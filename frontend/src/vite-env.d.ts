@@ -11,3 +11,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/** Injected at build time from the root CHANGELOG.md (see vite.config.ts). */
+declare const __LATEST_RELEASE_NOTES__: {
+  version: string;
+  date: string;
+  body: string;
+} | null;

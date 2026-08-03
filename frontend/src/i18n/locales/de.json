@@ -188,6 +188,7 @@
       "evening": "Guten Abend",
       "night": "Gute Nacht"
     },
+    "followUp": "Weiterführend",
     "welcome": {
       "helpToday": "Wie kann ich Ihnen heute helfen?",
       "helpTonight": "Wie kann ich Ihnen heute Abend helfen?",
@@ -244,7 +245,21 @@
       "attachImages": "Bilder anhängen",
       "attachments": "Anhänge und erweiterte Funktionen",
       "sendMessage": "Nachricht senden",
-      "stopGeneration": "Generierung stoppen"
+      "stopGeneration": "Generierung stoppen",
+      "menu": {
+        "uploadImages": "Bilder hochladen",
+        "attachDocument": "Dokument anhängen",
+        "attachWebpage": "Webseite anhängen",
+        "structuredOutput": "Strukturierte Ausgabe",
+        "attach": "Anhängen",
+        "documentAttached": "Dokument angehängt",
+        "webpageAttached": "Webseite angehängt",
+        "attachFailed": "Anhängen fehlgeschlagen",
+        "attachKnowledge": "Wissen anhängen",
+        "noCollections": "Noch keine Sammlungen — erstelle eine unter Einstellungen → Dokumente"
+      },
+      "voiceInput": "Spracheingabe",
+      "voiceStop": "Zuhören beenden"
     },
     "session": {
       "new": "Neuer Chat",
@@ -261,7 +276,23 @@
       "chats": "Chats",
       "renameChat": "Chat umbenennen",
       "deleteChat": "Chat löschen",
-      "incognito": "Inkognito-Chat"
+      "incognito": "Inkognito-Chat",
+      "archiveChat": "Chat archivieren",
+      "groups": {
+        "today": "Heute",
+        "yesterday": "Gestern",
+        "previous7Days": "Letzte 7 Tage",
+        "previous30Days": "Letzte 30 Tage",
+        "older": "Älter"
+      },
+      "folder": {
+        "new": "Neuer Ordner",
+        "namePlaceholder": "Ordnername",
+        "move": "In Ordner verschieben",
+        "remove": "Aus Ordner entfernen",
+        "delete": "Ordner löschen",
+        "deleteConfirm": "Diesen Ordner löschen? Die Chats darin bleiben erhalten."
+      }
     },
     "persona": {
       "applied": "Persona angewendet",
@@ -307,6 +338,25 @@
       "applySchema": "Schema anwenden",
       "cancel": "Abbrechen",
       "enabled": "Strukturierte Ausgabe aktiviert"
+    },
+    "controls": {
+      "title": "Chat-Steuerung",
+      "systemPrompt": "Systemprompt",
+      "systemPromptPlaceholder": "Anweisungen nur für diesen Chat…",
+      "advancedParams": "Erweiterte Parameter",
+      "advancedParamsDescription": "Überschreibungen für diesen Chat. Leere Felder nutzen die globalen Standardwerte.",
+      "saved": "Chat-Steuerung gespeichert",
+      "saveFailed": "Chat-Steuerung konnte nicht gespeichert werden",
+      "params": {
+        "temperature": "Temperatur",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Max. Tokens",
+        "repeatPenalty": "Wiederholungsstrafe",
+        "seed": "Seed",
+        "contextLength": "Kontextlänge"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Arbeit",
       "exploreLabel": "Entdecken",
       "usageAnalytics": "Anbieter-Nutzung",
-      "system": "System"
+      "system": "System",
+      "notes": "Notizen"
     },
     "toggleSize": "Seitenleistengröße umschalten",
     "expandSidebar": "Seitenleiste erweitern"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Chat-Oberfläche",
         "showUsername": "Benutzername anzeigen",
-        "showUsernameDescription": "Benutzernamen in Chat-Nachrichten anzeigen"
+        "showUsernameDescription": "Benutzernamen in Chat-Nachrichten anzeigen",
+        "followUpSuggestions": "Folgevorschläge",
+        "followUpSuggestionsDescription": "Nach jeder Antwort schnelle Rückfragen vorschlagen"
       },
       "background": {
         "title": "Hintergrundbild",
@@ -596,6 +649,14 @@
         "coverage": "Abdeckung",
         "regenerate": "Embeddings neu generieren",
         "regenerating": "Wird neu generiert..."
+      },
+      "collections": {
+        "title": "Wissenssammlungen",
+        "description": "Gruppiere Dokumente in Sammlungen und hänge sie an beliebige Chats an.",
+        "namePlaceholder": "Name der Sammlung",
+        "create": "Erstellen",
+        "none": "Keine Sammlung",
+        "deleteConfirm": "Diese Sammlung löschen? Die Dokumente darin bleiben erhalten."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "importiert",
       "skipped": "übersprungen",
       "documents": "Dokumente",
-      "errors": "Fehler"
+      "errors": "Fehler",
+      "archivedChats": {
+        "title": "Archivierte Chats",
+        "empty": "Keine archivierten Chats",
+        "unarchive": "Wiederherstellen"
+      }
     },
     "about": {
       "title": "Über",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Systemnachricht bearbeiten",
     "saveChanges": "Änderungen speichern",
     "cancelEditing": "Bearbeitung abbrechen",
+    "saveAndSubmit": "Speichern & senden",
+    "goodResponse": "Gute Antwort",
+    "badResponse": "Schlechte Antwort",
     "delete": "Löschen",
     "deleteConfirm": "Diese Nachricht löschen?",
     "branch": "Verzweigung",
@@ -1192,6 +1261,8 @@
     "showMore": "Mehr anzeigen",
     "showLess": "Weniger anzeigen",
     "thinking": "Denkt",
+    "thoughtFor": "Hat {{duration}} nachgedacht",
+    "hiddenLines": "{{count}} ausgeblendete Zeilen",
     "systemMessagePlaceholder": "Geben Sie Ihre Systemnachricht ein...",
     "fullSizeImage": "Bild in voller Größe",
     "startConversation": "Gespräch starten",
@@ -1295,7 +1366,10 @@
     "open": "Öffnen",
     "dragEdgeToResize": "Kante ziehen zum Anpassen",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Version {{current}} von {{total}}",
+    "previousVersion": "Vorherige Version",
+    "nextVersion": "Nächste Version"
   },
   "personaImportExport": {
     "title": "Personas importieren & exportieren",
@@ -1790,7 +1864,17 @@
       "title": "Noch keine Anbieter-Aufrufe",
       "description": "Aufrufe erscheinen hier, nachdem ein aktiviertes Plugin Chat-, Work-, Embedding-, Bild-, Sprach-, Sound- oder Video-Anfragen verarbeitet hat."
     },
-    "privacyNote": "Die Nutzung wird auf dem Server an der Plugin-Ausgangsgrenze gemessen. Libre WebUI speichert Anbieter, Modell, Timing, Status und gemeldete Zähler – niemals Prompts, Antworten, Endpunkte, Anmeldeinformationen oder Anbieter-Fehlermeldungen. Token-Gesamtsummen umfassen nur Aufrufe, bei denen der Anbieter Nutzungsmetadaten zurückgegeben hat."
+    "privacyNote": "Die Nutzung wird auf dem Server an der Plugin-Ausgangsgrenze gemessen. Libre WebUI speichert Anbieter, Modell, Timing, Status und gemeldete Zähler – niemals Prompts, Antworten, Endpunkte, Anmeldeinformationen oder Anbieter-Fehlermeldungen. Token-Gesamtsummen umfassen nur Aufrufe, bei denen der Anbieter Nutzungsmetadaten zurückgegeben hat.",
+    "heatmap": {
+      "title": "Ein Jahr Aktivität",
+      "description": "Tägliche Anbieteraufrufe des letzten Jahres, eingefärbt nach dem meistgenutzten Modell des Tages.",
+      "calls": "Aufrufe",
+      "noCalls": "Keine Aufrufe",
+      "other": "Weitere Modelle",
+      "less": "Weniger",
+      "more": "Mehr",
+      "yearTotal": "{{formatted}} Aufrufe im letzten Jahr"
+    }
   },
   "systemPage": {
     "eyebrow": "Verwaltung",
@@ -1912,5 +1996,23 @@
       "video": "Videos",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Was ist neu",
+    "releaseNotes": "Versionshinweise",
+    "cta": "Okay, los geht’s"
+  },
+  "notes": {
+    "title": "Notizen",
+    "new": "Neue Notiz",
+    "untitled": "Ohne Titel",
+    "empty": "Noch keine Notizen",
+    "selectOrCreate": "Wähle eine Notiz oder erstelle eine neue",
+    "contentPlaceholder": "In Markdown schreiben…",
+    "saved": "Gespeichert",
+    "saveFailed": "Notiz konnte nicht gespeichert werden",
+    "createFailed": "Notiz konnte nicht erstellt werden",
+    "deleteConfirm": "Diese Notiz löschen?",
+    "deleteFailed": "Notiz konnte nicht gelöscht werden"
   }
 }

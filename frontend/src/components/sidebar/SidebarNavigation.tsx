@@ -17,7 +17,13 @@
 
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Bot, Database, Sparkles, User as UserIcon } from 'lucide-react';
+import {
+  Bot,
+  Database,
+  NotebookPen,
+  Sparkles,
+  User as UserIcon,
+} from 'lucide-react';
 import { cn } from '@/utils';
 
 interface SidebarNavigationProps {
@@ -28,6 +34,7 @@ interface SidebarNavigationProps {
 }
 
 const DESTINATIONS = [
+  { path: '/notes', icon: NotebookPen, labelKey: 'sidebar.navigation.notes' },
   { path: '/models', icon: Database, labelKey: 'sidebar.navigation.models' },
   {
     path: '/personas',

@@ -188,6 +188,7 @@
       "evening": "Selamat petang",
       "night": "Selamat malam"
     },
+    "followUp": "Susulan",
     "welcome": {
       "helpToday": "Apa yang boleh saya bantu hari ini?",
       "helpTonight": "Apa yang boleh saya bantu malam ini?",
@@ -244,7 +245,21 @@
       "attachImages": "Lampirkan imej",
       "attachments": "Lampiran dan ciri lanjutan",
       "sendMessage": "Hantar mesej",
-      "stopGeneration": "Hentikan penjanaan"
+      "stopGeneration": "Hentikan penjanaan",
+      "menu": {
+        "uploadImages": "Muat naik imej",
+        "attachDocument": "Lampirkan dokumen",
+        "attachWebpage": "Lampirkan halaman web",
+        "structuredOutput": "Output berstruktur",
+        "attach": "Lampirkan",
+        "documentAttached": "Dokumen dilampirkan",
+        "webpageAttached": "Halaman web dilampirkan",
+        "attachFailed": "Tidak dapat melampirkan",
+        "attachKnowledge": "Lampirkan pengetahuan",
+        "noCollections": "Tiada koleksi lagi — cipta satu di Tetapan → Dokumen"
+      },
+      "voiceInput": "Input suara",
+      "voiceStop": "Berhenti mendengar"
     },
     "session": {
       "new": "Sembang Baharu",
@@ -261,7 +276,23 @@
       "chats": "Sembang",
       "renameChat": "Namakan semula sembang",
       "deleteChat": "Padam sembang",
-      "incognito": "Sembang Inkognito"
+      "incognito": "Sembang Inkognito",
+      "archiveChat": "Arkibkan sembang",
+      "groups": {
+        "today": "Hari ini",
+        "yesterday": "Semalam",
+        "previous7Days": "7 hari lepas",
+        "previous30Days": "30 hari lepas",
+        "older": "Lebih lama"
+      },
+      "folder": {
+        "new": "Folder baharu",
+        "namePlaceholder": "Nama folder",
+        "move": "Alih ke folder",
+        "remove": "Keluarkan dari folder",
+        "delete": "Padam folder",
+        "deleteConfirm": "Padam folder ini? Sembang di dalamnya kekal."
+      }
     },
     "persona": {
       "applied": "Persona digunakan",
@@ -307,6 +338,25 @@
       "applySchema": "Gunakan Skema",
       "cancel": "Batal",
       "enabled": "Output berstruktur diaktifkan"
+    },
+    "controls": {
+      "title": "Kawalan sembang",
+      "systemPrompt": "Prompt sistem",
+      "systemPromptPlaceholder": "Arahan yang terpakai untuk sembang ini sahaja…",
+      "advancedParams": "Parameter lanjutan",
+      "advancedParamsDescription": "Penggantian untuk sembang ini. Medan kosong menggunakan lalai global.",
+      "saved": "Kawalan disimpan",
+      "saveFailed": "Tidak dapat menyimpan kawalan",
+      "params": {
+        "temperature": "Suhu",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Token maks.",
+        "repeatPenalty": "Penalti ulangan",
+        "seed": "Benih",
+        "contextLength": "Panjang konteks"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Kerja",
       "exploreLabel": "Terokai",
       "usageAnalytics": "Penggunaan Penyedia",
-      "system": "Sistem"
+      "system": "Sistem",
+      "notes": "Nota"
     },
     "toggleSize": "Togol saiz bar sisi",
     "expandSidebar": "Kembangkan bar sisi"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Antara Muka Sembang",
         "showUsername": "Tunjukkan Nama Pengguna",
-        "showUsernameDescription": "Paparkan nama pengguna dalam mesej sembang"
+        "showUsernameDescription": "Paparkan nama pengguna dalam mesej sembang",
+        "followUpSuggestions": "Cadangan susulan",
+        "followUpSuggestionsDescription": "Cadangkan balasan pantas selepas setiap respons"
       },
       "background": {
         "title": "Imej Latar Belakang",
@@ -596,6 +649,14 @@
         "coverage": "Liputan",
         "regenerate": "Jana Semula Pembenaman",
         "regenerating": "Menjana semula..."
+      },
+      "collections": {
+        "title": "Koleksi pengetahuan",
+        "description": "Kumpulkan dokumen ke dalam koleksi dan lampirkan pada mana-mana sembang.",
+        "namePlaceholder": "Nama koleksi",
+        "create": "Cipta",
+        "none": "Tiada koleksi",
+        "deleteConfirm": "Padam koleksi ini? Dokumen di dalamnya kekal."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "diimport",
       "skipped": "dilangkau",
       "documents": "Dokumen",
-      "errors": "Ralat"
+      "errors": "Ralat",
+      "archivedChats": {
+        "title": "Sembang diarkibkan",
+        "empty": "Tiada sembang diarkibkan",
+        "unarchive": "Nyahakrib"
+      }
     },
     "about": {
       "title": "Perihal",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Sunting mesej sistem",
     "saveChanges": "Simpan perubahan",
     "cancelEditing": "Batal penyuntingan",
+    "saveAndSubmit": "Simpan & hantar",
+    "goodResponse": "Respons baik",
+    "badResponse": "Respons buruk",
     "delete": "Padam",
     "deleteConfirm": "Padam mesej ini?",
     "branch": "Cabang",
@@ -1192,6 +1261,8 @@
     "showMore": "Tunjuk lebih",
     "showLess": "Tunjuk kurang",
     "thinking": "Berfikir",
+    "thoughtFor": "Berfikir selama {{duration}}",
+    "hiddenLines": "{{count}} baris tersembunyi",
     "systemMessagePlaceholder": "Masukkan mesej sistem anda...",
     "fullSizeImage": "Imej saiz penuh",
     "startConversation": "Mulakan perbualan",
@@ -1295,7 +1366,10 @@
     "open": "Buka",
     "dragEdgeToResize": "Seret tepi untuk mengubah saiz",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Versi {{current}} daripada {{total}}",
+    "previousVersion": "Versi sebelumnya",
+    "nextVersion": "Versi seterusnya"
   },
   "personaImportExport": {
     "title": "Import & Eksport Persona",
@@ -1790,7 +1864,17 @@
       "title": "Tiada panggilan pembekal lagi",
       "description": "Panggilan akan dipaparkan di sini selepas pemalam yang didayakan mengendalikan permintaan sembang, Work, pembenaman, imej, pertuturan, bunyi, atau video."
     },
-    "privacyNote": "Penggunaan diukur pada pelayan di sempadan pemalam keluar. Libre WebUI menyimpan pembekal, model, masa, status, dan pembilang dilaporkan—tidak pernah gesaan, respons, titik akhir, kelayakan, atau badan ralat pembekal. Jumlah token hanya termasuk panggilan di mana pembekal memulangkan metadata penggunaan."
+    "privacyNote": "Penggunaan diukur pada pelayan di sempadan pemalam keluar. Libre WebUI menyimpan pembekal, model, masa, status, dan pembilang dilaporkan—tidak pernah gesaan, respons, titik akhir, kelayakan, atau badan ralat pembekal. Jumlah token hanya termasuk panggilan di mana pembekal memulangkan metadata penggunaan.",
+    "heatmap": {
+      "title": "Setahun aktiviti",
+      "description": "Panggilan penyedia harian sepanjang tahun lalu, diwarnakan mengikut model paling banyak digunakan setiap hari.",
+      "calls": "panggilan",
+      "noCalls": "Tiada panggilan",
+      "other": "Model lain",
+      "less": "Kurang",
+      "more": "Lebih",
+      "yearTotal": "{{formatted}} panggilan dalam setahun lalu"
+    }
   },
   "systemPage": {
     "eyebrow": "Pentadbiran",
@@ -1912,5 +1996,23 @@
       "video": "Video",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Apa yang baharu",
+    "releaseNotes": "Nota keluaran",
+    "cta": "Okay, mari mula"
+  },
+  "notes": {
+    "title": "Nota",
+    "new": "Nota baharu",
+    "untitled": "Tanpa tajuk",
+    "empty": "Tiada nota lagi",
+    "selectOrCreate": "Pilih nota atau cipta yang baharu",
+    "contentPlaceholder": "Tulis dalam Markdown…",
+    "saved": "Disimpan",
+    "saveFailed": "Tidak dapat menyimpan nota",
+    "createFailed": "Tidak dapat mencipta nota",
+    "deleteConfirm": "Padam nota ini?",
+    "deleteFailed": "Tidak dapat memadam nota"
   }
 }

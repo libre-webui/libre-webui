@@ -16,6 +16,7 @@
  */
 
 import type { Plugin, PluginApiMode } from '../types/index.js';
+import codexOAuthService from '../services/codexOAuthService.js';
 import { createLogger } from './logger.js';
 
 const logger = createLogger('utils:plugin-validation');
@@ -395,6 +396,22 @@ export function buildPluginAttributionHeaders(
   plugin: Pick<Plugin, 'id'>,
   endpoint: string
 ): Record<string, string> {
+  if (plugin.id === 'codex-oauth') {
+    try {
+      const url = new URL(endpoint);
+      if (url.protocol !== 'https:' || url.hostname !== 'chatgpt.com') {
+        return {};
+      }
+    } catch {
+      return {};
+    }
+    const accountId = codexOAuthService.getCachedAccountId();
+    return {
+      ...(accountId ? { 'ChatGPT-Account-Id': accountId } : {}),
+      'OpenAI-Beta': 'responses=experimental',
+    };
+  }
+
   if (plugin.id !== 'openrouter') return {};
 
   try {

@@ -188,6 +188,7 @@
       "evening": "Good evening",
       "night": "Good night"
     },
+    "followUp": "Follow up",
     "welcome": {
       "helpToday": "What can I help with today?",
       "helpTonight": "What can I help with tonight?",
@@ -244,7 +245,21 @@
       "attachImages": "Attach images",
       "attachments": "Attachments and advanced features",
       "sendMessage": "Send message",
-      "stopGeneration": "Stop generation"
+      "stopGeneration": "Stop generation",
+      "menu": {
+        "uploadImages": "Upload images",
+        "attachDocument": "Attach document",
+        "attachWebpage": "Attach webpage",
+        "structuredOutput": "Structured output",
+        "attach": "Attach",
+        "documentAttached": "Document attached",
+        "webpageAttached": "Webpage attached",
+        "attachFailed": "Could not attach that",
+        "attachKnowledge": "Attach knowledge",
+        "noCollections": "No collections yet — create one in Settings → Documents"
+      },
+      "voiceInput": "Voice input",
+      "voiceStop": "Stop listening"
     },
     "session": {
       "new": "New Chat",
@@ -261,7 +276,23 @@
       "createFirst": "Create your first chat above",
       "chats": "Chats",
       "renameChat": "Rename chat",
-      "deleteChat": "Delete chat"
+      "deleteChat": "Delete chat",
+      "archiveChat": "Archive chat",
+      "groups": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "previous7Days": "Previous 7 days",
+        "previous30Days": "Previous 30 days",
+        "older": "Older"
+      },
+      "folder": {
+        "new": "New folder",
+        "namePlaceholder": "Folder name",
+        "move": "Move to folder",
+        "remove": "Remove from folder",
+        "delete": "Delete folder",
+        "deleteConfirm": "Delete this folder? Chats inside are kept."
+      }
     },
     "persona": {
       "applied": "Persona applied",
@@ -307,6 +338,25 @@
       "applySchema": "Apply Schema",
       "cancel": "Cancel",
       "enabled": "Structured output enabled"
+    },
+    "controls": {
+      "title": "Chat controls",
+      "systemPrompt": "System prompt",
+      "systemPromptPlaceholder": "Instructions that apply only to this chat…",
+      "advancedParams": "Advanced parameters",
+      "advancedParamsDescription": "Overrides for this chat. Empty fields use your global defaults.",
+      "saved": "Chat controls saved",
+      "saveFailed": "Could not save chat controls",
+      "params": {
+        "temperature": "Temperature",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Max tokens",
+        "repeatPenalty": "Repeat penalty",
+        "seed": "Seed",
+        "contextLength": "Context length"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "system": "System",
       "userManagement": "User Management",
       "signOut": "Sign Out",
-      "exploreLabel": "Explore"
+      "exploreLabel": "Explore",
+      "notes": "Notes"
     },
     "toggleSize": "Toggle sidebar size",
     "expandSidebar": "Expand sidebar"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Chat Interface",
         "showUsername": "Show Username",
-        "showUsernameDescription": "Display username in chat messages"
+        "showUsernameDescription": "Display username in chat messages",
+        "followUpSuggestions": "Follow-up suggestions",
+        "followUpSuggestionsDescription": "Suggest quick replies after each response"
       },
       "background": {
         "title": "Background Image",
@@ -596,6 +649,14 @@
         "coverage": "Coverage",
         "regenerate": "Regenerate Embeddings",
         "regenerating": "Regenerating..."
+      },
+      "collections": {
+        "title": "Knowledge collections",
+        "description": "Group documents into collections and attach them to any chat.",
+        "namePlaceholder": "Collection name",
+        "create": "Create",
+        "none": "No collection",
+        "deleteConfirm": "Delete this collection? Documents inside are kept."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "imported",
       "skipped": "skipped",
       "documents": "Documents",
-      "errors": "Errors"
+      "errors": "Errors",
+      "archivedChats": {
+        "title": "Archived chats",
+        "empty": "No archived chats",
+        "unarchive": "Unarchive"
+      }
     },
     "about": {
       "title": "About",
@@ -1215,7 +1281,17 @@
       "title": "No provider calls yet",
       "description": "Calls will appear here after an enabled plugin handles chat, Work, embedding, image, speech, sound, or video requests."
     },
-    "privacyNote": "Usage is metered on the server at the outbound plugin boundary. Libre WebUI stores provider, model, timing, status, and reported counters—never prompts, responses, endpoints, credentials, or provider error bodies. Token totals include only calls where the provider returned usage metadata."
+    "privacyNote": "Usage is metered on the server at the outbound plugin boundary. Libre WebUI stores provider, model, timing, status, and reported counters—never prompts, responses, endpoints, credentials, or provider error bodies. Token totals include only calls where the provider returned usage metadata.",
+    "heatmap": {
+      "title": "A year of activity",
+      "description": "Daily provider calls over the past year, colored by each day's most-used model.",
+      "calls": "calls",
+      "noCalls": "No calls",
+      "other": "Other models",
+      "less": "Less",
+      "more": "More",
+      "yearTotal": "{{formatted}} calls in the last year"
+    }
   },
   "systemPage": {
     "eyebrow": "Administration",
@@ -1317,6 +1393,9 @@
     "editSystemMessage": "Edit system message",
     "saveChanges": "Save changes",
     "cancelEditing": "Cancel editing",
+    "saveAndSubmit": "Save & submit",
+    "goodResponse": "Good response",
+    "badResponse": "Bad response",
     "delete": "Delete",
     "deleteConfirm": "Delete this message?",
     "branch": "Branch",
@@ -1326,6 +1405,8 @@
     "showMore": "Show more",
     "showLess": "Show less",
     "thinking": "Thinking",
+    "thoughtFor": "Thought for {{duration}}",
+    "hiddenLines": "{{count}} hidden lines",
     "systemMessagePlaceholder": "Enter your system message...",
     "fullSizeImage": "Full size image",
     "startConversation": "Start a conversation",
@@ -1467,7 +1548,10 @@
     "open": "Open",
     "dragEdgeToResize": "Drag edge to resize",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Version {{current}} of {{total}}",
+    "previousVersion": "Previous version",
+    "nextVersion": "Next version"
   },
   "personaImportExport": {
     "title": "Import & Export Personas",
@@ -1912,5 +1996,23 @@
     "pull": "Pull",
     "pullRestricted": "Model installation is restricted to administrators on this instance.",
     "adminOnlyPull": "Admins only"
+  },
+  "whatsNew": {
+    "title": "What's new",
+    "releaseNotes": "Release notes",
+    "cta": "Okay, let's go"
+  },
+  "notes": {
+    "title": "Notes",
+    "new": "New note",
+    "untitled": "Untitled",
+    "empty": "No notes yet",
+    "selectOrCreate": "Select a note or create a new one",
+    "contentPlaceholder": "Write in Markdown…",
+    "saved": "Saved",
+    "saveFailed": "Could not save the note",
+    "createFailed": "Could not create a note",
+    "deleteConfirm": "Delete this note?",
+    "deleteFailed": "Could not delete the note"
   }
 }

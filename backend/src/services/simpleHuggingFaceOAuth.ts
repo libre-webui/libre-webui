@@ -66,7 +66,7 @@ export class HuggingFaceOAuthService {
   /**
    * Generate the authorization URL for Hugging Face OAuth
    */
-  getAuthUrl(): string {
+  getAuthUrl(state: string): string {
     if (!this.clientId) {
       throw new Error(
         'Hugging Face Client ID not configured. Please set the HUGGINGFACE_CLIENT_ID environment variable.'
@@ -78,12 +78,10 @@ export class HuggingFaceOAuthService {
       redirect_uri: this.callbackUrl,
       response_type: 'code',
       scope: 'read-repos read-billing', // Hugging Face scopes
-      state: crypto.randomBytes(32).toString('hex'), // CSRF protection
+      state,
     });
 
-    const authUrl = `https://huggingface.co/oauth/authorize?${params.toString()}`;
-    logger.debug('🤗 Hugging Face auth URL generated:', authUrl);
-    return authUrl;
+    return `https://huggingface.co/oauth/authorize?${params.toString()}`;
   }
 
   /**
@@ -189,6 +187,7 @@ export class HuggingFaceOAuthService {
         // The password is prefixed with 'oauth:hf:' to mark this account as Hugging Face OAuth-only
         password: 'oauth:hf:' + crypto.randomBytes(24).toString('base64'),
       });
+      if (!newUser) return null;
 
       logger.debug('Created new Hugging Face user:', newUser.username);
       return newUser;

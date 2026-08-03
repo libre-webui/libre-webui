@@ -58,6 +58,7 @@ import agentCliRoutes from './routes/agentCli.js';
 import preferencesRoutes from './routes/preferences.js';
 import pluginRoutes from './routes/plugins.js';
 import documentRoutes from './routes/documents.js';
+import notesRoutes from './routes/notes.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
 import personaRoutes from './routes/personas.js';
@@ -127,11 +128,18 @@ app.use(WORK_PREVIEW_PROXY_PREFIX, workPreviewProxyService.handleHttp);
 
 const isProduction = process.env.NODE_ENV === 'production';
 const port = process.env.PORT || (isProduction ? 8080 : 3001);
+const host =
+  process.env.WEBUI_HOST?.trim() ||
+  (process.env.DOCKER_ENV === 'true' ? '0.0.0.0' : '127.0.0.1');
 const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:8080',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:8080',
   `http://localhost:${port}`, // Allow same-origin when serving frontend
+  `http://127.0.0.1:${port}`,
 ];
 
 // Multi-user safe CORS configuration
@@ -473,6 +481,7 @@ app.use(
 );
 app.use('/api/embeddings', embeddingsRoutes);
 app.use('/api/documents', documentsRateLimiter, documentRoutes);
+app.use('/api/notes', documentsRateLimiter, notesRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 app.use('/api/tts', ttsRateLimiter, optionalAuth, ttsRoutes);
 app.use('/api/image-gen', imageGenRateLimiter, optionalAuth, imageGenRoutes);
@@ -537,21 +546,39 @@ const server = createServer(app);
 registerWebSocketServer(server);
 
 // Start server
-server.listen({ port, host: '0.0.0.0' }, () => {
-  const url = `http://localhost:${port}`;
+server.listen({ port, host }, () => {
+  const displayHost = ['0.0.0.0', '::'].includes(host)
+    ? 'localhost'
+    : host.includes(':')
+      ? `[${host}]`
+      : host;
+  const url = `http://${displayHost}:${port}`;
   logger.info(`Libre WebUI v${pkg.version}`);
   logger.info(url);
 
   // Open browser in production mode
-  if (process.env.SERVE_FRONTEND === 'true') {
-    import('child_process').then(({ exec }) => {
-      const cmd =
+  if (
+    process.env.SERVE_FRONTEND === 'true' &&
+    process.env.OPEN_BROWSER !== 'false'
+  ) {
+    import('child_process').then(({ spawn }) => {
+      const opener =
         process.platform === 'darwin'
-          ? 'open'
+          ? { command: 'open', args: [url] }
           : process.platform === 'win32'
-            ? 'start'
-            : 'xdg-open';
-      exec(`${cmd} ${url}`);
+            ? {
+                command: 'rundll32',
+                args: ['url.dll,FileProtocolHandler', url],
+              }
+            : { command: 'xdg-open', args: [url] };
+      const browser = spawn(opener.command, opener.args, {
+        detached: true,
+        stdio: 'ignore',
+      });
+      browser.on('error', error => {
+        logger.debug(`Unable to open the browser automatically: ${error}`);
+      });
+      browser.unref();
     });
   }
 

@@ -23,6 +23,7 @@ import {
   GenerationStatistics,
   Persona,
   ChatProviderType,
+  SessionFolder,
 } from '@/types';
 import { chatApi, ollamaApi, preferencesApi, personaApi } from '@/utils/api';
 import { pluginApi } from '@/utils/api';
@@ -88,6 +89,24 @@ interface ChatState {
     statistics?: GenerationStatistics,
     providerMetadata?: ChatMessage['providerMetadata']
   ) => void;
+  rateMessage: (
+    sessionId: string,
+    messageId: string,
+    rating: number | undefined
+  ) => Promise<void>;
+  setSessionArchived: (sessionId: string, archived: boolean) => Promise<void>;
+
+  // Session folders
+  folders: SessionFolder[];
+  loadFolders: () => Promise<void>;
+  createFolder: (name: string) => Promise<SessionFolder | undefined>;
+  renameFolder: (folderId: string, name: string) => Promise<void>;
+  deleteFolder: (folderId: string) => Promise<void>;
+  moveSessionToFolder: (
+    sessionId: string,
+    folderId: string | null
+  ) => Promise<void>;
+  truncateMessagesFrom: (sessionId: string, messageId: string) => void;
 
   // Models
   models: OllamaModel[];
@@ -388,6 +407,188 @@ export const useChatStore = create<ChatState>((set, get) => ({
     );
   },
 
+  rateMessage: async (
+    sessionId: string,
+    messageId: string,
+    rating: number | undefined
+  ) => {
+    const applyRating = (messages: ChatMessage[]) =>
+      messages.map(message =>
+        message.id === messageId ? { ...message, rating } : message
+      );
+
+    const isPrivate = get().currentSession?.isPrivate;
+    set(state => ({
+      sessions: state.sessions.map(session =>
+        session.id === sessionId
+          ? { ...session, messages: applyRating(session.messages) }
+          : session
+      ),
+      currentSession:
+        state.currentSession?.id === sessionId
+          ? {
+              ...state.currentSession,
+              messages: applyRating(state.currentSession.messages),
+            }
+          : state.currentSession,
+    }));
+
+    if (isPrivate) {
+      return;
+    }
+
+    try {
+      await chatApi.updateMessage(sessionId, messageId, {
+        rating: rating ?? null,
+      } as Partial<ChatMessage>);
+    } catch (error) {
+      logger.error('Failed to save message rating:', error);
+    }
+  },
+
+  folders: [],
+
+  loadFolders: async () => {
+    try {
+      const response = await chatApi.getFolders();
+      if (response.success && response.data) {
+        set({ folders: response.data });
+      }
+    } catch (error) {
+      logger.error('Failed to load folders:', error);
+    }
+  },
+
+  createFolder: async (name: string) => {
+    try {
+      const response = await chatApi.createFolder(name);
+      if (response.success && response.data) {
+        const folder = response.data;
+        set(state => ({
+          folders: [...state.folders, folder].sort((a, b) =>
+            a.name.localeCompare(b.name)
+          ),
+        }));
+        return folder;
+      }
+    } catch (error) {
+      logger.error('Failed to create folder:', error);
+    }
+    return undefined;
+  },
+
+  renameFolder: async (folderId: string, name: string) => {
+    try {
+      const response = await chatApi.renameFolder(folderId, name);
+      if (response.success && response.data) {
+        const folder = response.data;
+        set(state => ({
+          folders: state.folders
+            .map(item => (item.id === folderId ? folder : item))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+        }));
+      }
+    } catch (error) {
+      logger.error('Failed to rename folder:', error);
+    }
+  },
+
+  deleteFolder: async (folderId: string) => {
+    try {
+      const response = await chatApi.deleteFolder(folderId);
+      if (response.success) {
+        set(state => ({
+          folders: state.folders.filter(item => item.id !== folderId),
+          sessions: state.sessions.map(session =>
+            session.folderId === folderId
+              ? { ...session, folderId: null }
+              : session
+          ),
+          currentSession:
+            state.currentSession?.folderId === folderId
+              ? { ...state.currentSession, folderId: null }
+              : state.currentSession,
+        }));
+      }
+    } catch (error) {
+      logger.error('Failed to delete folder:', error);
+    }
+  },
+
+  moveSessionToFolder: async (sessionId: string, folderId: string | null) => {
+    set(state => ({
+      sessions: state.sessions.map(session =>
+        session.id === sessionId ? { ...session, folderId } : session
+      ),
+      currentSession:
+        state.currentSession?.id === sessionId
+          ? { ...state.currentSession, folderId }
+          : state.currentSession,
+    }));
+    try {
+      await chatApi.updateSession(sessionId, {
+        folderId,
+      } as Partial<ChatSession>);
+    } catch (error) {
+      logger.error('Failed to move session to folder:', error);
+    }
+  },
+
+  setSessionArchived: async (sessionId: string, archived: boolean) => {
+    set(state => ({
+      sessions: state.sessions.map(session =>
+        session.id === sessionId ? { ...session, archived } : session
+      ),
+      currentSession:
+        state.currentSession?.id === sessionId
+          ? { ...state.currentSession, archived }
+          : state.currentSession,
+    }));
+
+    try {
+      await chatApi.updateSession(sessionId, {
+        archived,
+      } as Partial<ChatSession>);
+    } catch (error) {
+      logger.error('Failed to update session archive state:', error);
+      // Roll back the optimistic update so the UI stays truthful.
+      set(state => ({
+        sessions: state.sessions.map(session =>
+          session.id === sessionId
+            ? { ...session, archived: !archived }
+            : session
+        ),
+      }));
+    }
+  },
+
+  truncateMessagesFrom: (sessionId: string, messageId: string) => {
+    const truncate = (messages: ChatMessage[]) => {
+      const index = messages.findIndex(message => message.id === messageId);
+      return index === -1 ? messages : messages.slice(0, index);
+    };
+
+    set(state => ({
+      sessions: state.sessions.map(session =>
+        session.id === sessionId
+          ? {
+              ...session,
+              messages: truncate(session.messages),
+              updatedAt: Date.now(),
+            }
+          : session
+      ),
+      currentSession:
+        state.currentSession?.id === sessionId
+          ? {
+              ...state.currentSession,
+              messages: truncate(state.currentSession.messages),
+              updatedAt: Date.now(),
+            }
+          : state.currentSession,
+    }));
+  },
+
   // Models
   models: [],
   loadModels: async () => {
@@ -468,6 +669,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             details: {},
             isAgent: true,
             agentName: agent.name,
+            agentId: agent.agentId,
           }));
           allModels.push(...agentModels);
           logger.debug('Agent CLI models added:', agentModels.length);
@@ -611,7 +813,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
   selectedProviderId: null,
   setSelectedModel: (model, providerType = null, providerId = null) => {
     const normalizedProviderId =
-      providerType === 'plugin' ? providerId || null : null;
+      providerType === 'plugin' || providerType === 'agent'
+        ? providerId || null
+        : null;
     set({
       selectedModel: model,
       selectedProviderType: providerType,
@@ -639,7 +843,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const response = await chatApi.updateSession(state.currentSession.id, {
         model,
         providerType,
-        providerId: providerType === 'plugin' ? providerId : null,
+        providerId:
+          providerType === 'plugin' || providerType === 'agent'
+            ? providerId
+            : null,
       });
 
       if (response.success && response.data) {
@@ -651,7 +858,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
           selectedModel: model,
           selectedProviderType: providerType,
           selectedProviderId:
-            providerType === 'plugin' ? providerId || null : null,
+            providerType === 'plugin' || providerType === 'agent'
+              ? providerId || null
+              : null,
         }));
         toast.success('Model updated for current chat');
       }

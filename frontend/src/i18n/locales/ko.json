@@ -188,6 +188,7 @@
       "evening": "좋은 저녁입니다",
       "night": "안녕히 주무세요"
     },
+    "followUp": "후속 질문",
     "welcome": {
       "helpToday": "오늘 무엇을 도와드릴까요?",
       "helpTonight": "오늘 밤 무엇을 도와드릴까요?",
@@ -244,7 +245,21 @@
       "attachImages": "이미지 첨부",
       "attachments": "첨부 파일 및 고급 기능",
       "sendMessage": "메시지 보내기",
-      "stopGeneration": "생성 중지"
+      "stopGeneration": "생성 중지",
+      "menu": {
+        "uploadImages": "이미지 업로드",
+        "attachDocument": "문서 첨부",
+        "attachWebpage": "웹페이지 첨부",
+        "structuredOutput": "구조화된 출력",
+        "attach": "첨부",
+        "documentAttached": "문서가 첨부되었습니다",
+        "webpageAttached": "웹페이지가 첨부되었습니다",
+        "attachFailed": "첨부하지 못했습니다",
+        "attachKnowledge": "지식 첨부",
+        "noCollections": "아직 컬렉션이 없습니다 — 설정 → 문서에서 만드세요"
+      },
+      "voiceInput": "음성 입력",
+      "voiceStop": "듣기 중지"
     },
     "session": {
       "new": "새 채팅",
@@ -261,7 +276,23 @@
       "chats": "채팅",
       "renameChat": "채팅 이름 변경",
       "deleteChat": "채팅 삭제",
-      "incognito": "시크릿 채팅"
+      "incognito": "시크릿 채팅",
+      "archiveChat": "채팅 보관",
+      "groups": {
+        "today": "오늘",
+        "yesterday": "어제",
+        "previous7Days": "지난 7일",
+        "previous30Days": "지난 30일",
+        "older": "이전"
+      },
+      "folder": {
+        "new": "새 폴더",
+        "namePlaceholder": "폴더 이름",
+        "move": "폴더로 이동",
+        "remove": "폴더에서 제거",
+        "delete": "폴더 삭제",
+        "deleteConfirm": "이 폴더를 삭제할까요? 안의 채팅은 유지됩니다."
+      }
     },
     "persona": {
       "applied": "페르소나 적용됨",
@@ -307,6 +338,25 @@
       "applySchema": "스키마 적용",
       "cancel": "취소",
       "enabled": "구조화된 출력 활성화됨"
+    },
+    "controls": {
+      "title": "채팅 컨트롤",
+      "systemPrompt": "시스템 프롬프트",
+      "systemPromptPlaceholder": "이 채팅에만 적용되는 지시사항…",
+      "advancedParams": "고급 매개변수",
+      "advancedParamsDescription": "이 채팅 전용 재정의입니다. 빈 칸은 전역 기본값을 사용합니다.",
+      "saved": "컨트롤이 저장되었습니다",
+      "saveFailed": "컨트롤을 저장하지 못했습니다",
+      "params": {
+        "temperature": "온도",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "최대 토큰",
+        "repeatPenalty": "반복 페널티",
+        "seed": "시드",
+        "contextLength": "컨텍스트 길이"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "작업",
       "exploreLabel": "둘러보기",
       "usageAnalytics": "프로바이더 사용량",
-      "system": "시스템"
+      "system": "시스템",
+      "notes": "노트"
     },
     "toggleSize": "사이드바 크기 전환",
     "expandSidebar": "사이드바 확장"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "채팅 인터페이스",
         "showUsername": "사용자 이름 표시",
-        "showUsernameDescription": "채팅 메시지에 사용자 이름 표시"
+        "showUsernameDescription": "채팅 메시지에 사용자 이름 표시",
+        "followUpSuggestions": "후속 질문 제안",
+        "followUpSuggestionsDescription": "각 응답 후 빠른 답장을 제안합니다"
       },
       "background": {
         "title": "배경 이미지",
@@ -596,6 +649,14 @@
         "coverage": "커버리지",
         "regenerate": "임베딩 재생성",
         "regenerating": "재생성 중..."
+      },
+      "collections": {
+        "title": "지식 컬렉션",
+        "description": "문서를 컬렉션으로 묶어 어느 채팅에나 첨부하세요.",
+        "namePlaceholder": "컬렉션 이름",
+        "create": "만들기",
+        "none": "컬렉션 없음",
+        "deleteConfirm": "이 컬렉션을 삭제할까요? 안의 문서는 유지됩니다."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "가져옴",
       "skipped": "건너뜀",
       "documents": "문서",
-      "errors": "오류"
+      "errors": "오류",
+      "archivedChats": {
+        "title": "보관된 채팅",
+        "empty": "보관된 채팅이 없습니다",
+        "unarchive": "보관 해제"
+      }
     },
     "about": {
       "title": "정보",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "시스템 메시지 편집",
     "saveChanges": "변경사항 저장",
     "cancelEditing": "편집 취소",
+    "saveAndSubmit": "저장 후 전송",
+    "goodResponse": "좋은 응답",
+    "badResponse": "나쁜 응답",
     "delete": "삭제",
     "deleteConfirm": "이 메시지를 삭제하시겠습니까?",
     "branch": "분기",
@@ -1192,6 +1261,8 @@
     "showMore": "더 보기",
     "showLess": "접기",
     "thinking": "생각 중",
+    "thoughtFor": "{{duration}} 동안 생각함",
+    "hiddenLines": "숨겨진 줄: {{count}}",
     "systemMessagePlaceholder": "시스템 메시지를 입력하세요...",
     "fullSizeImage": "전체 크기 이미지",
     "startConversation": "대화 시작하기",
@@ -1295,7 +1366,10 @@
     "open": "열기",
     "dragEdgeToResize": "가장자리를 끌어 크기 조절",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "버전 {{current}} / {{total}}",
+    "previousVersion": "이전 버전",
+    "nextVersion": "다음 버전"
   },
   "personaImportExport": {
     "title": "페르소나 가져오기 및 내보내기",
@@ -1790,7 +1864,17 @@
       "title": "아직 제공자 호출이 없습니다",
       "description": "활성화된 플러그인이 채팅, Work, 임베딩, 이미지, 음성, 소리 또는 비디오 요청을 처리하면 호출이 여기에 표시됩니다."
     },
-    "privacyNote": "사용량은 아웃바운드 플러그인 경계에서 서버를 통해 측정됩니다. Libre WebUI는 제공자, 모델, 타이밍, 상태 및 보고된 카운터를 저장하며, 프롬프트, 응답, 엔드포인트, 자격 증명 또는 제공자 오류 본문은 절대 저장하지 않습니다. 토큰 총량에는 제공자가 사용 메타데이터를 반환한 호출만 포함됩니다."
+    "privacyNote": "사용량은 아웃바운드 플러그인 경계에서 서버를 통해 측정됩니다. Libre WebUI는 제공자, 모델, 타이밍, 상태 및 보고된 카운터를 저장하며, 프롬프트, 응답, 엔드포인트, 자격 증명 또는 제공자 오류 본문은 절대 저장하지 않습니다. 토큰 총량에는 제공자가 사용 메타데이터를 반환한 호출만 포함됩니다.",
+    "heatmap": {
+      "title": "1년간의 활동",
+      "description": "지난 1년간의 일별 프로바이더 호출을 그날 가장 많이 사용된 모델별 색상으로 표시합니다.",
+      "calls": "회 호출",
+      "noCalls": "호출 없음",
+      "other": "기타 모델",
+      "less": "적음",
+      "more": "많음",
+      "yearTotal": "지난 1년간 {{formatted}}회 호출"
+    }
   },
   "systemPage": {
     "eyebrow": "관리",
@@ -1912,5 +1996,23 @@
       "video": "동영상",
       "audio": "오디오"
     }
+  },
+  "whatsNew": {
+    "title": "새로운 기능",
+    "releaseNotes": "릴리스 노트",
+    "cta": "좋아요, 시작하죠"
+  },
+  "notes": {
+    "title": "노트",
+    "new": "새 노트",
+    "untitled": "제목 없음",
+    "empty": "아직 노트가 없습니다",
+    "selectOrCreate": "노트를 선택하거나 새로 만드세요",
+    "contentPlaceholder": "Markdown으로 작성…",
+    "saved": "저장됨",
+    "saveFailed": "노트를 저장하지 못했습니다",
+    "createFailed": "노트를 만들지 못했습니다",
+    "deleteConfirm": "이 노트를 삭제할까요?",
+    "deleteFailed": "노트를 삭제하지 못했습니다"
   }
 }

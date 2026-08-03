@@ -1,0 +1,30 @@
+services:
+  watchtower:
+    image: containrrr/watchtower:1.7.1
+    container_name: libre-webui-watchtower
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    environment:
+      DOCKER_API_VERSION: '1.44'
+      WATCHTOWER_CLEANUP: 'true'
+      WATCHTOWER_LABEL_ENABLE: 'true'
+      WATCHTOWER_POLL_INTERVAL: '1800'
+      WATCHTOWER_WARN_ON_HEAD_FAILURE: never
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      com.centurylinklabs.watchtower.enable: 'false'
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '3'

@@ -188,6 +188,7 @@
       "evening": "শুভ সন্ধ্যা",
       "night": "শুভ রাত্রি"
     },
+    "followUp": "ফলো-আপ",
     "welcome": {
       "helpToday": "আজ আমি কীভাবে সাহায্য করতে পারি?",
       "helpTonight": "আজ রাতে আমি কীভাবে সাহায্য করতে পারি?",
@@ -244,7 +245,21 @@
       "attachImages": "ছবি সংযুক্ত করুন",
       "attachments": "সংযুক্তি এবং উন্নত বৈশিষ্ট্য",
       "sendMessage": "বার্তা পাঠান",
-      "stopGeneration": "জেনারেশন বন্ধ করুন"
+      "stopGeneration": "জেনারেশন বন্ধ করুন",
+      "menu": {
+        "uploadImages": "ছবি আপলোড করুন",
+        "attachDocument": "নথি সংযুক্ত করুন",
+        "attachWebpage": "ওয়েবপেজ সংযুক্ত করুন",
+        "structuredOutput": "কাঠামোবদ্ধ আউটপুট",
+        "attach": "সংযুক্ত করুন",
+        "documentAttached": "নথি সংযুক্ত হয়েছে",
+        "webpageAttached": "ওয়েবপেজ সংযুক্ত হয়েছে",
+        "attachFailed": "সংযুক্ত করা যায়নি",
+        "attachKnowledge": "জ্ঞান সংযুক্ত করুন",
+        "noCollections": "এখনও কোনো সংগ্রহ নেই — সেটিংস → নথিতে তৈরি করুন"
+      },
+      "voiceInput": "ভয়েস ইনপুট",
+      "voiceStop": "শোনা বন্ধ করুন"
     },
     "session": {
       "new": "নতুন চ্যাট",
@@ -261,7 +276,23 @@
       "chats": "চ্যাট",
       "renameChat": "চ্যাট পুনঃনামকরণ করুন",
       "deleteChat": "চ্যাট মুছুন",
-      "incognito": "ইনকগনিটো চ্যাট"
+      "incognito": "ইনকগনিটো চ্যাট",
+      "archiveChat": "চ্যাট সংরক্ষণাগারে রাখুন",
+      "groups": {
+        "today": "আজ",
+        "yesterday": "গতকাল",
+        "previous7Days": "গত ৭ দিন",
+        "previous30Days": "গত ৩০ দিন",
+        "older": "পুরানো"
+      },
+      "folder": {
+        "new": "নতুন ফোল্ডার",
+        "namePlaceholder": "ফোল্ডারের নাম",
+        "move": "ফোল্ডারে সরান",
+        "remove": "ফোল্ডার থেকে সরান",
+        "delete": "ফোল্ডার মুছুন",
+        "deleteConfirm": "এই ফোল্ডারটি মুছবেন? ভিতরের চ্যাটগুলি থাকবে।"
+      }
     },
     "persona": {
       "applied": "পার্সোনা প্রয়োগ করা হয়েছে",
@@ -307,6 +338,25 @@
       "applySchema": "স্কিমা প্রয়োগ করুন",
       "cancel": "বাতিল",
       "enabled": "স্ট্রাকচার্ড আউটপুট সক্রিয়"
+    },
+    "controls": {
+      "title": "চ্যাট নিয়ন্ত্রণ",
+      "systemPrompt": "সিস্টেম প্রম্পট",
+      "systemPromptPlaceholder": "শুধু এই চ্যাটে প্রযোজ্য নির্দেশনা…",
+      "advancedParams": "উন্নত প্যারামিটার",
+      "advancedParamsDescription": "এই চ্যাটের জন্য ওভাররাইড। খালি ঘরে গ্লোবাল ডিফল্ট ব্যবহৃত হয়।",
+      "saved": "নিয়ন্ত্রণ সংরক্ষিত হয়েছে",
+      "saveFailed": "নিয়ন্ত্রণ সংরক্ষণ করা যায়নি",
+      "params": {
+        "temperature": "তাপমাত্রা",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "সর্বোচ্চ টোকেন",
+        "repeatPenalty": "পুনরাবৃত্তি জরিমানা",
+        "seed": "সিড",
+        "contextLength": "প্রসঙ্গ দৈর্ঘ্য"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "কাজ",
       "exploreLabel": "অন্বেষণ",
       "usageAnalytics": "প্রোভাইডার ব্যবহার",
-      "system": "সিস্টেম"
+      "system": "সিস্টেম",
+      "notes": "নোট"
     },
     "toggleSize": "সাইডবার সাইজ টগল করুন",
     "expandSidebar": "সাইডবার প্রসারিত করুন"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "চ্যাট ইন্টারফেস",
         "showUsername": "ব্যবহারকারীর নাম দেখান",
-        "showUsernameDescription": "চ্যাট বার্তায় ব্যবহারকারীর নাম প্রদর্শন করুন"
+        "showUsernameDescription": "চ্যাট বার্তায় ব্যবহারকারীর নাম প্রদর্শন করুন",
+        "followUpSuggestions": "ফলো-আপ পরামর্শ",
+        "followUpSuggestionsDescription": "প্রতিটি উত্তরের পরে দ্রুত জবাবের পরামর্শ দিন"
       },
       "background": {
         "title": "ব্যাকগ্রাউন্ড ইমেজ",
@@ -596,6 +649,14 @@
         "coverage": "কভারেজ",
         "regenerate": "এমবেডিং পুনরায় তৈরি করুন",
         "regenerating": "পুনরায় তৈরি হচ্ছে..."
+      },
+      "collections": {
+        "title": "জ্ঞান সংগ্রহ",
+        "description": "নথিগুলিকে সংগ্রহে ভাগ করুন এবং যেকোনো চ্যাটে সংযুক্ত করুন।",
+        "namePlaceholder": "সংগ্রহের নাম",
+        "create": "তৈরি করুন",
+        "none": "কোনো সংগ্রহ নেই",
+        "deleteConfirm": "এই সংগ্রহটি মুছবেন? ভিতরের নথিগুলি থাকবে।"
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "ইম্পোর্ট করা হয়েছে",
       "skipped": "স্কিপ করা হয়েছে",
       "documents": "ডকুমেন্ট",
-      "errors": "ত্রুটি"
+      "errors": "ত্রুটি",
+      "archivedChats": {
+        "title": "সংরক্ষণাগারভুক্ত চ্যাট",
+        "empty": "কোনো সংরক্ষণাগারভুক্ত চ্যাট নেই",
+        "unarchive": "সংরক্ষণাগার থেকে সরান"
+      }
     },
     "about": {
       "title": "সম্পর্কে",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "সিস্টেম বার্তা সম্পাদনা করুন",
     "saveChanges": "পরিবর্তন সংরক্ষণ করুন",
     "cancelEditing": "সম্পাদনা বাতিল করুন",
+    "saveAndSubmit": "সংরক্ষণ ও পাঠান",
+    "goodResponse": "ভালো উত্তর",
+    "badResponse": "খারাপ উত্তর",
     "delete": "মুছুন",
     "deleteConfirm": "এই বার্তা মুছবেন?",
     "branch": "ব্রাঞ্চ",
@@ -1192,6 +1261,8 @@
     "showMore": "আরও দেখান",
     "showLess": "কম দেখান",
     "thinking": "চিন্তা করছে",
+    "thoughtFor": "{{duration}} ধরে ভেবেছে",
+    "hiddenLines": "লুকানো লাইন: {{count}}",
     "systemMessagePlaceholder": "আপনার সিস্টেম বার্তা লিখুন...",
     "fullSizeImage": "পূর্ণ সাইজ ইমেজ",
     "startConversation": "একটি কথোপকথন শুরু করুন",
@@ -1295,7 +1366,10 @@
     "open": "খুলুন",
     "dragEdgeToResize": "সাইজ পরিবর্তন করতে প্রান্ত টানুন",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "সংস্করণ {{current}} / {{total}}",
+    "previousVersion": "পূর্ববর্তী সংস্করণ",
+    "nextVersion": "পরবর্তী সংস্করণ"
   },
   "personaImportExport": {
     "title": "পার্সোনা ইম্পোর্ট এবং এক্সপোর্ট",
@@ -1790,7 +1864,17 @@
       "title": "এখনও কোনো প্রদানকারী কল নেই",
       "description": "একটি সক্রিয় প্লাগইন চ্যাট, কাজ, এম্বেডিং, ছবি, বক্তৃতা, শব্দ বা ভিডিও অনুরোধগুলি পরিচালনা করার পরে কলগুলি এখানে উপস্থিত হবে।"
     },
-    "privacyNote": "আউটবাউন্ড প্লাগইন সীমানায় সার্ভারে ব্যবহার মাপা হয়। Libre WebUI প্রদানকারী, মডেল, সময়, স্থিতি এবং রিপোর্ট করা কাউন্টার সংরক্ষণ করে—কখনও প্রম্পট, প্রতিক্রিয়া, এন্ডপয়েন্ট, শংসাপত্র বা প্রদানকারী ত্রুটি বডি নয়। টোকেন মোটগুলিতে কেবলমাত্র সেই কলগুলি অন্তর্ভুক্ত থাকে যেখানে প্রদানকারী ব্যবহারের মেটাডেটা ফেরত দিয়েছে।"
+    "privacyNote": "আউটবাউন্ড প্লাগইন সীমানায় সার্ভারে ব্যবহার মাপা হয়। Libre WebUI প্রদানকারী, মডেল, সময়, স্থিতি এবং রিপোর্ট করা কাউন্টার সংরক্ষণ করে—কখনও প্রম্পট, প্রতিক্রিয়া, এন্ডপয়েন্ট, শংসাপত্র বা প্রদানকারী ত্রুটি বডি নয়। টোকেন মোটগুলিতে কেবলমাত্র সেই কলগুলি অন্তর্ভুক্ত থাকে যেখানে প্রদানকারী ব্যবহারের মেটাডেটা ফেরত দিয়েছে।",
+    "heatmap": {
+      "title": "এক বছরের কার্যকলাপ",
+      "description": "গত এক বছরের দৈনিক প্রোভাইডার কল, প্রতিদিনের সর্বাধিক ব্যবহৃত মডেল অনুযায়ী রঙিন।",
+      "calls": "কল",
+      "noCalls": "কোনো কল নেই",
+      "other": "অন্যান্য মডেল",
+      "less": "কম",
+      "more": "বেশি",
+      "yearTotal": "গত এক বছরে {{formatted}} কল"
+    }
   },
   "systemPage": {
     "eyebrow": "প্রশাসন",
@@ -1912,5 +1996,23 @@
       "video": "ভিডিও",
       "audio": "অডিও"
     }
+  },
+  "whatsNew": {
+    "title": "নতুন কী আছে",
+    "releaseNotes": "রিলিজ নোট",
+    "cta": "ঠিক আছে, চলুন"
+  },
+  "notes": {
+    "title": "নোট",
+    "new": "নতুন নোট",
+    "untitled": "শিরোনামহীন",
+    "empty": "এখনও কোনো নোট নেই",
+    "selectOrCreate": "একটি নোট নির্বাচন করুন বা নতুন তৈরি করুন",
+    "contentPlaceholder": "মার্কডাউনে লিখুন…",
+    "saved": "সংরক্ষিত",
+    "saveFailed": "নোট সংরক্ষণ করা যায়নি",
+    "createFailed": "নোট তৈরি করা যায়নি",
+    "deleteConfirm": "এই নোটটি মুছবেন?",
+    "deleteFailed": "নোট মুছে ফেলা যায়নি"
   }
 }

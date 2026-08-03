@@ -380,7 +380,8 @@ export function registerWebSocketServer(server: Server): void {
                     ? agentCliService.executeAgentStreamRequest(
                         agentProviderId,
                         pluginMessages,
-                        userId
+                        userId,
+                        { model: actualModelName }
                       )
                     : pluginService.executePluginStreamRequest(
                         actualModelName,
@@ -542,6 +543,7 @@ export function registerWebSocketServer(server: Server): void {
             request: chatRequest,
             streamSource: ollamaService,
             messageId: assistantMessageId,
+            userId,
           });
 
           assistantContent = ollamaStream.content;

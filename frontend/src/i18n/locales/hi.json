@@ -188,6 +188,7 @@
       "evening": "शुभ संध्या",
       "night": "शुभ रात्रि"
     },
+    "followUp": "आगे पूछें",
     "welcome": {
       "helpToday": "आज मैं किसमें मदद कर सकता हूँ?",
       "helpTonight": "आज रात मैं किसमें मदद कर सकता हूँ?",
@@ -244,7 +245,21 @@
       "attachImages": "छवियाँ संलग्न करें",
       "attachments": "अटैचमेंट और उन्नत सुविधाएँ",
       "sendMessage": "संदेश भेजें",
-      "stopGeneration": "जनरेशन रोकें"
+      "stopGeneration": "जनरेशन रोकें",
+      "menu": {
+        "uploadImages": "छवियाँ अपलोड करें",
+        "attachDocument": "दस्तावेज़ संलग्न करें",
+        "attachWebpage": "वेबपेज संलग्न करें",
+        "structuredOutput": "संरचित आउटपुट",
+        "attach": "संलग्न करें",
+        "documentAttached": "दस्तावेज़ संलग्न हुआ",
+        "webpageAttached": "वेबपेज संलग्न हुआ",
+        "attachFailed": "संलग्न नहीं हो सका",
+        "attachKnowledge": "ज्ञान संलग्न करें",
+        "noCollections": "अभी कोई संग्रह नहीं — सेटिंग्स → दस्तावेज़ में बनाएँ"
+      },
+      "voiceInput": "वॉयस इनपुट",
+      "voiceStop": "सुनना बंद करें"
     },
     "session": {
       "new": "नई चैट",
@@ -261,7 +276,23 @@
       "chats": "चैट्स",
       "renameChat": "चैट का नाम बदलें",
       "deleteChat": "चैट हटाएं",
-      "incognito": "गुप्त चैट"
+      "incognito": "गुप्त चैट",
+      "archiveChat": "चैट संग्रहीत करें",
+      "groups": {
+        "today": "आज",
+        "yesterday": "कल",
+        "previous7Days": "पिछले 7 दिन",
+        "previous30Days": "पिछले 30 दिन",
+        "older": "पुराने"
+      },
+      "folder": {
+        "new": "नया फ़ोल्डर",
+        "namePlaceholder": "फ़ोल्डर का नाम",
+        "move": "फ़ोल्डर में ले जाएँ",
+        "remove": "फ़ोल्डर से हटाएँ",
+        "delete": "फ़ोल्डर हटाएँ",
+        "deleteConfirm": "यह फ़ोल्डर हटाएँ? अंदर की चैट बनी रहेंगी।"
+      }
     },
     "persona": {
       "applied": "पर्सोना लागू किया गया",
@@ -307,6 +338,25 @@
       "applySchema": "स्कीमा लागू करें",
       "cancel": "रद्द करें",
       "enabled": "संरचित आउटपुट सक्षम"
+    },
+    "controls": {
+      "title": "चैट नियंत्रण",
+      "systemPrompt": "सिस्टम प्रॉम्प्ट",
+      "systemPromptPlaceholder": "निर्देश जो केवल इस चैट पर लागू हों…",
+      "advancedParams": "उन्नत पैरामीटर",
+      "advancedParamsDescription": "इस चैट के लिए ओवरराइड। खाली फ़ील्ड वैश्विक डिफ़ॉल्ट उपयोग करते हैं।",
+      "saved": "नियंत्रण सहेजे गए",
+      "saveFailed": "नियंत्रण सहेजे नहीं जा सके",
+      "params": {
+        "temperature": "तापमान",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "अधिकतम टोकन",
+        "repeatPenalty": "दोहराव दंड",
+        "seed": "सीड",
+        "contextLength": "संदर्भ लंबाई"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "काम",
       "exploreLabel": "एक्सप्लोर",
       "usageAnalytics": "प्रदाता उपयोग",
-      "system": "सिस्टम"
+      "system": "सिस्टम",
+      "notes": "नोट्स"
     },
     "toggleSize": "साइडबार का आकार बदलें",
     "expandSidebar": "साइडबार विस्तारित करें"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "चैट इंटरफ़ेस",
         "showUsername": "उपयोगकर्ता नाम दिखाएं",
-        "showUsernameDescription": "चैट संदेशों में उपयोगकर्ता नाम प्रदर्शित करें"
+        "showUsernameDescription": "चैट संदेशों में उपयोगकर्ता नाम प्रदर्शित करें",
+        "followUpSuggestions": "फ़ॉलो-अप सुझाव",
+        "followUpSuggestionsDescription": "हर उत्तर के बाद त्वरित जवाब सुझाएँ"
       },
       "background": {
         "title": "पृष्ठभूमि छवि",
@@ -596,6 +649,14 @@
         "coverage": "कवरेज",
         "regenerate": "एम्बेडिंग पुनर्जनित करें",
         "regenerating": "पुनर्जनित हो रहा है..."
+      },
+      "collections": {
+        "title": "ज्ञान संग्रह",
+        "description": "दस्तावेज़ों को संग्रहों में समूहित करें और किसी भी चैट से जोड़ें।",
+        "namePlaceholder": "संग्रह का नाम",
+        "create": "बनाएँ",
+        "none": "कोई संग्रह नहीं",
+        "deleteConfirm": "यह संग्रह हटाएँ? अंदर के दस्तावेज़ बने रहेंगे।"
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "आयातित",
       "skipped": "छोड़ा गया",
       "documents": "दस्तावेज़",
-      "errors": "त्रुटियाँ"
+      "errors": "त्रुटियाँ",
+      "archivedChats": {
+        "title": "संग्रहीत चैट",
+        "empty": "कोई संग्रहीत चैट नहीं",
+        "unarchive": "संग्रह से निकालें"
+      }
     },
     "about": {
       "title": "परिचय",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "सिस्टम संदेश संपादित करें",
     "saveChanges": "परिवर्तन सहेजें",
     "cancelEditing": "संपादन रद्द करें",
+    "saveAndSubmit": "सहेजें और भेजें",
+    "goodResponse": "अच्छा जवाब",
+    "badResponse": "खराब जवाब",
     "delete": "हटाएं",
     "deleteConfirm": "इस संदेश को हटाएं?",
     "branch": "शाखा",
@@ -1192,6 +1261,8 @@
     "showMore": "और दिखाएं",
     "showLess": "कम दिखाएं",
     "thinking": "सोच रहा है",
+    "thoughtFor": "{{duration}} तक सोचा",
+    "hiddenLines": "छिपी पंक्तियाँ: {{count}}",
     "systemMessagePlaceholder": "अपना सिस्टम संदेश दर्ज करें...",
     "fullSizeImage": "पूर्ण आकार छवि",
     "startConversation": "बातचीत शुरू करें",
@@ -1295,7 +1366,10 @@
     "open": "खोलें",
     "dragEdgeToResize": "आकार बदलने के लिए किनारा खींचें",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "संस्करण {{current}} / {{total}}",
+    "previousVersion": "पिछला संस्करण",
+    "nextVersion": "अगला संस्करण"
   },
   "personaImportExport": {
     "title": "पर्सोना आयात और निर्यात",
@@ -1790,7 +1864,17 @@
       "title": "अभी तक कोई प्रदाता कॉल नहीं",
       "description": "सक्षम प्लगइन द्वारा चैट, वर्क, एम्बेडिंग, छवि, भाषण, ध्वनि या वीडियो अनुरोधों को संभालने के बाद कॉल यहां दिखाई देंगे।"
     },
-    "privacyNote": "उपयोग को आउटबाउंड प्लगइन सीमा पर सर्वर पर मापा जाता है। Libre WebUI प्रदाता, मॉडल, समय, स्थिति और रिपोर्ट किए गए काउंटरों को संग्रहीत करता है—कभी भी प्रॉम्प्ट, प्रतिक्रिया, एंडपॉइंट, क्रेडेंशियल या प्रदाता त्रुटि निकाय नहीं। टोकन कुल में केवल वे कॉल शामिल होते हैं जहां प्रदाता ने उपयोग मेटाडेटा लौटाया।"
+    "privacyNote": "उपयोग को आउटबाउंड प्लगइन सीमा पर सर्वर पर मापा जाता है। Libre WebUI प्रदाता, मॉडल, समय, स्थिति और रिपोर्ट किए गए काउंटरों को संग्रहीत करता है—कभी भी प्रॉम्प्ट, प्रतिक्रिया, एंडपॉइंट, क्रेडेंशियल या प्रदाता त्रुटि निकाय नहीं। टोकन कुल में केवल वे कॉल शामिल होते हैं जहां प्रदाता ने उपयोग मेटाडेटा लौटाया।",
+    "heatmap": {
+      "title": "एक साल की गतिविधि",
+      "description": "पिछले वर्ष की दैनिक प्रोवाइडर कॉल, हर दिन के सबसे अधिक उपयोग किए गए मॉडल के अनुसार रंगीन।",
+      "calls": "कॉल",
+      "noCalls": "कोई कॉल नहीं",
+      "other": "अन्य मॉडल",
+      "less": "कम",
+      "more": "अधिक",
+      "yearTotal": "पिछले वर्ष में {{formatted}} कॉल"
+    }
   },
   "systemPage": {
     "eyebrow": "प्रशासन",
@@ -1912,5 +1996,23 @@
       "video": "वीडियो",
       "audio": "ऑडियो"
     }
+  },
+  "whatsNew": {
+    "title": "नया क्या है",
+    "releaseNotes": "रिलीज़ नोट्स",
+    "cta": "ठीक है, चलिए"
+  },
+  "notes": {
+    "title": "नोट्स",
+    "new": "नया नोट",
+    "untitled": "बिना शीर्षक",
+    "empty": "अभी कोई नोट नहीं",
+    "selectOrCreate": "कोई नोट चुनें या नया बनाएँ",
+    "contentPlaceholder": "मार्कडाउन में लिखें…",
+    "saved": "सहेजा गया",
+    "saveFailed": "नोट सहेजा नहीं जा सका",
+    "createFailed": "नोट बनाया नहीं जा सका",
+    "deleteConfirm": "यह नोट हटाएँ?",
+    "deleteFailed": "नोट हटाया नहीं जा सका"
   }
 }

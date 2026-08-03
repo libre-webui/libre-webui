@@ -157,9 +157,75 @@ test('chat detects multi-file HTML artifacts and renders them in the slide-out p
 
   const iframe = panel.locator('iframe[title="Mini Canvas Game"]').first();
   await expect(iframe).toHaveAttribute('sandbox', /allow-scripts/);
+  await expect(iframe).not.toHaveAttribute('sandbox', /allow-same-origin/);
+  await expect(iframe).not.toHaveAttribute(
+    'sandbox',
+    /allow-popups-to-escape-sandbox/
+  );
   await expect(iframe).toHaveAttribute('sandbox', /allow-pointer-lock/);
   await expect(iframe).toHaveAttribute('allow', /clipboard-write/);
   await expect(iframe).toHaveAttribute('allow', /fullscreen/);
+
+  const canReadParentDocument = await frame.locator('body').evaluate(() => {
+    try {
+      return Boolean(parent.document.body);
+    } catch {
+      return false;
+    }
+  });
+  expect(canReadParentDocument).toBe(false);
+});
+
+test('SVG artifacts stay isolated from the authenticated parent document', async ({
+  page,
+}) => {
+  const now = Date.now();
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      {
+        id: 'hostile-svg-session',
+        title: 'Hostile SVG',
+        model: 'llama3.2:3b',
+        createdAt: now,
+        updatedAt: now,
+        messages: [
+          {
+            id: 'assistant-svg',
+            role: 'assistant',
+            content: '',
+            timestamp: now,
+            artifacts: [
+              {
+                id: 'hostile-svg-artifact',
+                type: 'svg',
+                title: 'Isolated SVG',
+                content:
+                  '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" onload="parent.document.documentElement.dataset.svgEscaped=\'true\'"><rect width="100" height="100" fill="red"/></svg>',
+                createdAt: now,
+                updatedAt: now,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
+  await page.goto('/c/hostile-svg-session');
+
+  const inlinePreview = page
+    .getByTestId('artifact-svg-preview')
+    .filter({ visible: true })
+    .first();
+  await expect(inlinePreview).toHaveAttribute('sandbox', '');
+  await expect(page.locator('html')).not.toHaveAttribute('data-svg-escaped');
+
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+  const panelPreview = page
+    .getByTestId('artifact-slide-out-panel')
+    .getByTestId('artifact-svg-preview');
+  await expect(panelPreview).toHaveAttribute('sandbox', '');
+  await expect(page.locator('html')).not.toHaveAttribute('data-svg-escaped');
 });
 
 test('chat detects filename-qualified HTML bundles and removes local file references', async ({

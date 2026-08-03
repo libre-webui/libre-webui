@@ -10,16 +10,18 @@ image: /img/social/12.png
 
 # Authentication & Security
 
-Libre WebUI uses local user accounts with JWT sessions. A fresh install guides the first user through account creation, and that first user becomes the administrator.
+Libre WebUI uses local user accounts with JWT sessions. A fresh installation
+always permits one local administrator bootstrap. Public registration for every
+later local or OAuth account is closed by default.
 
 ## First-Time Setup
 
 When the database has no users:
 
 1. Libre WebUI shows the first-time setup flow.
-2. The user creates the first account.
+2. The user creates the first local account.
 3. The account is assigned the `admin` role.
-4. The user is logged in and can manage the instance.
+4. Every later public registration stays closed unless explicitly enabled.
 
 Existing databases keep their current users and roles.
 
@@ -28,7 +30,8 @@ Existing databases keep their current users and roles.
 Local signup requires:
 
 - Username
-- Password with at least 6 characters
+- Password between 12 characters and 72 UTF-8 bytes, with uppercase,
+  lowercase, and a number
 - Optional email
 
 Passwords are hashed with bcrypt before storage. Login and signup routes are rate-limited.
@@ -74,23 +77,24 @@ Existing accounts are unaffected by an upgrade: only accounts created through
 public registration after the feature shipped start as pending. Accounts
 created by an administrator from user management are active immediately.
 
-### Disable public registration
+### Enable public registration deliberately
 
-Set the backend environment variable below to close public registration:
+Registration defaults to disabled. Set the backend environment variable below
+only while new local or OAuth accounts should be accepted:
 
 ```env
-ENABLE_SIGNUP=false
+ENABLE_SIGNUP=true
 ```
 
+Return it to `false` after any planned registration window.
 Existing local and OAuth users can still sign in, and administrators can still
-create accounts from user management. New local signups and new accounts from
-OAuth providers are blocked. Libre WebUI also removes the signup link from the
-login page.
+create accounts from user management while public registration is closed.
 
-Registration stays closed on an empty database. For a new private deployment,
-first place the hostname behind an identity allowlist such as Cloudflare
-Access, temporarily set `ENABLE_SIGNUP=true`, create the initial administrator,
-then set it back to `false` and recreate the application container.
+An empty database always permits one local administrator, even when
+`ENABLE_SIGNUP=false`; OAuth cannot claim that bootstrap slot. For a private
+remote deployment, place the hostname behind an identity allowlist such as
+Cloudflare Access before starting the application, then create the initial
+administrator through that protected route.
 
 ## Roles
 
@@ -173,6 +177,12 @@ HUGGINGFACE_CALLBACK_URL=https://your-domain.example/api/auth/oauth/huggingface/
 ```
 
 The Hugging Face OAuth flow creates local users with `hf_`-prefixed usernames and assigns the `user` role by default.
+
+Both OAuth providers use a cryptographically random `state` value bound to a
+short-lived HttpOnly, SameSite cookie. The callback rejects missing or mismatched
+state. After a successful callback, the JWT crosses back to the frontend in a
+60-second HttpOnly cookie that is exchanged and cleared immediately; bearer
+tokens are never placed in callback URLs, browser history, or referrer headers.
 
 ## Redirects and CORS
 

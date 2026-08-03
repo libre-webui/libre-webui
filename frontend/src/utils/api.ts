@@ -21,6 +21,7 @@ export type { AgentCliModel } from './api/agentCliApi';
 export { authApi, usersApi } from './api/authApi';
 export { chatApi } from './api/chatApi';
 export { documentsApi, embeddingApi } from './api/documentsApi';
+export { notesApi } from './api/notesApi';
 export { huggingfaceHubApi } from './api/huggingfaceHubApi';
 export type { GgufFileInfo, HuggingFaceModel } from './api/huggingfaceHubApi';
 export {

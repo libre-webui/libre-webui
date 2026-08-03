@@ -188,6 +188,7 @@
       "evening": "Goedenavond",
       "night": "Goedenacht"
     },
+    "followUp": "Vervolg",
     "welcome": {
       "helpToday": "Waarmee kan ik u vandaag helpen?",
       "helpTonight": "Waarmee kan ik u vanavond helpen?",
@@ -244,7 +245,21 @@
       "attachImages": "Afbeeldingen toevoegen",
       "attachments": "Bijlagen en geavanceerde functies",
       "sendMessage": "Bericht versturen",
-      "stopGeneration": "Generatie stoppen"
+      "stopGeneration": "Generatie stoppen",
+      "menu": {
+        "uploadImages": "Afbeeldingen uploaden",
+        "attachDocument": "Document bijvoegen",
+        "attachWebpage": "Webpagina bijvoegen",
+        "structuredOutput": "Gestructureerde uitvoer",
+        "attach": "Bijvoegen",
+        "documentAttached": "Document bijgevoegd",
+        "webpageAttached": "Webpagina bijgevoegd",
+        "attachFailed": "Bijvoegen mislukt",
+        "attachKnowledge": "Kennis bijvoegen",
+        "noCollections": "Nog geen collecties — maak er een in Instellingen → Documenten"
+      },
+      "voiceInput": "Spraakinvoer",
+      "voiceStop": "Stoppen met luisteren"
     },
     "session": {
       "new": "Nieuwe chat",
@@ -261,7 +276,23 @@
       "chats": "Chats",
       "renameChat": "Chat hernoemen",
       "deleteChat": "Chat verwijderen",
-      "incognito": "Incognito chat"
+      "incognito": "Incognito chat",
+      "archiveChat": "Chat archiveren",
+      "groups": {
+        "today": "Vandaag",
+        "yesterday": "Gisteren",
+        "previous7Days": "Afgelopen 7 dagen",
+        "previous30Days": "Afgelopen 30 dagen",
+        "older": "Ouder"
+      },
+      "folder": {
+        "new": "Nieuwe map",
+        "namePlaceholder": "Mapnaam",
+        "move": "Verplaatsen naar map",
+        "remove": "Uit map verwijderen",
+        "delete": "Map verwijderen",
+        "deleteConfirm": "Deze map verwijderen? De chats erin blijven bewaard."
+      }
     },
     "persona": {
       "applied": "Persona toegepast",
@@ -307,6 +338,25 @@
       "applySchema": "Schema toepassen",
       "cancel": "Annuleren",
       "enabled": "Gestructureerde uitvoer ingeschakeld"
+    },
+    "controls": {
+      "title": "Chatbediening",
+      "systemPrompt": "Systeemprompt",
+      "systemPromptPlaceholder": "Instructies die alleen voor deze chat gelden…",
+      "advancedParams": "Geavanceerde parameters",
+      "advancedParamsDescription": "Overschrijvingen voor deze chat. Lege velden gebruiken je globale standaarden.",
+      "saved": "Chatbediening opgeslagen",
+      "saveFailed": "Kon chatbediening niet opslaan",
+      "params": {
+        "temperature": "Temperatuur",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Max. tokens",
+        "repeatPenalty": "Herhalingsstraf",
+        "seed": "Seed",
+        "contextLength": "Contextlengte"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Werk",
       "exploreLabel": "Verkennen",
       "usageAnalytics": "Providergebruik",
-      "system": "Systeem"
+      "system": "Systeem",
+      "notes": "Notities"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
     "expandSidebar": "Zijbalk uitvouwen"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Chat-interface",
         "showUsername": "Gebruikersnaam tonen",
-        "showUsernameDescription": "Gebruikersnaam weergeven in chatberichten"
+        "showUsernameDescription": "Gebruikersnaam weergeven in chatberichten",
+        "followUpSuggestions": "Vervolgsuggesties",
+        "followUpSuggestionsDescription": "Stel snelle antwoorden voor na elke reactie"
       },
       "background": {
         "title": "Achtergrondafbeelding",
@@ -596,6 +649,14 @@
         "coverage": "Dekking",
         "regenerate": "Embeddings opnieuw genereren",
         "regenerating": "Opnieuw genereren..."
+      },
+      "collections": {
+        "title": "Kenniscollecties",
+        "description": "Groepeer documenten in collecties en voeg ze toe aan elke chat.",
+        "namePlaceholder": "Naam van collectie",
+        "create": "Aanmaken",
+        "none": "Geen collectie",
+        "deleteConfirm": "Deze collectie verwijderen? De documenten erin blijven bewaard."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "geïmporteerd",
       "skipped": "overgeslagen",
       "documents": "Documenten",
-      "errors": "Fouten"
+      "errors": "Fouten",
+      "archivedChats": {
+        "title": "Gearchiveerde chats",
+        "empty": "Geen gearchiveerde chats",
+        "unarchive": "Herstellen"
+      }
     },
     "about": {
       "title": "Over",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Systeembericht bewerken",
     "saveChanges": "Wijzigingen opslaan",
     "cancelEditing": "Bewerken annuleren",
+    "saveAndSubmit": "Opslaan & versturen",
+    "goodResponse": "Goed antwoord",
+    "badResponse": "Slecht antwoord",
     "delete": "Verwijderen",
     "deleteConfirm": "Dit bericht verwijderen?",
     "branch": "Vertakking",
@@ -1192,6 +1261,8 @@
     "showMore": "Meer tonen",
     "showLess": "Minder tonen",
     "thinking": "Denkt",
+    "thoughtFor": "Dacht {{duration}} na",
+    "hiddenLines": "{{count}} verborgen regels",
     "systemMessagePlaceholder": "Voer uw systeembericht in...",
     "fullSizeImage": "Afbeelding op volledige grootte",
     "startConversation": "Start een gesprek",
@@ -1295,7 +1366,10 @@
     "open": "Openen",
     "dragEdgeToResize": "Sleep rand om grootte aan te passen",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Versie {{current}} van {{total}}",
+    "previousVersion": "Vorige versie",
+    "nextVersion": "Volgende versie"
   },
   "personaImportExport": {
     "title": "Personas importeren & exporteren",
@@ -1790,7 +1864,17 @@
       "title": "Nog geen provider-aanroepen",
       "description": "Aanroepen verschijnen hier nadat een ingeschakelde plug-in chat-, Work-, embedding-, afbeeldings-, spraak-, geluids- of videoverzoeken afhandelt."
     },
-    "privacyNote": "Gebruik wordt op de server gemeten op de grens van de uitgaande plug-in. Libre WebUI slaat provider, model, timing, status en gerapporteerde tellers op—nooit prompts, antwoorden, endpoints, inloggegevens of foutmeldingen van de provider. Token totalen bevatten alleen aanroepen waarbij de provider gebruiks-metadata retourneerde."
+    "privacyNote": "Gebruik wordt op de server gemeten op de grens van de uitgaande plug-in. Libre WebUI slaat provider, model, timing, status en gerapporteerde tellers op—nooit prompts, antwoorden, endpoints, inloggegevens of foutmeldingen van de provider. Token totalen bevatten alleen aanroepen waarbij de provider gebruiks-metadata retourneerde.",
+    "heatmap": {
+      "title": "Een jaar activiteit",
+      "description": "Dagelijkse provideraanroepen van het afgelopen jaar, gekleurd naar het meestgebruikte model van de dag.",
+      "calls": "aanroepen",
+      "noCalls": "Geen aanroepen",
+      "other": "Overige modellen",
+      "less": "Minder",
+      "more": "Meer",
+      "yearTotal": "{{formatted}} aanroepen in het afgelopen jaar"
+    }
   },
   "systemPage": {
     "eyebrow": "Beheer",
@@ -1912,5 +1996,23 @@
       "video": "Video's",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Wat is nieuw",
+    "releaseNotes": "Release-opmerkingen",
+    "cta": "Oké, aan de slag"
+  },
+  "notes": {
+    "title": "Notities",
+    "new": "Nieuwe notitie",
+    "untitled": "Zonder titel",
+    "empty": "Nog geen notities",
+    "selectOrCreate": "Selecteer een notitie of maak een nieuwe",
+    "contentPlaceholder": "Schrijf in Markdown…",
+    "saved": "Opgeslagen",
+    "saveFailed": "Kon de notitie niet opslaan",
+    "createFailed": "Kon geen notitie maken",
+    "deleteConfirm": "Deze notitie verwijderen?",
+    "deleteFailed": "Kon de notitie niet verwijderen"
   }
 }

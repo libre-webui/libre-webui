@@ -21,11 +21,9 @@
     "noFallthroughCasesInSwitch": true,
 
     /* Path mapping */
-    "ignoreDeprecations": "6.0",
     "types": ["node"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"],

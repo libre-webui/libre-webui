@@ -28,6 +28,9 @@ import {
   getErrorMessage,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
+import pluginUsageService, {
+  type PluginUsageStatus,
+} from './pluginUsageService.js';
 
 const logger = createLogger('ollama');
 
@@ -446,10 +449,41 @@ class OllamaService {
   }
 
   // Chat completion methods
+  /** Meter a chat call into the usage analytics shown on the Usage page. */
+  private recordChatUsage(
+    model: string,
+    status: PluginUsageStatus,
+    startedAt: number,
+    userId?: string,
+    response?: OllamaChatResponse
+  ): void {
+    const promptTokens = response?.prompt_eval_count;
+    const completionTokens = response?.eval_count;
+    pluginUsageService.record({
+      userId,
+      pluginId: 'ollama',
+      pluginName: 'Ollama',
+      capability: 'chat',
+      model,
+      status,
+      durationMs: Date.now() - startedAt,
+      tokens:
+        promptTokens !== undefined || completionTokens !== undefined
+          ? {
+              promptTokens: promptTokens ?? 0,
+              completionTokens: completionTokens ?? 0,
+              totalTokens: (promptTokens ?? 0) + (completionTokens ?? 0),
+            }
+          : undefined,
+    });
+  }
+
   async generateChatResponse(
     request: OllamaChatRequest,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    usage?: { userId?: string }
   ): Promise<OllamaChatResponse> {
+    const startedAt = Date.now();
     try {
       // Use long operation client for chat generation as it may need to load model on first use
       const response = await this.longOperationClient.post(
@@ -461,8 +495,21 @@ class OllamaService {
         },
         { signal }
       );
+      this.recordChatUsage(
+        request.model,
+        'success',
+        startedAt,
+        usage?.userId,
+        response.data
+      );
       return response.data;
     } catch (error: unknown) {
+      this.recordChatUsage(
+        request.model,
+        signal?.aborted ? 'cancelled' : 'error',
+        startedAt,
+        usage?.userId
+      );
       logger.error('Failed to generate chat response:', error);
       throw new Error(
         getErrorMessage(error, 'Failed to generate chat response')
@@ -475,8 +522,25 @@ class OllamaService {
     onChunk: (chunk: OllamaChatResponse) => void,
     onError: (error: Error) => void,
     onComplete: () => void,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    usage?: { userId?: string }
   ): Promise<void> {
+    const startedAt = Date.now();
+    let usageRecorded = false;
+    const recordOnce = (
+      status: PluginUsageStatus,
+      finalChunk?: OllamaChatResponse
+    ) => {
+      if (usageRecorded) return;
+      usageRecorded = true;
+      this.recordChatUsage(
+        request.model,
+        status,
+        startedAt,
+        usage?.userId,
+        finalChunk
+      );
+    };
     try {
       // Use long operation client for chat streaming as it may need to load model on first use
       const response = await this.longOperationClient.post(
@@ -505,6 +569,7 @@ class OllamaService {
               const data = JSON.parse(line);
               onChunk(data);
               if (data.done) {
+                recordOnce('success', data);
                 onComplete();
                 return;
               }
@@ -516,13 +581,17 @@ class OllamaService {
       });
 
       response.data.on('error', (error: Error) => {
+        recordOnce(signal?.aborted ? 'cancelled' : 'error');
         onError(error);
       });
 
       response.data.on('end', () => {
+        // A stream that ends without a done chunk was cut short.
+        recordOnce(signal?.aborted ? 'cancelled' : 'success');
         onComplete();
       });
     } catch (error: unknown) {
+      recordOnce(signal?.aborted ? 'cancelled' : 'error');
       logger.error('Failed to generate chat stream response:', error);
       onError(
         new Error(

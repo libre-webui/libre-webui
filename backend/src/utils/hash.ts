@@ -66,10 +66,23 @@ export function validatePasswordStrength(password: string): {
   isValid: boolean;
   errors: string[];
 } {
+  if (typeof password !== 'string') {
+    return {
+      isValid: false,
+      errors: ['Password must be a string'],
+    };
+  }
+
   const errors: string[] = [];
 
-  if (password.length < 6) {
-    errors.push('Password must be at least 6 characters long');
+  if (password.length < 12) {
+    errors.push('Password must be at least 12 characters long');
+  }
+
+  // bcrypt compares only the first 72 UTF-8 bytes. Reject longer values so
+  // users never receive a false impression that the ignored suffix is secret.
+  if (Buffer.byteLength(password, 'utf8') > 72) {
+    errors.push('Password must be no more than 72 UTF-8 bytes');
   }
 
   if (!/[A-Z]/.test(password)) {

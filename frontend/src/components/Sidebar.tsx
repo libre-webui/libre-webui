@@ -64,6 +64,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     sessions,
     deleteSession,
     updateSessionTitle,
+    setSessionArchived,
+    folders,
+    loadFolders,
+    createFolder,
+    renameFolder,
+    deleteFolder,
+    moveSessionToFolder,
     selectedModel,
     models,
     currentSession,
@@ -253,6 +260,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  useEffect(() => {
+    void loadFolders();
+  }, [loadFolders]);
+
+  const handleArchiveSession = async (
+    sessionId: string,
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation();
+    await setSessionArchived(sessionId, true);
+    useTabStore.getState().closeTab(`chat:${sessionId}`);
+    if (currentSessionId === sessionId) {
+      const remainingSessions = sessions.filter(
+        s => s.id !== sessionId && !s.archived
+      );
+      if (remainingSessions.length > 0) {
+        navigate(`/c/${remainingSessions[0].id}`, { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    }
+  };
+
   const handleStartEditing = (session: ChatSession, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingSessionId(session.id);
@@ -369,7 +399,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
           ) : (
             <SidebarSessions
-              sessions={sessions}
+              sessions={sessions.filter(session => !session.archived)}
               personas={personas}
               currentSessionId={currentSessionId}
               generatingTitleForSession={generatingTitleForSession}
@@ -382,6 +412,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onSaveEdit={handleSaveEdit}
               onCancelEdit={handleCancelEdit}
               onDeleteSession={handleDeleteSession}
+              onArchiveSession={handleArchiveSession}
+              folders={folders}
+              onCreateFolder={name => void createFolder(name)}
+              onRenameFolder={(folderId, name) =>
+                void renameFolder(folderId, name)
+              }
+              onDeleteFolder={folderId => void deleteFolder(folderId)}
+              onMoveSession={(sessionId, folderId) =>
+                void moveSessionToFolder(sessionId, folderId)
+              }
             />
           )}
 

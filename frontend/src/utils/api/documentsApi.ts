@@ -21,6 +21,7 @@ import type {
   DocumentDetail,
   DocumentSummary,
   EmbeddingModel,
+  KnowledgeCollection,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 import { api, createDemoResponse } from './client';
@@ -50,6 +51,46 @@ export const documentsApi = {
     }
 
     return api.post('/documents/upload', formData).then(res => res.data);
+  },
+
+  // Knowledge collections
+  getCollections: (): Promise<ApiResponse<KnowledgeCollection[]>> => {
+    if (isDemoMode()) return createDemoResponse([]);
+    return api.get('/documents/collections').then(res => res.data);
+  },
+
+  createCollection: (name: string): Promise<ApiResponse<KnowledgeCollection>> =>
+    api.post('/documents/collections', { name }).then(res => res.data),
+
+  deleteCollection: (collectionId: string): Promise<ApiResponse> =>
+    api.delete(`/documents/collections/${collectionId}`).then(res => res.data),
+
+  setDocumentCollection: (
+    documentId: string,
+    collectionId: string | null
+  ): Promise<ApiResponse> =>
+    api
+      .put(`/documents/${documentId}/collection`, { collectionId })
+      .then(res => res.data),
+
+  fetchWebpage: (
+    url: string,
+    sessionId?: string
+  ): Promise<ApiResponse<DocumentSummary>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        id: 'demo-doc-' + Date.now(),
+        filename: 'demo-webpage.txt',
+        fileType: 'txt' as const,
+        size: 0,
+        sessionId,
+        uploadedAt: Date.now(),
+      });
+    }
+
+    return api
+      .post('/documents/fetch-url', { url, sessionId })
+      .then(res => res.data);
   },
 
   getDocuments: (

@@ -442,7 +442,11 @@ router.post(
   '/chat',
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const data = await ollamaService.generateChatResponse(req.body);
+      const data = await ollamaService.generateChatResponse(
+        req.body,
+        undefined,
+        { userId: (req as AuthenticatedRequest).user?.userId }
+      );
       res.json({ success: true, data });
     } catch (error: unknown) {
       res.status(500).json({
@@ -474,7 +478,9 @@ router.post(
         () => {
           res.write('data: [DONE]\n\n');
           res.end();
-        }
+        },
+        undefined,
+        { userId: (req as AuthenticatedRequest).user?.userId }
       );
     } catch (error: unknown) {
       res.status(500).json({

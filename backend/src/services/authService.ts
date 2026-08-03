@@ -27,6 +27,7 @@ import {
   isPublicRegistrationEnabled,
 } from './registrationPolicy.js';
 import { createLogger } from '../utils/logger.js';
+import { validatePasswordStrength } from '../utils/hash.js';
 
 const logger = createLogger('services:auth-service');
 
@@ -194,6 +195,11 @@ export class AuthService {
         return null;
       }
 
+      if (!validatePasswordStrength(password).isValid) {
+        logger.warn('Blocked account creation because the password is weak');
+        return null;
+      }
+
       const userData = {
         username,
         password,
@@ -202,7 +208,10 @@ export class AuthService {
 
       // Bootstrap must remain possible. The model atomically makes the first
       // real user active/admin and holds every later registration for review.
-      const user = await userModel.createPublicUser(userData);
+      const user = await userModel.createPublicUser(
+        userData,
+        this.isPublicRegistrationEnabled()
+      );
       if (!user) return null;
 
       if (user.status === 'pending') {

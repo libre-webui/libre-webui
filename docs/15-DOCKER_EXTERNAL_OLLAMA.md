@@ -13,15 +13,12 @@ Use this setup when Ollama already runs on your host, another server, or a Tails
 
 ## Work Availability
 
-This Compose setup changes where Ollama runs; Work is unaffected and stays
-enabled. Like every repository Compose file, it mounts `/var/run/docker.sock`,
-so the backend creates Work task containers on the host daemon while Ollama runs
-wherever `OLLAMA_BASE_URL` points.
-
-That socket grants root-equivalent control of the Docker host, so keep the stack
-on a host whose administrators you already trust, and remove the mount if you do
-not want Work. On Linux, set `DOCKER_GID` in `.env` to the group owning the
-socket. See [Work: Isolated Workspaces](./WORKSPACES).
+This Compose setup changes where Ollama runs; Work remains enabled through the
+mounted host Docker socket. It grants Libre WebUI root-equivalent control of the
+Docker host, so use it only where Libre WebUI administrators are also trusted
+host administrators. On Linux, set `DOCKER_GID` in `.env` to the group owning
+the socket. Remove the mount if Work is not wanted. See
+[Work: Isolated Workspaces](./WORKSPACES).
 
 ## Prerequisites
 

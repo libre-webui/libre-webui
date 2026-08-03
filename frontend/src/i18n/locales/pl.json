@@ -188,6 +188,7 @@
       "evening": "Dobry wieczór",
       "night": "Dobranoc"
     },
+    "followUp": "Kontynuacja",
     "welcome": {
       "helpToday": "W czym mogę dziś pomóc?",
       "helpTonight": "W czym mogę dziś wieczorem pomóc?",
@@ -244,7 +245,21 @@
       "attachImages": "Załącz obrazy",
       "attachments": "Załączniki i zaawansowane funkcje",
       "sendMessage": "Wyślij wiadomość",
-      "stopGeneration": "Zatrzymaj generowanie"
+      "stopGeneration": "Zatrzymaj generowanie",
+      "menu": {
+        "uploadImages": "Prześlij obrazy",
+        "attachDocument": "Załącz dokument",
+        "attachWebpage": "Załącz stronę internetową",
+        "structuredOutput": "Ustrukturyzowane wyjście",
+        "attach": "Załącz",
+        "documentAttached": "Dokument załączony",
+        "webpageAttached": "Strona załączona",
+        "attachFailed": "Nie udało się załączyć",
+        "attachKnowledge": "Dołącz wiedzę",
+        "noCollections": "Brak kolekcji — utwórz ją w Ustawienia → Dokumenty"
+      },
+      "voiceInput": "Wprowadzanie głosowe",
+      "voiceStop": "Przestań słuchać"
     },
     "session": {
       "new": "Nowy czat",
@@ -261,7 +276,23 @@
       "chats": "Czaty",
       "renameChat": "Zmień nazwę czatu",
       "deleteChat": "Usuń czat",
-      "incognito": "Czat incognito"
+      "incognito": "Czat incognito",
+      "archiveChat": "Archiwizuj czat",
+      "groups": {
+        "today": "Dzisiaj",
+        "yesterday": "Wczoraj",
+        "previous7Days": "Ostatnie 7 dni",
+        "previous30Days": "Ostatnie 30 dni",
+        "older": "Starsze"
+      },
+      "folder": {
+        "new": "Nowy folder",
+        "namePlaceholder": "Nazwa folderu",
+        "move": "Przenieś do folderu",
+        "remove": "Usuń z folderu",
+        "delete": "Usuń folder",
+        "deleteConfirm": "Usunąć ten folder? Czaty w nim pozostaną."
+      }
     },
     "persona": {
       "applied": "Persona zastosowana",
@@ -307,6 +338,25 @@
       "applySchema": "Zastosuj schemat",
       "cancel": "Anuluj",
       "enabled": "Strukturalne wyjście włączone"
+    },
+    "controls": {
+      "title": "Ustawienia czatu",
+      "systemPrompt": "Prompt systemowy",
+      "systemPromptPlaceholder": "Instrukcje obowiązujące tylko w tym czacie…",
+      "advancedParams": "Parametry zaawansowane",
+      "advancedParamsDescription": "Nadpisania dla tego czatu. Puste pola używają globalnych domyślnych.",
+      "saved": "Ustawienia zapisane",
+      "saveFailed": "Nie udało się zapisać ustawień",
+      "params": {
+        "temperature": "Temperatura",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Maks. tokenów",
+        "repeatPenalty": "Kara za powtórzenia",
+        "seed": "Ziarno",
+        "contextLength": "Długość kontekstu"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Praca",
       "exploreLabel": "Odkrywaj",
       "usageAnalytics": "Użycie dostawców",
-      "system": "System"
+      "system": "System",
+      "notes": "Notatki"
     },
     "toggleSize": "Zmień rozmiar panelu bocznego",
     "expandSidebar": "Rozwiń panel boczny"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Interfejs czatu",
         "showUsername": "Pokaż nazwę użytkownika",
-        "showUsernameDescription": "Wyświetlaj nazwę użytkownika w wiadomościach czatu"
+        "showUsernameDescription": "Wyświetlaj nazwę użytkownika w wiadomościach czatu",
+        "followUpSuggestions": "Propozycje kontynuacji",
+        "followUpSuggestionsDescription": "Proponuj szybkie odpowiedzi po każdej odpowiedzi"
       },
       "background": {
         "title": "Obraz tła",
@@ -596,6 +649,14 @@
         "coverage": "Pokrycie",
         "regenerate": "Regeneruj embeddingi",
         "regenerating": "Regenerowanie..."
+      },
+      "collections": {
+        "title": "Kolekcje wiedzy",
+        "description": "Grupuj dokumenty w kolekcje i dołączaj je do dowolnego czatu.",
+        "namePlaceholder": "Nazwa kolekcji",
+        "create": "Utwórz",
+        "none": "Brak kolekcji",
+        "deleteConfirm": "Usunąć tę kolekcję? Dokumenty w niej pozostaną."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "zaimportowano",
       "skipped": "pominięto",
       "documents": "Dokumenty",
-      "errors": "Błędy"
+      "errors": "Błędy",
+      "archivedChats": {
+        "title": "Zarchiwizowane czaty",
+        "empty": "Brak zarchiwizowanych czatów",
+        "unarchive": "Przywróć"
+      }
     },
     "about": {
       "title": "O programie",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Edytuj wiadomość systemową",
     "saveChanges": "Zapisz zmiany",
     "cancelEditing": "Anuluj edycję",
+    "saveAndSubmit": "Zapisz i wyślij",
+    "goodResponse": "Dobra odpowiedź",
+    "badResponse": "Zła odpowiedź",
     "delete": "Usuń",
     "deleteConfirm": "Usunąć tę wiadomość?",
     "branch": "Gałąź",
@@ -1192,6 +1261,8 @@
     "showMore": "Pokaż więcej",
     "showLess": "Pokaż mniej",
     "thinking": "Myślenie",
+    "thoughtFor": "Myślał przez {{duration}}",
+    "hiddenLines": "Ukryte wiersze: {{count}}",
     "systemMessagePlaceholder": "Wprowadź wiadomość systemową...",
     "fullSizeImage": "Pełnowymiarowy obraz",
     "startConversation": "Rozpocznij rozmowę",
@@ -1295,7 +1366,10 @@
     "open": "Otwórz",
     "dragEdgeToResize": "Przeciągnij krawędź, aby zmienić rozmiar",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Wersja {{current}} z {{total}}",
+    "previousVersion": "Poprzednia wersja",
+    "nextVersion": "Następna wersja"
   },
   "personaImportExport": {
     "title": "Import i eksport person",
@@ -1790,7 +1864,17 @@
       "title": "Brak wywołań dostawcy",
       "description": "Wywołania pojawią się tutaj po obsłużeniu żądań czatu, Work, osadzania, obrazu, mowy, dźwięku lub wideo przez włączoną wtyczkę."
     },
-    "privacyNote": "Zużycie jest mierzone na serwerze na granicy wtyczki wychodzącej. Libre WebUI przechowuje dostawcę, model, czas, status i zgłoszone liczniki — nigdy prompty, odpowiedzi, endpointy, dane uwierzytelniające ani treści błędów dostawcy. Sumy tokenów obejmują tylko wywołania, w których dostawca zwrócił metadane użycia."
+    "privacyNote": "Zużycie jest mierzone na serwerze na granicy wtyczki wychodzącej. Libre WebUI przechowuje dostawcę, model, czas, status i zgłoszone liczniki — nigdy prompty, odpowiedzi, endpointy, dane uwierzytelniające ani treści błędów dostawcy. Sumy tokenów obejmują tylko wywołania, w których dostawca zwrócił metadane użycia.",
+    "heatmap": {
+      "title": "Rok aktywności",
+      "description": "Dzienne wywołania dostawców z ostatniego roku, pokolorowane według najczęściej używanego modelu danego dnia.",
+      "calls": "wywołań",
+      "noCalls": "Brak wywołań",
+      "other": "Inne modele",
+      "less": "Mniej",
+      "more": "Więcej",
+      "yearTotal": "{{formatted}} wywołań w ostatnim roku"
+    }
   },
   "systemPage": {
     "eyebrow": "Administracja",
@@ -1912,5 +1996,23 @@
       "video": "Wideo",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Co nowego",
+    "releaseNotes": "Informacje o wydaniu",
+    "cta": "OK, zaczynamy"
+  },
+  "notes": {
+    "title": "Notatki",
+    "new": "Nowa notatka",
+    "untitled": "Bez tytułu",
+    "empty": "Brak notatek",
+    "selectOrCreate": "Wybierz notatkę lub utwórz nową",
+    "contentPlaceholder": "Pisz w Markdownie…",
+    "saved": "Zapisano",
+    "saveFailed": "Nie udało się zapisać notatki",
+    "createFailed": "Nie udało się utworzyć notatki",
+    "deleteConfirm": "Usunąć tę notatkę?",
+    "deleteFailed": "Nie udało się usunąć notatki"
   }
 }

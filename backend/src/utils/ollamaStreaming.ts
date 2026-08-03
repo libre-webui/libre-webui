@@ -21,6 +21,7 @@ import type {
   OllamaChatResponse,
 } from '../types/index.js';
 import { extractStatistics } from './generationUtils.js';
+import { ThinkingPhaseTimer } from './thinkingPhaseTimer.js';
 import {
   sendAssistantChunk,
   sendError,
@@ -32,7 +33,9 @@ export interface OllamaChatStreamGenerator {
     request: OllamaChatRequest,
     onChunk: (chunk: OllamaChatResponse) => void,
     onError: (error: Error) => void,
-    onComplete: () => void
+    onComplete: () => void,
+    signal?: AbortSignal,
+    usage?: { userId?: string }
   ): Promise<void>;
 }
 
@@ -41,6 +44,8 @@ export interface StreamOllamaChatResponseOptions {
   request: OllamaChatRequest;
   streamSource: OllamaChatStreamGenerator;
   messageId?: string;
+  /** Attributes the metered usage of this call to a user. */
+  userId?: string;
 }
 
 export interface StreamOllamaChatResponseResult {
@@ -55,11 +60,13 @@ export async function streamOllamaChatResponse({
   request,
   streamSource,
   messageId,
+  userId,
 }: StreamOllamaChatResponseOptions): Promise<StreamOllamaChatResponseResult> {
   return new Promise(resolve => {
     let content = '';
     let statistics: GenerationStatistics | undefined;
     let resolved = false;
+    const thinkingTimer = new ThinkingPhaseTimer();
 
     const finish = (
       result: Omit<StreamOllamaChatResponseResult, 'content'>
@@ -83,6 +90,7 @@ export async function streamOllamaChatResponse({
 
       if (chunk.message?.content) {
         content += chunk.message.content;
+        thinkingTimer.observe(content);
         sendAssistantChunk(ws, {
           content: chunk.message.content,
           total: content,
@@ -93,6 +101,13 @@ export async function streamOllamaChatResponse({
 
       if (chunk.done) {
         statistics = extractStatistics(chunk);
+        const thinkingDurationMs = thinkingTimer.durationMs;
+        if (thinkingDurationMs !== undefined) {
+          statistics = {
+            ...statistics,
+            thinking_duration_ms: thinkingDurationMs,
+          };
+        }
         finish({ completed: true });
       }
     };
@@ -107,8 +122,13 @@ export async function streamOllamaChatResponse({
     };
 
     streamSource
-      .generateChatStreamResponse(request, handleChunk, handleError, () =>
-        finish({ completed: true })
+      .generateChatStreamResponse(
+        request,
+        handleChunk,
+        handleError,
+        () => finish({ completed: true }),
+        undefined,
+        { userId }
       )
       .catch(error => {
         handleError(error instanceof Error ? error : new Error(String(error)));

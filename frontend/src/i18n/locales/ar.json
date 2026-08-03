@@ -188,6 +188,7 @@
       "evening": "مساء الخير",
       "night": "تصبح على خير"
     },
+    "followUp": "متابعة",
     "welcome": {
       "helpToday": "كيف يمكنني مساعدتك اليوم؟",
       "helpTonight": "كيف يمكنني مساعدتك الليلة؟",
@@ -244,7 +245,21 @@
       "attachImages": "إرفاق صور",
       "attachments": "المرفقات والميزات المتقدمة",
       "sendMessage": "إرسال الرسالة",
-      "stopGeneration": "إيقاف التوليد"
+      "stopGeneration": "إيقاف التوليد",
+      "menu": {
+        "uploadImages": "رفع صور",
+        "attachDocument": "إرفاق مستند",
+        "attachWebpage": "إرفاق صفحة ويب",
+        "structuredOutput": "إخراج منظم",
+        "attach": "إرفاق",
+        "documentAttached": "تم إرفاق المستند",
+        "webpageAttached": "تم إرفاق صفحة الويب",
+        "attachFailed": "تعذر الإرفاق",
+        "attachKnowledge": "إرفاق معرفة",
+        "noCollections": "لا توجد مجموعات بعد — أنشئ واحدة في الإعدادات ← المستندات"
+      },
+      "voiceInput": "إدخال صوتي",
+      "voiceStop": "إيقاف الاستماع"
     },
     "session": {
       "new": "محادثة جديدة",
@@ -261,7 +276,23 @@
       "chats": "المحادثات",
       "renameChat": "إعادة تسمية المحادثة",
       "deleteChat": "حذف المحادثة",
-      "incognito": "دردشة مخفية"
+      "incognito": "دردشة مخفية",
+      "archiveChat": "أرشفة المحادثة",
+      "groups": {
+        "today": "اليوم",
+        "yesterday": "أمس",
+        "previous7Days": "آخر 7 أيام",
+        "previous30Days": "آخر 30 يومًا",
+        "older": "أقدم"
+      },
+      "folder": {
+        "new": "مجلد جديد",
+        "namePlaceholder": "اسم المجلد",
+        "move": "نقل إلى مجلد",
+        "remove": "إزالة من المجلد",
+        "delete": "حذف المجلد",
+        "deleteConfirm": "حذف هذا المجلد؟ ستبقى المحادثات بداخله."
+      }
     },
     "persona": {
       "applied": "تم تطبيق الشخصية",
@@ -307,6 +338,25 @@
       "applySchema": "تطبيق المخطط",
       "cancel": "إلغاء",
       "enabled": "تم تفعيل المخرجات المنظمة"
+    },
+    "controls": {
+      "title": "عناصر تحكم المحادثة",
+      "systemPrompt": "موجه النظام",
+      "systemPromptPlaceholder": "تعليمات تنطبق على هذه المحادثة فقط…",
+      "advancedParams": "معلمات متقدمة",
+      "advancedParamsDescription": "تجاوزات لهذه المحادثة. الحقول الفارغة تستخدم الإعدادات العامة.",
+      "saved": "تم حفظ عناصر التحكم",
+      "saveFailed": "تعذر حفظ عناصر التحكم",
+      "params": {
+        "temperature": "درجة الحرارة",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "أقصى عدد رموز",
+        "repeatPenalty": "عقوبة التكرار",
+        "seed": "البذرة",
+        "contextLength": "طول السياق"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "agents": "الوكلاء",
       "exploreLabel": "استكشاف",
       "usageAnalytics": "استخدام المزود",
-      "system": "النظام"
+      "system": "النظام",
+      "notes": "الملاحظات"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
     "expandSidebar": "توسيع الشريط الجانبي"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "واجهة المحادثة",
         "showUsername": "إظهار اسم المستخدم",
-        "showUsernameDescription": "عرض اسم المستخدم في رسائل المحادثة"
+        "showUsernameDescription": "عرض اسم المستخدم في رسائل المحادثة",
+        "followUpSuggestions": "اقتراحات المتابعة",
+        "followUpSuggestionsDescription": "اقتراح ردود سريعة بعد كل استجابة"
       },
       "background": {
         "title": "صورة الخلفية",
@@ -596,6 +649,14 @@
         "coverage": "التغطية",
         "regenerate": "إعادة توليد التضمينات",
         "regenerating": "جاري إعادة التوليد..."
+      },
+      "collections": {
+        "title": "مجموعات المعرفة",
+        "description": "اجمع المستندات في مجموعات وأرفقها بأي محادثة.",
+        "namePlaceholder": "اسم المجموعة",
+        "create": "إنشاء",
+        "none": "بدون مجموعة",
+        "deleteConfirm": "حذف هذه المجموعة؟ ستبقى المستندات بداخلها."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "تم الاستيراد",
       "skipped": "تم التخطي",
       "documents": "المستندات",
-      "errors": "أخطاء"
+      "errors": "أخطاء",
+      "archivedChats": {
+        "title": "المحادثات المؤرشفة",
+        "empty": "لا توجد محادثات مؤرشفة",
+        "unarchive": "إلغاء الأرشفة"
+      }
     },
     "about": {
       "title": "حول",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "تعديل رسالة النظام",
     "saveChanges": "حفظ التغييرات",
     "cancelEditing": "إلغاء التعديل",
+    "saveAndSubmit": "حفظ وإرسال",
+    "goodResponse": "رد جيد",
+    "badResponse": "رد سيئ",
     "delete": "حذف",
     "deleteConfirm": "حذف هذه الرسالة؟",
     "branch": "تفرع",
@@ -1192,6 +1261,8 @@
     "showMore": "عرض المزيد",
     "showLess": "عرض أقل",
     "thinking": "يفكر",
+    "thoughtFor": "فكّر لمدة {{duration}}",
+    "hiddenLines": "الأسطر المخفية: {{count}}",
     "systemMessagePlaceholder": "أدخل رسالة النظام...",
     "fullSizeImage": "صورة بالحجم الكامل",
     "startConversation": "ابدأ محادثة",
@@ -1295,7 +1366,10 @@
     "open": "فتح",
     "dragEdgeToResize": "اسحب الحافة لتغيير الحجم",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "الإصدار {{current}} من {{total}}",
+    "previousVersion": "الإصدار السابق",
+    "nextVersion": "الإصدار التالي"
   },
   "personaImportExport": {
     "title": "استيراد وتصدير الشخصيات",
@@ -1790,7 +1864,17 @@
       "title": "لا توجد مكالمات مزود بعد",
       "description": "ستظهر المكالمات هنا بعد أن تعالج إضافة ممكّنة طلبات الدردشة، أو العمل، أو التضمين، أو الصورة، أو الكلام، أو الصوت، أو الفيديو."
     },
-    "privacyNote": "يتم قياس الاستخدام على الخادم عند حدود الإضافة الصادرة. يخزن Libre WebUI المزود، والنموذج، والتوقيت، والحالة، والعدادات المُبلغ عنها — وليس المطالبات، أو الاستجابات، أو نقاط النهاية، أو بيانات الاعتماد، أو هيئات أخطاء المزود. تشمل إجماليات الرموز فقط المكالمات التي أعاد فيها المزود بيانات الاستخدام الوصفية."
+    "privacyNote": "يتم قياس الاستخدام على الخادم عند حدود الإضافة الصادرة. يخزن Libre WebUI المزود، والنموذج، والتوقيت، والحالة، والعدادات المُبلغ عنها — وليس المطالبات، أو الاستجابات، أو نقاط النهاية، أو بيانات الاعتماد، أو هيئات أخطاء المزود. تشمل إجماليات الرموز فقط المكالمات التي أعاد فيها المزود بيانات الاستخدام الوصفية.",
+    "heatmap": {
+      "title": "عام من النشاط",
+      "description": "استدعاءات المزوّد اليومية خلال العام الماضي، ملوّنة حسب النموذج الأكثر استخدامًا في كل يوم.",
+      "calls": "استدعاءات",
+      "noCalls": "لا استدعاءات",
+      "other": "نماذج أخرى",
+      "less": "أقل",
+      "more": "أكثر",
+      "yearTotal": "{{formatted}} استدعاءً خلال العام الماضي"
+    }
   },
   "systemPage": {
     "eyebrow": "الإدارة",
@@ -1912,5 +1996,23 @@
       "video": "مقاطع الفيديو",
       "audio": "الصوت"
     }
+  },
+  "whatsNew": {
+    "title": "ما الجديد",
+    "releaseNotes": "ملاحظات الإصدار",
+    "cta": "حسنًا، هيا بنا"
+  },
+  "notes": {
+    "title": "الملاحظات",
+    "new": "ملاحظة جديدة",
+    "untitled": "بدون عنوان",
+    "empty": "لا توجد ملاحظات بعد",
+    "selectOrCreate": "اختر ملاحظة أو أنشئ واحدة جديدة",
+    "contentPlaceholder": "اكتب بصيغة ماركداون…",
+    "saved": "تم الحفظ",
+    "saveFailed": "تعذر حفظ الملاحظة",
+    "createFailed": "تعذر إنشاء ملاحظة",
+    "deleteConfirm": "حذف هذه الملاحظة؟",
+    "deleteFailed": "تعذر حذف الملاحظة"
   }
 }

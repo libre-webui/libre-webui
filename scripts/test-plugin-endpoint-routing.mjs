@@ -62,6 +62,11 @@ const pluginServiceModule = await import(
   pathToFileURL(path.join(distRoot, 'services', 'pluginService.js')).href
 );
 const { default: pluginService, PluginService } = pluginServiceModule;
+const codexOAuthService = (
+  await import(
+    pathToFileURL(path.join(distRoot, 'services', 'codexOAuthService.js')).href
+  )
+).default;
 const pluginVariablesService = (
   await import(
     pathToFileURL(path.join(distRoot, 'services', 'pluginVariablesService.js'))
@@ -281,6 +286,34 @@ test('every bundled manifest exactly matches the compiled trust anchor', () => {
       `${plugin.id} changed without updating its compiled trust anchor`
     );
   }
+});
+
+test('Codex OAuth tokens stay bound to the trusted bundled definition', async () => {
+  const service = new PluginService();
+  const admin = upsertTestUser('codex-oauth-routing-admin', 'admin');
+  const bundledDefinition = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'plugins', 'codex-oauth.json'), 'utf8')
+  );
+  const attackerDefinition = {
+    ...bundledDefinition,
+    endpoint: 'https://attacker.example.test/v1/responses',
+  };
+
+  await withPatchedProperties(
+    codexOAuthService,
+    { getCachedAccessToken: () => 'server-user-oauth-token' },
+    async () => {
+      assert.equal(
+        service.getApiKey(bundledDefinition, admin.id),
+        'server-user-oauth-token'
+      );
+      assert.equal(service.getApiKey(attackerDefinition, admin.id), null);
+      assert.throws(
+        () => service.installPlugin(attackerDefinition, admin.id),
+        /Codex OAuth plugin ID is reserved/
+      );
+    }
+  );
 });
 
 test('non-admin runtime retains manifest routing defaults while ignoring stored overrides', () => {
@@ -1239,8 +1272,7 @@ test('custom endpoint resolution is full-URL based and fails closed', () => {
 
 test('Chat and Work requests use a valid custom endpoint instead of the bundled endpoint', async () => {
   const plugin = createPlugin();
-  const customEndpoint =
-    'http://ai-gateway:8080/openai/v1/chat/completions';
+  const customEndpoint = 'http://ai-gateway:8080/openai/v1/chat/completions';
   const requests = [];
 
   await withPatchedProperties(
@@ -2522,8 +2554,7 @@ test('model discovery uses the user endpoint and credentials without default fal
       key_env: 'OPENAI_API_KEY',
     },
   });
-  const customEndpoint =
-    'http://ai-gateway:8080/openai/v1/chat/completions';
+  const customEndpoint = 'http://ai-gateway:8080/openai/v1/chat/completions';
   const customModelsEndpoint =
     'http://model-catalog:8080/provider/models?channel=preview';
   const requests = [];
@@ -2852,8 +2883,7 @@ test('embedding and TTS HTTP requests reject redirects before a credential-beari
   const plugin = createPlugin({ id: 'capability-redirect-provider' });
   plugin.capabilities.embedding.endpoint =
     'http://ai-gateway:8080/v1/embeddings';
-  plugin.capabilities.tts.endpoint =
-    'http://ai-gateway:8080/v1/audio/speech';
+  plugin.capabilities.tts.endpoint = 'http://ai-gateway:8080/v1/audio/speech';
   const requests = [];
 
   await withPatchedProperties(

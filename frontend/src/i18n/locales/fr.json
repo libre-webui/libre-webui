@@ -188,6 +188,7 @@
       "evening": "Bonsoir",
       "night": "Bonne nuit"
     },
+    "followUp": "Poursuivre",
     "welcome": {
       "helpToday": "Comment puis-je vous aider aujourd'hui ?",
       "helpTonight": "Comment puis-je vous aider ce soir ?",
@@ -244,7 +245,21 @@
       "attachImages": "Joindre des images",
       "attachments": "Pièces jointes et fonctionnalités avancées",
       "sendMessage": "Envoyer le message",
-      "stopGeneration": "Arrêter la génération"
+      "stopGeneration": "Arrêter la génération",
+      "menu": {
+        "uploadImages": "Téléverser des images",
+        "attachDocument": "Joindre un document",
+        "attachWebpage": "Joindre une page web",
+        "structuredOutput": "Sortie structurée",
+        "attach": "Joindre",
+        "documentAttached": "Document joint",
+        "webpageAttached": "Page web jointe",
+        "attachFailed": "Impossible de joindre",
+        "attachKnowledge": "Joindre des connaissances",
+        "noCollections": "Aucune collection — créez-en une dans Paramètres → Documents"
+      },
+      "voiceInput": "Saisie vocale",
+      "voiceStop": "Arrêter l'écoute"
     },
     "session": {
       "new": "Nouvelle conversation",
@@ -261,7 +276,23 @@
       "chats": "Conversations",
       "renameChat": "Renommer la conversation",
       "deleteChat": "Supprimer la conversation",
-      "incognito": "Chat incognito"
+      "incognito": "Chat incognito",
+      "archiveChat": "Archiver la discussion",
+      "groups": {
+        "today": "Aujourd'hui",
+        "yesterday": "Hier",
+        "previous7Days": "7 derniers jours",
+        "previous30Days": "30 derniers jours",
+        "older": "Plus ancien"
+      },
+      "folder": {
+        "new": "Nouveau dossier",
+        "namePlaceholder": "Nom du dossier",
+        "move": "Déplacer vers un dossier",
+        "remove": "Retirer du dossier",
+        "delete": "Supprimer le dossier",
+        "deleteConfirm": "Supprimer ce dossier ? Les discussions sont conservées."
+      }
     },
     "persona": {
       "applied": "Persona appliqué",
@@ -307,6 +338,25 @@
       "applySchema": "Appliquer le schéma",
       "cancel": "Annuler",
       "enabled": "Sortie structurée activée"
+    },
+    "controls": {
+      "title": "Contrôles de la discussion",
+      "systemPrompt": "Prompt système",
+      "systemPromptPlaceholder": "Instructions valables uniquement pour cette discussion…",
+      "advancedParams": "Paramètres avancés",
+      "advancedParamsDescription": "Remplacements pour cette discussion. Les champs vides utilisent vos valeurs globales.",
+      "saved": "Contrôles enregistrés",
+      "saveFailed": "Impossible d'enregistrer les contrôles",
+      "params": {
+        "temperature": "Température",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Tokens max",
+        "repeatPenalty": "Pénalité de répétition",
+        "seed": "Graine",
+        "contextLength": "Longueur de contexte"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "signOut": "Déconnexion",
       "exploreLabel": "Explorer",
       "usageAnalytics": "Utilisation des fournisseurs",
-      "system": "Système"
+      "system": "Système",
+      "notes": "Notes"
     },
     "toggleSize": "Basculer la taille de la barre latérale",
     "expandSidebar": "Agrandir la barre latérale"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Interface de chat",
         "showUsername": "Afficher le nom d'utilisateur",
-        "showUsernameDescription": "Afficher le nom d'utilisateur dans les messages"
+        "showUsernameDescription": "Afficher le nom d'utilisateur dans les messages",
+        "followUpSuggestions": "Suggestions de suivi",
+        "followUpSuggestionsDescription": "Proposer des réponses rapides après chaque réponse"
       },
       "background": {
         "title": "Image d'arrière-plan",
@@ -596,6 +649,14 @@
         "coverage": "Couverture",
         "regenerate": "Régénérer les embeddings",
         "regenerating": "Régénération..."
+      },
+      "collections": {
+        "title": "Collections de connaissances",
+        "description": "Regroupez des documents en collections et joignez-les à toute discussion.",
+        "namePlaceholder": "Nom de la collection",
+        "create": "Créer",
+        "none": "Aucune collection",
+        "deleteConfirm": "Supprimer cette collection ? Les documents sont conservés."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "importées",
       "skipped": "ignorées",
       "documents": "Documents",
-      "errors": "Erreurs"
+      "errors": "Erreurs",
+      "archivedChats": {
+        "title": "Discussions archivées",
+        "empty": "Aucune discussion archivée",
+        "unarchive": "Désarchiver"
+      }
     },
     "about": {
       "title": "À propos",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Modifier le message système",
     "saveChanges": "Enregistrer les modifications",
     "cancelEditing": "Annuler la modification",
+    "saveAndSubmit": "Enregistrer et envoyer",
+    "goodResponse": "Bonne réponse",
+    "badResponse": "Mauvaise réponse",
     "delete": "Supprimer",
     "deleteConfirm": "Supprimer ce message ?",
     "branch": "Branche",
@@ -1192,6 +1261,8 @@
     "showMore": "Voir plus",
     "showLess": "Voir moins",
     "thinking": "Réflexion",
+    "thoughtFor": "A réfléchi pendant {{duration}}",
+    "hiddenLines": "{{count}} lignes masquées",
     "systemMessagePlaceholder": "Entrez votre message système...",
     "fullSizeImage": "Image en taille réelle",
     "startConversation": "Démarrer une conversation",
@@ -1295,7 +1366,10 @@
     "open": "Ouvrir",
     "dragEdgeToResize": "Faites glisser le bord pour redimensionner",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Version {{current}} sur {{total}}",
+    "previousVersion": "Version précédente",
+    "nextVersion": "Version suivante"
   },
   "personaImportExport": {
     "title": "Importer et exporter des personas",
@@ -1790,7 +1864,17 @@
       "title": "Aucun appel fournisseur pour le moment",
       "description": "Les appels apparaîtront ici une fois qu'un plugin activé aura traité des requêtes de chat, Work, d'embedding, d'image, de parole, de son ou de vidéo."
     },
-    "privacyNote": "L'utilisation est mesurée sur le serveur à la limite du plugin sortant. Libre WebUI stocke le fournisseur, le modèle, le minutage, le statut et les compteurs signalés — jamais les prompts, les réponses, les points de terminaison, les identifiants ou les corps d'erreur du fournisseur. Les totaux de jetons incluent uniquement les appels où le fournisseur a renvoyé des métadonnées d'utilisation."
+    "privacyNote": "L'utilisation est mesurée sur le serveur à la limite du plugin sortant. Libre WebUI stocke le fournisseur, le modèle, le minutage, le statut et les compteurs signalés — jamais les prompts, les réponses, les points de terminaison, les identifiants ou les corps d'erreur du fournisseur. Les totaux de jetons incluent uniquement les appels où le fournisseur a renvoyé des métadonnées d'utilisation.",
+    "heatmap": {
+      "title": "Une année d'activité",
+      "description": "Appels quotidiens aux fournisseurs sur l'année écoulée, colorés selon le modèle le plus utilisé chaque jour.",
+      "calls": "appels",
+      "noCalls": "Aucun appel",
+      "other": "Autres modèles",
+      "less": "Moins",
+      "more": "Plus",
+      "yearTotal": "{{formatted}} appels sur la dernière année"
+    }
   },
   "systemPage": {
     "eyebrow": "Administration",
@@ -1912,5 +1996,23 @@
       "video": "Vidéos",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Nouveautés",
+    "releaseNotes": "Notes de version",
+    "cta": "C'est parti"
+  },
+  "notes": {
+    "title": "Notes",
+    "new": "Nouvelle note",
+    "untitled": "Sans titre",
+    "empty": "Aucune note pour le moment",
+    "selectOrCreate": "Sélectionnez une note ou créez-en une",
+    "contentPlaceholder": "Écrivez en Markdown…",
+    "saved": "Enregistré",
+    "saveFailed": "Impossible d'enregistrer la note",
+    "createFailed": "Impossible de créer une note",
+    "deleteConfirm": "Supprimer cette note ?",
+    "deleteFailed": "Impossible de supprimer la note"
   }
 }

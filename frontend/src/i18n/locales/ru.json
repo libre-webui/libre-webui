@@ -188,6 +188,7 @@
       "evening": "Добрый вечер",
       "night": "Доброй ночи"
     },
+    "followUp": "Продолжить",
     "welcome": {
       "helpToday": "Чем могу помочь сегодня?",
       "helpTonight": "Чем могу помочь сегодня вечером?",
@@ -244,7 +245,21 @@
       "attachImages": "Прикрепить изображения",
       "attachments": "Вложения и дополнительные функции",
       "sendMessage": "Отправить сообщение",
-      "stopGeneration": "Остановить генерацию"
+      "stopGeneration": "Остановить генерацию",
+      "menu": {
+        "uploadImages": "Загрузить изображения",
+        "attachDocument": "Прикрепить документ",
+        "attachWebpage": "Прикрепить веб-страницу",
+        "structuredOutput": "Структурированный вывод",
+        "attach": "Прикрепить",
+        "documentAttached": "Документ прикреплён",
+        "webpageAttached": "Веб-страница прикреплена",
+        "attachFailed": "Не удалось прикрепить",
+        "attachKnowledge": "Прикрепить знания",
+        "noCollections": "Коллекций пока нет — создайте в Настройках → Документы"
+      },
+      "voiceInput": "Голосовой ввод",
+      "voiceStop": "Остановить прослушивание"
     },
     "session": {
       "new": "Новый чат",
@@ -261,7 +276,23 @@
       "chats": "Чаты",
       "renameChat": "Переименовать чат",
       "deleteChat": "Удалить чат",
-      "incognito": "Чат в режиме инкогнито"
+      "incognito": "Чат в режиме инкогнито",
+      "archiveChat": "Архивировать чат",
+      "groups": {
+        "today": "Сегодня",
+        "yesterday": "Вчера",
+        "previous7Days": "Последние 7 дней",
+        "previous30Days": "Последние 30 дней",
+        "older": "Старее"
+      },
+      "folder": {
+        "new": "Новая папка",
+        "namePlaceholder": "Название папки",
+        "move": "Переместить в папку",
+        "remove": "Убрать из папки",
+        "delete": "Удалить папку",
+        "deleteConfirm": "Удалить эту папку? Чаты внутри сохранятся."
+      }
     },
     "persona": {
       "applied": "Персона применена",
@@ -307,6 +338,25 @@
       "applySchema": "Применить схему",
       "cancel": "Отмена",
       "enabled": "Структурированный вывод включён"
+    },
+    "controls": {
+      "title": "Настройки чата",
+      "systemPrompt": "Системный промпт",
+      "systemPromptPlaceholder": "Инструкции только для этого чата…",
+      "advancedParams": "Расширенные параметры",
+      "advancedParamsDescription": "Переопределения для этого чата. Пустые поля используют глобальные значения.",
+      "saved": "Настройки сохранены",
+      "saveFailed": "Не удалось сохранить настройки",
+      "params": {
+        "temperature": "Температура",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Макс. токенов",
+        "repeatPenalty": "Штраф за повторы",
+        "seed": "Сид",
+        "contextLength": "Длина контекста"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Работа",
       "exploreLabel": "Обзор",
       "usageAnalytics": "Использование провайдеров",
-      "system": "Система"
+      "system": "Система",
+      "notes": "Заметки"
     },
     "toggleSize": "Переключить размер боковой панели",
     "expandSidebar": "Развернуть боковую панель"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Интерфейс чата",
         "showUsername": "Показывать имя пользователя",
-        "showUsernameDescription": "Отображать имя пользователя в сообщениях чата"
+        "showUsernameDescription": "Отображать имя пользователя в сообщениях чата",
+        "followUpSuggestions": "Подсказки для продолжения",
+        "followUpSuggestionsDescription": "Предлагать быстрые ответы после каждого ответа"
       },
       "background": {
         "title": "Фоновое изображение",
@@ -596,6 +649,14 @@
         "coverage": "Покрытие",
         "regenerate": "Перегенерировать встраивания",
         "regenerating": "Перегенерация..."
+      },
+      "collections": {
+        "title": "Коллекции знаний",
+        "description": "Группируйте документы в коллекции и прикрепляйте их к любому чату.",
+        "namePlaceholder": "Название коллекции",
+        "create": "Создать",
+        "none": "Без коллекции",
+        "deleteConfirm": "Удалить эту коллекцию? Документы внутри сохранятся."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "импортировано",
       "skipped": "пропущено",
       "documents": "Документы",
-      "errors": "Ошибки"
+      "errors": "Ошибки",
+      "archivedChats": {
+        "title": "Архивированные чаты",
+        "empty": "Нет архивированных чатов",
+        "unarchive": "Восстановить"
+      }
     },
     "about": {
       "title": "О программе",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Редактировать системное сообщение",
     "saveChanges": "Сохранить изменения",
     "cancelEditing": "Отменить редактирование",
+    "saveAndSubmit": "Сохранить и отправить",
+    "goodResponse": "Хороший ответ",
+    "badResponse": "Плохой ответ",
     "delete": "Удалить",
     "deleteConfirm": "Удалить это сообщение?",
     "branch": "Ветка",
@@ -1192,6 +1261,8 @@
     "showMore": "Показать больше",
     "showLess": "Показать меньше",
     "thinking": "Думает",
+    "thoughtFor": "Думал {{duration}}",
+    "hiddenLines": "Скрыто строк: {{count}}",
     "systemMessagePlaceholder": "Введите ваше системное сообщение...",
     "fullSizeImage": "Изображение в полном размере",
     "startConversation": "Начать разговор",
@@ -1295,7 +1366,10 @@
     "open": "Открыть",
     "dragEdgeToResize": "Перетащите край для изменения размера",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Версия {{current}} из {{total}}",
+    "previousVersion": "Предыдущая версия",
+    "nextVersion": "Следующая версия"
   },
   "personaImportExport": {
     "title": "Импорт и экспорт персон",
@@ -1790,7 +1864,17 @@
       "title": "Вызовов провайдеров пока нет",
       "description": "Вызовы появятся здесь после того, как включенный плагин обработает запросы чата, Work, встраивания, изображения, речи, звука или видео."
     },
-    "privacyNote": "Использование измеряется на сервере на границе исходящего плагина. Libre WebUI хранит провайдера, модель, время, статус и сообщенные счетчики — никогда не подсказки, ответы, конечные точки, учетные данные или тела ошибок провайдера. Итоги токенов включают только вызовы, где провайдер вернул метаданные использования."
+    "privacyNote": "Использование измеряется на сервере на границе исходящего плагина. Libre WebUI хранит провайдера, модель, время, статус и сообщенные счетчики — никогда не подсказки, ответы, конечные точки, учетные данные или тела ошибок провайдера. Итоги токенов включают только вызовы, где провайдер вернул метаданные использования.",
+    "heatmap": {
+      "title": "Год активности",
+      "description": "Ежедневные вызовы провайдеров за последний год, окрашенные по самой используемой модели каждого дня.",
+      "calls": "вызовов",
+      "noCalls": "Нет вызовов",
+      "other": "Другие модели",
+      "less": "Меньше",
+      "more": "Больше",
+      "yearTotal": "{{formatted}} вызовов за последний год"
+    }
   },
   "systemPage": {
     "eyebrow": "Администрирование",
@@ -1912,5 +1996,23 @@
       "video": "Видео",
       "audio": "Аудио"
     }
+  },
+  "whatsNew": {
+    "title": "Что нового",
+    "releaseNotes": "Примечания к выпуску",
+    "cta": "Хорошо, поехали"
+  },
+  "notes": {
+    "title": "Заметки",
+    "new": "Новая заметка",
+    "untitled": "Без названия",
+    "empty": "Заметок пока нет",
+    "selectOrCreate": "Выберите заметку или создайте новую",
+    "contentPlaceholder": "Пишите в Markdown…",
+    "saved": "Сохранено",
+    "saveFailed": "Не удалось сохранить заметку",
+    "createFailed": "Не удалось создать заметку",
+    "deleteConfirm": "Удалить эту заметку?",
+    "deleteFailed": "Не удалось удалить заметку"
   }
 }

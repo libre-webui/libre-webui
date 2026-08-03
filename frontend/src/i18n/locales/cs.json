@@ -188,6 +188,7 @@
       "evening": "Dobrý večer",
       "night": "Dobrou noc"
     },
+    "followUp": "Navázat",
     "welcome": {
       "helpToday": "S čím vám mohu dnes pomoci?",
       "helpTonight": "S čím vám mohu dnes večer pomoci?",
@@ -244,7 +245,21 @@
       "attachImages": "Připojit obrázky",
       "attachments": "Přílohy a pokročilé funkce",
       "sendMessage": "Odeslat zprávu",
-      "stopGeneration": "Zastavit generování"
+      "stopGeneration": "Zastavit generování",
+      "menu": {
+        "uploadImages": "Nahrát obrázky",
+        "attachDocument": "Přiložit dokument",
+        "attachWebpage": "Přiložit webovou stránku",
+        "structuredOutput": "Strukturovaný výstup",
+        "attach": "Přiložit",
+        "documentAttached": "Dokument přiložen",
+        "webpageAttached": "Webová stránka přiložena",
+        "attachFailed": "Přiložení se nezdařilo",
+        "attachKnowledge": "Připojit znalosti",
+        "noCollections": "Zatím žádné kolekce — vytvořte ji v Nastavení → Dokumenty"
+      },
+      "voiceInput": "Hlasový vstup",
+      "voiceStop": "Zastavit poslech"
     },
     "session": {
       "new": "Nový chat",
@@ -261,7 +276,23 @@
       "chats": "Chaty",
       "renameChat": "Přejmenovat chat",
       "deleteChat": "Smazat chat",
-      "incognito": "Anonymní chat"
+      "incognito": "Anonymní chat",
+      "archiveChat": "Archivovat chat",
+      "groups": {
+        "today": "Dnes",
+        "yesterday": "Včera",
+        "previous7Days": "Posledních 7 dní",
+        "previous30Days": "Posledních 30 dní",
+        "older": "Starší"
+      },
+      "folder": {
+        "new": "Nová složka",
+        "namePlaceholder": "Název složky",
+        "move": "Přesunout do složky",
+        "remove": "Odebrat ze složky",
+        "delete": "Smazat složku",
+        "deleteConfirm": "Smazat tuto složku? Chaty uvnitř zůstanou."
+      }
     },
     "persona": {
       "applied": "Persona použita",
@@ -307,6 +338,25 @@
       "applySchema": "Použít schéma",
       "cancel": "Zrušit",
       "enabled": "Strukturovaný výstup povolen"
+    },
+    "controls": {
+      "title": "Ovládání chatu",
+      "systemPrompt": "Systémový prompt",
+      "systemPromptPlaceholder": "Pokyny platné jen pro tento chat…",
+      "advancedParams": "Pokročilé parametry",
+      "advancedParamsDescription": "Přepisy pro tento chat. Prázdná pole používají globální výchozí hodnoty.",
+      "saved": "Ovládání uloženo",
+      "saveFailed": "Ovládání se nepodařilo uložit",
+      "params": {
+        "temperature": "Teplota",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Max. tokenů",
+        "repeatPenalty": "Penalizace opakování",
+        "seed": "Seed",
+        "contextLength": "Délka kontextu"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Práce",
       "exploreLabel": "Prozkoumat",
       "usageAnalytics": "Využití poskytovatelů",
-      "system": "Systém"
+      "system": "Systém",
+      "notes": "Poznámky"
     },
     "toggleSize": "Změnit velikost postranního panelu",
     "expandSidebar": "Rozbalit postranní panel"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Rozhraní chatu",
         "showUsername": "Zobrazit uživatelské jméno",
-        "showUsernameDescription": "Zobrazovat uživatelské jméno ve zprávách chatu"
+        "showUsernameDescription": "Zobrazovat uživatelské jméno ve zprávách chatu",
+        "followUpSuggestions": "Návrhy pokračování",
+        "followUpSuggestionsDescription": "Po každé odpovědi navrhnout rychlé reakce"
       },
       "background": {
         "title": "Obrázek pozadí",
@@ -596,6 +649,14 @@
         "coverage": "Pokrytí",
         "regenerate": "Regenerovat embeddingy",
         "regenerating": "Regenerování..."
+      },
+      "collections": {
+        "title": "Kolekce znalostí",
+        "description": "Seskupte dokumenty do kolekcí a připojte je k libovolnému chatu.",
+        "namePlaceholder": "Název kolekce",
+        "create": "Vytvořit",
+        "none": "Bez kolekce",
+        "deleteConfirm": "Smazat tuto kolekci? Dokumenty uvnitř zůstanou."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "importováno",
       "skipped": "přeskočeno",
       "documents": "Dokumenty",
-      "errors": "Chyby"
+      "errors": "Chyby",
+      "archivedChats": {
+        "title": "Archivované chaty",
+        "empty": "Žádné archivované chaty",
+        "unarchive": "Obnovit z archivu"
+      }
     },
     "about": {
       "title": "O aplikaci",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Upravit systémovou zprávu",
     "saveChanges": "Uložit změny",
     "cancelEditing": "Zrušit úpravy",
+    "saveAndSubmit": "Uložit a odeslat",
+    "goodResponse": "Dobrá odpověď",
+    "badResponse": "Špatná odpověď",
     "delete": "Smazat",
     "deleteConfirm": "Smazat tuto zprávu?",
     "branch": "Větev",
@@ -1192,6 +1261,8 @@
     "showMore": "Zobrazit více",
     "showLess": "Zobrazit méně",
     "thinking": "Přemýšlení",
+    "thoughtFor": "Přemýšlel {{duration}}",
+    "hiddenLines": "Skryté řádky: {{count}}",
     "systemMessagePlaceholder": "Zadejte systémovou zprávu...",
     "fullSizeImage": "Plná velikost obrázku",
     "startConversation": "Zahájit konverzaci",
@@ -1295,7 +1366,10 @@
     "open": "Otevřít",
     "dragEdgeToResize": "Přetáhněte okraj pro změnu velikosti",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Verze {{current}} z {{total}}",
+    "previousVersion": "Předchozí verze",
+    "nextVersion": "Další verze"
   },
   "personaImportExport": {
     "title": "Import a export person",
@@ -1790,7 +1864,17 @@
       "title": "Zatím žádná volání poskytovatelů",
       "description": "Volání se zde zobrazí, jakmile povolený zásuvný modul zpracuje požadavky na chat, práci, embedding, obrázek, řeč, zvuk nebo video."
     },
-    "privacyNote": "Využití se měří na serveru na hranici odchozího zásuvného modulu. Libre WebUI ukládá poskytovatele, model, časování, stav a nahlášené čítače — nikdy výzvy, odpovědi, endpointy, přihlašovací údaje ani těla chyb poskytovatele. Součty tokenů zahrnují pouze volání, kde poskytovatel vrátil metadata o využití."
+    "privacyNote": "Využití se měří na serveru na hranici odchozího zásuvného modulu. Libre WebUI ukládá poskytovatele, model, časování, stav a nahlášené čítače — nikdy výzvy, odpovědi, endpointy, přihlašovací údaje ani těla chyb poskytovatele. Součty tokenů zahrnují pouze volání, kde poskytovatel vrátil metadata o využití.",
+    "heatmap": {
+      "title": "Rok aktivity",
+      "description": "Denní volání poskytovatelů za poslední rok, obarvená podle nejpoužívanějšího modelu daného dne.",
+      "calls": "volání",
+      "noCalls": "Žádná volání",
+      "other": "Ostatní modely",
+      "less": "Méně",
+      "more": "Více",
+      "yearTotal": "{{formatted}} volání za poslední rok"
+    }
   },
   "systemPage": {
     "eyebrow": "Správa",
@@ -1912,5 +1996,23 @@
       "video": "Videa",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Co je nového",
+    "releaseNotes": "Poznámky k vydání",
+    "cta": "Dobře, jdeme na to"
+  },
+  "notes": {
+    "title": "Poznámky",
+    "new": "Nová poznámka",
+    "untitled": "Bez názvu",
+    "empty": "Zatím žádné poznámky",
+    "selectOrCreate": "Vyberte poznámku nebo vytvořte novou",
+    "contentPlaceholder": "Pište v Markdownu…",
+    "saved": "Uloženo",
+    "saveFailed": "Poznámku se nepodařilo uložit",
+    "createFailed": "Poznámku se nepodařilo vytvořit",
+    "deleteConfirm": "Smazat tuto poznámku?",
+    "deleteFailed": "Poznámku se nepodařilo smazat"
   }
 }

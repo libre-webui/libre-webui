@@ -188,6 +188,7 @@
       "evening": "Chào buổi tối",
       "night": "Chúc ngủ ngon"
     },
+    "followUp": "Tiếp tục",
     "welcome": {
       "helpToday": "Tôi có thể giúp gì cho bạn hôm nay?",
       "helpTonight": "Tôi có thể giúp gì cho bạn tối nay?",
@@ -244,7 +245,21 @@
       "attachImages": "Đính kèm hình ảnh",
       "attachments": "Tệp đính kèm và tính năng nâng cao",
       "sendMessage": "Gửi tin nhắn",
-      "stopGeneration": "Dừng tạo"
+      "stopGeneration": "Dừng tạo",
+      "menu": {
+        "uploadImages": "Tải ảnh lên",
+        "attachDocument": "Đính kèm tài liệu",
+        "attachWebpage": "Đính kèm trang web",
+        "structuredOutput": "Đầu ra có cấu trúc",
+        "attach": "Đính kèm",
+        "documentAttached": "Đã đính kèm tài liệu",
+        "webpageAttached": "Đã đính kèm trang web",
+        "attachFailed": "Không thể đính kèm",
+        "attachKnowledge": "Đính kèm kiến thức",
+        "noCollections": "Chưa có bộ sưu tập nào — tạo trong Cài đặt → Tài liệu"
+      },
+      "voiceInput": "Nhập bằng giọng nói",
+      "voiceStop": "Dừng nghe"
     },
     "session": {
       "new": "Cuộc trò chuyện mới",
@@ -261,7 +276,23 @@
       "chats": "Cuộc trò chuyện",
       "renameChat": "Đổi tên cuộc trò chuyện",
       "deleteChat": "Xóa cuộc trò chuyện",
-      "incognito": "Trò chuyện ẩn danh"
+      "incognito": "Trò chuyện ẩn danh",
+      "archiveChat": "Lưu trữ cuộc trò chuyện",
+      "groups": {
+        "today": "Hôm nay",
+        "yesterday": "Hôm qua",
+        "previous7Days": "7 ngày qua",
+        "previous30Days": "30 ngày qua",
+        "older": "Cũ hơn"
+      },
+      "folder": {
+        "new": "Thư mục mới",
+        "namePlaceholder": "Tên thư mục",
+        "move": "Chuyển vào thư mục",
+        "remove": "Gỡ khỏi thư mục",
+        "delete": "Xóa thư mục",
+        "deleteConfirm": "Xóa thư mục này? Các cuộc trò chuyện bên trong vẫn giữ nguyên."
+      }
     },
     "persona": {
       "applied": "Đã áp dụng persona",
@@ -307,6 +338,25 @@
       "applySchema": "Áp dụng Schema",
       "cancel": "Hủy",
       "enabled": "Đã bật đầu ra có cấu trúc"
+    },
+    "controls": {
+      "title": "Điều khiển trò chuyện",
+      "systemPrompt": "Prompt hệ thống",
+      "systemPromptPlaceholder": "Hướng dẫn chỉ áp dụng cho cuộc trò chuyện này…",
+      "advancedParams": "Tham số nâng cao",
+      "advancedParamsDescription": "Ghi đè cho cuộc trò chuyện này. Ô trống dùng giá trị mặc định chung.",
+      "saved": "Đã lưu điều khiển",
+      "saveFailed": "Không thể lưu điều khiển",
+      "params": {
+        "temperature": "Nhiệt độ",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Số token tối đa",
+        "repeatPenalty": "Phạt lặp lại",
+        "seed": "Seed",
+        "contextLength": "Độ dài ngữ cảnh"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Công việc",
       "exploreLabel": "Khám phá",
       "usageAnalytics": "Mức sử dụng nhà cung cấp",
-      "system": "Hệ thống"
+      "system": "Hệ thống",
+      "notes": "Ghi chú"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
     "expandSidebar": "Mở rộng thanh bên"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Giao diện trò chuyện",
         "showUsername": "Hiển thị tên người dùng",
-        "showUsernameDescription": "Hiển thị tên người dùng trong tin nhắn trò chuyện"
+        "showUsernameDescription": "Hiển thị tên người dùng trong tin nhắn trò chuyện",
+        "followUpSuggestions": "Gợi ý tiếp theo",
+        "followUpSuggestionsDescription": "Gợi ý câu trả lời nhanh sau mỗi phản hồi"
       },
       "background": {
         "title": "Hình nền",
@@ -596,6 +649,14 @@
         "coverage": "Độ phủ",
         "regenerate": "Tạo lại nhúng",
         "regenerating": "Đang tạo lại..."
+      },
+      "collections": {
+        "title": "Bộ sưu tập kiến thức",
+        "description": "Nhóm tài liệu thành bộ sưu tập và đính kèm vào bất kỳ cuộc trò chuyện nào.",
+        "namePlaceholder": "Tên bộ sưu tập",
+        "create": "Tạo",
+        "none": "Không có bộ sưu tập",
+        "deleteConfirm": "Xóa bộ sưu tập này? Tài liệu bên trong vẫn giữ nguyên."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "đã nhập",
       "skipped": "đã bỏ qua",
       "documents": "Tài liệu",
-      "errors": "Lỗi"
+      "errors": "Lỗi",
+      "archivedChats": {
+        "title": "Cuộc trò chuyện đã lưu trữ",
+        "empty": "Không có cuộc trò chuyện nào được lưu trữ",
+        "unarchive": "Bỏ lưu trữ"
+      }
     },
     "about": {
       "title": "Giới thiệu",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Chỉnh sửa tin nhắn hệ thống",
     "saveChanges": "Lưu thay đổi",
     "cancelEditing": "Hủy chỉnh sửa",
+    "saveAndSubmit": "Lưu & gửi",
+    "goodResponse": "Phản hồi tốt",
+    "badResponse": "Phản hồi kém",
     "delete": "Xóa",
     "deleteConfirm": "Xóa tin nhắn này?",
     "branch": "Nhánh",
@@ -1192,6 +1261,8 @@
     "showMore": "Hiển thị thêm",
     "showLess": "Hiển thị ít hơn",
     "thinking": "Đang suy nghĩ",
+    "thoughtFor": "Đã suy nghĩ trong {{duration}}",
+    "hiddenLines": "{{count}} dòng bị ẩn",
     "systemMessagePlaceholder": "Nhập tin nhắn hệ thống của bạn...",
     "fullSizeImage": "Hình ảnh kích thước đầy đủ",
     "startConversation": "Bắt đầu cuộc trò chuyện",
@@ -1295,7 +1366,10 @@
     "open": "Mở",
     "dragEdgeToResize": "Kéo cạnh để thay đổi kích thước",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Phiên bản {{current}} / {{total}}",
+    "previousVersion": "Phiên bản trước",
+    "nextVersion": "Phiên bản sau"
   },
   "personaImportExport": {
     "title": "Nhập & Xuất Personas",
@@ -1790,7 +1864,17 @@
       "title": "Chưa có lệnh gọi nhà cung cấp",
       "description": "Các lệnh gọi sẽ hiển thị tại đây sau khi một plugin đã bật xử lý yêu cầu trò chuyện, Work, nhúng, hình ảnh, giọng nói, âm thanh hoặc video."
     },
-    "privacyNote": "Mức sử dụng được đo trên máy chủ tại ranh giới plugin gửi đi. Libre WebUI lưu trữ nhà cung cấp, mô hình, thời gian, trạng thái và bộ đếm đã báo cáo—không bao gồm lời nhắc, phản hồi, điểm cuối, thông tin xác thực hoặc nội dung lỗi của nhà cung cấp. Tổng token chỉ bao gồm các lệnh gọi mà nhà cung cấp trả về siêu dữ liệu sử dụng."
+    "privacyNote": "Mức sử dụng được đo trên máy chủ tại ranh giới plugin gửi đi. Libre WebUI lưu trữ nhà cung cấp, mô hình, thời gian, trạng thái và bộ đếm đã báo cáo—không bao gồm lời nhắc, phản hồi, điểm cuối, thông tin xác thực hoặc nội dung lỗi của nhà cung cấp. Tổng token chỉ bao gồm các lệnh gọi mà nhà cung cấp trả về siêu dữ liệu sử dụng.",
+    "heatmap": {
+      "title": "Một năm hoạt động",
+      "description": "Lượt gọi nhà cung cấp hằng ngày trong năm qua, tô màu theo mô hình được dùng nhiều nhất mỗi ngày.",
+      "calls": "lượt gọi",
+      "noCalls": "Không có lượt gọi",
+      "other": "Mô hình khác",
+      "less": "Ít",
+      "more": "Nhiều",
+      "yearTotal": "{{formatted}} lượt gọi trong năm qua"
+    }
   },
   "systemPage": {
     "eyebrow": "Quản trị",
@@ -1912,5 +1996,23 @@
       "video": "Video",
       "audio": "Âm thanh"
     }
+  },
+  "whatsNew": {
+    "title": "Có gì mới",
+    "releaseNotes": "Ghi chú phát hành",
+    "cta": "Được rồi, bắt đầu thôi"
+  },
+  "notes": {
+    "title": "Ghi chú",
+    "new": "Ghi chú mới",
+    "untitled": "Không có tiêu đề",
+    "empty": "Chưa có ghi chú nào",
+    "selectOrCreate": "Chọn một ghi chú hoặc tạo mới",
+    "contentPlaceholder": "Viết bằng Markdown…",
+    "saved": "Đã lưu",
+    "saveFailed": "Không thể lưu ghi chú",
+    "createFailed": "Không thể tạo ghi chú",
+    "deleteConfirm": "Xóa ghi chú này?",
+    "deleteFailed": "Không thể xóa ghi chú"
   }
 }

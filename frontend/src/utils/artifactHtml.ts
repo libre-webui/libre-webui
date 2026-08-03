@@ -16,7 +16,9 @@
  */
 
 export const HTML_ARTIFACT_SANDBOX =
-  'allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-pointer-lock allow-downloads';
+  'allow-scripts allow-forms allow-modals allow-popups allow-pointer-lock allow-downloads';
+
+export const SVG_ARTIFACT_SANDBOX = '';
 
 export const HTML_ARTIFACT_ALLOW =
   'clipboard-read; clipboard-write; fullscreen; gamepad';
@@ -85,6 +87,59 @@ export function buildHtmlArtifactDocument(
     ${trimmed}
   </body>
 </html>`;
+}
+
+export function buildSvgArtifactDocument(
+  content: string,
+  title = 'SVG Artifact'
+): string {
+  return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${escapeHtml(title)}</title>
+    <style>
+      html, body { width: 100%; height: 100%; margin: 0; }
+      body { display: flex; align-items: center; justify-content: center; overflow: auto; }
+      svg { max-width: 100%; max-height: 100%; }
+    </style>
+  </head>
+  <body>${content}</body>
+</html>`;
+}
+
+export function openHtmlArtifactPreview(
+  content: string,
+  title = 'HTML Artifact'
+): Window | null {
+  const previewWindow = window.open('', '_blank');
+  if (!previewWindow) return null;
+
+  // Keep untrusted artifact markup out of the same-origin popup document. The
+  // popup only hosts an opaque-origin sandboxed iframe built with DOM APIs.
+  previewWindow.opener = null;
+  const { document } = previewWindow;
+  document.title = title;
+  document.documentElement.style.width = '100%';
+  document.documentElement.style.height = '100%';
+  document.body.style.width = '100%';
+  document.body.style.height = '100%';
+  document.body.style.margin = '0';
+  document.body.replaceChildren();
+
+  const iframe = document.createElement('iframe');
+  iframe.title = title;
+  iframe.srcdoc = buildHtmlArtifactDocument(content, title);
+  iframe.setAttribute('sandbox', HTML_ARTIFACT_SANDBOX);
+  iframe.setAttribute('allow', HTML_ARTIFACT_ALLOW);
+  iframe.style.width = '100%';
+  iframe.style.height = '100%';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  return previewWindow;
 }
 
 function ensurePreviewHeadTags(htmlContent: string, title: string): string {

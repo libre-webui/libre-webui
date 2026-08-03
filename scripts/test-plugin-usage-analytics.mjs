@@ -107,6 +107,22 @@ test('aggregates calls, provider-reported tokens, failures, and capability units
     2
   );
 
+  // The contribution heatmap always covers a trailing year, independent of
+  // the requested range, and ranks each day's models by call count.
+  assert.equal(analytics.heatmap.days, 365);
+  assert.equal(
+    analytics.heatmap.cells.reduce((sum, cell) => sum + cell.calls, 0),
+    3
+  );
+  assert.equal(analytics.heatmap.models[0], 'gpt-test');
+  const today = analytics.heatmap.cells.find(
+    cell =>
+      cell.timestamp === analytics.heatmap.from + 364 * 24 * 60 * 60 * 1000
+  );
+  assert.ok(today, 'today has a heatmap cell');
+  assert.equal(today.models[0].model, 'gpt-test');
+  assert.equal(today.models[0].calls, 2);
+
   const columns = dbModule
     .getDatabase()
     .prepare('PRAGMA table_info(plugin_usage_events)')

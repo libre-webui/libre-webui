@@ -188,6 +188,7 @@
       "evening": "こんばんは",
       "night": "おやすみなさい"
     },
+    "followUp": "フォローアップ",
     "welcome": {
       "helpToday": "今日は何をお手伝いしましょうか？",
       "helpTonight": "今夜は何をお手伝いしましょうか？",
@@ -244,7 +245,21 @@
       "attachImages": "画像を添付",
       "attachments": "添付ファイルと高度な機能",
       "sendMessage": "メッセージを送信",
-      "stopGeneration": "生成を停止"
+      "stopGeneration": "生成を停止",
+      "menu": {
+        "uploadImages": "画像をアップロード",
+        "attachDocument": "ドキュメントを添付",
+        "attachWebpage": "ウェブページを添付",
+        "structuredOutput": "構造化出力",
+        "attach": "添付",
+        "documentAttached": "ドキュメントを添付しました",
+        "webpageAttached": "ウェブページを添付しました",
+        "attachFailed": "添付できませんでした",
+        "attachKnowledge": "ナレッジを添付",
+        "noCollections": "コレクションがまだありません — 設定 → ドキュメントで作成"
+      },
+      "voiceInput": "音声入力",
+      "voiceStop": "聞き取りを停止"
     },
     "session": {
       "new": "新しいチャット",
@@ -261,7 +276,23 @@
       "chats": "チャット",
       "renameChat": "チャット名を変更",
       "deleteChat": "チャットを削除",
-      "incognito": "シークレットチャット"
+      "incognito": "シークレットチャット",
+      "archiveChat": "チャットをアーカイブ",
+      "groups": {
+        "today": "今日",
+        "yesterday": "昨日",
+        "previous7Days": "過去7日間",
+        "previous30Days": "過去30日間",
+        "older": "それ以前"
+      },
+      "folder": {
+        "new": "新しいフォルダー",
+        "namePlaceholder": "フォルダー名",
+        "move": "フォルダーへ移動",
+        "remove": "フォルダーから外す",
+        "delete": "フォルダーを削除",
+        "deleteConfirm": "このフォルダーを削除しますか？中のチャットは残ります。"
+      }
     },
     "persona": {
       "applied": "ペルソナが適用されました",
@@ -307,6 +338,25 @@
       "applySchema": "スキーマを適用",
       "cancel": "キャンセル",
       "enabled": "構造化出力が有効"
+    },
+    "controls": {
+      "title": "チャット設定",
+      "systemPrompt": "システムプロンプト",
+      "systemPromptPlaceholder": "このチャットのみに適用される指示…",
+      "advancedParams": "詳細パラメータ",
+      "advancedParamsDescription": "このチャット専用の上書き。空欄はグローバル既定値を使います。",
+      "saved": "設定を保存しました",
+      "saveFailed": "設定を保存できませんでした",
+      "params": {
+        "temperature": "温度",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "最大トークン",
+        "repeatPenalty": "繰り返しペナルティ",
+        "seed": "シード",
+        "contextLength": "コンテキスト長"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "作業",
       "exploreLabel": "探索",
       "usageAnalytics": "プロバイダー使用状況",
-      "system": "システム"
+      "system": "システム",
+      "notes": "ノート"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
     "expandSidebar": "サイドバーを展開"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "チャットインターフェース",
         "showUsername": "ユーザー名を表示",
-        "showUsernameDescription": "チャットメッセージにユーザー名を表示"
+        "showUsernameDescription": "チャットメッセージにユーザー名を表示",
+        "followUpSuggestions": "フォローアップ提案",
+        "followUpSuggestionsDescription": "各回答の後にクイック返信を提案します"
       },
       "background": {
         "title": "背景画像",
@@ -596,6 +649,14 @@
         "coverage": "カバレッジ",
         "regenerate": "埋め込みを再生成",
         "regenerating": "再生成中..."
+      },
+      "collections": {
+        "title": "ナレッジコレクション",
+        "description": "ドキュメントをコレクションにまとめ、任意のチャットに添付できます。",
+        "namePlaceholder": "コレクション名",
+        "create": "作成",
+        "none": "コレクションなし",
+        "deleteConfirm": "このコレクションを削除しますか？中のドキュメントは残ります。"
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "インポート済み",
       "skipped": "スキップ",
       "documents": "ドキュメント",
-      "errors": "エラー"
+      "errors": "エラー",
+      "archivedChats": {
+        "title": "アーカイブ済みチャット",
+        "empty": "アーカイブ済みのチャットはありません",
+        "unarchive": "アーカイブ解除"
+      }
     },
     "about": {
       "title": "概要",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "システムメッセージを編集",
     "saveChanges": "変更を保存",
     "cancelEditing": "編集をキャンセル",
+    "saveAndSubmit": "保存して送信",
+    "goodResponse": "良い回答",
+    "badResponse": "悪い回答",
     "delete": "削除",
     "deleteConfirm": "このメッセージを削除しますか？",
     "branch": "分岐",
@@ -1192,6 +1261,8 @@
     "showMore": "もっと見る",
     "showLess": "閉じる",
     "thinking": "考え中",
+    "thoughtFor": "{{duration}}考えました",
+    "hiddenLines": "非表示の行: {{count}}",
     "systemMessagePlaceholder": "システムメッセージを入力...",
     "fullSizeImage": "フルサイズ画像",
     "startConversation": "会話を始める",
@@ -1295,7 +1366,10 @@
     "open": "開く",
     "dragEdgeToResize": "端をドラッグしてサイズ変更",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "バージョン {{current}} / {{total}}",
+    "previousVersion": "前のバージョン",
+    "nextVersion": "次のバージョン"
   },
   "personaImportExport": {
     "title": "ペルソナのインポート＆エクスポート",
@@ -1790,7 +1864,17 @@
       "title": "プロバイダ呼び出しはまだありません",
       "description": "有効なプラグインがチャット、Work、埋め込み、画像、音声、サウンド、または動画のリクエストを処理すると、呼び出しがここに表示されます。"
     },
-    "privacyNote": "使用量はサーバー上の送信プラグイン境界で計測されます。Libre WebUIはプロバイダ、モデル、タイミング、ステータス、および報告されたカウンターを保存しますが、プロンプト、レスポンス、エンドポイント、資格情報、またはプロバイダのエラー本文は保存しません。トークン合計には、プロバイダが使用量メタデータを返した呼び出しのみが含まれます。"
+    "privacyNote": "使用量はサーバー上の送信プラグイン境界で計測されます。Libre WebUIはプロバイダ、モデル、タイミング、ステータス、および報告されたカウンターを保存しますが、プロンプト、レスポンス、エンドポイント、資格情報、またはプロバイダのエラー本文は保存しません。トークン合計には、プロバイダが使用量メタデータを返した呼び出しのみが含まれます。",
+    "heatmap": {
+      "title": "1年間のアクティビティ",
+      "description": "過去1年間の日次プロバイダー呼び出し。各日の最も使用されたモデルごとに色分けされています。",
+      "calls": "回の呼び出し",
+      "noCalls": "呼び出しなし",
+      "other": "その他のモデル",
+      "less": "少",
+      "more": "多",
+      "yearTotal": "過去1年間で{{formatted}}回の呼び出し"
+    }
   },
   "systemPage": {
     "eyebrow": "管理",
@@ -1912,5 +1996,23 @@
       "video": "動画",
       "audio": "オーディオ"
     }
+  },
+  "whatsNew": {
+    "title": "新機能",
+    "releaseNotes": "リリースノート",
+    "cta": "さあ、始めましょう"
+  },
+  "notes": {
+    "title": "ノート",
+    "new": "新しいノート",
+    "untitled": "無題",
+    "empty": "ノートはまだありません",
+    "selectOrCreate": "ノートを選択するか新規作成してください",
+    "contentPlaceholder": "Markdownで書く…",
+    "saved": "保存済み",
+    "saveFailed": "ノートを保存できませんでした",
+    "createFailed": "ノートを作成できませんでした",
+    "deleteConfirm": "このノートを削除しますか？",
+    "deleteFailed": "ノートを削除できませんでした"
   }
 }

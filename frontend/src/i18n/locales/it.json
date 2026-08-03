@@ -188,6 +188,7 @@
       "evening": "Buonasera",
       "night": "Buonanotte"
     },
+    "followUp": "Approfondisci",
     "welcome": {
       "helpToday": "Come posso aiutarti oggi?",
       "helpTonight": "Come posso aiutarti stasera?",
@@ -244,7 +245,21 @@
       "attachImages": "Allega immagini",
       "attachments": "Allegati e funzionalità avanzate",
       "sendMessage": "Invia messaggio",
-      "stopGeneration": "Interrompi generazione"
+      "stopGeneration": "Interrompi generazione",
+      "menu": {
+        "uploadImages": "Carica immagini",
+        "attachDocument": "Allega documento",
+        "attachWebpage": "Allega pagina web",
+        "structuredOutput": "Output strutturato",
+        "attach": "Allega",
+        "documentAttached": "Documento allegato",
+        "webpageAttached": "Pagina web allegata",
+        "attachFailed": "Impossibile allegare",
+        "attachKnowledge": "Allega conoscenza",
+        "noCollections": "Ancora nessuna raccolta — creane una in Impostazioni → Documenti"
+      },
+      "voiceInput": "Input vocale",
+      "voiceStop": "Smetti di ascoltare"
     },
     "session": {
       "new": "Nuova chat",
@@ -261,7 +276,23 @@
       "chats": "Chat",
       "renameChat": "Rinomina chat",
       "deleteChat": "Elimina chat",
-      "incognito": "Chat in incognito"
+      "incognito": "Chat in incognito",
+      "archiveChat": "Archivia chat",
+      "groups": {
+        "today": "Oggi",
+        "yesterday": "Ieri",
+        "previous7Days": "Ultimi 7 giorni",
+        "previous30Days": "Ultimi 30 giorni",
+        "older": "Meno recenti"
+      },
+      "folder": {
+        "new": "Nuova cartella",
+        "namePlaceholder": "Nome cartella",
+        "move": "Sposta nella cartella",
+        "remove": "Rimuovi dalla cartella",
+        "delete": "Elimina cartella",
+        "deleteConfirm": "Eliminare questa cartella? Le chat al suo interno restano."
+      }
     },
     "persona": {
       "applied": "Persona applicata",
@@ -307,6 +338,25 @@
       "applySchema": "Applica schema",
       "cancel": "Annulla",
       "enabled": "Output strutturato abilitato"
+    },
+    "controls": {
+      "title": "Controlli della chat",
+      "systemPrompt": "Prompt di sistema",
+      "systemPromptPlaceholder": "Istruzioni valide solo per questa chat…",
+      "advancedParams": "Parametri avanzati",
+      "advancedParamsDescription": "Sostituzioni per questa chat. I campi vuoti usano i valori globali.",
+      "saved": "Controlli salvati",
+      "saveFailed": "Impossibile salvare i controlli",
+      "params": {
+        "temperature": "Temperatura",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Token max",
+        "repeatPenalty": "Penalità di ripetizione",
+        "seed": "Seed",
+        "contextLength": "Lunghezza contesto"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Lavoro",
       "exploreLabel": "Esplora",
       "usageAnalytics": "Utilizzo provider",
-      "system": "Sistema"
+      "system": "Sistema",
+      "notes": "Note"
     },
     "toggleSize": "Cambia dimensione barra laterale",
     "expandSidebar": "Espandi barra laterale"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Interfaccia chat",
         "showUsername": "Mostra nome utente",
-        "showUsernameDescription": "Visualizza nome utente nei messaggi chat"
+        "showUsernameDescription": "Visualizza nome utente nei messaggi chat",
+        "followUpSuggestions": "Suggerimenti di follow-up",
+        "followUpSuggestionsDescription": "Suggerisci risposte rapide dopo ogni risposta"
       },
       "background": {
         "title": "Immagine di sfondo",
@@ -596,6 +649,14 @@
         "coverage": "Copertura",
         "regenerate": "Rigenera embedding",
         "regenerating": "Rigenerazione..."
+      },
+      "collections": {
+        "title": "Raccolte di conoscenza",
+        "description": "Raggruppa i documenti in raccolte e allegale a qualsiasi chat.",
+        "namePlaceholder": "Nome della raccolta",
+        "create": "Crea",
+        "none": "Nessuna raccolta",
+        "deleteConfirm": "Eliminare questa raccolta? I documenti al suo interno restano."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "importato",
       "skipped": "saltato",
       "documents": "Documenti",
-      "errors": "Errori"
+      "errors": "Errori",
+      "archivedChats": {
+        "title": "Chat archiviate",
+        "empty": "Nessuna chat archiviata",
+        "unarchive": "Ripristina"
+      }
     },
     "about": {
       "title": "Informazioni",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Modifica messaggio di sistema",
     "saveChanges": "Salva modifiche",
     "cancelEditing": "Annulla modifica",
+    "saveAndSubmit": "Salva e invia",
+    "goodResponse": "Buona risposta",
+    "badResponse": "Cattiva risposta",
     "delete": "Elimina",
     "deleteConfirm": "Eliminare questo messaggio?",
     "branch": "Ramo",
@@ -1192,6 +1261,8 @@
     "showMore": "Mostra altro",
     "showLess": "Mostra meno",
     "thinking": "Pensando",
+    "thoughtFor": "Ha riflettuto per {{duration}}",
+    "hiddenLines": "{{count}} righe nascoste",
     "systemMessagePlaceholder": "Inserisci il tuo messaggio di sistema...",
     "fullSizeImage": "Immagine a dimensione intera",
     "startConversation": "Inizia una conversazione",
@@ -1295,7 +1366,10 @@
     "open": "Apri",
     "dragEdgeToResize": "Trascina il bordo per ridimensionare",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Versione {{current}} di {{total}}",
+    "previousVersion": "Versione precedente",
+    "nextVersion": "Versione successiva"
   },
   "personaImportExport": {
     "title": "Importa ed esporta personas",
@@ -1790,7 +1864,17 @@
       "title": "Nessuna chiamata al provider ancora",
       "description": "Le chiamate appariranno qui dopo che un plugin abilitato gestisce richieste di chat, Work, embedding, immagini, voce, audio o video."
     },
-    "privacyNote": "L'utilizzo viene misurato sul server al limite del plugin in uscita. Libre WebUI memorizza provider, modello, tempistiche, stato e contatori segnalati, mai prompt, risposte, endpoint, credenziali o corpi degli errori del provider. I totali dei token includono solo le chiamate in cui il provider ha restituito i metadati di utilizzo."
+    "privacyNote": "L'utilizzo viene misurato sul server al limite del plugin in uscita. Libre WebUI memorizza provider, modello, tempistiche, stato e contatori segnalati, mai prompt, risposte, endpoint, credenziali o corpi degli errori del provider. I totali dei token includono solo le chiamate in cui il provider ha restituito i metadati di utilizzo.",
+    "heatmap": {
+      "title": "Un anno di attività",
+      "description": "Chiamate giornaliere ai provider nell'ultimo anno, colorate in base al modello più usato di ogni giorno.",
+      "calls": "chiamate",
+      "noCalls": "Nessuna chiamata",
+      "other": "Altri modelli",
+      "less": "Meno",
+      "more": "Più",
+      "yearTotal": "{{formatted}} chiamate nell'ultimo anno"
+    }
   },
   "systemPage": {
     "eyebrow": "Amministrazione",
@@ -1912,5 +1996,23 @@
       "video": "Video",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Novità",
+    "releaseNotes": "Note di rilascio",
+    "cta": "Ok, iniziamo"
+  },
+  "notes": {
+    "title": "Note",
+    "new": "Nuova nota",
+    "untitled": "Senza titolo",
+    "empty": "Ancora nessuna nota",
+    "selectOrCreate": "Seleziona una nota o creane una nuova",
+    "contentPlaceholder": "Scrivi in Markdown…",
+    "saved": "Salvato",
+    "saveFailed": "Impossibile salvare la nota",
+    "createFailed": "Impossibile creare una nota",
+    "deleteConfirm": "Eliminare questa nota?",
+    "deleteFailed": "Impossibile eliminare la nota"
   }
 }

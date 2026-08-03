@@ -25,6 +25,7 @@ export interface GenerationStatistics {
   tokens_per_second?: number; // Calculated tokens/second
   created_at?: string; // Timestamp from Ollama
   model?: string; // Model used for generation
+  thinking_duration_ms?: number; // Wall-clock time of the reasoning phase
 }
 
 export interface Artifact {
@@ -54,6 +55,7 @@ export interface ChatMessage {
   branchIndex?: number; // Index within branch group (0 = original)
   isActive?: boolean; // Whether this is the active variant
   siblingCount?: number; // Total number of variants (including this one)
+  rating?: number; // User feedback: 1 = liked, -1 = disliked
 }
 
 export type ChatProviderType = 'ollama' | 'plugin' | 'agent';
@@ -71,6 +73,36 @@ export interface ChatSession extends ChatProviderSelection {
   createdAt: number;
   updatedAt: number;
   personaId?: string;
+  archived?: boolean; // Hidden from the sidebar until unarchived
+  settings?: ChatSessionSettings; // Per-chat overrides applied over global defaults
+  folderId?: string | null; // Optional folder this chat lives in
+}
+
+export interface KnowledgeCollection {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SessionFolder {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ChatSessionSettings {
+  generationOptions?: Partial<GenerationOptions>;
+  knowledgeCollectionIds?: string[]; // Collections whose documents join this chat's context
 }
 
 export interface GenerationOptions {
@@ -176,7 +208,8 @@ export interface UserPreferences {
   imageGenSettings?: ImageGenSettings;
   // Auto-title settings
   titleSettings?: TitleSettings;
-  showUsername: boolean; // If true, show username in chat; if false, show "you"
+  showUsername: boolean;
+  showFollowUpSuggestions?: boolean; // Suggest follow-up messages after responses // If true, show username in chat; if false, show "you"
   workRemoteProviderDisclosureDismissed: boolean;
   backgroundSettings?: {
     enabled: boolean;

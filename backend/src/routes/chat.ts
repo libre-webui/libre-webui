@@ -28,6 +28,7 @@ import chatGenerationService from '../services/chatGenerationService.js';
 import preferencesService from '../services/preferencesService.js';
 import { ChatRequestService } from '../services/chatRequestService.js';
 import { TitleGenerationService } from '../services/titleGenerationService.js';
+import { FollowUpService } from '../services/followUpService.js';
 import {
   ApiResponse,
   ChatSession,
@@ -38,8 +39,24 @@ import { createLogger } from '../utils/logger.js';
 import { buildChatDocumentContext } from '../utils/chatDocumentContext.js';
 import { ChatProviderSelectionError } from '../utils/chatProviderSelection.js';
 import { formatPluginStreamToolCalls } from '../utils/pluginStreaming.js';
+import { ResourcePolicyError } from '../utils/resourceLimits.js';
 
 const logger = createLogger('routes:chat');
+
+function sendSessionFolderError(
+  res: Response<ApiResponse>,
+  error: unknown,
+  fallback: string
+) {
+  if (error instanceof ResourcePolicyError) {
+    res.status(error.statusCode).json({ success: false, error: error.message });
+    return;
+  }
+  res.status(500).json({
+    success: false,
+    error: getErrorMessage(error, fallback),
+  });
+}
 
 const router = express.Router();
 const titleGenerationService = new TitleGenerationService({
@@ -52,6 +69,12 @@ const chatRequestService = new ChatRequestService({
   chatGenerationService,
   personaService,
   preferencesService,
+});
+const followUpService = new FollowUpService({
+  chatService,
+  chatGenerationService,
+  pluginService,
+  ollamaService,
 });
 
 // Rate limiter for chat routes: 60 requests per minute (reasonable for chat)
@@ -572,7 +595,8 @@ router.post(
         for await (const chunk of agentCliService.executeAgentStreamRequest(
           target.providerId,
           pluginMessages,
-          userId
+          userId,
+          { model: target.actualModelName }
         )) {
           if (chunk.type === 'content' && chunk.content) {
             fullResponse += chunk.content;
@@ -736,7 +760,9 @@ router.post(
 
           res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
           res.end();
-        }
+        },
+        undefined,
+        { userId }
       );
     } catch (error: unknown) {
       if (!res.headersSent) {
@@ -819,6 +845,120 @@ router.post(
       res.status(error instanceof ChatProviderSelectionError ? 400 : 500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to generate title'),
+      });
+    }
+  }
+);
+
+// Session folders
+router.get(
+  '/folders',
+  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+    try {
+      const userId = req.user?.userId || 'default';
+      res.json({ success: true, data: chatService.getSessionFolders(userId) });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to load folders'),
+      });
+    }
+  }
+);
+
+router.post(
+  '/folders',
+  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+    try {
+      const { name } = req.body as { name?: unknown };
+      const userId = req.user?.userId || 'default';
+      res.json({
+        success: true,
+        data: chatService.createSessionFolder(name, userId),
+      });
+    } catch (error: unknown) {
+      sendSessionFolderError(res, error, 'Failed to create folder');
+    }
+  }
+);
+
+router.put(
+  '/folders/:folderId',
+  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+    try {
+      const { name } = req.body as { name?: unknown };
+      const userId = req.user?.userId || 'default';
+      const folder = chatService.renameSessionFolder(
+        req.params.folderId as string,
+        name,
+        userId
+      );
+      if (!folder) {
+        res.status(404).json({ success: false, error: 'Folder not found' });
+        return;
+      }
+      res.json({ success: true, data: folder });
+    } catch (error: unknown) {
+      sendSessionFolderError(res, error, 'Failed to rename folder');
+    }
+  }
+);
+
+router.delete(
+  '/folders/:folderId',
+  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+    try {
+      const userId = req.user?.userId || 'default';
+      const deleted = chatService.deleteSessionFolder(
+        req.params.folderId as string,
+        userId
+      );
+      if (!deleted) {
+        res.status(404).json({ success: false, error: 'Folder not found' });
+        return;
+      }
+      res.json({ success: true, message: 'Folder deleted' });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to delete folder'),
+      });
+    }
+  }
+);
+
+// Suggest follow-up messages for the latest exchange in a session
+router.post(
+  '/sessions/:sessionId/followups',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ suggestions: string[] }>>
+  ): Promise<void> => {
+    try {
+      const sessionId = req.params.sessionId as string;
+      const userId = req.user?.userId || 'default';
+
+      const suggestions = await followUpService.generateFollowUpsForSession(
+        sessionId,
+        userId
+      );
+
+      if (suggestions === null) {
+        res.status(404).json({
+          success: false,
+          error: 'Session not found',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: { suggestions },
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to generate follow-ups'),
       });
     }
   }

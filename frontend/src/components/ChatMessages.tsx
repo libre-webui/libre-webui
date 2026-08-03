@@ -46,6 +46,9 @@ interface ChatMessagesProps {
   className?: string;
   onRegenerate?: () => void;
   onSelectBranch?: (messageId: string) => void;
+  onEditResend?: (messageId: string, content: string) => void;
+  followUpSuggestions?: string[];
+  onFollowUpSelect?: (suggestion: string) => void;
 }
 
 // Group messages by their position in the conversation, handling branches
@@ -78,6 +81,9 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   className,
   onRegenerate,
   onSelectBranch,
+  onEditResend,
+  followUpSuggestions,
+  onFollowUpSelect,
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -546,6 +552,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                   isStreaming={isThisMessageStreaming}
                   isLastAssistantMessage={isLastAssistantGroup}
                   onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
+                  onEditResend={isStreaming ? undefined : onEditResend}
                   className={groupIndex === 0 ? 'mt-3 sm:mt-4' : ''}
                 />
               );
@@ -585,6 +592,28 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
           {isStreaming && toolActivities.length > 0 && (
             <ToolActivityIndicator tools={toolActivities} className='px-0' />
           )}
+          {!isStreaming &&
+            followUpSuggestions &&
+            followUpSuggestions.length > 0 &&
+            onFollowUpSelect && (
+              <div className='mt-1 pb-2'>
+                <p className='mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500 dark:text-dark-500'>
+                  {t('chat.followUp')}
+                </p>
+                <div className='flex flex-col'>
+                  {followUpSuggestions.map(suggestion => (
+                    <button
+                      key={suggestion}
+                      onClick={() => onFollowUpSelect(suggestion)}
+                      dir='auto'
+                      className='border-t border-gray-100 py-2 text-start text-[0.9rem] leading-relaxed text-gray-600 transition-colors hover:text-gray-900 dark:border-dark-200 dark:text-dark-600 dark:hover:text-dark-900'
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           <div ref={messagesEndRef} className='h-4 sm:h-6' />
         </div>
       </div>

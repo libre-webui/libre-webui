@@ -326,9 +326,20 @@ function responsesItemKey(
   return `output-${Date.now()}`;
 }
 
+export interface ResponsesStreamOptions {
+  /**
+   * Accept a terminal event whose output array is empty and keep the streamed
+   * items as the record of the turn. Only for providers known to omit the
+   * authoritative replay (the ChatGPT codex endpoint); everyone else keeps the
+   * transient-text integrity check.
+   */
+  allowEmptyTerminalOutput?: boolean;
+}
+
 export async function* streamOpenAIResponsesResponse(
   response: Awaited<ReturnType<typeof fetch>>,
-  stateScope?: string
+  stateScope?: string,
+  streamOptions?: ResponsesStreamOptions
 ): AsyncGenerator<PluginStreamChunk, void, unknown> {
   if (!response.ok) {
     const errorText = await response.text();
@@ -762,34 +773,44 @@ export async function* streamOpenAIResponsesResponse(
               `Plugin API error: unexpected Responses status "${responseRecord.status.slice(0, 100)}"`
             );
           }
-          outputItems.clear();
-          reasoningItems.clear();
-          toolCalls.clear();
-          outputItemOrder = 0;
-          toolCallOrder = 0;
-          responseStateDropped = false;
-          invalidToolCallState = false;
-          for (const [outputIndex, item] of responseRecord.output.entries()) {
-            recordOutputItem({ output_index: outputIndex }, item);
-          }
-          const terminalContent = responseOutputContent(responseRecord?.output);
-          if (
-            Buffer.byteLength(terminalContent, 'utf8') >
-            OPENAI_RESPONSES_STREAM_MAX_TEXT_BYTES
-          ) {
-            throw new Error(
-              'Plugin API error: Responses terminal text exceeds the size limit'
+          // Some providers (the ChatGPT codex endpoint) send a terminal event
+          // with an EMPTY output array; when explicitly allowed, the streamed
+          // items are the record of the turn and must not be reconciled away.
+          const reconcileTerminalOutput =
+            responseRecord.output.length > 0 ||
+            !streamOptions?.allowEmptyTerminalOutput;
+          if (reconcileTerminalOutput) {
+            outputItems.clear();
+            reasoningItems.clear();
+            toolCalls.clear();
+            outputItemOrder = 0;
+            toolCallOrder = 0;
+            responseStateDropped = false;
+            invalidToolCallState = false;
+            for (const [outputIndex, item] of responseRecord.output.entries()) {
+              recordOutputItem({ output_index: outputIndex }, item);
+            }
+            const terminalContent = responseOutputContent(
+              responseRecord?.output
             );
-          }
-          if (terminalContent !== emittedAssistantText) {
-            if (!terminalContent.startsWith(emittedAssistantText)) {
+            if (
+              Buffer.byteLength(terminalContent, 'utf8') >
+              OPENAI_RESPONSES_STREAM_MAX_TEXT_BYTES
+            ) {
               throw new Error(
-                'Plugin API error: Responses stream content diverged from its terminal output'
+                'Plugin API error: Responses terminal text exceeds the size limit'
               );
             }
-            const suffix = terminalContent.slice(emittedAssistantText.length);
-            emittedAssistantText = terminalContent;
-            if (suffix) yield { type: 'content', content: suffix };
+            if (terminalContent !== emittedAssistantText) {
+              if (!terminalContent.startsWith(emittedAssistantText)) {
+                throw new Error(
+                  'Plugin API error: Responses stream content diverged from its terminal output'
+                );
+              }
+              const suffix = terminalContent.slice(emittedAssistantText.length);
+              emittedAssistantText = terminalContent;
+              if (suffix) yield { type: 'content', content: suffix };
+            }
           }
           const usage = parseResponsesUsage(responseRecord?.usage);
           const incompleteDetails =

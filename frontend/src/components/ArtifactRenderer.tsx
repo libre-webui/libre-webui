@@ -36,8 +36,11 @@ import { useAppStore } from '@/store/appStore';
 import { Artifact } from '@/types';
 import {
   buildHtmlArtifactDocument,
+  buildSvgArtifactDocument,
   HTML_ARTIFACT_ALLOW,
   HTML_ARTIFACT_SANDBOX,
+  openHtmlArtifactPreview,
+  SVG_ARTIFACT_SANDBOX,
 } from '@/utils/artifactHtml';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
@@ -182,25 +185,15 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   };
 
   const renderSvg = () => {
-    try {
-      return (
-        <div
-          className='w-full h-64 sm:h-80 lg:h-96 flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-200'
-          dangerouslySetInnerHTML={{ __html: artifact.content }}
-        />
-      );
-    } catch (_err) {
-      return (
-        <div className='w-full h-64 sm:h-80 lg:h-96 flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-200'>
-          <div className='text-center'>
-            <AlertTriangle className='h-8 w-8 text-primary-500 mx-auto mb-2' />
-            <p className='text-sm text-gray-600 dark:text-dark-600'>
-              {t('artifacts.invalidSvg')}
-            </p>
-          </div>
-        </div>
-      );
-    }
+    return (
+      <iframe
+        data-testid='artifact-svg-preview'
+        srcDoc={buildSvgArtifactDocument(artifact.content, artifact.title)}
+        className='w-full h-64 sm:h-80 lg:h-96 border-0 rounded-lg bg-white'
+        sandbox={SVG_ARTIFACT_SANDBOX}
+        title={artifact.title}
+      />
+    );
   };
 
   const renderCode = () => {
@@ -484,15 +477,9 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
           <Button
             variant='ghost'
             size='sm'
-            onClick={() => {
-              const newWindow = window.open('', '_blank');
-              if (newWindow) {
-                newWindow.document.write(
-                  buildHtmlArtifactDocument(artifact.content, artifact.title)
-                );
-                newWindow.document.close();
-              }
-            }}
+            onClick={() =>
+              openHtmlArtifactPreview(artifact.content, artifact.title)
+            }
             className='text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
           >
             <ExternalLink className='h-3 w-3 mr-1' />

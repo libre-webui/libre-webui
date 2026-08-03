@@ -21,6 +21,7 @@ import type {
   ChatMessage,
   ChatProviderType,
   ChatSession,
+  SessionFolder,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 import { API_BASE_URL } from '@/utils/config';
@@ -50,7 +51,10 @@ export const chatApi = {
         title: title || 'New Chat',
         model,
         providerType,
-        providerId: providerType === 'plugin' ? providerId : null,
+        providerId:
+          providerType === 'plugin' || providerType === 'agent'
+            ? providerId
+            : null,
         messages: [],
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -149,6 +153,37 @@ export const chatApi = {
         providerType,
         providerId,
       })
+      .then(res => res.data);
+  },
+
+  // Session folders
+  getFolders: (): Promise<ApiResponse<SessionFolder[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse([]);
+    }
+    return api.get('/chat/folders').then(res => res.data);
+  },
+
+  createFolder: (name: string): Promise<ApiResponse<SessionFolder>> =>
+    api.post('/chat/folders', { name }).then(res => res.data),
+
+  renameFolder: (
+    folderId: string,
+    name: string
+  ): Promise<ApiResponse<SessionFolder>> =>
+    api.put(`/chat/folders/${folderId}`, { name }).then(res => res.data),
+
+  deleteFolder: (folderId: string): Promise<ApiResponse> =>
+    api.delete(`/chat/folders/${folderId}`).then(res => res.data),
+
+  generateFollowUps: (
+    sessionId: string
+  ): Promise<ApiResponse<{ suggestions: string[] }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ suggestions: [] });
+    }
+    return api
+      .post(`/chat/sessions/${sessionId}/followups`)
       .then(res => res.data);
   },
 

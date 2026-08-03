@@ -188,6 +188,7 @@
       "evening": "İyi akşamlar",
       "night": "İyi geceler"
     },
+    "followUp": "Devam et",
     "welcome": {
       "helpToday": "Bugün size nasıl yardımcı olabilirim?",
       "helpTonight": "Bu gece size nasıl yardımcı olabilirim?",
@@ -244,7 +245,21 @@
       "attachImages": "Görsel ekle",
       "attachments": "Ekler ve gelişmiş özellikler",
       "sendMessage": "Mesaj gönder",
-      "stopGeneration": "Üretimi durdur"
+      "stopGeneration": "Üretimi durdur",
+      "menu": {
+        "uploadImages": "Görsel yükle",
+        "attachDocument": "Belge ekle",
+        "attachWebpage": "Web sayfası ekle",
+        "structuredOutput": "Yapılandırılmış çıktı",
+        "attach": "Ekle",
+        "documentAttached": "Belge eklendi",
+        "webpageAttached": "Web sayfası eklendi",
+        "attachFailed": "Eklenemedi",
+        "attachKnowledge": "Bilgi ekle",
+        "noCollections": "Henüz koleksiyon yok — Ayarlar → Belgeler bölümünden oluşturun"
+      },
+      "voiceInput": "Sesle giriş",
+      "voiceStop": "Dinlemeyi durdur"
     },
     "session": {
       "new": "Yeni Sohbet",
@@ -261,7 +276,23 @@
       "chats": "Sohbetler",
       "renameChat": "Sohbeti yeniden adlandır",
       "deleteChat": "Sohbeti sil",
-      "incognito": "Gizli Sohbet"
+      "incognito": "Gizli Sohbet",
+      "archiveChat": "Sohbeti arşivle",
+      "groups": {
+        "today": "Bugün",
+        "yesterday": "Dün",
+        "previous7Days": "Son 7 gün",
+        "previous30Days": "Son 30 gün",
+        "older": "Daha eski"
+      },
+      "folder": {
+        "new": "Yeni klasör",
+        "namePlaceholder": "Klasör adı",
+        "move": "Klasöre taşı",
+        "remove": "Klasörden çıkar",
+        "delete": "Klasörü sil",
+        "deleteConfirm": "Bu klasör silinsin mi? İçindeki sohbetler korunur."
+      }
     },
     "persona": {
       "applied": "Persona uygulandı",
@@ -307,6 +338,25 @@
       "applySchema": "Şemayı Uygula",
       "cancel": "İptal",
       "enabled": "Yapılandırılmış çıktı etkin"
+    },
+    "controls": {
+      "title": "Sohbet denetimleri",
+      "systemPrompt": "Sistem istemi",
+      "systemPromptPlaceholder": "Yalnızca bu sohbete uygulanan talimatlar…",
+      "advancedParams": "Gelişmiş parametreler",
+      "advancedParamsDescription": "Bu sohbete özel geçersiz kılmalar. Boş alanlar genel varsayılanları kullanır.",
+      "saved": "Denetimler kaydedildi",
+      "saveFailed": "Denetimler kaydedilemedi",
+      "params": {
+        "temperature": "Sıcaklık",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Maks. token",
+        "repeatPenalty": "Tekrar cezası",
+        "seed": "Tohum",
+        "contextLength": "Bağlam uzunluğu"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Çalışma",
       "exploreLabel": "Keşfet",
       "usageAnalytics": "Sağlayıcı Kullanımı",
-      "system": "Sistem"
+      "system": "Sistem",
+      "notes": "Notlar"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Sohbet Arayüzü",
         "showUsername": "Kullanıcı Adını Göster",
-        "showUsernameDescription": "Sohbet mesajlarında kullanıcı adını görüntüle"
+        "showUsernameDescription": "Sohbet mesajlarında kullanıcı adını görüntüle",
+        "followUpSuggestions": "Devam önerileri",
+        "followUpSuggestionsDescription": "Her yanıttan sonra hızlı yanıtlar öner"
       },
       "background": {
         "title": "Arka Plan Görseli",
@@ -596,6 +649,14 @@
         "coverage": "Kapsam",
         "regenerate": "Gömmeleri Yeniden Oluştur",
         "regenerating": "Yeniden oluşturuluyor..."
+      },
+      "collections": {
+        "title": "Bilgi koleksiyonları",
+        "description": "Belgeleri koleksiyonlar halinde gruplayın ve istediğiniz sohbete ekleyin.",
+        "namePlaceholder": "Koleksiyon adı",
+        "create": "Oluştur",
+        "none": "Koleksiyon yok",
+        "deleteConfirm": "Bu koleksiyon silinsin mi? İçindeki belgeler korunur."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "içe aktarıldı",
       "skipped": "atlandı",
       "documents": "Belgeler",
-      "errors": "Hatalar"
+      "errors": "Hatalar",
+      "archivedChats": {
+        "title": "Arşivlenmiş sohbetler",
+        "empty": "Arşivlenmiş sohbet yok",
+        "unarchive": "Arşivden çıkar"
+      }
     },
     "about": {
       "title": "Hakkında",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Sistem mesajını düzenle",
     "saveChanges": "Değişiklikleri kaydet",
     "cancelEditing": "Düzenlemeyi iptal et",
+    "saveAndSubmit": "Kaydet ve gönder",
+    "goodResponse": "İyi yanıt",
+    "badResponse": "Kötü yanıt",
     "delete": "Sil",
     "deleteConfirm": "Bu mesajı silmek istiyor musunuz?",
     "branch": "Dallandır",
@@ -1192,6 +1261,8 @@
     "showMore": "Daha fazla göster",
     "showLess": "Daha az göster",
     "thinking": "Düşünüyor",
+    "thoughtFor": "{{duration}} boyunca düşündü",
+    "hiddenLines": "{{count}} gizli satır",
     "systemMessagePlaceholder": "Sistem mesajınızı girin...",
     "fullSizeImage": "Tam boyut görsel",
     "startConversation": "Bir konuşma başlatın",
@@ -1295,7 +1366,10 @@
     "open": "Aç",
     "dragEdgeToResize": "Yeniden boyutlandırmak için kenarı sürükleyin",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Sürüm {{current}} / {{total}}",
+    "previousVersion": "Önceki sürüm",
+    "nextVersion": "Sonraki sürüm"
   },
   "personaImportExport": {
     "title": "Personaları İçe ve Dışa Aktar",
@@ -1790,7 +1864,17 @@
       "title": "Henüz sağlayıcı çağrısı yok",
       "description": "Etkin bir eklenti sohbet, Work, gömme, görüntü, konuşma, ses veya video isteklerini işledikten sonra çağrılar burada görünecektir."
     },
-    "privacyNote": "Kullanım, sunucuda giden eklenti sınırında ölçülür. Libre WebUI; sağlayıcı, model, zamanlama, durum ve bildirilen sayaçları saklar—asla istemleri, yanıtları, uç noktaları, kimlik bilgilerini veya sağlayıcı hata gövdelerini saklamaz. Token toplamları yalnızca sağlayıcının kullanım meta verilerini döndürdüğü çağrıları içerir."
+    "privacyNote": "Kullanım, sunucuda giden eklenti sınırında ölçülür. Libre WebUI; sağlayıcı, model, zamanlama, durum ve bildirilen sayaçları saklar—asla istemleri, yanıtları, uç noktaları, kimlik bilgilerini veya sağlayıcı hata gövdelerini saklamaz. Token toplamları yalnızca sağlayıcının kullanım meta verilerini döndürdüğü çağrıları içerir.",
+    "heatmap": {
+      "title": "Bir yıllık etkinlik",
+      "description": "Son bir yıldaki günlük sağlayıcı çağrıları, her günün en çok kullanılan modeline göre renklendirilmiştir.",
+      "calls": "çağrı",
+      "noCalls": "Çağrı yok",
+      "other": "Diğer modeller",
+      "less": "Az",
+      "more": "Çok",
+      "yearTotal": "Son bir yılda {{formatted}} çağrı"
+    }
   },
   "systemPage": {
     "eyebrow": "Yönetim",
@@ -1912,5 +1996,23 @@
       "video": "Videolar",
       "audio": "Ses"
     }
+  },
+  "whatsNew": {
+    "title": "Yenilikler",
+    "releaseNotes": "Sürüm notları",
+    "cta": "Tamam, başlayalım"
+  },
+  "notes": {
+    "title": "Notlar",
+    "new": "Yeni not",
+    "untitled": "Başlıksız",
+    "empty": "Henüz not yok",
+    "selectOrCreate": "Bir not seçin veya yeni oluşturun",
+    "contentPlaceholder": "Markdown ile yazın…",
+    "saved": "Kaydedildi",
+    "saveFailed": "Not kaydedilemedi",
+    "createFailed": "Not oluşturulamadı",
+    "deleteConfirm": "Bu not silinsin mi?",
+    "deleteFailed": "Not silinemedi"
   }
 }

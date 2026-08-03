@@ -188,6 +188,7 @@
       "evening": "God kväll",
       "night": "God natt"
     },
+    "followUp": "Uppföljning",
     "welcome": {
       "helpToday": "Vad kan jag hjälpa till med idag?",
       "helpTonight": "Vad kan jag hjälpa till med ikväll?",
@@ -244,7 +245,21 @@
       "attachImages": "Bifoga bilder",
       "attachments": "Bilagor och avancerade funktioner",
       "sendMessage": "Skicka meddelande",
-      "stopGeneration": "Stoppa generering"
+      "stopGeneration": "Stoppa generering",
+      "menu": {
+        "uploadImages": "Ladda upp bilder",
+        "attachDocument": "Bifoga dokument",
+        "attachWebpage": "Bifoga webbsida",
+        "structuredOutput": "Strukturerad utdata",
+        "attach": "Bifoga",
+        "documentAttached": "Dokument bifogat",
+        "webpageAttached": "Webbsida bifogad",
+        "attachFailed": "Kunde inte bifoga",
+        "attachKnowledge": "Bifoga kunskap",
+        "noCollections": "Inga samlingar än — skapa en i Inställningar → Dokument"
+      },
+      "voiceInput": "Röstinmatning",
+      "voiceStop": "Sluta lyssna"
     },
     "session": {
       "new": "Ny chatt",
@@ -261,7 +276,23 @@
       "chats": "Chattar",
       "renameChat": "Byt namn på chatt",
       "deleteChat": "Radera chatt",
-      "incognito": "Inkognitochatt"
+      "incognito": "Inkognitochatt",
+      "archiveChat": "Arkivera chatt",
+      "groups": {
+        "today": "Idag",
+        "yesterday": "Igår",
+        "previous7Days": "Senaste 7 dagarna",
+        "previous30Days": "Senaste 30 dagarna",
+        "older": "Äldre"
+      },
+      "folder": {
+        "new": "Ny mapp",
+        "namePlaceholder": "Mappnamn",
+        "move": "Flytta till mapp",
+        "remove": "Ta bort från mapp",
+        "delete": "Ta bort mapp",
+        "deleteConfirm": "Ta bort den här mappen? Chattarna i den behålls."
+      }
     },
     "persona": {
       "applied": "Persona tillämpad",
@@ -307,6 +338,25 @@
       "applySchema": "Tillämpa schema",
       "cancel": "Avbryt",
       "enabled": "Strukturerad utdata aktiverad"
+    },
+    "controls": {
+      "title": "Chattkontroller",
+      "systemPrompt": "Systemprompt",
+      "systemPromptPlaceholder": "Instruktioner som endast gäller den här chatten…",
+      "advancedParams": "Avancerade parametrar",
+      "advancedParamsDescription": "Åsidosättanden för den här chatten. Tomma fält använder dina globala standarder.",
+      "saved": "Kontroller sparade",
+      "saveFailed": "Kunde inte spara kontroller",
+      "params": {
+        "temperature": "Temperatur",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Max antal tokens",
+        "repeatPenalty": "Upprepningsstraff",
+        "seed": "Frö",
+        "contextLength": "Kontextlängd"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Arbete",
       "exploreLabel": "Utforska",
       "usageAnalytics": "Leverantörsanvändning",
-      "system": "System"
+      "system": "System",
+      "notes": "Anteckningar"
     },
     "toggleSize": "Växla sidofältets storlek",
     "expandSidebar": "Expandera sidofältet"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Chattgränssnitt",
         "showUsername": "Visa användarnamn",
-        "showUsernameDescription": "Visa användarnamn i chattmeddelanden"
+        "showUsernameDescription": "Visa användarnamn i chattmeddelanden",
+        "followUpSuggestions": "Uppföljningsförslag",
+        "followUpSuggestionsDescription": "Föreslå snabba svar efter varje svar"
       },
       "background": {
         "title": "Bakgrundsbild",
@@ -596,6 +649,14 @@
         "coverage": "Täckning",
         "regenerate": "Regenerera inbäddningar",
         "regenerating": "Regenererar..."
+      },
+      "collections": {
+        "title": "Kunskapssamlingar",
+        "description": "Gruppera dokument i samlingar och bifoga dem till valfri chatt.",
+        "namePlaceholder": "Samlingens namn",
+        "create": "Skapa",
+        "none": "Ingen samling",
+        "deleteConfirm": "Ta bort den här samlingen? Dokumenten i den behålls."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "importerade",
       "skipped": "hoppades över",
       "documents": "Dokument",
-      "errors": "Fel"
+      "errors": "Fel",
+      "archivedChats": {
+        "title": "Arkiverade chattar",
+        "empty": "Inga arkiverade chattar",
+        "unarchive": "Återställ"
+      }
     },
     "about": {
       "title": "Om",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Redigera systemmeddelande",
     "saveChanges": "Spara ändringar",
     "cancelEditing": "Avbryt redigering",
+    "saveAndSubmit": "Spara och skicka",
+    "goodResponse": "Bra svar",
+    "badResponse": "Dåligt svar",
     "delete": "Radera",
     "deleteConfirm": "Radera detta meddelande?",
     "branch": "Förgrena",
@@ -1192,6 +1261,8 @@
     "showMore": "Visa mer",
     "showLess": "Visa mindre",
     "thinking": "Tänker",
+    "thoughtFor": "Tänkte i {{duration}}",
+    "hiddenLines": "{{count}} dolda rader",
     "systemMessagePlaceholder": "Ange ditt systemmeddelande...",
     "fullSizeImage": "Fullstor bild",
     "startConversation": "Starta en konversation",
@@ -1295,7 +1366,10 @@
     "open": "Öppna",
     "dragEdgeToResize": "Dra i kanten för att ändra storlek",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Version {{current}} av {{total}}",
+    "previousVersion": "Föregående version",
+    "nextVersion": "Nästa version"
   },
   "personaImportExport": {
     "title": "Importera och exportera personas",
@@ -1790,7 +1864,17 @@
       "title": "Inga leverantörsanrop ännu",
       "description": "Anrop visas här efter att en aktiverad plugin hanterar chatt-, Work-, inbäddnings-, bild-, tal-, ljud- eller videoförfrågningar."
     },
-    "privacyNote": "Användning mäts på servern vid den utgående plugin-gränsen. Libre WebUI lagrar leverantör, modell, tidsmätning, status och rapporterade räknare—aldrig prompts, svar, ändpunkter, autentiseringsuppgifter eller leverantörsfelkroppar. Token-totaler inkluderar endast anrop där leverantören returnerade användningsmetadata."
+    "privacyNote": "Användning mäts på servern vid den utgående plugin-gränsen. Libre WebUI lagrar leverantör, modell, tidsmätning, status och rapporterade räknare—aldrig prompts, svar, ändpunkter, autentiseringsuppgifter eller leverantörsfelkroppar. Token-totaler inkluderar endast anrop där leverantören returnerade användningsmetadata.",
+    "heatmap": {
+      "title": "Ett år av aktivitet",
+      "description": "Dagliga leverantörsanrop under det senaste året, färgade efter dagens mest använda modell.",
+      "calls": "anrop",
+      "noCalls": "Inga anrop",
+      "other": "Övriga modeller",
+      "less": "Mindre",
+      "more": "Mer",
+      "yearTotal": "{{formatted}} anrop under det senaste året"
+    }
   },
   "systemPage": {
     "eyebrow": "Administration",
@@ -1912,5 +1996,23 @@
       "video": "Videor",
       "audio": "Ljud"
     }
+  },
+  "whatsNew": {
+    "title": "Nyheter",
+    "releaseNotes": "Versionsinformation",
+    "cta": "Okej, nu kör vi"
+  },
+  "notes": {
+    "title": "Anteckningar",
+    "new": "Ny anteckning",
+    "untitled": "Namnlös",
+    "empty": "Inga anteckningar än",
+    "selectOrCreate": "Välj en anteckning eller skapa en ny",
+    "contentPlaceholder": "Skriv i Markdown…",
+    "saved": "Sparad",
+    "saveFailed": "Kunde inte spara anteckningen",
+    "createFailed": "Kunde inte skapa en anteckning",
+    "deleteConfirm": "Ta bort den här anteckningen?",
+    "deleteFailed": "Kunde inte ta bort anteckningen"
   }
 }

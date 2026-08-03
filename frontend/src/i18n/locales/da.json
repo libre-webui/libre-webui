@@ -188,6 +188,7 @@
       "evening": "Godaften",
       "night": "Godnat"
     },
+    "followUp": "Opfølgning",
     "welcome": {
       "helpToday": "Hvad kan jeg hjælpe med i dag?",
       "helpTonight": "Hvad kan jeg hjælpe med i aften?",
@@ -244,7 +245,21 @@
       "attachImages": "Vedhæft billeder",
       "attachments": "Vedhæftninger og avancerede funktioner",
       "sendMessage": "Send besked",
-      "stopGeneration": "Stop generering"
+      "stopGeneration": "Stop generering",
+      "menu": {
+        "uploadImages": "Upload billeder",
+        "attachDocument": "Vedhæft dokument",
+        "attachWebpage": "Vedhæft webside",
+        "structuredOutput": "Struktureret output",
+        "attach": "Vedhæft",
+        "documentAttached": "Dokument vedhæftet",
+        "webpageAttached": "Webside vedhæftet",
+        "attachFailed": "Kunne ikke vedhæfte",
+        "attachKnowledge": "Vedhæft viden",
+        "noCollections": "Ingen samlinger endnu — opret en i Indstillinger → Dokumenter"
+      },
+      "voiceInput": "Stemmeinput",
+      "voiceStop": "Stop med at lytte"
     },
     "session": {
       "new": "Ny chat",
@@ -261,7 +276,23 @@
       "chats": "Chats",
       "renameChat": "Omdøb chat",
       "deleteChat": "Slet chat",
-      "incognito": "Incognito-chat"
+      "incognito": "Incognito-chat",
+      "archiveChat": "Arkivér chat",
+      "groups": {
+        "today": "I dag",
+        "yesterday": "I går",
+        "previous7Days": "Seneste 7 dage",
+        "previous30Days": "Seneste 30 dage",
+        "older": "Ældre"
+      },
+      "folder": {
+        "new": "Ny mappe",
+        "namePlaceholder": "Mappenavn",
+        "move": "Flyt til mappe",
+        "remove": "Fjern fra mappe",
+        "delete": "Slet mappe",
+        "deleteConfirm": "Slet denne mappe? Chats bevares."
+      }
     },
     "persona": {
       "applied": "Persona anvendt",
@@ -307,6 +338,25 @@
       "applySchema": "Anvend skema",
       "cancel": "Annuller",
       "enabled": "Struktureret output aktiveret"
+    },
+    "controls": {
+      "title": "Chatstyring",
+      "systemPrompt": "Systemprompt",
+      "systemPromptPlaceholder": "Instruktioner der kun gælder denne chat…",
+      "advancedParams": "Avancerede parametre",
+      "advancedParamsDescription": "Tilsidesættelser for denne chat. Tomme felter bruger dine globale standarder.",
+      "saved": "Chatstyring gemt",
+      "saveFailed": "Kunne ikke gemme chatstyring",
+      "params": {
+        "temperature": "Temperatur",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Maks. tokens",
+        "repeatPenalty": "Gentagelsesstraf",
+        "seed": "Seed",
+        "contextLength": "Kontekstlængde"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Arbejde",
       "exploreLabel": "Udforsk",
       "usageAnalytics": "Udbyderforbrug",
-      "system": "System"
+      "system": "System",
+      "notes": "Noter"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
     "expandSidebar": "Udvid sidebjælke"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Chat-grænseflade",
         "showUsername": "Vis brugernavn",
-        "showUsernameDescription": "Vis brugernavn i chatbeskeder"
+        "showUsernameDescription": "Vis brugernavn i chatbeskeder",
+        "followUpSuggestions": "Opfølgningsforslag",
+        "followUpSuggestionsDescription": "Foreslå hurtige svar efter hvert svar"
       },
       "background": {
         "title": "Baggrundsbillede",
@@ -596,6 +649,14 @@
         "coverage": "Dækning",
         "regenerate": "Regenerer embeddings",
         "regenerating": "Regenererer..."
+      },
+      "collections": {
+        "title": "Videnssamlinger",
+        "description": "Gruppér dokumenter i samlinger og vedhæft dem til enhver chat.",
+        "namePlaceholder": "Samlingens navn",
+        "create": "Opret",
+        "none": "Ingen samling",
+        "deleteConfirm": "Slet denne samling? Dokumenterne bevares."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "importeret",
       "skipped": "sprunget over",
       "documents": "Dokumenter",
-      "errors": "Fejl"
+      "errors": "Fejl",
+      "archivedChats": {
+        "title": "Arkiverede chats",
+        "empty": "Ingen arkiverede chats",
+        "unarchive": "Gendan"
+      }
     },
     "about": {
       "title": "Om",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Rediger systembesked",
     "saveChanges": "Gem ændringer",
     "cancelEditing": "Annuller redigering",
+    "saveAndSubmit": "Gem og send",
+    "goodResponse": "Godt svar",
+    "badResponse": "Dårligt svar",
     "delete": "Slet",
     "deleteConfirm": "Slet denne besked?",
     "branch": "Forgren",
@@ -1192,6 +1261,8 @@
     "showMore": "Vis mere",
     "showLess": "Vis mindre",
     "thinking": "Tænker",
+    "thoughtFor": "Tænkte i {{duration}}",
+    "hiddenLines": "{{count}} skjulte linjer",
     "systemMessagePlaceholder": "Indtast din systembesked...",
     "fullSizeImage": "Billede i fuld størrelse",
     "startConversation": "Start en samtale",
@@ -1295,7 +1366,10 @@
     "open": "Åbn",
     "dragEdgeToResize": "Træk kant for at ændre størrelse",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Version {{current}} af {{total}}",
+    "previousVersion": "Forrige version",
+    "nextVersion": "Næste version"
   },
   "personaImportExport": {
     "title": "Import og eksport af personaer",
@@ -1790,7 +1864,17 @@
       "title": "Ingen udbyderkald endnu",
       "description": "Kald vises her, når et aktiveret plugin håndterer anmodninger om chat, arbejde, embedding, billede, tale, lyd eller video."
     },
-    "privacyNote": "Forbrug måles på serveren ved den udgående plugin-grænse. Libre WebUI gemmer udbyder, model, timing, status og rapporterede tællere — aldrig prompts, svar, endepunkter, legitimationsoplysninger eller udbyderfejlmeddelelser. Token-totaler inkluderer kun kald, hvor udbyderen returnerede forbrugsmetadata."
+    "privacyNote": "Forbrug måles på serveren ved den udgående plugin-grænse. Libre WebUI gemmer udbyder, model, timing, status og rapporterede tællere — aldrig prompts, svar, endepunkter, legitimationsoplysninger eller udbyderfejlmeddelelser. Token-totaler inkluderer kun kald, hvor udbyderen returnerede forbrugsmetadata.",
+    "heatmap": {
+      "title": "Et års aktivitet",
+      "description": "Daglige udbyderkald det seneste år, farvet efter dagens mest brugte model.",
+      "calls": "kald",
+      "noCalls": "Ingen kald",
+      "other": "Andre modeller",
+      "less": "Mindre",
+      "more": "Mere",
+      "yearTotal": "{{formatted}} kald det seneste år"
+    }
   },
   "systemPage": {
     "eyebrow": "Administration",
@@ -1912,5 +1996,23 @@
       "video": "Videoer",
       "audio": "Lyd"
     }
+  },
+  "whatsNew": {
+    "title": "Nyheder",
+    "releaseNotes": "Udgivelsesnoter",
+    "cta": "Okay, lad os komme i gang"
+  },
+  "notes": {
+    "title": "Noter",
+    "new": "Ny note",
+    "untitled": "Uden titel",
+    "empty": "Ingen noter endnu",
+    "selectOrCreate": "Vælg en note eller opret en ny",
+    "contentPlaceholder": "Skriv i Markdown…",
+    "saved": "Gemt",
+    "saveFailed": "Kunne ikke gemme noten",
+    "createFailed": "Kunne ikke oprette en note",
+    "deleteConfirm": "Slet denne note?",
+    "deleteFailed": "Kunne ikke slette noten"
   }
 }

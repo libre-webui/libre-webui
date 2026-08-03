@@ -12,13 +12,12 @@ This guide describes the repository-supported local GPU setup: Ollama runs nativ
 
 ## Work Availability
 
-This stack gives you both: Ollama runs natively on the host GPU, and the Libre
-WebUI container mounts the host Docker socket, so Work creates task-scoped
-containers on the same daemon. No native Libre WebUI install is needed.
+Ollama runs natively on the host GPU. Work is enabled through the mounted host
+Docker socket, letting Libre WebUI create task-scoped containers on the same
+daemon. No native Libre WebUI install is needed.
 
-That socket grants root-equivalent control of the Docker host. Remove the
-`/var/run/docker.sock` mount from the Compose file if you do not want Work, and
-on Linux set `DOCKER_GID` in `.env` to the group that owns the socket.
+The socket grants root-equivalent control of the Docker host. Remove its mount
+unless Work is needed, and on Linux set `DOCKER_GID` in `.env`.
 
 On memory-constrained machines, Work can instead use an Ollama Cloud model or a
 configured remote completion/chat plugin. That reduces local model memory

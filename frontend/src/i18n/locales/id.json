@@ -188,6 +188,7 @@
       "evening": "Selamat sore",
       "night": "Selamat malam"
     },
+    "followUp": "Tindak lanjut",
     "welcome": {
       "helpToday": "Apa yang bisa saya bantu hari ini?",
       "helpTonight": "Apa yang bisa saya bantu malam ini?",
@@ -244,7 +245,21 @@
       "attachImages": "Lampirkan gambar",
       "attachments": "Lampiran dan fitur lanjutan",
       "sendMessage": "Kirim pesan",
-      "stopGeneration": "Hentikan pembuatan"
+      "stopGeneration": "Hentikan pembuatan",
+      "menu": {
+        "uploadImages": "Unggah gambar",
+        "attachDocument": "Lampirkan dokumen",
+        "attachWebpage": "Lampirkan halaman web",
+        "structuredOutput": "Keluaran terstruktur",
+        "attach": "Lampirkan",
+        "documentAttached": "Dokumen dilampirkan",
+        "webpageAttached": "Halaman web dilampirkan",
+        "attachFailed": "Gagal melampirkan",
+        "attachKnowledge": "Lampirkan pengetahuan",
+        "noCollections": "Belum ada koleksi — buat di Pengaturan → Dokumen"
+      },
+      "voiceInput": "Input suara",
+      "voiceStop": "Berhenti mendengarkan"
     },
     "session": {
       "new": "Chat Baru",
@@ -261,7 +276,23 @@
       "chats": "Chat",
       "renameChat": "Ubah nama chat",
       "deleteChat": "Hapus chat",
-      "incognito": "Chat Incognito"
+      "incognito": "Chat Incognito",
+      "archiveChat": "Arsipkan obrolan",
+      "groups": {
+        "today": "Hari ini",
+        "yesterday": "Kemarin",
+        "previous7Days": "7 hari terakhir",
+        "previous30Days": "30 hari terakhir",
+        "older": "Lebih lama"
+      },
+      "folder": {
+        "new": "Folder baru",
+        "namePlaceholder": "Nama folder",
+        "move": "Pindahkan ke folder",
+        "remove": "Keluarkan dari folder",
+        "delete": "Hapus folder",
+        "deleteConfirm": "Hapus folder ini? Obrolan di dalamnya tetap ada."
+      }
     },
     "persona": {
       "applied": "Persona diterapkan",
@@ -307,6 +338,25 @@
       "applySchema": "Terapkan Skema",
       "cancel": "Batal",
       "enabled": "Output terstruktur diaktifkan"
+    },
+    "controls": {
+      "title": "Kontrol obrolan",
+      "systemPrompt": "Prompt sistem",
+      "systemPromptPlaceholder": "Instruksi yang hanya berlaku untuk obrolan ini…",
+      "advancedParams": "Parameter lanjutan",
+      "advancedParamsDescription": "Penggantian untuk obrolan ini. Kolom kosong memakai bawaan global.",
+      "saved": "Kontrol disimpan",
+      "saveFailed": "Gagal menyimpan kontrol",
+      "params": {
+        "temperature": "Temperatur",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Token maks.",
+        "repeatPenalty": "Penalti pengulangan",
+        "seed": "Seed",
+        "contextLength": "Panjang konteks"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Kerja",
       "exploreLabel": "Jelajahi",
       "usageAnalytics": "Penggunaan Penyedia",
-      "system": "Sistem"
+      "system": "Sistem",
+      "notes": "Catatan"
     },
     "toggleSize": "Ubah ukuran sidebar",
     "expandSidebar": "Perluas sidebar"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Antarmuka Chat",
         "showUsername": "Tampilkan Nama Pengguna",
-        "showUsernameDescription": "Tampilkan nama pengguna di pesan chat"
+        "showUsernameDescription": "Tampilkan nama pengguna di pesan chat",
+        "followUpSuggestions": "Saran tindak lanjut",
+        "followUpSuggestionsDescription": "Sarankan balasan cepat setelah setiap respons"
       },
       "background": {
         "title": "Gambar Latar",
@@ -596,6 +649,14 @@
         "coverage": "Cakupan",
         "regenerate": "Regenerasi Embedding",
         "regenerating": "Meregenerasi..."
+      },
+      "collections": {
+        "title": "Koleksi pengetahuan",
+        "description": "Kelompokkan dokumen ke dalam koleksi dan lampirkan ke obrolan mana pun.",
+        "namePlaceholder": "Nama koleksi",
+        "create": "Buat",
+        "none": "Tanpa koleksi",
+        "deleteConfirm": "Hapus koleksi ini? Dokumen di dalamnya tetap ada."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "diimpor",
       "skipped": "dilewati",
       "documents": "Dokumen",
-      "errors": "Error"
+      "errors": "Error",
+      "archivedChats": {
+        "title": "Obrolan diarsipkan",
+        "empty": "Tidak ada obrolan yang diarsipkan",
+        "unarchive": "Batalkan arsip"
+      }
     },
     "about": {
       "title": "Tentang",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Edit pesan sistem",
     "saveChanges": "Simpan perubahan",
     "cancelEditing": "Batalkan pengeditan",
+    "saveAndSubmit": "Simpan & kirim",
+    "goodResponse": "Respons bagus",
+    "badResponse": "Respons buruk",
     "delete": "Hapus",
     "deleteConfirm": "Hapus pesan ini?",
     "branch": "Cabang",
@@ -1192,6 +1261,8 @@
     "showMore": "Tampilkan lebih banyak",
     "showLess": "Tampilkan lebih sedikit",
     "thinking": "Berpikir",
+    "thoughtFor": "Berpikir selama {{duration}}",
+    "hiddenLines": "{{count}} baris tersembunyi",
     "systemMessagePlaceholder": "Masukkan pesan sistem Anda...",
     "fullSizeImage": "Gambar ukuran penuh",
     "startConversation": "Mulai percakapan",
@@ -1295,7 +1366,10 @@
     "open": "Buka",
     "dragEdgeToResize": "Seret tepi untuk mengubah ukuran",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Versi {{current}} dari {{total}}",
+    "previousVersion": "Versi sebelumnya",
+    "nextVersion": "Versi berikutnya"
   },
   "personaImportExport": {
     "title": "Impor & Ekspor Persona",
@@ -1790,7 +1864,17 @@
       "title": "Belum ada panggilan provider",
       "description": "Panggilan akan muncul di sini setelah plugin aktif menangani permintaan chat, Work, embedding, gambar, ucapan, suara, atau video."
     },
-    "privacyNote": "Penggunaan diukur di server pada batas plugin keluar. Libre WebUI menyimpan provider, model, waktu, status, dan penghitung yang dilaporkan—tidak pernah menyimpan prompt, respons, endpoint, kredensial, atau isi error provider. Total token hanya mencakup panggilan di mana provider mengembalikan metadata penggunaan."
+    "privacyNote": "Penggunaan diukur di server pada batas plugin keluar. Libre WebUI menyimpan provider, model, waktu, status, dan penghitung yang dilaporkan—tidak pernah menyimpan prompt, respons, endpoint, kredensial, atau isi error provider. Total token hanya mencakup panggilan di mana provider mengembalikan metadata penggunaan.",
+    "heatmap": {
+      "title": "Setahun aktivitas",
+      "description": "Panggilan penyedia harian selama setahun terakhir, diwarnai berdasarkan model yang paling banyak digunakan setiap hari.",
+      "calls": "panggilan",
+      "noCalls": "Tidak ada panggilan",
+      "other": "Model lainnya",
+      "less": "Sedikit",
+      "more": "Banyak",
+      "yearTotal": "{{formatted}} panggilan dalam setahun terakhir"
+    }
   },
   "systemPage": {
     "eyebrow": "Administrasi",
@@ -1912,5 +1996,23 @@
       "video": "Video",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Yang baru",
+    "releaseNotes": "Catatan rilis",
+    "cta": "Oke, ayo mulai"
+  },
+  "notes": {
+    "title": "Catatan",
+    "new": "Catatan baru",
+    "untitled": "Tanpa judul",
+    "empty": "Belum ada catatan",
+    "selectOrCreate": "Pilih catatan atau buat yang baru",
+    "contentPlaceholder": "Tulis dalam Markdown…",
+    "saved": "Tersimpan",
+    "saveFailed": "Gagal menyimpan catatan",
+    "createFailed": "Gagal membuat catatan",
+    "deleteConfirm": "Hapus catatan ini?",
+    "deleteFailed": "Gagal menghapus catatan"
   }
 }

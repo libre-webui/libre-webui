@@ -24,9 +24,17 @@ import React, {
 } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Send, Plus, Paperclip, Minus, Ghost } from 'lucide-react';
+import {
+  Send,
+  Plus,
+  Paperclip,
+  Minus,
+  Ghost,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
+import { ChatControlsPanel } from '@/components/ChatControlsPanel';
 import { CodeAwareTextarea } from '@/components/CodeAwareTextarea';
 import { ModelSelector } from '@/components/ModelSelector';
 import { PersonaIndicator } from '@/components/PersonaIndicator';
@@ -154,6 +162,7 @@ export const ChatPage: React.FC = () => {
     sendMessage,
     stopGeneration,
     regenerateLastMessage,
+    editAndResendMessage,
     selectBranch,
     isStreaming,
     streamingMessage,
@@ -186,6 +195,66 @@ export const ChatPage: React.FC = () => {
   const [welcomePromptIndex, setWelcomePromptIndex] = useState(
     getWelcomePromptIndex
   );
+  // Keyed by session so switching chats naturally hides stale suggestions.
+  const [followUps, setFollowUps] = useState<{
+    sessionId: string;
+    suggestions: string[];
+  } | null>(null);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const followUpsEnabled = useAppStore(
+    state => state.preferences.showFollowUpSuggestions !== false
+  );
+  const lastFollowUpFetchRef = useRef<string | null>(null);
+  const wasStreamingRef = useRef(false);
+
+  // Fetch follow-up suggestions when a response finishes streaming.
+  useEffect(() => {
+    const sessionId = currentSession?.id;
+    const streamingJustEnded = wasStreamingRef.current && !isStreaming;
+    wasStreamingRef.current = isStreaming;
+
+    if (!sessionId || isStreaming) return;
+    if (!followUpsEnabled || currentSession?.isPrivate) return;
+    if (!streamingJustEnded) return;
+
+    const lastMessage =
+      currentSession.messages[currentSession.messages.length - 1];
+    if (
+      !lastMessage ||
+      lastMessage.role !== 'assistant' ||
+      !lastMessage.content.trim()
+    ) {
+      return;
+    }
+    if (lastFollowUpFetchRef.current === lastMessage.id) return;
+    lastFollowUpFetchRef.current = lastMessage.id;
+
+    let cancelled = false;
+    chatApi
+      .generateFollowUps(sessionId)
+      .then(response => {
+        if (cancelled || !response.success) return;
+        // Ignore stale results if the user already moved on.
+        const state = useChatStore.getState();
+        if (state.currentSession?.id !== sessionId) return;
+        setFollowUps({
+          sessionId,
+          suggestions: response.data?.suggestions ?? [],
+        });
+      })
+      .catch(() => {
+        // Suggestions are decorative; failures stay silent.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isStreaming, currentSession, followUpsEnabled]);
+
+  const followUpSuggestions =
+    followUps && followUps.sessionId === currentSession?.id
+      ? followUps.suggestions
+      : [];
+
   const welcomePrompt = useMemo(
     () =>
       getWelcomePrompt(
@@ -471,6 +540,7 @@ export const ChatPage: React.FC = () => {
     format?: string | Record<string, unknown>
   ) => {
     if (!currentSession) return;
+    setFollowUps(null);
     sendMessage(message, images, format);
   };
 
@@ -723,21 +793,44 @@ export const ChatPage: React.FC = () => {
             />
           </div>
         )}
-        <ChatMessages
-          messages={currentSession.messages}
-          streamingMessage={streamingMessage}
-          streamingMessageId={streamingMessageId}
-          isStreaming={isStreaming}
-          toolActivities={toolActivities}
-          onRegenerate={regenerateLastMessage}
-          onSelectBranch={selectBranch}
-          className='flex-1'
-        />
-        <ChatInput
-          onSendMessage={handleSendMessage}
-          onStopGeneration={stopGeneration}
-          disabled={!currentSession}
-        />
+        <div className='flex min-h-0 flex-1'>
+          <div className='relative flex min-w-0 flex-1 flex-col'>
+            <button
+              onClick={() => setControlsOpen(open => !open)}
+              className={cn(
+                'absolute end-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950',
+                controlsOpen && 'text-primary-600 dark:text-primary-400'
+              )}
+              title={t('chat.controls.title')}
+              aria-expanded={controlsOpen}
+            >
+              <SlidersHorizontal className='h-3.5 w-3.5' />
+            </button>
+            <ChatMessages
+              messages={currentSession.messages}
+              streamingMessage={streamingMessage}
+              streamingMessageId={streamingMessageId}
+              isStreaming={isStreaming}
+              toolActivities={toolActivities}
+              onRegenerate={regenerateLastMessage}
+              onSelectBranch={selectBranch}
+              onEditResend={editAndResendMessage}
+              followUpSuggestions={followUpSuggestions}
+              onFollowUpSelect={suggestion => handleSendMessage(suggestion)}
+              className='flex-1'
+            />
+            <ChatInput
+              onSendMessage={handleSendMessage}
+              onStopGeneration={stopGeneration}
+              disabled={!currentSession}
+            />
+          </div>
+          <ChatControlsPanel
+            session={currentSession}
+            open={controlsOpen}
+            onClose={() => setControlsOpen(false)}
+          />
+        </div>
       </div>
     </div>
   );

@@ -188,6 +188,7 @@
       "evening": "Gott kvöld",
       "night": "Góða nótt"
     },
+    "followUp": "Framhald",
     "welcome": {
       "helpToday": "Hvernig get ég aðstoðað í dag?",
       "helpTonight": "Hvernig get ég aðstoðað í kvöld?",
@@ -244,7 +245,21 @@
       "attachImages": "Hengja við myndir",
       "attachments": "Viðhengi og ítarlegir eiginleikar",
       "sendMessage": "Senda skilaboð",
-      "stopGeneration": "Stöðva myndun"
+      "stopGeneration": "Stöðva myndun",
+      "menu": {
+        "uploadImages": "Hlaða upp myndum",
+        "attachDocument": "Hengja við skjal",
+        "attachWebpage": "Hengja við vefsíðu",
+        "structuredOutput": "Skipulagt úttak",
+        "attach": "Hengja við",
+        "documentAttached": "Skjal fest við",
+        "webpageAttached": "Vefsíða fest við",
+        "attachFailed": "Ekki tókst að hengja við",
+        "attachKnowledge": "Hengja við þekkingu",
+        "noCollections": "Engin söfn enn — búðu til eitt í Stillingar → Skjöl"
+      },
+      "voiceInput": "Raddinnsláttur",
+      "voiceStop": "Hætta að hlusta"
     },
     "session": {
       "new": "Nýtt spjall",
@@ -261,7 +276,23 @@
       "chats": "Spjöll",
       "renameChat": "Endurnefna spjall",
       "deleteChat": "Eyða spjalli",
-      "incognito": "Huliðspjall"
+      "incognito": "Huliðspjall",
+      "archiveChat": "Setja spjall í geymslu",
+      "groups": {
+        "today": "Í dag",
+        "yesterday": "Í gær",
+        "previous7Days": "Síðustu 7 dagar",
+        "previous30Days": "Síðustu 30 dagar",
+        "older": "Eldra"
+      },
+      "folder": {
+        "new": "Ný mappa",
+        "namePlaceholder": "Heiti möppu",
+        "move": "Færa í möppu",
+        "remove": "Fjarlægja úr möppu",
+        "delete": "Eyða möppu",
+        "deleteConfirm": "Eyða þessari möppu? Spjöll innan hennar haldast."
+      }
     },
     "persona": {
       "applied": "Persóna notuð",
@@ -307,6 +338,25 @@
       "applySchema": "Nota skema",
       "cancel": "Hætta við",
       "enabled": "Skipulagt úttak virkt"
+    },
+    "controls": {
+      "title": "Spjallstýringar",
+      "systemPrompt": "Kerfisleiðbeining",
+      "systemPromptPlaceholder": "Leiðbeiningar sem gilda aðeins fyrir þetta spjall…",
+      "advancedParams": "Ítarlegar stillingar",
+      "advancedParamsDescription": "Yfirskrift fyrir þetta spjall. Tóm svæði nota sjálfgefin gildi.",
+      "saved": "Stýringar vistaðar",
+      "saveFailed": "Ekki tókst að vista stýringar",
+      "params": {
+        "temperature": "Hitastig",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Hám. tákn",
+        "repeatPenalty": "Endurtekningarrefsing",
+        "seed": "Sáðgildi",
+        "contextLength": "Samhengislengd"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Vinna",
       "exploreLabel": "Kanna",
       "usageAnalytics": "Notkun þjónustuaðila",
-      "system": "Kerfi"
+      "system": "Kerfi",
+      "notes": "Glósur"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
     "expandSidebar": "Stækka hliðarspjald"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Spjallviðmót",
         "showUsername": "Sýna notandanafn",
-        "showUsernameDescription": "Birta notandanafn í spjallskilaboðum"
+        "showUsernameDescription": "Birta notandanafn í spjallskilaboðum",
+        "followUpSuggestions": "Framhaldstillögur",
+        "followUpSuggestionsDescription": "Stinga upp á snöggum svörum eftir hvert svar"
       },
       "background": {
         "title": "Bakgrunnsmynd",
@@ -596,6 +649,14 @@
         "coverage": "Umfang",
         "regenerate": "Endurgera innfellingar",
         "regenerating": "Endurgerar..."
+      },
+      "collections": {
+        "title": "Þekkingarsöfn",
+        "description": "Flokkaðu skjöl í söfn og hengdu þau við hvaða spjall sem er.",
+        "namePlaceholder": "Heiti safns",
+        "create": "Búa til",
+        "none": "Ekkert safn",
+        "deleteConfirm": "Eyða þessu safni? Skjölin innan þess haldast."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "flutt inn",
       "skipped": "sleppt",
       "documents": "Skjöl",
-      "errors": "Villur"
+      "errors": "Villur",
+      "archivedChats": {
+        "title": "Spjall í geymslu",
+        "empty": "Ekkert spjall í geymslu",
+        "unarchive": "Taka úr geymslu"
+      }
     },
     "about": {
       "title": "Um",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Breyta kerfisskilaboðum",
     "saveChanges": "Vista breytingar",
     "cancelEditing": "Hætta við breytingu",
+    "saveAndSubmit": "Vista og senda",
+    "goodResponse": "Gott svar",
+    "badResponse": "Slæmt svar",
     "delete": "Eyða",
     "deleteConfirm": "Eyða þessum skilaboðum?",
     "branch": "Grein",
@@ -1192,6 +1261,8 @@
     "showMore": "Sýna meira",
     "showLess": "Sýna minna",
     "thinking": "Hugsar",
+    "thoughtFor": "Hugsaði í {{duration}}",
+    "hiddenLines": "{{count}} faldar línur",
     "systemMessagePlaceholder": "Sláðu inn kerfisskilaboðin þín...",
     "fullSizeImage": "Mynd í fullri stærð",
     "startConversation": "Hefja samtal",
@@ -1295,7 +1366,10 @@
     "open": "Opna",
     "dragEdgeToResize": "Dragðu brún til að breyta stærð",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Útgáfa {{current}} af {{total}}",
+    "previousVersion": "Fyrri útgáfa",
+    "nextVersion": "Næsta útgáfa"
   },
   "personaImportExport": {
     "title": "Flytja inn og út persónur",
@@ -1790,7 +1864,17 @@
       "title": "Engar beiningar til þjónustu enn",
       "description": "Beiningar birtast hér eftir að virk viðbót sér um spjall, vinnu, ígræðslu, mynd, tal, hljóð eða myndbandabeiningar."
     },
-    "privacyNote": "Notkun er mæld á netþjóninum við jaðar útleiðarviðbótar. Libre WebUI geymir þjónustu, líkan, tímasetningu, stöðu og skráða teljara—aldrei kvaðningu, svör, endapunkta, skilríki eða villumeldingar þjónustu. Heildarfjöldi táknanna inniheldur aðeins beiningar þar sem þjónustan skilaði notkunarmetögögnum."
+    "privacyNote": "Notkun er mæld á netþjóninum við jaðar útleiðarviðbótar. Libre WebUI geymir þjónustu, líkan, tímasetningu, stöðu og skráða teljara—aldrei kvaðningu, svör, endapunkta, skilríki eða villumeldingar þjónustu. Heildarfjöldi táknanna inniheldur aðeins beiningar þar sem þjónustan skilaði notkunarmetögögnum.",
+    "heatmap": {
+      "title": "Ár af virkni",
+      "description": "Dagleg köll til veitna síðastliðið ár, lituð eftir mest notaða líkani hvers dags.",
+      "calls": "köll",
+      "noCalls": "Engin köll",
+      "other": "Önnur líkön",
+      "less": "Minna",
+      "more": "Meira",
+      "yearTotal": "{{formatted}} köll síðastliðið ár"
+    }
   },
   "systemPage": {
     "eyebrow": "Stjórnun",
@@ -1912,5 +1996,23 @@
       "video": "Myndbönd",
       "audio": "Hljóð"
     }
+  },
+  "whatsNew": {
+    "title": "Nýjungar",
+    "releaseNotes": "Útgáfuskýringar",
+    "cta": "Allt í lagi, byrjum"
+  },
+  "notes": {
+    "title": "Glósur",
+    "new": "Ný glósa",
+    "untitled": "Án titils",
+    "empty": "Engar glósur enn",
+    "selectOrCreate": "Veldu glósu eða búðu til nýja",
+    "contentPlaceholder": "Skrifaðu í Markdown…",
+    "saved": "Vistað",
+    "saveFailed": "Ekki tókst að vista glósuna",
+    "createFailed": "Ekki tókst að búa til glósu",
+    "deleteConfirm": "Eyða þessari glósu?",
+    "deleteFailed": "Ekki tókst að eyða glósunni"
   }
 }

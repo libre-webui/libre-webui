@@ -17,7 +17,21 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Send, Square, Paperclip, Plus, Minus } from 'lucide-react';
+import {
+  Send,
+  Square,
+  Paperclip,
+  Plus,
+  Minus,
+  ImageIcon,
+  FileText,
+  Globe,
+  Braces,
+  Loader2,
+  Mic,
+  BookOpen,
+  Check,
+} from 'lucide-react';
 import { Button } from '@/components/ui';
 import { CodeAwareTextarea } from './CodeAwareTextarea';
 import { MediaUpload } from './MediaUpload';
@@ -26,10 +40,10 @@ import { StructuredOutput } from './StructuredOutput';
 import { ModelSelector } from './ModelSelector';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
-import { personaApi, chatApi, imageGenApi } from '@/utils/api';
+import { personaApi, chatApi, imageGenApi, documentsApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
-import { Persona } from '@/types';
+import { Persona, KnowledgeCollection, ChatSession } from '@/types';
 import { createLogger } from '@/utils/logger';
 import {
   chatModelOptionKey,
@@ -40,6 +54,33 @@ import {
 } from '@/utils/chatModelSelection';
 
 const logger = createLogger('components:chat-input');
+
+// Minimal typings for the vendor-prefixed Web Speech API.
+interface SpeechRecognitionLike {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult:
+    | ((event: {
+        results: ArrayLike<ArrayLike<{ transcript: string }>>;
+      }) => void)
+    | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
+const getSpeechRecognition = (): SpeechRecognitionConstructor | undefined => {
+  if (typeof window === 'undefined') return undefined;
+  const w = window as unknown as {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  };
+  return w.SpeechRecognition || w.webkitSpeechRecognition;
+};
 
 interface ChatInputProps {
   onSendMessage: (
@@ -56,15 +97,27 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onStopGeneration,
   disabled = false,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [message, setMessage] = useState('');
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const dictationBaseRef = useRef('');
+  const speechSupported = useMemo(() => Boolean(getSpeechRecognition()), []);
   const [images, setImages] = useState<string[]>([]);
   const [format, setFormat] = useState<string | Record<string, unknown> | null>(
     null
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false);
+  const [webpageUrl, setWebpageUrl] = useState<string | null>(null);
+  const [knowledgeMenuOpen, setKnowledgeMenuOpen] = useState(false);
+  const [collections, setCollections] = useState<KnowledgeCollection[]>([]);
+  const [attachingWebpage, setAttachingWebpage] = useState(false);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
   const [currentPersona, setCurrentPersona] = useState<Persona | null>(null);
   const [hasImageGenPlugins, setHasImageGenPlugins] = useState(false);
+  const attachMenuRef = useRef<HTMLDivElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
   const { isGenerating, setBackgroundImage } = useAppStore();
   const imageGenerationEnabled = useAppStore(
     state => state.preferences.imageGenSettings?.enabled === true
@@ -124,6 +177,180 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       cancelled = true;
     };
   }, [imageGenerationEnabled]);
+
+  // Close the attach menu on outside clicks.
+  useEffect(() => {
+    if (!attachMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        attachMenuRef.current &&
+        !attachMenuRef.current.contains(event.target as Node)
+      ) {
+        setAttachMenuOpen(false);
+        setWebpageUrl(null);
+      }
+    };
+    window.addEventListener('mousedown', handleClickOutside);
+    return () => window.removeEventListener('mousedown', handleClickOutside);
+  }, [attachMenuOpen]);
+
+  const closeAttachMenu = () => {
+    setAttachMenuOpen(false);
+    setWebpageUrl(null);
+    setKnowledgeMenuOpen(false);
+  };
+
+  // Load collections lazily when the knowledge submenu opens.
+  useEffect(() => {
+    if (!knowledgeMenuOpen) return;
+    let cancelled = false;
+    documentsApi
+      .getCollections()
+      .then(response => {
+        if (!cancelled && response.success && response.data) {
+          setCollections(response.data);
+        }
+      })
+      .catch(() => {
+        // The submenu simply stays empty on failure.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [knowledgeMenuOpen]);
+
+  const attachedCollectionIds =
+    currentSession?.settings?.knowledgeCollectionIds ?? [];
+
+  const toggleCollection = async (collectionId: string) => {
+    if (!currentSession) return;
+    const next = attachedCollectionIds.includes(collectionId)
+      ? attachedCollectionIds.filter(id => id !== collectionId)
+      : [...attachedCollectionIds, collectionId];
+    const settings = {
+      ...currentSession.settings,
+      knowledgeCollectionIds: next.length > 0 ? next : undefined,
+    };
+
+    // Optimistic local update; persisted below for non-private sessions.
+    useChatStore.setState(state => ({
+      currentSession:
+        state.currentSession?.id === currentSession.id
+          ? { ...state.currentSession, settings }
+          : state.currentSession,
+      sessions: state.sessions.map(session =>
+        session.id === currentSession.id ? { ...session, settings } : session
+      ),
+    }));
+
+    if (currentSession.isPrivate) return;
+    try {
+      await chatApi.updateSession(currentSession.id, {
+        settings,
+      } as Partial<ChatSession>);
+    } catch (error) {
+      logger.error('Failed to update knowledge collections:', error);
+      toast.error(t('chat.input.menu.attachFailed'));
+    }
+  };
+
+  // Stop dictation when unmounting.
+  useEffect(
+    () => () => {
+      recognitionRef.current?.stop();
+    },
+    []
+  );
+
+  const toggleDictation = () => {
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const SpeechRecognitionCtor = getSpeechRecognition();
+    if (!SpeechRecognitionCtor) return;
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = i18n.language;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    dictationBaseRef.current = message;
+    recognition.onresult = event => {
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0]?.transcript ?? '';
+      }
+      const base = dictationBaseRef.current;
+      setMessage(base ? `${base} ${transcript.trim()}` : transcript.trim());
+    };
+    recognition.onend = () => {
+      recognitionRef.current = null;
+      setListening(false);
+    };
+    recognition.onerror = () => {
+      recognitionRef.current = null;
+      setListening(false);
+    };
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+      setListening(true);
+    } catch (error) {
+      logger.error('Failed to start dictation:', error);
+      recognitionRef.current = null;
+    }
+  };
+
+  const handleDocumentSelected = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    closeAttachMenu();
+    setUploadingDocument(true);
+    try {
+      const response = await documentsApi.uploadDocument(
+        file,
+        currentSession?.id
+      );
+      if (response.success) {
+        toast.success(t('chat.input.menu.documentAttached'));
+        window.dispatchEvent(new Event('libre:documents-updated'));
+      } else {
+        toast.error(response.error || t('chat.input.menu.attachFailed'));
+      }
+    } catch (error) {
+      logger.error('Document upload failed:', error);
+      toast.error(t('chat.input.menu.attachFailed'));
+    } finally {
+      setUploadingDocument(false);
+    }
+  };
+
+  const handleAttachWebpage = async () => {
+    const url = webpageUrl?.trim();
+    if (!url || attachingWebpage) return;
+    setAttachingWebpage(true);
+    try {
+      const response = await documentsApi.fetchWebpage(url, currentSession?.id);
+      if (response.success) {
+        toast.success(t('chat.input.menu.webpageAttached'));
+        window.dispatchEvent(new Event('libre:documents-updated'));
+        closeAttachMenu();
+      } else {
+        toast.error(response.error || t('chat.input.menu.attachFailed'));
+      }
+    } catch (error) {
+      const message =
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || t('chat.input.menu.attachFailed');
+      logger.error('Webpage attach failed:', error);
+      toast.error(message);
+    } finally {
+      setAttachingWebpage(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,7 +489,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           model: selection.model,
           providerType: selection.providerType,
           providerId:
-            selection.providerType === 'plugin'
+            selection.providerType === 'plugin' ||
+            selection.providerType === 'agent'
               ? selection.providerId || null
               : null,
           personaId: null,
@@ -321,33 +549,208 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_52px_rgba(15,23,42,0.11)]'
               )}
             >
-              {/* Advanced Features Toggle - Integrated Left */}
-              <Button
-                type='button'
-                variant='ghost'
-                size='sm'
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className={cn(
-                  'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
-                  'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
-                  'transition-colors duration-150 touch-manipulation',
-                  hasAdvancedFeatures &&
-                    'text-primary-600 dark:text-primary-400',
-                  showAdvanced && 'bg-gray-100 dark:bg-dark-300'
-                )}
-                title={t('chat.input.attachments')}
-              >
-                {hasAdvancedFeatures ? (
-                  <div className='relative flex items-center justify-center'>
-                    <Paperclip className='h-4 w-4' />
-                    <div className='absolute -top-0.5 -end-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
+              {/* Attach menu - Integrated Left */}
+              <div ref={attachMenuRef} className='relative flex-shrink-0'>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => {
+                    if (showAdvanced) {
+                      setShowAdvanced(false);
+                      return;
+                    }
+                    setAttachMenuOpen(open => !open);
+                    setWebpageUrl(null);
+                  }}
+                  className={cn(
+                    'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
+                    'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                    'transition-colors duration-150 touch-manipulation',
+                    hasAdvancedFeatures &&
+                      'text-primary-600 dark:text-primary-400',
+                    (showAdvanced || attachMenuOpen) &&
+                      'bg-gray-100 dark:bg-dark-300'
+                  )}
+                  title={t('chat.input.attachments')}
+                >
+                  {uploadingDocument || attachingWebpage ? (
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                  ) : hasAdvancedFeatures ? (
+                    <div className='relative flex items-center justify-center'>
+                      <Paperclip className='h-4 w-4' />
+                      <div className='absolute -top-0.5 -end-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
+                    </div>
+                  ) : showAdvanced ? (
+                    <Minus className='h-4 w-4' />
+                  ) : (
+                    <Plus className='h-4 w-4' />
+                  )}
+                </Button>
+
+                {attachMenuOpen && (
+                  <div className='absolute bottom-full start-0 z-30 mb-2 w-64 rounded-2xl border border-black/[0.08] bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'>
+                    {knowledgeMenuOpen ? (
+                      <div className='p-1'>
+                        <p className='mb-1 px-1.5 text-[11px] font-medium text-gray-500 dark:text-dark-600'>
+                          {t('chat.input.menu.attachKnowledge')}
+                        </p>
+                        {collections.length === 0 ? (
+                          <p className='px-1.5 pb-1 text-[12px] text-gray-400 dark:text-dark-500'>
+                            {t('chat.input.menu.noCollections')}
+                          </p>
+                        ) : (
+                          collections.map(collection => {
+                            const attached = attachedCollectionIds.includes(
+                              collection.id
+                            );
+                            return (
+                              <button
+                                key={collection.id}
+                                type='button'
+                                onClick={() =>
+                                  void toggleCollection(collection.id)
+                                }
+                                className={cn(
+                                  'flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
+                                  attached &&
+                                    'text-primary-600 dark:text-primary-400'
+                                )}
+                                aria-pressed={attached}
+                              >
+                                <span className='flex min-w-0 items-center gap-2'>
+                                  <BookOpen className='h-4 w-4 shrink-0' />
+                                  <span className='truncate'>
+                                    {collection.name}
+                                  </span>
+                                </span>
+                                {attached && (
+                                  <Check className='h-3.5 w-3.5 shrink-0' />
+                                )}
+                              </button>
+                            );
+                          })
+                        )}
+                        <button
+                          type='button'
+                          onClick={() => setKnowledgeMenuOpen(false)}
+                          className='mt-1 w-full rounded-lg border-t border-gray-100 px-2.5 py-1.5 text-start text-xs text-gray-500 hover:bg-gray-100 dark:border-dark-300 dark:text-dark-600 dark:hover:bg-dark-200'
+                        >
+                          {t('common.back')}
+                        </button>
+                      </div>
+                    ) : webpageUrl !== null ? (
+                      <div className='p-1.5'>
+                        <label className='mb-1.5 block text-[11px] font-medium text-gray-500 dark:text-dark-600'>
+                          {t('chat.input.menu.attachWebpage')}
+                        </label>
+                        <input
+                          type='url'
+                          value={webpageUrl}
+                          onChange={event => setWebpageUrl(event.target.value)}
+                          onKeyDown={event => {
+                            if (event.key === 'Enter') {
+                              event.preventDefault();
+                              void handleAttachWebpage();
+                            } else if (event.key === 'Escape') {
+                              setWebpageUrl(null);
+                            }
+                          }}
+                          placeholder='https://…'
+                          autoFocus
+                          dir='ltr'
+                          className='w-full rounded-lg border border-black/[0.08] bg-white px-2.5 py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
+                        />
+                        <div className='mt-2 flex justify-end gap-1.5'>
+                          <button
+                            type='button'
+                            onClick={() => setWebpageUrl(null)}
+                            className='rounded-lg px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-100 dark:text-dark-600 dark:hover:bg-dark-200'
+                          >
+                            {t('common.cancel')}
+                          </button>
+                          <button
+                            type='button'
+                            onClick={() => void handleAttachWebpage()}
+                            disabled={!webpageUrl.trim() || attachingWebpage}
+                            className='rounded-lg bg-gray-900 px-2.5 py-1 text-xs text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-dark-300 dark:hover:bg-dark-400'
+                          >
+                            {attachingWebpage ? (
+                              <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                            ) : (
+                              t('chat.input.menu.attach')
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type='button'
+                          onClick={() => {
+                            setShowAdvanced(true);
+                            closeAttachMenu();
+                          }}
+                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                        >
+                          <ImageIcon className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                          {t('chat.input.menu.uploadImages')}
+                        </button>
+                        <button
+                          type='button'
+                          onClick={() => documentInputRef.current?.click()}
+                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                        >
+                          <FileText className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                          {t('chat.input.menu.attachDocument')}
+                        </button>
+                        <button
+                          type='button'
+                          onClick={() => setWebpageUrl('')}
+                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                        >
+                          <Globe className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                          {t('chat.input.menu.attachWebpage')}
+                        </button>
+                        <button
+                          type='button'
+                          onClick={() => setKnowledgeMenuOpen(true)}
+                          className='flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                        >
+                          <span className='flex items-center gap-2.5'>
+                            <BookOpen className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                            {t('chat.input.menu.attachKnowledge')}
+                          </span>
+                          {attachedCollectionIds.length > 0 && (
+                            <span className='rounded-full bg-primary-50 px-1.5 text-[10px] font-medium tabular-nums text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'>
+                              {attachedCollectionIds.length}
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          type='button'
+                          onClick={() => {
+                            setShowAdvanced(true);
+                            closeAttachMenu();
+                          }}
+                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                        >
+                          <Braces className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                          {t('chat.input.menu.structuredOutput')}
+                        </button>
+                      </>
+                    )}
                   </div>
-                ) : showAdvanced ? (
-                  <Minus className='h-4 w-4' />
-                ) : (
-                  <Plus className='h-4 w-4' />
                 )}
-              </Button>
+
+                <input
+                  ref={documentInputRef}
+                  type='file'
+                  accept='.pdf,.txt,application/pdf,text/plain'
+                  className='hidden'
+                  onChange={event => void handleDocumentSelected(event)}
+                />
+              </div>
 
               {/* Text Input Area */}
               <div className='flex-1 min-w-0'>
@@ -381,6 +784,31 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       showImageGen={showImageGeneration}
                     />
                   </div>
+                )}
+
+                {/* Voice input */}
+                {speechSupported && (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={toggleDictation}
+                    className={cn(
+                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                      'transition-colors duration-150 touch-manipulation',
+                      listening &&
+                        'bg-red-50 text-red-500 animate-pulse dark:bg-red-900/20 dark:text-red-400'
+                    )}
+                    title={
+                      listening
+                        ? t('chat.input.voiceStop')
+                        : t('chat.input.voiceInput')
+                    }
+                    aria-pressed={listening}
+                  >
+                    <Mic className='h-4 w-4' />
+                  </Button>
                 )}
 
                 {/* Send/Stop Button - Integrated Right */}

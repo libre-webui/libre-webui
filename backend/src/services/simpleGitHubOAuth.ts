@@ -53,7 +53,7 @@ export class GitHubOAuthService {
   /**
    * Generate GitHub OAuth authorization URL
    */
-  getAuthUrl(): string {
+  getAuthUrl(state: string): string {
     if (!this.clientId) {
       throw new Error(
         'GitHub client ID not configured. Please set the GITHUB_CLIENT_ID environment variable.'
@@ -65,6 +65,7 @@ export class GitHubOAuthService {
       redirect_uri: this.callbackUrl,
       scope: 'user:email',
       response_type: 'code',
+      state,
     });
 
     return `https://github.com/login/oauth/authorize?${params.toString()}`;
@@ -99,6 +100,7 @@ export class GitHubOAuthService {
             client_id: this.clientId,
             client_secret: this.clientSecret,
             code,
+            redirect_uri: this.callbackUrl,
           }),
         }
       );
@@ -242,6 +244,7 @@ export class GitHubOAuthService {
         // The password is prefixed with 'oauth:' to mark this account as OAuth-only
         password: 'oauth:' + crypto.randomBytes(24).toString('base64'),
       });
+      if (!newUser) return null;
 
       logger.debug('Created new GitHub user:', newUser.username);
       return newUser;

@@ -30,6 +30,7 @@ export interface Document {
   fileType?: 'pdf' | 'txt';
   size?: number;
   sessionId?: string;
+  collectionId?: string;
   uploadedAt: number;
   createdAt?: number;
   metadata?: Record<string, unknown>;
@@ -43,6 +44,17 @@ export interface SessionRow {
   persona_id?: string;
   provider_type?: string | null;
   provider_id?: string | null;
+  created_at: number;
+  updated_at: number;
+  archived?: number | null;
+  settings?: string | null;
+  folder_id?: string | null;
+}
+
+export interface SessionFolderRow {
+  id: string;
+  user_id: string;
+  name: string;
   created_at: number;
   updated_at: number;
 }
@@ -62,6 +74,7 @@ export interface MessageRow {
   parent_id?: string;
   branch_index?: number;
   is_active?: number;
+  rating?: number | null;
 }
 
 export interface DocumentRow {
@@ -73,6 +86,7 @@ export interface DocumentRow {
   file_type?: string;
   size?: number;
   session_id?: string;
+  collection_id?: string | null;
   uploaded_at: number;
   created_at?: number;
   metadata?: string;
@@ -140,6 +154,7 @@ export function mapMessageRow(
     parentId: row.parent_id,
     branchIndex: row.branch_index ?? 0,
     isActive: row.is_active !== 0,
+    rating: row.rating ?? undefined,
     siblingCount: siblingCount > 1 ? siblingCount : undefined,
   };
 }
@@ -160,6 +175,9 @@ export function mapSessionRow(
     providerId: row.provider_id || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    archived: row.archived === 1,
+    settings: decryptJson(row.settings || undefined),
+    folderId: row.folder_id || undefined,
     messages: messages.map(message => mapMessageRow(message, siblingCountMap)),
   };
 }
@@ -173,6 +191,7 @@ export function mapDocumentRow(row: DocumentRow): Document {
     fileType: row.file_type as 'pdf' | 'txt' | undefined,
     size: row.size,
     sessionId: row.session_id,
+    collectionId: row.collection_id || undefined,
     uploadedAt: row.uploaded_at,
     createdAt: row.created_at,
     metadata: decryptJson<Record<string, unknown>>(row.metadata),

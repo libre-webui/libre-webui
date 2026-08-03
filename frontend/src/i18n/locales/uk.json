@@ -188,6 +188,7 @@
       "evening": "Доброго вечора",
       "night": "Доброї ночі"
     },
+    "followUp": "Продовжити",
     "welcome": {
       "helpToday": "Чим можу допомогти сьогодні?",
       "helpTonight": "Чим можу допомогти сьогодні ввечері?",
@@ -244,7 +245,21 @@
       "attachImages": "Прикріпити зображення",
       "attachments": "Вкладення та розширені функції",
       "sendMessage": "Надіслати повідомлення",
-      "stopGeneration": "Зупинити генерацію"
+      "stopGeneration": "Зупинити генерацію",
+      "menu": {
+        "uploadImages": "Завантажити зображення",
+        "attachDocument": "Прикріпити документ",
+        "attachWebpage": "Прикріпити вебсторінку",
+        "structuredOutput": "Структурований вивід",
+        "attach": "Прикріпити",
+        "documentAttached": "Документ прикріплено",
+        "webpageAttached": "Вебсторінку прикріплено",
+        "attachFailed": "Не вдалося прикріпити",
+        "attachKnowledge": "Прикріпити знання",
+        "noCollections": "Колекцій поки немає — створіть у Налаштуваннях → Документи"
+      },
+      "voiceInput": "Голосове введення",
+      "voiceStop": "Зупинити прослуховування"
     },
     "session": {
       "new": "Новий чат",
@@ -261,7 +276,23 @@
       "chats": "Чати",
       "renameChat": "Перейменувати чат",
       "deleteChat": "Видалити чат",
-      "incognito": "Приватна розмова"
+      "incognito": "Приватна розмова",
+      "archiveChat": "Архівувати чат",
+      "groups": {
+        "today": "Сьогодні",
+        "yesterday": "Вчора",
+        "previous7Days": "Останні 7 днів",
+        "previous30Days": "Останні 30 днів",
+        "older": "Старіші"
+      },
+      "folder": {
+        "new": "Нова папка",
+        "namePlaceholder": "Назва папки",
+        "move": "Перемістити до папки",
+        "remove": "Прибрати з папки",
+        "delete": "Видалити папку",
+        "deleteConfirm": "Видалити цю папку? Чати всередині збережуться."
+      }
     },
     "persona": {
       "applied": "Персону застосовано",
@@ -307,6 +338,25 @@
       "applySchema": "Застосувати схему",
       "cancel": "Скасувати",
       "enabled": "Структурований вивід увімкнено"
+    },
+    "controls": {
+      "title": "Налаштування чату",
+      "systemPrompt": "Системний промпт",
+      "systemPromptPlaceholder": "Інструкції лише для цього чату…",
+      "advancedParams": "Розширені параметри",
+      "advancedParamsDescription": "Перевизначення для цього чату. Порожні поля використовують глобальні значення.",
+      "saved": "Налаштування збережено",
+      "saveFailed": "Не вдалося зберегти налаштування",
+      "params": {
+        "temperature": "Температура",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Макс. токенів",
+        "repeatPenalty": "Штраф за повтори",
+        "seed": "Сід",
+        "contextLength": "Довжина контексту"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "Робота",
       "exploreLabel": "Огляд",
       "usageAnalytics": "Використання провайдерів",
-      "system": "Система"
+      "system": "Система",
+      "notes": "Нотатки"
     },
     "toggleSize": "Змінити розмір бічної панелі",
     "expandSidebar": "Розгорнути бічну панель"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "Інтерфейс чату",
         "showUsername": "Показувати ім'я користувача",
-        "showUsernameDescription": "Відображати ім'я користувача в повідомленнях чату"
+        "showUsernameDescription": "Відображати ім'я користувача в повідомленнях чату",
+        "followUpSuggestions": "Підказки для продовження",
+        "followUpSuggestionsDescription": "Пропонувати швидкі відповіді після кожної відповіді"
       },
       "background": {
         "title": "Фонове зображення",
@@ -596,6 +649,14 @@
         "coverage": "Покриття",
         "regenerate": "Перегенерувати ембединги",
         "regenerating": "Перегенерація..."
+      },
+      "collections": {
+        "title": "Колекції знань",
+        "description": "Групуйте документи в колекції та прикріплюйте їх до будь-якого чату.",
+        "namePlaceholder": "Назва колекції",
+        "create": "Створити",
+        "none": "Без колекції",
+        "deleteConfirm": "Видалити цю колекцію? Документи всередині збережуться."
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "імпортовано",
       "skipped": "пропущено",
       "documents": "Документи",
-      "errors": "Помилки"
+      "errors": "Помилки",
+      "archivedChats": {
+        "title": "Архівовані чати",
+        "empty": "Немає архівованих чатів",
+        "unarchive": "Відновити"
+      }
     },
     "about": {
       "title": "Про програму",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "Редагувати системне повідомлення",
     "saveChanges": "Зберегти зміни",
     "cancelEditing": "Скасувати редагування",
+    "saveAndSubmit": "Зберегти й надіслати",
+    "goodResponse": "Гарна відповідь",
+    "badResponse": "Погана відповідь",
     "delete": "Видалити",
     "deleteConfirm": "Видалити це повідомлення?",
     "branch": "Гілка",
@@ -1192,6 +1261,8 @@
     "showMore": "Показати більше",
     "showLess": "Показати менше",
     "thinking": "Обмірковує",
+    "thoughtFor": "Думав {{duration}}",
+    "hiddenLines": "Приховано рядків: {{count}}",
     "systemMessagePlaceholder": "Введіть системне повідомлення...",
     "fullSizeImage": "Повнорозмірне зображення",
     "startConversation": "Почати розмову",
@@ -1295,7 +1366,10 @@
     "open": "Відкрити",
     "dragEdgeToResize": "Перетягніть край для зміни розміру",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Версія {{current}} з {{total}}",
+    "previousVersion": "Попередня версія",
+    "nextVersion": "Наступна версія"
   },
   "personaImportExport": {
     "title": "Імпорт та експорт персон",
@@ -1790,7 +1864,17 @@
       "title": "Викликів провайдерів ще немає",
       "description": "Виклики з'являться тут після того, як увімкнений плагін обробить запити чату, Work, вбудовування, зображення, мовлення, звуку або відео."
     },
-    "privacyNote": "Використання вимірюється на сервері на межі вихідного плагіна. Libre WebUI зберігає провайдера, модель, час, статус і звітовані лічильники — ніколи промпти, відповіді, кінцеві точки, облікові дані або тіла помилок провайдера. Підсумки токенів включають лише виклики, у яких провайдер повернув метадані використання."
+    "privacyNote": "Використання вимірюється на сервері на межі вихідного плагіна. Libre WebUI зберігає провайдера, модель, час, статус і звітовані лічильники — ніколи промпти, відповіді, кінцеві точки, облікові дані або тіла помилок провайдера. Підсумки токенів включають лише виклики, у яких провайдер повернув метадані використання.",
+    "heatmap": {
+      "title": "Рік активності",
+      "description": "Щоденні виклики провайдерів за останній рік, розфарбовані за найуживанішою моделлю кожного дня.",
+      "calls": "викликів",
+      "noCalls": "Немає викликів",
+      "other": "Інші моделі",
+      "less": "Менше",
+      "more": "Більше",
+      "yearTotal": "{{formatted}} викликів за останній рік"
+    }
   },
   "systemPage": {
     "eyebrow": "Адміністрування",
@@ -1912,5 +1996,23 @@
       "video": "Відео",
       "audio": "Аудіо"
     }
+  },
+  "whatsNew": {
+    "title": "Що нового",
+    "releaseNotes": "Нотатки випуску",
+    "cta": "Гаразд, поїхали"
+  },
+  "notes": {
+    "title": "Нотатки",
+    "new": "Нова нотатка",
+    "untitled": "Без назви",
+    "empty": "Нотаток поки немає",
+    "selectOrCreate": "Виберіть нотатку або створіть нову",
+    "contentPlaceholder": "Пишіть у Markdown…",
+    "saved": "Збережено",
+    "saveFailed": "Не вдалося зберегти нотатку",
+    "createFailed": "Не вдалося створити нотатку",
+    "deleteConfirm": "Видалити цю нотатку?",
+    "deleteFailed": "Не вдалося видалити нотатку"
   }
 }

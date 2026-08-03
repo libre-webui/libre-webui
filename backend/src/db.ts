@@ -186,8 +186,48 @@ function initializeTables(): void {
       provider_id TEXT, -- Plugin ID when provider_type is plugin
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
+      archived INTEGER DEFAULT 0, -- Hidden from the sidebar until unarchived
+      settings TEXT, -- Encrypted JSON with per-chat overrides
+      folder_id TEXT, -- Optional folder this chat lives in
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE SET NULL
+    )
+  `);
+
+  // Folders for organizing chat sessions
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS session_folders (
+      id TEXT PRIMARY KEY,
+      user_id TEXT DEFAULT 'default',
+      name TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Knowledge collections group documents for reuse across chats
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS knowledge_collections (
+      id TEXT PRIMARY KEY,
+      user_id TEXT DEFAULT 'default',
+      name TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Standalone notes
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS notes (
+      id TEXT PRIMARY KEY,
+      user_id TEXT DEFAULT 'default',
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
 
@@ -205,6 +245,7 @@ function initializeTables(): void {
       images TEXT, -- JSON array of base64 images (for multimodal support)
       statistics TEXT, -- JSON object with generation statistics
       artifacts TEXT, -- JSON array of artifacts
+      rating INTEGER, -- User feedback: 1 = liked, -1 = disliked
       FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
     )
   `);
@@ -238,6 +279,7 @@ function initializeTables(): void {
     { name: 'file_type', type: 'TEXT' },
     { name: 'size', type: 'INTEGER' },
     { name: 'session_id', type: 'TEXT' },
+    { name: 'collection_id', type: 'TEXT' },
   ]) {
     if (!existingDocumentColumns.has(column.name)) {
       db.exec(`ALTER TABLE documents ADD COLUMN ${column.name} ${column.type}`);
@@ -511,6 +553,8 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_session_messages_timestamp ON session_messages(timestamp);
     CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
     CREATE INDEX IF NOT EXISTS idx_documents_uploaded_at ON documents(uploaded_at);
+    CREATE INDEX IF NOT EXISTS idx_notes_user_updated ON notes(user_id, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_session_folders_user_id ON session_folders(user_id);
     CREATE INDEX IF NOT EXISTS idx_document_chunks_document_id ON document_chunks(document_id);
     CREATE INDEX IF NOT EXISTS idx_document_chunks_index ON document_chunks(chunk_index);
     CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
@@ -700,6 +744,7 @@ function runMigrations(): void {
       { name: 'parent_id', type: 'TEXT' }, // ID of the original message this is a variant of
       { name: 'branch_index', type: 'INTEGER DEFAULT 0' }, // Index within branch group (0 = original)
       { name: 'is_active', type: 'INTEGER DEFAULT 1' }, // Whether this is the active variant (1 = true)
+      { name: 'rating', type: 'INTEGER' }, // User feedback: 1 = liked, -1 = disliked
     ];
 
     for (const column of newSessionMessagesColumns) {
@@ -733,6 +778,9 @@ function runMigrations(): void {
     for (const column of [
       { name: 'provider_type', type: 'TEXT' },
       { name: 'provider_id', type: 'TEXT' },
+      { name: 'archived', type: 'INTEGER DEFAULT 0' },
+      { name: 'settings', type: 'TEXT' },
+      { name: 'folder_id', type: 'TEXT' },
     ]) {
       if (!existingSessionsColumns.includes(column.name)) {
         logger.debug(`Adding column ${column.name} to sessions table`);

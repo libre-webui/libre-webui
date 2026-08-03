@@ -17,6 +17,7 @@
 
 import documentService from '../services/documentService.js';
 import preferencesService from '../services/preferencesService.js';
+import storageService from '../storage.js';
 
 export interface ChatDocumentContext {
   documentContext: string;
@@ -33,10 +34,17 @@ export async function buildChatDocumentContext(
   const preferences = preferencesService.getPreferences(userId);
 
   if (preferences.embeddingSettings?.enabled) {
+    // Documents from knowledge collections attached to this chat join the
+    // session's own uploads in the searchable scope.
+    const knowledgeCollectionIds = storageService.getSession(sessionId, userId)
+      ?.settings?.knowledgeCollectionIds;
+
     const relevantDocuments = await documentService.searchDocuments(
       message,
       userId,
-      sessionId
+      sessionId,
+      5,
+      knowledgeCollectionIds
     );
 
     if (relevantDocuments.length > 0) {

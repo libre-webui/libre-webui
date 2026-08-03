@@ -53,7 +53,10 @@ export const preferencesApi = {
         updateDemoPreferences({
           defaultModel: model,
           defaultProviderType: providerType,
-          defaultProviderId: providerType === 'plugin' ? providerId : null,
+          defaultProviderId:
+            providerType === 'plugin' || providerType === 'agent'
+              ? providerId
+              : null,
         })
       );
     }

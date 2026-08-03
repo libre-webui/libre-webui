@@ -21,6 +21,7 @@ import {
   ChatProviderSelection,
   Persona,
   MemorySearchResult,
+  SessionFolder,
 } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
 import storageService from '../storage.js';
@@ -34,6 +35,10 @@ import {
   sanitizeChatMessageProviderState,
   selectChatMessagesForContext,
 } from '../utils/chatContext.js';
+import {
+  MAX_SESSION_FOLDER_NAME_LENGTH,
+  ResourcePolicyError,
+} from '../utils/resourceLimits.js';
 
 const logger = createLogger('chat-service');
 
@@ -336,7 +341,12 @@ class ChatService {
     const updatedMessage = sanitizeChatMessageProviderState<ChatMessage>({
       ...session.messages[messageIndex],
       ...updates,
-      timestamp: Date.now(), // Always update timestamp
+      // Only content edits move the timestamp; metadata updates (e.g. rating)
+      // keep the message's place in time.
+      timestamp:
+        updates.content !== undefined
+          ? Date.now()
+          : session.messages[messageIndex].timestamp,
     });
 
     session.messages[messageIndex] = updatedMessage;
@@ -357,6 +367,68 @@ class ChatService {
     const deleted = storageService.deleteSession(sessionId, userId);
     if (deleted) {
       this.sessions.delete(sessionId);
+    }
+    return deleted;
+  }
+
+  getSessionFolders(userId: string = 'default'): SessionFolder[] {
+    return storageService.getSessionFolders(userId);
+  }
+
+  createSessionFolder(
+    name: unknown,
+    userId: string = 'default'
+  ): SessionFolder {
+    const normalizedName = this.normalizeSessionFolderName(name);
+    const now = Date.now();
+    const folder: SessionFolder = {
+      id: uuidv4(),
+      name: normalizedName,
+      createdAt: now,
+      updatedAt: now,
+    };
+    storageService.saveSessionFolder(folder, userId);
+    return folder;
+  }
+
+  renameSessionFolder(
+    folderId: string,
+    name: unknown,
+    userId: string = 'default'
+  ): SessionFolder | undefined {
+    const normalizedName = this.normalizeSessionFolderName(name);
+    const folder = storageService
+      .getSessionFolders(userId)
+      .find(item => item.id === folderId);
+    if (!folder) return undefined;
+    const updated = { ...folder, name: normalizedName, updatedAt: Date.now() };
+    storageService.saveSessionFolder(updated, userId);
+    return updated;
+  }
+
+  private normalizeSessionFolderName(name: unknown): string {
+    if (typeof name !== 'string' || !name.trim()) {
+      throw new ResourcePolicyError('Name is required', 400);
+    }
+    const normalizedName = name.trim();
+    if (normalizedName.length > MAX_SESSION_FOLDER_NAME_LENGTH) {
+      throw new ResourcePolicyError(
+        `Name exceeds the maximum length of ${MAX_SESSION_FOLDER_NAME_LENGTH} characters`,
+        400
+      );
+    }
+    return normalizedName;
+  }
+
+  deleteSessionFolder(folderId: string, userId: string = 'default'): boolean {
+    const deleted = storageService.deleteSessionFolder(folderId, userId);
+    if (deleted) {
+      // Keep the in-memory cache consistent with the cleared folder links.
+      for (const session of this.getAllSessions(userId)) {
+        if (session.folderId === folderId) {
+          this.sessions.set(session.id, { ...session, folderId: undefined });
+        }
+      }
     }
     return deleted;
   }

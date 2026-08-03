@@ -21,6 +21,10 @@ import { useAppStore } from '@/store/appStore';
 import { GenerationStatistics, ToolActivity } from '@/types';
 import websocketService from '@/utils/websocket';
 import { generateId } from '@/utils';
+import {
+  trackThinkingProgress,
+  takeThinkingDuration,
+} from '@/utils/thinkingTimer';
 import { chatApi } from '@/utils/api';
 import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
@@ -220,6 +224,7 @@ export const useChat = (sessionId: string) => {
       if (messageId) {
         // Always update the content buffer and UI immediately for responsive streaming
         streamingContentRef.current = chunkData.total;
+        trackThinkingProgress(messageId, chunkData.total);
         publishStreamingMessage(chunkData.total, chunkData.done);
 
         // Debounced store updates - only update when streaming slows down or finishes
@@ -301,11 +306,22 @@ export const useChat = (sessionId: string) => {
           streamingContentRef.current || completeData.content;
 
         // Use updateMessageWithStatistics to include generation statistics
+        // The backend times the thinking phase for Ollama streams; the local
+        // timer covers providers that stream without statistics.
+        const thinkingDurationMs = takeThinkingDuration(messageId);
+        const statistics =
+          completeData.statistics?.thinking_duration_ms === undefined &&
+          thinkingDurationMs !== undefined
+            ? {
+                ...completeData.statistics,
+                thinking_duration_ms: thinkingDurationMs,
+              }
+            : completeData.statistics;
         updateMessageWithStatistics(
           sessionId,
           messageId,
           finalContent,
-          completeData.statistics,
+          statistics,
           completeData.providerMetadata
         );
       }
@@ -489,7 +505,10 @@ export const useChat = (sessionId: string) => {
             content: content.trim(),
             images: images,
             format: format,
-            options: preferences.generationOptions,
+            options: {
+              ...preferences.generationOptions,
+              ...session?.settings?.generationOptions,
+            },
             assistantMessageId, // Send the message ID to backend
             isPrivate: isPrivateSession, // Private sessions don't persist to DB
             ...(isPrivateSession
@@ -632,7 +651,10 @@ export const useChat = (sessionId: string) => {
           sessionId,
           content: lastUserMessage.content,
           images: lastUserMessage.images,
-          options: preferences.generationOptions,
+          options: {
+            ...preferences.generationOptions,
+            ...session.settings?.generationOptions,
+          },
           assistantMessageId: newBranchMessageId,
           regenerate: true,
           originalMessageId: lastAssistantMessage.id, // For branching
@@ -735,10 +757,43 @@ export const useChat = (sessionId: string) => {
     [sessionId]
   );
 
+  // Edit a user message: drop it and everything after, then resend the
+  // edited content as a fresh turn.
+  const editAndResendMessage = useCallback(
+    async (messageId: string, newContent: string) => {
+      if (!sessionId || !newContent.trim()) return;
+
+      const state = useChatStore.getState();
+      const session = state.currentSession;
+      if (!session || session.id !== sessionId) return;
+
+      const index = session.messages.findIndex(m => m.id === messageId);
+      if (index === -1 || session.messages[index].role !== 'user') return;
+
+      const editedMessage = session.messages[index];
+      const truncatedMessages = session.messages.slice(0, index);
+
+      try {
+        if (!session.isPrivate) {
+          await chatApi.updateSession(sessionId, {
+            messages: truncatedMessages,
+          });
+        }
+        state.truncateMessagesFrom(sessionId, messageId);
+        await sendMessage(newContent, editedMessage.images);
+      } catch (error) {
+        logger.error('Failed to edit message:', error);
+        toast.error('Failed to edit message');
+      }
+    },
+    [sessionId, sendMessage]
+  );
+
   return {
     sendMessage,
     stopGeneration,
     regenerateLastMessage,
+    editAndResendMessage,
     selectBranch,
     isStreaming,
     streamingMessage,

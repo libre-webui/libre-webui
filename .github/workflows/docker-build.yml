@@ -227,3 +227,13 @@ jobs:
       - name: Inspect Docker Hub image
         run: |
           docker buildx imagetools inspect ${{ env.DOCKERHUB_REGISTRY }}/${{ env.DOCKERHUB_USERNAME }}/libre-webui:${{ steps.meta-dockerhub.outputs.version }}
+
+      - name: Update Docker Hub description
+        if: github.ref == 'refs/heads/main'
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.DOCKERHUB_USERNAME }}/libre-webui
+          short-description: Local-first workspace for chat, private knowledge, artifacts, and isolated model-driven work.
+          readme-filepath: ./.github/DOCKERHUB.md

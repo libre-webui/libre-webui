@@ -188,6 +188,7 @@
       "evening": "晚上好",
       "night": "夜深了"
     },
+    "followUp": "后续问题",
     "welcome": {
       "helpToday": "今天我能帮您什么？",
       "helpTonight": "今晚我能帮您什么？",
@@ -244,7 +245,21 @@
       "attachImages": "添加图片",
       "attachments": "附件和高级功能",
       "sendMessage": "发送消息",
-      "stopGeneration": "停止生成"
+      "stopGeneration": "停止生成",
+      "menu": {
+        "uploadImages": "上传图片",
+        "attachDocument": "附加文档",
+        "attachWebpage": "附加网页",
+        "structuredOutput": "结构化输出",
+        "attach": "附加",
+        "documentAttached": "文档已附加",
+        "webpageAttached": "网页已附加",
+        "attachFailed": "无法附加",
+        "attachKnowledge": "附加知识",
+        "noCollections": "还没有集合 — 在 设置 → 文档 中创建"
+      },
+      "voiceInput": "语音输入",
+      "voiceStop": "停止聆听"
     },
     "session": {
       "new": "新对话",
@@ -261,7 +276,23 @@
       "chats": "对话",
       "renameChat": "重命名对话",
       "deleteChat": "删除对话",
-      "incognito": "隐身聊天"
+      "incognito": "隐身聊天",
+      "archiveChat": "归档聊天",
+      "groups": {
+        "today": "今天",
+        "yesterday": "昨天",
+        "previous7Days": "过去 7 天",
+        "previous30Days": "过去 30 天",
+        "older": "更早"
+      },
+      "folder": {
+        "new": "新建文件夹",
+        "namePlaceholder": "文件夹名称",
+        "move": "移动到文件夹",
+        "remove": "从文件夹中移除",
+        "delete": "删除文件夹",
+        "deleteConfirm": "删除此文件夹？其中的聊天会保留。"
+      }
     },
     "persona": {
       "applied": "已应用角色",
@@ -307,6 +338,25 @@
       "applySchema": "应用模式",
       "cancel": "取消",
       "enabled": "已启用结构化输出"
+    },
+    "controls": {
+      "title": "聊天控制",
+      "systemPrompt": "系统提示词",
+      "systemPromptPlaceholder": "仅适用于此聊天的指令…",
+      "advancedParams": "高级参数",
+      "advancedParamsDescription": "此聊天的覆盖设置。留空则使用全局默认值。",
+      "saved": "聊天控制已保存",
+      "saveFailed": "无法保存聊天控制",
+      "params": {
+        "temperature": "温度",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "最大 Token 数",
+        "repeatPenalty": "重复惩罚",
+        "seed": "种子",
+        "contextLength": "上下文长度"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "工作",
       "exploreLabel": "探索",
       "usageAnalytics": "提供商使用情况",
-      "system": "系统"
+      "system": "系统",
+      "notes": "笔记"
     },
     "toggleSize": "切换侧边栏大小",
     "expandSidebar": "展开侧边栏"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "聊天界面",
         "showUsername": "显示用户名",
-        "showUsernameDescription": "在聊天消息中显示用户名"
+        "showUsernameDescription": "在聊天消息中显示用户名",
+        "followUpSuggestions": "后续建议",
+        "followUpSuggestionsDescription": "每次回复后建议快捷回复"
       },
       "background": {
         "title": "背景图片",
@@ -596,6 +649,14 @@
         "coverage": "覆盖率",
         "regenerate": "重新生成嵌入",
         "regenerating": "重新生成中..."
+      },
+      "collections": {
+        "title": "知识集合",
+        "description": "将文档分组为集合，并附加到任意聊天。",
+        "namePlaceholder": "集合名称",
+        "create": "创建",
+        "none": "无集合",
+        "deleteConfirm": "删除此集合？其中的文档会保留。"
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "已导入",
       "skipped": "已跳过",
       "documents": "文档",
-      "errors": "错误"
+      "errors": "错误",
+      "archivedChats": {
+        "title": "已归档的聊天",
+        "empty": "没有已归档的聊天",
+        "unarchive": "取消归档"
+      }
     },
     "about": {
       "title": "关于",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "编辑系统消息",
     "saveChanges": "保存更改",
     "cancelEditing": "取消编辑",
+    "saveAndSubmit": "保存并发送",
+    "goodResponse": "回答得好",
+    "badResponse": "回答不佳",
     "delete": "删除",
     "deleteConfirm": "删除此消息？",
     "branch": "分支",
@@ -1192,6 +1261,8 @@
     "showMore": "显示更多",
     "showLess": "显示更少",
     "thinking": "思考中",
+    "thoughtFor": "思考了 {{duration}}",
+    "hiddenLines": "隐藏了 {{count}} 行",
     "systemMessagePlaceholder": "输入系统消息...",
     "fullSizeImage": "全尺寸图像",
     "startConversation": "开始对话",
@@ -1295,7 +1366,10 @@
     "open": "打开",
     "dragEdgeToResize": "拖动边缘调整大小",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "第 {{current}} 版，共 {{total}} 版",
+    "previousVersion": "上一版本",
+    "nextVersion": "下一版本"
   },
   "personaImportExport": {
     "title": "导入和导出角色",
@@ -1790,7 +1864,17 @@
       "title": "暂无提供商调用",
       "description": "当已启用的插件处理聊天、工作、嵌入、图像、语音、声音或视频请求后，调用将显示在此处。"
     },
-    "privacyNote": "使用量在服务器的出站插件边界处进行计量。Libre WebUI 存储提供商、模型、计时、状态和已报告的计数器——绝不存储提示词、响应、端点、凭据或提供商错误正文。Token 总量仅包含提供商返回使用元数据的调用。"
+    "privacyNote": "使用量在服务器的出站插件边界处进行计量。Libre WebUI 存储提供商、模型、计时、状态和已报告的计数器——绝不存储提示词、响应、端点、凭据或提供商错误正文。Token 总量仅包含提供商返回使用元数据的调用。",
+    "heatmap": {
+      "title": "一年的活动",
+      "description": "过去一年每日的提供商调用量，按当天使用最多的模型着色。",
+      "calls": "次调用",
+      "noCalls": "无调用",
+      "other": "其他模型",
+      "less": "少",
+      "more": "多",
+      "yearTotal": "过去一年共 {{formatted}} 次调用"
+    }
   },
   "systemPage": {
     "eyebrow": "管理",
@@ -1912,5 +1996,23 @@
       "video": "视频",
       "audio": "音频"
     }
+  },
+  "whatsNew": {
+    "title": "新功能",
+    "releaseNotes": "版本说明",
+    "cta": "好的，开始吧"
+  },
+  "notes": {
+    "title": "笔记",
+    "new": "新建笔记",
+    "untitled": "无标题",
+    "empty": "还没有笔记",
+    "selectOrCreate": "选择一条笔记或新建一条",
+    "contentPlaceholder": "用 Markdown 书写…",
+    "saved": "已保存",
+    "saveFailed": "无法保存笔记",
+    "createFailed": "无法创建笔记",
+    "deleteConfirm": "删除此笔记？",
+    "deleteFailed": "无法删除笔记"
   }
 }

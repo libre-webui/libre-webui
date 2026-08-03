@@ -32,6 +32,7 @@ export interface GenerationStatistics {
   tokens_per_second?: number; // Calculated tokens/second
   created_at?: string; // Timestamp from Ollama
   model?: string; // Model used for generation
+  thinking_duration_ms?: number; // Wall-clock time of the reasoning phase, measured client-side
 }
 
 export interface Artifact {
@@ -61,6 +62,7 @@ export interface ChatMessage {
   branchIndex?: number; // Index within branch group (0 = original)
   isActive?: boolean; // Whether this is the active variant
   siblingCount?: number; // Total number of variants (including this one)
+  rating?: number; // User feedback: 1 = liked, -1 = disliked
 }
 
 export interface ChatSession {
@@ -74,6 +76,29 @@ export interface ChatSession {
   updatedAt: number;
   personaId?: string | null;
   isPrivate?: boolean; // Private sessions are not saved to backend
+  archived?: boolean; // Hidden from the sidebar until unarchived
+  settings?: ChatSessionSettings; // Per-chat overrides applied over global defaults
+  folderId?: string | null; // Optional folder this chat lives in
+}
+
+export interface ChatSessionSettings {
+  generationOptions?: Partial<GenerationOptions>;
+  knowledgeCollectionIds?: string[]; // Collections whose documents join this chat's context
+}
+
+export interface SessionFolder {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export type ChatProviderType = 'ollama' | 'plugin' | 'agent';
@@ -111,6 +136,8 @@ export interface OllamaModel {
   // Agent-CLI fields (installed coding agents exposed as chat models)
   isAgent?: boolean;
   agentName?: string;
+  /** CLI id shared by every entry of one agent CLI; the chat providerId. */
+  agentId?: string;
   isLegacySelection?: boolean;
   isUnavailable?: boolean;
 }
@@ -262,6 +289,7 @@ export interface UserPreferences {
   imageGenSettings?: ImageGenSettings;
   titleSettings?: TitleSettings;
   showUsername: boolean; // If true, show username in chat; if false, show "you"
+  showFollowUpSuggestions?: boolean; // Suggest follow-up messages after responses
   workRemoteProviderDisclosureDismissed: boolean;
   backgroundSettings?: {
     enabled: boolean;
@@ -412,7 +440,16 @@ export interface DocumentSummary {
   fileType: 'pdf' | 'txt';
   size: number;
   sessionId?: string;
+  collectionId?: string;
   uploadedAt: number;
+}
+
+export interface KnowledgeCollection {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  documentCount?: number;
 }
 
 export interface DocumentDetail extends DocumentSummary {

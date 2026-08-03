@@ -49,6 +49,13 @@ export const DocumentIndicator: React.FC<DocumentIndicatorProps> = ({
     };
 
     loadDocuments();
+    const handleDocumentsUpdated = () => void loadDocuments();
+    window.addEventListener('libre:documents-updated', handleDocumentsUpdated);
+    return () =>
+      window.removeEventListener(
+        'libre:documents-updated',
+        handleDocumentsUpdated
+      );
   }, [sessionId]);
 
   if (!sessionId || documents.length === 0) {

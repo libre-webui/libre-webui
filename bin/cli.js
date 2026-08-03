@@ -28,7 +28,7 @@ const versionFlags = ['-v', '--version'];
 
 if (args.some(arg => helpFlags.includes(arg))) {
   console.log(`
-Libre WebUI - Privacy-First AI Chat Interface
+Libre WebUI - Local-First AI Workspace
 
 Usage: npx libre-webui [options]
 
@@ -129,7 +129,7 @@ console.log(`
 ╭─────────────────────────────────────────────────╮
 │                                                 │
 │   Libre WebUI                                   │
-│   Privacy-First AI Chat Interface               │
+│   Local-First AI Workspace                      │
 │                                                 │
 ╰─────────────────────────────────────────────────╯
 

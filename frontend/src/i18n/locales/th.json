@@ -188,6 +188,7 @@
       "evening": "สวัสดีตอนเย็น",
       "night": "สวัสดีตอนดึก"
     },
+    "followUp": "ติดตามต่อ",
     "welcome": {
       "helpToday": "วันนี้ฉันช่วยอะไรได้บ้าง?",
       "helpTonight": "คืนนี้ฉันช่วยอะไรได้บ้าง?",
@@ -244,7 +245,21 @@
       "attachImages": "แนบรูปภาพ",
       "attachments": "ไฟล์แนบและฟีเจอร์ขั้นสูง",
       "sendMessage": "ส่งข้อความ",
-      "stopGeneration": "หยุดการสร้าง"
+      "stopGeneration": "หยุดการสร้าง",
+      "menu": {
+        "uploadImages": "อัปโหลดรูปภาพ",
+        "attachDocument": "แนบเอกสาร",
+        "attachWebpage": "แนบหน้าเว็บ",
+        "structuredOutput": "เอาต์พุตที่มีโครงสร้าง",
+        "attach": "แนบ",
+        "documentAttached": "แนบเอกสารแล้ว",
+        "webpageAttached": "แนบหน้าเว็บแล้ว",
+        "attachFailed": "ไม่สามารถแนบได้",
+        "attachKnowledge": "แนบความรู้",
+        "noCollections": "ยังไม่มีคอลเลกชัน — สร้างได้ในตั้งค่า → เอกสาร"
+      },
+      "voiceInput": "ป้อนด้วยเสียง",
+      "voiceStop": "หยุดฟัง"
     },
     "session": {
       "new": "แชทใหม่",
@@ -261,7 +276,23 @@
       "chats": "แชท",
       "renameChat": "เปลี่ยนชื่อแชท",
       "deleteChat": "ลบแชท",
-      "incognito": "แชทไม่ระบุตัวตน"
+      "incognito": "แชทไม่ระบุตัวตน",
+      "archiveChat": "เก็บแชทถาวร",
+      "groups": {
+        "today": "วันนี้",
+        "yesterday": "เมื่อวาน",
+        "previous7Days": "7 วันที่ผ่านมา",
+        "previous30Days": "30 วันที่ผ่านมา",
+        "older": "เก่ากว่า"
+      },
+      "folder": {
+        "new": "โฟลเดอร์ใหม่",
+        "namePlaceholder": "ชื่อโฟลเดอร์",
+        "move": "ย้ายไปยังโฟลเดอร์",
+        "remove": "นำออกจากโฟลเดอร์",
+        "delete": "ลบโฟลเดอร์",
+        "deleteConfirm": "ลบโฟลเดอร์นี้? แชทข้างในจะยังอยู่"
+      }
     },
     "persona": {
       "applied": "ใช้เพอร์โซน่าแล้ว",
@@ -307,6 +338,25 @@
       "applySchema": "ใช้สกีมา",
       "cancel": "ยกเลิก",
       "enabled": "เปิดใช้เอาต์พุตที่มีโครงสร้างแล้ว"
+    },
+    "controls": {
+      "title": "การควบคุมแชท",
+      "systemPrompt": "พรอมต์ระบบ",
+      "systemPromptPlaceholder": "คำสั่งที่ใช้กับแชทนี้เท่านั้น…",
+      "advancedParams": "พารามิเตอร์ขั้นสูง",
+      "advancedParamsDescription": "การแทนที่สำหรับแชทนี้ ช่องว่างจะใช้ค่าเริ่มต้นส่วนกลาง",
+      "saved": "บันทึกการควบคุมแล้ว",
+      "saveFailed": "ไม่สามารถบันทึกการควบคุมได้",
+      "params": {
+        "temperature": "อุณหภูมิ",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "โทเคนสูงสุด",
+        "repeatPenalty": "บทลงโทษการทำซ้ำ",
+        "seed": "ซีด",
+        "contextLength": "ความยาวบริบท"
+      }
     }
   },
   "sidebar": {
@@ -322,7 +372,8 @@
       "work": "งาน",
       "exploreLabel": "สำรวจ",
       "usageAnalytics": "การใช้งานผู้ให้บริการ",
-      "system": "ระบบ"
+      "system": "ระบบ",
+      "notes": "บันทึกย่อ"
     },
     "toggleSize": "สลับขนาดแถบด้านข้าง",
     "expandSidebar": "ขยายแถบด้านข้าง"
@@ -402,7 +453,9 @@
       "chatInterface": {
         "title": "อินเทอร์เฟซแชท",
         "showUsername": "แสดงชื่อผู้ใช้",
-        "showUsernameDescription": "แสดงชื่อผู้ใช้ในข้อความแชท"
+        "showUsernameDescription": "แสดงชื่อผู้ใช้ในข้อความแชท",
+        "followUpSuggestions": "คำแนะนำติดตามต่อ",
+        "followUpSuggestionsDescription": "แนะนำการตอบกลับด่วนหลังการตอบแต่ละครั้ง"
       },
       "background": {
         "title": "รูปพื้นหลัง",
@@ -596,6 +649,14 @@
         "coverage": "ความครอบคลุม",
         "regenerate": "สร้าง Embeddings ใหม่",
         "regenerating": "กำลังสร้างใหม่..."
+      },
+      "collections": {
+        "title": "คอลเลกชันความรู้",
+        "description": "จัดกลุ่มเอกสารเป็นคอลเลกชันและแนบกับแชทใดก็ได้",
+        "namePlaceholder": "ชื่อคอลเลกชัน",
+        "create": "สร้าง",
+        "none": "ไม่มีคอลเลกชัน",
+        "deleteConfirm": "ลบคอลเลกชันนี้? เอกสารข้างในจะยังอยู่"
       }
     },
     "tts": {
@@ -671,7 +732,12 @@
       "importedLabel": "นำเข้าแล้ว",
       "skipped": "ข้ามแล้ว",
       "documents": "เอกสาร",
-      "errors": "ข้อผิดพลาด"
+      "errors": "ข้อผิดพลาด",
+      "archivedChats": {
+        "title": "แชทที่เก็บถาวร",
+        "empty": "ไม่มีแชทที่เก็บถาวร",
+        "unarchive": "เลิกเก็บถาวร"
+      }
     },
     "about": {
       "title": "เกี่ยวกับ",
@@ -1183,6 +1249,9 @@
     "editSystemMessage": "แก้ไขข้อความระบบ",
     "saveChanges": "บันทึกการเปลี่ยนแปลง",
     "cancelEditing": "ยกเลิกการแก้ไข",
+    "saveAndSubmit": "บันทึกและส่ง",
+    "goodResponse": "คำตอบที่ดี",
+    "badResponse": "คำตอบที่ไม่ดี",
     "delete": "ลบ",
     "deleteConfirm": "ลบข้อความนี้?",
     "branch": "สาขา",
@@ -1192,6 +1261,8 @@
     "showMore": "แสดงเพิ่มเติม",
     "showLess": "แสดงน้อยลง",
     "thinking": "กำลังคิด",
+    "thoughtFor": "คิดเป็นเวลา {{duration}}",
+    "hiddenLines": "บรรทัดที่ซ่อน: {{count}}",
     "systemMessagePlaceholder": "ป้อนข้อความระบบของคุณ...",
     "fullSizeImage": "รูปภาพขนาดเต็ม",
     "startConversation": "เริ่มการสนทนา",
@@ -1295,7 +1366,10 @@
     "open": "เปิด",
     "dragEdgeToResize": "ลากขอบเพื่อปรับขนาด",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "เวอร์ชัน {{current}} จาก {{total}}",
+    "previousVersion": "เวอร์ชันก่อนหน้า",
+    "nextVersion": "เวอร์ชันถัดไป"
   },
   "personaImportExport": {
     "title": "นำเข้าและส่งออกเพอร์โซน่า",
@@ -1790,7 +1864,17 @@
       "title": "ยังไม่มีการเรียกผู้ให้บริการ",
       "description": "การเรียกจะปรากฏที่นี่หลังจากที่ปลั๊กอินที่เปิดใช้งานจัดการคำขอแชท, Work, การฝังข้อมูล, รูปภาพ, คำพูด, เสียง หรือวิดีโอ"
     },
-    "privacyNote": "การใช้งานจะถูกวัดที่เซิร์ฟเวอร์ ณ ขอบเขตปลั๊กอินขาออก Libre WebUI จัดเก็บผู้ให้บริการ, โมเดล, เวลา, สถานะ และตัวนับที่รายงานเท่านั้น ไม่เก็บพร้อมต์, การตอบกลับ, เอนด์พอยต์, ข้อมูลประจำตัว หรือเนื้อหาข้อผิดพลาดของผู้ให้บริการ จำนวนโทเคนรวมรวมเฉพาะการเรียกที่ผู้ให้บริการส่งกลับข้อมูลเมตาของการใช้งานเท่านั้น"
+    "privacyNote": "การใช้งานจะถูกวัดที่เซิร์ฟเวอร์ ณ ขอบเขตปลั๊กอินขาออก Libre WebUI จัดเก็บผู้ให้บริการ, โมเดล, เวลา, สถานะ และตัวนับที่รายงานเท่านั้น ไม่เก็บพร้อมต์, การตอบกลับ, เอนด์พอยต์, ข้อมูลประจำตัว หรือเนื้อหาข้อผิดพลาดของผู้ให้บริการ จำนวนโทเคนรวมรวมเฉพาะการเรียกที่ผู้ให้บริการส่งกลับข้อมูลเมตาของการใช้งานเท่านั้น",
+    "heatmap": {
+      "title": "กิจกรรมตลอดหนึ่งปี",
+      "description": "การเรียกผู้ให้บริการรายวันในปีที่ผ่านมา แสดงสีตามโมเดลที่ใช้มากที่สุดของแต่ละวัน",
+      "calls": "ครั้ง",
+      "noCalls": "ไม่มีการเรียก",
+      "other": "โมเดลอื่น ๆ",
+      "less": "น้อย",
+      "more": "มาก",
+      "yearTotal": "{{formatted}} ครั้งในปีที่ผ่านมา"
+    }
   },
   "systemPage": {
     "eyebrow": "การดูแลระบบ",
@@ -1912,5 +1996,23 @@
       "video": "วิดีโอ",
       "audio": "เสียง"
     }
+  },
+  "whatsNew": {
+    "title": "มีอะไรใหม่",
+    "releaseNotes": "บันทึกประจำรุ่น",
+    "cta": "โอเค ไปกันเลย"
+  },
+  "notes": {
+    "title": "บันทึกย่อ",
+    "new": "บันทึกใหม่",
+    "untitled": "ไม่มีชื่อ",
+    "empty": "ยังไม่มีบันทึก",
+    "selectOrCreate": "เลือกบันทึกหรือสร้างใหม่",
+    "contentPlaceholder": "เขียนด้วย Markdown…",
+    "saved": "บันทึกแล้ว",
+    "saveFailed": "ไม่สามารถบันทึกได้",
+    "createFailed": "ไม่สามารถสร้างบันทึกได้",
+    "deleteConfirm": "ลบบันทึกนี้?",
+    "deleteFailed": "ไม่สามารถลบบันทึกได้"
   }
 }

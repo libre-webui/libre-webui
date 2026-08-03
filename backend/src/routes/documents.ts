@@ -17,10 +17,13 @@
 
 import express from 'express';
 import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
 import documentService from '../services/documentService.js';
+import storageService from '../storage.js';
 import { ApiResponse } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import { authenticate } from '../middleware/auth.js';
+import { fetchWebpageAsText } from '../utils/webpageFetcher.js';
 
 const logger = createLogger('routes:documents');
 
@@ -86,6 +89,158 @@ router.post('/upload', upload.single('document'), async (req, res) => {
   } catch (error) {
     logger.error('Document upload error:', error);
     res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    } as ApiResponse);
+  }
+});
+
+// Knowledge collections
+router.get('/collections', (req, res) => {
+  try {
+    const userId = requireUserId(req);
+    const collections = storageService.getKnowledgeCollections(userId);
+    const documents = storageService.getAllDocuments(userId);
+    res.json({
+      success: true,
+      data: collections.map(collection => ({
+        ...collection,
+        documentCount: documents.filter(
+          document => document.collectionId === collection.id
+        ).length,
+      })),
+    } as ApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to load collections',
+    } as ApiResponse);
+  }
+});
+
+router.post('/collections', (req, res) => {
+  try {
+    const { name } = req.body as { name?: string };
+    if (!name || !name.trim()) {
+      res.status(400).json({
+        success: false,
+        error: 'Name is required',
+      } as ApiResponse);
+      return;
+    }
+    const now = Date.now();
+    const collection = {
+      id: uuidv4(),
+      name: name.trim().slice(0, 100),
+      createdAt: now,
+      updatedAt: now,
+    };
+    storageService.saveKnowledgeCollection(collection, requireUserId(req));
+    res.json({ success: true, data: collection } as ApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to create collection',
+    } as ApiResponse);
+  }
+});
+
+router.delete('/collections/:collectionId', (req, res) => {
+  try {
+    const deleted = storageService.deleteKnowledgeCollection(
+      req.params.collectionId as string,
+      requireUserId(req)
+    );
+    if (!deleted) {
+      res.status(404).json({
+        success: false,
+        error: 'Collection not found',
+      } as ApiResponse);
+      return;
+    }
+    res.json({ success: true, message: 'Collection deleted' } as ApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to delete collection',
+    } as ApiResponse);
+  }
+});
+
+// Assign a document to a collection (or remove it with collectionId: null)
+router.put('/:documentId/collection', (req, res) => {
+  try {
+    const { collectionId } = req.body as { collectionId?: string | null };
+    const updated = storageService.setDocumentCollection(
+      req.params.documentId as string,
+      collectionId || null,
+      requireUserId(req)
+    );
+    if (!updated) {
+      res.status(404).json({
+        success: false,
+        error: 'Document not found',
+      } as ApiResponse);
+      return;
+    }
+    res.json({ success: true, message: 'Document updated' } as ApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to update document',
+    } as ApiResponse);
+  }
+});
+
+// Attach a public webpage as a text document
+router.post('/fetch-url', async (req, res) => {
+  try {
+    const { url, sessionId } = req.body as {
+      url?: string;
+      sessionId?: string;
+    };
+    if (!url || typeof url !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'URL is required',
+      } as ApiResponse);
+      return;
+    }
+
+    const page = await fetchWebpageAsText(url);
+    const hostname = new URL(page.url).hostname;
+    const filename = `${(page.title || hostname).slice(0, 80)}.txt`;
+
+    const header = `${page.title ? `${page.title}\n` : ''}Source: ${page.url}\n\n`;
+    const document = await documentService.processDocument(
+      filename,
+      Buffer.from(header + page.text, 'utf-8'),
+      'text/plain',
+      requireUserId(req),
+      sessionId
+    );
+
+    res.json({
+      success: true,
+      data: {
+        id: document.id,
+        filename: document.filename,
+        fileType: document.fileType,
+        size: document.size,
+        sessionId: document.sessionId,
+        uploadedAt: document.uploadedAt,
+        title: page.title,
+        url: page.url,
+      },
+      message: 'Webpage attached successfully',
+    } as ApiResponse);
+  } catch (error) {
+    logger.error('Webpage attach error:', error);
+    res.status(400).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
     } as ApiResponse);

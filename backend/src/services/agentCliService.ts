@@ -23,18 +23,35 @@ import { ChatMessage } from '../types/index.js';
 import { PluginStreamChunk } from '../utils/pluginStreaming.js';
 import { userModel } from '../models/userModel.js';
 import { createLogger } from '../utils/logger.js';
+import pluginUsageService from './pluginUsageService.js';
 
 const logger = createLogger('agent-cli');
 
+export interface AgentCliModelOption {
+  /** Model identifier passed to the CLI; selector id is "<cliId>:<id>". */
+  id: string;
+  /** Human-readable label shown next to the CLI name. */
+  label: string;
+}
+
 export interface AgentCliDefinition {
-  /** Stable id used as providerId and model name, e.g. "claude-code". */
+  /** Stable id used as providerId, e.g. "claude-code". */
   id: string;
   /** Human-readable name shown in the model selector. */
   name: string;
   /** Binary looked up on PATH. */
   command: string;
-  parser: 'claude' | 'codex';
-  buildArgs: () => string[];
+  parser: 'claude' | 'codex' | 'opencode' | 'pi';
+  buildArgs: (model?: string) => string[];
+  /** Fixed model choices offered beside the CLI-default entry. */
+  modelOptions?: AgentCliModelOption[];
+  /** Discover model choices from the installed CLI; results are cached. */
+  discoverModels?: (binaryPath: string) => Promise<AgentCliModelOption[]>;
+  /**
+   * Omit the CLI-default entry: running this CLI without an explicit model
+   * depends on local user configuration that may be broken or absent.
+   */
+  requiresModel?: boolean;
 }
 
 export interface AgentCliModel {
@@ -42,21 +59,32 @@ export interface AgentCliModel {
   name: string;
   command: string;
   binaryPath: string;
+  /** CLI id — used as the chat providerId for every entry of this CLI. */
+  agentId: string;
 }
 
-const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
+const NEUTRAL_SYSTEM_PROMPT =
+  'You are a helpful assistant replying in a chat conversation.';
+
+export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
   {
     id: 'claude-code',
     name: 'Claude Code',
     command: 'claude',
     parser: 'claude',
     // -p reads the prompt from stdin; stream-json gives line-delimited events.
-    buildArgs: () => [
+    buildArgs: model => [
       '-p',
       '--output-format',
       'stream-json',
       '--verbose',
       '--include-partial-messages',
+      ...(model ? ['--model', model] : []),
+    ],
+    modelOptions: [
+      { id: 'sonnet', label: 'Sonnet' },
+      { id: 'opus', label: 'Opus' },
+      { id: 'haiku', label: 'Haiku' },
     ],
   },
   {
@@ -64,7 +92,56 @@ const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
     name: 'Codex',
     command: 'codex',
     parser: 'codex',
-    buildArgs: () => ['exec', '--json', '--skip-git-repo-check', '-'],
+    buildArgs: model => [
+      'exec',
+      '--json',
+      '--skip-git-repo-check',
+      ...(model ? ['-m', model] : []),
+      '-',
+    ],
+    // The ChatGPT sign-in family from developers.openai.com/codex/models.
+    modelOptions: [
+      { id: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
+      { id: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
+      { id: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
+      { id: 'gpt-5.3-codex-spark', label: 'GPT-5.3 Codex Spark' },
+    ],
+  },
+  {
+    id: 'opencode',
+    name: 'OpenCode',
+    command: 'opencode',
+    parser: 'opencode',
+    // The prompt arrives on stdin (read to EOF). A model is required because
+    // the CLI-default can point at an unreachable local server and hang until
+    // our timeout.
+    requiresModel: true,
+    buildArgs: model => [
+      'run',
+      '--format',
+      'json',
+      ...(model ? ['-m', model] : []),
+    ],
+    discoverModels: binaryPath => discoverOpencodeModels(binaryPath),
+  },
+  {
+    id: 'pi',
+    name: 'Pi',
+    command: 'pi',
+    parser: 'pi',
+    // --no-session keeps chats out of the server user's pi session store and
+    // the neutral system prompt overrides any personal persona configured for
+    // the server user's own pi usage.
+    buildArgs: model => [
+      '-p',
+      '--mode',
+      'json',
+      '--no-session',
+      '--no-tools',
+      '--system-prompt',
+      NEUTRAL_SYSTEM_PROMPT,
+      ...(model ? ['--model', model] : []),
+    ],
   },
 ];
 
@@ -92,6 +169,56 @@ function resolveBinary(command: string): string | null {
     }
   }
   return null;
+}
+
+const MODEL_DISCOVERY_TIMEOUT_MS = 10_000;
+const MODEL_DISCOVERY_TTL_MS = 5 * 60_000;
+const MAX_DISCOVERED_MODELS = 40;
+const discoveryCache = new Map<
+  string,
+  { at: number; options: AgentCliModelOption[] }
+>();
+
+/** `opencode models` prints one provider/model id per line. */
+async function discoverOpencodeModels(
+  binaryPath: string
+): Promise<AgentCliModelOption[]> {
+  const cached = discoveryCache.get(binaryPath);
+  if (cached && Date.now() - cached.at < MODEL_DISCOVERY_TTL_MS) {
+    return cached.options;
+  }
+  const options = await new Promise<AgentCliModelOption[]>(resolve => {
+    const child = spawn(binaryPath, ['models'], {
+      env: process.env,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    let output = '';
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      resolve([]);
+    }, MODEL_DISCOVERY_TIMEOUT_MS);
+    child.stdout.on('data', (data: Buffer) => {
+      output += data.toString();
+      if (output.length > 100_000) child.kill('SIGKILL');
+    });
+    child.on('error', () => {
+      clearTimeout(timer);
+      resolve([]);
+    });
+    child.on('close', () => {
+      clearTimeout(timer);
+      resolve(
+        output
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => /^[\w.-]+\/[\w./:@-]+$/.test(line))
+          .slice(0, MAX_DISCOVERED_MODELS)
+          .map(id => ({ id, label: id }))
+      );
+    });
+  });
+  discoveryCache.set(binaryPath, { at: Date.now(), options });
+  return options;
 }
 
 function roleLabel(role: ChatMessage['role']): string {
@@ -155,15 +282,21 @@ class ChunkQueue {
   }
 }
 
-interface ParserState {
+export interface AgentParserSink {
+  push(chunk: PluginStreamChunk): void;
+}
+
+export interface ParserState {
   emittedContent: boolean;
   agentSessionId?: string;
   itemErrors: string[];
+  /** Per-part emitted text length for parsers that stream snapshots. */
+  partTextLengths: Record<string, number>;
 }
 
-function parseClaudeLine(
+export function parseClaudeLine(
   line: string,
-  queue: ChunkQueue,
+  queue: AgentParserSink,
   state: ParserState
 ): void {
   const event = JSON.parse(line) as Record<string, unknown>;
@@ -207,9 +340,9 @@ function parseClaudeLine(
   }
 }
 
-function parseCodexLine(
+export function parseCodexLine(
   line: string,
-  queue: ChunkQueue,
+  queue: AgentParserSink,
   state: ParserState
 ): void {
   const event = JSON.parse(line) as Record<string, unknown>;
@@ -238,18 +371,128 @@ function parseCodexLine(
   }
 }
 
+export function parseOpencodeLine(
+  line: string,
+  queue: AgentParserSink,
+  state: ParserState
+): void {
+  const event = JSON.parse(line) as Record<string, unknown>;
+  if (typeof event.sessionID === 'string' && !state.agentSessionId) {
+    state.agentSessionId = event.sessionID;
+  }
+  if (event.type === 'error') {
+    const error = event.error as
+      { name?: string; data?: { message?: string } } | undefined;
+    state.itemErrors.push(
+      error?.data?.message || error?.name || 'opencode error'
+    );
+    return;
+  }
+  const part = event.part as
+    | { id?: string; type?: string; text?: string; ignored?: boolean }
+    | undefined;
+  if (!part || typeof part.type !== 'string' || part.ignored) return;
+
+  // v1.16 emits each text/reasoning part once, complete, when it finishes —
+  // there is no delta stream. The part-id guard dedupes defensively.
+  if (
+    (part.type === 'text' || part.type === 'reasoning') &&
+    typeof part.text === 'string' &&
+    part.text
+  ) {
+    const key = `${part.type}:${part.id || 'default'}`;
+    if (state.partTextLengths[key]) return;
+    state.partTextLengths[key] = part.text.length;
+    if (part.type === 'text') {
+      state.emittedContent = true;
+      queue.push({ type: 'content', content: part.text });
+    } else {
+      queue.push({ type: 'reasoning', content: part.text });
+    }
+  }
+}
+
+export function parsePiLine(
+  line: string,
+  queue: AgentParserSink,
+  state: ParserState
+): void {
+  const event = JSON.parse(line) as Record<string, unknown>;
+  if (event.type === 'session' && typeof event.id === 'string') {
+    state.agentSessionId = event.id;
+    return;
+  }
+  if (event.type === 'message_update') {
+    const inner = event.assistantMessageEvent as
+      { type?: string; delta?: string } | undefined;
+    if (inner?.type === 'text_delta' && inner.delta) {
+      state.emittedContent = true;
+      queue.push({ type: 'content', content: inner.delta });
+    } else if (inner?.type === 'thinking_delta' && inner.delta) {
+      queue.push({ type: 'reasoning', content: inner.delta });
+    }
+    return;
+  }
+  if (event.type === 'turn_end' && !state.emittedContent) {
+    const message = event.message as
+      | { role?: string; content?: Array<{ type?: string; text?: string }> }
+      | undefined;
+    if (message?.role === 'assistant') {
+      const text = (message.content || [])
+        .filter(item => item.type === 'text' && item.text)
+        .map(item => item.text)
+        .join('');
+      if (text) {
+        state.emittedContent = true;
+        queue.push({ type: 'content', content: text });
+      }
+    }
+    return;
+  }
+  if (event.type === 'error') {
+    const detail =
+      typeof event.message === 'string' ? event.message : 'agent error';
+    state.itemErrors.push(detail);
+  }
+}
+
 export class AgentCliService {
-  listAgentModels(): AgentCliModel[] {
+  async listAgentModels(): Promise<AgentCliModel[]> {
     if (!agentsEnabled()) return [];
     const models: AgentCliModel[] = [];
     for (const definition of AGENT_CLI_DEFINITIONS) {
       const binaryPath = resolveBinary(definition.command);
-      if (binaryPath) {
+      if (!binaryPath) continue;
+
+      if (!definition.requiresModel) {
         models.push({
           id: definition.id,
           name: definition.name,
           command: definition.command,
           binaryPath,
+          agentId: definition.id,
+        });
+      }
+
+      let options = definition.modelOptions ?? [];
+      if (definition.discoverModels) {
+        try {
+          const discovered = await definition.discoverModels(binaryPath);
+          if (discovered.length > 0) options = discovered;
+        } catch (error) {
+          logger.warn(
+            `Model discovery failed for ${definition.command}:`,
+            error
+          );
+        }
+      }
+      for (const option of options) {
+        models.push({
+          id: `${definition.id}:${option.id}`,
+          name: `${definition.name} · ${option.label}`,
+          command: definition.command,
+          binaryPath,
+          agentId: definition.id,
         });
       }
     }
@@ -275,7 +518,7 @@ export class AgentCliService {
     agentId: string,
     messages: readonly ChatMessage[],
     userId: string,
-    options: { cwd?: string } = {}
+    options: { cwd?: string; model?: string } = {}
   ): AsyncGenerator<PluginStreamChunk, void, unknown> {
     this.assertAgentAccess(userId);
     const definition = AGENT_CLI_DEFINITIONS.find(
@@ -291,19 +534,38 @@ export class AgentCliService {
       );
     }
 
+    // Selector entries are "<cliId>" (CLI default) or "<cliId>:<model>".
+    const model =
+      options.model && options.model.startsWith(`${definition.id}:`)
+        ? options.model.slice(definition.id.length + 1)
+        : undefined;
+    if (definition.requiresModel && !model) {
+      throw new Error(
+        `${definition.name} needs an explicit model — pick one from the Agents group.`
+      );
+    }
+
     const cwd =
       options.cwd && fs.existsSync(options.cwd) ? options.cwd : os.homedir();
     const prompt = buildAgentPrompt(messages);
     const queue = new ChunkQueue();
-    const state: ParserState = { emittedContent: false, itemErrors: [] };
-    const parseLine =
-      definition.parser === 'claude' ? parseClaudeLine : parseCodexLine;
+    const state: ParserState = {
+      emittedContent: false,
+      itemErrors: [],
+      partTextLengths: {},
+    };
+    const parseLine = {
+      claude: parseClaudeLine,
+      codex: parseCodexLine,
+      opencode: parseOpencodeLine,
+      pi: parsePiLine,
+    }[definition.parser];
 
     logger.info(
       `Spawning agent CLI ${definition.id} (${binaryPath}) in ${cwd} for user ${userId}`
     );
 
-    const child = spawn(binaryPath, definition.buildArgs(), {
+    const child = spawn(binaryPath, definition.buildArgs(model), {
       cwd,
       env: process.env,
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -313,6 +575,19 @@ export class AgentCliService {
     let stderrBuffer = '';
     let totalChars = 0;
     let settled = false;
+    const startedAt = Date.now();
+
+    const recordUsage = (status: 'success' | 'error') => {
+      pluginUsageService.record({
+        userId,
+        pluginId: `agent-cli:${definition.id}`,
+        pluginName: definition.name,
+        capability: 'chat',
+        model: options.model || definition.id,
+        status,
+        durationMs: Date.now() - startedAt,
+      });
+    };
 
     const timeout = setTimeout(() => {
       fail(new Error(`Agent CLI timed out after ${AGENT_TIMEOUT_MS}ms.`));
@@ -323,6 +598,7 @@ export class AgentCliService {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
+      recordUsage('error');
       queue.finish(error);
     };
 
@@ -330,6 +606,7 @@ export class AgentCliService {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
+      recordUsage('success');
       const metadata: Record<string, unknown> = { agentCli: definition.id };
       if (state.agentSessionId) {
         metadata.agentSessionId = state.agentSessionId;

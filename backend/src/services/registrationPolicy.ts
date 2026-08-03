@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-/** Public account registration is enabled unless explicitly disabled. */
+/** Public account registration is disabled unless explicitly enabled. */
 export const isPublicRegistrationEnabled = (
   value: string | undefined = process.env.ENABLE_SIGNUP
-): boolean => value?.trim().toLowerCase() !== 'false';
+): boolean => value?.trim().toLowerCase() === 'true';
 
-/** Disabled registration is absolute, including on an empty database. */
+/** A fresh instance always permits one local administrator bootstrap. */
 export const canCreateLocalAccount = (
-  _userCount: number,
+  userCount: number,
   registrationEnabled = isPublicRegistrationEnabled()
-): boolean => registrationEnabled;
+): boolean => userCount === 0 || registrationEnabled;

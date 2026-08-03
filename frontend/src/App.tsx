@@ -52,6 +52,8 @@ import {
   KeyboardShortcutsModal,
   KeyboardShortcutsIndicator,
 } from '@/components/KeyboardShortcuts';
+import { WhatsNewModal } from '@/components/WhatsNewModal';
+import { useWhatsNew } from '@/hooks/useWhatsNew';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
 import { AppTabBar } from '@/components/AppTabBar';
@@ -79,6 +81,7 @@ const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
 const ModelsPage = React.lazy(() => import('@/pages/ModelsPage'));
 const PersonasPage = React.lazy(() => import('@/pages/PersonasPage'));
 const GalleryPage = React.lazy(() => import('@/pages/GalleryPage'));
+const NotesPage = React.lazy(() => import('@/pages/NotesPage'));
 const LibreClawPage = React.lazy(() => import('@/pages/LibreClawPage'));
 const WorkPage = React.lazy(() => import('@/pages/WorkPage'));
 const UserManagementPage = React.lazy(
@@ -245,6 +248,7 @@ const AppContent: React.FC = () => {
   const { isDemoMode, demoConfig } = useAppStore();
   const hasWorkspaceAccess =
     systemInfo?.requiresAuth === false || isAuthenticated;
+  const whatsNew = useWhatsNew();
 
   // Handle OAuth callback FIRST - before any routing or initialization
   const [oauthProcessed, setOauthProcessed] = React.useState(false);
@@ -262,46 +266,31 @@ const AppContent: React.FC = () => {
       processingRef.current = true;
 
       const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
       const authStatus = urlParams.get('auth');
 
-      if (token && authStatus === 'success') {
+      if (authStatus === 'success') {
         try {
-          // Verify token and get user info from the backend
-          const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+          const response = await fetch(`${API_BASE_URL}/auth/oauth/exchange`, {
+            method: 'POST',
             credentials: 'include',
           });
 
           if (response.ok) {
             const data = await response.json();
             if (data.success && data.data) {
-              // Use auth store login function to properly authenticate
-              const { login, systemInfo } = useAuthStore.getState();
-              login(
-                data.data,
-                token,
-                systemInfo || {
-                  requiresAuth: true,
-                  hasUsers: true,
-                  userCount: 1,
-                  signupEnabled: true,
-                  version: '0.1.6',
-                }
-              );
-              logger.debug('OAuth login successful, showing toast');
-              toast.success('GitHub login successful!');
+              const { login } = useAuthStore.getState();
+              login(data.data.user, data.data.token, data.data.systemInfo);
+              logger.debug('OAuth login successful');
+              toast.success('OAuth login successful!');
             } else {
-              toast.error('Failed to verify GitHub authentication');
+              toast.error('Failed to complete OAuth authentication');
             }
           } else {
-            toast.error('GitHub authentication verification failed');
+            toast.error('OAuth authentication verification failed');
           }
         } catch (error) {
           logger.error('OAuth processing error:', error);
-          toast.error('GitHub authentication failed');
+          toast.error('OAuth authentication failed');
         }
 
         // Clean up URL regardless of success/failure
@@ -543,6 +532,7 @@ const AppContent: React.FC = () => {
             <Route path='/models' element={<ModelsPage />} />
             <Route path='/personas' element={<PersonasPage />} />
             <Route path='/gallery' element={<GalleryPage />} />
+            <Route path='/notes' element={<NotesPage />} />
             <Route
               path='/work'
               element={
@@ -609,6 +599,7 @@ const AppContent: React.FC = () => {
                     <Route path='/models' element={<ModelsPage />} />
                     <Route path='/personas' element={<PersonasPage />} />
                     <Route path='/gallery' element={<GalleryPage />} />
+                    <Route path='/notes' element={<NotesPage />} />
                     <Route
                       path='/work'
                       element={
@@ -681,6 +672,10 @@ const AppContent: React.FC = () => {
         onClose={() => setShortcutsOpen(false)}
         shortcuts={shortcuts}
       />
+
+      {hasWorkspaceAccess && whatsNew.open && whatsNew.notes && (
+        <WhatsNewModal notes={whatsNew.notes} onDismiss={whatsNew.dismiss} />
+      )}
 
       {/* Keyboard shortcuts indicator - only show on chat pages */}
       {hasWorkspaceAccess && (
