@@ -245,7 +245,17 @@
       "attachImages": "ছবি সংযুক্ত করুন",
       "attachments": "সংযুক্তি এবং উন্নত বৈশিষ্ট্য",
       "sendMessage": "বার্তা পাঠান",
-      "stopGeneration": "জেনারেশন বন্ধ করুন"
+      "stopGeneration": "জেনারেশন বন্ধ করুন",
+      "menu": {
+        "uploadImages": "ছবি আপলোড করুন",
+        "attachDocument": "নথি সংযুক্ত করুন",
+        "attachWebpage": "ওয়েবপেজ সংযুক্ত করুন",
+        "structuredOutput": "কাঠামোবদ্ধ আউটপুট",
+        "attach": "সংযুক্ত করুন",
+        "documentAttached": "নথি সংযুক্ত হয়েছে",
+        "webpageAttached": "ওয়েবপেজ সংযুক্ত হয়েছে",
+        "attachFailed": "সংযুক্ত করা যায়নি"
+      }
     },
     "session": {
       "new": "নতুন চ্যাট",

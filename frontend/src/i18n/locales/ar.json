@@ -245,7 +245,17 @@
       "attachImages": "إرفاق صور",
       "attachments": "المرفقات والميزات المتقدمة",
       "sendMessage": "إرسال الرسالة",
-      "stopGeneration": "إيقاف التوليد"
+      "stopGeneration": "إيقاف التوليد",
+      "menu": {
+        "uploadImages": "رفع صور",
+        "attachDocument": "إرفاق مستند",
+        "attachWebpage": "إرفاق صفحة ويب",
+        "structuredOutput": "إخراج منظم",
+        "attach": "إرفاق",
+        "documentAttached": "تم إرفاق المستند",
+        "webpageAttached": "تم إرفاق صفحة الويب",
+        "attachFailed": "تعذر الإرفاق"
+      }
     },
     "session": {
       "new": "محادثة جديدة",

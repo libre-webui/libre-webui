@@ -245,7 +245,17 @@
       "attachImages": "Allega immagini",
       "attachments": "Allegati e funzionalità avanzate",
       "sendMessage": "Invia messaggio",
-      "stopGeneration": "Interrompi generazione"
+      "stopGeneration": "Interrompi generazione",
+      "menu": {
+        "uploadImages": "Carica immagini",
+        "attachDocument": "Allega documento",
+        "attachWebpage": "Allega pagina web",
+        "structuredOutput": "Output strutturato",
+        "attach": "Allega",
+        "documentAttached": "Documento allegato",
+        "webpageAttached": "Pagina web allegata",
+        "attachFailed": "Impossibile allegare"
+      }
     },
     "session": {
       "new": "Nuova chat",

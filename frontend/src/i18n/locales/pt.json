@@ -245,7 +245,17 @@
       "attachImages": "Anexar imagens",
       "attachments": "Anexos e recursos avançados",
       "sendMessage": "Enviar mensagem",
-      "stopGeneration": "Parar geração"
+      "stopGeneration": "Parar geração",
+      "menu": {
+        "uploadImages": "Carregar imagens",
+        "attachDocument": "Anexar documento",
+        "attachWebpage": "Anexar página web",
+        "structuredOutput": "Saída estruturada",
+        "attach": "Anexar",
+        "documentAttached": "Documento anexado",
+        "webpageAttached": "Página web anexada",
+        "attachFailed": "Não foi possível anexar"
+      }
     },
     "session": {
       "new": "Nova conversa",

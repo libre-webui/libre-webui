@@ -245,7 +245,17 @@
       "attachImages": "Załącz obrazy",
       "attachments": "Załączniki i zaawansowane funkcje",
       "sendMessage": "Wyślij wiadomość",
-      "stopGeneration": "Zatrzymaj generowanie"
+      "stopGeneration": "Zatrzymaj generowanie",
+      "menu": {
+        "uploadImages": "Prześlij obrazy",
+        "attachDocument": "Załącz dokument",
+        "attachWebpage": "Załącz stronę internetową",
+        "structuredOutput": "Ustrukturyzowane wyjście",
+        "attach": "Załącz",
+        "documentAttached": "Dokument załączony",
+        "webpageAttached": "Strona załączona",
+        "attachFailed": "Nie udało się załączyć"
+      }
     },
     "session": {
       "new": "Nowy czat",

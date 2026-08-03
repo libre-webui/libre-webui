@@ -52,6 +52,26 @@ export const documentsApi = {
     return api.post('/documents/upload', formData).then(res => res.data);
   },
 
+  fetchWebpage: (
+    url: string,
+    sessionId?: string
+  ): Promise<ApiResponse<DocumentSummary>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        id: 'demo-doc-' + Date.now(),
+        filename: 'demo-webpage.txt',
+        fileType: 'txt' as const,
+        size: 0,
+        sessionId,
+        uploadedAt: Date.now(),
+      });
+    }
+
+    return api
+      .post('/documents/fetch-url', { url, sessionId })
+      .then(res => res.data);
+  },
+
   getDocuments: (
     sessionId?: string
   ): Promise<ApiResponse<DocumentSummary[]>> => {

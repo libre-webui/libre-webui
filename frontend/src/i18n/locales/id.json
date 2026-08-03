@@ -245,7 +245,17 @@
       "attachImages": "Lampirkan gambar",
       "attachments": "Lampiran dan fitur lanjutan",
       "sendMessage": "Kirim pesan",
-      "stopGeneration": "Hentikan pembuatan"
+      "stopGeneration": "Hentikan pembuatan",
+      "menu": {
+        "uploadImages": "Unggah gambar",
+        "attachDocument": "Lampirkan dokumen",
+        "attachWebpage": "Lampirkan halaman web",
+        "structuredOutput": "Keluaran terstruktur",
+        "attach": "Lampirkan",
+        "documentAttached": "Dokumen dilampirkan",
+        "webpageAttached": "Halaman web dilampirkan",
+        "attachFailed": "Gagal melampirkan"
+      }
     },
     "session": {
       "new": "Chat Baru",

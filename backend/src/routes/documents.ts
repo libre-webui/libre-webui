@@ -21,6 +21,7 @@ import documentService from '../services/documentService.js';
 import { ApiResponse } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import { authenticate } from '../middleware/auth.js';
+import { fetchWebpageAsText } from '../utils/webpageFetcher.js';
 
 const logger = createLogger('routes:documents');
 
@@ -86,6 +87,57 @@ router.post('/upload', upload.single('document'), async (req, res) => {
   } catch (error) {
     logger.error('Document upload error:', error);
     res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    } as ApiResponse);
+  }
+});
+
+// Attach a public webpage as a text document
+router.post('/fetch-url', async (req, res) => {
+  try {
+    const { url, sessionId } = req.body as {
+      url?: string;
+      sessionId?: string;
+    };
+    if (!url || typeof url !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'URL is required',
+      } as ApiResponse);
+      return;
+    }
+
+    const page = await fetchWebpageAsText(url);
+    const hostname = new URL(page.url).hostname;
+    const filename = `${(page.title || hostname).slice(0, 80)}.txt`;
+
+    const header = `${page.title ? `${page.title}\n` : ''}Source: ${page.url}\n\n`;
+    const document = await documentService.processDocument(
+      filename,
+      Buffer.from(header + page.text, 'utf-8'),
+      'text/plain',
+      requireUserId(req),
+      sessionId
+    );
+
+    res.json({
+      success: true,
+      data: {
+        id: document.id,
+        filename: document.filename,
+        fileType: document.fileType,
+        size: document.size,
+        sessionId: document.sessionId,
+        uploadedAt: document.uploadedAt,
+        title: page.title,
+        url: page.url,
+      },
+      message: 'Webpage attached successfully',
+    } as ApiResponse);
+  } catch (error) {
+    logger.error('Webpage attach error:', error);
+    res.status(400).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
     } as ApiResponse);

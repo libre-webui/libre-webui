@@ -245,7 +245,17 @@
       "attachImages": "添加图片",
       "attachments": "附件和高级功能",
       "sendMessage": "发送消息",
-      "stopGeneration": "停止生成"
+      "stopGeneration": "停止生成",
+      "menu": {
+        "uploadImages": "上传图片",
+        "attachDocument": "附加文档",
+        "attachWebpage": "附加网页",
+        "structuredOutput": "结构化输出",
+        "attach": "附加",
+        "documentAttached": "文档已附加",
+        "webpageAttached": "网页已附加",
+        "attachFailed": "无法附加"
+      }
     },
     "session": {
       "new": "新对话",

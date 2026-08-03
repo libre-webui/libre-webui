@@ -245,7 +245,17 @@
       "attachImages": "Vedhæft billeder",
       "attachments": "Vedhæftninger og avancerede funktioner",
       "sendMessage": "Send besked",
-      "stopGeneration": "Stop generering"
+      "stopGeneration": "Stop generering",
+      "menu": {
+        "uploadImages": "Upload billeder",
+        "attachDocument": "Vedhæft dokument",
+        "attachWebpage": "Vedhæft webside",
+        "structuredOutput": "Struktureret output",
+        "attach": "Vedhæft",
+        "documentAttached": "Dokument vedhæftet",
+        "webpageAttached": "Webside vedhæftet",
+        "attachFailed": "Kunne ikke vedhæfte"
+      }
     },
     "session": {
       "new": "Ny chat",

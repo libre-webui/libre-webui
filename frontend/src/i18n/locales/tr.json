@@ -245,7 +245,17 @@
       "attachImages": "Görsel ekle",
       "attachments": "Ekler ve gelişmiş özellikler",
       "sendMessage": "Mesaj gönder",
-      "stopGeneration": "Üretimi durdur"
+      "stopGeneration": "Üretimi durdur",
+      "menu": {
+        "uploadImages": "Görsel yükle",
+        "attachDocument": "Belge ekle",
+        "attachWebpage": "Web sayfası ekle",
+        "structuredOutput": "Yapılandırılmış çıktı",
+        "attach": "Ekle",
+        "documentAttached": "Belge eklendi",
+        "webpageAttached": "Web sayfası eklendi",
+        "attachFailed": "Eklenemedi"
+      }
     },
     "session": {
       "new": "Yeni Sohbet",

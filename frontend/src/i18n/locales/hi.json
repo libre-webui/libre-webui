@@ -245,7 +245,17 @@
       "attachImages": "छवियाँ संलग्न करें",
       "attachments": "अटैचमेंट और उन्नत सुविधाएँ",
       "sendMessage": "संदेश भेजें",
-      "stopGeneration": "जनरेशन रोकें"
+      "stopGeneration": "जनरेशन रोकें",
+      "menu": {
+        "uploadImages": "छवियाँ अपलोड करें",
+        "attachDocument": "दस्तावेज़ संलग्न करें",
+        "attachWebpage": "वेबपेज संलग्न करें",
+        "structuredOutput": "संरचित आउटपुट",
+        "attach": "संलग्न करें",
+        "documentAttached": "दस्तावेज़ संलग्न हुआ",
+        "webpageAttached": "वेबपेज संलग्न हुआ",
+        "attachFailed": "संलग्न नहीं हो सका"
+      }
     },
     "session": {
       "new": "नई चैट",

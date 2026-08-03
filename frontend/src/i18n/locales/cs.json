@@ -245,7 +245,17 @@
       "attachImages": "Připojit obrázky",
       "attachments": "Přílohy a pokročilé funkce",
       "sendMessage": "Odeslat zprávu",
-      "stopGeneration": "Zastavit generování"
+      "stopGeneration": "Zastavit generování",
+      "menu": {
+        "uploadImages": "Nahrát obrázky",
+        "attachDocument": "Přiložit dokument",
+        "attachWebpage": "Přiložit webovou stránku",
+        "structuredOutput": "Strukturovaný výstup",
+        "attach": "Přiložit",
+        "documentAttached": "Dokument přiložen",
+        "webpageAttached": "Webová stránka přiložena",
+        "attachFailed": "Přiložení se nezdařilo"
+      }
     },
     "session": {
       "new": "Nový chat",

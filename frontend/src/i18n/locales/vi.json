@@ -245,7 +245,17 @@
       "attachImages": "Đính kèm hình ảnh",
       "attachments": "Tệp đính kèm và tính năng nâng cao",
       "sendMessage": "Gửi tin nhắn",
-      "stopGeneration": "Dừng tạo"
+      "stopGeneration": "Dừng tạo",
+      "menu": {
+        "uploadImages": "Tải ảnh lên",
+        "attachDocument": "Đính kèm tài liệu",
+        "attachWebpage": "Đính kèm trang web",
+        "structuredOutput": "Đầu ra có cấu trúc",
+        "attach": "Đính kèm",
+        "documentAttached": "Đã đính kèm tài liệu",
+        "webpageAttached": "Đã đính kèm trang web",
+        "attachFailed": "Không thể đính kèm"
+      }
     },
     "session": {
       "new": "Cuộc trò chuyện mới",

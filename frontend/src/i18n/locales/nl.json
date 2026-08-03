@@ -245,7 +245,17 @@
       "attachImages": "Afbeeldingen toevoegen",
       "attachments": "Bijlagen en geavanceerde functies",
       "sendMessage": "Bericht versturen",
-      "stopGeneration": "Generatie stoppen"
+      "stopGeneration": "Generatie stoppen",
+      "menu": {
+        "uploadImages": "Afbeeldingen uploaden",
+        "attachDocument": "Document bijvoegen",
+        "attachWebpage": "Webpagina bijvoegen",
+        "structuredOutput": "Gestructureerde uitvoer",
+        "attach": "Bijvoegen",
+        "documentAttached": "Document bijgevoegd",
+        "webpageAttached": "Webpagina bijgevoegd",
+        "attachFailed": "Bijvoegen mislukt"
+      }
     },
     "session": {
       "new": "Nieuwe chat",

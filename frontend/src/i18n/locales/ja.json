@@ -245,7 +245,17 @@
       "attachImages": "画像を添付",
       "attachments": "添付ファイルと高度な機能",
       "sendMessage": "メッセージを送信",
-      "stopGeneration": "生成を停止"
+      "stopGeneration": "生成を停止",
+      "menu": {
+        "uploadImages": "画像をアップロード",
+        "attachDocument": "ドキュメントを添付",
+        "attachWebpage": "ウェブページを添付",
+        "structuredOutput": "構造化出力",
+        "attach": "添付",
+        "documentAttached": "ドキュメントを添付しました",
+        "webpageAttached": "ウェブページを添付しました",
+        "attachFailed": "添付できませんでした"
+      }
     },
     "session": {
       "new": "新しいチャット",

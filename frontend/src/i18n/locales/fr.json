@@ -245,7 +245,17 @@
       "attachImages": "Joindre des images",
       "attachments": "Pièces jointes et fonctionnalités avancées",
       "sendMessage": "Envoyer le message",
-      "stopGeneration": "Arrêter la génération"
+      "stopGeneration": "Arrêter la génération",
+      "menu": {
+        "uploadImages": "Téléverser des images",
+        "attachDocument": "Joindre un document",
+        "attachWebpage": "Joindre une page web",
+        "structuredOutput": "Sortie structurée",
+        "attach": "Joindre",
+        "documentAttached": "Document joint",
+        "webpageAttached": "Page web jointe",
+        "attachFailed": "Impossible de joindre"
+      }
     },
     "session": {
       "new": "Nouvelle conversation",

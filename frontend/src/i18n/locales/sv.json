@@ -245,7 +245,17 @@
       "attachImages": "Bifoga bilder",
       "attachments": "Bilagor och avancerade funktioner",
       "sendMessage": "Skicka meddelande",
-      "stopGeneration": "Stoppa generering"
+      "stopGeneration": "Stoppa generering",
+      "menu": {
+        "uploadImages": "Ladda upp bilder",
+        "attachDocument": "Bifoga dokument",
+        "attachWebpage": "Bifoga webbsida",
+        "structuredOutput": "Strukturerad utdata",
+        "attach": "Bifoga",
+        "documentAttached": "Dokument bifogat",
+        "webpageAttached": "Webbsida bifogad",
+        "attachFailed": "Kunde inte bifoga"
+      }
     },
     "session": {
       "new": "Ny chatt",

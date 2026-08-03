@@ -245,7 +245,17 @@
       "attachImages": "이미지 첨부",
       "attachments": "첨부 파일 및 고급 기능",
       "sendMessage": "메시지 보내기",
-      "stopGeneration": "생성 중지"
+      "stopGeneration": "생성 중지",
+      "menu": {
+        "uploadImages": "이미지 업로드",
+        "attachDocument": "문서 첨부",
+        "attachWebpage": "웹페이지 첨부",
+        "structuredOutput": "구조화된 출력",
+        "attach": "첨부",
+        "documentAttached": "문서가 첨부되었습니다",
+        "webpageAttached": "웹페이지가 첨부되었습니다",
+        "attachFailed": "첨부하지 못했습니다"
+      }
     },
     "session": {
       "new": "새 채팅",

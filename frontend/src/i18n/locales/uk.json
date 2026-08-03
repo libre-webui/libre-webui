@@ -245,7 +245,17 @@
       "attachImages": "Прикріпити зображення",
       "attachments": "Вкладення та розширені функції",
       "sendMessage": "Надіслати повідомлення",
-      "stopGeneration": "Зупинити генерацію"
+      "stopGeneration": "Зупинити генерацію",
+      "menu": {
+        "uploadImages": "Завантажити зображення",
+        "attachDocument": "Прикріпити документ",
+        "attachWebpage": "Прикріпити вебсторінку",
+        "structuredOutput": "Структурований вивід",
+        "attach": "Прикріпити",
+        "documentAttached": "Документ прикріплено",
+        "webpageAttached": "Вебсторінку прикріплено",
+        "attachFailed": "Не вдалося прикріпити"
+      }
     },
     "session": {
       "new": "Новий чат",

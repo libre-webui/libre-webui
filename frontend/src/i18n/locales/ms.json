@@ -245,7 +245,17 @@
       "attachImages": "Lampirkan imej",
       "attachments": "Lampiran dan ciri lanjutan",
       "sendMessage": "Hantar mesej",
-      "stopGeneration": "Hentikan penjanaan"
+      "stopGeneration": "Hentikan penjanaan",
+      "menu": {
+        "uploadImages": "Muat naik imej",
+        "attachDocument": "Lampirkan dokumen",
+        "attachWebpage": "Lampirkan halaman web",
+        "structuredOutput": "Output berstruktur",
+        "attach": "Lampirkan",
+        "documentAttached": "Dokumen dilampirkan",
+        "webpageAttached": "Halaman web dilampirkan",
+        "attachFailed": "Tidak dapat melampirkan"
+      }
     },
     "session": {
       "new": "Sembang Baharu",

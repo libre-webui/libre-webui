@@ -245,7 +245,17 @@
       "attachImages": "Прикрепить изображения",
       "attachments": "Вложения и дополнительные функции",
       "sendMessage": "Отправить сообщение",
-      "stopGeneration": "Остановить генерацию"
+      "stopGeneration": "Остановить генерацию",
+      "menu": {
+        "uploadImages": "Загрузить изображения",
+        "attachDocument": "Прикрепить документ",
+        "attachWebpage": "Прикрепить веб-страницу",
+        "structuredOutput": "Структурированный вывод",
+        "attach": "Прикрепить",
+        "documentAttached": "Документ прикреплён",
+        "webpageAttached": "Веб-страница прикреплена",
+        "attachFailed": "Не удалось прикрепить"
+      }
     },
     "session": {
       "new": "Новый чат",

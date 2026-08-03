@@ -245,7 +245,17 @@
       "attachImages": "Hengja við myndir",
       "attachments": "Viðhengi og ítarlegir eiginleikar",
       "sendMessage": "Senda skilaboð",
-      "stopGeneration": "Stöðva myndun"
+      "stopGeneration": "Stöðva myndun",
+      "menu": {
+        "uploadImages": "Hlaða upp myndum",
+        "attachDocument": "Hengja við skjal",
+        "attachWebpage": "Hengja við vefsíðu",
+        "structuredOutput": "Skipulagt úttak",
+        "attach": "Hengja við",
+        "documentAttached": "Skjal fest við",
+        "webpageAttached": "Vefsíða fest við",
+        "attachFailed": "Ekki tókst að hengja við"
+      }
     },
     "session": {
       "new": "Nýtt spjall",

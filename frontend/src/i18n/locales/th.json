@@ -245,7 +245,17 @@
       "attachImages": "แนบรูปภาพ",
       "attachments": "ไฟล์แนบและฟีเจอร์ขั้นสูง",
       "sendMessage": "ส่งข้อความ",
-      "stopGeneration": "หยุดการสร้าง"
+      "stopGeneration": "หยุดการสร้าง",
+      "menu": {
+        "uploadImages": "อัปโหลดรูปภาพ",
+        "attachDocument": "แนบเอกสาร",
+        "attachWebpage": "แนบหน้าเว็บ",
+        "structuredOutput": "เอาต์พุตที่มีโครงสร้าง",
+        "attach": "แนบ",
+        "documentAttached": "แนบเอกสารแล้ว",
+        "webpageAttached": "แนบหน้าเว็บแล้ว",
+        "attachFailed": "ไม่สามารถแนบได้"
+      }
     },
     "session": {
       "new": "แชทใหม่",
