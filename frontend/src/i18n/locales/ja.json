@@ -1316,7 +1316,10 @@
     "open": "開く",
     "dragEdgeToResize": "端をドラッグしてサイズ変更",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "バージョン {{current}} / {{total}}",
+    "previousVersion": "前のバージョン",
+    "nextVersion": "次のバージョン"
   },
   "personaImportExport": {
     "title": "ペルソナのインポート＆エクスポート",

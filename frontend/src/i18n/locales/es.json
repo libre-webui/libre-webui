@@ -1316,7 +1316,10 @@
     "open": "Abrir",
     "dragEdgeToResize": "Arrastra el borde para redimensionar",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Versión {{current}} de {{total}}",
+    "previousVersion": "Versión anterior",
+    "nextVersion": "Versión siguiente"
   },
   "personaImportExport": {
     "title": "Importar y exportar personas",

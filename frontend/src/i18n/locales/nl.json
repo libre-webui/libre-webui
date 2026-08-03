@@ -1316,7 +1316,10 @@
     "open": "Openen",
     "dragEdgeToResize": "Sleep rand om grootte aan te passen",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Versie {{current}} van {{total}}",
+    "previousVersion": "Vorige versie",
+    "nextVersion": "Volgende versie"
   },
   "personaImportExport": {
     "title": "Personas importeren & exporteren",

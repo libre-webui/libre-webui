@@ -31,10 +31,13 @@ import {
   Eye,
   Code2,
   GripVertical,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
 import { useAppStore } from '@/store/appStore';
+import { useChatStore } from '@/store/chatStore';
 import {
   buildHtmlArtifactDocument,
   HTML_ARTIFACT_ALLOW,
@@ -57,9 +60,29 @@ export const ArtifactSlideOutPanel: React.FC = () => {
   const {
     artifactPanelOpen,
     artifactPanelArtifact,
+    openArtifactPanel,
     closeArtifactPanel,
     theme,
   } = useAppStore();
+  const currentSession = useChatStore(state => state.currentSession);
+
+  // Artifacts sharing a title across the conversation are iterations of the
+  // same piece of work; expose them as versions of one another.
+  const versions = React.useMemo(() => {
+    if (!artifactPanelArtifact) return [];
+    const key = artifactPanelArtifact.title.trim().toLowerCase();
+    const matches = (currentSession?.messages ?? [])
+      .flatMap(message => message.artifacts ?? [])
+      .filter(candidate => candidate.title.trim().toLowerCase() === key);
+    if (!matches.some(candidate => candidate.id === artifactPanelArtifact.id)) {
+      // Ad-hoc previews (e.g. from a code block) are not part of any message.
+      return [...matches, artifactPanelArtifact];
+    }
+    return matches;
+  }, [currentSession, artifactPanelArtifact]);
+  const versionIndex = versions.findIndex(
+    candidate => candidate.id === artifactPanelArtifact?.id
+  );
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
@@ -565,6 +588,36 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         {/* Toolbar */}
         <div className='flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-100/50'>
           <div className='flex items-center gap-1'>
+            {versions.length > 1 && versionIndex !== -1 && (
+              <div className='me-1 flex items-center gap-0.5'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  disabled={versionIndex === 0}
+                  onClick={() => openArtifactPanel(versions[versionIndex - 1])}
+                  className='h-8 w-8 p-0'
+                  title={t('artifacts.previousVersion')}
+                >
+                  <ChevronLeft className='h-3.5 w-3.5 rtl:rotate-180' />
+                </Button>
+                <span className='whitespace-nowrap text-xs tabular-nums text-gray-500 dark:text-dark-600'>
+                  {t('artifacts.versionOf', {
+                    current: versionIndex + 1,
+                    total: versions.length,
+                  })}
+                </span>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  disabled={versionIndex === versions.length - 1}
+                  onClick={() => openArtifactPanel(versions[versionIndex + 1])}
+                  className='h-8 w-8 p-0'
+                  title={t('artifacts.nextVersion')}
+                >
+                  <ChevronRight className='h-3.5 w-3.5 rtl:rotate-180' />
+                </Button>
+              </div>
+            )}
             {shouldShowViewToggle() && (
               <>
                 <Button

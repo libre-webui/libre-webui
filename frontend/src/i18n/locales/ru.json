@@ -1316,7 +1316,10 @@
     "open": "Открыть",
     "dragEdgeToResize": "Перетащите край для изменения размера",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Версия {{current}} из {{total}}",
+    "previousVersion": "Предыдущая версия",
+    "nextVersion": "Следующая версия"
   },
   "personaImportExport": {
     "title": "Импорт и экспорт персон",

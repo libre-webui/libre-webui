@@ -1316,7 +1316,10 @@
     "open": "打开",
     "dragEdgeToResize": "拖动边缘调整大小",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "第 {{current}} 版，共 {{total}} 版",
+    "previousVersion": "上一版本",
+    "nextVersion": "下一版本"
   },
   "personaImportExport": {
     "title": "导入和导出角色",

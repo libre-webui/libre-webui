@@ -1316,7 +1316,10 @@
     "open": "فتح",
     "dragEdgeToResize": "اسحب الحافة لتغيير الحجم",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "الإصدار {{current}} من {{total}}",
+    "previousVersion": "الإصدار السابق",
+    "nextVersion": "الإصدار التالي"
   },
   "personaImportExport": {
     "title": "استيراد وتصدير الشخصيات",

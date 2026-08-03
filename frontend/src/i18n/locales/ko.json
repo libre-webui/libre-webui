@@ -1316,7 +1316,10 @@
     "open": "열기",
     "dragEdgeToResize": "가장자리를 끌어 크기 조절",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "버전 {{current}} / {{total}}",
+    "previousVersion": "이전 버전",
+    "nextVersion": "다음 버전"
   },
   "personaImportExport": {
     "title": "페르소나 가져오기 및 내보내기",

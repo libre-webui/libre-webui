@@ -1316,7 +1316,10 @@
     "open": "Buka",
     "dragEdgeToResize": "Seret tepi untuk mengubah saiz",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Versi {{current}} daripada {{total}}",
+    "previousVersion": "Versi sebelumnya",
+    "nextVersion": "Versi seterusnya"
   },
   "personaImportExport": {
     "title": "Import & Eksport Persona",

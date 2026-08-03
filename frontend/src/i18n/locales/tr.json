@@ -1316,7 +1316,10 @@
     "open": "Aç",
     "dragEdgeToResize": "Yeniden boyutlandırmak için kenarı sürükleyin",
     "previewUnavailable": "Preview unavailable",
-    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
+    "versionOf": "Sürüm {{current}} / {{total}}",
+    "previousVersion": "Önceki sürüm",
+    "nextVersion": "Sonraki sürüm"
   },
   "personaImportExport": {
     "title": "Personaları İçe ve Dışa Aktar",
