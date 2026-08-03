@@ -1192,6 +1192,7 @@
     "showMore": "Показати більше",
     "showLess": "Показати менше",
     "thinking": "Обмірковує",
+    "thoughtFor": "Думав {{duration}}",
     "systemMessagePlaceholder": "Введіть системне повідомлення...",
     "fullSizeImage": "Повнорозмірне зображення",
     "startConversation": "Почати розмову",

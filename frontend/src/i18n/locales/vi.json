@@ -1192,6 +1192,7 @@
     "showMore": "Hiển thị thêm",
     "showLess": "Hiển thị ít hơn",
     "thinking": "Đang suy nghĩ",
+    "thoughtFor": "Đã suy nghĩ trong {{duration}}",
     "systemMessagePlaceholder": "Nhập tin nhắn hệ thống của bạn...",
     "fullSizeImage": "Hình ảnh kích thước đầy đủ",
     "startConversation": "Bắt đầu cuộc trò chuyện",

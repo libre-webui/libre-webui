@@ -1192,6 +1192,7 @@
     "showMore": "Zobrazit více",
     "showLess": "Zobrazit méně",
     "thinking": "Přemýšlení",
+    "thoughtFor": "Přemýšlel {{duration}}",
     "systemMessagePlaceholder": "Zadejte systémovou zprávu...",
     "fullSizeImage": "Plná velikost obrázku",
     "startConversation": "Zahájit konverzaci",

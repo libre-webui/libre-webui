@@ -24,6 +24,10 @@ import { GenerationStats } from '@/components/GenerationStats';
 import { ArtifactContainer } from '@/components/ArtifactContainer';
 import { TTSButton } from '@/components/TTSButton';
 import { formatTimestamp, cn, parseThinkingContent } from '@/utils';
+import {
+  formatThinkingDuration,
+  peekThinkingDuration,
+} from '@/utils/thinkingTimer';
 import { parseArtifacts } from '@/utils/artifactParser';
 import { findTTSModel, resolveTTSModel, ttsApi } from '@/utils/api';
 import {
@@ -131,6 +135,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         artifacts: [],
       };
     }, [message.content, message.artifacts, isUser, isSystem, isStreaming]);
+
+  // Backend statistics carry the persisted duration; the live timer covers
+  // the window between the thought closing and the stream completing.
+  const thinkingDurationMs = thinkingStreaming
+    ? undefined
+    : (message.statistics?.thinking_duration_ms ??
+      peekThinkingDuration(message.id));
 
   // Auto-play TTS when streaming completes (if enabled)
   useEffect(() => {
@@ -452,7 +463,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                         </span>
                       ) : (
                         <span className='font-medium'>
-                          {t('chatMessage.thinking')}
+                          {thinkingDurationMs !== undefined
+                            ? t('chatMessage.thoughtFor', {
+                                duration:
+                                  formatThinkingDuration(thinkingDurationMs),
+                              })
+                            : t('chatMessage.thinking')}
                         </span>
                       )}
                       {isThinkingExpanded ? (

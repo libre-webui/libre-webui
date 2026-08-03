@@ -21,6 +21,7 @@ import type {
   OllamaChatResponse,
 } from '../types/index.js';
 import { extractStatistics } from './generationUtils.js';
+import { ThinkingPhaseTimer } from './thinkingPhaseTimer.js';
 import {
   sendAssistantChunk,
   sendError,
@@ -65,6 +66,7 @@ export async function streamOllamaChatResponse({
     let content = '';
     let statistics: GenerationStatistics | undefined;
     let resolved = false;
+    const thinkingTimer = new ThinkingPhaseTimer();
 
     const finish = (
       result: Omit<StreamOllamaChatResponseResult, 'content'>
@@ -88,6 +90,7 @@ export async function streamOllamaChatResponse({
 
       if (chunk.message?.content) {
         content += chunk.message.content;
+        thinkingTimer.observe(content);
         sendAssistantChunk(ws, {
           content: chunk.message.content,
           total: content,
@@ -98,6 +101,13 @@ export async function streamOllamaChatResponse({
 
       if (chunk.done) {
         statistics = extractStatistics(chunk);
+        const thinkingDurationMs = thinkingTimer.durationMs;
+        if (thinkingDurationMs !== undefined) {
+          statistics = {
+            ...statistics,
+            thinking_duration_ms: thinkingDurationMs,
+          };
+        }
         finish({ completed: true });
       }
     };

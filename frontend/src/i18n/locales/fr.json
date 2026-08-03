@@ -1192,6 +1192,7 @@
     "showMore": "Voir plus",
     "showLess": "Voir moins",
     "thinking": "Réflexion",
+    "thoughtFor": "A réfléchi pendant {{duration}}",
     "systemMessagePlaceholder": "Entrez votre message système...",
     "fullSizeImage": "Image en taille réelle",
     "startConversation": "Démarrer une conversation",

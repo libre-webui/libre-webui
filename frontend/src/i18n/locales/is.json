@@ -1192,6 +1192,7 @@
     "showMore": "Sýna meira",
     "showLess": "Sýna minna",
     "thinking": "Hugsar",
+    "thoughtFor": "Hugsaði í {{duration}}",
     "systemMessagePlaceholder": "Sláðu inn kerfisskilaboðin þín...",
     "fullSizeImage": "Mynd í fullri stærð",
     "startConversation": "Hefja samtal",

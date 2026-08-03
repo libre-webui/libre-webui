@@ -1192,6 +1192,7 @@
     "showMore": "Visa mer",
     "showLess": "Visa mindre",
     "thinking": "Tänker",
+    "thoughtFor": "Tänkte i {{duration}}",
     "systemMessagePlaceholder": "Ange ditt systemmeddelande...",
     "fullSizeImage": "Fullstor bild",
     "startConversation": "Starta en konversation",

@@ -1192,6 +1192,7 @@
     "showMore": "もっと見る",
     "showLess": "閉じる",
     "thinking": "考え中",
+    "thoughtFor": "{{duration}}考えました",
     "systemMessagePlaceholder": "システムメッセージを入力...",
     "fullSizeImage": "フルサイズ画像",
     "startConversation": "会話を始める",

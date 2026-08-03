@@ -1192,6 +1192,7 @@
     "showMore": "और दिखाएं",
     "showLess": "कम दिखाएं",
     "thinking": "सोच रहा है",
+    "thoughtFor": "{{duration}} तक सोचा",
     "systemMessagePlaceholder": "अपना सिस्टम संदेश दर्ज करें...",
     "fullSizeImage": "पूर्ण आकार छवि",
     "startConversation": "बातचीत शुरू करें",

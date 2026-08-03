@@ -32,6 +32,7 @@ export interface GenerationStatistics {
   tokens_per_second?: number; // Calculated tokens/second
   created_at?: string; // Timestamp from Ollama
   model?: string; // Model used for generation
+  thinking_duration_ms?: number; // Wall-clock time of the reasoning phase, measured client-side
 }
 
 export interface Artifact {

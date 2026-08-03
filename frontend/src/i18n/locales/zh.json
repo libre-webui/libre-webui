@@ -1192,6 +1192,7 @@
     "showMore": "显示更多",
     "showLess": "显示更少",
     "thinking": "思考中",
+    "thoughtFor": "思考了 {{duration}}",
     "systemMessagePlaceholder": "输入系统消息...",
     "fullSizeImage": "全尺寸图像",
     "startConversation": "开始对话",

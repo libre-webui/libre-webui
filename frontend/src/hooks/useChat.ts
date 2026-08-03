@@ -21,6 +21,10 @@ import { useAppStore } from '@/store/appStore';
 import { GenerationStatistics, ToolActivity } from '@/types';
 import websocketService from '@/utils/websocket';
 import { generateId } from '@/utils';
+import {
+  trackThinkingProgress,
+  takeThinkingDuration,
+} from '@/utils/thinkingTimer';
 import { chatApi } from '@/utils/api';
 import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
@@ -220,6 +224,7 @@ export const useChat = (sessionId: string) => {
       if (messageId) {
         // Always update the content buffer and UI immediately for responsive streaming
         streamingContentRef.current = chunkData.total;
+        trackThinkingProgress(messageId, chunkData.total);
         publishStreamingMessage(chunkData.total, chunkData.done);
 
         // Debounced store updates - only update when streaming slows down or finishes
@@ -301,11 +306,22 @@ export const useChat = (sessionId: string) => {
           streamingContentRef.current || completeData.content;
 
         // Use updateMessageWithStatistics to include generation statistics
+        // The backend times the thinking phase for Ollama streams; the local
+        // timer covers providers that stream without statistics.
+        const thinkingDurationMs = takeThinkingDuration(messageId);
+        const statistics =
+          completeData.statistics?.thinking_duration_ms === undefined &&
+          thinkingDurationMs !== undefined
+            ? {
+                ...completeData.statistics,
+                thinking_duration_ms: thinkingDurationMs,
+              }
+            : completeData.statistics;
         updateMessageWithStatistics(
           sessionId,
           messageId,
           finalContent,
-          completeData.statistics,
+          statistics,
           completeData.providerMetadata
         );
       }

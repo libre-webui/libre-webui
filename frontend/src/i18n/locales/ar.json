@@ -1192,6 +1192,7 @@
     "showMore": "عرض المزيد",
     "showLess": "عرض أقل",
     "thinking": "يفكر",
+    "thoughtFor": "فكّر لمدة {{duration}}",
     "systemMessagePlaceholder": "أدخل رسالة النظام...",
     "fullSizeImage": "صورة بالحجم الكامل",
     "startConversation": "ابدأ محادثة",

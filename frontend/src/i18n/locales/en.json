@@ -1336,6 +1336,7 @@
     "showMore": "Show more",
     "showLess": "Show less",
     "thinking": "Thinking",
+    "thoughtFor": "Thought for {{duration}}",
     "systemMessagePlaceholder": "Enter your system message...",
     "fullSizeImage": "Full size image",
     "startConversation": "Start a conversation",

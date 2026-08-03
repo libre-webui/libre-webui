@@ -1192,6 +1192,7 @@
     "showMore": "Показать больше",
     "showLess": "Показать меньше",
     "thinking": "Думает",
+    "thoughtFor": "Думал {{duration}}",
     "systemMessagePlaceholder": "Введите ваше системное сообщение...",
     "fullSizeImage": "Изображение в полном размере",
     "startConversation": "Начать разговор",

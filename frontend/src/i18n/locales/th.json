@@ -1192,6 +1192,7 @@
     "showMore": "แสดงเพิ่มเติม",
     "showLess": "แสดงน้อยลง",
     "thinking": "กำลังคิด",
+    "thoughtFor": "คิดเป็นเวลา {{duration}}",
     "systemMessagePlaceholder": "ป้อนข้อความระบบของคุณ...",
     "fullSizeImage": "รูปภาพขนาดเต็ม",
     "startConversation": "เริ่มการสนทนา",
