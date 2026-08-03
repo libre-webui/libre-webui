@@ -1193,6 +1193,7 @@
     "showLess": "عرض أقل",
     "thinking": "يفكر",
     "thoughtFor": "فكّر لمدة {{duration}}",
+    "hiddenLines": "الأسطر المخفية: {{count}}",
     "systemMessagePlaceholder": "أدخل رسالة النظام...",
     "fullSizeImage": "صورة بالحجم الكامل",
     "startConversation": "ابدأ محادثة",

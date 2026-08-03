@@ -1193,6 +1193,7 @@
     "showLess": "कम दिखाएं",
     "thinking": "सोच रहा है",
     "thoughtFor": "{{duration}} तक सोचा",
+    "hiddenLines": "छिपी पंक्तियाँ: {{count}}",
     "systemMessagePlaceholder": "अपना सिस्टम संदेश दर्ज करें...",
     "fullSizeImage": "पूर्ण आकार छवि",
     "startConversation": "बातचीत शुरू करें",

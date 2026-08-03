@@ -1193,6 +1193,7 @@
     "showLess": "Показати менше",
     "thinking": "Обмірковує",
     "thoughtFor": "Думав {{duration}}",
+    "hiddenLines": "Приховано рядків: {{count}}",
     "systemMessagePlaceholder": "Введіть системне повідомлення...",
     "fullSizeImage": "Повнорозмірне зображення",
     "startConversation": "Почати розмову",

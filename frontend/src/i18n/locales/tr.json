@@ -1193,6 +1193,7 @@
     "showLess": "Daha az göster",
     "thinking": "Düşünüyor",
     "thoughtFor": "{{duration}} boyunca düşündü",
+    "hiddenLines": "{{count}} gizli satır",
     "systemMessagePlaceholder": "Sistem mesajınızı girin...",
     "fullSizeImage": "Tam boyut görsel",
     "startConversation": "Bir konuşma başlatın",

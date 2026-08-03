@@ -1193,6 +1193,7 @@
     "showLess": "显示更少",
     "thinking": "思考中",
     "thoughtFor": "思考了 {{duration}}",
+    "hiddenLines": "隐藏了 {{count}} 行",
     "systemMessagePlaceholder": "输入系统消息...",
     "fullSizeImage": "全尺寸图像",
     "startConversation": "开始对话",

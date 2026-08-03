@@ -1193,6 +1193,7 @@
     "showLess": "접기",
     "thinking": "생각 중",
     "thoughtFor": "{{duration}} 동안 생각함",
+    "hiddenLines": "숨겨진 줄: {{count}}",
     "systemMessagePlaceholder": "시스템 메시지를 입력하세요...",
     "fullSizeImage": "전체 크기 이미지",
     "startConversation": "대화 시작하기",

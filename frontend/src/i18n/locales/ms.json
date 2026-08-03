@@ -1193,6 +1193,7 @@
     "showLess": "Tunjuk kurang",
     "thinking": "Berfikir",
     "thoughtFor": "Berfikir selama {{duration}}",
+    "hiddenLines": "{{count}} baris tersembunyi",
     "systemMessagePlaceholder": "Masukkan mesej sistem anda...",
     "fullSizeImage": "Imej saiz penuh",
     "startConversation": "Mulakan perbualan",

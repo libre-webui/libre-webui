@@ -1193,6 +1193,7 @@
     "showLess": "แสดงน้อยลง",
     "thinking": "กำลังคิด",
     "thoughtFor": "คิดเป็นเวลา {{duration}}",
+    "hiddenLines": "บรรทัดที่ซ่อน: {{count}}",
     "systemMessagePlaceholder": "ป้อนข้อความระบบของคุณ...",
     "fullSizeImage": "รูปภาพขนาดเต็ม",
     "startConversation": "เริ่มการสนทนา",

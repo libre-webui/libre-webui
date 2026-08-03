@@ -1193,6 +1193,7 @@
     "showLess": "Minder tonen",
     "thinking": "Denkt",
     "thoughtFor": "Dacht {{duration}} na",
+    "hiddenLines": "{{count}} verborgen regels",
     "systemMessagePlaceholder": "Voer uw systeembericht in...",
     "fullSizeImage": "Afbeelding op volledige grootte",
     "startConversation": "Start een gesprek",

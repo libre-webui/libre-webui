@@ -1193,6 +1193,7 @@
     "showLess": "Mostra meno",
     "thinking": "Pensando",
     "thoughtFor": "Ha riflettuto per {{duration}}",
+    "hiddenLines": "{{count}} righe nascoste",
     "systemMessagePlaceholder": "Inserisci il tuo messaggio di sistema...",
     "fullSizeImage": "Immagine a dimensione intera",
     "startConversation": "Inizia una conversazione",

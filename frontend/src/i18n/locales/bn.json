@@ -1193,6 +1193,7 @@
     "showLess": "কম দেখান",
     "thinking": "চিন্তা করছে",
     "thoughtFor": "{{duration}} ধরে ভেবেছে",
+    "hiddenLines": "লুকানো লাইন: {{count}}",
     "systemMessagePlaceholder": "আপনার সিস্টেম বার্তা লিখুন...",
     "fullSizeImage": "পূর্ণ সাইজ ইমেজ",
     "startConversation": "একটি কথোপকথন শুরু করুন",

@@ -1193,6 +1193,7 @@
     "showLess": "Zobrazit méně",
     "thinking": "Přemýšlení",
     "thoughtFor": "Přemýšlel {{duration}}",
+    "hiddenLines": "Skryté řádky: {{count}}",
     "systemMessagePlaceholder": "Zadejte systémovou zprávu...",
     "fullSizeImage": "Plná velikost obrázku",
     "startConversation": "Zahájit konverzaci",

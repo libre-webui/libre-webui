@@ -1193,6 +1193,7 @@
     "showLess": "Weniger anzeigen",
     "thinking": "Denkt",
     "thoughtFor": "Hat {{duration}} nachgedacht",
+    "hiddenLines": "{{count}} ausgeblendete Zeilen",
     "systemMessagePlaceholder": "Geben Sie Ihre Systemnachricht ein...",
     "fullSizeImage": "Bild in voller Größe",
     "startConversation": "Gespräch starten",

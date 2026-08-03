@@ -1193,6 +1193,7 @@
     "showLess": "Показать меньше",
     "thinking": "Думает",
     "thoughtFor": "Думал {{duration}}",
+    "hiddenLines": "Скрыто строк: {{count}}",
     "systemMessagePlaceholder": "Введите ваше системное сообщение...",
     "fullSizeImage": "Изображение в полном размере",
     "startConversation": "Начать разговор",
