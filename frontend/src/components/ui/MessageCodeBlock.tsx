@@ -120,7 +120,9 @@ export function MessageCodeBlock({
     [code]
   );
   const collapsed =
-    manualExpanded === null ? lineCount > COLLAPSE_THRESHOLD : !manualExpanded;
+    manualExpanded === null
+      ? state === 'complete' && lineCount > COLLAPSE_THRESHOLD
+      : !manualExpanded;
   const previewType =
     state === 'complete' ? detectPreviewType(language, code) : null;
 

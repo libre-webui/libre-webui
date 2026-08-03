@@ -35,6 +35,10 @@ import {
   sanitizeChatMessageProviderState,
   selectChatMessagesForContext,
 } from '../utils/chatContext.js';
+import {
+  MAX_SESSION_FOLDER_NAME_LENGTH,
+  ResourcePolicyError,
+} from '../utils/resourceLimits.js';
 
 const logger = createLogger('chat-service');
 
@@ -371,11 +375,15 @@ class ChatService {
     return storageService.getSessionFolders(userId);
   }
 
-  createSessionFolder(name: string, userId: string = 'default'): SessionFolder {
+  createSessionFolder(
+    name: unknown,
+    userId: string = 'default'
+  ): SessionFolder {
+    const normalizedName = this.normalizeSessionFolderName(name);
     const now = Date.now();
     const folder: SessionFolder = {
       id: uuidv4(),
-      name: name.trim(),
+      name: normalizedName,
       createdAt: now,
       updatedAt: now,
     };
@@ -385,16 +393,31 @@ class ChatService {
 
   renameSessionFolder(
     folderId: string,
-    name: string,
+    name: unknown,
     userId: string = 'default'
   ): SessionFolder | undefined {
+    const normalizedName = this.normalizeSessionFolderName(name);
     const folder = storageService
       .getSessionFolders(userId)
       .find(item => item.id === folderId);
     if (!folder) return undefined;
-    const updated = { ...folder, name: name.trim(), updatedAt: Date.now() };
+    const updated = { ...folder, name: normalizedName, updatedAt: Date.now() };
     storageService.saveSessionFolder(updated, userId);
     return updated;
+  }
+
+  private normalizeSessionFolderName(name: unknown): string {
+    if (typeof name !== 'string' || !name.trim()) {
+      throw new ResourcePolicyError('Name is required', 400);
+    }
+    const normalizedName = name.trim();
+    if (normalizedName.length > MAX_SESSION_FOLDER_NAME_LENGTH) {
+      throw new ResourcePolicyError(
+        `Name exceeds the maximum length of ${MAX_SESSION_FOLDER_NAME_LENGTH} characters`,
+        400
+      );
+    }
+    return normalizedName;
   }
 
   deleteSessionFolder(folderId: string, userId: string = 'default'): boolean {

@@ -311,7 +311,7 @@ test('history navigation stays put while the latest response streams', async ({
   });
   await page.goto('/c/streaming-history-session');
 
-  const input = page.locator('textarea[dir="auto"]');
+  const input = page.locator('textarea[rows="1"][dir="auto"]');
   await input.fill('Add one final recommendation.');
   await input.press('Enter');
   await expect(page.locator('body')).toContainText('Streaming segment 0.');

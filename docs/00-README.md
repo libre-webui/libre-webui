@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 title: 'Documentation'
-description: 'Libre WebUI documentation - self-hosted chat, providers, and isolated Work workspaces'
+description: 'Libre WebUI documentation - local-first chat, private knowledge, artifacts, and isolated Work tasks'
 slug: /
 keywords:
   [

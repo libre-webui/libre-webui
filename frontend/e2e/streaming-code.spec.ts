@@ -207,7 +207,7 @@ test('code stays in a specialized block throughout a live response', async ({
   await page.goto('/c/streaming-code-session');
   await page.waitForLoadState('networkidle');
 
-  const input = page.locator('textarea[dir="auto"]');
+  const input = page.locator('textarea[rows="1"][dir="auto"]');
   await expect(input).toBeVisible();
   await input.fill('Show me a typed constant.');
   await input.press('Enter');
@@ -313,7 +313,7 @@ test('long code streams follow the tail until the reader scrolls away', async ({
   await page.goto('/c/long-stream-session');
   await page.waitForLoadState('networkidle');
 
-  const input = page.locator('textarea[dir="auto"]');
+  const input = page.locator('textarea[rows="1"][dir="auto"]');
   await input.fill('Stream a long list.');
   await input.press('Enter');
 

@@ -1,9 +1,9 @@
 apiVersion: v2
 name: libre-webui
-description: Privacy-first AI chat interface - self-hosted, open source, extensible
+description: A local-first workspace for chat, private knowledge, artifacts, and isolated model-driven work
 type: application
 version: 0.18.0
-appVersion: "0.18.0"
+appVersion: '0.18.0'
 keywords:
   - ai
   - chat
@@ -12,6 +12,11 @@ keywords:
   - openai
   - anthropic
   - self-hosted
+  - local-ai
+  - rag
+  - agents
+  - artifacts
+  - open-source
 home: https://librewebui.org
 sources:
   - https://github.com/libre-webui/libre-webui

@@ -26,7 +26,7 @@ We pursue simplicity and user sovereignty above growth, hype, or outside investm
 | **Transparency**        | All decisions, road‑maps, and governance discussions occur in public issues/PRs or recorded community calls.                         |
 | **Inclusive Community** | We enforce a strict anti‑harassment policy. All contributors and users are welcome regardless of background, identity, or geography. |
 | **Local‑First**         | The default experience never requires cloud services or external APIs. Remote options are opt‑in and clearly marked.                 |
-| **No Relicensing**      | This project shall **never** be relicensed to more restrictive terms (e.g., BSD‑3 with CLA, dual‑license, proprietary).              |
+| **No Relicensing**      | This project shall **never** be relicensed to more restrictive terms (e.g., dual‑license, source‑available, proprietary).            |
 | **Ethical Funding**     | We accept donations or grants only if they do not impose control over roadmap, license, or community. **No VC equity.**              |
 
 ## 3 Governance Model
@@ -85,7 +85,9 @@ Libre WebUI's local-first, zero-telemetry design can help organizations build de
 ### Contact
 
 **Enterprise inquiries**: enterprise@kroonen.ai
+
 **General support**: hello@kroonen.ai
+
 **Website**: https://kroonen.ai/services
 
 ## 7 Amendments

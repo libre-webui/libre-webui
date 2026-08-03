@@ -553,6 +553,8 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_session_messages_timestamp ON session_messages(timestamp);
     CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
     CREATE INDEX IF NOT EXISTS idx_documents_uploaded_at ON documents(uploaded_at);
+    CREATE INDEX IF NOT EXISTS idx_notes_user_updated ON notes(user_id, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_session_folders_user_id ON session_folders(user_id);
     CREATE INDEX IF NOT EXISTS idx_document_chunks_document_id ON document_chunks(document_id);
     CREATE INDEX IF NOT EXISTS idx_document_chunks_index ON document_chunks(chunk_index);
     CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);

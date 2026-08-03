@@ -27,11 +27,13 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
+    "ipaddr.js": "^2.4.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
     "pdfjs-dist": "^6.0.227",
     "sanitize-filename": "^1.6.3",
+    "undici": "^8.10.0",
     "uuid": "^14.0.0",
     "ws": "^8.14.2"
   },

@@ -39,8 +39,24 @@ import { createLogger } from '../utils/logger.js';
 import { buildChatDocumentContext } from '../utils/chatDocumentContext.js';
 import { ChatProviderSelectionError } from '../utils/chatProviderSelection.js';
 import { formatPluginStreamToolCalls } from '../utils/pluginStreaming.js';
+import { ResourcePolicyError } from '../utils/resourceLimits.js';
 
 const logger = createLogger('routes:chat');
+
+function sendSessionFolderError(
+  res: Response<ApiResponse>,
+  error: unknown,
+  fallback: string
+) {
+  if (error instanceof ResourcePolicyError) {
+    res.status(error.statusCode).json({ success: false, error: error.message });
+    return;
+  }
+  res.status(500).json({
+    success: false,
+    error: getErrorMessage(error, fallback),
+  });
+}
 
 const router = express.Router();
 const titleGenerationService = new TitleGenerationService({
@@ -854,21 +870,14 @@ router.post(
   '/folders',
   (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
     try {
-      const { name } = req.body as { name?: string };
-      if (!name || !name.trim()) {
-        res.status(400).json({ success: false, error: 'Name is required' });
-        return;
-      }
+      const { name } = req.body as { name?: unknown };
       const userId = req.user?.userId || 'default';
       res.json({
         success: true,
         data: chatService.createSessionFolder(name, userId),
       });
     } catch (error: unknown) {
-      res.status(500).json({
-        success: false,
-        error: getErrorMessage(error, 'Failed to create folder'),
-      });
+      sendSessionFolderError(res, error, 'Failed to create folder');
     }
   }
 );
@@ -877,11 +886,7 @@ router.put(
   '/folders/:folderId',
   (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
     try {
-      const { name } = req.body as { name?: string };
-      if (!name || !name.trim()) {
-        res.status(400).json({ success: false, error: 'Name is required' });
-        return;
-      }
+      const { name } = req.body as { name?: unknown };
       const userId = req.user?.userId || 'default';
       const folder = chatService.renameSessionFolder(
         req.params.folderId as string,
@@ -894,10 +899,7 @@ router.put(
       }
       res.json({ success: true, data: folder });
     } catch (error: unknown) {
-      res.status(500).json({
-        success: false,
-        error: getErrorMessage(error, 'Failed to rename folder'),
-      });
+      sendSessionFolderError(res, error, 'Failed to rename folder');
     }
   }
 );

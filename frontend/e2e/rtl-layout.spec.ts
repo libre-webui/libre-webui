@@ -100,7 +100,7 @@ test('Arabic mirrors the desktop shell and preserves content direction', async (
     sidebarBox!.x + 1
   );
 
-  await expect(page.locator('textarea[dir="auto"]')).toBeVisible();
+  await expect(page.locator('textarea[rows="1"][dir="auto"]')).toBeVisible();
   await expect(
     page.getByText('مرحبا بالعالم', { exact: true })
   ).toHaveAttribute('dir', 'auto');

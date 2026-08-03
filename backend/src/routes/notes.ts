@@ -20,6 +20,11 @@ import { v4 as uuidv4 } from 'uuid';
 import storageService from '../storage.js';
 import { ApiResponse, Note } from '../types/index.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  MAX_NOTE_CONTENT_LENGTH,
+  MAX_NOTE_TITLE_LENGTH,
+  ResourcePolicyError,
+} from '../utils/resourceLimits.js';
 
 const router = express.Router();
 router.use(authenticate);
@@ -27,8 +32,38 @@ router.use(authenticate);
 const userIdOf = (req: AuthenticatedRequest): string =>
   req.user?.userId || 'default';
 
-const MAX_TITLE_LENGTH = 200;
-const MAX_CONTENT_LENGTH = 200_000;
+function sendNoteError(
+  res: express.Response,
+  error: unknown,
+  fallback: string
+) {
+  if (error instanceof ResourcePolicyError) {
+    res.status(error.statusCode).json({ success: false, error: error.message });
+    return;
+  }
+  res.status(500).json({
+    success: false,
+    error: error instanceof Error ? error.message : fallback,
+  } as ApiResponse);
+}
+
+function readNoteField(
+  value: unknown,
+  field: 'title' | 'content',
+  maximum: number
+): string {
+  if (value === undefined) return '';
+  if (typeof value !== 'string') {
+    throw new ResourcePolicyError(`${field} must be a string`, 400);
+  }
+  if (value.length > maximum) {
+    throw new ResourcePolicyError(
+      `${field} exceeds the maximum length of ${maximum} characters`,
+      400
+    );
+  }
+  return value;
+}
 
 router.get('/', (req: AuthenticatedRequest, res) => {
   try {
@@ -37,31 +72,28 @@ router.get('/', (req: AuthenticatedRequest, res) => {
       data: storageService.getNotes(userIdOf(req)),
     } as ApiResponse<Note[]>);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to load notes',
-    } as ApiResponse);
+    sendNoteError(res, error, 'Failed to load notes');
   }
 });
 
 router.post('/', (req: AuthenticatedRequest, res) => {
   try {
-    const { title, content } = req.body as { title?: string; content?: string };
+    const { title, content } = req.body as {
+      title?: unknown;
+      content?: unknown;
+    };
     const now = Date.now();
     const note: Note = {
       id: uuidv4(),
-      title: (title || '').slice(0, MAX_TITLE_LENGTH),
-      content: (content || '').slice(0, MAX_CONTENT_LENGTH),
+      title: readNoteField(title, 'title', MAX_NOTE_TITLE_LENGTH),
+      content: readNoteField(content, 'content', MAX_NOTE_CONTENT_LENGTH),
       createdAt: now,
       updatedAt: now,
     };
     storageService.saveNote(note, userIdOf(req));
     res.json({ success: true, data: note } as ApiResponse<Note>);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to create note',
-    } as ApiResponse);
+    sendNoteError(res, error, 'Failed to create note');
   }
 });
 
@@ -79,24 +111,26 @@ router.put('/:noteId', (req: AuthenticatedRequest, res) => {
       } as ApiResponse);
       return;
     }
-    const { title, content } = req.body as { title?: string; content?: string };
+    const { title, content } = req.body as {
+      title?: unknown;
+      content?: unknown;
+    };
     const updated: Note = {
       ...existing,
       title:
-        title !== undefined ? title.slice(0, MAX_TITLE_LENGTH) : existing.title,
+        title !== undefined
+          ? readNoteField(title, 'title', MAX_NOTE_TITLE_LENGTH)
+          : existing.title,
       content:
         content !== undefined
-          ? content.slice(0, MAX_CONTENT_LENGTH)
+          ? readNoteField(content, 'content', MAX_NOTE_CONTENT_LENGTH)
           : existing.content,
       updatedAt: Date.now(),
     };
     storageService.saveNote(updated, userId);
     res.json({ success: true, data: updated } as ApiResponse<Note>);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to update note',
-    } as ApiResponse);
+    sendNoteError(res, error, 'Failed to update note');
   }
 });
 
@@ -115,10 +149,7 @@ router.delete('/:noteId', (req: AuthenticatedRequest, res) => {
     }
     res.json({ success: true, message: 'Note deleted' } as ApiResponse);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete note',
-    } as ApiResponse);
+    sendNoteError(res, error, 'Failed to delete note');
   }
 });
 

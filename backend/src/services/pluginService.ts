@@ -858,7 +858,12 @@ export class PluginService {
   getApiKey(plugin: Plugin, userId?: string): string | null {
     if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
       // Resolved from the server's Codex CLI sign-in, never user credentials.
-      return codexOAuthService.getCachedAccessToken();
+      // A writable same-ID definition must never receive the server user's
+      // OAuth bearer token, even when an administrator approved that file.
+      return this.usesTrustedBundledRouting(plugin) &&
+        matchesBundledPluginTrustAnchor(plugin)
+        ? codexOAuthService.getCachedAccessToken()
+        : null;
     }
     const hasHonoredConnectionOverride =
       this.canUseStoredConnectionOverrides(userId) &&
@@ -1468,6 +1473,9 @@ export class PluginService {
   installPlugin(pluginData: Plugin, approvedByUserId: string): Plugin {
     if (!this.validatePlugin(pluginData)) {
       throw new Error('Invalid plugin structure');
+    }
+    if (pluginData.id === CODEX_OAUTH_PLUGIN_ID) {
+      throw new Error('The bundled Codex OAuth plugin ID is reserved');
     }
     if (!this.canUseStoredConnectionOverrides(approvedByUserId)) {
       throw new Error('Administrator approval is required');

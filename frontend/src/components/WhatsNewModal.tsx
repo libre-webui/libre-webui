@@ -15,42 +15,11 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui';
-
-const SEEN_STORAGE_KEY = 'libre-webui:whats-new-seen';
-
-export function useWhatsNew() {
-  const [open, setOpen] = useState(false);
-  const notes = __LATEST_RELEASE_NOTES__;
-
-  useEffect(() => {
-    if (!notes) return;
-    try {
-      const seen = window.localStorage.getItem(SEEN_STORAGE_KEY);
-      if (seen !== notes.version) {
-        setOpen(true);
-      }
-    } catch {
-      // Storage unavailable (private mode) — skip rather than nag every load.
-    }
-  }, [notes]);
-
-  const dismiss = () => {
-    setOpen(false);
-    if (!notes) return;
-    try {
-      window.localStorage.setItem(SEEN_STORAGE_KEY, notes.version);
-    } catch {
-      // Ignore storage failures.
-    }
-  };
-
-  return { open, dismiss, notes };
-}
 
 interface WhatsNewModalProps {
   notes: NonNullable<typeof __LATEST_RELEASE_NOTES__>;

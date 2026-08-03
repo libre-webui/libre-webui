@@ -16,8 +16,22 @@
  */
 
 import { Page, Route } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { PluginUsageAnalytics } from '../../src/utils/api/pluginApi';
 import type { SystemDiagnostics } from '../../src/utils/api/systemApi';
+
+const latestReleaseVersion = readFileSync(
+  path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '..',
+    '..',
+    '..',
+    'CHANGELOG.md'
+  ),
+  'utf8'
+).match(/^## \[(\d+\.\d+\.\d+)\] - /m)?.[1];
 
 type ApiEnvelope<T> = {
   success: boolean;
@@ -342,6 +356,7 @@ type MockWorkTaskTransition = {
 };
 
 type MockOptions = {
+  showWhatsNew?: boolean;
   systemInfo?: MockSystemInfo;
   authRole?: 'admin' | 'user';
   authUsers?: Array<{
@@ -539,6 +554,12 @@ const fulfillApiError = async (route: Route, status: number, error: string) => {
 };
 
 export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
+  if (!options.showWhatsNew && latestReleaseVersion) {
+    await page.addInitScript(version => {
+      localStorage.setItem('libre-webui:whats-new-seen', version);
+    }, latestReleaseVersion);
+  }
+
   const systemInfo = options.systemInfo ?? defaultSystemInfo;
   const authRole = options.authRole ?? 'admin';
   const authUsers = options.authUsers ?? [];

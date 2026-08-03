@@ -52,7 +52,8 @@ import {
   KeyboardShortcutsModal,
   KeyboardShortcutsIndicator,
 } from '@/components/KeyboardShortcuts';
-import { WhatsNewModal, useWhatsNew } from '@/components/WhatsNewModal';
+import { WhatsNewModal } from '@/components/WhatsNewModal';
+import { useWhatsNew } from '@/hooks/useWhatsNew';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
 import { AppTabBar } from '@/components/AppTabBar';

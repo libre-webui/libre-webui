@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, Check, Database, RotateCcw, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, Select } from '@/components/ui';
@@ -229,37 +230,43 @@ export function SettingsDocumentsTab({
 
 function KnowledgeCollectionsSection() {
   const { t } = useTranslation();
-  const [collections, setCollections] = useState<KnowledgeCollection[]>([]);
-  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
+  const queryClient = useQueryClient();
   const [newName, setNewName] = useState('');
 
-  const reload = useCallback(async () => {
-    try {
+  const { data } = useQuery({
+    queryKey: ['knowledge-collections'],
+    queryFn: async (): Promise<{
+      collections: KnowledgeCollection[];
+      documents: DocumentSummary[];
+    }> => {
       const [collectionsResponse, documentsResponse] = await Promise.all([
         documentsApi.getCollections(),
         documentsApi.getDocuments(),
       ]);
-      if (collectionsResponse.success && collectionsResponse.data) {
-        setCollections(collectionsResponse.data);
-      }
-      if (documentsResponse.success && documentsResponse.data) {
-        setDocuments(documentsResponse.data);
-      }
-    } catch {
-      // Section stays empty when the backend is unreachable.
-    }
-  }, []);
 
-  useEffect(() => {
-    void reload();
-  }, [reload]);
+      return {
+        collections:
+          collectionsResponse.success && collectionsResponse.data
+            ? collectionsResponse.data
+            : [],
+        documents:
+          documentsResponse.success && documentsResponse.data
+            ? documentsResponse.data
+            : [],
+      };
+    },
+  });
+  const { collections = [], documents = [] } = data ?? {};
+
+  const reload = () =>
+    queryClient.invalidateQueries({ queryKey: ['knowledge-collections'] });
 
   const handleCreate = async () => {
     const name = newName.trim();
     if (!name) return;
     setNewName('');
     const response = await documentsApi.createCollection(name);
-    if (response.success) void reload();
+    if (response.success) await reload();
   };
 
   const handleDelete = async (collectionId: string) => {
@@ -267,7 +274,7 @@ function KnowledgeCollectionsSection() {
       return;
     }
     const response = await documentsApi.deleteCollection(collectionId);
-    if (response.success) void reload();
+    if (response.success) await reload();
   };
 
   const handleAssign = async (
@@ -278,7 +285,7 @@ function KnowledgeCollectionsSection() {
       documentId,
       collectionId
     );
-    if (response.success) void reload();
+    if (response.success) await reload();
   };
 
   return (

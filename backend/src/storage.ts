@@ -32,6 +32,14 @@ import {
 import { encryptionService } from './services/encryptionService.js';
 import { createLogger } from './utils/logger.js';
 import {
+  MAX_NOTE_CONTENT_LENGTH,
+  MAX_NOTES_PER_USER,
+  MAX_NOTE_TITLE_LENGTH,
+  MAX_SESSION_FOLDER_NAME_LENGTH,
+  MAX_SESSION_FOLDERS_PER_USER,
+  ResourcePolicyError,
+} from './utils/resourceLimits.js';
+import {
   mapDocumentChunkRow,
   mapDocumentRow,
   mapSessionRow,
@@ -460,8 +468,13 @@ class StorageService {
     if (!this.useSQLite) return [];
     const db = getDatabase();
     const rows = db
-      .prepare('SELECT * FROM notes WHERE user_id = ? ORDER BY updated_at DESC')
-      .all(userId) as Array<{
+      .prepare(
+        `SELECT * FROM notes
+         WHERE user_id = ?
+         ORDER BY updated_at DESC
+         LIMIT ?`
+      )
+      .all(userId, MAX_NOTES_PER_USER) as Array<{
       id: string;
       title: string;
       content: string;
@@ -478,23 +491,67 @@ class StorageService {
   }
 
   getNote(noteId: string, userId = 'default'): Note | undefined {
-    return this.getNotes(userId).find(note => note.id === noteId);
+    if (!this.useSQLite) return undefined;
+    const row = getDatabase()
+      .prepare('SELECT * FROM notes WHERE id = ? AND user_id = ?')
+      .get(noteId, userId) as
+      | {
+          id: string;
+          title: string;
+          content: string;
+          created_at: number;
+          updated_at: number;
+        }
+      | undefined;
+    return row
+      ? {
+          id: row.id,
+          title: encryptionService.decrypt(row.title),
+          content: encryptionService.decrypt(row.content),
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        }
+      : undefined;
   }
 
   saveNote(note: Note, userId = 'default'): void {
     if (!this.useSQLite) return;
+    if (
+      note.title.length > MAX_NOTE_TITLE_LENGTH ||
+      note.content.length > MAX_NOTE_CONTENT_LENGTH
+    ) {
+      throw new ResourcePolicyError('Note exceeds the maximum size', 400);
+    }
     const db = getDatabase();
-    db.prepare(
-      `INSERT OR REPLACE INTO notes (id, user_id, title, content, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).run(
-      note.id,
-      userId,
-      encryptionService.encrypt(note.title),
-      encryptionService.encrypt(note.content),
-      note.createdAt,
-      note.updatedAt
-    );
+    const save = db.transaction(() => {
+      const existing = db
+        .prepare('SELECT 1 FROM notes WHERE id = ? AND user_id = ?')
+        .get(note.id, userId);
+      if (!existing) {
+        const { count } = db
+          .prepare('SELECT COUNT(*) AS count FROM notes WHERE user_id = ?')
+          .get(userId) as { count: number };
+        if (count >= MAX_NOTES_PER_USER) {
+          throw new ResourcePolicyError(
+            `A user may store at most ${MAX_NOTES_PER_USER} notes`,
+            409
+          );
+        }
+      }
+
+      db.prepare(
+        `INSERT OR REPLACE INTO notes (id, user_id, title, content, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      ).run(
+        note.id,
+        userId,
+        encryptionService.encrypt(note.title),
+        encryptionService.encrypt(note.content),
+        note.createdAt,
+        note.updatedAt
+      );
+    });
+    save();
   }
 
   deleteNote(noteId: string, userId = 'default'): boolean {
@@ -516,9 +573,12 @@ class StorageService {
     const db = getDatabase();
     const rows = db
       .prepare(
-        'SELECT * FROM session_folders WHERE user_id = ? ORDER BY name COLLATE NOCASE ASC'
+        `SELECT * FROM session_folders
+         WHERE user_id = ?
+         ORDER BY name COLLATE NOCASE ASC
+         LIMIT ?`
       )
-      .all(userId) as SessionFolderRow[];
+      .all(userId, MAX_SESSION_FOLDERS_PER_USER) as SessionFolderRow[];
     return rows.map(row => ({
       id: row.id,
       name: encryptionService.decrypt(row.name),
@@ -529,17 +589,43 @@ class StorageService {
 
   saveSessionFolder(folder: SessionFolder, userId = 'default'): void {
     if (!this.useSQLite) return;
+    if (
+      !folder.name.trim() ||
+      folder.name.length > MAX_SESSION_FOLDER_NAME_LENGTH
+    ) {
+      throw new ResourcePolicyError('Invalid session folder name', 400);
+    }
     const db = getDatabase();
-    db.prepare(
-      `INSERT OR REPLACE INTO session_folders (id, user_id, name, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?)`
-    ).run(
-      folder.id,
-      userId,
-      encryptionService.encrypt(folder.name),
-      folder.createdAt,
-      folder.updatedAt
-    );
+    const save = db.transaction(() => {
+      const existing = db
+        .prepare('SELECT 1 FROM session_folders WHERE id = ? AND user_id = ?')
+        .get(folder.id, userId);
+      if (!existing) {
+        const { count } = db
+          .prepare(
+            'SELECT COUNT(*) AS count FROM session_folders WHERE user_id = ?'
+          )
+          .get(userId) as { count: number };
+        if (count >= MAX_SESSION_FOLDERS_PER_USER) {
+          throw new ResourcePolicyError(
+            `A user may store at most ${MAX_SESSION_FOLDERS_PER_USER} session folders`,
+            409
+          );
+        }
+      }
+
+      db.prepare(
+        `INSERT OR REPLACE INTO session_folders (id, user_id, name, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)`
+      ).run(
+        folder.id,
+        userId,
+        encryptionService.encrypt(folder.name),
+        folder.createdAt,
+        folder.updatedAt
+      );
+    });
+    save();
   }
 
   deleteSessionFolder(folderId: string, userId = 'default'): boolean {
