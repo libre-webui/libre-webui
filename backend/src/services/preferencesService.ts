@@ -100,6 +100,7 @@ class PreferencesService {
       pluginId: '',
     },
     showUsername: false, // Default to showing "you" instead of username
+    showFollowUpSuggestions: true, // Suggest follow-up messages after responses
     workRemoteProviderDisclosureDismissed: false,
   };
 

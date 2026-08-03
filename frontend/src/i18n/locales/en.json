@@ -188,6 +188,7 @@
       "evening": "Good evening",
       "night": "Good night"
     },
+    "followUp": "Follow up",
     "welcome": {
       "helpToday": "What can I help with today?",
       "helpTonight": "What can I help with tonight?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "Chat Interface",
         "showUsername": "Show Username",
-        "showUsernameDescription": "Display username in chat messages"
+        "showUsernameDescription": "Display username in chat messages",
+        "followUpSuggestions": "Follow-up suggestions",
+        "followUpSuggestionsDescription": "Suggest quick replies after each response"
       },
       "background": {
         "title": "Background Image",

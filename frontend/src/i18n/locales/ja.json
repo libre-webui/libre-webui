@@ -188,6 +188,7 @@
       "evening": "こんばんは",
       "night": "おやすみなさい"
     },
+    "followUp": "フォローアップ",
     "welcome": {
       "helpToday": "今日は何をお手伝いしましょうか？",
       "helpTonight": "今夜は何をお手伝いしましょうか？",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "チャットインターフェース",
         "showUsername": "ユーザー名を表示",
-        "showUsernameDescription": "チャットメッセージにユーザー名を表示"
+        "showUsernameDescription": "チャットメッセージにユーザー名を表示",
+        "followUpSuggestions": "フォローアップ提案",
+        "followUpSuggestionsDescription": "各回答の後にクイック返信を提案します"
       },
       "background": {
         "title": "背景画像",

@@ -188,6 +188,7 @@
       "evening": "Goedenavond",
       "night": "Goedenacht"
     },
+    "followUp": "Vervolg",
     "welcome": {
       "helpToday": "Waarmee kan ik u vandaag helpen?",
       "helpTonight": "Waarmee kan ik u vanavond helpen?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "Chat-interface",
         "showUsername": "Gebruikersnaam tonen",
-        "showUsernameDescription": "Gebruikersnaam weergeven in chatberichten"
+        "showUsernameDescription": "Gebruikersnaam weergeven in chatberichten",
+        "followUpSuggestions": "Vervolgsuggesties",
+        "followUpSuggestionsDescription": "Stel snelle antwoorden voor na elke reactie"
       },
       "background": {
         "title": "Achtergrondafbeelding",

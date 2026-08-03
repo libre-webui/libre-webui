@@ -188,6 +188,7 @@
       "evening": "Dobrý večer",
       "night": "Dobrou noc"
     },
+    "followUp": "Navázat",
     "welcome": {
       "helpToday": "S čím vám mohu dnes pomoci?",
       "helpTonight": "S čím vám mohu dnes večer pomoci?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "Rozhraní chatu",
         "showUsername": "Zobrazit uživatelské jméno",
-        "showUsernameDescription": "Zobrazovat uživatelské jméno ve zprávách chatu"
+        "showUsernameDescription": "Zobrazovat uživatelské jméno ve zprávách chatu",
+        "followUpSuggestions": "Návrhy pokračování",
+        "followUpSuggestionsDescription": "Po každé odpovědi navrhnout rychlé reakce"
       },
       "background": {
         "title": "Obrázek pozadí",

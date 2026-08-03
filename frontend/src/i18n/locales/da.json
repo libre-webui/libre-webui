@@ -188,6 +188,7 @@
       "evening": "Godaften",
       "night": "Godnat"
     },
+    "followUp": "Opfølgning",
     "welcome": {
       "helpToday": "Hvad kan jeg hjælpe med i dag?",
       "helpTonight": "Hvad kan jeg hjælpe med i aften?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "Chat-grænseflade",
         "showUsername": "Vis brugernavn",
-        "showUsernameDescription": "Vis brugernavn i chatbeskeder"
+        "showUsernameDescription": "Vis brugernavn i chatbeskeder",
+        "followUpSuggestions": "Opfølgningsforslag",
+        "followUpSuggestionsDescription": "Foreslå hurtige svar efter hvert svar"
       },
       "background": {
         "title": "Baggrundsbillede",

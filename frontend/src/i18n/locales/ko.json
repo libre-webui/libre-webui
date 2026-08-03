@@ -188,6 +188,7 @@
       "evening": "좋은 저녁입니다",
       "night": "안녕히 주무세요"
     },
+    "followUp": "후속 질문",
     "welcome": {
       "helpToday": "오늘 무엇을 도와드릴까요?",
       "helpTonight": "오늘 밤 무엇을 도와드릴까요?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "채팅 인터페이스",
         "showUsername": "사용자 이름 표시",
-        "showUsernameDescription": "채팅 메시지에 사용자 이름 표시"
+        "showUsernameDescription": "채팅 메시지에 사용자 이름 표시",
+        "followUpSuggestions": "후속 질문 제안",
+        "followUpSuggestionsDescription": "각 응답 후 빠른 답장을 제안합니다"
       },
       "background": {
         "title": "배경 이미지",

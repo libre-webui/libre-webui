@@ -178,7 +178,8 @@ export interface UserPreferences {
   imageGenSettings?: ImageGenSettings;
   // Auto-title settings
   titleSettings?: TitleSettings;
-  showUsername: boolean; // If true, show username in chat; if false, show "you"
+  showUsername: boolean;
+  showFollowUpSuggestions?: boolean; // Suggest follow-up messages after responses // If true, show username in chat; if false, show "you"
   workRemoteProviderDisclosureDismissed: boolean;
   backgroundSettings?: {
     enabled: boolean;

@@ -188,6 +188,7 @@
       "evening": "Gott kvöld",
       "night": "Góða nótt"
     },
+    "followUp": "Framhald",
     "welcome": {
       "helpToday": "Hvernig get ég aðstoðað í dag?",
       "helpTonight": "Hvernig get ég aðstoðað í kvöld?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "Spjallviðmót",
         "showUsername": "Sýna notandanafn",
-        "showUsernameDescription": "Birta notandanafn í spjallskilaboðum"
+        "showUsernameDescription": "Birta notandanafn í spjallskilaboðum",
+        "followUpSuggestions": "Framhaldstillögur",
+        "followUpSuggestionsDescription": "Stinga upp á snöggum svörum eftir hvert svar"
       },
       "background": {
         "title": "Bakgrunnsmynd",

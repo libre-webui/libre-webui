@@ -188,6 +188,7 @@
       "evening": "Guten Abend",
       "night": "Gute Nacht"
     },
+    "followUp": "Weiterführend",
     "welcome": {
       "helpToday": "Wie kann ich Ihnen heute helfen?",
       "helpTonight": "Wie kann ich Ihnen heute Abend helfen?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "Chat-Oberfläche",
         "showUsername": "Benutzername anzeigen",
-        "showUsernameDescription": "Benutzernamen in Chat-Nachrichten anzeigen"
+        "showUsernameDescription": "Benutzernamen in Chat-Nachrichten anzeigen",
+        "followUpSuggestions": "Folgevorschläge",
+        "followUpSuggestionsDescription": "Nach jeder Antwort schnelle Rückfragen vorschlagen"
       },
       "background": {
         "title": "Hintergrundbild",

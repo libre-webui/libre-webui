@@ -187,6 +187,58 @@ export const ChatPage: React.FC = () => {
   const [welcomePromptIndex, setWelcomePromptIndex] = useState(
     getWelcomePromptIndex
   );
+  const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
+  const followUpsEnabled = useAppStore(
+    state => state.preferences.showFollowUpSuggestions !== false
+  );
+  const lastFollowUpFetchRef = useRef<string | null>(null);
+  const wasStreamingRef = useRef(false);
+
+  // Fetch follow-up suggestions when a response finishes streaming.
+  useEffect(() => {
+    const sessionId = currentSession?.id;
+    const streamingJustEnded = wasStreamingRef.current && !isStreaming;
+    wasStreamingRef.current = isStreaming;
+
+    if (!sessionId || isStreaming) return;
+    if (!followUpsEnabled || currentSession?.isPrivate) return;
+    if (!streamingJustEnded) return;
+
+    const lastMessage =
+      currentSession.messages[currentSession.messages.length - 1];
+    if (
+      !lastMessage ||
+      lastMessage.role !== 'assistant' ||
+      !lastMessage.content.trim()
+    ) {
+      return;
+    }
+    if (lastFollowUpFetchRef.current === lastMessage.id) return;
+    lastFollowUpFetchRef.current = lastMessage.id;
+
+    let cancelled = false;
+    chatApi
+      .generateFollowUps(sessionId)
+      .then(response => {
+        if (cancelled || !response.success) return;
+        // Ignore stale results if the user already moved on.
+        const state = useChatStore.getState();
+        if (state.currentSession?.id !== sessionId) return;
+        setFollowUpSuggestions(response.data?.suggestions ?? []);
+      })
+      .catch(() => {
+        // Suggestions are decorative; failures stay silent.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isStreaming, currentSession, followUpsEnabled]);
+
+  // Reset suggestions when switching sessions.
+  useEffect(() => {
+    setFollowUpSuggestions([]);
+    lastFollowUpFetchRef.current = null;
+  }, [currentSession?.id]);
   const welcomePrompt = useMemo(
     () =>
       getWelcomePrompt(
@@ -472,6 +524,7 @@ export const ChatPage: React.FC = () => {
     format?: string | Record<string, unknown>
   ) => {
     if (!currentSession) return;
+    setFollowUpSuggestions([]);
     sendMessage(message, images, format);
   };
 
@@ -733,6 +786,8 @@ export const ChatPage: React.FC = () => {
           onRegenerate={regenerateLastMessage}
           onSelectBranch={selectBranch}
           onEditResend={editAndResendMessage}
+          followUpSuggestions={followUpSuggestions}
+          onFollowUpSelect={suggestion => handleSendMessage(suggestion)}
           className='flex-1'
         />
         <ChatInput

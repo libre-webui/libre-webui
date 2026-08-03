@@ -188,6 +188,7 @@
       "evening": "مساء الخير",
       "night": "تصبح على خير"
     },
+    "followUp": "متابعة",
     "welcome": {
       "helpToday": "كيف يمكنني مساعدتك اليوم؟",
       "helpTonight": "كيف يمكنني مساعدتك الليلة؟",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "واجهة المحادثة",
         "showUsername": "إظهار اسم المستخدم",
-        "showUsernameDescription": "عرض اسم المستخدم في رسائل المحادثة"
+        "showUsernameDescription": "عرض اسم المستخدم في رسائل المحادثة",
+        "followUpSuggestions": "اقتراحات المتابعة",
+        "followUpSuggestionsDescription": "اقتراح ردود سريعة بعد كل استجابة"
       },
       "background": {
         "title": "صورة الخلفية",

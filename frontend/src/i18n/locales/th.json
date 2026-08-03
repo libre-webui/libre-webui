@@ -188,6 +188,7 @@
       "evening": "สวัสดีตอนเย็น",
       "night": "สวัสดีตอนดึก"
     },
+    "followUp": "ติดตามต่อ",
     "welcome": {
       "helpToday": "วันนี้ฉันช่วยอะไรได้บ้าง?",
       "helpTonight": "คืนนี้ฉันช่วยอะไรได้บ้าง?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "อินเทอร์เฟซแชท",
         "showUsername": "แสดงชื่อผู้ใช้",
-        "showUsernameDescription": "แสดงชื่อผู้ใช้ในข้อความแชท"
+        "showUsernameDescription": "แสดงชื่อผู้ใช้ในข้อความแชท",
+        "followUpSuggestions": "คำแนะนำติดตามต่อ",
+        "followUpSuggestionsDescription": "แนะนำการตอบกลับด่วนหลังการตอบแต่ละครั้ง"
       },
       "background": {
         "title": "รูปพื้นหลัง",

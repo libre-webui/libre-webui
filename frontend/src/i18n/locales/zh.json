@@ -188,6 +188,7 @@
       "evening": "晚上好",
       "night": "夜深了"
     },
+    "followUp": "后续问题",
     "welcome": {
       "helpToday": "今天我能帮您什么？",
       "helpTonight": "今晚我能帮您什么？",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "聊天界面",
         "showUsername": "显示用户名",
-        "showUsernameDescription": "在聊天消息中显示用户名"
+        "showUsernameDescription": "在聊天消息中显示用户名",
+        "followUpSuggestions": "后续建议",
+        "followUpSuggestionsDescription": "每次回复后建议快捷回复"
       },
       "background": {
         "title": "背景图片",

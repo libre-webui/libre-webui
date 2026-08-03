@@ -188,6 +188,7 @@
       "evening": "शुभ संध्या",
       "night": "शुभ रात्रि"
     },
+    "followUp": "आगे पूछें",
     "welcome": {
       "helpToday": "आज मैं किसमें मदद कर सकता हूँ?",
       "helpTonight": "आज रात मैं किसमें मदद कर सकता हूँ?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "चैट इंटरफ़ेस",
         "showUsername": "उपयोगकर्ता नाम दिखाएं",
-        "showUsernameDescription": "चैट संदेशों में उपयोगकर्ता नाम प्रदर्शित करें"
+        "showUsernameDescription": "चैट संदेशों में उपयोगकर्ता नाम प्रदर्शित करें",
+        "followUpSuggestions": "फ़ॉलो-अप सुझाव",
+        "followUpSuggestionsDescription": "हर उत्तर के बाद त्वरित जवाब सुझाएँ"
       },
       "background": {
         "title": "पृष्ठभूमि छवि",

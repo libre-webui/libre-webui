@@ -188,6 +188,7 @@
       "evening": "Selamat petang",
       "night": "Selamat malam"
     },
+    "followUp": "Susulan",
     "welcome": {
       "helpToday": "Apa yang boleh saya bantu hari ini?",
       "helpTonight": "Apa yang boleh saya bantu malam ini?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "Antara Muka Sembang",
         "showUsername": "Tunjukkan Nama Pengguna",
-        "showUsernameDescription": "Paparkan nama pengguna dalam mesej sembang"
+        "showUsernameDescription": "Paparkan nama pengguna dalam mesej sembang",
+        "followUpSuggestions": "Cadangan susulan",
+        "followUpSuggestionsDescription": "Cadangkan balasan pantas selepas setiap respons"
       },
       "background": {
         "title": "Imej Latar Belakang",

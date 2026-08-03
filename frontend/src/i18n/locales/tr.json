@@ -188,6 +188,7 @@
       "evening": "İyi akşamlar",
       "night": "İyi geceler"
     },
+    "followUp": "Devam et",
     "welcome": {
       "helpToday": "Bugün size nasıl yardımcı olabilirim?",
       "helpTonight": "Bu gece size nasıl yardımcı olabilirim?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "Sohbet Arayüzü",
         "showUsername": "Kullanıcı Adını Göster",
-        "showUsernameDescription": "Sohbet mesajlarında kullanıcı adını görüntüle"
+        "showUsernameDescription": "Sohbet mesajlarında kullanıcı adını görüntüle",
+        "followUpSuggestions": "Devam önerileri",
+        "followUpSuggestionsDescription": "Her yanıttan sonra hızlı yanıtlar öner"
       },
       "background": {
         "title": "Arka Plan Görseli",

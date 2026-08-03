@@ -28,6 +28,7 @@ import chatGenerationService from '../services/chatGenerationService.js';
 import preferencesService from '../services/preferencesService.js';
 import { ChatRequestService } from '../services/chatRequestService.js';
 import { TitleGenerationService } from '../services/titleGenerationService.js';
+import { FollowUpService } from '../services/followUpService.js';
 import {
   ApiResponse,
   ChatSession,
@@ -52,6 +53,12 @@ const chatRequestService = new ChatRequestService({
   chatGenerationService,
   personaService,
   preferencesService,
+});
+const followUpService = new FollowUpService({
+  chatService,
+  chatGenerationService,
+  pluginService,
+  ollamaService,
 });
 
 // Rate limiter for chat routes: 60 requests per minute (reasonable for chat)
@@ -822,6 +829,43 @@ router.post(
       res.status(error instanceof ChatProviderSelectionError ? 400 : 500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to generate title'),
+      });
+    }
+  }
+);
+
+// Suggest follow-up messages for the latest exchange in a session
+router.post(
+  '/sessions/:sessionId/followups',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ suggestions: string[] }>>
+  ): Promise<void> => {
+    try {
+      const sessionId = req.params.sessionId as string;
+      const userId = req.user?.userId || 'default';
+
+      const suggestions = await followUpService.generateFollowUpsForSession(
+        sessionId,
+        userId
+      );
+
+      if (suggestions === null) {
+        res.status(404).json({
+          success: false,
+          error: 'Session not found',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: { suggestions },
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to generate follow-ups'),
       });
     }
   }

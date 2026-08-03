@@ -188,6 +188,7 @@
       "evening": "Добрый вечер",
       "night": "Доброй ночи"
     },
+    "followUp": "Продолжить",
     "welcome": {
       "helpToday": "Чем могу помочь сегодня?",
       "helpTonight": "Чем могу помочь сегодня вечером?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "Интерфейс чата",
         "showUsername": "Показывать имя пользователя",
-        "showUsernameDescription": "Отображать имя пользователя в сообщениях чата"
+        "showUsernameDescription": "Отображать имя пользователя в сообщениях чата",
+        "followUpSuggestions": "Подсказки для продолжения",
+        "followUpSuggestionsDescription": "Предлагать быстрые ответы после каждого ответа"
       },
       "background": {
         "title": "Фоновое изображение",

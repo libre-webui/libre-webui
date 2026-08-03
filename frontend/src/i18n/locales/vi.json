@@ -188,6 +188,7 @@
       "evening": "Chào buổi tối",
       "night": "Chúc ngủ ngon"
     },
+    "followUp": "Tiếp tục",
     "welcome": {
       "helpToday": "Tôi có thể giúp gì cho bạn hôm nay?",
       "helpTonight": "Tôi có thể giúp gì cho bạn tối nay?",
@@ -402,7 +403,9 @@
       "chatInterface": {
         "title": "Giao diện trò chuyện",
         "showUsername": "Hiển thị tên người dùng",
-        "showUsernameDescription": "Hiển thị tên người dùng trong tin nhắn trò chuyện"
+        "showUsernameDescription": "Hiển thị tên người dùng trong tin nhắn trò chuyện",
+        "followUpSuggestions": "Gợi ý tiếp theo",
+        "followUpSuggestionsDescription": "Gợi ý câu trả lời nhanh sau mỗi phản hồi"
       },
       "background": {
         "title": "Hình nền",

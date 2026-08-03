@@ -957,6 +957,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     });
   };
 
+  const handleShowFollowUpsChange = (showFollowUpSuggestions: boolean) => {
+    setPreferences({ showFollowUpSuggestions });
+    preferencesApi
+      .updatePreferences({ showFollowUpSuggestions })
+      .catch(error => {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        toast.error('Failed to update settings: ' + errorMessage);
+      });
+  };
+
   const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     if (!event.target.value) {
       useChatStore.setState({
@@ -1273,6 +1284,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onCustomAccentChange={handleCustomAccentChange}
             onAdaptToAccentChange={handleAdaptToAccentChange}
             onShowUsernameChange={handleShowUsernameChange}
+            onShowFollowUpsChange={handleShowFollowUpsChange}
           />
         );
 

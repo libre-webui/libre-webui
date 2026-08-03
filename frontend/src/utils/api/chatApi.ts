@@ -155,6 +155,17 @@ export const chatApi = {
       .then(res => res.data);
   },
 
+  generateFollowUps: (
+    sessionId: string
+  ): Promise<ApiResponse<{ suggestions: string[] }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ suggestions: [] });
+    }
+    return api
+      .post(`/chat/sessions/${sessionId}/followups`)
+      .then(res => res.data);
+  },
+
   // Messages
   sendMessage: (
     sessionId: string,
