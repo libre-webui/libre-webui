@@ -262,7 +262,15 @@
       "chats": "Chat",
       "renameChat": "Ubah nama chat",
       "deleteChat": "Hapus chat",
-      "incognito": "Chat Incognito"
+      "incognito": "Chat Incognito",
+      "archiveChat": "Arsipkan obrolan",
+      "groups": {
+        "today": "Hari ini",
+        "yesterday": "Kemarin",
+        "previous7Days": "7 hari terakhir",
+        "previous30Days": "30 hari terakhir",
+        "older": "Lebih lama"
+      }
     },
     "persona": {
       "applied": "Persona diterapkan",
@@ -674,7 +682,12 @@
       "importedLabel": "diimpor",
       "skipped": "dilewati",
       "documents": "Dokumen",
-      "errors": "Error"
+      "errors": "Error",
+      "archivedChats": {
+        "title": "Obrolan diarsipkan",
+        "empty": "Tidak ada obrolan yang diarsipkan",
+        "unarchive": "Batalkan arsip"
+      }
     },
     "about": {
       "title": "Tentang",

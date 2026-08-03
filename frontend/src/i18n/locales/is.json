@@ -262,7 +262,15 @@
       "chats": "Spjöll",
       "renameChat": "Endurnefna spjall",
       "deleteChat": "Eyða spjalli",
-      "incognito": "Huliðspjall"
+      "incognito": "Huliðspjall",
+      "archiveChat": "Setja spjall í geymslu",
+      "groups": {
+        "today": "Í dag",
+        "yesterday": "Í gær",
+        "previous7Days": "Síðustu 7 dagar",
+        "previous30Days": "Síðustu 30 dagar",
+        "older": "Eldra"
+      }
     },
     "persona": {
       "applied": "Persóna notuð",
@@ -674,7 +682,12 @@
       "importedLabel": "flutt inn",
       "skipped": "sleppt",
       "documents": "Skjöl",
-      "errors": "Villur"
+      "errors": "Villur",
+      "archivedChats": {
+        "title": "Spjall í geymslu",
+        "empty": "Ekkert spjall í geymslu",
+        "unarchive": "Taka úr geymslu"
+      }
     },
     "about": {
       "title": "Um",

@@ -262,7 +262,15 @@
       "chats": "Sohbetler",
       "renameChat": "Sohbeti yeniden adlandır",
       "deleteChat": "Sohbeti sil",
-      "incognito": "Gizli Sohbet"
+      "incognito": "Gizli Sohbet",
+      "archiveChat": "Sohbeti arşivle",
+      "groups": {
+        "today": "Bugün",
+        "yesterday": "Dün",
+        "previous7Days": "Son 7 gün",
+        "previous30Days": "Son 30 gün",
+        "older": "Daha eski"
+      }
     },
     "persona": {
       "applied": "Persona uygulandı",
@@ -674,7 +682,12 @@
       "importedLabel": "içe aktarıldı",
       "skipped": "atlandı",
       "documents": "Belgeler",
-      "errors": "Hatalar"
+      "errors": "Hatalar",
+      "archivedChats": {
+        "title": "Arşivlenmiş sohbetler",
+        "empty": "Arşivlenmiş sohbet yok",
+        "unarchive": "Arşivden çıkar"
+      }
     },
     "about": {
       "title": "Hakkında",

@@ -262,7 +262,15 @@
       "chats": "Chaty",
       "renameChat": "Přejmenovat chat",
       "deleteChat": "Smazat chat",
-      "incognito": "Anonymní chat"
+      "incognito": "Anonymní chat",
+      "archiveChat": "Archivovat chat",
+      "groups": {
+        "today": "Dnes",
+        "yesterday": "Včera",
+        "previous7Days": "Posledních 7 dní",
+        "previous30Days": "Posledních 30 dní",
+        "older": "Starší"
+      }
     },
     "persona": {
       "applied": "Persona použita",
@@ -674,7 +682,12 @@
       "importedLabel": "importováno",
       "skipped": "přeskočeno",
       "documents": "Dokumenty",
-      "errors": "Chyby"
+      "errors": "Chyby",
+      "archivedChats": {
+        "title": "Archivované chaty",
+        "empty": "Žádné archivované chaty",
+        "unarchive": "Obnovit z archivu"
+      }
     },
     "about": {
       "title": "O aplikaci",

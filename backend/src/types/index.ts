@@ -73,6 +73,7 @@ export interface ChatSession extends ChatProviderSelection {
   createdAt: number;
   updatedAt: number;
   personaId?: string;
+  archived?: boolean; // Hidden from the sidebar until unarchived
 }
 
 export interface GenerationOptions {

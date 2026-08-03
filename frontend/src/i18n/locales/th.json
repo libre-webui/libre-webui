@@ -262,7 +262,15 @@
       "chats": "แชท",
       "renameChat": "เปลี่ยนชื่อแชท",
       "deleteChat": "ลบแชท",
-      "incognito": "แชทไม่ระบุตัวตน"
+      "incognito": "แชทไม่ระบุตัวตน",
+      "archiveChat": "เก็บแชทถาวร",
+      "groups": {
+        "today": "วันนี้",
+        "yesterday": "เมื่อวาน",
+        "previous7Days": "7 วันที่ผ่านมา",
+        "previous30Days": "30 วันที่ผ่านมา",
+        "older": "เก่ากว่า"
+      }
     },
     "persona": {
       "applied": "ใช้เพอร์โซน่าแล้ว",
@@ -674,7 +682,12 @@
       "importedLabel": "นำเข้าแล้ว",
       "skipped": "ข้ามแล้ว",
       "documents": "เอกสาร",
-      "errors": "ข้อผิดพลาด"
+      "errors": "ข้อผิดพลาด",
+      "archivedChats": {
+        "title": "แชทที่เก็บถาวร",
+        "empty": "ไม่มีแชทที่เก็บถาวร",
+        "unarchive": "เลิกเก็บถาวร"
+      }
     },
     "about": {
       "title": "เกี่ยวกับ",

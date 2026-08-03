@@ -186,6 +186,7 @@ function initializeTables(): void {
       provider_id TEXT, -- Plugin ID when provider_type is plugin
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
+      archived INTEGER DEFAULT 0, -- Hidden from the sidebar until unarchived
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE SET NULL
     )
@@ -735,6 +736,7 @@ function runMigrations(): void {
     for (const column of [
       { name: 'provider_type', type: 'TEXT' },
       { name: 'provider_id', type: 'TEXT' },
+      { name: 'archived', type: 'INTEGER DEFAULT 0' },
     ]) {
       if (!existingSessionsColumns.includes(column.name)) {
         logger.debug(`Adding column ${column.name} to sessions table`);

@@ -262,7 +262,15 @@
       "chats": "المحادثات",
       "renameChat": "إعادة تسمية المحادثة",
       "deleteChat": "حذف المحادثة",
-      "incognito": "دردشة مخفية"
+      "incognito": "دردشة مخفية",
+      "archiveChat": "أرشفة المحادثة",
+      "groups": {
+        "today": "اليوم",
+        "yesterday": "أمس",
+        "previous7Days": "آخر 7 أيام",
+        "previous30Days": "آخر 30 يومًا",
+        "older": "أقدم"
+      }
     },
     "persona": {
       "applied": "تم تطبيق الشخصية",
@@ -674,7 +682,12 @@
       "importedLabel": "تم الاستيراد",
       "skipped": "تم التخطي",
       "documents": "المستندات",
-      "errors": "أخطاء"
+      "errors": "أخطاء",
+      "archivedChats": {
+        "title": "المحادثات المؤرشفة",
+        "empty": "لا توجد محادثات مؤرشفة",
+        "unarchive": "إلغاء الأرشفة"
+      }
     },
     "about": {
       "title": "حول",

@@ -262,7 +262,15 @@
       "chats": "Chats",
       "renameChat": "Omdøb chat",
       "deleteChat": "Slet chat",
-      "incognito": "Incognito-chat"
+      "incognito": "Incognito-chat",
+      "archiveChat": "Arkivér chat",
+      "groups": {
+        "today": "I dag",
+        "yesterday": "I går",
+        "previous7Days": "Seneste 7 dage",
+        "previous30Days": "Seneste 30 dage",
+        "older": "Ældre"
+      }
     },
     "persona": {
       "applied": "Persona anvendt",
@@ -674,7 +682,12 @@
       "importedLabel": "importeret",
       "skipped": "sprunget over",
       "documents": "Dokumenter",
-      "errors": "Fejl"
+      "errors": "Fejl",
+      "archivedChats": {
+        "title": "Arkiverede chats",
+        "empty": "Ingen arkiverede chats",
+        "unarchive": "Gendan"
+      }
     },
     "about": {
       "title": "Om",

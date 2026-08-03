@@ -262,7 +262,15 @@
       "chats": "Chats",
       "renameChat": "Chat hernoemen",
       "deleteChat": "Chat verwijderen",
-      "incognito": "Incognito chat"
+      "incognito": "Incognito chat",
+      "archiveChat": "Chat archiveren",
+      "groups": {
+        "today": "Vandaag",
+        "yesterday": "Gisteren",
+        "previous7Days": "Afgelopen 7 dagen",
+        "previous30Days": "Afgelopen 30 dagen",
+        "older": "Ouder"
+      }
     },
     "persona": {
       "applied": "Persona toegepast",
@@ -674,7 +682,12 @@
       "importedLabel": "geïmporteerd",
       "skipped": "overgeslagen",
       "documents": "Documenten",
-      "errors": "Fouten"
+      "errors": "Fouten",
+      "archivedChats": {
+        "title": "Gearchiveerde chats",
+        "empty": "Geen gearchiveerde chats",
+        "unarchive": "Herstellen"
+      }
     },
     "about": {
       "title": "Over",

@@ -262,7 +262,15 @@
       "chats": "चैट्स",
       "renameChat": "चैट का नाम बदलें",
       "deleteChat": "चैट हटाएं",
-      "incognito": "गुप्त चैट"
+      "incognito": "गुप्त चैट",
+      "archiveChat": "चैट संग्रहीत करें",
+      "groups": {
+        "today": "आज",
+        "yesterday": "कल",
+        "previous7Days": "पिछले 7 दिन",
+        "previous30Days": "पिछले 30 दिन",
+        "older": "पुराने"
+      }
     },
     "persona": {
       "applied": "पर्सोना लागू किया गया",
@@ -674,7 +682,12 @@
       "importedLabel": "आयातित",
       "skipped": "छोड़ा गया",
       "documents": "दस्तावेज़",
-      "errors": "त्रुटियाँ"
+      "errors": "त्रुटियाँ",
+      "archivedChats": {
+        "title": "संग्रहीत चैट",
+        "empty": "कोई संग्रहीत चैट नहीं",
+        "unarchive": "संग्रह से निकालें"
+      }
     },
     "about": {
       "title": "परिचय",

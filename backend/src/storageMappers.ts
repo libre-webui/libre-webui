@@ -45,6 +45,7 @@ export interface SessionRow {
   provider_id?: string | null;
   created_at: number;
   updated_at: number;
+  archived?: number | null;
 }
 
 export interface MessageRow {
@@ -162,6 +163,7 @@ export function mapSessionRow(
     providerId: row.provider_id || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    archived: row.archived === 1,
     messages: messages.map(message => mapMessageRow(message, siblingCountMap)),
   };
 }

@@ -262,7 +262,15 @@
       "chats": "Czaty",
       "renameChat": "Zmień nazwę czatu",
       "deleteChat": "Usuń czat",
-      "incognito": "Czat incognito"
+      "incognito": "Czat incognito",
+      "archiveChat": "Archiwizuj czat",
+      "groups": {
+        "today": "Dzisiaj",
+        "yesterday": "Wczoraj",
+        "previous7Days": "Ostatnie 7 dni",
+        "previous30Days": "Ostatnie 30 dni",
+        "older": "Starsze"
+      }
     },
     "persona": {
       "applied": "Persona zastosowana",
@@ -674,7 +682,12 @@
       "importedLabel": "zaimportowano",
       "skipped": "pominięto",
       "documents": "Dokumenty",
-      "errors": "Błędy"
+      "errors": "Błędy",
+      "archivedChats": {
+        "title": "Zarchiwizowane czaty",
+        "empty": "Brak zarchiwizowanych czatów",
+        "unarchive": "Przywróć"
+      }
     },
     "about": {
       "title": "O programie",

@@ -262,7 +262,15 @@
       "chats": "채팅",
       "renameChat": "채팅 이름 변경",
       "deleteChat": "채팅 삭제",
-      "incognito": "시크릿 채팅"
+      "incognito": "시크릿 채팅",
+      "archiveChat": "채팅 보관",
+      "groups": {
+        "today": "오늘",
+        "yesterday": "어제",
+        "previous7Days": "지난 7일",
+        "previous30Days": "지난 30일",
+        "older": "이전"
+      }
     },
     "persona": {
       "applied": "페르소나 적용됨",
@@ -674,7 +682,12 @@
       "importedLabel": "가져옴",
       "skipped": "건너뜀",
       "documents": "문서",
-      "errors": "오류"
+      "errors": "오류",
+      "archivedChats": {
+        "title": "보관된 채팅",
+        "empty": "보관된 채팅이 없습니다",
+        "unarchive": "보관 해제"
+      }
     },
     "about": {
       "title": "정보",

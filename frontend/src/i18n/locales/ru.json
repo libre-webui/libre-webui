@@ -262,7 +262,15 @@
       "chats": "Чаты",
       "renameChat": "Переименовать чат",
       "deleteChat": "Удалить чат",
-      "incognito": "Чат в режиме инкогнито"
+      "incognito": "Чат в режиме инкогнито",
+      "archiveChat": "Архивировать чат",
+      "groups": {
+        "today": "Сегодня",
+        "yesterday": "Вчера",
+        "previous7Days": "Последние 7 дней",
+        "previous30Days": "Последние 30 дней",
+        "older": "Старее"
+      }
     },
     "persona": {
       "applied": "Персона применена",
@@ -674,7 +682,12 @@
       "importedLabel": "импортировано",
       "skipped": "пропущено",
       "documents": "Документы",
-      "errors": "Ошибки"
+      "errors": "Ошибки",
+      "archivedChats": {
+        "title": "Архивированные чаты",
+        "empty": "Нет архивированных чатов",
+        "unarchive": "Восстановить"
+      }
     },
     "about": {
       "title": "О программе",

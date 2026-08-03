@@ -262,7 +262,15 @@
       "chats": "Чати",
       "renameChat": "Перейменувати чат",
       "deleteChat": "Видалити чат",
-      "incognito": "Приватна розмова"
+      "incognito": "Приватна розмова",
+      "archiveChat": "Архівувати чат",
+      "groups": {
+        "today": "Сьогодні",
+        "yesterday": "Вчора",
+        "previous7Days": "Останні 7 днів",
+        "previous30Days": "Останні 30 днів",
+        "older": "Старіші"
+      }
     },
     "persona": {
       "applied": "Персону застосовано",
@@ -674,7 +682,12 @@
       "importedLabel": "імпортовано",
       "skipped": "пропущено",
       "documents": "Документи",
-      "errors": "Помилки"
+      "errors": "Помилки",
+      "archivedChats": {
+        "title": "Архівовані чати",
+        "empty": "Немає архівованих чатів",
+        "unarchive": "Відновити"
+      }
     },
     "about": {
       "title": "Про програму",

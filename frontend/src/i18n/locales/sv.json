@@ -262,7 +262,15 @@
       "chats": "Chattar",
       "renameChat": "Byt namn på chatt",
       "deleteChat": "Radera chatt",
-      "incognito": "Inkognitochatt"
+      "incognito": "Inkognitochatt",
+      "archiveChat": "Arkivera chatt",
+      "groups": {
+        "today": "Idag",
+        "yesterday": "Igår",
+        "previous7Days": "Senaste 7 dagarna",
+        "previous30Days": "Senaste 30 dagarna",
+        "older": "Äldre"
+      }
     },
     "persona": {
       "applied": "Persona tillämpad",
@@ -674,7 +682,12 @@
       "importedLabel": "importerade",
       "skipped": "hoppades över",
       "documents": "Dokument",
-      "errors": "Fel"
+      "errors": "Fel",
+      "archivedChats": {
+        "title": "Arkiverade chattar",
+        "empty": "Inga arkiverade chattar",
+        "unarchive": "Återställ"
+      }
     },
     "about": {
       "title": "Om",

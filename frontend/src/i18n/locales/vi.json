@@ -262,7 +262,15 @@
       "chats": "Cuộc trò chuyện",
       "renameChat": "Đổi tên cuộc trò chuyện",
       "deleteChat": "Xóa cuộc trò chuyện",
-      "incognito": "Trò chuyện ẩn danh"
+      "incognito": "Trò chuyện ẩn danh",
+      "archiveChat": "Lưu trữ cuộc trò chuyện",
+      "groups": {
+        "today": "Hôm nay",
+        "yesterday": "Hôm qua",
+        "previous7Days": "7 ngày qua",
+        "previous30Days": "30 ngày qua",
+        "older": "Cũ hơn"
+      }
     },
     "persona": {
       "applied": "Đã áp dụng persona",
@@ -674,7 +682,12 @@
       "importedLabel": "đã nhập",
       "skipped": "đã bỏ qua",
       "documents": "Tài liệu",
-      "errors": "Lỗi"
+      "errors": "Lỗi",
+      "archivedChats": {
+        "title": "Cuộc trò chuyện đã lưu trữ",
+        "empty": "Không có cuộc trò chuyện nào được lưu trữ",
+        "unarchive": "Bỏ lưu trữ"
+      }
     },
     "about": {
       "title": "Giới thiệu",

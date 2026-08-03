@@ -262,7 +262,15 @@
       "createFirst": "Create your first chat above",
       "chats": "Chats",
       "renameChat": "Rename chat",
-      "deleteChat": "Delete chat"
+      "deleteChat": "Delete chat",
+      "archiveChat": "Archive chat",
+      "groups": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "previous7Days": "Previous 7 days",
+        "previous30Days": "Previous 30 days",
+        "older": "Older"
+      }
     },
     "persona": {
       "applied": "Persona applied",
@@ -674,7 +682,12 @@
       "importedLabel": "imported",
       "skipped": "skipped",
       "documents": "Documents",
-      "errors": "Errors"
+      "errors": "Errors",
+      "archivedChats": {
+        "title": "Archived chats",
+        "empty": "No archived chats",
+        "unarchive": "Unarchive"
+      }
     },
     "about": {
       "title": "About",

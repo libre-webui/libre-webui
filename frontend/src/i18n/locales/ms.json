@@ -262,7 +262,15 @@
       "chats": "Sembang",
       "renameChat": "Namakan semula sembang",
       "deleteChat": "Padam sembang",
-      "incognito": "Sembang Inkognito"
+      "incognito": "Sembang Inkognito",
+      "archiveChat": "Arkibkan sembang",
+      "groups": {
+        "today": "Hari ini",
+        "yesterday": "Semalam",
+        "previous7Days": "7 hari lepas",
+        "previous30Days": "30 hari lepas",
+        "older": "Lebih lama"
+      }
     },
     "persona": {
       "applied": "Persona digunakan",
@@ -674,7 +682,12 @@
       "importedLabel": "diimport",
       "skipped": "dilangkau",
       "documents": "Dokumen",
-      "errors": "Ralat"
+      "errors": "Ralat",
+      "archivedChats": {
+        "title": "Sembang diarkibkan",
+        "empty": "Tiada sembang diarkibkan",
+        "unarchive": "Nyahakrib"
+      }
     },
     "about": {
       "title": "Perihal",

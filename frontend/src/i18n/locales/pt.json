@@ -262,7 +262,15 @@
       "chats": "Conversas",
       "renameChat": "Renomear conversa",
       "deleteChat": "Excluir conversa",
-      "incognito": "Chat Incógnito"
+      "incognito": "Chat Incógnito",
+      "archiveChat": "Arquivar conversa",
+      "groups": {
+        "today": "Hoje",
+        "yesterday": "Ontem",
+        "previous7Days": "Últimos 7 dias",
+        "previous30Days": "Últimos 30 dias",
+        "older": "Mais antigas"
+      }
     },
     "persona": {
       "applied": "Persona aplicada",
@@ -674,7 +682,12 @@
       "importedLabel": "importado",
       "skipped": "ignorado",
       "documents": "Documentos",
-      "errors": "Erros"
+      "errors": "Erros",
+      "archivedChats": {
+        "title": "Conversas arquivadas",
+        "empty": "Nenhuma conversa arquivada",
+        "unarchive": "Desarquivar"
+      }
     },
     "about": {
       "title": "Sobre",

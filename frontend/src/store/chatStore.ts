@@ -93,6 +93,7 @@ interface ChatState {
     messageId: string,
     rating: number | undefined
   ) => Promise<void>;
+  setSessionArchived: (sessionId: string, archived: boolean) => Promise<void>;
   truncateMessagesFrom: (sessionId: string, messageId: string) => void;
 
   // Models
@@ -430,6 +431,34 @@ export const useChatStore = create<ChatState>((set, get) => ({
       } as Partial<ChatMessage>);
     } catch (error) {
       logger.error('Failed to save message rating:', error);
+    }
+  },
+
+  setSessionArchived: async (sessionId: string, archived: boolean) => {
+    set(state => ({
+      sessions: state.sessions.map(session =>
+        session.id === sessionId ? { ...session, archived } : session
+      ),
+      currentSession:
+        state.currentSession?.id === sessionId
+          ? { ...state.currentSession, archived }
+          : state.currentSession,
+    }));
+
+    try {
+      await chatApi.updateSession(sessionId, {
+        archived,
+      } as Partial<ChatSession>);
+    } catch (error) {
+      logger.error('Failed to update session archive state:', error);
+      // Roll back the optimistic update so the UI stays truthful.
+      set(state => ({
+        sessions: state.sessions.map(session =>
+          session.id === sessionId
+            ? { ...session, archived: !archived }
+            : session
+        ),
+      }));
     }
   },
 

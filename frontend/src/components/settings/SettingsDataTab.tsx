@@ -17,11 +17,76 @@
 
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
+import { ArchiveRestore, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { useChatStore } from '@/store/chatStore';
+import { formatTimestamp } from '@/utils';
 import type {
   ImportMergeStrategy,
   SettingsImportResult,
 } from './useSettingsDataImport';
+
+function ArchivedChatsSection() {
+  const { t, i18n } = useTranslation();
+  const { sessions, setSessionArchived, deleteSession } = useChatStore();
+  const archivedSessions = sessions.filter(session => session.archived);
+
+  return (
+    <div>
+      <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+        {t('settings.data.archivedChats.title')}
+      </h3>
+      {archivedSessions.length === 0 ? (
+        <p className='text-xs text-gray-500 dark:text-gray-400'>
+          {t('settings.data.archivedChats.empty')}
+        </p>
+      ) : (
+        <div className='divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-dark-300 dark:border-dark-300'>
+          {archivedSessions.map(session => (
+            <div
+              key={session.id}
+              className='flex items-center justify-between gap-3 px-3 py-2'
+            >
+              <div className='min-w-0 flex-1'>
+                <p className='truncate text-sm font-medium text-gray-900 dark:text-dark-900'>
+                  {session.title}
+                </p>
+                <p className='text-[11px] tabular-nums text-gray-400 dark:text-dark-500'>
+                  {formatTimestamp(session.updatedAt, i18n.language)}
+                </p>
+              </div>
+              <div className='flex shrink-0 items-center gap-1'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => setSessionArchived(session.id, false)}
+                  className='h-8 gap-1.5 px-2 text-xs'
+                  title={t('settings.data.archivedChats.unarchive')}
+                >
+                  <ArchiveRestore className='h-3.5 w-3.5' />
+                  {t('settings.data.archivedChats.unarchive')}
+                </Button>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => {
+                    if (window.confirm(t('chat.session.deleteConfirm'))) {
+                      void deleteSession(session.id);
+                    }
+                  }}
+                  className='h-8 w-8 p-0 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20'
+                  title={t('chat.session.deleteChat')}
+                >
+                  <Trash2 className='h-3.5 w-3.5' />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface SettingsDataTabProps {
   sessionCount: number;
@@ -253,6 +318,8 @@ export function SettingsDataTab({
           )}
         </div>
       </div>
+
+      <ArchivedChatsSection />
     </div>
   );
 }
