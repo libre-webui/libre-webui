@@ -34,7 +34,9 @@ model commands are never run directly on the host as a fallback.
 npx libre-webui
 ```
 
-Open [http://localhost:8080](http://localhost:8080). On a fresh install, create the first account; that account becomes the administrator.
+Open [http://localhost:8080](http://localhost:8080). Create the first account;
+that account becomes the administrator. Later public registration remains
+disabled unless you explicitly set `ENABLE_SIGNUP=true`.
 
 ## Install Ollama
 
@@ -103,6 +105,9 @@ cd libre-webui
 docker compose up -d
 ```
 
+Create the first administrator in the browser. No registration flag or restart
+is required; subsequent public registration is closed by default.
+
 If Ollama is already running on the host or another machine:
 
 ```bash
@@ -111,12 +116,15 @@ docker compose -f docker-compose.external-ollama.yml up -d
 
 For NVIDIA GPU acceleration, use the GPU compose file provided by the repository.
 
-Every repository Compose file mounts the host Docker socket, so Work is enabled
-out of the box: task containers run on the same daemon that runs Libre WebUI.
-That access is root-equivalent on the Docker host, so read
-[Work: Isolated Workspaces](./WORKSPACES) before exposing the stack beyond a
-machine whose administrators you already trust. On Linux, set `DOCKER_GID` in
-`.env` to the group that owns the socket.
+Repository Compose files mount the host Docker socket so Work is available when
+Docker is installed. This grants the application root-equivalent control of the
+host, so read [Work: Isolated Workspaces](./WORKSPACES) first. On Linux, set
+`DOCKER_GID` in `.env` to the group that owns the socket. Remove the mount if
+Work is not wanted.
+
+Bundled Ollama is also internal-only. Add
+`-f docker-compose.ollama-host.yml` only when another host process needs its API;
+the override binds to loopback by default.
 
 ## Keyboard Shortcuts
 

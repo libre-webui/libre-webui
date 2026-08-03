@@ -262,46 +262,31 @@ const AppContent: React.FC = () => {
       processingRef.current = true;
 
       const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
       const authStatus = urlParams.get('auth');
 
-      if (token && authStatus === 'success') {
+      if (authStatus === 'success') {
         try {
-          // Verify token and get user info from the backend
-          const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+          const response = await fetch(`${API_BASE_URL}/auth/oauth/exchange`, {
+            method: 'POST',
             credentials: 'include',
           });
 
           if (response.ok) {
             const data = await response.json();
             if (data.success && data.data) {
-              // Use auth store login function to properly authenticate
-              const { login, systemInfo } = useAuthStore.getState();
-              login(
-                data.data,
-                token,
-                systemInfo || {
-                  requiresAuth: true,
-                  hasUsers: true,
-                  userCount: 1,
-                  signupEnabled: true,
-                  version: '0.1.6',
-                }
-              );
-              logger.debug('OAuth login successful, showing toast');
-              toast.success('GitHub login successful!');
+              const { login } = useAuthStore.getState();
+              login(data.data.user, data.data.token, data.data.systemInfo);
+              logger.debug('OAuth login successful');
+              toast.success('OAuth login successful!');
             } else {
-              toast.error('Failed to verify GitHub authentication');
+              toast.error('Failed to complete OAuth authentication');
             }
           } else {
-            toast.error('GitHub authentication verification failed');
+            toast.error('OAuth authentication verification failed');
           }
         } catch (error) {
           logger.error('OAuth processing error:', error);
-          toast.error('GitHub authentication failed');
+          toast.error('OAuth authentication failed');
         }
 
         // Clean up URL regardless of success/failure

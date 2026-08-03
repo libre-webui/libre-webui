@@ -36,6 +36,10 @@ import {
 import { Logo } from '@/components/Logo';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 import { createLogger } from '@/utils/logger';
+import {
+  getPasswordPolicyError,
+  PASSWORD_REQUIREMENTS,
+} from '@/utils/passwordPolicy';
 
 const logger = createLogger('components:first-time-setup');
 
@@ -97,8 +101,9 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
       return;
     }
 
-    if (password.length < 6) {
-      toast.error(t('auth.signup.passwordTooShort'));
+    const passwordError = getPasswordPolicyError(password);
+    if (passwordError) {
+      toast.error(passwordError);
       return;
     }
 
@@ -429,6 +434,9 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              <p className='mt-1.5 text-xs text-gray-500 dark:text-dark-500'>
+                {PASSWORD_REQUIREMENTS}
+              </p>
             </div>
 
             <div>

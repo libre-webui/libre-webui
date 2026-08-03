@@ -9,10 +9,10 @@ keywords:
 
 # Private Remote Deployment
 
-This pattern runs Libre WebUI, Ollama, Cloudflare Tunnel, and Watchtower on one
-Docker host without publishing the application or Ollama ports. Cloudflare
-Access is the outer identity boundary; Libre WebUI authentication remains the
-inner boundary.
+This pattern runs Libre WebUI, Ollama, and Cloudflare Tunnel on one Docker host
+without publishing the application or Ollama ports. Cloudflare Access is the
+outer identity boundary; Libre WebUI authentication remains the inner boundary.
+Work and Watchtower are separate, root-equivalent opt-ins.
 
 Use [`deploy/private/docker-compose.yml`](https://github.com/libre-webui/libre-webui/blob/main/deploy/private/docker-compose.yml)
 as the starting point. It defaults to the `main` image:
@@ -34,13 +34,14 @@ the client default.
   The host publishes no application ports.
 - The app runs non-root with a read-only root filesystem, no Linux
   capabilities, no-new-privileges, and CPU, memory, and PID limits.
-- Work containers add their own read-only root filesystem, capability drop,
+- Work is disabled unless `docker-compose.work.yml` is included. When enabled,
+  its containers add their own read-only root filesystem, capability drop,
   resource limits, workspace volume, and default-deny network policy.
 
-The Docker socket remains the largest trust boundary. Anyone who compromises a
-process that can issue arbitrary Docker API calls can control the host. Remove
-the socket mount to disable Work when a client does not need it. A read-only
-socket mount does not make Docker API access read-only.
+The base stack mounts no Docker socket. Adding either the Work or Watchtower
+override introduces the largest trust boundary: anyone who compromises a
+process that can issue Docker API calls can control the host. A read-only socket
+mount does not make Docker API access read-only.
 
 ## Bootstrap
 
@@ -48,16 +49,20 @@ socket mount does not make Docker API access read-only.
    disabling root SSH.
 2. Copy `deploy/private/.env.example` to `/opt/libre-webui/.env`, set mode
    `0600`, and generate unique secrets.
-3. Set `DOCKER_GID` to the numeric group that owns `/var/run/docker.sock`.
+3. If Work will be enabled, set `DOCKER_GID` to the numeric group that owns
+   `/var/run/docker.sock`.
 4. Store the Cloudflare tunnel token in
    `/opt/libre-webui/secrets/tunnel-token` with mode `0640` or stricter.
 5. Create a Cloudflare Access self-hosted application for the complete
-   hostname and allow only the intended identities. Enable **Protect with
-   Access** on the tunnel route.
-6. Set `ENABLE_SIGNUP=true` only while the Access allowlist protects the initial
-   administrator setup. After the administrator exists, set it to `false` and
-   recreate the app container. Disabled registration is absolute, including on
-   an empty database.
+   hostname, use a 24-hour session, and allow only the intended identities.
+   Enable **Protect with Access** on the tunnel route. If monitoring requires a
+   public health check, create a separate path-scoped application or policy for
+   `/health` only. Never add a blanket Bypass policy to the main application:
+   matching Bypass policies defeat its Allow policy.
+6. Leave `ENABLE_SIGNUP=false`. Once the Access allowlist protects the hostname,
+   create the first local administrator; an empty database permits that one
+   bootstrap account automatically. Enable registration only for a deliberate
+   later registration window.
 7. Configure Turnstile hostname restrictions and set
    `TURNSTILE_EXPECTED_HOSTNAME` to the exact public hostname.
 
@@ -68,7 +73,22 @@ cd /opt/libre-webui
 docker compose config --quiet
 docker compose up -d
 docker compose ps
+```
+
+To enable Work, include its override deliberately:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.work.yml up -d
+```
+
+Once Access is active, command-line smoke tests need a Cloudflare Access
+service token unless the exact path has a narrow bypass. Store the credentials
+outside shell history and send both headers:
+
+```bash
 curl --fail --silent --show-error \
+  -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+  -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
   https://your-hostname.example/api/auth/system-info
 ```
 
@@ -76,6 +96,8 @@ An unauthenticated request to a protected application API must return `401`:
 
 ```bash
 curl --output /dev/null --write-out '%{http_code}\n' \
+  -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+  -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
   https://your-hostname.example/api/work/tasks
 ```
 
@@ -119,7 +141,18 @@ need a separate retention policy when their content matters.
 
 ## Updates
 
-Watchtower checks labelled application and Ollama images every 30 minutes. A
-client deployment follows `main`; a deliberately experimental instance may
-override `LIBRE_WEBUI_IMAGE` with `:dev`. Keep health checks and an off-host
-backup so a bad update can be rolled back to a previously recorded digest.
+Update pinned images manually after reviewing and backing up the deployment. If
+automatic updates are an accepted risk, add the socket-bearing Watchtower
+override explicitly:
+
+```bash
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.watchtower.yml \
+  up -d
+```
+
+Watchtower then checks labelled application and Ollama images every 30 minutes.
+A client deployment follows `main`; an experimental instance may override
+`LIBRE_WEBUI_IMAGE` with `:dev`. Keep health checks and an off-host backup so a
+bad update can be rolled back to a previously recorded digest.

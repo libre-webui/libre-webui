@@ -84,7 +84,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     e.preventDefault();
 
     const loginUsername = isDemo ? DEMO_CREDENTIALS.username : username.trim();
-    const loginPassword = isDemo ? DEMO_CREDENTIALS.password : password.trim();
+    const loginPassword = isDemo ? DEMO_CREDENTIALS.password : password;
 
     if (!loginUsername || !loginPassword) {
       toast.error(t('auth.login.enterBoth'));

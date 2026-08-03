@@ -26,6 +26,10 @@ import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
+import {
+  getPasswordPolicyError,
+  PASSWORD_REQUIREMENTS,
+} from '@/utils/passwordPolicy';
 
 const logger = createLogger('components:signup-form');
 
@@ -78,8 +82,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       return;
     }
 
-    if (password.length < 6) {
-      toast.error(t('auth.signup.passwordTooShort'));
+    const passwordError = getPasswordPolicyError(password);
+    if (passwordError) {
+      toast.error(passwordError);
       return;
     }
 
@@ -260,6 +265,9 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
+          <p className='mt-1.5 text-xs text-ink-muted'>
+            {PASSWORD_REQUIREMENTS}
+          </p>
         </div>
 
         <div>

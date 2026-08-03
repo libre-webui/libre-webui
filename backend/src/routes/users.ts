@@ -25,6 +25,7 @@ import {
 } from '../middleware/auth.js';
 import workAgentService from '../services/workAgentService.js';
 import { createLogger } from '../utils/logger.js';
+import { validatePasswordStrength } from '../utils/hash.js';
 
 const logger = createLogger('routes:users');
 
@@ -108,6 +109,16 @@ router.post(
         res.status(400).json({
           success: false,
           message: 'Username, email, password, and role are required',
+        });
+        return;
+      }
+
+      const passwordValidation = validatePasswordStrength(password);
+      if (!passwordValidation.isValid) {
+        res.status(400).json({
+          success: false,
+          message: 'Password does not meet security requirements',
+          errors: passwordValidation.errors,
         });
         return;
       }
@@ -276,6 +287,18 @@ router.patch(
           message: 'User not found',
         });
         return;
+      }
+
+      if (password !== undefined) {
+        const passwordValidation = validatePasswordStrength(password);
+        if (!passwordValidation.isValid) {
+          res.status(400).json({
+            success: false,
+            message: 'Password does not meet security requirements',
+            errors: passwordValidation.errors,
+          });
+          return;
+        }
       }
 
       // Validate role if provided

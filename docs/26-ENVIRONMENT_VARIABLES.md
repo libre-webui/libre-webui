@@ -37,7 +37,7 @@ This page lists the environment variables read by the current Libre WebUI backen
 
 | Variable                      | Default                           | Purpose                                                  |
 | ----------------------------- | --------------------------------- | -------------------------------------------------------- |
-| `ENABLE_SIGNUP`               | `true`                            | Set to `false` to disable public account registration    |
+| `ENABLE_SIGNUP`               | `false`                           | Allow registration after the first local administrator   |
 | `JWT_SECRET`                  | generated/fallback in development | JWT signing secret; set explicitly in production         |
 | `JWT_EXPIRES_IN`              | `7d`                              | Session-token lifetime                                   |
 | `ENCRYPTION_KEY`              | auto-generated                    | 64-character hex key for encrypted values                |
@@ -48,9 +48,9 @@ This page lists the environment variables read by the current Libre WebUI backen
 
 Turnstile is enabled only when both Turnstile keys are present.
 
-`ENABLE_SIGNUP=false` blocks new local and OAuth accounts even on an empty
-database. Temporarily enable it only after an outer identity boundary protects
-the initial administrator setup.
+`ENABLE_SIGNUP=false` still permits the first local administrator on an empty
+database, then blocks additional local and OAuth accounts. Protect a remotely
+reachable bootstrap route with an outer identity boundary before first start.
 
 Chat WebSocket admission can be tuned without weakening authentication:
 
@@ -161,10 +161,10 @@ round-limit error or claiming successful completion. A follow-up run continues
 in the same durable workspace. Persisted tool output has a separate bound of
 approximately 20,000 source characters plus a truncation marker.
 
-These variables tune a Work runtime that is already reachable. A Compose
-deployment reaches one by default: the image ships the Docker CLI and every
-repository Compose file mounts the host Docker socket. Two Compose-level
-variables control that wiring:
+These variables tune a Work runtime that is already reachable. Repository
+Compose deployments enable it by default: the image ships the Docker CLI and
+the Compose files mount the host Docker socket. Two Compose-level variables
+control that wiring:
 
 | Variable        | Default                | Purpose                                                         |
 | --------------- | ---------------------- | --------------------------------------------------------------- |
@@ -174,6 +174,10 @@ variables control that wiring:
 `DOCKER_GID` must be the socket's group **as seen inside a container**; a macOS
 host reports a different value. The Helm chart mounts no runtime socket, so Work
 remains unavailable on Kubernetes.
+
+Repository Compose files also accept `WEBUI_BIND_ADDRESS` (default
+`127.0.0.1`) and `WEBUI_PORT` (default `8080`). Keep the loopback default unless
+a trusted LAN or host reverse proxy must reach the port.
 
 ## Provider Model Discovery
 

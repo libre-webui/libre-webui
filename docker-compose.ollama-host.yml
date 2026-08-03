@@ -1,0 +1,6 @@
+services:
+  ollama:
+    # Opt in only when host applications need Ollama directly. Loopback is the
+    # safe default; set OLLAMA_BIND_ADDRESS deliberately for remote clients.
+    ports:
+      - '${OLLAMA_BIND_ADDRESS:-127.0.0.1}:${OLLAMA_PORT:-11434}:11434'

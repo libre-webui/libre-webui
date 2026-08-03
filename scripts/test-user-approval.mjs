@@ -30,7 +30,7 @@ legacyDb.exec(`
 legacyDb.close();
 
 process.env.DATA_DIR = dataDir;
-process.env.ENABLE_SIGNUP = 'true';
+process.env.ENABLE_SIGNUP = 'false';
 process.env.JWT_SECRET = 'user-approval-test-secret-that-is-long-enough';
 
 const importBuilt = file =>
@@ -48,45 +48,60 @@ test('public registrations require administrator approval before authentication'
     const migratedDefault = userModel.getUserById('default');
     assert.equal(migratedDefault?.status, 'active');
 
-    const credentials = [
+    const bootstrapCandidates = [
       {
         username: 'owner',
-        password: 'owner-password',
+        password: 'Owner-Password-123',
         email: 'owner@example.test',
       },
       {
-        username: 'waiting',
-        password: 'waiting-password',
-        email: 'waiting@example.test',
+        username: 'racing-owner',
+        password: 'Racing-Password-123',
+        email: 'racing-owner@example.test',
       },
     ];
-    const registrations = await Promise.all(
-      credentials.map(account =>
+    const bootstrapAttempts = await Promise.all(
+      bootstrapCandidates.map(account =>
         authService.signup(account.username, account.password, account.email)
       )
     );
-    const bootstrap = registrations.find(
+    const bootstrap = bootstrapAttempts.find(
       result => result?.status === 'authenticated'
     );
-    const registration = registrations.find(
-      result => result?.status === 'pending'
-    );
     assert.ok(bootstrap);
-    assert.ok(registration);
+    assert.equal(
+      bootstrapAttempts.filter(result => result?.status === 'authenticated')
+        .length,
+      1
+    );
+    assert.equal(bootstrapAttempts.filter(result => result === null).length, 1);
     assert.equal(bootstrap?.status, 'authenticated');
     assert.equal(bootstrap?.user.role, 'admin');
     assert.equal(bootstrap?.user.status, 'active');
     assert.ok(bootstrap && 'token' in bootstrap);
+    assert.deepEqual(userModel.getPendingApprovalSummary(), {
+      count: 0,
+      latestCreatedAt: null,
+    });
+
+    process.env.ENABLE_SIGNUP = 'true';
+    const pendingCredentials = {
+      username: 'waiting',
+      password: 'Waiting-Password-123',
+      email: 'waiting@example.test',
+    };
+    const registration = await authService.signup(
+      pendingCredentials.username,
+      pendingCredentials.password,
+      pendingCredentials.email
+    );
+    assert.ok(registration);
 
     assert.equal(registration?.status, 'pending');
     assert.equal(registration?.user.role, 'user');
     assert.equal(registration?.user.status, 'pending');
     assert.ok(registration && !('token' in registration));
 
-    const pendingCredentials = credentials.find(
-      account => account.username === registration.user.username
-    );
-    assert.ok(pendingCredentials);
     const pendingLogin = await authService.login(
       pendingCredentials.username,
       pendingCredentials.password

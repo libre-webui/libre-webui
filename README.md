@@ -252,34 +252,45 @@ Browser or desktop client
 
 ## Deploy on your terms
 
-| Path                | Command or link                                                         | Best for                                                      |
-| ------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------- |
-| **npm**             | `npx libre-webui`                                                       | Fast local start; Work available when Docker is installed     |
-| **Docker + Ollama** | `docker compose up -d`                                                  | Persistent stack; Work enabled through the host Docker socket |
-| **External Ollama** | `docker compose -f docker-compose.external-ollama.yml up -d`            | An Ollama you already run                                     |
-| **NVIDIA Docker**   | `docker compose -f docker-compose.gpu.yml up -d`                        | Local GPU inference                                           |
-| **Kubernetes**      | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui` | Cluster deployment; the chart has no Work runtime driver      |
-| **Desktop client**  | [GitHub Releases](https://github.com/libre-webui/libre-webui/releases)  | Electron UI over a separately managed backend                 |
-| **Source**          | `npm install && npm run dev`                                            | Development                                                   |
+| Path                | Command or link                                                         | Best for                                                  |
+| ------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
+| **npm**             | `npx libre-webui`                                                       | Fast local start; Work available when Docker is installed |
+| **Docker + Ollama** | `docker compose up -d`                                                  | Persistent stack; Work enabled through host Docker        |
+| **External Ollama** | `docker compose -f docker-compose.external-ollama.yml up -d`            | An Ollama you already run                                 |
+| **NVIDIA Docker**   | `docker compose -f docker-compose.gpu.yml up -d`                        | Local GPU inference                                       |
+| **Kubernetes**      | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui` | Cluster deployment; the chart has no Work runtime driver  |
+| **Desktop client**  | [GitHub Releases](https://github.com/libre-webui/libre-webui/releases)  | Electron UI over a separately managed backend             |
+| **Source**          | `npm install && npm run dev`                                            | Development                                               |
 
 Docker commands assume you have cloned this repository. Production deployments
 should set stable `JWT_SECRET` and `ENCRYPTION_KEY` values, persist the data
 directory, back up the database and key together, and terminate public traffic
 with HTTPS.
 
-> **The Docker socket is the security decision to understand.** Every Compose
-> file mounts `/var/run/docker.sock` so Work can run task containers as
-> siblings. That socket grants root-equivalent control of the host: treat every
-> Libre WebUI administrator as a host administrator, and remove the mount if you
-> do not want Work.
+Every fresh installation allows exactly one local administrator to be created.
+After that bootstrap, public local and OAuth registration remains disabled
+unless `ENABLE_SIGNUP=true` is set deliberately.
 
-On Linux the socket belongs to the `docker` group rather than root, so set the
-group id once in `.env`:
+> **The Docker socket is the security decision to understand.** Repository
+> Compose files mount it so Work functions out of the box. That grants Libre
+> WebUI root-equivalent control of the host and makes every Libre WebUI
+> administrator a host administrator. Remove the mount when Work is not wanted.
+
+On Linux, set the socket group in `.env`:
 
 ```bash
 echo "DOCKER_GID=$(docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
   alpine stat -c '%g' /var/run/docker.sock)" >> .env
 ```
+
+Ollama is reachable only on the internal Compose network. If host applications
+also need it, add `-f docker-compose.ollama-host.yml`; that override binds
+Ollama to `127.0.0.1` unless you deliberately choose another address.
+
+The WebUI itself also binds to `127.0.0.1` by default. Set
+`WEBUI_BIND_ADDRESS` only when a trusted LAN or a host reverse proxy must reach
+the Compose port; Internet deployments should use the private deployment
+profile instead of publishing it directly.
 
 ## Documentation
 
@@ -313,7 +324,9 @@ All participation follows the
 [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/)
 and the
 [Libre WebUI Community & Ethical Charter](https://github.com/libre-webui/libre-webui/blob/main/CHARTER.md).
-Report security issues privately to **security@kroonen.ai**.
+Report security issues privately through the
+[security policy](https://github.com/libre-webui/libre-webui/security/policy),
+never through a public issue.
 
 ## Built from experience, for independence
 
