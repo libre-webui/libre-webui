@@ -282,6 +282,14 @@
         "previous7Days": "Senaste 7 dagarna",
         "previous30Days": "Senaste 30 dagarna",
         "older": "Äldre"
+      },
+      "folder": {
+        "new": "Ny mapp",
+        "namePlaceholder": "Mappnamn",
+        "move": "Flytta till mapp",
+        "remove": "Ta bort från mapp",
+        "delete": "Ta bort mapp",
+        "deleteConfirm": "Ta bort den här mappen? Chattarna i den behålls."
       }
     },
     "persona": {

@@ -282,6 +282,14 @@
         "previous7Days": "7 derniers jours",
         "previous30Days": "30 derniers jours",
         "older": "Plus ancien"
+      },
+      "folder": {
+        "new": "Nouveau dossier",
+        "namePlaceholder": "Nom du dossier",
+        "move": "Déplacer vers un dossier",
+        "remove": "Retirer du dossier",
+        "delete": "Supprimer le dossier",
+        "deleteConfirm": "Supprimer ce dossier ? Les discussions sont conservées."
       }
     },
     "persona": {

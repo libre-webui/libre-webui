@@ -282,6 +282,14 @@
         "previous7Days": "Posledních 7 dní",
         "previous30Days": "Posledních 30 dní",
         "older": "Starší"
+      },
+      "folder": {
+        "new": "Nová složka",
+        "namePlaceholder": "Název složky",
+        "move": "Přesunout do složky",
+        "remove": "Odebrat ze složky",
+        "delete": "Smazat složku",
+        "deleteConfirm": "Smazat tuto složku? Chaty uvnitř zůstanou."
       }
     },
     "persona": {

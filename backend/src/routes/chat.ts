@@ -834,6 +834,97 @@ router.post(
   }
 );
 
+// Session folders
+router.get(
+  '/folders',
+  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+    try {
+      const userId = req.user?.userId || 'default';
+      res.json({ success: true, data: chatService.getSessionFolders(userId) });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to load folders'),
+      });
+    }
+  }
+);
+
+router.post(
+  '/folders',
+  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+    try {
+      const { name } = req.body as { name?: string };
+      if (!name || !name.trim()) {
+        res.status(400).json({ success: false, error: 'Name is required' });
+        return;
+      }
+      const userId = req.user?.userId || 'default';
+      res.json({
+        success: true,
+        data: chatService.createSessionFolder(name, userId),
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to create folder'),
+      });
+    }
+  }
+);
+
+router.put(
+  '/folders/:folderId',
+  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+    try {
+      const { name } = req.body as { name?: string };
+      if (!name || !name.trim()) {
+        res.status(400).json({ success: false, error: 'Name is required' });
+        return;
+      }
+      const userId = req.user?.userId || 'default';
+      const folder = chatService.renameSessionFolder(
+        req.params.folderId as string,
+        name,
+        userId
+      );
+      if (!folder) {
+        res.status(404).json({ success: false, error: 'Folder not found' });
+        return;
+      }
+      res.json({ success: true, data: folder });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to rename folder'),
+      });
+    }
+  }
+);
+
+router.delete(
+  '/folders/:folderId',
+  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+    try {
+      const userId = req.user?.userId || 'default';
+      const deleted = chatService.deleteSessionFolder(
+        req.params.folderId as string,
+        userId
+      );
+      if (!deleted) {
+        res.status(404).json({ success: false, error: 'Folder not found' });
+        return;
+      }
+      res.json({ success: true, message: 'Folder deleted' });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to delete folder'),
+      });
+    }
+  }
+);
+
 // Suggest follow-up messages for the latest exchange in a session
 router.post(
   '/sessions/:sessionId/followups',

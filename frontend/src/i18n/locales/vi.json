@@ -282,6 +282,14 @@
         "previous7Days": "7 ngày qua",
         "previous30Days": "30 ngày qua",
         "older": "Cũ hơn"
+      },
+      "folder": {
+        "new": "Thư mục mới",
+        "namePlaceholder": "Tên thư mục",
+        "move": "Chuyển vào thư mục",
+        "remove": "Gỡ khỏi thư mục",
+        "delete": "Xóa thư mục",
+        "deleteConfirm": "Xóa thư mục này? Các cuộc trò chuyện bên trong vẫn giữ nguyên."
       }
     },
     "persona": {

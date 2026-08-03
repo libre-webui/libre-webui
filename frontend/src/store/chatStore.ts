@@ -23,6 +23,7 @@ import {
   GenerationStatistics,
   Persona,
   ChatProviderType,
+  SessionFolder,
 } from '@/types';
 import { chatApi, ollamaApi, preferencesApi, personaApi } from '@/utils/api';
 import { pluginApi } from '@/utils/api';
@@ -94,6 +95,17 @@ interface ChatState {
     rating: number | undefined
   ) => Promise<void>;
   setSessionArchived: (sessionId: string, archived: boolean) => Promise<void>;
+
+  // Session folders
+  folders: SessionFolder[];
+  loadFolders: () => Promise<void>;
+  createFolder: (name: string) => Promise<SessionFolder | undefined>;
+  renameFolder: (folderId: string, name: string) => Promise<void>;
+  deleteFolder: (folderId: string) => Promise<void>;
+  moveSessionToFolder: (
+    sessionId: string,
+    folderId: string | null
+  ) => Promise<void>;
   truncateMessagesFrom: (sessionId: string, messageId: string) => void;
 
   // Models
@@ -431,6 +443,94 @@ export const useChatStore = create<ChatState>((set, get) => ({
       } as Partial<ChatMessage>);
     } catch (error) {
       logger.error('Failed to save message rating:', error);
+    }
+  },
+
+  folders: [],
+
+  loadFolders: async () => {
+    try {
+      const response = await chatApi.getFolders();
+      if (response.success && response.data) {
+        set({ folders: response.data });
+      }
+    } catch (error) {
+      logger.error('Failed to load folders:', error);
+    }
+  },
+
+  createFolder: async (name: string) => {
+    try {
+      const response = await chatApi.createFolder(name);
+      if (response.success && response.data) {
+        const folder = response.data;
+        set(state => ({
+          folders: [...state.folders, folder].sort((a, b) =>
+            a.name.localeCompare(b.name)
+          ),
+        }));
+        return folder;
+      }
+    } catch (error) {
+      logger.error('Failed to create folder:', error);
+    }
+    return undefined;
+  },
+
+  renameFolder: async (folderId: string, name: string) => {
+    try {
+      const response = await chatApi.renameFolder(folderId, name);
+      if (response.success && response.data) {
+        const folder = response.data;
+        set(state => ({
+          folders: state.folders
+            .map(item => (item.id === folderId ? folder : item))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+        }));
+      }
+    } catch (error) {
+      logger.error('Failed to rename folder:', error);
+    }
+  },
+
+  deleteFolder: async (folderId: string) => {
+    try {
+      const response = await chatApi.deleteFolder(folderId);
+      if (response.success) {
+        set(state => ({
+          folders: state.folders.filter(item => item.id !== folderId),
+          sessions: state.sessions.map(session =>
+            session.folderId === folderId
+              ? { ...session, folderId: null }
+              : session
+          ),
+          currentSession:
+            state.currentSession?.folderId === folderId
+              ? { ...state.currentSession, folderId: null }
+              : state.currentSession,
+        }));
+      }
+    } catch (error) {
+      logger.error('Failed to delete folder:', error);
+    }
+  },
+
+  moveSessionToFolder: async (sessionId: string, folderId: string | null) => {
+    set(state => ({
+      sessions: state.sessions.map(session =>
+        session.id === sessionId ? { ...session, folderId } : session
+      ),
+      currentSession:
+        state.currentSession?.id === sessionId
+          ? { ...state.currentSession, folderId }
+          : state.currentSession,
+    }));
+    try {
+      await chatApi.updateSession(sessionId, {
+        folderId,
+      } as Partial<ChatSession>);
+    } catch (error) {
+      logger.error('Failed to move session to folder:', error);
     }
   },
 

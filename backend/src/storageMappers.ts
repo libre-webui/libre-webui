@@ -47,6 +47,15 @@ export interface SessionRow {
   updated_at: number;
   archived?: number | null;
   settings?: string | null;
+  folder_id?: string | null;
+}
+
+export interface SessionFolderRow {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: number;
+  updated_at: number;
 }
 
 export interface MessageRow {
@@ -166,6 +175,7 @@ export function mapSessionRow(
     updatedAt: row.updated_at,
     archived: row.archived === 1,
     settings: decryptJson(row.settings || undefined),
+    folderId: row.folder_id || undefined,
     messages: messages.map(message => mapMessageRow(message, siblingCountMap)),
   };
 }

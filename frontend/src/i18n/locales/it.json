@@ -282,6 +282,14 @@
         "previous7Days": "Ultimi 7 giorni",
         "previous30Days": "Ultimi 30 giorni",
         "older": "Meno recenti"
+      },
+      "folder": {
+        "new": "Nuova cartella",
+        "namePlaceholder": "Nome cartella",
+        "move": "Sposta nella cartella",
+        "remove": "Rimuovi dalla cartella",
+        "delete": "Elimina cartella",
+        "deleteConfirm": "Eliminare questa cartella? Le chat al suo interno restano."
       }
     },
     "persona": {

@@ -282,6 +282,14 @@
         "previous7Days": "过去 7 天",
         "previous30Days": "过去 30 天",
         "older": "更早"
+      },
+      "folder": {
+        "new": "新建文件夹",
+        "namePlaceholder": "文件夹名称",
+        "move": "移动到文件夹",
+        "remove": "从文件夹中移除",
+        "delete": "删除文件夹",
+        "deleteConfirm": "删除此文件夹？其中的聊天会保留。"
       }
     },
     "persona": {

@@ -282,6 +282,14 @@
         "previous7Days": "Seneste 7 dage",
         "previous30Days": "Seneste 30 dage",
         "older": "Ældre"
+      },
+      "folder": {
+        "new": "Ny mappe",
+        "namePlaceholder": "Mappenavn",
+        "move": "Flyt til mappe",
+        "remove": "Fjern fra mappe",
+        "delete": "Slet mappe",
+        "deleteConfirm": "Slet denne mappe? Chats bevares."
       }
     },
     "persona": {

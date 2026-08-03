@@ -282,6 +282,14 @@
         "previous7Days": "過去7日間",
         "previous30Days": "過去30日間",
         "older": "それ以前"
+      },
+      "folder": {
+        "new": "新しいフォルダー",
+        "namePlaceholder": "フォルダー名",
+        "move": "フォルダーへ移動",
+        "remove": "フォルダーから外す",
+        "delete": "フォルダーを削除",
+        "deleteConfirm": "このフォルダーを削除しますか？中のチャットは残ります。"
       }
     },
     "persona": {

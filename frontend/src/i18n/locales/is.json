@@ -282,6 +282,14 @@
         "previous7Days": "Síðustu 7 dagar",
         "previous30Days": "Síðustu 30 dagar",
         "older": "Eldra"
+      },
+      "folder": {
+        "new": "Ný mappa",
+        "namePlaceholder": "Heiti möppu",
+        "move": "Færa í möppu",
+        "remove": "Fjarlægja úr möppu",
+        "delete": "Eyða möppu",
+        "deleteConfirm": "Eyða þessari möppu? Spjöll innan hennar haldast."
       }
     },
     "persona": {

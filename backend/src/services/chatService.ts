@@ -21,6 +21,7 @@ import {
   ChatProviderSelection,
   Persona,
   MemorySearchResult,
+  SessionFolder,
 } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
 import storageService from '../storage.js';
@@ -362,6 +363,49 @@ class ChatService {
     const deleted = storageService.deleteSession(sessionId, userId);
     if (deleted) {
       this.sessions.delete(sessionId);
+    }
+    return deleted;
+  }
+
+  getSessionFolders(userId: string = 'default'): SessionFolder[] {
+    return storageService.getSessionFolders(userId);
+  }
+
+  createSessionFolder(name: string, userId: string = 'default'): SessionFolder {
+    const now = Date.now();
+    const folder: SessionFolder = {
+      id: uuidv4(),
+      name: name.trim(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    storageService.saveSessionFolder(folder, userId);
+    return folder;
+  }
+
+  renameSessionFolder(
+    folderId: string,
+    name: string,
+    userId: string = 'default'
+  ): SessionFolder | undefined {
+    const folder = storageService
+      .getSessionFolders(userId)
+      .find(item => item.id === folderId);
+    if (!folder) return undefined;
+    const updated = { ...folder, name: name.trim(), updatedAt: Date.now() };
+    storageService.saveSessionFolder(updated, userId);
+    return updated;
+  }
+
+  deleteSessionFolder(folderId: string, userId: string = 'default'): boolean {
+    const deleted = storageService.deleteSessionFolder(folderId, userId);
+    if (deleted) {
+      // Keep the in-memory cache consistent with the cleared folder links.
+      for (const session of this.getAllSessions(userId)) {
+        if (session.folderId === folderId) {
+          this.sessions.set(session.id, { ...session, folderId: undefined });
+        }
+      }
     }
     return deleted;
   }

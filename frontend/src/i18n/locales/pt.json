@@ -282,6 +282,14 @@
         "previous7Days": "Últimos 7 dias",
         "previous30Days": "Últimos 30 dias",
         "older": "Mais antigas"
+      },
+      "folder": {
+        "new": "Nova pasta",
+        "namePlaceholder": "Nome da pasta",
+        "move": "Mover para a pasta",
+        "remove": "Remover da pasta",
+        "delete": "Eliminar pasta",
+        "deleteConfirm": "Eliminar esta pasta? As conversas mantêm-se."
       }
     },
     "persona": {

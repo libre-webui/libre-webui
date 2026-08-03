@@ -282,6 +282,14 @@
         "previous7Days": "Ostatnie 7 dni",
         "previous30Days": "Ostatnie 30 dni",
         "older": "Starsze"
+      },
+      "folder": {
+        "new": "Nowy folder",
+        "namePlaceholder": "Nazwa folderu",
+        "move": "Przenieś do folderu",
+        "remove": "Usuń z folderu",
+        "delete": "Usuń folder",
+        "deleteConfirm": "Usunąć ten folder? Czaty w nim pozostaną."
       }
     },
     "persona": {

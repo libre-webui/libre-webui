@@ -75,6 +75,14 @@ export interface ChatSession extends ChatProviderSelection {
   personaId?: string;
   archived?: boolean; // Hidden from the sidebar until unarchived
   settings?: ChatSessionSettings; // Per-chat overrides applied over global defaults
+  folderId?: string | null; // Optional folder this chat lives in
+}
+
+export interface SessionFolder {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface ChatSessionSettings {

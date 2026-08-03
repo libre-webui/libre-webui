@@ -282,6 +282,14 @@
         "previous7Days": "지난 7일",
         "previous30Days": "지난 30일",
         "older": "이전"
+      },
+      "folder": {
+        "new": "새 폴더",
+        "namePlaceholder": "폴더 이름",
+        "move": "폴더로 이동",
+        "remove": "폴더에서 제거",
+        "delete": "폴더 삭제",
+        "deleteConfirm": "이 폴더를 삭제할까요? 안의 채팅은 유지됩니다."
       }
     },
     "persona": {

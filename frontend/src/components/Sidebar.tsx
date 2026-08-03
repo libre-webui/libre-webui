@@ -65,6 +65,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     deleteSession,
     updateSessionTitle,
     setSessionArchived,
+    folders,
+    loadFolders,
+    createFolder,
+    renameFolder,
+    deleteFolder,
+    moveSessionToFolder,
     selectedModel,
     models,
     currentSession,
@@ -254,6 +260,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  useEffect(() => {
+    void loadFolders();
+  }, [loadFolders]);
+
   const handleArchiveSession = async (
     sessionId: string,
     e: React.MouseEvent
@@ -403,6 +413,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onCancelEdit={handleCancelEdit}
               onDeleteSession={handleDeleteSession}
               onArchiveSession={handleArchiveSession}
+              folders={folders}
+              onCreateFolder={name => void createFolder(name)}
+              onRenameFolder={(folderId, name) =>
+                void renameFolder(folderId, name)
+              }
+              onDeleteFolder={folderId => void deleteFolder(folderId)}
+              onMoveSession={(sessionId, folderId) =>
+                void moveSessionToFolder(sessionId, folderId)
+              }
             />
           )}
 

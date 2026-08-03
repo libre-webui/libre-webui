@@ -282,6 +282,14 @@
         "previous7Days": "Previous 7 days",
         "previous30Days": "Previous 30 days",
         "older": "Older"
+      },
+      "folder": {
+        "new": "New folder",
+        "namePlaceholder": "Folder name",
+        "move": "Move to folder",
+        "remove": "Remove from folder",
+        "delete": "Delete folder",
+        "deleteConfirm": "Delete this folder? Chats inside are kept."
       }
     },
     "persona": {

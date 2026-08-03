@@ -21,7 +21,12 @@ import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import getDatabase, { isDatabaseInitialized } from './db.js';
-import { ChatSession, DocumentChunk, UserPreferences } from './types/index.js';
+import {
+  ChatSession,
+  DocumentChunk,
+  SessionFolder,
+  UserPreferences,
+} from './types/index.js';
 import { encryptionService } from './services/encryptionService.js';
 import { createLogger } from './utils/logger.js';
 import {
@@ -32,6 +37,7 @@ import {
   type DocumentChunkRow,
   type DocumentRow,
   type MessageRow,
+  type SessionFolderRow,
   type SessionRow,
   type User,
 } from './storageMappers.js';
@@ -241,8 +247,8 @@ class StorageService {
       const transaction = db.transaction((session: ChatSession) => {
         // Insert or update session
         const sessionStmt = db.prepare(`
-          INSERT OR REPLACE INTO sessions (id, user_id, title, model, persona_id, provider_type, provider_id, created_at, updated_at, archived, settings)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT OR REPLACE INTO sessions (id, user_id, title, model, persona_id, provider_type, provider_id, created_at, updated_at, archived, settings, folder_id)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         // Encrypt sensitive session data
@@ -261,7 +267,8 @@ class StorageService {
           session.archived ? 1 : 0,
           session.settings
             ? encryptionService.encrypt(JSON.stringify(session.settings))
-            : null
+            : null,
+          session.folderId || null
         );
 
         // Delete existing messages
@@ -366,6 +373,55 @@ class StorageService {
     }
 
     return false;
+  }
+
+  // =================================
+  // SESSION FOLDERS
+  // =================================
+
+  getSessionFolders(userId = 'default'): SessionFolder[] {
+    if (!this.useSQLite) return [];
+    const db = getDatabase();
+    const rows = db
+      .prepare(
+        'SELECT * FROM session_folders WHERE user_id = ? ORDER BY name COLLATE NOCASE ASC'
+      )
+      .all(userId) as SessionFolderRow[];
+    return rows.map(row => ({
+      id: row.id,
+      name: encryptionService.decrypt(row.name),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  saveSessionFolder(folder: SessionFolder, userId = 'default'): void {
+    if (!this.useSQLite) return;
+    const db = getDatabase();
+    db.prepare(
+      `INSERT OR REPLACE INTO session_folders (id, user_id, name, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)`
+    ).run(
+      folder.id,
+      userId,
+      encryptionService.encrypt(folder.name),
+      folder.createdAt,
+      folder.updatedAt
+    );
+  }
+
+  deleteSessionFolder(folderId: string, userId = 'default'): boolean {
+    if (!this.useSQLite) return false;
+    const db = getDatabase();
+    const remove = db.transaction(() => {
+      db.prepare(
+        'UPDATE sessions SET folder_id = NULL WHERE folder_id = ? AND user_id = ?'
+      ).run(folderId, userId);
+      return db
+        .prepare('DELETE FROM session_folders WHERE id = ? AND user_id = ?')
+        .run(folderId, userId).changes;
+    });
+    return remove() > 0;
   }
 
   clearAllSessions(userId = 'default'): number {

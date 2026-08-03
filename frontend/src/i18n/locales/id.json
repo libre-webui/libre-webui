@@ -282,6 +282,14 @@
         "previous7Days": "7 hari terakhir",
         "previous30Days": "30 hari terakhir",
         "older": "Lebih lama"
+      },
+      "folder": {
+        "new": "Folder baru",
+        "namePlaceholder": "Nama folder",
+        "move": "Pindahkan ke folder",
+        "remove": "Keluarkan dari folder",
+        "delete": "Hapus folder",
+        "deleteConfirm": "Hapus folder ini? Obrolan di dalamnya tetap ada."
       }
     },
     "persona": {

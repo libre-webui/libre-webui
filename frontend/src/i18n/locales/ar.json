@@ -282,6 +282,14 @@
         "previous7Days": "آخر 7 أيام",
         "previous30Days": "آخر 30 يومًا",
         "older": "أقدم"
+      },
+      "folder": {
+        "new": "مجلد جديد",
+        "namePlaceholder": "اسم المجلد",
+        "move": "نقل إلى مجلد",
+        "remove": "إزالة من المجلد",
+        "delete": "حذف المجلد",
+        "deleteConfirm": "حذف هذا المجلد؟ ستبقى المحادثات بداخله."
       }
     },
     "persona": {

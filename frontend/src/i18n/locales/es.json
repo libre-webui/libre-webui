@@ -282,6 +282,14 @@
         "previous7Days": "Últimos 7 días",
         "previous30Days": "Últimos 30 días",
         "older": "Más antiguos"
+      },
+      "folder": {
+        "new": "Nueva carpeta",
+        "namePlaceholder": "Nombre de la carpeta",
+        "move": "Mover a carpeta",
+        "remove": "Quitar de la carpeta",
+        "delete": "Eliminar carpeta",
+        "deleteConfirm": "¿Eliminar esta carpeta? Los chats se conservan."
       }
     },
     "persona": {

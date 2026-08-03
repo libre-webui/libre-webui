@@ -282,6 +282,14 @@
         "previous7Days": "Letzte 7 Tage",
         "previous30Days": "Letzte 30 Tage",
         "older": "Älter"
+      },
+      "folder": {
+        "new": "Neuer Ordner",
+        "namePlaceholder": "Ordnername",
+        "move": "In Ordner verschieben",
+        "remove": "Aus Ordner entfernen",
+        "delete": "Ordner löschen",
+        "deleteConfirm": "Diesen Ordner löschen? Die Chats darin bleiben erhalten."
       }
     },
     "persona": {

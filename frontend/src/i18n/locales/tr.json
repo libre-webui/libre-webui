@@ -282,6 +282,14 @@
         "previous7Days": "Son 7 gün",
         "previous30Days": "Son 30 gün",
         "older": "Daha eski"
+      },
+      "folder": {
+        "new": "Yeni klasör",
+        "namePlaceholder": "Klasör adı",
+        "move": "Klasöre taşı",
+        "remove": "Klasörden çıkar",
+        "delete": "Klasörü sil",
+        "deleteConfirm": "Bu klasör silinsin mi? İçindeki sohbetler korunur."
       }
     },
     "persona": {

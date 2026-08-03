@@ -282,6 +282,14 @@
         "previous7Days": "Afgelopen 7 dagen",
         "previous30Days": "Afgelopen 30 dagen",
         "older": "Ouder"
+      },
+      "folder": {
+        "new": "Nieuwe map",
+        "namePlaceholder": "Mapnaam",
+        "move": "Verplaatsen naar map",
+        "remove": "Uit map verwijderen",
+        "delete": "Map verwijderen",
+        "deleteConfirm": "Deze map verwijderen? De chats erin blijven bewaard."
       }
     },
     "persona": {

@@ -282,6 +282,14 @@
         "previous7Days": "7 hari lepas",
         "previous30Days": "30 hari lepas",
         "older": "Lebih lama"
+      },
+      "folder": {
+        "new": "Folder baharu",
+        "namePlaceholder": "Nama folder",
+        "move": "Alih ke folder",
+        "remove": "Keluarkan dari folder",
+        "delete": "Padam folder",
+        "deleteConfirm": "Padam folder ini? Sembang di dalamnya kekal."
       }
     },
     "persona": {
