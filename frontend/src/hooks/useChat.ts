@@ -751,10 +751,43 @@ export const useChat = (sessionId: string) => {
     [sessionId]
   );
 
+  // Edit a user message: drop it and everything after, then resend the
+  // edited content as a fresh turn.
+  const editAndResendMessage = useCallback(
+    async (messageId: string, newContent: string) => {
+      if (!sessionId || !newContent.trim()) return;
+
+      const state = useChatStore.getState();
+      const session = state.currentSession;
+      if (!session || session.id !== sessionId) return;
+
+      const index = session.messages.findIndex(m => m.id === messageId);
+      if (index === -1 || session.messages[index].role !== 'user') return;
+
+      const editedMessage = session.messages[index];
+      const truncatedMessages = session.messages.slice(0, index);
+
+      try {
+        if (!session.isPrivate) {
+          await chatApi.updateSession(sessionId, {
+            messages: truncatedMessages,
+          });
+        }
+        state.truncateMessagesFrom(sessionId, messageId);
+        await sendMessage(newContent, editedMessage.images);
+      } catch (error) {
+        logger.error('Failed to edit message:', error);
+        toast.error('Failed to edit message');
+      }
+    },
+    [sessionId, sendMessage]
+  );
+
   return {
     sendMessage,
     stopGeneration,
     regenerateLastMessage,
+    editAndResendMessage,
     selectBranch,
     isStreaming,
     streamingMessage,

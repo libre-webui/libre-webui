@@ -41,6 +41,8 @@ import {
   RefreshCw,
   Copy,
   Check,
+  ThumbsUp,
+  ThumbsDown,
 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
@@ -55,6 +57,7 @@ interface ChatMessageProps {
   className?: string;
   isLastAssistantMessage?: boolean;
   onRegenerate?: () => void;
+  onEditResend?: (messageId: string, content: string) => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -63,13 +66,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   className,
   isLastAssistantMessage = false,
   onRegenerate,
+  onEditResend,
 }) => {
   const { t, i18n } = useTranslation();
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
   const { preferences } = useAppStore();
   const { user } = useAuthStore();
-  const { setSystemMessage, getCurrentPersona } = useChatStore();
+  const { setSystemMessage, getCurrentPersona, currentSession, rateMessage } =
+    useChatStore();
   const currentPersona = getCurrentPersona();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
@@ -269,6 +274,22 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     setEditedContent(message.content);
   };
 
+  const handleSaveUserEdit = () => {
+    const trimmed = editedContent.trim();
+    setIsEditing(false);
+    if (!trimmed || trimmed === message.content) return;
+    onEditResend?.(message.id, trimmed);
+  };
+
+  const handleRate = (value: number) => {
+    if (!currentSession) return;
+    rateMessage(
+      currentSession.id,
+      message.id,
+      message.rating === value ? undefined : value
+    );
+  };
+
   // Helper function to truncate system message for display
   const truncateSystemMessage = (content: string, maxLength: number = 100) => {
     if (content.length <= maxLength) return content;
@@ -353,14 +374,48 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             )}
 
             {isUser ? (
-              <div className='rounded-2xl rounded-ee-md border border-black/[0.06] bg-gray-900 px-3.5 py-2 text-white shadow-sm dark:border-white/[0.07] dark:bg-dark-300'>
-                <p
-                  dir='auto'
-                  className='whitespace-pre-wrap text-[0.9375rem] leading-relaxed'
-                >
-                  {message.content}
-                </p>
-              </div>
+              isEditing ? (
+                <div className='w-full min-w-[min(28rem,80vw)] rounded-2xl border border-black/[0.08] bg-white p-2 shadow-sm dark:border-white/[0.08] dark:bg-dark-100'>
+                  <textarea
+                    dir='auto'
+                    value={editedContent}
+                    onChange={e => setEditedContent(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSaveUserEdit();
+                      } else if (e.key === 'Escape') {
+                        handleCancelEdit();
+                      }
+                    }}
+                    autoFocus
+                    className='min-h-[72px] w-full resize-y rounded-xl border-none bg-transparent p-2 text-[0.9375rem] leading-relaxed text-gray-900 focus:outline-none dark:text-dark-900'
+                  />
+                  <div className='flex items-center justify-end gap-1.5 px-1 pb-1'>
+                    <button
+                      onClick={handleCancelEdit}
+                      className='rounded-lg px-2.5 py-1 text-xs text-gray-500 transition-colors hover:bg-gray-100 dark:text-dark-600 dark:hover:bg-dark-200'
+                    >
+                      {t('chatMessage.cancelEditing')}
+                    </button>
+                    <button
+                      onClick={handleSaveUserEdit}
+                      className='rounded-lg bg-gray-900 px-2.5 py-1 text-xs text-white transition-colors hover:bg-gray-700 dark:bg-dark-300 dark:hover:bg-dark-400'
+                    >
+                      {t('chatMessage.saveAndSubmit')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className='rounded-2xl rounded-ee-md border border-black/[0.06] bg-gray-900 px-3.5 py-2 text-white shadow-sm dark:border-white/[0.07] dark:bg-dark-300'>
+                  <p
+                    dir='auto'
+                    className='whitespace-pre-wrap text-[0.9375rem] leading-relaxed'
+                  >
+                    {message.content}
+                  </p>
+                </div>
+              )
             ) : isSystem ? (
               <div className='relative z-0 rounded-2xl border border-black/[0.06] bg-white/55 p-3 dark:border-white/[0.06] dark:bg-dark-200/45'>
                 <div className='mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-dark-500'>
@@ -540,6 +595,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     )}
                   />
                 )}
+                {isUser && onEditResend && !isEditing && (
+                  <button
+                    onClick={() => {
+                      setEditedContent(message.content);
+                      setIsEditing(true);
+                    }}
+                    className='flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-dark-200 dark:hover:text-dark-800'
+                    title={t('chatMessage.edit')}
+                  >
+                    <Edit3 className='h-3.5 w-3.5' />
+                  </button>
+                )}
                 <button
                   onClick={handleCopyMessage}
                   className='flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-dark-200 dark:hover:text-dark-800'
@@ -555,6 +622,40 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     <Copy className='h-3.5 w-3.5' />
                   )}
                 </button>
+                {!isUser && (
+                  <>
+                    <button
+                      onClick={() => handleRate(1)}
+                      className={cn(
+                        'flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-dark-200 dark:hover:text-dark-800',
+                        message.rating === 1 &&
+                          'text-primary-600 dark:text-primary-400'
+                      )}
+                      title={t('chatMessage.goodResponse')}
+                      aria-pressed={message.rating === 1}
+                    >
+                      <ThumbsUp
+                        className='h-3.5 w-3.5'
+                        fill={message.rating === 1 ? 'currentColor' : 'none'}
+                      />
+                    </button>
+                    <button
+                      onClick={() => handleRate(-1)}
+                      className={cn(
+                        'flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-dark-200 dark:hover:text-dark-800',
+                        message.rating === -1 &&
+                          'text-red-500 dark:text-red-400'
+                      )}
+                      title={t('chatMessage.badResponse')}
+                      aria-pressed={message.rating === -1}
+                    >
+                      <ThumbsDown
+                        className='h-3.5 w-3.5'
+                        fill={message.rating === -1 ? 'currentColor' : 'none'}
+                      />
+                    </button>
+                  </>
+                )}
                 {!isUser && isLastAssistantMessage && onRegenerate && (
                   <button
                     onClick={onRegenerate}

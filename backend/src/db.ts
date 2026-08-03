@@ -205,6 +205,7 @@ function initializeTables(): void {
       images TEXT, -- JSON array of base64 images (for multimodal support)
       statistics TEXT, -- JSON object with generation statistics
       artifacts TEXT, -- JSON array of artifacts
+      rating INTEGER, -- User feedback: 1 = liked, -1 = disliked
       FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
     )
   `);
@@ -700,6 +701,7 @@ function runMigrations(): void {
       { name: 'parent_id', type: 'TEXT' }, // ID of the original message this is a variant of
       { name: 'branch_index', type: 'INTEGER DEFAULT 0' }, // Index within branch group (0 = original)
       { name: 'is_active', type: 'INTEGER DEFAULT 1' }, // Whether this is the active variant (1 = true)
+      { name: 'rating', type: 'INTEGER' }, // User feedback: 1 = liked, -1 = disliked
     ];
 
     for (const column of newSessionMessagesColumns) {

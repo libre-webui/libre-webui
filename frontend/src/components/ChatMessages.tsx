@@ -46,6 +46,7 @@ interface ChatMessagesProps {
   className?: string;
   onRegenerate?: () => void;
   onSelectBranch?: (messageId: string) => void;
+  onEditResend?: (messageId: string, content: string) => void;
 }
 
 // Group messages by their position in the conversation, handling branches
@@ -78,6 +79,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   className,
   onRegenerate,
   onSelectBranch,
+  onEditResend,
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -546,6 +548,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                   isStreaming={isThisMessageStreaming}
                   isLastAssistantMessage={isLastAssistantGroup}
                   onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
+                  onEditResend={isStreaming ? undefined : onEditResend}
                   className={groupIndex === 0 ? 'mt-3 sm:mt-4' : ''}
                 />
               );

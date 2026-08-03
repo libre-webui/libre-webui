@@ -62,6 +62,7 @@ export interface MessageRow {
   parent_id?: string;
   branch_index?: number;
   is_active?: number;
+  rating?: number | null;
 }
 
 export interface DocumentRow {
@@ -140,6 +141,7 @@ export function mapMessageRow(
     parentId: row.parent_id,
     branchIndex: row.branch_index ?? 0,
     isActive: row.is_active !== 0,
+    rating: row.rating ?? undefined,
     siblingCount: siblingCount > 1 ? siblingCount : undefined,
   };
 }

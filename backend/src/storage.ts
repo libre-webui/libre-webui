@@ -269,8 +269,8 @@ class StorageService {
         // Insert messages
         if (session.messages && session.messages.length > 0) {
           const insertMessageStmt = db.prepare(`
-            INSERT INTO session_messages (id, session_id, role, content, timestamp, message_index, model, provider_metadata, images, statistics, artifacts, parent_id, branch_index, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO session_messages (id, session_id, role, content, timestamp, message_index, model, provider_metadata, images, statistics, artifacts, parent_id, branch_index, is_active, rating)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `);
 
           session.messages.forEach((message, index) => {
@@ -308,7 +308,8 @@ class StorageService {
               encryptedArtifacts,
               message.parentId || null,
               message.branchIndex ?? 0,
-              message.isActive !== false ? 1 : 0
+              message.isActive !== false ? 1 : 0,
+              message.rating ?? null
             );
           });
         }

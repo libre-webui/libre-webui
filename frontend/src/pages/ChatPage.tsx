@@ -154,6 +154,7 @@ export const ChatPage: React.FC = () => {
     sendMessage,
     stopGeneration,
     regenerateLastMessage,
+    editAndResendMessage,
     selectBranch,
     isStreaming,
     streamingMessage,
@@ -731,6 +732,7 @@ export const ChatPage: React.FC = () => {
           toolActivities={toolActivities}
           onRegenerate={regenerateLastMessage}
           onSelectBranch={selectBranch}
+          onEditResend={editAndResendMessage}
           className='flex-1'
         />
         <ChatInput

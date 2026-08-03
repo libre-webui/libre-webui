@@ -336,7 +336,12 @@ class ChatService {
     const updatedMessage = sanitizeChatMessageProviderState<ChatMessage>({
       ...session.messages[messageIndex],
       ...updates,
-      timestamp: Date.now(), // Always update timestamp
+      // Only content edits move the timestamp; metadata updates (e.g. rating)
+      // keep the message's place in time.
+      timestamp:
+        updates.content !== undefined
+          ? Date.now()
+          : session.messages[messageIndex].timestamp,
     });
 
     session.messages[messageIndex] = updatedMessage;

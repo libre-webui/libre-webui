@@ -55,6 +55,7 @@ export interface ChatMessage {
   branchIndex?: number; // Index within branch group (0 = original)
   isActive?: boolean; // Whether this is the active variant
   siblingCount?: number; // Total number of variants (including this one)
+  rating?: number; // User feedback: 1 = liked, -1 = disliked
 }
 
 export type ChatProviderType = 'ollama' | 'plugin' | 'agent';

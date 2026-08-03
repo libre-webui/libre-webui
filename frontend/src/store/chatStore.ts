@@ -88,6 +88,12 @@ interface ChatState {
     statistics?: GenerationStatistics,
     providerMetadata?: ChatMessage['providerMetadata']
   ) => void;
+  rateMessage: (
+    sessionId: string,
+    messageId: string,
+    rating: number | undefined
+  ) => Promise<void>;
+  truncateMessagesFrom: (sessionId: string, messageId: string) => void;
 
   // Models
   models: OllamaModel[];
@@ -386,6 +392,72 @@ export const useChatStore = create<ChatState>((set, get) => ({
         providerMetadata
       )
     );
+  },
+
+  rateMessage: async (
+    sessionId: string,
+    messageId: string,
+    rating: number | undefined
+  ) => {
+    const applyRating = (messages: ChatMessage[]) =>
+      messages.map(message =>
+        message.id === messageId ? { ...message, rating } : message
+      );
+
+    const isPrivate = get().currentSession?.isPrivate;
+    set(state => ({
+      sessions: state.sessions.map(session =>
+        session.id === sessionId
+          ? { ...session, messages: applyRating(session.messages) }
+          : session
+      ),
+      currentSession:
+        state.currentSession?.id === sessionId
+          ? {
+              ...state.currentSession,
+              messages: applyRating(state.currentSession.messages),
+            }
+          : state.currentSession,
+    }));
+
+    if (isPrivate) {
+      return;
+    }
+
+    try {
+      await chatApi.updateMessage(sessionId, messageId, {
+        rating: rating ?? null,
+      } as Partial<ChatMessage>);
+    } catch (error) {
+      logger.error('Failed to save message rating:', error);
+    }
+  },
+
+  truncateMessagesFrom: (sessionId: string, messageId: string) => {
+    const truncate = (messages: ChatMessage[]) => {
+      const index = messages.findIndex(message => message.id === messageId);
+      return index === -1 ? messages : messages.slice(0, index);
+    };
+
+    set(state => ({
+      sessions: state.sessions.map(session =>
+        session.id === sessionId
+          ? {
+              ...session,
+              messages: truncate(session.messages),
+              updatedAt: Date.now(),
+            }
+          : session
+      ),
+      currentSession:
+        state.currentSession?.id === sessionId
+          ? {
+              ...state.currentSession,
+              messages: truncate(state.currentSession.messages),
+              updatedAt: Date.now(),
+            }
+          : state.currentSession,
+    }));
   },
 
   // Models
