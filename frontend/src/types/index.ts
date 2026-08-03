@@ -83,6 +83,7 @@ export interface ChatSession {
 
 export interface ChatSessionSettings {
   generationOptions?: Partial<GenerationOptions>;
+  knowledgeCollectionIds?: string[]; // Collections whose documents join this chat's context
 }
 
 export interface SessionFolder {
@@ -439,7 +440,16 @@ export interface DocumentSummary {
   fileType: 'pdf' | 'txt';
   size: number;
   sessionId?: string;
+  collectionId?: string;
   uploadedAt: number;
+}
+
+export interface KnowledgeCollection {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  documentCount?: number;
 }
 
 export interface DocumentDetail extends DocumentSummary {

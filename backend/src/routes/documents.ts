@@ -17,7 +17,9 @@
 
 import express from 'express';
 import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
 import documentService from '../services/documentService.js';
+import storageService from '../storage.js';
 import { ApiResponse } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import { authenticate } from '../middleware/auth.js';
@@ -89,6 +91,107 @@ router.post('/upload', upload.single('document'), async (req, res) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
+    } as ApiResponse);
+  }
+});
+
+// Knowledge collections
+router.get('/collections', (req, res) => {
+  try {
+    const userId = requireUserId(req);
+    const collections = storageService.getKnowledgeCollections(userId);
+    const documents = storageService.getAllDocuments(userId);
+    res.json({
+      success: true,
+      data: collections.map(collection => ({
+        ...collection,
+        documentCount: documents.filter(
+          document => document.collectionId === collection.id
+        ).length,
+      })),
+    } as ApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to load collections',
+    } as ApiResponse);
+  }
+});
+
+router.post('/collections', (req, res) => {
+  try {
+    const { name } = req.body as { name?: string };
+    if (!name || !name.trim()) {
+      res.status(400).json({
+        success: false,
+        error: 'Name is required',
+      } as ApiResponse);
+      return;
+    }
+    const now = Date.now();
+    const collection = {
+      id: uuidv4(),
+      name: name.trim().slice(0, 100),
+      createdAt: now,
+      updatedAt: now,
+    };
+    storageService.saveKnowledgeCollection(collection, requireUserId(req));
+    res.json({ success: true, data: collection } as ApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to create collection',
+    } as ApiResponse);
+  }
+});
+
+router.delete('/collections/:collectionId', (req, res) => {
+  try {
+    const deleted = storageService.deleteKnowledgeCollection(
+      req.params.collectionId as string,
+      requireUserId(req)
+    );
+    if (!deleted) {
+      res.status(404).json({
+        success: false,
+        error: 'Collection not found',
+      } as ApiResponse);
+      return;
+    }
+    res.json({ success: true, message: 'Collection deleted' } as ApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to delete collection',
+    } as ApiResponse);
+  }
+});
+
+// Assign a document to a collection (or remove it with collectionId: null)
+router.put('/:documentId/collection', (req, res) => {
+  try {
+    const { collectionId } = req.body as { collectionId?: string | null };
+    const updated = storageService.setDocumentCollection(
+      req.params.documentId as string,
+      collectionId || null,
+      requireUserId(req)
+    );
+    if (!updated) {
+      res.status(404).json({
+        success: false,
+        error: 'Document not found',
+      } as ApiResponse);
+      return;
+    }
+    res.json({ success: true, message: 'Document updated' } as ApiResponse);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to update document',
     } as ApiResponse);
   }
 });

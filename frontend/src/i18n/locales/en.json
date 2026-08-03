@@ -254,7 +254,9 @@
         "attach": "Attach",
         "documentAttached": "Document attached",
         "webpageAttached": "Webpage attached",
-        "attachFailed": "Could not attach that"
+        "attachFailed": "Could not attach that",
+        "attachKnowledge": "Attach knowledge",
+        "noCollections": "No collections yet — create one in Settings → Documents"
       },
       "voiceInput": "Voice input",
       "voiceStop": "Stop listening"
@@ -647,6 +649,14 @@
         "coverage": "Coverage",
         "regenerate": "Regenerate Embeddings",
         "regenerating": "Regenerating..."
+      },
+      "collections": {
+        "title": "Knowledge collections",
+        "description": "Group documents into collections and attach them to any chat.",
+        "namePlaceholder": "Collection name",
+        "create": "Create",
+        "none": "No collection",
+        "deleteConfirm": "Delete this collection? Documents inside are kept."
       }
     },
     "tts": {

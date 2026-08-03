@@ -254,7 +254,9 @@
         "attach": "Vedhæft",
         "documentAttached": "Dokument vedhæftet",
         "webpageAttached": "Webside vedhæftet",
-        "attachFailed": "Kunne ikke vedhæfte"
+        "attachFailed": "Kunne ikke vedhæfte",
+        "attachKnowledge": "Vedhæft viden",
+        "noCollections": "Ingen samlinger endnu — opret en i Indstillinger → Dokumenter"
       },
       "voiceInput": "Stemmeinput",
       "voiceStop": "Stop med at lytte"
@@ -647,6 +649,14 @@
         "coverage": "Dækning",
         "regenerate": "Regenerer embeddings",
         "regenerating": "Regenererer..."
+      },
+      "collections": {
+        "title": "Videnssamlinger",
+        "description": "Gruppér dokumenter i samlinger og vedhæft dem til enhver chat.",
+        "namePlaceholder": "Samlingens navn",
+        "create": "Opret",
+        "none": "Ingen samling",
+        "deleteConfirm": "Slet denne samling? Dokumenterne bevares."
       }
     },
     "tts": {

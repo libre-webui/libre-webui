@@ -24,6 +24,7 @@ import getDatabase, { isDatabaseInitialized } from './db.js';
 import {
   ChatSession,
   DocumentChunk,
+  KnowledgeCollection,
   Note,
   SessionFolder,
   UserPreferences,
@@ -377,6 +378,81 @@ class StorageService {
   }
 
   // =================================
+  // KNOWLEDGE COLLECTIONS
+  // =================================
+
+  getKnowledgeCollections(userId = 'default'): KnowledgeCollection[] {
+    if (!this.useSQLite) return [];
+    const db = getDatabase();
+    const rows = db
+      .prepare(
+        'SELECT * FROM knowledge_collections WHERE user_id = ? ORDER BY name COLLATE NOCASE ASC'
+      )
+      .all(userId) as Array<{
+      id: string;
+      name: string;
+      created_at: number;
+      updated_at: number;
+    }>;
+    return rows.map(row => ({
+      id: row.id,
+      name: encryptionService.decrypt(row.name),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  saveKnowledgeCollection(
+    collection: KnowledgeCollection,
+    userId = 'default'
+  ): void {
+    if (!this.useSQLite) return;
+    const db = getDatabase();
+    db.prepare(
+      `INSERT OR REPLACE INTO knowledge_collections (id, user_id, name, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)`
+    ).run(
+      collection.id,
+      userId,
+      encryptionService.encrypt(collection.name),
+      collection.createdAt,
+      collection.updatedAt
+    );
+  }
+
+  deleteKnowledgeCollection(collectionId: string, userId = 'default'): boolean {
+    if (!this.useSQLite) return false;
+    const db = getDatabase();
+    const remove = db.transaction(() => {
+      db.prepare(
+        'UPDATE documents SET collection_id = NULL WHERE collection_id = ? AND user_id = ?'
+      ).run(collectionId, userId);
+      return db
+        .prepare(
+          'DELETE FROM knowledge_collections WHERE id = ? AND user_id = ?'
+        )
+        .run(collectionId, userId).changes;
+    });
+    return remove() > 0;
+  }
+
+  setDocumentCollection(
+    documentId: string,
+    collectionId: string | null,
+    userId = 'default'
+  ): boolean {
+    if (!this.useSQLite) return false;
+    const db = getDatabase();
+    return (
+      db
+        .prepare(
+          'UPDATE documents SET collection_id = ? WHERE id = ? AND user_id = ?'
+        )
+        .run(collectionId, documentId, userId).changes > 0
+    );
+  }
+
+  // =================================
   // NOTES
   // =================================
 
@@ -715,8 +791,8 @@ class StorageService {
 
       const stmt = db.prepare(`
         INSERT OR REPLACE INTO documents 
-        (id, user_id, filename, title, content, file_type, size, session_id, metadata, uploaded_at, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, user_id, filename, title, content, file_type, size, session_id, collection_id, metadata, uploaded_at, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       // Encrypt sensitive document data
@@ -739,6 +815,7 @@ class StorageService {
         document.fileType || null,
         document.size || null,
         document.sessionId || null,
+        document.collectionId || null,
         encryptedMetadata,
         document.uploadedAt,
         document.createdAt || now,

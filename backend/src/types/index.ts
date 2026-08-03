@@ -78,6 +78,13 @@ export interface ChatSession extends ChatProviderSelection {
   folderId?: string | null; // Optional folder this chat lives in
 }
 
+export interface KnowledgeCollection {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface Note {
   id: string;
   title: string;
@@ -95,6 +102,7 @@ export interface SessionFolder {
 
 export interface ChatSessionSettings {
   generationOptions?: Partial<GenerationOptions>;
+  knowledgeCollectionIds?: string[]; // Collections whose documents join this chat's context
 }
 
 export interface GenerationOptions {

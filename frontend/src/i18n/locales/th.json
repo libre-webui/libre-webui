@@ -254,7 +254,9 @@
         "attach": "แนบ",
         "documentAttached": "แนบเอกสารแล้ว",
         "webpageAttached": "แนบหน้าเว็บแล้ว",
-        "attachFailed": "ไม่สามารถแนบได้"
+        "attachFailed": "ไม่สามารถแนบได้",
+        "attachKnowledge": "แนบความรู้",
+        "noCollections": "ยังไม่มีคอลเลกชัน — สร้างได้ในตั้งค่า → เอกสาร"
       },
       "voiceInput": "ป้อนด้วยเสียง",
       "voiceStop": "หยุดฟัง"
@@ -647,6 +649,14 @@
         "coverage": "ความครอบคลุม",
         "regenerate": "สร้าง Embeddings ใหม่",
         "regenerating": "กำลังสร้างใหม่..."
+      },
+      "collections": {
+        "title": "คอลเลกชันความรู้",
+        "description": "จัดกลุ่มเอกสารเป็นคอลเลกชันและแนบกับแชทใดก็ได้",
+        "namePlaceholder": "ชื่อคอลเลกชัน",
+        "create": "สร้าง",
+        "none": "ไม่มีคอลเลกชัน",
+        "deleteConfirm": "ลบคอลเลกชันนี้? เอกสารข้างในจะยังอยู่"
       }
     },
     "tts": {

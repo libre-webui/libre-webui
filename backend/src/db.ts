@@ -206,6 +206,18 @@ function initializeTables(): void {
     )
   `);
 
+  // Knowledge collections group documents for reuse across chats
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS knowledge_collections (
+      id TEXT PRIMARY KEY,
+      user_id TEXT DEFAULT 'default',
+      name TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
   // Standalone notes
   db.exec(`
     CREATE TABLE IF NOT EXISTS notes (
@@ -267,6 +279,7 @@ function initializeTables(): void {
     { name: 'file_type', type: 'TEXT' },
     { name: 'size', type: 'INTEGER' },
     { name: 'session_id', type: 'TEXT' },
+    { name: 'collection_id', type: 'TEXT' },
   ]) {
     if (!existingDocumentColumns.has(column.name)) {
       db.exec(`ALTER TABLE documents ADD COLUMN ${column.name} ${column.type}`);

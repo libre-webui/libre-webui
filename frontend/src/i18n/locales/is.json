@@ -254,7 +254,9 @@
         "attach": "Hengja við",
         "documentAttached": "Skjal fest við",
         "webpageAttached": "Vefsíða fest við",
-        "attachFailed": "Ekki tókst að hengja við"
+        "attachFailed": "Ekki tókst að hengja við",
+        "attachKnowledge": "Hengja við þekkingu",
+        "noCollections": "Engin söfn enn — búðu til eitt í Stillingar → Skjöl"
       },
       "voiceInput": "Raddinnsláttur",
       "voiceStop": "Hætta að hlusta"
@@ -647,6 +649,14 @@
         "coverage": "Umfang",
         "regenerate": "Endurgera innfellingar",
         "regenerating": "Endurgerar..."
+      },
+      "collections": {
+        "title": "Þekkingarsöfn",
+        "description": "Flokkaðu skjöl í söfn og hengdu þau við hvaða spjall sem er.",
+        "namePlaceholder": "Heiti safns",
+        "create": "Búa til",
+        "none": "Ekkert safn",
+        "deleteConfirm": "Eyða þessu safni? Skjölin innan þess haldast."
       }
     },
     "tts": {

@@ -405,29 +405,63 @@ class DocumentService {
     return storageService.deleteDocument(documentId, userId) || deleted;
   }
 
+  /**
+   * A document is searchable for a chat when it belongs to that session or
+   * to one of the knowledge collections attached to it. With no scope at
+   * all, every document is searchable.
+   */
+  private documentInScope(
+    document: Document,
+    sessionId?: string,
+    collectionIds?: string[]
+  ): boolean {
+    const hasCollections = Boolean(collectionIds && collectionIds.length > 0);
+    if (!sessionId && !hasCollections) return true;
+    if (sessionId && document.sessionId === sessionId) return true;
+    return Boolean(
+      hasCollections &&
+      document.collectionId &&
+      collectionIds!.includes(document.collectionId)
+    );
+  }
+
   // Enhanced search with semantic similarity using embeddings
   async searchDocuments(
     query: string,
     userId: string,
     sessionId?: string,
-    limit = 5
+    limit = 5,
+    collectionIds?: string[]
   ): Promise<DocumentChunk[]> {
     const preferences = preferencesService.getPreferences(userId);
 
     // Use semantic search if embeddings are enabled
     if (preferences.embeddingSettings.enabled) {
-      return this.semanticSearchDocuments(query, userId, sessionId, limit);
+      return this.semanticSearchDocuments(
+        query,
+        userId,
+        sessionId,
+        limit,
+        collectionIds
+      );
     }
 
     // Fall back to keyword search
-    return this.keywordSearchDocuments(query, userId, sessionId, limit);
+    return this.keywordSearchDocuments(
+      query,
+      userId,
+      sessionId,
+      limit,
+      collectionIds
+    );
   }
 
   private async semanticSearchDocuments(
     query: string,
     userId: string,
     sessionId?: string,
-    limit = 5
+    limit = 5,
+    collectionIds?: string[]
   ): Promise<DocumentChunk[]> {
     try {
       // Generate embedding for the query
@@ -436,7 +470,13 @@ class DocumentService {
         logger.warn(
           'Failed to generate query embedding, falling back to keyword search'
         );
-        return this.keywordSearchDocuments(query, userId, sessionId, limit);
+        return this.keywordSearchDocuments(
+          query,
+          userId,
+          sessionId,
+          limit,
+          collectionIds
+        );
       }
 
       const preferences = preferencesService.getPreferences(userId);
@@ -449,8 +489,7 @@ class DocumentService {
       for (const document of storageService.getAllDocuments(userId)) {
         const documentChunks = this.loadDocumentChunks(document.id);
 
-        // Filter by session if specified
-        if (sessionId && document.sessionId !== sessionId) continue;
+        if (!this.documentInScope(document, sessionId, collectionIds)) continue;
 
         for (const chunk of documentChunks) {
           if (!chunk.embedding) continue;
@@ -477,7 +516,13 @@ class DocumentService {
         'Semantic search failed, falling back to keyword search:',
         error
       );
-      return this.keywordSearchDocuments(query, userId, sessionId, limit);
+      return this.keywordSearchDocuments(
+        query,
+        userId,
+        sessionId,
+        limit,
+        collectionIds
+      );
     }
   }
 
@@ -485,7 +530,8 @@ class DocumentService {
     query: string,
     userId: string,
     sessionId?: string,
-    limit = 5
+    limit = 5,
+    collectionIds?: string[]
   ): DocumentChunk[] {
     const searchTerms = query
       .toLowerCase()
@@ -500,8 +546,7 @@ class DocumentService {
     for (const document of storageService.getAllDocuments(userId)) {
       const documentChunks = this.loadDocumentChunks(document.id);
 
-      // Filter by session if specified
-      if (sessionId && document.sessionId !== sessionId) continue;
+      if (!this.documentInScope(document, sessionId, collectionIds)) continue;
 
       for (const chunk of documentChunks) {
         const chunkText = chunk.content.toLowerCase();

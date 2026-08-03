@@ -254,7 +254,9 @@
         "attach": "إرفاق",
         "documentAttached": "تم إرفاق المستند",
         "webpageAttached": "تم إرفاق صفحة الويب",
-        "attachFailed": "تعذر الإرفاق"
+        "attachFailed": "تعذر الإرفاق",
+        "attachKnowledge": "إرفاق معرفة",
+        "noCollections": "لا توجد مجموعات بعد — أنشئ واحدة في الإعدادات ← المستندات"
       },
       "voiceInput": "إدخال صوتي",
       "voiceStop": "إيقاف الاستماع"
@@ -647,6 +649,14 @@
         "coverage": "التغطية",
         "regenerate": "إعادة توليد التضمينات",
         "regenerating": "جاري إعادة التوليد..."
+      },
+      "collections": {
+        "title": "مجموعات المعرفة",
+        "description": "اجمع المستندات في مجموعات وأرفقها بأي محادثة.",
+        "namePlaceholder": "اسم المجموعة",
+        "create": "إنشاء",
+        "none": "بدون مجموعة",
+        "deleteConfirm": "حذف هذه المجموعة؟ ستبقى المستندات بداخلها."
       }
     },
     "tts": {

@@ -254,7 +254,9 @@
         "attach": "Załącz",
         "documentAttached": "Dokument załączony",
         "webpageAttached": "Strona załączona",
-        "attachFailed": "Nie udało się załączyć"
+        "attachFailed": "Nie udało się załączyć",
+        "attachKnowledge": "Dołącz wiedzę",
+        "noCollections": "Brak kolekcji — utwórz ją w Ustawienia → Dokumenty"
       },
       "voiceInput": "Wprowadzanie głosowe",
       "voiceStop": "Przestań słuchać"
@@ -647,6 +649,14 @@
         "coverage": "Pokrycie",
         "regenerate": "Regeneruj embeddingi",
         "regenerating": "Regenerowanie..."
+      },
+      "collections": {
+        "title": "Kolekcje wiedzy",
+        "description": "Grupuj dokumenty w kolekcje i dołączaj je do dowolnego czatu.",
+        "namePlaceholder": "Nazwa kolekcji",
+        "create": "Utwórz",
+        "none": "Brak kolekcji",
+        "deleteConfirm": "Usunąć tę kolekcję? Dokumenty w niej pozostaną."
       }
     },
     "tts": {

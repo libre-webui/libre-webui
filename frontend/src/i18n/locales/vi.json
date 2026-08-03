@@ -254,7 +254,9 @@
         "attach": "Đính kèm",
         "documentAttached": "Đã đính kèm tài liệu",
         "webpageAttached": "Đã đính kèm trang web",
-        "attachFailed": "Không thể đính kèm"
+        "attachFailed": "Không thể đính kèm",
+        "attachKnowledge": "Đính kèm kiến thức",
+        "noCollections": "Chưa có bộ sưu tập nào — tạo trong Cài đặt → Tài liệu"
       },
       "voiceInput": "Nhập bằng giọng nói",
       "voiceStop": "Dừng nghe"
@@ -647,6 +649,14 @@
         "coverage": "Độ phủ",
         "regenerate": "Tạo lại nhúng",
         "regenerating": "Đang tạo lại..."
+      },
+      "collections": {
+        "title": "Bộ sưu tập kiến thức",
+        "description": "Nhóm tài liệu thành bộ sưu tập và đính kèm vào bất kỳ cuộc trò chuyện nào.",
+        "namePlaceholder": "Tên bộ sưu tập",
+        "create": "Tạo",
+        "none": "Không có bộ sưu tập",
+        "deleteConfirm": "Xóa bộ sưu tập này? Tài liệu bên trong vẫn giữ nguyên."
       }
     },
     "tts": {

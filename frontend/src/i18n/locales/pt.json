@@ -254,7 +254,9 @@
         "attach": "Anexar",
         "documentAttached": "Documento anexado",
         "webpageAttached": "Página web anexada",
-        "attachFailed": "Não foi possível anexar"
+        "attachFailed": "Não foi possível anexar",
+        "attachKnowledge": "Anexar conhecimento",
+        "noCollections": "Ainda não há coleções — crie uma em Definições → Documentos"
       },
       "voiceInput": "Entrada de voz",
       "voiceStop": "Parar de ouvir"
@@ -647,6 +649,14 @@
         "coverage": "Cobertura",
         "regenerate": "Regenerar Embeddings",
         "regenerating": "Regenerando..."
+      },
+      "collections": {
+        "title": "Coleções de conhecimento",
+        "description": "Agrupe documentos em coleções e anexe-as a qualquer chat.",
+        "namePlaceholder": "Nome da coleção",
+        "create": "Criar",
+        "none": "Sem coleção",
+        "deleteConfirm": "Eliminar esta coleção? Os documentos mantêm-se."
       }
     },
     "tts": {

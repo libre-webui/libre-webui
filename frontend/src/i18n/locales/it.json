@@ -254,7 +254,9 @@
         "attach": "Allega",
         "documentAttached": "Documento allegato",
         "webpageAttached": "Pagina web allegata",
-        "attachFailed": "Impossibile allegare"
+        "attachFailed": "Impossibile allegare",
+        "attachKnowledge": "Allega conoscenza",
+        "noCollections": "Ancora nessuna raccolta — creane una in Impostazioni → Documenti"
       },
       "voiceInput": "Input vocale",
       "voiceStop": "Smetti di ascoltare"
@@ -647,6 +649,14 @@
         "coverage": "Copertura",
         "regenerate": "Rigenera embedding",
         "regenerating": "Rigenerazione..."
+      },
+      "collections": {
+        "title": "Raccolte di conoscenza",
+        "description": "Raggruppa i documenti in raccolte e allegale a qualsiasi chat.",
+        "namePlaceholder": "Nome della raccolta",
+        "create": "Crea",
+        "none": "Nessuna raccolta",
+        "deleteConfirm": "Eliminare questa raccolta? I documenti al suo interno restano."
       }
     },
     "tts": {

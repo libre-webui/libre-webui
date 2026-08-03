@@ -254,7 +254,9 @@
         "attach": "添付",
         "documentAttached": "ドキュメントを添付しました",
         "webpageAttached": "ウェブページを添付しました",
-        "attachFailed": "添付できませんでした"
+        "attachFailed": "添付できませんでした",
+        "attachKnowledge": "ナレッジを添付",
+        "noCollections": "コレクションがまだありません — 設定 → ドキュメントで作成"
       },
       "voiceInput": "音声入力",
       "voiceStop": "聞き取りを停止"
@@ -647,6 +649,14 @@
         "coverage": "カバレッジ",
         "regenerate": "埋め込みを再生成",
         "regenerating": "再生成中..."
+      },
+      "collections": {
+        "title": "ナレッジコレクション",
+        "description": "ドキュメントをコレクションにまとめ、任意のチャットに添付できます。",
+        "namePlaceholder": "コレクション名",
+        "create": "作成",
+        "none": "コレクションなし",
+        "deleteConfirm": "このコレクションを削除しますか？中のドキュメントは残ります。"
       }
     },
     "tts": {

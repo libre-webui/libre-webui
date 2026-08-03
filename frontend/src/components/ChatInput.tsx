@@ -29,6 +29,8 @@ import {
   Braces,
   Loader2,
   Mic,
+  BookOpen,
+  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { CodeAwareTextarea } from './CodeAwareTextarea';
@@ -41,7 +43,7 @@ import { useChatStore } from '@/store/chatStore';
 import { personaApi, chatApi, imageGenApi, documentsApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
-import { Persona } from '@/types';
+import { Persona, KnowledgeCollection, ChatSession } from '@/types';
 import { createLogger } from '@/utils/logger';
 import {
   chatModelOptionKey,
@@ -108,6 +110,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [attachMenuOpen, setAttachMenuOpen] = useState(false);
   const [webpageUrl, setWebpageUrl] = useState<string | null>(null);
+  const [knowledgeMenuOpen, setKnowledgeMenuOpen] = useState(false);
+  const [collections, setCollections] = useState<KnowledgeCollection[]>([]);
   const [attachingWebpage, setAttachingWebpage] = useState(false);
   const [uploadingDocument, setUploadingDocument] = useState(false);
   const [currentPersona, setCurrentPersona] = useState<Persona | null>(null);
@@ -193,6 +197,61 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const closeAttachMenu = () => {
     setAttachMenuOpen(false);
     setWebpageUrl(null);
+    setKnowledgeMenuOpen(false);
+  };
+
+  // Load collections lazily when the knowledge submenu opens.
+  useEffect(() => {
+    if (!knowledgeMenuOpen) return;
+    let cancelled = false;
+    documentsApi
+      .getCollections()
+      .then(response => {
+        if (!cancelled && response.success && response.data) {
+          setCollections(response.data);
+        }
+      })
+      .catch(() => {
+        // The submenu simply stays empty on failure.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [knowledgeMenuOpen]);
+
+  const attachedCollectionIds =
+    currentSession?.settings?.knowledgeCollectionIds ?? [];
+
+  const toggleCollection = async (collectionId: string) => {
+    if (!currentSession) return;
+    const next = attachedCollectionIds.includes(collectionId)
+      ? attachedCollectionIds.filter(id => id !== collectionId)
+      : [...attachedCollectionIds, collectionId];
+    const settings = {
+      ...currentSession.settings,
+      knowledgeCollectionIds: next.length > 0 ? next : undefined,
+    };
+
+    // Optimistic local update; persisted below for non-private sessions.
+    useChatStore.setState(state => ({
+      currentSession:
+        state.currentSession?.id === currentSession.id
+          ? { ...state.currentSession, settings }
+          : state.currentSession,
+      sessions: state.sessions.map(session =>
+        session.id === currentSession.id ? { ...session, settings } : session
+      ),
+    }));
+
+    if (currentSession.isPrivate) return;
+    try {
+      await chatApi.updateSession(currentSession.id, {
+        settings,
+      } as Partial<ChatSession>);
+    } catch (error) {
+      logger.error('Failed to update knowledge collections:', error);
+      toast.error(t('chat.input.menu.attachFailed'));
+    }
   };
 
   // Stop dictation when unmounting.
@@ -531,7 +590,56 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
                 {attachMenuOpen && (
                   <div className='absolute bottom-full start-0 z-30 mb-2 w-64 rounded-2xl border border-black/[0.08] bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'>
-                    {webpageUrl !== null ? (
+                    {knowledgeMenuOpen ? (
+                      <div className='p-1'>
+                        <p className='mb-1 px-1.5 text-[11px] font-medium text-gray-500 dark:text-dark-600'>
+                          {t('chat.input.menu.attachKnowledge')}
+                        </p>
+                        {collections.length === 0 ? (
+                          <p className='px-1.5 pb-1 text-[12px] text-gray-400 dark:text-dark-500'>
+                            {t('chat.input.menu.noCollections')}
+                          </p>
+                        ) : (
+                          collections.map(collection => {
+                            const attached = attachedCollectionIds.includes(
+                              collection.id
+                            );
+                            return (
+                              <button
+                                key={collection.id}
+                                type='button'
+                                onClick={() =>
+                                  void toggleCollection(collection.id)
+                                }
+                                className={cn(
+                                  'flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
+                                  attached &&
+                                    'text-primary-600 dark:text-primary-400'
+                                )}
+                                aria-pressed={attached}
+                              >
+                                <span className='flex min-w-0 items-center gap-2'>
+                                  <BookOpen className='h-4 w-4 shrink-0' />
+                                  <span className='truncate'>
+                                    {collection.name}
+                                  </span>
+                                </span>
+                                {attached && (
+                                  <Check className='h-3.5 w-3.5 shrink-0' />
+                                )}
+                              </button>
+                            );
+                          })
+                        )}
+                        <button
+                          type='button'
+                          onClick={() => setKnowledgeMenuOpen(false)}
+                          className='mt-1 w-full rounded-lg border-t border-gray-100 px-2.5 py-1.5 text-start text-xs text-gray-500 hover:bg-gray-100 dark:border-dark-300 dark:text-dark-600 dark:hover:bg-dark-200'
+                        >
+                          {t('common.back')}
+                        </button>
+                      </div>
+                    ) : webpageUrl !== null ? (
                       <div className='p-1.5'>
                         <label className='mb-1.5 block text-[11px] font-medium text-gray-500 dark:text-dark-600'>
                           {t('chat.input.menu.attachWebpage')}
@@ -603,6 +711,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         >
                           <Globe className='h-4 w-4 text-gray-500 dark:text-dark-600' />
                           {t('chat.input.menu.attachWebpage')}
+                        </button>
+                        <button
+                          type='button'
+                          onClick={() => setKnowledgeMenuOpen(true)}
+                          className='flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                        >
+                          <span className='flex items-center gap-2.5'>
+                            <BookOpen className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                            {t('chat.input.menu.attachKnowledge')}
+                          </span>
+                          {attachedCollectionIds.length > 0 && (
+                            <span className='rounded-full bg-primary-50 px-1.5 text-[10px] font-medium tabular-nums text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'>
+                              {attachedCollectionIds.length}
+                            </span>
+                          )}
                         </button>
                         <button
                           type='button'

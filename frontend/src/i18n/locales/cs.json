@@ -254,7 +254,9 @@
         "attach": "Přiložit",
         "documentAttached": "Dokument přiložen",
         "webpageAttached": "Webová stránka přiložena",
-        "attachFailed": "Přiložení se nezdařilo"
+        "attachFailed": "Přiložení se nezdařilo",
+        "attachKnowledge": "Připojit znalosti",
+        "noCollections": "Zatím žádné kolekce — vytvořte ji v Nastavení → Dokumenty"
       },
       "voiceInput": "Hlasový vstup",
       "voiceStop": "Zastavit poslech"
@@ -647,6 +649,14 @@
         "coverage": "Pokrytí",
         "regenerate": "Regenerovat embeddingy",
         "regenerating": "Regenerování..."
+      },
+      "collections": {
+        "title": "Kolekce znalostí",
+        "description": "Seskupte dokumenty do kolekcí a připojte je k libovolnému chatu.",
+        "namePlaceholder": "Název kolekce",
+        "create": "Vytvořit",
+        "none": "Bez kolekce",
+        "deleteConfirm": "Smazat tuto kolekci? Dokumenty uvnitř zůstanou."
       }
     },
     "tts": {

@@ -254,7 +254,9 @@
         "attach": "Lampirkan",
         "documentAttached": "Dokumen dilampirkan",
         "webpageAttached": "Halaman web dilampirkan",
-        "attachFailed": "Tidak dapat melampirkan"
+        "attachFailed": "Tidak dapat melampirkan",
+        "attachKnowledge": "Lampirkan pengetahuan",
+        "noCollections": "Tiada koleksi lagi — cipta satu di Tetapan → Dokumen"
       },
       "voiceInput": "Input suara",
       "voiceStop": "Berhenti mendengar"
@@ -647,6 +649,14 @@
         "coverage": "Liputan",
         "regenerate": "Jana Semula Pembenaman",
         "regenerating": "Menjana semula..."
+      },
+      "collections": {
+        "title": "Koleksi pengetahuan",
+        "description": "Kumpulkan dokumen ke dalam koleksi dan lampirkan pada mana-mana sembang.",
+        "namePlaceholder": "Nama koleksi",
+        "create": "Cipta",
+        "none": "Tiada koleksi",
+        "deleteConfirm": "Padam koleksi ini? Dokumen di dalamnya kekal."
       }
     },
     "tts": {

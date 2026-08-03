@@ -254,7 +254,9 @@
         "attach": "첨부",
         "documentAttached": "문서가 첨부되었습니다",
         "webpageAttached": "웹페이지가 첨부되었습니다",
-        "attachFailed": "첨부하지 못했습니다"
+        "attachFailed": "첨부하지 못했습니다",
+        "attachKnowledge": "지식 첨부",
+        "noCollections": "아직 컬렉션이 없습니다 — 설정 → 문서에서 만드세요"
       },
       "voiceInput": "음성 입력",
       "voiceStop": "듣기 중지"
@@ -647,6 +649,14 @@
         "coverage": "커버리지",
         "regenerate": "임베딩 재생성",
         "regenerating": "재생성 중..."
+      },
+      "collections": {
+        "title": "지식 컬렉션",
+        "description": "문서를 컬렉션으로 묶어 어느 채팅에나 첨부하세요.",
+        "namePlaceholder": "컬렉션 이름",
+        "create": "만들기",
+        "none": "컬렉션 없음",
+        "deleteConfirm": "이 컬렉션을 삭제할까요? 안의 문서는 유지됩니다."
       }
     },
     "tts": {

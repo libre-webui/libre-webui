@@ -254,7 +254,9 @@
         "attach": "Joindre",
         "documentAttached": "Document joint",
         "webpageAttached": "Page web jointe",
-        "attachFailed": "Impossible de joindre"
+        "attachFailed": "Impossible de joindre",
+        "attachKnowledge": "Joindre des connaissances",
+        "noCollections": "Aucune collection — créez-en une dans Paramètres → Documents"
       },
       "voiceInput": "Saisie vocale",
       "voiceStop": "Arrêter l'écoute"
@@ -647,6 +649,14 @@
         "coverage": "Couverture",
         "regenerate": "Régénérer les embeddings",
         "regenerating": "Régénération..."
+      },
+      "collections": {
+        "title": "Collections de connaissances",
+        "description": "Regroupez des documents en collections et joignez-les à toute discussion.",
+        "namePlaceholder": "Nom de la collection",
+        "create": "Créer",
+        "none": "Aucune collection",
+        "deleteConfirm": "Supprimer cette collection ? Les documents sont conservés."
       }
     },
     "tts": {

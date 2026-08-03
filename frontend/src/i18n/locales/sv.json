@@ -254,7 +254,9 @@
         "attach": "Bifoga",
         "documentAttached": "Dokument bifogat",
         "webpageAttached": "Webbsida bifogad",
-        "attachFailed": "Kunde inte bifoga"
+        "attachFailed": "Kunde inte bifoga",
+        "attachKnowledge": "Bifoga kunskap",
+        "noCollections": "Inga samlingar än — skapa en i Inställningar → Dokument"
       },
       "voiceInput": "Röstinmatning",
       "voiceStop": "Sluta lyssna"
@@ -647,6 +649,14 @@
         "coverage": "Täckning",
         "regenerate": "Regenerera inbäddningar",
         "regenerating": "Regenererar..."
+      },
+      "collections": {
+        "title": "Kunskapssamlingar",
+        "description": "Gruppera dokument i samlingar och bifoga dem till valfri chatt.",
+        "namePlaceholder": "Samlingens namn",
+        "create": "Skapa",
+        "none": "Ingen samling",
+        "deleteConfirm": "Ta bort den här samlingen? Dokumenten i den behålls."
       }
     },
     "tts": {

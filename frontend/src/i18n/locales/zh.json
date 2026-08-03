@@ -254,7 +254,9 @@
         "attach": "附加",
         "documentAttached": "文档已附加",
         "webpageAttached": "网页已附加",
-        "attachFailed": "无法附加"
+        "attachFailed": "无法附加",
+        "attachKnowledge": "附加知识",
+        "noCollections": "还没有集合 — 在 设置 → 文档 中创建"
       },
       "voiceInput": "语音输入",
       "voiceStop": "停止聆听"
@@ -647,6 +649,14 @@
         "coverage": "覆盖率",
         "regenerate": "重新生成嵌入",
         "regenerating": "重新生成中..."
+      },
+      "collections": {
+        "title": "知识集合",
+        "description": "将文档分组为集合，并附加到任意聊天。",
+        "namePlaceholder": "集合名称",
+        "create": "创建",
+        "none": "无集合",
+        "deleteConfirm": "删除此集合？其中的文档会保留。"
       }
     },
     "tts": {

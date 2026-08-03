@@ -30,6 +30,7 @@ export interface Document {
   fileType?: 'pdf' | 'txt';
   size?: number;
   sessionId?: string;
+  collectionId?: string;
   uploadedAt: number;
   createdAt?: number;
   metadata?: Record<string, unknown>;
@@ -85,6 +86,7 @@ export interface DocumentRow {
   file_type?: string;
   size?: number;
   session_id?: string;
+  collection_id?: string | null;
   uploaded_at: number;
   created_at?: number;
   metadata?: string;
@@ -189,6 +191,7 @@ export function mapDocumentRow(row: DocumentRow): Document {
     fileType: row.file_type as 'pdf' | 'txt' | undefined,
     size: row.size,
     sessionId: row.session_id,
+    collectionId: row.collection_id || undefined,
     uploadedAt: row.uploaded_at,
     createdAt: row.created_at,
     metadata: decryptJson<Record<string, unknown>>(row.metadata),

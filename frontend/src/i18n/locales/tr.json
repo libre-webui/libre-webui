@@ -254,7 +254,9 @@
         "attach": "Ekle",
         "documentAttached": "Belge eklendi",
         "webpageAttached": "Web sayfası eklendi",
-        "attachFailed": "Eklenemedi"
+        "attachFailed": "Eklenemedi",
+        "attachKnowledge": "Bilgi ekle",
+        "noCollections": "Henüz koleksiyon yok — Ayarlar → Belgeler bölümünden oluşturun"
       },
       "voiceInput": "Sesle giriş",
       "voiceStop": "Dinlemeyi durdur"
@@ -647,6 +649,14 @@
         "coverage": "Kapsam",
         "regenerate": "Gömmeleri Yeniden Oluştur",
         "regenerating": "Yeniden oluşturuluyor..."
+      },
+      "collections": {
+        "title": "Bilgi koleksiyonları",
+        "description": "Belgeleri koleksiyonlar halinde gruplayın ve istediğiniz sohbete ekleyin.",
+        "namePlaceholder": "Koleksiyon adı",
+        "create": "Oluştur",
+        "none": "Koleksiyon yok",
+        "deleteConfirm": "Bu koleksiyon silinsin mi? İçindeki belgeler korunur."
       }
     },
     "tts": {

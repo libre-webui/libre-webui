@@ -254,7 +254,9 @@
         "attach": "Anhängen",
         "documentAttached": "Dokument angehängt",
         "webpageAttached": "Webseite angehängt",
-        "attachFailed": "Anhängen fehlgeschlagen"
+        "attachFailed": "Anhängen fehlgeschlagen",
+        "attachKnowledge": "Wissen anhängen",
+        "noCollections": "Noch keine Sammlungen — erstelle eine unter Einstellungen → Dokumente"
       },
       "voiceInput": "Spracheingabe",
       "voiceStop": "Zuhören beenden"
@@ -647,6 +649,14 @@
         "coverage": "Abdeckung",
         "regenerate": "Embeddings neu generieren",
         "regenerating": "Wird neu generiert..."
+      },
+      "collections": {
+        "title": "Wissenssammlungen",
+        "description": "Gruppiere Dokumente in Sammlungen und hänge sie an beliebige Chats an.",
+        "namePlaceholder": "Name der Sammlung",
+        "create": "Erstellen",
+        "none": "Keine Sammlung",
+        "deleteConfirm": "Diese Sammlung löschen? Die Dokumente darin bleiben erhalten."
       }
     },
     "tts": {
