@@ -28,6 +28,7 @@ import {
   Sliders,
   Volume2,
   ImageIcon,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn } from '@/utils';
@@ -233,6 +234,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   ];
 
   const [activeTab, setActiveTab] = useState('appearance');
+  const [settingsQuery, setSettingsQuery] = useState('');
   const [tempSystemMessage, setTempSystemMessage] = useState(systemMessage);
 
   const [updatingAllModels, setUpdatingAllModels] = useState(false);
@@ -1219,6 +1221,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
+  // Extra terms per tab so searching finds settings that live inside a tab,
+  // not just the tab's name. Labels are matched in the active language;
+  // these keywords cover the English vocabulary users search with.
+  const tabSearchKeywords: Record<string, string> = {
+    appearance:
+      'theme dark light accent color language username follow-up background interface',
+    data: 'export import backup clear history sessions',
+    about: 'version license update',
+    models: 'default model system prompt title vision auto',
+    generation:
+      'temperature top_p top_k seed tokens context penalty embedding chunk similarity',
+    documents: 'upload pdf rag document embedding',
+    tts: 'voice speech audio speak read aloud',
+    'image-gen': 'image generation size quality style',
+    plugins: 'api key provider connection openai anthropic groq gemini',
+  };
+
+  const settingsQueryText = settingsQuery.trim().toLowerCase();
+  const tabMatchesQuery = (tab: { id: string; label: string }) =>
+    !settingsQueryText ||
+    tab.label.toLowerCase().includes(settingsQueryText) ||
+    (tabSearchKeywords[tab.id] || '').includes(settingsQueryText);
+
   // Grouped so the nav reads as four short lists instead of one long one.
   const tabGroups = [
     {
@@ -1496,52 +1521,86 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 WebkitOverflowScrolling: 'touch',
               }}
             >
+              <div className='relative mb-1 hidden sm:block'>
+                <Search className='pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-subtle' />
+                <input
+                  type='search'
+                  value={settingsQuery}
+                  onChange={event => {
+                    const query = event.target.value;
+                    setSettingsQuery(query);
+                    const text = query.trim().toLowerCase();
+                    if (!text) return;
+                    const matching = tabGroups
+                      .flatMap(group => group.tabs)
+                      .filter(
+                        tab =>
+                          tab.label.toLowerCase().includes(text) ||
+                          (tabSearchKeywords[tab.id] || '').includes(text)
+                      );
+                    if (
+                      matching.length > 0 &&
+                      !matching.some(tab => tab.id === activeTab)
+                    ) {
+                      setActiveTab(matching[0].id);
+                    }
+                  }}
+                  placeholder={t('common.search')}
+                  className='w-full rounded-lg border border-transparent bg-black/[0.04] py-1.5 pe-2.5 ps-8 text-[13px] text-ink placeholder:text-ink-subtle focus:border-primary-500/40 focus:outline-none dark:bg-white/[0.05]'
+                />
+              </div>
               <nav
                 className='flex gap-1 sm:flex-col sm:gap-0'
                 role='tablist'
                 aria-label={t('settings.title', 'Settings')}
               >
-                {tabGroups.map(group => (
-                  <div
-                    key={group.id}
-                    className='flex shrink-0 gap-1 sm:flex-col sm:gap-0.5 sm:pb-2'
-                  >
-                    <p
-                      aria-hidden='true'
-                      className='hidden px-2.5 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-subtle sm:block'
+                {tabGroups
+                  .map(group => ({
+                    ...group,
+                    tabs: group.tabs.filter(tabMatchesQuery),
+                  }))
+                  .filter(group => group.tabs.length > 0)
+                  .map(group => (
+                    <div
+                      key={group.id}
+                      className='flex shrink-0 gap-1 sm:flex-col sm:gap-0.5 sm:pb-2'
                     >
-                      {group.label}
-                    </p>
-                    {group.tabs.map(tab => {
-                      const Icon = tab.icon;
-                      const isActive = activeTab === tab.id;
+                      <p
+                        aria-hidden='true'
+                        className='hidden px-2.5 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-subtle sm:block'
+                      >
+                        {group.label}
+                      </p>
+                      {group.tabs.map(tab => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
 
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => setActiveTab(tab.id)}
-                          className={cn(
-                            'flex shrink-0 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
-                            isActive
-                              ? 'bg-black/[0.06] text-ink dark:bg-white/[0.08]'
-                              : 'text-ink-muted hover:bg-black/[0.04] hover:text-ink dark:hover:bg-white/[0.05]'
-                          )}
-                          role='tab'
-                          aria-selected={isActive}
-                          aria-controls='settings-tab-panel'
-                        >
-                          <Icon
-                            className='h-4 w-4 flex-shrink-0'
-                            aria-hidden='true'
-                          />
-                          <span className='truncate whitespace-nowrap text-[13px]'>
-                            {tab.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={cn(
+                              'flex shrink-0 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
+                              isActive
+                                ? 'bg-black/[0.06] text-ink dark:bg-white/[0.08]'
+                                : 'text-ink-muted hover:bg-black/[0.04] hover:text-ink dark:hover:bg-white/[0.05]'
+                            )}
+                            role='tab'
+                            aria-selected={isActive}
+                            aria-controls='settings-tab-panel'
+                          >
+                            <Icon
+                              className='h-4 w-4 flex-shrink-0'
+                              aria-hidden='true'
+                            />
+                            <span className='truncate whitespace-nowrap text-[13px]'>
+                              {tab.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
               </nav>
             </div>
 
