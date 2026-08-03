@@ -162,6 +162,7 @@ COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 COPY --from=backend-builder /app/backend/dist ./backend/dist
 COPY --from=backend-builder /app/backend/package*.json ./backend/
 COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=prod-deps /app/backend/node_modules ./backend/node_modules
 COPY --from=prod-deps /app/package*.json ./
 
 # Copy plugins directory

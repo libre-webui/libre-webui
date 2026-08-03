@@ -34,6 +34,17 @@ test('Docker install stages include the root postinstall script before npm ci', 
   }
 });
 
+test('Docker runtime includes non-hoisted backend workspace dependencies', () => {
+  assert.match(
+    dockerfile,
+    /COPY --from=prod-deps \/app\/node_modules \.\/node_modules/
+  );
+  assert.match(
+    dockerfile,
+    /COPY --from=prod-deps \/app\/backend\/node_modules \.\/backend\/node_modules/
+  );
+});
+
 test('Docker workflow publishes semantic version tags from release tags', () => {
   assert.match(dockerWorkflow, /tags: \['v\*'\]/);
   assert.match(dockerWorkflow, /type=semver,pattern=\{\{version\}\}/);
