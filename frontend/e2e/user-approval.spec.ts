@@ -26,6 +26,7 @@ const systemInfo = {
   version: '0.17.0-e2e',
   turnstile: { enabled: false },
 };
+const validPassword = 'SecurePassword123';
 
 test('new registrations wait for approval and cannot enter the UI', async ({
   page,
@@ -36,8 +37,8 @@ test('new registrations wait for approval and cannot enter the UI', async ({
   await page.getByRole('button', { name: 'Sign up here' }).click();
   await page.getByLabel('Username').fill('pending-user');
   await page.getByLabel(/Email/).fill('pending@example.test');
-  await page.getByLabel('Password', { exact: true }).fill('password');
-  await page.getByLabel('Confirm Password').fill('password');
+  await page.getByLabel('Password', { exact: true }).fill(validPassword);
+  await page.getByLabel('Confirm Password').fill(validPassword);
   await page.getByRole('button', { name: 'Create Account' }).click();
 
   await expect(page.getByTestId('signup-approval-pending')).toBeVisible();
@@ -46,7 +47,7 @@ test('new registrations wait for approval and cannot enter the UI', async ({
 
   await page.getByRole('button', { name: 'Back to sign in' }).click();
   await page.getByLabel('Username').fill('pending-user');
-  await page.getByLabel('Password').fill('password');
+  await page.getByLabel('Password').fill(validPassword);
   await page.getByRole('button', { name: /sign in/i }).click();
 
   await expect(page.getByTestId('login-approval-pending')).toBeVisible();
