@@ -255,7 +255,9 @@
         "documentAttached": "Document attached",
         "webpageAttached": "Webpage attached",
         "attachFailed": "Could not attach that"
-      }
+      },
+      "voiceInput": "Voice input",
+      "voiceStop": "Stop listening"
     },
     "session": {
       "new": "New Chat",

@@ -255,7 +255,9 @@
         "documentAttached": "दस्तावेज़ संलग्न हुआ",
         "webpageAttached": "वेबपेज संलग्न हुआ",
         "attachFailed": "संलग्न नहीं हो सका"
-      }
+      },
+      "voiceInput": "वॉयस इनपुट",
+      "voiceStop": "सुनना बंद करें"
     },
     "session": {
       "new": "नई चैट",

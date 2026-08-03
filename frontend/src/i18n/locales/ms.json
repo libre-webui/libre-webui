@@ -255,7 +255,9 @@
         "documentAttached": "Dokumen dilampirkan",
         "webpageAttached": "Halaman web dilampirkan",
         "attachFailed": "Tidak dapat melampirkan"
-      }
+      },
+      "voiceInput": "Input suara",
+      "voiceStop": "Berhenti mendengar"
     },
     "session": {
       "new": "Sembang Baharu",

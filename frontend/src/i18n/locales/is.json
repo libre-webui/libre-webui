@@ -255,7 +255,9 @@
         "documentAttached": "Skjal fest við",
         "webpageAttached": "Vefsíða fest við",
         "attachFailed": "Ekki tókst að hengja við"
-      }
+      },
+      "voiceInput": "Raddinnsláttur",
+      "voiceStop": "Hætta að hlusta"
     },
     "session": {
       "new": "Nýtt spjall",

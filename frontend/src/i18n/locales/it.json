@@ -255,7 +255,9 @@
         "documentAttached": "Documento allegato",
         "webpageAttached": "Pagina web allegata",
         "attachFailed": "Impossibile allegare"
-      }
+      },
+      "voiceInput": "Input vocale",
+      "voiceStop": "Smetti di ascoltare"
     },
     "session": {
       "new": "Nuova chat",

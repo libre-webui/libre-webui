@@ -255,7 +255,9 @@
         "documentAttached": "แนบเอกสารแล้ว",
         "webpageAttached": "แนบหน้าเว็บแล้ว",
         "attachFailed": "ไม่สามารถแนบได้"
-      }
+      },
+      "voiceInput": "ป้อนด้วยเสียง",
+      "voiceStop": "หยุดฟัง"
     },
     "session": {
       "new": "แชทใหม่",

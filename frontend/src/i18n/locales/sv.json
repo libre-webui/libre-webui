@@ -255,7 +255,9 @@
         "documentAttached": "Dokument bifogat",
         "webpageAttached": "Webbsida bifogad",
         "attachFailed": "Kunde inte bifoga"
-      }
+      },
+      "voiceInput": "Röstinmatning",
+      "voiceStop": "Sluta lyssna"
     },
     "session": {
       "new": "Ny chatt",

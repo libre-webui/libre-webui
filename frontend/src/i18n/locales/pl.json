@@ -255,7 +255,9 @@
         "documentAttached": "Dokument załączony",
         "webpageAttached": "Strona załączona",
         "attachFailed": "Nie udało się załączyć"
-      }
+      },
+      "voiceInput": "Wprowadzanie głosowe",
+      "voiceStop": "Przestań słuchać"
     },
     "session": {
       "new": "Nowy czat",

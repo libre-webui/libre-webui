@@ -255,7 +255,9 @@
         "documentAttached": "Belge eklendi",
         "webpageAttached": "Web sayfası eklendi",
         "attachFailed": "Eklenemedi"
-      }
+      },
+      "voiceInput": "Sesle giriş",
+      "voiceStop": "Dinlemeyi durdur"
     },
     "session": {
       "new": "Yeni Sohbet",

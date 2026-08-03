@@ -255,7 +255,9 @@
         "documentAttached": "Dokumen dilampirkan",
         "webpageAttached": "Halaman web dilampirkan",
         "attachFailed": "Gagal melampirkan"
-      }
+      },
+      "voiceInput": "Input suara",
+      "voiceStop": "Berhenti mendengarkan"
     },
     "session": {
       "new": "Chat Baru",

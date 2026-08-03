@@ -255,7 +255,9 @@
         "documentAttached": "Đã đính kèm tài liệu",
         "webpageAttached": "Đã đính kèm trang web",
         "attachFailed": "Không thể đính kèm"
-      }
+      },
+      "voiceInput": "Nhập bằng giọng nói",
+      "voiceStop": "Dừng nghe"
     },
     "session": {
       "new": "Cuộc trò chuyện mới",

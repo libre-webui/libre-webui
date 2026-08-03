@@ -255,7 +255,9 @@
         "documentAttached": "নথি সংযুক্ত হয়েছে",
         "webpageAttached": "ওয়েবপেজ সংযুক্ত হয়েছে",
         "attachFailed": "সংযুক্ত করা যায়নি"
-      }
+      },
+      "voiceInput": "ভয়েস ইনপুট",
+      "voiceStop": "শোনা বন্ধ করুন"
     },
     "session": {
       "new": "নতুন চ্যাট",

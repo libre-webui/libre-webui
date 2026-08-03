@@ -255,7 +255,9 @@
         "documentAttached": "Dokument přiložen",
         "webpageAttached": "Webová stránka přiložena",
         "attachFailed": "Přiložení se nezdařilo"
-      }
+      },
+      "voiceInput": "Hlasový vstup",
+      "voiceStop": "Zastavit poslech"
     },
     "session": {
       "new": "Nový chat",

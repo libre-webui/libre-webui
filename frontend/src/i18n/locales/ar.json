@@ -255,7 +255,9 @@
         "documentAttached": "تم إرفاق المستند",
         "webpageAttached": "تم إرفاق صفحة الويب",
         "attachFailed": "تعذر الإرفاق"
-      }
+      },
+      "voiceInput": "إدخال صوتي",
+      "voiceStop": "إيقاف الاستماع"
     },
     "session": {
       "new": "محادثة جديدة",

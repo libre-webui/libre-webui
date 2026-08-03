@@ -255,7 +255,9 @@
         "documentAttached": "Dokument angehängt",
         "webpageAttached": "Webseite angehängt",
         "attachFailed": "Anhängen fehlgeschlagen"
-      }
+      },
+      "voiceInput": "Spracheingabe",
+      "voiceStop": "Zuhören beenden"
     },
     "session": {
       "new": "Neuer Chat",

@@ -255,7 +255,9 @@
         "documentAttached": "문서가 첨부되었습니다",
         "webpageAttached": "웹페이지가 첨부되었습니다",
         "attachFailed": "첨부하지 못했습니다"
-      }
+      },
+      "voiceInput": "음성 입력",
+      "voiceStop": "듣기 중지"
     },
     "session": {
       "new": "새 채팅",

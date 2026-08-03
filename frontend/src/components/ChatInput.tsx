@@ -28,6 +28,7 @@ import {
   Globe,
   Braces,
   Loader2,
+  Mic,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { CodeAwareTextarea } from './CodeAwareTextarea';
@@ -52,6 +53,33 @@ import {
 
 const logger = createLogger('components:chat-input');
 
+// Minimal typings for the vendor-prefixed Web Speech API.
+interface SpeechRecognitionLike {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult:
+    | ((event: {
+        results: ArrayLike<ArrayLike<{ transcript: string }>>;
+      }) => void)
+    | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
+const getSpeechRecognition = (): SpeechRecognitionConstructor | undefined => {
+  if (typeof window === 'undefined') return undefined;
+  const w = window as unknown as {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  };
+  return w.SpeechRecognition || w.webkitSpeechRecognition;
+};
+
 interface ChatInputProps {
   onSendMessage: (
     message: string,
@@ -67,8 +95,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onStopGeneration,
   disabled = false,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [message, setMessage] = useState('');
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const dictationBaseRef = useRef('');
+  const speechSupported = useMemo(() => Boolean(getSpeechRecognition()), []);
   const [images, setImages] = useState<string[]>([]);
   const [format, setFormat] = useState<string | Record<string, unknown> | null>(
     null
@@ -161,6 +193,53 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const closeAttachMenu = () => {
     setAttachMenuOpen(false);
     setWebpageUrl(null);
+  };
+
+  // Stop dictation when unmounting.
+  useEffect(
+    () => () => {
+      recognitionRef.current?.stop();
+    },
+    []
+  );
+
+  const toggleDictation = () => {
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const SpeechRecognitionCtor = getSpeechRecognition();
+    if (!SpeechRecognitionCtor) return;
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = i18n.language;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    dictationBaseRef.current = message;
+    recognition.onresult = event => {
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0]?.transcript ?? '';
+      }
+      const base = dictationBaseRef.current;
+      setMessage(base ? `${base} ${transcript.trim()}` : transcript.trim());
+    };
+    recognition.onend = () => {
+      recognitionRef.current = null;
+      setListening(false);
+    };
+    recognition.onerror = () => {
+      recognitionRef.current = null;
+      setListening(false);
+    };
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+      setListening(true);
+    } catch (error) {
+      logger.error('Failed to start dictation:', error);
+      recognitionRef.current = null;
+    }
   };
 
   const handleDocumentSelected = async (
@@ -582,6 +661,31 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       showImageGen={showImageGeneration}
                     />
                   </div>
+                )}
+
+                {/* Voice input */}
+                {speechSupported && (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={toggleDictation}
+                    className={cn(
+                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                      'transition-colors duration-150 touch-manipulation',
+                      listening &&
+                        'bg-red-50 text-red-500 animate-pulse dark:bg-red-900/20 dark:text-red-400'
+                    )}
+                    title={
+                      listening
+                        ? t('chat.input.voiceStop')
+                        : t('chat.input.voiceInput')
+                    }
+                    aria-pressed={listening}
+                  >
+                    <Mic className='h-4 w-4' />
+                  </Button>
                 )}
 
                 {/* Send/Stop Button - Integrated Right */}

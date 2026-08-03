@@ -255,7 +255,9 @@
         "documentAttached": "Document bijgevoegd",
         "webpageAttached": "Webpagina bijgevoegd",
         "attachFailed": "Bijvoegen mislukt"
-      }
+      },
+      "voiceInput": "Spraakinvoer",
+      "voiceStop": "Stoppen met luisteren"
     },
     "session": {
       "new": "Nieuwe chat",

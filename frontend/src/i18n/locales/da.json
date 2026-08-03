@@ -255,7 +255,9 @@
         "documentAttached": "Dokument vedhæftet",
         "webpageAttached": "Webside vedhæftet",
         "attachFailed": "Kunne ikke vedhæfte"
-      }
+      },
+      "voiceInput": "Stemmeinput",
+      "voiceStop": "Stop med at lytte"
     },
     "session": {
       "new": "Ny chat",

@@ -255,7 +255,9 @@
         "documentAttached": "文档已附加",
         "webpageAttached": "网页已附加",
         "attachFailed": "无法附加"
-      }
+      },
+      "voiceInput": "语音输入",
+      "voiceStop": "停止聆听"
     },
     "session": {
       "new": "新对话",

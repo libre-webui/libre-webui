@@ -255,7 +255,9 @@
         "documentAttached": "Document joint",
         "webpageAttached": "Page web jointe",
         "attachFailed": "Impossible de joindre"
-      }
+      },
+      "voiceInput": "Saisie vocale",
+      "voiceStop": "Arrêter l'écoute"
     },
     "session": {
       "new": "Nouvelle conversation",

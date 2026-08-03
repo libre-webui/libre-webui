@@ -255,7 +255,9 @@
         "documentAttached": "Documento anexado",
         "webpageAttached": "Página web anexada",
         "attachFailed": "Não foi possível anexar"
-      }
+      },
+      "voiceInput": "Entrada de voz",
+      "voiceStop": "Parar de ouvir"
     },
     "session": {
       "new": "Nova conversa",

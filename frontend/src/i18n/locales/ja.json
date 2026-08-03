@@ -255,7 +255,9 @@
         "documentAttached": "ドキュメントを添付しました",
         "webpageAttached": "ウェブページを添付しました",
         "attachFailed": "添付できませんでした"
-      }
+      },
+      "voiceInput": "音声入力",
+      "voiceStop": "聞き取りを停止"
     },
     "session": {
       "new": "新しいチャット",
