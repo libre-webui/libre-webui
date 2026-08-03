@@ -9,40 +9,177 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
-- **OpenCode and Pi as chat agents.** The Agents group now detects the
-  `opencode` and `pi` CLIs beside Claude Code and Codex. Pi runs each turn
-  stateless with tools disabled and a neutral system prompt, so chats never
-  touch the server user's personal Pi configuration.
-- **A year of activity on the Usage page.** A contribution-style calendar shows
-  every day of provider calls over the trailing year, colored by each day's
-  most-used model with a per-day tooltip, a ranked model legend, and an
-  intensity ramp. The palette passes colorblind-safety validation in both
-  themes.
-- **Agent entries carry a model choice.** Claude Code offers Sonnet, Opus, and
-  Haiku beside its default, Codex offers the documented ChatGPT sign-in family
-  (GPT-5.6 Sol, Terra, Luna, and GPT-5.3 Codex Spark), and OpenCode lists
-  every model its providers offer and requires an explicit pick, because its
-  CLI default can point at an unreachable local server.
-- **Codex models as a real provider — chat and Work — via your ChatGPT
-  sign-in.** A bundled, administrator-only Codex (ChatGPT) provider reuses the
-  server's `codex login` session: tokens are refreshed through the CLI's own
-  OAuth client and never enter task containers, so GPT-5.6 Sol, Terra, Luna,
-  GPT-5.5, and Codex Spark can drive sandboxed Work tasks and chats without an
-  API key. Disable with `CODEX_OAUTH_MODELS_ENABLED=false`.
-- **Ollama and agent chats are metered too.** The Usage page now counts local
-  Ollama conversations (with prompt and completion tokens) and agent CLI turns
-  beside provider plugins, so the activity calendar and model tables cover
-  everything the instance runs.
-
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes
 
-- Selecting an agent from the model selector works again: the provider
-  identity was dropped when saving the choice, so starting or switching a chat
-  onto an agent was rejected.
+### 📚 Documentation
+
+## [0.19.0] - 2026-08-03
+
+Libre WebUI 0.19.0 expands the chat workspace with reusable knowledge
+collections, standalone notes, folders, per-chat controls, webpage attachments,
+voice dictation, follow-up suggestions, message editing, response ratings, and
+richer artifact tools. Agents gain OpenCode and Pi support plus explicit model
+selection, Codex can use the server's ChatGPT sign-in for chat and Work, and the
+Usage page now measures Ollama and agent activity across a full-year heatmap.
+
+This release also changes important security defaults. A fresh installation
+still permits its first local administrator, but later public registration is
+closed unless explicitly enabled. OAuth tokens no longer travel in callback
+URLs, Compose services bind more narrowly by default, fetched webpages and
+artifacts cross stricter trust boundaries, and all five CodeQL findings opened
+against the release candidate are fixed in code with regression coverage.
+
+### ✨ New Features
+
+- **Knowledge collections.** Create reusable document collections in Settings,
+  assign existing or newly uploaded documents to them, and attach an entire
+  collection to a conversation as one context source.
+- **Standalone notes.** A dedicated Notes page supports creating, editing,
+  deleting, searching, and previewing encrypted-at-rest Markdown notes.
+- **Chat folders.** Create, rename, collapse, and delete sidebar folders; move
+  conversations between them or return a conversation to the unfiled list.
+- **Per-chat controls.** Override the system prompt, temperature, top-p, top-k,
+  min-p, maximum tokens, repeat penalty, seed, and context length for an
+  individual conversation, with reset controls and persisted session state.
+- **Expanded attachment menu.** Reuse an existing document, upload a new file,
+  attach a knowledge collection, or fetch a public webpage into chat context.
+- **Voice dictation.** Browsers with the Web Speech API can transcribe speech
+  directly into the message composer while preserving already typed text.
+- **Follow-up suggestions.** After a completed assistant response, Libre WebUI
+  can generate short, clickable suggestions for the user's next message.
+- **Editable conversations and ratings.** Edit and resend a previous user
+  message from that point in the conversation, and record a positive or
+  negative rating on assistant responses.
+- **Richer code blocks.** Long code blocks start collapsed and can be expanded,
+  downloaded with a language-aware filename, or opened in the artifact preview
+  when the language supports it.
+- **Artifact history.** Navigate earlier and later versions of an artifact from
+  the slide-out panel without leaving the conversation.
+- **Reasoning duration.** Thinking blocks show elapsed reasoning time during
+  generation and retain the final duration with the saved response.
+- **Conversation navigation.** The sidebar groups chats by date, adds archiving,
+  and shows conversation previews on hover; settings navigation is searchable.
+- **What's New dialog.** A version-aware modal summarizes newly installed
+  features once after an upgrade and records the version locally when dismissed.
+- **OpenCode and Pi agents.** The Agents group detects `opencode` and `pi`
+  alongside Claude Code and Codex. Pi runs statelessly with tools disabled and a
+  neutral system prompt so chats do not use the server user's Pi configuration.
+- **Explicit agent model selection.** Claude Code offers its default, Sonnet,
+  Opus, and Haiku choices; Codex exposes its documented ChatGPT-sign-in models;
+  OpenCode discovers provider models and requires an explicit selection instead
+  of inheriting a possibly unreachable CLI default.
+- **Codex through ChatGPT sign-in.** The bundled administrator-only Codex
+  provider reuses the server's `codex login` session for chat and sandboxed Work
+  tasks. The CLI's OAuth client refreshes tokens, credentials never enter task
+  containers, and administrators can disable the integration with
+  `CODEX_OAUTH_MODELS_ENABLED=false`.
+- **Full-year usage activity.** The administrator Usage page adds a responsive
+  contribution-style calendar for the trailing year, per-day tooltips and call
+  totals, top-model coloring, an intensity scale, and a ranked model legend
+  designed to remain distinguishable in both themes.
+- **Ollama and agent metering.** Local Ollama calls now contribute prompt and
+  completion token counts, while agent CLI turns contribute usage events, so
+  the activity calendar and model tables cover local, plugin, and agent chats.
+
+### 🔧 Improvements
+
+- New interface strings for notes, folders, controls, attachments, dictation,
+  usage, and related states are included across all 25 shipped locales.
+- Added database indexes for per-user notes and session folders and enforced
+  clear storage policies: at most 100 notes and 100 folders per user, 200
+  characters per note title, 200,000 characters per note, and 120 characters
+  per folder name.
+- Upgraded both application workspaces to TypeScript 7 while keeping ESLint on
+  an isolated compatible TypeScript compiler; expanded toolchain regression
+  tests prevent the two compiler paths from drifting.
+- Added focused regression suites for webpage fetching, HTML artifacts, OAuth,
+  registration, password handling, public deployment defaults, content limits,
+  agent chats, Codex OAuth, and usage analytics.
+- Refined the project and Helm descriptions and keywords around Libre WebUI's
+  local-first chat, private knowledge, artifact, agent, and Work capabilities.
+
+### 🐛 Bug Fixes
+
+- **Agent chat selection now retains provider identity.** Starting a chat with an
+  agent, or switching an existing chat to one, no longer fails after the model
+  selector drops the agent provider metadata.
+- **Work model selection excludes agent CLI entries.** Agent pseudo-models stay
+  in chat's Agents group instead of appearing as unusable Work provider models.
+- **Codex streaming handles every supported caller path.** Responses streams
+  without a content-type are recognized, non-streaming callers receive an
+  aggregated result, and accumulated output is retained when a terminal event
+  carries no final text.
+- Refactored What's New initialization and document-list loading so the frontend
+  passes the current React effect and Fast Refresh lint rules without warnings.
+
+### 🔒 Security
+
+- **Registration is closed by default after bootstrap.** A fresh database still
+  permits exactly one local administrator, while every later local or OAuth
+  registration requires `ENABLE_SIGNUP=true` and still enters the existing
+  approval flow.
+- **Password policy is enforced server-side and in the UI.** New passwords must
+  contain at least 12 characters with uppercase, lowercase, and numeric
+  characters, and cannot exceed bcrypt's 72 UTF-8-byte input boundary.
+- **OAuth callbacks no longer expose bearer tokens.** GitHub and Hugging Face
+  flows bind cryptographically random state to short-lived HttpOnly, SameSite
+  cookies. The resulting JWT crosses through a 60-second Secure, HttpOnly
+  exchange cookie that is cleared immediately instead of appearing in URLs,
+  browser history, referrers, or reverse-proxy logs.
+- **Safer Compose defaults.** The WebUI binds to loopback by default; bundled
+  Ollama is no longer published to the host unless the new opt-in override is
+  used; signup defaults to disabled; and the private deployment separates the
+  root-equivalent Work Docker socket and Watchtower into explicit overrides.
+- **SSRF-resistant webpage attachments.** Only HTTP(S) URLs without embedded
+  credentials are accepted. Every resolved IPv4/IPv6 address and every redirect
+  hop must remain public, DNS is pinned for the connection, redirects are
+  bounded, fetches time out after 15 seconds, and response bodies are limited to
+  2 MB.
+- **Parser-based HTML extraction.** Webpage text now uses an HTML parser instead
+  of filtering regular expressions, ignores script/style/template content, and
+  decodes entities once. This fixes CodeQL alerts #119, #120, and #121 without
+  introducing double-unescaping or malformed-markup bypasses.
+- **Isolated artifact previews.** HTML previews open inside an opaque-origin
+  sandboxed iframe without same-origin or sandbox-escape privileges. SVG
+  artifacts also render in a script-free sandbox with a restrictive content
+  security policy instead of using direct HTML injection.
+- **Protected server Codex credentials.** User-writable plugins cannot reserve
+  the bundled Codex provider ID or receive the server user's OAuth access token;
+  only the bundled definition matching its trust anchor can use that route.
+- **CodeQL cookie fixes.** The OAuth transfer cookie is always Secure and
+  HttpOnly, resolving alerts #117 and #118 for clear-text transmission and
+  client-side exposure of a sensitive server cookie.
+- Added a public security policy with private GitHub/email reporting,
+  coordinated-disclosure expectations, documented trust boundaries, supported
+  versions, and a good-faith research safe harbor.
+
+### 📦 Dependencies
+
+- Refreshed 31 direct and transitive dependencies. Notable upgrades include
+  better-sqlite3 13, TypeScript 7, Xterm 6, Vite 8.2, KaTeX 0.18, Playwright
+  1.62, Electron 41.10.3, electron-builder 26.15.7, React type definitions,
+  i18next, Framer Motion, Lucide, PostCSS, and TanStack Query.
+- Raised the `brace-expansion` override from 5.0.8 to 5.0.9 to close the
+  remaining denial-of-service CVE bypass path; `npm audit` reports no known
+  vulnerabilities at release time.
 
 ### 📚 Documentation
+
+- Updated quick-start, authentication, Docker, external Ollama, local GPU,
+  environment-variable, development-branch, agent CLI, provider connection,
+  and private remote deployment guides for the new registration and network
+  defaults.
+- Added Docker Hub publishing metadata with installation paths, image-tag
+  semantics, architecture support, security notes, and canonical project links.
+- Replaced certification-style compliance claims with precise regulated-
+  deployment guidance: Libre WebUI can support local, private, or air-gapped
+  controls, but the complete deployment and organizational process determine
+  compliance.
+- Clarified the project charter's no-relicensing examples, added the canonical
+  security-policy link, removed the obsolete Hetzner GPU tutorial, and fixed the
+  private Compose documentation link so it works outside the repository.
 
 ## [0.18.0] - 2026-08-02
 
