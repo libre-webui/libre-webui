@@ -19,6 +19,7 @@ import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import type { LookupFunction } from 'node:net';
 import ipaddr from 'ipaddr.js';
+import { parse, type DefaultTreeAdapterTypes } from 'parse5';
 import { Agent, fetch } from 'undici';
 
 const MAX_REDIRECTS = 3;
@@ -92,31 +93,90 @@ function createPinnedDispatcher(target: ResolvedAddress): Agent {
   });
 }
 
-function htmlToText(html: string): { title: string | null; text: string } {
-  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+const HIDDEN_HTML_ELEMENTS = new Set([
+  'script',
+  'style',
+  'noscript',
+  'template',
+]);
+const LINE_BREAK_HTML_ELEMENTS = new Set([
+  'p',
+  'div',
+  'li',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'tr',
+]);
 
-  const text = html
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
-    .replace(/<!--[\s\S]*?-->/g, ' ')
-    .replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/tr)[^>]*>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
+function collectHtmlText(
+  node: DefaultTreeAdapterTypes.Node,
+  chunks: string[]
+): void {
+  if (node.nodeName === '#text' && 'value' in node) {
+    chunks.push(node.value);
+    return;
+  }
+
+  if ('tagName' in node) {
+    if (HIDDEN_HTML_ELEMENTS.has(node.tagName)) return;
+    if (node.tagName === 'br') {
+      chunks.push('\n');
+      return;
+    }
+  }
+
+  if ('childNodes' in node) {
+    for (const child of node.childNodes) collectHtmlText(child, chunks);
+  }
+
+  if ('tagName' in node && LINE_BREAK_HTML_ELEMENTS.has(node.tagName)) {
+    chunks.push('\n');
+  }
+}
+
+function findHtmlElement(
+  node: DefaultTreeAdapterTypes.Node,
+  tagName: string
+): DefaultTreeAdapterTypes.Element | undefined {
+  if ('tagName' in node && node.tagName === tagName) return node;
+  if (!('childNodes' in node)) return undefined;
+
+  for (const child of node.childNodes) {
+    const match = findHtmlElement(child, tagName);
+    if (match) return match;
+  }
+  return undefined;
+}
+
+function normalizeHtmlText(value: string): string {
+  return value
+    .replace(/\u00a0/g, ' ')
     .replace(/[ \t]+/g, ' ')
     .replace(/\s*\n\s*/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
 
-  const title = titleMatch
-    ? titleMatch[1].replace(/\s+/g, ' ').trim() || null
-    : null;
-  return { title, text };
+export function htmlToText(html: string): {
+  title: string | null;
+  text: string;
+} {
+  const document = parse(html);
+  const textChunks: string[] = [];
+  collectHtmlText(document, textChunks);
+
+  const titleElement = findHtmlElement(document, 'title');
+  const titleChunks: string[] = [];
+  if (titleElement) collectHtmlText(titleElement, titleChunks);
+
+  return {
+    title: normalizeHtmlText(titleChunks.join(' ')) || null,
+    text: normalizeHtmlText(textChunks.join('')),
+  };
 }
 
 export interface FetchedWebpage {

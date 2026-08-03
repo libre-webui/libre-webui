@@ -94,3 +94,26 @@ test('webpage URLs cannot contain embedded credentials', async () => {
     /embedded credentials/
   );
 });
+
+test('webpage HTML parsing excludes executable content and decodes entities once', () => {
+  const page = fetcher.htmlToText(`
+    <!doctype html>
+    <html>
+      <head>
+        <title>Safe &amp; readable</title>
+        <STYLE>body { display: none }</STYLE >
+      </head>
+      <body>
+        <p>Visible &amp;lt;markup&amp;gt;</p>
+        <SCRIPT>throw new Error('not visible')</sCrIpT >
+        <noscript>fallback should not be indexed</noscript>
+        <div>Still visible</div>
+      </body>
+    </html>
+  `);
+
+  assert.deepEqual(page, {
+    title: 'Safe & readable',
+    text: 'Safe & readable\nVisible &lt;markup&gt;\nStill visible',
+  });
+});

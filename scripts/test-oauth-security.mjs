@@ -113,7 +113,7 @@ test('OAuth state is random, HttpOnly, short-lived, and consumed once', () => {
 
 test('OAuth bearer token crosses the redirect boundary only in HttpOnly cookie', () => {
   const setResponse = response();
-  setOAuthSessionCookie(request('', true), setResponse, 'signed.jwt.token');
+  setOAuthSessionCookie(request(), setResponse, 'signed.jwt.token');
   assert.deepEqual(setResponse.writes[0], {
     name: 'libre_oauth_session',
     value: 'signed.jwt.token',

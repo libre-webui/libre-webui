@@ -92,7 +92,7 @@ test('new-window HTML previews keep untrusted markup in a sandboxed iframe', () 
     assert.equal(replaced, true);
     assert.equal(appended, iframe);
     assert.equal(attributes.get('sandbox'), HTML_ARTIFACT_SANDBOX);
-    assert.match(iframe.srcdoc, /<script>/);
+    assert.equal(iframe.srcdoc.includes('<script>'), true);
   } finally {
     if (previousWindow === undefined) {
       Reflect.deleteProperty(globalThis, 'window');

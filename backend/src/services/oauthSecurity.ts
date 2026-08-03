@@ -118,15 +118,17 @@ export const consumeOAuthState = (
  * callback URL, browser history, reverse-proxy logs, or referrer headers.
  */
 export const setOAuthSessionCookie = (
-  req: Request,
+  _req: Request,
   res: Response,
   token: string
 ): void => {
-  res.cookie(
-    SESSION_COOKIE_NAME,
-    token,
-    cookieOptions(req, SESSION_COOKIE_PATH, SESSION_TRANSFER_TTL_MS)
-  );
+  res.cookie(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: SESSION_COOKIE_PATH,
+    maxAge: SESSION_TRANSFER_TTL_MS,
+  });
 };
 
 /** Read and immediately clear the short-lived OAuth session-transfer cookie. */
@@ -135,9 +137,11 @@ export const consumeOAuthSessionCookie = (
   res: Response
 ): string | undefined => {
   const token = readCookie(req, SESSION_COOKIE_NAME);
-  res.clearCookie(
-    SESSION_COOKIE_NAME,
-    clearCookieOptions(req, SESSION_COOKIE_PATH)
-  );
+  res.clearCookie(SESSION_COOKIE_NAME, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: SESSION_COOKIE_PATH,
+  });
   return token;
 };
