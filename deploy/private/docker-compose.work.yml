@@ -1,0 +1,8 @@
+services:
+  libre-webui:
+    # Work requires root-equivalent control of the host Docker daemon. Keep this
+    # override out of the stack unless its administrators are also host admins.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - '${DOCKER_GID:?set DOCKER_GID}'

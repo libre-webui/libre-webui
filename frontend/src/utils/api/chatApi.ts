@@ -50,7 +50,10 @@ export const chatApi = {
         title: title || 'New Chat',
         model,
         providerType,
-        providerId: providerType === 'plugin' ? providerId : null,
+        providerId:
+          providerType === 'plugin' || providerType === 'agent'
+            ? providerId
+            : null,
         messages: [],
         createdAt: Date.now(),
         updatedAt: Date.now(),

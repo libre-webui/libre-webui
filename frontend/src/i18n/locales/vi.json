@@ -1790,7 +1790,17 @@
       "title": "Chưa có lệnh gọi nhà cung cấp",
       "description": "Các lệnh gọi sẽ hiển thị tại đây sau khi một plugin đã bật xử lý yêu cầu trò chuyện, Work, nhúng, hình ảnh, giọng nói, âm thanh hoặc video."
     },
-    "privacyNote": "Mức sử dụng được đo trên máy chủ tại ranh giới plugin gửi đi. Libre WebUI lưu trữ nhà cung cấp, mô hình, thời gian, trạng thái và bộ đếm đã báo cáo—không bao gồm lời nhắc, phản hồi, điểm cuối, thông tin xác thực hoặc nội dung lỗi của nhà cung cấp. Tổng token chỉ bao gồm các lệnh gọi mà nhà cung cấp trả về siêu dữ liệu sử dụng."
+    "privacyNote": "Mức sử dụng được đo trên máy chủ tại ranh giới plugin gửi đi. Libre WebUI lưu trữ nhà cung cấp, mô hình, thời gian, trạng thái và bộ đếm đã báo cáo—không bao gồm lời nhắc, phản hồi, điểm cuối, thông tin xác thực hoặc nội dung lỗi của nhà cung cấp. Tổng token chỉ bao gồm các lệnh gọi mà nhà cung cấp trả về siêu dữ liệu sử dụng.",
+    "heatmap": {
+      "title": "Một năm hoạt động",
+      "description": "Lượt gọi nhà cung cấp hằng ngày trong năm qua, tô màu theo mô hình được dùng nhiều nhất mỗi ngày.",
+      "calls": "lượt gọi",
+      "noCalls": "Không có lượt gọi",
+      "other": "Mô hình khác",
+      "less": "Ít",
+      "more": "Nhiều",
+      "yearTotal": "{{formatted}} lượt gọi trong năm qua"
+    }
   },
   "systemPage": {
     "eyebrow": "Quản trị",

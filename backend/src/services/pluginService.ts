@@ -35,6 +35,10 @@ import {
   PluginType,
   VideoGenConfig,
 } from '../types/index.js';
+import codexOAuthService, {
+  CODEX_OAUTH_PLUGIN_ID,
+} from './codexOAuthService.js';
+import { userModel } from '../models/userModel.js';
 import pluginCredentialsService from './pluginCredentialsService.js';
 import pluginVariablesService from './pluginVariablesService.js';
 import pluginActivationService from './pluginActivationService.js';
@@ -852,6 +856,10 @@ export class PluginService {
    * @returns The API key or null if not found
    */
   getApiKey(plugin: Plugin, userId?: string): string | null {
+    if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
+      // Resolved from the server's Codex CLI sign-in, never user credentials.
+      return codexOAuthService.getCachedAccessToken();
+    }
     const hasHonoredConnectionOverride =
       this.canUseStoredConnectionOverrides(userId) &&
       pluginVariablesService.hasStoredConnectionOverride(
@@ -1404,7 +1412,23 @@ export class PluginService {
       }
     }
 
-    return Array.from(plugins.values());
+    return Array.from(plugins.values()).filter(plugin =>
+      this.isPluginVisibleToUser(plugin, userId)
+    );
+  }
+
+  /**
+   * The codex-oauth plugin rides the server user's ChatGPT sign-in, so it is
+   * administrator-only and hidden entirely when no sign-in exists.
+   */
+  private isPluginVisibleToUser(
+    plugin: Pick<Plugin, 'id'>,
+    userId?: string
+  ): boolean {
+    if (plugin.id !== CODEX_OAUTH_PLUGIN_ID) return true;
+    if (!codexOAuthService.isAvailable()) return false;
+    if (!userId) return false;
+    return userModel.getUserById(userId)?.role === 'admin';
   }
 
   // Get a specific plugin by ID
@@ -1426,7 +1450,8 @@ export class PluginService {
       if (
         this.validatePlugin(parsedPlugin) &&
         parsedPlugin.id === sanitizedId &&
-        this.isPluginDefinitionApproved(parsedPlugin, filePath)
+        this.isPluginDefinitionApproved(parsedPlugin, filePath) &&
+        this.isPluginVisibleToUser(parsedPlugin, userId)
       ) {
         const plugin = applyPluginDefinitionPolicy(parsedPlugin);
         plugin.active = this.isPluginActive(plugin.id, userId);
@@ -1667,6 +1692,26 @@ export class PluginService {
         `Model ${model} is not supported by plugin ${activePlugin.id}`
       );
     }
+    if (activePlugin.id === CODEX_OAUTH_PLUGIN_ID) {
+      await codexOAuthService.ensureFreshToken();
+      // The codex endpoint only answers as an SSE stream; aggregate it here
+      // so non-streaming callers still get a complete response.
+      let aggregated = '';
+      for await (const chunk of this.executePluginStreamRequest(
+        model,
+        messages,
+        options,
+        userId,
+        activePlugin.id
+      )) {
+        if (chunk.type === 'content' && chunk.content) {
+          aggregated += chunk.content;
+        }
+      }
+      return {
+        choices: [{ message: { role: 'assistant', content: aggregated } }],
+      } as PluginResponse;
+    }
 
     const pluginVars = this.getPluginVariables(activePlugin, userId);
     const { apiMode, endpoint: effectiveEndpoint } = resolvePluginApiConfig(
@@ -1800,6 +1845,9 @@ export class PluginService {
         `Model ${model} is not supported by plugin ${activePlugin.id}`
       );
     }
+    if (activePlugin.id === CODEX_OAUTH_PLUGIN_ID) {
+      await codexOAuthService.ensureFreshToken();
+    }
 
     const pluginVars = this.getPluginVariables(activePlugin, userId);
     const { apiMode, endpoint: effectiveEndpoint } = resolvePluginApiConfig(
@@ -1900,7 +1948,10 @@ export class PluginService {
         yield* forward(streamAnthropicResponse(response));
       } else if (apiMode === 'responses') {
         const contentType = response.headers.get('content-type') || '';
-        if (!contentType.includes('text/event-stream')) {
+        // The codex endpoint streams SSE without any content-type header.
+        const streamedAnyway =
+          activePlugin.id === CODEX_OAUTH_PLUGIN_ID && response.ok;
+        if (!contentType.includes('text/event-stream') && !streamedAnyway) {
           if (!response.ok) {
             const errorText = await response.text();
             throw new Error(
@@ -1972,7 +2023,10 @@ export class PluginService {
           };
         } else {
           yield* forward(
-            streamOpenAIResponsesResponse(response, providerStateScope)
+            streamOpenAIResponsesResponse(response, providerStateScope, {
+              allowEmptyTerminalOutput:
+                activePlugin.id === CODEX_OAUTH_PLUGIN_ID,
+            })
           );
         }
       } else {

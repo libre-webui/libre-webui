@@ -1790,7 +1790,17 @@
       "title": "Nog geen provider-aanroepen",
       "description": "Aanroepen verschijnen hier nadat een ingeschakelde plug-in chat-, Work-, embedding-, afbeeldings-, spraak-, geluids- of videoverzoeken afhandelt."
     },
-    "privacyNote": "Gebruik wordt op de server gemeten op de grens van de uitgaande plug-in. Libre WebUI slaat provider, model, timing, status en gerapporteerde tellers op—nooit prompts, antwoorden, endpoints, inloggegevens of foutmeldingen van de provider. Token totalen bevatten alleen aanroepen waarbij de provider gebruiks-metadata retourneerde."
+    "privacyNote": "Gebruik wordt op de server gemeten op de grens van de uitgaande plug-in. Libre WebUI slaat provider, model, timing, status en gerapporteerde tellers op—nooit prompts, antwoorden, endpoints, inloggegevens of foutmeldingen van de provider. Token totalen bevatten alleen aanroepen waarbij de provider gebruiks-metadata retourneerde.",
+    "heatmap": {
+      "title": "Een jaar activiteit",
+      "description": "Dagelijkse provideraanroepen van het afgelopen jaar, gekleurd naar het meestgebruikte model van de dag.",
+      "calls": "aanroepen",
+      "noCalls": "Geen aanroepen",
+      "other": "Overige modellen",
+      "less": "Minder",
+      "more": "Meer",
+      "yearTotal": "{{formatted}} aanroepen in het afgelopen jaar"
+    }
   },
   "systemPage": {
     "eyebrow": "Beheer",

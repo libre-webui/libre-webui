@@ -1790,7 +1790,17 @@
       "title": "Engar beiningar til þjónustu enn",
       "description": "Beiningar birtast hér eftir að virk viðbót sér um spjall, vinnu, ígræðslu, mynd, tal, hljóð eða myndbandabeiningar."
     },
-    "privacyNote": "Notkun er mæld á netþjóninum við jaðar útleiðarviðbótar. Libre WebUI geymir þjónustu, líkan, tímasetningu, stöðu og skráða teljara—aldrei kvaðningu, svör, endapunkta, skilríki eða villumeldingar þjónustu. Heildarfjöldi táknanna inniheldur aðeins beiningar þar sem þjónustan skilaði notkunarmetögögnum."
+    "privacyNote": "Notkun er mæld á netþjóninum við jaðar útleiðarviðbótar. Libre WebUI geymir þjónustu, líkan, tímasetningu, stöðu og skráða teljara—aldrei kvaðningu, svör, endapunkta, skilríki eða villumeldingar þjónustu. Heildarfjöldi táknanna inniheldur aðeins beiningar þar sem þjónustan skilaði notkunarmetögögnum.",
+    "heatmap": {
+      "title": "Ár af virkni",
+      "description": "Dagleg köll til veitna síðastliðið ár, lituð eftir mest notaða líkani hvers dags.",
+      "calls": "köll",
+      "noCalls": "Engin köll",
+      "other": "Önnur líkön",
+      "less": "Minna",
+      "more": "Meira",
+      "yearTotal": "{{formatted}} köll síðastliðið ár"
+    }
   },
   "systemPage": {
     "eyebrow": "Stjórnun",

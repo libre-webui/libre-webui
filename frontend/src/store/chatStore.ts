@@ -468,6 +468,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             details: {},
             isAgent: true,
             agentName: agent.name,
+            agentId: agent.agentId,
           }));
           allModels.push(...agentModels);
           logger.debug('Agent CLI models added:', agentModels.length);
@@ -611,7 +612,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
   selectedProviderId: null,
   setSelectedModel: (model, providerType = null, providerId = null) => {
     const normalizedProviderId =
-      providerType === 'plugin' ? providerId || null : null;
+      providerType === 'plugin' || providerType === 'agent'
+        ? providerId || null
+        : null;
     set({
       selectedModel: model,
       selectedProviderType: providerType,
@@ -639,7 +642,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const response = await chatApi.updateSession(state.currentSession.id, {
         model,
         providerType,
-        providerId: providerType === 'plugin' ? providerId : null,
+        providerId:
+          providerType === 'plugin' || providerType === 'agent'
+            ? providerId
+            : null,
       });
 
       if (response.success && response.data) {
@@ -651,7 +657,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
           selectedModel: model,
           selectedProviderType: providerType,
           selectedProviderId:
-            providerType === 'plugin' ? providerId || null : null,
+            providerType === 'plugin' || providerType === 'agent'
+              ? providerId || null
+              : null,
         }));
         toast.success('Model updated for current chat');
       }

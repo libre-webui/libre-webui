@@ -110,7 +110,7 @@ async function signupPackedUser(baseUrl, username) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       username,
-      password: 'packed-test-password',
+      password: 'Packed-Test-Password-123',
     }),
   });
   assert.equal(response.status, 200);
@@ -121,7 +121,7 @@ async function signupPackedUser(baseUrl, username) {
 }
 
 async function signupAndApprovePackedUser(baseUrl, username, adminToken) {
-  const password = 'packed-test-password';
+  const password = 'Packed-Test-Password-123';
   const signupResponse = await fetch(`${baseUrl}/api/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -398,6 +398,7 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
         OPENAI_API_KEY: 'test-openai-key',
         OLLAMA_BASE_URL: 'http://127.0.0.1:9',
         JWT_SECRET: 'test-jwt-secret',
+        ENABLE_SIGNUP: 'true',
         TURNSTILE_SITE_KEY: '',
         TURNSTILE_SECRET_KEY: '',
         ENCRYPTION_KEY:
@@ -690,6 +691,7 @@ test('packed npm artifact routes TTS through the selected plugin valve from any 
         DATA_DIR: dataDir,
         OLLAMA_BASE_URL: 'http://127.0.0.1:9',
         JWT_SECRET: 'test-jwt-secret',
+        ENABLE_SIGNUP: 'true',
         TURNSTILE_SITE_KEY: '',
         TURNSTILE_SECRET_KEY: '',
         ENCRYPTION_KEY:

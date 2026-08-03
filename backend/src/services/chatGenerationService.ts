@@ -176,7 +176,8 @@ class ChatGenerationService {
       for await (const chunk of agentCliService.executeAgentStreamRequest(
         target.providerId,
         pluginMessages,
-        userId
+        userId,
+        { model: target.actualModelName }
       )) {
         if (chunk.type === 'content' && chunk.content) {
           assistantContent += chunk.content;
@@ -236,7 +237,11 @@ class ChatGenerationService {
           throw pluginError;
         }
 
-        const response = await ollamaService.generateChatResponse(chatRequest);
+        const response = await ollamaService.generateChatResponse(
+          chatRequest,
+          undefined,
+          { userId }
+        );
         return {
           response,
           assistantContent: response.message.content,
@@ -246,7 +251,11 @@ class ChatGenerationService {
       }
     }
 
-    const response = await ollamaService.generateChatResponse(chatRequest);
+    const response = await ollamaService.generateChatResponse(
+      chatRequest,
+      undefined,
+      { userId }
+    );
     return {
       response,
       assistantContent: response.message.content,

@@ -1215,7 +1215,17 @@
       "title": "No provider calls yet",
       "description": "Calls will appear here after an enabled plugin handles chat, Work, embedding, image, speech, sound, or video requests."
     },
-    "privacyNote": "Usage is metered on the server at the outbound plugin boundary. Libre WebUI stores provider, model, timing, status, and reported counters—never prompts, responses, endpoints, credentials, or provider error bodies. Token totals include only calls where the provider returned usage metadata."
+    "privacyNote": "Usage is metered on the server at the outbound plugin boundary. Libre WebUI stores provider, model, timing, status, and reported counters—never prompts, responses, endpoints, credentials, or provider error bodies. Token totals include only calls where the provider returned usage metadata.",
+    "heatmap": {
+      "title": "A year of activity",
+      "description": "Daily provider calls over the past year, colored by each day's most-used model.",
+      "calls": "calls",
+      "noCalls": "No calls",
+      "other": "Other models",
+      "less": "Less",
+      "more": "More",
+      "yearTotal": "{{formatted}} calls in the last year"
+    }
   },
   "systemPage": {
     "eyebrow": "Administration",

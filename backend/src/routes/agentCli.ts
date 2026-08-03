@@ -26,12 +26,12 @@ router.use(authenticate);
  * Installed agent CLIs usable as chat models. Non-admin users get an empty
  * list rather than an error so the model loader can call this unconditionally.
  */
-router.get('/models', (req: AuthenticatedRequest, res: Response) => {
+router.get('/models', async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.userId;
   const isAdmin = userId ? agentCliService.isAdminUser(userId) : false;
   res.json({
     success: true,
-    data: isAdmin ? agentCliService.listAgentModels() : [],
+    data: isAdmin ? await agentCliService.listAgentModels() : [],
   });
 });
 

@@ -11,12 +11,12 @@ const { canCreateLocalAccount, isPublicRegistrationEnabled } = await import(
   modulePath
 );
 
-test('public registration defaults to enabled', () => {
+test('public registration defaults to disabled', () => {
   const originalValue = process.env.ENABLE_SIGNUP;
   delete process.env.ENABLE_SIGNUP;
 
   try {
-    assert.equal(isPublicRegistrationEnabled(), true);
+    assert.equal(isPublicRegistrationEnabled(), false);
     assert.equal(isPublicRegistrationEnabled('true'), true);
   } finally {
     if (originalValue === undefined) delete process.env.ENABLE_SIGNUP;
@@ -29,8 +29,14 @@ test('ENABLE_SIGNUP=false disables public registration', () => {
   assert.equal(isPublicRegistrationEnabled(' FALSE '), false);
 });
 
-test('disabled registration also blocks an empty-instance bootstrap', () => {
-  assert.equal(canCreateLocalAccount(0, false), false);
+test('only an explicit true value enables public registration', () => {
+  assert.equal(isPublicRegistrationEnabled('1'), false);
+  assert.equal(isPublicRegistrationEnabled('yes'), false);
+  assert.equal(isPublicRegistrationEnabled(' TRUE '), true);
+});
+
+test('bootstrap remains available while later registration is closed', () => {
+  assert.equal(canCreateLocalAccount(0, false), true);
   assert.equal(canCreateLocalAccount(1, false), false);
   assert.equal(canCreateLocalAccount(0, true), true);
   assert.equal(canCreateLocalAccount(2, true), true);

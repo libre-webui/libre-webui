@@ -26,6 +26,8 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   Record<string, string>
 > = Object.freeze({
   anthropic: '4ba7c2344e8404ed78f6d6f622f24307fcc8f5451047d45ee427bb0ab4d1aecf',
+  'codex-oauth':
+    '6abe60d6c6ba6d617204783533070f042d7e7025b313580756235c6f924f2406',
   comfyui: 'eaefe81897b58bffdf92bae8f0d0b675a062af276d5379e43147d6a0adaf0f47',
   elevenlabs:
     'de6afcbd123600f484a078227618b5c9687bc56f6e2637b57514349fbcea63d6',

@@ -80,6 +80,16 @@ export interface PluginUsageAnalytics {
     inputUnits: number;
     outputUnits: number;
   }>;
+  heatmap?: {
+    from: number;
+    days: number;
+    models: string[];
+    cells: Array<{
+      timestamp: number;
+      calls: number;
+      models: Array<{ model: string; calls: number }>;
+    }>;
+  };
 }
 
 const emptyUsageAnalytics = (days: number): PluginUsageAnalytics => {

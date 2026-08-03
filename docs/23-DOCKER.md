@@ -17,11 +17,10 @@ Cloudflare Access boundary, host controls, backups, and container limits.
 
 ## Work Availability
 
-Work is enabled in every repository Compose file. The image ships the Docker
-CLI, and the Compose files mount `/var/run/docker.sock`, so the backend drives
-the same daemon that runs Libre WebUI. Work task containers are therefore
-**siblings** of the Libre WebUI container, not children of it, and they appear
-in `docker ps` on the host.
+Work is enabled in repository Compose files by default. The image ships the
+Docker CLI and Compose mounts `/var/run/docker.sock`, so Work task containers
+are **siblings** of the Libre WebUI container. They appear in `docker ps` on the
+host.
 
 A process with access to that socket has root-equivalent control of the Docker
 host. Enabling Work by default is a deliberate choice: Work is a core feature,
@@ -30,9 +29,8 @@ Libre WebUI administrator is effectively a host administrator**. Plan for it:
 
 - Keep the stack on a host whose administrators you already trust.
 - Do not expose the published port to an untrusted network.
-- Remove the `/var/run/docker.sock` mount from your Compose file to disable
-  Work. Nothing else in Libre WebUI depends on it, and the Work page then
-  reports **Runtime unavailable**.
+- Remove the `/var/run/docker.sock` mount when Work is not required. The Work
+  page then reports **Runtime unavailable**.
 
 On Linux the socket belongs to the `docker` group instead of root, so the
 non-root app user needs that group id. Set it once:
@@ -56,6 +54,20 @@ docker compose up -d
 ```
 
 Open [http://localhost:8080](http://localhost:8080).
+
+The WebUI port binds to host loopback by default. Set
+`WEBUI_BIND_ADDRESS=0.0.0.0` only when a trusted LAN or a host reverse proxy must
+reach it, and restrict the port with the host firewall.
+
+Ollama remains private to the Compose network. To make it available to host
+applications on loopback, add the explicit host override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.ollama-host.yml up -d
+```
+
+Set `OLLAMA_BIND_ADDRESS` only when another machine must reach Ollama, and
+protect that port with a firewall and authentication-capable proxy.
 
 ## NVIDIA GPU
 
@@ -100,7 +112,8 @@ Docker named volumes and are not included in the normal
 
 ## Public Access
 
-The repository Compose file currently sets `CORS_ORIGIN` directly. A value in
+Repository Compose files bind the WebUI to loopback and set `CORS_ORIGIN`
+directly. A value in
 your shell or `.env` file does not replace that literal. Edit the
 `libre-webui.environment` entry or save an explicit override as
 `compose.origin.yml`:
@@ -120,7 +133,8 @@ docker compose -f docker-compose.yml -f compose.origin.yml up -d
 ```
 
 Then put Libre WebUI behind HTTPS with a reverse proxy or platform load
-balancer.
+balancer. Set `WEBUI_BIND_ADDRESS` to the exact interface that proxy needs; do
+not publish the port on every interface unless the firewall requires it.
 
 ## Useful Commands
 

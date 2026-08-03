@@ -1790,7 +1790,17 @@
       "title": "Aún no hay llamadas al proveedor",
       "description": "Las llamadas aparecerán aquí después de que un complemento habilitado gestione solicitudes de chat, Work, incrustación, imagen, voz, sonido o video."
     },
-    "privacyNote": "El uso se mide en el servidor en el límite del complemento saliente. Libre WebUI almacena proveedor, modelo, tiempo, estado y contadores reportados, nunca prompts, respuestas, endpoints, credenciales ni cuerpos de error del proveedor. Los totales de tokens incluyen solo las llamadas en las que el proveedor devolvió metadatos de uso."
+    "privacyNote": "El uso se mide en el servidor en el límite del complemento saliente. Libre WebUI almacena proveedor, modelo, tiempo, estado y contadores reportados, nunca prompts, respuestas, endpoints, credenciales ni cuerpos de error del proveedor. Los totales de tokens incluyen solo las llamadas en las que el proveedor devolvió metadatos de uso.",
+    "heatmap": {
+      "title": "Un año de actividad",
+      "description": "Llamadas diarias a proveedores durante el último año, coloreadas según el modelo más usado cada día.",
+      "calls": "llamadas",
+      "noCalls": "Sin llamadas",
+      "other": "Otros modelos",
+      "less": "Menos",
+      "more": "Más",
+      "yearTotal": "{{formatted}} llamadas en el último año"
+    }
   },
   "systemPage": {
     "eyebrow": "Administración",

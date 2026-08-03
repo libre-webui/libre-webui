@@ -57,6 +57,21 @@ Plugin definitions are shared instance configuration, so only administrators
 can import, install, update, or delete them. Each authenticated user controls
 their own activation state, credential, and allowed generation settings.
 
+## Codex (ChatGPT Sign-In)
+
+The bundled **Codex (ChatGPT)** provider needs no API key. When the server has
+a Codex CLI sign-in (`codex login` as the server's operating-system user), the
+provider appears to administrators, offering the documented Codex model family
+through the ChatGPT session. Access tokens are read from the CLI's own
+`auth.json`, refreshed through the same OAuth client the CLI uses, and written
+back so the CLI keeps working; token values never appear in logs.
+
+Because the requests are made by the backend — never from inside a task
+container — these models also power Work with the normal sandboxed tool loop.
+The provider is administrator-only since every call spends the server owner's
+ChatGPT subscription. Hide it entirely with `CODEX_OAUTH_MODELS_ENABLED=false`,
+or point at a different sign-in with `CODEX_HOME`.
+
 ## Choose a Bundled or Imported Provider
 
 Libre WebUI includes definitions for OpenAI, Anthropic, Gemini, Groq, Mistral,

@@ -1790,7 +1790,17 @@
       "title": "Brak wywołań dostawcy",
       "description": "Wywołania pojawią się tutaj po obsłużeniu żądań czatu, Work, osadzania, obrazu, mowy, dźwięku lub wideo przez włączoną wtyczkę."
     },
-    "privacyNote": "Zużycie jest mierzone na serwerze na granicy wtyczki wychodzącej. Libre WebUI przechowuje dostawcę, model, czas, status i zgłoszone liczniki — nigdy prompty, odpowiedzi, endpointy, dane uwierzytelniające ani treści błędów dostawcy. Sumy tokenów obejmują tylko wywołania, w których dostawca zwrócił metadane użycia."
+    "privacyNote": "Zużycie jest mierzone na serwerze na granicy wtyczki wychodzącej. Libre WebUI przechowuje dostawcę, model, czas, status i zgłoszone liczniki — nigdy prompty, odpowiedzi, endpointy, dane uwierzytelniające ani treści błędów dostawcy. Sumy tokenów obejmują tylko wywołania, w których dostawca zwrócił metadane użycia.",
+    "heatmap": {
+      "title": "Rok aktywności",
+      "description": "Dzienne wywołania dostawców z ostatniego roku, pokolorowane według najczęściej używanego modelu danego dnia.",
+      "calls": "wywołań",
+      "noCalls": "Brak wywołań",
+      "other": "Inne modele",
+      "less": "Mniej",
+      "more": "Więcej",
+      "yearTotal": "{{formatted}} wywołań w ostatnim roku"
+    }
   },
   "systemPage": {
     "eyebrow": "Administracja",

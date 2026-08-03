@@ -9,9 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **OpenCode and Pi as chat agents.** The Agents group now detects the
+  `opencode` and `pi` CLIs beside Claude Code and Codex. Pi runs each turn
+  stateless with tools disabled and a neutral system prompt, so chats never
+  touch the server user's personal Pi configuration.
+- **A year of activity on the Usage page.** A contribution-style calendar shows
+  every day of provider calls over the trailing year, colored by each day's
+  most-used model with a per-day tooltip, a ranked model legend, and an
+  intensity ramp. The palette passes colorblind-safety validation in both
+  themes.
+- **Agent entries carry a model choice.** Claude Code offers Sonnet, Opus, and
+  Haiku beside its default, Codex offers the documented ChatGPT sign-in family
+  (GPT-5.6 Sol, Terra, Luna, and GPT-5.3 Codex Spark), and OpenCode lists
+  every model its providers offer and requires an explicit pick, because its
+  CLI default can point at an unreachable local server.
+- **Codex models as a real provider — chat and Work — via your ChatGPT
+  sign-in.** A bundled, administrator-only Codex (ChatGPT) provider reuses the
+  server's `codex login` session: tokens are refreshed through the CLI's own
+  OAuth client and never enter task containers, so GPT-5.6 Sol, Terra, Luna,
+  GPT-5.5, and Codex Spark can drive sandboxed Work tasks and chats without an
+  API key. Disable with `CODEX_OAUTH_MODELS_ENABLED=false`.
+- **Ollama and agent chats are metered too.** The Usage page now counts local
+  Ollama conversations (with prompt and completion tokens) and agent CLI turns
+  beside provider plugins, so the activity calendar and model tables cover
+  everything the instance runs.
+
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes
+
+- Selecting an agent from the model selector works again: the provider
+  identity was dropped when saving the choice, so starting or switching a chat
+  onto an agent was rejected.
 
 ### 📚 Documentation
 

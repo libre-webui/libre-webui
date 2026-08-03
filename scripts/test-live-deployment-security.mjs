@@ -102,4 +102,34 @@ test('private deployment template defaults to main and publishes no ports', () =
   assert.match(compose, /cap_drop:\n\s+- ALL/);
   assert.match(compose, /no-new-privileges:true/);
   assert.match(compose, /ENABLE_SIGNUP: \$\{ENABLE_SIGNUP:-false\}/);
+  assert.doesNotMatch(compose, /docker\.sock/);
+  assert.doesNotMatch(compose, /^\s+watchtower:/m);
+});
+
+test('local Compose defaults enable Work without publishing Ollama', () => {
+  for (const file of [
+    'docker-compose.yml',
+    'docker-compose.gpu.yml',
+    'docker-compose.external-ollama.yml',
+    'docker-compose.dev.yml',
+    'docker-compose.dev.gpu.yml',
+    'docker-compose.dev.external-ollama.yml',
+  ]) {
+    const compose = read(file);
+    assert.match(compose, /docker\.sock/, file);
+    assert.match(compose, /group_add:/, file);
+    assert.doesNotMatch(compose, /11434:11434/, file);
+    assert.match(compose, /ENABLE_SIGNUP=\$\{ENABLE_SIGNUP:-false\}/, file);
+    assert.match(compose, /WEBUI_BIND_ADDRESS:-127\.0\.0\.1/, file);
+  }
+
+  assert.match(
+    read('docker-compose.ollama-host.yml'),
+    /OLLAMA_BIND_ADDRESS:-127\.0\.0\.1/
+  );
+  assert.match(read('deploy/private/docker-compose.work.yml'), /docker\.sock/);
+  assert.match(
+    read('deploy/private/docker-compose.watchtower.yml'),
+    /docker\.sock/
+  );
 });

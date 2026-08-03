@@ -1790,7 +1790,17 @@
       "title": "Ingen udbyderkald endnu",
       "description": "Kald vises her, når et aktiveret plugin håndterer anmodninger om chat, arbejde, embedding, billede, tale, lyd eller video."
     },
-    "privacyNote": "Forbrug måles på serveren ved den udgående plugin-grænse. Libre WebUI gemmer udbyder, model, timing, status og rapporterede tællere — aldrig prompts, svar, endepunkter, legitimationsoplysninger eller udbyderfejlmeddelelser. Token-totaler inkluderer kun kald, hvor udbyderen returnerede forbrugsmetadata."
+    "privacyNote": "Forbrug måles på serveren ved den udgående plugin-grænse. Libre WebUI gemmer udbyder, model, timing, status og rapporterede tællere — aldrig prompts, svar, endepunkter, legitimationsoplysninger eller udbyderfejlmeddelelser. Token-totaler inkluderer kun kald, hvor udbyderen returnerede forbrugsmetadata.",
+    "heatmap": {
+      "title": "Et års aktivitet",
+      "description": "Daglige udbyderkald det seneste år, farvet efter dagens mest brugte model.",
+      "calls": "kald",
+      "noCalls": "Ingen kald",
+      "other": "Andre modeller",
+      "less": "Mindre",
+      "more": "Mere",
+      "yearTotal": "{{formatted}} kald det seneste år"
+    }
   },
   "systemPage": {
     "eyebrow": "Administration",

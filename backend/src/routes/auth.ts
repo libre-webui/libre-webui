@@ -27,6 +27,13 @@ import {
 } from '../middleware/auth.js';
 import { encryptionService } from '../services/encryptionService.js';
 import { turnstileService } from '../services/turnstileService.js';
+import {
+  beginOAuthFlow,
+  consumeOAuthSessionCookie,
+  consumeOAuthState,
+  setOAuthSessionCookie,
+} from '../services/oauthSecurity.js';
+import { validatePasswordStrength } from '../utils/hash.js';
 import { createLogger } from '../utils/logger.js';
 
 const router = express.Router();
@@ -34,8 +41,17 @@ const logger = createLogger('auth-routes');
 
 // Fallback frontend URL for OAuth redirects
 const FALLBACK_FRONTEND_URL = 'http://localhost:5173';
+const getFrontendUrl = (): string =>
+  (process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL)
+    .split(',')[0]
+    .trim()
+    .replace(/\/$/, '');
+const frontendRedirect = (search: string): string =>
+  `${getFrontendUrl()}${search}`;
 const pendingApprovalRedirect = (): string =>
-  `${(process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL).replace(/\/$/, '')}/login?approval=pending`;
+  frontendRedirect('/login?approval=pending');
+const oauthErrorRedirect = (error: string): string =>
+  frontendRedirect(`?error=${encodeURIComponent(error)}`);
 
 const getClientIp = (req: express.Request): string | undefined => {
   const cfConnectingIp = req.headers['cf-connecting-ip'];
@@ -281,6 +297,16 @@ router.post('/signup', authRateLimiter, async (req, res) => {
       return;
     }
 
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.isValid) {
+      res.status(400).json({
+        success: false,
+        message: 'Password does not meet security requirements',
+        errors: passwordValidation.errors,
+      });
+      return;
+    }
+
     // Check if user already exists
     const existingUser = await authService.getUserByUsername(username);
     if (existingUser) {
@@ -361,7 +387,8 @@ router.get('/oauth/github', generalAuthRateLimiter, (req, res) => {
     return res.status(404).json({ error: 'GitHub OAuth not configured' });
   }
 
-  const authUrl = githubOAuthService.getAuthUrl();
+  const state = beginOAuthFlow(req, res, 'github');
+  const authUrl = githubOAuthService.getAuthUrl(state);
   res.redirect(authUrl);
 });
 
@@ -374,42 +401,38 @@ router.get(
   async (req, res) => {
     try {
       if (!isGitHubConfigured) {
-        return res.redirect(
-          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_not_configured`
-        );
+        return res.redirect(oauthErrorRedirect('oauth_not_configured'));
       }
 
-      const { code } = req.query;
+      const { code, state } = req.query;
+      const stateIsValid = consumeOAuthState(
+        req,
+        res,
+        'github',
+        typeof state === 'string' ? state : ''
+      );
 
-      if (!code || typeof code !== 'string') {
-        return res.redirect(
-          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
-        );
+      if (!code || typeof code !== 'string' || !stateIsValid) {
+        return res.redirect(oauthErrorRedirect('oauth_failed'));
       }
 
       // Exchange code for access token
       const accessToken = await githubOAuthService.exchangeCodeForToken(code);
       if (!accessToken) {
-        return res.redirect(
-          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
-        );
+        return res.redirect(oauthErrorRedirect('oauth_failed'));
       }
 
       // Get user profile
       const profile = await githubOAuthService.getUserProfile(accessToken);
       if (!profile) {
-        return res.redirect(
-          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
-        );
+        return res.redirect(oauthErrorRedirect('oauth_failed'));
       }
 
       // Process user with GitHub OAuth service
       const user = await githubOAuthService.processUser(profile);
 
       if (!user) {
-        return res.redirect(
-          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
-        );
+        return res.redirect(oauthErrorRedirect('oauth_failed'));
       }
 
       if (user.status !== 'active') {
@@ -421,15 +444,11 @@ router.get(
 
       logger.debug('GitHub OAuth successful for user:', user.username);
 
-      // Redirect to frontend with token in URL
-      res.redirect(
-        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?token=${token}&auth=success`
-      );
+      setOAuthSessionCookie(req, res, token);
+      res.redirect(frontendRedirect('?auth=success'));
     } catch (error) {
       logger.error('GitHub OAuth callback error:', error);
-      res.redirect(
-        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
-      );
+      res.redirect(oauthErrorRedirect('oauth_failed'));
     }
   }
 );
@@ -457,7 +476,8 @@ router.get('/oauth/huggingface', generalAuthRateLimiter, (req, res) => {
     return res.status(404).json({ error: 'Hugging Face OAuth not configured' });
   }
 
-  const authUrl = huggingFaceOAuthService.getAuthUrl();
+  const state = beginOAuthFlow(req, res, 'huggingface');
+  const authUrl = huggingFaceOAuthService.getAuthUrl(state);
   res.redirect(authUrl);
 });
 
@@ -470,43 +490,39 @@ router.get(
   async (req, res) => {
     try {
       if (!isHuggingFaceConfigured) {
-        return res.redirect(
-          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_not_configured`
-        );
+        return res.redirect(oauthErrorRedirect('oauth_not_configured'));
       }
 
-      const { code } = req.query;
+      const { code, state } = req.query;
+      const stateIsValid = consumeOAuthState(
+        req,
+        res,
+        'huggingface',
+        typeof state === 'string' ? state : ''
+      );
 
-      if (!code || typeof code !== 'string') {
-        return res.redirect(
-          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
-        );
+      if (!code || typeof code !== 'string' || !stateIsValid) {
+        return res.redirect(oauthErrorRedirect('oauth_failed'));
       }
 
       // Exchange code for access token
       const accessToken =
         await huggingFaceOAuthService.exchangeCodeForToken(code);
       if (!accessToken) {
-        return res.redirect(
-          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
-        );
+        return res.redirect(oauthErrorRedirect('oauth_failed'));
       }
 
       // Get user profile
       const profile = await huggingFaceOAuthService.getUserProfile(accessToken);
       if (!profile) {
-        return res.redirect(
-          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
-        );
+        return res.redirect(oauthErrorRedirect('oauth_failed'));
       }
 
       // Process user with Hugging Face OAuth service
       const user = await huggingFaceOAuthService.processUser(profile);
 
       if (!user) {
-        return res.redirect(
-          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
-        );
+        return res.redirect(oauthErrorRedirect('oauth_failed'));
       }
 
       if (user.status !== 'active') {
@@ -518,15 +534,11 @@ router.get(
 
       logger.debug('Hugging Face OAuth successful for user:', user.username);
 
-      // Redirect to frontend with token in URL
-      res.redirect(
-        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?token=${token}&auth=success`
-      );
+      setOAuthSessionCookie(req, res, token);
+      res.redirect(frontendRedirect('?auth=success'));
     } catch (error) {
       logger.error('Hugging Face OAuth callback error:', error);
-      res.redirect(
-        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
-      );
+      res.redirect(oauthErrorRedirect('oauth_failed'));
     }
   }
 );
@@ -536,6 +548,38 @@ router.get(
  */
 router.get('/oauth/huggingface/status', generalAuthRateLimiter, (req, res) => {
   res.json({ configured: isHuggingFaceConfigured });
+});
+
+/**
+ * Exchange the short-lived HttpOnly OAuth transfer cookie for the application's
+ * normal bearer-token response. The cookie is cleared even when it is invalid.
+ */
+router.post('/oauth/exchange', generalAuthRateLimiter, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const token = consumeOAuthSessionCookie(req, res);
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'OAuth session is missing or expired',
+    });
+  }
+
+  const user = await authService.getUserFromToken(token);
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      message: 'OAuth session is invalid or expired',
+    });
+  }
+
+  return res.json({
+    success: true,
+    data: {
+      user,
+      token,
+      systemInfo: authService.getSystemInfo(),
+    },
+  });
 });
 
 /**

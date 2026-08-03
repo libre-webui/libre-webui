@@ -156,11 +156,13 @@ export class UserModel {
   /**
    * Atomically decide whether a public registration is the bootstrap
    * administrator or a pending user. Hashing happens before the transaction,
-   * while the count and insert stay serialized to prevent two first admins.
+   * while the count, registration policy, and insert stay serialized to
+   * prevent two first admins or a concurrent post-bootstrap registration.
    */
   async createPublicUser(
-    userData: Omit<UserCreateData, 'role' | 'accountStatus'>
-  ): Promise<UserPublic> {
+    userData: Omit<UserCreateData, 'role' | 'accountStatus'>,
+    allowNonBootstrapRegistration = true
+  ): Promise<UserPublic | null> {
     const passwordHash = await bcrypt.hash(userData.password, 12);
     const db = this.ensureDatabase();
     const create = db.transaction(() => {
@@ -168,6 +170,8 @@ export class UserModel {
         .prepare("SELECT COUNT(*) AS count FROM users WHERE id != 'default'")
         .get() as { count: number };
       const isFirstRealUser = count.count === 0;
+      if (!isFirstRealUser && !allowNonBootstrapRegistration) return null;
+
       return this.insertUser(
         {
           ...userData,

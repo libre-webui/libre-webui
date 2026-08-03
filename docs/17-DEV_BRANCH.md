@@ -37,10 +37,9 @@ The development branch (`dev`) is where new features are tested before being mer
 
 ### Docker Setup (Recommended)
 
-The development Compose files mount the host Docker socket, so the dev image
-exercises the Work runtime the same way a native backend does. Task containers
-run on the host daemon and show up in `docker ps`. On Linux, set `DOCKER_GID` in
-`.env` to the group that owns the socket; remove the mount to disable Work.
+The development Compose files mount the host Docker socket, so Work functions
+by default when Docker is available. Task containers run on the host daemon and
+show up in `docker ps`. On Linux, set `DOCKER_GID` in `.env` first.
 
 **With External Ollama:**
 

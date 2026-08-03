@@ -55,6 +55,10 @@ import {
   resolvePluginApiConfig,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import { AGENT_CLI_DEFINITIONS } from './agentCliService.js';
+import codexOAuthService, {
+  CODEX_OAUTH_PLUGIN_ID,
+} from './codexOAuthService.js';
 import ollamaService from './ollamaService.js';
 import pluginService from './pluginService.js';
 import pluginUsageService, {
@@ -142,6 +146,18 @@ export class WorkModelProviderService {
     if (provider.providerType === 'plugin') {
       this.requireExactPlugin(provider.providerId, cleaned, userId);
       return;
+    }
+    if (
+      AGENT_CLI_DEFINITIONS.some(
+        definition =>
+          cleaned === definition.id || cleaned.startsWith(`${definition.id}:`)
+      )
+    ) {
+      throw new WorkModelProviderError(
+        'Agent CLI models are chat-only: they run on the host, outside the Work sandbox. Pick an Ollama or provider model for Work.',
+        422,
+        'WORK_MODEL_TOOLS_UNSUPPORTED'
+      );
     }
     assertOllamaProvider(provider);
 
@@ -350,6 +366,17 @@ export class WorkModelProviderService {
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
+    if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
+      await codexOAuthService.ensureFreshToken();
+      // The codex endpoint only answers as an SSE stream; aggregate it.
+      return this.generatePluginStream(
+        plugin,
+        { ...request, stream: true },
+        userId,
+        {},
+        signal
+      );
+    }
     const variables = this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
@@ -533,6 +560,9 @@ export class WorkModelProviderService {
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
+    if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
+      await codexOAuthService.ensureFreshToken();
+    }
     const variables = this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
@@ -591,7 +621,9 @@ export class WorkModelProviderService {
       if (
         response.ok &&
         !contentType.includes('text/event-stream') &&
-        !contentType.includes('application/x-ndjson')
+        !contentType.includes('application/x-ndjson') &&
+        // The codex endpoint streams SSE without any content-type header.
+        plugin.id !== CODEX_OAUTH_PLUGIN_ID
       ) {
         const data = (await response.json()) as JsonObject;
         const normalized = normalizePluginWorkResponse(
@@ -623,7 +655,9 @@ export class WorkModelProviderService {
           : plugin.id === 'gemini'
             ? streamGeminiWorkResponse(response)
             : apiConfig.apiMode === 'responses'
-              ? streamOpenAIResponsesResponse(response, providerStateScope)
+              ? streamOpenAIResponsesResponse(response, providerStateScope, {
+                  allowEmptyTerminalOutput: plugin.id === CODEX_OAUTH_PLUGIN_ID,
+                })
               : streamOpenAICompatibleResponse(response);
       const normalized = await collectPluginWorkStream(
         chunks,
@@ -732,15 +766,22 @@ export function buildPluginWorkPayload(
   if (apiMode === 'responses') {
     const sampling = getOpenAICompatibleSamplingParameters(plugin, params);
     const tools = toOpenAIResponsesTools(request.tools || []);
+    // The ChatGPT-backed codex endpoint rejects sampling parameters outright.
+    const supportsSampling = plugin.id !== CODEX_OAUTH_PLUGIN_ID;
     return {
       payload: {
         model: request.model,
         input: toOpenAIResponsesWorkInput(request.messages, providerStateScope),
         ...(tools.length ? { tools, tool_choice: 'auto' } : {}),
-        temperature: sampling.temperature,
-        top_p: sampling.top_p,
-        max_output_tokens: params.maxTokens,
-        stream: Boolean(request.stream),
+        ...(supportsSampling
+          ? {
+              temperature: sampling.temperature,
+              top_p: sampling.top_p,
+              max_output_tokens: params.maxTokens,
+            }
+          : {}),
+        // The codex endpoint rejects non-streaming requests outright.
+        stream: supportsSampling ? Boolean(request.stream) : true,
         store: false,
         include: ['reasoning.encrypted_content'],
       },

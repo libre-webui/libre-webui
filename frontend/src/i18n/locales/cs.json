@@ -1790,7 +1790,17 @@
       "title": "Zatím žádná volání poskytovatelů",
       "description": "Volání se zde zobrazí, jakmile povolený zásuvný modul zpracuje požadavky na chat, práci, embedding, obrázek, řeč, zvuk nebo video."
     },
-    "privacyNote": "Využití se měří na serveru na hranici odchozího zásuvného modulu. Libre WebUI ukládá poskytovatele, model, časování, stav a nahlášené čítače — nikdy výzvy, odpovědi, endpointy, přihlašovací údaje ani těla chyb poskytovatele. Součty tokenů zahrnují pouze volání, kde poskytovatel vrátil metadata o využití."
+    "privacyNote": "Využití se měří na serveru na hranici odchozího zásuvného modulu. Libre WebUI ukládá poskytovatele, model, časování, stav a nahlášené čítače — nikdy výzvy, odpovědi, endpointy, přihlašovací údaje ani těla chyb poskytovatele. Součty tokenů zahrnují pouze volání, kde poskytovatel vrátil metadata o využití.",
+    "heatmap": {
+      "title": "Rok aktivity",
+      "description": "Denní volání poskytovatelů za poslední rok, obarvená podle nejpoužívanějšího modelu daného dne.",
+      "calls": "volání",
+      "noCalls": "Žádná volání",
+      "other": "Ostatní modely",
+      "less": "Méně",
+      "more": "Více",
+      "yearTotal": "{{formatted}} volání za poslední rok"
+    }
   },
   "systemPage": {
     "eyebrow": "Správa",

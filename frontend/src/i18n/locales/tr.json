@@ -1790,7 +1790,17 @@
       "title": "Henüz sağlayıcı çağrısı yok",
       "description": "Etkin bir eklenti sohbet, Work, gömme, görüntü, konuşma, ses veya video isteklerini işledikten sonra çağrılar burada görünecektir."
     },
-    "privacyNote": "Kullanım, sunucuda giden eklenti sınırında ölçülür. Libre WebUI; sağlayıcı, model, zamanlama, durum ve bildirilen sayaçları saklar—asla istemleri, yanıtları, uç noktaları, kimlik bilgilerini veya sağlayıcı hata gövdelerini saklamaz. Token toplamları yalnızca sağlayıcının kullanım meta verilerini döndürdüğü çağrıları içerir."
+    "privacyNote": "Kullanım, sunucuda giden eklenti sınırında ölçülür. Libre WebUI; sağlayıcı, model, zamanlama, durum ve bildirilen sayaçları saklar—asla istemleri, yanıtları, uç noktaları, kimlik bilgilerini veya sağlayıcı hata gövdelerini saklamaz. Token toplamları yalnızca sağlayıcının kullanım meta verilerini döndürdüğü çağrıları içerir.",
+    "heatmap": {
+      "title": "Bir yıllık etkinlik",
+      "description": "Son bir yıldaki günlük sağlayıcı çağrıları, her günün en çok kullanılan modeline göre renklendirilmiştir.",
+      "calls": "çağrı",
+      "noCalls": "Çağrı yok",
+      "other": "Diğer modeller",
+      "less": "Az",
+      "more": "Çok",
+      "yearTotal": "Son bir yılda {{formatted}} çağrı"
+    }
   },
   "systemPage": {
     "eyebrow": "Yönetim",

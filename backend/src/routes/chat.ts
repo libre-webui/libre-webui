@@ -572,7 +572,8 @@ router.post(
         for await (const chunk of agentCliService.executeAgentStreamRequest(
           target.providerId,
           pluginMessages,
-          userId
+          userId,
+          { model: target.actualModelName }
         )) {
           if (chunk.type === 'content' && chunk.content) {
             fullResponse += chunk.content;
@@ -736,7 +737,9 @@ router.post(
 
           res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
           res.end();
-        }
+        },
+        undefined,
+        { userId }
       );
     } catch (error: unknown) {
       if (!res.headersSent) {

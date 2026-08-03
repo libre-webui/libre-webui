@@ -242,6 +242,7 @@ services:
       - PORT=3001
       - OLLAMA_BASE_URL=http://ollama:11434
       - CORS_ORIGIN=http://<10.0.0.1>:8080
+      - ENABLE_SIGNUP=${ENABLE_SIGNUP:-false}
       - JWT_SECRET=${JWT_SECRET:-}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}
     volumes:
@@ -254,8 +255,6 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
-    ports:
-      - '11434:11434'
     volumes:
       - ollama_data:/root/.ollama
     deploy:
@@ -277,6 +276,9 @@ Here is what each key section does:
 
 - **`ports: "8080:3001"`** - Maps port 8080 on the host to port 3001 inside the Libre WebUI container. You will access the UI at `http://<10.0.0.1>:8080`.
 - **`OLLAMA_BASE_URL=http://ollama:11434`** - Tells Libre WebUI where to find Ollama. Docker Compose creates an internal network where containers can reach each other by service name (`ollama`).
+- **No Ollama host port** - Ollama is reachable only by Libre WebUI on the
+  Compose network. Do not publish `11434` unless another client needs it and
+  the network path is deliberately protected.
 - **`CORS_ORIGIN`** - Must match the URL you use to access the UI in your browser. Update this if you add a domain name later.
 - **`JWT_SECRET` and `ENCRYPTION_KEY`** - Used for session tokens and AES-256-GCM data encryption. If left empty, Libre WebUI generates secure random values on first start and stores them in the data volume.
 - **`deploy.resources.reservations.devices`** - This is the GPU passthrough configuration. It tells Docker to reserve all available NVIDIA GPUs (`count: all`) and expose them to the Ollama container with CUDA capabilities.
@@ -287,6 +289,9 @@ Save the file (`Ctrl+O`, then `Enter`, then `Ctrl+X` in nano) and start both ser
 ```bash
 docker compose up -d
 ```
+
+Create the first administrator in the browser. The empty database permits that
+one bootstrap account while later public registration remains closed.
 
 Docker will pull the images (this may take a few minutes on first run) and start both containers. Check that they are running:
 
