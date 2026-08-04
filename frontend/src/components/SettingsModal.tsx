@@ -50,6 +50,7 @@ import { usePluginStore } from '@/store/pluginStore';
 import { EmbeddingModel, Theme } from '@/types';
 import { normalizeTheme } from '@/utils/theme';
 import { triggerHapticFeedback } from '@/utils/haptics';
+import { resolveAppVersion } from '@/utils/appVersion';
 import {
   chatModelOptionKey,
   chatModelSelectionFromKey,
@@ -77,7 +78,7 @@ import {
 import toast from 'react-hot-toast';
 
 // Get version from Vite env (includes -dev suffix on dev branch)
-const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.0';
+const appVersion = resolveAppVersion() || '0.0.0';
 const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
 const DEFAULT_EMBEDDING_SETTINGS = {
   enabled: false,

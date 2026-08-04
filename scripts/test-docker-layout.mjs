@@ -45,6 +45,15 @@ test('Docker runtime includes non-hoisted backend workspace dependencies', () =>
   );
 });
 
+test('Docker runtime exposes the injected development version to backend APIs', () => {
+  const runtimeStage = dockerfile.split(/^FROM /m).at(-1);
+
+  assert.match(runtimeStage, /ARG APP_VERSION/);
+  assert.match(runtimeStage, /\.\/package\.json/);
+  assert.match(runtimeStage, /\.\/backend\/package\.json/);
+  assert.match(runtimeStage, /p\.version='\$APP_VERSION'/);
+});
+
 test('Docker workflow publishes semantic version tags from release tags', () => {
   assert.match(dockerWorkflow, /tags: \['v\*'\]/);
   assert.match(dockerWorkflow, /type=semver,pattern=\{\{version\}\}/);

@@ -39,6 +39,7 @@ import {
 import { workStatusPresentation } from '@/utils/workStatus';
 import { isWorkTaskActive } from '@/types/work';
 import { cn, formatTimestamp, isMac } from '@/utils';
+import { resolveAppVersion } from '@/utils/appVersion';
 
 const greetingKeyForHour = (hour: number): [string, string] => {
   if (hour < 5) return ['home.greeting.night', 'Up late'];
@@ -91,6 +92,7 @@ export const HomePage: React.FC = () => {
   const mod = isMac() ? '⌘' : 'Ctrl';
 
   const hasContinue = recentSessions.length > 0 || recentWork.length > 0;
+  const appVersion = resolveAppVersion(systemInfo?.version);
 
   return (
     <div
@@ -101,9 +103,12 @@ export const HomePage: React.FC = () => {
         <h1 className='text-2xl font-semibold tracking-tight text-gray-950 dark:text-dark-950'>
           {name ? `${greeting}, ${name}.` : `${greeting}.`}
         </h1>
-        <p className='mt-1 font-mono text-xs text-gray-400 dark:text-dark-500'>
+        <p
+          data-testid='app-version'
+          className='mt-1 font-mono text-xs text-gray-400 dark:text-dark-500'
+        >
           {window.location.host || 'Libre WebUI'}
-          {systemInfo?.version ? ` · v${systemInfo.version}` : ''}
+          {appVersion ? ` · v${appVersion}` : ''}
         </p>
 
         <div className='mt-8'>

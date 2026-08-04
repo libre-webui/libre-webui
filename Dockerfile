@@ -165,6 +165,13 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/backend/node_modules ./backend/node_modules
 COPY --from=prod-deps /app/package*.json ./
 
+# Keep the runtime package metadata aligned with the version injected into the
+# frontend build. The auth and diagnostics APIs read these files at startup.
+ARG APP_VERSION
+RUN if [ -n "$APP_VERSION" ]; then \
+      node -e "for (const packagePath of ['./package.json', './backend/package.json']) { const p=require(packagePath); p.version='$APP_VERSION'; require('fs').writeFileSync(packagePath, JSON.stringify(p, null, 2)); }"; \
+    fi
+
 # Copy plugins directory
 COPY plugins ./plugins
 

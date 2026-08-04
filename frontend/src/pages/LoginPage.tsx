@@ -24,8 +24,7 @@ import { LoginForm } from '@/components/LoginForm';
 import { SignupForm } from '@/components/SignupForm';
 import { Logo } from '@/components/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
-
-const appVersion = import.meta.env.VITE_APP_VERSION || '';
+import { resolveAppVersion } from '@/utils/appVersion';
 
 export const LoginPage: React.FC = () => {
   const { t } = useTranslation();
@@ -76,7 +75,7 @@ export const LoginPage: React.FC = () => {
     },
   ];
 
-  const version = systemInfo?.version || appVersion;
+  const version = resolveAppVersion(systemInfo?.version);
 
   return (
     <div className='relative min-h-screen overflow-y-auto bg-canvas text-ink'>
@@ -114,7 +113,10 @@ export const LoginPage: React.FC = () => {
             </ul>
           </div>
 
-          <p className='relative z-10 font-mono text-[11px] text-ink-subtle'>
+          <p
+            data-testid='app-version'
+            className='relative z-10 font-mono text-[11px] text-ink-subtle'
+          >
             {version ? `v${version}` : ''}
             {version ? ' · ' : ''}
             {t('auth.selfHosted', 'Self-hosted · Apache 2.0')}
