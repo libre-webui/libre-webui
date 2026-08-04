@@ -455,7 +455,9 @@
         "showUsername": "Pokaż nazwę użytkownika",
         "showUsernameDescription": "Wyświetlaj nazwę użytkownika w wiadomościach czatu",
         "followUpSuggestions": "Propozycje kontynuacji",
-        "followUpSuggestionsDescription": "Proponuj szybkie odpowiedzi po każdej odpowiedzi"
+        "followUpSuggestionsDescription": "Proponuj szybkie odpowiedzi po każdej odpowiedzi",
+        "hapticFeedback": "Wibracje haptyczne (Android)",
+        "hapticFeedbackDescription": "Używaj subtelnych wibracji przy ważnych działaniach mobilnych"
       },
       "background": {
         "title": "Obraz tła",

@@ -455,7 +455,9 @@
         "showUsername": "แสดงชื่อผู้ใช้",
         "showUsernameDescription": "แสดงชื่อผู้ใช้ในข้อความแชท",
         "followUpSuggestions": "คำแนะนำติดตามต่อ",
-        "followUpSuggestionsDescription": "แนะนำการตอบกลับด่วนหลังการตอบแต่ละครั้ง"
+        "followUpSuggestionsDescription": "แนะนำการตอบกลับด่วนหลังการตอบแต่ละครั้ง",
+        "hapticFeedback": "การตอบสนองแบบสัมผัส (Android)",
+        "hapticFeedbackDescription": "ใช้การสั่นเบา ๆ สำหรับการทำงานสำคัญบนมือถือ"
       },
       "background": {
         "title": "รูปพื้นหลัง",

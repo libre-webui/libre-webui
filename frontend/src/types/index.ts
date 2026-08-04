@@ -290,6 +290,7 @@ export interface UserPreferences {
   titleSettings?: TitleSettings;
   showUsername: boolean; // If true, show username in chat; if false, show "you"
   showFollowUpSuggestions?: boolean; // Suggest follow-up messages after responses
+  hapticFeedbackEnabled?: boolean; // Android Vibration API; unsupported platforms no-op
   workRemoteProviderDisclosureDismissed: boolean;
   backgroundSettings?: {
     enabled: boolean;

@@ -31,6 +31,7 @@ import { clearWorkTaskDrafts } from '@/utils/workDrafts';
 import { toast } from 'react-hot-toast';
 import { createLogger } from '@/utils/logger';
 import { advanceWelcomePrompt } from '@/utils/welcomePrompts';
+import { triggerHapticFeedback } from '@/utils/haptics';
 import { AvatarModal } from '@/components/sidebar/AvatarModal';
 import { SidebarHeader } from '@/components/sidebar/SidebarHeader';
 import { SidebarNavigation } from '@/components/sidebar/SidebarNavigation';
@@ -111,6 +112,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const handleToggleSidebarCompact = () => {
+    triggerHapticFeedback('selection');
+    toggleSidebarCompact();
+  };
+
   const forceWelcomeScreen = () => {
     const { setCurrentSession } = useChatStore.getState();
     advanceWelcomePrompt();
@@ -175,23 +181,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleCreateSession = () => {
+    triggerHapticFeedback('impact');
     forceWelcomeScreen();
     navigate('/chat', { replace: true });
     compactOnMobile();
   };
 
   const handleStartWork = () => {
+    triggerHapticFeedback('impact');
     useWorkStore.getState().clearError();
     navigate('/work');
     compactOnMobile();
   };
 
   const handleSelectSession = (session: ChatSession) => {
+    triggerHapticFeedback('selection');
     navigate(`/c/${session.id}`, { replace: true });
     compactOnMobile();
   };
 
   const handleSelectWorkTask = (workTaskId: string) => {
+    triggerHapticFeedback('selection');
     navigate(`/work/${workTaskId}`, { replace: true });
     compactOnMobile();
   };
@@ -211,6 +221,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ) {
       return;
     }
+
+    triggerHapticFeedback('warning');
 
     try {
       await deleteWorkTask(task.id);
@@ -240,6 +252,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     logger.debug('Delete session clicked:', sessionId);
 
     if (window.confirm(t('chat.session.deleteConfirm'))) {
+      triggerHapticFeedback('warning');
       try {
         logger.debug('Attempting to delete session:', sessionId);
         const isCurrentSession = currentSessionId === sessionId;
@@ -379,7 +392,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             activeMode={isWorkRoute ? 'work' : isChatRoute ? 'chat' : null}
             selectedModel={selectedModel}
             modelCount={models.length}
-            onToggleCompact={toggleSidebarCompact}
+            onToggleCompact={handleToggleSidebarCompact}
             onStartWork={handleStartWork}
             onCreateSession={handleCreateSession}
           />
@@ -402,7 +415,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               sidebarCompact={sidebarCompact}
               onSelectTask={handleSelectWorkTask}
               onDeleteTask={task => void handleDeleteWorkTask(task)}
-              onExpandSidebar={toggleSidebarCompact}
+              onExpandSidebar={handleToggleSidebarCompact}
             />
           ) : (
             <SidebarSessions
@@ -429,7 +442,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onMoveSession={(sessionId, folderId) =>
                 void moveSessionToFolder(sessionId, folderId)
               }
-              onExpandSidebar={toggleSidebarCompact}
+              onExpandSidebar={handleToggleSidebarCompact}
             />
           )}
 

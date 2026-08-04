@@ -455,7 +455,9 @@
         "showUsername": "Gebruikersnaam tonen",
         "showUsernameDescription": "Gebruikersnaam weergeven in chatberichten",
         "followUpSuggestions": "Vervolgsuggesties",
-        "followUpSuggestionsDescription": "Stel snelle antwoorden voor na elke reactie"
+        "followUpSuggestionsDescription": "Stel snelle antwoorden voor na elke reactie",
+        "hapticFeedback": "Haptische feedback (Android)",
+        "hapticFeedbackDescription": "Gebruik subtiele trillingen voor belangrijke mobiele acties"
       },
       "background": {
         "title": "Achtergrondafbeelding",

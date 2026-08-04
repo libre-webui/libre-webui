@@ -111,6 +111,7 @@ export const DEFAULT_DEMO_PREFERENCES: UserPreferences = {
     taskProviderId: null,
   },
   showUsername: false,
+  hapticFeedbackEnabled: false,
   workRemoteProviderDisclosureDismissed: false,
   backgroundSettings: {
     enabled: false,

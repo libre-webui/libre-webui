@@ -47,6 +47,7 @@ import { useChat } from '@/hooks/useChat';
 import { chatApi, imageGenApi } from '@/utils/api';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
+import { triggerHapticFeedback } from '@/utils/haptics';
 import { isRTL } from '@/i18n';
 import {
   chatModelOptionKey,
@@ -484,6 +485,8 @@ export const ChatPage: React.FC = () => {
       return;
     }
 
+    triggerHapticFeedback('impact');
+
     // Store the pending message in sessionStorage before creating session
     // This allows the new session page to pick it up and send it
     const pendingMessage = {
@@ -540,6 +543,7 @@ export const ChatPage: React.FC = () => {
     format?: string | Record<string, unknown>
   ) => {
     if (!currentSession) return;
+    triggerHapticFeedback('impact');
     setFollowUps(null);
     sendMessage(message, images, format);
   };

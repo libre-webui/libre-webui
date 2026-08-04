@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/appStore';
 import { generateId } from '@/utils';
 import { createLogger } from '@/utils/logger';
+import { triggerHapticFeedback } from '@/utils/haptics';
 
 const logger = createLogger('components:ui:message-code-block');
 
@@ -140,6 +141,7 @@ export function MessageCodeBlock({
 
     try {
       await navigator.clipboard.writeText(code);
+      triggerHapticFeedback('success');
       setCopiedCode(code);
 
       if (resetCopiedTimerRef.current !== null) {

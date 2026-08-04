@@ -48,6 +48,7 @@ import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { createLogger } from '@/utils/logger';
+import { triggerHapticFeedback } from '@/utils/haptics';
 
 const logger = createLogger('components:chat-message');
 
@@ -91,6 +92,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const handleCopyMessage = async () => {
     try {
       await navigator.clipboard.writeText(message.content);
+      triggerHapticFeedback('success');
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {

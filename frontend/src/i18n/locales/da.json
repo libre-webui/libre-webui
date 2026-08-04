@@ -455,7 +455,9 @@
         "showUsername": "Vis brugernavn",
         "showUsernameDescription": "Vis brugernavn i chatbeskeder",
         "followUpSuggestions": "Opfølgningsforslag",
-        "followUpSuggestionsDescription": "Foreslå hurtige svar efter hvert svar"
+        "followUpSuggestionsDescription": "Foreslå hurtige svar efter hvert svar",
+        "hapticFeedback": "Haptisk feedback (Android)",
+        "hapticFeedbackDescription": "Brug diskrete vibrationer til vigtige mobilhandlinger"
       },
       "background": {
         "title": "Baggrundsbillede",

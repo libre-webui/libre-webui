@@ -455,7 +455,9 @@
         "showUsername": "Sýna notandanafn",
         "showUsernameDescription": "Birta notandanafn í spjallskilaboðum",
         "followUpSuggestions": "Framhaldstillögur",
-        "followUpSuggestionsDescription": "Stinga upp á snöggum svörum eftir hvert svar"
+        "followUpSuggestionsDescription": "Stinga upp á snöggum svörum eftir hvert svar",
+        "hapticFeedback": "Snertiviðbrögð (Android)",
+        "hapticFeedbackDescription": "Nota vægan titring fyrir mikilvægar aðgerðir í síma"
       },
       "background": {
         "title": "Bakgrunnsmynd",

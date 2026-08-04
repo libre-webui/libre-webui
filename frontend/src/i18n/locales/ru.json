@@ -455,7 +455,9 @@
         "showUsername": "Показывать имя пользователя",
         "showUsernameDescription": "Отображать имя пользователя в сообщениях чата",
         "followUpSuggestions": "Подсказки для продолжения",
-        "followUpSuggestionsDescription": "Предлагать быстрые ответы после каждого ответа"
+        "followUpSuggestionsDescription": "Предлагать быстрые ответы после каждого ответа",
+        "hapticFeedback": "Тактильная отдача (Android)",
+        "hapticFeedbackDescription": "Использовать лёгкую вибрацию для важных действий на мобильном устройстве"
       },
       "background": {
         "title": "Фоновое изображение",

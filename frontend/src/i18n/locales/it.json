@@ -455,7 +455,9 @@
         "showUsername": "Mostra nome utente",
         "showUsernameDescription": "Visualizza nome utente nei messaggi chat",
         "followUpSuggestions": "Suggerimenti di follow-up",
-        "followUpSuggestionsDescription": "Suggerisci risposte rapide dopo ogni risposta"
+        "followUpSuggestionsDescription": "Suggerisci risposte rapide dopo ogni risposta",
+        "hapticFeedback": "Feedback aptico (Android)",
+        "hapticFeedbackDescription": "Usa vibrazioni discrete per le azioni mobili importanti"
       },
       "background": {
         "title": "Immagine di sfondo",

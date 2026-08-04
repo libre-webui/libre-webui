@@ -455,7 +455,9 @@
         "showUsername": "Zobrazit uživatelské jméno",
         "showUsernameDescription": "Zobrazovat uživatelské jméno ve zprávách chatu",
         "followUpSuggestions": "Návrhy pokračování",
-        "followUpSuggestionsDescription": "Po každé odpovědi navrhnout rychlé reakce"
+        "followUpSuggestionsDescription": "Po každé odpovědi navrhnout rychlé reakce",
+        "hapticFeedback": "Haptická odezva (Android)",
+        "hapticFeedbackDescription": "Použít jemné vibrace pro důležité mobilní akce"
       },
       "background": {
         "title": "Obrázek pozadí",

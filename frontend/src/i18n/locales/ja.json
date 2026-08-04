@@ -455,7 +455,9 @@
         "showUsername": "ユーザー名を表示",
         "showUsernameDescription": "チャットメッセージにユーザー名を表示",
         "followUpSuggestions": "フォローアップ提案",
-        "followUpSuggestionsDescription": "各回答の後にクイック返信を提案します"
+        "followUpSuggestionsDescription": "各回答の後にクイック返信を提案します",
+        "hapticFeedback": "触覚フィードバック (Android)",
+        "hapticFeedbackDescription": "モバイルの重要な操作で控えめな振動を使用します"
       },
       "background": {
         "title": "背景画像",

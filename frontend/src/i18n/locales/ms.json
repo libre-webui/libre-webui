@@ -455,7 +455,9 @@
         "showUsername": "Tunjukkan Nama Pengguna",
         "showUsernameDescription": "Paparkan nama pengguna dalam mesej sembang",
         "followUpSuggestions": "Cadangan susulan",
-        "followUpSuggestionsDescription": "Cadangkan balasan pantas selepas setiap respons"
+        "followUpSuggestionsDescription": "Cadangkan balasan pantas selepas setiap respons",
+        "hapticFeedback": "Maklum balas haptik (Android)",
+        "hapticFeedbackDescription": "Gunakan getaran halus untuk tindakan mudah alih penting"
       },
       "background": {
         "title": "Imej Latar Belakang",

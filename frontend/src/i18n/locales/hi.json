@@ -455,7 +455,9 @@
         "showUsername": "उपयोगकर्ता नाम दिखाएं",
         "showUsernameDescription": "चैट संदेशों में उपयोगकर्ता नाम प्रदर्शित करें",
         "followUpSuggestions": "फ़ॉलो-अप सुझाव",
-        "followUpSuggestionsDescription": "हर उत्तर के बाद त्वरित जवाब सुझाएँ"
+        "followUpSuggestionsDescription": "हर उत्तर के बाद त्वरित जवाब सुझाएँ",
+        "hapticFeedback": "हैप्टिक फ़ीडबैक (Android)",
+        "hapticFeedbackDescription": "महत्वपूर्ण मोबाइल क्रियाओं के लिए हल्के कंपन का उपयोग करें"
       },
       "background": {
         "title": "पृष्ठभूमि छवि",

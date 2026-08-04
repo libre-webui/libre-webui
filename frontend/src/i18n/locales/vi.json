@@ -455,7 +455,9 @@
         "showUsername": "Hiển thị tên người dùng",
         "showUsernameDescription": "Hiển thị tên người dùng trong tin nhắn trò chuyện",
         "followUpSuggestions": "Gợi ý tiếp theo",
-        "followUpSuggestionsDescription": "Gợi ý câu trả lời nhanh sau mỗi phản hồi"
+        "followUpSuggestionsDescription": "Gợi ý câu trả lời nhanh sau mỗi phản hồi",
+        "hapticFeedback": "Phản hồi xúc giác (Android)",
+        "hapticFeedbackDescription": "Dùng rung nhẹ cho các thao tác quan trọng trên thiết bị di động"
       },
       "background": {
         "title": "Hình nền",

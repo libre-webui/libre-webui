@@ -101,6 +101,7 @@ class PreferencesService {
     },
     showUsername: false, // Default to showing "you" instead of username
     showFollowUpSuggestions: true, // Suggest follow-up messages after responses
+    hapticFeedbackEnabled: false,
     workRemoteProviderDisclosureDismissed: false,
   };
 

@@ -455,7 +455,9 @@
         "showUsername": "Kullanıcı Adını Göster",
         "showUsernameDescription": "Sohbet mesajlarında kullanıcı adını görüntüle",
         "followUpSuggestions": "Devam önerileri",
-        "followUpSuggestionsDescription": "Her yanıttan sonra hızlı yanıtlar öner"
+        "followUpSuggestionsDescription": "Her yanıttan sonra hızlı yanıtlar öner",
+        "hapticFeedback": "Dokunsal geri bildirim (Android)",
+        "hapticFeedbackDescription": "Önemli mobil işlemler için hafif titreşim kullan"
       },
       "background": {
         "title": "Arka Plan Görseli",

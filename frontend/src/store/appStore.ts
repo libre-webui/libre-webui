@@ -207,6 +207,7 @@ export const useAppStore = create<AppState>()(
           taskProviderId: null,
         },
         showUsername: false, // Default to showing "you" instead of username
+        hapticFeedbackEnabled: false,
         workRemoteProviderDisclosureDismissed: false,
         backgroundSettings: {
           enabled: false,

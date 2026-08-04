@@ -455,7 +455,9 @@
         "showUsername": "إظهار اسم المستخدم",
         "showUsernameDescription": "عرض اسم المستخدم في رسائل المحادثة",
         "followUpSuggestions": "اقتراحات المتابعة",
-        "followUpSuggestionsDescription": "اقتراح ردود سريعة بعد كل استجابة"
+        "followUpSuggestionsDescription": "اقتراح ردود سريعة بعد كل استجابة",
+        "hapticFeedback": "ردود فعل لمسية (Android)",
+        "hapticFeedbackDescription": "استخدام اهتزاز خفيف للإجراءات المهمة على الهاتف"
       },
       "background": {
         "title": "صورة الخلفية",

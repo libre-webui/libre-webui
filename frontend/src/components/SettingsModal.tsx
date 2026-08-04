@@ -49,6 +49,7 @@ import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
 import { EmbeddingModel, Theme } from '@/types';
 import { normalizeTheme } from '@/utils/theme';
+import { triggerHapticFeedback } from '@/utils/haptics';
 import {
   chatModelOptionKey,
   chatModelSelectionFromKey,
@@ -970,6 +971,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       });
   };
 
+  const handleHapticFeedbackChange = (hapticFeedbackEnabled: boolean) => {
+    setPreferences({ hapticFeedbackEnabled });
+    if (hapticFeedbackEnabled) triggerHapticFeedback('selection');
+    preferencesApi.updatePreferences({ hapticFeedbackEnabled }).catch(error => {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to update settings: ' + errorMessage);
+    });
+  };
+
   const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     if (!event.target.value) {
       useChatStore.setState({
@@ -1310,6 +1321,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onAdaptToAccentChange={handleAdaptToAccentChange}
             onShowUsernameChange={handleShowUsernameChange}
             onShowFollowUpsChange={handleShowFollowUpsChange}
+            onHapticFeedbackChange={handleHapticFeedbackChange}
           />
         );
 

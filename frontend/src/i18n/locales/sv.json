@@ -455,7 +455,9 @@
         "showUsername": "Visa användarnamn",
         "showUsernameDescription": "Visa användarnamn i chattmeddelanden",
         "followUpSuggestions": "Uppföljningsförslag",
-        "followUpSuggestionsDescription": "Föreslå snabba svar efter varje svar"
+        "followUpSuggestionsDescription": "Föreslå snabba svar efter varje svar",
+        "hapticFeedback": "Haptisk återkoppling (Android)",
+        "hapticFeedbackDescription": "Använd diskreta vibrationer för viktiga mobilåtgärder"
       },
       "background": {
         "title": "Bakgrundsbild",

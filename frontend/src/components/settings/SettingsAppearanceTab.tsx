@@ -36,6 +36,7 @@ interface SettingsAppearanceTabProps {
   onAdaptToAccentChange: (adaptToAccent: boolean) => void;
   onShowUsernameChange: (showUsername: boolean) => void;
   onShowFollowUpsChange: (showFollowUpSuggestions: boolean) => void;
+  onHapticFeedbackChange: (hapticFeedbackEnabled: boolean) => void;
 }
 
 export function SettingsAppearanceTab({
@@ -47,6 +48,7 @@ export function SettingsAppearanceTab({
   onAdaptToAccentChange,
   onShowUsernameChange,
   onShowFollowUpsChange,
+  onHapticFeedbackChange,
 }: SettingsAppearanceTabProps) {
   const { t } = useTranslation();
   const activeAccent = theme.accent || DEFAULT_ACCENT;
@@ -254,6 +256,38 @@ export function SettingsAppearanceTab({
                 onChange={event => onShowFollowUpsChange(event.target.checked)}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+            </label>
+          </div>
+          <div className='flex items-center justify-between gap-4'>
+            <div className='flex flex-col'>
+              <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                {t('settings.appearance.chatInterface.hapticFeedback', {
+                  defaultValue: 'Haptic feedback (Android)',
+                })}
+              </span>
+              <span className='text-xs text-gray-500 dark:text-gray-400'>
+                {t(
+                  'settings.appearance.chatInterface.hapticFeedbackDescription',
+                  {
+                    defaultValue:
+                      'Use subtle vibration for important mobile actions',
+                  }
+                )}
+              </span>
+            </div>
+            <label className='relative inline-flex shrink-0 cursor-pointer items-center'>
+              <input
+                type='checkbox'
+                data-testid='haptic-feedback-toggle'
+                aria-label={t(
+                  'settings.appearance.chatInterface.hapticFeedback',
+                  { defaultValue: 'Haptic feedback (Android)' }
+                )}
+                className='peer sr-only'
+                checked={preferences.hapticFeedbackEnabled === true}
+                onChange={event => onHapticFeedbackChange(event.target.checked)}
+              />
+              <div className="peer h-6 w-11 rounded-full bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 peer-checked:bg-primary-600 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:content-[''] after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-primary-800 rtl:peer-checked:after:-translate-x-full"></div>
             </label>
           </div>
         </div>
