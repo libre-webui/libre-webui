@@ -23,6 +23,22 @@ test.use({
   isMobile: true,
 });
 
+const mobileSession = {
+  id: 'mobile-readable-session',
+  title: 'Readable mobile conversation',
+  model: 'llama3.2:3b',
+  messages: [
+    {
+      id: 'mobile-readable-message',
+      role: 'user' as const,
+      content: 'Keep this conversation preview off small screens.',
+      timestamp: Date.now(),
+    },
+  ],
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+};
+
 test('mobile navigation compacts the sidebar and pushes content aside', async ({
   page,
 }) => {
@@ -51,6 +67,50 @@ test('mobile navigation compacts the sidebar and pushes content aside', async ({
     .toBeGreaterThan(50);
 });
 
+test('mobile sidebar keeps titles readable without hover previews', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, { sessions: [mobileSession] });
+
+  await page.goto('/chat');
+
+  const sidebar = page.getByTestId('sidebar');
+  const sidebarBox = await sidebar.boundingBox();
+  expect(sidebarBox).not.toBeNull();
+  expect(sidebarBox!.width).toBeGreaterThanOrEqual(290);
+
+  await expect(sidebar.getByText(/Libre/).first()).toBeVisible();
+  const sessionTitle = sidebar.getByText(mobileSession.title, { exact: true });
+  await expect(sessionTitle).toBeVisible();
+
+  const titleBox = await sessionTitle.boundingBox();
+  expect(titleBox).not.toBeNull();
+  expect(titleBox!.width).toBeGreaterThan(120);
+
+  await sessionTitle.hover();
+  await page.waitForTimeout(650);
+  await expect(page.getByRole('tooltip')).toHaveCount(0);
+
+  await page.getByTestId('sidebar-session-actions-mobile').click();
+  const actionSheet = page.getByTestId('sidebar-session-actions-sheet');
+  await expect(actionSheet).toBeVisible();
+  await expect(actionSheet.getByText(mobileSession.title)).toBeVisible();
+  await actionSheet.getByRole('button', { name: 'Close' }).click();
+  await expect(actionSheet).toBeHidden();
+  await expect(page.getByRole('tooltip')).toHaveCount(0);
+
+  const chatsButton = page.getByTestId('sidebar-mobile-chats');
+  await expect(chatsButton).toBeVisible();
+  await expect(chatsButton).toHaveAccessibleName(/Chats \(1\)/);
+  await expect(sessionTitle).toBeHidden();
+
+  await chatsButton.click();
+  await expect(sessionTitle).toBeVisible();
+  await expect
+    .poll(async () => (await sidebar.boundingBox())?.width ?? 0)
+    .toBeGreaterThan(290);
+});
+
 test('Arabic mobile navigation mirrors the sidebar and content offset', async ({
   page,
 }) => {
@@ -74,9 +134,9 @@ test('Arabic mobile navigation mirrors the sidebar and content offset', async ({
   await page.waitForURL('**/models');
 
   await expect
-    // Compact sidebar is w-18 (4.5rem) against the app's 15px root font.
+    // Compact rail is w-20 (5rem) against the app's 15px root font.
     .poll(async () => (await sidebar.boundingBox())?.width ?? 0)
-    .toBeCloseTo(67.5, 0);
+    .toBeCloseTo(75, 0);
 
   await expect
     .poll(async () => {

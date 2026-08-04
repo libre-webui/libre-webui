@@ -82,13 +82,19 @@ export function SidebarNavigation({
               aria-label={label}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex items-center justify-center rounded-xl transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
+                'relative flex items-center justify-center rounded-xl transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
                 sidebarCompact ? 'h-11 w-11' : 'h-9 flex-1',
                 active
-                  ? 'bg-white text-gray-950 ring-1 ring-black/[0.04] dark:bg-dark-200 dark:text-dark-950 dark:ring-white/[0.06]'
+                  ? 'bg-primary-500/10 text-primary-700 ring-1 ring-primary-500/10 dark:bg-primary-500/15 dark:text-primary-300 dark:ring-primary-400/10'
                   : 'text-gray-500 hover:bg-white/60 hover:text-gray-950 dark:text-dark-600 dark:hover:bg-dark-200/60 dark:hover:text-dark-950'
               )}
             >
+              {sidebarCompact && active && (
+                <span
+                  aria-hidden='true'
+                  className='absolute -start-2 h-5 w-0.5 rounded-full bg-primary-500 shadow-[0_0_12px_rgb(var(--color-primary-500)/0.55)]'
+                />
+              )}
               <Icon className='h-[18px] w-[18px] shrink-0' />
             </Link>
           );

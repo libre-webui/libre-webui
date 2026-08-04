@@ -29,6 +29,17 @@ interface SidebarWorkTasksProps {
   sidebarCompact: boolean;
   onSelectTask: (taskId: string) => void;
   onDeleteTask: (task: WorkTaskSummary) => void;
+  onExpandSidebar: () => void;
+}
+
+function compactMonogram(title: string) {
+  const words = title.trim().split(/\s+/u).filter(Boolean);
+  if (words.length === 0) return '•';
+  if (words.length === 1) {
+    return Array.from(words[0]).slice(0, 2).join('').toLocaleUpperCase();
+  }
+
+  return `${Array.from(words[0])[0]}${Array.from(words[words.length - 1])[0]}`.toLocaleUpperCase();
 }
 
 export function SidebarWorkTasks({
@@ -39,8 +50,13 @@ export function SidebarWorkTasks({
   sidebarCompact,
   onSelectTask,
   onDeleteTask,
+  onExpandSidebar,
 }: SidebarWorkTasksProps) {
   const { t, i18n } = useTranslation();
+  const sortedTasks = [...tasks].sort(
+    (first, second) => second.updatedAt - first.updatedAt
+  );
+  const compactTasks = sortedTasks;
 
   return (
     <div
@@ -60,7 +76,77 @@ export function SidebarWorkTasks({
           </div>
         )}
 
-        {loading && tasks.length === 0 ? (
+        {sidebarCompact ? (
+          <div className='flex flex-col items-center gap-1'>
+            <button
+              type='button'
+              onClick={onExpandSidebar}
+              data-testid='sidebar-mobile-work-tasks'
+              aria-label={`${t('work.tasks.title', { defaultValue: 'Work tasks' })} (${tasks.length})`}
+              title={t('work.tasks.title', { defaultValue: 'Work tasks' })}
+              className='relative flex h-12 w-12 items-center justify-center rounded-xl text-gray-500 outline-none transition-colors hover:bg-white/70 hover:text-gray-950 focus-visible:ring-2 focus-visible:ring-primary-500/30 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 md:hidden'
+            >
+              <Briefcase className='h-[18px] w-[18px]' />
+              {tasks.length > 0 && (
+                <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'>
+                  {tasks.length > 99 ? '99+' : tasks.length}
+                </span>
+              )}
+            </button>
+
+            <div
+              data-testid='sidebar-compact-work-task-list'
+              className='flex w-full flex-col items-center gap-1'
+            >
+              {compactTasks.map(task => {
+                const selected = currentTaskId === task.id;
+                const status = workStatusPresentation[task.status];
+                const taskTitle =
+                  task.title ||
+                  t('work.tasks.untitled', {
+                    defaultValue: 'Untitled task',
+                  });
+                return (
+                  <button
+                    type='button'
+                    key={task.id}
+                    onClick={() => onSelectTask(task.id)}
+                    data-testid='sidebar-compact-work-task'
+                    aria-current={selected ? 'page' : undefined}
+                    aria-label={taskTitle}
+                    title={taskTitle}
+                    className={cn(
+                      'relative flex h-12 w-12 items-center justify-center rounded-xl outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-500/30',
+                      selected
+                        ? 'bg-primary-500/10 text-primary-700 ring-1 ring-primary-500/10 dark:bg-primary-500/15 dark:text-primary-300 dark:ring-primary-400/10'
+                        : 'text-gray-500 hover:bg-white/70 hover:text-gray-950 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950'
+                    )}
+                  >
+                    {selected && (
+                      <span
+                        aria-hidden='true'
+                        className='absolute -start-2 h-5 w-0.5 rounded-full bg-primary-500 shadow-[0_0_12px_rgb(var(--color-primary-500)/0.55)]'
+                      />
+                    )}
+                    <span className='font-mono text-[11px] font-semibold tracking-[-0.03em]'>
+                      {compactMonogram(taskTitle)}
+                    </span>
+                    <span
+                      aria-hidden='true'
+                      className={cn(
+                        'absolute bottom-1.5 end-1.5 h-2 w-2 rounded-full border-2 border-gray-100 dark:border-dark-50',
+                        status.animated && 'animate-pulse',
+                        task.status === 'idle' &&
+                          'ring-1 ring-black/20 dark:ring-white/20'
+                      )}
+                      style={{ backgroundColor: status.color }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : loading && tasks.length === 0 ? (
           <div
             role='status'
             aria-live='polite'

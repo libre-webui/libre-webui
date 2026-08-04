@@ -101,7 +101,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const currentSessionIdFromUrl =
     location.pathname.match(/^\/c\/([^/]+)$/)?.[1] || null;
-  const currentSessionId = currentSession?.id || currentSessionIdFromUrl;
+  // The URL changes before the newly selected session finishes loading into
+  // the store, so it must be the source of truth for the active rail item.
+  const currentSessionId = currentSessionIdFromUrl || currentSession?.id;
 
   const compactOnMobile = () => {
     if (window.innerWidth < 768 && !sidebarCompact) {
@@ -345,7 +347,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         data-testid='sidebar'
         className={cn(
           'fixed inset-y-0 start-0 z-50 border-e border-black/[0.06] dark:border-white/[0.06] transform transition-[width,transform,background-color] duration-200 ease-out shadow-[0_24px_80px_rgba(15,23,42,0.12)]',
-          sidebarCompact ? 'w-18' : 'w-72 max-sm:w-64',
+          sidebarCompact
+            ? 'w-20'
+            : 'w-72 max-sm:w-[calc(100vw-4.5rem)] max-sm:max-w-80',
           isOpen
             ? 'translate-x-0'
             : 'ltr:-translate-x-full rtl:translate-x-full',
@@ -380,12 +384,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onCreateSession={handleCreateSession}
           />
 
-          <SidebarNavigation
-            sidebarCompact={sidebarCompact}
-            activePath={location.pathname}
-            showAgents={showWork}
-            onMobileNavigate={compactOnMobile}
-          />
+          {!sidebarCompact && (
+            <SidebarNavigation
+              sidebarCompact={sidebarCompact}
+              activePath={location.pathname}
+              showAgents={showWork}
+              onMobileNavigate={compactOnMobile}
+            />
+          )}
 
           {isWorkRoute && showWork ? (
             <SidebarWorkTasks
@@ -396,6 +402,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               sidebarCompact={sidebarCompact}
               onSelectTask={handleSelectWorkTask}
               onDeleteTask={task => void handleDeleteWorkTask(task)}
+              onExpandSidebar={toggleSidebarCompact}
             />
           ) : (
             <SidebarSessions
@@ -422,6 +429,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onMoveSession={(sessionId, folderId) =>
                 void moveSessionToFolder(sessionId, folderId)
               }
+              onExpandSidebar={toggleSidebarCompact}
             />
           )}
 

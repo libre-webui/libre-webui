@@ -26,6 +26,7 @@ import {
   Home,
   ListX,
   MessageSquare,
+  NotebookPen,
   Package,
   PanelRightClose,
   Plus,
@@ -51,6 +52,7 @@ import {
 type IconComponent = React.ComponentType<{ className?: string }>;
 
 const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> = {
+  '/notes': { icon: NotebookPen, labelKey: 'sidebar.navigation.notes' },
   '/models': { icon: Database, labelKey: 'sidebar.navigation.models' },
   '/personas': { icon: UserIcon, labelKey: 'sidebar.navigation.personas' },
   '/gallery': { icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
@@ -101,6 +103,12 @@ interface TabContextMenuState {
   y: number;
 }
 
+interface NewTabMenuPosition {
+  left: number;
+  top: number;
+  width: number;
+}
+
 export const AppTabBar: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -115,10 +123,14 @@ export const AppTabBar: React.FC = () => {
   const workTasks = useWorkStore(state => state.tasks);
   const { systemInfo, isAdmin } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<NewTabMenuPosition | null>(
+    null
+  );
   const [contextMenu, setContextMenu] = useState<TabContextMenuState | null>(
     null
   );
   const menuRef = useRef<HTMLDivElement>(null);
+  const newTabButtonRef = useRef<HTMLButtonElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
 
@@ -173,6 +185,43 @@ export const AppTabBar: React.FC = () => {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [contextMenu, menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const positionMenu = () => {
+      const button = newTabButtonRef.current;
+      if (!button) return;
+
+      const buttonRect = button.getBoundingClientRect();
+      const contentRect = button
+        .closest<HTMLElement>('[data-testid="app-shell-content"]')
+        ?.getBoundingClientRect();
+      const boundaryLeft = contentRect?.left ?? 0;
+      const boundaryRight = contentRect?.right ?? window.innerWidth;
+      const viewportPadding = 8;
+      const leftLimit = boundaryLeft + viewportPadding;
+      const rightLimit = boundaryRight - viewportPadding;
+      const width = Math.max(0, Math.min(224, rightLimit - leftLimit));
+      const roomOnRight = rightLimit - buttonRect.left;
+      const preferredLeft =
+        roomOnRight >= width ? buttonRect.left : buttonRect.right - width;
+      const left = Math.max(
+        leftLimit,
+        Math.min(preferredLeft, rightLimit - width)
+      );
+
+      setMenuPosition({
+        left,
+        top: buttonRect.bottom + 4,
+        width,
+      });
+    };
+
+    positionMenu();
+    window.addEventListener('resize', positionMenu);
+    return () => window.removeEventListener('resize', positionMenu);
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -315,7 +364,7 @@ export const AppTabBar: React.FC = () => {
           },
         ]
       : []),
-    ...['/models', '/personas', '/gallery'].map(path => ({
+    ...['/notes', '/models', '/personas', '/gallery'].map(path => ({
       key: path,
       label: t(PAGE_META[path].labelKey, path.slice(1)),
       icon: PAGE_META[path].icon,
@@ -496,6 +545,7 @@ export const AppTabBar: React.FC = () => {
 
       <div className='relative flex-none' ref={menuRef}>
         <button
+          ref={newTabButtonRef}
           type='button'
           aria-label={t('tabs.new', 'New tab')}
           aria-expanded={menuOpen}
@@ -505,11 +555,12 @@ export const AppTabBar: React.FC = () => {
         >
           <Plus className='h-4 w-4' />
         </button>
-        {menuOpen && (
+        {menuOpen && menuPosition && (
           <div
             role='menu'
             data-testid='app-tab-new-menu'
-            className='absolute start-0 top-full z-50 mt-1 w-56 rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
+            className='fixed z-50 max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
+            style={menuPosition}
           >
             {menuItems.map(item => (
               <React.Fragment key={item.key}>

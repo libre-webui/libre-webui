@@ -24,6 +24,7 @@ import {
   Database,
   Ghost,
   MessageSquare,
+  NotebookPen,
   Sparkles,
   User as UserIcon,
 } from 'lucide-react';
@@ -231,6 +232,7 @@ export const HomePage: React.FC = () => {
           <div className='-mx-2.5 flex flex-col'>
             {(
               [
+                ['/notes', NotebookPen, t('sidebar.navigation.notes', 'Notes')],
                 ['/models', Database, t('sidebar.navigation.models', 'Models')],
                 [
                   '/personas',

@@ -132,7 +132,7 @@ const SidebarLayoutSpacer: React.FC<{ isOpen: boolean; compact: boolean }> = ({
     aria-hidden='true'
     className={cn(
       'hidden lg:block flex-shrink-0 transition-[width] duration-200 ease-out',
-      isOpen ? (compact ? 'w-18' : 'w-72') : 'w-0'
+      isOpen ? (compact ? 'w-20' : 'w-72') : 'w-0'
     )}
   />
 );
@@ -177,7 +177,7 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
         // Mobile behavior:
         // - Compact sidebar: push content away to avoid overlap
         // - Expanded sidebar: overlay (no transform)
-        sidebarOpen && sidebarCompact ? 'max-lg:ms-18' : 'max-lg:ms-0',
+        sidebarOpen && sidebarCompact ? 'max-lg:ms-20' : 'max-lg:ms-0',
         hasBackground ? 'bg-white/10 dark:bg-dark-50/10' : 'bg-transparent'
       )}
     >

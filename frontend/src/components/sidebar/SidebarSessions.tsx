@@ -28,6 +28,7 @@ import {
   FolderInput,
   FolderPlus,
   MessageSquare,
+  MoreHorizontal,
   Trash2,
   X,
 } from 'lucide-react';
@@ -55,6 +56,7 @@ interface SidebarSessionsProps {
   onRenameFolder?: (folderId: string, name: string) => void;
   onDeleteFolder?: (folderId: string) => void;
   onMoveSession?: (sessionId: string, folderId: string | null) => void;
+  onExpandSidebar: () => void;
 }
 
 type SessionGroupKey =
@@ -84,6 +86,16 @@ const GROUP_ORDER: SessionGroupKey[] = [
   'older',
 ];
 
+function compactMonogram(title: string) {
+  const words = title.trim().split(/\s+/u).filter(Boolean);
+  if (words.length === 0) return '•';
+  if (words.length === 1) {
+    return Array.from(words[0]).slice(0, 2).join('').toLocaleUpperCase();
+  }
+
+  return `${Array.from(words[0])[0]}${Array.from(words[words.length - 1])[0]}`.toLocaleUpperCase();
+}
+
 interface HoverPreviewState {
   session: ChatSession;
   top: number;
@@ -103,7 +115,7 @@ function SessionHoverPreview({ preview }: { preview: HoverPreviewState }) {
   return createPortal(
     <div
       role='tooltip'
-      className='pointer-events-none fixed z-[70] w-72 rounded-2xl border border-black/[0.07] bg-surface/95 p-3.5 shadow-[0_16px_48px_rgba(15,23,42,0.18)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'
+      className='pointer-events-none fixed z-[70] hidden w-72 rounded-2xl border border-black/[0.07] bg-surface/95 p-3.5 shadow-[0_16px_48px_rgba(15,23,42,0.18)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95 md:block'
       style={{
         top: Math.max(8, Math.min(preview.top, window.innerHeight - 220)),
         left: preview.left,
@@ -163,12 +175,19 @@ export function SidebarSessions({
   onRenameFolder,
   onDeleteFolder,
   onMoveSession,
+  onExpandSidebar,
 }: SidebarSessionsProps) {
   const { t, i18n } = useTranslation();
   const [hoverPreview, setHoverPreview] = useState<HoverPreviewState | null>(
     null
   );
+  const [mobileActionSessionId, setMobileActionSessionId] = useState<
+    string | null
+  >(null);
   const hoverTimerRef = useRef<number | null>(null);
+  const mobileActionSession = mobileActionSessionId
+    ? (sessions.find(session => session.id === mobileActionSessionId) ?? null)
+    : null;
 
   useEffect(
     () => () => {
@@ -188,7 +207,10 @@ export function SidebarSessions({
   };
 
   const scheduleHoverPreview = (session: ChatSession, element: HTMLElement) => {
-    if (sidebarCompact) return;
+    const canHover = window.matchMedia(
+      '(hover: hover) and (pointer: fine)'
+    ).matches;
+    if (sidebarCompact || window.innerWidth < 768 || !canHover) return;
     if (hoverTimerRef.current !== null) {
       window.clearTimeout(hoverTimerRef.current);
     }
@@ -261,6 +283,10 @@ export function SidebarSessions({
       ),
     })).filter(group => group.sessions.length > 0),
   ];
+  const recentSessions = [...sessions].sort(
+    (first, second) => second.updatedAt - first.updatedAt
+  );
+  const compactSessions = recentSessions;
 
   return (
     <div
@@ -312,7 +338,64 @@ export function SidebarSessions({
             />
           </div>
         )}
-        {sessions.length === 0 ? (
+        {sidebarCompact ? (
+          <div className='flex flex-col items-center gap-1'>
+            <button
+              type='button'
+              onClick={onExpandSidebar}
+              data-testid='sidebar-mobile-chats'
+              aria-label={`${t('chat.session.chats')} (${sessions.length})`}
+              title={t('chat.session.chats')}
+              className='relative flex h-12 w-12 items-center justify-center rounded-xl text-gray-500 outline-none transition-colors hover:bg-white/70 hover:text-gray-950 focus-visible:ring-2 focus-visible:ring-primary-500/30 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 md:hidden'
+            >
+              <MessageSquare className='h-[18px] w-[18px]' />
+              {sessions.length > 0 && (
+                <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'>
+                  {sessions.length > 99 ? '99+' : sessions.length}
+                </span>
+              )}
+            </button>
+
+            <div
+              data-testid='sidebar-compact-session-list'
+              className='flex w-full flex-col items-center gap-1'
+            >
+              {compactSessions.map(session => {
+                const isActive = currentSessionId === session.id;
+                return (
+                  <button
+                    type='button'
+                    key={session.id}
+                    onClick={() => onSelectSession(session)}
+                    data-testid='sidebar-compact-session'
+                    aria-current={isActive ? 'page' : undefined}
+                    aria-label={session.title}
+                    title={session.title}
+                    className={cn(
+                      'relative flex h-12 w-12 items-center justify-center rounded-xl outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-500/30',
+                      isActive
+                        ? 'bg-gray-950 text-white ring-1 ring-black/10 shadow-[0_8px_24px_-14px_rgba(0,0,0,0.7)] dark:bg-white dark:text-gray-950 dark:ring-white/20 dark:shadow-[0_8px_24px_-14px_rgba(255,255,255,0.45)]'
+                        : 'text-gray-500 hover:bg-white/70 hover:text-gray-950 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950'
+                    )}
+                  >
+                    {isActive && (
+                      <span
+                        aria-hidden='true'
+                        className='absolute -start-2 h-5 w-0.5 rounded-full bg-gray-950 shadow-[0_0_10px_rgba(0,0,0,0.35)] dark:bg-white dark:shadow-[0_0_10px_rgba(255,255,255,0.35)]'
+                      />
+                    )}
+                    <span className='font-mono text-[11px] font-semibold tracking-[-0.03em]'>
+                      {compactMonogram(session.title)}
+                    </span>
+                    {generatingTitleForSession === session.id && (
+                      <span className='absolute end-1.5 top-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-primary-500' />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : sessions.length === 0 ? (
           <div
             className={cn('text-center py-8', sidebarCompact ? 'px-1' : 'px-2')}
           >
@@ -445,7 +528,10 @@ export function SidebarSessions({
                               ? 'bg-white ring-1 ring-black/[0.04] dark:bg-dark-200 dark:ring-white/[0.05]'
                               : 'hover:bg-white/60 dark:hover:bg-dark-200/60'
                           )}
-                          onClick={() => onSelectSession(session)}
+                          onClick={() => {
+                            clearHoverPreview();
+                            onSelectSession(session);
+                          }}
                           onMouseEnter={event =>
                             scheduleHoverPreview(session, event.currentTarget)
                           }
@@ -614,7 +700,23 @@ export function SidebarSessions({
                                 </div>
                               </div>
 
-                              <div className='flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity duration-150 shrink-0'>
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={event => {
+                                  event.stopPropagation();
+                                  clearHoverPreview();
+                                  setMobileActionSessionId(session.id);
+                                }}
+                                className='h-8 w-8 shrink-0 rounded-lg p-0 touch-manipulation sm:hidden'
+                                title={t('palette.actions')}
+                                aria-label={t('palette.actions')}
+                                data-testid='sidebar-session-actions-mobile'
+                              >
+                                <MoreHorizontal className='h-4 w-4' />
+                              </Button>
+
+                              <div className='hidden shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 sm:flex'>
                                 <Button
                                   variant='ghost'
                                   size='sm'
@@ -723,6 +825,118 @@ export function SidebarSessions({
         )}
       </div>
       {hoverPreview && <SessionHoverPreview preview={hoverPreview} />}
+      {mobileActionSession &&
+        createPortal(
+          <div className='fixed inset-0 z-[80] sm:hidden'>
+            <button
+              type='button'
+              className='absolute inset-0 bg-black/35 backdrop-blur-[2px]'
+              onClick={() => setMobileActionSessionId(null)}
+              aria-label={t('common.close')}
+            />
+            <div
+              role='dialog'
+              aria-modal='true'
+              aria-label={t('palette.actions')}
+              className='absolute inset-x-3 bottom-3 rounded-2xl border border-black/[0.08] bg-surface p-2 shadow-[0_20px_70px_rgba(0,0,0,0.3)] dark:border-white/[0.09] dark:bg-dark-100'
+              data-testid='sidebar-session-actions-sheet'
+            >
+              <div className='flex items-center justify-between gap-3 px-2 pb-2 pt-1'>
+                <p className='min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-dark-900'>
+                  {mobileActionSession.title}
+                </p>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => setMobileActionSessionId(null)}
+                  className='h-9 w-9 shrink-0 rounded-xl p-0'
+                  title={t('common.close')}
+                  aria-label={t('common.close')}
+                >
+                  <X className='h-4 w-4' />
+                </Button>
+              </div>
+
+              <button
+                type='button'
+                onClick={event => {
+                  setMobileActionSessionId(null);
+                  onStartEditing(mobileActionSession, event);
+                }}
+                className='flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+              >
+                <Edit3 className='h-4 w-4 shrink-0' />
+                {t('chat.session.renameChat')}
+              </button>
+
+              {onArchiveSession && (
+                <button
+                  type='button'
+                  onClick={event => {
+                    setMobileActionSessionId(null);
+                    void onArchiveSession(mobileActionSession.id, event);
+                  }}
+                  className='flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                >
+                  <Archive className='h-4 w-4 shrink-0' />
+                  {t('chat.session.archiveChat')}
+                </button>
+              )}
+
+              {onMoveSession && folders.length > 0 && (
+                <div className='mt-1 border-t border-black/[0.06] pt-1 dark:border-white/[0.07]'>
+                  <p className='px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-dark-500'>
+                    {t('chat.session.folder.move')}
+                  </p>
+                  {folders.map(folder => (
+                    <button
+                      key={folder.id}
+                      type='button'
+                      onClick={() => {
+                        setMobileActionSessionId(null);
+                        onMoveSession(mobileActionSession.id, folder.id);
+                      }}
+                      className={cn(
+                        'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
+                        mobileActionSession.folderId === folder.id &&
+                          'text-primary-600 dark:text-primary-400'
+                      )}
+                    >
+                      <Folder className='h-4 w-4 shrink-0' />
+                      <span className='truncate'>{folder.name}</span>
+                    </button>
+                  ))}
+                  {mobileActionSession.folderId && (
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setMobileActionSessionId(null);
+                        onMoveSession(mobileActionSession.id, null);
+                      }}
+                      className='flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-gray-500 hover:bg-gray-100 dark:text-dark-600 dark:hover:bg-dark-200'
+                    >
+                      <X className='h-4 w-4 shrink-0' />
+                      {t('chat.session.folder.remove')}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <button
+                type='button'
+                onClick={event => {
+                  setMobileActionSessionId(null);
+                  void onDeleteSession(mobileActionSession.id, event);
+                }}
+                className='mt-1 flex min-h-11 w-full items-center gap-3 rounded-xl border-t border-black/[0.06] px-3 py-2 text-start text-sm text-red-500 hover:bg-red-50 dark:border-white/[0.07] dark:hover:bg-red-900/20'
+              >
+                <Trash2 className='h-4 w-4 shrink-0' />
+                {t('chat.session.deleteChat')}
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

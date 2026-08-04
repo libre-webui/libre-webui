@@ -217,15 +217,16 @@ test('Arabic mirrors the new Home and tab menus', async ({ page }) => {
 
   const newTabButtonBox = await newTabButton.boundingBox();
   const newTabMenuBox = await newTabMenu.boundingBox();
+  const appContentBox = await page
+    .getByTestId('app-shell-content')
+    .boundingBox();
   expect(newTabButtonBox).not.toBeNull();
   expect(newTabMenuBox).not.toBeNull();
-  expect(
-    Math.abs(
-      newTabMenuBox!.x +
-        newTabMenuBox!.width -
-        (newTabButtonBox!.x + newTabButtonBox!.width)
-    )
-  ).toBeLessThanOrEqual(2);
+  expect(appContentBox).not.toBeNull();
+  expect(newTabMenuBox!.x).toBeGreaterThanOrEqual(appContentBox!.x + 7);
+  expect(newTabMenuBox!.x + newTabMenuBox!.width).toBeLessThanOrEqual(
+    appContentBox!.x + appContentBox!.width - 7
+  );
 
   await newTabButton.click();
   await page.getByRole('button', { name: /admin/i }).last().click();

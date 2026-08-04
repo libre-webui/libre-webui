@@ -39,7 +39,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ children }) => {
           // Reserve space on the logical start edge where the sidebar is mounted.
           sidebarOpen
             ? sidebarCompact
-              ? 'ms-18'
+              ? 'ms-20'
               : 'ms-72 max-sm:ms-64'
             : 'ms-0'
         )}

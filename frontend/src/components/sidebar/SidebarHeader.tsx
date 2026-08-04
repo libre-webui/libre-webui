@@ -58,13 +58,13 @@ export function SidebarHeader({
   return (
     <div
       className={cn(
-        sidebarCompact ? 'px-2 pb-3 pt-3' : 'px-4 pb-4 pt-4',
+        sidebarCompact ? 'px-2 pb-2 pt-3' : 'px-4 pb-4 pt-4',
         isElectron && 'pt-10'
       )}
     >
       <div
         className={cn(
-          'flex items-center',
+          'flex min-w-0 items-center',
           sidebarCompact ? 'justify-center mb-3' : 'justify-between mb-4'
         )}
       >
@@ -72,10 +72,12 @@ export function SidebarHeader({
           <>
             <Logo
               size='sm'
-              className='text-gray-950 dark:text-dark-950 tracking-[-0.035em]'
+              className='shrink-0 text-gray-950 dark:text-dark-950 tracking-[-0.035em]'
             />
             <div className='flex items-center gap-0.5'>
-              <ThemeToggle />
+              <div className='hidden sm:block'>
+                <ThemeToggle />
+              </div>
               <Button
                 variant='ghost'
                 size='sm'
@@ -83,6 +85,7 @@ export function SidebarHeader({
                 className='h-9 w-9 p-0 rounded-xl text-gray-500 dark:text-dark-600 hover:bg-white/80 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation'
                 title={t('sidebar.toggleSize')}
                 aria-label={t('sidebar.toggleSize')}
+                data-testid='sidebar-toggle-size'
               >
                 <ChevronLeft className='h-4 w-4 rtl:rotate-180' />
               </Button>
@@ -93,19 +96,20 @@ export function SidebarHeader({
             <Logo
               size='sm'
               wordmark={false}
-              className='text-gray-950 dark:text-dark-950 text-base tracking-[-0.035em]'
+              className='flex h-11 w-11 items-center justify-center text-base tracking-[-0.035em] text-gray-950 dark:text-dark-950'
             />
             <Button
+              type='button'
               variant='ghost'
               size='sm'
               onClick={onToggleCompact}
-              className='h-9 w-9 p-0 rounded-xl text-gray-500 dark:text-dark-600 hover:bg-white/80 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation'
+              className='h-11 w-11 rounded-xl p-0 text-gray-600 ring-1 ring-black/[0.06] transition-colors hover:bg-white hover:text-gray-950 dark:text-dark-600 dark:ring-white/[0.08] dark:hover:bg-dark-200 dark:hover:text-dark-950'
               title={t('sidebar.expandSidebar')}
               aria-label={t('sidebar.expandSidebar')}
+              data-testid='sidebar-rail-expand'
             >
-              <ChevronRight className='h-4 w-4 rtl:rotate-180' />
+              <ChevronRight className='h-5 w-5 rtl:rotate-180' />
             </Button>
-            <ThemeToggle />
           </div>
         )}
       </div>
@@ -123,7 +127,7 @@ export function SidebarHeader({
             onClick={onStartWork}
             className={cn(
               'h-10 rounded-xl shadow-none touch-manipulation',
-              sidebarCompact && 'w-full p-0'
+              sidebarCompact && 'mx-auto h-11 w-11 p-0'
             )}
             size='sm'
             title={t('chat.session.work')}
@@ -142,7 +146,7 @@ export function SidebarHeader({
           disabled={createDisabled}
           className={cn(
             'h-10 rounded-xl shadow-none touch-manipulation',
-            sidebarCompact && 'w-full p-0'
+            sidebarCompact && 'mx-auto h-11 w-11 p-0'
           )}
           size='sm'
           title={createDisabled ? disabledTitle : t('chat.session.chat')}

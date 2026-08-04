@@ -17,7 +17,15 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, NotebookPen, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Eye,
+  NotebookPen,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import { RichMessageContent } from '@/components/ui/RichMessageContent';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui';
@@ -169,9 +177,18 @@ export const NotesPage: React.FC = () => {
   }, [notes, query]);
 
   return (
-    <div className='flex h-full min-h-0'>
+    <div
+      className='flex h-full min-h-0 overflow-hidden'
+      data-testid='notes-page'
+    >
       {/* Note list */}
-      <div className='flex w-72 shrink-0 flex-col border-e border-black/[0.06] dark:border-white/[0.07]'>
+      <div
+        data-testid='notes-list'
+        className={cn(
+          'min-h-0 w-full shrink-0 flex-col border-e border-black/[0.06] dark:border-white/[0.07] md:w-72',
+          selectedNote ? 'hidden md:flex' : 'flex'
+        )}
+      >
         <div className='flex items-center justify-between px-4 pb-2 pt-4'>
           <h1 className='text-sm font-semibold text-gray-900 dark:text-dark-900'>
             {t('notes.title')}
@@ -193,7 +210,7 @@ export const NotesPage: React.FC = () => {
             value={query}
             onChange={event => setQuery(event.target.value)}
             placeholder={t('common.search')}
-            className='w-full rounded-lg border border-transparent bg-black/[0.04] py-1.5 pe-2.5 ps-8 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:bg-white/[0.05] dark:text-dark-900 dark:placeholder:text-dark-500'
+            className='w-full rounded-lg border border-transparent bg-black/[0.04] py-1.5 pe-2.5 ps-8 text-base text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:bg-white/[0.05] dark:text-dark-900 dark:placeholder:text-dark-500 sm:text-[13px]'
           />
         </div>
         <div className='scroll-region min-h-0 flex-1 overflow-y-auto px-2 pb-3 scrollbar-thin'>
@@ -209,6 +226,7 @@ export const NotesPage: React.FC = () => {
               {filteredNotes.map(note => (
                 <div
                   key={note.id}
+                  data-testid='note-list-item'
                   onClick={() => selectNote(note)}
                   className={cn(
                     'group cursor-pointer rounded-lg px-2.5 py-2 transition-colors',
@@ -226,7 +244,7 @@ export const NotesPage: React.FC = () => {
                         event.stopPropagation();
                         void handleDelete(note.id);
                       }}
-                      className='shrink-0 rounded-md p-1 text-red-500 opacity-0 transition-opacity hover:bg-red-50 group-hover:opacity-100 dark:hover:bg-red-900/20'
+                      className='shrink-0 rounded-md p-1 text-red-500 opacity-100 transition-opacity hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 dark:hover:bg-red-900/20'
                       title={t('common.delete')}
                     >
                       <Trash2 className='h-3 w-3' />
@@ -249,11 +267,33 @@ export const NotesPage: React.FC = () => {
       </div>
 
       {/* Editor */}
-      <div className='flex min-w-0 flex-1 flex-col'>
+      <div
+        data-testid='notes-editor'
+        className={cn(
+          'min-w-0 flex-1 flex-col',
+          selectedNote ? 'flex' : 'hidden md:flex'
+        )}
+      >
         {selectedNote ? (
           <>
-            <div className='flex items-center gap-2 border-b border-black/[0.06] px-5 py-3 dark:border-white/[0.07]'>
+            <div className='flex min-w-0 items-center gap-1.5 border-b border-black/[0.06] px-2.5 py-2.5 dark:border-white/[0.07] sm:gap-2 sm:px-5 sm:py-3'>
+              <Button
+                size='sm'
+                variant='ghost'
+                onClick={() => {
+                  flushPendingSave();
+                  setSelectedId(null);
+                  setPreviewing(false);
+                }}
+                className='h-9 w-9 shrink-0 p-0 md:hidden'
+                title={`${t('common.back')}: ${t('notes.title')}`}
+                aria-label={`${t('common.back')}: ${t('notes.title')}`}
+                data-testid='notes-mobile-back'
+              >
+                <ArrowLeft className='h-4 w-4 rtl:rotate-180' />
+              </Button>
               <input
+                data-testid='notes-title-editor'
                 dir='auto'
                 value={titleDraft}
                 onChange={event => {
@@ -265,9 +305,12 @@ export const NotesPage: React.FC = () => {
                   );
                 }}
                 placeholder={t('notes.untitled')}
-                className='min-w-0 flex-1 bg-transparent text-lg font-semibold text-gray-950 placeholder:text-gray-400 focus:outline-none dark:text-dark-950 dark:placeholder:text-dark-500'
+                className='min-w-0 flex-1 bg-transparent text-base font-semibold text-gray-950 placeholder:text-gray-400 focus:outline-none dark:text-dark-950 dark:placeholder:text-dark-500 sm:text-lg'
               />
-              <span className='text-[11px] text-gray-400 dark:text-dark-500'>
+              <span
+                className='hidden shrink-0 text-[11px] text-gray-400 dark:text-dark-500 sm:inline'
+                aria-live='polite'
+              >
                 {saveState === 'saving'
                   ? t('common.saving')
                   : saveState === 'saved'
@@ -278,27 +321,38 @@ export const NotesPage: React.FC = () => {
                 size='sm'
                 variant='ghost'
                 onClick={() => setPreviewing(previous => !previous)}
-                className='h-8 gap-1.5 px-2.5 text-xs'
+                className='h-9 w-9 shrink-0 gap-1.5 p-0 text-xs sm:h-8 sm:w-auto sm:px-2.5'
+                title={previewing ? t('common.edit') : t('artifacts.preview')}
+                aria-label={
+                  previewing ? t('common.edit') : t('artifacts.preview')
+                }
+                data-testid='notes-preview-toggle'
               >
                 {previewing ? (
                   <>
                     <Pencil className='h-3.5 w-3.5' />
-                    {t('common.edit')}
+                    <span className='hidden sm:inline'>{t('common.edit')}</span>
                   </>
                 ) : (
                   <>
                     <Eye className='h-3.5 w-3.5' />
-                    {t('artifacts.preview')}
+                    <span className='hidden sm:inline'>
+                      {t('artifacts.preview')}
+                    </span>
                   </>
                 )}
               </Button>
             </div>
             {previewing ? (
-              <div className='scroll-region min-h-0 flex-1 overflow-y-auto px-5 py-4 scrollbar-thin'>
+              <div
+                data-testid='notes-preview'
+                className='scroll-region min-h-0 flex-1 overflow-y-auto px-4 py-3 scrollbar-thin sm:px-5 sm:py-4'
+              >
                 <RichMessageContent content={contentDraft} />
               </div>
             ) : (
               <textarea
+                data-testid='notes-content-editor'
                 dir='auto'
                 value={contentDraft}
                 onChange={event => {
@@ -307,7 +361,7 @@ export const NotesPage: React.FC = () => {
                 }}
                 onBlur={flushPendingSave}
                 placeholder={t('notes.contentPlaceholder')}
-                className='min-h-0 flex-1 resize-none bg-transparent px-5 py-4 font-mono text-[13.5px] leading-relaxed text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-dark-900 dark:placeholder:text-dark-500'
+                className='min-h-0 flex-1 resize-none bg-transparent px-4 py-3 font-mono text-base leading-relaxed text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-dark-900 dark:placeholder:text-dark-500 sm:px-5 sm:py-4 sm:text-[13.5px]'
               />
             )}
           </>

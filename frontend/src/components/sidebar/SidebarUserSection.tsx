@@ -97,69 +97,131 @@ export function SidebarUserSection({
       )}
     >
       {sidebarCompact ? (
-        <div className='flex flex-col items-center space-y-2'>
-          <UserAvatar user={user} size='sm' />
+        <div className='relative flex justify-center' ref={userMenuRef}>
+          <button
+            type='button'
+            onClick={onToggleUserMenu}
+            className='relative flex h-11 w-11 items-center justify-center rounded-xl outline-none transition-colors hover:bg-white/70 focus-visible:ring-2 focus-visible:ring-primary-500/30 dark:hover:bg-dark-200'
+            aria-label={user.username}
+            aria-expanded={userMenuOpen}
+            title={user.username}
+            data-testid='sidebar-rail-user-menu-button'
+          >
+            <UserAvatar user={user} size='sm' />
+            {pendingApprovalCount > 0 && (
+              <span
+                data-testid='pending-user-notification-badge'
+                className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-error-500 px-1 text-[9px] font-semibold text-white shadow-sm'
+                aria-label={t('userManager.approval.notificationBadge', {
+                  count: pendingApprovalCount,
+                  defaultValue: '{{count}} pending user approvals',
+                })}
+              >
+                {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
+              </span>
+            )}
+          </button>
 
-          {isAdmin && (
-            <Link
-              to='/users'
-              onClick={onMobileNavigate}
-              className='relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
-              title={t('sidebar.navigation.userManagement')}
+          {userMenuOpen && (
+            <div
+              data-testid='sidebar-user-menu'
+              className='scroll-region absolute bottom-0 start-full z-[70] ms-3 w-64 max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-xl border border-black/[0.07] bg-white/95 py-2 shadow-[0_18px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in scrollbar-thin dark:border-white/[0.08] dark:bg-dark-25/95'
             >
-              <UserIcon className='h-4 w-4' />
-              {pendingApprovalCount > 0 && (
-                <span
-                  data-testid='pending-user-notification-badge'
-                  className='absolute -end-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-error-500 px-1 text-[10px] font-semibold text-white shadow-subtle'
-                  aria-label={t('userManager.approval.notificationBadge', {
-                    count: pendingApprovalCount,
-                    defaultValue: '{{count}} pending user approvals',
-                  })}
-                >
-                  {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
+              <button
+                type='button'
+                onClick={() => {
+                  onOpenAvatar(user.avatar || '');
+                  onCloseUserMenu();
+                }}
+                className='flex w-full items-center gap-2.5 border-b border-gray-100 px-3 py-2.5 text-start transition-colors hover:bg-gray-100/70 dark:border-dark-200/50 dark:hover:bg-dark-200/70'
+              >
+                <UserAvatar user={user} size='md' />
+                <span className='min-w-0 flex-1'>
+                  <span className='block truncate text-sm font-medium text-gray-900 dark:text-gray-100'>
+                    {user.username}
+                  </span>
+                  <span className='block truncate text-xs text-gray-500 dark:text-gray-400'>
+                    {t('user.menu.changePicture')}
+                  </span>
                 </span>
-              )}
-            </Link>
+                <Camera className='h-4 w-4 shrink-0 text-gray-400' />
+              </button>
+
+              <div className='py-1'>
+                {isAdmin && (
+                  <Link
+                    to='/users'
+                    onClick={() => {
+                      onCloseUserMenu();
+                      onMobileNavigate();
+                    }}
+                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 transition-colors hover:bg-gray-100/70 dark:text-dark-700 dark:hover:bg-dark-200/70'
+                  >
+                    <UserIcon className='h-4 w-4 shrink-0' />
+                    <span className='min-w-0 flex-1 text-start'>
+                      {t('user.menu.userManagement')}
+                    </span>
+                    {pendingApprovalCount > 0 && (
+                      <span className='rounded-md bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
+                        {pendingApprovalCount > 99
+                          ? '99+'
+                          : pendingApprovalCount}
+                      </span>
+                    )}
+                  </Link>
+                )}
+                {isAdmin && (
+                  <Link
+                    to='/system'
+                    onClick={() => {
+                      onCloseUserMenu();
+                      onMobileNavigate();
+                    }}
+                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 transition-colors hover:bg-gray-100/70 dark:text-dark-700 dark:hover:bg-dark-200/70'
+                  >
+                    <Server className='h-4 w-4 shrink-0' />
+                    {t('user.menu.system')}
+                  </Link>
+                )}
+                {isAdmin && (
+                  <Link
+                    to='/usage'
+                    onClick={() => {
+                      onCloseUserMenu();
+                      onMobileNavigate();
+                    }}
+                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 transition-colors hover:bg-gray-100/70 dark:text-dark-700 dark:hover:bg-dark-200/70'
+                  >
+                    <ChartNoAxesCombined className='h-4 w-4 shrink-0' />
+                    {t('user.menu.usageAnalytics')}
+                  </Link>
+                )}
+                <div className='my-1 border-t border-gray-100 dark:border-dark-200/50' />
+                <button
+                  type='button'
+                  onClick={() => {
+                    onOpenSettings();
+                    onCloseUserMenu();
+                  }}
+                  className='flex w-full items-center gap-3 px-3 py-2.5 text-start text-[13px] text-gray-700 transition-colors hover:bg-gray-100/70 dark:text-dark-700 dark:hover:bg-dark-200/70'
+                >
+                  <Settings className='h-4 w-4 shrink-0' />
+                  {t('user.menu.settings')}
+                </button>
+                <button
+                  type='button'
+                  onClick={() => {
+                    onLogout();
+                    onCloseUserMenu();
+                  }}
+                  className='flex w-full items-center gap-3 px-3 py-2.5 text-start text-[13px] text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
+                >
+                  <LogOut className='h-4 w-4 shrink-0' />
+                  {t('user.menu.logout')}
+                </button>
+              </div>
+            </div>
           )}
-
-          {isAdmin && (
-            <Link
-              to='/system'
-              onClick={onMobileNavigate}
-              className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
-              title={t('sidebar.navigation.system')}
-            >
-              <Server className='h-4 w-4' />
-            </Link>
-          )}
-
-          {isAdmin && (
-            <Link
-              to='/usage'
-              onClick={onMobileNavigate}
-              className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
-              title={t('sidebar.navigation.usageAnalytics')}
-            >
-              <ChartNoAxesCombined className='h-4 w-4' />
-            </Link>
-          )}
-
-          <button
-            onClick={onOpenSettings}
-            className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
-            title={t('sidebar.navigation.settings')}
-          >
-            <Settings className='h-4 w-4' />
-          </button>
-
-          <button
-            onClick={onLogout}
-            className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 dark:text-dark-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 touch-manipulation transition-colors duration-150'
-            title={t('sidebar.navigation.signOut')}
-          >
-            <LogOut className='h-4 w-4' />
-          </button>
         </div>
       ) : (
         <div className='relative' ref={userMenuRef}>

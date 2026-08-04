@@ -70,10 +70,34 @@ test('the new-tab menu opens pages as tabs and shows their shortcuts', async ({
   await expect(menu.getByRole('menuitem').first()).toContainText('New Chat');
   await expect(menu.getByRole('menuitem').first()).toContainText('O');
   await expect(menu.getByRole('menuitem').nth(1)).toHaveText('Incognito Chat');
+  await expect(menu.getByRole('menuitem', { name: 'Notes' })).toBeVisible();
 
   await menu.getByRole('menuitem', { name: /Models/ }).click();
   await expect(page).toHaveURL(/\/models$/);
   await expect(page.getByTestId('app-tab')).toHaveCount(2);
+});
+
+test('the new-tab menu stays fully visible in a narrow window', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 466, height: 1014 });
+  await mockLibreWebUiApi(page);
+  await page.goto('/');
+
+  await page.getByTestId('sidebar-toggle-size').click();
+  await page.getByTestId('app-tab-new').click();
+  const menu = page.getByTestId('app-tab-new-menu');
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole('menuitem').first()).toContainText('New Chat');
+
+  const menuBox = await menu.boundingBox();
+  const contentBox = await page.getByTestId('app-shell-content').boundingBox();
+  expect(menuBox).not.toBeNull();
+  expect(contentBox).not.toBeNull();
+  expect(menuBox!.x).toBeGreaterThanOrEqual(contentBox!.x + 7);
+  expect(menuBox!.x + menuBox!.width).toBeLessThanOrEqual(
+    contentBox!.x + contentBox!.width - 7
+  );
 });
 
 test('incognito chat starts from Home without creating a saved session', async ({
@@ -99,6 +123,9 @@ test('incognito chat starts from Home without creating a saved session', async (
   await expect(startActions.nth(0)).toContainText('New Chat');
   await expect(startActions.nth(1)).toContainText('Incognito Chat');
   await expect(startActions.nth(2)).toContainText('New Work');
+  await expect(
+    page.getByRole('button', { name: 'Notes', exact: true })
+  ).toBeVisible();
 
   await page.getByTestId('home-incognito-chat').click();
   await expect(page).toHaveURL(/\/chat\?incognito=1$/);
