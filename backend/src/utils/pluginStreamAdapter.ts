@@ -23,6 +23,7 @@ import {
   OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY,
   OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY,
 } from './openAIResponsesAdapter.js';
+import { extractPluginReasoningDetails } from './pluginResponse.js';
 
 export interface PluginToolCall {
   id: string;
@@ -220,12 +221,16 @@ export async function* streamOpenAICompatibleResponse(
           continue;
         }
 
-        const reasoning =
+        const directReasoning =
           typeof delta.reasoning_content === 'string'
             ? delta.reasoning_content
             : typeof delta.reasoning === 'string'
               ? delta.reasoning
               : '';
+        const reasoning =
+          directReasoning ||
+          extractPluginReasoningDetails(delta.reasoning_details) ||
+          '';
         if (reasoning) {
           reasoningContent += reasoning;
           yield { type: 'reasoning', content: reasoning };

@@ -167,6 +167,7 @@ export const ChatPage: React.FC = () => {
     selectBranch,
     isStreaming,
     streamingMessage,
+    streamingThinking,
     streamingMessageId,
     toolActivities,
   } = useChat(currentSession?.id || '');
@@ -813,6 +814,7 @@ export const ChatPage: React.FC = () => {
             <ChatMessages
               messages={currentSession.messages}
               streamingMessage={streamingMessage}
+              streamingThinking={streamingThinking}
               streamingMessageId={streamingMessageId}
               isStreaming={isStreaming}
               toolActivities={toolActivities}

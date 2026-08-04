@@ -40,6 +40,7 @@ const logger = createLogger('components:chat-messages');
 interface ChatMessagesProps {
   messages: ChatMessageType[];
   streamingMessage?: string;
+  streamingThinking?: string;
   streamingMessageId?: string | null;
   isStreaming?: boolean;
   toolActivities?: ToolActivity[];
@@ -75,6 +76,7 @@ const getHistoryReadingOffset = (viewportHeight: number) =>
 export const ChatMessages: React.FC<ChatMessagesProps> = ({
   messages,
   streamingMessage,
+  streamingThinking,
   streamingMessageId,
   isStreaming = false,
   toolActivities = [],
@@ -408,7 +410,11 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
 
   useEffect(() => {
     // Only auto-scroll during streaming if user hasn't scrolled up
-    if (isStreaming && streamingMessage && !isUserScrolledUpRef.current) {
+    if (
+      isStreaming &&
+      (streamingMessage || streamingThinking) &&
+      !isUserScrolledUpRef.current
+    ) {
       requestAnimationFrame(() => {
         const container = scrollContainerRef.current;
         if (container) {
@@ -416,7 +422,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         }
       });
     }
-  }, [isStreaming, streamingMessage]);
+  }, [isStreaming, streamingMessage, streamingThinking]);
 
   useEffect(() => {
     scheduleHistoryUpdate();
@@ -541,10 +547,13 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
               const message = group.messages[0];
               const isThisMessageStreaming =
                 isStreaming && message.id === streamingMessageId;
-              const displayMessage =
-                isThisMessageStreaming && streamingMessage
-                  ? { ...message, content: streamingMessage }
-                  : message;
+              const displayMessage = isThisMessageStreaming
+                ? {
+                    ...message,
+                    content: streamingMessage ?? message.content,
+                    thinking: streamingThinking || message.thinking,
+                  }
+                : message;
 
               renderedMessage = (
                 <ChatMessage
@@ -563,6 +572,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                   messages={group.messages}
                   isStreaming={isStreamingThisGroup}
                   streamingMessage={streamingMessage}
+                  streamingThinking={streamingThinking}
                   streamingMessageId={streamingMessageId || undefined}
                   isLastAssistantMessage={isLastAssistantGroup}
                   onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}

@@ -103,7 +103,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   // Derive thinking content, parsed content, and artifacts from message content
   const { thinkingContent, thinkingStreaming, parsedContent, artifacts } =
     useMemo(() => {
-      if (isUser || isSystem || !message.content) {
+      if (isUser || isSystem || (!message.content && !message.thinking)) {
         return {
           thinkingContent: null as string | null,
           thinkingStreaming: false,
@@ -112,7 +112,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         };
       }
 
-      const thinkingParsed = parseThinkingContent(message.content);
+      const thinkingParsed = message.thinking
+        ? {
+            thinking: message.thinking,
+            content: message.content,
+            thinkingComplete: Boolean(message.content) || !isStreaming,
+          }
+        : parseThinkingContent(message.content);
       const contentAfterThinking = thinkingParsed.content;
       const thinkingStreaming = isStreaming && !thinkingParsed.thinkingComplete;
 
@@ -141,7 +147,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         parsedContent: contentAfterThinking,
         artifacts: [],
       };
-    }, [message.content, message.artifacts, isUser, isSystem, isStreaming]);
+    }, [
+      message.content,
+      message.thinking,
+      message.artifacts,
+      isUser,
+      isSystem,
+      isStreaming,
+    ]);
 
   // Backend statistics carry the persisted duration; the live timer covers
   // the window between the thought closing and the stream completing.

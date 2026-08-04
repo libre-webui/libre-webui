@@ -30,6 +30,7 @@ export interface AssistantCompletionInput {
   sessionId: string;
   session: ChatSession;
   content: string;
+  thinking?: string;
   model: string;
   messageId: string;
   userId: string;
@@ -63,6 +64,7 @@ class AssistantCompletionService {
     sessionId,
     session,
     content,
+    thinking,
     model,
     messageId,
     userId,
@@ -84,6 +86,7 @@ class AssistantCompletionService {
           id: messageId,
           role: 'assistant',
           content,
+          thinking,
           model,
           timestamp: Date.now(),
           statistics,
@@ -98,6 +101,7 @@ class AssistantCompletionService {
       {
         role: 'assistant',
         content,
+        thinking,
         model,
         id: messageId,
         statistics,

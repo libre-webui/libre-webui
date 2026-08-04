@@ -147,7 +147,10 @@ function splitDataUrlImage(image: string): {
 
 export function toOpenAICompatibleMessages(
   messages: ChatMessage[],
-  options: { preserveProviderMetadata?: boolean } = {}
+  options: {
+    preserveProviderMetadata?: boolean;
+    includeReasoning?: boolean;
+  } = {}
 ): Array<{
   role: string;
   content:
@@ -157,6 +160,7 @@ export function toOpenAICompatibleMessages(
         | { type: 'image_url'; image_url: { url: string } }
       >;
   providerMetadata?: Record<string, unknown>;
+  reasoning?: string;
 }> {
   return messages.map(message => {
     const providerMetadata = options.preserveProviderMetadata
@@ -182,6 +186,9 @@ export function toOpenAICompatibleMessages(
       return {
         role: message.role,
         content,
+        ...(options.includeReasoning && message.thinking
+          ? { reasoning: message.thinking }
+          : {}),
         ...(providerMetadata ? { providerMetadata } : {}),
       };
     }
@@ -189,6 +196,9 @@ export function toOpenAICompatibleMessages(
     return {
       role: message.role,
       content: message.content,
+      ...(options.includeReasoning && message.thinking
+        ? { reasoning: message.thinking }
+        : {}),
       ...(providerMetadata ? { providerMetadata } : {}),
     };
   });
@@ -341,7 +351,9 @@ function buildOpenAICompatibleChatPayload(
   return {
     payload: {
       model,
-      messages: toOpenAICompatibleMessages(messages),
+      messages: toOpenAICompatibleMessages(messages, {
+        includeReasoning: plugin.id === 'openrouter',
+      }),
       ...getOpenAICompatibleSamplingParameters(plugin, params),
       max_tokens: params.maxTokens,
       stop: options.stop,

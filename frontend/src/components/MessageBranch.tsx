@@ -25,6 +25,7 @@ interface MessageBranchProps {
   messages: ChatMessageType[]; // All variants of a message (branches)
   isStreaming?: boolean;
   streamingMessage?: string;
+  streamingThinking?: string;
   streamingMessageId?: string; // ID of the message being streamed
   isLastAssistantMessage?: boolean;
   onRegenerate?: () => void;
@@ -36,6 +37,7 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
   messages,
   isStreaming = false,
   streamingMessage,
+  streamingThinking,
   streamingMessageId,
   isLastAssistantMessage = false,
   onRegenerate,
@@ -47,10 +49,13 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
     const message = messages[0];
     const isThisMessageStreaming =
       isStreaming && streamingMessageId === message.id;
-    const displayMessage =
-      isThisMessageStreaming && streamingMessage
-        ? { ...message, content: streamingMessage }
-        : message;
+    const displayMessage = isThisMessageStreaming
+      ? {
+          ...message,
+          content: streamingMessage ?? message.content,
+          thinking: streamingThinking || message.thinking,
+        }
+      : message;
 
     return (
       <ChatMessage
@@ -78,10 +83,13 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
           const isActive = message.isActive !== false;
           const isThisMessageStreaming =
             isStreaming && streamingMessageId === message.id;
-          const displayMessage =
-            isThisMessageStreaming && streamingMessage
-              ? { ...message, content: streamingMessage }
-              : message;
+          const displayMessage = isThisMessageStreaming
+            ? {
+                ...message,
+                content: streamingMessage ?? message.content,
+                thinking: streamingThinking || message.thinking,
+              }
+            : message;
 
           return (
             <div

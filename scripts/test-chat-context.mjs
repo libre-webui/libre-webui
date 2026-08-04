@@ -295,6 +295,7 @@ test('extractPluginAssistantContent converts multimodal blocks and tool calls', 
         index: 0,
         message: {
           role: 'assistant',
+          reasoning_content: 'Checked the available tools.',
           content: [
             { type: 'text', text: 'Here is the image' },
             {
@@ -320,6 +321,26 @@ test('extractPluginAssistantContent converts multimodal blocks and tool calls', 
   assert.equal(
     result,
     'Here is the image\n\n![image](https://example.test/image.png)\n\n---\n**🔧 Tool Calls:**\n\n**render** (`call-1`)\n```json\n{\n  "ok": true\n}\n```\n'
+  );
+  assert.equal(
+    pluginResponse.extractPluginAssistantThinking({
+      choices: [
+        {
+          message: {
+            reasoning_content: 'Checked the available tools.',
+          },
+        },
+      ],
+    }),
+    'Checked the available tools.'
+  );
+  assert.equal(
+    pluginResponse.extractPluginReasoningDetails([
+      { type: 'reasoning.summary', summary: 'Checked context. ' },
+      { type: 'reasoning.text', text: 'Selected a tool.' },
+      { type: 'reasoning.encrypted', data: 'opaque' },
+    ]),
+    'Checked context. Selected a tool.'
   );
 });
 
@@ -815,6 +836,7 @@ test('streamPluginResponse emits chunks and appends formatted tool calls', async
   };
 
   async function* chunks() {
+    yield { type: 'reasoning', content: 'Plan first.' };
     yield { type: 'content', content: 'Hel' };
     yield { type: 'content', content: 'lo' };
     yield {
@@ -852,6 +874,7 @@ test('streamPluginResponse emits chunks and appends formatted tool calls', async
     result.content,
     'Hello\n\n---\n**🔧 Tool Calls:**\n\n**render** (`call-1`)\n```json\n{\n  "ok": true\n}\n```\n'
   );
+  assert.equal(result.thinking, 'Plan first.');
   assert.deepEqual(result.providerMetadata, {
     openAIResponsesOutputItems: [
       {
@@ -868,24 +891,35 @@ test('streamPluginResponse emits chunks and appends formatted tool calls', async
     [
       'assistant_chunk',
       'assistant_chunk',
+      'assistant_chunk',
       'tool_status',
       'tool_status',
       'assistant_chunk',
     ]
   );
   assert.deepEqual(sent[0].data, {
-    content: 'Hel',
-    total: 'Hel',
+    content: '',
+    total: '',
+    thinking: 'Plan first.',
+    thinkingTotal: 'Plan first.',
     done: false,
     messageId: 'assistant-1',
   });
-  assert.deepEqual(sent[2].data, {
+  assert.deepEqual(sent[1].data, {
+    content: 'Hel',
+    total: 'Hel',
+    thinkingTotal: 'Plan first.',
+    done: false,
+    messageId: 'assistant-1',
+  });
+  assert.deepEqual(sent[3].data, {
     toolCallId: 'tool-activity',
     name: 'render',
     phase: 'running',
   });
-  assert.equal(sent[4].data.done, true);
-  assert.equal(sent[4].data.total, result.content);
+  assert.equal(sent[5].data.done, true);
+  assert.equal(sent[5].data.total, result.content);
+  assert.equal(sent[5].data.thinkingTotal, result.thinking);
 });
 
 test('streamPluginResponse rejects incomplete provider streams with their reason', async () => {
@@ -1412,6 +1446,10 @@ test('convertProviderResponse normalizes Gemini responses', () => {
 
 test('streamOpenAICompatibleResponse parses content and tool call deltas', async () => {
   const body = [
+    'data: {"choices":[{"delta":{"reasoning_content":"Plan "}}]}',
+    '',
+    'data: {"choices":[{"delta":{"reasoning_details":[{"type":"reasoning.text","text":"carefully."}]}}]}',
+    '',
     'data: {"choices":[{"delta":{"content":"Hel"}}]}',
     '',
     'data: {"choices":[{"delta":{"content":"lo"}}]}',
@@ -1432,6 +1470,8 @@ test('streamOpenAICompatibleResponse parses content and tool call deltas', async
   }
 
   assert.deepEqual(chunks, [
+    { type: 'reasoning', content: 'Plan ' },
+    { type: 'reasoning', content: 'carefully.' },
     { type: 'content', content: 'Hel' },
     { type: 'content', content: 'lo' },
     {
@@ -1440,10 +1480,37 @@ test('streamOpenAICompatibleResponse parses content and tool call deltas', async
         id: 'call-1',
         name: 'render',
         arguments: '{"ok":true}',
+        providerMetadata: {
+          openAIReasoningContent: 'Plan carefully.',
+        },
       },
     },
     { type: 'done' },
   ]);
+});
+
+test('OpenRouter chat replay includes persisted plaintext reasoning', () => {
+  assert.deepEqual(
+    pluginChatAdapter.toOpenAICompatibleMessages(
+      [
+        {
+          id: 'assistant-1',
+          role: 'assistant',
+          content: 'Final answer',
+          thinking: 'Reasoning context',
+          timestamp: 1,
+        },
+      ],
+      { includeReasoning: true }
+    ),
+    [
+      {
+        role: 'assistant',
+        content: 'Final answer',
+        reasoning: 'Reasoning context',
+      },
+    ]
+  );
 });
 
 test('streamAnthropicResponse parses text and tool call events', async () => {
@@ -1524,6 +1591,12 @@ test('streamOllamaChatResponse streams chunks, extracts stats, and completes onc
       onChunk({
         model: 'llama-test',
         created_at: '2026-06-21T00:00:00Z',
+        message: { role: 'assistant', content: '', thinking: 'Plan first.' },
+        done: false,
+      });
+      onChunk({
+        model: 'llama-test',
+        created_at: '2026-06-21T00:00:00Z',
         message: { role: 'assistant', content: 'Hel' },
         done: false,
       });
@@ -1556,17 +1629,27 @@ test('streamOllamaChatResponse streams chunks, extracts stats, and completes onc
 
   assert.equal(result.completed, true);
   assert.equal(result.content, 'Hello');
+  assert.equal(result.thinking, 'Plan first.');
   assert.equal(result.statistics.model, 'llama-test');
   assert.equal(result.statistics.total_duration, 100);
   assert.equal(result.statistics.tokens_per_second, 5);
   assert.equal(completeCallbackCalls, 2);
   assert.deepEqual(
     sent.map(message => message.type),
-    ['assistant_chunk', 'assistant_chunk']
+    ['assistant_chunk', 'assistant_chunk', 'assistant_chunk']
   );
-  assert.deepEqual(sent[1].data, {
+  assert.deepEqual(sent[0].data, {
+    content: '',
+    total: '',
+    thinking: 'Plan first.',
+    thinkingTotal: 'Plan first.',
+    done: false,
+    messageId: 'assistant-1',
+  });
+  assert.deepEqual(sent[2].data, {
     content: 'lo',
     total: 'Hello',
+    thinkingTotal: 'Plan first.',
     done: true,
     messageId: 'assistant-1',
   });

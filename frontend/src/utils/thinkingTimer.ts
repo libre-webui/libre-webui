@@ -30,8 +30,29 @@ const timers = new Map<string, ThinkingTimerEntry>();
  * does not open with a thinking marker never will, and is marked 'none' to
  * skip re-parsing on later chunks.
  */
-export function trackThinkingProgress(messageId: string, content: string) {
+export function trackThinkingProgress(
+  messageId: string,
+  content: string,
+  thinking: string = ''
+) {
   const existing = timers.get(messageId);
+
+  if (thinking) {
+    if (!existing || existing.state === 'none') {
+      timers.set(messageId, { state: 'open', startedAt: Date.now() });
+      if (!content) return;
+    }
+
+    const active = timers.get(messageId);
+    if (content && active?.state === 'open') {
+      timers.set(messageId, {
+        state: 'done',
+        durationMs: Date.now() - active.startedAt,
+      });
+    }
+    return;
+  }
+
   if (existing && existing.state !== 'open') {
     return;
   }

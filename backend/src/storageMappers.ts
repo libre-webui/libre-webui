@@ -64,6 +64,7 @@ export interface MessageRow {
   session_id: string;
   role: string;
   content: string;
+  thinking?: string;
   timestamp: number;
   message_index: number;
   model?: string;
@@ -145,6 +146,9 @@ export function mapMessageRow(
     id: row.id,
     role: row.role as 'user' | 'assistant' | 'system',
     content: encryptionService.decrypt(row.content),
+    thinking: row.thinking
+      ? encryptionService.decrypt(row.thinking)
+      : undefined,
     timestamp: row.timestamp,
     model: row.model,
     providerMetadata: decryptJson(row.provider_metadata),

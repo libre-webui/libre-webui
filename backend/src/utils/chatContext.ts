@@ -25,7 +25,7 @@ import {
 
 export type ChatContextMessage = Pick<
   ChatMessage,
-  'role' | 'content' | 'images' | 'providerMetadata'
+  'role' | 'content' | 'thinking' | 'images' | 'providerMetadata'
 >;
 type ContentMessage = {
   role: string;
@@ -168,6 +168,10 @@ export function toOllamaMessages(
           : message.images.map(stripDataUrlPrefix);
     }
 
+    if (message.thinking) {
+      ollamaMessage.thinking = message.thinking;
+    }
+
     return ollamaMessage;
   });
 }
@@ -201,6 +205,7 @@ export function toChatMessages(
     id: `${idPrefix}-${index}`,
     role: message.role,
     content: message.content,
+    thinking: message.thinking,
     images: message.images,
     providerMetadata: message.providerMetadata,
     timestamp,

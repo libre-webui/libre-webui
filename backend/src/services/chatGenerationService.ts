@@ -17,7 +17,10 @@
 
 import { mergeGenerationOptions } from '../utils/generationUtils.js';
 import { OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY } from '../utils/openAIResponsesAdapter.js';
-import { extractPluginAssistantContent } from '../utils/pluginResponse.js';
+import {
+  extractPluginAssistantContent,
+  extractPluginAssistantThinking,
+} from '../utils/pluginResponse.js';
 import agentCliService from './agentCliService.js';
 import ollamaService from './ollamaService.js';
 import { personaService } from './personaService.js';
@@ -60,6 +63,7 @@ export interface NonStreamingExecutionOptions {
 export interface NonStreamingExecutionResult {
   response: OllamaChatResponse;
   assistantContent: string;
+  assistantThinking?: string;
   source: 'plugin' | 'ollama';
   pluginError?: Error;
 }
@@ -142,6 +146,7 @@ class ChatGenerationService {
   createPluginChatResponse(
     model: string,
     assistantContent: string,
+    assistantThinking?: string,
     providerMetadata?: Record<string, unknown>
   ): OllamaChatResponse {
     return {
@@ -150,6 +155,7 @@ class ChatGenerationService {
       message: {
         role: 'assistant',
         content: assistantContent,
+        ...(assistantThinking ? { thinking: assistantThinking } : {}),
         ...(providerMetadata ? { providerMetadata } : {}),
       },
       done: true,
@@ -172,6 +178,7 @@ class ChatGenerationService {
 
     if (target.providerType === 'agent' && target.providerId) {
       let assistantContent = '';
+      let assistantThinking = '';
       let providerMetadata: Record<string, unknown> | undefined;
       for await (const chunk of agentCliService.executeAgentStreamRequest(
         target.providerId,
@@ -181,6 +188,8 @@ class ChatGenerationService {
       )) {
         if (chunk.type === 'content' && chunk.content) {
           assistantContent += chunk.content;
+        } else if (chunk.type === 'reasoning' && chunk.content) {
+          assistantThinking += chunk.content;
         } else if (chunk.type === 'done' && chunk.providerMetadata) {
           providerMetadata = chunk.providerMetadata;
         }
@@ -189,9 +198,11 @@ class ChatGenerationService {
         response: this.createPluginChatResponse(
           target.actualModelName,
           assistantContent,
+          assistantThinking || undefined,
           providerMetadata
         ),
         assistantContent,
+        ...(assistantThinking ? { assistantThinking } : {}),
         source: 'plugin',
       };
     }
@@ -216,14 +227,18 @@ class ChatGenerationService {
         }
         const assistantContent =
           this.extractPluginAssistantContent(pluginResponse);
+        const assistantThinking =
+          extractPluginAssistantThinking(pluginResponse);
 
         return {
           response: this.createPluginChatResponse(
             target.actualModelName,
             assistantContent,
+            assistantThinking,
             pluginResponse.providerMetadata
           ),
           assistantContent,
+          ...(assistantThinking ? { assistantThinking } : {}),
           source: 'plugin',
         };
       } catch (error) {
@@ -245,6 +260,9 @@ class ChatGenerationService {
         return {
           response,
           assistantContent: response.message.content,
+          ...(response.message.thinking
+            ? { assistantThinking: response.message.thinking }
+            : {}),
           source: 'ollama',
           pluginError,
         };
@@ -259,6 +277,9 @@ class ChatGenerationService {
     return {
       response,
       assistantContent: response.message.content,
+      ...(response.message.thinking
+        ? { assistantThinking: response.message.thinking }
+        : {}),
       source: 'ollama',
     };
   }

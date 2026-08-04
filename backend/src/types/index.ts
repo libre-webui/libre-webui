@@ -44,6 +44,7 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  thinking?: string;
   timestamp: number;
   model?: string;
   providerMetadata?: Record<string, unknown>;
@@ -665,6 +666,8 @@ export interface PluginResponse {
       role: string;
       content: string;
       reasoning_content?: string;
+      reasoning?: string;
+      reasoning_details?: unknown[];
       tool_calls?: Array<{
         id: string;
         type: 'function';

@@ -37,6 +37,20 @@ export class ThinkingPhaseTimer {
   private searchFrom = 0;
   private measuredMs: number | undefined;
 
+  observeReasoning() {
+    if (this.state === 'unknown') {
+      this.state = 'open';
+      this.startedAt = Date.now();
+    }
+  }
+
+  observeAnswer() {
+    if (this.state === 'open') {
+      this.state = 'done';
+      this.measuredMs = Date.now() - this.startedAt;
+    }
+  }
+
   observe(content: string) {
     if (this.state === 'none' || this.state === 'done') {
       return;

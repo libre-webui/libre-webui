@@ -36,6 +36,7 @@ import { streamOllamaChatResponse } from './utils/ollamaStreaming.js';
 import { streamPluginResponse } from './utils/pluginStreaming.js';
 import { createLogger } from './utils/logger.js';
 import {
+  sendAssistantChunk,
   sendAssistantComplete,
   sendConnected,
   sendError,
@@ -307,6 +308,7 @@ export function registerWebSocketServer(server: Server): void {
           }
 
           let assistantContent = '';
+          let assistantThinking = '';
           let assistantProviderMetadata: Record<string, unknown> | undefined;
 
           logger.debug(
@@ -393,6 +395,7 @@ export function registerWebSocketServer(server: Server): void {
                   messageId: assistantMessageId,
                 });
                 assistantContent = streamResult.content;
+                assistantThinking = streamResult.thinking || '';
                 assistantProviderMetadata = streamResult.providerMetadata;
               } else {
                 const generationResult =
@@ -405,23 +408,41 @@ export function registerWebSocketServer(server: Server): void {
                   });
 
                 assistantContent = generationResult.assistantContent;
+                assistantThinking = generationResult.assistantThinking || '';
                 assistantProviderMetadata =
                   generationResult.response.message.providerMetadata;
 
-                await streamAssistantFakeChunks(
-                  ws,
-                  assistantContent,
-                  assistantMessageId
-                );
+                if (assistantThinking) {
+                  sendAssistantChunk(ws, {
+                    content: '',
+                    total: '',
+                    thinking: assistantThinking,
+                    thinkingTotal: assistantThinking,
+                    done: !assistantContent,
+                    messageId: assistantMessageId,
+                  });
+                }
+
+                if (assistantContent) {
+                  await streamAssistantFakeChunks(
+                    ws,
+                    assistantContent,
+                    assistantMessageId
+                  );
+                }
               }
 
               // Save the complete assistant message (skip for private sessions)
-              if (assistantContent && assistantMessageId) {
+              if (
+                (assistantContent || assistantThinking) &&
+                assistantMessageId
+              ) {
                 const completion =
                   assistantCompletionService.completeAssistantMessage({
                     sessionId,
                     session,
                     content: assistantContent,
+                    thinking: assistantThinking || undefined,
                     model: session.model,
                     messageId: assistantMessageId,
                     userId,
@@ -547,18 +568,20 @@ export function registerWebSocketServer(server: Server): void {
           });
 
           assistantContent = ollamaStream.content;
+          assistantThinking = ollamaStream.thinking || '';
 
           if (!ollamaStream.completed) {
             return;
           }
 
           // Save the complete assistant message with the provided ID (skip for private sessions)
-          if (assistantContent && assistantMessageId) {
+          if ((assistantContent || assistantThinking) && assistantMessageId) {
             const completion =
               assistantCompletionService.completeAssistantMessage({
                 sessionId,
                 session,
                 content: assistantContent,
+                thinking: assistantThinking || undefined,
                 model: session.model,
                 messageId: assistantMessageId,
                 userId,
@@ -616,6 +639,7 @@ export function registerWebSocketServer(server: Server): void {
               // Send completion signal with statistics
               sendAssistantComplete(ws, {
                 content: assistantContent,
+                thinking: assistantThinking || undefined,
                 role: 'assistant',
                 timestamp: Date.now(),
                 messageId: assistantMessageId,

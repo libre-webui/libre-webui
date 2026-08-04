@@ -290,13 +290,16 @@ class StorageService {
         // Insert messages
         if (session.messages && session.messages.length > 0) {
           const insertMessageStmt = db.prepare(`
-            INSERT INTO session_messages (id, session_id, role, content, timestamp, message_index, model, provider_metadata, images, statistics, artifacts, parent_id, branch_index, is_active, rating)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO session_messages (id, session_id, role, content, thinking, timestamp, message_index, model, provider_metadata, images, statistics, artifacts, parent_id, branch_index, is_active, rating)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `);
 
           session.messages.forEach((message, index) => {
             // Encrypt sensitive data before storing
             const encryptedContent = encryptionService.encrypt(message.content);
+            const encryptedThinking = message.thinking
+              ? encryptionService.encrypt(message.thinking)
+              : null;
             const encryptedImages = message.images
               ? encryptionService.encrypt(JSON.stringify(message.images))
               : null;
@@ -320,6 +323,7 @@ class StorageService {
               session.id,
               message.role,
               encryptedContent,
+              encryptedThinking,
               message.timestamp,
               index,
               message.model || null,

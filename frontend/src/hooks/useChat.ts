@@ -39,6 +39,7 @@ const isDefaultSessionTitle = (title?: string) =>
 
 export const useChat = (sessionId: string) => {
   const [streamingMessage, setStreamingMessage] = useState<string>('');
+  const [streamingThinking, setStreamingThinking] = useState<string>('');
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
     null
   );
@@ -61,12 +62,14 @@ export const useChat = (sessionId: string) => {
 
   // Buffer for streaming content to reduce state updates
   const streamingContentRef = useRef<string>('');
+  const streamingThinkingRef = useRef<string>('');
 
   // Store update batching with debounced timer approach
   const lastStoreUpdate = useRef<number>(0);
   const storeUpdateTimer = useRef<NodeJS.Timeout | undefined>(undefined);
   const streamingFrameRef = useRef<number | null>(null);
   const pendingStreamingContentRef = useRef<string>('');
+  const pendingStreamingThinkingRef = useRef<string>('');
 
   const cancelQueuedStreamingFrame = useCallback(() => {
     if (streamingFrameRef.current !== null && typeof window !== 'undefined') {
@@ -76,12 +79,14 @@ export const useChat = (sessionId: string) => {
   }, []);
 
   const publishStreamingMessage = useCallback(
-    (content: string, immediate = false) => {
+    (content: string, immediate = false, thinking: string = '') => {
       pendingStreamingContentRef.current = content;
+      pendingStreamingThinkingRef.current = thinking;
 
       if (immediate || typeof window === 'undefined') {
         cancelQueuedStreamingFrame();
         setStreamingMessage(content);
+        setStreamingThinking(thinking);
         return;
       }
 
@@ -92,6 +97,7 @@ export const useChat = (sessionId: string) => {
       streamingFrameRef.current = window.requestAnimationFrame(() => {
         streamingFrameRef.current = null;
         setStreamingMessage(pendingStreamingContentRef.current);
+        setStreamingThinking(pendingStreamingThinkingRef.current);
       });
     },
     [cancelQueuedStreamingFrame]
@@ -100,7 +106,9 @@ export const useChat = (sessionId: string) => {
   const resetVisibleStreamingMessage = useCallback(() => {
     cancelQueuedStreamingFrame();
     pendingStreamingContentRef.current = '';
+    pendingStreamingThinkingRef.current = '';
     setStreamingMessage('');
+    setStreamingThinking('');
   }, [cancelQueuedStreamingFrame]);
 
   const clearQueuedTitleGeneration = useCallback(() => {
@@ -214,6 +222,8 @@ export const useChat = (sessionId: string) => {
       const chunkData = data as {
         content: string;
         total: string;
+        thinking?: string;
+        thinkingTotal?: string;
         done: boolean;
         messageId?: string;
       };
@@ -224,8 +234,19 @@ export const useChat = (sessionId: string) => {
       if (messageId) {
         // Always update the content buffer and UI immediately for responsive streaming
         streamingContentRef.current = chunkData.total;
-        trackThinkingProgress(messageId, chunkData.total);
-        publishStreamingMessage(chunkData.total, chunkData.done);
+        if (typeof chunkData.thinkingTotal === 'string') {
+          streamingThinkingRef.current = chunkData.thinkingTotal;
+        }
+        trackThinkingProgress(
+          messageId,
+          chunkData.total,
+          streamingThinkingRef.current
+        );
+        publishStreamingMessage(
+          chunkData.total,
+          chunkData.done,
+          streamingThinkingRef.current
+        );
 
         // Debounced store updates - only update when streaming slows down or finishes
         if (storeUpdateTimer.current) {
@@ -279,6 +300,7 @@ export const useChat = (sessionId: string) => {
         role: string;
         timestamp: number;
         messageId?: string;
+        thinking?: string;
         statistics?: GenerationStatistics; // Generation statistics from Ollama
         providerMetadata?: Record<string, unknown>;
       };
@@ -304,6 +326,8 @@ export const useChat = (sessionId: string) => {
         // Ensure final update with the complete content
         const finalContent =
           streamingContentRef.current || completeData.content;
+        const finalThinking =
+          streamingThinkingRef.current || completeData.thinking;
 
         // Use updateMessageWithStatistics to include generation statistics
         // The backend times the thinking phase for Ollama streams; the local
@@ -322,7 +346,8 @@ export const useChat = (sessionId: string) => {
           messageId,
           finalContent,
           statistics,
-          completeData.providerMetadata
+          completeData.providerMetadata,
+          finalThinking
         );
       }
 
@@ -330,6 +355,7 @@ export const useChat = (sessionId: string) => {
 
       streamingMessageIdRef.current = null;
       streamingContentRef.current = '';
+      streamingThinkingRef.current = '';
 
       // Clear any pending store update timers
       if (storeUpdateTimer.current) {
@@ -348,6 +374,7 @@ export const useChat = (sessionId: string) => {
       resetVisibleStreamingMessage();
       setIsGenerating(false);
       streamingMessageIdRef.current = null;
+      streamingThinkingRef.current = '';
 
       // Handle session not found error by redirecting to home
       if (errorData.code === 'SESSION_NOT_FOUND') {
@@ -368,6 +395,7 @@ export const useChat = (sessionId: string) => {
       setIsStreaming(false);
       resetVisibleStreamingMessage();
       streamingMessageIdRef.current = null;
+      streamingThinkingRef.current = '';
     };
     resetStreamingState();
 
@@ -456,6 +484,7 @@ export const useChat = (sessionId: string) => {
         // Create placeholder for assistant message
         const assistantMessageId = generateId();
         streamingMessageIdRef.current = assistantMessageId;
+        streamingThinkingRef.current = '';
         setStreamingMessageId(assistantMessageId);
 
         addMessage(sessionId, {
@@ -476,6 +505,7 @@ export const useChat = (sessionId: string) => {
             maybeGenerateTitle(sessionId);
             streamingMessageIdRef.current = null;
             streamingContentRef.current = '';
+            streamingThinkingRef.current = '';
           }, 500);
           return;
         }
@@ -492,6 +522,7 @@ export const useChat = (sessionId: string) => {
               .map(m => ({
                 role: m.role,
                 content: m.content,
+                thinking: m.thinking,
                 images: m.images,
                 providerMetadata: m.providerMetadata,
               }))
@@ -528,6 +559,7 @@ export const useChat = (sessionId: string) => {
         setStreamingMessageId(null);
         setIsGenerating(false);
         streamingMessageIdRef.current = null;
+        streamingThinkingRef.current = '';
         toast.error('Failed to send message');
       }
     },
@@ -548,6 +580,7 @@ export const useChat = (sessionId: string) => {
     setStreamingMessageId(null);
     setIsGenerating(false);
     streamingMessageIdRef.current = null;
+    streamingThinkingRef.current = '';
     // Note: WebSocket connection doesn't have a built-in stop mechanism
     // You might want to implement this on the backend
   }, [setIsGenerating, resetVisibleStreamingMessage]);
@@ -615,6 +648,7 @@ export const useChat = (sessionId: string) => {
       // Generate a new message ID for the branch
       const newBranchMessageId = generateId();
       streamingMessageIdRef.current = newBranchMessageId;
+      streamingThinkingRef.current = '';
       setStreamingMessageId(newBranchMessageId);
 
       // Create a placeholder for the new branch message in the store
@@ -641,6 +675,7 @@ export const useChat = (sessionId: string) => {
             .map(message => ({
               role: message.role,
               content: message.content,
+              thinking: message.thinking,
               images: message.images,
               providerMetadata: message.providerMetadata,
             }))
@@ -676,6 +711,7 @@ export const useChat = (sessionId: string) => {
       setStreamingMessageId(null);
       setIsGenerating(false);
       streamingMessageIdRef.current = null;
+      streamingThinkingRef.current = '';
       toast.error('Failed to regenerate message');
     }
   }, [
@@ -797,6 +833,7 @@ export const useChat = (sessionId: string) => {
     selectBranch,
     isStreaming,
     streamingMessage,
+    streamingThinking,
     streamingMessageId,
     toolActivities,
   };

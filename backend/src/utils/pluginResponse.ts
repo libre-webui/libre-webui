@@ -33,6 +33,9 @@ type ToolCall = {
 
 type PluginMessageWithExtensions = {
   content?: unknown;
+  reasoning_content?: unknown;
+  reasoning?: unknown;
+  reasoning_details?: unknown;
   tool_calls?: unknown;
 };
 
@@ -104,4 +107,45 @@ export function extractPluginAssistantContent(
     formatPluginContent(message?.content) +
     formatPluginToolCalls(message?.tool_calls)
   );
+}
+
+export function extractPluginAssistantThinking(
+  response: PluginResponse
+): string | undefined {
+  const message = response?.choices?.[0]?.message as
+    PluginMessageWithExtensions | undefined;
+  const reasoning = message?.reasoning_content ?? message?.reasoning;
+
+  if (typeof reasoning === 'string' && reasoning.length > 0) {
+    return reasoning;
+  }
+
+  return extractPluginReasoningDetails(message?.reasoning_details);
+}
+
+export function extractPluginReasoningDetails(
+  details: unknown
+): string | undefined {
+  if (!Array.isArray(details)) {
+    return undefined;
+  }
+
+  const detailText = details
+    .flatMap(detail => {
+      if (!detail || typeof detail !== 'object') {
+        return [];
+      }
+
+      const record = detail as Record<string, unknown>;
+      if (typeof record.text === 'string' && record.text.length > 0) {
+        return [record.text];
+      }
+      if (typeof record.summary === 'string' && record.summary.length > 0) {
+        return [record.summary];
+      }
+      return [];
+    })
+    .join('');
+
+  return detailText || undefined;
 }

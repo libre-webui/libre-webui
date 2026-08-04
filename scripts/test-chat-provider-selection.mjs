@@ -372,6 +372,7 @@ test('Responses provider state is encrypted and round-trips with Chat messages',
         id: 'assistant-responses-state',
         role: 'assistant',
         content: 'Persisted answer',
+        thinking: 'Private reasoning summary',
         timestamp: now,
         model: sharedModel,
         providerMetadata,
@@ -385,9 +386,10 @@ test('Responses provider state is encrypted and round-trips with Chat messages',
 
   const columns = db.prepare('PRAGMA table_info(session_messages)').all();
   assert.ok(columns.some(column => column.name === 'provider_metadata'));
+  assert.ok(columns.some(column => column.name === 'thinking'));
   const stored = db
     .prepare(
-      `SELECT provider_metadata
+      `SELECT provider_metadata, thinking
        FROM session_messages
        WHERE session_id = ?`
     )
@@ -397,10 +399,11 @@ test('Responses provider state is encrypted and round-trips with Chat messages',
     stored.provider_metadata.includes('opaque-provider-reasoning'),
     false
   );
-  assert.deepEqual(
-    storageService.getSession(session.id, userId).messages[0].providerMetadata,
-    providerMetadata
-  );
+  assert.equal(stored.thinking.includes('Private reasoning summary'), false);
+  const loadedMessage = storageService.getSession(session.id, userId)
+    .messages[0];
+  assert.deepEqual(loadedMessage.providerMetadata, providerMetadata);
+  assert.equal(loadedMessage.thinking, 'Private reasoning summary');
 });
 
 test('session updates preserve provider metadata until an unqualified model change', async () => {

@@ -486,6 +486,7 @@ router.post(
         {
           role: 'assistant',
           content: generationResult.assistantContent,
+          thinking: generationResult.assistantThinking,
           model: session.model,
           statistics,
           providerMetadata: generationResult.response.message.providerMetadata,
@@ -589,6 +590,7 @@ router.post(
       };
 
       let fullResponse = '';
+      let fullThinking = '';
       let assistantProviderMetadata: Record<string, unknown> | undefined;
 
       if (target.providerType === 'agent' && target.providerId) {
@@ -607,17 +609,27 @@ router.post(
                 done: false,
               })}\n\n`
             );
+          } else if (chunk.type === 'reasoning' && chunk.content) {
+            fullThinking += chunk.content;
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'reasoning',
+                content: chunk.content,
+                done: false,
+              })}\n\n`
+            );
           } else if (chunk.type === 'done' && chunk.providerMetadata) {
             assistantProviderMetadata = chunk.providerMetadata;
           }
         }
 
-        if (fullResponse) {
+        if (fullResponse || fullThinking) {
           chatService.addMessage(
             sessionId,
             {
               role: 'assistant',
               content: fullResponse,
+              thinking: fullThinking || undefined,
               model: session.model,
               providerMetadata: assistantProviderMetadata,
             },
@@ -648,6 +660,15 @@ router.post(
               res.write(
                 `data: ${JSON.stringify({
                   type: 'chunk',
+                  content: chunk.content,
+                  done: false,
+                })}\n\n`
+              );
+            } else if (chunk.type === 'reasoning' && chunk.content) {
+              fullThinking += chunk.content;
+              res.write(
+                `data: ${JSON.stringify({
+                  type: 'reasoning',
                   content: chunk.content,
                   done: false,
                 })}\n\n`
@@ -692,8 +713,18 @@ router.post(
               pluginFallbackPolicy: 'allow',
             });
           fullResponse = generationResult.assistantContent;
+          fullThinking = generationResult.assistantThinking || '';
           assistantProviderMetadata =
             generationResult.response.message.providerMetadata;
+          if (fullThinking) {
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'reasoning',
+                content: fullThinking,
+                done: false,
+              })}\n\n`
+            );
+          }
           res.write(
             `data: ${JSON.stringify({
               type: 'chunk',
@@ -703,12 +734,13 @@ router.post(
           );
         }
 
-        if (fullResponse) {
+        if (fullResponse || fullThinking) {
           chatService.addMessage(
             sessionId,
             {
               role: 'assistant',
               content: fullResponse,
+              thinking: fullThinking || undefined,
               model: session.model,
               providerMetadata: assistantProviderMetadata,
             },
@@ -724,6 +756,18 @@ router.post(
       await ollamaService.generateChatStreamResponse(
         chatRequest,
         chunk => {
+          const thinkingDelta = chunk.message.thinking || '';
+          if (thinkingDelta) {
+            fullThinking += thinkingDelta;
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'reasoning',
+                content: thinkingDelta,
+                done: false,
+              })}\n\n`
+            );
+          }
+
           // Send chunk to client
           res.write(
             `data: ${JSON.stringify({
@@ -746,12 +790,13 @@ router.post(
         },
         () => {
           // Add complete assistant response to session
-          if (fullResponse) {
+          if (fullResponse || fullThinking) {
             chatService.addMessage(
               sessionId,
               {
                 role: 'assistant',
                 content: fullResponse,
+                thinking: fullThinking || undefined,
                 model: session.model,
               },
               userId

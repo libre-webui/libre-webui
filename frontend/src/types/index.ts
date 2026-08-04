@@ -51,6 +51,7 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  thinking?: string;
   timestamp: number;
   model?: string;
   providerMetadata?: Record<string, unknown>;

@@ -50,6 +50,7 @@ export interface StreamOllamaChatResponseOptions {
 
 export interface StreamOllamaChatResponseResult {
   content: string;
+  thinking?: string;
   statistics?: GenerationStatistics;
   completed: boolean;
   error?: Error;
@@ -64,6 +65,7 @@ export async function streamOllamaChatResponse({
 }: StreamOllamaChatResponseOptions): Promise<StreamOllamaChatResponseResult> {
   return new Promise(resolve => {
     let content = '';
+    let thinking = '';
     let statistics: GenerationStatistics | undefined;
     let resolved = false;
     const thinkingTimer = new ThinkingPhaseTimer();
@@ -78,6 +80,7 @@ export async function streamOllamaChatResponse({
       resolved = true;
       resolve({
         content,
+        ...(thinking ? { thinking } : {}),
         statistics,
         ...result,
       });
@@ -88,12 +91,26 @@ export async function streamOllamaChatResponse({
         return;
       }
 
-      if (chunk.message?.content) {
-        content += chunk.message.content;
+      const contentDelta = chunk.message?.content || '';
+      const thinkingDelta = chunk.message?.thinking || '';
+
+      if (thinkingDelta) {
+        thinking += thinkingDelta;
+        thinkingTimer.observeReasoning();
+      }
+
+      if (contentDelta) {
+        content += contentDelta;
+        thinkingTimer.observeAnswer();
         thinkingTimer.observe(content);
+      }
+
+      if (contentDelta || thinkingDelta) {
         sendAssistantChunk(ws, {
-          content: chunk.message.content,
+          content: contentDelta,
           total: content,
+          ...(thinkingDelta ? { thinking: thinkingDelta } : {}),
+          ...(thinking ? { thinkingTotal: thinking } : {}),
           done: chunk.done,
           messageId,
         });

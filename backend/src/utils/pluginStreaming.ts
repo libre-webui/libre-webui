@@ -64,6 +64,7 @@ export interface StreamPluginResponseOptions {
 
 export interface PluginStreamResponseResult {
   content: string;
+  thinking?: string;
   providerMetadata?: Record<string, unknown>;
 }
 
@@ -93,6 +94,7 @@ export async function streamPluginResponse({
   pauseThresholdMs = 2000,
 }: StreamPluginResponseOptions): Promise<PluginStreamResponseResult> {
   let totalContent = '';
+  let totalThinking = '';
   let providerMetadata: Record<string, unknown> | undefined;
   const toolCalls: PluginStreamToolCall[] = [];
   let pauseTimer: ReturnType<typeof setTimeout> | null = null;
@@ -147,6 +149,20 @@ export async function streamPluginResponse({
         sendAssistantChunk(ws, {
           content: chunk.content,
           total: totalContent,
+          ...(totalThinking ? { thinkingTotal: totalThinking } : {}),
+          done: false,
+          messageId,
+        });
+      } else if (chunk.type === 'reasoning' && chunk.content) {
+        finishToolActivity();
+        startPauseDetection();
+
+        totalThinking += chunk.content;
+        sendAssistantChunk(ws, {
+          content: '',
+          total: totalContent,
+          thinking: chunk.content,
+          thinkingTotal: totalThinking,
           done: false,
           messageId,
         });
@@ -180,6 +196,7 @@ export async function streamPluginResponse({
         sendAssistantChunk(ws, {
           content: '',
           total: totalContent,
+          ...(totalThinking ? { thinkingTotal: totalThinking } : {}),
           done: true,
           messageId,
         });
@@ -191,6 +208,7 @@ export async function streamPluginResponse({
 
   return {
     content: totalContent,
+    ...(totalThinking ? { thinking: totalThinking } : {}),
     ...(providerMetadata ? { providerMetadata } : {}),
   };
 }

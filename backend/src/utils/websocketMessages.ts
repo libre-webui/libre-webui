@@ -22,6 +22,8 @@ export interface WebSocketLike {
 export interface AssistantChunkData {
   content: string;
   total: string;
+  thinking?: string;
+  thinkingTotal?: string;
   done: boolean;
   messageId?: string;
 }

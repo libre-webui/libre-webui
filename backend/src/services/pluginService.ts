@@ -1906,7 +1906,9 @@ export class PluginService {
       const params = resolvePluginChatParameters(options, pluginVars);
       payload = {
         model,
-        messages: toOpenAICompatibleMessages(messages),
+        messages: toOpenAICompatibleMessages(messages, {
+          includeReasoning: activePlugin.id === 'openrouter',
+        }),
         ...getOpenAICompatibleSamplingParameters(activePlugin, params),
         max_tokens: params.maxTokens,
         stop: options.stop,

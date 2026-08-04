@@ -87,7 +87,8 @@ interface ChatState {
     messageId: string,
     content: string,
     statistics?: GenerationStatistics,
-    providerMetadata?: ChatMessage['providerMetadata']
+    providerMetadata?: ChatMessage['providerMetadata'],
+    thinking?: string
   ) => void;
   rateMessage: (
     sessionId: string,
@@ -393,7 +394,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     messageId: string,
     content: string,
     statistics?: GenerationStatistics,
-    providerMetadata?: ChatMessage['providerMetadata']
+    providerMetadata?: ChatMessage['providerMetadata'],
+    thinking?: string
   ) => {
     set(state =>
       updateMessageStatisticsInChatState(
@@ -402,7 +404,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         messageId,
         content,
         statistics,
-        providerMetadata
+        providerMetadata,
+        thinking
       )
     );
   },

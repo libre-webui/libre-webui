@@ -238,6 +238,7 @@ function initializeTables(): void {
       session_id TEXT NOT NULL,
       role TEXT NOT NULL,
       content TEXT NOT NULL,
+      thinking TEXT, -- Encrypted model reasoning shown separately from the answer
       timestamp INTEGER NOT NULL,
       message_index INTEGER NOT NULL,
       model TEXT, -- Model used for this message (for assistant messages)
@@ -736,6 +737,7 @@ function runMigrations(): void {
     // Add missing columns to session_messages table
     const newSessionMessagesColumns = [
       { name: 'model', type: 'TEXT' },
+      { name: 'thinking', type: 'TEXT' },
       { name: 'provider_metadata', type: 'TEXT' },
       { name: 'images', type: 'TEXT' },
       { name: 'statistics', type: 'TEXT' },
