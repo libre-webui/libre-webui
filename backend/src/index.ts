@@ -70,6 +70,7 @@ import huggingfaceHubRoutes from './routes/huggingfaceHub.js';
 import libreClawRoutes from './routes/libreClaw.js';
 import workRoutes from './routes/work.js';
 import systemDiagnosticsRoutes from './routes/systemDiagnostics.js';
+import artifactsRoutes from './routes/artifacts.js';
 import ollamaService from './services/ollamaService.js';
 import workRuntimeService from './services/workRuntimeService.js';
 import workTaskService from './services/workTaskService.js';
@@ -491,6 +492,7 @@ app.use('/api/huggingface-hub', huggingfaceHubRoutes);
 app.use('/api/libre-claw', libreClawRateLimiter, libreClawRoutes);
 app.use('/api/work', workRateLimiter, workRoutes);
 app.use('/api/system', systemDiagnosticsRoutes);
+app.use('/api/artifacts', artifactsRoutes);
 
 // Serve frontend static files in production (for npx libre-webui)
 if (

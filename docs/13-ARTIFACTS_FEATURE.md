@@ -71,15 +71,27 @@ If an interactive artifact needs keyboard input, click inside the preview first 
 
 ## Sandbox Behavior
 
-HTML artifacts run in an iframe sandbox that allows scripts, same-origin
-behavior, forms, modals, popups (including opening a destination outside the
-sandbox), pointer lock, and downloads. The iframe feature policy also allows
-clipboard access, fullscreen, and gamepad access.
+HTML artifacts load through `GET /api/artifacts/sandbox`, a small backend
+document that hosts the preview. The indirection matters: an `srcdoc` frame
+inherits the embedder's Content Security Policy, and the application policy
+forbids inline scripts, so artifacts rendered that way are blocked in
+production. The sandbox host is fetched over the network instead, so it carries
+its own policy, and the preview frame it creates inherits that one.
 
-Those permissions support generated demos and games, but they are not a strict
-security boundary from the main application origin. Artifacts can execute code;
-inspect untrusted generated HTML before rendering, downloading, or reusing it,
-and do not place secrets in an artifact.
+The artifact policy allows inline script and `eval`, because that is what an
+artifact is made of, and closes every network directive. A self-contained
+artifact runs; one that pulls a script, stylesheet, font, or image from a CDN
+does not, and neither can an artifact call home. Data and blob URLs stay
+available for generated assets.
+
+The frame itself allows scripts, forms, modals, popups, pointer lock, and
+downloads, but never `allow-same-origin`, so an artifact runs on an opaque
+origin with no access to the application's cookies, storage, or DOM. Its
+feature policy allows clipboard access, fullscreen, and gamepad input.
+
+Artifacts still execute generated code: inspect untrusted HTML before
+downloading or reusing it outside the preview, and do not place secrets in an
+artifact.
 
 ## Better Prompts
 

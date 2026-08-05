@@ -36,16 +36,16 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
+import { HtmlArtifactFrame } from '@/components/HtmlArtifactFrame';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
 import {
   buildHtmlArtifactDocument,
   buildSvgArtifactDocument,
-  HTML_ARTIFACT_ALLOW,
-  HTML_ARTIFACT_SANDBOX,
   openHtmlArtifactPreview,
   SVG_ARTIFACT_SANDBOX,
 } from '@/utils/artifactHtml';
+import { ARTIFACT_SANDBOX_URL } from '@/utils/artifactSandbox';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import { isRTL } from '@/i18n';
@@ -90,7 +90,6 @@ export const ArtifactSlideOutPanel: React.FC = () => {
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevArtifactIdRef = useRef<string | null>(null);
   const resizeStartXRef = useRef(0);
@@ -366,18 +365,14 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     }
 
     return (
-      <iframe
-        ref={iframeRef}
-        data-testid='artifact-html-preview'
-        srcDoc={buildHtmlArtifactDocument(artifact.content, artifact.title)}
+      <HtmlArtifactFrame
+        content={artifact.content}
+        title={artifact.title}
         className={cn(
           'w-full h-full border-0 rounded-lg bg-white',
           isResizing && 'pointer-events-none'
         )}
-        sandbox={HTML_ARTIFACT_SANDBOX}
-        allow={HTML_ARTIFACT_ALLOW}
-        allowFullScreen
-        title={artifact.title}
+        fallback={renderHtmlFallback()}
       />
     );
   };
@@ -674,7 +669,11 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                 variant='ghost'
                 size='sm'
                 onClick={() =>
-                  openHtmlArtifactPreview(artifact.content, artifact.title)
+                  openHtmlArtifactPreview(
+                    artifact.content,
+                    ARTIFACT_SANDBOX_URL,
+                    artifact.title
+                  )
                 }
                 className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
                 title={t('artifacts.openInNewWindow')}

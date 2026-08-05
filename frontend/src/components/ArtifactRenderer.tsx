@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Code,
@@ -32,16 +32,16 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
+import { HtmlArtifactFrame } from '@/components/HtmlArtifactFrame';
 import { useAppStore } from '@/store/appStore';
 import { Artifact } from '@/types';
 import {
   buildHtmlArtifactDocument,
   buildSvgArtifactDocument,
-  HTML_ARTIFACT_ALLOW,
-  HTML_ARTIFACT_SANDBOX,
   openHtmlArtifactPreview,
   SVG_ARTIFACT_SANDBOX,
 } from '@/utils/artifactHtml';
+import { ARTIFACT_SANDBOX_URL } from '@/utils/artifactSandbox';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 
@@ -59,7 +59,6 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const { theme, openArtifactPanel } = useAppStore();
 
   const copyToClipboard = async (text: string) => {
@@ -171,15 +170,11 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     }
 
     return (
-      <iframe
-        ref={iframeRef}
-        data-testid='artifact-html-preview'
-        srcDoc={buildHtmlArtifactDocument(artifact.content, artifact.title)}
-        className='w-full h-64 sm:h-80 lg:h-96 border-0 rounded-lg'
-        sandbox={HTML_ARTIFACT_SANDBOX}
-        allow={HTML_ARTIFACT_ALLOW}
-        allowFullScreen
+      <HtmlArtifactFrame
+        content={artifact.content}
         title={artifact.title}
+        className='w-full h-64 sm:h-80 lg:h-96 border-0 rounded-lg'
+        fallback={renderHtmlFallback()}
       />
     );
   };
@@ -478,7 +473,11 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
             variant='ghost'
             size='sm'
             onClick={() =>
-              openHtmlArtifactPreview(artifact.content, artifact.title)
+              openHtmlArtifactPreview(
+                artifact.content,
+                ARTIFACT_SANDBOX_URL,
+                artifact.title
+              )
             }
             className='text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
           >

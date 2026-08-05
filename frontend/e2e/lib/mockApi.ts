@@ -1039,6 +1039,58 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      // Mirrors backend/src/routes/artifacts.ts: the host document that HTML
+      // artifact previews load instead of inheriting the page's CSP through
+      // srcdoc. Keep the messaging contract in step with the real route.
+      if (path === '/artifacts/sandbox' && method === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/html; charset=utf-8',
+          headers: {
+            'Content-Security-Policy': [
+              "default-src 'none'",
+              "script-src 'unsafe-inline' 'unsafe-eval' blob:",
+              "style-src 'unsafe-inline'",
+              'img-src data: blob:',
+              'frame-src blob: data:',
+              "frame-ancestors 'self' http://127.0.0.1:4173",
+              'sandbox allow-scripts allow-forms allow-modals allow-popups allow-pointer-lock allow-downloads',
+            ].join('; '),
+          },
+          body: `<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="UTF-8" /><title>Artifact preview</title>
+    <style>html, body { height: 100%; margin: 0; } iframe { display: block; width: 100%; height: 100%; border: 0; }</style>
+  </head>
+  <body>
+    <script>
+      (function () {
+        var host = window.parent;
+        if (!host || host === window) return;
+        var frame = null;
+        window.addEventListener('message', function (event) {
+          if (event.source !== host) return;
+          var data = event.data;
+          if (!data || data.type !== 'libre-artifact:render') return;
+          if (typeof data.html !== 'string') return;
+          if (!frame) {
+            frame = document.createElement('iframe');
+            frame.setAttribute('allow', 'clipboard-read; clipboard-write; fullscreen; gamepad');
+            frame.setAttribute('allowfullscreen', '');
+            frame.setAttribute('title', 'Artifact');
+            document.body.appendChild(frame);
+          }
+          frame.srcdoc = data.html;
+        });
+        host.postMessage({ type: 'libre-artifact:ready' }, '*');
+      })();
+    </script>
+  </body>
+</html>`,
+        });
+        return;
+      }
+
       if (path === '/auth/system-info' && method === 'GET') {
         await fulfillJson(route, systemInfo);
         return;

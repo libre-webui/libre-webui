@@ -152,7 +152,10 @@ test('chat detects multi-file HTML artifacts and renders them in the slide-out p
   await expect(panel).toBeVisible();
   await expect(panel.getByText('Mini Canvas Game')).toBeVisible();
 
-  const frame = page.frameLocator('iframe[title="Mini Canvas Game"]').first();
+  const frame = page
+    .frameLocator('iframe[title="Mini Canvas Game"]')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
   await expect(frame.locator('#game')).toBeVisible();
 
   const iframe = panel.locator('iframe[title="Mini Canvas Game"]').first();
@@ -266,7 +269,10 @@ test('chat detects filename-qualified HTML bundles and removes local file refere
 
   await page.locator('button[title="Open in panel"]:visible').first().click();
 
-  const frame = page.frameLocator('iframe[title="Filename Bundle"]').first();
+  const frame = page
+    .frameLocator('iframe[title="Filename Bundle"]')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
   await expect(frame.locator('#app')).toHaveText('Bundle ready');
   await expect(frame.locator('body')).toHaveAttribute(
     'data-bundle-ready',
@@ -319,7 +325,10 @@ test('chat extracts standalone full HTML documents that are not fenced', async (
 
   await page.locator('button[title="Open in panel"]:visible').first().click();
 
-  const frame = page.frameLocator('iframe[title="Bare HTML Artifact"]').first();
+  const frame = page
+    .frameLocator('iframe[title="Bare HTML Artifact"]')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
   await expect(frame.locator('#launch')).toHaveText('Bare HTML ready');
 });
 
