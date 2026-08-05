@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
 
 const generatedMultiFileArtifact = `
@@ -448,4 +448,223 @@ test('artifact panel resize releases pointer state after mouse up', async ({
   const afterReleaseBox = await panel.boundingBox();
   expect(afterReleaseBox).not.toBeNull();
   expect(Math.abs(afterReleaseBox!.width - resizedBox!.width)).toBeLessThan(2);
+});
+
+const generatedReactArtifact = `
+Here is the dashboard component:
+
+\`\`\`jsx
+import { useState } from 'react';
+import { BarChart, Bar, XAxis, ResponsiveContainer } from 'recharts';
+import { Activity } from 'lucide-react';
+
+const data = [
+  { day: 'Mon', visits: 12 },
+  { day: 'Tue', visits: 19 },
+  { day: 'Wed', visits: 7 },
+];
+
+export default function VisitsPanel() {
+  const [label, setLabel] = useState('Weekly visits');
+
+  return (
+    <div className="p-4">
+      <h1 id="heading" className="text-lg font-bold text-slate-900">{label}</h1>
+      <Activity id="icon" className="w-4 h-4 text-rose-500" />
+      <div className="h-40 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <XAxis dataKey="day" />
+            <Bar dataKey="visits" fill="#2563eb" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <button id="rename" className="bg-slate-900 px-3 py-2 text-white" onClick={() => setLabel('Renamed')}>
+        Rename
+      </button>
+    </div>
+  );
+}
+\`\`\`
+`;
+
+const generatedMermaidArtifact = `
+Here is the flow:
+
+\`\`\`mermaid
+flowchart LR
+  Request[Request] --> Sandbox[Sandbox]
+  Sandbox --> Response[Response]
+\`\`\`
+`;
+
+const generatedCdnHtmlArtifact = `
+A dashboard that loads its libraries from a CDN:
+
+\`\`\`html
+<!doctype html>
+<html>
+  <head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+  </head>
+  <body class="bg-slate-100">
+    <h1 id="title" class="text-2xl font-bold text-slate-900">CDN Dashboard</h1>
+    <canvas id="board" width="240" height="120"></canvas>
+    <script>
+      document.getElementById('title').dataset.chartReady = String(typeof Chart === 'function');
+      new Chart(document.getElementById('board'), {
+        type: 'bar',
+        data: { labels: ['a', 'b'], datasets: [{ data: [3, 5] }] },
+        options: { animation: false, responsive: false },
+      });
+      document.getElementById('title').dataset.chartDrawn = 'true';
+    </script>
+  </body>
+</html>
+\`\`\`
+`;
+
+const sessionWith = (id: string, title: string, content: string) => ({
+  id,
+  title,
+  model: 'llama3.2:3b',
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  messages: [
+    {
+      id: `${id}-user`,
+      role: 'user' as const,
+      content: 'Build it',
+      timestamp: Date.now() - 1_000,
+    },
+    {
+      id: `${id}-assistant`,
+      role: 'assistant' as const,
+      model: 'llama3.2:3b',
+      content,
+      timestamp: Date.now(),
+    },
+  ],
+});
+
+/** Anything the artifact frame tries to load from outside this application. */
+const trackExternalRequests = (page: Page): string[] => {
+  const external: string[] = [];
+  page.on('request', request => {
+    const url = request.url();
+    if (
+      !/^(?:https?:\/\/(?:127\.0\.0\.1|localhost):\d+|data:|blob:|about:)/.test(
+        url
+      )
+    ) {
+      external.push(url);
+    }
+  });
+  return external;
+};
+
+test('React artifacts compile and mount against the vendored runtime', async ({
+  page,
+}) => {
+  const external = trackExternalRequests(page);
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith('react-session', 'React artifact', generatedReactArtifact),
+    ],
+  });
+
+  await page.goto('/c/react-session');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .frameLocator('iframe[title="VisitsPanel"]')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  // JSX compiled and React mounted.
+  await expect(frame.locator('#heading')).toHaveText('Weekly visits');
+  // Tailwind utilities are generated in the frame.
+  await expect
+    .poll(() =>
+      frame
+        .locator('#rename')
+        .evaluate(el => getComputedStyle(el).backgroundColor)
+    )
+    .not.toBe('rgba(0, 0, 0, 0)');
+  // Charting and icon libraries resolve through the import map.
+  await expect(frame.locator('.recharts-bar-rectangle').first()).toBeVisible();
+  await expect(frame.locator('#icon')).toBeVisible();
+  // State still works after mounting.
+  await frame.locator('#rename').click();
+  await expect(frame.locator('#heading')).toHaveText('Renamed');
+
+  await expect(
+    frame.locator('[data-testid="artifact-runtime-error"]')
+  ).toHaveCount(0);
+  expect(external).toEqual([]);
+});
+
+test('Mermaid artifacts are drawn in the sandbox', async ({ page }) => {
+  const external = trackExternalRequests(page);
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith(
+        'mermaid-session',
+        'Mermaid artifact',
+        generatedMermaidArtifact
+      ),
+    ],
+  });
+
+  await page.goto('/c/mermaid-session');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .frameLocator('iframe[title="Flowchart"]')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  await expect(frame.locator('svg')).toBeVisible();
+  await expect(frame.locator('svg')).toContainText('Sandbox');
+  await expect(
+    frame.locator('[data-testid="artifact-runtime-error"]')
+  ).toHaveCount(0);
+  expect(external).toEqual([]);
+});
+
+test('HTML artifacts load CDN libraries from the local runtime instead', async ({
+  page,
+}) => {
+  const external = trackExternalRequests(page);
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith('cdn-session', 'CDN artifact', generatedCdnHtmlArtifact),
+    ],
+  });
+
+  await page.goto('/c/cdn-session');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .frameLocator('iframe[title="CDN Dashboard"]')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  // Chart.js was replaced by the vendored build and still ran.
+  await expect(frame.locator('#title')).toHaveAttribute(
+    'data-chart-ready',
+    'true'
+  );
+  await expect(frame.locator('#title')).toHaveAttribute(
+    'data-chart-drawn',
+    'true'
+  );
+  // Tailwind's CDN build was replaced too, so the utility classes still apply.
+  await expect
+    .poll(() =>
+      frame.locator('#title').evaluate(el => getComputedStyle(el).fontWeight)
+    )
+    .toBe('700');
+  expect(external).toEqual([]);
 });

@@ -104,3 +104,6 @@ plugins/openclaw-agent.json
 
 # Local security audit (contains deployment-sensitive findings)
 /PRIVATE_DEPLOYMENT_SECURITY_AUDIT.md
+
+# Built artifact runtime bundles (vendored libraries for the artifact sandbox)
+frontend/public/artifact-runtime/

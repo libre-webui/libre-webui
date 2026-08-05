@@ -41,6 +41,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { createServer } from 'http';
+import { join as pathJoin } from 'path';
 
 import {
   errorHandler,
@@ -261,6 +262,27 @@ app.use(
     xssFilter: true,
   })
 );
+
+// The artifact sandbox runs on an opaque origin, so it fetches the vendored
+// runtime with `Origin: null` and, because module scripts are always fetched
+// in CORS mode, needs an explicit grant. This is mounted ahead of the
+// application CORS gate, which would reject that origin, and serves nothing
+// but uncredentialed static bundles.
+{
+  const runtimeRoot = resolveFrontendDist(import.meta.url);
+  if (runtimeRoot) {
+    app.use(
+      '/artifact-runtime',
+      express.static(pathJoin(runtimeRoot, 'artifact-runtime'), {
+        setHeaders: res => {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+          res.setHeader('Cache-Control', 'public, max-age=3600');
+        },
+      })
+    );
+  }
+}
 
 // CORS configuration
 app.use(

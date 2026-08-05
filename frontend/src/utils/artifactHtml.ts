@@ -142,10 +142,15 @@ export function buildSvgArtifactDocument(
 </html>`;
 }
 
-export function openHtmlArtifactPreview(
-  content: string,
+/**
+ * Opens an artifact in its own window. The document is composed by the caller
+ * so that every artifact kind — plain HTML, React, Mermaid — reaches the same
+ * sandbox host the inline preview uses.
+ */
+export function openArtifactPreviewWindow(
+  html: string,
   sandboxUrl: string,
-  title = 'HTML Artifact'
+  title = 'Artifact'
 ): Window | null {
   const previewWindow = window.open('', '_blank');
   if (!previewWindow) return null;
@@ -162,7 +167,6 @@ export function openHtmlArtifactPreview(
   document.body.style.margin = '0';
   document.body.replaceChildren();
 
-  const html = buildHtmlArtifactDocument(content, title);
   const iframe = document.createElement('iframe');
   iframe.title = title;
   iframe.src = sandboxUrl;
@@ -240,6 +244,10 @@ function injectBeforeBodyClose(htmlContent: string, payload: string): string {
   }
 
   return `${htmlContent}${payload}`;
+}
+
+export function escapeArtifactHtml(value: string): string {
+  return escapeHtml(value);
 }
 
 function escapeHtml(value: string): string {

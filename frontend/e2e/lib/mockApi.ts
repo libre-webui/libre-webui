@@ -537,6 +537,9 @@ const json = <T>(data: T, success = true): ApiEnvelope<T> => ({
   data,
 });
 
+/** Origins the suite serves the application (and the artifact runtime) from. */
+const APP_ORIGINS = "'self' http://127.0.0.1:4173 http://localhost:4173";
+
 const fulfillJson = async <T>(route: Route, data: T, success = true) => {
   await route.fulfill({
     status: success ? 200 : 500,
@@ -1049,11 +1052,16 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           headers: {
             'Content-Security-Policy': [
               "default-src 'none'",
-              "script-src 'unsafe-inline' 'unsafe-eval' blob:",
-              "style-src 'unsafe-inline'",
-              'img-src data: blob:',
+              // The vendored runtime is served by the application origin, which
+              // in the suite is the dev server; mirror the real route's policy.
+              `script-src ${APP_ORIGINS} 'unsafe-inline' 'unsafe-eval' blob:`,
+              `style-src ${APP_ORIGINS} 'unsafe-inline' blob:`,
+              `img-src ${APP_ORIGINS} data: blob:`,
+              `font-src ${APP_ORIGINS} data:`,
+              `connect-src ${APP_ORIGINS} data: blob:`,
               'frame-src blob: data:',
-              "frame-ancestors 'self' http://127.0.0.1:4173",
+              `worker-src ${APP_ORIGINS} blob:`,
+              `frame-ancestors ${APP_ORIGINS}`,
               'sandbox allow-scripts allow-forms allow-modals allow-popups allow-pointer-lock allow-downloads',
             ].join('; '),
           },

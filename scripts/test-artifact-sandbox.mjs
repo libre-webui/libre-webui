@@ -75,6 +75,9 @@ test('the artifact sandbox host overrides the application script policy', async 
     // Inline script is the whole point: an artifact is inline script.
     assert.match(policy, /script-src [^;]*'unsafe-inline'/);
     assert.match(policy, /script-src [^;]*'unsafe-eval'/);
+    // The vendored runtime — React, Tailwind, the chart and diagram libraries
+    // — is served by this application, so its own origin must be allowed.
+    assert.match(policy, /script-src [^;]*'self'/);
     // The application policy must not leak through.
     assert.doesNotMatch(policy, /challenges\.cloudflare\.com/);
   });
@@ -118,7 +121,7 @@ test('the sandbox host carries no artifact markup of its own', async () => {
   });
 });
 
-test('HTML artifact previews never inherit the application policy', () => {
+test('artifact previews never inherit the application policy', () => {
   const frontendComponents = path.join(
     repoRoot,
     'frontend',
@@ -136,13 +139,51 @@ test('HTML artifact previews never inherit the application policy', () => {
     // srcDoc inherits the embedder's CSP, which is what broke HTML artifacts in
     // production. Only the SVG preview, which needs no script, may use it.
     assert.doesNotMatch(source, /srcDoc=\{buildHtmlArtifactDocument/);
-    assert.match(source, /<HtmlArtifactFrame/);
+    assert.match(source, /<ArtifactSandboxFrame/);
+    // Every live kind goes through the sandbox.
+    for (const kind of ['html', 'react', 'mermaid']) {
+      assert.match(source, new RegExp(`renderSandbox\\('${kind}'\\)`));
+    }
   }
 
   const frame = readFileSync(
-    path.join(frontendComponents, 'HtmlArtifactFrame.tsx'),
+    path.join(frontendComponents, 'ArtifactSandboxFrame.tsx'),
     'utf8'
   );
   assert.match(frame, /src=\{ARTIFACT_SANDBOX_URL\}/);
   assert.doesNotMatch(frame, /srcDoc/);
+});
+
+test('the runtime is vendored, never fetched from a CDN', () => {
+  const manifest = readFileSync(
+    path.join(repoRoot, 'frontend', 'src', 'artifact-runtime', 'manifest.ts'),
+    'utf8'
+  );
+  // Every module an artifact can import resolves to a bundle this application
+  // serves: the URL helpers are built from the runtime path and the caller's
+  // own origin, never from a remote host.
+  assert.match(manifest, /ARTIFACT_RUNTIME_PATH = '\/artifact-runtime'/);
+  assert.match(
+    manifest,
+    /artifactModuleUrl[^=]*=[^`]*`\$\{origin\}\$\{ARTIFACT_RUNTIME_PATH\}/
+  );
+  assert.match(
+    manifest,
+    /artifactGlobalUrl[^=]*=[^`]*`\$\{origin\}\$\{ARTIFACT_RUNTIME_PATH\}/
+  );
+  assert.match(manifest, /artifactImportMap[\s\S]*artifactModuleUrl\(origin/);
+
+  const documents = readFileSync(
+    path.join(
+      repoRoot,
+      'frontend',
+      'src',
+      'utils',
+      'artifactRuntimeDocument.ts'
+    ),
+    'utf8'
+  );
+  // CDN references in generated HTML are redirected to those same bundles.
+  assert.match(documents, /rewriteArtifactCdnReferences/);
+  assert.match(documents, /artifactGlobalUrl/);
 });

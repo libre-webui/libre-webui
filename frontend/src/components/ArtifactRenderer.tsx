@@ -32,16 +32,24 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
-import { HtmlArtifactFrame } from '@/components/HtmlArtifactFrame';
+import { ArtifactSandboxFrame } from '@/components/ArtifactSandboxFrame';
 import { useAppStore } from '@/store/appStore';
 import { Artifact } from '@/types';
 import {
   buildHtmlArtifactDocument,
   buildSvgArtifactDocument,
-  openHtmlArtifactPreview,
+  openArtifactPreviewWindow,
   SVG_ARTIFACT_SANDBOX,
 } from '@/utils/artifactHtml';
-import { ARTIFACT_SANDBOX_URL } from '@/utils/artifactSandbox';
+import {
+  ARTIFACT_RUNTIME_ORIGIN,
+  ARTIFACT_SANDBOX_URL,
+} from '@/utils/artifactSandbox';
+import {
+  artifactSandboxKind,
+  buildArtifactSandboxDocument,
+  type ArtifactSandboxKind,
+} from '@/utils/artifactRuntimeDocument';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 
@@ -164,15 +172,17 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     </div>
   );
 
-  const renderHtml = () => {
+  const renderSandbox = (kind: ArtifactSandboxKind) => {
     if (!artifact.content.trim()) {
       return renderHtmlFallback();
     }
 
     return (
-      <HtmlArtifactFrame
+      <ArtifactSandboxFrame
         content={artifact.content}
         title={artifact.title}
+        kind={kind}
+        colorScheme={theme.mode === 'dark' ? 'dark' : 'light'}
         className='w-full h-64 sm:h-80 lg:h-96 border-0 rounded-lg'
         fallback={renderHtmlFallback()}
       />
@@ -264,7 +274,11 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     // Otherwise show the rendered preview
     switch (artifact.type) {
       case 'html':
-        return renderHtml();
+        return renderSandbox('html');
+      case 'react':
+        return renderSandbox('react');
+      case 'mermaid':
+        return renderSandbox('mermaid');
       case 'svg':
         return renderSvg();
       case 'json':
@@ -281,7 +295,8 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     return (
       artifact.type === 'html' ||
       artifact.type === 'svg' ||
-      artifact.type === 'react'
+      artifact.type === 'react' ||
+      artifact.type === 'mermaid'
     );
   };
 
@@ -468,13 +483,21 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
           {new Date(artifact.createdAt).toLocaleString()}
         </div>
 
-        {(artifact.type === 'html' || artifact.type === 'react') && (
+        {artifactSandboxKind(artifact.type) && (
           <Button
             variant='ghost'
             size='sm'
             onClick={() =>
-              openHtmlArtifactPreview(
-                artifact.content,
+              openArtifactPreviewWindow(
+                buildArtifactSandboxDocument(
+                  artifactSandboxKind(artifact.type) ?? 'html',
+                  artifact.content,
+                  artifact.title,
+                  {
+                    origin: ARTIFACT_RUNTIME_ORIGIN,
+                    colorScheme: theme.mode === 'dark' ? 'dark' : 'light',
+                  }
+                ),
                 ARTIFACT_SANDBOX_URL,
                 artifact.title
               )

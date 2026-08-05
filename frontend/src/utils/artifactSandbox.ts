@@ -27,3 +27,14 @@ import { API_BASE_URL } from '@/utils/config';
  * environment access and can be unit tested under plain Node.
  */
 export const ARTIFACT_SANDBOX_URL = `${API_BASE_URL.replace(/\/+$/, '')}/artifacts/sandbox`;
+
+/**
+ * Origin serving the vendored artifact runtime. It ships with the frontend
+ * build, so it is the page's own origin — except in the desktop build, which
+ * loads the page from `file://` and reaches the runtime through the backend
+ * that serves that same build.
+ */
+export const ARTIFACT_RUNTIME_ORIGIN =
+  window.location.protocol === 'file:'
+    ? new URL(ARTIFACT_SANDBOX_URL).origin
+    : window.location.origin;

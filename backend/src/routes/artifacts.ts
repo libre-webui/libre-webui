@@ -32,52 +32,69 @@ const ARTIFACT_FRAME_ALLOW =
   'clipboard-read; clipboard-write; fullscreen; gamepad';
 
 /**
- * Frame ancestors allowed to embed the sandbox host. Development serves the
- * frontend from a different port, and the packaged desktop build loads it from
- * `file://`, so both need explicit entries alongside the application origin.
+ * Origins that serve this application, and with it the vendored artifact
+ * runtime. In production the frontend and the API share an origin, so `'self'`
+ * covers it; development serves the frontend from another port.
  */
-const artifactFrameAncestors = (): string => {
-  const ancestors = new Set(["'self'", 'file:']);
+const applicationOrigins = (): string[] => {
+  const origins = new Set(["'self'"]);
   if (process.env.NODE_ENV !== 'production') {
-    ancestors.add('http://localhost:*');
-    ancestors.add('http://127.0.0.1:*');
-    ancestors.add('http://[::1]:*');
+    origins.add('http://localhost:*');
+    origins.add('http://127.0.0.1:*');
+    origins.add('http://[::1]:*');
   }
   for (const candidate of (process.env.CORS_ORIGIN || '').split(',')) {
     try {
       const origin = new URL(candidate.trim());
       if (origin.protocol === 'http:' || origin.protocol === 'https:') {
-        ancestors.add(origin.origin);
+        origins.add(origin.origin);
       }
     } catch {
       // Ignore wildcard and malformed CORS entries in a CSP source list.
     }
   }
-  return [...ancestors].join(' ');
+  return [...origins];
 };
 
 /**
- * The policy that governs artifact markup. It is deliberately unrelated to the
- * application policy: inline scripts and eval are what artifacts are made of,
- * while every network directive stays closed, so an artifact can render and
- * compute but cannot reach a third-party host or the API it is served from.
+ * Frame ancestors allowed to embed the sandbox host. The packaged desktop
+ * build loads the frontend from `file://`, so it needs an entry of its own.
  */
-const artifactSandboxPolicy = (): string =>
-  [
+const artifactFrameAncestors = (): string =>
+  [...applicationOrigins(), 'file:'].join(' ');
+
+/**
+ * The policy that governs artifact code. It is deliberately unrelated to the
+ * application policy: inline script and eval are what artifacts are made of,
+ * and the vendored runtime — React, Tailwind, the charting and diagram
+ * libraries — is loaded from this application's own origin.
+ *
+ * No third-party host appears anywhere in it. An artifact can render and
+ * compute, but it cannot fetch from a CDN, phone home, or reach anything but
+ * the runtime bundles it was given.
+ */
+const artifactSandboxPolicy = (): string => {
+  const app = applicationOrigins().join(' ');
+
+  return [
     "default-src 'none'",
-    "script-src 'unsafe-inline' 'unsafe-eval' blob:",
-    "style-src 'unsafe-inline'",
-    'img-src data: blob:',
-    'media-src data: blob:',
-    'font-src data:',
+    `script-src ${app} 'unsafe-inline' 'unsafe-eval' blob:`,
+    `style-src ${app} 'unsafe-inline' blob:`,
+    `img-src ${app} data: blob:`,
+    `media-src ${app} data: blob:`,
+    `font-src ${app} data:`,
+    // The runtime fetches nothing, but a bundle that inlines a worker or a
+    // source map should not fail against an unrelated host.
+    `connect-src ${app} data: blob:`,
     'frame-src blob: data:',
     'child-src blob: data:',
-    'worker-src blob:',
+    `worker-src ${app} blob:`,
     "form-action 'none'",
     "base-uri 'none'",
     `frame-ancestors ${artifactFrameAncestors()}`,
     `sandbox ${ARTIFACT_SANDBOX_FLAGS}`,
   ].join('; ');
+};
 
 /**
  * Host document for HTML artifact previews.

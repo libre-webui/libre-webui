@@ -18,13 +18,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-  buildHtmlArtifactDocument,
   HTML_ARTIFACT_ALLOW,
   HTML_ARTIFACT_SANDBOX,
   isArtifactSandboxReady,
   postArtifactDocument,
 } from '@/utils/artifactHtml';
-import { ARTIFACT_SANDBOX_URL } from '@/utils/artifactSandbox';
+import {
+  ARTIFACT_RUNTIME_ORIGIN,
+  ARTIFACT_SANDBOX_URL,
+} from '@/utils/artifactSandbox';
+import {
+  buildArtifactSandboxDocument,
+  type ArtifactSandboxKind,
+} from '@/utils/artifactRuntimeDocument';
 
 /**
  * How long to wait for the sandbox host to announce itself before falling back.
@@ -33,22 +39,27 @@ import { ARTIFACT_SANDBOX_URL } from '@/utils/artifactSandbox';
  */
 const SANDBOX_HANDSHAKE_TIMEOUT_MS = 8000;
 
-interface HtmlArtifactFrameProps {
+interface ArtifactSandboxFrameProps {
   content: string;
   title: string;
+  kind?: ArtifactSandboxKind;
+  colorScheme?: 'light' | 'dark';
   className?: string;
   testId?: string;
   fallback?: React.ReactNode;
 }
 
 /**
- * Renders untrusted HTML artifact markup inside the backend-served sandbox
- * host. The markup travels by `postMessage` rather than `srcdoc` so that it is
- * governed by the sandbox policy instead of inheriting the application's.
+ * Runs untrusted artifact code inside the backend-served sandbox host. The
+ * document travels by `postMessage` rather than `srcdoc` so that it is governed
+ * by the sandbox policy instead of inheriting the application's, which forbids
+ * the inline scripts artifacts are made of.
  */
-export const HtmlArtifactFrame: React.FC<HtmlArtifactFrameProps> = ({
+export const ArtifactSandboxFrame: React.FC<ArtifactSandboxFrameProps> = ({
   content,
   title,
+  kind = 'html',
+  colorScheme = 'light',
   className,
   testId = 'artifact-html-preview',
   fallback,
@@ -58,8 +69,12 @@ export const HtmlArtifactFrame: React.FC<HtmlArtifactFrameProps> = ({
   const [unavailable, setUnavailable] = useState(false);
 
   const document = useMemo(
-    () => buildHtmlArtifactDocument(content, title),
-    [content, title]
+    () =>
+      buildArtifactSandboxDocument(kind, content, title, {
+        origin: ARTIFACT_RUNTIME_ORIGIN,
+        colorScheme,
+      }),
+    [kind, content, title, colorScheme]
   );
   const documentRef = useRef(document);
 
@@ -107,4 +122,4 @@ export const HtmlArtifactFrame: React.FC<HtmlArtifactFrameProps> = ({
   );
 };
 
-export default HtmlArtifactFrame;
+export default ArtifactSandboxFrame;

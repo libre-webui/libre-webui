@@ -25,7 +25,7 @@ import {
   ARTIFACT_SANDBOX_RENDER,
   buildSvgArtifactDocument,
   HTML_ARTIFACT_SANDBOX,
-  openHtmlArtifactPreview,
+  openArtifactPreviewWindow,
   SVG_ARTIFACT_SANDBOX,
 } from './artifactHtml';
 
@@ -97,8 +97,8 @@ test('new-window HTML previews keep untrusted markup in a sandboxed iframe', () 
   });
 
   try {
-    const result = openHtmlArtifactPreview(
-      '<script>parent.document.body.textContent="owned"</script>',
+    const result = openArtifactPreviewWindow(
+      '<!DOCTYPE html><html><body><script>parent.document.body.textContent="owned"</script></body></html>',
       '/api/artifacts/sandbox',
       'Preview'
     );

@@ -77,8 +77,33 @@ const WS_BASE_URL = process.env.VITE_WS_BASE_URL || 'ws://localhost:3001';
 const isElectron = process.env.ELECTRON_BUILD === 'true';
 
 // https://vitejs.dev/config/
+/**
+ * The artifact sandbox runs on an opaque origin, so it fetches the vendored
+ * runtime with `Origin: null`, and module scripts are always fetched in CORS
+ * mode. Production serves these headers from the backend; this does the same
+ * for the dev server.
+ */
+const artifactRuntimeHeaders = () => ({
+  name: 'libre-artifact-runtime-headers',
+  configureServer(server: { middlewares: { use: (fn: unknown) => void } }) {
+    server.middlewares.use(
+      (
+        req: { url?: string },
+        res: { setHeader: (name: string, value: string) => void },
+        next: () => void
+      ) => {
+        if (req.url?.startsWith('/artifact-runtime/')) {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        }
+        next();
+      }
+    );
+  },
+});
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), artifactRuntimeHeaders()],
   base: isElectron ? './' : '/',
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
