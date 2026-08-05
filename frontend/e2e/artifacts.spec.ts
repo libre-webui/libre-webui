@@ -704,3 +704,76 @@ test('HTML artifacts load CDN libraries from the local runtime instead', async (
     .toBe('700');
   expect(external).toEqual([]);
 });
+
+const generatedThreeArtifact = `
+A rotating cube:
+
+\`\`\`html
+<!doctype html>
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  </head>
+  <body>
+    <div id="status">starting</div>
+    <div id="stage"></div>
+    <script>
+      try {
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, 2, 0.1, 100);
+        camera.position.z = 4;
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(240, 120);
+        document.getElementById('stage').appendChild(renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        scene.add(new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshNormalMaterial()));
+        renderer.render(scene, camera);
+        document.getElementById('status').dataset.ready = String(Boolean(controls.update));
+      } catch (error) {
+        document.getElementById('status').textContent = 'FAILED: ' + String(error).slice(0, 140);
+      }
+    </script>
+  </body>
+</html>
+\`\`\`
+`;
+
+test('Three.js artifacts get the addons their CDN tags expect', async ({
+  page,
+}) => {
+  test.slow();
+  const warnings: string[] = [];
+  page.on('console', message => {
+    if (/Multiple instances|not a constructor/i.test(message.text())) {
+      warnings.push(message.text().slice(0, 120));
+    }
+  });
+  const external = trackExternalRequests(page);
+
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith('three-session', 'Three artifact', generatedThreeArtifact),
+    ],
+  });
+
+  await page.goto('/c/three-session');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .getByTestId('artifact-slide-out-panel')
+    .frameLocator('iframe')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  // OrbitControls lives outside Three's core package; the vendored bundle
+  // carries the addons and hangs them off the global the way the CDN did.
+  await expect(frame.locator('#status')).toHaveAttribute('data-ready', 'true', {
+    timeout: 30_000,
+  });
+  await expect(frame.locator('canvas')).toBeVisible();
+  // Two CDN tags map to one bundle; inlining it twice would load a second copy
+  // of Three, which it warns about and which breaks instanceof checks.
+  expect(warnings).toEqual([]);
+  expect(external).toEqual([]);
+});

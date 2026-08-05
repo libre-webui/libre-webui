@@ -99,22 +99,30 @@ export function rewriteArtifactCdnReferences(
   html: string,
   sources: Record<string, string>
 ): string {
+  // One bundle often stands in for several tags — three.min.js and
+  // OrbitControls.js both map to Three — and running it twice would load a
+  // second copy of the library, which Three in particular refuses to work
+  // with. Later tags for a bundle already inlined are dropped.
+  const inlined = new Set<string>();
+
   const replacement = (url: string): string | null => {
     if (!/^(?:https?:)?\/\//i.test(url)) return null;
     for (const { pattern, bundle } of ARTIFACT_CDN_REPLACEMENTS) {
-      if (pattern.test(url)) {
-        return sources[bundle] ?? null;
+      if (!pattern.test(url)) continue;
+      const source = sources[bundle];
+      if (!source) return null;
+      if (inlined.has(bundle)) {
+        return `<!-- ${bundle} is already loaded above -->`;
       }
+      inlined.add(bundle);
+      return scriptTag(source);
     }
     return null;
   };
 
   const withScripts = html.replace(
     /<script\b[^>]*\bsrc\s*=\s*("|')(.*?)\1[^>]*>\s*<\/script>/gi,
-    (tag, _quote: string, url: string) => {
-      const source = replacement(url);
-      return source ? scriptTag(source) : tag;
-    }
+    (tag, _quote: string, url: string) => replacement(url) ?? tag
   );
 
   // A Tailwind stylesheet link becomes the browser build, which generates the
@@ -123,8 +131,7 @@ export function rewriteArtifactCdnReferences(
     /<link\b[^>]*\bhref\s*=\s*("|')(.*?)\1[^>]*>/gi,
     (tag, _quote: string, url: string) => {
       if (!/tailwind/i.test(url)) return tag;
-      const source = replacement(url);
-      return source ? scriptTag(source) : tag;
+      return replacement(url) ?? tag;
     }
   );
 }

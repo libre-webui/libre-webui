@@ -98,12 +98,51 @@ const REGISTRY_PRELUDE = `const __registry = (window.${ARTIFACT_RUNTIME_GLOBAL} 
 });`;
 
 const RESERVED_WORDS = new Set([
-  'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
-  'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false',
-  'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new',
-  'null', 'return', 'super', 'switch', 'this', 'throw', 'true', 'try',
-  'typeof', 'var', 'void', 'while', 'with', 'yield', 'let', 'static',
-  'implements', 'interface', 'package', 'private', 'protected', 'public',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'import',
+  'in',
+  'instanceof',
+  'new',
+  'null',
+  'return',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'typeof',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
+  'let',
+  'static',
+  'implements',
+  'interface',
+  'package',
+  'private',
+  'protected',
+  'public',
 ]);
 
 const exportableNames = (value: object): string[] =>
@@ -196,12 +235,82 @@ __registry.register(${JSON.stringify(specifiers)}, __value);
 window.${global} = __value;`;
 };
 
+/**
+ * Three.js keeps its controls, loaders and post-processing outside the core
+ * package, and generated code reaches for them constantly — `OrbitControls`
+ * above all. The legacy CDN builds hung them off the `THREE` global, so they
+ * are merged into it here as well as registered under their own specifiers.
+ */
+const THREE_ADDONS: Record<string, string> = {
+  OrbitControls: 'controls/OrbitControls.js',
+  MapControls: 'controls/MapControls.js',
+  TrackballControls: 'controls/TrackballControls.js',
+  FlyControls: 'controls/FlyControls.js',
+  FirstPersonControls: 'controls/FirstPersonControls.js',
+  PointerLockControls: 'controls/PointerLockControls.js',
+  DragControls: 'controls/DragControls.js',
+  ArcballControls: 'controls/ArcballControls.js',
+  GLTFLoader: 'loaders/GLTFLoader.js',
+  OBJLoader: 'loaders/OBJLoader.js',
+  MTLLoader: 'loaders/MTLLoader.js',
+  FBXLoader: 'loaders/FBXLoader.js',
+  STLLoader: 'loaders/STLLoader.js',
+  SVGLoader: 'loaders/SVGLoader.js',
+  FontLoader: 'loaders/FontLoader.js',
+  RGBELoader: 'loaders/RGBELoader.js',
+  TextGeometry: 'geometries/TextGeometry.js',
+  RoundedBoxGeometry: 'geometries/RoundedBoxGeometry.js',
+  ConvexGeometry: 'geometries/ConvexGeometry.js',
+  DecalGeometry: 'geometries/DecalGeometry.js',
+  EffectComposer: 'postprocessing/EffectComposer.js',
+  RenderPass: 'postprocessing/RenderPass.js',
+  ShaderPass: 'postprocessing/ShaderPass.js',
+  UnrealBloomPass: 'postprocessing/UnrealBloomPass.js',
+  OutputPass: 'postprocessing/OutputPass.js',
+  GlitchPass: 'postprocessing/GlitchPass.js',
+  BufferGeometryUtils: 'utils/BufferGeometryUtils.js',
+  SceneUtils: 'utils/SceneUtils.js',
+  Sky: 'objects/Sky.js',
+  Lensflare: 'objects/Lensflare.js',
+  Line2: 'lines/Line2.js',
+  LineGeometry: 'lines/LineGeometry.js',
+  LineMaterial: 'lines/LineMaterial.js',
+};
+
+const threeBundleSource = () => {
+  const imports = Object.entries(THREE_ADDONS)
+    .map(
+      ([name, file], index) =>
+        `import * as __addon${index} from 'three/examples/jsm/${file}';`
+    )
+    .join('\n');
+  const merged = Object.keys(THREE_ADDONS)
+    .map((_, index) => `...__addon${index}`)
+    .join(', ');
+  const registrations = Object.entries(THREE_ADDONS)
+    .map(
+      ([, file], index) =>
+        `__registry.register(['three/addons/${file}', 'three/examples/jsm/${file}'], __addon${index});`
+    )
+    .join('\n');
+
+  return `import * as __module from 'three';
+${imports}
+${REGISTRY_PRELUDE}
+const __value = { ...__module, ${merged} };
+__registry.register(['three'], __value);
+${registrations}
+window.THREE = __value;`;
+};
+
 const VIRTUAL_PREFIX = 'libre-artifact-entry:';
 
 const bundleSource = async (name: string): Promise<string> => {
   if (name === ARTIFACT_REACT_BUNDLE) return reactBundleSource();
+  if (name === 'three') return threeBundleSource();
   if (name === ARTIFACT_BABEL_BUNDLE) return babelBundleSource();
-  if (name === ARTIFACT_TAILWIND_BUNDLE) return `import '@tailwindcss/browser';`;
+  if (name === ARTIFACT_TAILWIND_BUNDLE)
+    return `import '@tailwindcss/browser';`;
   return librarySource(name);
 };
 
@@ -223,7 +332,8 @@ const virtualModules = (
     if (id.startsWith(`\0${VIRTUAL_PREFIX}`)) {
       const name = id.slice(`\0${VIRTUAL_PREFIX}`.length);
       const source = entry[name];
-      if (!source) throw new Error(`No artifact runtime bundle named "${name}".`);
+      if (!source)
+        throw new Error(`No artifact runtime bundle named "${name}".`);
       return source;
     }
     if (id.startsWith('\0shared:')) {
@@ -282,7 +392,9 @@ const buildBundle = async (name: string, shareReact: boolean) => {
     ...baseConfig,
     plugins: [
       virtualModules(
-        name === ARTIFACT_RUNTIME_BUNDLE ? {} : { [name]: await bundleSource(name) },
+        name === ARTIFACT_RUNTIME_BUNDLE
+          ? {}
+          : { [name]: await bundleSource(name) },
         shared
       ),
     ],
@@ -354,4 +466,6 @@ for (const name of ARTIFACT_LIBRARY_BUNDLES) {
 }
 
 await writeFile(stampPath, `${fingerprint}\n`);
-console.log(`artifact runtime built into ${path.relative(projectRoot, outDir)}`);
+console.log(
+  `artifact runtime built into ${path.relative(projectRoot, outDir)}`
+);
