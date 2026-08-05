@@ -201,7 +201,8 @@ app.use(
         styleSrc: [
           "'self'",
           "'unsafe-inline'", // Required for styled-components and CSS-in-JS
-          'https://fonts.googleapis.com',
+          // No font CDN: Inter is vendored into the frontend bundle, so the
+          // browser never needs to reach a third-party host for a stylesheet.
         ],
         imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
         connectSrc: [
@@ -224,7 +225,7 @@ app.use(
               ]
             : []),
         ],
-        fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+        fontSrc: ["'self'", 'data:'],
         mediaSrc: ["'self'", 'data:', 'blob:'],
         objectSrc: ["'none'"],
         frameSrc: ["'self'", 'https://challenges.cloudflare.com'],
