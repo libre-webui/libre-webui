@@ -29,6 +29,14 @@
 import { ARTIFACT_RUNTIME_PATH } from '@/artifact-runtime/manifest';
 import { ARTIFACT_RUNTIME_ORIGIN } from '@/utils/artifactSandbox';
 
+/**
+ * Stamped into the request so an intermediary cache — Cloudflare sits in front
+ * of many deployments — cannot serve a runtime bundle from before an update.
+ */
+const RUNTIME_VERSION = encodeURIComponent(
+  import.meta.env.VITE_APP_VERSION || 'dev'
+);
+
 const bundles = new Map<string, Promise<string>>();
 
 /** Source of one runtime bundle. Each is fetched once per page load. */
@@ -37,7 +45,7 @@ export function loadArtifactBundle(name: string): Promise<string> {
   if (cached) return cached;
 
   const pending = fetch(
-    `${ARTIFACT_RUNTIME_ORIGIN}${ARTIFACT_RUNTIME_PATH}/${name}.js`,
+    `${ARTIFACT_RUNTIME_ORIGIN}${ARTIFACT_RUNTIME_PATH}/${name}.js?v=${RUNTIME_VERSION}`,
     { credentials: 'same-origin' }
   ).then(response => {
     if (!response.ok) {

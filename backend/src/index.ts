@@ -277,7 +277,11 @@ app.use(
         setHeaders: res => {
           res.setHeader('Access-Control-Allow-Origin', '*');
           res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-          res.setHeader('Cache-Control', 'public, max-age=3600');
+          // Revalidate every time. These files change with each release but
+          // keep the same paths, and a cached copy from before an update
+          // leaves artifacts running against a runtime that no longer matches
+          // the application. The ETag makes an unchanged file a 304.
+          res.setHeader('Cache-Control', 'no-cache');
         },
       })
     );
