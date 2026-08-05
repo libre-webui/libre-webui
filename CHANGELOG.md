@@ -15,6 +15,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.19.2] - 2026-08-05
+
+Libre WebUI 0.19.2 sharpens the mobile experience and restores real-time
+reasoning for plugin-backed models. Notes, sidebar navigation, tab menus, and
+optional Android haptics now work more naturally on touch screens, while
+OpenAI-compatible reasoning stays separate from answer text and is saved with
+the conversation.
+
+### ✨ New Features
+
+- Added optional haptic feedback on supported Android browsers, with distinct
+  patterns for selection, impact, success, and warning actions and a translated
+  Appearance setting to turn it off.
+
+### 🔧 Improvements
+
+- Reworked the expanded mobile sidebar to use the available screen width and
+  collapse into a readable recent-chat or Work-task rail with clear active
+  state, labels, counts, and one-tap expansion.
+- Replaced hover-dependent conversation actions with a touch-friendly mobile
+  action sheet, kept conversation titles readable, and synchronized the active
+  item with the route as soon as navigation begins.
+- Improved the mobile Notes workspace with clearer editor and preview controls,
+  responsive content sizing, and safer behavior when switching notes.
+- Kept the new-tab menu inside the visible application area on narrow screens
+  and added Notes to its destinations.
+
+### 🐛 Bug Fixes
+
+- Streamed OpenAI-compatible `reasoning_content`, `reasoning`, and structured
+  `reasoning_details` as a live thinking block instead of revealing them only
+  after the answer completes. Reasoning is persisted, restored across branches,
+  and timed independently from answer generation.
+- Kept `-dev` visible on development images across Home, Login, Settings, and
+  backend version APIs by using the injected build version consistently in both
+  frontend and runtime package metadata.
+- Stabilized the browser E2E environment around development-version labels and
+  the compact mobile Work surface so the full quality gate reflects the UI's
+  intended overlay behavior.
+
 ## [0.19.1] - 2026-08-03
 
 Libre WebUI 0.19.1 fixes a container startup regression in 0.19.0. The
