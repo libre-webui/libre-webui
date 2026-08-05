@@ -548,6 +548,27 @@ const sessionWith = (id: string, title: string, content: string) => ({
   ],
 });
 
+/**
+ * The vendored runtime is several megabytes on disk. Reading it through a cold
+ * dev server while a browser waits is what makes these tests flaky, so each
+ * worker pulls it once up front.
+ */
+test.beforeAll(async ({ request }) => {
+  const assets = [
+    'react-bootstrap.js',
+    'mermaid-bootstrap.js',
+    'react.js',
+    'react-dom-client.js',
+    'recharts.js',
+    'lucide-react.js',
+    'globals/tailwind.js',
+    'globals/chart.js',
+  ];
+  for (const asset of assets) {
+    await request.get(`/artifact-runtime/${asset}`).catch(() => undefined);
+  }
+});
+
 /** Anything the artifact frame tries to load from outside this application. */
 const trackExternalRequests = (page: Page): string[] => {
   const external: string[] = [];
@@ -567,6 +588,9 @@ const trackExternalRequests = (page: Page): string[] => {
 test('React artifacts compile and mount against the vendored runtime', async ({
   page,
 }) => {
+  // Compiling the artifact and loading the vendored runtime is heavier than a
+  // markup-only preview, especially on a cold dev server.
+  test.slow();
   const external = trackExternalRequests(page);
   await mockLibreWebUiApi(page, {
     sessions: [
@@ -577,13 +601,18 @@ test('React artifacts compile and mount against the vendored runtime', async ({
   await page.goto('/c/react-session');
   await page.locator('button[title="Open in panel"]:visible').first().click();
 
+  // Scope to the panel: the same artifact is also rendered inline in the
+  // message list, where the panel backdrop covers it.
   const frame = page
+    .getByTestId('artifact-slide-out-panel')
     .frameLocator('iframe[title="VisitsPanel"]')
-    .first()
     .frameLocator('iframe[title="Artifact"]');
 
-  // JSX compiled and React mounted.
-  await expect(frame.locator('#heading')).toHaveText('Weekly visits');
+  // JSX compiled and React mounted. The first assertion waits on a cold load
+  // of the vendored runtime, which is a large bundle to compile.
+  await expect(frame.locator('#heading')).toHaveText('Weekly visits', {
+    timeout: 30_000,
+  });
   // Tailwind utilities are generated in the frame.
   await expect
     .poll(() =>
@@ -606,6 +635,7 @@ test('React artifacts compile and mount against the vendored runtime', async ({
 });
 
 test('Mermaid artifacts are drawn in the sandbox', async ({ page }) => {
+  test.slow();
   const external = trackExternalRequests(page);
   await mockLibreWebUiApi(page, {
     sessions: [
@@ -620,12 +650,14 @@ test('Mermaid artifacts are drawn in the sandbox', async ({ page }) => {
   await page.goto('/c/mermaid-session');
   await page.locator('button[title="Open in panel"]:visible').first().click();
 
+  // Scope to the panel: the same artifact is also rendered inline in the
+  // message list, where the panel backdrop covers it.
   const frame = page
+    .getByTestId('artifact-slide-out-panel')
     .frameLocator('iframe[title="Flowchart"]')
-    .first()
     .frameLocator('iframe[title="Artifact"]');
 
-  await expect(frame.locator('svg')).toBeVisible();
+  await expect(frame.locator('svg')).toBeVisible({ timeout: 30_000 });
   await expect(frame.locator('svg')).toContainText('Sandbox');
   await expect(
     frame.locator('[data-testid="artifact-runtime-error"]')
@@ -636,6 +668,7 @@ test('Mermaid artifacts are drawn in the sandbox', async ({ page }) => {
 test('HTML artifacts load CDN libraries from the local runtime instead', async ({
   page,
 }) => {
+  test.slow();
   const external = trackExternalRequests(page);
   await mockLibreWebUiApi(page, {
     sessions: [
@@ -646,15 +679,18 @@ test('HTML artifacts load CDN libraries from the local runtime instead', async (
   await page.goto('/c/cdn-session');
   await page.locator('button[title="Open in panel"]:visible').first().click();
 
+  // Scope to the panel: the same artifact is also rendered inline in the
+  // message list, where the panel backdrop covers it.
   const frame = page
+    .getByTestId('artifact-slide-out-panel')
     .frameLocator('iframe[title="CDN Dashboard"]')
-    .first()
     .frameLocator('iframe[title="Artifact"]');
 
   // Chart.js was replaced by the vendored build and still ran.
   await expect(frame.locator('#title')).toHaveAttribute(
     'data-chart-ready',
-    'true'
+    'true',
+    { timeout: 30_000 }
   );
   await expect(frame.locator('#title')).toHaveAttribute(
     'data-chart-drawn',

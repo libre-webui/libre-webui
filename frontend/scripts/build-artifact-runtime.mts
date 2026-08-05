@@ -31,7 +31,8 @@
  *             artifacts. Each is self-contained and assigns its own global.
  */
 
-import { rm } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build, type InlineConfig, type Plugin } from 'vite';
@@ -136,18 +137,22 @@ const exportableNames = (value: object): string[] =>
  */
 const moduleSource = async (specifier: string): Promise<string> => {
   const namespace = (await import(specifier)) as Record<string, unknown>;
-  const viaDefault =
-    Object.keys(namespace).length <= 2 && namespace.default !== undefined;
+  const hasDefault = namespace.default !== undefined;
+  // A CommonJS package arrives as a lone default; a native ESM one exposes its
+  // API on the namespace. Referring to a default that does not exist is what
+  // makes the bundler warn, so each case gets the binding that actually fits.
+  const viaDefault = Object.keys(namespace).length <= 2 && hasDefault;
   const target = (viaDefault ? namespace.default : namespace) as object;
   const names = exportableNames(target);
 
   const binding = viaDefault
     ? `import __module from '${specifier}';`
     : `import * as __namespace from '${specifier}';\nconst __module = __namespace;`;
+  const fallbackDefault = hasDefault ? '__namespace.default' : '__namespace';
 
   return [
     binding,
-    `export default ${viaDefault ? '__module' : '__namespace.default ?? __namespace'};`,
+    `export default ${viaDefault ? '__module' : fallbackDefault};`,
     names.length ? `export const { ${names.join(', ')} } = __module;` : '',
   ]
     .filter(Boolean)
@@ -237,13 +242,34 @@ const resolveEntry = (name: string) => {
   return entryId(name);
 };
 
+/**
+ * These bundles are vendored libraries, so the advice the bundler would give
+ * about them does not apply: they are meant to be large, and the IIFE globals
+ * inherit an `import.meta` reference from a helper they never reach. Real
+ * errors still surface.
+ */
+const SILENCED_LOG_CODES = new Set([
+  'EMPTY_IMPORT_META',
+  'IMPORT_IS_UNDEFINED',
+  'CIRCULAR_DEPENDENCY',
+]);
+
+const quietLog = (
+  level: string,
+  log: { code?: string },
+  handler: (level: string, log: { code?: string }) => void
+) => {
+  if (log.code && SILENCED_LOG_CODES.has(log.code)) return;
+  handler(level, log);
+};
+
 const baseConfig: InlineConfig = {
   root: projectRoot,
   configFile: false,
   // The output lives inside public/, so Vite must not also treat public/ as a
   // directory to copy.
   publicDir: false,
-  logLevel: 'warn',
+  logLevel: 'error',
   define: { 'process.env.NODE_ENV': '"production"' },
 };
 
@@ -264,7 +290,9 @@ const buildModules = async (names: string[], external: string[]) => {
       emptyOutDir: false,
       target: 'es2022',
       sourcemap: false,
+      chunkSizeWarningLimit: Infinity,
       rollupOptions: {
+        onLog: quietLog,
         input: Object.fromEntries(
           names.map(name => [name, resolveEntry(name)])
         ),
@@ -297,33 +325,62 @@ const buildGlobal = async (name: string) => {
       emptyOutDir: false,
       target: 'es2022',
       sourcemap: false,
+      chunkSizeWarningLimit: Infinity,
       rollupOptions: {
+        onLog: quietLog,
         input: { [name]: entryId(name) },
         output: {
           format: 'iife',
           name: `libreArtifactGlobal_${name.replace(/\W/g, '_')}`,
           entryFileNames: '[name].js',
           assetFileNames: '[name][extname]',
-          inlineDynamicImports: true,
         },
       },
     },
   });
 };
 
+/**
+ * What the output depends on: the runtime sources, this script, and the
+ * versions of the packages being vendored. Unchanged inputs mean the bundles
+ * on disk are still current, so a plain `npm run dev` does not rebuild them.
+ */
+const inputFingerprint = async (): Promise<string> => {
+  const hash = createHash('sha256');
+  const files = [
+    fileURLToPath(import.meta.url),
+    path.join(runtimeSource, 'manifest.ts'),
+    path.join(runtimeSource, 'react-bootstrap.ts'),
+    path.join(runtimeSource, 'mermaid-bootstrap.ts'),
+    path.join(projectRoot, 'package.json'),
+  ];
+  for (const file of files) {
+    hash.update(await readFile(file));
+  }
+  return hash.digest('hex');
+};
+
+const stampPath = path.join(outDir, '.build-fingerprint');
+const fingerprint = await inputFingerprint();
+const force = process.argv.includes('--force');
+
+if (!force) {
+  const previous = await readFile(stampPath, 'utf8').catch(() => null);
+  if (previous?.trim() === fingerprint) {
+    console.log('artifact runtime is up to date');
+    process.exit(0);
+  }
+}
+
 await rm(outDir, { recursive: true, force: true });
 
-console.log('artifact runtime: core');
+console.log('artifact runtime: building React, Tailwind and the library set');
 await buildModules(ARTIFACT_CORE_ENTRIES, []);
-
-console.log('artifact runtime: libraries');
 await buildModules(ARTIFACT_LIBRARY_ENTRIES, REACT_EXTERNALS);
 
 for (const name of ARTIFACT_GLOBAL_ENTRIES) {
-  console.log(`artifact runtime: globals/${name}`);
   await buildGlobal(name);
 }
 
-console.log(
-  `artifact runtime built into ${path.relative(projectRoot, outDir)}`
-);
+await writeFile(stampPath, `${fingerprint}\n`);
+console.log(`artifact runtime built into ${path.relative(projectRoot, outDir)}`);
