@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from '@/components/Logo';
+import { LogoMark } from '@/components/LogoMark';
 
 interface SettingsAboutTabProps {
   appVersion: string;
@@ -81,8 +82,9 @@ export function SettingsAboutTab({ appVersion }: SettingsAboutTabProps) {
   return (
     <div className='space-y-6'>
       <div>
-        <div className='mb-4'>
-          <Logo className='text-gray-900 dark:text-gray-100' />
+        <div className='mb-4 flex items-center gap-2.5 text-gray-900 dark:text-gray-100'>
+          <LogoMark size='md' label={null} />
+          <Logo />
         </div>
         <div className='text-sm text-gray-700 dark:text-gray-300 mb-6'>
           <span>{t('settings.about.title')}</span>

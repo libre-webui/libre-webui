@@ -25,6 +25,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RichMessageContent } from '@/components/ui/RichMessageContent';
+import { LogoMark } from '@/components/LogoMark';
 import { StreamingMessageContent } from '@/components/ui/StreamingMessageContent';
 import {
   ToolActivityRow,
@@ -64,19 +65,14 @@ function WorkAvatar({ role, user, size = 'message' }: WorkAvatarProps) {
         aria-label='Libre WebUI'
         data-testid='work-assistant-avatar'
         className={cn(
-          'flex shrink-0 items-center justify-center rounded-full border border-line bg-surface-raised shadow-subtle',
-          size === 'empty' ? 'mx-auto mb-4 h-12 px-3' : 'mt-0.5 h-8 px-2'
+          'flex shrink-0 items-center justify-center rounded-full border border-line bg-surface-raised text-ink shadow-subtle',
+          size === 'empty' ? 'mx-auto mb-4 h-12 w-12' : 'mt-0.5 h-8 w-8'
         )}
       >
-        <span
-          aria-hidden='true'
-          className={cn(
-            'libre-brand text-ink',
-            size === 'empty' ? 'text-sm' : 'text-[11px]'
-          )}
-        >
-          Libre
-        </span>
+        <LogoMark
+          label={null}
+          className={cn(size === 'empty' ? 'h-6 w-6' : 'h-4 w-4')}
+        />
       </div>
     );
   }

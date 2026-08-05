@@ -24,6 +24,7 @@ import {
   Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { Logo } from '@/components/Logo';
 import { LogoMark } from '@/components/LogoMark';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn, isMac } from '@/utils';
@@ -70,10 +71,10 @@ export function SidebarHeader({
       >
         {!sidebarCompact ? (
           <>
-            <LogoMark
-              size='sm'
-              className='shrink-0 text-gray-950 dark:text-dark-950'
-            />
+            <div className='flex min-w-0 items-center gap-2 text-gray-950 dark:text-dark-950'>
+              <LogoMark size='sm' label={null} />
+              <Logo size='sm' className='tracking-[-0.035em]' />
+            </div>
             <div className='flex items-center gap-0.5'>
               <div className='hidden sm:block'>
                 <ThemeToggle />

@@ -182,7 +182,9 @@ test('uses the Libre identity and authenticated user avatar in Work', async ({
   const assistantAvatar = page.getByTestId('work-assistant-avatar');
   await expect(assistantAvatar).toHaveCount(1);
   await expect(assistantAvatar).toHaveAttribute('aria-label', 'Libre WebUI');
-  await expect(assistantAvatar).toContainText('Libre');
+  // The avatar is the drawn mark, not the wordmark; the accessible name above
+  // is what carries the product name.
+  await expect(assistantAvatar.locator('svg')).toHaveCount(1);
 
   const html = page.locator('html');
   await expect(html).not.toHaveClass(/dark/);
