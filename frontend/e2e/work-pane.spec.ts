@@ -2226,6 +2226,10 @@ test('keeps the compact task surface switch in the task header', async ({
 
   await page.goto('/work/compact-workspace');
 
+  // The expanded mobile sidebar intentionally overlays the page until the
+  // user collapses it. This test targets the task surface beneath that layer.
+  await page.getByTestId('sidebar-toggle-size').click();
+
   const surfaceSwitch = page.getByRole('group', { name: 'Task surface' });
   await expect(surfaceSwitch).toBeVisible();
   await expect(page.getByTestId('work-split-resizer')).not.toBeVisible();

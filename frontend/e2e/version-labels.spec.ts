@@ -16,22 +16,29 @@
  */
 
 import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { mockLibreWebUiApi } from './lib/mockApi';
 
+const { version: packageVersion } = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+) as { version: string };
 const baseSystemInfo = {
   requiresAuth: false,
   hasUsers: true,
   userCount: 1,
   signupEnabled: false,
-  version: '0.19.1',
+  version: packageVersion,
   turnstile: { enabled: false },
 };
+const developmentVersion = `v${packageVersion}-dev`;
 
 test('development image suffix appears on Home', async ({ page }) => {
   await mockLibreWebUiApi(page, { systemInfo: baseSystemInfo });
   await page.goto('/');
 
-  await expect(page.getByTestId('app-version')).toContainText('v0.19.1-dev');
+  await expect(page.getByTestId('app-version')).toContainText(
+    developmentVersion
+  );
 });
 
 test('development image suffix appears on Login', async ({ page }) => {
@@ -40,5 +47,7 @@ test('development image suffix appears on Login', async ({ page }) => {
   });
   await page.goto('/login');
 
-  await expect(page.getByTestId('app-version')).toContainText('v0.19.1-dev');
+  await expect(page.getByTestId('app-version')).toContainText(
+    developmentVersion
+  );
 });

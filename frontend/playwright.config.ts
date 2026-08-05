@@ -16,9 +16,13 @@
  */
 
 import { defineConfig, devices } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 
 const PORT = Number(process.env.PLAYWRIGHT_PORT || 4173);
 const baseURL = `http://127.0.0.1:${PORT}`;
+const { version: packageVersion } = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8')
+) as { version: string };
 
 export default defineConfig({
   testDir: './e2e',
@@ -34,6 +38,9 @@ export default defineConfig({
   webServer: {
     command: `npm run dev -- --host 0.0.0.0 --port ${PORT}`,
     url: baseURL,
+    env: {
+      VITE_APP_VERSION: `${packageVersion}-dev`,
+    },
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
