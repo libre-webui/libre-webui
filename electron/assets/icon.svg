@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
-  <rect width="500" height="500" rx="96" fill="#0a0a0a"/>
-  <text x="250" y="250" text-anchor="middle" dominant-baseline="central" fill="#ffffff" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="72" letter-spacing="-0.72">
-    <tspan font-weight="700">Libre</tspan><tspan font-weight="400" dx="18">WebUI</tspan>
-  </text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><rect width="64" height="64" rx="14.4" fill="#000000"/><g transform="translate(9.2 9.2) scale(0.7125)"><path d="M 11.5 18.0 L 11.5 32 A 20.5 20.5 0 0 0 50.58 40.66" fill="none" stroke="#ffffff" stroke-width="11" stroke-linecap="round"/><path d="M 50.58 18.0 L 50.58 25.66" fill="none" stroke="#ffffff" stroke-width="11" stroke-linecap="round"/></g></svg>

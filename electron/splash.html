@@ -45,10 +45,10 @@
       overflow: hidden;
     }
 
-    .logo img {
-      width: 80px;
-      height: 80px;
-      border-radius: 16px;
+    .logo svg {
+      width: 56px;
+      height: 56px;
+      color: #ffffff;
     }
 
     @keyframes pulse {
@@ -58,13 +58,6 @@
       50% {
         transform: scale(1.05);
       }
-    }
-
-    h1 {
-      color: #ffffff;
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 8px;
     }
 
     .tagline {
@@ -104,14 +97,44 @@
       font-size: 12px;
       margin-top: 20px;
     }
+
+    @media (prefers-color-scheme: light) {
+      .splash-container {
+        background: #ffffff;
+        border-color: #e2e2dd;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.16);
+      }
+
+      .logo {
+        background: #ffffff;
+      }
+
+      .logo svg {
+        color: #0a0a0b;
+      }
+
+      .tagline {
+        color: #55534f;
+      }
+
+      .loader {
+        background: rgba(10, 10, 11, 0.08);
+      }
+
+      .status {
+        color: #77736c;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="splash-container">
-    <div class="logo">
-      <img src="assets/icon-source.png" alt="Libre WebUI" />
+    <div class="logo" role="img" aria-label="Libre WebUI">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M 11.5 18.0 L 11.5 32 A 20.5 20.5 0 0 0 50.58 40.66" fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
+        <path d="M 50.58 18.0 L 50.58 25.66" fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
+      </svg>
     </div>
-    <h1>Libre WebUI</h1>
     <p class="tagline">Your AI assistant is starting...</p>
     <div class="loader">
       <div class="loader-bar"></div>

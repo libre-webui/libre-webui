@@ -25,6 +25,7 @@ export { SettingsModal } from './SettingsModal';
 export { ModelTools } from './ModelTools';
 export { ThemeToggle } from './ThemeToggle';
 export { Logo } from './Logo';
+export { LogoMark } from './LogoMark';
 export { ModelManager } from './ModelManager';
 export { ImageUpload } from './ImageUpload';
 export { StructuredOutput } from './StructuredOutput';
