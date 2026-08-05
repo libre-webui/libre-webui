@@ -47,17 +47,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        launchOptions: {
-          // Artifact previews load the vendored runtime from the application
-          // origin. Responses this suite fulfils from the test process carry no
-          // address space, so Chrome treats the sandbox frame as public and
-          // refuses its request to the loopback dev server. A real deployment
-          // serves both from one origin and is unaffected.
-          args: ['--disable-features=LocalNetworkAccessChecks'],
-        },
-      },
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
 });

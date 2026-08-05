@@ -93,8 +93,7 @@ feature policy allows clipboard access, fullscreen, and gamepad input.
 ## The Artifact Runtime
 
 Generated artifacts assume libraries are available. Rather than let them reach
-a CDN, the application vendors what they ask for and serves it from
-`/artifact-runtime` on its own origin:
+a CDN, the application vendors what they ask for:
 
 | Available to artifacts                                             | How it is reached                   |
 | ------------------------------------------------------------------ | ----------------------------------- |
@@ -104,15 +103,28 @@ a CDN, the application vendors what they ask for and serves it from
 | Recharts, Lucide icons, D3, Three.js, Chart.js, Papa Parse, Lodash | `import ... from '<name>'`          |
 | Mermaid                                                            | `mermaid` artifacts, or by import   |
 
+The frame never fetches any of it. The application page — which carries the
+user's session — loads the bundles it needs and inlines them into the artifact
+document, and the artifact's own `import` statements are compiled to lookups
+against a small registry rather than left as network module resolution.
+
+That indirection is not incidental. A sandboxed frame has an opaque origin, so
+the browser treats its requests as cross-site and sends no session cookie.
+Behind an authenticating proxy — Cloudflare Access, Authelia, oauth2-proxy —
+such a request comes back as a redirect to a login page, which the sandbox
+policy then refuses to load, and the artifact fails with a Content Security
+Policy error. Inlining removes the request, so artifacts behave the same on a
+laptop and behind a corporate gate.
+
 React artifacts are compiled and mounted in the sandbox: export the component
-as the module default and it renders. Every library shares one React instance,
-so hooks behave normally.
+as the module default and it renders. Every library resolves React from the
+same registry, so there is one React instance and hooks behave normally.
 
 HTML artifacts that load a library from a CDN still work — a `<script>` or
 `<link>` pointing at Tailwind, Chart.js, D3, Three.js, Papa Parse, Lodash,
-Mermaid, React or Babel is redirected to the local build in the same document
-position, so inline scripts still find `Chart`, `d3`, or `React` when they run.
-A library outside that set is simply unavailable; inline it instead.
+Mermaid, React or Babel is replaced by the vendored build inline, in the same
+document position, so inline scripts still find `Chart`, `d3`, or `React` when
+they run. A library outside that set is unavailable; inline it instead.
 
 Because the frame has an opaque origin, `localStorage` and `sessionStorage`
 throw inside an artifact. Keep state in memory.

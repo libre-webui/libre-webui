@@ -75,9 +75,6 @@ test('the artifact sandbox host overrides the application script policy', async 
     // Inline script is the whole point: an artifact is inline script.
     assert.match(policy, /script-src [^;]*'unsafe-inline'/);
     assert.match(policy, /script-src [^;]*'unsafe-eval'/);
-    // The vendored runtime — React, Tailwind, the chart and diagram libraries
-    // — is served by this application, so its own origin must be allowed.
-    assert.match(policy, /script-src [^;]*'self'/);
     // The application policy must not leak through.
     assert.doesNotMatch(policy, /challenges\.cloudflare\.com/);
   });
@@ -91,10 +88,18 @@ test('artifacts cannot reach the network or escape their frame', async () => {
     const policy = response.headers.get('content-security-policy') ?? '';
 
     assert.match(policy, /default-src 'none'/);
-    // No directive may name an external scheme or host: artifacts are
-    // self-contained, so a compromised one has nowhere to send anything.
-    assert.doesNotMatch(policy, /https:/);
-    assert.doesNotMatch(policy, /http:\/\/(?!localhost|127\.0\.0\.1|\[::1\])/);
+    // No directive outside frame-ancestors may name any origin at all. The
+    // runtime is inlined into the document, so the frame fetches nothing —
+    // which is what keeps artifacts working behind an authenticating proxy,
+    // where a sandboxed frame's cookie-less request returns a login redirect.
+    const fetching = policy
+      .split(';')
+      .map(directive => directive.trim())
+      .filter(directive => !/^(frame-ancestors|sandbox)\b/.test(directive));
+    for (const directive of fetching) {
+      assert.doesNotMatch(directive, /https?:/, `origin in "${directive}"`);
+      assert.doesNotMatch(directive, /'self'/, `'self' in "${directive}"`);
+    }
     assert.match(policy, /frame-ancestors [^;]*'self'/);
     assert.match(policy, /sandbox [^;]*allow-scripts/);
     assert.doesNotMatch(policy, /sandbox [^;]*allow-same-origin/);
@@ -159,19 +164,7 @@ test('the runtime is vendored, never fetched from a CDN', () => {
     path.join(repoRoot, 'frontend', 'src', 'artifact-runtime', 'manifest.ts'),
     'utf8'
   );
-  // Every module an artifact can import resolves to a bundle this application
-  // serves: the URL helpers are built from the runtime path and the caller's
-  // own origin, never from a remote host.
   assert.match(manifest, /ARTIFACT_RUNTIME_PATH = '\/artifact-runtime'/);
-  assert.match(
-    manifest,
-    /artifactModuleUrl[^=]*=[^`]*`\$\{origin\}\$\{ARTIFACT_RUNTIME_PATH\}/
-  );
-  assert.match(
-    manifest,
-    /artifactGlobalUrl[^=]*=[^`]*`\$\{origin\}\$\{ARTIFACT_RUNTIME_PATH\}/
-  );
-  assert.match(manifest, /artifactImportMap[\s\S]*artifactModuleUrl\(origin/);
 
   const documents = readFileSync(
     path.join(
@@ -183,7 +176,17 @@ test('the runtime is vendored, never fetched from a CDN', () => {
     ),
     'utf8'
   );
-  // CDN references in generated HTML are redirected to those same bundles.
+  // The document carries its dependencies as inline script; nothing in it
+  // points the frame at a URL.
   assert.match(documents, /rewriteArtifactCdnReferences/);
-  assert.match(documents, /artifactGlobalUrl/);
+  assert.match(documents, /const scriptTag = \(source: string\)/);
+  assert.doesNotMatch(documents, /<script[^>]*src=/);
+  assert.doesNotMatch(documents, /importmap/);
+
+  const loader = readFileSync(
+    path.join(repoRoot, 'frontend', 'src', 'utils', 'artifactRuntimeLoader.ts'),
+    'utf8'
+  );
+  // The application page fetches the bundles, with its session.
+  assert.match(loader, /credentials: 'same-origin'/);
 });

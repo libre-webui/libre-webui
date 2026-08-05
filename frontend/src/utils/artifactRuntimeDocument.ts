@@ -18,23 +18,27 @@
 /**
  * Composes the documents that run inside the artifact sandbox.
  *
- * Artifacts have no network access, so anything a generated artifact expects
- * to fetch from a CDN is served from the application's own build instead: a
- * React artifact gets an import map, and an HTML artifact that loads Tailwind
- * or Chart.js from a CDN gets those tags pointed at the vendored equivalents.
+ * Every dependency an artifact has travels inside the document as inline
+ * script: React, the compiler, Tailwind, whatever libraries it imports, and —
+ * for generated HTML that reaches for a CDN — the local stand-in for that CDN
+ * bundle, spliced in where the tag was. The frame therefore issues no request
+ * of its own, which is what keeps artifacts working behind an authenticating
+ * proxy.
  */
 
 import {
   ARTIFACT_CDN_REPLACEMENTS,
-  artifactGlobalUrl,
-  artifactImportMap,
-  artifactModuleUrl,
-  ARTIFACT_MODULES,
+  ARTIFACT_MERMAID_PRELUDE,
+  ARTIFACT_REACT_PRELUDE,
+  ARTIFACT_RUNTIME_GLOBAL,
+  artifactBundlesFor,
+  artifactCdnBundlesFor,
 } from '@/artifact-runtime/manifest';
 import {
   buildHtmlArtifactDocument,
   escapeArtifactHtml,
 } from '@/utils/artifactHtml';
+import { loadArtifactBundles } from '@/utils/artifactRuntimeLoader';
 
 export type ArtifactSandboxKind = 'html' | 'react' | 'mermaid';
 
@@ -46,8 +50,6 @@ export function artifactSandboxKind(type: string): ArtifactSandboxKind | null {
 }
 
 export interface ArtifactDocumentOptions {
-  /** Origin serving the vendored runtime bundles. */
-  origin: string;
   colorScheme?: 'light' | 'dark';
 }
 
@@ -63,53 +65,55 @@ const PAGE_STYLE = `
 `;
 
 /**
- * Artifact source travels inside an inert script tag, so a `</script>` in the
- * source would end it early.
+ * Script bodies are raw text until the parser meets `</script`, so any such
+ * sequence inside one has to be broken up.
  */
-const inertScriptText = (source: string): string =>
+const inlineScriptText = (source: string): string =>
   source.replace(/<\/(script)/gi, '<\\/$1').replace(/<!--/g, '<\\!--');
 
-/** Local stand-in for a CDN URL, or null when the URL is not one we vendor. */
-const localReplacement = (
-  url: string,
-  origin: string,
-  asModule: boolean
-): string | null => {
-  if (!/^(?:https?:)?\/\//i.test(url)) return null;
+const scriptTag = (source: string): string =>
+  `<script>${inlineScriptText(source)}</script>`;
 
-  for (const { pattern, global } of ARTIFACT_CDN_REPLACEMENTS) {
-    if (!pattern.test(url)) continue;
-    if (
-      asModule &&
-      ARTIFACT_MODULES[global === 'chart' ? 'chart.js' : global]
-    ) {
-      return artifactModuleUrl(
-        origin,
-        ARTIFACT_MODULES[global === 'chart' ? 'chart.js' : global]
-      );
-    }
-    return artifactGlobalUrl(origin, global);
+/** Bundles this artifact needs, in load order. */
+export function artifactBundleNames(
+  kind: ArtifactSandboxKind,
+  content: string
+): string[] {
+  if (kind === 'react') {
+    return [
+      ...new Set([...ARTIFACT_REACT_PRELUDE, ...artifactBundlesFor(content)]),
+    ];
   }
-
-  return null;
-};
+  if (kind === 'mermaid') {
+    return [...ARTIFACT_MERMAID_PRELUDE];
+  }
+  return artifactCdnBundlesFor(content);
+}
 
 /**
- * Points CDN tags at the vendored bundles. Classic scripts keep their position
- * in the document, so an artifact's own inline scripts still find the globals
- * they expect when they run.
+ * Replaces CDN tags with the vendored bundle inline, in the same document
+ * position, so an artifact's own inline scripts still find the globals they
+ * expect when they run.
  */
 export function rewriteArtifactCdnReferences(
   html: string,
-  origin: string
+  sources: Record<string, string>
 ): string {
+  const replacement = (url: string): string | null => {
+    if (!/^(?:https?:)?\/\//i.test(url)) return null;
+    for (const { pattern, bundle } of ARTIFACT_CDN_REPLACEMENTS) {
+      if (pattern.test(url)) {
+        return sources[bundle] ?? null;
+      }
+    }
+    return null;
+  };
+
   const withScripts = html.replace(
-    /<script\b([^>]*)\bsrc\s*=\s*("|')(.*?)\2([^>]*)>/gi,
-    (tag, before: string, quote: string, url: string, after: string) => {
-      const asModule = /type\s*=\s*("|')module\1/i.test(`${before}${after}`);
-      const replacement = localReplacement(url, origin, asModule);
-      if (!replacement) return tag;
-      return `<script${before}src=${quote}${replacement}${quote}${after}>`;
+    /<script\b[^>]*\bsrc\s*=\s*("|')(.*?)\1[^>]*>\s*<\/script>/gi,
+    (tag, _quote: string, url: string) => {
+      const source = replacement(url);
+      return source ? scriptTag(source) : tag;
     }
   );
 
@@ -118,9 +122,9 @@ export function rewriteArtifactCdnReferences(
   return withScripts.replace(
     /<link\b[^>]*\bhref\s*=\s*("|')(.*?)\1[^>]*>/gi,
     (tag, _quote: string, url: string) => {
-      const replacement = localReplacement(url, origin, false);
-      if (!replacement || !/tailwind/i.test(url)) return tag;
-      return `<script src="${replacement}"></script>`;
+      if (!/tailwind/i.test(url)) return tag;
+      const source = replacement(url);
+      return source ? scriptTag(source) : tag;
     }
   );
 }
@@ -128,9 +132,9 @@ export function rewriteArtifactCdnReferences(
 const runtimeDocument = (
   title: string,
   source: string,
-  bootstrap: string,
-  options: ArtifactDocumentOptions,
-  head = ''
+  bundleSources: string[],
+  start: string,
+  options: ArtifactDocumentOptions
 ): string => `<!DOCTYPE html>
 <html lang="en" data-color-scheme="${options.colorScheme ?? 'light'}">
   <head>
@@ -138,53 +142,47 @@ const runtimeDocument = (
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base target="_blank" />
     <title>${escapeArtifactHtml(title)}</title>
-${head}    <style>${PAGE_STYLE}</style>
+    <style>${PAGE_STYLE}</style>
   </head>
   <body>
     <div id="root"></div>
-    <script type="text/plain" id="libre-artifact-source">${inertScriptText(source)}</script>
-    <script type="module" src="${artifactModuleUrl(options.origin, bootstrap)}"></script>
+    <script type="text/plain" id="libre-artifact-source">${inlineScriptText(source)}</script>
+${bundleSources.map(scriptTag).join('\n')}
+    <script>window.${ARTIFACT_RUNTIME_GLOBAL}.${start}();</script>
   </body>
 </html>`;
 
-/**
- * A React artifact: JSX or TSX source compiled in the frame, mounted against
- * the shared React instance, with Tailwind utilities available.
- */
-export function buildReactArtifactDocument(
-  content: string,
-  title: string,
-  options: ArtifactDocumentOptions
-): string {
-  const importMap = `    <script type="importmap">${artifactImportMap(options.origin)}</script>\n`;
-  return runtimeDocument(title, content, 'react-bootstrap', options, importMap);
-}
-
-export function buildMermaidArtifactDocument(
-  content: string,
-  title: string,
-  options: ArtifactDocumentOptions
-): string {
-  return runtimeDocument(title, content, 'mermaid-bootstrap', options);
-}
-
-/** The document for an artifact of the given kind, ready to hand the sandbox. */
-export function buildArtifactSandboxDocument(
+/** The document for an artifact of the given kind, with its runtime inlined. */
+export function composeArtifactSandboxDocument(
   kind: ArtifactSandboxKind,
   content: string,
   title: string,
-  options: ArtifactDocumentOptions
+  sources: Record<string, string>,
+  options: ArtifactDocumentOptions = {}
 ): string {
-  switch (kind) {
-    case 'react':
-      return buildReactArtifactDocument(content, title, options);
-    case 'mermaid':
-      return buildMermaidArtifactDocument(content, title, options);
-    case 'html':
-    default:
-      return rewriteArtifactCdnReferences(
-        buildHtmlArtifactDocument(content, title),
-        options.origin
-      );
+  const ordered = artifactBundleNames(kind, content)
+    .map(name => sources[name])
+    .filter((source): source is string => Boolean(source));
+
+  if (kind === 'react') {
+    return runtimeDocument(title, content, ordered, 'runReact', options);
   }
+  if (kind === 'mermaid') {
+    return runtimeDocument(title, content, ordered, 'runMermaid', options);
+  }
+  return rewriteArtifactCdnReferences(
+    buildHtmlArtifactDocument(content, title),
+    sources
+  );
+}
+
+/** Loads whatever the artifact needs, then composes its document. */
+export async function buildArtifactSandboxDocument(
+  kind: ArtifactSandboxKind,
+  content: string,
+  title: string,
+  options: ArtifactDocumentOptions = {}
+): Promise<string> {
+  const sources = await loadArtifactBundles(artifactBundleNames(kind, content));
+  return composeArtifactSandboxDocument(kind, content, title, sources, options);
 }

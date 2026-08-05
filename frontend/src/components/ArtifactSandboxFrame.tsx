@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import {
   HTML_ARTIFACT_ALLOW,
@@ -23,14 +23,14 @@ import {
   isArtifactSandboxReady,
   postArtifactDocument,
 } from '@/utils/artifactHtml';
-import {
-  ARTIFACT_RUNTIME_ORIGIN,
-  ARTIFACT_SANDBOX_URL,
-} from '@/utils/artifactSandbox';
+import { ARTIFACT_SANDBOX_URL } from '@/utils/artifactSandbox';
 import {
   buildArtifactSandboxDocument,
   type ArtifactSandboxKind,
 } from '@/utils/artifactRuntimeDocument';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:artifact-sandbox-frame');
 
 /**
  * How long to wait for the sandbox host to announce itself before falling back.
@@ -50,10 +50,12 @@ interface ArtifactSandboxFrameProps {
 }
 
 /**
- * Runs untrusted artifact code inside the backend-served sandbox host. The
- * document travels by `postMessage` rather than `srcdoc` so that it is governed
- * by the sandbox policy instead of inheriting the application's, which forbids
- * the inline scripts artifacts are made of.
+ * Runs untrusted artifact code inside the backend-served sandbox host.
+ *
+ * The document is assembled here, on the authenticated page, with the artifact
+ * runtime inlined into it, and delivered by `postMessage`. The frame is
+ * governed by the sandbox policy rather than inheriting the application's, and
+ * it never issues a request of its own.
  */
 export const ArtifactSandboxFrame: React.FC<ArtifactSandboxFrameProps> = ({
   content,
@@ -66,31 +68,40 @@ export const ArtifactSandboxFrame: React.FC<ArtifactSandboxFrameProps> = ({
 }) => {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const readyRef = useRef(false);
+  const documentRef = useRef<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
 
-  const document = useMemo(
-    () =>
-      buildArtifactSandboxDocument(kind, content, title, {
-        origin: ARTIFACT_RUNTIME_ORIGIN,
-        colorScheme,
-      }),
-    [kind, content, title, colorScheme]
-  );
-  const documentRef = useRef(document);
-
-  // Streaming artifacts change while the host is already listening.
+  // Assembling the document means loading the runtime bundles the artifact
+  // needs, so it cannot happen during render.
   useEffect(() => {
-    documentRef.current = document;
-    if (readyRef.current) {
-      postArtifactDocument(frameRef.current, document);
-    }
-  }, [document]);
+    let cancelled = false;
+
+    buildArtifactSandboxDocument(kind, content, title, { colorScheme })
+      .then(document => {
+        if (cancelled) return;
+        documentRef.current = document;
+        if (readyRef.current) {
+          postArtifactDocument(frameRef.current, document);
+        }
+      })
+      .catch(error => {
+        if (cancelled) return;
+        logger.error('Failed to prepare the artifact runtime:', error);
+        setUnavailable(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [kind, content, title, colorScheme]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (!isArtifactSandboxReady(event, frameRef.current)) return;
       readyRef.current = true;
-      postArtifactDocument(frameRef.current, documentRef.current);
+      if (documentRef.current) {
+        postArtifactDocument(frameRef.current, documentRef.current);
+      }
     };
 
     window.addEventListener('message', handleMessage);

@@ -18,30 +18,43 @@
 /**
  * The artifact runtime: the libraries generated artifacts expect to be there.
  *
- * Everything here is vendored into the application build and served from the
- * application's own origin. Artifacts run with no network access at all, so a
- * CDN reference would simply fail; these bundles are what makes an artifact
- * that imports `recharts` or loads Tailwind work anyway.
+ * Everything is vendored into the application build. The sandbox frame never
+ * fetches any of it: the application page loads these bundles itself and hands
+ * the source to the frame, which runs them inline. That keeps artifacts
+ * working when the deployment sits behind an authenticating proxy — Cloudflare
+ * Access, Authelia, oauth2-proxy — where a sandboxed frame's requests carry no
+ * session cookie and would be redirected to a login page.
  *
  * This module is the single source of truth: the build derives its entry
- * points from it, and the sandbox derives its import map and CDN rewrites from
- * it. It must stay free of browser and Node APIs so both can read it.
+ * points from it, and the sandbox derives its module registry from it. It must
+ * stay free of browser and Node APIs so both can read it.
  */
 
-/** Public path the built bundles are served from. */
+/** Path the built bundles are served from, for the application page to fetch. */
 export const ARTIFACT_RUNTIME_PATH = '/artifact-runtime';
 
+/** Registry and the code that compiles and mounts an artifact. Tiny. */
+export const ARTIFACT_RUNTIME_BUNDLE = 'runtime';
+
+/** React, ReactDOM and the JSX runtime, shared by every other bundle. */
+export const ARTIFACT_REACT_BUNDLE = 'react';
+
+/** Turns the JSX or TSX an artifact is written in into something runnable. */
+export const ARTIFACT_BABEL_BUNDLE = 'babel';
+
+/** Generates utility classes from the markup an artifact renders. */
+export const ARTIFACT_TAILWIND_BUNDLE = 'tailwind';
+
 /**
- * Bare specifiers artifact modules may import, mapped to the bundle that
- * provides them. React and friends are built in a pass of their own so that
- * every library shares one React instance.
+ * Bare specifiers artifact code may import, and the bundle that provides each.
+ * A bundle registers itself under every specifier listed here.
  */
 export const ARTIFACT_MODULES: Record<string, string> = {
-  react: 'react',
-  'react-dom': 'react-dom',
-  'react-dom/client': 'react-dom-client',
-  'react/jsx-runtime': 'jsx-runtime',
-  'react/jsx-dev-runtime': 'jsx-runtime',
+  react: ARTIFACT_REACT_BUNDLE,
+  'react-dom': ARTIFACT_REACT_BUNDLE,
+  'react-dom/client': ARTIFACT_REACT_BUNDLE,
+  'react/jsx-runtime': ARTIFACT_REACT_BUNDLE,
+  'react/jsx-dev-runtime': ARTIFACT_REACT_BUNDLE,
   recharts: 'recharts',
   'lucide-react': 'lucide-react',
   d3: 'd3',
@@ -54,16 +67,8 @@ export const ARTIFACT_MODULES: Record<string, string> = {
   'chart.js/auto': 'chart',
 };
 
-/** Entry points for the React-sharing pass. */
-export const ARTIFACT_CORE_ENTRIES = [
-  'react',
-  'react-dom',
-  'react-dom-client',
-  'jsx-runtime',
-];
-
-/** Entry points built against the shared React instance. */
-export const ARTIFACT_LIBRARY_ENTRIES = [
+/** Bundles built against the shared React instance in the react bundle. */
+export const ARTIFACT_LIBRARY_BUNDLES = [
   'recharts',
   'lucide-react',
   'd3',
@@ -72,65 +77,92 @@ export const ARTIFACT_LIBRARY_ENTRIES = [
   'lodash',
   'mermaid',
   'chart',
-  'react-bootstrap',
-  'mermaid-bootstrap',
 ];
 
-/**
- * Classic scripts that stand in for the CDN bundles HTML artifacts load. They
- * assign the same globals, in the same document position, so an artifact's own
- * inline scripts still find `Chart`, `d3`, or `React` when they run.
- */
-export const ARTIFACT_GLOBAL_ENTRIES = [
-  'tailwind',
-  'chart',
-  'd3',
-  'three',
-  'papaparse',
-  'lodash',
-  'mermaid',
-  'react',
-  'babel',
+export const ARTIFACT_BUNDLES = [
+  ARTIFACT_RUNTIME_BUNDLE,
+  ARTIFACT_REACT_BUNDLE,
+  ARTIFACT_BABEL_BUNDLE,
+  ARTIFACT_TAILWIND_BUNDLE,
+  ...ARTIFACT_LIBRARY_BUNDLES,
 ];
 
+/** Bundles a React artifact always needs, in load order. */
+export const ARTIFACT_REACT_PRELUDE = [
+  ARTIFACT_RUNTIME_BUNDLE,
+  ARTIFACT_REACT_BUNDLE,
+  ARTIFACT_BABEL_BUNDLE,
+  ARTIFACT_TAILWIND_BUNDLE,
+];
+
+/** Bundles a Mermaid artifact needs, in load order. */
+export const ARTIFACT_MERMAID_PRELUDE = [ARTIFACT_RUNTIME_BUNDLE, 'mermaid'];
+
 /**
- * CDN hosts a generated artifact is likely to reach for, and the local bundle
- * that replaces each one. Matched against the `src`/`href` of a tag.
+ * CDN hosts a generated HTML artifact is likely to reach for, and the bundle
+ * that replaces each. The tag is replaced by the bundle's source inline, in
+ * the same document position, so the artifact's own inline scripts still find
+ * the globals they expect when they run.
  */
 export const ARTIFACT_CDN_REPLACEMENTS: {
   pattern: RegExp;
-  global: string;
+  bundle: string;
 }[] = [
-  { pattern: /cdn\.tailwindcss\.com/i, global: 'tailwind' },
-  { pattern: /(?:^|\/)tailwindcss(?:@[\d.]+)?(?:\/|$)/i, global: 'tailwind' },
-  { pattern: /(?:^|\/)chart\.js(?:@[\d.]+)?(?:\/|$|\?)/i, global: 'chart' },
-  { pattern: /(?:^|\/)chart(?:\.min)?\.js(?:$|\?)/i, global: 'chart' },
-  { pattern: /(?:^|\/)d3(?:@[\d.]+)?(?:\/|$|\?)/i, global: 'd3' },
-  { pattern: /(?:^|\/)d3(?:\.min)?\.js(?:$|\?)/i, global: 'd3' },
-  { pattern: /(?:^|\/)three(?:@[\d.]+)?(?:\/|$|\?)/i, global: 'three' },
-  { pattern: /(?:^|\/)three(?:\.min)?\.js(?:$|\?)/i, global: 'three' },
-  { pattern: /papaparse/i, global: 'papaparse' },
-  { pattern: /(?:^|\/)lodash(?:@[\d.]+)?(?:\/|$|\?)/i, global: 'lodash' },
-  { pattern: /(?:^|\/)lodash(?:\.min)?\.js(?:$|\?)/i, global: 'lodash' },
-  { pattern: /mermaid/i, global: 'mermaid' },
-  { pattern: /react-dom/i, global: 'react' },
-  { pattern: /(?:^|\/)react(?:@[\d.]+)?(?:\/|$|\?)/i, global: 'react' },
-  { pattern: /babel(?:-standalone|\/standalone)/i, global: 'babel' },
+  { pattern: /cdn\.tailwindcss\.com/i, bundle: ARTIFACT_TAILWIND_BUNDLE },
+  {
+    pattern: /(?:^|\/)tailwindcss(?:@[\d.]+)?(?:\/|$)/i,
+    bundle: ARTIFACT_TAILWIND_BUNDLE,
+  },
+  { pattern: /(?:^|\/)chart\.js(?:@[\d.]+)?(?:\/|$|\?)/i, bundle: 'chart' },
+  { pattern: /(?:^|\/)chart(?:\.min)?\.js(?:$|\?)/i, bundle: 'chart' },
+  { pattern: /(?:^|\/)d3(?:@[\d.]+)?(?:\/|$|\?)/i, bundle: 'd3' },
+  { pattern: /(?:^|\/)d3(?:\.min)?\.js(?:$|\?)/i, bundle: 'd3' },
+  { pattern: /(?:^|\/)three(?:@[\d.]+)?(?:\/|$|\?)/i, bundle: 'three' },
+  { pattern: /(?:^|\/)three(?:\.min)?\.js(?:$|\?)/i, bundle: 'three' },
+  { pattern: /papaparse/i, bundle: 'papaparse' },
+  { pattern: /(?:^|\/)lodash(?:@[\d.]+)?(?:\/|$|\?)/i, bundle: 'lodash' },
+  { pattern: /(?:^|\/)lodash(?:\.min)?\.js(?:$|\?)/i, bundle: 'lodash' },
+  { pattern: /mermaid/i, bundle: 'mermaid' },
+  { pattern: /react-dom/i, bundle: ARTIFACT_REACT_BUNDLE },
+  {
+    pattern: /(?:^|\/)react(?:@[\d.]+)?(?:\/|$|\?)/i,
+    bundle: ARTIFACT_REACT_BUNDLE,
+  },
+  {
+    pattern: /babel(?:-standalone|\/standalone)/i,
+    bundle: ARTIFACT_BABEL_BUNDLE,
+  },
 ];
 
-export const artifactModuleUrl = (origin: string, bundle: string): string =>
-  `${origin}${ARTIFACT_RUNTIME_PATH}/${bundle}.js`;
+/** Global the bundles register themselves on inside the sandbox frame. */
+export const ARTIFACT_RUNTIME_GLOBAL = '__libreArtifactRuntime';
 
-export const artifactGlobalUrl = (origin: string, bundle: string): string =>
-  `${origin}${ARTIFACT_RUNTIME_PATH}/globals/${bundle}.js`;
+/** Bundles a piece of artifact code needs, based on what it imports. */
+export function artifactBundlesFor(source: string): string[] {
+  const needed = new Set<string>();
 
-/** Import map exposed to artifact modules, resolved against `origin`. */
-export const artifactImportMap = (origin: string): string =>
-  JSON.stringify({
-    imports: Object.fromEntries(
-      Object.entries(ARTIFACT_MODULES).map(([specifier, bundle]) => [
-        specifier,
-        artifactModuleUrl(origin, bundle),
-      ])
-    ),
-  });
+  for (const [specifier, bundle] of Object.entries(ARTIFACT_MODULES)) {
+    const quoted = specifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const referenced = new RegExp(
+      `(?:from|import|require)\\s*\\(?\\s*['"\`]${quoted}['"\`]`
+    ).test(source);
+    if (referenced) {
+      needed.add(bundle);
+    }
+  }
+
+  return [...needed];
+}
+
+/** Bundles referenced by CDN tags in generated HTML, in document order. */
+export function artifactCdnBundlesFor(html: string): string[] {
+  const needed = new Set<string>();
+
+  for (const { pattern, bundle } of ARTIFACT_CDN_REPLACEMENTS) {
+    if (pattern.test(html)) {
+      needed.add(bundle);
+    }
+  }
+
+  return [...needed];
+}

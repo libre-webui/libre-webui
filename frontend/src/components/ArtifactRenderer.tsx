@@ -41,10 +41,7 @@ import {
   openArtifactPreviewWindow,
   SVG_ARTIFACT_SANDBOX,
 } from '@/utils/artifactHtml';
-import {
-  ARTIFACT_RUNTIME_ORIGIN,
-  ARTIFACT_SANDBOX_URL,
-} from '@/utils/artifactSandbox';
+import { ARTIFACT_SANDBOX_URL } from '@/utils/artifactSandbox';
 import {
   artifactSandboxKind,
   buildArtifactSandboxDocument,
@@ -171,6 +168,21 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       </div>
     </div>
   );
+
+  // The runtime is inlined into the document, so preparing it is asynchronous.
+  const openArtifactWindow = async () => {
+    try {
+      const document = await buildArtifactSandboxDocument(
+        artifactSandboxKind(artifact.type) ?? 'html',
+        artifact.content,
+        artifact.title,
+        { colorScheme: theme.mode === 'dark' ? 'dark' : 'light' }
+      );
+      openArtifactPreviewWindow(document, ARTIFACT_SANDBOX_URL, artifact.title);
+    } catch (error) {
+      logger.error('Failed to open the artifact preview:', error);
+    }
+  };
 
   const renderSandbox = (kind: ArtifactSandboxKind) => {
     if (!artifact.content.trim()) {
@@ -487,21 +499,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
           <Button
             variant='ghost'
             size='sm'
-            onClick={() =>
-              openArtifactPreviewWindow(
-                buildArtifactSandboxDocument(
-                  artifactSandboxKind(artifact.type) ?? 'html',
-                  artifact.content,
-                  artifact.title,
-                  {
-                    origin: ARTIFACT_RUNTIME_ORIGIN,
-                    colorScheme: theme.mode === 'dark' ? 'dark' : 'light',
-                  }
-                ),
-                ARTIFACT_SANDBOX_URL,
-                artifact.title
-              )
-            }
+            onClick={() => openArtifactWindow()}
             className='text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
           >
             <ExternalLink className='h-3 w-3 mr-1' />

@@ -1052,15 +1052,15 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           headers: {
             'Content-Security-Policy': [
               "default-src 'none'",
-              // The vendored runtime is served by the application origin, which
-              // in the suite is the dev server; mirror the real route's policy.
-              `script-src ${APP_ORIGINS} 'unsafe-inline' 'unsafe-eval' blob:`,
-              `style-src ${APP_ORIGINS} 'unsafe-inline' blob:`,
-              `img-src ${APP_ORIGINS} data: blob:`,
-              `font-src ${APP_ORIGINS} data:`,
-              `connect-src ${APP_ORIGINS} data: blob:`,
+              // Mirrors the real route: the frame loads nothing over the
+              // network, so no origin appears in the policy at all.
+              "script-src 'unsafe-inline' 'unsafe-eval' blob:",
+              "style-src 'unsafe-inline' blob:",
+              'img-src data: blob:',
+              'font-src data:',
+              'connect-src data: blob:',
               'frame-src blob: data:',
-              `worker-src ${APP_ORIGINS} blob:`,
+              'worker-src blob:',
               `frame-ancestors ${APP_ORIGINS}`,
               'sandbox allow-scripts allow-forms allow-modals allow-popups allow-pointer-lock allow-downloads',
             ].join('; '),

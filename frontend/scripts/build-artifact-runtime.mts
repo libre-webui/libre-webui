@@ -21,14 +21,15 @@
  * server, the end-to-end suite, and the production build all serve it from the
  * same path without a special case.
  *
- * Three passes, because they have different linking rules:
+ * Every bundle is a self-contained classic script. The sandbox frame runs them
+ * inline, never fetching anything, because a frame with an opaque origin sends
+ * no session cookie: behind an authenticating proxy its requests come back as
+ * a login redirect. Only the application page — which is properly
+ * authenticated — ever loads these files.
  *
- *  - core     React and its entry points, built together so every library in
- *             the sandbox shares one React instance.
- *  - library  Modules artifacts import by name. React stays external and is
- *             resolved through the sandbox import map back to the core pass.
- *  - globals  Classic scripts that stand in for CDN bundles in HTML
- *             artifacts. Each is self-contained and assigns its own global.
+ * Each bundle registers what it provides on a small runtime object, and
+ * libraries resolve React from that same object so the whole frame shares one
+ * React instance.
  */
 
 import { createHash } from 'node:crypto';
@@ -38,9 +39,13 @@ import { fileURLToPath } from 'node:url';
 import { build, type InlineConfig, type Plugin } from 'vite';
 
 import {
-  ARTIFACT_CORE_ENTRIES,
-  ARTIFACT_GLOBAL_ENTRIES,
-  ARTIFACT_LIBRARY_ENTRIES,
+  ARTIFACT_BABEL_BUNDLE,
+  ARTIFACT_LIBRARY_BUNDLES,
+  ARTIFACT_MODULES,
+  ARTIFACT_REACT_BUNDLE,
+  ARTIFACT_RUNTIME_BUNDLE,
+  ARTIFACT_RUNTIME_GLOBAL,
+  ARTIFACT_TAILWIND_BUNDLE,
 } from '../src/artifact-runtime/manifest.js';
 
 const projectRoot = path.resolve(
@@ -50,7 +55,8 @@ const projectRoot = path.resolve(
 const outDir = path.join(projectRoot, 'public', 'artifact-runtime');
 const runtimeSource = path.join(projectRoot, 'src', 'artifact-runtime');
 
-const REACT_EXTERNALS = [
+/** Specifiers a library bundle resolves from the registry instead of bundling. */
+const SHARED_REACT_SPECIFIERS = [
   'react',
   'react-dom',
   'react-dom/client',
@@ -58,68 +64,46 @@ const REACT_EXTERNALS = [
   'react/jsx-dev-runtime',
 ];
 
-/** The package behind each module an artifact may import. */
-const MODULE_PACKAGES: Record<string, string> = {
-  react: 'react',
-  'react-dom': 'react-dom',
-  'react-dom-client': 'react-dom/client',
-  'jsx-runtime': 'react/jsx-runtime',
-  recharts: 'recharts',
-  'lucide-react': 'lucide-react',
-  d3: 'd3',
-  three: 'three',
-  papaparse: 'papaparse',
-  lodash: 'lodash',
-  mermaid: 'mermaid',
-  chart: 'chart.js/auto',
+/** The package behind each library bundle, and the global it also assigns. */
+const LIBRARY_BUNDLES: Record<
+  string,
+  { specifier: string; global: string; useDefault?: boolean }
+> = {
+  recharts: { specifier: 'recharts', global: 'Recharts' },
+  'lucide-react': { specifier: 'lucide-react', global: 'lucide' },
+  d3: { specifier: 'd3', global: 'd3' },
+  three: { specifier: 'three', global: 'THREE' },
+  papaparse: { specifier: 'papaparse', global: 'Papa', useDefault: true },
+  lodash: { specifier: 'lodash', global: '_', useDefault: true },
+  mermaid: { specifier: 'mermaid', global: 'mermaid', useDefault: true },
+  chart: { specifier: 'chart.js/auto', global: 'Chart', useDefault: true },
 };
 
+/**
+ * Creates the registry if this bundle happens to run first. An HTML artifact
+ * that only needed Chart.js gets that bundle and nothing else.
+ */
+const REGISTRY_PRELUDE = `const __registry = (window.${ARTIFACT_RUNTIME_GLOBAL} = window.${ARTIFACT_RUNTIME_GLOBAL} || {
+  modules: {},
+  register(specifiers, value) {
+    for (const specifier of specifiers) this.modules[specifier] = value;
+  },
+  require(specifier) {
+    const found = this.modules[specifier];
+    if (found === undefined) {
+      throw new Error('"' + specifier + '" is not one of the libraries available to artifacts.');
+    }
+    return found;
+  },
+});`;
+
 const RESERVED_WORDS = new Set([
-  'break',
-  'case',
-  'catch',
-  'class',
-  'const',
-  'continue',
-  'debugger',
-  'default',
-  'delete',
-  'do',
-  'else',
-  'enum',
-  'export',
-  'extends',
-  'false',
-  'finally',
-  'for',
-  'function',
-  'if',
-  'import',
-  'in',
-  'instanceof',
-  'new',
-  'null',
-  'return',
-  'super',
-  'switch',
-  'this',
-  'throw',
-  'true',
-  'try',
-  'typeof',
-  'var',
-  'void',
-  'while',
-  'with',
-  'yield',
-  'let',
-  'static',
-  'implements',
-  'interface',
-  'package',
-  'private',
-  'protected',
-  'public',
+  'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
+  'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false',
+  'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new',
+  'null', 'return', 'super', 'switch', 'this', 'throw', 'true', 'try',
+  'typeof', 'var', 'void', 'while', 'with', 'yield', 'let', 'static',
+  'implements', 'interface', 'package', 'private', 'protected', 'public',
 ]);
 
 const exportableNames = (value: object): string[] =>
@@ -127,80 +111,62 @@ const exportableNames = (value: object): string[] =>
     name => /^[A-Za-z_$][\w$]*$/.test(name) && !RESERVED_WORDS.has(name)
   );
 
-/**
- * Re-exports a package by name.
- *
- * `export *` is not enough: several of these packages are CommonJS, and a star
- * re-export of one carries no named bindings, so `import { useState } from
- * 'react'` inside an artifact would fail to link. The names are read from the
- * package itself here and written out explicitly.
- */
-const moduleSource = async (specifier: string): Promise<string> => {
+/** The names a package really exports, read from the package itself. */
+const namesOf = async (specifier: string): Promise<string[]> => {
   const namespace = (await import(specifier)) as Record<string, unknown>;
-  const hasDefault = namespace.default !== undefined;
-  // A CommonJS package arrives as a lone default; a native ESM one exposes its
-  // API on the namespace. Referring to a default that does not exist is what
-  // makes the bundler warn, so each case gets the binding that actually fits.
-  const viaDefault = Object.keys(namespace).length <= 2 && hasDefault;
-  const target = (viaDefault ? namespace.default : namespace) as object;
-  const names = exportableNames(target);
+  const viaDefault =
+    Object.keys(namespace).length <= 2 && namespace.default !== undefined;
+  return exportableNames(
+    (viaDefault ? namespace.default : namespace) as object
+  );
+};
 
-  const binding = viaDefault
-    ? `import __module from '${specifier}';`
-    : `import * as __namespace from '${specifier}';\nconst __module = __namespace;`;
-  const fallbackDefault = hasDefault ? '__namespace.default' : '__namespace';
-
+/**
+ * Stands in for React inside a library bundle: the binding comes from the
+ * registry at run time, so every library and the artifact itself share the one
+ * instance the react bundle registered.
+ */
+const sharedReactSource = async (specifier: string): Promise<string> => {
+  const names = await namesOf(specifier);
   return [
-    binding,
-    `export default ${viaDefault ? '__module' : fallbackDefault};`,
-    names.length ? `export const { ${names.join(', ')} } = __module;` : '',
+    `const __shared = window.${ARTIFACT_RUNTIME_GLOBAL}.modules[${JSON.stringify(specifier)}];`,
+    'export default __shared.default ?? __shared;',
+    names.length ? `export const { ${names.join(', ')} } = __shared;` : '',
   ]
     .filter(Boolean)
     .join('\n');
 };
 
-/**
- * Globals reproduce what the CDN builds put on `window`, so an artifact's own
- * inline scripts keep working after the CDN tag is redirected here.
- */
-const GLOBAL_SOURCES: Record<string, string> = {
-  tailwind: `import '@tailwindcss/browser';`,
-  chart: `import Chart from 'chart.js/auto';
-window.Chart = Chart;`,
-  d3: `import * as d3 from 'd3';
-window.d3 = d3;`,
-  three: `import * as THREE from 'three';
-window.THREE = THREE;`,
-  papaparse: `import Papa from 'papaparse';
-window.Papa = Papa;`,
-  lodash: `import _ from 'lodash';
-window._ = _;
-window.lodash = _;`,
-  mermaid: `import mermaid from 'mermaid';
-window.mermaid = mermaid;
-mermaid.initialize({ startOnLoad: true });`,
-  // React 19 dropped ReactDOM.render, which is what CDN-era generated code
-  // calls. The shim keeps those artifacts mounting.
-  react: `import * as React from 'react';
+const reactBundleSource = () => `import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import * as client from 'react-dom/client';
-const roots = new WeakMap();
+import * as ReactDOMClient from 'react-dom/client';
+import * as JsxRuntime from 'react/jsx-runtime';
+${REGISTRY_PRELUDE}
+__registry.register(['react'], React);
+__registry.register(['react-dom'], ReactDOM);
+__registry.register(['react-dom/client'], ReactDOMClient);
+__registry.register(['react/jsx-runtime', 'react/jsx-dev-runtime'], JsxRuntime);
+// React 19 dropped ReactDOM.render, which is what CDN-era generated code
+// calls. The shim keeps those artifacts mounting.
+const __roots = new WeakMap();
 const render = (element, container) => {
-  let root = roots.get(container);
+  let root = __roots.get(container);
   if (!root) {
-    root = client.createRoot(container);
-    roots.set(container, root);
+    root = ReactDOMClient.createRoot(container);
+    __roots.set(container, root);
   }
   root.render(element);
   return root;
 };
 window.React = React;
-window.ReactDOM = { ...ReactDOM, ...client, render };`,
-  // Babel's standalone build transforms <script type="text/babel"> tags on
-  // load; run it again in case the document was already parsed.
-  babel: `import * as Babel from '@babel/standalone';
+window.ReactDOM = { ...ReactDOM, ...ReactDOMClient, render };`;
+
+const babelBundleSource = () => `import * as Babel from '@babel/standalone';
+${REGISTRY_PRELUDE}
+__registry.register(['__babel'], Babel);
 window.Babel = Babel;
-const transform = () => {
+// Babel's standalone build transforms <script type="text/babel"> tags on load.
+const __transform = () => {
   try {
     Babel.transformScriptTags();
   } catch (error) {
@@ -208,45 +174,69 @@ const transform = () => {
   }
 };
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', transform);
+  document.addEventListener('DOMContentLoaded', __transform);
 } else {
-  transform();
-}`,
+  __transform();
+}`;
+
+const librarySource = (name: string) => {
+  const { specifier, global, useDefault } = LIBRARY_BUNDLES[name];
+  const specifiers = Object.entries(ARTIFACT_MODULES)
+    .filter(([, bundle]) => bundle === name)
+    .map(([key]) => key);
+
+  // A CommonJS library keeps its API on the default export; registering the
+  // namespace instead would hand artifacts an object with nothing on it.
+  const value = useDefault ? '__module.default ?? __module' : '__module';
+
+  return `import * as __module from '${specifier}';
+${REGISTRY_PRELUDE}
+const __value = ${value};
+__registry.register(${JSON.stringify(specifiers)}, __value);
+window.${global} = __value;`;
 };
 
 const VIRTUAL_PREFIX = 'libre-artifact-entry:';
 
-/** Serves the generated entry sources above as if they were files. */
-const virtualEntries = (sources: Record<string, string>): Plugin => ({
+const bundleSource = async (name: string): Promise<string> => {
+  if (name === ARTIFACT_REACT_BUNDLE) return reactBundleSource();
+  if (name === ARTIFACT_BABEL_BUNDLE) return babelBundleSource();
+  if (name === ARTIFACT_TAILWIND_BUNDLE) return `import '@tailwindcss/browser';`;
+  return librarySource(name);
+};
+
+/** Serves the generated entry sources, and React's registry stand-in. */
+const virtualModules = (
+  entry: Record<string, string>,
+  shared: Record<string, string>
+): Plugin => ({
   name: 'libre-artifact-entries',
+  // Ahead of Vite's own resolver, which would otherwise resolve React from
+  // node_modules and bundle a second copy of it into every library.
+  enforce: 'pre',
   resolveId(id) {
-    return id.startsWith(VIRTUAL_PREFIX) ? `\0${id}` : null;
+    if (id.startsWith(VIRTUAL_PREFIX)) return `\0${id}`;
+    if (shared[id]) return `\0shared:${id}`;
+    return null;
   },
   load(id) {
-    if (!id.startsWith(`\0${VIRTUAL_PREFIX}`)) return null;
-    const name = id.slice(`\0${VIRTUAL_PREFIX}`.length);
-    const source = sources[name];
-    if (!source) {
-      throw new Error(`No artifact runtime entry named "${name}".`);
+    if (id.startsWith(`\0${VIRTUAL_PREFIX}`)) {
+      const name = id.slice(`\0${VIRTUAL_PREFIX}`.length);
+      const source = entry[name];
+      if (!source) throw new Error(`No artifact runtime bundle named "${name}".`);
+      return source;
     }
-    return source;
+    if (id.startsWith('\0shared:')) {
+      return shared[id.slice('\0shared:'.length)];
+    }
+    return null;
   },
 });
 
-const entryId = (name: string) => `${VIRTUAL_PREFIX}${name}`;
-
-const resolveEntry = (name: string) => {
-  if (name.endsWith('-bootstrap')) {
-    return path.join(runtimeSource, `${name}.ts`);
-  }
-  return entryId(name);
-};
-
 /**
  * These bundles are vendored libraries, so the advice the bundler would give
- * about them does not apply: they are meant to be large, and the IIFE globals
- * inherit an `import.meta` reference from a helper they never reach. Real
- * errors still surface.
+ * about them does not apply: they are meant to be large, and an IIFE inherits
+ * an `import.meta` reference from a helper it never reaches.
  */
 const SILENCED_LOG_CODES = new Set([
   'EMPTY_IMPORT_META',
@@ -273,18 +263,29 @@ const baseConfig: InlineConfig = {
   define: { 'process.env.NODE_ENV': '"production"' },
 };
 
-const buildModules = async (names: string[], external: string[]) => {
-  const sources: Record<string, string> = {};
-  for (const name of names) {
-    const specifier = MODULE_PACKAGES[name];
-    if (specifier) {
-      sources[name] = await moduleSource(specifier);
+const buildBundle = async (name: string, shareReact: boolean) => {
+  const entry =
+    name === ARTIFACT_RUNTIME_BUNDLE
+      ? path.join(runtimeSource, 'runtime.ts')
+      : `${VIRTUAL_PREFIX}${name}`;
+
+  const shared: Record<string, string> = {};
+  if (shareReact) {
+    for (const specifier of SHARED_REACT_SPECIFIERS) {
+      shared[specifier] = await sharedReactSource(
+        specifier === 'react/jsx-dev-runtime' ? 'react/jsx-runtime' : specifier
+      );
     }
   }
 
   await build({
     ...baseConfig,
-    plugins: [virtualEntries(sources)],
+    plugins: [
+      virtualModules(
+        name === ARTIFACT_RUNTIME_BUNDLE ? {} : { [name]: await bundleSource(name) },
+        shared
+      ),
+    ],
     build: {
       outDir,
       emptyOutDir: false,
@@ -293,45 +294,10 @@ const buildModules = async (names: string[], external: string[]) => {
       chunkSizeWarningLimit: Infinity,
       rollupOptions: {
         onLog: quietLog,
-        input: Object.fromEntries(
-          names.map(name => [name, resolveEntry(name)])
-        ),
-        external,
-        // These entries exist to be imported by artifact code, not to run on
-        // their own: their exports are the whole product.
-        preserveEntrySignatures: 'exports-only',
-        output: {
-          format: 'es',
-          entryFileNames: '[name].js',
-          chunkFileNames: 'chunks/[name]-[hash].js',
-          assetFileNames: 'assets/[name]-[hash][extname]',
-          // A few of these libraries reach React through a CommonJS
-          // `require`. Left alone, the call resolves against the registry the
-          // bootstrap installs, which hands back the one shared instance;
-          // polyfilled, it would throw instead.
-          polyfillRequire: false,
-        },
-      },
-    },
-  });
-};
-
-const buildGlobal = async (name: string) => {
-  await build({
-    ...baseConfig,
-    plugins: [virtualEntries(GLOBAL_SOURCES)],
-    build: {
-      outDir: path.join(outDir, 'globals'),
-      emptyOutDir: false,
-      target: 'es2022',
-      sourcemap: false,
-      chunkSizeWarningLimit: Infinity,
-      rollupOptions: {
-        onLog: quietLog,
-        input: { [name]: entryId(name) },
+        input: { [name]: entry },
         output: {
           format: 'iife',
-          name: `libreArtifactGlobal_${name.replace(/\W/g, '_')}`,
+          name: `libreArtifact_${name.replace(/\W/g, '_')}`,
           entryFileNames: '[name].js',
           assetFileNames: '[name][extname]',
         },
@@ -350,8 +316,7 @@ const inputFingerprint = async (): Promise<string> => {
   const files = [
     fileURLToPath(import.meta.url),
     path.join(runtimeSource, 'manifest.ts'),
-    path.join(runtimeSource, 'react-bootstrap.ts'),
-    path.join(runtimeSource, 'mermaid-bootstrap.ts'),
+    path.join(runtimeSource, 'runtime.ts'),
     path.join(projectRoot, 'package.json'),
   ];
   for (const file of files) {
@@ -373,13 +338,19 @@ if (!force) {
 }
 
 await rm(outDir, { recursive: true, force: true });
-
 console.log('artifact runtime: building React, Tailwind and the library set');
-await buildModules(ARTIFACT_CORE_ENTRIES, []);
-await buildModules(ARTIFACT_LIBRARY_ENTRIES, REACT_EXTERNALS);
 
-for (const name of ARTIFACT_GLOBAL_ENTRIES) {
-  await buildGlobal(name);
+for (const name of [
+  ARTIFACT_RUNTIME_BUNDLE,
+  ARTIFACT_REACT_BUNDLE,
+  ARTIFACT_BABEL_BUNDLE,
+  ARTIFACT_TAILWIND_BUNDLE,
+]) {
+  await buildBundle(name, false);
+}
+
+for (const name of ARTIFACT_LIBRARY_BUNDLES) {
+  await buildBundle(name, true);
 }
 
 await writeFile(stampPath, `${fingerprint}\n`);

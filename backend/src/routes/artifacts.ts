@@ -65,36 +65,33 @@ const artifactFrameAncestors = (): string =>
 
 /**
  * The policy that governs artifact code. It is deliberately unrelated to the
- * application policy: inline script and eval are what artifacts are made of,
- * and the vendored runtime — React, Tailwind, the charting and diagram
- * libraries — is loaded from this application's own origin.
+ * application policy: inline script and eval are what artifacts are made of.
  *
- * No third-party host appears anywhere in it. An artifact can render and
- * compute, but it cannot fetch from a CDN, phone home, or reach anything but
- * the runtime bundles it was given.
+ * No origin appears anywhere in it, not even this application's. Everything an
+ * artifact needs — React, Tailwind, the charting and diagram libraries — is
+ * inlined into the document by the page that opened it, so the frame never
+ * makes a request. That keeps artifacts working behind an authenticating
+ * proxy, where a sandboxed frame's cookie-less request would come back as a
+ * login redirect, and it means a compromised artifact has nowhere to send
+ * anything.
  */
-const artifactSandboxPolicy = (): string => {
-  const app = applicationOrigins().join(' ');
-
-  return [
+const artifactSandboxPolicy = (): string =>
+  [
     "default-src 'none'",
-    `script-src ${app} 'unsafe-inline' 'unsafe-eval' blob:`,
-    `style-src ${app} 'unsafe-inline' blob:`,
-    `img-src ${app} data: blob:`,
-    `media-src ${app} data: blob:`,
-    `font-src ${app} data:`,
-    // The runtime fetches nothing, but a bundle that inlines a worker or a
-    // source map should not fail against an unrelated host.
-    `connect-src ${app} data: blob:`,
+    "script-src 'unsafe-inline' 'unsafe-eval' blob:",
+    "style-src 'unsafe-inline' blob:",
+    'img-src data: blob:',
+    'media-src data: blob:',
+    'font-src data:',
+    'connect-src data: blob:',
     'frame-src blob: data:',
     'child-src blob: data:',
-    `worker-src ${app} blob:`,
+    'worker-src blob:',
     "form-action 'none'",
     "base-uri 'none'",
     `frame-ancestors ${artifactFrameAncestors()}`,
     `sandbox ${ARTIFACT_SANDBOX_FLAGS}`,
   ].join('; ');
-};
 
 /**
  * Host document for HTML artifact previews.
