@@ -74,6 +74,57 @@ const inlineScriptText = (source: string): string =>
 const scriptTag = (source: string): string =>
   `<script>${inlineScriptText(source)}</script>`;
 
+/**
+ * Artifacts run on an opaque origin, where merely reading `localStorage`,
+ * `sessionStorage` or `document.cookie` throws a SecurityError and takes the
+ * whole script down with it. Generated code reaches for them constantly — to
+ * remember a score, a theme, a draft — so the frame gets in-memory stand-ins.
+ * State lives as long as the preview does, which is the honest behaviour for
+ * something with no origin to persist against.
+ */
+const ARTIFACT_STORAGE_SHIM = `(function () {
+  function createStorage() {
+    var data = Object.create(null);
+    var api = {
+      getItem: function (key) {
+        key = String(key);
+        return Object.prototype.hasOwnProperty.call(data, key) ? data[key] : null;
+      },
+      setItem: function (key, value) { data[String(key)] = String(value); },
+      removeItem: function (key) { delete data[String(key)]; },
+      clear: function () { data = Object.create(null); },
+      key: function (index) {
+        var keys = Object.keys(data);
+        return index < keys.length ? keys[index] : null;
+      },
+    };
+    Object.defineProperty(api, 'length', { get: function () { return Object.keys(data).length; } });
+    return api;
+  }
+
+  for (const name of ['localStorage', 'sessionStorage']) {
+    try {
+      void window[name];
+    } catch (error) {
+      Object.defineProperty(window, name, { value: createStorage(), configurable: true });
+    }
+  }
+
+  try {
+    void document.cookie;
+  } catch (error) {
+    var jar = '';
+    Object.defineProperty(document, 'cookie', {
+      configurable: true,
+      get: function () { return jar; },
+      set: function (value) {
+        var pair = String(value).split(';')[0];
+        jar = jar ? jar + '; ' + pair : pair;
+      },
+    });
+  }
+})();`;
+
 /** Bundles this artifact needs, in load order. */
 export function artifactBundleNames(
   kind: ArtifactSandboxKind,
@@ -97,7 +148,8 @@ export function artifactBundleNames(
  */
 export function rewriteArtifactCdnReferences(
   html: string,
-  sources: Record<string, string>
+  sources: Record<string, string>,
+  missing: string[] = []
 ): string {
   // One bundle often stands in for several tags — three.min.js and
   // OrbitControls.js both map to Three — and running it twice would load a
@@ -122,7 +174,18 @@ export function rewriteArtifactCdnReferences(
 
   const withScripts = html.replace(
     /<script\b[^>]*\bsrc\s*=\s*("|')(.*?)\1[^>]*>\s*<\/script>/gi,
-    (tag, _quote: string, url: string) => replacement(url) ?? tag
+    (tag, _quote: string, url: string) => {
+      const local = replacement(url);
+      if (local) return local;
+      // An external script the sandbox has no local stand-in for. It cannot
+      // load — artifacts have no network — so record it and drop the tag
+      // rather than leave a policy violation in the console.
+      if (/^(?:https?:)?\/\//i.test(url)) {
+        missing.push(url);
+        return `<!-- unavailable offline: ${escapeArtifactHtml(url)} -->`;
+      }
+      return tag;
+    }
   );
 
   // A Tailwind stylesheet link becomes the browser build, which generates the
@@ -135,6 +198,33 @@ export function rewriteArtifactCdnReferences(
     }
   );
 }
+
+/**
+ * Names what an artifact asked for and could not have. Silence would leave a
+ * blank preview and a Content Security Policy line in the console; this says
+ * plainly which library is missing.
+ */
+const missingLibraryNotice = (urls: string[]): string => {
+  const names = urls
+    .map(url => url.split('/').pop() || url)
+    .filter((name, index, all) => all.indexOf(name) === index);
+
+  return `(function () {
+  var notice = document.createElement('div');
+  notice.setAttribute('data-testid', 'artifact-missing-library');
+  notice.style.cssText = 'position:sticky;top:0;z-index:2147483647;margin:0;padding:10px 14px;' +
+    'background:#fff7ed;border-bottom:1px solid #fdba74;color:#7c2d12;' +
+    'font:13px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;';
+  notice.textContent = ${JSON.stringify(
+    `This artifact asked for ${names.join(', ')}, which is not available offline. Artifacts run without network access; ask for a version that uses the built-in libraries.`
+  )};
+  var place = function () {
+    if (document.body) document.body.insertBefore(notice, document.body.firstChild);
+  };
+  if (document.body) place();
+  else document.addEventListener('DOMContentLoaded', place);
+})();`;
+};
 
 const runtimeDocument = (
   title: string,
@@ -153,6 +243,7 @@ const runtimeDocument = (
   </head>
   <body>
     <div id="root"></div>
+    ${scriptTag(ARTIFACT_STORAGE_SHIM)}
     <script type="text/plain" id="libre-artifact-source">${inlineScriptText(source)}</script>
 ${bundleSources.map(scriptTag).join('\n')}
     <script>window.${ARTIFACT_RUNTIME_GLOBAL}.${start}();</script>
@@ -177,9 +268,19 @@ export function composeArtifactSandboxDocument(
   if (kind === 'mermaid') {
     return runtimeDocument(title, content, ordered, 'runMermaid', options);
   }
-  return rewriteArtifactCdnReferences(
+  const missing: string[] = [];
+  const html = rewriteArtifactCdnReferences(
     buildHtmlArtifactDocument(content, title),
-    sources
+    sources,
+    missing
+  );
+  const prelude =
+    scriptTag(ARTIFACT_STORAGE_SHIM) +
+    (missing.length ? scriptTag(missingLibraryNotice(missing)) : '');
+
+  return html.replace(
+    /<head([^>]*)>/i,
+    (tag, attributes: string) => `<head${attributes}>${prelude}`
   );
 }
 

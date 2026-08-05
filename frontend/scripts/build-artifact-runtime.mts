@@ -77,6 +77,15 @@ const LIBRARY_BUNDLES: Record<
   lodash: { specifier: 'lodash', global: '_', useDefault: true },
   mermaid: { specifier: 'mermaid', global: 'mermaid', useDefault: true },
   chart: { specifier: 'chart.js/auto', global: 'Chart', useDefault: true },
+  tone: { specifier: 'tone', global: 'Tone' },
+  mathjs: { specifier: 'mathjs', global: 'math' },
+  xlsx: { specifier: 'xlsx', global: 'XLSX' },
+  plotly: {
+    specifier: 'plotly.js-dist-min',
+    global: 'Plotly',
+    useDefault: true,
+  },
+  'framer-motion': { specifier: 'framer-motion', global: 'Motion' },
 };
 
 /**

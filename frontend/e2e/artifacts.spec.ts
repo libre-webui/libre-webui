@@ -777,3 +777,109 @@ test('Three.js artifacts get the addons their CDN tags expect', async ({
   expect(warnings).toEqual([]);
   expect(external).toEqual([]);
 });
+
+const generatedStorageArtifact = `
+A counter that remembers:
+
+\`\`\`html
+<!doctype html>
+<html>
+  <body>
+    <div id="out">starting</div>
+    <script>
+      localStorage.setItem('visits', String(Number(localStorage.getItem('visits') || 0) + 1));
+      sessionStorage.setItem('session', 'yes');
+      document.cookie = 'seen=1';
+      document.getElementById('out').textContent =
+        'visits=' + localStorage.getItem('visits') +
+        ' session=' + sessionStorage.getItem('session') +
+        ' cookie=' + document.cookie +
+        ' length=' + localStorage.length;
+    </script>
+  </body>
+</html>
+\`\`\`
+`;
+
+test('artifacts that use storage keep running', async ({ page }) => {
+  test.slow();
+  const failures: string[] = [];
+  page.on('pageerror', error => failures.push(String(error).slice(0, 120)));
+
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith(
+        'storage-session',
+        'Storage artifact',
+        generatedStorageArtifact
+      ),
+    ],
+  });
+
+  await page.goto('/c/storage-session');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .getByTestId('artifact-slide-out-panel')
+    .frameLocator('iframe')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  // An opaque origin makes real storage throw, which used to take the whole
+  // artifact down; the frame gets in-memory stand-ins instead.
+  await expect(frame.locator('#out')).toHaveText(
+    'visits=1 session=yes cookie=seen=1 length=1',
+    { timeout: 30_000 }
+  );
+  expect(failures.filter(message => /SecurityError/.test(message))).toEqual([]);
+});
+
+const generatedToneArtifact = `
+\`\`\`html
+<!doctype html>
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.0/dist/confetti.browser.min.js"></script>
+  </head>
+  <body>
+    <div id="out">starting</div>
+    <script>
+      document.getElementById('out').textContent =
+        'tone=' + (typeof Tone === 'object' ? 'yes' : 'no');
+    </script>
+  </body>
+</html>
+\`\`\`
+`;
+
+test('vendored libraries load and missing ones are named', async ({ page }) => {
+  test.slow();
+  const external = trackExternalRequests(page);
+
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith('tone-session', 'Tone artifact', generatedToneArtifact),
+    ],
+  });
+
+  await page.goto('/c/tone-session');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .getByTestId('artifact-slide-out-panel')
+    .frameLocator('iframe')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  // Tone.js is vendored, so the CDN tag resolves to the local build.
+  await expect(frame.locator('#out')).toHaveText('tone=yes', {
+    timeout: 30_000,
+  });
+  // Confetti is not, and an artifact cannot fetch it; say so rather than fail
+  // silently with a policy violation in the console.
+  await expect(
+    frame.locator('[data-testid="artifact-missing-library"]')
+  ).toContainText('confetti.browser.min.js');
+  expect(external).toEqual([]);
+});

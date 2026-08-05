@@ -95,13 +95,18 @@ feature policy allows clipboard access, fullscreen, and gamepad input.
 Generated artifacts assume libraries are available. Rather than let them reach
 a CDN, the application vendors what they ask for:
 
-| Available to artifacts                                             | How it is reached                   |
-| ------------------------------------------------------------------ | ----------------------------------- |
-| React and ReactDOM                                                 | `import ... from 'react'`           |
-| JSX and TSX                                                        | compiled in the frame by Babel      |
-| Tailwind utilities                                                 | generated from the markup, no build |
-| Recharts, Lucide icons, D3, Three.js, Chart.js, Papa Parse, Lodash | `import ... from '<name>'`          |
-| Mermaid                                                            | `mermaid` artifacts, or by import   |
+| Available to artifacts                                         | How it is reached                   |
+| -------------------------------------------------------------- | ----------------------------------- |
+| React, ReactDOM, Framer Motion                                 | `import ... from 'react'`           |
+| JSX and TSX                                                    | compiled in the frame by Babel      |
+| Tailwind utilities                                             | generated from the markup, no build |
+| Recharts, Chart.js, Plotly, D3                                 | `import ... from '<name>'`          |
+| Three.js with its controls, loaders and post-processing addons | `THREE.OrbitControls`, or by import |
+| Lucide icons, Lodash, MathJS, Papa Parse, SheetJS, Tone.js     | `import ... from '<name>'`          |
+| Mermaid                                                        | `mermaid` artifacts, or by import   |
+
+An artifact that reaches for a library outside this set gets a notice naming
+it, rather than a blank preview and a policy error in the console.
 
 The frame never fetches any of it. The application page — which carries the
 user's session — loads the bundles it needs and inlines them into the artifact
@@ -126,8 +131,10 @@ Mermaid, React or Babel is replaced by the vendored build inline, in the same
 document position, so inline scripts still find `Chart`, `d3`, or `React` when
 they run. A library outside that set is unavailable; inline it instead.
 
-Because the frame has an opaque origin, `localStorage` and `sessionStorage`
-throw inside an artifact. Keep state in memory.
+Because the frame has an opaque origin, real `localStorage`, `sessionStorage`
+and `document.cookie` throw. The sandbox supplies in-memory stand-ins so an
+artifact that uses them keeps running; the contents last as long as the preview
+does and are not shared with the application.
 
 Artifacts still execute generated code: inspect untrusted HTML before
 downloading or reusing it outside the preview, and do not place secrets in an

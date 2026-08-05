@@ -559,7 +559,13 @@ const fulfillApiError = async (route: Route, status: number, error: string) => {
 export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   if (!options.showWhatsNew && latestReleaseVersion) {
     await page.addInitScript(version => {
-      localStorage.setItem('libre-webui:whats-new-seen', version);
+      // Init scripts run in every frame, including the sandboxed artifact
+      // frame, where touching storage throws and would surface as a page error.
+      try {
+        localStorage.setItem('libre-webui:whats-new-seen', version);
+      } catch {
+        // No storage in an opaque origin; nothing to remember there anyway.
+      }
     }, latestReleaseVersion);
   }
 

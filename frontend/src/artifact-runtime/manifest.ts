@@ -65,6 +65,16 @@ export const ARTIFACT_MODULES: Record<string, string> = {
   mermaid: 'mermaid',
   'chart.js': 'chart',
   'chart.js/auto': 'chart',
+  tone: 'tone',
+  mathjs: 'mathjs',
+  xlsx: 'xlsx',
+  'plotly.js': 'plotly',
+  'plotly.js-dist-min': 'plotly',
+  'framer-motion': 'framer-motion',
+  'motion/react': 'framer-motion',
+  motion: 'framer-motion',
+  'three/addons/controls/OrbitControls.js': 'three',
+  'three/examples/jsm/controls/OrbitControls.js': 'three',
 };
 
 /** Bundles built against the shared React instance in the react bundle. */
@@ -77,6 +87,11 @@ export const ARTIFACT_LIBRARY_BUNDLES = [
   'lodash',
   'mermaid',
   'chart',
+  'tone',
+  'mathjs',
+  'xlsx',
+  'plotly',
+  'framer-motion',
 ];
 
 export const ARTIFACT_BUNDLES = [
@@ -123,6 +138,17 @@ export const ARTIFACT_CDN_REPLACEMENTS: {
   { pattern: /(?:^|\/)lodash(?:@[\d.]+)?(?:\/|$|\?)/i, bundle: 'lodash' },
   { pattern: /(?:^|\/)lodash(?:\.min)?\.js(?:$|\?)/i, bundle: 'lodash' },
   { pattern: /mermaid/i, bundle: 'mermaid' },
+  {
+    pattern: /(?:^|\/)tone(?:@[\d.]+)?(?:\/|$|\?)|tone(?:\.min)?\.js/i,
+    bundle: 'tone',
+  },
+  { pattern: /mathjs|math(?:\.min)?\.js/i, bundle: 'mathjs' },
+  { pattern: /xlsx|sheetjs/i, bundle: 'xlsx' },
+  { pattern: /plotly/i, bundle: 'plotly' },
+  {
+    pattern: /framer-motion|(?:^|\/)motion(?:@[\d.]+)?(?:\/|$)/i,
+    bundle: 'framer-motion',
+  },
   { pattern: /react-dom/i, bundle: ARTIFACT_REACT_BUNDLE },
   {
     pattern: /(?:^|\/)react(?:@[\d.]+)?(?:\/|$|\?)/i,
