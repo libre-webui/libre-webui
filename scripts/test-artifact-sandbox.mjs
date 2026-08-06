@@ -181,7 +181,10 @@ test('the runtime is vendored, never fetched from a CDN', () => {
   assert.match(documents, /rewriteArtifactCdnReferences/);
   assert.match(documents, /const scriptTag = \(source: string\)/);
   assert.doesNotMatch(documents, /<script[^>]*src=/);
-  assert.doesNotMatch(documents, /importmap/);
+  // An import map only names URLs the frame cannot fetch, so generated ones
+  // are stripped and their specifiers resolved from the registry instead.
+  assert.match(documents, /import map removed/);
+  assert.match(documents, /runInline/);
 
   const loader = readFileSync(
     path.join(repoRoot, 'frontend', 'src', 'utils', 'artifactRuntimeLoader.ts'),
