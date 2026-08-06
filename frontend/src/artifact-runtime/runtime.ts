@@ -28,6 +28,8 @@
  * `import` resolves through the registry below instead of the network.
  */
 
+import { artifactModuleKey } from './manifest';
+
 interface BabelTransformResult {
   code?: string | null;
 }
@@ -46,6 +48,7 @@ interface ArtifactRuntime {
   require(specifier: string): unknown;
   runReact(): void;
   runMermaid(): void;
+  runInline(source: string): void;
 }
 
 const SOURCE_ELEMENT_ID = 'libre-artifact-source';
@@ -61,13 +64,19 @@ const runtime: ArtifactRuntime = {
   },
 
   require(specifier) {
-    const module = this.modules[specifier];
-    if (module === undefined) {
-      throw new Error(
-        `"${specifier}" is not one of the libraries available to artifacts.`
-      );
-    }
-    return module;
+    const direct = this.modules[specifier];
+    if (direct !== undefined) return direct;
+
+    // Generated code imports the same library by many names: a bare
+    // specifier, a CDN URL, or a subpath such as three/addons/... They all
+    // resolve to the one registered instance.
+    const key = artifactModuleKey(specifier);
+    const resolved = key === null ? undefined : this.modules[key];
+    if (resolved !== undefined) return resolved;
+
+    throw new Error(
+      `"${specifier}" is not one of the libraries available to artifacts.`
+    );
   },
 
   runReact() {
@@ -76,6 +85,17 @@ const runtime: ArtifactRuntime = {
 
   runMermaid() {
     void drawMermaid();
+  },
+
+  runInline(source) {
+    // A module or text/babel script lifted out of generated HTML. Compiling it
+    // here rather than letting the browser resolve its imports is what keeps
+    // the frame off the network.
+    try {
+      evaluate(compile(source));
+    } catch (error) {
+      showFailure('This script could not run.', describe(error));
+    }
   },
 };
 

@@ -883,3 +883,111 @@ test('vendored libraries load and missing ones are named', async ({ page }) => {
   ).toContainText('confetti.browser.min.js');
   expect(external).toEqual([]);
 });
+
+// The boilerplate three.js is written with today: an import map and a module
+// script, not classic script tags.
+const generatedThreeModuleArtifact = `
+\`\`\`html
+<!doctype html>
+<html>
+  <head>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="status">starting</div>
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, 2, 0.1, 100);
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(240, 120);
+      document.body.appendChild(renderer.domElement);
+      const controls = new OrbitControls(camera, renderer.domElement);
+      scene.add(new THREE.Mesh(new THREE.TorusKnotGeometry(1, 0.3, 64, 16), new THREE.MeshNormalMaterial()));
+      renderer.render(scene, camera);
+      document.getElementById('status').dataset.ready = String(Boolean(controls.update));
+    </script>
+  </body>
+</html>
+\`\`\`
+`;
+
+const generatedTypeScriptArtifact = `
+\`\`\`html
+<!doctype html>
+<html>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      interface Product { id: number; name: string; price: number }
+      const items: Product[] = [{ id: 1, name: 'Desk', price: 120 }];
+      const total: number = items.reduce((sum, item) => sum + item.price, 0);
+      function App(): JSX.Element {
+        return <div id="total">Total: {total}</div>;
+      }
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  </body>
+</html>
+\`\`\`
+`;
+
+test('module scripts and import maps resolve to the local runtime', async ({
+  page,
+}) => {
+  test.slow();
+  const external = trackExternalRequests(page);
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith('three-module', 'Three module', generatedThreeModuleArtifact),
+    ],
+  });
+
+  await page.goto('/c/three-module');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .getByTestId('artifact-slide-out-panel')
+    .frameLocator('iframe')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  await expect(frame.locator('#status')).toHaveAttribute('data-ready', 'true', {
+    timeout: 30_000,
+  });
+  await expect(frame.locator('canvas')).toBeVisible();
+  expect(external).toEqual([]);
+});
+
+test('TypeScript in a text/babel script compiles', async ({ page }) => {
+  test.slow();
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith('ts-artifact', 'TS artifact', generatedTypeScriptArtifact),
+    ],
+  });
+
+  await page.goto('/c/ts-artifact');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .getByTestId('artifact-slide-out-panel')
+    .frameLocator('iframe')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  // Interfaces and type annotations must be stripped, not treated as
+  // reserved words by a JSX-only parser.
+  await expect(frame.locator('#total')).toHaveText('Total: 120', {
+    timeout: 30_000,
+  });
+});

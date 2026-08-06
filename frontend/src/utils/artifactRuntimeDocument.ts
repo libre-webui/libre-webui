@@ -27,11 +27,15 @@
  */
 
 import {
+  ARTIFACT_BABEL_BUNDLE,
   ARTIFACT_CDN_REPLACEMENTS,
   ARTIFACT_MERMAID_PRELUDE,
+  ARTIFACT_REACT_BUNDLE,
   ARTIFACT_REACT_PRELUDE,
+  ARTIFACT_RUNTIME_BUNDLE,
   ARTIFACT_RUNTIME_GLOBAL,
   artifactBundlesFor,
+  artifactBundlesForImports,
   artifactCdnBundlesFor,
 } from '@/artifact-runtime/manifest';
 import {
@@ -125,6 +129,43 @@ const ARTIFACT_STORAGE_SHIM = `(function () {
   }
 })();`;
 
+/** Inline `<script type="module">` and `<script type="text/babel">` bodies. */
+const COMPILED_SCRIPT_PATTERN =
+  /<script\b(?![^>]*\bsrc\s*=)[^>]*\btype\s*=\s*("|')(?:module|text\/babel|application\/babel)\1[^>]*>([\s\S]*?)<\/script>/gi;
+
+/** An import map only names URLs the frame cannot fetch. */
+const IMPORT_MAP_PATTERN =
+  /<script\b[^>]*\btype\s*=\s*("|')importmap\1[^>]*>[\s\S]*?<\/script>/gi;
+
+/**
+ * Hands inline module and Babel scripts to the runtime instead of the browser.
+ *
+ * The modern Three.js boilerplate is an import map plus
+ * `import * as THREE from 'three'`, and TypeScript artifacts arrive as
+ * `<script type="text/babel">` with interfaces in them. Left alone the first
+ * resolves over the network — which the sandbox forbids — and the second is
+ * parsed without the TypeScript preset. Compiling both here fixes each.
+ */
+function compileInlineScripts(html: string): string {
+  return html
+    .replace(
+      IMPORT_MAP_PATTERN,
+      '<!-- import map removed: modules resolve from the local runtime -->'
+    )
+    .replace(COMPILED_SCRIPT_PATTERN, (_tag, _quote: string, body: string) =>
+      body.trim()
+        ? `<script>window.${ARTIFACT_RUNTIME_GLOBAL}.runInline(${JSON.stringify(body)});</script>`
+        : ''
+    );
+}
+
+/** Source of every inline module or Babel script, for dependency detection. */
+function inlineScriptSources(html: string): string {
+  return [...html.matchAll(COMPILED_SCRIPT_PATTERN)]
+    .map(match => match[2])
+    .join('\n');
+}
+
 /** Bundles this artifact needs, in load order. */
 export function artifactBundleNames(
   kind: ArtifactSandboxKind,
@@ -138,7 +179,29 @@ export function artifactBundleNames(
   if (kind === 'mermaid') {
     return [...ARTIFACT_MERMAID_PRELUDE];
   }
-  return artifactCdnBundlesFor(content);
+
+  const inline = inlineScriptSources(content);
+  const needed = new Set<string>(artifactCdnBundlesFor(content));
+  for (const bundle of artifactBundlesForImports(inline)) {
+    needed.add(bundle);
+  }
+
+  if (inline.trim()) {
+    // Those scripts are compiled in the frame, which needs the compiler and
+    // the runtime that drives it.
+    needed.add(ARTIFACT_BABEL_BUNDLE);
+    if (/\bReact\b|jsx|<[A-Z]/.test(inline)) {
+      needed.add(ARTIFACT_REACT_BUNDLE);
+    }
+  }
+
+  const ordered = [...needed];
+  return ordered.length
+    ? [
+        ARTIFACT_RUNTIME_BUNDLE,
+        ...ordered.filter(name => name !== ARTIFACT_RUNTIME_BUNDLE),
+      ]
+    : [];
 }
 
 /**
@@ -151,59 +214,40 @@ export function rewriteArtifactCdnReferences(
   sources: Record<string, string>,
   missing: string[] = []
 ): string {
-  // One bundle often stands in for several tags — three.min.js and
-  // OrbitControls.js both map to Three — and running it twice would load a
-  // second copy of the library, which Three in particular refuses to work
-  // with. Later tags for a bundle already inlined are dropped.
-  const inlined = new Set<string>();
-
-  const replacement = (url: string): string | null => {
+  const drop = (url: string): string | null => {
     if (!/^(?:https?:)?\/\//i.test(url)) return null;
-    for (const { pattern, bundle } of ARTIFACT_CDN_REPLACEMENTS) {
-      if (!pattern.test(url)) continue;
-      const source = sources[bundle];
-      if (!source) return null;
-      if (inlined.has(bundle)) {
-        return `<!-- ${bundle} is already loaded above -->`;
-      }
-      inlined.add(bundle);
-      return scriptTag(source);
+
+    const bundle = ARTIFACT_CDN_REPLACEMENTS.find(({ pattern }) =>
+      pattern.test(url)
+    )?.bundle;
+
+    if (bundle && sources[bundle]) {
+      // The bundle is already in the document head; loading it again would
+      // give Three.js, in particular, a second copy of itself.
+      return `<!-- ${bundle} is provided by the local runtime -->`;
     }
-    return null;
+
+    // Nothing local stands in for this one, and the frame cannot fetch it.
+    missing.push(url);
+    return `<!-- unavailable offline: ${escapeArtifactHtml(url)} -->`;
   };
 
   const withScripts = html.replace(
     /<script\b[^>]*\bsrc\s*=\s*("|')(.*?)\1[^>]*>\s*<\/script>/gi,
-    (tag, _quote: string, url: string) => {
-      const local = replacement(url);
-      if (local) return local;
-      // An external script the sandbox has no local stand-in for. It cannot
-      // load — artifacts have no network — so record it and drop the tag
-      // rather than leave a policy violation in the console.
-      if (/^(?:https?:)?\/\//i.test(url)) {
-        missing.push(url);
-        return `<!-- unavailable offline: ${escapeArtifactHtml(url)} -->`;
-      }
-      return tag;
-    }
+    (tag, _quote: string, url: string) => drop(url) ?? tag
   );
 
-  // A Tailwind stylesheet link becomes the browser build, which generates the
-  // same utilities from the markup it finds.
+  // A Tailwind stylesheet link is the browser build in disguise; other
+  // stylesheets are left alone, since CSS cannot execute anything.
   return withScripts.replace(
     /<link\b[^>]*\bhref\s*=\s*("|')(.*?)\1[^>]*>/gi,
     (tag, _quote: string, url: string) => {
       if (!/tailwind/i.test(url)) return tag;
-      return replacement(url) ?? tag;
+      return drop(url) ?? tag;
     }
   );
 }
 
-/**
- * Names what an artifact asked for and could not have. Silence would leave a
- * blank preview and a Content Security Policy line in the console; this says
- * plainly which library is missing.
- */
 const missingLibraryNotice = (urls: string[]): string => {
   const names = urls
     .map(url => url.split('/').pop() || url)
@@ -269,14 +313,19 @@ export function composeArtifactSandboxDocument(
     return runtimeDocument(title, content, ordered, 'runMermaid', options);
   }
   const missing: string[] = [];
-  const html = rewriteArtifactCdnReferences(
-    buildHtmlArtifactDocument(content, title),
-    sources,
-    missing
+  const compiled = compileInlineScripts(
+    buildHtmlArtifactDocument(content, title)
   );
-  const prelude =
-    scriptTag(ARTIFACT_STORAGE_SHIM) +
-    (missing.length ? scriptTag(missingLibraryNotice(missing)) : '');
+  const html = rewriteArtifactCdnReferences(compiled, sources, missing);
+
+  // Everything the document needs goes in the head, ahead of the artifact's
+  // own scripts, so a library is ready whichever order the generated tags
+  // happened to be in.
+  const prelude = [
+    scriptTag(ARTIFACT_STORAGE_SHIM),
+    ...ordered.map(scriptTag),
+    missing.length ? scriptTag(missingLibraryNotice(missing)) : '',
+  ].join('');
 
   return html.replace(
     /<head([^>]*)>/i,

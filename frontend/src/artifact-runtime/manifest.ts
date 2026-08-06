@@ -163,6 +163,51 @@ export const ARTIFACT_CDN_REPLACEMENTS: {
 /** Global the bundles register themselves on inside the sandbox frame. */
 export const ARTIFACT_RUNTIME_GLOBAL = '__libreArtifactRuntime';
 
+/**
+ * The registry key for whatever an artifact wrote in an import: a bare
+ * specifier, a CDN URL, or a subpath of one of the vendored packages. This is
+ * what lets `import * as THREE from 'https://cdn.../three.module.js'` and
+ * `import 'three'` land on the same instance.
+ */
+export function artifactModuleKey(specifier: string): string | null {
+  if (ARTIFACT_MODULES[specifier]) return specifier;
+
+  const bundle = ARTIFACT_CDN_REPLACEMENTS.find(({ pattern }) =>
+    pattern.test(specifier)
+  )?.bundle;
+
+  const fromBundle =
+    bundle ??
+    // A subpath of a vendored package, such as three/addons/... — the bundle
+    // merges its addons, so the package itself answers for them.
+    Object.values(ARTIFACT_MODULES).find(name =>
+      specifier.startsWith(`${name}/`)
+    );
+
+  if (!fromBundle) return null;
+
+  return (
+    Object.entries(ARTIFACT_MODULES).find(
+      ([, name]) => name === fromBundle
+    )?.[0] ?? null
+  );
+}
+
+/** Bundles needed by the imports written inside a script body. */
+export function artifactBundlesForImports(source: string): string[] {
+  const needed = new Set<string>();
+  const specifiers = source.matchAll(
+    /(?:from|import|require)\s*\(?\s*['"`]([^'"`]+)['"`]/g
+  );
+
+  for (const [, specifier] of specifiers) {
+    const key = artifactModuleKey(specifier);
+    if (key) needed.add(ARTIFACT_MODULES[key]);
+  }
+
+  return [...needed];
+}
+
 /** Bundles a piece of artifact code needs, based on what it imports. */
 export function artifactBundlesFor(source: string): string[] {
   const needed = new Set<string>();
