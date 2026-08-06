@@ -70,7 +70,6 @@ export const ARTIFACT_MODULES: Record<string, string> = {
   'chart.js/auto': 'chart',
   tone: 'tone',
   mathjs: 'mathjs',
-  xlsx: 'xlsx',
   'plotly.js': 'plotly',
   'plotly.js-dist-min': 'plotly',
   'framer-motion': 'framer-motion',
@@ -93,7 +92,6 @@ export const ARTIFACT_LIBRARY_BUNDLES = [
   'chart',
   'tone',
   'mathjs',
-  'xlsx',
   'plotly',
   'framer-motion',
 ];
@@ -151,7 +149,6 @@ export const ARTIFACT_CDN_REPLACEMENTS: {
     bundle: 'tone',
   },
   { pattern: /mathjs|math(?:\.min)?\.js/i, bundle: 'mathjs' },
-  { pattern: /xlsx|sheetjs/i, bundle: 'xlsx' },
   { pattern: /plotly/i, bundle: 'plotly' },
   {
     pattern: /framer-motion|(?:^|\/)motion(?:@[\d.]+)?(?:\/|$)/i,

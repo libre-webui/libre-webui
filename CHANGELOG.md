@@ -23,7 +23,7 @@ placeholder iconography across the application.
 - Artifacts have a vendored library set: React and ReactDOM, Recharts,
   Chart.js, Plotly, D3, Three.js with its controls, loaders, environments,
   post-processing and exporters, Lucide icons, Lodash, MathJS, Papa Parse,
-  SheetJS, Tone.js, Framer Motion and Mermaid.
+  Tone.js, Framer Motion and Mermaid.
 - Generated HTML that loads a library from a CDN keeps working: the tag is
   replaced by the vendored build in the same document position, so inline
   scripts still find `Chart`, `d3` or `THREE` when they run.

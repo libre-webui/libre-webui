@@ -81,7 +81,6 @@ const LIBRARY_BUNDLES: Record<
   chart: { specifier: 'chart.js/auto', global: 'Chart', useDefault: true },
   tone: { specifier: 'tone', global: 'Tone' },
   mathjs: { specifier: 'mathjs', global: 'math' },
-  xlsx: { specifier: 'xlsx', global: 'XLSX' },
   plotly: {
     specifier: 'plotly.js-dist-min',
     global: 'Plotly',
