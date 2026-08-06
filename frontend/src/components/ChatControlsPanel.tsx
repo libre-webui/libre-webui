@@ -23,7 +23,7 @@ import { Button } from '@/components/ui';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
 import { chatApi, ollamaApi } from '@/utils/api';
-import { cn, generateId } from '@/utils';
+import { generateId } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import type { ChatSession, GenerationOptions } from '@/types';
 
@@ -57,22 +57,34 @@ const NUMERIC_OPTIONS: Array<{
 ];
 
 interface ChatControlsPanelProps {
-  session: ChatSession;
+  /**
+   * The conversation being adjusted. Omitted on the welcome screen, where the
+   * settings are kept as a draft and applied to the session once it is created.
+   */
+  session?: ChatSession;
+  /** Model the draft applies to, when there is no session yet. */
+  draftModel?: string;
   open: boolean;
   onClose: () => void;
 }
 
 export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
   session,
+  draftModel,
   open,
   onClose,
 }) => {
   const { t } = useTranslation();
+  const draftSettings = useChatStore(state => state.draftSessionSettings);
+  const setDraftSessionSettings = useChatStore(
+    state => state.setDraftSessionSettings
+  );
+  const model = session?.model ?? draftModel ?? '';
   const globalDefaults = useAppStore(
     state => state.preferences.generationOptions
   );
   const pinnedForModel = useAppStore(
-    state => state.preferences.modelGenerationOptions?.[session.model]
+    state => state.preferences.modelGenerationOptions?.[model]
   );
   const [modelDefaults, setModelDefaults] = useState<{
     options: Partial<GenerationOptions>;
@@ -84,11 +96,11 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
   // panel reports the value a message will actually run with, rather than an
   // application default the model overrides.
   useEffect(() => {
-    if (!open || !session.model) return;
+    if (!open || !model) return;
 
     let cancelled = false;
     void ollamaApi
-      .getModelDefaults(session.model)
+      .getModelDefaults(model)
       .then(response => {
         if (cancelled || !response.success || !response.data) return;
         setModelDefaults({
@@ -104,7 +116,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [open, session.model]);
+  }, [open, model]);
 
   const effectiveDefaults = useMemo(
     () => ({
@@ -116,24 +128,33 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
   );
 
   const systemMessage = useMemo(
-    () => session.messages.find(message => message.role === 'system'),
-    [session.messages]
+    () => session?.messages.find(message => message.role === 'system'),
+    [session?.messages]
   );
 
   const [systemPrompt, setSystemPrompt] = useState(
-    systemMessage?.content ?? ''
+    systemMessage?.content ?? draftSettings.systemPrompt ?? ''
   );
   const [overrides, setOverrides] = useState<Partial<GenerationOptions>>(
-    session.settings?.generationOptions ?? {}
+    session?.settings?.generationOptions ??
+      draftSettings.generationOptions ??
+      {}
   );
   const [saving, setSaving] = useState(false);
-  const [seededSessionId, setSeededSessionId] = useState(session.id);
+  const [seededSessionId, setSeededSessionId] = useState(
+    session?.id ?? 'draft'
+  );
 
   // Re-seed local form state when the panel is opened for another session.
-  if (seededSessionId !== session.id) {
-    setSeededSessionId(session.id);
-    setSystemPrompt(systemMessage?.content ?? '');
-    setOverrides(session.settings?.generationOptions ?? {});
+  const seedKey = session?.id ?? 'draft';
+  if (seededSessionId !== seedKey) {
+    setSeededSessionId(seedKey);
+    setSystemPrompt(systemMessage?.content ?? draftSettings.systemPrompt ?? '');
+    setOverrides(
+      session?.settings?.generationOptions ??
+        draftSettings.generationOptions ??
+        {}
+    );
   }
 
   const setNumericOverride = (key: NumericOption, raw: string) => {
@@ -165,6 +186,18 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
         Object.keys(cleanedOverrides).length > 0
           ? { generationOptions: cleanedOverrides }
           : undefined;
+
+      // No session yet: keep the choices as a draft for the one about to be
+      // created, so a conversation can start the way the user wants it.
+      if (!session) {
+        setDraftSessionSettings({
+          systemPrompt: trimmedPrompt || undefined,
+          generationOptions: settings?.generationOptions,
+        });
+        toast.success(t('chat.controls.saved'));
+        onClose();
+        return;
+      }
 
       let updatedMessages = session.messages;
       if (trimmedPrompt !== previousPrompt.trim()) {
@@ -232,13 +265,14 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
     }
   };
 
+  // Closed means gone: a hidden panel would still put its fields in the
+  // document, where anything reading the page finds them.
+  if (!open) return null;
+
   return (
     <div
       data-testid='chat-controls-panel'
-      className={cn(
-        'flex h-full w-[21rem] shrink-0 flex-col border-s border-black/[0.06] bg-surface/70 backdrop-blur-xl dark:border-white/[0.07] dark:bg-dark-100/70',
-        !open && 'hidden'
-      )}
+      className='flex h-full w-[21rem] shrink-0 flex-col border-s border-black/[0.06] bg-surface/70 backdrop-blur-xl dark:border-white/[0.07] dark:bg-dark-100/70'
     >
       <div className='flex items-center justify-between px-4 pb-2 pt-4'>
         <h2 className='text-sm font-semibold text-gray-900 dark:text-dark-900'>
@@ -334,7 +368,9 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
         </div>
       </div>
 
-      <div className='flex items-center justify-between gap-2 border-t border-black/[0.06] px-4 py-3 dark:border-white/[0.07]'>
+      {/* The floating keyboard-shortcuts control sits in this same corner on
+          large screens; the extra space keeps it off these buttons. */}
+      <div className='flex items-center justify-between gap-2 border-t border-black/[0.06] px-4 py-3 dark:border-white/[0.07] lg:pb-16'>
         <button
           onClick={() => {
             setOverrides({});

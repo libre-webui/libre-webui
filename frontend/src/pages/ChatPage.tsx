@@ -45,7 +45,8 @@ import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
 import { useChat } from '@/hooks/useChat';
 import { chatApi, imageGenApi } from '@/utils/api';
-import { cn } from '@/utils';
+import { cn, generateId } from '@/utils';
+import type { ChatSession } from '@/types';
 import { createLogger } from '@/utils/logger';
 import { triggerHapticFeedback } from '@/utils/haptics';
 import { isRTL } from '@/i18n';
@@ -511,9 +512,63 @@ export const ChatPage: React.FC = () => {
       selectedProviderId
     );
     if (newSession) {
+      // Carry the settings chosen before the session existed onto it.
+      await applyDraftSessionSettings(newSession);
       navigate(`/c/${newSession.id}`, { replace: true });
     }
   };
+
+  /**
+   * Moves the welcome screen's draft settings onto a newly created session:
+   * its system prompt as the leading message, its sampling as session
+   * overrides. Cleared afterwards so the next new chat starts fresh.
+   */
+  const applyDraftSessionSettings = useCallback(
+    async (session: ChatSession) => {
+      const draft = useChatStore.getState().draftSessionSettings;
+      const prompt = draft.systemPrompt?.trim();
+      const options = draft.generationOptions;
+
+      if (!prompt && !options) return;
+
+      const messages = prompt
+        ? [
+            {
+              id: generateId(),
+              role: 'system' as const,
+              content: prompt,
+              timestamp: Date.now(),
+            },
+            ...session.messages.filter(message => message.role !== 'system'),
+          ]
+        : session.messages;
+
+      try {
+        const response = await chatApi.updateSession(session.id, {
+          messages,
+          settings: options ? { generationOptions: options } : undefined,
+        } as Partial<ChatSession>);
+
+        if (response.success && response.data) {
+          const updated = response.data;
+          useChatStore.setState(state => ({
+            sessions: state.sessions.map(item =>
+              item.id === updated.id ? updated : item
+            ),
+            currentSession:
+              state.currentSession?.id === updated.id
+                ? updated
+                : state.currentSession,
+          }));
+        }
+      } catch (error) {
+        logger.error('Failed to apply chat settings to the new session', error);
+      } finally {
+        useChatStore.getState().setDraftSessionSettings({});
+      }
+    },
+    []
+  );
 
   const handleWelcomeKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -553,176 +608,199 @@ export const ChatPage: React.FC = () => {
     const hasAdvancedFeatures = welcomeImages.length > 0;
 
     return (
-      <div className='relative h-full flex-1 overflow-y-auto overflow-x-hidden px-4 py-20 sm:px-8 sm:py-24'>
-        <div
-          aria-hidden='true'
-          className='pointer-events-none absolute inset-0'
-        >
-          <div className='absolute left-[12%] top-[18%] h-56 w-56 rounded-full bg-primary-500/[0.035] blur-3xl dark:bg-primary-400/[0.04]' />
-          <div className='absolute bottom-[16%] right-[10%] h-72 w-72 rounded-full bg-gray-900/[0.025] blur-3xl dark:bg-white/[0.025]' />
-          <div className='absolute left-1/2 top-0 h-16 w-px bg-gray-300/60 dark:bg-white/10' />
-        </div>
-
-        {/* Private Mode Button - Top Right Corner */}
-        <button
-          onClick={() => startPrivateSession()}
-          disabled={
-            (!selectedModel && models.length === 0) ||
-            (Boolean(selectedModel) && !selectedModelAvailable)
-          }
-          className='absolute end-4 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-surface/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-6 sm:top-6'
-          title={t('chat.session.privateTooltip')}
-        >
-          <Ghost className='h-3.5 w-3.5' />
-          <span>{t('chat.session.incognito', 'Incognito Chat')}</span>
-        </button>
-
-        <div className='relative z-[1] mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center'>
+      <div className='flex h-full min-h-0 flex-1'>
+        <div className='relative h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-20 sm:px-8 sm:py-24'>
           <div
-            key={welcomePrompt.id}
-            className='mb-10 flex flex-col items-center text-center animate-fade-in sm:mb-12'
-            aria-live='polite'
+            aria-hidden='true'
+            className='pointer-events-none absolute inset-0'
           >
-            <h1 className='mb-4 max-w-3xl text-balance text-[clamp(2.65rem,7vw,5.25rem)] font-light leading-[0.98] tracking-[-0.055em] text-gray-950 dark:text-dark-950 rtl:leading-[1.12] rtl:tracking-normal'>
-              {welcomePrompt.title}
-            </h1>
-            <p className='max-w-xl text-balance text-base leading-relaxed text-gray-500 dark:text-dark-600 sm:text-lg'>
-              {welcomePrompt.subtitle}
-            </p>
+            <div className='absolute left-[12%] top-[18%] h-56 w-56 rounded-full bg-primary-500/[0.035] blur-3xl dark:bg-primary-400/[0.04]' />
+            <div className='absolute bottom-[16%] right-[10%] h-72 w-72 rounded-full bg-gray-900/[0.025] blur-3xl dark:bg-white/[0.025]' />
+            <div className='absolute left-1/2 top-0 h-16 w-px bg-gray-300/60 dark:bg-white/10' />
           </div>
 
-          {welcomeModels.length > 0 ? (
-            <div className='w-full'>
-              {/* Advanced Features Panel */}
-              {showWelcomeAdvanced && (
-                <div className='mb-3 animate-slide-up rounded-2xl border border-black/[0.07] bg-surface/80 p-4 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/80'>
-                  <ImageUpload
-                    images={welcomeImages}
-                    onImagesChange={setWelcomeImages}
-                    maxImages={5}
-                  />
-                </div>
-              )}
+          {/* Chat controls, beside the private mode button */}
+          <button
+            onClick={() => setControlsOpen(open => !open)}
+            className={cn(
+              'absolute end-[10.5rem] top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-[11.5rem] sm:top-6',
+              controlsOpen && 'text-primary-600 dark:text-primary-400'
+            )}
+            title={t('chat.controls.title')}
+            aria-expanded={controlsOpen}
+          >
+            <SlidersHorizontal className='h-4 w-4' />
+          </button>
 
-              {/* ChatGPT-style unified input */}
-              <form onSubmit={handleWelcomeSubmit}>
-                <div
-                  className={cn(
-                    'flex items-end gap-2 rounded-[1.35rem] border p-2 transition-[border-color,box-shadow,background-color] duration-200',
-                    'border-black/[0.08] bg-surface/90 dark:border-white/[0.09] dark:bg-dark-200/90',
-                    'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl',
-                    'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_22px_65px_rgba(15,23,42,0.12)]'
-                  )}
-                >
-                  {/* Attachment button */}
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => setShowWelcomeAdvanced(!showWelcomeAdvanced)}
-                    className={cn(
-                      'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
-                      'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300 transition-colors touch-manipulation',
-                      hasAdvancedFeatures &&
-                        'text-primary-600 dark:text-primary-400',
-                      showWelcomeAdvanced && 'bg-gray-100 dark:bg-dark-300'
-                    )}
-                    title={t('chat.input.attachImages')}
-                  >
-                    {hasAdvancedFeatures ? (
-                      <div className='relative flex items-center justify-center'>
-                        <Paperclip className='h-4 w-4' />
-                        <div className='absolute -top-0.5 -end-0.5 h-1.5 w-1.5 bg-primary-500 rounded-full' />
-                      </div>
-                    ) : showWelcomeAdvanced ? (
-                      <Minus className='h-4 w-4' />
-                    ) : (
-                      <Plus className='h-4 w-4' />
-                    )}
-                  </Button>
+          {/* Private Mode Button - Top Right Corner */}
+          <button
+            onClick={() => startPrivateSession()}
+            disabled={
+              (!selectedModel && models.length === 0) ||
+              (Boolean(selectedModel) && !selectedModelAvailable)
+            }
+            className='absolute end-4 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-surface/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-6 sm:top-6'
+            title={t('chat.session.privateTooltip')}
+          >
+            <Ghost className='h-3.5 w-3.5' />
+            <span>{t('chat.session.incognito', 'Incognito Chat')}</span>
+          </button>
 
-                  {/* Text Input */}
-                  <div className='flex-1 min-w-0'>
-                    <CodeAwareTextarea
-                      ref={welcomeTextareaRef}
-                      value={welcomeMessage}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                        setWelcomeMessage(e.target.value)
-                      }
-                      onKeyDown={handleWelcomeKeyDown}
-                      placeholder={t('chat.input.messagePlaceholder')}
-                      className='!m-0 min-h-[36px] max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !p-1.5 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-[0.9375rem] leading-relaxed touch-manipulation'
-                      rows={1}
-                    />
-                  </div>
-
-                  {/* Model selector (compact) */}
-                  <div className='hidden sm:block'>
-                    <ModelSelector
-                      models={welcomeModels}
-                      selectedModel={selectedModelKey}
-                      onModelChange={handleModelChange}
-                      getModelValue={chatModelOptionKey}
-                      className='min-w-[140px] max-w-[210px]'
-                      compact
-                      showImageGen={showImageGeneration}
-                    />
-                  </div>
-
-                  {/* Send button */}
-                  <Button
-                    type='submit'
-                    variant='ghost'
-                    size='sm'
-                    disabled={
-                      !welcomeMessage.trim() ||
-                      !selectedModel ||
-                      !selectedModelAvailable
-                    }
-                    className={cn(
-                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'bg-gray-950 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
-                      'disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-dark-300 dark:disabled:text-dark-500 disabled:hover:bg-gray-100 dark:disabled:hover:bg-dark-300',
-                      'transition-colors duration-150 touch-manipulation',
-                      welcomeMessage.trim() && selectedModel && 'shadow-sm'
-                    )}
-                    title={t('chat.input.sendMessage')}
-                  >
-                    <Send className='h-4 w-4' />
-                  </Button>
-                </div>
-              </form>
-
-              {/* Mobile model selector */}
-              <div className='sm:hidden mt-4'>
-                <ModelSelector
-                  models={welcomeModels}
-                  selectedModel={selectedModelKey}
-                  onModelChange={handleModelChange}
-                  getModelValue={chatModelOptionKey}
-                  className='w-full'
-                  compact
-                  showImageGen={showImageGeneration}
-                />
-              </div>
-
-              <p className='mt-4 text-center text-[10px] leading-relaxed text-gray-400 dark:text-dark-500'>
-                {t('chat.footer.disclaimer')}
+          <div className='relative z-[1] mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center'>
+            <div
+              key={welcomePrompt.id}
+              className='mb-10 flex flex-col items-center text-center animate-fade-in sm:mb-12'
+              aria-live='polite'
+            >
+              <h1 className='mb-4 max-w-3xl text-balance text-[clamp(2.65rem,7vw,5.25rem)] font-light leading-[0.98] tracking-[-0.055em] text-gray-950 dark:text-dark-950 rtl:leading-[1.12] rtl:tracking-normal'>
+                {welcomePrompt.title}
+              </h1>
+              <p className='max-w-xl text-balance text-base leading-relaxed text-gray-500 dark:text-dark-600 sm:text-lg'>
+                {welcomePrompt.subtitle}
               </p>
             </div>
-          ) : (
-            <div className='w-full max-w-lg'>
-              <div className='rounded-2xl border border-black/[0.07] bg-surface/70 p-6 backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/70'>
-                <p className='mb-4 text-sm leading-relaxed text-gray-600 dark:text-dark-700'>
-                  {t('chat.model.noModelsDescription')}
+
+            {welcomeModels.length > 0 ? (
+              <div className='w-full'>
+                {/* Advanced Features Panel */}
+                {showWelcomeAdvanced && (
+                  <div className='mb-3 animate-slide-up rounded-2xl border border-black/[0.07] bg-surface/80 p-4 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/80'>
+                    <ImageUpload
+                      images={welcomeImages}
+                      onImagesChange={setWelcomeImages}
+                      maxImages={5}
+                    />
+                  </div>
+                )}
+
+                {/* ChatGPT-style unified input */}
+                <form onSubmit={handleWelcomeSubmit}>
+                  <div
+                    className={cn(
+                      'flex items-end gap-2 rounded-[1.35rem] border p-2 transition-[border-color,box-shadow,background-color] duration-200',
+                      'border-black/[0.08] bg-surface/90 dark:border-white/[0.09] dark:bg-dark-200/90',
+                      'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl',
+                      'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_22px_65px_rgba(15,23,42,0.12)]'
+                    )}
+                  >
+                    {/* Attachment button */}
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() =>
+                        setShowWelcomeAdvanced(!showWelcomeAdvanced)
+                      }
+                      className={cn(
+                        'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
+                        'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300 transition-colors touch-manipulation',
+                        hasAdvancedFeatures &&
+                          'text-primary-600 dark:text-primary-400',
+                        showWelcomeAdvanced && 'bg-gray-100 dark:bg-dark-300'
+                      )}
+                      title={t('chat.input.attachImages')}
+                    >
+                      {hasAdvancedFeatures ? (
+                        <div className='relative flex items-center justify-center'>
+                          <Paperclip className='h-4 w-4' />
+                          <div className='absolute -top-0.5 -end-0.5 h-1.5 w-1.5 bg-primary-500 rounded-full' />
+                        </div>
+                      ) : showWelcomeAdvanced ? (
+                        <Minus className='h-4 w-4' />
+                      ) : (
+                        <Plus className='h-4 w-4' />
+                      )}
+                    </Button>
+
+                    {/* Text Input */}
+                    <div className='flex-1 min-w-0'>
+                      <CodeAwareTextarea
+                        ref={welcomeTextareaRef}
+                        value={welcomeMessage}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                          setWelcomeMessage(e.target.value)
+                        }
+                        onKeyDown={handleWelcomeKeyDown}
+                        placeholder={t('chat.input.messagePlaceholder')}
+                        className='!m-0 min-h-[36px] max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !p-1.5 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-[0.9375rem] leading-relaxed touch-manipulation'
+                        rows={1}
+                      />
+                    </div>
+
+                    {/* Model selector (compact) */}
+                    <div className='hidden sm:block'>
+                      <ModelSelector
+                        models={welcomeModels}
+                        selectedModel={selectedModelKey}
+                        onModelChange={handleModelChange}
+                        getModelValue={chatModelOptionKey}
+                        className='min-w-[140px] max-w-[210px]'
+                        compact
+                        showImageGen={showImageGeneration}
+                      />
+                    </div>
+
+                    {/* Send button */}
+                    <Button
+                      type='submit'
+                      variant='ghost'
+                      size='sm'
+                      disabled={
+                        !welcomeMessage.trim() ||
+                        !selectedModel ||
+                        !selectedModelAvailable
+                      }
+                      className={cn(
+                        'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'bg-gray-950 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
+                        'disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-dark-300 dark:disabled:text-dark-500 disabled:hover:bg-gray-100 dark:disabled:hover:bg-dark-300',
+                        'transition-colors duration-150 touch-manipulation',
+                        welcomeMessage.trim() && selectedModel && 'shadow-sm'
+                      )}
+                      title={t('chat.input.sendMessage')}
+                    >
+                      <Send className='h-4 w-4' />
+                    </Button>
+                  </div>
+                </form>
+
+                {/* Mobile model selector */}
+                <div className='sm:hidden mt-4'>
+                  <ModelSelector
+                    models={welcomeModels}
+                    selectedModel={selectedModelKey}
+                    onModelChange={handleModelChange}
+                    getModelValue={chatModelOptionKey}
+                    className='w-full'
+                    compact
+                    showImageGen={showImageGeneration}
+                  />
+                </div>
+
+                <p className='mt-4 text-center text-[10px] leading-relaxed text-gray-400 dark:text-dark-500'>
+                  {t('chat.footer.disclaimer')}
                 </p>
-                <code className='block rounded-xl bg-gray-100 p-3 font-mono text-xs text-gray-800 dark:bg-dark-300 dark:text-dark-700'>
-                  {t('chat.model.pullCommand')}
-                </code>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className='w-full max-w-lg'>
+                <div className='rounded-2xl border border-black/[0.07] bg-surface/70 p-6 backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/70'>
+                  <p className='mb-4 text-sm leading-relaxed text-gray-600 dark:text-dark-700'>
+                    {t('chat.model.noModelsDescription')}
+                  </p>
+                  <code className='block rounded-xl bg-gray-100 p-3 font-mono text-xs text-gray-800 dark:bg-dark-300 dark:text-dark-700'>
+                    {t('chat.model.pullCommand')}
+                  </code>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+
+        <ChatControlsPanel
+          draftModel={selectedModel}
+          open={controlsOpen}
+          onClose={() => setControlsOpen(false)}
+        />
       </div>
     );
   }

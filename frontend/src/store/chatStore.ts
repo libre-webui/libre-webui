@@ -17,6 +17,7 @@
 
 import { create } from 'zustand';
 import {
+  GenerationOptions,
   ChatSession,
   ChatMessage,
   OllamaModel,
@@ -49,9 +50,21 @@ import {
 
 const logger = createLogger('chat-store');
 
+/**
+ * Chat settings chosen before a session exists. The welcome screen edits these
+ * so a conversation can start with its own system prompt and sampling, rather
+ * than being created first and adjusted afterwards.
+ */
+export interface DraftSessionSettings {
+  systemPrompt?: string;
+  generationOptions?: Partial<GenerationOptions>;
+}
+
 interface ChatState {
   // Sessions
   sessions: ChatSession[];
+  draftSessionSettings: DraftSessionSettings;
+  setDraftSessionSettings: (settings: DraftSessionSettings) => void;
   currentSession: ChatSession | null;
   setCurrentSession: (session: ChatSession | null) => void;
   createSession: (
@@ -152,6 +165,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   currentSession: null,
   setCurrentSession: session => {
     set({ currentSession: session });
+  },
+
+  draftSessionSettings: {},
+
+  setDraftSessionSettings: (settings: DraftSessionSettings) => {
+    set({ draftSessionSettings: settings });
   },
 
   createSession: async (
