@@ -1325,9 +1325,11 @@ test('renders live reasoning, tokens, skills, and tool activity from the Work ev
   const liveRun = page.getByTestId('work-live-run').first();
   await expect(liveRun).toBeVisible();
   const liveRunMessage = page.getByTestId('work-live-run-message');
+  // The avatar is the drawn mark, not text; its accessible name carries the
+  // product name, as asserted for the conversation avatar above.
   await expect(
     liveRunMessage.getByTestId('work-assistant-avatar')
-  ).toContainText('Libre');
+  ).toHaveAttribute('aria-label', 'Libre WebUI');
   await expect(liveRun).toContainText('1/48');
   await expect(liveRun).toContainText('Workspace skills · 1');
   await expect(liveRun).not.toContainText('Web app workflow');
