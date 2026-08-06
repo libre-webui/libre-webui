@@ -253,14 +253,44 @@ export function artifactBundlesFor(source: string): string[] {
   return [...needed];
 }
 
-/** Bundles referenced by CDN tags in generated HTML, in document order. */
+/**
+ * The bundle that stands in for a URL, or null when nothing local does.
+ *
+ * The patterns above are anchored to the end of a URL, so they must be tested
+ * against one URL at a time. Testing them against a whole document silently
+ * matches nothing, which is how a tag ends up reported as missing while its
+ * bundle sits unused.
+ */
+export function artifactCdnBundle(url: string): string | null {
+  return (
+    ARTIFACT_CDN_REPLACEMENTS.find(({ pattern }) => pattern.test(url))
+      ?.bundle ?? null
+  );
+}
+
+/** Every URL a document references, from a tag attribute or an import. */
+export function artifactReferencedUrls(html: string): string[] {
+  const urls = new Set<string>();
+
+  for (const match of html.matchAll(/\b(?:src|href)\s*=\s*("|')(.*?)\1/gi)) {
+    urls.add(match[2]);
+  }
+  for (const match of html.matchAll(
+    /(?:from|import|require)\s*\(?\s*['"`]([^'"`]+)['"`]/g
+  )) {
+    urls.add(match[1]);
+  }
+
+  return [...urls];
+}
+
+/** Bundles referenced by the URLs in generated HTML. */
 export function artifactCdnBundlesFor(html: string): string[] {
   const needed = new Set<string>();
 
-  for (const { pattern, bundle } of ARTIFACT_CDN_REPLACEMENTS) {
-    if (pattern.test(html)) {
-      needed.add(bundle);
-    }
+  for (const url of artifactReferencedUrls(html)) {
+    const bundle = artifactCdnBundle(url);
+    if (bundle) needed.add(bundle);
   }
 
   return [...needed];

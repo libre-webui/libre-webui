@@ -28,7 +28,6 @@
 
 import {
   ARTIFACT_BABEL_BUNDLE,
-  ARTIFACT_CDN_REPLACEMENTS,
   ARTIFACT_MERMAID_PRELUDE,
   ARTIFACT_REACT_BUNDLE,
   ARTIFACT_REACT_PRELUDE,
@@ -36,6 +35,7 @@ import {
   ARTIFACT_RUNTIME_GLOBAL,
   ARTIFACT_TAILWIND_BUNDLE,
   artifactBundlesFor,
+  artifactCdnBundle,
   artifactBundlesForImports,
   artifactCdnBundlesFor,
   artifactUsesTailwind,
@@ -257,9 +257,9 @@ export function rewriteArtifactCdnReferences(
   const drop = (url: string): string | null => {
     if (!/^(?:https?:)?\/\//i.test(url)) return null;
 
-    const bundle = ARTIFACT_CDN_REPLACEMENTS.find(({ pattern }) =>
-      pattern.test(url)
-    )?.bundle;
+    // The same resolver the bundle list is built from, so a tag can never be
+    // called missing while its bundle was available.
+    const bundle = artifactCdnBundle(url);
 
     if (bundle && sources[bundle]) {
       // The bundle is already in the document head; loading it again would

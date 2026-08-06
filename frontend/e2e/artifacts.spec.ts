@@ -1095,3 +1095,50 @@ test('Tailwind and fonts arrive even when nothing loads them', async ({
   await expect(frame.locator('style[data-artifact-fonts]')).toHaveCount(1);
   expect(external).toEqual([]);
 });
+
+// A single unversioned CDN tag — the shape whose URL-anchored pattern never
+// matched when it was tested against the whole document.
+const generatedSingleTagThreeArtifact = `
+\`\`\`html
+<!doctype html>
+<html>
+  <body>
+    <div id="status">starting</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      const scene = new THREE.Scene();
+      scene.add(new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial()));
+      document.getElementById('status').dataset.ready = String(scene.children.length === 1);
+    </script>
+  </body>
+</html>
+\`\`\`
+`;
+
+test('a single unversioned CDN tag still resolves to its bundle', async ({
+  page,
+}) => {
+  test.slow();
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith('three-single', 'Cube', generatedSingleTagThreeArtifact),
+    ],
+  });
+
+  await page.goto('/c/three-single');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .getByTestId('artifact-slide-out-panel')
+    .frameLocator('iframe')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  await expect(frame.locator('#status')).toHaveAttribute('data-ready', 'true', {
+    timeout: 30_000,
+  });
+  // The bundle was available, so nothing should be reported as missing.
+  await expect(
+    frame.locator('[data-testid="artifact-missing-library"]')
+  ).toHaveCount(0);
+});
