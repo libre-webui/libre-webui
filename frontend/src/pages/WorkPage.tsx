@@ -1156,10 +1156,20 @@ export default function WorkPage() {
         )}
 
         {!taskId ? (
-          <div className='min-h-0 flex-1 overflow-y-auto'>
+          <div className='relative min-h-0 flex-1 overflow-y-auto'>
+            {/* The same ambient bloom the chat welcome screen sits in. */}
+            <div
+              aria-hidden='true'
+              className='pointer-events-none absolute inset-0'
+            >
+              <div className='absolute left-[12%] top-[18%] h-56 w-56 rounded-full bg-primary-500/[0.035] blur-3xl dark:bg-primary-400/[0.04]' />
+              <div className='absolute bottom-[16%] right-[10%] h-72 w-72 rounded-full bg-gray-900/[0.025] blur-3xl dark:bg-white/[0.025]' />
+              <div className='absolute left-1/2 top-0 h-16 w-px bg-gray-300/60 dark:bg-white/10' />
+            </div>
+
             <section
               data-testid='work-landing'
-              className='mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center px-4 py-20 sm:px-8 sm:py-24'
+              className='relative z-[1] mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center px-4 py-20 sm:px-8 sm:py-24'
             >
               <div className='flex flex-col items-center text-center'>
                 <h2 className='max-w-3xl text-balance text-[clamp(2.65rem,7vw,5.25rem)] font-light leading-[0.98] tracking-[-0.055em] text-ink rtl:leading-[1.12] rtl:tracking-normal'>
