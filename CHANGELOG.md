@@ -7,13 +7,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Artifacts now run the way they are written. A generated React component, a
+Three.js scene, a Mermaid diagram or a self-contained HTML page renders in the
+chat with the libraries it expects already present, and it does so without the
+preview making a single network request. The brand mark also replaces the
+placeholder iconography across the application.
+
 ### ✨ New Features
+
+- React artifacts are compiled and mounted in the preview. JSX and TSX are
+  transpiled in place, Tailwind utilities are generated from the markup, and
+  the component mounts against a single shared React instance.
+- Mermaid artifacts are drawn as diagrams instead of shown as source, themed
+  with the application.
+- Artifacts have a vendored library set: React and ReactDOM, Recharts,
+  Chart.js, Plotly, D3, Three.js with its controls, loaders, environments,
+  post-processing and exporters, Lucide icons, Lodash, MathJS, Papa Parse,
+  SheetJS, Tone.js, Framer Motion and Mermaid.
+- Generated HTML that loads a library from a CDN keeps working: the tag is
+  replaced by the vendored build in the same document position, so inline
+  scripts still find `Chart`, `d3` or `THREE` when they run.
+- An artifact that asks for a library outside that set is told so in the
+  preview, naming the file, rather than failing silently.
+- The Li mark is used across application icons, the loading screen, the
+  sidebar, the agent avatar and the login, signup and first-run screens.
 
 ### 🔧 Improvements
 
+- The artifact sandbox makes no network request of any kind. The page loads the
+  runtime with its own session and inlines it into the preview, which keeps
+  artifacts working behind an authenticating proxy such as Cloudflare Access,
+  Authelia or oauth2-proxy, where a sandboxed frame's cookie-less request comes
+  back as a login redirect.
+- The sandbox policy names no origin at all: `default-src 'none'`, script
+  limited to inline and eval, and a frame without `allow-same-origin`, so an
+  artifact runs on an opaque origin with no access to the application's
+  cookies, storage or DOM.
+- Artifacts get in-memory stand-ins for `localStorage`, `sessionStorage` and
+  `document.cookie`, which throw on an opaque origin and would otherwise stop
+  the artifact dead.
+- Generated markup is parsed rather than pattern-matched, so documents without
+  a `<head>`, end tags carrying attributes, and `<header>` elements are handled
+  correctly.
+- Inter is vendored into the build and served from the application, so no page
+  load contacts a font host; the font CDN is gone from the Content Security
+  Policy, and artifacts that link Google Fonts get the local face instead.
+- The theme script in `index.html` is allowed by hash rather than by opening
+  the policy, so saved themes apply before first paint without a dark flash.
+
 ### 🐛 Bug Fixes
 
+- HTML artifacts render again. Previews were composed with `srcdoc`, which
+  inherits the page's Content Security Policy, so every inline script an
+  artifact contained was blocked in production.
+- Runtime bundles are keyed to the build that produced them, so a browser
+  cannot keep using a copy from an earlier release against newer application
+  code.
+- Three.js scenes get the addons they import, including environments,
+  the CSS and SVG renderers, math helpers and exporters; a bundle is also
+  inlined at most once, so Three is never loaded twice.
+- Mermaid diagrams and CommonJS libraries resolve to their real exports rather
+  than an empty namespace.
+- Artifact code is embedded as data with every `<` escaped, so it cannot end
+  the element it travels in — reported by CodeQL as incomplete sanitization.
+- The favicon is the same opaque tile as the documentation site, so it stays
+  legible on a light browser tab.
+
 ### 📚 Documentation
+
+- The artifacts guide describes the runtime, the library set, what happens to
+  CDN references, and why the sandbox has no network access.
 
 ## [0.19.2] - 2026-08-05
 
