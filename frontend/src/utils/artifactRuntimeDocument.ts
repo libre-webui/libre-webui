@@ -162,13 +162,33 @@ function injectDocumentPrelude(html: string, prelude: string): string {
   return `${prelude}${html}`;
 }
 
-/** Inline `<script type="module">` and `<script type="text/babel">` bodies. */
-const COMPILED_SCRIPT_PATTERN =
-  /<script\b(?![^>]*\bsrc\s*=)[^>]*\btype\s*=\s*("|')(?:module|text\/babel|application\/babel)\1[^>]*>([\s\S]*?)<\/script>/gi;
+/**
+ * Script and link tags, matched in one pass with the attributes captured
+ * separately.
+ *
+ * Deliberately not one regex per tag shape: nesting quantifiers inside a
+ * `<script ...>` match backtracks badly on generated markup, and the attribute
+ * string is short enough to inspect on its own.
+ */
+const SCRIPT_TAG_PATTERN = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
+const LINK_TAG_PATTERN = /<link\b([^>]*)>/gi;
 
-/** An import map only names URLs the frame cannot fetch. */
-const IMPORT_MAP_PATTERN =
-  /<script\b[^>]*\btype\s*=\s*("|')importmap\1[^>]*>[\s\S]*?<\/script>/gi;
+/** The value of one attribute, read from a tag's attribute string. */
+const attributeValue = (attributes: string, name: string): string | null => {
+  const match = new RegExp(`\\b${name}\\s*=\\s*("|')([^"']*)\\1`, 'i').exec(
+    attributes
+  );
+  return match ? match[2] : null;
+};
+
+const scriptType = (attributes: string): string =>
+  (attributeValue(attributes, 'type') ?? '').trim().toLowerCase();
+
+const COMPILED_SCRIPT_TYPES = new Set([
+  'module',
+  'text/babel',
+  'application/babel',
+]);
 
 /**
  * Hands inline module and Babel scripts to the runtime instead of the browser.
@@ -180,23 +200,38 @@ const IMPORT_MAP_PATTERN =
  * parsed without the TypeScript preset. Compiling both here fixes each.
  */
 function compileInlineScripts(html: string): string {
-  return html
-    .replace(
-      IMPORT_MAP_PATTERN,
-      '<!-- import map removed: modules resolve from the local runtime -->'
-    )
-    .replace(COMPILED_SCRIPT_PATTERN, (_tag, _quote: string, body: string) =>
-      body.trim()
-        ? `<script>window.${ARTIFACT_RUNTIME_GLOBAL}.runInline(${JSON.stringify(body)});</script>`
-        : ''
-    );
+  return html.replace(
+    SCRIPT_TAG_PATTERN,
+    (tag, attributes: string, body: string) => {
+      const type = scriptType(attributes);
+
+      if (type === 'importmap') {
+        return '<!-- import map removed: modules resolve from the local runtime -->';
+      }
+      if (!COMPILED_SCRIPT_TYPES.has(type)) return tag;
+      if (attributeValue(attributes, 'src')) return tag;
+      if (!body.trim()) return '';
+
+      return `<script>window.${ARTIFACT_RUNTIME_GLOBAL}.runInline(${JSON.stringify(body)});</script>`;
+    }
+  );
 }
 
 /** Source of every inline module or Babel script, for dependency detection. */
 function inlineScriptSources(html: string): string {
-  return [...html.matchAll(COMPILED_SCRIPT_PATTERN)]
-    .map(match => match[2])
-    .join('\n');
+  const sources: string[] = [];
+
+  for (const match of html.matchAll(SCRIPT_TAG_PATTERN)) {
+    const [, attributes, body] = match;
+    if (
+      COMPILED_SCRIPT_TYPES.has(scriptType(attributes)) &&
+      !attributeValue(attributes, 'src')
+    ) {
+      sources.push(body);
+    }
+  }
+
+  return sources.join('\n');
 }
 
 /** Bundles this artifact needs, in load order. */
@@ -273,29 +308,28 @@ export function rewriteArtifactCdnReferences(
   };
 
   const withScripts = html.replace(
-    /<script\b[^>]*\bsrc\s*=\s*("|')(.*?)\1[^>]*>\s*<\/script>/gi,
-    (tag, _quote: string, url: string) => drop(url) ?? tag
+    SCRIPT_TAG_PATTERN,
+    (tag, attributes: string) => {
+      const url = attributeValue(attributes, 'src');
+      return url ? (drop(url) ?? tag) : tag;
+    }
   );
 
   // External stylesheets cannot load either — a Google Fonts link is the
   // usual one — so they get the same treatment: replaced by the local
   // equivalent where one exists, and named where none does.
-  return withScripts.replace(
-    /<link\b[^>]*\bhref\s*=\s*("|')(.*?)\1[^>]*>/gi,
-    (tag, _quote: string, url: string) => {
-      if (
-        /\brel\s*=\s*("|')?(?:preconnect|dns-prefetch|icon|apple-touch-icon)/i.test(
-          tag
-        )
-      ) {
-        return tag;
-      }
-      if (!/stylesheet/i.test(tag) && !/\.css|fonts\.googleapis/i.test(url)) {
-        return tag;
-      }
-      return drop(url) ?? tag;
+  return withScripts.replace(LINK_TAG_PATTERN, (tag, attributes: string) => {
+    const rel = (attributeValue(attributes, 'rel') ?? '').toLowerCase();
+    if (/preconnect|dns-prefetch|icon|manifest/.test(rel)) return tag;
+
+    const url = attributeValue(attributes, 'href');
+    if (!url) return tag;
+    if (!rel.includes('stylesheet') && !/\.css|fonts\.googleapis/i.test(url)) {
+      return tag;
     }
-  );
+
+    return drop(url) ?? tag;
+  });
 }
 
 const missingLibraryNotice = (urls: string[]): string => {

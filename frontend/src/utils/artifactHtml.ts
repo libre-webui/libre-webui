@@ -41,6 +41,22 @@ export function isArtifactSandboxReady(
   frame: HTMLIFrameElement | null
 ): boolean {
   if (!frame || event.source !== frame.contentWindow) return false;
+
+  // The host is sandboxed without allow-same-origin, so it always reports an
+  // opaque origin. Window identity is the real check — an unrelated page
+  // cannot obtain this frame's window — but the origin is verified too.
+  const origin = event.origin;
+  const expected =
+    typeof window === 'undefined' ? undefined : window.location?.origin;
+  if (
+    typeof origin === 'string' &&
+    origin !== '' &&
+    origin !== 'null' &&
+    origin !== expected
+  ) {
+    return false;
+  }
+
   const data = event.data as { type?: unknown } | null;
   return Boolean(data) && data?.type === ARTIFACT_SANDBOX_READY;
 }

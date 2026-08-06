@@ -262,7 +262,16 @@ const drawMermaid = async () => {
     });
 
     const { svg } = await mermaid.render('libre-artifact-diagram', source);
-    root.innerHTML = svg;
+
+    // Parsed as a document and adopted, rather than assigned as HTML: the
+    // diagram is built from artifact text, and nothing here should be able to
+    // reinterpret that text as markup for this document.
+    const parsed = new DOMParser().parseFromString(svg, 'image/svg+xml');
+    const diagram = parsed.documentElement;
+    if (!diagram || diagram.nodeName === 'parsererror') {
+      throw new Error('The diagram could not be parsed.');
+    }
+    root.replaceChildren(document.importNode(diagram, true));
   } catch (error) {
     showFailure('This diagram could not be drawn.', describe(error));
   }
