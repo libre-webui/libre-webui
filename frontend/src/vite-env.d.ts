@@ -18,3 +18,6 @@ declare const __LATEST_RELEASE_NOTES__: {
   date: string;
   body: string;
 } | null;
+
+/** Identifies the artifact runtime build; defined in vite.config.ts. */
+declare const __ARTIFACT_RUNTIME_FINGERPRINT__: string;

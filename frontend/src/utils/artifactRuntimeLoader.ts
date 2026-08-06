@@ -26,7 +26,6 @@
  * the source into the frame sidesteps that entirely.
  */
 
-import { ARTIFACT_RUNTIME_FINGERPRINT } from '@/artifact-runtime/fingerprint';
 import { ARTIFACT_RUNTIME_PATH } from '@/artifact-runtime/manifest';
 import { ARTIFACT_RUNTIME_ORIGIN } from '@/utils/artifactSandbox';
 
@@ -36,7 +35,7 @@ import { ARTIFACT_RUNTIME_ORIGIN } from '@/utils/artifactSandbox';
  * application version is not enough: it stays the same across development
  * builds, so the URL would not change even when the runtime did.
  */
-const RUNTIME_VERSION = encodeURIComponent(ARTIFACT_RUNTIME_FINGERPRINT);
+const RUNTIME_VERSION = encodeURIComponent(__ARTIFACT_RUNTIME_FINGERPRINT__);
 
 const bundles = new Map<string, Promise<string>>();
 
