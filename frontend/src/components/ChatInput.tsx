@@ -386,7 +386,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+      // An empty box keeps its natural height: Chromium counts the wrapped
+      // placeholder in scrollHeight, which would grow the bar on narrow
+      // screens before anything has been typed.
+      textarea.style.height = message
+        ? `${Math.min(textarea.scrollHeight, 200)}px`
+        : '';
     }
   }, [message]);
 
@@ -564,7 +569,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     setWebpageUrl(null);
                   }}
                   className={cn(
-                    'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
+                    'h-9 w-9 sm:h-10 sm:w-10 !p-0 rounded-full flex-shrink-0',
                     'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
                     'transition-colors duration-150 touch-manipulation',
                     hasAdvancedFeatures &&
@@ -763,7 +768,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   onKeyDown={handleKeyDown}
                   placeholder={t('chat.input.placeholder')}
                   disabled={disabled}
-                  className='!m-0 min-h-[36px] max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !p-1.5 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-[0.9375rem] leading-relaxed touch-manipulation'
+                  className='!m-0 block min-h-9 max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !px-1.5 !py-1.5 sm:!min-h-10 sm:!py-2 max-[768px]:!min-h-11 max-[768px]:!py-[10.5px] !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-[0.9375rem] leading-relaxed touch-manipulation'
                   rows={1}
                 />
               </div>
@@ -794,7 +799,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     size='sm'
                     onClick={toggleDictation}
                     className={cn(
-                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                       'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
                       'transition-colors duration-150 touch-manipulation',
                       listening &&
@@ -819,7 +824,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     size='sm'
                     onClick={handleStopGeneration}
                     className={cn(
-                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                       'bg-red-50 dark:bg-red-900/20',
                       'text-red-500 dark:text-red-400',
                       'hover:bg-red-100 dark:hover:bg-red-900/30',
@@ -838,7 +843,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       !message.trim() || disabled || !sessionModelAvailable
                     }
                     className={cn(
-                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                       'bg-gray-100 text-gray-400 dark:bg-dark-300 dark:text-dark-500',
                       'disabled:cursor-not-allowed disabled:opacity-70',
                       'transition-colors duration-150 touch-manipulation',

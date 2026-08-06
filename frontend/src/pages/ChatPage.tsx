@@ -457,7 +457,12 @@ export const ChatPage: React.FC = () => {
     const textarea = welcomeTextareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+      // An empty box keeps its natural height: Chromium counts the wrapped
+      // placeholder in scrollHeight, which would grow the bar on narrow
+      // screens before anything has been typed.
+      textarea.style.height = welcomeMessage
+        ? `${Math.min(textarea.scrollHeight, 200)}px`
+        : '';
     }
   }, [welcomeMessage]);
 
@@ -692,7 +697,7 @@ export const ChatPage: React.FC = () => {
                         setShowWelcomeAdvanced(!showWelcomeAdvanced)
                       }
                       className={cn(
-                        'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
+                        'h-9 w-9 sm:h-10 sm:w-10 !p-0 rounded-full flex-shrink-0',
                         'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300 transition-colors touch-manipulation',
                         hasAdvancedFeatures &&
                           'text-primary-600 dark:text-primary-400',
@@ -722,7 +727,7 @@ export const ChatPage: React.FC = () => {
                         }
                         onKeyDown={handleWelcomeKeyDown}
                         placeholder={t('chat.input.messagePlaceholder')}
-                        className='!m-0 min-h-[36px] max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !p-1.5 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-[0.9375rem] leading-relaxed touch-manipulation'
+                        className='!m-0 block min-h-9 max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !px-1.5 !py-1.5 sm:!min-h-10 sm:!py-2 max-[768px]:!min-h-11 max-[768px]:!py-[10.5px] !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-[0.9375rem] leading-relaxed touch-manipulation'
                         rows={1}
                       />
                     </div>
@@ -751,7 +756,7 @@ export const ChatPage: React.FC = () => {
                         !selectedModelAvailable
                       }
                       className={cn(
-                        'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                         'bg-gray-950 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
                         'disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-dark-300 dark:disabled:text-dark-500 disabled:hover:bg-gray-100 dark:disabled:hover:bg-dark-300',
                         'transition-colors duration-150 touch-manipulation',
