@@ -319,6 +319,28 @@ const THREE_ADDONS: Record<string, string> = {
   Line2: 'lines/Line2.js',
   LineGeometry: 'lines/LineGeometry.js',
   LineMaterial: 'lines/LineMaterial.js',
+  // Environments and renderers: generated scenes reach for RoomEnvironment to
+  // get plausible lighting in one line, and for the CSS renderers to mix DOM
+  // content into a scene.
+  RoomEnvironment: 'environments/RoomEnvironment.js',
+  DebugEnvironment: 'environments/DebugEnvironment.js',
+  CSS2DRenderer: 'renderers/CSS2DRenderer.js',
+  CSS3DRenderer: 'renderers/CSS3DRenderer.js',
+  SVGRenderer: 'renderers/SVGRenderer.js',
+  ImprovedNoise: 'math/ImprovedNoise.js',
+  MeshSurfaceSampler: 'math/MeshSurfaceSampler.js',
+  Octree: 'math/Octree.js',
+  Capsule: 'math/Capsule.js',
+  Lut: 'math/Lut.js',
+  GLTFExporter: 'exporters/GLTFExporter.js',
+  OBJExporter: 'exporters/OBJExporter.js',
+  STLExporter: 'exporters/STLExporter.js',
+  SimplifyModifier: 'modifiers/SimplifyModifier.js',
+  TessellateModifier: 'modifiers/TessellateModifier.js',
+  Water: 'objects/Water.js',
+  Reflector: 'objects/Reflector.js',
+  GroundedSkybox: 'objects/GroundedSkybox.js',
+  MarchingCubes: 'objects/MarchingCubes.js',
 };
 
 const threeBundleSource = () => {

@@ -1142,3 +1142,71 @@ test('a single unversioned CDN tag still resolves to its bundle', async ({
     frame.locator('[data-testid="artifact-missing-library"]')
   ).toHaveCount(0);
 });
+
+// Generated three.js scenes reach past the core package constantly; the one
+// that started this used an environment, which the bundle did not carry.
+const generatedThreeAddonArtifact = `
+\`\`\`html
+<!doctype html>
+<html>
+  <body>
+    <div id="status">starting</div>
+    <script type="importmap">
+      { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+    </script>
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(320, 200);
+      document.body.appendChild(renderer.domElement);
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, 1.6, 0.1, 100);
+      camera.position.z = 4;
+      const controls = new OrbitControls(camera, renderer.domElement);
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+      scene.add(new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), new THREE.MeshPhysicalMaterial({ roughness: 0.4 })));
+      renderer.render(scene, camera);
+      document.getElementById('status').dataset.ready = JSON.stringify({
+        environment: Boolean(scene.environment),
+        controls: Boolean(controls.update),
+      });
+    </script>
+  </body>
+</html>
+\`\`\`
+`;
+
+test('three.js addons beyond controls and loaders are available', async ({
+  page,
+}) => {
+  test.slow();
+  const external = trackExternalRequests(page);
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith('three-addons', 'Shark', generatedThreeAddonArtifact),
+    ],
+  });
+
+  await page.goto('/c/three-addons');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .getByTestId('artifact-slide-out-panel')
+    .frameLocator('iframe')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  // An environment resolves only if the addon itself is in the bundle: falling
+  // back to the Three namespace yields undefined and throws on construction.
+  await expect(frame.locator('#status')).toHaveAttribute(
+    'data-ready',
+    '{"environment":true,"controls":true}',
+    { timeout: 30_000 }
+  );
+  await expect(frame.locator('canvas')).toBeVisible();
+  expect(external).toEqual([]);
+});
