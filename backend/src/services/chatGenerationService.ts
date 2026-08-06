@@ -106,6 +106,39 @@ class ChatGenerationService {
     );
   }
 
+  /**
+   * The options a model actually runs with, in order of increasing authority:
+   *
+   *  1. the application's own settings,
+   *  2. what the model's modelfile recommends — its stop sequences and the
+   *     context it was trained for, rather than a fixed window that truncates
+   *     anything larger,
+   *  3. overrides the user pinned for this model,
+   *  4. options sent with the request itself.
+   */
+  async mergeOptionsForModel(
+    model: string,
+    userId: string,
+    options: GenerationOptions = {}
+  ): Promise<GenerationOptions> {
+    const global = preferencesService.getGenerationOptions(userId);
+    const pinned = preferencesService.getModelGenerationOptions(model, userId);
+
+    // Only ask the model when the user has not already answered for it.
+    const recommended =
+      Object.keys(pinned).length > 0 && pinned.num_ctx !== undefined
+        ? {}
+        : (await ollamaService.getModelDefaults(model)).options;
+
+    return mergeGenerationOptions(
+      mergeGenerationOptions(
+        mergeGenerationOptions(global, recommended as GenerationOptions),
+        pinned as GenerationOptions
+      ),
+      options
+    );
+  }
+
   async prepareGenerationTarget(
     sessionModel: string,
     userId: string,
@@ -116,7 +149,11 @@ class ChatGenerationService {
       sessionModel,
       userId
     );
-    const mergedOptions = this.mergeOptions(options);
+    const mergedOptions = await this.mergeOptionsForModel(
+      actualModelName,
+      userId,
+      options
+    );
     const provider = normalizeChatProviderSelection(providerSelection);
     const activePlugin =
       provider?.providerType === 'ollama' || provider?.providerType === 'agent'

@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Hướng dẫn chỉ áp dụng cho cuộc trò chuyện này…",
       "advancedParams": "Tham số nâng cao",
       "advancedParamsDescription": "Ghi đè cho cuộc trò chuyện này. Ô trống dùng giá trị mặc định chung.",
+      "fromModel": "từ mô hình",
+      "fromModelHint": "Giá trị này đến từ cài đặt do chính mô hình đề xuất.",
+      "contextCapped": "Ngữ cảnh giới hạn ở {{context}} trong {{trained}} mà mô hình được huấn luyện, để vẫn tải được.",
       "saved": "Đã lưu điều khiển",
       "saveFailed": "Không thể lưu điều khiển",
       "params": {

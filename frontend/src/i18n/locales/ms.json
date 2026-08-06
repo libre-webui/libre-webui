@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Arahan yang terpakai untuk sembang ini sahaja…",
       "advancedParams": "Parameter lanjutan",
       "advancedParamsDescription": "Penggantian untuk sembang ini. Medan kosong menggunakan lalai global.",
+      "fromModel": "daripada model",
+      "fromModelHint": "Nilai ini datang daripada tetapan yang disyorkan oleh model itu sendiri.",
+      "contextCapped": "Konteks dihadkan pada {{context}} daripada {{trained}} yang dilatih untuk model ini, supaya ia masih dimuatkan.",
       "saved": "Kawalan disimpan",
       "saveFailed": "Tidak dapat menyimpan kawalan",
       "params": {

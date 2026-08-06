@@ -83,6 +83,8 @@ class PreferencesService {
       raw: undefined,
       keep_alive: undefined,
     },
+    // Set per model, from the model's own recommendations or by the user.
+    modelGenerationOptions: {},
     // Embedding settings for semantic search
     embeddingSettings: {
       enabled: false, // Start with embeddings disabled
@@ -330,6 +332,39 @@ class PreferencesService {
 
   getGenerationOptions(userId?: string): GenerationOptions {
     return this.getPreferences(userId).generationOptions;
+  }
+
+  /** Whatever the user has pinned for one model, if anything. */
+  getModelGenerationOptions(
+    model: string,
+    userId?: string
+  ): Partial<GenerationOptions> {
+    const overrides = this.getPreferences(userId).modelGenerationOptions;
+    return overrides?.[model] ? { ...overrides[model] } : {};
+  }
+
+  /**
+   * Pins options for one model. Passing an empty object clears them, which is
+   * what returning a model to its own recommended settings amounts to.
+   */
+  setModelGenerationOptions(
+    model: string,
+    options: Partial<GenerationOptions>,
+    userId?: string
+  ): UserPreferences {
+    const preferences = this.getPreferences(userId);
+    const overrides = { ...(preferences.modelGenerationOptions ?? {}) };
+
+    if (Object.keys(options).length === 0) {
+      delete overrides[model];
+    } else {
+      overrides[model] = options;
+    }
+
+    return this.updatePreferences(
+      { modelGenerationOptions: overrides },
+      userId
+    );
   }
 
   getDefaultEmbeddingModel(userId?: string): string {

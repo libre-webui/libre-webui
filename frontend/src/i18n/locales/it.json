@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Istruzioni valide solo per questa chat…",
       "advancedParams": "Parametri avanzati",
       "advancedParamsDescription": "Sostituzioni per questa chat. I campi vuoti usano i valori globali.",
+      "fromModel": "dal modello",
+      "fromModelHint": "Questo valore proviene dalle impostazioni consigliate dal modello stesso.",
+      "contextCapped": "Contesto limitato a {{context}} dei {{trained}} per cui il modello è stato addestrato, così da caricarsi comunque.",
       "saved": "Controlli salvati",
       "saveFailed": "Impossibile salvare i controlli",
       "params": {

@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Leiðbeiningar sem gilda aðeins fyrir þetta spjall…",
       "advancedParams": "Ítarlegar stillingar",
       "advancedParamsDescription": "Yfirskrift fyrir þetta spjall. Tóm svæði nota sjálfgefin gildi.",
+      "fromModel": "frá líkaninu",
+      "fromModelHint": "Þetta gildi kemur úr ráðlögðum stillingum líkansins sjálfs.",
+      "contextCapped": "Samhengi takmarkað við {{context}} af {{trained}} sem líkanið var þjálfað fyrir, svo það hlaðist enn.",
       "saved": "Stýringar vistaðar",
       "saveFailed": "Ekki tókst að vista stýringar",
       "params": {

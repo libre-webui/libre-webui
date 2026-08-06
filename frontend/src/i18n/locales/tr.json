@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Yalnızca bu sohbete uygulanan talimatlar…",
       "advancedParams": "Gelişmiş parametreler",
       "advancedParamsDescription": "Bu sohbete özel geçersiz kılmalar. Boş alanlar genel varsayılanları kullanır.",
+      "fromModel": "modelden",
+      "fromModelHint": "Bu değer, modelin kendi önerdiği ayarlarından gelir.",
+      "contextCapped": "Bağlam, modelin eğitildiği {{trained}} içinden {{context}} ile sınırlandı; böylece yüklenmeye devam eder.",
       "saved": "Denetimler kaydedildi",
       "saveFailed": "Denetimler kaydedilemedi",
       "params": {

@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Instructions valables uniquement pour cette discussion…",
       "advancedParams": "Paramètres avancés",
       "advancedParamsDescription": "Remplacements pour cette discussion. Les champs vides utilisent vos valeurs globales.",
+      "fromModel": "du modèle",
+      "fromModelHint": "Cette valeur provient des réglages recommandés par le modèle lui-même.",
+      "contextCapped": "Contexte limité à {{context}} sur les {{trained}} pour lesquels le modèle a été entraîné, afin qu'il se charge encore.",
       "saved": "Contrôles enregistrés",
       "saveFailed": "Impossible d'enregistrer les contrôles",
       "params": {

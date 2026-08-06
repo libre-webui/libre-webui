@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "このチャットのみに適用される指示…",
       "advancedParams": "詳細パラメータ",
       "advancedParamsDescription": "このチャット専用の上書き。空欄はグローバル既定値を使います。",
+      "fromModel": "モデル由来",
+      "fromModelHint": "この値はモデル自身の推奨設定によるものです。",
+      "contextCapped": "モデルが学習した {{trained}} のうち {{context}} に制限しています（読み込み可能にするため）。",
       "saved": "設定を保存しました",
       "saveFailed": "設定を保存できませんでした",
       "params": {

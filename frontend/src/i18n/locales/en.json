@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Instructions that apply only to this chat…",
       "advancedParams": "Advanced parameters",
       "advancedParamsDescription": "Overrides for this chat. Empty fields use your global defaults.",
+      "fromModel": "from model",
+      "fromModelHint": "This value comes from the model's own recommended settings.",
+      "contextCapped": "Context capped at {{context}} of the {{trained}} this model was trained for, so it still loads.",
       "saved": "Chat controls saved",
       "saveFailed": "Could not save chat controls",
       "params": {

@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Instructies die alleen voor deze chat gelden…",
       "advancedParams": "Geavanceerde parameters",
       "advancedParamsDescription": "Overschrijvingen voor deze chat. Lege velden gebruiken je globale standaarden.",
+      "fromModel": "van het model",
+      "fromModelHint": "Deze waarde komt uit de door het model aanbevolen instellingen.",
+      "contextCapped": "Context beperkt tot {{context}} van de {{trained}} waarvoor dit model is getraind, zodat het nog laadt.",
       "saved": "Chatbediening opgeslagen",
       "saveFailed": "Kon chatbediening niet opslaan",
       "params": {

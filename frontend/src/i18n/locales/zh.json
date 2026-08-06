@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "仅适用于此聊天的指令…",
       "advancedParams": "高级参数",
       "advancedParamsDescription": "此聊天的覆盖设置。留空则使用全局默认值。",
+      "fromModel": "来自模型",
+      "fromModelHint": "该值来自模型自身推荐的设置。",
+      "contextCapped": "上下文限制为 {{context}}（模型训练长度为 {{trained}}），以确保仍能加载。",
       "saved": "聊天控制已保存",
       "saveFailed": "无法保存聊天控制",
       "params": {

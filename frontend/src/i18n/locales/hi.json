@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "निर्देश जो केवल इस चैट पर लागू हों…",
       "advancedParams": "उन्नत पैरामीटर",
       "advancedParamsDescription": "इस चैट के लिए ओवरराइड। खाली फ़ील्ड वैश्विक डिफ़ॉल्ट उपयोग करते हैं।",
+      "fromModel": "मॉडल से",
+      "fromModelHint": "यह मान मॉडल की अपनी अनुशंसित सेटिंग्स से आता है।",
+      "contextCapped": "संदर्भ {{trained}} में से {{context}} तक सीमित है, ताकि मॉडल लोड होता रहे।",
       "saved": "नियंत्रण सहेजे गए",
       "saveFailed": "नियंत्रण सहेजे नहीं जा सके",
       "params": {

@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "이 채팅에만 적용되는 지시사항…",
       "advancedParams": "고급 매개변수",
       "advancedParamsDescription": "이 채팅 전용 재정의입니다. 빈 칸은 전역 기본값을 사용합니다.",
+      "fromModel": "모델 제공",
+      "fromModelHint": "이 값은 모델 자체의 권장 설정에서 가져온 것입니다.",
+      "contextCapped": "모델이 학습한 {{trained}} 중 {{context}}로 제한했습니다. 그래야 계속 로드됩니다.",
       "saved": "컨트롤이 저장되었습니다",
       "saveFailed": "컨트롤을 저장하지 못했습니다",
       "params": {

@@ -94,6 +94,18 @@ export const preferencesApi = {
       .then(res => res.data);
   },
 
+  /**
+   * Pins generation options for one model. An empty object clears them, which
+   * returns the model to what its own modelfile recommends.
+   */
+  setModelGenerationOptions: (
+    model: string,
+    options: Partial<UserPreferences['generationOptions']>
+  ): Promise<ApiResponse<UserPreferences>> =>
+    api
+      .put('/preferences/model-generation-options', { model, options })
+      .then(response => response.data),
+
   resetGenerationOptions: (): Promise<ApiResponse<UserPreferences>> => {
     if (isDemoMode()) {
       return createDemoResponse(

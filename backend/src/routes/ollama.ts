@@ -272,6 +272,35 @@ router.get(
   }
 );
 
+/**
+ * What a model recommends for its own generation. The settings UI uses this to
+ * show, and to return to, the model's own values rather than a fixed default.
+ */
+router.get(
+  '/models/:modelName/defaults',
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const modelName = decodeURIComponent(req.params.modelName as string);
+      const defaults = await ollamaService.getModelDefaults(modelName);
+
+      res.json({
+        success: true,
+        data: {
+          model: modelName,
+          options: defaults.options,
+          trainedContextLength: defaults.trainedContextLength,
+          contextCapped: defaults.contextCapped,
+        },
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to read model defaults'),
+      });
+    }
+  }
+);
+
 // Create a model
 router.post(
   '/models',

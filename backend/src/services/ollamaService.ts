@@ -28,6 +28,10 @@ import {
   getErrorMessage,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  parseOllamaModelDefaults,
+  type OllamaModelDefaults,
+} from '../utils/ollamaModelDefaults.js';
 import pluginUsageService, {
   type PluginUsageStatus,
 } from './pluginUsageService.js';
@@ -66,7 +70,13 @@ function sanitizeOptionsForModel(
   return options;
 }
 
+const MODEL_DEFAULTS_TTL_MS = 10 * 60 * 1000;
+
 class OllamaService {
+  private modelDefaultsCache = new Map<
+    string,
+    { defaults: OllamaModelDefaults; at: number }
+  >();
   private client: AxiosInstance;
   private longOperationClient: AxiosInstance;
   private baseUrl: string;
@@ -339,6 +349,33 @@ class OllamaService {
     } catch (error: unknown) {
       logger.error('Failed to delete model:', error);
       throw new Error(getErrorMessage(error, 'Failed to delete model'));
+    }
+  }
+
+  /**
+   * What a model recommends for its own generation, from its modelfile and
+   * architecture metadata. Cached because `/api/show` is slow enough to notice
+   * on every message, and a model's own parameters do not change while it is
+   * installed.
+   */
+  async getModelDefaults(modelName: string): Promise<OllamaModelDefaults> {
+    const cached = this.modelDefaultsCache.get(modelName);
+    if (cached && Date.now() - cached.at < MODEL_DEFAULTS_TTL_MS) {
+      return cached.defaults;
+    }
+
+    try {
+      const show = await this.showModel(modelName, false);
+      const defaults = parseOllamaModelDefaults(show);
+      this.modelDefaultsCache.set(modelName, { defaults, at: Date.now() });
+      return defaults;
+    } catch (error) {
+      // A model that cannot be inspected simply contributes no defaults; the
+      // application's own settings still apply.
+      logger.debug(
+        `Could not read defaults for ${modelName}: ${getErrorMessage(error, 'unknown error')}`
+      );
+      return { options: {}, contextCapped: false };
     }
   }
 

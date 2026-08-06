@@ -9,9 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- Ollama models now run with the settings they recommend for themselves. The
+  modelfile's parameters and the context length the model was trained for are
+  read from the model and applied, instead of one fixed set of options used for
+  every model.
+- Generation settings are stored per model. Changing a value pins it for that
+  model alone, and resetting returns it to what the model recommends.
+
 ### 🔧 Improvements
 
+- Chat controls show the value a message will actually run with, mark the ones
+  that came from the model, and say so when a context window was capped to keep
+  the model loadable.
+
 ### 🐛 Bug Fixes
+
+- A model no longer runs with a 2048-token context regardless of what it
+  supports. The application sent that value explicitly, which overrode the
+  model's own window and silently truncated anything longer — a model trained
+  for 8k or 128k was capped at 2048. Adopted context is limited to 32768 by
+  default so a very large window cannot stop the model loading; raise it with
+  `OLLAMA_MAX_CONTEXT`.
+- Stop sequences declared by a model are now sent with the request. Without
+  them a model can carry on past the end of its turn.
 
 ### 📚 Documentation
 

@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Pokyny platné jen pro tento chat…",
       "advancedParams": "Pokročilé parametry",
       "advancedParamsDescription": "Přepisy pro tento chat. Prázdná pole používají globální výchozí hodnoty.",
+      "fromModel": "z modelu",
+      "fromModelHint": "Tato hodnota pochází z doporučeného nastavení samotného modelu.",
+      "contextCapped": "Kontext omezen na {{context}} z {{trained}}, pro které byl model trénován, aby se stále načetl.",
       "saved": "Ovládání uloženo",
       "saveFailed": "Ovládání se nepodařilo uložit",
       "params": {

@@ -249,6 +249,65 @@ router.put(
   }
 );
 
+/**
+ * Pins generation options for one model. Sending an empty object clears them,
+ * returning that model to what its own modelfile recommends. Kept separate
+ * from the generic preferences update, which shallow-merges and would drop
+ * every other model's pinned options.
+ */
+router.put(
+  '/model-generation-options',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<UserPreferences>>
+  ): Promise<void> => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          error: 'User ID not found in token',
+        });
+        return;
+      }
+
+      const { model, options } = req.body ?? {};
+
+      if (typeof model !== 'string' || !model.trim()) {
+        res.status(400).json({
+          success: false,
+          error: 'A model name is required',
+        });
+        return;
+      }
+
+      if (!options || typeof options !== 'object') {
+        res.status(400).json({
+          success: false,
+          error: 'Generation options are required',
+        });
+        return;
+      }
+
+      const updatedPreferences = preferencesService.setModelGenerationOptions(
+        model.trim(),
+        options,
+        userId
+      );
+
+      res.json({
+        success: true,
+        data: updatedPreferences,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to set model generation options'),
+      });
+    }
+  }
+);
+
 // Reset generation options to defaults
 router.post(
   '/generation-options/reset',

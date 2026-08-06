@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Anweisungen nur für diesen Chat…",
       "advancedParams": "Erweiterte Parameter",
       "advancedParamsDescription": "Überschreibungen für diesen Chat. Leere Felder nutzen die globalen Standardwerte.",
+      "fromModel": "vom Modell",
+      "fromModelHint": "Dieser Wert stammt aus den empfohlenen Einstellungen des Modells.",
+      "contextCapped": "Kontext auf {{context}} von {{trained}} begrenzt, für die das Modell trainiert wurde, damit es noch lädt.",
       "saved": "Chat-Steuerung gespeichert",
       "saveFailed": "Chat-Steuerung konnte nicht gespeichert werden",
       "params": {

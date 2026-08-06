@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Instrukcje obowiązujące tylko w tym czacie…",
       "advancedParams": "Parametry zaawansowane",
       "advancedParamsDescription": "Nadpisania dla tego czatu. Puste pola używają globalnych domyślnych.",
+      "fromModel": "z modelu",
+      "fromModelHint": "Ta wartość pochodzi z ustawień zalecanych przez sam model.",
+      "contextCapped": "Kontekst ograniczony do {{context}} z {{trained}}, dla których model trenowano, aby nadal się ładował.",
       "saved": "Ustawienia zapisane",
       "saveFailed": "Nie udało się zapisać ustawień",
       "params": {

@@ -279,6 +279,11 @@ export interface UserPreferences {
   visionProviderId?: string | null;
   systemMessage: string;
   generationOptions: GenerationOptions;
+  /**
+   * Per-model overrides, keyed by model name. Anything set here wins over both
+   * the global options above and what the model's own modelfile recommends.
+   */
+  modelGenerationOptions?: Record<string, Partial<GenerationOptions>>;
   embeddingSettings: {
     enabled: boolean;
     model: string;

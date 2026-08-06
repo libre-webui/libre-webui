@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Instruktioner der kun gælder denne chat…",
       "advancedParams": "Avancerede parametre",
       "advancedParamsDescription": "Tilsidesættelser for denne chat. Tomme felter bruger dine globale standarder.",
+      "fromModel": "fra modellen",
+      "fromModelHint": "Denne værdi kommer fra modellens egne anbefalede indstillinger.",
+      "contextCapped": "Konteksten er begrænset til {{context}} af de {{trained}}, modellen er trænet til, så den stadig indlæses.",
       "saved": "Chatstyring gemt",
       "saveFailed": "Kunne ikke gemme chatstyring",
       "params": {

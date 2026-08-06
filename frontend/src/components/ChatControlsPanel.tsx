@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
-import { chatApi } from '@/utils/api';
+import { chatApi, ollamaApi } from '@/utils/api';
 import { cn, generateId } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import type { ChatSession, GenerationOptions } from '@/types';
@@ -70,6 +70,49 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
   const { t } = useTranslation();
   const globalDefaults = useAppStore(
     state => state.preferences.generationOptions
+  );
+  const pinnedForModel = useAppStore(
+    state => state.preferences.modelGenerationOptions?.[session.model]
+  );
+  const [modelDefaults, setModelDefaults] = useState<{
+    options: Partial<GenerationOptions>;
+    trainedContextLength?: number;
+    contextCapped: boolean;
+  }>({ options: {}, contextCapped: false });
+
+  // What this model recommends for itself. Shown as the placeholder so the
+  // panel reports the value a message will actually run with, rather than an
+  // application default the model overrides.
+  useEffect(() => {
+    if (!open || !session.model) return;
+
+    let cancelled = false;
+    void ollamaApi
+      .getModelDefaults(session.model)
+      .then(response => {
+        if (cancelled || !response.success || !response.data) return;
+        setModelDefaults({
+          options: response.data.options ?? {},
+          trainedContextLength: response.data.trainedContextLength,
+          contextCapped: Boolean(response.data.contextCapped),
+        });
+      })
+      .catch(() => {
+        // A model that cannot be inspected simply contributes nothing.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, session.model]);
+
+  const effectiveDefaults = useMemo(
+    () => ({
+      ...(globalDefaults ?? {}),
+      ...modelDefaults.options,
+      ...(pinnedForModel ?? {}),
+    }),
+    [globalDefaults, modelDefaults.options, pinnedForModel]
   );
 
   const systemMessage = useMemo(
@@ -231,10 +274,22 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
           <p className='mb-2.5 text-[11px] leading-snug text-gray-400 dark:text-dark-500'>
             {t('chat.controls.advancedParamsDescription')}
           </p>
+          {modelDefaults.contextCapped &&
+            modelDefaults.trainedContextLength && (
+              <p className='mb-2.5 text-[11px] leading-snug text-gray-500 dark:text-dark-600'>
+                {t('chat.controls.contextCapped', {
+                  context: effectiveDefaults.num_ctx?.toLocaleString(),
+                  trained: modelDefaults.trainedContextLength.toLocaleString(),
+                })}
+              </p>
+            )}
           <div className='space-y-1.5'>
             {NUMERIC_OPTIONS.map(option => {
               const value = overrides[option.key];
-              const globalValue = globalDefaults?.[option.key];
+              const globalValue = effectiveDefaults[option.key];
+              const fromModel =
+                modelDefaults.options[option.key] !== undefined &&
+                pinnedForModel?.[option.key] === undefined;
               return (
                 <div
                   key={option.key}
@@ -245,6 +300,14 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
                     className='text-[13px] text-gray-700 dark:text-dark-700'
                   >
                     {t(`chat.controls.params.${option.labelKey}`)}
+                    {fromModel && (
+                      <span
+                        title={t('chat.controls.fromModelHint')}
+                        className='ms-1.5 text-[10px] uppercase tracking-wide text-gray-400 dark:text-dark-500'
+                      >
+                        {t('chat.controls.fromModel')}
+                      </span>
+                    )}
                   </label>
                   <input
                     id={`chat-control-${option.key}`}

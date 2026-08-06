@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Instruksi yang hanya berlaku untuk obrolan ini…",
       "advancedParams": "Parameter lanjutan",
       "advancedParamsDescription": "Penggantian untuk obrolan ini. Kolom kosong memakai bawaan global.",
+      "fromModel": "dari model",
+      "fromModelHint": "Nilai ini berasal dari pengaturan yang direkomendasikan model itu sendiri.",
+      "contextCapped": "Konteks dibatasi pada {{context}} dari {{trained}} yang dilatih untuk model ini, agar tetap dapat dimuat.",
       "saved": "Kontrol disimpan",
       "saveFailed": "Gagal menyimpan kontrol",
       "params": {

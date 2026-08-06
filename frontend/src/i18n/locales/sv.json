@@ -345,6 +345,9 @@
       "systemPromptPlaceholder": "Instruktioner som endast gäller den här chatten…",
       "advancedParams": "Avancerade parametrar",
       "advancedParamsDescription": "Åsidosättanden för den här chatten. Tomma fält använder dina globala standarder.",
+      "fromModel": "från modellen",
+      "fromModelHint": "Det här värdet kommer från modellens egna rekommenderade inställningar.",
+      "contextCapped": "Kontexten är begränsad till {{context}} av de {{trained}} modellen tränats för, så att den fortfarande laddas.",
       "saved": "Kontroller sparade",
       "saveFailed": "Kunde inte spara kontroller",
       "params": {

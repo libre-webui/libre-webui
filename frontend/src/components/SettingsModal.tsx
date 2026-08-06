@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+} from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   X,
@@ -47,7 +53,7 @@ import { useChatStore } from '@/store/chatStore';
 import { getErrorMessage } from '@/store/chatStoreHelpers';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
-import { EmbeddingModel, Theme } from '@/types';
+import { EmbeddingModel, GenerationOptions, Theme } from '@/types';
 import { normalizeTheme } from '@/utils/theme';
 import { triggerHapticFeedback } from '@/utils/haptics';
 import { resolveAppVersion } from '@/utils/appVersion';
@@ -269,6 +275,52 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [tempGenerationOptions, setTempGenerationOptions] = useState(
     preferences.generationOptions || {}
   );
+
+  /**
+   * What the selected model recommends for itself, read from its modelfile.
+   * Fetched rather than assumed: a fixed 2048-token window truncates a model
+   * trained for far more.
+   */
+  const loadModelRecommendedOptions = useCallback(
+    async (model: string): Promise<Partial<GenerationOptions>> => {
+      try {
+        const response = await ollamaApi.getModelDefaults(model);
+        return response.success ? (response.data?.options ?? {}) : {};
+      } catch {
+        // A model that cannot be inspected simply contributes nothing.
+        return {};
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!isOpen || !selectedModel) return;
+
+    let cancelled = false;
+
+    // The panel shows what this model will actually run with: the
+    // application's settings, the model's own recommendations on top, and
+    // anything pinned for it winning over both.
+    void loadModelRecommendedOptions(selectedModel).then(recommended => {
+      if (cancelled) return;
+      setTempGenerationOptions({
+        ...(preferences.generationOptions || {}),
+        ...recommended,
+        ...(preferences.modelGenerationOptions?.[selectedModel] || {}),
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isOpen,
+    selectedModel,
+    loadModelRecommendedOptions,
+    preferences.generationOptions,
+    preferences.modelGenerationOptions,
+  ]);
 
   // Embedding settings state
   const [embeddingSettings, setEmbeddingSettings] = useState(
@@ -1144,9 +1196,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleSaveGenerationOptions = async () => {
     try {
-      const response = await preferencesApi.setGenerationOptions(
-        tempGenerationOptions
-      );
+      const response = selectedModel
+        ? await preferencesApi.setModelGenerationOptions(
+            selectedModel,
+            tempGenerationOptions
+          )
+        : await preferencesApi.setGenerationOptions(tempGenerationOptions);
       if (response.success && response.data) {
         setPreferences(response.data);
         toast.success('Generation options updated successfully');
@@ -1160,11 +1215,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleResetGenerationOptions = async () => {
     try {
-      const response = await preferencesApi.resetGenerationOptions();
+      // Clearing this model's pinned options is what returns it to its own
+      // recommended settings; the modelfile is the default, not a fixed set.
+      const response = selectedModel
+        ? await preferencesApi.setModelGenerationOptions(selectedModel, {})
+        : await preferencesApi.resetGenerationOptions();
+
       if (response.success && response.data) {
         setPreferences(response.data);
-        setTempGenerationOptions(response.data.generationOptions || {});
-        toast.success('Generation options reset to defaults');
+
+        const recommended = selectedModel
+          ? await loadModelRecommendedOptions(selectedModel)
+          : {};
+
+        setTempGenerationOptions({
+          ...(response.data.generationOptions || {}),
+          ...recommended,
+        });
+        toast.success(
+          selectedModel
+            ? `Loaded the settings ${selectedModel} recommends`
+            : 'Generation options reset to defaults'
+        );
       }
     } catch (error: unknown) {
       const errorMessage =

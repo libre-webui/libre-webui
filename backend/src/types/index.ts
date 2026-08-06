@@ -201,6 +201,11 @@ export interface UserPreferences {
   };
   systemMessage: string;
   generationOptions: GenerationOptions;
+  /**
+   * Per-model overrides, keyed by model name. Anything set here wins over both
+   * the global options above and what the model's own modelfile recommends.
+   */
+  modelGenerationOptions?: Record<string, Partial<GenerationOptions>>;
   // Embedding settings for semantic search
   embeddingSettings: EmbeddingSettings;
   // Text-to-speech settings

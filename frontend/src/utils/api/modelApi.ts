@@ -18,6 +18,7 @@
 import type {
   ApiResponse,
   EmbeddingPayload,
+  GenerationOptions,
   EmbeddingResponse,
   ModelCreatePayload,
   OllamaModel,
@@ -200,6 +201,21 @@ export const ollamaApi = {
       .delete('/ollama/models', { params: { name: modelName } })
       .then(res => res.data);
   },
+
+  /** What a model recommends for its own generation, from its modelfile. */
+  getModelDefaults: (
+    model: string
+  ): Promise<
+    ApiResponse<{
+      model: string;
+      options: Partial<GenerationOptions>;
+      trainedContextLength?: number;
+      contextCapped: boolean;
+    }>
+  > =>
+    api
+      .get(`/ollama/models/${encodeURIComponent(model)}/defaults`)
+      .then(response => response.data),
 
   showModel: (
     modelName: string,
