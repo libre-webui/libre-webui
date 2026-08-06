@@ -127,6 +127,23 @@ const ARTIFACT_STORAGE_SHIM = `(function () {
     }
   }
 
+  // Generated code sometimes appends a font stylesheet itself. It cannot load
+  // — artifacts have no network — and the vendored face is already injected,
+  // so the tag is dropped instead of failing against the policy.
+  var appendChild = Node.prototype.appendChild;
+  var blocked = /fonts\\.(?:googleapis|gstatic)\\.com|^https?:\\/\\//i;
+  Node.prototype.appendChild = function (node) {
+    if (
+      node &&
+      node.tagName === 'LINK' &&
+      String(node.rel || '').toLowerCase().indexOf('stylesheet') !== -1 &&
+      blocked.test(String(node.href || ''))
+    ) {
+      return node;
+    }
+    return appendChild.call(this, node);
+  };
+
   try {
     void document.cookie;
   } catch (error) {
@@ -203,13 +220,14 @@ export function artifactBundleNames(
     }
   }
 
-  const ordered = [...needed];
-  return ordered.length
-    ? [
-        ARTIFACT_RUNTIME_BUNDLE,
-        ...ordered.filter(name => name !== ARTIFACT_RUNTIME_BUNDLE),
-      ]
-    : [];
+  // The runtime always ships. It is three kilobytes, and deciding case by case
+  // whether a document needs it has been wrong often enough — a script the
+  // rewrite compiles is worthless if the thing that compiles it was judged
+  // unnecessary.
+  return [
+    ARTIFACT_RUNTIME_BUNDLE,
+    ...[...needed].filter(name => name !== ARTIFACT_RUNTIME_BUNDLE),
+  ];
 }
 
 /**
