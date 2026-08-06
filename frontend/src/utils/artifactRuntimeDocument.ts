@@ -129,6 +129,37 @@ const ARTIFACT_STORAGE_SHIM = `(function () {
   }
 })();`;
 
+/**
+ * Puts the runtime at the very start of the document, whatever shape the
+ * generated markup takes.
+ *
+ * Matching `<head...>` loosely is a trap: it also matches `<header>`, which
+ * sits in the body, so the runtime would load after the scripts that need it.
+ * Generated documents also skip `<head>` altogether often enough to matter.
+ */
+const HEAD_OPEN_TAG = /<head(\s[^>]*)?>/i;
+const HTML_OPEN_TAG = /<html(\s[^>]*)?>/i;
+const DOCTYPE_TAG = /<!doctype[^>]*>/i;
+
+function injectDocumentPrelude(html: string, prelude: string): string {
+  if (HEAD_OPEN_TAG.test(html)) {
+    return html.replace(HEAD_OPEN_TAG, match => `${match}${prelude}`);
+  }
+  if (HTML_OPEN_TAG.test(html)) {
+    return html.replace(
+      HTML_OPEN_TAG,
+      match => `${match}<head>${prelude}</head>`
+    );
+  }
+  if (DOCTYPE_TAG.test(html)) {
+    return html.replace(
+      DOCTYPE_TAG,
+      match => `${match}<head>${prelude}</head>`
+    );
+  }
+  return `${prelude}${html}`;
+}
+
 /** Inline `<script type="module">` and `<script type="text/babel">` bodies. */
 const COMPILED_SCRIPT_PATTERN =
   /<script\b(?![^>]*\bsrc\s*=)[^>]*\btype\s*=\s*("|')(?:module|text\/babel|application\/babel)\1[^>]*>([\s\S]*?)<\/script>/gi;
@@ -327,10 +358,7 @@ export function composeArtifactSandboxDocument(
     missing.length ? scriptTag(missingLibraryNotice(missing)) : '',
   ].join('');
 
-  return html.replace(
-    /<head([^>]*)>/i,
-    (tag, attributes: string) => `<head${attributes}>${prelude}`
-  );
+  return injectDocumentPrelude(html, prelude);
 }
 
 /** Loads whatever the artifact needs, then composes its document. */

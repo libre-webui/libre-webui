@@ -991,3 +991,55 @@ test('TypeScript in a text/babel script compiles', async ({ page }) => {
     timeout: 30_000,
   });
 });
+
+// A document with a <header> element and no <head> — the shape that made the
+// runtime land in the wrong place, or nowhere at all.
+const generatedHeaderlessArtifact = `
+\`\`\`html
+<!doctype html>
+<html>
+  <body>
+    <header class="site-header">Catalogue</header>
+    <div id="root"></div>
+    <script type="text/babel">
+      interface Product { id: number; name: string; price: number }
+      const items: Product[] = [
+        { id: 1, name: 'Desk', price: 120 },
+        { id: 2, name: 'Lamp', price: 45 },
+      ];
+      function App(): JSX.Element {
+        const total: number = items.reduce((sum, item) => sum + item.price, 0);
+        return <div id="total">Total: {total}</div>;
+      }
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  </body>
+</html>
+\`\`\`
+`;
+
+test('the runtime loads even without a head element', async ({ page }) => {
+  test.slow();
+  const failures: string[] = [];
+  page.on('pageerror', error => failures.push(String(error).slice(0, 140)));
+
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith('headerless', 'Catalogue', generatedHeaderlessArtifact),
+    ],
+  });
+
+  await page.goto('/c/headerless');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .getByTestId('artifact-slide-out-panel')
+    .frameLocator('iframe')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  await expect(frame.locator('#total')).toHaveText('Total: 165', {
+    timeout: 30_000,
+  });
+  expect(failures.filter(message => /runInline/.test(message))).toEqual([]);
+});

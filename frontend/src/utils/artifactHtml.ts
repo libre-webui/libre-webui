@@ -216,8 +216,11 @@ function ensurePreviewHeadTags(htmlContent: string, title: string): string {
 }
 
 function injectAfterHeadOpen(htmlContent: string, payload: string): string {
-  if (/<head[^>]*>/i.test(htmlContent)) {
-    return htmlContent.replace(/<head([^>]*)>/i, `<head$1>${payload}`);
+  // The whitespace is required: `<head[^>]*>` also matches `<header>`, which
+  // would move these tags into the body.
+  const headOpen = /<head(\s[^>]*)?>/i;
+  if (headOpen.test(htmlContent)) {
+    return htmlContent.replace(headOpen, match => `${match}${payload}`);
   }
 
   return `${payload}\n${htmlContent}`;
