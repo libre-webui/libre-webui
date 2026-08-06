@@ -128,7 +128,6 @@ const SANDBOX_HOST_DOCUMENT = `<!DOCTYPE html>
           if (!frame) {
             frame = document.createElement('iframe');
             frame.setAttribute('allow', '${ARTIFACT_FRAME_ALLOW}');
-            frame.setAttribute('allowfullscreen', '');
             frame.setAttribute('title', 'Artifact');
             document.body.appendChild(frame);
           }
@@ -177,6 +176,9 @@ router.get('/sandbox', (_req: Request, res: Response): void => {
   // SAMEORIGIN would additionally reject the development server and the
   // desktop build's file:// document in browsers that still honour both.
   res.removeHeader('X-Frame-Options');
+  // The application itself does not request origin keying, so asking for it on
+  // this one response cannot be honoured and only warns.
+  res.removeHeader('Origin-Agent-Cluster');
   res.send(SANDBOX_HOST_DOCUMENT);
 });
 

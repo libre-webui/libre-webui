@@ -42,6 +42,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { createServer } from 'http';
 import { join as pathJoin } from 'path';
+import { readFileSync } from 'fs';
+import { createHash } from 'crypto';
 
 import {
   errorHandler,
@@ -182,6 +184,40 @@ const corsConfig = {
   },
 };
 
+/**
+ * Hashes of the inline scripts in the served page.
+ *
+ * The application ships one: a few lines in index.html that apply the saved
+ * theme before React mounts, so a light-mode user does not see a dark flash.
+ * A strict policy blocks it, which is why every page load has been logging a
+ * violation. Hashing the file that is actually served keeps the allowance
+ * exact and impossible to drift from the build.
+ */
+const inlineScriptHashes = (): string[] => {
+  const frontendPath = resolveFrontendDist(import.meta.url);
+  if (!frontendPath) return [];
+
+  try {
+    const html = readFileSync(pathJoin(frontendPath, 'index.html'), 'utf8');
+    const inline = [
+      ...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi),
+    ];
+
+    return inline
+      .map(match => match[1])
+      .filter(source => source.trim().length > 0)
+      .map(
+        source =>
+          `'sha256-${createHash('sha256').update(source, 'utf8').digest('base64')}'`
+      );
+  } catch {
+    // No built frontend to read; nothing to allow.
+    return [];
+  }
+};
+
+const INLINE_SCRIPT_HASHES = inlineScriptHashes();
+
 // Security middleware
 app.use(
   helmet({
@@ -196,6 +232,9 @@ app.use(
         scriptSrc: [
           "'self'",
           'https://challenges.cloudflare.com',
+          // The theme script in index.html, allowed by hash rather than by
+          // opening the policy to inline script.
+          ...INLINE_SCRIPT_HASHES,
           ...(process.env.NODE_ENV === 'production'
             ? [] // Strict in production
             : ["'unsafe-inline'", "'unsafe-eval'"]), // Allow for dev tools

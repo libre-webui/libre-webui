@@ -284,9 +284,22 @@ function rewriteGeneratedHtml(
       // Compiled by the runtime, so its imports resolve from the registry
       // rather than the network.
       const compiled = parsed.createElement('script');
-      compiled.textContent = `window.${ARTIFACT_RUNTIME_GLOBAL}.runInline(${jsStringLiteral(
-        script.textContent ?? ''
-      )});`;
+      // Guarded, and loud when the guard fires: if the runtime is not there,
+      // say what is, rather than leaving a bare TypeError in the console.
+      compiled.textContent = `(function () {
+  var runtime = window.${ARTIFACT_RUNTIME_GLOBAL};
+  if (runtime && typeof runtime.runInline === 'function') {
+    runtime.runInline(${jsStringLiteral(script.textContent ?? '')});
+    return;
+  }
+  var report = document.createElement('pre');
+  report.setAttribute('data-testid', 'artifact-runtime-missing');
+  report.style.cssText = 'margin:16px;padding:12px;border:1px solid #f0a5a5;border-radius:8px;background:#fff5f5;color:#7f1d1d;font:12px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;';
+  report.textContent = 'The artifact runtime did not load.\\n\\nregistry: ' +
+    (runtime ? 'present, keys: ' + Object.keys(runtime).join(', ') : 'absent') +
+    '\\nscripts in document: ' + document.querySelectorAll('script').length;
+  (document.body || document.documentElement).appendChild(report);
+})();`;
       script.replaceWith(compiled);
     }
   }

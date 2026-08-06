@@ -127,7 +127,6 @@ export const ArtifactSandboxFrame: React.FC<ArtifactSandboxFrameProps> = ({
       className={className}
       sandbox={HTML_ARTIFACT_SANDBOX}
       allow={HTML_ARTIFACT_ALLOW}
-      allowFullScreen
       title={title}
     />
   );
