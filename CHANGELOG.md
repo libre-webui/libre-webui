@@ -7,11 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✨ New Features
+
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.19.3] - 2026-08-06
+
 Artifacts now run the way they are written. A generated React component, a
 Three.js scene, a Mermaid diagram or a self-contained HTML page renders in the
-chat with the libraries it expects already present, and it does so without the
-preview making a single network request. The brand mark also replaces the
-placeholder iconography across the application.
+chat with the libraries it expects already present, and the preview makes no
+network request at all — which is what keeps artifacts working behind an
+authenticating proxy. The brand mark also replaces the placeholder iconography
+across the application.
 
 ### ✨ New Features
 
@@ -36,9 +47,8 @@ placeholder iconography across the application.
 
 - The artifact sandbox makes no network request of any kind. The page loads the
   runtime with its own session and inlines it into the preview, which keeps
-  artifacts working behind an authenticating proxy such as Cloudflare Access,
-  Authelia or oauth2-proxy, where a sandboxed frame's cookie-less request comes
-  back as a login redirect.
+  artifacts working behind Cloudflare Access, Authelia or oauth2-proxy, where a
+  sandboxed frame's cookie-less request comes back as a login redirect.
 - The sandbox policy names no origin at all: `default-src 'none'`, script
   limited to inline and eval, and a frame without `allow-same-origin`, so an
   artifact runs on an opaque origin with no access to the application's
@@ -47,13 +57,13 @@ placeholder iconography across the application.
   `document.cookie`, which throw on an opaque origin and would otherwise stop
   the artifact dead.
 - Generated markup is parsed rather than pattern-matched, so documents without
-  a `<head>`, end tags carrying attributes, and `<header>` elements are handled
-  correctly.
-- Inter is vendored into the build and served from the application, so no page
+  a `<head>`, end tags carrying attributes, and `<header>` elements are all
+  handled correctly.
+- Inter is vendored into the build and served by the application, so no page
   load contacts a font host; the font CDN is gone from the Content Security
-  Policy, and artifacts that link Google Fonts get the local face instead.
+  Policy, and artifacts linking Google Fonts get the local face instead.
 - The theme script in `index.html` is allowed by hash rather than by opening
-  the policy, so saved themes apply before first paint without a dark flash.
+  the policy, so a saved theme applies before first paint without a dark flash.
 
 ### 🐛 Bug Fixes
 
@@ -63,15 +73,27 @@ placeholder iconography across the application.
 - Runtime bundles are keyed to the build that produced them, so a browser
   cannot keep using a copy from an earlier release against newer application
   code.
-- Three.js scenes get the addons they import, including environments,
-  the CSS and SVG renderers, math helpers and exporters; a bundle is also
-  inlined at most once, so Three is never loaded twice.
+- Three.js scenes get the addons they import, including environments, the CSS
+  and SVG renderers, math helpers and exporters; a bundle is also inlined at
+  most once, so Three is never loaded twice.
 - Mermaid diagrams and CommonJS libraries resolve to their real exports rather
   than an empty namespace.
-- Artifact code is embedded as data with every `<` escaped, so it cannot end
-  the element it travels in — reported by CodeQL as incomplete sanitization.
+- Import maps and inline module scripts resolve from the local runtime, and
+  TypeScript in a `text/babel` script compiles instead of failing on the first
+  interface.
 - The favicon is the same opaque tile as the documentation site, so it stays
   legible on a light browser tab.
+
+### 🔒 Security & Dependencies
+
+- Artifact code is embedded as data with every `<` escaped, so it cannot end
+  the element it travels in. Reported by CodeQL as incomplete sanitization,
+  along with a script end-tag pattern that missed `</script foo>`; both are
+  fixed rather than dismissed.
+- Removed SheetJS from the vendored set. The npm package carries a
+  high-severity prototype pollution and ReDoS advisory with no fix available,
+  which is a poor trade inside a sandbox that runs generated code. Papa Parse
+  still covers delimited data.
 
 ### 📚 Documentation
 
