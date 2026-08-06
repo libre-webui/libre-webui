@@ -40,6 +40,7 @@ import { build, type InlineConfig, type Plugin } from 'vite';
 
 import {
   ARTIFACT_BABEL_BUNDLE,
+  ARTIFACT_FONTS_BUNDLE,
   ARTIFACT_LIBRARY_BUNDLES,
   ARTIFACT_MODULES,
   ARTIFACT_REACT_BUNDLE,
@@ -227,6 +228,39 @@ if (document.readyState === 'loading') {
   __transform();
 }`;
 
+/**
+ * Generated artifacts link Google Fonts constantly. The frame cannot fetch a
+ * stylesheet, let alone the font files behind it, so the vendored Inter the
+ * application already ships is turned into a stylesheet of data URIs and
+ * injected in the link's place. Families we do not have fall back to the
+ * system stack, which is what the artifact's own font-family list asks for
+ * next.
+ */
+const fontsBundleSource = async (): Promise<string> => {
+  const fontsDir = path.join(projectRoot, 'public', 'fonts');
+  const css = await readFile(path.join(fontsDir, 'inter.css'), 'utf8');
+
+  const files = [...css.matchAll(/url\((\/fonts\/[^)]+)\)/g)].map(
+    match => match[1]
+  );
+  let inlined = css;
+  for (const file of [...new Set(files)]) {
+    const data = await readFile(path.join(fontsDir, path.basename(file)));
+    inlined = inlined.replaceAll(
+      `url(${file})`,
+      `url(data:font/woff2;base64,${data.toString('base64')})`
+    );
+  }
+
+  return `${REGISTRY_PRELUDE}
+const __css = ${JSON.stringify(inlined)};
+const __style = document.createElement('style');
+__style.setAttribute('data-artifact-fonts', 'inter');
+__style.textContent = __css;
+(document.head || document.documentElement).appendChild(__style);
+__registry.register(['__fonts'], __css);`;
+};
+
 const librarySource = (name: string) => {
   const { specifier, global, useDefault } = LIBRARY_BUNDLES[name];
   const specifiers = Object.entries(ARTIFACT_MODULES)
@@ -320,6 +354,7 @@ const bundleSource = async (name: string): Promise<string> => {
   if (name === ARTIFACT_BABEL_BUNDLE) return babelBundleSource();
   if (name === ARTIFACT_TAILWIND_BUNDLE)
     return `import '@tailwindcss/browser';`;
+  if (name === ARTIFACT_FONTS_BUNDLE) return fontsBundleSource();
   return librarySource(name);
 };
 

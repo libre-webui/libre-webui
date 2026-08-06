@@ -1043,3 +1043,55 @@ test('the runtime loads even without a head element', async ({ page }) => {
   });
   expect(failures.filter(message => /runInline/.test(message))).toEqual([]);
 });
+
+// How generated HTML usually arrives: Tailwind utilities with nothing loading
+// them, and a Google Fonts link.
+const generatedStyledArtifact = `
+\`\`\`html
+<!doctype html>
+<html>
+  <head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-slate-100">
+    <div class="max-w-md mx-auto p-6">
+      <h1 id="title" class="text-2xl font-bold text-slate-900">Catalogue</h1>
+      <div class="flex items-center justify-between gap-4 rounded-lg bg-white p-4 shadow">
+        <span>Desk</span><span class="font-semibold">$120</span>
+      </div>
+    </div>
+  </body>
+</html>
+\`\`\`
+`;
+
+test('Tailwind and fonts arrive even when nothing loads them', async ({
+  page,
+}) => {
+  test.slow();
+  const external = trackExternalRequests(page);
+
+  await mockLibreWebUiApi(page, {
+    sessions: [sessionWith('styled', 'Catalogue', generatedStyledArtifact)],
+  });
+
+  await page.goto('/c/styled');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page
+    .getByTestId('artifact-slide-out-panel')
+    .frameLocator('iframe')
+    .first()
+    .frameLocator('iframe[title="Artifact"]');
+
+  await expect(frame.locator('#title')).toBeVisible({ timeout: 30_000 });
+  // Utilities were generated despite the artifact loading no Tailwind.
+  await expect
+    .poll(() =>
+      frame.locator('#title').evaluate(el => getComputedStyle(el).fontWeight)
+    )
+    .toBe('700');
+  // The Google Fonts link became the vendored face.
+  await expect(frame.locator('style[data-artifact-fonts]')).toHaveCount(1);
+  expect(external).toEqual([]);
+});

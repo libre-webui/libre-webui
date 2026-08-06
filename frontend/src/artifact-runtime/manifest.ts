@@ -45,6 +45,9 @@ export const ARTIFACT_BABEL_BUNDLE = 'babel';
 /** Generates utility classes from the markup an artifact renders. */
 export const ARTIFACT_TAILWIND_BUNDLE = 'tailwind';
 
+/** The application's self-hosted Inter, inlined for artifacts to use. */
+export const ARTIFACT_FONTS_BUNDLE = 'fonts';
+
 /**
  * Bare specifiers artifact code may import, and the bundle that provides each.
  * A bundle registers itself under every specifier listed here.
@@ -85,6 +88,7 @@ export const ARTIFACT_LIBRARY_BUNDLES = [
   'three',
   'papaparse',
   'lodash',
+  ARTIFACT_FONTS_BUNDLE,
   'mermaid',
   'chart',
   'tone',
@@ -137,6 +141,10 @@ export const ARTIFACT_CDN_REPLACEMENTS: {
   { pattern: /papaparse/i, bundle: 'papaparse' },
   { pattern: /(?:^|\/)lodash(?:@[\d.]+)?(?:\/|$|\?)/i, bundle: 'lodash' },
   { pattern: /(?:^|\/)lodash(?:\.min)?\.js(?:$|\?)/i, bundle: 'lodash' },
+  {
+    pattern: /fonts\.(?:googleapis|gstatic)\.com/i,
+    bundle: ARTIFACT_FONTS_BUNDLE,
+  },
   { pattern: /mermaid/i, bundle: 'mermaid' },
   {
     pattern: /(?:^|\/)tone(?:@[\d.]+)?(?:\/|$|\?)|tone(?:\.min)?\.js/i,
@@ -206,6 +214,26 @@ export function artifactBundlesForImports(source: string): string[] {
   }
 
   return [...needed];
+}
+
+/**
+ * Whether markup is written against Tailwind. Generated HTML often uses the
+ * utilities without loading anything, because the environment it was written
+ * for supplies them; without this the artifact renders unstyled.
+ *
+ * Several distinct utilities are required so ordinary class names — a `grid`
+ * or a `card` — do not drag Tailwind's reset into a hand-styled artifact.
+ */
+const TAILWIND_UTILITIES =
+  /\b(?:flex|grid|hidden|absolute|relative|(?:p|m|px|py|mx|my|mt|mb|ml|mr|gap|space)-\d|(?:w|h|max-w|min-h)-(?:\d|full|screen|auto)|text-(?:xs|sm|base|lg|xl|\dxl|center|left|right|white|black|gray-\d)|bg-(?:white|black|transparent|[a-z]+-\d)|rounded(?:-[a-z]+)?|shadow(?:-[a-z]+)?|border(?:-\d)?|items-(?:center|start|end)|justify-(?:center|between|around|end)|font-(?:bold|medium|semibold|light)|hover:[a-z-]+|(?:sm|md|lg|xl):[a-z-]+)\b/g;
+
+export function artifactUsesTailwind(html: string): boolean {
+  const classAttributes = [...html.matchAll(/class\s*=\s*("|')(.*?)\1/gi)]
+    .map(match => match[2])
+    .join(' ');
+
+  const matched = new Set(classAttributes.match(TAILWIND_UTILITIES) ?? []);
+  return matched.size >= 3;
 }
 
 /** Bundles a piece of artifact code needs, based on what it imports. */

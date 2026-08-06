@@ -34,9 +34,11 @@ import {
   ARTIFACT_REACT_PRELUDE,
   ARTIFACT_RUNTIME_BUNDLE,
   ARTIFACT_RUNTIME_GLOBAL,
+  ARTIFACT_TAILWIND_BUNDLE,
   artifactBundlesFor,
   artifactBundlesForImports,
   artifactCdnBundlesFor,
+  artifactUsesTailwind,
 } from '@/artifact-runtime/manifest';
 import {
   buildHtmlArtifactDocument,
@@ -217,6 +219,13 @@ export function artifactBundleNames(
     needed.add(bundle);
   }
 
+  if (artifactUsesTailwind(content)) {
+    // Written against Tailwind but loading nothing, which is how generated
+    // markup usually arrives: the environment it was written for supplied the
+    // utilities. Without this the artifact renders unstyled.
+    needed.add(ARTIFACT_TAILWIND_BUNDLE);
+  }
+
   if (inline.trim()) {
     // Those scripts are compiled in the frame, which needs the compiler and
     // the runtime that drives it.
@@ -268,12 +277,22 @@ export function rewriteArtifactCdnReferences(
     (tag, _quote: string, url: string) => drop(url) ?? tag
   );
 
-  // A Tailwind stylesheet link is the browser build in disguise; other
-  // stylesheets are left alone, since CSS cannot execute anything.
+  // External stylesheets cannot load either — a Google Fonts link is the
+  // usual one — so they get the same treatment: replaced by the local
+  // equivalent where one exists, and named where none does.
   return withScripts.replace(
     /<link\b[^>]*\bhref\s*=\s*("|')(.*?)\1[^>]*>/gi,
     (tag, _quote: string, url: string) => {
-      if (!/tailwind/i.test(url)) return tag;
+      if (
+        /\brel\s*=\s*("|')?(?:preconnect|dns-prefetch|icon|apple-touch-icon)/i.test(
+          tag
+        )
+      ) {
+        return tag;
+      }
+      if (!/stylesheet/i.test(tag) && !/\.css|fonts\.googleapis/i.test(url)) {
+        return tag;
+      }
       return drop(url) ?? tag;
     }
   );
