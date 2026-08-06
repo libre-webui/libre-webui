@@ -26,16 +26,17 @@
  * the source into the frame sidesteps that entirely.
  */
 
+import { ARTIFACT_RUNTIME_FINGERPRINT } from '@/artifact-runtime/fingerprint';
 import { ARTIFACT_RUNTIME_PATH } from '@/artifact-runtime/manifest';
 import { ARTIFACT_RUNTIME_ORIGIN } from '@/utils/artifactSandbox';
 
 /**
- * Stamped into the request so an intermediary cache — Cloudflare sits in front
- * of many deployments — cannot serve a runtime bundle from before an update.
+ * Stamped into the request so no cache — the browser's, or an edge in front of
+ * the deployment — can answer with a bundle from before an update. The
+ * application version is not enough: it stays the same across development
+ * builds, so the URL would not change even when the runtime did.
  */
-const RUNTIME_VERSION = encodeURIComponent(
-  import.meta.env.VITE_APP_VERSION || 'dev'
-);
+const RUNTIME_VERSION = encodeURIComponent(ARTIFACT_RUNTIME_FINGERPRINT);
 
 const bundles = new Map<string, Promise<string>>();
 
@@ -46,7 +47,9 @@ export function loadArtifactBundle(name: string): Promise<string> {
 
   const pending = fetch(
     `${ARTIFACT_RUNTIME_ORIGIN}${ARTIFACT_RUNTIME_PATH}/${name}.js?v=${RUNTIME_VERSION}`,
-    { credentials: 'same-origin' }
+    // Revalidate rather than trust a stored copy: a runtime that does not match
+    // the application is worse than a slower first paint.
+    { credentials: 'same-origin', cache: 'no-cache' }
   ).then(response => {
     if (!response.ok) {
       throw new Error(
