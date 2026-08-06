@@ -40,6 +40,7 @@ import { build, type InlineConfig, type Plugin } from 'vite';
 
 import {
   ARTIFACT_BABEL_BUNDLE,
+  ARTIFACT_BUNDLES,
   ARTIFACT_FONTS_BUNDLE,
   ARTIFACT_LIBRARY_BUNDLES,
   ARTIFACT_MODULES,
@@ -507,6 +508,18 @@ for (const name of [
 
 for (const name of ARTIFACT_LIBRARY_BUNDLES) {
   await buildBundle(name, true);
+}
+
+// These bundles are inlined into artifact documents as script text. Nothing
+// in this application's own output should be able to close that element, and
+// checking is cheaper than escaping code correctly.
+for (const name of ARTIFACT_BUNDLES) {
+  const built = await readFile(path.join(outDir, `${name}.js`), 'utf8');
+  if (/<\/script/i.test(built)) {
+    throw new Error(
+      `The ${name} bundle contains a script end tag and cannot be inlined safely.`
+    );
+  }
 }
 
 await writeFile(stampPath, `${fingerprint}\n`);

@@ -71,14 +71,25 @@ const PAGE_STYLE = `
 `;
 
 /**
- * Script bodies are raw text until the parser meets `</script`, so any such
- * sequence inside one has to be broken up.
+ * Artifact code as a JavaScript string literal.
+ *
+ * Escaping `<` outright is what makes this safe: no `</script`, no `<!--`, and
+ * no double-escaped script state can be spelled at all, so artifact text can
+ * never end the element it travels in. Escaping those sequences individually
+ * is the fragile version of this.
  */
-const inlineScriptText = (source: string): string =>
-  source.replace(/<\/(script)/gi, '<\\/$1').replace(/<!--/g, '<\\!--');
+const jsStringLiteral = (value: string): string =>
+  JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
 
-const scriptTag = (source: string): string =>
-  `<script>${inlineScriptText(source)}</script>`;
+/**
+ * Wraps a runtime bundle for inlining. These are this application's own build
+ * output, not artifact content; the build refuses to emit a bundle containing
+ * a script end tag, so nothing here needs escaping.
+ */
+const scriptTag = (source: string): string => `<script>${source}</script>`;
 
 /**
  * Artifacts run on an opaque origin, where merely reading `localStorage`,
@@ -170,7 +181,10 @@ function injectDocumentPrelude(html: string, prelude: string): string {
  * `<script ...>` match backtracks badly on generated markup, and the attribute
  * string is short enough to inspect on its own.
  */
-const SCRIPT_TAG_PATTERN = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
+// The end tag may carry whitespace and even stray attributes — browsers
+// accept `</script foo>` — and missing one would swallow the rest of the
+// document into a single match.
+const SCRIPT_TAG_PATTERN = /<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi;
 const LINK_TAG_PATTERN = /<link\b([^>]*)>/gi;
 
 /** The value of one attribute, read from a tag's attribute string. */
@@ -212,7 +226,7 @@ function compileInlineScripts(html: string): string {
       if (attributeValue(attributes, 'src')) return tag;
       if (!body.trim()) return '';
 
-      return `<script>window.${ARTIFACT_RUNTIME_GLOBAL}.runInline(${JSON.stringify(body)});</script>`;
+      return `<script>window.${ARTIFACT_RUNTIME_GLOBAL}.runInline(${jsStringLiteral(body)});</script>`;
     }
   );
 }
@@ -372,7 +386,7 @@ const runtimeDocument = (
   <body>
     <div id="root"></div>
     ${scriptTag(ARTIFACT_STORAGE_SHIM)}
-    <script type="text/plain" id="libre-artifact-source">${inlineScriptText(source)}</script>
+    <script>window.__libreArtifactSource = ${jsStringLiteral(source)};</script>
 ${bundleSources.map(scriptTag).join('\n')}
     <script>window.${ARTIFACT_RUNTIME_GLOBAL}.${start}();</script>
   </body>

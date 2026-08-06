@@ -51,7 +51,6 @@ interface ArtifactRuntime {
   runInline(source: string): void;
 }
 
-const SOURCE_ELEMENT_ID = 'libre-artifact-source';
 const ROOT_ELEMENT_ID = 'root';
 
 const runtime: ArtifactRuntime = {
@@ -99,8 +98,15 @@ const runtime: ArtifactRuntime = {
   },
 };
 
-const artifactSource = (): string =>
-  document.getElementById(SOURCE_ELEMENT_ID)?.textContent?.trim() ?? '';
+/**
+ * The artifact's own source, handed over as a string literal by the page that
+ * composed this document rather than as the text of an element.
+ */
+const artifactSource = (): string => {
+  const source = (window as unknown as { __libreArtifactSource?: unknown })
+    .__libreArtifactSource;
+  return typeof source === 'string' ? source.trim() : '';
+};
 
 const artifactRoot = (): HTMLElement | null =>
   document.getElementById(ROOT_ELEMENT_ID);
