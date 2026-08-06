@@ -178,13 +178,20 @@ test('the runtime is vendored, never fetched from a CDN', () => {
   );
   // The document carries its dependencies as inline script; nothing in it
   // points the frame at a URL.
-  assert.match(documents, /rewriteArtifactCdnReferences/);
-  assert.match(documents, /const scriptTag = \(source: string\)/);
+  assert.match(documents, /rewriteGeneratedHtml/);
   assert.doesNotMatch(documents, /<script[^>]*src=/);
   // An import map only names URLs the frame cannot fetch, so generated ones
   // are stripped and their specifiers resolved from the registry instead.
   assert.match(documents, /import map removed/);
   assert.match(documents, /runInline/);
+  // Generated markup is parsed, not pattern-matched: every regex written
+  // against it here eventually met a shape it mishandled.
+  assert.match(documents, /new DOMParser\(\)\.parseFromString/);
+  assert.doesNotMatch(documents, /html\.replace\(/);
+  // Artifact code travels as data, with every < escaped, so it cannot end the
+  // element it is embedded in.
+  assert.match(documents, /jsStringLiteral/);
+  assert.match(documents, /\\\\u003c/);
 
   const loader = readFileSync(
     path.join(repoRoot, 'frontend', 'src', 'utils', 'artifactRuntimeLoader.ts'),

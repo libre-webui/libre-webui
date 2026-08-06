@@ -142,110 +142,29 @@ const ARTIFACT_STORAGE_SHIM = `(function () {
   }
 })();`;
 
-/**
- * Puts the runtime at the very start of the document, whatever shape the
- * generated markup takes.
- *
- * Matching `<head...>` loosely is a trap: it also matches `<header>`, which
- * sits in the body, so the runtime would load after the scripts that need it.
- * Generated documents also skip `<head>` altogether often enough to matter.
- */
-const HEAD_OPEN_TAG = /<head(\s[^>]*)?>/i;
-const HTML_OPEN_TAG = /<html(\s[^>]*)?>/i;
-const DOCTYPE_TAG = /<!doctype[^>]*>/i;
-
-function injectDocumentPrelude(html: string, prelude: string): string {
-  if (HEAD_OPEN_TAG.test(html)) {
-    return html.replace(HEAD_OPEN_TAG, match => `${match}${prelude}`);
-  }
-  if (HTML_OPEN_TAG.test(html)) {
-    return html.replace(
-      HTML_OPEN_TAG,
-      match => `${match}<head>${prelude}</head>`
-    );
-  }
-  if (DOCTYPE_TAG.test(html)) {
-    return html.replace(
-      DOCTYPE_TAG,
-      match => `${match}<head>${prelude}</head>`
-    );
-  }
-  return `${prelude}${html}`;
-}
-
-/**
- * Script and link tags, matched in one pass with the attributes captured
- * separately.
- *
- * Deliberately not one regex per tag shape: nesting quantifiers inside a
- * `<script ...>` match backtracks badly on generated markup, and the attribute
- * string is short enough to inspect on its own.
- */
-// The end tag may carry whitespace and even stray attributes — browsers
-// accept `</script foo>` — and missing one would swallow the rest of the
-// document into a single match.
-const SCRIPT_TAG_PATTERN = /<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi;
-const LINK_TAG_PATTERN = /<link\b([^>]*)>/gi;
-
-/** The value of one attribute, read from a tag's attribute string. */
-const attributeValue = (attributes: string, name: string): string | null => {
-  const match = new RegExp(`\\b${name}\\s*=\\s*("|')([^"']*)\\1`, 'i').exec(
-    attributes
-  );
-  return match ? match[2] : null;
-};
-
-const scriptType = (attributes: string): string =>
-  (attributeValue(attributes, 'type') ?? '').trim().toLowerCase();
-
+/** Script types whose body this runtime compiles instead of the browser. */
 const COMPILED_SCRIPT_TYPES = new Set([
   'module',
   'text/babel',
   'application/babel',
 ]);
 
-/**
- * Hands inline module and Babel scripts to the runtime instead of the browser.
- *
- * The modern Three.js boilerplate is an import map plus
- * `import * as THREE from 'three'`, and TypeScript artifacts arrive as
- * `<script type="text/babel">` with interfaces in them. Left alone the first
- * resolves over the network — which the sandbox forbids — and the second is
- * parsed without the TypeScript preset. Compiling both here fixes each.
- */
-function compileInlineScripts(html: string): string {
-  return html.replace(
-    SCRIPT_TAG_PATTERN,
-    (tag, attributes: string, body: string) => {
-      const type = scriptType(attributes);
-
-      if (type === 'importmap') {
-        return '<!-- import map removed: modules resolve from the local runtime -->';
-      }
-      if (!COMPILED_SCRIPT_TYPES.has(type)) return tag;
-      if (attributeValue(attributes, 'src')) return tag;
-      if (!body.trim()) return '';
-
-      return `<script>window.${ARTIFACT_RUNTIME_GLOBAL}.runInline(${jsStringLiteral(body)});</script>`;
-    }
-  );
-}
+const isExternalUrl = (url: string): boolean => /^(?:https?:)?\/\//i.test(url);
 
 /** Source of every inline module or Babel script, for dependency detection. */
 function inlineScriptSources(html: string): string {
-  const sources: string[] = [];
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
 
-  for (const match of html.matchAll(SCRIPT_TAG_PATTERN)) {
-    const [, attributes, body] = match;
-    if (
-      COMPILED_SCRIPT_TYPES.has(scriptType(attributes)) &&
-      !attributeValue(attributes, 'src')
-    ) {
-      sources.push(body);
-    }
-  }
-
-  return sources.join('\n');
+  return [...parsed.querySelectorAll('script')]
+    .filter(
+      script =>
+        !script.getAttribute('src') &&
+        COMPILED_SCRIPT_TYPES.has(
+          (script.getAttribute('type') ?? '').trim().toLowerCase()
+        )
+    )
+    .map(script => script.textContent ?? '')
+    .join('\n');
 }
 
 /** Bundles this artifact needs, in load order. */
@@ -294,56 +213,100 @@ export function artifactBundleNames(
 }
 
 /**
- * Replaces CDN tags with the vendored bundle inline, in the same document
- * position, so an artifact's own inline scripts still find the globals they
- * expect when they run.
+ * Rewrites a generated document for the sandbox.
+ *
+ * Parsed rather than pattern-matched. Every regex written against generated
+ * markup here has eventually met a shape it mishandled — `<header>` read as
+ * `<head>`, an end tag carrying attributes, a document with no head at all —
+ * and the browser's own parser has none of those blind spots. It also
+ * guarantees a head element to put the runtime in.
+ *
+ * Nothing executes while a document is parsed this way; it stays inert until
+ * the sandbox frame loads the serialised result.
  */
-export function rewriteArtifactCdnReferences(
+function rewriteGeneratedHtml(
   html: string,
   sources: Record<string, string>,
-  missing: string[] = []
+  prelude: string[],
+  missing: string[]
 ): string {
-  const drop = (url: string): string | null => {
-    if (!/^(?:https?:)?\/\//i.test(url)) return null;
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+  const note = (text: string) => parsed.createComment(` ${text} `);
 
-    // The same resolver the bundle list is built from, so a tag can never be
-    // called missing while its bundle was available.
+  const localBundleFor = (url: string): string | null => {
     const bundle = artifactCdnBundle(url);
-
-    if (bundle && sources[bundle]) {
-      // The bundle is already in the document head; loading it again would
-      // give Three.js, in particular, a second copy of itself.
-      return `<!-- ${bundle} is provided by the local runtime -->`;
-    }
-
-    // Nothing local stands in for this one, and the frame cannot fetch it.
-    missing.push(url);
-    return `<!-- unavailable offline: ${escapeArtifactHtml(url)} -->`;
+    return bundle && sources[bundle] ? bundle : null;
   };
 
-  const withScripts = html.replace(
-    SCRIPT_TAG_PATTERN,
-    (tag, attributes: string) => {
-      const url = attributeValue(attributes, 'src');
-      return url ? (drop(url) ?? tag) : tag;
-    }
-  );
+  for (const script of [...parsed.querySelectorAll('script')]) {
+    const type = (script.getAttribute('type') ?? '').trim().toLowerCase();
+    const src = script.getAttribute('src');
 
-  // External stylesheets cannot load either — a Google Fonts link is the
-  // usual one — so they get the same treatment: replaced by the local
-  // equivalent where one exists, and named where none does.
-  return withScripts.replace(LINK_TAG_PATTERN, (tag, attributes: string) => {
-    const rel = (attributeValue(attributes, 'rel') ?? '').toLowerCase();
-    if (/preconnect|dns-prefetch|icon|manifest/.test(rel)) return tag;
-
-    const url = attributeValue(attributes, 'href');
-    if (!url) return tag;
-    if (!rel.includes('stylesheet') && !/\.css|fonts\.googleapis/i.test(url)) {
-      return tag;
+    if (type === 'importmap') {
+      script.replaceWith(
+        note('import map removed: modules resolve from the local runtime')
+      );
+      continue;
     }
 
-    return drop(url) ?? tag;
-  });
+    if (src) {
+      const bundle = localBundleFor(src);
+      if (bundle) {
+        // Already in the head; loading it again would give Three.js, in
+        // particular, a second copy of itself.
+        script.replaceWith(note(`${bundle} is provided by the local runtime`));
+      } else if (isExternalUrl(src)) {
+        missing.push(src);
+        script.replaceWith(note(`unavailable offline: ${src}`));
+      }
+      continue;
+    }
+
+    if (COMPILED_SCRIPT_TYPES.has(type)) {
+      // Compiled by the runtime, so its imports resolve from the registry
+      // rather than the network.
+      const compiled = parsed.createElement('script');
+      compiled.textContent = `window.${ARTIFACT_RUNTIME_GLOBAL}.runInline(${jsStringLiteral(
+        script.textContent ?? ''
+      )});`;
+      script.replaceWith(compiled);
+    }
+  }
+
+  for (const link of [...parsed.querySelectorAll('link')]) {
+    const rel = (link.getAttribute('rel') ?? '').toLowerCase();
+    if (/preconnect|dns-prefetch|icon|manifest/.test(rel)) continue;
+
+    const href = link.getAttribute('href');
+    if (!href) continue;
+    if (!rel.includes('stylesheet') && !/\.css|fonts\.googleapis/i.test(href)) {
+      continue;
+    }
+
+    const bundle = localBundleFor(href);
+    if (bundle) {
+      link.replaceWith(note(`${bundle} is provided by the local runtime`));
+    } else if (isExternalUrl(href)) {
+      missing.push(href);
+      link.replaceWith(note(`unavailable offline: ${href}`));
+    }
+  }
+
+  // The runtime goes first, ahead of the artifact's own scripts, so a library
+  // is ready whichever order the generated tags happened to be in.
+  const head = parsed.head;
+  const preludeSources = [
+    ...prelude,
+    missing.length ? missingLibraryNotice(missing) : '',
+  ].filter(Boolean);
+
+  for (const source of [...preludeSources].reverse()) {
+    const element = parsed.createElement('script');
+    element.textContent = source;
+    head.insertBefore(element, head.firstChild);
+  }
+
+  return `<!DOCTYPE html>${parsed.documentElement.outerHTML}`;
 }
 
 const missingLibraryNotice = (urls: string[]): string => {
@@ -411,21 +374,12 @@ export function composeArtifactSandboxDocument(
     return runtimeDocument(title, content, ordered, 'runMermaid', options);
   }
   const missing: string[] = [];
-  const compiled = compileInlineScripts(
-    buildHtmlArtifactDocument(content, title)
+  return rewriteGeneratedHtml(
+    buildHtmlArtifactDocument(content, title),
+    sources,
+    [ARTIFACT_STORAGE_SHIM, ...ordered],
+    missing
   );
-  const html = rewriteArtifactCdnReferences(compiled, sources, missing);
-
-  // Everything the document needs goes in the head, ahead of the artifact's
-  // own scripts, so a library is ready whichever order the generated tags
-  // happened to be in.
-  const prelude = [
-    scriptTag(ARTIFACT_STORAGE_SHIM),
-    ...ordered.map(scriptTag),
-    missing.length ? scriptTag(missingLibraryNotice(missing)) : '',
-  ].join('');
-
-  return injectDocumentPrelude(html, prelude);
 }
 
 /** Loads whatever the artifact needs, then composes its document. */
