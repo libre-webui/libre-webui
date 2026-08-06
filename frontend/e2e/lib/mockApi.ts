@@ -924,7 +924,10 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       send(rawMessage: string) {
         let message: {
           type?: string;
-          data?: { assistantMessageId?: string };
+          data?: {
+            assistantMessageId?: string;
+            options?: Record<string, unknown>;
+          };
         };
 
         try {
@@ -934,6 +937,10 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         }
 
         if (message.type !== 'chat_stream') return;
+
+        // Recorded so a test can assert what the client actually sends.
+        const sent = window as unknown as Record<string, unknown>;
+        ((sent.__libreChatStreams ||= []) as unknown[]).push(message.data);
 
         const messageId = message.data?.assistantMessageId;
         if (!messageId) return;

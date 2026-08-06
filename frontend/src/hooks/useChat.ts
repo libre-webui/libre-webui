@@ -52,7 +52,7 @@ export const useChat = (sessionId: string) => {
     applySessionTitle,
     setGeneratingTitleForSession,
   } = useChatStore();
-  const { setIsGenerating, preferences } = useAppStore();
+  const { setIsGenerating } = useAppStore();
   const streamingMessageIdRef = useRef<string | null>(null);
 
   // Track the first user message for auto-title generation
@@ -536,10 +536,10 @@ export const useChat = (sessionId: string) => {
             content: content.trim(),
             images: images,
             format: format,
-            options: {
-              ...preferences.generationOptions,
-              ...session?.settings?.generationOptions,
-            },
+            // Only this chat's own overrides. The global settings are applied
+            // by the server, which also knows what the model recommends and
+            // what was pinned for it — sending them here would outrank both.
+            options: session?.settings?.generationOptions ?? {},
             assistantMessageId, // Send the message ID to backend
             isPrivate: isPrivateSession, // Private sessions don't persist to DB
             ...(isPrivateSession
@@ -570,7 +570,6 @@ export const useChat = (sessionId: string) => {
       setIsGenerating,
       resetVisibleStreamingMessage,
       maybeGenerateTitle,
-      preferences.generationOptions,
     ]
   );
 
@@ -686,10 +685,7 @@ export const useChat = (sessionId: string) => {
           sessionId,
           content: lastUserMessage.content,
           images: lastUserMessage.images,
-          options: {
-            ...preferences.generationOptions,
-            ...session.settings?.generationOptions,
-          },
+          options: session.settings?.generationOptions ?? {},
           assistantMessageId: newBranchMessageId,
           regenerate: true,
           originalMessageId: lastAssistantMessage.id, // For branching
@@ -714,13 +710,7 @@ export const useChat = (sessionId: string) => {
       streamingThinkingRef.current = '';
       toast.error('Failed to regenerate message');
     }
-  }, [
-    sessionId,
-    setIsGenerating,
-    resetVisibleStreamingMessage,
-    addMessage,
-    preferences.generationOptions,
-  ]);
+  }, [sessionId, setIsGenerating, resetVisibleStreamingMessage, addMessage]);
 
   // Select a specific branch by message ID (for side-by-side UI)
   const selectBranch = useCallback(
