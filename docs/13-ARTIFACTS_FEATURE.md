@@ -95,15 +95,15 @@ feature policy allows clipboard access, fullscreen, and gamepad input.
 Generated artifacts assume libraries are available. Rather than let them reach
 a CDN, the application vendors what they ask for:
 
-| Available to artifacts                                         | How it is reached                   |
-| -------------------------------------------------------------- | ----------------------------------- |
-| React, ReactDOM, Framer Motion                                 | `import ... from 'react'`           |
-| JSX and TSX                                                    | compiled in the frame by Babel      |
-| Tailwind utilities                                             | generated from the markup, no build |
-| Recharts, Chart.js, Plotly, D3                                 | `import ... from '<name>'`          |
-| Three.js with its controls, loaders and post-processing addons | `THREE.OrbitControls`, or by import |
-| Lucide icons, Lodash, MathJS, Papa Parse, SheetJS, Tone.js     | `import ... from '<name>'`          |
-| Mermaid                                                        | `mermaid` artifacts, or by import   |
+| Available to artifacts                                        | How it is reached                   |
+| ------------------------------------------------------------- | ----------------------------------- |
+| React, ReactDOM, Framer Motion                                | `import ... from 'react'`           |
+| JSX and TSX                                                   | compiled in the frame by Babel      |
+| Tailwind utilities                                            | generated from the markup, no build |
+| Recharts, Chart.js, Plotly, D3                                | `import ... from '<name>'`          |
+| Three.js with controls, loaders, environments and more addons | `THREE.OrbitControls`, or by import |
+| Lucide icons, Lodash, MathJS, Papa Parse, Tone.js             | `import ... from '<name>'`          |
+| Mermaid                                                       | `mermaid` artifacts, or by import   |
 
 An artifact that reaches for a library outside this set gets a notice naming
 it, rather than a blank preview and a policy error in the console.

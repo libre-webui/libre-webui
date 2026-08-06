@@ -102,10 +102,30 @@ const artifactRuntimeHeaders = () => ({
   },
 });
 
+/** The artifact runtime build stamp, or a placeholder before it is built. */
+const artifactRuntimeFingerprint = (): string => {
+  try {
+    return readFileSync(
+      path.resolve(__dirname, 'public/artifact-runtime/.build-fingerprint'),
+      'utf-8'
+    )
+      .trim()
+      .slice(0, 16);
+  } catch {
+    return 'dev';
+  }
+};
+
 export default defineConfig({
   plugins: [react(), artifactRuntimeHeaders()],
   base: isElectron ? './' : '/',
   define: {
+    // Identifies the artifact runtime build, so a cached bundle from an
+    // earlier release cannot answer for the current one. Read from the stamp
+    // the runtime build writes rather than kept in a generated source file.
+    __ARTIFACT_RUNTIME_FINGERPRINT__: JSON.stringify(
+      artifactRuntimeFingerprint()
+    ),
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
     __LATEST_RELEASE_NOTES__: JSON.stringify(getLatestReleaseNotes()),
   },
