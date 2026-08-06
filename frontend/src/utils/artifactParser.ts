@@ -51,6 +51,9 @@ interface ParsedBundle {
 }
 
 const CODE_FENCE_REGEX = /```([^\n`]*)\n([\s\S]*?)\n```/g;
+/** Opening keyword of a Mermaid diagram, which is how one is recognised. */
+const MERMAID_DIAGRAM_PATTERN =
+  /^(?:%%|flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|gitGraph|quadrantChart|requirementDiagram|sankey-beta|xychart-beta|block-beta|architecture-beta|packet-beta|kanban|radar-beta|treemap-beta|C4Context)\b/i;
 const FILE_NAME_PATTERN =
   /[\w@./-]+\.(?:html?|css|mjs|js|jsx|ts|tsx|svg|json|py)/i;
 const VALID_ARTIFACT_TYPES: Artifact['type'][] = [
@@ -192,17 +195,43 @@ function extractTitle(htmlContent: string): string | null {
  * Extract component name from React/JSX content.
  */
 function extractComponentName(jsxContent: string): string | null {
-  const functionMatch = jsxContent.match(/(?:function|const)\s+(\w+)/);
-  if (functionMatch) {
-    return functionMatch[1];
-  }
+  // The entry component names the artifact, so the exported one wins over
+  // whatever happens to be declared first.
+  const patterns = [
+    /export\s+default\s+(?:function|class)\s+([A-Z]\w*)/,
+    /export\s+default\s+([A-Z]\w*)\s*(?:;|$)/m,
+    /(?:function|class)\s+([A-Z]\w*)/,
+    /const\s+([A-Z]\w*)\s*[:=]/,
+    /(?:function|const|class)\s+(\w+)/,
+  ];
 
-  const classMatch = jsxContent.match(/class\s+(\w+)/);
-  if (classMatch) {
-    return classMatch[1];
+  for (const pattern of patterns) {
+    const match = jsxContent.match(pattern);
+    if (match) {
+      return match[1];
+    }
   }
 
   return null;
+}
+
+/**
+ * Name a Mermaid diagram from its own title directive, falling back to the
+ * kind of diagram it is.
+ */
+function extractMermaidTitle(diagram: string): string | null {
+  const titled = diagram.match(/^\s*title\s+(.+)$/im);
+  if (titled) {
+    return titled[1].trim();
+  }
+
+  const kind = diagram.trim().match(/^([A-Za-z][\w-]*)/);
+  if (!kind) return null;
+
+  const label = kind[1]
+    .replace(/-(?:beta|v2)$/i, '')
+    .replace(/([a-z])([A-Z])/g, '$1 $2');
+  return `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
 }
 
 /**
@@ -430,6 +459,12 @@ function getFenceArtifactDefinition(
           titleFromFileName(fence.fileName) ||
           'React Component',
         language: 'jsx',
+      };
+    case 'mermaid':
+      return {
+        type: 'mermaid',
+        title: extractMermaidTitle(fence.content) || 'Diagram',
+        language: 'mermaid',
       };
     case 'json':
       return {
@@ -665,7 +700,19 @@ function shouldBeArtifact(content: string, type: Artifact['type']): boolean {
   }
 
   if (type === 'react') {
-    return /<[A-Z][^>]*>/.test(content) || /return\s*\(/.test(content);
+    // A component is worth previewing as soon as it renders markup and has an
+    // entry point, however it is written: a returned element with or without
+    // parentheses, an arrow body, or a default export.
+    return (
+      /<[A-Za-z][^>]*>/.test(content) &&
+      /\b(?:export\s+default|return\s*[(<]|=>\s*[(<]|createRoot|render\s*\()/.test(
+        content
+      )
+    );
+  }
+
+  if (type === 'mermaid') {
+    return MERMAID_DIAGRAM_PATTERN.test(content.trim());
   }
 
   if (type === 'json') {

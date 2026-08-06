@@ -41,6 +41,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { createServer } from 'http';
+import { join as pathJoin } from 'path';
+import { readFileSync } from 'fs';
+import { createHash } from 'crypto';
 
 import {
   errorHandler,
@@ -70,6 +73,7 @@ import huggingfaceHubRoutes from './routes/huggingfaceHub.js';
 import libreClawRoutes from './routes/libreClaw.js';
 import workRoutes from './routes/work.js';
 import systemDiagnosticsRoutes from './routes/systemDiagnostics.js';
+import artifactsRoutes from './routes/artifacts.js';
 import ollamaService from './services/ollamaService.js';
 import workRuntimeService from './services/workRuntimeService.js';
 import workTaskService from './services/workTaskService.js';
@@ -180,6 +184,40 @@ const corsConfig = {
   },
 };
 
+/**
+ * Hashes of the inline scripts in the served page.
+ *
+ * The application ships one: a few lines in index.html that apply the saved
+ * theme before React mounts, so a light-mode user does not see a dark flash.
+ * A strict policy blocks it, which is why every page load has been logging a
+ * violation. Hashing the file that is actually served keeps the allowance
+ * exact and impossible to drift from the build.
+ */
+const inlineScriptHashes = (): string[] => {
+  const frontendPath = resolveFrontendDist(import.meta.url);
+  if (!frontendPath) return [];
+
+  try {
+    const html = readFileSync(pathJoin(frontendPath, 'index.html'), 'utf8');
+    const inline = [
+      ...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi),
+    ];
+
+    return inline
+      .map(match => match[1])
+      .filter(source => source.trim().length > 0)
+      .map(
+        source =>
+          `'sha256-${createHash('sha256').update(source, 'utf8').digest('base64')}'`
+      );
+  } catch {
+    // No built frontend to read; nothing to allow.
+    return [];
+  }
+};
+
+const INLINE_SCRIPT_HASHES = inlineScriptHashes();
+
 // Security middleware
 app.use(
   helmet({
@@ -194,6 +232,9 @@ app.use(
         scriptSrc: [
           "'self'",
           'https://challenges.cloudflare.com',
+          // The theme script in index.html, allowed by hash rather than by
+          // opening the policy to inline script.
+          ...INLINE_SCRIPT_HASHES,
           ...(process.env.NODE_ENV === 'production'
             ? [] // Strict in production
             : ["'unsafe-inline'", "'unsafe-eval'"]), // Allow for dev tools
@@ -201,7 +242,8 @@ app.use(
         styleSrc: [
           "'self'",
           "'unsafe-inline'", // Required for styled-components and CSS-in-JS
-          'https://fonts.googleapis.com',
+          // No font CDN: Inter is vendored into the frontend bundle, so the
+          // browser never needs to reach a third-party host for a stylesheet.
         ],
         imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
         connectSrc: [
@@ -224,7 +266,7 @@ app.use(
               ]
             : []),
         ],
-        fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+        fontSrc: ["'self'", 'data:'],
         mediaSrc: ["'self'", 'data:', 'blob:'],
         objectSrc: ["'none'"],
         frameSrc: ["'self'", 'https://challenges.cloudflare.com'],
@@ -259,6 +301,31 @@ app.use(
     xssFilter: true,
   })
 );
+
+// The artifact sandbox runs on an opaque origin, so it fetches the vendored
+// runtime with `Origin: null` and, because module scripts are always fetched
+// in CORS mode, needs an explicit grant. This is mounted ahead of the
+// application CORS gate, which would reject that origin, and serves nothing
+// but uncredentialed static bundles.
+{
+  const runtimeRoot = resolveFrontendDist(import.meta.url);
+  if (runtimeRoot) {
+    app.use(
+      '/artifact-runtime',
+      express.static(pathJoin(runtimeRoot, 'artifact-runtime'), {
+        setHeaders: res => {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+          // Revalidate every time. These files change with each release but
+          // keep the same paths, and a cached copy from before an update
+          // leaves artifacts running against a runtime that no longer matches
+          // the application. The ETag makes an unchanged file a 304.
+          res.setHeader('Cache-Control', 'no-cache');
+        },
+      })
+    );
+  }
+}
 
 // CORS configuration
 app.use(
@@ -490,6 +557,7 @@ app.use('/api/huggingface-hub', huggingfaceHubRoutes);
 app.use('/api/libre-claw', libreClawRateLimiter, libreClawRoutes);
 app.use('/api/work', workRateLimiter, workRoutes);
 app.use('/api/system', systemDiagnosticsRoutes);
+app.use('/api/artifacts', artifactsRoutes);
 
 // Serve frontend static files in production (for npx libre-webui)
 if (

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Code,
@@ -32,16 +32,21 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
+import { ArtifactSandboxFrame } from '@/components/ArtifactSandboxFrame';
 import { useAppStore } from '@/store/appStore';
 import { Artifact } from '@/types';
 import {
   buildHtmlArtifactDocument,
   buildSvgArtifactDocument,
-  HTML_ARTIFACT_ALLOW,
-  HTML_ARTIFACT_SANDBOX,
-  openHtmlArtifactPreview,
+  openArtifactPreviewWindow,
   SVG_ARTIFACT_SANDBOX,
 } from '@/utils/artifactHtml';
+import { ARTIFACT_SANDBOX_URL } from '@/utils/artifactSandbox';
+import {
+  artifactSandboxKind,
+  buildArtifactSandboxDocument,
+  type ArtifactSandboxKind,
+} from '@/utils/artifactRuntimeDocument';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 
@@ -59,7 +64,6 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const { theme, openArtifactPanel } = useAppStore();
 
   const copyToClipboard = async (text: string) => {
@@ -165,21 +169,34 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     </div>
   );
 
-  const renderHtml = () => {
+  // The runtime is inlined into the document, so preparing it is asynchronous.
+  const openArtifactWindow = async () => {
+    try {
+      const document = await buildArtifactSandboxDocument(
+        artifactSandboxKind(artifact.type) ?? 'html',
+        artifact.content,
+        artifact.title,
+        { colorScheme: theme.mode === 'dark' ? 'dark' : 'light' }
+      );
+      openArtifactPreviewWindow(document, ARTIFACT_SANDBOX_URL, artifact.title);
+    } catch (error) {
+      logger.error('Failed to open the artifact preview:', error);
+    }
+  };
+
+  const renderSandbox = (kind: ArtifactSandboxKind) => {
     if (!artifact.content.trim()) {
       return renderHtmlFallback();
     }
 
     return (
-      <iframe
-        ref={iframeRef}
-        data-testid='artifact-html-preview'
-        srcDoc={buildHtmlArtifactDocument(artifact.content, artifact.title)}
-        className='w-full h-64 sm:h-80 lg:h-96 border-0 rounded-lg'
-        sandbox={HTML_ARTIFACT_SANDBOX}
-        allow={HTML_ARTIFACT_ALLOW}
-        allowFullScreen
+      <ArtifactSandboxFrame
+        content={artifact.content}
         title={artifact.title}
+        kind={kind}
+        colorScheme={theme.mode === 'dark' ? 'dark' : 'light'}
+        className='w-full h-64 sm:h-80 lg:h-96 border-0 rounded-lg'
+        fallback={renderHtmlFallback()}
       />
     );
   };
@@ -269,7 +286,11 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     // Otherwise show the rendered preview
     switch (artifact.type) {
       case 'html':
-        return renderHtml();
+        return renderSandbox('html');
+      case 'react':
+        return renderSandbox('react');
+      case 'mermaid':
+        return renderSandbox('mermaid');
       case 'svg':
         return renderSvg();
       case 'json':
@@ -286,7 +307,8 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     return (
       artifact.type === 'html' ||
       artifact.type === 'svg' ||
-      artifact.type === 'react'
+      artifact.type === 'react' ||
+      artifact.type === 'mermaid'
     );
   };
 
@@ -473,13 +495,11 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
           {new Date(artifact.createdAt).toLocaleString()}
         </div>
 
-        {(artifact.type === 'html' || artifact.type === 'react') && (
+        {artifactSandboxKind(artifact.type) && (
           <Button
             variant='ghost'
             size='sm'
-            onClick={() =>
-              openHtmlArtifactPreview(artifact.content, artifact.title)
-            }
+            onClick={() => openArtifactWindow()}
             className='text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
           >
             <ExternalLink className='h-3 w-3 mr-1' />

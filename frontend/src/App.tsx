@@ -59,7 +59,7 @@ import { BackgroundRenderer } from '@/components/BackgroundRenderer';
 import { AppTabBar } from '@/components/AppTabBar';
 import { startNewChat, startNewWork } from '@/utils/appNavigation';
 import { CommandPalette } from '@/components/CommandPalette';
-import { Logo } from '@/components/Logo';
+import { LogoMark } from '@/components/LogoMark';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useInitializeApp } from '@/hooks/useInitializeApp';
@@ -456,7 +456,7 @@ const AppContent: React.FC = () => {
       <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
         <div className='sm:mx-auto sm:w-full sm:max-w-md'>
           <div className='flex flex-col items-center'>
-            <Logo className='text-gray-900 dark:text-gray-100' />
+            <LogoMark size='lg' className='text-gray-900 dark:text-gray-100' />
           </div>
         </div>
 
@@ -473,7 +473,10 @@ const AppContent: React.FC = () => {
       <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex items-center justify-center p-4'>
         <div className='text-center'>
           <div className='mb-8'>
-            <Logo className='text-gray-900 dark:text-white' />
+            <LogoMark
+              size='lg'
+              className='mx-auto text-gray-900 dark:text-white'
+            />
           </div>
           <div className='flex justify-center mb-4'>
             <div className='w-8 h-8 border-4 border-gray-300 dark:border-dark-300 border-t-primary-500 dark:border-t-primary-400 rounded-full animate-spin'></div>

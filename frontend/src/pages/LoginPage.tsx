@@ -23,6 +23,7 @@ import { useAuthStore } from '@/store/authStore';
 import { LoginForm } from '@/components/LoginForm';
 import { SignupForm } from '@/components/SignupForm';
 import { Logo } from '@/components/Logo';
+import { LogoMark } from '@/components/LogoMark';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { resolveAppVersion } from '@/utils/appVersion';
 
@@ -80,13 +81,19 @@ export const LoginPage: React.FC = () => {
   return (
     <div className='relative min-h-screen overflow-y-auto bg-canvas text-ink'>
       <header className='absolute inset-x-0 top-0 z-10 flex h-14 items-center justify-between px-5 sm:px-8'>
-        <Logo size='sm' className='text-ink lg:invisible' />
+        <div className='flex items-center gap-2 text-ink lg:invisible'>
+          <LogoMark size='sm' label={null} />
+          <Logo size='sm' />
+        </div>
         <ThemeToggle />
       </header>
 
       <main className='grid min-h-screen lg:grid-cols-2'>
         <section className='relative hidden flex-col justify-between border-e border-line bg-surface px-10 py-12 lg:flex xl:px-16'>
-          <Logo size='lg' className='relative z-10 text-ink' />
+          <div className='relative z-10 flex items-center gap-3.5 text-ink'>
+            <LogoMark size='lg' label={null} />
+            <Logo size='lg' />
+          </div>
 
           <div className='relative z-10 max-w-lg'>
             <p className='text-[2.6rem] font-light leading-[1.05] tracking-[-0.04em] text-ink xl:text-5xl'>

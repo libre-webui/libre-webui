@@ -1,104 +1,67 @@
-# Dependencies
+# Dependencies and package manager state
 node_modules/
 */node_modules/
+.npm
+.yarn-integrity
 
-# Build outputs
-dist/
-build/
-*/dist/
-*/build/
-
-# Environment variables
+# Environment and local configuration
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Logs
+# Build and package outputs
+dist/
+build/
+*/dist/
+*/build/
+dist-electron/
+*.tgz
+homebrew/generated/
+
+# Build tool caches
+*.tsbuildinfo
+.cache
+.parcel-cache
+.vite/
+
+# Test output
+test-results/
+playwright-report/
+
+# Logs and local histories
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 */.dev.log
-*.log
+.node_repl_history
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-*.json.backup
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Session data
+# Runtime state and user data
 sessions.json
-
-# User preferences (generated at runtime)
 preferences.json
-
-# Documents and chunks data
 documents.json
 document-chunks.json
-
-# SQLite database (user data)
+.status.json
 data.sqlite
 *.sqlite
 *.db
+*.json.backup
 
-# Plugin status file
-.status.json
-
-# TypeScript
-*.tsbuildinfo
-
-# Playwright
-test-results/
-playwright-report/
-
-# Optional npm cache directory
-.npm
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-homebrew/generated/
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Vite
-.vite/
-
-# Installed plugins & backend data
+# Installed plugins and backend data
 backend/plugins/*
 backend/documents.json
 backend/document-chunks.json
 backend/data.sqlite.backup
 backend/backend/data/data.sqlite-shm
 backend/backend/data/data.sqlite-wal
+backend/data/data.sqlite-shm
+backend/data/data.sqlite-wal
 
-# Electron build output
-dist-electron/
+# Electron-generated assets
 electron/assets/icon.iconset/
 electron/assets/icons/
 electron/assets/*.icns
@@ -107,18 +70,40 @@ electron/assets/*.png
 electron/assets/*.tiff
 !electron/assets/icon.svg
 !electron/assets/dmg-art.png
-.claude/
-backend/data/data.sqlite-shm
-backend/data/data.sqlite-wal
 
-# Python
+# Python environments and bytecode
 venv/
+examples/qwen-tts-server/venv/
 __pycache__/
 *.py[cod]
 .Python
-examples/qwen-tts-server/venv/
+
+# Editors and local AI tooling
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+*~
+
+# Operating system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Local development overrides
 docker-compose.dev.external-ollama.watchtower.yml
 plugins/openclaw-agent.json
 
 # Local Codex instructions
 /AGENTS.md
+
+# Local security audit (contains deployment-sensitive findings)
+/PRIVATE_DEPLOYMENT_SECURITY_AUDIT.md
+
+# Built artifact runtime bundles (vendored libraries for the artifact sandbox)
+frontend/public/artifact-runtime/

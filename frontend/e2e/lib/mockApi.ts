@@ -537,6 +537,9 @@ const json = <T>(data: T, success = true): ApiEnvelope<T> => ({
   data,
 });
 
+/** Origins the suite serves the application (and the artifact runtime) from. */
+const APP_ORIGINS = "'self' http://127.0.0.1:4173 http://localhost:4173";
+
 const fulfillJson = async <T>(route: Route, data: T, success = true) => {
   await route.fulfill({
     status: success ? 200 : 500,
@@ -556,7 +559,13 @@ const fulfillApiError = async (route: Route, status: number, error: string) => {
 export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   if (!options.showWhatsNew && latestReleaseVersion) {
     await page.addInitScript(version => {
-      localStorage.setItem('libre-webui:whats-new-seen', version);
+      // Init scripts run in every frame, including the sandboxed artifact
+      // frame, where touching storage throws and would surface as a page error.
+      try {
+        localStorage.setItem('libre-webui:whats-new-seen', version);
+      } catch {
+        // No storage in an opaque origin; nothing to remember there anyway.
+      }
     }, latestReleaseVersion);
   }
 
@@ -1034,6 +1043,63 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
 <html>
   <head><title>Work preview</title><script type="module" src="preview-module.js"></script></head>
   <body><main data-testid="mock-work-preview">Isolated Work preview</main></body>
+</html>`,
+        });
+        return;
+      }
+
+      // Mirrors backend/src/routes/artifacts.ts: the host document that HTML
+      // artifact previews load instead of inheriting the page's CSP through
+      // srcdoc. Keep the messaging contract in step with the real route.
+      if (path === '/artifacts/sandbox' && method === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/html; charset=utf-8',
+          headers: {
+            'Content-Security-Policy': [
+              "default-src 'none'",
+              // Mirrors the real route: the frame loads nothing over the
+              // network, so no origin appears in the policy at all.
+              "script-src 'unsafe-inline' 'unsafe-eval' blob:",
+              "style-src 'unsafe-inline' blob:",
+              'img-src data: blob:',
+              'font-src data:',
+              'connect-src data: blob:',
+              'frame-src blob: data:',
+              'worker-src blob:',
+              `frame-ancestors ${APP_ORIGINS}`,
+              'sandbox allow-scripts allow-forms allow-modals allow-popups allow-pointer-lock allow-downloads',
+            ].join('; '),
+          },
+          body: `<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="UTF-8" /><title>Artifact preview</title>
+    <style>html, body { height: 100%; margin: 0; } iframe { display: block; width: 100%; height: 100%; border: 0; }</style>
+  </head>
+  <body>
+    <script>
+      (function () {
+        var host = window.parent;
+        if (!host || host === window) return;
+        var frame = null;
+        window.addEventListener('message', function (event) {
+          if (event.source !== host) return;
+          var data = event.data;
+          if (!data || data.type !== 'libre-artifact:render') return;
+          if (typeof data.html !== 'string') return;
+          if (!frame) {
+            frame = document.createElement('iframe');
+            frame.setAttribute('allow', 'clipboard-read; clipboard-write; fullscreen; gamepad');
+            frame.setAttribute('allowfullscreen', '');
+            frame.setAttribute('title', 'Artifact');
+            document.body.appendChild(frame);
+          }
+          frame.srcdoc = data.html;
+        });
+        host.postMessage({ type: 'libre-artifact:ready' }, '*');
+      })();
+    </script>
+  </body>
 </html>`,
         });
         return;

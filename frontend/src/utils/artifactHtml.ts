@@ -23,6 +23,54 @@ export const SVG_ARTIFACT_SANDBOX = '';
 export const HTML_ARTIFACT_ALLOW =
   'clipboard-read; clipboard-write; fullscreen; gamepad';
 
+/**
+ * Handshake with the backend-served sandbox host. The host announces itself
+ * once it is listening, and artifact markup is delivered as a message rather
+ * than as `srcdoc`, which would inherit the application's Content Security
+ * Policy and block the inline scripts artifacts are made of.
+ */
+export const ARTIFACT_SANDBOX_READY = 'libre-artifact:ready';
+export const ARTIFACT_SANDBOX_RENDER = 'libre-artifact:render';
+
+/**
+ * The sandbox host has an opaque origin, so its messages arrive with a `null`
+ * origin and can only be attributed by window identity.
+ */
+export function isArtifactSandboxReady(
+  event: MessageEvent,
+  frame: HTMLIFrameElement | null
+): boolean {
+  if (!frame || event.source !== frame.contentWindow) return false;
+
+  // The host is sandboxed without allow-same-origin, so it always reports an
+  // opaque origin. Window identity is the real check — an unrelated page
+  // cannot obtain this frame's window — but the origin is verified too.
+  const origin = event.origin;
+  const expected =
+    typeof window === 'undefined' ? undefined : window.location?.origin;
+  if (
+    typeof origin === 'string' &&
+    origin !== '' &&
+    origin !== 'null' &&
+    origin !== expected
+  ) {
+    return false;
+  }
+
+  const data = event.data as { type?: unknown } | null;
+  return Boolean(data) && data?.type === ARTIFACT_SANDBOX_READY;
+}
+
+export function postArtifactDocument(
+  frame: HTMLIFrameElement | null,
+  html: string
+): void {
+  frame?.contentWindow?.postMessage(
+    { type: ARTIFACT_SANDBOX_RENDER, html },
+    '*'
+  );
+}
+
 const DEFAULT_FRAGMENT_STYLE = `
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -110,9 +158,15 @@ export function buildSvgArtifactDocument(
 </html>`;
 }
 
-export function openHtmlArtifactPreview(
-  content: string,
-  title = 'HTML Artifact'
+/**
+ * Opens an artifact in its own window. The document is composed by the caller
+ * so that every artifact kind — plain HTML, React, Mermaid — reaches the same
+ * sandbox host the inline preview uses.
+ */
+export function openArtifactPreviewWindow(
+  html: string,
+  sandboxUrl: string,
+  title = 'Artifact'
 ): Window | null {
   const previewWindow = window.open('', '_blank');
   if (!previewWindow) return null;
@@ -131,12 +185,17 @@ export function openHtmlArtifactPreview(
 
   const iframe = document.createElement('iframe');
   iframe.title = title;
-  iframe.srcdoc = buildHtmlArtifactDocument(content, title);
+  iframe.src = sandboxUrl;
   iframe.setAttribute('sandbox', HTML_ARTIFACT_SANDBOX);
   iframe.setAttribute('allow', HTML_ARTIFACT_ALLOW);
   iframe.style.width = '100%';
   iframe.style.height = '100%';
   iframe.style.border = '0';
+
+  previewWindow.addEventListener('message', (event: MessageEvent) => {
+    if (!isArtifactSandboxReady(event, iframe)) return;
+    postArtifactDocument(iframe, html);
+  });
   document.body.appendChild(iframe);
 
   return previewWindow;
@@ -173,8 +232,11 @@ function ensurePreviewHeadTags(htmlContent: string, title: string): string {
 }
 
 function injectAfterHeadOpen(htmlContent: string, payload: string): string {
-  if (/<head[^>]*>/i.test(htmlContent)) {
-    return htmlContent.replace(/<head([^>]*)>/i, `<head$1>${payload}`);
+  // The whitespace is required: `<head[^>]*>` also matches `<header>`, which
+  // would move these tags into the body.
+  const headOpen = /<head(\s[^>]*)?>/i;
+  if (headOpen.test(htmlContent)) {
+    return htmlContent.replace(headOpen, match => `${match}${payload}`);
   }
 
   return `${payload}\n${htmlContent}`;
@@ -201,6 +263,10 @@ function injectBeforeBodyClose(htmlContent: string, payload: string): string {
   }
 
   return `${htmlContent}${payload}`;
+}
+
+export function escapeArtifactHtml(value: string): string {
+  return escapeHtml(value);
 }
 
 function escapeHtml(value: string): string {

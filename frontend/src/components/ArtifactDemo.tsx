@@ -154,6 +154,80 @@ const SAMPLE_ARTIFACTS: Artifact[] = [
     updatedAt: Date.now(),
   },
   {
+    id: 'demo-react-1',
+    type: 'react',
+    title: 'Revenue Dashboard',
+    description: 'A React component using Tailwind, Recharts and Lucide icons',
+    content: `import { useState } from 'react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { TrendingUp } from 'lucide-react';
+
+const data = [
+  { month: 'Jan', revenue: 4200 },
+  { month: 'Feb', revenue: 5100 },
+  { month: 'Mar', revenue: 4800 },
+  { month: 'Apr', revenue: 6300 },
+  { month: 'May', revenue: 7400 },
+  { month: 'Jun', revenue: 8100 },
+];
+
+export default function RevenueDashboard() {
+  const [highlight, setHighlight] = useState(false);
+  const total = data.reduce((sum, point) => sum + point.revenue, 0);
+
+  return (
+    <div className="p-6 font-sans">
+      <div className="flex items-center gap-2 mb-1">
+        <TrendingUp className="w-5 h-5 text-emerald-600" />
+        <h2 className="text-xl font-semibold text-slate-900">Revenue</h2>
+      </div>
+      <p id="total" className="text-sm text-slate-500 mb-4">
+        \${total.toLocaleString()} over six months
+      </p>
+      <div className="h-56 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
+            <YAxis stroke="#94a3b8" fontSize={12} />
+            <Tooltip />
+            <Line
+              type="monotone"
+              dataKey="revenue"
+              stroke={highlight ? '#059669' : '#2563eb'}
+              strokeWidth={2}
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      <button
+        id="toggle"
+        onClick={() => setHighlight(value => !value)}
+        className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+      >
+        {highlight ? 'Reset colour' : 'Highlight growth'}
+      </button>
+    </div>
+  );
+}`,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+  {
+    id: 'demo-mermaid-1',
+    type: 'mermaid',
+    title: 'Request Flow',
+    description: 'A Mermaid diagram rendered in the sandbox',
+    content: `flowchart LR
+  User[Browser] --> Sandbox[Artifact sandbox]
+  Sandbox --> Runtime[Vendored runtime]
+  Runtime --> Render[Rendered artifact]
+  Sandbox -.-> Internet((Internet))
+  linkStyle 3 stroke-dasharray: 4, stroke: #dc2626`,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+  {
     id: 'demo-svg-1',
     type: 'svg',
     title: 'Animated SVG Logo',

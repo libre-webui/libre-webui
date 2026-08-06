@@ -1,3 +1,9 @@
+/* Inter is vendored into public/fonts/ rather than loaded from a font CDN, so
+   no page load sends a user's IP to a third party. It was declared in the font
+   stack but never loaded, so the interface fell back to system fonts.
+   See scripts/vendor-inter.mjs. */
+@import '/fonts/inter.css';
+
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';

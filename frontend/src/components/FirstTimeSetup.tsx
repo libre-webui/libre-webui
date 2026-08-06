@@ -34,6 +34,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
+import { LogoMark } from '@/components/LogoMark';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 import { createLogger } from '@/utils/logger';
 import {
@@ -187,8 +188,9 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
     return (
       <div className='min-h-screen bg-gray-50 px-4 py-16 dark:bg-dark-50 sm:px-6 lg:flex lg:flex-col lg:justify-center lg:py-20'>
         <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-          <div className='flex flex-col items-center'>
-            <Logo className='text-gray-900 dark:text-gray-100' />
+          <div className='flex items-center justify-center gap-2.5 text-gray-900 dark:text-gray-100'>
+            <LogoMark size='md' label={null} />
+            <Logo />
           </div>
         </div>
 
@@ -267,8 +269,9 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
     return (
       <div className='min-h-screen bg-gray-50 px-4 py-16 dark:bg-dark-50 sm:px-6 lg:flex lg:flex-col lg:justify-center lg:py-20'>
         <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-          <div className='flex flex-col items-center'>
-            <Logo className='text-gray-900 dark:text-gray-100' />
+          <div className='flex items-center justify-center gap-2.5 text-gray-900 dark:text-gray-100'>
+            <LogoMark size='md' label={null} />
+            <Logo />
           </div>
           <h2 className='mt-8 text-center text-3xl font-light tracking-[-0.035em] text-gray-950 dark:text-dark-950'>
             {t('setup.encryptionKey.title')}
@@ -366,8 +369,9 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
   return (
     <div className='min-h-screen bg-gray-50 px-4 py-16 dark:bg-dark-50 sm:px-6 lg:flex lg:flex-col lg:justify-center lg:py-20'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-        <div className='flex flex-col items-center'>
-          <Logo className='text-gray-900 dark:text-gray-100' />
+        <div className='flex items-center justify-center gap-2.5 text-gray-900 dark:text-gray-100'>
+          <LogoMark size='md' label={null} />
+          <Logo />
         </div>
         <h2 className='mt-8 text-center text-3xl font-light tracking-[-0.035em] text-gray-950 dark:text-dark-950'>
           {t('setup.admin.title')}

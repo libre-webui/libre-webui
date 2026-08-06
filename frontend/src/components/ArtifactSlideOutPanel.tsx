@@ -36,16 +36,21 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
+import { ArtifactSandboxFrame } from '@/components/ArtifactSandboxFrame';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
 import {
   buildHtmlArtifactDocument,
   buildSvgArtifactDocument,
-  HTML_ARTIFACT_ALLOW,
-  HTML_ARTIFACT_SANDBOX,
-  openHtmlArtifactPreview,
+  openArtifactPreviewWindow,
   SVG_ARTIFACT_SANDBOX,
 } from '@/utils/artifactHtml';
+import { ARTIFACT_SANDBOX_URL } from '@/utils/artifactSandbox';
+import {
+  artifactSandboxKind,
+  buildArtifactSandboxDocument,
+  type ArtifactSandboxKind,
+} from '@/utils/artifactRuntimeDocument';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import { isRTL } from '@/i18n';
@@ -90,7 +95,6 @@ export const ArtifactSlideOutPanel: React.FC = () => {
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevArtifactIdRef = useRef<string | null>(null);
   const resizeStartXRef = useRef(0);
@@ -360,24 +364,37 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     </div>
   );
 
-  const renderHtml = () => {
+  // The runtime is inlined into the document, so preparing it is asynchronous.
+  const openArtifactWindow = async () => {
+    try {
+      const document = await buildArtifactSandboxDocument(
+        artifactSandboxKind(artifact.type) ?? 'html',
+        artifact.content,
+        artifact.title,
+        { colorScheme: theme.mode === 'dark' ? 'dark' : 'light' }
+      );
+      openArtifactPreviewWindow(document, ARTIFACT_SANDBOX_URL, artifact.title);
+    } catch (error) {
+      logger.error('Failed to open the artifact preview:', error);
+    }
+  };
+
+  const renderSandbox = (kind: ArtifactSandboxKind) => {
     if (!artifact.content.trim()) {
       return renderHtmlFallback();
     }
 
     return (
-      <iframe
-        ref={iframeRef}
-        data-testid='artifact-html-preview'
-        srcDoc={buildHtmlArtifactDocument(artifact.content, artifact.title)}
+      <ArtifactSandboxFrame
+        content={artifact.content}
+        title={artifact.title}
+        kind={kind}
+        colorScheme={theme.mode === 'dark' ? 'dark' : 'light'}
         className={cn(
           'w-full h-full border-0 rounded-lg bg-white',
           isResizing && 'pointer-events-none'
         )}
-        sandbox={HTML_ARTIFACT_SANDBOX}
-        allow={HTML_ARTIFACT_ALLOW}
-        allowFullScreen
-        title={artifact.title}
+        fallback={renderHtmlFallback()}
       />
     );
   };
@@ -463,7 +480,11 @@ export const ArtifactSlideOutPanel: React.FC = () => {
 
     switch (artifact.type) {
       case 'html':
-        return renderHtml();
+        return renderSandbox('html');
+      case 'react':
+        return renderSandbox('react');
+      case 'mermaid':
+        return renderSandbox('mermaid');
       case 'svg':
         return renderSvg();
       case 'json':
@@ -479,7 +500,8 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     return (
       artifact.type === 'html' ||
       artifact.type === 'svg' ||
-      artifact.type === 'react'
+      artifact.type === 'react' ||
+      artifact.type === 'mermaid'
     );
   };
 
@@ -669,13 +691,11 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               {t('artifacts.download')}
             </Button>
 
-            {(artifact.type === 'html' || artifact.type === 'react') && (
+            {artifactSandboxKind(artifact.type) && (
               <Button
                 variant='ghost'
                 size='sm'
-                onClick={() =>
-                  openHtmlArtifactPreview(artifact.content, artifact.title)
-                }
+                onClick={() => openArtifactWindow()}
                 className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
                 title={t('artifacts.openInNewWindow')}
               >

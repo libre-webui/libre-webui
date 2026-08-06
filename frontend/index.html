@@ -22,8 +22,12 @@
         document.documentElement.style.colorScheme = mode;
       })();
     </script>
-    <!-- Always use dark favicon -->
-    <link rel="icon" type="image/png" href="/favicon-dark.png" />
+    <!-- The SVG mark carries its own prefers-color-scheme rule, so the favicon
+         inverts with the OS theme. The PNG stays for browsers that do not
+         support SVG favicons. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-dark.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Libre WebUI</title>
     <meta
