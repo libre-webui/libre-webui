@@ -427,6 +427,7 @@
       "tts": "Ses",
       "imageGen": "Görseller",
       "data": "Veri",
+      "shortcuts": "Kısayollar",
       "about": "Hakkında"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Modalleri kapat",
     "groups": {
       "navigation": "Gezinme",
-      "settings": "Ayarlar",
       "general": "Genel",
-      "chat": "Sohbet"
+      "chat": "Sohbet",
+      "workspace": "Çalışma alanı"
     },
     "actions": {
       "sendMessage": "Mesaj gönder",
-      "newLine": "Mesajda yeni satır"
+      "newLine": "Mesajda yeni satır",
+      "saveEdit": "Düzenlenen mesajı kaydet",
+      "cancelEdit": "Düzenlemeyi iptal et",
+      "saveFile": "Dosyayı kaydet",
+      "formatCode": "Kodu biçimlendir"
     },
-    "footer": "Bu yardımı göstermek için {{key1}} veya {{key2}} tuşuna basın",
-    "tooltip": "Klavye kısayolları"
+    "description": "Libre WebUI'de kullanılabilen tüm klavye kısayolları.",
+    "newChat": "Yeni sohbet",
+    "newWork": "Yeni Work oturumu",
+    "openPalette": "Komut paletini aç"
   },
   "modelManager": {
     "title": "Modeller",

@@ -427,6 +427,7 @@
       "tts": "Speech",
       "imageGen": "Images",
       "data": "Data",
+      "shortcuts": "Shortcuts",
       "about": "About"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Close modals",
     "groups": {
       "navigation": "Navigation",
-      "settings": "Settings",
       "general": "General",
-      "chat": "Chat"
+      "chat": "Chat",
+      "workspace": "Workspace"
     },
     "actions": {
       "sendMessage": "Send message",
-      "newLine": "New line in message"
+      "newLine": "New line in message",
+      "saveEdit": "Save an edited message",
+      "cancelEdit": "Cancel editing",
+      "saveFile": "Save file",
+      "formatCode": "Format code"
     },
-    "footer": "Press {{key1}} or {{key2}} to show this help",
-    "tooltip": "Keyboard shortcuts"
+    "description": "Every keyboard shortcut available in Libre WebUI.",
+    "newChat": "New chat",
+    "newWork": "New Work session",
+    "openPalette": "Open command palette"
   },
   "modelManager": {
     "title": "Models",

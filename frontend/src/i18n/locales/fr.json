@@ -427,6 +427,7 @@
       "tts": "Voix",
       "imageGen": "Images",
       "data": "Données",
+      "shortcuts": "Raccourcis",
       "about": "À propos"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Fermer les fenêtres",
     "groups": {
       "navigation": "Navigation",
-      "settings": "Paramètres",
       "general": "Général",
-      "chat": "Chat"
+      "chat": "Chat",
+      "workspace": "Espace de travail"
     },
     "actions": {
       "sendMessage": "Envoyer le message",
-      "newLine": "Nouvelle ligne dans le message"
+      "newLine": "Nouvelle ligne dans le message",
+      "saveEdit": "Enregistrer le message modifié",
+      "cancelEdit": "Annuler la modification",
+      "saveFile": "Enregistrer le fichier",
+      "formatCode": "Formater le code"
     },
-    "footer": "Appuyez sur {{key1}} ou {{key2}} pour afficher cette aide",
-    "tooltip": "Raccourcis clavier"
+    "description": "Tous les raccourcis clavier disponibles dans Libre WebUI.",
+    "newChat": "Nouvelle conversation",
+    "newWork": "Nouvelle session Work",
+    "openPalette": "Ouvrir la palette de commandes"
   },
   "modelManager": {
     "title": "Modèles",

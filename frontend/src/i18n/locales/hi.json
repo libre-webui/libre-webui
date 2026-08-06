@@ -427,6 +427,7 @@
       "tts": "टेक्स्ट-टू-स्पीच",
       "imageGen": "छवि जनरेशन",
       "data": "डेटा",
+      "shortcuts": "शॉर्टकट",
       "about": "परिचय"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "मोडल बंद करें",
     "groups": {
       "navigation": "नेविगेशन",
-      "settings": "सेटिंग्स",
       "general": "सामान्य",
-      "chat": "चैट"
+      "chat": "चैट",
+      "workspace": "वर्कस्पेस"
     },
     "actions": {
       "sendMessage": "संदेश भेजें",
-      "newLine": "संदेश में नई लाइन"
+      "newLine": "संदेश में नई लाइन",
+      "saveEdit": "संपादित संदेश सहेजें",
+      "cancelEdit": "संपादन रद्द करें",
+      "saveFile": "फ़ाइल सहेजें",
+      "formatCode": "कोड फ़ॉर्मेट करें"
     },
-    "footer": "यह मदद दिखाने के लिए {{key1}} या {{key2}} दबाएं",
-    "tooltip": "कीबोर्ड शॉर्टकट"
+    "description": "Libre WebUI में उपलब्ध सभी कीबोर्ड शॉर्टकट।",
+    "newChat": "नई चैट",
+    "newWork": "नया Work सत्र",
+    "openPalette": "कमांड पैलेट खोलें"
   },
   "modelManager": {
     "title": "मॉडल",

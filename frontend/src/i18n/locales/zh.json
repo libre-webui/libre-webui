@@ -427,6 +427,7 @@
       "tts": "语音合成",
       "imageGen": "图像生成",
       "data": "数据",
+      "shortcuts": "快捷键",
       "about": "关于"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "关闭弹窗",
     "groups": {
       "navigation": "导航",
-      "settings": "设置",
       "general": "通用",
-      "chat": "聊天"
+      "chat": "聊天",
+      "workspace": "工作区"
     },
     "actions": {
       "sendMessage": "发送消息",
-      "newLine": "消息中换行"
+      "newLine": "消息中换行",
+      "saveEdit": "保存已编辑的消息",
+      "cancelEdit": "取消编辑",
+      "saveFile": "保存文件",
+      "formatCode": "格式化代码"
     },
-    "footer": "按 {{key1}} 或 {{key2}} 显示此帮助",
-    "tooltip": "键盘快捷键"
+    "description": "Libre WebUI 中可用的全部键盘快捷键。",
+    "newChat": "新建对话",
+    "newWork": "新建 Work 会话",
+    "openPalette": "打开命令面板"
   },
   "modelManager": {
     "title": "模型",

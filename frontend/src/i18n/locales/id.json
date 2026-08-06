@@ -427,6 +427,7 @@
       "tts": "Suara",
       "imageGen": "Gambar",
       "data": "Data",
+      "shortcuts": "Pintasan",
       "about": "Tentang"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Tutup modal",
     "groups": {
       "navigation": "Navigasi",
-      "settings": "Pengaturan",
       "general": "Umum",
-      "chat": "Chat"
+      "chat": "Chat",
+      "workspace": "Ruang kerja"
     },
     "actions": {
       "sendMessage": "Kirim pesan",
-      "newLine": "Baris baru dalam pesan"
+      "newLine": "Baris baru dalam pesan",
+      "saveEdit": "Simpan pesan yang diedit",
+      "cancelEdit": "Batalkan pengeditan",
+      "saveFile": "Simpan berkas",
+      "formatCode": "Format kode"
     },
-    "footer": "Tekan {{key1}} atau {{key2}} untuk menampilkan bantuan ini",
-    "tooltip": "Pintasan keyboard"
+    "description": "Semua pintasan keyboard yang tersedia di Libre WebUI.",
+    "newChat": "Obrolan baru",
+    "newWork": "Sesi Work baru",
+    "openPalette": "Buka palet perintah"
   },
   "modelManager": {
     "title": "Model",

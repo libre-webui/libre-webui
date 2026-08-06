@@ -34,6 +34,7 @@ import {
   Sliders,
   Volume2,
   ImageIcon,
+  Keyboard,
   Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -45,6 +46,7 @@ import { SettingsDocumentsTab } from '@/components/settings/SettingsDocumentsTab
 import { SettingsGenerationTab } from '@/components/settings/SettingsGenerationTab';
 import { SettingsImageGenerationTab } from '@/components/settings/SettingsImageGenerationTab';
 import { SettingsModelsTab } from '@/components/settings/SettingsModelsTab';
+import { SettingsShortcutsTab } from '@/components/settings/SettingsShortcutsTab';
 import { SettingsPluginsTab } from '@/components/settings/SettingsPluginsTab';
 import { SettingsTtsTab } from '@/components/settings/SettingsTtsTab';
 import { useSettingsDataImport } from '@/components/settings/useSettingsDataImport';
@@ -114,11 +116,14 @@ const DEFAULT_IMAGE_GEN_SETTINGS = {
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Tab to open on, for entry points that target one directly. */
+  initialTab?: string;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
+  initialTab,
 }) => {
   const {
     models,
@@ -241,7 +246,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     })),
   ];
 
-  const [activeTab, setActiveTab] = useState('appearance');
+  const [activeTab, setActiveTab] = useState(initialTab ?? 'appearance');
   const [settingsQuery, setSettingsQuery] = useState('');
   const [tempSystemMessage, setTempSystemMessage] = useState(systemMessage);
 
@@ -1320,6 +1325,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     tts: 'voice speech audio speak read aloud',
     'image-gen': 'image generation size quality style',
     plugins: 'api key provider connection openai anthropic groq gemini',
+    shortcuts: 'keyboard keys hotkeys shortcut command palette',
   };
 
   const settingsQueryText = settingsQuery.trim().toLowerCase();
@@ -1340,6 +1346,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           icon: Palette,
         },
         { id: 'data', label: t('settings.tabs.data'), icon: HardDrive },
+        {
+          id: 'shortcuts',
+          label: t('settings.tabs.shortcuts'),
+          icon: Keyboard,
+        },
         { id: 'about', label: t('settings.tabs.about'), icon: Info },
       ],
     },
@@ -1530,6 +1541,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onDismissImportResult={() => setImportResult(null)}
           />
         );
+
+      case 'shortcuts':
+        return <SettingsShortcutsTab />;
 
       case 'about':
         return <SettingsAboutTab appVersion={appVersion} />;

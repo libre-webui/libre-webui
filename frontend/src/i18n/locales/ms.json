@@ -427,6 +427,7 @@
       "tts": "Suara",
       "imageGen": "Imej",
       "data": "Data",
+      "shortcuts": "Pintasan",
       "about": "Perihal"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Tutup modal",
     "groups": {
       "navigation": "Navigasi",
-      "settings": "Tetapan",
       "general": "Umum",
-      "chat": "Sembang"
+      "chat": "Sembang",
+      "workspace": "Ruang kerja"
     },
     "actions": {
       "sendMessage": "Hantar mesej",
-      "newLine": "Baris baharu dalam mesej"
+      "newLine": "Baris baharu dalam mesej",
+      "saveEdit": "Simpan mesej yang disunting",
+      "cancelEdit": "Batalkan suntingan",
+      "saveFile": "Simpan fail",
+      "formatCode": "Formatkan kod"
     },
-    "footer": "Tekan {{key1}} atau {{key2}} untuk menunjukkan bantuan ini",
-    "tooltip": "Pintasan papan kekunci"
+    "description": "Semua pintasan papan kekunci yang ada dalam Libre WebUI.",
+    "newChat": "Sembang baharu",
+    "newWork": "Sesi Work baharu",
+    "openPalette": "Buka palet arahan"
   },
   "modelManager": {
     "title": "Model",

@@ -98,6 +98,17 @@ const streamWithAuthentication = (
   return () => controller.abort();
 };
 
+/**
+ * Announces that the set of installed models changed, so every list in the
+ * app can catch up. Without it a freshly pulled model stays invisible to the
+ * chat model picker until the whole application is reloaded.
+ */
+export const MODELS_CHANGED_EVENT = 'libre:models-changed';
+
+const notifyModelsChanged = (): void => {
+  window.dispatchEvent(new Event(MODELS_CHANGED_EVENT));
+};
+
 export const ollamaApi = {
   // Health check
   checkHealth: (): Promise<ApiResponse<{ status: string }>> => {
@@ -119,9 +130,10 @@ export const ollamaApi = {
     if (isDemoMode()) {
       return createDemoResponse(null, false);
     }
-    return api
-      .post('/ollama/models/pull', { name: modelName })
-      .then(res => res.data);
+    return api.post('/ollama/models/pull', { name: modelName }).then(res => {
+      notifyModelsChanged();
+      return res.data;
+    });
   },
 
   pullModelStream: (
@@ -150,7 +162,10 @@ export const ollamaApi = {
             percent: 100,
           });
           clearInterval(interval);
-          setTimeout(onComplete, 500);
+          setTimeout(() => {
+            notifyModelsChanged();
+            onComplete();
+          }, 500);
         } else {
           onProgress({
             status: 'pulling',
@@ -182,6 +197,7 @@ export const ollamaApi = {
             });
             break;
           case 'complete':
+            notifyModelsChanged();
             onComplete();
             break;
           case 'error':
@@ -199,7 +215,10 @@ export const ollamaApi = {
     }
     return api
       .delete('/ollama/models', { params: { name: modelName } })
-      .then(res => res.data);
+      .then(res => {
+        notifyModelsChanged();
+        return res.data;
+      });
   },
 
   /** What a model recommends for its own generation, from its modelfile. */
@@ -234,7 +253,10 @@ export const ollamaApi = {
     if (isDemoMode()) {
       return createDemoResponse(null, false);
     }
-    return api.post('/ollama/models', payload).then(res => res.data);
+    return api.post('/ollama/models', payload).then(res => {
+      notifyModelsChanged();
+      return res.data;
+    });
   },
 
   copyModel: (source: string, destination: string): Promise<ApiResponse> => {
@@ -243,7 +265,10 @@ export const ollamaApi = {
     }
     return api
       .post('/ollama/models/copy', { source, destination })
-      .then(res => res.data);
+      .then(res => {
+        notifyModelsChanged();
+        return res.data;
+      });
   },
 
   pushModel: (modelName: string): Promise<ApiResponse> => {
@@ -290,7 +315,10 @@ export const ollamaApi = {
         }
         if (current >= demoModels.length) {
           clearInterval(interval);
-          setTimeout(onComplete, 500);
+          setTimeout(() => {
+            notifyModelsChanged();
+            onComplete();
+          }, 500);
         }
       }, 1000);
       return;
@@ -316,6 +344,7 @@ export const ollamaApi = {
             break;
           }
           case 'complete':
+            notifyModelsChanged();
             onComplete();
             break;
           case 'error':

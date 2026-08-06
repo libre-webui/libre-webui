@@ -427,6 +427,7 @@
       "tts": "음성 합성",
       "imageGen": "이미지 생성",
       "data": "데이터",
+      "shortcuts": "단축키",
       "about": "정보"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "모달 닫기",
     "groups": {
       "navigation": "탐색",
-      "settings": "설정",
       "general": "일반",
-      "chat": "채팅"
+      "chat": "채팅",
+      "workspace": "작업 공간"
     },
     "actions": {
       "sendMessage": "메시지 보내기",
-      "newLine": "메시지에 새 줄"
+      "newLine": "메시지에 새 줄",
+      "saveEdit": "편집한 메시지 저장",
+      "cancelEdit": "편집 취소",
+      "saveFile": "파일 저장",
+      "formatCode": "코드 서식 정리"
     },
-    "footer": "{{key1}} 또는 {{key2}}를 눌러 이 도움말 표시",
-    "tooltip": "키보드 단축키"
+    "description": "Libre WebUI에서 사용할 수 있는 모든 키보드 단축키입니다.",
+    "newChat": "새 채팅",
+    "newWork": "새 Work 세션",
+    "openPalette": "명령 팔레트 열기"
   },
   "modelManager": {
     "title": "모델",

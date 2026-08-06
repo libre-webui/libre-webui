@@ -427,6 +427,7 @@
       "tts": "音声読み上げ",
       "imageGen": "画像生成",
       "data": "データ",
+      "shortcuts": "ショートカット",
       "about": "概要"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "モーダルを閉じる",
     "groups": {
       "navigation": "ナビゲーション",
-      "settings": "設定",
       "general": "一般",
-      "chat": "チャット"
+      "chat": "チャット",
+      "workspace": "ワークスペース"
     },
     "actions": {
       "sendMessage": "メッセージを送信",
-      "newLine": "メッセージ内で改行"
+      "newLine": "メッセージ内で改行",
+      "saveEdit": "編集したメッセージを保存",
+      "cancelEdit": "編集をキャンセル",
+      "saveFile": "ファイルを保存",
+      "formatCode": "コードを整形"
     },
-    "footer": "{{key1}}または{{key2}}を押すとこのヘルプを表示",
-    "tooltip": "キーボードショートカット"
+    "description": "Libre WebUI で使えるすべてのキーボードショートカット。",
+    "newChat": "新しいチャット",
+    "newWork": "新しい Work セッション",
+    "openPalette": "コマンドパレットを開く"
   },
   "modelManager": {
     "title": "モデル",

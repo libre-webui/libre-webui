@@ -22,7 +22,6 @@ import {
   RouterProvider,
   Routes,
   Route,
-  useLocation,
   useNavigate,
 } from 'react-router';
 
@@ -48,10 +47,6 @@ import { Sidebar } from '@/components/Sidebar';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { API_BASE_URL } from '@/utils/config';
-import {
-  KeyboardShortcutsModal,
-  KeyboardShortcutsIndicator,
-} from '@/components/KeyboardShortcuts';
 import { WhatsNewModal } from '@/components/WhatsNewModal';
 import { useWhatsNew } from '@/hooks/useWhatsNew';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
@@ -199,31 +194,13 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
   </div>
 );
 
-// Conditional keyboard shortcuts indicator - only shows on chat pages and desktop
-const ConditionalKeyboardShortcutsIndicator: React.FC<{
-  onClick: () => void;
-}> = ({ onClick }) => {
-  const location = useLocation();
-
-  // Check if we're on a chat page (/chat or /c/sessionId)
-  const isChatPage =
-    location.pathname === '/chat' || location.pathname.startsWith('/c/');
-
-  if (!isChatPage) return null;
-
-  return (
-    <div className='hidden lg:block'>
-      <KeyboardShortcutsIndicator onClick={onClick} />
-    </div>
-  );
-};
-
 const AppContent: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  // Which settings tab to open on; the shortcuts key jumps straight to its own.
+  const [settingsTab, setSettingsTab] = useState<string | undefined>(undefined);
   const [retryCount, setRetryCount] = useState(0);
   const [setupComplete, setSetupComplete] = useState(false);
   const {
@@ -354,7 +331,10 @@ const AppContent: React.FC = () => {
     {
       key: ',',
       metaKey: true,
-      action: () => setSettingsOpen(true),
+      action: () => {
+        setSettingsTab(undefined);
+        setSettingsOpen(true);
+      },
       description: t('keyboard.openSettings'),
     },
     {
@@ -362,7 +342,7 @@ const AppContent: React.FC = () => {
       metaKey: true,
       shiftKey: true,
       action: () => startNewChat(navigate),
-      description: t('keyboard.newChat', 'New chat'),
+      description: t('keyboard.newChat'),
     },
     {
       key: 'u',
@@ -374,7 +354,7 @@ const AppContent: React.FC = () => {
           startNewWork(navigate);
         }
       },
-      description: t('keyboard.newWork', 'New Work session'),
+      description: t('keyboard.newWork'),
     },
     {
       key: 'd',
@@ -384,15 +364,15 @@ const AppContent: React.FC = () => {
     },
     {
       key: 'h',
-      action: () => setShortcutsOpen(true),
+      action: () => {
+        setSettingsTab('shortcuts');
+        setSettingsOpen(true);
+      },
       description: t('keyboard.showShortcuts'),
     },
     {
       key: 'Escape',
-      action: () => {
-        setSettingsOpen(false);
-        setShortcutsOpen(false);
-      },
+      action: () => setSettingsOpen(false),
       description: t('keyboard.closeModals'),
     },
   ];
@@ -408,7 +388,6 @@ const AppContent: React.FC = () => {
 
     const frame = window.requestAnimationFrame(() => {
       setSettingsOpen(false);
-      setShortcutsOpen(false);
       closeArtifactPanel();
     });
     return () => window.cancelAnimationFrame(frame);
@@ -665,26 +644,14 @@ const AppContent: React.FC = () => {
         <Suspense fallback={null}>
           <SettingsModal
             isOpen={settingsOpen}
+            initialTab={settingsTab}
             onClose={() => setSettingsOpen(false)}
           />
         </Suspense>
       )}
 
-      <KeyboardShortcutsModal
-        isOpen={hasWorkspaceAccess && shortcutsOpen}
-        onClose={() => setShortcutsOpen(false)}
-        shortcuts={shortcuts}
-      />
-
       {hasWorkspaceAccess && whatsNew.open && whatsNew.notes && (
         <WhatsNewModal notes={whatsNew.notes} onDismiss={whatsNew.dismiss} />
-      )}
-
-      {/* Keyboard shortcuts indicator - only show on chat pages */}
-      {hasWorkspaceAccess && (
-        <ConditionalKeyboardShortcutsIndicator
-          onClick={() => setShortcutsOpen(true)}
-        />
       )}
 
       {/* Artifact slide-out panel */}

@@ -33,10 +33,6 @@ export { DocumentUpload } from './DocumentUpload';
 export { DocumentIndicator } from './DocumentIndicator';
 export { LoginForm } from './LoginForm';
 export { ProtectedRoute } from './ProtectedRoute';
-export {
-  KeyboardShortcutsModal,
-  KeyboardShortcutsIndicator,
-} from './KeyboardShortcuts';
 export { DemoModeBanner } from './DemoModeBanner';
 export { PluginManager, PluginVariablesEditor } from './PluginManager';
 export { GenerationStats } from './GenerationStats';

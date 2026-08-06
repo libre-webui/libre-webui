@@ -427,6 +427,7 @@
       "tts": "Spraak",
       "imageGen": "Beelden",
       "data": "Gegevens",
+      "shortcuts": "Sneltoetsen",
       "about": "Over"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Dialogen sluiten",
     "groups": {
       "navigation": "Navigatie",
-      "settings": "Instellingen",
       "general": "Algemeen",
-      "chat": "Chat"
+      "chat": "Chat",
+      "workspace": "Werkruimte"
     },
     "actions": {
       "sendMessage": "Bericht versturen",
-      "newLine": "Nieuwe regel in bericht"
+      "newLine": "Nieuwe regel in bericht",
+      "saveEdit": "Bewerkt bericht opslaan",
+      "cancelEdit": "Bewerken annuleren",
+      "saveFile": "Bestand opslaan",
+      "formatCode": "Code opmaken"
     },
-    "footer": "Druk op {{key1}} of {{key2}} om deze hulp te tonen",
-    "tooltip": "Sneltoetsen"
+    "description": "Alle sneltoetsen die in Libre WebUI beschikbaar zijn.",
+    "newChat": "Nieuwe chat",
+    "newWork": "Nieuwe Work-sessie",
+    "openPalette": "Opdrachtenpalet openen"
   },
   "modelManager": {
     "title": "Modellen",

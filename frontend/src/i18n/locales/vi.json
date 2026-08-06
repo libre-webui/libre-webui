@@ -427,6 +427,7 @@
       "tts": "Giọng nói",
       "imageGen": "Hình ảnh",
       "data": "Dữ liệu",
+      "shortcuts": "Phím tắt",
       "about": "Giới thiệu"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Đóng hộp thoại",
     "groups": {
       "navigation": "Điều hướng",
-      "settings": "Cài đặt",
       "general": "Chung",
-      "chat": "Trò chuyện"
+      "chat": "Trò chuyện",
+      "workspace": "Không gian làm việc"
     },
     "actions": {
       "sendMessage": "Gửi tin nhắn",
-      "newLine": "Dòng mới trong tin nhắn"
+      "newLine": "Dòng mới trong tin nhắn",
+      "saveEdit": "Lưu tin nhắn đã chỉnh sửa",
+      "cancelEdit": "Hủy chỉnh sửa",
+      "saveFile": "Lưu tệp",
+      "formatCode": "Định dạng mã"
     },
-    "footer": "Nhấn {{key1}} hoặc {{key2}} để hiển thị trợ giúp này",
-    "tooltip": "Phím tắt"
+    "description": "Tất cả phím tắt có trong Libre WebUI.",
+    "newChat": "Trò chuyện mới",
+    "newWork": "Phiên Work mới",
+    "openPalette": "Mở bảng lệnh"
   },
   "modelManager": {
     "title": "Mô hình",

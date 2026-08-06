@@ -427,6 +427,7 @@
       "tts": "ข้อความเป็นเสียง",
       "imageGen": "สร้างรูปภาพ",
       "data": "ข้อมูล",
+      "shortcuts": "ทางลัด",
       "about": "เกี่ยวกับ"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "ปิดหน้าต่าง",
     "groups": {
       "navigation": "การนำทาง",
-      "settings": "การตั้งค่า",
       "general": "ทั่วไป",
-      "chat": "แชท"
+      "chat": "แชท",
+      "workspace": "พื้นที่ทำงาน"
     },
     "actions": {
       "sendMessage": "ส่งข้อความ",
-      "newLine": "บรรทัดใหม่ในข้อความ"
+      "newLine": "บรรทัดใหม่ในข้อความ",
+      "saveEdit": "บันทึกข้อความที่แก้ไข",
+      "cancelEdit": "ยกเลิกการแก้ไข",
+      "saveFile": "บันทึกไฟล์",
+      "formatCode": "จัดรูปแบบโค้ด"
     },
-    "footer": "กด {{key1}} หรือ {{key2}} เพื่อแสดงความช่วยเหลือนี้",
-    "tooltip": "คีย์ลัด"
+    "description": "ทางลัดแป้นพิมพ์ทั้งหมดที่ใช้ได้ใน Libre WebUI",
+    "newChat": "แชทใหม่",
+    "newWork": "เซสชัน Work ใหม่",
+    "openPalette": "เปิดคอมมานด์พาเลตต์"
   },
   "modelManager": {
     "title": "โมเดล",

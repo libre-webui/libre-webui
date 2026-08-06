@@ -427,6 +427,7 @@
       "tts": "Řeč",
       "imageGen": "Obrázky",
       "data": "Data",
+      "shortcuts": "Zkratky",
       "about": "O aplikaci"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Zavřít modální okna",
     "groups": {
       "navigation": "Navigace",
-      "settings": "Nastavení",
       "general": "Obecné",
-      "chat": "Chat"
+      "chat": "Chat",
+      "workspace": "Pracovní prostor"
     },
     "actions": {
       "sendMessage": "Odeslat zprávu",
-      "newLine": "Nový řádek ve zprávě"
+      "newLine": "Nový řádek ve zprávě",
+      "saveEdit": "Uložit upravenou zprávu",
+      "cancelEdit": "Zrušit úpravy",
+      "saveFile": "Uložit soubor",
+      "formatCode": "Formátovat kód"
     },
-    "footer": "Stiskněte {{key1}} nebo {{key2}} pro zobrazení této nápovědy",
-    "tooltip": "Klávesové zkratky"
+    "description": "Všechny klávesové zkratky dostupné v Libre WebUI.",
+    "newChat": "Nový chat",
+    "newWork": "Nová relace Work",
+    "openPalette": "Otevřít příkazovou paletu"
   },
   "modelManager": {
     "title": "Modely",

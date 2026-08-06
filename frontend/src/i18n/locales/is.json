@@ -427,6 +427,7 @@
       "tts": "Tal",
       "imageGen": "Myndir",
       "data": "Gögn",
+      "shortcuts": "Flýtileiðir",
       "about": "Um"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Loka gluggum",
     "groups": {
       "navigation": "Flakk",
-      "settings": "Stillingar",
       "general": "Almennt",
-      "chat": "Spjall"
+      "chat": "Spjall",
+      "workspace": "Vinnusvæði"
     },
     "actions": {
       "sendMessage": "Senda skilaboð",
-      "newLine": "Ný lína í skilaboðum"
+      "newLine": "Ný lína í skilaboðum",
+      "saveEdit": "Vista breytt skilaboð",
+      "cancelEdit": "Hætta við breytingu",
+      "saveFile": "Vista skrá",
+      "formatCode": "Forsníða kóða"
     },
-    "footer": "Ýttu á {{key1}} eða {{key2}} til að sýna þessa hjálp",
-    "tooltip": "Flýtilyklar"
+    "description": "Allar flýtileiðir sem eru í boði í Libre WebUI.",
+    "newChat": "Nýtt spjall",
+    "newWork": "Ný Work-lota",
+    "openPalette": "Opna skipanaspjaldið"
   },
   "modelManager": {
     "title": "Líkön",

@@ -619,11 +619,11 @@ export const ChatPage: React.FC = () => {
             <div className='absolute left-1/2 top-0 h-16 w-px bg-gray-300/60 dark:bg-white/10' />
           </div>
 
-          {/* Chat controls, beside the private mode button */}
+          {/* Chat controls, on the outer side of the private mode button */}
           <button
             onClick={() => setControlsOpen(open => !open)}
             className={cn(
-              'absolute end-[10.5rem] top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-[11.5rem] sm:top-6',
+              'absolute end-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-6 sm:top-6',
               controlsOpen && 'text-primary-600 dark:text-primary-400'
             )}
             title={t('chat.controls.title')}
@@ -639,7 +639,7 @@ export const ChatPage: React.FC = () => {
               (!selectedModel && models.length === 0) ||
               (Boolean(selectedModel) && !selectedModelAvailable)
             }
-            className='absolute end-4 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-surface/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-6 sm:top-6'
+            className='absolute end-[3.75rem] top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-surface/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-[4.25rem] sm:top-6'
             title={t('chat.session.privateTooltip')}
           >
             <Ghost className='h-3.5 w-3.5' />

@@ -16,8 +16,6 @@
  */
 
 import { useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useAppStore } from '@/store/appStore';
 
 export interface KeyboardShortcut {
   key: string;
@@ -94,65 +92,4 @@ export const useKeyboardShortcuts = (
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [handleKeyDown, enabled]);
-};
-
-// Global keyboard shortcuts hook
-export const useGlobalKeyboardShortcuts = () => {
-  const { t } = useTranslation();
-  const { toggleSidebar, toggleTheme } = useAppStore();
-
-  const shortcuts: KeyboardShortcut[] = [
-    {
-      key: 'b',
-      metaKey: true,
-      action: toggleSidebar,
-      description: t('keyboard.toggleSidebar'),
-    },
-    {
-      key: ',',
-      metaKey: true,
-      action: () => {
-        // We'll need to trigger settings modal from here
-        // This will be handled by passing a callback from the component that manages the modal
-      },
-      description: t('keyboard.openSettings'),
-    },
-    {
-      key: 'd',
-      metaKey: true,
-      action: toggleTheme,
-      description: t('keyboard.toggleDarkMode'),
-    },
-  ];
-
-  return { shortcuts };
-};
-
-// Helper function to format shortcut display
-export const formatShortcut = (shortcut: KeyboardShortcut): string => {
-  const parts: string[] = [];
-
-  if (shortcut.metaKey) {
-    parts.push(navigator.platform.includes('Mac') ? '⌘' : 'Ctrl');
-  }
-  if (shortcut.ctrlKey) {
-    parts.push('Ctrl');
-  }
-  if (shortcut.shiftKey) {
-    parts.push('⇧');
-  }
-  if (shortcut.altKey) {
-    parts.push(navigator.platform.includes('Mac') ? '⌥' : 'Alt');
-  }
-
-  // Format special keys
-  let keyDisplay = shortcut.key.toUpperCase();
-  if (shortcut.key === ',') keyDisplay = ',';
-  if (shortcut.key === ' ') keyDisplay = 'Space';
-  if (shortcut.key === 'Enter') keyDisplay = '↩';
-  if (shortcut.key === 'Escape') keyDisplay = 'Esc';
-
-  parts.push(keyDisplay);
-
-  return parts.join('+');
 };

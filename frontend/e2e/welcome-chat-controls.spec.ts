@@ -26,11 +26,11 @@ test('chat controls are available before a chat exists', async ({ page }) => {
   const incognito = page.getByRole('button', { name: /incognito/i });
   await expect(controls).toBeVisible();
 
-  // The two live in the same corner of the welcome screen.
+  // The two live in the same corner, controls on the outer side.
   const controlsBox = await controls.boundingBox();
   const incognitoBox = await incognito.boundingBox();
-  expect(controlsBox!.x + controlsBox!.width).toBeLessThanOrEqual(
-    incognitoBox!.x
+  expect(incognitoBox!.x + incognitoBox!.width).toBeLessThanOrEqual(
+    controlsBox!.x
   );
 
   const panel = page.getByTestId('chat-controls-panel');

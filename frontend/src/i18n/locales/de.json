@@ -427,6 +427,7 @@
       "tts": "Sprache",
       "imageGen": "Bilder",
       "data": "Daten",
+      "shortcuts": "Tastenkürzel",
       "about": "Über"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Dialoge schließen",
     "groups": {
       "navigation": "Navigation",
-      "settings": "Einstellungen",
       "general": "Allgemein",
-      "chat": "Chat"
+      "chat": "Chat",
+      "workspace": "Arbeitsbereich"
     },
     "actions": {
       "sendMessage": "Nachricht senden",
-      "newLine": "Neue Zeile in Nachricht"
+      "newLine": "Neue Zeile in Nachricht",
+      "saveEdit": "Bearbeitete Nachricht speichern",
+      "cancelEdit": "Bearbeitung abbrechen",
+      "saveFile": "Datei speichern",
+      "formatCode": "Code formatieren"
     },
-    "footer": "Drücken Sie {{key1}} oder {{key2}}, um diese Hilfe anzuzeigen",
-    "tooltip": "Tastenkombinationen"
+    "description": "Alle Tastenkombinationen in Libre WebUI.",
+    "newChat": "Neuer Chat",
+    "newWork": "Neue Work-Sitzung",
+    "openPalette": "Befehlspalette öffnen"
   },
   "modelManager": {
     "title": "Modelle",

@@ -20,7 +20,7 @@ import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePluginStore } from '@/store/pluginStore';
-import { ollamaApi } from '@/utils/api';
+import { MODELS_CHANGED_EVENT, ollamaApi } from '@/utils/api';
 import { UserService } from '@/services/userService';
 import toast from 'react-hot-toast';
 import { isDemoMode } from '@/utils/demoMode';
@@ -177,4 +177,15 @@ export const useInitializeApp = () => {
     logger.debug('Plugin availability changed, reloading models...');
     void loadModels();
   }, [plugins, loadModels]);
+
+  // Pulling or removing a model changes what can be chatted with, so pick the
+  // new list up straight away instead of waiting for the next app start.
+  useEffect(() => {
+    const reload = () => {
+      logger.debug('Installed models changed, reloading models...');
+      void loadModels();
+    };
+    window.addEventListener(MODELS_CHANGED_EVENT, reload);
+    return () => window.removeEventListener(MODELS_CHANGED_EVENT, reload);
+  }, [loadModels]);
 };

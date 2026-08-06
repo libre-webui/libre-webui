@@ -427,6 +427,7 @@
       "tts": "Mowa",
       "imageGen": "Obrazy",
       "data": "Dane",
+      "shortcuts": "Skróty",
       "about": "O programie"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Zamknij okna modalne",
     "groups": {
       "navigation": "Nawigacja",
-      "settings": "Ustawienia",
       "general": "Ogólne",
-      "chat": "Czat"
+      "chat": "Czat",
+      "workspace": "Przestrzeń robocza"
     },
     "actions": {
       "sendMessage": "Wyślij wiadomość",
-      "newLine": "Nowa linia w wiadomości"
+      "newLine": "Nowa linia w wiadomości",
+      "saveEdit": "Zapisz edytowaną wiadomość",
+      "cancelEdit": "Anuluj edycję",
+      "saveFile": "Zapisz plik",
+      "formatCode": "Sformatuj kod"
     },
-    "footer": "Naciśnij {{key1}} lub {{key2}}, aby wyświetlić tę pomoc",
-    "tooltip": "Skróty klawiaturowe"
+    "description": "Wszystkie skróty klawiszowe dostępne w Libre WebUI.",
+    "newChat": "Nowy czat",
+    "newWork": "Nowa sesja Work",
+    "openPalette": "Otwórz paletę poleceń"
   },
   "modelManager": {
     "title": "Modele",

@@ -427,6 +427,7 @@
       "tts": "টেক্সট-টু-স্পিচ",
       "imageGen": "ইমেজ জেনারেশন",
       "data": "ডেটা",
+      "shortcuts": "শর্টকাট",
       "about": "সম্পর্কে"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "মোডাল বন্ধ করুন",
     "groups": {
       "navigation": "নেভিগেশন",
-      "settings": "সেটিংস",
       "general": "সাধারণ",
-      "chat": "চ্যাট"
+      "chat": "চ্যাট",
+      "workspace": "ওয়ার্কস্পেস"
     },
     "actions": {
       "sendMessage": "বার্তা পাঠান",
-      "newLine": "বার্তায় নতুন লাইন"
+      "newLine": "বার্তায় নতুন লাইন",
+      "saveEdit": "সম্পাদিত বার্তা সংরক্ষণ করুন",
+      "cancelEdit": "সম্পাদনা বাতিল করুন",
+      "saveFile": "ফাইল সংরক্ষণ করুন",
+      "formatCode": "কোড ফরম্যাট করুন"
     },
-    "footer": "এই সাহায্য দেখাতে {{key1}} বা {{key2}} চাপুন",
-    "tooltip": "কীবোর্ড শর্টকাট"
+    "description": "Libre WebUI-তে উপলব্ধ সব কীবোর্ড শর্টকাট।",
+    "newChat": "নতুন চ্যাট",
+    "newWork": "নতুন Work সেশন",
+    "openPalette": "কমান্ড প্যালেট খুলুন"
   },
   "modelManager": {
     "title": "মডেল",

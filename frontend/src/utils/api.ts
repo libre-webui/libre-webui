@@ -58,7 +58,7 @@ export type {
   LibreClawStartRunPayload,
   LibreClawStatus,
 } from './api/libreClawApi';
-export { ollamaApi } from './api/modelApi';
+export { ollamaApi, MODELS_CHANGED_EVENT } from './api/modelApi';
 export { personaApi } from './api/personaApi';
 export { pluginApi } from './api/pluginApi';
 export type {

@@ -573,7 +573,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const authRole = options.authRole ?? 'admin';
   const authUsers = options.authUsers ?? [];
   const sessions = structuredClone(options.sessions ?? []);
-  const models = options.models ?? defaultModels;
+  let models = options.models ?? defaultModels;
   const ollamaHealthy = options.ollamaHealthy ?? true;
   const plugins = structuredClone(options.plugins ?? []);
   const pluginVariables = structuredClone(options.pluginVariables ?? {});
@@ -2063,6 +2063,11 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   );
 
   return {
+    /** Stands in for a model appearing on the backend, as a pull would. */
+    setModels: (next: MockModel[]) => {
+      models = next;
+    },
+    getModels: () => models,
     pullStreamUrls,
     preferenceUpdateRequests,
     pluginCredentialUpdateRequests,

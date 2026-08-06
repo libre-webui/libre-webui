@@ -427,6 +427,7 @@
       "tts": "Tal",
       "imageGen": "Bilder",
       "data": "Data",
+      "shortcuts": "Kortkommandon",
       "about": "Om"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Stäng dialogrutor",
     "groups": {
       "navigation": "Navigering",
-      "settings": "Inställningar",
       "general": "Allmänt",
-      "chat": "Chatt"
+      "chat": "Chatt",
+      "workspace": "Arbetsyta"
     },
     "actions": {
       "sendMessage": "Skicka meddelande",
-      "newLine": "Ny rad i meddelande"
+      "newLine": "Ny rad i meddelande",
+      "saveEdit": "Spara redigerat meddelande",
+      "cancelEdit": "Avbryt redigering",
+      "saveFile": "Spara fil",
+      "formatCode": "Formatera kod"
     },
-    "footer": "Tryck {{key1}} eller {{key2}} för att visa denna hjälp",
-    "tooltip": "Tangentbordsgenvägar"
+    "description": "Alla kortkommandon som finns i Libre WebUI.",
+    "newChat": "Ny chatt",
+    "newWork": "Ny Work-session",
+    "openPalette": "Öppna kommandopaletten"
   },
   "modelManager": {
     "title": "Modeller",

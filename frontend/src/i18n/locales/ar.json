@@ -427,6 +427,7 @@
       "tts": "تحويل النص إلى كلام",
       "imageGen": "توليد الصور",
       "data": "البيانات",
+      "shortcuts": "الاختصارات",
       "about": "حول"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "إغلاق النوافذ المنبثقة",
     "groups": {
       "navigation": "التنقل",
-      "settings": "الإعدادات",
       "general": "عام",
-      "chat": "المحادثة"
+      "chat": "المحادثة",
+      "workspace": "مساحة العمل"
     },
     "actions": {
       "sendMessage": "إرسال الرسالة",
-      "newLine": "سطر جديد في الرسالة"
+      "newLine": "سطر جديد في الرسالة",
+      "saveEdit": "حفظ الرسالة المعدّلة",
+      "cancelEdit": "إلغاء التعديل",
+      "saveFile": "حفظ الملف",
+      "formatCode": "تنسيق الشيفرة"
     },
-    "footer": "اضغط {{key1}} أو {{key2}} لإظهار هذه المساعدة",
-    "tooltip": "اختصارات لوحة المفاتيح"
+    "description": "كل اختصارات لوحة المفاتيح المتاحة في Libre WebUI.",
+    "newChat": "محادثة جديدة",
+    "newWork": "جلسة عمل جديدة",
+    "openPalette": "فتح لوحة الأوامر"
   },
   "modelManager": {
     "title": "النماذج",

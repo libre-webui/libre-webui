@@ -427,6 +427,7 @@
       "tts": "Voz",
       "imageGen": "Imágenes",
       "data": "Datos",
+      "shortcuts": "Atajos",
       "about": "Acerca de"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Cerrar modales",
     "groups": {
       "navigation": "Navegación",
-      "settings": "Configuración",
       "general": "General",
-      "chat": "Chat"
+      "chat": "Chat",
+      "workspace": "Espacio de trabajo"
     },
     "actions": {
       "sendMessage": "Enviar mensaje",
-      "newLine": "Nueva línea en mensaje"
+      "newLine": "Nueva línea en mensaje",
+      "saveEdit": "Guardar el mensaje editado",
+      "cancelEdit": "Cancelar la edición",
+      "saveFile": "Guardar archivo",
+      "formatCode": "Formatear código"
     },
-    "footer": "Presiona {{key1}} o {{key2}} para mostrar esta ayuda",
-    "tooltip": "Atajos de teclado"
+    "description": "Todos los atajos de teclado disponibles en Libre WebUI.",
+    "newChat": "Nuevo chat",
+    "newWork": "Nueva sesión de Work",
+    "openPalette": "Abrir la paleta de comandos"
   },
   "modelManager": {
     "title": "Modelos",

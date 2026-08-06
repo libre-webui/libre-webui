@@ -427,6 +427,7 @@
       "tts": "Tale",
       "imageGen": "Billeder",
       "data": "Data",
+      "shortcuts": "Genveje",
       "about": "Om"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Luk dialogbokse",
     "groups": {
       "navigation": "Navigation",
-      "settings": "Indstillinger",
       "general": "Generelt",
-      "chat": "Chat"
+      "chat": "Chat",
+      "workspace": "Arbejdsområde"
     },
     "actions": {
       "sendMessage": "Send besked",
-      "newLine": "Ny linje i besked"
+      "newLine": "Ny linje i besked",
+      "saveEdit": "Gem redigeret besked",
+      "cancelEdit": "Annullér redigering",
+      "saveFile": "Gem fil",
+      "formatCode": "Formatér kode"
     },
-    "footer": "Tryk {{key1}} eller {{key2}} for at vise denne hjælp",
-    "tooltip": "Tastaturgenveje"
+    "description": "Alle tastaturgenveje i Libre WebUI.",
+    "newChat": "Ny chat",
+    "newWork": "Ny Work-session",
+    "openPalette": "Åbn kommandopaletten"
   },
   "modelManager": {
     "title": "Modeller",

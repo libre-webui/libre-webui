@@ -427,6 +427,7 @@
       "tts": "Voce",
       "imageGen": "Immagini",
       "data": "Dati",
+      "shortcuts": "Scorciatoie",
       "about": "Informazioni"
     },
     "appearance": {
@@ -863,16 +864,22 @@
     "closeModals": "Chiudi finestre",
     "groups": {
       "navigation": "Navigazione",
-      "settings": "Impostazioni",
       "general": "Generale",
-      "chat": "Chat"
+      "chat": "Chat",
+      "workspace": "Area di lavoro"
     },
     "actions": {
       "sendMessage": "Invia messaggio",
-      "newLine": "Nuova riga nel messaggio"
+      "newLine": "Nuova riga nel messaggio",
+      "saveEdit": "Salva il messaggio modificato",
+      "cancelEdit": "Annulla la modifica",
+      "saveFile": "Salva file",
+      "formatCode": "Formatta il codice"
     },
-    "footer": "Premi {{key1}} o {{key2}} per mostrare questa guida",
-    "tooltip": "Scorciatoie da tastiera"
+    "description": "Tutte le scorciatoie da tastiera disponibili in Libre WebUI.",
+    "newChat": "Nuova chat",
+    "newWork": "Nuova sessione Work",
+    "openPalette": "Apri la palette dei comandi"
   },
   "modelManager": {
     "title": "Modelli",
