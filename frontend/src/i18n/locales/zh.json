@@ -597,6 +597,11 @@
     "generation": {
       "title": "生成选项",
       "description": "配置 AI 如何生成响应",
+      "scopeLabel": "应用于",
+      "scopeAll": "所有模型",
+      "scopeModel": "仅 {{model}}",
+      "scopeAllHint": "除非模型有自己的设置，否则所有模型都使用这些值。",
+      "scopeModelHint": "仅为该模型保存，并优先于上面的通用值。",
       "coreParameters": "核心参数",
       "temperature": "温度",
       "temperatureDescription": "控制随机性。较低的值更专注，较高的值更有创意。",

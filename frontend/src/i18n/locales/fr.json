@@ -597,6 +597,11 @@
     "generation": {
       "title": "Options de génération",
       "description": "Configurez comment l'IA génère les réponses",
+      "scopeLabel": "S'applique à",
+      "scopeAll": "Tous les modèles",
+      "scopeModel": "Uniquement {{model}}",
+      "scopeAllHint": "Les valeurs utilisées par chaque modèle, sauf s'il a les siennes.",
+      "scopeModelHint": "Enregistré pour ce seul modèle, et prioritaire sur les valeurs générales.",
       "coreParameters": "Paramètres principaux",
       "temperature": "Température",
       "temperatureDescription": "Contrôle l'aléatoire. Les valeurs basses sont plus précises, les valeurs hautes plus créatives.",

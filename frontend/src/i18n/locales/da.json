@@ -597,6 +597,11 @@
     "generation": {
       "title": "Genereringsindstillinger",
       "description": "Konfigurer hvordan AI'en genererer svar",
+      "scopeLabel": "Gælder for",
+      "scopeAll": "Alle modeller",
+      "scopeModel": "Kun {{model}}",
+      "scopeAllHint": "De værdier hver model bruger, medmindre den har sine egne.",
+      "scopeModelHint": "Gemmes kun for denne model og vinder over de generelle værdier.",
       "coreParameters": "Kerneparametre",
       "temperature": "Temperatur",
       "temperatureDescription": "Styrer tilfældighed. Lavere værdier er mere fokuserede, højere værdier mere kreative.",

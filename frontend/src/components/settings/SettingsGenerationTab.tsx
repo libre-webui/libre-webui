@@ -34,8 +34,15 @@ interface SelectOption {
   label: string;
 }
 
+/** Which stored settings the tab reads and writes. */
+export type GenerationScope = 'global' | 'model';
+
 interface SettingsGenerationTabProps {
   generationOptions: GenerationOptions;
+  generationScope: GenerationScope;
+  /** The model a per-model scope would pin to, when one is selected. */
+  scopedModel?: string;
+  onGenerationScopeChange: (scope: GenerationScope) => void;
   embeddingSettings: EmbeddingSettings;
   effectiveEmbeddingSettings: EmbeddingSettings;
   embeddingModelOptions: SelectOption[];
@@ -56,6 +63,9 @@ interface SettingsGenerationTabProps {
 
 export function SettingsGenerationTab({
   generationOptions,
+  generationScope,
+  scopedModel,
+  onGenerationScopeChange,
   embeddingSettings,
   effectiveEmbeddingSettings,
   embeddingModelOptions,
@@ -70,6 +80,20 @@ export function SettingsGenerationTab({
   const { t } = useTranslation();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const advancedPanelId = useId();
+  const scopeSelectId = useId();
+
+  // A model can only be pinned when one is actually selected.
+  const scopeOptions = [
+    { value: 'global', label: t('settings.generation.scopeAll') },
+    ...(scopedModel
+      ? [
+          {
+            value: 'model',
+            label: t('settings.generation.scopeModel', { model: scopedModel }),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className='space-y-6'>
@@ -77,9 +101,33 @@ export function SettingsGenerationTab({
         <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
           {t('settings.generation.title')}
         </h3>
-        <p className='text-sm text-gray-600 dark:text-gray-400 mb-6'>
+        <p className='text-sm text-gray-600 dark:text-gray-400 mb-4'>
           {t('settings.generation.description')}
         </p>
+
+        {/* Without this, a save silently pinned whatever model the chat was on,
+            and the values every other model falls back to could not be reached. */}
+        <div className='mb-6 rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-300 dark:bg-dark-100'>
+          <label
+            htmlFor={scopeSelectId}
+            className='mb-2 block text-sm font-medium text-gray-900 dark:text-gray-100'
+          >
+            {t('settings.generation.scopeLabel')}
+          </label>
+          <Select
+            id={scopeSelectId}
+            value={generationScope}
+            onChange={event =>
+              onGenerationScopeChange(event.target.value as GenerationScope)
+            }
+            options={scopeOptions}
+          />
+          <p className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
+            {generationScope === 'model'
+              ? t('settings.generation.scopeModelHint')
+              : t('settings.generation.scopeAllHint')}
+          </p>
+        </div>
 
         <div className='rounded-lg border border-gray-200 bg-white dark:border-dark-300 dark:bg-dark-100'>
           <button

@@ -597,6 +597,11 @@
     "generation": {
       "title": "생성 옵션",
       "description": "AI가 응답을 생성하는 방식 구성",
+      "scopeLabel": "적용 대상",
+      "scopeAll": "모든 모델",
+      "scopeModel": "{{model}}만",
+      "scopeAllHint": "개별 설정이 없는 한 모든 모델이 사용하는 값입니다.",
+      "scopeModelHint": "이 모델에만 저장되며 전체 값보다 우선합니다.",
       "coreParameters": "핵심 매개변수",
       "temperature": "온도",
       "temperatureDescription": "무작위성을 제어합니다. 낮은 값은 더 집중적이고, 높은 값은 더 창의적입니다.",

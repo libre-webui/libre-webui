@@ -597,6 +597,11 @@
     "generation": {
       "title": "Genereringsalternativ",
       "description": "Konfigurera hur AI:n genererar svar",
+      "scopeLabel": "Gäller för",
+      "scopeAll": "Alla modeller",
+      "scopeModel": "Endast {{model}}",
+      "scopeAllHint": "Värdena som varje modell använder om den inte har egna.",
+      "scopeModelHint": "Sparas bara för den här modellen och vinner över de allmänna värdena.",
       "coreParameters": "Kärnparametrar",
       "temperature": "Temperatur",
       "temperatureDescription": "Styr slumpmässighet. Lägre värden är mer fokuserade, högre värden mer kreativa.",

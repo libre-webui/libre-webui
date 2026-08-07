@@ -597,6 +597,11 @@
     "generation": {
       "title": "Üretim Seçenekleri",
       "description": "Yapay zekanın yanıtları nasıl ürettiğini yapılandırın",
+      "scopeLabel": "Şunlara uygulanır",
+      "scopeAll": "Tüm modeller",
+      "scopeModel": "Yalnızca {{model}}",
+      "scopeAllHint": "Kendi değerleri yoksa her modelin kullandığı değerler.",
+      "scopeModelHint": "Yalnızca bu model için kaydedilir ve genel değerlerin önüne geçer.",
       "coreParameters": "Temel Parametreler",
       "temperature": "Sıcaklık",
       "temperatureDescription": "Rastgeleliği kontrol eder. Düşük değerler daha odaklı, yüksek değerler daha yaratıcıdır.",

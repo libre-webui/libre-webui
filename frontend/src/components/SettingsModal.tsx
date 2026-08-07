@@ -247,6 +247,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   ];
 
   const [activeTab, setActiveTab] = useState(initialTab ?? 'appearance');
+  // Which settings the Generation tab edits. It used to pin whatever model the
+  // chat happened to be on, with no way to reach the global values, so a limit
+  // set here came back the moment the model changed.
+  const [generationScope, setGenerationScope] = useState<'global' | 'model'>(
+    'global'
+  );
   const [settingsQuery, setSettingsQuery] = useState('');
   const [tempSystemMessage, setTempSystemMessage] = useState(systemMessage);
 
@@ -300,20 +306,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   );
 
   useEffect(() => {
-    if (!isOpen || !selectedModel) return;
+    if (!isOpen) return;
 
+    const forModel = generationScope === 'model' && Boolean(selectedModel);
     let cancelled = false;
 
-    // The panel shows what this model will actually run with: the
-    // application's settings, the model's own recommendations on top, and
-    // anything pinned for it winning over both.
-    void loadModelRecommendedOptions(selectedModel).then(recommended => {
+    // Editing the global values shows exactly those, so what is saved is what
+    // was displayed. For one model it shows what that model will actually run
+    // with: the global values, its own recommendations on top, and anything
+    // pinned for it winning over both.
+    void (
+      forModel
+        ? loadModelRecommendedOptions(selectedModel)
+        : Promise.resolve({})
+    ).then(recommended => {
       if (cancelled) return;
-      setTempGenerationOptions({
-        ...(preferences.generationOptions || {}),
-        ...recommended,
-        ...(preferences.modelGenerationOptions?.[selectedModel] || {}),
-      });
+      setTempGenerationOptions(
+        forModel
+          ? {
+              ...(preferences.generationOptions || {}),
+              ...recommended,
+              ...(preferences.modelGenerationOptions?.[selectedModel] || {}),
+            }
+          : { ...(preferences.generationOptions || {}) }
+      );
     });
 
     return () => {
@@ -321,6 +337,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     };
   }, [
     isOpen,
+    generationScope,
     selectedModel,
     loadModelRecommendedOptions,
     preferences.generationOptions,
@@ -1201,7 +1218,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleSaveGenerationOptions = async () => {
     try {
-      const response = selectedModel
+      const pinToModel = generationScope === 'model' && Boolean(selectedModel);
+      const response = pinToModel
         ? await preferencesApi.setModelGenerationOptions(
             selectedModel,
             tempGenerationOptions
@@ -1222,14 +1240,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       // Clearing this model's pinned options is what returns it to its own
       // recommended settings; the modelfile is the default, not a fixed set.
-      const response = selectedModel
-        ? await preferencesApi.setModelGenerationOptions(selectedModel, {})
-        : await preferencesApi.resetGenerationOptions();
+      const response =
+        generationScope === 'model' && selectedModel
+          ? await preferencesApi.setModelGenerationOptions(selectedModel, {})
+          : await preferencesApi.resetGenerationOptions();
 
       if (response.success && response.data) {
         setPreferences(response.data);
 
-        const recommended = selectedModel
+        const forModel = generationScope === 'model' && selectedModel;
+        const recommended = forModel
           ? await loadModelRecommendedOptions(selectedModel)
           : {};
 
@@ -1238,7 +1258,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           ...recommended,
         });
         toast.success(
-          selectedModel
+          forModel
             ? `Loaded the settings ${selectedModel} recommends`
             : 'Generation options reset to defaults'
         );
@@ -1552,6 +1572,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         return (
           <SettingsGenerationTab
             generationOptions={tempGenerationOptions}
+            generationScope={generationScope}
+            scopedModel={selectedModel || undefined}
+            onGenerationScopeChange={setGenerationScope}
             embeddingSettings={embeddingSettings}
             effectiveEmbeddingSettings={effectiveEmbeddingSettings}
             embeddingModelOptions={embeddingModelOptions}

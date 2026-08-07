@@ -623,6 +623,10 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   let pluginVariableResetFailures = options.pluginVariableResetFailures ?? 0;
   let pluginVariableResetRequests = 0;
   let pendingPluginListDelayMs = 0;
+  const preferenceScopedWrites: Array<{
+    path: string;
+    body: Record<string, unknown>;
+  }> = [];
   const preferenceUpdateUserIds: Array<string | null> = [];
   const pendingPreferenceUpdateReleases: Array<() => void> = [];
   let preferenceUpdateFailures = options.preferenceUpdateFailures ?? 0;
@@ -1805,6 +1809,12 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       }
 
       if (path.startsWith('/preferences') && method !== 'GET') {
+        // Which preferences endpoint was written to, so a test can tell a
+        // global save from one pinned to a single model.
+        preferenceScopedWrites.push({
+          path,
+          body: route.request().postDataJSON() as Record<string, unknown>,
+        });
         await fulfillJson(route, preferencesForRoute(route));
         return;
       }
@@ -2070,6 +2080,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   );
 
   return {
+    preferenceScopedWrites,
     /** Stands in for a model appearing on the backend, as a pull would. */
     setModels: (next: MockModel[]) => {
       models = next;

@@ -597,6 +597,11 @@
     "generation": {
       "title": "Opcje generowania",
       "description": "Skonfiguruj sposób generowania odpowiedzi przez AI",
+      "scopeLabel": "Dotyczy",
+      "scopeAll": "Wszystkich modeli",
+      "scopeModel": "Tylko {{model}}",
+      "scopeAllHint": "Wartości używane przez każdy model, o ile nie ma własnych.",
+      "scopeModelHint": "Zapisywane tylko dla tego modelu i mają pierwszeństwo przed ogólnymi.",
       "coreParameters": "Podstawowe parametry",
       "temperature": "Temperatura",
       "temperatureDescription": "Kontroluje losowość. Niższe wartości są bardziej skupione, wyższe bardziej kreatywne.",

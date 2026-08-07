@@ -597,6 +597,11 @@
     "generation": {
       "title": "Generierungsoptionen",
       "description": "Konfigurieren Sie, wie die KI Antworten generiert",
+      "scopeLabel": "Gilt für",
+      "scopeAll": "Alle Modelle",
+      "scopeModel": "Nur {{model}}",
+      "scopeAllHint": "Die Werte, die jedes Modell verwendet, sofern es keine eigenen hat.",
+      "scopeModelHint": "Wird nur für dieses Modell gespeichert und hat Vorrang vor den allgemeinen Werten.",
       "coreParameters": "Kernparameter",
       "temperature": "Temperatur",
       "temperatureDescription": "Steuert die Zufälligkeit. Niedrigere Werte sind fokussierter, höhere kreativer.",

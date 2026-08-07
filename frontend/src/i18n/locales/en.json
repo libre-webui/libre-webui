@@ -597,6 +597,11 @@
     "generation": {
       "title": "Generation Options",
       "description": "Configure how the AI generates responses",
+      "scopeLabel": "Applies to",
+      "scopeAll": "All models",
+      "scopeModel": "Only {{model}}",
+      "scopeAllHint": "The values every model uses unless it has its own.",
+      "scopeModelHint": "Saved for this model alone, and it wins over the values above.",
       "advancedSettings": "Advanced generation settings",
       "advancedSettingsDescription": "Sampling, token limits, context, penalties, and stop sequences",
       "coreParameters": "Core Parameters",

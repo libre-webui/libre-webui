@@ -597,6 +597,11 @@
     "generation": {
       "title": "Opsi Pembuatan",
       "description": "Konfigurasi cara AI membuat respons",
+      "scopeLabel": "Berlaku untuk",
+      "scopeAll": "Semua model",
+      "scopeModel": "Hanya {{model}}",
+      "scopeAllHint": "Nilai yang dipakai setiap model kecuali model itu punya nilainya sendiri.",
+      "scopeModelHint": "Disimpan hanya untuk model ini dan mengalahkan nilai umum.",
       "coreParameters": "Parameter Inti",
       "temperature": "Temperatur",
       "temperatureDescription": "Mengontrol keacakan. Nilai lebih rendah lebih fokus, nilai lebih tinggi lebih kreatif.",

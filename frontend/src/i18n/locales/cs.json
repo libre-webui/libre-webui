@@ -597,6 +597,11 @@
     "generation": {
       "title": "Možnosti generování",
       "description": "Nakonfigurujte, jak AI generuje odpovědi",
+      "scopeLabel": "Platí pro",
+      "scopeAll": "Všechny modely",
+      "scopeModel": "Pouze {{model}}",
+      "scopeAllHint": "Hodnoty, které použije každý model, pokud nemá vlastní nastavení.",
+      "scopeModelHint": "Uloží se jen pro tento model a má přednost před obecným nastavením.",
       "coreParameters": "Základní parametry",
       "temperature": "Teplota",
       "temperatureDescription": "Ovládá náhodnost. Nižší hodnoty jsou více zaměřené, vyšší více kreativní.",

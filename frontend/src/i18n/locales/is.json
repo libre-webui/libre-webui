@@ -597,6 +597,11 @@
     "generation": {
       "title": "Myndunarstillingar",
       "description": "Stilltu hvernig gervigreindin býr til svör",
+      "scopeLabel": "Gildir fyrir",
+      "scopeAll": "Öll líkön",
+      "scopeModel": "Aðeins {{model}}",
+      "scopeAllHint": "Gildin sem hvert líkan notar nema það hafi sín eigin.",
+      "scopeModelHint": "Vistað aðeins fyrir þetta líkan og gengur framar almennu gildunum.",
       "coreParameters": "Grunnfæribreytur",
       "temperature": "Hitastig",
       "temperatureDescription": "Stýrir tilviljun. Lægri gildi eru markvissari, hærri gildi skapandi.",

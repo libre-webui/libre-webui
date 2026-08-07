@@ -597,6 +597,11 @@
     "generation": {
       "title": "Tùy chọn tạo nội dung",
       "description": "Cấu hình cách AI tạo phản hồi",
+      "scopeLabel": "Áp dụng cho",
+      "scopeAll": "Tất cả mô hình",
+      "scopeModel": "Chỉ {{model}}",
+      "scopeAllHint": "Các giá trị mọi mô hình dùng, trừ khi mô hình đó có giá trị riêng.",
+      "scopeModelHint": "Chỉ lưu cho mô hình này và được ưu tiên hơn giá trị chung.",
       "coreParameters": "Tham số cốt lõi",
       "temperature": "Nhiệt độ",
       "temperatureDescription": "Kiểm soát tính ngẫu nhiên. Giá trị thấp hơn tập trung hơn, giá trị cao hơn sáng tạo hơn.",

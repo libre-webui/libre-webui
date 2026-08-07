@@ -597,6 +597,11 @@
     "generation": {
       "title": "Pilihan Penjanaan",
       "description": "Konfigurasi cara AI menjana respons",
+      "scopeLabel": "Digunakan pada",
+      "scopeAll": "Semua model",
+      "scopeModel": "Hanya {{model}}",
+      "scopeAllHint": "Nilai yang digunakan setiap model melainkan ia mempunyai nilainya sendiri.",
+      "scopeModelHint": "Disimpan untuk model ini sahaja dan mengatasi nilai umum.",
       "coreParameters": "Parameter Teras",
       "temperature": "Suhu",
       "temperatureDescription": "Mengawal rawak. Nilai lebih rendah lebih fokus, nilai lebih tinggi lebih kreatif.",

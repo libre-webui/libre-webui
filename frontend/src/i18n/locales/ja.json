@@ -597,6 +597,11 @@
     "generation": {
       "title": "生成オプション",
       "description": "AIがレスポンスを生成する方法を設定",
+      "scopeLabel": "適用先",
+      "scopeAll": "すべてのモデル",
+      "scopeModel": "{{model}} のみ",
+      "scopeAllHint": "個別の設定がないかぎり、すべてのモデルが使う値です。",
+      "scopeModelHint": "このモデルだけに保存され、全体の値より優先されます。",
       "coreParameters": "コアパラメータ",
       "temperature": "温度",
       "temperatureDescription": "ランダム性を制御します。低い値はより集中的、高い値はより創造的。",
