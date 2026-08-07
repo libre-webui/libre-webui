@@ -13,7 +13,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- The Generation tab in Settings reaches the shared values again. It saved to
+  whichever model the chat happened to be on — and a model is always selected —
+  so the values every other model falls back to could not be changed from the
+  interface at all. The tab now says what it writes to: it defaults to the
+  values every model shares, and pins to a single model only when that is
+  chosen explicitly.
+- A context size of -1 is never sent to Ollama. Settings saved while a hosted
+  model was selected can carry `num_ctx: -1`, which hosted backends ignore but
+  a local model would take as a real context size. There is no "unlimited"
+  sentinel for the context window, so a non-positive value is dropped before
+  the call.
+
 ### 📚 Documentation
+
+- The repository landing page takes its layout from the documentation site.
 
 ## [0.19.4] - 2026-08-07
 
