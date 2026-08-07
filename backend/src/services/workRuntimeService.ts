@@ -33,6 +33,7 @@ import {
   validateWorkGitRepositoryPaths,
 } from '../utils/workGit.js';
 import workPreviewProxyService from './workPreviewProxyService.js';
+import { KubernetesWorkRuntimeDriver } from './workKubernetesDriver.js';
 import {
   DockerWorkRuntimeDriver,
   type DiscoveredWorkContainer,
@@ -2655,5 +2656,28 @@ walk(targetReal);
 process.stdout.write(results.join('\\n'));
 `;
 
-export const workRuntimeService = new WorkRuntimeService();
+/**
+ * Select the runtime backend for this deployment. Docker remains the
+ * default; WORK_RUNTIME_BACKEND=kubernetes runs sandboxes as Pods in a
+ * namespace instead (no Docker daemon or socket anywhere). An unknown value
+ * fails startup loudly rather than silently running the wrong backend.
+ */
+export function createWorkRuntimeDriver(
+  backend = process.env.WORK_RUNTIME_BACKEND
+): WorkRuntimeDriver {
+  const selected = backend?.trim() || 'docker';
+  if (selected === 'docker') return new DockerWorkRuntimeDriver();
+  if (selected === 'kubernetes') return new KubernetesWorkRuntimeDriver();
+  throw new WorkRuntimeError(
+    `Unknown WORK_RUNTIME_BACKEND "${selected}". Use "docker" or "kubernetes".`,
+    503,
+    'WORK_RUNTIME_BACKEND_INVALID'
+  );
+}
+
+export { KubernetesWorkRuntimeDriver } from './workKubernetesDriver.js';
+
+export const workRuntimeService = new WorkRuntimeService(
+  createWorkRuntimeDriver()
+);
 export default workRuntimeService;

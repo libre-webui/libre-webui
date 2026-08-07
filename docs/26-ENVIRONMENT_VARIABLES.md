@@ -115,6 +115,12 @@ Libre WebUI backend:
 | `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session is closed         |
 | `WORK_HOST_WORKSPACES_ENABLED`        | `false`                                                                                       | Allow a task to use a host folder instead of a volume    |
 | `WORK_HOST_WORKSPACE_ROOTS`           | the server user's home directory                                                              | `:`-separated roots a host workspace must live inside    |
+| `WORK_RUNTIME_BACKEND`                | `docker`                                                                                      | Sandbox backend: `docker` or `kubernetes` (experimental) |
+| `WORK_K8S_NAMESPACE`                  | `libre-webui-work`                                                                            | Namespace holding Kubernetes sandbox Pods and PVCs       |
+| `WORK_K8S_STORAGE_CLASS`              | cluster default                                                                               | StorageClass for workspace PVCs                          |
+| `WORK_K8S_WORKSPACE_SIZE`             | `5Gi`                                                                                         | Per-task workspace PVC size (a real disk quota)          |
+| `WORK_K8S_POD_READY_TIMEOUT_MS`       | `900000`                                                                                      | Wait for a sandbox Pod to reach Running (covers pulls)   |
+| `WORK_K8S_POD_GONE_TIMEOUT_MS`        | `60000`                                                                                       | Wait for a deleted sandbox Pod to disappear              |
 | `AGENT_CLI_MODELS_ENABLED`            | `true`                                                                                        | Offer installed agent CLIs as chat models to admins      |
 | `AGENT_CLI_TIMEOUT_MS`                | `600000`                                                                                      | Time an agent CLI may run before it is killed            |
 | `CODEX_OAUTH_MODELS_ENABLED`          | `true`                                                                                        | Offer the Codex (ChatGPT) provider to admins             |

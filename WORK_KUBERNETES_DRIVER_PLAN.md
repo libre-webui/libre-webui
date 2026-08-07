@@ -1,12 +1,17 @@
 # Work Kubernetes Runtime Driver — Implementation Plan
 
-Status: phase 1 complete — the `WorkRuntimeDriver` seam exists
-(`backend/src/services/workRuntimeDriver.ts`) with the Docker driver as the
-only implementation, including the terminal transport; behavior is
-unchanged and the full Work suite passes against it. Phases 2–5 are not
-built. The deployment matrix in `docs/33-WORKSPACES.md` still marks
-Kubernetes as unsupported; this plan describes how to change that without
-weakening the Work security model.
+Status: phases 1–2 complete. The `WorkRuntimeDriver` seam exists
+(`backend/src/services/workRuntimeDriver.ts`), and
+`WORK_RUNTIME_BACKEND=kubernetes` selects the Kubernetes driver
+(`backend/src/services/workKubernetesDriver.ts`): PVC-backed workspaces,
+on-demand sandbox Pods with the full hardening profile, exec transport for
+files/commands/git, policy-fingerprint annotations, and label-driven
+reconciliation — verified end-to-end against a kind cluster (lifecycle,
+stdin exec, persistence across Pod recreation, ownership refusal).
+Preview (phase 3), terminals (phase 3), Helm RBAC/NetworkPolicies
+(phase 4), and CI (phase 5) are not built; preview and terminals report
+themselves unavailable on this backend. Docker remains the default
+backend and is unchanged.
 
 ## Goal
 
