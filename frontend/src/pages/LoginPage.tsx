@@ -120,14 +120,41 @@ export const LoginPage: React.FC = () => {
             </ul>
           </div>
 
-          <p
-            data-testid='app-version'
-            className='relative z-10 font-mono text-[11px] text-ink-subtle'
-          >
-            {version ? `v${version}` : ''}
-            {version ? ' · ' : ''}
-            {t('auth.selfHosted', 'Self-hosted · Apache 2.0')}
-          </p>
+          <div className='relative z-10 space-y-1 font-mono text-[11px] text-ink-subtle'>
+            <p>
+              <a
+                href='https://librewebui.org'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='transition-colors hover:text-ink'
+              >
+                librewebui.org
+              </a>
+              {' · '}
+              <a
+                href='https://docs.librewebui.org'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='transition-colors hover:text-ink'
+              >
+                docs.librewebui.org
+              </a>
+            </p>
+            <p data-testid='app-version'>
+              {version ? `v${version}` : ''}
+              {version ? ' · ' : ''}
+              {t('auth.selfHosted', 'Self-hosted · Apache 2.0')}
+              {' · '}
+              <a
+                href='https://kroonen.ai'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='transition-colors hover:text-ink'
+              >
+                kroonen.ai
+              </a>
+            </p>
+          </div>
         </section>
 
         <section className='flex items-center justify-center px-5 pb-12 pt-24 sm:px-8 lg:px-12 lg:py-12'>

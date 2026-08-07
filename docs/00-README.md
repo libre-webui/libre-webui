@@ -47,7 +47,7 @@ import CodeBlock from '@theme/CodeBlock';
     <div className="docs-landing__command-block">
       <p className="docs-landing__command-label">One-command local start</p>
       <div className="docs-landing__command">
-        <CodeBlock language="bash">npx libre-webui</CodeBlock>
+        <CodeBlock language="bash">npx libre-webui@latest</CodeBlock>
       </div>
       <p className="docs-landing__command-note">
         {"Open your private workspace at "}<code>http://localhost:8080</code>{"."}

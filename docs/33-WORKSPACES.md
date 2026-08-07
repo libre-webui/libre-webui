@@ -147,7 +147,7 @@ computer as the browser:
 
 ```bash
 docker info
-npx libre-webui
+npx libre-webui@latest
 ```
 
 Open `http://localhost:8080`, sign in as an administrator, select **Work** in
