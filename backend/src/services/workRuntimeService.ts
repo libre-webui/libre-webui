@@ -213,15 +213,23 @@ export class WorkRuntimeService {
   private previewLeaseReleases = new Map<string, () => void>();
   private terminalHolds = new Map<string, number>();
   private recoveryTasks = new Map<string, WorkTaskRecord>();
+  private recoveryOrphans = new Map<string, DiscoveredWorkContainer>();
+  private recoveryInventory?: WorkTaskRecord[];
   private recoveryTimer?: NodeJS.Timeout;
   private shuttingDown = false;
 
   get recoveryPending(): boolean {
-    return this.recoveryTasks.size > 0;
+    return this.recoveryPendingCount > 0;
   }
 
   get recoveryPendingCount(): number {
-    return this.recoveryTasks.size;
+    // Before reconciliation has run, every inventoried task counts as
+    // pending: nothing has been proven about its container yet.
+    return (
+      (this.recoveryInventory?.length ?? 0) +
+      this.recoveryTasks.size +
+      this.recoveryOrphans.size
+    );
   }
 
   assertAcceptingWork(): void {
@@ -283,9 +291,7 @@ export class WorkRuntimeService {
   async beginRecovery(
     tasks: WorkTaskRecord[]
   ): Promise<{ stopped: number; failed: number }> {
-    for (const task of tasks) {
-      this.recoveryTasks.set(task.id, task);
-    }
+    this.recoveryInventory = tasks;
     const result = await this.sweepRecoveryTasks();
     this.scheduleRecoverySweep();
     return result;
@@ -476,19 +482,70 @@ export class WorkRuntimeService {
     stopped: number;
     failed: number;
   }> {
-    if (this.recoveryTasks.size === 0) {
+    if (
+      this.recoveryInventory === undefined &&
+      this.recoveryTasks.size === 0 &&
+      this.recoveryOrphans.size === 0
+    ) {
       return { stopped: 0, failed: 0 };
     }
     if (this.shuttingDown || !(await this.isDockerAvailable())) {
-      return { stopped: 0, failed: this.recoveryTasks.size };
+      if (this.recoveryInventory?.length === 0) {
+        // No tasks to supervise and no daemon to ask about leftovers: stay
+        // quiet instead of fail-closing a deployment without Docker.
+        this.recoveryInventory = undefined;
+        return { stopped: 0, failed: 0 };
+      }
+      return { stopped: 0, failed: this.recoveryPendingCount };
+    }
+
+    if (this.recoveryInventory !== undefined) {
+      // Reconcile against what actually exists instead of stopping every
+      // known task blind: one labeled listing decides which containers are
+      // running unsupervised, which are at rest, and which are orphans left
+      // by a task whose database row is gone.
+      let discovered: DiscoveredWorkContainer[];
+      try {
+        discovered = await this.listManagedContainers();
+      } catch (error) {
+        logger.warn(
+          'Could not list Work containers for startup reconciliation:',
+          error
+        );
+        return { stopped: 0, failed: this.recoveryPendingCount };
+      }
+      const plan = planStartupReconciliation(
+        this.recoveryInventory,
+        discovered
+      );
+      for (const task of plan.stop) {
+        this.recoveryTasks.set(task.id, task);
+      }
+      for (const orphan of plan.removeOrphans) {
+        this.recoveryOrphans.set(orphan.name, orphan);
+      }
+      this.recoveryInventory = undefined;
+      if (this.recoveryPendingCount > 0 || plan.atRest > 0) {
+        logger.info(
+          `Work startup reconciliation: ${plan.stop.length} running container(s) to stop, ` +
+            `${plan.removeOrphans.length} orphaned container(s) to remove, ` +
+            `${plan.atRest} container(s) already at rest.`
+        );
+      }
     }
 
     const tasks = [...this.recoveryTasks.values()];
-    const results = await Promise.allSettled(
-      tasks.map(task => this.stopContainer(task))
-    );
+    const orphans = [...this.recoveryOrphans.values()];
+    const [taskResults, orphanResults] = await Promise.all([
+      Promise.allSettled(tasks.map(task => this.stopContainer(task))),
+      Promise.allSettled(
+        orphans.map(orphan =>
+          this.docker(['rm', '--force', orphan.name], { timeoutMs: 15_000 })
+        )
+      ),
+    ]);
     let stopped = 0;
-    results.forEach((result, index) => {
+    taskResults.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         this.recoveryTasks.delete(tasks[index].id);
         stopped += 1;
@@ -499,16 +556,27 @@ export class WorkRuntimeService {
         );
       }
     });
-    if (this.recoveryTasks.size === 0) {
+    orphanResults.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        this.recoveryOrphans.delete(orphans[index].name);
+        stopped += 1;
+      } else {
+        logger.warn(
+          `Could not remove orphaned Work container ${orphans[index].name} during recovery:`,
+          result.reason
+        );
+      }
+    });
+    if (this.recoveryPendingCount === 0 && (tasks.length || orphans.length)) {
       logger.info('Work startup container recovery completed.');
     }
-    return { stopped, failed: this.recoveryTasks.size };
+    return { stopped, failed: this.recoveryPendingCount };
   }
 
   private scheduleRecoverySweep(): void {
     if (
       this.shuttingDown ||
-      this.recoveryTasks.size === 0 ||
+      this.recoveryPendingCount === 0 ||
       this.recoveryTimer
     ) {
       return;
@@ -537,7 +605,7 @@ export class WorkRuntimeService {
 
   private completeRecoveryTask(taskId: string): void {
     const removed = this.recoveryTasks.delete(taskId);
-    if (removed && this.recoveryTasks.size === 0) {
+    if (removed && this.recoveryPendingCount === 0) {
       logger.info('Pending Work container cleanup completed.');
     }
   }
@@ -2345,6 +2413,26 @@ export class WorkRuntimeService {
     return this.docker(args, options);
   }
 
+  /**
+   * Every container the Work runtime has ever created, in one daemon query,
+   * identified by the managed label stamped at `docker run` time.
+   */
+  private async listManagedContainers(): Promise<DiscoveredWorkContainer[]> {
+    const result = await this.docker(
+      [
+        'ps',
+        '--all',
+        '--no-trunc',
+        '--filter',
+        'label=ai.libre-webui.managed=true',
+        '--format',
+        '{{.Names}}\t{{.State}}\t{{.Label "ai.libre-webui.task"}}',
+      ],
+      { timeoutMs: 15_000 }
+    );
+    return parseManagedContainerList(result.stdout);
+  }
+
   private async docker(
     args: string[],
     options: ProcessOptions = {}
@@ -2358,6 +2446,74 @@ export class WorkRuntimeService {
       );
     }
   }
+}
+
+export interface DiscoveredWorkContainer {
+  name: string;
+  taskId: string;
+  running: boolean;
+}
+
+/** Parse `docker ps` lines of `name\tstate\ttask-label` into containers. */
+export function parseManagedContainerList(
+  stdout: string
+): DiscoveredWorkContainer[] {
+  const containers: DiscoveredWorkContainer[] = [];
+  for (const line of stdout.split('\n')) {
+    if (!line.trim()) continue;
+    const [name = '', state = '', taskId = ''] = line
+      .split('\t')
+      .map(field => field.trim());
+    if (!name || !state) continue;
+    containers.push({
+      name,
+      taskId,
+      // paused and restarting containers still hold execution state; only
+      // created/exited/dead containers are safely at rest.
+      running:
+        state === 'running' || state === 'restarting' || state === 'paused',
+    });
+  }
+  return containers;
+}
+
+export interface StartupReconciliationPlan {
+  /** Known tasks whose container is running unsupervised: stop them. */
+  stop: WorkTaskRecord[];
+  /** Managed containers whose task row no longer exists: remove them. */
+  removeOrphans: DiscoveredWorkContainer[];
+  /** Known-task containers already stopped: left exactly as they are. */
+  atRest: number;
+}
+
+/**
+ * Decide the minimal startup cleanup from the task inventory and the labeled
+ * containers Docker actually has. A task without a container needs nothing —
+ * which is the common case, and why recovery is no longer O(tasks) docker
+ * calls. Ownership is decided by the task label alone (stamped at creation
+ * together with the managed label): a managed container whose label matches
+ * no inventory row is unowned, and stopping it through a task record would
+ * be refused by the ownership assertion anyway.
+ */
+export function planStartupReconciliation(
+  tasks: WorkTaskRecord[],
+  containers: DiscoveredWorkContainer[]
+): StartupReconciliationPlan {
+  const byId = new Map(tasks.map(task => [task.id, task]));
+  const stop = new Map<string, WorkTaskRecord>();
+  const removeOrphans: DiscoveredWorkContainer[] = [];
+  let atRest = 0;
+  for (const container of containers) {
+    const task = byId.get(container.taskId);
+    if (!task) {
+      removeOrphans.push(container);
+    } else if (container.running) {
+      stop.set(task.id, task);
+    } else {
+      atRest += 1;
+    }
+  }
+  return { stop: [...stop.values()], removeOrphans, atRest };
 }
 
 /** Bracket a bare IPv6 literal so it can carry a port in a URL. */

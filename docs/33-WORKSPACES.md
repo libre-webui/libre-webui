@@ -524,12 +524,23 @@ idle container, commands stop the container after completion, and a verified
 preview may keep it running so the user can inspect the app. The named volume
 stays mounted again when the same task container is restarted or recreated.
 
-On backend startup, active runs are marked failed, preview state is cleared,
-and Libre WebUI attempts to stop every known Work container. If Docker cannot
-prove a container was stopped, the cleanup remains tracked, new mutable Work
+On backend startup, active runs are marked failed and preview state is
+cleared — the agent loop and the preview proxy died with the process and
+cannot be resumed. Containers are then reconciled against Docker in a single
+labeled query rather than stopped blind, one task at a time: running
+containers owned by known tasks are stopped, because an interrupted command
+may still be executing without a supervising process; containers already at
+rest are left exactly as they are; and managed containers whose task row no
+longer exists — a crash during task deletion, or a database restored without
+its Docker resources — are removed. Ownership is decided by the task label
+stamped at creation, never by name. A task with no container at all needs no
+Docker call, so startup cost follows what is actually running, not the size
+of the task list. If Docker cannot prove a running container was stopped or
+an orphan was removed, that cleanup remains tracked, new mutable Work
 operations stay blocked, and Libre WebUI retries every 10 seconds. An old
-command or preview may still be running while Docker is unavailable, so restore
-daemon access and let recovery complete before treating the runtime as stopped.
+command or preview may still be running while Docker is unavailable, so
+restore daemon access and let recovery complete before treating the runtime
+as stopped.
 
 ## Network Behavior
 

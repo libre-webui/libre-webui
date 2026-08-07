@@ -93,21 +93,23 @@ const app = express();
 const logger = createLogger('server');
 
 // Containers are execution state, while each task's named volume is durable.
-// Stop all known Work containers on backend startup so an interrupted command
-// or loopback preview cannot continue running without a supervising process.
+// On startup, reconcile the labeled Work containers Docker actually has
+// against the task inventory: running containers are stopped so an
+// interrupted command or loopback preview cannot continue without a
+// supervising process, containers at rest are left alone, and labeled
+// containers whose task row is gone are removed. Runs even with an empty
+// task table, so a restored database still sweeps leftover containers.
 const workRecovery = workTaskService.recoverOnStartup();
-if (workRecovery.tasks.length > 0) {
-  const cleanup = await workRuntimeService.beginRecovery(workRecovery.tasks);
-  if (cleanup.failed > 0) {
-    logger.warn(
-      `Work is fail-closed while ${cleanup.failed} startup container cleanup(s) are retried.`
-    );
-  }
-  if (workRecovery.interruptedRuns > 0 || workRecovery.activePreviews > 0) {
-    logger.info(
-      `Recovered ${workRecovery.interruptedRuns} interrupted Work run(s) and ${workRecovery.activePreviews} preview(s).`
-    );
-  }
+const workCleanup = await workRuntimeService.beginRecovery(workRecovery.tasks);
+if (workCleanup.failed > 0) {
+  logger.warn(
+    `Work is fail-closed while ${workCleanup.failed} startup container cleanup(s) are retried.`
+  );
+}
+if (workRecovery.interruptedRuns > 0 || workRecovery.activePreviews > 0) {
+  logger.info(
+    `Recovered ${workRecovery.interruptedRuns} interrupted Work run(s) and ${workRecovery.activePreviews} preview(s).`
+  );
 }
 
 // Trust proxy setting for running behind reverse proxies (Nginx, Caddy, etc.)
