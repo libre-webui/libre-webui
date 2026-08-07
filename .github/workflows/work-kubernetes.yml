@@ -1,0 +1,104 @@
+name: Work Kubernetes Backend
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - 'backend/src/services/work*'
+      - 'backend/src/utils/dockerEndpoint.ts'
+      - 'helm/libre-webui/**'
+      - 'scripts/test-work-kubernetes.mjs'
+      - 'scripts/test-helm-work.mjs'
+      - 'scripts/e2e-work-kubernetes.mjs'
+      - '.github/workflows/work-kubernetes.yml'
+      - 'package.json'
+      - 'backend/package.json'
+      - 'package-lock.json'
+  pull_request:
+    paths:
+      - 'backend/src/services/work*'
+      - 'backend/src/utils/dockerEndpoint.ts'
+      - 'helm/libre-webui/**'
+      - 'scripts/test-work-kubernetes.mjs'
+      - 'scripts/test-helm-work.mjs'
+      - 'scripts/e2e-work-kubernetes.mjs'
+      - '.github/workflows/work-kubernetes.yml'
+      - 'package.json'
+      - 'backend/package.json'
+      - 'package-lock.json'
+
+concurrency:
+  group: work-kubernetes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build backend
+        run: npm run build:backend
+
+      - name: Unit tests (Kubernetes driver and Helm chart)
+        run: |
+          node --test scripts/test-work-kubernetes.mjs
+          node --test scripts/test-helm-work.mjs
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: libre-work-ci
+
+      - name: Install chart with Work enabled
+        run: |
+          helm install lw-ci ./helm/libre-webui \
+            --set work.enabled=true \
+            --set replicaCount=0 \
+            --set ollama.bundled.enabled=false \
+            --set persistence.enabled=false
+          kubectl get role,rolebinding,networkpolicy -n libre-webui-work
+
+      - name: Build a ServiceAccount-scoped kubeconfig
+        run: |
+          TOKEN=$(kubectl create token lw-ci-libre-webui --duration=1h)
+          SERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+          kubectl config view --minify --raw \
+            -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' \
+            | base64 -d > /tmp/work-ca.crt
+          cat > /tmp/work-sa-kubeconfig.yaml << EOF
+          apiVersion: v1
+          kind: Config
+          clusters:
+            - name: kind
+              cluster:
+                server: ${SERVER}
+                certificate-authority: /tmp/work-ca.crt
+          users:
+            - name: work-sa
+              user:
+                token: ${TOKEN}
+          contexts:
+            - name: work
+              context: {cluster: kind, user: work-sa}
+          current-context: work
+          EOF
+
+      - name: End-to-end suite under least-privilege RBAC
+        run: node scripts/e2e-work-kubernetes.mjs
+        env:
+          SA_KUBECONFIG: /tmp/work-sa-kubeconfig.yaml

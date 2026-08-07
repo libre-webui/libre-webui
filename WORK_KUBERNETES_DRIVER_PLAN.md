@@ -16,7 +16,15 @@ chart creates the sandbox namespace, a namespace-scoped Role/RoleBinding
 sufficient by running the full driver lifecycle under the ServiceAccount
 token), and default-deny NetworkPolicies with a preview-ingress carve-out
 and metadata-blocking egress rules; the deployment matrix is flipped.
-Only CI (phase 5) remains. Docker stays the default backend, unchanged.
+Phase 5 is complete: `.github/workflows/work-kubernetes.yml` runs the
+driver/chart unit tests and then `scripts/e2e-work-kubernetes.mjs` on a
+kind cluster — chart install, ServiceAccount-scoped kubeconfig, and the
+full Work surface (lifecycle, exec, TTY terminal, preview with a
+cross-pod fetch, persistence, reconciliation, ownership refusal) under
+least-privilege RBAC. The suite also probes NetworkPolicy enforcement:
+a backend-labeled pod must reach the preview while an unlabeled pod is
+refused when the CNI enforces (recent kind does). All five phases are
+done. Docker stays the default backend, unchanged.
 
 ## Goal
 

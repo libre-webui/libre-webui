@@ -44,10 +44,12 @@ same-origin proxy, which requires the backend to run in-cluster (the normal
 chart topology). Host-folder workspaces are not supported on this backend.
 
 Two operator notes. NetworkPolicy enforcement requires a CNI that
-implements it (Calico, Cilium, and most managed-cluster defaults do;
-kindnet does not) — verify with your cluster before treating sandbox egress
-as constrained. And never mount a node's container-runtime socket into the
-WebUI pod; the Kubernetes backend exists precisely so that is unnecessary.
+implements it (Calico, Cilium, recent kind releases, and most
+managed-cluster defaults do) — verify with your cluster before treating
+sandbox isolation as active; the CI end-to-end suite reports whether the
+cluster it runs on enforces. And never mount a node's container-runtime
+socket into the WebUI pod; the Kubernetes backend exists precisely so that
+is unnecessary.
 
 ## Install
 

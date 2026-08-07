@@ -3,8 +3,8 @@
 # sandboxes cannot reach one another or anything in the cluster, networked
 # sandboxes get internet egress minus the blocked ranges, network-disabled
 # sandboxes get nothing. Enforcement requires a CNI that implements
-# NetworkPolicy (Calico, Cilium, ...); kindnet and other no-op CNIs accept
-# these objects without enforcing them.
+# NetworkPolicy (Calico, Cilium, recent kind, most managed defaults); a
+# no-op CNI accepts these objects without enforcing them.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
