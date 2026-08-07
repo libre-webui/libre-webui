@@ -9,9 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- The desktop app opens on a landing page. The horizon film plays through
+  once and settles on its still. Get Started asks where the server runs:
+  on this machine, with a live check that hands over the Docker command
+  and continues by itself as soon as the server answers — or on another
+  server, reached by its address and remembered for the next launch.
+  Switch Server in the app menu brings the page back, and the app's static
+  pages now carry a strict content security policy.
+
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes
+
+- `npx libre-webui` starts again. The command installs only the package's
+  own dependency list, and three packages the backend needs at runtime —
+  `parse5`, `ipaddr.js` and `undici` — were declared by the backend
+  workspace alone, so the server crashed the moment it booted. They ship
+  with the package now, and a packaging test walks every import in the
+  built backend against the published dependency list so this cannot
+  happen quietly again.
 
 ### 📚 Documentation
 
