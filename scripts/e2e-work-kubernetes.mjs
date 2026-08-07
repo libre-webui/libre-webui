@@ -135,53 +135,66 @@ try {
   }
   // Fetch as the backend would: from the release namespace, carrying the
   // backend's selector labels, which is exactly what the preview-ingress
-  // NetworkPolicy admits.
-  const probe = (name, extraArgs, url) =>
-    execFileSync(
-      'kubectl',
-      [
-        'run',
-        name,
-        '--rm',
-        '-i',
-        '--restart=Never',
-        '--image=busybox',
-        ...extraArgs,
-        '--',
-        'wget',
-        '-T',
-        '10',
-        '-qO-',
-        url,
-      ],
-      {
-        encoding: 'utf8',
-        timeout: 180_000,
-        env: { ...process.env, KUBECONFIG: adminKubeconfig },
+  // NetworkPolicy admits. `kubectl run --rm -i` attaches and can miss the
+  // output of a fast container entirely, so create the pod, wait for a
+  // terminal phase, and read the logs deterministically instead.
+  const kubectlAdmin = args =>
+    execFileSync('kubectl', args, {
+      encoding: 'utf8',
+      timeout: 180_000,
+      env: { ...process.env, KUBECONFIG: adminKubeconfig },
+    });
+  const probe = async (name, podNamespace, labels, url) => {
+    const nsArgs = ['-n', podNamespace];
+    kubectlAdmin([
+      'run',
+      name,
+      '--restart=Never',
+      '--image=busybox',
+      ...nsArgs,
+      ...(labels ? [`--labels=${labels}`] : []),
+      '--',
+      'wget',
+      '-T',
+      '10',
+      '-qO-',
+      url,
+    ]);
+    try {
+      let phase = '';
+      const deadline = Date.now() + 120_000;
+      while (phase !== 'Succeeded' && phase !== 'Failed') {
+        if (Date.now() >= deadline) fail(`probe ${name} never finished`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        phase = kubectlAdmin([
+          'get',
+          'pod',
+          name,
+          ...nsArgs,
+          '-o',
+          'jsonpath={.status.phase}',
+        ]).trim();
       }
-    );
-  const fetched = probe(
+      return kubectlAdmin(['logs', name, ...nsArgs]);
+    } finally {
+      kubectlAdmin(['delete', 'pod', name, ...nsArgs, '--wait=false']);
+    }
+  };
+  const fetched = await probe(
     'lw-e2e-backend-probe',
-    [
-      '-n',
-      releaseNamespace,
-      `--labels=app.kubernetes.io/name=libre-webui,app.kubernetes.io/instance=${releaseName}`,
-    ],
+    releaseNamespace,
+    `app.kubernetes.io/name=libre-webui,app.kubernetes.io/instance=${releaseName}`,
     `http://${endpoint.host}:${endpoint.port}/`
   );
   if (!fetched.includes('preview-e2e')) fail(`backend fetch: ${fetched}`);
 
   step('network policy: an unrelated pod cannot reach the sandbox');
-  let strangerBody = '';
-  try {
-    strangerBody = probe(
-      'lw-e2e-stranger-probe',
-      ['-n', namespace],
-      `http://${endpoint.host}:${endpoint.port}/`
-    );
-  } catch {
-    // Connection refused/timed out: the default-deny policy is enforced.
-  }
+  const strangerBody = await probe(
+    'lw-e2e-stranger-probe',
+    namespace,
+    null,
+    `http://${endpoint.host}:${endpoint.port}/`
+  );
   if (strangerBody.includes('preview-e2e')) {
     // Objects exist but nothing enforces them (e.g. a no-op CNI). The
     // deployment still works; isolation is the operator's CNI choice.
