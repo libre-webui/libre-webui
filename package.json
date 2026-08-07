@@ -98,7 +98,7 @@
     "minimatch": ">=10.2.1",
     "brace-expansion": "^5.0.9",
     "ip-address": "10.4.0",
-    "js-yaml": "4.3.0",
+    "js-yaml": "^4.3.1",
     "shell-quote": "1.10.0"
   },
   "devDependencies": {
