@@ -51,23 +51,25 @@ export function isCloudModel(model: string | undefined): boolean {
 }
 
 /**
- * Strip options that hosted cloud models reject. The cloud backend maps
- * num_predict -> max_tokens, which must be positive; locally num_predict: -1
- * means "unlimited", so for cloud we omit it and let the host apply its default.
- * Returns the options unchanged for local models.
+ * Strip option values Ollama cannot take. num_ctx has no "unlimited" sentinel:
+ * a context size must be positive everywhere, and pins written while a hosted
+ * model was selected can carry -1. num_predict: -1 is valid locally (it means
+ * unlimited), but the cloud backend maps num_predict -> max_tokens, which must
+ * be positive, so for cloud we omit it and let the host apply its default.
  */
-function sanitizeOptionsForModel(
+export function sanitizeOptionsForModel(
   model: string,
   options: Record<string, unknown> | undefined
 ): Record<string, unknown> | undefined {
-  if (!options || !isCloudModel(model)) return options;
-  const numPredict = options.num_predict;
-  if (typeof numPredict === 'number' && numPredict <= 0) {
-    const sanitized = { ...options };
-    delete sanitized.num_predict;
-    return sanitized;
-  }
-  return options;
+  if (!options) return options;
+  const isInvalid = (value: unknown) => typeof value === 'number' && value <= 0;
+  const dropNumCtx = isInvalid(options.num_ctx);
+  const dropNumPredict = isCloudModel(model) && isInvalid(options.num_predict);
+  if (!dropNumCtx && !dropNumPredict) return options;
+  const sanitized = { ...options };
+  if (dropNumCtx) delete sanitized.num_ctx;
+  if (dropNumPredict) delete sanitized.num_predict;
+  return sanitized;
 }
 
 const MODEL_DEFAULTS_TTL_MS = 10 * 60 * 1000;

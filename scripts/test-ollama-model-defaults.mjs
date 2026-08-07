@@ -150,3 +150,38 @@ test('the model has the last word over the application default, and the user ove
   // Untouched application settings survive.
   assert.equal(effective.top_p, 0.9);
 });
+
+test('a non-positive num_ctx never reaches Ollama', async () => {
+  const { sanitizeOptionsForModel } = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'ollamaService.js')
+    ).href
+  );
+
+  // Pins written while a hosted model was selected carry num_ctx: -1, which
+  // hosted backends ignore but a local Ollama would take as a context size.
+  // num_predict: -1 stays for local models; it is Ollama's own "unlimited".
+  assert.deepEqual(
+    sanitizeOptionsForModel('smollm2:latest', {
+      num_ctx: -1,
+      num_predict: -1,
+      temperature: 0.8,
+    }),
+    { num_predict: -1, temperature: 0.8 }
+  );
+
+  // Hosted models reject both sentinels.
+  assert.deepEqual(
+    sanitizeOptionsForModel('deepseek-v4-pro:cloud', {
+      num_ctx: -1,
+      num_predict: -1,
+      temperature: 0.8,
+    }),
+    { temperature: 0.8 }
+  );
+
+  // Real values pass through untouched, as the same object.
+  const options = { num_ctx: 8192, num_predict: -1 };
+  assert.equal(sanitizeOptionsForModel('smollm2:latest', options), options);
+  assert.equal(sanitizeOptionsForModel('smollm2:latest', undefined), undefined);
+});
