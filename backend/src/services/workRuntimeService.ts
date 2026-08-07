@@ -2388,7 +2388,7 @@ export function describeDockerUnavailable(
     /is the docker daemon running/i.test(message) ||
     /no such file or directory/i.test(message)
   ) {
-    return 'No Docker daemon is reachable. Start Docker, or mount the host socket into the Libre WebUI container with -v /var/run/docker.sock:/var/run/docker.sock.';
+    return 'No Docker daemon is reachable. Start Docker, mount the host socket into the Libre WebUI container with -v /var/run/docker.sock:/var/run/docker.sock, or point DOCKER_HOST at a reachable Docker API endpoint such as a socket proxy.';
   }
 
   return message;

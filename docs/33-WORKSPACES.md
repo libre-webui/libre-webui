@@ -367,13 +367,16 @@ Operational behavior:
 - **While a run is active** — the tab explains that the model owns the
   container and opens the shell once the turn finishes.
 
-The terminal needs the Docker Engine **Unix socket**, because a TTY session
-requires a hijacked bidirectional stream that the Docker CLI only provides to
-a real controlling terminal. It uses `WORK_DOCKER_SOCKET`, otherwise a
-`unix://` `DOCKER_HOST`, otherwise `/var/run/docker.sock`. A deployment whose
-`DOCKER_HOST` is a remote TCP endpoint reports the terminal as unavailable
-with that reason rather than silently attaching elsewhere; the rest of Work
-keeps working.
+The terminal talks to the Docker Engine **API directly**, because a TTY
+session requires a hijacked bidirectional stream that the Docker CLI only
+provides to a real controlling terminal. It uses `WORK_DOCKER_SOCKET`,
+otherwise `DOCKER_HOST` — a `unix://` socket or a plain-HTTP `tcp://`
+endpoint such as a socket proxy, whose HTTP-aware forwarding carries the
+hijacked stream over a standard `Connection: Upgrade` tunnel — otherwise
+`/var/run/docker.sock`. A `DOCKER_HOST` this client cannot speak to
+(`ssh://`, or `tcp://` with `DOCKER_TLS_VERIFY` set) reports the terminal as
+unavailable with that reason rather than silently attaching elsewhere; the
+rest of Work keeps working.
 
 Terminal sessions are interactive, not recorded. Commands typed there do not
 appear in the task's Activity timeline.
@@ -644,6 +647,19 @@ containers. A mounted Docker socket is therefore a control-plane credential,
 not an ordinary data mount: compromising the web application can become a
 Docker-host compromise.
 
+The first mitigation ships in this repository:
+`docker-compose.socket-proxy.yml` keeps the socket out of the Libre WebUI
+container entirely. A socket proxy holds `/var/run/docker.sock` on an
+internal network and forwards only the API sections Work uses — containers,
+images, volumes, networks, exec, info — while swarm, secrets, configs,
+build, commit, and system endpoints are denied before they reach the daemon.
+Libre WebUI is pointed at it with `DOCKER_HOST=tcp://docker-socket-proxy:2375`
+and needs no socket mount and no socket-group membership; the CLI, the
+interactive terminal, and Docker diagnostics all follow that endpoint. The
+proxy narrows the API surface, not the blast radius of the endpoints it does
+forward: whoever can create containers can still bind-mount host paths, so
+the boundary below still matters.
+
 For a stronger production boundary, run Libre WebUI and its Work daemon on a
 dedicated VM with no unrelated workloads. Stronger still, give Work a
 dedicated rootless Docker daemon or a separate runtime host and expose only
@@ -773,6 +789,13 @@ daemon-security, network, lifecycle, backup, and access-control consequences.
 Delete the `/var/run/docker.sock` line from your Compose file to turn Work off;
 nothing else depends on it.
 
+To keep Work without handing the socket to the web application, deploy with
+`docker-compose.socket-proxy.yml` instead: a socket proxy on an internal
+network holds the socket and forwards only the API sections Work uses, and
+Libre WebUI reaches it through `DOCKER_HOST`. See
+[Isolate Docker control](#1-isolate-docker-control) for what that boundary
+does and does not cover.
+
 Three conditions must hold, and the Work panel names whichever one fails:
 
 1. **The Docker CLI must exist in the image.** It ships in the official image; a
@@ -833,7 +856,7 @@ Work reads these variables in the backend process:
 | `WORK_MAX_TASKS_PER_USER`             | `100`                                                                                         | Persisted Work task limit per administrator                |
 | `WORK_NETWORK_NAME`                   | `libre-webui-work`                                                                            | Managed sandbox bridge network for networked tasks         |
 | `WORK_RUNTIME_DNS`                    | unset                                                                                         | Comma-separated resolver IPs forced onto networked tasks   |
-| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://`, else `/var/run/docker.sock`                                       | Docker Engine socket used for interactive terminals        |
+| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://` or `tcp://`, else `/var/run/docker.sock`                           | Docker Engine endpoint used for interactive terminals      |
 | `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous interactive terminals per task                |
 | `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session closes              |
 

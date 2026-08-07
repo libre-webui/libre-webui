@@ -94,3 +94,57 @@ test('Docker builds gate pull requests into every branch without publishing', ()
   );
   assert.doesNotMatch(dockerWorkflow, /pull_request_target:/);
 });
+
+test('socket-proxy Compose variant keeps the Docker socket out of the app', () => {
+  const compose = fs.readFileSync(
+    path.join(repoRoot, 'docker-compose.socket-proxy.yml'),
+    'utf8'
+  );
+
+  const services = compose.split(/^  (?=\S+:$)/m);
+  const app = services.find(block => block.startsWith('libre-webui:'));
+  const proxy = services.find(block =>
+    block.startsWith('docker-socket-proxy:')
+  );
+  assert.ok(app, 'variant must define the libre-webui service');
+  assert.ok(proxy, 'variant must define the docker-socket-proxy service');
+
+  // The whole point: the app container gets a filtered tcp endpoint, never
+  // the socket itself and never socket-group membership.
+  assert.match(app, /DOCKER_HOST=tcp:\/\/docker-socket-proxy:2375/);
+  assert.doesNotMatch(app, /docker\.sock/);
+  assert.doesNotMatch(app, /group_add/);
+
+  // The proxy holds the socket read-only, publishes no host ports, and
+  // enables exactly the API sections Work uses.
+  assert.match(proxy, /\/var\/run\/docker\.sock:\/var\/run\/docker\.sock:ro/);
+  assert.doesNotMatch(proxy, /^\s+ports:/m);
+  for (const section of [
+    'CONTAINERS=1',
+    'IMAGES=1',
+    'VOLUMES=1',
+    'NETWORKS=1',
+    'EXEC=1',
+    'INFO=1',
+    'POST=1',
+  ]) {
+    assert.ok(proxy.includes(section), `proxy must enable ${section}`);
+  }
+  for (const denied of [
+    'SWARM=1',
+    'SECRETS=1',
+    'CONFIGS=1',
+    'SERVICES=1',
+    'BUILD=1',
+    'COMMIT=1',
+    'SYSTEM=1',
+    'SESSION=1',
+    'PLUGINS=1',
+  ]) {
+    assert.ok(!proxy.includes(denied), `proxy must not enable ${denied}`);
+  }
+  assert.match(proxy, /image: tecnativa\/docker-socket-proxy:v\d/);
+
+  // The proxy network is internal: reachable from the app, not the host.
+  assert.match(compose, /^  docker-proxy:\n(?:.*\n)*?\s+internal: true/m);
+});

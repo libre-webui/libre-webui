@@ -93,6 +93,26 @@ Override the Ollama URL if needed:
 OLLAMA_BASE_URL=http://192.168.1.10:11434 docker compose -f docker-compose.external-ollama.yml up -d
 ```
 
+## Socket-Isolated Work
+
+The standard Compose files mount the Docker socket into the Libre WebUI
+container so Work can run task containers; that mount is root-equivalent
+control of the Docker host. To keep Work without giving the web application
+the socket, use the socket-proxy variant:
+
+```bash
+docker compose -f docker-compose.socket-proxy.yml up -d
+```
+
+A socket proxy on an internal network holds `/var/run/docker.sock` and
+forwards only the API sections Work uses (containers, images, volumes,
+networks, exec, info). Swarm, secrets, configs, build, and system endpoints
+are denied at the proxy. Libre WebUI reaches it via
+`DOCKER_HOST=tcp://docker-socket-proxy:2375` — no socket mount, no
+`DOCKER_GID`, and the interactive terminal and system diagnostics work
+unchanged. See the Workspaces documentation for what this boundary does and
+does not cover.
+
 ## Data Persistence
 
 Libre WebUI stores backend data in `/app/backend/data` inside the container. The Compose files mount that path as a named volume.

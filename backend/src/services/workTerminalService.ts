@@ -20,9 +20,15 @@ import type { Duplex } from 'node:stream';
 
 import workRuntimeService, { WorkRuntimeError } from './workRuntimeService.js';
 import type { WorkTaskRecord } from '../types/work.js';
+import {
+  dockerEndpointRequestOptions,
+  resolveDockerEndpoint,
+} from '../utils/dockerEndpoint.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('services:work-terminal');
+
+export { resolveDockerEndpoint } from '../utils/dockerEndpoint.js';
 
 export const WORK_TERMINAL_DEFAULTS = {
   idleTimeoutMs: 900_000,
@@ -31,9 +37,10 @@ export const WORK_TERMINAL_DEFAULTS = {
 } as const;
 
 const config = {
-  socketPath: resolveDockerSocketPath(
+  endpoint: resolveDockerEndpoint(
     process.env.WORK_DOCKER_SOCKET,
-    process.env.DOCKER_HOST
+    process.env.DOCKER_HOST,
+    process.env.DOCKER_TLS_VERIFY
   ),
   idleTimeoutMs: positiveInteger(
     process.env.WORK_TERMINAL_IDLE_TIMEOUT_MS,
@@ -46,26 +53,16 @@ const config = {
 };
 
 /**
- * The terminal talks to the Docker Engine API over its Unix socket because a
- * TTY exec needs a hijacked bidirectional stream, which the docker CLI only
- * offers to an interactive controlling terminal. Every documented deployment
- * (native Docker Desktop/Engine, container with the socket mounted) exposes
- * this socket. When only a remote DOCKER_HOST is available the terminal
- * reports itself unavailable instead of guessing.
+ * The terminal talks to the Docker Engine API directly because a TTY exec
+ * needs a hijacked bidirectional stream, which the docker CLI only offers to
+ * an interactive controlling terminal. The connection is the resolved Docker
+ * endpoint: the Unix socket, or a plain-HTTP tcp:// endpoint such as a
+ * socket proxy holding the socket on the app's behalf — the hijacked
+ * stream survives an HTTP-aware proxy because it rides a standard
+ * Connection: Upgrade tunnel. Endpoints this client cannot speak to
+ * (ssh://, TLS-verified tcp) make the terminal report itself unavailable
+ * instead of guessing.
  */
-export function resolveDockerSocketPath(
-  workDockerSocket: string | undefined,
-  dockerHost: string | undefined
-): string | null {
-  if (workDockerSocket) return workDockerSocket;
-  if (dockerHost) {
-    if (dockerHost.startsWith('unix://')) {
-      return dockerHost.slice('unix://'.length) || null;
-    }
-    return null;
-  }
-  return '/var/run/docker.sock';
-}
 
 export interface ExecCreatePayload {
   AttachStdin: boolean;
@@ -113,8 +110,8 @@ export class WorkTerminalService {
   private sessionCounts = new Map<string, number>();
 
   unavailableReason(): string | null {
-    if (!config.socketPath) {
-      return 'The Work terminal needs the Docker Engine socket. Set WORK_DOCKER_SOCKET to the Unix socket path (DOCKER_HOST points at a non-Unix endpoint).';
+    if (!config.endpoint) {
+      return 'The Work terminal needs a reachable Docker Engine API. Set WORK_DOCKER_SOCKET to the Unix socket path, or point DOCKER_HOST at a plain-HTTP tcp:// endpoint such as a socket proxy (DOCKER_HOST currently names an endpoint this client cannot speak to).';
     }
     return null;
   }
@@ -198,6 +195,30 @@ export class WorkTerminalService {
     }
   }
 
+  /**
+   * Transport options for the resolved endpoint. A Unix socket needs an
+   * explicit Host header (there is no authority in the request target); a
+   * tcp endpoint gets the real host:port so an HTTP-aware proxy can route
+   * on it.
+   */
+  private transport(): {
+    options: { socketPath: string } | { host: string; port: number };
+    hostHeader: Record<string, string>;
+  } {
+    const endpoint = config.endpoint;
+    if (!endpoint) {
+      throw new WorkRuntimeError(
+        this.unavailableReason() ?? 'The Work terminal is unavailable.',
+        503,
+        'WORK_TERMINAL_UNAVAILABLE'
+      );
+    }
+    return {
+      options: dockerEndpointRequestOptions(endpoint),
+      hostHeader: endpoint.kind === 'unix' ? { Host: 'docker' } : {},
+    };
+  }
+
   private dockerApi(
     method: 'GET' | 'POST',
     path: string,
@@ -205,13 +226,14 @@ export class WorkTerminalService {
   ): Promise<DockerApiResponse> {
     return new Promise((resolve, reject) => {
       const body = payload === undefined ? undefined : JSON.stringify(payload);
+      const { options, hostHeader } = this.transport();
       const request = http.request(
         {
-          socketPath: config.socketPath ?? undefined,
+          ...options,
           method,
           path,
           headers: {
-            Host: 'docker',
+            ...hostHeader,
             'Content-Type': 'application/json',
             'Content-Length': body ? Buffer.byteLength(body) : 0,
           },
@@ -247,12 +269,13 @@ export class WorkTerminalService {
   private startExecStream(execId: string): Promise<Duplex> {
     return new Promise((resolve, reject) => {
       const body = JSON.stringify({ Detach: false, Tty: true });
+      const { options, hostHeader } = this.transport();
       const request = http.request({
-        socketPath: config.socketPath ?? undefined,
+        ...options,
         method: 'POST',
         path: `/exec/${encodeURIComponent(execId)}/start`,
         headers: {
-          Host: 'docker',
+          ...hostHeader,
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(body),
           Connection: 'Upgrade',

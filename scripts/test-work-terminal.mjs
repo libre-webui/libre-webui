@@ -20,7 +20,7 @@ const {
   WORK_TERMINAL_DEFAULTS,
   boundedDimension,
   buildExecCreatePayload,
-  resolveDockerSocketPath,
+  resolveDockerEndpoint,
 } = terminalModule;
 const { WORK_TERMINAL_WS_PATH, parseTerminalClientMessage } = serverModule;
 
@@ -40,25 +40,39 @@ test('the interactive shell inherits the sandbox container policy', () => {
   assert.doesNotMatch(serialized, /Privileged|CapAdd|"root"|"0:0"/);
 });
 
-test('terminal transport is only offered over a Unix Docker socket', () => {
+test('terminal transport follows the resolved Docker endpoint', () => {
+  assert.deepEqual(resolveDockerEndpoint(undefined, undefined), {
+    kind: 'unix',
+    socketPath: '/var/run/docker.sock',
+  });
+  assert.deepEqual(resolveDockerEndpoint('/custom/docker.sock', undefined), {
+    kind: 'unix',
+    socketPath: '/custom/docker.sock',
+  });
+  assert.deepEqual(
+    resolveDockerEndpoint(undefined, 'unix:///run/user/1000/docker.sock'),
+    { kind: 'unix', socketPath: '/run/user/1000/docker.sock' }
+  );
+  // A plain-HTTP tcp endpoint (a socket proxy holding the real socket)
+  // carries the same hijacked exec stream over a Connection: Upgrade tunnel.
+  assert.deepEqual(
+    resolveDockerEndpoint(undefined, 'tcp://docker-socket-proxy:2375'),
+    { kind: 'tcp', host: 'docker-socket-proxy', port: 2375 }
+  );
+  // WORK_DOCKER_SOCKET pins the Unix socket over any DOCKER_HOST.
+  assert.deepEqual(
+    resolveDockerEndpoint('/explicit.sock', 'tcp://10.0.0.5:2375'),
+    { kind: 'unix', socketPath: '/explicit.sock' }
+  );
+  // Endpoints this client cannot speak to report unavailable rather than
+  // silently attaching to the wrong transport: TLS-verified tcp, ssh.
   assert.equal(
-    resolveDockerSocketPath(undefined, undefined),
-    '/var/run/docker.sock'
+    resolveDockerEndpoint(undefined, 'tcp://10.0.0.5:2376', '1'),
+    null
   );
   assert.equal(
-    resolveDockerSocketPath('/custom/docker.sock', undefined),
-    '/custom/docker.sock'
-  );
-  assert.equal(
-    resolveDockerSocketPath(undefined, 'unix:///run/user/1000/docker.sock'),
-    '/run/user/1000/docker.sock'
-  );
-  // A remote daemon has no local socket to hijack: report unavailable rather
-  // than silently attaching to the wrong endpoint.
-  assert.equal(resolveDockerSocketPath(undefined, 'tcp://10.0.0.5:2375'), null);
-  assert.equal(
-    resolveDockerSocketPath('/explicit.sock', 'tcp://10.0.0.5:2375'),
-    '/explicit.sock'
+    resolveDockerEndpoint(undefined, 'ssh://user@daemon.host'),
+    null
   );
 });
 
