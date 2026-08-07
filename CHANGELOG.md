@@ -9,21 +9,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
-- Ollama models now run with the settings they recommend for themselves. The
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.19.4] - 2026-08-07
+
+Models now run the way they ask to be run. Ollama models are started with the
+parameters their modelfile recommends and the context they were trained for,
+instead of one fixed profile applied to everything, and any value you change is
+remembered for that model alone. The chat controls also open before a chat
+exists, so a conversation can start the way you want it.
+
+### ✨ New Features
+
+- Ollama models run with the settings they recommend for themselves. The
   modelfile's parameters and the context length the model was trained for are
   read from the model and applied, instead of one fixed set of options used for
   every model.
 - Generation settings are stored per model. Changing a value pins it for that
   model alone, and resetting returns it to what the model recommends.
+- Chat controls can be opened before a chat exists. The system prompt and
+  sampling chosen on the welcome screen are carried onto the session the first
+  message creates.
+- Keyboard shortcuts have their own tab in Settings, which `?` opens directly.
+  The floating button and its dialog are gone, and the list now covers the
+  command palette, new chats and Work sessions, message editing and the Work
+  code editor — none of which the old dialog mentioned.
 
 ### 🔧 Improvements
 
 - Chat controls show the value a message will actually run with, mark the ones
   that came from the model, and say so when a context window was capped to keep
   the model loadable.
+- The Work landing screen sits in the same ambient glow as the chat welcome
+  screen, so the two read as one surface.
 
 ### 🐛 Bug Fixes
 
+- A value pinned for one model is no longer overridden on every request. Each
+  message carried the application-wide generation options with it, and options
+  sent with a request are the server's final word, so a model pinned to a longer
+  output still stopped at the global limit. A message now carries only that
+  chat's own overrides; the server applies the global settings, then what the
+  model recommends, then what was pinned for it.
 - A model no longer runs with a 2048-token context regardless of what it
   supports. The application sent that value explicitly, which overrode the
   model's own window and silently truncated anything longer — a model trained
@@ -32,8 +63,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `OLLAMA_MAX_CONTEXT`.
 - Stop sequences declared by a model are now sent with the request. Without
   them a model can carry on past the end of its turn.
+- A model pulled from Ollama or HuggingFace can be selected straight away.
+  Installing a model refreshed only the manager's own list, so the chat model
+  picker kept showing the old one until the whole application was reloaded.
+- Everything on the message bar sits on one centre line. The buttons, the model
+  selector and the text row were three different heights, and an inline text
+  area left a phantom line box under it, so the controls sat low against the
+  text. On narrow screens the bar also grew before anything had been typed,
+  because a wrapped placeholder counted towards the text area's height.
+
+### 🔒 Security
+
+- The js-yaml advisory (CVE-2026-59870) is remediated with a 4.3.1 override.
 
 ### 📚 Documentation
+
+- The README screenshot is the current release, taken from the desktop
+  application.
 
 ## [0.19.3] - 2026-08-06
 
