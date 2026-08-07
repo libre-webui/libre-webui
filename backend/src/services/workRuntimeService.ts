@@ -1502,15 +1502,19 @@ export class WorkRuntimeService {
           setTimeout(resolve, PREVIEW_POLL_INTERVAL_MS)
         );
       }
-      const publishedPort = await this.driver.publishedPreviewPort(task);
-      if (!publishedPort) {
+      const endpoint = await this.driver.previewEndpoint(task);
+      if (!endpoint) {
         throw new WorkRuntimeError(
-          'Docker did not publish the preview port.',
+          'The runtime did not expose the preview port.',
           503,
           'WORK_PREVIEW_PORT_UNAVAILABLE'
         );
       }
-      return workPreviewProxyService.createPreviewUrl(task.id, publishedPort);
+      return workPreviewProxyService.createPreviewUrl(
+        task.id,
+        endpoint.port,
+        endpoint.host
+      );
     } catch (error) {
       try {
         await this.stopPreviewPrepared(task);

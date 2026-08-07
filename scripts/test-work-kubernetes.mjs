@@ -208,15 +208,7 @@ test('the runtime backend is selected explicitly and fails loudly', () => {
   );
 });
 
-test('preview and terminal report unsupported instead of guessing', async () => {
+test('terminal transport is available on the Kubernetes backend', () => {
   const driver = new KubernetesWorkRuntimeDriver();
-  assert.match(driver.terminalUnavailableReason(), /not yet supported/);
-  await assert.rejects(
-    driver.openTerminal('any'),
-    error => error?.code === 'WORK_TERMINAL_UNAVAILABLE'
-  );
-  await assert.rejects(
-    driver.publishedPreviewPort(task),
-    error => error?.code === 'WORK_PREVIEW_UNSUPPORTED'
-  );
+  assert.equal(driver.terminalUnavailableReason(), null);
 });

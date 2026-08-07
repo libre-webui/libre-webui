@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Readable, Writable } from 'node:stream';
+import { Duplex, PassThrough, Readable, Writable } from 'node:stream';
 
 import type { WorkTaskRecord } from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
@@ -263,12 +263,18 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     );
   }
 
-  async publishedPreviewPort(_task: WorkTaskRecord): Promise<number> {
-    throw new WorkRuntimeError(
-      'Preview is not yet supported on the Kubernetes Work backend.',
-      501,
-      'WORK_PREVIEW_UNSUPPORTED'
-    );
+  async previewEndpoint(
+    task: WorkTaskRecord
+  ): Promise<{ host?: string; port: number } | undefined> {
+    // The sandbox publishes nothing: the backend (running in-cluster)
+    // reaches the preview server directly on the Pod IP. The IP is valid
+    // exactly as long as the Pod, which is exactly as long as the preview.
+    const pod = await this.readPod(task.containerName);
+    if (!pod) return undefined;
+    assertOwnedRuntime(pod.metadata?.labels, task);
+    const podIp = pod.status?.podIP;
+    if (!podIp) return undefined;
+    return { host: podIp, port: config.previewPort };
   }
 
   async listManaged(): Promise<DiscoveredWorkContainer[]> {
@@ -288,16 +294,61 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     await this.deletePodAndWait(name);
   }
 
-  terminalUnavailableReason(): string {
-    return 'Interactive terminals are not yet supported on the Kubernetes Work backend.';
+  terminalUnavailableReason(): null {
+    return null;
   }
 
-  async openTerminal(_containerName: string): Promise<WorkTerminalTransport> {
-    throw new WorkRuntimeError(
-      this.terminalUnavailableReason(),
-      503,
-      'WORK_TERMINAL_UNAVAILABLE'
-    );
+  /**
+   * Interactive TTY over the Kubernetes exec subresource. The exec API has
+   * no env parameter, so TERM rides in via env(1); with tty=true the server
+   * merges stderr into stdout, and resize frames travel on the dedicated
+   * resize channel, driven by the client library watching our stdout-side
+   * stream for TTY-style resize events.
+   */
+  async openTerminal(containerName: string): Promise<WorkTerminalTransport> {
+    const { lib, kubeConfig } = await this.client();
+    const stdinStream = new PassThrough();
+    const outputStream = new ResizableOutputStream();
+    const exec = new lib.Exec(kubeConfig);
+    let socket: import('isomorphic-ws').WebSocket;
+    try {
+      socket = await exec.exec(
+        this.namespace,
+        containerName,
+        WORK_CONTAINER_NAME,
+        ['env', 'TERM=xterm-256color', '/bin/bash', '-l'],
+        outputStream,
+        null,
+        stdinStream,
+        true
+      );
+    } catch (error) {
+      throw new WorkRuntimeError(
+        `Could not open the terminal stream: ${error instanceof Error ? error.message : String(error)}`,
+        503,
+        'WORK_TERMINAL_UNAVAILABLE'
+      );
+    }
+    const stream = new TerminalStreamBridge(stdinStream, outputStream);
+    socket.on('close', () => {
+      stream.destroy();
+    });
+    socket.on('error', () => {
+      stream.destroy();
+    });
+    stream.on('close', () => {
+      try {
+        socket.close();
+      } catch {
+        // The socket may already be closed; nothing to clean up.
+      }
+    });
+    return {
+      stream,
+      resize: async (cols: number, rows: number) => {
+        outputStream.setSize(cols, rows);
+      },
+    };
   }
 
   private async readPod(name: string) {
@@ -704,4 +755,60 @@ async function ignoreNotFound<T>(promise: Promise<T>): Promise<T | undefined> {
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Terminal output stream that also looks like a TTY to the Kubernetes
+ * client: exposing rows/columns and emitting 'resize' makes the client
+ * library open the resize channel and forward size updates to the server.
+ */
+class ResizableOutputStream extends PassThrough {
+  rows = 24;
+  columns = 80;
+
+  setSize(columns: number, rows: number): void {
+    this.columns = columns;
+    this.rows = rows;
+    this.emit('resize');
+  }
+}
+
+/**
+ * One bidirectional stream over the exec channel pair: writes become the
+ * shell's stdin, reads are the shell's merged TTY output — the same Duplex
+ * contract the Docker driver gets from its hijacked Engine-API socket.
+ */
+class TerminalStreamBridge extends Duplex {
+  constructor(
+    private readonly sink: PassThrough,
+    private readonly source: PassThrough
+  ) {
+    super();
+    source.on('data', (chunk: Buffer) => {
+      if (!this.push(chunk)) source.pause();
+    });
+    source.on('end', () => this.push(null));
+    source.on('error', error => this.destroy(error));
+  }
+
+  _read(): void {
+    this.source.resume();
+  }
+
+  _write(
+    chunk: unknown,
+    encoding: BufferEncoding,
+    callback: (error?: Error | null) => void
+  ): void {
+    this.sink.write(chunk, encoding, callback);
+  }
+
+  _destroy(
+    error: Error | null,
+    callback: (error?: Error | null) => void
+  ): void {
+    this.sink.destroy();
+    this.source.destroy();
+    callback(error);
+  }
 }

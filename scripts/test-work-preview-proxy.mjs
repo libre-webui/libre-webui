@@ -266,6 +266,54 @@ test('Work preview proxy is wired before middleware and into upgrades', () => {
   );
   assert.match(
     runtime,
-    /workPreviewProxyService\.createPreviewUrl\(task\.id, publishedPort\)/
+    /workPreviewProxyService\.createPreviewUrl\(\s*task\.id,\s*endpoint\.port,\s*endpoint\.host\s*\)/
   );
+});
+
+test('per-task upstream hosts route previews to the sandbox address', async () => {
+  const upstream = createServer((request, response) => {
+    response.setHeader('Content-Type', 'text/plain');
+    response.end(`per-task-host:${request.url}`);
+  });
+  const upstreamPort = await listen(upstream);
+  const taskId = '0af1c9e2-58c8-4f6e-a9d1-2b7c40de9b11';
+  let previewRecord;
+  // The constructor-level upstream host is unresolvable: traffic can only
+  // succeed if the per-task host recorded at createPreviewUrl time wins.
+  const service = new WorkPreviewProxyService(
+    'preview-proxy-test-secret',
+    candidateTaskId => (candidateTaskId === taskId ? previewRecord : undefined),
+    'preview-upstream.invalid'
+  );
+  const previewPath = service.createPreviewUrl(
+    taskId,
+    upstreamPort,
+    '127.0.0.1'
+  );
+  previewRecord = { preview_status: 'running', preview_url: previewPath };
+
+  const app = express();
+  app.use(WORK_PREVIEW_PROXY_PREFIX, service.handleHttp);
+  const proxy = createServer(app);
+  const proxyPort = await listen(proxy);
+
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:${proxyPort}${previewPath}data.txt`
+    );
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), 'per-task-host:/data.txt');
+
+    // A new preview URL without a host override clears the stored one, so
+    // the proxy falls back to the (unreachable) configured upstream.
+    const fallbackPath = service.createPreviewUrl(taskId, upstreamPort);
+    previewRecord = { preview_status: 'running', preview_url: fallbackPath };
+    const fallbackResponse = await fetch(
+      `http://127.0.0.1:${proxyPort}${fallbackPath}data.txt`
+    );
+    assert.notEqual(fallbackResponse.status, 200);
+  } finally {
+    await close(proxy);
+    await close(upstream);
+  }
 });

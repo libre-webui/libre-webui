@@ -101,8 +101,14 @@ export interface WorkRuntimeDriver {
     command: string[],
     options?: WorkExecOptions
   ): Promise<ProcessResult>;
-  /** Endpoint the backend can reach the task's preview port on, if any. */
-  publishedPreviewPort(task: WorkTaskRecord): Promise<number | undefined>;
+  /**
+   * Endpoint the backend can reach the task's preview server on, if any.
+   * A missing host means the proxy's configured upstream host (the Docker
+   * publish interface); Kubernetes returns the sandbox Pod IP.
+   */
+  previewEndpoint(
+    task: WorkTaskRecord
+  ): Promise<{ host?: string; port: number } | undefined>;
   /** Every sandbox this runtime has ever created, by ownership label. */
   listManaged(): Promise<DiscoveredWorkContainer[]>;
   /** Force-remove a managed sandbox whose task record no longer exists. */
@@ -264,15 +270,17 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     return this.docker(args, options);
   }
 
-  async publishedPreviewPort(
+  async previewEndpoint(
     task: WorkTaskRecord
-  ): Promise<number | undefined> {
+  ): Promise<{ host?: string; port: number } | undefined> {
     const portResult = await this.docker([
       'port',
       task.containerName,
       `${config.previewPort}/tcp`,
     ]);
-    return parsePublishedPort(portResult.stdout, config.previewPort);
+    const port = parsePublishedPort(portResult.stdout, config.previewPort);
+    // No host: the proxy targets its configured upstream (publish) interface.
+    return port === undefined ? undefined : { port };
   }
 
   /**
