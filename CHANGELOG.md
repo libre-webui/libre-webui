@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.19.6] - 2026-08-07
+
+`npx libre-webui` starts again, and the desktop app opens on a landing
+page that helps you set a server up or reach the one you already run.
+
+### ✨ New Features
+
 - The desktop app opens on a landing page. The horizon film plays through
   once and settles on its still. Get Started asks where the server runs:
   on this machine, with a live check that hands over the Docker command
@@ -16,8 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   server, reached by its address and remembered for the next launch.
   Switch Server in the app menu brings the page back, and the app's static
   pages now carry a strict content security policy.
-
-### 🔧 Improvements
 
 ### 🐛 Bug Fixes
 
@@ -28,8 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with the package now, and a packaging test walks every import in the
   built backend against the published dependency list so this cannot
   happen quietly again.
-
-### 📚 Documentation
 
 ## [0.19.5] - 2026-08-07
 
