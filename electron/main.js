@@ -15,11 +15,14 @@ const {
   shell,
   Menu,
   dialog,
+  ipcMain,
   nativeTheme,
   nativeImage,
 } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const http = require('http');
+const https = require('https');
 const { spawn } = require('child_process');
 
 // Get icon path for Linux (icons are in extraResources for production)
@@ -145,6 +148,179 @@ function createMainWindow() {
   return mainWindow;
 }
 
+// Where the last landing choice is remembered: {mode: 'local'} or
+// {mode: 'remote', url}. Absent means the landing page decides.
+const getLandingChoicePath = () =>
+  path.join(app.getPath('userData'), 'landing.json');
+
+function readLandingChoice() {
+  try {
+    const choice = JSON.parse(fs.readFileSync(getLandingChoicePath(), 'utf8'));
+    if (choice && choice.mode === 'local') return choice;
+    if (
+      choice &&
+      choice.mode === 'remote' &&
+      typeof choice.url === 'string' &&
+      /^https?:\/\//.test(choice.url)
+    ) {
+      return choice;
+    }
+  } catch {
+    // No saved choice, or an unreadable one: the landing page decides.
+  }
+  return null;
+}
+
+function saveLandingChoice(choice) {
+  try {
+    fs.mkdirSync(app.getPath('userData'), { recursive: true });
+    fs.writeFileSync(getLandingChoicePath(), JSON.stringify(choice));
+  } catch (error) {
+    console.error('Could not remember the landing choice:', error);
+  }
+}
+
+// A server qualifies when its health endpoint answers. Both the Docker image
+// and a bare `npm run dev:backend` expose /health at the root.
+function probeServer(baseUrl) {
+  return new Promise(resolve => {
+    let target;
+    try {
+      target = new URL('/health', baseUrl);
+    } catch {
+      resolve(false);
+      return;
+    }
+    const client = target.protocol === 'https:' ? https : http;
+    const request = client.get(target.toString(), response => {
+      response.resume();
+      resolve(response.statusCode === 200);
+    });
+    request.on('error', () => resolve(false));
+    request.setTimeout(5000, () => {
+      request.destroy();
+      resolve(false);
+    });
+  });
+}
+
+// Only the bundled landing page may steer the window; content loaded from a
+// server must not be able to invoke these channels.
+const isLandingSender = event => {
+  try {
+    const senderUrl = new URL(event.senderFrame.url);
+    return (
+      senderUrl.protocol === 'file:' &&
+      senderUrl.pathname.endsWith('/landing.html')
+    );
+  } catch {
+    return false;
+  }
+};
+
+function loadLocalApp(window) {
+  if (isDev) {
+    window.loadURL(`http://localhost:${FRONTEND_PORT}`);
+    return;
+  }
+  const frontendPath = getResourcePath('frontend', 'dist', 'index.html');
+  window.loadFile(frontendPath).catch(err => {
+    console.error('Failed to load frontend:', err);
+    dialog.showErrorBox('Load Error', `Could not load app: ${err.message}`);
+  });
+}
+
+function showLanding(window) {
+  window.loadFile(path.join(__dirname, 'landing.html'));
+}
+
+// A tolerant version lookup for the setup screen; the system-info endpoint is
+// public and answers before any login.
+function fetchLocalVersion() {
+  return new Promise(resolve => {
+    const request = http.get(
+      `http://localhost:${BACKEND_PORT}/api/auth/system-info`,
+      response => {
+        let body = '';
+        response.on('data', chunk => {
+          body += chunk;
+        });
+        response.on('end', () => {
+          try {
+            resolve(JSON.parse(body).data.version || null);
+          } catch {
+            resolve(null);
+          }
+        });
+      }
+    );
+    request.on('error', () => resolve(null));
+    request.setTimeout(2000, () => {
+      request.destroy();
+      resolve(null);
+    });
+  });
+}
+
+function registerLandingHandlers() {
+  ipcMain.on('landing-launch-local', event => {
+    if (!isLandingSender(event) || !mainWindow) return;
+    saveLandingChoice({ mode: 'local' });
+    loadLocalApp(mainWindow);
+  });
+
+  ipcMain.handle('landing-probe-local', async event => {
+    if (!isLandingSender(event)) return { healthy: false, version: null };
+    const healthy = await probeServer(`http://localhost:${BACKEND_PORT}`);
+    const version = healthy ? await fetchLocalVersion() : null;
+    return { healthy, version };
+  });
+
+  // The preload has always exposed getVersion; answer it.
+  ipcMain.handle('get-version', () => app.getVersion());
+
+  // The landing page's guidance links only; arbitrary pages stay out.
+  const LANDING_LINKS = new Set([
+    'https://docs.librewebui.org/DOCKER/',
+    'https://docs.docker.com/get-docker/',
+    'https://ollama.com/download',
+    'https://librewebui.org',
+    'https://docs.librewebui.org',
+    'https://kroonen.ai',
+  ]);
+  ipcMain.on('landing-open-external', (event, url) => {
+    if (!isLandingSender(event)) return;
+    if (LANDING_LINKS.has(url)) shell.openExternal(url);
+  });
+
+  ipcMain.handle('landing-connect', async (event, rawUrl) => {
+    if (!isLandingSender(event) || !mainWindow) {
+      return { ok: false, error: 'Not available right now.' };
+    }
+    let url;
+    try {
+      url = new URL(String(rawUrl));
+    } catch {
+      return { ok: false, error: 'That is not a valid address.' };
+    }
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return { ok: false, error: 'The address must start with http or https.' };
+    }
+    const base = url.toString().replace(/\/+$/, '');
+    if (!(await probeServer(base))) {
+      return {
+        ok: false,
+        error: 'No Libre WebUI server answered at that address.',
+      };
+    }
+    saveLandingChoice({ mode: 'remote', url: base });
+    mainWindow.loadURL(base);
+    return { ok: true };
+  });
+}
+
+registerLandingHandlers();
+
 // Check if backend is running
 async function checkBackend() {
   return new Promise(resolve => {
@@ -207,6 +383,13 @@ function createMenu() {
                 'window.dispatchEvent(new CustomEvent("open-settings"))'
               );
             }
+          },
+        },
+        {
+          label: 'Switch Server…',
+          click: () => {
+            fs.rmSync(getLandingChoicePath(), { force: true });
+            if (mainWindow) showLanding(mainWindow);
           },
         },
         { type: 'separator' },
@@ -305,18 +488,20 @@ async function main() {
     // Create main window
     const window = createMainWindow();
 
-    // Load the app
-    if (isDev) {
-      // In development, load from Vite dev server
-      window.loadURL(`http://localhost:${FRONTEND_PORT}`);
+    // The landing page decides on first launch; afterwards the remembered
+    // choice routes straight in. A remembered server that stops answering
+    // returns to the landing page rather than a blank window.
+    const choice = readLandingChoice();
+    if (!choice) {
+      showLanding(window);
+    } else if (choice.mode === 'remote') {
+      if (await probeServer(choice.url)) {
+        window.loadURL(choice.url);
+      } else {
+        showLanding(window);
+      }
     } else {
-      // In production, load the built frontend
-      const frontendPath = getResourcePath('frontend', 'dist', 'index.html');
-      console.log('Loading frontend from:', frontendPath);
-      window.loadFile(frontendPath).catch(err => {
-        console.error('Failed to load frontend:', err);
-        dialog.showErrorBox('Load Error', `Could not load app: ${err.message}`);
-      });
+      loadLocalApp(window);
     }
 
     // Open DevTools in dev mode

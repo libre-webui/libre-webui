@@ -27,13 +27,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // File operations
   openFile: () => ipcRenderer.invoke('open-file'),
-  saveFile: (data) => ipcRenderer.invoke('save-file', data),
+  saveFile: data => ipcRenderer.invoke('save-file', data),
 
   // System
-  openExternal: (url) => ipcRenderer.send('open-external', url),
+  openExternal: url => ipcRenderer.send('open-external', url),
+
+  // Landing page choices; the main process only honors these when the
+  // bundled landing page itself is the sender.
+  landing: {
+    launchLocal: () => ipcRenderer.send('landing-launch-local'),
+    connect: url => ipcRenderer.invoke('landing-connect', url),
+    probeLocal: () => ipcRenderer.invoke('landing-probe-local'),
+    openExternal: url => ipcRenderer.send('landing-open-external', url),
+  },
 
   // Events
-  onOpenSettings: (callback) => {
+  onOpenSettings: callback => {
     window.addEventListener('open-settings', callback);
     return () => window.removeEventListener('open-settings', callback);
   },

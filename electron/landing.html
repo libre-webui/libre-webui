@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Everything this page needs is bundled; nothing may load or connect
+         out. Inline script and style are the page's own only. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' file: data:; media-src 'self' file:; base-uri 'none'; form-action 'none'; object-src 'none'"
+    />
+    <title>Libre WebUI</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        color-scheme: dark;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        background: #0a0a0a;
+        color: #ffffff;
+      }
+
+      /* The window title bar is hidden; keep a grab strip under the traffic lights. */
+      .drag-strip {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 40px;
+        -webkit-app-region: drag;
+        z-index: 10;
+      }
+
+      .hero {
+        position: fixed;
+        inset: 0;
+        background: url('assets/landing/horizon.webp') center / cover;
+      }
+
+      .hero-motion {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: opacity 1.6s ease;
+      }
+
+      /* Played through: the reference still behind it takes over. */
+      .hero-motion.is-settled {
+        opacity: 0;
+      }
+
+      /* The still frame is the same picture; motion is decoration. */
+      @media (prefers-reduced-motion: reduce) {
+        .hero-motion {
+          display: none;
+        }
+      }
+
+      .hero-shade {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to top,
+          rgba(5, 5, 8, 0.92) 0%,
+          rgba(5, 5, 8, 0.55) 30%,
+          rgba(5, 5, 8, 0.25) 55%,
+          rgba(5, 5, 8, 0.35) 100%
+        );
+      }
+
+      .content {
+        position: fixed;
+        left: clamp(32px, 6vw, 96px);
+        right: clamp(32px, 6vw, 96px);
+        bottom: clamp(40px, 9vh, 110px);
+        max-width: 560px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .brand svg {
+        width: clamp(36px, 4vw, 44px);
+        height: clamp(36px, 4vw, 44px);
+        color: #ffffff;
+        flex: none;
+      }
+
+      h1 {
+        font-size: clamp(28px, 4vw, 40px);
+        font-weight: 400;
+        letter-spacing: -0.02em;
+      }
+
+      h1 strong {
+        font-weight: 700;
+      }
+
+      h2 {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin-bottom: 10px;
+      }
+
+      .tagline {
+        font-size: 15px;
+        line-height: 1.55;
+        color: rgba(255, 255, 255, 0.78);
+        max-width: 420px;
+        margin-bottom: 24px;
+      }
+
+      .step {
+        display: none;
+      }
+
+      .step.open {
+        display: block;
+      }
+
+      .cta {
+        appearance: none;
+        border: 0;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #111111;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 10px 18px;
+        cursor: pointer;
+        transition:
+          transform 120ms ease,
+          background 120ms ease,
+          opacity 120ms ease;
+      }
+
+      .cta:hover {
+        background: #ececec;
+      }
+
+      .cta:active {
+        transform: scale(0.98);
+      }
+
+      .cta[disabled] {
+        opacity: 0.45;
+        pointer-events: none;
+      }
+
+      .cta .arrow {
+        display: inline-block;
+        margin-left: 6px;
+        transition: transform 120ms ease;
+      }
+
+      .cta:hover .arrow {
+        transform: translateX(2px);
+      }
+
+      .secondary {
+        display: inline-block;
+        margin-top: 18px;
+        background: none;
+        border: 0;
+        font: inherit;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        padding: 0;
+        transition: color 120ms ease;
+      }
+
+      .secondary:hover {
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      /* Where-does-the-server-live choice. */
+      .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        max-width: 520px;
+      }
+
+      .card {
+        appearance: none;
+        text-align: left;
+        font: inherit;
+        color: inherit;
+        background: rgba(16, 16, 20, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 14px;
+        padding: 16px;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        transition:
+          border-color 120ms ease,
+          background 120ms ease;
+      }
+
+      .card:hover {
+        border-color: rgba(255, 255, 255, 0.45);
+        background: rgba(24, 24, 30, 0.8);
+      }
+
+      .card .card-title {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .card .card-desc {
+        display: block;
+        font-size: 12.5px;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.62);
+      }
+
+      /* Local setup guidance. */
+      .panel {
+        background: rgba(16, 16, 20, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 14px;
+        padding: 16px;
+        max-width: 520px;
+        backdrop-filter: blur(6px);
+      }
+
+      .status-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13.5px;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .status-line + * {
+        margin-top: 14px;
+      }
+
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex: none;
+      }
+
+      .dot.waiting {
+        background: #fbbf24;
+        animation: blink 1.4s ease-in-out infinite;
+      }
+
+      .dot.ok {
+        background: #34d399;
+      }
+
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      .hint {
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .hint + .hint {
+        margin-top: 8px;
+      }
+
+      .code-row {
+        display: flex;
+        gap: 8px;
+        margin: 10px 0 4px;
+      }
+
+      .code-row code {
+        flex: 1;
+        display: block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11.5px;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.85);
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        padding: 10px 12px;
+        overflow-x: auto;
+        white-space: pre;
+      }
+
+      .copy {
+        appearance: none;
+        align-self: flex-start;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 8px;
+        background: none;
+        color: rgba(255, 255, 255, 0.85);
+        font: inherit;
+        font-size: 12px;
+        padding: 6px 10px;
+        cursor: pointer;
+        transition:
+          border-color 120ms ease,
+          color 120ms ease;
+      }
+
+      .copy:hover {
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #ffffff;
+      }
+
+      .link {
+        background: none;
+        border: 0;
+        font: inherit;
+        font-size: 12.5px;
+        color: rgba(255, 255, 255, 0.72);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .link:hover {
+        color: #ffffff;
+      }
+
+      .panel .cta {
+        margin-top: 14px;
+      }
+
+      /* Connect-to-server form. */
+      .connect-form-body {
+        max-width: 420px;
+      }
+
+      .connect-form-body label {
+        display: block;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 8px;
+      }
+
+      .connect-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .connect-row input {
+        flex: 1;
+        font: inherit;
+        font-size: 14px;
+        color: #ffffff;
+        background: rgba(20, 20, 24, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 10px;
+        padding: 10px 12px;
+        outline: none;
+        transition: border-color 120ms ease;
+      }
+
+      .connect-row input:focus {
+        border-color: rgba(255, 255, 255, 0.45);
+      }
+
+      .connect-row input::placeholder {
+        color: rgba(255, 255, 255, 0.35);
+      }
+
+      .error {
+        min-height: 18px;
+        margin-top: 10px;
+        font-size: 12.5px;
+        color: #fca5a5;
+      }
+
+      .busy .cta {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      /* Website, docs, and provenance. */
+      .meta {
+        margin-top: 26px;
+        font-size: 11.5px;
+        line-height: 1.8;
+        color: rgba(255, 255, 255, 0.42);
+      }
+
+      .meta .link-plain {
+        background: none;
+        border: 0;
+        font: inherit;
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        padding: 0;
+        transition: color 120ms ease;
+      }
+
+      .meta .link-plain:hover {
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero" role="presentation">
+      <video
+        class="hero-motion"
+        src="assets/landing/horizon.mp4"
+        poster="assets/landing/horizon.webp"
+        autoplay
+        muted
+        playsinline
+      ></video>
+      <div class="hero-shade"></div>
+    </div>
+    <div class="drag-strip"></div>
+
+    <main class="content">
+      <div class="brand">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <path
+            d="M 11.5 18.0 L 11.5 32 A 20.5 20.5 0 0 0 50.58 40.66"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="11"
+            stroke-linecap="round"
+          />
+          <path
+            d="M 50.58 18.0 L 50.58 25.66"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="11"
+            stroke-linecap="round"
+          />
+        </svg>
+        <h1><strong>Libre</strong> WebUI</h1>
+      </div>
+
+      <section class="step open" id="step-welcome">
+        <p class="tagline">
+          Your models, your machine. Start here, or connect to a
+          Libre&nbsp;WebUI server you already run.
+        </p>
+        <button class="cta" id="get-started" type="button">
+          Get Started<span class="arrow">&rarr;</span>
+        </button>
+        <br />
+        <button class="secondary" id="shortcut-connect" type="button">
+          Connect to existing server &rarr;
+        </button>
+      </section>
+
+      <section class="step" id="step-choose">
+        <h2>Where does your server run?</h2>
+        <p class="tagline">
+          Libre&nbsp;WebUI is a server with a web interface. This app can use
+          one on this machine, or one running anywhere else.
+        </p>
+        <div class="cards">
+          <button class="card" id="choose-local" type="button">
+            <span class="card-title">On this machine</span>
+            <span class="card-desc"
+              >Run everything locally. You will be guided through starting a
+              server if one is not running yet.</span
+            >
+          </button>
+          <button class="card" id="choose-remote" type="button">
+            <span class="card-title">On another server</span>
+            <span class="card-desc"
+              >Connect to a Libre&nbsp;WebUI you or someone else already runs,
+              by its address.</span
+            >
+          </button>
+        </div>
+        <button class="secondary back" type="button">&larr; Back</button>
+      </section>
+
+      <section class="step" id="step-local">
+        <h2>On this machine</h2>
+        <div class="panel">
+          <div class="status-line" id="local-status">
+            <span class="dot waiting" id="local-dot"></span>
+            <span id="local-status-text"
+              >Checking for a local server&hellip;</span
+            >
+          </div>
+          <div id="local-guide" hidden>
+            <p class="hint">
+              No server is running here yet. The quickest way to start one is
+              Docker:
+            </p>
+            <div class="code-row">
+              <!-- prettier-ignore -->
+              <code id="docker-command">docker run -d -p 3001:3001 -v libre-webui:/app/backend/data --name libre-webui --restart always ghcr.io/libre-webui/libre-webui:latest</code>
+              <button class="copy" id="copy-docker" type="button">Copy</button>
+            </div>
+            <p class="hint">
+              Paste it into a terminal with
+              <button class="link" id="open-docker-site" type="button">
+                Docker
+              </button>
+              installed. For local models, also have
+              <button class="link" id="open-ollama-site" type="button">
+                Ollama
+              </button>
+              running. Other ways to install are in the
+              <button class="link" id="open-docs" type="button">
+                documentation</button
+              >.
+            </p>
+            <p class="hint">
+              This screen keeps watching and continues by itself as soon as the
+              server answers.
+            </p>
+          </div>
+          <button class="cta" id="open-local" type="button" disabled>
+            Open Libre WebUI<span class="arrow">&rarr;</span>
+          </button>
+        </div>
+        <button class="secondary back" type="button">&larr; Back</button>
+      </section>
+
+      <section class="step" id="step-connect">
+        <h2>On another server</h2>
+        <div class="connect-form-body" id="connect-body">
+          <p class="tagline">
+            The address of a running Libre&nbsp;WebUI server.
+          </p>
+          <label for="server-url">Server address</label>
+          <div class="connect-row">
+            <input
+              id="server-url"
+              type="url"
+              placeholder="https://chat.example.org"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button class="cta" id="connect" type="button">
+              Connect<span class="arrow">&rarr;</span>
+            </button>
+          </div>
+          <p class="error" id="connect-error"></p>
+          <button class="secondary back" type="button">&larr; Back</button>
+        </div>
+      </section>
+
+      <footer class="meta">
+        <div>
+          <button class="link-plain" id="open-website" type="button">
+            librewebui.org
+          </button>
+          &nbsp;&middot;&nbsp;
+          <button class="link-plain" id="open-docs-site" type="button">
+            docs.librewebui.org
+          </button>
+        </div>
+        <div>
+          <span id="app-version"></span>Self-hosted &middot; Apache 2.0 &middot;
+          from
+          <button class="link-plain" id="open-kroonen" type="button">
+            kroonen.ai
+          </button>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      const steps = {
+        welcome: document.getElementById('step-welcome'),
+        choose: document.getElementById('step-choose'),
+        local: document.getElementById('step-local'),
+        connect: document.getElementById('step-connect'),
+      };
+      const history = [];
+      let current = 'welcome';
+
+      const show = name => {
+        steps[current].classList.remove('open');
+        steps[name].classList.add('open');
+        current = name;
+        if (name === 'local') {
+          startLocalWatch();
+        } else {
+          stopLocalWatch();
+        }
+      };
+
+      const go = name => {
+        history.push(current);
+        show(name);
+      };
+
+      for (const button of document.querySelectorAll('.back')) {
+        button.addEventListener('click', () => {
+          show(history.pop() || 'welcome');
+          errorLine.textContent = '';
+        });
+      }
+
+      document
+        .getElementById('get-started')
+        .addEventListener('click', () => go('choose'));
+      document
+        .getElementById('shortcut-connect')
+        .addEventListener('click', () => go('connect'));
+      document
+        .getElementById('choose-local')
+        .addEventListener('click', () => go('local'));
+      document
+        .getElementById('choose-remote')
+        .addEventListener('click', () => go('connect'));
+
+      // --- Local server watch -------------------------------------------------
+
+      const localDot = document.getElementById('local-dot');
+      const localText = document.getElementById('local-status-text');
+      const localGuide = document.getElementById('local-guide');
+      const openLocal = document.getElementById('open-local');
+      let localTimer = null;
+      let everProbed = false;
+
+      const applyLocalState = result => {
+        if (result && result.healthy) {
+          localDot.className = 'dot ok';
+          localText.textContent = result.version
+            ? `Server detected — Libre WebUI v${result.version} is running on this machine.`
+            : 'Server detected — Libre WebUI is running on this machine.';
+          localGuide.hidden = true;
+          openLocal.disabled = false;
+        } else {
+          localDot.className = 'dot waiting';
+          localText.textContent = everProbed
+            ? 'Waiting for a local server…'
+            : 'Checking for a local server…';
+          localGuide.hidden = false;
+          openLocal.disabled = true;
+        }
+        everProbed = true;
+      };
+
+      const probeOnce = async () => {
+        const result = await window.electronAPI?.landing.probeLocal();
+        if (current === 'local') applyLocalState(result);
+      };
+
+      const startLocalWatch = () => {
+        if (localTimer) return;
+        probeOnce();
+        localTimer = setInterval(probeOnce, 2500);
+      };
+
+      const stopLocalWatch = () => {
+        if (localTimer) {
+          clearInterval(localTimer);
+          localTimer = null;
+        }
+      };
+
+      openLocal.addEventListener('click', () => {
+        window.electronAPI?.landing.launchLocal();
+      });
+
+      // --- Guidance links and copy -------------------------------------------
+
+      const external = {
+        'open-docs': 'https://docs.librewebui.org/DOCKER/',
+        'open-docker-site': 'https://docs.docker.com/get-docker/',
+        'open-ollama-site': 'https://ollama.com/download',
+        'open-website': 'https://librewebui.org',
+        'open-docs-site': 'https://docs.librewebui.org',
+        'open-kroonen': 'https://kroonen.ai',
+      };
+      for (const [id, url] of Object.entries(external)) {
+        document.getElementById(id).addEventListener('click', () => {
+          window.electronAPI?.landing.openExternal(url);
+        });
+      }
+
+      document
+        .getElementById('copy-docker')
+        .addEventListener('click', async () => {
+          const button = document.getElementById('copy-docker');
+          // Collapse any markup-introduced line breaks: what lands in the
+          // terminal must be one command.
+          const command = document
+            .getElementById('docker-command')
+            .textContent.replace(/\s+/g, ' ')
+            .trim();
+          try {
+            await navigator.clipboard.writeText(command);
+            button.textContent = 'Copied';
+            setTimeout(() => {
+              button.textContent = 'Copy';
+            }, 1500);
+          } catch {
+            button.textContent = 'Select it manually';
+          }
+        });
+
+      // --- Connect to another server -----------------------------------------
+
+      const urlInput = document.getElementById('server-url');
+      const errorLine = document.getElementById('connect-error');
+      const connectBody = document.getElementById('connect-body');
+
+      const connect = async () => {
+        const url = urlInput.value.trim();
+        if (!url) {
+          errorLine.textContent = 'Enter a server address.';
+          return;
+        }
+        errorLine.textContent = '';
+        connectBody.classList.add('busy');
+        try {
+          const result = await window.electronAPI?.landing.connect(url);
+          if (result && !result.ok) {
+            errorLine.textContent = result.error;
+          }
+        } finally {
+          connectBody.classList.remove('busy');
+        }
+      };
+
+      document.getElementById('connect').addEventListener('click', connect);
+      urlInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') connect();
+      });
+
+      // --- Hero motion settles on the still ----------------------------------
+
+      const heroMotion = document.querySelector('.hero-motion');
+      heroMotion.addEventListener(
+        'ended',
+        () => heroMotion.classList.add('is-settled'),
+        { once: true }
+      );
+
+      // --- Version in the footer ---------------------------------------------
+
+      window.electronAPI
+        ?.getVersion()
+        .then(version => {
+          if (version) {
+            document.getElementById('app-version').textContent =
+              `v${version} · `;
+          }
+        })
+        .catch(() => {});
+    </script>
+  </body>
+</html>
