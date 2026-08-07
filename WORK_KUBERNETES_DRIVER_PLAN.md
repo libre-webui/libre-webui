@@ -10,8 +10,13 @@ reconciliation, interactive terminals (exec-with-TTY WebSocket, resize
 frames included), and preview (the signed proxy targets the sandbox Pod
 IP — no Service needed, since it is 1:1 with the Pod; the backend must
 run in-cluster to reach it). All verified end-to-end against a kind
-cluster. Helm namespace/RBAC/NetworkPolicies (phase 4) and CI (phase 5)
-are not built. Docker remains the default backend and is unchanged.
+cluster. Phase 4 is also complete: `--set work.enabled=true` on the Helm
+chart creates the sandbox namespace, a namespace-scoped Role/RoleBinding
+(pods, pods/exec, persistentvolumeclaims — verified live as exactly
+sufficient by running the full driver lifecycle under the ServiceAccount
+token), and default-deny NetworkPolicies with a preview-ingress carve-out
+and metadata-blocking egress rules; the deployment matrix is flipped.
+Only CI (phase 5) remains. Docker stays the default backend, unchanged.
 
 ## Goal
 

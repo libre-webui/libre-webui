@@ -98,6 +98,36 @@ secrets:
   huggingfaceClientId: ""
   huggingfaceClientSecret: ""
 
+# Work sandboxes on the Kubernetes runtime backend. No Docker daemon or
+# socket is involved: sandboxes run as Pods in a dedicated namespace, the
+# backend's ServiceAccount gets a namespace-scoped Role (pods, pods/exec,
+# persistentvolumeclaims), and NetworkPolicies isolate the sandboxes.
+work:
+  enabled: false
+  namespace: libre-webui-work
+  createNamespace: true
+  # StorageClass for workspace PVCs; empty uses the cluster default.
+  storageClass: ""
+  # Per-task workspace size - a real disk quota, enforced by the provisioner.
+  workspaceSize: 5Gi
+  # Override the Work runtime image (WORK_RUNTIME_IMAGE). Pin a digest.
+  runtimeImage: ""
+  # Extra WORK_* environment for the backend, e.g. WORK_MEMORY_LIMIT: "4g".
+  env: {}
+  networkPolicy:
+    enabled: true
+    # Ranges networked sandboxes may never reach: private networks and the
+    # link-local range that hosts cloud metadata endpoints. Requires a CNI
+    # that enforces NetworkPolicy (Calico, Cilium, ...). Extend rather than
+    # trim, and keep 169.254.0.0/16 unless you know why you are removing it.
+    blockedEgressCidrs:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
+      - 169.254.0.0/16
+      - "fc00::/7"
+      - "fe80::/10"
+
 # Ollama configuration
 ollama:
   # Use external Ollama instance

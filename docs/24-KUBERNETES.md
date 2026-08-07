@@ -10,19 +10,44 @@ keywords: [libre webui kubernetes, helm chart, k8s deployment]
 
 Libre WebUI ships a Helm chart under `helm/libre-webui`.
 
-## Work Availability
+## Work on Kubernetes
 
-The current Helm chart does not create a Work runtime. The image ships the
-Docker CLI and the repository Compose files mount the host Docker socket, but
-the chart mounts no container-runtime socket and Kubernetes nodes do not
-normally expose one. Work therefore reports **Runtime unavailable** in a normal
-chart installation; Chat and the other application features continue to work.
+Work runs natively on Kubernetes — no Docker daemon, CLI, or socket is
+involved anywhere. Enable it at install time:
 
-Do not mount a node's container-runtime socket into the WebUI pod. Supporting
-Work safely in Kubernetes requires a separate runtime driver with tightly
-scoped RBAC, one isolated workload and persistent volume per task, admission and
-resource policies, cleanup guarantees, and a preview-routing design. Those
-resources are not part of the current chart.
+```bash
+helm install libre-webui ./helm/libre-webui --set work.enabled=true
+```
+
+This switches the backend to `WORK_RUNTIME_BACKEND=kubernetes` and creates:
+
+- a dedicated sandbox namespace (`work.namespace`, default
+  `libre-webui-work`) holding one Pod per running sandbox and one
+  PersistentVolumeClaim per task workspace (`work.workspaceSize`, default
+  `5Gi` — a real per-task disk quota);
+- a namespace-scoped Role and RoleBinding granting the backend's
+  ServiceAccount exactly `pods` (get/list/create/delete), `pods/exec`
+  (get/create), and `persistentvolumeclaims` (get/create/delete) in that
+  namespace — no secrets, no cluster scope. This grant replaces the Docker
+  socket entirely: the API server, not the application, enforces that a
+  sandbox spec cannot mount host paths;
+- NetworkPolicies that default-deny all sandbox traffic, allow ingress only
+  from the backend on the preview port, and give network-enabled sandboxes
+  egress to the internet minus `work.networkPolicy.blockedEgressCidrs`
+  (private ranges and the cloud-metadata link-local range by default).
+
+Sandboxes run non-root with a read-only root filesystem, all capabilities
+dropped, seccomp `RuntimeDefault`, and no ServiceAccount token. Files,
+commands, git, and interactive terminals ride the exec subresource through
+the API server; preview is served from the sandbox Pod IP through the signed
+same-origin proxy, which requires the backend to run in-cluster (the normal
+chart topology). Host-folder workspaces are not supported on this backend.
+
+Two operator notes. NetworkPolicy enforcement requires a CNI that
+implements it (Calico, Cilium, and most managed-cluster defaults do;
+kindnet does not) — verify with your cluster before treating sandbox egress
+as constrained. And never mount a node's container-runtime socket into the
+WebUI pod; the Kubernetes backend exists precisely so that is unnecessary.
 
 ## Install
 
@@ -81,9 +106,10 @@ configure per-user credentials in the WebUI.
 
 Keep the Libre WebUI data PVC and Ollama model PVC on persistent storage. Back up the Libre WebUI data volume and the encryption key together.
 
-A future Work runtime would also need an independent backup policy for
-task-owned persistent volumes. Work files do not live in the Libre WebUI data
-PVC.
+Work task workspaces live in their own PVCs in the sandbox namespace, not in
+the Libre WebUI data PVC. Complete Work recovery needs both the database
+(task ownership, resource names, runs) and those PVCs; back them up together
+under the same policy.
 
 ## Ingress
 
