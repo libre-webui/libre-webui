@@ -809,3 +809,50 @@ test('packed npm artifact routes TTS through the selected plugin valve from any 
     }
   });
 });
+
+test('every external import in the packed backend is a declared dependency', async () => {
+  // The npx install gets only the root manifest's dependencies; a runtime
+  // import satisfied by a workspace manifest alone crashes the CLI at boot
+  // (0.19.5 shipped without parse5 this way).
+  const rootManifest = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')
+  );
+  const declared = new Set(Object.keys(rootManifest.dependencies ?? {}));
+  const distRoot = path.join(repoRoot, 'backend', 'dist');
+  assert.ok(fs.existsSync(distRoot), 'backend/dist must be built first');
+
+  const importPattern =
+    /(?:from\s+|import\s*\(\s*|require\s*\(\s*)['"]([^'"./][^'"]*)['"]/g;
+  const missing = new Map();
+
+  const walk = dir => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (!entry.name.endsWith('.js')) continue;
+      const source = fs.readFileSync(full, 'utf8');
+      for (const match of source.matchAll(importPattern)) {
+        const specifier = match[1];
+        if (specifier.startsWith('node:')) continue;
+        const parts = specifier.split('/');
+        const name = specifier.startsWith('@')
+          ? parts.slice(0, 2).join('/')
+          : parts[0];
+        if (declared.has(name)) continue;
+        // Bare specifiers that are Node built-ins without the node: prefix.
+        if (process.getBuiltinModule?.(name)) continue;
+        if (!missing.has(name)) missing.set(name, path.relative(repoRoot, full));
+      }
+    }
+  };
+  walk(distRoot);
+
+  assert.deepEqual(
+    Object.fromEntries(missing),
+    {},
+    'backend/dist imports packages the published manifest does not declare'
+  );
+});
