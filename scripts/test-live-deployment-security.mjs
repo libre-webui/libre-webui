@@ -132,4 +132,24 @@ test('local Compose defaults enable Work without publishing Ollama', () => {
     read('deploy/private/docker-compose.watchtower.yml'),
     /docker\.sock/
   );
+
+  // The socket-proxy Work override keeps the socket out of the application:
+  // only the proxy service mounts it (read-only), the app gets a filtered
+  // tcp endpoint, the proxy network stays internal, and no dangerous API
+  // section is enabled.
+  const workProxy = read('deploy/private/docker-compose.work-proxy.yml');
+  assert.match(workProxy, /DOCKER_HOST: tcp:\/\/docker-socket-proxy:2375/);
+  assert.match(
+    workProxy,
+    /\/var\/run\/docker\.sock:\/var\/run\/docker\.sock:ro/
+  );
+  assert.equal(workProxy.match(/docker\.sock/g).length, 2);
+  assert.doesNotMatch(workProxy, /group_add/);
+  assert.match(workProxy, /internal: true/);
+  for (const denied of ['SWARM', 'SECRETS', 'CONFIGS', 'BUILD', 'COMMIT']) {
+    assert.ok(
+      !new RegExp(`${denied}: 1`).test(workProxy),
+      `proxy must not enable ${denied}`
+    );
+  }
 });

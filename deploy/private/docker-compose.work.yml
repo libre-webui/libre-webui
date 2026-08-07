@@ -1,7 +1,10 @@
 services:
   libre-webui:
-    # Work requires root-equivalent control of the host Docker daemon. Keep this
-    # override out of the stack unless its administrators are also host admins.
+    # Raw-socket variant: root-equivalent control of the host Docker daemon.
+    # Prefer docker-compose.work-proxy.yml, which enables Work through a
+    # filtered API proxy instead of handing the application the socket. Keep
+    # this override out of the stack unless its administrators are also host
+    # admins.
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     group_add:

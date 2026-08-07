@@ -1,0 +1,57 @@
+# Work through a filtered Docker API proxy — the preferred way to enable
+# Work on a private instance. Libre WebUI never sees the Docker socket and
+# joins no socket-owning group; a proxy holds the socket on an internal
+# network and forwards only the API sections Work uses. Swarm, secrets,
+# configs, build, commit, and system endpoints are denied before they reach
+# the daemon. The proxy narrows the API surface, not the blast radius of
+# what it forwards: container creation can still bind-mount host paths, so
+# the audit's dedicated-VM / rootless-daemon guidance still applies.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.work-proxy.yml up -d
+services:
+  libre-webui:
+    environment:
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+    networks:
+      - docker-proxy
+
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:v0.4.2
+    container_name: libre-webui-docker-socket-proxy
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    environment:
+      # Exactly the surface Work uses. GET /_ping and /version are allowed
+      # by the proxy's defaults; POST=1 gates every write (create, start,
+      # stop, remove) behind the sections enabled here.
+      CONTAINERS: 1
+      IMAGES: 1
+      VOLUMES: 1
+      NETWORKS: 1
+      EXEC: 1
+      INFO: 1
+      POST: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - docker-proxy
+    labels:
+      com.centurylinklabs.watchtower.enable: 'false'
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '3'
+
+networks:
+  # Internal: reachable only from containers attached to it, never from the
+  # host network or the private application bridge.
+  docker-proxy:
+    driver: bridge
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.name: lwui-dockerproxy
