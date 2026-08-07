@@ -13,6 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+### 📚 Documentation
+
+## [0.19.5] - 2026-08-07
+
+The generation settings shared by every model can be edited again. Saving them
+had silently pinned whatever model the chat was on, which is why an output
+limit set there came back the moment the model changed.
+
+### 🐛 Bug Fixes
+
 - The Generation tab in Settings reaches the shared values again. It saved to
   whichever model the chat happened to be on — and a model is always selected —
   so the values every other model falls back to could not be changed from the
