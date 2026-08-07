@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-import { spawn } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { getDatabase } from '../db.js';
 import {
@@ -35,116 +33,45 @@ import {
   validateWorkGitRepositoryPaths,
 } from '../utils/workGit.js';
 import workPreviewProxyService from './workPreviewProxyService.js';
+import {
+  DockerWorkRuntimeDriver,
+  type DiscoveredWorkContainer,
+  type WorkRuntimeDriver,
+} from './workRuntimeDriver.js';
+import {
+  type ProcessOptions,
+  type ProcessResult,
+  type WorkCommandResult,
+  WorkRuntimeError,
+  workRuntimeConfig as config,
+} from './workRuntimeShared.js';
+
+// The public surface of the Work runtime is unchanged by the driver split:
+// consumers and tests keep importing everything from this module.
+export {
+  WORK_RUNTIME_ADMISSION_DEFAULTS,
+  WORK_RUNTIME_DEFAULTS,
+  WorkRuntimeError,
+  parseDnsServers,
+} from './workRuntimeShared.js';
+export type { WorkCommandResult } from './workRuntimeShared.js';
+export {
+  DockerWorkRuntimeDriver,
+  buildWorkContainerRunArgs,
+  describeDockerUnavailable,
+  formatPreviewHost,
+  parseManagedContainerList,
+  parsePublishedPort,
+} from './workRuntimeDriver.js';
+export type {
+  DiscoveredWorkContainer,
+  WorkRuntimeDriver,
+} from './workRuntimeDriver.js';
 
 const logger = createLogger('services:work-runtime');
-const activeDockerProcesses = new Set<ReturnType<typeof spawn>>();
 
-export const WORK_RUNTIME_DEFAULTS = {
-  image:
-    'node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3',
-  dockerCommand: 'docker',
-  commandTimeoutMs: 120_000,
-  maxOutputChars: 50_000,
-  maxAgentRounds: 48,
-  memoryLimit: '2g',
-  cpuLimit: '2',
-  pidsLimit: 256,
-  previewPort: 4173,
-  previewBind: '127.0.0.1',
-  networkName: 'libre-webui-work',
-} as const;
-
-// Two runtimes per administrator so a second task does not have to wait for
-// the first, three per instance to bound the worst case at three containers'
-// resource caps. Both remain tunable through WORK_MAX_ACTIVE_RUNTIMES_*.
-export const WORK_RUNTIME_ADMISSION_DEFAULTS = {
-  maxActiveRuntimesGlobal: 3,
-  maxActiveRuntimesPerUser: 2,
-} as const;
-
-const config = {
-  image: process.env.WORK_RUNTIME_IMAGE || WORK_RUNTIME_DEFAULTS.image,
-  dockerCommand:
-    process.env.WORK_DOCKER_COMMAND || WORK_RUNTIME_DEFAULTS.dockerCommand,
-  commandTimeoutMs: positiveInteger(
-    process.env.WORK_COMMAND_TIMEOUT_MS,
-    WORK_RUNTIME_DEFAULTS.commandTimeoutMs
-  ),
-  maxOutputChars: positiveInteger(
-    process.env.WORK_MAX_OUTPUT_CHARS,
-    WORK_RUNTIME_DEFAULTS.maxOutputChars
-  ),
-  maxAgentRounds: positiveInteger(
-    process.env.WORK_MAX_AGENT_ROUNDS,
-    WORK_RUNTIME_DEFAULTS.maxAgentRounds
-  ),
-  memoryLimit:
-    process.env.WORK_MEMORY_LIMIT || WORK_RUNTIME_DEFAULTS.memoryLimit,
-  cpuLimit: process.env.WORK_CPU_LIMIT || WORK_RUNTIME_DEFAULTS.cpuLimit,
-  pidsLimit: positiveInteger(
-    process.env.WORK_PIDS_LIMIT,
-    WORK_RUNTIME_DEFAULTS.pidsLimit
-  ),
-  previewPort: positiveInteger(
-    process.env.WORK_PREVIEW_PORT,
-    WORK_RUNTIME_DEFAULTS.previewPort
-  ),
-  // Interface the daemon publishes a task preview on. Loopback keeps a preview
-  // private to the Docker host, which is correct when the browser runs there.
-  previewBind:
-    process.env.WORK_PREVIEW_BIND || WORK_RUNTIME_DEFAULTS.previewBind,
-  maxActiveRuntimesGlobal: positiveInteger(
-    process.env.WORK_MAX_ACTIVE_RUNTIMES_GLOBAL,
-    WORK_RUNTIME_ADMISSION_DEFAULTS.maxActiveRuntimesGlobal
-  ),
-  maxActiveRuntimesPerUser: positiveInteger(
-    process.env.WORK_MAX_ACTIVE_RUNTIMES_PER_USER,
-    WORK_RUNTIME_ADMISSION_DEFAULTS.maxActiveRuntimesPerUser
-  ),
-  // Dedicated bridge network for networked Work tasks. It is created with
-  // inter-container communication disabled, so a sandbox cannot reach other
-  // Work sandboxes or the deployment's own containers on the default bridge.
-  networkName:
-    process.env.WORK_NETWORK_NAME || WORK_RUNTIME_DEFAULTS.networkName,
-  // Optional resolvers forced onto every networked sandbox. Pointing this at
-  // a filtering resolver is the supported egress-policy hook.
-  dnsServers: parseDnsServers(process.env.WORK_RUNTIME_DNS),
-};
 const PREVIEW_READY_TIMEOUT_MS = 15_000;
 const PREVIEW_POLL_INTERVAL_MS = 250;
-const runtimePolicyFingerprint = createHash('sha256')
-  .update(
-    JSON.stringify({
-      version: 2,
-      memoryLimit: config.memoryLimit,
-      cpuLimit: config.cpuLimit,
-      pidsLimit: config.pidsLimit,
-      previewPort: config.previewPort,
-      previewBind: config.previewBind,
-      networkName: config.networkName,
-      dnsServers: config.dnsServers,
-      memorySwapPinned: true,
-    })
-  )
-  .digest('hex');
-
-export interface WorkCommandResult {
-  exitCode: number;
-  stdout: string;
-  stderr: string;
-  truncated: boolean;
-}
-
-interface ProcessOptions {
-  timeoutMs?: number;
-  maxOutputChars?: number;
-  input?: string;
-  acceptFailure?: boolean;
-}
-
-interface ProcessResult extends WorkCommandResult {
-  signal?: NodeJS.Signals;
-}
 
 interface PreviewStateHooks {
   onStarting?: () => void;
@@ -176,23 +103,8 @@ interface RuntimeLease {
   holders: number;
 }
 
-export class WorkRuntimeError extends Error {
-  readonly status: number;
-  readonly code: string;
-
-  constructor(
-    message: string,
-    status = 503,
-    code = 'WORK_RUNTIME_UNAVAILABLE'
-  ) {
-    super(message);
-    this.name = 'WorkRuntimeError';
-    this.status = status;
-    this.code = code;
-  }
-}
-
 export class WorkRuntimeService {
+  readonly driver: WorkRuntimeDriver;
   readonly image = config.image;
   readonly previewPort = config.previewPort;
   readonly limits = {
@@ -217,6 +129,10 @@ export class WorkRuntimeService {
   private recoveryInventory?: WorkTaskRecord[];
   private recoveryTimer?: NodeJS.Timeout;
   private shuttingDown = false;
+
+  constructor(driver: WorkRuntimeDriver = new DockerWorkRuntimeDriver()) {
+    this.driver = driver;
+  }
 
   get recoveryPending(): boolean {
     return this.recoveryPendingCount > 0;
@@ -251,16 +167,12 @@ export class WorkRuntimeService {
 
   async isDockerAvailable(): Promise<boolean> {
     try {
-      await this.docker(['info', '--format', '{{.ServerVersion}}'], {
-        timeoutMs: 5_000,
-      });
+      await this.driver.probe();
       this.lastDockerUnavailableReason = null;
       return true;
     } catch (error) {
-      this.lastDockerUnavailableReason = describeDockerUnavailable(
-        error,
-        config.dockerCommand
-      );
+      this.lastDockerUnavailableReason =
+        error instanceof Error ? error.message : String(error);
       return false;
     }
   }
@@ -458,9 +370,7 @@ export class WorkRuntimeService {
       clearTimeout(this.recoveryTimer);
       this.recoveryTimer = undefined;
     }
-    for (const child of activeDockerProcesses) {
-      child.kill('SIGKILL');
-    }
+    this.driver.shutdown();
   }
 
   beginTaskSuspension(taskId: string): void {
@@ -506,7 +416,7 @@ export class WorkRuntimeService {
       // by a task whose database row is gone.
       let discovered: DiscoveredWorkContainer[];
       try {
-        discovered = await this.listManagedContainers();
+        discovered = await this.driver.listManaged();
       } catch (error) {
         logger.warn(
           'Could not list Work containers for startup reconciliation:',
@@ -539,9 +449,7 @@ export class WorkRuntimeService {
     const [taskResults, orphanResults] = await Promise.all([
       Promise.allSettled(tasks.map(task => this.stopContainer(task))),
       Promise.allSettled(
-        orphans.map(orphan =>
-          this.docker(['rm', '--force', orphan.name], { timeoutMs: 15_000 })
-        )
+        orphans.map(orphan => this.driver.removeOrphan(orphan.name))
       ),
     ]);
     let stopped = 0;
@@ -631,84 +539,14 @@ export class WorkRuntimeService {
     this.assertRuntimeLease(task);
     this.assertCurrentNetworkPolicy(task);
     this.assertTaskIsActive(task);
-    await this.ensureVolume(task);
+    await this.driver.ensureWorkspace(task);
     this.assertTaskIsActive(task);
-    await this.ensureContainer(task);
+    this.assertRuntimeLease(task);
+    await this.driver.ensureRuntime(task);
     if (this.shuttingDown) {
       await this.stopContainerWithLock(task);
       this.assertTaskIsActive(task);
     }
-  }
-
-  private async ensureWorkNetwork(task: WorkTaskRecord): Promise<void> {
-    if (!task.networkEnabled) return;
-    const inspect = await this.docker(
-      [
-        'network',
-        'inspect',
-        '--format',
-        '{{index .Labels "ai.libre-webui.managed"}} {{index .Options "com.docker.network.bridge.enable_icc"}}',
-        config.networkName,
-      ],
-      { acceptFailure: true }
-    );
-    if (inspect.exitCode === 0) {
-      const [managed, icc] = inspect.stdout.trim().split(' ');
-      if (managed !== 'true' || icc !== 'false') {
-        throw new WorkRuntimeError(
-          `Docker network "${config.networkName}" exists but is not the managed Work sandbox network (label ai.libre-webui.managed=true with inter-container communication disabled). Remove it or point WORK_NETWORK_NAME at an unused name.`,
-          503,
-          'WORK_NETWORK_CONFLICT'
-        );
-      }
-      return;
-    }
-    const created = await this.docker(
-      [
-        'network',
-        'create',
-        '--label',
-        'ai.libre-webui.managed=true',
-        '--opt',
-        'com.docker.network.bridge.enable_icc=false',
-        config.networkName,
-      ],
-      { acceptFailure: true }
-    );
-    if (created.exitCode !== 0 && !/already exists/i.test(created.stderr)) {
-      throw new WorkRuntimeError(
-        `Could not create the Work sandbox network "${config.networkName}": ${created.stderr.trim()}`,
-        503,
-        'WORK_NETWORK_UNAVAILABLE'
-      );
-    }
-  }
-
-  private async ensureContainer(task: WorkTaskRecord): Promise<void> {
-    this.assertRuntimeLease(task);
-    await this.ensureWorkNetwork(task);
-    if (await this.containerExists(task.containerName)) {
-      await this.assertManagedContainer(task);
-      if (!(await this.containerMatchesTaskPolicy(task))) {
-        logger.warn(
-          `Recreating Work container ${task.containerName} because its isolation policy is stale.`
-        );
-        await this.docker(['rm', '-f', task.containerName]);
-        await this.docker(buildWorkContainerRunArgs(task, this.image));
-        return;
-      }
-      const state = await this.docker([
-        'inspect',
-        '--format',
-        '{{.State.Running}}',
-        task.containerName,
-      ]);
-      if (state.stdout.trim() !== 'true') {
-        await this.docker(['start', task.containerName]);
-      }
-      return;
-    }
-    await this.docker(buildWorkContainerRunArgs(task, this.image));
   }
 
   async recreateContainer(task: WorkTaskRecord): Promise<void> {
@@ -787,13 +625,10 @@ export class WorkRuntimeService {
   private async recreateContainerWithLock(task: WorkTaskRecord): Promise<void> {
     this.assertRuntimeLease(task);
     this.assertTaskIsActive(task);
-    await this.ensureVolume(task);
+    await this.driver.ensureWorkspace(task);
     this.assertTaskIsActive(task);
-    if (await this.containerExists(task.containerName)) {
-      await this.assertManagedContainer(task);
-      await this.docker(['rm', '-f', task.containerName]);
-    }
-    await this.ensureContainer(task);
+    await this.driver.removeRuntime(task);
+    await this.driver.ensureRuntime(task);
     if (this.shuttingDown) {
       await this.stopContainerWithLock(task);
       this.assertTaskIsActive(task);
@@ -824,11 +659,7 @@ export class WorkRuntimeService {
 
   private async stopContainerWithLock(task: WorkTaskRecord): Promise<void> {
     try {
-      if (!(await this.containerExists(task.containerName))) return;
-      await this.assertManagedContainer(task);
-      await this.docker(['stop', '--time', '1', task.containerName], {
-        timeoutMs: 10_000,
-      });
+      await this.driver.stopRuntime(task);
     } catch (error) {
       this.queueFailedCleanup(task, error);
       throw error;
@@ -846,30 +677,9 @@ export class WorkRuntimeService {
     }
     this.retiringTasks.add(task.id);
     try {
-      await this.withLifecycleLock(task.id, async () => {
-        const [hasContainer, hasVolume] = await Promise.all([
-          this.containerExists(task.containerName),
-          this.volumeExists(task.volumeName),
-        ]);
-        // Validate every destructive target before removing either one, so a
-        // conflicting unmanaged Docker resource cannot cause partial cleanup.
-        if (hasContainer) {
-          await this.assertManagedContainer(task);
-        }
-        if (hasVolume) {
-          await this.assertManagedVolume(task);
-        }
-        if (hasContainer) {
-          await this.docker(['rm', '-f', task.containerName], {
-            timeoutMs: 15_000,
-          });
-        }
-        if (hasVolume) {
-          await this.docker(['volume', 'rm', task.volumeName], {
-            timeoutMs: 15_000,
-          });
-        }
-      });
+      await this.withLifecycleLock(task.id, () =>
+        this.driver.removeTaskResources(task)
+      );
     } catch (error) {
       this.retiringTasks.delete(task.id);
       throw error;
@@ -1530,20 +1340,9 @@ export class WorkRuntimeService {
     task: WorkTaskRecord
   ): Promise<PreviewLaunch> {
     try {
-      const result = await this.docker(
-        [
-          'exec',
-          '--user',
-          '1000:1000',
-          '--workdir',
-          '/workspace',
-          task.containerName,
-          'node',
-          '-e',
-          PREVIEW_TARGET_SCRIPT,
-          '--',
-          '/workspace',
-        ],
+      const result = await this.driver.exec(
+        task,
+        ['node', '-e', PREVIEW_TARGET_SCRIPT, '--', '/workspace'],
         {
           acceptFailure: true,
           timeoutMs: 5_000,
@@ -1631,14 +1430,9 @@ export class WorkRuntimeService {
     previewLaunch: PreviewLaunch
   ): Promise<string> {
     try {
-      const launch = await this.docker(
+      const launch = await this.driver.exec(
+        task,
         [
-          'exec',
-          '--user',
-          '1000:1000',
-          '--workdir',
-          previewLaunch.workdir,
-          task.containerName,
           '/bin/bash',
           '-lc',
           `if [ -s /tmp/libre-work-preview.pid ] &&
@@ -1662,7 +1456,11 @@ export class WorkRuntimeService {
             : previewLaunch.command,
           String(config.previewPort),
         ],
-        { acceptFailure: true, timeoutMs: 5_000 }
+        {
+          workdir: previewLaunch.workdir,
+          acceptFailure: true,
+          timeoutMs: 5_000,
+        }
       );
       if (launch.exitCode !== 0 && launch.exitCode !== 17) {
         throw await this.previewStartError(
@@ -1674,12 +1472,9 @@ export class WorkRuntimeService {
 
       const deadline = Date.now() + PREVIEW_READY_TIMEOUT_MS;
       while (true) {
-        const readiness = await this.docker(
+        const readiness = await this.driver.exec(
+          task,
           [
-            'exec',
-            '--user',
-            '1000:1000',
-            task.containerName,
             'node',
             '-e',
             PREVIEW_READY_SCRIPT,
@@ -1706,15 +1501,7 @@ export class WorkRuntimeService {
           setTimeout(resolve, PREVIEW_POLL_INTERVAL_MS)
         );
       }
-      const portResult = await this.docker([
-        'port',
-        task.containerName,
-        `${config.previewPort}/tcp`,
-      ]);
-      const publishedPort = parsePublishedPort(
-        portResult.stdout,
-        config.previewPort
-      );
+      const publishedPort = await this.driver.publishedPreviewPort(task);
       if (!publishedPort) {
         throw new WorkRuntimeError(
           'Docker did not publish the preview port.',
@@ -1741,12 +1528,9 @@ export class WorkRuntimeService {
     reason: string,
     detail = ''
   ): Promise<WorkRuntimeError> {
-    const log = await this.docker(
+    const log = await this.driver.exec(
+      task,
       [
-        'exec',
-        '--user',
-        '1000:1000',
-        task.containerName,
         '/bin/bash',
         '-lc',
         'tail -c 4000 /tmp/libre-work-preview.log 2>/dev/null || true',
@@ -1813,21 +1597,10 @@ export class WorkRuntimeService {
   private async previewProcessCheckWithLock(
     task: WorkTaskRecord
   ): Promise<'ready' | 'alive' | 'dead' | 'absent'> {
-    if (!(await this.containerExists(task.containerName))) return 'absent';
-    await this.assertManagedContainer(task);
-    if (!(await this.containerIsRunning(task.containerName))) return 'absent';
-    const readiness = await this.docker(
-      [
-        'exec',
-        '--user',
-        '1000:1000',
-        task.containerName,
-        'node',
-        '-e',
-        PREVIEW_READY_SCRIPT,
-        '--',
-        String(config.previewPort),
-      ],
+    if ((await this.driver.runtimeState(task)) !== 'running') return 'absent';
+    const readiness = await this.driver.exec(
+      task,
+      ['node', '-e', PREVIEW_READY_SCRIPT, '--', String(config.previewPort)],
       { acceptFailure: true, timeoutMs: 2_000, maxOutputChars: 2_000 }
     );
     if (readiness.exitCode === 0) return 'ready';
@@ -1850,222 +1623,12 @@ export class WorkRuntimeService {
 
   private async ensureImage(): Promise<void> {
     if (!this.imagePreparation) {
-      this.imagePreparation = (async () => {
-        const inspected = await this.docker(['image', 'inspect', this.image], {
-          timeoutMs: 10_000,
-          acceptFailure: true,
-        });
-        if (inspected.exitCode === 0) return;
-        logger.info(`Pulling Work runtime image ${this.image}`);
-        await this.docker(['pull', this.image], { timeoutMs: 900_000 });
-      })().catch(error => {
+      this.imagePreparation = this.driver.ensureImage().catch(error => {
         this.imagePreparation = undefined;
         throw error;
       });
     }
     await this.imagePreparation;
-  }
-
-  private async initializeVolume(task: WorkTaskRecord): Promise<void> {
-    await this.docker([
-      'run',
-      '--rm',
-      '--network',
-      'none',
-      '--read-only',
-      '--tmpfs',
-      '/tmp:rw,noexec,nosuid,size=64m',
-      '--cap-drop',
-      'ALL',
-      '--cap-add',
-      'CHOWN',
-      '--mount',
-      `type=volume,src=${task.volumeName},dst=/workspace`,
-      this.image,
-      'chown',
-      '-R',
-      '1000:1000',
-      '/workspace',
-    ]);
-  }
-
-  private async ensureVolume(task: WorkTaskRecord): Promise<void> {
-    if (await this.volumeExists(task.volumeName)) {
-      await this.assertManagedVolume(task);
-      return;
-    }
-    await this.docker([
-      'volume',
-      'create',
-      '--label',
-      'ai.libre-webui.managed=true',
-      '--label',
-      `ai.libre-webui.task=${task.id}`,
-      task.volumeName,
-    ]);
-    // Docker returns an existing volume from `volume create` if another
-    // process wins the name race, so prove ownership before mounting it.
-    await this.assertManagedVolume(task);
-    try {
-      await this.initializeVolume(task);
-    } catch (error) {
-      await this.docker(['volume', 'rm', task.volumeName], {
-        acceptFailure: true,
-      });
-      throw error;
-    }
-  }
-
-  private async volumeExists(name: string): Promise<boolean> {
-    const result = await this.docker(['volume', 'inspect', name], {
-      timeoutMs: 5_000,
-      acceptFailure: true,
-    });
-    if (result.exitCode === 0) return true;
-    if (/no such volume/i.test(`${result.stderr}\n${result.stdout}`)) {
-      return false;
-    }
-    throw new WorkRuntimeError(
-      `Could not inspect Work volume "${name}": ${result.stderr.trim() || result.stdout.trim() || `Docker exited with code ${result.exitCode}.`}`,
-      503,
-      'WORK_DOCKER_INSPECT_FAILED'
-    );
-  }
-
-  private async containerExists(name: string): Promise<boolean> {
-    const result = await this.docker(['container', 'inspect', name], {
-      timeoutMs: 5_000,
-      acceptFailure: true,
-    });
-    if (result.exitCode === 0) return true;
-    if (
-      /no such (?:container|object)/i.test(`${result.stderr}\n${result.stdout}`)
-    ) {
-      return false;
-    }
-    throw new WorkRuntimeError(
-      `Could not inspect Work container "${name}": ${result.stderr.trim() || result.stdout.trim() || `Docker exited with code ${result.exitCode}.`}`,
-      503,
-      'WORK_DOCKER_INSPECT_FAILED'
-    );
-  }
-
-  private async containerIsRunning(name: string): Promise<boolean> {
-    const result = await this.docker([
-      'inspect',
-      '--format',
-      '{{.State.Running}}',
-      name,
-    ]);
-    const state = result.stdout.trim();
-    if (state === 'true') return true;
-    if (state === 'false') return false;
-    throw new WorkRuntimeError(
-      `Docker returned an invalid state for Work container "${name}".`,
-      503,
-      'WORK_DOCKER_INSPECT_FAILED'
-    );
-  }
-
-  private async assertManagedContainer(task: WorkTaskRecord): Promise<void> {
-    const result = await this.docker([
-      'inspect',
-      '--format',
-      '{{ index .Config.Labels "ai.libre-webui.task" }}',
-      task.containerName,
-    ]);
-    if (result.stdout.trim() !== task.id) {
-      throw new WorkRuntimeError(
-        `Refusing to operate unmanaged container "${task.containerName}".`,
-        409,
-        'WORK_CONTAINER_NAME_CONFLICT'
-      );
-    }
-  }
-
-  private async containerMatchesTaskPolicy(
-    task: WorkTaskRecord
-  ): Promise<boolean> {
-    const result = await this.docker([
-      'inspect',
-      '--format',
-      '{{json .}}',
-      task.containerName,
-    ]);
-    let inspected: Record<string, unknown>;
-    try {
-      inspected = JSON.parse(result.stdout) as Record<string, unknown>;
-    } catch {
-      return false;
-    }
-    const containerConfig = objectRecord(inspected.Config);
-    const hostConfig = objectRecord(inspected.HostConfig);
-    const labels = objectRecord(containerConfig.Labels);
-    const env = stringArray(containerConfig.Env);
-    const capDrop = stringArray(hostConfig.CapDrop);
-    const securityOpt = stringArray(hostConfig.SecurityOpt);
-    const command = stringArray(containerConfig.Cmd);
-    const mounts = Array.isArray(inspected.Mounts)
-      ? inspected.Mounts.map(objectRecord)
-      : [];
-    const workspaceMount = mounts.find(
-      mount => mount.Destination === '/workspace'
-    );
-    const expectedNetwork = task.networkEnabled ? config.networkName : 'none';
-    const portBindings = objectRecord(hostConfig.PortBindings);
-    const previewBindings = Array.isArray(
-      portBindings[`${config.previewPort}/tcp`]
-    )
-      ? (portBindings[`${config.previewPort}/tcp`] as unknown[]).map(
-          objectRecord
-        )
-      : [];
-    const portPolicyMatches = task.networkEnabled
-      ? Object.keys(portBindings).length === 1 &&
-        previewBindings.length === 1 &&
-        previewBindings[0]?.HostIp === config.previewBind
-      : Object.keys(portBindings).length === 0;
-    return (
-      labels['ai.libre-webui.managed'] === 'true' &&
-      labels['ai.libre-webui.task'] === task.id &&
-      labels['ai.libre-webui.policy'] === runtimePolicyFingerprint &&
-      containerConfig.Image === this.image &&
-      containerConfig.User === '1000:1000' &&
-      containerConfig.WorkingDir === '/workspace' &&
-      command.join('\0') === ['tail', '-f', '/dev/null'].join('\0') &&
-      env.includes('HOME=/tmp') &&
-      env.includes('NPM_CONFIG_CACHE=/tmp/npm-cache') &&
-      hostConfig.ReadonlyRootfs === true &&
-      hostConfig.Privileged === false &&
-      capDrop.includes('ALL') &&
-      securityOpt.includes('no-new-privileges') &&
-      Number(hostConfig.PidsLimit) === config.pidsLimit &&
-      Number(hostConfig.Memory) > 0 &&
-      Number(hostConfig.MemorySwap) === Number(hostConfig.Memory) &&
-      Number(hostConfig.NanoCpus) > 0 &&
-      hostConfig.NetworkMode === expectedNetwork &&
-      portPolicyMatches &&
-      workspaceMount?.Type === 'volume' &&
-      workspaceMount.Name === task.volumeName &&
-      workspaceMount.RW === true
-    );
-  }
-
-  private async assertManagedVolume(task: WorkTaskRecord): Promise<void> {
-    const result = await this.docker([
-      'volume',
-      'inspect',
-      '--format',
-      '{{ index .Labels "ai.libre-webui.task" }}',
-      task.volumeName,
-    ]);
-    if (result.stdout.trim() !== task.id) {
-      throw new WorkRuntimeError(
-        `Refusing to operate unmanaged volume "${task.volumeName}".`,
-        409,
-        'WORK_VOLUME_NAME_CONFLICT'
-      );
-    }
   }
 
   private assertTaskIsActive(task: WorkTaskRecord): void {
@@ -2400,81 +1963,8 @@ export class WorkRuntimeService {
     command: string[],
     options: ProcessOptions = {}
   ): Promise<ProcessResult> {
-    const args = [
-      'exec',
-      ...(options.input !== undefined ? ['--interactive'] : []),
-      '--user',
-      '1000:1000',
-      '--workdir',
-      '/workspace',
-      task.containerName,
-      ...command,
-    ];
-    return this.docker(args, options);
+    return this.driver.exec(task, command, options);
   }
-
-  /**
-   * Every container the Work runtime has ever created, in one daemon query,
-   * identified by the managed label stamped at `docker run` time.
-   */
-  private async listManagedContainers(): Promise<DiscoveredWorkContainer[]> {
-    const result = await this.docker(
-      [
-        'ps',
-        '--all',
-        '--no-trunc',
-        '--filter',
-        'label=ai.libre-webui.managed=true',
-        '--format',
-        '{{.Names}}\t{{.State}}\t{{.Label "ai.libre-webui.task"}}',
-      ],
-      { timeoutMs: 15_000 }
-    );
-    return parseManagedContainerList(result.stdout);
-  }
-
-  private async docker(
-    args: string[],
-    options: ProcessOptions = {}
-  ): Promise<ProcessResult> {
-    try {
-      return await runProcess(config.dockerCommand, args, options);
-    } catch (error) {
-      if (error instanceof WorkRuntimeError) throw error;
-      throw new WorkRuntimeError(
-        error instanceof Error ? error.message : 'Docker command failed.'
-      );
-    }
-  }
-}
-
-export interface DiscoveredWorkContainer {
-  name: string;
-  taskId: string;
-  running: boolean;
-}
-
-/** Parse `docker ps` lines of `name\tstate\ttask-label` into containers. */
-export function parseManagedContainerList(
-  stdout: string
-): DiscoveredWorkContainer[] {
-  const containers: DiscoveredWorkContainer[] = [];
-  for (const line of stdout.split('\n')) {
-    if (!line.trim()) continue;
-    const [name = '', state = '', taskId = ''] = line
-      .split('\t')
-      .map(field => field.trim());
-    if (!name || !state) continue;
-    containers.push({
-      name,
-      taskId,
-      // paused and restarting containers still hold execution state; only
-      // created/exited/dead containers are safely at rest.
-      running:
-        state === 'running' || state === 'restarting' || state === 'paused',
-    });
-  }
-  return containers;
 }
 
 export interface StartupReconciliationPlan {
@@ -2514,104 +2004,6 @@ export function planStartupReconciliation(
     }
   }
   return { stop: [...stop.values()], removeOrphans, atRest };
-}
-
-/** Bracket a bare IPv6 literal so it can carry a port in a URL. */
-export function formatPreviewHost(host: string): string {
-  return host.includes(':') && !host.startsWith('[') ? `[${host}]` : host;
-}
-
-/**
- * Turn a failed `docker info` into the change an operator has to make. These
- * are the three ways a containerized Libre WebUI fails to reach the daemon:
- * the image has no CLI, the bind-mounted socket is owned by a group the
- * backend user is not in, or no daemon is listening.
- */
-export function describeDockerUnavailable(
-  error: unknown,
-  dockerCommand = config.dockerCommand
-): string {
-  const message = error instanceof Error ? error.message : String(error);
-
-  if (/ENOENT/.test(message)) {
-    return `The "${dockerCommand}" CLI is not installed in the Libre WebUI runtime. Run an image that ships the Docker CLI and mount the host Docker socket, or point WORK_DOCKER_COMMAND at the CLI path.`;
-  }
-  if (/EACCES/.test(message) || /permission denied/i.test(message)) {
-    return 'The Docker socket is mounted but the Libre WebUI user cannot open it. Add the backend user to the group that owns /var/run/docker.sock (Compose: group_add with the socket GID).';
-  }
-  if (
-    /cannot connect to the docker daemon/i.test(message) ||
-    /is the docker daemon running/i.test(message) ||
-    /no such file or directory/i.test(message)
-  ) {
-    return 'No Docker daemon is reachable. Start Docker, mount the host socket into the Libre WebUI container with -v /var/run/docker.sock:/var/run/docker.sock, or point DOCKER_HOST at a reachable Docker API endpoint such as a socket proxy.';
-  }
-
-  return message;
-}
-
-export function buildWorkContainerRunArgs(
-  task: WorkTaskRecord,
-  image = config.image
-): string[] {
-  const args = [
-    'run',
-    '--detach',
-    '--name',
-    task.containerName,
-    '--init',
-    '--label',
-    'ai.libre-webui.managed=true',
-    '--label',
-    `ai.libre-webui.task=${task.id}`,
-    '--label',
-    `ai.libre-webui.policy=${runtimePolicyFingerprint}`,
-    '--user',
-    '1000:1000',
-    '--workdir',
-    '/workspace',
-    '--read-only',
-    '--tmpfs',
-    '/tmp:rw,nosuid,size=512m',
-    '--env',
-    'HOME=/tmp',
-    '--env',
-    'NPM_CONFIG_CACHE=/tmp/npm-cache',
-    '--cap-drop',
-    'ALL',
-    '--security-opt',
-    'no-new-privileges',
-    '--pids-limit',
-    String(config.pidsLimit),
-    '--memory',
-    config.memoryLimit,
-    // Same value as --memory: the memory cap cannot be sidestepped via swap.
-    '--memory-swap',
-    config.memoryLimit,
-    '--cpus',
-    config.cpuLimit,
-    '--network',
-    task.networkEnabled ? config.networkName : 'none',
-  ];
-  if (task.networkEnabled) {
-    args.push('--publish', `${config.previewBind}::${config.previewPort}`);
-    for (const server of config.dnsServers) {
-      args.push('--dns', server);
-    }
-  }
-  args.push(
-    '--mount',
-    task.hostPath
-      ? // Host-folder workspaces are opt-in per deployment and validated
-        // against an allowlist before ever reaching this point.
-        `type=bind,src=${task.hostPath},dst=/workspace`
-      : `type=volume,src=${task.volumeName},dst=/workspace,volume-nocopy`,
-    image,
-    'tail',
-    '-f',
-    '/dev/null'
-  );
-  return args;
 }
 
 export function validateWorkspacePath(input: string, allowRoot = true): string {
@@ -2670,28 +2062,6 @@ function validateGitIdentity(value: string, field: 'name' | 'email'): string {
   return value;
 }
 
-export function parsePublishedPort(
-  output: string,
-  _containerPort = config.previewPort,
-  bindAddress = config.previewBind
-): number | undefined {
-  // Only a binding on the interface this deployment asked for counts. The
-  // default stays loopback, so a stray wildcard binding is still rejected.
-  const allowed = new Set(
-    bindAddress === WORK_RUNTIME_DEFAULTS.previewBind
-      ? ['127.0.0.1', '[::1]']
-      : [bindAddress, formatPreviewHost(bindAddress)]
-  );
-
-  for (const line of output.trim().split(/\r?\n/)) {
-    const match = line.match(/^(.*):(\d+)$/);
-    if (!match || !allowed.has(match[1])) continue;
-    const port = Number(match[2]);
-    if (Number.isInteger(port) && port > 0 && port <= 65535) return port;
-  }
-  return undefined;
-}
-
 async function waitForAbortSignal<T>(
   promise: Promise<T>,
   signal?: AbortSignal
@@ -2724,118 +2094,6 @@ async function waitForAbortSignal<T>(
   });
 }
 
-async function runProcess(
-  command: string,
-  args: string[],
-  options: ProcessOptions
-): Promise<ProcessResult> {
-  const timeoutMs = options.timeoutMs ?? config.commandTimeoutMs;
-  const maxOutputChars = options.maxOutputChars ?? config.maxOutputChars;
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: process.env,
-    });
-    activeDockerProcesses.add(child);
-    let stdout = '';
-    let stderr = '';
-    let truncated = false;
-    let settled = false;
-    let stdinError: Error | undefined;
-    let timer: NodeJS.Timeout | undefined;
-    const claimSettlement = (): boolean => {
-      if (settled) return false;
-      settled = true;
-      if (timer) clearTimeout(timer);
-      return true;
-    };
-    const append = (current: string, chunk: Buffer): string => {
-      const next = current + chunk.toString('utf8');
-      if (next.length <= maxOutputChars) return next;
-      truncated = true;
-      const half = Math.floor(maxOutputChars / 2);
-      return `${next.slice(0, half)}\n... output truncated ...\n${next.slice(-half)}`;
-    };
-    child.stdout.on('data', chunk => {
-      stdout = append(stdout, chunk as Buffer);
-    });
-    child.stderr.on('data', chunk => {
-      stderr = append(stderr, chunk as Buffer);
-    });
-    child.stdin.on('error', error => {
-      // A helper may reject the request and close stdin before a large input
-      // has finished writing. EPIPE is then expected; the process exit carries
-      // the useful error. Other stdin failures are reported when it closes.
-      if ((error as NodeJS.ErrnoException).code !== 'EPIPE') {
-        stdinError = error;
-      }
-    });
-    child.on('error', error => {
-      activeDockerProcesses.delete(child);
-      if (!claimSettlement()) return;
-      reject(
-        new WorkRuntimeError(
-          `Could not start ${command}: ${error.message}`,
-          503,
-          'WORK_DOCKER_UNAVAILABLE'
-        )
-      );
-    });
-    child.on('close', (code, signal) => {
-      activeDockerProcesses.delete(child);
-      const result: ProcessResult = {
-        exitCode: code ?? -1,
-        stdout,
-        stderr,
-        truncated,
-        signal: signal || undefined,
-      };
-      if (stdinError && !options.acceptFailure) {
-        if (!claimSettlement()) return;
-        reject(
-          new WorkRuntimeError(
-            `Could not write command input: ${stdinError.message}`,
-            503,
-            'WORK_DOCKER_STDIN_FAILED'
-          )
-        );
-        return;
-      }
-      if (result.exitCode !== 0 && !options.acceptFailure) {
-        if (!claimSettlement()) return;
-        reject(
-          new WorkRuntimeError(
-            stderr.trim() ||
-              stdout.trim() ||
-              `${command} exited with code ${result.exitCode}.`,
-            503,
-            'WORK_DOCKER_COMMAND_FAILED'
-          )
-        );
-        return;
-      }
-      if (claimSettlement()) resolve(result);
-    });
-    timer = setTimeout(() => {
-      child.kill('SIGKILL');
-      if (!claimSettlement()) return;
-      reject(
-        new WorkRuntimeError(
-          `Command timed out after ${timeoutMs}ms.`,
-          504,
-          'WORK_COMMAND_TIMEOUT'
-        )
-      );
-    }, timeoutMs);
-    timer.unref();
-    if (options.input !== undefined) {
-      child.stdin.end(options.input);
-    } else {
-      child.stdin.end();
-    }
-  });
-}
-
 function parseJsonOutput<T>(output: string): T {
   try {
     return JSON.parse(output.trim()) as T;
@@ -2846,38 +2104,6 @@ function parseJsonOutput<T>(output: string): T {
       'WORK_HELPER_INVALID_RESPONSE'
     );
   }
-}
-
-function positiveInteger(value: string | undefined, fallback: number): number {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-export function parseDnsServers(value: string | undefined): string[] {
-  if (!value) return [];
-  return value
-    .split(',')
-    .map(server => server.trim())
-    .filter(server => {
-      if (!server) return false;
-      if (/^[0-9a-fA-F:.]+$/.test(server)) return true;
-      logger.warn(
-        `Ignoring WORK_RUNTIME_DNS entry "${server}": not an IPv4/IPv6 address.`
-      );
-      return false;
-    });
-}
-
-function objectRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object'
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function stringArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : [];
 }
 
 function isSafePreviewWorkdir(value: unknown): value is string {

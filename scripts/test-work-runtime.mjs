@@ -630,7 +630,7 @@ test('preview startup wires detected targets into safe Docker launch arguments',
     service.assertCurrentNetworkPolicy = () => {};
     service.prepareWithLock = async () => {};
     service.withLifecycleLock = async (_taskId, operation) => operation();
-    service.docker = async args => {
+    service.driver.docker = async args => {
       dockerCalls.push(args);
       if (args.includes(PREVIEW_TARGET_SCRIPT)) {
         return {
@@ -718,7 +718,7 @@ test('failed preview discovery stops the container and releases its lease', asyn
   service.stopContainerWithLock = async () => {
     cleanupCalls += 1;
   };
-  service.docker = async args => {
+  service.driver.docker = async args => {
     assert.ok(args.includes(PREVIEW_TARGET_SCRIPT));
     return {
       exitCode: 0,
@@ -1168,7 +1168,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   // whose container is already gone needs no stop call at all.
   const restedRuntime = new runtimeModule.WorkRuntimeService();
   restedRuntime.isDockerAvailable = async () => true;
-  restedRuntime.docker = async args => {
+  restedRuntime.driver.docker = async args => {
     assert.equal(args[0], 'ps');
     return { exitCode: 0, stdout: '', stderr: '', truncated: false };
   };
@@ -1182,7 +1182,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   const recoveredRuntime = new runtimeModule.WorkRuntimeService();
   recoveredRuntime.isDockerAvailable = async () => true;
   const recoveryCalls = [];
-  recoveredRuntime.docker = async args => {
+  recoveredRuntime.driver.docker = async args => {
     recoveryCalls.push(args);
     if (args[0] === 'ps') {
       return {
@@ -1224,7 +1224,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   const teardownRuntime = new runtimeModule.WorkRuntimeService();
   teardownRuntime.isDockerAvailable = async () => true;
   let stopFails = true;
-  teardownRuntime.docker = async args => {
+  teardownRuntime.driver.docker = async args => {
     if (args[0] === 'container') {
       return {
         exitCode: 0,
@@ -1289,7 +1289,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   db.prepare(`UPDATE users SET role = 'user' WHERE id = ?`).run(userId);
 
   const cleanupRuntime = new runtimeModule.WorkRuntimeService();
-  cleanupRuntime.docker = missingDocker;
+  cleanupRuntime.driver.docker = missingDocker;
   await assert.rejects(
     cleanupRuntime.removeTask(retiredRecord),
     error => error?.status === 403 && error?.code === 'WORK_ACCESS_REVOKED'

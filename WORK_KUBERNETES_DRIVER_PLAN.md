@@ -1,9 +1,12 @@
 # Work Kubernetes Runtime Driver — Implementation Plan
 
-Status: proposed. Nothing in this document is built yet. The deployment
-matrix in `docs/33-WORKSPACES.md` currently marks Kubernetes as unsupported;
-this plan describes how to change that without weakening the Work security
-model.
+Status: phase 1 complete — the `WorkRuntimeDriver` seam exists
+(`backend/src/services/workRuntimeDriver.ts`) with the Docker driver as the
+only implementation, including the terminal transport; behavior is
+unchanged and the full Work suite passes against it. Phases 2–5 are not
+built. The deployment matrix in `docs/33-WORKSPACES.md` still marks
+Kubernetes as unsupported; this plan describes how to change that without
+weakening the Work security model.
 
 ## Goal
 

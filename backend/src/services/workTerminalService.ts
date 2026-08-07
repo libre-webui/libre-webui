@@ -15,19 +15,22 @@
  * limitations under the License.
  */
 
-import http from 'node:http';
 import type { Duplex } from 'node:stream';
 
 import workRuntimeService, { WorkRuntimeError } from './workRuntimeService.js';
 import type { WorkTaskRecord } from '../types/work.js';
-import {
-  dockerEndpointRequestOptions,
-  resolveDockerEndpoint,
-} from '../utils/dockerEndpoint.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('services:work-terminal');
 
+// The terminal transport (Engine API exec + hijacked stream, endpoint
+// resolution) lives in the runtime driver; this service owns session policy:
+// admission, per-task session limits, and idle handling. These re-exports
+// keep the module's public surface unchanged.
+export {
+  buildExecCreatePayload,
+  type ExecCreatePayload,
+} from './workRuntimeDriver.js';
 export { resolveDockerEndpoint } from '../utils/dockerEndpoint.js';
 
 export const WORK_TERMINAL_DEFAULTS = {
@@ -37,11 +40,6 @@ export const WORK_TERMINAL_DEFAULTS = {
 } as const;
 
 const config = {
-  endpoint: resolveDockerEndpoint(
-    process.env.WORK_DOCKER_SOCKET,
-    process.env.DOCKER_HOST,
-    process.env.DOCKER_TLS_VERIFY
-  ),
   idleTimeoutMs: positiveInteger(
     process.env.WORK_TERMINAL_IDLE_TIMEOUT_MS,
     WORK_TERMINAL_DEFAULTS.idleTimeoutMs
@@ -52,56 +50,10 @@ const config = {
   ),
 };
 
-/**
- * The terminal talks to the Docker Engine API directly because a TTY exec
- * needs a hijacked bidirectional stream, which the docker CLI only offers to
- * an interactive controlling terminal. The connection is the resolved Docker
- * endpoint: the Unix socket, or a plain-HTTP tcp:// endpoint such as a
- * socket proxy holding the socket on the app's behalf — the hijacked
- * stream survives an HTTP-aware proxy because it rides a standard
- * Connection: Upgrade tunnel. Endpoints this client cannot speak to
- * (ssh://, TLS-verified tcp) make the terminal report itself unavailable
- * instead of guessing.
- */
-
-export interface ExecCreatePayload {
-  AttachStdin: boolean;
-  AttachStdout: boolean;
-  AttachStderr: boolean;
-  Tty: boolean;
-  User: string;
-  WorkingDir: string;
-  Env: string[];
-  Cmd: string[];
-}
-
-export function buildExecCreatePayload(
-  shell: readonly string[] = WORK_TERMINAL_DEFAULTS.shell
-): ExecCreatePayload {
-  // Mirrors the container policy: the shell runs as the same unprivileged
-  // user, in the workspace, inside the already-hardened container. Nothing
-  // about the sandbox weakens because a human is typing instead of the model.
-  return {
-    AttachStdin: true,
-    AttachStdout: true,
-    AttachStderr: true,
-    Tty: true,
-    User: '1000:1000',
-    WorkingDir: '/workspace',
-    Env: ['TERM=xterm-256color'],
-    Cmd: [...shell],
-  };
-}
-
 export interface WorkTerminalSession {
   stream: Duplex;
   resize: (cols: number, rows: number) => Promise<void>;
   close: () => Promise<void>;
-}
-
-interface DockerApiResponse {
-  status: number;
-  body: string;
 }
 
 export class WorkTerminalService {
@@ -110,10 +62,7 @@ export class WorkTerminalService {
   private sessionCounts = new Map<string, number>();
 
   unavailableReason(): string | null {
-    if (!config.endpoint) {
-      return 'The Work terminal needs a reachable Docker Engine API. Set WORK_DOCKER_SOCKET to the Unix socket path, or point DOCKER_HOST at a plain-HTTP tcp:// endpoint such as a socket proxy (DOCKER_HOST currently names an endpoint this client cannot speak to).';
-    }
-    return null;
+    return workRuntimeService.driver.terminalUnavailableReason();
   }
 
   sessionCount(taskId: string): number {
@@ -154,13 +103,10 @@ export class WorkTerminalService {
 
     try {
       releaseHold = await workRuntimeService.acquireTerminalHold(task);
-      const created = await this.dockerApi(
-        'POST',
-        `/containers/${encodeURIComponent(task.containerName)}/exec`,
-        buildExecCreatePayload()
+      const transport = await workRuntimeService.driver.openTerminal(
+        task.containerName
       );
-      const execId = parseExecId(created);
-      stream = await this.startExecStream(execId);
+      stream = transport.stream;
       const activeStream = stream;
       let closed = false;
       const close = async () => {
@@ -178,10 +124,7 @@ export class WorkTerminalService {
           const height = boundedDimension(rows);
           if (!width || !height) return;
           try {
-            await this.dockerApi(
-              'POST',
-              `/exec/${encodeURIComponent(execId)}/resize?w=${width}&h=${height}`
-            );
+            await transport.resize(width, height);
           } catch (error) {
             // Resize failures are cosmetic; the shell keeps running.
             logger.debug('Work terminal resize failed:', error);
@@ -194,147 +137,6 @@ export class WorkTerminalService {
       throw error;
     }
   }
-
-  /**
-   * Transport options for the resolved endpoint. A Unix socket needs an
-   * explicit Host header (there is no authority in the request target); a
-   * tcp endpoint gets the real host:port so an HTTP-aware proxy can route
-   * on it.
-   */
-  private transport(): {
-    options: { socketPath: string } | { host: string; port: number };
-    hostHeader: Record<string, string>;
-  } {
-    const endpoint = config.endpoint;
-    if (!endpoint) {
-      throw new WorkRuntimeError(
-        this.unavailableReason() ?? 'The Work terminal is unavailable.',
-        503,
-        'WORK_TERMINAL_UNAVAILABLE'
-      );
-    }
-    return {
-      options: dockerEndpointRequestOptions(endpoint),
-      hostHeader: endpoint.kind === 'unix' ? { Host: 'docker' } : {},
-    };
-  }
-
-  private dockerApi(
-    method: 'GET' | 'POST',
-    path: string,
-    payload?: unknown
-  ): Promise<DockerApiResponse> {
-    return new Promise((resolve, reject) => {
-      const body = payload === undefined ? undefined : JSON.stringify(payload);
-      const { options, hostHeader } = this.transport();
-      const request = http.request(
-        {
-          ...options,
-          method,
-          path,
-          headers: {
-            ...hostHeader,
-            'Content-Type': 'application/json',
-            'Content-Length': body ? Buffer.byteLength(body) : 0,
-          },
-        },
-        response => {
-          const chunks: Buffer[] = [];
-          response.on('data', chunk => chunks.push(chunk));
-          response.on('end', () => {
-            resolve({
-              status: response.statusCode ?? 0,
-              body: Buffer.concat(chunks).toString('utf8'),
-            });
-          });
-        }
-      );
-      request.setTimeout(10_000, () => {
-        request.destroy(new Error('Docker Engine API request timed out.'));
-      });
-      request.on('error', error => {
-        reject(
-          new WorkRuntimeError(
-            `Could not reach the Docker Engine socket for the terminal: ${error.message}`,
-            503,
-            'WORK_TERMINAL_UNAVAILABLE'
-          )
-        );
-      });
-      if (body) request.write(body);
-      request.end();
-    });
-  }
-
-  private startExecStream(execId: string): Promise<Duplex> {
-    return new Promise((resolve, reject) => {
-      const body = JSON.stringify({ Detach: false, Tty: true });
-      const { options, hostHeader } = this.transport();
-      const request = http.request({
-        ...options,
-        method: 'POST',
-        path: `/exec/${encodeURIComponent(execId)}/start`,
-        headers: {
-          ...hostHeader,
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(body),
-          Connection: 'Upgrade',
-          Upgrade: 'tcp',
-        },
-      });
-      request.on('upgrade', (_response, socket, head) => {
-        // With Tty:true the hijacked stream is raw terminal bytes in both
-        // directions; no stream-multiplexing frames to parse.
-        if (head.length > 0) socket.unshift(head);
-        resolve(socket);
-      });
-      request.on('response', response => {
-        const chunks: Buffer[] = [];
-        response.on('data', chunk => chunks.push(chunk));
-        response.on('end', () => {
-          reject(
-            new WorkRuntimeError(
-              `The Docker Engine refused the terminal stream (HTTP ${response.statusCode}): ${Buffer.concat(chunks).toString('utf8').trim()}`,
-              503,
-              'WORK_TERMINAL_UNAVAILABLE'
-            )
-          );
-        });
-      });
-      request.on('error', error => {
-        reject(
-          new WorkRuntimeError(
-            `Could not open the terminal stream: ${error.message}`,
-            503,
-            'WORK_TERMINAL_UNAVAILABLE'
-          )
-        );
-      });
-      request.write(body);
-      request.end();
-    });
-  }
-}
-
-function parseExecId(response: DockerApiResponse): string {
-  if (response.status < 200 || response.status >= 300) {
-    throw new WorkRuntimeError(
-      `The Docker Engine rejected the terminal exec (HTTP ${response.status}): ${response.body.trim()}`,
-      503,
-      'WORK_TERMINAL_UNAVAILABLE'
-    );
-  }
-  try {
-    const parsed = JSON.parse(response.body) as { Id?: unknown };
-    if (typeof parsed.Id === 'string' && parsed.Id) return parsed.Id;
-  } catch {
-    // Fall through to the error below.
-  }
-  throw new WorkRuntimeError(
-    'The Docker Engine returned an unexpected exec-create response.',
-    503,
-    'WORK_TERMINAL_UNAVAILABLE'
-  );
 }
 
 export function boundedDimension(value: number): number | null {
