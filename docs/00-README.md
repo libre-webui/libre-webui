@@ -1,185 +1,178 @@
 ---
 sidebar_position: 1
-title: 'Documentation'
-description: 'Libre WebUI documentation - local-first chat, private knowledge, artifacts, and isolated Work tasks'
+title: "Libre WebUI"
+description: "Install Libre WebUI, connect the models you choose, build with agents, and deploy a private AI workspace."
 slug: /
+hide_title: true
+hide_table_of_contents: true
 keywords:
   [
     libre webui,
     ollama,
     local ai,
-    privacy ai,
     self-hosted ai,
+    ai workspace,
+    ai creation tools,
+    model providers,
     coding agent,
     isolated workspace,
-    chatgpt alternative,
+    document chat,
+    ai deployment,
   ]
 ---
 
-# Libre WebUI Documentation
+import CodeBlock from '@theme/CodeBlock';
 
-Libre WebUI is a self-hosted AI workspace for chat, local Ollama models, cloud
-provider plugins, isolated model-driven Work tasks, personas, document search,
-and interactive artifacts. It is designed for people who want a polished WebUI
-without giving up control of their data or model stack.
+<div className="docs-landing">
+  <header>
+    <p className="docs-landing__eyebrow">Libre WebUI</p>
+    <h1 className="docs-landing__title">Make whatever comes next.</h1>
+    <p className="docs-landing__lede">
+      {"Run Libre WebUI locally, bring the models you choose, work with documents and media, or give an agent a durable project workspace. Everything opens as a tab in one workspace. Start with the task you want to accomplish."}
+    </p>
+    <div className="docs-landing__actions">
+      <a className="docs-landing__primary" href="/QUICK_START">
+        {"Install Libre WebUI"}
+      </a>
+      <a className="docs-landing__secondary" href="https://demo.librewebui.org">
+        {"Try the demo"}
+      </a>
+      <a
+        className="docs-landing__source"
+        href="https://github.com/libre-webui/libre-webui"
+      >
+        {"View source"}
+      </a>
+    </div>
+    <div className="docs-landing__command-block">
+      <p className="docs-landing__command-label">One-command local start</p>
+      <div className="docs-landing__command">
+        <CodeBlock language="bash">npx libre-webui</CodeBlock>
+      </div>
+      <p className="docs-landing__command-note">
+        {"Open your private workspace at "}<code>http://localhost:8080</code>{"."}
+      </p>
+    </div>
+  </header>
 
-## Quick Start
+  <section className="docs-landing__section" aria-labelledby="choose-a-task">
+    <p className="docs-landing__section-label">01 / Choose a task</p>
+    <h2 id="choose-a-task">What do you want to do?</h2>
 
-```bash
-npx libre-webui
-```
+    <div className="docs-landing__grid">
+      <article className="docs-landing-card">
+        <span className="docs-landing-card__index">01</span>
+        <h3 className="docs-landing-card__title">Run privately</h3>
+        <p className="docs-landing-card__copy">
+          {"Install Libre WebUI on your own machine and begin with Ollama or another model you control."}
+        </p>
+        <a className="docs-landing-card__link" href="/QUICK_START">
+          {"Follow the Quick Start"}
+        </a>
+      </article>
 
-Libre WebUI opens at `http://localhost:8080`. A fresh install always permits
-the first local administrator; later public registration is closed by default.
-Install [Ollama](https://ollama.com) first if you want local models, or add
-provider API keys for cloud models.
+      <article className="docs-landing-card">
+        <span className="docs-landing-card__index">02</span>
+        <h3 className="docs-landing-card__title">Connect your models</h3>
+        <p className="docs-landing-card__copy">
+          {"Use bundled providers, an OpenAI-compatible service, a self-hosted gateway, or a coding agent already installed on the machine."}
+        </p>
+        <a className="docs-landing-card__link" href="/PROVIDER_CONNECTIONS">
+          {"Connect a model provider"}
+        </a>
+      </article>
 
-The main app and Chat do not require Docker. **Work** does: Docker must be
-installed and usable on the machine running the Libre WebUI backend. Without it,
-the app continues to work and the Work page reports **Runtime unavailable**.
+      <article className="docs-landing-card">
+        <span className="docs-landing-card__index">03</span>
+        <h3 className="docs-landing-card__title">Build with Work</h3>
+        <p className="docs-landing-card__copy">
+          {"Give an agent a durable project with conversation, files, a terminal, tools, and a live application preview."}
+        </p>
+        <a className="docs-landing-card__link" href="/WORKSPACES">
+          {"Explore Libre WebUI Work"}
+        </a>
+      </article>
 
-## Installation Options
+      <article className="docs-landing-card">
+        <span className="docs-landing-card__index">04</span>
+        <h3 className="docs-landing-card__title">Deploy for others</h3>
+        <p className="docs-landing-card__copy">
+          {"Move from a local workspace to a maintained deployment with persistent data and access controls."}
+        </p>
+        <a className="docs-landing-card__link" href="/DOCKER">
+          {"Plan a deployment"}
+        </a>
+      </article>
+    </div>
 
-| Method                      | Command                                                                   | Work availability                                                  |
-| --------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| npx                         | `npx libre-webui`                                                         | Available when Docker is installed on the same machine             |
-| Docker                      | `docker compose up -d`                                                    | Available through the mounted host Docker socket                   |
-| Docker with external Ollama | `docker compose -f docker-compose.external-ollama.yml up -d`              | Available through the mounted host Docker socket                   |
-| Kubernetes                  | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui`   | Unavailable in the current chart; no per-task runtime driver       |
-| Source                      | `npm install && npm run dev`                                              | Available when the native backend process can use Docker           |
-| Electron                    | [Download a release](https://github.com/libre-webui/libre-webui/releases) | Uses Docker on its separately managed backend host, when available |
+  </section>
 
-## Getting Around
+  <section className="docs-landing__section" aria-labelledby="find-your-way">
+    <p className="docs-landing__section-label">02 / Get around</p>
+    <h2 id="find-your-way">Everything is one tab away.</h2>
 
-The interface is organized as tabs, like a browser. **Home** is always the first
-tab: it greets you, offers what to start, and lists recent chats and Work
-sessions so you can pick one back up. Opening a chat, a Work session, or a page
-adds a tab beside it; the `+` button starts a new one and lists the shortcut for
-each.
+    <div className="docs-landing__path-grid">
+      <div className="docs-landing-path">
+        <h3>Start from Home</h3>
+        <p>{"Home greets you, offers what to start, and lists the chats and Work sessions worth picking back up, with a live badge when a Work runtime is active."}</p>
+      </div>
 
-Press `Cmd/Ctrl + K` anywhere to search your chats, Work sessions, and actions.
-It works even while you are typing a message, so you can jump elsewhere without
-losing a draft. `Cmd/Ctrl + Shift + O` starts a chat and `Cmd/Ctrl + Shift + U`
-starts a Work session.
+      <div className="docs-landing-path">
+        <h3>Keep work side by side</h3>
+        <p>{"Chats, Work sessions, and pages open as tabs beside Home. They survive a reload, so returning to a project returns you to where you left it."}</p>
+      </div>
 
-The sidebar keeps your conversation list, a search entry, and a compact row of
-icons for Models, Personas, Imagine, and Agents. Every one of those is also in
-the command palette and on Home, so you never have to remember which surface
-something lives on.
+      <div className="docs-landing-path">
+        <h3>Search instead of hunting</h3>
+        <p>{"Press Cmd/Ctrl + K anywhere to reach a chat, a Work session, or an action. It works while you are typing a message, so a draft is never lost to navigation."}</p>
+        <ul>
+          <li><a href="/KEYBOARD_SHORTCUTS">All keyboard shortcuts</a></li>
+        </ul>
+      </div>
+    </div>
 
-## Core Features
+  </section>
 
-- Streaming chat with local and plugin-backed models
-- Native Work tasks with a dedicated persistent Docker volume, isolated command
-  container, durable conversation, file editor, tool activity, and app preview
-- Model Manager for installed Ollama models, live Ollama Library search, and Ollama Cloud models
-- Document Chat for PDF and plain-text files, with keyword search or embeddings
-- Personas with model settings, prompts, import/export, memory, and mutation state
-- Interactive artifacts for HTML, SVG, JSON, code, and bundled multi-file outputs
-- Authentication with local accounts, optional GitHub/Hugging Face OAuth, and optional Cloudflare Turnstile on login and signup
-- Light/dark themes with custom accent colors and 25 translated locales,
-  including fully mirrored Arabic RTL Work layouts
+  <section className="docs-landing__section" aria-labelledby="read-the-docs">
+    <p className="docs-landing__section-label">03 / Browse guides</p>
+    <h2 id="read-the-docs">Find the path that matches your work.</h2>
 
-## Work at a Glance
+    <div className="docs-landing__path-grid">
+      <div className="docs-landing-path">
+        <h3>Models and providers</h3>
+        <p>{"Choose where inference runs and connect the services that fit your work."}</p>
+        <ul>
+          <li><a href="/WORKING_WITH_MODELS">Working with Models</a></li>
+          <li><a href="/PROVIDER_CONNECTIONS">Connect Model Providers</a></li>
+          <li><a href="/AGENT_CLI_MODELS">Use an Installed Coding Agent</a></li>
+          <li><a href="/MLX_APPLE_SILICON">MLX LM on Apple Silicon</a></li>
+          <li><a href="/HUGGINGFACE_HUB">Hugging Face Hub</a></li>
+        </ul>
+      </div>
 
-Select **Work** beside **Chat**, choose a tool-capable Ollama, Ollama Cloud, or
-plugin-backed model, then describe what you want to build or change. A Work task
-owns:
+      <div className="docs-landing-path">
+        <h3>Create and automate</h3>
+        <p>{"Turn conversations into durable projects, reusable context, and working material."}</p>
+        <ul>
+          <li><a href="/WORKSPACES">Work: Isolated Workspaces</a></li>
+          <li><a href="/RAG_FEATURE">Document Chat</a></li>
+          <li><a href="/ARTIFACTS_FEATURE">Artifacts</a></li>
+          <li><a href="/PERSONA_DEVELOPMENT_FRAMEWORK">Personas</a></li>
+          <li><a href="/KEYBOARD_SHORTCUTS">Keyboard Shortcuts</a></li>
+        </ul>
+      </div>
 
-- its conversation and run history;
-- an exact persisted provider route;
-- a dedicated Docker named volume mounted at `/workspace`;
-- a disposable, policy-checked container for file and shell tools;
-- Files, Activity, and Preview views in a draggable responsive workspace.
+      <div className="docs-landing-path">
+        <h3>Deploy and administer</h3>
+        <p>{"Run a maintained installation with deliberate access, data, and configuration choices."}</p>
+        <ul>
+          <li><a href="/DOCKER">Docker</a></li>
+          <li><a href="/AUTHENTICATION">Authentication</a></li>
+          <li><a href="/ENVIRONMENT_VARIABLES">Environment Variables</a></li>
+          <li><a href="/TROUBLESHOOTING">Troubleshooting</a></li>
+        </ul>
+      </div>
+    </div>
 
-Work is built into Libre WebUI and does not require Libre Claw. It is restricted
-to administrators because it intentionally lets the selected model run arbitrary
-commands inside the task container.
-
-[Start with the complete Work guide](./WORKSPACES).
-
-## AI Providers
-
-Local inference is available through Ollama or the MLX LM plugin on Apple
-Silicon. Cloud providers are added through plugins and include OpenAI-compatible
-APIs plus first-party entries for OpenAI, Anthropic, Google, Groq, Kimi Code by
-Moonshot AI, Mistral, OpenRouter, Hugging Face, and other compatible services.
-Provider plugin files in the repository are the fallback source of truth, while
-live provider discovery can populate newer models when a provider exposes a
-compatible model-list endpoint.
-
-[Connect a third-party or self-hosted provider](./PROVIDER_CONNECTIONS) with
-the Provider connections workspace introduced in Libre WebUI 0.16.0.
-
-A coding-agent CLI already installed on the server, such as Claude Code or
-Codex, can also be used as a chat model without an API key.
-[Use an installed coding agent](./AGENT_CLI_MODELS).
-
-## Documentation
-
-### Getting Started
-
-- [Quick Start](./QUICK_START)
-- [Hardware Requirements](./HARDWARE_REQUIREMENTS)
-- [Working with Models](./WORKING_WITH_MODELS)
-- [Work: Isolated Workspaces](./WORKSPACES)
-- [Keyboard Shortcuts](./KEYBOARD_SHORTCUTS)
-- [Troubleshooting](./TROUBLESHOOTING)
-
-### Deployment
-
-- [Docker](./DOCKER)
-- [Private Remote Deployment](./PRIVATE_REMOTE_DEPLOYMENT)
-- [Docker with External Ollama](./DOCKER_EXTERNAL_OLLAMA)
-- [Kubernetes](./KUBERNETES)
-- [Desktop App](./ELECTRON_DESKTOP_APP)
-
-### Features
-
-- [Work: Isolated Workspaces](./WORKSPACES)
-- [Connect Third-Party and Self-Hosted Providers](./PROVIDER_CONNECTIONS)
-- [Use an Installed Coding Agent as a Chat Model](./AGENT_CLI_MODELS)
-- [Plugin Architecture](./PLUGIN_ARCHITECTURE)
-- [Kimi Code](./KIMI_CODE)
-- [Hugging Face Hub](./HUGGINGFACE_HUB)
-- [MLX LM on Apple Silicon](./MLX_APPLE_SILICON)
-- [Video & Audio Generation](./MEDIA_GENERATION)
-- [Document Chat](./RAG_FEATURE)
-- [Artifacts](./ARTIFACTS_FEATURE)
-- [Personas](./PERSONA_DEVELOPMENT_FRAMEWORK)
-- [Qwen3-TTS](./QWEN3_TTS)
-- [Kyutai TTS](./KYUTAI_TTS)
-
-### Administration
-
-- [Authentication](./AUTHENTICATION)
-- [Single Sign-On](./SINGLE_SIGN_ON)
-- [System Diagnostics & Usage Analytics](./SYSTEM_MONITORING)
-- [Environment Variables](./ENVIRONMENT_VARIABLES)
-- [Database Encryption](./DATABASE_ENCRYPTION)
-
-## Basic Configuration
-
-Create or edit `backend/.env`:
-
-```env
-OLLAMA_BASE_URL=http://localhost:11434
-JWT_SECRET=replace-with-a-long-random-secret
-
-# Optional provider keys
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-
-# Optional login and signup protection
-TURNSTILE_SITE_KEY=...
-TURNSTILE_SECRET_KEY=...
-TURNSTILE_EXPECTED_HOSTNAME=librewebui.example
-```
-
-The first local account created in a fresh install becomes the administrator.
-
-## Links
-
-- [Website](https://librewebui.org)
-- [GitHub](https://github.com/libre-webui/libre-webui)
-- [Issues](https://github.com/libre-webui/libre-webui/issues)
+  </section>
+</div>
