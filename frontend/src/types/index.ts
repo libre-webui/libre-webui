@@ -537,6 +537,7 @@ export interface SystemInfo {
   hasUsers: boolean;
   userCount: number;
   signupEnabled: boolean;
+  agentsEnabled?: boolean; // Admin opt-in for the Agents section (Libre Claw)
   version?: string;
   turnstile?: {
     enabled: boolean;

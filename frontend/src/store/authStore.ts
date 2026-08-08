@@ -46,6 +46,7 @@ interface AuthState {
   isAdmin: () => boolean;
   requiresAuth: () => boolean;
   canUseWork: () => boolean;
+  canUseAgents: () => boolean;
   refreshWorkAccess: () => Promise<void>;
 }
 
@@ -193,6 +194,16 @@ export const useAuthStore = create<AuthState>()(
         if (systemInfo?.requiresAuth === false) return true;
         if (user?.role === 'admin') return true;
         return workAccess?.allowed === true;
+      },
+
+      // Whether the interface should offer the Agents section (Libre Claw).
+      // The feature is an explicit administrator opt-in reported through
+      // system info; the backend enforces it on every request regardless.
+      canUseAgents: () => {
+        const { systemInfo, user } = get();
+        if (systemInfo?.agentsEnabled !== true) return false;
+        if (systemInfo?.requiresAuth === false) return true;
+        return user?.role === 'admin';
       },
 
       refreshWorkAccess: async () => {

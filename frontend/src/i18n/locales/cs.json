@@ -1283,6 +1283,13 @@
       "deleted": "Politika Work smazána",
       "failed": "Politiku Work se nepodařilo uložit",
       "invalidNumber": "Limit PID a zastavení při nečinnosti musí být čísla."
+    },
+    "agentAccess": {
+      "title": "Agenti",
+      "description": "Zpřístupnit administrátorům sekci Agenti (Libre Claw). Agentní CLI běží na hostiteli pod uživatelem serveru, mimo sandbox Work.",
+      "saved": "Přístup k agentům byl aktualizován",
+      "saveFailed": "Přístup k agentům se nepodařilo aktualizovat",
+      "lockedByEnv": "Určeno proměnnou prostředí AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {

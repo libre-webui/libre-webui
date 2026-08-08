@@ -1283,6 +1283,13 @@
       "deleted": "Đã xóa chính sách Work",
       "failed": "Không thể lưu chính sách Work",
       "invalidNumber": "Giới hạn PID và dừng khi rảnh phải là số."
+    },
+    "agentAccess": {
+      "title": "Tác nhân",
+      "description": "Cung cấp mục Tác nhân (Libre Claw) cho quản trị viên. CLI tác nhân chạy trên máy chủ với tư cách người dùng máy chủ, bên ngoài sandbox Work.",
+      "saved": "Đã cập nhật quyền truy cập tác nhân",
+      "saveFailed": "Không thể cập nhật quyền truy cập tác nhân",
+      "lockedByEnv": "Bị khóa bởi biến môi trường AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {

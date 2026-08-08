@@ -1283,6 +1283,13 @@
       "deleted": "Dasar Work dipadamkan",
       "failed": "Tidak dapat menyimpan dasar Work",
       "invalidNumber": "Had PID dan henti melahu mestilah nombor."
+    },
+    "agentAccess": {
+      "title": "Ejen",
+      "description": "Tawarkan bahagian Ejen (Libre Claw) kepada pentadbir. CLI ejen berjalan pada hos sebagai pengguna pelayan, di luar kotak pasir Work.",
+      "saved": "Akses ejen dikemas kini",
+      "saveFailed": "Tidak dapat mengemas kini akses ejen",
+      "lockedByEnv": "Ditetapkan oleh pemboleh ubah persekitaran AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {

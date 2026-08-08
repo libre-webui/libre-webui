@@ -1283,6 +1283,13 @@
       "deleted": "Kebijakan Work dihapus",
       "failed": "Tidak dapat menyimpan kebijakan Work",
       "invalidNumber": "Batas PID dan henti saat idle harus berupa angka."
+    },
+    "agentAccess": {
+      "title": "Agen",
+      "description": "Tawarkan bagian Agen (Libre Claw) kepada administrator. CLI agen berjalan di host sebagai pengguna server, di luar sandbox Work.",
+      "saved": "Akses agen diperbarui",
+      "saveFailed": "Tidak dapat memperbarui akses agen",
+      "lockedByEnv": "Dikunci oleh variabel lingkungan AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {

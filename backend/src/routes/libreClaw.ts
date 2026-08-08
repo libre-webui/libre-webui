@@ -17,6 +17,11 @@
 
 import express, { Request, Response } from 'express';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
+import {
+  agentsEnabledLockedByEnv,
+  getAgentsEnabled,
+  setAgentsEnabled,
+} from '../services/agentAccessService.js';
 import libreClawService, {
   LibreClawPermissionResolution,
   LibreClawRunRequest,
@@ -27,6 +32,50 @@ import { ApiResponse } from '../types/index.js';
 const router = express.Router();
 
 router.use(authenticate, requireAdmin);
+
+/**
+ * The Agents feature toggle. Reachable while the feature is disabled —
+ * this is how an administrator turns it on. Everything below the gate
+ * requires the feature to be enabled.
+ */
+router.get('/access', (_req: Request, res: Response): void => {
+  sendSuccess(res, {
+    enabled: getAgentsEnabled(),
+    lockedByEnv: agentsEnabledLockedByEnv(),
+  });
+});
+
+router.put('/access', (req: Request, res: Response): void => {
+  const enabled = req.body?.enabled;
+  if (typeof enabled !== 'boolean') {
+    res.status(400).json({
+      success: false,
+      error: 'enabled must be a boolean.',
+    } satisfies ApiResponse);
+    return;
+  }
+  if (agentsEnabledLockedByEnv()) {
+    res.status(409).json({
+      success: false,
+      error:
+        'The Agents feature is pinned by AGENT_CLI_MODELS_ENABLED; unset the environment variable to manage it here.',
+    } satisfies ApiResponse);
+    return;
+  }
+  setAgentsEnabled(enabled);
+  sendSuccess(res, { enabled: getAgentsEnabled(), lockedByEnv: false });
+});
+
+router.use((_req: Request, res: Response, next): void => {
+  if (!getAgentsEnabled()) {
+    res.status(403).json({
+      success: false,
+      error: 'The Agents feature is disabled on this server.',
+    } satisfies ApiResponse);
+    return;
+  }
+  next();
+});
 
 router.get('/status', async (_req: Request, res: Response): Promise<void> => {
   const status = await libreClawService.status();

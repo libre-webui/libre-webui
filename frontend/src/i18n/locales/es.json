@@ -1283,6 +1283,13 @@
       "deleted": "Política de Work eliminada",
       "failed": "No se pudo guardar la política de Work",
       "invalidNumber": "El límite de PID y la parada por inactividad deben ser números."
+    },
+    "agentAccess": {
+      "title": "Agentes",
+      "description": "Ofrecer la sección Agentes (Libre Claw) a los administradores. Las CLI de agentes se ejecutan en el host como el usuario del servidor, fuera del sandbox de Work.",
+      "saved": "Acceso a agentes actualizado",
+      "saveFailed": "No se pudo actualizar el acceso a agentes",
+      "lockedByEnv": "Fijado por la variable de entorno AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {

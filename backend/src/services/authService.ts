@@ -22,6 +22,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { randomBytes } from 'crypto';
 import { turnstileService, TurnstilePublicConfig } from './turnstileService.js';
+import { getAgentsEnabled } from './agentAccessService.js';
 import {
   canCreateLocalAccount,
   isPublicRegistrationEnabled,
@@ -73,6 +74,7 @@ export interface SystemInfo {
   hasUsers: boolean;
   userCount: number;
   signupEnabled: boolean;
+  agentsEnabled: boolean;
   version?: string;
   turnstile: TurnstilePublicConfig;
 }
@@ -143,6 +145,7 @@ export class AuthService {
       hasUsers: userCount > 0,
       userCount,
       signupEnabled: canCreateLocalAccount(userCount),
+      agentsEnabled: getAgentsEnabled(),
       version: packageVersion,
       turnstile: turnstileService.getPublicConfig(),
     };

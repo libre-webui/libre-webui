@@ -1283,6 +1283,13 @@
       "deleted": "Work ilkesi silindi",
       "failed": "Work ilkesi kaydedilemedi",
       "invalidNumber": "PID sınırı ve boşta durdurma sayı olmalıdır."
+    },
+    "agentAccess": {
+      "title": "Ajanlar",
+      "description": "Ajanlar bölümünü (Libre Claw) yöneticilere sunun. Ajan CLI'ları ana makinede sunucu kullanıcısı olarak, Work korumalı alanının dışında çalışır.",
+      "saved": "Ajan erişimi güncellendi",
+      "saveFailed": "Ajan erişimi güncellenemedi",
+      "lockedByEnv": "AGENT_CLI_MODELS_ENABLED ortam değişkeniyle sabitlendi."
     }
   },
   "chatHistory": {

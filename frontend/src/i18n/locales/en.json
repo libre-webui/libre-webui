@@ -1283,6 +1283,13 @@
       "deleted": "Work policy deleted",
       "failed": "Could not save the Work policy",
       "invalidNumber": "PID limit and idle stop must be numbers."
+    },
+    "agentAccess": {
+      "title": "Agents",
+      "description": "Offer the Agents section (Libre Claw) to administrators. Agent CLIs run on the host as the server user, outside the Work sandbox.",
+      "saved": "Agent access updated",
+      "saveFailed": "Could not update agent access",
+      "lockedByEnv": "Pinned by the AGENT_CLI_MODELS_ENABLED environment variable."
     }
   },
   "usageAnalytics": {

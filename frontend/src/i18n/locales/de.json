@@ -1283,6 +1283,13 @@
       "deleted": "Work-Richtlinie gelöscht",
       "failed": "Work-Richtlinie konnte nicht gespeichert werden",
       "invalidNumber": "PID-Limit und Leerlauf-Stopp müssen Zahlen sein."
+    },
+    "agentAccess": {
+      "title": "Agenten",
+      "description": "Den Bereich Agenten (Libre Claw) für Administratoren anbieten. Agenten-CLIs laufen auf dem Host als Server-Benutzer, außerhalb der Work-Sandbox.",
+      "saved": "Agenten-Zugriff aktualisiert",
+      "saveFailed": "Agenten-Zugriff konnte nicht aktualisiert werden",
+      "lockedByEnv": "Durch die Umgebungsvariable AGENT_CLI_MODELS_ENABLED festgelegt."
     }
   },
   "chatHistory": {

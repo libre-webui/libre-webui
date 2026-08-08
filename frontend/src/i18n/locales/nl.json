@@ -1283,6 +1283,13 @@
       "deleted": "Work-beleid verwijderd",
       "failed": "Kon het Work-beleid niet opslaan",
       "invalidNumber": "PID-limiet en inactiviteitsstop moeten getallen zijn."
+    },
+    "agentAccess": {
+      "title": "Agents",
+      "description": "Bied de sectie Agents (Libre Claw) aan beheerders aan. Agent-CLI's draaien op de host als de servergebruiker, buiten de Work-sandbox.",
+      "saved": "Agent-toegang bijgewerkt",
+      "saveFailed": "Kon agent-toegang niet bijwerken",
+      "lockedByEnv": "Vastgezet door de omgevingsvariabele AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {

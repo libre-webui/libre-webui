@@ -23,6 +23,7 @@ import { ChatMessage } from '../types/index.js';
 import { PluginStreamChunk } from '../utils/pluginStreaming.js';
 import { userModel } from '../models/userModel.js';
 import { createLogger } from '../utils/logger.js';
+import { getAgentsEnabled } from './agentAccessService.js';
 import pluginUsageService from './pluginUsageService.js';
 
 const logger = createLogger('agent-cli');
@@ -153,8 +154,7 @@ const MAX_OUTPUT_CHARS = 2_000_000;
 const MAX_STDERR_CHARS = 8_000;
 const MAX_CONTEXT_MESSAGES = 30;
 
-const agentsEnabled = (): boolean =>
-  process.env.AGENT_CLI_MODELS_ENABLED !== 'false';
+const agentsEnabled = (): boolean => getAgentsEnabled();
 
 function resolveBinary(command: string): string | null {
   const pathValue = process.env.PATH || '';

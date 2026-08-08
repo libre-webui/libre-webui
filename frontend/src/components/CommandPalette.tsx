@@ -81,10 +81,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const sessions = useChatStore(state => state.sessions);
   const workTasks = useWorkStore(state => state.tasks);
   const toggleTheme = useAppStore(state => state.toggleTheme);
-  const { systemInfo, isAdmin, canUseWork } = useAuthStore();
+  const { systemInfo, isAdmin, canUseWork, canUseAgents } = useAuthStore();
 
   const showWork = canUseWork();
-  const showAgents = systemInfo?.requiresAuth === false || isAdmin();
+  const showAgents = canUseAgents();
   const mod = isMac() ? '⌘' : 'Ctrl';
 
   // Own capture-phase listener so ⌘K works even while typing in the composer.

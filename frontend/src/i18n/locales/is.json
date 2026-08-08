@@ -1283,6 +1283,13 @@
       "deleted": "Work-stefnu eytt",
       "failed": "Ekki tókst að vista Work-stefnuna",
       "invalidNumber": "PID-mörk og stöðvun í aðgerðaleysi verða að vera tölur."
+    },
+    "agentAccess": {
+      "title": "Fulltrúar",
+      "description": "Bjóða stjórnendum upp á Fulltrúa-hlutann (Libre Claw). Fulltrúa-skipanalínur keyra á hýslinum sem netþjónsnotandinn, utan Work-sandkassans.",
+      "saved": "Aðgangur að fulltrúum uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra aðgang að fulltrúum",
+      "lockedByEnv": "Fest með umhverfisbreytunni AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {

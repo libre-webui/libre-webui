@@ -77,11 +77,16 @@ whatever access those agents normally have, including the ability to read files
 and run commands on the server if it decides to.
 
 Treat enabling this as equivalent to granting the agent shell access to the
-machine. If that is not what you want on a shared or public deployment, turn it
-off:
+machine. Because of that, the feature ships **disabled**: an administrator must
+turn it on under **User Management → Agents**. The setting is persisted and
+takes effect immediately, without a restart.
+
+To pin the decision at the deployment level regardless of the runtime toggle,
+set the environment variable either way (this also locks the toggle in the
+interface):
 
 ```bash
-AGENT_CLI_MODELS_ENABLED=false
+AGENT_CLI_MODELS_ENABLED=false   # or true
 ```
 
 For a model that can act on files but stays inside a sandbox, use
@@ -92,12 +97,14 @@ container with an isolated workspace.
 
 | Variable                   | Default  | Purpose                                                  |
 | -------------------------- | -------- | -------------------------------------------------------- |
-| `AGENT_CLI_MODELS_ENABLED` | `true`   | Set to `false` to hide agent CLIs from the model list    |
+| `AGENT_CLI_MODELS_ENABLED` | unset    | Pin the feature `true`/`false`; unset defers to the admin toggle (off by default) |
 | `AGENT_CLI_TIMEOUT_MS`     | `600000` | How long a single agent turn may run before it is killed |
 
 ## Troubleshooting
 
-**No Agents group appears.** Confirm you are signed in as an administrator, then
+**No Agents group appears.** Confirm the feature is enabled under
+**User Management → Agents** (it is off by default) and that you are signed in
+as an administrator, then
 check that the command is on the `PATH` of the process running the backend — not
 just your interactive shell. A service manager, Docker container, or desktop
 launcher often starts with a much smaller `PATH` than a login terminal.

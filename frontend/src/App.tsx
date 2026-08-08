@@ -533,7 +533,7 @@ const AppContent: React.FC = () => {
             <Route
               path='/agents'
               element={
-                <ProtectedRoute requireAdmin={true}>
+                <ProtectedRoute requireAdmin={true} requireAgents={true}>
                   <LibreClawPage />
                 </ProtectedRoute>
               }
@@ -600,7 +600,10 @@ const AppContent: React.FC = () => {
                     <Route
                       path='/agents'
                       element={
-                        <ProtectedRoute requireAdmin={true}>
+                        <ProtectedRoute
+                          requireAdmin={true}
+                          requireAgents={true}
+                        >
                           <LibreClawPage />
                         </ProtectedRoute>
                       }

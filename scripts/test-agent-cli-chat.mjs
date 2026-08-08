@@ -19,13 +19,22 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const serviceUrl = pathToFileURL(
-  path.join(__dirname, '..', 'backend', 'dist', 'services', 'agentCliService.js')
-).href;
+
+// Agents are disabled by default; these tests exercise the persisted
+// admin opt-in against a throwaway database.
+const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-agent-cli-'));
+const previousDataDir = process.env.DATA_DIR;
+process.env.DATA_DIR = dataDir;
+process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
+delete process.env.AGENT_CLI_MODELS_ENABLED;
+
+const distUrl = name =>
+  pathToFileURL(path.join(__dirname, '..', 'backend', 'dist', name)).href;
+const serviceUrl = distUrl(path.join('services', 'agentCliService.js'));
 
 const {
   AGENT_CLI_DEFINITIONS,
@@ -34,6 +43,20 @@ const {
   parseClaudeLine,
   default: agentCliService,
 } = await import(serviceUrl);
+const { getAgentsEnabled, setAgentsEnabled, agentsEnabledLockedByEnv } =
+  await import(distUrl(path.join('services', 'agentAccessService.js')));
+const { closeDatabase } = await import(distUrl('db.js'));
+
+// The feature ships disabled; opt in for the tests that list models.
+assert.equal(getAgentsEnabled(), false);
+setAgentsEnabled(true);
+
+after(() => {
+  closeDatabase();
+  if (previousDataDir === undefined) delete process.env.DATA_DIR;
+  else process.env.DATA_DIR = previousDataDir;
+  fs.rmSync(dataDir, { recursive: true, force: true });
+});
 
 const collect = () => {
   const chunks = [];
@@ -57,10 +80,10 @@ test('every agent CLI passes an explicit model through to its argv', () => {
     'gpt-5.4',
     '-',
   ]);
-  assert.deepEqual(definition('opencode').buildArgs('openai/gpt-5.4').slice(-2), [
-    '-m',
-    'openai/gpt-5.4',
-  ]);
+  assert.deepEqual(
+    definition('opencode').buildArgs('openai/gpt-5.4').slice(-2),
+    ['-m', 'openai/gpt-5.4']
+  );
   assert.deepEqual(definition('pi').buildArgs('provider/model').slice(-2), [
     '--model',
     'provider/model',
@@ -69,8 +92,14 @@ test('every agent CLI passes an explicit model through to its argv', () => {
 
 test('pi runs stateless, tool-less, with a neutral system prompt', () => {
   const args = definition('pi').buildArgs();
-  assert.ok(args.includes('--no-session'), 'must not touch the server user session store');
-  assert.ok(args.includes('--no-tools'), 'chat replies must not run local tools');
+  assert.ok(
+    args.includes('--no-session'),
+    'must not touch the server user session store'
+  );
+  assert.ok(
+    args.includes('--no-tools'),
+    'chat replies must not run local tools'
+  );
   const promptIndex = args.indexOf('--system-prompt');
   assert.ok(promptIndex !== -1, 'personal persona config must be overridden');
   assert.match(args[promptIndex + 1], /helpful assistant/);
@@ -91,11 +120,15 @@ test('pi parser streams text deltas and falls back to the final message', () => 
   for (const line of lines) parsePiLine(line, queue, state);
   assert.equal(state.agentSessionId, 'sess-1');
   assert.deepEqual(
-    chunks.filter(chunk => chunk.type === 'content').map(chunk => chunk.content),
+    chunks
+      .filter(chunk => chunk.type === 'content')
+      .map(chunk => chunk.content),
     ['po', 'ng']
   );
   assert.deepEqual(
-    chunks.filter(chunk => chunk.type === 'reasoning').map(chunk => chunk.content),
+    chunks
+      .filter(chunk => chunk.type === 'reasoning')
+      .map(chunk => chunk.content),
     ['hm']
   );
 
@@ -176,16 +209,43 @@ test('listAgentModels expands CLIs into per-model entries with a shared agentId'
       'opencode:openai/gpt-5.4',
     ]);
     assert.ok(
-      models.every(model =>
-        model.id === model.agentId || model.id.startsWith(`${model.agentId}:`)
+      models.every(
+        model =>
+          model.id === model.agentId || model.id.startsWith(`${model.agentId}:`)
       )
     );
     // opencode has no CLI-default entry: a model is required.
     assert.ok(!ids.includes('opencode'));
-    const discovered = models.find(model => model.id === 'opencode:openai/gpt-5.4');
+    const discovered = models.find(
+      model => model.id === 'opencode:openai/gpt-5.4'
+    );
     assert.equal(discovered.name, 'OpenCode · openai/gpt-5.4');
   } finally {
     process.env.PATH = previousPath;
     fs.rmSync(binDir, { recursive: true, force: true });
   }
+});
+
+test('agents follow the persisted opt-in and the environment pin', async () => {
+  // Disabled: no models are offered and access assertions fail closed.
+  setAgentsEnabled(false);
+  assert.equal(getAgentsEnabled(), false);
+  assert.deepEqual(await agentCliService.listAgentModels(), []);
+  assert.throws(() => agentCliService.assertAgentAccess('nobody'), /disabled/i);
+
+  // Enabled again: the persisted setting turns the feature back on.
+  setAgentsEnabled(true);
+  assert.equal(getAgentsEnabled(), true);
+
+  // The environment variable pins the value either way and locks the toggle.
+  process.env.AGENT_CLI_MODELS_ENABLED = 'false';
+  try {
+    assert.equal(getAgentsEnabled(), false);
+    assert.equal(agentsEnabledLockedByEnv(), true);
+    assert.deepEqual(await agentCliService.listAgentModels(), []);
+  } finally {
+    delete process.env.AGENT_CLI_MODELS_ENABLED;
+  }
+  assert.equal(agentsEnabledLockedByEnv(), false);
+  assert.equal(getAgentsEnabled(), true);
 });

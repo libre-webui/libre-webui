@@ -1283,6 +1283,13 @@
       "deleted": "Work ポリシーを削除しました",
       "failed": "Work ポリシーを保存できませんでした",
       "invalidNumber": "PID 制限とアイドル停止は数値で入力してください。"
+    },
+    "agentAccess": {
+      "title": "エージェント",
+      "description": "管理者向けにエージェントセクション（Libre Claw）を提供します。エージェント CLI は Work サンドボックスの外で、サーバーユーザーとしてホスト上で実行されます。",
+      "saved": "エージェントへのアクセスを更新しました",
+      "saveFailed": "エージェントへのアクセスを更新できませんでした",
+      "lockedByEnv": "環境変数 AGENT_CLI_MODELS_ENABLED によって固定されています。"
     }
   },
   "chatHistory": {

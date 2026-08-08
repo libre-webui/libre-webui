@@ -85,7 +85,26 @@ const demoStatus: LibreClawStatus = {
   error: 'Libre Claw daemon is not connected in demo mode.',
 };
 
+export interface AgentAccess {
+  enabled: boolean;
+  lockedByEnv: boolean;
+}
+
 export const libreClawApi = {
+  access: (): Promise<ApiResponse<AgentAccess>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ enabled: false, lockedByEnv: false });
+    }
+    return api.get('/libre-claw/access').then(res => res.data);
+  },
+
+  setAccess: (enabled: boolean): Promise<ApiResponse<AgentAccess>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ enabled, lockedByEnv: false });
+    }
+    return api.put('/libre-claw/access', { enabled }).then(res => res.data);
+  },
+
   status: (): Promise<ApiResponse<LibreClawStatus>> => {
     if (isDemoMode()) {
       return createDemoResponse(demoStatus);

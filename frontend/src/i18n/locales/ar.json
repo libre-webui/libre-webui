@@ -1283,6 +1283,13 @@
       "deleted": "تم حذف سياسة Work",
       "failed": "تعذر حفظ سياسة Work",
       "invalidNumber": "يجب أن يكون حد PID والإيقاف عند الخمول أرقامًا."
+    },
+    "agentAccess": {
+      "title": "الوكلاء",
+      "description": "إتاحة قسم الوكلاء (Libre Claw) للمسؤولين. تعمل واجهات الوكلاء على المضيف بهوية مستخدم الخادم، خارج بيئة Work المعزولة.",
+      "saved": "تم تحديث الوصول إلى الوكلاء",
+      "saveFailed": "تعذر تحديث الوصول إلى الوكلاء",
+      "lockedByEnv": "مثبَّت بواسطة متغير البيئة AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {

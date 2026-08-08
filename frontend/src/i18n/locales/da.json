@@ -1283,6 +1283,13 @@
       "deleted": "Work-politik slettet",
       "failed": "Work-politikken kunne ikke gemmes",
       "invalidNumber": "PID-grænse og tomgangsstop skal være tal."
+    },
+    "agentAccess": {
+      "title": "Agenter",
+      "description": "Tilbyd sektionen Agenter (Libre Claw) til administratorer. Agent-CLI'er kører på værten som serverbrugeren, uden for Work-sandkassen.",
+      "saved": "Agent-adgang opdateret",
+      "saveFailed": "Kunne ikke opdatere agent-adgang",
+      "lockedByEnv": "Fastlåst af miljøvariablen AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {

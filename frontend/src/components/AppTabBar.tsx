@@ -123,7 +123,7 @@ export const AppTabBar: React.FC = () => {
   const sessions = useChatStore(state => state.sessions);
   const currentSession = useChatStore(state => state.currentSession);
   const workTasks = useWorkStore(state => state.tasks);
-  const { systemInfo, isAdmin, canUseWork } = useAuthStore();
+  const { systemInfo, isAdmin, canUseWork, canUseAgents } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<NewTabMenuPosition | null>(
     null
@@ -374,7 +374,7 @@ export const AppTabBar: React.FC = () => {
       icon: PAGE_META[path].icon,
       action: () => navigate(path),
     })),
-    ...(showAdminWorkspace
+    ...(canUseAgents()
       ? [
           {
             key: '/agents',

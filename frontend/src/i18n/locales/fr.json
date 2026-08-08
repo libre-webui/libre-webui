@@ -1283,6 +1283,13 @@
       "deleted": "Politique Work supprimée",
       "failed": "Impossible d'enregistrer la politique Work",
       "invalidNumber": "La limite de PID et l'arrêt d'inactivité doivent être des nombres."
+    },
+    "agentAccess": {
+      "title": "Agents",
+      "description": "Proposer la section Agents (Libre Claw) aux administrateurs. Les CLI d'agents s'exécutent sur l'hôte avec l'utilisateur du serveur, hors du bac à sable Work.",
+      "saved": "Accès aux agents mis à jour",
+      "saveFailed": "Impossible de mettre à jour l'accès aux agents",
+      "lockedByEnv": "Fixé par la variable d'environnement AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {

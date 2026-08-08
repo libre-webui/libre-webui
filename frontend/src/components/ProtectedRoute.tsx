@@ -24,6 +24,7 @@ interface ProtectedRouteProps {
   requireAuth?: boolean;
   requireAdmin?: boolean;
   requireWork?: boolean;
+  requireAgents?: boolean;
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
@@ -31,6 +32,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAuth = true,
   requireAdmin = false,
   requireWork = false,
+  requireAgents = false,
 }) => {
   const { isAuthenticated, user, systemInfo, isLoading, canUseWork } =
     useAuthStore();
@@ -43,6 +45,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         <div className='w-8 h-8 border-4 border-gray-200 dark:border-dark-300 border-t-primary-500 dark:border-t-primary-400 rounded-full animate-spin'></div>
       </div>
     );
+  }
+
+  // The Agents feature is an explicit administrator opt-in; the flag gates
+  // every mode, including no-auth single-user deployments.
+  if (requireAgents && systemInfo?.agentsEnabled !== true) {
+    return <Navigate to='/' replace />;
   }
 
   // If system doesn't require auth, allow access

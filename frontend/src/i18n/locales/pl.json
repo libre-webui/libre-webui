@@ -1283,6 +1283,13 @@
       "deleted": "Polityka Work usunięta",
       "failed": "Nie udało się zapisać polityki Work",
       "invalidNumber": "Limit PID i zatrzymanie przy bezczynności muszą być liczbami."
+    },
+    "agentAccess": {
+      "title": "Agenci",
+      "description": "Udostępnij administratorom sekcję Agenci (Libre Claw). CLI agentów działają na hoście jako użytkownik serwera, poza piaskownicą Work.",
+      "saved": "Zaktualizowano dostęp do agentów",
+      "saveFailed": "Nie udało się zaktualizować dostępu do agentów",
+      "lockedByEnv": "Ustalone przez zmienną środowiskową AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {

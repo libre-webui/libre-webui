@@ -1283,6 +1283,13 @@
       "deleted": "Work-policy borttagen",
       "failed": "Kunde inte spara Work-policyn",
       "invalidNumber": "PID-gräns och tomgångsstopp måste vara tal."
+    },
+    "agentAccess": {
+      "title": "Agenter",
+      "description": "Erbjud sektionen Agenter (Libre Claw) för administratörer. Agent-CLI:er körs på värden som serveranvändaren, utanför Work-sandlådan.",
+      "saved": "Agentåtkomst uppdaterad",
+      "saveFailed": "Kunde inte uppdatera agentåtkomst",
+      "lockedByEnv": "Låst av miljövariabeln AGENT_CLI_MODELS_ENABLED."
     }
   },
   "chatHistory": {
