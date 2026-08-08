@@ -10,6 +10,8 @@ keywords:
     docker errors,
     model pull,
     authentication,
+    reverse proxy,
+    websocket,
   ]
 ---
 
@@ -83,6 +85,75 @@ For phone, LAN, or Tailscale access, do not point the phone browser at `localhos
 ```bash
 npm run dev:host
 ```
+
+## Chat Doesn't Stream Behind a Reverse Proxy
+
+The typical symptom is that messages send but no reply ever renders, while the
+browser console shows a WebSocket connection failure. Confirm that the proxy
+allows WebSocket upgrades and does not close long-lived connections.
+
+For a public hostname, allow that browser origin in the Libre WebUI service:
+
+```yaml
+services:
+  libre-webui:
+    environment:
+      CORS_ORIGIN: https://chat.example.com
+      BASE_URL: https://chat.example.com
+```
+
+The nginx and Caddy examples below assume the proxy runs on the Docker host,
+where the repository's Compose setup publishes Libre WebUI on port `8080`. If
+the proxy joins the Compose network instead, use `libre-webui:3001` as the
+upstream address.
+
+### nginx
+
+nginx requires the upgrade headers to be forwarded explicitly. The longer read
+timeout keeps an otherwise idle chat connection open while the model works.
+
+```nginx
+location /ws {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_read_timeout 3600s;
+}
+```
+
+Reload nginx after validating the configuration with `nginx -t`.
+
+### Caddy
+
+Caddy's `reverse_proxy` supports WebSockets out of the box, so no upgrade
+headers are needed:
+
+```caddyfile
+chat.example.com {
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+### Traefik
+
+Traefik also handles WebSocket upgrades by default. When its Docker provider
+shares Libre WebUI's network, only the normal router and service labels are
+needed, for example:
+
+```yaml
+labels:
+  - 'traefik.enable=true'
+  - 'traefik.http.routers.libre-webui.rule=Host(`chat.example.com`)'
+  - 'traefik.http.routers.libre-webui.entrypoints=websecure'
+  - 'traefik.http.routers.libre-webui.tls=true'
+  - 'traefik.http.services.libre-webui.loadbalancer.server.port=3001'
+```
+
+If streams connect but drop later, check the idle timeout on any proxy or load
+balancer in front of Traefik. When Traefik itself is enforcing the limit,
+adjust the entry point's `transport.respondingTimeouts` setting.
 
 ## Ollama Is Not Detected
 
