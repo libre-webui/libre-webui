@@ -36,6 +36,7 @@ import {
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { ChatControlsPanel } from '@/components/ChatControlsPanel';
+import { ChatSourcesPanel } from '@/components/ChatSourcesPanel';
 import { CodeAwareTextarea } from '@/components/CodeAwareTextarea';
 import { ModelSelector } from '@/components/ModelSelector';
 import { PersonaIndicator } from '@/components/PersonaIndicator';
@@ -941,6 +942,7 @@ export const ChatPage: React.FC = () => {
       )}
 
       <div className='relative z-10 flex h-full flex-col'>
+        {currentSession && <ChatSourcesPanel session={currentSession} />}
         {/* Private mode indicator */}
         {currentSession?.isPrivate && (
           <div className='flex-shrink-0 border-b border-black/[0.05] bg-surface/55 px-4 py-2 backdrop-blur-xl dark:border-white/[0.06] dark:bg-dark-100/55'>

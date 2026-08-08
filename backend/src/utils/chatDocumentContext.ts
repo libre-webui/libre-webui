@@ -16,66 +16,82 @@
  */
 
 import documentService from '../services/documentService.js';
-import preferencesService from '../services/preferencesService.js';
 import storageService from '../storage.js';
+
+export interface ChatDocumentSource {
+  id: string;
+  filename: string;
+}
 
 export interface ChatDocumentContext {
   documentContext: string;
   enhancedContent: string;
   hasRelevantContext: boolean;
+  /** Documents that actually contributed chunks, deduplicated, best first. */
+  sources: ChatDocumentSource[];
 }
+
+export const EMPTY_CHAT_DOCUMENT_CONTEXT = (
+  message: string
+): ChatDocumentContext => ({
+  documentContext: '',
+  enhancedContent: message,
+  hasRelevantContext: false,
+  sources: [],
+});
 
 export async function buildChatDocumentContext(
   message: string,
   sessionId: string,
   userId: string
 ): Promise<ChatDocumentContext> {
-  let documentContext = '';
-  const preferences = preferencesService.getPreferences(userId);
+  // Documents from knowledge collections attached to this chat join the
+  // session's own uploads and the user's standing uploads in the
+  // searchable scope. searchDocuments picks semantic or keyword retrieval
+  // by the embedding settings, so retrieval works either way.
+  const knowledgeCollectionIds = storageService.getSession(sessionId, userId)
+    ?.settings?.knowledgeCollectionIds;
 
-  if (preferences.embeddingSettings?.enabled) {
-    // Documents from knowledge collections attached to this chat join the
-    // session's own uploads in the searchable scope.
-    const knowledgeCollectionIds = storageService.getSession(sessionId, userId)
-      ?.settings?.knowledgeCollectionIds;
+  const relevantDocuments = await documentService.searchDocuments(
+    message,
+    userId,
+    sessionId,
+    5,
+    knowledgeCollectionIds
+  );
 
-    const relevantDocuments = await documentService.searchDocuments(
-      message,
-      userId,
-      sessionId,
-      5,
-      knowledgeCollectionIds
-    );
+  if (relevantDocuments.length === 0) {
+    return EMPTY_CHAT_DOCUMENT_CONTEXT(message);
+  }
 
-    if (relevantDocuments.length > 0) {
-      const documentsMap = new Map();
-      for (const chunk of relevantDocuments) {
-        if (!documentsMap.has(chunk.documentId)) {
-          documentsMap.set(
-            chunk.documentId,
-            documentService.getDocument(chunk.documentId, userId)
-          );
-        }
-      }
-
-      documentContext =
-        '\n\n--- RELEVANT DOCUMENTS ---\n' +
-        relevantDocuments
-          .map((chunk, index) => {
-            const doc = documentsMap.get(chunk.documentId);
-            const docTitle = doc ? doc.filename : 'Unknown Document';
-            return `Document ${index + 1}: ${docTitle} (chunk ${chunk.chunkIndex + 1})\n${chunk.content}\n`;
-          })
-          .join('\n---\n') +
-        '\n--- END DOCUMENTS ---\n\n';
+  const documentsMap = new Map();
+  const sources: ChatDocumentSource[] = [];
+  for (const chunk of relevantDocuments) {
+    if (!documentsMap.has(chunk.documentId)) {
+      const document = documentService.getDocument(chunk.documentId, userId);
+      documentsMap.set(chunk.documentId, document);
+      sources.push({
+        id: chunk.documentId,
+        filename: document?.filename || 'Unknown Document',
+      });
     }
   }
 
+  const documentContext =
+    '\n\n--- RELEVANT DOCUMENTS ---\n' +
+    relevantDocuments
+      .map((chunk, index) => {
+        const doc = documentsMap.get(chunk.documentId);
+        const docTitle = doc ? doc.filename : 'Unknown Document';
+        return `Document ${index + 1}: ${docTitle} (chunk ${chunk.chunkIndex + 1})\n${chunk.content}\n`;
+      })
+      .join('\n---\n') +
+    '\n--- END DOCUMENTS ---\n\n';
+
   return {
     documentContext,
-    enhancedContent: documentContext
-      ? `${documentContext}User question: ${message}`
-      : message,
-    hasRelevantContext: Boolean(documentContext),
+    enhancedContent: `${documentContext}User question: ${message}`,
+    hasRelevantContext: true,
+    sources,
   };
 }

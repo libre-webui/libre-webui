@@ -22,7 +22,6 @@ import { WebSocketServer } from 'ws';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
-import documentService from './services/documentService.js';
 import agentCliService from './services/agentCliService.js';
 import {
   buildWebSearchEnhancedContent,
@@ -30,14 +29,15 @@ import {
   userCanUseWebSearch,
   webSearch as runWebSearch,
 } from './services/webSearchService.js';
+import {
+  buildChatDocumentContext,
+  EMPTY_CHAT_DOCUMENT_CONTEXT,
+} from './utils/chatDocumentContext.js';
 import chatGenerationService from './services/chatGenerationService.js';
 import preferencesService from './services/preferencesService.js';
 import assistantCompletionService from './services/assistantCompletionService.js';
 import { personaService } from './services/personaService.js';
-import {
-  buildDocumentEnhancedContent,
-  ChatRequestService,
-} from './services/chatRequestService.js';
+import { ChatRequestService } from './services/chatRequestService.js';
 import { streamOllamaChatResponse } from './utils/ollamaStreaming.js';
 import { streamPluginResponse } from './utils/pluginStreaming.js';
 import { createLogger } from './utils/logger.js';
@@ -294,25 +294,26 @@ export function registerWebSocketServer(server: Server): void {
             });
           }
 
-          // RAG: Get relevant document context for the user's query
-          const relevantContext = await documentService.getRelevantContext(
-            content,
-            userId,
-            sessionId
-          );
-          const enhancedContent = buildDocumentEnhancedContent(
-            content,
-            relevantContext
-          );
-
-          if (relevantContext.length > 0) {
+          // RAG through the same collection-aware builder as the REST
+          // routes: session uploads, attached knowledge collections, and
+          // the user's standing uploads. Private sessions skip documents —
+          // nothing about them should touch persisted per-user state.
+          let documentContext = EMPTY_CHAT_DOCUMENT_CONTEXT(content);
+          if (!isPrivate) {
+            try {
+              documentContext = await buildChatDocumentContext(
+                content,
+                sessionId,
+                userId
+              );
+            } catch (contextError) {
+              logger.error('Error during document search:', contextError);
+            }
+          }
+          if (documentContext.sources.length > 0) {
             logger.debug(
-              `Found ${relevantContext.length} relevant document chunks for query`
+              `Document context drawn from ${documentContext.sources.length} document(s)`
             );
-
-            // Update the user message with enhanced content that includes document context
-            // We'll create a new message with the enhanced content for the AI model
-            logger.debug('Enhanced user message with document context');
           }
 
           // Requested web search composes on top of any document context.
@@ -320,8 +321,8 @@ export function registerWebSocketServer(server: Server): void {
           // search degrades to a normal reply rather than failing the turn.
           let webSearchSources:
             Array<{ title: string; url: string }> | undefined;
-          let searchEnhancedContent = enhancedContent;
-          let searchHasRelevantContext = relevantContext.length > 0;
+          let searchEnhancedContent = documentContext.enhancedContent;
+          let searchHasRelevantContext = documentContext.hasRelevantContext;
           if (
             webSearchRequested === true &&
             isWebSearchAvailable() &&
@@ -364,12 +365,20 @@ export function registerWebSocketServer(server: Server): void {
               });
             }
           }
-          const withSearchSources = (
+          const withContextSources = (
             metadata: Record<string, unknown> | undefined
-          ): Record<string, unknown> | undefined =>
-            webSearchSources?.length
-              ? { ...(metadata ?? {}), webSearchSources }
+          ): Record<string, unknown> | undefined => {
+            const extras: Record<string, unknown> = {};
+            if (webSearchSources?.length) {
+              extras.webSearchSources = webSearchSources;
+            }
+            if (documentContext.sources.length > 0) {
+              extras.ragSources = documentContext.sources;
+            }
+            return Object.keys(extras).length > 0
+              ? { ...(metadata ?? {}), ...extras }
               : metadata;
+          };
 
           let assistantContent = '';
           let assistantThinking = '';
@@ -513,7 +522,7 @@ export function registerWebSocketServer(server: Server): void {
                     isPrivate,
                     regenerate,
                     originalMessageId,
-                    providerMetadata: withSearchSources(
+                    providerMetadata: withContextSources(
                       assistantProviderMetadata
                     ),
                   });
@@ -655,7 +664,7 @@ export function registerWebSocketServer(server: Server): void {
                 regenerate,
                 originalMessageId,
                 statistics: ollamaStream.statistics,
-                providerMetadata: withSearchSources(undefined),
+                providerMetadata: withContextSources(undefined),
               });
 
             if (isPrivate) {
@@ -711,8 +720,8 @@ export function registerWebSocketServer(server: Server): void {
                 timestamp: Date.now(),
                 messageId: assistantMessageId,
                 statistics: ollamaStream.statistics,
-                ...(webSearchSources?.length
-                  ? { providerMetadata: withSearchSources(undefined) }
+                ...(withContextSources(undefined)
+                  ? { providerMetadata: withContextSources(undefined) }
                   : {}),
                 ...completion.branchingFields,
               });

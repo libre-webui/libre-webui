@@ -417,6 +417,10 @@ class DocumentService {
   ): boolean {
     const hasCollections = Boolean(collectionIds && collectionIds.length > 0);
     if (!sessionId && !hasCollections) return true;
+    // User-scoped uploads (no session, no collection) are part of the
+    // user's standing knowledge and join every chat's searchable scope —
+    // previously they were unreachable from any session.
+    if (!document.sessionId && !document.collectionId) return true;
     if (sessionId && document.sessionId === sessionId) return true;
     return Boolean(
       hasCollections &&
@@ -485,6 +489,11 @@ class DocumentService {
         similarity: number;
         document: Document;
       }[] = [];
+      // Chunks without embeddings (uploaded while embeddings were off, or
+      // whose embedding generation failed) would otherwise be invisible to
+      // semantic search forever — exactly the "only my first document is
+      // used" failure. They compete through keyword scoring instead.
+      const unembedded: { chunk: DocumentChunk; document: Document }[] = [];
 
       for (const document of storageService.getAllDocuments(userId)) {
         const documentChunks = this.loadDocumentChunks(document.id);
@@ -492,7 +501,10 @@ class DocumentService {
         if (!this.documentInScope(document, sessionId, collectionIds)) continue;
 
         for (const chunk of documentChunks) {
-          if (!chunk.embedding) continue;
+          if (!chunk.embedding) {
+            unembedded.push({ chunk, document });
+            continue;
+          }
 
           const similarity = cosineSimilarity(queryEmbedding, chunk.embedding);
 
@@ -503,14 +515,35 @@ class DocumentService {
         }
       }
 
-      // Sort by similarity score and return top results
-      return results
+      const top = results
         .sort((a, b) => b.similarity - a.similarity)
         .slice(0, limit)
         .map(result => ({
           ...result.chunk,
           filename: result.document.filename, // Add filename for context
         })) as DocumentChunk[];
+
+      if (top.length < limit && unembedded.length > 0) {
+        const scored = this.scoreChunksByKeywords(query, unembedded);
+        for (const entry of scored) {
+          if (top.length >= limit) break;
+          top.push({
+            ...entry.chunk,
+            filename: entry.document.filename,
+          } as DocumentChunk);
+        }
+      }
+      if (top.length > 0) return top;
+
+      // Nothing cleared the similarity threshold: keyword search is a
+      // better answer than an empty context.
+      return this.keywordSearchDocuments(
+        query,
+        userId,
+        sessionId,
+        limit,
+        collectionIds
+      );
     } catch (error) {
       logger.error(
         'Semantic search failed, falling back to keyword search:',
@@ -526,6 +559,33 @@ class DocumentService {
     }
   }
 
+  /** Term-frequency scores for a set of chunks, best first. */
+  private scoreChunksByKeywords(
+    query: string,
+    entries: { chunk: DocumentChunk; document: Document }[]
+  ): { chunk: DocumentChunk; score: number; document: Document }[] {
+    const searchTerms = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(term => term.length > 2);
+    const scored: {
+      chunk: DocumentChunk;
+      score: number;
+      document: Document;
+    }[] = [];
+    for (const { chunk, document } of entries) {
+      const chunkText = chunk.content.toLowerCase();
+      let score = 0;
+      for (const term of searchTerms) {
+        // Escape special regex characters to prevent injection
+        const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        score += (chunkText.match(new RegExp(escapedTerm, 'gi')) || []).length;
+      }
+      if (score > 0) scored.push({ chunk, score, document });
+    }
+    return scored.sort((a, b) => b.score - a.score);
+  }
+
   private keywordSearchDocuments(
     query: string,
     userId: string,
@@ -533,15 +593,7 @@ class DocumentService {
     limit = 5,
     collectionIds?: string[]
   ): DocumentChunk[] {
-    const searchTerms = query
-      .toLowerCase()
-      .split(/\s+/)
-      .filter(term => term.length > 2);
-    const results: {
-      chunk: DocumentChunk;
-      score: number;
-      document: Document;
-    }[] = [];
+    const candidates: { chunk: DocumentChunk; document: Document }[] = [];
 
     for (const document of storageService.getAllDocuments(userId)) {
       const documentChunks = this.loadDocumentChunks(document.id);
@@ -549,32 +601,15 @@ class DocumentService {
       if (!this.documentInScope(document, sessionId, collectionIds)) continue;
 
       for (const chunk of documentChunks) {
-        const chunkText = chunk.content.toLowerCase();
-        let score = 0;
-
-        // Simple scoring based on term frequency
-        for (const term of searchTerms) {
-          // Escape special regex characters to prevent injection
-          const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const matches = (chunkText.match(new RegExp(escapedTerm, 'gi')) || [])
-            .length;
-          score += matches;
-        }
-
-        if (score > 0) {
-          results.push({ chunk, score, document });
-        }
+        candidates.push({ chunk, document });
       }
     }
+    const results = this.scoreChunksByKeywords(query, candidates);
 
-    // Sort by score and return top results
-    return results
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit)
-      .map(result => ({
-        ...result.chunk,
-        filename: result.document.filename, // Add filename for context
-      })) as DocumentChunk[];
+    return results.slice(0, limit).map(result => ({
+      ...result.chunk,
+      filename: result.document.filename, // Add filename for context
+    })) as DocumentChunk[];
   }
 
   // Get relevant context for RAG

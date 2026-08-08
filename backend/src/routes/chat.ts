@@ -44,7 +44,10 @@ import {
   getErrorMessage,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
-import { buildChatDocumentContext } from '../utils/chatDocumentContext.js';
+import {
+  buildChatDocumentContext,
+  EMPTY_CHAT_DOCUMENT_CONTEXT,
+} from '../utils/chatDocumentContext.js';
 import { ChatProviderSelectionError } from '../utils/chatProviderSelection.js';
 import { formatPluginStreamToolCalls } from '../utils/pluginStreaming.js';
 import { ResourcePolicyError } from '../utils/resourceLimits.js';
@@ -447,10 +450,7 @@ router.post(
         return;
       }
 
-      let documentContext = {
-        enhancedContent: message,
-        hasRelevantContext: false,
-      };
+      let documentContext = EMPTY_CHAT_DOCUMENT_CONTEXT(message);
       try {
         documentContext = await buildChatDocumentContext(
           message,
@@ -526,12 +526,16 @@ router.post(
           thinking: generationResult.assistantThinking,
           model: session.model,
           statistics,
-          providerMetadata: webSearchSources?.length
-            ? {
-                ...(generationResult.response.message.providerMetadata ?? {}),
-                webSearchSources,
-              }
-            : generationResult.response.message.providerMetadata,
+          providerMetadata:
+            webSearchSources?.length || documentContext.sources.length > 0
+              ? {
+                  ...(generationResult.response.message.providerMetadata ?? {}),
+                  ...(webSearchSources?.length ? { webSearchSources } : {}),
+                  ...(documentContext.sources.length > 0
+                    ? { ragSources: documentContext.sources }
+                    : {}),
+                }
+              : generationResult.response.message.providerMetadata,
         },
         userId
       );
@@ -606,6 +610,19 @@ router.post(
         return;
       }
 
+      // Document context first, matching the WebSocket and non-stream
+      // paths; search composes on top of it.
+      let documentContext = EMPTY_CHAT_DOCUMENT_CONTEXT(message);
+      try {
+        documentContext = await buildChatDocumentContext(
+          message,
+          sessionId,
+          userId
+        );
+      } catch (contextError) {
+        logger.error('Error during document search:', contextError);
+      }
+
       // Requested web search runs before generation and reports its own
       // progress so the interface can show a searching state; failure
       // degrades to a normal reply.
@@ -623,7 +640,7 @@ router.post(
           const results: WebSearchResult[] = await runWebSearch(message);
           if (results.length > 0) {
             searchEnhancedContent = buildWebSearchEnhancedContent(
-              message,
+              documentContext.enhancedContent,
               results,
               message
             );
@@ -652,10 +669,18 @@ router.post(
       }
       const withSearchSources = (
         metadata: Record<string, unknown> | undefined
-      ): Record<string, unknown> | undefined =>
-        webSearchSources?.length
-          ? { ...(metadata ?? {}), webSearchSources }
+      ): Record<string, unknown> | undefined => {
+        const extras: Record<string, unknown> = {};
+        if (webSearchSources?.length) {
+          extras.webSearchSources = webSearchSources;
+        }
+        if (documentContext.sources.length > 0) {
+          extras.ragSources = documentContext.sources;
+        }
+        return Object.keys(extras).length > 0
+          ? { ...(metadata ?? {}), ...extras }
           : metadata;
+      };
 
       const preparedGeneration =
         await chatRequestService.prepareGenerationRequest({
@@ -664,12 +689,11 @@ router.post(
           options,
           persistedMessages: chatService.getMessagesForContext(sessionId),
           content: message,
-          ...(searchEnhancedContent
-            ? {
-                enhancedContent: searchEnhancedContent,
-                hasRelevantContext: true,
-              }
-            : {}),
+          enhancedContent:
+            searchEnhancedContent ?? documentContext.enhancedContent,
+          hasRelevantContext: Boolean(
+            searchEnhancedContent ?? documentContext.hasRelevantContext
+          ),
         });
       const {
         target,
