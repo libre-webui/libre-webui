@@ -80,6 +80,24 @@ test('web search ships disabled and validates its configuration', () => {
     () => setWebSearchConfig({ enabled: true, url: '' }),
     /SearXNG URL/
   );
+
+  // Retrieval settings default sensibly and clamp to the ceiling.
+  assert.equal(config.maxResults, 6);
+  assert.equal(config.safeSearch, true);
+  const tuned = setWebSearchConfig({
+    enabled: false,
+    url: 'http://searxng:8080',
+    maxResults: 99,
+    safeSearch: false,
+  });
+  assert.equal(tuned.maxResults, 10);
+  assert.equal(tuned.safeSearch, false);
+  setWebSearchConfig({
+    enabled: false,
+    url: 'http://searxng:8080',
+    maxResults: 6,
+    safeSearch: true,
+  });
 });
 
 test('web search queries the configured instance and bounds results', async () => {
@@ -116,9 +134,24 @@ test('web search queries the configured instance and bounds results', async () =
   const port = server.address().port;
 
   try {
-    setWebSearchConfig({ enabled: true, url: `http://127.0.0.1:${port}` });
+    setWebSearchConfig({
+      enabled: true,
+      url: `http://127.0.0.1:${port}`,
+      maxResults: 1,
+      safeSearch: true,
+    });
     assert.equal(isWebSearchAvailable(), true);
 
+    // The admin ceiling caps any requested count.
+    const capped = await webSearch('libre webui', 5);
+    assert.equal(capped.length, 1);
+
+    setWebSearchConfig({
+      enabled: true,
+      url: `http://127.0.0.1:${port}`,
+      maxResults: 6,
+      safeSearch: true,
+    });
     const results = await webSearch('libre webui', 5);
     // The javascript: result is discarded; text is bounded.
     assert.deepEqual(

@@ -28,6 +28,10 @@ export interface WebSearchConfigResponse {
   url?: string;
   /** Only present for administrators. */
   access?: WebSearchAccessMode;
+  /** Only present for administrators. */
+  maxResults?: number;
+  /** Only present for administrators. */
+  safeSearch?: boolean;
 }
 
 export type WebSearchAccessMode = 'admins' | 'all-users';
@@ -64,7 +68,8 @@ export const searchApi = {
 
   setConfig: (
     enabled: boolean,
-    url: string
+    url: string,
+    options?: { maxResults?: number; safeSearch?: boolean }
   ): Promise<ApiResponse<WebSearchConfigResponse>> => {
     if (isDemoMode()) {
       return createDemoResponse({
@@ -74,7 +79,9 @@ export const searchApi = {
         url,
       });
     }
-    return api.put('/search/config', { enabled, url }).then(res => res.data);
+    return api
+      .put('/search/config', { enabled, url, ...(options ?? {}) })
+      .then(res => res.data);
   },
 
   test: (): Promise<ApiResponse<{ ok: boolean; results: number }>> => {

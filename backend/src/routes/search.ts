@@ -53,7 +53,14 @@ router.get('/config', (req: Request, res: Response): void => {
       // Whether this account may use search right now — drives the
       // composer toggle. The backend re-checks on every request.
       allowed: config.available && userCanUseWebSearch(currentUser),
-      ...(isAdmin ? { url: config.url, access: getWebSearchAccessMode() } : {}),
+      ...(isAdmin
+        ? {
+            url: config.url,
+            access: getWebSearchAccessMode(),
+            maxResults: config.maxResults,
+            safeSearch: config.safeSearch,
+          }
+        : {}),
     },
   });
 });
@@ -92,6 +99,8 @@ router.put('/access', requireAdmin, (req: Request, res: Response): void => {
 router.put('/config', requireAdmin, (req: Request, res: Response): void => {
   const enabled = req.body?.enabled;
   const url = req.body?.url;
+  const maxResults = req.body?.maxResults;
+  const safeSearch = req.body?.safeSearch;
   if (typeof enabled !== 'boolean' || typeof url !== 'string') {
     res.status(400).json({
       success: false,
@@ -99,14 +108,33 @@ router.put('/config', requireAdmin, (req: Request, res: Response): void => {
     });
     return;
   }
+  if (
+    maxResults !== undefined &&
+    (!Number.isInteger(maxResults) || maxResults < 1 || maxResults > 10)
+  ) {
+    res.status(400).json({
+      success: false,
+      error: 'maxResults must be an integer between 1 and 10.',
+    });
+    return;
+  }
+  if (safeSearch !== undefined && typeof safeSearch !== 'boolean') {
+    res.status(400).json({
+      success: false,
+      error: 'safeSearch must be a boolean.',
+    });
+    return;
+  }
   try {
-    const config = setWebSearchConfig({ enabled, url });
+    const config = setWebSearchConfig({ enabled, url, maxResults, safeSearch });
     res.json({
       success: true,
       data: {
         enabled: config.enabled,
         available: config.available,
         url: config.url,
+        maxResults: config.maxResults,
+        safeSearch: config.safeSearch,
       },
     });
   } catch (error) {

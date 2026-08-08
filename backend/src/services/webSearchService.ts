@@ -34,6 +34,11 @@ const logger = createLogger('services:web-search');
 export const WEB_SEARCH_ENABLED_KEY = 'web_search_enabled';
 export const WEB_SEARCH_URL_KEY = 'web_search_url';
 export const WEB_SEARCH_ACCESS_KEY = 'web_search_access';
+export const WEB_SEARCH_MAX_RESULTS_KEY = 'web_search_max_results';
+export const WEB_SEARCH_SAFE_SEARCH_KEY = 'web_search_safe_search';
+
+export const WEB_SEARCH_DEFAULT_MAX_RESULTS = 6;
+export const WEB_SEARCH_RESULTS_CEILING = 10;
 
 export type WebSearchAccessMode = 'admins' | 'all-users';
 
@@ -44,7 +49,6 @@ export function isWebSearchAccessMode(
 }
 
 const SEARCH_TIMEOUT_MS = 12_000;
-const MAX_RESULTS_LIMIT = 8;
 const RESULT_TEXT_MAX_CHARS = 500;
 const QUERY_MAX_CHARS = 400;
 
@@ -60,6 +64,15 @@ export interface WebSearchConfig {
   url: string;
   /** Enabled and a URL is set — search can actually run. */
   available: boolean;
+  /** Admin ceiling on results per search, 1-10. */
+  maxResults: number;
+  safeSearch: boolean;
+}
+
+export function normalizeWebSearchMaxResults(value: unknown): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) return WEB_SEARCH_DEFAULT_MAX_RESULTS;
+  return Math.min(Math.max(parsed, 1), WEB_SEARCH_RESULTS_CEILING);
 }
 
 function readSetting(key: string): string | undefined {
@@ -106,12 +119,25 @@ export function getWebSearchConfig(): WebSearchConfig {
   const storedUrl = readSetting(WEB_SEARCH_URL_KEY);
   const url =
     storedUrl !== undefined ? storedUrl : (process.env.SEARXNG_URL ?? '');
-  return { enabled, url, available: enabled && url.length > 0 };
+  const storedMax = readSetting(WEB_SEARCH_MAX_RESULTS_KEY);
+  return {
+    enabled,
+    url,
+    available: enabled && url.length > 0,
+    maxResults:
+      storedMax !== undefined
+        ? normalizeWebSearchMaxResults(storedMax)
+        : WEB_SEARCH_DEFAULT_MAX_RESULTS,
+    // Safe search is on unless an administrator turned it off.
+    safeSearch: readSetting(WEB_SEARCH_SAFE_SEARCH_KEY) !== 'false',
+  };
 }
 
 export function setWebSearchConfig(input: {
   enabled: boolean;
   url: string;
+  maxResults?: number;
+  safeSearch?: boolean;
 }): WebSearchConfig {
   const url = normalizeWebSearchUrl(input.url);
   if (input.enabled && !url) {
@@ -119,6 +145,18 @@ export function setWebSearchConfig(input: {
   }
   writeSetting(WEB_SEARCH_ENABLED_KEY, input.enabled ? 'true' : 'false');
   writeSetting(WEB_SEARCH_URL_KEY, url);
+  if (input.maxResults !== undefined) {
+    writeSetting(
+      WEB_SEARCH_MAX_RESULTS_KEY,
+      String(normalizeWebSearchMaxResults(input.maxResults))
+    );
+  }
+  if (input.safeSearch !== undefined) {
+    writeSetting(
+      WEB_SEARCH_SAFE_SEARCH_KEY,
+      input.safeSearch ? 'true' : 'false'
+    );
+  }
   return getWebSearchConfig();
 }
 
@@ -167,7 +205,7 @@ const bounded = (value: unknown, max: number): string =>
 
 export async function webSearch(
   query: string,
-  maxResults = 6
+  maxResults?: number
 ): Promise<WebSearchResult[]> {
   const config = getWebSearchConfig();
   if (!config.available) {
@@ -177,15 +215,18 @@ export async function webSearch(
   if (!trimmedQuery) {
     throw new Error('A search query is required.');
   }
-  const limit = Math.min(
-    Math.max(1, Math.trunc(maxResults)),
-    MAX_RESULTS_LIMIT
-  );
+  // Callers (including model tool calls) can request fewer results, never
+  // more than the administrator's ceiling.
+  const requested =
+    maxResults === undefined
+      ? config.maxResults
+      : Math.max(1, Math.trunc(maxResults));
+  const limit = Math.min(requested, config.maxResults);
 
   const target = new URL(`${config.url}/search`);
   target.searchParams.set('q', trimmedQuery);
   target.searchParams.set('format', 'json');
-  target.searchParams.set('safesearch', '1');
+  target.searchParams.set('safesearch', config.safeSearch ? '1' : '0');
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SEARCH_TIMEOUT_MS);

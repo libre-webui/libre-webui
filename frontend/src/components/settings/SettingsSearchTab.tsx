@@ -33,6 +33,8 @@ export const SettingsSearchTab: React.FC = () => {
   const { t } = useTranslation();
   const [enabled, setEnabled] = useState(false);
   const [url, setUrl] = useState('');
+  const [maxResults, setMaxResults] = useState('6');
+  const [safeSearch, setSafeSearch] = useState(true);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -45,6 +47,12 @@ export const SettingsSearchTab: React.FC = () => {
         if (cancelled || !response.success || !response.data) return;
         setEnabled(response.data.enabled);
         setUrl(response.data.url ?? '');
+        if (typeof response.data.maxResults === 'number') {
+          setMaxResults(String(response.data.maxResults));
+        }
+        if (typeof response.data.safeSearch === 'boolean') {
+          setSafeSearch(response.data.safeSearch);
+        }
         setLoaded(true);
       })
       .catch(() => {});
@@ -54,14 +62,28 @@ export const SettingsSearchTab: React.FC = () => {
   }, []);
 
   const save = async (nextEnabled = enabled) => {
+    const parsedMax = Number(maxResults);
+    if (!Number.isInteger(parsedMax) || parsedMax < 1 || parsedMax > 10) {
+      toast.error(t('settings.search.maxResultsInvalid'));
+      return;
+    }
     setSaving(true);
     try {
-      const response = await searchApi.setConfig(nextEnabled, url.trim());
+      const response = await searchApi.setConfig(nextEnabled, url.trim(), {
+        maxResults: parsedMax,
+        safeSearch,
+      });
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Search settings update failed.');
       }
       setEnabled(response.data.enabled);
       setUrl(response.data.url ?? '');
+      if (typeof response.data.maxResults === 'number') {
+        setMaxResults(String(response.data.maxResults));
+      }
+      if (typeof response.data.safeSearch === 'boolean') {
+        setSafeSearch(response.data.safeSearch);
+      }
       toast.success(t('settings.search.saved'));
     } catch (error) {
       toast.error(
@@ -144,6 +166,39 @@ export const SettingsSearchTab: React.FC = () => {
             dir='ltr'
           />
         </label>
+        <div className='grid gap-3 sm:grid-cols-2'>
+          <label className='block'>
+            <span className='mb-1 block text-sm font-medium text-gray-900 dark:text-gray-100'>
+              {t('settings.search.maxResultsLabel')}
+            </span>
+            <span className='mb-2 block text-xs text-gray-500 dark:text-gray-400'>
+              {t('settings.search.maxResultsDescription')}
+            </span>
+            <Input
+              type='number'
+              min={1}
+              max={10}
+              value={maxResults}
+              onChange={event => setMaxResults(event.target.value)}
+              dir='ltr'
+            />
+          </label>
+          <div className='flex items-start justify-between gap-4 sm:pt-1'>
+            <div>
+              <span className='mb-1 block text-sm font-medium text-gray-900 dark:text-gray-100'>
+                {t('settings.search.safeSearchLabel')}
+              </span>
+              <span className='block text-xs text-gray-500 dark:text-gray-400'>
+                {t('settings.search.safeSearchDescription')}
+              </span>
+            </div>
+            <SettingsToggle
+              checked={safeSearch}
+              onChange={setSafeSearch}
+              disabled={saving || !loaded}
+            />
+          </div>
+        </div>
         <div className='flex justify-end gap-2'>
           <Button
             size='sm'

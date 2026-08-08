@@ -158,7 +158,8 @@ export const WORK_WEB_SEARCH_TOOL_SCHEMA: Record<string, unknown> =
       query: stringProperty('Search query.'),
       max_results: {
         type: 'integer',
-        description: 'Optional result count, 1-8. Defaults to 5.',
+        description:
+          "Optional result count. Defaults to 5, capped by the server's configured limit.",
       },
     },
     ['query']
