@@ -100,7 +100,14 @@ function writeSetting(key: string, value: string): void {
 
 export function normalizeWebSearchUrl(value: unknown): string {
   if (typeof value !== 'string') return '';
-  const trimmed = value.trim().replace(/\/+$/, '');
+  // Strip trailing slashes without a regex: an end-anchored /\/+$/ backtracks
+  // polynomially on a long run of slashes (CodeQL js/polynomial-redos).
+  let trimmed = value.trim();
+  let end = trimmed.length;
+  while (end > 0 && trimmed.charCodeAt(end - 1) === 0x2f) {
+    end--;
+  }
+  trimmed = trimmed.slice(0, end);
   if (!trimmed) return '';
   let parsed: URL;
   try {
