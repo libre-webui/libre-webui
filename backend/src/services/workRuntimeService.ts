@@ -33,6 +33,7 @@ import {
   validateWorkGitRepositoryPaths,
 } from '../utils/workGit.js';
 import { userHasWorkAccess } from './workAccessService.js';
+import workPolicyService from './workPolicyService.js';
 import workPreviewProxyService from './workPreviewProxyService.js';
 import workTaskService from './workTaskService.js';
 import { KubernetesWorkRuntimeDriver } from './workKubernetesDriver.js';
@@ -117,7 +118,7 @@ export class WorkRuntimeService {
     maxActiveRuntimesGlobal: config.maxActiveRuntimesGlobal,
     maxActiveRuntimesPerUser: config.maxActiveRuntimesPerUser,
   };
-  private imagePreparation?: Promise<void>;
+  private imagePreparations = new Map<string, Promise<void>>();
   private lifecycleTails = new Map<string, Promise<void>>();
   private preparations = new Map<string, Promise<void>>();
   private retiringTasks = new Set<string>();
@@ -315,7 +316,7 @@ export class WorkRuntimeService {
     }
     let tracked: Promise<void>;
     tracked = (async () => {
-      await waitForAbortSignal(this.ensureImage(), signal);
+      await waitForAbortSignal(this.ensureImage(task), signal);
       this.assertTaskIsActive(task);
       await this.withLifecycleLock(task.id, async () => {
         this.assertTaskIsActive(task);
@@ -555,10 +556,13 @@ export class WorkRuntimeService {
    * on a guess.
    */
   async sweepIdleRuntimes(now = Date.now()): Promise<{ stopped: number }> {
+    if (this.shuttingDown || this.recoveryPending) {
+      return { stopped: 0 };
+    }
+    // Idle-stop can come from the global knob or from any named policy.
     if (
-      config.idleTimeoutMs <= 0 ||
-      this.shuttingDown ||
-      this.recoveryPending
+      config.idleTimeoutMs <= 0 &&
+      !workPolicyService.anyIdleTimeoutConfigured()
     ) {
       return { stopped: 0 };
     }
@@ -588,7 +592,10 @@ export class WorkRuntimeService {
         this.noteTaskActivity(task.id);
         continue;
       }
-      if (now - lastActivity < config.idleTimeoutMs) continue;
+      const idleAfterMs = workPolicyService.resolve(
+        task.policyId
+      ).idleTimeoutMs;
+      if (idleAfterMs <= 0 || now - lastActivity < idleAfterMs) continue;
       try {
         if (this.previewLeaseReleases.has(task.id)) {
           await this.stopPreview(task, {
@@ -600,7 +607,7 @@ export class WorkRuntimeService {
         this.taskActivity.delete(task.id);
         stopped += 1;
         logger.info(
-          `Stopped idle Work sandbox ${task.containerName} after ${config.idleTimeoutMs}ms of inactivity.`
+          `Stopped idle Work sandbox ${task.containerName} after ${idleAfterMs}ms of inactivity.`
         );
       } catch (error) {
         logger.warn(
@@ -613,15 +620,21 @@ export class WorkRuntimeService {
   }
 
   private scheduleIdleSweep(): void {
-    if (config.idleTimeoutMs <= 0 || this.shuttingDown || this.idleTimer) {
+    if (this.shuttingDown || this.idleTimer) {
       return;
     }
-    // Sweep well inside the timeout so an idle sandbox overshoots its
+    // Policies can enable idle-stop at runtime even when the global knob is
+    // off, so the timer always runs; the sweep itself exits in one cheap
+    // query when nothing configures a timeout. With a global timeout the
+    // interval sits well inside it, so an idle sandbox overshoots its
     // deadline by a fraction, not a multiple.
-    const interval = Math.max(
-      15_000,
-      Math.min(60_000, Math.floor(config.idleTimeoutMs / 4))
-    );
+    const interval =
+      config.idleTimeoutMs > 0
+        ? Math.max(
+            15_000,
+            Math.min(60_000, Math.floor(config.idleTimeoutMs / 4))
+          )
+        : 60_000;
     this.idleTimer = setTimeout(() => {
       this.idleTimer = undefined;
       void this.sweepIdleRuntimes()
@@ -707,7 +720,7 @@ export class WorkRuntimeService {
   async recreateContainer(task: WorkTaskRecord): Promise<void> {
     const releaseLease = this.acquireRuntimeLease(task);
     try {
-      await this.ensureImage();
+      await this.ensureImage(task);
       this.assertTaskIsActive(task);
       await this.withLifecycleLock(task.id, async () => {
         this.assertTaskIsActive(task);
@@ -741,7 +754,7 @@ export class WorkRuntimeService {
     const releaseLease = this.acquireRuntimeLease(before);
     let previewStopped = false;
     try {
-      await this.ensureImage();
+      await this.ensureImage(before);
       this.assertTaskIsActive(before);
       return await this.withLifecycleLock(before.id, async () => {
         this.assertTaskIsActive(before);
@@ -876,7 +889,7 @@ export class WorkRuntimeService {
   ): Promise<T> {
     const releaseLease = this.acquireRuntimeLease(task);
     try {
-      await this.ensureImage();
+      await this.ensureImage(task);
       this.assertTaskIsActive(task);
       return await this.withLifecycleLock(task.id, async () => {
         this.assertTaskIsActive(task);
@@ -1358,7 +1371,7 @@ export class WorkRuntimeService {
     const releaseLease = this.acquireRuntimeLease(task);
     let commandRegistered = false;
     try {
-      await this.ensureImage();
+      await this.ensureImage(task);
       this.assertTaskIsActive(task);
       await this.withLifecycleLock(task.id, async () => {
         this.assertTaskIsActive(task);
@@ -1443,7 +1456,7 @@ export class WorkRuntimeService {
     const releaseLease = this.acquireRuntimeLease(task);
     let leaseRetained = false;
     try {
-      await this.ensureImage();
+      await this.ensureImage(task);
       this.assertTaskIsActive(task);
       const url = await this.withLifecycleLock(task.id, async () => {
         this.assertTaskIsActive(task);
@@ -1783,14 +1796,19 @@ export class WorkRuntimeService {
     await this.stopContainerWithLock(task);
   }
 
-  private async ensureImage(): Promise<void> {
-    if (!this.imagePreparation) {
-      this.imagePreparation = this.driver.ensureImage().catch(error => {
-        this.imagePreparation = undefined;
+  private async ensureImage(task: WorkTaskRecord): Promise<void> {
+    // Pulls are deduplicated per image, not globally: tasks under different
+    // policies may run different images.
+    const image = workPolicyService.resolve(task.policyId).image;
+    let preparation = this.imagePreparations.get(image);
+    if (!preparation) {
+      preparation = this.driver.ensureImage(image).catch(error => {
+        this.imagePreparations.delete(image);
         throw error;
       });
+      this.imagePreparations.set(image, preparation);
     }
-    await this.imagePreparation;
+    await preparation;
   }
 
   private assertTaskIsActive(task: WorkTaskRecord): void {

@@ -1253,6 +1253,31 @@
       "description": "Tillåt alla aktiva användare att skapa och köra Work-uppgifter i isolerade sandlådor. Administratörer har alltid åtkomst; arbetsytor i värdmappar förblir endast för administratörer.",
       "saved": "Work-åtkomst uppdaterad",
       "saveFailed": "Kunde inte uppdatera Work-åtkomst"
+    },
+    "workPolicies": {
+      "title": "Work-policyer",
+      "description": "Namngivna körningsförval (image, gränser, tomgångsstopp) som uppgifter kan skapas under. Tomma fält ärver de globala standarderna.",
+      "add": "Lägg till policy",
+      "name": "Namn",
+      "image": "Image",
+      "memory": "Minne",
+      "cpu": "CPU:er",
+      "pids": "PID-gräns",
+      "workspaceSize": "Arbetsytans storlek",
+      "idleMinutes": "Tomgångsstopp (minuter)",
+      "networkDefault": "Nätverksstandard",
+      "networkInherit": "Ärv standard",
+      "networkOn": "Aktiverad",
+      "networkOff": "Inaktiverad",
+      "save": "Spara",
+      "cancel": "Avbryt",
+      "edit": "Redigera policy",
+      "delete": "Ta bort policy",
+      "deleteConfirm": "Ta bort denna policy? Uppgifter som använder den faller tillbaka till de globala standarderna.",
+      "empty": "Inga policyer ännu. Uppgifter använder de globala körningsstandarderna.",
+      "saved": "Work-policy sparad",
+      "deleted": "Work-policy borttagen",
+      "failed": "Kunde inte spara Work-policyn"
     }
   },
   "chatHistory": {
@@ -1836,6 +1861,10 @@
       "unavailable": "Den interaktiva terminalen är inte tillgänglig i den här installationen.",
       "blockedByRun": "Modellen använder den här containern. Terminalen öppnas när turen är klar.",
       "taskRunning": "Modelltur pågår"
+    },
+    "policy": {
+      "label": "Körningspolicy",
+      "default": "Standard (globala gränser)"
     }
   },
   "usageAnalytics": {

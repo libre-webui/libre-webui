@@ -1253,6 +1253,31 @@
       "description": "Benarkan semua pengguna aktif mencipta dan menjalankan tugas Work dalam kotak pasir terpencil. Pentadbir sentiasa mempunyai akses; ruang kerja folder hos kekal untuk pentadbir sahaja.",
       "saved": "Akses Work dikemas kini",
       "saveFailed": "Tidak dapat mengemas kini akses Work"
+    },
+    "workPolicies": {
+      "title": "Dasar Work",
+      "description": "Praset masa jalan bernama (imej, had, henti melahu) untuk mencipta tugas. Medan kosong mewarisi lalai global.",
+      "add": "Tambah dasar",
+      "name": "Nama",
+      "image": "Imej",
+      "memory": "Memori",
+      "cpu": "CPU",
+      "pids": "Had PID",
+      "workspaceSize": "Saiz ruang kerja",
+      "idleMinutes": "Henti melahu (minit)",
+      "networkDefault": "Rangkaian lalai",
+      "networkInherit": "Warisi lalai",
+      "networkOn": "Didayakan",
+      "networkOff": "Dilumpuhkan",
+      "save": "Simpan",
+      "cancel": "Batal",
+      "edit": "Sunting dasar",
+      "delete": "Padam dasar",
+      "deleteConfirm": "Padam dasar ini? Tugas yang menggunakannya kembali kepada lalai global.",
+      "empty": "Tiada dasar lagi. Tugas menggunakan lalai masa jalan global.",
+      "saved": "Dasar Work disimpan",
+      "deleted": "Dasar Work dipadamkan",
+      "failed": "Tidak dapat menyimpan dasar Work"
     }
   },
   "chatHistory": {
@@ -1836,6 +1861,10 @@
       "unavailable": "Terminal interaktif tidak tersedia dalam penggunaan ini.",
       "blockedByRun": "Model sedang menggunakan bekas ini. Terminal dibuka apabila giliran selesai.",
       "taskRunning": "Giliran model sedang berjalan"
+    },
+    "policy": {
+      "label": "Dasar masa jalan",
+      "default": "Lalai (had global)"
     }
   },
   "usageAnalytics": {

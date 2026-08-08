@@ -239,7 +239,14 @@ test('runtime limits expose admission capacity and live occupancy', () => {
 
 test('network-disabled containers use a non-root, least-privilege policy', () => {
   const image = 'example.invalid/work-runtime@sha256:test-only';
-  const args = buildWorkContainerRunArgs(task, image);
+  const args = buildWorkContainerRunArgs(task, {
+    policyId: null,
+    image,
+    memoryLimit: '2g',
+    cpuLimit: '2',
+    pidsLimit: 256,
+    idleTimeoutMs: 0,
+  });
 
   assert.deepEqual(args.slice(0, 2), ['run', '--detach']);
   assert.equal(optionValue(args, '--name'), task.containerName);
@@ -284,7 +291,14 @@ test('network-disabled containers use a non-root, least-privilege policy', () =>
 test('network-enabled containers publish only a dynamic loopback preview port', () => {
   const args = buildWorkContainerRunArgs(
     { ...task, networkEnabled: true },
-    'example.invalid/work-runtime@sha256:test-only'
+    {
+      policyId: null,
+      image: 'example.invalid/work-runtime@sha256:test-only',
+      memoryLimit: '2g',
+      cpuLimit: '2',
+      pidsLimit: 256,
+      idleTimeoutMs: 0,
+    }
   );
 
   // A dedicated managed bridge, never Docker's shared default bridge: task

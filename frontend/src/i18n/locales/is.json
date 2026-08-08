@@ -1253,6 +1253,31 @@
       "description": "Leyfa öllum virkum notendum að búa til og keyra Work-verkefni í einangruðum sandkössum. Stjórnendur hafa alltaf aðgang; vinnusvæði í hýsilmöppum eru áfram aðeins fyrir stjórnendur.",
       "saved": "Work-aðgangur uppfærður",
       "saveFailed": "Ekki tókst að uppfæra Work-aðgang"
+    },
+    "workPolicies": {
+      "title": "Work-stefnur",
+      "description": "Nefndar keyrslustillingar (mynd, mörk, stöðvun í aðgerðaleysi) sem hægt er að búa verkefni til undir. Auð svæði erfa almennu sjálfgildin.",
+      "add": "Bæta við stefnu",
+      "name": "Nafn",
+      "image": "Mynd",
+      "memory": "Minni",
+      "cpu": "Örgjörvar",
+      "pids": "PID-mörk",
+      "workspaceSize": "Stærð vinnusvæðis",
+      "idleMinutes": "Stöðvun í aðgerðaleysi (mínútur)",
+      "networkDefault": "Sjálfgefið net",
+      "networkInherit": "Erfa sjálfgildi",
+      "networkOn": "Virkt",
+      "networkOff": "Óvirkt",
+      "save": "Vista",
+      "cancel": "Hætta við",
+      "edit": "Breyta stefnu",
+      "delete": "Eyða stefnu",
+      "deleteConfirm": "Eyða þessari stefnu? Verkefni sem nota hana falla aftur á almennu sjálfgildin.",
+      "empty": "Engar stefnur ennþá. Verkefni nota almennu keyrslusjálfgildin.",
+      "saved": "Work-stefna vistuð",
+      "deleted": "Work-stefnu eytt",
+      "failed": "Ekki tókst að vista Work-stefnuna"
     }
   },
   "chatHistory": {
@@ -1836,6 +1861,10 @@
       "unavailable": "Gagnvirki skjáhermirinn er ekki í boði í þessari uppsetningu.",
       "blockedByRun": "Líkanið notar þennan gám. Skjáhermirinn opnast þegar umferðinni lýkur.",
       "taskRunning": "Umferð líkans í gangi"
+    },
+    "policy": {
+      "label": "Keyrslustefna",
+      "default": "Sjálfgefið (almenn mörk)"
     }
   },
   "usageAnalytics": {

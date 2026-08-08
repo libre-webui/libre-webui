@@ -1253,6 +1253,31 @@
       "description": "允许所有活跃用户在隔离沙箱中创建并运行 Work 任务。管理员始终拥有访问权限；主机文件夹工作区仍仅限管理员使用。",
       "saved": "Work 访问权限已更新",
       "saveFailed": "无法更新 Work 访问权限"
+    },
+    "workPolicies": {
+      "title": "Work 策略",
+      "description": "可在创建任务时选择的命名运行时预设（镜像、限制、空闲停止）。留空字段继承全局默认值。",
+      "add": "添加策略",
+      "name": "名称",
+      "image": "镜像",
+      "memory": "内存",
+      "cpu": "CPU",
+      "pids": "PID 限制",
+      "workspaceSize": "工作区大小",
+      "idleMinutes": "空闲停止（分钟）",
+      "networkDefault": "默认网络",
+      "networkInherit": "继承默认值",
+      "networkOn": "启用",
+      "networkOff": "禁用",
+      "save": "保存",
+      "cancel": "取消",
+      "edit": "编辑策略",
+      "delete": "删除策略",
+      "deleteConfirm": "删除此策略？使用它的任务将回退到全局默认值。",
+      "empty": "暂无策略。任务使用全局运行时默认值。",
+      "saved": "已保存 Work 策略",
+      "deleted": "已删除 Work 策略",
+      "failed": "无法保存 Work 策略"
     }
   },
   "chatHistory": {
@@ -1836,6 +1861,10 @@
       "unavailable": "此部署不支持交互式终端。",
       "blockedByRun": "模型正在使用该容器。回合结束后终端将打开。",
       "taskRunning": "模型回合进行中"
+    },
+    "policy": {
+      "label": "运行时策略",
+      "default": "默认（全局限制）"
     }
   },
   "usageAnalytics": {

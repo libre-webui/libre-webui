@@ -25,12 +25,15 @@ import {
   resolveDockerEndpoint,
 } from '../utils/dockerEndpoint.js';
 import { createLogger } from '../utils/logger.js';
+import workPolicyService from './workPolicyService.js';
 import {
   ProcessOptions,
   ProcessResult,
+  ResolvedWorkRuntimePolicy,
   WorkRuntimeError,
   WORK_RUNTIME_DEFAULTS,
-  runtimePolicyFingerprint,
+  computePolicyFingerprint,
+  defaultRuntimePolicy,
   workRuntimeConfig as config,
 } from './workRuntimeShared.js';
 
@@ -74,8 +77,8 @@ export interface WorkRuntimeDriver {
   probe(): Promise<void>;
   /** Kill in-flight backend processes during shutdown. */
   shutdown(): void;
-  /** Make the runtime image available. No cross-call deduplication. */
-  ensureImage(): Promise<void>;
+  /** Make a runtime image available. No cross-call deduplication. */
+  ensureImage(image?: string): Promise<void>;
   /** Create the task workspace if needed; verify ownership if it exists. */
   ensureWorkspace(task: WorkTaskRecord): Promise<void>;
   /**
@@ -148,14 +151,14 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     }
   }
 
-  async ensureImage(): Promise<void> {
-    const inspected = await this.docker(['image', 'inspect', this.image], {
+  async ensureImage(image = config.image): Promise<void> {
+    const inspected = await this.docker(['image', 'inspect', image], {
       timeoutMs: 10_000,
       acceptFailure: true,
     });
     if (inspected.exitCode === 0) return;
-    logger.info(`Pulling Work runtime image ${this.image}`);
-    await this.docker(['pull', this.image], { timeoutMs: 900_000 });
+    logger.info(`Pulling Work runtime image ${image}`);
+    await this.docker(['pull', image], { timeoutMs: 900_000 });
   }
 
   async ensureWorkspace(task: WorkTaskRecord): Promise<void> {
@@ -176,7 +179,10 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     // process wins the name race, so prove ownership before mounting it.
     await this.assertManagedVolume(task);
     try {
-      await this.initializeVolume(task);
+      await this.initializeVolume(
+        task,
+        workPolicyService.resolve(task.policyId).image
+      );
     } catch (error) {
       await this.docker(['volume', 'rm', task.volumeName], {
         acceptFailure: true,
@@ -186,15 +192,16 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
   }
 
   async ensureRuntime(task: WorkTaskRecord): Promise<void> {
+    const policy = workPolicyService.resolve(task.policyId);
     await this.ensureWorkNetwork(task);
     if (await this.containerExists(task.containerName)) {
       await this.assertManagedContainer(task);
-      if (!(await this.containerMatchesTaskPolicy(task))) {
+      if (!(await this.containerMatchesTaskPolicy(task, policy))) {
         logger.warn(
           `Recreating Work container ${task.containerName} because its isolation policy is stale.`
         );
         await this.docker(['rm', '-f', task.containerName]);
-        await this.docker(buildWorkContainerRunArgs(task, this.image));
+        await this.docker(buildWorkContainerRunArgs(task, policy));
         return;
       }
       const state = await this.docker([
@@ -208,7 +215,7 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
       }
       return;
     }
-    await this.docker(buildWorkContainerRunArgs(task, this.image));
+    await this.docker(buildWorkContainerRunArgs(task, policy));
   }
 
   async runtimeState(task: WorkTaskRecord): Promise<WorkRuntimeState> {
@@ -520,7 +527,10 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     }
   }
 
-  private async initializeVolume(task: WorkTaskRecord): Promise<void> {
+  private async initializeVolume(
+    task: WorkTaskRecord,
+    image = this.image
+  ): Promise<void> {
     await this.docker([
       'run',
       '--rm',
@@ -535,7 +545,7 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
       'CHOWN',
       '--mount',
       `type=volume,src=${task.volumeName},dst=/workspace`,
-      this.image,
+      image,
       'chown',
       '-R',
       '1000:1000',
@@ -611,7 +621,8 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
   }
 
   private async containerMatchesTaskPolicy(
-    task: WorkTaskRecord
+    task: WorkTaskRecord,
+    policy: ResolvedWorkRuntimePolicy = defaultRuntimePolicy
   ): Promise<boolean> {
     const result = await this.docker([
       'inspect',
@@ -655,8 +666,8 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     return (
       labels['ai.libre-webui.managed'] === 'true' &&
       labels['ai.libre-webui.task'] === task.id &&
-      labels['ai.libre-webui.policy'] === runtimePolicyFingerprint &&
-      containerConfig.Image === this.image &&
+      labels['ai.libre-webui.policy'] === computePolicyFingerprint(policy) &&
+      containerConfig.Image === policy.image &&
       containerConfig.User === '1000:1000' &&
       containerConfig.WorkingDir === '/workspace' &&
       command.join('\0') === ['tail', '-f', '/dev/null'].join('\0') &&
@@ -666,7 +677,7 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
       hostConfig.Privileged === false &&
       capDrop.includes('ALL') &&
       securityOpt.includes('no-new-privileges') &&
-      Number(hostConfig.PidsLimit) === config.pidsLimit &&
+      Number(hostConfig.PidsLimit) === policy.pidsLimit &&
       Number(hostConfig.Memory) > 0 &&
       Number(hostConfig.MemorySwap) === Number(hostConfig.Memory) &&
       Number(hostConfig.NanoCpus) > 0 &&
@@ -824,7 +835,7 @@ export function describeDockerUnavailable(
 
 export function buildWorkContainerRunArgs(
   task: WorkTaskRecord,
-  image = config.image
+  policy: ResolvedWorkRuntimePolicy = defaultRuntimePolicy
 ): string[] {
   const args = [
     'run',
@@ -837,7 +848,7 @@ export function buildWorkContainerRunArgs(
     '--label',
     `ai.libre-webui.task=${task.id}`,
     '--label',
-    `ai.libre-webui.policy=${runtimePolicyFingerprint}`,
+    `ai.libre-webui.policy=${computePolicyFingerprint(policy)}`,
     '--user',
     '1000:1000',
     '--workdir',
@@ -854,14 +865,14 @@ export function buildWorkContainerRunArgs(
     '--security-opt',
     'no-new-privileges',
     '--pids-limit',
-    String(config.pidsLimit),
+    String(policy.pidsLimit),
     '--memory',
-    config.memoryLimit,
+    policy.memoryLimit,
     // Same value as --memory: the memory cap cannot be sidestepped via swap.
     '--memory-swap',
-    config.memoryLimit,
+    policy.memoryLimit,
     '--cpus',
-    config.cpuLimit,
+    policy.cpuLimit,
     '--network',
     task.networkEnabled ? config.networkName : 'none',
   ];
@@ -878,7 +889,7 @@ export function buildWorkContainerRunArgs(
         // against an allowlist before ever reaching this point.
         `type=bind,src=${task.hostPath},dst=/workspace`
       : `type=volume,src=${task.volumeName},dst=/workspace,volume-nocopy`,
-    image,
+    policy.image,
     'tail',
     '-f',
     '/dev/null'

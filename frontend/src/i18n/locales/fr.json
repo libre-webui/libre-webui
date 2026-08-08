@@ -1253,6 +1253,31 @@
       "description": "Autoriser tous les utilisateurs actifs à créer et exécuter des tâches Work dans des bacs à sable isolés. Les administrateurs y ont toujours accès ; les espaces de travail sur dossiers hôtes restent réservés aux administrateurs.",
       "saved": "Accès à Work mis à jour",
       "saveFailed": "Impossible de mettre à jour l'accès à Work"
+    },
+    "workPolicies": {
+      "title": "Politiques Work",
+      "description": "Préréglages d'exécution nommés (image, limites, arrêt d'inactivité) sous lesquels créer des tâches. Les champs vides héritent des valeurs globales.",
+      "add": "Ajouter une politique",
+      "name": "Nom",
+      "image": "Image",
+      "memory": "Mémoire",
+      "cpu": "CPU",
+      "pids": "Limite de PID",
+      "workspaceSize": "Taille de l'espace de travail",
+      "idleMinutes": "Arrêt d'inactivité (minutes)",
+      "networkDefault": "Réseau par défaut",
+      "networkInherit": "Hériter du défaut",
+      "networkOn": "Activé",
+      "networkOff": "Désactivé",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "edit": "Modifier la politique",
+      "delete": "Supprimer la politique",
+      "deleteConfirm": "Supprimer cette politique ? Les tâches qui l'utilisent reviennent aux valeurs globales.",
+      "empty": "Aucune politique pour l'instant. Les tâches utilisent les valeurs d'exécution globales.",
+      "saved": "Politique Work enregistrée",
+      "deleted": "Politique Work supprimée",
+      "failed": "Impossible d'enregistrer la politique Work"
     }
   },
   "chatHistory": {
@@ -1804,6 +1829,10 @@
       "unavailable": "Le terminal interactif n’est pas disponible dans ce déploiement.",
       "blockedByRun": "Le modèle utilise ce conteneur. Le terminal s’ouvrira à la fin du tour.",
       "taskRunning": "Tour du modèle en cours"
+    },
+    "policy": {
+      "label": "Politique d'exécution",
+      "default": "Par défaut (limites globales)"
     }
   },
   "personaBackground": {

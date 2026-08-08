@@ -29,6 +29,8 @@ import type {
   WorkGitDiff,
   WorkGitStatus,
   WorkMessagePage,
+  WorkPolicy,
+  WorkPolicyInput,
   WorkTask,
   WorkTaskSummary,
 } from '@/types/work';
@@ -52,6 +54,27 @@ export const workApi = {
 
   adminOverview: (): Promise<ApiResponse<WorkAdminOverview>> =>
     api.get('/work/admin/overview').then(response => response.data),
+
+  listPolicies: (): Promise<ApiResponse<WorkPolicy[]>> =>
+    api.get('/work/policies').then(response => response.data),
+
+  createPolicy: (input: WorkPolicyInput): Promise<ApiResponse<WorkPolicy>> =>
+    api.post('/work/policies', input).then(response => response.data),
+
+  updatePolicy: (
+    policyId: string,
+    input: WorkPolicyInput
+  ): Promise<ApiResponse<WorkPolicy>> =>
+    api
+      .put(`/work/policies/${encodeURIComponent(policyId)}`, input)
+      .then(response => response.data),
+
+  deletePolicy: (
+    policyId: string
+  ): Promise<ApiResponse<{ id: string; deleted: true }>> =>
+    api
+      .delete(`/work/policies/${encodeURIComponent(policyId)}`)
+      .then(response => response.data),
 
   capabilities: (): Promise<ApiResponse<WorkCapabilities>> =>
     api.get('/work/capabilities').then(response => response.data),

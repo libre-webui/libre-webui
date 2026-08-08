@@ -38,6 +38,9 @@ import workEventService, {
   WORK_EVENT_MAX_RESUME_CURSOR,
 } from '../services/workEventService.js';
 import workModelProviderService from '../services/workModelProviderService.js';
+import workPolicyService, {
+  type WorkPolicyRecord,
+} from '../services/workPolicyService.js';
 import workRuntimeService from '../services/workRuntimeService.js';
 import workTerminalService from '../services/workTerminalService.js';
 import workHostWorkspaceService, {
@@ -210,6 +213,75 @@ router.get(
   }
 );
 
+// Named runtime policies. Reading is open to every Work user (the picker at
+// task creation needs the list); mutations are admin-only. Registered before
+// the fail-closed gate: policies are configuration, not runtime mutations.
+router.get(
+  '/policies',
+  (
+    _req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkPolicyRecord[]>>
+  ): void => {
+    try {
+      sendSuccess(res, workPolicyService.list());
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.post(
+  '/policies',
+  requireAdmin,
+  (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkPolicyRecord>>
+  ): void => {
+    try {
+      res
+        .status(201)
+        .json({ success: true, data: workPolicyService.create(req.body) });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.put(
+  '/policies/:id',
+  requireAdmin,
+  (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkPolicyRecord>>
+  ): void => {
+    try {
+      sendSuccess(
+        res,
+        workPolicyService.update(String(req.params.id || ''), req.body)
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.delete(
+  '/policies/:id',
+  requireAdmin,
+  (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ id: string; deleted: true }>>
+  ): void => {
+    try {
+      const id = String(req.params.id || '');
+      workPolicyService.remove(id);
+      sendSuccess(res, { id, deleted: true });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
 // Registered before the fail-closed gate below: the overview is exactly
 // what an administrator needs while Work is blocked on recovery.
 router.get(
@@ -309,6 +381,18 @@ router.post(
       const hostPath = requestedHostPath
         ? workHostWorkspaceService.resolveWorkspacePath(requestedHostPath)
         : undefined;
+      const requestedPolicyId =
+        typeof req.body?.policyId === 'string' ? req.body.policyId.trim() : '';
+      let policy: WorkPolicyRecord | undefined;
+      if (requestedPolicyId) {
+        policy = workPolicyService.get(requestedPolicyId);
+        if (!policy) {
+          throw new WorkRouteError(
+            'The selected Work policy no longer exists.',
+            400
+          );
+        }
+      }
       await workModelProviderService.assertModelSupportsTools(
         model,
         provider,
@@ -318,9 +402,10 @@ router.post(
         userId,
         message,
         model,
-        true,
+        policy?.networkDefault ?? true,
         provider,
-        hostPath
+        hostPath,
+        policy?.id
       );
       const runId = detail.activeRun?.id;
       if (!runId) {

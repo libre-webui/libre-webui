@@ -1253,6 +1253,31 @@
       "description": "Tüm etkin kullanıcıların yalıtılmış korumalı alanlarda Work görevleri oluşturmasına ve çalıştırmasına izin verin. Yöneticiler her zaman erişebilir; ana makine klasörü çalışma alanları yalnızca yöneticilere açıktır.",
       "saved": "Work erişimi güncellendi",
       "saveFailed": "Work erişimi güncellenemedi"
+    },
+    "workPolicies": {
+      "title": "Work ilkeleri",
+      "description": "Görevlerin altında oluşturulabileceği adlandırılmış çalışma zamanı ön ayarları (imaj, sınırlar, boşta durdurma). Boş alanlar genel varsayılanları devralır.",
+      "add": "İlke ekle",
+      "name": "Ad",
+      "image": "İmaj",
+      "memory": "Bellek",
+      "cpu": "CPU",
+      "pids": "PID sınırı",
+      "workspaceSize": "Çalışma alanı boyutu",
+      "idleMinutes": "Boşta durdurma (dakika)",
+      "networkDefault": "Ağ varsayılanı",
+      "networkInherit": "Varsayılanı devral",
+      "networkOn": "Etkin",
+      "networkOff": "Devre dışı",
+      "save": "Kaydet",
+      "cancel": "İptal",
+      "edit": "İlkeyi düzenle",
+      "delete": "İlkeyi sil",
+      "deleteConfirm": "Bu ilke silinsin mi? Onu kullanan görevler genel varsayılanlara döner.",
+      "empty": "Henüz ilke yok. Görevler genel çalışma zamanı varsayılanlarını kullanır.",
+      "saved": "Work ilkesi kaydedildi",
+      "deleted": "Work ilkesi silindi",
+      "failed": "Work ilkesi kaydedilemedi"
     }
   },
   "chatHistory": {
@@ -1836,6 +1861,10 @@
       "unavailable": "Etkileşimli terminal bu kurulumda kullanılamıyor.",
       "blockedByRun": "Model bu kapsayıcıyı kullanıyor. Tur bitince terminal açılır.",
       "taskRunning": "Model turu sürüyor"
+    },
+    "policy": {
+      "label": "Çalışma zamanı ilkesi",
+      "default": "Varsayılan (genel sınırlar)"
     }
   },
   "usageAnalytics": {

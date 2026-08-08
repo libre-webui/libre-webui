@@ -1253,6 +1253,31 @@
       "description": "Zezwól wszystkim aktywnym użytkownikom na tworzenie i uruchamianie zadań Work w izolowanych piaskownicach. Administratorzy zawsze mają dostęp; przestrzenie robocze w folderach hosta pozostają tylko dla administratorów.",
       "saved": "Zaktualizowano dostęp do Work",
       "saveFailed": "Nie udało się zaktualizować dostępu do Work"
+    },
+    "workPolicies": {
+      "title": "Polityki Work",
+      "description": "Nazwane presety środowiska (obraz, limity, zatrzymanie przy bezczynności), pod którymi można tworzyć zadania. Puste pola dziedziczą globalne wartości.",
+      "add": "Dodaj politykę",
+      "name": "Nazwa",
+      "image": "Obraz",
+      "memory": "Pamięć",
+      "cpu": "CPU",
+      "pids": "Limit PID",
+      "workspaceSize": "Rozmiar przestrzeni roboczej",
+      "idleMinutes": "Zatrzymanie przy bezczynności (minuty)",
+      "networkDefault": "Domyślna sieć",
+      "networkInherit": "Dziedzicz domyślne",
+      "networkOn": "Włączona",
+      "networkOff": "Wyłączona",
+      "save": "Zapisz",
+      "cancel": "Anuluj",
+      "edit": "Edytuj politykę",
+      "delete": "Usuń politykę",
+      "deleteConfirm": "Usunąć tę politykę? Zadania z niej korzystające wrócą do globalnych wartości.",
+      "empty": "Brak polityk. Zadania używają globalnych ustawień środowiska.",
+      "saved": "Polityka Work zapisana",
+      "deleted": "Polityka Work usunięta",
+      "failed": "Nie udało się zapisać polityki Work"
     }
   },
   "chatHistory": {
@@ -1836,6 +1861,10 @@
       "unavailable": "Terminal interaktywny nie jest dostępny w tym wdrożeniu.",
       "blockedByRun": "Model używa tego kontenera. Terminal otworzy się po zakończeniu tury.",
       "taskRunning": "Trwa tura modelu"
+    },
+    "policy": {
+      "label": "Polityka środowiska",
+      "default": "Domyślna (limity globalne)"
     }
   },
   "usageAnalytics": {

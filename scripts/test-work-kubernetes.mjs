@@ -51,7 +51,14 @@ const task = {
 };
 
 test('sandbox Pods carry the full non-root, least-privilege policy', () => {
-  const pod = buildWorkPodManifest(task, 'example.invalid/work@sha256:test');
+  const pod = buildWorkPodManifest(task, {
+    policyId: null,
+    image: 'example.invalid/work@sha256:test',
+    memoryLimit: '2g',
+    cpuLimit: '2',
+    pidsLimit: 256,
+    idleTimeoutMs: 0,
+  });
 
   assert.equal(pod.metadata.name, task.containerName);
   assert.equal(pod.metadata.labels['ai.libre-webui.managed'], 'true');

@@ -19,6 +19,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserManager } from '@/components/UserManager';
 import { WorkAccessSettings } from '@/components/WorkAccessSettings';
+import { WorkPoliciesSettings } from '@/components/WorkPoliciesSettings';
 import { PageHeader, PageShell } from '@/components/ui';
 
 export const UserManagementPage: React.FC = () => {
@@ -30,8 +31,9 @@ export const UserManagementPage: React.FC = () => {
         title={t('userManager.title')}
         description={t('userManager.pageDescription')}
       />
-      <div className='mb-4'>
+      <div className='mb-4 space-y-4'>
         <WorkAccessSettings />
+        <WorkPoliciesSettings />
       </div>
       <UserManager />
     </PageShell>

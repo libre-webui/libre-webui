@@ -1253,6 +1253,31 @@
       "description": "Izinkan semua pengguna aktif membuat dan menjalankan tugas Work di sandbox terisolasi. Administrator selalu punya akses; ruang kerja folder host tetap khusus administrator.",
       "saved": "Akses Work diperbarui",
       "saveFailed": "Tidak dapat memperbarui akses Work"
+    },
+    "workPolicies": {
+      "title": "Kebijakan Work",
+      "description": "Preset runtime bernama (image, batas, henti saat idle) untuk membuat tugas. Bidang kosong mewarisi bawaan global.",
+      "add": "Tambah kebijakan",
+      "name": "Nama",
+      "image": "Image",
+      "memory": "Memori",
+      "cpu": "CPU",
+      "pids": "Batas PID",
+      "workspaceSize": "Ukuran ruang kerja",
+      "idleMinutes": "Henti saat idle (menit)",
+      "networkDefault": "Jaringan bawaan",
+      "networkInherit": "Warisi bawaan",
+      "networkOn": "Aktif",
+      "networkOff": "Nonaktif",
+      "save": "Simpan",
+      "cancel": "Batal",
+      "edit": "Edit kebijakan",
+      "delete": "Hapus kebijakan",
+      "deleteConfirm": "Hapus kebijakan ini? Tugas yang memakainya kembali ke bawaan global.",
+      "empty": "Belum ada kebijakan. Tugas memakai bawaan runtime global.",
+      "saved": "Kebijakan Work disimpan",
+      "deleted": "Kebijakan Work dihapus",
+      "failed": "Tidak dapat menyimpan kebijakan Work"
     }
   },
   "chatHistory": {
@@ -1836,6 +1861,10 @@
       "unavailable": "Terminal interaktif tidak tersedia pada penerapan ini.",
       "blockedByRun": "Model sedang memakai kontainer ini. Terminal terbuka setelah giliran selesai.",
       "taskRunning": "Giliran model berlangsung"
+    },
+    "policy": {
+      "label": "Kebijakan runtime",
+      "default": "Bawaan (batas global)"
     }
   },
   "usageAnalytics": {

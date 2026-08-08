@@ -1253,6 +1253,31 @@
       "description": "Consenti a tutti gli utenti attivi di creare ed eseguire attività Work in sandbox isolate. Gli amministratori hanno sempre accesso; gli spazi di lavoro su cartelle host restano riservati agli amministratori.",
       "saved": "Accesso a Work aggiornato",
       "saveFailed": "Impossibile aggiornare l'accesso a Work"
+    },
+    "workPolicies": {
+      "title": "Politiche Work",
+      "description": "Preset di esecuzione con nome (immagine, limiti, arresto per inattività) con cui creare attività. I campi vuoti ereditano i valori globali.",
+      "add": "Aggiungi politica",
+      "name": "Nome",
+      "image": "Immagine",
+      "memory": "Memoria",
+      "cpu": "CPU",
+      "pids": "Limite PID",
+      "workspaceSize": "Dimensione spazio di lavoro",
+      "idleMinutes": "Arresto per inattività (minuti)",
+      "networkDefault": "Rete predefinita",
+      "networkInherit": "Eredita predefinito",
+      "networkOn": "Attivata",
+      "networkOff": "Disattivata",
+      "save": "Salva",
+      "cancel": "Annulla",
+      "edit": "Modifica politica",
+      "delete": "Elimina politica",
+      "deleteConfirm": "Eliminare questa politica? Le attività che la usano tornano ai valori globali.",
+      "empty": "Ancora nessuna politica. Le attività usano i valori di esecuzione globali.",
+      "saved": "Politica Work salvata",
+      "deleted": "Politica Work eliminata",
+      "failed": "Impossibile salvare la politica Work"
     }
   },
   "chatHistory": {
@@ -1836,6 +1861,10 @@
       "unavailable": "Il terminale interattivo non è disponibile in questa installazione.",
       "blockedByRun": "Il modello sta usando questo container. Il terminale si apre a fine turno.",
       "taskRunning": "Turno del modello in corso"
+    },
+    "policy": {
+      "label": "Politica di esecuzione",
+      "default": "Predefinita (limiti globali)"
     }
   },
   "usageAnalytics": {

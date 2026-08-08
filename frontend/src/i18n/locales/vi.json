@@ -1253,6 +1253,31 @@
       "description": "Cho phép mọi người dùng đang hoạt động tạo và chạy tác vụ Work trong các sandbox cô lập. Quản trị viên luôn có quyền truy cập; không gian làm việc thư mục máy chủ vẫn chỉ dành cho quản trị viên.",
       "saved": "Đã cập nhật quyền truy cập Work",
       "saveFailed": "Không thể cập nhật quyền truy cập Work"
+    },
+    "workPolicies": {
+      "title": "Chính sách Work",
+      "description": "Các preset runtime có tên (image, giới hạn, dừng khi rảnh) để tạo tác vụ. Trường trống kế thừa mặc định toàn cục.",
+      "add": "Thêm chính sách",
+      "name": "Tên",
+      "image": "Image",
+      "memory": "Bộ nhớ",
+      "cpu": "CPU",
+      "pids": "Giới hạn PID",
+      "workspaceSize": "Kích thước không gian làm việc",
+      "idleMinutes": "Dừng khi rảnh (phút)",
+      "networkDefault": "Mạng mặc định",
+      "networkInherit": "Kế thừa mặc định",
+      "networkOn": "Bật",
+      "networkOff": "Tắt",
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "edit": "Sửa chính sách",
+      "delete": "Xóa chính sách",
+      "deleteConfirm": "Xóa chính sách này? Các tác vụ đang dùng sẽ quay về mặc định toàn cục.",
+      "empty": "Chưa có chính sách nào. Tác vụ dùng mặc định runtime toàn cục.",
+      "saved": "Đã lưu chính sách Work",
+      "deleted": "Đã xóa chính sách Work",
+      "failed": "Không thể lưu chính sách Work"
     }
   },
   "chatHistory": {
@@ -1836,6 +1861,10 @@
       "unavailable": "Terminal tương tác không khả dụng trong bản triển khai này.",
       "blockedByRun": "Mô hình đang dùng vùng chứa này. Terminal sẽ mở khi lượt kết thúc.",
       "taskRunning": "Lượt của mô hình đang chạy"
+    },
+    "policy": {
+      "label": "Chính sách runtime",
+      "default": "Mặc định (giới hạn toàn cục)"
     }
   },
   "usageAnalytics": {

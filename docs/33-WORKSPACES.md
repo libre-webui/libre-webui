@@ -529,6 +529,16 @@ idle container, commands stop the container after completion, and a verified
 preview may keep it running so the user can inspect the app. The named volume
 stays mounted again when the same task container is restarted or recreated.
 
+Administrators can define **named runtime policies** from the User
+Management page: presets combining a runtime image, memory/CPU/PID limits,
+a workspace size (Kubernetes), an idle timeout, and a network default. A
+task created under a policy runs with that configuration; every field a
+policy leaves empty inherits the deployment's global values, and deleting
+a policy returns its tasks to those globals on their next container
+recreation. Policies adjust resources only — the hardening profile
+(non-root, read-only rootfs, dropped capabilities, network isolation) is
+not a policy field and cannot be weakened per policy.
+
 `WORK_RUNTIME_IDLE_TIMEOUT_MS` bounds how long that preview grace lasts:
 when set, a sweep stops any sandbox that has seen no activity — no command
 finished, no terminal attached, no preview request through the signed

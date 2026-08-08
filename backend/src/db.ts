@@ -544,7 +544,37 @@ function initializeTables(): void {
       WHERE status IN ('queued', 'preparing', 'running');
     CREATE INDEX IF NOT EXISTS idx_work_messages_task_index
       ON work_messages(task_id, message_index);
+
+    -- Named Work runtime policies. Every column except the name is optional:
+    -- a null field falls back to the deployment's global runtime config, so a
+    -- policy only has to state what it changes.
+    CREATE TABLE IF NOT EXISTS work_policies (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      image TEXT,
+      memory_limit TEXT,
+      cpu_limit TEXT,
+      pids_limit INTEGER,
+      network_default INTEGER,
+      workspace_size TEXT,
+      idle_timeout_ms INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
   `);
+
+  // Tasks may reference a named policy; null means the global defaults.
+  // (SQLite cannot add a foreign key via ALTER TABLE; deleting a policy
+  // clears the reference in code, which is the SET NULL semantic.)
+  {
+    const workTaskColumns = db
+      .prepare('PRAGMA table_info(work_tasks)')
+      .all() as Array<{ name: string }>;
+    if (!workTaskColumns.some(column => column.name === 'policy_id')) {
+      logger.debug('Adding column policy_id to work_tasks table');
+      db.exec('ALTER TABLE work_tasks ADD COLUMN policy_id TEXT');
+    }
+  }
 
   // Create indexes for better performance
   db.exec(`

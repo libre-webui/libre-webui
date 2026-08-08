@@ -111,21 +111,63 @@ export const workRuntimeConfig = {
   dnsServers: parseDnsServers(process.env.WORK_RUNTIME_DNS),
 };
 
-export const runtimePolicyFingerprint = createHash('sha256')
-  .update(
-    JSON.stringify({
-      version: 2,
-      memoryLimit: workRuntimeConfig.memoryLimit,
-      cpuLimit: workRuntimeConfig.cpuLimit,
-      pidsLimit: workRuntimeConfig.pidsLimit,
-      previewPort: workRuntimeConfig.previewPort,
-      previewBind: workRuntimeConfig.previewBind,
-      networkName: workRuntimeConfig.networkName,
-      dnsServers: workRuntimeConfig.dnsServers,
-      memorySwapPinned: true,
-    })
-  )
-  .digest('hex');
+/**
+ * The runtime configuration one task's sandbox is actually built with: the
+ * global config, with a named policy's overrides applied. `workspaceSize`
+ * stays optional because its fallback belongs to the Kubernetes driver.
+ */
+export interface ResolvedWorkRuntimePolicy {
+  policyId: string | null;
+  image: string;
+  memoryLimit: string;
+  cpuLimit: string;
+  pidsLimit: number;
+  idleTimeoutMs: number;
+  workspaceSize?: string;
+}
+
+/** The resolution of "no policy": exactly the global configuration. */
+export const defaultRuntimePolicy: ResolvedWorkRuntimePolicy = {
+  policyId: null,
+  image: workRuntimeConfig.image,
+  memoryLimit: workRuntimeConfig.memoryLimit,
+  cpuLimit: workRuntimeConfig.cpuLimit,
+  pidsLimit: workRuntimeConfig.pidsLimit,
+  idleTimeoutMs: workRuntimeConfig.idleTimeoutMs,
+};
+
+/**
+ * Fingerprint of the isolation-relevant configuration a sandbox was created
+ * with; a mismatch at ensure time recreates the sandbox. Computed per task
+ * from its resolved policy. The payload shape (and therefore the digest for
+ * a task without a policy) is unchanged from the pre-policy global
+ * fingerprint, so existing sandboxes are not recreated by the upgrade.
+ */
+export function computePolicyFingerprint(
+  policy: Pick<
+    ResolvedWorkRuntimePolicy,
+    'memoryLimit' | 'cpuLimit' | 'pidsLimit'
+  >
+): string {
+  return createHash('sha256')
+    .update(
+      JSON.stringify({
+        version: 2,
+        memoryLimit: policy.memoryLimit,
+        cpuLimit: policy.cpuLimit,
+        pidsLimit: policy.pidsLimit,
+        previewPort: workRuntimeConfig.previewPort,
+        previewBind: workRuntimeConfig.previewBind,
+        networkName: workRuntimeConfig.networkName,
+        dnsServers: workRuntimeConfig.dnsServers,
+        memorySwapPinned: true,
+      })
+    )
+    .digest('hex');
+}
+
+export const runtimePolicyFingerprint =
+  computePolicyFingerprint(workRuntimeConfig);
 
 export interface WorkCommandResult {
   exitCode: number;

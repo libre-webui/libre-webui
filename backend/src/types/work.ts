@@ -98,6 +98,8 @@ export interface WorkTaskDetail {
   workspacePath: '/workspace';
   /** Host folder mounted at /workspace, when this task is bound to one. */
   hostPath?: string;
+  /** Named runtime policy this task runs under; absent = global defaults. */
+  policyId?: string;
 }
 
 export type WorkLiveEventType =
@@ -324,6 +326,8 @@ export interface WorkTaskRecord {
   containerName: string;
   /** Host folder bound to /workspace, when this task uses one. */
   hostPath?: string;
+  /** Named runtime policy this task runs under; absent = global defaults. */
+  policyId?: string;
   previewUrl?: string;
   previewStatus: WorkPreviewStatus;
   createdAt: number;

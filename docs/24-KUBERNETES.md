@@ -24,7 +24,8 @@ This switches the backend to `WORK_RUNTIME_BACKEND=kubernetes` and creates:
 - a dedicated sandbox namespace (`work.namespace`, default
   `libre-webui-work`) holding one Pod per running sandbox and one
   PersistentVolumeClaim per task workspace (`work.workspaceSize`, default
-  `5Gi` — a real per-task disk quota);
+  `5Gi` — a real per-task disk quota; a named Work policy can set a
+  different size for the tasks created under it);
 - a namespace-scoped Role and RoleBinding granting the backend's
   ServiceAccount exactly `pods` (get/list/create/delete), `pods/exec`
   (get/create), and `persistentvolumeclaims` (get/list/create/delete) in

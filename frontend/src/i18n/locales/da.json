@@ -1253,6 +1253,31 @@
       "description": "Tillad alle aktive brugere at oprette og køre Work-opgaver i isolerede sandkasser. Administratorer har altid adgang; værtsmappe-arbejdsområder er fortsat kun for administratorer.",
       "saved": "Work-adgang opdateret",
       "saveFailed": "Work-adgang kunne ikke opdateres"
+    },
+    "workPolicies": {
+      "title": "Work-politikker",
+      "description": "Navngivne kørselsforudindstillinger (image, grænser, tomgangsstop), som opgaver kan oprettes under. Tomme felter arver de globale standarder.",
+      "add": "Tilføj politik",
+      "name": "Navn",
+      "image": "Image",
+      "memory": "Hukommelse",
+      "cpu": "CPU'er",
+      "pids": "PID-grænse",
+      "workspaceSize": "Arbejdsområdestørrelse",
+      "idleMinutes": "Tomgangsstop (minutter)",
+      "networkDefault": "Netværksstandard",
+      "networkInherit": "Arv standard",
+      "networkOn": "Aktiveret",
+      "networkOff": "Deaktiveret",
+      "save": "Gem",
+      "cancel": "Annuller",
+      "edit": "Rediger politik",
+      "delete": "Slet politik",
+      "deleteConfirm": "Slet denne politik? Opgaver, der bruger den, falder tilbage til de globale standarder.",
+      "empty": "Ingen politikker endnu. Opgaver bruger de globale kørselsstandarder.",
+      "saved": "Work-politik gemt",
+      "deleted": "Work-politik slettet",
+      "failed": "Work-politikken kunne ikke gemmes"
     }
   },
   "chatHistory": {
@@ -1836,6 +1861,10 @@
       "unavailable": "Den interaktive terminal er ikke tilgængelig i denne installation.",
       "blockedByRun": "Modellen bruger denne container. Terminalen åbner, når turen er færdig.",
       "taskRunning": "Modeltur i gang"
+    },
+    "policy": {
+      "label": "Kørselspolitik",
+      "default": "Standard (globale grænser)"
     }
   },
   "usageAnalytics": {

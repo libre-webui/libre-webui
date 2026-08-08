@@ -26,11 +26,14 @@ import type {
   WorkRuntimeState,
   WorkTerminalTransport,
 } from './workRuntimeDriver.js';
+import workPolicyService from './workPolicyService.js';
 import {
   ProcessResult,
+  ResolvedWorkRuntimePolicy,
   WorkRuntimeError,
+  computePolicyFingerprint,
+  defaultRuntimePolicy,
   positiveInteger,
-  runtimePolicyFingerprint,
   workRuntimeConfig as config,
 } from './workRuntimeShared.js';
 
@@ -166,20 +169,26 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     // user on mount; no chown init step is needed.
     await core.createNamespacedPersistentVolumeClaim({
       namespace: this.namespace,
-      body: buildWorkspaceClaimManifest(task),
+      body: buildWorkspaceClaimManifest(
+        task,
+        workPolicyService.resolve(task.policyId).workspaceSize
+      ),
     });
   }
 
   async ensureRuntime(task: WorkTaskRecord): Promise<void> {
     assertNoHostWorkspace(task);
+    const policy = workPolicyService.resolve(task.policyId);
     const { core } = await this.client();
     const existing = await this.readPod(task.containerName);
     if (existing) {
       assertOwnedRuntime(existing.metadata?.labels, task);
       const phase = existing.status?.phase ?? '';
-      const policy = existing.metadata?.annotations?.[POLICY_ANNOTATION];
+      const fingerprint = existing.metadata?.annotations?.[POLICY_ANNOTATION];
       const image = existing.spec?.containers?.[0]?.image;
-      const stale = policy !== runtimePolicyFingerprint || image !== this.image;
+      const stale =
+        fingerprint !== computePolicyFingerprint(policy) ||
+        image !== policy.image;
       const finished = phase === 'Succeeded' || phase === 'Failed';
       if (stale || finished) {
         if (stale) {
@@ -195,7 +204,7 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     }
     await core.createNamespacedPod({
       namespace: this.namespace,
-      body: buildWorkPodManifest(task, this.image),
+      body: buildWorkPodManifest(task, policy),
     });
     await this.waitForPodRunning(task.containerName);
   }
@@ -567,7 +576,8 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
 }
 
 export function buildWorkspaceClaimManifest(
-  task: WorkTaskRecord
+  task: WorkTaskRecord,
+  workspaceSize?: string
 ): import('@kubernetes/client-node').V1PersistentVolumeClaim {
   return {
     metadata: {
@@ -579,7 +589,9 @@ export function buildWorkspaceClaimManifest(
     },
     spec: {
       accessModes: ['ReadWriteOnce'],
-      resources: { requests: { storage: k8sConfig.workspaceSize } },
+      resources: {
+        requests: { storage: workspaceSize ?? k8sConfig.workspaceSize },
+      },
       ...(k8sConfig.storageClass
         ? { storageClassName: k8sConfig.storageClass }
         : {}),
@@ -589,7 +601,7 @@ export function buildWorkspaceClaimManifest(
 
 export function buildWorkPodManifest(
   task: WorkTaskRecord,
-  image = config.image
+  policy: ResolvedWorkRuntimePolicy = defaultRuntimePolicy
 ): import('@kubernetes/client-node').V1Pod {
   assertNoHostWorkspace(task);
   return {
@@ -605,7 +617,7 @@ export function buildWorkPodManifest(
       },
       // The fingerprint is a 64-char sha256 hex digest — too long for a
       // label value, so it rides as an annotation.
-      annotations: { [POLICY_ANNOTATION]: runtimePolicyFingerprint },
+      annotations: { [POLICY_ANNOTATION]: computePolicyFingerprint(policy) },
     },
     spec: {
       restartPolicy: 'Never',
@@ -622,7 +634,7 @@ export function buildWorkPodManifest(
       containers: [
         {
           name: WORK_CONTAINER_NAME,
-          image,
+          image: policy.image,
           command: ['tail', '-f', '/dev/null'],
           workingDir: '/workspace',
           env: [
@@ -636,8 +648,8 @@ export function buildWorkPodManifest(
           },
           resources: {
             limits: {
-              memory: dockerMemoryToKubernetes(config.memoryLimit),
-              cpu: dockerCpusToKubernetes(config.cpuLimit),
+              memory: dockerMemoryToKubernetes(policy.memoryLimit),
+              cpu: dockerCpusToKubernetes(policy.cpuLimit),
             },
           },
           volumeMounts: [
