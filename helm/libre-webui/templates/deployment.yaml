@@ -74,6 +74,26 @@ spec:
               value: {{ .Values.env.VITE_API_TIMEOUT | quote }}
             - name: DATA_DIR
               value: {{ .Values.env.DATA_DIR | quote }}
+            {{- if .Values.work.enabled }}
+            - name: WORK_RUNTIME_BACKEND
+              value: 'kubernetes'
+            - name: WORK_K8S_NAMESPACE
+              value: {{ .Values.work.namespace | quote }}
+            - name: WORK_K8S_WORKSPACE_SIZE
+              value: {{ .Values.work.workspaceSize | quote }}
+            {{- if .Values.work.storageClass }}
+            - name: WORK_K8S_STORAGE_CLASS
+              value: {{ .Values.work.storageClass | quote }}
+            {{- end }}
+            {{- if .Values.work.runtimeImage }}
+            - name: WORK_RUNTIME_IMAGE
+              value: {{ .Values.work.runtimeImage | quote }}
+            {{- end }}
+            {{- range $name, $value := .Values.work.env }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
             {{- if .Values.secrets.jwtSecret }}
             - name: JWT_SECRET
               valueFrom:

@@ -108,10 +108,13 @@ administrators because these operations change host resources.
 
 ### Work Access
 
-Work is restricted to administrators because it lets a selected model execute
-arbitrary commands inside a managed container. Treat every administrator with
-Work access as a trusted runtime operator, not only as a WebUI settings
-administrator.
+Work is restricted to administrators by default because it lets a selected
+model execute arbitrary commands inside a managed container. An administrator
+can open Work to all active users from the User Management page; the setting
+persists across restarts and takes effect immediately, including for open
+terminal sessions. Host-folder workspaces remain admin-only in every mode
+because they bind-mount server paths. Treat everyone granted Work access as
+a trusted runtime operator, not only as a WebUI user.
 
 Admin authorization is checked against the current database role rather than
 only the role cached in an existing JWT. Demoting an administrator therefore
@@ -212,8 +215,8 @@ Demo mode is a frontend preview mode. It pre-fills disabled demo credentials and
 - Use HTTPS for public deployments.
 - Restrict provider API keys to the minimum scope needed.
 - Keep OAuth callback URLs exact.
-- Grant Work-capable administrator accounts only to people trusted to operate
-  the backend's container runtime.
+- Grant Work access (administrator accounts, or the open-to-all-users mode)
+  only to people trusted to operate the backend's container runtime.
 
 ## Related Docs
 

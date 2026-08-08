@@ -50,6 +50,7 @@ import {
   workModelSelectionKey,
   type WorkFile,
   type WorkModelOption,
+  type WorkPolicy,
   type WorkRunEvent,
   type WorkTask,
 } from '@/types/work';
@@ -200,6 +201,24 @@ export default function WorkPage() {
   const [hostPath, setHostPath] = useState('');
   const hostWorkspacesEnabled = capabilities?.hostWorkspaces?.enabled === true;
   const hostWorkspaceRoots = capabilities?.hostWorkspaces?.roots ?? [];
+  // Named runtime policies an administrator has defined; an empty list
+  // (the common case) renders no picker at all.
+  const [policies, setPolicies] = useState<WorkPolicy[]>([]);
+  const [policyId, setPolicyId] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    workApi
+      .listPolicies()
+      .then(response => {
+        if (!cancelled && response.success && response.data) {
+          setPolicies(response.data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [taskActionsState, setTaskActionsState] = useState<{
     taskId: string | null;
     open: boolean;
@@ -599,6 +618,7 @@ export default function WorkPage() {
           ...(hostWorkspacesEnabled && hostPath.trim()
             ? { hostPath: hostPath.trim() }
             : {}),
+          ...(policyId ? { policyId } : {}),
         });
         navigate(`/work/${task.id}`);
       }
@@ -1184,6 +1204,36 @@ export default function WorkPage() {
                   })}
                 </p>
               </div>
+              {policies.length > 0 && (
+                <div className='mt-8 w-full max-w-2xl'>
+                  <label
+                    htmlFor='work-policy'
+                    className='mb-1.5 block text-xs font-medium text-ink-muted'
+                  >
+                    {t('work.policy.label', {
+                      defaultValue: 'Runtime policy',
+                    })}
+                  </label>
+                  <select
+                    id='work-policy'
+                    data-testid='work-policy'
+                    value={policyId}
+                    onChange={event => setPolicyId(event.target.value)}
+                    className='w-full rounded-xl border border-line bg-surface px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                  >
+                    <option value=''>
+                      {t('work.policy.default', {
+                        defaultValue: 'Default (global limits)',
+                      })}
+                    </option>
+                    {policies.map(policy => (
+                      <option key={policy.id} value={policy.id}>
+                        {policy.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               {hostWorkspacesEnabled && (
                 <div className='mt-8 w-full max-w-2xl'>
                   <label

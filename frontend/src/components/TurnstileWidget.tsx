@@ -31,6 +31,8 @@ interface TurnstileApi {
     options: {
       sitekey: string;
       theme: 'auto';
+      /** Fill the container's width instead of the fixed 300px card. */
+      size: 'flexible';
       action: string;
       callback: (token: string) => void;
       'expired-callback': () => void;
@@ -115,6 +117,7 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
         widgetIdRef.current = window.turnstile.render(container, {
           sitekey: siteKey,
           theme: 'auto',
+          size: 'flexible',
           action,
           callback: token => onTokenChange(token),
           'expired-callback': () => onTokenChange(''),

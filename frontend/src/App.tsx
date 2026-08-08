@@ -349,8 +349,7 @@ const AppContent: React.FC = () => {
       metaKey: true,
       shiftKey: true,
       action: () => {
-        const { systemInfo: info, isAdmin } = useAuthStore.getState();
-        if (info?.requiresAuth === false || isAdmin()) {
+        if (useAuthStore.getState().canUseWork()) {
           startNewWork(navigate);
         }
       },
@@ -518,7 +517,7 @@ const AppContent: React.FC = () => {
             <Route
               path='/work'
               element={
-                <ProtectedRoute requireAdmin={true}>
+                <ProtectedRoute requireWork={true}>
                   <WorkPage />
                 </ProtectedRoute>
               }
@@ -526,7 +525,7 @@ const AppContent: React.FC = () => {
             <Route
               path='/work/:taskId'
               element={
-                <ProtectedRoute requireAdmin={true}>
+                <ProtectedRoute requireWork={true}>
                   <WorkPage />
                 </ProtectedRoute>
               }
@@ -585,7 +584,7 @@ const AppContent: React.FC = () => {
                     <Route
                       path='/work'
                       element={
-                        <ProtectedRoute requireAdmin={true}>
+                        <ProtectedRoute requireWork={true}>
                           <WorkPage />
                         </ProtectedRoute>
                       }
@@ -593,7 +592,7 @@ const AppContent: React.FC = () => {
                     <Route
                       path='/work/:taskId'
                       element={
-                        <ProtectedRoute requireAdmin={true}>
+                        <ProtectedRoute requireWork={true}>
                           <WorkPage />
                         </ProtectedRoute>
                       }

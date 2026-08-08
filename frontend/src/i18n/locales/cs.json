@@ -1247,6 +1247,37 @@
       "failed": "Účet nebylo možné schválit.",
       "notification": "{{count}} registrací čeká na vaše schválení.",
       "notificationBadge": "{{count}} nevyřízených schválení uživatelů"
+    },
+    "workAccess": {
+      "title": "Přístup k Work",
+      "description": "Povolit všem aktivním uživatelům vytvářet a spouštět úlohy Work v izolovaných sandboxech. Administrátoři mají přístup vždy; pracovní prostory v hostitelských složkách zůstávají jen pro administrátory.",
+      "saved": "Přístup k Work byl aktualizován",
+      "saveFailed": "Přístup k Work se nepodařilo aktualizovat"
+    },
+    "workPolicies": {
+      "title": "Politiky Work",
+      "description": "Pojmenované běhové předvolby (image, limity, zastavení při nečinnosti), pod kterými lze úlohy vytvářet. Prázdná pole dědí globální výchozí hodnoty.",
+      "add": "Přidat politiku",
+      "name": "Název",
+      "image": "Image",
+      "memory": "Paměť",
+      "cpu": "CPU",
+      "pids": "Limit PID",
+      "workspaceSize": "Velikost pracovního prostoru",
+      "idleMinutes": "Zastavení při nečinnosti (minuty)",
+      "networkDefault": "Výchozí síť",
+      "networkInherit": "Dědit výchozí",
+      "networkOn": "Zapnuto",
+      "networkOff": "Vypnuto",
+      "save": "Uložit",
+      "cancel": "Zrušit",
+      "edit": "Upravit politiku",
+      "delete": "Smazat politiku",
+      "deleteConfirm": "Smazat tuto politiku? Úlohy, které ji používají, se vrátí ke globálním výchozím hodnotám.",
+      "empty": "Zatím žádné politiky. Úlohy používají globální výchozí hodnoty.",
+      "saved": "Politika Work uložena",
+      "deleted": "Politika Work smazána",
+      "failed": "Politiku Work se nepodařilo uložit"
     }
   },
   "chatHistory": {
@@ -1830,6 +1861,10 @@
       "unavailable": "Interaktivní terminál není v tomto nasazení dostupný.",
       "blockedByRun": "Model používá tento kontejner. Terminál se otevře po dokončení tahu.",
       "taskRunning": "Probíhá tah modelu"
+    },
+    "policy": {
+      "label": "Běhová politika",
+      "default": "Výchozí (globální limity)"
     }
   },
   "usageAnalytics": {
@@ -1974,7 +2009,30 @@
       "internal": "interní",
       "empty": "Běhovému prostředí aplikace nejsou viditelná žádná síťová rozhraní."
     },
-    "securityNote": "Tato stránka je přístupná pouze správcům. Server vrací pouze provozní shrnutí: neodhaluje proměnné prostředí, přihlašovací údaje, Docker štítky, připojené svazky, příkazy kontejnerů ani inspect payloady. Když běží Libre WebUI v kontejneru, detaily o CPU a paměti hostitele pocházejí z Docker Engine, pokud je dostupný lokální socket; ostatní hodnoty popisují běhové prostředí aplikace."
+    "securityNote": "Tato stránka je přístupná pouze správcům. Server vrací pouze provozní shrnutí: neodhaluje proměnné prostředí, přihlašovací údaje, Docker štítky, připojené svazky, příkazy kontejnerů ani inspect payloady. Když běží Libre WebUI v kontejneru, detaily o CPU a paměti hostitele pocházejí z Docker Engine, pokud je dostupný lokální socket; ostatní hodnoty popisují běhové prostředí aplikace.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxy napříč všemi uživateli",
+      "access": "Přístup",
+      "accessAdmins": "Pouze administrátoři",
+      "accessAllUsers": "Všichni uživatelé",
+      "runtimeAvailable": "Dostupné",
+      "runtimeUnavailable": "Nedostupné",
+      "activeRuntimes": "Aktivní běhová prostředí",
+      "pendingCleanups": "Čekající úklidy",
+      "orphans": "Osiřelé kontejnery",
+      "owner": "Vlastník",
+      "task": "Úloha",
+      "state": "Stav",
+      "preview": "Náhled",
+      "terminals": "Terminály",
+      "updated": "Aktualizováno",
+      "stateRunning": "Běží",
+      "stateStopped": "Zastaveno",
+      "stateStarting": "Spouští se",
+      "stateUnknown": "Neznámý",
+      "noTasks": "Zatím žádné úlohy Work."
+    }
   },
   "mediaGeneration": {
     "title": "Generovat média",

@@ -20,7 +20,14 @@ import os from 'node:os';
 import path from 'node:path';
 import { readFile, stat, statfs } from 'node:fs/promises';
 
+import {
+  dockerEndpointRequestOptions,
+  resolveDockerEndpoint,
+  type DockerEndpoint,
+} from '../utils/dockerEndpoint.js';
 import { loadAppPackage } from '../utils/packagePaths.js';
+
+export { resolveDockerEndpoint } from '../utils/dockerEndpoint.js';
 
 const DOCKER_RESPONSE_LIMIT_BYTES = 5 * 1024 * 1024;
 const DOCKER_TIMEOUT_MS = 4_000;
@@ -112,7 +119,10 @@ export interface DockerDiagnostics {
   containers: DockerContainerSummary[];
 }
 
-type DockerGet = (socketPath: string, requestPath: string) => Promise<unknown>;
+type DockerGet = (
+  endpoint: DockerEndpoint,
+  requestPath: string
+) => Promise<unknown>;
 
 interface DockerVersionPayload {
   Version?: unknown;
@@ -159,19 +169,6 @@ const safeText = (value: unknown, fallback = '', maxLength = 160): string => {
 
 const percent = (used: number, total: number): number =>
   total > 0 ? Math.round((used / total) * 1_000) / 10 : 0;
-
-export function resolveSystemDockerSocketPath(
-  workDockerSocket: string | undefined,
-  dockerHost: string | undefined
-): string | null {
-  if (workDockerSocket?.trim()) return workDockerSocket.trim();
-  if (dockerHost) {
-    return dockerHost.startsWith('unix://')
-      ? dockerHost.slice('unix://'.length) || null
-      : null;
-  }
-  return '/var/run/docker.sock';
-}
 
 export function parseNetworkCounters(
   contents: string
@@ -261,7 +258,7 @@ export function summarizeDockerPayloads(
 }
 
 export async function collectDockerDiagnostics(
-  socketPath: string | null,
+  endpoint: DockerEndpoint | null,
   dockerGet: DockerGet = dockerApiGet
 ): Promise<DockerDiagnostics> {
   const unavailable = (
@@ -277,41 +274,45 @@ export async function collectDockerDiagnostics(
     pausedContainers: 0,
     containers: [],
   });
-  if (!socketPath) {
+  if (!endpoint) {
     return unavailable(
-      'Docker diagnostics require a local Unix socket; remote Docker endpoints are not queried.',
+      'Docker diagnostics need the local Unix socket or a plain-HTTP tcp:// endpoint (such as a socket proxy); the configured DOCKER_HOST is neither.',
       false
     );
   }
 
-  let socketMounted = false;
-  try {
-    const socketStats = await stat(socketPath);
-    socketMounted = socketStats.isSocket();
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'EACCES') {
+  // "socketMounted" doubles as "an endpoint is configured": a tcp endpoint
+  // has no socket file to stat, so reachability is decided by the request.
+  if (endpoint.kind === 'unix') {
+    let socketMounted = false;
+    try {
+      const socketStats = await stat(endpoint.socketPath);
+      socketMounted = socketStats.isSocket();
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'EACCES') {
+        return unavailable(
+          'The Docker socket is mounted but the Libre WebUI process cannot read it.',
+          true
+        );
+      }
       return unavailable(
-        'The Docker socket is mounted but the Libre WebUI process cannot read it.',
-        true
+        'Docker is unavailable because its local socket is not mounted.',
+        false
       );
     }
-    return unavailable(
-      'Docker is unavailable because its local socket is not mounted.',
-      false
-    );
-  }
-  if (!socketMounted) {
-    return unavailable(
-      'The configured Docker path is not a Unix socket.',
-      false
-    );
+    if (!socketMounted) {
+      return unavailable(
+        'The configured Docker path is not a Unix socket.',
+        false
+      );
+    }
   }
 
   try {
     const [version, info, containers] = await Promise.all([
-      dockerGet(socketPath, '/version'),
-      dockerGet(socketPath, '/info'),
-      dockerGet(socketPath, '/containers/json?all=1'),
+      dockerGet(endpoint, '/version'),
+      dockerGet(endpoint, '/info'),
+      dockerGet(endpoint, '/containers/json?all=1'),
     ]);
     return summarizeDockerPayloads(
       (version ?? {}) as DockerVersionPayload,
@@ -325,22 +326,27 @@ export async function collectDockerDiagnostics(
         ? 'The Docker socket is mounted but the Libre WebUI process cannot read it.'
         : code === 'ETIMEDOUT'
           ? 'The Docker daemon did not answer the diagnostics request in time.'
-          : 'The Docker socket is mounted, but the daemon could not be reached.';
+          : endpoint.kind === 'unix'
+            ? 'The Docker socket is mounted, but the daemon could not be reached.'
+            : 'The configured Docker tcp endpoint could not be reached.';
     return unavailable(reason, true);
   }
 }
 
 async function dockerApiGet(
-  socketPath: string,
+  endpoint: DockerEndpoint,
   requestPath: string
 ): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const request = http.request(
       {
-        socketPath,
+        ...dockerEndpointRequestOptions(endpoint),
         method: 'GET',
         path: requestPath,
-        headers: { Host: 'docker', Accept: 'application/json' },
+        headers: {
+          ...(endpoint.kind === 'unix' ? { Host: 'docker' } : {}),
+          Accept: 'application/json',
+        },
       },
       response => {
         const chunks: Buffer[] = [];
@@ -468,9 +474,10 @@ export class SystemDiagnosticsService {
     const processMemory = process.memoryUsage();
     const dataDirectory =
       process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
-    const socketPath = resolveSystemDockerSocketPath(
+    const dockerEndpoint = resolveDockerEndpoint(
       process.env.WORK_DOCKER_SOCKET,
-      process.env.DOCKER_HOST
+      process.env.DOCKER_HOST,
+      process.env.DOCKER_TLS_VERIFY
     );
     const [containerized, runtimeFilesystem, dataFilesystem, network, docker] =
       await Promise.all([
@@ -478,7 +485,7 @@ export class SystemDiagnosticsService {
         collectFilesystem('Runtime filesystem', '/'),
         collectFilesystem('Data directory', dataDirectory),
         collectNetworkInterfaces(),
-        collectDockerDiagnostics(socketPath),
+        collectDockerDiagnostics(dockerEndpoint),
       ]);
     const filesystems = [runtimeFilesystem, dataFilesystem].filter(
       (item): item is SystemFilesystemDiagnostics => item !== null

@@ -31,7 +31,7 @@ model commands are never run directly on the host as a fallback.
 ## Start Libre WebUI
 
 ```bash
-npx libre-webui
+npx libre-webui@latest
 ```
 
 Open [http://localhost:8080](http://localhost:8080). Create the first account;

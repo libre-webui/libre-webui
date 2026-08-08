@@ -1,0 +1,95 @@
+{{- if and .Values.work.enabled .Values.work.networkPolicy.enabled }}
+# Sandbox network isolation, matching the Docker backend's bridge semantics:
+# sandboxes cannot reach one another or anything in the cluster, networked
+# sandboxes get internet egress minus the blocked ranges, network-disabled
+# sandboxes get nothing. Enforcement requires a CNI that implements
+# NetworkPolicy (Calico, Cilium, recent kind, most managed defaults); a
+# no-op CNI accepts these objects without enforcing them.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "libre-webui.fullname" . }}-work-default-deny
+  namespace: {{ .Values.work.namespace }}
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      ai.libre-webui.managed: 'true'
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# The only ingress a sandbox ever accepts: the backend fetching its preview.
+# Exec traffic rides the kubelet, not the Pod network, so nothing else is
+# needed for files, commands, git, or terminals.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "libre-webui.fullname" . }}-work-preview-ingress
+  namespace: {{ .Values.work.namespace }}
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      ai.libre-webui.managed: 'true'
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Release.Namespace }}
+          podSelector:
+            matchLabels:
+              {{- include "libre-webui.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 4173
+---
+# Networked sandboxes: cluster DNS, then the world minus the blocked ranges
+# (private networks and the cloud metadata endpoint). Sandboxes whose
+# network label is "false" match no egress rule and stay at default-deny.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "libre-webui.fullname" . }}-work-sandbox-egress
+  namespace: {{ .Values.work.namespace }}
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      ai.libre-webui.managed: 'true'
+      ai.libre-webui.network: 'true'
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              {{- range .Values.work.networkPolicy.blockedEgressCidrs }}
+              {{- if not (contains ":" .) }}
+              - {{ . }}
+              {{- end }}
+              {{- end }}
+        - ipBlock:
+            cidr: '::/0'
+            except:
+              {{- range .Values.work.networkPolicy.blockedEgressCidrs }}
+              {{- if contains ":" . }}
+              - {{ . | quote }}
+              {{- end }}
+              {{- end }}
+{{- end }}

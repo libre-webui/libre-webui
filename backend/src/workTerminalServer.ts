@@ -20,6 +20,7 @@ import { WebSocketServer, type WebSocket } from 'ws';
 
 import { userModel } from './models/userModel.js';
 import { authService } from './services/authService.js';
+import { userHasWorkAccess } from './services/workAccessService.js';
 import workTaskService from './services/workTaskService.js';
 import workTerminalService from './services/workTerminalService.js';
 import { WorkRuntimeError } from './services/workRuntimeService.js';
@@ -72,9 +73,9 @@ interface TerminalAuthResult {
 
 /**
  * The terminal enforces the exact HTTP Work-route contract: a valid JWT is
- * mandatory (no default-user fallback) and the current database role must be
- * admin, so a demotion takes effect immediately. The task must belong to the
- * authenticated administrator.
+ * mandatory (no default-user fallback) and the current database state must
+ * grant Work access, so a demotion or an access-mode change takes effect
+ * immediately. The task must belong to the authenticated user.
  */
 function authorizeTerminalRequest(req: IncomingMessage): TerminalAuthResult {
   const url = new URL(req.url || '', 'http://localhost');
@@ -99,10 +100,10 @@ function authorizeTerminalRequest(req: IncomingMessage): TerminalAuthResult {
   if (
     !currentUser ||
     currentUser.status !== 'active' ||
-    currentUser.role !== 'admin'
+    !userHasWorkAccess(currentUser)
   ) {
     throw new WorkRuntimeError(
-      'Admin access required.',
+      'Work access required.',
       403,
       'WORK_TERMINAL_FORBIDDEN'
     );

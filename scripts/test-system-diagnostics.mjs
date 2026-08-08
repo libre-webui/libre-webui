@@ -17,26 +17,36 @@ const diagnosticsModule = await import(
   ).href
 );
 
-test('system diagnostics only accepts a local Docker Unix socket', () => {
-  assert.equal(
-    diagnosticsModule.resolveSystemDockerSocketPath(
-      '/custom/docker.sock',
-      undefined
-    ),
-    '/custom/docker.sock'
+test('system diagnostics accept a Unix socket or a plain tcp endpoint', () => {
+  assert.deepEqual(
+    diagnosticsModule.resolveDockerEndpoint('/custom/docker.sock', undefined),
+    { kind: 'unix', socketPath: '/custom/docker.sock' }
   );
-  assert.equal(
-    diagnosticsModule.resolveSystemDockerSocketPath(
+  assert.deepEqual(
+    diagnosticsModule.resolveDockerEndpoint(
       undefined,
       'unix:///run/user/1000/docker.sock'
     ),
-    '/run/user/1000/docker.sock'
+    { kind: 'unix', socketPath: '/run/user/1000/docker.sock' }
   );
-  assert.equal(
-    diagnosticsModule.resolveSystemDockerSocketPath(
+  assert.deepEqual(
+    diagnosticsModule.resolveDockerEndpoint(
       undefined,
       'tcp://docker.example.test:2375'
     ),
+    { kind: 'tcp', host: 'docker.example.test', port: 2375 }
+  );
+  // TLS-verified tcp and non-HTTP schemes are refused, not guessed at.
+  assert.equal(
+    diagnosticsModule.resolveDockerEndpoint(
+      undefined,
+      'tcp://docker.example.test:2376',
+      '1'
+    ),
+    null
+  );
+  assert.equal(
+    diagnosticsModule.resolveDockerEndpoint(undefined, 'ssh://user@host'),
     null
   );
 });

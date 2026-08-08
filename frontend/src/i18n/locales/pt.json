@@ -1247,6 +1247,37 @@
       "failed": "A conta não pôde ser aprovada.",
       "notification": "{{count}} registro(s) aguardando sua aprovação.",
       "notificationBadge": "{{count}} aprovações de usuário pendentes"
+    },
+    "workAccess": {
+      "title": "Acesso ao Work",
+      "description": "Permitir que todos os usuários ativos criem e executem tarefas do Work em sandboxes isoladas. Administradores sempre têm acesso; espaços de trabalho em pastas do host continuam restritos a administradores.",
+      "saved": "Acesso ao Work atualizado",
+      "saveFailed": "Não foi possível atualizar o acesso ao Work"
+    },
+    "workPolicies": {
+      "title": "Políticas do Work",
+      "description": "Predefinições de execução nomeadas (imagem, limites, parada por inatividade) sob as quais criar tarefas. Campos vazios herdam os padrões globais.",
+      "add": "Adicionar política",
+      "name": "Nome",
+      "image": "Imagem",
+      "memory": "Memória",
+      "cpu": "CPUs",
+      "pids": "Limite de PID",
+      "workspaceSize": "Tamanho do espaço de trabalho",
+      "idleMinutes": "Parada por inatividade (minutos)",
+      "networkDefault": "Rede padrão",
+      "networkInherit": "Herdar padrão",
+      "networkOn": "Ativada",
+      "networkOff": "Desativada",
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "edit": "Editar política",
+      "delete": "Excluir política",
+      "deleteConfirm": "Excluir esta política? As tarefas que a usam voltam aos padrões globais.",
+      "empty": "Nenhuma política ainda. As tarefas usam os padrões de execução globais.",
+      "saved": "Política do Work salva",
+      "deleted": "Política do Work excluída",
+      "failed": "Não foi possível salvar a política do Work"
     }
   },
   "chatHistory": {
@@ -1830,6 +1861,10 @@
       "unavailable": "O terminal interativo não está disponível nesta implantação.",
       "blockedByRun": "O modelo está usando este contêiner. O terminal abre ao fim do turno.",
       "taskRunning": "Turno do modelo em andamento"
+    },
+    "policy": {
+      "label": "Política de execução",
+      "default": "Padrão (limites globais)"
     }
   },
   "usageAnalytics": {
@@ -1974,7 +2009,30 @@
       "internal": "interno",
       "empty": "Nenhuma interface de rede está visível ao runtime da aplicação."
     },
-    "securityNote": "Esta página é restrita a administradores. O servidor retorna apenas resumos operacionais: não expõe variáveis de ambiente, credenciais, rótulos do Docker, montagens, comandos de container ou payloads de inspeção. Quando o Libre WebUI é executado em um container, os detalhes de CPU e memória em nível de host vêm do Docker Engine quando seu socket local está disponível; outros valores descrevem o runtime da aplicação."
+    "securityNote": "Esta página é restrita a administradores. O servidor retorna apenas resumos operacionais: não expõe variáveis de ambiente, credenciais, rótulos do Docker, montagens, comandos de container ou payloads de inspeção. Quando o Libre WebUI é executado em um container, os detalhes de CPU e memória em nível de host vêm do Docker Engine quando seu socket local está disponível; outros valores descrevem o runtime da aplicação.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxes de todos os usuários",
+      "access": "Acesso",
+      "accessAdmins": "Somente administradores",
+      "accessAllUsers": "Todos os usuários",
+      "runtimeAvailable": "Disponível",
+      "runtimeUnavailable": "Indisponível",
+      "activeRuntimes": "Runtimes ativos",
+      "pendingCleanups": "Limpezas pendentes",
+      "orphans": "Contêineres órfãos",
+      "owner": "Proprietário",
+      "task": "Tarefa",
+      "state": "Estado",
+      "preview": "Pré-visualização",
+      "terminals": "Terminais",
+      "updated": "Atualizado",
+      "stateRunning": "Em execução",
+      "stateStopped": "Parado",
+      "stateStarting": "Iniciando",
+      "stateUnknown": "Desconhecido",
+      "noTasks": "Ainda não há tarefas do Work."
+    }
   },
   "mediaGeneration": {
     "title": "Gerar mídia",

@@ -85,8 +85,10 @@ const ADMIN_ONLY_TAB_PATHS = new Set([
   '/system',
 ]);
 
-const isAdminOnlyTab = (tab: AppTab) =>
-  tab.kind === 'work' || ADMIN_ONLY_TAB_PATHS.has(tab.path);
+// Work tabs follow Work access (admins, or everyone once an administrator
+// opens Work up); the listed paths stay admin-only regardless.
+const isRestrictedTab = (tab: AppTab, canWork: boolean) =>
+  tab.kind === 'work' ? !canWork : ADMIN_ONLY_TAB_PATHS.has(tab.path);
 
 interface NewTabMenuItem {
   key: string;
@@ -121,7 +123,7 @@ export const AppTabBar: React.FC = () => {
   const sessions = useChatStore(state => state.sessions);
   const currentSession = useChatStore(state => state.currentSession);
   const workTasks = useWorkStore(state => state.tasks);
-  const { systemInfo, isAdmin } = useAuthStore();
+  const { systemInfo, isAdmin, canUseWork } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<NewTabMenuPosition | null>(
     null
@@ -136,10 +138,10 @@ export const AppTabBar: React.FC = () => {
 
   const admin = isAdmin();
   const showAdminWorkspace = systemInfo?.requiresAuth === false || admin;
-  const showWork = showAdminWorkspace;
+  const showWork = canUseWork();
   const accessibleTabs = showAdminWorkspace
     ? tabs
-    : tabs.filter(tab => !isAdminOnlyTab(tab));
+    : tabs.filter(tab => !isRestrictedTab(tab, showWork));
 
   useEffect(() => {
     syncWithPath(location.pathname);
@@ -154,11 +156,13 @@ export const AppTabBar: React.FC = () => {
 
   useEffect(() => {
     if (!systemInfo || showAdminWorkspace) return;
-    const restrictedTabIds = tabs.filter(isAdminOnlyTab).map(tab => tab.id);
+    const restrictedTabIds = tabs
+      .filter(tab => isRestrictedTab(tab, showWork))
+      .map(tab => tab.id);
     if (restrictedTabIds.length === 0) return;
     const fallback = closeTabs(restrictedTabIds, 'home');
     if (fallback) navigate(fallback.path, { replace: true });
-  }, [closeTabs, navigate, showAdminWorkspace, systemInfo, tabs]);
+  }, [closeTabs, navigate, showAdminWorkspace, showWork, systemInfo, tabs]);
 
   useEffect(() => {
     if (!menuOpen && !contextMenu) return;

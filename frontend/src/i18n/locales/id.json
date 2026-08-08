@@ -1247,6 +1247,37 @@
       "failed": "Akun tidak dapat disetujui.",
       "notification": "{{count}} pendaftaran menunggu persetujuan Anda.",
       "notificationBadge": "{{count}} persetujuan pengguna tertunda"
+    },
+    "workAccess": {
+      "title": "Akses Work",
+      "description": "Izinkan semua pengguna aktif membuat dan menjalankan tugas Work di sandbox terisolasi. Administrator selalu punya akses; ruang kerja folder host tetap khusus administrator.",
+      "saved": "Akses Work diperbarui",
+      "saveFailed": "Tidak dapat memperbarui akses Work"
+    },
+    "workPolicies": {
+      "title": "Kebijakan Work",
+      "description": "Preset runtime bernama (image, batas, henti saat idle) untuk membuat tugas. Bidang kosong mewarisi bawaan global.",
+      "add": "Tambah kebijakan",
+      "name": "Nama",
+      "image": "Image",
+      "memory": "Memori",
+      "cpu": "CPU",
+      "pids": "Batas PID",
+      "workspaceSize": "Ukuran ruang kerja",
+      "idleMinutes": "Henti saat idle (menit)",
+      "networkDefault": "Jaringan bawaan",
+      "networkInherit": "Warisi bawaan",
+      "networkOn": "Aktif",
+      "networkOff": "Nonaktif",
+      "save": "Simpan",
+      "cancel": "Batal",
+      "edit": "Edit kebijakan",
+      "delete": "Hapus kebijakan",
+      "deleteConfirm": "Hapus kebijakan ini? Tugas yang memakainya kembali ke bawaan global.",
+      "empty": "Belum ada kebijakan. Tugas memakai bawaan runtime global.",
+      "saved": "Kebijakan Work disimpan",
+      "deleted": "Kebijakan Work dihapus",
+      "failed": "Tidak dapat menyimpan kebijakan Work"
     }
   },
   "chatHistory": {
@@ -1830,6 +1861,10 @@
       "unavailable": "Terminal interaktif tidak tersedia pada penerapan ini.",
       "blockedByRun": "Model sedang memakai kontainer ini. Terminal terbuka setelah giliran selesai.",
       "taskRunning": "Giliran model berlangsung"
+    },
+    "policy": {
+      "label": "Kebijakan runtime",
+      "default": "Bawaan (batas global)"
     }
   },
   "usageAnalytics": {
@@ -1974,7 +2009,30 @@
       "internal": "internal",
       "empty": "Tidak ada antarmuka jaringan yang terlihat oleh runtime aplikasi."
     },
-    "securityNote": "Halaman ini dibatasi untuk administrator. Server hanya mengembalikan ringkasan operasional: tidak mengekspos variabel lingkungan, kredensial, label Docker, mount, perintah container, atau payload inspect. Saat Libre WebUI berjalan di dalam container, detail CPU dan memori tingkat host berasal dari Docker Engine ketika soket lokalnya tersedia; nilai lainnya menjelaskan runtime aplikasi."
+    "securityNote": "Halaman ini dibatasi untuk administrator. Server hanya mengembalikan ringkasan operasional: tidak mengekspos variabel lingkungan, kredensial, label Docker, mount, perintah container, atau payload inspect. Saat Libre WebUI berjalan di dalam container, detail CPU dan memori tingkat host berasal dari Docker Engine ketika soket lokalnya tersedia; nilai lainnya menjelaskan runtime aplikasi.",
+    "work": {
+      "title": "Work",
+      "description": "Sandbox semua pengguna",
+      "access": "Akses",
+      "accessAdmins": "Hanya administrator",
+      "accessAllUsers": "Semua pengguna",
+      "runtimeAvailable": "Tersedia",
+      "runtimeUnavailable": "Tidak tersedia",
+      "activeRuntimes": "Runtime aktif",
+      "pendingCleanups": "Pembersihan tertunda",
+      "orphans": "Kontainer yatim",
+      "owner": "Pemilik",
+      "task": "Tugas",
+      "state": "Status",
+      "preview": "Pratinjau",
+      "terminals": "Terminal",
+      "updated": "Diperbarui",
+      "stateRunning": "Berjalan",
+      "stateStopped": "Berhenti",
+      "stateStarting": "Memulai",
+      "stateUnknown": "Tidak diketahui",
+      "noTasks": "Belum ada tugas Work."
+    }
   },
   "mediaGeneration": {
     "title": "Hasilkan media",

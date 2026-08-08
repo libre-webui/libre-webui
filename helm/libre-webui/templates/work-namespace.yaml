@@ -1,0 +1,12 @@
+{{- if and .Values.work.enabled .Values.work.createNamespace }}
+# Dedicated namespace for Work sandbox Pods and workspace PVCs. Keeping
+# sandboxes out of the release namespace is what lets the RBAC grant and the
+# NetworkPolicies below be this narrow.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.work.namespace }}
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+    ai.libre-webui.managed: "true"
+{{- end }}

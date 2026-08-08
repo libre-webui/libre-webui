@@ -1247,6 +1247,37 @@
       "failed": "계정을 승인할 수 없습니다.",
       "notification": "{{count}}건의 등록이 승인을 기다리고 있습니다.",
       "notificationBadge": "{{count}}건의 대기 중인 사용자 승인"
+    },
+    "workAccess": {
+      "title": "Work 접근",
+      "description": "모든 활성 사용자가 격리된 샌드박스에서 Work 작업을 만들고 실행할 수 있도록 허용합니다. 관리자는 항상 접근할 수 있으며, 호스트 폴더 워크스페이스는 관리자 전용으로 유지됩니다.",
+      "saved": "Work 접근이 업데이트되었습니다",
+      "saveFailed": "Work 접근을 업데이트할 수 없습니다"
+    },
+    "workPolicies": {
+      "title": "Work 정책",
+      "description": "작업을 만들 때 선택할 수 있는 이름 있는 런타임 프리셋(이미지, 제한, 유휴 중지)입니다. 빈 필드는 전역 기본값을 상속합니다.",
+      "add": "정책 추가",
+      "name": "이름",
+      "image": "이미지",
+      "memory": "메모리",
+      "cpu": "CPU",
+      "pids": "PID 제한",
+      "workspaceSize": "워크스페이스 크기",
+      "idleMinutes": "유휴 중지(분)",
+      "networkDefault": "네트워크 기본값",
+      "networkInherit": "기본값 상속",
+      "networkOn": "사용",
+      "networkOff": "사용 안 함",
+      "save": "저장",
+      "cancel": "취소",
+      "edit": "정책 편집",
+      "delete": "정책 삭제",
+      "deleteConfirm": "이 정책을 삭제할까요? 이 정책을 사용하는 작업은 전역 기본값으로 돌아갑니다.",
+      "empty": "아직 정책이 없습니다. 작업은 전역 런타임 기본값을 사용합니다.",
+      "saved": "Work 정책이 저장되었습니다",
+      "deleted": "Work 정책이 삭제되었습니다",
+      "failed": "Work 정책을 저장할 수 없습니다"
     }
   },
   "chatHistory": {
@@ -1830,6 +1861,10 @@
       "unavailable": "이 배포에서는 대화형 터미널을 사용할 수 없습니다.",
       "blockedByRun": "모델이 이 컨테이너를 사용 중입니다. 턴이 끝나면 터미널이 열립니다.",
       "taskRunning": "모델 턴 진행 중"
+    },
+    "policy": {
+      "label": "런타임 정책",
+      "default": "기본값(전역 제한)"
     }
   },
   "usageAnalytics": {
@@ -1974,7 +2009,30 @@
       "internal": "내부",
       "empty": "애플리케이션 런타임에 표시되는 네트워크 인터페이스가 없습니다."
     },
-    "securityNote": "이 페이지는 관리자 전용입니다. 서버는 운영 요약만 반환합니다: 환경 변수, 자격 증명, Docker 레이블, 마운트, 컨테이너 명령 또는 검사 페이로드를 노출하지 않습니다. Libre WebUI가 컨테이너에서 실행될 때 로컬 소켓을 사용할 수 있는 경우 호스트 수준 CPU 및 메모리 세부 정보는 Docker Engine에서 가져옵니다. 다른 값은 애플리케이션 런타임을 설명합니다."
+    "securityNote": "이 페이지는 관리자 전용입니다. 서버는 운영 요약만 반환합니다: 환경 변수, 자격 증명, Docker 레이블, 마운트, 컨테이너 명령 또는 검사 페이로드를 노출하지 않습니다. Libre WebUI가 컨테이너에서 실행될 때 로컬 소켓을 사용할 수 있는 경우 호스트 수준 CPU 및 메모리 세부 정보는 Docker Engine에서 가져옵니다. 다른 값은 애플리케이션 런타임을 설명합니다.",
+    "work": {
+      "title": "Work",
+      "description": "모든 사용자의 샌드박스",
+      "access": "접근",
+      "accessAdmins": "관리자만",
+      "accessAllUsers": "모든 사용자",
+      "runtimeAvailable": "사용 가능",
+      "runtimeUnavailable": "사용 불가",
+      "activeRuntimes": "활성 런타임",
+      "pendingCleanups": "대기 중인 정리",
+      "orphans": "고아 컨테이너",
+      "owner": "소유자",
+      "task": "작업",
+      "state": "상태",
+      "preview": "미리보기",
+      "terminals": "터미널",
+      "updated": "업데이트됨",
+      "stateRunning": "실행 중",
+      "stateStopped": "중지됨",
+      "stateStarting": "시작 중",
+      "stateUnknown": "알 수 없음",
+      "noTasks": "아직 Work 작업이 없습니다."
+    }
   },
   "mediaGeneration": {
     "title": "미디어 생성",

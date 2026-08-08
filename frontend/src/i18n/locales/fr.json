@@ -1247,6 +1247,37 @@
       "failed": "Le compte n'a pas pu être approuvé.",
       "notification": "{{count}} inscription(s) en attente de votre approbation.",
       "notificationBadge": "{{count}} approbations d'utilisateurs en attente"
+    },
+    "workAccess": {
+      "title": "Accès à Work",
+      "description": "Autoriser tous les utilisateurs actifs à créer et exécuter des tâches Work dans des bacs à sable isolés. Les administrateurs y ont toujours accès ; les espaces de travail sur dossiers hôtes restent réservés aux administrateurs.",
+      "saved": "Accès à Work mis à jour",
+      "saveFailed": "Impossible de mettre à jour l'accès à Work"
+    },
+    "workPolicies": {
+      "title": "Politiques Work",
+      "description": "Préréglages d'exécution nommés (image, limites, arrêt d'inactivité) sous lesquels créer des tâches. Les champs vides héritent des valeurs globales.",
+      "add": "Ajouter une politique",
+      "name": "Nom",
+      "image": "Image",
+      "memory": "Mémoire",
+      "cpu": "CPU",
+      "pids": "Limite de PID",
+      "workspaceSize": "Taille de l'espace de travail",
+      "idleMinutes": "Arrêt d'inactivité (minutes)",
+      "networkDefault": "Réseau par défaut",
+      "networkInherit": "Hériter du défaut",
+      "networkOn": "Activé",
+      "networkOff": "Désactivé",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "edit": "Modifier la politique",
+      "delete": "Supprimer la politique",
+      "deleteConfirm": "Supprimer cette politique ? Les tâches qui l'utilisent reviennent aux valeurs globales.",
+      "empty": "Aucune politique pour l'instant. Les tâches utilisent les valeurs d'exécution globales.",
+      "saved": "Politique Work enregistrée",
+      "deleted": "Politique Work supprimée",
+      "failed": "Impossible d'enregistrer la politique Work"
     }
   },
   "chatHistory": {
@@ -1798,6 +1829,10 @@
       "unavailable": "Le terminal interactif n’est pas disponible dans ce déploiement.",
       "blockedByRun": "Le modèle utilise ce conteneur. Le terminal s’ouvrira à la fin du tour.",
       "taskRunning": "Tour du modèle en cours"
+    },
+    "policy": {
+      "label": "Politique d'exécution",
+      "default": "Par défaut (limites globales)"
     }
   },
   "personaBackground": {
@@ -1974,7 +2009,30 @@
       "internal": "interne",
       "empty": "Aucune interface réseau n'est visible pour l'environnement d'exécution de l'application."
     },
-    "securityNote": "Cette page est réservée aux administrateurs. Le serveur renvoie uniquement des résumés opérationnels : il n'expose pas les variables d'environnement, les identifiants, les étiquettes Docker, les points de montage, les commandes de conteneur ou les charges utiles d'inspection. Lorsque Libre WebUI s'exécute dans un conteneur, les détails du CPU et de la mémoire au niveau de l'hôte proviennent de Docker Engine lorsque son socket local est disponible ; les autres valeurs décrivent l'environnement d'exécution de l'application."
+    "securityNote": "Cette page est réservée aux administrateurs. Le serveur renvoie uniquement des résumés opérationnels : il n'expose pas les variables d'environnement, les identifiants, les étiquettes Docker, les points de montage, les commandes de conteneur ou les charges utiles d'inspection. Lorsque Libre WebUI s'exécute dans un conteneur, les détails du CPU et de la mémoire au niveau de l'hôte proviennent de Docker Engine lorsque son socket local est disponible ; les autres valeurs décrivent l'environnement d'exécution de l'application.",
+    "work": {
+      "title": "Work",
+      "description": "Bacs à sable de tous les utilisateurs",
+      "access": "Accès",
+      "accessAdmins": "Administrateurs uniquement",
+      "accessAllUsers": "Tous les utilisateurs",
+      "runtimeAvailable": "Disponible",
+      "runtimeUnavailable": "Indisponible",
+      "activeRuntimes": "Environnements actifs",
+      "pendingCleanups": "Nettoyages en attente",
+      "orphans": "Conteneurs orphelins",
+      "owner": "Propriétaire",
+      "task": "Tâche",
+      "state": "État",
+      "preview": "Aperçu",
+      "terminals": "Terminaux",
+      "updated": "Mis à jour",
+      "stateRunning": "En cours",
+      "stateStopped": "Arrêté",
+      "stateStarting": "Démarrage",
+      "stateUnknown": "Inconnu",
+      "noTasks": "Aucune tâche Work pour l'instant."
+    }
   },
   "mediaGeneration": {
     "title": "Générer des médias",

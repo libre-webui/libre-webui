@@ -16,7 +16,7 @@ Libre WebUI includes app-level shortcuts for navigation and message composition.
 | ---------------------- | ------------------------------------------ |
 | `Cmd/Ctrl + K`         | Open the command palette                   |
 | `Cmd/Ctrl + Shift + O` | Start a new chat in a tab                  |
-| `Cmd/Ctrl + Shift + U` | Start a new Work session in a tab (admins) |
+| `Cmd/Ctrl + Shift + U` | Start a new Work session in a tab (with Work access) |
 | `Cmd/Ctrl + B`         | Toggle the sidebar                         |
 | `Cmd/Ctrl + ,`         | Open Settings                              |
 | `Cmd/Ctrl + D`         | Toggle light/dark theme                    |

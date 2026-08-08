@@ -22,11 +22,25 @@ import {
   AuthenticatedRequest,
 } from '../middleware/auth.js';
 import { userModel } from '../models/userModel.js';
+import {
+  getWorkAccessMode,
+  isWorkAccessMode,
+  setWorkAccessMode,
+  userHasWorkAccess,
+  type WorkAccessMode,
+} from '../services/workAccessService.js';
+import {
+  buildWorkAdminOverview,
+  type WorkAdminOverview,
+} from '../services/workAdminService.js';
 import workAgentService from '../services/workAgentService.js';
 import workEventService, {
   WORK_EVENT_MAX_RESUME_CURSOR,
 } from '../services/workEventService.js';
 import workModelProviderService from '../services/workModelProviderService.js';
+import workPolicyService, {
+  type WorkPolicyRecord,
+} from '../services/workPolicyService.js';
 import workRuntimeService from '../services/workRuntimeService.js';
 import workTerminalService from '../services/workTerminalService.js';
 import workHostWorkspaceService, {
@@ -53,7 +67,97 @@ const router = express.Router();
 const WORK_SSE_MAX_PENDING_BYTES = 1_000_000;
 const WORK_SSE_BACKPRESSURE_TIMEOUT_MS = 15_000;
 router.use(authenticate);
-router.use(requireAdmin);
+
+/**
+ * Work access follows the persisted access mode: administrators always
+ * pass, other active accounts pass when an administrator has opened Work
+ * to all users. Like requireAdmin, authorization follows current database
+ * state rather than the role cached in a still-valid JWT, so a demotion or
+ * a mode change takes effect immediately.
+ */
+const requireWorkAccess = (
+  req: AuthenticatedRequest,
+  res: Response<ApiResponse>,
+  next: NextFunction
+): void => {
+  if (!req.user) {
+    res.status(403).json({ success: false, message: 'Work access required' });
+    return;
+  }
+  try {
+    const currentUser = userModel.getUserById(req.user.userId);
+    if (
+      !currentUser ||
+      currentUser.status !== 'active' ||
+      !userHasWorkAccess(currentUser)
+    ) {
+      res.status(403).json({ success: false, message: 'Work access required' });
+      return;
+    }
+    req.user = {
+      ...req.user,
+      username: currentUser.username,
+      role: currentUser.role,
+    };
+    next();
+  } catch (_error) {
+    res.status(500).json({
+      success: false,
+      message: 'Authorization check failed',
+    });
+  }
+};
+
+// Readable by every authenticated user: the interface needs to know whether
+// to offer Work before it may call anything behind requireWorkAccess.
+router.get(
+  '/access',
+  (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ mode: WorkAccessMode; allowed: boolean }>>
+  ): void => {
+    try {
+      const currentUser = req.user
+        ? userModel.getUserById(req.user.userId)
+        : undefined;
+      sendSuccess(res, {
+        mode: getWorkAccessMode(),
+        allowed: Boolean(
+          currentUser &&
+          currentUser.status === 'active' &&
+          userHasWorkAccess(currentUser)
+        ),
+      });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.put(
+  '/access',
+  requireAdmin,
+  (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ mode: WorkAccessMode }>>
+  ): void => {
+    try {
+      const mode: unknown = req.body?.mode;
+      if (!isWorkAccessMode(mode)) {
+        throw new WorkRouteError(
+          'Field "mode" must be "admins" or "all-users".',
+          400
+        );
+      }
+      setWorkAccessMode(mode);
+      sendSuccess(res, { mode });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.use(requireWorkAccess);
 
 router.get(
   '/capabilities',
@@ -96,10 +200,102 @@ router.get(
         idleTimeoutMs: workTerminalService.idleTimeoutMs,
       },
       hostWorkspaces: {
-        enabled: workHostWorkspaceService.isEnabled(),
-        roots: workHostWorkspaceService.listRoots(),
+        // Admin-only regardless of the access mode: host folders bind-mount
+        // server paths.
+        enabled:
+          workHostWorkspaceService.isEnabled() && req.user?.role === 'admin',
+        roots:
+          req.user?.role === 'admin'
+            ? workHostWorkspaceService.listRoots()
+            : [],
       },
     });
+  }
+);
+
+// Named runtime policies. Reading is open to every Work user (the picker at
+// task creation needs the list); mutations are admin-only. Registered before
+// the fail-closed gate: policies are configuration, not runtime mutations.
+router.get(
+  '/policies',
+  (
+    _req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkPolicyRecord[]>>
+  ): void => {
+    try {
+      sendSuccess(res, workPolicyService.list());
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.post(
+  '/policies',
+  requireAdmin,
+  (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkPolicyRecord>>
+  ): void => {
+    try {
+      res
+        .status(201)
+        .json({ success: true, data: workPolicyService.create(req.body) });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.put(
+  '/policies/:id',
+  requireAdmin,
+  (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkPolicyRecord>>
+  ): void => {
+    try {
+      sendSuccess(
+        res,
+        workPolicyService.update(String(req.params.id || ''), req.body)
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.delete(
+  '/policies/:id',
+  requireAdmin,
+  (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ id: string; deleted: true }>>
+  ): void => {
+    try {
+      const id = String(req.params.id || '');
+      workPolicyService.remove(id);
+      sendSuccess(res, { id, deleted: true });
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+// Registered before the fail-closed gate below: the overview is exactly
+// what an administrator needs while Work is blocked on recovery.
+router.get(
+  '/admin/overview',
+  requireAdmin,
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkAdminOverview>>
+  ): Promise<void> => {
+    try {
+      sendSuccess(res, await buildWorkAdminOverview());
+    } catch (error) {
+      sendError(res, error);
+    }
   }
 );
 
@@ -174,9 +370,29 @@ router.post(
       const provider = readProviderSelection(req.body);
       const requestedHostPath =
         typeof req.body?.hostPath === 'string' ? req.body.hostPath.trim() : '';
+      // Host folders bind-mount server paths, so they stay admin-only even
+      // when Work itself is open to all users.
+      if (requestedHostPath && req.user?.role !== 'admin') {
+        throw new WorkRouteError(
+          'Host-folder workspaces require administrator access.',
+          403
+        );
+      }
       const hostPath = requestedHostPath
         ? workHostWorkspaceService.resolveWorkspacePath(requestedHostPath)
         : undefined;
+      const requestedPolicyId =
+        typeof req.body?.policyId === 'string' ? req.body.policyId.trim() : '';
+      let policy: WorkPolicyRecord | undefined;
+      if (requestedPolicyId) {
+        policy = workPolicyService.get(requestedPolicyId);
+        if (!policy) {
+          throw new WorkRouteError(
+            'The selected Work policy no longer exists.',
+            400
+          );
+        }
+      }
       await workModelProviderService.assertModelSupportsTools(
         model,
         provider,
@@ -186,9 +402,10 @@ router.post(
         userId,
         message,
         model,
-        true,
+        policy?.networkDefault ?? true,
         provider,
-        hostPath
+        hostPath,
+        policy?.id
       );
       const runId = detail.activeRun?.id;
       if (!runId) {

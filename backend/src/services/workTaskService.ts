@@ -80,6 +80,7 @@ interface TaskRow {
   volume_name: string;
   container_name: string;
   host_path: string | null;
+  policy_id: string | null;
   preview_url: string | null;
   preview_status: WorkPreviewStatus;
   created_at: number;
@@ -122,7 +123,8 @@ export class WorkTaskService {
     model: string,
     networkEnabled: boolean,
     provider: WorkProviderSelection = { providerType: 'ollama' },
-    hostPath?: string
+    hostPath?: string,
+    policyId?: string
   ): WorkTaskDetail {
     this.assertUserIsActive(userId);
     const selectedProvider = normalizeProvider(provider);
@@ -139,9 +141,9 @@ export class WorkTaskService {
       db.prepare(
         `INSERT INTO work_tasks (
           id, user_id, title, model, provider_type, provider_id, status,
-          network_enabled, volume_name, container_name, host_path,
+          network_enabled, volume_name, container_name, host_path, policy_id,
           preview_status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, 'preparing', ?, ?, ?, ?, 'stopped', ?, ?)`
+        ) VALUES (?, ?, ?, ?, ?, ?, 'preparing', ?, ?, ?, ?, ?, 'stopped', ?, ?)`
       ).run(
         taskId,
         userId,
@@ -153,6 +155,7 @@ export class WorkTaskService {
         `libre-work-${compactId}`,
         `libre-work-${compactId}`,
         hostPath || null,
+        policyId || null,
         now,
         now
       );
@@ -275,6 +278,25 @@ export class WorkTaskService {
         .prepare('SELECT * FROM work_tasks ORDER BY created_at ASC')
         .all() as TaskRow[]
     ).map(mapTaskRecord);
+  }
+
+  /** Every task with its owner's username, for the admin overview. */
+  listAllTasksWithOwner(): Array<{
+    record: WorkTaskRecord;
+    ownerUsername: string;
+  }> {
+    const rows = getDatabase()
+      .prepare(
+        `SELECT work_tasks.*, users.username AS owner_username
+         FROM work_tasks
+         JOIN users ON users.id = work_tasks.user_id
+         ORDER BY work_tasks.updated_at DESC`
+      )
+      .all() as Array<TaskRow & { owner_username: string }>;
+    return rows.map(row => ({
+      record: mapTaskRecord(row),
+      ownerUsername: row.owner_username,
+    }));
   }
 
   beginUserRetirement(userId: string): void {
@@ -990,6 +1012,7 @@ export class WorkTaskService {
       previewStatus: row.preview_status,
       workspacePath: '/workspace',
       hostPath: row.host_path || undefined,
+      policyId: row.policy_id || undefined,
     };
   }
 
@@ -1060,6 +1083,7 @@ const mapTaskRecord = (row: TaskRow): WorkTaskRecord => ({
   volumeName: row.volume_name,
   containerName: row.container_name,
   hostPath: row.host_path || undefined,
+  policyId: row.policy_id || undefined,
   previewUrl: row.preview_url || undefined,
   previewStatus: row.preview_status,
   createdAt: row.created_at,

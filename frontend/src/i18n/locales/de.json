@@ -1247,6 +1247,37 @@
       "failed": "Das Konto konnte nicht genehmigt werden.",
       "notification": "{{count}} Registrierung(en) warten auf Ihre Genehmigung.",
       "notificationBadge": "{{count}} ausstehende Benutzergenehmigungen"
+    },
+    "workAccess": {
+      "title": "Work-Zugriff",
+      "description": "Allen aktiven Benutzern erlauben, Work-Aufgaben in isolierten Sandboxes zu erstellen und auszuführen. Administratoren haben immer Zugriff; Host-Ordner-Arbeitsbereiche bleiben Administratoren vorbehalten.",
+      "saved": "Work-Zugriff aktualisiert",
+      "saveFailed": "Work-Zugriff konnte nicht aktualisiert werden"
+    },
+    "workPolicies": {
+      "title": "Work-Richtlinien",
+      "description": "Benannte Laufzeit-Voreinstellungen (Image, Limits, Leerlauf-Stopp), unter denen Aufgaben erstellt werden können. Leere Felder erben die globalen Standards.",
+      "add": "Richtlinie hinzufügen",
+      "name": "Name",
+      "image": "Image",
+      "memory": "Speicher",
+      "cpu": "CPUs",
+      "pids": "PID-Limit",
+      "workspaceSize": "Arbeitsbereichsgröße",
+      "idleMinutes": "Leerlauf-Stopp (Minuten)",
+      "networkDefault": "Netzwerkstandard",
+      "networkInherit": "Standard erben",
+      "networkOn": "Aktiviert",
+      "networkOff": "Deaktiviert",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "edit": "Richtlinie bearbeiten",
+      "delete": "Richtlinie löschen",
+      "deleteConfirm": "Diese Richtlinie löschen? Aufgaben, die sie verwenden, fallen auf die globalen Standards zurück.",
+      "empty": "Noch keine Richtlinien. Aufgaben verwenden die globalen Laufzeitstandards.",
+      "saved": "Work-Richtlinie gespeichert",
+      "deleted": "Work-Richtlinie gelöscht",
+      "failed": "Work-Richtlinie konnte nicht gespeichert werden"
     }
   },
   "chatHistory": {
@@ -1830,6 +1861,10 @@
       "unavailable": "Das interaktive Terminal ist in dieser Installation nicht verfügbar.",
       "blockedByRun": "Das Modell nutzt diesen Container. Das Terminal öffnet nach dem Zug.",
       "taskRunning": "Modellzug läuft"
+    },
+    "policy": {
+      "label": "Laufzeitrichtlinie",
+      "default": "Standard (globale Limits)"
     }
   },
   "usageAnalytics": {
@@ -1974,7 +2009,30 @@
       "internal": "intern",
       "empty": "Für die Anwendungs-Laufzeit sind keine Netzwerkschnittstellen sichtbar."
     },
-    "securityNote": "Diese Seite ist auf Administratoren beschränkt. Der Server gibt nur betriebliche Zusammenfassungen zurück: Er legt keine Umgebungsvariablen, Anmeldeinformationen, Docker-Labels, Einbindungen, Container-Befehle oder Inspektions-Payloads offen. Wenn Libre WebUI in einem Container läuft, stammen Host-Ebene-CPU- und Speicherdetails vom Docker Engine, wenn sein lokaler Socket verfügbar ist; andere Werte beschreiben die Anwendungs-Laufzeit."
+    "securityNote": "Diese Seite ist auf Administratoren beschränkt. Der Server gibt nur betriebliche Zusammenfassungen zurück: Er legt keine Umgebungsvariablen, Anmeldeinformationen, Docker-Labels, Einbindungen, Container-Befehle oder Inspektions-Payloads offen. Wenn Libre WebUI in einem Container läuft, stammen Host-Ebene-CPU- und Speicherdetails vom Docker Engine, wenn sein lokaler Socket verfügbar ist; andere Werte beschreiben die Anwendungs-Laufzeit.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxes über alle Benutzer hinweg",
+      "access": "Zugriff",
+      "accessAdmins": "Nur Administratoren",
+      "accessAllUsers": "Alle Benutzer",
+      "runtimeAvailable": "Verfügbar",
+      "runtimeUnavailable": "Nicht verfügbar",
+      "activeRuntimes": "Aktive Laufzeitumgebungen",
+      "pendingCleanups": "Ausstehende Bereinigungen",
+      "orphans": "Verwaiste Container",
+      "owner": "Besitzer",
+      "task": "Aufgabe",
+      "state": "Zustand",
+      "preview": "Vorschau",
+      "terminals": "Terminals",
+      "updated": "Aktualisiert",
+      "stateRunning": "Läuft",
+      "stateStopped": "Gestoppt",
+      "stateStarting": "Startet",
+      "stateUnknown": "Unbekannt",
+      "noTasks": "Noch keine Work-Aufgaben."
+    }
   },
   "mediaGeneration": {
     "title": "Medien generieren",

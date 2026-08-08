@@ -119,6 +119,7 @@ interface PreviewRecord {
 export type PreviewRecordLookup = (taskId: string) => PreviewRecord | undefined;
 
 interface PreviewProxyTarget {
+  upstreamHost: string;
   taskId: string;
   port: number;
   proxyBasePath: string;
@@ -322,6 +323,12 @@ export class WorkPreviewProxyService {
     private readonly upstreamHost = previewUpstreamHost()
   ) {}
 
+  // Per-task upstream host overrides (the Kubernetes backend targets the
+  // sandbox Pod IP). Server-side only — never part of the signed URL — and
+  // in-memory only, matching preview lifetimes: previews do not survive a
+  // backend restart.
+  private readonly taskUpstreamHosts = new Map<string, string>();
+
   private signature(taskId: string, port: number, nonce: string): string {
     return crypto
       .createHmac('sha256', this.secret)
@@ -329,16 +336,37 @@ export class WorkPreviewProxyService {
       .digest('base64url');
   }
 
-  createPreviewUrl(taskId: string, port: number): string {
+  createPreviewUrl(
+    taskId: string,
+    port: number,
+    upstreamHost?: string
+  ): string {
     if (!TASK_ID_PATTERN.test(taskId)) {
       throw new Error('Work preview task ID is invalid.');
     }
     if (!Number.isInteger(port) || port < 1 || port > 65_535) {
       throw new Error('Work preview port is invalid.');
     }
+    if (upstreamHost) {
+      this.taskUpstreamHosts.set(taskId, upstreamHost.replace(/^\[|\]$/g, ''));
+    } else {
+      this.taskUpstreamHosts.delete(taskId);
+    }
     const nonce = crypto.randomBytes(16).toString('base64url');
     const signature = this.signature(taskId, port, nonce);
     return `${WORK_PREVIEW_PROXY_PREFIX}/${encodeURIComponent(taskId)}/${port}.${nonce}.${signature}/`;
+  }
+
+  /** Drop a task's upstream override when its preview stops or it is removed. */
+  clearPreviewUpstream(taskId: string): void {
+    this.taskUpstreamHosts.delete(taskId);
+  }
+
+  private activityListener?: (taskId: string) => void;
+
+  /** Observe authorized preview traffic, e.g. to feed an idle sweep. */
+  onPreviewActivity(listener: (taskId: string) => void): void {
+    this.activityListener = listener;
   }
 
   private parseTarget(rawUrl: string): PreviewProxyTarget | undefined {
@@ -393,7 +421,16 @@ export class WorkPreviewProxyService {
     }
 
     const upstreamPath = `/${url.pathname.slice(proxyBasePath.length)}${url.search}`;
-    return { taskId, port, proxyBasePath, upstreamPath };
+    // Every authorized preview request (HTTP and WebSocket both resolve
+    // through here) counts as task activity for the idle sweep.
+    this.activityListener?.(taskId);
+    return {
+      taskId,
+      port,
+      proxyBasePath,
+      upstreamPath,
+      upstreamHost: this.taskUpstreamHosts.get(taskId) ?? this.upstreamHost,
+    };
   }
 
   private upstreamRequestHeaders(
@@ -413,10 +450,10 @@ export class WorkPreviewProxyService {
       }
       outgoing[name] = value;
     }
-    outgoing.host = `${formatHostForUrl(this.upstreamHost)}:${target.port}`;
+    outgoing.host = `${formatHostForUrl(target.upstreamHost)}:${target.port}`;
     outgoing['accept-encoding'] = 'identity';
     if (headers.origin) {
-      outgoing.origin = `http://${formatHostForUrl(this.upstreamHost)}:${target.port}`;
+      outgoing.origin = `http://${formatHostForUrl(target.upstreamHost)}:${target.port}`;
     }
     return outgoing;
   }
@@ -425,10 +462,10 @@ export class WorkPreviewProxyService {
     try {
       const location = new URL(
         value,
-        `http://${formatHostForUrl(this.upstreamHost)}:${target.port}`
+        `http://${formatHostForUrl(target.upstreamHost)}:${target.port}`
       );
       if (
-        location.hostname.replace(/^\[|\]$/g, '') === this.upstreamHost &&
+        location.hostname.replace(/^\[|\]$/g, '') === target.upstreamHost &&
         Number(location.port || 80) === target.port
       ) {
         return `${target.proxyBasePath}${location.pathname.replace(/^\/+/, '')}${location.search}${location.hash}`;
@@ -518,7 +555,7 @@ export class WorkPreviewProxyService {
 
     const upstreamRequest = http.request(
       {
-        hostname: this.upstreamHost,
+        hostname: target.upstreamHost,
         port: target.port,
         path: target.upstreamPath,
         method: request.method,
@@ -607,7 +644,7 @@ export class WorkPreviewProxyService {
     headers.connection = 'Upgrade';
     headers.upgrade = request.headers.upgrade || 'websocket';
     const upstreamRequest = http.request({
-      hostname: this.upstreamHost,
+      hostname: target.upstreamHost,
       port: target.port,
       path: target.upstreamPath,
       method: request.method,

@@ -1247,6 +1247,37 @@
       "failed": "Kontoen kunne ikke godkendes.",
       "notification": "{{count}} registrering(er) afventer din godkendelse.",
       "notificationBadge": "{{count}} afventende brugergodkendelser"
+    },
+    "workAccess": {
+      "title": "Work-adgang",
+      "description": "Tillad alle aktive brugere at oprette og køre Work-opgaver i isolerede sandkasser. Administratorer har altid adgang; værtsmappe-arbejdsområder er fortsat kun for administratorer.",
+      "saved": "Work-adgang opdateret",
+      "saveFailed": "Work-adgang kunne ikke opdateres"
+    },
+    "workPolicies": {
+      "title": "Work-politikker",
+      "description": "Navngivne kørselsforudindstillinger (image, grænser, tomgangsstop), som opgaver kan oprettes under. Tomme felter arver de globale standarder.",
+      "add": "Tilføj politik",
+      "name": "Navn",
+      "image": "Image",
+      "memory": "Hukommelse",
+      "cpu": "CPU'er",
+      "pids": "PID-grænse",
+      "workspaceSize": "Arbejdsområdestørrelse",
+      "idleMinutes": "Tomgangsstop (minutter)",
+      "networkDefault": "Netværksstandard",
+      "networkInherit": "Arv standard",
+      "networkOn": "Aktiveret",
+      "networkOff": "Deaktiveret",
+      "save": "Gem",
+      "cancel": "Annuller",
+      "edit": "Rediger politik",
+      "delete": "Slet politik",
+      "deleteConfirm": "Slet denne politik? Opgaver, der bruger den, falder tilbage til de globale standarder.",
+      "empty": "Ingen politikker endnu. Opgaver bruger de globale kørselsstandarder.",
+      "saved": "Work-politik gemt",
+      "deleted": "Work-politik slettet",
+      "failed": "Work-politikken kunne ikke gemmes"
     }
   },
   "chatHistory": {
@@ -1830,6 +1861,10 @@
       "unavailable": "Den interaktive terminal er ikke tilgængelig i denne installation.",
       "blockedByRun": "Modellen bruger denne container. Terminalen åbner, når turen er færdig.",
       "taskRunning": "Modeltur i gang"
+    },
+    "policy": {
+      "label": "Kørselspolitik",
+      "default": "Standard (globale grænser)"
     }
   },
   "usageAnalytics": {
@@ -1974,7 +2009,30 @@
       "internal": "intern",
       "empty": "Ingen netværksgrænseflader er synlige for applikationsruntime."
     },
-    "securityNote": "Denne side er begrænset til administratorer. Serveren returnerer kun operationelle oversigter: den udsætter ikke miljøvariabler, legitimationsoplysninger, Docker-labels, monteringer, containerkommandoer eller inspektions-payloads. Når Libre WebUI kører i en container, kommer CPU- og hukommelsesdetaljer på værtsniveau fra Docker Engine, når dens lokale socket er tilgængelig; andre værdier beskriver applikationsruntime."
+    "securityNote": "Denne side er begrænset til administratorer. Serveren returnerer kun operationelle oversigter: den udsætter ikke miljøvariabler, legitimationsoplysninger, Docker-labels, monteringer, containerkommandoer eller inspektions-payloads. Når Libre WebUI kører i en container, kommer CPU- og hukommelsesdetaljer på værtsniveau fra Docker Engine, når dens lokale socket er tilgængelig; andre værdier beskriver applikationsruntime.",
+    "work": {
+      "title": "Work",
+      "description": "Sandkasser på tværs af alle brugere",
+      "access": "Adgang",
+      "accessAdmins": "Kun administratorer",
+      "accessAllUsers": "Alle brugere",
+      "runtimeAvailable": "Tilgængelig",
+      "runtimeUnavailable": "Utilgængelig",
+      "activeRuntimes": "Aktive kørselsmiljøer",
+      "pendingCleanups": "Afventende oprydninger",
+      "orphans": "Forældreløse containere",
+      "owner": "Ejer",
+      "task": "Opgave",
+      "state": "Tilstand",
+      "preview": "Forhåndsvisning",
+      "terminals": "Terminaler",
+      "updated": "Opdateret",
+      "stateRunning": "Kører",
+      "stateStopped": "Stoppet",
+      "stateStarting": "Starter",
+      "stateUnknown": "Ukendt",
+      "noTasks": "Ingen Work-opgaver endnu."
+    }
   },
   "mediaGeneration": {
     "title": "Generer medie",

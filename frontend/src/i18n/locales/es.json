@@ -1247,6 +1247,37 @@
       "failed": "No se pudo aprobar la cuenta.",
       "notification": "{{count}} registro(s) esperando tu aprobación.",
       "notificationBadge": "{{count}} aprobaciones de usuario pendientes"
+    },
+    "workAccess": {
+      "title": "Acceso a Work",
+      "description": "Permitir que todos los usuarios activos creen y ejecuten tareas de Work en sandboxes aislados. Los administradores siempre tienen acceso; los espacios de trabajo en carpetas del host siguen siendo solo para administradores.",
+      "saved": "Acceso a Work actualizado",
+      "saveFailed": "No se pudo actualizar el acceso a Work"
+    },
+    "workPolicies": {
+      "title": "Políticas de Work",
+      "description": "Preajustes de ejecución con nombre (imagen, límites, parada por inactividad) bajo los que crear tareas. Los campos vacíos heredan los valores globales.",
+      "add": "Añadir política",
+      "name": "Nombre",
+      "image": "Imagen",
+      "memory": "Memoria",
+      "cpu": "CPU",
+      "pids": "Límite de PID",
+      "workspaceSize": "Tamaño del espacio de trabajo",
+      "idleMinutes": "Parada por inactividad (minutos)",
+      "networkDefault": "Red predeterminada",
+      "networkInherit": "Heredar predeterminado",
+      "networkOn": "Activada",
+      "networkOff": "Desactivada",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "edit": "Editar política",
+      "delete": "Eliminar política",
+      "deleteConfirm": "¿Eliminar esta política? Las tareas que la usan vuelven a los valores globales.",
+      "empty": "Aún no hay políticas. Las tareas usan los valores de ejecución globales.",
+      "saved": "Política de Work guardada",
+      "deleted": "Política de Work eliminada",
+      "failed": "No se pudo guardar la política de Work"
     }
   },
   "chatHistory": {
@@ -1830,6 +1861,10 @@
       "unavailable": "La terminal interactiva no está disponible en esta instalación.",
       "blockedByRun": "El modelo está usando este contenedor. La terminal se abrirá al terminar el turno.",
       "taskRunning": "Turno del modelo en curso"
+    },
+    "policy": {
+      "label": "Política de ejecución",
+      "default": "Predeterminada (límites globales)"
     }
   },
   "usageAnalytics": {
@@ -1974,7 +2009,30 @@
       "internal": "interna",
       "empty": "No hay interfaces de red visibles para el entorno de ejecución de la aplicación."
     },
-    "securityNote": "Esta página está restringida a administradores. El servidor solo devuelve resúmenes operativos: no expone variables de entorno, credenciales, etiquetas de Docker, montajes, comandos de contenedor ni cargas útiles de inspección. Cuando Libre WebUI se ejecuta en un contenedor, los detalles de CPU y memoria a nivel de host provienen de Docker Engine cuando su socket local está disponible; otros valores describen el entorno de ejecución de la aplicación."
+    "securityNote": "Esta página está restringida a administradores. El servidor solo devuelve resúmenes operativos: no expone variables de entorno, credenciales, etiquetas de Docker, montajes, comandos de contenedor ni cargas útiles de inspección. Cuando Libre WebUI se ejecuta en un contenedor, los detalles de CPU y memoria a nivel de host provienen de Docker Engine cuando su socket local está disponible; otros valores describen el entorno de ejecución de la aplicación.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxes de todos los usuarios",
+      "access": "Acceso",
+      "accessAdmins": "Solo administradores",
+      "accessAllUsers": "Todos los usuarios",
+      "runtimeAvailable": "Disponible",
+      "runtimeUnavailable": "No disponible",
+      "activeRuntimes": "Entornos activos",
+      "pendingCleanups": "Limpiezas pendientes",
+      "orphans": "Contenedores huérfanos",
+      "owner": "Propietario",
+      "task": "Tarea",
+      "state": "Estado",
+      "preview": "Vista previa",
+      "terminals": "Terminales",
+      "updated": "Actualizado",
+      "stateRunning": "En ejecución",
+      "stateStopped": "Detenido",
+      "stateStarting": "Iniciando",
+      "stateUnknown": "Desconocido",
+      "noTasks": "Aún no hay tareas de Work."
+    }
   },
   "mediaGeneration": {
     "title": "Generar multimedia",

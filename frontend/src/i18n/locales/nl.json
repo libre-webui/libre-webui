@@ -1247,6 +1247,37 @@
       "failed": "Het account kon niet worden goedgekeurd.",
       "notification": "{{count}} registratie(s) wachten op uw goedkeuring.",
       "notificationBadge": "{{count}} openstaande gebruikersgoedkeuringen"
+    },
+    "workAccess": {
+      "title": "Work-toegang",
+      "description": "Sta alle actieve gebruikers toe om Work-taken te maken en uit te voeren in geïsoleerde sandboxes. Beheerders hebben altijd toegang; hostmap-werkruimten blijven alleen voor beheerders.",
+      "saved": "Work-toegang bijgewerkt",
+      "saveFailed": "Kon Work-toegang niet bijwerken"
+    },
+    "workPolicies": {
+      "title": "Work-beleid",
+      "description": "Benoemde runtime-presets (image, limieten, inactiviteitsstop) waaronder taken gemaakt kunnen worden. Lege velden erven de globale standaarden.",
+      "add": "Beleid toevoegen",
+      "name": "Naam",
+      "image": "Image",
+      "memory": "Geheugen",
+      "cpu": "CPU's",
+      "pids": "PID-limiet",
+      "workspaceSize": "Werkruimtegrootte",
+      "idleMinutes": "Inactiviteitsstop (minuten)",
+      "networkDefault": "Netwerkstandaard",
+      "networkInherit": "Standaard erven",
+      "networkOn": "Ingeschakeld",
+      "networkOff": "Uitgeschakeld",
+      "save": "Opslaan",
+      "cancel": "Annuleren",
+      "edit": "Beleid bewerken",
+      "delete": "Beleid verwijderen",
+      "deleteConfirm": "Dit beleid verwijderen? Taken die het gebruiken vallen terug op de globale standaarden.",
+      "empty": "Nog geen beleid. Taken gebruiken de globale runtime-standaarden.",
+      "saved": "Work-beleid opgeslagen",
+      "deleted": "Work-beleid verwijderd",
+      "failed": "Kon het Work-beleid niet opslaan"
     }
   },
   "chatHistory": {
@@ -1830,6 +1861,10 @@
       "unavailable": "De interactieve terminal is niet beschikbaar in deze installatie.",
       "blockedByRun": "Het model gebruikt deze container. De terminal opent na de beurt.",
       "taskRunning": "Modelbeurt bezig"
+    },
+    "policy": {
+      "label": "Runtimebeleid",
+      "default": "Standaard (globale limieten)"
     }
   },
   "usageAnalytics": {
@@ -1974,7 +2009,30 @@
       "internal": "intern",
       "empty": "Er zijn geen netwerkinterfaces zichtbaar voor de applicatieruntime."
     },
-    "securityNote": "Deze pagina is beperkt tot beheerders. De server retourneert alleen operationele samenvattingen: het stelt geen omgevingsvariabelen, inloggegevens, Docker-labels, mounts, containercommando's of inspect-payloads bloot. Wanneer Libre WebUI in een container draait, komen host-level CPU- en geheugendetails van Docker Engine wanneer de lokale socket beschikbaar is; andere waarden beschrijven de applicatieruntime."
+    "securityNote": "Deze pagina is beperkt tot beheerders. De server retourneert alleen operationele samenvattingen: het stelt geen omgevingsvariabelen, inloggegevens, Docker-labels, mounts, containercommando's of inspect-payloads bloot. Wanneer Libre WebUI in een container draait, komen host-level CPU- en geheugendetails van Docker Engine wanneer de lokale socket beschikbaar is; andere waarden beschrijven de applicatieruntime.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxes van alle gebruikers",
+      "access": "Toegang",
+      "accessAdmins": "Alleen beheerders",
+      "accessAllUsers": "Alle gebruikers",
+      "runtimeAvailable": "Beschikbaar",
+      "runtimeUnavailable": "Niet beschikbaar",
+      "activeRuntimes": "Actieve runtimes",
+      "pendingCleanups": "Openstaande opschoningen",
+      "orphans": "Verweesde containers",
+      "owner": "Eigenaar",
+      "task": "Taak",
+      "state": "Status",
+      "preview": "Voorbeeld",
+      "terminals": "Terminals",
+      "updated": "Bijgewerkt",
+      "stateRunning": "Actief",
+      "stateStopped": "Gestopt",
+      "stateStarting": "Wordt gestart",
+      "stateUnknown": "Onbekend",
+      "noTasks": "Nog geen Work-taken."
+    }
   },
   "mediaGeneration": {
     "title": "Media genereren",

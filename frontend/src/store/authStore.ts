@@ -18,6 +18,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, SystemInfo } from '@/types';
+import type { WorkAccess } from '@/types/work';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
@@ -34,6 +35,7 @@ interface AuthState {
   user: User | null;
   token: string | null;
   systemInfo: SystemInfo | null;
+  workAccess: WorkAccess | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (user: User, token: string, systemInfo: SystemInfo) => void;
@@ -43,6 +45,8 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
   isAdmin: () => boolean;
   requiresAuth: () => boolean;
+  canUseWork: () => boolean;
+  refreshWorkAccess: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -51,6 +55,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       systemInfo: null,
+      workAccess: null,
       isAuthenticated: false,
       isLoading: false,
 
@@ -119,6 +124,7 @@ export const useAuthStore = create<AuthState>()(
               chatStore.loadPreferences(),
               currentAppStore.loadPreferences(),
               pluginStore.loadPlugins(),
+              get().refreshWorkAccess(),
             ]);
             logger.debug('Reinitialized app after login');
           } catch (error) {
@@ -150,6 +156,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           token: null,
+          workAccess: null,
           isAuthenticated: false,
           isLoading: false,
         });
@@ -176,6 +183,29 @@ export const useAuthStore = create<AuthState>()(
         const { systemInfo } = get();
         return systemInfo?.requiresAuth ?? false;
       },
+
+      // Whether the interface should offer Work. Administrators always may;
+      // other users may when an administrator has opened Work to all users
+      // (reported by the backend through /work/access). The backend enforces
+      // this on every request regardless of what the interface shows.
+      canUseWork: () => {
+        const { systemInfo, user, workAccess } = get();
+        if (systemInfo?.requiresAuth === false) return true;
+        if (user?.role === 'admin') return true;
+        return workAccess?.allowed === true;
+      },
+
+      refreshWorkAccess: async () => {
+        try {
+          const { workApi } = await import('@/utils/api/workApi');
+          const response = await workApi.access();
+          if (response.success && response.data) {
+            set({ workAccess: response.data });
+          }
+        } catch (error) {
+          logger.debug('Could not load Work access mode:', error);
+        }
+      },
     }),
     {
       name: 'auth-store',
@@ -183,6 +213,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         token: state.token,
         systemInfo: state.systemInfo,
+        workAccess: state.workAccess,
         isAuthenticated: state.isAuthenticated,
       }),
     }

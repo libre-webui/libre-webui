@@ -1247,6 +1247,37 @@
       "failed": "Ekki tókst að samþykkja reikninginn.",
       "notification": "{{count}} skráning(ar) bíða samþykkis þíns.",
       "notificationBadge": "{{count}} bíðandi notandasamþykki"
+    },
+    "workAccess": {
+      "title": "Work-aðgangur",
+      "description": "Leyfa öllum virkum notendum að búa til og keyra Work-verkefni í einangruðum sandkössum. Stjórnendur hafa alltaf aðgang; vinnusvæði í hýsilmöppum eru áfram aðeins fyrir stjórnendur.",
+      "saved": "Work-aðgangur uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra Work-aðgang"
+    },
+    "workPolicies": {
+      "title": "Work-stefnur",
+      "description": "Nefndar keyrslustillingar (mynd, mörk, stöðvun í aðgerðaleysi) sem hægt er að búa verkefni til undir. Auð svæði erfa almennu sjálfgildin.",
+      "add": "Bæta við stefnu",
+      "name": "Nafn",
+      "image": "Mynd",
+      "memory": "Minni",
+      "cpu": "Örgjörvar",
+      "pids": "PID-mörk",
+      "workspaceSize": "Stærð vinnusvæðis",
+      "idleMinutes": "Stöðvun í aðgerðaleysi (mínútur)",
+      "networkDefault": "Sjálfgefið net",
+      "networkInherit": "Erfa sjálfgildi",
+      "networkOn": "Virkt",
+      "networkOff": "Óvirkt",
+      "save": "Vista",
+      "cancel": "Hætta við",
+      "edit": "Breyta stefnu",
+      "delete": "Eyða stefnu",
+      "deleteConfirm": "Eyða þessari stefnu? Verkefni sem nota hana falla aftur á almennu sjálfgildin.",
+      "empty": "Engar stefnur ennþá. Verkefni nota almennu keyrslusjálfgildin.",
+      "saved": "Work-stefna vistuð",
+      "deleted": "Work-stefnu eytt",
+      "failed": "Ekki tókst að vista Work-stefnuna"
     }
   },
   "chatHistory": {
@@ -1830,6 +1861,10 @@
       "unavailable": "Gagnvirki skjáhermirinn er ekki í boði í þessari uppsetningu.",
       "blockedByRun": "Líkanið notar þennan gám. Skjáhermirinn opnast þegar umferðinni lýkur.",
       "taskRunning": "Umferð líkans í gangi"
+    },
+    "policy": {
+      "label": "Keyrslustefna",
+      "default": "Sjálfgefið (almenn mörk)"
     }
   },
   "usageAnalytics": {
@@ -1974,7 +2009,30 @@
       "internal": "innra",
       "empty": "Engin netkerfisviðmót eru sjáanleg keyrslutíma forritsins."
     },
-    "securityNote": "Þessi síða er aðeins fyrir kerfisstjóra. Þjónninn skilar aðeins rekstraryfirliti: hann gefur ekki upp umhverfisbreytur, skilríki, Docker merki, tengipunkta, gámaskipanir eða inspect gagnalöð. Þegar Libre WebUI keyrir í gámi koma upplýsingar um CPU og minni hýsitölvu frá Docker Engine þegar staðbundinn sökkull þess er tiltækur; aðrar gildi lýsa keyrslutíma forritsins."
+    "securityNote": "Þessi síða er aðeins fyrir kerfisstjóra. Þjónninn skilar aðeins rekstraryfirliti: hann gefur ekki upp umhverfisbreytur, skilríki, Docker merki, tengipunkta, gámaskipanir eða inspect gagnalöð. Þegar Libre WebUI keyrir í gámi koma upplýsingar um CPU og minni hýsitölvu frá Docker Engine þegar staðbundinn sökkull þess er tiltækur; aðrar gildi lýsa keyrslutíma forritsins.",
+    "work": {
+      "title": "Work",
+      "description": "Sandkassar allra notenda",
+      "access": "Aðgangur",
+      "accessAdmins": "Aðeins stjórnendur",
+      "accessAllUsers": "Allir notendur",
+      "runtimeAvailable": "Tiltækt",
+      "runtimeUnavailable": "Ótiltækt",
+      "activeRuntimes": "Virk keyrsluumhverfi",
+      "pendingCleanups": "Hreinsanir í bið",
+      "orphans": "Munaðarlausir gámar",
+      "owner": "Eigandi",
+      "task": "Verkefni",
+      "state": "Staða",
+      "preview": "Forskoðun",
+      "terminals": "Skjáhermar",
+      "updated": "Uppfært",
+      "stateRunning": "Í keyrslu",
+      "stateStopped": "Stöðvað",
+      "stateStarting": "Ræsist",
+      "stateUnknown": "Óþekkt",
+      "noTasks": "Engin Work-verkefni ennþá."
+    }
   },
   "mediaGeneration": {
     "title": "Búa til miðil",

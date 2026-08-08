@@ -1247,6 +1247,37 @@
       "failed": "アカウントを承認できませんでした。",
       "notification": "{{count}}件の登録が承認待ちです。",
       "notificationBadge": "{{count}}件の保留中のユーザー承認"
+    },
+    "workAccess": {
+      "title": "Work へのアクセス",
+      "description": "すべてのアクティブなユーザーが隔離されたサンドボックスで Work タスクを作成・実行できるようにします。管理者は常にアクセスできます。ホストフォルダーのワークスペースは管理者専用のままです。",
+      "saved": "Work へのアクセスを更新しました",
+      "saveFailed": "Work へのアクセスを更新できませんでした"
+    },
+    "workPolicies": {
+      "title": "Work ポリシー",
+      "description": "タスク作成時に選べる名前付きランタイムプリセット（イメージ、制限、アイドル停止）。空欄はグローバル既定値を継承します。",
+      "add": "ポリシーを追加",
+      "name": "名前",
+      "image": "イメージ",
+      "memory": "メモリ",
+      "cpu": "CPU",
+      "pids": "PID 制限",
+      "workspaceSize": "ワークスペースサイズ",
+      "idleMinutes": "アイドル停止（分）",
+      "networkDefault": "ネットワーク既定値",
+      "networkInherit": "既定値を継承",
+      "networkOn": "有効",
+      "networkOff": "無効",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "edit": "ポリシーを編集",
+      "delete": "ポリシーを削除",
+      "deleteConfirm": "このポリシーを削除しますか？使用中のタスクはグローバル既定値に戻ります。",
+      "empty": "ポリシーはまだありません。タスクはグローバルなランタイム既定値を使用します。",
+      "saved": "Work ポリシーを保存しました",
+      "deleted": "Work ポリシーを削除しました",
+      "failed": "Work ポリシーを保存できませんでした"
     }
   },
   "chatHistory": {
@@ -1830,6 +1861,10 @@
       "unavailable": "この環境では対話型ターミナルを利用できません。",
       "blockedByRun": "モデルがこのコンテナを使用中です。ターンの終了後にターミナルが開きます。",
       "taskRunning": "モデルのターンを実行中"
+    },
+    "policy": {
+      "label": "ランタイムポリシー",
+      "default": "デフォルト（グローバル制限）"
     }
   },
   "usageAnalytics": {
@@ -1974,7 +2009,30 @@
       "internal": "内部",
       "empty": "アプリケーションランタイムに表示されるネットワークインターフェースはありません。"
     },
-    "securityNote": "このページは管理者に限定されています。サーバーは運用上の要約のみを返します。環境変数、認証情報、Dockerラベル、マウント、コンテナコマンド、またはinspectペイロードは公開されません。Libre WebUIがコンテナ内で実行されている場合、ローカルソケットが利用可能であれば、ホストレベルのCPUおよびメモリの詳細はDocker Engineから取得されます。その他の値はアプリケーションランタイムを示します。"
+    "securityNote": "このページは管理者に限定されています。サーバーは運用上の要約のみを返します。環境変数、認証情報、Dockerラベル、マウント、コンテナコマンド、またはinspectペイロードは公開されません。Libre WebUIがコンテナ内で実行されている場合、ローカルソケットが利用可能であれば、ホストレベルのCPUおよびメモリの詳細はDocker Engineから取得されます。その他の値はアプリケーションランタイムを示します。",
+    "work": {
+      "title": "Work",
+      "description": "全ユーザーのサンドボックス",
+      "access": "アクセス",
+      "accessAdmins": "管理者のみ",
+      "accessAllUsers": "すべてのユーザー",
+      "runtimeAvailable": "利用可能",
+      "runtimeUnavailable": "利用不可",
+      "activeRuntimes": "アクティブなランタイム",
+      "pendingCleanups": "保留中のクリーンアップ",
+      "orphans": "孤立したコンテナ",
+      "owner": "所有者",
+      "task": "タスク",
+      "state": "状態",
+      "preview": "プレビュー",
+      "terminals": "ターミナル",
+      "updated": "更新日時",
+      "stateRunning": "実行中",
+      "stateStopped": "停止",
+      "stateStarting": "起動中",
+      "stateUnknown": "不明",
+      "noTasks": "Work タスクはまだありません。"
+    }
   },
   "mediaGeneration": {
     "title": "メディアを生成",

@@ -1,0 +1,43 @@
+{{- if .Values.work.enabled }}
+# Everything the Kubernetes Work runtime backend is allowed to do, and
+# nothing else: manage sandbox Pods and workspace PVCs inside the sandbox
+# namespace, and exec into those Pods. No secrets, no nodes, no cluster
+# scope — this grant replaces the Docker socket entirely.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "libre-webui.fullname" . }}-work
+  namespace: {{ .Values.work.namespace }}
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ['']
+    resources: ['pods']
+    verbs: ['get', 'list', 'create', 'delete']
+  - apiGroups: ['']
+    resources: ['pods/exec']
+    # SPDY exec is a create; WebSocket exec arrives as a get. The backend
+    # uses WebSockets, and both verbs describe the same capability.
+    verbs: ['get', 'create']
+  - apiGroups: ['']
+    resources: ['persistentvolumeclaims']
+    # list lets startup reconciliation report orphaned workspaces (PVCs
+    # whose task record is gone); they are never deleted automatically.
+    verbs: ['get', 'list', 'create', 'delete']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "libre-webui.fullname" . }}-work
+  namespace: {{ .Values.work.namespace }}
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "libre-webui.fullname" . }}-work
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "libre-webui.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

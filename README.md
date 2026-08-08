@@ -58,7 +58,7 @@ You need [Node.js 22.22 or newer](https://nodejs.org). Docker is optional — on
 [Work](#work-one-persistent-environment-per-task) requires it.
 
 ```bash
-npx libre-webui
+npx libre-webui@latest
 ```
 
 Open [http://localhost:8080](http://localhost:8080). The first account created
@@ -254,7 +254,7 @@ Browser or desktop client
 
 | Path                | Command or link                                                         | Best for                                                  |
 | ------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
-| **npm**             | `npx libre-webui`                                                       | Fast local start; Work available when Docker is installed |
+| **npm**             | `npx libre-webui@latest`                                                | Fast local start; Work available when Docker is installed |
 | **Docker + Ollama** | `docker compose up -d`                                                  | Persistent stack; Work enabled through host Docker        |
 | **External Ollama** | `docker compose -f docker-compose.external-ollama.yml up -d`            | An Ollama you already run                                 |
 | **NVIDIA Docker**   | `docker compose -f docker-compose.gpu.yml up -d`                        | Local GPU inference                                       |

@@ -110,11 +110,18 @@ Libre WebUI backend:
 | `WORK_MAX_TASKS_PER_USER`             | `100`                                                                                         | Maximum persisted Work tasks for one administrator       |
 | `WORK_NETWORK_NAME`                   | `libre-webui-work`                                                                            | Managed sandbox bridge network for networked tasks       |
 | `WORK_RUNTIME_DNS`                    | unset                                                                                         | Comma-separated resolver IPs forced onto networked tasks |
-| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://`, else `/var/run/docker.sock`                                       | Docker Engine socket for terminals and diagnostics       |
+| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://` or `tcp://`, else `/var/run/docker.sock`                           | Docker Engine endpoint for terminals and diagnostics     |
 | `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous browser terminals attached to one task      |
 | `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session is closed         |
+| `WORK_RUNTIME_IDLE_TIMEOUT_MS`        | `0` (disabled)                                                                                | Stop a sandbox after this much inactivity (previews too) |
 | `WORK_HOST_WORKSPACES_ENABLED`        | `false`                                                                                       | Allow a task to use a host folder instead of a volume    |
 | `WORK_HOST_WORKSPACE_ROOTS`           | the server user's home directory                                                              | `:`-separated roots a host workspace must live inside    |
+| `WORK_RUNTIME_BACKEND`                | `docker`                                                                                      | Sandbox backend: `docker` or `kubernetes` (experimental) |
+| `WORK_K8S_NAMESPACE`                  | `libre-webui-work`                                                                            | Namespace holding Kubernetes sandbox Pods and PVCs       |
+| `WORK_K8S_STORAGE_CLASS`              | cluster default                                                                               | StorageClass for workspace PVCs                          |
+| `WORK_K8S_WORKSPACE_SIZE`             | `5Gi`                                                                                         | Per-task workspace PVC size (a real disk quota)          |
+| `WORK_K8S_POD_READY_TIMEOUT_MS`       | `900000`                                                                                      | Wait for a sandbox Pod to reach Running (covers pulls)   |
+| `WORK_K8S_POD_GONE_TIMEOUT_MS`        | `60000`                                                                                       | Wait for a deleted sandbox Pod to disappear              |
 | `AGENT_CLI_MODELS_ENABLED`            | `true`                                                                                        | Offer installed agent CLIs as chat models to admins      |
 | `AGENT_CLI_TIMEOUT_MS`                | `600000`                                                                                      | Time an agent CLI may run before it is killed            |
 | `CODEX_OAUTH_MODELS_ENABLED`          | `true`                                                                                        | Offer the Codex (ChatGPT) provider to admins             |
@@ -142,9 +149,14 @@ allow/deny lists. Entries that are not IPv4/IPv6 addresses are rejected and
 logged. DNS filtering does not constrain direct-IP egress; add host firewall
 rules when a deployment requires that.
 
-The interactive terminal needs the Docker Engine Unix socket. When `DOCKER_HOST`
-points at a remote TCP endpoint and `WORK_DOCKER_SOCKET` is unset, Libre WebUI
-reports the terminal as unavailable and the rest of Work continues to run.
+The interactive terminal and system diagnostics talk to the Docker Engine API
+directly. They follow `WORK_DOCKER_SOCKET` when set, otherwise `DOCKER_HOST` —
+either a `unix://` socket or a plain-HTTP `tcp://` endpoint such as a socket
+proxy (see `docker-compose.socket-proxy.yml`) — otherwise
+`/var/run/docker.sock`. A `DOCKER_HOST` this client cannot speak to (`ssh://`,
+or `tcp://` with `DOCKER_TLS_VERIFY` set) reports the terminal and Docker
+diagnostics as unavailable; the rest of Work continues to run through the
+docker CLI, which understands those endpoints on its own.
 
 Work reads these values when the backend starts. The preview port is internal to
 the task container; Libre WebUI publishes it to a dynamically assigned loopback

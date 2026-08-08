@@ -1247,6 +1247,37 @@
       "updateSuccess": "User updated successfully",
       "createFailed": "Failed to create user",
       "updateFailed": "Failed to update user"
+    },
+    "workAccess": {
+      "title": "Work access",
+      "description": "Allow all active users to create and run Work tasks in isolated sandboxes. Administrators always have access; host folder workspaces remain admin-only.",
+      "saved": "Work access updated",
+      "saveFailed": "Could not update Work access"
+    },
+    "workPolicies": {
+      "title": "Work policies",
+      "description": "Named runtime presets (image, limits, idle stop) a task can be created under. Empty fields inherit the global defaults.",
+      "add": "Add policy",
+      "name": "Name",
+      "image": "Image",
+      "memory": "Memory",
+      "cpu": "CPUs",
+      "pids": "PID limit",
+      "workspaceSize": "Workspace size",
+      "idleMinutes": "Idle stop (minutes)",
+      "networkDefault": "Network default",
+      "networkInherit": "Inherit default",
+      "networkOn": "Enabled",
+      "networkOff": "Disabled",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit policy",
+      "delete": "Delete policy",
+      "deleteConfirm": "Delete this policy? Tasks using it fall back to the global defaults.",
+      "empty": "No policies yet. Tasks use the global runtime defaults.",
+      "saved": "Work policy saved",
+      "deleted": "Work policy deleted",
+      "failed": "Could not save the Work policy"
     }
   },
   "usageAnalytics": {
@@ -1391,7 +1422,30 @@
       "internal": "internal",
       "empty": "No network interfaces are visible to the application runtime."
     },
-    "securityNote": "This page is restricted to administrators. The server returns operational summaries only: it does not expose environment variables, credentials, Docker labels, mounts, container commands, or inspect payloads. When Libre WebUI runs in a container, host-level CPU and memory details come from Docker Engine when its local socket is available; other values describe the application runtime."
+    "securityNote": "This page is restricted to administrators. The server returns operational summaries only: it does not expose environment variables, credentials, Docker labels, mounts, container commands, or inspect payloads. When Libre WebUI runs in a container, host-level CPU and memory details come from Docker Engine when its local socket is available; other values describe the application runtime.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxes across every user",
+      "access": "Access",
+      "accessAdmins": "Administrators only",
+      "accessAllUsers": "All users",
+      "runtimeAvailable": "Available",
+      "runtimeUnavailable": "Unavailable",
+      "activeRuntimes": "Active runtimes",
+      "pendingCleanups": "Pending cleanups",
+      "orphans": "Orphaned containers",
+      "owner": "Owner",
+      "task": "Task",
+      "state": "State",
+      "preview": "Preview",
+      "terminals": "Terminals",
+      "updated": "Updated",
+      "stateRunning": "Running",
+      "stateStopped": "Stopped",
+      "stateStarting": "Starting",
+      "stateUnknown": "Unknown",
+      "noTasks": "No Work tasks yet."
+    }
   },
   "chatHistory": {
     "label": "Conversation history",
@@ -1980,6 +2034,10 @@
       "unavailable": "The interactive terminal is not available in this deployment.",
       "blockedByRun": "The model is using this container. The terminal opens when the turn finishes.",
       "taskRunning": "Model turn in progress"
+    },
+    "policy": {
+      "label": "Runtime policy",
+      "default": "Default (global limits)"
     }
   },
   "personaBackground": {

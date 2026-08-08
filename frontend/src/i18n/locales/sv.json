@@ -1247,6 +1247,37 @@
       "failed": "Kontot kunde inte godkännas.",
       "notification": "{{count}} registrering(ar) väntar på ditt godkännande.",
       "notificationBadge": "{{count}} väntande användargodkännanden"
+    },
+    "workAccess": {
+      "title": "Work-åtkomst",
+      "description": "Tillåt alla aktiva användare att skapa och köra Work-uppgifter i isolerade sandlådor. Administratörer har alltid åtkomst; arbetsytor i värdmappar förblir endast för administratörer.",
+      "saved": "Work-åtkomst uppdaterad",
+      "saveFailed": "Kunde inte uppdatera Work-åtkomst"
+    },
+    "workPolicies": {
+      "title": "Work-policyer",
+      "description": "Namngivna körningsförval (image, gränser, tomgångsstopp) som uppgifter kan skapas under. Tomma fält ärver de globala standarderna.",
+      "add": "Lägg till policy",
+      "name": "Namn",
+      "image": "Image",
+      "memory": "Minne",
+      "cpu": "CPU:er",
+      "pids": "PID-gräns",
+      "workspaceSize": "Arbetsytans storlek",
+      "idleMinutes": "Tomgångsstopp (minuter)",
+      "networkDefault": "Nätverksstandard",
+      "networkInherit": "Ärv standard",
+      "networkOn": "Aktiverad",
+      "networkOff": "Inaktiverad",
+      "save": "Spara",
+      "cancel": "Avbryt",
+      "edit": "Redigera policy",
+      "delete": "Ta bort policy",
+      "deleteConfirm": "Ta bort denna policy? Uppgifter som använder den faller tillbaka till de globala standarderna.",
+      "empty": "Inga policyer ännu. Uppgifter använder de globala körningsstandarderna.",
+      "saved": "Work-policy sparad",
+      "deleted": "Work-policy borttagen",
+      "failed": "Kunde inte spara Work-policyn"
     }
   },
   "chatHistory": {
@@ -1830,6 +1861,10 @@
       "unavailable": "Den interaktiva terminalen är inte tillgänglig i den här installationen.",
       "blockedByRun": "Modellen använder den här containern. Terminalen öppnas när turen är klar.",
       "taskRunning": "Modelltur pågår"
+    },
+    "policy": {
+      "label": "Körningspolicy",
+      "default": "Standard (globala gränser)"
     }
   },
   "usageAnalytics": {
@@ -1974,7 +2009,30 @@
       "internal": "intern",
       "empty": "Inga nätverksgränssnitt är synliga för programmets körningsmiljö."
     },
-    "securityNote": "Denna sida är begränsad till administratörer. Servern returnerar endast driftsammanfattningar: den exponerar inte miljövariabler, autentiseringsuppgifter, Docker-etiketter, monteringar, container-kommandon eller inspektionsnyttolaster. När Libre WebUI körs i en container kommer värdnivåns CPU- och minnesdetaljer från Docker Engine när dess lokala socket är tillgänglig; andra värden beskriver programmets körningsmiljö."
+    "securityNote": "Denna sida är begränsad till administratörer. Servern returnerar endast driftsammanfattningar: den exponerar inte miljövariabler, autentiseringsuppgifter, Docker-etiketter, monteringar, container-kommandon eller inspektionsnyttolaster. När Libre WebUI körs i en container kommer värdnivåns CPU- och minnesdetaljer från Docker Engine när dess lokala socket är tillgänglig; andra värden beskriver programmets körningsmiljö.",
+    "work": {
+      "title": "Work",
+      "description": "Sandlådor för alla användare",
+      "access": "Åtkomst",
+      "accessAdmins": "Endast administratörer",
+      "accessAllUsers": "Alla användare",
+      "runtimeAvailable": "Tillgänglig",
+      "runtimeUnavailable": "Otillgänglig",
+      "activeRuntimes": "Aktiva körmiljöer",
+      "pendingCleanups": "Väntande rensningar",
+      "orphans": "Föräldralösa containrar",
+      "owner": "Ägare",
+      "task": "Uppgift",
+      "state": "Tillstånd",
+      "preview": "Förhandsvisning",
+      "terminals": "Terminaler",
+      "updated": "Uppdaterad",
+      "stateRunning": "Körs",
+      "stateStopped": "Stoppad",
+      "stateStarting": "Startar",
+      "stateUnknown": "Okänd",
+      "noTasks": "Inga Work-uppgifter ännu."
+    }
   },
   "mediaGeneration": {
     "title": "Generera media",

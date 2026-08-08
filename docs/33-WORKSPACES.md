@@ -27,13 +27,16 @@ commands in a task-scoped Docker container, and start a browser preview.
 Work is implemented directly in Libre WebUI. It does not require Libre Claw or
 another agent daemon.
 
-:::warning Trusted administrators only
+:::warning Trusted users only
 
-Every Work API requires an authenticated administrator account. Work
-deliberately lets a model execute arbitrary shell commands inside a container,
-and current UI-created Work containers have network egress. Treat every
-administrator with Work access as a trusted runtime operator, not merely as a
-chat user.
+Every Work API requires an authenticated account with Work access. By
+default that means administrators only; an administrator can open Work to
+all active users from the User Management page (host-folder workspaces stay
+admin-only regardless, because they bind-mount server paths). Work
+deliberately lets a model execute arbitrary shell commands inside a
+container, and current UI-created Work containers have network egress.
+Treat everyone you grant Work access as a trusted runtime operator, not
+merely as a chat user.
 
 :::
 
@@ -147,7 +150,7 @@ computer as the browser:
 
 ```bash
 docker info
-npx libre-webui
+npx libre-webui@latest
 ```
 
 Open `http://localhost:8080`, sign in as an administrator, select **Work** in
@@ -367,13 +370,18 @@ Operational behavior:
 - **While a run is active** — the tab explains that the model owns the
   container and opens the shell once the turn finishes.
 
-The terminal needs the Docker Engine **Unix socket**, because a TTY session
-requires a hijacked bidirectional stream that the Docker CLI only provides to
-a real controlling terminal. It uses `WORK_DOCKER_SOCKET`, otherwise a
-`unix://` `DOCKER_HOST`, otherwise `/var/run/docker.sock`. A deployment whose
-`DOCKER_HOST` is a remote TCP endpoint reports the terminal as unavailable
-with that reason rather than silently attaching elsewhere; the rest of Work
-keeps working.
+The terminal talks to the Docker Engine **API directly**, because a TTY
+session requires a hijacked bidirectional stream that the Docker CLI only
+provides to a real controlling terminal. It uses `WORK_DOCKER_SOCKET`,
+otherwise `DOCKER_HOST` — a `unix://` socket or a plain-HTTP `tcp://`
+endpoint such as a socket proxy, whose HTTP-aware forwarding carries the
+hijacked stream over a standard `Connection: Upgrade` tunnel — otherwise
+`/var/run/docker.sock`. A `DOCKER_HOST` this client cannot speak to
+(`ssh://`, or `tcp://` with `DOCKER_TLS_VERIFY` set) reports the terminal as
+unavailable with that reason rather than silently attaching elsewhere; the
+rest of Work keeps working. On the Kubernetes backend the same session
+rides the exec subresource as a TTY WebSocket through the API server —
+resize frames included — with no Docker endpoint involved.
 
 Terminal sessions are interactive, not recorded. Commands typed there do not
 appear in the task's Activity timeline.
@@ -521,12 +529,45 @@ idle container, commands stop the container after completion, and a verified
 preview may keep it running so the user can inspect the app. The named volume
 stays mounted again when the same task container is restarted or recreated.
 
-On backend startup, active runs are marked failed, preview state is cleared,
-and Libre WebUI attempts to stop every known Work container. If Docker cannot
-prove a container was stopped, the cleanup remains tracked, new mutable Work
+Administrators can define **named runtime policies** from the User
+Management page: presets combining a runtime image, memory/CPU/PID limits,
+a workspace size (Kubernetes), an idle timeout, and a network default. A
+task created under a policy runs with that configuration; every field a
+policy leaves empty inherits the deployment's global values, and deleting
+a policy returns its tasks to those globals on their next container
+recreation. Policies adjust resources only — the hardening profile
+(non-root, read-only rootfs, dropped capabilities, network isolation) is
+not a policy field and cannot be weakened per policy.
+
+`WORK_RUNTIME_IDLE_TIMEOUT_MS` bounds how long that preview grace lasts:
+when set, a sweep stops any sandbox that has seen no activity — no command
+finished, no terminal attached, no preview request through the signed
+proxy — for that many milliseconds, freeing its admission slot. Stopping is
+cheap and the workspace persists, so an idled preview simply restarts on
+the next use. The default (`0`) keeps today's behavior: a preview runs
+until it is stopped explicitly.
+
+On backend startup, active runs are marked failed and preview state is
+cleared — the agent loop and the preview proxy died with the process and
+cannot be resumed. Containers are then reconciled against Docker in a single
+labeled query rather than stopped blind, one task at a time: running
+containers owned by known tasks are stopped, because an interrupted command
+may still be executing without a supervising process; containers already at
+rest are left exactly as they are; and managed containers whose task row no
+longer exists — a crash during task deletion, or a database restored without
+its Docker resources — are removed. Ownership is decided by the task label
+stamped at creation, never by name. Orphan removal assumes one Libre WebUI
+instance per Docker daemon: a second instance sharing the daemon would see
+the first instance's labeled containers as orphans and remove them at
+startup. Run each instance against its own daemon (or a dedicated rootless
+daemon, as recommended below). A task with no container at all needs no
+Docker call, so startup cost follows what is actually running, not the size
+of the task list. If Docker cannot prove a running container was stopped or
+an orphan was removed, that cleanup remains tracked, new mutable Work
 operations stay blocked, and Libre WebUI retries every 10 seconds. An old
-command or preview may still be running while Docker is unavailable, so restore
-daemon access and let recovery complete before treating the runtime as stopped.
+command or preview may still be running while Docker is unavailable, so
+restore daemon access and let recovery complete before treating the runtime
+as stopped.
 
 ## Network Behavior
 
@@ -580,7 +621,7 @@ DNS filtering constrains name resolution, not raw IP egress. A deployment that
 must guarantee no direct-IP egress needs host-level firewall rules as well.
 
 Do not assume that placing code in Work prevents it from transmitting data.
-Use Work only for trusted administrators. There is no Work environment
+Grant Work access only to trusted users. There is no Work environment
 variable that changes the UI-created task default to offline mode.
 
 Network access does not add credentials. Libre WebUI does not mount SSH keys,
@@ -643,6 +684,19 @@ The main Libre WebUI container needs daemon control to create and inspect Work
 containers. A mounted Docker socket is therefore a control-plane credential,
 not an ordinary data mount: compromising the web application can become a
 Docker-host compromise.
+
+The first mitigation ships in this repository:
+`docker-compose.socket-proxy.yml` keeps the socket out of the Libre WebUI
+container entirely. A socket proxy holds `/var/run/docker.sock` on an
+internal network and forwards only the API sections Work uses — containers,
+images, volumes, networks, exec, info — while swarm, secrets, configs,
+build, commit, and system endpoints are denied before they reach the daemon.
+Libre WebUI is pointed at it with `DOCKER_HOST=tcp://docker-socket-proxy:2375`
+and needs no socket mount and no socket-group membership; the CLI, the
+interactive terminal, and Docker diagnostics all follow that endpoint. The
+proxy narrows the API surface, not the blast radius of the endpoints it does
+forward: whoever can create containers can still bind-mount host paths, so
+the boundary below still matters.
 
 For a stronger production boundary, run Libre WebUI and its Work daemon on a
 dedicated VM with no unrelated workloads. Stronger still, give Work a
@@ -744,14 +798,14 @@ not normally emit compatible resource headers.
 Work availability follows the machine and process running the Libre WebUI
 backend, not merely the browser or desktop interface.
 
-| Deployment                                | Work runs and files                                                                                       | Embedded preview                                                              |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `npx libre-webui` on a local computer     | Supported when Docker is installed, running, and callable by the backend user.                            | Supported through the signed application-origin proxy.                        |
-| Source development on a local computer    | Supported under the same Docker and provider requirements.                                                | Supported through the development API origin on port 3001.                    |
-| Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.  | Supported through that backend's signed proxy URL.                            |
-| Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                               | Supported when the public reverse proxy preserves HTTP and WebSocket traffic. |
-| Standard repository Docker Compose        | Supported by default: the image ships the Docker CLI and the Compose file mounts the host Docker socket.  | Supported through the same public Libre WebUI origin.                         |
-| Current Kubernetes/Helm deployment        | Unavailable: the chart does not create a Work runtime driver, per-task Pods, RBAC, or persistent volumes. | Unavailable.                                                                  |
+| Deployment                                | Work runs and files                                                                                                                                                                                                                                                            | Embedded preview                                                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `npx libre-webui` on a local computer     | Supported when Docker is installed, running, and callable by the backend user.                                                                                                                                                                                                 | Supported through the signed application-origin proxy.                                            |
+| Source development on a local computer    | Supported under the same Docker and provider requirements.                                                                                                                                                                                                                     | Supported through the development API origin on port 3001.                                        |
+| Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.                                                                                                                                                                       | Supported through that backend's signed proxy URL.                                                |
+| Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                                                                                                                                                                                                    | Supported when the public reverse proxy preserves HTTP and WebSocket traffic.                     |
+| Standard repository Docker Compose        | Supported by default: the image ships the Docker CLI and the Compose file mounts the host Docker socket.                                                                                                                                                                       | Supported through the same public Libre WebUI origin.                                             |
+| Current Kubernetes/Helm deployment        | Supported with `--set work.enabled=true`: sandboxes run as Pods with PVC workspaces (runs, files, commands, git, interactive terminals), under a namespace-scoped Role and default-deny NetworkPolicies — no Docker socket anywhere. See the [Kubernetes guide](./KUBERNETES). | Supported when the backend runs in-cluster: the signed proxy targets the sandbox Pod IP directly. |
 
 ### Running Work when Libre WebUI is itself in Docker
 
@@ -772,6 +826,13 @@ effectively an administrator of the Docker host.** Operators own the
 daemon-security, network, lifecycle, backup, and access-control consequences.
 Delete the `/var/run/docker.sock` line from your Compose file to turn Work off;
 nothing else depends on it.
+
+To keep Work without handing the socket to the web application, deploy with
+`docker-compose.socket-proxy.yml` instead: a socket proxy on an internal
+network holds the socket and forwards only the API sections Work uses, and
+Libre WebUI reaches it through `DOCKER_HOST`. See
+[Isolate Docker control](#1-isolate-docker-control) for what that boundary
+does and does not cover.
 
 Three conditions must hold, and the Work panel names whichever one fails:
 
@@ -833,9 +894,10 @@ Work reads these variables in the backend process:
 | `WORK_MAX_TASKS_PER_USER`             | `100`                                                                                         | Persisted Work task limit per administrator                |
 | `WORK_NETWORK_NAME`                   | `libre-webui-work`                                                                            | Managed sandbox bridge network for networked tasks         |
 | `WORK_RUNTIME_DNS`                    | unset                                                                                         | Comma-separated resolver IPs forced onto networked tasks   |
-| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://`, else `/var/run/docker.sock`                                       | Docker Engine socket used for interactive terminals        |
+| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://` or `tcp://`, else `/var/run/docker.sock`                           | Docker Engine endpoint used for interactive terminals      |
 | `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous interactive terminals per task                |
 | `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session closes              |
+| `WORK_RUNTIME_IDLE_TIMEOUT_MS`        | `0` (disabled)                                                                                | Stop a sandbox after this much inactivity (previews too)   |
 
 Use a fixed image version or digest in production. A mutable image tag can
 change both the available command-line tools and the security boundary without
@@ -1121,7 +1183,9 @@ Resolve that name/ownership conflict carefully, then retry deletion.
 
 Before enabling Work for an installation, remember:
 
-- Work is admin-only but administrators are powerful trusted operators.
+- Work is admins-only by default; opening it to all users makes every
+  active account a sandbox operator, so decide deliberately. Host-folder
+  workspaces stay admin-only in every mode.
 - The backend must control a Docker daemon.
 - Containers reduce filesystem exposure but are not virtual machines.
 - Current UI-created Work tasks have bridge network egress and no UI network

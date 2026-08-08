@@ -138,6 +138,44 @@ export interface WorkModelOption extends WorkModelSelection {
   remote: boolean;
 }
 
+export type WorkAccessMode = 'admins' | 'all-users';
+
+export interface WorkAccess {
+  mode: WorkAccessMode;
+  allowed: boolean;
+}
+
+export interface WorkAdminTask {
+  id: string;
+  title: string;
+  ownerId: string;
+  ownerUsername: string;
+  model: string;
+  status: string;
+  previewStatus: string;
+  networkEnabled: boolean;
+  hostWorkspace: boolean;
+  /** null when the runtime could not be asked (backend unavailable). */
+  running: boolean | null;
+  terminalSessions: number;
+  updatedAt: number;
+}
+
+export interface WorkAdminOverview {
+  generatedAt: number;
+  accessMode: WorkAccessMode;
+  runtimeAvailable: boolean;
+  runtimeReason?: string;
+  recoveryPending: number;
+  admission: {
+    activeGlobal: number;
+    maxGlobal: number;
+    maxPerUser: number;
+  };
+  tasks: WorkAdminTask[];
+  orphanContainers: Array<{ name: string; taskId: string; running: boolean }>;
+}
+
 export interface WorkCapabilities {
   available: boolean;
   runtime: 'docker';
@@ -216,6 +254,8 @@ export interface WorkTaskSummary {
   workspacePath: '/workspace';
   /** Host folder mounted at /workspace, when this task is bound to one. */
   hostPath?: string | null;
+  /** Named runtime policy this task runs under; absent = global defaults. */
+  policyId?: string | null;
 }
 
 export interface WorkTask extends WorkTaskSummary {
@@ -284,6 +324,33 @@ export interface CreateWorkTaskRequest {
   networkEnabled: boolean;
   /** Absolute host folder to bind as the workspace, when enabled server-side. */
   hostPath?: string;
+  /** Named runtime policy to create the task under. */
+  policyId?: string;
+}
+
+export interface WorkPolicy {
+  id: string;
+  name: string;
+  image?: string;
+  memoryLimit?: string;
+  cpuLimit?: string;
+  pidsLimit?: number;
+  networkDefault?: boolean;
+  workspaceSize?: string;
+  idleTimeoutMs?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface WorkPolicyInput {
+  name: string;
+  image?: string | null;
+  memoryLimit?: string | null;
+  cpuLimit?: string | null;
+  pidsLimit?: number | null;
+  networkDefault?: boolean | null;
+  workspaceSize?: string | null;
+  idleTimeoutMs?: number | null;
 }
 
 export interface StartWorkRunRequest {

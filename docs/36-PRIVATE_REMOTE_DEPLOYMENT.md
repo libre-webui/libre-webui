@@ -34,14 +34,24 @@ the client default.
   The host publishes no application ports.
 - The app runs non-root with a read-only root filesystem, no Linux
   capabilities, no-new-privileges, and CPU, memory, and PID limits.
-- Work is disabled unless `docker-compose.work.yml` is included. When enabled,
+- Work is disabled unless one of its overrides is included. When enabled,
   its containers add their own read-only root filesystem, capability drop,
   resource limits, workspace volume, and default-deny network policy.
 
-The base stack mounts no Docker socket. Adding either the Work or Watchtower
-override introduces the largest trust boundary: anyone who compromises a
-process that can issue Docker API calls can control the host. A read-only socket
-mount does not make Docker API access read-only.
+The base stack mounts no Docker socket. Enabling Work with
+`docker-compose.work-proxy.yml` keeps it that way: a socket proxy on an
+internal network holds the socket and forwards only the API sections Work
+uses (containers, images, volumes, networks, exec, info); swarm, secrets,
+build, and system endpoints are denied at the proxy, and the application
+needs no socket mount or socket-group membership. The proxy narrows the
+Docker API surface, not the blast radius of what it forwards — whoever can
+create containers can still bind-mount host paths — so treat it as a real
+hardening layer, not as multi-tenant isolation.
+
+The raw-socket alternatives remain the largest trust boundary: the
+`docker-compose.work.yml` and Watchtower overrides give a container a
+process that can issue arbitrary Docker API calls, which can control the
+host. A read-only socket mount does not make Docker API access read-only.
 
 ## Bootstrap
 
@@ -75,11 +85,14 @@ docker compose up -d
 docker compose ps
 ```
 
-To enable Work, include its override deliberately:
+To enable Work, include the socket-proxy override deliberately:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.work.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.work-proxy.yml up -d
 ```
+
+The raw-socket variant (`docker-compose.work.yml`) remains available for
+deployments that need it, with the trust consequences described above.
 
 Once Access is active, command-line smoke tests need a Cloudflare Access
 service token unless the exact path has a narrow bypass. Store the credentials

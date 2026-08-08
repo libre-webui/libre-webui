@@ -208,6 +208,8 @@ test('Work runtime defaults pin the image and bound resource use', () => {
     previewPort: 4173,
     previewBind: '127.0.0.1',
     networkName: 'libre-webui-work',
+    // Idle-stop is opt-in: 0 keeps previews running until stopped.
+    idleTimeoutMs: 0,
   });
   assert.match(WORK_RUNTIME_DEFAULTS.image, /@sha256:[a-f0-9]{64}$/);
   assert.doesNotMatch(WORK_RUNTIME_DEFAULTS.image, /:latest(?:@|$)/);
@@ -237,7 +239,14 @@ test('runtime limits expose admission capacity and live occupancy', () => {
 
 test('network-disabled containers use a non-root, least-privilege policy', () => {
   const image = 'example.invalid/work-runtime@sha256:test-only';
-  const args = buildWorkContainerRunArgs(task, image);
+  const args = buildWorkContainerRunArgs(task, {
+    policyId: null,
+    image,
+    memoryLimit: '2g',
+    cpuLimit: '2',
+    pidsLimit: 256,
+    idleTimeoutMs: 0,
+  });
 
   assert.deepEqual(args.slice(0, 2), ['run', '--detach']);
   assert.equal(optionValue(args, '--name'), task.containerName);
@@ -282,7 +291,14 @@ test('network-disabled containers use a non-root, least-privilege policy', () =>
 test('network-enabled containers publish only a dynamic loopback preview port', () => {
   const args = buildWorkContainerRunArgs(
     { ...task, networkEnabled: true },
-    'example.invalid/work-runtime@sha256:test-only'
+    {
+      policyId: null,
+      image: 'example.invalid/work-runtime@sha256:test-only',
+      memoryLimit: '2g',
+      cpuLimit: '2',
+      pidsLimit: 256,
+      idleTimeoutMs: 0,
+    }
   );
 
   // A dedicated managed bridge, never Docker's shared default bridge: task
@@ -630,7 +646,7 @@ test('preview startup wires detected targets into safe Docker launch arguments',
     service.assertCurrentNetworkPolicy = () => {};
     service.prepareWithLock = async () => {};
     service.withLifecycleLock = async (_taskId, operation) => operation();
-    service.docker = async args => {
+    service.driver.docker = async args => {
       dockerCalls.push(args);
       if (args.includes(PREVIEW_TARGET_SCRIPT)) {
         return {
@@ -718,7 +734,7 @@ test('failed preview discovery stops the container and releases its lease', asyn
   service.stopContainerWithLock = async () => {
     cleanupCalls += 1;
   };
-  service.docker = async args => {
+  service.driver.docker = async args => {
     assert.ok(args.includes(PREVIEW_TARGET_SCRIPT));
     return {
       exitCode: 0,
@@ -1164,18 +1180,67 @@ test('task retirement gates every new mutation before cleanup', async t => {
       truncated: false,
     };
   };
+  // Reconciliation asks Docker once which labeled containers exist. A task
+  // whose container is already gone needs no stop call at all.
+  const restedRuntime = new runtimeModule.WorkRuntimeService();
+  restedRuntime.isDockerAvailable = async () => true;
+  restedRuntime.driver.docker = async args => {
+    assert.equal(args[0], 'ps');
+    return { exitCode: 0, stdout: '', stderr: '', truncated: false };
+  };
+  const rested = await restedRuntime.beginRecovery([taskOneRecord]);
+  assert.deepEqual(rested, { stopped: 0, failed: 0 });
+  assert.equal(restedRuntime.recoveryPending, false);
+  assert.doesNotThrow(() => restedRuntime.assertAcceptingWork());
+
+  // A running container of a known task is stopped; a managed container
+  // whose task row is gone is force-removed as an orphan.
   const recoveredRuntime = new runtimeModule.WorkRuntimeService();
   recoveredRuntime.isDockerAvailable = async () => true;
-  recoveredRuntime.docker = missingDocker;
+  const recoveryCalls = [];
+  recoveredRuntime.driver.docker = async args => {
+    recoveryCalls.push(args);
+    if (args[0] === 'ps') {
+      return {
+        exitCode: 0,
+        stdout:
+          `${taskOneRecord.containerName}\trunning\t${taskOneRecord.id}\n` +
+          'work-orphan\trunning\ttask-gone\n',
+        stderr: '',
+        truncated: false,
+      };
+    }
+    if (args[0] === 'inspect') {
+      return {
+        exitCode: 0,
+        stdout: `${taskOneRecord.id}\n`,
+        stderr: '',
+        truncated: false,
+      };
+    }
+    return { exitCode: 0, stdout: '', stderr: '', truncated: false };
+  };
   const recovered = await recoveredRuntime.beginRecovery([taskOneRecord]);
-  assert.deepEqual(recovered, { stopped: 1, failed: 0 });
+  assert.deepEqual(recovered, { stopped: 2, failed: 0 });
   assert.equal(recoveredRuntime.recoveryPending, false);
   assert.doesNotThrow(() => recoveredRuntime.assertAcceptingWork());
+  assert.ok(
+    recoveryCalls.some(
+      args => args[0] === 'stop' && args.includes(taskOneRecord.containerName)
+    ),
+    'the running owned container must be stopped'
+  );
+  assert.ok(
+    recoveryCalls.some(
+      args => args[0] === 'rm' && args.includes('work-orphan')
+    ),
+    'the orphaned container must be removed'
+  );
 
   const teardownRuntime = new runtimeModule.WorkRuntimeService();
   teardownRuntime.isDockerAvailable = async () => true;
   let stopFails = true;
-  teardownRuntime.docker = async args => {
+  teardownRuntime.driver.docker = async args => {
     if (args[0] === 'container') {
       return {
         exitCode: 0,
@@ -1240,7 +1305,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   db.prepare(`UPDATE users SET role = 'user' WHERE id = ?`).run(userId);
 
   const cleanupRuntime = new runtimeModule.WorkRuntimeService();
-  cleanupRuntime.docker = missingDocker;
+  cleanupRuntime.driver.docker = missingDocker;
   await assert.rejects(
     cleanupRuntime.removeTask(retiredRecord),
     error => error?.status === 403 && error?.code === 'WORK_ACCESS_REVOKED'
@@ -1530,4 +1595,66 @@ test('Work message metadata and model context enforce exact byte bounds', async 
     [latestBudgetMessage.id]
   );
   assert.notEqual(firstBudgetMessage.id, latestBudgetMessage.id);
+});
+
+test('startup reconciliation stops only what is running and owned', () => {
+  const { parseManagedContainerList, planStartupReconciliation } =
+    runtimeModule;
+
+  const containers = parseManagedContainerList(
+    [
+      'work-a\trunning\ttask-a',
+      'work-b\texited\ttask-b',
+      'work-c\tpaused\ttask-c',
+      'work-ghost\trunning\ttask-deleted',
+      'work-stale\texited\ttask-deleted-too',
+      'work-unlabeled\trunning\t',
+      'work-idle-no-container\trunning\ttask-someone-else',
+      '',
+      'garbage-line-without-tabs',
+    ].join('\n')
+  );
+
+  // paused/restarting containers still hold execution state; exited ones
+  // are at rest. A missing task label parses as an empty owner.
+  assert.deepEqual(
+    containers.map(c => [c.name, c.running]),
+    [
+      ['work-a', true],
+      ['work-b', false],
+      ['work-c', true],
+      ['work-ghost', true],
+      ['work-stale', false],
+      ['work-unlabeled', true],
+      ['work-idle-no-container', true],
+    ]
+  );
+
+  const tasks = [
+    { id: 'task-a', containerName: 'work-a' },
+    { id: 'task-b', containerName: 'work-b' },
+    { id: 'task-c', containerName: 'work-c' },
+    { id: 'task-idle', containerName: 'work-idle-no-container' },
+  ];
+  const plan = planStartupReconciliation(tasks, containers);
+
+  // Only running containers of known tasks are stopped; the task with no
+  // container at all needs zero docker calls.
+  assert.deepEqual(plan.stop.map(task => task.id).sort(), ['task-a', 'task-c']);
+  // Ownership is by task label alone: an unknown or missing label makes the
+  // managed container an orphan, running or not — including a name that
+  // matches a known task, which the ownership assertion would refuse anyway.
+  assert.deepEqual(plan.removeOrphans.map(c => c.name).sort(), [
+    'work-ghost',
+    'work-idle-no-container',
+    'work-stale',
+    'work-unlabeled',
+  ]);
+  assert.equal(plan.atRest, 1);
+
+  // A restored-database scenario: no task rows, leftover containers are all
+  // orphans and an empty inventory plans no task stops.
+  const restorePlan = planStartupReconciliation([], containers);
+  assert.equal(restorePlan.stop.length, 0);
+  assert.equal(restorePlan.removeOrphans.length, containers.length);
 });
