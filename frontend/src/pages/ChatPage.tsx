@@ -601,12 +601,13 @@ export const ChatPage: React.FC = () => {
   const handleSendMessage = (
     message: string,
     images?: string[],
-    format?: string | Record<string, unknown>
+    format?: string | Record<string, unknown>,
+    webSearch?: boolean
   ) => {
     if (!currentSession) return;
     triggerHapticFeedback('impact');
     setFollowUps(null);
-    sendMessage(message, images, format);
+    sendMessage(message, images, format, webSearch);
   };
 
   if (!currentSession) {

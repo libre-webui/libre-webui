@@ -25,6 +25,9 @@ services:
       TRUST_PROXY: '1'
       ENABLE_SIGNUP: ${ENABLE_SIGNUP:-false}
       OLLAMA_BASE_URL: http://ollama:11434
+      # Default SearXNG endpoint for the bundled web-search service. Search
+      # stays off until an administrator enables it in Settings > Search.
+      SEARXNG_URL: http://searxng:8080
       WORK_PREVIEW_BIND: 172.30.0.1
       # Stop a Work sandbox after this much inactivity (no command, terminal,
       # or preview traffic). Bounds how long an unwatched preview holds one of
@@ -87,6 +90,51 @@ services:
       timeout: 10s
       retries: 5
       start_period: 15s
+    labels:
+      com.centurylinklabs.watchtower.enable: 'true'
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: libre-webui-searxng
+    restart: unless-stopped
+    init: true
+    # Upstream searxng-docker hardening: the entrypoint drops privileges
+    # itself, so it needs exactly these capabilities and nothing else.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: ${SEARXNG_PIDS_LIMIT:-256}
+    mem_limit: ${SEARXNG_MEMORY_LIMIT:-512m}
+    environment:
+      SEARXNG_BASE_URL: http://searxng:8080/
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?set SEARXNG_SECRET}
+    volumes:
+      - ./searxng:/etc/searxng
+    # Internal only: the app queries it server-side; nothing is published.
+    expose:
+      - '8080'
+    networks:
+      - private
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - -qO-
+        - http://127.0.0.1:8080/healthz
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
     labels:
       com.centurylinklabs.watchtower.enable: 'true'
     logging:

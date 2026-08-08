@@ -259,7 +259,9 @@
         "noCollections": "Belum ada koleksi — buat di Pengaturan → Dokumen"
       },
       "voiceInput": "Input suara",
-      "voiceStop": "Berhenti mendengarkan"
+      "voiceStop": "Berhenti mendengarkan",
+      "webSearchOn": "Pencarian web aktif — balasan memakai hasil langsung",
+      "webSearchOff": "Cari di web untuk pesan ini"
     },
     "session": {
       "new": "Chat Baru",
@@ -364,6 +366,9 @@
         "seed": "Seed",
         "contextLength": "Panjang konteks"
       }
+    },
+    "message": {
+      "sources": "Sumber"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Model",
       "systemMessage": "Pesan Sistem",
       "plugins": "Plugin",
+      "search": "Pencarian",
       "generation": "Pembuatan",
       "documents": "Dokumen",
       "tts": "Suara",
@@ -804,6 +810,21 @@
       "chat": "Chat",
       "media": "Suara & gambar",
       "connections": "Koneksi"
+    },
+    "search": {
+      "title": "Pencarian web",
+      "description": "Cari di web melalui instans SearXNG yang dihosting sendiri. Saat diaktifkan, komposer chat menampilkan tombol pencarian dan tugas Work dengan akses jaringan dapat mencari.",
+      "enableLabel": "Aktifkan pencarian web",
+      "enableDescription": "Tawarkan pencarian web untuk chat dan tugas Work. Pencarian berjalan di sisi server terhadap instans yang dikonfigurasi.",
+      "urlLabel": "URL SearXNG",
+      "urlDescription": "URL dasar instans SearXNG yang dapat dijangkau dari server. Stack deploy privat bawaan menyediakan http://searxng:8080.",
+      "test": "Uji koneksi",
+      "testing": "Menguji…",
+      "testOk": "Pencarian berfungsi — {{results}} hasil dikembalikan",
+      "testFailed": "Uji pencarian gagal",
+      "save": "Simpan",
+      "saved": "Pengaturan pencarian disimpan",
+      "saveFailed": "Tidak dapat menyimpan pengaturan pencarian"
     }
   },
   "models": {

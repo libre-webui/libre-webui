@@ -259,7 +259,9 @@
         "noCollections": "Aucune collection — créez-en une dans Paramètres → Documents"
       },
       "voiceInput": "Saisie vocale",
-      "voiceStop": "Arrêter l'écoute"
+      "voiceStop": "Arrêter l'écoute",
+      "webSearchOn": "Recherche web activée — les réponses utilisent des résultats en direct",
+      "webSearchOff": "Chercher sur le web pour ce message"
     },
     "session": {
       "new": "Nouvelle conversation",
@@ -364,6 +366,9 @@
         "seed": "Graine",
         "contextLength": "Longueur de contexte"
       }
+    },
+    "message": {
+      "sources": "Sources"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Modèle",
       "systemMessage": "Message système",
       "plugins": "Plugins",
+      "search": "Recherche",
       "generation": "Génération",
       "documents": "Documents",
       "tts": "Voix",
@@ -804,6 +810,21 @@
       "chat": "Chat",
       "media": "Voix et images",
       "connections": "Connexions"
+    },
+    "search": {
+      "title": "Recherche web",
+      "description": "Recherchez sur le web via une instance SearXNG auto-hébergée. Une fois activée, le chat propose un bouton de recherche et les tâches Work avec accès réseau peuvent chercher.",
+      "enableLabel": "Activer la recherche web",
+      "enableDescription": "Proposer la recherche web aux chats et aux tâches Work. Les recherches s'exécutent côté serveur sur l'instance configurée.",
+      "urlLabel": "URL SearXNG",
+      "urlDescription": "URL de base de l'instance SearXNG accessible depuis le serveur. La pile de déploiement privé fournie expose http://searxng:8080.",
+      "test": "Tester la connexion",
+      "testing": "Test en cours…",
+      "testOk": "La recherche fonctionne — {{results}} résultats renvoyés",
+      "testFailed": "Échec du test de recherche",
+      "save": "Enregistrer",
+      "saved": "Paramètres de recherche enregistrés",
+      "saveFailed": "Impossible d'enregistrer les paramètres de recherche"
     }
   },
   "models": {

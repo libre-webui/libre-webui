@@ -259,7 +259,9 @@
         "noCollections": "Noch keine Sammlungen — erstelle eine unter Einstellungen → Dokumente"
       },
       "voiceInput": "Spracheingabe",
-      "voiceStop": "Zuhören beenden"
+      "voiceStop": "Zuhören beenden",
+      "webSearchOn": "Websuche aktiv — Antworten nutzen Live-Ergebnisse",
+      "webSearchOff": "Für diese Nachricht im Web suchen"
     },
     "session": {
       "new": "Neuer Chat",
@@ -364,6 +366,9 @@
         "seed": "Seed",
         "contextLength": "Kontextlänge"
       }
+    },
+    "message": {
+      "sources": "Quellen"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Modell",
       "systemMessage": "Systemnachricht",
       "plugins": "Plugins",
+      "search": "Suche",
       "generation": "Generierung",
       "documents": "Dokumente",
       "tts": "Sprache",
@@ -804,6 +810,21 @@
       "chat": "Chat",
       "media": "Sprache & Bilder",
       "connections": "Verbindungen"
+    },
+    "search": {
+      "title": "Websuche",
+      "description": "Im Web über eine selbst gehostete SearXNG-Instanz suchen. Wenn aktiviert, bietet der Chat einen Suchschalter, und Work-Aufgaben mit Netzwerkzugriff können suchen.",
+      "enableLabel": "Websuche aktivieren",
+      "enableDescription": "Websuche für Chats und Work-Aufgaben anbieten. Suchen laufen serverseitig gegen die konfigurierte Instanz.",
+      "urlLabel": "SearXNG-URL",
+      "urlDescription": "Basis-URL der SearXNG-Instanz, erreichbar vom Server. Der mitgelieferte private Deploy-Stack stellt http://searxng:8080 bereit.",
+      "test": "Verbindung testen",
+      "testing": "Wird getestet…",
+      "testOk": "Suche funktioniert — {{results}} Ergebnisse erhalten",
+      "testFailed": "Suchtest fehlgeschlagen",
+      "save": "Speichern",
+      "saved": "Sucheinstellungen gespeichert",
+      "saveFailed": "Sucheinstellungen konnten nicht gespeichert werden"
     }
   },
   "models": {

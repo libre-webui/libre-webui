@@ -259,7 +259,9 @@
         "noCollections": "No collections yet — create one in Settings → Documents"
       },
       "voiceInput": "Voice input",
-      "voiceStop": "Stop listening"
+      "voiceStop": "Stop listening",
+      "webSearchOn": "Web search on — replies use live results",
+      "webSearchOff": "Search the web for this message"
     },
     "session": {
       "new": "New Chat",
@@ -364,6 +366,9 @@
         "seed": "Seed",
         "contextLength": "Context length"
       }
+    },
+    "message": {
+      "sources": "Sources"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Model",
       "systemMessage": "System Message",
       "plugins": "Plugins",
+      "search": "Search",
       "generation": "Generation",
       "documents": "Documents",
       "tts": "Speech",
@@ -804,6 +810,21 @@
       "chat": "Chat",
       "media": "Speech & images",
       "connections": "Connections"
+    },
+    "search": {
+      "title": "Web search",
+      "description": "Search the web through a self-hosted SearXNG instance. When enabled, the chat composer offers a search toggle and Work tasks with network access can search.",
+      "enableLabel": "Enable web search",
+      "enableDescription": "Offer web search to chats and Work tasks. Searches run server-side against the configured instance.",
+      "urlLabel": "SearXNG URL",
+      "urlDescription": "Base URL of the SearXNG instance, reachable from the server. The bundled private deploy stack provides http://searxng:8080.",
+      "test": "Test connection",
+      "testing": "Testing…",
+      "testOk": "Search works — {{results}} results returned",
+      "testFailed": "Search test failed",
+      "save": "Save",
+      "saved": "Search settings saved",
+      "saveFailed": "Could not save the search settings"
     }
   },
   "models": {

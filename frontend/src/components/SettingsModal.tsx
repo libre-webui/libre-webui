@@ -30,6 +30,7 @@ import {
   HardDrive,
   Palette,
   Info,
+  Globe,
   Puzzle,
   Sliders,
   Volume2,
@@ -48,6 +49,8 @@ import { SettingsImageGenerationTab } from '@/components/settings/SettingsImageG
 import { SettingsModelsTab } from '@/components/settings/SettingsModelsTab';
 import { SettingsShortcutsTab } from '@/components/settings/SettingsShortcutsTab';
 import { SettingsPluginsTab } from '@/components/settings/SettingsPluginsTab';
+import { SettingsSearchTab } from '@/components/settings/SettingsSearchTab';
+import { useAuthStore } from '@/store/authStore';
 import { SettingsTtsTab } from '@/components/settings/SettingsTtsTab';
 import { useSettingsDataImport } from '@/components/settings/useSettingsDataImport';
 import { useTranslation } from 'react-i18next';
@@ -246,6 +249,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     })),
   ];
 
+  // The Search tab manages a server-wide setting; only administrators (or
+  // the single-user no-auth mode) see it.
+  const settingsAuthUser = useAuthStore(state => state.user);
+  const settingsSystemInfo = useAuthStore(state => state.systemInfo);
+  const isSettingsAdmin =
+    settingsAuthUser?.role === 'admin' ||
+    settingsSystemInfo?.requiresAuth === false;
   const [activeTab, setActiveTab] = useState(initialTab ?? 'appearance');
   // Which settings the Generation tab edits. It used to pin whatever model the
   // chat happened to be on, with no way to reach the global values, so a limit
@@ -1345,6 +1355,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     tts: 'voice speech audio speak read aloud',
     'image-gen': 'image generation size quality style',
     plugins: 'api key provider connection openai anthropic groq gemini',
+    search: 'web search searxng internet browse sources',
     shortcuts: 'keyboard keys hotkeys shortcut command palette',
   };
 
@@ -1408,6 +1419,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       label: t('settings.groups.connections', 'Connections'),
       tabs: [
         { id: 'plugins', label: t('settings.tabs.plugins'), icon: Puzzle },
+        ...(isSettingsAdmin
+          ? [{ id: 'search', label: t('settings.tabs.search'), icon: Globe }]
+          : []),
       ],
     },
   ];
@@ -1506,6 +1520,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onSave={handleSaveEmbeddingSettings}
           />
         );
+
+      case 'search':
+        return <SettingsSearchTab />;
 
       case 'plugins':
         return (

@@ -422,7 +422,8 @@ export const useChat = (sessionId: string) => {
     async (
       content: string,
       images?: string[],
-      format?: string | Record<string, unknown>
+      format?: string | Record<string, unknown>,
+      webSearch?: boolean
     ) => {
       // Allow sending if there's content OR if there are images
       if (!sessionId || (!content.trim() && (!images || images.length === 0)))
@@ -542,6 +543,7 @@ export const useChat = (sessionId: string) => {
             options: session?.settings?.generationOptions ?? {},
             assistantMessageId, // Send the message ID to backend
             isPrivate: isPrivateSession, // Private sessions don't persist to DB
+            ...(webSearch === true ? { webSearch: true } : {}),
             ...(isPrivateSession
               ? {
                   model: session?.model,

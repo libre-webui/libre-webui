@@ -259,7 +259,9 @@
         "noCollections": "Zatím žádné kolekce — vytvořte ji v Nastavení → Dokumenty"
       },
       "voiceInput": "Hlasový vstup",
-      "voiceStop": "Zastavit poslech"
+      "voiceStop": "Zastavit poslech",
+      "webSearchOn": "Vyhledávání zapnuto — odpovědi využívají živé výsledky",
+      "webSearchOff": "Vyhledat tuto zprávu na webu"
     },
     "session": {
       "new": "Nový chat",
@@ -364,6 +366,9 @@
         "seed": "Seed",
         "contextLength": "Délka kontextu"
       }
+    },
+    "message": {
+      "sources": "Zdroje"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Model",
       "systemMessage": "Systémová zpráva",
       "plugins": "Pluginy",
+      "search": "Vyhledávání",
       "generation": "Generování",
       "documents": "Dokumenty",
       "tts": "Řeč",
@@ -804,6 +810,21 @@
       "chat": "Chat",
       "media": "Řeč a obrázky",
       "connections": "Připojení"
+    },
+    "search": {
+      "title": "Vyhledávání na webu",
+      "description": "Vyhledávejte na webu přes vlastní instanci SearXNG. Po zapnutí nabídne chat přepínač vyhledávání a úlohy Work s přístupem k síti mohou vyhledávat.",
+      "enableLabel": "Zapnout vyhledávání na webu",
+      "enableDescription": "Nabídnout vyhledávání chatům a úlohám Work. Vyhledávání běží na serveru proti nakonfigurované instanci.",
+      "urlLabel": "Adresa SearXNG",
+      "urlDescription": "Základní URL instance SearXNG dostupné ze serveru. Přiložený privátní deploy stack poskytuje http://searxng:8080.",
+      "test": "Otestovat připojení",
+      "testing": "Testuje se…",
+      "testOk": "Vyhledávání funguje — vráceno {{results}} výsledků",
+      "testFailed": "Test vyhledávání selhal",
+      "save": "Uložit",
+      "saved": "Nastavení vyhledávání uloženo",
+      "saveFailed": "Nastavení vyhledávání se nepodařilo uložit"
     }
   },
   "models": {

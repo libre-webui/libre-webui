@@ -40,7 +40,13 @@ import { StructuredOutput } from './StructuredOutput';
 import { ModelSelector } from './ModelSelector';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
-import { personaApi, chatApi, imageGenApi, documentsApi } from '@/utils/api';
+import {
+  personaApi,
+  chatApi,
+  imageGenApi,
+  documentsApi,
+  searchApi,
+} from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
 import { Persona, KnowledgeCollection, ChatSession } from '@/types';
@@ -86,7 +92,8 @@ interface ChatInputProps {
   onSendMessage: (
     message: string,
     images?: string[],
-    format?: string | Record<string, unknown>
+    format?: string | Record<string, unknown>,
+    webSearch?: boolean
   ) => void;
   onStopGeneration: () => void;
   disabled?: boolean;
@@ -103,12 +110,33 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const dictationBaseRef = useRef('');
   const speechSupported = useMemo(() => Boolean(getSpeechRecognition()), []);
+
   const [images, setImages] = useState<string[]>([]);
   const [format, setFormat] = useState<string | Record<string, unknown> | null>(
     null
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [attachMenuOpen, setAttachMenuOpen] = useState(false);
+  // Web search runs server-side through the admin-configured engine; the
+  // toggle appears only when an administrator has enabled it.
+  const [webSearchAvailable, setWebSearchAvailable] = useState(false);
+  const [webSearchActive, setWebSearchActive] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    searchApi
+      .getConfig()
+      .then(response => {
+        if (!cancelled && response.success && response.data) {
+          setWebSearchAvailable(response.data.available);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [webpageUrl, setWebpageUrl] = useState<string | null>(null);
   const [knowledgeMenuOpen, setKnowledgeMenuOpen] = useState(false);
   const [collections, setCollections] = useState<KnowledgeCollection[]>([]);
@@ -364,7 +392,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     onSendMessage(
       message.trim(),
       images.length > 0 ? images : undefined,
-      format || undefined
+      format || undefined,
+      webSearchAvailable && webSearchActive ? true : undefined
     );
     setMessage('');
     setImages([]);
@@ -789,6 +818,31 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       showImageGen={showImageGeneration}
                     />
                   </div>
+                )}
+
+                {/* Web search toggle */}
+                {webSearchAvailable && (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => setWebSearchActive(active => !active)}
+                    className={cn(
+                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                      'transition-colors duration-150 touch-manipulation',
+                      webSearchActive &&
+                        'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
+                    )}
+                    title={
+                      webSearchActive
+                        ? t('chat.input.webSearchOn')
+                        : t('chat.input.webSearchOff')
+                    }
+                    aria-pressed={webSearchActive}
+                  >
+                    <Globe className='h-4 w-4' />
+                  </Button>
                 )}
 
                 {/* Voice input */}

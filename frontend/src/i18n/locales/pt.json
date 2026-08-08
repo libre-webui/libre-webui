@@ -259,7 +259,9 @@
         "noCollections": "Ainda não há coleções — crie uma em Definições → Documentos"
       },
       "voiceInput": "Entrada de voz",
-      "voiceStop": "Parar de ouvir"
+      "voiceStop": "Parar de ouvir",
+      "webSearchOn": "Pesquisa na web ativa — respostas usam resultados ao vivo",
+      "webSearchOff": "Pesquisar na web para esta mensagem"
     },
     "session": {
       "new": "Nova conversa",
@@ -364,6 +366,9 @@
         "seed": "Semente",
         "contextLength": "Comprimento do contexto"
       }
+    },
+    "message": {
+      "sources": "Fontes"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Modelo",
       "systemMessage": "Mensagem do Sistema",
       "plugins": "Plugins",
+      "search": "Pesquisa",
       "generation": "Geração",
       "documents": "Documentos",
       "tts": "Voz",
@@ -804,6 +810,21 @@
       "chat": "Chat",
       "media": "Voz e imagens",
       "connections": "Conexões"
+    },
+    "search": {
+      "title": "Pesquisa na web",
+      "description": "Pesquise na web por meio de uma instância SearXNG auto-hospedada. Quando ativada, o chat oferece um botão de pesquisa e tarefas do Work com acesso à rede podem pesquisar.",
+      "enableLabel": "Ativar pesquisa na web",
+      "enableDescription": "Oferecer pesquisa na web para chats e tarefas do Work. As pesquisas rodam no servidor contra a instância configurada.",
+      "urlLabel": "URL do SearXNG",
+      "urlDescription": "URL base da instância SearXNG acessível pelo servidor. A pilha de deploy privado incluída fornece http://searxng:8080.",
+      "test": "Testar conexão",
+      "testing": "Testando…",
+      "testOk": "A pesquisa funciona — {{results}} resultados retornados",
+      "testFailed": "Falha no teste de pesquisa",
+      "save": "Salvar",
+      "saved": "Configurações de pesquisa salvas",
+      "saveFailed": "Não foi possível salvar as configurações de pesquisa"
     }
   },
   "models": {

@@ -1,0 +1,226 @@
+/*
+ * Libre WebUI
+ * Copyright (C) 2025 Kroonen AI, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at:
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Web search through a SearXNG instance. The connection is an
+ * administrator-managed persisted setting (the SEARXNG_URL environment
+ * variable seeds the default, so the bundled deploy stack works out of the
+ * box once an admin flips the toggle). Search stays off until enabled.
+ *
+ * The backend queries SearXNG's JSON API server-side; result text is
+ * bounded before it reaches any model context. The URL is admin-supplied
+ * configuration — treated like the Ollama endpoint, not user input.
+ */
+
+import { getDatabase } from '../db.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:web-search');
+
+export const WEB_SEARCH_ENABLED_KEY = 'web_search_enabled';
+export const WEB_SEARCH_URL_KEY = 'web_search_url';
+
+const SEARCH_TIMEOUT_MS = 12_000;
+const MAX_RESULTS_LIMIT = 8;
+const RESULT_TEXT_MAX_CHARS = 500;
+const QUERY_MAX_CHARS = 400;
+
+export interface WebSearchResult {
+  title: string;
+  url: string;
+  content: string;
+  engine?: string;
+}
+
+export interface WebSearchConfig {
+  enabled: boolean;
+  url: string;
+  /** Enabled and a URL is set — search can actually run. */
+  available: boolean;
+}
+
+function readSetting(key: string): string | undefined {
+  try {
+    const row = getDatabase()
+      .prepare('SELECT value FROM system_settings WHERE key = ?')
+      .get(key) as { value?: string } | undefined;
+    return row?.value;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeSetting(key: string, value: string): void {
+  getDatabase()
+    .prepare(
+      `INSERT INTO system_settings (key, value, updated_at)
+       VALUES (?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET
+         value = excluded.value,
+         updated_at = excluded.updated_at`
+    )
+    .run(key, value, Date.now());
+}
+
+export function normalizeWebSearchUrl(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim().replace(/\/+$/, '');
+  if (!trimmed) return '';
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new Error('Search URL must be a valid http(s) URL.');
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error('Search URL must use http or https.');
+  }
+  return trimmed;
+}
+
+export function getWebSearchConfig(): WebSearchConfig {
+  const enabled = readSetting(WEB_SEARCH_ENABLED_KEY) === 'true';
+  const storedUrl = readSetting(WEB_SEARCH_URL_KEY);
+  const url =
+    storedUrl !== undefined ? storedUrl : (process.env.SEARXNG_URL ?? '');
+  return { enabled, url, available: enabled && url.length > 0 };
+}
+
+export function setWebSearchConfig(input: {
+  enabled: boolean;
+  url: string;
+}): WebSearchConfig {
+  const url = normalizeWebSearchUrl(input.url);
+  if (input.enabled && !url) {
+    throw new Error('Enable web search only with a SearXNG URL configured.');
+  }
+  writeSetting(WEB_SEARCH_ENABLED_KEY, input.enabled ? 'true' : 'false');
+  writeSetting(WEB_SEARCH_URL_KEY, url);
+  return getWebSearchConfig();
+}
+
+export function isWebSearchAvailable(): boolean {
+  return getWebSearchConfig().available;
+}
+
+interface SearxngResult {
+  title?: unknown;
+  url?: unknown;
+  content?: unknown;
+  engine?: unknown;
+}
+
+const bounded = (value: unknown, max: number): string =>
+  typeof value === 'string'
+    ? value.replace(/\s+/g, ' ').trim().slice(0, max)
+    : '';
+
+export async function webSearch(
+  query: string,
+  maxResults = 6
+): Promise<WebSearchResult[]> {
+  const config = getWebSearchConfig();
+  if (!config.available) {
+    throw new Error('Web search is not enabled on this server.');
+  }
+  const trimmedQuery = query.trim().slice(0, QUERY_MAX_CHARS);
+  if (!trimmedQuery) {
+    throw new Error('A search query is required.');
+  }
+  const limit = Math.min(
+    Math.max(1, Math.trunc(maxResults)),
+    MAX_RESULTS_LIMIT
+  );
+
+  const target = new URL(`${config.url}/search`);
+  target.searchParams.set('q', trimmedQuery);
+  target.searchParams.set('format', 'json');
+  target.searchParams.set('safesearch', '1');
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SEARCH_TIMEOUT_MS);
+  let response: globalThis.Response;
+  try {
+    response = await fetch(target, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+  } catch (error) {
+    logger.warn('Web search request failed:', error);
+    throw new Error(
+      'The search service could not be reached. Check the SearXNG URL.'
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!response.ok) {
+    throw new Error(
+      `The search service answered with HTTP ${response.status}. Confirm the instance allows the JSON format.`
+    );
+  }
+  let payload: { results?: SearxngResult[] };
+  try {
+    payload = (await response.json()) as { results?: SearxngResult[] };
+  } catch {
+    throw new Error(
+      'The search service did not return JSON. Enable the json format in the SearXNG settings.'
+    );
+  }
+
+  const results: WebSearchResult[] = [];
+  for (const raw of payload.results ?? []) {
+    const url = typeof raw.url === 'string' ? raw.url.trim() : '';
+    if (!/^https?:\/\//i.test(url)) continue;
+    results.push({
+      title: bounded(raw.title, 200) || url,
+      url: url.slice(0, 1_000),
+      content: bounded(raw.content, RESULT_TEXT_MAX_CHARS),
+      ...(typeof raw.engine === 'string' ? { engine: raw.engine } : {}),
+    });
+    if (results.length >= limit) break;
+  }
+  return results;
+}
+
+/**
+ * The latest user message enhanced with search context, mirroring the
+ * document-RAG enhancement shape so every provider path benefits.
+ */
+export function buildWebSearchEnhancedContent(
+  content: string,
+  results: readonly WebSearchResult[],
+  query: string
+): string {
+  if (results.length === 0) return content;
+  const blocks = results.map(
+    (result, index) =>
+      `[${index + 1}] ${result.title}\n${result.url}${
+        result.content ? `\n${result.content}` : ''
+      }`
+  );
+  return `Web search results for "${query}":\n\n${blocks.join(
+    '\n\n'
+  )}\n\n---\n\nUsing the search results above when they are relevant, answer the user's message. Cite sources inline with bracketed numbers like [1] where you rely on them.\n\nUser message: ${content}`;
+}
+
+export default {
+  getWebSearchConfig,
+  setWebSearchConfig,
+  isWebSearchAvailable,
+  webSearch,
+  buildWebSearchEnhancedContent,
+};

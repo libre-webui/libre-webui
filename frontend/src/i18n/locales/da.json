@@ -259,7 +259,9 @@
         "noCollections": "Ingen samlinger endnu — opret en i Indstillinger → Dokumenter"
       },
       "voiceInput": "Stemmeinput",
-      "voiceStop": "Stop med at lytte"
+      "voiceStop": "Stop med at lytte",
+      "webSearchOn": "Websøgning til — svar bruger live-resultater",
+      "webSearchOff": "Søg på nettet for denne besked"
     },
     "session": {
       "new": "Ny chat",
@@ -364,6 +366,9 @@
         "seed": "Seed",
         "contextLength": "Kontekstlængde"
       }
+    },
+    "message": {
+      "sources": "Kilder"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Model",
       "systemMessage": "Systembesked",
       "plugins": "Plugins",
+      "search": "Søgning",
       "generation": "Generering",
       "documents": "Dokumenter",
       "tts": "Tale",
@@ -804,6 +810,21 @@
       "chat": "Chat",
       "media": "Tale og billeder",
       "connections": "Forbindelser"
+    },
+    "search": {
+      "title": "Websøgning",
+      "description": "Søg på nettet via en selvhostet SearXNG-instans. Når det er aktiveret, får chatten en søgeknap, og Work-opgaver med netværksadgang kan søge.",
+      "enableLabel": "Aktivér websøgning",
+      "enableDescription": "Tilbyd websøgning i chats og Work-opgaver. Søgninger kører på serveren mod den konfigurerede instans.",
+      "urlLabel": "SearXNG-URL",
+      "urlDescription": "Basis-URL for SearXNG-instansen, som serveren kan nå. Den medfølgende private deploy-stak leverer http://searxng:8080.",
+      "test": "Test forbindelse",
+      "testing": "Tester…",
+      "testOk": "Søgningen virker — {{results}} resultater returneret",
+      "testFailed": "Søgetesten mislykkedes",
+      "save": "Gem",
+      "saved": "Søgeindstillinger gemt",
+      "saveFailed": "Kunne ikke gemme søgeindstillingerne"
     }
   },
   "models": {

@@ -259,7 +259,9 @@
         "noCollections": "Engin söfn enn — búðu til eitt í Stillingar → Skjöl"
       },
       "voiceInput": "Raddinnsláttur",
-      "voiceStop": "Hætta að hlusta"
+      "voiceStop": "Hætta að hlusta",
+      "webSearchOn": "Vefleit virk — svör nota lifandi niðurstöður",
+      "webSearchOff": "Leita á vefnum fyrir þessi skilaboð"
     },
     "session": {
       "new": "Nýtt spjall",
@@ -364,6 +366,9 @@
         "seed": "Sáðgildi",
         "contextLength": "Samhengislengd"
       }
+    },
+    "message": {
+      "sources": "Heimildir"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Líkan",
       "systemMessage": "Kerfisskilaboð",
       "plugins": "Viðbætur",
+      "search": "Leit",
       "generation": "Myndun",
       "documents": "Skjöl",
       "tts": "Tal",
@@ -804,6 +810,21 @@
       "chat": "Spjall",
       "media": "Tal og myndir",
       "connections": "Tengingar"
+    },
+    "search": {
+      "title": "Vefleit",
+      "description": "Leitaðu á vefnum í gegnum sjálfhýst SearXNG-tilvik. Þegar kveikt er á birtist leitarrofi í spjallinu og Work-verk með netaðgang geta leitað.",
+      "enableLabel": "Virkja vefleit",
+      "enableDescription": "Bjóða vefleit í spjalli og Work-verkum. Leitir keyra á þjóninum gegn uppsetta tilvikinu.",
+      "urlLabel": "SearXNG-slóð",
+      "urlDescription": "Grunnslóð SearXNG-tilviksins, aðgengileg frá þjóninum. Meðfylgjandi einkauppsetning veitir http://searxng:8080.",
+      "test": "Prófa tengingu",
+      "testing": "Prófa…",
+      "testOk": "Leitin virkar — {{results}} niðurstöður skiluðust",
+      "testFailed": "Leitarprófun mistókst",
+      "save": "Vista",
+      "saved": "Leitarstillingar vistaðar",
+      "saveFailed": "Ekki tókst að vista leitarstillingar"
     }
   },
   "models": {

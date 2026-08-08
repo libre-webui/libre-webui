@@ -24,6 +24,11 @@ import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
 import documentService from './services/documentService.js';
 import agentCliService from './services/agentCliService.js';
+import {
+  buildWebSearchEnhancedContent,
+  isWebSearchAvailable,
+  webSearch as runWebSearch,
+} from './services/webSearchService.js';
 import chatGenerationService from './services/chatGenerationService.js';
 import preferencesService from './services/preferencesService.js';
 import assistantCompletionService from './services/assistantCompletionService.js';
@@ -40,6 +45,7 @@ import {
   sendAssistantComplete,
   sendConnected,
   sendError,
+  sendToolStatus,
   sendUserMessage,
   streamAssistantFakeChunks,
 } from './utils/websocketMessages.js';
@@ -200,6 +206,7 @@ export function registerWebSocketServer(server: Server): void {
             providerType,
             providerId,
             messageHistory,
+            webSearch: webSearchRequested,
           } = message.data;
           const requestProviderSelection = isPrivate
             ? normalizeChatProviderSelection({ providerType, providerId })
@@ -307,6 +314,58 @@ export function registerWebSocketServer(server: Server): void {
             logger.debug('Enhanced user message with document context');
           }
 
+          // Requested web search composes on top of any document context.
+          // The tool status feeds the existing activity indicator; a failed
+          // search degrades to a normal reply rather than failing the turn.
+          let webSearchSources:
+            Array<{ title: string; url: string }> | undefined;
+          let searchEnhancedContent = enhancedContent;
+          let searchHasRelevantContext = relevantContext.length > 0;
+          if (webSearchRequested === true && isWebSearchAvailable()) {
+            const searchToolCallId = `web-search-${Date.now()}`;
+            sendToolStatus(ws, {
+              toolCallId: searchToolCallId,
+              name: 'web_search',
+              phase: 'running',
+            });
+            try {
+              const results = await runWebSearch(content);
+              if (results.length > 0) {
+                searchEnhancedContent = buildWebSearchEnhancedContent(
+                  searchEnhancedContent,
+                  results,
+                  content
+                );
+                searchHasRelevantContext = true;
+                webSearchSources = results.map(({ title, url }) => ({
+                  title,
+                  url,
+                }));
+              }
+              sendToolStatus(ws, {
+                toolCallId: searchToolCallId,
+                name: 'web_search',
+                phase: 'completed',
+              });
+            } catch (searchError) {
+              logger.error(
+                'Web search failed; answering without it:',
+                searchError
+              );
+              sendToolStatus(ws, {
+                toolCallId: searchToolCallId,
+                name: 'web_search',
+                phase: 'failed',
+              });
+            }
+          }
+          const withSearchSources = (
+            metadata: Record<string, unknown> | undefined
+          ): Record<string, unknown> | undefined =>
+            webSearchSources?.length
+              ? { ...(metadata ?? {}), webSearchSources }
+              : metadata;
+
           let assistantContent = '';
           let assistantThinking = '';
           let assistantProviderMetadata: Record<string, unknown> | undefined;
@@ -332,8 +391,8 @@ export function registerWebSocketServer(server: Server): void {
               regenerate,
               content,
               images: images || undefined,
-              hasRelevantContext: relevantContext.length > 0,
-              enhancedContent,
+              hasRelevantContext: searchHasRelevantContext,
+              enhancedContent: searchEnhancedContent,
             });
 
           const generationTarget = preparedGeneration.target;
@@ -449,7 +508,9 @@ export function registerWebSocketServer(server: Server): void {
                     isPrivate,
                     regenerate,
                     originalMessageId,
-                    providerMetadata: assistantProviderMetadata,
+                    providerMetadata: withSearchSources(
+                      assistantProviderMetadata
+                    ),
                   });
 
                 if (isPrivate) {
@@ -589,6 +650,7 @@ export function registerWebSocketServer(server: Server): void {
                 regenerate,
                 originalMessageId,
                 statistics: ollamaStream.statistics,
+                providerMetadata: withSearchSources(undefined),
               });
 
             if (isPrivate) {
@@ -644,6 +706,9 @@ export function registerWebSocketServer(server: Server): void {
                 timestamp: Date.now(),
                 messageId: assistantMessageId,
                 statistics: ollamaStream.statistics,
+                ...(webSearchSources?.length
+                  ? { providerMetadata: withSearchSources(undefined) }
+                  : {}),
                 ...completion.branchingFields,
               });
             }

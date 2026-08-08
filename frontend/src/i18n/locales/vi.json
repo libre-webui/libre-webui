@@ -259,7 +259,9 @@
         "noCollections": "Chưa có bộ sưu tập nào — tạo trong Cài đặt → Tài liệu"
       },
       "voiceInput": "Nhập bằng giọng nói",
-      "voiceStop": "Dừng nghe"
+      "voiceStop": "Dừng nghe",
+      "webSearchOn": "Tìm kiếm web đang bật — trả lời dùng kết quả trực tiếp",
+      "webSearchOff": "Tìm trên web cho tin nhắn này"
     },
     "session": {
       "new": "Cuộc trò chuyện mới",
@@ -364,6 +366,9 @@
         "seed": "Seed",
         "contextLength": "Độ dài ngữ cảnh"
       }
+    },
+    "message": {
+      "sources": "Nguồn"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Mô hình",
       "systemMessage": "Tin nhắn hệ thống",
       "plugins": "Plugin",
+      "search": "Tìm kiếm",
       "generation": "Tạo nội dung",
       "documents": "Tài liệu",
       "tts": "Giọng nói",
@@ -804,6 +810,21 @@
       "chat": "Trò chuyện",
       "media": "Giọng nói & hình ảnh",
       "connections": "Kết nối"
+    },
+    "search": {
+      "title": "Tìm kiếm web",
+      "description": "Tìm kiếm trên web qua một phiên bản SearXNG tự lưu trữ. Khi bật, khung soạn chat có nút tìm kiếm và các tác vụ Work có mạng có thể tìm kiếm.",
+      "enableLabel": "Bật tìm kiếm web",
+      "enableDescription": "Cung cấp tìm kiếm web cho chat và tác vụ Work. Tìm kiếm chạy phía máy chủ trên phiên bản đã cấu hình.",
+      "urlLabel": "URL SearXNG",
+      "urlDescription": "URL gốc của phiên bản SearXNG mà máy chủ truy cập được. Bộ triển khai riêng đi kèm cung cấp http://searxng:8080.",
+      "test": "Kiểm tra kết nối",
+      "testing": "Đang kiểm tra…",
+      "testOk": "Tìm kiếm hoạt động — trả về {{results}} kết quả",
+      "testFailed": "Kiểm tra tìm kiếm thất bại",
+      "save": "Lưu",
+      "saved": "Đã lưu cài đặt tìm kiếm",
+      "saveFailed": "Không thể lưu cài đặt tìm kiếm"
     }
   },
   "models": {

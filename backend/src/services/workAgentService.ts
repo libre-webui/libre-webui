@@ -29,6 +29,7 @@ import {
   workToolCallBudget,
 } from './workAgentGuidance.js';
 import workRuntimeService, { WorkCommandResult } from './workRuntimeService.js';
+import { isWebSearchAvailable, webSearch } from './webSearchService.js';
 import workTaskService, {
   WORK_MESSAGE_METADATA_MAX_BYTES,
   WorkConflictError,
@@ -140,6 +141,31 @@ export const WORK_TOOL_SCHEMAS: Record<string, unknown>[] = [
   ),
   functionTool('stop_preview', 'Stop the running workspace preview.', {}),
 ];
+
+// Offered per run, only when an administrator enabled web search and the
+// task has network access: an "offline" task should stay offline even
+// though the search request itself egresses from the backend.
+export const WORK_WEB_SEARCH_TOOL_SCHEMA: Record<string, unknown> =
+  functionTool(
+    'web_search',
+    'Search the web through the server-configured search engine. Returns titles, URLs, and snippets.',
+    {
+      query: stringProperty('Search query.'),
+      max_results: {
+        type: 'integer',
+        description: 'Optional result count, 1-8. Defaults to 5.',
+      },
+    },
+    ['query']
+  );
+
+export function workToolSchemasForTask(task: {
+  networkEnabled: boolean;
+}): Record<string, unknown>[] {
+  return task.networkEnabled && isWebSearchAvailable()
+    ? [...WORK_TOOL_SCHEMAS, WORK_WEB_SEARCH_TOOL_SCHEMA]
+    : WORK_TOOL_SCHEMAS;
+}
 
 export class WorkAgentService {
   private controllers = new Map<string, AbortController>();
@@ -440,7 +466,7 @@ export class WorkAgentService {
             {
               model: run.model,
               messages,
-              tools: WORK_TOOL_SCHEMAS,
+              tools: workToolSchemasForTask(task),
               stream: true,
             },
             providerSelection,
@@ -1085,6 +1111,35 @@ export class WorkAgentService {
           optionalString(args.path) || '.'
         );
         return commandResult(result);
+      }
+      case 'web_search': {
+        if (!task.networkEnabled || !isWebSearchAvailable()) {
+          throw new WorkAgentHttpError(
+            'Web search is not available for this task.',
+            403,
+            'WORK_WEB_SEARCH_UNAVAILABLE'
+          );
+        }
+        const query = requiredString(args.query, 'query');
+        const results = await webSearch(
+          query,
+          optionalInteger(args.max_results) ?? 5
+        );
+        const content =
+          results.length === 0
+            ? 'No results.'
+            : results
+                .map(
+                  (result, index) =>
+                    `[${index + 1}] ${result.title}\n${result.url}${
+                      result.content ? `\n${result.content}` : ''
+                    }`
+                )
+                .join('\n\n');
+        return {
+          content: content.slice(0, workRuntimeService.limits.maxOutputChars),
+          metadata: { query, results: results.length },
+        };
       }
       case 'run_command': {
         const timeout = optionalInteger(args.timeout_ms);
@@ -1807,6 +1862,7 @@ function validateToolCallArguments(call: WorkToolCall): string | undefined {
     case 'move_file':
       return invalidRequiredString('from') || invalidRequiredString('to');
     case 'search_files':
+    case 'web_search':
       return invalidRequiredString('query');
     case 'run_command':
       return invalidRequiredString('command');
@@ -1855,6 +1911,9 @@ function summarizeToolCall(call: WorkToolCall): Record<string, unknown> {
       break;
     case 'search_files':
       includeString('path', args.path);
+      includeString('query', args.query, 500);
+      break;
+    case 'web_search':
       includeString('query', args.query, 500);
       break;
     case 'run_command':

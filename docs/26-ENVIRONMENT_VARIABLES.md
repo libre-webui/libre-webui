@@ -80,6 +80,12 @@ If callback URLs are not set, Libre WebUI builds defaults from `BASE_URL`.
 | `OLLAMA_TIMEOUT`                | `300000`                 | Standard Ollama request timeout in milliseconds     |
 | `OLLAMA_LONG_OPERATION_TIMEOUT` | `900000`                 | Long operation timeout for pulls and large requests |
 
+## Web Search
+
+| Variable      | Default | Purpose                                                                                          |
+| ------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `SEARXNG_URL` | unset   | Default SearXNG endpoint for the web-search setting; an admin still enables it in Settings > Search |
+
 ## Libre Claw
 
 | Variable                | Default                 | Purpose                         |

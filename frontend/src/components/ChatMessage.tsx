@@ -573,6 +573,55 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               </div>
             )}
 
+            {/* Web search sources the reply drew on */}
+            {!isUser &&
+              !isSystem &&
+              Array.isArray(message.providerMetadata?.webSearchSources) &&
+              (
+                message.providerMetadata.webSearchSources as Array<{
+                  title?: string;
+                  url?: string;
+                }>
+              ).length > 0 && (
+                <div className='mt-2.5 flex flex-wrap items-center gap-1.5'>
+                  <span className='text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-dark-500 rtl:tracking-normal'>
+                    {t('chat.message.sources', 'Sources')}
+                  </span>
+                  {(
+                    message.providerMetadata.webSearchSources as Array<{
+                      title?: string;
+                      url?: string;
+                    }>
+                  ).map((source, index) =>
+                    typeof source?.url === 'string' ? (
+                      <a
+                        key={`${source.url}-${index}`}
+                        href={source.url}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        dir='ltr'
+                        className='inline-flex max-w-[220px] items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-600 transition-colors hover:border-primary-300 hover:text-primary-600 dark:border-dark-300 dark:bg-dark-200 dark:text-dark-700 dark:hover:text-primary-400'
+                        title={source.title || source.url}
+                      >
+                        <span className='tabular-nums'>{index + 1}</span>
+                        <span className='truncate'>
+                          {(() => {
+                            try {
+                              return new URL(source.url).hostname.replace(
+                                /^www\./,
+                                ''
+                              );
+                            } catch {
+                              return source.url;
+                            }
+                          })()}
+                        </span>
+                      </a>
+                    ) : null
+                  )}
+                </div>
+              )}
+
             {/* Display generation statistics for assistant messages */}
             {!isUser && !isSystem && message.statistics && (
               <div className='mt-2'>

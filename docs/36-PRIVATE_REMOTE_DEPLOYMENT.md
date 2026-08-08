@@ -30,8 +30,11 @@ the client default.
   WebSocket upgrades. Do not add public bypass paths.
 - Libre WebUI requires a current account for application APIs. Model lifecycle
   and Work operations require the current database role to be administrator.
-- The application, Ollama, and cloudflared only use a private Compose network.
-  The host publishes no application ports.
+- The application, Ollama, SearXNG, and cloudflared only use a private Compose
+  network. The host publishes no application ports.
+- The bundled SearXNG service powers optional web search. It is internal-only
+  and inert until an administrator enables search in Settings > Search; set
+  `SEARXNG_SECRET` in `.env` before starting the stack.
 - The app runs non-root with a read-only root filesystem, no Linux
   capabilities, no-new-privileges, and CPU, memory, and PID limits.
 - Work is disabled unless one of its overrides is included. When enabled,

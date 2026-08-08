@@ -259,7 +259,9 @@
         "noCollections": "还没有集合 — 在 设置 → 文档 中创建"
       },
       "voiceInput": "语音输入",
-      "voiceStop": "停止聆听"
+      "voiceStop": "停止聆听",
+      "webSearchOn": "网页搜索已开启 — 回复将使用实时结果",
+      "webSearchOff": "为这条消息搜索网页"
     },
     "session": {
       "new": "新对话",
@@ -364,6 +366,9 @@
         "seed": "种子",
         "contextLength": "上下文长度"
       }
+    },
+    "message": {
+      "sources": "来源"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "模型",
       "systemMessage": "系统消息",
       "plugins": "插件",
+      "search": "搜索",
       "generation": "生成",
       "documents": "文档",
       "tts": "语音合成",
@@ -804,6 +810,21 @@
       "chat": "聊天",
       "media": "语音与图像",
       "connections": "连接"
+    },
+    "search": {
+      "title": "网页搜索",
+      "description": "通过自托管的 SearXNG 实例搜索网页。启用后，聊天输入框会显示搜索开关，具有网络访问权限的 Work 任务也可以搜索。",
+      "enableLabel": "启用网页搜索",
+      "enableDescription": "为聊天和 Work 任务提供网页搜索。搜索在服务器端通过配置的实例执行。",
+      "urlLabel": "SearXNG 地址",
+      "urlDescription": "服务器可访问的 SearXNG 实例基础 URL。随附的私有部署栈提供 http://searxng:8080。",
+      "test": "测试连接",
+      "testing": "正在测试…",
+      "testOk": "搜索正常 — 返回 {{results}} 条结果",
+      "testFailed": "搜索测试失败",
+      "save": "保存",
+      "saved": "搜索设置已保存",
+      "saveFailed": "无法保存搜索设置"
     }
   },
   "models": {

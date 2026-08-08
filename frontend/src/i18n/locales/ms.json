@@ -259,7 +259,9 @@
         "noCollections": "Tiada koleksi lagi — cipta satu di Tetapan → Dokumen"
       },
       "voiceInput": "Input suara",
-      "voiceStop": "Berhenti mendengar"
+      "voiceStop": "Berhenti mendengar",
+      "webSearchOn": "Carian web hidup — balasan menggunakan hasil langsung",
+      "webSearchOff": "Cari di web untuk mesej ini"
     },
     "session": {
       "new": "Sembang Baharu",
@@ -364,6 +366,9 @@
         "seed": "Benih",
         "contextLength": "Panjang konteks"
       }
+    },
+    "message": {
+      "sources": "Sumber"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Model",
       "systemMessage": "Mesej Sistem",
       "plugins": "Plugin",
+      "search": "Carian",
       "generation": "Penjanaan",
       "documents": "Dokumen",
       "tts": "Suara",
@@ -804,6 +810,21 @@
       "chat": "Sembang",
       "media": "Suara & imej",
       "connections": "Sambungan"
+    },
+    "search": {
+      "title": "Carian web",
+      "description": "Cari di web melalui instans SearXNG yang dihoskan sendiri. Apabila diaktifkan, penggubah sembang menawarkan togol carian dan tugas Work dengan akses rangkaian boleh mencari.",
+      "enableLabel": "Dayakan carian web",
+      "enableDescription": "Tawarkan carian web kepada sembang dan tugas Work. Carian dijalankan di pihak pelayan terhadap instans yang dikonfigurasi.",
+      "urlLabel": "URL SearXNG",
+      "urlDescription": "URL asas instans SearXNG yang boleh dicapai dari pelayan. Stack deploy peribadi yang disertakan menyediakan http://searxng:8080.",
+      "test": "Uji sambungan",
+      "testing": "Menguji…",
+      "testOk": "Carian berfungsi — {{results}} hasil dikembalikan",
+      "testFailed": "Ujian carian gagal",
+      "save": "Simpan",
+      "saved": "Tetapan carian disimpan",
+      "saveFailed": "Tidak dapat menyimpan tetapan carian"
     }
   },
   "models": {

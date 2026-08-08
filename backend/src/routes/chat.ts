@@ -24,6 +24,12 @@ import { personaService } from '../services/personaService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import { extractStatistics } from '../utils/generationUtils.js';
 import agentCliService from '../services/agentCliService.js';
+import {
+  buildWebSearchEnhancedContent,
+  isWebSearchAvailable,
+  webSearch as runWebSearch,
+  type WebSearchResult,
+} from '../services/webSearchService.js';
 import chatGenerationService from '../services/chatGenerationService.js';
 import preferencesService from '../services/preferencesService.js';
 import { ChatRequestService } from '../services/chatRequestService.js';
@@ -453,6 +459,31 @@ router.post(
         logger.error('Error during document search:', error);
       }
 
+      // Requested web search composes on top of any document context; a
+      // failed search degrades to a normal reply rather than failing it.
+      let webSearchSources: Array<{ title: string; url: string }> | undefined;
+      let enhancedContent = documentContext.enhancedContent;
+      let hasRelevantContext = documentContext.hasRelevantContext;
+      if (req.body?.webSearch === true && isWebSearchAvailable()) {
+        try {
+          const results: WebSearchResult[] = await runWebSearch(message);
+          if (results.length > 0) {
+            enhancedContent = buildWebSearchEnhancedContent(
+              enhancedContent,
+              results,
+              message
+            );
+            hasRelevantContext = true;
+            webSearchSources = results.map(({ title, url }) => ({
+              title,
+              url,
+            }));
+          }
+        } catch (error) {
+          logger.error('Web search failed; answering without it:', error);
+        }
+      }
+
       const preparedGeneration =
         await chatRequestService.prepareGenerationRequest({
           session,
@@ -460,8 +491,8 @@ router.post(
           options,
           persistedMessages: chatService.getMessagesForContext(sessionId),
           content: message,
-          hasRelevantContext: documentContext.hasRelevantContext,
-          enhancedContent: documentContext.enhancedContent,
+          hasRelevantContext,
+          enhancedContent,
         });
 
       const generationResult = await chatGenerationService.executeNonStreaming({
@@ -489,7 +520,12 @@ router.post(
           thinking: generationResult.assistantThinking,
           model: session.model,
           statistics,
-          providerMetadata: generationResult.response.message.providerMetadata,
+          providerMetadata: webSearchSources?.length
+            ? {
+                ...(generationResult.response.message.providerMetadata ?? {}),
+                webSearchSources,
+              }
+            : generationResult.response.message.providerMetadata,
         },
         userId
       );
@@ -564,6 +600,53 @@ router.post(
         return;
       }
 
+      // Requested web search runs before generation and reports its own
+      // progress so the interface can show a searching state; failure
+      // degrades to a normal reply.
+      let webSearchSources: Array<{ title: string; url: string }> | undefined;
+      let searchEnhancedContent: string | undefined;
+      if (req.body?.webSearch === true && isWebSearchAvailable()) {
+        res.write(
+          `data: ${JSON.stringify({ type: 'search', status: 'searching' })}\n\n`
+        );
+        try {
+          const results: WebSearchResult[] = await runWebSearch(message);
+          if (results.length > 0) {
+            searchEnhancedContent = buildWebSearchEnhancedContent(
+              message,
+              results,
+              message
+            );
+            webSearchSources = results.map(({ title, url }) => ({
+              title,
+              url,
+            }));
+          }
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'search',
+              status: 'done',
+              sources: webSearchSources ?? [],
+            })}\n\n`
+          );
+        } catch (searchError) {
+          logger.error('Web search failed; answering without it:', searchError);
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'search',
+              status: 'failed',
+              error: getErrorMessage(searchError, 'Web search failed.'),
+            })}\n\n`
+          );
+        }
+      }
+      const withSearchSources = (
+        metadata: Record<string, unknown> | undefined
+      ): Record<string, unknown> | undefined =>
+        webSearchSources?.length
+          ? { ...(metadata ?? {}), webSearchSources }
+          : metadata;
+
       const preparedGeneration =
         await chatRequestService.prepareGenerationRequest({
           session,
@@ -571,6 +654,12 @@ router.post(
           options,
           persistedMessages: chatService.getMessagesForContext(sessionId),
           content: message,
+          ...(searchEnhancedContent
+            ? {
+                enhancedContent: searchEnhancedContent,
+                hasRelevantContext: true,
+              }
+            : {}),
         });
       const {
         target,
@@ -631,7 +720,7 @@ router.post(
               content: fullResponse,
               thinking: fullThinking || undefined,
               model: session.model,
-              providerMetadata: assistantProviderMetadata,
+              providerMetadata: withSearchSources(assistantProviderMetadata),
             },
             userId
           );
@@ -742,7 +831,7 @@ router.post(
               content: fullResponse,
               thinking: fullThinking || undefined,
               model: session.model,
-              providerMetadata: assistantProviderMetadata,
+              providerMetadata: withSearchSources(assistantProviderMetadata),
             },
             userId
           );
@@ -798,6 +887,7 @@ router.post(
                 content: fullResponse,
                 thinking: fullThinking || undefined,
                 model: session.model,
+                providerMetadata: withSearchSources(undefined),
               },
               userId
             );

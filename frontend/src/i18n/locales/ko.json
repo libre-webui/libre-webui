@@ -259,7 +259,9 @@
         "noCollections": "아직 컬렉션이 없습니다 — 설정 → 문서에서 만드세요"
       },
       "voiceInput": "음성 입력",
-      "voiceStop": "듣기 중지"
+      "voiceStop": "듣기 중지",
+      "webSearchOn": "웹 검색 켜짐 — 답변에 실시간 결과 사용",
+      "webSearchOff": "이 메시지에 대해 웹 검색"
     },
     "session": {
       "new": "새 채팅",
@@ -364,6 +366,9 @@
         "seed": "시드",
         "contextLength": "컨텍스트 길이"
       }
+    },
+    "message": {
+      "sources": "출처"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "모델",
       "systemMessage": "시스템 메시지",
       "plugins": "플러그인",
+      "search": "검색",
       "generation": "생성",
       "documents": "문서",
       "tts": "음성 합성",
@@ -804,6 +810,21 @@
       "chat": "채팅",
       "media": "음성 및 이미지",
       "connections": "연결"
+    },
+    "search": {
+      "title": "웹 검색",
+      "description": "자체 호스팅 SearXNG 인스턴스로 웹을 검색합니다. 활성화하면 채팅 입력창에 검색 토글이 표시되고 네트워크 접근이 있는 Work 작업도 검색할 수 있습니다.",
+      "enableLabel": "웹 검색 활성화",
+      "enableDescription": "채팅과 Work 작업에 웹 검색을 제공합니다. 검색은 구성된 인스턴스에 대해 서버 측에서 실행됩니다.",
+      "urlLabel": "SearXNG URL",
+      "urlDescription": "서버에서 접근 가능한 SearXNG 인스턴스의 기본 URL. 포함된 프라이빗 배포 스택은 http://searxng:8080 을 제공합니다.",
+      "test": "연결 테스트",
+      "testing": "테스트 중…",
+      "testOk": "검색 작동 — {{results}}개의 결과 반환",
+      "testFailed": "검색 테스트 실패",
+      "save": "저장",
+      "saved": "검색 설정이 저장되었습니다",
+      "saveFailed": "검색 설정을 저장할 수 없습니다"
     }
   },
   "models": {

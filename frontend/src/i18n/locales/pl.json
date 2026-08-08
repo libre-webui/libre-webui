@@ -259,7 +259,9 @@
         "noCollections": "Brak kolekcji — utwórz ją w Ustawienia → Dokumenty"
       },
       "voiceInput": "Wprowadzanie głosowe",
-      "voiceStop": "Przestań słuchać"
+      "voiceStop": "Przestań słuchać",
+      "webSearchOn": "Wyszukiwanie włączone — odpowiedzi używają bieżących wyników",
+      "webSearchOff": "Szukaj w sieci dla tej wiadomości"
     },
     "session": {
       "new": "Nowy czat",
@@ -364,6 +366,9 @@
         "seed": "Ziarno",
         "contextLength": "Długość kontekstu"
       }
+    },
+    "message": {
+      "sources": "Źródła"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Model",
       "systemMessage": "Wiadomość systemowa",
       "plugins": "Wtyczki",
+      "search": "Wyszukiwanie",
       "generation": "Generowanie",
       "documents": "Dokumenty",
       "tts": "Mowa",
@@ -804,6 +810,21 @@
       "chat": "Czat",
       "media": "Mowa i obrazy",
       "connections": "Połączenia"
+    },
+    "search": {
+      "title": "Wyszukiwanie w sieci",
+      "description": "Szukaj w sieci przez własną instancję SearXNG. Po włączeniu czat oferuje przełącznik wyszukiwania, a zadania Work z dostępem do sieci mogą wyszukiwać.",
+      "enableLabel": "Włącz wyszukiwanie w sieci",
+      "enableDescription": "Udostępnij wyszukiwanie czatom i zadaniom Work. Wyszukiwania działają po stronie serwera na skonfigurowanej instancji.",
+      "urlLabel": "Adres SearXNG",
+      "urlDescription": "Bazowy URL instancji SearXNG osiągalny z serwera. Dołączony prywatny stack wdrożeniowy udostępnia http://searxng:8080.",
+      "test": "Testuj połączenie",
+      "testing": "Testowanie…",
+      "testOk": "Wyszukiwanie działa — zwrócono {{results}} wyników",
+      "testFailed": "Test wyszukiwania nie powiódł się",
+      "save": "Zapisz",
+      "saved": "Zapisano ustawienia wyszukiwania",
+      "saveFailed": "Nie udało się zapisać ustawień wyszukiwania"
     }
   },
   "models": {

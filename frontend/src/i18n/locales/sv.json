@@ -259,7 +259,9 @@
         "noCollections": "Inga samlingar än — skapa en i Inställningar → Dokument"
       },
       "voiceInput": "Röstinmatning",
-      "voiceStop": "Sluta lyssna"
+      "voiceStop": "Sluta lyssna",
+      "webSearchOn": "Webbsökning på — svar använder live-resultat",
+      "webSearchOff": "Sök på webben för det här meddelandet"
     },
     "session": {
       "new": "Ny chatt",
@@ -364,6 +366,9 @@
         "seed": "Frö",
         "contextLength": "Kontextlängd"
       }
+    },
+    "message": {
+      "sources": "Källor"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Modell",
       "systemMessage": "Systemmeddelande",
       "plugins": "Tillägg",
+      "search": "Sökning",
       "generation": "Generering",
       "documents": "Dokument",
       "tts": "Tal",
@@ -804,6 +810,21 @@
       "chat": "Chatt",
       "media": "Tal och bilder",
       "connections": "Anslutningar"
+    },
+    "search": {
+      "title": "Webbsökning",
+      "description": "Sök på webben via en självhostad SearXNG-instans. När den är aktiverad får chatten en sökknapp och Work-uppgifter med nätverksåtkomst kan söka.",
+      "enableLabel": "Aktivera webbsökning",
+      "enableDescription": "Erbjud webbsökning i chattar och Work-uppgifter. Sökningar körs på servern mot den konfigurerade instansen.",
+      "urlLabel": "SearXNG-URL",
+      "urlDescription": "Bas-URL för SearXNG-instansen som nås från servern. Den medföljande privata deploy-stacken tillhandahåller http://searxng:8080.",
+      "test": "Testa anslutning",
+      "testing": "Testar…",
+      "testOk": "Sökningen fungerar — {{results}} resultat returnerades",
+      "testFailed": "Söktestet misslyckades",
+      "save": "Spara",
+      "saved": "Sökinställningar sparade",
+      "saveFailed": "Kunde inte spara sökinställningarna"
     }
   },
   "models": {

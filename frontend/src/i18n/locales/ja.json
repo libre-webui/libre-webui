@@ -259,7 +259,9 @@
         "noCollections": "コレクションがまだありません — 設定 → ドキュメントで作成"
       },
       "voiceInput": "音声入力",
-      "voiceStop": "聞き取りを停止"
+      "voiceStop": "聞き取りを停止",
+      "webSearchOn": "ウェブ検索オン — 返信にライブ結果を使用",
+      "webSearchOff": "このメッセージについてウェブを検索"
     },
     "session": {
       "new": "新しいチャット",
@@ -364,6 +366,9 @@
         "seed": "シード",
         "contextLength": "コンテキスト長"
       }
+    },
+    "message": {
+      "sources": "出典"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "モデル",
       "systemMessage": "システムメッセージ",
       "plugins": "プラグイン",
+      "search": "検索",
       "generation": "生成",
       "documents": "ドキュメント",
       "tts": "音声読み上げ",
@@ -804,6 +810,21 @@
       "chat": "チャット",
       "media": "音声と画像",
       "connections": "接続"
+    },
+    "search": {
+      "title": "ウェブ検索",
+      "description": "セルフホストの SearXNG インスタンスでウェブを検索します。有効にすると、チャット入力に検索トグルが表示され、ネットワーク接続のある Work タスクも検索できます。",
+      "enableLabel": "ウェブ検索を有効化",
+      "enableDescription": "チャットと Work タスクにウェブ検索を提供します。検索は設定済みインスタンスに対してサーバー側で実行されます。",
+      "urlLabel": "SearXNG URL",
+      "urlDescription": "サーバーから到達可能な SearXNG インスタンスのベース URL。同梱のプライベートデプロイスタックは http://searxng:8080 を提供します。",
+      "test": "接続テスト",
+      "testing": "テスト中…",
+      "testOk": "検索は動作しています — {{results}} 件の結果",
+      "testFailed": "検索テストに失敗しました",
+      "save": "保存",
+      "saved": "検索設定を保存しました",
+      "saveFailed": "検索設定を保存できませんでした"
     }
   },
   "models": {

@@ -259,7 +259,9 @@
         "noCollections": "Nog geen collecties — maak er een in Instellingen → Documenten"
       },
       "voiceInput": "Spraakinvoer",
-      "voiceStop": "Stoppen met luisteren"
+      "voiceStop": "Stoppen met luisteren",
+      "webSearchOn": "Webzoeken aan — antwoorden gebruiken live resultaten",
+      "webSearchOff": "Zoek op het web voor dit bericht"
     },
     "session": {
       "new": "Nieuwe chat",
@@ -364,6 +366,9 @@
         "seed": "Seed",
         "contextLength": "Contextlengte"
       }
+    },
+    "message": {
+      "sources": "Bronnen"
     }
   },
   "sidebar": {
@@ -426,6 +431,7 @@
       "model": "Model",
       "systemMessage": "Systeembericht",
       "plugins": "Plugins",
+      "search": "Zoeken",
       "generation": "Generatie",
       "documents": "Documenten",
       "tts": "Spraak",
@@ -804,6 +810,21 @@
       "chat": "Chat",
       "media": "Spraak en beelden",
       "connections": "Verbindingen"
+    },
+    "search": {
+      "title": "Webzoeken",
+      "description": "Zoek op het web via een zelf gehoste SearXNG-instantie. Indien ingeschakeld biedt de chat een zoekschakelaar en kunnen Work-taken met netwerktoegang zoeken.",
+      "enableLabel": "Webzoeken inschakelen",
+      "enableDescription": "Webzoeken aanbieden aan chats en Work-taken. Zoekopdrachten draaien serverzijdig tegen de geconfigureerde instantie.",
+      "urlLabel": "SearXNG-URL",
+      "urlDescription": "Basis-URL van de SearXNG-instantie, bereikbaar vanaf de server. De meegeleverde private deploy-stack levert http://searxng:8080.",
+      "test": "Verbinding testen",
+      "testing": "Testen…",
+      "testOk": "Zoeken werkt — {{results}} resultaten ontvangen",
+      "testFailed": "Zoektest mislukt",
+      "save": "Opslaan",
+      "saved": "Zoekinstellingen opgeslagen",
+      "saveFailed": "Kon zoekinstellingen niet opslaan"
     }
   },
   "models": {
