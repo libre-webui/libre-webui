@@ -275,7 +275,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
         type='button'
         onClick={() => setSheetOpen(true)}
         data-testid='chat-sources-trigger'
-        className='absolute end-3 top-14 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 xl:hidden'
+        className='absolute end-3 top-[4.25rem] z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 xl:hidden'
         title={t('chat.message.sources', 'Sources')}
         aria-haspopup='dialog'
         aria-expanded={sheetOpen}
