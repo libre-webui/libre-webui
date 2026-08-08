@@ -88,6 +88,7 @@ import { encryptionService as _encryptionService } from './services/encryptionSe
 import { loadAppPackage, resolveFrontendDist } from './utils/packagePaths.js';
 import { registerWebSocketServer } from './websocketServer.js';
 import { createLogger } from './utils/logger.js';
+import { getDatabase } from './db.js';
 
 const pkg = loadAppPackage(import.meta.url);
 const app = express();
@@ -627,6 +628,27 @@ server.listen({ port, host }, () => {
   const url = `http://${displayHost}:${port}`;
   logger.info(`Libre WebUI v${pkg.version}`);
   logger.info(url);
+
+  // One quiet line on the very first boot, never repeated. Not a nag, not a
+  // modal, no telemetry — the flag lives in the local database only.
+  try {
+    const db = getDatabase();
+    const seen = db
+      .prepare('SELECT value FROM system_settings WHERE key = ?')
+      .get('first_run_star_note') as { value: string } | undefined;
+    if (!seen) {
+      db.prepare(
+        `INSERT INTO system_settings (key, value, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(key) DO NOTHING`
+      ).run('first_run_star_note', 'shown', Date.now());
+      logger.info(
+        'If Libre WebUI is useful to you, a star helps others find it: https://github.com/libre-webui/libre-webui'
+      );
+    }
+  } catch {
+    // A missing table or read-only database must never affect startup.
+  }
 
   // Open browser in production mode
   if (
