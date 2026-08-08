@@ -36,7 +36,9 @@
     "none": "Nessuno",
     "default": "Predefinito",
     "custom": "Personalizzato",
-    "remove": "Rimuovi"
+    "remove": "Rimuovi",
+    "home": "Home",
+    "more": "Più"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "Accesso GitHub riuscito!",
       "githubFailed": "Autenticazione GitHub fallita",
       "githubVerifyFailed": "Verifica autenticazione GitHub fallita",
-      "approvalPending": "Il tuo account è in attesa di approvazione da parte dell'amministratore."
+      "approvalPending": "Il tuo account è in attesa di approvazione da parte dell'amministratore.",
+      "verificationFailed": "Verifica di sicurezza non riuscita. Aggiorna la pagina e riprova."
     },
     "signup": {
       "title": "Crea account",
@@ -1616,7 +1619,14 @@
     "use": "Usa",
     "pull": "Scarica",
     "pullRestricted": "L'installazione dei modelli è limitata agli amministratori in questa istanza.",
-    "adminOnlyPull": "Solo amministratori"
+    "adminOnlyPull": "Solo amministratori",
+    "legacyProvider": "provider non registrato",
+    "providerNotRecorded": "Provider non registrato",
+    "providerUnavailable": "provider non disponibile",
+    "reselectProvider": "riseleziona un provider per fissare questo modello",
+    "unavailable": "non disponibile",
+    "unavailableSelections": "Selezioni non disponibili",
+    "agentModels": "Agenti"
   },
   "libreClaw": {
     "title": "Agenti",
@@ -1841,7 +1851,8 @@
       "resize": "Ridimensiona conversazione e spazio di lavoro",
       "resizeHint": "Trascina per ridimensionare. Usa i tasti freccia per un controllo preciso. Fai doppio clic o premi Invio per ripristinare.",
       "splitSize": "Conversazione {{conversation}}%, spazio di lavoro {{workspace}}%",
-      "terminal": "Terminale"
+      "terminal": "Terminale",
+      "git": "Git"
     },
     "files": {
       "discard": "Ignorare le modifiche al file non salvate?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Politica di esecuzione",
       "default": "Predefinita (limiti globali)"
+    },
+    "git": {
+      "actionFailed": "Azione Git non riuscita.",
+      "blockedByPreview": "Ferma l'anteprima prima di modificare lo stato Git.",
+      "blockedByRun": "Le azioni di scrittura Git si sbloccano al termine del turno del modello.",
+      "branchCreated": "{{name}} creato.",
+      "branchSwitched": "Passato a {{name}}.",
+      "clean": "L'albero di lavoro è pulito.",
+      "commit": "Committa le modifiche in stage",
+      "commitMessage": "Messaggio del commit",
+      "committed": "Commit creato.",
+      "detached": "HEAD scollegato",
+      "diff": "Anteprima diff",
+      "diffFailed": "Impossibile caricare questo diff.",
+      "history": "Cronologia locale",
+      "initialize": "Inizializza Git",
+      "initializeDescription": "Crea un repository locale per stato, diff, branch e commit. Nessuna credenziale remota viene collegata.",
+      "initialized": "Repository Git inizializzato.",
+      "loadFailed": "Impossibile caricare lo stato Git.",
+      "localOnly": "Solo Git locale. Push, pull e pull request richiedono un intermediario di credenziali fidato separato.",
+      "newBranch": "Nuovo branch locale",
+      "noCommits": "Ancora nessun commit.",
+      "noDiff": "Nessun diff testuale disponibile. I file non tracciati compaiono dopo lo stage.",
+      "notInitialized": "Git non è inizializzato",
+      "selectChange": "Seleziona un file modificato per esaminarne il diff.",
+      "selectPath": "Seleziona {{path}}",
+      "stageAll": "Stage di tutto",
+      "stageSelected": "Stage di {{count}}",
+      "staged": "Modifiche in stage.",
+      "switchBranch": "Cambia branch locale",
+      "changes": "Modifiche",
+      "createBranch": "Crea"
+    },
+    "hostWorkspace": {
+      "hint": "Lascia vuoto per uno spazio isolato, oppure punta l'attività a una cartella di questa macchina.",
+      "label": "Cartella dello spazio di lavoro (facoltativa)",
+      "warning": "L'attività può leggere e scrivere questa cartella direttamente. Lascia vuoto per uno spazio isolato."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Impossibile creare una nota",
     "deleteConfirm": "Eliminare questa nota?",
     "deleteFailed": "Impossibile eliminare la nota"
+  },
+  "home": {
+    "active": "attivo",
+    "continue": "Continua",
+    "start": "Inizia",
+    "explore": "Esplora"
+  },
+  "palette": {
+    "empty": "Nessun risultato.",
+    "placeholder": "Cerca chat, Work, azioni…",
+    "toggleTheme": "Cambia tema",
+    "actions": "Azioni",
+    "chats": "Chat",
+    "search": "Cerca",
+    "settings": "Impostazioni",
+    "work": "Lavoro"
+  },
+  "tabs": {
+    "actions": "Azioni scheda",
+    "close": "Chiudi scheda",
+    "closeAll": "Chiudi tutte le schede",
+    "closeOthers": "Chiudi le altre schede",
+    "closeRight": "Chiudi le schede a destra",
+    "home": "Home",
+    "label": "Schede aperte",
+    "new": "Nuova scheda",
+    "newWork": "Nuovo Work",
+    "chat": "Chat",
+    "newChat": "Nuova chat",
+    "work": "Lavoro"
   }
 }

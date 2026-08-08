@@ -36,7 +36,9 @@
     "none": "Tiada",
     "default": "Lalai",
     "custom": "Tersuai",
-    "remove": "Buang"
+    "remove": "Buang",
+    "home": "Laman utama",
+    "more": "Lebih"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "Berjaya log masuk melalui GitHub!",
       "githubFailed": "Pengesahan GitHub gagal",
       "githubVerifyFailed": "Gagal mengesahkan pengesahan GitHub",
-      "approvalPending": "Akaun anda sedang menunggu kelulusan pentadbir."
+      "approvalPending": "Akaun anda sedang menunggu kelulusan pentadbir.",
+      "verificationFailed": "Pengesahan keselamatan gagal. Muat semula halaman dan cuba lagi."
     },
     "signup": {
       "title": "Cipta Akaun",
@@ -1616,7 +1619,14 @@
     "use": "Use",
     "pull": "Pull",
     "pullRestricted": "Pemasangan model dihadkan kepada pentadbir sahaja pada instance ini.",
-    "adminOnlyPull": "Pentadbir sahaja"
+    "adminOnlyPull": "Pentadbir sahaja",
+    "legacyProvider": "penyedia tidak direkodkan",
+    "providerNotRecorded": "Penyedia tidak direkodkan",
+    "providerUnavailable": "penyedia tidak tersedia",
+    "reselectProvider": "pilih semula penyedia untuk menyemat model ini",
+    "unavailable": "tidak tersedia",
+    "unavailableSelections": "Pilihan tidak tersedia",
+    "agentModels": "Ejen"
   },
   "libreClaw": {
     "title": "Ejen",
@@ -1841,7 +1851,8 @@
       "resize": "Ubah saiz perbualan dan ruang kerja",
       "resizeHint": "Seret untuk mengubah saiz. Gunakan kekunci anak panah untuk kawalan tepat. Klik dua kali atau tekan Enter untuk menetapkan semula.",
       "splitSize": "Perbualan {{conversation}}%, ruang kerja {{workspace}}%",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Buang perubahan fail yang belum disimpan?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Dasar masa jalan",
       "default": "Lalai (had global)"
+    },
+    "git": {
+      "actionFailed": "Tindakan Git gagal.",
+      "blockedByPreview": "Hentikan pratonton sebelum mengubah keadaan Git.",
+      "blockedByRun": "Tindakan tulis Git terbuka selepas giliran model tamat.",
+      "branchCreated": "{{name}} dicipta.",
+      "branchSwitched": "Bertukar ke {{name}}.",
+      "clean": "Pokok kerja bersih.",
+      "commit": "Commit perubahan berperingkat",
+      "commitMessage": "Mesej commit",
+      "committed": "Commit dicipta.",
+      "detached": "HEAD terpisah",
+      "diff": "Pratonton diff",
+      "diffFailed": "Tidak dapat memuatkan diff ini.",
+      "history": "Sejarah setempat",
+      "initialize": "Mulakan Git",
+      "initializeDescription": "Cipta repositori setempat untuk status, diff, cabang dan commit. Tiada kelayakan jauh disambungkan.",
+      "initialized": "Repositori Git dimulakan.",
+      "loadFailed": "Tidak dapat memuatkan status Git.",
+      "localOnly": "Git setempat sahaja. Push, pull dan pull request memerlukan broker kelayakan dipercayai yang berasingan.",
+      "newBranch": "Cabang setempat baharu",
+      "noCommits": "Belum ada commit.",
+      "noDiff": "Belum ada diff teks. Fail tidak dijejak muncul selepas peringkat.",
+      "notInitialized": "Git belum dimulakan",
+      "selectChange": "Pilih fail yang berubah untuk memeriksa diffnya.",
+      "selectPath": "Pilih {{path}}",
+      "stageAll": "Peringkat semua",
+      "stageSelected": "Peringkat {{count}}",
+      "staged": "Perubahan diperingkat.",
+      "switchBranch": "Tukar cabang setempat",
+      "changes": "Perubahan",
+      "createBranch": "Cipta"
+    },
+    "hostWorkspace": {
+      "hint": "Biarkan kosong untuk ruang kerja terpencil, atau halakan tugas ke folder pada mesin ini.",
+      "label": "Folder ruang kerja (pilihan)",
+      "warning": "Tugas boleh membaca dan menulis folder ini terus. Biarkan kosong untuk ruang kerja terpencil."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Tidak dapat mencipta nota",
     "deleteConfirm": "Padam nota ini?",
     "deleteFailed": "Tidak dapat memadam nota"
+  },
+  "home": {
+    "active": "aktif",
+    "continue": "Teruskan",
+    "start": "Mula",
+    "explore": "Terokai"
+  },
+  "palette": {
+    "empty": "Tiada padanan.",
+    "placeholder": "Cari sembang, Work, tindakan…",
+    "toggleTheme": "Tukar tema",
+    "actions": "Tindakan",
+    "chats": "Sembang",
+    "search": "Cari",
+    "settings": "Tetapan",
+    "work": "Kerja"
+  },
+  "tabs": {
+    "actions": "Tindakan tab",
+    "close": "Tutup tab",
+    "closeAll": "Tutup semua tab",
+    "closeOthers": "Tutup tab lain",
+    "closeRight": "Tutup tab di kanan",
+    "home": "Laman utama",
+    "label": "Tab terbuka",
+    "new": "Tab baharu",
+    "newWork": "Work baharu",
+    "chat": "Sembang",
+    "newChat": "Sembang Baharu",
+    "work": "Kerja"
   }
 }

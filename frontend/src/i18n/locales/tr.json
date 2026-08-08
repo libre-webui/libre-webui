@@ -36,7 +36,9 @@
     "none": "Hiçbiri",
     "default": "Varsayılan",
     "custom": "Özel",
-    "remove": "Kaldır"
+    "remove": "Kaldır",
+    "home": "Ana sayfa",
+    "more": "Çok"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "GitHub girişi başarılı!",
       "githubFailed": "GitHub kimlik doğrulaması başarısız",
       "githubVerifyFailed": "GitHub kimlik doğrulaması doğrulanamadı",
-      "approvalPending": "Hesabınız yönetici onayı bekliyor."
+      "approvalPending": "Hesabınız yönetici onayı bekliyor.",
+      "verificationFailed": "Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin."
     },
     "signup": {
       "title": "Hesap Oluştur",
@@ -1616,7 +1619,14 @@
     "use": "Kullan",
     "pull": "İndir",
     "pullRestricted": "Bu örnekte model kurulumu yalnızca yöneticilerle sınırlandırılmıştır.",
-    "adminOnlyPull": "Yalnızca yöneticiler"
+    "adminOnlyPull": "Yalnızca yöneticiler",
+    "legacyProvider": "sağlayıcı kayıtlı değil",
+    "providerNotRecorded": "Sağlayıcı kayıtlı değil",
+    "providerUnavailable": "sağlayıcı kullanılamıyor",
+    "reselectProvider": "bu modeli sabitlemek için sağlayıcıyı yeniden seçin",
+    "unavailable": "kullanılamıyor",
+    "unavailableSelections": "Kullanılamayan seçimler",
+    "agentModels": "Ajanlar"
   },
   "libreClaw": {
     "title": "Ajanlar",
@@ -1841,7 +1851,8 @@
       "resize": "Konuşmayı ve çalışma alanını yeniden boyutlandır",
       "resizeHint": "Yeniden boyutlandırmak için sürükleyin. Hassas ayar için ok tuşlarını kullanın. Sıfırlamak için çift tıklayın veya Enter tuşuna basın.",
       "splitSize": "Konuşma %{{conversation}}, çalışma alanı %{{workspace}}",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Kaydedilmemiş dosya değişiklikleri silinsin mi?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Çalışma zamanı ilkesi",
       "default": "Varsayılan (genel sınırlar)"
+    },
+    "git": {
+      "actionFailed": "Git eylemi başarısız.",
+      "blockedByPreview": "Git durumunu değiştirmeden önce önizlemeyi durdurun.",
+      "blockedByRun": "Git yazma eylemleri model turu bitince açılır.",
+      "branchCreated": "{{name}} oluşturuldu.",
+      "branchSwitched": "{{name}} dalına geçildi.",
+      "clean": "Çalışma ağacı temiz.",
+      "commit": "Hazırlanan değişiklikleri commit'le",
+      "commitMessage": "Commit mesajı",
+      "committed": "Commit oluşturuldu.",
+      "detached": "ayrık HEAD",
+      "diff": "Diff önizlemesi",
+      "diffFailed": "Bu diff yüklenemedi.",
+      "history": "Yerel geçmiş",
+      "initialize": "Git'i başlat",
+      "initializeDescription": "Durum, diff, dal ve commit'ler için yerel bir depo oluşturun. Uzak kimlik bilgisi bağlanmaz.",
+      "initialized": "Git deposu başlatıldı.",
+      "loadFailed": "Git durumu yüklenemedi.",
+      "localOnly": "Yalnızca yerel Git. Push, pull ve pull request ayrı bir güvenilir kimlik bilgisi aracısı gerektirir.",
+      "newBranch": "Yeni yerel dal",
+      "noCommits": "Henüz commit yok.",
+      "noDiff": "Henüz metin diff'i yok. İzlenmeyen dosyalar hazırlandıktan sonra görünür.",
+      "notInitialized": "Git başlatılmadı",
+      "selectChange": "Diff'ini incelemek için değişen bir dosya seçin.",
+      "selectPath": "{{path}} seç",
+      "stageAll": "Tümünü hazırla",
+      "stageSelected": "{{count}} hazırla",
+      "staged": "Değişiklikler hazırlandı.",
+      "switchBranch": "Yerel dalı değiştir",
+      "changes": "Değişiklikler",
+      "createBranch": "Oluştur"
+    },
+    "hostWorkspace": {
+      "hint": "İzole çalışma alanı için boş bırakın veya görevi bu makinedeki bir klasöre yönlendirin.",
+      "label": "Çalışma alanı klasörü (isteğe bağlı)",
+      "warning": "Görev bu klasörü doğrudan okuyup yazabilir. İzole çalışma alanı için boş bırakın."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Not oluşturulamadı",
     "deleteConfirm": "Bu not silinsin mi?",
     "deleteFailed": "Not silinemedi"
+  },
+  "home": {
+    "active": "etkin",
+    "continue": "Devam et",
+    "start": "Başla",
+    "explore": "Keşfet"
+  },
+  "palette": {
+    "empty": "Eşleşme yok.",
+    "placeholder": "Sohbetlerde, Work'te, eylemlerde ara…",
+    "toggleTheme": "Temayı değiştir",
+    "actions": "İşlemler",
+    "chats": "Sohbetler",
+    "search": "Ara",
+    "settings": "Ayarlar",
+    "work": "Çalışma"
+  },
+  "tabs": {
+    "actions": "Sekme eylemleri",
+    "close": "Sekmeyi kapat",
+    "closeAll": "Tüm sekmeleri kapat",
+    "closeOthers": "Diğer sekmeleri kapat",
+    "closeRight": "Sağdaki sekmeleri kapat",
+    "home": "Ana sayfa",
+    "label": "Açık sekmeler",
+    "new": "Yeni sekme",
+    "newWork": "Yeni Work",
+    "chat": "Sohbet",
+    "newChat": "Yeni Sohbet",
+    "work": "Çalışma"
   }
 }

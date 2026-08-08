@@ -36,7 +36,9 @@
     "none": "Keine",
     "default": "Standard",
     "custom": "Benutzerdefiniert",
-    "remove": "Entfernen"
+    "remove": "Entfernen",
+    "home": "Start",
+    "more": "Mehr"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "GitHub-Anmeldung erfolgreich!",
       "githubFailed": "GitHub-Authentifizierung fehlgeschlagen",
       "githubVerifyFailed": "Überprüfung der GitHub-Authentifizierung fehlgeschlagen",
-      "approvalPending": "Ihr Konto wartet auf die Genehmigung durch den Administrator."
+      "approvalPending": "Ihr Konto wartet auf die Genehmigung durch den Administrator.",
+      "verificationFailed": "Sicherheitsprüfung fehlgeschlagen. Seite neu laden und erneut versuchen."
     },
     "signup": {
       "title": "Konto erstellen",
@@ -1616,7 +1619,14 @@
     "use": "Verwenden",
     "pull": "Herunterladen",
     "pullRestricted": "Die Modellinstallation ist in dieser Instanz auf Administratoren beschränkt.",
-    "adminOnlyPull": "Nur Admins"
+    "adminOnlyPull": "Nur Admins",
+    "legacyProvider": "Anbieter nicht erfasst",
+    "providerNotRecorded": "Anbieter nicht erfasst",
+    "providerUnavailable": "Anbieter nicht verfügbar",
+    "reselectProvider": "Anbieter neu auswählen, um dieses Modell zu fixieren",
+    "unavailable": "nicht verfügbar",
+    "unavailableSelections": "Nicht verfügbare Auswahlen",
+    "agentModels": "Agenten"
   },
   "libreClaw": {
     "title": "Agenten",
@@ -1841,7 +1851,8 @@
       "resize": "Größe von Unterhaltung und Arbeitsbereich ändern",
       "resizeHint": "Ziehen Sie zum Ändern der Größe. Verwenden Sie die Pfeiltasten zur präzisen Steuerung. Doppelklicken Sie oder drücken Sie die Eingabetaste zum Zurücksetzen.",
       "splitSize": "Unterhaltung {{conversation}} %, Arbeitsbereich {{workspace}} %",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Ungespeicherte Dateiänderungen verwerfen?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Laufzeitrichtlinie",
       "default": "Standard (globale Limits)"
+    },
+    "git": {
+      "actionFailed": "Git-Aktion fehlgeschlagen.",
+      "blockedByPreview": "Vorschau stoppen, bevor der Git-Zustand geändert wird.",
+      "blockedByRun": "Git-Schreibaktionen werden nach dem Modellzug freigegeben.",
+      "branchCreated": "{{name}} erstellt.",
+      "branchSwitched": "Zu {{name}} gewechselt.",
+      "clean": "Arbeitsverzeichnis ist sauber.",
+      "commit": "Vorgemerkte Änderungen committen",
+      "commitMessage": "Commit-Nachricht",
+      "committed": "Commit erstellt.",
+      "detached": "losgelöster HEAD",
+      "diff": "Diff-Vorschau",
+      "diffFailed": "Dieser Diff konnte nicht geladen werden.",
+      "history": "Lokale Historie",
+      "initialize": "Git initialisieren",
+      "initializeDescription": "Ein lokales Repository für Status, Diffs, Branches und Commits anlegen. Keine Remote-Zugangsdaten werden verbunden.",
+      "initialized": "Git-Repository initialisiert.",
+      "loadFailed": "Git-Status konnte nicht geladen werden.",
+      "localOnly": "Nur lokales Git. Push, Pull und Pull Requests erfordern einen separaten vertrauenswürdigen Zugangsdaten-Broker.",
+      "newBranch": "Neuer lokaler Branch",
+      "noCommits": "Noch keine Commits.",
+      "noDiff": "Noch kein Text-Diff verfügbar. Unversionierte Dateien erscheinen nach dem Vormerken.",
+      "notInitialized": "Git ist nicht initialisiert",
+      "selectChange": "Geänderte Datei auswählen, um ihren Diff zu prüfen.",
+      "selectPath": "{{path}} auswählen",
+      "stageAll": "Alle vormerken",
+      "stageSelected": "{{count}} vormerken",
+      "staged": "Änderungen vorgemerkt.",
+      "switchBranch": "Lokalen Branch wechseln",
+      "changes": "Änderungen",
+      "createBranch": "Erstellen"
+    },
+    "hostWorkspace": {
+      "hint": "Leer lassen für einen isolierten Arbeitsbereich, oder die Aufgabe auf einen Ordner dieses Rechners richten.",
+      "label": "Arbeitsbereich-Ordner (optional)",
+      "warning": "Die Aufgabe kann diesen Ordner direkt lesen und schreiben. Leer lassen für einen isolierten Arbeitsbereich."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Notiz konnte nicht erstellt werden",
     "deleteConfirm": "Diese Notiz löschen?",
     "deleteFailed": "Notiz konnte nicht gelöscht werden"
+  },
+  "home": {
+    "active": "aktiv",
+    "continue": "Fortsetzen",
+    "start": "Starten",
+    "explore": "Entdecken"
+  },
+  "palette": {
+    "empty": "Keine Treffer.",
+    "placeholder": "Chats, Work, Aktionen durchsuchen…",
+    "toggleTheme": "Design umschalten",
+    "actions": "Aktionen",
+    "chats": "Chats",
+    "search": "Suchen",
+    "settings": "Einstellungen",
+    "work": "Arbeit"
+  },
+  "tabs": {
+    "actions": "Tab-Aktionen",
+    "close": "Tab schließen",
+    "closeAll": "Alle Tabs schließen",
+    "closeOthers": "Andere Tabs schließen",
+    "closeRight": "Tabs rechts schließen",
+    "home": "Start",
+    "label": "Offene Tabs",
+    "new": "Neuer Tab",
+    "newWork": "Neues Work",
+    "chat": "Chat",
+    "newChat": "Neuer Chat",
+    "work": "Arbeit"
   }
 }

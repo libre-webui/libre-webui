@@ -36,7 +36,9 @@
     "none": "Tidak ada",
     "default": "Default",
     "custom": "Kustom",
-    "remove": "Hapus"
+    "remove": "Hapus",
+    "home": "Beranda",
+    "more": "Banyak"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "Login GitHub berhasil!",
       "githubFailed": "Autentikasi GitHub gagal",
       "githubVerifyFailed": "Gagal memverifikasi autentikasi GitHub",
-      "approvalPending": "Akun Anda menunggu persetujuan administrator."
+      "approvalPending": "Akun Anda menunggu persetujuan administrator.",
+      "verificationFailed": "Verifikasi keamanan gagal. Muat ulang halaman dan coba lagi."
     },
     "signup": {
       "title": "Buat Akun",
@@ -1616,7 +1619,14 @@
     "use": "Gunakan",
     "pull": "Unduh",
     "pullRestricted": "Instalasi model dibatasi hanya untuk administrator pada instance ini.",
-    "adminOnlyPull": "Hanya admin"
+    "adminOnlyPull": "Hanya admin",
+    "legacyProvider": "penyedia tidak tercatat",
+    "providerNotRecorded": "Penyedia tidak tercatat",
+    "providerUnavailable": "penyedia tidak tersedia",
+    "reselectProvider": "pilih ulang penyedia untuk menyematkan model ini",
+    "unavailable": "tidak tersedia",
+    "unavailableSelections": "Pilihan tidak tersedia",
+    "agentModels": "Agen"
   },
   "libreClaw": {
     "title": "Agen",
@@ -1841,7 +1851,8 @@
       "resize": "Ubah ukuran percakapan dan ruang kerja",
       "resizeHint": "Seret untuk mengubah ukuran. Gunakan tombol panah untuk kontrol presisi. Klik dua kali atau tekan Enter untuk mereset.",
       "splitSize": "Percakapan {{conversation}}%, ruang kerja {{workspace}}%",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Buang perubahan file yang belum disimpan?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Kebijakan runtime",
       "default": "Bawaan (batas global)"
+    },
+    "git": {
+      "actionFailed": "Aksi Git gagal.",
+      "blockedByPreview": "Hentikan pratinjau sebelum mengubah status Git.",
+      "blockedByRun": "Aksi tulis Git terbuka setelah giliran model selesai.",
+      "branchCreated": "{{name}} dibuat.",
+      "branchSwitched": "Beralih ke {{name}}.",
+      "clean": "Pohon kerja bersih.",
+      "commit": "Commit perubahan yang di-stage",
+      "commitMessage": "Pesan commit",
+      "committed": "Commit dibuat.",
+      "detached": "HEAD terlepas",
+      "diff": "Pratinjau diff",
+      "diffFailed": "Tidak dapat memuat diff ini.",
+      "history": "Riwayat lokal",
+      "initialize": "Inisialisasi Git",
+      "initializeDescription": "Buat repositori lokal untuk status, diff, cabang, dan commit. Tidak ada kredensial jarak jauh yang terhubung.",
+      "initialized": "Repositori Git diinisialisasi.",
+      "loadFailed": "Tidak dapat memuat status Git.",
+      "localOnly": "Hanya Git lokal. Push, pull, dan pull request memerlukan perantara kredensial tepercaya terpisah.",
+      "newBranch": "Cabang lokal baru",
+      "noCommits": "Belum ada commit.",
+      "noDiff": "Belum ada diff teks. Berkas tak terlacak muncul setelah staging.",
+      "notInitialized": "Git belum diinisialisasi",
+      "selectChange": "Pilih berkas yang berubah untuk memeriksa diff-nya.",
+      "selectPath": "Pilih {{path}}",
+      "stageAll": "Stage semua",
+      "stageSelected": "Stage {{count}}",
+      "staged": "Perubahan di-stage.",
+      "switchBranch": "Ganti cabang lokal",
+      "changes": "Perubahan",
+      "createBranch": "Buat"
+    },
+    "hostWorkspace": {
+      "hint": "Biarkan kosong untuk ruang kerja terisolasi, atau arahkan tugas ke folder di mesin ini.",
+      "label": "Folder ruang kerja (opsional)",
+      "warning": "Tugas dapat membaca dan menulis folder ini langsung. Biarkan kosong untuk ruang kerja terisolasi."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Gagal membuat catatan",
     "deleteConfirm": "Hapus catatan ini?",
     "deleteFailed": "Gagal menghapus catatan"
+  },
+  "home": {
+    "active": "aktif",
+    "continue": "Lanjutkan",
+    "start": "Mulai",
+    "explore": "Jelajahi"
+  },
+  "palette": {
+    "empty": "Tidak ada yang cocok.",
+    "placeholder": "Cari chat, Work, aksi…",
+    "toggleTheme": "Ganti tema",
+    "actions": "Tindakan",
+    "chats": "Chat",
+    "search": "Cari",
+    "settings": "Pengaturan",
+    "work": "Kerja"
+  },
+  "tabs": {
+    "actions": "Aksi tab",
+    "close": "Tutup tab",
+    "closeAll": "Tutup semua tab",
+    "closeOthers": "Tutup tab lain",
+    "closeRight": "Tutup tab di kanan",
+    "home": "Beranda",
+    "label": "Tab terbuka",
+    "new": "Tab baru",
+    "newWork": "Work baru",
+    "chat": "Chat",
+    "newChat": "Chat Baru",
+    "work": "Kerja"
   }
 }

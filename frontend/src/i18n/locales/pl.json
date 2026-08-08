@@ -36,7 +36,9 @@
     "none": "Żadne",
     "default": "Domyślne",
     "custom": "Własne",
-    "remove": "Usuń"
+    "remove": "Usuń",
+    "home": "Strona główna",
+    "more": "Więcej"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "Logowanie przez GitHub pomyślne!",
       "githubFailed": "Uwierzytelnianie GitHub nie powiodło się",
       "githubVerifyFailed": "Nie udało się zweryfikować uwierzytelnienia GitHub",
-      "approvalPending": "Twoje konto oczekuje na zatwierdzenie przez administratora."
+      "approvalPending": "Twoje konto oczekuje na zatwierdzenie przez administratora.",
+      "verificationFailed": "Weryfikacja bezpieczeństwa nie powiodła się. Odśwież stronę i spróbuj ponownie."
     },
     "signup": {
       "title": "Utwórz konto",
@@ -1616,7 +1619,14 @@
     "use": "Użyj",
     "pull": "Pobierz",
     "pullRestricted": "Instalacja modeli w tej instancji jest ograniczona do administratorów.",
-    "adminOnlyPull": "Tylko administratorzy"
+    "adminOnlyPull": "Tylko administratorzy",
+    "legacyProvider": "dostawca niezapisany",
+    "providerNotRecorded": "Dostawca niezapisany",
+    "providerUnavailable": "dostawca niedostępny",
+    "reselectProvider": "wybierz ponownie dostawcę, aby przypiąć ten model",
+    "unavailable": "niedostępne",
+    "unavailableSelections": "Niedostępne wybory",
+    "agentModels": "Agenci"
   },
   "libreClaw": {
     "title": "Agenci",
@@ -1841,7 +1851,8 @@
       "resize": "Zmień rozmiar rozmowy i obszaru roboczego",
       "resizeHint": "Przeciągnij, aby zmienić rozmiar. Użyj klawiszy strzałek do precyzyjnej regulacji. Kliknij dwukrotnie lub naciśnij Enter, aby zresetować.",
       "splitSize": "Rozmowa {{conversation}}%, obszar roboczy {{workspace}}%",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Odrzucić niezapisane zmiany w pliku?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Polityka środowiska",
       "default": "Domyślna (limity globalne)"
+    },
+    "git": {
+      "actionFailed": "Akcja Git nie powiodła się.",
+      "blockedByPreview": "Zatrzymaj podgląd przed zmianą stanu Gita.",
+      "blockedByRun": "Akcje zapisu Gita odblokują się po zakończeniu tury modelu.",
+      "branchCreated": "Utworzono {{name}}.",
+      "branchSwitched": "Przełączono na {{name}}.",
+      "clean": "Drzewo robocze jest czyste.",
+      "commit": "Zatwierdź przygotowane zmiany",
+      "commitMessage": "Komunikat commita",
+      "committed": "Commit utworzony.",
+      "detached": "odłączony HEAD",
+      "diff": "Podgląd diffa",
+      "diffFailed": "Nie udało się wczytać tego diffa.",
+      "history": "Historia lokalna",
+      "initialize": "Zainicjuj Git",
+      "initializeDescription": "Utwórz lokalne repozytorium dla statusu, diffów, gałęzi i commitów. Żadne zdalne poświadczenia nie są podłączane.",
+      "initialized": "Repozytorium Git zainicjowane.",
+      "loadFailed": "Nie udało się wczytać statusu Gita.",
+      "localOnly": "Tylko lokalny Git. Push, pull i pull requesty wymagają osobnego zaufanego brokera poświadczeń.",
+      "newBranch": "Nowa lokalna gałąź",
+      "noCommits": "Brak commitów.",
+      "noDiff": "Brak diffa tekstowego. Nieśledzone pliki pojawią się po przygotowaniu.",
+      "notInitialized": "Git nie jest zainicjowany",
+      "selectChange": "Wybierz zmieniony plik, aby obejrzeć jego diff.",
+      "selectPath": "Wybierz {{path}}",
+      "stageAll": "Przygotuj wszystko",
+      "stageSelected": "Przygotuj {{count}}",
+      "staged": "Zmiany przygotowane.",
+      "switchBranch": "Przełącz lokalną gałąź",
+      "changes": "Zmiany",
+      "createBranch": "Utwórz"
+    },
+    "hostWorkspace": {
+      "hint": "Zostaw puste dla izolowanej przestrzeni, albo wskaż zadaniu folder na tej maszynie.",
+      "label": "Folder przestrzeni roboczej (opcjonalnie)",
+      "warning": "Zadanie może bezpośrednio czytać i zapisywać ten folder. Zostaw puste dla izolowanej przestrzeni."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Nie udało się utworzyć notatki",
     "deleteConfirm": "Usunąć tę notatkę?",
     "deleteFailed": "Nie udało się usunąć notatki"
+  },
+  "home": {
+    "active": "aktywny",
+    "continue": "Kontynuuj",
+    "start": "Start",
+    "explore": "Odkrywaj"
+  },
+  "palette": {
+    "empty": "Brak wyników.",
+    "placeholder": "Szukaj czatów, Work, akcji…",
+    "toggleTheme": "Przełącz motyw",
+    "actions": "Akcje",
+    "chats": "Czaty",
+    "search": "Szukaj",
+    "settings": "Ustawienia",
+    "work": "Praca"
+  },
+  "tabs": {
+    "actions": "Akcje karty",
+    "close": "Zamknij kartę",
+    "closeAll": "Zamknij wszystkie karty",
+    "closeOthers": "Zamknij pozostałe karty",
+    "closeRight": "Zamknij karty po prawej",
+    "home": "Strona główna",
+    "label": "Otwarte karty",
+    "new": "Nowa karta",
+    "newWork": "Nowy Work",
+    "chat": "Czat",
+    "newChat": "Nowy czat",
+    "work": "Praca"
   }
 }

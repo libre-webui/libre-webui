@@ -36,7 +36,9 @@
     "none": "Ingen",
     "default": "Standard",
     "custom": "Anpassad",
-    "remove": "Ta bort"
+    "remove": "Ta bort",
+    "home": "Hem",
+    "more": "Mer"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "GitHub-inloggningen lyckades!",
       "githubFailed": "GitHub-autentiseringen misslyckades",
       "githubVerifyFailed": "Kunde inte verifiera GitHub-autentiseringen",
-      "approvalPending": "Ditt konto väntar på administratörsgodkännande."
+      "approvalPending": "Ditt konto väntar på administratörsgodkännande.",
+      "verificationFailed": "Säkerhetsverifieringen misslyckades. Uppdatera sidan och försök igen."
     },
     "signup": {
       "title": "Skapa konto",
@@ -1616,7 +1619,14 @@
     "use": "Använd",
     "pull": "Ladda ner",
     "pullRestricted": "Modellinstallation är begränsad till administratörer på denna instans.",
-    "adminOnlyPull": "Endast administratörer"
+    "adminOnlyPull": "Endast administratörer",
+    "legacyProvider": "leverantör ej registrerad",
+    "providerNotRecorded": "Leverantör ej registrerad",
+    "providerUnavailable": "leverantör otillgänglig",
+    "reselectProvider": "välj leverantör igen för att fästa denna modell",
+    "unavailable": "otillgänglig",
+    "unavailableSelections": "Otillgängliga val",
+    "agentModels": "Agenter"
   },
   "libreClaw": {
     "title": "Agenter",
@@ -1841,7 +1851,8 @@
       "resize": "Ändra storlek på konversationen och arbetsytan",
       "resizeHint": "Dra för att ändra storleken. Använd piltangenterna för exakt kontroll. Dubbelklicka eller tryck på Retur för att återställa.",
       "splitSize": "Konversation {{conversation}} %, arbetsyta {{workspace}} %",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Kassera osparade filändringar?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Körningspolicy",
       "default": "Standard (globala gränser)"
+    },
+    "git": {
+      "actionFailed": "Git-åtgärden misslyckades.",
+      "blockedByPreview": "Stoppa förhandsvisningen innan Git-läget ändras.",
+      "blockedByRun": "Git-skrivåtgärder låses upp när modellens tur är klar.",
+      "branchCreated": "{{name}} skapad.",
+      "branchSwitched": "Bytte till {{name}}.",
+      "clean": "Arbetsträdet är rent.",
+      "commit": "Committa förberedda ändringar",
+      "commitMessage": "Commit-meddelande",
+      "committed": "Commit skapad.",
+      "detached": "frånkopplad HEAD",
+      "diff": "Diff-förhandsvisning",
+      "diffFailed": "Kunde inte läsa in denna diff.",
+      "history": "Lokal historik",
+      "initialize": "Initiera Git",
+      "initializeDescription": "Skapa ett lokalt repository för status, diffar, grenar och commits. Inga fjärruppgifter kopplas.",
+      "initialized": "Git-repository initierat.",
+      "loadFailed": "Kunde inte läsa in Git-status.",
+      "localOnly": "Endast lokal Git. Push, pull och pull requests kräver en separat betrodd uppgiftsmäklare.",
+      "newBranch": "Ny lokal gren",
+      "noCommits": "Inga commits ännu.",
+      "noDiff": "Ingen textdiff ännu. Ospårade filer visas efter förberedelse.",
+      "notInitialized": "Git är inte initierat",
+      "selectChange": "Välj en ändrad fil för att granska dess diff.",
+      "selectPath": "Välj {{path}}",
+      "stageAll": "Förbered alla",
+      "stageSelected": "Förbered {{count}}",
+      "staged": "Ändringar förberedda.",
+      "switchBranch": "Byt lokal gren",
+      "changes": "Ändringar",
+      "createBranch": "Skapa"
+    },
+    "hostWorkspace": {
+      "hint": "Lämna tomt för en isolerad arbetsyta, eller peka uppgiften mot en mapp på den här datorn.",
+      "label": "Arbetsytemapp (valfritt)",
+      "warning": "Uppgiften kan läsa och skriva denna mapp direkt. Lämna tomt för en isolerad arbetsyta."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Kunde inte skapa en anteckning",
     "deleteConfirm": "Ta bort den här anteckningen?",
     "deleteFailed": "Kunde inte ta bort anteckningen"
+  },
+  "home": {
+    "active": "aktiv",
+    "continue": "Fortsätt",
+    "start": "Börja",
+    "explore": "Utforska"
+  },
+  "palette": {
+    "empty": "Inga träffar.",
+    "placeholder": "Sök chattar, Work, åtgärder…",
+    "toggleTheme": "Växla tema",
+    "actions": "Åtgärder",
+    "chats": "Chattar",
+    "search": "Sök",
+    "settings": "Inställningar",
+    "work": "Arbete"
+  },
+  "tabs": {
+    "actions": "Flikåtgärder",
+    "close": "Stäng flik",
+    "closeAll": "Stäng alla flikar",
+    "closeOthers": "Stäng övriga flikar",
+    "closeRight": "Stäng flikar till höger",
+    "home": "Hem",
+    "label": "Öppna flikar",
+    "new": "Ny flik",
+    "newWork": "Nytt Work",
+    "chat": "Chatt",
+    "newChat": "Ny chatt",
+    "work": "Arbete"
   }
 }

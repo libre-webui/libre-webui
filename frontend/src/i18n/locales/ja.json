@@ -36,7 +36,9 @@
     "none": "なし",
     "default": "デフォルト",
     "custom": "カスタム",
-    "remove": "削除"
+    "remove": "削除",
+    "home": "ホーム",
+    "more": "多"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "GitHubログインに成功しました！",
       "githubFailed": "GitHub認証に失敗しました",
       "githubVerifyFailed": "GitHub認証の確認に失敗しました",
-      "approvalPending": "アカウントは管理者の承認待ちです。"
+      "approvalPending": "アカウントは管理者の承認待ちです。",
+      "verificationFailed": "セキュリティ確認に失敗しました。ページを更新して再試行してください。"
     },
     "signup": {
       "title": "アカウント作成",
@@ -1616,7 +1619,14 @@
     "use": "使用",
     "pull": "ダウンロード",
     "pullRestricted": "このインスタンスでは、モデルのインストールは管理者のみに制限されています。",
-    "adminOnlyPull": "管理者のみ"
+    "adminOnlyPull": "管理者のみ",
+    "legacyProvider": "プロバイダー未記録",
+    "providerNotRecorded": "プロバイダー未記録",
+    "providerUnavailable": "プロバイダー利用不可",
+    "reselectProvider": "このモデルを固定するにはプロバイダーを再選択してください",
+    "unavailable": "利用不可",
+    "unavailableSelections": "利用できない選択",
+    "agentModels": "エージェント"
   },
   "libreClaw": {
     "title": "エージェント",
@@ -1841,7 +1851,8 @@
       "resize": "会話とワークスペースのサイズを変更",
       "resizeHint": "ドラッグしてサイズを変更します。細かく調整するには矢印キーを使用します。ダブルクリックまたは Enter キーでリセットします。",
       "splitSize": "会話 {{conversation}}%、ワークスペース {{workspace}}%",
-      "terminal": "ターミナル"
+      "terminal": "ターミナル",
+      "git": "Git"
     },
     "files": {
       "discard": "未保存のファイル変更を破棄しますか？",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "ランタイムポリシー",
       "default": "デフォルト（グローバル制限）"
+    },
+    "git": {
+      "actionFailed": "Git 操作に失敗しました。",
+      "blockedByPreview": "Git の状態を変更する前にプレビューを停止してください。",
+      "blockedByRun": "Git の書き込み操作はモデルのターン終了後に解放されます。",
+      "branchCreated": "{{name}} を作成しました。",
+      "branchSwitched": "{{name}} に切り替えました。",
+      "clean": "作業ツリーはクリーンです。",
+      "commit": "ステージ済みの変更をコミット",
+      "commitMessage": "コミットメッセージ",
+      "committed": "コミットを作成しました。",
+      "detached": "切り離された HEAD",
+      "diff": "差分プレビュー",
+      "diffFailed": "この差分を読み込めませんでした。",
+      "history": "ローカル履歴",
+      "initialize": "Git を初期化",
+      "initializeDescription": "状態・差分・ブランチ・コミットのためのローカルリポジトリを作成します。リモート認証情報は接続されません。",
+      "initialized": "Git リポジトリを初期化しました。",
+      "loadFailed": "Git の状態を読み込めませんでした。",
+      "localOnly": "ローカル Git のみ。push・pull・プルリクエストには別の信頼できる認証情報ブローカーが必要です。",
+      "newBranch": "新しいローカルブランチ",
+      "noCommits": "まだコミットはありません。",
+      "noDiff": "テキスト差分はまだありません。未追跡ファイルはステージ後に表示されます。",
+      "notInitialized": "Git は初期化されていません",
+      "selectChange": "差分を確認するには変更されたファイルを選択してください。",
+      "selectPath": "{{path}} を選択",
+      "stageAll": "すべてステージ",
+      "stageSelected": "{{count}} 件をステージ",
+      "staged": "変更をステージしました。",
+      "switchBranch": "ローカルブランチを切り替え",
+      "changes": "変更",
+      "createBranch": "作成"
+    },
+    "hostWorkspace": {
+      "hint": "分離ワークスペースの場合は空欄のまま、またはこのマシンのフォルダーをタスクに指定します。",
+      "label": "ワークスペースフォルダー（任意）",
+      "warning": "タスクはこのフォルダーを直接読み書きできます。分離ワークスペースを使うには空欄のままにしてください。"
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "ノートを作成できませんでした",
     "deleteConfirm": "このノートを削除しますか？",
     "deleteFailed": "ノートを削除できませんでした"
+  },
+  "home": {
+    "active": "アクティブ",
+    "continue": "続行",
+    "start": "開始",
+    "explore": "探索"
+  },
+  "palette": {
+    "empty": "一致なし。",
+    "placeholder": "チャット・Work・アクションを検索…",
+    "toggleTheme": "テーマ切り替え",
+    "actions": "アクション",
+    "chats": "チャット",
+    "search": "検索",
+    "settings": "設定",
+    "work": "作業"
+  },
+  "tabs": {
+    "actions": "タブ操作",
+    "close": "タブを閉じる",
+    "closeAll": "すべてのタブを閉じる",
+    "closeOthers": "他のタブを閉じる",
+    "closeRight": "右側のタブを閉じる",
+    "home": "ホーム",
+    "label": "開いているタブ",
+    "new": "新しいタブ",
+    "newWork": "新しい Work",
+    "chat": "チャット",
+    "newChat": "新しいチャット",
+    "work": "作業"
   }
 }

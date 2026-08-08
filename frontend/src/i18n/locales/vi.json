@@ -36,7 +36,9 @@
     "none": "Không có",
     "default": "Mặc định",
     "custom": "Tùy chỉnh",
-    "remove": "Xóa"
+    "remove": "Xóa",
+    "home": "Trang chủ",
+    "more": "Nhiều"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "Đăng nhập GitHub thành công!",
       "githubFailed": "Xác thực GitHub thất bại",
       "githubVerifyFailed": "Không thể xác minh xác thực GitHub",
-      "approvalPending": "Tài khoản của bạn đang chờ quản trị viên phê duyệt."
+      "approvalPending": "Tài khoản của bạn đang chờ quản trị viên phê duyệt.",
+      "verificationFailed": "Xác minh bảo mật thất bại. Hãy tải lại trang và thử lại."
     },
     "signup": {
       "title": "Tạo tài khoản",
@@ -1616,7 +1619,14 @@
     "use": "Dùng",
     "pull": "Tải",
     "pullRestricted": "Việc cài đặt mô hình trên phiên bản này chỉ dành cho quản trị viên.",
-    "adminOnlyPull": "Chỉ quản trị viên"
+    "adminOnlyPull": "Chỉ quản trị viên",
+    "legacyProvider": "nhà cung cấp chưa được ghi",
+    "providerNotRecorded": "Nhà cung cấp chưa được ghi",
+    "providerUnavailable": "nhà cung cấp không khả dụng",
+    "reselectProvider": "chọn lại nhà cung cấp để ghim mô hình này",
+    "unavailable": "không khả dụng",
+    "unavailableSelections": "Lựa chọn không khả dụng",
+    "agentModels": "Tác nhân"
   },
   "libreClaw": {
     "title": "Tác nhân",
@@ -1841,7 +1851,8 @@
       "resize": "Đổi kích thước cuộc trò chuyện và không gian làm việc",
       "resizeHint": "Kéo để đổi kích thước. Dùng phím mũi tên để điều chỉnh chính xác. Nhấp đúp hoặc nhấn Enter để đặt lại.",
       "splitSize": "Cuộc trò chuyện {{conversation}}%, không gian làm việc {{workspace}}%",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Bỏ các thay đổi tệp chưa lưu?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Chính sách runtime",
       "default": "Mặc định (giới hạn toàn cục)"
+    },
+    "git": {
+      "actionFailed": "Hành động Git thất bại.",
+      "blockedByPreview": "Dừng bản xem trước trước khi thay đổi trạng thái Git.",
+      "blockedByRun": "Hành động ghi Git sẽ mở khóa khi lượt của mô hình kết thúc.",
+      "branchCreated": "Đã tạo {{name}}.",
+      "branchSwitched": "Đã chuyển sang {{name}}.",
+      "clean": "Cây làm việc sạch.",
+      "commit": "Commit các thay đổi đã stage",
+      "commitMessage": "Thông điệp commit",
+      "committed": "Đã tạo commit.",
+      "detached": "HEAD tách rời",
+      "diff": "Xem trước diff",
+      "diffFailed": "Không thể tải diff này.",
+      "history": "Lịch sử cục bộ",
+      "initialize": "Khởi tạo Git",
+      "initializeDescription": "Tạo kho cục bộ cho trạng thái, diff, nhánh và commit. Không kết nối thông tin xác thực từ xa.",
+      "initialized": "Đã khởi tạo kho Git.",
+      "loadFailed": "Không thể tải trạng thái Git.",
+      "localOnly": "Chỉ Git cục bộ. Push, pull và pull request cần một trung gian thông tin xác thực đáng tin cậy riêng.",
+      "newBranch": "Nhánh cục bộ mới",
+      "noCommits": "Chưa có commit.",
+      "noDiff": "Chưa có diff văn bản. Tệp chưa theo dõi sẽ hiện sau khi stage.",
+      "notInitialized": "Git chưa được khởi tạo",
+      "selectChange": "Chọn một tệp đã thay đổi để xem diff.",
+      "selectPath": "Chọn {{path}}",
+      "stageAll": "Stage tất cả",
+      "stageSelected": "Stage {{count}}",
+      "staged": "Đã stage thay đổi.",
+      "switchBranch": "Chuyển nhánh cục bộ",
+      "changes": "Thay đổi",
+      "createBranch": "Tạo"
+    },
+    "hostWorkspace": {
+      "hint": "Để trống cho không gian làm việc cô lập, hoặc trỏ tác vụ tới một thư mục trên máy này.",
+      "label": "Thư mục không gian làm việc (tùy chọn)",
+      "warning": "Tác vụ có thể đọc và ghi thư mục này trực tiếp. Để trống để dùng không gian cô lập."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Không thể tạo ghi chú",
     "deleteConfirm": "Xóa ghi chú này?",
     "deleteFailed": "Không thể xóa ghi chú"
+  },
+  "home": {
+    "active": "đang hoạt động",
+    "continue": "Tiếp tục",
+    "start": "Bắt đầu",
+    "explore": "Khám phá"
+  },
+  "palette": {
+    "empty": "Không có kết quả.",
+    "placeholder": "Tìm chat, Work, hành động…",
+    "toggleTheme": "Đổi giao diện",
+    "actions": "Hành động",
+    "chats": "Cuộc trò chuyện",
+    "search": "Tìm kiếm",
+    "settings": "Cài đặt",
+    "work": "Công việc"
+  },
+  "tabs": {
+    "actions": "Hành động thẻ",
+    "close": "Đóng thẻ",
+    "closeAll": "Đóng tất cả thẻ",
+    "closeOthers": "Đóng các thẻ khác",
+    "closeRight": "Đóng các thẻ bên phải",
+    "home": "Trang chủ",
+    "label": "Thẻ đang mở",
+    "new": "Thẻ mới",
+    "newWork": "Work mới",
+    "chat": "Trò chuyện",
+    "newChat": "Cuộc trò chuyện mới",
+    "work": "Công việc"
   }
 }

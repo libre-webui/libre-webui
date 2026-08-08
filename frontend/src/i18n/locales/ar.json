@@ -36,7 +36,9 @@
     "none": "لا شيء",
     "default": "افتراضي",
     "custom": "مخصص",
-    "remove": "إزالة"
+    "remove": "إزالة",
+    "home": "الرئيسية",
+    "more": "أكثر"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "تم تسجيل الدخول عبر GitHub بنجاح!",
       "githubFailed": "فشلت مصادقة GitHub",
       "githubVerifyFailed": "فشل التحقق من مصادقة GitHub",
-      "approvalPending": "حسابك في انتظار موافقة المسؤول."
+      "approvalPending": "حسابك في انتظار موافقة المسؤول.",
+      "verificationFailed": "فشل التحقق الأمني. حدّث الصفحة وحاول مجددًا."
     },
     "signup": {
       "title": "إنشاء حساب",
@@ -1616,7 +1619,14 @@
     "use": "استخدام",
     "pull": "تنزيل",
     "pullRestricted": "تثبيت النماذج مقصور على المسؤولين في هذا المثيل.",
-    "adminOnlyPull": "للمسؤولين فقط"
+    "adminOnlyPull": "للمسؤولين فقط",
+    "legacyProvider": "المزود غير مسجل",
+    "providerNotRecorded": "المزود غير مسجل",
+    "providerUnavailable": "المزود غير متاح",
+    "reselectProvider": "أعد اختيار مزود لتثبيت هذا النموذج",
+    "unavailable": "غير متاح",
+    "unavailableSelections": "اختيارات غير متاحة",
+    "agentModels": "الوكلاء"
   },
   "libreClaw": {
     "title": "الوكلاء",
@@ -1841,7 +1851,8 @@
       "resize": "تغيير حجم المحادثة ومساحة العمل",
       "resizeHint": "اسحب لتغيير الحجم. استخدم مفاتيح الأسهم للتحكم الدقيق. انقر نقرًا مزدوجًا أو اضغط Enter لإعادة التعيين.",
       "splitSize": "المحادثة {{conversation}}٪، مساحة العمل {{workspace}}٪",
-      "terminal": "الطرفية"
+      "terminal": "الطرفية",
+      "git": "Git"
     },
     "files": {
       "discard": "هل تريد تجاهل التغييرات غير المحفوظة في الملف؟",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "سياسة التشغيل",
       "default": "افتراضي (الحدود العامة)"
+    },
+    "git": {
+      "actionFailed": "فشل إجراء Git.",
+      "blockedByPreview": "أوقف المعاينة قبل تغيير حالة Git.",
+      "blockedByRun": "تتاح إجراءات الكتابة في Git بعد انتهاء دور النموذج.",
+      "branchCreated": "تم إنشاء {{name}}.",
+      "branchSwitched": "تم التبديل إلى {{name}}.",
+      "clean": "شجرة العمل نظيفة.",
+      "commit": "إيداع التغييرات المجهزة",
+      "commitMessage": "رسالة الإيداع",
+      "committed": "تم إنشاء الإيداع.",
+      "detached": "HEAD منفصل",
+      "diff": "معاينة الفرق",
+      "diffFailed": "تعذر تحميل هذا الفرق.",
+      "history": "السجل المحلي",
+      "initialize": "تهيئة Git",
+      "initializeDescription": "أنشئ مستودعًا محليًا للحالة والفروق والفروع والإيداعات. لا تُربط أي بيانات اعتماد بعيدة.",
+      "initialized": "تمت تهيئة مستودع Git.",
+      "loadFailed": "تعذر تحميل حالة Git.",
+      "localOnly": "Git محلي فقط. يتطلب الدفع والسحب وطلبات الدمج وسيط اعتماد موثوقًا منفصلًا.",
+      "newBranch": "فرع محلي جديد",
+      "noCommits": "لا توجد إيداعات بعد.",
+      "noDiff": "لا يوجد فرق نصي بعد. تظهر الملفات غير المتتبعة بعد التجهيز.",
+      "notInitialized": "لم تتم تهيئة Git",
+      "selectChange": "اختر ملفًا معدلًا لفحص فرقه.",
+      "selectPath": "اختيار {{path}}",
+      "stageAll": "تجهيز الكل",
+      "stageSelected": "تجهيز {{count}}",
+      "staged": "تم تجهيز التغييرات.",
+      "switchBranch": "تبديل الفرع المحلي",
+      "changes": "التغييرات",
+      "createBranch": "إنشاء"
+    },
+    "hostWorkspace": {
+      "hint": "اتركه فارغًا لمساحة عمل معزولة، أو وجّه المهمة إلى مجلد على هذا الجهاز.",
+      "label": "مجلد مساحة العمل (اختياري)",
+      "warning": "يمكن للمهمة قراءة هذا المجلد والكتابة فيه مباشرة. اتركه فارغًا لاستخدام مساحة عمل معزولة."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "تعذر إنشاء ملاحظة",
     "deleteConfirm": "حذف هذه الملاحظة؟",
     "deleteFailed": "تعذر حذف الملاحظة"
+  },
+  "home": {
+    "active": "نشط",
+    "continue": "متابعة",
+    "start": "ابدأ",
+    "explore": "استكشاف"
+  },
+  "palette": {
+    "empty": "لا توجد نتائج.",
+    "placeholder": "ابحث في المحادثات وWork والإجراءات…",
+    "toggleTheme": "تبديل السمة",
+    "actions": "الإجراءات",
+    "chats": "المحادثات",
+    "search": "بحث",
+    "settings": "الإعدادات",
+    "work": "العمل"
+  },
+  "tabs": {
+    "actions": "إجراءات التبويب",
+    "close": "إغلاق التبويب",
+    "closeAll": "إغلاق كل التبويبات",
+    "closeOthers": "إغلاق التبويبات الأخرى",
+    "closeRight": "إغلاق التبويبات إلى اليمين",
+    "home": "الرئيسية",
+    "label": "التبويبات المفتوحة",
+    "new": "تبويب جديد",
+    "newWork": "Work جديد",
+    "chat": "محادثة",
+    "newChat": "محادثة جديدة",
+    "work": "العمل"
   }
 }

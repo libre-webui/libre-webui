@@ -36,7 +36,9 @@
     "none": "없음",
     "default": "기본값",
     "custom": "사용자 정의",
-    "remove": "제거"
+    "remove": "제거",
+    "home": "홈",
+    "more": "많음"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "GitHub 로그인 성공!",
       "githubFailed": "GitHub 인증 실패",
       "githubVerifyFailed": "GitHub 인증 확인 실패",
-      "approvalPending": "계정이 관리자 승인을 기다리고 있습니다."
+      "approvalPending": "계정이 관리자 승인을 기다리고 있습니다.",
+      "verificationFailed": "보안 확인에 실패했습니다. 페이지를 새로 고친 뒤 다시 시도하세요."
     },
     "signup": {
       "title": "계정 만들기",
@@ -1616,7 +1619,14 @@
     "use": "사용",
     "pull": "다운로드",
     "pullRestricted": "이 인스턴스에서 모델 설치는 관리자만 가능합니다.",
-    "adminOnlyPull": "관리자만"
+    "adminOnlyPull": "관리자만",
+    "legacyProvider": "프로바이더 미기록",
+    "providerNotRecorded": "프로바이더 미기록",
+    "providerUnavailable": "프로바이더 사용 불가",
+    "reselectProvider": "이 모델을 고정하려면 프로바이더를 다시 선택하세요",
+    "unavailable": "사용 불가",
+    "unavailableSelections": "사용할 수 없는 선택",
+    "agentModels": "에이전트"
   },
   "libreClaw": {
     "title": "에이전트",
@@ -1841,7 +1851,8 @@
       "resize": "대화 및 워크스페이스 크기 조절",
       "resizeHint": "드래그하여 크기를 조절하세요. 세밀하게 조절하려면 화살표 키를 사용하세요. 재설정하려면 두 번 클릭하거나 Enter를 누르세요.",
       "splitSize": "대화 {{conversation}}%, 워크스페이스 {{workspace}}%",
-      "terminal": "터미널"
+      "terminal": "터미널",
+      "git": "Git"
     },
     "files": {
       "discard": "저장하지 않은 파일 변경 사항을 버릴까요?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "런타임 정책",
       "default": "기본값(전역 제한)"
+    },
+    "git": {
+      "actionFailed": "Git 작업이 실패했습니다.",
+      "blockedByPreview": "Git 상태를 변경하기 전에 미리보기를 중지하세요.",
+      "blockedByRun": "Git 쓰기 작업은 모델 턴이 끝나면 잠금 해제됩니다.",
+      "branchCreated": "{{name}} 생성됨.",
+      "branchSwitched": "{{name}}(으)로 전환했습니다.",
+      "clean": "작업 트리가 깨끗합니다.",
+      "commit": "스테이징된 변경 사항 커밋",
+      "commitMessage": "커밋 메시지",
+      "committed": "커밋이 생성되었습니다.",
+      "detached": "분리된 HEAD",
+      "diff": "디프 미리보기",
+      "diffFailed": "이 디프를 불러올 수 없습니다.",
+      "history": "로컬 기록",
+      "initialize": "Git 초기화",
+      "initializeDescription": "상태, 디프, 브랜치, 커밋을 위한 로컬 저장소를 만듭니다. 원격 자격 증명은 연결되지 않습니다.",
+      "initialized": "Git 저장소가 초기화되었습니다.",
+      "loadFailed": "Git 상태를 불러올 수 없습니다.",
+      "localOnly": "로컬 Git 전용. push, pull, 풀 리퀘스트에는 별도의 신뢰할 수 있는 자격 증명 브로커가 필요합니다.",
+      "newBranch": "새 로컬 브랜치",
+      "noCommits": "아직 커밋이 없습니다.",
+      "noDiff": "아직 텍스트 디프가 없습니다. 추적되지 않은 파일은 스테이징 후 표시됩니다.",
+      "notInitialized": "Git이 초기화되지 않았습니다",
+      "selectChange": "디프를 확인할 변경된 파일을 선택하세요.",
+      "selectPath": "{{path}} 선택",
+      "stageAll": "모두 스테이징",
+      "stageSelected": "{{count}}개 스테이징",
+      "staged": "변경 사항이 스테이징되었습니다.",
+      "switchBranch": "로컬 브랜치 전환",
+      "changes": "변경 사항",
+      "createBranch": "만들기"
+    },
+    "hostWorkspace": {
+      "hint": "격리된 작업 공간을 쓰려면 비워 두고, 아니면 이 컴퓨터의 폴더를 지정하세요.",
+      "label": "작업 공간 폴더(선택)",
+      "warning": "작업이 이 폴더를 직접 읽고 쓸 수 있습니다. 격리된 작업 공간을 쓰려면 비워 두세요."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "노트를 만들지 못했습니다",
     "deleteConfirm": "이 노트를 삭제할까요?",
     "deleteFailed": "노트를 삭제하지 못했습니다"
+  },
+  "home": {
+    "active": "활성",
+    "continue": "계속",
+    "start": "시작",
+    "explore": "둘러보기"
+  },
+  "palette": {
+    "empty": "일치 항목 없음.",
+    "placeholder": "채팅, Work, 작업 검색…",
+    "toggleTheme": "테마 전환",
+    "actions": "작업",
+    "chats": "채팅",
+    "search": "검색",
+    "settings": "설정",
+    "work": "작업"
+  },
+  "tabs": {
+    "actions": "탭 작업",
+    "close": "탭 닫기",
+    "closeAll": "모든 탭 닫기",
+    "closeOthers": "다른 탭 닫기",
+    "closeRight": "오른쪽 탭 닫기",
+    "home": "홈",
+    "label": "열린 탭",
+    "new": "새 탭",
+    "newWork": "새 Work",
+    "chat": "채팅",
+    "newChat": "새 채팅",
+    "work": "작업"
   }
 }

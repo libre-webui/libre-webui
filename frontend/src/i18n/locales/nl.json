@@ -36,7 +36,9 @@
     "none": "Geen",
     "default": "Standaard",
     "custom": "Aangepast",
-    "remove": "Verwijderen"
+    "remove": "Verwijderen",
+    "home": "Home",
+    "more": "Meer"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "GitHub-aanmelding gelukt!",
       "githubFailed": "GitHub-authenticatie mislukt",
       "githubVerifyFailed": "Verificatie van GitHub-authenticatie mislukt",
-      "approvalPending": "Uw account wacht op goedkeuring van de beheerder."
+      "approvalPending": "Uw account wacht op goedkeuring van de beheerder.",
+      "verificationFailed": "Beveiligingsverificatie mislukt. Vernieuw de pagina en probeer opnieuw."
     },
     "signup": {
       "title": "Account aanmaken",
@@ -1616,7 +1619,14 @@
     "use": "Gebruiken",
     "pull": "Downloaden",
     "pullRestricted": "Modelinstallatie is op deze instantie beperkt tot beheerders.",
-    "adminOnlyPull": "Alleen beheerders"
+    "adminOnlyPull": "Alleen beheerders",
+    "legacyProvider": "provider niet vastgelegd",
+    "providerNotRecorded": "Provider niet vastgelegd",
+    "providerUnavailable": "provider niet beschikbaar",
+    "reselectProvider": "selecteer opnieuw een provider om dit model vast te zetten",
+    "unavailable": "niet beschikbaar",
+    "unavailableSelections": "Niet-beschikbare selecties",
+    "agentModels": "Agents"
   },
   "libreClaw": {
     "title": "Agents",
@@ -1841,7 +1851,8 @@
       "resize": "Conversatie en werkruimte groter of kleiner maken",
       "resizeHint": "Sleep om het formaat te wijzigen. Gebruik de pijltoetsen voor nauwkeurige bediening. Dubbelklik of druk op Enter om te herstellen.",
       "splitSize": "Conversatie {{conversation}}%, werkruimte {{workspace}}%",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Niet-opgeslagen bestandswijzigingen negeren?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Runtimebeleid",
       "default": "Standaard (globale limieten)"
+    },
+    "git": {
+      "actionFailed": "Git-actie mislukt.",
+      "blockedByPreview": "Stop de preview voordat je de Git-status wijzigt.",
+      "blockedByRun": "Git-schrijfacties worden vrijgegeven zodra de modelbeurt klaar is.",
+      "branchCreated": "{{name}} aangemaakt.",
+      "branchSwitched": "Overgeschakeld naar {{name}}.",
+      "clean": "Werkboom is schoon.",
+      "commit": "Gestagede wijzigingen committen",
+      "commitMessage": "Commitbericht",
+      "committed": "Commit aangemaakt.",
+      "detached": "losgekoppelde HEAD",
+      "diff": "Diff-voorbeeld",
+      "diffFailed": "Kon deze diff niet laden.",
+      "history": "Lokale geschiedenis",
+      "initialize": "Git initialiseren",
+      "initializeDescription": "Maak een lokale repository voor status, diffs, branches en commits. Er worden geen externe inloggegevens gekoppeld.",
+      "initialized": "Git-repository geïnitialiseerd.",
+      "loadFailed": "Kon Git-status niet laden.",
+      "localOnly": "Alleen lokale Git. Push, pull en pull requests vereisen een aparte vertrouwde credential-broker.",
+      "newBranch": "Nieuwe lokale branch",
+      "noCommits": "Nog geen commits.",
+      "noDiff": "Nog geen tekstdiff beschikbaar. Niet-gevolgde bestanden verschijnen na het stagen.",
+      "notInitialized": "Git is niet geïnitialiseerd",
+      "selectChange": "Selecteer een gewijzigd bestand om de diff te bekijken.",
+      "selectPath": "{{path}} selecteren",
+      "stageAll": "Alles stagen",
+      "stageSelected": "{{count}} stagen",
+      "staged": "Wijzigingen gestaged.",
+      "switchBranch": "Lokale branch wisselen",
+      "changes": "Wijzigingen",
+      "createBranch": "Aanmaken"
+    },
+    "hostWorkspace": {
+      "hint": "Laat leeg voor een geïsoleerde werkruimte, of wijs de taak naar een map op deze machine.",
+      "label": "Werkruimtemap (optioneel)",
+      "warning": "De taak kan deze map direct lezen en schrijven. Laat leeg voor een geïsoleerde werkruimte."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Kon geen notitie maken",
     "deleteConfirm": "Deze notitie verwijderen?",
     "deleteFailed": "Kon de notitie niet verwijderen"
+  },
+  "home": {
+    "active": "actief",
+    "continue": "Doorgaan",
+    "start": "Starten",
+    "explore": "Verkennen"
+  },
+  "palette": {
+    "empty": "Geen resultaten.",
+    "placeholder": "Zoek chats, Work, acties…",
+    "toggleTheme": "Thema wisselen",
+    "actions": "Acties",
+    "chats": "Chats",
+    "search": "Zoeken",
+    "settings": "Instellingen",
+    "work": "Werk"
+  },
+  "tabs": {
+    "actions": "Tabbladacties",
+    "close": "Tabblad sluiten",
+    "closeAll": "Alle tabbladen sluiten",
+    "closeOthers": "Andere tabbladen sluiten",
+    "closeRight": "Tabbladen rechts sluiten",
+    "home": "Home",
+    "label": "Open tabbladen",
+    "new": "Nieuw tabblad",
+    "newWork": "Nieuw Work",
+    "chat": "Chat",
+    "newChat": "Nieuwe chat",
+    "work": "Werk"
   }
 }

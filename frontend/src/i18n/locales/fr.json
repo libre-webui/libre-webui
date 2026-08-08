@@ -36,7 +36,9 @@
     "none": "Aucun",
     "default": "Par défaut",
     "custom": "Personnalisé",
-    "remove": "Supprimer"
+    "remove": "Supprimer",
+    "home": "Accueil",
+    "more": "Plus"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "Connexion GitHub réussie !",
       "githubFailed": "Échec de l'authentification GitHub",
       "githubVerifyFailed": "Échec de la vérification de l'authentification GitHub",
-      "approvalPending": "Votre compte est en attente d'approbation par un administrateur."
+      "approvalPending": "Votre compte est en attente d'approbation par un administrateur.",
+      "verificationFailed": "La vérification de sécurité a échoué. Actualisez la page et réessayez."
     },
     "signup": {
       "title": "Créer un compte",
@@ -1809,7 +1812,8 @@
       "resize": "Redimensionner la conversation et l'espace de travail",
       "resizeHint": "Faites glisser pour redimensionner. Utilisez les touches fléchées pour un réglage précis. Double-cliquez ou appuyez sur Entrée pour réinitialiser.",
       "splitSize": "Conversation {{conversation}} %, espace de travail {{workspace}} %",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Ignorer les modifications de fichier non enregistrées ?",
@@ -1883,6 +1887,43 @@
     "policy": {
       "label": "Politique d'exécution",
       "default": "Par défaut (limites globales)"
+    },
+    "git": {
+      "actionFailed": "L'action Git a échoué.",
+      "blockedByPreview": "Arrêtez l'aperçu avant de modifier l'état Git.",
+      "blockedByRun": "Les actions d'écriture Git se déverrouillent à la fin du tour du modèle.",
+      "branchCreated": "{{name}} créée.",
+      "branchSwitched": "Basculé vers {{name}}.",
+      "clean": "L'arbre de travail est propre.",
+      "commit": "Committer les changements indexés",
+      "commitMessage": "Message du commit",
+      "committed": "Commit créé.",
+      "detached": "HEAD détaché",
+      "diff": "Aperçu du diff",
+      "diffFailed": "Impossible de charger ce diff.",
+      "history": "Historique local",
+      "initialize": "Initialiser Git",
+      "initializeDescription": "Créez un dépôt local pour le statut, les diffs, les branches et les commits. Aucun identifiant distant n'est connecté.",
+      "initialized": "Dépôt Git initialisé.",
+      "loadFailed": "Impossible de charger le statut Git.",
+      "localOnly": "Git local uniquement. Push, pull et pull requests nécessitent un courtier d'identifiants de confiance séparé.",
+      "newBranch": "Nouvelle branche locale",
+      "noCommits": "Aucun commit pour l'instant.",
+      "noDiff": "Aucun diff textuel pour l'instant. Les fichiers non suivis apparaissent après indexation.",
+      "notInitialized": "Git n'est pas initialisé",
+      "selectChange": "Sélectionnez un fichier modifié pour inspecter son diff.",
+      "selectPath": "Sélectionner {{path}}",
+      "stageAll": "Tout indexer",
+      "stageSelected": "Indexer {{count}}",
+      "staged": "Changements indexés.",
+      "switchBranch": "Changer de branche locale",
+      "changes": "Modifications",
+      "createBranch": "Créer"
+    },
+    "hostWorkspace": {
+      "hint": "Laissez vide pour un espace isolé, ou pointez la tâche vers un dossier de cette machine.",
+      "label": "Dossier de l'espace de travail (facultatif)",
+      "warning": "La tâche peut lire et écrire ce dossier directement. Laissez vide pour un espace isolé."
     }
   },
   "personaBackground": {
@@ -1915,7 +1956,14 @@
     "use": "Utiliser",
     "pull": "Télécharger",
     "pullRestricted": "L'installation des modèles est réservée aux administrateurs sur cette instance.",
-    "adminOnlyPull": "Admins uniquement"
+    "adminOnlyPull": "Admins uniquement",
+    "legacyProvider": "fournisseur non enregistré",
+    "providerNotRecorded": "Fournisseur non enregistré",
+    "providerUnavailable": "fournisseur indisponible",
+    "reselectProvider": "resélectionnez un fournisseur pour épingler ce modèle",
+    "unavailable": "indisponible",
+    "unavailableSelections": "Sélections indisponibles",
+    "agentModels": "Agents"
   },
   "usageAnalytics": {
     "eyebrow": "Administration",
@@ -2139,5 +2187,35 @@
     "createFailed": "Impossible de créer une note",
     "deleteConfirm": "Supprimer cette note ?",
     "deleteFailed": "Impossible de supprimer la note"
+  },
+  "home": {
+    "active": "actif",
+    "continue": "Continuer",
+    "start": "Commencer",
+    "explore": "Explorer"
+  },
+  "palette": {
+    "empty": "Aucun résultat.",
+    "placeholder": "Rechercher chats, Work, actions…",
+    "toggleTheme": "Changer de thème",
+    "actions": "Actions",
+    "chats": "Conversations",
+    "search": "Rechercher",
+    "settings": "Paramètres",
+    "work": "Travail"
+  },
+  "tabs": {
+    "actions": "Actions de l'onglet",
+    "close": "Fermer l'onglet",
+    "closeAll": "Fermer tous les onglets",
+    "closeOthers": "Fermer les autres onglets",
+    "closeRight": "Fermer les onglets à droite",
+    "home": "Accueil",
+    "label": "Onglets ouverts",
+    "new": "Nouvel onglet",
+    "newWork": "Nouveau Work",
+    "chat": "Chat",
+    "newChat": "Nouvelle conversation",
+    "work": "Travail"
   }
 }

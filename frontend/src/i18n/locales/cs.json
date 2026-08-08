@@ -36,7 +36,9 @@
     "none": "Žádné",
     "default": "Výchozí",
     "custom": "Vlastní",
-    "remove": "Odstranit"
+    "remove": "Odstranit",
+    "home": "Domů",
+    "more": "Více"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "Přihlášení přes GitHub úspěšné!",
       "githubFailed": "Ověření GitHub se nezdařilo",
       "githubVerifyFailed": "Nepodařilo se ověřit GitHub autentizaci",
-      "approvalPending": "Váš účet čeká na schválení správcem."
+      "approvalPending": "Váš účet čeká na schválení správcem.",
+      "verificationFailed": "Bezpečnostní ověření selhalo. Obnovte stránku a zkuste to znovu."
     },
     "signup": {
       "title": "Vytvořit účet",
@@ -1616,7 +1619,14 @@
     "use": "Použít",
     "pull": "Stáhnout",
     "pullRestricted": "Instalace modelů je v této instanci omezena pouze na administrátory.",
-    "adminOnlyPull": "Pouze administrátoři"
+    "adminOnlyPull": "Pouze administrátoři",
+    "legacyProvider": "poskytovatel nezaznamenán",
+    "providerNotRecorded": "Poskytovatel nezaznamenán",
+    "providerUnavailable": "poskytovatel nedostupný",
+    "reselectProvider": "znovu vyberte poskytovatele pro připnutí modelu",
+    "unavailable": "nedostupné",
+    "unavailableSelections": "Nedostupné volby",
+    "agentModels": "Agenti"
   },
   "libreClaw": {
     "title": "Agenti",
@@ -1841,7 +1851,8 @@
       "resize": "Změnit velikost konverzace a pracovního prostoru",
       "resizeHint": "Velikost změníte přetažením. Pro přesné nastavení použijte klávesy se šipkami. Dvojitým kliknutím nebo klávesou Enter obnovíte výchozí velikost.",
       "splitSize": "Konverzace {{conversation}} %, pracovní prostor {{workspace}} %",
-      "terminal": "Terminál"
+      "terminal": "Terminál",
+      "git": "Git"
     },
     "files": {
       "discard": "Zahodit neuložené změny souboru?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Běhová politika",
       "default": "Výchozí (globální limity)"
+    },
+    "git": {
+      "actionFailed": "Akce Gitu selhala.",
+      "blockedByPreview": "Před změnou stavu Gitu zastavte náhled.",
+      "blockedByRun": "Zápisové akce Gitu se odemknou po skončení tahu modelu.",
+      "branchCreated": "Vytvořeno {{name}}.",
+      "branchSwitched": "Přepnuto na {{name}}.",
+      "clean": "Pracovní strom je čistý.",
+      "commit": "Commitnout připravené změny",
+      "commitMessage": "Zpráva commitu",
+      "committed": "Commit vytvořen.",
+      "detached": "odpojený HEAD",
+      "diff": "Náhled diffu",
+      "diffFailed": "Tento diff se nepodařilo načíst.",
+      "history": "Místní historie",
+      "initialize": "Inicializovat Git",
+      "initializeDescription": "Vytvořte místní repozitář pro stav, diffy, větve a commity. Žádné vzdálené přihlašovací údaje se nepřipojují.",
+      "initialized": "Repozitář Git inicializován.",
+      "loadFailed": "Stav Gitu se nepodařilo načíst.",
+      "localOnly": "Pouze místní Git. Push, pull a pull requesty vyžadují samostatného důvěryhodného zprostředkovatele přihlašovacích údajů.",
+      "newBranch": "Nová místní větev",
+      "noCommits": "Zatím žádné commity.",
+      "noDiff": "Textový diff zatím není k dispozici. Nesledované soubory se objeví po přípravě.",
+      "notInitialized": "Git není inicializován",
+      "selectChange": "Vyberte změněný soubor pro zobrazení diffu.",
+      "selectPath": "Vybrat {{path}}",
+      "stageAll": "Připravit vše",
+      "stageSelected": "Připravit {{count}}",
+      "staged": "Změny připraveny.",
+      "switchBranch": "Přepnout místní větev",
+      "changes": "Změny",
+      "createBranch": "Vytvořit"
+    },
+    "hostWorkspace": {
+      "hint": "Nechte prázdné pro izolovaný pracovní prostor, nebo nasměrujte úlohu na složku na tomto počítači.",
+      "label": "Složka pracovního prostoru (volitelné)",
+      "warning": "Úloha může tuto složku přímo číst i zapisovat. Pro izolovaný pracovní prostor nechte prázdné."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Poznámku se nepodařilo vytvořit",
     "deleteConfirm": "Smazat tuto poznámku?",
     "deleteFailed": "Poznámku se nepodařilo smazat"
+  },
+  "home": {
+    "active": "aktivní",
+    "continue": "Pokračovat",
+    "start": "Začít",
+    "explore": "Prozkoumat"
+  },
+  "palette": {
+    "empty": "Žádné shody.",
+    "placeholder": "Hledat chaty, Work, akce…",
+    "toggleTheme": "Přepnout motiv",
+    "actions": "Akce",
+    "chats": "Chaty",
+    "search": "Hledat",
+    "settings": "Nastavení",
+    "work": "Práce"
+  },
+  "tabs": {
+    "actions": "Akce karty",
+    "close": "Zavřít kartu",
+    "closeAll": "Zavřít všechny karty",
+    "closeOthers": "Zavřít ostatní karty",
+    "closeRight": "Zavřít karty vpravo",
+    "home": "Domů",
+    "label": "Otevřené karty",
+    "new": "Nová karta",
+    "newWork": "Nový Work",
+    "chat": "Chat",
+    "newChat": "Nový chat",
+    "work": "Práce"
   }
 }

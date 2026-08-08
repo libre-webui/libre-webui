@@ -36,7 +36,9 @@
     "none": "None",
     "default": "Default",
     "custom": "Custom",
-    "remove": "Remove"
+    "remove": "Remove",
+    "home": "Home",
+    "more": "More"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "enterBoth": "Please enter both username and password",
       "githubSuccess": "GitHub login successful!",
       "githubFailed": "GitHub authentication failed",
-      "githubVerifyFailed": "Failed to verify GitHub authentication"
+      "githubVerifyFailed": "Failed to verify GitHub authentication",
+      "verificationFailed": "Security verification failed. Please refresh and try again."
     },
     "signup": {
       "title": "Create Account",
@@ -2014,7 +2017,8 @@
       "resize": "Resize conversation and workspace",
       "resizeHint": "Drag to resize. Use arrow keys for precise control. Double-click or press Enter to reset.",
       "splitSize": "Conversation {{conversation}}%, workspace {{workspace}}%",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Discard unsaved file changes?",
@@ -2088,6 +2092,43 @@
     "policy": {
       "label": "Runtime policy",
       "default": "Default (global limits)"
+    },
+    "git": {
+      "actionFailed": "Git action failed.",
+      "blockedByPreview": "Stop the preview before changing Git state.",
+      "blockedByRun": "Git write actions unlock when the model turn finishes.",
+      "branchCreated": "Created {{name}}.",
+      "branchSwitched": "Switched to {{name}}.",
+      "clean": "Working tree is clean.",
+      "commit": "Commit staged changes",
+      "commitMessage": "Commit message",
+      "committed": "Commit created.",
+      "detached": "detached HEAD",
+      "diff": "Diff preview",
+      "diffFailed": "Could not load this diff.",
+      "history": "Local history",
+      "initialize": "Initialize Git",
+      "initializeDescription": "Create a local repository for status, diffs, branches, and commits. No remote credentials are connected.",
+      "initialized": "Git repository initialized.",
+      "loadFailed": "Could not load Git status.",
+      "localOnly": "Local Git only. Push, pull, and pull requests require a separate trusted credential broker.",
+      "newBranch": "New local branch",
+      "noCommits": "No commits yet.",
+      "noDiff": "No textual diff is available yet. Untracked files appear after staging.",
+      "notInitialized": "Git is not initialized",
+      "selectChange": "Select a changed file to inspect its diff.",
+      "selectPath": "Select {{path}}",
+      "stageAll": "Stage all",
+      "stageSelected": "Stage {{count}}",
+      "staged": "Changes staged.",
+      "switchBranch": "Switch local branch",
+      "changes": "Changes",
+      "createBranch": "Create"
+    },
+    "hostWorkspace": {
+      "hint": "Leave blank for an isolated workspace, or point the task at a folder on this machine.",
+      "label": "Workspace folder (optional)",
+      "warning": "The task can read and write this folder directly. Leave blank to use an isolated workspace instead."
     }
   },
   "personaBackground": {
@@ -2120,7 +2161,14 @@
     "use": "Use",
     "pull": "Pull",
     "pullRestricted": "Model installation is restricted to administrators on this instance.",
-    "adminOnlyPull": "Admins only"
+    "adminOnlyPull": "Admins only",
+    "legacyProvider": "provider not recorded",
+    "providerNotRecorded": "Provider not recorded",
+    "providerUnavailable": "provider unavailable",
+    "reselectProvider": "reselect a provider to pin this model",
+    "unavailable": "unavailable",
+    "unavailableSelections": "Unavailable selections",
+    "agentModels": "Agents"
   },
   "whatsNew": {
     "title": "What's new",
@@ -2139,5 +2187,35 @@
     "createFailed": "Could not create a note",
     "deleteConfirm": "Delete this note?",
     "deleteFailed": "Could not delete the note"
+  },
+  "home": {
+    "active": "active",
+    "continue": "Continue",
+    "start": "Start",
+    "explore": "Explore"
+  },
+  "palette": {
+    "empty": "No matches.",
+    "placeholder": "Search chats, Work, actions…",
+    "toggleTheme": "Toggle theme",
+    "actions": "Actions",
+    "chats": "Chats",
+    "search": "Search",
+    "settings": "Settings",
+    "work": "Work"
+  },
+  "tabs": {
+    "actions": "Tab actions",
+    "close": "Close tab",
+    "closeAll": "Close all tabs",
+    "closeOthers": "Close other tabs",
+    "closeRight": "Close tabs to the right",
+    "home": "Home",
+    "label": "Open tabs",
+    "new": "New tab",
+    "newWork": "New Work",
+    "chat": "Chat",
+    "newChat": "New Chat",
+    "work": "Work"
   }
 }

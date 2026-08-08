@@ -36,7 +36,9 @@
     "none": "Nenhum",
     "default": "Padrão",
     "custom": "Personalizado",
-    "remove": "Remover"
+    "remove": "Remover",
+    "home": "Início",
+    "more": "Mais"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "Login com GitHub realizado com sucesso!",
       "githubFailed": "Falha na autenticação do GitHub",
       "githubVerifyFailed": "Falha ao verificar autenticação do GitHub",
-      "approvalPending": "A sua conta está a aguardar aprovação do administrador."
+      "approvalPending": "A sua conta está a aguardar aprovação do administrador.",
+      "verificationFailed": "A verificação de segurança falhou. Atualize a página e tente novamente."
     },
     "signup": {
       "title": "Criar conta",
@@ -1616,7 +1619,14 @@
     "use": "Usar",
     "pull": "Baixar",
     "pullRestricted": "A instalação de modelos está restrita a administradores nesta instância.",
-    "adminOnlyPull": "Apenas administradores"
+    "adminOnlyPull": "Apenas administradores",
+    "legacyProvider": "provedor não registrado",
+    "providerNotRecorded": "Provedor não registrado",
+    "providerUnavailable": "provedor indisponível",
+    "reselectProvider": "selecione novamente um provedor para fixar este modelo",
+    "unavailable": "indisponível",
+    "unavailableSelections": "Seleções indisponíveis",
+    "agentModels": "Agentes"
   },
   "libreClaw": {
     "title": "Agentes",
@@ -1841,7 +1851,8 @@
       "resize": "Redimensionar a conversa e o espaço de trabalho",
       "resizeHint": "Arraste para redimensionar. Use as teclas de seta para um controle preciso. Clique duas vezes ou pressione Enter para restaurar.",
       "splitSize": "Conversa {{conversation}}%, espaço de trabalho {{workspace}}%",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Descartar alterações não salvas no arquivo?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Política de execução",
       "default": "Padrão (limites globais)"
+    },
+    "git": {
+      "actionFailed": "A ação do Git falhou.",
+      "blockedByPreview": "Pare a pré-visualização antes de alterar o estado do Git.",
+      "blockedByRun": "As ações de escrita do Git desbloqueiam quando o turno do modelo termina.",
+      "branchCreated": "{{name}} criado.",
+      "branchSwitched": "Alternado para {{name}}.",
+      "clean": "A árvore de trabalho está limpa.",
+      "commit": "Fazer commit das mudanças preparadas",
+      "commitMessage": "Mensagem do commit",
+      "committed": "Commit criado.",
+      "detached": "HEAD desanexado",
+      "diff": "Pré-visualização do diff",
+      "diffFailed": "Não foi possível carregar este diff.",
+      "history": "Histórico local",
+      "initialize": "Inicializar Git",
+      "initializeDescription": "Crie um repositório local para status, diffs, branches e commits. Nenhuma credencial remota é conectada.",
+      "initialized": "Repositório Git inicializado.",
+      "loadFailed": "Não foi possível carregar o status do Git.",
+      "localOnly": "Apenas Git local. Push, pull e pull requests exigem um intermediário de credenciais confiável separado.",
+      "newBranch": "Nova branch local",
+      "noCommits": "Ainda sem commits.",
+      "noDiff": "Ainda não há diff textual. Arquivos não rastreados aparecem após preparar.",
+      "notInitialized": "Git não está inicializado",
+      "selectChange": "Selecione um arquivo alterado para inspecionar o diff.",
+      "selectPath": "Selecionar {{path}}",
+      "stageAll": "Preparar tudo",
+      "stageSelected": "Preparar {{count}}",
+      "staged": "Mudanças preparadas.",
+      "switchBranch": "Trocar branch local",
+      "changes": "Alterações",
+      "createBranch": "Criar"
+    },
+    "hostWorkspace": {
+      "hint": "Deixe em branco para um espaço isolado, ou aponte a tarefa para uma pasta desta máquina.",
+      "label": "Pasta do espaço de trabalho (opcional)",
+      "warning": "A tarefa pode ler e escrever esta pasta diretamente. Deixe em branco para um espaço isolado."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Não foi possível criar uma nota",
     "deleteConfirm": "Eliminar esta nota?",
     "deleteFailed": "Não foi possível eliminar a nota"
+  },
+  "home": {
+    "active": "ativo",
+    "continue": "Continuar",
+    "start": "Começar",
+    "explore": "Explorar"
+  },
+  "palette": {
+    "empty": "Sem correspondências.",
+    "placeholder": "Pesquisar chats, Work, ações…",
+    "toggleTheme": "Alternar tema",
+    "actions": "Ações",
+    "chats": "Conversas",
+    "search": "Pesquisar",
+    "settings": "Configurações",
+    "work": "Trabalho"
+  },
+  "tabs": {
+    "actions": "Ações da aba",
+    "close": "Fechar aba",
+    "closeAll": "Fechar todas as abas",
+    "closeOthers": "Fechar outras abas",
+    "closeRight": "Fechar abas à direita",
+    "home": "Início",
+    "label": "Abas abertas",
+    "new": "Nova aba",
+    "newWork": "Novo Work",
+    "chat": "Chat",
+    "newChat": "Nova conversa",
+    "work": "Trabalho"
   }
 }

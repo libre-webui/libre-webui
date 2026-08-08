@@ -36,7 +36,9 @@
     "none": "无",
     "default": "默认",
     "custom": "自定义",
-    "remove": "移除"
+    "remove": "移除",
+    "home": "主页",
+    "more": "多"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "GitHub 登录成功！",
       "githubFailed": "GitHub 认证失败",
       "githubVerifyFailed": "GitHub 认证验证失败",
-      "approvalPending": "您的账户正在等待管理员批准。"
+      "approvalPending": "您的账户正在等待管理员批准。",
+      "verificationFailed": "安全验证失败。请刷新页面后重试。"
     },
     "signup": {
       "title": "创建账户",
@@ -1616,7 +1619,14 @@
     "use": "使用",
     "pull": "下载",
     "pullRestricted": "此实例上的模型安装仅限管理员。",
-    "adminOnlyPull": "仅管理员"
+    "adminOnlyPull": "仅管理员",
+    "legacyProvider": "未记录提供方",
+    "providerNotRecorded": "未记录提供方",
+    "providerUnavailable": "提供方不可用",
+    "reselectProvider": "重新选择提供方以固定此模型",
+    "unavailable": "不可用",
+    "unavailableSelections": "不可用的选择",
+    "agentModels": "智能体"
   },
   "libreClaw": {
     "title": "智能体",
@@ -1841,7 +1851,8 @@
       "resize": "调整对话和工作区大小",
       "resizeHint": "拖动以调整大小。使用方向键精确控制。双击或按 Enter 重置。",
       "splitSize": "对话 {{conversation}}%，工作区 {{workspace}}%",
-      "terminal": "终端"
+      "terminal": "终端",
+      "git": "Git"
     },
     "files": {
       "discard": "放弃未保存的文件更改？",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "运行时策略",
       "default": "默认（全局限制）"
+    },
+    "git": {
+      "actionFailed": "Git 操作失败。",
+      "blockedByPreview": "更改 Git 状态前请先停止预览。",
+      "blockedByRun": "模型回合结束后 Git 写入操作才会解锁。",
+      "branchCreated": "已创建 {{name}}。",
+      "branchSwitched": "已切换到 {{name}}。",
+      "clean": "工作树是干净的。",
+      "commit": "提交已暂存的更改",
+      "commitMessage": "提交信息",
+      "committed": "已创建提交。",
+      "detached": "分离的 HEAD",
+      "diff": "差异预览",
+      "diffFailed": "无法加载此差异。",
+      "history": "本地历史",
+      "initialize": "初始化 Git",
+      "initializeDescription": "为状态、差异、分支和提交创建本地仓库。不会连接任何远程凭据。",
+      "initialized": "Git 仓库已初始化。",
+      "loadFailed": "无法加载 Git 状态。",
+      "localOnly": "仅限本地 Git。push、pull 和拉取请求需要单独的可信凭据代理。",
+      "newBranch": "新建本地分支",
+      "noCommits": "还没有提交。",
+      "noDiff": "暂无文本差异。未跟踪的文件会在暂存后显示。",
+      "notInitialized": "Git 未初始化",
+      "selectChange": "选择已更改的文件以查看其差异。",
+      "selectPath": "选择 {{path}}",
+      "stageAll": "全部暂存",
+      "stageSelected": "暂存 {{count}} 个",
+      "staged": "更改已暂存。",
+      "switchBranch": "切换本地分支",
+      "changes": "更改",
+      "createBranch": "创建"
+    },
+    "hostWorkspace": {
+      "hint": "留空以使用隔离工作区，或将任务指向本机的一个文件夹。",
+      "label": "工作区文件夹（可选）",
+      "warning": "任务可以直接读写此文件夹。留空则使用隔离工作区。"
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "无法创建笔记",
     "deleteConfirm": "删除此笔记？",
     "deleteFailed": "无法删除笔记"
+  },
+  "home": {
+    "active": "活跃",
+    "continue": "继续",
+    "start": "开始",
+    "explore": "探索"
+  },
+  "palette": {
+    "empty": "没有匹配项。",
+    "placeholder": "搜索聊天、Work、操作…",
+    "toggleTheme": "切换主题",
+    "actions": "操作",
+    "chats": "对话",
+    "search": "搜索",
+    "settings": "设置",
+    "work": "工作"
+  },
+  "tabs": {
+    "actions": "标签页操作",
+    "close": "关闭标签页",
+    "closeAll": "关闭所有标签页",
+    "closeOthers": "关闭其他标签页",
+    "closeRight": "关闭右侧标签页",
+    "home": "主页",
+    "label": "打开的标签页",
+    "new": "新标签页",
+    "newWork": "新 Work",
+    "chat": "对话",
+    "newChat": "新对话",
+    "work": "工作"
   }
 }

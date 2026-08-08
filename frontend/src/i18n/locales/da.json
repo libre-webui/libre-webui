@@ -36,7 +36,9 @@
     "none": "Ingen",
     "default": "Standard",
     "custom": "Tilpasset",
-    "remove": "Fjern"
+    "remove": "Fjern",
+    "home": "Hjem",
+    "more": "Mere"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "GitHub-login lykkedes!",
       "githubFailed": "GitHub-godkendelse mislykkedes",
       "githubVerifyFailed": "Kunne ikke bekræfte GitHub-godkendelse",
-      "approvalPending": "Din konto afventer godkendelse af administrator."
+      "approvalPending": "Din konto afventer godkendelse af administrator.",
+      "verificationFailed": "Sikkerhedskontrollen mislykkedes. Opdater siden og prøv igen."
     },
     "signup": {
       "title": "Opret konto",
@@ -1616,7 +1619,14 @@
     "use": "Brug",
     "pull": "Download",
     "pullRestricted": "Modelinstallation er begrænset til administratorer på denne instans.",
-    "adminOnlyPull": "Kun administratorer"
+    "adminOnlyPull": "Kun administratorer",
+    "legacyProvider": "udbyder ikke registreret",
+    "providerNotRecorded": "Udbyder ikke registreret",
+    "providerUnavailable": "udbyder utilgængelig",
+    "reselectProvider": "genvælg en udbyder for at fastgøre denne model",
+    "unavailable": "utilgængelig",
+    "unavailableSelections": "Utilgængelige valg",
+    "agentModels": "Agenter"
   },
   "libreClaw": {
     "title": "Agenter",
@@ -1841,7 +1851,8 @@
       "resize": "Tilpas størrelsen på samtalen og arbejdsområdet",
       "resizeHint": "Træk for at ændre størrelsen. Brug piletasterne til præcis styring. Dobbeltklik eller tryk på Enter for at nulstille.",
       "splitSize": "Samtale {{conversation}} %, arbejdsområde {{workspace}} %",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "Kassér ændringer i filen, der ikke er gemt?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Kørselspolitik",
       "default": "Standard (globale grænser)"
+    },
+    "git": {
+      "actionFailed": "Git-handlingen mislykkedes.",
+      "blockedByPreview": "Stop forhåndsvisningen, før du ændrer Git-tilstand.",
+      "blockedByRun": "Git-skrivehandlinger låses op, når modellens tur er slut.",
+      "branchCreated": "{{name}} oprettet.",
+      "branchSwitched": "Skiftet til {{name}}.",
+      "clean": "Arbejdstræet er rent.",
+      "commit": "Commit klargjorte ændringer",
+      "commitMessage": "Commit-besked",
+      "committed": "Commit oprettet.",
+      "detached": "løsrevet HEAD",
+      "diff": "Diff-forhåndsvisning",
+      "diffFailed": "Kunne ikke indlæse denne diff.",
+      "history": "Lokal historik",
+      "initialize": "Initialisér Git",
+      "initializeDescription": "Opret et lokalt repository til status, diffs, branches og commits. Ingen fjerntliggende legitimationsoplysninger forbindes.",
+      "initialized": "Git-repository initialiseret.",
+      "loadFailed": "Kunne ikke indlæse Git-status.",
+      "localOnly": "Kun lokal Git. Push, pull og pull requests kræver en separat betroet legitimationsmægler.",
+      "newBranch": "Ny lokal branch",
+      "noCommits": "Ingen commits endnu.",
+      "noDiff": "Ingen tekstdiff endnu. Usporede filer vises efter klargøring.",
+      "notInitialized": "Git er ikke initialiseret",
+      "selectChange": "Vælg en ændret fil for at se dens diff.",
+      "selectPath": "Vælg {{path}}",
+      "stageAll": "Klargør alle",
+      "stageSelected": "Klargør {{count}}",
+      "staged": "Ændringer klargjort.",
+      "switchBranch": "Skift lokal branch",
+      "changes": "Ændringer",
+      "createBranch": "Opret"
+    },
+    "hostWorkspace": {
+      "hint": "Lad stå tomt for et isoleret arbejdsområde, eller peg opgaven på en mappe på denne maskine.",
+      "label": "Arbejdsområdemappe (valgfri)",
+      "warning": "Opgaven kan læse og skrive denne mappe direkte. Lad stå tomt for et isoleret arbejdsområde."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Kunne ikke oprette en note",
     "deleteConfirm": "Slet denne note?",
     "deleteFailed": "Kunne ikke slette noten"
+  },
+  "home": {
+    "active": "aktiv",
+    "continue": "Fortsæt",
+    "start": "Start",
+    "explore": "Udforsk"
+  },
+  "palette": {
+    "empty": "Ingen match.",
+    "placeholder": "Søg i chats, Work, handlinger…",
+    "toggleTheme": "Skift tema",
+    "actions": "Handlinger",
+    "chats": "Chats",
+    "search": "Søg",
+    "settings": "Indstillinger",
+    "work": "Arbejde"
+  },
+  "tabs": {
+    "actions": "Fanehandlinger",
+    "close": "Luk fane",
+    "closeAll": "Luk alle faner",
+    "closeOthers": "Luk andre faner",
+    "closeRight": "Luk faner til højre",
+    "home": "Hjem",
+    "label": "Åbne faner",
+    "new": "Ny fane",
+    "newWork": "Nyt Work",
+    "chat": "Chat",
+    "newChat": "Ny chat",
+    "work": "Arbejde"
   }
 }

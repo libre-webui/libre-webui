@@ -36,7 +36,9 @@
     "none": "Ninguno",
     "default": "Predeterminado",
     "custom": "Personalizado",
-    "remove": "Quitar"
+    "remove": "Quitar",
+    "home": "Inicio",
+    "more": "Más"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "¡Inicio de sesión con GitHub exitoso!",
       "githubFailed": "Autenticación de GitHub fallida",
       "githubVerifyFailed": "Error al verificar autenticación de GitHub",
-      "approvalPending": "Tu cuenta está esperando la aprobación del administrador."
+      "approvalPending": "Tu cuenta está esperando la aprobación del administrador.",
+      "verificationFailed": "La verificación de seguridad falló. Actualiza la página e inténtalo de nuevo."
     },
     "signup": {
       "title": "Crear cuenta",
@@ -1616,7 +1619,14 @@
     "use": "Usar",
     "pull": "Descargar",
     "pullRestricted": "La instalación de modelos está restringida a administradores en esta instancia.",
-    "adminOnlyPull": "Solo administradores"
+    "adminOnlyPull": "Solo administradores",
+    "legacyProvider": "proveedor no registrado",
+    "providerNotRecorded": "Proveedor no registrado",
+    "providerUnavailable": "proveedor no disponible",
+    "reselectProvider": "vuelve a seleccionar un proveedor para fijar este modelo",
+    "unavailable": "no disponible",
+    "unavailableSelections": "Selecciones no disponibles",
+    "agentModels": "Agentes"
   },
   "libreClaw": {
     "title": "Agentes",
@@ -1841,7 +1851,8 @@
       "resize": "Cambiar el tamaño de la conversación y el espacio de trabajo",
       "resizeHint": "Arrastra para cambiar el tamaño. Usa las teclas de flecha para un control preciso. Haz doble clic o pulsa Intro para restablecer.",
       "splitSize": "Conversación {{conversation}} %, espacio de trabajo {{workspace}} %",
-      "terminal": "Terminal"
+      "terminal": "Terminal",
+      "git": "Git"
     },
     "files": {
       "discard": "¿Descartar los cambios no guardados del archivo?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Política de ejecución",
       "default": "Predeterminada (límites globales)"
+    },
+    "git": {
+      "actionFailed": "La acción de Git falló.",
+      "blockedByPreview": "Detén la vista previa antes de cambiar el estado de Git.",
+      "blockedByRun": "Las acciones de escritura de Git se desbloquean al terminar el turno del modelo.",
+      "branchCreated": "{{name}} creada.",
+      "branchSwitched": "Cambiado a {{name}}.",
+      "clean": "El árbol de trabajo está limpio.",
+      "commit": "Confirmar cambios preparados",
+      "commitMessage": "Mensaje del commit",
+      "committed": "Commit creado.",
+      "detached": "HEAD separado",
+      "diff": "Vista previa del diff",
+      "diffFailed": "No se pudo cargar este diff.",
+      "history": "Historial local",
+      "initialize": "Inicializar Git",
+      "initializeDescription": "Crea un repositorio local para estado, diffs, ramas y commits. No se conectan credenciales remotas.",
+      "initialized": "Repositorio Git inicializado.",
+      "loadFailed": "No se pudo cargar el estado de Git.",
+      "localOnly": "Solo Git local. Push, pull y pull requests requieren un intermediario de credenciales de confianza aparte.",
+      "newBranch": "Nueva rama local",
+      "noCommits": "Aún no hay commits.",
+      "noDiff": "Aún no hay diff textual. Los archivos sin seguimiento aparecen tras prepararlos.",
+      "notInitialized": "Git no está inicializado",
+      "selectChange": "Selecciona un archivo modificado para inspeccionar su diff.",
+      "selectPath": "Seleccionar {{path}}",
+      "stageAll": "Preparar todo",
+      "stageSelected": "Preparar {{count}}",
+      "staged": "Cambios preparados.",
+      "switchBranch": "Cambiar de rama local",
+      "changes": "Cambios",
+      "createBranch": "Crear"
+    },
+    "hostWorkspace": {
+      "hint": "Déjalo en blanco para un espacio aislado, o apunta la tarea a una carpeta de esta máquina.",
+      "label": "Carpeta del espacio de trabajo (opcional)",
+      "warning": "La tarea puede leer y escribir esta carpeta directamente. Déjalo en blanco para usar un espacio aislado."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "No se pudo crear la nota",
     "deleteConfirm": "¿Eliminar esta nota?",
     "deleteFailed": "No se pudo eliminar la nota"
+  },
+  "home": {
+    "active": "activo",
+    "continue": "Continuar",
+    "start": "Empezar",
+    "explore": "Explorar"
+  },
+  "palette": {
+    "empty": "Sin coincidencias.",
+    "placeholder": "Buscar chats, Work, acciones…",
+    "toggleTheme": "Cambiar tema",
+    "actions": "Acciones",
+    "chats": "Chats",
+    "search": "Buscar",
+    "settings": "Configuración",
+    "work": "Trabajo"
+  },
+  "tabs": {
+    "actions": "Acciones de pestaña",
+    "close": "Cerrar pestaña",
+    "closeAll": "Cerrar todas las pestañas",
+    "closeOthers": "Cerrar las demás pestañas",
+    "closeRight": "Cerrar pestañas a la derecha",
+    "home": "Inicio",
+    "label": "Pestañas abiertas",
+    "new": "Nueva pestaña",
+    "newWork": "Nuevo Work",
+    "chat": "Chat",
+    "newChat": "Nuevo chat",
+    "work": "Trabajo"
   }
 }

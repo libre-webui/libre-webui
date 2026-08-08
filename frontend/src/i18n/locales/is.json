@@ -36,7 +36,9 @@
     "none": "Ekkert",
     "default": "Sjálfgefið",
     "custom": "Sérsniðið",
-    "remove": "Fjarlægja"
+    "remove": "Fjarlægja",
+    "home": "Heim",
+    "more": "Meira"
   },
   "brand": {
     "name": "Libre WebUI",
@@ -61,7 +63,8 @@
       "githubSuccess": "GitHub innskráning tókst!",
       "githubFailed": "GitHub auðkenning mistókst",
       "githubVerifyFailed": "Ekki tókst að staðfesta GitHub auðkenningu",
-      "approvalPending": "Aðgangurinn þinn bíður samþykkis stjórnanda."
+      "approvalPending": "Aðgangurinn þinn bíður samþykkis stjórnanda.",
+      "verificationFailed": "Öryggisstaðfesting mistókst. Endurhladdu síðunni og reyndu aftur."
     },
     "signup": {
       "title": "Stofna reikning",
@@ -1616,7 +1619,14 @@
     "use": "Use",
     "pull": "Pull",
     "pullRestricted": "Uppsetning líkana er takmörkuð við stjórnendur á þessu tilviki.",
-    "adminOnlyPull": "Aðeins stjórnendur"
+    "adminOnlyPull": "Aðeins stjórnendur",
+    "legacyProvider": "veitandi ekki skráður",
+    "providerNotRecorded": "Veitandi ekki skráður",
+    "providerUnavailable": "veitandi ófáanlegur",
+    "reselectProvider": "veldu veitanda aftur til að festa þetta líkan",
+    "unavailable": "ófáanlegt",
+    "unavailableSelections": "Ófáanlegar valkostir",
+    "agentModels": "Fulltrúar"
   },
   "libreClaw": {
     "title": "Fulltrúar",
@@ -1841,7 +1851,8 @@
       "resize": "Breyta stærð samtals og vinnusvæðis",
       "resizeHint": "Dragðu til að breyta stærð. Notaðu örvatakkana til að fínstilla. Tvísmelltu eða ýttu á Enter til að endurstilla.",
       "splitSize": "Samtal {{conversation}}%, vinnusvæði {{workspace}}%",
-      "terminal": "Skjáhermir"
+      "terminal": "Skjáhermir",
+      "git": "Git"
     },
     "files": {
       "discard": "Fleygja óvistuðum breytingum á skrá?",
@@ -1915,6 +1926,43 @@
     "policy": {
       "label": "Keyrslustefna",
       "default": "Sjálfgefið (almenn mörk)"
+    },
+    "git": {
+      "actionFailed": "Git-aðgerð mistókst.",
+      "blockedByPreview": "Stöðvaðu forskoðunina áður en Git-stöðu er breytt.",
+      "blockedByRun": "Git-skrifaðgerðir opnast þegar umferð líkansins lýkur.",
+      "branchCreated": "{{name}} búin til.",
+      "branchSwitched": "Skipt yfir í {{name}}.",
+      "clean": "Vinnutréð er hreint.",
+      "commit": "Commit-a undirbúnar breytingar",
+      "commitMessage": "Commit-skilaboð",
+      "committed": "Commit búið til.",
+      "detached": "aftengt HEAD",
+      "diff": "Diff-forskoðun",
+      "diffFailed": "Ekki tókst að hlaða þessu diff-i.",
+      "history": "Staðbundin saga",
+      "initialize": "Frumstilla Git",
+      "initializeDescription": "Búðu til staðbundna geymslu fyrir stöðu, diff, greinar og commit. Engin fjarauðkenni eru tengd.",
+      "initialized": "Git-geymsla frumstillt.",
+      "loadFailed": "Ekki tókst að hlaða Git-stöðu.",
+      "localOnly": "Aðeins staðbundið Git. Push, pull og pull request krefjast sérstaks trausts auðkennamiðlara.",
+      "newBranch": "Ný staðbundin grein",
+      "noCommits": "Engin commit ennþá.",
+      "noDiff": "Ekkert textadiff ennþá. Óraktar skrár birtast eftir undirbúning.",
+      "notInitialized": "Git er ekki frumstillt",
+      "selectChange": "Veldu breytta skrá til að skoða diff hennar.",
+      "selectPath": "Velja {{path}}",
+      "stageAll": "Undirbúa allt",
+      "stageSelected": "Undirbúa {{count}}",
+      "staged": "Breytingar undirbúnar.",
+      "switchBranch": "Skipta um staðbundna grein",
+      "changes": "Breytingar",
+      "createBranch": "Búa til"
+    },
+    "hostWorkspace": {
+      "hint": "Skildu eftir autt fyrir einangrað vinnusvæði, eða beindu verkinu á möppu á þessari vél.",
+      "label": "Vinnusvæðismappa (valfrjálst)",
+      "warning": "Verkið getur lesið og skrifað þessa möppu beint. Skildu eftir autt fyrir einangrað vinnusvæði."
     }
   },
   "usageAnalytics": {
@@ -2139,5 +2187,35 @@
     "createFailed": "Ekki tókst að búa til glósu",
     "deleteConfirm": "Eyða þessari glósu?",
     "deleteFailed": "Ekki tókst að eyða glósunni"
+  },
+  "home": {
+    "active": "virkt",
+    "continue": "Halda áfram",
+    "start": "Byrja",
+    "explore": "Kanna"
+  },
+  "palette": {
+    "empty": "Engar samsvaranir.",
+    "placeholder": "Leita í spjalli, Work, aðgerðum…",
+    "toggleTheme": "Skipta um þema",
+    "actions": "Aðgerðir",
+    "chats": "Spjöll",
+    "search": "Leita",
+    "settings": "Stillingar",
+    "work": "Vinna"
+  },
+  "tabs": {
+    "actions": "Flipaaðgerðir",
+    "close": "Loka flipa",
+    "closeAll": "Loka öllum flipum",
+    "closeOthers": "Loka öðrum flipum",
+    "closeRight": "Loka flipum til hægri",
+    "home": "Heim",
+    "label": "Opnir flipar",
+    "new": "Nýr flipi",
+    "newWork": "Nýtt Work",
+    "chat": "Spjall",
+    "newChat": "Nýtt spjall",
+    "work": "Vinna"
   }
 }
