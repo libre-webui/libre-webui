@@ -30,6 +30,7 @@ import {
   Paperclip,
   Minus,
   Ghost,
+  Globe,
   SlidersHorizontal,
 } from 'lucide-react';
 import { ChatMessages } from '@/components/ChatMessages';
@@ -44,7 +45,7 @@ import { useChatStore } from '@/store/chatStore';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
 import { useChat } from '@/hooks/useChat';
-import { chatApi, imageGenApi } from '@/utils/api';
+import { chatApi, documentsApi, imageGenApi, searchApi } from '@/utils/api';
 import { cn, generateId } from '@/utils';
 import type { ChatSession } from '@/types';
 import { createLogger } from '@/utils/logger';
@@ -272,6 +273,53 @@ export const ChatPage: React.FC = () => {
   // Welcome screen state
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [welcomeImages, setWelcomeImages] = useState<string[]>([]);
+  // Web search from the very first message: same permission-driven toggle
+  // as the in-session composer.
+  const [welcomeWebSearchAllowed, setWelcomeWebSearchAllowed] = useState(false);
+  const [welcomeWebSearch, setWelcomeWebSearch] = useState(false);
+  const [welcomeUploadingDocument, setWelcomeUploadingDocument] =
+    useState(false);
+  const welcomeDocumentInputRef = useRef<HTMLInputElement>(null);
+
+  // Documents attached before the first message are user-scoped; retrieval
+  // picks them up for the session created on send.
+  const handleWelcomeDocumentSelected = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setWelcomeUploadingDocument(true);
+    try {
+      const response = await documentsApi.uploadDocument(file);
+      if (response.success) {
+        toast.success(t('chat.input.menu.documentAttached'));
+        window.dispatchEvent(new Event('libre:documents-updated'));
+      } else {
+        toast.error(response.error || t('chat.input.menu.attachFailed'));
+      }
+    } catch (error) {
+      logger.error('Document upload failed:', error);
+      toast.error(t('chat.input.menu.attachFailed'));
+    } finally {
+      setWelcomeUploadingDocument(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    searchApi
+      .getConfig()
+      .then(response => {
+        if (!cancelled && response.success && response.data) {
+          setWelcomeWebSearchAllowed(response.data.allowed);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [showWelcomeAdvanced, setShowWelcomeAdvanced] = useState(false);
   const welcomeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -440,10 +488,16 @@ export const ChatPage: React.FC = () => {
           const pendingMessage = JSON.parse(pendingMessageStr) as {
             content: string;
             images?: string[];
+            webSearch?: boolean;
           };
           // Small delay to ensure WebSocket handlers are set up
           setTimeout(() => {
-            sendMessage(pendingMessage.content, pendingMessage.images);
+            sendMessage(
+              pendingMessage.content,
+              pendingMessage.images,
+              undefined,
+              pendingMessage.webSearch === true
+            );
           }, 100);
         } catch (e) {
           logger.error('Failed to parse pending message:', e);
@@ -499,12 +553,14 @@ export const ChatPage: React.FC = () => {
     const pendingMessage = {
       content: welcomeMessage.trim(),
       images: welcomeImages.length > 0 ? welcomeImages : undefined,
+      webSearch: welcomeWebSearchAllowed && welcomeWebSearch ? true : undefined,
     };
     sessionStorage.setItem('pendingMessage', JSON.stringify(pendingMessage));
 
     // Clear local state
     setWelcomeMessage('');
     setWelcomeImages([]);
+    setWelcomeWebSearch(false);
 
     // Create a new session and navigate to it
     const newSession = await createSession(
@@ -676,6 +732,35 @@ export const ChatPage: React.FC = () => {
                       onImagesChange={setWelcomeImages}
                       maxImages={5}
                     />
+                    <div className='mt-3 flex items-center justify-between gap-3 border-t border-black/[0.06] pt-3 dark:border-white/[0.07]'>
+                      <span className='text-xs text-gray-500 dark:text-dark-500'>
+                        {t('chat.input.menu.attachDocument')}
+                      </span>
+                      <Button
+                        type='button'
+                        size='sm'
+                        variant='outline'
+                        disabled={welcomeUploadingDocument}
+                        onClick={() => welcomeDocumentInputRef.current?.click()}
+                        className='shrink-0 whitespace-nowrap'
+                      >
+                        <Paperclip className='h-3.5 w-3.5' />
+                        <span className='ms-1.5'>
+                          {welcomeUploadingDocument
+                            ? t('documents.uploading')
+                            : t('chat.input.menu.attach')}
+                        </span>
+                      </Button>
+                      <input
+                        ref={welcomeDocumentInputRef}
+                        type='file'
+                        accept='.pdf,.txt,.md'
+                        className='hidden'
+                        onChange={event =>
+                          void handleWelcomeDocumentSelected(event)
+                        }
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -732,6 +817,31 @@ export const ChatPage: React.FC = () => {
                         rows={1}
                       />
                     </div>
+
+                    {/* Web search toggle */}
+                    {welcomeWebSearchAllowed && (
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => setWelcomeWebSearch(active => !active)}
+                        className={cn(
+                          'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                          'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                          'transition-colors duration-150 touch-manipulation',
+                          welcomeWebSearch &&
+                            'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
+                        )}
+                        title={
+                          welcomeWebSearch
+                            ? t('chat.input.webSearchOn')
+                            : t('chat.input.webSearchOff')
+                        }
+                        aria-pressed={welcomeWebSearch}
+                      >
+                        <Globe className='h-4 w-4' />
+                      </Button>
+                    )}
 
                     {/* Model selector (compact) */}
                     <div className='hidden sm:block'>
