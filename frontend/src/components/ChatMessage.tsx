@@ -43,7 +43,9 @@ import {
   Check,
   ThumbsUp,
   ThumbsDown,
+  User as UserIcon,
 } from 'lucide-react';
+import { LogoMark } from '@/components/LogoMark';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
@@ -59,6 +61,84 @@ interface ChatMessageProps {
   isLastAssistantMessage?: boolean;
   onRegenerate?: () => void;
   onEditResend?: (messageId: string, content: string) => void;
+}
+
+interface ChatAvatarProps {
+  role: 'assistant' | 'user';
+  user?: { username?: string; avatar?: string | null } | null;
+  personaAvatar?: string | null;
+}
+
+/** Message avatars matching the Work conversation: the Libre mark for the
+ * assistant (or the persona's avatar) and the account avatar for the user. */
+function ChatAvatar({ role, user, personaAvatar }: ChatAvatarProps) {
+  const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
+
+  if (role === 'assistant') {
+    const persona = personaAvatar?.trim() || '';
+    const personaImage =
+      persona.startsWith('data:') && persona !== failedAvatar ? persona : '';
+    return (
+      <div
+        role='img'
+        aria-label='Libre WebUI'
+        data-testid='chat-assistant-avatar'
+        className='mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-black/[0.07] bg-white text-gray-900 shadow-sm dark:border-white/[0.09] dark:bg-dark-200 dark:text-dark-950'
+      >
+        {personaImage ? (
+          <img
+            src={personaImage}
+            alt=''
+            className='h-full w-full object-cover'
+            onError={() => setFailedAvatar(persona)}
+          />
+        ) : persona ? (
+          <span aria-hidden='true' className='text-base leading-none'>
+            {persona}
+          </span>
+        ) : (
+          <LogoMark label={null} className='h-4 w-4' />
+        )}
+      </div>
+    );
+  }
+
+  const label = user?.username || 'User';
+  const avatar = user?.avatar?.trim() || '';
+  const hasAvatar = Boolean(avatar) && avatar !== failedAvatar;
+
+  return (
+    <div
+      role={hasAvatar ? undefined : 'img'}
+      aria-label={hasAvatar ? undefined : label}
+      data-testid='chat-user-avatar'
+      className={cn(
+        'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full',
+        hasAvatar
+          ? 'border border-black/[0.07] bg-white dark:border-white/[0.09] dark:bg-dark-200'
+          : 'bg-gray-950 text-white dark:bg-white dark:text-gray-950'
+      )}
+      title={label}
+    >
+      {hasAvatar ? (
+        <img
+          src={avatar}
+          alt={label}
+          className='h-full w-full object-cover'
+          onError={() => setFailedAvatar(avatar)}
+        />
+      ) : user?.username ? (
+        <span
+          aria-hidden='true'
+          className='text-xs font-medium uppercase leading-none'
+        >
+          {user.username.charAt(0)}
+        </span>
+      ) : (
+        <UserIcon aria-hidden='true' className='h-4 w-4' />
+      )}
+    </div>
+  );
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -324,10 +404,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     >
       <div
         className={cn(
-          'flex min-w-0',
+          'flex min-w-0 gap-2.5 sm:gap-3',
           isUser ? 'max-w-[85%] sm:max-w-[70%]' : 'w-full'
         )}
       >
+        {!isUser && !isSystem && (
+          <ChatAvatar role='assistant' personaAvatar={currentPersona?.avatar} />
+        )}
         {/* Content */}
         <div
           className={cn(
@@ -733,6 +816,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             )}
           </div>
         </div>
+        {isUser && <ChatAvatar role='user' user={user ?? null} />}
       </div>
 
       {/* Image Lightbox Modal - rendered via portal to escape stacking context */}
