@@ -26,6 +26,11 @@ services:
       ENABLE_SIGNUP: ${ENABLE_SIGNUP:-false}
       OLLAMA_BASE_URL: http://ollama:11434
       WORK_PREVIEW_BIND: 172.30.0.1
+      # Stop a Work sandbox after this much inactivity (no command, terminal,
+      # or preview traffic). Bounds how long an unwatched preview holds one of
+      # the global admission slots; the workspace persists and restarts on
+      # next use. 0 disables the sweep.
+      WORK_RUNTIME_IDLE_TIMEOUT_MS: ${WORK_RUNTIME_IDLE_TIMEOUT_MS:-1800000}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:?set TURNSTILE_SITE_KEY}
