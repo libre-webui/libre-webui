@@ -15,6 +15,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.20.0] - 2026-08-08
+
+Libre WebUI 0.20.0 introduces a major expansion of the Work sandbox system, headlined by an experimental Kubernetes runtime backend, named runtime policies, and idle-stop for unwatched sandboxes. This release also strengthens deployment security with Docker socket proxy isolation, adds an admin overview panel for monitoring all sandboxes, and allows per-user access control behind an admin setting.
+
+Upgrading is safe in place: database migrations (the `work_policies` table, the `policy_id` task column, and the access-mode setting) run automatically at startup, every new capability is off or admins-only by default, and the per-task policy fingerprint is byte-compatible with the previous global fingerprint, so existing sandboxes are not recreated by the upgrade.
+
+### ✨ New Features
+
+- **Named runtime policies.** Admins can define named presets (image, memory/CPU/PID limits, workspace size, idle timeout, network default) from the User Management page and users pick one at task creation on the Work landing page. Policies are managed through `GET/POST/PUT/DELETE /api/work/policies` (reads open to Work users for the picker, mutations admin-only). Empty policy fields inherit the global runtime config, and the hardening profile (non-root, read-only rootfs, dropped capabilities, network isolation) is deliberately not a policy field, so a policy can never weaken the sandbox. Deleting a policy clears task references so those tasks fall back to global defaults on next recreation, and the per-task fingerprint means changing a policy recreates exactly the sandboxes running under it.
+- **Idle-stop for unwatched sandboxes.** A new `WORK_RUNTIME_IDLE_TIMEOUT_MS` setting (default 0, off; also settable per policy) stops a running sandbox after a period of inactivity. Activity is a finished command, a terminal session ending, or an authorized request through the signed preview proxy. The sweep skips busy tasks (active command, attached terminal, running operation) while refreshing their clock, starts a first-seen sandbox's clock at the sighting, and stops idle previews through the real preview-stop path so admission leases release and task state updates. The workspace persists, so an idled preview simply restarts on next use. The private deployment stack now defaults this to 30 minutes.
+- **Admin overview of every sandbox.** The System page gains a Work panel backed by `GET /api/work/admin/overview`: task inventory with owners across all users, live runtime state from one labeled listing, terminal session counts, preview state, admission headroom, pending recovery cleanups, orphaned containers, and the access mode, refreshing every 30 seconds. The endpoint is registered before the fail-closed gate so it stays readable exactly when administrators need it most, and per-task state degrades to "unknown" instead of failing when the runtime is unreachable.
+- **Per-user access control.** Work remains admins-only by default, but a new persisted access mode (User Management page, `GET/PUT /api/work/access`) lets administrators open Work to all active users. Every check reads current database state, so mode flips or demotions take effect immediately across routes, terminal WebSockets, and in-flight runtime mutations. Host-folder workspaces remain admin-only in every mode because they bind-mount server paths.
+- **Kubernetes runtime backend (experimental).** Setting `WORK_RUNTIME_BACKEND=kubernetes` runs Work sandboxes as Pods in a namespace with PVC-backed workspaces (a real per-task disk quota), on-demand Pods with the full hardening profile, exec transport for files/commands/git, and label-driven startup reconciliation. No Docker daemon or socket is involved. Configured through `WORK_K8S_NAMESPACE`, `WORK_K8S_STORAGE_CLASS`, `WORK_K8S_WORKSPACE_SIZE`, `WORK_K8S_POD_READY_TIMEOUT_MS`, and `WORK_K8S_POD_GONE_TIMEOUT_MS`; verified end to end on a kind cluster in CI under the exact namespace-scoped RBAC the Helm chart grants.
+- **Terminal and preview on Kubernetes.** Interactive terminals ride the exec subresource as a TTY WebSocket with resize support. Preview targets the sandbox Pod IP, with the driver reporting a full endpoint (host + port) and the signed preview proxy accepting a per-task upstream host.
+- **Work sandboxes via Helm.** The Helm chart supports `work.enabled=true` to switch the backend to the Kubernetes runtime, creating the sandbox namespace, a namespace-scoped Role/RoleBinding, and NetworkPolicies (default-deny, ingress from the backend on the preview port, egress for networked sandboxes minus private and cloud-metadata ranges).
+- **Socket-isolated deployment.** Work no longer requires the raw Docker socket in the app container. Terminal and diagnostics speak the Engine API over a plain-HTTP `tcp:// DOCKER_HOST`, allowing a filtered socket proxy to hold the socket. Ships `docker-compose.socket-proxy.yml` with only the API sections Work uses enabled.
+- **Startup container reconciliation.** Startup recovery now asks Docker once which managed containers exist and acts only on those: running containers of known tasks are stopped, exited ones are left alone, and labeled containers whose task row is gone are force-removed. Boot cost follows what is actually running instead of the task count.
+- **Wider Turnstile, login footer links, npx @latest.** The verification widget takes the width of its block instead of a fixed 300px card. The login page's left panel links the website, docs, and kroonen.ai. Install commands now say `npx libre-webui@latest` so a cached older version is never started.
+
+### 🔧 Improvements
+
+- **Runtime driver seam for pluggable backends.** Docker CLI calls, Engine API terminal transport, and resource ownership verification move behind a `WorkRuntimeDriver` interface with `DockerWorkRuntimeDriver` as the default implementation. The runtime service retains all policy decisions (admission, leases, lifecycle locks, recovery bookkeeping, budgets) with zero behavior change.
+
+### 🐛 Bug Fixes
+
+- **Runtime driver split follow-ups.** Armed the Kubernetes exec timeout before WebSocket connects, gave the Kubernetes exec failure path its own `WORK_COMMAND_FAILED` code, retry the empty-inventory startup sweep for a bounded window (5 min) for late-starting socket proxies, report orphaned workspace PVCs during reconciliation, clear the preview proxy's per-task upstream host on stop/removal, accept Docker's two-letter memory suffixes in Kubernetes quantity translation, and block 100.64.0.0/10 by default in sandbox egress policy.
+- **Over-long proxy bridge name.** The custom bridge name `lwui-dockerproxy` exceeded Linux's 15-character interface name limit, causing `docker compose up` to fail. The name was cosmetic and is now auto-assigned by Docker.
+- **E2e probe output retrieval.** `kubectl run --rm -i` could miss the output of fast wget commands. The probe now creates the pod, polls for a terminal phase, reads `kubectl logs`, then deletes — deterministic on any runner.
+
+### 🔒 Security & Dependencies
+
+- Remediated npm security advisories for nanoid.
+- Added `@kubernetes/client-node` for the Kubernetes runtime backend; it is loaded lazily so Docker-backed deployments never pay for it at startup.
+- Sandbox egress NetworkPolicies now also block `100.64.0.0/10` by default, covering managed clusters that use the CGNAT range for pod and service networks.
+
+### 📚 Documentation
+
+- Documented the idle-stop default for the private stack.
+- Added socket-proxy Work override guidance for the private deployment stack, including a new `docker-compose.work-proxy.yml` overlay that puts a filtered socket proxy on an internal-only network.
+- Added a planning document for the Kubernetes runtime driver.
+
 ## [0.19.6] - 2026-08-07
 
 `npx libre-webui` starts again, and the desktop app opens on a landing
