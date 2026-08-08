@@ -1980,7 +1980,30 @@
       "internal": "dahili",
       "empty": "Uygulama çalışma zamanına görünür ağ arayüzü yok."
     },
-    "securityNote": "Bu sayfa yöneticilerle sınırlıdır. Sunucu yalnızca operasyonel özetler döndürür: ortam değişkenlerini, kimlik bilgilerini, Docker etiketlerini, bağlamaları, konteyner komutlarını veya inceleme yüklerini açıklamaz. Libre WebUI bir konteynerde çalıştığında, ana makine düzeyindeki CPU ve bellek ayrıntıları yerel soketi kullanılabilir olduğunda Docker Engine'den gelir; diğer değerler uygulama çalışma zamanını tanımlar."
+    "securityNote": "Bu sayfa yöneticilerle sınırlıdır. Sunucu yalnızca operasyonel özetler döndürür: ortam değişkenlerini, kimlik bilgilerini, Docker etiketlerini, bağlamaları, konteyner komutlarını veya inceleme yüklerini açıklamaz. Libre WebUI bir konteynerde çalıştığında, ana makine düzeyindeki CPU ve bellek ayrıntıları yerel soketi kullanılabilir olduğunda Docker Engine'den gelir; diğer değerler uygulama çalışma zamanını tanımlar.",
+    "work": {
+      "title": "Work",
+      "description": "Tüm kullanıcıların korumalı alanları",
+      "access": "Erişim",
+      "accessAdmins": "Yalnızca yöneticiler",
+      "accessAllUsers": "Tüm kullanıcılar",
+      "runtimeAvailable": "Kullanılabilir",
+      "runtimeUnavailable": "Kullanılamıyor",
+      "activeRuntimes": "Etkin çalışma ortamları",
+      "pendingCleanups": "Bekleyen temizlikler",
+      "orphans": "Sahipsiz kapsayıcılar",
+      "owner": "Sahip",
+      "task": "Görev",
+      "state": "Durum",
+      "preview": "Önizleme",
+      "terminals": "Terminaller",
+      "updated": "Güncellendi",
+      "stateRunning": "Çalışıyor",
+      "stateStopped": "Durduruldu",
+      "stateStarting": "Başlatılıyor",
+      "stateUnknown": "Bilinmiyor",
+      "noTasks": "Henüz Work görevi yok."
+    }
   },
   "mediaGeneration": {
     "title": "Medya oluştur",

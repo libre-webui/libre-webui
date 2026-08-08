@@ -1980,7 +1980,30 @@
       "internal": "interno",
       "empty": "Nenhuma interface de rede está visível ao runtime da aplicação."
     },
-    "securityNote": "Esta página é restrita a administradores. O servidor retorna apenas resumos operacionais: não expõe variáveis de ambiente, credenciais, rótulos do Docker, montagens, comandos de container ou payloads de inspeção. Quando o Libre WebUI é executado em um container, os detalhes de CPU e memória em nível de host vêm do Docker Engine quando seu socket local está disponível; outros valores descrevem o runtime da aplicação."
+    "securityNote": "Esta página é restrita a administradores. O servidor retorna apenas resumos operacionais: não expõe variáveis de ambiente, credenciais, rótulos do Docker, montagens, comandos de container ou payloads de inspeção. Quando o Libre WebUI é executado em um container, os detalhes de CPU e memória em nível de host vêm do Docker Engine quando seu socket local está disponível; outros valores descrevem o runtime da aplicação.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxes de todos os usuários",
+      "access": "Acesso",
+      "accessAdmins": "Somente administradores",
+      "accessAllUsers": "Todos os usuários",
+      "runtimeAvailable": "Disponível",
+      "runtimeUnavailable": "Indisponível",
+      "activeRuntimes": "Runtimes ativos",
+      "pendingCleanups": "Limpezas pendentes",
+      "orphans": "Contêineres órfãos",
+      "owner": "Proprietário",
+      "task": "Tarefa",
+      "state": "Estado",
+      "preview": "Pré-visualização",
+      "terminals": "Terminais",
+      "updated": "Atualizado",
+      "stateRunning": "Em execução",
+      "stateStopped": "Parado",
+      "stateStarting": "Iniciando",
+      "stateUnknown": "Desconhecido",
+      "noTasks": "Ainda não há tarefas do Work."
+    }
   },
   "mediaGeneration": {
     "title": "Gerar mídia",

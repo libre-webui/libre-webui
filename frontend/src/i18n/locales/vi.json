@@ -1980,7 +1980,30 @@
       "internal": "nội bộ",
       "empty": "Không có giao diện mạng nào hiển thị với thời gian chạy của ứng dụng."
     },
-    "securityNote": "Trang này chỉ dành cho quản trị viên. Máy chủ chỉ trả về tóm tắt hoạt động: nó không tiết lộ biến môi trường, thông tin xác thực, nhãn Docker, điểm gắn kết, lệnh container hoặc payload kiểm tra. Khi Libre WebUI chạy trong container, chi tiết CPU và bộ nhớ cấp máy chủ đến từ Docker Engine khi socket cục bộ của nó khả dụng; các giá trị khác mô tả thời gian chạy của ứng dụng."
+    "securityNote": "Trang này chỉ dành cho quản trị viên. Máy chủ chỉ trả về tóm tắt hoạt động: nó không tiết lộ biến môi trường, thông tin xác thực, nhãn Docker, điểm gắn kết, lệnh container hoặc payload kiểm tra. Khi Libre WebUI chạy trong container, chi tiết CPU và bộ nhớ cấp máy chủ đến từ Docker Engine khi socket cục bộ của nó khả dụng; các giá trị khác mô tả thời gian chạy của ứng dụng.",
+    "work": {
+      "title": "Work",
+      "description": "Sandbox của mọi người dùng",
+      "access": "Quyền truy cập",
+      "accessAdmins": "Chỉ quản trị viên",
+      "accessAllUsers": "Tất cả người dùng",
+      "runtimeAvailable": "Khả dụng",
+      "runtimeUnavailable": "Không khả dụng",
+      "activeRuntimes": "Môi trường đang hoạt động",
+      "pendingCleanups": "Dọn dẹp đang chờ",
+      "orphans": "Container mồ côi",
+      "owner": "Chủ sở hữu",
+      "task": "Tác vụ",
+      "state": "Trạng thái",
+      "preview": "Xem trước",
+      "terminals": "Terminal",
+      "updated": "Đã cập nhật",
+      "stateRunning": "Đang chạy",
+      "stateStopped": "Đã dừng",
+      "stateStarting": "Đang khởi động",
+      "stateUnknown": "Không rõ",
+      "noTasks": "Chưa có tác vụ Work nào."
+    }
   },
   "mediaGeneration": {
     "title": "Tạo phương tiện",

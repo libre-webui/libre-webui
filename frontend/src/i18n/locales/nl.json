@@ -1980,7 +1980,30 @@
       "internal": "intern",
       "empty": "Er zijn geen netwerkinterfaces zichtbaar voor de applicatieruntime."
     },
-    "securityNote": "Deze pagina is beperkt tot beheerders. De server retourneert alleen operationele samenvattingen: het stelt geen omgevingsvariabelen, inloggegevens, Docker-labels, mounts, containercommando's of inspect-payloads bloot. Wanneer Libre WebUI in een container draait, komen host-level CPU- en geheugendetails van Docker Engine wanneer de lokale socket beschikbaar is; andere waarden beschrijven de applicatieruntime."
+    "securityNote": "Deze pagina is beperkt tot beheerders. De server retourneert alleen operationele samenvattingen: het stelt geen omgevingsvariabelen, inloggegevens, Docker-labels, mounts, containercommando's of inspect-payloads bloot. Wanneer Libre WebUI in een container draait, komen host-level CPU- en geheugendetails van Docker Engine wanneer de lokale socket beschikbaar is; andere waarden beschrijven de applicatieruntime.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxes van alle gebruikers",
+      "access": "Toegang",
+      "accessAdmins": "Alleen beheerders",
+      "accessAllUsers": "Alle gebruikers",
+      "runtimeAvailable": "Beschikbaar",
+      "runtimeUnavailable": "Niet beschikbaar",
+      "activeRuntimes": "Actieve runtimes",
+      "pendingCleanups": "Openstaande opschoningen",
+      "orphans": "Verweesde containers",
+      "owner": "Eigenaar",
+      "task": "Taak",
+      "state": "Status",
+      "preview": "Voorbeeld",
+      "terminals": "Terminals",
+      "updated": "Bijgewerkt",
+      "stateRunning": "Actief",
+      "stateStopped": "Gestopt",
+      "stateStarting": "Wordt gestart",
+      "stateUnknown": "Onbekend",
+      "noTasks": "Nog geen Work-taken."
+    }
   },
   "mediaGeneration": {
     "title": "Media genereren",

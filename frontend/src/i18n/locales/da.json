@@ -1980,7 +1980,30 @@
       "internal": "intern",
       "empty": "Ingen netværksgrænseflader er synlige for applikationsruntime."
     },
-    "securityNote": "Denne side er begrænset til administratorer. Serveren returnerer kun operationelle oversigter: den udsætter ikke miljøvariabler, legitimationsoplysninger, Docker-labels, monteringer, containerkommandoer eller inspektions-payloads. Når Libre WebUI kører i en container, kommer CPU- og hukommelsesdetaljer på værtsniveau fra Docker Engine, når dens lokale socket er tilgængelig; andre værdier beskriver applikationsruntime."
+    "securityNote": "Denne side er begrænset til administratorer. Serveren returnerer kun operationelle oversigter: den udsætter ikke miljøvariabler, legitimationsoplysninger, Docker-labels, monteringer, containerkommandoer eller inspektions-payloads. Når Libre WebUI kører i en container, kommer CPU- og hukommelsesdetaljer på værtsniveau fra Docker Engine, når dens lokale socket er tilgængelig; andre værdier beskriver applikationsruntime.",
+    "work": {
+      "title": "Work",
+      "description": "Sandkasser på tværs af alle brugere",
+      "access": "Adgang",
+      "accessAdmins": "Kun administratorer",
+      "accessAllUsers": "Alle brugere",
+      "runtimeAvailable": "Tilgængelig",
+      "runtimeUnavailable": "Utilgængelig",
+      "activeRuntimes": "Aktive kørselsmiljøer",
+      "pendingCleanups": "Afventende oprydninger",
+      "orphans": "Forældreløse containere",
+      "owner": "Ejer",
+      "task": "Opgave",
+      "state": "Tilstand",
+      "preview": "Forhåndsvisning",
+      "terminals": "Terminaler",
+      "updated": "Opdateret",
+      "stateRunning": "Kører",
+      "stateStopped": "Stoppet",
+      "stateStarting": "Starter",
+      "stateUnknown": "Ukendt",
+      "noTasks": "Ingen Work-opgaver endnu."
+    }
   },
   "mediaGeneration": {
     "title": "Generer medie",

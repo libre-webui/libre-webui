@@ -1980,7 +1980,30 @@
       "internal": "innra",
       "empty": "Engin netkerfisviðmót eru sjáanleg keyrslutíma forritsins."
     },
-    "securityNote": "Þessi síða er aðeins fyrir kerfisstjóra. Þjónninn skilar aðeins rekstraryfirliti: hann gefur ekki upp umhverfisbreytur, skilríki, Docker merki, tengipunkta, gámaskipanir eða inspect gagnalöð. Þegar Libre WebUI keyrir í gámi koma upplýsingar um CPU og minni hýsitölvu frá Docker Engine þegar staðbundinn sökkull þess er tiltækur; aðrar gildi lýsa keyrslutíma forritsins."
+    "securityNote": "Þessi síða er aðeins fyrir kerfisstjóra. Þjónninn skilar aðeins rekstraryfirliti: hann gefur ekki upp umhverfisbreytur, skilríki, Docker merki, tengipunkta, gámaskipanir eða inspect gagnalöð. Þegar Libre WebUI keyrir í gámi koma upplýsingar um CPU og minni hýsitölvu frá Docker Engine þegar staðbundinn sökkull þess er tiltækur; aðrar gildi lýsa keyrslutíma forritsins.",
+    "work": {
+      "title": "Work",
+      "description": "Sandkassar allra notenda",
+      "access": "Aðgangur",
+      "accessAdmins": "Aðeins stjórnendur",
+      "accessAllUsers": "Allir notendur",
+      "runtimeAvailable": "Tiltækt",
+      "runtimeUnavailable": "Ótiltækt",
+      "activeRuntimes": "Virk keyrsluumhverfi",
+      "pendingCleanups": "Hreinsanir í bið",
+      "orphans": "Munaðarlausir gámar",
+      "owner": "Eigandi",
+      "task": "Verkefni",
+      "state": "Staða",
+      "preview": "Forskoðun",
+      "terminals": "Skjáhermar",
+      "updated": "Uppfært",
+      "stateRunning": "Í keyrslu",
+      "stateStopped": "Stöðvað",
+      "stateStarting": "Ræsist",
+      "stateUnknown": "Óþekkt",
+      "noTasks": "Engin Work-verkefni ennþá."
+    }
   },
   "mediaGeneration": {
     "title": "Búa til miðil",

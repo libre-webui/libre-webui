@@ -1980,7 +1980,30 @@
       "internal": "interne",
       "empty": "Aucune interface réseau n'est visible pour l'environnement d'exécution de l'application."
     },
-    "securityNote": "Cette page est réservée aux administrateurs. Le serveur renvoie uniquement des résumés opérationnels : il n'expose pas les variables d'environnement, les identifiants, les étiquettes Docker, les points de montage, les commandes de conteneur ou les charges utiles d'inspection. Lorsque Libre WebUI s'exécute dans un conteneur, les détails du CPU et de la mémoire au niveau de l'hôte proviennent de Docker Engine lorsque son socket local est disponible ; les autres valeurs décrivent l'environnement d'exécution de l'application."
+    "securityNote": "Cette page est réservée aux administrateurs. Le serveur renvoie uniquement des résumés opérationnels : il n'expose pas les variables d'environnement, les identifiants, les étiquettes Docker, les points de montage, les commandes de conteneur ou les charges utiles d'inspection. Lorsque Libre WebUI s'exécute dans un conteneur, les détails du CPU et de la mémoire au niveau de l'hôte proviennent de Docker Engine lorsque son socket local est disponible ; les autres valeurs décrivent l'environnement d'exécution de l'application.",
+    "work": {
+      "title": "Work",
+      "description": "Bacs à sable de tous les utilisateurs",
+      "access": "Accès",
+      "accessAdmins": "Administrateurs uniquement",
+      "accessAllUsers": "Tous les utilisateurs",
+      "runtimeAvailable": "Disponible",
+      "runtimeUnavailable": "Indisponible",
+      "activeRuntimes": "Environnements actifs",
+      "pendingCleanups": "Nettoyages en attente",
+      "orphans": "Conteneurs orphelins",
+      "owner": "Propriétaire",
+      "task": "Tâche",
+      "state": "État",
+      "preview": "Aperçu",
+      "terminals": "Terminaux",
+      "updated": "Mis à jour",
+      "stateRunning": "En cours",
+      "stateStopped": "Arrêté",
+      "stateStarting": "Démarrage",
+      "stateUnknown": "Inconnu",
+      "noTasks": "Aucune tâche Work pour l'instant."
+    }
   },
   "mediaGeneration": {
     "title": "Générer des médias",

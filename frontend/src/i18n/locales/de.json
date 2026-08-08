@@ -1980,7 +1980,30 @@
       "internal": "intern",
       "empty": "Für die Anwendungs-Laufzeit sind keine Netzwerkschnittstellen sichtbar."
     },
-    "securityNote": "Diese Seite ist auf Administratoren beschränkt. Der Server gibt nur betriebliche Zusammenfassungen zurück: Er legt keine Umgebungsvariablen, Anmeldeinformationen, Docker-Labels, Einbindungen, Container-Befehle oder Inspektions-Payloads offen. Wenn Libre WebUI in einem Container läuft, stammen Host-Ebene-CPU- und Speicherdetails vom Docker Engine, wenn sein lokaler Socket verfügbar ist; andere Werte beschreiben die Anwendungs-Laufzeit."
+    "securityNote": "Diese Seite ist auf Administratoren beschränkt. Der Server gibt nur betriebliche Zusammenfassungen zurück: Er legt keine Umgebungsvariablen, Anmeldeinformationen, Docker-Labels, Einbindungen, Container-Befehle oder Inspektions-Payloads offen. Wenn Libre WebUI in einem Container läuft, stammen Host-Ebene-CPU- und Speicherdetails vom Docker Engine, wenn sein lokaler Socket verfügbar ist; andere Werte beschreiben die Anwendungs-Laufzeit.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxes über alle Benutzer hinweg",
+      "access": "Zugriff",
+      "accessAdmins": "Nur Administratoren",
+      "accessAllUsers": "Alle Benutzer",
+      "runtimeAvailable": "Verfügbar",
+      "runtimeUnavailable": "Nicht verfügbar",
+      "activeRuntimes": "Aktive Laufzeitumgebungen",
+      "pendingCleanups": "Ausstehende Bereinigungen",
+      "orphans": "Verwaiste Container",
+      "owner": "Besitzer",
+      "task": "Aufgabe",
+      "state": "Zustand",
+      "preview": "Vorschau",
+      "terminals": "Terminals",
+      "updated": "Aktualisiert",
+      "stateRunning": "Läuft",
+      "stateStopped": "Gestoppt",
+      "stateStarting": "Startet",
+      "stateUnknown": "Unbekannt",
+      "noTasks": "Noch keine Work-Aufgaben."
+    }
   },
   "mediaGeneration": {
     "title": "Medien generieren",

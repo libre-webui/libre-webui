@@ -277,6 +277,25 @@ export class WorkTaskService {
     ).map(mapTaskRecord);
   }
 
+  /** Every task with its owner's username, for the admin overview. */
+  listAllTasksWithOwner(): Array<{
+    record: WorkTaskRecord;
+    ownerUsername: string;
+  }> {
+    const rows = getDatabase()
+      .prepare(
+        `SELECT work_tasks.*, users.username AS owner_username
+         FROM work_tasks
+         JOIN users ON users.id = work_tasks.user_id
+         ORDER BY work_tasks.updated_at DESC`
+      )
+      .all() as Array<TaskRow & { owner_username: string }>;
+    return rows.map(row => ({
+      record: mapTaskRecord(row),
+      ownerUsername: row.owner_username,
+    }));
+  }
+
   beginUserRetirement(userId: string): void {
     if (this.retiringUsers.has(userId)) {
       throw new WorkConflictError(

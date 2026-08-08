@@ -22,6 +22,7 @@ import type {
   UpdateWorkTaskRequest,
   WorkAccess,
   WorkAccessMode,
+  WorkAdminOverview,
   WorkCapabilities,
   WorkFile,
   WorkFileEntry,
@@ -48,6 +49,9 @@ export const workApi = {
     mode: WorkAccessMode
   ): Promise<ApiResponse<{ mode: WorkAccessMode }>> =>
     api.put('/work/access', { mode }).then(response => response.data),
+
+  adminOverview: (): Promise<ApiResponse<WorkAdminOverview>> =>
+    api.get('/work/admin/overview').then(response => response.data),
 
   capabilities: (): Promise<ApiResponse<WorkCapabilities>> =>
     api.get('/work/capabilities').then(response => response.data),

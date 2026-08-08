@@ -145,6 +145,37 @@ export interface WorkAccess {
   allowed: boolean;
 }
 
+export interface WorkAdminTask {
+  id: string;
+  title: string;
+  ownerId: string;
+  ownerUsername: string;
+  model: string;
+  status: string;
+  previewStatus: string;
+  networkEnabled: boolean;
+  hostWorkspace: boolean;
+  /** null when the runtime could not be asked (backend unavailable). */
+  running: boolean | null;
+  terminalSessions: number;
+  updatedAt: number;
+}
+
+export interface WorkAdminOverview {
+  generatedAt: number;
+  accessMode: WorkAccessMode;
+  runtimeAvailable: boolean;
+  runtimeReason?: string;
+  recoveryPending: number;
+  admission: {
+    activeGlobal: number;
+    maxGlobal: number;
+    maxPerUser: number;
+  };
+  tasks: WorkAdminTask[];
+  orphanContainers: Array<{ name: string; taskId: string; running: boolean }>;
+}
+
 export interface WorkCapabilities {
   available: boolean;
   runtime: 'docker';

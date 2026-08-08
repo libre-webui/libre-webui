@@ -29,6 +29,10 @@ import {
   userHasWorkAccess,
   type WorkAccessMode,
 } from '../services/workAccessService.js';
+import {
+  buildWorkAdminOverview,
+  type WorkAdminOverview,
+} from '../services/workAdminService.js';
 import workAgentService from '../services/workAgentService.js';
 import workEventService, {
   WORK_EVENT_MAX_RESUME_CURSOR,
@@ -203,6 +207,23 @@ router.get(
             : [],
       },
     });
+  }
+);
+
+// Registered before the fail-closed gate below: the overview is exactly
+// what an administrator needs while Work is blocked on recovery.
+router.get(
+  '/admin/overview',
+  requireAdmin,
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkAdminOverview>>
+  ): Promise<void> => {
+    try {
+      sendSuccess(res, await buildWorkAdminOverview());
+    } catch (error) {
+      sendError(res, error);
+    }
   }
 );
 

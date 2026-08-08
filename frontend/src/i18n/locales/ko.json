@@ -1980,7 +1980,30 @@
       "internal": "내부",
       "empty": "애플리케이션 런타임에 표시되는 네트워크 인터페이스가 없습니다."
     },
-    "securityNote": "이 페이지는 관리자 전용입니다. 서버는 운영 요약만 반환합니다: 환경 변수, 자격 증명, Docker 레이블, 마운트, 컨테이너 명령 또는 검사 페이로드를 노출하지 않습니다. Libre WebUI가 컨테이너에서 실행될 때 로컬 소켓을 사용할 수 있는 경우 호스트 수준 CPU 및 메모리 세부 정보는 Docker Engine에서 가져옵니다. 다른 값은 애플리케이션 런타임을 설명합니다."
+    "securityNote": "이 페이지는 관리자 전용입니다. 서버는 운영 요약만 반환합니다: 환경 변수, 자격 증명, Docker 레이블, 마운트, 컨테이너 명령 또는 검사 페이로드를 노출하지 않습니다. Libre WebUI가 컨테이너에서 실행될 때 로컬 소켓을 사용할 수 있는 경우 호스트 수준 CPU 및 메모리 세부 정보는 Docker Engine에서 가져옵니다. 다른 값은 애플리케이션 런타임을 설명합니다.",
+    "work": {
+      "title": "Work",
+      "description": "모든 사용자의 샌드박스",
+      "access": "접근",
+      "accessAdmins": "관리자만",
+      "accessAllUsers": "모든 사용자",
+      "runtimeAvailable": "사용 가능",
+      "runtimeUnavailable": "사용 불가",
+      "activeRuntimes": "활성 런타임",
+      "pendingCleanups": "대기 중인 정리",
+      "orphans": "고아 컨테이너",
+      "owner": "소유자",
+      "task": "작업",
+      "state": "상태",
+      "preview": "미리보기",
+      "terminals": "터미널",
+      "updated": "업데이트됨",
+      "stateRunning": "실행 중",
+      "stateStopped": "중지됨",
+      "stateStarting": "시작 중",
+      "stateUnknown": "알 수 없음",
+      "noTasks": "아직 Work 작업이 없습니다."
+    }
   },
   "mediaGeneration": {
     "title": "미디어 생성",

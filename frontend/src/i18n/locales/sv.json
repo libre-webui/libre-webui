@@ -1980,7 +1980,30 @@
       "internal": "intern",
       "empty": "Inga nätverksgränssnitt är synliga för programmets körningsmiljö."
     },
-    "securityNote": "Denna sida är begränsad till administratörer. Servern returnerar endast driftsammanfattningar: den exponerar inte miljövariabler, autentiseringsuppgifter, Docker-etiketter, monteringar, container-kommandon eller inspektionsnyttolaster. När Libre WebUI körs i en container kommer värdnivåns CPU- och minnesdetaljer från Docker Engine när dess lokala socket är tillgänglig; andra värden beskriver programmets körningsmiljö."
+    "securityNote": "Denna sida är begränsad till administratörer. Servern returnerar endast driftsammanfattningar: den exponerar inte miljövariabler, autentiseringsuppgifter, Docker-etiketter, monteringar, container-kommandon eller inspektionsnyttolaster. När Libre WebUI körs i en container kommer värdnivåns CPU- och minnesdetaljer från Docker Engine när dess lokala socket är tillgänglig; andra värden beskriver programmets körningsmiljö.",
+    "work": {
+      "title": "Work",
+      "description": "Sandlådor för alla användare",
+      "access": "Åtkomst",
+      "accessAdmins": "Endast administratörer",
+      "accessAllUsers": "Alla användare",
+      "runtimeAvailable": "Tillgänglig",
+      "runtimeUnavailable": "Otillgänglig",
+      "activeRuntimes": "Aktiva körmiljöer",
+      "pendingCleanups": "Väntande rensningar",
+      "orphans": "Föräldralösa containrar",
+      "owner": "Ägare",
+      "task": "Uppgift",
+      "state": "Tillstånd",
+      "preview": "Förhandsvisning",
+      "terminals": "Terminaler",
+      "updated": "Uppdaterad",
+      "stateRunning": "Körs",
+      "stateStopped": "Stoppad",
+      "stateStarting": "Startar",
+      "stateUnknown": "Okänd",
+      "noTasks": "Inga Work-uppgifter ännu."
+    }
   },
   "mediaGeneration": {
     "title": "Generera media",

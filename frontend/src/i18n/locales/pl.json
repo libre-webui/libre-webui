@@ -1980,7 +1980,30 @@
       "internal": "wewnętrzny",
       "empty": "Żadne interfejsy sieciowe nie są widoczne dla środowiska uruchomieniowego aplikacji."
     },
-    "securityNote": "Ta strona jest dostępna tylko dla administratorów. Serwer zwraca tylko podsumowania operacyjne: nie udostępnia zmiennych środowiskowych, poświadczeń, etykiet Docker, punktów montowania, poleceń kontenera ani ładunków inspekcji. Gdy Libre WebUI działa w kontenerze, szczegóły CPU i pamięci na poziomie hosta pochodzą z Docker Engine, gdy jego lokalne gniazdo jest dostępne; inne wartości opisują środowisko uruchomieniowe aplikacji."
+    "securityNote": "Ta strona jest dostępna tylko dla administratorów. Serwer zwraca tylko podsumowania operacyjne: nie udostępnia zmiennych środowiskowych, poświadczeń, etykiet Docker, punktów montowania, poleceń kontenera ani ładunków inspekcji. Gdy Libre WebUI działa w kontenerze, szczegóły CPU i pamięci na poziomie hosta pochodzą z Docker Engine, gdy jego lokalne gniazdo jest dostępne; inne wartości opisują środowisko uruchomieniowe aplikacji.",
+    "work": {
+      "title": "Work",
+      "description": "Piaskownice wszystkich użytkowników",
+      "access": "Dostęp",
+      "accessAdmins": "Tylko administratorzy",
+      "accessAllUsers": "Wszyscy użytkownicy",
+      "runtimeAvailable": "Dostępne",
+      "runtimeUnavailable": "Niedostępne",
+      "activeRuntimes": "Aktywne środowiska",
+      "pendingCleanups": "Oczekujące porządki",
+      "orphans": "Osierocone kontenery",
+      "owner": "Właściciel",
+      "task": "Zadanie",
+      "state": "Stan",
+      "preview": "Podgląd",
+      "terminals": "Terminale",
+      "updated": "Zaktualizowano",
+      "stateRunning": "Działa",
+      "stateStopped": "Zatrzymane",
+      "stateStarting": "Uruchamianie",
+      "stateUnknown": "Nieznany",
+      "noTasks": "Brak zadań Work."
+    }
   },
   "mediaGeneration": {
     "title": "Generuj multimedia",

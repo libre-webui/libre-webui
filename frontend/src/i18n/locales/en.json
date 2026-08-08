@@ -1397,7 +1397,30 @@
       "internal": "internal",
       "empty": "No network interfaces are visible to the application runtime."
     },
-    "securityNote": "This page is restricted to administrators. The server returns operational summaries only: it does not expose environment variables, credentials, Docker labels, mounts, container commands, or inspect payloads. When Libre WebUI runs in a container, host-level CPU and memory details come from Docker Engine when its local socket is available; other values describe the application runtime."
+    "securityNote": "This page is restricted to administrators. The server returns operational summaries only: it does not expose environment variables, credentials, Docker labels, mounts, container commands, or inspect payloads. When Libre WebUI runs in a container, host-level CPU and memory details come from Docker Engine when its local socket is available; other values describe the application runtime.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxes across every user",
+      "access": "Access",
+      "accessAdmins": "Administrators only",
+      "accessAllUsers": "All users",
+      "runtimeAvailable": "Available",
+      "runtimeUnavailable": "Unavailable",
+      "activeRuntimes": "Active runtimes",
+      "pendingCleanups": "Pending cleanups",
+      "orphans": "Orphaned containers",
+      "owner": "Owner",
+      "task": "Task",
+      "state": "State",
+      "preview": "Preview",
+      "terminals": "Terminals",
+      "updated": "Updated",
+      "stateRunning": "Running",
+      "stateStopped": "Stopped",
+      "stateStarting": "Starting",
+      "stateUnknown": "Unknown",
+      "noTasks": "No Work tasks yet."
+    }
   },
   "chatHistory": {
     "label": "Conversation history",

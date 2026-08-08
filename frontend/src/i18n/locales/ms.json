@@ -1980,7 +1980,30 @@
       "internal": "dalaman",
       "empty": "Tiada antara muka rangkaian yang boleh dilihat oleh masa jalan aplikasi."
     },
-    "securityNote": "Halaman ini terhad kepada pentadbir. Pelayan hanya memulangkan ringkasan operasi: ia tidak mendedahkan pembolehubah persekitaran, kelayakan, label Docker, lekap, arahan kontena atau muatan pemeriksaan. Apabila Libre WebUI berjalan dalam kontena, butiran CPU dan ingatan peringkat hos datang dari Docker Engine apabila soket tempatannya tersedia; nilai lain menerangkan masa jalan aplikasi."
+    "securityNote": "Halaman ini terhad kepada pentadbir. Pelayan hanya memulangkan ringkasan operasi: ia tidak mendedahkan pembolehubah persekitaran, kelayakan, label Docker, lekap, arahan kontena atau muatan pemeriksaan. Apabila Libre WebUI berjalan dalam kontena, butiran CPU dan ingatan peringkat hos datang dari Docker Engine apabila soket tempatannya tersedia; nilai lain menerangkan masa jalan aplikasi.",
+    "work": {
+      "title": "Work",
+      "description": "Kotak pasir semua pengguna",
+      "access": "Akses",
+      "accessAdmins": "Pentadbir sahaja",
+      "accessAllUsers": "Semua pengguna",
+      "runtimeAvailable": "Tersedia",
+      "runtimeUnavailable": "Tidak tersedia",
+      "activeRuntimes": "Masa jalan aktif",
+      "pendingCleanups": "Pembersihan tertunda",
+      "orphans": "Kontena yatim",
+      "owner": "Pemilik",
+      "task": "Tugas",
+      "state": "Keadaan",
+      "preview": "Pratonton",
+      "terminals": "Terminal",
+      "updated": "Dikemas kini",
+      "stateRunning": "Berjalan",
+      "stateStopped": "Berhenti",
+      "stateStarting": "Bermula",
+      "stateUnknown": "Tidak diketahui",
+      "noTasks": "Tiada tugas Work lagi."
+    }
   },
   "mediaGeneration": {
     "title": "Jana media",

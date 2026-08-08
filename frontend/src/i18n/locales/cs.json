@@ -1980,7 +1980,30 @@
       "internal": "interní",
       "empty": "Běhovému prostředí aplikace nejsou viditelná žádná síťová rozhraní."
     },
-    "securityNote": "Tato stránka je přístupná pouze správcům. Server vrací pouze provozní shrnutí: neodhaluje proměnné prostředí, přihlašovací údaje, Docker štítky, připojené svazky, příkazy kontejnerů ani inspect payloady. Když běží Libre WebUI v kontejneru, detaily o CPU a paměti hostitele pocházejí z Docker Engine, pokud je dostupný lokální socket; ostatní hodnoty popisují běhové prostředí aplikace."
+    "securityNote": "Tato stránka je přístupná pouze správcům. Server vrací pouze provozní shrnutí: neodhaluje proměnné prostředí, přihlašovací údaje, Docker štítky, připojené svazky, příkazy kontejnerů ani inspect payloady. Když běží Libre WebUI v kontejneru, detaily o CPU a paměti hostitele pocházejí z Docker Engine, pokud je dostupný lokální socket; ostatní hodnoty popisují běhové prostředí aplikace.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxy napříč všemi uživateli",
+      "access": "Přístup",
+      "accessAdmins": "Pouze administrátoři",
+      "accessAllUsers": "Všichni uživatelé",
+      "runtimeAvailable": "Dostupné",
+      "runtimeUnavailable": "Nedostupné",
+      "activeRuntimes": "Aktivní běhová prostředí",
+      "pendingCleanups": "Čekající úklidy",
+      "orphans": "Osiřelé kontejnery",
+      "owner": "Vlastník",
+      "task": "Úloha",
+      "state": "Stav",
+      "preview": "Náhled",
+      "terminals": "Terminály",
+      "updated": "Aktualizováno",
+      "stateRunning": "Běží",
+      "stateStopped": "Zastaveno",
+      "stateStarting": "Spouští se",
+      "stateUnknown": "Neznámý",
+      "noTasks": "Zatím žádné úlohy Work."
+    }
   },
   "mediaGeneration": {
     "title": "Generovat média",

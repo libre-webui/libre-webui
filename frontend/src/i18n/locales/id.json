@@ -1980,7 +1980,30 @@
       "internal": "internal",
       "empty": "Tidak ada antarmuka jaringan yang terlihat oleh runtime aplikasi."
     },
-    "securityNote": "Halaman ini dibatasi untuk administrator. Server hanya mengembalikan ringkasan operasional: tidak mengekspos variabel lingkungan, kredensial, label Docker, mount, perintah container, atau payload inspect. Saat Libre WebUI berjalan di dalam container, detail CPU dan memori tingkat host berasal dari Docker Engine ketika soket lokalnya tersedia; nilai lainnya menjelaskan runtime aplikasi."
+    "securityNote": "Halaman ini dibatasi untuk administrator. Server hanya mengembalikan ringkasan operasional: tidak mengekspos variabel lingkungan, kredensial, label Docker, mount, perintah container, atau payload inspect. Saat Libre WebUI berjalan di dalam container, detail CPU dan memori tingkat host berasal dari Docker Engine ketika soket lokalnya tersedia; nilai lainnya menjelaskan runtime aplikasi.",
+    "work": {
+      "title": "Work",
+      "description": "Sandbox semua pengguna",
+      "access": "Akses",
+      "accessAdmins": "Hanya administrator",
+      "accessAllUsers": "Semua pengguna",
+      "runtimeAvailable": "Tersedia",
+      "runtimeUnavailable": "Tidak tersedia",
+      "activeRuntimes": "Runtime aktif",
+      "pendingCleanups": "Pembersihan tertunda",
+      "orphans": "Kontainer yatim",
+      "owner": "Pemilik",
+      "task": "Tugas",
+      "state": "Status",
+      "preview": "Pratinjau",
+      "terminals": "Terminal",
+      "updated": "Diperbarui",
+      "stateRunning": "Berjalan",
+      "stateStopped": "Berhenti",
+      "stateStarting": "Memulai",
+      "stateUnknown": "Tidak diketahui",
+      "noTasks": "Belum ada tugas Work."
+    }
   },
   "mediaGeneration": {
     "title": "Hasilkan media",

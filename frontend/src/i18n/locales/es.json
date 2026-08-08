@@ -1980,7 +1980,30 @@
       "internal": "interna",
       "empty": "No hay interfaces de red visibles para el entorno de ejecución de la aplicación."
     },
-    "securityNote": "Esta página está restringida a administradores. El servidor solo devuelve resúmenes operativos: no expone variables de entorno, credenciales, etiquetas de Docker, montajes, comandos de contenedor ni cargas útiles de inspección. Cuando Libre WebUI se ejecuta en un contenedor, los detalles de CPU y memoria a nivel de host provienen de Docker Engine cuando su socket local está disponible; otros valores describen el entorno de ejecución de la aplicación."
+    "securityNote": "Esta página está restringida a administradores. El servidor solo devuelve resúmenes operativos: no expone variables de entorno, credenciales, etiquetas de Docker, montajes, comandos de contenedor ni cargas útiles de inspección. Cuando Libre WebUI se ejecuta en un contenedor, los detalles de CPU y memoria a nivel de host provienen de Docker Engine cuando su socket local está disponible; otros valores describen el entorno de ejecución de la aplicación.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxes de todos los usuarios",
+      "access": "Acceso",
+      "accessAdmins": "Solo administradores",
+      "accessAllUsers": "Todos los usuarios",
+      "runtimeAvailable": "Disponible",
+      "runtimeUnavailable": "No disponible",
+      "activeRuntimes": "Entornos activos",
+      "pendingCleanups": "Limpiezas pendientes",
+      "orphans": "Contenedores huérfanos",
+      "owner": "Propietario",
+      "task": "Tarea",
+      "state": "Estado",
+      "preview": "Vista previa",
+      "terminals": "Terminales",
+      "updated": "Actualizado",
+      "stateRunning": "En ejecución",
+      "stateStopped": "Detenido",
+      "stateStarting": "Iniciando",
+      "stateUnknown": "Desconocido",
+      "noTasks": "Aún no hay tareas de Work."
+    }
   },
   "mediaGeneration": {
     "title": "Generar multimedia",

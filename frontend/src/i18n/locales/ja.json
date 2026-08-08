@@ -1980,7 +1980,30 @@
       "internal": "内部",
       "empty": "アプリケーションランタイムに表示されるネットワークインターフェースはありません。"
     },
-    "securityNote": "このページは管理者に限定されています。サーバーは運用上の要約のみを返します。環境変数、認証情報、Dockerラベル、マウント、コンテナコマンド、またはinspectペイロードは公開されません。Libre WebUIがコンテナ内で実行されている場合、ローカルソケットが利用可能であれば、ホストレベルのCPUおよびメモリの詳細はDocker Engineから取得されます。その他の値はアプリケーションランタイムを示します。"
+    "securityNote": "このページは管理者に限定されています。サーバーは運用上の要約のみを返します。環境変数、認証情報、Dockerラベル、マウント、コンテナコマンド、またはinspectペイロードは公開されません。Libre WebUIがコンテナ内で実行されている場合、ローカルソケットが利用可能であれば、ホストレベルのCPUおよびメモリの詳細はDocker Engineから取得されます。その他の値はアプリケーションランタイムを示します。",
+    "work": {
+      "title": "Work",
+      "description": "全ユーザーのサンドボックス",
+      "access": "アクセス",
+      "accessAdmins": "管理者のみ",
+      "accessAllUsers": "すべてのユーザー",
+      "runtimeAvailable": "利用可能",
+      "runtimeUnavailable": "利用不可",
+      "activeRuntimes": "アクティブなランタイム",
+      "pendingCleanups": "保留中のクリーンアップ",
+      "orphans": "孤立したコンテナ",
+      "owner": "所有者",
+      "task": "タスク",
+      "state": "状態",
+      "preview": "プレビュー",
+      "terminals": "ターミナル",
+      "updated": "更新日時",
+      "stateRunning": "実行中",
+      "stateStopped": "停止",
+      "stateStarting": "起動中",
+      "stateUnknown": "不明",
+      "noTasks": "Work タスクはまだありません。"
+    }
   },
   "mediaGeneration": {
     "title": "メディアを生成",

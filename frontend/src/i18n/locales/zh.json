@@ -1980,7 +1980,30 @@
       "internal": "内部",
       "empty": "应用运行时未显示任何网络接口。"
     },
-    "securityNote": "此页面仅限管理员访问。服务器仅返回运行状态摘要：不会暴露环境变量、凭据、Docker 标签、挂载点、容器命令或 inspect 负载。当 Libre WebUI 在容器中运行时，如果本地套接字可用，主机级别的 CPU 和内存详情来自 Docker Engine；其他值描述的是应用运行时。"
+    "securityNote": "此页面仅限管理员访问。服务器仅返回运行状态摘要：不会暴露环境变量、凭据、Docker 标签、挂载点、容器命令或 inspect 负载。当 Libre WebUI 在容器中运行时，如果本地套接字可用，主机级别的 CPU 和内存详情来自 Docker Engine；其他值描述的是应用运行时。",
+    "work": {
+      "title": "Work",
+      "description": "所有用户的沙箱",
+      "access": "访问权限",
+      "accessAdmins": "仅管理员",
+      "accessAllUsers": "所有用户",
+      "runtimeAvailable": "可用",
+      "runtimeUnavailable": "不可用",
+      "activeRuntimes": "活跃运行时",
+      "pendingCleanups": "待处理清理",
+      "orphans": "孤立容器",
+      "owner": "所有者",
+      "task": "任务",
+      "state": "状态",
+      "preview": "预览",
+      "terminals": "终端",
+      "updated": "更新时间",
+      "stateRunning": "运行中",
+      "stateStopped": "已停止",
+      "stateStarting": "启动中",
+      "stateUnknown": "未知",
+      "noTasks": "暂无 Work 任务。"
+    }
   },
   "mediaGeneration": {
     "title": "生成媒体",

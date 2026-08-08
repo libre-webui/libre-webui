@@ -20,6 +20,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
+  Boxes,
   Clock3,
   Container,
   HardDrive,
@@ -35,6 +36,7 @@ import {
 import { Button, PageHeader, PageShell } from '@/components/ui';
 import { cn } from '@/utils';
 import { systemApi, type SystemDiagnostics } from '@/utils/api';
+import { workApi } from '@/utils/api/workApi';
 
 const bytesFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 1,
@@ -167,6 +169,185 @@ const Meter: React.FC<{ value: number; tone?: 'primary' | 'warning' }> = ({
   </div>
 );
 
+const WorkPanel: React.FC = () => {
+  const { t } = useTranslation();
+  const { data: overview } = useQuery({
+    queryKey: ['work-admin-overview'],
+    queryFn: async () => {
+      const response = await workApi.adminOverview();
+      if (!response.success || !response.data) {
+        throw new Error(response.error || t('systemPage.loadFailed'));
+      }
+      return response.data;
+    },
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
+  });
+
+  if (!overview) return null;
+
+  const stateLabel = (running: boolean | null): string =>
+    running === null
+      ? t('systemPage.work.stateUnknown')
+      : running
+        ? t('systemPage.work.stateRunning')
+        : t('systemPage.work.stateStopped');
+  const previewLabel = (previewStatus: string): string =>
+    previewStatus === 'running'
+      ? t('systemPage.work.stateRunning')
+      : previewStatus === 'starting'
+        ? t('systemPage.work.stateStarting')
+        : '—';
+
+  return (
+    <Panel
+      title={t('systemPage.work.title')}
+      description={t('systemPage.work.description')}
+      icon={Boxes}
+      action={
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.1em]',
+            overview.runtimeAvailable
+              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+              : 'bg-gray-500/10 text-gray-600 dark:text-dark-600'
+          )}
+        >
+          <span
+            className={cn(
+              'h-1.5 w-1.5 rounded-full',
+              overview.runtimeAvailable ? 'bg-emerald-500' : 'bg-gray-400'
+            )}
+          />
+          {overview.runtimeAvailable
+            ? t('systemPage.work.runtimeAvailable')
+            : t('systemPage.work.runtimeUnavailable')}
+        </span>
+      }
+    >
+      <div className='grid gap-3 border-b border-gray-200/70 p-4 dark:border-white/[0.07] sm:grid-cols-2 sm:p-5 lg:grid-cols-4'>
+        {[
+          [
+            t('systemPage.work.access'),
+            overview.accessMode === 'all-users'
+              ? t('systemPage.work.accessAllUsers')
+              : t('systemPage.work.accessAdmins'),
+          ],
+          [
+            t('systemPage.work.activeRuntimes'),
+            `${overview.admission.activeGlobal} / ${overview.admission.maxGlobal}`,
+          ],
+          [t('systemPage.work.pendingCleanups'), overview.recoveryPending],
+          [t('systemPage.work.orphans'), overview.orphanContainers.length],
+        ].map(([label, value]) => (
+          <div
+            key={String(label)}
+            className='rounded-xl bg-gray-50 px-3 py-2.5 dark:bg-dark-200/70'
+          >
+            <div className='text-[11px] text-gray-500 dark:text-dark-500'>
+              {label}
+            </div>
+            <div className='mt-1 text-xl text-gray-950 dark:text-dark-950'>
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {!overview.runtimeAvailable && overview.runtimeReason && (
+        <div className='mx-4 mt-4 flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-white/[0.07] dark:bg-dark-200/60 dark:text-dark-600 sm:mx-5'>
+          <TriangleAlert className='mt-0.5 h-4 w-4 shrink-0' />
+          <p>{overview.runtimeReason}</p>
+        </div>
+      )}
+
+      {overview.tasks.length === 0 ? (
+        <p className='px-4 py-4 text-sm text-gray-500 dark:text-dark-500 sm:px-5'>
+          {t('systemPage.work.noTasks')}
+        </p>
+      ) : (
+        <div className='overflow-x-auto'>
+          <table
+            data-testid='system-work-table'
+            className='w-full min-w-[760px] text-sm'
+          >
+            <thead className='text-[11px] uppercase tracking-[0.1em] text-gray-400 dark:text-dark-500'>
+              <tr>
+                <th className='px-5 py-2 text-start font-medium'>
+                  {t('systemPage.work.owner')}
+                </th>
+                <th className='px-4 py-2 text-start font-medium'>
+                  {t('systemPage.work.task')}
+                </th>
+                <th className='px-4 py-2 text-start font-medium'>
+                  {t('systemPage.work.state')}
+                </th>
+                <th className='px-4 py-2 text-start font-medium'>
+                  {t('systemPage.work.preview')}
+                </th>
+                <th className='px-4 py-2 text-start font-medium'>
+                  {t('systemPage.work.terminals')}
+                </th>
+                <th className='px-5 py-2 text-end font-medium'>
+                  {t('systemPage.work.updated')}
+                </th>
+              </tr>
+            </thead>
+            <tbody className='divide-y divide-gray-100 dark:divide-white/[0.06]'>
+              {overview.tasks.map(task => (
+                <tr key={task.id}>
+                  <td className='px-5 py-2.5 text-gray-800 dark:text-dark-800'>
+                    {task.ownerUsername}
+                  </td>
+                  <td className='px-4 py-2.5'>
+                    <div className='font-medium text-gray-900 dark:text-dark-900'>
+                      {task.title}
+                    </div>
+                    <div className='mt-0.5 font-mono text-[10px] text-gray-500 dark:text-dark-500'>
+                      {task.model}
+                    </div>
+                  </td>
+                  <td className='px-4 py-2.5'>
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1.5 text-xs',
+                        task.running
+                          ? 'text-emerald-700 dark:text-emerald-300'
+                          : 'text-gray-600 dark:text-dark-600'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'h-1.5 w-1.5 rounded-full',
+                          task.running === null
+                            ? 'bg-amber-400'
+                            : task.running
+                              ? 'bg-emerald-500'
+                              : 'bg-gray-400'
+                        )}
+                      />
+                      {stateLabel(task.running)}
+                    </span>
+                  </td>
+                  <td className='px-4 py-2.5 text-xs text-gray-600 dark:text-dark-600'>
+                    {previewLabel(task.previewStatus)}
+                  </td>
+                  <td className='px-4 py-2.5 text-xs text-gray-600 dark:text-dark-600'>
+                    {task.terminalSessions || '—'}
+                  </td>
+                  <td className='px-5 py-2.5 text-end text-xs text-gray-600 dark:text-dark-600'>
+                    {dateFormatter.format(task.updatedAt)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Panel>
+  );
+};
+
 const SystemPage: React.FC = () => {
   const { t } = useTranslation();
   const {
@@ -251,6 +432,7 @@ const SystemPage: React.FC = () => {
 
           <StoragePanel diagnostics={diagnostics} />
           <DockerPanel diagnostics={diagnostics} />
+          <WorkPanel />
           <NetworkPanel diagnostics={diagnostics} />
 
           <div className='flex items-start gap-2 px-1 text-xs leading-5 text-gray-500 dark:text-dark-500'>
