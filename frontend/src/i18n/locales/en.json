@@ -276,9 +276,13 @@
       "createFirst": "Create your first chat above",
       "chats": "Chats",
       "renameChat": "Rename chat",
+      "openNewTab": "Open in new tab",
+      "pinChat": "Pin",
+      "unpinChat": "Unpin",
       "deleteChat": "Delete chat",
       "archiveChat": "Archive chat",
       "groups": {
+        "pinned": "Pinned",
         "today": "Today",
         "yesterday": "Yesterday",
         "previous7Days": "Previous 7 days",

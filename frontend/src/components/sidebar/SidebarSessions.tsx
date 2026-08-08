@@ -24,11 +24,13 @@ import {
   ChevronDown,
   ChevronRight,
   Edit3,
+  ExternalLink,
   Folder,
-  FolderInput,
   FolderPlus,
   MessageSquare,
   MoreHorizontal,
+  Pin,
+  PinOff,
   Trash2,
   X,
 } from 'lucide-react';
@@ -51,6 +53,7 @@ interface SidebarSessionsProps {
   onCancelEdit: () => void;
   onDeleteSession: (sessionId: string, event: React.MouseEvent) => void;
   onArchiveSession?: (sessionId: string, event: React.MouseEvent) => void;
+  onTogglePinSession?: (sessionId: string, pinned: boolean) => void;
   folders?: SessionFolder[];
   onCreateFolder?: (name: string) => void;
   onRenameFolder?: (folderId: string, name: string) => void;
@@ -170,6 +173,7 @@ export function SidebarSessions({
   onCancelEdit,
   onDeleteSession,
   onArchiveSession,
+  onTogglePinSession,
   folders = [],
   onCreateFolder,
   onRenameFolder,
@@ -230,9 +234,67 @@ export function SidebarSessions({
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [folderNameDraft, setFolderNameDraft] = useState('');
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
-  const [folderMenuSessionId, setFolderMenuSessionId] = useState<string | null>(
-    null
-  );
+  // Desktop "…" context menu, rendered through a portal so the scroll
+  // region cannot clip it. Anchored to the button that opened it.
+  const [sessionMenu, setSessionMenu] = useState<{
+    sessionId: string;
+    top: number;
+    left: number;
+  } | null>(null);
+  const sessionMenuSession = sessionMenu
+    ? (sessions.find(session => session.id === sessionMenu.sessionId) ?? null)
+    : null;
+
+  useEffect(() => {
+    if (!sessionMenu) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSessionMenu(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [sessionMenu]);
+
+  const SESSION_MENU_WIDTH = 208;
+  const SESSION_MENU_MAX_HEIGHT = 340;
+
+  const openSessionMenu = (
+    session: ChatSession,
+    event: React.MouseEvent<HTMLElement>
+  ) => {
+    event.stopPropagation();
+    clearHoverPreview();
+    if (sessionMenu?.sessionId === session.id) {
+      setSessionMenu(null);
+      return;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    setSessionMenu({
+      sessionId: session.id,
+      top: Math.max(
+        8,
+        Math.min(
+          rect.bottom + 6,
+          window.innerHeight - SESSION_MENU_MAX_HEIGHT - 8
+        )
+      ),
+      left: Math.max(
+        8,
+        Math.min(
+          rect.right - SESSION_MENU_WIDTH,
+          window.innerWidth - SESSION_MENU_WIDTH - 8
+        )
+      ),
+    });
+  };
+
+  const openSessionInNewTab = (session: ChatSession) => {
+    // Electron serves the app from file:// with hash routing.
+    const isElectron = window.location.protocol === 'file:';
+    const url = isElectron
+      ? `${window.location.pathname}#/c/${session.id}`
+      : `/c/${session.id}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   const toggleFolderCollapsed = (folderId: string) => {
     setCollapsedFolders(previous => {
@@ -258,22 +320,37 @@ export function SidebarSessions({
   };
 
   const folderIds = new Set(folders.map(folder => folder.id));
-  const looseSessions = sessions.filter(
+  // Pinned chats live in their own group at the top and leave their folder
+  // and date groups until unpinned.
+  const pinnedSessions = sessions.filter(session => session.pinned);
+  const unpinnedSessions = sessions.filter(session => !session.pinned);
+  const looseSessions = unpinnedSessions.filter(
     session => !session.folderId || !folderIds.has(session.folderId)
   );
 
   interface SidebarSection {
     key: string;
-    labelKey?: SessionGroupKey;
+    labelKey?: SessionGroupKey | 'pinned';
     folder?: SessionFolder;
     sessions: ChatSession[];
   }
 
   const sections: SidebarSection[] = [
+    ...(pinnedSessions.length > 0
+      ? [
+          {
+            key: 'pinned',
+            labelKey: 'pinned' as const,
+            sessions: pinnedSessions,
+          },
+        ]
+      : []),
     ...folders.map(folder => ({
       key: `folder:${folder.id}`,
       folder,
-      sessions: sessions.filter(session => session.folderId === folder.id),
+      sessions: unpinnedSessions.filter(
+        session => session.folderId === folder.id
+      ),
     })),
     ...GROUP_ORDER.map(key => ({
       key: key as string,
@@ -716,100 +793,27 @@ export function SidebarSessions({
                                 <MoreHorizontal className='h-4 w-4' />
                               </Button>
 
-                              <div className='hidden shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 sm:flex'>
+                              <div className='hidden shrink-0 sm:block'>
                                 <Button
                                   variant='ghost'
                                   size='sm'
-                                  onClick={e => onStartEditing(session, e)}
-                                  className='h-7 w-7 sm:h-7 sm:w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-300 rounded-lg touch-manipulation'
-                                  title={t('chat.session.renameChat')}
+                                  onClick={event =>
+                                    openSessionMenu(session, event)
+                                  }
+                                  className={cn(
+                                    'h-7 w-7 rounded-lg p-0 opacity-0 transition-opacity duration-150 hover:bg-gray-100 group-hover:opacity-100 group-focus-within:opacity-100 dark:hover:bg-dark-300 touch-manipulation',
+                                    sessionMenu?.sessionId === session.id &&
+                                      'bg-gray-100 opacity-100 dark:bg-dark-300'
+                                  )}
+                                  title={t('palette.actions')}
+                                  aria-label={t('palette.actions')}
+                                  aria-haspopup='menu'
+                                  aria-expanded={
+                                    sessionMenu?.sessionId === session.id
+                                  }
+                                  data-testid='sidebar-session-actions'
                                 >
-                                  <Edit3 className='h-3 w-3' />
-                                </Button>
-                                {onMoveSession && folders.length > 0 && (
-                                  <div className='relative'>
-                                    <Button
-                                      variant='ghost'
-                                      size='sm'
-                                      onClick={e => {
-                                        e.stopPropagation();
-                                        clearHoverPreview();
-                                        setFolderMenuSessionId(current =>
-                                          current === session.id
-                                            ? null
-                                            : session.id
-                                        );
-                                      }}
-                                      className='h-7 w-7 sm:h-7 sm:w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-300 rounded-lg touch-manipulation'
-                                      title={t('chat.session.folder.move')}
-                                    >
-                                      <FolderInput className='h-3 w-3' />
-                                    </Button>
-                                    {folderMenuSessionId === session.id && (
-                                      <div
-                                        className='absolute end-0 top-full z-40 mt-1 w-44 rounded-xl border border-black/[0.08] bg-surface/95 p-1 shadow-[0_12px_36px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-white/[0.09] dark:bg-dark-100/95'
-                                        onClick={e => e.stopPropagation()}
-                                      >
-                                        {folders.map(folder => (
-                                          <button
-                                            key={folder.id}
-                                            onClick={() => {
-                                              setFolderMenuSessionId(null);
-                                              onMoveSession(
-                                                session.id,
-                                                folder.id
-                                              );
-                                            }}
-                                            className={cn(
-                                              'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start text-[12px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
-                                              session.folderId === folder.id &&
-                                                'text-primary-600 dark:text-primary-400'
-                                            )}
-                                          >
-                                            <Folder className='h-3 w-3 shrink-0' />
-                                            <span className='truncate'>
-                                              {folder.name}
-                                            </span>
-                                          </button>
-                                        ))}
-                                        {session.folderId && (
-                                          <button
-                                            onClick={() => {
-                                              setFolderMenuSessionId(null);
-                                              onMoveSession(session.id, null);
-                                            }}
-                                            className='flex w-full items-center gap-2 rounded-lg border-t border-gray-100 px-2 py-1.5 text-start text-[12px] text-gray-500 hover:bg-gray-100 dark:border-dark-300 dark:text-dark-600 dark:hover:bg-dark-200'
-                                          >
-                                            <X className='h-3 w-3 shrink-0' />
-                                            {t('chat.session.folder.remove')}
-                                          </button>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                                {onArchiveSession && (
-                                  <Button
-                                    variant='ghost'
-                                    size='sm'
-                                    onClick={e => {
-                                      clearHoverPreview();
-                                      onArchiveSession(session.id, e);
-                                    }}
-                                    className='h-7 w-7 sm:h-7 sm:w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-300 rounded-lg touch-manipulation'
-                                    title={t('chat.session.archiveChat')}
-                                  >
-                                    <Archive className='h-3 w-3' />
-                                  </Button>
-                                )}
-                                <Button
-                                  variant='ghost'
-                                  size='sm'
-                                  onClick={e => onDeleteSession(session.id, e)}
-                                  className='h-7 w-7 sm:h-7 sm:w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg touch-manipulation'
-                                  title={t('chat.session.deleteChat')}
-                                >
-                                  <Trash2 className='h-3 w-3' />
+                                  <MoreHorizontal className='h-4 w-4' />
                                 </Button>
                               </div>
                             </div>
@@ -825,6 +829,146 @@ export function SidebarSessions({
         )}
       </div>
       {hoverPreview && <SessionHoverPreview preview={hoverPreview} />}
+      {sessionMenu &&
+        sessionMenuSession &&
+        createPortal(
+          <div className='fixed inset-0 z-[75] hidden sm:block'>
+            <button
+              type='button'
+              tabIndex={-1}
+              aria-label={t('common.close')}
+              className='absolute inset-0 cursor-default'
+              onClick={() => setSessionMenu(null)}
+            />
+            <div
+              role='menu'
+              aria-label={sessionMenuSession.title}
+              data-testid='sidebar-session-menu'
+              className='absolute overflow-y-auto rounded-2xl border border-black/[0.08] bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.2)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'
+              style={{
+                top: sessionMenu.top,
+                left: sessionMenu.left,
+                width: SESSION_MENU_WIDTH,
+                maxHeight: SESSION_MENU_MAX_HEIGHT,
+              }}
+            >
+              <button
+                type='button'
+                role='menuitem'
+                onClick={() => {
+                  setSessionMenu(null);
+                  openSessionInNewTab(sessionMenuSession);
+                }}
+                className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+              >
+                <ExternalLink className='h-3.5 w-3.5 shrink-0' />
+                {t('chat.session.openNewTab')}
+              </button>
+              <button
+                type='button'
+                role='menuitem'
+                onClick={event => {
+                  setSessionMenu(null);
+                  onStartEditing(sessionMenuSession, event);
+                }}
+                className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+              >
+                <Edit3 className='h-3.5 w-3.5 shrink-0' />
+                {t('chat.session.renameChat')}
+              </button>
+              {onTogglePinSession && (
+                <button
+                  type='button'
+                  role='menuitem'
+                  onClick={() => {
+                    setSessionMenu(null);
+                    onTogglePinSession(
+                      sessionMenuSession.id,
+                      !sessionMenuSession.pinned
+                    );
+                  }}
+                  className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                >
+                  {sessionMenuSession.pinned ? (
+                    <PinOff className='h-3.5 w-3.5 shrink-0' />
+                  ) : (
+                    <Pin className='h-3.5 w-3.5 shrink-0' />
+                  )}
+                  {sessionMenuSession.pinned
+                    ? t('chat.session.unpinChat')
+                    : t('chat.session.pinChat')}
+                </button>
+              )}
+              {onArchiveSession && (
+                <button
+                  type='button'
+                  role='menuitem'
+                  onClick={event => {
+                    setSessionMenu(null);
+                    onArchiveSession(sessionMenuSession.id, event);
+                  }}
+                  className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                >
+                  <Archive className='h-3.5 w-3.5 shrink-0' />
+                  {t('chat.session.archiveChat')}
+                </button>
+              )}
+              {onMoveSession && folders.length > 0 && (
+                <div className='mt-1 border-t border-black/[0.06] pt-1 dark:border-white/[0.07]'>
+                  <p className='px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-dark-500 rtl:tracking-normal'>
+                    {t('chat.session.folder.move')}
+                  </p>
+                  {folders.map(folder => (
+                    <button
+                      key={folder.id}
+                      type='button'
+                      role='menuitem'
+                      onClick={() => {
+                        setSessionMenu(null);
+                        onMoveSession(sessionMenuSession.id, folder.id);
+                      }}
+                      className={cn(
+                        'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
+                        sessionMenuSession.folderId === folder.id &&
+                          'text-primary-600 dark:text-primary-400'
+                      )}
+                    >
+                      <Folder className='h-3.5 w-3.5 shrink-0' />
+                      <span className='truncate'>{folder.name}</span>
+                    </button>
+                  ))}
+                  {sessionMenuSession.folderId && (
+                    <button
+                      type='button'
+                      role='menuitem'
+                      onClick={() => {
+                        setSessionMenu(null);
+                        onMoveSession(sessionMenuSession.id, null);
+                      }}
+                      className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-500 hover:bg-gray-100 dark:text-dark-600 dark:hover:bg-dark-200'
+                    >
+                      <X className='h-3.5 w-3.5 shrink-0' />
+                      {t('chat.session.folder.remove')}
+                    </button>
+                  )}
+                </div>
+              )}
+              <button
+                type='button'
+                role='menuitem'
+                onClick={event => {
+                  setSessionMenu(null);
+                  onDeleteSession(sessionMenuSession.id, event);
+                }}
+                className='mt-1 flex w-full items-center gap-2.5 rounded-lg border-t border-black/[0.06] px-2.5 py-2 text-start text-[13px] text-red-500 hover:bg-red-50 dark:border-white/[0.07] dark:hover:bg-red-900/20'
+              >
+                <Trash2 className='h-3.5 w-3.5 shrink-0' />
+                {t('chat.session.deleteChat')}
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
       {mobileActionSession &&
         createPortal(
           <div className='fixed inset-0 z-[80] sm:hidden'>
@@ -868,6 +1012,29 @@ export function SidebarSessions({
                 <Edit3 className='h-4 w-4 shrink-0' />
                 {t('chat.session.renameChat')}
               </button>
+
+              {onTogglePinSession && (
+                <button
+                  type='button'
+                  onClick={() => {
+                    setMobileActionSessionId(null);
+                    onTogglePinSession(
+                      mobileActionSession.id,
+                      !mobileActionSession.pinned
+                    );
+                  }}
+                  className='flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                >
+                  {mobileActionSession.pinned ? (
+                    <PinOff className='h-4 w-4 shrink-0' />
+                  ) : (
+                    <Pin className='h-4 w-4 shrink-0' />
+                  )}
+                  {mobileActionSession.pinned
+                    ? t('chat.session.unpinChat')
+                    : t('chat.session.pinChat')}
+                </button>
+              )}
 
               {onArchiveSession && (
                 <button

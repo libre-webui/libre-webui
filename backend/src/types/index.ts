@@ -77,6 +77,7 @@ export interface ChatSession extends ChatProviderSelection {
   archived?: boolean; // Hidden from the sidebar until unarchived
   settings?: ChatSessionSettings; // Per-chat overrides applied over global defaults
   folderId?: string | null; // Optional folder this chat lives in
+  pinned?: boolean; // Kept in the sidebar's Pinned group
 }
 
 export interface KnowledgeCollection {

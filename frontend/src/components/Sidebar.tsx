@@ -66,6 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     deleteSession,
     updateSessionTitle,
     setSessionArchived,
+    setSessionPinned,
     folders,
     loadFolders,
     createFolder,
@@ -298,6 +299,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const handleTogglePinSession = (sessionId: string, pinned: boolean) => {
+    void setSessionPinned(sessionId, pinned);
+  };
+
   const handleStartEditing = (session: ChatSession, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingSessionId(session.id);
@@ -433,6 +438,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onCancelEdit={handleCancelEdit}
               onDeleteSession={handleDeleteSession}
               onArchiveSession={handleArchiveSession}
+              onTogglePinSession={handleTogglePinSession}
               folders={folders}
               onCreateFolder={name => void createFolder(name)}
               onRenameFolder={(folderId, name) =>

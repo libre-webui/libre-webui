@@ -189,6 +189,7 @@ function initializeTables(): void {
       archived INTEGER DEFAULT 0, -- Hidden from the sidebar until unarchived
       settings TEXT, -- Encrypted JSON with per-chat overrides
       folder_id TEXT, -- Optional folder this chat lives in
+      pinned INTEGER DEFAULT 0, -- Shown in the sidebar's Pinned group
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE SET NULL
     )
@@ -813,6 +814,7 @@ function runMigrations(): void {
       { name: 'archived', type: 'INTEGER DEFAULT 0' },
       { name: 'settings', type: 'TEXT' },
       { name: 'folder_id', type: 'TEXT' },
+      { name: 'pinned', type: 'INTEGER DEFAULT 0' },
     ]) {
       if (!existingSessionsColumns.includes(column.name)) {
         logger.debug(`Adding column ${column.name} to sessions table`);

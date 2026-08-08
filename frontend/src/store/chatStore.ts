@@ -109,6 +109,7 @@ interface ChatState {
     rating: number | undefined
   ) => Promise<void>;
   setSessionArchived: (sessionId: string, archived: boolean) => Promise<void>;
+  setSessionPinned: (sessionId: string, pinned: boolean) => Promise<void>;
 
   // Session folders
   folders: SessionFolder[];
@@ -579,6 +580,32 @@ export const useChatStore = create<ChatState>((set, get) => ({
           session.id === sessionId
             ? { ...session, archived: !archived }
             : session
+        ),
+      }));
+    }
+  },
+
+  setSessionPinned: async (sessionId: string, pinned: boolean) => {
+    set(state => ({
+      sessions: state.sessions.map(session =>
+        session.id === sessionId ? { ...session, pinned } : session
+      ),
+      currentSession:
+        state.currentSession?.id === sessionId
+          ? { ...state.currentSession, pinned }
+          : state.currentSession,
+    }));
+
+    try {
+      await chatApi.updateSession(sessionId, {
+        pinned,
+      } as Partial<ChatSession>);
+    } catch (error) {
+      logger.error('Failed to update session pin state:', error);
+      // Roll back the optimistic update so the UI stays truthful.
+      set(state => ({
+        sessions: state.sessions.map(session =>
+          session.id === sessionId ? { ...session, pinned: !pinned } : session
         ),
       }));
     }

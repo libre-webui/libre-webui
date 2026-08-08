@@ -49,6 +49,7 @@ export interface SessionRow {
   archived?: number | null;
   settings?: string | null;
   folder_id?: string | null;
+  pinned?: number | null;
 }
 
 export interface SessionFolderRow {
@@ -182,6 +183,7 @@ export function mapSessionRow(
     archived: row.archived === 1,
     settings: decryptJson(row.settings || undefined),
     folderId: row.folder_id || undefined,
+    pinned: row.pinned === 1,
     messages: messages.map(message => mapMessageRow(message, siblingCountMap)),
   };
 }

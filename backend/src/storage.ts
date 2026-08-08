@@ -257,8 +257,8 @@ class StorageService {
       const transaction = db.transaction((session: ChatSession) => {
         // Insert or update session
         const sessionStmt = db.prepare(`
-          INSERT OR REPLACE INTO sessions (id, user_id, title, model, persona_id, provider_type, provider_id, created_at, updated_at, archived, settings, folder_id)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT OR REPLACE INTO sessions (id, user_id, title, model, persona_id, provider_type, provider_id, created_at, updated_at, archived, settings, folder_id, pinned)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         // Encrypt sensitive session data
@@ -278,7 +278,8 @@ class StorageService {
           session.settings
             ? encryptionService.encrypt(JSON.stringify(session.settings))
             : null,
-          session.folderId || null
+          session.folderId || null,
+          session.pinned ? 1 : 0
         );
 
         // Delete existing messages
