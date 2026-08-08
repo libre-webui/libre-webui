@@ -942,7 +942,6 @@ export const ChatPage: React.FC = () => {
       )}
 
       <div className='relative z-10 flex h-full flex-col'>
-        {currentSession && <ChatSourcesPanel session={currentSession} />}
         {/* Private mode indicator */}
         {currentSession?.isPrivate && (
           <div className='flex-shrink-0 border-b border-black/[0.05] bg-surface/55 px-4 py-2 backdrop-blur-xl dark:border-white/[0.06] dark:bg-dark-100/55'>
@@ -1027,6 +1026,7 @@ export const ChatPage: React.FC = () => {
               disabled={!currentSession}
             />
           </div>
+          {currentSession && <ChatSourcesPanel session={currentSession} />}
           <ChatControlsPanel
             session={currentSession}
             open={controlsOpen}

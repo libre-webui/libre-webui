@@ -17,10 +17,9 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, FileText, Globe, X } from 'lucide-react';
+import { ChevronUp, FileText, Globe } from 'lucide-react';
 import type { ChatSession } from '@/types';
 import { documentsApi } from '@/utils/api';
-import { cn } from '@/utils';
 
 interface WebSource {
   title: string;
@@ -41,6 +40,8 @@ interface ChatSourcesPanelProps {
   session: ChatSession;
 }
 
+const COLLAPSED_ROWS = 6;
+
 const hostnameOf = (url: string): string => {
   try {
     return new URL(url).hostname.replace(/^www\./, '');
@@ -50,19 +51,20 @@ const hostnameOf = (url: string): string => {
 };
 
 /**
- * Conversation-level context panel: every web source the replies cited and
- * every document retrieval has drawn on, plus the documents attached to
- * the chat. Collapsed to a corner button; hidden entirely while there is
- * nothing to show.
+ * Conversation context rail: the web sources replies drew on and the
+ * documents in retrieval scope, as a quiet fixed column beside the
+ * conversation on wide screens. Renders nothing while the conversation has
+ * no context; per-message source chips remain the compact fallback.
  */
 export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
   session,
 }) => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
   const [attachedDocuments, setAttachedDocuments] = useState<
     AttachedDocument[]
   >([]);
+  const [allSources, setAllSources] = useState(false);
+  const [allDocuments, setAllDocuments] = useState(false);
 
   const { webSources, ragSources } = useMemo(() => {
     const web = new Map<string, WebSource>();
@@ -149,103 +151,113 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
 
   if (webSources.length === 0 && documents.length === 0) return null;
 
-  return (
-    <>
+  const visibleSources = allSources
+    ? webSources
+    : webSources.slice(0, COLLAPSED_ROWS);
+  const visibleDocuments = allDocuments
+    ? documents
+    : documents.slice(0, COLLAPSED_ROWS);
+
+  const showMore = (
+    hidden: number,
+    expanded: boolean,
+    toggle: () => void
+  ): React.ReactNode =>
+    (hidden > 0 || expanded) && (
       <button
         type='button'
-        onClick={() => setOpen(current => !current)}
-        data-testid='chat-sources-toggle'
-        className={cn(
-          'absolute end-4 top-16 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-6',
-          open && 'text-primary-600 dark:text-primary-400'
-        )}
-        title={t('chat.message.sources', 'Sources')}
-        aria-expanded={open}
+        onClick={toggle}
+        className='mt-1 flex items-center gap-1 px-1 text-[12px] text-gray-400 transition-colors hover:text-gray-700 dark:text-dark-500 dark:hover:text-dark-800'
       >
-        <BookOpen className='h-4 w-4' />
-        <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'>
-          {webSources.length + documents.length}
-        </span>
+        {expanded ? (
+          <>
+            <ChevronUp className='h-3 w-3' />
+            {t('chatMessage.showLess', 'Show less')}
+          </>
+        ) : (
+          `${t('chatMessage.showMore')} (${hidden})`
+        )}
       </button>
+    );
 
-      {open && (
-        <aside
-          data-testid='chat-sources-panel'
-          className='absolute end-4 top-[6.75rem] z-20 flex max-h-[70vh] w-80 flex-col overflow-y-auto rounded-2xl border border-black/[0.08] bg-surface/95 p-4 shadow-[0_16px_48px_rgba(15,23,42,0.18)] backdrop-blur-xl animate-scale-in scrollbar-thin dark:border-white/[0.09] dark:bg-dark-100/95 sm:end-6'
-        >
-          <div className='mb-1 flex items-center justify-between'>
-            <h3 className='text-sm font-semibold text-gray-900 dark:text-dark-900'>
-              {t('chat.message.sources', 'Sources')}
-            </h3>
-            <button
-              type='button'
-              onClick={() => setOpen(false)}
-              className='rounded-md p-1 text-gray-400 hover:text-gray-700 dark:text-dark-500 dark:hover:text-dark-800'
-              aria-label={t('common.close')}
-            >
-              <X className='h-3.5 w-3.5' />
-            </button>
-          </div>
-
-          {webSources.length > 0 && (
-            <ul className='mb-1 space-y-0.5'>
-              {webSources.map(source => (
-                <li key={source.url}>
-                  <a
-                    href={source.url}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='group flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-dark-200'
-                    title={source.url}
-                  >
-                    <Globe className='h-4 w-4 shrink-0 text-gray-400 group-hover:text-primary-500 dark:text-dark-500' />
-                    <span className='min-w-0 flex-1'>
-                      <span className='block truncate text-[13px] text-gray-800 dark:text-dark-800'>
-                        {source.title}
-                      </span>
-                      <span
-                        dir='ltr'
-                        className='block truncate text-[11px] text-gray-400 dark:text-dark-500'
-                      >
-                        {hostnameOf(source.url)}
-                      </span>
+  return (
+    <aside
+      data-testid='chat-sources-panel'
+      className='hidden w-72 shrink-0 flex-col gap-7 overflow-y-auto border-s border-black/[0.05] px-5 py-6 scrollbar-thin dark:border-white/[0.06] xl:flex'
+    >
+      {webSources.length > 0 && (
+        <section>
+          <h3 className='mb-2 text-[13px] font-medium text-gray-500 dark:text-dark-500'>
+            {t('chat.message.sources', 'Sources')}
+          </h3>
+          <ul className='space-y-0.5'>
+            {visibleSources.map(source => (
+              <li key={source.url}>
+                <a
+                  href={source.url}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='group -mx-1 flex items-center gap-2.5 rounded-lg px-1 py-1.5 transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.05]'
+                  title={source.url}
+                >
+                  <Globe className='h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-gray-700 dark:text-dark-500 dark:group-hover:text-dark-800' />
+                  <span className='min-w-0 flex-1'>
+                    <span className='block truncate text-[13px] leading-snug text-gray-800 dark:text-dark-800'>
+                      {source.title}
                     </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {documents.length > 0 && (
-            <>
-              <h4 className='mb-1 mt-3 border-t border-black/[0.06] pt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:border-white/[0.07] dark:text-dark-500 rtl:tracking-normal'>
-                {t('settings.tabs.documents', 'Documents')}
-              </h4>
-              <ul className='space-y-0.5'>
-                {documents.map(doc => (
-                  <li
-                    key={doc.id}
-                    className='flex items-center gap-2.5 rounded-lg px-2 py-1.5'
-                    title={doc.filename}
-                  >
-                    <FileText className='h-4 w-4 shrink-0 text-gray-400 dark:text-dark-500' />
-                    <span className='min-w-0 flex-1 truncate text-[13px] text-gray-800 dark:text-dark-800'>
-                      {doc.filename}
+                    <span
+                      dir='ltr'
+                      className='block truncate text-[11px] text-gray-400 dark:text-dark-500'
+                    >
+                      {hostnameOf(source.url)}
                     </span>
-                    {doc.used && (
-                      <span
-                        className='h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500'
-                        title={t('chat.message.sources', 'Sources')}
-                      />
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          {showMore(webSources.length - visibleSources.length, allSources, () =>
+            setAllSources(current => !current)
           )}
-        </aside>
+        </section>
       )}
-    </>
+
+      {documents.length > 0 && (
+        <section>
+          <h3 className='mb-2 text-[13px] font-medium text-gray-500 dark:text-dark-500'>
+            {t('settings.tabs.documents', 'Documents')}
+          </h3>
+          <ul className='space-y-0.5'>
+            {visibleDocuments.map(doc => (
+              <li
+                key={doc.id}
+                className='-mx-1 flex items-center gap-2.5 rounded-lg px-1 py-1.5'
+                title={doc.filename}
+              >
+                <FileText className='h-4 w-4 shrink-0 text-gray-400 dark:text-dark-500' />
+                <span
+                  dir='ltr'
+                  className='min-w-0 flex-1 truncate text-[13px] leading-snug text-gray-800 dark:text-dark-800'
+                >
+                  {doc.filename}
+                </span>
+                {doc.used && (
+                  <span
+                    aria-hidden='true'
+                    className='h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500'
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
+          {showMore(
+            documents.length - visibleDocuments.length,
+            allDocuments,
+            () => setAllDocuments(current => !current)
+          )}
+        </section>
+      )}
+    </aside>
   );
 };
 
