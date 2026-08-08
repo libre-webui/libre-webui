@@ -569,8 +569,6 @@ if (
   process.env.NODE_ENV === 'production' ||
   process.env.SERVE_FRONTEND === 'true'
 ) {
-  const pathModule = await import('path');
-
   const frontendPath = resolveFrontendDist(import.meta.url);
 
   if (frontendPath) {
@@ -587,12 +585,19 @@ if (
 
     app.use(staticRateLimiter, express.static(frontendPath));
 
-    // SPA fallback - serve index.html for all non-API routes
-    const indexPath = pathModule.join(frontendPath, 'index.html');
+    // SPA fallback - serve index.html for all non-API routes. Pass the file
+    // relative to a root instead of as an absolute path: send() rejects
+    // absolute paths that contain a dot-segment, and the npx cache lives
+    // under ~/.npm/_npx, so every `npx libre-webui` install 500s on deep
+    // links without the root option.
+    const indexFile = 'index.html';
+    const sendIndex = (res: express.Response) => {
+      res.sendFile(indexFile, { root: frontendPath });
+    };
 
     // Root route
     app.get('/', staticRateLimiter, (_req, res) => {
-      res.sendFile(indexPath);
+      sendIndex(res);
     });
 
     // All other non-API routes (Express 5 wildcard syntax)
@@ -600,7 +605,7 @@ if (
       if (req.path.startsWith('/api/') || req.path.startsWith('/ws')) {
         return next();
       }
-      res.sendFile(indexPath);
+      sendIndex(res);
     });
   } else {
     logger.warn(

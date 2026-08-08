@@ -333,6 +333,72 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
   });
 });
 
+test('packed npm artifact serves SPA routes from a dot-directory install', async () => {
+  await withTempPackedProject(async ({ tempDir, packedRoot }) => {
+    // npx runs the package from ~/.npm/_npx/<hash>/node_modules/… — a path
+    // with a dot-segment in it. send() refuses absolute file paths that
+    // contain dot-segments, so the SPA fallback must resolve index.html
+    // against a root option. Recreate the npx layout and prove deep links
+    // survive it; only "/" works when this regresses.
+    const dotRoot = path.join(tempDir, '.npx-cache', 'node_modules');
+    fs.mkdirSync(dotRoot, { recursive: true });
+    const movedRoot = path.join(dotRoot, 'libre-webui');
+    fs.renameSync(packedRoot, movedRoot);
+    linkInstalledDependencies(movedRoot);
+
+    const portProbe = http.createServer();
+    const backendPort = await startServer(portProbe);
+    await new Promise(resolve => portProbe.close(resolve));
+
+    const backendEntry = path.join(movedRoot, 'backend', 'dist', 'index.js');
+    const backendProcess = spawn(process.execPath, [backendEntry], {
+      cwd: tempDir,
+      env: {
+        ...process.env,
+        PORT: String(backendPort),
+        DATA_DIR: path.join(tempDir, 'spa-runtime-data'),
+        SERVE_FRONTEND: 'true',
+        OLLAMA_BASE_URL: 'http://127.0.0.1:9',
+        JWT_SECRET: 'test-jwt-secret',
+        ENCRYPTION_KEY:
+          '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      },
+      stdio: 'pipe',
+    });
+
+    let backendLogs = '';
+    backendProcess.stdout.on('data', chunk => {
+      backendLogs += chunk.toString();
+    });
+    backendProcess.stderr.on('data', chunk => {
+      backendLogs += chunk.toString();
+    });
+
+    try {
+      await waitForServer(
+        `http://127.0.0.1:${backendPort}/health`,
+        backendProcess
+      );
+
+      for (const route of ['/', '/login', '/c/some-session-id']) {
+        const response = await fetch(`http://127.0.0.1:${backendPort}${route}`);
+        assert.equal(
+          response.status,
+          200,
+          `${route} must serve the SPA from a dot-directory install`
+        );
+        assert.match(await response.text(), /id="root"/);
+      }
+    } catch (error) {
+      throw new Error(
+        `${error instanceof Error ? error.message : String(error)}\n\nPacked backend logs:\n${backendLogs}`
+      );
+    } finally {
+      await stopChild(backendProcess);
+    }
+  });
+});
+
 test('packed npm artifact exposes provider-backed embedding models and requests', async () => {
   await withTempPackedProject(async ({ tempDir, packedRoot }) => {
     linkInstalledDependencies(packedRoot);
