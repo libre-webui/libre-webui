@@ -126,6 +126,10 @@ ${skills}
 Finish with a concise summary of what changed and the checks that actually ran.`;
 }
 
+export function buildWorkEmptyRoundNudgePrompt(): string {
+  return `Your last turn contained no reply and no tool calls, so nothing happened. Continue the task now: either call the tools you need, or reply with your findings and the next step.`;
+}
+
 export function buildWorkBudgetExhaustionPrompt(): string {
   return `The autonomous execution budget is exhausted. Do not call any more tools.
 Return a concise final response that states:

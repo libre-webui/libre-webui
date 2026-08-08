@@ -23,6 +23,7 @@ import workEventService from './workEventService.js';
 import {
   buildWorkAgentSystemPrompt,
   buildWorkBudgetExhaustionPrompt,
+  buildWorkEmptyRoundNudgePrompt,
   WORK_AGENT_SKILLS,
   WORK_WRITE_FILE_RECOMMENDED_CHARS,
   workToolCallBudget,
@@ -51,6 +52,14 @@ import {
 
 const logger = createLogger('services:work-agent');
 export const WORK_PROVIDER_STATE_METADATA_KEY = 'workProviderState';
+export const WORK_EMPTY_MODEL_RESPONSE_METADATA_KEY = 'emptyModelResponse';
+// A reasoning-heavy model occasionally ends a round with neither text nor
+// tool calls. Treating that as the final answer strands the run mid-task,
+// so nudge it back to work a bounded number of times per run first.
+const WORK_EMPTY_ROUND_NUDGE_LIMIT = 2;
+// Cross-run replay only needs the shape of past tool calls, not full
+// write_file payloads; bound each persisted argument set.
+const WORK_CHAT_TOOL_CALL_ARGUMENTS_MAX_BYTES = 4_096;
 
 export const WORK_TOOL_SCHEMAS: Record<string, unknown>[] = [
   functionTool('list_files', 'List direct children of a workspace directory.', {
@@ -395,6 +404,7 @@ export class WorkAgentService {
       let streamedAssistantTotal = '';
       let streamedReasoningTotal = '';
       let budgetReason = 'round';
+      let emptyRoundNudges = 0;
 
       roundLoop: for (let round = 0; round < roundLimit; round++) {
         this.throwIfCancelled(runId, controller);
@@ -524,6 +534,37 @@ export class WorkAgentService {
           );
         }
         if (toolCalls.length === 0) {
+          if (
+            !assistantContent &&
+            emptyRoundNudges < WORK_EMPTY_ROUND_NUDGE_LIMIT
+          ) {
+            // A round with no text and no tool calls carries no result;
+            // completing here would strand the run mid-task. Preserve any
+            // provider replay state, then send the model back to work.
+            emptyRoundNudges += 1;
+            if (response.message.providerMetadata) {
+              messages.push({
+                role: 'assistant',
+                content: '',
+                providerMetadata: response.message.providerMetadata,
+              });
+            }
+            if (providerStateMetadata) {
+              workTaskService.addMessage(
+                taskId,
+                runId,
+                'assistant',
+                'provider_state',
+                '',
+                providerStateMetadata
+              );
+            }
+            messages.push({
+              role: 'user',
+              content: buildWorkEmptyRoundNudgePrompt(),
+            });
+            continue;
+          }
           const finalContent =
             assistantContent ||
             'The model completed without returning a text response.';
@@ -533,7 +574,15 @@ export class WorkAgentService {
             'assistant',
             'message',
             finalContent,
-            providerStateMetadata
+            assistantContent
+              ? providerStateMetadata
+              : {
+                  // The placeholder tells the user what happened, but it is
+                  // not something the model said; keep it out of future
+                  // model context unless it carries provider replay state.
+                  [WORK_EMPTY_MODEL_RESPONSE_METADATA_KEY]: true,
+                  ...(providerStateMetadata ?? {}),
+                }
           );
           // Keep completion hidden until the disposable container has either
           // stopped or been retained for a verified live preview. Consumers
@@ -565,6 +614,11 @@ export class WorkAgentService {
             ? { providerMetadata: response.message.providerMetadata }
             : {}),
         });
+        // Responses-mode providers persist their durable replay state; every
+        // other provider persists the tool calls themselves so the next run's
+        // restored context keeps the tool history instead of dropping it.
+        const persistedAssistantMetadata =
+          providerStateMetadata ?? toPersistedWorkChatToolCalls(run, toolCalls);
         if (assistantContent) {
           workTaskService.addMessage(
             taskId,
@@ -572,16 +626,16 @@ export class WorkAgentService {
             'assistant',
             'message',
             assistantContent,
-            providerStateMetadata
+            persistedAssistantMetadata
           );
-        } else if (providerStateMetadata) {
+        } else if (persistedAssistantMetadata) {
           workTaskService.addMessage(
             taskId,
             runId,
             'assistant',
             'provider_state',
             '',
-            providerStateMetadata
+            persistedAssistantMetadata
           );
         }
         for (const call of toolCalls) {
@@ -1147,7 +1201,15 @@ interface PersistedWorkProviderState {
   providerType: WorkRun['providerType'];
   providerId?: string;
   model: string;
-  providerMetadata: Record<string, unknown>;
+  providerMetadata?: Record<string, unknown>;
+  toolCalls?: PersistedWorkChatToolCall[];
+}
+
+interface PersistedWorkChatToolCall {
+  id: string;
+  name: string;
+  // JSON-encoded arguments, bounded — replay context, not an exact record.
+  arguments: string;
 }
 
 function toPersistedWorkProviderState(
@@ -1185,6 +1247,102 @@ function toPersistedWorkProviderState(
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Chat-completions providers (Ollama, OpenRouter-style plugins) have no
+ * durable Responses replay state, so persist the tool calls themselves:
+ * without them, cross-run context restoration cannot rebuild the
+ * assistant/tool message pairs and silently drops every tool result — the
+ * model then re-discovers its own work each turn.
+ */
+function toPersistedWorkChatToolCalls(
+  run: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
+  toolCalls: WorkToolCall[]
+): Record<string, unknown> | undefined {
+  if (toolCalls.length === 0) return undefined;
+  const persisted = {
+    [WORK_PROVIDER_STATE_METADATA_KEY]: {
+      providerType: run.providerType,
+      ...(run.providerId ? { providerId: run.providerId } : {}),
+      model: run.model,
+      toolCalls: toolCalls.map(call => ({
+        id: call.id,
+        name: call.function.name,
+        arguments: boundedToolCallArgumentsJson(call.function.arguments),
+      })),
+    } satisfies PersistedWorkProviderState,
+  };
+  try {
+    return Buffer.byteLength(JSON.stringify(persisted), 'utf8') <=
+      WORK_MESSAGE_METADATA_MAX_BYTES
+      ? persisted
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function boundedToolCallArgumentsJson(
+  args: Record<string, unknown>,
+  maxBytes = WORK_CHAT_TOOL_CALL_ARGUMENTS_MAX_BYTES
+): string {
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(args ?? {});
+  } catch {
+    return '{}';
+  }
+  if (Buffer.byteLength(serialized, 'utf8') <= maxBytes) return serialized;
+  const truncated: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(args)) {
+    truncated[key] =
+      typeof value === 'string' && value.length > 512
+        ? `${value.slice(0, 512)}… [truncated for replay]`
+        : value;
+  }
+  try {
+    serialized = JSON.stringify(truncated);
+    return Buffer.byteLength(serialized, 'utf8') <= maxBytes
+      ? serialized
+      : '{}';
+  } catch {
+    return '{}';
+  }
+}
+
+/**
+ * Read back tool calls persisted by toPersistedWorkChatToolCalls. Fails
+ * closed: any malformed entry drops the whole batch, so restoration falls
+ * back to visible assistant text exactly like malformed Responses state.
+ */
+function persistedChatToolCalls(
+  message: WorkMessage
+): Array<{ id: string; name: string; arguments: string }> | undefined {
+  const state = objectValue(
+    message.metadata?.[WORK_PROVIDER_STATE_METADATA_KEY]
+  );
+  const rawCalls = state?.toolCalls;
+  if (!Array.isArray(rawCalls) || rawCalls.length === 0) return undefined;
+  const calls: Array<{ id: string; name: string; arguments: string }> = [];
+  for (const value of rawCalls) {
+    const call = objectValue(value);
+    if (
+      !call ||
+      typeof call.id !== 'string' ||
+      call.id.length === 0 ||
+      typeof call.name !== 'string' ||
+      call.name.length === 0
+    ) {
+      return undefined;
+    }
+    calls.push({
+      id: call.id,
+      name: call.name,
+      arguments: typeof call.arguments === 'string' ? call.arguments : '{}',
+    });
+  }
+  return calls;
 }
 
 export function restorePersistedWorkContext(
@@ -1238,21 +1396,43 @@ export function restorePersistedWorkContext(
         provider,
         expectedStateScope
       );
+      // Chat-mode rounds persist their tool calls directly (no Responses
+      // replay state exists for them). Restore those only when the current
+      // provider requires no such state either — the strict Responses
+      // invariant stays fail-closed.
+      const chatCalls =
+        !providerMetadata && !expectedStateScope
+          ? persistedChatToolCalls(message)
+          : undefined;
       const responseCalls = providerMetadata
         ? responseFunctionCalls(providerMetadata)
-        : [];
-      const rawFunctionCallCount = Array.isArray(
-        providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
-      )
-        ? (
-            providerMetadata[
-              OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
-            ] as unknown[]
-          ).filter(item => objectValue(item)?.type === 'function_call').length
-        : 0;
+        : (chatCalls ?? []);
+      const rawFunctionCallCount = providerMetadata
+        ? Array.isArray(
+            providerMetadata[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+          )
+          ? (
+              providerMetadata[
+                OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
+              ] as unknown[]
+            ).filter(item => objectValue(item)?.type === 'function_call').length
+          : 0
+        : responseCalls.length;
       const expectedCallIds = new Set(responseCalls.map(call => call.id));
 
-      if (message.kind === 'provider_state' && !providerMetadata) {
+      if (
+        !providerMetadata &&
+        message.metadata?.[WORK_EMPTY_MODEL_RESPONSE_METADATA_KEY] === true
+      ) {
+        // The empty-response placeholder informs the user; it is not
+        // something the model said, so keep it out of model context.
+        continue;
+      }
+      if (
+        message.kind === 'provider_state' &&
+        !providerMetadata &&
+        !chatCalls
+      ) {
         continue;
       }
       if (message.kind !== 'message' && message.kind !== 'provider_state') {

@@ -70,7 +70,10 @@ after(async () => {
 
 test('the tool registry covers full file management inside the sandbox', () => {
   const byName = new Map(
-    WORK_TOOL_SCHEMAS.map(schema => [schema.function?.name ?? schema.name, schema])
+    WORK_TOOL_SCHEMAS.map(schema => [
+      schema.function?.name ?? schema.name,
+      schema,
+    ])
   );
   for (const name of [
     'list_files',
@@ -1195,5 +1198,351 @@ test('Work stops before a second provider request after credential rotation', as
       .replay(detail.id, runId, 0)
       .events.find(event => event.type === 'error')?.data.code,
     'WORK_PROVIDER_ROUTING_CHANGED'
+  );
+});
+
+test('chat-mode tool history survives a persisted Work resume', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-chat-resume-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => undefined
+  );
+  replaceMethod(
+    workModelProviderService,
+    'getRoutingFingerprint',
+    () => 'chat-resume-routing'
+  );
+  replaceMethod(workRuntimeService, 'listFiles', async () => ({
+    entries: [],
+  }));
+
+  let phase = 'initial';
+  let initialRound = 0;
+  let resumedRequest;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      if (phase === 'resumed') {
+        resumedRequest = request;
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: 'Resumed with full history.',
+          },
+          done: true,
+        };
+      }
+
+      initialRound += 1;
+      if (initialRound === 1) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'chat-call-1',
+                function: { name: 'list_files', arguments: { path: '.' } },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+      assert.equal(initialRound, 2);
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Wrote the road files.' },
+        done: true,
+      };
+    }
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Build the road.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const initialRunId = detail.activeRun?.id;
+  assert.ok(initialRunId);
+  await workAgentService.execute(detail.id, initialRunId, userId);
+  assert.equal(workTaskService.getRun(initialRunId).status, 'completed');
+
+  // The chat round persisted its tool calls for cross-run replay.
+  const persistedState = workTaskService
+    .getRecentModelContextMessages(detail.id, 30)
+    .find(message => message.kind === 'provider_state');
+  assert.ok(persistedState);
+  assert.deepEqual(persistedState.metadata.workProviderState.toolCalls, [
+    { id: 'chat-call-1', name: 'list_files', arguments: '{"path":"."}' },
+  ]);
+
+  phase = 'resumed';
+  const resumedDetail = workTaskService.createRun(
+    detail.id,
+    userId,
+    'Continue the road.'
+  );
+  const resumedRunId = resumedDetail.activeRun?.id;
+  assert.ok(resumedRunId);
+  await workAgentService.execute(detail.id, resumedRunId, userId);
+  assert.equal(workTaskService.getRun(resumedRunId).status, 'completed');
+  assert.ok(resumedRequest);
+
+  // The resumed request replays the assistant tool-call turn and its result,
+  // so the model keeps the evidence of its own prior work.
+  const replayedAssistant = resumedRequest.messages.find(
+    message =>
+      message.role === 'assistant' &&
+      Array.isArray(message.tool_calls) &&
+      message.tool_calls.length > 0
+  );
+  assert.ok(replayedAssistant);
+  assert.deepEqual(replayedAssistant.tool_calls, [
+    {
+      id: 'chat-call-1',
+      type: 'function',
+      function: { name: 'list_files', arguments: '{"path":"."}' },
+    },
+  ]);
+  const replayedResult = resumedRequest.messages.find(
+    message => message.role === 'tool' && message.tool_call_id === 'chat-call-1'
+  );
+  assert.equal(replayedResult.content, '[]');
+  assert.ok(
+    resumedRequest.messages.some(
+      message =>
+        message.role === 'assistant' &&
+        message.content === 'Wrote the road files.'
+    )
+  );
+});
+
+test('chat-persisted tool calls restore for chat providers and fail closed for Responses', () => {
+  const provider = {
+    providerType: 'plugin',
+    providerId: 'chat-provider',
+    model: 'chat-model',
+  };
+  const chatState = {
+    workProviderState: {
+      providerType: 'plugin',
+      providerId: 'chat-provider',
+      model: 'chat-model',
+      toolCalls: [
+        { id: 'call-a', name: 'write_file', arguments: '{"path":"road.js"}' },
+        { id: 'call-b', name: 'read_file', arguments: '{"path":"game.js"}' },
+      ],
+    },
+  };
+  const rows = [
+    {
+      role: 'assistant',
+      kind: 'provider_state',
+      content: '',
+      metadata: chatState,
+    },
+    {
+      role: 'tool',
+      kind: 'tool_result',
+      content: 'Wrote 120 bytes to road.js.',
+      metadata: { name: 'write_file', toolCallId: 'call-a' },
+    },
+    { role: 'user', kind: 'message', content: 'Continue.' },
+  ];
+
+  const restored = restorePersistedWorkContext(rows, provider, undefined);
+  assert.deepEqual(
+    restored.map(message => ({
+      role: message.role,
+      toolCallId: message.tool_call_id,
+      calls: message.tool_calls?.length,
+    })),
+    [
+      { role: 'assistant', toolCallId: undefined, calls: 2 },
+      { role: 'tool', toolCallId: 'call-a', calls: undefined },
+      { role: 'tool', toolCallId: 'call-b', calls: undefined },
+      { role: 'user', toolCallId: undefined, calls: undefined },
+    ]
+  );
+  // The interrupted second call synthesizes an explicit unknown outcome.
+  assert.match(restored[2].content, /interrupted/i);
+
+  // A Responses-mode provider must never replay tool calls without durable
+  // Responses state: the chat rows fail closed to the user message alone.
+  assert.deepEqual(
+    restorePersistedWorkContext(rows, provider, 'some-responses-scope'),
+    [{ role: 'user', content: 'Continue.' }]
+  );
+
+  // A malformed persisted call drops the whole batch rather than replaying
+  // a partial tool history.
+  const malformed = structuredClone(rows);
+  delete malformed[0].metadata.workProviderState.toolCalls[1].id;
+  assert.deepEqual(
+    restorePersistedWorkContext(malformed, provider, undefined),
+    [{ role: 'user', content: 'Continue.' }]
+  );
+});
+
+test('empty rounds are nudged back to work instead of completing', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-empty-nudge-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => undefined
+  );
+
+  let requests = 0;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests += 1;
+      if (requests > 1) {
+        assert.match(
+          request.messages.at(-1).content,
+          /no reply and no tool calls/i
+        );
+      }
+      if (requests < 3) {
+        // A reasoning-only round: thinking, no content, no tool calls.
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            thinking: 'Considering the road geometry.',
+          },
+          done: true,
+        };
+      }
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: 'Recovered final answer.' },
+        done: true,
+      };
+    }
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Diagnose the missing road.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(requests, 3);
+  assert.equal(workTaskService.getRun(runId).status, 'completed');
+  const persisted = workTaskService.getMessages(detail.id);
+  assert.ok(
+    persisted.some(message => message.content === 'Recovered final answer.')
+  );
+  assert.equal(
+    persisted.some(message =>
+      message.content.includes('without returning a text response')
+    ),
+    false
+  );
+});
+
+test('a run that stays empty completes with a placeholder hidden from replay', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-empty-exhausted-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => undefined
+  );
+
+  let requests = 0;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests += 1;
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: { role: 'assistant', content: '' },
+        done: true,
+      };
+    }
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Say something.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  // Initial round plus the two bounded nudges, then an honest completion.
+  assert.equal(requests, 3);
+  assert.equal(workTaskService.getRun(runId).status, 'completed');
+  const placeholder = workTaskService
+    .getMessages(detail.id)
+    .find(message =>
+      message.content.includes('without returning a text response')
+    );
+  assert.ok(placeholder);
+  assert.equal(placeholder.metadata.emptyModelResponse, true);
+
+  // The placeholder stays user-visible but never re-enters model context.
+  const restored = restorePersistedWorkContext(
+    workTaskService.getRecentModelContextMessages(detail.id, 30),
+    { providerType: 'plugin', providerId: 'test-plugin', model: 'test-model' },
+    undefined
+  );
+  assert.equal(
+    restored.some(message =>
+      message.content.includes('without returning a text response')
+    ),
+    false
   );
 });
