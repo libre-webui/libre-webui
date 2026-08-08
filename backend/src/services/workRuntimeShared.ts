@@ -41,6 +41,8 @@ export const WORK_RUNTIME_DEFAULTS = {
   previewPort: 4173,
   previewBind: '127.0.0.1',
   networkName: 'libre-webui-work',
+  // 0 disables the idle sweep: previews stay up until stopped explicitly.
+  idleTimeoutMs: 0,
 } as const;
 
 // Two runtimes per administrator so a second task does not have to wait for
@@ -82,6 +84,15 @@ export const workRuntimeConfig = {
   // private to the Docker host, which is correct when the browser runs there.
   previewBind:
     process.env.WORK_PREVIEW_BIND || WORK_RUNTIME_DEFAULTS.previewBind,
+  // Stop a running sandbox after this much inactivity: no command finished,
+  // no terminal attached, no preview request through the signed proxy.
+  // Commands already stop their container on completion, so this mainly
+  // bounds how long an unwatched preview keeps a sandbox (and its admission
+  // slot) alive. 0 keeps today's behavior: previews run until stopped.
+  idleTimeoutMs: positiveInteger(
+    process.env.WORK_RUNTIME_IDLE_TIMEOUT_MS,
+    WORK_RUNTIME_DEFAULTS.idleTimeoutMs
+  ),
   maxActiveRuntimesGlobal: positiveInteger(
     process.env.WORK_MAX_ACTIVE_RUNTIMES_GLOBAL,
     WORK_RUNTIME_ADMISSION_DEFAULTS.maxActiveRuntimesGlobal

@@ -529,6 +529,14 @@ idle container, commands stop the container after completion, and a verified
 preview may keep it running so the user can inspect the app. The named volume
 stays mounted again when the same task container is restarted or recreated.
 
+`WORK_RUNTIME_IDLE_TIMEOUT_MS` bounds how long that preview grace lasts:
+when set, a sweep stops any sandbox that has seen no activity — no command
+finished, no terminal attached, no preview request through the signed
+proxy — for that many milliseconds, freeing its admission slot. Stopping is
+cheap and the workspace persists, so an idled preview simply restarts on
+the next use. The default (`0`) keeps today's behavior: a preview runs
+until it is stopped explicitly.
+
 On backend startup, active runs are marked failed and preview state is
 cleared — the agent loop and the preview proxy died with the process and
 cannot be resumed. Containers are then reconciled against Docker in a single
@@ -879,6 +887,7 @@ Work reads these variables in the backend process:
 | `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://` or `tcp://`, else `/var/run/docker.sock`                           | Docker Engine endpoint used for interactive terminals      |
 | `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous interactive terminals per task                |
 | `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session closes              |
+| `WORK_RUNTIME_IDLE_TIMEOUT_MS`        | `0` (disabled)                                                                                | Stop a sandbox after this much inactivity (previews too)   |
 
 Use a fixed image version or digest in production. A mutable image tag can
 change both the available command-line tools and the security boundary without

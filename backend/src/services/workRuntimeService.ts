@@ -34,6 +34,7 @@ import {
 } from '../utils/workGit.js';
 import { userHasWorkAccess } from './workAccessService.js';
 import workPreviewProxyService from './workPreviewProxyService.js';
+import workTaskService from './workTaskService.js';
 import { KubernetesWorkRuntimeDriver } from './workKubernetesDriver.js';
 import {
   DockerWorkRuntimeDriver,
@@ -138,6 +139,21 @@ export class WorkRuntimeService {
 
   constructor(driver: WorkRuntimeDriver = new DockerWorkRuntimeDriver()) {
     this.driver = driver;
+    // Authorized preview traffic keeps its task's idle clock fresh.
+    workPreviewProxyService.onPreviewActivity(taskId =>
+      this.noteTaskActivity(taskId)
+    );
+    this.scheduleIdleSweep();
+  }
+
+  // Last observed activity per task, feeding the idle sweep: a finished
+  // command, a terminal session ending, or a preview fetch. In-memory only —
+  // after a restart the clock restarts from the first sighting.
+  private taskActivity = new Map<string, number>();
+  private idleTimer?: NodeJS.Timeout;
+
+  noteTaskActivity(taskId: string): void {
+    this.taskActivity.set(taskId, Date.now());
   }
 
   get recoveryPending(): boolean {
@@ -343,6 +359,7 @@ export class WorkRuntimeService {
     return async () => {
       if (released) return;
       released = true;
+      this.noteTaskActivity(task.id);
       const remaining = (this.terminalHolds.get(task.id) ?? 1) - 1;
       if (remaining <= 0) {
         this.terminalHolds.delete(task.id);
@@ -375,6 +392,10 @@ export class WorkRuntimeService {
     if (this.recoveryTimer) {
       clearTimeout(this.recoveryTimer);
       this.recoveryTimer = undefined;
+    }
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = undefined;
     }
     this.driver.shutdown();
   }
@@ -521,6 +542,97 @@ export class WorkRuntimeService {
         error
       );
     }
+  }
+
+  /**
+   * Stop sandboxes that have seen no activity — no command finished, no
+   * terminal attached, no preview fetch — for WORK_RUNTIME_IDLE_TIMEOUT_MS.
+   * Stopping is cheap and the workspace persists, so the sweep only spends
+   * an admission slot holder that nobody is using. Busy tasks (active
+   * command, terminal, or a non-preview operation lease) refresh their
+   * clock instead of being considered. A running sandbox seen for the
+   * first time starts its clock at the sighting rather than being stopped
+   * on a guess.
+   */
+  async sweepIdleRuntimes(now = Date.now()): Promise<{ stopped: number }> {
+    if (
+      config.idleTimeoutMs <= 0 ||
+      this.shuttingDown ||
+      this.recoveryPending
+    ) {
+      return { stopped: 0 };
+    }
+    let discovered: DiscoveredWorkContainer[];
+    try {
+      discovered = await this.driver.listManaged();
+    } catch {
+      // The runtime is unreachable; nothing can be stopped anyway.
+      return { stopped: 0 };
+    }
+    const records = new Map(
+      workTaskService.listAllTaskRecords().map(task => [task.id, task])
+    );
+    let stopped = 0;
+    for (const entry of discovered) {
+      if (!entry.running) continue;
+      const task = records.get(entry.taskId);
+      // Containers without a task row are startup reconciliation's business.
+      if (!task) continue;
+      const busy =
+        this.activeCommands.has(task.id) ||
+        (this.terminalHolds.get(task.id) ?? 0) > 0 ||
+        (this.runtimeLeases.has(task.id) &&
+          !this.previewLeaseReleases.has(task.id));
+      const lastActivity = this.taskActivity.get(task.id);
+      if (busy || lastActivity === undefined) {
+        this.noteTaskActivity(task.id);
+        continue;
+      }
+      if (now - lastActivity < config.idleTimeoutMs) continue;
+      try {
+        if (this.previewLeaseReleases.has(task.id)) {
+          await this.stopPreview(task, {
+            onStopped: () => workTaskService.updatePreview(task.id, 'stopped'),
+          });
+        } else {
+          await this.stopContainer(task);
+        }
+        this.taskActivity.delete(task.id);
+        stopped += 1;
+        logger.info(
+          `Stopped idle Work sandbox ${task.containerName} after ${config.idleTimeoutMs}ms of inactivity.`
+        );
+      } catch (error) {
+        logger.warn(
+          `Could not stop idle Work sandbox ${task.containerName}:`,
+          error
+        );
+      }
+    }
+    return { stopped };
+  }
+
+  private scheduleIdleSweep(): void {
+    if (config.idleTimeoutMs <= 0 || this.shuttingDown || this.idleTimer) {
+      return;
+    }
+    // Sweep well inside the timeout so an idle sandbox overshoots its
+    // deadline by a fraction, not a multiple.
+    const interval = Math.max(
+      15_000,
+      Math.min(60_000, Math.floor(config.idleTimeoutMs / 4))
+    );
+    this.idleTimer = setTimeout(() => {
+      this.idleTimer = undefined;
+      void this.sweepIdleRuntimes()
+        .catch(error => {
+          logger.warn('Work idle sweep failed:', error);
+        })
+        .finally(() => {
+          this.scheduleIdleSweep();
+        });
+    }, interval);
+    this.idleTimer.unref();
   }
 
   private scheduleRecoverySweep(): void {
@@ -736,6 +848,7 @@ export class WorkRuntimeService {
     this.activeCommands.delete(taskId);
     this.releasePreviewLease(taskId);
     this.runtimeLeases.delete(taskId);
+    this.taskActivity.delete(taskId);
     workPreviewProxyService.clearPreviewUpstream(taskId);
   }
 
@@ -2013,7 +2126,11 @@ export class WorkRuntimeService {
     command: string[],
     options: ProcessOptions = {}
   ): Promise<ProcessResult> {
-    return this.driver.exec(task, command, options);
+    try {
+      return await this.driver.exec(task, command, options);
+    } finally {
+      this.noteTaskActivity(task.id);
+    }
   }
 }
 

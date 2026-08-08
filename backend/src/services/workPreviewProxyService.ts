@@ -362,6 +362,13 @@ export class WorkPreviewProxyService {
     this.taskUpstreamHosts.delete(taskId);
   }
 
+  private activityListener?: (taskId: string) => void;
+
+  /** Observe authorized preview traffic, e.g. to feed an idle sweep. */
+  onPreviewActivity(listener: (taskId: string) => void): void {
+    this.activityListener = listener;
+  }
+
   private parseTarget(rawUrl: string): PreviewProxyTarget | undefined {
     let url: URL;
     try {
@@ -414,6 +421,9 @@ export class WorkPreviewProxyService {
     }
 
     const upstreamPath = `/${url.pathname.slice(proxyBasePath.length)}${url.search}`;
+    // Every authorized preview request (HTTP and WebSocket both resolve
+    // through here) counts as task activity for the idle sweep.
+    this.activityListener?.(taskId);
     return {
       taskId,
       port,
