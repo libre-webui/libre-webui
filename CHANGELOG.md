@@ -15,6 +15,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.21.0] - 2026-08-08
+
+Libre WebUI 0.21.0 adds self-hosted web search, repairs document retrieval (RAG) so every document in scope is actually used, and puts each dual-use capability behind an explicit administrator access control. Chat picks up long-requested quality of life: pinned chats, drag-and-drop foldering, message avatars, and a sources panel that shows exactly what fed each reply.
+
+Upgrading notes: database migrations (the `pinned` session column and the new settings) run automatically at startup, and every new capability ships off or admins-only. Two defaults changed deliberately: **the Agents section (Libre Claw and agent CLI models) is now disabled until an administrator enables it** in User Management — or pins it with `AGENT_CLI_MODELS_ENABLED=true`, which is now tri-state (unset defers to the toggle) — and **the private deployment stack now requires `SEARXNG_SECRET` in `.env`** for its bundled search service.
+
+### ✨ New Features
+
+- **Self-hosted web search through SearXNG.** Administrators configure the engine in Settings > Search (URL, enable, live connection test, results per search 1-10, safe search). Chat gains a composer globe: results are injected as context before generation, so every model benefits — including small local models without tool calling — and replies show numbered source chips. Work tasks with network access gain a `web_search` tool whose result count is capped by the admin ceiling. The private deploy stack bundles an internal-only SearXNG service, and `SEARXNG_URL` pre-fills the endpoint.
+- **Sources and documents panel.** Conversations show their evidence: every web source the replies drew on and every document retrieval used, plus the documents attached to the chat. A flat right rail on wide screens, a bottom sheet behind a compact trigger on smaller ones; per-message source chips persist across reloads.
+- **Pinned chats and a session context menu.** Every sidebar chat gets a "..." menu — open in new tab, rename, pin, move to folder, archive, delete. Pinned chats sit in a Pinned group at the top and survive reloads.
+- **Drag and drop chats into folders.** Drag a chat onto a folder header to file it, or onto a date-group label to take it back out.
+- **Message avatars in Chat.** Assistant replies carry the Libre mark (or the persona's avatar); user messages show the account avatar — matching the Work conversation.
+- **Welcome-screen parity.** The first-message composer gains the web search toggle and document attach (PDF/TXT/MD), so search and retrieval work from the very first message of a new chat.
+- **Access controls for model downloads, web search, and agents.** User Management gains three cards beside Work access: Model downloads (open Ollama pulls and the Hugging Face browser to all users; administrators always can), Web search (same shape), and Agents (enable the Agents section, off by default). Each is a persisted mode enforced server-side on every request path and failing closed to admins-only.
+
+### 🔧 Improvements
+
+- Work policy editing rejects garbage numeric input instead of silently clearing limits, stores CPU limits normalized, anchors policy image references to a registry charset so nothing flag-shaped can reach the container runtime, bounds memory (6m-1024g) and workspace (up to 16Ti) magnitudes, and no longer rounds sub-minute idle timeouts in the edit form.
+- Work access changes reach live sessions without a re-login: the interface re-checks on window focus and when a Work call is rejected.
+- The System page Work panel shows its error with a retry instead of disappearing, reports zero terminal sessions as 0, and open clients converge after an idle-stopped preview.
+- The Work task-actions menu renders above the workspace panes instead of hiding behind them.
+- The Work policy picker refreshes when returning to the landing view and clears stale selections.
+- Cleared every React set-state-in-effect lint warning; `npm run lint` is silent again.
+
+### 🐛 Bug Fixes
+
+- **Document retrieval (RAG) repaired across all chat paths.** The chat WebSocket path now honors attached knowledge collections exactly like the REST API; user-scoped uploads join every chat's searchable scope; documents whose chunks were never embedded surface through keyword scoring instead of staying permanently invisible (the "only my first document is used" failure); and keyword search takes over when nothing clears the similarity threshold.
+- **Work agents keep their tool history across runs.** Chat-completions providers now persist tool calls for cross-run replay, so a follow-up run sees what was already built instead of re-reading every file; reasoning-only rounds are nudged back to work instead of silently ending the run; and the empty-response placeholder no longer re-enters model context.
+- Added 68 translation keys that the interface referenced but no locale defined — command palette, tab strip, Work Git panel, model selector states, and the host workspace form — with real translations in all 25 languages.
+
+### 🔒 Security & Dependencies
+
+- The bundled SearXNG service is internal-only (never published to the host), runs with dropped capabilities and no-new-privileges, and search queries execute server-side with bounded result text and http(s)-only result URLs.
+- Individual model pulls moved from hard-coded admin-only to a fail-closed persisted mode; every other model lifecycle operation remains strictly admin-only.
+
+### 📚 Documentation
+
+- New Web Search guide: setup with the bundled stack or any SearXNG instance, privacy and scope notes, troubleshooting.
+- Agent CLI documentation updated for the disabled-by-default toggle and the tri-state `AGENT_CLI_MODELS_ENABLED`.
+- Private deployment guide covers the SearXNG service and `SEARXNG_SECRET`; the environment reference gains `SEARXNG_URL`.
+
 ## [0.20.0] - 2026-08-08
 
 Libre WebUI 0.20.0 introduces a major expansion of the Work sandbox system, headlined by an experimental Kubernetes runtime backend, named runtime policies, and idle-stop for unwatched sandboxes. This release also strengthens deployment security with Docker socket proxy isolation, adds an admin overview panel for monitoring all sandboxes, and allows per-user access control behind an admin setting.
