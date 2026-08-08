@@ -27,14 +27,18 @@ This switches the backend to `WORK_RUNTIME_BACKEND=kubernetes` and creates:
   `5Gi` — a real per-task disk quota);
 - a namespace-scoped Role and RoleBinding granting the backend's
   ServiceAccount exactly `pods` (get/list/create/delete), `pods/exec`
-  (get/create), and `persistentvolumeclaims` (get/create/delete) in that
-  namespace — no secrets, no cluster scope. This grant replaces the Docker
-  socket entirely: the API server, not the application, enforces that a
-  sandbox spec cannot mount host paths;
+  (get/create), and `persistentvolumeclaims` (get/list/create/delete) in
+  that namespace — no secrets, no cluster scope. This grant replaces the
+  Docker socket entirely: the API server, not the application, enforces
+  that a sandbox spec cannot mount host paths;
 - NetworkPolicies that default-deny all sandbox traffic, allow ingress only
   from the backend on the preview port, and give network-enabled sandboxes
   egress to the internet minus `work.networkPolicy.blockedEgressCidrs`
-  (private ranges and the cloud-metadata link-local range by default).
+  (private ranges, the CGNAT range some managed clusters use for pod and
+  service CIDRs, and the cloud-metadata link-local range by default —
+  verify your cluster's pod and service CIDRs are covered). Sandbox DNS is
+  allowed only to `kube-system`; a cluster running node-local DNS needs its
+  own DNS carve-out.
 
 Sandboxes run non-root with a read-only root filesystem, all capabilities
 dropped, seccomp `RuntimeDefault`, and no ServiceAccount token. Files,

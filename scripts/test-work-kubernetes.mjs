@@ -124,6 +124,10 @@ test('resource quantities translate from Docker to Kubernetes forms', () => {
   assert.equal(dockerMemoryToKubernetes('2g'), '2Gi');
   assert.equal(dockerMemoryToKubernetes('1536m'), '1536Mi');
   assert.equal(dockerMemoryToKubernetes('512k'), '512Ki');
+  // Docker's two-letter suffix spellings mean the same binary quantity.
+  assert.equal(dockerMemoryToKubernetes('2gb'), '2Gi');
+  assert.equal(dockerMemoryToKubernetes('2GB'), '2Gi');
+  assert.equal(dockerMemoryToKubernetes('512mib'), '512Mi');
   // Already-Kubernetes values pass through untouched.
   assert.equal(dockerMemoryToKubernetes('2Gi'), '2Gi');
   assert.equal(dockerCpusToKubernetes('2'), '2');

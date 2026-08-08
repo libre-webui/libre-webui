@@ -357,6 +357,11 @@ export class WorkPreviewProxyService {
     return `${WORK_PREVIEW_PROXY_PREFIX}/${encodeURIComponent(taskId)}/${port}.${nonce}.${signature}/`;
   }
 
+  /** Drop a task's upstream override when its preview stops or it is removed. */
+  clearPreviewUpstream(taskId: string): void {
+    this.taskUpstreamHosts.delete(taskId);
+  }
+
   private parseTarget(rawUrl: string): PreviewProxyTarget | undefined {
     let url: URL;
     try {

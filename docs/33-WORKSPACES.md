@@ -535,7 +535,11 @@ may still be executing without a supervising process; containers already at
 rest are left exactly as they are; and managed containers whose task row no
 longer exists — a crash during task deletion, or a database restored without
 its Docker resources — are removed. Ownership is decided by the task label
-stamped at creation, never by name. A task with no container at all needs no
+stamped at creation, never by name. Orphan removal assumes one Libre WebUI
+instance per Docker daemon: a second instance sharing the daemon would see
+the first instance's labeled containers as orphans and remove them at
+startup. Run each instance against its own daemon (or a dedicated rootless
+daemon, as recommended below). A task with no container at all needs no
 Docker call, so startup cost follows what is actually running, not the size
 of the task list. If Docker cannot prove a running container was stopped or
 an orphan was removed, that cleanup remains tracked, new mutable Work

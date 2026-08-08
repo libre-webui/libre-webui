@@ -41,7 +41,7 @@ test('the Work Role grants exactly the driver surface, nothing else', () => {
   );
   assert.match(
     rbac,
-    /resources: \['persistentvolumeclaims'\]\n\s+verbs: \['get', 'create', 'delete'\]/
+    /resources: \['persistentvolumeclaims'\][\s\S]{0,300}verbs: \['get', 'list', 'create', 'delete'\]/
   );
   assert.doesNotMatch(
     rbac,

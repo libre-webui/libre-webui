@@ -116,12 +116,17 @@ work:
   env: {}
   networkPolicy:
     enabled: true
-    # Ranges networked sandboxes may never reach: private networks and the
-    # link-local range that hosts cloud metadata endpoints. Requires a CNI
-    # that enforces NetworkPolicy (Calico, Cilium, ...). Extend rather than
-    # trim, and keep 169.254.0.0/16 unless you know why you are removing it.
+    # Ranges networked sandboxes may never reach: private networks (including
+    # the CGNAT range some managed clusters use for pod/service CIDRs) and
+    # the link-local range that hosts cloud metadata endpoints. Requires a
+    # CNI that enforces NetworkPolicy (Calico, Cilium, ...). Extend rather
+    # than trim, and keep 169.254.0.0/16 unless you know why you are
+    # removing it. Note: sandbox DNS is allowed only to kube-system; a
+    # cluster running node-local DNS (a link-local resolver on each node)
+    # needs its own DNS carve-out.
     blockedEgressCidrs:
       - 10.0.0.0/8
+      - 100.64.0.0/10
       - 172.16.0.0/12
       - 192.168.0.0/16
       - 169.254.0.0/16

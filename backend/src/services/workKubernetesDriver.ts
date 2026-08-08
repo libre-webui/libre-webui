@@ -93,8 +93,9 @@ interface KubernetesClient {
  * workspace, one on-demand Pod per running sandbox, exec for everything that
  * happens inside. No Docker daemon or socket is involved anywhere, and the
  * backing ServiceAccount only needs pods/pods-exec/PVC rights in the sandbox
- * namespace. Preview and interactive terminals are not implemented yet
- * (plan phases 3–4); both report themselves unavailable.
+ * namespace. Interactive terminals ride the exec subresource as a TTY
+ * WebSocket, and preview is served from the sandbox Pod IP through the
+ * signed proxy (the backend must run in-cluster to reach it).
  */
 export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
   readonly image = config.image;
@@ -294,6 +295,18 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     await this.deletePodAndWait(name);
   }
 
+  async listWorkspaces(): Promise<{ name: string; taskId: string }[]> {
+    const { core } = await this.client();
+    const claims = await core.listNamespacedPersistentVolumeClaim({
+      namespace: this.namespace,
+      labelSelector: `${MANAGED_LABEL}=true`,
+    });
+    return (claims.items ?? []).map(claim => ({
+      name: claim.metadata?.name ?? '',
+      taskId: claim.metadata?.labels?.[TASK_LABEL] ?? '',
+    }));
+  }
+
   terminalUnavailableReason(): null {
     return null;
   }
@@ -448,14 +461,32 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
 
     return new Promise<ProcessResult>((resolve, reject) => {
       let settled = false;
-      let timer: NodeJS.Timeout | undefined;
+      let socket: import('isomorphic-ws').WebSocket | undefined;
       let status: import('@kubernetes/client-node').V1Status | undefined;
       const claimSettlement = (): boolean => {
         if (settled) return false;
         settled = true;
-        if (timer) clearTimeout(timer);
+        clearTimeout(timer);
         return true;
       };
+      // Armed before the connection attempt: a hung API-server connection
+      // must hit the same deadline as a hung command.
+      const timer = setTimeout(() => {
+        if (!claimSettlement()) return;
+        try {
+          socket?.close();
+        } catch {
+          // The socket may already be closed; nothing to clean up.
+        }
+        reject(
+          new WorkRuntimeError(
+            `Command timed out after ${timeoutMs}ms.`,
+            504,
+            'WORK_COMMAND_TIMEOUT'
+          )
+        );
+      }, timeoutMs);
+      timer.unref();
 
       const exec = new lib.Exec(kubeConfig);
       exec
@@ -476,20 +507,17 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
             status = result;
           }
         )
-        .then(socket => {
-          timer = setTimeout(() => {
-            socket.close();
-            if (!claimSettlement()) return;
-            reject(
-              new WorkRuntimeError(
-                `Command timed out after ${timeoutMs}ms.`,
-                504,
-                'WORK_COMMAND_TIMEOUT'
-              )
-            );
-          }, timeoutMs);
-          timer.unref();
-          socket.on('error', error => {
+        .then(connected => {
+          socket = connected;
+          if (settled) {
+            try {
+              connected.close();
+            } catch {
+              // The socket may already be closed; nothing to clean up.
+            }
+            return;
+          }
+          connected.on('error', error => {
             if (!claimSettlement()) return;
             reject(
               new WorkRuntimeError(
@@ -499,7 +527,7 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
               )
             );
           });
-          socket.on('close', () => {
+          connected.on('close', () => {
             if (!claimSettlement()) return;
             const exitCode = statusToExitCode(status);
             const result: ProcessResult = {
@@ -516,7 +544,7 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
                     status?.message ||
                     `Command exited with code ${exitCode}.`,
                   503,
-                  'WORK_DOCKER_COMMAND_FAILED'
+                  'WORK_COMMAND_FAILED'
                 )
               );
               return;
@@ -647,9 +675,12 @@ export function wrapCommandWithWorkdir(
   return ['/bin/sh', '-c', 'cd -- "$0" && exec "$@"', workdir, ...command];
 }
 
-/** Docker memory strings use binary multiples; so do Ki/Mi/Gi. */
+/**
+ * Docker memory strings use binary multiples; so do Ki/Mi/Gi. Docker accepts
+ * both one- and two-letter suffixes (2g, 2gb, 2gib) for the same quantity.
+ */
 export function dockerMemoryToKubernetes(value: string): string {
-  const match = value.trim().match(/^(\d+(?:\.\d+)?)([bkmg])$/i);
+  const match = value.trim().match(/^(\d+(?:\.\d+)?)([bkmg])(?:i?b)?$/i);
   if (!match) return value;
   const suffix = { b: '', k: 'Ki', m: 'Mi', g: 'Gi' }[
     match[2].toLowerCase() as 'b' | 'k' | 'm' | 'g'
@@ -761,6 +792,10 @@ function sleep(ms: number): Promise<void> {
  * Terminal output stream that also looks like a TTY to the Kubernetes
  * client: exposing rows/columns and emitting 'resize' makes the client
  * library open the resize channel and forward size updates to the server.
+ * That is undocumented @kubernetes/client-node behavior, so a client
+ * upgrade can silently break resize — the kind e2e suite asserts it works
+ * (`stty size` after a resize call); trust that check when bumping the
+ * dependency.
  */
 class ResizableOutputStream extends PassThrough {
   rows = 24;

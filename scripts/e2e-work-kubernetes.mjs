@@ -217,6 +217,13 @@ try {
   const mine = managed.find(entry => entry.taskId === task.id);
   if (!mine?.running) fail(`listManaged: ${JSON.stringify(managed)}`);
 
+  step('workspace listing sees the PVC (orphan reporting, list verb)');
+  const workspaces = await driver.listWorkspaces();
+  const claim = workspaces.find(entry => entry.taskId === task.id);
+  if (claim?.name !== task.volumeName) {
+    fail(`listWorkspaces: ${JSON.stringify(workspaces)}`);
+  }
+
   step('ownership: a foreign task record is refused');
   let refused = false;
   try {

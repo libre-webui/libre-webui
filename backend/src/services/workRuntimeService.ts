@@ -128,6 +128,10 @@ export class WorkRuntimeService {
   private recoveryTasks = new Map<string, WorkTaskRecord>();
   private recoveryOrphans = new Map<string, DiscoveredWorkContainer>();
   private recoveryInventory?: WorkTaskRecord[];
+  // Sweeps left for the empty-inventory case before giving up on a daemon
+  // that never appears (30 × 10s: covers a socket proxy starting late
+  // without probing a Docker-less deployment forever).
+  private emptyInventorySweepsLeft = 30;
   private recoveryTimer?: NodeJS.Timeout;
   private shuttingDown = false;
 
@@ -402,9 +406,16 @@ export class WorkRuntimeService {
     }
     if (this.shuttingDown || !(await this.isDockerAvailable())) {
       if (this.recoveryInventory?.length === 0) {
-        // No tasks to supervise and no daemon to ask about leftovers: stay
-        // quiet instead of fail-closing a deployment without Docker.
-        this.recoveryInventory = undefined;
+        // No tasks to supervise, so nothing fail-closes — but leftover
+        // containers may still exist (a restored database, a daemon or
+        // socket proxy that comes up after the backend). Keep retrying the
+        // reconciliation quietly for a bounded window, then give up so a
+        // deployment without Docker is not probed forever.
+        if (this.shuttingDown || this.emptyInventorySweepsLeft <= 0) {
+          this.recoveryInventory = undefined;
+          return { stopped: 0, failed: 0 };
+        }
+        this.emptyInventorySweepsLeft -= 1;
         return { stopped: 0, failed: 0 };
       }
       return { stopped: 0, failed: this.recoveryPendingCount };
@@ -435,6 +446,7 @@ export class WorkRuntimeService {
       for (const orphan of plan.removeOrphans) {
         this.recoveryOrphans.set(orphan.name, orphan);
       }
+      await this.reportOrphanWorkspaces(this.recoveryInventory);
       this.recoveryInventory = undefined;
       if (this.recoveryPendingCount > 0 || plan.atRest > 0) {
         logger.info(
@@ -482,10 +494,39 @@ export class WorkRuntimeService {
     return { stopped, failed: this.recoveryPendingCount };
   }
 
+  /**
+   * Workspaces whose task record no longer exists are reported, never
+   * auto-deleted: a workspace is the durable half of a task, so removal is
+   * always an explicit operator decision.
+   */
+  private async reportOrphanWorkspaces(
+    inventory: WorkTaskRecord[]
+  ): Promise<void> {
+    if (!this.driver.listWorkspaces) return;
+    try {
+      const known = new Set(inventory.map(task => task.id));
+      const orphaned = (await this.driver.listWorkspaces()).filter(
+        workspace => !known.has(workspace.taskId)
+      );
+      if (orphaned.length > 0) {
+        logger.warn(
+          `Work found ${orphaned.length} workspace(s) with no task record, left in place: ` +
+            orphaned.map(workspace => workspace.name).join(', ')
+        );
+      }
+    } catch (error) {
+      logger.warn(
+        'Could not list Work workspaces for orphan reporting:',
+        error
+      );
+    }
+  }
+
   private scheduleRecoverySweep(): void {
     if (
       this.shuttingDown ||
-      this.recoveryPendingCount === 0 ||
+      (this.recoveryPendingCount === 0 &&
+        this.recoveryInventory === undefined) ||
       this.recoveryTimer
     ) {
       return;
@@ -694,6 +735,7 @@ export class WorkRuntimeService {
     this.activeCommands.delete(taskId);
     this.releasePreviewLease(taskId);
     this.runtimeLeases.delete(taskId);
+    workPreviewProxyService.clearPreviewUpstream(taskId);
   }
 
   async listFiles(
@@ -1619,6 +1661,7 @@ export class WorkRuntimeService {
   }
 
   private async stopPreviewPrepared(task: WorkTaskRecord): Promise<void> {
+    workPreviewProxyService.clearPreviewUpstream(task.id);
     // Stop the container, not only the recorded process group. A custom
     // preview command can intentionally double-fork or create a new session;
     // Docker's container boundary guarantees those descendants are gone.

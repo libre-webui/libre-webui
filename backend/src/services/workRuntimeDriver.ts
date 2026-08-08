@@ -113,6 +113,12 @@ export interface WorkRuntimeDriver {
   listManaged(): Promise<DiscoveredWorkContainer[]>;
   /** Force-remove a managed sandbox whose task record no longer exists. */
   removeOrphan(name: string): Promise<void>;
+  /**
+   * Every workspace this runtime has created, by ownership label, so
+   * reconciliation can report workspaces whose task record no longer
+   * exists. Orphaned workspaces are only reported, never auto-deleted.
+   */
+  listWorkspaces?(): Promise<{ name: string; taskId: string }[]>;
   /** Why interactive terminals are unavailable on this backend, if so. */
   terminalUnavailableReason(): string | null;
   /** Open an interactive TTY inside the sandbox as the unprivileged user. */
