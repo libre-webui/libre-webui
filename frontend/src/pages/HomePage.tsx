@@ -57,8 +57,7 @@ const rowClass =
 export const HomePage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, systemInfo, isAdmin, canUseWork, canUseAgents } =
-    useAuthStore();
+  const { user, systemInfo, canUseWork, canUseAgents } = useAuthStore();
   const sessions = useChatStore(state => state.sessions);
   const workTasks = useWorkStore(state => state.tasks);
   const capabilities = useWorkStore(state => state.capabilities);

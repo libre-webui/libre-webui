@@ -81,7 +81,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const sessions = useChatStore(state => state.sessions);
   const workTasks = useWorkStore(state => state.tasks);
   const toggleTheme = useAppStore(state => state.toggleTheme);
-  const { systemInfo, isAdmin, canUseWork, canUseAgents } = useAuthStore();
+  const { canUseWork, canUseAgents } = useAuthStore();
 
   const showWork = canUseWork();
   const showAgents = canUseAgents();
