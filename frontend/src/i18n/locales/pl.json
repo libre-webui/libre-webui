@@ -1284,6 +1284,12 @@
       "failed": "Nie udało się zapisać polityki Work",
       "invalidNumber": "Limit PID i zatrzymanie przy bezczynności muszą być liczbami."
     },
+    "modelAccess": {
+      "title": "Pobieranie modeli",
+      "description": "Zezwól wszystkim aktywnym użytkownikom na pobieranie modeli z Ollamy i przeglądarki Hugging Face. Administratorzy zawsze mogą pobierać modele.",
+      "saved": "Zaktualizowano dostęp do pobierania modeli",
+      "saveFailed": "Nie udało się zaktualizować dostępu do pobierania modeli"
+    },
     "agentAccess": {
       "title": "Agenci",
       "description": "Udostępnij administratorom sekcję Agenci (Libre Claw). CLI agentów działają na hoście jako użytkownik serwera, poza piaskownicą Work.",

@@ -1284,6 +1284,12 @@
       "failed": "无法保存 Work 策略",
       "invalidNumber": "PID 限制和空闲停止必须是数字。"
     },
+    "modelAccess": {
+      "title": "模型下载",
+      "description": "允许所有活跃用户通过 Ollama 和 Hugging Face 浏览器拉取模型。管理员始终可以下载模型。",
+      "saved": "模型下载权限已更新",
+      "saveFailed": "无法更新模型下载权限"
+    },
     "agentAccess": {
       "title": "智能体",
       "description": "向管理员提供智能体板块（Libre Claw）。智能体 CLI 在 Work 沙箱之外，以服务器用户身份在主机上运行。",

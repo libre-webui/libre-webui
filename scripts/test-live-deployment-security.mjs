@@ -56,8 +56,6 @@ test('Ollama lifecycle operations require the current administrator', () => {
   for (const route of [
     '/models/pull-all',
     '/models/pull-all/stream',
-    '/models/pull',
-    '/pull/stream',
     '/models/copy',
     '/models/push',
     '/models/unload',
@@ -67,6 +65,27 @@ test('Ollama lifecycle operations require the current administrator', () => {
     assert.notEqual(start, -1, route);
     assert.match(source.slice(start, start + 180), /requireAdmin/, route);
   }
+
+  // Individual pulls follow the persisted download mode, which fails closed
+  // to admins-only; the mode itself is changed through an admin-only route.
+  for (const route of ['/models/pull', '/pull/stream']) {
+    const start = source.indexOf(`'${route}'`);
+    assert.notEqual(start, -1, route);
+    assert.match(
+      source.slice(start, start + 180),
+      /requireModelDownloadAccess/,
+      route
+    );
+  }
+  const putAccess = source.indexOf("router.put(\n  '/models/access'");
+  assert.notEqual(putAccess, -1);
+  assert.match(source.slice(putAccess, putAccess + 120), /requireAdmin/);
+  const accessService = read('backend/src/services/modelAccessService.ts');
+  assert.match(
+    accessService,
+    /isModelDownloadMode\(row\?\.value\) \? row\.value : 'admins'/
+  );
+  assert.match(accessService, /if \(user\.role === 'admin'\) return true;/);
 
   const deleteRoute = source.slice(
     source.indexOf("router.delete(\n  '/models'")

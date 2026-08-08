@@ -85,8 +85,20 @@ const normalizeCloudPullName = (modelName: string): string => {
 export const ModelManager: React.FC = () => {
   const { t } = useTranslation();
   const { user, systemInfo } = useAuthStore();
+  // An administrator can open model downloads to all users; the backend
+  // reports whether this account may pull and enforces it on every request.
+  const { data: modelAccess } = useQuery({
+    queryKey: ['model-download-access'],
+    queryFn: async () => {
+      const response = await ollamaApi.getModelAccess();
+      return response.success && response.data ? response.data : null;
+    },
+    staleTime: 60_000,
+  });
   const canInstallModels =
-    user?.role === 'admin' || systemInfo?.requiresAuth === false;
+    user?.role === 'admin' ||
+    systemInfo?.requiresAuth === false ||
+    modelAccess?.allowed === true;
   const queryClient = useQueryClient();
   const [libraryFilter, setLibraryFilter] = useState<string>('all');
   const [librarySearch, setLibrarySearch] = useState('');

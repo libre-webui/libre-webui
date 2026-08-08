@@ -1284,6 +1284,12 @@
       "failed": "Impossibile salvare la politica Work",
       "invalidNumber": "Il limite PID e l'arresto per inattività devono essere numeri."
     },
+    "modelAccess": {
+      "title": "Download dei modelli",
+      "description": "Consenti a tutti gli utenti attivi di scaricare modelli da Ollama e dal browser Hugging Face. Gli amministratori possono sempre scaricare modelli.",
+      "saved": "Accesso al download dei modelli aggiornato",
+      "saveFailed": "Impossibile aggiornare l'accesso al download dei modelli"
+    },
     "agentAccess": {
       "title": "Agenti",
       "description": "Offrire la sezione Agenti (Libre Claw) agli amministratori. Le CLI degli agenti vengono eseguite sull'host come utente del server, fuori dalla sandbox di Work.",

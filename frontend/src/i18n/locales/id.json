@@ -1284,6 +1284,12 @@
       "failed": "Tidak dapat menyimpan kebijakan Work",
       "invalidNumber": "Batas PID dan henti saat idle harus berupa angka."
     },
+    "modelAccess": {
+      "title": "Unduhan model",
+      "description": "Izinkan semua pengguna aktif menarik model dari Ollama dan peramban Hugging Face. Administrator selalu dapat mengunduh model.",
+      "saved": "Akses unduhan model diperbarui",
+      "saveFailed": "Tidak dapat memperbarui akses unduhan model"
+    },
     "agentAccess": {
       "title": "Agen",
       "description": "Tawarkan bagian Agen (Libre Claw) kepada administrator. CLI agen berjalan di host sebagai pengguna server, di luar sandbox Work.",

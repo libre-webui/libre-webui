@@ -1284,6 +1284,12 @@
       "failed": "Impossible d'enregistrer la politique Work",
       "invalidNumber": "La limite de PID et l'arrêt d'inactivité doivent être des nombres."
     },
+    "modelAccess": {
+      "title": "Téléchargement de modèles",
+      "description": "Autoriser tous les utilisateurs actifs à télécharger des modèles depuis Ollama et le navigateur Hugging Face. Les administrateurs peuvent toujours télécharger des modèles.",
+      "saved": "Accès au téléchargement de modèles mis à jour",
+      "saveFailed": "Impossible de mettre à jour l'accès au téléchargement de modèles"
+    },
     "agentAccess": {
       "title": "Agents",
       "description": "Proposer la section Agents (Libre Claw) aux administrateurs. Les CLI d'agents s'exécutent sur l'hôte avec l'utilisateur du serveur, hors du bac à sable Work.",

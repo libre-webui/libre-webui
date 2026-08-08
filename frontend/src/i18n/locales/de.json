@@ -1284,6 +1284,12 @@
       "failed": "Work-Richtlinie konnte nicht gespeichert werden",
       "invalidNumber": "PID-Limit und Leerlauf-Stopp müssen Zahlen sein."
     },
+    "modelAccess": {
+      "title": "Modell-Downloads",
+      "description": "Allen aktiven Benutzern erlauben, Modelle über Ollama und den Hugging-Face-Browser zu laden. Administratoren können Modelle immer herunterladen.",
+      "saved": "Modell-Download-Zugriff aktualisiert",
+      "saveFailed": "Modell-Download-Zugriff konnte nicht aktualisiert werden"
+    },
     "agentAccess": {
       "title": "Agenten",
       "description": "Den Bereich Agenten (Libre Claw) für Administratoren anbieten. Agenten-CLIs laufen auf dem Host als Server-Benutzer, außerhalb der Work-Sandbox.",

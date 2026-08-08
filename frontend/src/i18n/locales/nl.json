@@ -1284,6 +1284,12 @@
       "failed": "Kon het Work-beleid niet opslaan",
       "invalidNumber": "PID-limiet en inactiviteitsstop moeten getallen zijn."
     },
+    "modelAccess": {
+      "title": "Modeldownloads",
+      "description": "Sta alle actieve gebruikers toe modellen op te halen via Ollama en de Hugging Face-browser. Beheerders kunnen altijd modellen downloaden.",
+      "saved": "Toegang tot modeldownloads bijgewerkt",
+      "saveFailed": "Kon toegang tot modeldownloads niet bijwerken"
+    },
     "agentAccess": {
       "title": "Agents",
       "description": "Bied de sectie Agents (Libre Claw) aan beheerders aan. Agent-CLI's draaien op de host als de servergebruiker, buiten de Work-sandbox.",

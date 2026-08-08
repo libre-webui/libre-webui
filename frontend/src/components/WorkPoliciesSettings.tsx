@@ -200,13 +200,14 @@ export const WorkPoliciesSettings: React.FC = () => {
           <Button
             size='sm'
             variant='outline'
+            className='shrink-0 whitespace-nowrap'
             onClick={() => {
               setForm(emptyForm);
               setEditing('new');
             }}
           >
-            <Plus size={14} />
-            <span className='ml-1'>{t('userManager.workPolicies.add')}</span>
+            <Plus size={14} className='shrink-0' />
+            <span className='ms-1.5'>{t('userManager.workPolicies.add')}</span>
           </Button>
         )}
       </div>

@@ -1284,6 +1284,12 @@
       "failed": "Ekki tókst að vista Work-stefnuna",
       "invalidNumber": "PID-mörk og stöðvun í aðgerðaleysi verða að vera tölur."
     },
+    "modelAccess": {
+      "title": "Niðurhal líkana",
+      "description": "Leyfa öllum virkum notendum að sækja líkön frá Ollama og Hugging Face-vafranum. Stjórnendur geta alltaf sótt líkön.",
+      "saved": "Aðgangur að niðurhali líkana uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra aðgang að niðurhali líkana"
+    },
     "agentAccess": {
       "title": "Fulltrúar",
       "description": "Bjóða stjórnendum upp á Fulltrúa-hlutann (Libre Claw). Fulltrúa-skipanalínur keyra á hýslinum sem netþjónsnotandinn, utan Work-sandkassans.",

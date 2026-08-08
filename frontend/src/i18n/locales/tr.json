@@ -1284,6 +1284,12 @@
       "failed": "Work ilkesi kaydedilemedi",
       "invalidNumber": "PID sınırı ve boşta durdurma sayı olmalıdır."
     },
+    "modelAccess": {
+      "title": "Model indirmeleri",
+      "description": "Tüm etkin kullanıcıların Ollama ve Hugging Face tarayıcısından model çekmesine izin verin. Yöneticiler her zaman model indirebilir.",
+      "saved": "Model indirme erişimi güncellendi",
+      "saveFailed": "Model indirme erişimi güncellenemedi"
+    },
     "agentAccess": {
       "title": "Ajanlar",
       "description": "Ajanlar bölümünü (Libre Claw) yöneticilere sunun. Ajan CLI'ları ana makinede sunucu kullanıcısı olarak, Work korumalı alanının dışında çalışır.",

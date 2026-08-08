@@ -1284,6 +1284,12 @@
       "failed": "Tidak dapat menyimpan dasar Work",
       "invalidNumber": "Had PID dan henti melahu mestilah nombor."
     },
+    "modelAccess": {
+      "title": "Muat turun model",
+      "description": "Benarkan semua pengguna aktif menarik model daripada Ollama dan pelayar Hugging Face. Pentadbir sentiasa boleh memuat turun model.",
+      "saved": "Akses muat turun model dikemas kini",
+      "saveFailed": "Tidak dapat mengemas kini akses muat turun model"
+    },
     "agentAccess": {
       "title": "Ejen",
       "description": "Tawarkan bahagian Ejen (Libre Claw) kepada pentadbir. CLI ejen berjalan pada hos sebagai pengguna pelayan, di luar kotak pasir Work.",

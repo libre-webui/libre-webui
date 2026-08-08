@@ -1284,6 +1284,12 @@
       "failed": "Work-politikken kunne ikke gemmes",
       "invalidNumber": "PID-grænse og tomgangsstop skal være tal."
     },
+    "modelAccess": {
+      "title": "Modeldownloads",
+      "description": "Tillad alle aktive brugere at hente modeller fra Ollama og Hugging Face-browseren. Administratorer kan altid hente modeller.",
+      "saved": "Adgang til modeldownload opdateret",
+      "saveFailed": "Kunne ikke opdatere adgang til modeldownload"
+    },
     "agentAccess": {
       "title": "Agenter",
       "description": "Tilbyd sektionen Agenter (Libre Claw) til administratorer. Agent-CLI'er kører på værten som serverbrugeren, uden for Work-sandkassen.",

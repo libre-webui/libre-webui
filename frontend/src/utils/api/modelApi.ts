@@ -126,6 +126,26 @@ export const ollamaApi = {
     return api.get('/ollama/models').then(res => res.data);
   },
 
+  // Who may pull models: 'admins' or 'all-users', plus whether the current
+  // account may pull right now.
+  getModelAccess: (): Promise<
+    ApiResponse<{ mode: 'admins' | 'all-users'; allowed: boolean }>
+  > => {
+    if (isDemoMode()) {
+      return createDemoResponse({ mode: 'admins' as const, allowed: false });
+    }
+    return api.get('/ollama/models/access').then(res => res.data);
+  },
+
+  setModelAccess: (
+    mode: 'admins' | 'all-users'
+  ): Promise<ApiResponse<{ mode: 'admins' | 'all-users' }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ mode });
+    }
+    return api.put('/ollama/models/access', { mode }).then(res => res.data);
+  },
+
   pullModel: (modelName: string): Promise<ApiResponse> => {
     if (isDemoMode()) {
       return createDemoResponse(null, false);

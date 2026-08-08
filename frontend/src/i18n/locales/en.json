@@ -1284,6 +1284,12 @@
       "failed": "Could not save the Work policy",
       "invalidNumber": "PID limit and idle stop must be numbers."
     },
+    "modelAccess": {
+      "title": "Model downloads",
+      "description": "Allow all active users to pull models from Ollama and the Hugging Face browser. Administrators can always download models.",
+      "saved": "Model download access updated",
+      "saveFailed": "Could not update model download access"
+    },
     "agentAccess": {
       "title": "Agents",
       "description": "Offer the Agents section (Libre Claw) to administrators. Agent CLIs run on the host as the server user, outside the Work sandbox.",

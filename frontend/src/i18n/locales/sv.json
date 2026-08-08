@@ -1284,6 +1284,12 @@
       "failed": "Kunde inte spara Work-policyn",
       "invalidNumber": "PID-gräns och tomgångsstopp måste vara tal."
     },
+    "modelAccess": {
+      "title": "Modellnedladdningar",
+      "description": "Tillåt alla aktiva användare att hämta modeller från Ollama och Hugging Face-bläddraren. Administratörer kan alltid hämta modeller.",
+      "saved": "Åtkomst till modellnedladdning uppdaterad",
+      "saveFailed": "Kunde inte uppdatera åtkomst till modellnedladdning"
+    },
     "agentAccess": {
       "title": "Agenter",
       "description": "Erbjud sektionen Agenter (Libre Claw) för administratörer. Agent-CLI:er körs på värden som serveranvändaren, utanför Work-sandlådan.",

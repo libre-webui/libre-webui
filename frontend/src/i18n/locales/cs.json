@@ -1284,6 +1284,12 @@
       "failed": "Politiku Work se nepodařilo uložit",
       "invalidNumber": "Limit PID a zastavení při nečinnosti musí být čísla."
     },
+    "modelAccess": {
+      "title": "Stahování modelů",
+      "description": "Povolit všem aktivním uživatelům stahovat modely z Ollamy a prohlížeče Hugging Face. Administrátoři mohou modely stahovat vždy.",
+      "saved": "Přístup ke stahování modelů byl aktualizován",
+      "saveFailed": "Přístup ke stahování modelů se nepodařilo aktualizovat"
+    },
     "agentAccess": {
       "title": "Agenti",
       "description": "Zpřístupnit administrátorům sekci Agenti (Libre Claw). Agentní CLI běží na hostiteli pod uživatelem serveru, mimo sandbox Work.",

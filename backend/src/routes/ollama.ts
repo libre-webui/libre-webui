@@ -28,9 +28,44 @@ import {
   getOllamaLibraryModels,
   type RemoteModelInfo,
 } from '../utils/ollamaLibrary.js';
+import {
+  getModelDownloadMode,
+  isModelDownloadMode,
+  setModelDownloadMode,
+  userCanDownloadModels,
+} from '../services/modelAccessService.js';
+import { userModel } from '../models/userModel.js';
 
 const router = express.Router();
 router.use(authenticate);
+
+/**
+ * Like requireAdmin, but for model pulls: administrators always pass, other
+ * active users pass when an administrator has opened model downloads to all
+ * users. Authorization follows current database state on every request.
+ */
+const requireModelDownloadAccess = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: express.NextFunction
+): void => {
+  if (!req.user) {
+    res.status(403).json({
+      success: false,
+      message: 'Model downloads require an account.',
+    });
+    return;
+  }
+  const currentUser = userModel.getUserById(req.user.userId);
+  if (!currentUser || !userCanDownloadModels(currentUser)) {
+    res.status(403).json({
+      success: false,
+      message: 'Model downloads are restricted to administrators.',
+    });
+    return;
+  }
+  next();
+};
 
 // Health check
 router.get(
@@ -82,6 +117,37 @@ router.get(
         error: getErrorMessage(error, 'Failed to get models'),
       });
     }
+  }
+);
+
+// Who may pull models. Read is open to any authenticated user so the
+// interface can decide whether to offer download affordances; changing the
+// mode is admin-only.
+router.get('/models/access', (req: AuthenticatedRequest, res: Response) => {
+  const currentUser = req.user ? userModel.getUserById(req.user.userId) : null;
+  res.json({
+    success: true,
+    data: {
+      mode: getModelDownloadMode(),
+      allowed: currentUser ? userCanDownloadModels(currentUser) : false,
+    },
+  });
+});
+
+router.put(
+  '/models/access',
+  requireAdmin,
+  (req: Request, res: Response): void => {
+    const mode = req.body?.mode;
+    if (!isModelDownloadMode(mode)) {
+      res.status(400).json({
+        success: false,
+        error: 'mode must be "admins" or "all-users".',
+      });
+      return;
+    }
+    setModelDownloadMode(mode);
+    res.json({ success: true, data: { mode: getModelDownloadMode() } });
   }
 );
 
@@ -145,7 +211,7 @@ router.get(
 // Pull a new model (uses request body to support model names with slashes like hf.co/author/model:tag)
 router.post(
   '/models/pull',
-  requireAdmin,
+  requireModelDownloadAccess,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const modelName = req.body.name as string;
@@ -175,7 +241,7 @@ router.post(
 // Uses query param ?model= to support model names with slashes (e.g., hf.co/author/model)
 router.get(
   '/pull/stream',
-  requireAdmin,
+  requireModelDownloadAccess,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const modelName = req.query.model as string;
