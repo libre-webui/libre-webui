@@ -1277,7 +1277,8 @@
       "empty": "Engar stefnur ennþá. Verkefni nota almennu keyrslusjálfgildin.",
       "saved": "Work-stefna vistuð",
       "deleted": "Work-stefnu eytt",
-      "failed": "Ekki tókst að vista Work-stefnuna"
+      "failed": "Ekki tókst að vista Work-stefnuna",
+      "invalidNumber": "PID-mörk og stöðvun í aðgerðaleysi verða að vera tölur."
     }
   },
   "chatHistory": {

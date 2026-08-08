@@ -85,6 +85,20 @@ api.interceptors.response.use(
       return Promise.reject(new Error('Session expired'));
     }
 
+    // A 403 from a Work endpoint usually means an administrator changed the
+    // access mode mid-session. Re-sync the stored access so the interface
+    // stops (or starts) offering Work without requiring a re-login. The
+    // access probe itself sits outside the Work gate, so this cannot loop.
+    if (
+      error.response?.status === 403 &&
+      (error.config?.url ?? '').startsWith('/work') &&
+      error.config?.url !== '/work/access'
+    ) {
+      import('@/store/authStore').then(({ useAuthStore }) => {
+        void useAuthStore.getState().refreshWorkAccess();
+      });
+    }
+
     logger.error('API Error:', error);
     return Promise.reject(error);
   }

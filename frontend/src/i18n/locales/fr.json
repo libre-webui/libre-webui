@@ -1277,7 +1277,8 @@
       "empty": "Aucune politique pour l'instant. Les tâches utilisent les valeurs d'exécution globales.",
       "saved": "Politique Work enregistrée",
       "deleted": "Politique Work supprimée",
-      "failed": "Impossible d'enregistrer la politique Work"
+      "failed": "Impossible d'enregistrer la politique Work",
+      "invalidNumber": "La limite de PID et l'arrêt d'inactivité doivent être des nombres."
     }
   },
   "chatHistory": {

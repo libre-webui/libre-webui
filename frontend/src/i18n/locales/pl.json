@@ -1277,7 +1277,8 @@
       "empty": "Brak polityk. Zadania używają globalnych ustawień środowiska.",
       "saved": "Polityka Work zapisana",
       "deleted": "Polityka Work usunięta",
-      "failed": "Nie udało się zapisać polityki Work"
+      "failed": "Nie udało się zapisać polityki Work",
+      "invalidNumber": "Limit PID i zatrzymanie przy bezczynności muszą być liczbami."
     }
   },
   "chatHistory": {

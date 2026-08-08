@@ -1277,7 +1277,8 @@
       "empty": "Ancora nessuna politica. Le attività usano i valori di esecuzione globali.",
       "saved": "Politica Work salvata",
       "deleted": "Politica Work eliminata",
-      "failed": "Impossibile salvare la politica Work"
+      "failed": "Impossibile salvare la politica Work",
+      "invalidNumber": "Il limite PID e l'arresto per inattività devono essere numeri."
     }
   },
   "chatHistory": {

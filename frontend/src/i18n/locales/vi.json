@@ -1277,7 +1277,8 @@
       "empty": "Chưa có chính sách nào. Tác vụ dùng mặc định runtime toàn cục.",
       "saved": "Đã lưu chính sách Work",
       "deleted": "Đã xóa chính sách Work",
-      "failed": "Không thể lưu chính sách Work"
+      "failed": "Không thể lưu chính sách Work",
+      "invalidNumber": "Giới hạn PID và dừng khi rảnh phải là số."
     }
   },
   "chatHistory": {

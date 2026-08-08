@@ -178,6 +178,29 @@ export const useInitializeApp = () => {
     void loadModels();
   }, [plugins, loadModels]);
 
+  // An administrator can open or close Work while a session is running.
+  // Re-check on window focus so grants and revocations reach the interface
+  // without a re-login; a small gap keeps rapid tab switches from spamming
+  // the endpoint.
+  useEffect(() => {
+    let lastCheck = 0;
+    const recheckWorkAccess = () => {
+      if (document.visibilityState !== 'visible') return;
+      const auth = useAuthStore.getState();
+      if (auth.requiresAuth() && !auth.isAuthenticated) return;
+      const now = Date.now();
+      if (now - lastCheck < 10_000) return;
+      lastCheck = now;
+      void auth.refreshWorkAccess();
+    };
+    window.addEventListener('focus', recheckWorkAccess);
+    document.addEventListener('visibilitychange', recheckWorkAccess);
+    return () => {
+      window.removeEventListener('focus', recheckWorkAccess);
+      document.removeEventListener('visibilitychange', recheckWorkAccess);
+    };
+  }, []);
+
   // Pulling or removing a model changes what can be chatted with, so pick the
   // new list up straight away instead of waiting for the next app start.
   useEffect(() => {

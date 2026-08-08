@@ -1277,7 +1277,8 @@
       "empty": "Ingen politikker endnu. Opgaver bruger de globale kørselsstandarder.",
       "saved": "Work-politik gemt",
       "deleted": "Work-politik slettet",
-      "failed": "Work-politikken kunne ikke gemmes"
+      "failed": "Work-politikken kunne ikke gemmes",
+      "invalidNumber": "PID-grænse og tomgangsstop skal være tal."
     }
   },
   "chatHistory": {

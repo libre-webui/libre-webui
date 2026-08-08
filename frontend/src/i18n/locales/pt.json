@@ -1277,7 +1277,8 @@
       "empty": "Nenhuma política ainda. As tarefas usam os padrões de execução globais.",
       "saved": "Política do Work salva",
       "deleted": "Política do Work excluída",
-      "failed": "Não foi possível salvar a política do Work"
+      "failed": "Não foi possível salvar a política do Work",
+      "invalidNumber": "O limite de PID e a parada por inatividade devem ser números."
     }
   },
   "chatHistory": {

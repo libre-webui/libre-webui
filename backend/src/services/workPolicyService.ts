@@ -45,6 +45,11 @@ const IMAGE_MAX_LENGTH = 300;
 const MEMORY_PATTERN = /^\d+(?:\.\d+)?(?:[bkmg](?:i?b)?)?$/i;
 // Kubernetes resource quantities for workspace PVCs.
 const WORKSPACE_SIZE_PATTERN = /^\d+(?:\.\d+)?(?:Ki|Mi|Gi|Ti|K|M|G|T)?$/;
+// Image references: [registry[:port]/]name[/name...][:tag][@sha256:digest].
+// Anchored to the registry/repository charset so a stored image can never
+// begin with '-' and reach the container runtime looking like a flag.
+const IMAGE_PATTERN =
+  /^[a-z0-9][a-z0-9._-]*(?::\d+)?(?:\/[a-z0-9][a-z0-9._-]*)*(?::[A-Za-z0-9_][A-Za-z0-9._-]{0,127})?(?:@sha256:[a-f0-9]{64})?$/;
 
 export interface WorkPolicyRecord {
   id: string;
@@ -126,8 +131,13 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
     input.image === null || input.image === undefined || input.image === ''
       ? null
       : String(input.image).trim();
-  if (image !== null && (image.length > IMAGE_MAX_LENGTH || /\s/.test(image))) {
-    throw invalid('Policy image must be a single image reference.');
+  if (
+    image !== null &&
+    (image.length > IMAGE_MAX_LENGTH || !IMAGE_PATTERN.test(image))
+  ) {
+    throw invalid(
+      'Policy image must be a valid image reference like registry/name:tag.'
+    );
   }
 
   const memoryLimit =

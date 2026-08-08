@@ -1277,7 +1277,8 @@
       "empty": "아직 정책이 없습니다. 작업은 전역 런타임 기본값을 사용합니다.",
       "saved": "Work 정책이 저장되었습니다",
       "deleted": "Work 정책이 삭제되었습니다",
-      "failed": "Work 정책을 저장할 수 없습니다"
+      "failed": "Work 정책을 저장할 수 없습니다",
+      "invalidNumber": "PID 제한과 유휴 중지는 숫자여야 합니다."
     }
   },
   "chatHistory": {

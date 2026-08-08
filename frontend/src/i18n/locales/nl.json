@@ -1277,7 +1277,8 @@
       "empty": "Nog geen beleid. Taken gebruiken de globale runtime-standaarden.",
       "saved": "Work-beleid opgeslagen",
       "deleted": "Work-beleid verwijderd",
-      "failed": "Kon het Work-beleid niet opslaan"
+      "failed": "Kon het Work-beleid niet opslaan",
+      "invalidNumber": "PID-limiet en inactiviteitsstop moeten getallen zijn."
     }
   },
   "chatHistory": {

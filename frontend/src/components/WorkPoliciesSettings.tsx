@@ -64,6 +64,14 @@ const formFromPolicy = (policy: WorkPolicy): PolicyFormState => ({
         : 'off',
 });
 
+// A non-numeric PID limit or idle stop would serialize NaN as JSON null,
+// which the backend reads as "clear this field" — a typo would silently
+// remove the limit. Refuse to submit instead.
+const invalidNumericInput = (form: PolicyFormState): boolean =>
+  [form.pidsLimit, form.idleMinutes].some(
+    raw => raw.trim() !== '' && !Number.isFinite(Number(raw))
+  );
+
 const inputFromForm = (form: PolicyFormState): WorkPolicyInput => ({
   name: form.name.trim(),
   image: form.image.trim() || null,
@@ -110,6 +118,10 @@ export const WorkPoliciesSettings: React.FC = () => {
   });
 
   const submit = async () => {
+    if (invalidNumericInput(form)) {
+      toast.error(t('userManager.workPolicies.invalidNumber'));
+      return;
+    }
     setSaving(true);
     try {
       const input = inputFromForm(form);

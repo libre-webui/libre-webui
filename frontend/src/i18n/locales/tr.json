@@ -1277,7 +1277,8 @@
       "empty": "Henüz ilke yok. Görevler genel çalışma zamanı varsayılanlarını kullanır.",
       "saved": "Work ilkesi kaydedildi",
       "deleted": "Work ilkesi silindi",
-      "failed": "Work ilkesi kaydedilemedi"
+      "failed": "Work ilkesi kaydedilemedi",
+      "invalidNumber": "PID sınırı ve boşta durdurma sayı olmalıdır."
     }
   },
   "chatHistory": {

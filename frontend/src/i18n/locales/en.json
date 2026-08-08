@@ -1277,7 +1277,8 @@
       "empty": "No policies yet. Tasks use the global runtime defaults.",
       "saved": "Work policy saved",
       "deleted": "Work policy deleted",
-      "failed": "Could not save the Work policy"
+      "failed": "Could not save the Work policy",
+      "invalidNumber": "PID limit and idle stop must be numbers."
     }
   },
   "usageAnalytics": {

@@ -1277,7 +1277,8 @@
       "empty": "Inga policyer ännu. Uppgifter använder de globala körningsstandarderna.",
       "saved": "Work-policy sparad",
       "deleted": "Work-policy borttagen",
-      "failed": "Kunde inte spara Work-policyn"
+      "failed": "Kunde inte spara Work-policyn",
+      "invalidNumber": "PID-gräns och tomgångsstopp måste vara tal."
     }
   },
   "chatHistory": {

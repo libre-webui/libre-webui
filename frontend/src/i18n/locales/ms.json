@@ -1277,7 +1277,8 @@
       "empty": "Tiada dasar lagi. Tugas menggunakan lalai masa jalan global.",
       "saved": "Dasar Work disimpan",
       "deleted": "Dasar Work dipadamkan",
-      "failed": "Tidak dapat menyimpan dasar Work"
+      "failed": "Tidak dapat menyimpan dasar Work",
+      "invalidNumber": "Had PID dan henti melahu mestilah nombor."
     }
   },
   "chatHistory": {

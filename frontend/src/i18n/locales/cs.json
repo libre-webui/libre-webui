@@ -1277,7 +1277,8 @@
       "empty": "Zatím žádné politiky. Úlohy používají globální výchozí hodnoty.",
       "saved": "Politika Work uložena",
       "deleted": "Politika Work smazána",
-      "failed": "Politiku Work se nepodařilo uložit"
+      "failed": "Politiku Work se nepodařilo uložit",
+      "invalidNumber": "Limit PID a zastavení při nečinnosti musí být čísla."
     }
   },
   "chatHistory": {

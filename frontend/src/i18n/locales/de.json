@@ -1277,7 +1277,8 @@
       "empty": "Noch keine Richtlinien. Aufgaben verwenden die globalen Laufzeitstandards.",
       "saved": "Work-Richtlinie gespeichert",
       "deleted": "Work-Richtlinie gelöscht",
-      "failed": "Work-Richtlinie konnte nicht gespeichert werden"
+      "failed": "Work-Richtlinie konnte nicht gespeichert werden",
+      "invalidNumber": "PID-Limit und Leerlauf-Stopp müssen Zahlen sein."
     }
   },
   "chatHistory": {

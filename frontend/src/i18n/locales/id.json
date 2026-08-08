@@ -1277,7 +1277,8 @@
       "empty": "Belum ada kebijakan. Tugas memakai bawaan runtime global.",
       "saved": "Kebijakan Work disimpan",
       "deleted": "Kebijakan Work dihapus",
-      "failed": "Tidak dapat menyimpan kebijakan Work"
+      "failed": "Tidak dapat menyimpan kebijakan Work",
+      "invalidNumber": "Batas PID dan henti saat idle harus berupa angka."
     }
   },
   "chatHistory": {

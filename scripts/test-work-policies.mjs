@@ -61,7 +61,7 @@ const optionValue = (args, flag) => args[args.indexOf(flag) + 1];
 test('policy input validation accepts sane values and rejects the rest', () => {
   const valid = validateWorkPolicyInput({
     name: '  Heavy build  ',
-    image: 'example.invalid/build@sha256:abc',
+    image: `example.invalid/build@sha256:${'ab'.repeat(32)}`,
     memoryLimit: '4g',
     cpuLimit: '3.5',
     pidsLimit: 512,
@@ -77,10 +77,29 @@ test('policy input validation accepts sane values and rejects the rest', () => {
   assert.equal(sparse.image, null);
   assert.equal(sparse.networkDefault, null);
 
+  // The image charset admits real-world references: bare names, tags,
+  // private registries with ports, and pinned digests.
+  for (const good of [
+    'node',
+    'node:22-bookworm',
+    'localhost:5000/team/app:1.2',
+    `ghcr.io/org/app@sha256:${'0'.repeat(64)}`,
+  ]) {
+    assert.equal(
+      validateWorkPolicyInput({ name: 'ok', image: good }).image,
+      good
+    );
+  }
+
   for (const bad of [
     { name: '' },
     { name: 'x'.repeat(101) },
     { name: 'ok', image: 'two words' },
+    // A reference is anchored to the registry/repo charset, so nothing
+    // flag-shaped can reach the container runtime.
+    { name: 'ok', image: '--privileged' },
+    { name: 'ok', image: '-rm' },
+    { name: 'ok', image: 'node:22@sha256:abc' },
     { name: 'ok', memoryLimit: 'lots' },
     { name: 'ok', cpuLimit: '-1' },
     { name: 'ok', cpuLimit: '1000' },

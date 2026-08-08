@@ -1277,7 +1277,8 @@
       "empty": "暂无策略。任务使用全局运行时默认值。",
       "saved": "已保存 Work 策略",
       "deleted": "已删除 Work 策略",
-      "failed": "无法保存 Work 策略"
+      "failed": "无法保存 Work 策略",
+      "invalidNumber": "PID 限制和空闲停止必须是数字。"
     }
   },
   "chatHistory": {
