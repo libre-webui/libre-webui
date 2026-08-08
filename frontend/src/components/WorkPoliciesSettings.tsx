@@ -109,7 +109,20 @@ export const WorkPoliciesSettings: React.FC = () => {
   };
 
   useEffect(() => {
-    void reload();
+    let cancelled = false;
+    workApi
+      .listPolicies()
+      .then(response => {
+        if (!cancelled && response.success && response.data) {
+          setPolicies(response.data);
+        }
+      })
+      .catch(() => {
+        // The card stays usable with a stale list; mutations surface errors.
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const field = (key: keyof PolicyFormState) => ({

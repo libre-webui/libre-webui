@@ -40,7 +40,6 @@ export const WorkAccessSettings: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
-    setLoadFailed(false);
     workApi
       .access()
       .then(response => {
@@ -92,7 +91,10 @@ export const WorkAccessSettings: React.FC = () => {
           <Button
             size='sm'
             variant='outline'
-            onClick={() => setLoadAttempt(attempt => attempt + 1)}
+            onClick={() => {
+              setLoadFailed(false);
+              setLoadAttempt(attempt => attempt + 1);
+            }}
           >
             {t('common.retry')}
           </Button>

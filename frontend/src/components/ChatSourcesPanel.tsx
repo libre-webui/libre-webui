@@ -42,6 +42,7 @@ interface ChatSourcesPanelProps {
 }
 
 const COLLAPSED_ROWS = 6;
+const EMPTY_DOCUMENTS: AttachedDocument[] = [];
 
 const hostnameOf = (url: string): string => {
   try {
@@ -61,9 +62,16 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
   session,
 }) => {
   const { t } = useTranslation();
-  const [attachedDocuments, setAttachedDocuments] = useState<
-    AttachedDocument[]
-  >([]);
+  // Keyed by session so switching chats never shows another chat's
+  // attachments; private sessions derive an empty list without state work.
+  const [attached, setAttached] = useState<{
+    sessionId: string;
+    docs: AttachedDocument[];
+  }>({ sessionId: '', docs: EMPTY_DOCUMENTS });
+  const attachedDocuments =
+    !session.isPrivate && attached.sessionId === session.id
+      ? attached.docs
+      : EMPTY_DOCUMENTS;
   const [allSources, setAllSources] = useState(false);
   const [allDocuments, setAllDocuments] = useState(false);
   // Below xl the rail has no room; the same content opens as a bottom
@@ -113,10 +121,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
   // Documents attached to this chat, whether or not retrieval has used
   // them yet. Private sessions have no persisted attachments.
   useEffect(() => {
-    if (session.isPrivate) {
-      setAttachedDocuments([]);
-      return;
-    }
+    if (session.isPrivate) return;
     let cancelled = false;
     const load = () => {
       documentsApi
@@ -124,9 +129,13 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
         .then(response => {
           if (cancelled || !response.success || !Array.isArray(response.data))
             return;
-          setAttachedDocuments(
-            response.data.map(doc => ({ id: doc.id, filename: doc.filename }))
-          );
+          setAttached({
+            sessionId: session.id,
+            docs: response.data.map(doc => ({
+              id: doc.id,
+              filename: doc.filename,
+            })),
+          });
         })
         .catch(() => {});
     };

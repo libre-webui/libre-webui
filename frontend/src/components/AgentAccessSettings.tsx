@@ -43,7 +43,6 @@ export const AgentAccessSettings: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
-    setLoadFailed(false);
     libreClawApi
       .access()
       .then(response => {
@@ -104,7 +103,10 @@ export const AgentAccessSettings: React.FC = () => {
           <Button
             size='sm'
             variant='outline'
-            onClick={() => setLoadAttempt(attempt => attempt + 1)}
+            onClick={() => {
+              setLoadFailed(false);
+              setLoadAttempt(attempt => attempt + 1);
+            }}
           >
             {t('common.retry')}
           </Button>

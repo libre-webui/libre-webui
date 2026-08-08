@@ -40,7 +40,6 @@ export const ModelDownloadSettings: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
-    setLoadFailed(false);
     ollamaApi
       .getModelAccess()
       .then(response => {
@@ -91,7 +90,10 @@ export const ModelDownloadSettings: React.FC = () => {
           <Button
             size='sm'
             variant='outline'
-            onClick={() => setLoadAttempt(attempt => attempt + 1)}
+            onClick={() => {
+              setLoadFailed(false);
+              setLoadAttempt(attempt => attempt + 1);
+            }}
           >
             {t('common.retry')}
           </Button>
