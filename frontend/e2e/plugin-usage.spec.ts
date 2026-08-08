@@ -23,6 +23,8 @@ const systemInfo = {
   hasUsers: true,
   userCount: 2,
   signupEnabled: true,
+  // The Agents entry only exists when an administrator enabled the feature.
+  agentsEnabled: true,
   version: '0.17.0-e2e',
   turnstile: { enabled: false },
 };

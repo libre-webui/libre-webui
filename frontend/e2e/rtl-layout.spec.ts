@@ -157,6 +157,8 @@ test('Arabic mirrors the new Home and tab menus', async ({ page }) => {
       requiresAuth: true,
       hasUsers: true,
       userCount: 1,
+      // The Agents entry only exists when an administrator enabled the feature.
+      agentsEnabled: true,
       version: '0.17.0-e2e',
       turnstile: { enabled: false },
     },
