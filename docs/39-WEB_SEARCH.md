@@ -36,7 +36,11 @@ exists:
 2. **The admin setting** — Settings > Connections > **Search** (the tab is
    admin-only). Set the SearXNG URL, flip **Enable web search**, and use
    **Test connection** to prove the wiring with a live query.
-3. **The per-use controls** that appear once search is enabled:
+3. **Who may use it** — the **Web search** card in User Management, next to
+   the Work access and model download controls. Off (the default) keeps
+   search admins-only even while it is enabled; on opens it to all active
+   users. The backend enforces this on every request.
+4. **The per-use controls** that appear for permitted users:
    - **Chat:** a globe toggle in the composer. When it is on, the backend
      searches for your message before generating, injects the top results as
      context, and the reply shows numbered **source chips** linking to each
@@ -105,8 +109,8 @@ survives restarts and takes effect immediately without redeploying.
 ## Troubleshooting
 
 **No globe in the composer / no `web_search` tool in Work.** Search is not
-enabled, or the URL is empty. Both live in Settings > Connections > Search
-(administrators only).
+enabled (Settings > Connections > Search), or the account is not permitted:
+regular users need the **Web search** toggle in User Management turned on.
 
 **Test connection fails with an HTTP 403.** The instance does not allow the
 JSON format. Add `json` to `search.formats` in its `settings.yml` (see

@@ -33,6 +33,15 @@ const logger = createLogger('services:web-search');
 
 export const WEB_SEARCH_ENABLED_KEY = 'web_search_enabled';
 export const WEB_SEARCH_URL_KEY = 'web_search_url';
+export const WEB_SEARCH_ACCESS_KEY = 'web_search_access';
+
+export type WebSearchAccessMode = 'admins' | 'all-users';
+
+export function isWebSearchAccessMode(
+  value: unknown
+): value is WebSearchAccessMode {
+  return value === 'admins' || value === 'all-users';
+}
 
 const SEARCH_TIMEOUT_MS = 12_000;
 const MAX_RESULTS_LIMIT = 8;
@@ -115,6 +124,33 @@ export function setWebSearchConfig(input: {
 
 export function isWebSearchAvailable(): boolean {
   return getWebSearchConfig().available;
+}
+
+/**
+ * Who may use web search, mirroring the Work access mode: administrators
+ * always may; other active users only when an administrator opens it up in
+ * User Management. Defaults to admins-only and fails closed.
+ */
+export function getWebSearchAccessMode(): WebSearchAccessMode {
+  const value = readSetting(WEB_SEARCH_ACCESS_KEY);
+  return isWebSearchAccessMode(value) ? value : 'admins';
+}
+
+export function setWebSearchAccessMode(mode: WebSearchAccessMode): void {
+  if (!isWebSearchAccessMode(mode)) {
+    throw new Error(`Invalid web search access mode "${String(mode)}".`);
+  }
+  writeSetting(WEB_SEARCH_ACCESS_KEY, mode);
+}
+
+/** Whether this user may run web searches right now (search must also be available). */
+export function userCanUseWebSearch(
+  user: { role?: string; status?: string } | undefined | null
+): boolean {
+  if (!user) return false;
+  if (user.status !== undefined && user.status !== 'active') return false;
+  if (user.role === 'admin') return true;
+  return getWebSearchAccessMode() === 'all-users';
 }
 
 interface SearxngResult {
@@ -221,6 +257,9 @@ export default {
   getWebSearchConfig,
   setWebSearchConfig,
   isWebSearchAvailable,
+  getWebSearchAccessMode,
+  setWebSearchAccessMode,
+  userCanUseWebSearch,
   webSearch,
   buildWebSearchEnhancedContent,
 };

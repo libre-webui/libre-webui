@@ -22,16 +22,44 @@ import { api, createDemoResponse } from './client';
 export interface WebSearchConfigResponse {
   enabled: boolean;
   available: boolean;
+  /** Whether the current account may use search right now. */
+  allowed: boolean;
   /** Only present for administrators. */
   url?: string;
+  /** Only present for administrators. */
+  access?: WebSearchAccessMode;
 }
+
+export type WebSearchAccessMode = 'admins' | 'all-users';
 
 export const searchApi = {
   getConfig: (): Promise<ApiResponse<WebSearchConfigResponse>> => {
     if (isDemoMode()) {
-      return createDemoResponse({ enabled: false, available: false });
+      return createDemoResponse({
+        enabled: false,
+        available: false,
+        allowed: false,
+      });
     }
     return api.get('/search/config').then(res => res.data);
+  },
+
+  getAccess: (): Promise<
+    ApiResponse<{ mode: WebSearchAccessMode; allowed: boolean }>
+  > => {
+    if (isDemoMode()) {
+      return createDemoResponse({ mode: 'admins' as const, allowed: false });
+    }
+    return api.get('/search/access').then(res => res.data);
+  },
+
+  setAccess: (
+    mode: WebSearchAccessMode
+  ): Promise<ApiResponse<{ mode: WebSearchAccessMode }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ mode });
+    }
+    return api.put('/search/access', { mode }).then(res => res.data);
   },
 
   setConfig: (
@@ -39,7 +67,12 @@ export const searchApi = {
     url: string
   ): Promise<ApiResponse<WebSearchConfigResponse>> => {
     if (isDemoMode()) {
-      return createDemoResponse({ enabled, available: enabled, url });
+      return createDemoResponse({
+        enabled,
+        available: enabled,
+        allowed: false,
+        url,
+      });
     }
     return api.put('/search/config', { enabled, url }).then(res => res.data);
   },

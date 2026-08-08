@@ -1311,6 +1311,12 @@
       "saved": "Toegang tot modeldownloads bijgewerkt",
       "saveFailed": "Kon toegang tot modeldownloads niet bijwerken"
     },
+    "webSearchAccess": {
+      "title": "Webzoeken",
+      "description": "Sta alle actieve gebruikers toe webzoeken te gebruiken in chats en Work-taken. Beheerders kunnen het altijd gebruiken. De engine configureer je onder Instellingen > Zoeken.",
+      "saved": "Toegang tot webzoeken bijgewerkt",
+      "saveFailed": "Kon toegang tot webzoeken niet bijwerken"
+    },
     "agentAccess": {
       "title": "Agents",
       "description": "Bied de sectie Agents (Libre Claw) aan beheerders aan. Agent-CLI's draaien op de host als de servergebruiker, buiten de Work-sandbox.",

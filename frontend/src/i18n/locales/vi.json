@@ -1311,6 +1311,12 @@
       "saved": "Đã cập nhật quyền tải mô hình",
       "saveFailed": "Không thể cập nhật quyền tải mô hình"
     },
+    "webSearchAccess": {
+      "title": "Tìm kiếm web",
+      "description": "Cho phép tất cả người dùng đang hoạt động dùng tìm kiếm web trong chat và tác vụ Work. Quản trị viên luôn dùng được. Cấu hình công cụ trong Cài đặt > Tìm kiếm.",
+      "saved": "Đã cập nhật quyền tìm kiếm web",
+      "saveFailed": "Không thể cập nhật quyền tìm kiếm web"
+    },
     "agentAccess": {
       "title": "Tác nhân",
       "description": "Cung cấp mục Tác nhân (Libre Claw) cho quản trị viên. CLI tác nhân chạy trên máy chủ với tư cách người dùng máy chủ, bên ngoài sandbox Work.",

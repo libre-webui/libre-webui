@@ -1311,6 +1311,12 @@
       "saved": "Akses muat turun model dikemas kini",
       "saveFailed": "Tidak dapat mengemas kini akses muat turun model"
     },
+    "webSearchAccess": {
+      "title": "Carian web",
+      "description": "Benarkan semua pengguna aktif menggunakan carian web dalam sembang dan tugas Work. Pentadbir sentiasa boleh menggunakannya. Enjin dikonfigurasi di Tetapan > Carian.",
+      "saved": "Akses carian web dikemas kini",
+      "saveFailed": "Tidak dapat mengemas kini akses carian web"
+    },
     "agentAccess": {
       "title": "Ejen",
       "description": "Tawarkan bahagian Ejen (Libre Claw) kepada pentadbir. CLI ejen berjalan pada hos sebagai pengguna pelayan, di luar kotak pasir Work.",

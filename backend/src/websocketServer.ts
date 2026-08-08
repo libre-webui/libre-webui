@@ -27,6 +27,7 @@ import agentCliService from './services/agentCliService.js';
 import {
   buildWebSearchEnhancedContent,
   isWebSearchAvailable,
+  userCanUseWebSearch,
   webSearch as runWebSearch,
 } from './services/webSearchService.js';
 import chatGenerationService from './services/chatGenerationService.js';
@@ -321,7 +322,11 @@ export function registerWebSocketServer(server: Server): void {
             Array<{ title: string; url: string }> | undefined;
           let searchEnhancedContent = enhancedContent;
           let searchHasRelevantContext = relevantContext.length > 0;
-          if (webSearchRequested === true && isWebSearchAvailable()) {
+          if (
+            webSearchRequested === true &&
+            isWebSearchAvailable() &&
+            userCanUseWebSearch(userModel.getUserById(userId))
+          ) {
             const searchToolCallId = `web-search-${Date.now()}`;
             sendToolStatus(ws, {
               toolCallId: searchToolCallId,

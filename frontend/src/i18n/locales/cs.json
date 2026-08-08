@@ -1311,6 +1311,12 @@
       "saved": "Přístup ke stahování modelů byl aktualizován",
       "saveFailed": "Přístup ke stahování modelů se nepodařilo aktualizovat"
     },
+    "webSearchAccess": {
+      "title": "Vyhledávání na webu",
+      "description": "Povolit všem aktivním uživatelům vyhledávání na webu v chatech a úlohách Work. Administrátoři jej mohou používat vždy. Vyhledávač se nastavuje v Nastavení > Vyhledávání.",
+      "saved": "Přístup k vyhledávání na webu byl aktualizován",
+      "saveFailed": "Přístup k vyhledávání na webu se nepodařilo aktualizovat"
+    },
     "agentAccess": {
       "title": "Agenti",
       "description": "Zpřístupnit administrátorům sekci Agenti (Libre Claw). Agentní CLI běží na hostiteli pod uživatelem serveru, mimo sandbox Work.",

@@ -18,10 +18,15 @@
 import express, { Request, Response } from 'express';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import {
+  getWebSearchAccessMode,
   getWebSearchConfig,
+  isWebSearchAccessMode,
+  setWebSearchAccessMode,
   setWebSearchConfig,
+  userCanUseWebSearch,
   webSearch,
 } from '../services/webSearchService.js';
+import { userModel } from '../models/userModel.js';
 import { getErrorMessage } from '../types/index.js';
 
 const router = express.Router();
@@ -35,15 +40,53 @@ router.use(authenticate);
  */
 router.get('/config', (req: Request, res: Response): void => {
   const config = getWebSearchConfig();
-  const role = (req as { user?: { role?: string } }).user?.role;
+  const userId = (req as { user?: { userId?: string } }).user?.userId;
+  const currentUser = userId ? userModel.getUserById(userId) : null;
+  // Authorization follows current database state, like requireAdmin.
+  const isAdmin =
+    currentUser?.status === 'active' && currentUser.role === 'admin';
   res.json({
     success: true,
     data: {
       enabled: config.enabled,
       available: config.available,
-      ...(role === 'admin' ? { url: config.url } : {}),
+      // Whether this account may use search right now — drives the
+      // composer toggle. The backend re-checks on every request.
+      allowed: config.available && userCanUseWebSearch(currentUser),
+      ...(isAdmin ? { url: config.url, access: getWebSearchAccessMode() } : {}),
     },
   });
+});
+
+/**
+ * Who may use web search. Read is open to authenticated users; changing
+ * the mode is admin-only and lives in User Management next to the other
+ * access controls.
+ */
+router.get('/access', (req: Request, res: Response): void => {
+  const userId = (req as { user?: { userId?: string } }).user?.userId;
+  const currentUser = userId ? userModel.getUserById(userId) : null;
+  res.json({
+    success: true,
+    data: {
+      mode: getWebSearchAccessMode(),
+      allowed:
+        getWebSearchConfig().available && userCanUseWebSearch(currentUser),
+    },
+  });
+});
+
+router.put('/access', requireAdmin, (req: Request, res: Response): void => {
+  const mode = req.body?.mode;
+  if (!isWebSearchAccessMode(mode)) {
+    res.status(400).json({
+      success: false,
+      error: 'mode must be "admins" or "all-users".',
+    });
+    return;
+  }
+  setWebSearchAccessMode(mode);
+  res.json({ success: true, data: { mode: getWebSearchAccessMode() } });
 });
 
 router.put('/config', requireAdmin, (req: Request, res: Response): void => {

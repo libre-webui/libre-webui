@@ -1311,6 +1311,12 @@
       "saved": "Zaktualizowano dostęp do pobierania modeli",
       "saveFailed": "Nie udało się zaktualizować dostępu do pobierania modeli"
     },
+    "webSearchAccess": {
+      "title": "Wyszukiwanie w sieci",
+      "description": "Zezwól wszystkim aktywnym użytkownikom na wyszukiwanie w sieci w czatach i zadaniach Work. Administratorzy zawsze mogą z niego korzystać. Silnik konfiguruje się w Ustawienia > Wyszukiwanie.",
+      "saved": "Zaktualizowano dostęp do wyszukiwania w sieci",
+      "saveFailed": "Nie udało się zaktualizować dostępu do wyszukiwania w sieci"
+    },
     "agentAccess": {
       "title": "Agenci",
       "description": "Udostępnij administratorom sekcję Agenci (Libre Claw). CLI agentów działają na hoście jako użytkownik serwera, poza piaskownicą Work.",

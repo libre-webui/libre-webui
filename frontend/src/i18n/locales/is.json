@@ -1311,6 +1311,12 @@
       "saved": "Aðgangur að niðurhali líkana uppfærður",
       "saveFailed": "Ekki tókst að uppfæra aðgang að niðurhali líkana"
     },
+    "webSearchAccess": {
+      "title": "Vefleit",
+      "description": "Leyfa öllum virkum notendum að nota vefleit í spjalli og Work-verkum. Stjórnendur geta alltaf notað hana. Leitarvélin er stillt í Stillingar > Leit.",
+      "saved": "Aðgangur að vefleit uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra aðgang að vefleit"
+    },
     "agentAccess": {
       "title": "Fulltrúar",
       "description": "Bjóða stjórnendum upp á Fulltrúa-hlutann (Libre Claw). Fulltrúa-skipanalínur keyra á hýslinum sem netþjónsnotandinn, utan Work-sandkassans.",

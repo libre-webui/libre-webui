@@ -1311,6 +1311,12 @@
       "saved": "Model indirme erişimi güncellendi",
       "saveFailed": "Model indirme erişimi güncellenemedi"
     },
+    "webSearchAccess": {
+      "title": "Web araması",
+      "description": "Tüm etkin kullanıcıların sohbetlerde ve Work görevlerinde web aramasını kullanmasına izin verin. Yöneticiler her zaman kullanabilir. Motor, Ayarlar > Arama bölümünde yapılandırılır.",
+      "saved": "Web araması erişimi güncellendi",
+      "saveFailed": "Web araması erişimi güncellenemedi"
+    },
     "agentAccess": {
       "title": "Ajanlar",
       "description": "Ajanlar bölümünü (Libre Claw) yöneticilere sunun. Ajan CLI'ları ana makinede sunucu kullanıcısı olarak, Work korumalı alanının dışında çalışır.",

@@ -1311,6 +1311,12 @@
       "saved": "Acceso a descarga de modelos actualizado",
       "saveFailed": "No se pudo actualizar el acceso a descarga de modelos"
     },
+    "webSearchAccess": {
+      "title": "Búsqueda web",
+      "description": "Permitir que todos los usuarios activos usen la búsqueda web en chats y tareas de Work. Los administradores siempre pueden usarla. El motor se configura en Configuración > Búsqueda.",
+      "saved": "Acceso a búsqueda web actualizado",
+      "saveFailed": "No se pudo actualizar el acceso a búsqueda web"
+    },
     "agentAccess": {
       "title": "Agentes",
       "description": "Ofrecer la sección Agentes (Libre Claw) a los administradores. Las CLI de agentes se ejecutan en el host como el usuario del servidor, fuera del sandbox de Work.",

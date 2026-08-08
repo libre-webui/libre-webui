@@ -35,11 +35,14 @@ process.env.DATA_DIR = dataDir;
 const dist = name =>
   pathToFileURL(path.join(repoRoot, 'backend', 'dist', name)).href;
 
-const { closeDatabase } = await import(dist('db.js'));
+const { closeDatabase, getDatabase } = await import(dist('db.js'));
 const {
   getWebSearchConfig,
   setWebSearchConfig,
   isWebSearchAvailable,
+  getWebSearchAccessMode,
+  setWebSearchAccessMode,
+  userCanUseWebSearch,
   webSearch,
   buildWebSearchEnhancedContent,
   normalizeWebSearchUrl,
@@ -59,6 +62,11 @@ test('web search ships disabled and validates its configuration', () => {
   const config = getWebSearchConfig();
   assert.equal(config.enabled, false);
   assert.equal(config.available, false);
+  // Use is admins-only until an administrator opens it in User Management.
+  assert.equal(getWebSearchAccessMode(), 'admins');
+  assert.equal(userCanUseWebSearch({ role: 'admin', status: 'active' }), true);
+  assert.equal(userCanUseWebSearch({ role: 'user', status: 'active' }), false);
+  assert.equal(userCanUseWebSearch(undefined), false);
 
   assert.throws(() => normalizeWebSearchUrl('ftp://host'), /http or https/);
   assert.throws(() => normalizeWebSearchUrl('not a url'), /valid http/);
@@ -133,21 +141,38 @@ test('web search queries the configured instance and bounds results', async () =
   }
 });
 
-test('Work offers web_search only with search enabled and task network access', () => {
-  setWebSearchConfig({ enabled: false, url: 'http://searxng:8080' });
-  assert.deepEqual(
-    workToolSchemasForTask({ networkEnabled: true }),
-    WORK_TOOL_SCHEMAS
+test('Work offers web_search by search state, task network, and owner access', () => {
+  const now = Date.now();
+  const insertUser = getDatabase().prepare(
+    `INSERT INTO users (
+      id, username, email, password_hash, role, created_at, updated_at
+    ) VALUES (?, ?, NULL, 'unused', ?, ?, ?)`
   );
+  insertUser.run('search-admin', 'search-admin', 'admin', now, now);
+  insertUser.run('search-user', 'search-user', 'user', now, now);
+  const adminTask = { networkEnabled: true, userId: 'search-admin' };
+  const userTask = { networkEnabled: true, userId: 'search-user' };
+
+  setWebSearchConfig({ enabled: false, url: 'http://searxng:8080' });
+  assert.deepEqual(workToolSchemasForTask(adminTask), WORK_TOOL_SCHEMAS);
 
   setWebSearchConfig({ enabled: true, url: 'http://searxng:8080' });
-  const withSearch = workToolSchemasForTask({ networkEnabled: true });
+  const withSearch = workToolSchemasForTask(adminTask);
   assert.equal(withSearch.length, WORK_TOOL_SCHEMAS.length + 1);
   assert.equal(withSearch.at(-1).function.name, 'web_search');
 
-  // An offline task stays offline.
+  // Regular users follow the persisted access mode, admins-only by default.
+  assert.deepEqual(workToolSchemasForTask(userTask), WORK_TOOL_SCHEMAS);
+  setWebSearchAccessMode('all-users');
+  assert.equal(
+    workToolSchemasForTask(userTask).at(-1).function.name,
+    'web_search'
+  );
+  setWebSearchAccessMode('admins');
+
+  // An offline task stays offline regardless of role.
   assert.deepEqual(
-    workToolSchemasForTask({ networkEnabled: false }),
+    workToolSchemasForTask({ networkEnabled: false, userId: 'search-admin' }),
     WORK_TOOL_SCHEMAS
   );
   setWebSearchConfig({ enabled: false, url: 'http://searxng:8080' });
@@ -160,6 +185,7 @@ test('search routes gate configuration behind the administrator', () => {
   );
   assert.match(source, /router\.use\(authenticate\)/);
   assert.match(source, /router\.put\(\s*'\/config',\s*requireAdmin/);
+  assert.match(source, /router\.put\(\s*'\/access',\s*requireAdmin/);
   assert.match(source, /router\.post\(\s*'\/test',\s*requireAdmin/);
 
   // The private stack keeps SearXNG internal-only.

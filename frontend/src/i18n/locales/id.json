@@ -1311,6 +1311,12 @@
       "saved": "Akses unduhan model diperbarui",
       "saveFailed": "Tidak dapat memperbarui akses unduhan model"
     },
+    "webSearchAccess": {
+      "title": "Pencarian web",
+      "description": "Izinkan semua pengguna aktif memakai pencarian web di chat dan tugas Work. Administrator selalu dapat memakainya. Mesin dikonfigurasi di Pengaturan > Pencarian.",
+      "saved": "Akses pencarian web diperbarui",
+      "saveFailed": "Tidak dapat memperbarui akses pencarian web"
+    },
     "agentAccess": {
       "title": "Agen",
       "description": "Tawarkan bagian Agen (Libre Claw) kepada administrator. CLI agen berjalan di host sebagai pengguna server, di luar sandbox Work.",

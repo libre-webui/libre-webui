@@ -1311,6 +1311,12 @@
       "saved": "Åtkomst till modellnedladdning uppdaterad",
       "saveFailed": "Kunde inte uppdatera åtkomst till modellnedladdning"
     },
+    "webSearchAccess": {
+      "title": "Webbsökning",
+      "description": "Tillåt alla aktiva användare att använda webbsökning i chattar och Work-uppgifter. Administratörer kan alltid använda den. Motorn konfigureras under Inställningar > Sökning.",
+      "saved": "Åtkomst till webbsökning uppdaterad",
+      "saveFailed": "Kunde inte uppdatera åtkomst till webbsökning"
+    },
     "agentAccess": {
       "title": "Agenter",
       "description": "Erbjud sektionen Agenter (Libre Claw) för administratörer. Agent-CLI:er körs på värden som serveranvändaren, utanför Work-sandlådan.",

@@ -1311,6 +1311,12 @@
       "saved": "Accès au téléchargement de modèles mis à jour",
       "saveFailed": "Impossible de mettre à jour l'accès au téléchargement de modèles"
     },
+    "webSearchAccess": {
+      "title": "Recherche web",
+      "description": "Autoriser tous les utilisateurs actifs à utiliser la recherche web dans les chats et les tâches Work. Les administrateurs peuvent toujours l'utiliser. Le moteur se configure dans Paramètres > Recherche.",
+      "saved": "Accès à la recherche web mis à jour",
+      "saveFailed": "Impossible de mettre à jour l'accès à la recherche web"
+    },
     "agentAccess": {
       "title": "Agents",
       "description": "Proposer la section Agents (Libre Claw) aux administrateurs. Les CLI d'agents s'exécutent sur l'hôte avec l'utilisateur du serveur, hors du bac à sable Work.",

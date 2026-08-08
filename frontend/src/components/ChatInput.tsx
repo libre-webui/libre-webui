@@ -128,7 +128,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       .getConfig()
       .then(response => {
         if (!cancelled && response.success && response.data) {
-          setWebSearchAvailable(response.data.available);
+          setWebSearchAvailable(response.data.allowed);
         }
       })
       .catch(() => {});

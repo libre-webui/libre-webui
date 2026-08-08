@@ -29,7 +29,12 @@ import {
   workToolCallBudget,
 } from './workAgentGuidance.js';
 import workRuntimeService, { WorkCommandResult } from './workRuntimeService.js';
-import { isWebSearchAvailable, webSearch } from './webSearchService.js';
+import {
+  isWebSearchAvailable,
+  userCanUseWebSearch,
+  webSearch,
+} from './webSearchService.js';
+import { userModel } from '../models/userModel.js';
 import workTaskService, {
   WORK_MESSAGE_METADATA_MAX_BYTES,
   WorkConflictError,
@@ -161,8 +166,11 @@ export const WORK_WEB_SEARCH_TOOL_SCHEMA: Record<string, unknown> =
 
 export function workToolSchemasForTask(task: {
   networkEnabled: boolean;
+  userId: string;
 }): Record<string, unknown>[] {
-  return task.networkEnabled && isWebSearchAvailable()
+  return task.networkEnabled &&
+    isWebSearchAvailable() &&
+    userCanUseWebSearch(userModel.getUserById(task.userId))
     ? [...WORK_TOOL_SCHEMAS, WORK_WEB_SEARCH_TOOL_SCHEMA]
     : WORK_TOOL_SCHEMAS;
 }
@@ -1113,7 +1121,11 @@ export class WorkAgentService {
         return commandResult(result);
       }
       case 'web_search': {
-        if (!task.networkEnabled || !isWebSearchAvailable()) {
+        if (
+          !task.networkEnabled ||
+          !isWebSearchAvailable() ||
+          !userCanUseWebSearch(userModel.getUserById(task.userId))
+        ) {
           throw new WorkAgentHttpError(
             'Web search is not available for this task.',
             403,

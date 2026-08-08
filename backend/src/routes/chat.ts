@@ -27,9 +27,11 @@ import agentCliService from '../services/agentCliService.js';
 import {
   buildWebSearchEnhancedContent,
   isWebSearchAvailable,
+  userCanUseWebSearch,
   webSearch as runWebSearch,
   type WebSearchResult,
 } from '../services/webSearchService.js';
+import { userModel } from '../models/userModel.js';
 import chatGenerationService from '../services/chatGenerationService.js';
 import preferencesService from '../services/preferencesService.js';
 import { ChatRequestService } from '../services/chatRequestService.js';
@@ -464,7 +466,11 @@ router.post(
       let webSearchSources: Array<{ title: string; url: string }> | undefined;
       let enhancedContent = documentContext.enhancedContent;
       let hasRelevantContext = documentContext.hasRelevantContext;
-      if (req.body?.webSearch === true && isWebSearchAvailable()) {
+      if (
+        req.body?.webSearch === true &&
+        isWebSearchAvailable() &&
+        userCanUseWebSearch(userModel.getUserById(userId))
+      ) {
         try {
           const results: WebSearchResult[] = await runWebSearch(message);
           if (results.length > 0) {
@@ -605,7 +611,11 @@ router.post(
       // degrades to a normal reply.
       let webSearchSources: Array<{ title: string; url: string }> | undefined;
       let searchEnhancedContent: string | undefined;
-      if (req.body?.webSearch === true && isWebSearchAvailable()) {
+      if (
+        req.body?.webSearch === true &&
+        isWebSearchAvailable() &&
+        userCanUseWebSearch(userModel.getUserById(userId))
+      ) {
         res.write(
           `data: ${JSON.stringify({ type: 'search', status: 'searching' })}\n\n`
         );

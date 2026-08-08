@@ -1311,6 +1311,12 @@
       "saved": "Adgang til modeldownload opdateret",
       "saveFailed": "Kunne ikke opdatere adgang til modeldownload"
     },
+    "webSearchAccess": {
+      "title": "Websøgning",
+      "description": "Tillad alle aktive brugere at bruge websøgning i chats og Work-opgaver. Administratorer kan altid bruge den. Motoren konfigureres under Indstillinger > Søgning.",
+      "saved": "Adgang til websøgning opdateret",
+      "saveFailed": "Kunne ikke opdatere adgang til websøgning"
+    },
     "agentAccess": {
       "title": "Agenter",
       "description": "Tilbyd sektionen Agenter (Libre Claw) til administratorer. Agent-CLI'er kører på værten som serverbrugeren, uden for Work-sandkassen.",

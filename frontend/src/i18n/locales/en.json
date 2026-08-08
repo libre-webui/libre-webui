@@ -1311,6 +1311,12 @@
       "saved": "Model download access updated",
       "saveFailed": "Could not update model download access"
     },
+    "webSearchAccess": {
+      "title": "Web search",
+      "description": "Allow all active users to use web search in chats and Work tasks. Administrators can always use it. Configure the engine in Settings > Search.",
+      "saved": "Web search access updated",
+      "saveFailed": "Could not update web search access"
+    },
     "agentAccess": {
       "title": "Agents",
       "description": "Offer the Agents section (Libre Claw) to administrators. Agent CLIs run on the host as the server user, outside the Work sandbox.",

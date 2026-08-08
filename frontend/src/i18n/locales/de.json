@@ -1311,6 +1311,12 @@
       "saved": "Modell-Download-Zugriff aktualisiert",
       "saveFailed": "Modell-Download-Zugriff konnte nicht aktualisiert werden"
     },
+    "webSearchAccess": {
+      "title": "Websuche",
+      "description": "Allen aktiven Benutzern die Websuche in Chats und Work-Aufgaben erlauben. Administratoren können sie immer nutzen. Die Engine wird unter Einstellungen > Suche konfiguriert.",
+      "saved": "Websuche-Zugriff aktualisiert",
+      "saveFailed": "Websuche-Zugriff konnte nicht aktualisiert werden"
+    },
     "agentAccess": {
       "title": "Agenten",
       "description": "Den Bereich Agenten (Libre Claw) für Administratoren anbieten. Agenten-CLIs laufen auf dem Host als Server-Benutzer, außerhalb der Work-Sandbox.",
