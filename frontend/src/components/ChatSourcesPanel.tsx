@@ -16,8 +16,9 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { ChevronUp, FileText, Globe } from 'lucide-react';
+import { BookOpen, ChevronUp, FileText, Globe, X } from 'lucide-react';
 import type { ChatSession } from '@/types';
 import { documentsApi } from '@/utils/api';
 
@@ -65,6 +66,9 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
   >([]);
   const [allSources, setAllSources] = useState(false);
   const [allDocuments, setAllDocuments] = useState(false);
+  // Below xl the rail has no room; the same content opens as a bottom
+  // sheet from a compact trigger, matching the app's mobile pattern.
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const { webSources, ragSources } = useMemo(() => {
     const web = new Map<string, WebSource>();
@@ -180,11 +184,8 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
       </button>
     );
 
-  return (
-    <aside
-      data-testid='chat-sources-panel'
-      className='hidden w-72 shrink-0 flex-col gap-7 overflow-y-auto border-s border-black/[0.05] px-5 py-6 scrollbar-thin dark:border-white/[0.06] xl:flex'
-    >
+  const sections = (
+    <>
       {webSources.length > 0 && (
         <section>
           <h3 className='mb-2 text-[13px] font-medium text-gray-500 dark:text-dark-500'>
@@ -257,7 +258,69 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
           )}
         </section>
       )}
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      <aside
+        data-testid='chat-sources-panel'
+        className='hidden w-72 shrink-0 flex-col gap-7 overflow-y-auto border-s border-black/[0.05] px-5 py-6 scrollbar-thin dark:border-white/[0.06] xl:flex'
+      >
+        {sections}
+      </aside>
+
+      {/* Compact trigger below xl, sitting under the chat controls button */}
+      <button
+        type='button'
+        onClick={() => setSheetOpen(true)}
+        data-testid='chat-sources-trigger'
+        className='absolute end-3 top-14 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.07] bg-surface/65 text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 xl:hidden'
+        title={t('chat.message.sources', 'Sources')}
+        aria-haspopup='dialog'
+        aria-expanded={sheetOpen}
+      >
+        <BookOpen className='h-3.5 w-3.5' />
+        <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-primary-500 px-1 text-[9px] font-semibold tabular-nums text-white shadow-sm'>
+          {webSources.length + documents.length}
+        </span>
+      </button>
+
+      {sheetOpen &&
+        createPortal(
+          <div className='fixed inset-0 z-[80] xl:hidden'>
+            <button
+              type='button'
+              className='absolute inset-0 bg-black/35 backdrop-blur-[2px]'
+              onClick={() => setSheetOpen(false)}
+              aria-label={t('common.close')}
+            />
+            <div
+              role='dialog'
+              aria-modal='true'
+              aria-label={t('chat.message.sources', 'Sources')}
+              className='absolute inset-x-3 bottom-3 max-h-[75vh] overflow-y-auto rounded-2xl border border-black/[0.08] bg-surface p-5 shadow-[0_20px_70px_rgba(0,0,0,0.3)] scrollbar-thin dark:border-white/[0.09] dark:bg-dark-100'
+              data-testid='chat-sources-sheet'
+            >
+              <div className='mb-3 flex items-center justify-between'>
+                <p className='text-sm font-semibold text-gray-900 dark:text-dark-900'>
+                  {t('chat.message.sources', 'Sources')}
+                </p>
+                <button
+                  type='button'
+                  onClick={() => setSheetOpen(false)}
+                  className='rounded-md p-1.5 text-gray-400 hover:text-gray-700 dark:text-dark-500 dark:hover:text-dark-800'
+                  aria-label={t('common.close')}
+                >
+                  <X className='h-4 w-4' />
+                </button>
+              </div>
+              <div className='flex flex-col gap-6'>{sections}</div>
+            </div>
+          </div>,
+          document.body
+        )}
+    </>
   );
 };
 
