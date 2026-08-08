@@ -71,6 +71,14 @@ test('policy input validation accepts sane values and rejects the rest', () => {
   });
   assert.equal(valid.name, 'Heavy build');
   assert.equal(valid.memoryLimit, '4g');
+  assert.equal(valid.cpuLimit, '3.5');
+
+  // The CPU limit is stored as the parsed number: Number() accepts spellings
+  // like '0x10' that docker/kubelet reject at container start.
+  assert.equal(
+    validateWorkPolicyInput({ name: 'ok', cpuLimit: '0x10' }).cpuLimit,
+    '16'
+  );
 
   // Empty optional fields resolve to null (= inherit the global default).
   const sparse = validateWorkPolicyInput({ name: 'sparse' });
@@ -101,6 +109,11 @@ test('policy input validation accepts sane values and rejects the rest', () => {
     { name: 'ok', image: '-rm' },
     { name: 'ok', image: 'node:22@sha256:abc' },
     { name: 'ok', memoryLimit: 'lots' },
+    // Magnitudes are bounded: below Docker's 6m floor or past 1024g is a
+    // typo, not a limit, and a petabyte workspace claim is the same.
+    { name: 'ok', memoryLimit: '1m' },
+    { name: 'ok', memoryLimit: '2000g' },
+    { name: 'ok', workspaceSize: '999Ti' },
     { name: 'ok', cpuLimit: '-1' },
     { name: 'ok', cpuLimit: '1000' },
     { name: 'ok', pidsLimit: 4 },

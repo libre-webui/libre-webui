@@ -171,7 +171,12 @@ const Meter: React.FC<{ value: number; tone?: 'primary' | 'warning' }> = ({
 
 const WorkPanel: React.FC = () => {
   const { t } = useTranslation();
-  const { data: overview } = useQuery({
+  const {
+    data: overview,
+    error,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: ['work-admin-overview'],
     queryFn: async () => {
       const response = await workApi.adminOverview();
@@ -184,7 +189,37 @@ const WorkPanel: React.FC = () => {
     refetchIntervalInBackground: false,
   });
 
-  if (!overview) return null;
+  if (!overview) {
+    // A failed overview is exactly when an administrator needs this panel;
+    // show the failure instead of silently dropping the whole section.
+    if (!error) return null;
+    return (
+      <Panel
+        title={t('systemPage.work.title')}
+        description={t('systemPage.work.description')}
+        icon={Boxes}
+      >
+        <div className='flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5'>
+          <div className='flex items-start gap-3 text-sm text-red-700 dark:text-red-300'>
+            <TriangleAlert className='mt-0.5 h-4 w-4 shrink-0' />
+            <p>
+              {error instanceof Error && error.message
+                ? error.message
+                : t('systemPage.loadFailed')}
+            </p>
+          </div>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => void refetch()}
+            disabled={isFetching}
+          >
+            {t('common.retry')}
+          </Button>
+        </div>
+      </Panel>
+    );
+  }
 
   const stateLabel = (running: boolean | null): string =>
     running === null
@@ -333,7 +368,7 @@ const WorkPanel: React.FC = () => {
                     {previewLabel(task.previewStatus)}
                   </td>
                   <td className='px-4 py-2.5 text-xs text-gray-600 dark:text-dark-600'>
-                    {task.terminalSessions || '—'}
+                    {task.terminalSessions}
                   </td>
                   <td className='px-5 py-2.5 text-end text-xs text-gray-600 dark:text-dark-600'>
                     {dateFormatter.format(task.updatedAt)}

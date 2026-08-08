@@ -205,20 +205,46 @@ export default function WorkPage() {
   // (the common case) renders no picker at all.
   const [policies, setPolicies] = useState<WorkPolicy[]>([]);
   const [policyId, setPolicyId] = useState('');
+  // The picker only appears on the landing view, so refresh the list every
+  // time the user returns there: an administrator may have added or deleted
+  // policies since the last visit, and a stale selected id would 400 on
+  // submit.
+  const onLanding = !selectedTask;
   useEffect(() => {
+    if (!onLanding) return;
     let cancelled = false;
     workApi
       .listPolicies()
       .then(response => {
-        if (!cancelled && response.success && response.data) {
-          setPolicies(response.data);
-        }
+        if (cancelled || !response.success || !response.data) return;
+        const fresh = response.data;
+        setPolicies(fresh);
+        setPolicyId(current =>
+          current && !fresh.some(policy => policy.id === current) ? '' : current
+        );
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [onLanding]);
+  // Idle-stop can end a preview server-side, and no live channel exists to
+  // announce it (the SSE stream is run-scoped and idle-stop fires precisely
+  // when nothing runs). Poll the open task while its preview is up so the
+  // panel converges instead of showing "running" until a manual refetch.
+  const selectedTaskId = selectedTask?.id;
+  const previewLive =
+    selectedTask?.previewStatus === 'running' ||
+    selectedTask?.previewStatus === 'starting';
+  useEffect(() => {
+    if (!selectedTaskId || !previewLive) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      void loadTask(selectedTaskId, true).catch(() => {});
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, [selectedTaskId, previewLive, loadTask]);
+
   const [taskActionsState, setTaskActionsState] = useState<{
     taskId: string | null;
     open: boolean;

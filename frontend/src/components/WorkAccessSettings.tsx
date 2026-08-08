@@ -18,6 +18,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
+import { Button } from '@/components/ui';
 import { SettingsToggle } from '@/components/settings/SettingsToggle';
 import { useAuthStore } from '@/store/authStore';
 import type { WorkAccessMode } from '@/types/work';
@@ -32,21 +33,31 @@ export const WorkAccessSettings: React.FC = () => {
   const refreshWorkAccess = useAuthStore(state => state.refreshWorkAccess);
   const [mode, setMode] = useState<WorkAccessMode | null>(null);
   const [saving, setSaving] = useState(false);
+  // A failed initial fetch would otherwise leave the toggle disabled for
+  // the rest of the session; offer a retry instead.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setLoadFailed(false);
     workApi
       .access()
       .then(response => {
-        if (!cancelled && response.success && response.data) {
+        if (cancelled) return;
+        if (response.success && response.data) {
           setMode(response.data.mode);
+        } else {
+          setLoadFailed(true);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadAttempt]);
 
   const handleChange = async (checked: boolean) => {
     const next: WorkAccessMode = checked ? 'all-users' : 'admins';
@@ -77,11 +88,21 @@ export const WorkAccessSettings: React.FC = () => {
             {t('userManager.workAccess.description')}
           </p>
         </div>
-        <SettingsToggle
-          checked={mode === 'all-users'}
-          onChange={handleChange}
-          disabled={saving || mode === null}
-        />
+        {mode === null && loadFailed ? (
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={() => setLoadAttempt(attempt => attempt + 1)}
+          >
+            {t('common.retry')}
+          </Button>
+        ) : (
+          <SettingsToggle
+            checked={mode === 'all-users'}
+            onChange={handleChange}
+            disabled={saving || mode === null}
+          />
+        )}
       </div>
     </div>
   );

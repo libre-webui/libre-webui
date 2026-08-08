@@ -52,10 +52,12 @@ const formFromPolicy = (policy: WorkPolicy): PolicyFormState => ({
   cpuLimit: policy.cpuLimit ?? '',
   pidsLimit: policy.pidsLimit === undefined ? '' : String(policy.pidsLimit),
   workspaceSize: policy.workspaceSize ?? '',
+  // Exact minutes, fractional if needed: rounding here would silently
+  // rewrite a sub-minute timeout on the next save.
   idleMinutes:
     policy.idleTimeoutMs === undefined
       ? ''
-      : String(Math.round(policy.idleTimeoutMs / 60_000)),
+      : String(policy.idleTimeoutMs / 60_000),
   networkDefault:
     policy.networkDefault === undefined
       ? 'inherit'
@@ -80,7 +82,7 @@ const inputFromForm = (form: PolicyFormState): WorkPolicyInput => ({
   pidsLimit: form.pidsLimit.trim() ? Number(form.pidsLimit) : null,
   workspaceSize: form.workspaceSize.trim() || null,
   idleTimeoutMs: form.idleMinutes.trim()
-    ? Number(form.idleMinutes) * 60_000
+    ? Math.round(Number(form.idleMinutes) * 60_000)
     : null,
   networkDefault:
     form.networkDefault === 'inherit' ? null : form.networkDefault === 'on',

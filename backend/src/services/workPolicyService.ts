@@ -41,10 +41,47 @@ const logger = createLogger('services:work-policy');
 const NAME_MAX_LENGTH = 100;
 const IMAGE_MAX_LENGTH = 300;
 // Docker memory quantities: bytes, or one-letter binary suffixes with the
-// two-letter spellings Docker also accepts (2g, 2gb, 2gib).
+// two-letter spellings Docker also accepts (2g, 2gb, 2gib). Bounded to
+// what a container can actually start with: Docker refuses less than 6m,
+// and anything past 1024g is a typo, not a limit.
 const MEMORY_PATTERN = /^\d+(?:\.\d+)?(?:[bkmg](?:i?b)?)?$/i;
-// Kubernetes resource quantities for workspace PVCs.
+const MEMORY_MIN_BYTES = 6 * 1024 ** 2;
+const MEMORY_MAX_BYTES = 1024 ** 4;
+// Kubernetes resource quantities for workspace PVCs, capped at 16Ti so a
+// slipped keystroke cannot request a petabyte claim.
 const WORKSPACE_SIZE_PATTERN = /^\d+(?:\.\d+)?(?:Ki|Mi|Gi|Ti|K|M|G|T)?$/;
+const WORKSPACE_MAX_BYTES = 16 * 1024 ** 4;
+
+const MEMORY_UNIT_BYTES: Record<string, number> = {
+  b: 1,
+  k: 1024,
+  m: 1024 ** 2,
+  g: 1024 ** 3,
+};
+
+function memoryLimitBytes(value: string): number {
+  const match = /^(\d+(?:\.\d+)?)([bkmg])?/i.exec(value);
+  if (!match) return Number.NaN;
+  return Number(match[1]) * MEMORY_UNIT_BYTES[(match[2] ?? 'b').toLowerCase()];
+}
+
+const WORKSPACE_UNIT_BYTES: Record<string, number> = {
+  '': 1,
+  K: 1e3,
+  M: 1e6,
+  G: 1e9,
+  T: 1e12,
+  Ki: 1024,
+  Mi: 1024 ** 2,
+  Gi: 1024 ** 3,
+  Ti: 1024 ** 4,
+};
+
+function workspaceSizeBytes(value: string): number {
+  const match = /^(\d+(?:\.\d+)?)(Ki|Mi|Gi|Ti|K|M|G|T)?$/.exec(value);
+  if (!match) return Number.NaN;
+  return Number(match[1]) * WORKSPACE_UNIT_BYTES[match[2] ?? ''];
+}
 // Image references: [registry[:port]/]name[/name...][:tag][@sha256:digest].
 // Anchored to the registry/repository charset so a stored image can never
 // begin with '-' and reach the container runtime looking like a flag.
@@ -146,21 +183,33 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
     input.memoryLimit === ''
       ? null
       : String(input.memoryLimit).trim();
-  if (memoryLimit !== null && !MEMORY_PATTERN.test(memoryLimit)) {
-    throw invalid('Policy memory limit must look like 2g, 512m, or bytes.');
+  if (memoryLimit !== null) {
+    const bytes = memoryLimitBytes(memoryLimit);
+    if (
+      !MEMORY_PATTERN.test(memoryLimit) ||
+      !(bytes >= MEMORY_MIN_BYTES && bytes <= MEMORY_MAX_BYTES)
+    ) {
+      throw invalid(
+        'Policy memory limit must look like 512m or 2g, between 6m and 1024g.'
+      );
+    }
   }
 
-  const cpuLimit =
+  const cpuLimitRaw =
     input.cpuLimit === null ||
     input.cpuLimit === undefined ||
     input.cpuLimit === ''
       ? null
       : String(input.cpuLimit).trim();
-  if (cpuLimit !== null) {
-    const parsed = Number(cpuLimit);
+  let cpuLimit: string | null = null;
+  if (cpuLimitRaw !== null) {
+    const parsed = Number(cpuLimitRaw);
     if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 256) {
       throw invalid('Policy CPU limit must be a number between 0 and 256.');
     }
+    // Store the parsed value, not the raw spelling: Number() accepts forms
+    // like '0x10' that the container runtimes reject at start time.
+    cpuLimit = String(parsed);
   }
 
   const pidsLimit =
@@ -185,8 +234,14 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
     input.workspaceSize === ''
       ? null
       : String(input.workspaceSize).trim();
-  if (workspaceSize !== null && !WORKSPACE_SIZE_PATTERN.test(workspaceSize)) {
-    throw invalid('Policy workspace size must look like 5Gi or 500Mi.');
+  if (
+    workspaceSize !== null &&
+    (!WORKSPACE_SIZE_PATTERN.test(workspaceSize) ||
+      !(workspaceSizeBytes(workspaceSize) <= WORKSPACE_MAX_BYTES))
+  ) {
+    throw invalid(
+      'Policy workspace size must look like 5Gi or 500Mi, at most 16Ti.'
+    );
   }
 
   const idleTimeoutMs =
