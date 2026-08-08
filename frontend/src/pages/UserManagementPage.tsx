@@ -18,6 +18,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserManager } from '@/components/UserManager';
+import { WorkAccessSettings } from '@/components/WorkAccessSettings';
 import { PageHeader, PageShell } from '@/components/ui';
 
 export const UserManagementPage: React.FC = () => {
@@ -29,6 +30,9 @@ export const UserManagementPage: React.FC = () => {
         title={t('userManager.title')}
         description={t('userManager.pageDescription')}
       />
+      <div className='mb-4'>
+        <WorkAccessSettings />
+      </div>
       <UserManager />
     </PageShell>
   );

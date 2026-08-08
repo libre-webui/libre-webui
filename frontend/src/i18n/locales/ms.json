@@ -1247,6 +1247,12 @@
       "failed": "Akaun tidak dapat diluluskan.",
       "notification": "{{count}} pendaftaran menunggu kelulusan anda.",
       "notificationBadge": "{{count}} kelulusan pengguna tertangguh"
+    },
+    "workAccess": {
+      "title": "Akses Work",
+      "description": "Benarkan semua pengguna aktif mencipta dan menjalankan tugas Work dalam kotak pasir terpencil. Pentadbir sentiasa mempunyai akses; ruang kerja folder hos kekal untuk pentadbir sahaja.",
+      "saved": "Akses Work dikemas kini",
+      "saveFailed": "Tidak dapat mengemas kini akses Work"
     }
   },
   "chatHistory": {

@@ -1247,6 +1247,12 @@
       "failed": "アカウントを承認できませんでした。",
       "notification": "{{count}}件の登録が承認待ちです。",
       "notificationBadge": "{{count}}件の保留中のユーザー承認"
+    },
+    "workAccess": {
+      "title": "Work へのアクセス",
+      "description": "すべてのアクティブなユーザーが隔離されたサンドボックスで Work タスクを作成・実行できるようにします。管理者は常にアクセスできます。ホストフォルダーのワークスペースは管理者専用のままです。",
+      "saved": "Work へのアクセスを更新しました",
+      "saveFailed": "Work へのアクセスを更新できませんでした"
     }
   },
   "chatHistory": {

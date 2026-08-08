@@ -20,6 +20,8 @@ import type {
   CreateWorkTaskRequest,
   StartWorkRunRequest,
   UpdateWorkTaskRequest,
+  WorkAccess,
+  WorkAccessMode,
   WorkCapabilities,
   WorkFile,
   WorkFileEntry,
@@ -39,6 +41,14 @@ const taskPath = (taskId: string): string =>
   `/work/tasks/${encodeURIComponent(taskId)}`;
 
 export const workApi = {
+  access: (): Promise<ApiResponse<WorkAccess>> =>
+    api.get('/work/access').then(response => response.data),
+
+  setAccess: (
+    mode: WorkAccessMode
+  ): Promise<ApiResponse<{ mode: WorkAccessMode }>> =>
+    api.put('/work/access', { mode }).then(response => response.data),
+
   capabilities: (): Promise<ApiResponse<WorkCapabilities>> =>
     api.get('/work/capabilities').then(response => response.data),
 

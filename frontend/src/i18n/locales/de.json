@@ -1247,6 +1247,12 @@
       "failed": "Das Konto konnte nicht genehmigt werden.",
       "notification": "{{count}} Registrierung(en) warten auf Ihre Genehmigung.",
       "notificationBadge": "{{count}} ausstehende Benutzergenehmigungen"
+    },
+    "workAccess": {
+      "title": "Work-Zugriff",
+      "description": "Allen aktiven Benutzern erlauben, Work-Aufgaben in isolierten Sandboxes zu erstellen und auszuführen. Administratoren haben immer Zugriff; Host-Ordner-Arbeitsbereiche bleiben Administratoren vorbehalten.",
+      "saved": "Work-Zugriff aktualisiert",
+      "saveFailed": "Work-Zugriff konnte nicht aktualisiert werden"
     }
   },
   "chatHistory": {

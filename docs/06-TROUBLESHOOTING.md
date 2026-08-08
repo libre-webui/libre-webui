@@ -302,7 +302,9 @@ the raw model ID, so similarly named entries are independent choices.
 
 ### Work Is Missing or Reports Runtime Unavailable
 
-Work requires a currently authenticated administrator. Its container runtime
+Work requires a currently authenticated account with Work access — an
+administrator, or any active user once an administrator has opened Work to
+all users from the User Management page. Its container runtime
 must be available to the Libre WebUI backend:
 
 ```bash

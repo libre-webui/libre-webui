@@ -1247,6 +1247,12 @@
       "failed": "No se pudo aprobar la cuenta.",
       "notification": "{{count}} registro(s) esperando tu aprobación.",
       "notificationBadge": "{{count}} aprobaciones de usuario pendientes"
+    },
+    "workAccess": {
+      "title": "Acceso a Work",
+      "description": "Permitir que todos los usuarios activos creen y ejecuten tareas de Work en sandboxes aislados. Los administradores siempre tienen acceso; los espacios de trabajo en carpetas del host siguen siendo solo para administradores.",
+      "saved": "Acceso a Work actualizado",
+      "saveFailed": "No se pudo actualizar el acceso a Work"
     }
   },
   "chatHistory": {

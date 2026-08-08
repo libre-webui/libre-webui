@@ -1247,6 +1247,12 @@
       "failed": "Akun tidak dapat disetujui.",
       "notification": "{{count}} pendaftaran menunggu persetujuan Anda.",
       "notificationBadge": "{{count}} persetujuan pengguna tertunda"
+    },
+    "workAccess": {
+      "title": "Akses Work",
+      "description": "Izinkan semua pengguna aktif membuat dan menjalankan tugas Work di sandbox terisolasi. Administrator selalu punya akses; ruang kerja folder host tetap khusus administrator.",
+      "saved": "Akses Work diperbarui",
+      "saveFailed": "Tidak dapat memperbarui akses Work"
     }
   },
   "chatHistory": {

@@ -57,15 +57,15 @@ const rowClass =
 export const HomePage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user, systemInfo, isAdmin } = useAuthStore();
+  const { user, systemInfo, isAdmin, canUseWork } = useAuthStore();
   const sessions = useChatStore(state => state.sessions);
   const workTasks = useWorkStore(state => state.tasks);
   const capabilities = useWorkStore(state => state.capabilities);
   const loadWorkTasks = useWorkStore(state => state.loadTasks);
   const loadCapabilities = useWorkStore(state => state.loadCapabilities);
 
-  const showWork = systemInfo?.requiresAuth === false || isAdmin();
-  const showAgents = showWork;
+  const showWork = canUseWork();
+  const showAgents = systemInfo?.requiresAuth === false || isAdmin();
 
   useEffect(() => {
     if (!showWork) return;

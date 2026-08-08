@@ -1247,6 +1247,12 @@
       "failed": "Het account kon niet worden goedgekeurd.",
       "notification": "{{count}} registratie(s) wachten op uw goedkeuring.",
       "notificationBadge": "{{count}} openstaande gebruikersgoedkeuringen"
+    },
+    "workAccess": {
+      "title": "Work-toegang",
+      "description": "Sta alle actieve gebruikers toe om Work-taken te maken en uit te voeren in geïsoleerde sandboxes. Beheerders hebben altijd toegang; hostmap-werkruimten blijven alleen voor beheerders.",
+      "saved": "Work-toegang bijgewerkt",
+      "saveFailed": "Kon Work-toegang niet bijwerken"
     }
   },
   "chatHistory": {

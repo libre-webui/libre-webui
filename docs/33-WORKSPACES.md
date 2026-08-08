@@ -27,13 +27,16 @@ commands in a task-scoped Docker container, and start a browser preview.
 Work is implemented directly in Libre WebUI. It does not require Libre Claw or
 another agent daemon.
 
-:::warning Trusted administrators only
+:::warning Trusted users only
 
-Every Work API requires an authenticated administrator account. Work
-deliberately lets a model execute arbitrary shell commands inside a container,
-and current UI-created Work containers have network egress. Treat every
-administrator with Work access as a trusted runtime operator, not merely as a
-chat user.
+Every Work API requires an authenticated account with Work access. By
+default that means administrators only; an administrator can open Work to
+all active users from the User Management page (host-folder workspaces stay
+admin-only regardless, because they bind-mount server paths). Work
+deliberately lets a model execute arbitrary shell commands inside a
+container, and current UI-created Work containers have network egress.
+Treat everyone you grant Work access as a trusted runtime operator, not
+merely as a chat user.
 
 :::
 
@@ -600,7 +603,7 @@ DNS filtering constrains name resolution, not raw IP egress. A deployment that
 must guarantee no direct-IP egress needs host-level firewall rules as well.
 
 Do not assume that placing code in Work prevents it from transmitting data.
-Use Work only for trusted administrators. There is no Work environment
+Grant Work access only to trusted users. There is no Work environment
 variable that changes the UI-created task default to offline mode.
 
 Network access does not add credentials. Libre WebUI does not mount SSH keys,
@@ -1161,7 +1164,9 @@ Resolve that name/ownership conflict carefully, then retry deletion.
 
 Before enabling Work for an installation, remember:
 
-- Work is admin-only but administrators are powerful trusted operators.
+- Work is admins-only by default; opening it to all users makes every
+  active account a sandbox operator, so decide deliberately. Host-folder
+  workspaces stay admin-only in every mode.
 - The backend must control a Docker daemon.
 - Containers reduce filesystem exposure but are not virtual machines.
 - Current UI-created Work tasks have bridge network egress and no UI network

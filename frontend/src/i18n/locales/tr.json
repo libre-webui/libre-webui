@@ -1247,6 +1247,12 @@
       "failed": "Hesap onaylanamadı.",
       "notification": "{{count}} kayıt onayınızı bekliyor.",
       "notificationBadge": "{{count}} bekleyen kullanıcı onayı"
+    },
+    "workAccess": {
+      "title": "Work erişimi",
+      "description": "Tüm etkin kullanıcıların yalıtılmış korumalı alanlarda Work görevleri oluşturmasına ve çalıştırmasına izin verin. Yöneticiler her zaman erişebilir; ana makine klasörü çalışma alanları yalnızca yöneticilere açıktır.",
+      "saved": "Work erişimi güncellendi",
+      "saveFailed": "Work erişimi güncellenemedi"
     }
   },
   "chatHistory": {

@@ -1247,6 +1247,12 @@
       "failed": "Nie udało się zatwierdzić konta.",
       "notification": "{{count}} rejestracja(-e) czeka(-ją) na Twoje zatwierdzenie.",
       "notificationBadge": "{{count}} oczekujących zatwierdzeń użytkowników"
+    },
+    "workAccess": {
+      "title": "Dostęp do Work",
+      "description": "Zezwól wszystkim aktywnym użytkownikom na tworzenie i uruchamianie zadań Work w izolowanych piaskownicach. Administratorzy zawsze mają dostęp; przestrzenie robocze w folderach hosta pozostają tylko dla administratorów.",
+      "saved": "Zaktualizowano dostęp do Work",
+      "saveFailed": "Nie udało się zaktualizować dostępu do Work"
     }
   },
   "chatHistory": {

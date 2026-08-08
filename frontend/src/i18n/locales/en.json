@@ -1247,6 +1247,12 @@
       "updateSuccess": "User updated successfully",
       "createFailed": "Failed to create user",
       "updateFailed": "Failed to update user"
+    },
+    "workAccess": {
+      "title": "Work access",
+      "description": "Allow all active users to create and run Work tasks in isolated sandboxes. Administrators always have access; host folder workspaces remain admin-only.",
+      "saved": "Work access updated",
+      "saveFailed": "Could not update Work access"
     }
   },
   "usageAnalytics": {

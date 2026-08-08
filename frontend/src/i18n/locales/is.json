@@ -1247,6 +1247,12 @@
       "failed": "Ekki tókst að samþykkja reikninginn.",
       "notification": "{{count}} skráning(ar) bíða samþykkis þíns.",
       "notificationBadge": "{{count}} bíðandi notandasamþykki"
+    },
+    "workAccess": {
+      "title": "Work-aðgangur",
+      "description": "Leyfa öllum virkum notendum að búa til og keyra Work-verkefni í einangruðum sandkössum. Stjórnendur hafa alltaf aðgang; vinnusvæði í hýsilmöppum eru áfram aðeins fyrir stjórnendur.",
+      "saved": "Work-aðgangur uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra Work-aðgang"
     }
   },
   "chatHistory": {

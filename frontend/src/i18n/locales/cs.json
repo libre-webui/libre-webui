@@ -1247,6 +1247,12 @@
       "failed": "Účet nebylo možné schválit.",
       "notification": "{{count}} registrací čeká na vaše schválení.",
       "notificationBadge": "{{count}} nevyřízených schválení uživatelů"
+    },
+    "workAccess": {
+      "title": "Přístup k Work",
+      "description": "Povolit všem aktivním uživatelům vytvářet a spouštět úlohy Work v izolovaných sandboxech. Administrátoři mají přístup vždy; pracovní prostory v hostitelských složkách zůstávají jen pro administrátory.",
+      "saved": "Přístup k Work byl aktualizován",
+      "saveFailed": "Přístup k Work se nepodařilo aktualizovat"
     }
   },
   "chatHistory": {

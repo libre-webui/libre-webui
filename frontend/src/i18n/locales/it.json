@@ -1247,6 +1247,12 @@
       "failed": "L'account non può essere approvato.",
       "notification": "{{count}} registrazioni in attesa di approvazione.",
       "notificationBadge": "{{count}} approvazioni utente in sospeso"
+    },
+    "workAccess": {
+      "title": "Accesso a Work",
+      "description": "Consenti a tutti gli utenti attivi di creare ed eseguire attività Work in sandbox isolate. Gli amministratori hanno sempre accesso; gli spazi di lavoro su cartelle host restano riservati agli amministratori.",
+      "saved": "Accesso a Work aggiornato",
+      "saveFailed": "Impossibile aggiornare l'accesso a Work"
     }
   },
   "chatHistory": {

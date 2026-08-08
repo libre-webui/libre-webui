@@ -1247,6 +1247,12 @@
       "failed": "Kontoen kunne ikke godkendes.",
       "notification": "{{count}} registrering(er) afventer din godkendelse.",
       "notificationBadge": "{{count}} afventende brugergodkendelser"
+    },
+    "workAccess": {
+      "title": "Work-adgang",
+      "description": "Tillad alle aktive brugere at oprette og køre Work-opgaver i isolerede sandkasser. Administratorer har altid adgang; værtsmappe-arbejdsområder er fortsat kun for administratorer.",
+      "saved": "Work-adgang opdateret",
+      "saveFailed": "Work-adgang kunne ikke opdateres"
     }
   },
   "chatHistory": {

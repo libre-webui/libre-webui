@@ -1247,6 +1247,12 @@
       "failed": "Không thể phê duyệt tài khoản.",
       "notification": "{{count}} đăng ký đang chờ bạn phê duyệt.",
       "notificationBadge": "{{count}} phê duyệt người dùng đang chờ xử lý"
+    },
+    "workAccess": {
+      "title": "Quyền truy cập Work",
+      "description": "Cho phép mọi người dùng đang hoạt động tạo và chạy tác vụ Work trong các sandbox cô lập. Quản trị viên luôn có quyền truy cập; không gian làm việc thư mục máy chủ vẫn chỉ dành cho quản trị viên.",
+      "saved": "Đã cập nhật quyền truy cập Work",
+      "saveFailed": "Không thể cập nhật quyền truy cập Work"
     }
   },
   "chatHistory": {

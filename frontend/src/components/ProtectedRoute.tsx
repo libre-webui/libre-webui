@@ -23,14 +23,17 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAuth?: boolean;
   requireAdmin?: boolean;
+  requireWork?: boolean;
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireAuth = true,
   requireAdmin = false,
+  requireWork = false,
 }) => {
-  const { isAuthenticated, user, systemInfo, isLoading } = useAuthStore();
+  const { isAuthenticated, user, systemInfo, isLoading, canUseWork } =
+    useAuthStore();
   const _location = useLocation();
 
   // Show loading spinner while checking auth
@@ -54,6 +57,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // If admin is required but user is not admin
   if (requireAdmin && (!user || user.role !== 'admin')) {
+    return <Navigate to='/' replace />;
+  }
+
+  // If Work access is required, follow the persisted access mode: admins
+  // always pass, other users pass when Work is open to all users.
+  if (requireWork && !canUseWork()) {
     return <Navigate to='/' replace />;
   }
 

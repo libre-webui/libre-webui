@@ -138,6 +138,13 @@ export interface WorkModelOption extends WorkModelSelection {
   remote: boolean;
 }
 
+export type WorkAccessMode = 'admins' | 'all-users';
+
+export interface WorkAccess {
+  mode: WorkAccessMode;
+  allowed: boolean;
+}
+
 export interface WorkCapabilities {
   available: boolean;
   runtime: 'docker';

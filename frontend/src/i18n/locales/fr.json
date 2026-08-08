@@ -1247,6 +1247,12 @@
       "failed": "Le compte n'a pas pu être approuvé.",
       "notification": "{{count}} inscription(s) en attente de votre approbation.",
       "notificationBadge": "{{count}} approbations d'utilisateurs en attente"
+    },
+    "workAccess": {
+      "title": "Accès à Work",
+      "description": "Autoriser tous les utilisateurs actifs à créer et exécuter des tâches Work dans des bacs à sable isolés. Les administrateurs y ont toujours accès ; les espaces de travail sur dossiers hôtes restent réservés aux administrateurs.",
+      "saved": "Accès à Work mis à jour",
+      "saveFailed": "Impossible de mettre à jour l'accès à Work"
     }
   },
   "chatHistory": {

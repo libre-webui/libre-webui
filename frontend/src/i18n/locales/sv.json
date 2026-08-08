@@ -1247,6 +1247,12 @@
       "failed": "Kontot kunde inte godkännas.",
       "notification": "{{count}} registrering(ar) väntar på ditt godkännande.",
       "notificationBadge": "{{count}} väntande användargodkännanden"
+    },
+    "workAccess": {
+      "title": "Work-åtkomst",
+      "description": "Tillåt alla aktiva användare att skapa och köra Work-uppgifter i isolerade sandlådor. Administratörer har alltid åtkomst; arbetsytor i värdmappar förblir endast för administratörer.",
+      "saved": "Work-åtkomst uppdaterad",
+      "saveFailed": "Kunde inte uppdatera Work-åtkomst"
     }
   },
   "chatHistory": {

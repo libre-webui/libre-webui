@@ -32,6 +32,7 @@ import {
   validateWorkGitBranchName,
   validateWorkGitRepositoryPaths,
 } from '../utils/workGit.js';
+import { userHasWorkAccess } from './workAccessService.js';
 import workPreviewProxyService from './workPreviewProxyService.js';
 import { KubernetesWorkRuntimeDriver } from './workKubernetesDriver.js';
 import {
@@ -715,7 +716,7 @@ export class WorkRuntimeService {
     if (allowRevokedOwner) {
       this.assertTaskStillOwned(task);
     } else {
-      this.assertTaskOwnerIsAdmin(task);
+      this.assertTaskOwnerHasWorkAccess(task);
     }
     this.retiringTasks.add(task.id);
     try {
@@ -1688,18 +1689,19 @@ export class WorkRuntimeService {
         'WORK_TASK_REMOVING'
       );
     }
-    this.assertTaskOwnerIsAdmin(task);
+    this.assertTaskOwnerHasWorkAccess(task);
   }
 
-  private assertTaskOwnerIsAdmin(task: WorkTaskRecord): void {
+  private assertTaskOwnerHasWorkAccess(task: WorkTaskRecord): void {
     const access = getDatabase()
       .prepare(
-        `SELECT users.role
+        `SELECT users.role AS role, users.account_status AS status
          FROM work_tasks
          JOIN users ON users.id = work_tasks.user_id
          WHERE work_tasks.id = ? AND work_tasks.user_id = ?`
       )
-      .get(task.id, task.userId) as { role: string } | undefined;
+      .get(task.id, task.userId) as
+      { role: string; status: string } | undefined;
     if (!access) {
       throw new WorkRuntimeError(
         'This Work task no longer exists.',
@@ -1707,9 +1709,9 @@ export class WorkRuntimeService {
         'WORK_TASK_REMOVING'
       );
     }
-    if (access.role !== 'admin') {
+    if (!userHasWorkAccess(access)) {
       throw new WorkRuntimeError(
-        'Administrator access to this Work task was revoked.',
+        'Work access for this task was revoked.',
         403,
         'WORK_ACCESS_REVOKED'
       );

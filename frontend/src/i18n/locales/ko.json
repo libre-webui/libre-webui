@@ -1247,6 +1247,12 @@
       "failed": "계정을 승인할 수 없습니다.",
       "notification": "{{count}}건의 등록이 승인을 기다리고 있습니다.",
       "notificationBadge": "{{count}}건의 대기 중인 사용자 승인"
+    },
+    "workAccess": {
+      "title": "Work 접근",
+      "description": "모든 활성 사용자가 격리된 샌드박스에서 Work 작업을 만들고 실행할 수 있도록 허용합니다. 관리자는 항상 접근할 수 있으며, 호스트 폴더 워크스페이스는 관리자 전용으로 유지됩니다.",
+      "saved": "Work 접근이 업데이트되었습니다",
+      "saveFailed": "Work 접근을 업데이트할 수 없습니다"
     }
   },
   "chatHistory": {
