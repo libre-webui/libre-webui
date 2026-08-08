@@ -55,7 +55,8 @@ anyone's permission.
 ## Quick start
 
 You need [Node.js 22.22 or newer](https://nodejs.org). Docker is optional — only
-[Work](#work-one-persistent-environment-per-task) requires it.
+[Work](#work-one-persistent-environment-per-task) needs a sandbox runtime
+(Docker locally, or Kubernetes when deployed with the Helm chart).
 
 ```bash
 npx libre-webui@latest
@@ -195,13 +196,18 @@ can make many paid calls and can send conversation context and tool results,
 including file contents, to that provider. You should know that before a run
 starts, not after the bill.
 
-**On the sandbox.** Work is admin-only and never falls back to host execution.
-Containers run as a non-root user with a read-only root filesystem, dropped
-capabilities, `no-new-privileges`, resource limits with swap pinned to the
-memory cap, and only the task volume mounted. Networked tasks join a managed
-bridge with inter-container communication disabled. The whole policy is hashed
-into a container label and re-verified before reuse, so a container predating a
-hardening change is recreated rather than reused.
+**On the sandbox.** Work is admins-only by default — an administrator can open
+it to all users, and access is re-checked on every request — and it never falls
+back to host execution. Containers run as a non-root user with a read-only
+root filesystem, dropped capabilities, `no-new-privileges`, resource limits
+with swap pinned to the memory cap, and only the task volume mounted.
+Networked tasks join a managed bridge with inter-container communication
+disabled. The whole policy is hashed into a container label and re-verified
+before reuse, so a container predating a hardening change is recreated rather
+than reused. Administrators can define **named runtime policies** — image,
+resource limits, workspace size, idle timeout — that tasks are created under;
+the hardening profile is not a policy field, so a policy can size a sandbox
+but never weaken it.
 
 Two honest limits: containers are not virtual machines, and Work tasks have
 outbound internet egress by design.
@@ -252,15 +258,15 @@ Browser or desktop client
 
 ## Deploy on your terms
 
-| Path                | Command or link                                                         | Best for                                                  |
-| ------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------- |
-| **npm**             | `npx libre-webui@latest`                                                | Fast local start; Work available when Docker is installed |
-| **Docker + Ollama** | `docker compose up -d`                                                  | Persistent stack; Work enabled through host Docker        |
-| **External Ollama** | `docker compose -f docker-compose.external-ollama.yml up -d`            | An Ollama you already run                                 |
-| **NVIDIA Docker**   | `docker compose -f docker-compose.gpu.yml up -d`                        | Local GPU inference                                       |
-| **Kubernetes**      | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui` | Cluster deployment; the chart has no Work runtime driver  |
-| **Desktop client**  | [GitHub Releases](https://github.com/libre-webui/libre-webui/releases)  | Electron UI over a separately managed backend             |
-| **Source**          | `npm install && npm run dev`                                            | Development                                               |
+| Path                | Command or link                                                         | Best for                                                                                              |
+| ------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **npm**             | `npx libre-webui@latest`                                                | Fast local start; Work available when Docker is installed                                             |
+| **Docker + Ollama** | `docker compose up -d`                                                  | Persistent stack; Work enabled through host Docker                                                    |
+| **External Ollama** | `docker compose -f docker-compose.external-ollama.yml up -d`            | An Ollama you already run                                                                             |
+| **NVIDIA Docker**   | `docker compose -f docker-compose.gpu.yml up -d`                        | Local GPU inference                                                                                   |
+| **Kubernetes**      | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui` | Cluster deployment; `--set work.enabled=true` runs Work sandboxes as Pods — no Docker socket anywhere |
+| **Desktop client**  | [GitHub Releases](https://github.com/libre-webui/libre-webui/releases)  | Electron UI over a separately managed backend                                                         |
+| **Source**          | `npm install && npm run dev`                                            | Development                                                                                           |
 
 Docker commands assume you have cloned this repository. Production deployments
 should set stable `JWT_SECRET` and `ENCRYPTION_KEY` values, persist the data
@@ -274,7 +280,11 @@ unless `ENABLE_SIGNUP=true` is set deliberately.
 > **The Docker socket is the security decision to understand.** Repository
 > Compose files mount it so Work functions out of the box. That grants Libre
 > WebUI root-equivalent control of the host and makes every Libre WebUI
-> administrator a host administrator. Remove the mount when Work is not wanted.
+> administrator a host administrator. Remove the mount when Work is not
+> wanted — or keep Work without handing the app the socket:
+> `docker compose -f docker-compose.socket-proxy.yml up -d` runs Work through
+> a filtered API proxy on an internal network, and the Kubernetes backend
+> needs no socket at all.
 
 On Linux, set the socket group in `.env`:
 
