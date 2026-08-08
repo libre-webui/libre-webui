@@ -7,13 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### ✨ New Features
-
 ### 🔧 Improvements
+
+- **A one-time note on first start.** The very first backend boot prints a single line asking for a GitHub star if the project is useful. It never repeats (the flag persists in the local database), and nothing is transmitted anywhere.
 
 ### 🐛 Bug Fixes
 
+- **`npx libre-webui` returned 500 on every page except the home screen.** npx runs the package from `~/.npm/_npx`, and the SPA fallback passed an absolute path containing that dot-directory to `sendFile`, which rejects dot-segments by design. Deep links — including the automatic redirect to `/login` — failed on every npx install. The fallback now resolves `index.html` against the frontend root, and a packaging test boots the packed tarball from a dot-directory and asserts deep links serve the app. Global (`npm i -g`), Docker, and desktop installs were never affected.
+
 ### 📚 Documentation
+
+- **CONTRIBUTING.md.** Setup, project layout, PR expectations (25-locale key parity, license headers), and where to start — paired with a first set of `good first issue` tickets.
 
 ## [0.21.0] - 2026-08-08
 
