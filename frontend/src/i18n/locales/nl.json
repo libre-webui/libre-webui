@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona toegepast",
       "label": "Persona",
+      "loadFailed": "Persoona-details laden mislukt",
       "removeFailed": "Kan persona niet verwijderen"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Bronnen"
+    },
+    "toasts": {
+      "chatCreated": "Nieuwe chat aangemaakt",
+      "createFailed": "Sessie maken mislukt",
+      "loadFailed": "Sessies laden mislukt",
+      "chatDeleted": "Chat verwijderd",
+      "deleteFailed": "Chat verwijderen mislukt",
+      "deleteSessionFailed": "Sessie verwijderen mislukt",
+      "historyCleared": "Alle chatgeschiedenis gewist",
+      "historyClearFailed": "Chatgeschiedenis wissen mislukt",
+      "titleUpdated": "Chattitel bijgewerkt",
+      "updateFailed": "Sessie bijwerken mislukt",
+      "noValidSession": "Geen geldige chatsessie. Maak een chat aan of selecteer er een.",
+      "sessionNotFound": "Sessie niet gevonden of ongeldig. Selecteer of maak een geldige chatsessie.",
+      "noModelProvider": "Geen modelprovider beschikbaar",
+      "modelUnavailable": "Het geselecteerde model \"{{model}}\" is niet beschikbaar via {{provider}}. Activeer die provider opnieuw of selecteer een ander model.",
+      "modelSwitched": "Overgeschakeld naar {{model}} (vorig model is niet meer beschikbaar)",
+      "modelsLoadFailed": "Modellen laden mislukt",
+      "modelUpdated": "Model bijgewerkt voor de huidige chat",
+      "modelUpdateFailed": "Sessiemodel bijwerken mislukt"
     }
   },
   "sidebar": {

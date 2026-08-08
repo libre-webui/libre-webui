@@ -306,6 +306,7 @@
     "persona": {
       "applied": "पर्सोना लागू किया गया",
       "label": "पर्सोना",
+      "loadFailed": "पर्सोना विवरण लोड करने में विफल",
       "removeFailed": "पर्सोना हटाने में विफल"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "स्रोत"
+    },
+    "toasts": {
+      "chatCreated": "नई चैट बनाई गई",
+      "createFailed": "सत्र बनाने में विफल",
+      "loadFailed": "सत्र लोड करने में विफल",
+      "chatDeleted": "चैट हटा दी गई",
+      "deleteFailed": "चैट हटाने में विफल",
+      "deleteSessionFailed": "सत्र हटाने में विफल",
+      "historyCleared": "सभी चैट इतिहास साफ़ हो गया",
+      "historyClearFailed": "चैट इतिहास साफ़ करने में विफल",
+      "titleUpdated": "चैट शीर्षक अपडेट हुआ",
+      "updateFailed": "सत्र अपडेट करने में विफल",
+      "noValidSession": "कोई वैध चैट सत्र नहीं है। कृपया एक चैट बनाएं या चुनें।",
+      "sessionNotFound": "सत्र नहीं मिला या अमान्य है। कृपया एक वैध चैट सत्र चुनें या बनाएं।",
+      "noModelProvider": "कोई मॉडल प्रदाता उपलब्ध नहीं है",
+      "modelUnavailable": "चयनित मॉडल \"{{model}}\" {{provider}} से उपलब्ध नहीं है। उस प्रदाता को फिर से सक्रिय करें या कोई अन्य मॉडल चुनें।",
+      "modelSwitched": "{{model}} पर स्विच किया गया (पिछला मॉडल अब उपलब्ध नहीं है)",
+      "modelsLoadFailed": "मॉडल लोड करने में विफल",
+      "modelUpdated": "वर्तमान चैट के लिए मॉडल अपडेट हुआ",
+      "modelUpdateFailed": "सत्र मॉडल अपडेट करने में विफल"
     }
   },
   "sidebar": {

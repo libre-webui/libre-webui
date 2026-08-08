@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona applied",
       "label": "Persona",
+      "loadFailed": "Failed to load persona details",
       "removeFailed": "Failed to remove persona"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Sources"
+    },
+    "toasts": {
+      "chatCreated": "New chat created",
+      "createFailed": "Failed to create session",
+      "loadFailed": "Failed to load sessions",
+      "chatDeleted": "Chat deleted",
+      "deleteFailed": "Failed to delete chat",
+      "deleteSessionFailed": "Failed to delete session",
+      "historyCleared": "All chat history cleared",
+      "historyClearFailed": "Failed to clear chat history",
+      "titleUpdated": "Chat title updated",
+      "updateFailed": "Failed to update session",
+      "noValidSession": "No valid chat session. Please create or select a chat.",
+      "sessionNotFound": "Session not found or invalid. Please select or create a valid chat session.",
+      "noModelProvider": "No model provider is available",
+      "modelUnavailable": "Selected model \"{{model}}\" is unavailable from {{provider}}. Reactivate that provider or select another model.",
+      "modelSwitched": "Switched to {{model}} (previous model no longer available)",
+      "modelsLoadFailed": "Failed to load models",
+      "modelUpdated": "Model updated for current chat",
+      "modelUpdateFailed": "Failed to update session model"
     }
   },
   "sidebar": {

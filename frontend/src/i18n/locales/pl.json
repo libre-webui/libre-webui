@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona zastosowana",
       "label": "Persona",
+      "loadFailed": "Nie udało się załadować szczegółów persony",
       "removeFailed": "Nie udało się usunąć persony"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Źródła"
+    },
+    "toasts": {
+      "chatCreated": "Utworzono nowy czat",
+      "createFailed": "Nie udało się utworzyć sesji",
+      "loadFailed": "Nie udało się załadować sesji",
+      "chatDeleted": "Czat usunięty",
+      "deleteFailed": "Nie udało się usunąć czatu",
+      "deleteSessionFailed": "Nie udało się usunąć sesji",
+      "historyCleared": "Wyczyszczono całą historię czatu",
+      "historyClearFailed": "Nie udało się wyczyścić historii czatu",
+      "titleUpdated": "Zaktualizowano tytuł czatu",
+      "updateFailed": "Nie udało się zaktualizować sesji",
+      "noValidSession": "Brak prawidłowej sesji czatu. Utwórz lub wybierz czat.",
+      "sessionNotFound": "Sesja nie została znaleziona lub jest nieprawidłowa. Wybierz lub utwórz prawidłową sesję czatu.",
+      "noModelProvider": "Brak dostępnego dostawcy modeli",
+      "modelUnavailable": "Wybrany model \"{{model}}\" jest niedostępny u dostawcy {{provider}}. Ponownie aktywuj tego dostawcę lub wybierz inny model.",
+      "modelSwitched": "Przełączono na {{model}} (poprzedni model nie jest już dostępny)",
+      "modelsLoadFailed": "Nie udało się załadować modeli",
+      "modelUpdated": "Zaktualizowano model bieżącego czatu",
+      "modelUpdateFailed": "Nie udało się zaktualizować modelu sesji"
     }
   },
   "sidebar": {

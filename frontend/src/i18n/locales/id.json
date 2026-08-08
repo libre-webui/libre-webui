@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona diterapkan",
       "label": "Persona",
+      "loadFailed": "Gagal memuat detail persona",
       "removeFailed": "Gagal menghapus persona"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Sumber"
+    },
+    "toasts": {
+      "chatCreated": "Chat baru dibuat",
+      "createFailed": "Gagal membuat sesi",
+      "loadFailed": "Gagal memuat sesi",
+      "chatDeleted": "Chat dihapus",
+      "deleteFailed": "Gagal menghapus chat",
+      "deleteSessionFailed": "Gagal menghapus sesi",
+      "historyCleared": "Semua riwayat chat dihapus",
+      "historyClearFailed": "Gagal menghapus riwayat chat",
+      "titleUpdated": "Judul chat diperbarui",
+      "updateFailed": "Gagal memperbarui sesi",
+      "noValidSession": "Tidak ada sesi chat yang valid. Silakan buat atau pilih chat.",
+      "sessionNotFound": "Sesi tidak ditemukan atau tidak valid. Silakan pilih atau buat sesi chat yang valid.",
+      "noModelProvider": "Tidak ada penyedia model yang tersedia",
+      "modelUnavailable": "Model yang dipilih \"{{model}}\" tidak tersedia dari {{provider}}. Aktifkan kembali penyedia tersebut atau pilih model lain.",
+      "modelSwitched": "Berpindah ke {{model}} (model sebelumnya tidak lagi tersedia)",
+      "modelsLoadFailed": "Gagal memuat model",
+      "modelUpdated": "Model diperbarui untuk chat saat ini",
+      "modelUpdateFailed": "Gagal memperbarui model sesi"
     }
   },
   "sidebar": {

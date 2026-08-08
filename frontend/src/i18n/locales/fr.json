@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona appliqué",
       "label": "Persona",
+      "loadFailed": "Échec du chargement des détails de la persona",
       "removeFailed": "Échec de la suppression du persona"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Sources"
+    },
+    "toasts": {
+      "chatCreated": "Nouveau chat créé",
+      "createFailed": "Échec de la création de la session",
+      "loadFailed": "Échec du chargement des sessions",
+      "chatDeleted": "Chat supprimé",
+      "deleteFailed": "Échec de la suppression du chat",
+      "deleteSessionFailed": "Échec de la suppression de la session",
+      "historyCleared": "Tout l'historique de chat a été effacé",
+      "historyClearFailed": "Échec de l'effacement de l'historique du chat",
+      "titleUpdated": "Titre du chat mis à jour",
+      "updateFailed": "Échec de la mise à jour de la session",
+      "noValidSession": "Aucune session de chat valide. Veuillez créer ou sélectionner un chat.",
+      "sessionNotFound": "Session introuvable ou invalide. Veuillez sélectionner ou créer une session de chat valide.",
+      "noModelProvider": "Aucun fournisseur de modèles disponible",
+      "modelUnavailable": "Le modèle sélectionné \"{{model}}\" n'est pas disponible auprès de {{provider}}. Réactivez ce fournisseur ou sélectionnez un autre modèle.",
+      "modelSwitched": "Basculement vers {{model}} (le modèle précédent n'est plus disponible)",
+      "modelsLoadFailed": "Échec du chargement des modèles",
+      "modelUpdated": "Modèle mis à jour pour le chat actuel",
+      "modelUpdateFailed": "Échec de la mise à jour du modèle de session"
     }
   },
   "sidebar": {

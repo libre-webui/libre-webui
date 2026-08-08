@@ -306,6 +306,7 @@
     "persona": {
       "applied": "已应用角色",
       "label": "角色",
+      "loadFailed": "无法加载角色详细信息",
       "removeFailed": "移除角色失败"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "来源"
+    },
+    "toasts": {
+      "chatCreated": "已创建新聊天",
+      "createFailed": "创建会话失败",
+      "loadFailed": "加载会话失败",
+      "chatDeleted": "聊天已删除",
+      "deleteFailed": "删除聊天失败",
+      "deleteSessionFailed": "删除会话失败",
+      "historyCleared": "所有聊天记录已清除",
+      "historyClearFailed": "清除聊天记录失败",
+      "titleUpdated": "聊天标题已更新",
+      "updateFailed": "更新会话失败",
+      "noValidSession": "没有有效的聊天会话。请创建或选择一个聊天。",
+      "sessionNotFound": "未找到会话或会话无效。请选择或创建一个有效的聊天会话。",
+      "noModelProvider": "没有可用的模型提供商",
+      "modelUnavailable": "所选模型“{{model}}”在 {{provider}} 中不可用。请重新激活该提供商或选择其他模型。",
+      "modelSwitched": "已切换到 {{model}}（之前的模型不再可用）",
+      "modelsLoadFailed": "加载模型失败",
+      "modelUpdated": "当前聊天的模型已更新",
+      "modelUpdateFailed": "更新会话模型失败"
     }
   },
   "sidebar": {

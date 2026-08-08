@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona uygulandı",
       "label": "Persona",
+      "loadFailed": "Persona ayrıntıları yüklenemedi",
       "removeFailed": "Persona kaldırılamadı"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Kaynaklar"
+    },
+    "toasts": {
+      "chatCreated": "Yeni sohbet oluşturuldu",
+      "createFailed": "Oturum oluşturulamadı",
+      "loadFailed": "Oturumlar yüklenemedi",
+      "chatDeleted": "Sohbet silindi",
+      "deleteFailed": "Sohbet silinemedi",
+      "deleteSessionFailed": "Oturum silinemedi",
+      "historyCleared": "Tüm sohbet geçmişi temizlendi",
+      "historyClearFailed": "Sohbet geçmişi temizlenemedi",
+      "titleUpdated": "Sohbet başlığı güncellendi",
+      "updateFailed": "Oturum güncellenemedi",
+      "noValidSession": "Geçerli bir sohbet oturumu yok. Lütfen bir sohbet oluşturun veya seçin.",
+      "sessionNotFound": "Oturum bulunamadı veya geçersiz. Lütfen geçerli bir sohbet oturumu seçin veya oluşturun.",
+      "noModelProvider": "Kullanılabilir model sağlayıcısı yok",
+      "modelUnavailable": "Seçilen model \"{{model}}\" {{provider}} üzerinden kullanılamıyor. Bu sağlayıcıyı yeniden etkinleştirin veya başka bir model seçin.",
+      "modelSwitched": "{{model}} öğesine geçildi (önceki model artık kullanılamıyor)",
+      "modelsLoadFailed": "Modeller yüklenemedi",
+      "modelUpdated": "Geçerli sohbet için model güncellendi",
+      "modelUpdateFailed": "Oturum modeli güncellenemedi"
     }
   },
   "sidebar": {

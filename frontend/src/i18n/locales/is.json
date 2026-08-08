@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persóna notuð",
       "label": "Persóna",
+      "loadFailed": "Mistókst að hlaða upplýsingar um persónu",
       "removeFailed": "Ekki tókst að fjarlægja persónu"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Heimildir"
+    },
+    "toasts": {
+      "chatCreated": "Nýtt spjall búið til",
+      "createFailed": "Mistókst að búa til lotu",
+      "loadFailed": "Mistókst að hlaða lotur",
+      "chatDeleted": "Spjalli eytt",
+      "deleteFailed": "Mistókst að eyða spjalli",
+      "deleteSessionFailed": "Mistókst að eyða lotu",
+      "historyCleared": "Öll spjallsaga hreinsuð",
+      "historyClearFailed": "Mistókst að hreinsa spjallsögu",
+      "titleUpdated": "Spjalltitill uppfærður",
+      "updateFailed": "Mistókst að uppfæra lotu",
+      "noValidSession": "Engin gild spjalllota. Vinsamlegast búðu til eða veldu spjall.",
+      "sessionNotFound": "Lota fannst ekki eða er ógild. Vinsamlegast veldu eða búðu til gilda spjalllotu.",
+      "noModelProvider": "Enginn líkanveitandi tiltækur",
+      "modelUnavailable": "Valið líkan \"{{model}}\" er ekki tiltækt frá {{provider}}. Virkjaðu þann veitanda aftur eða veldu annað líkan.",
+      "modelSwitched": "Skipt yfir í {{model}} (fyrra líkan er ekki lengur tiltækt)",
+      "modelsLoadFailed": "Mistókst að hlaða líkön",
+      "modelUpdated": "Líkan uppfært fyrir núverandi spjall",
+      "modelUpdateFailed": "Mistókst að uppfæra líkan lotunnar"
     }
   },
   "sidebar": {

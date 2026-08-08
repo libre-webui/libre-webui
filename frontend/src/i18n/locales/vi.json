@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Đã áp dụng persona",
       "label": "Persona",
+      "loadFailed": "Không tải được chi tiết persona",
       "removeFailed": "Không thể xóa persona"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Nguồn"
+    },
+    "toasts": {
+      "chatCreated": "Đã tạo cuộc trò chuyện mới",
+      "createFailed": "Không tạo được phiên",
+      "loadFailed": "Không tải được phiên",
+      "chatDeleted": "Đã xóa cuộc trò chuyện",
+      "deleteFailed": "Không xóa được cuộc trò chuyện",
+      "deleteSessionFailed": "Không xóa được phiên",
+      "historyCleared": "Đã xóa toàn bộ lịch sử trò chuyện",
+      "historyClearFailed": "Không xóa được lịch sử trò chuyện",
+      "titleUpdated": "Đã cập nhật tiêu đề cuộc trò chuyện",
+      "updateFailed": "Không cập nhật được phiên",
+      "noValidSession": "Không có phiên trò chuyện hợp lệ. Vui lòng tạo hoặc chọn cuộc trò chuyện.",
+      "sessionNotFound": "Không tìm thấy phiên hoặc phiên không hợp lệ. Vui lòng chọn hoặc tạo phiên trò chuyện hợp lệ.",
+      "noModelProvider": "Không có nhà cung cấp mô hình nào khả dụng",
+      "modelUnavailable": "Mô hình đã chọn \"{{model}}\" không khả dụng từ {{provider}}. Hãy kích hoạt lại nhà cung cấp đó hoặc chọn mô hình khác.",
+      "modelSwitched": "Đã chuyển sang {{model}} (mô hình trước không còn khả dụng)",
+      "modelsLoadFailed": "Không tải được mô hình",
+      "modelUpdated": "Đã cập nhật mô hình cho cuộc trò chuyện hiện tại",
+      "modelUpdateFailed": "Không cập nhật được mô hình của phiên"
     }
   },
   "sidebar": {

@@ -306,6 +306,7 @@
     "persona": {
       "applied": "تم تطبيق الشخصية",
       "label": "الشخصية",
+      "loadFailed": "فشل تحميل تفاصيل الشخصية",
       "removeFailed": "فشل في إزالة الشخصية"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "المصادر"
+    },
+    "toasts": {
+      "chatCreated": "تم إنشاء محادثة جديدة",
+      "createFailed": "فشل إنشاء الجلسة",
+      "loadFailed": "فشل تحميل الجلسات",
+      "chatDeleted": "تم حذف المحادثة",
+      "deleteFailed": "فشل حذف المحادثة",
+      "deleteSessionFailed": "فشل حذف الجلسة",
+      "historyCleared": "تم مسح سجل المحادثات بالكامل",
+      "historyClearFailed": "فشل مسح سجل المحادثات",
+      "titleUpdated": "تم تحديث عنوان المحادثة",
+      "updateFailed": "فشل تحديث الجلسة",
+      "noValidSession": "لا توجد جلسة محادثة صالحة. يرجى إنشاء محادثة أو تحديدها.",
+      "sessionNotFound": "الجلسة غير موجودة أو غير صالحة. يرجى تحديد أو إنشاء جلسة محادثة صالحة.",
+      "noModelProvider": "لا يوجد مزود نماذج متاح",
+      "modelUnavailable": "النموذج المحدد \"{{model}}\" غير متوفر من {{provider}}. أعد تنشيط هذا المزود أو حدد نموذجًا آخر.",
+      "modelSwitched": "تم التبديل إلى {{model}} (النموذج السابق لم يعد متوفرًا)",
+      "modelsLoadFailed": "فشل تحميل النماذج",
+      "modelUpdated": "تم تحديث النموذج للمحادثة الحالية",
+      "modelUpdateFailed": "فشل تحديث نموذج الجلسة"
     }
   },
   "sidebar": {
