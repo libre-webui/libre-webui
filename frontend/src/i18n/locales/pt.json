@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona aplicada",
       "label": "Persona",
+      "loadFailed": "Falha ao carregar os detalhes da persona",
       "removeFailed": "Falha ao remover a persona"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Fontes"
+    },
+    "toasts": {
+      "chatCreated": "Novo chat criado",
+      "createFailed": "Falha ao criar a sessão",
+      "loadFailed": "Falha ao carregar as sessões",
+      "chatDeleted": "Chat excluído",
+      "deleteFailed": "Falha ao excluir o chat",
+      "deleteSessionFailed": "Falha ao excluir a sessão",
+      "historyCleared": "Todo o histórico de chat foi limpo",
+      "historyClearFailed": "Falha ao limpar o histórico de chat",
+      "titleUpdated": "Título do chat atualizado",
+      "updateFailed": "Falha ao atualizar a sessão",
+      "noValidSession": "Nenhuma sessão de chat válida. Crie ou selecione um chat.",
+      "sessionNotFound": "Sessão não encontrada ou inválida. Selecione ou crie uma sessão de chat válida.",
+      "noModelProvider": "Nenhum provedor de modelos disponível",
+      "modelUnavailable": "O modelo selecionado \"{{model}}\" não está disponível em {{provider}}. Reative esse provedor ou selecione outro modelo.",
+      "modelSwitched": "Alterado para {{model}} (o modelo anterior não está mais disponível)",
+      "modelsLoadFailed": "Falha ao carregar os modelos",
+      "modelUpdated": "Modelo atualizado para o chat atual",
+      "modelUpdateFailed": "Falha ao atualizar o modelo da sessão"
     }
   },
   "sidebar": {

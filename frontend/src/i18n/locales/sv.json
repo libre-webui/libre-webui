@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona tillämpad",
       "label": "Persona",
+      "loadFailed": "Det gick inte att ladda personadetaljer",
       "removeFailed": "Det gick inte att ta bort personan"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Källor"
+    },
+    "toasts": {
+      "chatCreated": "Ny chatt skapad",
+      "createFailed": "Det gick inte att skapa sessionen",
+      "loadFailed": "Det gick inte att läsa in sessioner",
+      "chatDeleted": "Chatt borttagen",
+      "deleteFailed": "Det gick inte att ta bort chatten",
+      "deleteSessionFailed": "Det gick inte att ta bort sessionen",
+      "historyCleared": "All chathistorik rensad",
+      "historyClearFailed": "Det gick inte att rensa chathistoriken",
+      "titleUpdated": "Chatttitel uppdaterad",
+      "updateFailed": "Det gick inte att uppdatera sessionen",
+      "noValidSession": "Ingen giltig chatsession. Skapa eller välj en chatt.",
+      "sessionNotFound": "Sessionen hittades inte eller är ogiltig. Välj eller skapa en giltig chatsession.",
+      "noModelProvider": "Ingen modellleverantör tillgänglig",
+      "modelUnavailable": "Den valda modellen \"{{model}}\" är inte tillgänglig från {{provider}}. Återaktivera den leverantören eller välj en annan modell.",
+      "modelSwitched": "Växlade till {{model}} (föregående modell är inte längre tillgänglig)",
+      "modelsLoadFailed": "Det gick inte att läsa in modeller",
+      "modelUpdated": "Modell uppdaterad för den aktuella chatten",
+      "modelUpdateFailed": "Det gick inte att uppdatera sessionens modell"
     }
   },
   "sidebar": {

@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona použita",
       "label": "Persona",
+      "loadFailed": "Načtení podrobností persony se nezdařilo",
       "removeFailed": "Nepodařilo se odebrat personu"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Zdroje"
+    },
+    "toasts": {
+      "chatCreated": "Nový chat vytvořen",
+      "createFailed": "Vytvoření relace se nezdařilo",
+      "loadFailed": "Načtení relací se nezdařilo",
+      "chatDeleted": "Chat smazán",
+      "deleteFailed": "Smazání chatu se nezdařilo",
+      "deleteSessionFailed": "Smazání relace se nezdařilo",
+      "historyCleared": "Celá historie chatu vymazána",
+      "historyClearFailed": "Vymazání historie chatu se nezdařilo",
+      "titleUpdated": "Název chatu aktualizován",
+      "updateFailed": "Aktualizace relace se nezdařila",
+      "noValidSession": "Žádná platná relace chatu. Vytvořte nebo vyberte chat.",
+      "sessionNotFound": "Relace nebyla nalezena nebo je neplatná. Vyberte nebo vytvořte platnou relaci chatu.",
+      "noModelProvider": "Žádný poskytovatel modelů není k dispozici",
+      "modelUnavailable": "Vybraný model \"{{model}}\" není od {{provider}} dostupný. Znovu aktivujte tohoto poskytovatele nebo vyberte jiný model.",
+      "modelSwitched": "Přepnuto na {{model}} (předchozí model již není dostupný)",
+      "modelsLoadFailed": "Načtení modelů se nezdařilo",
+      "modelUpdated": "Model pro aktuální chat aktualizován",
+      "modelUpdateFailed": "Aktualizace modelu relace se nezdařila"
     }
   },
   "sidebar": {

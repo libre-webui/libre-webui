@@ -29,6 +29,7 @@ import {
 import { chatApi, ollamaApi, preferencesApi, personaApi } from '@/utils/api';
 import { pluginApi } from '@/utils/api';
 import { createLogger } from '@/utils/logger';
+import i18n from '@/i18n';
 import toast from 'react-hot-toast';
 import {
   appendMessageToChatState,
@@ -202,11 +203,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         // Note: System message is now automatically added by the backend when creating sessions
 
-        toast.success('New chat created');
+        toast.success(i18n.t('chat.toasts.chatCreated'));
         return newSession;
       }
     } catch (error: unknown) {
-      const errorMessage = getErrorMessage(error, 'Failed to create session');
+      const errorMessage = getErrorMessage(
+        error,
+        i18n.t('chat.toasts.createFailed')
+      );
       set({ error: errorMessage, loading: false });
       toast.error(errorMessage);
     }
@@ -250,7 +254,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
       }
     } catch (error: unknown) {
-      const errorMessage = getErrorMessage(error, 'Failed to load sessions');
+      const errorMessage = getErrorMessage(
+        error,
+        i18n.t('chat.toasts.loadFailed')
+      );
       set({ error: errorMessage, loading: false });
       toast.error(errorMessage);
     }
@@ -279,14 +286,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
             currentSession: newCurrentSession,
           };
         });
-        toast.success('Chat deleted');
+        toast.success(i18n.t('chat.toasts.chatDeleted'));
       } else {
         logger.error('Store: deleteSession failed:', response);
-        toast.error('Failed to delete chat');
+        toast.error(i18n.t('chat.toasts.deleteFailed'));
       }
     } catch (error: unknown) {
       logger.error('Store: deleteSession error:', error);
-      const errorMessage = getErrorMessage(error, 'Failed to delete session');
+      const errorMessage = getErrorMessage(
+        error,
+        i18n.t('chat.toasts.deleteSessionFailed')
+      );
       toast.error(errorMessage);
     }
   },
@@ -302,17 +312,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
           currentSession: null,
           loading: false,
         });
-        toast.success('All chat history cleared');
+        toast.success(i18n.t('chat.toasts.historyCleared'));
       } else {
         logger.error('Store: clearAllSessions failed:', response);
-        toast.error('Failed to clear chat history');
+        toast.error(i18n.t('chat.toasts.historyClearFailed'));
         set({ loading: false });
       }
     } catch (error: unknown) {
       logger.error('Store: clearAllSessions error:', error);
       const errorMessage = getErrorMessage(
         error,
-        'Failed to clear chat history'
+        i18n.t('chat.toasts.historyClearFailed')
       );
       toast.error(errorMessage);
       set({ loading: false });
@@ -363,10 +373,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const updatedAt = response.data.updatedAt ?? Date.now();
 
         get().applySessionTitle(sessionId, updatedTitle, updatedAt);
-        toast.success('Chat title updated');
+        toast.success(i18n.t('chat.toasts.titleUpdated'));
       }
     } catch (error: unknown) {
-      const errorMessage = getErrorMessage(error, 'Failed to update session');
+      const errorMessage = getErrorMessage(
+        error,
+        i18n.t('chat.toasts.updateFailed')
+      );
       toast.error(errorMessage);
     }
   },
@@ -380,7 +393,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const isPrivate = isPrivateSession(state, sessionId);
 
     if (!hasValidCurrentSession(state, sessionId)) {
-      toast.error('No valid chat session. Please create or select a chat.');
+      toast.error(i18n.t('chat.toasts.noValidSession'));
       logger.error(
         'addMessage blocked: currentSession is not valid',
         state.currentSession?.id
@@ -389,9 +402,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
 
     if (!isPrivate && !hasSession(state, sessionId)) {
-      toast.error(
-        'Session not found or invalid. Please select or create a valid chat session.'
-      );
+      toast.error(i18n.t('chat.toasts.sessionNotFound'));
       logger.error(
         'addMessage blocked: sessionId not found in sessions',
         sessionId
@@ -749,7 +760,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       logger.debug('Total models loaded:', allModels.length);
       const providerLoadError =
         providerModelCount === 0 && ollamaLoadError
-          ? getErrorMessage(ollamaLoadError, 'No model provider is available')
+          ? getErrorMessage(
+              ollamaLoadError,
+              i18n.t('chat.toasts.noModelProvider')
+            )
           : null;
 
       // Validate that the currently selected model still exists in the models list
@@ -772,7 +786,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
           currentState.selectedProviderType === 'plugin'
             ? currentState.selectedProviderId || 'plugin'
             : 'Ollama';
-        const unavailableError = `Selected model "${currentSelectedModel}" is unavailable from ${providerLabel}. Reactivate that provider or select another model.`;
+        const unavailableError = i18n.t('chat.toasts.modelUnavailable', {
+          model: currentSelectedModel,
+          provider: providerLabel,
+        });
         set({
           models: allModels,
           loading: false,
@@ -806,7 +823,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
             logger.warn('Failed to save fallback default model:', error);
           });
         toast.success(
-          `Switched to ${fallbackSelection.model} (previous model no longer available)`
+          i18n.t('chat.toasts.modelSwitched', {
+            model: fallbackSelection.model,
+          })
         );
       } else {
         set({ models: allModels, loading: false, error: providerLoadError });
@@ -816,7 +835,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     } catch (error: unknown) {
       logger.error('Error loading models:', error);
-      const errorMessage = getErrorMessage(error, 'Failed to load models');
+      const errorMessage = getErrorMessage(
+        error,
+        i18n.t('chat.toasts.modelsLoadFailed')
+      );
       set({ error: errorMessage, loading: false });
       toast.error(errorMessage);
     }
@@ -911,12 +933,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
               ? providerId || null
               : null,
         }));
-        toast.success('Model updated for current chat');
+        toast.success(i18n.t('chat.toasts.modelUpdated'));
       }
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(
         error,
-        'Failed to update session model'
+        i18n.t('chat.toasts.modelUpdateFailed')
       );
       toast.error(errorMessage);
       throw error;

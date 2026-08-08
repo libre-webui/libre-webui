@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona anvendt",
       "label": "Persona",
+      "loadFailed": "Kunne ikke indlæse personadetaljer",
       "removeFailed": "Kunne ikke fjerne persona"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Kilder"
+    },
+    "toasts": {
+      "chatCreated": "Ny chat oprettet",
+      "createFailed": "Kunne ikke oprette session",
+      "loadFailed": "Kunne ikke indlæse sessioner",
+      "chatDeleted": "Chat slettet",
+      "deleteFailed": "Kunne ikke slette chat",
+      "deleteSessionFailed": "Kunne ikke slette session",
+      "historyCleared": "Al chathistorik ryddet",
+      "historyClearFailed": "Kunne ikke rydde chathistorik",
+      "titleUpdated": "Chattitel opdateret",
+      "updateFailed": "Kunne ikke opdatere session",
+      "noValidSession": "Ingen gyldig chatsession. Opret eller vælg venligst en chat.",
+      "sessionNotFound": "Session ikke fundet eller ugyldig. Vælg eller opret venligst en gyldig chatsession.",
+      "noModelProvider": "Ingen modeludbyder tilgængelig",
+      "modelUnavailable": "Den valgte model \"{{model}}\" er ikke tilgængelig fra {{provider}}. Genaktiver denne udbyder eller vælg en anden model.",
+      "modelSwitched": "Skiftet til {{model}} (forrige model er ikke længere tilgængelig)",
+      "modelsLoadFailed": "Kunne ikke indlæse modeller",
+      "modelUpdated": "Model opdateret for den aktuelle chat",
+      "modelUpdateFailed": "Kunne ikke opdatere sessionens model"
     }
   },
   "sidebar": {

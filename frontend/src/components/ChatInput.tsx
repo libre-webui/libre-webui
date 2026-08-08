@@ -385,7 +385,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
     if (!message.trim() || isGenerating) return;
     if (!sessionModelAvailable) {
-      toast.error('Select an available model before sending');
+      toast.error(t('chat.model.selectBeforeSending'));
       return;
     }
 
@@ -485,7 +485,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         // Get persona details to use its model
         const personaResponse = await personaApi.getPersona(personaId);
         if (!personaResponse.success || !personaResponse.data) {
-          toast.error('Failed to load persona details');
+          toast.error(t('chat.persona.loadFailed'));
           return;
         }
 
@@ -547,7 +547,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       }
     } catch (error) {
       logger.error('Failed to update session:', error);
-      toast.error('Failed to update session');
+      toast.error(t('chat.toasts.updateFailed'));
     }
   };
 

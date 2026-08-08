@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona applicata",
       "label": "Persona",
+      "loadFailed": "Impossibile caricare i dettagli della persona",
       "removeFailed": "Impossibile rimuovere la persona"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Fonti"
+    },
+    "toasts": {
+      "chatCreated": "Nuova chat creata",
+      "createFailed": "Impossibile creare la sessione",
+      "loadFailed": "Impossibile caricare le sessioni",
+      "chatDeleted": "Chat eliminata",
+      "deleteFailed": "Impossibile eliminare la chat",
+      "deleteSessionFailed": "Impossibile eliminare la sessione",
+      "historyCleared": "Tutta la cronologia delle chat è stata cancellata",
+      "historyClearFailed": "Impossibile cancellare la cronologia delle chat",
+      "titleUpdated": "Titolo della chat aggiornato",
+      "updateFailed": "Impossibile aggiornare la sessione",
+      "noValidSession": "Nessuna sessione di chat valida. Crea o seleziona una chat.",
+      "sessionNotFound": "Sessione non trovata o non valida. Seleziona o crea una sessione di chat valida.",
+      "noModelProvider": "Nessun fornitore di modelli disponibile",
+      "modelUnavailable": "Il modello selezionato \"{{model}}\" non è disponibile da {{provider}}. Riattiva quel fornitore o seleziona un altro modello.",
+      "modelSwitched": "Passato a {{model}} (il modello precedente non è più disponibile)",
+      "modelsLoadFailed": "Impossibile caricare i modelli",
+      "modelUpdated": "Modello aggiornato per la chat corrente",
+      "modelUpdateFailed": "Impossibile aggiornare il modello della sessione"
     }
   },
   "sidebar": {

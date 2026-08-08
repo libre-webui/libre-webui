@@ -306,6 +306,7 @@
     "persona": {
       "applied": "페르소나 적용됨",
       "label": "페르소나",
+      "loadFailed": "페르소나 세부 정보를 불러오지 못했습니다",
       "removeFailed": "페르소나 제거에 실패했습니다"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "출처"
+    },
+    "toasts": {
+      "chatCreated": "새 채팅이 생성되었습니다",
+      "createFailed": "세션을 만들지 못했습니다",
+      "loadFailed": "세션을 불러오지 못했습니다",
+      "chatDeleted": "채팅이 삭제되었습니다",
+      "deleteFailed": "채팅을 삭제하지 못했습니다",
+      "deleteSessionFailed": "세션을 삭제하지 못했습니다",
+      "historyCleared": "모든 채팅 기록이 지워졌습니다",
+      "historyClearFailed": "채팅 기록을 지우지 못했습니다",
+      "titleUpdated": "채팅 제목이 업데이트되었습니다",
+      "updateFailed": "세션을 업데이트하지 못했습니다",
+      "noValidSession": "유효한 채팅 세션이 없습니다. 채팅을 만들거나 선택하세요.",
+      "sessionNotFound": "세션을 찾을 수 없거나 유효하지 않습니다. 유효한 채팅 세션을 선택하거나 만드세요.",
+      "noModelProvider": "사용 가능한 모델 제공자가 없습니다",
+      "modelUnavailable": "선택한 모델 \"{{model}}\"은(는) {{provider}}에서 사용할 수 없습니다. 해당 제공자를 다시 활성화하거나 다른 모델을 선택하세요.",
+      "modelSwitched": "{{model}}로 전환했습니다(이전 모델은 더 이상 사용할 수 없음)",
+      "modelsLoadFailed": "모델을 불러오지 못했습니다",
+      "modelUpdated": "현재 채팅의 모델이 업데이트되었습니다",
+      "modelUpdateFailed": "세션 모델을 업데이트하지 못했습니다"
     }
   },
   "sidebar": {

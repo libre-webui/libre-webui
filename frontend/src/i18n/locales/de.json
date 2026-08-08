@@ -306,6 +306,7 @@
     "persona": {
       "applied": "Persona angewendet",
       "label": "Persona",
+      "loadFailed": "Persona-Details konnten nicht geladen werden",
       "removeFailed": "Persona konnte nicht entfernt werden"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "Quellen"
+    },
+    "toasts": {
+      "chatCreated": "Neuer Chat erstellt",
+      "createFailed": "Sitzung konnte nicht erstellt werden",
+      "loadFailed": "Sitzungen konnten nicht geladen werden",
+      "chatDeleted": "Chat gelöscht",
+      "deleteFailed": "Chat konnte nicht gelöscht werden",
+      "deleteSessionFailed": "Sitzung konnte nicht gelöscht werden",
+      "historyCleared": "Gesamter Chatverlauf gelöscht",
+      "historyClearFailed": "Chatverlauf konnte nicht gelöscht werden",
+      "titleUpdated": "Chattitel aktualisiert",
+      "updateFailed": "Sitzung konnte nicht aktualisiert werden",
+      "noValidSession": "Keine gültige Chat-Sitzung. Bitte erstellen oder wählen Sie einen Chat.",
+      "sessionNotFound": "Sitzung nicht gefunden oder ungültig. Bitte wählen oder erstellen Sie eine gültige Chat-Sitzung.",
+      "noModelProvider": "Kein Modellanbieter verfügbar",
+      "modelUnavailable": "Das ausgewählte Modell \"{{model}}\" ist von {{provider}} nicht verfügbar. Aktivieren Sie den Anbieter erneut oder wählen Sie ein anderes Modell.",
+      "modelSwitched": "Gewechselt zu {{model}} (vorheriges Modell nicht mehr verfügbar)",
+      "modelsLoadFailed": "Modelle konnten nicht geladen werden",
+      "modelUpdated": "Modell für den aktuellen Chat aktualisiert",
+      "modelUpdateFailed": "Sitzungsmodell konnte nicht aktualisiert werden"
     }
   },
   "sidebar": {

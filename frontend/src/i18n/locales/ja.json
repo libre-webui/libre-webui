@@ -306,6 +306,7 @@
     "persona": {
       "applied": "ペルソナが適用されました",
       "label": "ペルソナ",
+      "loadFailed": "ペルソナの詳細を読み込めませんでした",
       "removeFailed": "ペルソナの削除に失敗しました"
     },
     "model": {
@@ -372,6 +373,26 @@
     },
     "message": {
       "sources": "出典"
+    },
+    "toasts": {
+      "chatCreated": "新しいチャットが作成されました",
+      "createFailed": "セッションの作成に失敗しました",
+      "loadFailed": "セッションの読み込みに失敗しました",
+      "chatDeleted": "チャットが削除されました",
+      "deleteFailed": "チャットの削除に失敗しました",
+      "deleteSessionFailed": "セッションの削除に失敗しました",
+      "historyCleared": "すべてのチャット履歴が削除されました",
+      "historyClearFailed": "チャット履歴の削除に失敗しました",
+      "titleUpdated": "チャットのタイトルが更新されました",
+      "updateFailed": "セッションの更新に失敗しました",
+      "noValidSession": "有効なチャットセッションがありません。チャットを作成または選択してください。",
+      "sessionNotFound": "セッションが見つからないか、無効です。有効なチャットセッションを選択または作成してください。",
+      "noModelProvider": "利用可能なモデルプロバイダーがありません",
+      "modelUnavailable": "選択したモデル \"{{model}}\" は {{provider}} から利用できません。そのプロバイダーを再度有効にするか、別のモデルを選択してください。",
+      "modelSwitched": "{{model}} に切り替えました（以前のモデルは利用できなくなりました）",
+      "modelsLoadFailed": "モデルの読み込みに失敗しました",
+      "modelUpdated": "現在のチャットのモデルが更新されました",
+      "modelUpdateFailed": "セッションモデルの更新に失敗しました"
     }
   },
   "sidebar": {
