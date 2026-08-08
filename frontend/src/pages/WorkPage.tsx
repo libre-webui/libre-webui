@@ -911,7 +911,7 @@ export default function WorkPage() {
       className='relative flex h-full min-h-0 overflow-hidden bg-transparent'
     >
       <main className='flex min-h-0 min-w-0 flex-1 flex-col'>
-        <header className='flex h-16 shrink-0 items-center gap-3 border-b border-line bg-surface/55 px-3 backdrop-blur-xl md:px-4'>
+        <header className='relative z-50 flex h-16 shrink-0 items-center gap-3 border-b border-line bg-surface/55 px-3 backdrop-blur-xl md:px-4'>
           {selectedTask ? (
             <input
               key={`${selectedTask.id}:${selectedTask.title}`}

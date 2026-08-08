@@ -234,6 +234,46 @@ export function SidebarSessions({
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [folderNameDraft, setFolderNameDraft] = useState('');
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  // Drag a chat onto a folder header to file it, or onto a date-group
+  // label to take it out of its folder. HTML5 drag and drop: desktop only,
+  // which matches the pointer model (mobile keeps the actions sheet).
+  const [draggingSessionId, setDraggingSessionId] = useState<string | null>(
+    null
+  );
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const draggingSession = draggingSessionId
+    ? (sessions.find(session => session.id === draggingSessionId) ?? null)
+    : null;
+
+  const clearDragState = () => {
+    setDraggingSessionId(null);
+    setDropTarget(null);
+  };
+
+  const handleSessionDrop = (folderId: string | null) => {
+    const session = draggingSession;
+    clearDragState();
+    if (!session || !onMoveSession) return;
+    if ((session.folderId ?? null) === folderId) return;
+    onMoveSession(session.id, folderId);
+  };
+
+  const dropTargetProps = (targetKey: string, folderId: string | null) => ({
+    onDragOver: (event: React.DragEvent) => {
+      if (!draggingSessionId) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      if (dropTarget !== targetKey) setDropTarget(targetKey);
+    },
+    onDragLeave: () => {
+      if (dropTarget === targetKey) setDropTarget(null);
+    },
+    onDrop: (event: React.DragEvent) => {
+      event.preventDefault();
+      handleSessionDrop(folderId);
+    },
+  });
+
   // Desktop "…" context menu, rendered through a portal so the scroll
   // region cannot clip it. Anchored to the button that opened it.
   const [sessionMenu, setSessionMenu] = useState<{
@@ -505,7 +545,17 @@ export function SidebarSessions({
             {sections.map(group => (
               <div key={group.key}>
                 {!sidebarCompact && group.folder && (
-                  <div className='group/folder mb-1 flex items-center justify-between px-1'>
+                  <div
+                    {...dropTargetProps(
+                      `folder:${group.folder.id}`,
+                      group.folder.id
+                    )}
+                    className={cn(
+                      'group/folder mb-1 flex items-center justify-between rounded-md px-1 transition-colors',
+                      dropTarget === `folder:${group.folder.id}` &&
+                        'bg-primary-500/10 ring-1 ring-primary-500/40'
+                    )}
+                  >
                     {renamingFolderId === group.folder.id ? (
                       <Input
                         value={folderNameDraft}
@@ -578,7 +628,15 @@ export function SidebarSessions({
                   </div>
                 )}
                 {!sidebarCompact && !group.folder && (
-                  <p className='mb-1 px-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-dark-500 rtl:tracking-normal'>
+                  <p
+                    {...dropTargetProps(`group:${group.key}`, null)}
+                    className={cn(
+                      'mb-1 rounded-md px-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-dark-500 rtl:tracking-normal transition-colors',
+                      dropTarget === `group:${group.key}` &&
+                        draggingSession?.folderId &&
+                        'bg-primary-500/10 ring-1 ring-primary-500/40 text-primary-600 dark:text-primary-400'
+                    )}
+                  >
                     {t(`chat.session.groups.${group.labelKey}`)}
                   </p>
                 )}
@@ -596,6 +654,22 @@ export function SidebarSessions({
                       return (
                         <div
                           key={session.id}
+                          draggable={
+                            !sidebarCompact &&
+                            Boolean(onMoveSession) &&
+                            editingSessionId !== session.id
+                          }
+                          onDragStart={event => {
+                            clearHoverPreview();
+                            setSessionMenu(null);
+                            setDraggingSessionId(session.id);
+                            event.dataTransfer.effectAllowed = 'move';
+                            event.dataTransfer.setData(
+                              'text/plain',
+                              session.id
+                            );
+                          }}
+                          onDragEnd={clearDragState}
                           className={cn(
                             'group relative cursor-pointer transition-colors duration-150 touch-manipulation outline-none',
                             sidebarCompact
@@ -603,7 +677,8 @@ export function SidebarSessions({
                               : 'rounded-lg px-2.5 py-2',
                             isActive
                               ? 'bg-white ring-1 ring-black/[0.04] dark:bg-dark-200 dark:ring-white/[0.05]'
-                              : 'hover:bg-white/60 dark:hover:bg-dark-200/60'
+                              : 'hover:bg-white/60 dark:hover:bg-dark-200/60',
+                            draggingSessionId === session.id && 'opacity-40'
                           )}
                           onClick={() => {
                             clearHoverPreview();
