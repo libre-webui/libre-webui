@@ -173,8 +173,8 @@ and preview — so returning to it a week later returns to exactly where it was.
 ```text
 Work task
    ├── durable conversation and run history in SQLite
-   ├── dedicated Docker named volume mounted at /workspace
-   ├── disposable, policy-checked container for commands
+   ├── dedicated persistent volume mounted at /workspace
+   ├── disposable, policy-checked sandbox for commands
    └── Files · Activity · Terminal · Preview workspace pane
 ```
 
@@ -252,7 +252,7 @@ Browser or desktop client
           │
           ├────────► Ollama (local models)
           ├────────► selected provider plugins
-          ├────────► Docker (native Work task containers)
+          ├────────► Docker or Kubernetes (Work task sandboxes)
           └────────► Libre Claw (optional agent runtime)
 ```
 
