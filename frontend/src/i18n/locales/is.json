@@ -1978,7 +1978,12 @@
       "staged": "Breytingar undirbúnar.",
       "switchBranch": "Skipta um staðbundna grein",
       "changes": "Breytingar",
-      "createBranch": "Búa til"
+      "createBranch": "Búa til",
+      "filterFiles": "Sía breyttar skrár",
+      "noFilterMatches": "Engar breyttar skrár passa við þessa síu.",
+      "allChanges": "Allar breytingar",
+      "diffTruncated": "Þessi diff er styttur.",
+      "binaryFile": "Tvíundarskrá, enginn textadiff."
     },
     "hostWorkspace": {
       "hint": "Skildu eftir autt fyrir einangrað vinnusvæði, eða beindu verkinu á möppu á þessari vél.",

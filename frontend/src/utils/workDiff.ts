@@ -202,12 +202,14 @@ export const workDiffStats = (lines: WorkDiffLine[]): WorkDiffStats => {
 };
 
 export type WorkDiffRow =
-  { type: 'line'; line: WorkDiffLine } | { type: 'fold'; count: number };
+  | { type: 'line'; line: WorkDiffLine }
+  | { type: 'fold'; count: number; lines: WorkDiffLine[] };
 
 const FOLD_CONTEXT_LINES = 3;
 
 // Keeps a few context lines around every change and folds long unchanged runs
-// so the diff reads like a review, not a full file dump.
+// so the diff reads like a review, not a full file dump. Fold rows carry the
+// hidden lines so a viewer can expand them in place.
 export const foldWorkDiff = (lines: WorkDiffLine[]): WorkDiffRow[] => {
   const keep = new Array<boolean>(lines.length).fill(false);
   for (let index = 0; index < lines.length; index += 1) {
@@ -218,18 +220,20 @@ export const foldWorkDiff = (lines: WorkDiffLine[]): WorkDiffRow[] => {
   }
 
   const rows: WorkDiffRow[] = [];
-  let folded = 0;
+  let folded: WorkDiffLine[] = [];
   for (let index = 0; index < lines.length; index += 1) {
     if (!keep[index]) {
-      folded += 1;
+      folded.push(lines[index]);
       continue;
     }
-    if (folded > 0) {
-      rows.push({ type: 'fold', count: folded });
-      folded = 0;
+    if (folded.length > 0) {
+      rows.push({ type: 'fold', count: folded.length, lines: folded });
+      folded = [];
     }
     rows.push({ type: 'line', line: lines[index] });
   }
-  if (folded > 0) rows.push({ type: 'fold', count: folded });
+  if (folded.length > 0) {
+    rows.push({ type: 'fold', count: folded.length, lines: folded });
+  }
   return rows;
 };

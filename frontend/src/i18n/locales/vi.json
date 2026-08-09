@@ -1978,7 +1978,12 @@
       "staged": "Đã stage thay đổi.",
       "switchBranch": "Chuyển nhánh cục bộ",
       "changes": "Thay đổi",
-      "createBranch": "Tạo"
+      "createBranch": "Tạo",
+      "filterFiles": "Lọc các tệp đã thay đổi",
+      "noFilterMatches": "Không có tệp thay đổi nào khớp với bộ lọc này.",
+      "allChanges": "Tất cả thay đổi",
+      "diffTruncated": "Diff này đã bị cắt bớt.",
+      "binaryFile": "Tệp nhị phân, không có diff văn bản."
     },
     "hostWorkspace": {
       "hint": "Để trống cho không gian làm việc cô lập, hoặc trỏ tác vụ tới một thư mục trên máy này.",

@@ -2144,7 +2144,12 @@
       "staged": "Changes staged.",
       "switchBranch": "Switch local branch",
       "changes": "Changes",
-      "createBranch": "Create"
+      "createBranch": "Create",
+      "filterFiles": "Filter changed files",
+      "noFilterMatches": "No changed files match this filter.",
+      "allChanges": "All changes",
+      "diffTruncated": "This diff is truncated.",
+      "binaryFile": "Binary file, no text diff."
     },
     "hostWorkspace": {
       "hint": "Leave blank for an isolated workspace, or point the task at a folder on this machine.",

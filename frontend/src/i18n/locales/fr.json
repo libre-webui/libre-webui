@@ -1939,7 +1939,12 @@
       "staged": "Changements indexés.",
       "switchBranch": "Changer de branche locale",
       "changes": "Modifications",
-      "createBranch": "Créer"
+      "createBranch": "Créer",
+      "filterFiles": "Filtrer les fichiers modifiés",
+      "noFilterMatches": "Aucun fichier modifié ne correspond à ce filtre.",
+      "allChanges": "Tous les changements",
+      "diffTruncated": "Ce diff est tronqué.",
+      "binaryFile": "Fichier binaire, pas de diff texte."
     },
     "hostWorkspace": {
       "hint": "Laissez vide pour un espace isolé, ou pointez la tâche vers un dossier de cette machine.",

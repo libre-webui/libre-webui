@@ -1978,7 +1978,12 @@
       "staged": "Değişiklikler hazırlandı.",
       "switchBranch": "Yerel dalı değiştir",
       "changes": "Değişiklikler",
-      "createBranch": "Oluştur"
+      "createBranch": "Oluştur",
+      "filterFiles": "Değişen dosyaları filtrele",
+      "noFilterMatches": "Bu filtreyle eşleşen değişen dosya yok.",
+      "allChanges": "Tüm değişiklikler",
+      "diffTruncated": "Bu diff kısaltıldı.",
+      "binaryFile": "İkili dosya, metin diffi yok."
     },
     "hostWorkspace": {
       "hint": "İzole çalışma alanı için boş bırakın veya görevi bu makinedeki bir klasöre yönlendirin.",

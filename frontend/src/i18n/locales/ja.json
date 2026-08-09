@@ -1978,7 +1978,12 @@
       "staged": "変更をステージしました。",
       "switchBranch": "ローカルブランチを切り替え",
       "changes": "変更",
-      "createBranch": "作成"
+      "createBranch": "作成",
+      "filterFiles": "変更されたファイルを絞り込む",
+      "noFilterMatches": "このフィルターに一致する変更ファイルはありません。",
+      "allChanges": "すべての変更",
+      "diffTruncated": "この差分は省略されています。",
+      "binaryFile": "バイナリファイルのため、テキスト差分はありません。"
     },
     "hostWorkspace": {
       "hint": "分離ワークスペースの場合は空欄のまま、またはこのマシンのフォルダーをタスクに指定します。",

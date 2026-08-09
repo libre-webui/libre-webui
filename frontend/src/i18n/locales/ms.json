@@ -1978,7 +1978,12 @@
       "staged": "Perubahan diperingkat.",
       "switchBranch": "Tukar cabang setempat",
       "changes": "Perubahan",
-      "createBranch": "Cipta"
+      "createBranch": "Cipta",
+      "filterFiles": "Tapis fail yang berubah",
+      "noFilterMatches": "Tiada fail berubah yang sepadan dengan tapisan ini.",
+      "allChanges": "Semua perubahan",
+      "diffTruncated": "Diff ini dipotong.",
+      "binaryFile": "Fail binari, tiada diff teks."
     },
     "hostWorkspace": {
       "hint": "Biarkan kosong untuk ruang kerja terpencil, atau halakan tugas ke folder pada mesin ini.",

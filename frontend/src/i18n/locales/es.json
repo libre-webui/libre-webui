@@ -1978,7 +1978,12 @@
       "staged": "Cambios preparados.",
       "switchBranch": "Cambiar de rama local",
       "changes": "Cambios",
-      "createBranch": "Crear"
+      "createBranch": "Crear",
+      "filterFiles": "Filtrar archivos modificados",
+      "noFilterMatches": "Ningún archivo modificado coincide con este filtro.",
+      "allChanges": "Todos los cambios",
+      "diffTruncated": "Este diff está truncado.",
+      "binaryFile": "Archivo binario, sin diff de texto."
     },
     "hostWorkspace": {
       "hint": "Déjalo en blanco para un espacio aislado, o apunta la tarea a una carpeta de esta máquina.",

@@ -16,6 +16,7 @@
  */
 
 import {
+  ArrowLeft,
   Check,
   FileDiff,
   GitBranch,
@@ -23,20 +24,37 @@ import {
   Loader2,
   Plus,
   RefreshCw,
+  Search,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
+import { WorkspaceDiffTable } from '@/components/work/WorkspaceDiffView';
 import type { ApiResponse } from '@/types';
-import type { WorkGitDiff, WorkGitStatus } from '@/types/work';
+import type { WorkGitChange, WorkGitStatus } from '@/types/work';
 import { cn } from '@/utils';
 import { workApi } from '@/utils/api/workApi';
+import { diffWorkLines, type WorkDiffLine } from '@/utils/workDiff';
+import {
+  parseUnifiedGitDiff,
+  workGitDiffTotals,
+  type WorkGitFileDiff,
+  type WorkGitFileStatus,
+} from '@/utils/workGitDiff';
 
 interface WorkspaceGitPanelProps {
   taskId: string;
   mutationsDisabled?: boolean;
   disabledReason?: string;
+}
+
+interface SelectedDiff {
+  path: string;
+  status: WorkGitFileStatus;
+  lines: WorkDiffLine[];
+  binary: boolean;
+  truncated: boolean;
 }
 
 const responseData = <T,>(response: ApiResponse<T>, fallback: string): T => {
@@ -51,6 +69,92 @@ const errorMessage = (error: unknown, fallback: string): string => {
   return error instanceof Error && error.message ? error.message : fallback;
 };
 
+const isUntracked = (change: WorkGitChange): boolean =>
+  change.indexStatus === '?';
+
+// One letter per file, the way IDE source-control views badge changes.
+const changeLetter = (change: WorkGitChange): string => {
+  if (isUntracked(change)) return 'U';
+  if (change.workingTreeStatus !== '.') return change.workingTreeStatus;
+  return change.indexStatus;
+};
+
+const statusLetter = (status: WorkGitFileStatus): string =>
+  ({ modified: 'M', added: 'A', deleted: 'D', renamed: 'R' })[status];
+
+const letterClass = (letter: string): string => {
+  if (letter === 'A' || letter === 'U') return 'text-[rgb(46,164,79)]';
+  if (letter === 'D') return 'text-[rgb(255,61,129)]';
+  if (letter === 'R' || letter === 'C') return 'text-sky-600 dark:text-sky-400';
+  return 'text-amber-600 dark:text-amber-500';
+};
+
+const splitPath = (path: string): { name: string; directory: string } => {
+  const separator = path.lastIndexOf('/');
+  if (separator === -1) return { name: path, directory: '' };
+  return {
+    name: path.slice(separator + 1),
+    directory: path.slice(0, separator),
+  };
+};
+
+function DiffStatsBadge({
+  added,
+  removed,
+  muted = false,
+}: {
+  added: number;
+  removed: number;
+  muted?: boolean;
+}) {
+  return (
+    <span dir='ltr' className='shrink-0 font-mono text-[10px] tabular-nums'>
+      <span className={muted ? 'text-ink-subtle' : 'text-[rgb(46,164,79)]'}>
+        +{added}
+      </span>{' '}
+      <span className={muted ? 'text-ink-subtle' : 'text-[rgb(255,61,129)]'}>
+        −{removed}
+      </span>
+    </span>
+  );
+}
+
+function FileDiffHeader({
+  letter,
+  path,
+  oldPath,
+  added,
+  removed,
+}: {
+  letter: string;
+  path: string;
+  oldPath?: string;
+  added: number;
+  removed: number;
+}) {
+  return (
+    <div className='sticky top-0 z-10 flex items-center gap-2 border-b border-line bg-surface-raised/95 px-3 py-1.5 backdrop-blur'>
+      <span
+        aria-hidden='true'
+        className={cn(
+          'w-4 shrink-0 text-center font-mono text-[11px] font-semibold',
+          letterClass(letter)
+        )}
+      >
+        {letter}
+      </span>
+      <span
+        dir='ltr'
+        className='min-w-0 flex-1 truncate text-start font-mono text-[11px] text-ink'
+        title={oldPath ? `${oldPath} → ${path}` : path}
+      >
+        {oldPath ? `${oldPath} → ${path}` : path}
+      </span>
+      <DiffStatsBadge added={added} removed={removed} />
+    </div>
+  );
+}
+
 export function WorkspaceGitPanel({
   taskId,
   mutationsDisabled = false,
@@ -64,9 +168,16 @@ export function WorkspaceGitPanel({
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
   const [commitMessage, setCommitMessage] = useState('');
   const [branchName, setBranchName] = useState('');
-  const [diff, setDiff] = useState<WorkGitDiff | null>(null);
-  const [diffLoading, setDiffLoading] = useState(false);
+  const [fileFilter, setFileFilter] = useState('');
+  const [selected, setSelected] = useState<SelectedDiff | null>(null);
+  const [selectedLoading, setSelectedLoading] = useState(false);
+  const [fullDiff, setFullDiff] = useState<{
+    files: WorkGitFileDiff[];
+    truncated: boolean;
+  } | null>(null);
+  const [fullDiffLoading, setFullDiffLoading] = useState(false);
   const generation = useRef(0);
+  const selectionGeneration = useRef(0);
 
   const loadStatus = useCallback(async () => {
     const request = ++generation.current;
@@ -105,6 +216,42 @@ export function WorkspaceGitPanel({
     };
   }, [loadStatus]);
 
+  // The full working-tree diff feeds the review view, the per-file counts,
+  // and the toolbar totals. Untracked files never appear in `git diff HEAD`,
+  // so an all-untracked tree skips the request entirely.
+  useEffect(() => {
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      if (!status?.initialized) {
+        setFullDiff(null);
+        return;
+      }
+      if (!status.changes.some(change => !isUntracked(change))) {
+        setFullDiff(
+          status.changes.length > 0 ? { files: [], truncated: false } : null
+        );
+        return;
+      }
+      setFullDiffLoading(true);
+      try {
+        const response = await workApi.getGitDiff(taskId);
+        if (cancelled || !response.success || !response.data) return;
+        setFullDiff({
+          files: parseUnifiedGitDiff(response.data.patch),
+          truncated: response.data.truncated,
+        });
+      } catch {
+        // The review view degrades to the changes list; row clicks still work.
+      } finally {
+        if (!cancelled) setFullDiffLoading(false);
+      }
+    }, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [status, taskId]);
+
   const runMutation = async (
     action: () => Promise<ApiResponse<WorkGitStatus>>,
     successMessage: string
@@ -117,9 +264,10 @@ export function WorkspaceGitPanel({
         await action(),
         t('work.git.actionFailed', { defaultValue: 'Git action failed.' })
       );
+      selectionGeneration.current += 1;
       setStatus(next);
       setSelectedPaths([]);
-      setDiff(null);
+      setSelected(null);
       toast.success(successMessage);
       return true;
     } catch (actionError) {
@@ -135,19 +283,47 @@ export function WorkspaceGitPanel({
     }
   };
 
-  const openDiff = async (path: string) => {
-    setDiffLoading(true);
+  const openDiff = async (change: WorkGitChange) => {
+    const request = ++selectionGeneration.current;
+    setSelectedLoading(true);
     setError(null);
     try {
-      setDiff(
-        responseData(
-          await workApi.getGitDiff(taskId, path),
+      if (isUntracked(change)) {
+        // Untracked files have no patch until staged; reading the file and
+        // diffing against nothing shows them as fully added, IDE-style.
+        const file = responseData(
+          await workApi.getFile(taskId, change.path),
           t('work.git.diffFailed', {
             defaultValue: 'Could not load this diff.',
           })
-        )
-      );
+        );
+        if (request !== selectionGeneration.current) return;
+        setSelected({
+          path: change.path,
+          status: 'added',
+          lines: diffWorkLines('', file.content),
+          binary: false,
+          truncated: false,
+        });
+      } else {
+        const diff = responseData(
+          await workApi.getGitDiff(taskId, change.path),
+          t('work.git.diffFailed', {
+            defaultValue: 'Could not load this diff.',
+          })
+        );
+        if (request !== selectionGeneration.current) return;
+        const parsed = parseUnifiedGitDiff(diff.patch)[0];
+        setSelected({
+          path: change.path,
+          status: parsed?.status ?? 'modified',
+          lines: parsed?.lines ?? [],
+          binary: parsed?.binary ?? false,
+          truncated: diff.truncated,
+        });
+      }
     } catch (diffError) {
+      if (request !== selectionGeneration.current) return;
       setError(
         errorMessage(
           diffError,
@@ -157,9 +333,29 @@ export function WorkspaceGitPanel({
         )
       );
     } finally {
-      setDiffLoading(false);
+      if (request === selectionGeneration.current) setSelectedLoading(false);
     }
   };
+
+  const statsByPath = useMemo(() => {
+    const map = new Map<string, WorkGitFileDiff>();
+    for (const file of fullDiff?.files ?? []) map.set(file.path, file);
+    return map;
+  }, [fullDiff]);
+
+  const totals = useMemo(
+    () => workGitDiffTotals(fullDiff?.files ?? []),
+    [fullDiff]
+  );
+
+  const normalizedFilter = fileFilter.trim().toLowerCase();
+  const visibleChanges = useMemo(() => {
+    const changes = status?.changes ?? [];
+    if (!normalizedFilter) return changes;
+    return changes.filter(change =>
+      change.path.toLowerCase().includes(normalizedFilter)
+    );
+  }, [normalizedFilter, status]);
 
   if (loading && !status) {
     return (
@@ -238,6 +434,12 @@ export function WorkspaceGitPanel({
 
   const stagedCount = status.changes.filter(change => change.staged).length;
   const dirty = status.changes.length > 0;
+  const untrackedChanges = visibleChanges.filter(isUntracked);
+  const reviewFiles = normalizedFilter
+    ? (fullDiff?.files ?? []).filter(file =>
+        file.path.toLowerCase().includes(normalizedFilter)
+      )
+    : (fullDiff?.files ?? []);
 
   return (
     <div className='flex h-full min-h-0 flex-col' data-testid='work-git-panel'>
@@ -250,6 +452,16 @@ export function WorkspaceGitPanel({
               : status.branch || 'main'}
           </span>
         </span>
+        {fullDiff && (totals.added > 0 || totals.removed > 0) && (
+          <span
+            data-testid='work-git-total-stats'
+            dir='ltr'
+            className='font-mono text-[11px] font-medium tabular-nums'
+          >
+            <span className='text-[rgb(46,164,79)]'>+{totals.added}</span>{' '}
+            <span className='text-[rgb(255,61,129)]'>−{totals.removed}</span>
+          </span>
+        )}
         {(status.ahead > 0 || status.behind > 0) && (
           <span className='text-[10px] text-ink-muted'>
             ↑{status.ahead} ↓{status.behind}
@@ -346,9 +558,9 @@ export function WorkspaceGitPanel({
         </div>
       )}
 
-      <div className='grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(14rem,0.8fr)_minmax(18rem,1.2fr)_minmax(13rem,0.8fr)]'>
+      <div className='grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(15rem,0.75fr)_minmax(0,2.25fr)]'>
         <section className='flex min-h-0 flex-col border-b border-line lg:border-b-0 lg:border-e'>
-          <div className='flex items-center justify-between px-3 py-2'>
+          <div className='flex items-center justify-between gap-2 px-3 py-2'>
             <h3 className='text-xs font-medium text-ink'>
               {t('work.git.changes', { defaultValue: 'Changes' })}{' '}
               <span className='text-ink-subtle'>{status.changes.length}</span>
@@ -383,6 +595,24 @@ export function WorkspaceGitPanel({
                 : t('work.git.stageAll', { defaultValue: 'Stage all' })}
             </Button>
           </div>
+          {status.changes.length > 0 && (
+            <div className='relative px-2 pb-1.5'>
+              <Search className='pointer-events-none absolute start-4 top-1/2 h-3 w-3 -translate-y-[calc(50%+3px)] text-ink-subtle' />
+              <input
+                data-testid='work-git-filter'
+                value={fileFilter}
+                maxLength={500}
+                onChange={event => setFileFilter(event.target.value)}
+                placeholder={t('work.git.filterFiles', {
+                  defaultValue: 'Filter changed files',
+                })}
+                aria-label={t('work.git.filterFiles', {
+                  defaultValue: 'Filter changed files',
+                })}
+                className='h-7 w-full rounded-lg border border-line bg-surface pe-2 ps-7 text-[11px] text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500'
+              />
+            </div>
+          )}
           <div className='min-h-32 flex-1 overflow-y-auto px-2 pb-2'>
             {status.changes.length === 0 ? (
               <p className='px-2 py-8 text-center text-xs text-ink-muted'>
@@ -390,54 +620,79 @@ export function WorkspaceGitPanel({
                   defaultValue: 'Working tree is clean.',
                 })}
               </p>
+            ) : visibleChanges.length === 0 ? (
+              <p className='px-2 py-8 text-center text-xs text-ink-muted'>
+                {t('work.git.noFilterMatches', {
+                  defaultValue: 'No changed files match this filter.',
+                })}
+              </p>
             ) : (
-              status.changes.map(change => (
-                <div
-                  key={`${change.path}:${change.originalPath || ''}`}
-                  className='flex items-center gap-1 rounded-lg hover:bg-surface-subtle'
-                >
-                  <input
-                    type='checkbox'
-                    aria-label={t('work.git.selectPath', {
-                      path: change.path,
-                      defaultValue: 'Select {{path}}',
-                    })}
-                    checked={selectedPaths.includes(change.path)}
-                    onChange={event =>
-                      setSelectedPaths(current =>
-                        event.target.checked
-                          ? [...current, change.path]
-                          : current.filter(path => path !== change.path)
-                      )
-                    }
-                    className='ms-2 h-3.5 w-3.5 accent-[#ff7b52]'
-                  />
-                  <button
-                    type='button'
-                    data-testid='work-git-change'
-                    onClick={() => void openDiff(change.path)}
-                    className='flex min-w-0 flex-1 items-center gap-2 px-1.5 py-2 text-start'
+              visibleChanges.map(change => {
+                const letter = changeLetter(change);
+                const { name, directory } = splitPath(change.path);
+                const fileStats = statsByPath.get(change.path);
+                return (
+                  <div
+                    key={`${change.path}:${change.originalPath || ''}`}
+                    className={cn(
+                      'flex items-center gap-1 rounded-lg hover:bg-surface-subtle',
+                      selected?.path === change.path && 'bg-surface-subtle'
+                    )}
                   >
-                    <span
-                      dir='ltr'
-                      className={cn(
-                        'w-5 shrink-0 font-mono text-[10px] font-semibold',
-                        change.staged ? 'text-emerald-600' : 'text-amber-600'
-                      )}
-                    >
-                      {change.indexStatus}
-                      {change.workingTreeStatus}
-                    </span>
-                    <span
-                      dir='ltr'
-                      className='min-w-0 flex-1 truncate font-mono text-[11px] text-ink'
+                    <input
+                      type='checkbox'
+                      aria-label={t('work.git.selectPath', {
+                        path: change.path,
+                        defaultValue: 'Select {{path}}',
+                      })}
+                      checked={selectedPaths.includes(change.path)}
+                      onChange={event =>
+                        setSelectedPaths(current =>
+                          event.target.checked
+                            ? [...current, change.path]
+                            : current.filter(path => path !== change.path)
+                        )
+                      }
+                      className='ms-2 h-3.5 w-3.5 accent-[#ff7b52]'
+                    />
+                    <button
+                      type='button'
+                      data-testid='work-git-change'
+                      onClick={() => void openDiff(change)}
+                      className='flex min-w-0 flex-1 items-center gap-2 px-1.5 py-2 text-start'
                       title={change.path}
                     >
-                      {change.path}
-                    </span>
-                  </button>
-                </div>
-              ))
+                      <span
+                        aria-hidden='true'
+                        className={cn(
+                          'w-3.5 shrink-0 text-center font-mono text-[10px] font-semibold',
+                          letterClass(letter),
+                          change.staged && 'underline underline-offset-2'
+                        )}
+                      >
+                        {letter}
+                      </span>
+                      <span
+                        dir='ltr'
+                        className='min-w-0 flex-1 truncate text-start font-mono text-[11px]'
+                      >
+                        <span className='text-ink'>{name}</span>
+                        {directory && (
+                          <span className='text-ink-subtle'> {directory}</span>
+                        )}
+                      </span>
+                      {fileStats &&
+                        (fileStats.stats.added > 0 ||
+                          fileStats.stats.removed > 0) && (
+                          <DiffStatsBadge
+                            added={fileStats.stats.added}
+                            removed={fileStats.stats.removed}
+                          />
+                        )}
+                    </button>
+                  </div>
+                );
+              })
             )}
           </div>
           <div className='border-t border-line p-2'>
@@ -478,80 +733,208 @@ export function WorkspaceGitPanel({
               {t('work.git.commit', { defaultValue: 'Commit staged changes' })}
             </Button>
           </div>
-        </section>
-
-        <section className='flex min-h-48 min-w-0 flex-col border-b border-line lg:border-b-0 lg:border-e'>
-          <div className='flex items-center gap-2 px-3 py-2 text-xs font-medium text-ink'>
-            <FileDiff className='h-3.5 w-3.5' />
-            {diff?.path || t('work.git.diff', { defaultValue: 'Diff preview' })}
-          </div>
-          {diffLoading ? (
-            <Loader2 className='m-auto h-5 w-5 animate-spin text-ink-muted' />
-          ) : diff ? (
-            diff.patch ? (
-              <pre
-                data-testid='work-git-diff'
-                dir='ltr'
-                className='min-h-0 flex-1 overflow-auto whitespace-pre p-3 text-left font-mono text-[11px] leading-relaxed text-ink'
-              >
-                {diff.patch}
-                {diff.truncated && '\n… diff truncated …'}
-              </pre>
-            ) : (
-              <p className='m-auto px-5 text-center text-xs text-ink-muted'>
-                {t('work.git.noDiff', {
-                  defaultValue:
-                    'No textual diff is available yet. Untracked files appear after staging.',
-                })}
+          <div className='max-h-56 shrink-0 overflow-y-auto border-t border-line p-3'>
+            <div className='mb-2 flex items-center gap-2 text-xs font-medium text-ink'>
+              <History className='h-3.5 w-3.5' />
+              {t('work.git.history', { defaultValue: 'Local history' })}
+            </div>
+            {status.commits.length === 0 ? (
+              <p className='py-3 text-center text-xs text-ink-muted'>
+                {t('work.git.noCommits', { defaultValue: 'No commits yet.' })}
               </p>
-            )
-          ) : (
-            <p className='m-auto px-5 text-center text-xs text-ink-muted'>
-              {t('work.git.selectChange', {
-                defaultValue: 'Select a changed file to inspect its diff.',
+            ) : (
+              <ol className='space-y-2'>
+                {status.commits.map(commit => (
+                  <li
+                    key={commit.hash}
+                    className='rounded-lg border border-line bg-surface px-2.5 py-2'
+                  >
+                    <p dir='auto' className='text-xs text-ink'>
+                      {commit.subject}
+                    </p>
+                    <p className='mt-1 flex flex-wrap gap-x-2 text-[10px] text-ink-subtle'>
+                      <span dir='ltr' className='font-mono'>
+                        {commit.shortHash}
+                      </span>
+                      <span dir='auto'>{commit.author}</span>
+                      <time dateTime={commit.authoredAt}>
+                        {new Date(commit.authoredAt).toLocaleDateString()}
+                      </time>
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <p className='mt-3 border-t border-line pt-2 text-[10px] leading-relaxed text-ink-subtle'>
+              {t('work.git.localOnly', {
+                defaultValue:
+                  'Local Git only. Push, pull, and pull requests require a separate trusted credential broker.',
               })}
             </p>
-          )}
+          </div>
         </section>
 
-        <section className='min-h-36 overflow-y-auto p-3'>
-          <div className='mb-2 flex items-center gap-2 text-xs font-medium text-ink'>
-            <History className='h-3.5 w-3.5' />
-            {t('work.git.history', { defaultValue: 'Local history' })}
-          </div>
-          {status.commits.length === 0 ? (
-            <p className='py-6 text-center text-xs text-ink-muted'>
-              {t('work.git.noCommits', { defaultValue: 'No commits yet.' })}
-            </p>
-          ) : (
-            <ol className='space-y-2'>
-              {status.commits.map(commit => (
-                <li
-                  key={commit.hash}
-                  className='rounded-lg border border-line bg-surface px-2.5 py-2'
+        <section className='flex min-h-48 min-w-0 flex-col'>
+          {selected || selectedLoading ? (
+            <>
+              <div className='flex items-center gap-1.5 border-b border-line px-2 py-1.5'>
+                <button
+                  type='button'
+                  data-testid='work-git-all-changes-button'
+                  onClick={() => {
+                    selectionGeneration.current += 1;
+                    setSelected(null);
+                    setSelectedLoading(false);
+                  }}
+                  className='inline-flex h-6 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[11px] text-ink-muted hover:bg-surface-subtle hover:text-ink'
                 >
-                  <p dir='auto' className='text-xs text-ink'>
-                    {commit.subject}
-                  </p>
-                  <p className='mt-1 flex flex-wrap gap-x-2 text-[10px] text-ink-subtle'>
-                    <span dir='ltr' className='font-mono'>
-                      {commit.shortHash}
+                  <ArrowLeft className='h-3 w-3 rtl:rotate-180' />
+                  {t('work.git.allChanges', { defaultValue: 'All changes' })}
+                </button>
+                {selected && (
+                  <>
+                    <span
+                      aria-hidden='true'
+                      className={cn(
+                        'w-4 shrink-0 text-center font-mono text-[11px] font-semibold',
+                        letterClass(statusLetter(selected.status))
+                      )}
+                    >
+                      {statusLetter(selected.status)}
                     </span>
-                    <span dir='auto'>{commit.author}</span>
-                    <time dateTime={commit.authoredAt}>
-                      {new Date(commit.authoredAt).toLocaleDateString()}
-                    </time>
-                  </p>
-                </li>
+                    <span
+                      dir='ltr'
+                      className='min-w-0 flex-1 truncate font-mono text-[11px] text-ink'
+                      title={selected.path}
+                    >
+                      {selected.path}
+                    </span>
+                    {!selected.binary && (
+                      <DiffStatsBadge
+                        added={
+                          selected.lines.filter(line => line.type === 'added')
+                            .length
+                        }
+                        removed={
+                          selected.lines.filter(line => line.type === 'removed')
+                            .length
+                        }
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+              {selectedLoading ? (
+                <Loader2 className='m-auto h-5 w-5 animate-spin text-ink-muted' />
+              ) : selected ? (
+                <div
+                  data-testid='work-git-diff'
+                  dir='ltr'
+                  className='min-h-0 flex-1 overflow-auto bg-surface font-mono text-[12px] leading-5'
+                >
+                  {selected.truncated && (
+                    <p className='border-b border-line bg-surface-subtle/70 px-3 py-1.5 text-center font-sans text-[11px] text-ink-subtle'>
+                      {t('work.git.diffTruncated', {
+                        defaultValue: 'This diff is truncated.',
+                      })}
+                    </p>
+                  )}
+                  {selected.binary ? (
+                    <p className='px-5 py-10 text-center font-sans text-xs text-ink-muted'>
+                      {t('work.git.binaryFile', {
+                        defaultValue: 'Binary file, no text diff.',
+                      })}
+                    </p>
+                  ) : selected.lines.length === 0 ? (
+                    <p className='px-5 py-10 text-center font-sans text-xs text-ink-muted'>
+                      {t('work.git.noDiff', {
+                        defaultValue:
+                          'No textual diff is available yet. Untracked files appear after staging.',
+                      })}
+                    </p>
+                  ) : (
+                    <WorkspaceDiffTable lines={selected.lines} />
+                  )}
+                </div>
+              ) : null}
+            </>
+          ) : status.changes.length === 0 ? (
+            <p className='m-auto px-5 text-center text-xs text-ink-muted'>
+              {t('work.git.clean', { defaultValue: 'Working tree is clean.' })}
+            </p>
+          ) : fullDiffLoading && !fullDiff ? (
+            <Loader2 className='m-auto h-5 w-5 animate-spin text-ink-muted' />
+          ) : (
+            <div
+              data-testid='work-git-review'
+              dir='ltr'
+              className='min-h-0 flex-1 overflow-auto bg-surface font-mono text-[12px] leading-5'
+            >
+              {fullDiff?.truncated && (
+                <p className='border-b border-line bg-surface-subtle/70 px-3 py-1.5 text-center font-sans text-[11px] text-ink-subtle'>
+                  {t('work.git.diffTruncated', {
+                    defaultValue: 'This diff is truncated.',
+                  })}
+                </p>
+              )}
+              {reviewFiles.map(file => (
+                <div key={file.path} data-testid='work-git-review-file'>
+                  <FileDiffHeader
+                    letter={statusLetter(file.status)}
+                    path={file.path}
+                    oldPath={file.oldPath}
+                    added={file.stats.added}
+                    removed={file.stats.removed}
+                  />
+                  {file.binary ? (
+                    <p className='px-5 py-6 text-center font-sans text-xs text-ink-muted'>
+                      {t('work.git.binaryFile', {
+                        defaultValue: 'Binary file, no text diff.',
+                      })}
+                    </p>
+                  ) : (
+                    <WorkspaceDiffTable lines={file.lines} />
+                  )}
+                </div>
               ))}
-            </ol>
+              {untrackedChanges.map(change => (
+                <div key={change.path} data-testid='work-git-review-file'>
+                  <button
+                    type='button'
+                    onClick={() => void openDiff(change)}
+                    title={change.path}
+                    className='flex w-full items-center gap-2 border-b border-line px-3 py-1.5 text-start hover:bg-surface-subtle'
+                  >
+                    <span
+                      aria-hidden='true'
+                      className='w-4 shrink-0 text-center font-mono text-[11px] font-semibold text-[rgb(46,164,79)]'
+                    >
+                      U
+                    </span>
+                    <span
+                      dir='ltr'
+                      className='min-w-0 flex-1 truncate font-mono text-[11px] text-ink'
+                    >
+                      {change.path}
+                    </span>
+                    <FileDiff className='h-3 w-3 shrink-0 text-ink-subtle' />
+                  </button>
+                </div>
+              ))}
+              {reviewFiles.length === 0 && untrackedChanges.length === 0 && (
+                <p className='px-5 py-10 text-center font-sans text-xs text-ink-muted'>
+                  {normalizedFilter
+                    ? t('work.git.noFilterMatches', {
+                        defaultValue: 'No changed files match this filter.',
+                      })
+                    : t('work.git.selectChange', {
+                        defaultValue:
+                          'Select a changed file to inspect its diff.',
+                      })}
+                </p>
+              )}
+            </div>
           )}
-          <p className='mt-4 border-t border-line pt-3 text-[10px] leading-relaxed text-ink-subtle'>
-            {t('work.git.localOnly', {
-              defaultValue:
-                'Local Git only. Push, pull, and pull requests require a separate trusted credential broker.',
-            })}
-          </p>
         </section>
       </div>
     </div>

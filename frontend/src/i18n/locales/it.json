@@ -1978,7 +1978,12 @@
       "staged": "Modifiche in stage.",
       "switchBranch": "Cambia branch locale",
       "changes": "Modifiche",
-      "createBranch": "Crea"
+      "createBranch": "Crea",
+      "filterFiles": "Filtra i file modificati",
+      "noFilterMatches": "Nessun file modificato corrisponde a questo filtro.",
+      "allChanges": "Tutte le modifiche",
+      "diffTruncated": "Questo diff è troncato.",
+      "binaryFile": "File binario, nessun diff di testo."
     },
     "hostWorkspace": {
       "hint": "Lascia vuoto per uno spazio isolato, oppure punta l'attività a una cartella di questa macchina.",

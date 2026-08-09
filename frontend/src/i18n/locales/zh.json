@@ -1978,7 +1978,12 @@
       "staged": "更改已暂存。",
       "switchBranch": "切换本地分支",
       "changes": "更改",
-      "createBranch": "创建"
+      "createBranch": "创建",
+      "filterFiles": "筛选已更改的文件",
+      "noFilterMatches": "没有与此筛选条件匹配的已更改文件。",
+      "allChanges": "全部更改",
+      "diffTruncated": "此差异已被截断。",
+      "binaryFile": "二进制文件，无文本差异。"
     },
     "hostWorkspace": {
       "hint": "留空以使用隔离工作区，或将任务指向本机的一个文件夹。",

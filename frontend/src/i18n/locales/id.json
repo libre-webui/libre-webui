@@ -1978,7 +1978,12 @@
       "staged": "Perubahan di-stage.",
       "switchBranch": "Ganti cabang lokal",
       "changes": "Perubahan",
-      "createBranch": "Buat"
+      "createBranch": "Buat",
+      "filterFiles": "Filter berkas yang berubah",
+      "noFilterMatches": "Tidak ada berkas berubah yang cocok dengan filter ini.",
+      "allChanges": "Semua perubahan",
+      "diffTruncated": "Diff ini terpotong.",
+      "binaryFile": "Berkas biner, tidak ada diff teks."
     },
     "hostWorkspace": {
       "hint": "Biarkan kosong untuk ruang kerja terisolasi, atau arahkan tugas ke folder di mesin ini.",

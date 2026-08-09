@@ -1978,7 +1978,12 @@
       "staged": "Zmiany przygotowane.",
       "switchBranch": "Przełącz lokalną gałąź",
       "changes": "Zmiany",
-      "createBranch": "Utwórz"
+      "createBranch": "Utwórz",
+      "filterFiles": "Filtruj zmienione pliki",
+      "noFilterMatches": "Żadne zmienione pliki nie pasują do tego filtra.",
+      "allChanges": "Wszystkie zmiany",
+      "diffTruncated": "Ten diff został skrócony.",
+      "binaryFile": "Plik binarny, brak diffu tekstowego."
     },
     "hostWorkspace": {
       "hint": "Zostaw puste dla izolowanej przestrzeni, albo wskaż zadaniu folder na tej maszynie.",

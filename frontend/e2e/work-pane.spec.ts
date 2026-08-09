@@ -2716,6 +2716,16 @@ test('manages local workspace Git without exposing remote credentials', async ({
       },
     },
     workGitDiffs: {
+      'git-workspace:': [
+        'diff --git a/src/app.ts b/src/app.ts',
+        'index 1111111..2222222 100644',
+        '--- a/src/app.ts',
+        '+++ b/src/app.ts',
+        '@@ -1,1 +1,2 @@',
+        " const app = 'libre';",
+        '+export const ready = true;',
+        '',
+      ].join('\n'),
       'git-workspace:src/app.ts':
         'diff --git a/src/app.ts b/src/app.ts\n+export const ready = true;\n',
     },
@@ -2729,6 +2739,25 @@ test('manages local workspace Git without exposing remote credentials', async ({
   await expect(page.getByText(/Local Git only/)).toBeVisible();
   await expect(page.getByRole('button', { name: /push/i })).toHaveCount(0);
 
+  // The review view opens with every changed file rendered as a rich diff,
+  // and the toolbar totals the whole working tree.
+  await expect(page.getByTestId('work-git-total-stats')).toHaveText('+1 −0');
+  const reviewFile = page.getByTestId('work-git-review-file');
+  await expect(reviewFile).toHaveCount(1);
+  await expect(reviewFile).toContainText('src/app.ts');
+  await expect(reviewFile).toContainText('export const ready = true;');
+
+  // Filtering narrows the changes list without any network traffic.
+  await page.getByTestId('work-git-filter').fill('nothing-matches-this');
+  await expect(page.getByTestId('work-git-change')).toHaveCount(0);
+  await page.getByTestId('work-git-filter').clear();
+
+  await page.getByTestId('work-git-change').click();
+  await expect(page.getByTestId('work-git-diff')).toContainText(
+    'export const ready = true;'
+  );
+  await page.getByTestId('work-git-all-changes-button').click();
+  await expect(page.getByTestId('work-git-review-file')).toBeVisible();
   await page.getByTestId('work-git-change').click();
   await expect(page.getByTestId('work-git-diff')).toContainText(
     'export const ready = true;'
@@ -2753,9 +2782,22 @@ test('manages local workspace Git without exposing remote credentials', async ({
     .getByTestId('work-git-branch-select')
     .selectOption('feature/local-ui');
 
+  // The panel fetches the full working-tree diff after the initial status
+  // and again after staging changes the tree; committing empties the tree,
+  // so no refetch follows the commit, branch, or switch actions.
   await expect
     .poll(() => mock.workGitRequests.map(request => request.action))
-    .toEqual(['status', 'diff', 'stage', 'commit', 'branch', 'switch']);
+    .toEqual([
+      'status',
+      'diff',
+      'diff',
+      'diff',
+      'stage',
+      'diff',
+      'commit',
+      'branch',
+      'switch',
+    ]);
   expect(
     mock.workGitRequests.find(request => request.action === 'stage')
   ).toMatchObject({ paths: ['src/app.ts'] });

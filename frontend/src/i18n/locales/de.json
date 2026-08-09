@@ -1978,7 +1978,12 @@
       "staged": "Änderungen vorgemerkt.",
       "switchBranch": "Lokalen Branch wechseln",
       "changes": "Änderungen",
-      "createBranch": "Erstellen"
+      "createBranch": "Erstellen",
+      "filterFiles": "Geänderte Dateien filtern",
+      "noFilterMatches": "Keine geänderten Dateien entsprechen diesem Filter.",
+      "allChanges": "Alle Änderungen",
+      "diffTruncated": "Dieser Diff ist gekürzt.",
+      "binaryFile": "Binärdatei, kein Text-Diff."
     },
     "hostWorkspace": {
       "hint": "Leer lassen für einen isolierten Arbeitsbereich, oder die Aufgabe auf einen Ordner dieses Rechners richten.",

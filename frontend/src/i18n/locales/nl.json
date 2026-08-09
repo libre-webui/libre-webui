@@ -1978,7 +1978,12 @@
       "staged": "Wijzigingen gestaged.",
       "switchBranch": "Lokale branch wisselen",
       "changes": "Wijzigingen",
-      "createBranch": "Aanmaken"
+      "createBranch": "Aanmaken",
+      "filterFiles": "Gewijzigde bestanden filteren",
+      "noFilterMatches": "Geen gewijzigde bestanden komen overeen met dit filter.",
+      "allChanges": "Alle wijzigingen",
+      "diffTruncated": "Deze diff is ingekort.",
+      "binaryFile": "Binair bestand, geen tekstdiff."
     },
     "hostWorkspace": {
       "hint": "Laat leeg voor een geïsoleerde werkruimte, of wijs de taak naar een map op deze machine.",

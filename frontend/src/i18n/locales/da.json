@@ -1978,7 +1978,12 @@
       "staged": "Ændringer klargjort.",
       "switchBranch": "Skift lokal branch",
       "changes": "Ændringer",
-      "createBranch": "Opret"
+      "createBranch": "Opret",
+      "filterFiles": "Filtrer ændrede filer",
+      "noFilterMatches": "Ingen ændrede filer matcher dette filter.",
+      "allChanges": "Alle ændringer",
+      "diffTruncated": "Denne diff er afkortet.",
+      "binaryFile": "Binær fil, ingen tekstdiff."
     },
     "hostWorkspace": {
       "hint": "Lad stå tomt for et isoleret arbejdsområde, eller peg opgaven på en mappe på denne maskine.",

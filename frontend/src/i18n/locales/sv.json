@@ -1978,7 +1978,12 @@
       "staged": "Ändringar förberedda.",
       "switchBranch": "Byt lokal gren",
       "changes": "Ändringar",
-      "createBranch": "Skapa"
+      "createBranch": "Skapa",
+      "filterFiles": "Filtrera ändrade filer",
+      "noFilterMatches": "Inga ändrade filer matchar det här filtret.",
+      "allChanges": "Alla ändringar",
+      "diffTruncated": "Denna diff är avkortad.",
+      "binaryFile": "Binär fil, ingen textdiff."
     },
     "hostWorkspace": {
       "hint": "Lämna tomt för en isolerad arbetsyta, eller peka uppgiften mot en mapp på den här datorn.",

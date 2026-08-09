@@ -1978,7 +1978,12 @@
       "staged": "변경 사항이 스테이징되었습니다.",
       "switchBranch": "로컬 브랜치 전환",
       "changes": "변경 사항",
-      "createBranch": "만들기"
+      "createBranch": "만들기",
+      "filterFiles": "변경된 파일 필터링",
+      "noFilterMatches": "이 필터와 일치하는 변경된 파일이 없습니다.",
+      "allChanges": "모든 변경 사항",
+      "diffTruncated": "이 diff는 잘렸습니다.",
+      "binaryFile": "바이너리 파일이므로 텍스트 diff가 없습니다."
     },
     "hostWorkspace": {
       "hint": "격리된 작업 공간을 쓰려면 비워 두고, 아니면 이 컴퓨터의 폴더를 지정하세요.",

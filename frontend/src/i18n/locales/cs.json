@@ -1978,7 +1978,12 @@
       "staged": "Změny připraveny.",
       "switchBranch": "Přepnout místní větev",
       "changes": "Změny",
-      "createBranch": "Vytvořit"
+      "createBranch": "Vytvořit",
+      "filterFiles": "Filtrovat změněné soubory",
+      "noFilterMatches": "Tomuto filtru neodpovídají žádné změněné soubory.",
+      "allChanges": "Všechny změny",
+      "diffTruncated": "Tento diff je zkrácen.",
+      "binaryFile": "Binární soubor, bez textového diffu."
     },
     "hostWorkspace": {
       "hint": "Nechte prázdné pro izolovaný pracovní prostor, nebo nasměrujte úlohu na složku na tomto počítači.",
