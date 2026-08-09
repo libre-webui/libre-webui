@@ -12,6 +12,13 @@ We appreciate all the amazing people who have contributed to making Libre WebUI 
 
 ## Community Contributors
 
+- **[Rohit Babu](https://github.com/BabuBahir)** - Chat i18n and sidebar test coverage
+  - Translated the hardcoded chat toast messages across all 25 locales (#192)
+  - Playwright coverage for pinned chats and drag-and-drop foldering,
+    including a native DragEvent harness for React's synthetic handlers (#194)
+- **[ColumbusLabs](https://github.com/ColumbusLabs)** - Reverse proxy documentation
+  - Troubleshooting guide for WebSocket streaming behind nginx, Caddy, and
+    Traefik, verified against the actual ports and env vars (#195)
 - **[jm](https://github.com/jmoney7823956789378)** - Network Access Enhancement
   - Fixed `--host` flag functionality for development server
   - Implemented CORS support for private network IPs
