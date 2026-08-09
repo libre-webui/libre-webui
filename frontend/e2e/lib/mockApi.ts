@@ -232,6 +232,15 @@ type MockSession = {
   messages: MockMessage[];
   createdAt: number;
   updatedAt: number;
+  folderId?: string | null;
+  pinned?: boolean;
+};
+
+type MockFolder = {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
 };
 
 type MockChatStream = {
@@ -370,6 +379,7 @@ type MockOptions = {
     preferences?: Partial<typeof defaultPreferences>;
   }>;
   sessions?: MockSession[];
+  folders?: MockFolder[];
   models?: MockModel[];
   ollamaHealthy?: boolean;
   plugins?: MockPlugin[];
@@ -573,6 +583,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const authRole = options.authRole ?? 'admin';
   const authUsers = options.authUsers ?? [];
   const sessions = structuredClone(options.sessions ?? []);
+  const folders = structuredClone(options.folders ?? []);
   let models = options.models ?? defaultModels;
   const ollamaHealthy = options.ollamaHealthy ?? true;
   const plugins = structuredClone(options.plugins ?? []);
@@ -651,6 +662,9 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     sessionId: string;
     updates: Partial<MockSession>;
   }> = [];
+  const folderCreateRequests: Array<{ name: string }> = [];
+  const folderRenameRequests: Array<{ folderId: string; name: string }> = [];
+  const folderDeleteRequests: string[] = [];
   const workTaskCreateRequests: Array<{
     message: string;
     model: string;
@@ -696,6 +710,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   }> = [];
   let nextWorkTaskId = workTasks.length + 1;
   let nextWorkMessageId = 1;
+  let nextFolderId = folders.length + 1;
 
   const authUserForRoute = (route: Route) => {
     const authorization = route.request().headers().authorization;
@@ -1824,6 +1839,51 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/chat/folders' && method === 'GET') {
+        await fulfillJson(route, folders);
+        return;
+      }
+
+      if (path === '/chat/folders' && method === 'POST') {
+        const request = route.request().postDataJSON() as { name?: string };
+        const now = Date.now();
+        const folder: MockFolder = {
+          id: `folder-${nextFolderId++}`,
+          name: String(request.name ?? '').trim(),
+          createdAt: now,
+          updatedAt: now,
+        };
+        folderCreateRequests.push({ name: folder.name });
+        folders.push(folder);
+        await fulfillJson(route, folder);
+        return;
+      }
+
+      const folderMatch = path.match(/^\/chat\/folders\/([^/]+)$/);
+      if (folderMatch && (method === 'PUT' || method === 'DELETE')) {
+        const folderId = decodeURIComponent(folderMatch[1]);
+        const folder = folders.find(item => item.id === folderId);
+        if (!folder) {
+          await fulfillApiError(route, 404, 'Folder not found');
+          return;
+        }
+        if (method === 'PUT') {
+          const request = route.request().postDataJSON() as { name?: string };
+          folder.name = String(request.name ?? '').trim();
+          folder.updatedAt = Date.now();
+          folderRenameRequests.push({ folderId, name: folder.name });
+          await fulfillJson(route, folder);
+          return;
+        }
+        folderDeleteRequests.push(folderId);
+        folders.splice(folders.indexOf(folder), 1);
+        for (const session of sessions) {
+          if (session.folderId === folderId) session.folderId = null;
+        }
+        await fulfillJson(route, undefined);
+        return;
+      }
+
       const generatedTitleMatch = path.match(
         /^\/chat\/sessions\/([^/]+)\/generate-title$/
       );
@@ -2105,6 +2165,9 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     soundGenerationRequests,
     titleGenerationRequests,
     sessionUpdateRequests,
+    folderCreateRequests,
+    folderRenameRequests,
+    folderDeleteRequests,
     workTaskCreateRequests,
     workTaskDetailRequests,
     workTaskListRequests,
