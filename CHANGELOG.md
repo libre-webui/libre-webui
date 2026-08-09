@@ -9,11 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **An IDE-grade diff manager in Work's Git tab.** Opening the tab now shows every changed file as a rendered diff: line numbers, per-file and total +/− counts, colored status letters, a filename filter, and dividers for skipped unchanged regions. Folded context in the turn diff expands in place, and untracked files display as fully added instead of hiding until staged.
+
 ### 🔧 Improvements
+
+- **The desktop app moved to its own repository.** This repo no longer carries the Electron shell, its build tooling, or 149 packages of its dependency tree. Releases here dispatch the desktop repository, which builds the installers and uploads them onto the same GitHub release, so download links and the Homebrew cask are unchanged.
 
 ### 🐛 Bug Fixes
 
 ### 📚 Documentation
+
+- **The desktop app guide is now user-facing.** Install per platform, approve the ad-hoc-signed macOS build, and connect to a local or remote server; build-from-source instructions left with the code.
 
 ## [0.21.1] - 2026-08-08
 

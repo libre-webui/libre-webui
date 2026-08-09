@@ -2,7 +2,6 @@
   "name": "libre-webui",
   "version": "0.21.1",
   "description": "A local-first workspace for chat, private knowledge, artifacts, and isolated model-driven work.",
-  "main": "electron/main.js",
   "bin": {
     "libre-webui": "bin/cli.js"
   },
@@ -28,7 +27,7 @@
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
-    "test:package": "node --test scripts/test-deprecated-dependencies.mjs && node --test scripts/test-typescript-toolchain.mjs && node --test scripts/test-helm-versioning.mjs && node --test scripts/test-helm-work.mjs && node --test scripts/test-tts-example-security.mjs && npm run test:unit --workspace=frontend && npm run build && node --test scripts/test-webpage-fetch-security.mjs && node --test scripts/test-web-search.mjs && node --test scripts/test-content-resource-limits.mjs && node --test scripts/test-registration-policy.mjs && node --test scripts/test-user-approval.mjs && node --test scripts/test-turnstile-auth.mjs && node --test scripts/test-oauth-security.mjs && node --test scripts/test-password-security.mjs && node --test scripts/test-live-deployment-security.mjs && node --test scripts/test-ollama-model-defaults.mjs && node --test scripts/test-ollama-library.mjs && node --test scripts/test-chat-context.mjs && node --test scripts/test-rag-retrieval.mjs && node --test scripts/test-chat-rest-responses.mjs && node --test scripts/test-plugin-endpoint-routing.mjs && node --test scripts/test-plugin-capability-routing.mjs && node --test scripts/test-plugin-usage-analytics.mjs && node --test scripts/test-system-diagnostics.mjs && node --test scripts/test-openrouter-attribution.mjs && node --test scripts/test-openrouter-media-routing.mjs && node --test scripts/test-chat-provider-selection.mjs && node --test scripts/test-agent-cli-chat.mjs && node --test scripts/test-codex-oauth.mjs && node --test scripts/test-provider-api-modes.mjs && node --test scripts/test-plugin-variable-overrides.mjs && node --test scripts/test-plugin-model-refresh.mjs && node --test scripts/test-tts-routing.mjs && node --test scripts/test-image-generation-routing.mjs && node --test scripts/test-work-host-workspace.mjs && node --test scripts/test-work-runtime.mjs && node --test scripts/test-work-access.mjs && node --test scripts/test-work-admin.mjs && node --test scripts/test-work-idle.mjs && node --test scripts/test-work-policies.mjs && node --test scripts/test-work-kubernetes.mjs && node --test scripts/test-work-preview-proxy.mjs && node --test scripts/test-artifact-sandbox.mjs && node --test scripts/test-work-terminal.mjs && node --test scripts/test-work-provider.mjs && node --test scripts/test-work-agent-guidance.mjs && node --test scripts/test-work-agent-loop.mjs && node --test scripts/test-work-events.mjs && node --test scripts/test-package-layout.mjs && node --test scripts/test-release-notes.mjs && node --test scripts/test-release-status.mjs && node --test scripts/test-docker-layout.mjs && node --test scripts/test-electron-macos-signing.mjs && node --test scripts/test-pr-quality-gates.mjs && node --test scripts/test-homebrew-publishing.mjs && node --test scripts/test-forgejo-release-mirror.mjs",
+    "test:package": "node --test scripts/test-deprecated-dependencies.mjs && node --test scripts/test-typescript-toolchain.mjs && node --test scripts/test-helm-versioning.mjs && node --test scripts/test-helm-work.mjs && node --test scripts/test-tts-example-security.mjs && npm run test:unit --workspace=frontend && npm run build && node --test scripts/test-webpage-fetch-security.mjs && node --test scripts/test-web-search.mjs && node --test scripts/test-content-resource-limits.mjs && node --test scripts/test-registration-policy.mjs && node --test scripts/test-user-approval.mjs && node --test scripts/test-turnstile-auth.mjs && node --test scripts/test-oauth-security.mjs && node --test scripts/test-password-security.mjs && node --test scripts/test-live-deployment-security.mjs && node --test scripts/test-ollama-model-defaults.mjs && node --test scripts/test-ollama-library.mjs && node --test scripts/test-chat-context.mjs && node --test scripts/test-rag-retrieval.mjs && node --test scripts/test-chat-rest-responses.mjs && node --test scripts/test-plugin-endpoint-routing.mjs && node --test scripts/test-plugin-capability-routing.mjs && node --test scripts/test-plugin-usage-analytics.mjs && node --test scripts/test-system-diagnostics.mjs && node --test scripts/test-openrouter-attribution.mjs && node --test scripts/test-openrouter-media-routing.mjs && node --test scripts/test-chat-provider-selection.mjs && node --test scripts/test-agent-cli-chat.mjs && node --test scripts/test-codex-oauth.mjs && node --test scripts/test-provider-api-modes.mjs && node --test scripts/test-plugin-variable-overrides.mjs && node --test scripts/test-plugin-model-refresh.mjs && node --test scripts/test-tts-routing.mjs && node --test scripts/test-image-generation-routing.mjs && node --test scripts/test-work-host-workspace.mjs && node --test scripts/test-work-runtime.mjs && node --test scripts/test-work-access.mjs && node --test scripts/test-work-admin.mjs && node --test scripts/test-work-idle.mjs && node --test scripts/test-work-policies.mjs && node --test scripts/test-work-kubernetes.mjs && node --test scripts/test-work-preview-proxy.mjs && node --test scripts/test-artifact-sandbox.mjs && node --test scripts/test-work-terminal.mjs && node --test scripts/test-work-provider.mjs && node --test scripts/test-work-agent-guidance.mjs && node --test scripts/test-work-agent-loop.mjs && node --test scripts/test-work-events.mjs && node --test scripts/test-package-layout.mjs && node --test scripts/test-release-notes.mjs && node --test scripts/test-release-status.mjs && node --test scripts/test-docker-layout.mjs && node --test scripts/test-pr-quality-gates.mjs && node --test scripts/test-homebrew-publishing.mjs && node --test scripts/test-forgejo-release-mirror.mjs",
     "test:e2e": "npm run e2e --workspace=frontend",
     "test:work": "npm run build:backend && node --test scripts/test-work-host-workspace.mjs && node --test scripts/test-work-runtime.mjs && node --test scripts/test-work-access.mjs && node --test scripts/test-work-admin.mjs && node --test scripts/test-work-idle.mjs && node --test scripts/test-work-policies.mjs && node --test scripts/test-work-kubernetes.mjs && node --test scripts/test-work-preview-proxy.mjs && node --test scripts/test-work-terminal.mjs && node --test scripts/test-work-provider.mjs && node --test scripts/test-work-agent-guidance.mjs && node --test scripts/test-work-agent-loop.mjs && node --test scripts/test-work-events.mjs",
     "security:audit": "npm audit --audit-level=moderate",
@@ -52,14 +51,6 @@
     "release:major": "node scripts/release.js major",
     "release:mirror:forgejo": "node scripts/mirror-forgejo-releases.mjs",
     "changelog": "node scripts/generate-changelog.js",
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-    "electron:build": "ELECTRON_BUILD=true npm run build:frontend && npm run build:backend && electron-builder build --mac --arm64 --publish never",
-    "electron:verify:mac": "bash scripts/verify-macos-artifact.sh",
-    "electron:build:win": "npm run build:frontend && npm run build:backend && electron-builder build --win --publish never",
-    "electron:build:linux": "ELECTRON_BUILD=true npm run build:frontend && npm run build:backend && electron-builder build --linux --publish never",
-    "electron:build:universal": "npm run build && electron-builder build --mac --arm64 --x64",
-    "electron:pack": "electron-builder --dir",
-    "generate-icons": "node scripts/generate-icons.js",
     "prepublishOnly": "npm run build",
     "npm:publish:dry-run": "npm publish --dry-run --access public",
     "npm:publish": "npm publish --access public"
@@ -76,9 +67,6 @@
     "node": ">=22.22.0"
   },
   "overrides": {
-    "@electron/asar": "4.2.0",
-    "@electron/get": "5.0.0",
-    "@electron/universal": "3.0.6",
     "prismjs": "^1.30.0",
     "@isaacs/brace-expansion": ">=5.0.1",
     "react": "19.2.8",
@@ -108,14 +96,9 @@
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.34.0",
     "concurrently": "^10.0.1",
-    "electron": "41.10.3",
-    "electron-builder": "26.15.7",
     "eslint": "^9.39.4",
-    "png-to-ico": "^3.0.1",
     "prettier": "^3.7.4",
-    "sharp": "^0.35.1",
-    "typescript": "6.0.3",
-    "wait-on": "^9.0.3"
+    "typescript": "6.0.3"
   },
   "keywords": [
     "llm",

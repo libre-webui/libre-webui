@@ -36,151 +36,11 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  # Build Electron app for macOS
-  build-electron-mac:
-    needs: release-preflight
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '22.22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: |
-          npm ci
-          npm run install:all
-
-      - name: Build frontend and backend
-        run: npm run build
-
-      - name: Generate Electron icons
-        run: npm run generate-icons
-
-      - name: Build Electron app for macOS
-        run: npm run electron:build
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ELECTRON_BUILD: true
-
-      - name: Verify macOS application signature
-        run: npm run electron:verify:mac
-
-      - name: Upload Electron artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: electron-frontend-mac-arm64
-          path: |
-            dist-electron/*.dmg
-            dist-electron/*.zip
-          if-no-files-found: warn
-
-  # Build Electron app for Windows
-  build-electron-win:
-    needs: release-preflight
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '22.22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: |
-          npm ci
-          npm run install:all
-
-      - name: Rebuild native modules for Electron
-        run: npx electron-rebuild -f -w better-sqlite3
-
-      - name: Build frontend and backend
-        run: npm run build
-        env:
-          ELECTRON_BUILD: true
-
-      - name: Generate Electron icons
-        run: npm run generate-icons
-
-      - name: Build Electron app for Windows
-        run: npm run electron:build:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ELECTRON_BUILD: true
-
-      - name: Upload Electron artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: electron-frontend-win
-          path: |
-            dist-electron/*.exe
-            dist-electron/*.msi
-          if-no-files-found: warn
-
-  # Build Electron app for Linux
-  build-electron-linux:
-    needs: release-preflight
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '22.22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: |
-          npm ci
-          npm run install:all
-
-      - name: Rebuild native modules for Electron
-        run: npx electron-rebuild -f -w better-sqlite3
-
-      - name: Build frontend and backend
-        run: npm run build
-        env:
-          ELECTRON_BUILD: true
-
-      - name: Generate Electron icons
-        run: npm run generate-icons
-
-      - name: Build Electron app for Linux
-        run: npm run electron:build:linux
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ELECTRON_BUILD: true
-
-      - name: Upload Electron artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: electron-frontend-linux
-          path: |
-            dist-electron/*.AppImage
-            dist-electron/*.deb
-          if-no-files-found: warn
-
-  # Create the GitHub release with all artifacts
+  # Create the GitHub release. Desktop installers are built by the
+  # libre-webui-desktop repository, which this workflow dispatches below;
+  # that build uploads its artifacts onto this release.
   create-release:
-    needs: [build-electron-mac, build-electron-win, build-electron-linux]
+    needs: release-preflight
     runs-on: ubuntu-latest
 
     steps:
@@ -222,17 +82,6 @@ jobs:
           echo "$CHANGELOG_SECTION" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Download Electron artifacts
-        uses: actions/download-artifact@v8
-        with:
-          path: electron-builds
-        continue-on-error: true
-
-      - name: List downloaded artifacts
-        run: |
-          echo "Downloaded artifacts:"
-          find electron-builds -type f 2>/dev/null || echo "No artifacts found"
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
@@ -241,13 +90,6 @@ jobs:
           body: ${{ steps.release_notes.outputs.notes }}
           draft: false
           prerelease: false
-          files: |
-            electron-builds/**/*.dmg
-            electron-builds/**/*.zip
-            electron-builds/**/*.exe
-            electron-builds/**/*.msi
-            electron-builds/**/*.AppImage
-            electron-builds/**/*.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -268,3 +110,27 @@ jobs:
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # Hand desktop packaging to libre-webui-desktop. The dispatch needs a
+  # token that can reach that repository; without one the step reports and
+  # the desktop build is started by hand (gh workflow run in that repo).
+  dispatch-desktop-build:
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger the desktop installer build
+        env:
+          DISPATCH_TOKEN: ${{ secrets.DESKTOP_DISPATCH_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [ -z "$DISPATCH_TOKEN" ]; then
+            echo "::warning::DESKTOP_DISPATCH_TOKEN is not set; start the desktop build manually for $TAG."
+            exit 0
+          fi
+          curl -sS --fail-with-body -X POST \
+            -H "Authorization: Bearer $DISPATCH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/libre-webui/libre-webui-desktop/dispatches \
+            -d "{\"event_type\":\"release\",\"client_payload\":{\"tag\":\"$TAG\"}}"
+          echo "Dispatched desktop build for $TAG."

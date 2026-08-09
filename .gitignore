@@ -16,7 +16,6 @@ dist/
 build/
 */dist/
 */build/
-dist-electron/
 *.tgz
 homebrew/generated/
 
@@ -61,16 +60,6 @@ backend/backend/data/data.sqlite-wal
 backend/data/data.sqlite-shm
 backend/data/data.sqlite-wal
 
-# Electron-generated assets
-electron/assets/icon.iconset/
-electron/assets/icons/
-electron/assets/*.icns
-electron/assets/*.ico
-electron/assets/*.png
-electron/assets/*.tiff
-!electron/assets/icon.svg
-!electron/assets/dmg-art.png
-
 # Python environments and bytecode
 venv/
 examples/qwen-tts-server/venv/
@@ -107,3 +96,7 @@ plugins/openclaw-agent.json
 
 # Built artifact runtime bundles (vendored libraries for the artifact sandbox)
 frontend/public/artifact-runtime/
+
+# The iOS and desktop apps live in their own repositories; nothing app-shell
+# related belongs here.
+/ios/

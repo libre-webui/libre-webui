@@ -49,15 +49,21 @@ test('Homebrew templates match current release packaging', () => {
   );
 });
 
-test('release packaging and Homebrew metadata stay aligned', () => {
+test('the release pipeline hands desktop packaging to the desktop repo', () => {
   const releaseWorkflow = readRepoFile('.github/workflows/release.yml');
-  const electronBuilder = readRepoFile('electron-builder.yml');
 
+  // The desktop repository builds the installers and uploads them onto this
+  // repository's release, so the cask keeps resolving the same asset name.
   assert.match(
-    electronBuilder,
-    /artifactName: 'Libre-WebUI-Frontend-\$\{version\}-mac-arm64\.\$\{ext\}'/
+    releaseWorkflow,
+    /repos\/libre-webui\/libre-webui-desktop\/dispatches/,
+    'the release workflow must dispatch the desktop installer build'
   );
-  assert.match(releaseWorkflow, /electron-builds\/\*\*\/\*\.dmg/);
+  assert.doesNotMatch(
+    releaseWorkflow,
+    /electron/i,
+    'desktop packaging must not run from this repository'
+  );
   assert.match(
     readRepoFile('homebrew/libre-webui-cask.template'),
     /Libre-WebUI-Frontend-#\{version\}-mac-arm64\.dmg/
