@@ -9,19 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.21.2] - 2026-08-09
+
+The important fix: Work tasks on Ollama models broke with a 400 on every message after the first one that used tools; 0.21.2 repairs that, so upgrade if you use Work with local models. Alongside it, the Git tab in Work grew into a real diff manager, and this is the first Libre WebUI release carrying code from outside contributors.
+
+### ✨ New Features
+
 - **An IDE-grade diff manager in Work's Git tab.** Opening the tab now shows every changed file as a rendered diff: line numbers, per-file and total +/− counts, colored status letters, a filename filter, and dividers for skipped unchanged regions. Folded context in the turn diff expands in place, and untracked files display as fully added instead of hiding until staged.
 
 ### 🔧 Improvements
 
-- **The desktop app moved to its own repository.** This repo no longer carries the Electron shell, its build tooling, or 149 packages of its dependency tree. Releases here dispatch the desktop repository, which builds the installers and uploads them onto the same GitHub release, so download links and the Homebrew cask are unchanged.
+- **The desktop app moved to its own repository.** This repo no longer carries the Electron shell, its build tooling, or 149 packages of its dependency tree. Releases here dispatch the [desktop repository](https://github.com/libre-webui/libre-webui-desktop), which builds the installers and uploads them onto the same GitHub release, so download links and the Homebrew cask are unchanged.
+- **End-to-end tests for pinned folders and chat drag-and-drop.** Sidebar foldering now has real browser coverage, including drag-and-drop moves. (#194, Rohit Babu)
 
 ### 🐛 Bug Fixes
 
 - **Work with Ollama failed with a 400 on the second message.** Replaying the first turn's tool calls sent their arguments as JSON strings, the shape every OpenAI-compatible provider expects, but Ollama's native API requires objects and rejected the request. The Ollama transport now converts arguments at the protocol boundary. Streamed error responses are also read and parsed now, so an Ollama failure surfaces its real reason instead of "Request failed with status code 400".
+- **Chat toasts now speak your language.** A batch of hardcoded English toast messages went through translations instead. (#192, Rohit Babu)
+- **The app shell's social metadata caught up with the product.** Stale page description replaced and Open Graph tags added, so links to a deployed instance preview correctly.
 
 ### 📚 Documentation
 
+- **Reverse-proxy WebSocket guidance.** Why chat streams fail behind nginx or Caddy and the exact upgrade, origin, and timeout settings that fix it, verified against the source. (#195, ColumbusLabs)
 - **The desktop app guide is now user-facing.** Install per platform, approve the ad-hoc-signed macOS build, and connect to a local or remote server; build-from-source instructions left with the code.
+
+### 🙏 Acknowledgements
+
+First release with outside contributions. Thank you [Rohit Babu](https://github.com/BabuBahir) for the toast i18n fix and the Playwright e2e suite, and [ColumbusLabs](https://github.com/ColumbusLabs) for the reverse-proxy WebSocket documentation. Both are in [CONTRIBUTORS.md](CONTRIBUTORS.md) now.
 
 ## [0.21.1] - 2026-08-08
 
