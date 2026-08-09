@@ -1058,3 +1058,69 @@ test('provider identity keeps colliding local and plugin model routes separate',
       /different-plugin/.test(error.message)
   );
 });
+
+// Replayed Work history stores tool-call arguments as JSON strings (the
+// OpenAI-compatible shape). Ollama's native /api/chat rejects that with a
+// 400, so the ollama transport must convert them to objects on the way out.
+const { normalizeChatMessagesForOllama } = await import(
+  pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'services', 'ollamaService.js')
+  ).href
+);
+
+test('replayed tool calls reach native Ollama with object arguments', () => {
+  const messages = [
+    { role: 'user', content: 'create a duck with a tiny hat' },
+    {
+      role: 'assistant',
+      content: '',
+      providerMetadata: { internal: true },
+      tool_calls: [
+        {
+          id: 'call_oia64moe',
+          type: 'function',
+          function: { name: 'list_files', arguments: '{"path":""}' },
+        },
+      ],
+    },
+    {
+      role: 'tool',
+      content: '[]',
+      tool_name: 'list_files',
+      tool_call_id: 'call_oia64moe',
+    },
+    { role: 'user', content: 'add a gun to it' },
+  ];
+
+  const wire = normalizeChatMessagesForOllama(messages);
+
+  assert.deepEqual(wire[1].tool_calls[0].function.arguments, { path: '' });
+  assert.equal(wire[1].tool_calls[0].id, 'call_oia64moe');
+  assert.equal('providerMetadata' in wire[1], false);
+  // Untouched messages come through structurally identical.
+  assert.deepEqual(wire[0], messages[0]);
+  assert.deepEqual(wire[2], messages[2]);
+  // The input is not mutated.
+  assert.equal(typeof messages[1].tool_calls[0].function.arguments, 'string');
+});
+
+test('unparseable or non-object tool arguments degrade to an empty object', () => {
+  const wire = normalizeChatMessagesForOllama([
+    {
+      role: 'assistant',
+      content: '',
+      tool_calls: [
+        { function: { name: 'a', arguments: '{"broken":' } },
+        { function: { name: 'b', arguments: '"just a string"' } },
+        { function: { name: 'c', arguments: '' } },
+        { function: { name: 'd', arguments: { already: 'object' } } },
+      ],
+    },
+  ]);
+
+  const calls = wire[0].tool_calls;
+  assert.deepEqual(calls[0].function.arguments, {});
+  assert.deepEqual(calls[1].function.arguments, {});
+  assert.deepEqual(calls[2].function.arguments, {});
+  assert.deepEqual(calls[3].function.arguments, { already: 'object' });
+});

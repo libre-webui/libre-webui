@@ -23,6 +23,7 @@ import {
   OllamaCreateRequest,
   OllamaEmbeddingsRequest,
   OllamaEmbeddingsResponse,
+  OllamaChatMessage,
   OllamaChatRequest,
   OllamaChatResponse,
   getErrorMessage,
@@ -70,6 +71,68 @@ export function sanitizeOptionsForModel(
   if (dropNumCtx) delete sanitized.num_ctx;
   if (dropNumPredict) delete sanitized.num_predict;
   return sanitized;
+}
+
+/**
+ * Ollama's native /api/chat requires tool_call function arguments to be an
+ * object; a JSON string there fails its request parser with a 400 ("Value
+ * looks like object, but can't find closing '}' symbol"). Replayed Work
+ * history stores arguments as JSON strings because every OpenAI-compatible
+ * provider wants them that way, so the conversion to the native shape
+ * happens here, at the protocol boundary. providerMetadata is internal
+ * bookkeeping and never belongs on the wire.
+ */
+export function normalizeChatMessagesForOllama(
+  messages: OllamaChatMessage[]
+): OllamaChatMessage[] {
+  return messages.map(message => {
+    const { providerMetadata: _providerMetadata, ...wireMessage } = message;
+    if (!wireMessage.tool_calls?.length) return wireMessage;
+    return {
+      ...wireMessage,
+      tool_calls: wireMessage.tool_calls.map(call => {
+        const fn =
+          call.function && typeof call.function === 'object'
+            ? { ...(call.function as Record<string, unknown>) }
+            : undefined;
+        if (!fn || typeof fn.arguments !== 'string') return call;
+        let parsed: unknown = {};
+        try {
+          parsed = fn.arguments.trim() ? JSON.parse(fn.arguments) : {};
+        } catch {
+          parsed = {};
+        }
+        fn.arguments =
+          parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+            ? parsed
+            : {};
+        return { ...call, function: fn };
+      }),
+    };
+  });
+}
+
+// With responseType 'stream', an HTTP error resolves with the body still a
+// stream, so getErrorMessage cannot see Ollama's {"error": ...} text and the
+// surfaced message degrades to axios' generic status line. Reading a bounded
+// slice of the body restores the real reason.
+const STREAMED_ERROR_BODY_MAX_BYTES = 8_192;
+async function parseStreamedErrorBody(error: unknown): Promise<void> {
+  const response = (error as { response?: { data?: unknown } })?.response;
+  const body = response?.data as AsyncIterable<Buffer> & { on?: unknown };
+  if (!response || !body || typeof body.on !== 'function') return;
+  try {
+    const chunks: Buffer[] = [];
+    let total = 0;
+    for await (const chunk of body) {
+      chunks.push(chunk);
+      total += chunk.length;
+      if (total > STREAMED_ERROR_BODY_MAX_BYTES) break;
+    }
+    response.data = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    // Keep the original error when the body is unreadable or not JSON.
+  }
 }
 
 const MODEL_DEFAULTS_TTL_MS = 10 * 60 * 1000;
@@ -529,6 +592,7 @@ class OllamaService {
         '/api/chat',
         {
           ...request,
+          messages: normalizeChatMessagesForOllama(request.messages),
           options: sanitizeOptionsForModel(request.model, request.options),
           stream: false,
         },
@@ -586,6 +650,7 @@ class OllamaService {
         '/api/chat',
         {
           ...request,
+          messages: normalizeChatMessagesForOllama(request.messages),
           options: sanitizeOptionsForModel(request.model, request.options),
           stream: true,
         },
@@ -631,6 +696,7 @@ class OllamaService {
       });
     } catch (error: unknown) {
       recordOnce(signal?.aborted ? 'cancelled' : 'error');
+      await parseStreamedErrorBody(error);
       logger.error('Failed to generate chat stream response:', error);
       onError(
         new Error(

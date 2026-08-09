@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **Work with Ollama failed with a 400 on the second message.** Replaying the first turn's tool calls sent their arguments as JSON strings, the shape every OpenAI-compatible provider expects, but Ollama's native API requires objects and rejected the request. The Ollama transport now converts arguments at the protocol boundary. Streamed error responses are also read and parsed now, so an Ollama failure surfaces its real reason instead of "Request failed with status code 400".
+
 ### 📚 Documentation
 
 - **The desktop app guide is now user-facing.** Install per platform, approve the ad-hoc-signed macOS build, and connect to a local or remote server; build-from-source instructions left with the code.
