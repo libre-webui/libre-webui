@@ -134,3 +134,27 @@ jobs:
             https://api.github.com/repos/libre-webui/libre-webui-desktop/dispatches \
             -d "{\"event_type\":\"release\",\"client_payload\":{\"tag\":\"$TAG\"}}"
           echo "Dispatched desktop build for $TAG."
+
+  # The iOS client is native and does not bundle the frontend, so this
+  # dispatch is informational: it lets libre-webui-ios validate against the
+  # new release. App Store submissions happen on that repository's own tags.
+  dispatch-ios-build:
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify the iOS repository
+        env:
+          DISPATCH_TOKEN: ${{ secrets.IOS_DISPATCH_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [ -z "$DISPATCH_TOKEN" ]; then
+            echo "::notice::IOS_DISPATCH_TOKEN is not set; skipping the iOS dispatch."
+            exit 0
+          fi
+          curl -sS --fail-with-body -X POST \
+            -H "Authorization: Bearer $DISPATCH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/libre-webui/libre-webui-ios/dispatches \
+            -d "{\"event_type\":\"release\",\"client_payload\":{\"tag\":\"$TAG\"}}"
+          echo "Dispatched iOS validation for $TAG."
