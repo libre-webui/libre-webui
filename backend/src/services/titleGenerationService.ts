@@ -109,7 +109,7 @@ export interface TitleGenerationServiceDependencies {
 }
 
 export function buildTitlePrompt(message: string): string {
-  return `Generate a very short, concise title (3-6 words max) for a chat that starts with this message. Only respond with the title, nothing else. No quotes, no punctuation at the end. Do not use any markdown formatting.
+  return `Generate a very short, concise title (3-6 words max) for a chat that starts with this message. Only respond with the title, nothing else. No quotes, no punctuation at the end. Do not use any markdown formatting. Do not think out loud, do not explain your reasoning, and do not describe what the user wants; output only the title text.
 
 Message: "${message.substring(0, 500)}"
 
@@ -136,11 +136,25 @@ function truncateGeneratedTitle(title: string, maxLength = 50): string {
   return `${wordBoundary.replace(/[,:;.!?]+$/, '').trimEnd()}...`;
 }
 
+// Reasoning models sometimes leak their thinking into the title response:
+// as <think>/<thinking> blocks (often truncated before the closing tag by the
+// token budget), or as untagged deliberation ("The user wants a very short,
+// concise title…"). Either way it is not a title.
+const REASONING_PREAMBLE =
+  /^(the user (wants|is asking|asked|needs|says)|i (need|should|will) |let me |okay, |we need to |hmm\b)/i;
+
+function stripThinking(rawTitle: string): string {
+  return rawTitle
+    .replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, ' ')
+    .replace(/^[\s\S]*?<\/think(?:ing)?>/i, ' ')
+    .replace(/<think(?:ing)?>[\s\S]*$/i, ' ');
+}
+
 export function sanitizeGeneratedTitleResult(
   rawTitle: string,
   sourceMessage: string
 ): SanitizedGeneratedTitle {
-  const title = rawTitle
+  const title = stripThinking(rawTitle)
     .trim()
     .replace(/^```(?:\w+)?\s*|\s*```$/g, '')
     .replace(/^["'`]+|["'`]+$/g, '')
@@ -149,7 +163,7 @@ export function sanitizeGeneratedTitleResult(
     .replace(/[.!?]+$/, '')
     .trim();
 
-  if (!title) {
+  if (!title || REASONING_PREAMBLE.test(title)) {
     return {
       title: buildFallbackTitle(sourceMessage),
       usedFallback: true,

@@ -1840,3 +1840,57 @@ test('sanitizeGeneratedTitle strips wrappers and preserves verbose generated tit
     }
   );
 });
+
+test('generated titles never leak model thinking', () => {
+  const { sanitizeGeneratedTitleResult, buildTitlePrompt } = titleGeneration;
+  const source = 'help me plan a garden for my balcony this spring';
+
+  // Tagged thinking blocks disappear; the real title survives.
+  assert.deepEqual(
+    sanitizeGeneratedTitleResult(
+      '<think>The user wants a short title. Something about gardens.</think>Balcony Garden Planning',
+      source
+    ),
+    { title: 'Balcony Garden Planning', usedFallback: false }
+  );
+
+  // A think block truncated by the token budget leaves no usable title.
+  const unclosed = sanitizeGeneratedTitleResult(
+    '<think>The user wants a very short, concise title for',
+    source
+  );
+  assert.equal(unclosed.usedFallback, true);
+  assert.equal(unclosed.title, 'help me plan a garden for my b...');
+
+  // An orphaned closing tag keeps only what follows it.
+  assert.deepEqual(
+    sanitizeGeneratedTitleResult(
+      'planning something green</think>Spring Balcony Garden',
+      source
+    ),
+    { title: 'Spring Balcony Garden', usedFallback: false }
+  );
+
+  // Untagged deliberation reads as reasoning, not a title.
+  for (const leak of [
+    'The user wants a very short, concise title',
+    'Okay, the message is about gardening',
+    'Let me think about this garden request',
+    'I need to generate a title',
+  ]) {
+    assert.equal(
+      sanitizeGeneratedTitleResult(leak, source).usedFallback,
+      true,
+      `should reject: ${leak}`
+    );
+  }
+
+  // Ordinary titles pass through untouched.
+  assert.deepEqual(sanitizeGeneratedTitleResult('Garden Planning Help', source), {
+    title: 'Garden Planning Help',
+    usedFallback: false,
+  });
+
+  // The prompt itself tells reasoning models to keep their thinking out.
+  assert.match(buildTitlePrompt(source), /do not think out loud/i);
+});

@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- **Chat titles no longer leak model thinking.** Reasoning models could turn every session title into "The user wants a very short, ..." — their deliberation instead of a title. The title prompt now forbids thinking out loud, and the sanitizer strips tagged think blocks and rejects reasoning-shaped output, falling back to the message preview.
+
 ### 📚 Documentation
 
 ## [0.21.2] - 2026-08-09
