@@ -311,8 +311,12 @@ class OllamaService {
   async pullModel(modelName: string): Promise<void> {
     try {
       logger.debug(`Pulling model: ${modelName}`);
+      // Without stream:false Ollama streams NDJSON and reports failures as
+      // {"error": ...} lines inside a 200 response, which axios cannot see
+      // as an error. Non-streaming pulls fail with a real HTTP status.
       await this.longOperationClient.post('/api/pull', {
         name: modelName,
+        stream: false,
       });
       logger.debug(`Successfully pulled model: ${modelName}`);
     } catch (error: unknown) {
@@ -351,8 +355,24 @@ class OllamaService {
       );
 
       let buffer = '';
+      // A pull that fails mid-stream still ends with HTTP 200: Ollama
+      // reports the failure as an {"error": ...} NDJSON line and closes the
+      // stream. Settle exactly once so an in-stream error (or the final
+      // success line) is never followed by a second completion signal.
+      let settled = false;
+      const settleError = (error: Error) => {
+        if (settled) return;
+        settled = true;
+        onError(error);
+      };
+      const settleComplete = () => {
+        if (settled) return;
+        settled = true;
+        onComplete();
+      };
 
       response.data.on('data', (chunk: Buffer) => {
+        if (settled) return;
         buffer += chunk.toString();
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
@@ -361,6 +381,12 @@ class OllamaService {
           if (line.trim()) {
             try {
               const data = JSON.parse(line);
+
+              if (data.error) {
+                settleError(new Error(String(data.error)));
+                response.data.destroy();
+                return;
+              }
 
               // Calculate percentage if total and completed are available
               let percent: number | undefined;
@@ -381,7 +407,7 @@ class OllamaService {
                 data.status === 'success' ||
                 (!data.status && data.completed === data.total)
               ) {
-                onComplete();
+                settleComplete();
                 return;
               }
             } catch (parseError) {
@@ -392,14 +418,20 @@ class OllamaService {
       });
 
       response.data.on('error', (error: Error) => {
-        onError(error);
+        settleError(error);
       });
 
       response.data.on('end', () => {
-        onComplete();
+        // Ollama closes a successful pull with a {"status":"success"} line,
+        // which settles above. Reaching end without it means the pull was
+        // interrupted and the model is not installed.
+        settleError(
+          new Error('Model pull ended before Ollama reported success')
+        );
       });
     } catch (error: unknown) {
       logger.error('Failed to pull model with streaming:', error);
+      await parseStreamedErrorBody(error);
       onError(
         new Error(getErrorMessage(error, 'Failed to pull model with streaming'))
       );
