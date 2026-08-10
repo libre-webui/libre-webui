@@ -13,9 +13,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
-- **Chat titles no longer leak model thinking.** Reasoning models could turn every session title into "The user wants a very short, ..." — their deliberation instead of a title. The title prompt now forbids thinking out loud, and the sanitizer strips tagged think blocks and rejects reasoning-shaped output, falling back to the message preview.
-
 ### 📚 Documentation
+
+## [0.21.3] - 2026-08-10
+
+Documents attached to chats are finally manageable: see what is in a conversation's context, remove what should not be there, and delete collections with real feedback. Model pulls also stop pretending to succeed when they failed, and reasoning models no longer leak their deliberation into chat titles.
+
+### ✨ New Features
+
+- **Chat context documents are now visible and removable.** The docs chip above the message box opens a panel listing every document in the conversation's context — the chat's own uploads plus standing documents that join every chat — each with its size, scope, and a remove control. Settings → Documents gained the same power: an always-visible document library with per-document delete and collection assignment. All new interface strings ship in all 25 languages.
+
+### 🔧 Improvements
+
+- **Collection management got honest feedback.** Deleting a collection now uses an in-app confirmation instead of the browser dialog, which some environments silently suppress, and create, delete, and assignment failures surface as toasts instead of doing nothing. The assignment dropdown also reflects a document's saved collection now — the list API previously omitted it.
+- **Complete social preview metadata.** The app shell now ships full Open Graph and social card tags, so shared links to a deployed instance preview richly everywhere.
+
+### 🐛 Bug Fixes
+
+- **Failed model pulls no longer report success.** Ollama reports pull failures as an error line inside a successful-looking stream, and the backend treated any stream end as completion — so a typo'd model name showed "pulled successfully" while installing nothing. Pull errors now surface with Ollama's real reason, and an interrupted download is reported as interrupted instead of complete.
+- **Chat titles no longer leak model thinking.** Reasoning models could turn every session title into "The user wants a very short, ..." — their deliberation instead of a title. The title prompt now forbids thinking out loud, and the sanitizer strips tagged think blocks and rejects reasoning-shaped output, falling back to the message preview.
 
 ## [0.21.2] - 2026-08-09
 
