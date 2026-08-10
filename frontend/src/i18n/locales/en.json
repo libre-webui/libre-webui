@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Failed to load models",
       "modelUpdated": "Model updated for current chat",
       "modelUpdateFailed": "Failed to update session model"
+    },
+    "documents": {
+      "title": "Documents in context"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Collection name",
         "create": "Create",
         "none": "No collection",
-        "deleteConfirm": "Delete this collection? Documents inside are kept."
+        "deleteConfirm": "Delete this collection? Documents inside are kept.",
+        "createFailed": "Failed to create the collection",
+        "deleteFailed": "Failed to delete the collection",
+        "assignFailed": "Failed to move the document"
+      },
+      "library": {
+        "title": "Uploaded documents",
+        "description": "Documents available as chat context. A document uploaded in a chat stays in its own conversation; a document with no chat and no collection joins every conversation.",
+        "empty": "No documents uploaded yet.",
+        "chatScope": "One chat",
+        "everyChatScope": "Every chat",
+        "deleteConfirm": "Delete \"{{name}}\"? It disappears from every chat.",
+        "deleteFailed": "Failed to delete the document"
       }
     },
     "tts": {

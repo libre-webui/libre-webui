@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Načtení modelů se nezdařilo",
       "modelUpdated": "Model pro aktuální chat aktualizován",
       "modelUpdateFailed": "Aktualizace modelu relace se nezdařila"
+    },
+    "documents": {
+      "title": "Dokumenty v kontextu"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Název kolekce",
         "create": "Vytvořit",
         "none": "Bez kolekce",
-        "deleteConfirm": "Smazat tuto kolekci? Dokumenty uvnitř zůstanou."
+        "deleteConfirm": "Smazat tuto kolekci? Dokumenty uvnitř zůstanou.",
+        "createFailed": "Kolekci se nepodařilo vytvořit",
+        "deleteFailed": "Kolekci se nepodařilo smazat",
+        "assignFailed": "Dokument se nepodařilo přesunout"
+      },
+      "library": {
+        "title": "Nahrané dokumenty",
+        "description": "Dokumenty dostupné jako kontext chatu. Dokument nahraný v chatu zůstává jen ve své konverzaci; dokument bez chatu a kolekce se připojí ke každé konverzaci.",
+        "empty": "Zatím nejsou nahrány žádné dokumenty.",
+        "chatScope": "Jeden chat",
+        "everyChatScope": "Všechny chaty",
+        "deleteConfirm": "Smazat „{{name}}“? Zmizí ze všech chatů.",
+        "deleteFailed": "Dokument se nepodařilo smazat"
       }
     },
     "tts": {

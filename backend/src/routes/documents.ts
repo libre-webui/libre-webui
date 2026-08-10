@@ -263,6 +263,7 @@ router.get('/session/:sessionId', (req, res) => {
       fileType: doc.fileType,
       size: doc.size,
       sessionId: doc.sessionId,
+      collectionId: doc.collectionId,
       uploadedAt: doc.uploadedAt,
     }));
 
@@ -291,6 +292,7 @@ router.get('/', (req, res) => {
       fileType: doc.fileType,
       size: doc.size,
       sessionId: doc.sessionId,
+      collectionId: doc.collectionId,
       uploadedAt: doc.uploadedAt,
     }));
 

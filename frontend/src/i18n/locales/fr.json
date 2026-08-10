@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Échec du chargement des modèles",
       "modelUpdated": "Modèle mis à jour pour le chat actuel",
       "modelUpdateFailed": "Échec de la mise à jour du modèle de session"
+    },
+    "documents": {
+      "title": "Documents dans le contexte"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Nom de la collection",
         "create": "Créer",
         "none": "Aucune collection",
-        "deleteConfirm": "Supprimer cette collection ? Les documents sont conservés."
+        "deleteConfirm": "Supprimer cette collection ? Les documents sont conservés.",
+        "createFailed": "Impossible de créer la collection",
+        "deleteFailed": "Impossible de supprimer la collection",
+        "assignFailed": "Impossible de déplacer le document"
+      },
+      "library": {
+        "title": "Documents importés",
+        "description": "Documents disponibles comme contexte de chat. Un document importé dans un chat reste dans sa conversation ; un document sans chat ni collection rejoint toutes les conversations.",
+        "empty": "Aucun document importé pour le moment.",
+        "chatScope": "Un seul chat",
+        "everyChatScope": "Tous les chats",
+        "deleteConfirm": "Supprimer « {{name}} » ? Il disparaîtra de tous les chats.",
+        "deleteFailed": "Impossible de supprimer le document"
       }
     },
     "tts": {

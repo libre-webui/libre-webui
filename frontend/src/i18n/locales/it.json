@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Impossibile caricare i modelli",
       "modelUpdated": "Modello aggiornato per la chat corrente",
       "modelUpdateFailed": "Impossibile aggiornare il modello della sessione"
+    },
+    "documents": {
+      "title": "Documenti nel contesto"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Nome della raccolta",
         "create": "Crea",
         "none": "Nessuna raccolta",
-        "deleteConfirm": "Eliminare questa raccolta? I documenti al suo interno restano."
+        "deleteConfirm": "Eliminare questa raccolta? I documenti al suo interno restano.",
+        "createFailed": "Impossibile creare la raccolta",
+        "deleteFailed": "Impossibile eliminare la raccolta",
+        "assignFailed": "Impossibile spostare il documento"
+      },
+      "library": {
+        "title": "Documenti caricati",
+        "description": "Documenti disponibili come contesto della chat. Un documento caricato in una chat resta nella sua conversazione; un documento senza chat né raccolta entra in ogni conversazione.",
+        "empty": "Nessun documento caricato finora.",
+        "chatScope": "Una chat",
+        "everyChatScope": "Tutte le chat",
+        "deleteConfirm": "Eliminare \"{{name}}\"? Scomparirà da tutte le chat.",
+        "deleteFailed": "Impossibile eliminare il documento"
       }
     },
     "tts": {

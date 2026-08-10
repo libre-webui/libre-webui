@@ -393,6 +393,9 @@
       "modelsLoadFailed": "No se pudieron cargar los modelos",
       "modelUpdated": "Modelo actualizado para el chat actual",
       "modelUpdateFailed": "No se pudo actualizar el modelo de la sesión"
+    },
+    "documents": {
+      "title": "Documentos en contexto"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Nombre de la colección",
         "create": "Crear",
         "none": "Sin colección",
-        "deleteConfirm": "¿Eliminar esta colección? Los documentos se conservan."
+        "deleteConfirm": "¿Eliminar esta colección? Los documentos se conservan.",
+        "createFailed": "No se pudo crear la colección",
+        "deleteFailed": "No se pudo eliminar la colección",
+        "assignFailed": "No se pudo mover el documento"
+      },
+      "library": {
+        "title": "Documentos subidos",
+        "description": "Documentos disponibles como contexto del chat. Un documento subido en un chat permanece en su conversación; un documento sin chat ni colección se suma a todas las conversaciones.",
+        "empty": "Aún no hay documentos subidos.",
+        "chatScope": "Un chat",
+        "everyChatScope": "Todos los chats",
+        "deleteConfirm": "¿Eliminar \"{{name}}\"? Desaparecerá de todos los chats.",
+        "deleteFailed": "No se pudo eliminar el documento"
       }
     },
     "tts": {

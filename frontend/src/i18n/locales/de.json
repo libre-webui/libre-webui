@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Modelle konnten nicht geladen werden",
       "modelUpdated": "Modell für den aktuellen Chat aktualisiert",
       "modelUpdateFailed": "Sitzungsmodell konnte nicht aktualisiert werden"
+    },
+    "documents": {
+      "title": "Dokumente im Kontext"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Name der Sammlung",
         "create": "Erstellen",
         "none": "Keine Sammlung",
-        "deleteConfirm": "Diese Sammlung löschen? Die Dokumente darin bleiben erhalten."
+        "deleteConfirm": "Diese Sammlung löschen? Die Dokumente darin bleiben erhalten.",
+        "createFailed": "Sammlung konnte nicht erstellt werden",
+        "deleteFailed": "Sammlung konnte nicht gelöscht werden",
+        "assignFailed": "Dokument konnte nicht verschoben werden"
+      },
+      "library": {
+        "title": "Hochgeladene Dokumente",
+        "description": "Dokumente, die als Chat-Kontext verfügbar sind. Ein im Chat hochgeladenes Dokument bleibt in seiner Unterhaltung; ein Dokument ohne Chat und Sammlung fließt in jede Unterhaltung ein.",
+        "empty": "Noch keine Dokumente hochgeladen.",
+        "chatScope": "Ein Chat",
+        "everyChatScope": "Alle Chats",
+        "deleteConfirm": "„{{name}}“ löschen? Es verschwindet aus allen Chats.",
+        "deleteFailed": "Dokument konnte nicht gelöscht werden"
       }
     },
     "tts": {

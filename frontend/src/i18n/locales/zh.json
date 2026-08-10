@@ -393,6 +393,9 @@
       "modelsLoadFailed": "加载模型失败",
       "modelUpdated": "当前聊天的模型已更新",
       "modelUpdateFailed": "更新会话模型失败"
+    },
+    "documents": {
+      "title": "上下文中的文档"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "集合名称",
         "create": "创建",
         "none": "无集合",
-        "deleteConfirm": "删除此集合？其中的文档会保留。"
+        "deleteConfirm": "删除此集合？其中的文档会保留。",
+        "createFailed": "无法创建集合",
+        "deleteFailed": "无法删除集合",
+        "assignFailed": "无法移动文档"
+      },
+      "library": {
+        "title": "已上传的文档",
+        "description": "可用作聊天上下文的文档。在聊天中上传的文档只属于该对话；不属于任何聊天和集合的文档会加入每个对话。",
+        "empty": "尚未上传任何文档。",
+        "chatScope": "单个聊天",
+        "everyChatScope": "所有聊天",
+        "deleteConfirm": "删除“{{name}}”？它将从所有聊天中消失。",
+        "deleteFailed": "无法删除文档"
       }
     },
     "tts": {

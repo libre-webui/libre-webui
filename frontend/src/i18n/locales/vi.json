@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Không tải được mô hình",
       "modelUpdated": "Đã cập nhật mô hình cho cuộc trò chuyện hiện tại",
       "modelUpdateFailed": "Không cập nhật được mô hình của phiên"
+    },
+    "documents": {
+      "title": "Tài liệu trong ngữ cảnh"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Tên bộ sưu tập",
         "create": "Tạo",
         "none": "Không có bộ sưu tập",
-        "deleteConfirm": "Xóa bộ sưu tập này? Tài liệu bên trong vẫn giữ nguyên."
+        "deleteConfirm": "Xóa bộ sưu tập này? Tài liệu bên trong vẫn giữ nguyên.",
+        "createFailed": "Không thể tạo bộ sưu tập",
+        "deleteFailed": "Không thể xóa bộ sưu tập",
+        "assignFailed": "Không thể di chuyển tài liệu"
+      },
+      "library": {
+        "title": "Tài liệu đã tải lên",
+        "description": "Tài liệu có thể dùng làm ngữ cảnh trò chuyện. Tài liệu tải lên trong một cuộc trò chuyện chỉ ở lại cuộc đó; tài liệu không thuộc cuộc trò chuyện hay bộ sưu tập nào sẽ tham gia mọi cuộc trò chuyện.",
+        "empty": "Chưa có tài liệu nào được tải lên.",
+        "chatScope": "Một cuộc trò chuyện",
+        "everyChatScope": "Mọi cuộc trò chuyện",
+        "deleteConfirm": "Xóa \"{{name}}\"? Tài liệu sẽ biến mất khỏi mọi cuộc trò chuyện.",
+        "deleteFailed": "Không thể xóa tài liệu"
       }
     },
     "tts": {

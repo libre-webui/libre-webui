@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Kunne ikke indlæse modeller",
       "modelUpdated": "Model opdateret for den aktuelle chat",
       "modelUpdateFailed": "Kunne ikke opdatere sessionens model"
+    },
+    "documents": {
+      "title": "Dokumenter i kontekst"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Samlingens navn",
         "create": "Opret",
         "none": "Ingen samling",
-        "deleteConfirm": "Slet denne samling? Dokumenterne bevares."
+        "deleteConfirm": "Slet denne samling? Dokumenterne bevares.",
+        "createFailed": "Samlingen kunne ikke oprettes",
+        "deleteFailed": "Samlingen kunne ikke slettes",
+        "assignFailed": "Dokumentet kunne ikke flyttes"
+      },
+      "library": {
+        "title": "Uploadede dokumenter",
+        "description": "Dokumenter tilgængelige som chatkontekst. Et dokument uploadet i en chat bliver i sin egen samtale; et dokument uden chat og samling indgår i alle samtaler.",
+        "empty": "Der er ikke uploadet dokumenter endnu.",
+        "chatScope": "Én chat",
+        "everyChatScope": "Alle chats",
+        "deleteConfirm": "Slet \"{{name}}\"? Det forsvinder fra alle chats.",
+        "deleteFailed": "Dokumentet kunne ikke slettes"
       }
     },
     "tts": {

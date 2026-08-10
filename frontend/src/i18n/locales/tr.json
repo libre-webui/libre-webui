@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Modeller yüklenemedi",
       "modelUpdated": "Geçerli sohbet için model güncellendi",
       "modelUpdateFailed": "Oturum modeli güncellenemedi"
+    },
+    "documents": {
+      "title": "Bağlamdaki belgeler"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Koleksiyon adı",
         "create": "Oluştur",
         "none": "Koleksiyon yok",
-        "deleteConfirm": "Bu koleksiyon silinsin mi? İçindeki belgeler korunur."
+        "deleteConfirm": "Bu koleksiyon silinsin mi? İçindeki belgeler korunur.",
+        "createFailed": "Koleksiyon oluşturulamadı",
+        "deleteFailed": "Koleksiyon silinemedi",
+        "assignFailed": "Belge taşınamadı"
+      },
+      "library": {
+        "title": "Yüklenen belgeler",
+        "description": "Sohbet bağlamı olarak kullanılabilen belgeler. Sohbette yüklenen belge kendi konuşmasında kalır; sohbeti ve koleksiyonu olmayan belge her konuşmaya katılır.",
+        "empty": "Henüz belge yüklenmedi.",
+        "chatScope": "Tek sohbet",
+        "everyChatScope": "Tüm sohbetler",
+        "deleteConfirm": "\"{{name}}\" silinsin mi? Tüm sohbetlerden kaldırılır.",
+        "deleteFailed": "Belge silinemedi"
       }
     },
     "tts": {

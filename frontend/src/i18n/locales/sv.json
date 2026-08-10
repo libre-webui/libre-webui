@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Det gick inte att läsa in modeller",
       "modelUpdated": "Modell uppdaterad för den aktuella chatten",
       "modelUpdateFailed": "Det gick inte att uppdatera sessionens modell"
+    },
+    "documents": {
+      "title": "Dokument i kontexten"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Samlingens namn",
         "create": "Skapa",
         "none": "Ingen samling",
-        "deleteConfirm": "Ta bort den här samlingen? Dokumenten i den behålls."
+        "deleteConfirm": "Ta bort den här samlingen? Dokumenten i den behålls.",
+        "createFailed": "Samlingen kunde inte skapas",
+        "deleteFailed": "Samlingen kunde inte tas bort",
+        "assignFailed": "Dokumentet kunde inte flyttas"
+      },
+      "library": {
+        "title": "Uppladdade dokument",
+        "description": "Dokument som är tillgängliga som chattkontext. Ett dokument som laddats upp i en chatt stannar i sin konversation; ett dokument utan chatt och samling ingår i varje konversation.",
+        "empty": "Inga dokument har laddats upp ännu.",
+        "chatScope": "En chatt",
+        "everyChatScope": "Alla chattar",
+        "deleteConfirm": "Ta bort \"{{name}}\"? Det försvinner från alla chattar.",
+        "deleteFailed": "Dokumentet kunde inte tas bort"
       }
     },
     "tts": {

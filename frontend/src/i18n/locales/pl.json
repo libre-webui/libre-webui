@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Nie udało się załadować modeli",
       "modelUpdated": "Zaktualizowano model bieżącego czatu",
       "modelUpdateFailed": "Nie udało się zaktualizować modelu sesji"
+    },
+    "documents": {
+      "title": "Dokumenty w kontekście"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Nazwa kolekcji",
         "create": "Utwórz",
         "none": "Brak kolekcji",
-        "deleteConfirm": "Usunąć tę kolekcję? Dokumenty w niej pozostaną."
+        "deleteConfirm": "Usunąć tę kolekcję? Dokumenty w niej pozostaną.",
+        "createFailed": "Nie udało się utworzyć kolekcji",
+        "deleteFailed": "Nie udało się usunąć kolekcji",
+        "assignFailed": "Nie udało się przenieść dokumentu"
+      },
+      "library": {
+        "title": "Przesłane dokumenty",
+        "description": "Dokumenty dostępne jako kontekst czatu. Dokument przesłany w czacie pozostaje w swojej rozmowie; dokument bez czatu i kolekcji dołącza do każdej rozmowy.",
+        "empty": "Nie przesłano jeszcze żadnych dokumentów.",
+        "chatScope": "Jeden czat",
+        "everyChatScope": "Wszystkie czaty",
+        "deleteConfirm": "Usunąć „{{name}}”? Zniknie ze wszystkich czatów.",
+        "deleteFailed": "Nie udało się usunąć dokumentu"
       }
     },
     "tts": {

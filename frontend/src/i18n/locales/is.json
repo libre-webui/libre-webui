@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Mistókst að hlaða líkön",
       "modelUpdated": "Líkan uppfært fyrir núverandi spjall",
       "modelUpdateFailed": "Mistókst að uppfæra líkan lotunnar"
+    },
+    "documents": {
+      "title": "Skjöl í samhengi"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Heiti safns",
         "create": "Búa til",
         "none": "Ekkert safn",
-        "deleteConfirm": "Eyða þessu safni? Skjölin innan þess haldast."
+        "deleteConfirm": "Eyða þessu safni? Skjölin innan þess haldast.",
+        "createFailed": "Ekki tókst að búa til safnið",
+        "deleteFailed": "Ekki tókst að eyða safninu",
+        "assignFailed": "Ekki tókst að færa skjalið"
+      },
+      "library": {
+        "title": "Hlaðin skjöl",
+        "description": "Skjöl sem eru tiltæk sem samhengi í spjalli. Skjal sem er hlaðið upp í spjalli helst í sinni samræðu; skjal án spjalls og safns bætist við allar samræður.",
+        "empty": "Engum skjölum hefur verið hlaðið upp enn.",
+        "chatScope": "Eitt spjall",
+        "everyChatScope": "Öll spjöll",
+        "deleteConfirm": "Eyða „{{name}}“? Það hverfur úr öllum spjöllum.",
+        "deleteFailed": "Ekki tókst að eyða skjalinu"
       }
     },
     "tts": {

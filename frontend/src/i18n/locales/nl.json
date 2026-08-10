@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Modellen laden mislukt",
       "modelUpdated": "Model bijgewerkt voor de huidige chat",
       "modelUpdateFailed": "Sessiemodel bijwerken mislukt"
+    },
+    "documents": {
+      "title": "Documenten in context"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Naam van collectie",
         "create": "Aanmaken",
         "none": "Geen collectie",
-        "deleteConfirm": "Deze collectie verwijderen? De documenten erin blijven bewaard."
+        "deleteConfirm": "Deze collectie verwijderen? De documenten erin blijven bewaard.",
+        "createFailed": "Collectie kon niet worden aangemaakt",
+        "deleteFailed": "Collectie kon niet worden verwijderd",
+        "assignFailed": "Document kon niet worden verplaatst"
+      },
+      "library": {
+        "title": "Geüploade documenten",
+        "description": "Documenten die beschikbaar zijn als chatcontext. Een document dat in een chat is geüpload blijft in dat gesprek; een document zonder chat en collectie doet in elk gesprek mee.",
+        "empty": "Nog geen documenten geüpload.",
+        "chatScope": "Eén chat",
+        "everyChatScope": "Alle chats",
+        "deleteConfirm": "\"{{name}}\" verwijderen? Het verdwijnt uit alle chats.",
+        "deleteFailed": "Document kon niet worden verwijderd"
       }
     },
     "tts": {

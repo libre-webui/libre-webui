@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Gagal memuat model",
       "modelUpdated": "Model diperbarui untuk chat saat ini",
       "modelUpdateFailed": "Gagal memperbarui model sesi"
+    },
+    "documents": {
+      "title": "Dokumen dalam konteks"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Nama koleksi",
         "create": "Buat",
         "none": "Tanpa koleksi",
-        "deleteConfirm": "Hapus koleksi ini? Dokumen di dalamnya tetap ada."
+        "deleteConfirm": "Hapus koleksi ini? Dokumen di dalamnya tetap ada.",
+        "createFailed": "Gagal membuat koleksi",
+        "deleteFailed": "Gagal menghapus koleksi",
+        "assignFailed": "Gagal memindahkan dokumen"
+      },
+      "library": {
+        "title": "Dokumen terunggah",
+        "description": "Dokumen yang tersedia sebagai konteks obrolan. Dokumen yang diunggah di obrolan hanya berlaku di percakapan itu; dokumen tanpa obrolan dan koleksi ikut di setiap percakapan.",
+        "empty": "Belum ada dokumen yang diunggah.",
+        "chatScope": "Satu obrolan",
+        "everyChatScope": "Semua obrolan",
+        "deleteConfirm": "Hapus \"{{name}}\"? Dokumen ini akan hilang dari semua obrolan.",
+        "deleteFailed": "Gagal menghapus dokumen"
       }
     },
     "tts": {

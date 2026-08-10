@@ -393,6 +393,9 @@
       "modelsLoadFailed": "모델을 불러오지 못했습니다",
       "modelUpdated": "현재 채팅의 모델이 업데이트되었습니다",
       "modelUpdateFailed": "세션 모델을 업데이트하지 못했습니다"
+    },
+    "documents": {
+      "title": "컨텍스트의 문서"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "컬렉션 이름",
         "create": "만들기",
         "none": "컬렉션 없음",
-        "deleteConfirm": "이 컬렉션을 삭제할까요? 안의 문서는 유지됩니다."
+        "deleteConfirm": "이 컬렉션을 삭제할까요? 안의 문서는 유지됩니다.",
+        "createFailed": "컬렉션을 만들지 못했습니다",
+        "deleteFailed": "컬렉션을 삭제하지 못했습니다",
+        "assignFailed": "문서를 이동하지 못했습니다"
+      },
+      "library": {
+        "title": "업로드된 문서",
+        "description": "채팅 컨텍스트로 사용할 수 있는 문서입니다. 채팅에서 업로드한 문서는 해당 대화에만 남고, 채팅과 컬렉션이 없는 문서는 모든 대화에 포함됩니다.",
+        "empty": "아직 업로드된 문서가 없습니다.",
+        "chatScope": "단일 채팅",
+        "everyChatScope": "모든 채팅",
+        "deleteConfirm": "\"{{name}}\"을(를) 삭제할까요? 모든 채팅에서 사라집니다.",
+        "deleteFailed": "문서를 삭제하지 못했습니다"
       }
     },
     "tts": {

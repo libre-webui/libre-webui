@@ -393,6 +393,9 @@
       "modelsLoadFailed": "Gagal memuatkan model",
       "modelUpdated": "Model dikemas kini untuk chat semasa",
       "modelUpdateFailed": "Gagal mengemas kini model sesi"
+    },
+    "documents": {
+      "title": "Dokumen dalam konteks"
     }
   },
   "sidebar": {
@@ -701,7 +704,19 @@
         "namePlaceholder": "Nama koleksi",
         "create": "Cipta",
         "none": "Tiada koleksi",
-        "deleteConfirm": "Padam koleksi ini? Dokumen di dalamnya kekal."
+        "deleteConfirm": "Padam koleksi ini? Dokumen di dalamnya kekal.",
+        "createFailed": "Gagal mencipta koleksi",
+        "deleteFailed": "Gagal memadamkan koleksi",
+        "assignFailed": "Gagal memindahkan dokumen"
+      },
+      "library": {
+        "title": "Dokumen yang dimuat naik",
+        "description": "Dokumen yang tersedia sebagai konteks sembang. Dokumen yang dimuat naik dalam sembang kekal dalam perbualannya; dokumen tanpa sembang dan koleksi menyertai setiap perbualan.",
+        "empty": "Tiada dokumen dimuat naik lagi.",
+        "chatScope": "Satu sembang",
+        "everyChatScope": "Semua sembang",
+        "deleteConfirm": "Padam \"{{name}}\"? Ia akan hilang daripada semua sembang.",
+        "deleteFailed": "Gagal memadamkan dokumen"
       }
     },
     "tts": {
