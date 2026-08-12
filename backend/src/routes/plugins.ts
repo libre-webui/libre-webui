@@ -77,6 +77,13 @@ const requestUserIsAdmin = (req: Request): boolean => {
 const supportsCompletionModelDiscovery = (plugin: Plugin): boolean =>
   plugin.type === 'completion' || plugin.type === 'chat';
 
+const DISCOVERABLE_MEDIA_CAPABILITIES = [
+  'image',
+  'tts',
+  'audio',
+  'video',
+] as const;
+
 const getModelDiscoveryVariableNames = (
   plugin: Plugin
 ): ReadonlySet<string> => {
@@ -91,10 +98,14 @@ const getModelDiscoveryVariableNames = (
       capabilityRecord.config && typeof capabilityRecord.config === 'object'
         ? (capabilityRecord.config as Record<string, unknown>)
         : {};
-    const selector =
-      config.endpoint_variable ?? capabilityRecord.endpoint_variable;
-    if (typeof selector === 'string' && selector.trim()) {
-      names.add(selector.trim());
+    const selectors = [
+      config.endpoint_variable ?? capabilityRecord.endpoint_variable,
+      config.models_endpoint_variable,
+    ];
+    for (const selector of selectors) {
+      if (typeof selector === 'string' && selector.trim()) {
+        names.add(selector.trim());
+      }
     }
   }
 
@@ -135,13 +146,20 @@ const matchesInheritedDefault = (
           capabilityRecord.config && typeof capabilityRecord.config === 'object'
             ? (capabilityRecord.config as Record<string, unknown>)
             : {};
-        const selector =
+        const endpointSelector =
           config.endpoint_variable ?? capabilityRecord.endpoint_variable;
         if (
-          selector === definition.name &&
+          endpointSelector === definition.name &&
           typeof capabilityRecord.endpoint === 'string'
         ) {
           inheritedValue = capabilityRecord.endpoint;
+          break;
+        }
+        if (
+          config.models_endpoint_variable === definition.name &&
+          typeof capabilityRecord.models_endpoint === 'string'
+        ) {
+          inheritedValue = capabilityRecord.models_endpoint;
           break;
         }
       }
@@ -162,11 +180,25 @@ const refreshUserModels = async (
   userId: string,
   clearExisting = true
 ): Promise<void> => {
-  if (!supportsCompletionModelDiscovery(plugin)) return;
+  const capabilities = DISCOVERABLE_MEDIA_CAPABILITIES.filter(
+    capability => plugin.capabilities?.[capability]?.models_endpoint
+  );
+  if (!supportsCompletionModelDiscovery(plugin) && capabilities.length === 0) {
+    return;
+  }
   if (clearExisting) {
     pluginService.clearDiscoveredModels(plugin.id, userId);
   }
-  await pluginService.discoverModels(plugin.id, userId).catch(() => {});
+  await Promise.all([
+    ...(supportsCompletionModelDiscovery(plugin)
+      ? [pluginService.discoverModels(plugin.id, userId).catch(() => {})]
+      : []),
+    ...capabilities.map(capability =>
+      pluginService
+        .discoverCapabilityModels(plugin.id, capability, userId)
+        .catch(() => {})
+    ),
+  ]);
 };
 
 // Rate limiting for plugin operations

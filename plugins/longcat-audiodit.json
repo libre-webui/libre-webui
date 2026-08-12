@@ -1,0 +1,114 @@
+{
+  "id": "longcat-audiodit",
+  "name": "LongCat AudioDiT",
+  "type": "tts",
+  "endpoint": "http://localhost:8300/v1/audio/speech",
+  "auth": {
+    "header": "",
+    "key_env": ""
+  },
+  "model_map": [
+    "meituan-longcat/LongCat-AudioDiT-1B",
+    "meituan-longcat/LongCat-AudioDiT-3.5B"
+  ],
+  "capabilities": {
+    "tts": {
+      "endpoint": "http://localhost:8300/v1/audio/speech",
+      "models_endpoint": "http://localhost:8300/v1/models",
+      "model_map": [
+        "meituan-longcat/LongCat-AudioDiT-1B",
+        "meituan-longcat/LongCat-AudioDiT-3.5B"
+      ],
+      "config": {
+        "voices": [],
+        "default_voice": "",
+        "formats": ["wav"],
+        "default_format": "wav",
+        "max_characters": 140,
+        "supports_streaming": false,
+        "allows_custom_voice": false,
+        "no_auth_required": true,
+        "endpoint_variable": "endpoint",
+        "models_endpoint_variable": "models_endpoint",
+        "supports_voice_cloning": true,
+        "voice_clone_endpoint": "http://localhost:8300/v1/audio/voice-clone",
+        "voice_clone_endpoint_variable": "voice_clone_endpoint",
+        "clone_requires_transcript": true,
+        "clone_audio_mime_types": [
+          "audio/wav",
+          "audio/x-wav",
+          "audio/flac",
+          "audio/mpeg",
+          "audio/ogg"
+        ],
+        "clone_max_audio_bytes": 10485760,
+        "request_variables": [
+          "steps",
+          "cfg_strength",
+          "guidance_method",
+          "seed"
+        ]
+      }
+    }
+  },
+  "description": "Local CUDA adapter for LongCat AudioDiT text-to-speech and consent-based voice cloning",
+  "documentation_url": "https://github.com/meituan-longcat/LongCat-AudioDiT",
+  "variables": [
+    {
+      "name": "endpoint",
+      "type": "string",
+      "label": "Speech API Endpoint",
+      "description": "Override the local JSON speech endpoint.",
+      "default": "http://localhost:8300/v1/audio/speech"
+    },
+    {
+      "name": "models_endpoint",
+      "type": "string",
+      "label": "Models API Endpoint",
+      "description": "Override the local checkpoint-discovery endpoint.",
+      "default": "http://localhost:8300/v1/models"
+    },
+    {
+      "name": "voice_clone_endpoint",
+      "type": "string",
+      "label": "Voice Clone Endpoint",
+      "description": "Override the local multipart voice-cloning endpoint.",
+      "default": "http://localhost:8300/v1/audio/voice-clone"
+    },
+    {
+      "name": "steps",
+      "type": "number",
+      "label": "ODE Steps",
+      "description": "Number of diffusion ODE steps. Higher values trade latency for refinement.",
+      "default": 16,
+      "min": 2,
+      "max": 64
+    },
+    {
+      "name": "cfg_strength",
+      "type": "number",
+      "label": "Guidance Strength",
+      "description": "Classifier-free or adaptive projection guidance strength.",
+      "default": 4,
+      "min": 0,
+      "max": 20
+    },
+    {
+      "name": "guidance_method",
+      "type": "select",
+      "label": "Guidance Method",
+      "description": "Use classifier-free guidance (CFG) or adaptive projection guidance (APG).",
+      "default": "cfg",
+      "options": ["cfg", "apg"]
+    },
+    {
+      "name": "seed",
+      "type": "number",
+      "label": "Seed",
+      "description": "Deterministic random seed used for AudioDiT inference.",
+      "default": 1024,
+      "min": 0,
+      "max": 2147483647
+    }
+  ]
+}

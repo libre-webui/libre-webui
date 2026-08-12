@@ -426,7 +426,16 @@ export interface TTSConfig {
   max_characters?: number; // Maximum text length
   supports_streaming?: boolean; // Whether streaming is supported
   endpoint_variable?: string; // Capability-specific endpoint override variable
+  models_endpoint_variable?: string; // Capability model-discovery endpoint override variable
   allows_custom_voice?: boolean; // Whether arbitrary provider voice IDs are accepted
+  supports_voice_cloning?: boolean; // Whether reference-audio voice cloning is supported
+  voice_clone_endpoint?: string; // Multipart voice-cloning endpoint
+  voice_clone_endpoint_variable?: string; // Per-user voice-cloning endpoint override variable
+  clone_requires_transcript?: boolean; // Whether reference_text must accompany the audio
+  clone_audio_mime_types?: string[]; // Accepted reference-audio MIME types
+  clone_max_audio_bytes?: number; // Maximum reference-audio upload size
+  no_auth_required?: boolean; // Whether the capability can run without an API key
+  request_variables?: string[]; // Allowlisted plugin variables forwarded to provider requests
 }
 
 // Image Generation-specific configuration

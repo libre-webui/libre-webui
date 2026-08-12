@@ -146,8 +146,8 @@ Ollama is the default local path, not a lock-in strategy. Libre WebUI bundles an
 MLX LM plugin for native Apple Silicon inference plus provider definitions
 spanning chat, images, embeddings, and speech — OpenAI, Anthropic, Google
 Gemini, Groq, Kimi Code by Moonshot AI, Mistral, OpenRouter, Hugging Face,
-GitHub Models, ComfyUI, ElevenLabs, Qwen3-TTS, Kyutai TTS, and any
-OpenAI-compatible service.
+GitHub Models, ComfyUI, ElevenLabs, Qwen3-TTS, Kyutai TTS, LongCat AudioDiT,
+and any OpenAI-compatible service.
 
 Credentials come from deployment-wide environment variables or encrypted,
 user-scoped settings. Plugins can declare static model lists and use live

@@ -60,6 +60,14 @@ image generation is enabled in Settings), plus **Video** and **Audio** panels.
 Speech and sound generation are synchronous: the request runs, the result is
 saved to the gallery, and the response returns the finished item.
 
+TTS plugins can also declare one-time voice cloning. For those models, the
+Audio panel shows a reference-audio upload and, when the provider requires it,
+an exact transcript field. Libre WebUI validates the manifest's file type and
+size limits, holds the upload in memory, and forwards it only to the selected
+provider. The reference recording is not stored in the gallery; only the
+generated speech is saved. Only use recordings from speakers who consented to
+the cloning request.
+
 ### Video Job Lifecycle
 
 Video generation is asynchronous. Submitting a job

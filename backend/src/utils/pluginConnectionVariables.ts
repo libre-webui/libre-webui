@@ -26,6 +26,7 @@ export const PLUGIN_CONNECTION_VARIABLE_NAMES: ReadonlySet<string> = new Set([
   'image_endpoint',
   'embedding_endpoint',
   'tts_endpoint',
+  'voice_clone_endpoint',
   'api_mode',
   'model',
   'model_id',
@@ -48,10 +49,15 @@ export function getPluginConnectionVariableNames(
       capabilityRecord.config && typeof capabilityRecord.config === 'object'
         ? (capabilityRecord.config as Record<string, unknown>)
         : {};
-    const selector =
-      config.endpoint_variable ?? capabilityRecord.endpoint_variable;
-    if (typeof selector === 'string' && selector.trim()) {
-      names.add(selector);
+    const selectors = [
+      config.endpoint_variable ?? capabilityRecord.endpoint_variable,
+      config.models_endpoint_variable,
+      config.voice_clone_endpoint_variable,
+    ];
+    for (const selector of selectors) {
+      if (typeof selector === 'string' && selector.trim()) {
+        names.add(selector);
+      }
     }
   }
   return names;

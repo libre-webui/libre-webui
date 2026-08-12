@@ -165,6 +165,10 @@ function getPluginRoutingAuthProjection(plugin: Plugin): string {
         models_endpoint: capability.models_endpoint ?? null,
         endpoint_variable:
           config.endpoint_variable ?? capability.endpoint_variable ?? null,
+        models_endpoint_variable: config.models_endpoint_variable ?? null,
+        voice_clone_endpoint: config.voice_clone_endpoint ?? null,
+        voice_clone_endpoint_variable:
+          config.voice_clone_endpoint_variable ?? null,
       };
     });
   const definitions = new Map(
@@ -1173,7 +1177,21 @@ export class PluginService {
       userId || 'default'
     );
     this.capabilityDiscoveryAttemptedAt.set(cacheKey, Date.now());
-    const modelsEndpoint = definition.models_endpoint;
+    const config =
+      definition.config && typeof definition.config === 'object'
+        ? (definition.config as Record<string, unknown>)
+        : {};
+    const modelsEndpointVariable = config.models_endpoint_variable;
+    const pluginVariables = this.getPluginVariables(plugin, userId);
+    const modelsEndpointOverride =
+      typeof modelsEndpointVariable === 'string'
+        ? pluginVariables[modelsEndpointVariable]
+        : undefined;
+    const modelsEndpoint =
+      typeof modelsEndpointOverride === 'string' &&
+      modelsEndpointOverride.trim().length > 0
+        ? this.validateEndpointUrl(modelsEndpointOverride.trim())
+        : definition.models_endpoint;
     assertSafePluginEndpoint(
       modelsEndpoint,
       `${capability} model discovery endpoint`
@@ -2219,6 +2237,30 @@ export class PluginService {
     } = {}
   ): Promise<Buffer> {
     return this.ttsService.executeTTSRequest(model, input, options);
+  }
+
+  async executeVoiceCloneRequest(
+    model: string,
+    input: string,
+    referenceAudio: {
+      buffer: Buffer;
+      originalname: string;
+      mimetype: string;
+      size?: number;
+    },
+    options: {
+      referenceText?: string;
+      response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
+      pluginId?: string;
+      userId?: string;
+    } = {}
+  ): Promise<Buffer> {
+    return this.ttsService.executeVoiceCloneRequest(
+      model,
+      input,
+      referenceAudio,
+      options
+    );
   }
 
   getTTSConfig(pluginId: string, userId?: string): TTSConfig | null {

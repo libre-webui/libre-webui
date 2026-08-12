@@ -100,6 +100,15 @@ const { authService } = await import(
 const imageGenRoutes = (
   await import(pathToFileURL(path.join(distRoot, 'routes', 'imageGen.js')).href)
 ).default;
+const ttsRoutes = (
+  await import(pathToFileURL(path.join(distRoot, 'routes', 'tts.js')).href)
+).default;
+const mediaRoutes = (
+  await import(pathToFileURL(path.join(distRoot, 'routes', 'media.js')).href)
+).default;
+const { TTSProviderResponseError } = await import(
+  pathToFileURL(path.join(distRoot, 'services', 'pluginTTSService.js')).href
+);
 const galleryService = (
   await import(
     pathToFileURL(path.join(distRoot, 'services', 'galleryService.js')).href
@@ -256,6 +265,7 @@ test('connection-routing variable policy uses one canonical name set', () => {
       'image_endpoint',
       'embedding_endpoint',
       'tts_endpoint',
+      'voice_clone_endpoint',
       'api_mode',
       'model',
       'model_id',
@@ -2748,6 +2758,141 @@ test('saving and resetting endpoint aliases refreshes the user model catalog', a
   );
 });
 
+test('custom capability model endpoint selectors refresh their user catalog', async () => {
+  const selector = 'tts_catalog_endpoint';
+  const bundledModelsEndpoint = 'https://speech.example.test/v1/models';
+  const customModelsEndpoint = 'https://custom-speech.example.test/v1/models';
+  const user = upsertTestUser('capability-model-selector-user', 'admin');
+  const plugin = {
+    ...createPlugin({ id: 'capability-model-selector-provider' }),
+    type: 'tts',
+    variables: [
+      {
+        name: selector,
+        type: 'string',
+        default: bundledModelsEndpoint,
+      },
+    ],
+    capabilities: {
+      tts: {
+        endpoint: 'https://speech.example.test/v1/audio/speech',
+        models_endpoint: bundledModelsEndpoint,
+        model_map: ['speech-model'],
+        config: {
+          no_auth_required: true,
+          models_endpoint_variable: selector,
+        },
+      },
+    },
+  };
+  let resolvedVariables = { [selector]: bundledModelsEndpoint };
+  const refreshCalls = [];
+  const getRouteHandler = method => {
+    const layer = pluginRoutes.stack.find(
+      candidate =>
+        candidate.route?.path === '/:id/variables' &&
+        candidate.route.methods[method]
+    );
+    assert.ok(layer, `Expected ${method} variables route`);
+    return layer.route.stack.at(-1).handle;
+  };
+  const invokeRoute = async (method, body = {}) => {
+    let statusCode = 200;
+    let responseBody;
+    const response = {
+      status(code) {
+        statusCode = code;
+        return this;
+      },
+      json(value) {
+        responseBody = value;
+        return this;
+      },
+    };
+    await getRouteHandler(method)(
+      {
+        params: { id: plugin.id },
+        body,
+        user: { userId: user.id },
+      },
+      response
+    );
+    return { statusCode, responseBody };
+  };
+
+  await withPatchedProperties(
+    pluginService,
+    {
+      getPlugin: (id, userId) => {
+        assert.equal(userId, user.id);
+        return id === plugin.id ? plugin : null;
+      },
+      clearDiscoveredModels: (id, userId) => {
+        refreshCalls.push({ operation: 'clear', id, userId });
+      },
+      discoverModels: async () => {
+        assert.fail('a TTS-only plugin must not run completion discovery');
+      },
+      discoverCapabilityModels: async (id, capability, userId) => {
+        refreshCalls.push({
+          operation: 'discover',
+          id,
+          capability,
+          userId,
+        });
+        return { models: ['speech-model'], outcome: 'updated' };
+      },
+    },
+    async () =>
+      withPatchedProperties(
+        pluginVariablesService,
+        {
+          getResolvedVariables: () => ({ ...resolvedVariables }),
+          setVariables: (_id, variables) => {
+            resolvedVariables = { ...resolvedVariables, ...variables };
+            return true;
+          },
+          deletePluginVariables: () => {
+            resolvedVariables = { [selector]: bundledModelsEndpoint };
+            return true;
+          },
+        },
+        async () => {
+          assert.deepEqual(
+            await invokeRoute('put', {
+              variables: { [selector]: customModelsEndpoint },
+            }),
+            {
+              statusCode: 200,
+              responseBody: { success: true, data: true },
+            }
+          );
+          assert.deepEqual(await invokeRoute('delete'), {
+            statusCode: 200,
+            responseBody: { success: true, data: true },
+          });
+        }
+      )
+  );
+
+  assert.deepEqual(refreshCalls, [
+    { operation: 'clear', id: plugin.id, userId: user.id },
+    {
+      operation: 'discover',
+      id: plugin.id,
+      capability: 'tts',
+      userId: user.id,
+    },
+    { operation: 'clear', id: plugin.id, userId: user.id },
+    {
+      operation: 'discover',
+      id: plugin.id,
+      capability: 'tts',
+      userId: user.id,
+    },
+  ]);
+});
+
 test('discovered models persist per user without mutating the shared plugin manifest', async () => {
   const database = databaseModule.getDatabase();
   const now = Date.now();
@@ -2937,6 +3082,310 @@ test('embedding and TTS HTTP requests reject redirects before a credential-beari
     requests.every(request => request.config.maxRedirects === 0),
     'embedding and TTS credentials must never be forwarded through redirects'
   );
+});
+
+test('TTS routes preserve configured output formats and provider clone errors', async () => {
+  const user = upsertTestUser('tts-route-user', 'user');
+  const plugin = createPlugin({ id: 'tts-route-provider' });
+  plugin.capabilities.tts.config = {
+    ...plugin.capabilities.tts.config,
+    default_format: 'wav',
+    formats: ['wav'],
+    supports_voice_cloning: true,
+    voice_clone_endpoint: 'http://127.0.0.1:9/v1/audio/voice-clone',
+    clone_requires_transcript: true,
+    clone_audio_mime_types: ['audio/wav'],
+    clone_max_audio_bytes: 1024,
+  };
+
+  const app = express();
+  app.use(express.json());
+  app.use('/api/tts', ttsRoutes);
+  const server = await listen(app);
+  const headers = {
+    Authorization: `Bearer ${authService.generateToken(user)}`,
+  };
+
+  try {
+    await withPatchedProperties(
+      pluginService,
+      {
+        getAllPlugins: () => [plugin],
+        getPlugin: id => (id === plugin.id ? plugin : null),
+        getPluginVariables: () => ({}),
+        getApiKey: () => null,
+      },
+      async () => {
+        const generated = await withPatchedProperties(
+          axios,
+          {
+            post: async () => ({ data: Buffer.from('RIFFxxxxWAVEroute') }),
+          },
+          () =>
+            fetch(`${server.baseUrl}/api/tts/generate`, {
+              method: 'POST',
+              headers: { ...headers, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                model: 'tts-model',
+                pluginId: plugin.id,
+                input: 'route format',
+              }),
+            })
+        );
+        assert.equal(generated.status, 200);
+        assert.equal(generated.headers.get('content-type'), 'audio/wav');
+        assert.match(
+          generated.headers.get('content-disposition'),
+          /speech\.wav/
+        );
+
+        const form = new FormData();
+        form.set('model', 'tts-model');
+        form.set('pluginId', plugin.id);
+        form.set('input', 'clone this');
+        form.set('referenceText', 'reference words');
+        form.set(
+          'reference_audio',
+          new Blob([Buffer.from('RIFFxxxxWAVEreference')], {
+            type: 'audio/wav',
+          }),
+          'reference.wav'
+        );
+        const cloned = await withPatchedProperties(
+          axios,
+          {
+            post: async () => {
+              const error = new Error('provider rejected the reference');
+              error.isAxiosError = true;
+              error.response = {
+                status: 413,
+                statusText: 'Payload Too Large',
+                data: Buffer.from(
+                  JSON.stringify({ detail: 'reference is too long' })
+                ),
+              };
+              throw error;
+            },
+          },
+          () =>
+            fetch(`${server.baseUrl}/api/tts/voice-clone`, {
+              method: 'POST',
+              headers,
+              body: form,
+            })
+        );
+        assert.equal(cloned.status, 413);
+        assert.match((await cloned.json()).message, /reference is too long/);
+      }
+    );
+  } finally {
+    await server.close();
+  }
+});
+
+test('TTS and media routes translate provider authentication failures to 502', async () => {
+  const user = upsertTestUser('tts-provider-auth-status-user', 'user');
+  const plugin = createPlugin({ id: 'tts-provider-auth-status-provider' });
+  const app = express();
+  app.use(express.json());
+  app.use('/api/tts', ttsRoutes);
+  app.use('/api/media', mediaRoutes);
+  const server = await listen(app);
+  const headers = {
+    Authorization: `Bearer ${authService.generateToken(user)}`,
+    'Content-Type': 'application/json',
+  };
+  let providerStatus = 401;
+
+  try {
+    await withPatchedProperties(
+      pluginService,
+      {
+        getPluginForTTS: () => plugin,
+        executeTTSRequest: async () => {
+          throw new TTSProviderResponseError(
+            providerStatus,
+            `TTS provider rejected its credential with ${providerStatus}`
+          );
+        },
+      },
+      async () => {
+        for (const route of [
+          '/api/tts/generate',
+          '/api/media/audio/generate',
+        ]) {
+          for (providerStatus of [401, 403]) {
+            const response = await fetch(`${server.baseUrl}${route}`, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                model: 'tts-model',
+                pluginId: plugin.id,
+                input: 'provider auth mapping',
+              }),
+            });
+            assert.equal(
+              response.status,
+              502,
+              `${route} must not expose provider ${providerStatus} as an app-auth status`
+            );
+            assert.match(
+              (await response.json()).message,
+              new RegExp(String(providerStatus))
+            );
+          }
+        }
+      }
+    );
+  } finally {
+    await server.close();
+  }
+});
+
+test('voice-clone uploads have a dedicated request and 10 MiB memory limit', async () => {
+  const cloneUser = upsertTestUser('tts-clone-limit-user', 'user');
+  const oversizedUser = upsertTestUser('tts-clone-size-user', 'user');
+  const plugin = createPlugin({ id: 'tts-clone-limit-provider' });
+  plugin.capabilities.tts.config = {
+    ...plugin.capabilities.tts.config,
+    default_format: 'wav',
+    formats: ['wav'],
+    supports_voice_cloning: true,
+    voice_clone_endpoint: 'http://127.0.0.1:9/v1/audio/voice-clone',
+    clone_requires_transcript: true,
+    clone_audio_mime_types: ['audio/wav'],
+    clone_max_audio_bytes: 20 * 1024 * 1024,
+  };
+  const app = express();
+  app.use(express.json());
+  app.use('/api/tts', ttsRoutes);
+  const server = await listen(app);
+  const tokenFor = user => ({
+    Authorization: `Bearer ${authService.generateToken(user)}`,
+  });
+  const cloneForm = audio => {
+    const form = new FormData();
+    form.set('model', 'tts-model');
+    form.set('pluginId', plugin.id);
+    form.set('input', 'clone limiter');
+    form.set('referenceText', 'reference words');
+    form.set('reference_audio', audio, 'reference.wav');
+    return form;
+  };
+
+  try {
+    await withPatchedProperties(
+      pluginService,
+      {
+        getPluginForTTS: () => plugin,
+        executeTTSRequest: async () => Buffer.from('RIFFxxxxWAVEgenerated'),
+        executeVoiceCloneRequest: async () => Buffer.from('RIFFxxxxWAVEcloned'),
+      },
+      async () => {
+        for (let index = 0; index < 7; index += 1) {
+          const generated = await fetch(`${server.baseUrl}/api/tts/generate`, {
+            method: 'POST',
+            headers: {
+              ...tokenFor(cloneUser),
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'tts-model',
+              pluginId: plugin.id,
+              input: `ordinary batch ${index}`,
+            }),
+          });
+          assert.equal(generated.status, 200);
+        }
+
+        const cloneStatuses = [];
+        for (let index = 0; index < 7; index += 1) {
+          const cloned = await fetch(`${server.baseUrl}/api/tts/voice-clone`, {
+            method: 'POST',
+            headers: tokenFor(cloneUser),
+            body: cloneForm(
+              new Blob([Buffer.from('RIFFxxxxWAVEreference')], {
+                type: 'audio/wav',
+              })
+            ),
+          });
+          cloneStatuses.push(cloned.status);
+          if (index === 6) {
+            assert.match(
+              (await cloned.json()).message,
+              /Too many voice-cloning requests/
+            );
+          }
+        }
+        assert.deepEqual(cloneStatuses, [200, 200, 200, 200, 200, 200, 429]);
+
+        const oversized = await fetch(`${server.baseUrl}/api/tts/voice-clone`, {
+          method: 'POST',
+          headers: tokenFor(oversizedUser),
+          body: cloneForm(
+            new Blob([new Uint8Array(10 * 1024 * 1024 + 1)], {
+              type: 'audio/wav',
+            })
+          ),
+        });
+        assert.equal(oversized.status, 400);
+        assert.match(
+          (await oversized.json()).message,
+          /maximum size of 10 MiB/
+        );
+      }
+    );
+  } finally {
+    await server.close();
+  }
+});
+
+test('capability model discovery honors its declared endpoint override', async () => {
+  const discoveryUser = upsertTestUser('tts-discovery-override-user', 'admin');
+  const plugin = createPlugin({ id: 'tts-discovery-override-provider' });
+  plugin.capabilities.tts.models_endpoint = 'http://127.0.0.1:9/v1/models';
+  plugin.capabilities.tts.config.models_endpoint_variable =
+    'tts_models_endpoint';
+  plugin.variables = [
+    {
+      name: 'tts_models_endpoint',
+      type: 'string',
+      label: 'TTS models endpoint',
+    },
+  ];
+  const override = 'http://127.0.0.1:12345/custom/models';
+  const requests = [];
+
+  await withPatchedProperties(
+    pluginService,
+    {
+      getPlugin: id => (id === plugin.id ? plugin : null),
+      getPluginVariables: () => ({ tts_models_endpoint: override }),
+      getApiKey: () => null,
+    },
+    () =>
+      withPatchedProperties(
+        axios,
+        {
+          get: async (endpoint, config) => {
+            requests.push({ endpoint, config });
+            return { data: { data: [{ id: 'resident-model' }] } };
+          },
+        },
+        async () => {
+          const result = await pluginService.discoverCapabilityModels(
+            plugin.id,
+            'tts',
+            discoveryUser.id
+          );
+          assert.deepEqual(result.models, ['resident-model']);
+        }
+      )
+  );
+
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].endpoint, override);
+  assert.equal(requests[0].config.maxRedirects, 0);
 });
 
 test('Chat, Work, embedding, TTS, and image overrides fail before network access', async () => {

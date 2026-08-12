@@ -149,7 +149,9 @@ Native Ollama uses the host installation. Check your Ollama install, GPU driver,
 
 **Need TTS**
 
-Use the [Qwen3-TTS](./QWEN3_TTS) or [Kyutai TTS](./KYUTAI_TTS) server guides, then enable the matching plugin in Settings.
+Use the [Qwen3-TTS](./QWEN3_TTS), [Kyutai TTS](./KYUTAI_TTS), or
+[LongCat AudioDiT](./LONGCAT_AUDIODIT) server guide, then enable the matching
+plugin in Settings.
 
 ## Related Docs
 

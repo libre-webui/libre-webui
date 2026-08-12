@@ -16,23 +16,79 @@
  */
 
 import express from 'express';
+import multer from 'multer';
 import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService.js';
 import { authenticate, type AuthenticatedRequest } from '../middleware/auth.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  parseTTSVoiceCloneUpload,
+  TTS_VOICE_CLONE_GLOBAL_MAX_AUDIO_BYTES,
+  TTSVoiceCloneUploadError,
+  validateTTSVoiceCloneAudio,
+} from '../utils/ttsVoiceCloneUpload.js';
+import { TTSProviderResponseError } from '../services/pluginTTSService.js';
 
 const logger = createLogger('routes:tts');
 
 const router = express.Router();
 router.use(authenticate);
 
-// Rate limiter for TTS routes: 30 requests per minute
+const TTS_RESPONSE_FORMATS = [
+  'mp3',
+  'opus',
+  'aac',
+  'flac',
+  'wav',
+  'pcm',
+] as const;
+
+type TTSResponseFormat = (typeof TTS_RESPONSE_FORMATS)[number];
+
+const isTTSResponseFormat = (value: unknown): value is TTSResponseFormat =>
+  typeof value === 'string' &&
+  (TTS_RESPONSE_FORMATS as readonly string[]).includes(value);
+
+const ttsContentType = (format: TTSResponseFormat): string =>
+  ({
+    mp3: 'audio/mpeg',
+    opus: 'audio/opus',
+    aac: 'audio/aac',
+    flac: 'audio/flac',
+    wav: 'audio/wav',
+    pcm: 'audio/pcm',
+  })[format];
+
+const providerResponseStatus = (status: number): number =>
+  status === 401 || status === 403
+    ? 502
+    : status >= 400 && status < 500
+      ? status
+      : 502;
+
+// Sentence-aware playback can issue many small provider-safe batches. Keep a
+// bounded per-minute ceiling while allowing a long response to finish.
 const ttsRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 30, // limit each IP to 30 requests per windowMs
+  max: 120,
   message: {
     success: false,
     message: 'Too many TTS requests, please try again later',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Voice cloning carries a memory-backed upload and is substantially more
+// expensive than one sentence batch. Limit it independently per account.
+const voiceCloneRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 6,
+  keyGenerator: req =>
+    (req as AuthenticatedRequest).user?.userId || 'unauthenticated',
+  message: {
+    success: false,
+    message: 'Too many voice-cloning requests, please try again later',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -85,6 +141,10 @@ router.get('/voices/:pluginId', async (req: AuthenticatedRequest, res) => {
         default_format: config.default_format || 'mp3',
         max_characters: config.max_characters,
         supports_streaming: config.supports_streaming || false,
+        supports_voice_cloning: config.supports_voice_cloning || false,
+        clone_requires_transcript: config.clone_requires_transcript || false,
+        clone_audio_mime_types: config.clone_audio_mime_types,
+        clone_max_audio_bytes: config.clone_max_audio_bytes,
       },
     });
   } catch (error) {
@@ -165,10 +225,23 @@ router.post(
         return;
       }
 
+      const selectedPlugin = pluginService.getPluginForTTS(
+        model,
+        pluginId,
+        req.user?.userId
+      );
+      const configuredFormat =
+        selectedPlugin?.capabilities?.tts?.config?.default_format;
+      const format = isTTSResponseFormat(response_format)
+        ? response_format
+        : isTTSResponseFormat(configuredFormat)
+          ? configuredFormat
+          : 'mp3';
+
       // Execute TTS request
       const audioBuffer = await pluginService.executeTTSRequest(model, input, {
         voice,
-        response_format,
+        response_format: format,
         speed,
         pluginId,
         userId: req.user?.userId,
@@ -184,7 +257,6 @@ router.post(
         pcm: 'audio/pcm',
       };
 
-      const format = response_format || 'mp3';
       const contentType = contentTypeMap[format] || 'audio/mpeg';
 
       // Set response headers
@@ -197,6 +269,16 @@ router.post(
       // Send audio data
       res.send(audioBuffer);
     } catch (error) {
+      if (error instanceof TTSProviderResponseError) {
+        logger.warn(
+          `TTS provider returned status ${error.providerStatus} during generation`
+        );
+        res.status(providerResponseStatus(error.providerStatus)).json({
+          success: false,
+          message: error.message,
+        });
+        return;
+      }
       logger.error('TTS generation failed:', error);
 
       const errorMessage =
@@ -212,6 +294,193 @@ router.post(
         statusCode = 400;
       }
 
+      res.status(statusCode).json({
+        success: false,
+        message: errorMessage,
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/tts/voice-clone
+ * Generate speech using an ephemeral reference-audio sample. The sample is
+ * held in memory only and is never written to storage.
+ */
+router.post(
+  '/voice-clone',
+  voiceCloneRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      await parseTTSVoiceCloneUpload(req, res);
+
+      const {
+        model,
+        pluginId,
+        input,
+        referenceText,
+        reference_text: legacyReferenceText,
+        response_format,
+        responseFormat,
+      } = req.body || {};
+
+      if (!model || typeof model !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'Model is required and must be a string',
+        });
+        return;
+      }
+      if (!input || typeof input !== 'string' || input.trim().length === 0) {
+        res.status(400).json({
+          success: false,
+          message: 'Input text is required and must be a non-empty string',
+        });
+        return;
+      }
+      if (
+        pluginId !== undefined &&
+        (typeof pluginId !== 'string' || pluginId.length === 0)
+      ) {
+        res.status(400).json({
+          success: false,
+          message: 'pluginId must be a non-empty string when provided',
+        });
+        return;
+      }
+
+      const normalizedReferenceText = referenceText ?? legacyReferenceText;
+      if (
+        normalizedReferenceText !== undefined &&
+        typeof normalizedReferenceText !== 'string'
+      ) {
+        res.status(400).json({
+          success: false,
+          message: 'referenceText must be a string when provided',
+        });
+        return;
+      }
+
+      const requestedFormat = response_format ?? responseFormat;
+      if (
+        requestedFormat !== undefined &&
+        !isTTSResponseFormat(requestedFormat)
+      ) {
+        res.status(400).json({
+          success: false,
+          message: `Invalid response format. Must be one of: ${TTS_RESPONSE_FORMATS.join(', ')}`,
+        });
+        return;
+      }
+
+      const userId = req.user?.userId;
+      const selectedPlugin = pluginService.getPluginForTTS(
+        model,
+        pluginId,
+        userId
+      );
+      if (!selectedPlugin) {
+        res.status(404).json({
+          success: false,
+          message: `No TTS plugin found for model: ${model}`,
+        });
+        return;
+      }
+      const config = selectedPlugin.capabilities?.tts?.config;
+      if (!config?.supports_voice_cloning) {
+        res.status(400).json({
+          success: false,
+          message: `TTS plugin ${selectedPlugin.id} does not support voice cloning`,
+        });
+        return;
+      }
+      if (
+        config.clone_requires_transcript &&
+        (!normalizedReferenceText ||
+          normalizedReferenceText.trim().length === 0)
+      ) {
+        res.status(400).json({
+          success: false,
+          message: `TTS plugin ${selectedPlugin.id} requires a reference audio transcript for voice cloning`,
+        });
+        return;
+      }
+
+      const referenceAudio = validateTTSVoiceCloneAudio(req.file, config);
+      const format = requestedFormat || config.default_format || 'wav';
+      if (!isTTSResponseFormat(format)) {
+        res.status(400).json({
+          success: false,
+          message: `Invalid configured response format: ${format}`,
+        });
+        return;
+      }
+
+      const audioBuffer = await pluginService.executeVoiceCloneRequest(
+        model,
+        input,
+        referenceAudio,
+        {
+          referenceText: normalizedReferenceText,
+          response_format: format,
+          pluginId: selectedPlugin.id,
+          userId,
+        }
+      );
+
+      res.set({
+        'Content-Type': ttsContentType(format),
+        'Content-Length': audioBuffer.length.toString(),
+        'Content-Disposition': `inline; filename="speech.${format}"`,
+      });
+      res.send(audioBuffer);
+    } catch (error) {
+      if (error instanceof multer.MulterError) {
+        logger.warn(`TTS voice-clone upload failed: ${error.code}`);
+        res.status(400).json({
+          success: false,
+          message:
+            error.code === 'LIMIT_FILE_SIZE'
+              ? `Reference audio exceeds the global maximum size of ${TTS_VOICE_CLONE_GLOBAL_MAX_AUDIO_BYTES / (1024 * 1024)} MiB`
+              : `Invalid voice clone upload: ${error.message}`,
+        });
+        return;
+      }
+      if (error instanceof TTSVoiceCloneUploadError) {
+        logger.warn(`TTS voice-clone upload failed: ${error.code}`);
+        res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+        return;
+      }
+      if (error instanceof TTSProviderResponseError) {
+        logger.warn(
+          `TTS provider returned status ${error.providerStatus} during voice cloning`
+        );
+        res.status(providerResponseStatus(error.providerStatus)).json({
+          success: false,
+          message: error.message,
+        });
+        return;
+      }
+
+      logger.error('TTS voice cloning failed:', error);
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      let statusCode = 500;
+      if (errorMessage.includes('No TTS plugin found')) {
+        statusCode = 404;
+      } else if (errorMessage.includes('API key not found')) {
+        statusCode = 503;
+      } else if (
+        errorMessage.includes('does not support voice cloning') ||
+        errorMessage.includes('requires a reference audio transcript') ||
+        errorMessage.includes('exceeds maximum length')
+      ) {
+        statusCode = 400;
+      }
       res.status(statusCode).json({
         success: false,
         message: errorMessage,
@@ -342,6 +611,16 @@ router.post(
         },
       });
     } catch (error) {
+      if (error instanceof TTSProviderResponseError) {
+        logger.warn(
+          `TTS provider returned status ${error.providerStatus} during base64 generation`
+        );
+        res.status(providerResponseStatus(error.providerStatus)).json({
+          success: false,
+          message: error.message,
+        });
+        return;
+      }
       logger.error('TTS generation failed:', error);
 
       const errorMessage =
