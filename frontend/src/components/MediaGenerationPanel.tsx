@@ -41,7 +41,11 @@ export function MediaGenerationPanel({
   const [catalog, setCatalog] = useState<MediaModelCatalog>(EMPTY_CATALOG);
   const [selected, setSelected] = useState('');
   const [prompt, setPrompt] = useState('');
-  const [voice, setVoice] = useState('alloy');
+  const [voice, setVoice] = useState('');
+  const [cloneVoice, setCloneVoice] = useState(false);
+  const [referenceAudio, setReferenceAudio] = useState<File | null>(null);
+  const [referenceText, setReferenceText] = useState('');
+  const [fileInputKey, setFileInputKey] = useState(0);
   const [resolution, setResolution] = useState('');
   const [aspectRatio, setAspectRatio] = useState('');
   const [duration, setDuration] = useState('');
@@ -49,6 +53,18 @@ export function MediaGenerationPanel({
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const titleId = React.useId();
+
+  const resetVoiceCloneInputs = () => {
+    setCloneVoice(false);
+    setReferenceAudio(null);
+    setReferenceText('');
+    setFileInputKey(value => value + 1);
+  };
+
+  const handleClose = () => {
+    resetVoiceCloneInputs();
+    onClose();
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -88,27 +104,60 @@ export function MediaGenerationPanel({
       : undefined;
   const audioModel =
     kind === 'audio' ? (selectedModel as AudioGenModel | undefined) : undefined;
+  const supportsVoiceCloning = Boolean(
+    audioModel?.mode === 'speech' && audioModel.config?.supports_voice_cloning
+  );
+  const cloneRequiresTranscript = Boolean(
+    audioModel?.config?.clone_requires_transcript
+  );
+  const useVoiceClone = supportsVoiceCloning && cloneVoice;
+  const allowsVoiceInput = Boolean(
+    audioModel?.mode !== 'speech' ||
+    audioModel.config?.allows_custom_voice !== false ||
+    audioModel.config?.voices?.length
+  );
+  const speechMaxCharacters =
+    audioModel?.mode === 'speech'
+      ? audioModel.config?.max_characters
+      : undefined;
 
   const handleGenerate = async () => {
     if (!selectedModel || !prompt.trim()) return;
     setGenerating(true);
     try {
       if (kind === 'audio') {
-        const response =
-          audioModel?.mode === 'sound'
+        const responseFormat = resolveSpeechFormat(
+          audioModel?.config?.default_format
+        );
+        const response = useVoiceClone
+          ? await mediaApi.cloneVoice({
+              model: selectedModel.model,
+              pluginId: selectedModel.plugin,
+              input: prompt.trim(),
+              referenceAudio: referenceAudio!,
+              referenceText: referenceText.trim() || undefined,
+              responseFormat,
+            })
+          : audioModel?.mode === 'sound'
             ? await mediaApi.generateSound({
                 model: selectedModel.model,
                 pluginId: selectedModel.plugin,
                 prompt: prompt.trim(),
-                voice: voice.trim() || undefined,
+                voice:
+                  voice.trim() ||
+                  audioModel?.config?.default_voice ||
+                  undefined,
                 format: 'wav',
               })
             : await mediaApi.generateAudio({
                 model: selectedModel.model,
                 pluginId: selectedModel.plugin,
                 input: prompt.trim(),
-                voice: voice.trim() || undefined,
-                response_format: 'mp3',
+                voice:
+                  voice.trim() ||
+                  audioModel?.config?.default_voice ||
+                  undefined,
+                response_format: responseFormat,
               });
         if (!response.success) throw new Error(response.message);
       } else {
@@ -148,6 +197,7 @@ export function MediaGenerationPanel({
       }
       toast.success(t('mediaGeneration.success'));
       setPrompt('');
+      resetVoiceCloneInputs();
       onGenerated();
       onClose();
     } catch (error) {
@@ -165,7 +215,7 @@ export function MediaGenerationPanel({
     <div className='fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6'>
       <button
         className='absolute inset-0 bg-black/55 backdrop-blur-sm'
-        onClick={onClose}
+        onClick={handleClose}
         aria-label={t('common.close')}
       />
       <div
@@ -186,7 +236,7 @@ export function MediaGenerationPanel({
               {t('mediaGeneration.description')}
             </p>
           </div>
-          <button onClick={onClose} className='rounded-xl p-2'>
+          <button onClick={handleClose} className='rounded-xl p-2'>
             <X className='h-5 w-5' />
           </button>
         </div>
@@ -197,7 +247,12 @@ export function MediaGenerationPanel({
               <button
                 key={option}
                 type='button'
-                onClick={() => setKind(option)}
+                onClick={() => {
+                  setKind(option);
+                  setSelected('');
+                  setVoice('');
+                  resetVoiceCloneInputs();
+                }}
                 className={cn(
                   'flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors',
                   option === kind
@@ -232,6 +287,8 @@ export function MediaGenerationPanel({
                   value={effectiveSelected}
                   onChange={event => {
                     setSelected(event.target.value);
+                    setVoice('');
+                    resetVoiceCloneInputs();
                     setResolution('');
                     setAspectRatio('');
                     setDuration('');
@@ -251,16 +308,19 @@ export function MediaGenerationPanel({
                 </select>
               </Field>
 
-              {kind === 'audio' ? (
+              {kind === 'audio' && !useVoiceClone && allowsVoiceInput ? (
                 <Field label={t('mediaGeneration.voice')}>
                   <input
                     value={voice}
                     onChange={event => setVoice(event.target.value)}
                     className={inputClass}
-                    placeholder='alloy'
+                    placeholder={
+                      audioModel?.config?.default_voice ||
+                      t('mediaGeneration.providerDefault')
+                    }
                   />
                 </Field>
-              ) : (
+              ) : kind === 'video' ? (
                 <div className='grid gap-4 sm:grid-cols-3'>
                   <Field label={t('mediaGeneration.resolution')}>
                     <select
@@ -311,6 +371,86 @@ export function MediaGenerationPanel({
                     </select>
                   </Field>
                 </div>
+              ) : null}
+
+              {supportsVoiceCloning && (
+                <div className='space-y-3 rounded-xl border border-primary-500/20 bg-primary-500/[0.06] p-4'>
+                  <label className='flex items-start gap-3 text-sm'>
+                    <input
+                      type='checkbox'
+                      checked={useVoiceClone}
+                      onChange={event => {
+                        if (event.target.checked) {
+                          setCloneVoice(true);
+                        } else {
+                          resetVoiceCloneInputs();
+                        }
+                      }}
+                      className='mt-0.5'
+                    />
+                    <span>
+                      <span className='block font-medium text-gray-900 dark:text-gray-100'>
+                        {t('mediaGeneration.cloneVoice')}
+                      </span>
+                      <span className='mt-0.5 block text-xs font-normal text-gray-500 dark:text-dark-500'>
+                        {t('mediaGeneration.cloneVoiceDescription')}
+                      </span>
+                    </span>
+                  </label>
+
+                  {useVoiceClone && (
+                    <div className='space-y-3 border-t border-primary-500/15 pt-3'>
+                      <Field label={t('mediaGeneration.referenceAudio')}>
+                        <input
+                          key={fileInputKey}
+                          type='file'
+                          accept={
+                            audioModel?.config?.clone_audio_mime_types?.join(
+                              ','
+                            ) || 'audio/wav,audio/mpeg,audio/flac,audio/ogg'
+                          }
+                          onChange={event => {
+                            const file = event.target.files?.[0] || null;
+                            const maxBytes =
+                              audioModel?.config?.clone_max_audio_bytes;
+                            if (file && maxBytes && file.size > maxBytes) {
+                              toast.error(
+                                t('mediaGeneration.referenceAudioTooLarge', {
+                                  max: formatBytes(maxBytes),
+                                })
+                              );
+                              event.target.value = '';
+                              setReferenceAudio(null);
+                              return;
+                            }
+                            setReferenceAudio(file);
+                          }}
+                          className={cn(
+                            inputClass,
+                            'file:me-3 file:rounded-lg file:border-0 file:bg-primary-500/10 file:px-3 file:py-1 file:text-primary-700 dark:file:text-primary-300'
+                          )}
+                        />
+                      </Field>
+                      <Field label={t('mediaGeneration.referenceTranscript')}>
+                        <textarea
+                          value={referenceText}
+                          onChange={event =>
+                            setReferenceText(event.target.value)
+                          }
+                          rows={3}
+                          required={cloneRequiresTranscript}
+                          className={cn(inputClass, 'resize-none')}
+                          placeholder={t(
+                            'mediaGeneration.referenceTranscriptPlaceholder'
+                          )}
+                        />
+                      </Field>
+                      <p className='text-xs font-normal text-amber-700 dark:text-amber-300'>
+                        {t('mediaGeneration.cloneConsent')}
+                      </p>
+                    </div>
+                  )}
+                </div>
               )}
 
               {kind === 'video' && videoConfig?.supports_audio && (
@@ -337,6 +477,7 @@ export function MediaGenerationPanel({
                   value={prompt}
                   onChange={event => setPrompt(event.target.value)}
                   rows={6}
+                  maxLength={speechMaxCharacters}
                   className={cn(inputClass, 'resize-none')}
                   placeholder={t(
                     kind === 'audio' && audioModel?.mode === 'sound'
@@ -344,6 +485,11 @@ export function MediaGenerationPanel({
                       : `mediaGeneration.${kind}Placeholder`
                   )}
                 />
+                {speechMaxCharacters && (
+                  <span className='block text-end text-xs font-normal text-gray-500 dark:text-dark-500'>
+                    {prompt.length} / {speechMaxCharacters}
+                  </span>
+                )}
               </Field>
             </>
           )}
@@ -353,7 +499,17 @@ export function MediaGenerationPanel({
           <div className='border-t border-gray-200/70 p-4 dark:border-white/[0.08] sm:px-5'>
             <Button
               onClick={handleGenerate}
-              disabled={generating || !selectedModel || !prompt.trim()}
+              disabled={
+                generating ||
+                !selectedModel ||
+                !prompt.trim() ||
+                Boolean(
+                  speechMaxCharacters && prompt.length > speechMaxCharacters
+                ) ||
+                (useVoiceClone &&
+                  (!referenceAudio ||
+                    (cloneRequiresTranscript && !referenceText.trim())))
+              }
               className='w-full gap-2'
             >
               {generating ? (
@@ -398,6 +554,20 @@ function modelKey(model: {
 
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => window.setTimeout(resolve, ms));
+}
+
+function resolveSpeechFormat(
+  format?: string
+): 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm' {
+  return ['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm'].includes(format || '')
+    ? (format as 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm')
+    : 'mp3';
+}
+
+function formatBytes(bytes: number): string {
+  return bytes >= 1024 * 1024
+    ? `${Math.ceil(bytes / (1024 * 1024))} MB`
+    : `${Math.ceil(bytes / 1024)} KB`;
 }
 
 const inputClass =

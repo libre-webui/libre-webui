@@ -32,6 +32,11 @@ export interface TTSModel {
     default_format?: TTSResponseFormat;
     max_characters?: number;
     supports_streaming?: boolean;
+    allows_custom_voice?: boolean;
+    supports_voice_cloning?: boolean;
+    clone_requires_transcript?: boolean;
+    clone_audio_mime_types?: string[];
+    clone_max_audio_bytes?: number;
   };
 }
 
@@ -135,6 +140,11 @@ export const ttsApi = {
       default_format: string;
       max_characters?: number;
       supports_streaming: boolean;
+      allows_custom_voice?: boolean;
+      supports_voice_cloning: boolean;
+      clone_requires_transcript: boolean;
+      clone_audio_mime_types?: string[];
+      clone_max_audio_bytes?: number;
     }>
   > => {
     if (isDemoMode()) {
@@ -145,6 +155,8 @@ export const ttsApi = {
         default_format: 'mp3',
         max_characters: 4096,
         supports_streaming: false,
+        supports_voice_cloning: false,
+        clone_requires_transcript: false,
       });
     }
 
@@ -174,7 +186,10 @@ export const ttsApi = {
   },
 
   // Generate speech and get as blob (for direct playback)
-  generate: async (request: TTSGenerateRequest): Promise<Blob> => {
+  generate: async (
+    request: TTSGenerateRequest,
+    options: { signal?: AbortSignal } = {}
+  ): Promise<Blob> => {
     if (isDemoMode()) {
       // Return empty blob for demo
       return new Blob([], { type: 'audio/mpeg' });
@@ -187,6 +202,7 @@ export const ttsApi = {
 
     const response = await api.post('/tts/generate', payload, {
       responseType: 'blob',
+      signal: options.signal,
     });
     return response.data;
   },

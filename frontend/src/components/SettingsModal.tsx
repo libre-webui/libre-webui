@@ -105,7 +105,7 @@ const DEFAULT_TTS_SETTINGS = {
   voice: '',
   speed: 1.0,
   pluginId: '',
-  streamSentences: false,
+  streamSentences: true,
 };
 const DEFAULT_IMAGE_GEN_SETTINGS = {
   enabled: false,
@@ -481,7 +481,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       ...ttsSettings,
       model: selectedTtsModel.model,
       pluginId: selectedTtsModel.plugin,
-      voice: selectedTtsModel.config?.default_voice || '',
+      voice: selectedTtsModel.config?.default_voice ?? '',
     };
   }, [selectedTtsModel, ttsModels, ttsSettings]);
 
@@ -704,7 +704,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         ...prev,
         model: modelName,
         pluginId,
-        voice: selectedModel.config?.default_voice || prev.voice,
+        voice: selectedModel.config?.default_voice ?? '',
       }));
     }
   };
@@ -787,7 +787,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         model: effectiveTtsSettings.model || 'tts-1',
         pluginId: effectiveTtsSettings.pluginId,
         input: 'Hello! This is a test of the text-to-speech system.',
-        voice: effectiveTtsSettings.voice || 'alloy',
+        voice: effectiveTtsSettings.voice || undefined,
         speed: effectiveTtsSettings.speed || 1.0,
         response_format: selectedTtsModel?.config?.default_format,
       });
@@ -825,10 +825,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       enabled: false,
       autoPlay: false,
       model: ttsModels[0]?.model || '',
-      voice: ttsModels[0]?.config?.default_voice || '',
+      voice: ttsModels[0]?.config?.default_voice ?? '',
       speed: 1.0,
       pluginId: ttsModels[0]?.plugin || '',
-      streamSentences: false,
+      streamSentences: true,
     });
   };
 

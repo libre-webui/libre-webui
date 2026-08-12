@@ -145,7 +145,7 @@ export function SettingsTtsTab({
                   </p>
                 </div>
                 <SettingsToggle
-                  checked={settings.streamSentences || false}
+                  checked={settings.streamSentences !== false}
                   disabled={!settings.enabled}
                   onChange={checked =>
                     onSettingChange('streamSentences', checked)
@@ -194,31 +194,48 @@ export function SettingsTtsTab({
                   </p>
                 </div>
 
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    {t('settings.tts.voice')}
-                  </label>
-                  <Select
-                    aria-label={t('settings.tts.voice')}
-                    value={effectiveSettings.voice}
-                    onChange={event =>
-                      onSettingChange('voice', event.target.value)
-                    }
-                    disabled={!settings.enabled || voices.length === 0}
-                    options={[
-                      { value: '', label: t('settings.tts.selectVoice') },
-                      ...voices.map(voice => ({
-                        value: voice,
-                        label: voice.charAt(0).toUpperCase() + voice.slice(1),
-                      })),
-                    ]}
-                  />
-                  <p className='text-xs text-gray-500 mt-1'>
-                    {t('settings.tts.voiceDescription')}
+                {voices.length > 0 ? (
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {t('settings.tts.voice')}
+                    </label>
+                    <Select
+                      aria-label={t('settings.tts.voice')}
+                      value={effectiveSettings.voice}
+                      onChange={event =>
+                        onSettingChange('voice', event.target.value)
+                      }
+                      disabled={!settings.enabled}
+                      options={[
+                        { value: '', label: t('settings.tts.selectVoice') },
+                        ...voices.map(voice => ({
+                          value: voice,
+                          label: voice.charAt(0).toUpperCase() + voice.slice(1),
+                        })),
+                      ]}
+                    />
+                    <p className='text-xs text-gray-500 mt-1'>
+                      {t('settings.tts.voiceDescription')}
+                    </p>
+                  </div>
+                ) : (
+                  <p className='rounded-lg bg-gray-50 p-3 text-xs text-gray-600 dark:bg-dark-50 dark:text-gray-400'>
+                    {t('settings.tts.providerDefaultVoice')}
                   </p>
-                </div>
+                )}
               </div>
             </div>
+
+            {selectedModel?.config?.supports_voice_cloning && (
+              <div className='rounded-lg border border-primary-500/20 bg-primary-500/[0.06] p-4'>
+                <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                  {t('settings.tts.voiceCloningAvailable')}
+                </h4>
+                <p className='mt-1 text-xs text-gray-600 dark:text-gray-400'>
+                  {t('settings.tts.voiceCloningAvailableDescription')}
+                </p>
+              </div>
+            )}
 
             {plugins.length > 0 && (
               <div className='bg-gray-50 dark:bg-dark-50 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>

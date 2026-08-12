@@ -653,6 +653,10 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const ttsGenerationRequests: MockTTSGenerationRequest[] = [];
   const imageGenerationRequests: MockImageGenerationRequest[] = [];
   const soundGenerationRequests: MockSoundGenerationRequest[] = [];
+  const voiceCloneRequests: Array<{
+    body: string;
+    contentType: string;
+  }> = [];
   const titleGenerationRequests: Array<{
     sessionId: string;
     model: string;
@@ -2086,6 +2090,25 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/media/audio/voice-clone' && method === 'POST') {
+        voiceCloneRequests.push({
+          body: route.request().postDataBuffer()?.toString('utf8') || '',
+          contentType: route.request().headers()['content-type'] || '',
+        });
+        await fulfillJson(route, {
+          id: 'generated-voice-clone',
+          userId: 'default',
+          kind: 'audio',
+          prompt: 'Cloned speech',
+          model: 'meituan-longcat/LongCat-AudioDiT-1B',
+          pluginId: 'longcat-audiodit',
+          mediaData: '/api/media/gallery/generated-voice-clone/content',
+          mimeType: 'audio/wav',
+          createdAt: Date.now(),
+        });
+        return;
+      }
+
       if (path === '/media/sound/generate' && method === 'POST') {
         const request = route
           .request()
@@ -2163,6 +2186,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     ttsGenerationRequests,
     imageGenerationRequests,
     soundGenerationRequests,
+    voiceCloneRequests,
     titleGenerationRequests,
     sessionUpdateRequests,
     folderCreateRequests,

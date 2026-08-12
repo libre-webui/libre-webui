@@ -33,6 +33,12 @@ export interface AudioGenModel {
     formats?: string[];
     default_format?: string;
     max_prompt_length?: number;
+    max_characters?: number;
+    allows_custom_voice?: boolean;
+    supports_voice_cloning?: boolean;
+    clone_requires_transcript?: boolean;
+    clone_audio_mime_types?: string[];
+    clone_max_audio_bytes?: number;
   };
 }
 
@@ -62,10 +68,35 @@ export const mediaApi = {
     pluginId: string;
     input: string;
     voice?: string;
-    response_format?: 'mp3' | 'pcm';
+    response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
     speed?: number;
   }): Promise<ApiResponse<GeneratedMedia>> =>
     api.post('/media/audio/generate', request).then(response => response.data),
+
+  cloneVoice: (request: {
+    model: string;
+    pluginId: string;
+    input: string;
+    referenceAudio: File;
+    referenceText?: string;
+    responseFormat?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
+  }): Promise<ApiResponse<GeneratedMedia>> => {
+    const form = new FormData();
+    form.set('model', request.model);
+    form.set('pluginId', request.pluginId);
+    form.set('input', request.input);
+    form.set('reference_audio', request.referenceAudio);
+    if (request.referenceText) {
+      form.set('reference_text', request.referenceText);
+    }
+    if (request.responseFormat) {
+      form.set('response_format', request.responseFormat);
+    }
+
+    return api
+      .post('/media/audio/voice-clone', form)
+      .then(response => response.data);
+  },
 
   generateSound: (request: {
     model: string;

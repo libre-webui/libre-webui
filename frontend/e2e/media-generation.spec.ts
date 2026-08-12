@@ -67,3 +67,87 @@ test('Imagine distinguishes OpenRouter sound generation from speech', async ({
     format: 'wav',
   });
 });
+
+test('Imagine exposes JSON-declared LongCat voice cloning fields', async ({
+  page,
+}) => {
+  const model = 'meituan-longcat/LongCat-AudioDiT-1B';
+  const mockApi = await mockLibreWebUiApi(page, {
+    mediaModels: {
+      video: [],
+      audio: [
+        {
+          model,
+          plugin: 'longcat-audiodit',
+          mode: 'speech',
+          config: {
+            formats: ['wav'],
+            default_format: 'wav',
+            allows_custom_voice: false,
+            supports_voice_cloning: true,
+            clone_requires_transcript: true,
+            clone_audio_mime_types: ['audio/wav'],
+            clone_max_audio_bytes: 5 * 1024 * 1024,
+          },
+        },
+      ],
+    },
+  });
+
+  await page.goto('/gallery');
+  await page
+    .locator('header')
+    .getByRole('button', { name: 'Audio', exact: true })
+    .click();
+
+  const dialog = page.getByRole('dialog', { name: 'Generate media' });
+  const cloneToggle = dialog.getByRole('checkbox', {
+    name: /Clone a reference voice/,
+  });
+  await expect(
+    dialog.getByRole('textbox', { name: 'Voice or voice ID' })
+  ).toHaveCount(0);
+  await cloneToggle.check();
+  await dialog.getByLabel('Reference audio').setInputFiles({
+    name: 'consented-reference.wav',
+    mimeType: 'audio/wav',
+    buffer: Buffer.from('RIFF\u0000\u0000\u0000\u0000WAVEfmt '),
+  });
+  await dialog
+    .getByRole('textbox', { name: 'Exact reference transcript' })
+    .fill('This is the exact reference recording.');
+  await cloneToggle.uncheck();
+  await cloneToggle.check();
+  await expect(dialog.getByLabel('Reference audio')).toHaveValue('');
+  await expect(
+    dialog.getByRole('textbox', { name: 'Exact reference transcript' })
+  ).toHaveValue('');
+  await expect(
+    dialog.getByRole('button', { name: 'Generate', exact: true })
+  ).toBeDisabled();
+
+  await dialog.getByLabel('Reference audio').setInputFiles({
+    name: 'consented-reference.wav',
+    mimeType: 'audio/wav',
+    buffer: Buffer.from('RIFF\u0000\u0000\u0000\u0000WAVEfmt '),
+  });
+  await dialog
+    .getByRole('textbox', { name: 'Exact reference transcript' })
+    .fill('This is the exact reference recording.');
+  await dialog
+    .getByRole('textbox', { name: 'Text to speak' })
+    .fill('Generate this sentence in the consented voice.');
+  await dialog.getByRole('button', { name: 'Generate', exact: true }).click();
+
+  await expect.poll(() => mockApi.voiceCloneRequests.length).toBe(1);
+  const request = mockApi.voiceCloneRequests[0];
+  expect(request.contentType).toContain('multipart/form-data; boundary=');
+  expect(request.body).toContain(model);
+  expect(request.body).toContain('longcat-audiodit');
+  expect(request.body).toContain('consented-reference.wav');
+  expect(request.body).toContain('This is the exact reference recording.');
+  expect(request.body).toContain(
+    'Generate this sentence in the consented voice.'
+  );
+  expect(request.body).toContain('wav');
+});
