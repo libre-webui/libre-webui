@@ -32,7 +32,7 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
-    "parse5": "^7.3.0",
+    "parse5": "^8.0.1",
     "pdfjs-dist": "^6.0.227",
     "sanitize-filename": "^1.6.3",
     "undici": "^8.10.0",
@@ -42,14 +42,14 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@types/bcrypt": "^6.0.0",
-    "@types/better-sqlite3": "^7.6.13",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/morgan": "^1.9.10",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@types/ws": "^8.5.10",
     "eslint": "^9.39.4",
-    "tsx": "^4.23.1",
+    "tsx": "^4.23.11",
     "typescript": "^7.0.2"
   }
 }
