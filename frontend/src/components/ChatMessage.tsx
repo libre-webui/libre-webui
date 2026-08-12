@@ -295,6 +295,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           const voice = savedSelection
             ? savedSettings?.voice || selectedModel?.config?.default_voice
             : selectedModel?.config?.default_voice;
+          const voiceProfileId = savedSelection
+            ? savedSettings?.voiceProfileId || undefined
+            : undefined;
           const providerMaxChars = Math.max(
             1,
             selectedModel?.config?.max_characters || 600
@@ -322,7 +325,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   model,
                   pluginId,
                   input,
-                  voice: voice || undefined,
+                  voice: voiceProfileId ? undefined : voice || undefined,
+                  voiceProfileId,
                   speed: savedSettings?.speed || 1.0,
                   response_format: selectedModel?.config?.default_format,
                 },

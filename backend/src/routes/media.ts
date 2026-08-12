@@ -12,6 +12,7 @@ import { authenticate, type AuthenticatedRequest } from '../middleware/auth.js';
 import galleryService from '../services/galleryService.js';
 import mediaGenerationJobService from '../services/mediaGenerationJobService.js';
 import pluginService from '../services/pluginService.js';
+import voiceProfileService from '../services/voiceProfileService.js';
 import { TTSProviderResponseError } from '../services/pluginTTSService.js';
 import type { GeneratedMediaKind } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
@@ -172,8 +173,15 @@ router.post(
   async (req: AuthenticatedRequest, res) => {
     try {
       await parseTTSVoiceCloneUpload(req, res);
-      const { model, pluginId, input, reference_text, response_format } =
-        req.body || {};
+      const {
+        model,
+        pluginId,
+        input,
+        reference_text,
+        response_format,
+        saveVoiceName,
+        consentToStore,
+      } = req.body || {};
       if (
         typeof model !== 'string' ||
         typeof pluginId !== 'string' ||
@@ -190,6 +198,30 @@ router.post(
         res.status(400).json({
           success: false,
           message: 'reference_text must be a string when provided',
+        });
+        return;
+      }
+      if (
+        saveVoiceName !== undefined &&
+        (typeof saveVoiceName !== 'string' || saveVoiceName.trim().length === 0)
+      ) {
+        res.status(400).json({
+          success: false,
+          message: 'saveVoiceName must be a non-empty string when provided',
+        });
+        return;
+      }
+      if (saveVoiceName !== undefined && consentToStore !== 'true') {
+        res.status(400).json({
+          success: false,
+          message: 'Explicit consent is required to save a reusable voice',
+        });
+        return;
+      }
+      if (consentToStore === 'true' && saveVoiceName === undefined) {
+        res.status(400).json({
+          success: false,
+          message: 'A voice name is required when consentToStore is true',
         });
         return;
       }
@@ -218,6 +250,24 @@ router.post(
           ? config.default_format
           : 'wav';
       const referenceAudio = validateTTSVoiceCloneAudio(req.file, config);
+      const profileInput =
+        saveVoiceName !== undefined
+          ? {
+              name: saveVoiceName,
+              pluginId: selectedPlugin.id,
+              model,
+              routingFingerprint:
+                pluginService.getCredentialRoutingAuthFingerprint(
+                  selectedPlugin,
+                  id
+                ),
+              referenceAudio,
+              ...(reference_text?.trim()
+                ? { referenceText: reference_text.trim() }
+                : {}),
+            }
+          : null;
+      if (profileInput) voiceProfileService.validateCreate(id, profileInput);
       const audio = await pluginService.executeVoiceCloneRequest(
         model,
         input.trim(),
@@ -240,6 +290,17 @@ router.post(
         metadata: { mode: 'speech', voiceClone: true, format },
       });
       if (!saved) throw new Error('Failed to save generated audio');
+      // Persist only after successful provider and gallery generation. If the
+      // final atomic profile check loses a race, roll back the gallery item so
+      // the caller never receives a partial success.
+      if (profileInput) {
+        try {
+          voiceProfileService.create(id, profileInput);
+        } catch (error) {
+          galleryService.deleteMedia(saved.id, id);
+          throw error;
+        }
+      }
       res.json({ success: true, data: publicMedia(saved) });
     } catch (error) {
       if (error instanceof multer.MulterError) {
@@ -273,7 +334,7 @@ router.post(
         error instanceof Error ? error.message : 'Voice cloning failed';
       res
         .status(
-          /required|maximum length|does not support|no voice clone endpoint/i.test(
+          /required|maximum|at most|limited to|already exists|unsupported|does not support|no voice clone endpoint/i.test(
             message
           )
             ? 400

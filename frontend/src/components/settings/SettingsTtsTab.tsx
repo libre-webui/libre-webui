@@ -15,13 +15,22 @@
  * limitations under the License.
  */
 
-import { Check, Loader2, Play, RotateCcw, Square, Volume2 } from 'lucide-react';
+import {
+  Check,
+  Loader2,
+  Play,
+  RotateCcw,
+  Square,
+  Trash2,
+  Volume2,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, Select } from '@/components/ui';
 import {
   getTTSModelOptionValue,
   type TTSModel,
   type TTSPlugin,
+  type TTSVoiceProfile,
 } from '@/utils/api';
 import type { TTSSettings } from '@/types';
 import { SettingsToggle } from './SettingsToggle';
@@ -33,12 +42,17 @@ interface SettingsTtsTabProps {
   models: TTSModel[];
   plugins: TTSPlugin[];
   voices: string[];
+  voiceProfiles: TTSVoiceProfile[];
+  selectableVoiceProfiles: TTSVoiceProfile[];
+  loadingVoiceProfiles: boolean;
   testing: boolean;
   onSettingChange: (
     key: keyof TTSSettings,
     value: string | number | boolean
   ) => void;
   onModelChange: (modelName: string, pluginId: string) => void;
+  onVoiceChange: (voice: string, voiceProfileId: string) => void;
+  onDeleteVoiceProfile: (profile: TTSVoiceProfile) => void;
   onReset: () => void;
   onTest: () => void;
   onSave: () => void;
@@ -51,9 +65,14 @@ export function SettingsTtsTab({
   models,
   plugins,
   voices,
+  voiceProfiles,
+  selectableVoiceProfiles,
+  loadingVoiceProfiles,
   testing,
   onSettingChange,
   onModelChange,
+  onVoiceChange,
+  onDeleteVoiceProfile,
   onReset,
   onTest,
   onSave,
@@ -194,17 +213,29 @@ export function SettingsTtsTab({
                   </p>
                 </div>
 
-                {voices.length > 0 ? (
+                {voices.length > 0 || selectableVoiceProfiles.length > 0 ? (
                   <div>
                     <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       {t('settings.tts.voice')}
                     </label>
                     <Select
                       aria-label={t('settings.tts.voice')}
-                      value={effectiveSettings.voice}
-                      onChange={event =>
-                        onSettingChange('voice', event.target.value)
+                      value={
+                        effectiveSettings.voiceProfileId
+                          ? savedVoiceOptionValue(
+                              effectiveSettings.voiceProfileId
+                            )
+                          : effectiveSettings.voice
                       }
+                      onChange={event => {
+                        const savedVoiceId = parseSavedVoiceOptionValue(
+                          event.target.value
+                        );
+                        onVoiceChange(
+                          savedVoiceId ? '' : event.target.value,
+                          savedVoiceId || ''
+                        );
+                      }}
                       disabled={!settings.enabled}
                       options={[
                         { value: '', label: t('settings.tts.selectVoice') },
@@ -212,11 +243,26 @@ export function SettingsTtsTab({
                           value: voice,
                           label: voice.charAt(0).toUpperCase() + voice.slice(1),
                         })),
+                        ...selectableVoiceProfiles.map(profile => ({
+                          value: savedVoiceOptionValue(profile.id),
+                          label: t('settings.tts.savedVoiceOption', {
+                            name: profile.name,
+                            defaultValue: '{{name}} (saved voice)',
+                          }),
+                          key: `saved-voice-${profile.id}`,
+                        })),
                       ]}
                     />
                     <p className='text-xs text-gray-500 mt-1'>
                       {t('settings.tts.voiceDescription')}
                     </p>
+                  </div>
+                ) : loadingVoiceProfiles ? (
+                  <div className='flex items-center gap-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-600 dark:bg-dark-50 dark:text-gray-400'>
+                    <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                    {t('settings.tts.loadingSavedVoices', {
+                      defaultValue: 'Loading saved voices…',
+                    })}
                   </div>
                 ) : (
                   <p className='rounded-lg bg-gray-50 p-3 text-xs text-gray-600 dark:bg-dark-50 dark:text-gray-400'>
@@ -299,6 +345,67 @@ export function SettingsTtsTab({
           </div>
         )}
       </div>
+
+      {(loadingVoiceProfiles || voiceProfiles.length > 0) && (
+        <div className='rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-300 dark:bg-dark-100'>
+          <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+            {t('settings.tts.savedVoices', {
+              defaultValue: 'Saved voices',
+            })}
+          </h4>
+          {loadingVoiceProfiles ? (
+            <div className='mt-3 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400'>
+              <Loader2 className='h-3.5 w-3.5 animate-spin' />
+              {t('settings.tts.loadingSavedVoices', {
+                defaultValue: 'Loading saved voices…',
+              })}
+            </div>
+          ) : (
+            <div className='mt-3 space-y-2'>
+              {voiceProfiles.map(profile => (
+                <div
+                  key={profile.id}
+                  className='flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-dark-300 dark:bg-dark-50'
+                >
+                  <div className='min-w-0'>
+                    <p className='truncate text-sm text-gray-800 dark:text-gray-200'>
+                      {profile.name}
+                    </p>
+                    <p className='truncate text-xs text-gray-500 dark:text-gray-400'>
+                      {profile.pluginId} · {profile.model}
+                    </p>
+                  </div>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => onDeleteVoiceProfile(profile)}
+                    aria-label={t('settings.tts.deleteSavedVoice', {
+                      name: profile.name,
+                      defaultValue: 'Delete saved voice {{name}}',
+                    })}
+                    className='shrink-0 px-2 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30'
+                  >
+                    <Trash2 className='h-4 w-4' />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
+}
+
+const SAVED_VOICE_OPTION_PREFIX = '__saved_voice__:';
+
+function savedVoiceOptionValue(id: string): string {
+  return `${SAVED_VOICE_OPTION_PREFIX}${id}`;
+}
+
+function parseSavedVoiceOptionValue(value: string): string | undefined {
+  return value.startsWith(SAVED_VOICE_OPTION_PREFIX)
+    ? value.slice(SAVED_VOICE_OPTION_PREFIX.length)
+    : undefined;
 }

@@ -157,6 +157,7 @@ export interface TTSSettings {
   autoPlay: boolean;
   model: string;
   voice: string;
+  voiceProfileId?: string;
   speed: number;
   pluginId?: string;
   streamSentences?: boolean; // Play sentence by sentence instead of full message

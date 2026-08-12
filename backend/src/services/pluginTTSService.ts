@@ -111,6 +111,7 @@ export interface VoiceCloneRequestOptions {
   response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
   pluginId?: string;
   userId?: string;
+  signal?: AbortSignal;
 }
 
 export class TTSProviderResponseError extends Error {
@@ -573,6 +574,7 @@ export class PluginTTSService {
         timeout: 120000,
         responseType: 'arraybuffer',
         maxRedirects: 0,
+        signal: options.signal,
       });
       const audio = Buffer.from(response.data);
       this.deps.recordUsage?.({
@@ -588,21 +590,26 @@ export class PluginTTSService {
       });
       return audio;
     } catch (error: unknown) {
+      const cancelled = axios.isCancel(error) || options.signal?.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
         pluginName: plugin.name,
         capability: 'tts',
         model,
-        status: 'error',
+        status: cancelled ? 'cancelled' : 'error',
         durationMs: Date.now() - startedAt,
         inputUnits: input.length,
         unitKind: 'characters',
       });
-      logger.error(
-        `TTS voice clone request failed for ${plugin.id}:`,
-        describeTTSRequestFailure(error)
-      );
+      if (!cancelled) {
+        logger.error(
+          `TTS voice clone request failed for ${plugin.id}:`,
+          describeTTSRequestFailure(error)
+        );
+      }
+
+      if (cancelled) throw new Error('TTS voice clone request was cancelled');
 
       if (axios.isAxiosError(error) && error.response) {
         let errorMessage = error.response.statusText;

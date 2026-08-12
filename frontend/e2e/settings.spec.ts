@@ -1270,6 +1270,359 @@ test('TTS keeps the selected provider for shared model aliases and generation', 
   );
 });
 
+test('Speech settings select, test, and delete a saved cloned voice', async ({
+  page,
+}) => {
+  const model = 'meituan-longcat/LongCat-AudioDiT-3.5B';
+  const profileId = 'saved-longcat-voice';
+  const now = Date.now();
+  const mockApi = await mockLibreWebUiApi(page, {
+    preferences: {
+      ttsSettings: {
+        enabled: true,
+        autoPlay: false,
+        model,
+        voice: '',
+        voiceProfileId: profileId,
+        speed: 1,
+        pluginId: 'longcat-audiodit',
+        streamSentences: true,
+      },
+    },
+    ttsModels: [
+      {
+        model,
+        plugin: 'longcat-audiodit',
+        config: {
+          voices: ['narrator'],
+          default_voice: 'narrator',
+          formats: ['wav'],
+          default_format: 'wav',
+          supports_voice_cloning: true,
+          clone_requires_transcript: true,
+        },
+      },
+    ],
+    ttsPlugins: [
+      {
+        id: 'longcat-audiodit',
+        name: 'LongCat AudioDiT',
+        models: [model],
+      },
+    ],
+    ttsVoiceProfiles: [
+      {
+        id: profileId,
+        name: 'Robin',
+        pluginId: 'longcat-audiodit',
+        model,
+        mimeType: 'audio/wav',
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'e2e-token');
+
+    class MockAudio {
+      currentTime = 0;
+      onended: ((event: Event) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+
+      pause() {}
+
+      play() {
+        queueMicrotask(() => this.onended?.(new Event('ended')));
+        return Promise.resolve();
+      }
+    }
+
+    Object.defineProperty(window, 'Audio', {
+      configurable: true,
+      value: MockAudio,
+    });
+  });
+
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await page.getByRole('tab', { name: 'Speech' }).click();
+
+  const voiceSelect = page.getByRole('combobox', { name: 'Voice' });
+  await expect(voiceSelect).toHaveValue(`__saved_voice__:${profileId}`);
+  await expect(voiceSelect.locator('option')).toHaveText([
+    'Select a voice',
+    'Narrator',
+    'Robin (saved voice)',
+  ]);
+
+  await page.getByRole('button', { name: 'Test', exact: true }).click();
+  await expect.poll(() => mockApi.ttsGenerationRequests.length).toBe(1);
+  expect(mockApi.ttsGenerationRequests[0]).toMatchObject({
+    model,
+    pluginId: 'longcat-audiodit',
+    voiceProfileId: profileId,
+    response_format: 'wav',
+  });
+  expect(mockApi.ttsGenerationRequests[0].voice).toBeUndefined();
+
+  await voiceSelect.selectOption('narrator');
+  await page.getByRole('button', { name: 'Save Settings' }).click();
+  await expect
+    .poll(() => mockApi.preferenceUpdateRequests.length)
+    .toBeGreaterThan(0);
+  expect(mockApi.preferenceUpdateRequests.at(-1)?.ttsSettings).toMatchObject({
+    voice: 'narrator',
+    voiceProfileId: '',
+  });
+
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Delete saved voice Robin' }).click();
+  await expect
+    .poll(() => mockApi.ttsVoiceProfileDeleteRequests)
+    .toEqual([profileId]);
+  await expect(voiceSelect.locator('option')).toHaveText([
+    'Select a voice',
+    'Narrator',
+  ]);
+});
+
+test('Speech settings clear a route-mismatched saved voice preference', async ({
+  page,
+}) => {
+  const model = 'meituan-longcat/LongCat-AudioDiT-3.5B';
+  const mockApi = await mockLibreWebUiApi(page, {
+    preferences: {
+      ttsSettings: {
+        enabled: true,
+        autoPlay: false,
+        model,
+        voice: '',
+        voiceProfileId: 'deleted-profile',
+        speed: 1,
+        pluginId: 'longcat-audiodit',
+        streamSentences: true,
+      },
+    },
+    ttsModels: [
+      {
+        model,
+        plugin: 'longcat-audiodit',
+        config: {
+          voices: ['narrator'],
+          default_voice: 'narrator',
+          formats: ['wav'],
+          default_format: 'wav',
+          supports_voice_cloning: true,
+          clone_requires_transcript: true,
+        },
+      },
+    ],
+    ttsPlugins: [
+      {
+        id: 'longcat-audiodit',
+        name: 'LongCat AudioDiT',
+        models: [model],
+      },
+    ],
+    ttsVoiceProfiles: [
+      {
+        id: 'deleted-profile',
+        name: 'Voice from another route',
+        pluginId: 'different-tts-provider',
+        model,
+        mimeType: 'audio/wav',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
+    ],
+  });
+
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await page.getByRole('tab', { name: 'Speech' }).click();
+
+  await expect(page.getByRole('combobox', { name: 'Voice' })).toHaveValue(
+    'narrator'
+  );
+  await expect
+    .poll(
+      () =>
+        mockApi.preferenceUpdateRequests.find(
+          request => request.ttsSettings?.voiceProfileId === ''
+        )?.ttsSettings
+    )
+    .toMatchObject({ voice: 'narrator', voiceProfileId: '' });
+});
+
+test('deleting a selected voice clears live playback when preference persistence fails', async ({
+  page,
+}) => {
+  const model = 'meituan-longcat/LongCat-AudioDiT-3.5B';
+  const profileId = 'selected-profile-with-failed-cleanup';
+  const now = Date.now();
+  const mockApi = await mockLibreWebUiApi(page, {
+    preferenceUpdateFailures: 1,
+    preferences: {
+      ttsSettings: {
+        enabled: true,
+        autoPlay: false,
+        model,
+        voice: '',
+        voiceProfileId: profileId,
+        speed: 1,
+        pluginId: 'longcat-audiodit',
+        streamSentences: true,
+      },
+    },
+    ttsModels: [
+      {
+        model,
+        plugin: 'longcat-audiodit',
+        config: {
+          voices: ['narrator'],
+          default_voice: 'narrator',
+          formats: ['wav'],
+          default_format: 'wav',
+          supports_voice_cloning: true,
+          clone_requires_transcript: true,
+        },
+      },
+    ],
+    ttsVoiceProfiles: [
+      {
+        id: profileId,
+        name: 'Soon deleted voice',
+        pluginId: 'longcat-audiodit',
+        model,
+        mimeType: 'audio/wav',
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
+    sessions: [
+      {
+        id: 'deleted-voice-live-playback',
+        title: 'Deleted voice playback',
+        model: 'llama3.2:3b',
+        createdAt: now,
+        updatedAt: now,
+        messages: [
+          {
+            id: 'deleted-voice-assistant',
+            role: 'assistant',
+            content: 'Read this with the safe fallback voice.',
+            timestamp: now,
+            model: 'llama3.2:3b',
+          },
+        ],
+      },
+    ],
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'e2e-token');
+    Object.defineProperty(window, 'AudioContext', {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(window, 'webkitAudioContext', {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: () => 'blob:e2e-deleted-voice',
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: () => undefined,
+    });
+    class MockAudio {
+      currentTime = 0;
+      onended: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      pause() {}
+      play() {
+        queueMicrotask(() => this.onended?.());
+        return Promise.resolve();
+      }
+      removeAttribute() {}
+      load() {}
+    }
+    Object.defineProperty(window, 'Audio', {
+      configurable: true,
+      value: MockAudio,
+    });
+  });
+
+  await page.goto('/c/deleted-voice-live-playback');
+  await expect(page.locator('button[title="Read aloud"]')).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await page.getByRole('tab', { name: 'Speech' }).click();
+  page.once('dialog', dialog => dialog.accept());
+  await page
+    .getByRole('button', { name: 'Delete saved voice Soon deleted voice' })
+    .click();
+  await expect(page.getByText('Soon deleted voice')).toHaveCount(0);
+  await expect(
+    page.getByText(
+      'Saved voice deleted, but Speech settings could not be reset'
+    )
+  ).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await page.locator('button[title="Read aloud"]').click();
+  await expect.poll(() => mockApi.ttsGenerationRequests.length).toBe(1);
+  expect(mockApi.ttsGenerationRequests[0]).toMatchObject({
+    voice: 'narrator',
+  });
+  expect(mockApi.ttsGenerationRequests[0].voiceProfileId).toBeUndefined();
+});
+
+test('Speech settings can delete a saved voice after its provider is removed', async ({
+  page,
+}) => {
+  const profileId = 'orphaned-saved-voice';
+  const now = Date.now();
+  const mockApi = await mockLibreWebUiApi(page, {
+    ttsModels: [],
+    ttsPlugins: [],
+    ttsVoiceProfiles: [
+      {
+        id: profileId,
+        name: 'Retired provider voice',
+        pluginId: 'removed-longcat',
+        model: 'meituan-longcat/LongCat-AudioDiT-3.5B',
+        mimeType: 'audio/wav',
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
+  });
+
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await page.getByRole('tab', { name: 'Speech' }).click();
+
+  await expect(page.getByText('No TTS Providers')).toBeVisible();
+  await expect(page.getByText('Retired provider voice')).toBeVisible();
+  await expect(
+    page.getByText('removed-longcat · meituan-longcat/LongCat-AudioDiT-3.5B')
+  ).toBeVisible();
+
+  page.once('dialog', dialog => dialog.accept());
+  await page
+    .getByRole('button', { name: 'Delete saved voice Retired provider voice' })
+    .click();
+  await expect
+    .poll(() => mockApi.ttsVoiceProfileDeleteRequests)
+    .toEqual([profileId]);
+  await expect(page.getByText('Retired provider voice')).toHaveCount(0);
+});
+
 test('image generation keeps duplicate model providers distinct through save and generation', async ({
   page,
 }) => {

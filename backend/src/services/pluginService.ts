@@ -2253,6 +2253,7 @@ export class PluginService {
       response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
       pluginId?: string;
       userId?: string;
+      signal?: AbortSignal;
     } = {}
   ): Promise<Buffer> {
     return this.ttsService.executeVoiceCloneRequest(

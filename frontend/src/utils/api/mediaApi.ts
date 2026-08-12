@@ -80,6 +80,8 @@ export const mediaApi = {
     referenceAudio: File;
     referenceText?: string;
     responseFormat?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
+    saveVoiceName?: string;
+    consentToStore?: boolean;
   }): Promise<ApiResponse<GeneratedMedia>> => {
     const form = new FormData();
     form.set('model', request.model);
@@ -91,6 +93,12 @@ export const mediaApi = {
     }
     if (request.responseFormat) {
       form.set('response_format', request.responseFormat);
+    }
+    if (request.saveVoiceName) {
+      form.set('saveVoiceName', request.saveVoiceName);
+    }
+    if (request.consentToStore) {
+      form.set('consentToStore', 'true');
     }
 
     return api

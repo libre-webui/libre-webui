@@ -135,8 +135,20 @@ test('Imagine exposes JSON-declared LongCat voice cloning fields', async ({
     .getByRole('textbox', { name: 'Exact reference transcript' })
     .fill('This is the exact reference recording.');
   await dialog
+    .getByRole('checkbox', { name: /Save as a reusable voice/ })
+    .check();
+  await dialog
+    .getByRole('textbox', { name: 'Saved voice name' })
+    .fill('Robin test voice');
+  await dialog
     .getByRole('textbox', { name: 'Text to speak' })
     .fill('Generate this sentence in the consented voice.');
+  await expect(
+    dialog.getByRole('button', { name: 'Generate', exact: true })
+  ).toBeDisabled();
+  await dialog
+    .getByRole('checkbox', { name: /permission to clone and store/ })
+    .check();
   await dialog.getByRole('button', { name: 'Generate', exact: true }).click();
 
   await expect.poll(() => mockApi.voiceCloneRequests.length).toBe(1);
@@ -149,5 +161,8 @@ test('Imagine exposes JSON-declared LongCat voice cloning fields', async ({
   expect(request.body).toContain(
     'Generate this sentence in the consented voice.'
   );
+  expect(request.body).toContain('saveVoiceName');
+  expect(request.body).toContain('Robin test voice');
+  expect(request.body).toContain('consentToStore');
   expect(request.body).toContain('wav');
 });

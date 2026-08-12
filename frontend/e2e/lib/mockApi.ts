@@ -84,6 +84,8 @@ type MockTTSModel = {
     default_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
     max_characters?: number;
     supports_streaming?: boolean;
+    supports_voice_cloning?: boolean;
+    clone_requires_transcript?: boolean;
   };
 };
 
@@ -196,8 +198,19 @@ type MockTTSGenerationRequest = {
   pluginId?: string;
   input: string;
   voice?: string;
+  voiceProfileId?: string;
   response_format?: string;
   speed?: number;
+};
+
+type MockTTSVoiceProfile = {
+  id: string;
+  name: string;
+  pluginId: string;
+  model: string;
+  mimeType: string;
+  createdAt: number;
+  updatedAt: number;
 };
 
 type MockMessage = {
@@ -395,6 +408,7 @@ type MockOptions = {
   cloudLibraryModels?: MockLibraryModel[];
   ttsModels?: MockTTSModel[];
   ttsPlugins?: MockTTSPlugin[];
+  ttsVoiceProfiles?: MockTTSVoiceProfile[];
   imageGenModels?: MockImageGenModel[];
   imageGenPlugins?: MockImageGenPlugin[];
   mediaModels?: MockMediaModels;
@@ -475,6 +489,7 @@ const defaultPreferences = {
     autoPlay: false,
     model: '',
     voice: '',
+    voiceProfileId: '',
     speed: 1,
     pluginId: '',
     streamSentences: false,
@@ -593,6 +608,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     options.cloudLibraryModels ?? defaultCloudLibraryModels;
   const ttsModels = options.ttsModels ?? [];
   const ttsPlugins = options.ttsPlugins ?? [];
+  let ttsVoiceProfiles = structuredClone(options.ttsVoiceProfiles ?? []);
   const imageGenModels = options.imageGenModels ?? [];
   const imageGenPlugins = options.imageGenPlugins ?? [];
   const mediaModels = options.mediaModels ?? { video: [], audio: [] };
@@ -651,6 +667,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     : null;
   const pullStreamUrls: string[] = [];
   const ttsGenerationRequests: MockTTSGenerationRequest[] = [];
+  const ttsVoiceProfileDeleteRequests: string[] = [];
   const imageGenerationRequests: MockImageGenerationRequest[] = [];
   const soundGenerationRequests: MockSoundGenerationRequest[] = [];
   const voiceCloneRequests: Array<{
@@ -2138,6 +2155,33 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/tts/voice-profiles' && method === 'GET') {
+        const pluginId = url.searchParams.get('pluginId');
+        const model = url.searchParams.get('model');
+        await fulfillJson(
+          route,
+          ttsVoiceProfiles.filter(
+            profile =>
+              (!pluginId || profile.pluginId === pluginId) &&
+              (!model || profile.model === model)
+          )
+        );
+        return;
+      }
+
+      const ttsVoiceProfileMatch = path.match(
+        /^\/tts\/voice-profiles\/([^/]+)$/
+      );
+      if (ttsVoiceProfileMatch && method === 'DELETE') {
+        const id = decodeURIComponent(ttsVoiceProfileMatch[1]);
+        ttsVoiceProfileDeleteRequests.push(id);
+        ttsVoiceProfiles = ttsVoiceProfiles.filter(
+          profile => profile.id !== id
+        );
+        await route.fulfill({ status: 204, body: '' });
+        return;
+      }
+
       if (path === '/tts/generate-base64' && method === 'POST') {
         ttsGenerationRequests.push(
           route.request().postDataJSON() as MockTTSGenerationRequest
@@ -2147,6 +2191,18 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           format: 'wav',
           mimeType: 'audio/wav',
           size: 4,
+        });
+        return;
+      }
+
+      if (path === '/tts/generate' && method === 'POST') {
+        ttsGenerationRequests.push(
+          route.request().postDataJSON() as MockTTSGenerationRequest
+        );
+        await route.fulfill({
+          status: 200,
+          contentType: 'audio/wav',
+          body: Buffer.from('RIFF0000WAVEfmt '),
         });
         return;
       }
@@ -2184,6 +2240,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         .forEach(releasePreferenceUpdate => releasePreferenceUpdate());
     },
     ttsGenerationRequests,
+    ttsVoiceProfileDeleteRequests,
     imageGenerationRequests,
     soundGenerationRequests,
     voiceCloneRequests,

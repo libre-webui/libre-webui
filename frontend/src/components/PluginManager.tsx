@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { usePluginStore } from '@/store/pluginStore';
@@ -62,6 +63,7 @@ export const PluginVariablesEditor: React.FC<{
   plugin: Plugin;
 }> = ({ plugin }) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const user = useAuthStore(state => state.user);
   const systemInfo = useAuthStore(state => state.systemInfo);
   const canManageProviderRouting =
@@ -258,12 +260,15 @@ export const PluginVariablesEditor: React.FC<{
         update.unset
       );
       if (success) {
-        if (
-          Object.keys(changedVariables).some(name =>
-            connectionVariableNames.has(name)
-          )
-        ) {
+        const connectionChanged = Object.keys(changedVariables).some(name =>
+          connectionVariableNames.has(name)
+        );
+        if (connectionChanged) {
           await loadPlugins();
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+            queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+          ]);
         }
         setLocalValues(current => {
           const next = { ...current };
@@ -319,6 +324,10 @@ export const PluginVariablesEditor: React.FC<{
         schema.some(definition => connectionVariableNames.has(definition.name))
       ) {
         await loadPlugins();
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+          queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+        ]);
       }
 
       setLocalValues(initializePluginVariableInputs(schema, {}));
@@ -679,6 +688,7 @@ interface PluginManagerProps {
 }
 
 export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
+  const queryClient = useQueryClient();
   const {
     plugins,
     isLoading,
@@ -725,6 +735,10 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+        queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+      ]);
     }
   };
 
@@ -734,6 +748,10 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       await usePluginStore.getState().installPlugin(pluginData);
       setShowJsonForm(false);
       setJsonInput('');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+        queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+      ]);
     } catch (_error) {
       usePluginStore.getState().setError('Invalid JSON format');
     }
@@ -745,11 +763,19 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
     } else {
       await activatePlugin(id);
     }
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+      queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+    ]);
   };
 
   const handleDeletePlugin = async (id: string) => {
     if (window.confirm(t('pluginManager.confirmDelete'))) {
       await deletePlugin(id);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+        queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+      ]);
     }
   };
 

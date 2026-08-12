@@ -178,6 +178,9 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
       const voice = savedSelectionIsValid
         ? ttsSettings?.voice || selectedModel?.config?.default_voice
         : selectedModel?.config?.default_voice;
+      const voiceProfileId = savedSelectionIsValid
+        ? ttsSettings?.voiceProfileId || undefined
+        : undefined;
       const speed = ttsSettings?.speed || 1.0;
       const responseFormat = selectedModel?.config?.default_format;
       const providerMaxChars = Math.max(
@@ -209,7 +212,8 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
               model,
               pluginId,
               input,
-              voice: voice || undefined,
+              voice: voiceProfileId ? undefined : voice || undefined,
+              voiceProfileId,
               speed,
               response_format: responseFormat,
             },

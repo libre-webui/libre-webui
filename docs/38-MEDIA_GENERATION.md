@@ -60,13 +60,27 @@ image generation is enabled in Settings), plus **Video** and **Audio** panels.
 Speech and sound generation are synchronous: the request runs, the result is
 saved to the gallery, and the response returns the finished item.
 
-TTS plugins can also declare one-time voice cloning. For those models, the
-Audio panel shows a reference-audio upload and, when the provider requires it,
-an exact transcript field. Libre WebUI validates the manifest's file type and
-size limits, holds the upload in memory, and forwards it only to the selected
-provider. The reference recording is not stored in the gallery; only the
-generated speech is saved. Only use recordings from speakers who consented to
-the cloning request.
+TTS plugins can also declare voice cloning. For those models, the Audio panel
+shows a reference-audio upload and, when the provider requires it, an exact
+transcript field. Libre WebUI validates the manifest's file type and size
+limits, holds the upload in memory, and forwards it only to the selected
+provider. Only the generated speech is placed in the gallery.
+
+A clone can optionally be saved as a reusable, named voice for the same plugin
+and model. Saving requires a separate storage-consent confirmation. Libre WebUI
+encrypts the original reference and transcript in a user-owned voice profile;
+it does not use generated speech as the reference. Saved profiles can be
+selected or permanently deleted under **Settings → Text-to-Speech**. The
+configured provider receives the stored reference again whenever it generates
+a Speech batch. The profile is bound to that provider's approved routing; if
+the plugin definition or endpoint changes, recreate the profile to consent to
+the new destination. Only use recordings from speakers who consented to both
+the cloning request and any requested storage.
+
+Voice profiles are intentionally omitted from Libre WebUI's general data
+export because they contain biometric source material. Back up the encrypted
+application database and `ENCRYPTION_KEY` together if you need disaster
+recovery; otherwise recreate profiles from the original consented recordings.
 
 ### Video Job Lifecycle
 

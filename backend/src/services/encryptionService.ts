@@ -35,6 +35,7 @@ export class EncryptionService {
   private static instance: EncryptionService;
   private encryptionKey: Buffer;
   private algorithm = 'aes-256-gcm';
+  private readonly binaryEnvelopeMagic = Buffer.from('LWB1', 'ascii');
 
   /**
    * Automatically add the encryption key to the .env file or persistent storage
@@ -344,6 +345,74 @@ export class EncryptionService {
       logger.error('Decryption error:', error);
       logger.warn('Treating as unencrypted data for backward compatibility');
       return encryptedData; // Return original data if decryption fails
+    }
+  }
+
+  /**
+   * Encrypt arbitrary bytes in a versioned AES-256-GCM envelope.
+   *
+   * Binary payloads must not be converted to text before encryption: doing so
+   * can corrupt audio and other non-UTF-8 data. The envelope is self-checking
+   * and intentionally has no plaintext fallback.
+   */
+  public encryptBuffer(plaintext: Buffer, additionalData?: Buffer): Buffer {
+    try {
+      const iv = crypto.randomBytes(12);
+      const cipher = crypto.createCipheriv(
+        this.algorithm,
+        this.encryptionKey,
+        iv
+      ) as crypto.CipherGCM;
+      if (additionalData) cipher.setAAD(additionalData);
+      const encrypted = Buffer.concat([
+        cipher.update(plaintext),
+        cipher.final(),
+      ]);
+      const authTag = cipher.getAuthTag();
+
+      return Buffer.concat([this.binaryEnvelopeMagic, iv, authTag, encrypted]);
+    } catch (error) {
+      logger.error('Binary encryption error:', error);
+      throw new Error('Failed to encrypt binary data');
+    }
+  }
+
+  /**
+   * Decrypt bytes produced by encryptBuffer(). Authentication failures are
+   * fatal so corrupted or plaintext data can never be mistaken for a secret.
+   */
+  public decryptBuffer(encryptedData: Buffer, additionalData?: Buffer): Buffer {
+    const magicLength = this.binaryEnvelopeMagic.length;
+    const ivLength = 12;
+    const authTagLength = 16;
+    const minimumLength = magicLength + ivLength + authTagLength;
+
+    if (
+      encryptedData.length < minimumLength ||
+      !encryptedData.subarray(0, magicLength).equals(this.binaryEnvelopeMagic)
+    ) {
+      throw new Error('Invalid encrypted binary data');
+    }
+
+    try {
+      const ivStart = magicLength;
+      const tagStart = ivStart + ivLength;
+      const encryptedStart = tagStart + authTagLength;
+      const decipher = crypto.createDecipheriv(
+        this.algorithm,
+        this.encryptionKey,
+        encryptedData.subarray(ivStart, tagStart)
+      ) as crypto.DecipherGCM;
+      if (additionalData) decipher.setAAD(additionalData);
+      decipher.setAuthTag(encryptedData.subarray(tagStart, encryptedStart));
+
+      return Buffer.concat([
+        decipher.update(encryptedData.subarray(encryptedStart)),
+        decipher.final(),
+      ]);
+    } catch (error) {
+      logger.error('Binary decryption error:', error);
+      throw new Error('Failed to decrypt binary data');
     }
   }
 

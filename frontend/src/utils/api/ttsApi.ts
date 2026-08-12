@@ -52,8 +52,19 @@ export interface TTSGenerateRequest {
   pluginId?: string;
   input: string;
   voice?: string;
+  voiceProfileId?: string;
   response_format?: TTSResponseFormat;
   speed?: number;
+}
+
+export interface TTSVoiceProfile {
+  id: string;
+  name: string;
+  pluginId: string;
+  model: string;
+  mimeType: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface TTSGenerateBase64Response {
@@ -127,6 +138,29 @@ export const ttsApi = {
     }
 
     return api.get('/tts/plugins').then(res => res.data);
+  },
+
+  getVoiceProfiles: (
+    filters: {
+      pluginId?: string;
+      model?: string;
+    } = {}
+  ): Promise<ApiResponse<TTSVoiceProfile[]>> => {
+    if (isDemoMode()) return createDemoResponse<TTSVoiceProfile[]>([]);
+
+    return api
+      .get('/tts/voice-profiles', {
+        params: {
+          pluginId: filters.pluginId || undefined,
+          model: filters.model || undefined,
+        },
+      })
+      .then(res => res.data);
+  },
+
+  deleteVoiceProfile: async (id: string): Promise<void> => {
+    if (isDemoMode()) return;
+    await api.delete(`/tts/voice-profiles/${encodeURIComponent(id)}`);
   },
 
   // Get voices for a specific plugin
@@ -214,6 +248,7 @@ export const ttsApi = {
       model?: string;
       pluginId?: string;
       voice?: string;
+      voiceProfileId?: string;
       speed?: number;
       responseFormat?: TTSResponseFormat;
       onStart?: () => void;
@@ -229,6 +264,7 @@ export const ttsApi = {
         pluginId: options.pluginId,
         input: text,
         voice: options.voice,
+        voiceProfileId: options.voiceProfileId,
         speed: options.speed,
         response_format: options.responseFormat,
       });

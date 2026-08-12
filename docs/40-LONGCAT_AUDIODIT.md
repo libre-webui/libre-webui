@@ -56,8 +56,10 @@ python examples/longcat-audiodit-server/server.py \
 
 The server binds to `127.0.0.1:8300` by default. It is intentionally
 authentication-free for local use, so do not expose it directly to an
-untrusted network. A CUDA Docker example and health check are documented in
-`examples/longcat-audiodit-server/README.md`.
+untrusted network. Use an authenticated HTTPS gateway when Libre WebUI and the
+adapter are on different hosts: reusable voices send the decrypted reference
+recording to that endpoint for every Speech batch. A CUDA Docker example and
+health check are documented in `examples/longcat-audiodit-server/README.md`.
 
 ## Enable the plugin
 
@@ -65,6 +67,12 @@ Open **Settings → Plugins → LongCat AudioDiT**, activate it, and leave the
 default local endpoints unless the adapter runs elsewhere. Model discovery
 advertises only the checkpoint resident in that server process. Restart the
 adapter to switch between the 1B and 3.5B models.
+
+When a gateway such as llama-swap fronts the adapter, configure the Models API
+Endpoint as the adapter's `GET /v1/models` route through that gateway. Do not
+point model discovery at `POST /v1/audio/speech`: failed discovery falls back
+to both manifest checkpoints and can let the UI select a checkpoint that the
+adapter did not load.
 
 Use **Settings → Text-to-Speech** to select LongCat for chat playback. Natural
 batched playback is enabled by default. The shared 140-character provider cap
@@ -78,15 +86,32 @@ reference voice**. Upload a clean recording and enter the exact words spoken
 in it. A 3–10 second, single-speaker clip with little background noise works
 best; the adapter rejects clips above 15 seconds or 10 MiB.
 
+Cloning can remain a one-time generation, or you can select **Save as a reusable
+voice**, give the voice a private name, and explicitly confirm that the speaker
+consented to storage. Saved voices become selectable for the same LongCat model
+under **Settings → Text-to-Speech**. Chat read-aloud and autoplay then reuse
+that voice across Libre WebUI's sentence-aware batches.
+
 The reference consumes part of AudioDiT's duration window. If the requested
 speech would not fit in the remaining time, the adapter returns a clear client
 error instead of silently clipping the audio; shorten the reference or the
 generated passage and try again.
 
-Only clone a voice with the speaker's explicit permission. The reference is
-kept in memory by Libre WebUI, written to a temporary adapter file only for
-decoding, and removed after the request. The generated WAV is the only audio
-saved to the user's encrypted media gallery.
+Only clone a voice with the speaker's explicit permission. For a one-time
+generation, Libre WebUI keeps the reference in memory and the adapter removes
+its temporary decoding file after the request. When you explicitly save a
+reusable voice, Libre WebUI stores the original reference audio and exact
+transcript in a user-scoped, AES-GCM-encrypted profile. It never substitutes
+the generated imitation as the canonical reference. AudioDiT does not expose a
+portable speaker embedding, so the original pair is decrypted and sent to the
+configured provider for each generated batch. You can permanently delete the
+profile from Text-to-Speech settings. A saved profile will fail closed if the
+plugin's approved routing or endpoint changes; recreate it after verifying the
+new destination.
+
+Generated speech is stored separately in the user's encrypted media gallery.
+Deleting a gallery result does not delete its saved voice profile, and deleting
+a voice profile does not remove previously generated gallery audio.
 
 The provider supports WAV, FLAC, MP3, and Ogg references. English and Mandarin
 Chinese are the strongest documented language targets. LongCat does not

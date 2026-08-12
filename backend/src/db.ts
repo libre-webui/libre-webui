@@ -447,6 +447,42 @@ function initializeTables(): void {
     )
   `);
 
+  // Reusable, user-owned TTS voice profiles. User-provided names, reference
+  // recordings, and exact transcripts are AES-GCM encrypted binary envelopes;
+  // only the routing and validation metadata remains queryable.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS voice_profiles (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      name BLOB NOT NULL,
+      plugin_id TEXT NOT NULL,
+      model TEXT NOT NULL,
+      routing_fingerprint TEXT NOT NULL,
+      reference_audio BLOB NOT NULL,
+      reference_text BLOB,
+      audio_mime_type TEXT NOT NULL,
+      audio_format TEXT NOT NULL CHECK(audio_format IN ('wav', 'mp3', 'flac', 'ogg', 'm4a')),
+      audio_size INTEGER NOT NULL CHECK(audio_size > 0),
+      consent_confirmed_at INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+  const voiceProfileColumns = db
+    .prepare('PRAGMA table_info(voice_profiles)')
+    .all() as Array<{ name: string }>;
+  if (
+    !voiceProfileColumns.some(column => column.name === 'routing_fingerprint')
+  ) {
+    // This table first existed on the unreleased dev branch. Preserve any
+    // profiles created by that build, but require explicit re-creation before
+    // reuse because their original provider route was not consent-bound.
+    db.exec(
+      "ALTER TABLE voice_profiles ADD COLUMN routing_fingerprint TEXT NOT NULL DEFAULT ''"
+    );
+  }
+
   // Generated images table - for image gallery
   db.exec(`
     CREATE TABLE IF NOT EXISTS generated_images (
@@ -605,6 +641,8 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_plugin_created ON plugin_usage_events(plugin_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_model_created ON plugin_usage_events(model, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_user_created ON plugin_usage_events(user_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_voice_profiles_user_updated ON voice_profiles(user_id, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_voice_profiles_user_route ON voice_profiles(user_id, plugin_id, model);
     CREATE INDEX IF NOT EXISTS idx_generated_images_user_id ON generated_images(user_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_created_at ON generated_images(created_at);
     CREATE INDEX IF NOT EXISTS idx_media_generation_jobs_user_created ON media_generation_jobs(user_id, created_at DESC);

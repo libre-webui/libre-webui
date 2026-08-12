@@ -380,6 +380,69 @@ test('voice cloning rejects unsupported plugins and missing required transcripts
   );
 });
 
+test('voice cloning aborts the provider request when its caller disconnects', async () => {
+  let providerSawAbort = false;
+  let providerStarted;
+  const providerStartedPromise = new Promise(resolve => {
+    providerStarted = resolve;
+  });
+  const provider = http.createServer((req, res) => {
+    providerStarted();
+    req.once('aborted', () => {
+      providerSawAbort = true;
+    });
+    res.once('close', () => {
+      if (!res.writableEnded) providerSawAbort = true;
+    });
+  });
+  const port = await startServer(provider);
+  const plugin = createPlugin(
+    'abortable-clone-provider',
+    'http://127.0.0.1:9/v1/audio/speech',
+    {
+      no_auth_required: true,
+      supports_voice_cloning: true,
+      voice_clone_endpoint: `http://127.0.0.1:${port}/v1/audio/voice-clone`,
+      clone_requires_transcript: true,
+      clone_audio_mime_types: ['audio/wav'],
+    }
+  );
+  const service = new PluginTTSService({
+    getAllPlugins: () => [plugin],
+    getPlugin: () => plugin,
+    getApiKey: () => null,
+    getPluginVariables: () => ({}),
+    validateEndpointUrl: endpoint => endpoint,
+  });
+  const controller = new AbortController();
+  const request = service.executeVoiceCloneRequest(
+    'tts-1-hd',
+    'cancel this clone',
+    {
+      buffer: Buffer.from('RIFFxxxxWAVEreference-bytes'),
+      originalname: 'sample.wav',
+      mimetype: 'audio/wav',
+    },
+    {
+      pluginId: plugin.id,
+      userId: 'user-a',
+      referenceText: 'reference words',
+      response_format: 'wav',
+      signal: controller.signal,
+    }
+  );
+
+  try {
+    await providerStartedPromise;
+    controller.abort();
+    await assert.rejects(request, /voice clone request was cancelled/i);
+    await new Promise(resolve => setTimeout(resolve, 20));
+    assert.equal(providerSawAbort, true);
+  } finally {
+    await new Promise(resolve => provider.close(resolve));
+  }
+});
+
 test('voice clone audio validation enforces MIME, signature, and manifest size', () => {
   assert.equal(TTS_VOICE_CLONE_GLOBAL_MAX_AUDIO_BYTES, 10 * 1024 * 1024);
   assert.equal(

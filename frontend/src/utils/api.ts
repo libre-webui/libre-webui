@@ -78,6 +78,7 @@ export type {
   TTSModel,
   TTSPlugin,
   TTSResponseFormat,
+  TTSVoiceProfile,
 } from './api/ttsApi';
 export {
   findTTSModel,

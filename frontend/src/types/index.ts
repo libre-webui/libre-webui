@@ -220,6 +220,7 @@ export interface TTSSettings {
   autoPlay: boolean;
   model: string;
   voice: string;
+  voiceProfileId?: string;
   speed: number;
   pluginId?: string;
   streamSentences?: boolean; // Generate phrase-aware batches ahead for continuous playback

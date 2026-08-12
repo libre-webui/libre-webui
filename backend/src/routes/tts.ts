@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import express from 'express';
+import express, { type Response } from 'express';
 import multer from 'multer';
 import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService.js';
@@ -28,6 +28,7 @@ import {
   validateTTSVoiceCloneAudio,
 } from '../utils/ttsVoiceCloneUpload.js';
 import { TTSProviderResponseError } from '../services/pluginTTSService.js';
+import voiceProfileService from '../services/voiceProfileService.js';
 
 const logger = createLogger('routes:tts');
 
@@ -93,6 +94,160 @@ const voiceCloneRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+const reusableVoiceRequestsByUser = new Map<string, number>();
+const MAX_REUSABLE_VOICE_REQUESTS_PER_USER = 4;
+let reusableVoiceRequestsGlobal = 0;
+const MAX_REUSABLE_VOICE_REQUESTS_GLOBAL = 8;
+
+class ReusableVoiceConcurrencyError extends Error {
+  constructor() {
+    super('Too many concurrent saved-voice requests');
+    this.name = 'ReusableVoiceConcurrencyError';
+  }
+}
+
+async function withReusableVoiceSlot<T>(
+  userId: string,
+  operation: () => Promise<T>
+): Promise<T> {
+  const active = reusableVoiceRequestsByUser.get(userId) || 0;
+  if (
+    active >= MAX_REUSABLE_VOICE_REQUESTS_PER_USER ||
+    reusableVoiceRequestsGlobal >= MAX_REUSABLE_VOICE_REQUESTS_GLOBAL
+  ) {
+    throw new ReusableVoiceConcurrencyError();
+  }
+  reusableVoiceRequestsByUser.set(userId, active + 1);
+  reusableVoiceRequestsGlobal += 1;
+  try {
+    return await operation();
+  } finally {
+    reusableVoiceRequestsGlobal = Math.max(0, reusableVoiceRequestsGlobal - 1);
+    const remaining = (reusableVoiceRequestsByUser.get(userId) || 1) - 1;
+    if (remaining > 0) reusableVoiceRequestsByUser.set(userId, remaining);
+    else reusableVoiceRequestsByUser.delete(userId);
+  }
+}
+
+function authenticatedUserId(req: AuthenticatedRequest): string {
+  if (!req.user) throw new Error('Authenticated user context is required');
+  return req.user.userId;
+}
+
+function requestString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : undefined;
+}
+
+function requestAbortSignal(
+  req: AuthenticatedRequest,
+  res: Response
+): {
+  signal: AbortSignal;
+  cleanup: () => void;
+} {
+  const controller = new AbortController();
+  const abort = () => controller.abort(new Error('TTS client disconnected'));
+  const abortOnResponseClose = () => {
+    if (!res.writableEnded) abort();
+  };
+  req.once('aborted', abort);
+  res.once('close', abortOnResponseClose);
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      req.off('aborted', abort);
+      res.off('close', abortOnResponseClose);
+    },
+  };
+}
+
+function selectedCloningPlugin(
+  model: string,
+  pluginId: string | undefined,
+  userId: string
+) {
+  const plugin = pluginService.getPluginForTTS(model, pluginId, userId);
+  const config = plugin?.capabilities?.tts?.config;
+  if (!plugin) throw new Error(`No TTS plugin found for model: ${model}`);
+  if (!config?.supports_voice_cloning) {
+    throw new Error(`TTS plugin ${plugin.id} does not support voice cloning`);
+  }
+  return { plugin, config };
+}
+
+function assertProfileRoutingIsCurrent(
+  profile: { routingFingerprint: string },
+  plugin: NonNullable<ReturnType<typeof pluginService.getPluginForTTS>>,
+  userId: string
+): void {
+  if (
+    profile.routingFingerprint !==
+    pluginService.getCredentialRoutingAuthFingerprint(plugin, userId)
+  ) {
+    throw new Error(
+      'Saved voice provider routing changed; create a new profile to consent to the current endpoint'
+    );
+  }
+}
+
+function profileRequestStatus(message: string): number {
+  if (/not found/i.test(message)) return 404;
+  if (/Database is not available/i.test(message)) return 503;
+  if (
+    /required|invalid|maximum|must be at most|unsupported|does not support|requires/i.test(
+      message
+    )
+  ) {
+    return 400;
+  }
+  return 500;
+}
+
+/** Metadata only: reference recordings and transcripts are never returned. */
+router.get('/voice-profiles', (req: AuthenticatedRequest, res) => {
+  try {
+    const pluginId = requestString(req.query.pluginId);
+    const model = requestString(req.query.model);
+    res.json({
+      success: true,
+      data: voiceProfileService.list(authenticatedUserId(req), {
+        ...(pluginId ? { pluginId } : {}),
+        ...(model ? { model } : {}),
+      }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Failed to list voice profiles';
+    logger.error('Failed to list voice profiles:', error);
+    res.status(profileRequestStatus(message)).json({ success: false, message });
+  }
+});
+
+router.delete(
+  '/voice-profiles/:profileId',
+  (req: AuthenticatedRequest, res) => {
+    try {
+      const profileId = Array.isArray(req.params.profileId)
+        ? req.params.profileId[0]
+        : req.params.profileId;
+      if (!voiceProfileService.delete(profileId, authenticatedUserId(req))) {
+        res
+          .status(404)
+          .json({ success: false, message: 'Voice profile not found' });
+        return;
+      }
+      res.status(204).send();
+    } catch (error) {
+      logger.error('Failed to delete voice profile:', error);
+      res
+        .status(500)
+        .json({ success: false, message: 'Failed to delete voice profile' });
+    }
+  }
+);
 
 /**
  * GET /api/tts/models
@@ -165,8 +320,15 @@ router.post(
   ttsRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { model, pluginId, input, voice, response_format, speed } =
-        req.body;
+      const {
+        model,
+        pluginId,
+        input,
+        voice,
+        voiceProfileId,
+        response_format,
+        speed,
+      } = req.body;
 
       // Validate required fields
       if (!model || typeof model !== 'string') {
@@ -192,6 +354,23 @@ router.post(
         res.status(400).json({
           success: false,
           message: 'pluginId must be a non-empty string when provided',
+        });
+        return;
+      }
+      if (
+        voiceProfileId !== undefined &&
+        (typeof voiceProfileId !== 'string' || voiceProfileId.length === 0)
+      ) {
+        res.status(400).json({
+          success: false,
+          message: 'voiceProfileId must be a non-empty string when provided',
+        });
+        return;
+      }
+      if (voiceProfileId && voice !== undefined) {
+        res.status(400).json({
+          success: false,
+          message: 'voice and voiceProfileId cannot be used together',
         });
         return;
       }
@@ -225,10 +404,27 @@ router.post(
         return;
       }
 
+      const userId = authenticatedUserId(req);
+      const profileRoute = voiceProfileId
+        ? voiceProfileService.getMetadata(voiceProfileId, userId)
+        : null;
+      if (voiceProfileId && !profileRoute) {
+        throw new Error('Voice profile not found');
+      }
+      if (
+        profileRoute &&
+        (profileRoute.model !== model ||
+          (pluginId !== undefined && profileRoute.pluginId !== pluginId))
+      ) {
+        throw new Error(
+          'Voice profile does not match the requested TTS plugin and model'
+        );
+      }
+      const routedPluginId = profileRoute?.pluginId || pluginId;
       const selectedPlugin = pluginService.getPluginForTTS(
         model,
-        pluginId,
-        req.user?.userId
+        routedPluginId,
+        userId
       );
       const configuredFormat =
         selectedPlugin?.capabilities?.tts?.config?.default_format;
@@ -238,14 +434,48 @@ router.post(
           ? configuredFormat
           : 'mp3';
 
-      // Execute TTS request
-      const audioBuffer = await pluginService.executeTTSRequest(model, input, {
-        voice,
-        response_format: format,
-        speed,
-        pluginId,
-        userId: req.user?.userId,
-      });
+      let audioBuffer: Buffer;
+      if (voiceProfileId && profileRoute) {
+        const { plugin, config } = selectedCloningPlugin(
+          model,
+          profileRoute.pluginId,
+          userId
+        );
+        const requestAbort = requestAbortSignal(req, res);
+        try {
+          audioBuffer = await withReusableVoiceSlot(userId, async () => {
+            const profile = voiceProfileService.get(
+              voiceProfileId,
+              userId,
+              config
+            );
+            if (!profile) throw new Error('Voice profile not found');
+            assertProfileRoutingIsCurrent(profile, plugin, userId);
+            return pluginService.executeVoiceCloneRequest(
+              model,
+              input,
+              profile.referenceAudio,
+              {
+                referenceText: profile.referenceText,
+                response_format: format,
+                pluginId: profile.pluginId,
+                userId,
+                signal: requestAbort.signal,
+              }
+            );
+          });
+        } finally {
+          requestAbort.cleanup();
+        }
+      } else {
+        audioBuffer = await pluginService.executeTTSRequest(model, input, {
+          voice,
+          response_format: format,
+          speed,
+          pluginId,
+          userId,
+        });
+      }
 
       // Determine content type based on format
       const contentTypeMap: Record<string, string> = {
@@ -269,6 +499,14 @@ router.post(
       // Send audio data
       res.send(audioBuffer);
     } catch (error) {
+      if (error instanceof ReusableVoiceConcurrencyError) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
+      if (error instanceof TTSVoiceCloneUploadError) {
+        res.status(400).json({ success: false, message: error.message });
+        return;
+      }
       if (error instanceof TTSProviderResponseError) {
         logger.warn(
           `TTS provider returned status ${error.providerStatus} during generation`
@@ -288,9 +526,18 @@ router.post(
       let statusCode = 500;
       if (errorMessage.includes('No TTS plugin found')) {
         statusCode = 404;
+      } else if (errorMessage.includes('Voice profile not found')) {
+        statusCode = 404;
       } else if (errorMessage.includes('API key not found')) {
         statusCode = 503; // Service unavailable
-      } else if (errorMessage.includes('exceeds maximum length')) {
+      } else if (
+        errorMessage.includes('exceeds maximum length') ||
+        errorMessage.includes('does not match') ||
+        errorMessage.includes('provider routing changed') ||
+        errorMessage.includes('cannot be used together') ||
+        errorMessage.includes('does not support voice cloning') ||
+        errorMessage.includes('requires a reference audio transcript')
+      ) {
         statusCode = 400;
       }
 
@@ -499,8 +746,15 @@ router.post(
   ttsRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { model, pluginId, input, voice, response_format, speed } =
-        req.body;
+      const {
+        model,
+        pluginId,
+        input,
+        voice,
+        voiceProfileId,
+        response_format,
+        speed,
+      } = req.body;
 
       // Validate required fields
       if (!model || typeof model !== 'string') {
@@ -526,6 +780,23 @@ router.post(
         res.status(400).json({
           success: false,
           message: 'pluginId must be a non-empty string when provided',
+        });
+        return;
+      }
+      if (
+        voiceProfileId !== undefined &&
+        (typeof voiceProfileId !== 'string' || voiceProfileId.length === 0)
+      ) {
+        res.status(400).json({
+          success: false,
+          message: 'voiceProfileId must be a non-empty string when provided',
+        });
+        return;
+      }
+      if (voiceProfileId && voice !== undefined) {
+        res.status(400).json({
+          success: false,
+          message: 'voice and voiceProfileId cannot be used together',
         });
         return;
       }
@@ -559,17 +830,81 @@ router.post(
         return;
       }
 
-      // Execute TTS request
-      const audioBuffer = await pluginService.executeTTSRequest(model, input, {
-        voice,
-        response_format,
-        speed,
-        pluginId,
-        userId: req.user?.userId,
-      });
+      const userId = authenticatedUserId(req);
+      const profileRoute = voiceProfileId
+        ? voiceProfileService.getMetadata(voiceProfileId, userId)
+        : null;
+      if (voiceProfileId && !profileRoute) {
+        throw new Error('Voice profile not found');
+      }
+      if (
+        profileRoute &&
+        (profileRoute.model !== model ||
+          (pluginId !== undefined && profileRoute.pluginId !== pluginId))
+      ) {
+        throw new Error(
+          'Voice profile does not match the requested TTS plugin and model'
+        );
+      }
+      const routedPluginId = profileRoute?.pluginId || pluginId;
+      const selectedPlugin = pluginService.getPluginForTTS(
+        model,
+        routedPluginId,
+        userId
+      );
+      const configuredFormat =
+        selectedPlugin?.capabilities?.tts?.config?.default_format;
+      const requestedFormat = isTTSResponseFormat(response_format)
+        ? response_format
+        : isTTSResponseFormat(configuredFormat)
+          ? configuredFormat
+          : 'mp3';
+
+      let audioBuffer: Buffer;
+      if (voiceProfileId && profileRoute) {
+        const { plugin, config } = selectedCloningPlugin(
+          model,
+          profileRoute.pluginId,
+          userId
+        );
+        const requestAbort = requestAbortSignal(req, res);
+        try {
+          audioBuffer = await withReusableVoiceSlot(userId, async () => {
+            const profile = voiceProfileService.get(
+              voiceProfileId,
+              userId,
+              config
+            );
+            if (!profile) throw new Error('Voice profile not found');
+            assertProfileRoutingIsCurrent(profile, plugin, userId);
+            return pluginService.executeVoiceCloneRequest(
+              model,
+              input,
+              profile.referenceAudio,
+              {
+                referenceText: profile.referenceText,
+                response_format: requestedFormat,
+                pluginId: profile.pluginId,
+                userId,
+                signal: requestAbort.signal,
+              }
+            );
+          });
+        } finally {
+          requestAbort.cleanup();
+        }
+      } else {
+        audioBuffer = await pluginService.executeTTSRequest(model, input, {
+          voice,
+          response_format: requestedFormat,
+          speed,
+          pluginId,
+          userId,
+        });
+      }
 
       // Auto-detect actual audio format from buffer header
-      let detectedFormat = response_format || 'mp3';
+      let detectedFormat = requestedFormat;
       if (audioBuffer.length >= 4) {
         const header = audioBuffer.slice(0, 4).toString('ascii');
         if (header === 'RIFF') {
@@ -611,6 +946,14 @@ router.post(
         },
       });
     } catch (error) {
+      if (error instanceof ReusableVoiceConcurrencyError) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
+      if (error instanceof TTSVoiceCloneUploadError) {
+        res.status(400).json({ success: false, message: error.message });
+        return;
+      }
       if (error instanceof TTSProviderResponseError) {
         logger.warn(
           `TTS provider returned status ${error.providerStatus} during base64 generation`
@@ -629,9 +972,18 @@ router.post(
       let statusCode = 500;
       if (errorMessage.includes('No TTS plugin found')) {
         statusCode = 404;
+      } else if (errorMessage.includes('Voice profile not found')) {
+        statusCode = 404;
       } else if (errorMessage.includes('API key not found')) {
         statusCode = 503;
-      } else if (errorMessage.includes('exceeds maximum length')) {
+      } else if (
+        errorMessage.includes('exceeds maximum length') ||
+        errorMessage.includes('does not match') ||
+        errorMessage.includes('provider routing changed') ||
+        errorMessage.includes('cannot be used together') ||
+        errorMessage.includes('does not support voice cloning') ||
+        errorMessage.includes('requires a reference audio transcript')
+      ) {
         statusCode = 400;
       }
 

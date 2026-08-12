@@ -80,6 +80,7 @@ import {
   resolveTTSModel,
   TTSModel,
   TTSPlugin,
+  TTSVoiceProfile,
   ImageGenModel,
   ImageGenPlugin,
   findImageGenModel,
@@ -103,6 +104,7 @@ const DEFAULT_TTS_SETTINGS = {
   autoPlay: false,
   model: '',
   voice: '',
+  voiceProfileId: '',
   speed: 1.0,
   pluginId: '',
   streamSentences: true,
@@ -366,6 +368,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   );
   const [testingTTS, setTestingTTS] = useState(false);
   const testAudioRef = useRef<HTMLAudioElement | null>(null);
+  const clearedDanglingVoiceProfileRef = useRef<string | null>(null);
 
   // Image Generation settings state
   const [imageGenSettings, setImageGenSettings] = useState(
@@ -465,7 +468,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     () => resolveTTSModel(ttsModels, ttsSettings.model, ttsSettings.pluginId),
     [ttsModels, ttsSettings.model, ttsSettings.pluginId]
   );
-  const effectiveTtsSettings = useMemo(() => {
+  const modelResolvedTtsSettings = useMemo(() => {
     if (!selectedTtsModel) return ttsSettings;
 
     const savedModel = findTTSModel(
@@ -482,6 +485,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       model: selectedTtsModel.model,
       pluginId: selectedTtsModel.plugin,
       voice: selectedTtsModel.config?.default_voice ?? '',
+      voiceProfileId: '',
     };
   }, [selectedTtsModel, ttsModels, ttsSettings]);
 
@@ -489,11 +493,117 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const ttsVoices = useMemo(() => {
     const currentModel = findTTSModel(
       ttsModels,
-      effectiveTtsSettings.model,
-      effectiveTtsSettings.pluginId
+      modelResolvedTtsSettings.model,
+      modelResolvedTtsSettings.pluginId
     );
     return currentModel?.config?.voices ?? [];
-  }, [effectiveTtsSettings, ttsModels]);
+  }, [modelResolvedTtsSettings, ttsModels]);
+
+  const {
+    data: ttsVoiceProfiles = [],
+    isLoading: loadingTTSVoiceProfiles,
+    isSuccess: loadedTTSVoiceProfiles,
+  } = useQuery<TTSVoiceProfile[]>({
+    queryKey: ['tts-voice-profiles'],
+    queryFn: async () => {
+      const response = await ttsApi.getVoiceProfiles();
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to load saved voices');
+      }
+      return response.data ?? [];
+    },
+    enabled: isOpen,
+  });
+
+  const selectableTtsVoiceProfiles = useMemo(
+    () =>
+      ttsVoiceProfiles.filter(
+        profile =>
+          profile.pluginId === modelResolvedTtsSettings.pluginId &&
+          profile.model === modelResolvedTtsSettings.model
+      ),
+    [modelResolvedTtsSettings, ttsVoiceProfiles]
+  );
+
+  const effectiveTtsSettings = useMemo(() => {
+    const selectedProfileId = modelResolvedTtsSettings.voiceProfileId;
+    const selectedProfile = selectedProfileId
+      ? ttsVoiceProfiles.find(profile => profile.id === selectedProfileId)
+      : undefined;
+    const selectedModelCannotClone =
+      Boolean(selectedProfileId && selectedTtsModel) &&
+      !selectedTtsModel?.config?.supports_voice_cloning;
+    const selectedProfileIsUnavailable =
+      loadedTTSVoiceProfiles &&
+      Boolean(selectedProfileId) &&
+      (!selectedProfile ||
+        selectedProfile.pluginId !== modelResolvedTtsSettings.pluginId ||
+        selectedProfile.model !== modelResolvedTtsSettings.model);
+    if (
+      !selectedProfileId ||
+      (!selectedModelCannotClone && !selectedProfileIsUnavailable)
+    ) {
+      return modelResolvedTtsSettings;
+    }
+
+    return {
+      ...modelResolvedTtsSettings,
+      voiceProfileId: '',
+      voice: selectedTtsModel?.config?.default_voice ?? '',
+    };
+  }, [
+    loadedTTSVoiceProfiles,
+    modelResolvedTtsSettings,
+    selectedTtsModel,
+    ttsVoiceProfiles,
+  ]);
+
+  useEffect(() => {
+    const selectedProfileId = modelResolvedTtsSettings.voiceProfileId;
+    const selectedProfile = selectedProfileId
+      ? ttsVoiceProfiles.find(profile => profile.id === selectedProfileId)
+      : undefined;
+    const profileIsUnavailable =
+      Boolean(selectedProfileId) &&
+      ((Boolean(selectedTtsModel) &&
+        !selectedTtsModel?.config?.supports_voice_cloning) ||
+        (loadedTTSVoiceProfiles &&
+          (!selectedProfile ||
+            selectedProfile.pluginId !== modelResolvedTtsSettings.pluginId ||
+            selectedProfile.model !== modelResolvedTtsSettings.model)));
+    if (
+      !profileIsUnavailable ||
+      !selectedProfileId ||
+      clearedDanglingVoiceProfileRef.current === selectedProfileId
+    ) {
+      return;
+    }
+
+    clearedDanglingVoiceProfileRef.current = selectedProfileId;
+    void preferencesApi
+      .updatePreferences({ ttsSettings: effectiveTtsSettings })
+      .then(response => {
+        if (response.success && response.data) setPreferences(response.data);
+      })
+      .catch(error => {
+        clearedDanglingVoiceProfileRef.current = null;
+        toast.error(
+          getErrorMessage(
+            error,
+            'The saved voice is unavailable and could not be cleared from Speech settings'
+          )
+        );
+      });
+  }, [
+    effectiveTtsSettings,
+    loadedTTSVoiceProfiles,
+    modelResolvedTtsSettings.model,
+    modelResolvedTtsSettings.pluginId,
+    modelResolvedTtsSettings.voiceProfileId,
+    selectedTtsModel,
+    setPreferences,
+    ttsVoiceProfiles,
+  ]);
 
   // Image Gen data query
   const { data: imageGenData, isLoading: loadingImageGen } = useQuery({
@@ -658,9 +768,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           queryKey: ['plugin-credentials'],
         });
         await loadPlugins();
-        await queryClient.invalidateQueries({
-          queryKey: ['image-gen-data'],
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+          queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+        ]);
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
         setShowApiKey(prev => ({ ...prev, [pluginId]: false }));
       } else {
@@ -683,9 +794,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           queryKey: ['plugin-credentials'],
         });
         await loadPlugins();
-        await queryClient.invalidateQueries({
-          queryKey: ['image-gen-data'],
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+          queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+        ]);
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
       } else {
         toast.error(response.error || 'Failed to remove API key');
@@ -705,6 +817,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         model: modelName,
         pluginId,
         voice: selectedModel.config?.default_voice ?? '',
+        voiceProfileId: '',
       }));
     }
   };
@@ -752,6 +865,96 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }));
   };
 
+  const handleTtsVoiceChange = (voice: string, voiceProfileId: string) => {
+    setTtsSettings(prev => ({
+      ...prev,
+      voice,
+      voiceProfileId,
+    }));
+  };
+
+  const handleDeleteTtsVoiceProfile = async (profile: TTSVoiceProfile) => {
+    if (
+      !window.confirm(
+        t('settings.tts.deleteSavedVoiceConfirm', {
+          name: profile.name,
+          defaultValue:
+            'Delete the saved voice “{{name}}”? Its reference recording and transcript will be removed.',
+        })
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await ttsApi.deleteVoiceProfile(profile.id);
+    } catch (error: unknown) {
+      toast.error(
+        getErrorMessage(
+          error,
+          t('settings.tts.savedVoiceDeleteFailed', {
+            defaultValue: 'Failed to delete saved voice',
+          })
+        )
+      );
+      return;
+    }
+
+    const fallbackVoice = selectedTtsModel?.config?.default_voice ?? '';
+    if (ttsSettings.voiceProfileId === profile.id) {
+      setTtsSettings(prev => ({
+        ...prev,
+        voiceProfileId: '',
+        voice: fallbackVoice,
+      }));
+    }
+    if (preferences.ttsSettings?.voiceProfileId === profile.id) {
+      setPreferences({
+        ...preferences,
+        ttsSettings: {
+          ...preferences.ttsSettings,
+          voiceProfileId: '',
+          voice: fallbackVoice,
+        },
+      });
+    }
+    queryClient.setQueryData<TTSVoiceProfile[]>(
+      ['tts-voice-profiles'],
+      current => current?.filter(candidate => candidate.id !== profile.id) ?? []
+    );
+    await queryClient.invalidateQueries({
+      queryKey: ['tts-voice-profiles'],
+    });
+    toast.success(
+      t('settings.tts.savedVoiceDeleted', {
+        defaultValue: 'Saved voice deleted',
+      })
+    );
+
+    if (preferences.ttsSettings?.voiceProfileId === profile.id) {
+      try {
+        const response = await preferencesApi.updatePreferences({
+          ttsSettings: {
+            ...preferences.ttsSettings,
+            voiceProfileId: '',
+            voice: fallbackVoice,
+          },
+        });
+        if (!response.success || !response.data) {
+          throw new Error(response.error || 'Preference update failed');
+        }
+        setPreferences(response.data);
+      } catch {
+        toast.error(
+          t('settings.tts.savedVoicePreferenceCleanupFailed', {
+            defaultValue:
+              'Saved voice deleted, but Speech settings could not be reset',
+          })
+        );
+      }
+    }
+  };
+
   const handleSaveTtsSettings = async () => {
     try {
       const response = await preferencesApi.updatePreferences({
@@ -787,7 +990,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         model: effectiveTtsSettings.model || 'tts-1',
         pluginId: effectiveTtsSettings.pluginId,
         input: 'Hello! This is a test of the text-to-speech system.',
-        voice: effectiveTtsSettings.voice || undefined,
+        voice: effectiveTtsSettings.voiceProfileId
+          ? undefined
+          : effectiveTtsSettings.voice || undefined,
+        voiceProfileId: effectiveTtsSettings.voiceProfileId || undefined,
         speed: effectiveTtsSettings.speed || 1.0,
         response_format: selectedTtsModel?.config?.default_format,
       });
@@ -826,6 +1032,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       autoPlay: false,
       model: ttsModels[0]?.model || '',
       voice: ttsModels[0]?.config?.default_voice ?? '',
+      voiceProfileId: '',
       speed: 1.0,
       pluginId: ttsModels[0]?.plugin || '',
       streamSentences: true,
@@ -916,7 +1123,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       }
       // Reload models after uploading a plugin
       await loadModels();
-      await queryClient.invalidateQueries({ queryKey: ['image-gen-data'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+        queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+      ]);
     }
   };
 
@@ -928,7 +1138,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setJsonInput('');
       // Reload models after installing a plugin
       await loadModels();
-      await queryClient.invalidateQueries({ queryKey: ['image-gen-data'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+        queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+      ]);
     } catch (_error) {
       clearPluginError();
       toast.error('Invalid JSON format');
@@ -944,7 +1157,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
     // Reload models to include/exclude plugin models
     await loadModels();
-    await queryClient.invalidateQueries({ queryKey: ['image-gen-data'] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+      queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+    ]);
   };
 
   const handleRefreshPluginModels = async (id: string) => {
@@ -998,7 +1214,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       await deletePlugin(id);
       // Reload models after deleting a plugin
       await loadModels();
-      await queryClient.invalidateQueries({ queryKey: ['image-gen-data'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['image-gen-data'] }),
+        queryClient.invalidateQueries({ queryKey: ['tts-data'] }),
+      ]);
     }
   };
 
@@ -1479,8 +1698,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             models={ttsModels}
             plugins={ttsPlugins}
             voices={ttsVoices}
+            voiceProfiles={ttsVoiceProfiles}
+            selectableVoiceProfiles={selectableTtsVoiceProfiles}
+            loadingVoiceProfiles={loadingTTSVoiceProfiles}
             testing={testingTTS}
             onSettingChange={handleTtsSettingChange}
+            onVoiceChange={handleTtsVoiceChange}
+            onDeleteVoiceProfile={handleDeleteTtsVoiceProfile}
             onModelChange={handleTtsModelChange}
             onReset={handleResetTtsSettings}
             onTest={handleTestTTS}

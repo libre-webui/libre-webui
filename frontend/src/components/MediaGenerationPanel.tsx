@@ -7,6 +7,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Film, Loader2, Sparkles, Volume2, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +38,7 @@ export function MediaGenerationPanel({
   onGenerated,
 }: MediaGenerationPanelProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [kind, setKind] = useState<MediaGenerationKind>(initialKind);
   const [catalog, setCatalog] = useState<MediaModelCatalog>(EMPTY_CATALOG);
   const [selected, setSelected] = useState('');
@@ -45,6 +47,9 @@ export function MediaGenerationPanel({
   const [cloneVoice, setCloneVoice] = useState(false);
   const [referenceAudio, setReferenceAudio] = useState<File | null>(null);
   const [referenceText, setReferenceText] = useState('');
+  const [saveVoiceProfile, setSaveVoiceProfile] = useState(false);
+  const [voiceProfileName, setVoiceProfileName] = useState('');
+  const [consentToStore, setConsentToStore] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [resolution, setResolution] = useState('');
   const [aspectRatio, setAspectRatio] = useState('');
@@ -58,6 +63,9 @@ export function MediaGenerationPanel({
     setCloneVoice(false);
     setReferenceAudio(null);
     setReferenceText('');
+    setSaveVoiceProfile(false);
+    setVoiceProfileName('');
+    setConsentToStore(false);
     setFileInputKey(value => value + 1);
   };
 
@@ -137,6 +145,10 @@ export function MediaGenerationPanel({
               referenceAudio: referenceAudio!,
               referenceText: referenceText.trim() || undefined,
               responseFormat,
+              saveVoiceName: saveVoiceProfile
+                ? voiceProfileName.trim()
+                : undefined,
+              consentToStore: saveVoiceProfile && consentToStore,
             })
           : audioModel?.mode === 'sound'
             ? await mediaApi.generateSound({
@@ -160,6 +172,11 @@ export function MediaGenerationPanel({
                 response_format: responseFormat,
               });
         if (!response.success) throw new Error(response.message);
+        if (useVoiceClone && saveVoiceProfile) {
+          await queryClient.invalidateQueries({
+            queryKey: ['tts-voice-profiles'],
+          });
+        }
       } else {
         const submitted = await mediaApi.generateVideo({
           model: selectedModel.model,
@@ -195,7 +212,15 @@ export function MediaGenerationPanel({
           throw new Error(job.error || t('mediaGeneration.failed'));
         }
       }
-      toast.success(t('mediaGeneration.success'));
+      toast.success(
+        useVoiceClone && saveVoiceProfile
+          ? t('mediaGeneration.successWithSavedVoice', {
+              name: voiceProfileName.trim(),
+              defaultValue:
+                'Media generated and “{{name}}” is now available in Speech settings',
+            })
+          : t('mediaGeneration.success')
+      );
       setPrompt('');
       resetVoiceCloneInputs();
       onGenerated();
@@ -445,9 +470,78 @@ export function MediaGenerationPanel({
                           )}
                         />
                       </Field>
-                      <p className='text-xs font-normal text-amber-700 dark:text-amber-300'>
-                        {t('mediaGeneration.cloneConsent')}
-                      </p>
+                      <label className='flex items-start gap-3 text-sm'>
+                        <input
+                          type='checkbox'
+                          checked={saveVoiceProfile}
+                          onChange={event => {
+                            setSaveVoiceProfile(event.target.checked);
+                            if (!event.target.checked) {
+                              setVoiceProfileName('');
+                              setConsentToStore(false);
+                            }
+                          }}
+                          className='mt-0.5'
+                        />
+                        <span>
+                          <span className='block font-medium text-gray-900 dark:text-gray-100'>
+                            {t('mediaGeneration.saveVoiceProfile', {
+                              defaultValue: 'Save as a reusable voice',
+                            })}
+                          </span>
+                          <span className='mt-0.5 block text-xs font-normal text-gray-500 dark:text-dark-500'>
+                            {t('mediaGeneration.saveVoiceProfileDescription', {
+                              defaultValue:
+                                'Store this reference recording and transcript securely. Libre WebUI sends them to the selected provider for every Speech batch that uses this voice.',
+                            })}
+                          </span>
+                        </span>
+                      </label>
+                      {saveVoiceProfile && (
+                        <div className='space-y-3 rounded-lg border border-primary-500/15 bg-white/60 p-3 dark:bg-dark-100/50'>
+                          <Field
+                            label={t('mediaGeneration.voiceProfileName', {
+                              defaultValue: 'Saved voice name',
+                            })}
+                          >
+                            <input
+                              type='text'
+                              value={voiceProfileName}
+                              onChange={event =>
+                                setVoiceProfileName(event.target.value)
+                              }
+                              maxLength={80}
+                              autoComplete='off'
+                              className={inputClass}
+                              placeholder={t(
+                                'mediaGeneration.voiceProfileNamePlaceholder',
+                                { defaultValue: 'For example, My voice' }
+                              )}
+                            />
+                          </Field>
+                          <label className='flex items-start gap-3 text-xs text-amber-700 dark:text-amber-300'>
+                            <input
+                              type='checkbox'
+                              checked={consentToStore}
+                              onChange={event =>
+                                setConsentToStore(event.target.checked)
+                              }
+                              className='mt-0.5'
+                            />
+                            <span>
+                              {t('mediaGeneration.voiceStorageConsent', {
+                                defaultValue:
+                                  'I confirm that I have the speaker’s permission to clone and store this voice. The reference stays saved until I delete it.',
+                              })}
+                            </span>
+                          </label>
+                        </div>
+                      )}
+                      {!saveVoiceProfile && (
+                        <p className='text-xs font-normal text-amber-700 dark:text-amber-300'>
+                          {t('mediaGeneration.cloneConsent')}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -508,7 +602,9 @@ export function MediaGenerationPanel({
                 ) ||
                 (useVoiceClone &&
                   (!referenceAudio ||
-                    (cloneRequiresTranscript && !referenceText.trim())))
+                    (cloneRequiresTranscript && !referenceText.trim()) ||
+                    (saveVoiceProfile &&
+                      (!voiceProfileName.trim() || !consentToStore))))
               }
               className='w-full gap-2'
             >
