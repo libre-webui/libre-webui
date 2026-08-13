@@ -11,6 +11,10 @@ metadata:
   labels:
     {{- include "libre-webui.labels" . | nindent 4 }}
 spec:
+  # Recreate prevents a rolling upgrade from briefly starting a second pod
+  # against the same SQLite database and local application state.
+  strategy:
+    type: Recreate
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
@@ -43,18 +47,26 @@ spec:
             - name: http
               containerPort: 3001
               protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 120
           livenessProbe:
             httpGet:
-              path: /health
+              path: /health/live
               port: http
             initialDelaySeconds: 10
             periodSeconds: 30
           readinessProbe:
             httpGet:
-              path: /health
+              path: /health/ready
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
+            timeoutSeconds: 5
           env:
             - name: NODE_ENV
               value: {{ .Values.env.NODE_ENV | quote }}
@@ -78,6 +90,28 @@ spec:
               value: {{ .Values.env.VITE_API_TIMEOUT | quote }}
             - name: DATA_DIR
               value: {{ .Values.env.DATA_DIR | quote }}
+            - name: PLATFORM_PREFLIGHT_TMP_DIR
+              value: {{ .Values.env.PLATFORM_PREFLIGHT_TMP_DIR | quote }}
+            - name: LIBRE_PLATFORM_MODE
+              value: {{ .Values.env.LIBRE_PLATFORM_MODE | quote }}
+            - name: DATABASE_BACKEND
+              value: {{ .Values.env.DATABASE_BACKEND | quote }}
+            - name: BLOB_STORE_BACKEND
+              value: {{ .Values.env.BLOB_STORE_BACKEND | quote }}
+            - name: VECTOR_STORE_BACKEND
+              value: {{ .Values.env.VECTOR_STORE_BACKEND | quote }}
+            - name: COORDINATION_BACKEND
+              value: {{ .Values.env.COORDINATION_BACKEND | quote }}
+            - name: REDIS_KEY_PREFIX
+              value: {{ .Values.env.REDIS_KEY_PREFIX | quote }}
+            - name: REDIS_CONNECT_TIMEOUT_MS
+              value: {{ .Values.env.REDIS_CONNECT_TIMEOUT_MS | quote }}
+            - name: JOB_WORKER_MODE
+              value: {{ .Values.env.JOB_WORKER_MODE | quote }}
+            {{- if .Values.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID }}
+            - name: STORAGE_ENCRYPTION_ACTIVE_KEY_ID
+              value: {{ .Values.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID | quote }}
+            {{- end }}
             {{- if .Values.work.enabled }}
             - name: WORK_RUNTIME_BACKEND
               value: 'kubernetes'
@@ -118,6 +152,27 @@ spec:
                 secretKeyRef:
                   name: {{ include "libre-webui.fullname" . }}-secrets
                   key: session-secret
+            {{- end }}
+            {{- if .Values.secrets.databaseUrl }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: database-url
+            {{- end }}
+            {{- if .Values.secrets.redisUrl }}
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: redis-url
+            {{- end }}
+            {{- if .Values.secrets.storageEncryptionKeys }}
+            - name: STORAGE_ENCRYPTION_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: storage-encryption-keys
             {{- end }}
             {{- if .Values.secrets.githubClientId }}
             - name: GITHUB_CLIENT_ID

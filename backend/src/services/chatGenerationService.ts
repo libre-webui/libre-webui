@@ -159,7 +159,7 @@ class ChatGenerationService {
     const activePlugin =
       provider?.providerType === 'ollama' || provider?.providerType === 'agent'
         ? null
-        : pluginService.getActivePluginForModel(
+        : await pluginService.getActivePluginForModel(
             actualModelName,
             userId,
             provider?.providerId

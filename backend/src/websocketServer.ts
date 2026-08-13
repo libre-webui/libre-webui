@@ -17,7 +17,7 @@
 
 import type { IncomingMessage, Server } from 'http';
 import type { Duplex } from 'stream';
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, type RawData } from 'ws';
 
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
@@ -147,16 +147,16 @@ export const isAllowedWebSocketOrigin = (
   return allowed.length === 0 || allowed.includes(requestOrigin);
 };
 
-const authorizeChatUpgrade = (
+const authorizeChatUpgrade = async (
   request: AuthenticatedChatRequest
-): { userId: string; sessionExpiresAt: number } | null => {
+): Promise<{ userId: string; sessionExpiresAt: number } | null> => {
   try {
     const url = new URL(request.url || '', `http://${request.headers.host}`);
     const ticket = url.searchParams.get('ticket')?.trim() || '';
     if (!ticket) return null;
-    const consumed = websocketTicketService.consume(ticket, 'chat');
+    const consumed = await websocketTicketService.consume(ticket, 'chat');
     if (!consumed) return null;
-    const currentUser = userModel.getUserById(consumed.userId);
+    const currentUser = await userModel.getUserById(consumed.userId);
     if (!currentUser || currentUser.status !== 'active') return null;
     return {
       userId: currentUser.id,
@@ -181,7 +181,25 @@ const rejectUpgrade = (
   );
 };
 
-export function registerWebSocketServer(server: Server): void {
+export interface RegisteredWebSocketServers {
+  close(): Promise<void>;
+}
+
+const closeWebSocketServer = (server: WebSocketServer): Promise<void> => {
+  for (const client of server.clients) client.terminate();
+  return new Promise(resolve => {
+    server.close(() => resolve());
+  });
+};
+
+export function registerWebSocketServer(
+  server: Server
+): RegisteredWebSocketServers {
+  let shuttingDown = false;
+  let closePromise: Promise<void> | undefined;
+  const activeMessageHandlers = new Set<Promise<void>>();
+  const activeUpgradeAuthorizations = new Set<Promise<void>>();
+
   // WebSocket server for real-time chat streaming. Upgrades are dispatched by
   // path in index.ts so the Work terminal can share the same HTTP server.
   const wss = new WebSocketServer({
@@ -190,6 +208,10 @@ export function registerWebSocketServer(server: Server): void {
   });
 
   wss.on('connection', (ws, rawRequest) => {
+    if (shuttingDown) {
+      ws.terminate();
+      return;
+    }
     logger.debug('WebSocket client connected');
     const req = rawRequest as AuthenticatedChatRequest;
     const chatAuth = req.chatAuth;
@@ -211,7 +233,7 @@ export function registerWebSocketServer(server: Server): void {
     let messageWindowStartedAt = Date.now();
     let messageCount = 0;
 
-    ws.on('message', async data => {
+    const handleMessage = async (data: RawData): Promise<void> => {
       let currentGeneration: ActiveChatGeneration | undefined;
       let globallyReserved = false;
       try {
@@ -226,7 +248,7 @@ export function registerWebSocketServer(server: Server): void {
           return;
         }
 
-        const currentUser = userModel.getUserById(userId);
+        const currentUser = await userModel.getUserById(userId);
         if (
           !currentUser ||
           currentUser.status !== 'active' ||
@@ -412,7 +434,7 @@ export function registerWebSocketServer(server: Server): void {
           if (
             webSearchRequested === true &&
             isWebSearchAvailable() &&
-            userCanUseWebSearch(userModel.getUserById(userId))
+            userCanUseWebSearch(currentUser)
           ) {
             const searchToolCallId = `web-search-${Date.now()}`;
             sendToolStatus(ws, {
@@ -857,6 +879,22 @@ export function registerWebSocketServer(server: Server): void {
           }
         }
       }
+    };
+
+    ws.on('message', data => {
+      if (shuttingDown) return;
+
+      let trackedHandler: Promise<void>;
+      trackedHandler = handleMessage(data)
+        .catch(error => {
+          // EventEmitter does not observe rejected async listeners. Contain a
+          // late send failure after shutdown while retaining the handler in
+          // the drain set until every provider and persistence operation has
+          // actually settled.
+          logger.error('WebSocket message handler failed:', error);
+        })
+        .finally(() => activeMessageHandlers.delete(trackedHandler));
+      activeMessageHandlers.add(trackedHandler);
     });
 
     ws.on('close', () => {
@@ -877,8 +915,19 @@ export function registerWebSocketServer(server: Server): void {
   });
 
   const terminalServer = createWorkTerminalServer();
+  const upgradedSockets = new Set<Duplex>();
 
-  server.on('upgrade', (request, socket, head) => {
+  const handleUpgrade = (
+    request: IncomingMessage,
+    socket: Duplex,
+    head: Buffer
+  ) => {
+    if (shuttingDown) {
+      socket.destroy();
+      return;
+    }
+    upgradedSockets.add(socket);
+    socket.once('close', () => upgradedSockets.delete(socket));
     if (workPreviewProxyService.tryHandleUpgrade(request, socket, head)) {
       return;
     }
@@ -906,17 +955,59 @@ export function registerWebSocketServer(server: Server): void {
         return;
       }
       const authenticatedRequest = request as AuthenticatedChatRequest;
-      const chatAuth = authorizeChatUpgrade(authenticatedRequest);
-      if (!chatAuth) {
-        rejectUpgrade(socket, 401, 'WebSocket authentication is required');
-        return;
-      }
-      authenticatedRequest.chatAuth = chatAuth;
-      wss.handleUpgrade(request, socket, head, ws => {
-        wss.emit('connection', ws, request);
-      });
+      socket.pause();
+      let authorization: Promise<void>;
+      authorization = authorizeChatUpgrade(authenticatedRequest)
+        .then(chatAuth => {
+          if (shuttingDown) {
+            socket.destroy();
+            return;
+          }
+          if (!chatAuth) {
+            rejectUpgrade(socket, 401, 'WebSocket authentication is required');
+            return;
+          }
+          authenticatedRequest.chatAuth = chatAuth;
+          wss.handleUpgrade(request, socket, head, ws => {
+            wss.emit('connection', ws, request);
+          });
+          socket.resume();
+        })
+        .catch(error => {
+          logger.error('WebSocket upgrade authorization failed:', error);
+          if (!shuttingDown) {
+            rejectUpgrade(socket, 401, 'WebSocket authentication is required');
+          }
+        })
+        .finally(() => activeUpgradeAuthorizations.delete(authorization));
+      activeUpgradeAuthorizations.add(authorization);
       return;
     }
     socket.destroy();
-  });
+  };
+  server.on('upgrade', handleUpgrade);
+
+  return {
+    close: () => {
+      if (closePromise) return closePromise;
+      shuttingDown = true;
+      closePromise = (async () => {
+        server.off('upgrade', handleUpgrade);
+        for (const socket of upgradedSockets) socket.destroy();
+        upgradedSockets.clear();
+        await Promise.allSettled([
+          closeWebSocketServer(wss),
+          closeWebSocketServer(terminalServer),
+        ]);
+        // Socket close aborts every active generation. Wait for their async
+        // handlers to honor that signal (or finish independently) before the
+        // caller closes SQLite and snapshots its WAL state.
+        await Promise.allSettled([
+          ...activeUpgradeAuthorizations,
+          ...activeMessageHandlers,
+        ]);
+      })();
+      return closePromise;
+    },
+  };
 }

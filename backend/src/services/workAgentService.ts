@@ -165,13 +165,13 @@ export const WORK_WEB_SEARCH_TOOL_SCHEMA: Record<string, unknown> =
     ['query']
   );
 
-export function workToolSchemasForTask(task: {
+export async function workToolSchemasForTask(task: {
   networkEnabled: boolean;
   userId: string;
-}): Record<string, unknown>[] {
+}): Promise<Record<string, unknown>[]> {
   return task.networkEnabled &&
     isWebSearchAvailable() &&
-    userCanUseWebSearch(userModel.getUserById(task.userId))
+    userCanUseWebSearch(await userModel.getUserById(task.userId))
     ? [...WORK_TOOL_SCHEMAS, WORK_WEB_SEARCH_TOOL_SCHEMA]
     : WORK_TOOL_SCHEMAS;
 }
@@ -416,13 +416,13 @@ export class WorkAgentService {
         providerId: run.providerId,
       } as const;
       const providerRoutingFingerprint =
-        workModelProviderService.getRoutingFingerprint(
+        await workModelProviderService.getRoutingFingerprint(
           run.model,
           providerSelection,
           userId
         );
       const providerStateScope =
-        workModelProviderService.getResponsesStateScope(
+        await workModelProviderService.getResponsesStateScope(
           run.model,
           providerSelection,
           userId
@@ -466,7 +466,7 @@ export class WorkAgentService {
         const roundStartedAt = Date.now();
         let response: OllamaChatResponse;
         try {
-          this.assertStableProviderRouting(
+          await this.assertStableProviderRouting(
             run,
             userId,
             providerRoutingFingerprint
@@ -475,7 +475,7 @@ export class WorkAgentService {
             {
               model: run.model,
               messages,
-              tools: workToolSchemasForTask(task),
+              tools: await workToolSchemasForTask(task),
               stream: true,
             },
             providerSelection,
@@ -784,7 +784,7 @@ export class WorkAgentService {
       let handoffResponse: OllamaChatResponse;
       try {
         try {
-          this.assertStableProviderRouting(
+          await this.assertStableProviderRouting(
             run,
             userId,
             providerRoutingFingerprint
@@ -1001,19 +1001,20 @@ export class WorkAgentService {
     }
   }
 
-  private assertStableProviderRouting(
+  private async assertStableProviderRouting(
     run: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
     userId: string,
     expectedFingerprint: string
-  ): void {
-    const currentFingerprint = workModelProviderService.getRoutingFingerprint(
-      run.model,
-      {
-        providerType: run.providerType,
-        providerId: run.providerId,
-      },
-      userId
-    );
+  ): Promise<void> {
+    const currentFingerprint =
+      await workModelProviderService.getRoutingFingerprint(
+        run.model,
+        {
+          providerType: run.providerType,
+          providerId: run.providerId,
+        },
+        userId
+      );
     if (currentFingerprint !== expectedFingerprint) {
       throw new WorkAgentHttpError(
         'The provider routing changed while this Work run was active. Start a new run with the updated provider configuration.',
@@ -1125,7 +1126,7 @@ export class WorkAgentService {
         if (
           !task.networkEnabled ||
           !isWebSearchAvailable() ||
-          !userCanUseWebSearch(userModel.getUserById(task.userId))
+          !userCanUseWebSearch(await userModel.getUserById(task.userId))
         ) {
           throw new WorkAgentHttpError(
             'Web search is not available for this task.',

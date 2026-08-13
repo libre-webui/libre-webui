@@ -25,8 +25,11 @@ Start with the layer that is failing: browser, frontend, backend, Ollama, provid
 # App branch and local changes
 git status
 
-# Backend health
-curl http://localhost:3001/api/health
+# Backend process liveness
+curl http://localhost:3001/health/live
+
+# Backend dependency readiness (SQLite, schema, and writable data storage)
+curl http://localhost:3001/health/ready
 
 # Ollama health
 curl http://localhost:11434/api/tags
@@ -62,6 +65,31 @@ Stop the old process or configure another port.
 **Backend cannot write data**
 
 The backend stores data under `DATA_DIR` when set, otherwise under `backend/data` from the project root. Make sure that directory is writable.
+
+Older workspace scripts could accidentally write to `backend/backend/data`.
+Libre now refuses to start when that legacy database exists while the selected
+path is the canonical `backend/data`. Stop Libre, back up both directories,
+then either set `DATA_DIR` to the legacy directory temporarily or migrate the
+complete directory deliberately. Libre never silently chooses, merges, or
+copies divergent databases.
+
+The health endpoints deliberately distinguish a running process from a usable
+application:
+
+- `/health` and `/health/live` return `200` while the backend process can serve
+  HTTP. Optional model providers do not affect liveness.
+- `/health/ready` returns `503` when a required database, schema, storage, or
+  registered platform dependency is unavailable. Its public response omits
+  error messages and internal details.
+- `/health/deep` performs SQLite integrity and foreign-key checks in a bounded
+  worker so the scan cannot block process liveness indefinitely. It requires a
+  current administrator bearer token and is not suitable for a frequent
+  orchestrator probe.
+
+```bash
+curl -H "Authorization: Bearer $LIBRE_ADMIN_TOKEN" \
+  http://localhost:3001/health/deep
+```
 
 ## Browser Cannot Reach the Backend
 

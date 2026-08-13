@@ -154,20 +154,22 @@ export class HuggingFaceOAuthService {
       // Check if username already exists and make it unique if needed
       let counter = 1;
       let checkUsername = uniqueUsername;
-      while (userModel.usernameExists(checkUsername)) {
+      while (await userModel.usernameExists(checkUsername)) {
         checkUsername = `${uniqueUsername}_${counter}`;
         counter++;
       }
       uniqueUsername = checkUsername;
 
       // Check if user already exists by username first (Hugging Face doesn't always provide email)
-      const existingUser = userModel.getUserByUsername(`hf_${profile.name}`);
+      const existingUser = await userModel.getUserByUsername(
+        `hf_${profile.name}`
+      );
       if (existingUser) {
         logger.debug(
           'Found existing Hugging Face user by username:',
           existingUser.username
         );
-        return userModel.getUserById(existingUser.id);
+        return await userModel.getUserById(existingUser.id);
       }
 
       if (!authService.isPublicRegistrationEnabled()) {

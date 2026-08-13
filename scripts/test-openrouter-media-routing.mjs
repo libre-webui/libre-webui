@@ -680,7 +680,7 @@ test('capability discovery keeps live image, speech, sound, and video catalogs s
       'default'
     );
     await service.activatePlugin(pluginId, 'default');
-    const plugin = service.getPlugin(pluginId, 'default');
+    const plugin = await service.getPlugin(pluginId, 'default');
     assert.deepEqual(plugin.model_map, ['chat-live']);
     assert.deepEqual(plugin.capabilities.image.model_map, [
       'image-live-a',

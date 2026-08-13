@@ -60,7 +60,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 class StorageService {
-  private useSQLite = false;
+  private readonly useSQLite: true;
+  // Retained only for the explicit migration utility. Runtime construction
+  // always requires SQLite, so these legacy paths are never read or written by
+  // the authenticated application.
   private sessionsFile = path.join(__dirname, '..', 'sessions.json');
   private preferencesFile = path.join(__dirname, '..', 'preferences.json');
   private documentsFile = path.join(__dirname, '..', 'documents.json');
@@ -71,9 +74,14 @@ class StorageService {
   );
 
   constructor() {
-    // Check if SQLite should be used
-    this.useSQLite = isDatabaseInitialized();
-    logger.debug(`Storage mode: ${this.useSQLite ? 'SQLite' : 'JSON'}`);
+    // Authenticated application state must never split into cwd-dependent JSON
+    // files after a transient SQLite failure. Startup either establishes the
+    // canonical database first or fails closed.
+    if (!isDatabaseInitialized()) {
+      throw new Error('SQLite application storage is unavailable');
+    }
+    this.useSQLite = true;
+    logger.debug('Storage mode: SQLite');
   }
 
   // =================================

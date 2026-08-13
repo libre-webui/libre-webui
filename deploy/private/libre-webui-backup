@@ -7,26 +7,81 @@ stack_dir=${LIBRE_WEBUI_STACK_DIR:-/opt/libre-webui}
 backup_dir=${LIBRE_WEBUI_BACKUP_DIR:-/var/backups/libre-webui}
 retention_days=${LIBRE_WEBUI_BACKUP_RETENTION_DAYS:-14}
 compose_file=${stack_dir}/docker-compose.yml
+container_name=${LIBRE_WEBUI_CONTAINER_NAME:-libre-webui}
 data_volume=${LIBRE_WEBUI_DATA_VOLUME:-}
 timestamp=$(date -u +%Y%m%dT%H%M%SZ)
 archive=${backup_dir}/libre-webui-data-${timestamp}.tar.gz
+archive_partial=${archive}.partial
+inventory=${backup_dir}/libre-webui-recovery-${timestamp}.json
+inventory_partial=${inventory}.partial
+manifest=${backup_dir}/libre-webui-backup-${timestamp}.sha256
+manifest_partial=${manifest}.partial
 
 install -d -m 0700 "${backup_dir}"
+container_env=$(mktemp)
+chmod 0600 "${container_env}"
+exec 9>"${backup_dir}/.backup.lock"
+if ! flock -n 9; then
+  echo 'Another Libre WebUI backup is already running.' >&2
+  rm -f "${container_env}"
+  exit 1
+fi
+recovery_scratch=$(mktemp -d "${backup_dir}/.recovery-${timestamp}.XXXXXX")
+# The backup directory itself is root-only (0700). Grant the isolated,
+# networkless image user write/search access to this one mounted scratch leaf
+# without making its contents listable to other host users.
+chmod 0733 "${recovery_scratch}"
+
+restart_app=false
+cleanup() {
+  rm -f \
+    "${archive_partial}" \
+    "${inventory_partial}" \
+    "${manifest_partial}" \
+    "${container_env}"
+  rm -rf -- "${recovery_scratch}"
+  if [[ "${restart_app}" == true ]]; then
+    docker compose -f "${compose_file}" start libre-webui >/dev/null || true
+  fi
+}
+trap cleanup EXIT
+
 if [[ -z "${data_volume}" ]]; then
-  data_volume=$(docker inspect libre-webui --format '{{range .Mounts}}{{if eq .Destination "/app/backend/data"}}{{.Name}}{{end}}{{end}}')
+  data_volume=$(docker inspect "${container_name}" --format '{{range .Mounts}}{{if eq .Destination "/app/backend/data"}}{{.Name}}{{end}}{{end}}')
 fi
 if [[ -z "${data_volume}" ]]; then
   echo 'Could not resolve the Libre WebUI data volume.' >&2
   exit 1
 fi
-docker compose -f "${compose_file}" stop libre-webui
-restart_app=true
-cleanup() {
-  if [[ "${restart_app}" == true ]]; then
-    docker compose -f "${compose_file}" start libre-webui >/dev/null
-  fi
-}
-trap cleanup EXIT
+image_ref=$(docker inspect "${container_name}" --format '{{.Image}}')
+container_was_running=$(docker inspect "${container_name}" --format '{{.State.Running}}')
+docker inspect "${container_name}" \
+  --format '{{range .Config.Env}}{{println .}}{{end}}' >"${container_env}"
+
+if [[ "${container_was_running}" == true ]]; then
+  restart_app=true
+  docker compose -f "${compose_file}" stop --timeout 20 libre-webui
+fi
+
+# Inspect the quiesced mounted volume using the exact deployed image and
+# environment. A host checkout can point at another DB or different source.
+if ! docker run --rm \
+  --read-only \
+  --network none \
+  --cap-drop ALL \
+  --security-opt no-new-privileges \
+  --volumes-from "${container_name}:ro" \
+  --mount type=bind,src="${recovery_scratch}",dst=/recovery-tmp \
+  --env-file "${container_env}" \
+  --env TMPDIR=/recovery-tmp \
+  --entrypoint node \
+  "${image_ref}" \
+  /app/backend/dist/cli/recoveryInventory.js \
+  --json --data-dir /app/backend/data >"${inventory_partial}"; then
+  echo 'Recovery readiness check failed; no backup was published.' >&2
+  cat "${inventory_partial}" >&2
+  exit 1
+fi
 
 docker run --rm \
   --read-only \
@@ -36,10 +91,42 @@ docker run --rm \
   --mount type=volume,src="${data_volume}",dst=/data,readonly \
   --mount type=bind,src="${backup_dir}",dst=/backup \
   alpine:3.22 \
-  tar -C /data -czf "/backup/$(basename "${archive}")" .
-chmod 0600 "${archive}"
+  tar -C /data -czf "/backup/$(basename "${archive_partial}")" .
 
-docker compose -f "${compose_file}" start libre-webui >/dev/null
-restart_app=false
-find "${backup_dir}" -type f -name 'libre-webui-data-*.tar.gz' \
+docker run --rm \
+  --read-only \
+  --network none \
+  --cap-drop ALL \
+  --security-opt no-new-privileges \
+  --mount type=bind,src="${backup_dir}",dst=/backup,readonly \
+  alpine:3.22 \
+  tar -tzf "/backup/$(basename "${archive_partial}")" >/dev/null
+
+chmod 0600 "${archive_partial}" "${inventory_partial}"
+sync -f "${archive_partial}"
+sync -f "${inventory_partial}"
+archive_hash=$(sha256sum "${archive_partial}" | cut -d ' ' -f 1)
+inventory_hash=$(sha256sum "${inventory_partial}" | cut -d ' ' -f 1)
+printf '%s  %s\n%s  %s\n' \
+  "${archive_hash}" "$(basename "${archive}")" \
+  "${inventory_hash}" "$(basename "${inventory}")" \
+  >"${manifest_partial}"
+chmod 0600 "${manifest_partial}"
+sync -f "${manifest_partial}"
+mv "${archive_partial}" "${archive}"
+mv "${inventory_partial}" "${inventory}"
+sync -f "${backup_dir}"
+# The manifest is the completion marker. Consumers must ignore timestamp sets
+# without it and verify both listed hashes before using an archive.
+mv "${manifest_partial}" "${manifest}"
+sync -f "${backup_dir}"
+
+if [[ "${restart_app}" == true ]]; then
+  docker compose -f "${compose_file}" start libre-webui >/dev/null
+  restart_app=false
+fi
+find "${backup_dir}" -type f \
+  \( -name 'libre-webui-data-*.tar.gz' \
+     -o -name 'libre-webui-recovery-*.json' \
+     -o -name 'libre-webui-backup-*.sha256' \) \
   -mtime "+${retention_days}" -delete

@@ -18,14 +18,13 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { createLogger } from '../utils/logger.js';
+import {
+  BACKEND_DIRECTORY,
+  resolveDataDirectory,
+} from '../utils/dataDirectory.js';
 
 const logger = createLogger('encryption');
-
-// ESM __dirname equivalent
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * Encryption service for sensitive data
@@ -58,8 +57,7 @@ export class EncryptionService {
    */
   private saveKeyToPersistentStorage(encryptionKey: string): void {
     try {
-      const dataDir =
-        process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
+      const dataDir = resolveDataDirectory();
       const keyPath = path.join(dataDir, '.encryption_key');
 
       // Ensure data directory exists
@@ -92,29 +90,7 @@ export class EncryptionService {
    * Find the .env file location - checks multiple possible locations
    */
   private findEnvFilePath(): string {
-    // Possible .env file locations in order of priority
-    const possiblePaths = [
-      path.join(process.cwd(), 'backend', '.env'), // Running from project root (npm run dev)
-      path.join(process.cwd(), '.env'), // Running from backend directory
-      path.join(__dirname, '..', '..', '.env'), // Relative to this file (backend/src/services -> backend/)
-    ];
-
-    // Find the first existing .env file
-    for (const envPath of possiblePaths) {
-      if (fs.existsSync(envPath)) {
-        return envPath;
-      }
-    }
-
-    // If no .env exists, prefer the backend/.env location if backend dir exists
-    const backendEnvPath = path.join(process.cwd(), 'backend', '.env');
-    const backendDir = path.dirname(backendEnvPath);
-    if (fs.existsSync(backendDir)) {
-      return backendEnvPath;
-    }
-
-    // Fallback to cwd/.env
-    return path.join(process.cwd(), '.env');
+    return path.join(BACKEND_DIRECTORY, '.env');
   }
 
   /**
@@ -189,8 +165,7 @@ export class EncryptionService {
    */
   private loadKeyFromPersistentStorage(): string | null {
     try {
-      const dataDir =
-        process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
+      const dataDir = resolveDataDirectory();
       const keyPath = path.join(dataDir, '.encryption_key');
 
       if (fs.existsSync(keyPath)) {
@@ -215,11 +190,10 @@ export class EncryptionService {
     // Get encryption key from environment, persistent storage, or generate one
     let keyString = process.env.ENCRYPTION_KEY;
 
-    // If no environment variable, try loading from persistent storage (Docker or npx)
-    if (
-      !keyString &&
-      (process.env.DOCKER_ENV === 'true' || process.env.DATA_DIR)
-    ) {
+    // A persistent key is valid for every launch mode. Restricting this lookup
+    // to Docker or an explicit DATA_DIR could generate a replacement key when
+    // the same canonical data directory is opened from a different entrypoint.
+    if (!keyString) {
       const persistentKey = this.loadKeyFromPersistentStorage();
       if (persistentKey) {
         keyString = persistentKey;
@@ -294,6 +268,55 @@ export class EncryptionService {
     }
   }
 
+  private parseTextEnvelope(encryptedData: string): {
+    iv: Buffer;
+    authTag: Buffer;
+    encrypted: string;
+  } {
+    const parts = encryptedData.split(':');
+    const [ivHex, authTagHex, encrypted] = parts;
+    if (
+      parts.length !== 3 ||
+      !ivHex ||
+      !authTagHex ||
+      encrypted === undefined ||
+      !/^[a-fA-F0-9]{32}$/.test(ivHex) ||
+      !/^[a-fA-F0-9]{32}$/.test(authTagHex) ||
+      !/^(?:[a-fA-F0-9]{2})*$/.test(encrypted)
+    ) {
+      throw new Error('Invalid encrypted text data');
+    }
+    return {
+      iv: Buffer.from(ivHex, 'hex'),
+      authTag: Buffer.from(authTagHex, 'hex'),
+      encrypted,
+    };
+  }
+
+  /**
+   * Decrypt a canonical text envelope without the legacy plaintext fallback.
+   * Persistence boundaries use this form so a wrong key or damaged identity
+   * value can never be returned to an API as if it were an email address.
+   */
+  public decryptAuthenticated(encryptedData: string): string {
+    const { iv, authTag, encrypted } = this.parseTextEnvelope(encryptedData);
+    try {
+      const decipher = crypto.createDecipheriv(
+        this.algorithm,
+        this.encryptionKey,
+        iv
+      );
+      (decipher as crypto.DecipherGCM).setAuthTag(authTag);
+
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    } catch {
+      logger.error('Authenticated text decryption failed');
+      throw new Error('Failed to decrypt authenticated text data');
+    }
+  }
+
   /**
    * Decrypt encrypted text data
    */
@@ -309,38 +332,7 @@ export class EncryptionService {
     }
 
     try {
-      const parts = encryptedData.split(':');
-      if (parts.length !== 3) {
-        logger.warn(
-          `Decryption: Invalid format (expected 3 parts, got ${parts.length}), treating as unencrypted data`
-        );
-        return encryptedData;
-      }
-
-      const [ivHex, authTagHex, encrypted] = parts;
-
-      // Validate hex format before attempting to convert
-      if (!/^[a-fA-F0-9]+$/.test(ivHex) || !/^[a-fA-F0-9]+$/.test(authTagHex)) {
-        logger.warn(
-          'Decryption: Invalid hex format, treating as unencrypted data'
-        );
-        return encryptedData;
-      }
-
-      const iv = Buffer.from(ivHex, 'hex');
-      const authTag = Buffer.from(authTagHex, 'hex');
-
-      const decipher = crypto.createDecipheriv(
-        this.algorithm,
-        this.encryptionKey,
-        iv
-      );
-      (decipher as crypto.DecipherGCM).setAuthTag(authTag);
-
-      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-      decrypted += decipher.final('utf8');
-
-      return decrypted;
+      return this.decryptAuthenticated(encryptedData);
     } catch (error) {
       logger.error('Decryption error:', error);
       logger.warn('Treating as unencrypted data for backward compatibility');
@@ -435,7 +427,25 @@ export class EncryptionService {
    * Check if data appears to be encrypted
    */
   public isEncrypted(data: string): boolean {
-    return Boolean(data && data.includes(':') && data.split(':').length === 3);
+    try {
+      this.parseTextEnvelope(data);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Produce an equality-only lookup token for an identity email. Randomized
+   * ciphertext remains the stored value; this keyed token restores atomic
+   * uniqueness without exposing the address or using deterministic encryption.
+   */
+  public lookupToken(plaintext: string): string {
+    return crypto
+      .createHmac('sha256', this.encryptionKey)
+      .update('libre:identity-email:v1\0', 'utf8')
+      .update(plaintext, 'utf8')
+      .digest('hex');
   }
 
   /**

@@ -38,10 +38,10 @@ router.use(authenticate);
  * composer knows whether to offer the toggle; the SearXNG URL itself is
  * admin configuration and only returned to administrators.
  */
-router.get('/config', (req: Request, res: Response): void => {
+router.get('/config', async (req: Request, res: Response): Promise<void> => {
   const config = getWebSearchConfig();
   const userId = (req as { user?: { userId?: string } }).user?.userId;
-  const currentUser = userId ? userModel.getUserById(userId) : null;
+  const currentUser = userId ? await userModel.getUserById(userId) : null;
   // Authorization follows current database state, like requireAdmin.
   const isAdmin =
     currentUser?.status === 'active' && currentUser.role === 'admin';
@@ -70,9 +70,9 @@ router.get('/config', (req: Request, res: Response): void => {
  * the mode is admin-only and lives in User Management next to the other
  * access controls.
  */
-router.get('/access', (req: Request, res: Response): void => {
+router.get('/access', async (req: Request, res: Response): Promise<void> => {
   const userId = (req as { user?: { userId?: string } }).user?.userId;
-  const currentUser = userId ? userModel.getUserById(userId) : null;
+  const currentUser = userId ? await userModel.getUserById(userId) : null;
   res.json({
     success: true,
     data: {

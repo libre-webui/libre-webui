@@ -958,8 +958,8 @@ test('streamPluginResponse rejects incomplete provider streams with their reason
 
 test('plugin model routing requires an active plugin and the current user credentials', async () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-plugin-route-'));
-  const pluginsDir = path.join(tempDir, 'plugins');
   const dataDir = path.join(tempDir, 'data');
+  const pluginsDir = path.join(dataDir, 'plugins');
   const previousCwd = process.cwd();
 
   const writePlugin = plugin => {
@@ -1076,7 +1076,7 @@ test('plugin model routing requires an active plugin and the current user creden
               'alice-key',
               'alice',
               pluginService.getCredentialRoutingAuthFingerprint(
-                pluginService.getPlugin('active-plugin', 'alice'),
+                await pluginService.getPlugin('active-plugin', 'alice'),
                 'alice'
               )
             ),
@@ -1886,10 +1886,13 @@ test('generated titles never leak model thinking', () => {
   }
 
   // Ordinary titles pass through untouched.
-  assert.deepEqual(sanitizeGeneratedTitleResult('Garden Planning Help', source), {
-    title: 'Garden Planning Help',
-    usedFallback: false,
-  });
+  assert.deepEqual(
+    sanitizeGeneratedTitleResult('Garden Planning Help', source),
+    {
+      title: 'Garden Planning Help',
+      usedFallback: false,
+    }
+  );
 
   // The prompt itself tells reasoning models to keep their thinking out.
   assert.match(buildTitlePrompt(source), /do not think out loud/i);

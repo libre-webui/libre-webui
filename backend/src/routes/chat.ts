@@ -478,7 +478,7 @@ router.post(
       if (
         req.body?.webSearch === true &&
         isWebSearchAvailable() &&
-        userCanUseWebSearch(userModel.getUserById(userId))
+        userCanUseWebSearch(await userModel.getUserById(userId))
       ) {
         try {
           const results: WebSearchResult[] = await runWebSearch(
@@ -659,7 +659,7 @@ router.post(
       if (
         req.body?.webSearch === true &&
         isWebSearchAvailable() &&
-        userCanUseWebSearch(userModel.getUserById(userId))
+        userCanUseWebSearch(await userModel.getUserById(userId))
       ) {
         res.write(
           `data: ${JSON.stringify({ type: 'search', status: 'searching' })}\n\n`

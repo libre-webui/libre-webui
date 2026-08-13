@@ -5,11 +5,13 @@ After=docker.service
 
 [Service]
 Type=oneshot
+TimeoutStartSec=6h
+EnvironmentFile=-/etc/libre-webui/backup.env
 ExecStart=/usr/local/sbin/libre-webui-backup
 Nice=10
 IOSchedulingClass=best-effort
 IOSchedulingPriority=7
 PrivateTmp=true
 ProtectSystem=strict
-ReadWritePaths=/var/backups/libre-webui /var/run/docker.sock
+ReadWritePaths=-/var/backups/libre-webui /var/run/docker.sock
 NoNewPrivileges=true

@@ -503,29 +503,29 @@ export class AgentCliService {
     return models;
   }
 
-  isAdminUser(userId: string): boolean {
-    const user = userModel.getUserById(userId);
+  async isAdminUser(userId: string): Promise<boolean> {
+    const user = await userModel.getUserById(userId);
     return user?.role === 'admin';
   }
 
-  assertAgentAccess(userId: string): AgentCliDefinition[] {
+  async assertAgentAccess(userId: string): Promise<AgentCliDefinition[]> {
     if (!agentsEnabled()) {
       throw new Error('Agent CLI models are disabled on this server.');
     }
-    if (!this.isAdminUser(userId)) {
+    if (!(await this.isAdminUser(userId))) {
       throw new Error('Agent CLI models require an admin account.');
     }
     return AGENT_CLI_DEFINITIONS;
   }
 
-  executeAgentStreamRequest(
+  async *executeAgentStreamRequest(
     agentId: string,
     messages: readonly ChatMessage[],
     userId: string,
     options: { cwd?: string; model?: string; signal?: AbortSignal } = {}
   ): AsyncGenerator<PluginStreamChunk, void, unknown> {
     throwIfChatGenerationCancelled(options.signal);
-    this.assertAgentAccess(userId);
+    await this.assertAgentAccess(userId);
     const definition = AGENT_CLI_DEFINITIONS.find(
       candidate => candidate.id === agentId
     );
@@ -706,7 +706,7 @@ export class AgentCliService {
       child.stdin.end();
     }
 
-    return queue.drain();
+    yield* queue.drain();
   }
 }
 

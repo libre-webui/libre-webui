@@ -48,11 +48,11 @@ router.use(authenticate);
  * active users pass when an administrator has opened model downloads to all
  * users. Authorization follows current database state on every request.
  */
-const requireModelDownloadAccess = (
+const requireModelDownloadAccess = async (
   req: AuthenticatedRequest,
   res: Response,
   next: express.NextFunction
-): void => {
+): Promise<void> => {
   if (!req.user) {
     res.status(403).json({
       success: false,
@@ -60,7 +60,7 @@ const requireModelDownloadAccess = (
     });
     return;
   }
-  const currentUser = userModel.getUserById(req.user.userId);
+  const currentUser = await userModel.getUserById(req.user.userId);
   if (!currentUser || !userCanDownloadModels(currentUser)) {
     res.status(403).json({
       success: false,
@@ -127,16 +127,21 @@ router.get(
 // Who may pull models. Read is open to any authenticated user so the
 // interface can decide whether to offer download affordances; changing the
 // mode is admin-only.
-router.get('/models/access', (req: AuthenticatedRequest, res: Response) => {
-  const currentUser = req.user ? userModel.getUserById(req.user.userId) : null;
-  res.json({
-    success: true,
-    data: {
-      mode: getModelDownloadMode(),
-      allowed: currentUser ? userCanDownloadModels(currentUser) : false,
-    },
-  });
-});
+router.get(
+  '/models/access',
+  async (req: AuthenticatedRequest, res: Response) => {
+    const currentUser = req.user
+      ? await userModel.getUserById(req.user.userId)
+      : null;
+    res.json({
+      success: true,
+      data: {
+        mode: getModelDownloadMode(),
+        allowed: currentUser ? userCanDownloadModels(currentUser) : false,
+      },
+    });
+  }
+);
 
 router.put(
   '/models/access',

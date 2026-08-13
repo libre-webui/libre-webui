@@ -19,7 +19,11 @@ serviceAccount:
   name: ''
 
 podAnnotations: {}
-podSecurityContext: {}
+podSecurityContext:
+  # Fresh PVCs are commonly root-owned. Kubernetes applies this group so the
+  # non-root application can create SQLite and local storage safely.
+  fsGroup: 1001
+  fsGroupChangePolicy: OnRootMismatch
 
 securityContext:
   runAsNonRoot: true
@@ -87,12 +91,28 @@ env:
   OLLAMA_LONG_OPERATION_TIMEOUT: '900000'
   VITE_API_TIMEOUT: '300000'
   DATA_DIR: '/app/backend/data'
+  PLATFORM_PREFLIGHT_TMP_DIR: '/app/backend/temp/preflight'
+  LIBRE_PLATFORM_MODE: 'solo'
+  DATABASE_BACKEND: 'sqlite'
+  BLOB_STORE_BACKEND: 'local'
+  VECTOR_STORE_BACKEND: 'embedded'
+  COORDINATION_BACKEND: 'local'
+  REDIS_KEY_PREFIX: 'libre'
+  REDIS_CONNECT_TIMEOUT_MS: '5000'
+  JOB_WORKER_MODE: 'embedded'
+  STORAGE_ENCRYPTION_ACTIVE_KEY_ID: ''
 
 # Secrets - provide via --set or external secret management
 secrets:
   jwtSecret: ''
   encryptionKey: ''
   sessionSecret: ''
+  # Platform connection/key material. PostgreSQL remains unavailable; Redis
+  # coordination is supported in solo mode, and storage key rotation is
+  # validated even before resource callers migrate.
+  databaseUrl: ''
+  redisUrl: ''
+  storageEncryptionKeys: ''
   # OAuth
   githubClientId: ''
   githubClientSecret: ''

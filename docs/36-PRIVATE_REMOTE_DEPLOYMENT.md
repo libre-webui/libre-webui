@@ -71,7 +71,7 @@ host. A read-only socket mount does not make Docker API access read-only.
    hostname, use a 24-hour session, and allow only the intended identities.
    Enable **Protect with Access** on the tunnel route. If monitoring requires a
    public health check, create a separate path-scoped application or policy for
-   `/health` only. Never add a blanket Bypass policy to the main application:
+   `/health/live` only. Never add a blanket Bypass policy to the main application:
    matching Bypass policies defeat its Allow policy.
 6. Leave `ENABLE_SIGNUP=false`. Once the Access allowlist protects the hostname,
    create the first local administrator; an empty database permits that one
@@ -139,9 +139,28 @@ forwarding unless the deployment has a documented need for them.
 
 ## Backups and recovery
 
+Before taking a backup, run the read-only recovery inventory inside the running
+deployment container. This uses the exact deployed application version,
+environment, and mounted data volume. A command from a host checkout can inspect
+the wrong database or run source that differs from the deployed image.
+
+```bash
+docker exec libre-webui \
+  node /app/backend/dist/cli/recoveryInventory.js \
+  --json --data-dir /app/backend/data
+```
+
+Exit status `0` means no recovery-readiness blockers were found, `1` means the
+JSON report contains blockers, and `2` means the command could not run. The
+report includes only an encryption-key fingerprint and secret-presence flags;
+it never prints a key or other secret value. Keep the inventory with the
+corresponding backup so operators can compare the application version, schema
+fingerprint, expected Work resources, and exclusions before a restore.
+
 Install the provided backup script and systemd units, then enable the timer:
 
 ```bash
+install -d -m 0700 /var/backups/libre-webui
 install -m 0750 deploy/private/libre-webui-backup \
   /usr/local/sbin/libre-webui-backup
 install -m 0644 deploy/private/libre-webui-backup.{service,timer} \
@@ -150,11 +169,58 @@ systemctl daemon-reload
 systemctl enable --now libre-webui-backup.timer
 ```
 
-The backup briefly stops the application to produce a consistent data-volume
-archive. Copy archives off-host using encrypted storage and regularly test a
-restore. Back up `.env` separately in a secrets manager; never place it inside
-an unencrypted archive. Ollama models can be pulled again. Work task volumes
-need a separate retention policy when their content matters.
+The unit optionally reads maintenance-only overrides from
+`/etc/libre-webui/backup.env`; it does not load the application `.env`. Create
+the file as root only when an override is needed:
+
+```bash
+install -d -m 0750 /etc/libre-webui
+install -m 0600 /dev/null /etc/libre-webui/backup.env
+```
+
+`LIBRE_WEBUI_STACK_DIR`, `LIBRE_WEBUI_BACKUP_RETENTION_DAYS`,
+`LIBRE_WEBUI_CONTAINER_NAME`, and `LIBRE_WEBUI_DATA_VOLUME` can be set there
+directly. Keep the file owned by root and mode `0600`.
+
+Changing `LIBRE_WEBUI_BACKUP_DIR` also changes the systemd write boundary. The
+directory must exist before the service starts, and the unit needs a matching
+drop-in. For example, after setting
+`LIBRE_WEBUI_BACKUP_DIR=/srv/backups/libre-webui` in `backup.env`:
+
+```bash
+install -d -m 0700 /srv/backups/libre-webui
+systemctl edit libre-webui-backup.service
+```
+
+Add this exact path in the editor, then reload the unit:
+
+```ini
+[Service]
+ReadWritePaths=/srv/backups/libre-webui
+```
+
+```bash
+systemctl daemon-reload
+systemctl start libre-webui-backup.service
+```
+
+Without the matching `ReadWritePaths=` entry, `ProtectSystem=strict` correctly
+prevents the timer from writing to a custom location.
+
+The backup service allows up to six hours for large archives. The helper
+acquires a host lock, stops the application only when it was already running,
+and runs the
+inventory against the quiesced volume with the exact deployed image. It then
+creates and validates the data archive, stores the paired inventory, and writes
+a SHA-256 manifest. Each file is renamed atomically and the manifest is
+published last as the completion marker. The helper remains a
+baseline volume backup, not a complete coordinated, signed, or encrypted system
+backup. Copy all three files off-host using encrypted storage and regularly test
+a restore. Back up `.env` separately in a secrets manager; never place it inside
+an unencrypted archive. Ollama models can be pulled again. Docker Work volumes,
+Kubernetes Work PVCs, and host-bound Work folders are outside the application
+data directory and require their own coordinated snapshots and retention
+policy.
 
 ## Updates
 

@@ -17,7 +17,6 @@
 
 import http from 'node:http';
 import os from 'node:os';
-import path from 'node:path';
 import { readFile, stat, statfs } from 'node:fs/promises';
 
 import {
@@ -26,6 +25,7 @@ import {
   type DockerEndpoint,
 } from '../utils/dockerEndpoint.js';
 import { loadAppPackage } from '../utils/packagePaths.js';
+import { resolveDataDirectory } from '../utils/dataDirectory.js';
 
 export { resolveDockerEndpoint } from '../utils/dockerEndpoint.js';
 
@@ -472,8 +472,7 @@ export class SystemDiagnosticsService {
     const freeBytes = Math.max(0, os.freemem());
     const usedBytes = Math.max(0, totalBytes - freeBytes);
     const processMemory = process.memoryUsage();
-    const dataDirectory =
-      process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
+    const dataDirectory = resolveDataDirectory();
     const dockerEndpoint = resolveDockerEndpoint(
       process.env.WORK_DOCKER_SOCKET,
       process.env.DOCKER_HOST,

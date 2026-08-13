@@ -125,7 +125,7 @@ export class WorkModelProviderService {
   async availability(userId: string): Promise<WorkProviderAvailability> {
     const [ollamaAvailable, pluginAvailable] = await Promise.all([
       this.dependencies.ollama.isHealthy(),
-      Promise.resolve(this.hasConfiguredPlugin(userId)),
+      this.hasConfiguredPlugin(userId),
     ]);
     return { ollamaAvailable, pluginAvailable };
   }
@@ -144,7 +144,7 @@ export class WorkModelProviderService {
       );
     }
     if (provider.providerType === 'plugin') {
-      this.requireExactPlugin(provider.providerId, cleaned, userId);
+      await this.requireExactPlugin(provider.providerId, cleaned, userId);
       return;
     }
     if (
@@ -183,15 +183,18 @@ export class WorkModelProviderService {
     }
   }
 
-  getResponsesStateScope(
+  async getResponsesStateScope(
     model: string,
     provider: WorkProviderSelection,
     userId: string
-  ): string | undefined {
+  ): Promise<string | undefined> {
     if (provider.providerType !== 'plugin') return undefined;
     const providerId = provider.providerId?.trim();
     if (!providerId) return undefined;
-    const plugin = this.dependencies.plugins.getPlugin(providerId, userId);
+    const plugin = await this.dependencies.plugins.getPlugin(
+      providerId,
+      userId
+    );
     if (!plugin || !plugin.active || !plugin.model_map.includes(model)) {
       return undefined;
     }
@@ -212,11 +215,11 @@ export class WorkModelProviderService {
     );
   }
 
-  getRoutingFingerprint(
+  async getRoutingFingerprint(
     model: string,
     provider: WorkProviderSelection,
     userId: string
-  ): string {
+  ): Promise<string> {
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
       return createHash('sha256')
@@ -230,7 +233,11 @@ export class WorkModelProviderService {
         .digest('hex');
     }
 
-    const plugin = this.requireExactPlugin(provider.providerId, model, userId);
+    const plugin = await this.requireExactPlugin(
+      provider.providerId,
+      model,
+      userId
+    );
     const variables = this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
@@ -264,7 +271,7 @@ export class WorkModelProviderService {
       assertOllamaProvider(provider);
       return this.dependencies.ollama.generateChatResponse(request, signal);
     }
-    const plugin = this.requireExactPlugin(
+    const plugin = await this.requireExactPlugin(
       provider.providerId,
       request.model,
       userId
@@ -284,7 +291,7 @@ export class WorkModelProviderService {
       assertOllamaProvider(provider);
       return this.generateOllamaStream(streamRequest, observer, signal);
     }
-    const plugin = this.requireExactPlugin(
+    const plugin = await this.requireExactPlugin(
       provider.providerId,
       request.model,
       userId
@@ -298,9 +305,8 @@ export class WorkModelProviderService {
     );
   }
 
-  private hasConfiguredPlugin(userId: string): boolean {
-    return this.dependencies.plugins
-      .getActivePlugins(userId)
+  private async hasConfiguredPlugin(userId: string): Promise<boolean> {
+    return (await this.dependencies.plugins.getActivePlugins(userId))
       .filter(isWorkPlugin)
       .some(
         plugin =>
@@ -310,11 +316,11 @@ export class WorkModelProviderService {
       );
   }
 
-  private requireExactPlugin(
+  private async requireExactPlugin(
     providerId: string | undefined,
     model: string,
     userId: string
-  ): Plugin {
+  ): Promise<Plugin> {
     const cleanedProviderId = providerId?.trim();
     if (!cleanedProviderId) {
       throw new WorkModelProviderError(
@@ -323,7 +329,7 @@ export class WorkModelProviderService {
         'WORK_PLUGIN_ID_REQUIRED'
       );
     }
-    const plugin = this.dependencies.plugins.getPlugin(
+    const plugin = await this.dependencies.plugins.getPlugin(
       cleanedProviderId,
       userId
     );

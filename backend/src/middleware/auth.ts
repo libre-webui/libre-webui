@@ -56,7 +56,7 @@ export const authenticate = async (
       return;
     }
 
-    const currentUser = userModel.getUserById(payload.userId);
+    const currentUser = await userModel.getUserById(payload.userId);
     if (!currentUser) {
       res.status(401).json({
         success: false,
@@ -110,7 +110,7 @@ export const requireAdmin = async (
   }
 
   try {
-    const currentUser = userModel.getUserById(req.user.userId);
+    const currentUser = await userModel.getUserById(req.user.userId);
     if (
       !currentUser ||
       currentUser.status !== 'active' ||
@@ -155,7 +155,7 @@ export const optionalAuth = async (
       const token = authHeader.substring(7);
       const payload = authService.verifyToken(token);
       if (payload) {
-        const currentUser = userModel.getUserById(payload.userId);
+        const currentUser = await userModel.getUserById(payload.userId);
         if (currentUser?.status === 'active') {
           req.user = {
             userId: currentUser.id,

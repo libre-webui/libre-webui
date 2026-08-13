@@ -857,7 +857,7 @@ test('provider API configuration resolves modes, base URLs, paths, and model dis
   );
 });
 
-test('Responses replay and Work routing change when provider credentials rotate', () => {
+test('Responses replay and Work routing change when provider credentials rotate', async () => {
   const plugin = {
     id: 'credential-rotation-provider',
     name: 'Credential rotation provider',
@@ -890,23 +890,23 @@ test('Responses replay and Work routing change when provider credentials rotate'
     providerId: plugin.id,
   };
 
-  const oldStateScope = service.getResponsesStateScope(
+  const oldStateScope = await service.getResponsesStateScope(
     'gpt-test',
     provider,
     'credential-rotation-user'
   );
-  const oldRoutingFingerprint = service.getRoutingFingerprint(
+  const oldRoutingFingerprint = await service.getRoutingFingerprint(
     'gpt-test',
     provider,
     'credential-rotation-user'
   );
   apiKey = 'new-api-key';
-  const newStateScope = service.getResponsesStateScope(
+  const newStateScope = await service.getResponsesStateScope(
     'gpt-test',
     provider,
     'credential-rotation-user'
   );
-  const newRoutingFingerprint = service.getRoutingFingerprint(
+  const newRoutingFingerprint = await service.getRoutingFingerprint(
     'gpt-test',
     provider,
     'credential-rotation-user'
@@ -2711,27 +2711,38 @@ test('discovered model maps persist per user without mutating the plugin manifes
       ['model-model-user-two']
     );
     assert.deepEqual(
-      service.getPlugin('model-isolation-provider', 'model-user-one').model_map,
+      (await service.getPlugin('model-isolation-provider', 'model-user-one'))
+        .model_map,
       ['model-model-user-one']
     );
     assert.deepEqual(
-      service.getPlugin('model-isolation-provider', 'model-user-two').model_map,
+      (await service.getPlugin('model-isolation-provider', 'model-user-two'))
+        .model_map,
       ['model-model-user-two']
     );
     assert.deepEqual(
-      service.getPlugin('model-isolation-provider', 'default').model_map,
+      (await service.getPlugin('model-isolation-provider', 'default'))
+        .model_map,
       ['manifest-model']
     );
 
     const reloadedService = new pluginServiceModule.PluginService();
     assert.deepEqual(
-      reloadedService.getPlugin('model-isolation-provider', 'model-user-one')
-        .model_map,
+      (
+        await reloadedService.getPlugin(
+          'model-isolation-provider',
+          'model-user-one'
+        )
+      ).model_map,
       ['model-model-user-one']
     );
     assert.deepEqual(
-      reloadedService.getPlugin('model-isolation-provider', 'model-user-two')
-        .model_map,
+      (
+        await reloadedService.getPlugin(
+          'model-isolation-provider',
+          'model-user-two'
+        )
+      ).model_map,
       ['model-model-user-two']
     );
 
@@ -2740,13 +2751,21 @@ test('discovered model maps persist per user without mutating the plugin manifes
       'model-user-one'
     );
     assert.deepEqual(
-      reloadedService.getPlugin('model-isolation-provider', 'model-user-one')
-        .model_map,
+      (
+        await reloadedService.getPlugin(
+          'model-isolation-provider',
+          'model-user-one'
+        )
+      ).model_map,
       ['manifest-model']
     );
     assert.deepEqual(
-      reloadedService.getPlugin('model-isolation-provider', 'model-user-two')
-        .model_map,
+      (
+        await reloadedService.getPlugin(
+          'model-isolation-provider',
+          'model-user-two'
+        )
+      ).model_map,
       ['model-model-user-two']
     );
   } finally {

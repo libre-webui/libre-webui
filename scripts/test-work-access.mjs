@@ -29,9 +29,8 @@ const runtimeModule = await import(
   ).href
 );
 const terminalServerModule = await import(
-  pathToFileURL(
-    path.join(repoRoot, 'backend', 'dist', 'workTerminalServer.js')
-  ).href
+  pathToFileURL(path.join(repoRoot, 'backend', 'dist', 'workTerminalServer.js'))
+    .href
 );
 
 const {
@@ -103,8 +102,16 @@ test('runtime mutations honor the owner’s current Work access', async () => {
       id, user_id, title, model, volume_name, container_name,
       created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(task.id, userId, task.title, task.model, task.volumeName,
-    task.containerName, now, now);
+  ).run(
+    task.id,
+    userId,
+    task.title,
+    task.model,
+    task.volumeName,
+    task.containerName,
+    now,
+    now
+  );
 
   const service = new WorkRuntimeService();
   let removed = 0;
@@ -127,7 +134,7 @@ test('runtime mutations honor the owner’s current Work access', async () => {
   setWorkAccessMode('admins');
 });
 
-test('an established terminal rechecks current access and task ownership', () => {
+test('an established terminal rechecks current access and task ownership', async () => {
   const db = databaseModule.getDatabase();
   const now = Date.now();
   const userId = 'terminal-reauth-user';
@@ -155,25 +162,23 @@ test('an established terminal rechecks current access and task ownership', () =>
   );
 
   setWorkAccessMode('all-users');
-  assert.equal(requireCurrentTerminalTask(userId, taskId).id, taskId);
+  assert.equal((await requireCurrentTerminalTask(userId, taskId)).id, taskId);
 
   db.prepare("UPDATE users SET account_status = 'pending' WHERE id = ?").run(
     userId
   );
-  assert.throws(
-    () => requireCurrentTerminalTask(userId, taskId),
-    error =>
-      error?.status === 403 && error?.code === 'WORK_TERMINAL_FORBIDDEN'
+  await assert.rejects(
+    requireCurrentTerminalTask(userId, taskId),
+    error => error?.status === 403 && error?.code === 'WORK_TERMINAL_FORBIDDEN'
   );
   db.prepare("UPDATE users SET account_status = 'active' WHERE id = ?").run(
     userId
   );
 
   setWorkAccessMode('admins');
-  assert.throws(
-    () => requireCurrentTerminalTask(userId, taskId),
-    error =>
-      error?.status === 403 && error?.code === 'WORK_TERMINAL_FORBIDDEN'
+  await assert.rejects(
+    requireCurrentTerminalTask(userId, taskId),
+    error => error?.status === 403 && error?.code === 'WORK_TERMINAL_FORBIDDEN'
   );
 
   setWorkAccessMode('all-users');
@@ -181,8 +186,8 @@ test('an established terminal rechecks current access and task ownership', () =>
     otherUserId,
     taskId
   );
-  assert.throws(
-    () => requireCurrentTerminalTask(userId, taskId),
+  await assert.rejects(
+    requireCurrentTerminalTask(userId, taskId),
     error =>
       error?.status === 404 && error?.code === 'WORK_TERMINAL_TASK_NOT_FOUND'
   );
@@ -204,16 +209,16 @@ test('the Work routes gate on Work access, not blanket admin', () => {
   assert.ok(accessRead !== -1 && gate !== -1 && accessRead < gate);
   assert.match(source, /router\.put\(\s*'\/access',\s*requireAdmin/);
   // Host folders bind-mount server paths: admin-only in every mode.
-  assert.match(
-    source,
-    /requestedHostPath && req\.user\?\.role !== 'admin'/
-  );
+  assert.match(source, /requestedHostPath && req\.user\?\.role !== 'admin'/);
 
   const terminal = readFileSync(
     path.join(repoRoot, 'backend', 'src', 'workTerminalServer.ts'),
     'utf8'
   );
   assert.match(terminal, /!userHasWorkAccess\(currentUser\)/);
-  assert.match(terminal, /requireCurrentTerminalTask\(userId, task\.id\)/);
+  assert.match(
+    terminal,
+    /requireCurrentTerminalTask\(\s*userId,\s*task\.id,\s*\(\) => lifecycle\.isShuttingDown/
+  );
   assert.doesNotMatch(terminal, /currentUser\.role !== 'admin'/);
 });

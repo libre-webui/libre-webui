@@ -81,6 +81,13 @@ import {
   throwIfChatGenerationCancelled,
 } from '../utils/chatCancellation.js';
 import { resolveBundledPluginsDir } from '../utils/packagePaths.js';
+import {
+  BACKEND_DIRECTORY,
+  PROJECT_DIRECTORY,
+  resolveDataDirectory,
+  resolveLegacyPluginsDirectories,
+  resolvePluginsDirectory,
+} from '../utils/dataDirectory.js';
 import { getDatabaseSafe } from '../db.js';
 import {
   createOpenAIResponsesStateScope,
@@ -98,6 +105,80 @@ import {
 } from '../utils/pluginDefinitionTrust.js';
 
 const logger = createLogger('plugins');
+
+const hasSymlinkPathComponentFromRoot = (
+  root: string,
+  target: string
+): boolean => {
+  const resolvedRoot = path.resolve(root);
+  const resolvedTarget = path.resolve(target);
+  const relative = path.relative(resolvedRoot, resolvedTarget);
+  if (
+    relative === '..' ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative)
+  ) {
+    return false;
+  }
+  let current = resolvedRoot;
+  for (const component of relative.split(path.sep)) {
+    if (!component) continue;
+    current = path.join(current, component);
+    try {
+      if (fs.lstatSync(current).isSymbolicLink()) return true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+      throw error;
+    }
+  }
+  return false;
+};
+
+const isRegularPluginDirectory = (directory: string): boolean => {
+  try {
+    const stat = fs.lstatSync(directory);
+    return stat.isDirectory() && !stat.isSymbolicLink();
+  } catch {
+    return false;
+  }
+};
+
+const isRegularPluginDefinition = (filePath: string): boolean => {
+  try {
+    if (!isRegularPluginDirectory(path.dirname(filePath))) return false;
+    const stat = fs.lstatSync(filePath);
+    return stat.isFile() && !stat.isSymbolicLink();
+  } catch {
+    return false;
+  }
+};
+
+const readRegularPluginDefinition = (filePath: string): string => {
+  if (!isRegularPluginDirectory(path.dirname(filePath))) {
+    throw new Error('Plugin definition directory is not a regular directory');
+  }
+  const namedStat = fs.lstatSync(filePath);
+  if (!namedStat.isFile() || namedStat.isSymbolicLink()) {
+    throw new Error('Plugin definition is not a regular file');
+  }
+  const descriptor = fs.openSync(
+    filePath,
+    fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0)
+  );
+  try {
+    const openedStat = fs.fstatSync(descriptor);
+    if (
+      !openedStat.isFile() ||
+      openedStat.dev !== namedStat.dev ||
+      openedStat.ino !== namedStat.ino
+    ) {
+      throw new Error('Plugin definition changed during inspection');
+    }
+    return fs.readFileSync(descriptor, 'utf8');
+  } finally {
+    fs.closeSync(descriptor);
+  }
+};
 
 const readPositiveIntEnv = (name: string, fallback: number): number => {
   const parsed = Number(process.env[name]);
@@ -215,10 +296,16 @@ function getPluginRoutingAuthProjection(plugin: Plugin): string {
   });
 }
 
+export interface PluginServiceOptions {
+  /** Dependency injection for isolated tests; production uses deterministic legacy paths. */
+  legacyPluginsDirectories?: string[];
+}
+
 export class PluginService {
   private pluginsDir: string;
   private bundledPluginsDir: string;
-  private legacyPluginsDir: string;
+  private legacyPluginsDirs: string[];
+  private historicalPluginConflictDirs: string[];
   private pluginReadDirs: string[];
   private discoveredModelsCache = new Map<string, string[] | null>();
   private discoveredModelsUpdatedAt = new Map<string, number>();
@@ -243,24 +330,42 @@ export class PluginService {
   private capabilityRegistryService: PluginCapabilityRegistryService;
   private bundledRoutingProjectionCache = new Map<string, string | null>();
 
-  constructor() {
+  constructor(options: PluginServiceOptions = {}) {
     this.bundledPluginsDir = resolveBundledPluginsDir(import.meta.url);
-    this.legacyPluginsDir = path.join(process.cwd(), 'plugins');
-    this.pluginsDir =
-      process.env.PLUGINS_DIR ||
-      (process.env.DATA_DIR
-        ? path.join(process.env.DATA_DIR, 'plugins')
-        : this.legacyPluginsDir);
+    this.pluginsDir = resolvePluginsDirectory();
+    this.legacyPluginsDirs =
+      options.legacyPluginsDirectories ?? resolveLegacyPluginsDirectories();
+    const activePluginDirectories = new Set(
+      [this.bundledPluginsDir, this.pluginsDir, ...this.legacyPluginsDirs].map(
+        directory => path.resolve(directory)
+      )
+    );
+    this.historicalPluginConflictDirs = options.legacyPluginsDirectories
+      ? []
+      : resolveLegacyPluginsDirectories(process.env, {
+          historicalWorkingDirectory: process.cwd(),
+        }).filter(
+          directory => !activePluginDirectories.has(path.resolve(directory))
+        );
     this.pluginReadDirs = Array.from(
-      new Set([this.bundledPluginsDir, this.legacyPluginsDir, this.pluginsDir])
+      new Set([
+        this.bundledPluginsDir,
+        ...this.legacyPluginsDirs,
+        this.pluginsDir,
+      ])
     );
     this.ensurePluginsDirectory();
     pluginActivationService.migrateLegacyStatus(
-      [this.pluginsDir, this.legacyPluginsDir],
+      [...this.pluginReadDirs]
+        .reverse()
+        .filter(
+          pluginsDir =>
+            path.resolve(pluginsDir) !== path.resolve(this.bundledPluginsDir)
+        ),
       pluginId => this.canMigrateLegacyActivation(pluginId)
     );
     this.embeddingService = new PluginEmbeddingService({
-      getAllPlugins: userId => this.getActivePlugins(userId),
+      getAllPlugins: userId => this.getActivePluginsUnchecked(userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
@@ -268,8 +373,8 @@ export class PluginService {
       recordUsage: usage => pluginUsageService.record(usage),
     });
     this.ttsService = new PluginTTSService({
-      getAllPlugins: userId => this.getActivePlugins(userId),
-      getPlugin: (id, userId) => this.getPlugin(id, userId),
+      getAllPlugins: userId => this.getActivePluginsUnchecked(userId),
+      getPlugin: (id, userId) => this.getPluginUnchecked(id, userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
@@ -277,8 +382,8 @@ export class PluginService {
       recordUsage: usage => pluginUsageService.record(usage),
     });
     this.sttService = new PluginSTTService({
-      getAllPlugins: userId => this.getActivePlugins(userId),
-      getPlugin: (id, userId) => this.getPlugin(id, userId),
+      getAllPlugins: userId => this.getActivePluginsUnchecked(userId),
+      getPlugin: (id, userId) => this.getPluginUnchecked(id, userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
@@ -286,8 +391,8 @@ export class PluginService {
       recordUsage: usage => pluginUsageService.record(usage),
     });
     this.imageGenerationService = new PluginImageGenerationService({
-      getAllPlugins: userId => this.getActivePlugins(userId),
-      getPlugin: (id, userId) => this.getPlugin(id, userId),
+      getAllPlugins: userId => this.getActivePluginsUnchecked(userId),
+      getPlugin: (id, userId) => this.getPluginUnchecked(id, userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
@@ -295,8 +400,8 @@ export class PluginService {
       recordUsage: usage => pluginUsageService.record(usage),
     });
     this.audioGenerationService = new PluginAudioGenerationService({
-      getAllPlugins: userId => this.getActivePlugins(userId),
-      getPlugin: (id, userId) => this.getPlugin(id, userId),
+      getAllPlugins: userId => this.getActivePluginsUnchecked(userId),
+      getPlugin: (id, userId) => this.getPluginUnchecked(id, userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
@@ -304,8 +409,8 @@ export class PluginService {
       recordUsage: usage => pluginUsageService.record(usage),
     });
     this.videoGenerationService = new PluginVideoGenerationService({
-      getAllPlugins: userId => this.getActivePlugins(userId),
-      getPlugin: (id, userId) => this.getPlugin(id, userId),
+      getAllPlugins: userId => this.getActivePluginsUnchecked(userId),
+      getPlugin: (id, userId) => this.getPluginUnchecked(id, userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
@@ -313,7 +418,7 @@ export class PluginService {
       recordUsage: usage => pluginUsageService.record(usage),
     });
     this.capabilityRegistryService = new PluginCapabilityRegistryService({
-      getAllPlugins: userId => this.getActivePlugins(userId),
+      getAllPlugins: userId => this.getActivePluginsUnchecked(userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
     });
   }
@@ -666,8 +771,94 @@ export class PluginService {
   }
 
   private ensurePluginsDirectory(): void {
-    if (!fs.existsSync(this.pluginsDir)) {
+    const dataDirectory = resolveDataDirectory();
+    const configuredRelativeToData = path.relative(
+      dataDirectory,
+      this.pluginsDir
+    );
+    const configuredPathRoot =
+      configuredRelativeToData === '' ||
+      (configuredRelativeToData !== '..' &&
+        !configuredRelativeToData.startsWith(`..${path.sep}`) &&
+        !path.isAbsolute(configuredRelativeToData))
+        ? dataDirectory
+        : process.env.PLUGINS_DIR?.trim() &&
+            !path.isAbsolute(process.env.PLUGINS_DIR.trim())
+          ? PROJECT_DIRECTORY
+          : path.dirname(this.pluginsDir);
+    try {
+      if (
+        hasSymlinkPathComponentFromRoot(configuredPathRoot, this.pluginsDir)
+      ) {
+        throw new Error(
+          'PLUGINS_DIR cannot contain a symbolic-link path component'
+        );
+      }
+      const pluginsStat = fs.lstatSync(this.pluginsDir);
+      if (!pluginsStat.isDirectory() || pluginsStat.isSymbolicLink()) {
+        throw new Error(
+          'PLUGINS_DIR must be a physical directory, not a symlink or special file'
+        );
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
       fs.mkdirSync(this.pluginsDir, { recursive: true });
+      const createdStat = fs.lstatSync(this.pluginsDir);
+      if (!createdStat.isDirectory() || createdStat.isSymbolicLink()) {
+        throw new Error('PLUGINS_DIR could not be created safely');
+      }
+    }
+    for (const legacyDirectory of this.legacyPluginsDirs) {
+      const relativeToBackend = path.relative(
+        BACKEND_DIRECTORY,
+        legacyDirectory
+      );
+      const legacyRoot =
+        relativeToBackend === '' ||
+        (relativeToBackend !== '..' &&
+          !relativeToBackend.startsWith(`..${path.sep}`) &&
+          !path.isAbsolute(relativeToBackend))
+          ? BACKEND_DIRECTORY
+          : path.dirname(legacyDirectory);
+      if (hasSymlinkPathComponentFromRoot(legacyRoot, legacyDirectory)) {
+        throw new Error(
+          'A legacy plugin path contains a symbolic-link component; refusing to follow it'
+        );
+      }
+      const legacyStat = (() => {
+        try {
+          return fs.lstatSync(legacyDirectory);
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+          throw error;
+        }
+      })();
+      if (
+        legacyStat &&
+        (!legacyStat.isDirectory() || legacyStat.isSymbolicLink())
+      ) {
+        throw new Error(
+          'A legacy plugin path is not a physical directory; refusing to follow it'
+        );
+      }
+    }
+    for (const historicalDirectory of this.historicalPluginConflictDirs) {
+      let historicalEntries: fs.Dirent[];
+      try {
+        historicalEntries = fs.readdirSync(historicalDirectory, {
+          withFileTypes: true,
+        });
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
+        throw new Error(
+          `Historical plugin directory ${historicalDirectory} cannot be inspected safely`
+        );
+      }
+      if (historicalEntries.some(entry => entry.name.endsWith('.json'))) {
+        throw new Error(
+          `Legacy plugin definitions exist at ${historicalDirectory}, where the relative PLUGINS_DIR previously resolved from the caller working directory. Move them into ${this.pluginsDir} or configure an absolute PLUGINS_DIR; Libre will not silently choose between them.`
+        );
+      }
     }
   }
 
@@ -778,7 +969,7 @@ export class PluginService {
     if (!effectivePath) return false;
     try {
       const parsedPlugin = JSON.parse(
-        fs.readFileSync(effectivePath, 'utf8')
+        readRegularPluginDefinition(effectivePath)
       ) as Plugin;
       return (
         this.validatePlugin(parsedPlugin) &&
@@ -797,8 +988,29 @@ export class PluginService {
     for (const pluginsDir of [...this.pluginReadDirs].reverse()) {
       const resolvedDirectory = path.resolve(pluginsDir);
       const candidate = path.resolve(pluginsDir, `${sanitizedId}.json`);
-      if (candidate.startsWith(resolvedDirectory) && fs.existsSync(candidate)) {
+      if (!candidate.startsWith(resolvedDirectory)) continue;
+      const directoryStat = (() => {
+        try {
+          return fs.lstatSync(pluginsDir);
+        } catch {
+          return null;
+        }
+      })();
+      if (
+        directoryStat &&
+        (!directoryStat.isDirectory() || directoryStat.isSymbolicLink())
+      ) {
+        // Preserve precedence while forcing the no-follow reader to reject the
+        // unsafe path instead of falling back to a lower-priority definition.
         return candidate;
+      }
+      try {
+        fs.lstatSync(candidate);
+        // Return invalid named entries too. The strict reader will reject them,
+        // preventing a symlink/special-file shadow from revealing a bundled ID.
+        return candidate;
+      } catch {
+        // Continue to lower-priority sources only when the named entry is absent.
       }
     }
 
@@ -824,7 +1036,7 @@ export class PluginService {
 
     try {
       const parsedPlugin = JSON.parse(
-        fs.readFileSync(bundledPath, 'utf8')
+        readRegularPluginDefinition(bundledPath)
       ) as Plugin;
       if (
         !this.validatePlugin(parsedPlugin) ||
@@ -945,7 +1157,7 @@ export class PluginService {
     if (effectivePath) {
       try {
         const effectiveDefinition = JSON.parse(
-          fs.readFileSync(effectivePath, 'utf8')
+          readRegularPluginDefinition(effectivePath)
         ) as Plugin;
         if (
           this.validatePlugin(effectiveDefinition) &&
@@ -1085,7 +1297,7 @@ export class PluginService {
    * the next request.
    */
   async refreshStaleModels(userId?: string): Promise<void> {
-    const due = this.getActivePlugins(userId).filter(
+    const due = (await this.getActivePlugins(userId)).filter(
       plugin =>
         (plugin.type === 'completion' || plugin.type === 'chat') &&
         this.isModelDiscoveryDue(plugin.id, userId)
@@ -1157,7 +1369,7 @@ export class PluginService {
     capability: DiscoverableMediaCapability,
     userId?: string
   ): Promise<void> {
-    const due = this.getActivePlugins(userId).filter(plugin => {
+    const due = (await this.getActivePlugins(userId)).filter(plugin => {
       const definition = plugin.capabilities?.[capability];
       return (
         Boolean(definition?.models_endpoint) &&
@@ -1186,7 +1398,7 @@ export class PluginService {
     capability: DiscoverableMediaCapability,
     userId?: string
   ): Promise<PluginModelDiscoveryResult> {
-    const plugin = this.getPlugin(pluginId, userId);
+    const plugin = await this.getPlugin(pluginId, userId);
     const definition = plugin?.capabilities?.[capability];
     if (!plugin || !definition) {
       return {
@@ -1314,7 +1526,7 @@ export class PluginService {
     pluginId: string,
     userId?: string
   ): Promise<PluginModelDiscoveryResult> {
-    const plugin = this.getPlugin(pluginId, userId);
+    const plugin = await this.getPlugin(pluginId, userId);
     if (!plugin) {
       return { models: [], outcome: 'unavailable', reason: 'Plugin not found' };
     }
@@ -1405,23 +1617,47 @@ export class PluginService {
   }
 
   // List all installed plugins
-  getAllPlugins(userId?: string): Plugin[] {
+  private getAllPluginsUnchecked(userId?: string): Plugin[] {
     const plugins = new Map<string, Plugin>();
     const activePluginIds = pluginActivationService.getActivePluginIds(userId);
 
     for (const pluginsDir of this.pluginReadDirs) {
-      if (!fs.existsSync(pluginsDir)) {
+      const directoryStat = (() => {
+        try {
+          return fs.lstatSync(pluginsDir);
+        } catch {
+          return null;
+        }
+      })();
+      if (!directoryStat) {
+        continue;
+      }
+      if (!directoryStat.isDirectory() || directoryStat.isSymbolicLink()) {
+        plugins.clear();
+        logger.error(
+          'Ignoring unsafe plugin directory %s and every lower-priority definition',
+          pluginsDir
+        );
         continue;
       }
 
       try {
-        const files = fs.readdirSync(pluginsDir);
-        for (const file of files) {
+        const entries = fs.readdirSync(pluginsDir, { withFileTypes: true });
+        for (const entry of entries) {
+          const file = entry.name;
           if (file.endsWith('.json') && !file.startsWith('.')) {
             const filenameId = path.basename(file, '.json');
             try {
               const filePath = path.join(pluginsDir, file);
-              const content = fs.readFileSync(filePath, 'utf8');
+              if (!entry.isFile() || entry.isSymbolicLink()) {
+                plugins.delete(filenameId);
+                logger.error(
+                  'Ignoring non-regular plugin definition %s',
+                  filePath
+                );
+                continue;
+              }
+              const content = readRegularPluginDefinition(filePath);
               const parsedPlugin: Plugin = JSON.parse(content);
 
               // Validate plugin structure
@@ -1463,27 +1699,36 @@ export class PluginService {
       }
     }
 
-    return Array.from(plugins.values()).filter(plugin =>
-      this.isPluginVisibleToUser(plugin, userId)
-    );
+    return Array.from(plugins.values());
+  }
+
+  async getAllPlugins(userId?: string): Promise<Plugin[]> {
+    const plugins = this.getAllPluginsUnchecked(userId);
+    const visible: Plugin[] = [];
+    for (const plugin of plugins) {
+      if (await this.isPluginVisibleToUser(plugin, userId)) {
+        visible.push(plugin);
+      }
+    }
+    return visible;
   }
 
   /**
    * The codex-oauth plugin rides the server user's ChatGPT sign-in, so it is
    * administrator-only and hidden entirely when no sign-in exists.
    */
-  private isPluginVisibleToUser(
+  private async isPluginVisibleToUser(
     plugin: Pick<Plugin, 'id'>,
     userId?: string
-  ): boolean {
+  ): Promise<boolean> {
     if (plugin.id !== CODEX_OAUTH_PLUGIN_ID) return true;
     if (!codexOAuthService.isAvailable()) return false;
     if (!userId) return false;
-    return userModel.getUserById(userId)?.role === 'admin';
+    return (await userModel.getUserById(userId))?.role === 'admin';
   }
 
   // Get a specific plugin by ID
-  getPlugin(id: string, userId?: string): Plugin | null {
+  private loadPlugin(id: string, userId?: string): Plugin | null {
     // Sanitize the ID to prevent path traversal
     const sanitizedId = sanitize(id);
     if (!sanitizedId || sanitizedId !== id) {
@@ -1495,14 +1740,13 @@ export class PluginService {
     if (!filePath) return null;
 
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = readRegularPluginDefinition(filePath);
       const parsedPlugin: Plugin = JSON.parse(content);
 
       if (
         this.validatePlugin(parsedPlugin) &&
         parsedPlugin.id === sanitizedId &&
-        this.isPluginDefinitionApproved(parsedPlugin, filePath) &&
-        this.isPluginVisibleToUser(parsedPlugin, userId)
+        this.isPluginDefinitionApproved(parsedPlugin, filePath)
       ) {
         const plugin = applyPluginDefinitionPolicy(parsedPlugin);
         plugin.active = this.isPluginActive(plugin.id, userId);
@@ -1515,8 +1759,22 @@ export class PluginService {
     return null;
   }
 
+  private getPluginUnchecked(id: string, userId?: string): Plugin | null {
+    if (id === CODEX_OAUTH_PLUGIN_ID) return null;
+    return this.loadPlugin(id, userId);
+  }
+
+  async getPlugin(id: string, userId?: string): Promise<Plugin | null> {
+    const plugin = this.loadPlugin(id, userId);
+    if (!plugin || !(await this.isPluginVisibleToUser(plugin, userId))) {
+      return null;
+    }
+    return plugin;
+  }
+
   // Install or update a plugin
   installPlugin(pluginData: Plugin, approvedByUserId: string): Plugin {
+    this.ensurePluginsDirectory();
     if (!this.validatePlugin(pluginData)) {
       throw new Error('Invalid plugin structure');
     }
@@ -1584,11 +1842,11 @@ export class PluginService {
 
     const bundledDirectory = path.resolve(this.bundledPluginsDir);
     const writablePluginDirs = Array.from(
-      new Set([this.pluginsDir, this.legacyPluginsDir])
+      new Set([this.pluginsDir, ...this.legacyPluginsDirs])
     ).filter(pluginsDir => path.resolve(pluginsDir) !== bundledDirectory);
     const filePath = writablePluginDirs
       .map(pluginsDir => path.resolve(pluginsDir, `${sanitizedId}.json`))
-      .find(candidate => fs.existsSync(candidate));
+      .find(candidate => isRegularPluginDefinition(candidate));
 
     if (!filePath) {
       logger.error('File path is invalid or does not exist:', filePath);
@@ -1615,7 +1873,7 @@ export class PluginService {
 
   // Activate a plugin
   async activatePlugin(id: string, userId?: string): Promise<boolean> {
-    const plugin = this.getPlugin(id, userId);
+    const plugin = await this.getPlugin(id, userId);
 
     if (!plugin) {
       throw new Error('Plugin not found');
@@ -1650,13 +1908,13 @@ export class PluginService {
   }
 
   // Get the active plugin for a specific model
-  getActivePluginForModel(
+  async getActivePluginForModel(
     model: string,
     userId?: string,
     pluginId?: string
-  ): Plugin | null {
+  ): Promise<Plugin | null> {
     if (pluginId) {
-      const plugin = this.getPlugin(pluginId, userId);
+      const plugin = await this.getPlugin(pluginId, userId);
       if (!plugin) {
         throw new Error(`Plugin not found: ${pluginId}`);
       }
@@ -1681,7 +1939,7 @@ export class PluginService {
     }
 
     // Only route through plugins the user explicitly activated.
-    const activePlugins = this.getActivePlugins(userId);
+    const activePlugins = await this.getActivePlugins(userId);
 
     // Find the active plugin that supports this model
     for (const plugin of activePlugins) {
@@ -1702,21 +1960,27 @@ export class PluginService {
   }
 
   // Get all currently active plugins
-  getActivePlugins(userId?: string): Plugin[] {
-    const allPlugins = this.getAllPlugins(userId);
+  async getActivePlugins(userId?: string): Promise<Plugin[]> {
+    const allPlugins = await this.getAllPlugins(userId);
     const activePlugins = allPlugins.filter(plugin => plugin.active);
     return activePlugins;
   }
 
+  private getActivePluginsUnchecked(userId?: string): Plugin[] {
+    return this.getAllPluginsUnchecked(userId).filter(
+      plugin => plugin.active && plugin.id !== CODEX_OAUTH_PLUGIN_ID
+    );
+  }
+
   // Legacy method for backward compatibility - returns first active plugin
-  getActivePlugin(userId?: string): Plugin | null {
-    const activePlugins = this.getActivePlugins(userId);
+  async getActivePlugin(userId?: string): Promise<Plugin | null> {
+    const activePlugins = await this.getActivePlugins(userId);
     return activePlugins.length > 0 ? activePlugins[0] : null;
   }
 
   // Get plugin status
-  getPluginStatus(userId?: string): PluginStatus[] {
-    const plugins = this.getAllPlugins(userId);
+  async getPluginStatus(userId?: string): Promise<PluginStatus[]> {
+    const plugins = await this.getAllPlugins(userId);
     return plugins.map(plugin => ({
       id: plugin.id,
       active: plugin.active || false,
@@ -1738,7 +2002,11 @@ export class PluginService {
     throwIfChatGenerationCancelled(signal);
     validatePluginModel(model);
 
-    const activePlugin = this.getActivePluginForModel(model, userId, pluginId);
+    const activePlugin = await this.getActivePluginForModel(
+      model,
+      userId,
+      pluginId
+    );
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
     }
@@ -1903,7 +2171,11 @@ export class PluginService {
     throwIfChatGenerationCancelled(signal);
     validatePluginModel(model);
 
-    const activePlugin = this.getActivePluginForModel(model, userId, pluginId);
+    const activePlugin = await this.getActivePluginForModel(
+      model,
+      userId,
+      pluginId
+    );
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
     }
@@ -2172,7 +2444,7 @@ export class PluginService {
   }
 
   // Export plugin to JSON
-  exportPlugin(id: string, userId?: string): Plugin | null {
+  async exportPlugin(id: string, userId?: string): Promise<Plugin | null> {
     return this.getPlugin(id, userId);
   }
 
@@ -2190,7 +2462,7 @@ export class PluginService {
     if (existingPluginPath) {
       try {
         const existingPlugin = JSON.parse(
-          fs.readFileSync(existingPluginPath, 'utf8')
+          readRegularPluginDefinition(existingPluginPath)
         ) as Plugin;
         if (
           this.validatePlugin(existingPlugin) &&

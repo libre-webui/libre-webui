@@ -22,20 +22,90 @@ test-only canaries are intentionally omitted.
 
 ## Backend Server
 
-| Variable         | Default                                   | Purpose                                             |
-| ---------------- | ----------------------------------------- | --------------------------------------------------- |
-| `NODE_ENV`       | `development`                             | Runtime mode                                        |
-| `PORT`           | `3001` in dev, `8080` in production       | Backend HTTP port                                   |
-| `TRUST_PROXY`    | unset                                     | Express trust proxy setting                         |
-| `CORS_ORIGIN`    | local dev origins                         | Comma-separated allowed browser origins             |
-| `SERVE_FRONTEND` | unset                                     | Serve built frontend from backend when `true`       |
-| `DOCKER_ENV`     | unset                                     | Enables Docker-oriented behavior when `true`        |
-| `DATA_DIR`       | `backend/data`                            | Persistent data directory                           |
-| `PLUGINS_DIR`    | `$DATA_DIR/plugins`, otherwise `plugins/` | Writable directory for installed/customized plugins |
-| `BASE_URL`       | `http://localhost:3001`                   | Base URL used for OAuth callback defaults           |
-| `LOG_LEVEL`      | `info` (`warn` in tests)                  | Backend log level                                   |
-| `WEBUI_HOST`     | loopback; `0.0.0.0` in Docker             | HTTP listen address                                 |
-| `OPEN_BROWSER`   | `true` when serving the frontend          | Set `false` to suppress automatic browser launch    |
+| Variable                     | Default                             | Purpose                                                                                       |
+| ---------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                   | `development`                       | Runtime mode                                                                                  |
+| `PORT`                       | `3001` in dev, `8080` in production | Backend HTTP port                                                                             |
+| `TRUST_PROXY`                | unset                               | Express trust proxy setting                                                                   |
+| `CORS_ORIGIN`                | local dev origins                   | Comma-separated allowed browser origins                                                       |
+| `SERVE_FRONTEND`             | unset                               | Serve built frontend from backend when `true`                                                 |
+| `DOCKER_ENV`                 | unset                               | Enables Docker-oriented behavior when `true`                                                  |
+| `DATA_DIR`                   | `backend/data`                      | Persistent data directory                                                                     |
+| `PLATFORM_PREFLIGHT_TMP_DIR` | `backend/temp/preflight`            | Scratch space for a private DB/WAL startup inspection copy; size it for the database plus WAL |
+| `PLUGINS_DIR`                | `$DATA_DIR/plugins`                 | Writable directory for installed/customized plugins                                           |
+| `BASE_URL`                   | `http://localhost:3001`             | Base URL used for OAuth callback defaults                                                     |
+| `LOG_LEVEL`                  | `info` (`warn` in tests)            | Backend log level                                                                             |
+| `WEBUI_HOST`                 | loopback; `0.0.0.0` in Docker       | HTTP listen address                                                                           |
+| `OPEN_BROWSER`               | `true` when serving the frontend    | Set `false` to suppress automatic browser launch                                              |
+
+The default data path is module-relative, not working-directory-relative, so
+root and backend workspace commands use the same `backend/data`. If a database
+exists at the historical accidental `backend/backend/data` path while
+`DATA_DIR` is unset, startup fails with migration guidance instead of hiding or
+copying that data.
+
+## Platform Foundation
+
+The supported profile remains `solo`: SQLite, local encrypted blobs,
+embedded vectors, local coordination, an inactive durable-job substrate, and
+one application replica. No domain job handler worker is bootstrapped yet. The
+selectors for the future shared profile are parsed and validated now, but
+PostgreSQL, S3, PGVector, and the external worker fail closed as unavailable in
+this release.
+
+| Variable                           | Default                                | Purpose                                                                        |
+| ---------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------ |
+| `LIBRE_PLATFORM_MODE`              | `solo`                                 | Select `solo` or the fail-closed future `team` profile                         |
+| `DATABASE_BACKEND`                 | `sqlite`                               | Select `sqlite` or unavailable `postgres`                                      |
+| `DATABASE_URL`                     | unset                                  | PostgreSQL URL; parsed but not usable until its adapter ships                  |
+| `BLOB_STORE_BACKEND`               | `local`                                | Select `local` or unavailable `s3`                                             |
+| `VECTOR_STORE_BACKEND`             | `embedded` with SQLite                 | Select `embedded` or unavailable `pgvector`                                    |
+| `COORDINATION_BACKEND`             | `local` in solo; `redis` in team       | Select process-local or Redis coordination                                     |
+| `REDIS_URL`                        | unset                                  | `redis:` or `rediss:` URL, required with Redis coordination                    |
+| `REDIS_KEY_PREFIX`                 | `libre`                                | 1-64 character namespace for Libre coordination keys                           |
+| `REDIS_CONNECT_TIMEOUT_MS`         | `5000`                                 | Initial Redis connection timeout, capped at 60 seconds                         |
+| `JOB_WORKER_MODE`                  | `embedded` in solo; `external` in team | Selector only; no worker is bootstrapped, and external workers are unavailable |
+| `STORAGE_ENCRYPTION_KEYS`          | unset                                  | Secret JSON key map; currently must include `legacy` matching `ENCRYPTION_KEY` |
+| `STORAGE_ENCRYPTION_ACTIVE_KEY_ID` | unset                                  | Key ID used for new local blob and embedded-vector writes                      |
+
+When the versioned storage key map is absent, storage adapters use the existing
+`ENCRYPTION_KEY` as key ID `legacy`; when it is also absent, they read the
+existing `${DATA_DIR}/.encryption_key` without generating or modifying it.
+Explicit configuration and the persistent file must agree. If a versioned map
+is introduced while a legacy key exists, retain that key under the exact ID
+`legacy` until all objects and vectors have been rewritten or rewrapped and
+verified. Conflicts, unsafe file permissions, symlinks, and missing configured
+keys fail closed.
+
+Redis is coordination, not canonical persistence. Selecting it does not make
+SQLite, local files, process-local tickets, or current Work events safe across
+replicas. See [Platform Foundation](./45-PLATFORM_FOUNDATION.md).
+
+The supplied Compose variants forward every selector above. In the Helm
+chart, non-secret selectors live under `env`; set `secrets.redisUrl`,
+`secrets.databaseUrl`, and `secrets.storageEncryptionKeys` for connection or
+key material. PostgreSQL remains unavailable even when its URL is rendered.
+
+## Private Backup Helper
+
+These variables configure `deploy/private/libre-webui-backup` and are read by
+the maintenance script, not the application process:
+
+| Variable                            | Default                         | Purpose                                           |
+| ----------------------------------- | ------------------------------- | ------------------------------------------------- |
+| `LIBRE_WEBUI_STACK_DIR`             | `/opt/libre-webui`              | Directory containing the private Compose file     |
+| `LIBRE_WEBUI_BACKUP_DIR`            | `/var/backups/libre-webui`      | Protected directory for backup sets and lock file |
+| `LIBRE_WEBUI_BACKUP_RETENTION_DAYS` | `14`                            | Age after which completed backup sets are removed |
+| `LIBRE_WEBUI_CONTAINER_NAME`        | `libre-webui`                   | Deployed application container to inspect         |
+| `LIBRE_WEBUI_DATA_VOLUME`           | resolved from the app container | Explicit data-volume name override                |
+
+The systemd unit loads these overrides from the optional root-owned file
+`/etc/libre-webui/backup.env`. Set it to mode `0600`. Stack directory,
+retention, container name, and data-volume overrides can be set there directly.
+The unit's filesystem sandbox permits writes only below the default backup
+directory. A custom `LIBRE_WEBUI_BACKUP_DIR` additionally requires that exact,
+pre-created directory in a `ReadWritePaths=` service drop-in; see
+[Private Remote Deployment](./36-PRIVATE_REMOTE_DEPLOYMENT.md#backups-and-recovery).
 
 ## Authentication and Security
 
@@ -280,6 +350,14 @@ authentication contract, and routing values. Users must save a key again after
 an administrator changes that destination. Pre-upgrade unbound keys are
 accepted and bound on first use only for an exact shipped definition using its
 bundled route.
+
+Relative `PLUGINS_DIR` values resolve from the project root. For compatibility,
+Libre also reads the deterministic `backend/plugins` directory and the
+historical backend-relative location of a configured relative path. Move those
+definitions into `$DATA_DIR/plugins`; recovery reports the legacy paths as
+external state and blocks a volume-only snapshot while custom definitions
+remain there. Plugin directories and JSON definitions must be physical regular
+entries—Libre does not follow plugin symlinks.
 
 ## Frontend
 

@@ -231,7 +231,10 @@ test('agents follow the persisted opt-in and the environment pin', async () => {
   setAgentsEnabled(false);
   assert.equal(getAgentsEnabled(), false);
   assert.deepEqual(await agentCliService.listAgentModels(), []);
-  assert.throws(() => agentCliService.assertAgentAccess('nobody'), /disabled/i);
+  await assert.rejects(
+    agentCliService.assertAgentAccess('nobody'),
+    /disabled/i
+  );
 
   // Enabled again: the persisted setting turns the feature back on.
   setAgentsEnabled(true);

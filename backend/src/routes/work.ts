@@ -75,17 +75,17 @@ router.use(authenticate);
  * state rather than the role cached in a still-valid JWT, so a demotion or
  * a mode change takes effect immediately.
  */
-const requireWorkAccess = (
+const requireWorkAccess = async (
   req: AuthenticatedRequest,
   res: Response<ApiResponse>,
   next: NextFunction
-): void => {
+): Promise<void> => {
   if (!req.user) {
     res.status(403).json({ success: false, message: 'Work access required' });
     return;
   }
   try {
-    const currentUser = userModel.getUserById(req.user.userId);
+    const currentUser = await userModel.getUserById(req.user.userId);
     if (
       !currentUser ||
       currentUser.status !== 'active' ||
@@ -112,13 +112,13 @@ const requireWorkAccess = (
 // to offer Work before it may call anything behind requireWorkAccess.
 router.get(
   '/access',
-  (
+  async (
     req: AuthenticatedRequest,
     res: Response<ApiResponse<{ mode: WorkAccessMode; allowed: boolean }>>
-  ): void => {
+  ): Promise<void> => {
     try {
       const currentUser = req.user
-        ? userModel.getUserById(req.user.userId)
+        ? await userModel.getUserById(req.user.userId)
         : undefined;
       sendSuccess(res, {
         mode: getWorkAccessMode(),
@@ -1004,7 +1004,7 @@ router.post(
     try {
       const userId = requireUserId(req);
       const task = requireIdleGitTask(req);
-      const user = userModel.getUserById(userId);
+      const user = await userModel.getUserById(userId);
       if (!user) throw new WorkRouteError('User account was not found.', 404);
       sendSuccess(
         res,

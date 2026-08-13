@@ -46,6 +46,118 @@ after(() => {
   fs.rmSync(testDataDir, { recursive: true, force: true });
 });
 
+test('writable plugin definitions default to DATA_DIR while legacy reads are deterministic', () => {
+  const originalDataDir = process.env.DATA_DIR;
+  const originalPluginsDir = process.env.PLUGINS_DIR;
+  const originalCwd = process.cwd();
+  const dataDir = path.join(testDataDir, 'canonical-data');
+  const unrelatedCwd = path.join(testDataDir, 'unrelated-cwd');
+  fs.mkdirSync(unrelatedCwd, { recursive: true });
+  try {
+    process.env.DATA_DIR = dataDir;
+    delete process.env.PLUGINS_DIR;
+    process.chdir(unrelatedCwd);
+    const service = new PluginService();
+    assert.equal(service.pluginsDir, path.join(dataDir, 'plugins'));
+    assert.ok(
+      service.pluginReadDirs.includes(path.join(repoRoot, 'backend', 'plugins'))
+    );
+    assert.ok(service.pluginReadDirs.includes(path.join(dataDir, 'plugins')));
+    assert.equal(
+      service.pluginReadDirs.includes(path.join(unrelatedCwd, 'plugins')),
+      false
+    );
+  } finally {
+    process.chdir(originalCwd);
+    if (originalDataDir === undefined) delete process.env.DATA_DIR;
+    else process.env.DATA_DIR = originalDataDir;
+    if (originalPluginsDir === undefined) delete process.env.PLUGINS_DIR;
+    else process.env.PLUGINS_DIR = originalPluginsDir;
+  }
+});
+
+test('relative PLUGINS_DIR fails closed when caller-cwd legacy definitions remain', () => {
+  const originalDataDir = process.env.DATA_DIR;
+  const originalPluginsDir = process.env.PLUGINS_DIR;
+  const originalCwd = process.cwd();
+  const historicalCwd = path.join(testDataDir, 'historical-caller-cwd');
+  const relativePlugins = 'relative-custom-plugins';
+  const historicalPlugins = path.join(historicalCwd, relativePlugins);
+  fs.mkdirSync(historicalPlugins, { recursive: true });
+  fs.writeFileSync(
+    path.join(historicalPlugins, 'legacy-provider.json'),
+    '{"id":"legacy-provider"}'
+  );
+  try {
+    process.env.DATA_DIR = path.join(testDataDir, 'relative-path-data');
+    process.env.PLUGINS_DIR = relativePlugins;
+    process.chdir(historicalCwd);
+    assert.throws(
+      () => new PluginService(),
+      /Legacy plugin definitions exist.*relative PLUGINS_DIR.*Move them/i
+    );
+  } finally {
+    process.chdir(originalCwd);
+    if (originalDataDir === undefined) delete process.env.DATA_DIR;
+    else process.env.DATA_DIR = originalDataDir;
+    if (originalPluginsDir === undefined) delete process.env.PLUGINS_DIR;
+    else process.env.PLUGINS_DIR = originalPluginsDir;
+  }
+});
+
+test('default plugin storage fails closed on caller-cwd legacy definitions', () => {
+  const originalDataDir = process.env.DATA_DIR;
+  const originalPluginsDir = process.env.PLUGINS_DIR;
+  const originalCwd = process.cwd();
+  const historicalCwd = path.join(testDataDir, 'default-historical-cwd');
+  const historicalPlugins = path.join(historicalCwd, 'plugins');
+  fs.mkdirSync(historicalPlugins, { recursive: true });
+  fs.writeFileSync(
+    path.join(historicalPlugins, 'legacy-provider.json'),
+    '{"id":"legacy-provider"}'
+  );
+  try {
+    process.env.DATA_DIR = path.join(testDataDir, 'default-path-data');
+    delete process.env.PLUGINS_DIR;
+    process.chdir(historicalCwd);
+    assert.throws(
+      () => new PluginService(),
+      /Legacy plugin definitions exist.*caller working directory.*Move them/i
+    );
+  } finally {
+    process.chdir(originalCwd);
+    if (originalDataDir === undefined) delete process.env.DATA_DIR;
+    else process.env.DATA_DIR = originalDataDir;
+    if (originalPluginsDir === undefined) delete process.env.PLUGINS_DIR;
+    else process.env.PLUGINS_DIR = originalPluginsDir;
+  }
+});
+
+test('plugin loading refuses symlinked definitions instead of falling back to bundled IDs', async t => {
+  const service = new PluginService({ legacyPluginsDirectories: [] });
+  const linkedDefinition = path.join(
+    testDataDir,
+    'external-openai-definition.json'
+  );
+  const writableShadow = path.join(process.env.PLUGINS_DIR, 'openai.json');
+  fs.writeFileSync(
+    linkedDefinition,
+    fs.readFileSync(path.join(repoRoot, 'plugins', 'openai.json'))
+  );
+  const before = fs.readFileSync(linkedDefinition);
+  fs.symlinkSync(linkedDefinition, writableShadow);
+  t.after(() => fs.rmSync(writableShadow, { force: true }));
+
+  assert.equal(await service.getPlugin('openai', 'default'), null);
+  assert.equal(
+    (await service.getAllPlugins('default')).some(
+      plugin => plugin.id === 'openai'
+    ),
+    false
+  );
+  assert.deepEqual(fs.readFileSync(linkedDefinition), before);
+});
+
 function upsertTestUser(userId, role) {
   const database = databaseModule.getDatabase();
   const now = Date.now();
@@ -115,10 +227,10 @@ function installProvider(service, id, providerBaseUrl, adminId) {
   );
 }
 
-function modelsFor(service, pluginId, userId) {
-  const plugin = service
-    .getAllPlugins(userId)
-    .find(candidate => candidate.id === pluginId);
+async function modelsFor(service, pluginId, userId) {
+  const plugin = (await service.getAllPlugins(userId)).find(
+    candidate => candidate.id === pluginId
+  );
   assert.ok(plugin, `expected plugin ${pluginId} to be listed`);
   return plugin.model_map;
 }
@@ -151,7 +263,7 @@ test('a stale catalog is re-discovered when the plugin list is read', async () =
   try {
     await service.activatePlugin(pluginId, user.id);
     assert.deepEqual(
-      modelsFor(service, pluginId, user.id),
+      await modelsFor(service, pluginId, user.id),
       ['model-a'],
       'activation should replace the bundled catalog with the live one'
     );
@@ -163,7 +275,7 @@ test('a stale catalog is re-discovered when the plugin list is read', async () =
     const requestsBeforeBackoffCheck = provider.state.requests;
     await service.refreshStaleModels(user.id);
     assert.equal(provider.state.requests, requestsBeforeBackoffCheck);
-    assert.deepEqual(modelsFor(service, pluginId, user.id), ['model-a']);
+    assert.deepEqual(await modelsFor(service, pluginId, user.id), ['model-a']);
 
     // Once the entry ages past the TTL, the next read picks up the new catalog.
     await withEnv(
@@ -176,7 +288,7 @@ test('a stale catalog is re-discovered when the plugin list is read', async () =
         await service.refreshStaleModels(user.id);
       }
     );
-    assert.deepEqual(modelsFor(service, pluginId, user.id), [
+    assert.deepEqual(await modelsFor(service, pluginId, user.id), [
       'model-b',
       'model-c',
     ]);
@@ -244,7 +356,7 @@ test('an unreachable provider keeps the last known catalog and backs off', async
 
   try {
     await service.activatePlugin(pluginId, user.id);
-    assert.deepEqual(modelsFor(service, pluginId, user.id), ['model-a']);
+    assert.deepEqual(await modelsFor(service, pluginId, user.id), ['model-a']);
 
     await provider.close();
 
@@ -258,7 +370,7 @@ test('an unreachable provider keeps the last known catalog and backs off', async
       }
     );
     assert.deepEqual(
-      modelsFor(service, pluginId, user.id),
+      await modelsFor(service, pluginId, user.id),
       ['model-a'],
       'a failed refresh must not wipe the working catalog'
     );
@@ -266,7 +378,7 @@ test('an unreachable provider keeps the last known catalog and backs off', async
     // With the default backoff restored, a failing provider is not re-probed.
     const failedAttempt = service.refreshStaleModels(user.id);
     await failedAttempt;
-    assert.deepEqual(modelsFor(service, pluginId, user.id), ['model-a']);
+    assert.deepEqual(await modelsFor(service, pluginId, user.id), ['model-a']);
   } finally {
     service.deletePlugin(pluginId);
   }
@@ -355,14 +467,16 @@ test('a slow provider cannot stall the plugin list past the refresh deadline', a
       `plugin list waited ${elapsed}ms on a slow provider`
     );
     assert.deepEqual(
-      modelsFor(service, pluginId, user.id),
+      await modelsFor(service, pluginId, user.id),
       ['model-a'],
       'the previous catalog is served while the slow refresh completes'
     );
 
     // The refresh that outran the deadline still lands for the next read.
     await new Promise(resolve => setTimeout(resolve, 2000));
-    assert.deepEqual(modelsFor(service, pluginId, user.id), ['slow-model']);
+    assert.deepEqual(await modelsFor(service, pluginId, user.id), [
+      'slow-model',
+    ]);
   } finally {
     service.deletePlugin(pluginId);
     provider.state.delayMs = 0;

@@ -67,8 +67,8 @@ if (portArgIndex !== -1 && args[portArgIndex + 1]) {
 
 // Find the backend entry point
 const possibleBackendPaths = [
-  path.join(__dirname, '../backend/dist/index.js'),
-  path.join(__dirname, '../dist/backend/index.js'),
+  path.join(__dirname, '../backend/dist/main.js'),
+  path.join(__dirname, '../dist/backend/main.js'),
 ];
 
 let backendPath = '';
@@ -107,13 +107,9 @@ if (!frontendExists) {
 
 // Set up persistent data directory in user's home
 const os = require('os');
-const dataDir = process.env.DATA_DIR || path.join(os.homedir(), '.libre-webui');
-
-// Create data directory if it doesn't exist
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-  console.log(`📁 Created data directory: ${dataDir}`);
-}
+const dataDir = process.env.DATA_DIR
+  ? path.resolve(process.cwd(), process.env.DATA_DIR)
+  : path.join(os.homedir(), '.libre-webui');
 
 // Set production environment
 const env = {

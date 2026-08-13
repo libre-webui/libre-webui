@@ -220,7 +220,7 @@ async function stopChild(child) {
 
 test('packed npm artifact resolves package metadata and frontend dist', async () => {
   await withTempPackedProject(async ({ packedRoot }) => {
-    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'index.js');
+    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'main.js');
     const backendPackageJson = path.join(packedRoot, 'backend', 'package.json');
     const frontendDist = path.join(packedRoot, 'frontend', 'dist');
     const helperPath = path.join(
@@ -350,7 +350,7 @@ test('packed npm artifact serves SPA routes from a dot-directory install', async
     const backendPort = await startServer(portProbe);
     await new Promise(resolve => portProbe.close(resolve));
 
-    const backendEntry = path.join(movedRoot, 'backend', 'dist', 'index.js');
+    const backendEntry = path.join(movedRoot, 'backend', 'dist', 'main.js');
     const backendProcess = spawn(process.execPath, [backendEntry], {
       cwd: tempDir,
       env: {
@@ -454,7 +454,7 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
     const callerDir = path.join(tempDir, 'embedding-caller');
     const dataDir = path.join(tempDir, 'embedding-runtime-data');
     fs.mkdirSync(callerDir, { recursive: true });
-    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'index.js');
+    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'main.js');
     const backendProcess = spawn(process.execPath, [backendEntry], {
       cwd: callerDir,
       env: {
@@ -748,7 +748,7 @@ test('packed npm artifact routes TTS through the selected plugin valve from any 
     const callerDir = path.join(tempDir, 'unrelated-caller');
     const dataDir = path.join(tempDir, 'runtime-data');
     fs.mkdirSync(callerDir, { recursive: true });
-    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'index.js');
+    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'main.js');
     const backendProcess = spawn(process.execPath, [backendEntry], {
       cwd: callerDir,
       env: {

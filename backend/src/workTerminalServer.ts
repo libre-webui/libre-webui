@@ -73,17 +73,87 @@ interface TerminalAuthResult {
   sessionExpiresAt: number;
 }
 
+class DrainingWorkTerminalServer extends WebSocketServer {
+  private closing = false;
+  private closePromise: Promise<void> | undefined;
+  private readonly activeOperations = new Set<Promise<unknown>>();
+
+  get isShuttingDown(): boolean {
+    return this.closing;
+  }
+
+  track(operation: Promise<unknown>, description: string): void {
+    this.activeOperations.add(operation);
+    void operation.then(
+      () => this.activeOperations.delete(operation),
+      error => {
+        this.activeOperations.delete(operation);
+        logger.error(`Work terminal ${description} failed:`, error);
+      }
+    );
+  }
+
+  private async drain(): Promise<void> {
+    // Operations may schedule cleanup while settling. Repeat until shutdown
+    // reaches a stable empty set instead of taking a one-time snapshot.
+    while (this.activeOperations.size > 0) {
+      await Promise.allSettled([...this.activeOperations]);
+    }
+  }
+
+  override close(callback?: (error?: Error) => void): void {
+    this.closing = true;
+    if (!this.closePromise) {
+      this.closePromise = (async () => {
+        let closeError: Error | undefined;
+        await new Promise<void>(resolve => {
+          super.close(error => {
+            closeError = error;
+            resolve();
+          });
+        });
+        await this.drain();
+        if (closeError) throw closeError;
+      })();
+    }
+    void this.closePromise.then(
+      () => callback?.(),
+      error =>
+        callback?.(
+          error instanceof Error
+            ? error
+            : new Error('Work terminal shutdown failed')
+        )
+    );
+  }
+}
+
 /**
  * Re-evaluate the mutable authorization state for an established terminal.
  * Tickets prove who opened the socket, while this check makes account
  * suspension, Work-access revocation, task deletion, and ownership changes
  * effective before any further shell input is accepted.
  */
-export function requireCurrentTerminalTask(
+export async function requireCurrentTerminalTask(
   userId: string,
-  taskId: string
-): WorkTaskRecord {
-  const currentUser = userModel.getUserById(userId);
+  taskId: string,
+  isShuttingDown: () => boolean = () => false
+): Promise<WorkTaskRecord> {
+  if (isShuttingDown()) {
+    throw new WorkRuntimeError(
+      'The Work terminal is shutting down.',
+      503,
+      'WORK_TERMINAL_SHUTTING_DOWN'
+    );
+  }
+  const currentUser = await userModel.getUserById(userId);
+  if (isShuttingDown()) {
+    throw new WorkRuntimeError(
+      'The Work terminal is shutting down.',
+      503,
+      'WORK_TERMINAL_SHUTTING_DOWN'
+    );
+  }
   if (
     !currentUser ||
     currentUser.status !== 'active' ||
@@ -113,7 +183,10 @@ export function requireCurrentTerminalTask(
  * database state must still grant Work access, so a demotion or access-mode
  * change takes effect immediately.
  */
-function authorizeTerminalRequest(req: IncomingMessage): TerminalAuthResult {
+async function authorizeTerminalRequest(
+  req: IncomingMessage,
+  lifecycle: DrainingWorkTerminalServer
+): Promise<TerminalAuthResult> {
   const url = new URL(req.url || '', 'http://localhost');
   const ticket = url.searchParams.get('ticket') || '';
   const taskId = url.searchParams.get('taskId') || '';
@@ -124,7 +197,7 @@ function authorizeTerminalRequest(req: IncomingMessage): TerminalAuthResult {
       'WORK_TERMINAL_UNAUTHORIZED'
     );
   }
-  const consumed = websocketTicketService.consume(
+  const consumed = await websocketTicketService.consume(
     ticket,
     'work-terminal',
     taskId
@@ -136,7 +209,18 @@ function authorizeTerminalRequest(req: IncomingMessage): TerminalAuthResult {
       'WORK_TERMINAL_UNAUTHORIZED'
     );
   }
-  const task = requireCurrentTerminalTask(consumed.userId, taskId);
+  if (lifecycle.isShuttingDown) {
+    throw new WorkRuntimeError(
+      'The Work terminal is shutting down.',
+      503,
+      'WORK_TERMINAL_SHUTTING_DOWN'
+    );
+  }
+  const task = await requireCurrentTerminalTask(
+    consumed.userId,
+    taskId,
+    () => lifecycle.isShuttingDown
+  );
   return {
     task,
     userId: consumed.userId,
@@ -152,13 +236,21 @@ function sendControl(ws: WebSocket, message: Record<string, unknown>): void {
 
 async function handleTerminalConnection(
   ws: WebSocket,
-  req: IncomingMessage
+  req: IncomingMessage,
+  lifecycle: DrainingWorkTerminalServer
 ): Promise<void> {
+  if (lifecycle.isShuttingDown) {
+    ws.terminate();
+    return;
+  }
   let task: WorkTaskRecord;
   let userId: string;
   let sessionExpiresAt: number;
   try {
-    ({ task, userId, sessionExpiresAt } = authorizeTerminalRequest(req));
+    ({ task, userId, sessionExpiresAt } = await authorizeTerminalRequest(
+      req,
+      lifecycle
+    ));
   } catch (error) {
     const detail =
       error instanceof WorkRuntimeError
@@ -169,6 +261,10 @@ async function handleTerminalConnection(
           };
     sendControl(ws, { type: 'error', ...detail });
     ws.close(4401, detail.code);
+    return;
+  }
+  if (lifecycle.isShuttingDown) {
+    ws.terminate();
     return;
   }
 
@@ -186,6 +282,18 @@ async function handleTerminalConnection(
     logger.warn(`Work terminal open failed for task ${task.id}:`, error);
     sendControl(ws, { type: 'error', ...detail });
     ws.close(4503, detail.code);
+    return;
+  }
+  if (lifecycle.isShuttingDown) {
+    try {
+      await session.close();
+    } catch (error) {
+      logger.warn(
+        `Work terminal cleanup failed during shutdown for task ${task.id}:`,
+        error
+      );
+    }
+    ws.terminate();
     return;
   }
 
@@ -208,19 +316,31 @@ async function handleTerminalConnection(
   };
 
   let ended = false;
-  const endSession = async (code: number, reason: string) => {
-    if (ended) return;
+  let endPromise: Promise<void> | undefined;
+  const endSession = (code: number, reason: string): Promise<void> => {
+    if (endPromise) return endPromise;
     ended = true;
-    if (idleTimer) clearTimeout(idleTimer);
-    if (sessionExpiryTimer) clearTimeout(sessionExpiryTimer);
-    try {
-      await session.close();
-    } catch (error) {
-      logger.warn(`Work terminal cleanup failed for task ${task.id}:`, error);
-    }
-    if (ws.readyState === ws.OPEN || ws.readyState === ws.CONNECTING) {
-      ws.close(code, reason);
-    }
+    endPromise = (async () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      if (sessionExpiryTimer) clearTimeout(sessionExpiryTimer);
+      try {
+        await session.close();
+      } catch (error) {
+        logger.warn(`Work terminal cleanup failed for task ${task.id}:`, error);
+      }
+      if (ws.readyState === ws.OPEN || ws.readyState === ws.CONNECTING) {
+        try {
+          ws.close(code, reason);
+        } catch (error) {
+          logger.debug(
+            `Work terminal socket close failed for ${task.id}:`,
+            error
+          );
+        }
+      }
+    })();
+    lifecycle.track(endPromise, `cleanup for task ${task.id}`);
+    return endPromise;
   };
 
   sessionExpiryTimer = setTimeout(
@@ -273,14 +393,30 @@ async function handleTerminalConnection(
     void endSession(1011, 'stream-error');
   });
 
+  let inputQueue = Promise.resolve();
   ws.on('message', (data, isBinary) => {
-    if (ended || isBinary) return;
-    const message = parseTerminalClientMessage(data.toString());
-    if (!message) return;
-    if (message.type === 'input') {
-      try {
-        requireCurrentTerminalTask(userId, task.id);
-      } catch (error) {
+    if (lifecycle.isShuttingDown || ended) return;
+    inputQueue = inputQueue
+      .then(async () => {
+        if (lifecycle.isShuttingDown || ended || isBinary) return;
+        const message = parseTerminalClientMessage(data.toString());
+        if (!message) return;
+        if (message.type === 'input') {
+          await requireCurrentTerminalTask(
+            userId,
+            task.id,
+            () => lifecycle.isShuttingDown
+          );
+          if (lifecycle.isShuttingDown || ended) return;
+          armIdleTimer();
+          session.stream.write(message.data);
+          return;
+        }
+        if (lifecycle.isShuttingDown || ended) return;
+        armIdleTimer();
+        await session.resize(message.cols, message.rows);
+      })
+      .catch(error => {
         const detail =
           error instanceof WorkRuntimeError
             ? { message: error.message, code: error.code, status: error.status }
@@ -298,14 +434,8 @@ async function handleTerminalConnection(
           detail.status === 404 ? 4404 : detail.status === 403 ? 4403 : 4401,
           detail.code
         );
-        return;
-      }
-      armIdleTimer();
-      session.stream.write(message.data);
-      return;
-    }
-    armIdleTimer();
-    void session.resize(message.cols, message.rows);
+      });
+    lifecycle.track(inputQueue, `input handler for task ${task.id}`);
   });
 
   ws.on('close', () => {
@@ -317,12 +447,16 @@ async function handleTerminalConnection(
 }
 
 export function createWorkTerminalServer(): WebSocketServer {
-  const wss = new WebSocketServer({
+  const wss = new DrainingWorkTerminalServer({
     noServer: true,
     maxPayload: WORK_TERMINAL_MAX_INPUT_BYTES,
   });
   wss.on('connection', (ws, req) => {
-    void handleTerminalConnection(ws, req).catch(error => {
+    if (wss.isShuttingDown) {
+      ws.terminate();
+      return;
+    }
+    const connection = handleTerminalConnection(ws, req, wss).catch(error => {
       logger.error('Work terminal connection failed:', error);
       try {
         ws.close(1011, 'internal-error');
@@ -330,6 +464,7 @@ export function createWorkTerminalServer(): WebSocketServer {
         // Already closed.
       }
     });
+    wss.track(connection, 'connection handler');
   });
   return wss;
 }

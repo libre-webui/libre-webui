@@ -4,7 +4,7 @@
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at:
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -15,25 +15,20 @@
  * limitations under the License.
  */
 
-import { getDatabaseSafe } from '../db.js';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { getPersistence } from '../persistence/index.js';
+import { encryptionService } from '../services/encryptionService.js';
+import type {
+  IdentityAccountStatus,
+  IdentityRepository,
+  IdentitySyncRepository,
+  IdentityUserRecord,
+  Persistence,
+} from '../persistence/index.js';
 
-export type AccountStatus = 'pending' | 'active';
-
-export interface User {
-  id: string;
-  username: string;
-  email: string | null;
-  password_hash: string;
-  role: 'admin' | 'user';
-  account_status: AccountStatus;
-  approved_at: number | null;
-  approved_by: string | null;
-  avatar: string | null;
-  created_at: number;
-  updated_at: number;
-}
+export type AccountStatus = IdentityAccountStatus;
+export type User = IdentityUserRecord;
 
 export interface UserCreateData {
   username: string;
@@ -66,17 +61,10 @@ export interface UserPublic {
 }
 
 export class UserModel {
-  private db = getDatabaseSafe();
-
-  /**
-   * Ensure database is available
-   */
-  private ensureDatabase() {
-    if (!this.db) {
-      throw new Error('Database not available');
-    }
-    return this.db;
-  }
+  constructor(
+    private readonly persistenceProvider: () => Persistence = () =>
+      getPersistence(encryptionService)
+  ) {}
 
   private toPublic(user: Omit<User, 'password_hash'>): UserPublic {
     return {
@@ -85,9 +73,10 @@ export class UserModel {
       email: user.email,
       role: user.role,
       status: user.account_status,
-      approvedAt: user.approved_at
-        ? new Date(user.approved_at).toISOString()
-        : null,
+      approvedAt:
+        user.approved_at === null
+          ? null
+          : new Date(user.approved_at).toISOString(),
       approvedBy: user.approved_by,
       avatar: user.avatar,
       createdAt: new Date(user.created_at).toISOString(),
@@ -95,84 +84,51 @@ export class UserModel {
     };
   }
 
-  /**
-   * Get all users (excluding the default system user)
-   */
-  getAllUsers(): UserPublic[] {
-    const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      SELECT id, username, email, role, account_status, approved_at, approved_by,
-             avatar, created_at, updated_at
-      FROM users
-      WHERE id != 'default'
-      ORDER BY created_at DESC
-    `);
-
-    const users = stmt.all() as Omit<User, 'password_hash'>[];
+  /** Get all users, excluding the default single-user identity. */
+  async getAllUsers(): Promise<UserPublic[]> {
+    const users = await this.persistenceProvider().repositories.identity.list();
     return users.map(user => this.toPublic(user));
   }
 
-  /**
-   * Get user by ID
-   */
-  getUserById(id: string): UserPublic | null {
-    const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      SELECT id, username, email, role, account_status, approved_at, approved_by,
-             avatar, created_at, updated_at
-      FROM users
-      WHERE id = ?
-    `);
-
-    const user = stmt.get(id) as Omit<User, 'password_hash'> | undefined;
-    if (!user) return null;
-
-    return this.toPublic(user);
+  async getUserById(id: string): Promise<UserPublic | null> {
+    const user =
+      await this.persistenceProvider().repositories.identity.findPublicById(id);
+    return user ? this.toPublic(user) : null;
   }
 
-  /**
-   * Get user by username
-   */
-  getUserByUsername(username: string): User | null {
-    const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      SELECT *
-      FROM users
-      WHERE username = ?
-    `);
-
-    return stmt.get(username) as User | null;
+  getUserByUsername(username: string): Promise<User | null> {
+    return this.persistenceProvider().repositories.identity.findByUsername(
+      username
+    );
   }
 
-  /**
-   * Create a new user
-   */
   async createUser(userData: UserCreateData): Promise<UserPublic> {
     const passwordHash = await bcrypt.hash(userData.password, 12);
     const accountStatus = userData.accountStatus ?? 'active';
-    return this.insertUser(userData, passwordHash, accountStatus);
+    return this.insertUser(
+      this.persistenceProvider().repositories.identity,
+      userData,
+      passwordHash,
+      accountStatus
+    );
   }
 
   /**
    * Atomically decide whether a public registration is the bootstrap
-   * administrator or a pending user. Hashing happens before the transaction,
-   * while the count, registration policy, and insert stay serialized to
-   * prevent two first admins or a concurrent post-bootstrap registration.
+   * administrator or a pending user. Password hashing happens before the unit
+   * of work so the database transaction remains short.
    */
   async createPublicUser(
     userData: Omit<UserCreateData, 'role' | 'accountStatus'>,
     allowNonBootstrapRegistration = true
   ): Promise<UserPublic | null> {
     const passwordHash = await bcrypt.hash(userData.password, 12);
-    const db = this.ensureDatabase();
-    const create = db.transaction(() => {
-      const count = db
-        .prepare("SELECT COUNT(*) AS count FROM users WHERE id != 'default'")
-        .get() as { count: number };
-      const isFirstRealUser = count.count === 0;
+    return this.persistenceProvider().transaction(({ identity }) => {
+      const isFirstRealUser = identity.countRealUsers() === 0;
       if (!isFirstRealUser && !allowNonBootstrapRegistration) return null;
 
-      return this.insertUser(
+      return this.insertUserSynchronously(
+        identity,
         {
           ...userData,
           role: isFirstRealUser ? 'admin' : 'user',
@@ -181,216 +137,146 @@ export class UserModel {
         isFirstRealUser ? 'active' : 'pending'
       );
     });
-
-    return create();
   }
 
-  private insertUser(
+  private async insertUser(
+    identity: IdentityRepository,
+    userData: UserCreateData,
+    passwordHash: string,
+    accountStatus: AccountStatus
+  ): Promise<UserPublic> {
+    const user = this.createUserRecord(userData, passwordHash, accountStatus);
+    await identity.insert(user);
+    return this.toPublic(user);
+  }
+
+  private insertUserSynchronously(
+    identity: IdentitySyncRepository,
     userData: UserCreateData,
     passwordHash: string,
     accountStatus: AccountStatus
   ): UserPublic {
+    const user = this.createUserRecord(userData, passwordHash, accountStatus);
+    identity.insert(user);
+    return this.toPublic(user);
+  }
+
+  private createUserRecord(
+    userData: UserCreateData,
+    passwordHash: string,
+    accountStatus: AccountStatus
+  ): User {
     const id = uuidv4();
     const now = Date.now();
     const approvedAt = accountStatus === 'active' ? now : null;
-
-    const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      INSERT INTO users (
-        id, username, email, password_hash, role, account_status,
-        approved_at, approved_by, avatar, created_at, updated_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    stmt.run(
-      id,
-      userData.username,
-      userData.email || null, // Store NULL instead of empty string
-      passwordHash,
-      userData.role,
-      accountStatus,
-      approvedAt,
-      null,
-      userData.avatar || null,
-      now,
-      now
-    );
-
-    return {
+    const user: User = {
       id,
       username: userData.username,
-      email: userData.email,
+      email: userData.email || null,
+      password_hash: passwordHash,
       role: userData.role,
-      status: accountStatus,
-      approvedAt: approvedAt ? new Date(approvedAt).toISOString() : null,
-      approvedBy: null,
+      account_status: accountStatus,
+      approved_at: approvedAt,
+      approved_by: null,
       avatar: userData.avatar || null,
-      createdAt: new Date(now).toISOString(),
-      updatedAt: new Date(now).toISOString(),
+      created_at: now,
+      updated_at: now,
     };
+
+    return user;
   }
 
   /** Activate a pending account and record the administrator who reviewed it. */
-  approveUser(id: string, approvedBy: string): UserPublic | null {
-    const db = this.ensureDatabase();
-    const now = Date.now();
-    const result = db
-      .prepare(
-        `
-          UPDATE users
-          SET account_status = 'active', approved_at = ?, approved_by = ?, updated_at = ?
-          WHERE id = ? AND id != 'default' AND account_status = 'pending'
-        `
-      )
-      .run(now, approvedBy, now, id);
-
-    if (result.changes === 0) return null;
-    return this.getUserById(id);
+  async approveUser(
+    id: string,
+    approvedBy: string
+  ): Promise<UserPublic | null> {
+    return this.persistenceProvider().transaction(({ identity }) => {
+      const now = Date.now();
+      if (!identity.approve(id, approvedBy, now)) return null;
+      const user = identity.findPublicById(id);
+      return user ? this.toPublic(user) : null;
+    });
   }
 
   /** Return the durable state used by the administrator notification badge. */
-  getPendingApprovalSummary(): {
+  async getPendingApprovalSummary(): Promise<{
     count: number;
     latestCreatedAt: string | null;
-  } {
-    const db = this.ensureDatabase();
-    const result = db
-      .prepare(
-        `
-          SELECT COUNT(*) AS count, MAX(created_at) AS latest_created_at
-          FROM users
-          WHERE id != 'default' AND account_status = 'pending'
-        `
-      )
-      .get() as { count: number; latest_created_at: number | null };
-
+  }> {
+    const result =
+      await this.persistenceProvider().repositories.identity.getPendingApprovalSummary();
     return {
       count: result.count,
-      latestCreatedAt: result.latest_created_at
-        ? new Date(result.latest_created_at).toISOString()
-        : null,
+      latestCreatedAt:
+        result.latest_created_at === null
+          ? null
+          : new Date(result.latest_created_at).toISOString(),
     };
   }
 
-  /**
-   * Update a user
-   */
   async updateUser(
     id: string,
     userData: UserUpdateData
   ): Promise<UserPublic | null> {
-    const existingUser = this.getUserById(id);
+    const existingUser = await this.getUserById(id);
     if (!existingUser) return null;
 
-    const now = Date.now();
-    const updates: string[] = [];
-    const values: (string | number | null)[] = [];
-
-    if (userData.username !== undefined) {
-      updates.push('username = ?');
-      values.push(userData.username);
-    }
-
-    if (userData.email !== undefined) {
-      updates.push('email = ?');
-      values.push(userData.email);
-    }
-
-    if (userData.password !== undefined) {
-      const passwordHash = await bcrypt.hash(userData.password, 12);
-      updates.push('password_hash = ?');
-      values.push(passwordHash);
-    }
-
-    if (userData.role !== undefined) {
-      updates.push('role = ?');
-      values.push(userData.role);
-    }
-
-    if (userData.avatar !== undefined) {
-      updates.push('avatar = ?');
-      values.push(userData.avatar);
-    }
-
-    if (updates.length === 0) {
+    if (Object.values(userData).every(value => value === undefined)) {
       return existingUser;
     }
 
-    updates.push('updated_at = ?');
-    values.push(now);
-    values.push(id);
-
-    const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      UPDATE users
-      SET ${updates.join(', ')}
-      WHERE id = ?
-    `);
-
-    stmt.run(...values);
-
-    return this.getUserById(id);
+    const passwordHash =
+      userData.password === undefined
+        ? undefined
+        : await bcrypt.hash(userData.password, 12);
+    const identity = this.persistenceProvider().repositories.identity;
+    const normalizedEmail =
+      userData.email === undefined
+        ? undefined
+        : userData.email === null || userData.email.trim() === ''
+          ? null
+          : userData.email.trim();
+    await identity.update(id, {
+      username: userData.username,
+      email: normalizedEmail,
+      passwordHash,
+      role: userData.role,
+      avatar: userData.avatar,
+      updatedAt: Date.now(),
+    });
+    const updatedUser = await identity.findPublicById(id);
+    return updatedUser ? this.toPublic(updatedUser) : null;
   }
 
-  /**
-   * Delete a user
-   */
-  deleteUser(id: string): boolean {
-    const db = this.ensureDatabase();
-    const stmt = db.prepare('DELETE FROM users WHERE id = ?');
-    const result = stmt.run(id);
-    return result.changes > 0;
+  deleteUser(id: string): Promise<boolean> {
+    return this.persistenceProvider().repositories.identity.delete(id);
   }
 
-  /**
-   * Verify user password
-   */
   async verifyPassword(
     username: string,
     password: string
   ): Promise<User | null> {
-    const user = this.getUserByUsername(username);
+    const user = await this.getUserByUsername(username);
     if (!user) return null;
-
-    const isValid = await bcrypt.compare(password, user.password_hash);
-    return isValid ? user : null;
+    return (await bcrypt.compare(password, user.password_hash)) ? user : null;
   }
 
-  /**
-   * Check if username exists
-   */
-  usernameExists(username: string): boolean {
-    const db = this.ensureDatabase();
-    const stmt = db.prepare('SELECT 1 FROM users WHERE username = ?');
-    return !!stmt.get(username);
-  }
-
-  /**
-   * Check if email exists
-   */
-  emailExists(email: string): boolean {
-    const db = this.ensureDatabase();
-    const stmt = db.prepare('SELECT 1 FROM users WHERE email = ?');
-    return !!stmt.get(email);
-  }
-
-  /**
-   * Get user count (excluding the default system user)
-   */
-  getUserCount(): number {
-    const db = this.ensureDatabase();
-    const stmt = db.prepare(
-      'SELECT COUNT(*) as count FROM users WHERE id != ?'
+  usernameExists(username: string): Promise<boolean> {
+    return this.persistenceProvider().repositories.identity.usernameExists(
+      username
     );
-    const result = stmt.get('default') as { count: number };
-    return result.count;
   }
 
-  /**
-   * Get real user count (excluding default system user) - alias for getUserCount
-   */
-  getRealUserCount(): number {
+  emailExists(email: string): Promise<boolean> {
+    return this.persistenceProvider().repositories.identity.emailExists(email);
+  }
+
+  getUserCount(): Promise<number> {
+    return this.persistenceProvider().repositories.identity.countRealUsers();
+  }
+
+  getRealUserCount(): Promise<number> {
     return this.getUserCount();
   }
 }

@@ -335,7 +335,7 @@ test('Codex OAuth tokens stay bound to the trusted bundled definition', async ()
   );
 });
 
-test('non-admin runtime retains manifest routing defaults while ignoring stored overrides', () => {
+test('non-admin runtime retains manifest routing defaults while ignoring stored overrides', async () => {
   const service = new PluginService();
   const pluginId = 'manifest-default-routing-provider';
   const manifestEndpoint =
@@ -384,7 +384,7 @@ test('non-admin runtime retains manifest routing defaults while ignoring stored 
       ),
       true
     );
-    const plugin = service.getPlugin(pluginId, normalUser.id);
+    const plugin = await service.getPlugin(pluginId, normalUser.id);
     assert.ok(plugin);
     assert.deepEqual(
       service.getPluginVariables(plugin, normalUser.id),
@@ -399,12 +399,18 @@ test('non-admin runtime retains manifest routing defaults while ignoring stored 
   }
 });
 
-test('legacy global activation migrates once into durable per-user state', () => {
+test('legacy global activation migrates once into durable per-user state', async () => {
   const pluginId = 'openai';
   const quarantinedPluginId = 'legacy-quarantined-provider';
   const database = databaseModule.getDatabase();
-  assert.equal(pluginService.getPlugin(pluginId, 'default').active, true);
-  assert.equal(pluginService.getPlugin(quarantinedPluginId, 'default'), null);
+  assert.equal(
+    (await pluginService.getPlugin(pluginId, 'default')).active,
+    true
+  );
+  assert.equal(
+    await pluginService.getPlugin(quarantinedPluginId, 'default'),
+    null
+  );
   assert.equal(
     database
       .prepare(
@@ -418,11 +424,17 @@ test('legacy global activation migrates once into durable per-user state', () =>
   );
 
   const laterUser = upsertTestUser('post-migration-plugin-user', 'user');
-  assert.equal(pluginService.getPlugin(pluginId, laterUser.id).active, false);
+  assert.equal(
+    (await pluginService.getPlugin(pluginId, laterUser.id)).active,
+    false
+  );
   assert.equal(pluginService.deactivatePlugin(pluginId, 'default'), true);
 
   const reloadedService = new PluginService();
-  assert.equal(reloadedService.getPlugin(pluginId, 'default').active, false);
+  assert.equal(
+    (await reloadedService.getPlugin(pluginId, 'default')).active,
+    false
+  );
   assert.equal(
     database
       .prepare('SELECT value FROM system_settings WHERE key = ?')
@@ -498,17 +510,17 @@ test('pre-upgrade writable definitions stay quarantined across every execution p
       },
       async () => {
         for (const definition of definitions) {
-          assert.equal(service.getPlugin(definition.id, user.id), null);
+          assert.equal(await service.getPlugin(definition.id, user.id), null);
           assert.equal(
-            service
-              .getAllPlugins(user.id)
-              .some(plugin => plugin.id === definition.id),
+            (await service.getAllPlugins(user.id)).some(
+              plugin => plugin.id === definition.id
+            ),
             false
           );
           assert.equal(
-            service
-              .getActivePlugins(user.id)
-              .some(plugin => plugin.id === definition.id),
+            (await service.getActivePlugins(user.id)).some(
+              plugin => plugin.id === definition.id
+            ),
             false
           );
           assert.deepEqual(
@@ -617,7 +629,7 @@ test('pre-upgrade writable definitions stay quarantined across every execution p
 
     const approved = service.importPlugin(definitions[0], admin.id);
     assert.equal(approved.id, definitions[0].id);
-    assert.ok(service.getPlugin(approved.id, user.id));
+    assert.ok(await service.getPlugin(approved.id, user.id));
     assert.equal(
       database
         .prepare(
@@ -629,7 +641,7 @@ test('pre-upgrade writable definitions stay quarantined across every execution p
       0,
       'approval must clear every legacy activation before the definition becomes visible'
     );
-    assert.equal(service.getPlugin(approved.id, user.id).active, false);
+    assert.equal((await service.getPlugin(approved.id, user.id)).active, false);
     assert.equal(
       service
         .getAvailableEmbeddingModels(user.id)
@@ -659,7 +671,7 @@ test('pre-upgrade writable definitions stay quarantined across every execution p
     tampered.name = 'Tampered after approval';
     fs.writeFileSync(approvedPath, JSON.stringify(tampered, null, 2));
     assert.equal(
-      service.getPlugin(approved.id, user.id),
+      await service.getPlugin(approved.id, user.id),
       null,
       'any post-approval byte-level definition change must re-quarantine it'
     );
@@ -759,7 +771,7 @@ test('plugin routes require authentication and preserve non-admin generation set
       );
     }
 
-    const openAIPlugin = pluginService.getPlugin('openai', normalUser.id);
+    const openAIPlugin = await pluginService.getPlugin('openai', normalUser.id);
     assert.ok(openAIPlugin?.variables);
     const generationSave = await fetch(
       `${server.baseUrl}/api/plugins/openai/variables`,
@@ -834,9 +846,9 @@ test('plugin routes require authentication and preserve non-admin generation set
         Date.now()
       );
     assert.equal(
-      pluginService
-        .getPlugin('openai', normalUser.id)
-        .model_map.includes('stale-legacy-route-model'),
+      (
+        await pluginService.getPlugin('openai', normalUser.id)
+      ).model_map.includes('stale-legacy-route-model'),
       false,
       'ignored legacy routing must also suppress its discovered catalog'
     );
@@ -948,7 +960,10 @@ test('plugin routes require authentication and preserve non-admin generation set
       0,
       'changing a trusted route must invalidate its discovered catalog'
     );
-    const customAdminPlugin = pluginService.getPlugin('openai', adminUser.id);
+    const customAdminPlugin = await pluginService.getPlugin(
+      'openai',
+      adminUser.id
+    );
     assert.equal(
       customAdminPlugin.model_map.includes('stale-trusted-route-model'),
       false
@@ -968,7 +983,7 @@ test('plugin routes require authentication and preserve non-admin generation set
     assert.equal(adminRoutingReset.status, 200);
     assert.equal(
       pluginService.getApiKey(
-        pluginService.getPlugin('openai', adminUser.id),
+        await pluginService.getPlugin('openai', adminUser.id),
         adminUser.id
       ),
       'route-environment-secret',
@@ -1006,7 +1021,10 @@ test('plugin routes require authentication and preserve non-admin generation set
       }
     );
     assert.equal(boundRouteChange.status, 200);
-    const changedRoutePlugin = pluginService.getPlugin('openai', adminUser.id);
+    const changedRoutePlugin = await pluginService.getPlugin(
+      'openai',
+      adminUser.id
+    );
     assert.equal(
       pluginService.getApiKey(changedRoutePlugin, adminUser.id),
       null,
@@ -1072,7 +1090,7 @@ test('plugin routes require authentication and preserve non-admin generation set
     );
     assert.equal(
       pluginService.getApiKey(
-        pluginService.getPlugin('openai', adminUser.id),
+        await pluginService.getPlugin('openai', adminUser.id),
         adminUser.id
       ),
       'route-environment-secret',
@@ -1573,7 +1591,7 @@ test('environment credentials never reach imported or user-stored routes', async
   const requests = [];
 
   try {
-    const importedPlugin = service.getPlugin(pluginId, adminUser.id);
+    const importedPlugin = await service.getPlugin(pluginId, adminUser.id);
     assert.ok(importedPlugin);
     assert.equal(
       service.getApiKey(importedPlugin, adminUser.id),
@@ -1589,7 +1607,7 @@ test('environment credentials never reach imported or user-stored routes', async
       ),
       true
     );
-    const adminPlugin = service.getPlugin(pluginId, adminUser.id);
+    const adminPlugin = await service.getPlugin(pluginId, adminUser.id);
     assert.ok(adminPlugin);
     assert.equal(
       service.getPluginVariables(adminPlugin, adminUser.id).endpoint,
@@ -1632,9 +1650,9 @@ test('environment credentials never reach imported or user-stored routes', async
           true
         );
         assert.equal(
-          service
-            .getPluginStatus(adminUser.id)
-            .find(status => status.id === pluginId)?.available,
+          (await service.getPluginStatus(adminUser.id)).find(
+            status => status.id === pluginId
+          )?.available,
           false
         );
         assert.equal(
@@ -1685,9 +1703,9 @@ test('environment credentials never reach imported or user-stored routes', async
           true
         );
         assert.equal(
-          service
-            .getPluginStatus(adminUser.id)
-            .find(status => status.id === pluginId)?.available,
+          (await service.getPluginStatus(adminUser.id)).find(
+            status => status.id === pluginId
+          )?.available,
           true
         );
         assert.equal(
@@ -1797,7 +1815,7 @@ test('administrator definition retargeting revokes activation and cannot carry a
     capabilities: undefined,
   };
   service.installPlugin(definitionA, admin.id);
-  const pluginA = service.getPlugin(pluginId, user.id);
+  const pluginA = await service.getPlugin(pluginId, user.id);
   assert.ok(pluginA);
   assert.equal(
     pluginCredentialsService.setApiKey(
@@ -1839,7 +1857,7 @@ test('administrator definition retargeting revokes activation and cannot carry a
           },
           admin.id
         );
-        const pluginB = service.getPlugin(pluginId, user.id);
+        const pluginB = await service.getPlugin(pluginId, user.id);
         assert.ok(pluginB);
         assert.equal(pluginB.active, false);
         assert.equal(
@@ -1912,12 +1930,12 @@ test('trusted bundled routing may use an environment credential', async () => {
   process.env[keyEnv] = environmentKey;
 
   try {
-    const adminPlugin = service.getPlugin(pluginId, adminUser.id);
+    const adminPlugin = await service.getPlugin(pluginId, adminUser.id);
     assert.ok(adminPlugin?.variables);
     const model = adminPlugin.model_map[0];
     assert.ok(model);
     assert.equal(service.getApiKey(adminPlugin, adminUser.id), environmentKey);
-    const legacyCredentialPlugin = service.getPlugin(
+    const legacyCredentialPlugin = await service.getPlugin(
       pluginId,
       legacyCredentialUser.id
     );
@@ -2025,7 +2043,7 @@ test('trusted bundled routing may use an environment credential', async () => {
             JSON.stringify(['stale-custom-model']),
             Date.now()
           );
-        const normalPlugin = service.getPlugin(pluginId, normalUser.id);
+        const normalPlugin = await service.getPlugin(pluginId, normalUser.id);
         assert.ok(normalPlugin);
         const normalVariables = service.getPluginVariables(
           normalPlugin,
@@ -2095,7 +2113,7 @@ test('trusted bundled routing may use an environment credential', async () => {
   }
 });
 
-test('Docker-style bundled and legacy directory alias preserves anchored environment fallback', () => {
+test('Docker-style bundled and legacy directory alias preserves anchored environment fallback', async () => {
   const service = new PluginService();
   const user = upsertTestUser('docker-layout-environment-user', 'user');
   const previousEnvironmentKey = process.env.OPENAI_API_KEY;
@@ -2104,7 +2122,7 @@ test('Docker-style bundled and legacy directory alias preserves anchored environ
   service.pluginReadDirs = [service.bundledPluginsDir, service.pluginsDir];
 
   try {
-    const plugin = service.getPlugin('openai', user.id);
+    const plugin = await service.getPlugin('openai', user.id);
     assert.ok(plugin);
     assert.equal(
       service.getApiKey(plugin, user.id),
@@ -2119,7 +2137,7 @@ test('Docker-style bundled and legacy directory alias preserves anchored environ
   }
 });
 
-test('mismatched filenames and duplicate variable names cannot confuse trust resolution', () => {
+test('mismatched filenames and duplicate variable names cannot confuse trust resolution', async () => {
   const service = new PluginService();
   const normalUser = upsertTestUser('manifest-ambiguity-normal-user', 'user');
   const adminUser = upsertTestUser('manifest-ambiguity-admin-user', 'admin');
@@ -2155,9 +2173,9 @@ test('mismatched filenames and duplicate variable names cannot confuse trust res
         2
       )
     );
-    const safePlugin = service
-      .getAllPlugins(normalUser.id)
-      .find(plugin => plugin.id === 'openai');
+    const safePlugin = (await service.getAllPlugins(normalUser.id)).find(
+      plugin => plugin.id === 'openai'
+    );
     assert.ok(safePlugin);
     const safeVariables = service.getPluginVariables(safePlugin, normalUser.id);
     assert.equal(
@@ -2187,11 +2205,11 @@ test('mismatched filenames and duplicate variable names cannot confuse trust res
     );
 
     fs.writeFileSync(exactIdPath, fs.readFileSync(mismatchedPath, 'utf8'));
-    assert.equal(service.getPlugin('openai', normalUser.id), null);
+    assert.equal(await service.getPlugin('openai', normalUser.id), null);
     assert.equal(
-      service
-        .getAllPlugins(normalUser.id)
-        .some(plugin => plugin.id === 'openai'),
+      (await service.getAllPlugins(normalUser.id)).some(
+        plugin => plugin.id === 'openai'
+      ),
       false,
       'an invalid effective same-ID shadow must hide the earlier bundled definition'
     );
@@ -2213,7 +2231,7 @@ test('a pre-upgrade same-ID shadow cannot consume a legacy unbound credential', 
   const bundledDefinition = JSON.parse(
     fs.readFileSync(path.join(repoRoot, 'plugins', 'openai.json'), 'utf8')
   );
-  const bundledPlugin = service.getPlugin('openai', user.id);
+  const bundledPlugin = await service.getPlugin('openai', user.id);
   assert.ok(bundledPlugin);
   const binding = service.getCredentialRoutingAuthFingerprint(
     bundledPlugin,
@@ -2271,9 +2289,11 @@ test('a pre-upgrade same-ID shadow cannot consume a legacy unbound credential', 
         },
       },
       async () => {
-        assert.equal(service.getPlugin('openai', user.id), null);
+        assert.equal(await service.getPlugin('openai', user.id), null);
         assert.equal(
-          service.getAllPlugins(user.id).some(plugin => plugin.id === 'openai'),
+          (await service.getAllPlugins(user.id)).some(
+            plugin => plugin.id === 'openai'
+          ),
           false
         );
         assert.deepEqual(await service.discoverModels('openai', user.id), []);
@@ -2325,13 +2345,13 @@ test('bundled-ID shadows cannot consume environment credentials', async () => {
   process.env[keyEnv] = 'deployment-environment-secret';
 
   const assertShadowIsBlocked = async () => {
-    const shadow = service.getPlugin(pluginId, adminUser.id);
+    const shadow = await service.getPlugin(pluginId, adminUser.id);
     assert.ok(shadow);
     assert.equal(service.getApiKey(shadow, adminUser.id), null);
     assert.equal(
-      service
-        .getPluginStatus(adminUser.id)
-        .find(status => status.id === pluginId)?.available,
+      (await service.getPluginStatus(adminUser.id)).find(
+        status => status.id === pluginId
+      )?.available,
       false
     );
     assert.equal(await service.activatePlugin(pluginId, adminUser.id), true);
@@ -2403,7 +2423,10 @@ test('bundled-ID shadows cannot consume environment credentials', async () => {
           },
           adminUser.id
         );
-        const capabilityShadow = service.getPlugin(pluginId, adminUser.id);
+        const capabilityShadow = await service.getPlugin(
+          pluginId,
+          adminUser.id
+        );
         assert.ok(capabilityShadow);
         assert.equal(service.getApiKey(capabilityShadow, adminUser.id), null);
         assert.equal(
@@ -2474,7 +2497,7 @@ test('environment fallback fails closed when bundled and writable directories al
         },
       },
       async () => {
-        const plugin = service.getPlugin(pluginId, adminUser.id);
+        const plugin = await service.getPlugin(pluginId, adminUser.id);
         assert.ok(plugin);
         assert.equal(service.getApiKey(plugin, adminUser.id), null);
         assert.equal(
@@ -2958,33 +2981,40 @@ test('discovered models persist per user without mutating the shared plugin mani
   );
 
   assert.deepEqual(
-    service.getPlugin(providerId, 'catalog-user-one').model_map,
+    (await service.getPlugin(providerId, 'catalog-user-one')).model_map,
     ['model-catalog-user-one']
   );
   assert.deepEqual(
-    service.getPlugin(providerId, 'catalog-user-two').model_map,
+    (await service.getPlugin(providerId, 'catalog-user-two')).model_map,
     ['model-catalog-user-two']
   );
-  assert.equal(service.getPlugin(providerId, 'catalog-user-one').active, true);
-  assert.equal(service.getPlugin(providerId, 'catalog-user-two').active, false);
-  assert.deepEqual(service.getPlugin(providerId, 'default').model_map, [
+  assert.equal(
+    (await service.getPlugin(providerId, 'catalog-user-one')).active,
+    true
+  );
+  assert.equal(
+    (await service.getPlugin(providerId, 'catalog-user-two')).active,
+    false
+  );
+  assert.deepEqual((await service.getPlugin(providerId, 'default')).model_map, [
     'chat-model',
   ]);
   assert.equal(
-    service.getActivePluginForModel(
-      'model-catalog-user-one',
-      'catalog-user-one',
-      providerId
+    (
+      await service.getActivePluginForModel(
+        'model-catalog-user-one',
+        'catalog-user-one',
+        providerId
+      )
     )?.id,
     providerId
   );
-  assert.throws(
-    () =>
-      service.getActivePluginForModel(
-        'model-catalog-user-one',
-        'catalog-user-two',
-        providerId
-      ),
+  await assert.rejects(
+    service.getActivePluginForModel(
+      'model-catalog-user-one',
+      'catalog-user-two',
+      providerId
+    ),
     /not active/
   );
 
@@ -2998,19 +3028,19 @@ test('discovered models persist per user without mutating the shared plugin mani
 
   const reloadedService = new PluginService();
   assert.deepEqual(
-    reloadedService.getPlugin(providerId, 'catalog-user-one').model_map,
+    (await reloadedService.getPlugin(providerId, 'catalog-user-one')).model_map,
     ['model-catalog-user-one']
   );
   assert.deepEqual(
-    reloadedService.getPlugin(providerId, 'catalog-user-two').model_map,
+    (await reloadedService.getPlugin(providerId, 'catalog-user-two')).model_map,
     ['model-catalog-user-two']
   );
   assert.equal(
-    reloadedService.getPlugin(providerId, 'catalog-user-one').active,
+    (await reloadedService.getPlugin(providerId, 'catalog-user-one')).active,
     true
   );
   assert.equal(
-    reloadedService.getPlugin(providerId, 'catalog-user-two').active,
+    (await reloadedService.getPlugin(providerId, 'catalog-user-two')).active,
     false
   );
 
@@ -3024,11 +3054,13 @@ test('discovered models persist per user without mutating the shared plugin mani
   );
   const twiceReloadedService = new PluginService();
   assert.equal(
-    twiceReloadedService.getPlugin(providerId, 'catalog-user-one').active,
+    (await twiceReloadedService.getPlugin(providerId, 'catalog-user-one'))
+      .active,
     false
   );
   assert.equal(
-    twiceReloadedService.getPlugin(providerId, 'catalog-user-two').active,
+    (await twiceReloadedService.getPlugin(providerId, 'catalog-user-two'))
+      .active,
     true
   );
 });
@@ -3043,46 +3075,60 @@ test('embedding and TTS HTTP requests reject redirects before a credential-beari
   await withPatchedProperties(
     pluginService,
     {
-      getAllPlugins: () => [plugin],
-      getPlugin: id => (id === plugin.id ? plugin : null),
       getPluginVariables: () => ({}),
       getApiKey: () => null,
     },
     async () =>
       withPatchedProperties(
-        axios,
+        pluginService.embeddingService.deps,
         {
-          post: async (endpoint, payload, config) => {
-            requests.push({ endpoint, payload, config });
-            if (endpoint.endsWith('/embeddings')) {
-              return { data: { data: [{ embedding: [0.1, 0.2] }] } };
-            }
-            if (endpoint.endsWith('/audio/speech')) {
-              return { data: Buffer.from('RIFFtest-audio') };
-            }
-            throw new Error(`Unexpected capability endpoint: ${endpoint}`);
-          },
+          getAllPlugins: () => [plugin],
         },
-        async () => {
-          assert.deepEqual(
-            await pluginService.executeEmbeddingRequest(
-              'embedding-model',
-              'Hello',
-              plugin.id,
-              'user-42'
-            ),
-            { embeddings: [[0.1, 0.2]] }
-          );
-          const audio = await pluginService.executeTTSRequest(
-            'tts-model',
-            'Hello',
+        async () =>
+          withPatchedProperties(
+            pluginService.ttsService.deps,
             {
-              pluginId: plugin.id,
-              userId: 'user-42',
-            }
-          );
-          assert.equal(audio.subarray(0, 4).toString('ascii'), 'RIFF');
-        }
+              getAllPlugins: () => [plugin],
+            },
+            async () =>
+              withPatchedProperties(
+                axios,
+                {
+                  post: async (endpoint, payload, config) => {
+                    requests.push({ endpoint, payload, config });
+                    if (endpoint.endsWith('/embeddings')) {
+                      return { data: { data: [{ embedding: [0.1, 0.2] }] } };
+                    }
+                    if (endpoint.endsWith('/audio/speech')) {
+                      return { data: Buffer.from('RIFFtest-audio') };
+                    }
+                    throw new Error(
+                      `Unexpected capability endpoint: ${endpoint}`
+                    );
+                  },
+                },
+                async () => {
+                  assert.deepEqual(
+                    await pluginService.executeEmbeddingRequest(
+                      'embedding-model',
+                      'Hello',
+                      plugin.id,
+                      'user-42'
+                    ),
+                    { embeddings: [[0.1, 0.2]] }
+                  );
+                  const audio = await pluginService.executeTTSRequest(
+                    'tts-model',
+                    'Hello',
+                    {
+                      pluginId: plugin.id,
+                      userId: 'user-42',
+                    }
+                  );
+                  assert.equal(audio.subarray(0, 4).toString('ascii'), 'RIFF');
+                }
+              )
+          )
       )
   );
 
@@ -3125,75 +3171,84 @@ test('TTS routes preserve configured output formats and provider clone errors', 
     await withPatchedProperties(
       pluginService,
       {
-        getAllPlugins: () => [plugin],
-        getPlugin: id => (id === plugin.id ? plugin : null),
         getPluginVariables: () => ({}),
         getApiKey: () => null,
       },
-      async () => {
-        const generated = await withPatchedProperties(
-          axios,
+      async () =>
+        withPatchedProperties(
+          pluginService.ttsService.deps,
           {
-            post: async () => ({ data: Buffer.from('RIFFxxxxWAVEroute') }),
+            getAllPlugins: () => [plugin],
+            getPlugin: id => (id === plugin.id ? plugin : null),
           },
-          () =>
-            fetch(`${server.baseUrl}/api/tts/generate`, {
-              method: 'POST',
-              headers: { ...headers, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                model: 'tts-model',
-                pluginId: plugin.id,
-                input: 'route format',
-              }),
-            })
-        );
-        assert.equal(generated.status, 200);
-        assert.equal(generated.headers.get('content-type'), 'audio/wav');
-        assert.match(
-          generated.headers.get('content-disposition'),
-          /speech\.wav/
-        );
+          async () => {
+            const generated = await withPatchedProperties(
+              axios,
+              {
+                post: async () => ({ data: Buffer.from('RIFFxxxxWAVEroute') }),
+              },
+              () =>
+                fetch(`${server.baseUrl}/api/tts/generate`, {
+                  method: 'POST',
+                  headers: { ...headers, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    model: 'tts-model',
+                    pluginId: plugin.id,
+                    input: 'route format',
+                  }),
+                })
+            );
+            assert.equal(generated.status, 200);
+            assert.equal(generated.headers.get('content-type'), 'audio/wav');
+            assert.match(
+              generated.headers.get('content-disposition'),
+              /speech\.wav/
+            );
 
-        const form = new FormData();
-        form.set('model', 'tts-model');
-        form.set('pluginId', plugin.id);
-        form.set('input', 'clone this');
-        form.set('referenceText', 'reference words');
-        form.set(
-          'reference_audio',
-          new Blob([Buffer.from('RIFFxxxxWAVEreference')], {
-            type: 'audio/wav',
-          }),
-          'reference.wav'
-        );
-        const cloned = await withPatchedProperties(
-          axios,
-          {
-            post: async (_endpoint, _body, config) => {
-              assert.ok(config.signal instanceof AbortSignal);
-              assert.equal(config.maxContentLength, 50 * 1024 * 1024);
-              const error = new Error('provider rejected the reference');
-              error.isAxiosError = true;
-              error.response = {
-                status: 413,
-                statusText: 'Payload Too Large',
-                data: Buffer.from(
-                  JSON.stringify({ detail: 'reference is too long' })
-                ),
-              };
-              throw error;
-            },
-          },
-          () =>
-            fetch(`${server.baseUrl}/api/tts/voice-clone`, {
-              method: 'POST',
-              headers,
-              body: form,
-            })
-        );
-        assert.equal(cloned.status, 413);
-        assert.match((await cloned.json()).message, /reference is too long/);
-      }
+            const form = new FormData();
+            form.set('model', 'tts-model');
+            form.set('pluginId', plugin.id);
+            form.set('input', 'clone this');
+            form.set('referenceText', 'reference words');
+            form.set(
+              'reference_audio',
+              new Blob([Buffer.from('RIFFxxxxWAVEreference')], {
+                type: 'audio/wav',
+              }),
+              'reference.wav'
+            );
+            const cloned = await withPatchedProperties(
+              axios,
+              {
+                post: async (_endpoint, _body, config) => {
+                  assert.ok(config.signal instanceof AbortSignal);
+                  assert.equal(config.maxContentLength, 50 * 1024 * 1024);
+                  const error = new Error('provider rejected the reference');
+                  error.isAxiosError = true;
+                  error.response = {
+                    status: 413,
+                    statusText: 'Payload Too Large',
+                    data: Buffer.from(
+                      JSON.stringify({ detail: 'reference is too long' })
+                    ),
+                  };
+                  throw error;
+                },
+              },
+              () =>
+                fetch(`${server.baseUrl}/api/tts/voice-clone`, {
+                  method: 'POST',
+                  headers,
+                  body: form,
+                })
+            );
+            assert.equal(cloned.status, 413);
+            assert.match(
+              (await cloned.json()).message,
+              /reference is too long/
+            );
+          }
+        )
     );
   } finally {
     await server.close();
@@ -3802,8 +3857,6 @@ test('Chat, Work, embedding, TTS, and image overrides fail before network access
     pluginService,
     {
       getActivePluginForModel: () => plugin,
-      getAllPlugins: () => [plugin],
-      getPlugin: id => (id === plugin.id ? plugin : null),
       getPluginVariables: () => ({
         api_url: unsafeEndpoint,
         embedding_endpoint: unsafeEndpoint,
@@ -3817,56 +3870,75 @@ test('Chat, Work, embedding, TTS, and image overrides fail before network access
     },
     async () =>
       withPatchedProperties(
-        axios,
+        pluginService.embeddingService.deps,
         {
-          post: async () => {
-            networkRequests += 1;
-            throw new Error('Unexpected network request');
-          },
+          getAllPlugins: () => [plugin],
         },
-        async () => {
-          await assert.rejects(
-            pluginService.executePluginRequest(
-              'chat-model',
-              [{ role: 'user', content: 'Hello' }],
-              {},
-              'user-42'
-            ),
-            /Invalid plugin endpoint override/
-          );
-          assert.equal(
-            credentialLookups,
-            0,
-            'Chat must validate api_url before selecting credentials'
-          );
-          await assert.rejects(
-            pluginService.executeEmbeddingRequest(
-              'embedding-model',
-              'Hello',
-              plugin.id,
-              'user-42'
-            ),
-            /Invalid plugin endpoint override/
-          );
-          await assert.rejects(
-            pluginService.executeTTSRequest('tts-model', 'Hello', {
-              pluginId: plugin.id,
-              userId: 'user-42',
-            }),
-            /Invalid plugin endpoint override/
-          );
-          await assert.rejects(
-            pluginService.executeImageGenRequest(
-              'image-model',
-              'A test image',
-              {
-                pluginId: plugin.id,
-                userId: 'user-42',
-              }
-            ),
-            /Invalid plugin endpoint override/
-          );
-        }
+        async () =>
+          withPatchedProperties(
+            pluginService.ttsService.deps,
+            { getAllPlugins: () => [plugin] },
+            async () =>
+              withPatchedProperties(
+                pluginService.imageGenerationService.deps,
+                {
+                  getPlugin: id => (id === plugin.id ? plugin : null),
+                },
+                async () =>
+                  withPatchedProperties(
+                    axios,
+                    {
+                      post: async () => {
+                        networkRequests += 1;
+                        throw new Error('Unexpected network request');
+                      },
+                    },
+                    async () => {
+                      await assert.rejects(
+                        pluginService.executePluginRequest(
+                          'chat-model',
+                          [{ role: 'user', content: 'Hello' }],
+                          {},
+                          'user-42'
+                        ),
+                        /Invalid plugin endpoint override/
+                      );
+                      assert.equal(
+                        credentialLookups,
+                        0,
+                        'Chat must validate api_url before selecting credentials'
+                      );
+                      await assert.rejects(
+                        pluginService.executeEmbeddingRequest(
+                          'embedding-model',
+                          'Hello',
+                          plugin.id,
+                          'user-42'
+                        ),
+                        /Invalid plugin endpoint override/
+                      );
+                      await assert.rejects(
+                        pluginService.executeTTSRequest('tts-model', 'Hello', {
+                          pluginId: plugin.id,
+                          userId: 'user-42',
+                        }),
+                        /Invalid plugin endpoint override/
+                      );
+                      await assert.rejects(
+                        pluginService.executeImageGenRequest(
+                          'image-model',
+                          'A test image',
+                          {
+                            pluginId: plugin.id,
+                            userId: 'user-42',
+                          }
+                        ),
+                        /Invalid plugin endpoint override/
+                      );
+                    }
+                  )
+              )
+          )
       )
   );
 

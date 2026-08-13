@@ -143,7 +143,7 @@ export class AuthService {
     const user = await userModel.verifyPassword(username, password);
     if (!user) return null;
 
-    const userPublic = userModel.getUserById(user.id);
+    const userPublic = await userModel.getUserById(user.id);
     if (!userPublic) return null;
     if (userPublic.status !== 'active') {
       return { status: 'pending', user: userPublic };
@@ -156,8 +156,8 @@ export class AuthService {
   /**
    * Get system information
    */
-  getSystemInfo(): SystemInfo {
-    const userCount = userModel.getUserCount();
+  async getSystemInfo(): Promise<SystemInfo> {
+    const userCount = await userModel.getUserCount();
 
     return {
       requiresAuth: true, // For now, always require auth
@@ -176,8 +176,8 @@ export class AuthService {
   }
 
   /** Whether the local signup endpoint may create an account right now. */
-  canCreateLocalAccount(): boolean {
-    return canCreateLocalAccount(userModel.getUserCount());
+  async canCreateLocalAccount(): Promise<boolean> {
+    return canCreateLocalAccount(await userModel.getUserCount());
   }
 
   /**
@@ -187,7 +187,7 @@ export class AuthService {
     const payload = this.verifyToken(token);
     if (!payload) return null;
 
-    const user = userModel.getUserById(payload.userId);
+    const user = await userModel.getUserById(payload.userId);
     return user?.status === 'active' ? user : null;
   }
 
@@ -195,7 +195,7 @@ export class AuthService {
    * Get user by username
    */
   async getUserByUsername(username: string): Promise<UserPublic | null> {
-    const user = userModel.getUserByUsername(username);
+    const user = await userModel.getUserByUsername(username);
     if (!user) return null;
 
     return userModel.getUserById(user.id);
@@ -210,7 +210,7 @@ export class AuthService {
     email?: string
   ): Promise<AuthResult | null> {
     try {
-      if (!this.canCreateLocalAccount()) {
+      if (!(await this.canCreateLocalAccount())) {
         logger.warn(
           'Blocked account creation because registration is disabled'
         );

@@ -111,16 +111,14 @@ class EmbeddingService {
       logger.warn('Failed to load Ollama embedding models:', error);
     }
 
-    const plugins = pluginService
-      .getActivePlugins(userId)
-      .filter(
-        plugin =>
-          (plugin.capabilities?.embedding ||
-            plugin.type === 'embedding' ||
-            plugin.type === 'completion' ||
-            plugin.type === 'chat') &&
-          Boolean(pluginService.getApiKey(plugin, userId))
-      );
+    const plugins = (await pluginService.getActivePlugins(userId)).filter(
+      plugin =>
+        (plugin.capabilities?.embedding ||
+          plugin.type === 'embedding' ||
+          plugin.type === 'completion' ||
+          plugin.type === 'chat') &&
+        Boolean(pluginService.getApiKey(plugin, userId))
+    );
     await Promise.all(
       plugins.map(plugin =>
         pluginService

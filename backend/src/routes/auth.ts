@@ -179,7 +179,7 @@ router.post('/login', authRateLimiter, async (req, res) => {
       return;
     }
 
-    const systemInfo = authService.getSystemInfo();
+    const systemInfo = await authService.getSystemInfo();
 
     res.json({
       success: true,
@@ -264,7 +264,7 @@ router.get(
  */
 router.get('/system-info', async (req, res) => {
   try {
-    const systemInfo = authService.getSystemInfo();
+    const systemInfo = await authService.getSystemInfo();
     res.json({
       success: true,
       data: systemInfo,
@@ -289,7 +289,7 @@ router.get(
   requireAdmin,
   async (_req, res) => {
     try {
-      const systemInfo = authService.getSystemInfo();
+      const systemInfo = await authService.getSystemInfo();
 
       // Keep the first-time setup behavior, but bind disclosure to the
       // authenticated administrator created by that setup.
@@ -321,7 +321,7 @@ router.get(
  */
 router.post('/signup', authRateLimiter, async (req, res) => {
   try {
-    if (!authService.canCreateLocalAccount()) {
+    if (!(await authService.canCreateLocalAccount())) {
       res.status(403).json({
         success: false,
         message: 'Registration is disabled',
@@ -382,7 +382,7 @@ router.post('/signup', authRateLimiter, async (req, res) => {
       return;
     }
 
-    const systemInfo = authService.getSystemInfo();
+    const systemInfo = await authService.getSystemInfo();
 
     if (result.status === 'pending') {
       res.status(202).json({
@@ -619,7 +619,7 @@ router.post('/oauth/exchange', generalAuthRateLimiter, async (req, res) => {
     data: {
       user,
       token,
-      systemInfo: authService.getSystemInfo(),
+      systemInfo: await authService.getSystemInfo(),
     },
   });
 });

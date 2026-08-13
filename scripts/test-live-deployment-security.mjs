@@ -28,6 +28,7 @@ test('generated encryption keys are stored privately and never logged', () => {
 
 test('chat WebSockets fail closed without a current account', () => {
   const source = read('backend/src/websocketServer.ts');
+  const server = read('backend/src/index.ts');
   assert.doesNotMatch(source, /let userId = 'default'/);
   assert.match(source, /authorizeChatUpgrade/);
   assert.match(source, /isAllowedWebSocketOrigin/);
@@ -35,6 +36,12 @@ test('chat WebSockets fail closed without a current account', () => {
   assert.match(source, /CHAT_WS_MAX_MESSAGES_PER_MINUTE/);
   assert.match(source, /userModel\.getUserById/);
   assert.match(source, /rejectUpgrade\(socket, 401/);
+  assert.match(source, /RegisteredWebSocketServers/);
+  assert.match(source, /closeWebSocketServer\(wss\)/);
+  assert.match(source, /closeWebSocketServer\(terminalServer\)/);
+  assert.match(server, /registeredWebSockets\.close\(\)/);
+  assert.match(server, /closeCoordinator\(\)/);
+  assert.match(server, /Promise\.allSettled/);
 });
 
 test('private application APIs require authentication', () => {
@@ -121,8 +128,73 @@ test('private deployment template defaults to main and publishes no ports', () =
   assert.match(compose, /cap_drop:\n\s+- ALL/);
   assert.match(compose, /no-new-privileges:true/);
   assert.match(compose, /ENABLE_SIGNUP: \$\{ENABLE_SIGNUP:-false\}/);
+  assert.match(compose, /stop_grace_period: 20s/);
   assert.doesNotMatch(compose, /docker\.sock/);
   assert.doesNotMatch(compose, /^\s+watchtower:/m);
+});
+
+test('deployment health and backups fail closed on incomplete state', () => {
+  const dockerfile = read('Dockerfile');
+  const backup = read('deploy/private/libre-webui-backup');
+  const server = read('backend/src/index.ts');
+  const recoveryInventory = read(
+    'backend/src/services/recoveryInventoryService.ts'
+  );
+  assert.match(dockerfile, /HEALTHCHECK[^\n]*--timeout=5s/);
+  assert.match(dockerfile, /localhost:3001\/health\/ready/);
+  assert.match(
+    server,
+    /Promise\.resolve\(\)\.then\(\(\) => closeDatabase\(\)\)/
+  );
+  assert.ok(
+    server.indexOf('registeredWebSockets.close()') <
+      server.indexOf('closeDatabase()'),
+    'SQLite must close only after active HTTP and WebSocket work drains'
+  );
+  assert.match(backup, /flock -n/);
+  assert.match(backup, /recoveryInventory\.js/);
+  assert.match(backup, /--volumes-from "\$\{container_name\}:ro"/);
+  assert.doesNotMatch(
+    recoveryInventory,
+    /blockers\.push\('The configured data directory is not writable\.'/,
+    'a quiesced read-only recovery source must not fail backup preflight'
+  );
+  assert.match(backup, /\.partial/);
+  assert.match(backup, /tar -tzf/);
+  assert.match(backup, /sha256sum/);
+  assert.match(backup, /--format '\{\{\.Image\}\}'/);
+  assert.match(backup, /stop --timeout 20 libre-webui/);
+  assert.match(backup, /chmod 0733 "\$\{recovery_scratch\}"/);
+  assert.match(backup, /--env TMPDIR=\/recovery-tmp/);
+  assert.match(backup, /container_was_running=/);
+  assert.match(backup, /if \[\[ "\$\{container_was_running\}" == true \]\]/);
+  assert.ok(
+    (backup.match(/sync -f "\$\{backup_dir\}"/g) || []).length >= 2,
+    'backup final-name and manifest directory entries must be durable'
+  );
+  const backupService = read('deploy/private/libre-webui-backup.service');
+  assert.match(backupService, /TimeoutStartSec=6h/);
+  assert.match(
+    backupService,
+    /EnvironmentFile=-\/etc\/libre-webui\/backup\.env/
+  );
+  assert.match(backupService, /ReadWritePaths=-\/var\/backups\/libre-webui/);
+  const privateDeploymentDocs = read('docs/36-PRIVATE_REMOTE_DEPLOYMENT.md');
+  assert.match(privateDeploymentDocs, /backup\.env/);
+  assert.match(
+    privateDeploymentDocs,
+    /LIBRE_WEBUI_BACKUP_DIR[\s\S]*ReadWritePaths=\/srv\/backups\/libre-webui/
+  );
+  assert.ok(
+    backup.indexOf('trap cleanup EXIT') <
+      backup.indexOf('docker compose -f "${compose_file}" stop'),
+    'restart cleanup must be armed before the application is stopped'
+  );
+  assert.ok(
+    backup.indexOf('mv "${manifest_partial}" "${manifest}"') >
+      backup.indexOf('mv "${inventory_partial}" "${inventory}"'),
+    'the manifest must be published last as the completed-set marker'
+  );
 });
 
 test('local Compose defaults enable Work without publishing Ollama', () => {

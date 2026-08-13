@@ -76,24 +76,55 @@ import workRoutes from './routes/work.js';
 import systemDiagnosticsRoutes from './routes/systemDiagnostics.js';
 import artifactsRoutes from './routes/artifacts.js';
 import searchRoutes from './routes/search.js';
+import healthRoutes from './routes/health.js';
 import ollamaService from './services/ollamaService.js';
 import workRuntimeService from './services/workRuntimeService.js';
 import workTaskService from './services/workTaskService.js';
 import workAgentService from './services/workAgentService.js';
+import healthService from './services/healthService.js';
 import workPreviewProxyService, {
   WORK_PREVIEW_PROXY_PREFIX,
 } from './services/workPreviewProxyService.js';
 import { GitHubOAuthService } from './services/simpleGitHubOAuth.js';
 import { HuggingFaceOAuthService } from './services/simpleHuggingFaceOAuth.js';
 import { encryptionService as _encryptionService } from './services/encryptionService.js';
+import { getPersistence } from './persistence/index.js';
 import { loadAppPackage, resolveFrontendDist } from './utils/packagePaths.js';
 import { registerWebSocketServer } from './websocketServer.js';
 import { createLogger } from './utils/logger.js';
-import { getDatabase } from './db.js';
+import {
+  closeDatabase,
+  getDatabase,
+  getSchemaCompatibilityState,
+} from './db.js';
+import {
+  closeCoordinator,
+  initializeCoordinator,
+} from './platform/coordination/service.js';
 
 const pkg = loadAppPackage(import.meta.url);
 const app = express();
 const logger = createLogger('server');
+
+// Coordination is an explicit platform dependency. Solo mode uses one local
+// coordinator; Redis selections fail startup/readiness instead of silently
+// falling back to process-local state.
+const platformCoordinator = await initializeCoordinator();
+healthService.registerDependencyCheck({
+  id: 'coordination',
+  required: true,
+  check: async () => {
+    const health = await platformCoordinator.health();
+    return {
+      status: health.ready ? 'pass' : 'fail',
+      ...(health.message ? { message: health.message } : {}),
+      details: {
+        backend: health.backend,
+        providerLatencyMs: health.latencyMs,
+      },
+    };
+  },
+});
 
 // Containers are execution state, while each task's named volume is durable.
 // On startup, reconcile the labeled Work containers Docker actually has
@@ -352,14 +383,10 @@ app.use(requestLogger);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Libre WebUI Backend is running',
-    timestamp: new Date().toISOString(),
-  });
-});
+// Process liveness, dependency readiness, and authenticated deep diagnostics.
+// These routes are intentionally outside /api so deployment probes do not
+// depend on API rate limits or optional provider configuration.
+app.use('/health', healthRoutes);
 
 // Static files are served by a separate frontend server on port 8080
 // Backend only serves API endpoints
@@ -620,10 +647,25 @@ if (
 app.use(notFoundHandler);
 app.use(errorHandler);
 
+// Complete schema initialization before binding a network socket. Migration
+// failures and compatibility mismatches are startup failures, never a partial
+// application mode.
+getDatabase();
+// Construct the identity repository before the socket is bound. This
+// authenticates existing encrypted emails and atomically upgrades legacy
+// plaintext rows, so no request can observe mixed storage formats.
+getPersistence(_encryptionService);
+const schemaCompatibility = getSchemaCompatibilityState();
+if (schemaCompatibility.status === 'incompatible') {
+  throw new Error(
+    `Database schema is incompatible: ${schemaCompatibility.reason || 'migration failed'}`
+  );
+}
+
 // Create HTTP server
 const server = createServer(app);
 
-registerWebSocketServer(server);
+const registeredWebSockets = registerWebSocketServer(server);
 
 // Start server
 server.listen({ port, host }, () => {
@@ -716,31 +758,58 @@ server.listen({ port, host }, () => {
 
 // Graceful shutdown
 let shutdownStarted = false;
-const shutdown = (signal: 'SIGTERM' | 'SIGINT'): void => {
+const shutdown = async (signal: 'SIGTERM' | 'SIGINT'): Promise<void> => {
   if (shutdownStarted) return;
   shutdownStarted = true;
-  logger.info(`${signal} signal received: stopping Work containers`);
-  server.close(() => {
-    logger.info('HTTP server closed');
+  logger.info(`${signal} signal received: shutting down`);
+  const httpClosed = new Promise<void>(resolve => {
+    server.close(() => {
+      logger.info('HTTP server closed');
+      resolve();
+    });
   });
+  server.closeIdleConnections?.();
   const timeout = new Promise<'timeout'>(resolve => {
     const timer = setTimeout(() => resolve('timeout'), 15_000);
     timer.unref();
   });
-  void Promise.race([workAgentService.shutdown(), timeout]).then(result => {
-    if (result === 'timeout') {
-      logger.warn('Timed out waiting for Work containers to stop.');
-    } else if (result.failed > 0) {
-      logger.warn(
-        `Failed to stop ${result.failed} Work container(s) during shutdown.`
+  const stopWork = workAgentService.shutdown().then(summary => {
+    if (summary.failed > 0) {
+      throw new Error(
+        `Failed to stop ${summary.failed} Work container${summary.failed === 1 ? '' : 's'} during shutdown.`
       );
-    } else {
-      logger.info(`Stopped ${result.stopped} Work container(s).`);
     }
+    logger.info(`Stopped ${summary.stopped} Work container(s).`);
   });
+  const cleanup = Promise.allSettled([
+    registeredWebSockets.close(),
+    stopWork,
+    closeCoordinator(),
+    httpClosed,
+  ]).then(async initialResults => {
+    // Close SQLite only after request, socket, and Work users have drained so
+    // WAL state is settled before an operator snapshots the data directory.
+    const databaseResults = await Promise.allSettled([
+      Promise.resolve().then(() => closeDatabase()),
+    ]);
+    return [...initialResults, ...databaseResults];
+  });
+  const result = await Promise.race([cleanup, timeout]);
+  if (result === 'timeout') {
+    logger.error(
+      'Shutdown exceeded 15 seconds; forcing remaining sockets closed.'
+    );
+    server.closeAllConnections?.();
+    process.exit(1);
+  }
+  const rejected = result.filter(item => item.status === 'rejected');
+  if (rejected.length > 0) {
+    logger.warn(`${rejected.length} shutdown operation(s) failed.`);
+    process.exitCode = 1;
+  }
 };
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));
 
 export default app;

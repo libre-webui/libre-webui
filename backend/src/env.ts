@@ -16,9 +16,19 @@
  */
 
 import dotenv from 'dotenv';
+import path from 'node:path';
+import { BACKEND_DIRECTORY } from './utils/dataDirectory.js';
 
-// Load environment variables immediately
-dotenv.config({ path: '.env' });
+// Development configuration lives at backend/.env regardless of launch cwd.
+// A root .env remains a lower-priority compatibility source for root scripts;
+// neither file overrides variables explicitly supplied by the operator.
+dotenv.config({
+  path: [
+    path.join(BACKEND_DIRECTORY, '.env'),
+    path.join(BACKEND_DIRECTORY, '..', '.env'),
+  ],
+  quiet: true,
+});
 
 // Export a flag to confirm env is loaded
 export const ENV_LOADED = true;

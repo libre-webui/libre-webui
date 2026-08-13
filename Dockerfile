@@ -190,6 +190,7 @@ USER nodejs
 # Backend serves both API and frontend on the same port
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV PLATFORM_PREFLIGHT_TMP_DIR=/app/backend/temp/preflight
 
 # Set Ollama URL to connect to host machine when running in container
 ENV OLLAMA_BASE_URL=http://host.docker.internal:11434
@@ -201,11 +202,11 @@ ENV OLLAMA_BASE_URL=http://host.docker.internal:11434
 EXPOSE 3001
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health/ready || exit 1
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start backend (which also serves frontend static files)
-CMD ["node", "./backend/dist/index.js"]
+CMD ["node", "./backend/dist/main.js"]

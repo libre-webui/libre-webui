@@ -302,6 +302,7 @@ See the [deployment documentation](https://docs.librewebui.org) for details.
 - [Capability contracts](https://docs.librewebui.org/CAPABILITY_CONTRACTS)
 - [Authentication](https://docs.librewebui.org/AUTHENTICATION)
 - [Data portability](https://docs.librewebui.org/DATA_PORTABILITY)
+- [Platform foundation](https://docs.librewebui.org/PLATFORM_FOUNDATION)
 - [Speech to text](https://docs.librewebui.org/SPEECH_TO_TEXT)
 - [Environment variables](https://docs.librewebui.org/ENVIRONMENT_VARIABLES)
 - [Troubleshooting](https://docs.librewebui.org/TROUBLESHOOTING)

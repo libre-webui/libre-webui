@@ -45,7 +45,7 @@ const [{ authService, JWT_SECRET }, { userModel }, { authenticate }, database] =
 
 test('public registrations require administrator approval before authentication', async () => {
   try {
-    const migratedDefault = userModel.getUserById('default');
+    const migratedDefault = await userModel.getUserById('default');
     assert.equal(migratedDefault?.status, 'active');
 
     const bootstrapCandidates = [
@@ -79,7 +79,7 @@ test('public registrations require administrator approval before authentication'
     assert.equal(bootstrap?.user.role, 'admin');
     assert.equal(bootstrap?.user.status, 'active');
     assert.ok(bootstrap && 'token' in bootstrap);
-    assert.deepEqual(userModel.getPendingApprovalSummary(), {
+    assert.deepEqual(await userModel.getPendingApprovalSummary(), {
       count: 0,
       latestCreatedAt: null,
     });
@@ -145,17 +145,17 @@ test('public registrations require administrator approval before authentication'
     assert.equal(responseStatus, 403);
     assert.equal(responseBody.code, 'ACCOUNT_PENDING');
 
-    assert.deepEqual(userModel.getPendingApprovalSummary(), {
+    assert.deepEqual(await userModel.getPendingApprovalSummary(), {
       count: 1,
       latestCreatedAt: registration.user.createdAt,
     });
-    const approved = userModel.approveUser(
+    const approved = await userModel.approveUser(
       registration.user.id,
       bootstrap.user.id
     );
     assert.equal(approved?.status, 'active');
     assert.equal(approved?.approvedBy, bootstrap.user.id);
-    assert.equal(userModel.getPendingApprovalSummary().count, 0);
+    assert.equal((await userModel.getPendingApprovalSummary()).count, 0);
 
     const approvedLogin = await authService.login(
       pendingCredentials.username,

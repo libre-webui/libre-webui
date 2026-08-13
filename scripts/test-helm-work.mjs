@@ -87,10 +87,97 @@ test('enabling Work switches the backend to the Kubernetes runtime', () => {
   assert.match(deployment, /WORK_K8S_WORKSPACE_SIZE/);
 });
 
+test('deployment probes separate process liveness from dependency readiness', () => {
+  const deployment = read('deployment.yaml');
+  assert.match(deployment, /startupProbe:[\s\S]{0,220}path: \/health\/live/);
+  assert.match(deployment, /startupProbe:[\s\S]{0,300}failureThreshold: 120/);
+  assert.match(deployment, /livenessProbe:[\s\S]{0,180}path: \/health\/live/);
+  assert.match(deployment, /readinessProbe:[\s\S]{0,180}path: \/health\/ready/);
+  assert.doesNotMatch(
+    deployment,
+    /(?:livenessProbe|readinessProbe):[\s\S]{0,120}path: \/health\s*$/m
+  );
+});
+
+test('the chart renders platform selectors and secret connection material', t => {
+  const deployment = read('deployment.yaml');
+  for (const variable of [
+    'LIBRE_PLATFORM_MODE',
+    'DATABASE_BACKEND',
+    'BLOB_STORE_BACKEND',
+    'VECTOR_STORE_BACKEND',
+    'COORDINATION_BACKEND',
+    'REDIS_KEY_PREFIX',
+    'REDIS_CONNECT_TIMEOUT_MS',
+    'JOB_WORKER_MODE',
+    'STORAGE_ENCRYPTION_ACTIVE_KEY_ID',
+    'PLATFORM_PREFLIGHT_TMP_DIR',
+  ]) {
+    assert.match(deployment, new RegExp(`- name: ${variable}`));
+  }
+  for (const variable of [
+    'DATABASE_URL',
+    'REDIS_URL',
+    'STORAGE_ENCRYPTION_KEYS',
+  ]) {
+    assert.match(deployment, new RegExp(`- name: ${variable}`));
+  }
+
+  try {
+    execFileSync('helm', ['version', '--short'], { encoding: 'utf8' });
+  } catch {
+    t.skip('helm binary not available');
+    return;
+  }
+  const rendered = execFileSync(
+    'helm',
+    [
+      'template',
+      'platform-test',
+      chartDir,
+      '--set-string',
+      'env.COORDINATION_BACKEND=redis',
+      '--set-string',
+      'env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID=active',
+      '--set-string',
+      'secrets.redisUrl=redis://redis.example.test:6379/0',
+      '--set-string',
+      'secrets.storageEncryptionKeys=fixture-key-map',
+    ],
+    { encoding: 'utf8' }
+  );
+  assert.match(rendered, /- name: COORDINATION_BACKEND\n\s+value: "redis"/);
+  assert.match(
+    rendered,
+    /- name: PLATFORM_PREFLIGHT_TMP_DIR\n\s+value: "\/app\/backend\/temp\/preflight"/
+  );
+  assert.match(
+    rendered,
+    /- name: temp\n\s+emptyDir: \{\}/,
+    'startup inspection scratch must use the pod temp volume rather than the data PVC'
+  );
+  assert.match(rendered, /- name: REDIS_URL\n\s+valueFrom:/);
+  assert.match(rendered, /- name: STORAGE_ENCRYPTION_KEYS\n\s+valueFrom:/);
+  assert.match(
+    rendered,
+    /- name: STORAGE_ENCRYPTION_ACTIVE_KEY_ID\n\s+value: "active"/
+  );
+  assert.match(rendered, /redis-url:/);
+  assert.match(rendered, /storage-encryption-keys:/);
+});
+
+test('the chart makes its data PVC writable by the non-root process', () => {
+  assert.match(values, /podSecurityContext:[\s\S]*?fsGroup: 1001/);
+  assert.match(values, /fsGroupChangePolicy: OnRootMismatch/);
+  assert.match(values, /securityContext:\n\s+runAsNonRoot: true/);
+  assert.match(values, /runAsUser: 1001/);
+});
+
 test('the chart rejects unsafe application replicas and autoscaling', t => {
   const deployment = read('deployment.yaml');
   assert.match(deployment, /requires replicaCount=0 or 1/);
   assert.match(deployment, /autoscaling is disabled/);
+  assert.match(deployment, /strategy:\n\s+type: Recreate/);
   assert.match(values, /^replicaCount: 1$/m);
   assert.match(values, /autoscaling:\n[\s\S]*?enabled: false/);
   assert.match(values, /autoscaling:\n[\s\S]*?maxReplicas: 1/);
@@ -121,6 +208,7 @@ test('the chart rejects unsafe application replicas and autoscaling', t => {
     encoding: 'utf8',
   });
   assert.match(rendered, /replicas: 1/);
+  assert.match(rendered, /strategy:\n\s+type: Recreate/);
   assert.match(rendered, /- name: ENABLE_SIGNUP\n\s+value: "false"/);
   assert.doesNotMatch(rendered, /SINGLE_USER_MODE/);
 

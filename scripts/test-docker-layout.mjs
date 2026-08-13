@@ -70,6 +70,63 @@ test('Compose files expose only implemented signup behavior', () => {
   }
 });
 
+test('Compose files forward every operable platform selector', () => {
+  const platformVariables = [
+    'LIBRE_PLATFORM_MODE',
+    'DATABASE_BACKEND',
+    'DATABASE_URL',
+    'BLOB_STORE_BACKEND',
+    'VECTOR_STORE_BACKEND',
+    'COORDINATION_BACKEND',
+    'REDIS_URL',
+    'REDIS_KEY_PREFIX',
+    'REDIS_CONNECT_TIMEOUT_MS',
+    'JOB_WORKER_MODE',
+    'STORAGE_ENCRYPTION_KEYS',
+    'STORAGE_ENCRYPTION_ACTIVE_KEY_ID',
+  ];
+  for (const filename of composeFiles) {
+    const compose = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
+    for (const variable of platformVariables) {
+      assert.ok(
+        compose.includes(`- ${variable}=\${${variable}`),
+        `${filename} must forward ${variable}`
+      );
+    }
+    assert.match(
+      compose,
+      /PLATFORM_PREFLIGHT_TMP_DIR=\/app\/backend\/temp\/preflight/,
+      `${filename} must place startup inspection copies on the temp volume`
+    );
+  }
+
+  const privateCompose = fs.readFileSync(
+    path.join(repoRoot, 'deploy', 'private', 'docker-compose.yml'),
+    'utf8'
+  );
+  for (const variable of platformVariables) {
+    assert.match(
+      privateCompose,
+      new RegExp(`^\\s+${variable}: \\$\\{${variable}(?::[-?][^}]*)?\\}$`, 'm'),
+      `private Compose must forward ${variable}`
+    );
+  }
+  assert.match(
+    privateCompose,
+    /PLATFORM_PREFLIGHT_TMP_DIR: \/app\/backend\/temp\/preflight/
+  );
+  assert.match(privateCompose, /libre-webui-preflight:\/app\/backend\/temp/);
+  assert.doesNotMatch(
+    privateCompose,
+    /\/app\/backend\/temp:rw,nosuid,nodev,noexec,size=512m/,
+    'a valid database larger than 512 MiB must still be able to restart'
+  );
+  assert.match(
+    dockerfile,
+    /ENV PLATFORM_PREFLIGHT_TMP_DIR=\/app\/backend\/temp\/preflight/
+  );
+});
+
 test('Dockerfile describes the repository socket default accurately', () => {
   assert.match(dockerfile, /default Compose file does mount the socket/);
   assert.doesNotMatch(dockerfile, /socket is never mounted by default/i);

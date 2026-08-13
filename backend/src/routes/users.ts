@@ -53,7 +53,7 @@ router.get(
   requireAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const users = userModel.getAllUsers();
+      const users = await userModel.getAllUsers();
       res.json({
         success: true,
         data: users,
@@ -80,7 +80,7 @@ router.get(
     try {
       res.json({
         success: true,
-        data: userModel.getPendingApprovalSummary(),
+        data: await userModel.getPendingApprovalSummary(),
       });
     } catch (error) {
       logger.error('Get pending user approvals error:', error);
@@ -133,7 +133,7 @@ router.post(
       }
 
       // Check if username exists
-      if (userModel.usernameExists(username)) {
+      if (await userModel.usernameExists(username)) {
         res.status(400).json({
           success: false,
           message: 'Username already exists',
@@ -142,7 +142,7 @@ router.post(
       }
 
       // Check if email exists
-      if (userModel.emailExists(email)) {
+      if (await userModel.emailExists(email)) {
         res.status(400).json({
           success: false,
           message: 'Email already exists',
@@ -229,7 +229,7 @@ router.patch(
   async (req: AuthenticatedRequest, res) => {
     try {
       const id = req.params.id as string;
-      const existingUser = userModel.getUserById(id);
+      const existingUser = await userModel.getUserById(id);
       if (!existingUser) {
         res.status(404).json({
           success: false,
@@ -245,7 +245,7 @@ router.patch(
         return;
       }
 
-      const user = userModel.approveUser(id, req.user!.userId);
+      const user = await userModel.approveUser(id, req.user!.userId);
       if (!user) {
         res.status(409).json({
           success: false,
@@ -280,7 +280,7 @@ router.patch(
     try {
       const id = req.params.id as string;
       const { username, email, password, role, avatar } = req.body;
-      const existingUser = userModel.getUserById(id);
+      const existingUser = await userModel.getUserById(id);
       if (!existingUser) {
         res.status(404).json({
           success: false,
@@ -311,7 +311,7 @@ router.patch(
       }
 
       // Check if username exists (and is not the current user)
-      if (username && userModel.usernameExists(username)) {
+      if (username && (await userModel.usernameExists(username))) {
         if (existingUser.username !== username) {
           res.status(400).json({
             success: false,
@@ -322,7 +322,7 @@ router.patch(
       }
 
       // Check if email exists (and is not the current user)
-      if (email && userModel.emailExists(email)) {
+      if (email && (await userModel.emailExists(email))) {
         if (existingUser.email !== email) {
           res.status(400).json({
             success: false,
@@ -392,7 +392,7 @@ router.delete(
         return;
       }
 
-      if (!userModel.getUserById(id)) {
+      if (!(await userModel.getUserById(id))) {
         res.status(404).json({
           success: false,
           message: 'User not found',
@@ -406,7 +406,7 @@ router.delete(
       await workAgentService.removeTasksForUser(id);
       let deleted: boolean;
       try {
-        deleted = userModel.deleteUser(id);
+        deleted = await userModel.deleteUser(id);
       } catch (error) {
         workAgentService.releaseUserRetirement(id);
         throw error;

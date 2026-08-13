@@ -29,8 +29,9 @@ const [
   databaseModule,
   { authService },
   { default: authRouter },
-  { WebSocketTicketService },
+  { WebSocketTicketService, websocketTicketService },
   { registerWebSocketServer },
+  { userModel },
   frontendUrls,
 ] = await Promise.all([
   importDist('db.js'),
@@ -38,6 +39,7 @@ const [
   importDist('routes/auth.js'),
   importDist('services/websocketTicketService.js'),
   importDist('websocketServer.js'),
+  importDist('models/userModel.js'),
   tsImport(
     path.join(repoRoot, 'frontend', 'src', 'utils', 'websocketUrl.ts'),
     import.meta.url
@@ -89,7 +91,7 @@ server.prependListener('upgrade', request => {
     authorization: request.headers.authorization,
   });
 });
-registerWebSocketServer(server);
+const registeredWebSockets = registerWebSocketServer(server);
 await new Promise((resolve, reject) => {
   server.once('error', reject);
   server.listen(0, '127.0.0.1', resolve);
@@ -109,6 +111,7 @@ const browserEnvironment = {
 const WEBSOCKET_TEST_TIMEOUT_MS = 5_000;
 
 after(async () => {
+  await registeredWebSockets.close();
   await new Promise(resolve => server.close(resolve));
   databaseModule.closeDatabase();
   fs.rmSync(testRoot, { recursive: true, force: true });
@@ -439,4 +442,75 @@ test('VITE_WS_BASE_URL is shared, path-aware, and validated', () => {
       }),
     /must not contain credentials/
   );
+});
+
+test('shutdown drains in-flight chat handlers without unhandled rejection', async t => {
+  const isolatedServer = http.createServer(express());
+  const isolatedWebSockets = registerWebSocketServer(isolatedServer);
+  await new Promise((resolve, reject) => {
+    isolatedServer.once('error', reject);
+    isolatedServer.listen(0, '127.0.0.1', resolve);
+  });
+  t.after(async () => {
+    await isolatedWebSockets.close();
+    await new Promise(resolve => isolatedServer.close(resolve));
+  });
+
+  const isolatedAddress = isolatedServer.address();
+  assert.ok(isolatedAddress && typeof isolatedAddress === 'object');
+  const issued = websocketTicketService.issue(
+    user.id,
+    Date.now() + 60_000,
+    'chat'
+  );
+  const client = await openWebSocket(
+    `ws://127.0.0.1:${isolatedAddress.port}/ws?ticket=${issued.ticket}`
+  );
+
+  const originalGetUserById = userModel.getUserById;
+  let releaseLookup;
+  const lookupBlocked = new Promise(resolve => {
+    releaseLookup = resolve;
+  });
+  let lookupStarted;
+  const didStartLookup = new Promise(resolve => {
+    lookupStarted = resolve;
+  });
+  userModel.getUserById = async () => {
+    lookupStarted();
+    await lookupBlocked;
+    throw new Error('late shutdown lookup failure');
+  };
+  t.after(() => {
+    userModel.getUserById = originalGetUserById;
+  });
+
+  const unhandledRejections = [];
+  const captureUnhandledRejection = reason => unhandledRejections.push(reason);
+  process.on('unhandledRejection', captureUnhandledRejection);
+  try {
+    client.send(JSON.stringify({ type: 'ignored-during-shutdown' }));
+    await didStartLookup;
+
+    let shutdownSettled = false;
+    const shutdown = isolatedWebSockets.close().then(() => {
+      shutdownSettled = true;
+    });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(
+      shutdownSettled,
+      false,
+      'shutdown must retain the database boundary until handlers settle'
+    );
+
+    releaseLookup();
+    await shutdown;
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(unhandledRejections, []);
+  } finally {
+    process.off('unhandledRejection', captureUnhandledRejection);
+    userModel.getUserById = originalGetUserById;
+    releaseLookup?.();
+    client.terminate();
+  }
 });

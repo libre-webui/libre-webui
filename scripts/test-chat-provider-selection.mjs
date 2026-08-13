@@ -155,7 +155,9 @@ legacyDatabase.exec(`
     model TEXT NOT NULL,
     persona_id TEXT,
     created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE SET NULL
   )
 `);
 legacyDatabase.close();
@@ -252,7 +254,7 @@ assert.equal(
     'provider-a-key',
     userId,
     pluginService.getCredentialRoutingAuthFingerprint(
-      pluginService.getPlugin(pluginAId, userId),
+      await pluginService.getPlugin(pluginAId, userId),
       userId
     )
   ),
@@ -264,7 +266,7 @@ assert.equal(
     'provider-b-key',
     userId,
     pluginService.getCredentialRoutingAuthFingerprint(
-      pluginService.getPlugin(pluginBId, userId),
+      await pluginService.getPlugin(pluginBId, userId),
       userId
     )
   ),

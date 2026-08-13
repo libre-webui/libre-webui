@@ -28,7 +28,7 @@ router.use(authenticate);
  */
 router.get('/models', async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.userId;
-  const isAdmin = userId ? agentCliService.isAdminUser(userId) : false;
+  const isAdmin = userId ? await agentCliService.isAdminUser(userId) : false;
   res.json({
     success: true,
     data: isAdmin ? await agentCliService.listAgentModels() : [],

@@ -174,7 +174,7 @@ test('web search queries the configured instance and bounds results', async () =
   }
 });
 
-test('Work offers web_search by search state, task network, and owner access', () => {
+test('Work offers web_search by search state, task network, and owner access', async () => {
   const now = Date.now();
   const insertUser = getDatabase().prepare(
     `INSERT INTO users (
@@ -187,25 +187,28 @@ test('Work offers web_search by search state, task network, and owner access', (
   const userTask = { networkEnabled: true, userId: 'search-user' };
 
   setWebSearchConfig({ enabled: false, url: 'http://searxng:8080' });
-  assert.deepEqual(workToolSchemasForTask(adminTask), WORK_TOOL_SCHEMAS);
+  assert.deepEqual(await workToolSchemasForTask(adminTask), WORK_TOOL_SCHEMAS);
 
   setWebSearchConfig({ enabled: true, url: 'http://searxng:8080' });
-  const withSearch = workToolSchemasForTask(adminTask);
+  const withSearch = await workToolSchemasForTask(adminTask);
   assert.equal(withSearch.length, WORK_TOOL_SCHEMAS.length + 1);
   assert.equal(withSearch.at(-1).function.name, 'web_search');
 
   // Regular users follow the persisted access mode, admins-only by default.
-  assert.deepEqual(workToolSchemasForTask(userTask), WORK_TOOL_SCHEMAS);
+  assert.deepEqual(await workToolSchemasForTask(userTask), WORK_TOOL_SCHEMAS);
   setWebSearchAccessMode('all-users');
   assert.equal(
-    workToolSchemasForTask(userTask).at(-1).function.name,
+    (await workToolSchemasForTask(userTask)).at(-1).function.name,
     'web_search'
   );
   setWebSearchAccessMode('admins');
 
   // An offline task stays offline regardless of role.
   assert.deepEqual(
-    workToolSchemasForTask({ networkEnabled: false, userId: 'search-admin' }),
+    await workToolSchemasForTask({
+      networkEnabled: false,
+      userId: 'search-admin',
+    }),
     WORK_TOOL_SCHEMAS
   );
   setWebSearchConfig({ enabled: false, url: 'http://searxng:8080' });
