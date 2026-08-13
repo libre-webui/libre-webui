@@ -35,6 +35,10 @@ import {
   userCanDownloadModels,
 } from '../services/modelAccessService.js';
 import { userModel } from '../models/userModel.js';
+import {
+  abortChatGenerationOnResponseClose,
+  isChatGenerationCancelled,
+} from '../utils/chatCancellation.js';
 
 const router = express.Router();
 router.use(authenticate);
@@ -536,18 +540,25 @@ router.get(
 router.post(
   '/chat',
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+    const { controller, cleanup } = abortChatGenerationOnResponseClose(res);
     try {
       const data = await ollamaService.generateChatResponse(
         req.body,
-        undefined,
+        controller.signal,
         { userId: (req as AuthenticatedRequest).user?.userId }
       );
       res.json({ success: true, data });
     } catch (error: unknown) {
+      if (isChatGenerationCancelled(error, controller.signal)) {
+        if (!res.writableEnded) res.status(499).end();
+        return;
+      }
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to generate chat response'),
       });
+    } finally {
+      cleanup();
     }
   }
 );
@@ -556,6 +567,8 @@ router.post(
 router.post(
   '/chat/stream',
   async (req: Request, res: Response): Promise<void> => {
+    const { controller, cleanup } = abortChatGenerationOnResponseClose(res);
+    const signal = controller.signal;
     try {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
@@ -564,24 +577,33 @@ router.post(
       await ollamaService.generateChatStreamResponse(
         req.body,
         chunk => {
+          if (signal.aborted || res.writableEnded) return;
           res.write(`data: ${JSON.stringify(chunk)}\n\n`);
         },
         error => {
+          if (signal.aborted || res.writableEnded) return;
           res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
           res.end();
         },
         () => {
+          if (signal.aborted || res.writableEnded) return;
           res.write('data: [DONE]\n\n');
           res.end();
         },
-        undefined,
+        signal,
         { userId: (req as AuthenticatedRequest).user?.userId }
       );
     } catch (error: unknown) {
+      if (isChatGenerationCancelled(error, signal)) {
+        if (!res.writableEnded) res.end();
+        return;
+      }
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to stream chat response'),
       });
+    } finally {
+      cleanup();
     }
   }
 );

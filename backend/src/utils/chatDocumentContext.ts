@@ -17,6 +17,7 @@
 
 import documentService from '../services/documentService.js';
 import storageService from '../storage.js';
+import { throwIfChatGenerationCancelled } from './chatCancellation.js';
 
 export interface ChatDocumentSource {
   id: string;
@@ -43,8 +44,10 @@ export const EMPTY_CHAT_DOCUMENT_CONTEXT = (
 export async function buildChatDocumentContext(
   message: string,
   sessionId: string,
-  userId: string
+  userId: string,
+  signal?: AbortSignal
 ): Promise<ChatDocumentContext> {
+  throwIfChatGenerationCancelled(signal);
   // Documents from knowledge collections attached to this chat join the
   // session's own uploads and the user's standing uploads in the
   // searchable scope. searchDocuments picks semantic or keyword retrieval
@@ -57,8 +60,10 @@ export async function buildChatDocumentContext(
     userId,
     sessionId,
     5,
-    knowledgeCollectionIds
+    knowledgeCollectionIds,
+    signal
   );
+  throwIfChatGenerationCancelled(signal);
 
   if (relevantDocuments.length === 0) {
     return EMPTY_CHAT_DOCUMENT_CONTEXT(message);

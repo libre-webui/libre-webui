@@ -38,6 +38,7 @@ import type {
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
+import { throwIfChatGenerationCancelled } from '../utils/chatCancellation.js';
 
 const logger = createLogger('services:chat-generation-service');
 
@@ -58,6 +59,7 @@ export interface NonStreamingExecutionOptions {
   pluginMessages: ChatMessage[];
   userId: string;
   pluginFallbackPolicy?: PluginFallbackPolicy;
+  signal?: AbortSignal;
 }
 
 export interface NonStreamingExecutionResult {
@@ -119,7 +121,8 @@ class ChatGenerationService {
   async mergeOptionsForModel(
     model: string,
     userId: string,
-    options: GenerationOptions = {}
+    options: GenerationOptions = {},
+    signal?: AbortSignal
   ): Promise<GenerationOptions> {
     const global = preferencesService.getGenerationOptions(userId);
     const pinned = preferencesService.getModelGenerationOptions(model, userId);
@@ -128,7 +131,7 @@ class ChatGenerationService {
     const recommended =
       Object.keys(pinned).length > 0 && pinned.num_ctx !== undefined
         ? {}
-        : (await ollamaService.getModelDefaults(model)).options;
+        : (await ollamaService.getModelDefaults(model, signal)).options;
 
     return mergeGenerationOptions(
       mergeGenerationOptions(
@@ -143,7 +146,8 @@ class ChatGenerationService {
     sessionModel: string,
     userId: string,
     options: GenerationOptions = {},
-    providerSelection?: ChatProviderSelection
+    providerSelection?: ChatProviderSelection,
+    signal?: AbortSignal
   ): Promise<GenerationTarget> {
     const actualModelName = await this.resolveActualModelName(
       sessionModel,
@@ -152,7 +156,8 @@ class ChatGenerationService {
     const mergedOptions = await this.mergeOptionsForModel(
       actualModelName,
       userId,
-      options
+      options,
+      signal
     );
     const provider = normalizeChatProviderSelection(providerSelection);
     const activePlugin =
@@ -205,7 +210,9 @@ class ChatGenerationService {
     pluginMessages,
     userId,
     pluginFallbackPolicy = 'disabled',
+    signal,
   }: NonStreamingExecutionOptions): Promise<NonStreamingExecutionResult> {
+    throwIfChatGenerationCancelled(signal);
     const chatRequest = {
       model: target.actualModelName,
       messages: ollamaMessages,
@@ -221,7 +228,7 @@ class ChatGenerationService {
         target.providerId,
         pluginMessages,
         userId,
-        { model: target.actualModelName }
+        { model: target.actualModelName, signal }
       )) {
         if (chunk.type === 'content' && chunk.content) {
           assistantContent += chunk.content;
@@ -251,7 +258,8 @@ class ChatGenerationService {
           pluginMessages,
           target.mergedOptions,
           userId,
-          target.activePlugin.id
+          target.activePlugin.id,
+          signal
         );
         const incompleteReason =
           pluginResponse.providerMetadata?.[
@@ -291,7 +299,7 @@ class ChatGenerationService {
 
         const response = await ollamaService.generateChatResponse(
           chatRequest,
-          undefined,
+          signal,
           { userId }
         );
         return {
@@ -308,7 +316,7 @@ class ChatGenerationService {
 
     const response = await ollamaService.generateChatResponse(
       chatRequest,
-      undefined,
+      signal,
       { userId }
     );
     return {

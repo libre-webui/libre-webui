@@ -263,6 +263,9 @@
       },
       "voiceInput": "Input suara",
       "voiceStop": "Berhenti mendengar",
+      "transcriptionSource": "Sumber pengecaman pertuturan",
+      "browserSpeech": "Pengecaman pertuturan pelayar pada peranti",
+      "providerTranscriptionDisclosure": "Rakam dan hantar audio kepada {{provider}} untuk transkripsi",
       "webSearchOn": "Carian web hidup — balasan menggunakan hasil langsung",
       "webSearchOff": "Cari di web untuk mesej ini"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Gagal menjana pertuturan",
     "playbackFailed": "Main balik audio gagal",
     "stopSpeaking": "Hentikan pertuturan",
+    "preparingSpeech": "Menyediakan pertuturan...",
     "generatingSpeech": "Menjana pertuturan...",
+    "bufferingSpeech": "Memuatkan pertuturan...",
+    "enableAudio": "Dayakan audio dan baca dengan kuat",
+    "enableAudioShort": "Dayakan audio",
     "readAloud": "Baca dengan kuat"
   },
   "artifacts": {

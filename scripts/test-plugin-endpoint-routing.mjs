@@ -264,6 +264,7 @@ test('connection-routing variable policy uses one canonical name set', () => {
       'api_url',
       'image_endpoint',
       'embedding_endpoint',
+      'stt_endpoint',
       'tts_endpoint',
       'voice_clone_endpoint',
       'api_mode',

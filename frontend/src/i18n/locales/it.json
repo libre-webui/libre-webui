@@ -263,6 +263,9 @@
       },
       "voiceInput": "Input vocale",
       "voiceStop": "Smetti di ascoltare",
+      "transcriptionSource": "Origine del riconoscimento vocale",
+      "browserSpeech": "Riconoscimento vocale del browser sul dispositivo",
+      "providerTranscriptionDisclosure": "Registra e invia l’audio a {{provider}} per la trascrizione",
       "webSearchOn": "Ricerca web attiva — le risposte usano risultati in tempo reale",
       "webSearchOff": "Cerca sul web per questo messaggio"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Impossibile generare la voce",
     "playbackFailed": "Riproduzione audio fallita",
     "stopSpeaking": "Interrompi lettura",
+    "preparingSpeech": "Preparazione voce...",
     "generatingSpeech": "Generazione voce...",
+    "bufferingSpeech": "Caricamento voce...",
+    "enableAudio": "Attiva l’audio e leggi ad alta voce",
+    "enableAudioShort": "Attiva audio",
     "readAloud": "Leggi ad alta voce"
   },
   "artifacts": {

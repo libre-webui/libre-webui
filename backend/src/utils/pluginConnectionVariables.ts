@@ -25,6 +25,7 @@ export const PLUGIN_CONNECTION_VARIABLE_NAMES: ReadonlySet<string> = new Set([
   'api_url',
   'image_endpoint',
   'embedding_endpoint',
+  'stt_endpoint',
   'tts_endpoint',
   'voice_clone_endpoint',
   'api_mode',

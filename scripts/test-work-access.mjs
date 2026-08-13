@@ -28,6 +28,11 @@ const runtimeModule = await import(
     path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeService.js')
   ).href
 );
+const terminalServerModule = await import(
+  pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'workTerminalServer.js')
+  ).href
+);
 
 const {
   getWorkAccessMode,
@@ -36,6 +41,7 @@ const {
   userHasWorkAccess,
 } = accessModule;
 const { WorkRuntimeService } = runtimeModule;
+const { requireCurrentTerminalTask } = terminalServerModule;
 
 test.after(() => {
   databaseModule.closeDatabase();
@@ -121,6 +127,68 @@ test('runtime mutations honor the owner’s current Work access', async () => {
   setWorkAccessMode('admins');
 });
 
+test('an established terminal rechecks current access and task ownership', () => {
+  const db = databaseModule.getDatabase();
+  const now = Date.now();
+  const userId = 'terminal-reauth-user';
+  const otherUserId = 'terminal-reauth-other-user';
+  const taskId = 'terminal-reauth-task';
+  const insertUser = db.prepare(
+    `INSERT INTO users (
+      id, username, email, password_hash, role, created_at, updated_at
+    ) VALUES (?, ?, NULL, 'unused', 'user', ?, ?)`
+  );
+  insertUser.run(userId, userId, now, now);
+  insertUser.run(otherUserId, otherUserId, now, now);
+  db.prepare(
+    `INSERT INTO work_tasks (
+      id, user_id, title, model, volume_name, container_name,
+      created_at, updated_at
+    ) VALUES (?, ?, 'terminal reauth', 'test', ?, ?, ?, ?)`
+  ).run(
+    taskId,
+    userId,
+    'libre-work-terminalreauth01',
+    'libre-work-terminalreauth01',
+    now,
+    now
+  );
+
+  setWorkAccessMode('all-users');
+  assert.equal(requireCurrentTerminalTask(userId, taskId).id, taskId);
+
+  db.prepare("UPDATE users SET account_status = 'pending' WHERE id = ?").run(
+    userId
+  );
+  assert.throws(
+    () => requireCurrentTerminalTask(userId, taskId),
+    error =>
+      error?.status === 403 && error?.code === 'WORK_TERMINAL_FORBIDDEN'
+  );
+  db.prepare("UPDATE users SET account_status = 'active' WHERE id = ?").run(
+    userId
+  );
+
+  setWorkAccessMode('admins');
+  assert.throws(
+    () => requireCurrentTerminalTask(userId, taskId),
+    error =>
+      error?.status === 403 && error?.code === 'WORK_TERMINAL_FORBIDDEN'
+  );
+
+  setWorkAccessMode('all-users');
+  db.prepare('UPDATE work_tasks SET user_id = ? WHERE id = ?').run(
+    otherUserId,
+    taskId
+  );
+  assert.throws(
+    () => requireCurrentTerminalTask(userId, taskId),
+    error =>
+      error?.status === 404 && error?.code === 'WORK_TERMINAL_TASK_NOT_FOUND'
+  );
+  setWorkAccessMode('admins');
+});
+
 test('the Work routes gate on Work access, not blanket admin', () => {
   const source = readFileSync(
     path.join(repoRoot, 'backend', 'src', 'routes', 'work.ts'),
@@ -146,5 +214,6 @@ test('the Work routes gate on Work access, not blanket admin', () => {
     'utf8'
   );
   assert.match(terminal, /!userHasWorkAccess\(currentUser\)/);
+  assert.match(terminal, /requireCurrentTerminalTask\(userId, task\.id\)/);
   assert.doesNotMatch(terminal, /currentUser\.role !== 'admin'/);
 });

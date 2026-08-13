@@ -413,7 +413,7 @@ test('offers cloud models and remembers remote disclosure dismissal', async ({
       available: true,
       runtime: 'docker',
       image: 'node:test',
-      dockerAvailable: true,
+      runtimeAvailable: true,
       ollamaAvailable: false,
       pluginAvailable: true,
       runtimeImage: 'node:test',
@@ -667,7 +667,7 @@ test('loads plugin Work models when Ollama is offline', async ({ page }) => {
       available: true,
       runtime: 'docker',
       image: 'node:test',
-      dockerAvailable: true,
+      runtimeAvailable: true,
       ollamaAvailable: false,
       pluginAvailable: true,
       runtimeImage: 'node:test',
@@ -2521,7 +2521,7 @@ test('explains when the local container runtime is unavailable', async ({
       available: false,
       runtime: 'docker',
       image: '',
-      dockerAvailable: false,
+      runtimeAvailable: false,
       ollamaAvailable: true,
       runtimeImage: '',
       reason: 'Docker daemon unavailable',
@@ -2630,6 +2630,8 @@ test('the terminal tab opens a shell session and reports deployment limits', asy
   const socketUrl = new URL(terminalSockets[0]);
   expect(socketUrl.pathname).toBe('/ws/work-terminal');
   expect(socketUrl.searchParams.get('taskId')).toBe('terminal-workspace');
+  expect(socketUrl.searchParams.get('ticket')).toBe('e2e-websocket-ticket');
+  expect(socketUrl.searchParams.has('token')).toBe(false);
   expect(socketUrl.protocol).toMatch(/^wss?:$/);
 });
 
@@ -2644,7 +2646,7 @@ test('the terminal explains when a deployment cannot offer it', async ({
       available: true,
       runtime: 'docker',
       image: 'ghcr.io/libre-webui/work-runtime:0.1.0-e2e',
-      dockerAvailable: true,
+      runtimeAvailable: true,
       ollamaAvailable: true,
       runtimeImage: 'ghcr.io/libre-webui/work-runtime:0.1.0-e2e',
       limits: {

@@ -66,6 +66,7 @@ import {
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import websocketService from '@/utils/websocket';
+import { armTTSAudioPlaybackUnlock } from '@/utils/ttsBatching';
 import toast from 'react-hot-toast';
 
 const logger = createLogger('app');
@@ -226,6 +227,19 @@ const AppContent: React.FC = () => {
   const hasWorkspaceAccess =
     systemInfo?.requiresAuth === false || isAuthenticated;
   const whatsNew = useWhatsNew();
+
+  // Browser autoplay permission is transient. Arm the shared TTS output on
+  // the next real gesture so a response can start speaking after its network
+  // request completes, even when auto-play was saved in an earlier session.
+  React.useEffect(() => {
+    if (
+      !preferences.ttsSettings?.enabled ||
+      !preferences.ttsSettings.autoPlay
+    ) {
+      return;
+    }
+    return armTTSAudioPlaybackUnlock();
+  }, [preferences.ttsSettings?.autoPlay, preferences.ttsSettings?.enabled]);
 
   // Handle OAuth callback FIRST - before any routing or initialization
   const [oauthProcessed, setOauthProcessed] = React.useState(false);

@@ -755,7 +755,7 @@ export const ChatPage: React.FC = () => {
                       <input
                         ref={welcomeDocumentInputRef}
                         type='file'
-                        accept='.pdf,.txt,.md'
+                        accept='.pdf,.txt'
                         className='hidden'
                         onChange={event =>
                           void handleWelcomeDocumentSelected(event)

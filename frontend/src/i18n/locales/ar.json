@@ -263,6 +263,9 @@
       },
       "voiceInput": "إدخال صوتي",
       "voiceStop": "إيقاف الاستماع",
+      "transcriptionSource": "مصدر التعرّف على الكلام",
+      "browserSpeech": "التعرّف على الكلام محليًا في المتصفح",
+      "providerTranscriptionDisclosure": "تسجيل الصوت وإرساله إلى {{provider}} لتحويله إلى نص",
       "webSearchOn": "البحث في الويب مفعّل — تستخدم الردود نتائج حية",
       "webSearchOff": "ابحث في الويب لهذه الرسالة"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "فشل توليد الكلام",
     "playbackFailed": "فشل تشغيل الصوت",
     "stopSpeaking": "إيقاف التحدث",
+    "preparingSpeech": "جارٍ تحضير الكلام...",
     "generatingSpeech": "جاري توليد الكلام...",
+    "bufferingSpeech": "جارٍ تخزين الكلام مؤقتًا...",
+    "enableAudio": "تمكين الصوت والقراءة بصوت عالٍ",
+    "enableAudioShort": "تمكين الصوت",
     "readAloud": "قراءة بصوت عالٍ"
   },
   "artifacts": {

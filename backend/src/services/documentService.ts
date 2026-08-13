@@ -273,7 +273,8 @@ class DocumentService {
 
   private async generateEmbeddingForText(
     text: string,
-    userId: string
+    userId: string,
+    signal?: AbortSignal
   ): Promise<number[] | null> {
     try {
       const preferences = preferencesService.getPreferences(userId);
@@ -286,11 +287,13 @@ class DocumentService {
           model: preferences.embeddingSettings.model,
           input: text,
         },
-        userId
+        userId,
+        signal
       );
 
       return response.embeddings[0] || null;
     } catch (error) {
+      if (signal?.aborted) throw error;
       logger.error('Failed to generate embedding:', error);
       return null;
     }
@@ -435,7 +438,8 @@ class DocumentService {
     userId: string,
     sessionId?: string,
     limit = 5,
-    collectionIds?: string[]
+    collectionIds?: string[],
+    signal?: AbortSignal
   ): Promise<DocumentChunk[]> {
     const preferences = preferencesService.getPreferences(userId);
 
@@ -446,7 +450,8 @@ class DocumentService {
         userId,
         sessionId,
         limit,
-        collectionIds
+        collectionIds,
+        signal
       );
     }
 
@@ -465,11 +470,16 @@ class DocumentService {
     userId: string,
     sessionId?: string,
     limit = 5,
-    collectionIds?: string[]
+    collectionIds?: string[],
+    signal?: AbortSignal
   ): Promise<DocumentChunk[]> {
     try {
       // Generate embedding for the query
-      const queryEmbedding = await this.generateEmbeddingForText(query, userId);
+      const queryEmbedding = await this.generateEmbeddingForText(
+        query,
+        userId,
+        signal
+      );
       if (!queryEmbedding) {
         logger.warn(
           'Failed to generate query embedding, falling back to keyword search'
@@ -545,6 +555,7 @@ class DocumentService {
         collectionIds
       );
     } catch (error) {
+      if (signal?.aborted) throw error;
       logger.error(
         'Semantic search failed, falling back to keyword search:',
         error

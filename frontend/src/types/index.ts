@@ -194,6 +194,7 @@ export interface WebSocketMessage {
     | 'user_message'
     | 'assistant_chunk'
     | 'assistant_complete'
+    | 'assistant_cancelled'
     | 'tool_status'
     | 'error';
   data: unknown;

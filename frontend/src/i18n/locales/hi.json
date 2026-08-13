@@ -263,6 +263,9 @@
       },
       "voiceInput": "वॉयस इनपुट",
       "voiceStop": "सुनना बंद करें",
+      "transcriptionSource": "वाक् पहचान स्रोत",
+      "browserSpeech": "डिवाइस पर ब्राउज़र वाक् पहचान",
+      "providerTranscriptionDisclosure": "ट्रांसक्रिप्शन के लिए ऑडियो रिकॉर्ड करके {{provider}} को भेजें",
       "webSearchOn": "वेब खोज चालू — उत्तर लाइव परिणाम उपयोग करते हैं",
       "webSearchOff": "इस संदेश के लिए वेब पर खोजें"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "स्पीच जनरेट करने में विफल",
     "playbackFailed": "ऑडियो प्लेबैक विफल",
     "stopSpeaking": "बोलना बंद करें",
+    "preparingSpeech": "स्पीच तैयार हो रही है...",
     "generatingSpeech": "स्पीच जनरेट हो रही है...",
+    "bufferingSpeech": "स्पीच बफ़र हो रही है...",
+    "enableAudio": "ऑडियो चालू करें और ज़ोर से पढ़ें",
+    "enableAudioShort": "ऑडियो चालू करें",
     "readAloud": "ज़ोर से पढ़ें"
   },
   "artifacts": {

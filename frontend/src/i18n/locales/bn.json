@@ -263,6 +263,9 @@
       },
       "voiceInput": "ভয়েস ইনপুট",
       "voiceStop": "শোনা বন্ধ করুন",
+      "transcriptionSource": "কথা শনাক্তকরণের উৎস",
+      "browserSpeech": "ডিভাইসে ব্রাউজারের কথা শনাক্তকরণ",
+      "providerTranscriptionDisclosure": "ট্রান্সক্রিপশনের জন্য অডিও রেকর্ড করে {{provider}}-এ পাঠান",
       "webSearchOn": "ওয়েব অনুসন্ধান চালু — উত্তরে লাইভ ফলাফল ব্যবহৃত হয়",
       "webSearchOff": "এই বার্তার জন্য ওয়েবে অনুসন্ধান করুন"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "স্পিচ তৈরি করতে ব্যর্থ",
     "playbackFailed": "অডিও প্লেব্যাক ব্যর্থ",
     "stopSpeaking": "বলা বন্ধ করুন",
+    "preparingSpeech": "স্পিচ প্রস্তুত হচ্ছে...",
     "generatingSpeech": "স্পিচ তৈরি হচ্ছে...",
+    "bufferingSpeech": "স্পিচ বাফার হচ্ছে...",
+    "enableAudio": "অডিও চালু করে জোরে পড়ুন",
+    "enableAudioShort": "অডিও চালু করুন",
     "readAloud": "জোরে পড়ুন"
   },
   "artifacts": {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import { userModel, UserPublic } from '../models/userModel.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -59,10 +59,29 @@ export const JWT_SECRET =
     return generatedSecret;
   })();
 
+export const parseJwtLifetime = (
+  value = process.env.JWT_EXPIRES_IN
+): SignOptions['expiresIn'] => {
+  const normalized = value?.trim();
+  if (!normalized) return '7d';
+  if (/^\d+$/.test(normalized)) return Number.parseInt(normalized, 10);
+  if (/^\d+(?:ms|s|m|h|d|w|y)$/i.test(normalized)) {
+    return normalized as SignOptions['expiresIn'];
+  }
+  logger.warn(
+    `Ignoring invalid JWT_EXPIRES_IN value "${normalized}"; using 7d.`
+  );
+  return '7d';
+};
+
+export const JWT_EXPIRES_IN = parseJwtLifetime();
+
 export interface AuthTokenPayload {
   userId: string;
   username: string;
   role: 'admin' | 'user';
+  iat?: number;
+  exp?: number;
 }
 
 export type AuthResult =
@@ -94,7 +113,7 @@ export class AuthService {
       role: user.role,
     };
 
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
   }
 
   /**

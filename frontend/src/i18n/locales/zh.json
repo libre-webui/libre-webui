@@ -263,6 +263,9 @@
       },
       "voiceInput": "语音输入",
       "voiceStop": "停止聆听",
+      "transcriptionSource": "语音识别来源",
+      "browserSpeech": "设备端浏览器语音识别",
+      "providerTranscriptionDisclosure": "录制音频并发送至 {{provider}} 进行转写",
       "webSearchOn": "网页搜索已开启 — 回复将使用实时结果",
       "webSearchOff": "为这条消息搜索网页"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "生成语音失败",
     "playbackFailed": "音频播放失败",
     "stopSpeaking": "停止朗读",
+    "preparingSpeech": "正在准备语音...",
     "generatingSpeech": "生成语音中...",
+    "bufferingSpeech": "正在缓冲语音...",
+    "enableAudio": "启用音频并朗读",
+    "enableAudioShort": "启用音频",
     "readAloud": "朗读"
   },
   "artifacts": {

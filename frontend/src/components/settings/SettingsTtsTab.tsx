@@ -33,6 +33,7 @@ import {
   type TTSVoiceProfile,
 } from '@/utils/api';
 import type { TTSSettings } from '@/types';
+import { unlockTTSAudioPlayback } from '@/utils/ttsBatching';
 import { SettingsToggle } from './SettingsToggle';
 
 interface SettingsTtsTabProps {
@@ -148,7 +149,12 @@ export function SettingsTtsTab({
                 <SettingsToggle
                   checked={settings.autoPlay}
                   disabled={!settings.enabled}
-                  onChange={checked => onSettingChange('autoPlay', checked)}
+                  onChange={checked => {
+                    // Invoke resume synchronously while this checkbox change
+                    // still carries browser user activation.
+                    if (checked) void unlockTTSAudioPlayback();
+                    onSettingChange('autoPlay', checked);
+                  }}
                 />
               </div>
             </div>

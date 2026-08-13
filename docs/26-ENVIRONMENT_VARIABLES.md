@@ -54,10 +54,12 @@ reachable bootstrap route with an outer identity boundary before first start.
 
 Chat WebSocket admission can be tuned without weakening authentication:
 
-| Variable                          | Default | Purpose                                  |
-| --------------------------------- | ------- | ---------------------------------------- |
-| `CHAT_WS_MAX_PAYLOAD_BYTES`       | 10 MiB  | Maximum accepted WebSocket message size  |
-| `CHAT_WS_MAX_MESSAGES_PER_MINUTE` | `120`   | Per-connection WebSocket message ceiling |
+| Variable                                  | Default | Purpose                                      |
+| ----------------------------------------- | ------- | -------------------------------------------- |
+| `CHAT_WS_MAX_PAYLOAD_BYTES`               | 10 MiB  | Maximum accepted WebSocket message size      |
+| `CHAT_WS_MAX_MESSAGES_PER_MINUTE`         | `120`   | Per-connection WebSocket message ceiling     |
+| `CHAT_WS_MAX_ACTIVE_GENERATIONS_PER_USER` | `4`     | Provider generations allowed per account     |
+| `CHAT_WS_MAX_CONNECTIONS_PER_USER`        | `5`     | Concurrent authenticated sockets per account |
 
 ## OAuth
 
@@ -82,8 +84,8 @@ If callback URLs are not set, Libre WebUI builds defaults from `BASE_URL`.
 
 ## Web Search
 
-| Variable      | Default | Purpose                                                                                          |
-| ------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| Variable      | Default | Purpose                                                                                             |
+| ------------- | ------- | --------------------------------------------------------------------------------------------------- |
 | `SEARXNG_URL` | unset   | Default SearXNG endpoint for the web-search setting; an admin still enables it in Settings > Search |
 
 ## Libre Claw
@@ -95,51 +97,53 @@ If callback URLs are not set, Libre WebUI builds defaults from `BASE_URL`.
 
 ## Work Runtime
 
-These variables configure native Work execution on the machine running the
-Libre WebUI backend:
+These variables configure Work execution on the machine or Kubernetes cluster
+running the Libre WebUI backend. Docker is the default runtime; the Helm chart
+selects Kubernetes when `work.enabled=true`.
 
-| Variable                              | Default                                                                                       | Purpose                                                  |
-| ------------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `WORK_RUNTIME_IMAGE`                  | `node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3` | Pinned image used for Work task containers               |
-| `WORK_DOCKER_COMMAND`                 | `docker`                                                                                      | Docker CLI executable available to the backend process   |
-| `WORK_COMMAND_TIMEOUT_MS`             | `120000`                                                                                      | Default timeout; a tool can request up to `600000` ms    |
-| `WORK_MAX_OUTPUT_CHARS`               | `50000`                                                                                       | Captured stdout/stderr limit, applied to each stream     |
-| `WORK_MAX_AGENT_ROUNDS`               | `48`                                                                                          | Provider-agnostic model/tool round budget for one run    |
-| `WORK_MEMORY_LIMIT`                   | `2g`                                                                                          | Memory limit passed to each Work container               |
-| `WORK_CPU_LIMIT`                      | `2`                                                                                           | CPU limit passed to each Work container                  |
-| `WORK_PIDS_LIMIT`                     | `256`                                                                                         | Process limit passed to each Work container              |
-| `WORK_PREVIEW_PORT`                   | `4173`                                                                                        | Port a preview server must use inside the task container |
-| `WORK_PREVIEW_BIND`                   | `127.0.0.1`                                                                                   | Host interface a task preview port is published on       |
-| `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`     | `3`                                                                                           | Concurrent container-backed tasks for the whole instance |
-| `WORK_MAX_ACTIVE_RUNTIMES_PER_USER`   | `2`                                                                                           | Concurrent container-backed tasks for one administrator  |
-| `WORK_MAX_TASKS_GLOBAL`               | `500`                                                                                         | Maximum persisted Work tasks for the whole instance      |
-| `WORK_MAX_TASKS_PER_USER`             | `100`                                                                                         | Maximum persisted Work tasks for one administrator       |
-| `WORK_NETWORK_NAME`                   | `libre-webui-work`                                                                            | Managed sandbox bridge network for networked tasks       |
-| `WORK_RUNTIME_DNS`                    | unset                                                                                         | Comma-separated resolver IPs forced onto networked tasks |
-| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://` or `tcp://`, else `/var/run/docker.sock`                           | Docker Engine endpoint for terminals and diagnostics     |
-| `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous browser terminals attached to one task      |
-| `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session is closed         |
-| `WORK_RUNTIME_IDLE_TIMEOUT_MS`        | `0` (disabled)                                                                                | Stop a sandbox after this much inactivity (previews too) |
-| `WORK_HOST_WORKSPACES_ENABLED`        | `false`                                                                                       | Allow a task to use a host folder instead of a volume    |
-| `WORK_HOST_WORKSPACE_ROOTS`           | the server user's home directory                                                              | `:`-separated roots a host workspace must live inside    |
-| `WORK_RUNTIME_BACKEND`                | `docker`                                                                                      | Sandbox backend: `docker` or `kubernetes` (experimental) |
-| `WORK_K8S_NAMESPACE`                  | `libre-webui-work`                                                                            | Namespace holding Kubernetes sandbox Pods and PVCs       |
-| `WORK_K8S_STORAGE_CLASS`              | cluster default                                                                               | StorageClass for workspace PVCs                          |
-| `WORK_K8S_WORKSPACE_SIZE`             | `5Gi`                                                                                         | Per-task workspace PVC size (a real disk quota)          |
-| `WORK_K8S_POD_READY_TIMEOUT_MS`       | `900000`                                                                                      | Wait for a sandbox Pod to reach Running (covers pulls)   |
-| `WORK_K8S_POD_GONE_TIMEOUT_MS`        | `60000`                                                                                       | Wait for a deleted sandbox Pod to disappear              |
+| Variable                              | Default                                                                                       | Purpose                                                                                                     |
+| ------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `WORK_RUNTIME_IMAGE`                  | `node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3` | Pinned image used for Work sandboxes                                                                        |
+| `WORK_DOCKER_COMMAND`                 | `docker`                                                                                      | Docker-backend CLI executable available to the process                                                      |
+| `WORK_COMMAND_TIMEOUT_MS`             | `120000`                                                                                      | Default timeout; a tool can request up to `600000` ms                                                       |
+| `WORK_MAX_OUTPUT_CHARS`               | `50000`                                                                                       | Captured stdout/stderr limit, applied to each stream                                                        |
+| `WORK_MAX_AGENT_ROUNDS`               | `48`                                                                                          | Provider-agnostic model/tool round budget for one run                                                       |
+| `WORK_MEMORY_LIMIT`                   | `2g`                                                                                          | Memory limit passed to each Work container                                                                  |
+| `WORK_CPU_LIMIT`                      | `2`                                                                                           | CPU limit passed to each Work container                                                                     |
+| `WORK_PIDS_LIMIT`                     | `256`                                                                                         | Process limit passed to each Work container                                                                 |
+| `WORK_PREVIEW_PORT`                   | `4173`                                                                                        | Port a preview server must use inside the task container                                                    |
+| `WORK_PREVIEW_BIND`                   | `127.0.0.1`                                                                                   | Host interface a task preview port is published on                                                          |
+| `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`     | `3`                                                                                           | Concurrent runtime-backed tasks for the whole instance                                                      |
+| `WORK_MAX_ACTIVE_RUNTIMES_PER_USER`   | `2`                                                                                           | Concurrent runtime-backed tasks for one user                                                                |
+| `WORK_MAX_TASKS_GLOBAL`               | `500`                                                                                         | Maximum persisted Work tasks for the whole instance                                                         |
+| `WORK_MAX_TASKS_PER_USER`             | `100`                                                                                         | Maximum persisted Work tasks for one administrator                                                          |
+| `WORK_NETWORK_NAME`                   | `libre-webui-work`                                                                            | Managed sandbox bridge network for networked tasks                                                          |
+| `WORK_RUNTIME_DNS`                    | unset                                                                                         | Comma-separated resolver IPs forced onto networked tasks                                                    |
+| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://` or `tcp://`, else `/var/run/docker.sock`                           | Docker Engine endpoint for terminals and diagnostics                                                        |
+| `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous browser terminals attached to one task                                                         |
+| `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session is closed                                                            |
+| `WORK_RUNTIME_IDLE_TIMEOUT_MS`        | `0` (disabled)                                                                                | Stop a sandbox after this much inactivity (previews too)                                                    |
+| `WORK_HOST_WORKSPACES_ENABLED`        | `false`                                                                                       | Allow a task to use a host folder instead of a volume                                                       |
+| `WORK_HOST_WORKSPACE_ROOTS`           | the server user's home directory                                                              | `:`-separated roots a host workspace must live inside                                                       |
+| `WORK_RUNTIME_BACKEND`                | `docker`                                                                                      | Sandbox backend: `docker` or `kubernetes`                                                                   |
+| `WORK_K8S_NAMESPACE`                  | `libre-webui-work`                                                                            | Namespace holding Kubernetes sandbox Pods and PVCs                                                          |
+| `WORK_K8S_STORAGE_CLASS`              | cluster default                                                                               | StorageClass for workspace PVCs                                                                             |
+| `WORK_K8S_WORKSPACE_SIZE`             | `5Gi`                                                                                         | Per-task workspace PVC size (a real disk quota)                                                             |
+| `WORK_K8S_POD_READY_TIMEOUT_MS`       | `900000`                                                                                      | Wait for a sandbox Pod to reach Running (covers pulls)                                                      |
+| `WORK_K8S_POD_GONE_TIMEOUT_MS`        | `60000`                                                                                       | Wait for a deleted sandbox Pod to disappear                                                                 |
 | `AGENT_CLI_MODELS_ENABLED`            | unset (admin toggle, off)                                                                     | Pin the Agents feature on/off; unset leaves it to the admin toggle in User Management (disabled by default) |
-| `AGENT_CLI_TIMEOUT_MS`                | `600000`                                                                                      | Time an agent CLI may run before it is killed            |
-| `CODEX_OAUTH_MODELS_ENABLED`          | `true`                                                                                        | Offer the Codex (ChatGPT) provider to admins             |
-| `CODEX_HOME`                          | `~/.codex`                                                                                    | Where the Codex CLI sign-in (`auth.json`) is read from   |
+| `AGENT_CLI_TIMEOUT_MS`                | `600000`                                                                                      | Time an agent CLI may run before it is killed                                                               |
+| `CODEX_OAUTH_MODELS_ENABLED`          | `true`                                                                                        | Offer the Codex (ChatGPT) provider to admins                                                                |
+| `CODEX_HOME`                          | `~/.codex`                                                                                    | Where the Codex CLI sign-in (`auth.json`) is read from                                                      |
 
-A host workspace bind-mounts a real directory at `/workspace`, so the task can
-read and write those files directly instead of working in its own Docker volume.
-That is a deliberate reduction of the sandbox: keep `WORK_HOST_WORKSPACES_ENABLED`
-off unless you want it, and keep `WORK_HOST_WORKSPACE_ROOTS` as narrow as
-possible. Requested paths are resolved through symlinks before they are checked
-against the roots, and folders such as `.ssh`, `.gnupg`, `.aws`, and `.config`
-are rejected outright.
+On the Docker backend, a host workspace bind-mounts a real directory at
+`/workspace`, so the task can read and write those files directly instead of
+working in its own Docker volume. Kubernetes rejects host-folder workspaces.
+This is a deliberate reduction of the Docker sandbox: keep
+`WORK_HOST_WORKSPACES_ENABLED` off unless you want it, and keep
+`WORK_HOST_WORKSPACE_ROOTS` as narrow as possible. Requested paths are resolved
+through symlinks before they are checked against the roots, and folders such as
+`.ssh`, `.gnupg`, `.aws`, and `.config` are rejected outright.
 
 Agent CLI models expose coding agents already installed on the server (`claude`,
 `codex`) as selectable chat models, so a subscription agent can answer without an
@@ -147,29 +151,32 @@ API key. Only administrators see them, the CLI runs as the Libre WebUI server
 user, and it inherits that user's agent credentials — treat it as equivalent to
 granting shell access to those agents.
 
-Networked Work tasks attach to the managed `WORK_NETWORK_NAME` bridge, created
-with inter-container communication disabled so one sandbox cannot reach another
-sandbox or the deployment's own containers. `WORK_RUNTIME_DNS` is the supported
-egress-policy hook: point it at a filtering resolver to apply name-based
-allow/deny lists. Entries that are not IPv4/IPv6 addresses are rejected and
-logged. DNS filtering does not constrain direct-IP egress; add host firewall
-rules when a deployment requires that.
+On Docker, networked Work tasks attach to the managed `WORK_NETWORK_NAME`
+bridge, created with inter-container communication disabled so one sandbox
+cannot reach another sandbox or the deployment's own containers.
+`WORK_RUNTIME_DNS` is the supported Docker egress-policy hook: point it at a
+filtering resolver to apply name-based allow/deny lists. Entries that are not
+IPv4/IPv6 addresses are rejected and logged. DNS filtering does not constrain
+direct-IP egress; add host firewall rules when a deployment requires that. The
+Kubernetes backend instead uses the chart's default-deny NetworkPolicies and
+`work.networkPolicy.blockedEgressCidrs` values.
 
-The interactive terminal and system diagnostics talk to the Docker Engine API
-directly. They follow `WORK_DOCKER_SOCKET` when set, otherwise `DOCKER_HOST` —
+On Docker, the interactive terminal and system diagnostics talk to the Docker
+Engine API directly. They follow `WORK_DOCKER_SOCKET` when set, otherwise `DOCKER_HOST` —
 either a `unix://` socket or a plain-HTTP `tcp://` endpoint such as a socket
 proxy (see `docker-compose.socket-proxy.yml`) — otherwise
 `/var/run/docker.sock`. A `DOCKER_HOST` this client cannot speak to (`ssh://`,
 or `tcp://` with `DOCKER_TLS_VERIFY` set) reports the terminal and Docker
 diagnostics as unavailable; the rest of Work continues to run through the
-docker CLI, which understands those endpoints on its own.
+Docker CLI, which understands those endpoints on its own. On Kubernetes, the
+terminal uses the Pod exec subresource and does not use a Docker endpoint.
 
 Work reads these values when the backend starts. The preview port is internal to
 the task container; Libre WebUI publishes it to a dynamically assigned loopback
 port rather than exposing this value directly on every host interface.
 
 Keep the runtime image pinned to a reviewed version or digest. Increasing
-concurrency or resource limits raises the amount of Docker-host capacity one or
+concurrency or resource limits raises the amount of runtime capacity one or
 more autonomous runs can consume. `WORK_MAX_AGENT_ROUNDS` applies equally to
 Ollama and plugin-backed runs; there is no lower plugin-only clamp. The
 tool-call safety budget is `max(128, WORK_MAX_AGENT_ROUNDS × 8)`. When a run
@@ -190,8 +197,13 @@ control that wiring:
 | `DOCKER_SOCKET` | `/var/run/docker.sock` | Host path of the Docker socket to mount                         |
 
 `DOCKER_GID` must be the socket's group **as seen inside a container**; a macOS
-host reports a different value. The Helm chart mounts no runtime socket, so Work
-remains unavailable on Kubernetes.
+host reports a different value. The Helm chart never mounts a node runtime
+socket. Enable its native Pod/PVC Work backend with `work.enabled=true`.
+
+Libre WebUI itself must remain at one application replica while it uses SQLite
+and process-local coordination. The Helm chart rejects a larger
+`replicaCount` and rejects enabling autoscaling; Work sandbox Pods can still be
+created independently within the configured runtime limits.
 
 Repository Compose files also accept `WEBUI_BIND_ADDRESS` (default
 `127.0.0.1`) and `WEBUI_PORT` (default `8080`). Keep the loopback default unless

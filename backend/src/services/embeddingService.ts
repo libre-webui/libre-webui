@@ -179,7 +179,8 @@ class EmbeddingService {
 
   async generateEmbeddings(
     payload: OllamaEmbeddingsRequest,
-    userId?: string
+    userId?: string,
+    signal?: AbortSignal
   ): Promise<OllamaEmbeddingsResponse> {
     const target = parseModelTarget(payload.model);
     if (target.pluginId) {
@@ -187,7 +188,8 @@ class EmbeddingService {
         target.model,
         payload.input,
         target.pluginId,
-        userId
+        userId,
+        signal
       );
     }
 
@@ -201,14 +203,18 @@ class EmbeddingService {
         target.model,
         payload.input,
         undefined,
-        userId
+        userId,
+        signal
       );
     }
 
-    return ollamaService.generateEmbeddings({
-      ...payload,
-      model: target.model,
-    });
+    return ollamaService.generateEmbeddings(
+      {
+        ...payload,
+        model: target.model,
+      },
+      signal
+    );
   }
 }
 

@@ -17,7 +17,7 @@
 
 import jwt from 'jsonwebtoken';
 import { User } from '../types/index.js';
-import { JWT_SECRET } from '../services/authService.js';
+import { JWT_EXPIRES_IN, JWT_SECRET } from '../services/authService.js';
 
 /**
  * JWT payload interface
@@ -44,9 +44,7 @@ export function generateToken(user: User): string {
     role: user.role,
   };
 
-  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
-
-  return jwt.sign(payload, JWT_SECRET, { expiresIn } as jwt.SignOptions);
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
 /**

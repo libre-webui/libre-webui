@@ -89,7 +89,7 @@ Work runs. Requests to local Ollama are not metered.
 Each event records:
 
 - plugin id and a snapshot of the plugin name
-- capability (`chat`, `embedding`, `image`, `tts`, `audio`, `video`)
+- capability (`chat`, `embedding`, `image`, `stt`, `tts`, `audio`, `video`)
 - model
 - status: `success`, `error`, or `cancelled` (an aborted stream counts as
   cancelled)

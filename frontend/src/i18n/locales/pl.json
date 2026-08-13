@@ -263,6 +263,9 @@
       },
       "voiceInput": "Wprowadzanie głosowe",
       "voiceStop": "Przestań słuchać",
+      "transcriptionSource": "Źródło rozpoznawania mowy",
+      "browserSpeech": "Rozpoznawanie mowy w przeglądarce na urządzeniu",
+      "providerTranscriptionDisclosure": "Nagraj i wyślij dźwięk do {{provider}} w celu transkrypcji",
       "webSearchOn": "Wyszukiwanie włączone — odpowiedzi używają bieżących wyników",
       "webSearchOff": "Szukaj w sieci dla tej wiadomości"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Nie udało się wygenerować mowy",
     "playbackFailed": "Odtwarzanie audio nie powiodło się",
     "stopSpeaking": "Zatrzymaj mówienie",
+    "preparingSpeech": "Przygotowywanie mowy...",
     "generatingSpeech": "Generowanie mowy...",
+    "bufferingSpeech": "Buforowanie mowy...",
+    "enableAudio": "Włącz dźwięk i czytaj na głos",
+    "enableAudioShort": "Włącz dźwięk",
     "readAloud": "Czytaj na głos"
   },
   "artifacts": {

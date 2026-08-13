@@ -109,6 +109,7 @@ interface RuntimeLease {
 
 export class WorkRuntimeService {
   readonly driver: WorkRuntimeDriver;
+  readonly runtimeKind: 'docker' | 'kubernetes';
   readonly image = config.image;
   readonly previewPort = config.previewPort;
   readonly limits = {
@@ -124,22 +125,23 @@ export class WorkRuntimeService {
   private retiringTasks = new Set<string>();
   private networkPolicies = new Map<string, boolean>();
   private activeCommands = new Set<string>();
-  private lastDockerUnavailableReason: string | null = null;
+  private lastRuntimeUnavailableReason: string | null = null;
   private runtimeLeases = new Map<string, RuntimeLease>();
   private previewLeaseReleases = new Map<string, () => void>();
   private terminalHolds = new Map<string, number>();
   private recoveryTasks = new Map<string, WorkTaskRecord>();
   private recoveryOrphans = new Map<string, DiscoveredWorkContainer>();
   private recoveryInventory?: WorkTaskRecord[];
-  // Sweeps left for the empty-inventory case before giving up on a daemon
-  // that never appears (30 × 10s: covers a socket proxy starting late
-  // without probing a Docker-less deployment forever).
+  // Sweeps left for the empty-inventory case before giving up on a runtime
+  // that never appears (30 × 10s covers a late Docker socket proxy or
+  // Kubernetes API without probing an intentionally disabled backend forever).
   private emptyInventorySweepsLeft = 30;
   private recoveryTimer?: NodeJS.Timeout;
   private shuttingDown = false;
 
   constructor(driver: WorkRuntimeDriver = new DockerWorkRuntimeDriver()) {
     this.driver = driver;
+    this.runtimeKind = driver.kind;
     // Authorized preview traffic keeps its task's idle clock fresh.
     workPreviewProxyService.onPreviewActivity(taskId =>
       this.noteTaskActivity(taskId)
@@ -188,25 +190,24 @@ export class WorkRuntimeService {
     }
   }
 
-  async isDockerAvailable(): Promise<boolean> {
+  async isRuntimeAvailable(): Promise<boolean> {
     try {
       await this.driver.probe();
-      this.lastDockerUnavailableReason = null;
+      this.lastRuntimeUnavailableReason = null;
       return true;
     } catch (error) {
-      this.lastDockerUnavailableReason =
+      this.lastRuntimeUnavailableReason =
         error instanceof Error ? error.message : String(error);
       return false;
     }
   }
 
   /**
-   * Why the last availability probe failed. "Docker is not available" cannot be
-   * acted on: a containerized deployment fails for a missing CLI, an unreadable
-   * socket, or a stopped daemon, and each needs a different change.
+   * Why the last availability probe failed. A generic "runtime unavailable"
+   * message cannot be acted on, so drivers return their operator-facing cause.
    */
-  get dockerUnavailableReason(): string | null {
-    return this.lastDockerUnavailableReason;
+  get runtimeUnavailableReason(): string | null {
+    return this.lastRuntimeUnavailableReason;
   }
 
   /**
@@ -427,13 +428,12 @@ export class WorkRuntimeService {
     ) {
       return { stopped: 0, failed: 0 };
     }
-    if (this.shuttingDown || !(await this.isDockerAvailable())) {
+    if (this.shuttingDown || !(await this.isRuntimeAvailable())) {
       if (this.recoveryInventory?.length === 0) {
         // No tasks to supervise, so nothing fail-closes — but leftover
-        // containers may still exist (a restored database, a daemon or
-        // socket proxy that comes up after the backend). Keep retrying the
-        // reconciliation quietly for a bounded window, then give up so a
-        // deployment without Docker is not probed forever.
+        // sandboxes may still exist after a database restore, or the runtime
+        // control plane may start after the backend. Retry for a bounded
+        // window without probing an intentionally disabled runtime forever.
         if (this.shuttingDown || this.emptyInventorySweepsLeft <= 0) {
           this.recoveryInventory = undefined;
           return { stopped: 0, failed: 0 };

@@ -263,6 +263,9 @@
       },
       "voiceInput": "Röstinmatning",
       "voiceStop": "Sluta lyssna",
+      "transcriptionSource": "Källa för taligenkänning",
+      "browserSpeech": "Taligenkänning i webbläsaren på enheten",
+      "providerTranscriptionDisclosure": "Spela in och skicka ljud till {{provider}} för transkribering",
       "webSearchOn": "Webbsökning på — svar använder live-resultat",
       "webSearchOff": "Sök på webben för det här meddelandet"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Kunde inte generera tal",
     "playbackFailed": "Ljuduppspelning misslyckades",
     "stopSpeaking": "Sluta tala",
+    "preparingSpeech": "Förbereder tal...",
     "generatingSpeech": "Genererar tal...",
+    "bufferingSpeech": "Buffrar tal...",
+    "enableAudio": "Aktivera ljud och läs högt",
+    "enableAudioShort": "Aktivera ljud",
     "readAloud": "Läs högt"
   },
   "artifacts": {

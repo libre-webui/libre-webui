@@ -483,6 +483,20 @@ export interface AudioGenConfig {
   endpoint_variable?: string;
 }
 
+// Speech-to-text configuration. Providers either accept an OpenAI-compatible
+// multipart upload or raw audio bytes at a model-qualified endpoint.
+export interface STTConfig {
+  formats?: string[];
+  max_audio_bytes?: number;
+  max_duration_seconds?: number;
+  languages?: string[];
+  supports_timestamps?: boolean;
+  request_mode?: 'multipart' | 'raw';
+  endpoint_variable?: string;
+  models_endpoint_variable?: string;
+  no_auth_required?: boolean;
+}
+
 // Embedding-specific configuration
 export interface EmbeddingConfig {
   [key: string]: unknown;
@@ -508,6 +522,8 @@ export interface PluginCapabilities {
   stt?: {
     endpoint: string;
     model_map: string[];
+    models_endpoint?: string;
+    config?: STTConfig;
   };
   embedding?: {
     endpoint: string;

@@ -73,6 +73,8 @@ export interface WorkTerminalTransport {
  * whether an operation should happen.
  */
 export interface WorkRuntimeDriver {
+  /** Stable identity reported through the Work capability contract. */
+  readonly kind: 'docker' | 'kubernetes';
   /** Reject with an operator-actionable reason when the backend is down. */
   probe(): Promise<void>;
   /** Kill in-flight backend processes during shutdown. */
@@ -129,6 +131,7 @@ export interface WorkRuntimeDriver {
 }
 
 export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
+  readonly kind = 'docker' as const;
   readonly image = config.image;
 
   async probe(): Promise<void> {

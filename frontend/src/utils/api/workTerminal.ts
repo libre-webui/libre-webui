@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+import { api } from './client';
+import type { ApiResponse } from '@/types';
+
 export const WORK_TERMINAL_PATH = '/ws/work-terminal';
 
 interface TerminalUrlEnvironment {
@@ -23,7 +26,7 @@ interface TerminalUrlEnvironment {
   hostname: string;
   apiBaseUrl?: string;
   production: boolean;
-  token: string | null;
+  ticket: string;
 }
 
 /**
@@ -51,17 +54,25 @@ export function buildWorkTerminalUrl(
   }
   const url = new URL(`${origin}${WORK_TERMINAL_PATH}`);
   url.searchParams.set('taskId', taskId);
-  if (environment.token) url.searchParams.set('token', environment.token);
+  url.searchParams.set('ticket', environment.ticket);
   return url.toString();
 }
 
-export function workTerminalUrl(taskId: string): string {
+export async function workTerminalUrl(taskId: string): Promise<string> {
+  const response = await api.post<
+    ApiResponse<{ ticket: string; expiresAt: string }>
+  >('/auth/websocket-ticket', {
+    audience: 'work-terminal',
+    taskId,
+  });
+  const ticket = response.data.data?.ticket;
+  if (!ticket) throw new Error('The server did not issue a terminal ticket.');
   return buildWorkTerminalUrl(taskId, {
     protocol: window.location.protocol,
     host: window.location.host,
     hostname: window.location.hostname,
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
     production: import.meta.env.PROD,
-    token: localStorage.getItem('auth-token'),
+    ticket,
   });
 }

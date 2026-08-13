@@ -263,6 +263,9 @@
       },
       "voiceInput": "음성 입력",
       "voiceStop": "듣기 중지",
+      "transcriptionSource": "음성 인식 소스",
+      "browserSpeech": "기기 내 브라우저 음성 인식",
+      "providerTranscriptionDisclosure": "오디오를 녹음하여 텍스트 변환을 위해 {{provider}}에 전송",
       "webSearchOn": "웹 검색 켜짐 — 답변에 실시간 결과 사용",
       "webSearchOff": "이 메시지에 대해 웹 검색"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "음성 생성 실패",
     "playbackFailed": "오디오 재생 실패",
     "stopSpeaking": "읽기 중지",
+    "preparingSpeech": "음성 준비 중...",
     "generatingSpeech": "음성 생성 중...",
+    "bufferingSpeech": "음성 버퍼링 중...",
+    "enableAudio": "오디오를 켜고 소리 내어 읽기",
+    "enableAudioShort": "오디오 켜기",
     "readAloud": "소리로 읽기"
   },
   "artifacts": {

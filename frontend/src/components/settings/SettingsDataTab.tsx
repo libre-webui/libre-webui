@@ -138,6 +138,12 @@ export function SettingsDataTab({
               <p className='text-xs text-gray-500 dark:text-gray-400 mb-3 flex-1'>
                 {t('settings.data.exportDescription')}
               </p>
+              <p className='mb-3 text-[11px] text-amber-700 dark:text-amber-300'>
+                {t('settings.data.archiveScope', {
+                  defaultValue:
+                    'Excludes accounts and secrets, cloned voices, generated media, personas and notes, and Work data or volumes.',
+                })}
+              </p>
               <Button
                 onClick={onExportData}
                 variant='outline'
@@ -274,33 +280,64 @@ export function SettingsDataTab({
                 <div>
                   {t('settings.data.sessions')}:{' '}
                   {importResult.sessions.imported}{' '}
-                  {t('settings.data.importedLabel')},
-                  {importResult.sessions.skipped} {t('settings.data.skipped')}
+                  {t('settings.data.importedLabel')},{' '}
+                  {importResult.sessions.overwritten}{' '}
+                  {t('settings.data.overwrittenLabel', {
+                    defaultValue: 'overwritten',
+                  })}
+                  , {importResult.sessions.skipped} {t('settings.data.skipped')}
                 </div>
                 <div>
                   {t('settings.data.documents')}:{' '}
                   {importResult.documents.imported}{' '}
                   {t('settings.data.importedLabel')},{' '}
-                  {importResult.documents.skipped} {t('settings.data.skipped')}
+                  {importResult.documents.overwritten}{' '}
+                  {t('settings.data.overwrittenLabel', {
+                    defaultValue: 'overwritten',
+                  })}
+                  , {importResult.documents.skipped}{' '}
+                  {t('settings.data.skipped')}
                 </div>
-                {(importResult.sessions.errors.length > 0 ||
-                  importResult.documents.errors.length > 0) && (
+                <div>
+                  {t('settings.data.sessionFolders', {
+                    defaultValue: 'Session folders',
+                  })}
+                  : {importResult.sessionFolders.imported}{' '}
+                  {t('settings.data.importedLabel')},{' '}
+                  {importResult.sessionFolders.overwritten}{' '}
+                  {t('settings.data.overwrittenLabel', {
+                    defaultValue: 'overwritten',
+                  })}
+                  , {importResult.sessionFolders.skipped}{' '}
+                  {t('settings.data.skipped')}
+                </div>
+                <div>
+                  {t('settings.data.knowledgeCollections', {
+                    defaultValue: 'Knowledge collections',
+                  })}
+                  : {importResult.knowledgeCollections.imported}{' '}
+                  {t('settings.data.importedLabel')},{' '}
+                  {importResult.knowledgeCollections.overwritten}{' '}
+                  {t('settings.data.overwrittenLabel', {
+                    defaultValue: 'overwritten',
+                  })}
+                  , {importResult.knowledgeCollections.skipped}{' '}
+                  {t('settings.data.skipped')}
+                </div>
+                {importResult.warnings.length > 0 && (
                   <div className='mt-2'>
-                    <p className='font-medium'>{t('settings.data.errors')}:</p>
-                    {importResult.sessions.errors.map((error, index) => (
+                    <p className='font-medium'>
+                      {t('settings.data.warnings', {
+                        defaultValue: 'Warnings',
+                      })}
+                      :
+                    </p>
+                    {importResult.warnings.map((warning, index) => (
                       <p
-                        key={`session-${index}`}
-                        className='text-red-600 dark:text-red-400'
+                        key={`warning-${index}`}
+                        className='text-amber-700 dark:text-amber-300'
                       >
-                        • {error}
-                      </p>
-                    ))}
-                    {importResult.documents.errors.map((error, index) => (
-                      <p
-                        key={`document-${index}`}
-                        className='text-red-600 dark:text-red-400'
-                      >
-                        • {error}
+                        • {warning}
                       </p>
                     ))}
                   </div>

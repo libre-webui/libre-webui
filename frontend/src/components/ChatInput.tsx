@@ -46,7 +46,9 @@ import {
   imageGenApi,
   documentsApi,
   searchApi,
+  sttApi,
 } from '@/utils/api';
+import type { STTModel } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
 import { Persona, KnowledgeCollection, ChatSession } from '@/types';
@@ -88,6 +90,30 @@ const getSpeechRecognition = (): SpeechRecognitionConstructor | undefined => {
   return w.SpeechRecognition || w.webkitSpeechRecognition;
 };
 
+const RECORDING_MIME_TYPES = [
+  { mimeType: 'audio/webm;codecs=opus', format: 'webm' },
+  { mimeType: 'audio/ogg;codecs=opus', format: 'ogg' },
+  { mimeType: 'audio/mp4', format: 'm4a' },
+] as const;
+
+const sttModelKey = (model: STTModel): string =>
+  `${encodeURIComponent(model.plugin)}:${encodeURIComponent(model.model)}`;
+
+function preferredRecordingMimeType(model: STTModel): string | undefined {
+  if (typeof MediaRecorder === 'undefined') return undefined;
+  const accepted = new Set(
+    (model.config?.formats || []).map(format =>
+      format.toLowerCase() === 'mp4' ? 'm4a' : format.toLowerCase()
+    )
+  );
+  return RECORDING_MIME_TYPES.find(
+    candidate =>
+      (accepted.size === 0 || accepted.has(candidate.format)) &&
+      (typeof MediaRecorder.isTypeSupported !== 'function' ||
+        MediaRecorder.isTypeSupported(candidate.mimeType))
+  )?.mimeType;
+}
+
 interface ChatInputProps {
   onSendMessage: (
     message: string,
@@ -107,9 +133,54 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const { t, i18n } = useTranslation();
   const [message, setMessage] = useState('');
   const [listening, setListening] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const [sttModels, setSttModels] = useState<STTModel[]>([]);
+  const [speechInputSource, setSpeechInputSource] = useState(() =>
+    getSpeechRecognition() ? 'browser' : ''
+  );
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const transcriptionAbortRef = useRef<AbortController | null>(null);
   const dictationBaseRef = useRef('');
-  const speechSupported = useMemo(() => Boolean(getSpeechRecognition()), []);
+  const browserSpeechSupported = useMemo(
+    () => Boolean(getSpeechRecognition()),
+    []
+  );
+  const compatibleSttModels = useMemo(
+    () => sttModels.filter(model => Boolean(preferredRecordingMimeType(model))),
+    [sttModels]
+  );
+  const activeSpeechInputSource = useMemo(() => {
+    if (speechInputSource === 'browser' && browserSpeechSupported) {
+      return speechInputSource;
+    }
+    if (
+      compatibleSttModels.some(
+        model => sttModelKey(model) === speechInputSource
+      )
+    ) {
+      return speechInputSource;
+    }
+    return browserSpeechSupported
+      ? 'browser'
+      : compatibleSttModels[0]
+        ? sttModelKey(compatibleSttModels[0])
+        : '';
+  }, [browserSpeechSupported, compatibleSttModels, speechInputSource]);
+  const providerSttModel = useMemo(
+    () =>
+      compatibleSttModels.find(
+        model => sttModelKey(model) === activeSpeechInputSource
+      ),
+    [activeSpeechInputSource, compatibleSttModels]
+  );
+  const providerSpeechSupported =
+    Boolean(providerSttModel) &&
+    typeof navigator !== 'undefined' &&
+    Boolean(navigator.mediaDevices?.getUserMedia);
+  const speechSupported =
+    browserSpeechSupported || compatibleSttModels.length > 0;
 
   const [images, setImages] = useState<string[]>([]);
   const [format, setFormat] = useState<string | Record<string, unknown> | null>(
@@ -132,6 +203,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         }
       })
       .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    sttApi
+      .getModels()
+      .then(response => {
+        if (!cancelled && response.success && response.data) {
+          setSttModels(response.data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSttModels([]);
+      });
     return () => {
       cancelled = true;
     };
@@ -286,15 +374,102 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   useEffect(
     () => () => {
       recognitionRef.current?.stop();
+      transcriptionAbortRef.current?.abort();
+      const recorder = mediaRecorderRef.current;
+      if (recorder?.state === 'recording') recorder.stop();
+      mediaStreamRef.current?.getTracks().forEach(track => track.stop());
     },
     []
   );
 
-  const toggleDictation = () => {
+  const toggleDictation = async () => {
     if (listening) {
-      recognitionRef.current?.stop();
+      if (mediaRecorderRef.current?.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      } else {
+        recognitionRef.current?.stop();
+      }
       return;
     }
+
+    const providerModel = providerSttModel;
+    if (providerModel && providerSpeechSupported) {
+      dictationBaseRef.current = message;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        mediaStreamRef.current = stream;
+        const mimeType = preferredRecordingMimeType(providerModel);
+        const recorder = mimeType
+          ? new MediaRecorder(stream, { mimeType })
+          : new MediaRecorder(stream);
+        const chunks: Blob[] = [];
+        recorder.ondataavailable = event => {
+          if (event.data.size > 0) chunks.push(event.data);
+        };
+        recorder.onerror = () => {
+          stream.getTracks().forEach(track => track.stop());
+          mediaRecorderRef.current = null;
+          mediaStreamRef.current = null;
+          setListening(false);
+          toast.error(t('chat.input.menu.attachFailed'));
+        };
+        recorder.onstop = () => {
+          stream.getTracks().forEach(track => track.stop());
+          mediaRecorderRef.current = null;
+          mediaStreamRef.current = null;
+          setListening(false);
+          if (chunks.length === 0) return;
+          const recording = new Blob(chunks, {
+            type: recorder.mimeType || chunks[0].type || 'audio/webm',
+          });
+          const controller = new AbortController();
+          transcriptionAbortRef.current = controller;
+          setTranscribing(true);
+          void sttApi
+            .transcribe(recording, providerModel, {
+              language: i18n.language,
+              signal: controller.signal,
+            })
+            .then(result => {
+              const base = dictationBaseRef.current;
+              setMessage(
+                base ? `${base} ${result.text.trim()}` : result.text.trim()
+              );
+            })
+            .catch(error => {
+              if (!controller.signal.aborted) {
+                logger.error('Provider transcription failed:', error);
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : t('chat.input.menu.attachFailed')
+                );
+              }
+            })
+            .finally(() => {
+              if (transcriptionAbortRef.current === controller) {
+                transcriptionAbortRef.current = null;
+                setTranscribing(false);
+              }
+            });
+        };
+        mediaRecorderRef.current = recorder;
+        recorder.start(250);
+        setListening(true);
+        return;
+      } catch (error) {
+        logger.error('Failed to start provider dictation:', error);
+        mediaStreamRef.current?.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+        mediaRecorderRef.current = null;
+        setListening(false);
+        toast.error(t('chat.input.menu.attachFailed'));
+        return;
+      }
+    }
+
     const SpeechRecognitionCtor = getSpeechRecognition();
     if (!SpeechRecognitionCtor) return;
 
@@ -845,13 +1020,45 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   </Button>
                 )}
 
-                {/* Voice input */}
+                {/* Voice input. Selecting a provider makes the audio transfer
+                    explicit before the user starts recording. */}
+                {compatibleSttModels.length > 0 && (
+                  <select
+                    value={activeSpeechInputSource}
+                    onChange={event => setSpeechInputSource(event.target.value)}
+                    disabled={listening || transcribing}
+                    aria-label={t('chat.input.transcriptionSource')}
+                    title={
+                      providerSttModel
+                        ? t('chat.input.providerTranscriptionDisclosure', {
+                            provider: providerSttModel.plugin,
+                          })
+                        : t('chat.input.transcriptionSource')
+                    }
+                    className='h-8 max-w-32 rounded-lg border border-black/[0.08] bg-transparent px-1.5 text-[11px] text-gray-500 outline-none focus:border-primary-500/40 dark:border-white/[0.09] dark:text-dark-600'
+                  >
+                    {browserSpeechSupported && (
+                      <option value='browser'>
+                        {t('chat.input.browserSpeech')}
+                      </option>
+                    )}
+                    {compatibleSttModels.map(model => (
+                      <option
+                        key={sttModelKey(model)}
+                        value={sttModelKey(model)}
+                      >
+                        {model.plugin} · {model.model}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 {speechSupported && (
                   <Button
                     type='button'
                     variant='ghost'
                     size='sm'
-                    onClick={toggleDictation}
+                    onClick={() => void toggleDictation()}
+                    disabled={transcribing}
                     className={cn(
                       'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                       'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
@@ -860,13 +1067,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         'bg-red-50 text-red-500 animate-pulse dark:bg-red-900/20 dark:text-red-400'
                     )}
                     title={
-                      listening
-                        ? t('chat.input.voiceStop')
-                        : t('chat.input.voiceInput')
+                      transcribing
+                        ? t('common.loading')
+                        : listening
+                          ? t('chat.input.voiceStop')
+                          : providerSttModel
+                            ? t('chat.input.providerTranscriptionDisclosure', {
+                                provider: providerSttModel.plugin,
+                              })
+                            : t('chat.input.voiceInput')
                     }
                     aria-pressed={listening}
                   >
-                    <Mic className='h-4 w-4' />
+                    {transcribing ? (
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                    ) : (
+                      <Mic className='h-4 w-4' />
+                    )}
                   </Button>
                 )}
 

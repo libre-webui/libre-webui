@@ -263,6 +263,9 @@
       },
       "voiceInput": "ป้อนด้วยเสียง",
       "voiceStop": "หยุดฟัง",
+      "transcriptionSource": "แหล่งการรู้จำเสียงพูด",
+      "browserSpeech": "การรู้จำเสียงพูดด้วยเบราว์เซอร์บนอุปกรณ์",
+      "providerTranscriptionDisclosure": "บันทึกและส่งเสียงไปยัง {{provider}} เพื่อถอดเสียง",
       "webSearchOn": "การค้นหาเว็บเปิดอยู่ — คำตอบใช้ผลลัพธ์สด",
       "webSearchOff": "ค้นหาเว็บสำหรับข้อความนี้"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "ไม่สามารถสร้างเสียง",
     "playbackFailed": "การเล่นเสียงล้มเหลว",
     "stopSpeaking": "หยุดพูด",
+    "preparingSpeech": "กำลังเตรียมเสียง...",
     "generatingSpeech": "กำลังสร้างเสียง...",
+    "bufferingSpeech": "กำลังบัฟเฟอร์เสียง...",
+    "enableAudio": "เปิดเสียงและอ่านออกเสียง",
+    "enableAudioShort": "เปิดเสียง",
     "readAloud": "อ่านออกเสียง"
   },
   "artifacts": {

@@ -1,3 +1,9 @@
+{{- if ne (int .Values.replicaCount) 1 }}
+{{- fail "Libre WebUI currently requires replicaCount=1 because SQLite and local application state are not safe across replicas." }}
+{{- end }}
+{{- if .Values.autoscaling.enabled }}
+{{- fail "Libre WebUI autoscaling is disabled until shared database and application-state backends are supported." }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -60,8 +66,6 @@ spec:
               value: {{ include "libre-webui.ollamaUrl" . | quote }}
             - name: CORS_ORIGIN
               value: {{ .Values.env.CORS_ORIGIN | quote }}
-            - name: SINGLE_USER_MODE
-              value: {{ .Values.env.SINGLE_USER_MODE | quote }}
             - name: ENABLE_SIGNUP
               value: {{ .Values.env.ENABLE_SIGNUP | quote }}
             - name: JWT_EXPIRES_IN

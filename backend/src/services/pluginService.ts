@@ -33,6 +33,7 @@ import {
   ImageGenConfig,
   ImageGenResponse,
   PluginType,
+  STTConfig,
   VideoGenConfig,
 } from '../types/index.js';
 import codexOAuthService, {
@@ -46,6 +47,7 @@ import { PluginAudioGenerationService } from './pluginAudioGenerationService.js'
 import { PluginCapabilityRegistryService } from './pluginCapabilityRegistryService.js';
 import { PluginEmbeddingService } from './pluginEmbeddingService.js';
 import { PluginImageGenerationService } from './pluginImageGenerationService.js';
+import { PluginSTTService } from './pluginSTTService.js';
 import { PluginTTSService } from './pluginTTSService.js';
 import { PluginVideoGenerationService } from './pluginVideoGenerationService.js';
 import {
@@ -74,6 +76,10 @@ import {
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  isChatGenerationCancelled,
+  throwIfChatGenerationCancelled,
+} from '../utils/chatCancellation.js';
 import { resolveBundledPluginsDir } from '../utils/packagePaths.js';
 import { getDatabaseSafe } from '../db.js';
 import {
@@ -114,7 +120,7 @@ const modelDiscoveryRefreshDeadlineMs = (): number =>
   readPositiveIntEnv('PLUGIN_MODEL_DISCOVERY_REFRESH_DEADLINE_MS', 3000);
 
 const MODEL_DISCOVERY_REQUEST_TIMEOUT_MS = 5000;
-type DiscoverableMediaCapability = 'image' | 'tts' | 'audio' | 'video';
+type DiscoverableMediaCapability = 'image' | 'stt' | 'tts' | 'audio' | 'video';
 
 /**
  * Why a refresh did or did not change the catalog. Reported to the caller so a
@@ -230,6 +236,7 @@ export class PluginService {
   >();
   private embeddingService: PluginEmbeddingService;
   private ttsService: PluginTTSService;
+  private sttService: PluginSTTService;
   private imageGenerationService: PluginImageGenerationService;
   private audioGenerationService: PluginAudioGenerationService;
   private videoGenerationService: PluginVideoGenerationService;
@@ -261,6 +268,15 @@ export class PluginService {
       recordUsage: usage => pluginUsageService.record(usage),
     });
     this.ttsService = new PluginTTSService({
+      getAllPlugins: userId => this.getActivePlugins(userId),
+      getPlugin: (id, userId) => this.getPlugin(id, userId),
+      getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
+      getPluginVariables: (plugin, userId) =>
+        this.getPluginVariables(plugin, userId),
+      validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
+      recordUsage: usage => pluginUsageService.record(usage),
+    });
+    this.sttService = new PluginSTTService({
       getAllPlugins: userId => this.getActivePlugins(userId),
       getPlugin: (id, userId) => this.getPlugin(id, userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
@@ -561,7 +577,13 @@ export class PluginService {
   ): void {
     const db = getDatabaseSafe();
     if (userId) {
-      for (const capability of ['image', 'tts', 'audio', 'video'] as const) {
+      for (const capability of [
+        'image',
+        'stt',
+        'tts',
+        'audio',
+        'video',
+      ] as const) {
         const key = this.discoveredCapabilityModelsCacheKey(
           pluginId,
           capability,
@@ -582,7 +604,7 @@ export class PluginService {
 
     for (const key of this.discoveredCapabilityModelsCache.keys()) {
       if (
-        (['image', 'tts', 'audio', 'video'] as const).some(capability =>
+        (['image', 'stt', 'tts', 'audio', 'video'] as const).some(capability =>
           key.endsWith(`:${pluginId}:${capability}`)
         )
       ) {
@@ -615,7 +637,13 @@ export class PluginService {
       ? { ...plugin.capabilities }
       : undefined;
     if (capabilities) {
-      for (const capability of ['image', 'tts', 'audio', 'video'] as const) {
+      for (const capability of [
+        'image',
+        'stt',
+        'tts',
+        'audio',
+        'video',
+      ] as const) {
         const definition = capabilities[capability];
         const discovered = this.getDiscoveredCapabilityModels(
           plugin.id,
@@ -1601,7 +1629,7 @@ export class PluginService {
     // observe the same user-scoped model catalog.
     await Promise.all([
       this.discoverModels(id, userId).catch(() => []),
-      ...(['image', 'tts', 'audio', 'video'] as const)
+      ...(['image', 'stt', 'tts', 'audio', 'video'] as const)
         .filter(
           capability => plugin.capabilities?.[capability]?.models_endpoint
         )
@@ -1704,8 +1732,10 @@ export class PluginService {
     messages: ChatMessage[],
     options: GenerationOptions = {},
     userId?: string,
-    pluginId?: string
+    pluginId?: string,
+    signal?: AbortSignal
   ): Promise<PluginResponse> {
+    throwIfChatGenerationCancelled(signal);
     validatePluginModel(model);
 
     const activePlugin = this.getActivePluginForModel(model, userId, pluginId);
@@ -1728,7 +1758,8 @@ export class PluginService {
         messages,
         options,
         userId,
-        activePlugin.id
+        activePlugin.id,
+        signal
       )) {
         if (chunk.type === 'content' && chunk.content) {
           aggregated += chunk.content;
@@ -1787,6 +1818,7 @@ export class PluginService {
         headers,
         timeout: 60000, // 60 second timeout
         maxRedirects: 0,
+        signal,
       });
 
       const normalized = convertProviderResponse(
@@ -1814,16 +1846,23 @@ export class PluginService {
       });
       return normalized;
     } catch (error: unknown) {
+      const cancelled = isChatGenerationCancelled(error, signal);
       pluginUsageService.record({
         userId,
         pluginId: activePlugin.id,
         pluginName: activePlugin.name,
         capability: 'chat',
         model,
-        status: 'error',
+        status: cancelled ? 'cancelled' : 'error',
         durationMs: Date.now() - startedAt,
       });
-      logger.error(`Plugin request failed for ${activePlugin.id}:`, error);
+      if (!cancelled) {
+        logger.error(`Plugin request failed for ${activePlugin.id}:`, error);
+      }
+
+      if (cancelled) {
+        throw error;
+      }
 
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as {
@@ -1858,8 +1897,10 @@ export class PluginService {
     messages: ChatMessage[],
     options: GenerationOptions = {},
     userId?: string,
-    pluginId?: string
+    pluginId?: string,
+    signal?: AbortSignal
   ): AsyncGenerator<PluginStreamChunk, void, unknown> {
+    throwIfChatGenerationCancelled(signal);
     validatePluginModel(model);
 
     const activePlugin = this.getActivePluginForModel(model, userId, pluginId);
@@ -1970,6 +2011,7 @@ export class PluginService {
         headers,
         body: JSON.stringify(payload),
         redirect: 'error',
+        signal,
       });
 
       if (activePlugin.id === 'anthropic') {
@@ -2062,7 +2104,7 @@ export class PluginService {
       }
       status = 'success';
     } catch (error) {
-      status = 'error';
+      status = isChatGenerationCancelled(error, signal) ? 'cancelled' : 'error';
       throw error;
     } finally {
       pluginUsageService.record({
@@ -2207,13 +2249,15 @@ export class PluginService {
     model: string,
     input: string | string[],
     pluginId?: string,
-    userId?: string
+    userId?: string,
+    signal?: AbortSignal
   ): Promise<OllamaEmbeddingsResponse> {
     return this.embeddingService.executeEmbeddingRequest(
       model,
       input,
       pluginId,
-      userId
+      userId,
+      signal
     );
   }
 
@@ -2223,6 +2267,22 @@ export class PluginService {
     config?: TTSConfig;
   }[] {
     return this.ttsService.getAvailableTTSModels(userId);
+  }
+
+  getAvailableSTTModels(userId?: string): Array<{
+    model: string;
+    plugin: string;
+    config?: STTConfig;
+  }> {
+    return this.sttService.getAvailableModels(userId);
+  }
+
+  executeSTTRequest(
+    model: string,
+    audio: Parameters<PluginSTTService['transcribe']>[1],
+    options: Parameters<PluginSTTService['transcribe']>[2]
+  ) {
+    return this.sttService.transcribe(model, audio, options);
   }
 
   async executeTTSRequest(

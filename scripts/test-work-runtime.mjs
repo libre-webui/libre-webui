@@ -1183,7 +1183,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   // Reconciliation asks Docker once which labeled containers exist. A task
   // whose container is already gone needs no stop call at all.
   const restedRuntime = new runtimeModule.WorkRuntimeService();
-  restedRuntime.isDockerAvailable = async () => true;
+  restedRuntime.isRuntimeAvailable = async () => true;
   restedRuntime.driver.docker = async args => {
     assert.equal(args[0], 'ps');
     return { exitCode: 0, stdout: '', stderr: '', truncated: false };
@@ -1196,7 +1196,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   // A running container of a known task is stopped; a managed container
   // whose task row is gone is force-removed as an orphan.
   const recoveredRuntime = new runtimeModule.WorkRuntimeService();
-  recoveredRuntime.isDockerAvailable = async () => true;
+  recoveredRuntime.isRuntimeAvailable = async () => true;
   const recoveryCalls = [];
   recoveredRuntime.driver.docker = async args => {
     recoveryCalls.push(args);
@@ -1238,7 +1238,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   );
 
   const teardownRuntime = new runtimeModule.WorkRuntimeService();
-  teardownRuntime.isDockerAvailable = async () => true;
+  teardownRuntime.isRuntimeAvailable = async () => true;
   let stopFails = true;
   teardownRuntime.driver.docker = async args => {
     if (args[0] === 'container') {
@@ -1283,7 +1283,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   teardownRuntime.beginShutdown();
 
   const blockedRuntime = new runtimeModule.WorkRuntimeService();
-  blockedRuntime.isDockerAvailable = async () => false;
+  blockedRuntime.isRuntimeAvailable = async () => false;
   const blocked = await blockedRuntime.beginRecovery([taskOneRecord]);
   assert.deepEqual(blocked, { stopped: 0, failed: 1 });
   assert.equal(blockedRuntime.recoveryPending, true);

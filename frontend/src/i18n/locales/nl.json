@@ -263,6 +263,9 @@
       },
       "voiceInput": "Spraakinvoer",
       "voiceStop": "Stoppen met luisteren",
+      "transcriptionSource": "Bron voor spraakherkenning",
+      "browserSpeech": "Spraakherkenning in de browser op het apparaat",
+      "providerTranscriptionDisclosure": "Audio opnemen en naar {{provider}} sturen voor transcriptie",
       "webSearchOn": "Webzoeken aan — antwoorden gebruiken live resultaten",
       "webSearchOff": "Zoek op het web voor dit bericht"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Kon spraak niet genereren",
     "playbackFailed": "Audio afspelen mislukt",
     "stopSpeaking": "Voorlezen stoppen",
+    "preparingSpeech": "Spraak voorbereiden...",
     "generatingSpeech": "Spraak genereren...",
+    "bufferingSpeech": "Spraak bufferen...",
+    "enableAudio": "Audio inschakelen en voorlezen",
+    "enableAudioShort": "Audio inschakelen",
     "readAloud": "Voorlezen"
   },
   "artifacts": {

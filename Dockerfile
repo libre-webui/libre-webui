@@ -149,8 +149,9 @@ WORKDIR /app
 
 # Install security updates.
 # docker-cli lets the Work runtime drive the host daemon when this image is
-# given the Docker socket. The socket is never mounted by default; without it
-# the CLI is inert and Work simply reports that no daemon is reachable.
+# given the Docker socket. The image itself does not mount host resources;
+# the repository's default Compose file does mount the socket for Work, while
+# deployments that omit that mount leave the Docker runtime unavailable.
 RUN apk update && apk upgrade && apk add --no-cache wget docker-cli
 
 # Create non-root user

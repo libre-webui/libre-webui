@@ -101,6 +101,7 @@ interface KubernetesClient {
  * signed proxy (the backend must run in-cluster to reach it).
  */
 export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
+  readonly kind = 'kubernetes' as const;
   readonly image = config.image;
   readonly namespace = k8sConfig.namespace;
   private clientState?: Promise<KubernetesClient>;

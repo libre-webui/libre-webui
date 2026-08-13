@@ -263,6 +263,9 @@
       },
       "voiceInput": "Stemmeinput",
       "voiceStop": "Stop med at lytte",
+      "transcriptionSource": "Kilde til talegenkendelse",
+      "browserSpeech": "Talegenkendelse i browseren på enheden",
+      "providerTranscriptionDisclosure": "Optag og send lyd til {{provider}} til transskribering",
       "webSearchOn": "Websøgning til — svar bruger live-resultater",
       "webSearchOff": "Søg på nettet for denne besked"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Kunne ikke generere tale",
     "playbackFailed": "Lydafspilning mislykkedes",
     "stopSpeaking": "Stop oplæsning",
+    "preparingSpeech": "Forbereder tale...",
     "generatingSpeech": "Genererer tale...",
+    "bufferingSpeech": "Indlæser tale...",
+    "enableAudio": "Aktivér lyd og læs højt",
+    "enableAudioShort": "Aktivér lyd",
     "readAloud": "Læs højt"
   },
   "artifacts": {

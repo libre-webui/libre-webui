@@ -80,6 +80,8 @@ export const authenticate = async (
       userId: currentUser.id,
       username: currentUser.username,
       role: currentUser.role,
+      ...(payload.iat !== undefined ? { iat: payload.iat } : {}),
+      ...(payload.exp !== undefined ? { exp: payload.exp } : {}),
     };
     next();
   } catch (error) {
@@ -159,6 +161,8 @@ export const optionalAuth = async (
             userId: currentUser.id,
             username: currentUser.username,
             role: currentUser.role,
+            ...(payload.iat !== undefined ? { iat: payload.iat } : {}),
+            ...(payload.exp !== undefined ? { exp: payload.exp } : {}),
           };
         }
       }

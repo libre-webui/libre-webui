@@ -51,9 +51,12 @@ export const useChat = (sessionId: string) => {
     updateMessageWithStatistics,
     applySessionTitle,
     setGeneratingTitleForSession,
+    removeMessage,
   } = useChatStore();
   const { setIsGenerating } = useAppStore();
   const streamingMessageIdRef = useRef<string | null>(null);
+  const cancelRequestedMessageIdsRef = useRef<Set<string>>(new Set());
+  const demoGenerationTimerRef = useRef<number | null>(null);
 
   // Track the first user message for auto-title generation
   const firstUserMessageRef = useRef<string | null>(null);
@@ -191,10 +194,18 @@ export const useChat = (sessionId: string) => {
   // Clean up handlers when component unmounts or sessionId changes
   useEffect(() => {
     return () => {
+      const assistantMessageId = streamingMessageIdRef.current;
+      if (assistantMessageId && sessionId) {
+        websocketService.send({
+          type: 'chat_cancel',
+          data: { sessionId, assistantMessageId },
+        });
+      }
       // Clean up WebSocket handlers when component unmounts
       websocketService.offMessage('user_message');
       websocketService.offMessage('assistant_chunk');
       websocketService.offMessage('assistant_complete');
+      websocketService.offMessage('assistant_cancelled');
       websocketService.offMessage('tool_status');
       websocketService.offMessage('error');
     };
@@ -207,6 +218,7 @@ export const useChat = (sessionId: string) => {
       websocketService.offMessage('user_message');
       websocketService.offMessage('assistant_chunk');
       websocketService.offMessage('assistant_complete');
+      websocketService.offMessage('assistant_cancelled');
       websocketService.offMessage('tool_status');
       websocketService.offMessage('error');
       return;
@@ -230,6 +242,17 @@ export const useChat = (sessionId: string) => {
 
       // Use messageId from backend if provided, otherwise fall back to current streaming ID
       const messageId = chunkData.messageId || streamingMessageIdRef.current;
+
+      // A cancelled stream can still have buffered network chunks in flight.
+      // Never let them overwrite a newer retry or resurrect stopped UI.
+      if (
+        (messageId && cancelRequestedMessageIdsRef.current.has(messageId)) ||
+        (messageId &&
+          streamingMessageIdRef.current &&
+          messageId !== streamingMessageIdRef.current)
+      ) {
+        return;
+      }
 
       if (messageId) {
         // Always update the content buffer and UI immediately for responsive streaming
@@ -313,14 +336,35 @@ export const useChat = (sessionId: string) => {
         !!completeData.statistics
       );
 
+      // Use messageId from backend if provided, otherwise fall back to current
+      // streaming ID. A completion can win a close cancellation race; update
+      // that message without clearing a newer generation's state.
+      const messageId = completeData.messageId || streamingMessageIdRef.current;
+      const isCurrentGeneration =
+        !messageId || messageId === streamingMessageIdRef.current;
+      if (messageId) {
+        cancelRequestedMessageIdsRef.current.delete(messageId);
+      }
+
+      if (!isCurrentGeneration) {
+        if (messageId) {
+          updateMessageWithStatistics(
+            sessionId,
+            messageId,
+            completeData.content,
+            completeData.statistics,
+            completeData.providerMetadata,
+            completeData.thinking
+          );
+        }
+        return;
+      }
+
       // Clear streaming state immediately for better UX
       setIsStreaming(false);
       resetVisibleStreamingMessage();
       setIsGenerating(false);
       setToolActivities([]);
-
-      // Use messageId from backend if provided, otherwise fall back to current streaming ID
-      const messageId = completeData.messageId || streamingMessageIdRef.current;
 
       if (completeData && messageId) {
         // Ensure final update with the complete content
@@ -362,6 +406,32 @@ export const useChat = (sessionId: string) => {
         clearTimeout(storeUpdateTimer.current);
       }
       lastStoreUpdate.current = 0;
+    });
+
+    websocketService.onMessage('assistant_cancelled', (data: unknown) => {
+      const cancelledData = data as {
+        assistantMessageId?: string;
+        sessionId?: string;
+        cancelled?: boolean;
+      };
+      const messageId = cancelledData.assistantMessageId;
+      if (!messageId || cancelledData.sessionId !== sessionId) return;
+      if (!cancelRequestedMessageIdsRef.current.has(messageId)) return;
+
+      cancelRequestedMessageIdsRef.current.delete(messageId);
+      // Cancelled assistant placeholders are client-side only: the backend
+      // deliberately does not persist a partial reply as a completed answer.
+      removeMessage(sessionId, messageId);
+
+      if (streamingMessageIdRef.current !== messageId) return;
+      setIsStreaming(false);
+      resetVisibleStreamingMessage();
+      setStreamingMessageId(null);
+      setIsGenerating(false);
+      setToolActivities([]);
+      streamingMessageIdRef.current = null;
+      streamingContentRef.current = '';
+      streamingThinkingRef.current = '';
     });
 
     websocketService.onMessage('error', (data: unknown) => {
@@ -416,6 +486,7 @@ export const useChat = (sessionId: string) => {
     cancelQueuedStreamingFrame,
     maybeGenerateTitle,
     clearQueuedTitleGeneration,
+    removeMessage,
   ]);
 
   const sendMessage = useCallback(
@@ -447,6 +518,8 @@ export const useChat = (sessionId: string) => {
         setIsGenerating(true);
         setIsStreaming(true);
         resetVisibleStreamingMessage();
+        streamingContentRef.current = '';
+        streamingThinkingRef.current = '';
 
         // Reset batching timers for new stream
         if (storeUpdateTimer.current) {
@@ -497,7 +570,11 @@ export const useChat = (sessionId: string) => {
         if (isDemoMode()) {
           const demoResponse = `Demo response for: ${content.trim()}`;
 
-          window.setTimeout(() => {
+          demoGenerationTimerRef.current = window.setTimeout(() => {
+            demoGenerationTimerRef.current = null;
+            if (cancelRequestedMessageIdsRef.current.has(assistantMessageId)) {
+              return;
+            }
             updateMessage(sessionId, assistantMessageId, demoResponse);
             setIsStreaming(false);
             resetVisibleStreamingMessage();
@@ -576,15 +653,45 @@ export const useChat = (sessionId: string) => {
   );
 
   const stopGeneration = useCallback(() => {
+    const assistantMessageId = streamingMessageIdRef.current;
+    if (assistantMessageId) {
+      cancelRequestedMessageIdsRef.current.add(assistantMessageId);
+      if (demoGenerationTimerRef.current !== null) {
+        window.clearTimeout(demoGenerationTimerRef.current);
+        demoGenerationTimerRef.current = null;
+        removeMessage(sessionId, assistantMessageId);
+        cancelRequestedMessageIdsRef.current.delete(assistantMessageId);
+      } else {
+        const sent = websocketService.send({
+          type: 'chat_cancel',
+          data: { sessionId, assistantMessageId },
+        });
+        if (!sent) {
+          removeMessage(sessionId, assistantMessageId);
+          cancelRequestedMessageIdsRef.current.delete(assistantMessageId);
+        }
+      }
+    }
+
+    if (storeUpdateTimer.current) {
+      clearTimeout(storeUpdateTimer.current);
+      storeUpdateTimer.current = undefined;
+    }
     setIsStreaming(false);
     resetVisibleStreamingMessage();
     setStreamingMessageId(null);
     setIsGenerating(false);
     streamingMessageIdRef.current = null;
+    streamingContentRef.current = '';
     streamingThinkingRef.current = '';
-    // Note: WebSocket connection doesn't have a built-in stop mechanism
-    // You might want to implement this on the backend
-  }, [setIsGenerating, resetVisibleStreamingMessage]);
+    clearQueuedTitleGeneration();
+  }, [
+    setIsGenerating,
+    resetVisibleStreamingMessage,
+    removeMessage,
+    sessionId,
+    clearQueuedTitleGeneration,
+  ]);
 
   // Regenerate the last assistant message (creates a new branch)
   const regenerateLastMessage = useCallback(async () => {
@@ -639,6 +746,8 @@ export const useChat = (sessionId: string) => {
       setIsGenerating(true);
       setIsStreaming(true);
       resetVisibleStreamingMessage();
+      streamingContentRef.current = '';
+      streamingThinkingRef.current = '';
 
       // Reset batching timers for new stream
       if (storeUpdateTimer.current) {

@@ -35,6 +35,7 @@ import {
 } from '../services/oauthSecurity.js';
 import { validatePasswordStrength } from '../utils/hash.js';
 import { createLogger } from '../utils/logger.js';
+import { websocketTicketService } from '../services/websocketTicketService.js';
 
 const router = express.Router();
 const logger = createLogger('auth-routes');
@@ -90,6 +91,47 @@ const generalAuthRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+/**
+ * Exchange the normal Authorization header for a short-lived, one-use
+ * WebSocket ticket. This keeps the durable JWT out of URLs, proxy logs, and
+ * browser history while retaining browser-compatible WebSocket authentication.
+ */
+router.post(
+  '/websocket-ticket',
+  generalAuthRateLimiter,
+  authenticate,
+  (req: AuthenticatedRequest, res) => {
+    res.set('Cache-Control', 'no-store');
+    const audience = req.body?.audience;
+    const taskId = req.body?.taskId;
+    if (audience !== 'chat' && audience !== 'work-terminal') {
+      res.status(400).json({
+        success: false,
+        message: 'WebSocket ticket audience must be chat or work-terminal',
+      });
+      return;
+    }
+    if (
+      audience === 'work-terminal' &&
+      (typeof taskId !== 'string' || !taskId.trim() || taskId.length > 256)
+    ) {
+      res.status(400).json({
+        success: false,
+        message: 'A valid taskId is required for a Work terminal ticket',
+      });
+      return;
+    }
+    const sessionExpiresAt = (req.user?.exp ?? 0) * 1000;
+    const ticket = websocketTicketService.issue(
+      req.user!.userId,
+      sessionExpiresAt,
+      audience,
+      audience === 'work-terminal' ? taskId.trim() : undefined
+    );
+    res.json({ success: true, data: ticket });
+  }
+);
 
 /**
  * Login endpoint

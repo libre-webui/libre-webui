@@ -16,6 +16,8 @@
  */
 
 import { WebSocketMessage } from '@/types';
+import type { ApiResponse } from '@/types';
+import { api } from '@/utils/api/client';
 import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
 
@@ -28,6 +30,9 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private messageHandlers: Map<string, (data: unknown) => void> = new Map();
+  private connectPromise: Promise<void> | null = null;
+  private shouldReconnect = false;
+  private connectionEpoch = 0;
 
   constructor() {
     // For WebSocket, we need to connect to the backend server (port 3001)
@@ -61,30 +66,58 @@ class WebSocketService {
       return Promise.resolve();
     }
 
+    if (this.ws?.readyState === WebSocket.OPEN) return Promise.resolve();
+    if (this.connectPromise) return this.connectPromise;
+
+    this.shouldReconnect = true;
+    const epoch = ++this.connectionEpoch;
+    const attempt = this.openWithTicket(epoch).finally(() => {
+      if (this.connectPromise === attempt) this.connectPromise = null;
+    });
+    this.connectPromise = attempt;
+    return attempt;
+  }
+
+  private async openWithTicket(epoch: number): Promise<void> {
+    let response;
+    try {
+      response = await api.post<
+        ApiResponse<{ ticket: string; expiresAt: string }>
+      >('/auth/websocket-ticket', { audience: 'chat' });
+    } catch (error) {
+      if (this.shouldReconnect && epoch === this.connectionEpoch) {
+        this.attemptReconnect();
+      }
+      throw error;
+    }
+    const ticket = response.data.data?.ticket;
+    if (!ticket)
+      throw new Error('The server did not issue a WebSocket ticket.');
+    if (!this.shouldReconnect || epoch !== this.connectionEpoch) return;
+
     logger.debug('WebSocket: Attempting to connect to:', this.url);
 
     return new Promise((resolve, reject) => {
       try {
-        // Include auth token in WebSocket connection
-        const token = localStorage.getItem('auth-token');
-        const wsUrlWithAuth = token
-          ? `${this.url}?token=${encodeURIComponent(token)}`
-          : this.url;
+        const wsUrlWithAuth = `${this.url}?ticket=${encodeURIComponent(ticket)}`;
 
-        logger.debug(
-          'WebSocket: Connecting to:',
-          wsUrlWithAuth.replace(/token=[^&]+/, 'token=***')
-        );
+        logger.debug('WebSocket: Connecting with a one-use ticket');
 
-        this.ws = new WebSocket(wsUrlWithAuth);
+        const socket = new WebSocket(wsUrlWithAuth);
+        this.ws = socket;
 
-        this.ws.onopen = () => {
+        socket.onopen = () => {
+          if (!this.shouldReconnect || epoch !== this.connectionEpoch) {
+            socket.close();
+            resolve();
+            return;
+          }
           logger.debug('WebSocket connected successfully');
           this.reconnectAttempts = 0;
           resolve();
         };
 
-        this.ws.onmessage = event => {
+        socket.onmessage = event => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
             const handler = this.messageHandlers.get(message.type);
@@ -103,13 +136,15 @@ class WebSocketService {
           }
         };
 
-        this.ws.onclose = () => {
+        socket.onclose = () => {
           logger.debug('WebSocket disconnected');
-          this.ws = null;
-          this.attemptReconnect();
+          if (this.ws === socket) this.ws = null;
+          if (this.shouldReconnect && epoch === this.connectionEpoch) {
+            this.attemptReconnect();
+          }
         };
 
-        this.ws.onerror = error => {
+        socket.onerror = error => {
           logger.error('WebSocket error:', error);
           reject(error);
         };
@@ -120,21 +155,26 @@ class WebSocketService {
   }
 
   disconnect() {
+    this.shouldReconnect = false;
+    this.connectionEpoch += 1;
+    this.connectPromise = null;
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
   }
 
-  send(message: WebSocketMessage | Record<string, unknown>) {
+  send(message: WebSocketMessage | Record<string, unknown>): boolean {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       logger.debug('WebSocket: Sending message:', message);
       this.ws.send(JSON.stringify(message));
+      return true;
     } else {
       logger.warn(
         'WebSocket is not connected. ReadyState:',
         this.ws?.readyState
       );
+      return false;
     }
   }
 
@@ -160,6 +200,7 @@ class WebSocketService {
       );
 
       setTimeout(() => {
+        if (!this.shouldReconnect) return;
         this.connect().catch(() => {
           // Will try again if this fails
         });

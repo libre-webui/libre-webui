@@ -263,6 +263,9 @@
       },
       "voiceInput": "Entrada de voz",
       "voiceStop": "Parar de ouvir",
+      "transcriptionSource": "Fonte de reconhecimento de voz",
+      "browserSpeech": "Reconhecimento de voz do navegador no dispositivo",
+      "providerTranscriptionDisclosure": "Gravar e enviar áudio para {{provider}} para transcrição",
       "webSearchOn": "Pesquisa na web ativa — respostas usam resultados ao vivo",
       "webSearchOff": "Pesquisar na web para esta mensagem"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Falha ao gerar fala",
     "playbackFailed": "Falha na reprodução do áudio",
     "stopSpeaking": "Parar de falar",
+    "preparingSpeech": "Preparando fala...",
     "generatingSpeech": "Gerando fala...",
+    "bufferingSpeech": "Carregando fala...",
+    "enableAudio": "Ativar áudio e ler em voz alta",
+    "enableAudioShort": "Ativar áudio",
     "readAloud": "Ler em voz alta"
   },
   "artifacts": {

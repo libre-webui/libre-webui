@@ -814,20 +814,23 @@ export default function WorkPage() {
   };
 
   const runtimeUnavailable = capabilities?.available === false;
-  const runtimeReadyDetail = capabilities?.pluginAvailable
-    ? capabilities.ollamaAvailable
-      ? t('work.runtime.readyHybrid', {
-          defaultValue: 'Docker + models ready',
-        })
-      : t('work.runtime.readyPlugin', {
-          defaultValue: 'Docker + plugin ready',
-        })
-    : t('work.runtime.readyOllama', {
-        defaultValue: 'Docker ready',
-      });
   const runtimeReadyLabel = t('work.runtime.ready', {
     defaultValue: 'Runtime ready',
   });
+  const runtimeReadyDetail =
+    capabilities?.runtime === 'kubernetes'
+      ? `Kubernetes · ${runtimeReadyLabel}`
+      : capabilities?.pluginAvailable
+        ? capabilities.ollamaAvailable
+          ? t('work.runtime.readyHybrid', {
+              defaultValue: 'Docker + models ready',
+            })
+          : t('work.runtime.readyPlugin', {
+              defaultValue: 'Docker + plugin ready',
+            })
+        : t('work.runtime.readyOllama', {
+            defaultValue: 'Docker ready',
+          });
   const activeTask = selectedTask ? isWorkTaskActive(selectedTask) : false;
   const taskModel = selectedTask
     ? {
@@ -1184,7 +1187,7 @@ export default function WorkPage() {
                 ? capabilities?.reason ||
                   t('work.runtime.reason', {
                     defaultValue:
-                      'Docker and an available Ollama or plugin model provider are required.',
+                      'A Work runtime and an available Ollama or plugin model provider are required.',
                   })
                 : error}
             </span>

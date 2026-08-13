@@ -27,6 +27,10 @@ import {
   sendError,
   type WebSocketLike,
 } from './websocketMessages.js';
+import {
+  ChatGenerationCancelledError,
+  isChatGenerationCancelled,
+} from './chatCancellation.js';
 
 export interface OllamaChatStreamGenerator {
   generateChatStreamResponse(
@@ -46,6 +50,7 @@ export interface StreamOllamaChatResponseOptions {
   messageId?: string;
   /** Attributes the metered usage of this call to a user. */
   userId?: string;
+  signal?: AbortSignal;
 }
 
 export interface StreamOllamaChatResponseResult {
@@ -62,6 +67,7 @@ export async function streamOllamaChatResponse({
   streamSource,
   messageId,
   userId,
+  signal,
 }: StreamOllamaChatResponseOptions): Promise<StreamOllamaChatResponseResult> {
   return new Promise(resolve => {
     let content = '';
@@ -78,6 +84,7 @@ export async function streamOllamaChatResponse({
       }
 
       resolved = true;
+      signal?.removeEventListener('abort', handleAbort);
       resolve({
         content,
         ...(thinking ? { thinking } : {}),
@@ -134,9 +141,25 @@ export async function streamOllamaChatResponse({
         return;
       }
 
-      sendError(ws, { error: error.message });
+      if (!isChatGenerationCancelled(error, signal)) {
+        sendError(ws, { error: error.message });
+      }
       finish({ completed: false, error });
     };
+
+    const handleAbort = () => {
+      const error =
+        signal?.reason instanceof Error
+          ? signal.reason
+          : new ChatGenerationCancelledError();
+      finish({ completed: false, error });
+    };
+
+    signal?.addEventListener('abort', handleAbort, { once: true });
+    if (signal?.aborted) {
+      handleAbort();
+      return;
+    }
 
     streamSource
       .generateChatStreamResponse(
@@ -144,7 +167,7 @@ export async function streamOllamaChatResponse({
         handleChunk,
         handleError,
         () => finish({ completed: true }),
-        undefined,
+        signal,
         { userId }
       )
       .catch(error => {

@@ -18,14 +18,23 @@
 import React, { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { preferencesApi } from '@/utils/api';
+import type {
+  ArchiveSectionResult,
+  DataArchiveExclusion,
+} from '@/utils/api/preferencesApi';
+import { parsePortableArchiveJson } from '@/utils/dataArchive';
 import type { ChatSession, UserPreferences } from '@/types';
 
-export type ImportMergeStrategy = 'skip' | 'overwrite' | 'merge';
+export type ImportMergeStrategy = 'skip' | 'overwrite';
 
 export interface SettingsImportResult {
   preferences: { imported: boolean; error: string | null };
-  sessions: { imported: number; skipped: number; errors: string[] };
-  documents: { imported: number; skipped: number; errors: string[] };
+  sessionFolders: ArchiveSectionResult;
+  sessions: ArchiveSectionResult;
+  knowledgeCollections: ArchiveSectionResult;
+  documents: ArchiveSectionResult;
+  warnings: string[];
+  exclusions: DataArchiveExclusion[];
 }
 
 interface UseSettingsDataImportOptions {
@@ -36,8 +45,6 @@ interface UseSettingsDataImportOptions {
 }
 
 export function useSettingsDataImport({
-  preferences,
-  sessions,
   loadPreferences,
   loadSessions,
 }: UseSettingsDataImportOptions) {
@@ -60,29 +67,29 @@ export function useSettingsDataImport({
     }
   };
 
-  const handleExportData = () => {
-    const data = {
-      format: 'libre-webui-export',
-      version: '1.0',
-      preferences,
-      sessions,
-      documents: [],
-      exportedAt: new Date().toISOString(),
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `libre-webui-export-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast.success('Data exported successfully');
+  const handleExportData = async () => {
+    try {
+      const response = await preferencesApi.exportData();
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Export failed');
+      }
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `libre-webui-user-data-v2-${
+        new Date().toISOString().split('T')[0]
+      }.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Portable data archive exported');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Export failed');
+    }
   };
 
   const handleImportFileSelect = (
@@ -102,29 +109,41 @@ export function useSettingsDataImport({
     setImporting(true);
     try {
       const fileContent = await selectedImportFile.text();
-      const importData = JSON.parse(fileContent);
+      parsePortableArchiveJson(fileContent);
 
-      if (!importData.format || importData.format !== 'libre-webui-export') {
-        throw new Error(
-          'Invalid export format. Please use a valid Libre WebUI export file.'
-        );
+      // Preflight uses the same migration, ownership checks, and conflict
+      // planner as import, but does not open a write transaction.
+      const preflight = await preferencesApi.preflightImport(
+        selectedImportFile,
+        mergeStrategy
+      );
+      if (!preflight.success || !preflight.data?.valid) {
+        throw new Error(preflight.error || 'Archive validation failed');
       }
 
       const result = await preferencesApi.importData(
-        importData,
-        mergeStrategy === 'overwrite' ? 'replace' : 'merge'
+        selectedImportFile,
+        mergeStrategy
       );
 
       if (result.success && result.data) {
         setImportResult({
-          preferences: { imported: true, error: null },
-          sessions: { imported: 0, skipped: 0, errors: [] },
-          documents: { imported: 0, skipped: 0, errors: [] },
+          preferences: {
+            imported: result.data.preferences.imported,
+            error: null,
+          },
+          sessionFolders: result.data.sessionFolders,
+          sessions: result.data.sessions,
+          knowledgeCollections: result.data.knowledgeCollections,
+          documents: result.data.documents,
+          warnings: result.data.warnings,
+          exclusions: result.data.exclusions,
         });
-        toast.success('Data imported successfully');
+        toast.success('Portable data archive imported');
 
         await loadPreferences();
         await loadSessions();
+        window.dispatchEvent(new Event('libre:documents-updated'));
       } else {
         throw new Error(result.error || 'Import failed');
       }

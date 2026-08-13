@@ -43,6 +43,7 @@ import { streamPluginResponse } from './utils/pluginStreaming.js';
 import { createLogger } from './utils/logger.js';
 import {
   sendAssistantChunk,
+  sendAssistantCancelled,
   sendAssistantComplete,
   sendConnected,
   sendError,
@@ -57,8 +58,15 @@ import {
 import { OllamaChatRequest, ChatSession } from './types/index.js';
 import { normalizeChatProviderSelection } from './utils/chatProviderSelection.js';
 import workPreviewProxyService from './services/workPreviewProxyService.js';
-import { authService } from './services/authService.js';
 import { userModel } from './models/userModel.js';
+import { websocketTicketService } from './services/websocketTicketService.js';
+import {
+  type ActiveChatGeneration,
+  ChatGenerationRegistry,
+  UserChatGenerationRegistry,
+  isChatGenerationCancelled,
+  throwIfChatGenerationCancelled,
+} from './utils/chatCancellation.js';
 
 const chatRequestService = new ChatRequestService({
   chatGenerationService,
@@ -74,17 +82,43 @@ const CHAT_WS_MAX_MESSAGES_PER_MINUTE = positiveInteger(
   process.env.CHAT_WS_MAX_MESSAGES_PER_MINUTE,
   120
 );
+const CHAT_WS_MAX_ACTIVE_GENERATIONS_PER_USER = positiveInteger(
+  process.env.CHAT_WS_MAX_ACTIVE_GENERATIONS_PER_USER,
+  4
+);
+const CHAT_WS_MAX_CONNECTIONS_PER_USER = positiveInteger(
+  process.env.CHAT_WS_MAX_CONNECTIONS_PER_USER,
+  5
+);
+const activeGenerationsByUser = new UserChatGenerationRegistry(
+  CHAT_WS_MAX_ACTIVE_GENERATIONS_PER_USER
+);
+const activeConnectionsByUser = new Map<string, number>();
 
 interface AuthenticatedChatRequest extends IncomingMessage {
   chatAuth?: {
-    token: string;
     userId: string;
+    sessionExpiresAt: number;
   };
 }
 
 function positiveInteger(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(value || '', 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function reserveChatConnection(userId: string): (() => void) | null {
+  const active = activeConnectionsByUser.get(userId) || 0;
+  if (active >= CHAT_WS_MAX_CONNECTIONS_PER_USER) return null;
+  activeConnectionsByUser.set(userId, active + 1);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    const remaining = (activeConnectionsByUser.get(userId) || 1) - 1;
+    if (remaining > 0) activeConnectionsByUser.set(userId, remaining);
+    else activeConnectionsByUser.delete(userId);
+  };
 }
 
 export const isAllowedWebSocketOrigin = (
@@ -115,16 +149,19 @@ export const isAllowedWebSocketOrigin = (
 
 const authorizeChatUpgrade = (
   request: AuthenticatedChatRequest
-): { token: string; userId: string } | null => {
+): { userId: string; sessionExpiresAt: number } | null => {
   try {
     const url = new URL(request.url || '', `http://${request.headers.host}`);
-    const token = url.searchParams.get('token')?.trim() || '';
-    if (!token) return null;
-    const payload = authService.verifyToken(token);
-    if (!payload) return null;
-    const currentUser = userModel.getUserById(payload.userId);
+    const ticket = url.searchParams.get('ticket')?.trim() || '';
+    if (!ticket) return null;
+    const consumed = websocketTicketService.consume(ticket, 'chat');
+    if (!consumed) return null;
+    const currentUser = userModel.getUserById(consumed.userId);
     if (!currentUser || currentUser.status !== 'active') return null;
-    return { token, userId: currentUser.id };
+    return {
+      userId: currentUser.id,
+      sessionExpiresAt: consumed.sessionExpiresAt,
+    };
   } catch {
     return null;
   }
@@ -160,11 +197,23 @@ export function registerWebSocketServer(server: Server): void {
       ws.close(1008, 'Authentication required');
       return;
     }
-    const { userId } = chatAuth;
+    const { userId, sessionExpiresAt } = chatAuth;
+    const releaseConnection = reserveChatConnection(userId);
+    if (!releaseConnection) {
+      ws.close(1008, 'Too many active Chat connections');
+      return;
+    }
+    const activeGenerations = new ChatGenerationRegistry();
+    const sessionExpiryTimer = setTimeout(
+      () => ws.close(1008, 'Session expired'),
+      Math.max(0, Math.min(sessionExpiresAt - Date.now(), 2_147_483_647))
+    );
     let messageWindowStartedAt = Date.now();
     let messageCount = 0;
 
     ws.on('message', async data => {
+      let currentGeneration: ActiveChatGeneration | undefined;
+      let globallyReserved = false;
       try {
         const now = Date.now();
         if (now - messageWindowStartedAt >= 60_000) {
@@ -177,20 +226,35 @@ export function registerWebSocketServer(server: Server): void {
           return;
         }
 
-        const currentPayload = authService.verifyToken(chatAuth.token);
-        const currentUser = currentPayload
-          ? userModel.getUserById(currentPayload.userId)
-          : null;
+        const currentUser = userModel.getUserById(userId);
         if (
           !currentUser ||
           currentUser.status !== 'active' ||
-          currentUser.id !== userId
+          currentUser.id !== userId ||
+          sessionExpiresAt <= Date.now()
         ) {
           ws.close(1008, 'Session expired or account unavailable');
           return;
         }
 
         const message = JSON.parse(data.toString());
+
+        if (message.type === 'chat_cancel') {
+          const assistantMessageId = message.data?.assistantMessageId;
+          const sessionId = message.data?.sessionId;
+          if (!activeGenerations.cancel(sessionId, assistantMessageId)) {
+            sendAssistantCancelled(
+              ws,
+              {
+                assistantMessageId,
+                sessionId,
+                cancelled: false,
+              },
+              { ignoreClosedSocket: true }
+            );
+          }
+          return;
+        }
 
         if (message.type === 'chat_stream') {
           const {
@@ -209,6 +273,25 @@ export function registerWebSocketServer(server: Server): void {
             messageHistory,
             webSearch: webSearchRequested,
           } = message.data;
+          if (
+            typeof assistantMessageId !== 'string' ||
+            !assistantMessageId.trim()
+          ) {
+            sendError(ws, { error: 'An assistant message ID is required.' });
+            return;
+          }
+          if (typeof sessionId !== 'string' || !sessionId.trim()) {
+            sendError(ws, { error: 'A session ID is required.' });
+            return;
+          }
+
+          currentGeneration = activeGenerations.start(
+            sessionId,
+            assistantMessageId
+          );
+          activeGenerationsByUser.start(userId, currentGeneration);
+          globallyReserved = true;
+          const generationSignal = currentGeneration.controller.signal;
           const requestProviderSelection = isPrivate
             ? normalizeChatProviderSelection({ providerType, providerId })
             : undefined;
@@ -262,6 +345,7 @@ export function registerWebSocketServer(server: Server): void {
               return;
             }
           }
+          throwIfChatGenerationCancelled(generationSignal);
 
           // Add user message with images if provided (skip for regenerations and private sessions)
           let userMessage;
@@ -304,9 +388,11 @@ export function registerWebSocketServer(server: Server): void {
               documentContext = await buildChatDocumentContext(
                 content,
                 sessionId,
-                userId
+                userId,
+                generationSignal
               );
             } catch (contextError) {
+              throwIfChatGenerationCancelled(generationSignal);
               logger.error('Error during document search:', contextError);
             }
           }
@@ -335,7 +421,11 @@ export function registerWebSocketServer(server: Server): void {
               phase: 'running',
             });
             try {
-              const results = await runWebSearch(content);
+              const results = await runWebSearch(
+                content,
+                undefined,
+                generationSignal
+              );
               if (results.length > 0) {
                 searchEnhancedContent = buildWebSearchEnhancedContent(
                   searchEnhancedContent,
@@ -354,6 +444,7 @@ export function registerWebSocketServer(server: Server): void {
                 phase: 'completed',
               });
             } catch (searchError) {
+              throwIfChatGenerationCancelled(generationSignal);
               logger.error(
                 'Web search failed; answering without it:',
                 searchError
@@ -407,7 +498,9 @@ export function registerWebSocketServer(server: Server): void {
               images: images || undefined,
               hasRelevantContext: searchHasRelevantContext,
               enhancedContent: searchEnhancedContent,
+              signal: generationSignal,
             });
+          throwIfChatGenerationCancelled(generationSignal);
 
           const generationTarget = preparedGeneration.target;
           const {
@@ -456,16 +549,18 @@ export function registerWebSocketServer(server: Server): void {
                         agentProviderId,
                         pluginMessages,
                         userId,
-                        { model: actualModelName }
+                        { model: actualModelName, signal: generationSignal }
                       )
                     : pluginService.executePluginStreamRequest(
                         actualModelName,
                         pluginMessages,
                         mergedOptions,
                         userId,
-                        (activePlugin as NonNullable<typeof activePlugin>).id
+                        (activePlugin as NonNullable<typeof activePlugin>).id,
+                        generationSignal
                       ),
                   messageId: assistantMessageId,
+                  signal: generationSignal,
                 });
                 assistantContent = streamResult.content;
                 assistantThinking = streamResult.thinking || '';
@@ -478,6 +573,7 @@ export function registerWebSocketServer(server: Server): void {
                     pluginMessages,
                     userId,
                     pluginFallbackPolicy: 'disabled',
+                    signal: generationSignal,
                   });
 
                 assistantContent = generationResult.assistantContent;
@@ -500,10 +596,14 @@ export function registerWebSocketServer(server: Server): void {
                   await streamAssistantFakeChunks(
                     ws,
                     assistantContent,
-                    assistantMessageId
+                    assistantMessageId,
+                    100,
+                    generationSignal
                   );
                 }
               }
+
+              throwIfChatGenerationCancelled(generationSignal);
 
               // Save the complete assistant message (skip for private sessions)
               if (
@@ -559,6 +659,7 @@ export function registerWebSocketServer(server: Server): void {
               }
               return; // Exit early since we handled the request via plugin
             } catch (pluginError: unknown) {
+              throwIfChatGenerationCancelled(generationSignal);
               const err =
                 pluginError instanceof Error
                   ? pluginError
@@ -640,10 +741,13 @@ export function registerWebSocketServer(server: Server): void {
             streamSource: ollamaService,
             messageId: assistantMessageId,
             userId,
+            signal: generationSignal,
           });
 
           assistantContent = ollamaStream.content;
           assistantThinking = ollamaStream.thinking || '';
+
+          throwIfChatGenerationCancelled(generationSignal);
 
           if (!ollamaStream.completed) {
             return;
@@ -729,14 +833,41 @@ export function registerWebSocketServer(server: Server): void {
           }
         }
       } catch (error: unknown) {
+        if (
+          currentGeneration &&
+          isChatGenerationCancelled(error, currentGeneration.controller.signal)
+        ) {
+          sendAssistantCancelled(
+            ws,
+            {
+              assistantMessageId: currentGeneration.assistantMessageId,
+              sessionId: currentGeneration.sessionId,
+              cancelled: true,
+            },
+            { ignoreClosedSocket: true }
+          );
+          return;
+        }
         logger.error('WebSocket error:', error);
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         sendError(ws, { error: errorMessage });
+      } finally {
+        if (currentGeneration) {
+          activeGenerations.finish(currentGeneration);
+          if (globallyReserved) {
+            activeGenerationsByUser.finish(userId, currentGeneration);
+          }
+        }
       }
     });
 
     ws.on('close', () => {
+      clearTimeout(sessionExpiryTimer);
+      releaseConnection();
+      activeGenerations.cancelAll(
+        'The WebSocket closed before generation completed.'
+      );
       logger.debug('WebSocket client disconnected');
     });
 
@@ -763,6 +894,10 @@ export function registerWebSocketServer(server: Server): void {
       return;
     }
     if (pathname === WORK_TERMINAL_WS_PATH) {
+      if (!isAllowedWebSocketOrigin(request.headers.origin)) {
+        rejectUpgrade(socket, 403, 'WebSocket origin is not allowed');
+        return;
+      }
       terminalServer.handleUpgrade(request, socket, head, ws => {
         terminalServer.emit('connection', ws, request);
       });

@@ -263,6 +263,9 @@
       },
       "voiceInput": "Hlasový vstup",
       "voiceStop": "Zastavit poslech",
+      "transcriptionSource": "Zdroj rozpoznávání řeči",
+      "browserSpeech": "Rozpoznávání řeči v prohlížeči na zařízení",
+      "providerTranscriptionDisclosure": "Nahrát a odeslat zvuk službě {{provider}} k přepisu",
       "webSearchOn": "Vyhledávání zapnuto — odpovědi využívají živé výsledky",
       "webSearchOff": "Vyhledat tuto zprávu na webu"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Nepodařilo se vygenerovat řeč",
     "playbackFailed": "Přehrávání zvuku se nezdařilo",
     "stopSpeaking": "Zastavit mluvení",
+    "preparingSpeech": "Příprava řeči...",
     "generatingSpeech": "Generování řeči...",
+    "bufferingSpeech": "Načítání řeči...",
+    "enableAudio": "Povolit zvuk a přečíst nahlas",
+    "enableAudioShort": "Povolit zvuk",
     "readAloud": "Přečíst nahlas"
   },
   "artifacts": {

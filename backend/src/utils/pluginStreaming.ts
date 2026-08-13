@@ -21,6 +21,7 @@ import {
   sendToolStatus,
   type WebSocketLike,
 } from './websocketMessages.js';
+import { throwIfChatGenerationCancelled } from './chatCancellation.js';
 
 export interface PluginStreamToolCall {
   id: string;
@@ -60,6 +61,7 @@ export interface StreamPluginResponseOptions {
   chunks: AsyncIterable<PluginStreamChunk>;
   messageId?: string;
   pauseThresholdMs?: number;
+  signal?: AbortSignal;
 }
 
 export interface PluginStreamResponseResult {
@@ -92,7 +94,9 @@ export async function streamPluginResponse({
   chunks,
   messageId,
   pauseThresholdMs = 2000,
+  signal,
 }: StreamPluginResponseOptions): Promise<PluginStreamResponseResult> {
+  throwIfChatGenerationCancelled(signal);
   let totalContent = '';
   let totalThinking = '';
   let providerMetadata: Record<string, unknown> | undefined;
@@ -141,6 +145,7 @@ export async function streamPluginResponse({
 
   try {
     for await (const chunk of chunks) {
+      throwIfChatGenerationCancelled(signal);
       if (chunk.type === 'content' && chunk.content) {
         finishToolActivity();
         startPauseDetection();
@@ -205,6 +210,8 @@ export async function streamPluginResponse({
   } finally {
     clearPauseTimer();
   }
+
+  throwIfChatGenerationCancelled(signal);
 
   return {
     content: totalContent,

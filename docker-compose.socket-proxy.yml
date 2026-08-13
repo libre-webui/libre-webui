@@ -25,7 +25,6 @@ services:
       - DOCKER_HOST=tcp://docker-socket-proxy:2375
       # For network access, add your IP/hostname to CORS_ORIGIN:
       - CORS_ORIGIN=http://localhost:8080
-      - SINGLE_USER_MODE=false
       - ENABLE_SIGNUP=${ENABLE_SIGNUP:-false}
       # JWT_SECRET: Generate with 'openssl rand -hex 64' and set via .env file or environment
       - JWT_SECRET=${JWT_SECRET:-}

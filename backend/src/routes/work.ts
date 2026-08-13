@@ -166,27 +166,27 @@ router.get(
     res: Response<ApiResponse<WorkCapabilities>>
   ): Promise<void> => {
     const userId = requireUserId(req);
-    const [dockerAvailable, providers] = await Promise.all([
-      workRuntimeService.isDockerAvailable(),
+    const [runtimeAvailable, providers] = await Promise.all([
+      workRuntimeService.isRuntimeAvailable(),
       workModelProviderService.availability(userId),
     ]);
     const providerAvailable =
       providers.ollamaAvailable || providers.pluginAvailable;
     const recoveryPending = workRuntimeService.recoveryPending;
-    const available = dockerAvailable && !recoveryPending && providerAvailable;
+    const available = runtimeAvailable && !recoveryPending && providerAvailable;
     const reason = recoveryPending
-      ? `Work is safely retrying ${workRuntimeService.recoveryPendingCount} container cleanup(s). New operations remain blocked until Docker proves they are stopped.`
-      : !dockerAvailable
-        ? workRuntimeService.dockerUnavailableReason ||
-          'Docker is not available to the Libre WebUI backend.'
+      ? `Work is safely retrying ${workRuntimeService.recoveryPendingCount} sandbox cleanup(s). New operations remain blocked until the configured runtime proves they are stopped.`
+      : !runtimeAvailable
+        ? workRuntimeService.runtimeUnavailableReason ||
+          `The ${workRuntimeService.runtimeKind} runtime is not available to the Libre WebUI backend.`
         : !providerAvailable
           ? 'No Ollama or configured plugin model provider is available.'
           : undefined;
     sendSuccess(res, {
       available,
-      runtime: 'docker',
+      runtime: workRuntimeService.runtimeKind,
       image: workRuntimeService.image,
-      dockerAvailable,
+      runtimeAvailable,
       ollamaAvailable: providers.ollamaAvailable,
       pluginAvailable: providers.pluginAvailable,
       runtimeImage: workRuntimeService.image,
@@ -194,7 +194,7 @@ router.get(
       limits: workRuntimeService.limits,
       activeRuntimes: workRuntimeService.activeRuntimeCounts(userId),
       terminal: {
-        available: dockerAvailable && !workTerminalService.unavailableReason(),
+        available: runtimeAvailable && !workTerminalService.unavailableReason(),
         reason: workTerminalService.unavailableReason() ?? undefined,
         maxSessionsPerTask: workTerminalService.maxSessionsPerTask,
         idleTimeoutMs: workTerminalService.idleTimeoutMs,

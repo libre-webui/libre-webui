@@ -263,6 +263,9 @@
       },
       "voiceInput": "Saisie vocale",
       "voiceStop": "Arrêter l'écoute",
+      "transcriptionSource": "Source de reconnaissance vocale",
+      "browserSpeech": "Reconnaissance vocale locale du navigateur",
+      "providerTranscriptionDisclosure": "Enregistrer et envoyer l’audio à {{provider}} pour transcription",
       "webSearchOn": "Recherche web activée — les réponses utilisent des résultats en direct",
       "webSearchOff": "Chercher sur le web pour ce message"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Échec de la génération de la parole",
     "playbackFailed": "Échec de la lecture audio",
     "stopSpeaking": "Arrêter la lecture",
+    "preparingSpeech": "Préparation de la parole...",
     "generatingSpeech": "Génération de la parole...",
+    "bufferingSpeech": "Mise en mémoire tampon...",
+    "enableAudio": "Activer l’audio et lire à voix haute",
+    "enableAudioShort": "Activer l’audio",
     "readAloud": "Lire à voix haute"
   },
   "artifacts": {

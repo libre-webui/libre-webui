@@ -32,7 +32,10 @@ import {
   batchTextForTTS,
   createTTSPlaybackSession,
   isTTSPlaybackAbort,
+  isTTSPlaybackBlocked,
   type TTSPlaybackSession,
+  type TTSPlaybackState,
+  unlockTTSAudioPlayback,
 } from '@/utils/ttsBatching';
 
 const logger = createLogger('components:ttsbutton');
@@ -88,21 +91,22 @@ interface TTSButtonProps {
   text: string;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
-  externallyPlaying?: boolean;
+  externalPlaybackState?: TTSPlaybackState;
   onStopExternal?: () => void;
+  onRetryExternal?: () => void;
 }
 
 export const TTSButton: React.FC<TTSButtonProps> = ({
   text,
   className,
   size = 'sm',
-  externallyPlaying = false,
+  externalPlaybackState,
   onStopExternal,
+  onRetryExternal,
 }) => {
   const { t, i18n } = useTranslation();
   const { preferences } = useAppStore();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [playbackState, setPlaybackState] = useState<TTSPlaybackState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [availableModels, setAvailableModels] = useState<TTSModel[]>([]);
   const [hasModels, setHasModels] = useState<boolean | null>(null);
@@ -142,13 +146,33 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
     playbackRunRef.current += 1;
     playbackRef.current?.cancel();
     playbackRef.current = null;
-    setIsPlaying(false);
-    setIsLoading(false);
+    setPlaybackState('idle');
   };
 
   const handlePlay = async () => {
-    if (externallyPlaying) {
+    if (
+      externalPlaybackState === 'blocked' ||
+      externalPlaybackState === 'error'
+    ) {
+      onRetryExternal?.();
+      return;
+    }
+    if (
+      externalPlaybackState === 'loading' ||
+      externalPlaybackState === 'generating' ||
+      externalPlaybackState === 'buffering' ||
+      externalPlaybackState === 'playing'
+    ) {
       onStopExternal?.();
+      return;
+    }
+    if (
+      playbackState === 'loading' ||
+      playbackState === 'generating' ||
+      playbackState === 'buffering' ||
+      playbackState === 'playing'
+    ) {
+      stopPlayback();
       return;
     }
     if (playbackRef.current) {
@@ -156,12 +180,22 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
       return;
     }
 
-    setIsLoading(true);
+    // `resume()` must be invoked before this event handler yields. The same
+    // shared context is used after provider generation completes.
+    const audioUnlock = unlockTTSAudioPlayback();
+    setPlaybackState('loading');
     setError(null);
     const runId = playbackRunRef.current + 1;
     playbackRunRef.current = runId;
 
     try {
+      const audioUnlockState = await audioUnlock;
+      if (playbackRunRef.current !== runId) return;
+      if (audioUnlockState === 'blocked') {
+        setPlaybackState('blocked');
+        return;
+      }
+
       // Use saved settings from preferences, fall back to first available model
       const ttsSettings = preferences.ttsSettings;
       const selectedModel = resolveTTSModel(
@@ -219,15 +253,9 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
             },
             { signal }
           ),
-        onStart: () => {
+        onStateChange: state => {
           if (playbackRunRef.current !== runId) return;
-          setIsLoading(false);
-          setIsPlaying(true);
-        },
-        onEnd: () => {
-          if (playbackRunRef.current !== runId) return;
-          setIsLoading(false);
-          setIsPlaying(false);
+          setPlaybackState(state);
         },
       });
       playbackRef.current = session;
@@ -242,16 +270,18 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
     } catch (err) {
       if (playbackRunRef.current !== runId) return;
       if (isTTSPlaybackAbort(err)) {
-        setIsPlaying(false);
-        setIsLoading(false);
+        setPlaybackState('idle');
+        return;
+      }
+      if (isTTSPlaybackBlocked(err)) {
+        setPlaybackState('blocked');
         return;
       }
       const errorMessage =
         err instanceof Error ? err.message : t('ttsButton.generateFailed');
       setError(errorMessage);
       logger.error('TTS error:', err);
-      setIsPlaying(false);
-      setIsLoading(false);
+      setPlaybackState('error');
     }
   };
 
@@ -286,39 +316,73 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
     lg: 'h-5 w-5',
   };
 
+  const displayState =
+    externalPlaybackState &&
+    !['idle', 'ended', 'cancelled'].includes(externalPlaybackState)
+      ? externalPlaybackState
+      : playbackState;
+  const isBusy =
+    displayState === 'loading' ||
+    displayState === 'generating' ||
+    displayState === 'buffering';
+  const isPlaying = displayState === 'playing';
+  const isBlocked = displayState === 'blocked';
+  const isError = Boolean(error) || displayState === 'error';
+  const title = error
+    ? error
+    : isError
+      ? t('ttsButton.playbackFailed')
+      : isBlocked
+        ? t('ttsButton.enableAudio')
+        : isPlaying || isBusy
+          ? isPlaying
+            ? t('ttsButton.stopSpeaking')
+            : displayState === 'buffering'
+              ? t('ttsButton.bufferingSpeech')
+              : displayState === 'generating'
+                ? t('ttsButton.generatingSpeech')
+                : t('ttsButton.preparingSpeech')
+          : t('ttsButton.readAloud');
+
   return (
     <button
       onClick={handlePlay}
       disabled={!text}
-      title={
-        error
-          ? error
-          : isPlaying || isLoading || externallyPlaying
-            ? t('ttsButton.stopSpeaking')
-            : t('ttsButton.readAloud')
-      }
+      title={title}
+      aria-label={title}
+      aria-busy={isBusy || undefined}
       className={cn(
-        'rounded-full transition-all duration-200',
+        'inline-flex items-center justify-center rounded-full transition-all duration-200',
         'hover:bg-gray-100 dark:hover:bg-dark-200',
         'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1',
         'disabled:opacity-50 disabled:cursor-not-allowed',
-        error
+        isError
           ? 'text-red-500 dark:text-red-400'
-          : isPlaying || externallyPlaying
-            ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-            : 'text-gray-500 dark:text-gray-400',
-        sizeClasses[size],
+          : isBlocked
+            ? 'w-auto gap-1 bg-amber-50 px-2 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'
+            : isPlaying
+              ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+              : 'text-gray-500 dark:text-gray-400',
+        !isBlocked && sizeClasses[size],
+        isBlocked && size === 'sm' && 'h-7',
+        isBlocked && size === 'md' && 'h-8',
+        isBlocked && size === 'lg' && 'h-10',
         className
       )}
     >
-      {isLoading ? (
+      {isBusy ? (
         <Loader2 className={cn(iconSizes[size], 'animate-spin')} />
-      ) : isPlaying || externallyPlaying ? (
+      ) : isPlaying ? (
         <Square className={iconSizes[size]} />
-      ) : error ? (
+      ) : isError || isBlocked ? (
         <VolumeX className={iconSizes[size]} />
       ) : (
         <Volume2 className={iconSizes[size]} />
+      )}
+      {isBlocked && (
+        <span className='whitespace-nowrap text-xs font-medium'>
+          {t('ttsButton.enableAudioShort')}
+        </span>
       )}
     </button>
   );

@@ -35,7 +35,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   github: '482f22da003d73fe0d6684572dc2d959b46d7f8dbecf0f92205c2b4ef2f03817',
   groq: 'd03908e9caddae5ad838de9967fdc0b5dfb249d13f24391af1c9822fcf28e823',
   huggingface:
-    '6130d437e3d8b25b5de3e9f3b30eda617edd44703dd4c9dd2c1fb061df2642ca',
+    'f16c5c14b02e929b2615737f30a3b836667997aaa4a98751d9f3de545c1f590e',
   'kimi-code':
     '0b861caf086e5fdeeb029b6053447e673f2f8e121246d79b8102b157c109b557',
   'kyutai-tts-1.6b':
@@ -50,7 +50,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   'mlx-lm': 'c5aad700fd557216a1e1eda361c0d67f92d51d1fe46d9c2028354f8ca8f25503',
   'openai-tts':
     'ebc3677f4f0ef2ec1628408d59a9e273059cc50d2f9d462e7a3b7f0c4eefe843',
-  openai: '1f91bdec0091a9951e23fda7f9e32b956c040170644ae10b9ebb90025e0a6d17',
+  openai: '12fded722a653963dc55a6c2ee00de2a128c3af384e50403ada44555ad3a7499',
   openrouter:
     '83cd1e5918d6c3176bb2929fbed6e325677e5d2e0c1ceda2da7a75f64df8365f',
   'qwen-tts':

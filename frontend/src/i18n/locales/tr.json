@@ -263,6 +263,9 @@
       },
       "voiceInput": "Sesle giriş",
       "voiceStop": "Dinlemeyi durdur",
+      "transcriptionSource": "Konuşma tanıma kaynağı",
+      "browserSpeech": "Cihazdaki tarayıcı konuşma tanıma",
+      "providerTranscriptionDisclosure": "Sesi kaydedip transkripsiyon için {{provider}} hizmetine gönder",
       "webSearchOn": "Web araması açık — yanıtlar canlı sonuçları kullanır",
       "webSearchOff": "Bu mesaj için webde ara"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Konuşma oluşturulamadı",
     "playbackFailed": "Ses oynatma başarısız",
     "stopSpeaking": "Seslendirmeyi durdur",
+    "preparingSpeech": "Konuşma hazırlanıyor...",
     "generatingSpeech": "Konuşma oluşturuluyor...",
+    "bufferingSpeech": "Konuşma yükleniyor...",
+    "enableAudio": "Sesi etkinleştir ve sesli oku",
+    "enableAudioShort": "Sesi etkinleştir",
     "readAloud": "Sesli oku"
   },
   "artifacts": {

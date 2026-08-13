@@ -10,6 +10,9 @@ const modulePath = pathToFileURL(
 const { canCreateLocalAccount, isPublicRegistrationEnabled } = await import(
   modulePath
 );
+const { parseJwtLifetime } = await import(
+  pathToFileURL(path.resolve('backend/dist/services/authService.js')).href
+);
 
 test('public registration defaults to disabled', () => {
   const originalValue = process.env.ENABLE_SIGNUP;
@@ -40,4 +43,11 @@ test('bootstrap remains available while later registration is closed', () => {
   assert.equal(canCreateLocalAccount(1, false), false);
   assert.equal(canCreateLocalAccount(0, true), true);
   assert.equal(canCreateLocalAccount(2, true), true);
+});
+
+test('session-token lifetime accepts documented durations and fails closed', () => {
+  assert.equal(parseJwtLifetime(undefined), '7d');
+  assert.equal(parseJwtLifetime(' 15m '), '15m');
+  assert.equal(parseJwtLifetime('3600'), 3600);
+  assert.equal(parseJwtLifetime('forever'), '7d');
 });

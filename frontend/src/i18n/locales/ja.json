@@ -263,6 +263,9 @@
       },
       "voiceInput": "音声入力",
       "voiceStop": "聞き取りを停止",
+      "transcriptionSource": "音声認識ソース",
+      "browserSpeech": "デバイス上のブラウザー音声認識",
+      "providerTranscriptionDisclosure": "音声を録音し、文字起こしのために{{provider}}へ送信",
       "webSearchOn": "ウェブ検索オン — 返信にライブ結果を使用",
       "webSearchOff": "このメッセージについてウェブを検索"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "音声の生成に失敗しました",
     "playbackFailed": "音声の再生に失敗しました",
     "stopSpeaking": "読み上げを停止",
+    "preparingSpeech": "音声を準備中...",
     "generatingSpeech": "音声を生成中...",
+    "bufferingSpeech": "音声を読み込み中...",
+    "enableAudio": "音声を有効にして読み上げる",
+    "enableAudioShort": "音声を有効化",
     "readAloud": "音声で読み上げ"
   },
   "artifacts": {

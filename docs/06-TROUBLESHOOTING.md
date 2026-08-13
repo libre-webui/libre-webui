@@ -383,14 +383,16 @@ docker info
 docker version
 ```
 
-Confirm Docker is running and that the operating-system user running the
-backend can invoke the configured `WORK_DOCKER_COMMAND`. Installing Libre WebUI
-with `npx` does not install Docker. If Docker is missing, Libre WebUI keeps the
-rest of the application available and does not fall back to executing model
-commands on the host.
+For the default Docker backend, confirm Docker is running and that the
+operating-system user running Libre WebUI can invoke the configured
+`WORK_DOCKER_COMMAND`. Installing Libre WebUI with `npx` does not install
+Docker. If the runtime is missing, Libre WebUI keeps the rest of the
+application available and does not fall back to executing model commands on
+the host.
 
-The repository Compose files enable Work by mounting the host Docker socket. The
-Helm chart does not, so Work stays unavailable on Kubernetes. When a Compose
+The repository Compose files enable Work by mounting the host Docker socket.
+On Kubernetes, enable the native Pod/PVC runtime with Helm value
+`work.enabled=true`; do not mount a node's runtime socket. When a Compose
 deployment still reports **Runtime unavailable**, the Work page names which of
 these applies:
 

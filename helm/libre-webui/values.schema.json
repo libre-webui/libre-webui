@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "replicaCount": {
+      "description": "Libre WebUI is single-replica until shared state backends are supported.",
+      "type": "integer",
+      "const": 1
+    },
+    "autoscaling": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Horizontal autoscaling is unsafe with SQLite and process-local state.",
+          "type": "boolean",
+          "const": false
+        },
+        "minReplicas": {
+          "type": "integer",
+          "const": 1
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "const": 1
+        }
+      }
+    }
+  }
+}

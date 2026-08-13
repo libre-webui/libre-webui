@@ -47,7 +47,8 @@ export interface ChatGenerationTargetService {
     sessionModel: string,
     userId: string,
     options?: GenerationOptions,
-    providerSelection?: ChatProviderSelection
+    providerSelection?: ChatProviderSelection,
+    signal?: AbortSignal
   ): Promise<GenerationTarget>;
 }
 
@@ -107,6 +108,7 @@ export interface PrepareChatGenerationRequestOptions extends Omit<
   providerId?: ChatProviderSelection['providerId'];
   personaSystemPrompt?: string;
   includePersonaPrompt?: boolean;
+  signal?: AbortSignal;
 }
 
 export interface PreparedChatGenerationRequest
@@ -250,6 +252,7 @@ export class ChatRequestService {
     providerId,
     personaSystemPrompt,
     includePersonaPrompt = true,
+    signal,
     ...messageOptions
   }: PrepareChatGenerationRequestOptions): Promise<PreparedChatGenerationRequest> {
     const sessionProviderSelection = normalizeChatProviderSelection(session);
@@ -290,7 +293,8 @@ export class ChatRequestService {
       generationModel,
       userId,
       options,
-      generationProviderSelection
+      generationProviderSelection,
+      signal
     );
 
     const resolvedPersonaSystemPrompt =

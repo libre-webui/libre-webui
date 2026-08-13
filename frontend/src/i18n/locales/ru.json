@@ -263,6 +263,9 @@
       },
       "voiceInput": "Голосовой ввод",
       "voiceStop": "Остановить прослушивание",
+      "transcriptionSource": "Источник распознавания речи",
+      "browserSpeech": "Распознавание речи браузером на устройстве",
+      "providerTranscriptionDisclosure": "Записать и отправить аудио в {{provider}} для расшифровки",
       "webSearchOn": "Веб-поиск включён — ответы используют актуальные результаты",
       "webSearchOff": "Искать в интернете для этого сообщения"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Не удалось сгенерировать речь",
     "playbackFailed": "Ошибка воспроизведения аудио",
     "stopSpeaking": "Остановить озвучивание",
+    "preparingSpeech": "Подготовка речи...",
     "generatingSpeech": "Генерация речи...",
+    "bufferingSpeech": "Буферизация речи...",
+    "enableAudio": "Включить звук и читать вслух",
+    "enableAudioShort": "Включить звук",
     "readAloud": "Читать вслух"
   },
   "artifacts": {

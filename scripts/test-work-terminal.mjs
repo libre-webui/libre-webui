@@ -22,7 +22,12 @@ const {
   buildExecCreatePayload,
   resolveDockerEndpoint,
 } = terminalModule;
-const { WORK_TERMINAL_WS_PATH, parseTerminalClientMessage } = serverModule;
+const {
+  WORK_TERMINAL_MAX_INPUT_BYTES,
+  WORK_TERMINAL_WS_PATH,
+  createWorkTerminalServer,
+  parseTerminalClientMessage,
+} = serverModule;
 
 test('the interactive shell inherits the sandbox container policy', () => {
   const payload = buildExecCreatePayload();
@@ -105,6 +110,15 @@ test('only well-formed control frames reach the shell', () => {
       `{"type":"input","data":"${'a'.repeat(1_048_600)}"}`
     ),
     null
+  );
+});
+
+test('the WebSocket rejects oversized frames before buffering the terminal protocol', () => {
+  const server = createWorkTerminalServer();
+  assert.equal(
+    server.options.maxPayload,
+    WORK_TERMINAL_MAX_INPUT_BYTES,
+    'the ws-layer cap must match the parser cap'
   );
 });
 

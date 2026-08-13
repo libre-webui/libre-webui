@@ -51,6 +51,11 @@ import {
 import { ChatProviderSelectionError } from '../utils/chatProviderSelection.js';
 import { formatPluginStreamToolCalls } from '../utils/pluginStreaming.js';
 import { ResourcePolicyError } from '../utils/resourceLimits.js';
+import {
+  abortChatGenerationOnResponseClose,
+  isChatGenerationCancelled,
+  throwIfChatGenerationCancelled,
+} from '../utils/chatCancellation.js';
 
 const logger = createLogger('routes:chat');
 
@@ -411,6 +416,8 @@ router.post(
     req: AuthenticatedRequest,
     res: Response<ApiResponse<ChatMessage>>
   ): Promise<void> => {
+    const { controller, cleanup } = abortChatGenerationOnResponseClose(res);
+    const signal = controller.signal;
     try {
       const sessionId = req.params.sessionId as string;
       const { message, options = {} } = req.body;
@@ -455,9 +462,11 @@ router.post(
         documentContext = await buildChatDocumentContext(
           message,
           sessionId,
-          userId
+          userId,
+          signal
         );
       } catch (error) {
+        throwIfChatGenerationCancelled(signal);
         logger.error('Error during document search:', error);
       }
 
@@ -472,7 +481,11 @@ router.post(
         userCanUseWebSearch(userModel.getUserById(userId))
       ) {
         try {
-          const results: WebSearchResult[] = await runWebSearch(message);
+          const results: WebSearchResult[] = await runWebSearch(
+            message,
+            undefined,
+            signal
+          );
           if (results.length > 0) {
             enhancedContent = buildWebSearchEnhancedContent(
               enhancedContent,
@@ -486,6 +499,7 @@ router.post(
             }));
           }
         } catch (error) {
+          throwIfChatGenerationCancelled(signal);
           logger.error('Web search failed; answering without it:', error);
         }
       }
@@ -499,6 +513,7 @@ router.post(
           content: message,
           hasRelevantContext,
           enhancedContent,
+          signal,
         });
 
       const generationResult = await chatGenerationService.executeNonStreaming({
@@ -507,7 +522,10 @@ router.post(
         pluginMessages: preparedGeneration.pluginMessages,
         userId,
         pluginFallbackPolicy: 'allow',
+        signal,
       });
+
+      throwIfChatGenerationCancelled(signal);
 
       if (generationResult.pluginError) {
         logger.error(
@@ -553,10 +571,16 @@ router.post(
         data: assistantMessage,
       });
     } catch (error: unknown) {
+      if (isChatGenerationCancelled(error, signal)) {
+        if (!res.writableEnded) res.status(499).end();
+        return;
+      }
       res.status(error instanceof ChatProviderSelectionError ? 400 : 500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to generate response'),
       });
+    } finally {
+      cleanup();
     }
   }
 );
@@ -565,6 +589,8 @@ router.post(
 router.post(
   '/sessions/:sessionId/generate/stream',
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const { controller, cleanup } = abortChatGenerationOnResponseClose(res);
+    const signal = controller.signal;
     try {
       const sessionId = req.params.sessionId as string;
       const { message, options = {} } = req.body;
@@ -617,9 +643,11 @@ router.post(
         documentContext = await buildChatDocumentContext(
           message,
           sessionId,
-          userId
+          userId,
+          signal
         );
       } catch (contextError) {
+        throwIfChatGenerationCancelled(signal);
         logger.error('Error during document search:', contextError);
       }
 
@@ -637,7 +665,11 @@ router.post(
           `data: ${JSON.stringify({ type: 'search', status: 'searching' })}\n\n`
         );
         try {
-          const results: WebSearchResult[] = await runWebSearch(message);
+          const results: WebSearchResult[] = await runWebSearch(
+            message,
+            undefined,
+            signal
+          );
           if (results.length > 0) {
             searchEnhancedContent = buildWebSearchEnhancedContent(
               documentContext.enhancedContent,
@@ -657,6 +689,7 @@ router.post(
             })}\n\n`
           );
         } catch (searchError) {
+          throwIfChatGenerationCancelled(signal);
           logger.error('Web search failed; answering without it:', searchError);
           res.write(
             `data: ${JSON.stringify({
@@ -694,7 +727,9 @@ router.post(
           hasRelevantContext: Boolean(
             searchEnhancedContent ?? documentContext.hasRelevantContext
           ),
+          signal,
         });
+      throwIfChatGenerationCancelled(signal);
       const {
         target,
         actualModelName,
@@ -721,7 +756,7 @@ router.post(
           target.providerId,
           pluginMessages,
           userId,
-          { model: target.actualModelName }
+          { model: target.actualModelName, signal }
         )) {
           if (chunk.type === 'content' && chunk.content) {
             fullResponse += chunk.content;
@@ -745,6 +780,8 @@ router.post(
             assistantProviderMetadata = chunk.providerMetadata;
           }
         }
+
+        throwIfChatGenerationCancelled(signal);
 
         if (fullResponse || fullThinking) {
           chatService.addMessage(
@@ -776,7 +813,8 @@ router.post(
             pluginMessages,
             mergedOptions,
             userId,
-            activePlugin.id
+            activePlugin.id,
+            signal
           )) {
             if (chunk.type === 'content' && chunk.content) {
               fullResponse += chunk.content;
@@ -815,6 +853,8 @@ router.post(
             }
           }
 
+          throwIfChatGenerationCancelled(signal);
+
           const toolContent = formatPluginStreamToolCalls(toolCalls);
           if (toolContent) {
             fullResponse += toolContent;
@@ -834,6 +874,7 @@ router.post(
               pluginMessages,
               userId,
               pluginFallbackPolicy: 'allow',
+              signal,
             });
           fullResponse = generationResult.assistantContent;
           fullThinking = generationResult.assistantThinking || '';
@@ -856,6 +897,8 @@ router.post(
             })}\n\n`
           );
         }
+
+        throwIfChatGenerationCancelled(signal);
 
         if (fullResponse || fullThinking) {
           chatService.addMessage(
@@ -906,12 +949,14 @@ router.post(
           }
         },
         error => {
+          if (signal.aborted || res.writableEnded) return;
           res.write(
             `data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`
           );
           res.end();
         },
         () => {
+          if (signal.aborted || res.writableEnded) return;
           // Add complete assistant response to session
           if (fullResponse || fullThinking) {
             chatService.addMessage(
@@ -930,10 +975,14 @@ router.post(
           res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
           res.end();
         },
-        undefined,
+        signal,
         { userId }
       );
     } catch (error: unknown) {
+      if (isChatGenerationCancelled(error, signal)) {
+        if (!res.writableEnded) res.end();
+        return;
+      }
       if (!res.headersSent) {
         res
           .status(error instanceof ChatProviderSelectionError ? 400 : 500)
@@ -947,6 +996,8 @@ router.post(
         `data: ${JSON.stringify({ type: 'error', error: getErrorMessage(error, 'Failed to generate stream response') })}\n\n`
       );
       res.end();
+    } finally {
+      cleanup();
     }
   }
 );

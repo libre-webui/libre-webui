@@ -96,6 +96,7 @@ interface ChatState {
     messageId: string,
     content: string
   ) => void;
+  removeMessage: (sessionId: string, messageId: string) => void;
   updateMessageWithStatistics: (
     sessionId: string,
     messageId: string,
@@ -418,6 +419,56 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set(state =>
       updateMessageContentInChatState(state, sessionId, messageId, content)
     );
+  },
+
+  removeMessage: (sessionId: string, messageId: string) => {
+    const remove = (messages: ChatMessage[]): ChatMessage[] => {
+      const removed = messages.find(message => message.id === messageId);
+      const remaining = messages.filter(message => message.id !== messageId);
+      if (!removed?.parentId) return remaining;
+
+      const siblings = remaining.filter(
+        message =>
+          message.id === removed.parentId ||
+          message.parentId === removed.parentId
+      );
+      const activeSibling = siblings.reduce<ChatMessage | undefined>(
+        (latest, message) =>
+          !latest || (message.branchIndex ?? 0) > (latest.branchIndex ?? 0)
+            ? message
+            : latest,
+        undefined
+      );
+      return remaining.map(message =>
+        siblings.some(sibling => sibling.id === message.id)
+          ? {
+              ...message,
+              isActive: message.id === activeSibling?.id,
+              siblingCount: siblings.length,
+            }
+          : message
+      );
+    };
+
+    set(state => ({
+      sessions: state.sessions.map(session =>
+        session.id === sessionId
+          ? {
+              ...session,
+              messages: remove(session.messages),
+              updatedAt: Date.now(),
+            }
+          : session
+      ),
+      currentSession:
+        state.currentSession?.id === sessionId
+          ? {
+              ...state.currentSession,
+              messages: remove(state.currentSession.messages),
+              updatedAt: Date.now(),
+            }
+          : state.currentSession,
+    }));
   },
 
   updateMessageWithStatistics: (

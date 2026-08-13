@@ -11,6 +11,15 @@ const dockerWorkflow = fs.readFileSync(
   path.join(repoRoot, '.github', 'workflows', 'docker-build.yml'),
   'utf8'
 );
+const composeFiles = [
+  'docker-compose.yml',
+  'docker-compose.gpu.yml',
+  'docker-compose.external-ollama.yml',
+  'docker-compose.socket-proxy.yml',
+  'docker-compose.dev.yml',
+  'docker-compose.dev.gpu.yml',
+  'docker-compose.dev.external-ollama.yml',
+];
 
 test('Docker install stages include the root postinstall script before npm ci', () => {
   const installStages = dockerfile
@@ -43,6 +52,27 @@ test('Docker runtime includes non-hoisted backend workspace dependencies', () =>
     dockerfile,
     /COPY --from=prod-deps \/app\/backend\/node_modules \.\/backend\/node_modules/
   );
+});
+
+test('Compose files expose only implemented signup behavior', () => {
+  for (const filename of composeFiles) {
+    const compose = fs.readFileSync(path.join(repoRoot, filename), 'utf8');
+    assert.match(
+      compose,
+      /ENABLE_SIGNUP=\$\{ENABLE_SIGNUP:-false\}/,
+      `${filename} must default signup closed`
+    );
+    assert.doesNotMatch(
+      compose,
+      /SINGLE_USER_MODE/,
+      `${filename} must not advertise the removed unauthenticated mode`
+    );
+  }
+});
+
+test('Dockerfile describes the repository socket default accurately', () => {
+  assert.match(dockerfile, /default Compose file does mount the socket/);
+  assert.doesNotMatch(dockerfile, /socket is never mounted by default/i);
 });
 
 test('Docker runtime exposes the injected development version to backend APIs', () => {

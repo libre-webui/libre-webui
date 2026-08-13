@@ -28,6 +28,7 @@
 
 import { getDatabase } from '../db.js';
 import { createLogger } from '../utils/logger.js';
+import { throwIfChatGenerationCancelled } from '../utils/chatCancellation.js';
 
 const logger = createLogger('services:web-search');
 
@@ -212,8 +213,10 @@ const bounded = (value: unknown, max: number): string =>
 
 export async function webSearch(
   query: string,
-  maxResults?: number
+  maxResults?: number,
+  signal?: AbortSignal
 ): Promise<WebSearchResult[]> {
+  throwIfChatGenerationCancelled(signal);
   const config = getWebSearchConfig();
   if (!config.available) {
     throw new Error('Web search is not enabled on this server.');
@@ -237,6 +240,9 @@ export async function webSearch(
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SEARCH_TIMEOUT_MS);
+  const cancel = () => controller.abort(signal?.reason);
+  signal?.addEventListener('abort', cancel, { once: true });
+  if (signal?.aborted) cancel();
   let response: globalThis.Response;
   try {
     response = await fetch(target, {
@@ -244,12 +250,14 @@ export async function webSearch(
       headers: { Accept: 'application/json' },
     });
   } catch (error) {
+    throwIfChatGenerationCancelled(signal);
     logger.warn('Web search request failed:', error);
     throw new Error(
       'The search service could not be reached. Check the SearXNG URL.'
     );
   } finally {
     clearTimeout(timer);
+    signal?.removeEventListener('abort', cancel);
   }
   if (!response.ok) {
     throw new Error(

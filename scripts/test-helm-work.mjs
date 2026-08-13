@@ -12,6 +12,9 @@ const chartDir = path.join(repoRoot, 'helm', 'libre-webui');
 const read = name =>
   fs.readFileSync(path.join(chartDir, 'templates', name), 'utf8');
 const values = fs.readFileSync(path.join(chartDir, 'values.yaml'), 'utf8');
+const valuesSchema = JSON.parse(
+  fs.readFileSync(path.join(chartDir, 'values.schema.json'), 'utf8')
+);
 
 test('Work stays fully disabled by default in the Helm chart', () => {
   assert.match(values, /^work:\n\s+enabled: false$/m);
@@ -82,6 +85,67 @@ test('enabling Work switches the backend to the Kubernetes runtime', () => {
   );
   assert.match(deployment, /WORK_K8S_NAMESPACE/);
   assert.match(deployment, /WORK_K8S_WORKSPACE_SIZE/);
+});
+
+test('the chart rejects unsafe application replicas and autoscaling', t => {
+  const deployment = read('deployment.yaml');
+  assert.match(deployment, /requires replicaCount=1/);
+  assert.match(deployment, /autoscaling is disabled/);
+  assert.match(values, /^replicaCount: 1$/m);
+  assert.match(values, /autoscaling:\n[\s\S]*?enabled: false/);
+  assert.match(values, /autoscaling:\n[\s\S]*?maxReplicas: 1/);
+  assert.match(values, /ENABLE_SIGNUP: ['"]false['"]/);
+  assert.equal(valuesSchema.properties.replicaCount.const, 1);
+  assert.equal(
+    valuesSchema.properties.autoscaling.properties.enabled.const,
+    false
+  );
+  assert.equal(
+    valuesSchema.properties.autoscaling.properties.minReplicas.const,
+    1
+  );
+  assert.equal(
+    valuesSchema.properties.autoscaling.properties.maxReplicas.const,
+    1
+  );
+
+  try {
+    execFileSync('helm', ['version', '--short'], { encoding: 'utf8' });
+  } catch {
+    t.skip('helm binary not available');
+    return;
+  }
+
+  const rendered = execFileSync('helm', ['template', 'render-test', chartDir], {
+    encoding: 'utf8',
+  });
+  assert.match(rendered, /- name: ENABLE_SIGNUP\n\s+value: "false"/);
+  assert.doesNotMatch(rendered, /SINGLE_USER_MODE/);
+
+  assert.throws(
+    () =>
+      execFileSync(
+        'helm',
+        ['template', 'render-test', chartDir, '--set', 'replicaCount=2'],
+        { encoding: 'utf8', stdio: 'pipe' }
+      ),
+    /replicaCount|requires replicaCount=1/
+  );
+  assert.throws(
+    () =>
+      execFileSync(
+        'helm',
+        [
+          'template',
+          'render-test',
+          chartDir,
+          '--set',
+          'autoscaling.enabled=true',
+        ],
+        { encoding: 'utf8', stdio: 'pipe' }
+      ),
+    /autoscaling|disabled/
+  );
 });
 
 test('the chart renders cleanly with Work enabled when helm is available', t => {

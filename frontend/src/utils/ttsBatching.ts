@@ -487,7 +487,25 @@ export interface TTSHTMLAudioElement {
 }
 
 export type TTSPlaybackState =
-  'idle' | 'generating' | 'playing' | 'ended' | 'cancelled' | 'error';
+  | 'idle'
+  | 'loading'
+  | 'generating'
+  | 'buffering'
+  | 'blocked'
+  | 'playing'
+  | 'ended'
+  | 'cancelled'
+  | 'error';
+
+export type TTSAudioUnlockState =
+  'idle' | 'unlocking' | 'ready' | 'blocked' | 'unsupported';
+
+export class TTSPlaybackBlockedError extends Error {
+  constructor() {
+    super('Audio playback needs a click or key press before it can start');
+    this.name = 'TTSPlaybackBlockedError';
+  }
+}
 
 export interface TTSPlaybackSessionOptions {
   generate: TTSBatchGenerator;
@@ -496,8 +514,10 @@ export interface TTSPlaybackSessionOptions {
   /** Ordered results to have ready before playback starts. Defaults to two. */
   initialBufferSize?: number;
   signal?: AbortSignal;
+  onStateChange?: (state: TTSPlaybackState) => void;
   onStart?: () => void;
   onEnd?: () => void;
+  onBlocked?: () => void;
   onError?: (error: Error) => void;
   /** Primarily useful for tests; returning null selects HTMLAudio playback. */
   audioContextFactory?: () => TTSAudioContext | null;
@@ -526,8 +546,18 @@ const createAbortError = (reason?: unknown): Error => {
   return error;
 };
 
+const getErrorName = (error: unknown): string | undefined =>
+  typeof error === 'object' && error !== null && 'name' in error
+    ? String(error.name)
+    : undefined;
+
 export const isTTSPlaybackAbort = (error: unknown): boolean =>
-  error instanceof Error && error.name === 'AbortError';
+  getErrorName(error) === 'AbortError';
+
+export const isTTSPlaybackBlocked = (error: unknown): boolean => {
+  const name = getErrorName(error);
+  return name === 'TTSPlaybackBlockedError' || name === 'NotAllowedError';
+};
 
 const clampInteger = (
   value: number,
@@ -543,7 +573,7 @@ const safelyCall = (callback: (() => void) | undefined): void => {
   }
 };
 
-const defaultAudioContextFactory = (): TTSAudioContext | null => {
+const createDefaultAudioContext = (): TTSAudioContext | null => {
   const audioGlobal = globalThis as typeof globalThis & {
     webkitAudioContext?: new () => TTSAudioContext;
   };
@@ -559,6 +589,106 @@ const defaultAudioContextFactory = (): TTSAudioContext | null => {
     return null;
   }
 };
+
+let sharedAudioContext: TTSAudioContext | null = null;
+let sharedAudioUnlockState: TTSAudioUnlockState = 'idle';
+
+const setSharedAudioUnlockState = (state: TTSAudioUnlockState): void => {
+  sharedAudioUnlockState = state;
+};
+
+const getSharedAudioContext = (): TTSAudioContext | null => {
+  if (sharedAudioContext?.state === 'closed') {
+    sharedAudioContext = null;
+    setSharedAudioUnlockState('idle');
+  }
+  if (!sharedAudioContext) {
+    sharedAudioContext = createDefaultAudioContext();
+    if (!sharedAudioContext) {
+      setSharedAudioUnlockState('unsupported');
+      return null;
+    }
+  }
+
+  if (sharedAudioContext.state === 'running') {
+    setSharedAudioUnlockState('ready');
+  }
+  return sharedAudioContext;
+};
+
+/** Return the browser-wide TTS output gate state for diagnostics and UI. */
+export const getTTSAudioUnlockState = (): TTSAudioUnlockState =>
+  sharedAudioUnlockState;
+
+/**
+ * Create/resume the shared output synchronously from a trusted user event.
+ * Do not make this function async: invoking `resume()` before returning is
+ * what preserves the browser's transient user activation.
+ */
+export function unlockTTSAudioPlayback(): Promise<TTSAudioUnlockState> {
+  const context = getSharedAudioContext();
+  if (!context) return Promise.resolve('unsupported');
+  if (!context.state || context.state === 'running') {
+    setSharedAudioUnlockState('ready');
+    return Promise.resolve('ready');
+  }
+  if (!context.resume || context.state === 'closed') {
+    setSharedAudioUnlockState('blocked');
+    return Promise.resolve('blocked');
+  }
+
+  setSharedAudioUnlockState('unlocking');
+  let resumed: Promise<void>;
+  try {
+    // This call must remain in the same stack as the pointer/key handler.
+    resumed = context.resume();
+  } catch {
+    setSharedAudioUnlockState('blocked');
+    return Promise.resolve('blocked');
+  }
+
+  return Promise.resolve(resumed).then(
+    () => {
+      const state = context.state;
+      const unlocked = !state || state === 'running';
+      setSharedAudioUnlockState(unlocked ? 'ready' : 'blocked');
+      return unlocked ? 'ready' : 'blocked';
+    },
+    () => {
+      setSharedAudioUnlockState('blocked');
+      return 'blocked';
+    }
+  );
+}
+
+/**
+ * Arm a one-time browser gesture unlock. This covers returning users who
+ * already enabled auto-play in an earlier session. The shared context remains
+ * alive across React rerenders and route navigation.
+ */
+export function armTTSAudioPlaybackUnlock(): () => void {
+  if (typeof document === 'undefined') return () => undefined;
+
+  let disposed = false;
+  const removeListeners = () => {
+    if (disposed) return;
+    disposed = true;
+    document.removeEventListener('pointerdown', handleGesture, true);
+    document.removeEventListener('keydown', handleGesture, true);
+  };
+  const handleGesture = (event: Event) => {
+    if (event instanceof KeyboardEvent) {
+      if (['Alt', 'Control', 'Meta', 'Shift'].includes(event.key)) return;
+    }
+    void unlockTTSAudioPlayback().then(state => {
+      if (state === 'ready' || state === 'unsupported') removeListeners();
+    });
+  };
+
+  document.addEventListener('pointerdown', handleGesture, true);
+  document.addEventListener('keydown', handleGesture, true);
+  return removeListeners;
+}
 
 const defaultAudioElementFactory = (url: string): TTSHTMLAudioElement => {
   const AudioConstructor = (
@@ -706,6 +836,7 @@ export class TTSPlaybackSession {
   private cancelled = false;
   private fatalError: Error | undefined;
   private currentState: TTSPlaybackState = 'idle';
+  private ownsAudioContext = false;
 
   constructor(private readonly options: TTSPlaybackSessionOptions) {
     this.concurrency = clampInteger(
@@ -762,30 +893,37 @@ export class TTSPlaybackSession {
 
     const batches = inputBatches.map(batch => batch.trim()).filter(Boolean);
     if (batches.length === 0) {
-      this.currentState = 'ended';
+      this.setState('ended');
       safelyCall(this.options.onEnd);
       this.removeExternalAbortListener();
       return;
     }
 
-    this.currentState = 'generating';
-    const queue = new OrderedGenerationQueue(
-      batches,
-      this.options.generate,
-      this.concurrency,
-      Math.max(this.concurrency, this.initialBufferSize),
-      this.controller.signal,
-      error => {
-        this.fatalError = error;
-        this.abort(error);
-      }
-    );
-
     try {
       this.throwIfStopped();
-      this.audioContext = (
-        this.options.audioContextFactory ?? defaultAudioContextFactory
-      )();
+      this.setState('loading');
+      if (this.options.audioContextFactory) {
+        this.ownsAudioContext = true;
+        this.audioContext = this.options.audioContextFactory();
+      } else {
+        this.audioContext = getSharedAudioContext();
+      }
+      if (this.audioContext)
+        await this.ensureAudioContextReady(this.audioContext);
+
+      this.throwIfStopped();
+      this.setState('generating');
+      const queue = new OrderedGenerationQueue(
+        batches,
+        this.options.generate,
+        this.concurrency,
+        Math.max(this.concurrency, this.initialBufferSize),
+        this.controller.signal,
+        error => {
+          this.fatalError = error;
+          this.abort(error);
+        }
+      );
 
       if (this.audioContext) {
         await this.playWithWebAudio(queue, batches.length);
@@ -793,17 +931,24 @@ export class TTSPlaybackSession {
         await this.playWithHtmlAudio(queue, batches.length);
       }
       this.throwIfStopped();
-      this.currentState = 'ended';
+      this.setState('ended');
       await this.cleanup();
       safelyCall(this.options.onEnd);
     } catch (error) {
       const failure = this.fatalError ?? toError(error, 'TTS playback failed');
       const wasCancelled = this.cancelled && !this.fatalError;
-      this.currentState = wasCancelled ? 'cancelled' : 'error';
+      const wasBlocked = !wasCancelled && isTTSPlaybackBlocked(failure);
+      this.setState(
+        wasCancelled ? 'cancelled' : wasBlocked ? 'blocked' : 'error'
+      );
       if (!this.controller.signal.aborted) this.abort(failure);
       await this.cleanup();
 
       if (wasCancelled) throw createAbortError(this.controller.signal.reason);
+      if (wasBlocked) {
+        safelyCall(this.options.onBlocked);
+        throw failure;
+      }
       try {
         this.options.onError?.(failure);
       } catch {
@@ -824,11 +969,54 @@ export class TTSPlaybackSession {
     }
   }
 
+  private setState(state: TTSPlaybackState): void {
+    if (this.currentState === state) return;
+    this.currentState = state;
+    try {
+      this.options.onStateChange?.(state);
+    } catch {
+      // UI lifecycle callbacks must not corrupt playback.
+    }
+  }
+
+  private async ensureAudioContextReady(
+    context: TTSAudioContext
+  ): Promise<void> {
+    if (!context.state || context.state === 'running') {
+      if (!this.ownsAudioContext) setSharedAudioUnlockState('ready');
+      return;
+    }
+    if (context.state === 'closed') {
+      throw new Error('Audio output was closed before playback started');
+    }
+    if (!context.resume) throw new TTSPlaybackBlockedError();
+
+    try {
+      await this.raceAbort(context.resume());
+    } catch (error) {
+      if (isTTSPlaybackAbort(error)) throw error;
+      if (!this.ownsAudioContext) setSharedAudioUnlockState('blocked');
+      throw new TTSPlaybackBlockedError();
+    }
+
+    if (context.state && context.state !== 'running') {
+      if (!this.ownsAudioContext) setSharedAudioUnlockState('blocked');
+      throw new TTSPlaybackBlockedError();
+    }
+    if (!this.ownsAudioContext) setSharedAudioUnlockState('ready');
+  }
+
   private markStarted(): void {
     if (this.started) return;
     this.started = true;
-    this.currentState = 'playing';
+    this.setState('playing');
     safelyCall(this.options.onStart);
+  }
+
+  private markBuffering(): void {
+    if (!this.started && this.currentState === 'generating') {
+      this.setState('buffering');
+    }
   }
 
   private async playWithWebAudio(
@@ -837,10 +1025,6 @@ export class TTSPlaybackSession {
   ): Promise<void> {
     const context = this.audioContext;
     if (!context) throw new Error('Web Audio context is unavailable');
-
-    if (context.state === 'suspended' && context.resume) {
-      await this.raceAbort(context.resume());
-    }
 
     // Keep two decoded sources queued whenever possible. As each leading
     // source ends, decode the next batch in parallel with the remaining one
@@ -902,6 +1086,7 @@ export class TTSPlaybackSession {
     index: number
   ): Promise<TTSDecodedAudio> {
     const blob = await queue.get(index);
+    this.markBuffering();
     this.throwIfStopped();
     const encoded = await this.raceAbort(blob.arrayBuffer());
     this.throwIfStopped();
@@ -916,6 +1101,7 @@ export class TTSPlaybackSession {
     const buffered: Blob[] = [];
     for (let index = 0; index < prebufferCount; index += 1) {
       buffered.push(await queue.get(index));
+      this.markBuffering();
     }
 
     for (let index = 0; index < total; index += 1) {
@@ -1014,7 +1200,7 @@ export class TTSPlaybackSession {
 
     const context = this.audioContext;
     this.audioContext = null;
-    if (context?.close) {
+    if (this.ownsAudioContext && context?.close) {
       try {
         await context.close();
       } catch {

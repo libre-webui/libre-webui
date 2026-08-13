@@ -25,6 +25,10 @@ import { userModel } from '../models/userModel.js';
 import { createLogger } from '../utils/logger.js';
 import { getAgentsEnabled } from './agentAccessService.js';
 import pluginUsageService from './pluginUsageService.js';
+import {
+  ChatGenerationCancelledError,
+  throwIfChatGenerationCancelled,
+} from '../utils/chatCancellation.js';
 
 const logger = createLogger('agent-cli');
 
@@ -518,8 +522,9 @@ export class AgentCliService {
     agentId: string,
     messages: readonly ChatMessage[],
     userId: string,
-    options: { cwd?: string; model?: string } = {}
+    options: { cwd?: string; model?: string; signal?: AbortSignal } = {}
   ): AsyncGenerator<PluginStreamChunk, void, unknown> {
+    throwIfChatGenerationCancelled(options.signal);
     this.assertAgentAccess(userId);
     const definition = AGENT_CLI_DEFINITIONS.find(
       candidate => candidate.id === agentId
@@ -575,9 +580,10 @@ export class AgentCliService {
     let stderrBuffer = '';
     let totalChars = 0;
     let settled = false;
+    let forceKillTimer: ReturnType<typeof setTimeout> | undefined;
     const startedAt = Date.now();
 
-    const recordUsage = (status: 'success' | 'error') => {
+    const recordUsage = (status: 'success' | 'error' | 'cancelled') => {
       pluginUsageService.record({
         userId,
         pluginId: `agent-cli:${definition.id}`,
@@ -594,18 +600,24 @@ export class AgentCliService {
       child.kill('SIGKILL');
     }, AGENT_TIMEOUT_MS);
 
-    const fail = (error: Error) => {
+    const cleanup = () => {
+      clearTimeout(timeout);
+      if (forceKillTimer) clearTimeout(forceKillTimer);
+      options.signal?.removeEventListener('abort', cancel);
+    };
+
+    const fail = (error: Error, status: 'error' | 'cancelled' = 'error') => {
       if (settled) return;
       settled = true;
-      clearTimeout(timeout);
-      recordUsage('error');
+      cleanup();
+      recordUsage(status);
       queue.finish(error);
     };
 
     const succeed = () => {
       if (settled) return;
       settled = true;
-      clearTimeout(timeout);
+      cleanup();
       recordUsage('success');
       const metadata: Record<string, unknown> = { agentCli: definition.id };
       if (state.agentSessionId) {
@@ -614,6 +626,22 @@ export class AgentCliService {
       queue.push({ type: 'done', providerMetadata: metadata });
       queue.finish();
     };
+
+    const cancel = () => {
+      const reason =
+        options.signal?.reason instanceof Error
+          ? options.signal.reason
+          : new ChatGenerationCancelledError();
+      fail(reason, 'cancelled');
+      if (!child.killed) {
+        child.kill('SIGTERM');
+        forceKillTimer = setTimeout(() => child.kill('SIGKILL'), 1_000);
+        forceKillTimer.unref?.();
+      }
+    };
+
+    options.signal?.addEventListener('abort', cancel, { once: true });
+    if (options.signal?.aborted) cancel();
 
     const handleLine = (line: string) => {
       const trimmed = line.trim();
@@ -657,7 +685,10 @@ export class AgentCliService {
 
     child.on('close', code => {
       if (stdoutBuffer) handleLine(stdoutBuffer);
-      if (settled) return;
+      if (settled) {
+        if (forceKillTimer) clearTimeout(forceKillTimer);
+        return;
+      }
       if (state.emittedContent) {
         succeed();
         return;
@@ -670,8 +701,10 @@ export class AgentCliService {
     child.stdin.on('error', () => {
       // The CLI may exit before consuming the prompt; close handles reporting.
     });
-    child.stdin.write(prompt);
-    child.stdin.end();
+    if (!settled) {
+      child.stdin.write(prompt);
+      child.stdin.end();
+    }
 
     return queue.drain();
   }

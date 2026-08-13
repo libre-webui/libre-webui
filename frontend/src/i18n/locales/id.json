@@ -263,6 +263,9 @@
       },
       "voiceInput": "Input suara",
       "voiceStop": "Berhenti mendengarkan",
+      "transcriptionSource": "Sumber pengenalan ucapan",
+      "browserSpeech": "Pengenalan ucapan browser di perangkat",
+      "providerTranscriptionDisclosure": "Rekam dan kirim audio ke {{provider}} untuk ditranskripsikan",
       "webSearchOn": "Pencarian web aktif — balasan memakai hasil langsung",
       "webSearchOff": "Cari di web untuk pesan ini"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Gagal membuat ucapan",
     "playbackFailed": "Pemutaran audio gagal",
     "stopSpeaking": "Berhenti berbicara",
+    "preparingSpeech": "Menyiapkan ucapan...",
     "generatingSpeech": "Membuat ucapan...",
+    "bufferingSpeech": "Memuat ucapan...",
+    "enableAudio": "Aktifkan audio dan baca dengan suara",
+    "enableAudioShort": "Aktifkan audio",
     "readAloud": "Baca dengan suara"
   },
   "artifacts": {

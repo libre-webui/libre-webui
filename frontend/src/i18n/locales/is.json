@@ -263,6 +263,9 @@
       },
       "voiceInput": "Raddinnsláttur",
       "voiceStop": "Hætta að hlusta",
+      "transcriptionSource": "Uppruni talgreiningar",
+      "browserSpeech": "Talgreining í vafra á tækinu",
+      "providerTranscriptionDisclosure": "Taka upp og senda hljóð til {{provider}} til umritunar",
       "webSearchOn": "Vefleit virk — svör nota lifandi niðurstöður",
       "webSearchOff": "Leita á vefnum fyrir þessi skilaboð"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Ekki tókst að búa til tal",
     "playbackFailed": "Afspilun hljóðs mistókst",
     "stopSpeaking": "Stöðva tal",
+    "preparingSpeech": "Undirbýr tal...",
     "generatingSpeech": "Býr til tal...",
+    "bufferingSpeech": "Hleður tali...",
+    "enableAudio": "Virkja hljóð og lesa upphátt",
+    "enableAudioShort": "Virkja hljóð",
     "readAloud": "Lesa upphátt"
   },
   "artifacts": {

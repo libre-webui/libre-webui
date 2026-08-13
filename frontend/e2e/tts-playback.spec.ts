@@ -138,3 +138,169 @@ test('batched read-aloud reuses the selected saved voice for every batch', async
     )
   ).toBe(true);
 });
+
+test('auto-play surfaces blocked audio and retries from a real click', async ({
+  page,
+}) => {
+  const model = 'mock-autoplay-tts';
+  const mockApi = await mockLibreWebUiApi(page, {
+    preferences: {
+      ttsSettings: {
+        enabled: true,
+        autoPlay: true,
+        model,
+        voice: 'calm',
+        voiceProfileId: '',
+        speed: 1,
+        pluginId: 'mock-tts',
+        streamSentences: true,
+      },
+    },
+    ttsModels: [
+      {
+        model,
+        plugin: 'mock-tts',
+        config: {
+          voices: ['calm'],
+          default_voice: 'calm',
+          formats: ['wav'],
+          default_format: 'wav',
+          max_characters: 600,
+        },
+      },
+    ],
+    sessions: [
+      {
+        id: 'autoplay-recovery',
+        title: 'Autoplay recovery',
+        model: 'llama3.2:3b',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messages: [],
+      },
+    ],
+    chatStream: {
+      chunks: ['This response should begin speaking automatically.'],
+      chunkDelayMs: 20,
+      completionDelayMs: 20,
+    },
+  });
+
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'en');
+    localStorage.setItem('auth-token', 'e2e-token');
+
+    type AudioProbe = Window & {
+      __allowTtsAudio: boolean;
+      __ttsContextCount: number;
+      __ttsResumeCalls: number;
+      __ttsStarts: number;
+    };
+    const probe = window as AudioProbe;
+    probe.__allowTtsAudio = false;
+    probe.__ttsContextCount = 0;
+    probe.__ttsResumeCalls = 0;
+    probe.__ttsStarts = 0;
+
+    class MockBufferSource {
+      buffer: { duration: number } | null = null;
+      onended: (() => void) | null = null;
+
+      connect() {}
+
+      disconnect() {}
+
+      start() {
+        probe.__ttsStarts += 1;
+        queueMicrotask(() => this.onended?.());
+      }
+
+      stop() {}
+    }
+
+    class GatedAudioContext {
+      currentTime = 0;
+      destination = {};
+      state = 'suspended';
+
+      constructor() {
+        probe.__ttsContextCount += 1;
+      }
+
+      createBufferSource() {
+        return new MockBufferSource();
+      }
+
+      async decodeAudioData() {
+        return { duration: 0.05 };
+      }
+
+      resume() {
+        probe.__ttsResumeCalls += 1;
+        if (!probe.__allowTtsAudio) {
+          return Promise.reject(
+            Object.assign(new Error('User activation is required'), {
+              name: 'NotAllowedError',
+            })
+          );
+        }
+        this.state = 'running';
+        return Promise.resolve();
+      }
+    }
+
+    Object.defineProperty(window, 'AudioContext', {
+      configurable: true,
+      value: GatedAudioContext,
+    });
+    Object.defineProperty(window, 'webkitAudioContext', {
+      configurable: true,
+      value: undefined,
+    });
+  });
+
+  await page.goto('/c/autoplay-recovery');
+  await page.waitForLoadState('networkidle');
+
+  const input = page.locator('textarea[rows="1"][dir="auto"]');
+  await input.fill('Please answer aloud.');
+  await input.press('Enter');
+
+  const enableAudio = page.getByRole('button', {
+    name: 'Enable audio and read aloud',
+  });
+  await expect(enableAudio).toBeVisible();
+  expect(mockApi.ttsGenerationRequests).toHaveLength(0);
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __ttsStarts: number }).__ttsStarts
+    )
+  ).toBe(0);
+
+  await page.evaluate(() => {
+    (window as unknown as { __allowTtsAudio: boolean }).__allowTtsAudio = true;
+  });
+  await enableAudio.click();
+
+  await expect
+    .poll(() => mockApi.ttsGenerationRequests.length)
+    .toBeGreaterThan(0);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window as unknown as { __ttsStarts: number }).__ttsStarts
+      )
+    )
+    .toBeGreaterThan(0);
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __ttsResumeCalls: number }).__ttsResumeCalls
+    )
+  ).toBeGreaterThan(1);
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { __ttsContextCount: number }).__ttsContextCount
+    )
+  ).toBe(1);
+});

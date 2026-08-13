@@ -118,7 +118,18 @@ export function WorkspaceTerminal({
         // The pane may still be laying out; the resize observer refits.
       }
 
-      socket = new WebSocket(workTerminalUrl(taskId));
+      let terminalUrl: string;
+      try {
+        terminalUrl = await workTerminalUrl(taskId);
+      } catch (ticketError) {
+        if (!disposed) {
+          setStatus('error');
+          setError(ticketError instanceof Error ? ticketError.message : null);
+        }
+        return;
+      }
+      if (disposed) return;
+      socket = new WebSocket(terminalUrl);
       socket.binaryType = 'arraybuffer';
       socketRef.current = socket;
       const decoder = new TextDecoder();

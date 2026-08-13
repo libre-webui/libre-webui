@@ -37,9 +37,11 @@ export class PluginCapabilityRegistryService {
         const capabilityConfig =
           capabilityType === 'tts'
             ? plugin.capabilities?.tts?.config
-            : capabilityType === 'image'
-              ? plugin.capabilities?.image?.config
-              : undefined;
+            : capabilityType === 'stt'
+              ? plugin.capabilities?.stt?.config
+              : capabilityType === 'image'
+                ? plugin.capabilities?.image?.config
+                : undefined;
         const noAuthRequired =
           (capabilityConfig as Record<string, unknown> | undefined)
             ?.no_auth_required === true;
@@ -65,6 +67,11 @@ export class PluginCapabilityRegistryService {
             break;
           case 'stt':
             hasCapability = !!plugin.capabilities.stt;
+            noAuthRequired =
+              (
+                plugin.capabilities.stt?.config as
+                  Record<string, unknown> | undefined
+              )?.no_auth_required === true;
             break;
           case 'embedding':
             hasCapability = !!plugin.capabilities.embedding;

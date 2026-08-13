@@ -15,7 +15,15 @@
  * limitations under the License.
  */
 
-import type { ApiResponse, ChatProviderType, UserPreferences } from '@/types';
+import type {
+  ApiResponse,
+  ChatProviderType,
+  ChatSession,
+  DocumentChunk,
+  KnowledgeCollection,
+  SessionFolder,
+  UserPreferences,
+} from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 import { api, createDemoResponse } from './client';
 import {
@@ -23,6 +31,92 @@ import {
   getDemoPreferences,
   updateDemoPreferences,
 } from './demoData';
+
+export type DataArchiveMergeStrategy = 'skip' | 'overwrite';
+
+export interface DataArchiveExclusion {
+  key: string;
+  reason: string;
+}
+
+export interface ArchivedDocument {
+  id: string;
+  filename: string;
+  title?: string;
+  content?: string;
+  fileType?: 'pdf' | 'txt';
+  size?: number;
+  sessionId?: string;
+  collectionId?: string;
+  uploadedAt: number;
+  createdAt?: number;
+  metadata?: Record<string, unknown>;
+  chunks: Array<Omit<DocumentChunk, 'embedding' | 'filename'>>;
+}
+
+export interface UserDataArchive {
+  format: 'libre-webui-user-data';
+  version: 2;
+  exportedAt: string;
+  preferences: Partial<UserPreferences>;
+  sessionFolders: SessionFolder[];
+  sessions: ChatSession[];
+  knowledgeCollections: KnowledgeCollection[];
+  documents: ArchivedDocument[];
+  exclusions: DataArchiveExclusion[];
+}
+
+export interface ArchiveSectionResult {
+  imported: number;
+  overwritten: number;
+  skipped: number;
+}
+
+export interface DataArchiveImportResult {
+  format: 'libre-webui-user-data';
+  version: 2;
+  migratedFromVersion?: string;
+  strategy: DataArchiveMergeStrategy;
+  preferences: { imported: boolean; mode: 'merge' | 'replace' };
+  sessionFolders: ArchiveSectionResult;
+  sessions: ArchiveSectionResult;
+  knowledgeCollections: ArchiveSectionResult;
+  documents: ArchiveSectionResult;
+  remappedIds: number;
+  warnings: string[];
+  exclusions: DataArchiveExclusion[];
+}
+
+export interface DataArchivePreflight {
+  valid: true;
+  format: 'libre-webui-user-data';
+  version: 2;
+  migratedFromVersion?: string;
+  strategy: DataArchiveMergeStrategy;
+  incoming: {
+    sessionFolders: number;
+    sessions: number;
+    messages: number;
+    knowledgeCollections: number;
+    documents: number;
+    documentChunks: number;
+  };
+  warnings: string[];
+  exclusions: DataArchiveExclusion[];
+}
+
+function archiveImportPayload(
+  data: Record<string, unknown> | File,
+  strategy: DataArchiveMergeStrategy
+): Record<string, unknown> | FormData {
+  if (typeof File !== 'undefined' && data instanceof File) {
+    const formData = new FormData();
+    formData.append('archive', data);
+    formData.append('strategy', strategy);
+    return formData;
+  }
+  return { data, strategy };
+}
 
 export const preferencesApi = {
   getPreferences: (): Promise<ApiResponse<UserPreferences>> => {
@@ -147,36 +241,82 @@ export const preferencesApi = {
     return api
       .post('/preferences/embedding-settings/reset')
       .then(res => res.data);
-  }, // Data import/export
-  importData: (
-    data: Record<string, unknown>,
-    mergeStrategy: 'replace' | 'merge' = 'replace'
-  ): Promise<ApiResponse<UserPreferences>> => {
+  },
+
+  // Portable, per-user data archive. Secrets, reusable cloned voices, media,
+  // personas/notes, and Work volumes are explicitly excluded by the backend.
+  exportData: (): Promise<ApiResponse<UserDataArchive>> => {
     if (isDemoMode()) {
-      return createDemoResponse<UserPreferences>({
-        theme: {
-          mode: 'dark',
-          adaptToAccent: false,
-          accent: 'blue',
-          customAccent: '#2563eb',
+      return createDemoResponse<UserDataArchive>({
+        format: 'libre-webui-user-data',
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        preferences: getDemoPreferences(),
+        sessionFolders: [],
+        sessions: [],
+        knowledgeCollections: [],
+        documents: [],
+        exclusions: [],
+      });
+    }
+    return api.get('/preferences/export').then(res => res.data);
+  },
+
+  preflightImport: (
+    data: Record<string, unknown> | File,
+    strategy: DataArchiveMergeStrategy
+  ): Promise<ApiResponse<DataArchivePreflight>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<DataArchivePreflight>({
+        valid: true,
+        format: 'libre-webui-user-data',
+        version: 2,
+        strategy,
+        incoming: {
+          sessionFolders: 0,
+          sessions: 0,
+          messages: 0,
+          knowledgeCollections: 0,
+          documents: 0,
+          documentChunks: 0,
         },
-        defaultModel: 'llama3.2',
-        systemMessage: 'You are a helpful assistant.',
-        generationOptions: {},
-        embeddingSettings: {
-          enabled: false,
-          model: 'nomic-embed-text',
-          chunkSize: 1000,
-          chunkOverlap: 200,
-          similarityThreshold: 0.7,
+        warnings: [],
+        exclusions: [],
+      });
+    }
+    return api
+      .post(
+        '/preferences/import/preflight',
+        archiveImportPayload(data, strategy)
+      )
+      .then(res => res.data);
+  },
+
+  importData: (
+    data: Record<string, unknown> | File,
+    strategy: DataArchiveMergeStrategy = 'skip'
+  ): Promise<ApiResponse<DataArchiveImportResult>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<DataArchiveImportResult>({
+        format: 'libre-webui-user-data',
+        version: 2,
+        strategy,
+        preferences: {
+          imported: true,
+          mode: strategy === 'overwrite' ? 'replace' : 'merge',
         },
-        showUsername: false, // Default to showing "You"
-        workRemoteProviderDisclosureDismissed: false,
+        sessionFolders: { imported: 0, overwritten: 0, skipped: 0 },
+        sessions: { imported: 0, overwritten: 0, skipped: 0 },
+        knowledgeCollections: { imported: 0, overwritten: 0, skipped: 0 },
+        documents: { imported: 0, overwritten: 0, skipped: 0 },
+        remappedIds: 0,
+        warnings: [],
+        exclusions: [],
       });
     }
 
     return api
-      .post('/preferences/import', { data, mergeStrategy })
+      .post('/preferences/import', archiveImportPayload(data, strategy))
       .then(res => res.data);
   },
 };

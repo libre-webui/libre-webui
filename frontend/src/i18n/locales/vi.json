@@ -263,6 +263,9 @@
       },
       "voiceInput": "Nhập bằng giọng nói",
       "voiceStop": "Dừng nghe",
+      "transcriptionSource": "Nguồn nhận dạng giọng nói",
+      "browserSpeech": "Nhận dạng giọng nói bằng trình duyệt trên thiết bị",
+      "providerTranscriptionDisclosure": "Ghi âm và gửi âm thanh đến {{provider}} để chuyển thành văn bản",
       "webSearchOn": "Tìm kiếm web đang bật — trả lời dùng kết quả trực tiếp",
       "webSearchOff": "Tìm trên web cho tin nhắn này"
     },
@@ -1488,7 +1491,11 @@
     "generateFailed": "Không thể tạo giọng nói",
     "playbackFailed": "Phát lại âm thanh thất bại",
     "stopSpeaking": "Dừng đọc",
+    "preparingSpeech": "Đang chuẩn bị giọng nói...",
     "generatingSpeech": "Đang tạo giọng nói...",
+    "bufferingSpeech": "Đang tải giọng nói...",
+    "enableAudio": "Bật âm thanh và đọc to",
+    "enableAudioShort": "Bật âm thanh",
     "readAloud": "Đọc to"
   },
   "artifacts": {

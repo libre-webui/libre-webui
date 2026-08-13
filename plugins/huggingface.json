@@ -215,7 +215,7 @@
       }
     },
     "stt": {
-      "endpoint": "https://router.huggingface.co/hf-inference/models",
+      "endpoint": "https://router.huggingface.co/hf-inference/models/{model}",
       "model_map": [
         "openai/whisper-large-v3",
         "openai/whisper-large-v3-turbo",
@@ -230,7 +230,7 @@
       ],
       "config": {
         "formats": ["flac", "mp3", "wav", "webm", "ogg"],
-        "max_duration_seconds": 300,
+        "max_audio_bytes": 26214400,
         "languages": [
           "en",
           "es",
@@ -243,7 +243,9 @@
           "ko",
           "zh"
         ],
-        "supports_timestamps": true
+        "supports_timestamps": false,
+        "request_mode": "raw",
+        "endpoint_variable": "stt_endpoint"
       }
     }
   },
@@ -260,6 +262,12 @@
       "type": "string",
       "label": "TTS API Endpoint",
       "description": "Optional TTS endpoint template. Use {model} where the model ID belongs."
+    },
+    {
+      "name": "stt_endpoint",
+      "type": "string",
+      "label": "Speech-to-Text API Endpoint",
+      "description": "Optional transcription endpoint template. Use {model} where the model ID belongs."
     },
     {
       "name": "image_endpoint",

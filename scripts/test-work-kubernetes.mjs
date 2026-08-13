@@ -203,16 +203,28 @@ test('unavailability reasons are operator-actionable', () => {
 });
 
 test('the runtime backend is selected explicitly and fails loudly', () => {
-  const { createWorkRuntimeDriver, DockerWorkRuntimeDriver } = runtimeModule;
-  assert.ok(
-    createWorkRuntimeDriver(undefined) instanceof DockerWorkRuntimeDriver
-  );
-  assert.ok(
-    createWorkRuntimeDriver('docker') instanceof DockerWorkRuntimeDriver
-  );
-  assert.ok(
-    createWorkRuntimeDriver('kubernetes') instanceof KubernetesWorkRuntimeDriver
-  );
+  const {
+    createWorkRuntimeDriver,
+    DockerWorkRuntimeDriver,
+    WorkRuntimeService,
+  } = runtimeModule;
+  const defaultDriver = createWorkRuntimeDriver(undefined);
+  const dockerDriver = createWorkRuntimeDriver('docker');
+  const kubernetesDriver = createWorkRuntimeDriver('kubernetes');
+  assert.ok(defaultDriver instanceof DockerWorkRuntimeDriver);
+  assert.ok(dockerDriver instanceof DockerWorkRuntimeDriver);
+  assert.ok(kubernetesDriver instanceof KubernetesWorkRuntimeDriver);
+  assert.equal(defaultDriver.kind, 'docker');
+  assert.equal(dockerDriver.kind, 'docker');
+  assert.equal(kubernetesDriver.kind, 'kubernetes');
+
+  const dockerRuntime = new WorkRuntimeService(dockerDriver);
+  const kubernetesRuntime = new WorkRuntimeService(kubernetesDriver);
+  assert.equal(dockerRuntime.runtimeKind, 'docker');
+  assert.equal(kubernetesRuntime.runtimeKind, 'kubernetes');
+  dockerRuntime.beginShutdown();
+  kubernetesRuntime.beginShutdown();
+
   assert.throws(
     () => createWorkRuntimeDriver('podman'),
     error => error?.code === 'WORK_RUNTIME_BACKEND_INVALID'

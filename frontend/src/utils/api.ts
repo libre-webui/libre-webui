@@ -72,6 +72,8 @@ export { systemApi } from './api/systemApi';
 export type { SystemDiagnostics } from './api/systemApi';
 export { workApi } from './api/workApi';
 export { ttsApi } from './api/ttsApi';
+export { sttApi } from './api/sttApi';
+export type { STTModel, STTTranscription } from './api/sttApi';
 export type {
   TTSGenerateBase64Response,
   TTSGenerateRequest,

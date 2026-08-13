@@ -81,8 +81,8 @@ interface WorkAdminDeps {
 const defaultDeps: WorkAdminDeps = {
   listTasksWithOwner: () => workTaskService.listAllTasksWithOwner(),
   listManaged: () => workRuntimeService.driver.listManaged(),
-  isRuntimeAvailable: () => workRuntimeService.isDockerAvailable(),
-  runtimeUnavailableReason: () => workRuntimeService.dockerUnavailableReason,
+  isRuntimeAvailable: () => workRuntimeService.isRuntimeAvailable(),
+  runtimeUnavailableReason: () => workRuntimeService.runtimeUnavailableReason,
   sessionCount: taskId => workTerminalService.sessionCount(taskId),
   activeGlobal: () => workRuntimeService.activeRuntimeCounts().global,
   limits: () => ({

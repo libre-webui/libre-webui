@@ -12,6 +12,17 @@
   },
   "model_map": ["gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano", "gpt-5.5"],
   "capabilities": {
+    "stt": {
+      "endpoint": "https://api.openai.com/v1/audio/transcriptions",
+      "model_map": ["gpt-4o-transcribe", "gpt-4o-mini-transcribe", "whisper-1"],
+      "config": {
+        "formats": ["flac", "mp3", "m4a", "ogg", "wav", "webm"],
+        "max_audio_bytes": 26214400,
+        "supports_timestamps": false,
+        "request_mode": "multipart",
+        "endpoint_variable": "stt_endpoint"
+      }
+    },
     "tts": {
       "endpoint": "https://api.openai.com/v1/audio/speech",
       "model_map": ["gpt-4o-mini-tts", "tts-1", "tts-1-hd"],
@@ -87,6 +98,12 @@
       "type": "string",
       "label": "Image API Endpoint",
       "description": "Optional full Image API generation endpoint. Leave blank to use the bundled OpenAI endpoint."
+    },
+    {
+      "name": "stt_endpoint",
+      "type": "string",
+      "label": "Speech-to-Text API Endpoint",
+      "description": "Optional full audio transcription endpoint. Leave blank to use the bundled OpenAI endpoint."
     },
     {
       "name": "temperature",

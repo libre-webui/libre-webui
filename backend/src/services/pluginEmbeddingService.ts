@@ -140,7 +140,8 @@ export class PluginEmbeddingService {
     model: string,
     input: string | string[],
     pluginId?: string,
-    userId?: string
+    userId?: string,
+    signal?: AbortSignal
   ): Promise<OllamaEmbeddingsResponse> {
     validatePluginModel(model);
 
@@ -199,6 +200,7 @@ export class PluginEmbeddingService {
           headers,
           timeout: 60000,
           maxRedirects: 0,
+          signal,
         }
       );
 
@@ -259,13 +261,14 @@ export class PluginEmbeddingService {
       });
       return result;
     } catch (error) {
+      const cancelled = signal?.aborted === true || axios.isCancel(error);
       this.deps.recordUsage?.({
         userId,
         pluginId: plugin.id,
         pluginName: plugin.name,
         capability: 'embedding',
         model,
-        status: 'error',
+        status: cancelled ? 'cancelled' : 'error',
         durationMs: Date.now() - startedAt,
         inputUnits: Array.isArray(input) ? input.length : 1,
         unitKind: 'inputs',

@@ -96,6 +96,16 @@ type MockTTSPlugin = {
   config?: MockTTSModel['config'];
 };
 
+type MockSTTModel = {
+  model: string;
+  plugin: string;
+  config?: {
+    formats?: string[];
+    max_audio_bytes?: number;
+    languages?: string[];
+  };
+};
+
 type MockImageGenModel = {
   model: string;
   plugin: string;
@@ -265,10 +275,10 @@ type MockChatStream = {
 
 type MockWorkCapabilities = {
   available: boolean;
-  runtime: 'docker';
+  runtime: 'docker' | 'kubernetes';
   image: string;
   reason?: string;
-  dockerAvailable?: boolean;
+  runtimeAvailable?: boolean;
   ollamaAvailable?: boolean;
   pluginAvailable?: boolean;
   runtimeImage?: string;
@@ -409,6 +419,8 @@ type MockOptions = {
   ttsModels?: MockTTSModel[];
   ttsPlugins?: MockTTSPlugin[];
   ttsVoiceProfiles?: MockTTSVoiceProfile[];
+  sttModels?: MockSTTModel[];
+  sttTranscript?: string;
   imageGenModels?: MockImageGenModel[];
   imageGenPlugins?: MockImageGenPlugin[];
   mediaModels?: MockMediaModels;
@@ -542,7 +554,7 @@ const defaultWorkCapabilities: MockWorkCapabilities = {
   available: true,
   runtime: 'docker',
   image: 'ghcr.io/libre-webui/work-runtime:0.1.0-e2e',
-  dockerAvailable: true,
+  runtimeAvailable: true,
   ollamaAvailable: true,
   runtimeImage: 'ghcr.io/libre-webui/work-runtime:0.1.0-e2e',
   limits: {
@@ -609,6 +621,8 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const ttsModels = options.ttsModels ?? [];
   const ttsPlugins = options.ttsPlugins ?? [];
   let ttsVoiceProfiles = structuredClone(options.ttsVoiceProfiles ?? []);
+  const sttModels = options.sttModels ?? [];
+  const sttTranscript = options.sttTranscript ?? 'Transcribed speech';
   const imageGenModels = options.imageGenModels ?? [];
   const imageGenPlugins = options.imageGenPlugins ?? [];
   const mediaModels = options.mediaModels ?? { video: [], audio: [] };
@@ -667,6 +681,10 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     : null;
   const pullStreamUrls: string[] = [];
   const ttsGenerationRequests: MockTTSGenerationRequest[] = [];
+  const sttTranscriptionRequests: Array<{
+    body: string;
+    contentType: string;
+  }> = [];
   const ttsVoiceProfileDeleteRequests: string[] = [];
   const imageGenerationRequests: MockImageGenerationRequest[] = [];
   const soundGenerationRequests: MockSoundGenerationRequest[] = [];
@@ -966,6 +984,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           type?: string;
           data?: {
             assistantMessageId?: string;
+            sessionId?: string;
             options?: Record<string, unknown>;
           };
         };
@@ -973,6 +992,24 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         try {
           message = JSON.parse(rawMessage);
         } catch {
+          return;
+        }
+
+        if (message.type === 'chat_cancel') {
+          const sent = window as unknown as Record<string, unknown>;
+          ((sent.__libreChatCancels ||= []) as unknown[]).push(message.data);
+          this.onmessage?.(
+            new MessageEvent('message', {
+              data: JSON.stringify({
+                type: 'assistant_cancelled',
+                data: {
+                  assistantMessageId: message.data?.assistantMessageId,
+                  sessionId: message.data?.sessionId,
+                  cancelled: true,
+                },
+              }),
+            })
+          );
           return;
         }
 
@@ -1154,6 +1191,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
 
       if (path === '/auth/system-info' && method === 'GET') {
         await fulfillJson(route, systemInfo);
+        return;
+      }
+
+      if (path === '/auth/websocket-ticket' && method === 'POST') {
+        await fulfillJson(route, {
+          ticket: 'e2e-websocket-ticket',
+          expiresAt: new Date(Date.now() + 30_000).toISOString(),
+        });
         return;
       }
 
@@ -2150,6 +2195,20 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/stt/models' && method === 'GET') {
+        await fulfillJson(route, sttModels);
+        return;
+      }
+
+      if (path === '/stt/transcribe' && method === 'POST') {
+        sttTranscriptionRequests.push({
+          body: route.request().postDataBuffer()?.toString('latin1') || '',
+          contentType: route.request().headers()['content-type'] || '',
+        });
+        await fulfillJson(route, { text: sttTranscript, language: 'en' });
+        return;
+      }
+
       if (path === '/tts/plugins' && method === 'GET') {
         await fulfillJson(route, ttsPlugins);
         return;
@@ -2240,6 +2299,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         .forEach(releasePreferenceUpdate => releasePreferenceUpdate());
     },
     ttsGenerationRequests,
+    sttTranscriptionRequests,
     ttsVoiceProfileDeleteRequests,
     imageGenerationRequests,
     soundGenerationRequests,

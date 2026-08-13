@@ -29,7 +29,7 @@ const HEATMAP_MODELS_PER_DAY = 5;
 const RETENTION_DAYS = 400;
 
 export type PluginUsageCapability =
-  'chat' | 'embedding' | 'image' | 'tts' | 'audio' | 'video';
+  'chat' | 'embedding' | 'image' | 'stt' | 'tts' | 'audio' | 'video';
 export type PluginUsageStatus = 'success' | 'error' | 'cancelled';
 
 export interface ProviderTokenUsage {

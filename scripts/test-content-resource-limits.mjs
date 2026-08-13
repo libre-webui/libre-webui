@@ -208,3 +208,17 @@ test('session-folder names and per-user storage are bounded', () => {
   );
   assert.equal(renamed?.name, 'Renamed while at quota');
 });
+
+test('the welcome document picker matches the PDF and text upload contract', () => {
+  const picker = fs.readFileSync(
+    path.join(repoRoot, 'frontend', 'src', 'pages', 'ChatPage.tsx'),
+    'utf8'
+  );
+  const route = fs.readFileSync(
+    path.join(repoRoot, 'backend', 'src', 'routes', 'documents.ts'),
+    'utf8'
+  );
+  assert.match(picker, /accept='\.pdf,\.txt'/);
+  assert.doesNotMatch(picker, /accept='\.pdf,\.txt,\.md'/);
+  assert.match(route, /Only PDF and TXT files are allowed/);
+});

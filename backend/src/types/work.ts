@@ -279,9 +279,9 @@ export interface WorkGitDiff {
 
 export interface WorkCapabilities {
   available: boolean;
-  runtime: 'docker';
+  runtime: 'docker' | 'kubernetes';
   image: string;
-  dockerAvailable: boolean;
+  runtimeAvailable: boolean;
   ollamaAvailable: boolean;
   pluginAvailable: boolean;
   runtimeImage: string;

@@ -392,7 +392,7 @@ function initializeTables(): void {
     CREATE TABLE IF NOT EXISTS plugin_discovered_capability_models (
       user_id TEXT DEFAULT 'default',
       plugin_id TEXT NOT NULL,
-      capability TEXT NOT NULL CHECK(capability IN ('image', 'tts', 'audio', 'video')),
+      capability TEXT NOT NULL CHECK(capability IN ('image', 'stt', 'tts', 'audio', 'video')),
       models_json TEXT NOT NULL,
       updated_at INTEGER NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -433,7 +433,7 @@ function initializeTables(): void {
       user_id TEXT NOT NULL,
       plugin_id TEXT NOT NULL,
       plugin_name TEXT NOT NULL,
-      capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'tts', 'audio', 'video')),
+      capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'stt', 'tts', 'audio', 'video')),
       model TEXT NOT NULL,
       status TEXT NOT NULL CHECK(status IN ('success', 'error', 'cancelled')),
       prompt_tokens INTEGER,
@@ -700,7 +700,8 @@ function runMigrations(): void {
     if (
       usageTableSql?.sql &&
       (!usageTableSql.sql.includes("'video'") ||
-        !usageTableSql.sql.includes("'audio'"))
+        !usageTableSql.sql.includes("'audio'") ||
+        !usageTableSql.sql.includes("'stt'"))
     ) {
       migrationDb.transaction(() => {
         migrationDb.exec(`
@@ -709,7 +710,7 @@ function runMigrations(): void {
             user_id TEXT NOT NULL,
             plugin_id TEXT NOT NULL,
             plugin_name TEXT NOT NULL,
-            capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'tts', 'audio', 'video')),
+            capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'stt', 'tts', 'audio', 'video')),
             model TEXT NOT NULL,
             status TEXT NOT NULL CHECK(status IN ('success', 'error', 'cancelled')),
             prompt_tokens INTEGER,
@@ -728,6 +729,38 @@ function runMigrations(): void {
           CREATE INDEX idx_plugin_usage_events_plugin_created ON plugin_usage_events(plugin_id, created_at DESC);
           CREATE INDEX idx_plugin_usage_events_model_created ON plugin_usage_events(model, created_at DESC);
           CREATE INDEX idx_plugin_usage_events_user_created ON plugin_usage_events(user_id, created_at DESC);
+        `);
+      })();
+    }
+
+    const capabilityModelsTableSql = migrationDb
+      .prepare(
+        `SELECT sql FROM sqlite_master
+         WHERE type = 'table' AND name = 'plugin_discovered_capability_models'`
+      )
+      .get() as { sql?: string } | undefined;
+    if (
+      capabilityModelsTableSql?.sql &&
+      !capabilityModelsTableSql.sql.includes("'stt'")
+    ) {
+      migrationDb.transaction(() => {
+        migrationDb.exec(`
+          CREATE TABLE plugin_discovered_capability_models_next (
+            user_id TEXT DEFAULT 'default',
+            plugin_id TEXT NOT NULL,
+            capability TEXT NOT NULL CHECK(capability IN ('image', 'stt', 'tts', 'audio', 'video')),
+            models_json TEXT NOT NULL,
+            updated_at INTEGER NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            PRIMARY KEY (user_id, plugin_id, capability)
+          );
+          INSERT INTO plugin_discovered_capability_models_next
+            SELECT * FROM plugin_discovered_capability_models;
+          DROP TABLE plugin_discovered_capability_models;
+          ALTER TABLE plugin_discovered_capability_models_next
+            RENAME TO plugin_discovered_capability_models;
+          CREATE INDEX idx_plugin_discovered_capability_models_plugin_id
+            ON plugin_discovered_capability_models(plugin_id);
         `);
       })();
     }
