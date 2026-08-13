@@ -68,7 +68,7 @@ jobs:
         run: |
           helm install lw-ci ./helm/libre-webui \
             --set work.enabled=true \
-            --set replicaCount=0 \
+            --set replicaCount=1 \
             --set ollama.bundled.enabled=false \
             --set persistence.enabled=false
           kubectl get role,rolebinding,networkpolicy -n libre-webui-work
