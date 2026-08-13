@@ -785,6 +785,31 @@ test('provider API configuration resolves modes, base URLs, paths, and model dis
       endpoint: 'http://gateway.internal:8080/v1/chat/completions',
     }
   );
+  const llamaCppPlugin = {
+    endpoint: 'http://localhost:8080/v1/chat/completions',
+    api_mode: 'chat_completions',
+    base_url: 'http://localhost:8080/v1',
+  };
+  assert.deepEqual(
+    pluginValidation.resolvePluginApiConfig(llamaCppPlugin, {
+      base_url: llamaCppPlugin.base_url,
+      endpoint: 'http://llama-gateway.example:8080/v1/',
+    }),
+    {
+      apiMode: 'chat_completions',
+      endpoint: 'http://llama-gateway.example:8080/v1/chat/completions',
+    }
+  );
+  assert.deepEqual(
+    pluginValidation.resolvePluginApiConfig(llamaCppPlugin, {
+      base_url: llamaCppPlugin.base_url,
+      endpoint: 'http://llama-gateway.example:8080/custom/inference',
+    }),
+    {
+      apiMode: 'chat_completions',
+      endpoint: 'http://llama-gateway.example:8080/custom/inference',
+    }
+  );
   for (const endpoint of [
     'http://10.example.com/v1',
     'http://172.16.example.com/v1',

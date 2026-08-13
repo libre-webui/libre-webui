@@ -122,14 +122,16 @@ class ChatGenerationService {
     model: string,
     userId: string,
     options: GenerationOptions = {},
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    includeOllamaDefaults = true
   ): Promise<GenerationOptions> {
     const global = preferencesService.getGenerationOptions(userId);
     const pinned = preferencesService.getModelGenerationOptions(model, userId);
 
     // Only ask the model when the user has not already answered for it.
     const recommended =
-      Object.keys(pinned).length > 0 && pinned.num_ctx !== undefined
+      !includeOllamaDefaults ||
+      (Object.keys(pinned).length > 0 && pinned.num_ctx !== undefined)
         ? {}
         : (await ollamaService.getModelDefaults(model, signal)).options;
 
@@ -149,17 +151,11 @@ class ChatGenerationService {
     providerSelection?: ChatProviderSelection,
     signal?: AbortSignal
   ): Promise<GenerationTarget> {
+    const provider = normalizeChatProviderSelection(providerSelection);
     const actualModelName = await this.resolveActualModelName(
       sessionModel,
       userId
     );
-    const mergedOptions = await this.mergeOptionsForModel(
-      actualModelName,
-      userId,
-      options,
-      signal
-    );
-    const provider = normalizeChatProviderSelection(providerSelection);
     const activePlugin =
       provider?.providerType === 'ollama' || provider?.providerType === 'agent'
         ? null
@@ -168,6 +164,15 @@ class ChatGenerationService {
             userId,
             provider?.providerId
           );
+    const includeOllamaDefaults =
+      provider?.providerType === 'ollama' || (!provider && !activePlugin);
+    const mergedOptions = await this.mergeOptionsForModel(
+      actualModelName,
+      userId,
+      options,
+      signal,
+      includeOllamaDefaults
+    );
     const pluginVariables = activePlugin
       ? pluginService.getPluginVariables(activePlugin, userId)
       : {};

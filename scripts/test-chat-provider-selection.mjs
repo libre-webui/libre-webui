@@ -611,6 +611,77 @@ test('provider-qualified targets distinguish Ollama and colliding plugins', asyn
   assert.equal(legacyTarget.providerId, undefined);
 });
 
+test('plugin, agent, and legacy plugin targets do not probe Ollama defaults', async () => {
+  const originalGetModelDefaults = ollamaService.getModelDefaults;
+  const globalNumCtx = preferencesService.getGenerationOptions(userId).num_ctx;
+  const probedModels = [];
+  ollamaService.getModelDefaults = async model => {
+    probedModels.push(model);
+    return { options: { num_ctx: 12345 }, contextCapped: false };
+  };
+
+  try {
+    const pluginTarget = await chatGenerationService.prepareGenerationTarget(
+      sharedModel,
+      userId,
+      { temperature: 0.25 },
+      { providerType: 'plugin', providerId: pluginBId }
+    );
+    const agentTarget = await chatGenerationService.prepareGenerationTarget(
+      sharedModel,
+      userId,
+      {},
+      { providerType: 'agent', providerId: 'test-agent' }
+    );
+    const legacyPluginTarget =
+      await chatGenerationService.prepareGenerationTarget(sharedModel, userId);
+
+    assert.equal(pluginTarget.activePlugin?.id, pluginBId);
+    assert.equal(pluginTarget.mergedOptions.temperature, 0.25);
+    assert.equal(pluginTarget.mergedOptions.num_ctx, globalNumCtx);
+    assert.equal(agentTarget.activePlugin, null);
+    assert.equal(agentTarget.mergedOptions.num_ctx, globalNumCtx);
+    assert.equal(legacyPluginTarget.activePlugin?.id, pluginAId);
+    assert.equal(legacyPluginTarget.mergedOptions.num_ctx, globalNumCtx);
+    assert.deepEqual(probedModels, []);
+  } finally {
+    ollamaService.getModelDefaults = originalGetModelDefaults;
+  }
+});
+
+test('explicit Ollama and unclaimed legacy targets retain Ollama defaults', async () => {
+  const originalGetModelDefaults = ollamaService.getModelDefaults;
+  const ollamaOnlyModel = 'chat-provider-ollama-only-model';
+  const probedModels = [];
+  ollamaService.getModelDefaults = async model => {
+    probedModels.push(model);
+    return { options: { num_ctx: 12345 }, contextCapped: false };
+  };
+
+  try {
+    const explicitOllamaTarget =
+      await chatGenerationService.prepareGenerationTarget(
+        sharedModel,
+        userId,
+        {},
+        { providerType: 'ollama' }
+      );
+    const legacyOllamaTarget =
+      await chatGenerationService.prepareGenerationTarget(
+        ollamaOnlyModel,
+        userId
+      );
+
+    assert.equal(explicitOllamaTarget.activePlugin, null);
+    assert.equal(explicitOllamaTarget.mergedOptions.num_ctx, 12345);
+    assert.equal(legacyOllamaTarget.activePlugin, null);
+    assert.equal(legacyOllamaTarget.mergedOptions.num_ctx, 12345);
+    assert.deepEqual(probedModels, [sharedModel, ollamaOnlyModel]);
+  } finally {
+    ollamaService.getModelDefaults = originalGetModelDefaults;
+  }
+});
+
 test('persisted legacy sessions ignore unpersisted request provider identity', async () => {
   const requestService = new ChatRequestService({
     chatGenerationService,

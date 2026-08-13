@@ -43,7 +43,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   'kyutai-tts':
     '22b48b58b8d7d3021e6c0163771830e2e4e4d973466e700def41fe85ec90644f',
   'llama-cpp':
-    'cb29e46330199af61f0ee677b7c72d6026f7141bacdb4423588f05ecd29f46ca',
+    'df2a449df1f367400999599e48df53b05a104d59e5df269eb13ed1d9720073f8',
   'longcat-audiodit':
     'ac898aaad95181722b4f53303edd4939a9f9b0fcd0c5a8126f39fa80e45cba25',
   mistral: 'a8a188cc75799a4b0a4c8fa4b448a8601b5ed72babc358ee460683459a75fbed',

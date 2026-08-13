@@ -668,10 +668,7 @@ export function registerWebSocketServer(server: Server): void {
                 string,
                 unknown
               > | null;
-              logger.error(
-                'Plugin failed, falling back to Ollama:',
-                err.message
-              );
+              logger.error('Plugin request failed:', err.message);
               if (
                 errWithResponse &&
                 typeof errWithResponse === 'object' &&
@@ -701,7 +698,7 @@ export function registerWebSocketServer(server: Server): void {
                     agentProviderId
                       ? `Agent CLI "${agentProviderId}"`
                       : `Plugin "${activePlugin?.name}"`
-                  } failed for model ${actualModelName}, not falling back to Ollama`
+                  } failed for model ${actualModelName}`
                 );
                 sendError(ws, {
                   error: agentProviderId
