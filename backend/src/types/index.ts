@@ -472,6 +472,9 @@ export interface VideoGenConfig {
   endpoint_variable?: string;
   poll_interval_ms?: number;
   timeout_ms?: number;
+  /** Optional provider operation for cancelling an accepted job. Use {job_id}. */
+  cancel_endpoint?: string;
+  cancel_method?: 'POST' | 'DELETE';
 }
 
 export interface AudioGenConfig {

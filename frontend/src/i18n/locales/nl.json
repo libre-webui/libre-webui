@@ -264,7 +264,7 @@
       "voiceInput": "Spraakinvoer",
       "voiceStop": "Stoppen met luisteren",
       "transcriptionSource": "Bron voor spraakherkenning",
-      "browserSpeech": "Spraakherkenning in de browser op het apparaat",
+      "browserSpeech": "Spraakservice van de browser",
       "providerTranscriptionDisclosure": "Audio opnemen en naar {{provider}} sturen voor transcriptie",
       "webSearchOn": "Webzoeken aan — antwoorden gebruiken live resultaten",
       "webSearchOff": "Zoek op het web voor dit bericht"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Gegevensbeheer",
       "export": "Gegevens exporteren",
-      "exportDescription": "Download al uw gegevens inclusief voorkeuren, sessies en documenten.",
+      "exportDescription": "Download een draagbaar archief met voorkeuren, chatmappen, sessies en berichten, notities, kennisverzamelingen en geëxtraheerde documenttekst.",
       "exportAll": "Alle gegevens exporteren",
       "import": "Gegevens importeren",
       "importDescription": "Importeer gegevens van een eerdere export.",
@@ -796,6 +796,11 @@
       "clearing": "Wissen...",
       "importOptions": "Importopties",
       "importOptionsDescription": "Kies hoe om te gaan met bestaande gegevens",
+      "validatingArchive": "Archief valideren en wijzigingen berekenen…",
+      "archiveValidationFailed": "Archiefvalidatie mislukt",
+      "preflightReport": "Importvoorbeeld",
+      "preflightIncoming": "{{folders}} mappen · {{sessions}} chats · {{messages}} berichten · {{notes}} notities · {{collections}} verzamelingen · {{documents}} documenten · {{chunks}} fragmenten",
+      "preflightRemappedIds": "{{count}} ID’s worden opnieuw toegewezen om de gegevens van een ander account te beschermen.",
       "skipDuplicates": "Duplicaten overslaan",
       "overwrite": "Bestaande overschrijven",
       "importResults": "Importresultaten",
@@ -803,15 +808,25 @@
       "imported": "Geïmporteerd",
       "failed": "Mislukt",
       "sessions": "Sessies",
+      "sessionFolders": "Sessiemappen",
+      "notes": "Notities",
+      "knowledgeCollections": "Kennisverzamelingen",
       "importedLabel": "geïmporteerd",
+      "overwrittenLabel": "overschreven",
       "skipped": "overgeslagen",
+      "toCreate": "aan te maken",
+      "toOverwrite": "te overschrijven",
+      "toSkip": "over te slaan",
       "documents": "Documenten",
+      "warnings": "Waarschuwingen",
+      "refreshAfterImportFailed": "De gegevens zijn geïmporteerd, maar sommige weergaven konden niet worden vernieuwd. Laad Libre WebUI opnieuw om alle wijzigingen te zien.",
       "errors": "Fouten",
       "archivedChats": {
         "title": "Gearchiveerde chats",
         "empty": "Geen gearchiveerde chats",
         "unarchive": "Herstellen"
-      }
+      },
+      "archiveScopeV3": "Bevat voorkeuren, chats, mappen, notities, kennisverzamelingen en geëxtraheerde documenttekst. Accounts en geheimen, biometrisch gekloonde stemmen, gegenereerde media, persona’s en geheugen en Work-gegevens of -volumes zijn uitgesloten."
     },
     "about": {
       "title": "Over",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Mogelijkhedenmix",
       "characters": "{{count}} tekens",
+      "bytes": "{{count}} bytes",
       "images": "{{count}} afbeeldingen",
       "jobs": "{{count}} video jobs",
       "inputs": "{{count}} inputs",

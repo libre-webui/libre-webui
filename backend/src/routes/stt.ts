@@ -65,17 +65,22 @@ function reserveTranscriptionSlot(id: string): () => void {
   };
 }
 
-function requestAbortSignal(
+export function requestAbortSignal(
   req: AuthenticatedRequest,
   res: Response
 ): { signal: AbortSignal; cleanup: () => void } {
   const controller = new AbortController();
-  const abort = () => controller.abort(new Error('STT client disconnected'));
+  const abort = () => {
+    if (!controller.signal.aborted) {
+      controller.abort(new Error('STT client disconnected'));
+    }
+  };
   const responseClosed = () => {
     if (!res.writableEnded) abort();
   };
   req.once('aborted', abort);
   res.once('close', responseClosed);
+  if (req.aborted || res.destroyed) abort();
   return {
     signal: controller.signal,
     cleanup: () => {
@@ -107,13 +112,16 @@ router.get('/models', async (req: AuthenticatedRequest, res) => {
 });
 
 router.post('/transcribe', async (req: AuthenticatedRequest, res) => {
+  const abort = requestAbortSignal(req, res);
   let releaseSlot: (() => void) | undefined;
   try {
+    if (abort.signal.aborted) return;
     const id = userId(req);
     // Reserve before multer buffers the recording. The same per-user/global
     // ceiling therefore bounds both upload memory and provider work.
     releaseSlot = reserveTranscriptionSlot(id);
     await parseSTTAudioUpload(req, res);
+    if (abort.signal.aborted) return;
     const { model, pluginId, language, prompt } = req.body || {};
     if (typeof model !== 'string' || typeof pluginId !== 'string') {
       res.status(400).json({
@@ -155,22 +163,19 @@ router.post('/transcribe', async (req: AuthenticatedRequest, res) => {
       return;
     }
     const audio = validateSTTAudio(req.file, selected.config);
-    const abort = requestAbortSignal(req, res);
-    try {
-      const result = await pluginService.executeSTTRequest(model, audio, {
-        pluginId,
-        userId: id,
-        ...(language ? { language } : {}),
-        ...(prompt?.trim() ? { prompt: prompt.trim() } : {}),
-        signal: abort.signal,
-      });
-      if (!abort.signal.aborted) {
-        res.json({ success: true, data: result });
-      }
-    } finally {
-      abort.cleanup();
+    if (abort.signal.aborted) return;
+    const result = await pluginService.executeSTTRequest(model, audio, {
+      pluginId,
+      userId: id,
+      ...(language ? { language } : {}),
+      ...(prompt?.trim() ? { prompt: prompt.trim() } : {}),
+      signal: abort.signal,
+    });
+    if (!abort.signal.aborted) {
+      res.json({ success: true, data: result });
     }
   } catch (error) {
+    if (abort.signal.aborted) return;
     if (error instanceof STTProviderResponseError) {
       logger.warn(
         `Speech provider returned status ${error.providerStatus} during transcription`
@@ -211,6 +216,7 @@ router.post('/transcribe', async (req: AuthenticatedRequest, res) => {
       message: 'Speech transcription failed',
     });
   } finally {
+    abort.cleanup();
     releaseSlot?.();
   }
 });

@@ -264,7 +264,7 @@
       "voiceInput": "Stemmeinput",
       "voiceStop": "Stop med at lytte",
       "transcriptionSource": "Kilde til talegenkendelse",
-      "browserSpeech": "Talegenkendelse i browseren på enheden",
+      "browserSpeech": "Browserens talegenkendelsestjeneste",
       "providerTranscriptionDisclosure": "Optag og send lyd til {{provider}} til transskribering",
       "webSearchOn": "Websøgning til — svar bruger live-resultater",
       "webSearchOff": "Søg på nettet for denne besked"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Dataadministration",
       "export": "Eksporter data",
-      "exportDescription": "Download alle dine data inklusive præferencer, sessioner og dokumenter.",
+      "exportDescription": "Download et flytbart arkiv med indstillinger, chatmapper, sessioner og beskeder, noter, videnssamlinger og udtrukket dokumenttekst.",
       "exportAll": "Eksporter alle data",
       "import": "Importer data",
       "importDescription": "Importer data fra en tidligere eksport.",
@@ -796,6 +796,11 @@
       "clearing": "Rydder...",
       "importOptions": "Importindstillinger",
       "importOptionsDescription": "Vælg hvordan eksisterende data skal håndteres",
+      "validatingArchive": "Validerer arkivet og beregner ændringer…",
+      "archiveValidationFailed": "Validering af arkivet mislykkedes",
+      "preflightReport": "Forhåndsvisning af import",
+      "preflightIncoming": "{{folders}} mapper · {{sessions}} chats · {{messages}} beskeder · {{notes}} noter · {{collections}} samlinger · {{documents}} dokumenter · {{chunks}} tekststykker",
+      "preflightRemappedIds": "{{count}} id’er bliver ændret for at beskytte en anden kontos data.",
       "skipDuplicates": "Spring dubletter over",
       "overwrite": "Overskriv eksisterende",
       "importResults": "Importresultater",
@@ -803,15 +808,25 @@
       "imported": "Importeret",
       "failed": "Mislykkedes",
       "sessions": "Sessioner",
+      "sessionFolders": "Sessionsmapper",
+      "notes": "Noter",
+      "knowledgeCollections": "Videnssamlinger",
       "importedLabel": "importeret",
+      "overwrittenLabel": "overskrevet",
       "skipped": "sprunget over",
+      "toCreate": "oprettes",
+      "toOverwrite": "overskrives",
+      "toSkip": "springes over",
       "documents": "Dokumenter",
+      "warnings": "Advarsler",
+      "refreshAfterImportFailed": "Data blev importeret, men nogle visninger kunne ikke opdateres. Genindlæs Libre WebUI for at se alle ændringer.",
       "errors": "Fejl",
       "archivedChats": {
         "title": "Arkiverede chats",
         "empty": "Ingen arkiverede chats",
         "unarchive": "Gendan"
-      }
+      },
+      "archiveScopeV3": "Omfatter indstillinger, chats, mapper, noter, videnssamlinger og udtrukket dokumenttekst. Udelader konti og hemmeligheder, biometrisk klonede stemmer, genererede medier, personaer og hukommelse samt Work-data eller -drev."
     },
     "about": {
       "title": "Om",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Mulighedsmix",
       "characters": "{{count}} tegn",
+      "bytes": "{{count}} byte",
       "images": "{{count}} billeder",
       "jobs": "{{count}} videojobs",
       "inputs": "{{count}} input",

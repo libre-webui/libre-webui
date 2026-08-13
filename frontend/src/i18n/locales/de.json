@@ -264,7 +264,7 @@
       "voiceInput": "Spracheingabe",
       "voiceStop": "Zuhören beenden",
       "transcriptionSource": "Quelle der Spracherkennung",
-      "browserSpeech": "Spracherkennung im Browser auf diesem Gerät",
+      "browserSpeech": "Spracherkennungsdienst des Browsers",
       "providerTranscriptionDisclosure": "Audio aufnehmen und zur Transkription an {{provider}} senden",
       "webSearchOn": "Websuche aktiv — Antworten nutzen Live-Ergebnisse",
       "webSearchOff": "Für diese Nachricht im Web suchen"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Datenverwaltung",
       "export": "Daten exportieren",
-      "exportDescription": "Laden Sie alle Ihre Daten herunter, einschließlich Einstellungen, Sitzungen und Dokumente.",
+      "exportDescription": "Laden Sie ein portables Archiv mit Einstellungen, Chat-Ordnern, Sitzungen und Nachrichten, Notizen, Wissenssammlungen und extrahiertem Dokumenttext herunter.",
       "exportAll": "Alle Daten exportieren",
       "import": "Daten importieren",
       "importDescription": "Importieren Sie Daten aus einem früheren Export.",
@@ -796,6 +796,11 @@
       "clearing": "Wird gelöscht...",
       "importOptions": "Import-Optionen",
       "importOptionsDescription": "Wählen Sie, wie vorhandene Daten behandelt werden sollen",
+      "validatingArchive": "Archiv wird geprüft und Änderungen werden berechnet…",
+      "archiveValidationFailed": "Archivprüfung fehlgeschlagen",
+      "preflightReport": "Importvorschau",
+      "preflightIncoming": "{{folders}} Ordner · {{sessions}} Chats · {{messages}} Nachrichten · {{notes}} Notizen · {{collections}} Sammlungen · {{documents}} Dokumente · {{chunks}} Abschnitte",
+      "preflightRemappedIds": "{{count}} IDs werden zum Schutz der Daten eines anderen Kontos neu zugeordnet.",
       "skipDuplicates": "Duplikate überspringen",
       "overwrite": "Vorhandene überschreiben",
       "importResults": "Import-Ergebnisse",
@@ -803,15 +808,25 @@
       "imported": "Importiert",
       "failed": "Fehlgeschlagen",
       "sessions": "Sitzungen",
+      "sessionFolders": "Sitzungsordner",
+      "notes": "Notizen",
+      "knowledgeCollections": "Wissenssammlungen",
       "importedLabel": "importiert",
+      "overwrittenLabel": "überschrieben",
       "skipped": "übersprungen",
+      "toCreate": "zu erstellen",
+      "toOverwrite": "zu überschreiben",
+      "toSkip": "zu überspringen",
       "documents": "Dokumente",
+      "warnings": "Warnungen",
+      "refreshAfterImportFailed": "Die Daten wurden importiert, aber einige Ansichten konnten nicht aktualisiert werden. Laden Sie Libre WebUI neu, um alle Änderungen zu sehen.",
       "errors": "Fehler",
       "archivedChats": {
         "title": "Archivierte Chats",
         "empty": "Keine archivierten Chats",
         "unarchive": "Wiederherstellen"
-      }
+      },
+      "archiveScopeV3": "Enthält Einstellungen, Chats, Ordner, Notizen, Wissenssammlungen und extrahierten Dokumenttext. Ausgeschlossen sind Konten und Geheimnisse, biometrisch geklonte Stimmen, generierte Medien, Personas und Erinnerungen sowie Work-Daten oder -Volumes."
     },
     "about": {
       "title": "Über",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Fähigkeitsmix",
       "characters": "{{count}} Zeichen",
+      "bytes": "{{count}} Bytes",
       "images": "{{count}} Bilder",
       "jobs": "{{count}} Video-Jobs",
       "inputs": "{{count}} Eingaben",

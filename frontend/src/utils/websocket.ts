@@ -20,12 +20,17 @@ import type { ApiResponse } from '@/types';
 import { api } from '@/utils/api/client';
 import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
+import {
+  buildChatWebSocketUrl,
+  resolveWebSocketBaseUrl,
+  type WebSocketUrlEnvironment,
+} from '@/utils/websocketUrl';
 
 const logger = createLogger('websocket');
 
 class WebSocketService {
   private ws: WebSocket | null = null;
-  private url: string;
+  private readonly urlEnvironment: WebSocketUrlEnvironment;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
@@ -35,29 +40,18 @@ class WebSocketService {
   private connectionEpoch = 0;
 
   constructor() {
-    // For WebSocket, we need to connect to the backend server (port 3001)
-    // When running in Electron with file:// protocol, use localhost
-    let wsUrl: string;
-
-    if (window.location.protocol === 'file:') {
-      // Electron app - use localhost directly
-      wsUrl = 'ws://localhost:3001';
-    } else if (import.meta.env.VITE_API_BASE_URL) {
-      // Explicit API URL configured
-      const apiUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '');
-      wsUrl = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://');
-    } else if (import.meta.env.PROD) {
-      // Production (npx, docker): use same origin
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsUrl = `${protocol}//${window.location.host}`;
-    } else {
-      // Development: derive from window location with port 3001
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsUrl = `${protocol}//${window.location.hostname}:3001`;
-    }
-
-    this.url = `${wsUrl}/ws`;
-    logger.debug('WebSocket URL constructed:', this.url);
+    this.urlEnvironment = {
+      protocol: window.location.protocol,
+      host: window.location.host,
+      hostname: window.location.hostname,
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+      websocketBaseUrl: import.meta.env.VITE_WS_BASE_URL,
+      production: import.meta.env.PROD,
+    };
+    logger.debug(
+      'WebSocket base URL resolved:',
+      resolveWebSocketBaseUrl(this.urlEnvironment)
+    );
   }
 
   connect(): Promise<void> {
@@ -95,11 +89,14 @@ class WebSocketService {
       throw new Error('The server did not issue a WebSocket ticket.');
     if (!this.shouldReconnect || epoch !== this.connectionEpoch) return;
 
-    logger.debug('WebSocket: Attempting to connect to:', this.url);
+    logger.debug('WebSocket: Attempting to connect');
 
     return new Promise((resolve, reject) => {
       try {
-        const wsUrlWithAuth = `${this.url}?ticket=${encodeURIComponent(ticket)}`;
+        const wsUrlWithAuth = buildChatWebSocketUrl(
+          ticket,
+          this.urlEnvironment
+        );
 
         logger.debug('WebSocket: Connecting with a one-use ticket');
 

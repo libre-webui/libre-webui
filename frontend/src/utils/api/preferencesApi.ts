@@ -21,10 +21,12 @@ import type {
   ChatSession,
   DocumentChunk,
   KnowledgeCollection,
+  Note,
   SessionFolder,
   UserPreferences,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
+import { computePortableArchiveDigest } from '@/utils/dataArchive';
 import { api, createDemoResponse } from './client';
 import {
   DEFAULT_DEMO_PREFERENCES,
@@ -56,14 +58,20 @@ export interface ArchivedDocument {
 
 export interface UserDataArchive {
   format: 'libre-webui-user-data';
-  version: 2;
+  version: 3;
   exportedAt: string;
   preferences: Partial<UserPreferences>;
   sessionFolders: SessionFolder[];
   sessions: ChatSession[];
+  notes: Note[];
   knowledgeCollections: KnowledgeCollection[];
   documents: ArchivedDocument[];
   exclusions: DataArchiveExclusion[];
+  integrity: {
+    algorithm: 'sha256';
+    canonicalization: 'libre-json-sort-v1';
+    digest: string;
+  };
 }
 
 export interface ArchiveSectionResult {
@@ -74,12 +82,13 @@ export interface ArchiveSectionResult {
 
 export interface DataArchiveImportResult {
   format: 'libre-webui-user-data';
-  version: 2;
+  version: 3;
   migratedFromVersion?: string;
   strategy: DataArchiveMergeStrategy;
   preferences: { imported: boolean; mode: 'merge' | 'replace' };
   sessionFolders: ArchiveSectionResult;
   sessions: ArchiveSectionResult;
+  notes: ArchiveSectionResult;
   knowledgeCollections: ArchiveSectionResult;
   documents: ArchiveSectionResult;
   remappedIds: number;
@@ -90,20 +99,53 @@ export interface DataArchiveImportResult {
 export interface DataArchivePreflight {
   valid: true;
   format: 'libre-webui-user-data';
-  version: 2;
+  version: 3;
   migratedFromVersion?: string;
   strategy: DataArchiveMergeStrategy;
   incoming: {
     sessionFolders: number;
     sessions: number;
     messages: number;
+    notes: number;
     knowledgeCollections: number;
     documents: number;
     documentChunks: number;
   };
+  result: Omit<DataArchiveImportResult, 'preferences'>;
   warnings: string[];
   exclusions: DataArchiveExclusion[];
 }
+
+const DEMO_DATA_ARCHIVE_EXCLUSIONS: DataArchiveExclusion[] = [
+  {
+    key: 'accountAndAuthentication',
+    reason: 'Account and authentication records are not portable.',
+  },
+  {
+    key: 'providerSecrets',
+    reason: 'Provider credentials must be configured again.',
+  },
+  {
+    key: 'voiceProfiles',
+    reason: 'Voice reference audio is biometric data and is not portable.',
+  },
+  {
+    key: 'personasAndMemory',
+    reason: 'Personas and persona memory are not part of archive version 3.',
+  },
+  {
+    key: 'generatedMedia',
+    reason: 'Generated media library files are not portable.',
+  },
+  {
+    key: 'work',
+    reason: 'Work data and volumes require a system backup.',
+  },
+  {
+    key: 'derivedEmbeddings',
+    reason: 'Document embeddings can be regenerated after import.',
+  },
+];
 
 function archiveImportPayload(
   data: Record<string, unknown> | File,
@@ -244,19 +286,30 @@ export const preferencesApi = {
   },
 
   // Portable, per-user data archive. Secrets, reusable cloned voices, media,
-  // personas/notes, and Work volumes are explicitly excluded by the backend.
-  exportData: (): Promise<ApiResponse<UserDataArchive>> => {
+  // personas/memory, and Work volumes are explicitly excluded by the backend.
+  exportData: async (): Promise<ApiResponse<UserDataArchive>> => {
     if (isDemoMode()) {
-      return createDemoResponse<UserDataArchive>({
+      const payload: Omit<UserDataArchive, 'integrity'> = {
         format: 'libre-webui-user-data',
-        version: 2,
+        version: 3,
         exportedAt: new Date().toISOString(),
         preferences: getDemoPreferences(),
         sessionFolders: [],
         sessions: [],
+        notes: [],
         knowledgeCollections: [],
         documents: [],
-        exclusions: [],
+        exclusions: DEMO_DATA_ARCHIVE_EXCLUSIONS,
+      };
+      return createDemoResponse<UserDataArchive>({
+        ...payload,
+        integrity: {
+          algorithm: 'sha256',
+          canonicalization: 'libre-json-sort-v1',
+          digest: await computePortableArchiveDigest(
+            payload as unknown as Record<string, unknown>
+          ),
+        },
       });
     }
     return api.get('/preferences/export').then(res => res.data);
@@ -270,15 +323,29 @@ export const preferencesApi = {
       return createDemoResponse<DataArchivePreflight>({
         valid: true,
         format: 'libre-webui-user-data',
-        version: 2,
+        version: 3,
         strategy,
         incoming: {
           sessionFolders: 0,
           sessions: 0,
           messages: 0,
+          notes: 0,
           knowledgeCollections: 0,
           documents: 0,
           documentChunks: 0,
+        },
+        result: {
+          format: 'libre-webui-user-data',
+          version: 3,
+          strategy,
+          sessionFolders: { imported: 0, overwritten: 0, skipped: 0 },
+          sessions: { imported: 0, overwritten: 0, skipped: 0 },
+          notes: { imported: 0, overwritten: 0, skipped: 0 },
+          knowledgeCollections: { imported: 0, overwritten: 0, skipped: 0 },
+          documents: { imported: 0, overwritten: 0, skipped: 0 },
+          remappedIds: 0,
+          warnings: [],
+          exclusions: [],
         },
         warnings: [],
         exclusions: [],
@@ -299,7 +366,7 @@ export const preferencesApi = {
     if (isDemoMode()) {
       return createDemoResponse<DataArchiveImportResult>({
         format: 'libre-webui-user-data',
-        version: 2,
+        version: 3,
         strategy,
         preferences: {
           imported: true,
@@ -307,6 +374,7 @@ export const preferencesApi = {
         },
         sessionFolders: { imported: 0, overwritten: 0, skipped: 0 },
         sessions: { imported: 0, overwritten: 0, skipped: 0 },
+        notes: { imported: 0, overwritten: 0, skipped: 0 },
         knowledgeCollections: { imported: 0, overwritten: 0, skipped: 0 },
         documents: { imported: 0, overwritten: 0, skipped: 0 },
         remappedIds: 0,

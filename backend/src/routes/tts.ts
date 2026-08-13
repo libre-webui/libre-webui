@@ -27,7 +27,10 @@ import {
   TTSVoiceCloneUploadError,
   validateTTSVoiceCloneAudio,
 } from '../utils/ttsVoiceCloneUpload.js';
-import { TTSProviderResponseError } from '../services/pluginTTSService.js';
+import {
+  TTSConcurrencyError,
+  TTSProviderResponseError,
+} from '../services/pluginTTSService.js';
 import voiceProfileService from '../services/voiceProfileService.js';
 
 const logger = createLogger('routes:tts');
@@ -149,17 +152,22 @@ function requestAbortSignal(
   cleanup: () => void;
 } {
   const controller = new AbortController();
-  const abort = () => controller.abort(new Error('TTS client disconnected'));
+  const abort = () => {
+    if (!controller.signal.aborted) {
+      controller.abort(new Error('TTS client disconnected'));
+    }
+  };
   const abortOnResponseClose = () => {
     if (!res.writableEnded) abort();
   };
-  req.once('aborted', abort);
-  res.once('close', abortOnResponseClose);
+  req.once?.('aborted', abort);
+  res.once?.('close', abortOnResponseClose);
+  if (req.aborted || res.destroyed) abort();
   return {
     signal: controller.signal,
     cleanup: () => {
-      req.off('aborted', abort);
-      res.off('close', abortOnResponseClose);
+      req.off?.('aborted', abort);
+      res.off?.('close', abortOnResponseClose);
     },
   };
 }
@@ -319,6 +327,7 @@ router.post(
   '/generate',
   ttsRateLimiter,
   async (req: AuthenticatedRequest, res) => {
+    const requestAbort = requestAbortSignal(req, res);
     try {
       const {
         model,
@@ -441,32 +450,27 @@ router.post(
           profileRoute.pluginId,
           userId
         );
-        const requestAbort = requestAbortSignal(req, res);
-        try {
-          audioBuffer = await withReusableVoiceSlot(userId, async () => {
-            const profile = voiceProfileService.get(
-              voiceProfileId,
+        audioBuffer = await withReusableVoiceSlot(userId, async () => {
+          const profile = voiceProfileService.get(
+            voiceProfileId,
+            userId,
+            config
+          );
+          if (!profile) throw new Error('Voice profile not found');
+          assertProfileRoutingIsCurrent(profile, plugin, userId);
+          return pluginService.executeVoiceCloneRequest(
+            model,
+            input,
+            profile.referenceAudio,
+            {
+              referenceText: profile.referenceText,
+              response_format: format,
+              pluginId: profile.pluginId,
               userId,
-              config
-            );
-            if (!profile) throw new Error('Voice profile not found');
-            assertProfileRoutingIsCurrent(profile, plugin, userId);
-            return pluginService.executeVoiceCloneRequest(
-              model,
-              input,
-              profile.referenceAudio,
-              {
-                referenceText: profile.referenceText,
-                response_format: format,
-                pluginId: profile.pluginId,
-                userId,
-                signal: requestAbort.signal,
-              }
-            );
-          });
-        } finally {
-          requestAbort.cleanup();
-        }
+              signal: requestAbort.signal,
+            }
+          );
+        });
       } else {
         audioBuffer = await pluginService.executeTTSRequest(model, input, {
           voice,
@@ -474,8 +478,11 @@ router.post(
           speed,
           pluginId,
           userId,
+          signal: requestAbort.signal,
         });
       }
+
+      if (requestAbort.signal.aborted) return;
 
       // Determine content type based on format
       const contentTypeMap: Record<string, string> = {
@@ -499,6 +506,11 @@ router.post(
       // Send audio data
       res.send(audioBuffer);
     } catch (error) {
+      if (requestAbort.signal.aborted) return;
+      if (error instanceof TTSConcurrencyError) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
       if (error instanceof ReusableVoiceConcurrencyError) {
         res.status(429).json({ success: false, message: error.message });
         return;
@@ -545,6 +557,8 @@ router.post(
         success: false,
         message: errorMessage,
       });
+    } finally {
+      requestAbort.cleanup();
     }
   }
 );
@@ -558,6 +572,7 @@ router.post(
   '/voice-clone',
   voiceCloneRateLimiter,
   async (req: AuthenticatedRequest, res) => {
+    const requestAbort = requestAbortSignal(req, res);
     try {
       await parseTTSVoiceCloneUpload(req, res);
 
@@ -672,8 +687,11 @@ router.post(
           response_format: format,
           pluginId: selectedPlugin.id,
           userId,
+          signal: requestAbort.signal,
         }
       );
+
+      if (requestAbort.signal.aborted) return;
 
       res.set({
         'Content-Type': ttsContentType(format),
@@ -682,6 +700,11 @@ router.post(
       });
       res.send(audioBuffer);
     } catch (error) {
+      if (requestAbort.signal.aborted) return;
+      if (error instanceof TTSConcurrencyError) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
       if (error instanceof multer.MulterError) {
         logger.warn(`TTS voice-clone upload failed: ${error.code}`);
         res.status(400).json({
@@ -732,6 +755,8 @@ router.post(
         success: false,
         message: errorMessage,
       });
+    } finally {
+      requestAbort.cleanup();
     }
   }
 );
@@ -745,6 +770,7 @@ router.post(
   '/generate-base64',
   ttsRateLimiter,
   async (req: AuthenticatedRequest, res) => {
+    const requestAbort = requestAbortSignal(req, res);
     try {
       const {
         model,
@@ -867,32 +893,27 @@ router.post(
           profileRoute.pluginId,
           userId
         );
-        const requestAbort = requestAbortSignal(req, res);
-        try {
-          audioBuffer = await withReusableVoiceSlot(userId, async () => {
-            const profile = voiceProfileService.get(
-              voiceProfileId,
+        audioBuffer = await withReusableVoiceSlot(userId, async () => {
+          const profile = voiceProfileService.get(
+            voiceProfileId,
+            userId,
+            config
+          );
+          if (!profile) throw new Error('Voice profile not found');
+          assertProfileRoutingIsCurrent(profile, plugin, userId);
+          return pluginService.executeVoiceCloneRequest(
+            model,
+            input,
+            profile.referenceAudio,
+            {
+              referenceText: profile.referenceText,
+              response_format: requestedFormat,
+              pluginId: profile.pluginId,
               userId,
-              config
-            );
-            if (!profile) throw new Error('Voice profile not found');
-            assertProfileRoutingIsCurrent(profile, plugin, userId);
-            return pluginService.executeVoiceCloneRequest(
-              model,
-              input,
-              profile.referenceAudio,
-              {
-                referenceText: profile.referenceText,
-                response_format: requestedFormat,
-                pluginId: profile.pluginId,
-                userId,
-                signal: requestAbort.signal,
-              }
-            );
-          });
-        } finally {
-          requestAbort.cleanup();
-        }
+              signal: requestAbort.signal,
+            }
+          );
+        });
       } else {
         audioBuffer = await pluginService.executeTTSRequest(model, input, {
           voice,
@@ -900,8 +921,11 @@ router.post(
           speed,
           pluginId,
           userId,
+          signal: requestAbort.signal,
         });
       }
+
+      if (requestAbort.signal.aborted) return;
 
       // Auto-detect actual audio format from buffer header
       let detectedFormat = requestedFormat;
@@ -946,6 +970,11 @@ router.post(
         },
       });
     } catch (error) {
+      if (requestAbort.signal.aborted) return;
+      if (error instanceof TTSConcurrencyError) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
       if (error instanceof ReusableVoiceConcurrencyError) {
         res.status(429).json({ success: false, message: error.message });
         return;
@@ -991,6 +1020,8 @@ router.post(
         success: false,
         message: errorMessage,
       });
+    } finally {
+      requestAbort.cleanup();
     }
   }
 );

@@ -443,6 +443,94 @@ test('voice cloning aborts the provider request when its caller disconnects', as
   }
 });
 
+test('ordinary TTS aborts the provider request and records cancelled usage', async () => {
+  let providerSawAbort = false;
+  let providerStarted;
+  const providerStartedPromise = new Promise(resolve => {
+    providerStarted = resolve;
+  });
+  const provider = http.createServer((req, res) => {
+    providerStarted();
+    req.once('aborted', () => {
+      providerSawAbort = true;
+    });
+    res.once('close', () => {
+      if (!res.writableEnded) providerSawAbort = true;
+    });
+  });
+  const port = await startServer(provider);
+  const plugin = createPlugin(
+    'abortable-tts-provider',
+    `http://127.0.0.1:${port}/v1/audio/speech`
+  );
+  const usages = [];
+  const service = new PluginTTSService({
+    getAllPlugins: () => [plugin],
+    getPlugin: () => plugin,
+    getApiKey: () => null,
+    getPluginVariables: () => ({}),
+    validateEndpointUrl: endpoint => endpoint,
+    recordUsage: usage => usages.push(usage),
+  });
+  const controller = new AbortController();
+  const request = service.executeTTSRequest('tts-1-hd', 'cancel this speech', {
+    pluginId: plugin.id,
+    userId: 'user-a',
+    signal: controller.signal,
+  });
+
+  try {
+    await providerStartedPromise;
+    controller.abort();
+    await assert.rejects(request, /provider request was cancelled/i);
+    await new Promise(resolve => setTimeout(resolve, 20));
+    assert.equal(providerSawAbort, true);
+    assert.equal(usages.length, 1);
+    assert.equal(usages[0].status, 'cancelled');
+  } finally {
+    await new Promise(resolve => provider.close(resolve));
+  }
+});
+
+test('ordinary TTS bounds concurrent provider work per user', async () => {
+  const provider = http.createServer(() => {});
+  const port = await startServer(provider);
+  const plugin = createPlugin(
+    'bounded-concurrency-provider',
+    `http://127.0.0.1:${port}/v1/audio/speech`
+  );
+  const service = new PluginTTSService({
+    getAllPlugins: () => [plugin],
+    getPlugin: () => plugin,
+    getApiKey: () => null,
+    getPluginVariables: () => ({}),
+    validateEndpointUrl: endpoint => endpoint,
+  });
+  const controller = new AbortController();
+  const active = Array.from({ length: 6 }, (_, index) =>
+    service.executeTTSRequest('tts-1-hd', `speech ${index}`, {
+      pluginId: plugin.id,
+      userId: 'same-user',
+      signal: controller.signal,
+    })
+  );
+
+  try {
+    await assert.rejects(
+      service.executeTTSRequest('tts-1-hd', 'one too many', {
+        pluginId: plugin.id,
+        userId: 'same-user',
+      }),
+      /Too many concurrent TTS provider requests/
+    );
+  } finally {
+    controller.abort();
+    await Promise.allSettled(active);
+    provider.closeAllConnections?.();
+    await new Promise(resolve => provider.close(resolve));
+  }
+});
+
 test('voice clone audio validation enforces MIME, signature, and manifest size', () => {
   assert.equal(TTS_VOICE_CLONE_GLOBAL_MAX_AUDIO_BYTES, 10 * 1024 * 1024);
   assert.equal(

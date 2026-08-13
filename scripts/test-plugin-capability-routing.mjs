@@ -4,6 +4,7 @@ import http from 'node:http';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import ts from 'typescript';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,6 +58,56 @@ function readBundledPlugin(name) {
   return JSON.parse(
     fs.readFileSync(path.join(repoRoot, 'plugins', `${name}.json`), 'utf8')
   );
+}
+
+function assertAxiosCallsDisableRedirects(source, filename) {
+  const sourceFile = ts.createSourceFile(
+    filename,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const calls = [];
+  const visit = node => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ts.isIdentifier(node.expression.expression) &&
+      node.expression.expression.text === 'axios' &&
+      ['get', 'post', 'request'].includes(node.expression.name.text)
+    ) {
+      calls.push(node);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  assert.ok(calls.length > 0, `${filename} must make provider requests`);
+
+  for (const call of calls) {
+    const method = call.expression.name.text;
+    const config =
+      method === 'request'
+        ? call.arguments[0]
+        : method === 'get'
+          ? call.arguments[1]
+          : call.arguments[2];
+    assert.ok(
+      config && ts.isObjectLiteralExpression(config),
+      `${filename} ${method} request needs an inline security configuration`
+    );
+    const maxRedirects = config.properties.find(
+      property =>
+        ts.isPropertyAssignment(property) &&
+        property.name.getText(sourceFile) === 'maxRedirects'
+    );
+    assert.ok(
+      maxRedirects &&
+        ts.isPropertyAssignment(maxRedirects) &&
+        maxRedirects.initializer.getText(sourceFile) === '0',
+      `${filename} ${method} request must set maxRedirects: 0`
+    );
+  }
 }
 
 test('bundled capability manifests use current and isolated endpoints', () => {
@@ -411,7 +462,16 @@ test('chat, Work, discovery, and generated media clients disable redirects', () 
   );
   assert.match(workServiceSource, /timeout: 300_000,[\s\S]*?maxRedirects: 0/);
   assert.match(workServiceSource, /fetch\(endpoint,[\s\S]*?redirect: 'error'/);
-  assert.equal((imageServiceSource.match(/maxRedirects: 0/g) || []).length, 5);
-  assert.equal((audioServiceSource.match(/maxRedirects: 0/g) || []).length, 1);
-  assert.equal((videoServiceSource.match(/maxRedirects: 0/g) || []).length, 3);
+  assertAxiosCallsDisableRedirects(
+    imageServiceSource,
+    'pluginImageGenerationService.ts'
+  );
+  assertAxiosCallsDisableRedirects(
+    audioServiceSource,
+    'pluginAudioGenerationService.ts'
+  );
+  assertAxiosCallsDisableRedirects(
+    videoServiceSource,
+    'pluginVideoGenerationService.ts'
+  );
 });

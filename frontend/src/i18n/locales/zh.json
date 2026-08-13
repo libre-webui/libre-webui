@@ -264,7 +264,7 @@
       "voiceInput": "语音输入",
       "voiceStop": "停止聆听",
       "transcriptionSource": "语音识别来源",
-      "browserSpeech": "设备端浏览器语音识别",
+      "browserSpeech": "浏览器语音识别服务",
       "providerTranscriptionDisclosure": "录制音频并发送至 {{provider}} 进行转写",
       "webSearchOn": "网页搜索已开启 — 回复将使用实时结果",
       "webSearchOff": "为这条消息搜索网页"
@@ -784,7 +784,7 @@
     "data": {
       "title": "数据管理",
       "export": "导出数据",
-      "exportDescription": "下载所有数据，包括偏好设置、会话和文档。",
+      "exportDescription": "下载包含偏好设置、聊天文件夹、会话和消息、笔记、知识集合及提取的文档文本的便携归档。",
       "exportAll": "导出所有数据",
       "import": "导入数据",
       "importDescription": "从之前的导出导入数据。",
@@ -796,6 +796,11 @@
       "clearing": "清除中...",
       "importOptions": "导入选项",
       "importOptionsDescription": "选择如何处理现有数据",
+      "validatingArchive": "正在验证归档并计算更改…",
+      "archiveValidationFailed": "归档验证失败",
+      "preflightReport": "导入预览",
+      "preflightIncoming": "{{folders}} 个文件夹 · {{sessions}} 个聊天 · {{messages}} 条消息 · {{notes}} 条笔记 · {{collections}} 个集合 · {{documents}} 个文档 · {{chunks}} 个文本块",
+      "preflightRemappedIds": "将重新映射 {{count}} 个 ID 以保护其他账户的数据。",
       "skipDuplicates": "跳过重复项",
       "overwrite": "覆盖现有项",
       "importResults": "导入结果",
@@ -803,15 +808,25 @@
       "imported": "已导入",
       "failed": "失败",
       "sessions": "会话",
+      "sessionFolders": "会话文件夹",
+      "notes": "笔记",
+      "knowledgeCollections": "知识集合",
       "importedLabel": "已导入",
+      "overwrittenLabel": "已覆盖",
       "skipped": "已跳过",
+      "toCreate": "待创建",
+      "toOverwrite": "待覆盖",
+      "toSkip": "待跳过",
       "documents": "文档",
+      "warnings": "警告",
+      "refreshAfterImportFailed": "数据已导入，但部分视图无法刷新。请重新加载 Libre WebUI 以查看所有更改。",
       "errors": "错误",
       "archivedChats": {
         "title": "已归档的聊天",
         "empty": "没有已归档的聊天",
         "unarchive": "取消归档"
-      }
+      },
+      "archiveScopeV3": "包含偏好设置、聊天、文件夹、笔记、知识集合及提取的文档文本。不包含账户和机密、生物特征克隆语音、生成的媒体、角色和记忆，以及 Work 数据或卷。"
     },
     "about": {
       "title": "关于",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "能力组合",
       "characters": "{{count}} 个字符",
+      "bytes": "{{count}} 字节",
       "images": "{{count}} 张图片",
       "jobs": "{{count}} 个视频任务",
       "inputs": "{{count}} 个输入",

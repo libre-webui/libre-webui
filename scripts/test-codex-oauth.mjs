@@ -58,11 +58,25 @@ const writeAuthFile = (accessToken, refreshToken = 'refresh-1') =>
 
 // Mock the OAuth token endpoint.
 const refreshCalls = [];
+let slowRefreshStarted;
+let slowRefreshClosed;
+const resetSlowRefreshSignals = () => {
+  slowRefreshStarted = Promise.withResolvers();
+  slowRefreshClosed = Promise.withResolvers();
+};
+resetSlowRefreshSignals();
 const mockServer = http.createServer((req, res) => {
   let body = '';
   req.on('data', chunk => (body += chunk));
   req.on('end', () => {
     refreshCalls.push(Object.fromEntries(new URLSearchParams(body)));
+    if (req.url === '/slow-token') {
+      slowRefreshStarted.resolve();
+      res.once('close', () => {
+        if (!res.writableEnded) slowRefreshClosed.resolve();
+      });
+      return;
+    }
     res.setHeader('Content-Type', 'application/json');
     res.end(
       JSON.stringify({
@@ -120,6 +134,41 @@ test('refreshes an expired token through the OAuth client and persists it', asyn
   assert.equal(persisted.tokens.refresh_token, 'refresh-2');
   assert.equal(persisted.tokens.account_id, 'acct-2');
   assert.notEqual(persisted.last_refresh, new Date(0).toISOString());
+});
+
+test('cancelling the final refresh waiter blocks an overlapping retry until transport settlement', async () => {
+  resetSlowRefreshSignals();
+  writeAuthFile(jwt({ chatgpt_account_id: 'acct-1' }, -60), 'refresh-slow');
+  const service = new CodexOAuthService();
+  const normalTokenUrl = process.env.CODEX_OAUTH_TOKEN_URL;
+  process.env.CODEX_OAUTH_TOKEN_URL = `http://127.0.0.1:${mockServer.address().port}/slow-token`;
+  const controller = new AbortController();
+  const refreshing = service.ensureFreshToken(controller.signal);
+
+  try {
+    await slowRefreshStarted.promise;
+    controller.abort(new Error('Chat generation was cancelled'));
+    await assert.rejects(refreshing, /Chat generation was cancelled/);
+
+    // Changing the endpoint makes an incorrectly detached single-flight launch
+    // a second request immediately. The correct retry remains joined to the
+    // aborting flight and observes its cancellation after transport teardown.
+    process.env.CODEX_OAUTH_TOKEN_URL = normalTokenUrl;
+    const retryDuringTeardown = service.ensureFreshToken();
+    const retryDuringTeardownRejected = assert.rejects(
+      retryDuringTeardown,
+      error => error?.code === 'ERR_CANCELED' || /cancel/i.test(error?.message)
+    );
+    await slowRefreshClosed.promise;
+    await retryDuringTeardownRejected;
+
+    // Only after the cancelled transport settles may a new refresh exchange
+    // start with the same rotating refresh token.
+    await service.ensureFreshToken();
+    assert.equal(service.getCachedAccountId(), 'acct-2');
+  } finally {
+    process.env.CODEX_OAUTH_TOKEN_URL = normalTokenUrl;
+  }
 });
 
 test('the bundled codex plugin omits sampling parameters and adds ChatGPT headers', async () => {

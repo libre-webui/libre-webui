@@ -53,7 +53,7 @@ class MediaGenerationJobService {
     const now = Date.now();
     db.prepare(
       `DELETE FROM media_generation_jobs
-       WHERE updated_at < ?`
+       WHERE status IN ('completed', 'failed') AND updated_at < ?`
     ).run(now - 30 * 24 * 60 * 60 * 1000);
     db.prepare(
       `INSERT INTO media_generation_jobs
@@ -94,6 +94,37 @@ class MediaGenerationJobService {
       )
       .get(id, userId) as JobRow | undefined;
     return row ? fromRow(row) : null;
+  }
+
+  list(
+    userId: string,
+    options: { limit?: number; activeOnly?: boolean } = {}
+  ): MediaGenerationJob[] {
+    const db = getDatabaseSafe();
+    if (!db) return [];
+    const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
+    const rows = db
+      .prepare(
+        `SELECT * FROM media_generation_jobs
+         WHERE user_id = ?
+           ${options.activeOnly ? "AND status IN ('pending', 'in_progress')" : ''}
+         ORDER BY updated_at DESC, id ASC
+         LIMIT ?`
+      )
+      .all(userId, limit) as JobRow[];
+    return rows.map(fromRow);
+  }
+
+  remove(id: string, userId: string): boolean {
+    const db = getDatabaseSafe();
+    if (!db) return false;
+    return (
+      db
+        .prepare(
+          'DELETE FROM media_generation_jobs WHERE id = ? AND user_id = ?'
+        )
+        .run(id, userId).changes > 0
+    );
   }
 
   update(

@@ -264,7 +264,7 @@
       "voiceInput": "إدخال صوتي",
       "voiceStop": "إيقاف الاستماع",
       "transcriptionSource": "مصدر التعرّف على الكلام",
-      "browserSpeech": "التعرّف على الكلام محليًا في المتصفح",
+      "browserSpeech": "خدمة التعرّف على الكلام في المتصفح",
       "providerTranscriptionDisclosure": "تسجيل الصوت وإرساله إلى {{provider}} لتحويله إلى نص",
       "webSearchOn": "البحث في الويب مفعّل — تستخدم الردود نتائج حية",
       "webSearchOff": "ابحث في الويب لهذه الرسالة"
@@ -784,7 +784,7 @@
     "data": {
       "title": "إدارة البيانات",
       "export": "تصدير البيانات",
-      "exportDescription": "تحميل جميع بياناتك بما في ذلك التفضيلات والجلسات والمستندات.",
+      "exportDescription": "نزّل أرشيفًا قابلاً للنقل يضم التفضيلات ومجلدات المحادثات والجلسات والرسائل والملاحظات ومجموعات المعرفة ونصوص المستندات المستخرجة.",
       "exportAll": "تصدير جميع البيانات",
       "import": "استيراد البيانات",
       "importDescription": "استيراد البيانات من تصدير سابق.",
@@ -796,6 +796,11 @@
       "clearing": "جاري المسح...",
       "importOptions": "خيارات الاستيراد",
       "importOptionsDescription": "اختر كيفية التعامل مع البيانات الموجودة",
+      "validatingArchive": "جارٍ التحقق من الأرشيف وحساب التغييرات…",
+      "archiveValidationFailed": "فشل التحقق من الأرشيف",
+      "preflightReport": "معاينة الاستيراد",
+      "preflightIncoming": "{{folders}} مجلدات · {{sessions}} محادثات · {{messages}} رسائل · {{notes}} ملاحظات · {{collections}} مجموعات · {{documents}} مستندات · {{chunks}} مقاطع",
+      "preflightRemappedIds": "ستُعاد تعيين {{count}} معرّفات لحماية بيانات حساب آخر.",
       "skipDuplicates": "تخطي المكررات",
       "overwrite": "الكتابة فوق الموجود",
       "importResults": "نتائج الاستيراد",
@@ -803,15 +808,25 @@
       "imported": "تم الاستيراد",
       "failed": "فشل",
       "sessions": "الجلسات",
+      "sessionFolders": "مجلدات الجلسات",
+      "notes": "الملاحظات",
+      "knowledgeCollections": "مجموعات المعرفة",
       "importedLabel": "تم الاستيراد",
+      "overwrittenLabel": "تمت الكتابة فوقه",
       "skipped": "تم التخطي",
+      "toCreate": "للإنشاء",
+      "toOverwrite": "للكتابة فوقه",
+      "toSkip": "للتخطي",
       "documents": "المستندات",
+      "warnings": "تحذيرات",
+      "refreshAfterImportFailed": "تم استيراد البيانات، لكن تعذّر تحديث بعض العروض. أعد تحميل Libre WebUI لرؤية جميع التغييرات.",
       "errors": "أخطاء",
       "archivedChats": {
         "title": "المحادثات المؤرشفة",
         "empty": "لا توجد محادثات مؤرشفة",
         "unarchive": "إلغاء الأرشفة"
-      }
+      },
+      "archiveScopeV3": "يشمل التفضيلات والمحادثات والمجلدات والملاحظات ومجموعات المعرفة ونصوص المستندات المستخرجة. يستثني الحسابات والأسرار والأصوات الحيوية المستنسخة والوسائط المنشأة والشخصيات والذاكرة وبيانات أو وحدات تخزين Work."
     },
     "about": {
       "title": "حول",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "مزيج القدرات",
       "characters": "{{count}} حرف",
+      "bytes": "{{count}} بايت",
       "images": "{{count}} صورة",
       "jobs": "{{count}} مهمة فيديو",
       "inputs": "{{count}} مدخل",

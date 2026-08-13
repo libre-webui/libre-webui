@@ -70,7 +70,7 @@ test('quality gates cover formatting, linting, types, package tests, and E2E', (
   assert.match(packageTests, /run: npm run test:package/);
   assert.match(
     browserE2e,
-    /cd frontend && npx playwright install --with-deps chromium/
+    /cd frontend && npx playwright install --with-deps chromium webkit/
   );
   assert.match(browserE2e, /run: npm run test:e2e/);
   assert.match(browserE2e, /if: failure\(\)/);

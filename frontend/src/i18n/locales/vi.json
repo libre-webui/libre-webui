@@ -264,7 +264,7 @@
       "voiceInput": "Nhập bằng giọng nói",
       "voiceStop": "Dừng nghe",
       "transcriptionSource": "Nguồn nhận dạng giọng nói",
-      "browserSpeech": "Nhận dạng giọng nói bằng trình duyệt trên thiết bị",
+      "browserSpeech": "Dịch vụ nhận dạng giọng nói của trình duyệt",
       "providerTranscriptionDisclosure": "Ghi âm và gửi âm thanh đến {{provider}} để chuyển thành văn bản",
       "webSearchOn": "Tìm kiếm web đang bật — trả lời dùng kết quả trực tiếp",
       "webSearchOff": "Tìm trên web cho tin nhắn này"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Quản lý dữ liệu",
       "export": "Xuất dữ liệu",
-      "exportDescription": "Tải xuống tất cả dữ liệu của bạn bao gồm tùy chọn, phiên và tài liệu.",
+      "exportDescription": "Tải xuống một tệp lưu trữ di động gồm tùy chọn, thư mục trò chuyện, phiên và tin nhắn, ghi chú, bộ sưu tập kiến thức và văn bản trích xuất từ tài liệu.",
       "exportAll": "Xuất tất cả dữ liệu",
       "import": "Nhập dữ liệu",
       "importDescription": "Nhập dữ liệu từ bản xuất trước đó.",
@@ -796,6 +796,11 @@
       "clearing": "Đang xóa...",
       "importOptions": "Tùy chọn nhập",
       "importOptionsDescription": "Chọn cách xử lý dữ liệu hiện có",
+      "validatingArchive": "Đang xác thực tệp lưu trữ và tính toán thay đổi…",
+      "archiveValidationFailed": "Xác thực tệp lưu trữ thất bại",
+      "preflightReport": "Xem trước nội dung nhập",
+      "preflightIncoming": "{{folders}} thư mục · {{sessions}} cuộc trò chuyện · {{messages}} tin nhắn · {{notes}} ghi chú · {{collections}} bộ sưu tập · {{documents}} tài liệu · {{chunks}} đoạn",
+      "preflightRemappedIds": "{{count}} ID sẽ được ánh xạ lại để bảo vệ dữ liệu của tài khoản khác.",
       "skipDuplicates": "Bỏ qua bản sao",
       "overwrite": "Ghi đè hiện có",
       "importResults": "Kết quả nhập",
@@ -803,15 +808,25 @@
       "imported": "Đã nhập",
       "failed": "Thất bại",
       "sessions": "Phiên",
+      "sessionFolders": "Thư mục phiên",
+      "notes": "Ghi chú",
+      "knowledgeCollections": "Bộ sưu tập kiến thức",
       "importedLabel": "đã nhập",
+      "overwrittenLabel": "đã ghi đè",
       "skipped": "đã bỏ qua",
+      "toCreate": "sẽ tạo",
+      "toOverwrite": "sẽ ghi đè",
+      "toSkip": "sẽ bỏ qua",
       "documents": "Tài liệu",
+      "warnings": "Cảnh báo",
+      "refreshAfterImportFailed": "Dữ liệu đã được nhập, nhưng không thể làm mới một số chế độ xem. Hãy tải lại Libre WebUI để xem mọi thay đổi.",
       "errors": "Lỗi",
       "archivedChats": {
         "title": "Cuộc trò chuyện đã lưu trữ",
         "empty": "Không có cuộc trò chuyện nào được lưu trữ",
         "unarchive": "Bỏ lưu trữ"
-      }
+      },
+      "archiveScopeV3": "Bao gồm tùy chọn, cuộc trò chuyện, thư mục, ghi chú, bộ sưu tập kiến thức và văn bản trích xuất từ tài liệu. Không bao gồm tài khoản và bí mật, giọng nói nhân bản sinh trắc học, nội dung đa phương tiện đã tạo, persona và bộ nhớ, cũng như dữ liệu hoặc ổ đĩa Work."
     },
     "about": {
       "title": "Giới thiệu",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Phân bổ khả năng",
       "characters": "{{count}} ký tự",
+      "bytes": "{{count}} byte",
       "images": "{{count}} hình ảnh",
       "jobs": "{{count}} tác vụ video",
       "inputs": "{{count}} đầu vào",

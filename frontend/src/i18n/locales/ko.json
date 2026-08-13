@@ -264,7 +264,7 @@
       "voiceInput": "음성 입력",
       "voiceStop": "듣기 중지",
       "transcriptionSource": "음성 인식 소스",
-      "browserSpeech": "기기 내 브라우저 음성 인식",
+      "browserSpeech": "브라우저 음성 인식 서비스",
       "providerTranscriptionDisclosure": "오디오를 녹음하여 텍스트 변환을 위해 {{provider}}에 전송",
       "webSearchOn": "웹 검색 켜짐 — 답변에 실시간 결과 사용",
       "webSearchOff": "이 메시지에 대해 웹 검색"
@@ -784,7 +784,7 @@
     "data": {
       "title": "데이터 관리",
       "export": "데이터 내보내기",
-      "exportDescription": "환경설정, 세션, 문서를 포함한 모든 데이터를 다운로드합니다.",
+      "exportDescription": "환경설정, 채팅 폴더, 세션과 메시지, 노트, 지식 컬렉션, 추출된 문서 텍스트가 포함된 이동식 아카이브를 다운로드합니다.",
       "exportAll": "모든 데이터 내보내기",
       "import": "데이터 가져오기",
       "importDescription": "이전 내보내기에서 데이터를 가져옵니다.",
@@ -796,6 +796,11 @@
       "clearing": "지우는 중...",
       "importOptions": "가져오기 옵션",
       "importOptionsDescription": "기존 데이터 처리 방법 선택",
+      "validatingArchive": "아카이브를 검증하고 변경 사항을 계산하는 중…",
+      "archiveValidationFailed": "아카이브 검증 실패",
+      "preflightReport": "가져오기 미리보기",
+      "preflightIncoming": "폴더 {{folders}}개 · 채팅 {{sessions}}개 · 메시지 {{messages}}개 · 노트 {{notes}}개 · 컬렉션 {{collections}}개 · 문서 {{documents}}개 · 청크 {{chunks}}개",
+      "preflightRemappedIds": "다른 계정의 데이터를 보호하기 위해 ID {{count}}개가 다시 매핑됩니다.",
       "skipDuplicates": "중복 건너뛰기",
       "overwrite": "기존 항목 덮어쓰기",
       "importResults": "가져오기 결과",
@@ -803,15 +808,25 @@
       "imported": "가져옴",
       "failed": "실패",
       "sessions": "세션",
+      "sessionFolders": "세션 폴더",
+      "notes": "노트",
+      "knowledgeCollections": "지식 컬렉션",
       "importedLabel": "가져옴",
+      "overwrittenLabel": "덮어씀",
       "skipped": "건너뜀",
+      "toCreate": "생성 예정",
+      "toOverwrite": "덮어쓰기 예정",
+      "toSkip": "건너뛰기 예정",
       "documents": "문서",
+      "warnings": "경고",
+      "refreshAfterImportFailed": "데이터를 가져왔지만 일부 화면을 새로 고치지 못했습니다. 모든 변경 사항을 보려면 Libre WebUI를 다시 로드하세요.",
       "errors": "오류",
       "archivedChats": {
         "title": "보관된 채팅",
         "empty": "보관된 채팅이 없습니다",
         "unarchive": "보관 해제"
-      }
+      },
+      "archiveScopeV3": "환경설정, 채팅, 폴더, 노트, 지식 컬렉션, 추출된 문서 텍스트를 포함합니다. 계정과 비밀 정보, 생체정보 기반 복제 음성, 생성된 미디어, 페르소나와 메모리, Work 데이터나 볼륨은 제외됩니다."
     },
     "about": {
       "title": "정보",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "기능 분포",
       "characters": "{{count}}자",
+      "bytes": "{{count}}바이트",
       "images": "{{count}}개 이미지",
       "jobs": "{{count}}개 비디오 작업",
       "inputs": "{{count}}개 입력",

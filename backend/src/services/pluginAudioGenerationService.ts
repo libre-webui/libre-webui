@@ -20,6 +20,11 @@ import {
 
 const MAX_SSE_LINE_BYTES = 2 * 1024 * 1024;
 const MAX_ENCODED_AUDIO_BYTES = 80 * 1024 * 1024;
+const MAX_AUDIO_STREAM_BYTES = 120 * 1024 * 1024;
+const MAX_ACTIVE_AUDIO_REQUESTS_PER_USER = 2;
+const MAX_ACTIVE_AUDIO_REQUESTS_GLOBAL = 6;
+const activeAudioRequestsByUser = new Map<string, number>();
+let activeAudioRequestsGlobal = 0;
 
 type PluginVariables = Record<string, string | number | boolean>;
 
@@ -36,6 +41,34 @@ export interface AudioGenerationResult {
   audio: Buffer;
   mimeType: string;
   transcript?: string;
+}
+
+export class AudioGenerationConcurrencyError extends Error {
+  constructor() {
+    super('Too many concurrent audio provider requests');
+    this.name = 'AudioGenerationConcurrencyError';
+  }
+}
+
+function reserveAudioProviderRequest(userId: string): () => void {
+  const activeForUser = activeAudioRequestsByUser.get(userId) || 0;
+  if (
+    activeForUser >= MAX_ACTIVE_AUDIO_REQUESTS_PER_USER ||
+    activeAudioRequestsGlobal >= MAX_ACTIVE_AUDIO_REQUESTS_GLOBAL
+  ) {
+    throw new AudioGenerationConcurrencyError();
+  }
+  activeAudioRequestsByUser.set(userId, activeForUser + 1);
+  activeAudioRequestsGlobal += 1;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    activeAudioRequestsGlobal = Math.max(0, activeAudioRequestsGlobal - 1);
+    const remaining = (activeAudioRequestsByUser.get(userId) || 1) - 1;
+    if (remaining > 0) activeAudioRequestsByUser.set(userId, remaining);
+    else activeAudioRequestsByUser.delete(userId);
+  };
 }
 
 export class PluginAudioGenerationService {
@@ -73,6 +106,7 @@ export class PluginAudioGenerationService {
       userId: string;
       voice?: string;
       format?: string;
+      signal?: AbortSignal;
     }
   ): Promise<AudioGenerationResult> {
     validatePluginModel(model);
@@ -100,6 +134,7 @@ export class PluginAudioGenerationService {
       stream: true,
     };
 
+    const releaseProviderSlot = reserveAudioProviderRequest(options.userId);
     const startedAt = Date.now();
     try {
       const response = await axios.post(endpoint, payload, {
@@ -107,8 +142,9 @@ export class PluginAudioGenerationService {
         timeout: 300000,
         responseType: 'stream',
         maxRedirects: 0,
+        signal: options.signal,
       });
-      const result = await collectAudioStream(response.data);
+      const result = await collectAudioStream(response.data, options.signal);
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -127,16 +163,24 @@ export class PluginAudioGenerationService {
         ...(result.transcript ? { transcript: result.transcript } : {}),
       };
     } catch (error) {
+      const cancelled = axios.isCancel(error) || options.signal?.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
         pluginName: plugin.name,
         capability: 'audio',
         model,
-        status: 'error',
+        status: cancelled ? 'cancelled' : 'error',
         durationMs: Date.now() - startedAt,
       });
+      if (cancelled) {
+        throw options.signal?.reason instanceof Error
+          ? options.signal.reason
+          : new Error('Audio provider request was cancelled');
+      }
       throw audioGenerationError(error);
+    } finally {
+      releaseProviderSlot();
     }
   }
 
@@ -178,7 +222,8 @@ export class PluginAudioGenerationService {
 }
 
 async function collectAudioStream(
-  stream: AsyncIterable<Buffer | string>
+  stream: AsyncIterable<Buffer | string>,
+  signal?: AbortSignal
 ): Promise<{
   audio: Buffer;
   transcript?: string;
@@ -187,6 +232,7 @@ async function collectAudioStream(
   let pending = '';
   let encodedAudio = '';
   let transcript = '';
+  let receivedBytes = 0;
   let usage: ReturnType<typeof normalizeProviderTokenUsage>;
 
   const consumeLine = (rawLine: string) => {
@@ -218,7 +264,17 @@ async function collectAudioStream(
   };
 
   for await (const part of stream) {
-    pending += Buffer.isBuffer(part) ? part.toString('utf8') : String(part);
+    if (signal?.aborted) {
+      throw signal.reason instanceof Error
+        ? signal.reason
+        : new Error('Audio provider request was cancelled');
+    }
+    const text = Buffer.isBuffer(part) ? part.toString('utf8') : String(part);
+    receivedBytes += Buffer.byteLength(text);
+    if (receivedBytes > MAX_AUDIO_STREAM_BYTES) {
+      throw new Error('Audio provider response exceeded the size limit');
+    }
+    pending += text;
     if (pending.length > MAX_SSE_LINE_BYTES && !pending.includes('\n')) {
       throw new Error('Audio provider returned an oversized stream event');
     }

@@ -87,6 +87,53 @@ test('Ollama streaming receives the caller signal and cancellation is not sent a
   assert.deepEqual(ws.messages, []);
 });
 
+test('Ollama cancellation keeps the generation reserved until an abort-ignoring transport settles', async () => {
+  const ws = socket();
+  const controller = new AbortController();
+  let releaseTransport;
+  let transportSettled = false;
+  const source = {
+    async generateChatStreamResponse() {
+      await new Promise(resolve => {
+        releaseTransport = resolve;
+      });
+      transportSettled = true;
+    },
+  };
+
+  let wrapperSettled = false;
+  const resultPromise = streamOllamaChatResponse({
+    ws,
+    request: { model: 'test', messages: [], stream: true },
+    streamSource: source,
+    messageId: 'assistant-delayed-teardown',
+    signal: controller.signal,
+  });
+  resultPromise.then(() => {
+    wrapperSettled = true;
+  });
+  await new Promise(resolve => setImmediate(resolve));
+
+  controller.abort(new ChatGenerationCancelledError());
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(transportSettled, false);
+  assert.equal(
+    wrapperSettled,
+    false,
+    'the caller must not release registry/provider slots during transport teardown'
+  );
+
+  releaseTransport();
+  const result = await resultPromise;
+  assert.equal(transportSettled, true);
+  assert.equal(result.completed, false);
+  assert.equal(
+    isChatGenerationCancelled(result.error, controller.signal),
+    true
+  );
+  assert.deepEqual(ws.messages, []);
+});
+
 test('plugin streaming stops before buffered chunks can be published', async () => {
   const ws = socket();
   const controller = new AbortController();

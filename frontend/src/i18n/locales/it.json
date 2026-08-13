@@ -264,7 +264,7 @@
       "voiceInput": "Input vocale",
       "voiceStop": "Smetti di ascoltare",
       "transcriptionSource": "Origine del riconoscimento vocale",
-      "browserSpeech": "Riconoscimento vocale del browser sul dispositivo",
+      "browserSpeech": "Servizio vocale del browser",
       "providerTranscriptionDisclosure": "Registra e invia l’audio a {{provider}} per la trascrizione",
       "webSearchOn": "Ricerca web attiva — le risposte usano risultati in tempo reale",
       "webSearchOff": "Cerca sul web per questo messaggio"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Gestione dati",
       "export": "Esporta dati",
-      "exportDescription": "Scarica tutti i tuoi dati incluse preferenze, sessioni e documenti.",
+      "exportDescription": "Scarica un archivio portatile di preferenze, cartelle chat, sessioni e messaggi, note, raccolte di conoscenze e testo estratto dai documenti.",
       "exportAll": "Esporta tutti i dati",
       "import": "Importa dati",
       "importDescription": "Importa dati da un'esportazione precedente.",
@@ -796,6 +796,11 @@
       "clearing": "Cancellazione...",
       "importOptions": "Opzioni importazione",
       "importOptionsDescription": "Scegli come gestire i dati esistenti",
+      "validatingArchive": "Convalida dell’archivio e calcolo delle modifiche…",
+      "archiveValidationFailed": "Convalida dell’archivio non riuscita",
+      "preflightReport": "Anteprima importazione",
+      "preflightIncoming": "{{folders}} cartelle · {{sessions}} chat · {{messages}} messaggi · {{notes}} note · {{collections}} raccolte · {{documents}} documenti · {{chunks}} frammenti",
+      "preflightRemappedIds": "{{count}} ID verranno rimappati per proteggere i dati di un altro account.",
       "skipDuplicates": "Salta duplicati",
       "overwrite": "Sovrascrivi esistenti",
       "importResults": "Risultati importazione",
@@ -803,15 +808,25 @@
       "imported": "Importato",
       "failed": "Fallito",
       "sessions": "Sessioni",
+      "sessionFolders": "Cartelle delle sessioni",
+      "notes": "Note",
+      "knowledgeCollections": "Raccolte di conoscenze",
       "importedLabel": "importato",
+      "overwrittenLabel": "sovrascritto",
       "skipped": "saltato",
+      "toCreate": "da creare",
+      "toOverwrite": "da sovrascrivere",
+      "toSkip": "da ignorare",
       "documents": "Documenti",
+      "warnings": "Avvisi",
+      "refreshAfterImportFailed": "I dati sono stati importati, ma non è stato possibile aggiornare alcune viste. Ricarica Libre WebUI per vedere tutte le modifiche.",
       "errors": "Errori",
       "archivedChats": {
         "title": "Chat archiviate",
         "empty": "Nessuna chat archiviata",
         "unarchive": "Ripristina"
-      }
+      },
+      "archiveScopeV3": "Include preferenze, chat, cartelle, note, raccolte di conoscenze e testo estratto dai documenti. Esclude account e segreti, voci biometriche clonate, contenuti multimediali generati, persona e memoria e dati o volumi Work."
     },
     "about": {
       "title": "Informazioni",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Mix di capacità",
       "characters": "{{count}} caratteri",
+      "bytes": "{{count}} byte",
       "images": "{{count}} immagini",
       "jobs": "{{count}} processi video",
       "inputs": "{{count}} input",

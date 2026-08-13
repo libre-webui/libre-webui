@@ -264,7 +264,7 @@
       "voiceInput": "Input suara",
       "voiceStop": "Berhenti mendengarkan",
       "transcriptionSource": "Sumber pengenalan ucapan",
-      "browserSpeech": "Pengenalan ucapan browser di perangkat",
+      "browserSpeech": "Layanan ucapan browser",
       "providerTranscriptionDisclosure": "Rekam dan kirim audio ke {{provider}} untuk ditranskripsikan",
       "webSearchOn": "Pencarian web aktif — balasan memakai hasil langsung",
       "webSearchOff": "Cari di web untuk pesan ini"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Manajemen Data",
       "export": "Ekspor Data",
-      "exportDescription": "Unduh semua data Anda termasuk preferensi, sesi, dan dokumen.",
+      "exportDescription": "Unduh arsip portabel berisi preferensi, folder obrolan, sesi dan pesan, catatan, koleksi pengetahuan, serta teks dokumen yang diekstrak.",
       "exportAll": "Ekspor Semua Data",
       "import": "Impor Data",
       "importDescription": "Impor data dari ekspor sebelumnya.",
@@ -796,6 +796,11 @@
       "clearing": "Menghapus...",
       "importOptions": "Opsi Impor",
       "importOptionsDescription": "Pilih cara menangani data yang ada",
+      "validatingArchive": "Memvalidasi arsip dan menghitung perubahan…",
+      "archiveValidationFailed": "Validasi arsip gagal",
+      "preflightReport": "Pratinjau impor",
+      "preflightIncoming": "{{folders}} folder · {{sessions}} obrolan · {{messages}} pesan · {{notes}} catatan · {{collections}} koleksi · {{documents}} dokumen · {{chunks}} potongan",
+      "preflightRemappedIds": "{{count}} ID akan dipetakan ulang untuk melindungi data akun lain.",
       "skipDuplicates": "Lewati duplikat",
       "overwrite": "Timpa yang ada",
       "importResults": "Hasil Impor",
@@ -803,15 +808,25 @@
       "imported": "Diimpor",
       "failed": "Gagal",
       "sessions": "Sesi",
+      "sessionFolders": "Folder sesi",
+      "notes": "Catatan",
+      "knowledgeCollections": "Koleksi pengetahuan",
       "importedLabel": "diimpor",
+      "overwrittenLabel": "ditimpa",
       "skipped": "dilewati",
+      "toCreate": "akan dibuat",
+      "toOverwrite": "akan ditimpa",
+      "toSkip": "akan dilewati",
       "documents": "Dokumen",
+      "warnings": "Peringatan",
+      "refreshAfterImportFailed": "Data telah diimpor, tetapi beberapa tampilan tidak dapat disegarkan. Muat ulang Libre WebUI untuk melihat semua perubahan.",
       "errors": "Error",
       "archivedChats": {
         "title": "Obrolan diarsipkan",
         "empty": "Tidak ada obrolan yang diarsipkan",
         "unarchive": "Batalkan arsip"
-      }
+      },
+      "archiveScopeV3": "Mencakup preferensi, obrolan, folder, catatan, koleksi pengetahuan, dan teks dokumen yang diekstrak. Tidak mencakup akun dan rahasia, suara kloning biometrik, media yang dihasilkan, persona dan memori, serta data atau volume Work."
     },
     "about": {
       "title": "Tentang",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Bauran kapabilitas",
       "characters": "{{count}} karakter",
+      "bytes": "{{count}} byte",
       "images": "{{count}} gambar",
       "jobs": "{{count}} pekerjaan video",
       "inputs": "{{count}} input",

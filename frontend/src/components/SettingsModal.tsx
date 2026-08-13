@@ -143,6 +143,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     sessions,
     loadModels,
     loadSessions,
+    loadFolders,
   } = useChatStore();
   const { theme, updateTheme, preferences, setPreferences, loadPreferences } =
     useAppStore();
@@ -377,21 +378,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const {
     importing,
+    preflighting,
+    preflight,
     showImportOptions,
     mergeStrategy,
-    setMergeStrategy,
     importResult,
     setImportResult,
     importFileInputRef,
     handleExportData,
     handleImportFileSelect,
+    handleMergeStrategyChange,
     handleConfirmImport,
     handleCancelImport,
   } = useSettingsDataImport({
-    preferences,
-    sessions,
     loadPreferences,
     loadSessions,
+    loadFolders,
   });
   const queryClient = useQueryClient();
 
@@ -1789,6 +1791,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             sessionCount={sessions.length}
             loading={loading}
             importing={importing}
+            preflighting={preflighting}
+            preflight={preflight}
             showImportOptions={showImportOptions}
             mergeStrategy={mergeStrategy}
             importResult={importResult}
@@ -1796,7 +1800,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onExportData={handleExportData}
             onImportFileSelect={handleImportFileSelect}
             onClearAllHistory={handleClearAllHistory}
-            onMergeStrategyChange={setMergeStrategy}
+            onMergeStrategyChange={handleMergeStrategyChange}
             onConfirmImport={handleConfirmImport}
             onCancelImport={handleCancelImport}
             onDismissImportResult={() => setImportResult(null)}

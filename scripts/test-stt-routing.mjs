@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -20,6 +21,9 @@ const { parseSTTAudioUpload, STTAudioUploadError, validateSTTAudio } =
     pathToFileURL(path.join(repoRoot, 'backend/dist/utils/sttAudioUpload.js'))
       .href
   );
+const { requestAbortSignal } = await import(
+  pathToFileURL(path.join(repoRoot, 'backend/dist/routes/stt.js')).href
+);
 
 function plugin(id, endpoint, config = {}) {
   return {
@@ -62,7 +66,92 @@ function startServer(handler) {
   });
 }
 
-const wav = Buffer.from('RIFFxxxxWAVEaudio-data');
+function makePcmWav(durationSeconds = 0.1, sampleRate = 16_000) {
+  const channels = 1;
+  const bitsPerSample = 16;
+  const blockAlign = channels * (bitsPerSample / 8);
+  const dataBytes = Math.max(
+    blockAlign,
+    Math.round(durationSeconds * sampleRate) * blockAlign
+  );
+  const wav = Buffer.alloc(44 + dataBytes);
+  wav.write('RIFF', 0, 'ascii');
+  wav.writeUInt32LE(wav.length - 8, 4);
+  wav.write('WAVE', 8, 'ascii');
+  wav.write('fmt ', 12, 'ascii');
+  wav.writeUInt32LE(16, 16);
+  wav.writeUInt16LE(1, 20);
+  wav.writeUInt16LE(channels, 22);
+  wav.writeUInt32LE(sampleRate, 24);
+  wav.writeUInt32LE(sampleRate * blockAlign, 28);
+  wav.writeUInt16LE(blockAlign, 32);
+  wav.writeUInt16LE(bitsPerSample, 34);
+  wav.write('data', 36, 'ascii');
+  wav.writeUInt32LE(dataBytes, 40);
+  return wav;
+}
+
+function ebmlElement(id, data) {
+  assert.ok(data.length < 127, 'fixture element must use a one-byte size');
+  return Buffer.concat([
+    Buffer.from(id),
+    Buffer.from([0x80 | data.length]),
+    data,
+  ]);
+}
+
+function makeOpusWebm() {
+  const float = Buffer.alloc(8);
+  float.writeDoubleBE(48_000);
+  const header = ebmlElement(
+    [0x1a, 0x45, 0xdf, 0xa3],
+    ebmlElement([0x42, 0x82], Buffer.from('webm'))
+  );
+  const info = ebmlElement(
+    [0x15, 0x49, 0xa9, 0x66],
+    ebmlElement([0x2a, 0xd7, 0xb1], Buffer.from([0x0f, 0x42, 0x40]))
+  );
+  const audio = ebmlElement(
+    [0xe1],
+    Buffer.concat([
+      ebmlElement([0xb5], float),
+      ebmlElement([0x9f], Buffer.from([1])),
+    ])
+  );
+  const track = ebmlElement(
+    [0xae],
+    Buffer.concat([
+      ebmlElement([0xd7], Buffer.from([1])),
+      ebmlElement([0x83], Buffer.from([2])),
+      ebmlElement([0x86], Buffer.from('A_OPUS')),
+      ebmlElement(
+        [0x63, 0xa2],
+        Buffer.concat([
+          Buffer.from('OpusHead'),
+          Buffer.from([1, 1]),
+          Buffer.alloc(8),
+          Buffer.from([0]),
+        ])
+      ),
+      audio,
+    ])
+  );
+  const tracks = ebmlElement([0x16, 0x54, 0xae, 0x6b], track);
+  const cluster = ebmlElement(
+    [0x1f, 0x43, 0xb6, 0x75],
+    Buffer.concat([
+      ebmlElement([0xe7], Buffer.from([0])),
+      ebmlElement([0xa3], Buffer.from([0x81, 0, 0, 0, 0xf8])),
+    ])
+  );
+  const segment = ebmlElement(
+    [0x18, 0x53, 0x80, 0x67],
+    Buffer.concat([info, tracks, cluster])
+  );
+  return Buffer.concat([header, segment]);
+}
+
+const wav = makePcmWav();
 const audio = {
   buffer: wav,
   originalname: 'recording.wav',
@@ -107,7 +196,8 @@ test('STT sends an OpenAI-compatible multipart request to the selected route', a
     assert.match(received.headers['content-type'], /^multipart\/form-data;/);
     assert.match(received.body, /name="file"; filename="recording.wav"/);
     assert.match(received.body, /Content-Type: audio\/wav/);
-    assert.match(received.body, /RIFFxxxxWAVEaudio-data/);
+    assert.match(received.body, /RIFF/);
+    assert.match(received.body, /WAVEfmt/);
     assert.match(received.body, /name="model"\r\n\r\ntranscribe-model/);
     assert.match(received.body, /name="language"\r\n\r\nen/);
     assert.match(received.body, /name="prompt"\r\n\r\nLibre WebUI/);
@@ -226,22 +316,27 @@ test('legacy direct STT plugins execute through their primary route', async () =
   }
 });
 
-test('STT validates MIME, content signatures, configured formats, and size', () => {
-  const file = mimetype => ({
-    buffer: wav,
-    originalname: 'recording.wav',
+test('STT validates audio structure, codec metadata, duration, MIME, extension, and size', () => {
+  const file = (mimetype, buffer = wav, originalname = 'recording.wav') => ({
+    buffer,
+    originalname,
     mimetype,
-    size: wav.length,
+    size: buffer.length,
   });
-  assert.equal(validateSTTAudio(file('audio/wav')).format, 'wav');
+  const validatedWav = validateSTTAudio(file('audio/wav'));
+  assert.equal(validatedWav.format, 'wav');
+  assert.equal(validatedWav.codec, 'pcm');
+  assert.equal(validatedWav.sampleRate, 16_000);
+  assert.equal(validatedWav.channels, 1);
+  assert.ok(validatedWav.durationSeconds > 0);
   assert.throws(
     () => validateSTTAudio(file('audio/mpeg')),
     error =>
       error instanceof STTAudioUploadError &&
-      error.code === 'signature_mismatch'
+      error.code === 'unsupported_mime_type'
   );
   assert.throws(
-    () => validateSTTAudio(file('audio/wav'), { formats: ['mp3'] }),
+    () => validateSTTAudio(file('audio/wav'), { formats: ['webm'] }),
     error =>
       error instanceof STTAudioUploadError &&
       error.code === 'unsupported_mime_type'
@@ -251,13 +346,62 @@ test('STT validates MIME, content signatures, configured formats, and size', () 
     error =>
       error instanceof STTAudioUploadError && error.code === 'file_too_large'
   );
-  const webm = validateSTTAudio({
-    buffer: Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0, 0, 0, 0]),
-    originalname: 'recording.webm',
-    mimetype: 'audio/webm;codecs=opus',
-    size: 8,
-  });
+  assert.throws(
+    () => validateSTTAudio(file('audio/wav', wav, 'recording.webm')),
+    error =>
+      error instanceof STTAudioUploadError &&
+      error.code === 'extension_mismatch'
+  );
+  assert.throws(
+    () =>
+      validateSTTAudio(
+        file(
+          'audio/wav',
+          Buffer.from('RIFFxxxxWAVEaudio-data'),
+          'recording.wav'
+        )
+      ),
+    error =>
+      error instanceof STTAudioUploadError &&
+      error.code === 'invalid_audio_structure'
+  );
+  const trailingWav = Buffer.concat([wav, Buffer.from('trailing')]);
+  assert.throws(
+    () => validateSTTAudio(file('audio/wav', trailingWav)),
+    error =>
+      error instanceof STTAudioUploadError &&
+      error.code === 'invalid_audio_structure'
+  );
+  assert.throws(
+    () =>
+      validateSTTAudio(file('audio/wav', makePcmWav(2), 'recording.wav'), {
+        max_duration_seconds: 1,
+      }),
+    error =>
+      error instanceof STTAudioUploadError && error.code === 'duration_exceeded'
+  );
+
+  const webmBytes = makeOpusWebm();
+  const webm = validateSTTAudio(
+    file('audio/webm;codecs=opus', webmBytes, 'recording.webm')
+  );
   assert.equal(webm.format, 'webm');
+  assert.equal(webm.codec, 'opus');
+  assert.equal(webm.sampleRate, 48_000);
+  assert.equal(webm.channels, 1);
+  assert.throws(
+    () =>
+      validateSTTAudio(
+        file(
+          'audio/webm',
+          Buffer.from([0x1a, 0x45, 0xdf, 0xa3]),
+          'recording.webm'
+        )
+      ),
+    error =>
+      error instanceof STTAudioUploadError &&
+      error.code === 'invalid_audio_structure'
+  );
 });
 
 test('bundled OpenAI and Hugging Face STT manifests are executable contracts', () => {
@@ -272,6 +416,8 @@ test('bundled OpenAI and Hugging Face STT manifests are executable contracts', (
   assert.equal(huggingface.capabilities.stt.config.request_mode, 'raw');
   assert.match(huggingface.capabilities.stt.endpoint, /\{model\}$/);
   for (const manifest of [openai, huggingface]) {
+    assert.deepEqual(manifest.capabilities.stt.config.formats, ['wav', 'webm']);
+    assert.equal(manifest.capabilities.stt.config.max_duration_seconds, 300);
     const variable = manifest.capabilities.stt.config.endpoint_variable;
     assert.ok(manifest.variables.some(entry => entry.name === variable));
   }
@@ -339,4 +485,37 @@ test('STT upload accepts only the bounded transcription form', async () => {
   } finally {
     await new Promise(resolve => server.close(resolve));
   }
+});
+
+test('STT observes disconnects before upload parsing and provider dispatch', () => {
+  const routeSource = fs.readFileSync(
+    path.join(repoRoot, 'backend/src/routes/stt.ts'),
+    'utf8'
+  );
+  const signalIndex = routeSource.indexOf(
+    'const abort = requestAbortSignal(req, res);'
+  );
+  const uploadIndex = routeSource.indexOf(
+    'await parseSTTAudioUpload(req, res);'
+  );
+  assert.ok(signalIndex >= 0 && signalIndex < uploadIndex);
+
+  const req = new EventEmitter();
+  req.aborted = true;
+  const res = new EventEmitter();
+  res.destroyed = false;
+  res.writableEnded = false;
+  const disconnected = requestAbortSignal(req, res);
+  assert.equal(disconnected.signal.aborted, true);
+  disconnected.cleanup();
+
+  const liveReq = new EventEmitter();
+  liveReq.aborted = false;
+  const liveRes = new EventEmitter();
+  liveRes.destroyed = false;
+  liveRes.writableEnded = false;
+  const closing = requestAbortSignal(liveReq, liveRes);
+  liveRes.emit('close');
+  assert.equal(closing.signal.aborted, true);
+  closing.cleanup();
 });

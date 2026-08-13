@@ -229,8 +229,9 @@
         "Systran/faster-whisper-large-v3"
       ],
       "config": {
-        "formats": ["flac", "mp3", "wav", "webm", "ogg"],
+        "formats": ["wav", "webm"],
         "max_audio_bytes": 26214400,
+        "max_duration_seconds": 300,
         "languages": [
           "en",
           "es",

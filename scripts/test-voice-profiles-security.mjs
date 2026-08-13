@@ -539,6 +539,7 @@ test('HTTP routes require consent, redact secrets, isolate owners, and bind prof
         assert.equal(created.status, 200);
         const createdBody = await created.json();
         assert.equal(createdBody.success, true);
+        assert.ok(cloneCalls[0].options.signal instanceof AbortSignal);
         assert.doesNotMatch(JSON.stringify(createdBody), /route-secret/);
         assert.doesNotMatch(
           JSON.stringify(createdBody),
@@ -639,6 +640,7 @@ test('HTTP routes require consent, redact secrets, isolate owners, and bind prof
           ownerListBody.data[0].pluginId
         );
         assert.equal(cloneCalls[1].options.userId, owner.id);
+        assert.ok(cloneCalls[1].options.signal instanceof AbortSignal);
         assert.equal(
           cloneCalls[1].options.referenceText,
           'exact route transcript'

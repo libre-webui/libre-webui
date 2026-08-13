@@ -1749,7 +1749,7 @@ export class PluginService {
       );
     }
     if (activePlugin.id === CODEX_OAUTH_PLUGIN_ID) {
-      await codexOAuthService.ensureFreshToken();
+      await codexOAuthService.ensureFreshToken(signal);
       // The codex endpoint only answers as an SSE stream; aggregate it here
       // so non-streaming callers still get a complete response.
       let aggregated = '';
@@ -1913,7 +1913,7 @@ export class PluginService {
       );
     }
     if (activePlugin.id === CODEX_OAUTH_PLUGIN_ID) {
-      await codexOAuthService.ensureFreshToken();
+      await codexOAuthService.ensureFreshToken(signal);
     }
 
     const pluginVars = this.getPluginVariables(activePlugin, userId);
@@ -2294,6 +2294,7 @@ export class PluginService {
       speed?: number;
       pluginId?: string;
       userId?: string;
+      signal?: AbortSignal;
     } = {}
   ): Promise<Buffer> {
     return this.ttsService.executeTTSRequest(model, input, options);
@@ -2359,6 +2360,7 @@ export class PluginService {
       response_format?: 'url' | 'b64_json';
       pluginId: string;
       userId?: string;
+      signal?: AbortSignal;
     }
   ): Promise<ImageGenResponse> {
     return this.imageGenerationService.executeImageGenRequest(
@@ -2418,13 +2420,15 @@ export class PluginService {
     model: string,
     providerJobId: string,
     pluginId: string,
-    userId: string
+    userId: string,
+    signal?: AbortSignal
   ) {
     return this.videoGenerationService.poll(
       model,
       providerJobId,
       pluginId,
-      userId
+      userId,
+      signal
     );
   }
 
@@ -2432,13 +2436,43 @@ export class PluginService {
     model: string,
     providerJobId: string,
     pluginId: string,
-    userId: string
+    userId: string,
+    signal?: AbortSignal
   ) {
     return this.videoGenerationService.download(
       model,
       providerJobId,
       pluginId,
+      userId,
+      signal
+    );
+  }
+
+  canCancelVideoGenRequest(
+    model: string,
+    pluginId: string,
+    userId: string
+  ): boolean {
+    return this.videoGenerationService.supportsCancellation(
+      model,
+      pluginId,
       userId
+    );
+  }
+
+  cancelVideoGenRequest(
+    model: string,
+    providerJobId: string,
+    pluginId: string,
+    userId: string,
+    signal?: AbortSignal
+  ) {
+    return this.videoGenerationService.cancel(
+      model,
+      providerJobId,
+      pluginId,
+      userId,
+      signal
     );
   }
 }

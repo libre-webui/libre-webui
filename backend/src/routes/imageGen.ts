@@ -36,6 +36,31 @@ const getRequestUserId = (req: AuthenticatedRequest): string => {
   return req.user.userId;
 };
 
+function requestAbortSignal(
+  req: AuthenticatedRequest,
+  res: express.Response
+): { signal: AbortSignal; cleanup: () => void } {
+  const controller = new AbortController();
+  const abort = () => {
+    if (!controller.signal.aborted) {
+      controller.abort(new Error('Image generation client disconnected'));
+    }
+  };
+  const abortOnResponseClose = () => {
+    if (!res.writableEnded) abort();
+  };
+  req.once?.('aborted', abort);
+  res.once?.('close', abortOnResponseClose);
+  if (req.aborted || res.destroyed) abort();
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      req.off?.('aborted', abort);
+      res.off?.('close', abortOnResponseClose);
+    },
+  };
+}
+
 // Rate limiter for image generation routes: 10 requests per minute
 const imageGenRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -165,6 +190,7 @@ router.post(
   '/generate',
   imageGenRateLimiter,
   async (req: AuthenticatedRequest, res) => {
+    const requestAbort = requestAbortSignal(req, res);
     try {
       const {
         model,
@@ -240,7 +266,10 @@ router.post(
         response_format,
         pluginId,
         userId,
+        signal: requestAbort.signal,
       });
+
+      if (requestAbort.signal.aborted) return;
 
       // Auto-save generated images to gallery
       const savedImages: string[] = [];
@@ -280,6 +309,7 @@ router.post(
         },
       });
     } catch (error) {
+      if (requestAbort.signal.aborted) return;
       logger.error('Image generation failed:', error);
 
       const errorMessage =
@@ -302,6 +332,8 @@ router.post(
         success: false,
         message: errorMessage,
       });
+    } finally {
+      requestAbort.cleanup();
     }
   }
 );

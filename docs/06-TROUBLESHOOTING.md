@@ -74,6 +74,12 @@ VITE_API_BASE_URL=http://localhost:3001/api
 VITE_WS_BASE_URL=ws://localhost:3001
 ```
 
+`VITE_WS_BASE_URL` is optional, but when set it is the shared base for Chat and
+Work terminal sockets. Use an absolute `ws:` or `wss:` URL; a path prefix such
+as `wss://example.com/libre` is supported. Do not include credentials, query
+parameters, or fragments. Restart/rebuild the frontend after changing a Vite
+variable.
+
 Backend `.env` example:
 
 ```env
@@ -91,6 +97,14 @@ npm run dev:host
 The typical symptom is that messages send but no reply ever renders, while the
 browser console shows a WebSocket connection failure. Confirm that the proxy
 allows WebSocket upgrades and does not close long-lived connections.
+
+When either value is configured, browser upgrades that send an `Origin` header
+are checked against `CORS_ORIGIN` and `BASE_URL`. Set at least one for a remote
+deployment; with neither configured, the Origin filter remains permissive for
+local development. Electron and other non-browser clients may omit `Origin`,
+but they still must first exchange their Authorization header for a short-
+lived, one-use ticket. Keep the backend behind TLS and the same network or
+reverse-proxy access controls used for the HTTP API.
 
 For a public hostname, allow that browser origin in the Libre WebUI service:
 

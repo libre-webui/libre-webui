@@ -16,8 +16,9 @@
       "endpoint": "https://api.openai.com/v1/audio/transcriptions",
       "model_map": ["gpt-4o-transcribe", "gpt-4o-mini-transcribe", "whisper-1"],
       "config": {
-        "formats": ["flac", "mp3", "m4a", "ogg", "wav", "webm"],
+        "formats": ["wav", "webm"],
         "max_audio_bytes": 26214400,
+        "max_duration_seconds": 300,
         "supports_timestamps": false,
         "request_mode": "multipart",
         "endpoint_variable": "stt_endpoint"

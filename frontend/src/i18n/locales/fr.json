@@ -264,7 +264,7 @@
       "voiceInput": "Saisie vocale",
       "voiceStop": "Arrêter l'écoute",
       "transcriptionSource": "Source de reconnaissance vocale",
-      "browserSpeech": "Reconnaissance vocale locale du navigateur",
+      "browserSpeech": "Service de reconnaissance vocale du navigateur",
       "providerTranscriptionDisclosure": "Enregistrer et envoyer l’audio à {{provider}} pour transcription",
       "webSearchOn": "Recherche web activée — les réponses utilisent des résultats en direct",
       "webSearchOff": "Chercher sur le web pour ce message"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Gestion des données",
       "export": "Exporter les données",
-      "exportDescription": "Téléchargez toutes vos données incluant les préférences, sessions et documents.",
+      "exportDescription": "Téléchargez une archive portable contenant les préférences, dossiers de discussions, sessions et messages, notes, collections de connaissances et le texte extrait des documents.",
       "exportAll": "Exporter toutes les données",
       "import": "Importer les données",
       "importDescription": "Importez les données d'une exportation précédente.",
@@ -796,6 +796,11 @@
       "clearing": "Effacement...",
       "importOptions": "Options d'importation",
       "importOptionsDescription": "Choisissez comment gérer les données existantes",
+      "validatingArchive": "Validation de l’archive et calcul des modifications…",
+      "archiveValidationFailed": "Échec de la validation de l’archive",
+      "preflightReport": "Aperçu de l’importation",
+      "preflightIncoming": "{{folders}} dossiers · {{sessions}} discussions · {{messages}} messages · {{notes}} notes · {{collections}} collections · {{documents}} documents · {{chunks}} fragments",
+      "preflightRemappedIds": "{{count}} ID seront réattribués pour protéger les données d’un autre compte.",
       "skipDuplicates": "Ignorer les doublons",
       "overwrite": "Écraser les existants",
       "importResults": "Résultats de l'importation",
@@ -803,15 +808,25 @@
       "imported": "Importé",
       "failed": "Échoué",
       "sessions": "Sessions",
+      "sessionFolders": "Dossiers de sessions",
+      "notes": "Notes",
+      "knowledgeCollections": "Collections de connaissances",
       "importedLabel": "importées",
+      "overwrittenLabel": "écrasé",
       "skipped": "ignorées",
+      "toCreate": "à créer",
+      "toOverwrite": "à écraser",
+      "toSkip": "à ignorer",
       "documents": "Documents",
+      "warnings": "Avertissements",
+      "refreshAfterImportFailed": "Les données ont été importées, mais certaines vues n’ont pas pu être actualisées. Rechargez Libre WebUI pour voir toutes les modifications.",
       "errors": "Erreurs",
       "archivedChats": {
         "title": "Discussions archivées",
         "empty": "Aucune discussion archivée",
         "unarchive": "Désarchiver"
-      }
+      },
+      "archiveScopeV3": "Inclut les préférences, discussions, dossiers, notes, collections de connaissances et le texte extrait des documents. Exclut les comptes et secrets, voix clonées biométriques, médias générés, personas et mémoire, ainsi que les données ou volumes Work."
     },
     "about": {
       "title": "À propos",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Répartition des capacités",
       "characters": "{{count}} caractères",
+      "bytes": "{{count}} octets",
       "images": "{{count}} images",
       "jobs": "{{count}} tâches vidéo",
       "inputs": "{{count}} entrées",

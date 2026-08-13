@@ -114,6 +114,13 @@ const galleryService = (
     pathToFileURL(path.join(distRoot, 'services', 'galleryService.js')).href
   )
 ).default;
+const mediaGenerationJobService = (
+  await import(
+    pathToFileURL(
+      path.join(distRoot, 'services', 'mediaGenerationJobService.js')
+    ).href
+  )
+).default;
 const { WorkModelProviderService } = await import(
   pathToFileURL(path.join(distRoot, 'services', 'workModelProviderService.js'))
     .href
@@ -226,6 +233,7 @@ async function listen(app) {
   assert.ok(address && typeof address === 'object');
   return {
     baseUrl: `http://127.0.0.1:${address.port}`,
+    closeAllConnections: () => server.closeAllConnections?.(),
     close: () => new Promise(resolve => server.close(resolve)),
   };
 }
@@ -3083,6 +3091,12 @@ test('embedding and TTS HTTP requests reject redirects before a credential-beari
     requests.every(request => request.config.maxRedirects === 0),
     'embedding and TTS credentials must never be forwarded through redirects'
   );
+  assert.equal(
+    requests.find(request => request.endpoint.endsWith('/audio/speech')).config
+      .maxContentLength,
+    50 * 1024 * 1024,
+    'TTS provider responses must be bounded before buffering'
+  );
 });
 
 test('TTS routes preserve configured output formats and provider clone errors', async () => {
@@ -3155,7 +3169,9 @@ test('TTS routes preserve configured output formats and provider clone errors', 
         const cloned = await withPatchedProperties(
           axios,
           {
-            post: async () => {
+            post: async (_endpoint, _body, config) => {
+              assert.ok(config.signal instanceof AbortSignal);
+              assert.equal(config.maxContentLength, 50 * 1024 * 1024);
               const error = new Error('provider rejected the reference');
               error.isAxiosError = true;
               error.response = {
@@ -3203,7 +3219,11 @@ test('TTS and media routes translate provider authentication failures to 502', a
       pluginService,
       {
         getPluginForTTS: () => plugin,
-        executeTTSRequest: async () => {
+        executeTTSRequest: async (_model, _input, options) => {
+          assert.ok(
+            options.signal instanceof AbortSignal,
+            'TTS and media routes must pass their disconnect signal'
+          );
           throw new TTSProviderResponseError(
             providerStatus,
             `TTS provider rejected its credential with ${providerStatus}`
@@ -3213,6 +3233,7 @@ test('TTS and media routes translate provider authentication failures to 502', a
       async () => {
         for (const route of [
           '/api/tts/generate',
+          '/api/tts/generate-base64',
           '/api/media/audio/generate',
         ]) {
           for (providerStatus of [401, 403]) {
@@ -3239,6 +3260,388 @@ test('TTS and media routes translate provider authentication failures to 502', a
       }
     );
   } finally {
+    await server.close();
+  }
+});
+
+test('sound and video routes apply the correct transport lifetime', async () => {
+  const user = upsertTestUser('media-cancellation-signal-user', 'user');
+  const app = express();
+  app.use(express.json());
+  app.use('/api/media', mediaRoutes);
+  const server = await listen(app);
+  const headers = {
+    Authorization: `Bearer ${authService.generateToken(user)}`,
+    'Content-Type': 'application/json',
+  };
+  const observed = [];
+
+  try {
+    await withPatchedProperties(
+      pluginService,
+      {
+        executeAudioGenRequest: async (_model, _prompt, options) => {
+          observed.push(['sound', options.signal instanceof AbortSignal]);
+          return { audio: Buffer.from('sound'), mimeType: 'audio/wav' };
+        },
+        submitVideoGenRequest: async (_model, _prompt, options) => {
+          observed.push([
+            'video-submit',
+            options.signal instanceof AbortSignal,
+          ]);
+          return { providerJobId: 'provider-video-job', status: 'pending' };
+        },
+        pollVideoGenRequest: async (
+          _model,
+          _providerJobId,
+          _pluginId,
+          _userId,
+          signal
+        ) => {
+          observed.push(['video-poll', signal instanceof AbortSignal]);
+          return { status: 'completed' };
+        },
+        downloadVideoGenResult: async (
+          _model,
+          _providerJobId,
+          _pluginId,
+          _userId,
+          signal
+        ) => {
+          observed.push(['video-download', signal instanceof AbortSignal]);
+          return { video: Buffer.from('video'), mimeType: 'video/mp4' };
+        },
+      },
+      async () => {
+        const sound = await fetch(
+          `${server.baseUrl}/api/media/sound/generate`,
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              model: 'sound-model',
+              pluginId: 'sound-provider',
+              prompt: 'A sound',
+            }),
+          }
+        );
+        assert.equal(sound.status, 200);
+
+        const submitted = await fetch(
+          `${server.baseUrl}/api/media/video/generate`,
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              model: 'video-model',
+              pluginId: 'video-provider',
+              prompt: 'A video',
+            }),
+          }
+        );
+        assert.equal(submitted.status, 202);
+        const jobId = (await submitted.json()).data.id;
+        const polled = await fetch(
+          `${server.baseUrl}/api/media/video/jobs/${encodeURIComponent(jobId)}`,
+          { headers }
+        );
+        assert.equal(polled.status, 200);
+        assert.equal((await polled.json()).data.status, 'completed');
+      }
+    );
+  } finally {
+    await server.close();
+  }
+
+  assert.deepEqual(observed, [
+    ['sound', true],
+    ['video-submit', false],
+    ['video-poll', true],
+    ['video-download', true],
+  ]);
+});
+
+test('accepted video jobs survive response disconnects and stay user-scoped', async () => {
+  const owner = upsertTestUser('durable-video-job-owner', 'user');
+  const other = upsertTestUser('durable-video-job-other', 'user');
+  const app = express();
+  app.use(express.json());
+  app.use('/api/media', mediaRoutes);
+  const server = await listen(app);
+  const submitStarted = Promise.withResolvers();
+  const releaseSubmit = Promise.withResolvers();
+  const auth = user => ({
+    Authorization: `Bearer ${authService.generateToken(user)}`,
+    'Content-Type': 'application/json',
+  });
+
+  try {
+    await withPatchedProperties(
+      pluginService,
+      {
+        submitVideoGenRequest: async () => {
+          submitStarted.resolve();
+          await releaseSubmit.promise;
+          return {
+            providerJobId: 'accepted-after-disconnect',
+            status: 'pending',
+          };
+        },
+        canCancelVideoGenRequest: () => false,
+      },
+      async () => {
+        const controller = new AbortController();
+        const submission = fetch(`${server.baseUrl}/api/media/video/generate`, {
+          method: 'POST',
+          headers: auth(owner),
+          body: JSON.stringify({
+            model: 'video-model',
+            pluginId: 'video-provider',
+            prompt: 'Keep this accepted handle',
+          }),
+          signal: controller.signal,
+        });
+        await submitStarted.promise;
+        controller.abort();
+        await assert.rejects(submission, error => error.name === 'AbortError');
+        releaseSubmit.resolve();
+
+        let ownerJobs = [];
+        for (
+          let attempt = 0;
+          attempt < 20 && ownerJobs.length === 0;
+          attempt += 1
+        ) {
+          await new Promise(resolve => setTimeout(resolve, 10));
+          const response = await fetch(
+            `${server.baseUrl}/api/media/video/jobs`,
+            { headers: auth(owner) }
+          );
+          ownerJobs = (await response.json()).data.jobs;
+        }
+        assert.equal(ownerJobs.length, 1);
+        assert.equal(ownerJobs[0].prompt, 'Keep this accepted handle');
+
+        const unsupportedCancel = await fetch(
+          `${server.baseUrl}/api/media/video/jobs/${ownerJobs[0].id}`,
+          { method: 'DELETE', headers: auth(owner) }
+        );
+        assert.equal(unsupportedCancel.status, 409);
+        assert.match(
+          (await unsupportedCancel.json()).message,
+          /does not declare job cancellation/
+        );
+        assert.ok(mediaGenerationJobService.get(ownerJobs[0].id, owner.id));
+
+        const otherJobs = await fetch(
+          `${server.baseUrl}/api/media/video/jobs`,
+          {
+            headers: auth(other),
+          }
+        );
+        assert.deepEqual((await otherJobs.json()).data.jobs, []);
+      }
+    );
+  } finally {
+    releaseSubmit.resolve();
+    server.closeAllConnections();
+    await server.close();
+  }
+});
+
+test('video job deletion waits for provider cancellation confirmation', async () => {
+  const user = upsertTestUser('cancellable-video-job-owner', 'user');
+  const job = mediaGenerationJobService.create(user.id, {
+    providerJobId: 'provider-cancel-handle',
+    pluginId: 'cancellable-video-provider',
+    model: 'video-model',
+    prompt: 'Cancel this provider job',
+    options: {},
+  });
+  const app = express();
+  app.use(express.json());
+  app.use('/api/media', mediaRoutes);
+  const server = await listen(app);
+  let observedProviderJobId;
+
+  try {
+    await withPatchedProperties(
+      pluginService,
+      {
+        canCancelVideoGenRequest: () => true,
+        cancelVideoGenRequest: async (
+          _model,
+          providerJobId,
+          _pluginId,
+          _userId,
+          signal
+        ) => {
+          assert.ok(signal instanceof AbortSignal);
+          observedProviderJobId = providerJobId;
+        },
+      },
+      async () => {
+        const response = await fetch(
+          `${server.baseUrl}/api/media/video/jobs/${job.id}`,
+          {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${authService.generateToken(user)}`,
+            },
+          }
+        );
+        assert.equal(response.status, 200);
+        assert.equal((await response.json()).success, true);
+      }
+    );
+  } finally {
+    await server.close();
+  }
+
+  assert.equal(observedProviderJobId, 'provider-cancel-handle');
+  assert.equal(mediaGenerationJobService.get(job.id, user.id), null);
+});
+
+test('concurrent video resume requests save one gallery result', async () => {
+  const user = upsertTestUser('single-flight-video-owner', 'user');
+  const job = mediaGenerationJobService.create(user.id, {
+    providerJobId: 'single-flight-provider-job',
+    pluginId: 'video-provider',
+    model: 'video-model',
+    prompt: 'Persist exactly once',
+    options: {},
+  });
+  const app = express();
+  app.use(express.json());
+  app.use('/api/media', mediaRoutes);
+  const server = await listen(app);
+  const headers = {
+    Authorization: `Bearer ${authService.generateToken(user)}`,
+    'Content-Type': 'application/json',
+  };
+  let polls = 0;
+  let downloads = 0;
+
+  try {
+    await withPatchedProperties(
+      pluginService,
+      {
+        pollVideoGenRequest: async () => {
+          polls += 1;
+          await new Promise(resolve => setTimeout(resolve, 40));
+          return { status: 'completed' };
+        },
+        downloadVideoGenResult: async () => {
+          downloads += 1;
+          await new Promise(resolve => setTimeout(resolve, 40));
+          return { video: Buffer.from('one-video'), mimeType: 'video/mp4' };
+        },
+        canCancelVideoGenRequest: () => false,
+      },
+      async () => {
+        const [first, second] = await Promise.all([
+          fetch(`${server.baseUrl}/api/media/video/jobs/${job.id}/resume`, {
+            method: 'POST',
+            headers,
+          }),
+          fetch(`${server.baseUrl}/api/media/video/jobs/${job.id}/resume`, {
+            method: 'POST',
+            headers,
+          }),
+        ]);
+        assert.equal(first.status, 200);
+        assert.equal(second.status, 200);
+        const results = await Promise.all([first.json(), second.json()]);
+        assert.equal(results[0].data.media.id, results[1].data.media.id);
+      }
+    );
+  } finally {
+    await server.close();
+  }
+
+  assert.equal(polls, 1);
+  assert.equal(downloads, 1);
+  const gallery = galleryService.getMedia(user.id, { limit: 20, offset: 0 });
+  assert.equal(gallery.total, 1);
+});
+
+test('media disconnect aborts provider work and suppresses an abort-ignoring late gallery write', async () => {
+  const user = upsertTestUser('media-late-write-user', 'user');
+  const plugin = createPlugin({ id: 'media-late-write-provider' });
+  const app = express();
+  app.use(express.json());
+  app.use('/api/media', mediaRoutes);
+  const server = await listen(app);
+  const providerStarted = Promise.withResolvers();
+  const releaseProvider = Promise.withResolvers();
+  let providerSignal;
+  let galleryWrites = 0;
+
+  try {
+    await withPatchedProperties(
+      pluginService,
+      {
+        getPluginForTTS: () => plugin,
+        executeTTSRequest: async (_model, _input, options) => {
+          providerSignal = options.signal;
+          providerStarted.resolve();
+          // Deliberately ignore AbortSignal to exercise the route's late-write
+          // guard independently from the real Axios cancellation path.
+          await releaseProvider.promise;
+          return Buffer.from('late-audio');
+        },
+      },
+      () =>
+        withPatchedProperties(
+          galleryService,
+          {
+            saveMedia: () => {
+              galleryWrites += 1;
+              return null;
+            },
+          },
+          async () => {
+            const controller = new AbortController();
+            const response = fetch(
+              `${server.baseUrl}/api/media/audio/generate`,
+              {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${authService.generateToken(user)}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model: 'tts-model',
+                  pluginId: plugin.id,
+                  input: 'Do not save this',
+                }),
+                signal: controller.signal,
+              }
+            );
+            await providerStarted.promise;
+            const providerAborted = new Promise(resolve => {
+              if (providerSignal.aborted) resolve();
+              else
+                providerSignal.addEventListener('abort', resolve, {
+                  once: true,
+                });
+            });
+            controller.abort();
+            await assert.rejects(
+              response,
+              error => error.name === 'AbortError'
+            );
+            await providerAborted;
+            releaseProvider.resolve();
+            await new Promise(resolve => setImmediate(resolve));
+            assert.equal(providerSignal.aborted, true);
+            assert.equal(galleryWrites, 0);
+          }
+        )
+    );
+  } finally {
+    releaseProvider.resolve();
+    server.closeAllConnections();
     await server.close();
   }
 });
@@ -3645,6 +4048,7 @@ test('image routes forward the authenticated user and selected plugin', async ()
           operation: 'generate',
           pluginId: options.pluginId,
           userId: options.userId,
+          hasSignal: options.signal instanceof AbortSignal,
         });
         return { images: [], model: 'image-model' };
       },
@@ -3699,6 +4103,7 @@ test('image routes forward the authenticated user and selected plugin', async ()
       operation: 'generate',
       pluginId: 'selected-image-provider',
       userId: 'image-route-user',
+      hasSignal: true,
     },
   ]);
 });

@@ -16,7 +16,9 @@ keywords:
 
 # Environment Variables
 
-This page lists the environment variables read by the current Libre WebUI backend, frontend, and maintenance scripts.
+This page lists the supported operator-facing environment variables read by
+the current Libre WebUI backend, frontend, and maintenance scripts. Internal
+test-only canaries are intentionally omitted.
 
 ## Backend Server
 
@@ -32,6 +34,8 @@ This page lists the environment variables read by the current Libre WebUI backen
 | `PLUGINS_DIR`    | `$DATA_DIR/plugins`, otherwise `plugins/` | Writable directory for installed/customized plugins |
 | `BASE_URL`       | `http://localhost:3001`                   | Base URL used for OAuth callback defaults           |
 | `LOG_LEVEL`      | `info` (`warn` in tests)                  | Backend log level                                   |
+| `WEBUI_HOST`     | loopback; `0.0.0.0` in Docker             | HTTP listen address                                 |
+| `OPEN_BROWSER`   | `true` when serving the frontend          | Set `false` to suppress automatic browser launch    |
 
 ## Authentication and Security
 
@@ -54,12 +58,28 @@ reachable bootstrap route with an outer identity boundary before first start.
 
 Chat WebSocket admission can be tuned without weakening authentication:
 
-| Variable                                  | Default | Purpose                                      |
-| ----------------------------------------- | ------- | -------------------------------------------- |
-| `CHAT_WS_MAX_PAYLOAD_BYTES`               | 10 MiB  | Maximum accepted WebSocket message size      |
-| `CHAT_WS_MAX_MESSAGES_PER_MINUTE`         | `120`   | Per-connection WebSocket message ceiling     |
-| `CHAT_WS_MAX_ACTIVE_GENERATIONS_PER_USER` | `4`     | Provider generations allowed per account     |
-| `CHAT_WS_MAX_CONNECTIONS_PER_USER`        | `5`     | Concurrent authenticated sockets per account |
+| Variable                                  | Default | Purpose                                                 |
+| ----------------------------------------- | ------- | ------------------------------------------------------- |
+| `CHAT_WS_MAX_PAYLOAD_BYTES`               | 10 MiB  | Maximum accepted WebSocket message size                 |
+| `CHAT_WS_MAX_MESSAGES_PER_MINUTE`         | `120`   | Per-connection WebSocket message ceiling                |
+| `CHAT_WS_MAX_ACTIVE_GENERATIONS_PER_USER` | `4`     | Provider generations allowed per account                |
+| `CHAT_WS_MAX_CONNECTIONS_PER_USER`        | `5`     | Concurrent authenticated sockets per account            |
+| `WEBSOCKET_TICKET_TTL_MS`                 | `30000` | One-use Chat/Work ticket lifetime; capped at 60 seconds |
+
+The browser exchanges its normal Authorization header for an opaque ticket and
+puts only that short-lived value in the WebSocket upgrade URL. Tickets are
+single use, protocol-bound, session-bounded, and stored only as hashes. This
+keeps durable session tokens out of reverse-proxy request-target logs.
+When `CORS_ORIGIN` or `BASE_URL` is configured, browser upgrades with an
+`Origin` header must match one of those configured origins. Set at least one on
+a remotely reachable deployment; with neither configured, the Origin filter
+is permissive for local-development compatibility.
+Originless upgrades remain supported intentionally for Electron and
+non-browser clients, where browsers' Origin control is unavailable; they still
+need a valid one-use ticket and receive the same current account, Work-access,
+and task checks. Treat the ticket as the authentication boundary and restrict
+non-browser access with the deployment's normal TLS, firewall, and reverse
+proxy controls.
 
 ## OAuth
 
@@ -81,6 +101,7 @@ If callback URLs are not set, Libre WebUI builds defaults from `BASE_URL`.
 | `OLLAMA_BASE_URL`               | `http://localhost:11434` | Ollama API base URL                                 |
 | `OLLAMA_TIMEOUT`                | `300000`                 | Standard Ollama request timeout in milliseconds     |
 | `OLLAMA_LONG_OPERATION_TIMEOUT` | `900000`                 | Long operation timeout for pulls and large requests |
+| `OLLAMA_MAX_CONTEXT`            | `32768`                  | Maximum model context adopted automatically         |
 
 ## Web Search
 
@@ -262,17 +283,24 @@ bundled route.
 
 ## Frontend
 
-| Variable             | Default                                 | Purpose                                             |
-| -------------------- | --------------------------------------- | --------------------------------------------------- |
-| `VITE_API_BASE_URL`  | inferred from host/dev config           | Frontend API base URL                               |
-| `VITE_WS_BASE_URL`   | inferred from API URL                   | WebSocket base URL                                  |
-| `VITE_APP_VERSION`   | package version injected by Vite config | Displayed app version                               |
-| `VITE_DEMO_MODE`     | `false`                                 | Enables demo-mode mocks when `true`                 |
-| `VITE_API_TIMEOUT`   | `300000`                                | Frontend API timeout in milliseconds                |
-| `VITE_BACKEND_URL`   | `http://localhost:3001`                 | Used by some auth helper components                 |
-| `VITE_DEBUG_VERBOSE` | unset                                   | Enables verbose frontend debug logs in development  |
-| `VITE_LOG_LEVEL`     | unset                                   | Overrides the frontend log level                    |
-| `ELECTRON_BUILD`     | unset                                   | Enables Electron-specific Vite behavior when `true` |
+| Variable             | Default                                 | Purpose                                              |
+| -------------------- | --------------------------------------- | ---------------------------------------------------- |
+| `VITE_API_BASE_URL`  | inferred from host/dev config           | Frontend API base URL                                |
+| `VITE_WS_BASE_URL`   | inferred from API URL                   | Absolute `ws:`/`wss:` base for Chat and Work sockets |
+| `VITE_APP_VERSION`   | package version injected by Vite config | Displayed app version                                |
+| `VITE_DEMO_MODE`     | `false`                                 | Enables demo-mode mocks when `true`                  |
+| `VITE_API_TIMEOUT`   | `300000`                                | Frontend API timeout in milliseconds                 |
+| `VITE_BACKEND_URL`   | `http://localhost:3001`                 | Used by some auth helper components                  |
+| `VITE_DEBUG_VERBOSE` | unset                                   | Enables verbose frontend debug logs in development   |
+| `VITE_LOG_LEVEL`     | unset                                   | Overrides the frontend log level                     |
+| `ELECTRON_BUILD`     | unset                                   | Enables Electron-specific Vite behavior when `true`  |
+
+`VITE_WS_BASE_URL` overrides every WebSocket fallback for both Chat and the
+Work terminal. It may include a reverse-proxy path prefix, but it must be an
+absolute `ws:` or `wss:` URL without credentials, a query, or a fragment. When
+it is unset, Electron `file:` clients use `ws://localhost:3001`; browser
+clients derive their base from `VITE_API_BASE_URL`, then the production browser
+origin or the development backend on port 3001.
 
 ## Maintenance Scripts
 

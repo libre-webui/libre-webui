@@ -264,7 +264,7 @@
       "voiceInput": "Sesle giriş",
       "voiceStop": "Dinlemeyi durdur",
       "transcriptionSource": "Konuşma tanıma kaynağı",
-      "browserSpeech": "Cihazdaki tarayıcı konuşma tanıma",
+      "browserSpeech": "Tarayıcı konuşma hizmeti",
       "providerTranscriptionDisclosure": "Sesi kaydedip transkripsiyon için {{provider}} hizmetine gönder",
       "webSearchOn": "Web araması açık — yanıtlar canlı sonuçları kullanır",
       "webSearchOff": "Bu mesaj için webde ara"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Veri Yönetimi",
       "export": "Veriyi Dışa Aktar",
-      "exportDescription": "Tercihler, oturumlar ve belgeler dahil tüm verilerinizi indirin.",
+      "exportDescription": "Tercihler, sohbet klasörleri, oturumlar ve mesajlar, notlar, bilgi koleksiyonları ve çıkarılmış belge metninden oluşan taşınabilir bir arşiv indirin.",
       "exportAll": "Tüm Verileri Dışa Aktar",
       "import": "Veriyi İçe Aktar",
       "importDescription": "Önceki bir dışa aktarmadan veri içe aktarın.",
@@ -796,6 +796,11 @@
       "clearing": "Temizleniyor...",
       "importOptions": "İçe Aktarma Seçenekleri",
       "importOptionsDescription": "Mevcut verilerin nasıl işleneceğini seçin",
+      "validatingArchive": "Arşiv doğrulanıyor ve değişiklikler hesaplanıyor…",
+      "archiveValidationFailed": "Arşiv doğrulaması başarısız oldu",
+      "preflightReport": "İçe aktarma önizlemesi",
+      "preflightIncoming": "{{folders}} klasör · {{sessions}} sohbet · {{messages}} mesaj · {{notes}} not · {{collections}} koleksiyon · {{documents}} belge · {{chunks}} parça",
+      "preflightRemappedIds": "Başka bir hesabın verilerini korumak için {{count}} kimlik yeniden eşlenecek.",
       "skipDuplicates": "Yinelenenleri atla",
       "overwrite": "Mevcutların üzerine yaz",
       "importResults": "İçe Aktarma Sonuçları",
@@ -803,15 +808,25 @@
       "imported": "İçe aktarıldı",
       "failed": "Başarısız",
       "sessions": "Oturumlar",
+      "sessionFolders": "Oturum klasörleri",
+      "notes": "Notlar",
+      "knowledgeCollections": "Bilgi koleksiyonları",
       "importedLabel": "içe aktarıldı",
+      "overwrittenLabel": "üzerine yazıldı",
       "skipped": "atlandı",
+      "toCreate": "oluşturulacak",
+      "toOverwrite": "üzerine yazılacak",
+      "toSkip": "atlanacak",
       "documents": "Belgeler",
+      "warnings": "Uyarılar",
+      "refreshAfterImportFailed": "Veriler içe aktarıldı, ancak bazı görünümler yenilenemedi. Tüm değişiklikleri görmek için Libre WebUI’yi yeniden yükleyin.",
       "errors": "Hatalar",
       "archivedChats": {
         "title": "Arşivlenmiş sohbetler",
         "empty": "Arşivlenmiş sohbet yok",
         "unarchive": "Arşivden çıkar"
-      }
+      },
+      "archiveScopeV3": "Tercihleri, sohbetleri, klasörleri, notları, bilgi koleksiyonlarını ve çıkarılmış belge metnini içerir. Hesapları ve gizli bilgileri, biyometrik olarak klonlanmış sesleri, oluşturulan medyayı, kişilikleri ve belleği, ayrıca Work verilerini veya birimlerini içermez."
     },
     "about": {
       "title": "Hakkında",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Yetenek dağılımı",
       "characters": "{{count}} karakter",
+      "bytes": "{{count}} bayt",
       "images": "{{count}} görüntü",
       "jobs": "{{count}} video işi",
       "inputs": "{{count}} girdi",

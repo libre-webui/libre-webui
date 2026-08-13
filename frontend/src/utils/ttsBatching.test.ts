@@ -18,9 +18,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  activateTTSPlaybackSession,
   batchTextForTTS,
   createTTSPlaybackSession,
   getTTSAudioUnlockState,
+  isTTSPlaybackAbort,
   isTTSPlaybackBlocked,
   splitTTSSentences,
   splitTTSSentencesFallback,
@@ -375,6 +377,83 @@ test('HTML audio fallback plays every batch in order and revokes object URLs', a
   assert.deepEqual(playedUrls, createdUrls);
   assert.deepEqual(revokedUrls, createdUrls);
   assert.equal(session.state, 'ended');
+});
+
+test('HTML audio fallback reports autoplay policy rejection as blocked', async () => {
+  const revokedUrls: string[] = [];
+  const session = createTTSPlaybackSession({
+    audioContextFactory: () => null,
+    generate: async () => new Blob(['audio']),
+    objectUrlFactory: {
+      create: () => 'blob:blocked-audio',
+      revoke: url => revokedUrls.push(url),
+    },
+    audioElementFactory: () => ({
+      currentTime: 0,
+      onended: null,
+      onerror: null,
+      pause() {},
+      play: async () => {
+        throw Object.assign(new Error('A user gesture is required'), {
+          name: 'NotAllowedError',
+        });
+      },
+      removeAttribute() {},
+      load() {},
+    }),
+  });
+
+  await assert.rejects(session.play(['blocked output']), error => {
+    assert.equal(isTTSPlaybackBlocked(error), true);
+    return true;
+  });
+  assert.equal(session.state, 'blocked');
+  assert.deepEqual(revokedUrls, ['blob:blocked-audio']);
+});
+
+test('exclusive playback cancels provider work before a replacement starts', async () => {
+  let firstSignal: AbortSignal | undefined;
+  const first = createTTSPlaybackSession({
+    audioContextFactory: () => new FakeAudioContext(),
+    generate: (_text, { signal }) => {
+      firstSignal = signal;
+      return new Promise<Blob>((_resolve, reject) => {
+        signal.addEventListener(
+          'abort',
+          () =>
+            reject(
+              Object.assign(new Error('cancelled'), { name: 'AbortError' })
+            ),
+          { once: true }
+        );
+      });
+    },
+  });
+  const releaseFirst = activateTTSPlaybackSession(first);
+  const firstPlayback = first.play(['old response']);
+  await waitFor(() => Boolean(firstSignal));
+
+  const secondContext = new FakeAudioContext();
+  const second = createTTSPlaybackSession({
+    scheduleLeadSeconds: 0,
+    audioContextFactory: () => secondContext,
+    generate: async () => new Blob(['new response']),
+  });
+  const releaseSecond = activateTTSPlaybackSession(second);
+  const secondPlayback = second.play(['new response']);
+
+  await assert.rejects(firstPlayback, error => {
+    assert.equal(isTTSPlaybackAbort(error), true);
+    return true;
+  });
+  await secondPlayback;
+  releaseFirst();
+  releaseSecond();
+
+  assert.equal(firstSignal?.aborted, true);
+  assert.equal(first.state, 'cancelled');
+  assert.equal(second.state, 'ended');
+  assert.equal(secondContext.starts.length, 1);
 });
 
 test('the shared audio context unlocks in the gesture stack and survives sessions', async () => {

@@ -264,7 +264,7 @@
       "voiceInput": "Raddinnsláttur",
       "voiceStop": "Hætta að hlusta",
       "transcriptionSource": "Uppruni talgreiningar",
-      "browserSpeech": "Talgreining í vafra á tækinu",
+      "browserSpeech": "Talgreiningarþjónusta vafrans",
       "providerTranscriptionDisclosure": "Taka upp og senda hljóð til {{provider}} til umritunar",
       "webSearchOn": "Vefleit virk — svör nota lifandi niðurstöður",
       "webSearchOff": "Leita á vefnum fyrir þessi skilaboð"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Gagnastjórnun",
       "export": "Flytja út gögn",
-      "exportDescription": "Sæktu öll gögnin þín þar á meðal stillingar, setur og skjöl.",
+      "exportDescription": "Sæktu færanlegt safn með kjörstillingum, spjallmöppum, setum og skilaboðum, glósum, þekkingarsöfnum og útdregnum texta skjala.",
       "exportAll": "Flytja út öll gögn",
       "import": "Flytja inn gögn",
       "importDescription": "Flytja inn gögn frá fyrri útflutningi.",
@@ -796,6 +796,11 @@
       "clearing": "Hreinsar...",
       "importOptions": "Innflutningsvalkostir",
       "importOptionsDescription": "Veldu hvernig meðhöndla á núverandi gögn",
+      "validatingArchive": "Staðfesti safn og reikna breytingar…",
+      "archiveValidationFailed": "Staðfesting safns mistókst",
+      "preflightReport": "Forskoðun innflutnings",
+      "preflightIncoming": "{{folders}} möppur · {{sessions}} spjöll · {{messages}} skilaboð · {{notes}} glósur · {{collections}} söfn · {{documents}} skjöl · {{chunks}} hlutar",
+      "preflightRemappedIds": "{{count}} auðkennum verður endurvarpað til að verja gögn annars reiknings.",
       "skipDuplicates": "Sleppa tvítekningum",
       "overwrite": "Yfirskrifa núverandi",
       "importResults": "Niðurstöður innflutnings",
@@ -803,15 +808,25 @@
       "imported": "Flutt inn",
       "failed": "Mistókst",
       "sessions": "Setur",
+      "sessionFolders": "Setumöppur",
+      "notes": "Glósur",
+      "knowledgeCollections": "Þekkingarsöfn",
       "importedLabel": "flutt inn",
+      "overwrittenLabel": "yfirskrifað",
       "skipped": "sleppt",
+      "toCreate": "til að búa til",
+      "toOverwrite": "til að yfirskrifa",
+      "toSkip": "til að sleppa",
       "documents": "Skjöl",
+      "warnings": "Viðvaranir",
+      "refreshAfterImportFailed": "Gögn voru flutt inn, en ekki tókst að endurnýja sumar sýnir. Endurhlaðið Libre WebUI til að sjá allar breytingar.",
       "errors": "Villur",
       "archivedChats": {
         "title": "Spjall í geymslu",
         "empty": "Ekkert spjall í geymslu",
         "unarchive": "Taka úr geymslu"
-      }
+      },
+      "archiveScopeV3": "Inniheldur kjörstillingar, spjöll, möppur, glósur, þekkingarsöfn og útdreginn texta skjala. Undanskilur reikninga og leyndarmál, lífkennilega klónaðar raddir, myndað efni, persónur og minni, ásamt Work-gögnum eða -diskum."
     },
     "about": {
       "title": "Um",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Fjölbreytni getu",
       "characters": "{{count}} stafir",
+      "bytes": "{{count}} bæti",
       "images": "{{count}} myndir",
       "jobs": "{{count}} myndbandaverk",
       "inputs": "{{count}} inntök",

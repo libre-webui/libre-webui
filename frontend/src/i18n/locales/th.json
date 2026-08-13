@@ -264,7 +264,7 @@
       "voiceInput": "ป้อนด้วยเสียง",
       "voiceStop": "หยุดฟัง",
       "transcriptionSource": "แหล่งการรู้จำเสียงพูด",
-      "browserSpeech": "การรู้จำเสียงพูดด้วยเบราว์เซอร์บนอุปกรณ์",
+      "browserSpeech": "บริการรู้จำเสียงพูดของเบราว์เซอร์",
       "providerTranscriptionDisclosure": "บันทึกและส่งเสียงไปยัง {{provider}} เพื่อถอดเสียง",
       "webSearchOn": "การค้นหาเว็บเปิดอยู่ — คำตอบใช้ผลลัพธ์สด",
       "webSearchOff": "ค้นหาเว็บสำหรับข้อความนี้"
@@ -784,7 +784,7 @@
     "data": {
       "title": "การจัดการข้อมูล",
       "export": "ส่งออกข้อมูล",
-      "exportDescription": "ดาวน์โหลดข้อมูลทั้งหมดของคุณรวมถึงการตั้งค่า เซสชัน และเอกสาร",
+      "exportDescription": "ดาวน์โหลดคลังแบบพกพาที่มีการตั้งค่า โฟลเดอร์แชท เซสชันและข้อความ โน้ต คอลเลกชันความรู้ และข้อความที่แยกจากเอกสาร",
       "exportAll": "ส่งออกข้อมูลทั้งหมด",
       "import": "นำเข้าข้อมูล",
       "importDescription": "นำเข้าข้อมูลจากการส่งออกก่อนหน้า",
@@ -796,6 +796,11 @@
       "clearing": "กำลังล้าง...",
       "importOptions": "ตัวเลือกการนำเข้า",
       "importOptionsDescription": "เลือกวิธีจัดการข้อมูลที่มีอยู่",
+      "validatingArchive": "กำลังตรวจสอบคลังและคำนวณการเปลี่ยนแปลง…",
+      "archiveValidationFailed": "การตรวจสอบคลังล้มเหลว",
+      "preflightReport": "ตัวอย่างก่อนนำเข้า",
+      "preflightIncoming": "{{folders}} โฟลเดอร์ · {{sessions}} แชท · {{messages}} ข้อความ · {{notes}} โน้ต · {{collections}} คอลเลกชัน · {{documents}} เอกสาร · {{chunks}} ส่วน",
+      "preflightRemappedIds": "จะกำหนด ID ใหม่ {{count}} รายการเพื่อปกป้องข้อมูลของบัญชีอื่น",
       "skipDuplicates": "ข้ามรายการซ้ำ",
       "overwrite": "เขียนทับที่มีอยู่",
       "importResults": "ผลลัพธ์การนำเข้า",
@@ -803,15 +808,25 @@
       "imported": "นำเข้าแล้ว",
       "failed": "ล้มเหลว",
       "sessions": "เซสชัน",
+      "sessionFolders": "โฟลเดอร์เซสชัน",
+      "notes": "โน้ต",
+      "knowledgeCollections": "คอลเลกชันความรู้",
       "importedLabel": "นำเข้าแล้ว",
+      "overwrittenLabel": "เขียนทับแล้ว",
       "skipped": "ข้ามแล้ว",
+      "toCreate": "ที่จะสร้าง",
+      "toOverwrite": "ที่จะเขียนทับ",
+      "toSkip": "ที่จะข้าม",
       "documents": "เอกสาร",
+      "warnings": "คำเตือน",
+      "refreshAfterImportFailed": "นำเข้าข้อมูลแล้ว แต่ไม่สามารถรีเฟรชมุมมองบางส่วนได้ โปรดโหลด Libre WebUI ใหม่เพื่อดูการเปลี่ยนแปลงทั้งหมด",
       "errors": "ข้อผิดพลาด",
       "archivedChats": {
         "title": "แชทที่เก็บถาวร",
         "empty": "ไม่มีแชทที่เก็บถาวร",
         "unarchive": "เลิกเก็บถาวร"
-      }
+      },
+      "archiveScopeV3": "รวมการตั้งค่า แชท โฟลเดอร์ โน้ต คอลเลกชันความรู้ และข้อความที่แยกจากเอกสาร ไม่รวมบัญชีและข้อมูลลับ เสียงโคลนไบโอเมตริก สื่อที่สร้างขึ้น เพอร์โซนาและหน่วยความจำ รวมถึงข้อมูลหรือโวลุ่ม Work"
     },
     "about": {
       "title": "เกี่ยวกับ",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "สัดส่วนความสามารถ",
       "characters": "{{count}} ตัวอักษร",
+      "bytes": "{{count}} ไบต์",
       "images": "{{count}} รูปภาพ",
       "jobs": "{{count}} งานวิดีโอ",
       "inputs": "{{count}} อินพุต",

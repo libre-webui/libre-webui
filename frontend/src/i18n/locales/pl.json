@@ -264,7 +264,7 @@
       "voiceInput": "Wprowadzanie głosowe",
       "voiceStop": "Przestań słuchać",
       "transcriptionSource": "Źródło rozpoznawania mowy",
-      "browserSpeech": "Rozpoznawanie mowy w przeglądarce na urządzeniu",
+      "browserSpeech": "Usługa rozpoznawania mowy przeglądarki",
       "providerTranscriptionDisclosure": "Nagraj i wyślij dźwięk do {{provider}} w celu transkrypcji",
       "webSearchOn": "Wyszukiwanie włączone — odpowiedzi używają bieżących wyników",
       "webSearchOff": "Szukaj w sieci dla tej wiadomości"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Zarządzanie danymi",
       "export": "Eksportuj dane",
-      "exportDescription": "Pobierz wszystkie swoje dane, w tym preferencje, sesje i dokumenty.",
+      "exportDescription": "Pobierz przenośne archiwum preferencji, folderów czatów, sesji i wiadomości, notatek, kolekcji wiedzy oraz wyodrębnionego tekstu dokumentów.",
       "exportAll": "Eksportuj wszystkie dane",
       "import": "Importuj dane",
       "importDescription": "Importuj dane z poprzedniego eksportu.",
@@ -796,6 +796,11 @@
       "clearing": "Czyszczenie...",
       "importOptions": "Opcje importu",
       "importOptionsDescription": "Wybierz sposób obsługi istniejących danych",
+      "validatingArchive": "Sprawdzanie archiwum i obliczanie zmian…",
+      "archiveValidationFailed": "Sprawdzanie archiwum nie powiodło się",
+      "preflightReport": "Podgląd importu",
+      "preflightIncoming": "{{folders}} folderów · {{sessions}} czatów · {{messages}} wiadomości · {{notes}} notatek · {{collections}} kolekcji · {{documents}} dokumentów · {{chunks}} fragmentów",
+      "preflightRemappedIds": "{{count}} identyfikatorów zostanie ponownie przypisanych, aby chronić dane innego konta.",
       "skipDuplicates": "Pomiń duplikaty",
       "overwrite": "Nadpisz istniejące",
       "importResults": "Wyniki importu",
@@ -803,15 +808,25 @@
       "imported": "Zaimportowano",
       "failed": "Niepowodzenie",
       "sessions": "Sesje",
+      "sessionFolders": "Foldery sesji",
+      "notes": "Notatki",
+      "knowledgeCollections": "Kolekcje wiedzy",
       "importedLabel": "zaimportowano",
+      "overwrittenLabel": "nadpisano",
       "skipped": "pominięto",
+      "toCreate": "do utworzenia",
+      "toOverwrite": "do nadpisania",
+      "toSkip": "do pominięcia",
       "documents": "Dokumenty",
+      "warnings": "Ostrzeżenia",
+      "refreshAfterImportFailed": "Dane zostały zaimportowane, ale niektórych widoków nie udało się odświeżyć. Załaduj ponownie Libre WebUI, aby zobaczyć wszystkie zmiany.",
       "errors": "Błędy",
       "archivedChats": {
         "title": "Zarchiwizowane czaty",
         "empty": "Brak zarchiwizowanych czatów",
         "unarchive": "Przywróć"
-      }
+      },
+      "archiveScopeV3": "Obejmuje preferencje, czaty, foldery, notatki, kolekcje wiedzy i wyodrębniony tekst dokumentów. Nie obejmuje kont i sekretów, biometrycznie sklonowanych głosów, wygenerowanych multimediów, person i pamięci ani danych lub woluminów Work."
     },
     "about": {
       "title": "O programie",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Rozkład możliwości",
       "characters": "{{count}} znaków",
+      "bytes": "{{count}} bajtów",
       "images": "{{count}} obrazów",
       "jobs": "{{count}} zadań wideo",
       "inputs": "{{count}} wejść",

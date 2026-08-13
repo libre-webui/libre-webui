@@ -264,7 +264,7 @@
       "voiceInput": "ভয়েস ইনপুট",
       "voiceStop": "শোনা বন্ধ করুন",
       "transcriptionSource": "কথা শনাক্তকরণের উৎস",
-      "browserSpeech": "ডিভাইসে ব্রাউজারের কথা শনাক্তকরণ",
+      "browserSpeech": "ব্রাউজারের স্পিচ পরিষেবা",
       "providerTranscriptionDisclosure": "ট্রান্সক্রিপশনের জন্য অডিও রেকর্ড করে {{provider}}-এ পাঠান",
       "webSearchOn": "ওয়েব অনুসন্ধান চালু — উত্তরে লাইভ ফলাফল ব্যবহৃত হয়",
       "webSearchOff": "এই বার্তার জন্য ওয়েবে অনুসন্ধান করুন"
@@ -784,7 +784,7 @@
     "data": {
       "title": "ডেটা ম্যানেজমেন্ট",
       "export": "ডেটা এক্সপোর্ট",
-      "exportDescription": "পছন্দ, সেশন এবং ডকুমেন্ট সহ আপনার সব ডেটা ডাউনলোড করুন।",
+      "exportDescription": "পছন্দ, চ্যাট ফোল্ডার, সেশন ও বার্তা, নোট, জ্ঞান সংগ্রহ এবং নথি থেকে নেওয়া লেখা-সহ একটি বহনযোগ্য আর্কাইভ ডাউনলোড করুন।",
       "exportAll": "সব ডেটা এক্সপোর্ট করুন",
       "import": "ডেটা ইম্পোর্ট",
       "importDescription": "পূর্ববর্তী এক্সপোর্ট থেকে ডেটা ইম্পোর্ট করুন।",
@@ -796,6 +796,11 @@
       "clearing": "মোছা হচ্ছে...",
       "importOptions": "ইম্পোর্ট অপশন",
       "importOptionsDescription": "বিদ্যমান ডেটা কীভাবে হ্যান্ডেল করতে হবে তা বেছে নিন",
+      "validatingArchive": "আর্কাইভ যাচাই ও পরিবর্তন গণনা করা হচ্ছে…",
+      "archiveValidationFailed": "আর্কাইভ যাচাই ব্যর্থ হয়েছে",
+      "preflightReport": "আমদানি পূর্বরূপ",
+      "preflightIncoming": "{{folders}} ফোল্ডার · {{sessions}} চ্যাট · {{messages}} বার্তা · {{notes}} নোট · {{collections}} সংগ্রহ · {{documents}} নথি · {{chunks}} খণ্ড",
+      "preflightRemappedIds": "অন্য অ্যাকাউন্টের ডেটা সুরক্ষায় {{count}}টি ID পুনরায় নির্ধারণ করা হবে।",
       "skipDuplicates": "ডুপ্লিকেট স্কিপ করুন",
       "overwrite": "বিদ্যমান ওভাররাইট করুন",
       "importResults": "ইম্পোর্ট ফলাফল",
@@ -803,15 +808,25 @@
       "imported": "ইম্পোর্ট করা হয়েছে",
       "failed": "ব্যর্থ",
       "sessions": "সেশন",
+      "sessionFolders": "সেশন ফোল্ডার",
+      "notes": "নোট",
+      "knowledgeCollections": "জ্ঞান সংগ্রহ",
       "importedLabel": "ইম্পোর্ট করা হয়েছে",
+      "overwrittenLabel": "ওভাররাইট করা",
       "skipped": "স্কিপ করা হয়েছে",
+      "toCreate": "তৈরি হবে",
+      "toOverwrite": "ওভাররাইট হবে",
+      "toSkip": "এড়ানো হবে",
       "documents": "ডকুমেন্ট",
+      "warnings": "সতর্কতা",
+      "refreshAfterImportFailed": "ডেটা আমদানি হয়েছে, তবে কিছু দৃশ্য রিফ্রেশ করা যায়নি। সব পরিবর্তন দেখতে Libre WebUI পুনরায় লোড করুন।",
       "errors": "ত্রুটি",
       "archivedChats": {
         "title": "সংরক্ষণাগারভুক্ত চ্যাট",
         "empty": "কোনো সংরক্ষণাগারভুক্ত চ্যাট নেই",
         "unarchive": "সংরক্ষণাগার থেকে সরান"
-      }
+      },
+      "archiveScopeV3": "পছন্দ, চ্যাট, ফোল্ডার, নোট, জ্ঞান সংগ্রহ এবং নথি থেকে নেওয়া লেখা অন্তর্ভুক্ত। অ্যাকাউন্ট ও গোপন তথ্য, বায়োমেট্রিক ক্লোন করা কণ্ঠ, তৈরি মিডিয়া, পারসোনা ও মেমরি এবং Work ডেটা বা ভলিউম অন্তর্ভুক্ত নয়।"
     },
     "about": {
       "title": "সম্পর্কে",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "ক্ষমতার মিশ্রণ",
       "characters": "{{count}} অক্ষর",
+      "bytes": "{{count}} বাইট",
       "images": "{{count}} ছবি",
       "jobs": "{{count}} ভিডিও কাজ",
       "inputs": "{{count}} ইনপুট",

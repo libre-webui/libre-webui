@@ -17,13 +17,14 @@
 
 import React, { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { preferencesApi } from '@/utils/api';
 import type {
   ArchiveSectionResult,
   DataArchiveExclusion,
+  DataArchivePreflight,
 } from '@/utils/api/preferencesApi';
 import { parsePortableArchiveJson } from '@/utils/dataArchive';
-import type { ChatSession, UserPreferences } from '@/types';
 
 export type ImportMergeStrategy = 'skip' | 'overwrite';
 
@@ -31,6 +32,7 @@ export interface SettingsImportResult {
   preferences: { imported: boolean; error: string | null };
   sessionFolders: ArchiveSectionResult;
   sessions: ArchiveSectionResult;
+  notes: ArchiveSectionResult;
   knowledgeCollections: ArchiveSectionResult;
   documents: ArchiveSectionResult;
   warnings: string[];
@@ -38,17 +40,20 @@ export interface SettingsImportResult {
 }
 
 interface UseSettingsDataImportOptions {
-  preferences: UserPreferences;
-  sessions: ChatSession[];
   loadPreferences: () => Promise<void>;
   loadSessions: () => Promise<void>;
+  loadFolders: () => Promise<void>;
 }
 
 export function useSettingsDataImport({
   loadPreferences,
   loadSessions,
+  loadFolders,
 }: UseSettingsDataImportOptions) {
+  const { t } = useTranslation();
   const [importing, setImporting] = useState(false);
+  const [preflighting, setPreflighting] = useState(false);
+  const [preflight, setPreflight] = useState<DataArchivePreflight | null>(null);
   const [showImportOptions, setShowImportOptions] = useState(false);
   const [mergeStrategy, setMergeStrategy] =
     useState<ImportMergeStrategy>('skip');
@@ -59,8 +64,12 @@ export function useSettingsDataImport({
     null
   );
   const importFileInputRef = useRef<HTMLInputElement>(null);
+  const preflightRequestIdRef = useRef(0);
 
   const resetImportState = () => {
+    preflightRequestIdRef.current += 1;
+    setPreflight(null);
+    setPreflighting(false);
     setSelectedImportFile(null);
     if (importFileInputRef.current) {
       importFileInputRef.current.value = '';
@@ -79,7 +88,7 @@ export function useSettingsDataImport({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `libre-webui-user-data-v2-${
+      a.download = `libre-webui-user-data-v3-${
         new Date().toISOString().split('T')[0]
       }.json`;
       document.body.appendChild(a);
@@ -92,6 +101,40 @@ export function useSettingsDataImport({
     }
   };
 
+  const runPreflight = async (
+    file: File,
+    strategy: ImportMergeStrategy
+  ): Promise<void> => {
+    const requestId = preflightRequestIdRef.current + 1;
+    preflightRequestIdRef.current = requestId;
+    setPreflighting(true);
+    setPreflight(null);
+    try {
+      parsePortableArchiveJson(await file.text());
+      const response = await preferencesApi.preflightImport(file, strategy);
+      if (!response.success || !response.data?.valid) {
+        throw new Error(
+          response.error || t('settings.data.archiveValidationFailed')
+        );
+      }
+      if (preflightRequestIdRef.current === requestId) {
+        setPreflight(response.data);
+      }
+    } catch (error) {
+      if (preflightRequestIdRef.current === requestId) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t('settings.data.archiveValidationFailed')
+        );
+      }
+    } finally {
+      if (preflightRequestIdRef.current === requestId) {
+        setPreflighting(false);
+      }
+    }
+  };
+
   const handleImportFileSelect = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -100,27 +143,28 @@ export function useSettingsDataImport({
       setSelectedImportFile(file);
       setShowImportOptions(true);
       setImportResult(null);
+      void runPreflight(file, mergeStrategy);
+    }
+  };
+
+  const handleMergeStrategyChange = (strategy: ImportMergeStrategy) => {
+    setMergeStrategy(strategy);
+    if (selectedImportFile) {
+      void runPreflight(selectedImportFile, strategy);
     }
   };
 
   const handleConfirmImport = async () => {
-    if (!selectedImportFile) return;
+    if (
+      !selectedImportFile ||
+      !preflight ||
+      preflight.strategy !== mergeStrategy
+    ) {
+      return;
+    }
 
     setImporting(true);
     try {
-      const fileContent = await selectedImportFile.text();
-      parsePortableArchiveJson(fileContent);
-
-      // Preflight uses the same migration, ownership checks, and conflict
-      // planner as import, but does not open a write transaction.
-      const preflight = await preferencesApi.preflightImport(
-        selectedImportFile,
-        mergeStrategy
-      );
-      if (!preflight.success || !preflight.data?.valid) {
-        throw new Error(preflight.error || 'Archive validation failed');
-      }
-
       const result = await preferencesApi.importData(
         selectedImportFile,
         mergeStrategy
@@ -134,6 +178,7 @@ export function useSettingsDataImport({
           },
           sessionFolders: result.data.sessionFolders,
           sessions: result.data.sessions,
+          notes: result.data.notes,
           knowledgeCollections: result.data.knowledgeCollections,
           documents: result.data.documents,
           warnings: result.data.warnings,
@@ -141,8 +186,14 @@ export function useSettingsDataImport({
         });
         toast.success('Portable data archive imported');
 
-        await loadPreferences();
-        await loadSessions();
+        const reloads = await Promise.allSettled([
+          loadPreferences(),
+          loadSessions(),
+          loadFolders(),
+        ]);
+        if (reloads.some(reload => reload.status === 'rejected')) {
+          toast.error(t('settings.data.refreshAfterImportFailed'));
+        }
         window.dispatchEvent(new Event('libre:documents-updated'));
       } else {
         throw new Error(result.error || 'Import failed');
@@ -165,14 +216,16 @@ export function useSettingsDataImport({
 
   return {
     importing,
+    preflighting,
+    preflight,
     showImportOptions,
     mergeStrategy,
-    setMergeStrategy,
     importResult,
     setImportResult,
     importFileInputRef,
     handleExportData,
     handleImportFileSelect,
+    handleMergeStrategyChange,
     handleConfirmImport,
     handleCancelImport,
   };

@@ -102,6 +102,7 @@ type MockSTTModel = {
   config?: {
     formats?: string[];
     max_audio_bytes?: number;
+    max_duration_seconds?: number;
     languages?: string[];
   };
 };
@@ -157,6 +158,30 @@ type MockSoundGenerationRequest = {
   prompt: string;
   voice?: string;
   format?: string;
+};
+
+type MockVideoGenerationRequest = {
+  model: string;
+  pluginId: string;
+  prompt: string;
+  duration?: number;
+  resolution?: string;
+  aspect_ratio?: string;
+  generate_audio?: boolean;
+};
+
+type MockVideoGenerationJob = {
+  id: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  model: string;
+  pluginId: string;
+  prompt?: string;
+  cancellable: boolean;
+  galleryId?: string;
+  error?: string;
+  createdAt: number;
+  updatedAt: number;
+  media?: Record<string, unknown>;
 };
 
 type MockPlugin = {
@@ -271,6 +296,7 @@ type MockChatStream = {
   finalChunk?: string;
   chunkDelayMs?: number;
   completionDelayMs?: number;
+  duplicateCompletion?: boolean;
 };
 
 type MockWorkCapabilities = {
@@ -421,9 +447,11 @@ type MockOptions = {
   ttsVoiceProfiles?: MockTTSVoiceProfile[];
   sttModels?: MockSTTModel[];
   sttTranscript?: string;
+  sttTranscriptionDelayMs?: number;
   imageGenModels?: MockImageGenModel[];
   imageGenPlugins?: MockImageGenPlugin[];
   mediaModels?: MockMediaModels;
+  mediaVideoJobs?: MockVideoGenerationJob[];
   preferences?: Partial<typeof defaultPreferences>;
   preferenceUpdateFailures?: number;
   deferPreferenceUpdates?: boolean;
@@ -626,6 +654,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const imageGenModels = options.imageGenModels ?? [];
   const imageGenPlugins = options.imageGenPlugins ?? [];
   const mediaModels = options.mediaModels ?? { video: [], audio: [] };
+  let mediaVideoJobs = structuredClone(options.mediaVideoJobs ?? []);
   const workCapabilities = options.workCapabilities ?? defaultWorkCapabilities;
   const workTaskTransition = options.workTaskTransition;
   const workTasks = structuredClone(options.workTasks ?? []);
@@ -677,6 +706,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         finalChunk: options.chatStream.finalChunk,
         chunkDelayMs: options.chatStream.chunkDelayMs ?? 40,
         completionDelayMs: options.chatStream.completionDelayMs ?? 40,
+        duplicateCompletion: options.chatStream.duplicateCompletion ?? false,
       }
     : null;
   const pullStreamUrls: string[] = [];
@@ -688,6 +718,9 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const ttsVoiceProfileDeleteRequests: string[] = [];
   const imageGenerationRequests: MockImageGenerationRequest[] = [];
   const soundGenerationRequests: MockSoundGenerationRequest[] = [];
+  const videoGenerationRequests: MockVideoGenerationRequest[] = [];
+  const videoResumeRequests: string[] = [];
+  const videoCancelRequests: string[] = [];
   const voiceCloneRequests: Array<{
     body: string;
     contentType: string;
@@ -1069,12 +1102,16 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
 
         window.setTimeout(
           () => {
-            dispatch('assistant_complete', {
+            const completion = {
               content: cumulativeChunks[cumulativeChunks.length - 1].total,
               role: 'assistant',
               timestamp: Date.now(),
               messageId,
-            });
+            };
+            dispatch('assistant_complete', completion);
+            if (streamConfig.duplicateCompletion) {
+              queueMicrotask(() => dispatch('assistant_complete', completion));
+            }
           },
           streamConfig.chunkDelayMs * cumulativeChunks.length +
             streamConfig.completionDelayMs
@@ -2147,6 +2184,66 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/media/video/jobs' && method === 'GET') {
+        await fulfillJson(route, { jobs: mediaVideoJobs });
+        return;
+      }
+
+      if (path === '/media/video/generate' && method === 'POST') {
+        const request = route
+          .request()
+          .postDataJSON() as MockVideoGenerationRequest;
+        videoGenerationRequests.push(request);
+        const now = Date.now();
+        const job: MockVideoGenerationJob = {
+          id: `video-job-${videoGenerationRequests.length}`,
+          status: 'pending',
+          model: request.model,
+          pluginId: request.pluginId,
+          prompt: request.prompt,
+          cancellable: false,
+          createdAt: now,
+          updatedAt: now,
+        };
+        mediaVideoJobs = [job, ...mediaVideoJobs];
+        await fulfillJson(route, job);
+        return;
+      }
+
+      const mediaVideoJobMatch = path.match(/^\/media\/video\/jobs\/([^/]+)$/);
+      const mediaVideoResumeMatch = path.match(
+        /^\/media\/video\/jobs\/([^/]+)\/resume$/
+      );
+      if (mediaVideoResumeMatch && method === 'POST') {
+        const jobId = decodeURIComponent(mediaVideoResumeMatch[1]);
+        videoResumeRequests.push(jobId);
+        const job = mediaVideoJobs.find(candidate => candidate.id === jobId);
+        if (!job) {
+          await fulfillJson(route, null, false);
+          return;
+        }
+        const completed: MockVideoGenerationJob = {
+          ...job,
+          status: 'completed',
+          galleryId: `gallery-${jobId}`,
+          cancellable: false,
+          updatedAt: Date.now(),
+          media: { id: `gallery-${jobId}`, kind: 'video' },
+        };
+        mediaVideoJobs = mediaVideoJobs.map(candidate =>
+          candidate.id === jobId ? completed : candidate
+        );
+        await fulfillJson(route, completed);
+        return;
+      }
+      if (mediaVideoJobMatch && method === 'DELETE') {
+        const jobId = decodeURIComponent(mediaVideoJobMatch[1]);
+        videoCancelRequests.push(jobId);
+        mediaVideoJobs = mediaVideoJobs.filter(job => job.id !== jobId);
+        await fulfillJson(route, undefined);
+        return;
+      }
+
       if (path === '/media/gallery' && method === 'GET') {
         await fulfillJson(route, { media: [], total: 0 });
         return;
@@ -2205,7 +2302,17 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           body: route.request().postDataBuffer()?.toString('latin1') || '',
           contentType: route.request().headers()['content-type'] || '',
         });
-        await fulfillJson(route, { text: sttTranscript, language: 'en' });
+        if (options.sttTranscriptionDelayMs) {
+          await new Promise(resolve =>
+            setTimeout(resolve, options.sttTranscriptionDelayMs)
+          );
+        }
+        try {
+          await fulfillJson(route, { text: sttTranscript, language: 'en' });
+        } catch {
+          // A cancelled transcription can close the intercepted request before
+          // its delayed provider response is ready.
+        }
         return;
       }
 
@@ -2303,6 +2410,9 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     ttsVoiceProfileDeleteRequests,
     imageGenerationRequests,
     soundGenerationRequests,
+    videoGenerationRequests,
+    videoResumeRequests,
+    videoCancelRequests,
     voiceCloneRequests,
     titleGenerationRequests,
     sessionUpdateRequests,

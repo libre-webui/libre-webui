@@ -264,7 +264,7 @@
       "voiceInput": "Röstinmatning",
       "voiceStop": "Sluta lyssna",
       "transcriptionSource": "Källa för taligenkänning",
-      "browserSpeech": "Taligenkänning i webbläsaren på enheten",
+      "browserSpeech": "Webbläsarens taligenkänningstjänst",
       "providerTranscriptionDisclosure": "Spela in och skicka ljud till {{provider}} för transkribering",
       "webSearchOn": "Webbsökning på — svar använder live-resultat",
       "webSearchOff": "Sök på webben för det här meddelandet"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Datahantering",
       "export": "Exportera data",
-      "exportDescription": "Ladda ner all din data inklusive inställningar, sessioner och dokument.",
+      "exportDescription": "Ladda ner ett portabelt arkiv med inställningar, chattmappar, sessioner och meddelanden, anteckningar, kunskapssamlingar och extraherad dokumenttext.",
       "exportAll": "Exportera all data",
       "import": "Importera data",
       "importDescription": "Importera data från en tidigare export.",
@@ -796,6 +796,11 @@
       "clearing": "Rensar...",
       "importOptions": "Importalternativ",
       "importOptionsDescription": "Välj hur befintlig data ska hanteras",
+      "validatingArchive": "Validerar arkivet och beräknar ändringar…",
+      "archiveValidationFailed": "Arkivvalideringen misslyckades",
+      "preflightReport": "Förhandsgranskning av import",
+      "preflightIncoming": "{{folders}} mappar · {{sessions}} chattar · {{messages}} meddelanden · {{notes}} anteckningar · {{collections}} samlingar · {{documents}} dokument · {{chunks}} delar",
+      "preflightRemappedIds": "{{count}} id:n får nya värden för att skydda ett annat kontos data.",
       "skipDuplicates": "Hoppa över dubbletter",
       "overwrite": "Skriv över befintliga",
       "importResults": "Importresultat",
@@ -803,15 +808,25 @@
       "imported": "Importerade",
       "failed": "Misslyckades",
       "sessions": "Sessioner",
+      "sessionFolders": "Sessionsmappar",
+      "notes": "Anteckningar",
+      "knowledgeCollections": "Kunskapssamlingar",
       "importedLabel": "importerade",
+      "overwrittenLabel": "överskrivet",
       "skipped": "hoppades över",
+      "toCreate": "att skapa",
+      "toOverwrite": "att skriva över",
+      "toSkip": "att hoppa över",
       "documents": "Dokument",
+      "warnings": "Varningar",
+      "refreshAfterImportFailed": "Data importerades, men vissa vyer kunde inte uppdateras. Läs in Libre WebUI igen för att se alla ändringar.",
       "errors": "Fel",
       "archivedChats": {
         "title": "Arkiverade chattar",
         "empty": "Inga arkiverade chattar",
         "unarchive": "Återställ"
-      }
+      },
+      "archiveScopeV3": "Omfattar inställningar, chattar, mappar, anteckningar, kunskapssamlingar och extraherad dokumenttext. Konton och hemligheter, biometriskt klonade röster, genererade medier, personas och minne samt Work-data eller -volymer ingår inte."
     },
     "about": {
       "title": "Om",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Kapabilitetsmix",
       "characters": "{{count}} tecken",
+      "bytes": "{{count}} byte",
       "images": "{{count}} bilder",
       "jobs": "{{count}} videojobb",
       "inputs": "{{count}} indata",

@@ -264,7 +264,7 @@
       "voiceInput": "Input suara",
       "voiceStop": "Berhenti mendengar",
       "transcriptionSource": "Sumber pengecaman pertuturan",
-      "browserSpeech": "Pengecaman pertuturan pelayar pada peranti",
+      "browserSpeech": "Perkhidmatan pertuturan pelayar",
       "providerTranscriptionDisclosure": "Rakam dan hantar audio kepada {{provider}} untuk transkripsi",
       "webSearchOn": "Carian web hidup — balasan menggunakan hasil langsung",
       "webSearchOff": "Cari di web untuk mesej ini"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Pengurusan Data",
       "export": "Eksport Data",
-      "exportDescription": "Muat turun semua data anda termasuk keutamaan, sesi dan dokumen.",
+      "exportDescription": "Muat turun arkib mudah alih yang mengandungi keutamaan, folder sembang, sesi dan mesej, nota, koleksi pengetahuan serta teks dokumen yang diekstrak.",
       "exportAll": "Eksport Semua Data",
       "import": "Import Data",
       "importDescription": "Import data dari eksport sebelumnya.",
@@ -796,6 +796,11 @@
       "clearing": "Mengosongkan...",
       "importOptions": "Pilihan Import",
       "importOptionsDescription": "Pilih cara mengendalikan data sedia ada",
+      "validatingArchive": "Mengesahkan arkib dan mengira perubahan…",
+      "archiveValidationFailed": "Pengesahan arkib gagal",
+      "preflightReport": "Pratonton import",
+      "preflightIncoming": "{{folders}} folder · {{sessions}} sembang · {{messages}} mesej · {{notes}} nota · {{collections}} koleksi · {{documents}} dokumen · {{chunks}} cebisan",
+      "preflightRemappedIds": "{{count}} ID akan dipetakan semula untuk melindungi data akaun lain.",
       "skipDuplicates": "Langkau pendua",
       "overwrite": "Tulis ganti sedia ada",
       "importResults": "Hasil Import",
@@ -803,15 +808,25 @@
       "imported": "Diimport",
       "failed": "Gagal",
       "sessions": "Sesi",
+      "sessionFolders": "Folder sesi",
+      "notes": "Nota",
+      "knowledgeCollections": "Koleksi pengetahuan",
       "importedLabel": "diimport",
+      "overwrittenLabel": "ditulis ganti",
       "skipped": "dilangkau",
+      "toCreate": "untuk dicipta",
+      "toOverwrite": "untuk ditulis ganti",
+      "toSkip": "untuk dilangkau",
       "documents": "Dokumen",
+      "warnings": "Amaran",
+      "refreshAfterImportFailed": "Data telah diimport, tetapi sesetengah paparan tidak dapat disegar semula. Muat semula Libre WebUI untuk melihat semua perubahan.",
       "errors": "Ralat",
       "archivedChats": {
         "title": "Sembang diarkibkan",
         "empty": "Tiada sembang diarkibkan",
         "unarchive": "Nyahakrib"
-      }
+      },
+      "archiveScopeV3": "Merangkumi keutamaan, sembang, folder, nota, koleksi pengetahuan dan teks dokumen yang diekstrak. Tidak termasuk akaun dan rahsia, suara klon biometrik, media yang dijana, persona dan memori serta data atau volum Work."
     },
     "about": {
       "title": "Perihal",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Campuran keupayaan",
       "characters": "{{count}} aksara",
+      "bytes": "{{count}} bait",
       "images": "{{count}} imej",
       "jobs": "{{count}} kerja video",
       "inputs": "{{count}} input",

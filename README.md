@@ -299,6 +299,7 @@ See the [deployment documentation](https://docs.librewebui.org) for details.
 - [Work workspaces](https://docs.librewebui.org/WORKSPACES)
 - [Document chat](https://docs.librewebui.org/RAG_FEATURE)
 - [Plugin architecture](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)
+- [Capability contracts](https://docs.librewebui.org/CAPABILITY_CONTRACTS)
 - [Authentication](https://docs.librewebui.org/AUTHENTICATION)
 - [Data portability](https://docs.librewebui.org/DATA_PORTABILITY)
 - [Speech to text](https://docs.librewebui.org/SPEECH_TO_TEXT)

@@ -5,7 +5,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Film, Loader2, Sparkles, Volume2, X } from 'lucide-react';
@@ -18,6 +18,7 @@ import {
   mediaApi,
   type MediaModelCatalog,
   type VideoGenModel,
+  type VideoGenerationJob,
 } from '@/utils/api';
 
 type MediaGenerationKind = 'video' | 'audio';
@@ -57,6 +58,8 @@ export function MediaGenerationPanel({
   const [generateAudio, setGenerateAudio] = useState(true);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [videoJobs, setVideoJobs] = useState<VideoGenerationJob[]>([]);
+  const generationControllerRef = useRef<AbortController | null>(null);
   const titleId = React.useId();
 
   const resetVoiceCloneInputs = () => {
@@ -70,9 +73,22 @@ export function MediaGenerationPanel({
   };
 
   const handleClose = () => {
+    generationControllerRef.current?.abort();
     resetVoiceCloneInputs();
     onClose();
   };
+
+  useEffect(
+    () => () => {
+      generationControllerRef.current?.abort();
+      generationControllerRef.current = null;
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!isOpen) generationControllerRef.current?.abort();
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -94,7 +110,34 @@ export function MediaGenerationPanel({
     };
   }, [isOpen, t]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    void mediaApi
+      .listVideoJobs({ limit: 100, active: true })
+      .then(response => {
+        if (!cancelled && response.success && response.data) {
+          setVideoJobs(response.data.jobs);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          toast.error(
+            t('mediaGeneration.jobsLoadFailed', {
+              defaultValue: 'Failed to load saved video jobs',
+            })
+          );
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, t]);
+
   const models = kind === 'video' ? catalog.video : catalog.audio;
+  const recoverableVideoJobs = videoJobs.filter(
+    job => job.status !== 'completed'
+  );
 
   const effectiveSelected = models.some(model => modelKey(model) === selected)
     ? selected
@@ -129,8 +172,83 @@ export function MediaGenerationPanel({
       ? audioModel.config?.max_characters
       : undefined;
 
+  const followVideoJob = async (
+    job: VideoGenerationJob,
+    controller: AbortController,
+    waitBeforePoll: boolean,
+    transientFailures = 0
+  ): Promise<VideoGenerationJob> => {
+    if (job.status !== 'pending' && job.status !== 'in_progress') return job;
+    if (waitBeforePoll) await delay(30_000, controller.signal);
+    try {
+      const response = await mediaApi.resumeVideoJob(job.id, controller.signal);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || t('mediaGeneration.failed'));
+      }
+      const nextJob = response.data;
+      setVideoJobs(current => [
+        nextJob,
+        ...current.filter(candidate => candidate.id !== nextJob.id),
+      ]);
+      return followVideoJob(nextJob, controller, true);
+    } catch (error) {
+      if (controller.signal.aborted || transientFailures >= 4) throw error;
+      return followVideoJob(job, controller, true, transientFailures + 1);
+    }
+  };
+
+  const handleResumeVideoJob = async (initialJob: VideoGenerationJob) => {
+    const controller = new AbortController();
+    generationControllerRef.current?.abort();
+    generationControllerRef.current = controller;
+    setGenerating(true);
+    try {
+      const job = await followVideoJob(initialJob, controller, false);
+      if (controller.signal.aborted) return;
+      if (job.status === 'failed') {
+        throw new Error(job.error || t('mediaGeneration.failed'));
+      }
+      toast.success(t('mediaGeneration.success'));
+      onGenerated();
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      toast.error(
+        error instanceof Error ? error.message : t('mediaGeneration.failed')
+      );
+    } finally {
+      if (generationControllerRef.current === controller) {
+        generationControllerRef.current = null;
+        setGenerating(false);
+      }
+    }
+  };
+
+  const handleCancelVideoJob = async (job: VideoGenerationJob) => {
+    try {
+      const response = await mediaApi.cancelVideoJob(job.id);
+      if (!response.success) {
+        throw new Error(response.message || t('mediaGeneration.failed'));
+      }
+      setVideoJobs(current =>
+        current.filter(candidate => candidate.id !== job.id)
+      );
+      toast.success(
+        t('mediaGeneration.jobCancelled', {
+          defaultValue: 'Video job cancelled at the provider',
+        })
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : t('mediaGeneration.failed')
+      );
+    }
+  };
+
   const handleGenerate = async () => {
     if (!selectedModel || !prompt.trim()) return;
+    const controller = new AbortController();
+    generationControllerRef.current?.abort();
+    generationControllerRef.current = controller;
     setGenerating(true);
     try {
       if (kind === 'audio') {
@@ -138,80 +256,86 @@ export function MediaGenerationPanel({
           audioModel?.config?.default_format
         );
         const response = useVoiceClone
-          ? await mediaApi.cloneVoice({
-              model: selectedModel.model,
-              pluginId: selectedModel.plugin,
-              input: prompt.trim(),
-              referenceAudio: referenceAudio!,
-              referenceText: referenceText.trim() || undefined,
-              responseFormat,
-              saveVoiceName: saveVoiceProfile
-                ? voiceProfileName.trim()
-                : undefined,
-              consentToStore: saveVoiceProfile && consentToStore,
-            })
-          : audioModel?.mode === 'sound'
-            ? await mediaApi.generateSound({
-                model: selectedModel.model,
-                pluginId: selectedModel.plugin,
-                prompt: prompt.trim(),
-                voice:
-                  voice.trim() ||
-                  audioModel?.config?.default_voice ||
-                  undefined,
-                format: 'wav',
-              })
-            : await mediaApi.generateAudio({
+          ? await mediaApi.cloneVoice(
+              {
                 model: selectedModel.model,
                 pluginId: selectedModel.plugin,
                 input: prompt.trim(),
-                voice:
-                  voice.trim() ||
-                  audioModel?.config?.default_voice ||
-                  undefined,
-                response_format: responseFormat,
-              });
+                referenceAudio: referenceAudio!,
+                referenceText: referenceText.trim() || undefined,
+                responseFormat,
+                saveVoiceName: saveVoiceProfile
+                  ? voiceProfileName.trim()
+                  : undefined,
+                consentToStore: saveVoiceProfile && consentToStore,
+              },
+              controller.signal
+            )
+          : audioModel?.mode === 'sound'
+            ? await mediaApi.generateSound(
+                {
+                  model: selectedModel.model,
+                  pluginId: selectedModel.plugin,
+                  prompt: prompt.trim(),
+                  voice:
+                    voice.trim() ||
+                    audioModel?.config?.default_voice ||
+                    undefined,
+                  format: 'wav',
+                },
+                controller.signal
+              )
+            : await mediaApi.generateAudio(
+                {
+                  model: selectedModel.model,
+                  pluginId: selectedModel.plugin,
+                  input: prompt.trim(),
+                  voice:
+                    voice.trim() ||
+                    audioModel?.config?.default_voice ||
+                    undefined,
+                  response_format: responseFormat,
+                },
+                controller.signal
+              );
+        if (controller.signal.aborted) return;
         if (!response.success) throw new Error(response.message);
         if (useVoiceClone && saveVoiceProfile) {
           await queryClient.invalidateQueries({
             queryKey: ['tts-voice-profiles'],
           });
+          if (controller.signal.aborted) return;
         }
       } else {
-        const submitted = await mediaApi.generateVideo({
-          model: selectedModel.model,
-          pluginId: selectedModel.plugin,
-          prompt: prompt.trim(),
-          ...(duration ? { duration: Number(duration) } : {}),
-          ...(resolution ? { resolution } : {}),
-          ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
-          ...(videoConfig?.supports_audio
-            ? { generate_audio: generateAudio }
-            : {}),
-        });
+        const submitted = await mediaApi.generateVideo(
+          {
+            model: selectedModel.model,
+            pluginId: selectedModel.plugin,
+            prompt: prompt.trim(),
+            ...(duration ? { duration: Number(duration) } : {}),
+            ...(resolution ? { resolution } : {}),
+            ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
+            ...(videoConfig?.supports_audio
+              ? { generate_audio: generateAudio }
+              : {}),
+          },
+          controller.signal
+        );
+        if (controller.signal.aborted) return;
         if (!submitted.success || !submitted.data) {
           throw new Error(submitted.message || t('mediaGeneration.failed'));
         }
-        let job = submitted.data;
-        let transientFailures = 0;
-        while (job.status === 'pending' || job.status === 'in_progress') {
-          await delay(30_000);
-          try {
-            const response = await mediaApi.getVideoJob(job.id);
-            if (!response.success || !response.data) {
-              throw new Error(response.message || t('mediaGeneration.failed'));
-            }
-            job = response.data;
-            transientFailures = 0;
-          } catch (error) {
-            transientFailures += 1;
-            if (transientFailures >= 5) throw error;
-          }
-        }
+        const submittedJob = submitted.data;
+        setVideoJobs(current => [
+          submittedJob,
+          ...current.filter(job => job.id !== submittedJob.id),
+        ]);
+        const job = await followVideoJob(submittedJob, controller, true);
         if (job.status === 'failed') {
           throw new Error(job.error || t('mediaGeneration.failed'));
         }
       }
+      if (controller.signal.aborted) return;
       toast.success(
         useVoiceClone && saveVoiceProfile
           ? t('mediaGeneration.successWithSavedVoice', {
@@ -226,12 +350,20 @@ export function MediaGenerationPanel({
       onGenerated();
       onClose();
     } catch (error) {
+      if (controller.signal.aborted) return;
       toast.error(
         error instanceof Error ? error.message : t('mediaGeneration.failed')
       );
     } finally {
-      setGenerating(false);
+      if (generationControllerRef.current === controller) {
+        generationControllerRef.current = null;
+        setGenerating(false);
+      }
     }
+  };
+
+  const handleCancelGeneration = () => {
+    generationControllerRef.current?.abort();
   };
 
   if (!isOpen) return null;
@@ -272,6 +404,7 @@ export function MediaGenerationPanel({
               <button
                 key={option}
                 type='button'
+                disabled={generating}
                 onClick={() => {
                   setKind(option);
                   setSelected('');
@@ -282,7 +415,8 @@ export function MediaGenerationPanel({
                   'flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors',
                   option === kind
                     ? 'bg-white text-gray-950 shadow-sm dark:bg-white/10 dark:text-white'
-                    : 'text-gray-500 dark:text-dark-500'
+                    : 'text-gray-500 dark:text-dark-500',
+                  generating && 'cursor-not-allowed opacity-50'
                 )}
               >
                 {option === 'video' ? (
@@ -294,6 +428,75 @@ export function MediaGenerationPanel({
               </button>
             ))}
           </div>
+
+          {kind === 'video' && recoverableVideoJobs.length > 0 && (
+            <section className='space-y-2 rounded-xl border border-gray-200/80 bg-gray-50/80 p-3 dark:border-white/10 dark:bg-white/[0.025]'>
+              <div>
+                <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                  {t('mediaGeneration.savedJobs', {
+                    defaultValue: 'Saved video jobs',
+                  })}
+                </h3>
+                <p className='mt-0.5 text-xs text-gray-500 dark:text-dark-500'>
+                  {t('mediaGeneration.savedJobsDescription', {
+                    defaultValue:
+                      'Closing this panel only stops waiting. Reopen it to resume any provider job listed here.',
+                  })}
+                </p>
+              </div>
+              {recoverableVideoJobs.map(job => (
+                <div
+                  key={job.id}
+                  data-testid={`video-job-${job.id}`}
+                  className='flex items-center gap-3 rounded-lg border border-gray-200/70 bg-white/80 p-2.5 dark:border-white/10 dark:bg-dark-50/70'
+                >
+                  <div className='min-w-0 flex-1'>
+                    <p className='truncate text-sm text-gray-900 dark:text-gray-100'>
+                      {job.prompt || job.model}
+                    </p>
+                    <p className='text-xs text-gray-500 dark:text-dark-500'>
+                      {job.model} ·{' '}
+                      {t(`mediaGeneration.jobStatus.${job.status}`, {
+                        defaultValue: job.status.replace('_', ' '),
+                      })}
+                    </p>
+                    {job.error && (
+                      <p className='mt-1 text-xs text-red-600 dark:text-red-300'>
+                        {job.error}
+                      </p>
+                    )}
+                  </div>
+                  {(job.status === 'pending' ||
+                    job.status === 'in_progress') && (
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      disabled={generating}
+                      onClick={() => void handleResumeVideoJob(job)}
+                    >
+                      {t('mediaGeneration.resumeJob', {
+                        defaultValue: 'Resume',
+                      })}
+                    </Button>
+                  )}
+                  {job.cancellable && (
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      disabled={generating}
+                      onClick={() => void handleCancelVideoJob(job)}
+                    >
+                      {t('mediaGeneration.cancelJob', {
+                        defaultValue: 'Cancel job',
+                      })}
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </section>
+          )}
 
           {loading ? (
             <div className='flex justify-center py-12'>
@@ -592,29 +795,34 @@ export function MediaGenerationPanel({
         {models.length > 0 && (
           <div className='border-t border-gray-200/70 p-4 dark:border-white/[0.08] sm:px-5'>
             <Button
-              onClick={handleGenerate}
+              onClick={generating ? handleCancelGeneration : handleGenerate}
               disabled={
-                generating ||
-                !selectedModel ||
-                !prompt.trim() ||
-                Boolean(
-                  speechMaxCharacters && prompt.length > speechMaxCharacters
-                ) ||
-                (useVoiceClone &&
-                  (!referenceAudio ||
-                    (cloneRequiresTranscript && !referenceText.trim()) ||
-                    (saveVoiceProfile &&
-                      (!voiceProfileName.trim() || !consentToStore))))
+                generating
+                  ? false
+                  : !selectedModel ||
+                    !prompt.trim() ||
+                    Boolean(
+                      speechMaxCharacters && prompt.length > speechMaxCharacters
+                    ) ||
+                    (useVoiceClone &&
+                      (!referenceAudio ||
+                        (cloneRequiresTranscript && !referenceText.trim()) ||
+                        (saveVoiceProfile &&
+                          (!voiceProfileName.trim() || !consentToStore))))
               }
               className='w-full gap-2'
             >
               {generating ? (
-                <Loader2 className='h-4 w-4 animate-spin' />
+                <X className='h-4 w-4' />
               ) : (
                 <Sparkles className='h-4 w-4' />
               )}
               {generating
-                ? t('mediaGeneration.generating')
+                ? kind === 'video'
+                  ? t('mediaGeneration.stopWaiting', {
+                      defaultValue: 'Stop waiting',
+                    })
+                  : t('common.cancel')
                 : t('mediaGeneration.generate')}
             </Button>
           </div>
@@ -648,8 +856,19 @@ function modelKey(model: {
   return `${model.mode || 'default'}::${model.plugin}::${model.model}`;
 }
 
-function delay(ms: number): Promise<void> {
-  return new Promise(resolve => window.setTimeout(resolve, ms));
+function delay(ms: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) return Promise.reject(signal.reason);
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      signal?.removeEventListener('abort', abort);
+      resolve();
+    }, ms);
+    const abort = () => {
+      window.clearTimeout(timer);
+      reject(signal?.reason);
+    };
+    signal?.addEventListener('abort', abort, { once: true });
+  });
 }
 
 function resolveSpeechFormat(

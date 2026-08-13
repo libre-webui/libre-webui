@@ -74,6 +74,9 @@ export async function streamOllamaChatResponse({
     let thinking = '';
     let statistics: GenerationStatistics | undefined;
     let resolved = false;
+    let terminalResult:
+      Omit<StreamOllamaChatResponseResult, 'content'> | undefined;
+    let providerErrorReported = false;
     const thinkingTimer = new ThinkingPhaseTimer();
 
     const finish = (
@@ -94,7 +97,7 @@ export async function streamOllamaChatResponse({
     };
 
     const handleChunk = (chunk: OllamaChatResponse) => {
-      if (resolved) {
+      if (resolved || terminalResult || signal?.aborted) {
         return;
       }
 
@@ -132,19 +135,20 @@ export async function streamOllamaChatResponse({
             thinking_duration_ms: thinkingDurationMs,
           };
         }
-        finish({ completed: true });
+        terminalResult = { completed: true };
       }
     };
 
     const handleError = (error: Error) => {
-      if (resolved) {
+      if (resolved || terminalResult) {
         return;
       }
 
-      if (!isChatGenerationCancelled(error, signal)) {
+      if (!isChatGenerationCancelled(error, signal) && !providerErrorReported) {
+        providerErrorReported = true;
         sendError(ws, { error: error.message });
       }
-      finish({ completed: false, error });
+      terminalResult = { completed: false, error };
     };
 
     const handleAbort = () => {
@@ -152,26 +156,46 @@ export async function streamOllamaChatResponse({
         signal?.reason instanceof Error
           ? signal.reason
           : new ChatGenerationCancelledError();
-      finish({ completed: false, error });
+      // Keep the wrapper pending until the provider transport promise settles.
+      // The caller releases its generation/provider slots after this promise,
+      // so resolving at AbortSignal delivery would permit an overlapping retry
+      // while an abort-ignoring transport is still tearing down.
+      terminalResult = { completed: false, error };
     };
 
     signal?.addEventListener('abort', handleAbort, { once: true });
     if (signal?.aborted) {
       handleAbort();
-      return;
     }
 
-    streamSource
-      .generateChatStreamResponse(
-        request,
-        handleChunk,
-        handleError,
-        () => finish({ completed: true }),
-        signal,
-        { userId }
-      )
-      .catch(error => {
+    void (async () => {
+      try {
+        await streamSource.generateChatStreamResponse(
+          request,
+          handleChunk,
+          handleError,
+          () => {
+            if (!terminalResult) terminalResult = { completed: true };
+          },
+          signal,
+          { userId }
+        );
+      } catch (error) {
         handleError(error instanceof Error ? error : new Error(String(error)));
-      });
+      } finally {
+        finish(
+          terminalResult ||
+            (signal?.aborted
+              ? {
+                  completed: false,
+                  error:
+                    signal.reason instanceof Error
+                      ? signal.reason
+                      : new ChatGenerationCancelledError(),
+                }
+              : { completed: true })
+        );
+      }
+    })();
   });
 }

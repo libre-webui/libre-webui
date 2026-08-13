@@ -84,8 +84,8 @@ jobs:
       - name: Install workspace dependencies
         run: npm run install:all
 
-      - name: Install Chromium
-        run: cd frontend && npx playwright install --with-deps chromium
+      - name: Install browser engines
+        run: cd frontend && npx playwright install --with-deps chromium webkit
 
       - name: Run browser end-to-end tests
         run: npm run test:e2e

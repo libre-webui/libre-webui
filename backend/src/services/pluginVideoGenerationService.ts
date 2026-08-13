@@ -69,6 +69,8 @@ export class PluginVideoGenerationService {
       resolution?: string;
       aspectRatio?: string;
       generateAudio?: boolean;
+      /** Cancels only this HTTP submission transport, not a provider job that was already accepted. */
+      signal?: AbortSignal;
     }
   ): Promise<{ providerJobId: string; status: string }> {
     validatePluginModel(model);
@@ -100,6 +102,7 @@ export class PluginVideoGenerationService {
         headers,
         timeout: 30000,
         maxRedirects: 0,
+        signal: options.signal,
       });
       const providerJobId = response.data?.id;
       if (typeof providerJobId !== 'string' || providerJobId.length === 0) {
@@ -118,7 +121,16 @@ export class PluginVideoGenerationService {
       });
       return { providerJobId, status: response.data?.status || 'pending' };
     } catch (error) {
-      this.recordError(plugin, model, options.userId, startedAt);
+      const cancelled = axios.isCancel(error) || options.signal?.aborted;
+      this.recordError(
+        plugin,
+        model,
+        options.userId,
+        startedAt,
+        cancelled ? 'cancelled' : 'error'
+      );
+      if (cancelled)
+        throw cancellationReason(options.signal, 'Video submission');
       throw toVideoError(error);
     }
   }
@@ -127,7 +139,8 @@ export class PluginVideoGenerationService {
     model: string,
     providerJobId: string,
     pluginId: string,
-    userId: string
+    userId: string,
+    signal?: AbortSignal
   ): Promise<VideoGenerationJobStatus> {
     const { endpoint, headers } = this.resolve(model, pluginId, userId);
     const statusEndpoint = `${endpoint.replace(/\/+$/, '')}/${encodeURIComponent(
@@ -139,6 +152,7 @@ export class PluginVideoGenerationService {
         headers,
         timeout: 15000,
         maxRedirects: 0,
+        signal,
       });
       const status = response.data?.status;
       if (!['pending', 'in_progress', 'completed', 'failed'].includes(status)) {
@@ -154,6 +168,9 @@ export class PluginVideoGenerationService {
           : {}),
       };
     } catch (error) {
+      if (axios.isCancel(error) || signal?.aborted) {
+        throw cancellationReason(signal, 'Video status request');
+      }
       throw toVideoError(error);
     }
   }
@@ -162,7 +179,8 @@ export class PluginVideoGenerationService {
     model: string,
     providerJobId: string,
     pluginId: string,
-    userId: string
+    userId: string,
+    signal?: AbortSignal
   ): Promise<{ video: Buffer; mimeType: string }> {
     const { endpoint, headers } = this.resolve(model, pluginId, userId);
     const contentEndpoint = `${endpoint.replace(
@@ -177,6 +195,7 @@ export class PluginVideoGenerationService {
         responseType: 'arraybuffer',
         maxRedirects: 0,
         maxContentLength: 200 * 1024 * 1024,
+        signal,
       });
       const mimeType = String(response.headers['content-type'] || 'video/mp4')
         .split(';')[0]
@@ -186,6 +205,81 @@ export class PluginVideoGenerationService {
       }
       return { video: Buffer.from(response.data), mimeType };
     } catch (error) {
+      if (axios.isCancel(error) || signal?.aborted) {
+        throw cancellationReason(signal, 'Video download');
+      }
+      throw toVideoError(error);
+    }
+  }
+
+  supportsCancellation(
+    model: string,
+    pluginId: string,
+    userId: string
+  ): boolean {
+    try {
+      const { endpoint, config } = this.resolve(model, pluginId, userId);
+      const configuredEndpoint = config?.cancel_endpoint;
+      const method = config?.cancel_method || 'POST';
+      if (
+        typeof configuredEndpoint !== 'string' ||
+        !configuredEndpoint.includes('{job_id}') ||
+        (method !== 'POST' && method !== 'DELETE')
+      ) {
+        return false;
+      }
+      const candidate = resolveRelativeOperationEndpoint(
+        endpoint,
+        configuredEndpoint.replace('{job_id}', 'job-id')
+      );
+      assertSafePluginEndpoint(candidate, 'video cancellation endpoint');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async cancel(
+    model: string,
+    providerJobId: string,
+    pluginId: string,
+    userId: string,
+    signal?: AbortSignal
+  ): Promise<void> {
+    const { endpoint, headers, config } = this.resolve(model, pluginId, userId);
+    const configuredEndpoint = config?.cancel_endpoint;
+    if (typeof configuredEndpoint !== 'string' || !configuredEndpoint) {
+      throw new VideoCancellationUnsupportedError();
+    }
+    const expandedEndpoint = configuredEndpoint.replace(
+      /\{job_id\}/g,
+      encodeURIComponent(providerJobId)
+    );
+    if (!configuredEndpoint.includes('{job_id}')) {
+      throw new Error('Video cancel endpoint must contain {job_id}');
+    }
+    const cancelEndpoint = resolveRelativeOperationEndpoint(
+      endpoint,
+      expandedEndpoint
+    );
+    assertSafePluginEndpoint(cancelEndpoint, 'video cancellation endpoint');
+    const method = config.cancel_method || 'POST';
+    if (method !== 'POST' && method !== 'DELETE') {
+      throw new Error('Video cancel method must be POST or DELETE');
+    }
+    try {
+      await axios.request({
+        url: cancelEndpoint,
+        method,
+        headers,
+        timeout: 15000,
+        maxRedirects: 0,
+        signal,
+      });
+    } catch (error) {
+      if (axios.isCancel(error) || signal?.aborted) {
+        throw cancellationReason(signal, 'Video cancellation request');
+      }
       throw toVideoError(error);
     }
   }
@@ -230,7 +324,8 @@ export class PluginVideoGenerationService {
     plugin: Plugin,
     model: string,
     userId: string,
-    startedAt: number
+    startedAt: number,
+    status: 'error' | 'cancelled'
   ) {
     this.deps.recordUsage?.({
       userId,
@@ -238,12 +333,46 @@ export class PluginVideoGenerationService {
       pluginName: plugin.name,
       capability: 'video',
       model,
-      status: 'error',
+      status,
       durationMs: Date.now() - startedAt,
       outputUnits: 0,
       unitKind: 'jobs',
     });
   }
+}
+
+export class VideoCancellationUnsupportedError extends Error {
+  constructor() {
+    super('The selected video provider does not declare job cancellation');
+    this.name = 'VideoCancellationUnsupportedError';
+  }
+}
+
+function resolveRelativeOperationEndpoint(
+  generationEndpoint: string,
+  configuredEndpoint: string
+): string {
+  try {
+    return new URL(configuredEndpoint).toString();
+  } catch {
+    const generationUrl = new URL(generationEndpoint);
+    if (configuredEndpoint.startsWith('/')) {
+      return new URL(configuredEndpoint, generationUrl.origin).toString();
+    }
+    const base = generationEndpoint.endsWith('/')
+      ? generationEndpoint
+      : `${generationEndpoint}/`;
+    return new URL(configuredEndpoint, base).toString();
+  }
+}
+
+function cancellationReason(
+  signal: AbortSignal | undefined,
+  operation: string
+) {
+  return signal?.reason instanceof Error
+    ? signal.reason
+    : new Error(`${operation} was cancelled`);
 }
 
 function toVideoError(error: unknown): Error {

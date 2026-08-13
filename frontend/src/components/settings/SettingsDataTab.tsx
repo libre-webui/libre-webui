@@ -21,6 +21,7 @@ import { ArchiveRestore, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useChatStore } from '@/store/chatStore';
 import { formatTimestamp } from '@/utils';
+import type { DataArchivePreflight } from '@/utils/api/preferencesApi';
 import type {
   ImportMergeStrategy,
   SettingsImportResult,
@@ -92,6 +93,8 @@ interface SettingsDataTabProps {
   sessionCount: number;
   loading: boolean;
   importing: boolean;
+  preflighting: boolean;
+  preflight: DataArchivePreflight | null;
   showImportOptions: boolean;
   mergeStrategy: ImportMergeStrategy;
   importResult: SettingsImportResult | null;
@@ -109,6 +112,8 @@ export function SettingsDataTab({
   sessionCount,
   loading,
   importing,
+  preflighting,
+  preflight,
   showImportOptions,
   mergeStrategy,
   importResult,
@@ -139,9 +144,9 @@ export function SettingsDataTab({
                 {t('settings.data.exportDescription')}
               </p>
               <p className='mb-3 text-[11px] text-amber-700 dark:text-amber-300'>
-                {t('settings.data.archiveScope', {
+                {t('settings.data.archiveScopeV3', {
                   defaultValue:
-                    'Excludes accounts and secrets, cloned voices, generated media, personas and notes, and Work data or volumes.',
+                    'Includes preferences, chats, folders, Notes, knowledge collections, and extracted document text. Excludes accounts and secrets, biometric cloned voices, generated media, personas and memory, and Work data or volumes.',
                 })}
               </p>
               <Button
@@ -248,11 +253,107 @@ export function SettingsDataTab({
                   </span>
                 </label>
               </div>
+              {preflighting && (
+                <p className='mb-4 text-xs text-gray-600 dark:text-gray-300'>
+                  {t('settings.data.validatingArchive', {
+                    defaultValue: 'Validating archive and calculating changes…',
+                  })}
+                </p>
+              )}
+              {preflight && !preflighting && (
+                <div className='mb-4 space-y-2 rounded-md border border-gray-200 bg-white p-3 text-xs text-gray-700 dark:border-dark-300 dark:bg-dark-200 dark:text-gray-300'>
+                  <p className='font-medium text-gray-900 dark:text-gray-100'>
+                    {t('settings.data.preflightReport', {
+                      defaultValue: 'Import preview',
+                    })}
+                  </p>
+                  <p>
+                    {t('settings.data.preflightIncoming', {
+                      defaultValue:
+                        '{{folders}} folders · {{sessions}} chats · {{messages}} messages · {{notes}} Notes · {{collections}} collections · {{documents}} documents · {{chunks}} chunks',
+                      folders: preflight.incoming.sessionFolders,
+                      sessions: preflight.incoming.sessions,
+                      messages: preflight.incoming.messages,
+                      notes: preflight.incoming.notes,
+                      collections: preflight.incoming.knowledgeCollections,
+                      documents: preflight.incoming.documents,
+                      chunks: preflight.incoming.documentChunks,
+                    })}
+                  </p>
+                  <div className='space-y-1'>
+                    {(
+                      [
+                        [
+                          t('settings.data.sessionFolders', {
+                            defaultValue: 'Session folders',
+                          }),
+                          preflight.result.sessionFolders,
+                        ],
+                        [
+                          t('settings.data.sessions'),
+                          preflight.result.sessions,
+                        ],
+                        [
+                          t('settings.data.notes', { defaultValue: 'Notes' }),
+                          preflight.result.notes,
+                        ],
+                        [
+                          t('settings.data.knowledgeCollections', {
+                            defaultValue: 'Knowledge collections',
+                          }),
+                          preflight.result.knowledgeCollections,
+                        ],
+                        [
+                          t('settings.data.documents'),
+                          preflight.result.documents,
+                        ],
+                      ] as const
+                    ).map(([label, section]) => (
+                      <p key={label}>
+                        {label}: {section.imported}{' '}
+                        {t('settings.data.toCreate', {
+                          defaultValue: 'to create',
+                        })}
+                        , {section.overwritten}{' '}
+                        {t('settings.data.toOverwrite', {
+                          defaultValue: 'to overwrite',
+                        })}
+                        , {section.skipped}{' '}
+                        {t('settings.data.toSkip', {
+                          defaultValue: 'to skip',
+                        })}
+                      </p>
+                    ))}
+                  </div>
+                  {preflight.result.remappedIds > 0 && (
+                    <p className='text-amber-700 dark:text-amber-300'>
+                      {t('settings.data.preflightRemappedIds', {
+                        defaultValue:
+                          "{{count}} IDs will be remapped to protect another account's data.",
+                        count: preflight.result.remappedIds,
+                      })}
+                    </p>
+                  )}
+                  {preflight.warnings.map((warning, index) => (
+                    <p
+                      key={`preflight-warning-${index}`}
+                      className='text-amber-700 dark:text-amber-300'
+                    >
+                      • {warning}
+                    </p>
+                  ))}
+                </div>
+              )}
               <div className='flex gap-2'>
                 <Button
                   onClick={onConfirmImport}
                   size='sm'
-                  disabled={importing}
+                  disabled={
+                    importing ||
+                    preflighting ||
+                    !preflight ||
+                    preflight.strategy !== mergeStrategy
+                  }
                 >
                   {importing
                     ? t('settings.data.importing')
@@ -297,6 +398,16 @@ export function SettingsDataTab({
                   })}
                   , {importResult.documents.skipped}{' '}
                   {t('settings.data.skipped')}
+                </div>
+                <div>
+                  {t('settings.data.notes', { defaultValue: 'Notes' })}:{' '}
+                  {importResult.notes.imported}{' '}
+                  {t('settings.data.importedLabel')},{' '}
+                  {importResult.notes.overwritten}{' '}
+                  {t('settings.data.overwrittenLabel', {
+                    defaultValue: 'overwritten',
+                  })}
+                  , {importResult.notes.skipped} {t('settings.data.skipped')}
                 </div>
                 <div>
                   {t('settings.data.sessionFolders', {

@@ -367,7 +367,7 @@ export class WorkModelProviderService {
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
     if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
-      await codexOAuthService.ensureFreshToken();
+      await codexOAuthService.ensureFreshToken(signal);
       // The codex endpoint only answers as an SSE stream; aggregate it.
       return this.generatePluginStream(
         plugin,
@@ -561,7 +561,7 @@ export class WorkModelProviderService {
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
     if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
-      await codexOAuthService.ensureFreshToken();
+      await codexOAuthService.ensureFreshToken(signal);
     }
     const variables = this.dependencies.plugins.getPluginVariables(
       plugin,

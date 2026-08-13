@@ -20,6 +20,8 @@ Libre WebUI uses plugins to connect external AI providers and model capabilities
 | Image generation | Image models and ComfyUI-style backends          |
 | Text-to-speech   | Voice synthesis providers                        |
 | Speech-to-text   | Transcription providers                          |
+| Audio generation | Sound and audio-generation providers             |
+| Video generation | Asynchronous video-generation providers          |
 
 Plugins can expose static model maps and, where supported, refresh available models from provider APIs.
 
@@ -70,10 +72,11 @@ Plugin variables are split by purpose. Only administrators can store recognized
 connection-routing variables:
 
 `endpoint`, `base_url`, `api_path`, `models_endpoint`, `api_url`,
-`image_endpoint`, `embedding_endpoint`, `tts_endpoint`, `api_mode`, `model`,
-and `model_id`. A capability's declared
-`config.endpoint_variable` is also connection routing, even when it uses a
-different name.
+`image_endpoint`, `embedding_endpoint`, `stt_endpoint`, `tts_endpoint`,
+`voice_clone_endpoint`, `api_mode`, `model`, and `model_id`. A capability's
+declared `config.endpoint_variable`, `config.models_endpoint_variable`, or
+`config.voice_clone_endpoint_variable` is also connection routing, even when
+it uses a different name.
 
 Non-administrators can continue to save generation controls such as temperature
 and streaming preferences. Old routing rows belonging to a non-administrator
@@ -252,8 +255,9 @@ The final derived discovery URL is checked before the user's credential is read
 or an authorization header is built, including when the URL originates in an
 imported plugin manifest. Discovery and provider capability requests do not
 follow HTTP redirects. Configure the final Chat, Work, model-list, image,
-embedding, or TTS endpoint directly; this prevents credentials from being
-forwarded from a validated URL to an unvalidated redirect destination.
+embedding, transcription, speech, voice-clone, audio, or video endpoint
+directly; this prevents credentials from being forwarded from a validated URL
+to an unvalidated redirect destination.
 
 Provider endpoints may use HTTP or HTTPS. HTTP sends API keys, prompts, tool
 results, and generated content without transport encryption, so use it only for
@@ -262,16 +266,18 @@ supports TLS. Requests originate from the backend. In container deployments,
 that means a service URL such as `http://ai-gateway:8080/v1`, while `localhost`
 identifies the Libre WebUI container itself. Plugin capability routes, including
 image generation, resolve endpoint variables and credentials for the requesting
-user. Single-user mode uses the `default` user.
+authenticated account. Libre WebUI does not have an unauthenticated
+single-user mode.
 
 ### Capability-specific endpoints
 
-Chat endpoint overrides are isolated from image, embedding, and text-to-speech
-capabilities. Multi-capability plugins can expose `image_endpoint`,
-`embedding_endpoint`, or `tts_endpoint` variables (or name another variable
-with `config.endpoint_variable`). Leaving those fields blank uses the
-capability endpoint declared by the plugin; a generic Chat `endpoint` is never
-used as a capability override.
+Chat endpoint overrides are isolated from image, embedding, transcription,
+text-to-speech, audio, and video capabilities. Multi-capability plugins can
+expose `image_endpoint`, `embedding_endpoint`, `stt_endpoint`, `tts_endpoint`,
+or another variable named by `config.endpoint_variable`. Voice-cloning routes
+can likewise name `config.voice_clone_endpoint_variable`. Leaving those fields
+blank uses the capability endpoint declared by the plugin; a generic Chat
+`endpoint` is never used as a capability override.
 
 The bundled GitHub Models plugin inherits its current
 `models.github.ai/inference/chat/completions` endpoint when its optional

@@ -39,7 +39,10 @@ A plugin definition declares each media capability as its own block:
 Every block has an `endpoint`, a `model_map` fallback list, an optional
 `models_endpoint` for live model discovery, and a `config` object with
 capability-specific options — sizes and aspect ratios for images, voices and
-formats for speech, resolutions, aspect ratios, and durations for video.
+formats for speech, resolutions, aspect ratios, and durations for video. A
+video provider may also declare a prompt-ID `cancel_endpoint` and
+`cancel_method`; Libre does not infer cancellation support from an ordinary
+generation endpoint.
 
 Two audio capabilities exist and both end up in the gallery as audio:
 
@@ -58,7 +61,19 @@ Open **Imagine** (`/gallery`). The header offers **Generate** for images (when
 image generation is enabled in Settings), plus **Video** and **Audio** panels.
 
 Speech and sound generation are synchronous: the request runs, the result is
-saved to the gallery, and the response returns the finished item.
+saved to the gallery, and the response returns the finished item. **Cancel**
+aborts the browser request and Libre's outbound provider request; a cancelled
+result is not saved. Image generation follows the same disconnect-cancellation
+contract.
+
+For an accepted ComfyUI workflow, Libre sends both the prompt-ID job-cancel
+operation and a prompt-ID queue deletion, then waits up to three seconds for
+that teardown before releasing the request. It never calls ComfyUI's unscoped
+interrupt operation, which could stop another user's workflow. Current ComfyUI
+releases expose `/api/jobs/:promptId/cancel` for a running workflow. On an old
+release without that operation, Libre can still remove the exact pending queue
+item, but cannot safely stop an already-running workflow; upgrade ComfyUI for
+the complete cancellation contract.
 
 TTS plugins can also declare voice cloning. For those models, the Audio panel
 shows a reference-audio upload and, when the provider requires it, an exact
@@ -89,16 +104,29 @@ Video generation is asynchronous. Submitting a job
 job moves through `pending`, `in_progress`, and finally `completed` or
 `failed`.
 
-- Progress is client-driven. The provider is contacted only when the job is
-  polled (`GET /api/media/video/jobs/:jobId`); the UI polls every 30 seconds
-  while the panel is open. There is no background worker, so nothing advances
-  a job while nobody is polling it — the provider keeps rendering, and the
-  next poll picks up the result.
+- Submission is detached from the browser response after validation. Libre
+  persists the provider job ID immediately after acceptance even if the panel
+  or network connection closes while the provider is replying.
+- `GET /api/media/video/jobs` lists only the authenticated user's saved handles;
+  the panel requests up to 100 active handles whenever it opens. A pending job
+  can therefore be reopened after navigation, refresh, or disconnect.
+- Progress is client-driven. `POST /api/media/video/jobs/:jobId/resume` checks
+  the provider and downloads a completed result; the existing per-job `GET`
+  performs the same operation for older clients. The UI checks every 30 seconds
+  while it is waiting. There is no background worker, so the provider keeps
+  rendering while the panel is closed and the next resume picks up the result.
+  Concurrent resume requests for one user/job share one in-process completion
+  path, preventing two tabs from saving duplicate gallery items. This relies on
+  Libre's current single-replica deployment contract.
+- Closing the panel or choosing **Stop waiting** aborts only the current status
+  or download transport. A provider-side **Cancel job** action appears only
+  when that plugin explicitly declares a job-ID cancellation endpoint. On a
+  confirmed provider cancellation, Libre removes the saved local handle.
 - On completion the backend downloads the video (200 MB cap, HTTP redirects
   not followed) and saves it to the gallery.
 - The job record stores the plugin, model, options, status, and the prompt
-  (encrypted at rest). Job records older than 30 days are pruned
-  opportunistically.
+  (encrypted at rest). Completed and failed job records older than 30 days are
+  pruned opportunistically; pending handles are not expired by that cleanup.
 
 ## The Unified Gallery
 

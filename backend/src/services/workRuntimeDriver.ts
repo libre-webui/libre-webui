@@ -64,8 +64,8 @@ export interface WorkTerminalTransport {
 }
 
 /**
- * The mechanics of running one task sandbox, behind which a runtime backend
- * (Docker today, Kubernetes later) is interchangeable. The runtime service
+ * The mechanics of running one task sandbox, behind which the Docker and
+ * Kubernetes runtime backends are interchangeable. The runtime service
  * owns every policy decision — admission, leases, lifecycle locks, task
  * ownership rules, output budgets — and calls a driver only to make the
  * sandbox world match what policy already decided. Drivers verify resource

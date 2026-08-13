@@ -27,6 +27,7 @@ import {
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import { ChatProviderSelectionError } from '../utils/chatProviderSelection.js';
 import dataArchiveService, {
+  DATA_ARCHIVE_MAX_BYTES,
   DataArchiveValidationError,
   type DataArchiveImportResult,
   type DataArchiveMergeStrategy,
@@ -41,7 +42,7 @@ const logger = createLogger('routes:preferences');
 const archiveUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 50 * 1024 * 1024,
+    fileSize: DATA_ARCHIVE_MAX_BYTES,
     files: 1,
     fields: 1,
     // Busboy raises LIMIT_PART_COUNT when the configured count is reached,
@@ -552,10 +553,9 @@ router.get(
         data: dataArchiveService.exportUserData(userId),
       });
     } catch (error: unknown) {
-      logger.error('Failed to export user data archive:', error);
-      res.status(500).json({
+      res.status(archiveErrorStatus(error)).json({
         success: false,
-        error: 'Failed to export user data',
+        error: archiveErrorMessage(error, 'Failed to export user data'),
       });
     }
   }

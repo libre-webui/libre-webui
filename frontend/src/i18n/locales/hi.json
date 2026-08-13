@@ -264,7 +264,7 @@
       "voiceInput": "वॉयस इनपुट",
       "voiceStop": "सुनना बंद करें",
       "transcriptionSource": "वाक् पहचान स्रोत",
-      "browserSpeech": "डिवाइस पर ब्राउज़र वाक् पहचान",
+      "browserSpeech": "ब्राउज़र वाक् सेवा",
       "providerTranscriptionDisclosure": "ट्रांसक्रिप्शन के लिए ऑडियो रिकॉर्ड करके {{provider}} को भेजें",
       "webSearchOn": "वेब खोज चालू — उत्तर लाइव परिणाम उपयोग करते हैं",
       "webSearchOff": "इस संदेश के लिए वेब पर खोजें"
@@ -784,7 +784,7 @@
     "data": {
       "title": "डेटा प्रबंधन",
       "export": "डेटा निर्यात करें",
-      "exportDescription": "प्राथमिकताएं, सत्र और दस्तावेज़ सहित अपना सभी डेटा डाउनलोड करें।",
+      "exportDescription": "प्राथमिकताओं, चैट फ़ोल्डरों, सत्रों और संदेशों, नोट्स, ज्ञान संग्रहों और निकाले गए दस्तावेज़ पाठ का पोर्टेबल संग्रह डाउनलोड करें।",
       "exportAll": "सभी डेटा निर्यात करें",
       "import": "डेटा आयात करें",
       "importDescription": "पिछले निर्यात से डेटा आयात करें।",
@@ -796,6 +796,11 @@
       "clearing": "साफ़ हो रहा है...",
       "importOptions": "आयात विकल्प",
       "importOptionsDescription": "मौजूदा डेटा को कैसे संभालना है चुनें",
+      "validatingArchive": "संग्रह का सत्यापन और परिवर्तनों की गणना हो रही है…",
+      "archiveValidationFailed": "संग्रह सत्यापन विफल",
+      "preflightReport": "आयात पूर्वावलोकन",
+      "preflightIncoming": "{{folders}} फ़ोल्डर · {{sessions}} चैट · {{messages}} संदेश · {{notes}} नोट्स · {{collections}} संग्रह · {{documents}} दस्तावेज़ · {{chunks}} खंड",
+      "preflightRemappedIds": "दूसरे खाते का डेटा सुरक्षित रखने के लिए {{count}} ID फिर से मैप किए जाएँगे।",
       "skipDuplicates": "डुप्लीकेट छोड़ें",
       "overwrite": "मौजूदा को ओवरराइट करें",
       "importResults": "आयात परिणाम",
@@ -803,15 +808,25 @@
       "imported": "आयातित",
       "failed": "विफल",
       "sessions": "सत्र",
+      "sessionFolders": "सत्र फ़ोल्डर",
+      "notes": "नोट्स",
+      "knowledgeCollections": "ज्ञान संग्रह",
       "importedLabel": "आयातित",
+      "overwrittenLabel": "ओवरराइट किया गया",
       "skipped": "छोड़ा गया",
+      "toCreate": "बनाने के लिए",
+      "toOverwrite": "ओवरराइट करने के लिए",
+      "toSkip": "छोड़ने के लिए",
       "documents": "दस्तावेज़",
+      "warnings": "चेतावनियाँ",
+      "refreshAfterImportFailed": "डेटा आयात हो गया, लेकिन कुछ दृश्य रीफ़्रेश नहीं हो सके। सभी परिवर्तन देखने के लिए Libre WebUI को पुनः लोड करें।",
       "errors": "त्रुटियाँ",
       "archivedChats": {
         "title": "संग्रहीत चैट",
         "empty": "कोई संग्रहीत चैट नहीं",
         "unarchive": "संग्रह से निकालें"
-      }
+      },
+      "archiveScopeV3": "इसमें प्राथमिकताएँ, चैट, फ़ोल्डर, नोट्स, ज्ञान संग्रह और निकाला गया दस्तावेज़ पाठ शामिल है। खाते और गोपनीय जानकारी, बायोमेट्रिक क्लोन की गई आवाज़ें, जनरेट किया गया मीडिया, पर्सोना और मेमोरी तथा Work डेटा या वॉल्यूम शामिल नहीं हैं।"
     },
     "about": {
       "title": "परिचय",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "क्षमता मिश्रण",
       "characters": "{{count}} अक्षर",
+      "bytes": "{{count}} बाइट",
       "images": "{{count}} छवियाँ",
       "jobs": "{{count}} वीडियो कार्य",
       "inputs": "{{count}} इनपुट",

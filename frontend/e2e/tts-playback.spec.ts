@@ -183,6 +183,7 @@ test('auto-play surfaces blocked audio and retries from a real click', async ({
       chunks: ['This response should begin speaking automatically.'],
       chunkDelayMs: 20,
       completionDelayMs: 20,
+      duplicateCompletion: true,
     },
   });
 
@@ -292,6 +293,8 @@ test('auto-play surfaces blocked audio and retries from a real click', async ({
       )
     )
     .toBeGreaterThan(0);
+  await page.waitForTimeout(50);
+  expect(mockApi.ttsGenerationRequests).toHaveLength(1);
   expect(
     await page.evaluate(
       () => (window as unknown as { __ttsResumeCalls: number }).__ttsResumeCalls
@@ -303,4 +306,169 @@ test('auto-play surfaces blocked audio and retries from a real click', async ({
         (window as unknown as { __ttsContextCount: number }).__ttsContextCount
     )
   ).toBe(1);
+});
+
+test('read-aloud stops, restarts, and releases audio on navigation', async ({
+  page,
+}) => {
+  const now = Date.now();
+  const mockApi = await mockLibreWebUiApi(page, {
+    preferences: {
+      ttsSettings: {
+        enabled: true,
+        autoPlay: false,
+        model: 'lifecycle-tts',
+        voice: 'calm',
+        voiceProfileId: '',
+        speed: 1,
+        pluginId: 'mock-tts',
+        streamSentences: true,
+      },
+    },
+    ttsModels: [
+      {
+        model: 'lifecycle-tts',
+        plugin: 'mock-tts',
+        config: {
+          voices: ['calm'],
+          default_voice: 'calm',
+          formats: ['wav'],
+          default_format: 'wav',
+          max_characters: 600,
+        },
+      },
+    ],
+    sessions: [
+      {
+        id: 'tts-lifecycle-a',
+        title: 'TTS lifecycle A',
+        model: 'llama3.2:3b',
+        createdAt: now,
+        updatedAt: now,
+        messages: [
+          {
+            id: 'tts-lifecycle-message',
+            role: 'assistant',
+            content: 'This response remains active until the user stops it.',
+            timestamp: now,
+            model: 'llama3.2:3b',
+          },
+        ],
+      },
+      {
+        id: 'tts-lifecycle-b',
+        title: 'TTS lifecycle B',
+        model: 'llama3.2:3b',
+        createdAt: now,
+        updatedAt: now,
+        messages: [],
+      },
+    ],
+  });
+
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'e2e-token');
+    Object.defineProperty(window, 'AudioContext', {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(window, 'webkitAudioContext', {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: () => 'blob:tts-lifecycle',
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: () => undefined,
+    });
+
+    const probe = window as unknown as {
+      __ttsLifecyclePlays: number;
+      __ttsLifecyclePauses: number;
+    };
+    probe.__ttsLifecyclePlays = 0;
+    probe.__ttsLifecyclePauses = 0;
+    class LifecycleAudio {
+      currentTime = 0;
+      onended: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+
+      pause() {
+        probe.__ttsLifecyclePauses += 1;
+      }
+
+      async play() {
+        probe.__ttsLifecyclePlays += 1;
+      }
+
+      removeAttribute() {}
+
+      load() {}
+    }
+    Object.defineProperty(window, 'Audio', {
+      configurable: true,
+      value: LifecycleAudio,
+    });
+  });
+
+  await page.goto('/c/tts-lifecycle-a');
+  await page.getByRole('button', { name: 'Read aloud' }).click();
+  await expect
+    .poll(() => mockApi.ttsGenerationRequests.length)
+    .toBeGreaterThan(0);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { __ttsLifecyclePlays: number })
+            .__ttsLifecyclePlays
+      )
+    )
+    .toBe(1);
+
+  await page.getByRole('button', { name: 'Stop speaking' }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { __ttsLifecyclePauses: number })
+            .__ttsLifecyclePauses
+      )
+    )
+    .toBeGreaterThan(0);
+
+  await page.getByRole('button', { name: 'Read aloud' }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { __ttsLifecyclePlays: number })
+            .__ttsLifecyclePlays
+      )
+    )
+    .toBe(2);
+
+  const pausesBeforeNavigation = await page.evaluate(
+    () =>
+      (window as unknown as { __ttsLifecyclePauses: number })
+        .__ttsLifecyclePauses
+  );
+
+  await page.evaluate(() => {
+    history.pushState({}, '', '/c/tts-lifecycle-b');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+  await expect(page).toHaveURL(/\/c\/tts-lifecycle-b$/);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { __ttsLifecyclePauses: number })
+            .__ttsLifecyclePauses
+      )
+    )
+    .toBeGreaterThan(pausesBeforeNavigation);
 });

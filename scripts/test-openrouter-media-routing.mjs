@@ -67,14 +67,14 @@ async function listen(app) {
   };
 }
 
-function dependencies(plugin) {
+function dependencies(plugin, recordUsage = () => {}) {
   return {
     getAllPlugins: () => [plugin],
     getPlugin: id => (id === plugin.id ? plugin : null),
     getApiKey: () => 'test-key',
     getPluginVariables: () => ({}),
     validateEndpointUrl: endpoint => endpoint,
-    recordUsage: () => {},
+    recordUsage,
   };
 }
 
@@ -179,6 +179,62 @@ test('OpenRouter audio-output models stream generated sound bytes', async () => 
   }
 });
 
+test('generated sound aborts its provider stream and records cancelled usage', async () => {
+  const app = express();
+  app.use(express.json());
+  let providerStarted;
+  const providerStartedPromise = new Promise(resolve => {
+    providerStarted = resolve;
+  });
+  let providerSawClose = false;
+  app.post('/chat/completions', (_req, res) => {
+    providerStarted();
+    res.set('Content-Type', 'text/event-stream');
+    res.flushHeaders();
+    res.once('close', () => {
+      if (!res.writableEnded) providerSawClose = true;
+    });
+  });
+  const server = await listen(app);
+  const plugin = {
+    id: 'abortable-audio',
+    name: 'Abortable audio',
+    type: 'completion',
+    endpoint: `${server.baseUrl}/chat/completions`,
+    auth: { header: 'Authorization', prefix: 'Bearer ', key_env: 'TEST' },
+    model_map: ['chat-model'],
+    active: true,
+    capabilities: {
+      audio: {
+        endpoint: `${server.baseUrl}/chat/completions`,
+        model_map: ['audio-model'],
+        config: { formats: ['wav'], default_format: 'wav' },
+      },
+    },
+  };
+  const usages = [];
+  const controller = new AbortController();
+  const service = new PluginAudioGenerationService(
+    dependencies(plugin, usage => usages.push(usage))
+  );
+  const request = service.generate('audio-model', 'Stop this sound', {
+    pluginId: plugin.id,
+    userId: 'user',
+    signal: controller.signal,
+  });
+
+  try {
+    await providerStartedPromise;
+    controller.abort(new Error('sound client disconnected'));
+    await assert.rejects(request, /sound client disconnected/);
+    await new Promise(resolve => setTimeout(resolve, 20));
+    assert.equal(providerSawClose, true);
+    assert.equal(usages.at(-1)?.status, 'cancelled');
+  } finally {
+    await server.close();
+  }
+});
+
 test('image generation maps the UI size to OpenRouter aspect_ratio and normalizes media_type', async () => {
   const app = express();
   app.use(express.json());
@@ -232,6 +288,64 @@ test('image generation maps the UI size to OpenRouter aspect_ratio and normalize
     assert.deepEqual(result.images, [
       { b64_json: 'aGVsbG8=', mime_type: 'image/webp' },
     ]);
+  } finally {
+    await server.close();
+  }
+});
+
+test('image generation aborts its provider request and records cancelled usage', async () => {
+  const app = express();
+  app.use(express.json());
+  let providerStarted;
+  const providerStartedPromise = new Promise(resolve => {
+    providerStarted = resolve;
+  });
+  let providerSawClose = false;
+  app.post('/images', (_req, res) => {
+    providerStarted();
+    res.once('close', () => {
+      if (!res.writableEnded) providerSawClose = true;
+    });
+  });
+  const server = await listen(app);
+  const plugin = {
+    id: 'abortable-image',
+    name: 'Abortable image',
+    type: 'completion',
+    endpoint: `${server.baseUrl}/chat/completions`,
+    auth: { header: 'Authorization', prefix: 'Bearer ', key_env: 'TEST' },
+    model_map: ['chat-model'],
+    active: true,
+    capabilities: {
+      image: {
+        endpoint: `${server.baseUrl}/images`,
+        model_map: ['image-model'],
+        config: { supports_response_format: false },
+      },
+    },
+  };
+  const usages = [];
+  const controller = new AbortController();
+  const service = new PluginImageGenerationService(
+    dependencies(plugin, usage => usages.push(usage))
+  );
+  const request = service.executeImageGenRequest(
+    'image-model',
+    'Stop this image',
+    {
+      pluginId: plugin.id,
+      userId: 'user',
+      signal: controller.signal,
+    }
+  );
+
+  try {
+    await providerStartedPromise;
+    controller.abort(new Error('image client disconnected'));
+    await assert.rejects(request, /image client disconnected/);
+    await new Promise(resolve => setTimeout(resolve, 20));
+    assert.equal(providerSawClose, true);
+    assert.equal(usages.at(-1)?.status, 'cancelled');
   } finally {
     await server.close();
   }
@@ -336,6 +450,181 @@ test('video generation submits, polls, and downloads through the provider endpoi
   } finally {
     await server.close();
   }
+});
+
+test('video transport abort does not pretend to cancel an accepted durable provider job', async () => {
+  const app = express();
+  app.use(express.json());
+  const methods = [];
+  const durableJobs = new Set();
+  const started = new Map();
+  const waitFor = key =>
+    new Promise(resolve => {
+      started.set(key, resolve);
+    });
+  const submitStarted = waitFor('submit');
+  const pollStarted = waitFor('poll');
+  const downloadStarted = waitFor('download');
+  app.use((req, _res, next) => {
+    methods.push(req.method);
+    next();
+  });
+  app.post('/videos', (_req, _res) => {
+    durableJobs.add('job-accepted');
+    started.get('submit')();
+  });
+  app.get('/videos/job-accepted', (_req, _res) => {
+    started.get('poll')();
+  });
+  app.get('/videos/job-accepted/content', (_req, _res) => {
+    started.get('download')();
+  });
+  const server = await listen(app);
+  const plugin = {
+    id: 'abortable-video',
+    name: 'Abortable video',
+    type: 'completion',
+    endpoint: `${server.baseUrl}/chat/completions`,
+    auth: { header: 'Authorization', prefix: 'Bearer ', key_env: 'TEST' },
+    model_map: ['chat-model'],
+    active: true,
+    capabilities: {
+      video: {
+        endpoint: `${server.baseUrl}/videos`,
+        model_map: ['video-model'],
+        config: {},
+      },
+    },
+  };
+  const usages = [];
+  const service = new PluginVideoGenerationService(
+    dependencies(plugin, usage => usages.push(usage))
+  );
+
+  try {
+    const submitController = new AbortController();
+    const submit = service.submit('video-model', 'A durable scene', {
+      pluginId: plugin.id,
+      userId: 'user',
+      signal: submitController.signal,
+    });
+    await submitStarted;
+    submitController.abort(new Error('submission transport disconnected'));
+    await assert.rejects(submit, /submission transport disconnected/);
+    assert.equal(usages.at(-1)?.status, 'cancelled');
+
+    const pollController = new AbortController();
+    const poll = service.poll(
+      'video-model',
+      'job-accepted',
+      plugin.id,
+      'user',
+      pollController.signal
+    );
+    await pollStarted;
+    pollController.abort(new Error('poll transport disconnected'));
+    await assert.rejects(poll, /poll transport disconnected/);
+
+    const downloadController = new AbortController();
+    const download = service.download(
+      'video-model',
+      'job-accepted',
+      plugin.id,
+      'user',
+      downloadController.signal
+    );
+    await downloadStarted;
+    downloadController.abort(new Error('download transport disconnected'));
+    await assert.rejects(download, /download transport disconnected/);
+
+    assert.deepEqual([...durableJobs], ['job-accepted']);
+    assert.equal(
+      methods.includes('DELETE'),
+      false,
+      'transport cancellation must not claim provider-job cancellation'
+    );
+  } finally {
+    await server.close();
+  }
+});
+
+test('video cancellation uses only a declared provider job endpoint', async () => {
+  const app = express();
+  app.use(express.json());
+  const requests = [];
+  app.delete('/videos/job-to-cancel/cancel', (req, res) => {
+    requests.push({ method: req.method, path: req.path });
+    res.status(204).end();
+  });
+  const server = await listen(app);
+  const plugin = {
+    id: 'cancellable-video',
+    name: 'Cancellable video',
+    type: 'completion',
+    endpoint: `${server.baseUrl}/chat/completions`,
+    auth: { header: 'Authorization', prefix: 'Bearer ', key_env: 'TEST' },
+    model_map: ['chat-model'],
+    active: true,
+    capabilities: {
+      video: {
+        endpoint: `${server.baseUrl}/videos`,
+        model_map: ['video-model'],
+        config: {
+          cancel_endpoint: '/videos/{job_id}/cancel',
+          cancel_method: 'DELETE',
+        },
+      },
+    },
+  };
+  try {
+    const service = new PluginVideoGenerationService(dependencies(plugin));
+    assert.equal(
+      service.supportsCancellation('video-model', plugin.id, 'video-owner'),
+      true
+    );
+    await service.cancel(
+      'video-model',
+      'job-to-cancel',
+      plugin.id,
+      'video-owner'
+    );
+  } finally {
+    await server.close();
+  }
+  assert.deepEqual(requests, [
+    { method: 'DELETE', path: '/videos/job-to-cancel/cancel' },
+  ]);
+
+  const unsupportedPlugin = {
+    ...plugin,
+    id: 'non-cancellable-video',
+    capabilities: {
+      video: {
+        ...plugin.capabilities.video,
+        config: {},
+      },
+    },
+  };
+  const unsupported = new PluginVideoGenerationService(
+    dependencies(unsupportedPlugin)
+  );
+  assert.equal(
+    unsupported.supportsCancellation(
+      'video-model',
+      unsupportedPlugin.id,
+      'video-owner'
+    ),
+    false
+  );
+  await assert.rejects(
+    unsupported.cancel(
+      'video-model',
+      'job-to-cancel',
+      unsupportedPlugin.id,
+      'video-owner'
+    ),
+    /does not declare job cancellation/
+  );
 });
 
 test('capability discovery keeps live image, speech, sound, and video catalogs separate', async () => {

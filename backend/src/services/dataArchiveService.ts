@@ -24,24 +24,33 @@ import type {
   ChatSession,
   DocumentChunk,
   KnowledgeCollection,
+  Note,
   SessionFolder,
   UserPreferences,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
-import { MAX_SESSION_FOLDERS_PER_USER } from '../utils/resourceLimits.js';
+import {
+  MAX_NOTES_PER_USER,
+  MAX_NOTE_CONTENT_LENGTH,
+  MAX_NOTE_TITLE_LENGTH,
+  MAX_SESSION_FOLDERS_PER_USER,
+} from '../utils/resourceLimits.js';
 import preferencesService from './preferencesService.js';
 
 const logger = createLogger('services:data-archive');
 
 export const DATA_ARCHIVE_FORMAT = 'libre-webui-user-data';
-export const DATA_ARCHIVE_VERSION = 2;
+export const DATA_ARCHIVE_VERSION = 3;
+export const DATA_ARCHIVE_MAX_BYTES = 50 * 1024 * 1024;
+export const DATA_ARCHIVE_CANONICALIZATION = 'libre-json-sort-v1';
 
 const LEGACY_ARCHIVE_FORMAT = 'libre-webui-export';
 const MAX_ARCHIVE_SESSIONS = 5_000;
 const MAX_ARCHIVE_MESSAGES = 100_000;
 const MAX_ARCHIVE_DOCUMENTS = 5_000;
 const MAX_ARCHIVE_CHUNKS = 100_000;
-const MAX_ARCHIVE_FOLDERS = 100;
+const MAX_ARCHIVE_FOLDERS = MAX_SESSION_FOLDERS_PER_USER;
+const MAX_ARCHIVE_NOTES = MAX_NOTES_PER_USER;
 const MAX_ARCHIVE_COLLECTIONS = 5_000;
 const MAX_ID_LENGTH = 256;
 const MAX_TITLE_LENGTH = 10_000;
@@ -68,17 +77,16 @@ export const DATA_ARCHIVE_EXCLUSIONS: DataArchiveExclusion[] = [
   {
     key: 'voiceProfiles',
     reason:
-      'Voice-cloning reference audio and transcripts require separate consent-aware handling.',
+      'Voice-cloning reference audio is biometric data and requires separate consent-aware handling with its transcript.',
   },
   {
-    key: 'personasNotesAndMemory',
-    reason:
-      'Personas, notes, and persona memory are not part of archive version 2.',
+    key: 'personasAndMemory',
+    reason: 'Personas and persona memory are not part of archive version 3.',
   },
   {
     key: 'generatedMedia',
     reason:
-      'Generated image, audio, and video library files are not part of archive version 2.',
+      'Generated image, audio, and video library files are not part of archive version 3.',
   },
   {
     key: 'work',
@@ -96,6 +104,12 @@ export interface ArchivedDocument extends Document {
   chunks: Array<Omit<DocumentChunk, 'embedding'>>;
 }
 
+export interface DataArchiveIntegrity {
+  algorithm: 'sha256';
+  canonicalization: typeof DATA_ARCHIVE_CANONICALIZATION;
+  digest: string;
+}
+
 export interface UserDataArchive {
   format: typeof DATA_ARCHIVE_FORMAT;
   version: typeof DATA_ARCHIVE_VERSION;
@@ -103,9 +117,11 @@ export interface UserDataArchive {
   preferences: Partial<UserPreferences>;
   sessionFolders: SessionFolder[];
   sessions: ChatSession[];
+  notes: Note[];
   knowledgeCollections: KnowledgeCollection[];
   documents: ArchivedDocument[];
   exclusions: DataArchiveExclusion[];
+  integrity: DataArchiveIntegrity;
 }
 
 export interface ArchiveSectionResult {
@@ -125,6 +141,7 @@ export interface DataArchiveImportResult {
   };
   sessionFolders: ArchiveSectionResult;
   sessions: ArchiveSectionResult;
+  notes: ArchiveSectionResult;
   knowledgeCollections: ArchiveSectionResult;
   documents: ArchiveSectionResult;
   remappedIds: number;
@@ -142,6 +159,7 @@ export interface DataArchivePreflight {
     sessionFolders: number;
     sessions: number;
     messages: number;
+    notes: number;
     knowledgeCollections: number;
     documents: number;
     documentChunks: number;
@@ -162,6 +180,7 @@ interface ImportPlan {
   folderIds: Map<string, string>;
   sessionIds: Map<string, string>;
   messageIds: Map<string, string>;
+  noteIds: Map<string, string>;
   collectionIds: Map<string, string>;
   documentIds: Map<string, string>;
   chunkIds: Map<string, string>;
@@ -174,6 +193,79 @@ class DataArchiveValidationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'DataArchiveValidationError';
+  }
+}
+
+type CanonicalJson =
+  | null
+  | boolean
+  | number
+  | string
+  | CanonicalJson[]
+  | { [key: string]: CanonicalJson };
+
+function canonicalJson(value: CanonicalJson): string {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(entry => canonicalJson(entry)).join(',')}]`;
+  }
+  return `{${Object.keys(value)
+    .sort()
+    .map(key => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
+    .join(',')}}`;
+}
+
+function archivePayloadForIntegrity(
+  value: Record<string, unknown>
+): Record<string, unknown> {
+  const { integrity: _integrity, ...payload } = value;
+  return payload;
+}
+
+function computeArchiveDigest(value: Record<string, unknown>): string {
+  const payload = archivePayloadForIntegrity(value);
+  const jsonSafe = JSON.parse(JSON.stringify(payload)) as CanonicalJson;
+  return createHash('sha256').update(canonicalJson(jsonSafe)).digest('hex');
+}
+
+function sealArchive(
+  value: Omit<UserDataArchive, 'integrity'>
+): UserDataArchive {
+  const payload = value as unknown as Record<string, unknown>;
+  return {
+    ...value,
+    integrity: {
+      algorithm: 'sha256',
+      canonicalization: DATA_ARCHIVE_CANONICALIZATION,
+      digest: computeArchiveDigest(payload),
+    },
+  };
+}
+
+function verifyArchiveIntegrity(value: Record<string, unknown>): void {
+  const integrity = requireRecord(value.integrity, 'integrity');
+  if (integrity.algorithm !== 'sha256') {
+    throw new DataArchiveValidationError(
+      'integrity.algorithm must be "sha256"'
+    );
+  }
+  if (integrity.canonicalization !== DATA_ARCHIVE_CANONICALIZATION) {
+    throw new DataArchiveValidationError(
+      `integrity.canonicalization must be "${DATA_ARCHIVE_CANONICALIZATION}"`
+    );
+  }
+  const digest = requireString(integrity.digest, 'integrity.digest', 64);
+  if (!/^[a-f0-9]{64}$/.test(digest)) {
+    throw new DataArchiveValidationError(
+      'integrity.digest must be a lowercase SHA-256 digest'
+    );
+  }
+  if (digest !== computeArchiveDigest(value)) {
+    throw new DataArchiveValidationError(
+      'Portable archive integrity check failed; the file is incomplete or was modified'
+    );
   }
 }
 
@@ -390,6 +482,22 @@ function normalizeFolder(value: unknown, index: number): SessionFolder {
       item.updatedAt,
       `sessionFolders[${index}].updatedAt`
     ),
+  };
+}
+
+function normalizeNote(value: unknown, index: number): Note {
+  const path = `notes[${index}]`;
+  const item = requireRecord(value, path);
+  return {
+    id: requireNonEmptyString(item.id, `${path}.id`),
+    title: requireString(item.title, `${path}.title`, MAX_NOTE_TITLE_LENGTH),
+    content: requireString(
+      item.content,
+      `${path}.content`,
+      MAX_NOTE_CONTENT_LENGTH
+    ),
+    createdAt: requireTimestamp(item.createdAt, `${path}.createdAt`),
+    updatedAt: requireTimestamp(item.updatedAt, `${path}.updatedAt`),
   };
 }
 
@@ -644,6 +752,80 @@ function assertUniqueIds(items: Array<{ id: string }>, path: string): void {
   }
 }
 
+function validateExclusions(value: unknown): void {
+  const exclusions = requireArray(value, 'exclusions').map((entry, index) => {
+    const item = requireRecord(entry, `exclusions[${index}]`);
+    return {
+      id: requireNonEmptyString(item.key, `exclusions[${index}].key`),
+      reason: requireNonEmptyString(
+        item.reason,
+        `exclusions[${index}].reason`,
+        MAX_TITLE_LENGTH
+      ),
+    };
+  });
+  assertUniqueIds(exclusions, 'exclusions');
+  const keys = new Set(exclusions.map(exclusion => exclusion.id));
+  for (const required of DATA_ARCHIVE_EXCLUSIONS) {
+    if (!keys.has(required.key)) {
+      throw new DataArchiveValidationError(
+        `exclusions must declare ${required.key}`
+      );
+    }
+  }
+}
+
+function validateRelationships(
+  sessionFolders: SessionFolder[],
+  sessions: ChatSession[],
+  knowledgeCollections: KnowledgeCollection[],
+  documents: ArchivedDocument[]
+): void {
+  const folderIds = new Set(sessionFolders.map(folder => folder.id));
+  const sessionIds = new Set(sessions.map(session => session.id));
+  const collectionIds = new Set(
+    knowledgeCollections.map(collection => collection.id)
+  );
+
+  sessions.forEach((session, sessionIndex) => {
+    if (session.folderId && !folderIds.has(session.folderId)) {
+      throw new DataArchiveValidationError(
+        `sessions[${sessionIndex}].folderId references missing session folder ${session.folderId}`
+      );
+    }
+    session.settings?.knowledgeCollectionIds?.forEach(
+      (collectionId, collectionIndex) => {
+        if (!collectionIds.has(collectionId)) {
+          throw new DataArchiveValidationError(
+            `sessions[${sessionIndex}].settings.knowledgeCollectionIds[${collectionIndex}] references missing knowledge collection ${collectionId}`
+          );
+        }
+      }
+    );
+    const messageIds = new Set(session.messages.map(message => message.id));
+    session.messages.forEach((message, messageIndex) => {
+      if (message.parentId && !messageIds.has(message.parentId)) {
+        throw new DataArchiveValidationError(
+          `sessions[${sessionIndex}].messages[${messageIndex}].parentId must reference a message in the same session`
+        );
+      }
+    });
+  });
+
+  documents.forEach((document, documentIndex) => {
+    if (document.sessionId && !sessionIds.has(document.sessionId)) {
+      throw new DataArchiveValidationError(
+        `documents[${documentIndex}].sessionId references missing session ${document.sessionId}`
+      );
+    }
+    if (document.collectionId && !collectionIds.has(document.collectionId)) {
+      throw new DataArchiveValidationError(
+        `documents[${documentIndex}].collectionId references missing knowledge collection ${document.collectionId}`
+      );
+    }
+  });
+}
+
 function normalizeArchive(value: unknown): NormalizedArchive {
   const raw = requireRecord(value, 'archive');
   const warnings: string[] = [];
@@ -659,11 +841,23 @@ function normalizeArchive(value: unknown): NormalizedArchive {
       preferences: raw.preferences,
       sessionFolders: [],
       sessions: raw.sessions ?? [],
+      notes: [],
       knowledgeCollections: [],
       documents: raw.documents ?? [],
     };
     warnings.push(
-      'Legacy archive migrated to version 2. Legacy exports did not contain folders, collections, or document chunks.'
+      'Legacy archive migrated to version 3 without integrity verification. Legacy exports did not contain folders, Notes, collections, or document chunks.'
+    );
+  } else if (raw.format === DATA_ARCHIVE_FORMAT && raw.version === 2) {
+    migratedFromVersion = '2';
+    source = {
+      ...raw,
+      version: DATA_ARCHIVE_VERSION,
+      notes: [],
+    };
+    delete source.integrity;
+    warnings.push(
+      'Archive version 2 migrated to version 3 without integrity verification. Version 2 did not contain Notes or a checksum.'
     );
   }
 
@@ -676,6 +870,10 @@ function normalizeArchive(value: unknown): NormalizedArchive {
     throw new DataArchiveValidationError(
       `Unsupported archive version ${String(source.version)}; expected ${DATA_ARCHIVE_VERSION}`
     );
+  }
+  if (!migratedFromVersion) {
+    verifyArchiveIntegrity(source);
+    validateExclusions(source.exclusions);
   }
 
   const exportedAt = requireString(source.exportedAt, 'exportedAt', 100);
@@ -690,6 +888,7 @@ function normalizeArchive(value: unknown): NormalizedArchive {
   const sessions = requireArray(source.sessions, 'sessions').map(
     normalizeSession
   );
+  const notes = requireArray(source.notes, 'notes').map(normalizeNote);
   const knowledgeCollections = requireArray(
     source.knowledgeCollections,
     'knowledgeCollections'
@@ -708,31 +907,43 @@ function normalizeArchive(value: unknown): NormalizedArchive {
   );
   if (sessionFolders.length > MAX_ARCHIVE_FOLDERS) {
     throw new DataArchiveValidationError(
-      'Archive contains too many session folders'
+      `Archive contains ${sessionFolders.length} session folders; the maximum is ${MAX_ARCHIVE_FOLDERS}`
     );
   }
   if (sessions.length > MAX_ARCHIVE_SESSIONS) {
-    throw new DataArchiveValidationError('Archive contains too many sessions');
+    throw new DataArchiveValidationError(
+      `Archive contains ${sessions.length} sessions; the maximum is ${MAX_ARCHIVE_SESSIONS}`
+    );
   }
   if (messageCount > MAX_ARCHIVE_MESSAGES) {
-    throw new DataArchiveValidationError('Archive contains too many messages');
+    throw new DataArchiveValidationError(
+      `Archive contains ${messageCount} messages; the maximum is ${MAX_ARCHIVE_MESSAGES}`
+    );
+  }
+  if (notes.length > MAX_ARCHIVE_NOTES) {
+    throw new DataArchiveValidationError(
+      `Archive contains ${notes.length} Notes; the maximum is ${MAX_ARCHIVE_NOTES}`
+    );
   }
   if (knowledgeCollections.length > MAX_ARCHIVE_COLLECTIONS) {
     throw new DataArchiveValidationError(
-      'Archive contains too many knowledge collections'
+      `Archive contains ${knowledgeCollections.length} knowledge collections; the maximum is ${MAX_ARCHIVE_COLLECTIONS}`
     );
   }
   if (documents.length > MAX_ARCHIVE_DOCUMENTS) {
-    throw new DataArchiveValidationError('Archive contains too many documents');
+    throw new DataArchiveValidationError(
+      `Archive contains ${documents.length} documents; the maximum is ${MAX_ARCHIVE_DOCUMENTS}`
+    );
   }
   if (chunkCount > MAX_ARCHIVE_CHUNKS) {
     throw new DataArchiveValidationError(
-      'Archive contains too many document chunks'
+      `Archive contains ${chunkCount} document chunks; the maximum is ${MAX_ARCHIVE_CHUNKS}`
     );
   }
 
   assertUniqueIds(sessionFolders, 'sessionFolders');
   assertUniqueIds(sessions, 'sessions');
+  assertUniqueIds(notes, 'notes');
   assertUniqueIds(knowledgeCollections, 'knowledgeCollections');
   assertUniqueIds(documents, 'documents');
   assertUniqueIds(
@@ -743,19 +954,26 @@ function normalizeArchive(value: unknown): NormalizedArchive {
     documents.flatMap(document => document.chunks),
     'document chunks'
   );
+  validateRelationships(
+    sessionFolders,
+    sessions,
+    knowledgeCollections,
+    documents
+  );
 
   return {
-    archive: {
+    archive: sealArchive({
       format: DATA_ARCHIVE_FORMAT,
       version: DATA_ARCHIVE_VERSION,
       exportedAt,
       preferences,
       sessionFolders,
       sessions,
+      notes,
       knowledgeCollections,
       documents,
       exclusions: DATA_ARCHIVE_EXCLUSIONS,
-    },
+    }),
     migratedFromVersion,
     warnings,
   };
@@ -881,6 +1099,7 @@ function buildPlan(
     },
     sessionFolders: emptySection(),
     sessions: emptySection(),
+    notes: emptySection(),
     knowledgeCollections: emptySection(),
     documents: emptySection(),
     remappedIds: 0,
@@ -929,6 +1148,13 @@ function buildPlan(
     'session',
     result.sessions
   );
+  const noteIds = mapIds(archive.notes, 'notes', 'note', result.notes);
+  const existingNoteCount = storageService.getNotes(userId).length;
+  if (existingNoteCount + result.notes.imported > MAX_NOTES_PER_USER) {
+    throw new DataArchiveValidationError(
+      `Import would exceed the per-user limit of ${MAX_NOTES_PER_USER} Notes`
+    );
+  }
   const collectionIds = mapIds(
     archive.knowledgeCollections,
     'knowledge_collections',
@@ -983,12 +1209,23 @@ function buildPlan(
       `${result.remappedIds} archive IDs were deterministically remapped because another user already owns them.`
     );
   }
+  for (const session of archive.sessions) {
+    if (
+      session.personaId &&
+      !currentUserOwns('personas', session.personaId, userId)
+    ) {
+      result.warnings.push(
+        `Session ${session.id} will be detached from persona ${session.personaId} because personas are excluded and the target account does not already own it.`
+      );
+    }
+  }
 
   return {
     archive,
     folderIds,
     sessionIds,
     messageIds,
+    noteIds,
     collectionIds,
     documentIds,
     chunkIds,
@@ -1036,6 +1273,14 @@ function applyPlan(
     storageService.saveSessionFolder({ ...folder, id: targetId }, userId);
   }
 
+  for (const note of plan.archive.notes) {
+    const targetId = plan.noteIds.get(note.id)!;
+    if (strategy === 'skip' && currentUserOwns('notes', targetId, userId)) {
+      continue;
+    }
+    storageService.saveNote({ ...note, id: targetId }, userId);
+  }
+
   for (const collection of plan.archive.knowledgeCollections) {
     const targetId = plan.collectionIds.get(collection.id)!;
     if (
@@ -1076,11 +1321,6 @@ function applyPlan(
       'personas',
       userId
     );
-    if (archivedSession.personaId && !personaId) {
-      plan.result.warnings.push(
-        `Session ${archivedSession.id} was detached from an unavailable persona.`
-      );
-    }
     storageService.saveSession(
       {
         ...archivedSession,
@@ -1141,8 +1381,53 @@ function applyPlan(
   }
 }
 
+function assertExportIsRestorable(archive: UserDataArchive): void {
+  // Run the exact importer schema and resource checks before returning a file.
+  // This prevents Libre from offering an export that its own preflight rejects.
+  normalizeArchive(archive);
+  const serializedBytes = Buffer.byteLength(
+    JSON.stringify(archive, null, 2),
+    'utf8'
+  );
+  if (serializedBytes > DATA_ARCHIVE_MAX_BYTES) {
+    throw new DataArchiveValidationError(
+      `Portable archive is ${serializedBytes} bytes; the import limit is ${DATA_ARCHIVE_MAX_BYTES} bytes`
+    );
+  }
+}
+
+function assertStoredCountWithinExportLimit(
+  table: 'session_folders' | 'notes',
+  label: string,
+  maximum: number,
+  userId: string
+): void {
+  const row = getDatabase()
+    .prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE user_id = ?`)
+    .get(userId) as { count: number };
+  if (row.count > maximum) {
+    throw new DataArchiveValidationError(
+      `Account contains ${row.count} ${label}; the portable archive maximum is ${maximum}`
+    );
+  }
+}
+
 class DataArchiveService {
   exportUserData(userId: string): UserDataArchive {
+    // These storage readers enforce UI limits with SQL LIMIT. Check the true
+    // row counts first so an inconsistent older database is never truncated.
+    assertStoredCountWithinExportLimit(
+      'session_folders',
+      'session folders',
+      MAX_ARCHIVE_FOLDERS,
+      userId
+    );
+    assertStoredCountWithinExportLimit(
+      'notes',
+      'Notes',
+      MAX_ARCHIVE_NOTES,
+      userId
+    );
     const preferences = JSON.parse(
       JSON.stringify(preferencesService.getPreferences(userId))
     ) as Partial<UserPreferences>;
@@ -1163,17 +1448,20 @@ class DataArchiveService {
         })),
       }));
 
-    return {
+    const archive = sealArchive({
       format: DATA_ARCHIVE_FORMAT,
       version: DATA_ARCHIVE_VERSION,
       exportedAt: new Date().toISOString(),
       preferences,
       sessionFolders: storageService.getSessionFolders(userId),
       sessions: storageService.getAllSessions(userId),
+      notes: storageService.getNotes(userId),
       knowledgeCollections: storageService.getKnowledgeCollections(userId),
       documents,
       exclusions: DATA_ARCHIVE_EXCLUSIONS,
-    };
+    });
+    assertExportIsRestorable(archive);
+    return archive;
   }
 
   preflight(
@@ -1202,6 +1490,7 @@ class DataArchiveService {
         sessionFolders: normalized.archive.sessionFolders.length,
         sessions: normalized.archive.sessions.length,
         messages: messageCount,
+        notes: normalized.archive.notes.length,
         knowledgeCollections: normalized.archive.knowledgeCollections.length,
         documents: normalized.archive.documents.length,
         documentChunks: chunkCount,

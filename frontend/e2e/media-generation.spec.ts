@@ -166,3 +166,105 @@ test('Imagine exposes JSON-declared LongCat voice cloning fields', async ({
   expect(request.body).toContain('consentToStore');
   expect(request.body).toContain('wav');
 });
+
+test('video jobs can stop waiting, reopen, and resume without losing the handle', async ({
+  page,
+}) => {
+  const mockApi = await mockLibreWebUiApi(page, {
+    mediaModels: {
+      video: [
+        {
+          model: 'video-model',
+          plugin: 'video-provider',
+          config: { durations: [5], default_duration: 5 },
+        },
+      ],
+      audio: [],
+    },
+  });
+
+  await page.goto('/gallery');
+  await page
+    .locator('header')
+    .getByRole('button', { name: 'Video', exact: true })
+    .click();
+  let dialog = page.getByRole('dialog', { name: 'Generate media' });
+  const prompt = dialog.getByRole('textbox', { name: 'Prompt' });
+  await prompt.fill('A durable video job');
+  await dialog.getByRole('button', { name: 'Generate', exact: true }).click();
+  await expect.poll(() => mockApi.videoGenerationRequests.length).toBe(1);
+
+  const stopWaiting = dialog.getByRole('button', { name: 'Stop waiting' });
+  await expect(stopWaiting).toBeVisible();
+  await prompt.fill('');
+  await expect(stopWaiting).toBeEnabled();
+  await stopWaiting.click();
+  await expect(
+    dialog.getByRole('button', { name: 'Generate', exact: true })
+  ).toBeVisible();
+
+  await dialog.locator('button').first().click();
+  await expect(dialog).toBeHidden();
+  await page
+    .locator('header')
+    .getByRole('button', { name: 'Video', exact: true })
+    .click();
+  dialog = page.getByRole('dialog', { name: 'Generate media' });
+  await expect(dialog.getByText('A durable video job')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Resume' }).click();
+  await expect.poll(() => mockApi.videoResumeRequests).toEqual(['video-job-1']);
+  await expect(dialog.getByText('A durable video job')).toHaveCount(0);
+});
+
+test('provider cancellation is offered only for a cancellable saved video job', async ({
+  page,
+}) => {
+  const now = Date.now();
+  const mockApi = await mockLibreWebUiApi(page, {
+    mediaModels: {
+      video: [{ model: 'video-model', plugin: 'video-provider' }],
+      audio: [],
+    },
+    mediaVideoJobs: [
+      {
+        id: 'cancellable-job',
+        status: 'in_progress',
+        model: 'video-model',
+        pluginId: 'video-provider',
+        prompt: 'A cancellable provider render',
+        cancellable: true,
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: 'wait-only-job',
+        status: 'pending',
+        model: 'video-model',
+        pluginId: 'video-provider',
+        prompt: 'A wait-only provider render',
+        cancellable: false,
+        createdAt: now - 1,
+        updatedAt: now - 1,
+      },
+    ],
+  });
+
+  await page.goto('/gallery');
+  await page
+    .locator('header')
+    .getByRole('button', { name: 'Video', exact: true })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Generate media' });
+  const cancellableRow = dialog.getByTestId('video-job-cancellable-job');
+  const waitOnlyRow = dialog.getByTestId('video-job-wait-only-job');
+  await expect(
+    cancellableRow.getByRole('button', { name: 'Cancel job' })
+  ).toBeVisible();
+  await expect(
+    waitOnlyRow.getByRole('button', { name: 'Cancel job' })
+  ).toHaveCount(0);
+  await cancellableRow.getByRole('button', { name: 'Cancel job' }).click();
+  await expect
+    .poll(() => mockApi.videoCancelRequests)
+    .toEqual(['cancellable-job']);
+});

@@ -17,6 +17,38 @@
 
 const CURRENT_FORMAT = 'libre-webui-user-data';
 const LEGACY_FORMAT = 'libre-webui-export';
+const CURRENT_VERSION = 3;
+const MIGRATABLE_VERSIONS = new Set([2, CURRENT_VERSION]);
+
+type JsonValue =
+  null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+
+function canonicalJson(value: JsonValue): string {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(entry => canonicalJson(entry)).join(',')}]`;
+  }
+  return `{${Object.keys(value)
+    .sort()
+    .map(key => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
+    .join(',')}}`;
+}
+
+export async function computePortableArchiveDigest(
+  archive: Record<string, unknown>
+): Promise<string> {
+  const { integrity: _integrity, ...payload } = archive;
+  const jsonSafe = JSON.parse(JSON.stringify(payload)) as JsonValue;
+  const digest = await globalThis.crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(canonicalJson(jsonSafe))
+  );
+  return Array.from(new Uint8Array(digest), byte =>
+    byte.toString(16).padStart(2, '0')
+  ).join('');
+}
 
 export function parsePortableArchiveJson(
   text: string
@@ -32,7 +64,7 @@ export function parsePortableArchiveJson(
   }
   const archive = value as Record<string, unknown>;
   if (archive.format === CURRENT_FORMAT) {
-    if (archive.version !== 2) {
+    if (!MIGRATABLE_VERSIONS.has(archive.version as number)) {
       throw new Error(
         `Unsupported portable archive version ${String(archive.version)}.`
       );

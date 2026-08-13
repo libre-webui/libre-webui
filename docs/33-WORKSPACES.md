@@ -365,10 +365,18 @@ interface to the same boundary, not a way around it.
 
 Operational behavior:
 
-- **Authentication** — the WebSocket at `/ws/work-terminal` requires a valid
-  token and re-checks the administrator role against the database on every
-  connection, so a demotion takes effect immediately. The task must belong to
-  the authenticated administrator.
+- **Authentication** — the browser exchanges its normal Authorization header
+  over HTTP for a short-lived, one-use ticket bound to the Work-terminal
+  protocol and exact task. Only that ticket and the task ID appear on the
+  `/ws/work-terminal` upgrade URL. Before every shell input, Libre re-checks
+  the current account status, Work access, task existence, and task ownership.
+  Revocation closes the shell and releases its runtime lease immediately.
+- **Origin checks** — when `CORS_ORIGIN` or `BASE_URL` is configured, browser
+  upgrades must match one of those origins. Configure at least one for remote
+  deployments. Originless upgrades remain available for Electron and
+  non-browser clients, but still require the same task-bound ticket and live
+  authorization checks; use TLS, firewall, and reverse-proxy policy to control
+  those clients.
 - **Admission** — an open terminal takes a runtime lease exactly like a
   command or preview, and counts against `WORK_MAX_ACTIVE_RUNTIMES_*`.
 - **Container lifetime** — an attached terminal keeps the container running

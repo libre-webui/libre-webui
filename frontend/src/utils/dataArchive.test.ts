@@ -17,9 +17,42 @@
 
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { parsePortableArchiveJson } from './dataArchive';
+import {
+  computePortableArchiveDigest,
+  parsePortableArchiveJson,
+} from './dataArchive';
+
+test('canonical digest ignores object key order and the integrity field', async () => {
+  const first = {
+    format: 'libre-webui-user-data',
+    version: 3,
+    notes: [{ id: 'note-1', content: 'portable' }],
+    integrity: { digest: 'not-part-of-the-payload' },
+  };
+  const reordered = {
+    notes: [{ content: 'portable', id: 'note-1' }],
+    version: 3,
+    format: 'libre-webui-user-data',
+    integrity: { digest: 'different-and-still-ignored' },
+  };
+  assert.equal(
+    await computePortableArchiveDigest(first),
+    await computePortableArchiveDigest(reordered)
+  );
+  assert.notEqual(
+    await computePortableArchiveDigest(first),
+    await computePortableArchiveDigest({ ...reordered, version: 2 })
+  );
+});
 
 test('accepts the current portable archive format', () => {
+  const archive = parsePortableArchiveJson(
+    JSON.stringify({ format: 'libre-webui-user-data', version: 3 })
+  );
+  assert.equal(archive.version, 3);
+});
+
+test('accepts version 2 so the backend can migrate it with a warning', () => {
   const archive = parsePortableArchiveJson(
     JSON.stringify({ format: 'libre-webui-user-data', version: 2 })
   );
@@ -42,8 +75,8 @@ test('rejects malformed JSON, unrelated files, and future versions', () => {
   assert.throws(
     () =>
       parsePortableArchiveJson(
-        JSON.stringify({ format: 'libre-webui-user-data', version: 3 })
+        JSON.stringify({ format: 'libre-webui-user-data', version: 4 })
       ),
-    /Unsupported portable archive version 3/
+    /Unsupported portable archive version 4/
   );
 });

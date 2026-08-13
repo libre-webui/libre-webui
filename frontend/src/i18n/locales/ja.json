@@ -264,7 +264,7 @@
       "voiceInput": "音声入力",
       "voiceStop": "聞き取りを停止",
       "transcriptionSource": "音声認識ソース",
-      "browserSpeech": "デバイス上のブラウザー音声認識",
+      "browserSpeech": "ブラウザーの音声認識サービス",
       "providerTranscriptionDisclosure": "音声を録音し、文字起こしのために{{provider}}へ送信",
       "webSearchOn": "ウェブ検索オン — 返信にライブ結果を使用",
       "webSearchOff": "このメッセージについてウェブを検索"
@@ -784,7 +784,7 @@
     "data": {
       "title": "データ管理",
       "export": "データをエクスポート",
-      "exportDescription": "設定、セッション、ドキュメントを含むすべてのデータをダウンロード。",
+      "exportDescription": "設定、チャットフォルダー、セッションとメッセージ、ノート、ナレッジコレクション、抽出した文書テキストを含むポータブルアーカイブをダウンロードします。",
       "exportAll": "すべてのデータをエクスポート",
       "import": "データをインポート",
       "importDescription": "以前のエクスポートからデータをインポート。",
@@ -796,6 +796,11 @@
       "clearing": "クリア中...",
       "importOptions": "インポートオプション",
       "importOptionsDescription": "既存データの処理方法を選択",
+      "validatingArchive": "アーカイブを検証し、変更内容を計算しています…",
+      "archiveValidationFailed": "アーカイブの検証に失敗しました",
+      "preflightReport": "インポートのプレビュー",
+      "preflightIncoming": "{{folders}} フォルダー · {{sessions}} チャット · {{messages}} メッセージ · {{notes}} ノート · {{collections}} コレクション · {{documents}} 文書 · {{chunks}} チャンク",
+      "preflightRemappedIds": "別のアカウントのデータを保護するため、{{count}} 件の ID が再割り当てされます。",
       "skipDuplicates": "重複をスキップ",
       "overwrite": "既存を上書き",
       "importResults": "インポート結果",
@@ -803,15 +808,25 @@
       "imported": "インポート済み",
       "failed": "失敗",
       "sessions": "セッション",
+      "sessionFolders": "セッションフォルダー",
+      "notes": "ノート",
+      "knowledgeCollections": "ナレッジコレクション",
       "importedLabel": "インポート済み",
+      "overwrittenLabel": "上書き済み",
       "skipped": "スキップ",
+      "toCreate": "作成予定",
+      "toOverwrite": "上書き予定",
+      "toSkip": "スキップ予定",
       "documents": "ドキュメント",
+      "warnings": "警告",
+      "refreshAfterImportFailed": "データはインポートされましたが、一部の画面を更新できませんでした。すべての変更を表示するには Libre WebUI を再読み込みしてください。",
       "errors": "エラー",
       "archivedChats": {
         "title": "アーカイブ済みチャット",
         "empty": "アーカイブ済みのチャットはありません",
         "unarchive": "アーカイブ解除"
-      }
+      },
+      "archiveScopeV3": "設定、チャット、フォルダー、ノート、ナレッジコレクション、抽出した文書テキストが含まれます。アカウントとシークレット、生体情報に基づく複製音声、生成メディア、ペルソナとメモリ、Work のデータやボリュームは含まれません。"
     },
     "about": {
       "title": "概要",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "機能の構成",
       "characters": "{{count}} 文字",
+      "bytes": "{{count}} バイト",
       "images": "{{count}} 画像",
       "jobs": "{{count}} 件の動画ジョブ",
       "inputs": "{{count}} 件の入力",

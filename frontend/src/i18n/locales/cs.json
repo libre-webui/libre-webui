@@ -264,7 +264,7 @@
       "voiceInput": "Hlasový vstup",
       "voiceStop": "Zastavit poslech",
       "transcriptionSource": "Zdroj rozpoznávání řeči",
-      "browserSpeech": "Rozpoznávání řeči v prohlížeči na zařízení",
+      "browserSpeech": "Služba rozpoznávání řeči prohlížeče",
       "providerTranscriptionDisclosure": "Nahrát a odeslat zvuk službě {{provider}} k přepisu",
       "webSearchOn": "Vyhledávání zapnuto — odpovědi využívají živé výsledky",
       "webSearchOff": "Vyhledat tuto zprávu na webu"
@@ -784,7 +784,7 @@
     "data": {
       "title": "Správa dat",
       "export": "Exportovat data",
-      "exportDescription": "Stáhněte všechna svá data včetně předvoleb, relací a dokumentů.",
+      "exportDescription": "Stáhněte přenositelný archiv předvoleb, složek chatů, relací a zpráv, poznámek, znalostních kolekcí a extrahovaného textu dokumentů.",
       "exportAll": "Exportovat všechna data",
       "import": "Importovat data",
       "importDescription": "Importujte data z předchozího exportu.",
@@ -796,6 +796,11 @@
       "clearing": "Mazání...",
       "importOptions": "Možnosti importu",
       "importOptionsDescription": "Vyberte, jak zacházet s existujícími daty",
+      "validatingArchive": "Ověřování archivu a výpočet změn…",
+      "archiveValidationFailed": "Ověření archivu selhalo",
+      "preflightReport": "Náhled importu",
+      "preflightIncoming": "{{folders}} složek · {{sessions}} chatů · {{messages}} zpráv · {{notes}} poznámek · {{collections}} kolekcí · {{documents}} dokumentů · {{chunks}} úseků",
+      "preflightRemappedIds": "{{count}} ID bude přemapováno kvůli ochraně dat jiného účtu.",
       "skipDuplicates": "Přeskočit duplikáty",
       "overwrite": "Přepsat existující",
       "importResults": "Výsledky importu",
@@ -803,15 +808,25 @@
       "imported": "Importováno",
       "failed": "Selhalo",
       "sessions": "Relace",
+      "sessionFolders": "Složky relací",
+      "notes": "Poznámky",
+      "knowledgeCollections": "Znalostní kolekce",
       "importedLabel": "importováno",
+      "overwrittenLabel": "přepsáno",
       "skipped": "přeskočeno",
+      "toCreate": "k vytvoření",
+      "toOverwrite": "k přepsání",
+      "toSkip": "k přeskočení",
       "documents": "Dokumenty",
+      "warnings": "Varování",
+      "refreshAfterImportFailed": "Data byla importována, ale některá zobrazení se nepodařilo obnovit. Načtěte Libre WebUI znovu, aby se zobrazily všechny změny.",
       "errors": "Chyby",
       "archivedChats": {
         "title": "Archivované chaty",
         "empty": "Žádné archivované chaty",
         "unarchive": "Obnovit z archivu"
-      }
+      },
+      "archiveScopeV3": "Zahrnuje předvolby, chaty, složky, poznámky, znalostní kolekce a extrahovaný text dokumentů. Nezahrnuje účty a tajné údaje, biometrické klony hlasů, vygenerovaná média, persony a paměť ani data či svazky Work."
     },
     "about": {
       "title": "O aplikaci",
@@ -2064,6 +2079,7 @@
     "capabilities": {
       "title": "Mix schopností",
       "characters": "{{count}} znaků",
+      "bytes": "{{count}} bajtů",
       "images": "{{count}} obrázků",
       "jobs": "{{count}} video úloh",
       "inputs": "{{count}} vstupů",
