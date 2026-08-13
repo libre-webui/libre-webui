@@ -89,13 +89,14 @@ test('enabling Work switches the backend to the Kubernetes runtime', () => {
 
 test('the chart rejects unsafe application replicas and autoscaling', t => {
   const deployment = read('deployment.yaml');
-  assert.match(deployment, /requires replicaCount=1/);
+  assert.match(deployment, /requires replicaCount=0 or 1/);
   assert.match(deployment, /autoscaling is disabled/);
   assert.match(values, /^replicaCount: 1$/m);
   assert.match(values, /autoscaling:\n[\s\S]*?enabled: false/);
   assert.match(values, /autoscaling:\n[\s\S]*?maxReplicas: 1/);
   assert.match(values, /ENABLE_SIGNUP: ['"]false['"]/);
-  assert.equal(valuesSchema.properties.replicaCount.const, 1);
+  assert.equal(valuesSchema.properties.replicaCount.minimum, 0);
+  assert.equal(valuesSchema.properties.replicaCount.maximum, 1);
   assert.equal(
     valuesSchema.properties.autoscaling.properties.enabled.const,
     false
@@ -119,17 +120,42 @@ test('the chart rejects unsafe application replicas and autoscaling', t => {
   const rendered = execFileSync('helm', ['template', 'render-test', chartDir], {
     encoding: 'utf8',
   });
+  assert.match(rendered, /replicas: 1/);
   assert.match(rendered, /- name: ENABLE_SIGNUP\n\s+value: "false"/);
   assert.doesNotMatch(rendered, /SINGLE_USER_MODE/);
 
+  const suspended = execFileSync(
+    'helm',
+    ['template', 'render-test', chartDir, '--set', 'replicaCount=0'],
+    { encoding: 'utf8' }
+  );
+  assert.match(suspended, /replicas: 0/);
+
+  for (const unsafeReplicaCount of [-1, 2]) {
+    assert.throws(
+      () =>
+        execFileSync(
+          'helm',
+          [
+            'template',
+            'render-test',
+            chartDir,
+            '--set',
+            `replicaCount=${unsafeReplicaCount}`,
+          ],
+          { encoding: 'utf8', stdio: 'pipe' }
+        ),
+      /replicaCount|requires replicaCount=0 or 1/
+    );
+  }
   assert.throws(
     () =>
       execFileSync(
         'helm',
-        ['template', 'render-test', chartDir, '--set', 'replicaCount=2'],
+        ['template', 'render-test', chartDir, '--set', 'replicaCount=0.5'],
         { encoding: 'utf8', stdio: 'pipe' }
       ),
-    /replicaCount|requires replicaCount=1/
+    /replicaCount|integer/
   );
   assert.throws(
     () =>

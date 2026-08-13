@@ -1,5 +1,5 @@
-{{- if ne (int .Values.replicaCount) 1 }}
-{{- fail "Libre WebUI currently requires replicaCount=1 because SQLite and local application state are not safe across replicas." }}
+{{- if or (lt (int .Values.replicaCount) 0) (gt (int .Values.replicaCount) 1) }}
+{{- fail "Libre WebUI currently requires replicaCount=0 or 1 because SQLite and local application state are not safe across multiple replicas." }}
 {{- end }}
 {{- if .Values.autoscaling.enabled }}
 {{- fail "Libre WebUI autoscaling is disabled until shared database and application-state backends are supported." }}

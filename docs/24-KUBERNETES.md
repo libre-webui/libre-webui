@@ -69,12 +69,14 @@ semantic `appVersion` image. Set `image.tag` or `image.digest` explicitly only
 when you intentionally want a different image. A non-empty `image.tag` takes
 precedence over the transition digest.
 
-Libre WebUI currently requires exactly one application replica. Its SQLite
+Libre WebUI currently supports at most one application replica. Its SQLite
 database and process-local coordination are not safe behind multiple pods, so
-the chart rejects `replicaCount` values other than `1` and rejects enabling
-the HorizontalPodAutoscaler. Scale model providers and Work sandbox pods
-independently; do not bypass this guard until Libre supports shared database
-and application-state backends.
+the chart accepts `replicaCount: 0` for a deliberate suspension or
+`replicaCount: 1` for normal operation, and rejects larger values and the
+HorizontalPodAutoscaler. A zero-replica release provisions its control-plane
+resources but serves no Libre WebUI traffic. Scale model providers and Work
+sandbox pods independently; do not bypass this guard until Libre supports
+shared database and application-state backends.
 
 ## Access Locally
 

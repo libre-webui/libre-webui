@@ -3,9 +3,10 @@
   "type": "object",
   "properties": {
     "replicaCount": {
-      "description": "Libre WebUI is single-replica until shared state backends are supported.",
+      "description": "Libre WebUI may be suspended or run as one replica until shared state backends are supported.",
       "type": "integer",
-      "const": 1
+      "minimum": 0,
+      "maximum": 1
     },
     "autoscaling": {
       "type": "object",

@@ -200,10 +200,11 @@ control that wiring:
 host reports a different value. The Helm chart never mounts a node runtime
 socket. Enable its native Pod/PVC Work backend with `work.enabled=true`.
 
-Libre WebUI itself must remain at one application replica while it uses SQLite
-and process-local coordination. The Helm chart rejects a larger
-`replicaCount` and rejects enabling autoscaling; Work sandbox Pods can still be
-created independently within the configured runtime limits.
+Libre WebUI itself must remain at zero or one application replica while it
+uses SQLite and process-local coordination. The Helm chart accepts zero for a
+deliberate suspension where Libre serves no traffic, rejects larger
+`replicaCount` values and autoscaling, and still lets Work sandbox Pods scale
+independently within the configured runtime limits.
 
 Repository Compose files also accept `WEBUI_BIND_ADDRESS` (default
 `127.0.0.1`) and `WEBUI_PORT` (default `8080`). Keep the loopback default unless
