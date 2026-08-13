@@ -23,6 +23,10 @@ class LibreWebui < Formula
     bin.install_symlink libexec.glob("bin/*")
   end
 
+  def post_install
+    (var/"libre-webui").mkpath
+  end
+
   def caveats
     <<~EOS
       Libre WebUI has been installed!
@@ -56,7 +60,9 @@ class LibreWebui < Formula
     working_dir var/"libre-webui"
     log_path var/"log/libre-webui.log"
     error_log_path var/"log/libre-webui.log"
-    environment_variables PATH: std_service_path_env
+    environment_variables PATH: std_service_path_env,
+                          DATA_DIR: File.join(Dir.home, ".libre-webui"),
+                          PLATFORM_PREFLIGHT_TMP_DIR: (var/"libre-webui"/"preflight").to_s
   end
 
   test do

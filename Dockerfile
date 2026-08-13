@@ -190,6 +190,8 @@ USER nodejs
 # Backend serves both API and frontend on the same port
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV DOCKER_ENV=true
+ENV DATA_DIR=/app/backend/data
 ENV PLATFORM_PREFLIGHT_TMP_DIR=/app/backend/temp/preflight
 
 # Set Ollama URL to connect to host machine when running in container

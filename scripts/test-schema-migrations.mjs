@@ -93,6 +93,21 @@ const removeDurableJobsMigration = database => {
   `);
 };
 
+const migrationChecksum = version =>
+  migrations.SQLITE_MIGRATION_CONTRACT.find(
+    migration => migration.version === version
+  ).checksum;
+
+const markHistoricalVectorChecksum = database => {
+  database
+    .prepare(
+      `UPDATE _libre_schema_migrations
+          SET checksum = 'VECTOR_CHECKSUM_TO_FREEZE'
+        WHERE version = 2 AND name = 'platform-vector-storage'`
+    )
+    .run();
+};
+
 test('fresh SQLite state uses private filesystem permissions', t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-private-state-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -162,6 +177,10 @@ test('data and preflight paths are stable across launch working directories', t 
 
   assert.equal(
     dataDirectoryHelpers.resolveDataDirectory({ DATA_DIR: './backend/data' }),
+    path.join(repoRoot, 'backend', 'backend', 'data')
+  );
+  assert.equal(
+    dataDirectoryHelpers.resolveDataDirectory({ DATA_DIR: './data' }),
     path.join(repoRoot, 'backend', 'data')
   );
   const environmentModule = pathToFileURL(
@@ -185,10 +204,13 @@ test('data and preflight paths are stable across launch working directories', t 
     assert.equal(result.status, 0, result.stderr);
     return result.stdout;
   };
-  assert.equal(resolveFrom(repoRoot), path.join(repoRoot, 'backend', 'data'));
+  assert.equal(
+    resolveFrom(repoRoot),
+    path.join(repoRoot, 'backend', 'backend', 'data')
+  );
   assert.equal(
     resolveFrom(path.join(repoRoot, 'backend')),
-    path.join(repoRoot, 'backend', 'data')
+    path.join(repoRoot, 'backend', 'backend', 'data')
   );
   assert.throws(
     () =>
@@ -221,6 +243,21 @@ test('data and preflight paths are stable across launch working directories', t 
       path.join(defaultData, 'preflight')
     )
   );
+  assert.equal(
+    dataDirectoryHelpers.resolveDataDirectory(
+      {},
+      {
+        defaultDataDirectory: defaultData,
+        legacyDataDirectory: legacyData,
+      }
+    ),
+    legacyData,
+    'an unset source profile must preserve its sole historical store'
+  );
+  dataDirectoryHelpers.assertNoLegacyDataDirectoryConflict(
+    {},
+    { defaultDataDirectory: defaultData, legacyDataDirectory: legacyData }
+  );
   assert.throws(
     () =>
       dataDirectoryHelpers.assertNoLegacyDataDirectoryConflict(
@@ -236,6 +273,16 @@ test('data and preflight paths are stable across launch working directories', t 
     { DATA_DIR: legacyData },
     { defaultDataDirectory: defaultData, legacyDataDirectory: legacyData }
   );
+  fs.writeFileSync(path.join(defaultData, 'data.sqlite'), 'canonical');
+  assert.throws(
+    () =>
+      dataDirectoryHelpers.assertNoLegacyDataDirectoryConflict(
+        {},
+        { defaultDataDirectory: defaultData, legacyDataDirectory: legacyData }
+      ),
+    /startup will not choose or copy/i,
+    'an unset source profile must not choose between divergent stores'
+  );
 
   const historicalRelativeName = `.libre-relative-${process.pid}-${Date.now()}`;
   const historicalRelativeData = path.join(
@@ -248,13 +295,9 @@ test('data and preflight paths are stable across launch working directories', t 
   );
   fs.mkdirSync(historicalRelativeData, { recursive: true });
   fs.writeFileSync(path.join(historicalRelativeData, 'data.sqlite'), 'legacy');
-  assert.throws(
-    () =>
-      dataDirectoryHelpers.assertNoLegacyDataDirectoryConflict({
-        DATA_DIR: `./${historicalRelativeName}`,
-      }),
-    /historical process working directory.*absolute DATA_DIR/is
-  );
+  dataDirectoryHelpers.assertNoLegacyDataDirectoryConflict({
+    DATA_DIR: `./${historicalRelativeName}`,
+  });
 
   const callerWorkingDirectory = path.join(fixture, 'npx-caller');
   const callerRelativeData = path.join(callerWorkingDirectory, 'state');
@@ -729,6 +772,270 @@ test('vector schema is installed only through checksummed migration v2', t => {
   assert.equal(migrated.currentVersion, 4);
   assert.equal(migrated.status, 'compatible');
   assert.equal(migrations.inspectSQLiteSchema(database).missing.length, 0);
+});
+
+test('historical vector checksum is repaired only in the atomic live coordinator', t => {
+  const dataDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'libre-schema-vector-checksum-')
+  );
+  t.after(() => fs.rmSync(dataDir, { recursive: true, force: true }));
+  const databasePath = initializeApplicationDatabase(dataDir);
+  const database = new Database(databasePath);
+  t.after(() => database.close());
+
+  removeDurableJobsMigration(database);
+  markHistoricalVectorChecksum(database);
+  const appliedAt = database
+    .prepare(
+      'SELECT applied_at FROM _libre_schema_migrations WHERE version = 2'
+    )
+    .get().applied_at;
+  const beforeBytes = fs.readFileSync(databasePath);
+
+  const inspection = migrations.inspectSQLiteSchema(database);
+  assert.equal(inspection.status, 'migrating');
+  assert.equal(inspection.compatible, false);
+  assert.equal(
+    inspection.appliedMigrations.find(row => row.version === 2).checksumMatches,
+    false
+  );
+  assert.match(inspection.reason, /recognized historical checksum/i);
+  assert.deepEqual(migrations.preflightSQLiteMigrationLedger(database), {
+    dialect: 'sqlite',
+    status: 'migrating',
+    currentVersion: 2,
+    targetVersion: 4,
+    minimumSupportedVersion: 1,
+  });
+  assert.deepEqual(
+    fs.readFileSync(databasePath),
+    beforeBytes,
+    'read-only preflight must not repair the historical checksum'
+  );
+
+  assert.deepEqual(migrations.runSQLiteMigrationCoordinator(database), {
+    dialect: 'sqlite',
+    status: 'compatible',
+    currentVersion: 4,
+    targetVersion: 4,
+    minimumSupportedVersion: 1,
+  });
+  const repaired = database
+    .prepare(
+      `SELECT version, checksum, applied_at
+         FROM _libre_schema_migrations
+        ORDER BY version`
+    )
+    .all();
+  assert.equal(repaired.length, 4);
+  assert.equal(repaired[1].checksum, migrationChecksum(2));
+  assert.equal(repaired[1].applied_at, appliedAt);
+  assert.equal(
+    migrations
+      .inspectSQLiteSchema(database)
+      .appliedMigrations.find(row => row.version === 2).checksumMatches,
+    true
+  );
+  assert.ok(
+    migrations.SQLITE_MIGRATION_CONTRACT.every(
+      migration => migration.checksum !== 'VECTOR_CHECKSUM_TO_FREEZE'
+    )
+  );
+});
+
+test('historical vector checksum repairs under coherent later ledger rows', t => {
+  const dataDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'libre-schema-vector-checksum-current-')
+  );
+  t.after(() => fs.rmSync(dataDir, { recursive: true, force: true }));
+  const databasePath = initializeApplicationDatabase(dataDir);
+  const database = new Database(databasePath);
+  t.after(() => database.close());
+  markHistoricalVectorChecksum(database);
+  const beforeRows = database
+    .prepare(
+      `SELECT version, name, checksum, applied_at
+         FROM _libre_schema_migrations
+        ORDER BY version`
+    )
+    .all();
+  const beforeBytes = fs.readFileSync(databasePath);
+
+  assert.deepEqual(migrations.preflightSQLiteMigrationLedger(database), {
+    dialect: 'sqlite',
+    status: 'migrating',
+    currentVersion: 4,
+    targetVersion: 4,
+    minimumSupportedVersion: 1,
+  });
+  assert.deepEqual(fs.readFileSync(databasePath), beforeBytes);
+  migrations.runSQLiteMigrationCoordinator(database);
+
+  const afterRows = database
+    .prepare(
+      `SELECT version, name, checksum, applied_at
+         FROM _libre_schema_migrations
+        ORDER BY version`
+    )
+    .all();
+  assert.deepEqual(
+    afterRows,
+    beforeRows.map(row =>
+      row.version === 2 ? { ...row, checksum: migrationChecksum(2) } : row
+    )
+  );
+});
+
+test('historical vector checksum does not excuse schema or later-ledger tampering', t => {
+  const root = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'libre-schema-vector-checksum-reject-')
+  );
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const cases = [
+    {
+      name: 'altered-vector-schema',
+      mutate(database) {
+        database.exec(`
+          DROP INDEX idx_platform_vectors_scope;
+          CREATE INDEX idx_platform_vectors_scope
+            ON platform_vector_entries(namespace, owner_user_id);
+        `);
+      },
+    },
+    {
+      name: 'extra-vector-index',
+      mutate(database) {
+        database.exec(`
+          CREATE INDEX unexpected_vector_index
+            ON platform_vector_entries(id);
+        `);
+      },
+    },
+    {
+      name: 'altered-vector-check-literal',
+      mutate(database) {
+        database.exec(`
+          DROP TABLE platform_vector_acl;
+          CREATE TABLE platform_vector_acl (
+            namespace TEXT NOT NULL,
+            owner_user_id TEXT NOT NULL,
+            vector_id TEXT NOT NULL,
+            principal_type TEXT NOT NULL CHECK(
+              principal_type IN ('USER', 'group')
+            ),
+            principal_id TEXT NOT NULL,
+            PRIMARY KEY (
+              namespace,
+              owner_user_id,
+              vector_id,
+              principal_type,
+              principal_id
+            ),
+            FOREIGN KEY (namespace, owner_user_id, vector_id)
+              REFERENCES platform_vector_entries(namespace, owner_user_id, id)
+              ON DELETE CASCADE
+          );
+          CREATE INDEX idx_platform_vector_acl_principal
+            ON platform_vector_acl(
+              principal_type,
+              principal_id,
+              namespace,
+              owner_user_id,
+              vector_id
+            );
+        `);
+      },
+    },
+    {
+      name: 'tampered-later-checksum',
+      mutate(database) {
+        database
+          .prepare(
+            "UPDATE _libre_schema_migrations SET checksum = 'tampered' WHERE version = 3"
+          )
+          .run();
+      },
+    },
+    {
+      name: 'arbitrary-vector-checksum',
+      mutate(database) {
+        database
+          .prepare(
+            "UPDATE _libre_schema_migrations SET checksum = 'not-the-historical-marker' WHERE version = 2"
+          )
+          .run();
+      },
+    },
+  ];
+
+  for (const fixture of cases) {
+    const dataDir = path.join(root, fixture.name);
+    const databasePath = initializeApplicationDatabase(dataDir);
+    const database = new Database(databasePath);
+    markHistoricalVectorChecksum(database);
+    fixture.mutate(database);
+    const beforeLedger = database
+      .prepare(
+        `SELECT version, name, checksum, applied_at
+           FROM _libre_schema_migrations
+          ORDER BY version`
+      )
+      .all();
+    const beforeSchema = database
+      .prepare(
+        `SELECT type, name, tbl_name, sql
+           FROM sqlite_master
+          ORDER BY type, name`
+      )
+      .all();
+    database.close();
+    const beforeBytes = fs.readFileSync(databasePath);
+
+    const reopened = new Database(databasePath);
+    try {
+      assert.throws(
+        () => migrations.preflightSQLiteMigrationLedger(reopened),
+        /checksum|canonical/i,
+        fixture.name
+      );
+      assert.throws(
+        () => migrations.runSQLiteMigrationCoordinator(reopened),
+        /checksum|canonical/i,
+        fixture.name
+      );
+      assert.deepEqual(
+        reopened
+          .prepare(
+            `SELECT version, name, checksum, applied_at
+               FROM _libre_schema_migrations
+              ORDER BY version`
+          )
+          .all(),
+        beforeLedger
+      );
+      assert.deepEqual(
+        reopened
+          .prepare(
+            `SELECT type, name, tbl_name, sql
+               FROM sqlite_master
+              ORDER BY type, name`
+          )
+          .all(),
+        beforeSchema
+      );
+      assert.deepEqual(fs.readFileSync(databasePath), beforeBytes);
+      assert.equal(
+        reopened
+          .prepare(
+            'SELECT checksum FROM _libre_schema_migrations WHERE version = 2'
+          )
+          .get().checksum,
+        beforeLedger.find(row => row.version === 2).checksum
+      );
+    } finally {
+      reopened.close();
+    }
+  }
 });
 
 test('failed vector migration does not record v2 as applied', t => {

@@ -54,6 +54,29 @@ test('Docker runtime includes non-hoisted backend workspace dependencies', () =>
   );
 });
 
+test('bare Docker image uses externally persistent runtime paths', () => {
+  const runtimeStage = dockerfile.split(/^FROM /m).at(-1);
+  assert.match(runtimeStage, /^ENV DOCKER_ENV=true$/m);
+  assert.match(runtimeStage, /^ENV DATA_DIR=\/app\/backend\/data$/m);
+  assert.match(
+    runtimeStage,
+    /^ENV PLATFORM_PREFLIGHT_TMP_DIR=\/app\/backend\/temp\/preflight$/m
+  );
+  assert.notEqual(
+    path
+      .relative('/app/backend/data', '/app/backend/temp/preflight')
+      .split(path.sep)[0],
+    '',
+    'preflight scratch must not be the data directory'
+  );
+  assert.ok(
+    path
+      .relative('/app/backend/data', '/app/backend/temp/preflight')
+      .startsWith('..'),
+    'preflight scratch must remain outside DATA_DIR'
+  );
+});
+
 test('Compose files expose only implemented signup behavior', () => {
   for (const filename of composeFiles) {
     const compose = fs.readFileSync(path.join(repoRoot, filename), 'utf8');

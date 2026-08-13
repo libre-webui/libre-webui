@@ -80,8 +80,8 @@ export class EncryptionService {
         '❌ Failed to save ENCRYPTION_KEY to persistent storage:',
         error
       );
-      logger.warn(
-        '   Set ENCRYPTION_KEY through protected configuration before restarting.'
+      throw new Error(
+        'Unable to persist ENCRYPTION_KEY; refusing to continue with an ephemeral key'
       );
     }
   }
@@ -154,8 +154,8 @@ export class EncryptionService {
         '❌ Failed to automatically add ENCRYPTION_KEY to .env file:',
         error
       );
-      logger.warn(
-        '   Set ENCRYPTION_KEY through protected configuration before restarting.'
+      throw new Error(
+        'Unable to persist ENCRYPTION_KEY; refusing to continue with an ephemeral key'
       );
     }
   }
@@ -218,7 +218,12 @@ export class EncryptionService {
       logger.warn('⚠️  No ENCRYPTION_KEY found. Generated a new key.');
 
       // Automatically add the key to appropriate storage (Docker/npx vs dev)
-      this.addKeyToStorage(newKeyString);
+      try {
+        this.addKeyToStorage(newKeyString);
+      } catch (error) {
+        this.encryptionKey.fill(0);
+        throw error;
+      }
 
       if (process.env.DOCKER_ENV === 'true' || process.env.DATA_DIR) {
         logger.info('🔐 Generated encryption key saved to persistent storage');

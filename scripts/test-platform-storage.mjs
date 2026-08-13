@@ -16,6 +16,7 @@
  */
 
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import { once } from 'node:events';
 import fs from 'node:fs';
@@ -52,6 +53,7 @@ const {
   createStorageKeyringFromEnvironment,
   createVectorStore,
   inspectStorageKeyConfiguration,
+  provisionLegacyEncryptionKey,
 } = storageModule;
 
 const temporaryRoots = [];
@@ -1063,6 +1065,195 @@ test('storage factories support only implemented backends and require durable ke
       }),
     error => error instanceof VectorStoreError && error.code === 'unavailable'
   );
+});
+
+test('key bootstrap durably provisions one private key before stateful application import', () => {
+  const root = temporaryDirectory('libre-key-bootstrap-');
+  const dataDirectory = path.join(root, 'data');
+  const output = [];
+  const originalConsole = {
+    error: console.error,
+    info: console.info,
+    log: console.log,
+    warn: console.warn,
+  };
+  for (const method of Object.keys(originalConsole)) {
+    console[method] = (...values) => output.push(values.join(' '));
+  }
+
+  let generatedKey;
+  try {
+    generatedKey = provisionLegacyEncryptionKey({ DATA_DIR: dataDirectory });
+  } finally {
+    Object.assign(console, originalConsole);
+  }
+
+  assert.match(generatedKey, /^[0-9a-f]{64}$/);
+  const keyPath = path.join(dataDirectory, '.encryption_key');
+  assert.equal(fs.readFileSync(keyPath, 'utf8'), generatedKey);
+  if (process.platform !== 'win32') {
+    assert.equal(fs.statSync(dataDirectory).mode & 0o777, 0o700);
+    assert.equal(fs.statSync(keyPath).mode & 0o777, 0o600);
+  }
+  assert.deepEqual(fs.readdirSync(dataDirectory), ['.encryption_key']);
+  assert.equal(fs.existsSync(path.join(dataDirectory, 'data.sqlite')), false);
+  assert.equal(fs.existsSync(path.join(dataDirectory, 'plugins')), false);
+  assert.equal(fs.existsSync(path.join(dataDirectory, 'blobs')), false);
+  assert.doesNotMatch(output.join('\n'), new RegExp(generatedKey, 'i'));
+
+  const before = fs.statSync(keyPath);
+  assert.equal(
+    provisionLegacyEncryptionKey({ DATA_DIR: dataDirectory }),
+    generatedKey
+  );
+  const after = fs.statSync(keyPath);
+  assert.equal(after.mtimeMs, before.mtimeMs);
+
+  const mainSource = fs.readFileSync(
+    path.join(repoRoot, 'backend', 'src', 'main.ts'),
+    'utf8'
+  );
+  const canonicalSelection = mainSource.indexOf(
+    'process.env.DATA_DIR = dataDir'
+  );
+  const provision = mainSource.indexOf(
+    'provisionLegacyEncryptionKey(process.env)'
+  );
+  const statefulImport = mainSource.indexOf("await import('./index.js')");
+  assert.ok(canonicalSelection >= 0 && canonicalSelection < provision);
+  assert.ok(provision >= 0 && provision < statefulImport);
+});
+
+test('key bootstrap rolls back a persistence failure before creating application state', () => {
+  const root = temporaryDirectory('libre-key-persistence-failure-');
+  const dataDirectory = path.join(root, 'data');
+  const secretSentinel = 'raw-key-material-must-not-escape';
+  const originalLinkSync = fs.linkSync;
+  fs.linkSync = () => {
+    throw new Error(secretSentinel);
+  };
+  try {
+    assert.throws(
+      () => provisionLegacyEncryptionKey({ DATA_DIR: dataDirectory }),
+      error => {
+        assert.ok(error instanceof StorageEncryptionError);
+        assert.match(error.message, /durably provision/i);
+        assert.doesNotMatch(error.message, new RegExp(secretSentinel, 'i'));
+        return true;
+      }
+    );
+  } finally {
+    fs.linkSync = originalLinkSync;
+  }
+
+  assert.equal(fs.existsSync(dataDirectory), false);
+  assert.equal(fs.existsSync(path.join(dataDirectory, 'data.sqlite')), false);
+  assert.equal(fs.existsSync(path.join(dataDirectory, 'plugins')), false);
+  assert.equal(fs.existsSync(path.join(dataDirectory, 'blobs')), false);
+});
+
+test('legacy encryption service import aborts instead of retaining an unpersisted key', () => {
+  const root = temporaryDirectory('libre-legacy-key-failure-');
+  const blockedDataDirectory = path.join(root, 'not-a-directory');
+  const before = Buffer.from('path blocker');
+  fs.writeFileSync(blockedDataDirectory, before);
+  const env = {
+    ...process.env,
+    DATA_DIR: blockedDataDirectory,
+  };
+  delete env.ENCRYPTION_KEY;
+  delete env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID;
+  delete env.STORAGE_ENCRYPTION_KEYS;
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `await import(${JSON.stringify(
+        pathToFileURL(
+          path.join(
+            repoRoot,
+            'backend',
+            'dist',
+            'services',
+            'encryptionService.js'
+          )
+        ).href
+      )})`,
+    ],
+    { cwd: root, env, encoding: 'utf8', timeout: 10_000 }
+  );
+  const output = `${result.stderr}\n${result.stdout}`;
+  assert.notEqual(result.status, 0);
+  assert.match(output, /refusing to continue with an ephemeral key/i);
+  assert.doesNotMatch(output, /\b[0-9a-f]{64}\b/i);
+  assert.deepEqual(fs.readFileSync(blockedDataDirectory), before);
+  assert.deepEqual(fs.readdirSync(root), ['not-a-directory']);
+});
+
+test('key bootstrap fails closed for existing state without its original key', () => {
+  const dataDirectory = temporaryDirectory('libre-key-existing-state-');
+  const databasePath = path.join(dataDirectory, 'data.sqlite');
+  const before = Buffer.from('existing-encrypted-state');
+  fs.writeFileSync(databasePath, before, { mode: 0o600 });
+
+  assert.throws(
+    () => provisionLegacyEncryptionKey({ DATA_DIR: dataDirectory }),
+    error =>
+      error instanceof StorageEncryptionError &&
+      /requires its original encryption key/i.test(error.message)
+  );
+  assert.deepEqual(fs.readFileSync(databasePath), before);
+  assert.equal(
+    fs.existsSync(path.join(dataDirectory, '.encryption_key')),
+    false
+  );
+  assert.deepEqual(fs.readdirSync(dataDirectory), ['data.sqlite']);
+});
+
+test('storage initialization rejects relative DATA_DIR after bootstrap selection', () => {
+  const validKey = '7a'.repeat(32);
+  assert.throws(
+    () =>
+      provisionLegacyEncryptionKey({
+        DATA_DIR: './relative-data',
+        ENCRYPTION_KEY: validKey,
+      }),
+    error =>
+      error instanceof StorageEncryptionError &&
+      /DATA_DIR must be an absolute path/i.test(error.message)
+  );
+  assert.throws(
+    () =>
+      createStorageKeyringFromEnvironment({
+        DATA_DIR: './relative-data',
+        ENCRYPTION_KEY: validKey,
+      }),
+    error =>
+      error instanceof StorageEncryptionError &&
+      /DATA_DIR must be an absolute path/i.test(error.message)
+  );
+});
+
+test('invalid versioned key settings fail without provisioning local state', () => {
+  const root = temporaryDirectory('libre-invalid-key-bootstrap-');
+  const dataDirectory = path.join(root, 'data');
+  const secretSentinel = 'secret-sentinel';
+  assert.throws(
+    () =>
+      provisionLegacyEncryptionKey({
+        DATA_DIR: dataDirectory,
+        STORAGE_ENCRYPTION_ACTIVE_KEY_ID: 'active',
+        STORAGE_ENCRYPTION_KEYS: JSON.stringify({ active: secretSentinel }),
+      }),
+    error => {
+      assert.ok(error instanceof StorageEncryptionError);
+      assert.doesNotMatch(error.message, new RegExp(secretSentinel, 'i'));
+      return true;
+    }
+  );
+  assert.equal(fs.existsSync(dataDirectory), false);
 });
 
 test('storage key factory reads the persistent data key without mutating it and rejects conflicts', () => {

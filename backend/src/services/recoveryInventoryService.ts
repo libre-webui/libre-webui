@@ -1238,9 +1238,11 @@ export class RecoveryInventoryService {
     const env = options.env || process.env;
     const dataDir = options.dataDir
       ? path.resolve(options.dataDir)
-      : options.cwd && !env.DATA_DIR?.trim()
-        ? path.resolve(options.cwd, 'backend', 'data')
-        : resolveDataDirectory(env);
+      : options.databasePath
+        ? path.dirname(path.resolve(options.databasePath))
+        : options.cwd && !env.DATA_DIR?.trim()
+          ? path.resolve(options.cwd, 'backend', 'data')
+          : resolveDataDirectory(env);
     const databasePath = path.resolve(
       options.databasePath || path.join(dataDir, 'data.sqlite')
     );
@@ -1901,7 +1903,7 @@ export class RecoveryInventoryService {
       pluginLocations.backendDirectory || BACKEND_DIRECTORY;
     const projectDirectory =
       pluginLocations.projectDirectory || PROJECT_DIRECTORY;
-    const pluginsPath = resolvePluginsDirectory(env, dataDir, projectDirectory);
+    const pluginsPath = resolvePluginsDirectory(env, dataDir, backendDirectory);
     const bundledPluginsDirectory = path.resolve(
       pluginLocations.bundledDirectory || path.join(projectDirectory, 'plugins')
     );

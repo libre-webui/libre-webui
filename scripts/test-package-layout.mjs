@@ -4,6 +4,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
 import test from 'node:test';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { x as extractTarball } from 'tar';
@@ -12,6 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const requireFromTest = createRequire(import.meta.url);
 
 function packProject(outputDir) {
   try {
@@ -218,6 +220,30 @@ async function stopChild(child) {
   }
 }
 
+function makeInstallTreeReadOnly(root) {
+  if (process.platform === 'win32') return () => undefined;
+  const originalModes = [];
+  const visit = candidate => {
+    const stat = fs.lstatSync(candidate);
+    if (stat.isSymbolicLink()) return;
+    originalModes.push([candidate, stat.mode & 0o777]);
+    if (stat.isDirectory()) {
+      for (const entry of fs.readdirSync(candidate)) {
+        visit(path.join(candidate, entry));
+      }
+      fs.chmodSync(candidate, 0o555);
+    } else {
+      fs.chmodSync(candidate, 0o444);
+    }
+  };
+  visit(root);
+  return () => {
+    for (const [candidate, mode] of originalModes) {
+      fs.chmodSync(candidate, mode);
+    }
+  };
+}
+
 test('packed npm artifact resolves package metadata and frontend dist', async () => {
   await withTempPackedProject(async ({ packedRoot }) => {
     const backendEntry = path.join(packedRoot, 'backend', 'dist', 'main.js');
@@ -230,12 +256,14 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
       'utils',
       'packagePaths.js'
     );
+    const runtimePathsHelper = path.join(packedRoot, 'bin', 'runtime-paths.js');
 
     assert.ok(fs.existsSync(path.join(packedRoot, 'package.json')));
     assert.ok(fs.existsSync(backendPackageJson));
     assert.ok(fs.existsSync(backendEntry));
     assert.ok(fs.existsSync(path.join(frontendDist, 'index.html')));
     assert.ok(fs.existsSync(helperPath));
+    assert.ok(fs.existsSync(runtimePathsHelper));
     assert.ok(
       fs.existsSync(path.join(packedRoot, 'scripts', 'postinstall.js'))
     );
@@ -318,6 +346,7 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
     assert.equal(pkg.bin?.['libre-webui'], 'bin/cli.js');
     assert.equal(pkg.scripts?.postinstall, 'node scripts/postinstall.js');
     const helper = await import(pathToFileURL(helperPath).href);
+    const { resolveCliRuntimePaths } = requireFromTest(runtimePathsHelper);
     const backendEntryUrl = pathToFileURL(backendEntry).href;
 
     assert.equal(helper.resolveAppPackageRoot(backendEntryUrl), packedRoot);
@@ -330,6 +359,200 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
       ),
       path.join(packedRoot, 'plugins')
     );
+
+    const callerDirectory = path.join(packedRoot, 'caller');
+    const fakeHome = path.join(packedRoot, 'home');
+    assert.equal(fs.existsSync(callerDirectory), false);
+    assert.equal(fs.existsSync(fakeHome), false);
+    const linuxPaths = resolveCliRuntimePaths(
+      { XDG_CACHE_HOME: path.join(fakeHome, 'cache') },
+      {
+        cwd: callerDirectory,
+        homeDirectory: fakeHome,
+        platform: 'linux',
+        tempDirectory: path.join(packedRoot, 'tmp'),
+        uid: 123,
+      }
+    );
+    assert.equal(linuxPaths.dataDirectory, path.join(fakeHome, '.libre-webui'));
+    assert.equal(
+      linuxPaths.preflightDirectory,
+      path.join(fakeHome, 'cache', 'libre-webui', 'preflight')
+    );
+    assert.equal(
+      linuxPaths.pluginsDirectory,
+      path.join(fakeHome, '.libre-webui', 'plugins')
+    );
+    assert.equal(fs.existsSync(callerDirectory), false);
+    assert.equal(fs.existsSync(fakeHome), false);
+
+    const configuredPaths = resolveCliRuntimePaths(
+      {
+        DATA_DIR: './state',
+        PLUGINS_DIR: './plugins',
+        PLATFORM_PREFLIGHT_TMP_DIR: './scratch',
+      },
+      { cwd: callerDirectory, homeDirectory: fakeHome, platform: 'linux' }
+    );
+    assert.equal(
+      configuredPaths.dataDirectory,
+      path.join(callerDirectory, 'state')
+    );
+    assert.equal(
+      configuredPaths.preflightDirectory,
+      path.join(callerDirectory, 'scratch')
+    );
+    assert.equal(
+      configuredPaths.pluginsDirectory,
+      path.join(callerDirectory, 'plugins')
+    );
+    assert.equal(fs.existsSync(callerDirectory), false);
+    assert.equal(fs.existsSync(fakeHome), false);
+  });
+});
+
+test('packed CLI survives two starts and ignores unrelated caller plugins', async () => {
+  await withTempPackedProject(async ({ tempDir, packedRoot }) => {
+    linkInstalledDependencies(packedRoot);
+    const restoreInstallModes = makeInstallTreeReadOnly(packedRoot);
+    const callerDirectory = path.join(tempDir, 'cli-caller');
+    const fakeHome = path.join(tempDir, 'cli-home');
+    const xdgCache = path.join(tempDir, 'cli-cache');
+    const localAppData = path.join(tempDir, 'cli-local-app-data');
+    fs.mkdirSync(callerDirectory, { recursive: true });
+    fs.mkdirSync(fakeHome, { recursive: true });
+    const unrelatedCallerPlugin = path.join(
+      callerDirectory,
+      'plugins',
+      'unrelated.json'
+    );
+    fs.mkdirSync(path.dirname(unrelatedCallerPlugin), { recursive: true });
+    fs.writeFileSync(unrelatedCallerPlugin, '{}\n');
+    const unrelatedCallerPluginBefore = fs.readFileSync(unrelatedCallerPlugin);
+
+    const launchEnv = {
+      ...process.env,
+      HOME: fakeHome,
+      USERPROFILE: fakeHome,
+      XDG_CACHE_HOME: xdgCache,
+      LOCALAPPDATA: localAppData,
+      OPEN_BROWSER: 'false',
+      OLLAMA_BASE_URL: 'http://127.0.0.1:9',
+      JWT_SECRET: 'packed-cli-jwt-secret-packed-cli-jwt-secret',
+      SESSION_SECRET: 'packed-cli-session-secret',
+      TURNSTILE_SITE_KEY: '',
+      TURNSTILE_SECRET_KEY: '',
+      TURNSTILE_EXPECTED_HOSTNAME: '',
+      LOG_LEVEL: 'warn',
+    };
+    for (const key of [
+      'DATA_DIR',
+      'PLUGINS_DIR',
+      'PLATFORM_PREFLIGHT_TMP_DIR',
+      'ENCRYPTION_KEY',
+      'STORAGE_ENCRYPTION_KEYS',
+      'STORAGE_ENCRYPTION_ACTIVE_KEY_ID',
+    ]) {
+      delete launchEnv[key];
+    }
+
+    const cliPath = path.join(packedRoot, 'bin', 'cli.js');
+    const runningChildren = new Set();
+    const launch = async () => {
+      const portProbe = http.createServer();
+      const port = await startServer(portProbe);
+      await new Promise(resolve => portProbe.close(resolve));
+      const child = spawn(process.execPath, [cliPath, '--port', String(port)], {
+        cwd: callerDirectory,
+        env: launchEnv,
+        stdio: 'pipe',
+      });
+      runningChildren.add(child);
+      let logs = '';
+      child.stdout.on('data', chunk => {
+        logs += chunk.toString();
+      });
+      child.stderr.on('data', chunk => {
+        logs += chunk.toString();
+      });
+      try {
+        await waitForServer(`http://127.0.0.1:${port}/health/ready`, child);
+      } catch (error) {
+        throw new Error(
+          `${error instanceof Error ? error.message : String(error)}\n\nPacked CLI logs:\n${logs}`
+        );
+      }
+      return { child, port, logs: () => logs };
+    };
+
+    try {
+      const first = await launch();
+      try {
+        const signup = await signupPackedUser(
+          `http://127.0.0.1:${first.port}`,
+          'packed-cli-admin'
+        );
+        assert.equal(signup.user.username, 'packed-cli-admin');
+      } finally {
+        await stopChild(first.child);
+        runningChildren.delete(first.child);
+      }
+
+      const dataDirectory = path.join(fakeHome, '.libre-webui');
+      assert.ok(fs.existsSync(path.join(dataDirectory, 'data.sqlite')));
+      assert.ok(fs.existsSync(path.join(dataDirectory, '.encryption_key')));
+      assert.deepEqual(
+        fs.readFileSync(unrelatedCallerPlugin),
+        unrelatedCallerPluginBefore,
+        'the packaged launcher must neither import nor mutate caller plugins'
+      );
+      assert.equal(
+        fs.existsSync(path.join(dataDirectory, 'plugins', 'unrelated.json')),
+        false
+      );
+
+      const second = await launch();
+      try {
+        const login = await fetch(
+          `http://127.0.0.1:${second.port}/api/auth/login`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: 'packed-cli-admin',
+              password: 'Packed-Test-Password-123',
+            }),
+          }
+        );
+        assert.equal(login.status, 200, second.logs());
+        const payload = await login.json();
+        assert.equal(payload.data?.user?.username, 'packed-cli-admin');
+      } finally {
+        await stopChild(second.child);
+        runningChildren.delete(second.child);
+      }
+
+      const expectedPreflight =
+        process.platform === 'win32'
+          ? path.join(localAppData, 'libre-webui', 'preflight')
+          : process.platform === 'darwin'
+            ? path.join(
+                fakeHome,
+                'Library',
+                'Caches',
+                'libre-webui',
+                'preflight'
+              )
+            : path.join(xdgCache, 'libre-webui', 'preflight');
+      assert.ok(fs.existsSync(expectedPreflight));
+      assert.equal(
+        fs.existsSync(path.join(packedRoot, 'backend', 'temp')),
+        false
+      );
+    } finally {
+      for (const child of runningChildren) await stopChild(child);
+      restoreInstallModes();
+    }
   });
 });
 
@@ -910,7 +1133,8 @@ test('every external import in the packed backend is a declared dependency', asy
         if (declared.has(name)) continue;
         // Bare specifiers that are Node built-ins without the node: prefix.
         if (process.getBuiltinModule?.(name)) continue;
-        if (!missing.has(name)) missing.set(name, path.relative(repoRoot, full));
+        if (!missing.has(name))
+          missing.set(name, path.relative(repoRoot, full));
       }
     }
   };

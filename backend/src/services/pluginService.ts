@@ -86,6 +86,7 @@ import {
   PROJECT_DIRECTORY,
   resolveDataDirectory,
   resolveLegacyPluginsDirectories,
+  resolvePhysicalPathCandidate,
   resolvePluginsDirectory,
 } from '../utils/dataDirectory.js';
 import { getDatabaseSafe } from '../db.js';
@@ -337,7 +338,7 @@ export class PluginService {
       options.legacyPluginsDirectories ?? resolveLegacyPluginsDirectories();
     const activePluginDirectories = new Set(
       [this.bundledPluginsDir, this.pluginsDir, ...this.legacyPluginsDirs].map(
-        directory => path.resolve(directory)
+        directory => resolvePhysicalPathCandidate(directory)
       )
     );
     this.historicalPluginConflictDirs = options.legacyPluginsDirectories
@@ -345,7 +346,10 @@ export class PluginService {
       : resolveLegacyPluginsDirectories(process.env, {
           historicalWorkingDirectory: process.cwd(),
         }).filter(
-          directory => !activePluginDirectories.has(path.resolve(directory))
+          directory =>
+            !activePluginDirectories.has(
+              resolvePhysicalPathCandidate(directory)
+            )
         );
     this.pluginReadDirs = Array.from(
       new Set([

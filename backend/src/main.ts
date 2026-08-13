@@ -13,7 +13,10 @@ import {
   assertPlatformRuntimeConfig,
   resolvePlatformRuntimeConfig,
 } from './platform/runtimeConfig.js';
-import { inspectStorageKeyConfiguration } from './platform/storage/index.js';
+import {
+  inspectStorageKeyConfiguration,
+  provisionLegacyEncryptionKey,
+} from './platform/storage/index.js';
 import { preflightExistingSQLiteDatabase } from './persistence/index.js';
 import { verifyLegacyCiphertextIntegrity } from './services/legacyCiphertextIntegrity.js';
 import {
@@ -27,27 +30,34 @@ import path from 'node:path';
 import fs from 'node:fs';
 
 assertPlatformRuntimeConfig(resolvePlatformRuntimeConfig());
+// Preserve the raw relative-path provenance until compatibility checks have
+// run. Source launches historically resolved relative paths from backend/;
+// packaged launchers resolve caller-relative paths once and pass absolutes.
 assertNoLegacyDataDirectoryConflict();
 const dataDir = resolveDataDirectory();
-const storageKeys = inspectStorageKeyConfiguration({
-  ...process.env,
-  DATA_DIR: dataDir,
-});
 const databasePath = path.join(dataDir, 'data.sqlite');
 const preflightDirectory = resolvePreflightDirectory();
 assertPreflightDirectoryOutsideDataDirectory(dataDir, preflightDirectory);
+
+// Every stateful module consumes one absolute runtime selection. Do not let a
+// downstream service reinterpret a relative DATA_DIR using its own cwd.
+process.env.DATA_DIR = dataDir;
+process.env.PLATFORM_PREFLIGHT_TMP_DIR = preflightDirectory;
 assertExistingStateHasLegacyEncryptionKey(dataDir);
-if (storageKeys.status === 'invalid') {
+const initialStorageKeys = inspectStorageKeyConfiguration(process.env);
+if (initialStorageKeys.status === 'invalid') {
+  throw new Error('Invalid platform storage encryption configuration.');
+}
+const encryptionKeyHex = provisionLegacyEncryptionKey(process.env);
+process.env.ENCRYPTION_KEY = encryptionKeyHex;
+const storageKeys = inspectStorageKeyConfiguration(process.env);
+if (storageKeys.status !== 'configured') {
   throw new Error('Invalid platform storage encryption configuration.');
 }
 let legacyEncryptionKey: Buffer | undefined;
 try {
   if (fs.existsSync(databasePath)) {
-    const configuredKey = process.env.ENCRYPTION_KEY?.trim();
-    const keyHex = configuredKey
-      ? configuredKey
-      : fs.readFileSync(path.join(dataDir, '.encryption_key'), 'utf8').trim();
-    legacyEncryptionKey = Buffer.from(keyHex, 'hex');
+    legacyEncryptionKey = Buffer.from(encryptionKeyHex, 'hex');
   }
   preflightExistingSQLiteDatabase(databasePath, preflightDirectory, database =>
     verifyLegacyCiphertextIntegrity(

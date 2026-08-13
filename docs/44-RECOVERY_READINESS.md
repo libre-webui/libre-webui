@@ -24,7 +24,9 @@ to inspect a non-default location. A default or `--data-dir` volume inventory
 accepts only the canonical `DATA_DIR/data.sqlite` file and rejects hard-linked,
 symlinked, or non-regular database/WAL/SHM entries. An explicit `--database`
 path may be outside `DATA_DIR`, but the selected database and any companions
-must still be regular files and cannot be symlinks.
+must still be regular files and cannot be symlinks. When `--database` is used
+without `--data-dir`, recovery treats the database's parent as its data root so
+the matching key, blobs, and plugin definitions are inventoried together.
 
 The runtime also reads historical plugin definitions from the deterministic
 backend package `plugins` directory and, for a relative `PLUGINS_DIR`, its

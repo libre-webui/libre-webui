@@ -1005,6 +1005,7 @@ test('plugin model routing requires an active plugin and the current user creden
         ACTIVE_PLUGIN_TEST_KEY: undefined,
         INACTIVE_PLUGIN_TEST_KEY: undefined,
         DATA_DIR: dataDir,
+        PLUGINS_DIR: pluginsDir,
         ENCRYPTION_KEY:
           '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
       },

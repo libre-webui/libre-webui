@@ -64,14 +64,15 @@ Stop the old process or configure another port.
 
 **Backend cannot write data**
 
-The backend stores data under `DATA_DIR` when set, otherwise under `backend/data` from the project root. Make sure that directory is writable.
-
-Older workspace scripts could accidentally write to `backend/backend/data`.
-Libre now refuses to start when that legacy database exists while the selected
-path is the canonical `backend/data`. Stop Libre, back up both directories,
-then either set `DATA_DIR` to the legacy directory temporarily or migrate the
-complete directory deliberately. Libre never silently chooses, merges, or
-copies divergent databases.
+The backend stores data under `DATA_DIR` when set, otherwise under
+`backend/data`. Source launches resolve a relative `DATA_DIR` from the backend
+directory, not the shell's current directory. Thus `DATA_DIR=./data` selects
+`backend/data`, while the historically supported `DATA_DIR=./backend/data`
+selects `backend/backend/data`. Make sure the selected directory is writable.
+With `DATA_DIR` unset, Libre preserves the historical directory when it is the
+only existing store. If both locations contain data, stop Libre, back up both,
+and choose or migrate deliberately; Libre never merges or copies divergent
+databases.
 
 The health endpoints deliberately distinguish a running process from a usable
 application:

@@ -29,6 +29,13 @@ test('Homebrew templates match current release packaging', () => {
     /system "npm", "install", \*std_npm_args\(ignore_scripts: false\)/
   );
   assert.match(formula, /bin\.install_symlink libexec\.glob\("bin\/\*"\)/);
+  assert.match(formula, /DATA_DIR: File\.join\(Dir\.home, "\.libre-webui"\)/);
+  assert.match(
+    formula,
+    /PLATFORM_PREFLIGHT_TMP_DIR: \(var\/"libre-webui"\/"preflight"\)\.to_s/
+  );
+  assert.match(formula, /def post_install\s+\(var\/"libre-webui"\)\.mkpath/m);
+  assert.match(formula, /Data is stored in: ~\/\.libre-webui/);
   assert.doesNotMatch(
     formula,
     /node@20|python-setuptools|npm", "run", "build"/

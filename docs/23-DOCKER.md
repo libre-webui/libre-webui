@@ -117,6 +117,11 @@ does not cover.
 
 Libre WebUI stores backend data in `/app/backend/data` inside the container. The Compose files mount that path as a named volume.
 
+The image also uses that path by default when it is launched directly with
+`docker run`; its database preflight scratch stays separately under
+`/app/backend/temp`. Mount `/app/backend/data` whenever the container may be
+recreated.
+
 For production, set stable secrets:
 
 ```env
@@ -125,6 +130,12 @@ ENCRYPTION_KEY=replace-with-64-hex-characters
 ```
 
 Back up the data volume and encryption key together.
+
+Before removing a directly launched container created from an older image,
+confirm that `/app/backend/data/.encryption_key` exists or record the configured
+`ENCRYPTION_KEY`. Older images could write an automatically generated key only
+to the container layer; deleting that container also deletes the only key able
+to decrypt its persisted database.
 
 If you operate a custom Work-capable runtime, its task files live in separate
 Docker named volumes and are not included in the normal

@@ -20,6 +20,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const { resolveCliRuntimePaths } = require('./runtime-paths');
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -39,6 +40,10 @@ Options:
 
 Environment Variables:
   PORT                    Server port (default: 8080)
+  DATA_DIR                Persistent data directory (default: ~/.libre-webui)
+  PLUGINS_DIR             Custom plugin directory (default: DATA_DIR/plugins)
+  PLATFORM_PREFLIGHT_TMP_DIR
+                          Writable database-inspection scratch directory
   OLLAMA_BASE_URL         Ollama API URL (default: http://localhost:11434)
   OPENAI_API_KEY          OpenAI API key (optional)
   ANTHROPIC_API_KEY       Anthropic API key (optional)
@@ -105,18 +110,19 @@ if (!frontendExists) {
   process.exit(1);
 }
 
-// Set up persistent data directory in user's home
-const os = require('os');
-const dataDir = process.env.DATA_DIR
-  ? path.resolve(process.cwd(), process.env.DATA_DIR)
-  : path.join(os.homedir(), '.libre-webui');
+// Resolve packaged runtime state outside the npm cache/global installation.
+// Explicit relative paths remain relative to the caller for compatibility.
+const { dataDirectory, pluginsDirectory, preflightDirectory } =
+  resolveCliRuntimePaths(process.env);
 
 // Set production environment
 const env = {
   ...process.env,
   NODE_ENV: 'production',
   SERVE_FRONTEND: 'true',
-  DATA_DIR: dataDir,
+  DATA_DIR: dataDirectory,
+  PLUGINS_DIR: pluginsDirectory,
+  PLATFORM_PREFLIGHT_TMP_DIR: preflightDirectory,
 };
 
 const port = env.PORT || '8080';

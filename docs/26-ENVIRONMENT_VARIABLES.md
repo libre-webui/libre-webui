@@ -22,27 +22,47 @@ test-only canaries are intentionally omitted.
 
 ## Backend Server
 
-| Variable                     | Default                             | Purpose                                                                                       |
-| ---------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------- |
-| `NODE_ENV`                   | `development`                       | Runtime mode                                                                                  |
-| `PORT`                       | `3001` in dev, `8080` in production | Backend HTTP port                                                                             |
-| `TRUST_PROXY`                | unset                               | Express trust proxy setting                                                                   |
-| `CORS_ORIGIN`                | local dev origins                   | Comma-separated allowed browser origins                                                       |
-| `SERVE_FRONTEND`             | unset                               | Serve built frontend from backend when `true`                                                 |
-| `DOCKER_ENV`                 | unset                               | Enables Docker-oriented behavior when `true`                                                  |
-| `DATA_DIR`                   | `backend/data`                      | Persistent data directory                                                                     |
-| `PLATFORM_PREFLIGHT_TMP_DIR` | `backend/temp/preflight`            | Scratch space for a private DB/WAL startup inspection copy; size it for the database plus WAL |
-| `PLUGINS_DIR`                | `$DATA_DIR/plugins`                 | Writable directory for installed/customized plugins                                           |
-| `BASE_URL`                   | `http://localhost:3001`             | Base URL used for OAuth callback defaults                                                     |
-| `LOG_LEVEL`                  | `info` (`warn` in tests)            | Backend log level                                                                             |
-| `WEBUI_HOST`                 | loopback; `0.0.0.0` in Docker       | HTTP listen address                                                                           |
-| `OPEN_BROWSER`               | `true` when serving the frontend    | Set `false` to suppress automatic browser launch                                              |
+| Variable                     | Default                                                  | Purpose                                                                                       |
+| ---------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                   | `development`                                            | Runtime mode                                                                                  |
+| `PORT`                       | `3001` in dev, `8080` in production                      | Backend HTTP port                                                                             |
+| `TRUST_PROXY`                | unset                                                    | Express trust proxy setting                                                                   |
+| `CORS_ORIGIN`                | local dev origins                                        | Comma-separated allowed browser origins                                                       |
+| `SERVE_FRONTEND`             | unset                                                    | Serve built frontend from backend when `true`                                                 |
+| `DOCKER_ENV`                 | unset                                                    | Enables Docker-oriented behavior when `true`                                                  |
+| `DATA_DIR`                   | `backend/data`; `~/.libre-webui` in the packaged CLI     | Persistent data directory                                                                     |
+| `PLATFORM_PREFLIGHT_TMP_DIR` | `backend/temp/preflight`; user cache in the packaged CLI | Scratch space for a private DB/WAL startup inspection copy; size it for the database plus WAL |
+| `PLUGINS_DIR`                | `$DATA_DIR/plugins`                                      | Writable directory for installed/customized plugins                                           |
+| `BASE_URL`                   | `http://localhost:3001`                                  | Base URL used for OAuth callback defaults                                                     |
+| `LOG_LEVEL`                  | `info` (`warn` in tests)                                 | Backend log level                                                                             |
+| `WEBUI_HOST`                 | loopback; `0.0.0.0` in Docker                            | HTTP listen address                                                                           |
+| `OPEN_BROWSER`               | `true` when serving the frontend                         | Set `false` to suppress automatic browser launch                                              |
 
-The default data path is module-relative, not working-directory-relative, so
-root and backend workspace commands use the same `backend/data`. If a database
-exists at the historical accidental `backend/backend/data` path while
-`DATA_DIR` is unset, startup fails with migration guidance instead of hiding or
-copying that data.
+Source launches anchor relative `DATA_DIR`, `PLUGINS_DIR`, and
+`PLATFORM_PREFLIGHT_TMP_DIR` values at the backend directory, independent of
+the shell's working directory. With `DATA_DIR` unset—or with the fresh source
+example `DATA_DIR=./data`—root and backend workspace commands therefore use
+`backend/data`. For compatibility, an existing source configuration containing
+`DATA_DIR=./backend/data` continues to select `backend/backend/data`; change it
+only as part of a deliberate, stopped backup and migration. An unset source
+profile also keeps using `backend/backend/data` when it is the only existing
+durable store. If both locations contain state and no path is selected, startup
+fails closed instead of guessing, copying, or merging.
+
+The `npx`, global npm, and interactive Homebrew launcher instead preserve data
+under `~/.libre-webui`. An explicit relative `DATA_DIR` supplied to that
+launcher resolves from the caller's working directory and is converted to an
+absolute path before the backend starts. An explicitly configured relative
+`PLUGINS_DIR` follows the same caller-relative rule; when it is unset, writable
+plugins remain under `$DATA_DIR/plugins`. Inspection scratch defaults to a
+user-writable cache outside the data directory: `~/Library/Caches/libre-webui`
+on macOS, `%LOCALAPPDATA%\libre-webui` on Windows, or
+`${XDG_CACHE_HOME:-~/.cache}/libre-webui` on other systems. The Homebrew service
+pins the same home data directory and uses Homebrew `var/libre-webui/preflight`
+for scratch. Set `PLATFORM_PREFLIGHT_TMP_DIR` explicitly when that cache cannot
+hold the database plus its WAL. The supplied Docker and Helm deployments use
+absolute `/app/backend/data` and `/app/backend/temp/preflight` paths backed by
+separate mounts.
 
 ## Platform Foundation
 
@@ -351,13 +371,15 @@ an administrator changes that destination. Pre-upgrade unbound keys are
 accepted and bound on first use only for an exact shipped definition using its
 bundled route.
 
-Relative `PLUGINS_DIR` values resolve from the project root. For compatibility,
-Libre also reads the deterministic `backend/plugins` directory and the
-historical backend-relative location of a configured relative path. Move those
-definitions into `$DATA_DIR/plugins`; recovery reports the legacy paths as
-external state and blocks a volume-only snapshot while custom definitions
-remain there. Plugin directories and JSON definitions must be physical regular
-entries—Libre does not follow plugin symlinks.
+For source launches, relative `PLUGINS_DIR` values resolve from the backend
+directory. The packaged launcher instead converts an explicitly configured
+relative value to a caller-absolute path before starting the backend. For
+compatibility, Libre also reads the deterministic `backend/plugins` directory
+and historical locations selected by previous configurations. Move those
+definitions into `$DATA_DIR/plugins`; recovery reports legacy paths as external
+state and blocks a volume-only snapshot while custom definitions remain there.
+Plugin directories and JSON definitions must be physical regular entries—Libre
+does not follow plugin symlinks.
 
 ## Frontend
 

@@ -19,6 +19,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type Database from 'better-sqlite3';
+import { hasKeyDependentApplicationState } from '../../utils/dataDirectory.js';
 import { Aes256GcmKeyring, StorageEncryptionError } from './aesGcmKeyring.js';
 import {
   BlobStoreError,
@@ -89,6 +90,7 @@ interface ResolvedStorageKeys {
 }
 
 const MAX_PERSISTENT_KEY_FILE_BYTES = 256;
+const STORAGE_KEY_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 
 const parseHexKey = (value: unknown, description: string): Buffer => {
   if (typeof value !== 'string' || !/^[a-fA-F0-9]{64}$/.test(value)) {
@@ -103,11 +105,9 @@ const parseKeyMap = (rawValue: string): Record<string, Buffer> => {
   let value: unknown;
   try {
     value = JSON.parse(rawValue) as unknown;
-  } catch (error) {
+  } catch {
     throw new StorageEncryptionError(
-      `STORAGE_ENCRYPTION_KEYS must be a JSON object: ${
-        error instanceof Error ? error.message : 'invalid JSON'
-      }`
+      'STORAGE_ENCRYPTION_KEYS must be a valid JSON object'
     );
   }
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -122,27 +122,45 @@ const parseKeyMap = (rawValue: string): Record<string, Buffer> => {
       'STORAGE_ENCRYPTION_KEYS must contain 1-32 keys'
     );
   }
-  return Object.fromEntries(
-    entries.map(([keyId, key]) => [
-      keyId,
-      parseHexKey(key, `Storage key ${keyId}`),
-    ])
-  );
+  const keys = Object.create(null) as Record<string, Buffer>;
+  try {
+    for (const [keyId, key] of entries) {
+      if (!STORAGE_KEY_ID_PATTERN.test(keyId)) {
+        throw new StorageEncryptionError(
+          'STORAGE_ENCRYPTION_KEYS contains an invalid key ID'
+        );
+      }
+      keys[keyId] = parseHexKey(key, 'Storage key material');
+    }
+    return keys;
+  } catch (error) {
+    for (const key of Object.values(keys)) key.fill(0);
+    throw error;
+  }
 };
 
 const sameKey = (left: Buffer, right: Buffer): boolean =>
   left.length === right.length && crypto.timingSafeEqual(left, right);
 
+const clearKeys = (keys: Readonly<Record<string, Buffer>>): void => {
+  for (const key of Object.values(keys)) key.fill(0);
+};
+
 const persistentKeyPath = (
   env: StorageKeyringEnvironment
 ): string | undefined => {
-  const dataDirectory = env.DATA_DIR?.trim();
-  if (!dataDirectory) return undefined;
-  try {
-    return path.join(path.resolve(dataDirectory), '.encryption_key');
-  } catch {
-    throw new StorageEncryptionError('Invalid DATA_DIR for storage key');
+  const rawDataDirectory = env.DATA_DIR;
+  if (rawDataDirectory === undefined || rawDataDirectory === '')
+    return undefined;
+  if (
+    rawDataDirectory.trim() !== rawDataDirectory ||
+    !path.isAbsolute(rawDataDirectory)
+  ) {
+    throw new StorageEncryptionError(
+      'DATA_DIR must be an absolute path before storage initialization'
+    );
   }
+  return path.join(path.normalize(rawDataDirectory), '.encryption_key');
 };
 
 /**
@@ -158,6 +176,7 @@ const readPersistentStorageKey = (
 
   const noFollow = fs.constants.O_NOFOLLOW ?? 0;
   let descriptor: number;
+  let content: Buffer | undefined;
   try {
     descriptor = fs.openSync(keyPath, fs.constants.O_RDONLY | noFollow);
   } catch (error) {
@@ -196,7 +215,7 @@ const readPersistentStorageKey = (
       );
     }
 
-    const content = Buffer.alloc(MAX_PERSISTENT_KEY_FILE_BYTES + 1);
+    content = Buffer.alloc(MAX_PERSISTENT_KEY_FILE_BYTES + 1);
     const bytesRead = fs.readSync(descriptor, content, 0, content.length, 0);
     const after = fs.fstatSync(descriptor);
     const namedAfter = fs.lstatSync(keyPath);
@@ -224,7 +243,168 @@ const readPersistentStorageKey = (
       'Unable to safely read the persistent storage encryption key'
     );
   } finally {
+    content?.fill(0);
     fs.closeSync(descriptor);
+  }
+};
+
+const syncDirectory = (directory: string): void => {
+  // Windows does not expose a portable directory-fsync operation through
+  // Node. The key file itself is still fsynced before atomic publication.
+  if (process.platform === 'win32') return;
+  let descriptor: number | undefined;
+  try {
+    descriptor = fs.openSync(directory, fs.constants.O_RDONLY);
+    fs.fsyncSync(descriptor);
+  } finally {
+    if (descriptor !== undefined) fs.closeSync(descriptor);
+  }
+};
+
+/**
+ * Select the legacy application encryption key before stateful modules load.
+ * A fresh installation receives one durably published key; an existing store
+ * without its original key always fails closed. The returned value is suitable
+ * for assigning to ENCRYPTION_KEY and is never logged by this helper.
+ */
+export const provisionLegacyEncryptionKey = (
+  env: StorageKeyringEnvironment = process.env
+): string => {
+  const environmentValue = env.ENCRYPTION_KEY;
+  if (environmentValue !== undefined && environmentValue !== '') {
+    if (environmentValue.trim() !== environmentValue) {
+      throw new StorageEncryptionError(
+        'ENCRYPTION_KEY must not contain leading or trailing whitespace'
+      );
+    }
+  }
+
+  // Resolve and validate every configured key source before creating a data
+  // directory or publishing a key. In particular, malformed versioned-key
+  // settings must fail without leaving behind state from a rejected launch.
+  const resolvedKeys = resolveStorageKeys(env);
+  if (resolvedKeys) {
+    const legacyKey = resolvedKeys.keys.legacy;
+    if (!legacyKey) {
+      clearKeys(resolvedKeys.keys);
+      throw new StorageEncryptionError(
+        'Storage encryption configuration must retain the legacy key'
+      );
+    }
+    try {
+      return legacyKey.toString('hex');
+    } finally {
+      clearKeys(resolvedKeys.keys);
+    }
+  }
+
+  const keyPath = persistentKeyPath(env);
+  if (!keyPath) {
+    throw new StorageEncryptionError(
+      'DATA_DIR must be selected before provisioning the encryption key'
+    );
+  }
+
+  const dataDirectory = path.dirname(keyPath);
+  if (hasKeyDependentApplicationState(dataDirectory)) {
+    throw new StorageEncryptionError(
+      'Existing encrypted application state requires its original encryption key'
+    );
+  }
+
+  const dataDirectoryExisted = fs.existsSync(dataDirectory);
+  let temporaryPath: string | undefined;
+  let published = false;
+  const generatedKey = crypto.randomBytes(32);
+  try {
+    fs.mkdirSync(dataDirectory, { recursive: true, mode: 0o700 });
+    const directoryStat = fs.lstatSync(dataDirectory);
+    if (!directoryStat.isDirectory() || directoryStat.isSymbolicLink()) {
+      throw new StorageEncryptionError(
+        'DATA_DIR must be a physical directory before key provisioning'
+      );
+    }
+    if (process.platform !== 'win32') fs.chmodSync(dataDirectory, 0o700);
+
+    temporaryPath = path.join(
+      dataDirectory,
+      `.encryption_key.${process.pid}.${crypto.randomUUID()}.tmp`
+    );
+    const descriptor = fs.openSync(
+      temporaryPath,
+      fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL,
+      0o600
+    );
+    try {
+      if (process.platform !== 'win32') fs.fchmodSync(descriptor, 0o600);
+      const serialized = Buffer.from(generatedKey.toString('hex'), 'utf8');
+      try {
+        let offset = 0;
+        while (offset < serialized.length) {
+          const bytesWritten = fs.writeSync(
+            descriptor,
+            serialized,
+            offset,
+            serialized.length - offset
+          );
+          if (bytesWritten <= 0) {
+            throw new StorageEncryptionError(
+              'Unable to completely write the persistent encryption key'
+            );
+          }
+          offset += bytesWritten;
+        }
+        fs.fsyncSync(descriptor);
+      } finally {
+        serialized.fill(0);
+      }
+    } finally {
+      fs.closeSync(descriptor);
+    }
+
+    // Hard-link publication is an atomic no-overwrite operation. Renaming a
+    // staging file could silently replace a key created by another process.
+    fs.linkSync(temporaryPath, keyPath);
+    published = true;
+    fs.unlinkSync(temporaryPath);
+    temporaryPath = undefined;
+    syncDirectory(dataDirectory);
+
+    const verified = readPersistentStorageKey(env);
+    if (!verified || !sameKey(generatedKey, verified)) {
+      verified?.fill(0);
+      throw new StorageEncryptionError(
+        'The persistent encryption key could not be verified after publication'
+      );
+    }
+    verified.fill(0);
+    return generatedKey.toString('hex');
+  } catch (error) {
+    if (temporaryPath) {
+      try {
+        fs.unlinkSync(temporaryPath);
+      } catch {
+        // Preserve the original failure; a private orphan is safer than
+        // continuing with an unpersisted key.
+      }
+    }
+    // Once the canonical name has been published, never remove it during
+    // rollback. Another process may already have selected that exact key; its
+    // removal could make subsequently encrypted state unrecoverable. Startup
+    // still fails closed, and the next launch revalidates the published file.
+    if (!dataDirectoryExisted && !published) {
+      try {
+        fs.rmdirSync(dataDirectory);
+      } catch {
+        // Parent cleanup is best effort and never permits startup to continue.
+      }
+    }
+    if (error instanceof StorageEncryptionError) throw error;
+    throw new StorageEncryptionError(
+      'Unable to durably provision the application encryption key'
+    );
+  } finally {
+    generatedKey.fill(0);
   }
 };
 
@@ -234,63 +414,93 @@ const resolveStorageKeys = (
   const rawKeyMap = env.STORAGE_ENCRYPTION_KEYS?.trim();
   const requestedActiveKeyId = env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID?.trim();
   const rawEnvironmentKey = env.ENCRYPTION_KEY?.trim();
-  const environmentKey = rawEnvironmentKey
+  let environmentKey = rawEnvironmentKey
     ? parseHexKey(rawEnvironmentKey, 'ENCRYPTION_KEY')
     : undefined;
-  const persistentKey = readPersistentStorageKey(env);
+  let persistentKey: Buffer | undefined;
+  let versionedKeys: Record<string, Buffer> | undefined;
+  try {
+    persistentKey = readPersistentStorageKey(env);
 
-  if (
-    environmentKey &&
-    persistentKey &&
-    !sameKey(environmentKey, persistentKey)
-  ) {
-    throw new StorageEncryptionError(
-      'ENCRYPTION_KEY differs from the persistent storage encryption key'
-    );
-  }
-  const legacyKey = environmentKey ?? persistentKey;
-
-  if (rawKeyMap || requestedActiveKeyId) {
-    if (!rawKeyMap || !requestedActiveKeyId) {
+    if (
+      environmentKey &&
+      persistentKey &&
+      !sameKey(environmentKey, persistentKey)
+    ) {
       throw new StorageEncryptionError(
-        'Versioned storage keys require a key map and active key ID'
+        'ENCRYPTION_KEY differs from the persistent storage encryption key'
       );
     }
-    const keys = parseKeyMap(rawKeyMap);
-    // Constructing validates key IDs and proves that the active ID exists.
-    new Aes256GcmKeyring(requestedActiveKeyId, keys);
-    if (!legacyKey) {
-      throw new StorageEncryptionError(
-        'Versioned storage keys currently require a stable ENCRYPTION_KEY or DATA_DIR/.encryption_key legacy key'
-      );
-    }
-    if (!keys.legacy || !sameKey(keys.legacy, legacyKey)) {
-      throw new StorageEncryptionError(
-        'Versioned storage keys must retain the configured legacy key as key ID legacy'
-      );
-    }
-    return {
-      source: 'versioned-keyring',
-      activeKeyId: requestedActiveKeyId,
-      keys,
-    };
-  }
+    const legacyKey = environmentKey ?? persistentKey;
 
-  if (environmentKey) {
-    return {
-      source: 'legacy-encryption-key',
-      activeKeyId: 'legacy',
-      keys: { legacy: environmentKey },
-    };
+    if (rawKeyMap || requestedActiveKeyId) {
+      if (!rawKeyMap || !requestedActiveKeyId) {
+        throw new StorageEncryptionError(
+          'Versioned storage keys require a key map and active key ID'
+        );
+      }
+      versionedKeys = parseKeyMap(rawKeyMap);
+      if (
+        !STORAGE_KEY_ID_PATTERN.test(requestedActiveKeyId) ||
+        !Object.prototype.hasOwnProperty.call(
+          versionedKeys,
+          requestedActiveKeyId
+        )
+      ) {
+        throw new StorageEncryptionError(
+          'The active storage key ID is invalid or unavailable'
+        );
+      }
+      if (!legacyKey) {
+        throw new StorageEncryptionError(
+          'Versioned storage keys currently require a stable ENCRYPTION_KEY or DATA_DIR/.encryption_key legacy key'
+        );
+      }
+      if (!versionedKeys.legacy || !sameKey(versionedKeys.legacy, legacyKey)) {
+        throw new StorageEncryptionError(
+          'Versioned storage keys must retain the configured legacy key as key ID legacy'
+        );
+      }
+      environmentKey?.fill(0);
+      environmentKey = undefined;
+      persistentKey?.fill(0);
+      persistentKey = undefined;
+      const keys = versionedKeys;
+      versionedKeys = undefined;
+      return {
+        source: 'versioned-keyring',
+        activeKeyId: requestedActiveKeyId,
+        keys,
+      };
+    }
+
+    if (environmentKey) {
+      persistentKey?.fill(0);
+      persistentKey = undefined;
+      const key = environmentKey;
+      environmentKey = undefined;
+      return {
+        source: 'legacy-encryption-key',
+        activeKeyId: 'legacy',
+        keys: { legacy: key },
+      };
+    }
+    if (persistentKey) {
+      const key = persistentKey;
+      persistentKey = undefined;
+      return {
+        source: 'persistent-key-file',
+        activeKeyId: 'legacy',
+        keys: { legacy: key },
+      };
+    }
+    return undefined;
+  } catch (error) {
+    environmentKey?.fill(0);
+    persistentKey?.fill(0);
+    if (versionedKeys) clearKeys(versionedKeys);
+    throw error;
   }
-  if (persistentKey) {
-    return {
-      source: 'persistent-key-file',
-      activeKeyId: 'legacy',
-      keys: { legacy: persistentKey },
-    };
-  }
-  return undefined;
 };
 
 const fingerprintKeys = (
@@ -316,19 +526,24 @@ export const inspectStorageKeyConfiguration = (
 ): StorageKeyConfigurationInspection => {
   try {
     const resolved = resolveStorageKeys(env);
-    return resolved
-      ? {
-          status: 'configured',
-          source: resolved.source,
-          activeKeyId: resolved.activeKeyId,
-          keyFingerprints: fingerprintKeys(resolved.keys),
-        }
-      : {
-          status: 'missing',
-          source: 'none',
-          activeKeyId: null,
-          keyFingerprints: [],
-        };
+    if (!resolved) {
+      return {
+        status: 'missing',
+        source: 'none',
+        activeKeyId: null,
+        keyFingerprints: [],
+      };
+    }
+    try {
+      return {
+        status: 'configured',
+        source: resolved.source,
+        activeKeyId: resolved.activeKeyId,
+        keyFingerprints: fingerprintKeys(resolved.keys),
+      };
+    } finally {
+      clearKeys(resolved.keys);
+    }
   } catch {
     const source: StorageKeyConfigurationSource =
       env.STORAGE_ENCRYPTION_KEYS?.trim() ||
@@ -362,7 +577,11 @@ export const createStorageKeyringFromEnvironment = (
       'Storage encryption requires STORAGE_ENCRYPTION_KEYS, ENCRYPTION_KEY, or DATA_DIR/.encryption_key'
     );
   }
-  return new Aes256GcmKeyring(resolved.activeKeyId, resolved.keys);
+  try {
+    return new Aes256GcmKeyring(resolved.activeKeyId, resolved.keys);
+  } finally {
+    clearKeys(resolved.keys);
+  }
 };
 
 export const createBlobStore = (

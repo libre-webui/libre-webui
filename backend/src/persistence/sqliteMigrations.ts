@@ -688,6 +688,11 @@ interface SQLiteMigration {
   apply(database: Database.Database): void;
 }
 
+interface AppliedMigrationValidation {
+  currentVersion: number;
+  legacyPlatformVectorChecksumRepairRequired: boolean;
+}
+
 const addColumnIfMissing = (
   database: Database.Database,
   table: string,
@@ -1083,6 +1088,111 @@ const normalizeSql = (sql: string): string =>
     .replace(/\s*([(),>])\s*/g, '$1')
     .trim();
 
+const normalizeSchemaObjectSql = (sql: string): string =>
+  sql
+    .trim()
+    .replace(/^CREATE\s+(TABLE|INDEX)\s+IF\s+NOT\s+EXISTS\s+/, 'CREATE $1 ')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([(),>])\s*/g, '$1');
+
+interface CanonicalSchemaObject {
+  type: 'table' | 'index';
+  name: string;
+  table: string;
+  sql: string;
+}
+
+const CANONICAL_PLATFORM_VECTOR_SCHEMA_OBJECTS: readonly CanonicalSchemaObject[] =
+  PLATFORM_VECTOR_SCHEMA_SQL.split(';')
+    .map(statement => statement.trim())
+    .filter(Boolean)
+    .map(statement => {
+      const declaration =
+        /^CREATE\s+(TABLE|INDEX)\s+IF\s+NOT\s+EXISTS\s+([A-Za-z0-9_]+)/i.exec(
+          statement
+        );
+      if (!declaration) {
+        throw new Error('Invalid canonical platform vector schema statement');
+      }
+      const type = declaration[1]?.toLowerCase() as 'table' | 'index';
+      const name = declaration[2] as string;
+      const indexTarget =
+        type === 'index'
+          ? /\bON\s+([A-Za-z0-9_]+)/i.exec(statement)?.[1]
+          : undefined;
+      if (type === 'index' && !indexTarget) {
+        throw new Error('Invalid canonical platform vector index statement');
+      }
+      return Object.freeze({
+        type,
+        name,
+        table: indexTarget ?? name,
+        sql: normalizeSchemaObjectSql(statement),
+      });
+    });
+
+/**
+ * Compare migration v2's complete declared schema identity, not only its
+ * columns. This covers column definitions, keys, foreign keys, checks, and
+ * every explicit index while rejecting additional indexes or triggers on the
+ * migration-owned tables.
+ */
+const collectPlatformVectorSchemaIdentityMismatches = (
+  database: Database.Database
+): string[] => {
+  const expected = new Map(
+    CANONICAL_PLATFORM_VECTOR_SCHEMA_OBJECTS.map(item => [item.name, item])
+  );
+  const ownedTables = new Set(
+    CANONICAL_PLATFORM_VECTOR_SCHEMA_OBJECTS.filter(
+      item => item.type === 'table'
+    ).map(item => item.name)
+  );
+  const actual = (
+    database
+      .prepare(
+        `SELECT type, name, tbl_name, sql
+           FROM sqlite_master
+          WHERE sql IS NOT NULL
+          ORDER BY type, name`
+      )
+      .all() as Array<{
+      type: string;
+      name: string;
+      tbl_name: string;
+      sql: string;
+    }>
+  ).filter(
+    item =>
+      expected.has(item.name) ||
+      (ownedTables.has(item.tbl_name) &&
+        (item.type === 'index' || item.type === 'trigger'))
+  );
+  const actualByName = new Map(actual.map(item => [item.name, item]));
+  const mismatches: string[] = [];
+
+  for (const item of expected.values()) {
+    const observed = actualByName.get(item.name);
+    if (!observed) {
+      mismatches.push(`${item.name} is missing`);
+      continue;
+    }
+    if (
+      observed.type !== item.type ||
+      observed.tbl_name !== item.table ||
+      normalizeSchemaObjectSql(observed.sql) !== item.sql
+    ) {
+      mismatches.push(`${item.name} does not match its canonical definition`);
+    }
+  }
+  for (const item of actual) {
+    if (!expected.has(item.name)) {
+      mismatches.push(`${item.name} is not part of migration v2`);
+    }
+  }
+  return mismatches;
+};
+
 const sameColumns = (
   actual: readonly string[],
   expected: readonly string[]
@@ -1384,6 +1494,7 @@ const BASELINE_MIGRATION_CHECKSUM =
   '6027d48757e31a6d2a65819c46a5b641bfd9a8bde50628757e2d682ec3e320bf';
 const PLATFORM_VECTOR_MIGRATION_CHECKSUM =
   '633f4d535c207fb212764f4fddf43536678a3f02e8ccad52628b7223d17b00d5';
+const LEGACY_PLATFORM_VECTOR_MIGRATION_CHECKSUM = 'VECTOR_CHECKSUM_TO_FREEZE';
 const DURABLE_JOBS_EVENTS_MIGRATION_CHECKSUM =
   'dbc2cfa903c0ab173acc2e29f9aa576b7ba744816fb819492271c39a4fbd23de';
 const IDENTITY_EMAIL_LOOKUP_MIGRATION_CHECKSUM =
@@ -1479,9 +1590,11 @@ const readAppliedMigrations = (
     .all() as AppliedMigrationRow[];
 
 const validateAppliedMigrations = (
-  applied: readonly AppliedMigrationRow[]
-): number => {
+  applied: readonly AppliedMigrationRow[],
+  options: { allowLegacyPlatformVectorChecksum?: boolean } = {}
+): AppliedMigrationValidation => {
   const currentVersion = applied[applied.length - 1]?.version ?? 0;
+  let legacyPlatformVectorChecksumRepairRequired = false;
   if (currentVersion > targetVersion) {
     throw new Error(
       `Database schema version ${currentVersion} is newer than supported version ${targetVersion}`
@@ -1504,12 +1617,43 @@ const validateAppliedMigrations = (
       );
     }
     if (row.checksum !== expected.checksum) {
+      if (
+        options.allowLegacyPlatformVectorChecksum === true &&
+        row.version === 2 &&
+        row.name === 'platform-vector-storage' &&
+        row.checksum === LEGACY_PLATFORM_VECTOR_MIGRATION_CHECKSUM
+      ) {
+        legacyPlatformVectorChecksumRepairRequired = true;
+        continue;
+      }
       throw new Error(
         `Database migration ${row.version} checksum mismatch for ${row.name}`
       );
     }
   }
-  return currentVersion;
+  return {
+    currentVersion,
+    legacyPlatformVectorChecksumRepairRequired,
+  };
+};
+
+const validateAppliedMigrationsForLiveRepair = (
+  database: Database.Database,
+  applied: readonly AppliedMigrationRow[]
+): AppliedMigrationValidation => {
+  const validation = validateAppliedMigrations(applied, {
+    allowLegacyPlatformVectorChecksum: true,
+  });
+  if (validation.legacyPlatformVectorChecksumRepairRequired) {
+    const mismatches = collectPlatformVectorSchemaIdentityMismatches(database);
+    if (mismatches.length > 0) {
+      throw new Error(
+        'Database migration 2 legacy checksum cannot be repaired because ' +
+          `the platform vector schema is not canonical: ${mismatches.join(', ')}`
+      );
+    }
+  }
+  return validation;
 };
 
 /**
@@ -1522,7 +1666,7 @@ export function assertPlatformVectorMigrationReady(
   if (!tableExists(database, MIGRATION_TABLE)) {
     throw new Error('The SQLite migration ledger is missing');
   }
-  const currentVersion = validateAppliedMigrations(
+  const { currentVersion } = validateAppliedMigrations(
     readAppliedMigrations(database)
   );
   if (currentVersion < 2) {
@@ -1545,7 +1689,7 @@ export function assertDurableJobMigrationReady(
   if (!tableExists(database, MIGRATION_TABLE)) {
     throw new Error('The SQLite migration ledger is missing');
   }
-  const currentVersion = validateAppliedMigrations(
+  const { currentVersion } = validateAppliedMigrations(
     readAppliedMigrations(database)
   );
   if (currentVersion < 3) {
@@ -1644,7 +1788,28 @@ export function inspectSQLiteSchema(
       (row, index) => row.version !== index + 1 || !row.checksumMatches
     );
     if (invalid) {
-      reason = `Database migration ${invalid.version} ledger entry does not match the application migration`;
+      try {
+        const validation = validateAppliedMigrationsForLiveRepair(
+          database,
+          applied
+        );
+        const requiredAtCurrentVersion = collectMissingSchemaAtVersion(
+          database,
+          validation.currentVersion
+        );
+        if (
+          validation.legacyPlatformVectorChecksumRepairRequired &&
+          requiredAtCurrentVersion.length === 0
+        ) {
+          reason =
+            'Database migration 2 uses a recognized historical checksum and requires canonical repair';
+          canMigrate = true;
+        } else {
+          reason = `Database migration ${invalid.version} ledger entry does not match the application migration`;
+        }
+      } catch {
+        reason = `Database migration ${invalid.version} ledger entry does not match the application migration`;
+      }
     } else if (currentVersion < targetVersion) {
       const requiredAtCurrentVersion = collectMissingSchemaAtVersion(
         database,
@@ -1744,7 +1909,8 @@ export function preflightSQLiteMigrationLedger(
   const applied = readAppliedMigrations(database);
   const observedVersion = applied[applied.length - 1]?.version ?? 0;
   try {
-    const currentVersion = validateAppliedMigrations(applied);
+    const { currentVersion, legacyPlatformVectorChecksumRepairRequired } =
+      validateAppliedMigrationsForLiveRepair(database, applied);
     const missing = collectMissingSchemaAtVersion(database, currentVersion);
     if (missing.length > 0) {
       throw new Error(
@@ -1756,7 +1922,11 @@ export function preflightSQLiteMigrationLedger(
     }
     compatibilityState = {
       dialect: 'sqlite',
-      status: currentVersion === targetVersion ? 'compatible' : 'migrating',
+      status:
+        currentVersion === targetVersion &&
+        !legacyPlatformVectorChecksumRepairRequired
+          ? 'compatible'
+          : 'migrating',
       currentVersion,
       targetVersion,
       minimumSupportedVersion,
@@ -1831,7 +2001,80 @@ export function runSQLiteMigrationCoordinator(
 
     const applied = readAppliedMigrations(database);
     currentVersion = applied[applied.length - 1]?.version ?? 0;
-    currentVersion = validateAppliedMigrations(applied);
+    const validation = validateAppliedMigrationsForLiveRepair(
+      database,
+      applied
+    );
+    currentVersion = validation.currentVersion;
+    const missingAtCurrentVersion = collectMissingSchemaAtVersion(
+      database,
+      currentVersion
+    );
+    if (missingAtCurrentVersion.length > 0) {
+      throw new Error(
+        `SQLite schema is incompatible at migration version ${currentVersion}; ` +
+          `missing ${missingAtCurrentVersion.slice(0, 20).join(', ')}${
+            missingAtCurrentVersion.length > 20
+              ? ` and ${missingAtCurrentVersion.length - 20} more`
+              : ''
+          }`
+      );
+    }
+    if (validation.legacyPlatformVectorChecksumRepairRequired) {
+      database.transaction(() => {
+        const repairValidation = validateAppliedMigrationsForLiveRepair(
+          database,
+          readAppliedMigrations(database)
+        );
+        if (
+          !repairValidation.legacyPlatformVectorChecksumRepairRequired ||
+          repairValidation.currentVersion !== currentVersion
+        ) {
+          throw new Error(
+            'Database migration ledger changed during legacy checksum repair'
+          );
+        }
+        const repairMissing = collectMissingSchemaAtVersion(
+          database,
+          repairValidation.currentVersion
+        );
+        if (repairMissing.length > 0) {
+          throw new Error(
+            `SQLite schema is incompatible at migration version ${repairValidation.currentVersion}; ` +
+              `missing ${repairMissing.slice(0, 20).join(', ')}${
+                repairMissing.length > 20
+                  ? ` and ${repairMissing.length - 20} more`
+                  : ''
+              }`
+          );
+        }
+        const result = database
+          .prepare(
+            `UPDATE ${MIGRATION_TABLE}
+                SET checksum = ?
+              WHERE version = 2
+                AND name = 'platform-vector-storage'
+                AND checksum = ?`
+          )
+          .run(
+            PLATFORM_VECTOR_MIGRATION_CHECKSUM,
+            LEGACY_PLATFORM_VECTOR_MIGRATION_CHECKSUM
+          );
+        if (result.changes !== 1) {
+          throw new Error(
+            'Database migration 2 changed during legacy checksum repair'
+          );
+        }
+        const repairedValidation = validateAppliedMigrations(
+          readAppliedMigrations(database)
+        );
+        if (repairedValidation.currentVersion !== currentVersion) {
+          throw new Error(
+            'Database migration ledger changed during legacy checksum repair'
+          );
+        }
+      })();
+    }
     compatibilityState = {
       ...compatibilityState,
       currentVersion,

@@ -28,24 +28,58 @@ export const LEGACY_NESTED_DATA_DIRECTORY = path.join(
 );
 export const LEGACY_PLUGINS_DIRECTORY = path.join(BACKEND_DIRECTORY, 'plugins');
 
+const configuredPath = (
+  value: string | undefined,
+  variableName: string
+): string | undefined => {
+  if (value === undefined || value === '') return undefined;
+  if (value.trim() !== value) {
+    throw new Error(
+      `${variableName} must not contain leading or trailing whitespace.`
+    );
+  }
+  return value;
+};
+
 export const resolveDataDirectory = (
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  locations: {
+    backendDirectory?: string;
+    defaultDataDirectory?: string;
+    legacyDataDirectory?: string;
+  } = {}
 ): string => {
-  const configured = env.DATA_DIR?.trim();
-  return configured
-    ? path.resolve(PROJECT_DIRECTORY, configured)
-    : DEFAULT_DATA_DIRECTORY;
+  const configured = configuredPath(env.DATA_DIR, 'DATA_DIR');
+  const backendDirectory = locations.backendDirectory || BACKEND_DIRECTORY;
+  if (configured) return path.resolve(backendDirectory, configured);
+
+  const defaultDataDirectory =
+    locations.defaultDataDirectory || DEFAULT_DATA_DIRECTORY;
+  const legacyDataDirectory =
+    locations.legacyDataDirectory || LEGACY_NESTED_DATA_DIRECTORY;
+  // Before runtime paths were centralized, an unset DATA_DIR was resolved as
+  // process.cwd()/backend/data. Source scripts run from backend/, so existing
+  // installations landed in backend/backend/data. Preserve that location only
+  // when it is the sole durable store; a dual-store checkout needs an explicit
+  // operator choice and is rejected by the compatibility guard below.
+  if (
+    hasKeyDependentApplicationState(legacyDataDirectory) &&
+    !hasKeyDependentApplicationState(defaultDataDirectory)
+  ) {
+    return path.resolve(legacyDataDirectory);
+  }
+  return path.resolve(defaultDataDirectory);
 };
 
 /** Keep writable plugin definitions inside the backed-up data root by default. */
 export const resolvePluginsDirectory = (
   env: NodeJS.ProcessEnv = process.env,
   dataDirectory = resolveDataDirectory(env),
-  projectDirectory = PROJECT_DIRECTORY
+  relativeBaseDirectory = BACKEND_DIRECTORY
 ): string => {
-  const configured = env.PLUGINS_DIR?.trim();
+  const configured = configuredPath(env.PLUGINS_DIR, 'PLUGINS_DIR');
   return configured
-    ? path.resolve(projectDirectory, configured)
+    ? path.resolve(relativeBaseDirectory, configured)
     : path.join(dataDirectory, 'plugins');
 };
 
@@ -65,11 +99,12 @@ export const resolveLegacyPluginsDirectories = (
   const backendDirectory = locations.backendDirectory || BACKEND_DIRECTORY;
   const projectDirectory = locations.projectDirectory || PROJECT_DIRECTORY;
   const directories = [path.join(backendDirectory, 'plugins')];
-  const configured = env.PLUGINS_DIR?.trim();
+  const configured = configuredPath(env.PLUGINS_DIR, 'PLUGINS_DIR');
   if (configured && !path.isAbsolute(configured)) {
-    const selectedDirectory = path.resolve(projectDirectory, configured);
+    const selectedDirectory = path.resolve(backendDirectory, configured);
     for (const historicalRoot of [
       backendDirectory,
+      projectDirectory,
       locations.historicalWorkingDirectory,
     ]) {
       if (!historicalRoot) continue;
@@ -80,8 +115,8 @@ export const resolveLegacyPluginsDirectories = (
     }
   } else if (!configured && locations.historicalWorkingDirectory) {
     // Before plugin storage was canonicalized, the implicit writable/read path
-    // was process.cwd()/plugins. Keep it conflict-only so npx callers do not
-    // silently lose approved definitions from an arbitrary launch directory.
+    // was process.cwd()/plugins. Packaged launchers pass an absolute plugin
+    // root, so this branch remains limited to source/direct-backend history.
     const historicalDirectory = path.resolve(
       locations.historicalWorkingDirectory,
       'plugins'
@@ -115,10 +150,13 @@ export const resolvePhysicalPathCandidate = (candidate: string): string => {
 export const resolvePreflightDirectory = (
   env: NodeJS.ProcessEnv = process.env
 ): string => {
-  const configured = env.PLATFORM_PREFLIGHT_TMP_DIR?.trim();
+  const configured = configuredPath(
+    env.PLATFORM_PREFLIGHT_TMP_DIR,
+    'PLATFORM_PREFLIGHT_TMP_DIR'
+  );
   return resolvePhysicalPathCandidate(
     configured
-      ? path.resolve(PROJECT_DIRECTORY, configured)
+      ? path.resolve(BACKEND_DIRECTORY, configured)
       : DEFAULT_PREFLIGHT_DIRECTORY
   );
 };
@@ -265,10 +303,11 @@ export const assertNoLegacyDataDirectoryConflict = (
     locations.defaultDataDirectory || DEFAULT_DATA_DIRECTORY;
   const legacyDataDirectory =
     locations.legacyDataDirectory || LEGACY_NESTED_DATA_DIRECTORY;
-  const configuredDataDirectory = env.DATA_DIR?.trim();
-  const selectedDataDirectory = configuredDataDirectory
-    ? resolveDataDirectory(env)
-    : defaultDataDirectory;
+  const configuredDataDirectory = configuredPath(env.DATA_DIR, 'DATA_DIR');
+  const selectedDataDirectory = resolveDataDirectory(env, {
+    defaultDataDirectory,
+    legacyDataDirectory,
+  });
   if (configuredDataDirectory && !path.isAbsolute(configuredDataDirectory)) {
     const historicalCandidates = Array.from(
       new Set(
@@ -309,8 +348,8 @@ export const assertNoLegacyDataDirectoryConflict = (
   }
   if (path.resolve(selectedDataDirectory) === path.resolve(legacyDataDirectory))
     return;
+  if (!hasKeyDependentApplicationState(legacyDataDirectory)) return;
   const legacyDatabase = path.join(legacyDataDirectory, 'data.sqlite');
-  if (!fs.existsSync(legacyDatabase)) return;
   const canonicalDatabase = path.join(selectedDataDirectory, 'data.sqlite');
   throw new Error(
     `Legacy data exists at ${legacyDatabase}. Libre is configured to use ${canonicalDatabase}. Stop Libre and either set DATA_DIR=${legacyDataDirectory} temporarily or migrate the full data directory deliberately; startup will not choose or copy between them.`

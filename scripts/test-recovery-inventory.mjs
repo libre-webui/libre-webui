@@ -807,6 +807,21 @@ test('volume recovery rejects linked or non-regular SQLite sources without follo
     true,
     explicitOutside.blockers.join('\n')
   );
+  const inferredOutside = await service.collect({
+    databasePath: externalDatabasePath,
+    env: healthyEnv(),
+    inspectWorkResources: presentInspector,
+  });
+  assert.equal(
+    inferredOutside.storage.dataDirectory.path,
+    externalDatabaseDir,
+    '--database must infer its key, plugin, and data inventory root'
+  );
+  assert.equal(
+    inferredOutside.restoreReady,
+    true,
+    inferredOutside.blockers.join('\n')
+  );
 });
 
 test('schema and encryption-key problems are explicit blockers', async t => {
@@ -1146,7 +1161,7 @@ test('plugin recovery rejects a PLUGINS_DIR reached through an ancestor symlink'
   );
 });
 
-test('relative PLUGINS_DIR retains and blocks the historical backend-relative path', async t => {
+test('relative PLUGINS_DIR selects backend-relative and blocks alternate historical paths', async t => {
   const root = fs.mkdtempSync(
     path.join(os.tmpdir(), 'libre-recovery-relative-plugins-')
   );
@@ -1156,8 +1171,8 @@ test('relative PLUGINS_DIR retains and blocks the historical backend-relative pa
   const projectDirectory = path.join(root, 'project');
   const historicalWorkingDirectory = path.join(root, 'historical-cwd');
   const relativePlugins = 'operator-plugins';
-  const selectedDirectory = path.join(projectDirectory, relativePlugins);
-  const historicalDirectory = path.join(backendDirectory, relativePlugins);
+  const selectedDirectory = path.join(backendDirectory, relativePlugins);
+  const historicalDirectory = path.join(projectDirectory, relativePlugins);
   const callerHistoricalDirectory = path.join(
     historicalWorkingDirectory,
     relativePlugins
@@ -1358,6 +1373,11 @@ test('default recovery fails closed on a legacy nested data conflict', async t =
   assert.doesNotMatch(
     explicitDatabase.blockers.join('\n'),
     /Legacy data exists/i
+  );
+  assert.equal(
+    explicitDatabase.storage.dataDirectory.path,
+    canonicalDir,
+    '--database without --data-dir must inventory the database directory'
   );
 });
 
