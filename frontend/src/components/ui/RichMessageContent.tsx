@@ -20,6 +20,7 @@ import ReactMarkdown, {
   type Components,
   type ExtraProps,
 } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
@@ -215,6 +216,83 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
         </h3>
       );
     },
+    table({ children, node: _node, ...props }) {
+      return (
+        <div
+          className={cn(
+            'my-4 w-full overflow-x-auto rounded-xl border border-line bg-surface shadow-subtle',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+          )}
+          tabIndex={0}
+        >
+          <table
+            dir='auto'
+            className='w-full min-w-[42rem] border-separate border-spacing-0 text-start text-sm'
+            {...props}
+          >
+            {children}
+          </table>
+        </div>
+      );
+    },
+    thead({ children, node: _node, ...props }) {
+      return (
+        <thead className='bg-surface-subtle' {...props}>
+          {children}
+        </thead>
+      );
+    },
+    tbody({ children, node: _node, ...props }) {
+      return <tbody {...props}>{children}</tbody>;
+    },
+    tr({ children, node: _node, ...props }) {
+      return (
+        <tr
+          className='transition-colors hover:bg-black/[0.025] last:[&>td]:border-b-0 dark:hover:bg-white/[0.025]'
+          {...props}
+        >
+          {children}
+        </tr>
+      );
+    },
+    th({ align, children, node: _node, ...props }) {
+      return (
+        <th
+          className={cn(
+            'border-b border-e border-line-strong px-3 py-2.5 align-bottom font-semibold text-ink last:border-e-0',
+            align === 'center'
+              ? 'text-center'
+              : align === 'right'
+                ? 'text-right'
+                : align === 'left'
+                  ? 'text-left'
+                  : 'text-start'
+          )}
+          {...props}
+        >
+          {children}
+        </th>
+      );
+    },
+    td({ align, children, node: _node, ...props }) {
+      return (
+        <td
+          className={cn(
+            'min-w-40 border-b border-e border-line px-3 py-2.5 align-top leading-relaxed text-ink last:border-e-0',
+            align === 'center'
+              ? 'text-center'
+              : align === 'right'
+                ? 'text-right'
+                : align === 'left'
+                  ? 'text-left'
+                  : 'text-start'
+          )}
+          {...props}
+        >
+          {children}
+        </td>
+      );
+    },
   };
 
   return (
@@ -228,7 +306,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
       )}
     >
       <ReactMarkdown
-        remarkPlugins={[remarkMath]}
+        remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={markdownComponents}
       >

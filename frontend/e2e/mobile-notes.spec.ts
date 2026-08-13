@@ -26,16 +26,32 @@ test.use({
 const mobileNote = {
   id: 'mobile-note',
   title: 'A note with a visible title',
-  content: '# Mobile preview\n\nThe editor and preview stay inside the page.',
+  content: [
+    '# Mobile preview',
+    '',
+    'The editor and preview stay inside the page.',
+    '',
+    '| Product dimension | Current leader | Detailed assessment |',
+    '| --- | --- | --- |',
+    '| Whole-chat sharing and forking | Libre WebUI | Built in and ready to use |',
+  ].join('\n'),
   createdAt: Date.now(),
   updatedAt: Date.now(),
 };
 
-test('notes use a mobile list-detail flow with an inline preview', async ({
+test('notes preview wide Markdown tables without mobile page overflow', async ({
   page,
 }) => {
   await mockLibreWebUiApi(page);
   await page.route(/\/api\/notes(?:\/[^/?]+)?(?:\?.*)?$/, async route => {
+    if (route.request().method() !== 'GET') {
+      await route.fulfill({
+        status: 405,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: false, error: 'Method not allowed' }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -55,16 +71,15 @@ test('notes use a mobile list-detail flow with an inline preview', async ({
   await page.getByText(mobileNote.title, { exact: true }).click();
   await expect(noteList).toBeHidden();
   await expect(noteEditor).toBeVisible();
-  await expect(page.getByTestId('notes-title-editor')).toHaveValue(
+  await expect(page.getByTestId('notes-title-preview')).toHaveText(
     mobileNote.title
   );
-  await expect(page.getByTestId('notes-content-editor')).toBeVisible();
+  await expect(page.getByTestId('notes-content-editor')).toBeHidden();
 
   const editorBox = await noteEditor.boundingBox();
   expect(editorBox).not.toBeNull();
   expect(editorBox!.width).toBeGreaterThan(280);
 
-  await page.getByTestId('notes-preview-toggle').click();
   const preview = page.getByTestId('notes-preview');
   await expect(preview).toBeVisible();
   await expect(
@@ -73,6 +88,44 @@ test('notes use a mobile list-detail flow with an inline preview', async ({
   const previewBox = await preview.boundingBox();
   expect(previewBox).not.toBeNull();
   expect(previewBox!.width).toBeCloseTo(editorBox!.width, 0);
+
+  const table = preview.getByRole('table');
+  await expect(
+    table.getByRole('columnheader', { name: 'Product dimension' })
+  ).toBeVisible();
+  await expect(
+    table.getByRole('cell', { name: 'Whole-chat sharing and forking' })
+  ).toBeVisible();
+
+  const containment = await table.evaluate(element => {
+    const wrapper = element.parentElement;
+    if (!wrapper) throw new Error('Expected a table overflow wrapper');
+    const bounds = wrapper.getBoundingClientRect();
+    return {
+      wrapperOverflowX: getComputedStyle(wrapper).overflowX,
+      wrapperHasHorizontalScroll: wrapper.scrollWidth > wrapper.clientWidth,
+      wrapperLeft: bounds.left,
+      wrapperRight: bounds.right,
+      viewportWidth: document.documentElement.clientWidth,
+      documentWidth: document.documentElement.scrollWidth,
+    };
+  });
+  expect(containment.wrapperOverflowX).toBe('auto');
+  expect(containment.wrapperHasHorizontalScroll).toBe(true);
+  expect(containment.wrapperLeft).toBeGreaterThanOrEqual(previewBox!.x);
+  expect(containment.wrapperRight).toBeLessThanOrEqual(
+    previewBox!.x + previewBox!.width
+  );
+  expect(containment.documentWidth).toBeLessThanOrEqual(
+    containment.viewportWidth
+  );
+
+  await page.getByTestId('notes-preview-toggle').click();
+  await expect(page.getByTestId('notes-title-editor')).toHaveValue(
+    mobileNote.title
+  );
+  await expect(page.getByTestId('notes-content-editor')).toBeVisible();
+  await expect(preview).toBeHidden();
 
   await page.getByTestId('notes-mobile-back').click();
   await expect(noteList).toBeVisible();
