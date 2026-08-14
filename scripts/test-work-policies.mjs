@@ -103,6 +103,7 @@ test('policy input validation accepts sane values and rejects the rest', () => {
 
   for (const bad of [
     { name: '' },
+    { name: 'bad\u0000name' },
     { name: 'x'.repeat(101) },
     { name: 'ok', image: 'two words' },
     // A reference is anchored to the registry/repo charset, so nothing

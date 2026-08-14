@@ -17,7 +17,10 @@ import {
   type PostgresQueryExecutor,
 } from './postgresDatabase.js';
 import { POSTGRES_MIGRATIONS } from './postgresMigrationRegistry.js';
-import { runPostgresMigrationCoordinator } from './postgresMigrations.js';
+import {
+  PostgresMigrationError,
+  runPostgresMigrationCoordinator,
+} from './postgresMigrations.js';
 import { inspectPostgresSchema } from './postgresSchemaInspector.js';
 import {
   POSTGRES_SQLITE_IMPORT_SCHEMA_SQL,
@@ -30,9 +33,12 @@ import {
 } from './sqliteMigrations.js';
 import { getPluginDefinitionFingerprint } from '../utils/pluginDefinitionTrust.js';
 import type { Plugin } from '../types/index.js';
+import { encodePostgresWorkMessageContent } from '../platform/workPersistence/workMessageContentCodec.js';
 
 const IMPORT_LOCK = '6840141877227442765';
 const BATCH_SIZE = 250;
+const POSTGRES_TARGET_SCHEMA_VERSION =
+  POSTGRES_MIGRATIONS[POSTGRES_MIGRATIONS.length - 1]!.version;
 
 export type SQLiteToPostgresMigrationMode = 'dry-run' | 'apply' | 'validate';
 
@@ -156,6 +162,7 @@ interface TargetInspection {
   initialized: boolean;
   schemaVersion: number | null;
   structurallyCompatible: boolean;
+  resumableSchemaPrefix: boolean;
   empty: boolean;
   importStatus: 'absent' | 'running' | 'complete' | 'failed';
   importFingerprint: string | null;
@@ -268,6 +275,14 @@ const projectSessionMessageRow = (
   // does, so preserve every resolvable value and deterministically clear only
   // references whose message no longer exists.
   return parentExists(parentId) ? row : { ...row, parent_id: null };
+};
+
+const projectWorkMessageRow = (
+  _database: Database.Database,
+  row: Record<string, unknown>
+): Record<string, unknown> => {
+  if (typeof row.content !== 'string') return row;
+  return { ...row, content: encodePostgresWorkMessageContent(row.content) };
 };
 
 const timestamps = [
@@ -879,9 +894,54 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'created_at',
     ],
     ['id'],
-    { integers: [...timestamps, 'message_index'] }
+    {
+      integers: [...timestamps, 'message_index'],
+      projectSourceRow: projectWorkMessageRow,
+    }
   ),
 ]);
+
+interface SourceTextNulField {
+  table: string;
+  column: string;
+  rows: number;
+}
+
+const sourceTextNulInventoryCache = new WeakMap<
+  Database.Database,
+  SourceTextNulField[]
+>();
+
+const sourceTextNulInventory = (
+  database: Database.Database
+): readonly SourceTextNulField[] => {
+  const cached = sourceTextNulInventoryCache.get(database);
+  if (cached) return cached;
+  const inventory: SourceTextNulField[] = [];
+  for (const mapping of TABLE_MAPPINGS) {
+    const columns = mapping.columns.filter(column => column.kind === 'text');
+    if (columns.length === 0) continue;
+    const counts = database
+      .prepare(
+        `SELECT ${columns
+          .map(
+            column =>
+              `COUNT(*) FILTER (WHERE instr(${quote(column.source)}, char(0)) > 0) AS ${quote(column.source)}`
+          )
+          .join(', ')}
+           FROM ${quote(mapping.source)}`
+      )
+      .get() as Record<string, unknown>;
+    for (const column of columns) {
+      const rows = safeCount(counts[column.source]);
+      if (rows > 0) {
+        inventory.push({ table: mapping.source, column: column.source, rows });
+      }
+    }
+  }
+  sourceTextNulInventoryCache.set(database, inventory);
+  return inventory;
+};
 
 const TARGET_DOMAIN_TABLES = Object.freeze([
   ...new Set([
@@ -1062,6 +1122,20 @@ const sourceBlockers = (
       `voice_profiles: ${missingVoiceLookups} row(s) lack keyed name lookups; start the current SQLite release once with the correct encryption key before migration`
     );
   }
+  const unsupportedNulFields = sourceTextNulInventory(database).filter(
+    field => !(field.table === 'work_messages' && field.column === 'content')
+  );
+  if (unsupportedNulFields.length > 0) {
+    const maximumDetails = 8;
+    const details = unsupportedNulFields
+      .slice(0, maximumDetails)
+      .map(field => `${field.table}.${field.column}: ${field.rows} row(s)`)
+      .join(', ');
+    const remainder = unsupportedNulFields.length - maximumDetails;
+    blockers.push(
+      `PostgreSQL text cannot represent U+0000 in mapped source fields: ${details}${remainder > 0 ? `, and ${remainder} more field(s)` : ''}`
+    );
+  }
   return blockers;
 };
 
@@ -1084,6 +1158,18 @@ const sourceWarnings = (
         : 'session-message parent references point';
     warnings.push(
       `${danglingMessageParents} ${subject} to absent messages and will be imported as NULL; source rows and source checksums remain unchanged.`
+    );
+  }
+  const nulWorkMessages = sourceTextNulInventory(database).find(
+    field => field.table === 'work_messages' && field.column === 'content'
+  )?.rows;
+  if (nulWorkMessages) {
+    const subject =
+      nulWorkMessages === 1
+        ? 'Work-message content row contains'
+        : 'Work-message content rows contain';
+    warnings.push(
+      `${nulWorkMessages} ${subject} U+0000 and will use PostgreSQL's reversible JSON-string storage; logical content and raw source checksums remain unchanged.`
     );
   }
   if (!storagePhaseConfigured) {
@@ -1506,6 +1592,7 @@ const inspectTarget = async (
   const empty = await targetIsEmpty(database, present);
   let schemaVersion: number | null = null;
   let structurallyCompatible = false;
+  let resumableSchemaPrefix = false;
   if (ledgerExists) {
     const ledger = await database.query<{
       version: number;
@@ -1528,6 +1615,18 @@ const inspectTarget = async (
     if (ledgerCompatible) {
       structurallyCompatible = (
         await inspectPostgresSchema(database, POSTGRES_MIGRATIONS)
+      ).compatible;
+    } else if (
+      ledger.rows.length === POSTGRES_MIGRATIONS.length - 1 &&
+      POSTGRES_MIGRATIONS.slice(0, -1).every(
+        (migration, index) =>
+          Number(ledger.rows[index]?.version) === migration.version &&
+          ledger.rows[index]?.name === migration.name &&
+          ledger.rows[index]?.checksum === migration.checksum
+      )
+    ) {
+      resumableSchemaPrefix = (
+        await inspectPostgresSchema(database, POSTGRES_MIGRATIONS.slice(0, -1))
       ).compatible;
     }
   }
@@ -1553,6 +1652,7 @@ const inspectTarget = async (
     initialized: ledgerExists,
     schemaVersion,
     structurallyCompatible,
+    resumableSchemaPrefix,
     empty,
     importStatus,
     importFingerprint,
@@ -1564,33 +1664,48 @@ const baseReport = (
   source: SourceAnalysis,
   target: TargetInspection,
   status: SQLiteToPostgresTableReport['status']
-): SQLiteToPostgresMigrationReport => ({
-  mode,
-  sourceSchemaVersion: source.schemaVersion,
-  sourceFingerprint: source.fingerprint,
-  targetSchemaVersion: target.schemaVersion,
-  targetInitialized: target.initialized,
-  targetEmpty: target.empty,
-  compatible:
-    source.blockers.length === 0 &&
-    (!target.initialized || target.structurallyCompatible),
-  resumed: false,
-  tables: source.tables.map(manifest => ({
-    sourceTable: manifest.mapping.source,
-    targetTable: manifest.mapping.target,
-    rows: manifest.rows,
-    checksum: manifest.checksum,
-    status,
-  })),
-  phases: source.phases.map(phase => ({
-    name: phase.analysis.name,
-    items: phase.analysis.items,
-    checksum: phase.analysis.checksum,
-    status,
-  })),
-  warnings: [...source.warnings],
-  blockers: [...source.blockers],
-});
+): SQLiteToPostgresMigrationReport => {
+  const resumableUpgrade =
+    target.resumableSchemaPrefix &&
+    (target.importStatus === 'running' || target.importStatus === 'failed') &&
+    target.importFingerprint === source.fingerprint;
+  return {
+    mode,
+    sourceSchemaVersion: source.schemaVersion,
+    sourceFingerprint: source.fingerprint,
+    targetSchemaVersion: target.schemaVersion,
+    targetInitialized: target.initialized,
+    targetEmpty: target.empty,
+    compatible:
+      source.blockers.length === 0 &&
+      (!target.initialized ||
+        target.structurallyCompatible ||
+        resumableUpgrade),
+    resumed: false,
+    tables: source.tables.map(manifest => ({
+      sourceTable: manifest.mapping.source,
+      targetTable: manifest.mapping.target,
+      rows: manifest.rows,
+      checksum: manifest.checksum,
+      status,
+    })),
+    phases: source.phases.map(phase => ({
+      name: phase.analysis.name,
+      items: phase.analysis.items,
+      checksum: phase.analysis.checksum,
+      status,
+    })),
+    warnings: [
+      ...source.warnings,
+      ...(resumableUpgrade
+        ? [
+            `PostgreSQL has the exact version ${target.schemaVersion} migration-ledger prefix and matching incomplete SQLite import; --resume can safely apply version ${POSTGRES_TARGET_SCHEMA_VERSION} before continuing.`,
+          ]
+        : []),
+    ],
+    blockers: [...source.blockers],
+  };
+};
 
 const createImportJournal = async (client: PoolClient): Promise<void> => {
   await client.query(POSTGRES_SQLITE_IMPORT_SCHEMA_SQL);
@@ -2029,7 +2144,7 @@ export const migrateSQLiteToPostgres = async (
           if (options.mode === 'dry-run') return report;
           if (source.blockers.length > 0) {
             throw new SQLiteToPostgresMigrationError(
-              'SQLite source contains storage state that requires a coordinated blob/vector migration',
+              'SQLite source failed PostgreSQL migration preflight; inspect the reported blockers',
               report
             );
           }
@@ -2070,16 +2185,53 @@ export const migrateSQLiteToPostgres = async (
             target = await inspectTarget(database);
             report = baseReport(options.mode, source, target, 'planned');
           } else if (!target.structurallyCompatible) {
-            throw new SQLiteToPostgresMigrationError(
-              'PostgreSQL target schema is not structurally compatible',
-              report
-            );
+            const resumableUpgrade =
+              target.resumableSchemaPrefix &&
+              (target.importStatus === 'running' ||
+                target.importStatus === 'failed') &&
+              target.importFingerprint === source.fingerprint;
+            if (!resumableUpgrade || options.resume !== true) {
+              throw new SQLiteToPostgresMigrationError(
+                resumableUpgrade
+                  ? 'The matching incomplete SQLite import requires --resume before its PostgreSQL schema can be upgraded'
+                  : 'PostgreSQL target schema is not structurally compatible',
+                report
+              );
+            }
+            try {
+              await runPostgresMigrationCoordinator(
+                database,
+                {
+                  migrationMode: 'apply',
+                  migrationLockTimeoutMs:
+                    options.postgres.migrationLockTimeoutMs,
+                },
+                POSTGRES_MIGRATIONS
+              );
+            } catch (error) {
+              if (
+                !(error instanceof PostgresMigrationError) ||
+                !/incomplete SQLite import/i.test(
+                  error.compatibility.reason ?? error.message
+                )
+              ) {
+                throw error;
+              }
+            }
+            target = await inspectTarget(database);
+            report = baseReport(options.mode, source, target, 'planned');
+            if (!target.structurallyCompatible) {
+              throw new SQLiteToPostgresMigrationError(
+                'PostgreSQL target schema did not reach the resumable import version',
+                report
+              );
+            }
           }
 
           await applyImport(database, source, report, options.resume === true);
           report.compatible = true;
           report.targetInitialized = true;
-          report.targetSchemaVersion = POSTGRES_MIGRATIONS.length;
+          report.targetSchemaVersion = POSTGRES_TARGET_SCHEMA_VERSION;
           return report;
         } catch (error) {
           if (error instanceof SQLiteToPostgresMigrationError) throw error;

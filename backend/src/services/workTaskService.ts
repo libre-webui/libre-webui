@@ -18,6 +18,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import {
   getWorkPersistence,
+  replaceWorkTextNul,
   WorkPersistenceError,
   type WorkMessageRow,
   type WorkRunRow,
@@ -239,11 +240,12 @@ export class WorkTaskService {
     const compactId = taskId.replace(/-/g, '');
     const now = Date.now();
     const title = deriveTitle(message);
+    const selectedModel = cleanRequired(model);
     const taskRow: TaskRow = {
       id: taskId,
       user_id: userId,
       title,
-      model,
+      model: selectedModel,
       provider_type: selectedProvider.providerType,
       provider_id: selectedProvider.providerId || null,
       status: 'preparing',
@@ -262,7 +264,7 @@ export class WorkTaskService {
     const runRow: RunRow = {
       id: runId,
       task_id: taskId,
-      model,
+      model: selectedModel,
       provider_type: selectedProvider.providerType,
       provider_id: selectedProvider.providerId || null,
       status: 'queued',
@@ -336,7 +338,8 @@ export class WorkTaskService {
     }
     const runId = uuidv4();
     const messageId = uuidv4();
-    const selectedModel = model?.trim() || task.model;
+    const selectedModel =
+      model === undefined ? task.model : cleanRequired(model);
     const selectedProvider = normalizeProvider(
       provider || {
         providerType: task.providerType,
@@ -882,7 +885,7 @@ export class WorkTaskService {
     await getWorkPersistence().updateRun({
       runId,
       status,
-      error: options.error || null,
+      error: options.error ? replaceWorkTextNul(options.error) : null,
       started: Boolean(options.started),
       finished: Boolean(options.finished),
       now,
@@ -1015,6 +1018,15 @@ export class WorkAdmissionError extends Error {
     super(message);
     this.name = 'WorkAdmissionError';
     this.code = code;
+  }
+}
+
+export class WorkInputError extends Error {
+  readonly status = 400;
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'WorkInputError';
   }
 }
 
@@ -1163,11 +1175,18 @@ const deriveTitle = (message: string): string => {
   return cleanTitle(firstLine.slice(0, 80));
 };
 
+const rejectWorkTextNul = (value: string, field: string): string => {
+  if (value.includes('\u0000')) {
+    throw new WorkInputError(`${field} cannot contain U+0000.`);
+  }
+  return value;
+};
+
 const cleanTitle = (value: string): string =>
-  value.trim().slice(0, 120) || 'New Work';
+  replaceWorkTextNul(value).trim().slice(0, 120) || 'New Work';
 
 const cleanRequired = (value: string): string => {
-  const cleaned = value.trim();
+  const cleaned = rejectWorkTextNul(value, 'Work model').trim();
   if (!cleaned) {
     throw new Error('Model cannot be empty.');
   }

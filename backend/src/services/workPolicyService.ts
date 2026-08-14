@@ -150,9 +150,9 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
   idleTimeoutMs: number | null;
 } {
   const name = typeof input.name === 'string' ? input.name.trim() : '';
-  if (!name || name.length > NAME_MAX_LENGTH) {
+  if (!name || name.length > NAME_MAX_LENGTH || name.includes('\u0000')) {
     throw invalid(
-      `Policy name is required and must be at most ${NAME_MAX_LENGTH} characters.`
+      `Policy name is required, cannot contain U+0000, and must be at most ${NAME_MAX_LENGTH} characters.`
     );
   }
 

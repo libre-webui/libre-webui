@@ -24,6 +24,13 @@ import { SQLITE_MIGRATION_CONTRACT } from '../backend/dist/persistence/sqliteMig
 import { initializePostgresPersistence } from '../backend/dist/persistence/postgresPersistence.js';
 import { validatePostgresMigrationRegistry } from '../backend/dist/persistence/postgresMigrations.js';
 import { inspectPostgresSchema } from '../backend/dist/persistence/postgresSchemaInspector.js';
+import { PostgresWorkPersistence } from '../backend/dist/platform/workPersistence/postgresWorkPersistence.js';
+import { SQLiteWorkPersistence } from '../backend/dist/platform/workPersistence/sqliteWorkPersistence.js';
+import {
+  decodePostgresWorkMessageContent,
+  encodePostgresWorkMessageContent,
+} from '../backend/dist/platform/workPersistence/workMessageContentCodec.js';
+import { replaceWorkTextNul } from '../backend/dist/platform/workPersistence/workTextSafety.js';
 import { PostgresDurableJobRepository } from '../backend/dist/platform/jobs/postgresDurableJobRepository.js';
 import { PostgresDurableJobService } from '../backend/dist/platform/jobs/postgresDurableJobService.js';
 import { durableEventId } from '../backend/dist/platform/jobs/durableEventIdentity.js';
@@ -71,13 +78,13 @@ test('PostgreSQL configuration rejects ambiguous TLS and unsafe bounds', () => {
 test('PostgreSQL migration registry is contiguous, checksummed, and frozen', () => {
   assert.deepEqual(
     POSTGRES_MIGRATIONS.map(migration => migration.version),
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
   );
   validatePostgresMigrationRegistry(POSTGRES_MIGRATIONS);
   assert.equal(Object.isFrozen(POSTGRES_MIGRATIONS), true);
   assert.equal(POSTGRES_MIGRATIONS.every(Object.isFrozen), true);
   assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 12);
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 10);
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 11);
   assert.equal(
     SQLITE_MIGRATION_CONTRACT.some(
       migration => migration.name === 'blob-quotas'
@@ -174,6 +181,22 @@ test('PostgresDatabase pins, commits, rolls back, releases, and closes', async (
   await assert.rejects(database.query('SELECT 1'), /pool is closed/);
 });
 
+test('PostgreSQL Work message JSON storage is exact and reversible', () => {
+  const ordinary = 'ordinary tool output';
+  const encodedOrdinary = encodePostgresWorkMessageContent(ordinary);
+  assert.equal(encodedOrdinary, JSON.stringify(ordinary));
+  assert.equal(decodePostgresWorkMessageContent(encodedOrdinary), ordinary);
+
+  const withNul = 'bin\u0000\u0001\u0002tail';
+  const encodedNul = encodePostgresWorkMessageContent(withNul);
+  assert.equal(encodedNul.includes('\u0000'), false);
+  assert.equal(decodePostgresWorkMessageContent(encodedNul), withNul);
+  assert.throws(
+    () => decodePostgresWorkMessageContent('not JSON'),
+    /Invalid PostgreSQL Work message content encoding/
+  );
+});
+
 const integrationUrl = process.env.TEST_POSTGRES_URL?.trim();
 
 test(
@@ -229,7 +252,7 @@ test(
         initializePostgresPersistence(config, codec),
       ]);
       assert.equal(first.schemaCompatibility.status, 'compatible');
-      assert.equal(second.schemaCompatibility.currentVersion, 10);
+      assert.equal(second.schemaCompatibility.currentVersion, 11);
       assert.equal((await first.health()).ready, true);
 
       const assertStructuralDamage = async (mutation, expected) => {
@@ -1694,6 +1717,70 @@ test(
       null,
       0
     );
+    const workTaskId = 'import-work-task';
+    const workRunId = 'import-work-run';
+    const workNulContent = 'bin\u0000\u0001\u0002\u0003\u0004\u0005\u0006';
+    assert.equal(workNulContent.length, 10);
+    assert.equal(workNulContent.indexOf('\u0000'), 3);
+    const workMessageContents = new Map([
+      ['import-work-ordinary', 'ordinary tool output'],
+      ['import-work-json-looking', '"legacy-looking"'],
+      ['import-work-nul', workNulContent],
+    ]);
+    source
+      .prepare(
+        `INSERT INTO work_tasks (
+           id, user_id, title, model, provider_type, provider_id, status,
+           network_enabled, volume_name, container_name, host_path, policy_id,
+           preview_url, preview_status, preview_upstream_host,
+           preview_upstream_port, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, 'ollama', NULL, 'completed', 0, ?, ?, NULL,
+                   NULL, NULL, 'stopped', NULL, NULL, ?, ?)`
+      )
+      .run(
+        workTaskId,
+        'import-user',
+        'Imported Work task',
+        'import-model',
+        'libre-work-import-task-volume',
+        'libre-work-import-task-container',
+        7,
+        7
+      );
+    source
+      .prepare(
+        `INSERT INTO work_runs (
+           id, task_id, model, provider_type, provider_id, status, error,
+           created_at, started_at, finished_at
+         ) VALUES (?, ?, ?, 'ollama', NULL, 'completed', NULL, ?, ?, ?)`
+      )
+      .run(workRunId, workTaskId, 'import-model', 7, 7, 7);
+    const sqliteWork = new SQLiteWorkPersistence(source);
+    for (const [id, content] of workMessageContents) {
+      await sqliteWork.insertMessage({
+        id,
+        task_id: workTaskId,
+        run_id: workRunId,
+        role: 'tool',
+        kind: 'tool_result',
+        content,
+        metadata: id === 'import-work-nul' ? '{"source":"binary"}' : null,
+        created_at: 8,
+      });
+    }
+    assert.deepEqual(
+      (await sqliteWork.listMessages({ taskId: workTaskId, mode: 'all' })).map(
+        row => [row.id, row.content]
+      ),
+      [...workMessageContents]
+    );
+    assert.equal(
+      source
+        .prepare('SELECT content FROM work_messages WHERE id = ?')
+        .get('import-work-nul').content,
+      workNulContent,
+      'SQLite Work persistence keeps logical content byte-for-byte'
+    );
     const pluginsDirectory = path.join(sourceDirectory, 'plugins');
     fs.mkdirSync(pluginsDirectory, { mode: 0o700 });
     const pluginDefinition = {
@@ -1815,7 +1902,30 @@ test(
     cleanupSource
       .prepare('DELETE FROM generated_images WHERE id = ?')
       .run('blocked-media');
+    cleanupSource
+      .prepare('UPDATE work_tasks SET title = ? WHERE id = ?')
+      .run('invalid\u0000title', workTaskId);
     cleanupSource.close();
+
+    const nulBlockedDryRun = await migrateSQLiteToPostgres({
+      sourcePath,
+      postgres: config,
+      mode: 'dry-run',
+    });
+    assert.equal(nulBlockedDryRun.compatible, false);
+    assert.match(
+      nulBlockedDryRun.blockers.join('\n'),
+      /PostgreSQL text cannot represent U\+0000.*work_tasks\.title: 1 row/
+    );
+    assert.match(
+      nulBlockedDryRun.warnings.join('\n'),
+      /1 Work-message content row contains U\+0000.*reversible JSON-string storage.*raw source checksums remain unchanged/
+    );
+    const restoreSource = new Database(sourcePath);
+    restoreSource
+      .prepare('UPDATE work_tasks SET title = ? WHERE id = ?')
+      .run('Imported Work task', workTaskId);
+    restoreSource.close();
 
     const interruptedImportPhase = {
       async analyze() {
@@ -1862,6 +1972,10 @@ test(
     assert.match(
       dryRun.warnings.join('\n'),
       /1 session-message parent reference points.*imported as NULL.*source checksums remain unchanged/
+    );
+    assert.match(
+      dryRun.warnings.join('\n'),
+      /1 Work-message content row contains U\+0000.*reversible JSON-string storage.*raw source checksums remain unchanged/
     );
     assert.equal(
       dryRun.tables.find(row => row.sourceTable === 'session_messages')?.rows,
@@ -2012,6 +2126,103 @@ test(
         ?.checksum,
       'the journal retains the raw SQLite checksum when the target projection clears a dangling reference'
     );
+    const rawWorkMessages = await target.query(
+      `SELECT id, content, metadata
+         FROM work_messages
+        WHERE task_id = $1
+        ORDER BY message_index`,
+      [workTaskId]
+    );
+    assert.deepEqual(
+      rawWorkMessages.rows.map(row => [row.id, row.content]),
+      [...workMessageContents].map(([id, content]) => [
+        id,
+        JSON.stringify(content),
+      ]),
+      'PostgreSQL stores every Work message as one JSON string'
+    );
+    assert.equal(
+      rawWorkMessages.rows.find(row => row.id === 'import-work-nul').metadata,
+      '{"source":"binary"}',
+      'the content projection must not alter Work metadata'
+    );
+    assert.equal(
+      rawWorkMessages.rows.some(row => row.content.includes('\u0000')),
+      false
+    );
+    const postgresWork = new PostgresWorkPersistence(target);
+    assert.deepEqual(
+      (
+        await postgresWork.listMessages({ taskId: workTaskId, mode: 'all' })
+      ).map(row => [row.id, row.content]),
+      [...workMessageContents],
+      'PostgreSQL Work reads return exact logical strings'
+    );
+    const workMessageJournal = await target.query(
+      `SELECT checksum
+         FROM libre_sqlite_import_tables
+        WHERE source_table = 'work_messages'`
+    );
+    assert.equal(
+      workMessageJournal.rows[0].checksum,
+      dryRun.tables.find(row => row.sourceTable === 'work_messages')?.checksum,
+      'the journal retains the raw SQLite checksum while target validation uses JSON-string storage'
+    );
+    for (const logical of ['ordinary tool output', '"legacy-looking"']) {
+      assert.equal(
+        (
+          await target.query('SELECT to_json($1::text)::text AS encoded', [
+            logical,
+          ])
+        ).rows[0].encoded,
+        encodePostgresWorkMessageContent(logical),
+        'the SQL upgrade and JavaScript write codec must agree'
+      );
+    }
+    await target.withClient(async client => {
+      await client.query('BEGIN');
+      try {
+        await client.query(
+          'CREATE TEMP TABLE work_messages (content text NOT NULL) ON COMMIT DROP'
+        );
+        const legacyContents = [
+          'ordinary v10 content',
+          '"JSON-looking v10 content"',
+          'v10 control \u0001 content',
+        ];
+        for (const content of legacyContents) {
+          await client.query(
+            'INSERT INTO work_messages (content) VALUES ($1)',
+            [content]
+          );
+        }
+        await client.query(POSTGRES_MIGRATIONS.at(-1).sql);
+        assert.deepEqual(
+          (
+            await client.query(
+              'SELECT content FROM work_messages ORDER BY ctid'
+            )
+          ).rows.map(row => row.content),
+          legacyContents.map(encodePostgresWorkMessageContent),
+          'the v11 SQL upgrade encodes every existing PostgreSQL Work message exactly once'
+        );
+      } finally {
+        await client.query('ROLLBACK');
+      }
+    });
+    await assert.rejects(
+      target.query(
+        `UPDATE work_messages SET content = 'not a JSON string'
+          WHERE id = 'import-work-ordinary'`
+      ),
+      /work_messages_content_json_string_check|invalid input syntax for type json/i
+    );
+    assert.equal(
+      (
+        await postgresWork.listMessages({ taskId: workTaskId, mode: 'all' })
+      ).find(row => row.id === 'import-work-ordinary').content,
+      'ordinary tool output'
+    );
     const importedPlugin = await target.query(
       `SELECT definition_json, definition_fingerprint,
               approved_by_user_id, approved_at::text AS approved_at
@@ -2025,10 +2236,69 @@ test(
       approved_at: '3',
     });
 
-    await target.query(`UPDATE libre_sqlite_imports SET status = 'failed'`);
+    // Recreate the live failure boundary exactly: schema v10, a matching
+    // failed import with every relational table journaled except the final
+    // work_messages table, and no rows from that rolled-back table.
+    await target.query('DELETE FROM work_messages');
+    await target.query(
+      `DELETE FROM libre_sqlite_import_tables
+        WHERE source_table = 'work_messages'`
+    );
+    await target.query(
+      `ALTER TABLE work_messages
+         DROP CONSTRAINT work_messages_content_json_string_check`
+    );
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 11'
+    );
+    const v10Structure = await (
+      await import('../backend/dist/persistence/postgresSchemaInspector.js')
+    ).inspectPostgresSchema(target, POSTGRES_MIGRATIONS.slice(0, -1));
+    assert.equal(v10Structure.compatible, true);
+    await target.query(
+      `UPDATE libre_sqlite_imports
+          SET status = 'failed', completed_at = NULL, updated_at = $1`,
+      [Date.now()]
+    );
     await target.query(
       `UPDATE libre_schema_compatibility
-          SET status = 'incompatible', failure_code = 'sqlite_import_incomplete'`
+          SET status = 'incompatible', current_version = 10,
+              target_version = 10, minimum_reader_version = 10,
+              migration_owner = NULL,
+              failure_code = 'sqlite_import_incomplete',
+              schema_fingerprint = $1, updated_at = $2`,
+      [v10Structure.fingerprint, Date.now()]
+    );
+    const liveFailureState = await target.query(
+      `SELECT
+         (SELECT MAX(version)::text FROM libre_schema_migrations)
+           AS schema_version,
+         (SELECT status FROM libre_sqlite_imports) AS import_status,
+         (SELECT COUNT(*)::text FROM libre_sqlite_import_tables)
+           AS journal_count,
+         (SELECT COUNT(*)::text FROM libre_sqlite_import_tables
+           WHERE source_table = 'work_messages') AS work_journal,
+         (SELECT COUNT(*)::text FROM work_messages) AS work_messages`
+    );
+    assert.deepEqual(liveFailureState.rows[0], {
+      schema_version: '10',
+      import_status: 'failed',
+      journal_count: String(dryRun.tables.length - 1),
+      work_journal: '0',
+      work_messages: '0',
+    });
+    const prefixDryRun = await migrateSQLiteToPostgres({
+      sourcePath,
+      postgres: config,
+      mode: 'dry-run',
+      storagePhase: interruptedImportPhase,
+    });
+    assert.equal(prefixDryRun.compatible, true);
+    assert.equal(prefixDryRun.targetSchemaVersion, 10);
+    assert.equal(prefixDryRun.sourceFingerprint, dryRun.sourceFingerprint);
+    assert.match(
+      prefixDryRun.warnings.join('\n'),
+      /exact version 10 migration-ledger prefix.*--resume can safely apply version 11/i
     );
     const codec = {
       encrypt: value => value,
@@ -2038,17 +2308,13 @@ test(
       lookupToken: value => createHash('sha256').update(value).digest('hex'),
     };
     await assert.rejects(
-      initializePostgresPersistence(config, codec),
-      /incomplete SQLite import/i
-    );
-    await assert.rejects(
       migrateSQLiteToPostgres({
         sourcePath,
         postgres: config,
         mode: 'apply',
         storagePhase: interruptedImportPhase,
       }),
-      /resume enabled/i
+      /requires --resume/i
     );
     const resumed = await migrateSQLiteToPostgres({
       sourcePath,
@@ -2062,6 +2328,48 @@ test(
       resumed.tables.every(row => row.status === 'verified'),
       true
     );
+    assert.equal(resumed.targetSchemaVersion, 11);
+    const resumedState = await target.query(
+      `SELECT
+         (SELECT MAX(version)::text FROM libre_schema_migrations)
+           AS schema_version,
+         (SELECT status FROM libre_sqlite_imports) AS import_status,
+         (SELECT COUNT(*)::text FROM libre_sqlite_import_tables)
+           AS journal_count,
+         (SELECT COUNT(*)::text FROM libre_sqlite_import_tables
+           WHERE source_table = 'work_messages') AS work_journal,
+         (SELECT COUNT(*)::text FROM work_messages) AS work_messages`
+    );
+    assert.deepEqual(resumedState.rows[0], {
+      schema_version: '11',
+      import_status: 'complete',
+      journal_count: String(dryRun.tables.length),
+      work_journal: '1',
+      work_messages: String(workMessageContents.size),
+    });
+    assert.equal(
+      (
+        await target.query(
+          `SELECT checksum
+             FROM libre_sqlite_import_tables
+            WHERE source_table = 'work_messages'`
+        )
+      ).rows[0].checksum,
+      dryRun.tables.find(row => row.sourceTable === 'work_messages')?.checksum
+    );
+    const resumedWork = new PostgresWorkPersistence(target);
+    assert.deepEqual(
+      (await resumedWork.listMessages({ taskId: workTaskId, mode: 'all' })).map(
+        row => [row.id, row.content]
+      ),
+      [...workMessageContents]
+    );
+    const healthyResumedImport = await initializePostgresPersistence(
+      config,
+      codec
+    );
+    assert.equal((await healthyResumedImport.health()).ready, true);
+    await healthyResumedImport.close();
     const validated = await migrateSQLiteToPostgres({
       sourcePath,
       postgres: config,
@@ -2085,6 +2393,101 @@ test(
         storagePhase: interruptedImportPhase,
       }),
       /verification failed/i
+    );
+
+    const runtimeMessage = 'Run binary\u0000task';
+    const runtimeTaskId = 'runtime-nul-task';
+    const runtimeRunId = 'runtime-nul-run';
+    await resumedWork.createTaskWithRun(
+      {
+        task: {
+          id: runtimeTaskId,
+          user_id: 'import-user',
+          title: replaceWorkTextNul(runtimeMessage),
+          model: 'import-model',
+          provider_type: 'ollama',
+          provider_id: null,
+          status: 'preparing',
+          network_enabled: 0,
+          volume_name: 'libre-work-runtime-nul-volume',
+          container_name: 'libre-work-runtime-nul-container',
+          host_path: null,
+          policy_id: null,
+          preview_url: null,
+          preview_status: 'stopped',
+          preview_upstream_host: null,
+          preview_upstream_port: null,
+          created_at: 20,
+          updated_at: 20,
+        },
+        run: {
+          id: runtimeRunId,
+          task_id: runtimeTaskId,
+          model: 'import-model',
+          provider_type: 'ollama',
+          provider_id: null,
+          status: 'queued',
+          error: 'initial\u0000diagnostic',
+          created_at: 20,
+          started_at: null,
+          finished_at: null,
+        },
+        message: {
+          id: 'runtime-nul-message',
+          task_id: runtimeTaskId,
+          run_id: runtimeRunId,
+          role: 'user',
+          kind: 'message',
+          content: runtimeMessage,
+          metadata: null,
+          message_index: 0,
+          created_at: 20,
+        },
+        limits: {
+          maxActiveRuntimesGlobal: 10,
+          maxActiveRuntimesPerUser: 10,
+          maxTasksGlobal: 100,
+          maxTasksPerUser: 100,
+        },
+      },
+      {
+        enqueueSQLite() {
+          throw new Error('wrong persistence dialect');
+        },
+        async enqueuePostgres() {},
+      }
+    );
+    const runtimeRaw = await target.query(
+      `SELECT work_tasks.title, work_messages.content, work_runs.error
+         FROM work_tasks
+         JOIN work_messages ON work_messages.task_id = work_tasks.id
+         JOIN work_runs ON work_runs.id = work_messages.run_id
+        WHERE work_tasks.id = $1`,
+      [runtimeTaskId]
+    );
+    assert.deepEqual(runtimeRaw.rows[0], {
+      title: 'Run binary\uFFFDtask',
+      content: JSON.stringify(runtimeMessage),
+      error: 'initial\uFFFDdiagnostic',
+    });
+    assert.equal(
+      (
+        await resumedWork.listMessages({ taskId: runtimeTaskId, mode: 'all' })
+      )[0].content,
+      runtimeMessage,
+      'a PostgreSQL transaction preserves logical NUL message content'
+    );
+    await resumedWork.updateRun({
+      runId: runtimeRunId,
+      status: 'failed',
+      error: 'updated\u0000diagnostic',
+      started: false,
+      finished: true,
+      now: 21,
+    });
+    assert.equal(
+      (await resumedWork.findRun(runtimeRunId)).error,
+      'updated\uFFFDdiagnostic'
     );
     await target.close();
   }

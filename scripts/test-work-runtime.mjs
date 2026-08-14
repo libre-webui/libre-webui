@@ -869,18 +869,47 @@ test('task retirement gates every new mutation before cleanup', async t => {
 
   const created = await service.createTaskWithRun(
     userId,
-    'Build a retirement gate',
+    'Build a retirement\u0000 gate',
     'local-tools-model',
     false
+  );
+  assert.equal(created.title, 'Build a retirement\uFFFD gate');
+  assert.equal(
+    (await service.getMessages(created.id))[0].content,
+    'Build a retirement\u0000 gate',
+    'derived-title sanitizing must not change the logical Work message'
   );
   assert.equal(created.providerType, 'ollama');
   assert.equal(created.providerId, undefined);
   assert.equal(created.activeRun.providerType, 'ollama');
   assert.equal(created.activeRun.providerId, undefined);
   await service.updateRun(created.activeRun.id, 'completed', {
+    error: 'plugin\u0000diagnostic',
     finished: true,
   });
+  assert.equal(
+    (await service.getRun(created.activeRun.id)).error,
+    'plugin\uFFFDdiagnostic'
+  );
+  assert.equal(
+    db
+      .prepare('SELECT error FROM work_runs WHERE id = ?')
+      .get(created.activeRun.id).error,
+    'plugin\uFFFDdiagnostic'
+  );
   await service.updateTaskStatus(created.id, 'completed');
+  assert.equal(
+    (
+      await service.updateTask(created.id, userId, {
+        title: 'visible\u0000replacement',
+      })
+    ).title,
+    'visible\uFFFDreplacement'
+  );
+  await assert.rejects(
+    service.updateTask(created.id, userId, { model: 'invalid\u0000model' }),
+    error => error?.status === 400 && /model.*U\+0000/i.test(error.message)
+  );
 
   db.prepare(`UPDATE users SET role = 'user' WHERE id = ?`).run(userId);
   await assert.rejects(

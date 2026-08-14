@@ -8,5 +8,7 @@ export * from './types.js';
 export * from './service.js';
 export * from './sqliteWorkPersistence.js';
 export * from './postgresWorkPersistence.js';
+export * from './workMessageContentCodec.js';
+export * from './workTextSafety.js';
 export * from './postgresWorkMigration.js';
 export * from './workExecutionTypes.js';

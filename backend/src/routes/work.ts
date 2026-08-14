@@ -363,7 +363,7 @@ router.post(
   ): Promise<void> => {
     try {
       const message = requireBodyString(req.body?.message, 'message', 65_536);
-      const model = requireBodyString(req.body?.model, 'model', 500);
+      const model = requirePostgresBodyString(req.body?.model, 'model', 500);
       const userId = requireUserId(req);
       const provider = readProviderSelection(req.body);
       const requestedHostPath =
@@ -763,6 +763,10 @@ router.patch(
     try {
       const taskId = readTaskId(req);
       const userId = requireUserId(req);
+      const title =
+        typeof req.body?.title === 'string'
+          ? rejectPostgresTextNul(req.body.title, 'title')
+          : undefined;
       const before = await workTaskService.requireMutableTaskRecord(
         taskId,
         userId
@@ -773,7 +777,7 @@ router.patch(
           : undefined;
       const model =
         typeof req.body?.model === 'string'
-          ? requireBodyString(req.body.model, 'model', 500)
+          ? requirePostgresBodyString(req.body.model, 'model', 500)
           : undefined;
       const providerChanged =
         req.body?.providerType !== undefined ||
@@ -799,10 +803,7 @@ router.patch(
           const desired = { ...current, networkEnabled };
           await workRuntimeService.changeNetworkPolicy(current, desired, () => {
             return workTaskService.commitNetworkChange(taskId, userId, {
-              title:
-                typeof req.body?.title === 'string'
-                  ? req.body.title
-                  : undefined,
+              title,
               model,
               providerType: provider?.providerType,
               providerId: provider?.providerId,
@@ -819,7 +820,7 @@ router.patch(
         return;
       }
       const detail = await workTaskService.updateTask(taskId, userId, {
-        title: typeof req.body?.title === 'string' ? req.body.title : undefined,
+        title,
         model,
         providerType: provider?.providerType,
         providerId: provider?.providerId,
@@ -865,7 +866,7 @@ router.post(
       );
       const model =
         typeof req.body?.model === 'string' && req.body.model.trim()
-          ? req.body.model.trim()
+          ? requirePostgresBodyString(req.body.model, 'model', 500)
           : current.model;
       const provider = readProviderSelection(req.body, current);
       await workModelProviderService.assertModelSupportsTools(
@@ -1286,6 +1287,21 @@ function requireBodyString(
     );
   }
   return value.trim();
+}
+
+function rejectPostgresTextNul(value: string, name: string): string {
+  if (value.includes('\u0000')) {
+    throw new WorkRouteError(`Field "${name}" cannot contain U+0000.`, 400);
+  }
+  return value;
+}
+
+function requirePostgresBodyString(
+  value: unknown,
+  name: string,
+  maxLength: number
+): string {
+  return rejectPostgresTextNul(requireBodyString(value, name, maxLength), name);
 }
 
 function optionalNonNegativeInteger(

@@ -23,6 +23,11 @@ import {
   type WorkTaskUpdate,
 } from './types.js';
 import type { TransactionalWorkExecutionEnqueuer } from './workExecutionTypes.js';
+import {
+  decodePostgresWorkMessageContent,
+  encodePostgresWorkMessageContent,
+} from './workMessageContentCodec.js';
+import { replaceWorkTextNul } from './workTextSafety.js';
 
 type StoredTaskRow = QueryResultRow &
   Omit<
@@ -87,11 +92,14 @@ const runRow = (row: StoredRunRow): WorkRunRow => ({
   started_at: nullableInteger(row.started_at, 'run started time'),
   finished_at: nullableInteger(row.finished_at, 'run finished time'),
 });
-const messageRow = (row: StoredMessageRow): WorkMessageRow => ({
-  ...row,
-  message_index: integer(row.message_index, 'message index'),
-  created_at: integer(row.created_at, 'message created time'),
-});
+const messageRow = (row: StoredMessageRow): WorkMessageRow => {
+  return {
+    ...row,
+    content: decodePostgresWorkMessageContent(row.content),
+    message_index: integer(row.message_index, 'message index'),
+    created_at: integer(row.created_at, 'message created time'),
+  };
+};
 const policyRow = (row: StoredPolicyRow): WorkPolicyRow => ({
   ...row,
   pids_limit: nullableInteger(row.pids_limit, 'policy pids limit'),
@@ -549,7 +557,7 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
        finished_at = CASE WHEN $4 THEN $5 ELSE finished_at END WHERE id = $6`,
       [
         input.status,
-        input.error,
+        input.error === null ? null : replaceWorkTextNul(input.error),
         input.started,
         input.finished,
         input.now,
@@ -839,7 +847,7 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
         row.provider_type,
         row.provider_id,
         row.status,
-        row.error,
+        row.error === null ? null : replaceWorkTextNul(row.error),
         row.created_at,
         row.started_at,
         row.finished_at,
@@ -861,7 +869,7 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
         row.run_id,
         row.role,
         row.kind,
-        row.content,
+        encodePostgresWorkMessageContent(row.content),
         row.metadata,
         row.message_index,
         row.created_at,
