@@ -1226,6 +1226,11 @@ export const createTeamBackupArchive = async (
   const payload = path.join(scratch, 'payload');
   fs.mkdirSync(path.join(payload, 'team'), { recursive: true, mode: 0o700 });
   const dumpPath = path.join(payload, 'team', 'postgres.dump');
+  // A pg_dump wrapper may execute in a rootful container with this scratch
+  // directory bind-mounted from the host. Create the output inode as the
+  // Libre process first so pg_dump only truncates it and cannot leave behind
+  // a root-owned file that the host process is unable to secure or remove.
+  fs.writeFileSync(dumpPath, '', { flag: 'wx', mode: 0o600 });
   const database = createPostgresDatabase(postgresConfig);
   const s3Client = new S3Client(s3Config.clientConfig);
   const keyring = createStorageKeyringFromEnvironment(env);

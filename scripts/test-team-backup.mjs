@@ -69,9 +69,22 @@ const stopContainer = name => {
 };
 
 const writePostgresToolWrapper = (target, container, tool) => {
+  const dumpOutputGuard =
+    tool === 'pg_dump'
+      ? `dump_path=
+for argument do
+  case "\${argument}" in
+    --file=*) dump_path="\${argument#--file=}" ;;
+  esac
+done
+[ -n "\${dump_path}" ] && [ -f "\${dump_path}" ]
+dump_mode="$(stat -c %a "\${dump_path}" 2>/dev/null || stat -f %Lp "\${dump_path}")"
+[ "\${dump_mode}" = 600 ]
+`
+      : '';
   const content = `#!/bin/sh
 set -eu
-exec docker exec \\
+${dumpOutputGuard}exec docker exec \\
   -e PGHOST=127.0.0.1 \\
   -e PGPORT=5432 \\
   -e PGDATABASE="\${PGDATABASE}" \\
