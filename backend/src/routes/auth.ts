@@ -35,7 +35,11 @@ import {
 } from '../services/oauthSecurity.js';
 import { validatePasswordStrength } from '../utils/hash.js';
 import { createLogger } from '../utils/logger.js';
-import { websocketTicketService } from '../services/websocketTicketService.js';
+import {
+  WebSocketTicketRateLimitError,
+  websocketTicketService,
+} from '../services/websocketTicketService.js';
+import { coordinatedRateLimit } from '../middleware/coordinatedRateLimit.js';
 
 const router = express.Router();
 const logger = createLogger('auth-routes');
@@ -69,15 +73,18 @@ const getClientIp = (req: express.Request): string | undefined => {
 };
 
 // Rate limiter for authentication routes: 5 login attempts per 15 minutes
-const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs for auth
-  message: {
-    success: false,
-    message: 'Too many authentication attempts, please try again later',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
+const loginRateLimiter = coordinatedRateLimit({
+  keyPrefix: 'security.login',
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  message: 'Too many authentication attempts, please try again later',
+});
+
+const signupRateLimiter = coordinatedRateLimit({
+  keyPrefix: 'security.signup',
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  message: 'Too many authentication attempts, please try again later',
 });
 
 // Rate limiter for general auth routes: 100 requests per 15 minutes
@@ -101,7 +108,7 @@ router.post(
   '/websocket-ticket',
   generalAuthRateLimiter,
   authenticate,
-  (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res) => {
     res.set('Cache-Control', 'no-store');
     const audience = req.body?.audience;
     const taskId = req.body?.taskId;
@@ -123,20 +130,32 @@ router.post(
       return;
     }
     const sessionExpiresAt = (req.user?.exp ?? 0) * 1000;
-    const ticket = websocketTicketService.issue(
-      req.user!.userId,
-      sessionExpiresAt,
-      audience,
-      audience === 'work-terminal' ? taskId.trim() : undefined
-    );
-    res.json({ success: true, data: ticket });
+    try {
+      const ticket = await websocketTicketService.issue(
+        req.user!.userId,
+        sessionExpiresAt,
+        audience,
+        audience === 'work-terminal' ? taskId.trim() : undefined
+      );
+      res.json({ success: true, data: ticket });
+    } catch (error) {
+      if (error instanceof WebSocketTicketRateLimitError) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
+      logger.warn('Shared WebSocket ticket storage is unavailable');
+      res.status(503).json({
+        success: false,
+        message: 'WebSocket authentication is temporarily unavailable',
+      });
+    }
   }
 );
 
 /**
  * Login endpoint
  */
-router.post('/login', authRateLimiter, async (req, res) => {
+router.post('/login', loginRateLimiter, async (req, res) => {
   try {
     const { username, password, turnstileToken } = req.body;
 
@@ -319,7 +338,7 @@ router.get(
 /**
  * Signup endpoint
  */
-router.post('/signup', authRateLimiter, async (req, res) => {
+router.post('/signup', signupRateLimiter, async (req, res) => {
   try {
     if (!(await authService.canCreateLocalAccount())) {
       res.status(403).json({

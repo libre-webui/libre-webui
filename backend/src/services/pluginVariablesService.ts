@@ -16,21 +16,20 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabaseSafe } from '../db.js';
+import { getPersistence } from '../persistence/index.js';
+import type { StoredPluginVariable } from '../persistence/extensionTypes.js';
 import { encryptionService } from './encryptionService.js';
 import { PluginVariableDefinition } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import { PLUGIN_CONNECTION_VARIABLE_NAMES } from '../utils/pluginConnectionVariables.js';
+import {
+  ensurePluginCacheInvalidationSubscription,
+  publishPluginCacheInvalidation,
+  registerPluginCacheInvalidationListener,
+  type PluginCacheInvalidation,
+} from './pluginCacheInvalidation.js';
 
 const logger = createLogger('services:plugin-variables-service');
-
-interface VariableRow {
-  id: string;
-  variable_name: string;
-  variable_value: string;
-  is_encrypted: number;
-  updated_at: number;
-}
 
 export interface PluginVariableValue {
   name: string;
@@ -39,26 +38,68 @@ export interface PluginVariableValue {
   has_value: boolean;
 }
 
-class PluginVariablesService {
+export class PluginVariablesService {
   // Cache resolved variables with a 5-second TTL to avoid DB reads on every request
   private resolvedCache = new Map<
     string,
     { data: Record<string, string | number | boolean>; expires: number }
   >();
+  private cacheRevisions = new Map<string, number>();
+  private removeInvalidationListener: (() => void) | undefined;
 
   private getCacheKey(pluginId: string, userId: string): string {
     return `${pluginId}:${userId}`;
   }
 
+  private async ensureCacheInvalidation(): Promise<void> {
+    this.removeInvalidationListener ??= registerPluginCacheInvalidationListener(
+      invalidation => this.handleCacheInvalidation(invalidation)
+    );
+    await ensurePluginCacheInvalidationSubscription();
+  }
+
+  private bumpCacheRevision(key: string): void {
+    this.cacheRevisions.set(key, (this.cacheRevisions.get(key) ?? 0) + 1);
+  }
+
   private invalidateCache(pluginId: string, userId?: string): void {
     if (userId) {
-      this.resolvedCache.delete(this.getCacheKey(pluginId, userId));
+      const key = this.getCacheKey(pluginId, userId);
+      this.resolvedCache.delete(key);
+      this.bumpCacheRevision(key);
     } else {
       // Invalidate all entries for this plugin
-      for (const key of this.resolvedCache.keys()) {
+      const keys = new Set([
+        ...this.resolvedCache.keys(),
+        ...this.cacheRevisions.keys(),
+      ]);
+      for (const key of keys) {
         if (key.startsWith(`${pluginId}:`)) {
           this.resolvedCache.delete(key);
+          this.bumpCacheRevision(key);
         }
+      }
+    }
+  }
+
+  private handleCacheInvalidation(invalidation: PluginCacheInvalidation): void {
+    if (invalidation.scope === 'plugin-user') {
+      this.invalidateCache(invalidation.pluginId, invalidation.userId);
+      return;
+    }
+    if (invalidation.scope === 'plugin') {
+      this.invalidateCache(invalidation.pluginId);
+      return;
+    }
+    const suffix = `:${invalidation.userId}`;
+    const keys = new Set([
+      ...this.resolvedCache.keys(),
+      ...this.cacheRevisions.keys(),
+    ]);
+    for (const key of keys) {
+      if (key.endsWith(suffix)) {
+        this.resolvedCache.delete(key);
+        this.bumpCacheRevision(key);
       }
     }
   }
@@ -67,14 +108,13 @@ class PluginVariablesService {
    * Get all variable values for a plugin, merged with schema defaults.
    * If forDisplay is true, sensitive values are masked.
    */
-  getVariables(
+  async getVariables(
     pluginId: string,
     schema: PluginVariableDefinition[],
     userId?: string,
     forDisplay = false
-  ): Record<string, PluginVariableValue> {
+  ): Promise<Record<string, PluginVariableValue>> {
     const effectiveUserId = userId || 'default';
-    const db = getDatabaseSafe();
     const result: Record<string, PluginVariableValue> = {};
 
     // Initialize with defaults from schema
@@ -88,14 +128,8 @@ class PluginVariablesService {
       };
     }
 
-    if (!db) return result;
-
     try {
-      const rows = db
-        .prepare(
-          'SELECT variable_name, variable_value, is_encrypted, updated_at FROM plugin_variables WHERE plugin_id = ? AND user_id = ?'
-        )
-        .all(pluginId, effectiveUserId) as VariableRow[];
+      const rows = await this.repository().list(pluginId, effectiveUserId);
 
       for (const row of rows) {
         const def = schema.find(d => d.name === row.variable_name);
@@ -143,29 +177,40 @@ class PluginVariablesService {
   /**
    * Get resolved variable values for runtime use (decrypted, typed).
    */
-  getResolvedVariables(
+  async getResolvedVariables(
     pluginId: string,
     schema: PluginVariableDefinition[],
     userId?: string
-  ): Record<string, string | number | boolean> {
+  ): Promise<Record<string, string | number | boolean>> {
+    await this.ensureCacheInvalidation();
     const effectiveUserId = userId || 'default';
     const cacheKey = this.getCacheKey(pluginId, effectiveUserId);
-    const cached = this.resolvedCache.get(cacheKey);
+    const useProcessCache =
+      getPersistence(encryptionService).dialect === 'sqlite';
+    const cached = useProcessCache
+      ? this.resolvedCache.get(cacheKey)
+      : undefined;
 
     if (cached && cached.expires > Date.now()) {
       return cached.data;
     }
 
-    const vars = this.getVariables(pluginId, schema, userId, false);
+    const revision = this.cacheRevisions.get(cacheKey) ?? 0;
+    const vars = await this.getVariables(pluginId, schema, userId, false);
     const result: Record<string, string | number | boolean> = {};
     for (const [key, val] of Object.entries(vars)) {
       result[key] = val.value;
     }
 
-    this.resolvedCache.set(cacheKey, {
-      data: result,
-      expires: Date.now() + 5000, // 5 second TTL
-    });
+    if (
+      useProcessCache &&
+      revision === (this.cacheRevisions.get(cacheKey) ?? 0)
+    ) {
+      this.resolvedCache.set(cacheKey, {
+        data: result,
+        expires: Date.now() + 5000, // 5 second TTL
+      });
+    }
 
     return result;
   }
@@ -174,15 +219,13 @@ class PluginVariablesService {
    * Whether this user stored a non-empty connection-routing override.
    * Schema defaults are manifest-owned and intentionally do not count.
    */
-  hasStoredConnectionOverride(
+  async hasStoredConnectionOverride(
     pluginId: string,
     userId?: string,
     schema?: PluginVariableDefinition[],
     connectionVariableNames: ReadonlySet<string> = PLUGIN_CONNECTION_VARIABLE_NAMES
-  ): boolean {
+  ): Promise<boolean> {
     const effectiveUserId = userId || 'default';
-    const db = getDatabaseSafe();
-    if (!db) return false;
     const configuredConnectionNames = schema
       ? new Set(
           schema
@@ -192,15 +235,7 @@ class PluginVariablesService {
       : undefined;
 
     try {
-      const rows = db
-        .prepare(
-          `SELECT variable_name, variable_value, is_encrypted
-           FROM plugin_variables
-           WHERE plugin_id = ? AND user_id = ?`
-        )
-        .all(pluginId, effectiveUserId) as Array<
-        Pick<VariableRow, 'variable_name' | 'variable_value' | 'is_encrypted'>
-      >;
+      const rows = await this.repository().list(pluginId, effectiveUserId);
 
       return rows.some(row => {
         if (!connectionVariableNames.has(row.variable_name)) return false;
@@ -230,22 +265,17 @@ class PluginVariablesService {
   /**
    * Set multiple variable values for a plugin.
    */
-  setVariables(
+  async setVariables(
     pluginId: string,
     variables: Record<string, string | number | boolean>,
     schema: PluginVariableDefinition[],
     userId?: string,
     variablesToUnset: string[] = []
-  ): boolean {
+  ): Promise<boolean> {
     const effectiveUserId = userId || 'default';
-    const db = getDatabaseSafe();
-
-    if (!db) {
-      logger.error('Database not available for storing plugin variables');
-      return false;
-    }
 
     try {
+      await this.ensureCacheInvalidation();
       const now = Date.now();
       const schemaNames = new Set(schema.map(definition => definition.name));
       const variableNames = Object.keys(variables);
@@ -272,53 +302,38 @@ class PluginVariablesService {
         return false;
       }
 
-      const transaction = db.transaction(() => {
-        for (const name of unsetNames) {
-          db.prepare(
-            'DELETE FROM plugin_variables WHERE plugin_id = ? AND user_id = ? AND variable_name = ?'
-          ).run(pluginId, effectiveUserId, name);
-        }
+      const upserts: StoredPluginVariable[] = [];
+      for (const [name, value] of Object.entries(variables)) {
+        const def = schema.find(d => d.name === name);
+        if (!def) continue;
 
-        for (const [name, value] of Object.entries(variables)) {
-          const def = schema.find(d => d.name === name);
-          if (!def) continue;
+        const stringValue = String(value);
+        const isSensitive = def.sensitive ?? false;
+        const storedValue = isSensitive
+          ? encryptionService.encrypt(stringValue)
+          : stringValue;
 
-          const stringValue = String(value);
-          const isSensitive = def.sensitive ?? false;
-          const storedValue = isSensitive
-            ? encryptionService.encrypt(stringValue)
-            : stringValue;
-
-          const existing = db
-            .prepare(
-              'SELECT id FROM plugin_variables WHERE plugin_id = ? AND user_id = ? AND variable_name = ?'
-            )
-            .get(pluginId, effectiveUserId, name) as { id: string } | undefined;
-
-          if (existing) {
-            db.prepare(
-              'UPDATE plugin_variables SET variable_value = ?, is_encrypted = ?, updated_at = ? WHERE id = ?'
-            ).run(storedValue, isSensitive ? 1 : 0, now, existing.id);
-          } else {
-            const id = uuidv4();
-            db.prepare(
-              'INSERT INTO plugin_variables (id, user_id, plugin_id, variable_name, variable_value, is_encrypted, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-            ).run(
-              id,
-              effectiveUserId,
-              pluginId,
-              name,
-              storedValue,
-              isSensitive ? 1 : 0,
-              now,
-              now
-            );
-          }
-        }
+        upserts.push({
+          id: uuidv4(),
+          user_id: effectiveUserId,
+          plugin_id: pluginId,
+          variable_name: name,
+          variable_value: storedValue,
+          is_encrypted: isSensitive ? 1 : 0,
+          created_at: now,
+          updated_at: now,
+        });
+      }
+      await this.repository().apply(pluginId, effectiveUserId, {
+        unsetNames,
+        upserts,
       });
-
-      transaction();
-      this.invalidateCache(pluginId, effectiveUserId);
+      await publishPluginCacheInvalidation({
+        version: 1,
+        scope: 'plugin-user',
+        pluginId,
+        userId: effectiveUserId,
+      });
       return true;
     } catch (error) {
       logger.error('Failed to set variables for plugin %s:', pluginId, error);
@@ -329,21 +344,18 @@ class PluginVariablesService {
   /**
    * Delete all variables for a plugin (reset to defaults).
    */
-  deletePluginVariables(pluginId: string, userId?: string): boolean {
-    const db = getDatabaseSafe();
-    if (!db) return false;
-
+  async deletePluginVariables(
+    pluginId: string,
+    userId?: string
+  ): Promise<boolean> {
     try {
-      if (userId) {
-        db.prepare(
-          'DELETE FROM plugin_variables WHERE plugin_id = ? AND user_id = ?'
-        ).run(pluginId, userId);
-      } else {
-        db.prepare('DELETE FROM plugin_variables WHERE plugin_id = ?').run(
-          pluginId
-        );
-      }
-      this.invalidateCache(pluginId, userId);
+      await this.ensureCacheInvalidation();
+      await this.repository().delete(pluginId, userId);
+      await publishPluginCacheInvalidation(
+        userId
+          ? { version: 1, scope: 'plugin-user', pluginId, userId }
+          : { version: 1, scope: 'plugin', pluginId }
+      );
       return true;
     } catch (error) {
       logger.error(
@@ -358,23 +370,32 @@ class PluginVariablesService {
   /**
    * Delete all variables for a user (used on account deletion).
    */
-  deleteUserVariables(userId: string): boolean {
-    const db = getDatabaseSafe();
-    if (!db) return false;
-
+  async deleteUserVariables(userId: string): Promise<boolean> {
     try {
-      db.prepare('DELETE FROM plugin_variables WHERE user_id = ?').run(userId);
-      // Clear all cache entries for this user
-      for (const key of this.resolvedCache.keys()) {
-        if (key.endsWith(`:${userId}`)) {
-          this.resolvedCache.delete(key);
-        }
-      }
+      await this.ensureCacheInvalidation();
+      await this.repository().deleteByUser(userId);
+      await publishPluginCacheInvalidation({
+        version: 1,
+        scope: 'user',
+        userId,
+      });
       return true;
     } catch (error) {
       logger.error(`Failed to delete all variables for user ${userId}:`, error);
       return false;
     }
+  }
+
+  private repository() {
+    return getPersistence(encryptionService).repositories.extensions
+      .pluginVariables;
+  }
+
+  async closeCacheInvalidation(): Promise<void> {
+    this.removeInvalidationListener?.();
+    this.removeInvalidationListener = undefined;
+    this.resolvedCache.clear();
+    this.cacheRevisions.clear();
   }
 }
 

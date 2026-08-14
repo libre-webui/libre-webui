@@ -17,8 +17,23 @@
 
 export interface VectorActor {
   userId: string;
-  /** Trusted group IDs resolved by the authorization layer. */
+  /**
+   * Untrusted compatibility claims. Stores must resolve current membership
+   * through VectorPrincipalResolver and never authorize from this array.
+   */
   groupIds?: readonly string[];
+}
+
+export interface VectorPrincipalResolver {
+  /** Resolve current, trusted group membership on every authorization call. */
+  resolveGroupIds(userId: string): Promise<readonly string[]>;
+}
+
+/** Owner/user grants only until a trusted group repository is configured. */
+export class OwnerOnlyVectorPrincipalResolver implements VectorPrincipalResolver {
+  async resolveGroupIds(): Promise<readonly string[]> {
+    return [];
+  }
 }
 
 export type VectorGrant =
@@ -78,6 +93,37 @@ export interface VectorDeleteRequest {
   ids?: readonly string[];
 }
 
+export interface VectorResourceIndexEntry {
+  id: string;
+  sourceRevision: string;
+}
+
+/** Mutation batch size supported atomically by both vector backends. */
+export const MAX_VECTOR_RECORDS_PER_UPSERT = 1_000;
+
+/**
+ * Maximum exact resource manifest accepted by the bounded paged probe. This
+ * is deliberately larger than one mutation batch so callers can publish a
+ * resource through multiple compensated batches and still prove it globally,
+ * while remaining aligned with the portable archive document-chunk ceiling.
+ */
+export const MAX_VECTOR_RESOURCE_INDEX_ENTRIES = 100_000;
+
+/**
+ * Metadata-only owner probe used by repair paths before they mutate an index.
+ * Implementations must require the resource to contain exactly these records;
+ * extra, missing, stale-model, or stale-revision rows all return false.
+ */
+export interface VectorResourceIndexProbe {
+  actor: VectorActor;
+  namespace: string;
+  resourceId: string;
+  model: string;
+  dimensions: number;
+  version: string;
+  entries: readonly VectorResourceIndexEntry[];
+}
+
 /**
  * Every query and mutation carries an actor. Implementations must apply ACL
  * and resource predicates before embeddings are decrypted or scored.
@@ -85,6 +131,7 @@ export interface VectorDeleteRequest {
 export interface VectorStore {
   upsert(request: VectorUpsertRequest): Promise<void>;
   query(request: VectorQuery): Promise<VectorHit[]>;
+  hasExactResourceIndex(request: VectorResourceIndexProbe): Promise<boolean>;
   delete(request: VectorDeleteRequest): Promise<number>;
   deleteAllForOwner(actor: VectorActor): Promise<number>;
 }

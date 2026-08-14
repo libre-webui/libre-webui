@@ -3,28 +3,145 @@
   "type": "object",
   "properties": {
     "replicaCount": {
-      "description": "Libre WebUI may be suspended or run as one replica until shared state backends are supported.",
+      "description": "Solo mode permits at most one replica; team mode may scale shared-state application replicas.",
       "type": "integer",
-      "minimum": 0,
-      "maximum": 1
+      "minimum": 0
     },
     "autoscaling": {
       "type": "object",
       "properties": {
         "enabled": {
-          "description": "Horizontal autoscaling is unsafe with SQLite and process-local state.",
-          "type": "boolean",
-          "const": false
+          "description": "Horizontal autoscaling is accepted only with the complete team profile.",
+          "type": "boolean"
         },
         "minReplicas": {
           "type": "integer",
-          "const": 1
+          "minimum": 1
         },
         "maxReplicas": {
           "type": "integer",
-          "const": 1
+          "minimum": 1
         }
       }
+    },
+    "env": {
+      "type": "object",
+      "properties": {
+        "TRUST_PROXY": {
+          "description": "Exact trusted reverse-proxy hop count for application HTTP requests; zero trusts no forwarded address.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16
+        },
+        "DATABASE_SSL_MODE": {
+          "description": "PostgreSQL transport security; managed databases should retain verify-full.",
+          "type": "string",
+          "enum": ["disable", "require", "verify-full"]
+        },
+        "POSTGRES_MIGRATION_MODE": {
+          "description": "Apply compatible migrations under the advisory leader lock or validate without changing schema.",
+          "type": "string",
+          "enum": ["apply", "validate"]
+        },
+        "POSTGRES_POOL_MAX": {
+          "description": "Maximum PostgreSQL connections in each application or worker pod.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "POSTGRES_CONNECT_TIMEOUT_MS": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60000
+        },
+        "POSTGRES_IDLE_TIMEOUT_MS": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600000
+        },
+        "POSTGRES_STATEMENT_TIMEOUT_MS": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600000
+        },
+        "POSTGRES_MIGRATION_LOCK_TIMEOUT_MS": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600000
+        },
+        "BLOB_QUOTA_BYTES_PER_USER": {
+          "description": "Durable maximum plaintext blob bytes per owner.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "BLOB_QUOTA_RESERVATION_TTL_MS": {
+          "description": "Lifetime in milliseconds of an abandoned streaming quota reservation.",
+          "type": "integer",
+          "minimum": 60000,
+          "maximum": 9007199254740991
+        },
+        "OLLAMA_TIMEOUT": {
+          "description": "Standard Ollama request timeout in milliseconds for every application and worker pod.",
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 3600000
+        },
+        "OLLAMA_LONG_OPERATION_TIMEOUT": {
+          "description": "Long Ollama operation timeout in milliseconds; it must be at least OLLAMA_TIMEOUT.",
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 3600000
+        },
+        "OLLAMA_MAX_CONTEXT": {
+          "description": "Largest Ollama model context window adopted automatically in each application or worker pod.",
+          "type": "integer",
+          "minimum": 128,
+          "maximum": 2097152
+        },
+        "AGENT_CLI_MODELS_ENABLED": {
+          "description": "Node-local agent CLIs are unsupported in team mode and must remain false there.",
+          "type": "string",
+          "enum": ["false", "true"]
+        },
+        "CODEX_OAUTH_MODELS_ENABLED": {
+          "description": "Node-local Codex OAuth files are unsupported in team mode and must remain false there.",
+          "type": "string",
+          "enum": ["false", "true"]
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "properties": {
+        "jwtSecret": {
+          "description": "Stable JWT signing secret shared by every team application and worker replica; the empty value remains valid for solo mode.",
+          "type": "string",
+          "pattern": "^$|.*\\S.*"
+        }
+      }
+    },
+    "worker": {
+      "type": "object",
+      "properties": {
+        "replicaCount": {
+          "description": "External durable-worker replicas. An active team application requires at least one; zero is valid for full suspension or deliberate worker shutdown while application replicas are also zero.",
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": ["replicaCount"]
+    },
+    "team": {
+      "type": "object",
+      "properties": {
+        "tempSizeLimit": {
+          "description": "Bounded ephemeral scratch shared by no replicas and used for team-mode preflight/runtime files only.",
+          "type": "string",
+          "pattern": "^[1-9][0-9]*(Ki|Mi|Gi|Ti)$"
+        }
+      },
+      "required": ["tempSizeLimit"]
     }
   }
 }

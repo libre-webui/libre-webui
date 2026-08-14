@@ -16,15 +16,15 @@ class LibreWebui < Formula
   license "Apache-2.0"
   head "https://github.com/libre-webui/libre-webui.git", branch: "main"
 
+  depends_on "libpq@16"
   depends_on "node"
 
   def install
     system "npm", "install", *std_npm_args(ignore_scripts: false)
-    bin.install_symlink libexec.glob("bin/*")
-  end
-
-  def post_install
-    (var/"libre-webui").mkpath
+    (bin/"libre-webui").write_env_script(
+      libexec/"bin/libre-webui",
+      PATH: "#{formula_opt_bin("libpq@16")}:$PATH",
+    )
   end
 
   def caveats
@@ -36,6 +36,13 @@ class LibreWebui < Formula
 
       To start on a custom port:
         libre-webui --port 3000
+
+      Maintenance commands:
+        libre-webui recovery-check --help
+        libre-webui backup --help
+        libre-webui migrate-postgres --help
+
+      Team backup and restore use the bundled PostgreSQL 16 client tools.
 
       Configuration:
         Data is stored in: ~/.libre-webui
@@ -60,12 +67,13 @@ class LibreWebui < Formula
     working_dir var/"libre-webui"
     log_path var/"log/libre-webui.log"
     error_log_path var/"log/libre-webui.log"
-    environment_variables PATH: std_service_path_env,
-                          DATA_DIR: File.join(Dir.home, ".libre-webui"),
+    environment_variables PATH:                       std_service_path_env,
+                          DATA_DIR:                   File.join(Dir.home, ".libre-webui"),
                           PLATFORM_PREFLIGHT_TMP_DIR: (var/"libre-webui"/"preflight").to_s
   end
 
   test do
     assert_match version.to_s, shell_output("#{bin}/libre-webui --version")
+    assert_match "libre-webui recovery-check", shell_output("#{bin}/libre-webui recovery-check --help")
   end
 end

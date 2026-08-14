@@ -7,41 +7,30 @@ slug: /PLATFORM_FOUNDATION
 
 # Platform Foundation
 
-Libre WebUI remains a local-first, single-replica application in this release.
-The platform foundation introduces explicit contracts and safety gates needed
-for a future shared deployment without pretending that the migration is
-complete. SQLite, local encrypted storage, the embedded vector index, an
-inactive durable-job substrate, and one application replica remain the
-supported profile. No domain handler worker is bootstrapped yet.
-
-The existing Helm guard still permits at most one running application replica.
-Do not remove it until PostgreSQL, S3-compatible blobs, PGVector, durable jobs,
-shared event replay, and Redis-backed coordination have all passed the
-multi-replica acceptance suite.
+Libre WebUI supports a local-first `solo` profile and a shared `team` profile.
+Solo uses SQLite, encrypted local blobs, encrypted embedded vectors, local
+coordination, and an embedded durable worker. Team uses PostgreSQL,
+S3-compatible private blobs, PGVector, Redis coordination, and an external
+durable worker. Startup rejects mixed profiles instead of silently splitting
+state between local and shared backends.
 
 ## Current milestone
 
-| Area         | Available now                                                           | Still required                                                                                            |
-| ------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Persistence  | Async identity repository and transaction-scoped unit of work on SQLite | Move every domain behind repositories; PostgreSQL repositories, migrations, and verified offline transfer |
-| Migrations   | Versioned, checksummed SQLite ledger and legacy-schema adoption         | PostgreSQL migration leader, mixed-version policy, and upgrade fixtures                                   |
-| Blobs        | Encrypted streaming local adapter and contract                          | Resource metadata/backfill, S3 adapter, MinIO parity tests, HTTP Range proxy                              |
-| Vectors      | Encrypted embedded adapter with SQL-side ACL predicates                 | Migrate RAG/memory callers and add PGVector with PostgreSQL parity tests                                  |
-| Coordination | Local and real Redis coordinator contracts                              | Move tickets, caches, locks, limits, presence, and invalidation to the coordinator                        |
-| Jobs/events  | SQLite v3 durable jobs/attempts and ordered transactional event log     | Domain callers, handler bootstrap, admin API, external worker, and shared-database acceptance             |
-| Operations   | Split health probes and read-only recovery inventory                    | Signed encrypted backup, coordinated restore, and automated restore verification                          |
-
-PostgreSQL, S3, PGVector, and an external job worker are intentionally
-unavailable selections. Startup reports a configuration blocker instead of
-falling back to local state.
+| Area         | Implemented foundation                                                                | Remaining caller work                                                         |
+| ------------ | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Persistence  | SQLite and PostgreSQL repositories, immutable migrations, pooled transactions         | New domains must use repository boundaries                                    |
+| Blobs        | Encrypted local and S3-compatible streaming stores, ranges, checksums, durable quotas | Move chat attachments, avatars, and other remaining inline binary fields      |
+| Vectors      | Encrypted embedded vectors, PGVector ACLs, and deletion-safe document index rebuilds  | New embedding callers must preserve the same authority and lifecycle contract |
+| Coordination | Local and Redis events, cache, leases, rate limits, invalidation, and health          | Keep Redis non-authoritative                                                  |
+| Jobs/events  | SQLite/PostgreSQL queues, transactional events, workers, retries, cancellation, admin | Every new side effect needs an idempotency or outbox design                   |
+| Operations   | Health gates, signed/encrypted backup archives, clean-target restore, verification    | Exercise restore and cross-replica acceptance for each deployment environment |
 
 ## Runtime profiles
 
 `LIBRE_PLATFORM_MODE=solo` is the default. It selects SQLite, local blobs,
-embedded vectors, local coordination, and the inactive `embedded` job-worker
-selector. Redis may be selected in solo mode to exercise the coordination
-adapter, but doing so does not make SQLite or local files safe to share across
-replicas. No job worker starts until audited domain handlers are registered.
+embedded vectors, local coordination, and the embedded durable worker. Redis
+may be selected in solo mode, but doing so does not make SQLite or local files
+safe to share across replicas.
 
 `LIBRE_PLATFORM_MODE=team` requires all shared dependencies at once:
 
@@ -51,16 +40,112 @@ replicas. No job worker starts until audited domain handlers are registered.
 - `COORDINATION_BACKEND=redis` with `REDIS_URL`; and
 - `JOB_WORKER_MODE=external`.
 
-Team mode is expected to fail configuration validation in this release because
-the PostgreSQL, S3, PGVector, and external-worker adapters have not shipped.
-This is a safety property, not a setup error that operators should bypass.
+These selectors are a coherent set. Team startup fails when any shared
+dependency is missing or when a local backend is mixed into the profile.
+
+### Migrate an existing solo installation
+
+Stop every Libre application and worker before migrating. The examples use the
+installed `libre-webui` command from global npm or Homebrew. Without installing
+globally, replace it with `npx --yes libre-webui@latest`. From a source checkout,
+build once and replace `libre-webui migrate-postgres` with
+`npm run migrate:postgres --`. Configure the target PostgreSQL, S3, and
+versioned encryption-key environment exactly as the target team deployment,
+then run the read-only analysis first:
+
+```bash
+libre-webui migrate-postgres \
+  --source /absolute/path/to/data.sqlite \
+  --plugins /absolute/path/to/plugins \
+  --mode dry-run
+```
+
+Apply only to the empty target identified by that report. A failed run leaves a
+checksummed import journal; resume that same source and target rather than
+starting an unrelated import:
+
+```bash
+libre-webui migrate-postgres \
+  --source /absolute/path/to/data.sqlite \
+  --plugins /absolute/path/to/plugins \
+  --mode apply
+
+# Only after an interrupted apply of this exact source and target:
+libre-webui migrate-postgres \
+  --source /absolute/path/to/data.sqlite \
+  --plugins /absolute/path/to/plugins \
+  --mode apply --resume
+
+libre-webui migrate-postgres \
+  --source /absolute/path/to/data.sqlite \
+  --plugins /absolute/path/to/plugins \
+  --mode validate
+```
+
+The completion marker is withheld until relational rows, plugin definitions,
+local encrypted blobs, embedded vectors, and legacy persona vectors have all
+been transferred and authenticated in PostgreSQL/S3/PGVector. The command
+never invents a source encryption key: `ENCRYPTION_KEY` must match the source
+`.encryption_key`, and `STORAGE_ENCRYPTION_KEYS` must contain the configured
+active key plus the matching `legacy` entry.
+
+### Run the bundled team profile
+
+Set `POSTGRES_PASSWORD`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`,
+`JWT_SECRET`, `ENCRYPTION_KEY`, `STORAGE_ENCRYPTION_ACTIVE_KEY_ID`, and
+`STORAGE_ENCRYPTION_KEYS` in a root-only environment file. The same file may
+set `POSTGRES_MIGRATION_MODE`, `POSTGRES_POOL_MAX`, the supported PostgreSQL
+timeouts, `REDIS_CONNECT_TIMEOUT_MS`, `OLLAMA_BASE_URL`, `OLLAMA_TIMEOUT`,
+`OLLAMA_LONG_OPERATION_TIMEOUT`, and `OLLAMA_MAX_CONTEXT`; the shared Compose
+environment sends each value identically to the application and external
+worker. The provider timeouts accept 1,000-3,600,000 milliseconds, maximum
+context accepts 128-2,097,152 tokens, and the long timeout cannot be shorter
+than the standard timeout; malformed values fail both server entrypoints before
+state is created. Node-local Agent CLI binaries and Codex OAuth token files are
+not supported by external durable workers, so the team profile pins both
+provider paths off and startup rejects attempts to enable them. Then start the
+three application replicas, external durable worker, PostgreSQL/PGVector,
+Redis, versioned MinIO bucket, and gateway:
+
+```bash
+docker compose --env-file /absolute/path/to/libre-team.env \
+  -f docker-compose.team.yml up --build --scale libre-webui=3 -d
+docker compose --env-file /absolute/path/to/libre-team.env \
+  -f docker-compose.team.yml ps
+```
+
+The base team profile deliberately mounts no Docker socket, so Docker-backed
+Work is unavailable. Enable it only by including the shipped production
+overlay in every lifecycle command:
+
+```bash
+docker compose --env-file /absolute/path/to/libre-team.env \
+  -f docker-compose.team.yml -f docker-compose.team.work.yml \
+  up --build --scale libre-webui=3 -d
+docker compose --env-file /absolute/path/to/libre-team.env \
+  -f docker-compose.team.yml -f docker-compose.team.work.yml ps
+```
+
+That overlay points both application and worker processes at one filtered
+Docker socket proxy on an internal-only network. Neither process receives the
+raw socket or socket-group membership, and host-folder Work workspaces stay
+disabled. The proxy exposes only info, images, containers, exec, volumes,
+networks, and the write methods those lifecycle calls require. This narrows the
+API surface but does not make Docker a tenant boundary: container creation can
+still bind-mount host paths. Use a dedicated VM or rootless/separate Work daemon
+when host isolation matters.
+
+Do not expose the Compose-owned PostgreSQL, Redis, or MinIO services directly.
+For managed dependencies, use the Helm team profile and retain verified TLS;
+the Compose file disables PostgreSQL TLS only on its private project network.
+Readiness remains failed until an external worker is present.
 
 ## Persistence and migration boundary
 
 Identity and authorization now use asynchronous repositories. The repository
 transaction callback receives a unit of work bound to the same database
 connection; using the global repository from inside that callback is rejected.
-This proves the transaction boundary required by a future PostgreSQL pool while
+This is the transaction boundary used by the PostgreSQL connection pool while
 preserving the current SQLite behavior.
 
 The SQLite migration coordinator adopts existing installations only after
@@ -87,20 +172,21 @@ accepted arbitrary email strings and used blank values to clear the field;
 adoption preserves nonblank values and normalizes blanks to `NULL`. Damaged
 envelope-shaped values and any non-null mismatch still fail preflight.
 
-This is the first vertical slice of the repository migration. Legacy database
-consumers are allow-listed by a boundary test; new application code may not
-import the native SQLite database outside the persistence implementation.
-Authenticated runtime storage now fails startup closed when SQLite cannot be
-initialized; it cannot silently select the historical cwd-dependent JSON files.
-Those compatibility branches remain only as migration debt until each legacy
-domain is moved behind its repository.
+Application services use asynchronous dialect repositories. Native SQLite is
+restricted to SQLite adapters, migration/recovery inspection, and explicitly
+injected health checks. Runtime storage is initialized from the selected
+`Persistence`; PostgreSQL activation never falls through to the SQLite
+singleton or historical cwd-dependent JSON files.
 
 ## Blob and vector storage foundation
 
-The storage contracts and solo implementations are available, but existing
-gallery, document, voice, chat attachment, avatar, and persona-memory callers
-have not yet been migrated. Their current SQLite fields remain authoritative
-until an explicit, verified data migration switches each resource.
+Generated gallery media and document source files use `BlobStore`; document
+RAG and persona memory use `VectorStore`. SQLite legacy gallery rows are
+dual-read and adopted into blob references on first access. Relational
+metadata and a durable reference are authoritative; provider URLs and physical
+S3 keys are never persisted as application content. Chat attachments, avatars,
+and other remaining inline binary fields are not yet blob-store callers and
+must not be described as migrated.
 
 The recovery gate authenticates every durable object and embedded-vector
 envelope sequentially under explicit aggregate limits. It also strictly
@@ -142,15 +228,22 @@ version, and encryption key ID. Full reads verify SHA-256; range reads
 authenticate every touched chunk.
 
 The quota contract reserves capacity before streaming, consumes actual bytes,
-commits only after atomic visibility, and releases failed reservations. Durable
-usage accounting still belongs in the caller's relational transaction. A
-grace-based reconciler deletes old unreferenced objects and stale staging
-files, recovering from a crash between object rename and metadata commit.
+commits only after atomic visibility, and releases failed reservations. SQLite
+uses `BEGIN IMMEDIATE`; PostgreSQL uses serializable transactions and row
+locks. S3 object metadata and quota usage commit or roll back in one database
+transaction. Startup reconciles expired reservations and quota objects whose
+physical blob is missing. `BLOB_QUOTA_BYTES_PER_USER` sets the durable per-owner
+limit and `BLOB_QUOTA_RESERVATION_TTL_MS` bounds abandoned reservations.
 
-Only `BLOB_STORE_BACKEND=local` is implemented. S3 remains blocked until an
-adapter passes the same contract against MinIO, including private ACLs,
-checksums, range reads, quota races, aborts, crash recovery, and idempotent
-deletion.
+`BLOB_STORE_BACKEND=s3` uses a private S3-compatible bucket. Libre uploads
+opaque object keys and application-encrypted chunk streams, keeps encrypted
+descriptors in PostgreSQL, supports inclusive HTTP ranges, verifies plaintext
+and ciphertext SHA-256 digests, and performs idempotent deletion. A deleting
+row remains durable until physical deletion and atomic metadata/quota removal
+succeed; reconciliation retries interrupted deletes and removes aged physical
+orphans. The Docker-gated MinIO suite covers cross-replica read/delete,
+tenant isolation, quota contention, unconsumed streams, and injected database
+failures at commit and deletion boundaries.
 
 ### Encrypted embedded vectors
 
@@ -171,12 +264,69 @@ authenticated data. Queryable identity, grant, model, version, revision, and
 filter metadata remain plaintext, so callers must not put secrets in filter
 attributes. Embeddings themselves are sensitive derived data.
 
-Only `VECTOR_STORE_BACKEND=embedded` is implemented. A future PGVector adapter
-must apply actor and resource predicates inside the nearest-neighbor SQL query
-before ordering and limiting. Post-filtering global nearest neighbors is
-prohibited. PostgreSQL deployments must use TLS, encrypted storage/backups, a
-least-privilege role, and non-sensitive SQL logging; source blobs and text
-remain envelope-encrypted.
+`VECTOR_STORE_BACKEND=pgvector` applies namespace, model, dimensions, version,
+resource, attribute, owner, and grant predicates inside the same SQL statement
+as distance ordering and `LIMIT`. Post-filtering global nearest neighbors is
+prohibited. Group authorization is resolved from a trusted current-membership
+resolver for every query; caller-supplied `groupIds` are ignored. Revocation is
+therefore immediate and forged group claims cannot retrieve candidates.
+
+Document ingestion and the embedding-regeneration maintenance endpoint capture
+one immutable execution specification before work begins: enabled state, model,
+vector version, chunker version, chunk size, overlap, and similarity threshold.
+That same specification controls chunk generation, relational publication,
+vector upsert, and semantic query; a preference change during a run cannot
+produce mixed-model chunks or query a vector under a different threshold.
+The published document metadata records the aggregate chunk revision and this
+specification so SQL remains the authoritative index manifest.
+
+Regeneration holds an auto-renewing coordinator lease for each document and
+rechecks the owner-scoped row plus its permanent deletion tombstone before
+relational publication and before and after vector mutation. A deletion may
+commit while an upsert is in flight; the post-upsert authority check then
+removes the recreated vectors. PostgreSQL/team semantic reads never mutate
+PGVector. SQLite may lazily republish relational embeddings only when the
+stored manifest proves the exact current model and chunk configuration; that
+optional mutation reloads the row and chunks while holding the same document
+lease. A busy or superseded revision is skipped and remains eligible for
+keyword fallback or an explicit regeneration.
+
+Document indexes are replaced in compensated batches of at most 1,000 vectors,
+and exact-index checks page through the complete resource manifest rather than
+assuming one mutation batch is the whole document. A document may publish at
+most 100,000 chunks, so no single document exceeds the portable archive's
+total document-chunk ceiling. Ingestion rejects
+the 100,001st chunk before embedding or relational/vector publication and
+dead-letters that durable job without retry; increase the embedding chunk size
+or remove excessive paragraph breaks before uploading again.
+
+Pre-manifest solo databases can contain authenticated inline document vectors
+without any record of the model or chunker that created them. First semantic
+use treats only their presence as an upgrade signal: it rechunks authoritative
+document text and generates every vector again under the current captured
+specification while holding the document lease. It never copies the legacy
+payload or labels it with today's preference. Provider failure or a busy lease
+leaves the legacy row unchanged and keyword-searchable.
+
+SQLite-to-team migration fails closed when such a legacy document is not fully
+covered by authenticated current manifest metadata and an exact encrypted
+platform-vector index. Current preferences do not prove a historical vector's
+model. When dry-run reports this blocker, start the current release in
+solo/SQLite mode with the same `DATA_DIR` and `ENCRYPTION_KEY`, enable and
+select the desired embedding model, use **Settings -> Documents -> Regenerate
+embeddings** for every affected owner, and rerun the migration dry-run. Only
+then may team repository reads ignore the preserved inline ciphertext while
+the proven vectors move to PGVector.
+
+Confidentiality differs by backend. Embedded SQLite encrypts embeddings with
+application AES-256-GCM after applying metadata ACL predicates. PGVector must
+operate on the numeric embedding and therefore does not application-encrypt
+that column. Treat embeddings as sensitive derived data: require TLS,
+encrypted PostgreSQL volumes and backups, a least-privilege application role,
+restricted database administration, and SQL logs that never include vector or
+source content. Source text, persona memory content, gallery metadata, and blob
+descriptors remain envelope-encrypted. Vector attributes are queryable
+plaintext and must never contain secrets.
 
 ### Storage encryption keys
 
@@ -219,9 +369,10 @@ events must remain in the database; Redis is a wake-up, cache invalidation,
 presence, quota, and coordination layer. Critical work must also validate its
 database lease or fencing token before committing a side effect.
 
-Existing process-local tickets, caches, connection limits, Work events, and
-runtime locks have not yet moved to this coordinator, so Redis selection alone
-does not permit more replicas.
+Application ticketing, caches, shared invalidation, connection limits, Work
+events, and distributed runtime locks use this boundary. Redis selection alone
+still does not make local persistence shareable; team mode requires the entire
+shared profile.
 
 ## Durable jobs and events
 
@@ -232,16 +383,18 @@ state, and replay by global cursor. Encrypted JSON payloads use the platform
 keyring with job/event identity as authenticated data; payload references are
 opaque bounded identifiers.
 
-This is substrate, not an activated application feature. No existing domain
-caller submits work, no handler worker is bootstrapped at application startup,
-and there is no admin API or external worker. The recovery inventory reports
-these facts, counts every job state and attempt outcome, records event streams,
-events, and the last cursor, blocks running jobs, and authenticates every
-encrypted payload under aggregate row/ciphertext/plaintext limits. Opaque
-reference targets are syntax-checked but cannot be existence- or
-authorization-verified until an authoritative blob-reference repository is
-available. Recovery also rejects stream-head mismatches and non-contiguous
-per-stream event sequences.
+Application and standalone-worker bootstraps register audited handlers for
+document ingestion, media continuation, and retriable resource cleanup. The
+admin boundary exposes bounded inspection and cancellation. Enqueue is
+idempotent, and relational creation/deletion paths insert their durable job in
+the same SQLite/PostgreSQL transaction. Resource cleanup removes vectors,
+private blobs, durable references, cache entries, and resource-targeted queued
+work through retry-safe operations.
+
+The recovery inventory counts every job state and attempt outcome, records
+event streams and their last cursor, blocks unsafe running work, and
+authenticates encrypted payloads under aggregate limits. Recovery also rejects
+stream-head mismatches and non-contiguous per-stream sequences.
 
 Monotonic lease tokens fence stale workers from later database commits. Fencing
 does not provide exactly-once execution: a worker can complete an external side
@@ -265,8 +418,9 @@ Deployment probes now distinguish process liveness from dependency readiness:
 - `/health/deep` requires a current administrator and runs SQLite integrity and
   foreign-key checks in a bounded worker outside the HTTP event loop.
 
-Run `npm run --silent recovery:check -- --json` after building the backend. The
-inventory is read-only and reports schema/key identities, the local blob root,
+Run `libre-webui recovery-check --json`; from a source checkout, build the
+backend once and use `npm run recovery:check -- --json`. The inventory is
+read-only and reports schema/key identities, the local blob root,
 legacy and platform-vector counts, authenticates local platform blob/vector
 ciphertext, legacy application and saved-voice ciphertext, and encrypted
 durable job/event payloads, and reports data sizes,
@@ -276,26 +430,18 @@ active Work runs/previews and jobs, blockers, and known exclusions. It is a
 pre-backup gate, not a complete backup. See
 [Recovery Readiness](./44-RECOVERY_READINESS.md).
 
-## Required next migrations
+## Known remaining cutovers
 
-Before this roadmap phase can be declared complete:
+The foundation does not imply that every binary field is already a blob.
+Saved-voice audio, chat attachments, avatars, and future plugin-defined binary
+resources need explicit reference metadata, dual-read/backfill, retention, and
+deletion tests before they can move. Likewise, every future embedding caller
+must carry model, dimensions, version, source revision, owner, resource scope,
+and trusted grants through `VectorStore`; direct vector-table access is not an
+accepted shortcut.
 
-1. Move chats/resources/settings, plugin/media state, personas/memory, and Work
-   behind transaction-scoped repositories; remove insecure JSON fallbacks.
-2. Add PostgreSQL migrations/repositories, a migration advisory lock, and an
-   offline SQLite-to-PostgreSQL transfer with count and hash verification.
-3. Add relational blob references/quota reservations and durable deletion
-   outbox; migrate gallery first, then documents, voices, attachments, and
-   avatars through verified dual-read/backfill/cutover steps.
-4. Migrate document and persona embeddings through `VectorStore`, including
-   model/version/revision rebuild state; add S3/MinIO and PGVector parity suites.
-5. Migrate video, document ingestion, Work, and batch synthesis onto the
-   durable substrate; bootstrap audited handlers, add an admin API, adopt
-   side-effect idempotency/outbox patterns, and implement an external worker
-   only with shared-database acceptance tests.
-6. Move coordination and replay to Redis plus durable SQL events; validate
-   cross-replica ticket consumption, cache invalidation, quotas, revocation,
-   reconnect ordering, and Redis-outage recovery.
-7. Add versioned signed manifests, operator-encrypted backups, clean-target
-   restore, and automated restore verification for SQL, blobs, vectors,
-   configuration/key identities, Work storage, and job/outbox checkpoints.
+New long-running or externally visible side effects must register a durable
+resource target, support cancellation and retry, and use a transactional
+enqueue/outbox boundary with the owning relational mutation. Add each new
+resource to the cross-replica upload/read/search/delete and backup/restore
+acceptance gates before enabling it in team deployments.

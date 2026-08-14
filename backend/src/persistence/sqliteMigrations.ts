@@ -16,6 +16,14 @@
  */
 
 import type Database from 'better-sqlite3';
+import {
+  SQLITE_BLOB_QUOTA_SCHEMA_SQL,
+  SQLITE_BLOB_REFERENCE_SCHEMA_SQL,
+} from '../platform/storage/storageSchemaContracts.js';
+export {
+  SQLITE_BLOB_QUOTA_SCHEMA_SQL,
+  SQLITE_BLOB_REFERENCE_SCHEMA_SQL,
+} from '../platform/storage/storageSchemaContracts.js';
 
 const MIGRATION_TABLE = '_libre_schema_migrations';
 
@@ -577,11 +585,179 @@ const IDENTITY_EMAIL_LOOKUP_REQUIRED_SCHEMA = {
   users: ['email_lookup'],
 } as const;
 
+const BLOB_REFERENCE_REQUIRED_SCHEMA = {
+  platform_blob_references: [
+    'blob_id',
+    'owner_user_id',
+    'resource_type',
+    'resource_id',
+    'purpose',
+    'created_at',
+  ],
+} as const;
+
+const BLOB_QUOTA_REQUIRED_SCHEMA = {
+  platform_blob_quota_usage: [
+    'owner_user_id',
+    'stored_bytes',
+    'reserved_bytes',
+    'updated_at',
+  ],
+  platform_blob_quota_reservations: [
+    'id',
+    'owner_user_id',
+    'purpose',
+    'reserved_bytes',
+    'consumed_bytes',
+    'expires_at',
+    'created_at',
+    'updated_at',
+  ],
+  platform_blob_quota_objects: [
+    'blob_id',
+    'owner_user_id',
+    'purpose',
+    'stored_bytes',
+    'created_at',
+  ],
+} as const;
+
+const VOICE_PROFILE_NAME_LOOKUP_REQUIRED_SCHEMA = {
+  voice_profiles: ['name_lookup'],
+} as const;
+
+const PLUGIN_DEFINITION_REQUIRED_SCHEMA = {
+  plugin_definitions: [
+    'plugin_id',
+    'definition_json',
+    'definition_fingerprint',
+    'approved_by_user_id',
+    'approved_at',
+    'created_at',
+    'updated_at',
+  ],
+} as const;
+
+const WORK_PREVIEW_UPSTREAM_REQUIRED_SCHEMA = {
+  work_tasks: ['preview_upstream_host', 'preview_upstream_port'],
+} as const;
+
+const DURABLE_EVENT_IDEMPOTENCY_REQUIRED_SCHEMA = {
+  platform_events: ['request_fingerprint'],
+} as const;
+
+const RESOURCE_DELETION_LIFECYCLE_REQUIRED_SCHEMA = {
+  platform_resource_deletion_tombstones: [
+    'resource_type',
+    'resource_id',
+    'owner_user_id',
+    'deletion_incarnation',
+    'deletion_token',
+    'deleted_at',
+    'completed_at',
+  ],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
     ON users(email_lookup)
     WHERE email_lookup IS NOT NULL;
+`;
+
+export const VOICE_PROFILE_NAME_LOOKUP_SCHEMA_SQL = `
+  ALTER TABLE voice_profiles ADD COLUMN name_lookup TEXT;
+  CREATE UNIQUE INDEX idx_voice_profiles_name_lookup
+    ON voice_profiles(user_id, plugin_id, model, name_lookup)
+    WHERE name_lookup IS NOT NULL;
+`;
+
+export const PLUGIN_DEFINITION_SCHEMA_SQL = `
+  CREATE TABLE IF NOT EXISTS plugin_definitions (
+    plugin_id TEXT PRIMARY KEY,
+    definition_json TEXT NOT NULL,
+    definition_fingerprint TEXT NOT NULL,
+    approved_by_user_id TEXT,
+    approved_at INTEGER,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    CHECK (
+      (approved_by_user_id IS NULL AND approved_at IS NULL)
+      OR
+      (approved_by_user_id IS NOT NULL AND approved_at IS NOT NULL)
+    )
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_plugin_definitions_updated
+    ON plugin_definitions(updated_at DESC, plugin_id);
+`;
+
+export const IDENTITY_ACCOUNT_RETIREMENT_SCHEMA_SQL = `
+  CREATE TABLE users__retiring_v9 (
+    id TEXT PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE,
+    email_lookup TEXT,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('admin', 'user')),
+    account_status TEXT NOT NULL DEFAULT 'active'
+      CHECK(account_status IN ('pending', 'active', 'retiring')),
+    approved_at INTEGER,
+    approved_by TEXT,
+    avatar TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+`;
+
+export const WORK_PREVIEW_UPSTREAM_SCHEMA_SQL = `
+  ALTER TABLE work_tasks ADD COLUMN preview_upstream_host TEXT
+    CHECK (
+      preview_upstream_host IS NULL
+      OR length(preview_upstream_host) BETWEEN 1 AND 253
+    );
+  ALTER TABLE work_tasks ADD COLUMN preview_upstream_port INTEGER
+    CHECK (
+      preview_upstream_port IS NULL
+      OR preview_upstream_port BETWEEN 1 AND 65535
+    );
+`;
+
+export const DURABLE_EVENT_IDEMPOTENCY_SCHEMA_SQL = `
+  ALTER TABLE platform_events ADD COLUMN request_fingerprint TEXT NOT NULL
+    DEFAULT '0000000000000000000000000000000000000000000000000000000000000000'
+    CHECK (
+      length(request_fingerprint) = 64
+      AND request_fingerprint NOT GLOB '*[^0-9a-f]*'
+    );
+`;
+
+export const RESOURCE_DELETION_LIFECYCLE_SCHEMA_SQL = `
+  CREATE TABLE IF NOT EXISTS platform_resource_deletion_tombstones (
+    resource_type TEXT NOT NULL
+      CHECK (resource_type IN ('document', 'generated-media', 'persona')),
+    resource_id TEXT NOT NULL CHECK (length(resource_id) BETWEEN 1 AND 256),
+    owner_user_id TEXT NOT NULL CHECK (length(owner_user_id) BETWEEN 1 AND 256),
+    deletion_incarnation INTEGER NOT NULL CHECK (deletion_incarnation > 0),
+    deletion_token TEXT NOT NULL UNIQUE
+      CHECK (
+        length(deletion_token) = 64
+        AND deletion_token NOT GLOB '*[^0-9a-f]*'
+      ),
+    deleted_at INTEGER NOT NULL CHECK (deleted_at >= 0),
+    completed_at INTEGER CHECK (
+      completed_at IS NULL OR completed_at >= deleted_at
+    ),
+    PRIMARY KEY (resource_type, resource_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_platform_resource_tombstones_owner
+    ON platform_resource_deletion_tombstones(
+      owner_user_id,
+      deleted_at,
+      resource_type,
+      resource_id
+    );
 `;
 
 const REQUIRED_SCHEMA = {
@@ -590,8 +766,14 @@ const REQUIRED_SCHEMA = {
     ...LEGACY_REQUIRED_SCHEMA.users,
     ...IDENTITY_EMAIL_LOOKUP_REQUIRED_SCHEMA.users,
   ],
+  voice_profiles: [
+    ...LEGACY_REQUIRED_SCHEMA.voice_profiles,
+    ...VOICE_PROFILE_NAME_LOOKUP_REQUIRED_SCHEMA.voice_profiles,
+  ],
   ...PLATFORM_VECTOR_REQUIRED_SCHEMA,
   ...DURABLE_JOBS_EVENTS_REQUIRED_SCHEMA,
+  ...BLOB_REFERENCE_REQUIRED_SCHEMA,
+  ...PLUGIN_DEFINITION_REQUIRED_SCHEMA,
 } as const;
 
 const LEGACY_ADDITIVE_COLUMNS: Readonly<Record<string, readonly string[]>> = {
@@ -686,6 +868,7 @@ interface SQLiteMigration {
   name: string;
   checksum: string;
   apply(database: Database.Database): void;
+  requiresForeignKeysDisabled?: boolean;
 }
 
 interface AppliedMigrationValidation {
@@ -838,6 +1021,12 @@ const REQUIRED_PRIMARY_KEYS: Readonly<Record<string, readonly string[]>> = {
   platform_job_attempts: ['job_id', 'attempt_number'],
   platform_event_stream_heads: ['stream_id'],
   platform_events: ['global_cursor'],
+  platform_blob_references: ['blob_id'],
+  platform_blob_quota_usage: ['owner_user_id'],
+  platform_blob_quota_reservations: ['id'],
+  platform_blob_quota_objects: ['blob_id'],
+  plugin_definitions: ['plugin_id'],
+  platform_resource_deletion_tombstones: ['resource_type', 'resource_id'],
 };
 
 const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
@@ -851,6 +1040,8 @@ const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
   ],
   platform_job_attempts: [['job_id', 'lease_token']],
   platform_events: [['event_id'], ['stream_id', 'stream_sequence']],
+  platform_blob_references: [['resource_type', 'resource_id', 'purpose']],
+  platform_resource_deletion_tombstones: [['deletion_token']],
 };
 
 const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
@@ -963,6 +1154,18 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     sqlFragment: 'WHERE email_lookup IS NOT NULL',
   },
   {
+    name: 'idx_voice_profiles_name_lookup',
+    table: 'voice_profiles',
+    columns: ['user_id', 'plugin_id', 'model', 'name_lookup'],
+    unique: true,
+    sqlFragment: 'WHERE name_lookup IS NOT NULL',
+  },
+  {
+    name: 'idx_plugin_definitions_updated',
+    table: 'plugin_definitions',
+    columns: ['updated_at', 'plugin_id'],
+  },
+  {
     name: 'idx_sessions_user_id',
     table: 'sessions',
     columns: ['user_id'],
@@ -1053,6 +1256,36 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     table: 'platform_events',
     columns: ['occurred_at', 'global_cursor'],
   },
+  {
+    name: 'idx_platform_blob_references_owner',
+    table: 'platform_blob_references',
+    columns: ['owner_user_id', 'purpose', 'created_at'],
+  },
+  {
+    name: 'idx_platform_blob_references_resource',
+    table: 'platform_blob_references',
+    columns: ['resource_type', 'resource_id'],
+  },
+  {
+    name: 'idx_platform_blob_quota_reservations_expiry',
+    table: 'platform_blob_quota_reservations',
+    columns: ['expires_at', 'id'],
+  },
+  {
+    name: 'idx_platform_blob_quota_reservations_owner',
+    table: 'platform_blob_quota_reservations',
+    columns: ['owner_user_id', 'expires_at'],
+  },
+  {
+    name: 'idx_platform_blob_quota_objects_owner',
+    table: 'platform_blob_quota_objects',
+    columns: ['owner_user_id', 'purpose', 'created_at'],
+  },
+  {
+    name: 'idx_platform_resource_tombstones_owner',
+    table: 'platform_resource_deletion_tombstones',
+    columns: ['owner_user_id', 'deleted_at', 'resource_type', 'resource_id'],
+  },
 ];
 
 const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
@@ -1072,6 +1305,20 @@ const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
   platform_events: [
     "payload_format IN ('encrypted', 'reference')",
     'UNIQUE (stream_id, stream_sequence)',
+  ],
+  platform_blob_quota_usage: [
+    'CHECK(stored_bytes >= 0)',
+    'CHECK(reserved_bytes >= 0)',
+  ],
+  platform_blob_quota_reservations: [
+    'CHECK(reserved_bytes >= 0)',
+    'CHECK(consumed_bytes >= 0)',
+  ],
+  platform_blob_quota_objects: ['CHECK(stored_bytes >= 0)'],
+  plugin_definitions: ['approved_by_user_id IS NULL AND approved_at IS NULL'],
+  platform_resource_deletion_tombstones: [
+    "resource_type IN ('document', 'generated-media', 'persona')",
+    'CHECK(deletion_incarnation > 0)',
   ],
 };
 
@@ -1377,6 +1624,10 @@ const collectMissingStructuralInvariants = (
 const collectMissingSchema = (database: Database.Database): string[] => [
   ...collectMissingColumns(database, REQUIRED_SCHEMA),
   ...collectMissingStructuralInvariants(database),
+  ...collectMissingIdentityAccountRetirementSchema(database),
+  ...collectMissingWorkPreviewUpstreamSchema(database),
+  ...collectMissingDurableEventIdempotencySchema(database),
+  ...collectMissingResourceDeletionLifecycleSchema(database),
 ];
 
 const collectMissingMigrationLedgerSchema = (
@@ -1394,7 +1645,9 @@ const collectMissingLegacySchema = (database: Database.Database): string[] => [
   ...collectMissingColumns(database, LEGACY_REQUIRED_SCHEMA),
   ...collectMissingStructuralInvariants(database).filter(
     item =>
-      !item.includes('platform_') && !item.includes('idx_users_email_lookup')
+      !item.includes('platform_') &&
+      !item.includes('idx_users_email_lookup') &&
+      !item.includes('idx_voice_profiles_name_lookup')
   ),
 ];
 
@@ -1428,6 +1681,80 @@ const collectMissingDurableJobsEventsSchema = (
   ),
 ];
 
+const collectMissingBlobReferenceSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, BLOB_REFERENCE_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(item =>
+    item.includes('platform_blob_reference')
+  ),
+];
+
+const collectMissingBlobQuotaSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, BLOB_QUOTA_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(item =>
+    item.includes('platform_blob_quota')
+  ),
+];
+
+const collectMissingVoiceProfileNameLookupSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, VOICE_PROFILE_NAME_LOOKUP_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(item =>
+    item.includes('idx_voice_profiles_name_lookup')
+  ),
+];
+
+const collectMissingPluginDefinitionSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, PLUGIN_DEFINITION_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(item =>
+    item.includes('plugin_definition')
+  ),
+];
+
+const collectMissingWorkPreviewUpstreamSchema = (
+  database: Database.Database
+): string[] =>
+  collectMissingColumns(database, WORK_PREVIEW_UPSTREAM_REQUIRED_SCHEMA);
+
+const collectMissingDurableEventIdempotencySchema = (
+  database: Database.Database
+): string[] =>
+  collectMissingColumns(database, DURABLE_EVENT_IDEMPOTENCY_REQUIRED_SCHEMA);
+
+const collectMissingResourceDeletionLifecycleSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(
+    database,
+    RESOURCE_DELETION_LIFECYCLE_REQUIRED_SCHEMA
+  ),
+  ...collectMissingStructuralInvariants(database).filter(item =>
+    item.includes('platform_resource_deletion_tombstones')
+  ),
+];
+
+const collectMissingIdentityAccountRetirementSchema = (
+  database: Database.Database
+): string[] => {
+  const row = database
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'"
+    )
+    .get() as { sql: string | null } | undefined;
+  const normalized = normalizeSql(row?.sql ?? '');
+  return normalized.includes(
+    normalizeSql("account_status IN ('pending', 'active', 'retiring')")
+  )
+    ? []
+    : ['users account_status retiring constraint'];
+};
+
 function collectMissingSchemaAtVersion(
   database: Database.Database,
   version: number
@@ -1438,6 +1765,22 @@ function collectMissingSchemaAtVersion(
     ...(version >= 2 ? collectMissingPlatformVectorSchema(database) : []),
     ...(version >= 3 ? collectMissingDurableJobsEventsSchema(database) : []),
     ...(version >= 4 ? collectMissingIdentityEmailLookupSchema(database) : []),
+    ...(version >= 5 ? collectMissingBlobReferenceSchema(database) : []),
+    ...(version >= 6
+      ? collectMissingVoiceProfileNameLookupSchema(database)
+      : []),
+    ...(version >= 7 ? collectMissingPluginDefinitionSchema(database) : []),
+    ...(version >= 8 ? collectMissingBlobQuotaSchema(database) : []),
+    ...(version >= 9
+      ? collectMissingIdentityAccountRetirementSchema(database)
+      : []),
+    ...(version >= 10 ? collectMissingWorkPreviewUpstreamSchema(database) : []),
+    ...(version >= 11
+      ? collectMissingDurableEventIdempotencySchema(database)
+      : []),
+    ...(version >= 12
+      ? collectMissingResourceDeletionLifecycleSchema(database)
+      : []),
   ];
 }
 
@@ -1499,6 +1842,22 @@ const DURABLE_JOBS_EVENTS_MIGRATION_CHECKSUM =
   'dbc2cfa903c0ab173acc2e29f9aa576b7ba744816fb819492271c39a4fbd23de';
 const IDENTITY_EMAIL_LOOKUP_MIGRATION_CHECKSUM =
   'abac261ef3848667aa3ad5dbb47c123b119cadbc0738c167c9b9d35b057a43a0';
+const BLOB_REFERENCE_MIGRATION_CHECKSUM =
+  '84a2c0cf783c81f46e90c73ae2e62ca80b89669e672767f94af7ea5d37098b79';
+const VOICE_PROFILE_NAME_LOOKUP_MIGRATION_CHECKSUM =
+  '6162d4feb454f812ea1ddf88c472943f1fc07da5933c29986d4b8b27d6156df6';
+const PLUGIN_DEFINITION_MIGRATION_CHECKSUM =
+  '7092b4bb02ad71be4ef7d6106ed5bab6d5b76e9ec8d98f36f7a8a6c3a70c84c6';
+const BLOB_QUOTA_MIGRATION_CHECKSUM =
+  'c6dd6ff729b92dc935aacd5ea236bbbf6f8f455999abd3ab8f687457ec0ca998';
+const IDENTITY_ACCOUNT_RETIREMENT_MIGRATION_CHECKSUM =
+  '72c57042dd74cba8b1b22395bfe7942e62e269a0041706711094565fb6860657';
+const WORK_PREVIEW_UPSTREAM_MIGRATION_CHECKSUM =
+  'aa2023e736da5a2b63ab2e39c378a3c43fc6f40be9318eec1397dff83c4a9358';
+const DURABLE_EVENT_IDEMPOTENCY_MIGRATION_CHECKSUM =
+  'fe9aee7dc21dc4ca6a5bdcd0fcd5788104501f68bc2c72e83faf9b6ce6514d44';
+const RESOURCE_DELETION_LIFECYCLE_MIGRATION_CHECKSUM =
+  'a72e862afe109daf68b7ec8e445ef359bc3550a5ac8973d135cf7a18eb5bf1cc';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -1558,6 +1917,169 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite identity email lookup schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 5,
+    name: 'blob-references',
+    checksum: BLOB_REFERENCE_MIGRATION_CHECKSUM,
+    apply(database) {
+      database.exec(SQLITE_BLOB_REFERENCE_SCHEMA_SQL);
+      const missing = collectMissingBlobReferenceSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite blob reference schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 6,
+    name: 'voice-profile-name-lookup',
+    checksum: VOICE_PROFILE_NAME_LOOKUP_MIGRATION_CHECKSUM,
+    apply(database) {
+      // Existing names are encrypted with per-record authenticated data, so
+      // the adapter backfills their keyed lookup after migrations complete.
+      addColumnIfMissing(database, 'voice_profiles', 'name_lookup', 'TEXT');
+      database.exec(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_voice_profiles_name_lookup
+          ON voice_profiles(user_id, plugin_id, model, name_lookup)
+          WHERE name_lookup IS NOT NULL;
+      `);
+      const missing = collectMissingVoiceProfileNameLookupSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite voice profile lookup schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 7,
+    name: 'shared-plugin-definitions',
+    checksum: PLUGIN_DEFINITION_MIGRATION_CHECKSUM,
+    apply(database) {
+      database.exec(PLUGIN_DEFINITION_SCHEMA_SQL);
+      const missing = collectMissingPluginDefinitionSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite plugin definition schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 8,
+    name: 'blob-quotas',
+    checksum: BLOB_QUOTA_MIGRATION_CHECKSUM,
+    apply(database) {
+      database.exec(SQLITE_BLOB_QUOTA_SCHEMA_SQL);
+      const missing = collectMissingBlobQuotaSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite blob quota schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 9,
+    name: 'identity-account-retirement',
+    checksum: IDENTITY_ACCOUNT_RETIREMENT_MIGRATION_CHECKSUM,
+    requiresForeignKeysDisabled: true,
+    apply(database) {
+      database.exec(IDENTITY_ACCOUNT_RETIREMENT_SCHEMA_SQL);
+      database.exec(`
+        INSERT INTO users__retiring_v9 (
+          id, username, email, email_lookup, password_hash, role,
+          account_status, approved_at, approved_by, avatar, created_at,
+          updated_at
+        )
+        SELECT id, username, email, email_lookup, password_hash, role,
+               account_status, approved_at, approved_by, avatar, created_at,
+               updated_at
+          FROM users;
+        DROP TABLE users;
+        ALTER TABLE users__retiring_v9 RENAME TO users;
+        CREATE UNIQUE INDEX idx_users_email_lookup
+          ON users(email_lookup)
+          WHERE email_lookup IS NOT NULL;
+      `);
+      const missing = collectMissingIdentityAccountRetirementSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite account retirement schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 10,
+    name: 'work-preview-upstream',
+    checksum: WORK_PREVIEW_UPSTREAM_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(
+        database,
+        'work_tasks',
+        'preview_upstream_host',
+        `TEXT CHECK (
+          preview_upstream_host IS NULL
+          OR length(preview_upstream_host) BETWEEN 1 AND 253
+        )`
+      );
+      addColumnIfMissing(
+        database,
+        'work_tasks',
+        'preview_upstream_port',
+        `INTEGER CHECK (
+          preview_upstream_port IS NULL
+          OR preview_upstream_port BETWEEN 1 AND 65535
+        )`
+      );
+      const missing = collectMissingWorkPreviewUpstreamSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite Work preview upstream schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 11,
+    name: 'durable-event-idempotency',
+    checksum: DURABLE_EVENT_IDEMPOTENCY_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(
+        database,
+        'platform_events',
+        'request_fingerprint',
+        `TEXT NOT NULL
+          DEFAULT '0000000000000000000000000000000000000000000000000000000000000000'
+          CHECK (
+            length(request_fingerprint) = 64
+            AND request_fingerprint NOT GLOB '*[^0-9a-f]*'
+          )`
+      );
+      const missing = collectMissingDurableEventIdempotencySchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite durable event idempotency schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 12,
+    name: 'resource-deletion-lifecycle',
+    checksum: RESOURCE_DELETION_LIFECYCLE_MIGRATION_CHECKSUM,
+    apply(database) {
+      database.exec(RESOURCE_DELETION_LIFECYCLE_SCHEMA_SQL);
+      const missing = collectMissingResourceDeletionLifecycleSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite resource deletion lifecycle schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },
@@ -1692,10 +2214,13 @@ export function assertDurableJobMigrationReady(
   const { currentVersion } = validateAppliedMigrations(
     readAppliedMigrations(database)
   );
-  if (currentVersion < 3) {
-    throw new Error('Durable jobs require SQLite migration version 3');
+  if (currentVersion < 11) {
+    throw new Error('Durable jobs require SQLite migration version 11');
   }
-  const missing = collectMissingDurableJobsEventsSchema(database);
+  const missing = [
+    ...collectMissingDurableJobsEventsSchema(database),
+    ...collectMissingDurableEventIdempotencySchema(database),
+  ];
   if (missing.length > 0) {
     throw new Error(
       `SQLite durable jobs schema is incomplete; missing ${missing.join(', ')}`
@@ -2088,7 +2613,7 @@ export function runSQLiteMigrationCoordinator(
         );
       }
 
-      database.transaction(() => {
+      const applyMigration = (): void => {
         migration.apply(database);
         database
           .prepare(
@@ -2102,7 +2627,32 @@ export function runSQLiteMigrationCoordinator(
             migration.checksum,
             Date.now()
           );
-      })();
+      };
+      if (migration.requiresForeignKeysDisabled) {
+        const foreignKeysEnabled = database.pragma('foreign_keys', {
+          simple: true,
+        }) as number;
+        database.pragma('foreign_keys = OFF');
+        try {
+          database.transaction(() => {
+            applyMigration();
+            const violations = database.pragma(
+              'foreign_key_check'
+            ) as unknown[];
+            if (violations.length > 0) {
+              throw new Error(
+                'SQLite account retirement migration left foreign-key violations'
+              );
+            }
+          })();
+        } finally {
+          database.pragma(
+            `foreign_keys = ${foreignKeysEnabled === 1 ? 'ON' : 'OFF'}`
+          );
+        }
+      } else {
+        database.transaction(applyMigration)();
+      }
       currentVersion = migration.version;
     }
 

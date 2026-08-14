@@ -42,6 +42,12 @@ import codexOAuthService, {
 import { userModel } from '../models/userModel.js';
 import pluginCredentialsService from './pluginCredentialsService.js';
 import pluginVariablesService from './pluginVariablesService.js';
+import {
+  ensurePluginCacheInvalidationSubscription,
+  publishPluginCacheInvalidation,
+  registerPluginCacheInvalidationListener,
+  type PluginCacheInvalidation,
+} from './pluginCacheInvalidation.js';
 import pluginActivationService from './pluginActivationService.js';
 import { PluginAudioGenerationService } from './pluginAudioGenerationService.js';
 import { PluginCapabilityRegistryService } from './pluginCapabilityRegistryService.js';
@@ -89,7 +95,7 @@ import {
   resolvePhysicalPathCandidate,
   resolvePluginsDirectory,
 } from '../utils/dataDirectory.js';
-import { getDatabaseSafe } from '../db.js';
+import { getPersistence } from '../persistence/index.js';
 import {
   createOpenAIResponsesStateScope,
   createPluginCredentialFingerprint,
@@ -104,6 +110,8 @@ import {
   getPluginDefinitionFingerprint,
   matchesBundledPluginTrustAnchor,
 } from '../utils/pluginDefinitionTrust.js';
+import { encryptionService } from './encryptionService.js';
+import type { StoredPluginDefinition } from '../persistence/extensionTypes.js';
 
 const logger = createLogger('plugins');
 
@@ -322,6 +330,9 @@ export class PluginService {
     string,
     Promise<PluginModelDiscoveryResult>
   >();
+  private discoveryCacheRevisions = new Map<string, number>();
+  private capabilityDiscoveryCacheRevisions = new Map<string, number>();
+  private removeCacheInvalidationListener: (() => void) | undefined;
   private embeddingService: PluginEmbeddingService;
   private ttsService: PluginTTSService;
   private sttService: PluginSTTService;
@@ -330,8 +341,13 @@ export class PluginService {
   private videoGenerationService: PluginVideoGenerationService;
   private capabilityRegistryService: PluginCapabilityRegistryService;
   private bundledRoutingProjectionCache = new Map<string, string | null>();
+  private legacyActivationMigration: Promise<void> | undefined;
+  private readonly sharedPluginDefinitions: boolean;
+  private readonly sharedDefinitionIds = new Set<string>();
 
   constructor(options: PluginServiceOptions = {}) {
+    this.sharedPluginDefinitions =
+      getPersistence(encryptionService).dialect === 'postgres';
     this.bundledPluginsDir = resolveBundledPluginsDir(import.meta.url);
     this.pluginsDir = resolvePluginsDirectory();
     this.legacyPluginsDirs =
@@ -351,23 +367,20 @@ export class PluginService {
               resolvePhysicalPathCandidate(directory)
             )
         );
-    this.pluginReadDirs = Array.from(
-      new Set([
-        this.bundledPluginsDir,
-        ...this.legacyPluginsDirs,
-        this.pluginsDir,
-      ])
-    );
-    this.ensurePluginsDirectory();
-    pluginActivationService.migrateLegacyStatus(
-      [...this.pluginReadDirs]
-        .reverse()
-        .filter(
-          pluginsDir =>
-            path.resolve(pluginsDir) !== path.resolve(this.bundledPluginsDir)
-        ),
-      pluginId => this.canMigrateLegacyActivation(pluginId)
-    );
+    this.pluginReadDirs = this.sharedPluginDefinitions
+      ? [this.bundledPluginsDir]
+      : Array.from(
+          new Set([
+            this.bundledPluginsDir,
+            ...this.legacyPluginsDirs,
+            this.pluginsDir,
+          ])
+        );
+    if (this.sharedPluginDefinitions) {
+      this.assertNoLocalCustomDefinitions();
+    } else {
+      this.ensurePluginsDirectory();
+    }
     this.embeddingService = new PluginEmbeddingService({
       getAllPlugins: userId => this.getActivePluginsUnchecked(userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
@@ -427,6 +440,165 @@ export class PluginService {
     });
   }
 
+  private repositories() {
+    return getPersistence(encryptionService).repositories.extensions;
+  }
+
+  private async ensureCacheInvalidation(): Promise<void> {
+    this.removeCacheInvalidationListener ??=
+      registerPluginCacheInvalidationListener(invalidation =>
+        this.invalidateRuntimeCaches(invalidation)
+      );
+    await ensurePluginCacheInvalidationSubscription();
+  }
+
+  private bumpDiscoveryRevision(key: string): void {
+    this.discoveryCacheRevisions.set(
+      key,
+      (this.discoveryCacheRevisions.get(key) ?? 0) + 1
+    );
+  }
+
+  private bumpCapabilityDiscoveryRevision(key: string): void {
+    this.capabilityDiscoveryCacheRevisions.set(
+      key,
+      (this.capabilityDiscoveryCacheRevisions.get(key) ?? 0) + 1
+    );
+  }
+
+  private invalidateRuntimeCaches(invalidation: PluginCacheInvalidation): void {
+    const completionKeys = new Set([
+      ...this.discoveredModelsCache.keys(),
+      ...this.discoveredModelsUpdatedAt.keys(),
+      ...this.discoveryAttemptedAt.keys(),
+      ...this.inflightDiscovery.keys(),
+      ...this.discoveryCacheRevisions.keys(),
+    ]);
+    const capabilityKeys = new Set([
+      ...this.discoveredCapabilityModelsCache.keys(),
+      ...this.discoveredCapabilityModelsUpdatedAt.keys(),
+      ...this.capabilityDiscoveryAttemptedAt.keys(),
+      ...this.inflightCapabilityDiscovery.keys(),
+      ...this.capabilityDiscoveryCacheRevisions.keys(),
+    ]);
+    const completionMatches = (key: string): boolean => {
+      if (invalidation.scope === 'plugin-user') {
+        return (
+          key ===
+          this.discoveredModelsCacheKey(
+            invalidation.pluginId,
+            invalidation.userId
+          )
+        );
+      }
+      if (invalidation.scope === 'plugin') {
+        return key.endsWith(`:${invalidation.pluginId}`);
+      }
+      return key.startsWith(`${invalidation.userId}:`);
+    };
+    const capabilityMatches = (key: string): boolean => {
+      if (invalidation.scope === 'plugin-user') {
+        return key.startsWith(
+          `${invalidation.userId}:${invalidation.pluginId}:`
+        );
+      }
+      if (invalidation.scope === 'plugin') {
+        return key.includes(`:${invalidation.pluginId}:`);
+      }
+      return key.startsWith(`${invalidation.userId}:`);
+    };
+
+    for (const key of completionKeys) {
+      if (!completionMatches(key)) continue;
+      this.discoveredModelsCache.delete(key);
+      this.discoveredModelsUpdatedAt.delete(key);
+      this.discoveryAttemptedAt.delete(key);
+      this.inflightDiscovery.delete(key);
+      this.bumpDiscoveryRevision(key);
+    }
+    for (const key of capabilityKeys) {
+      if (!capabilityMatches(key)) continue;
+      this.discoveredCapabilityModelsCache.delete(key);
+      this.discoveredCapabilityModelsUpdatedAt.delete(key);
+      this.capabilityDiscoveryAttemptedAt.delete(key);
+      this.inflightCapabilityDiscovery.delete(key);
+      this.bumpCapabilityDiscoveryRevision(key);
+    }
+  }
+
+  private ensureLegacyActivationMigration(): Promise<void> {
+    if (this.sharedPluginDefinitions) return Promise.resolve();
+    this.legacyActivationMigration ??=
+      pluginActivationService.migrateLegacyStatus(
+        [...this.pluginReadDirs]
+          .reverse()
+          .filter(
+            pluginsDir =>
+              path.resolve(pluginsDir) !== path.resolve(this.bundledPluginsDir)
+          ),
+        pluginId => this.canMigrateLegacyActivation(pluginId)
+      );
+    return this.legacyActivationMigration;
+  }
+
+  /**
+   * Team replicas must never pick a provider definition from node-local disk.
+   * Refuse startup when an old writable definition is present so an operator
+   * has to migrate it deliberately instead of getting replica-dependent
+   * routing, credentials, or activation state.
+   */
+  private assertNoLocalCustomDefinitions(): void {
+    const bundledDirectory = path.resolve(this.bundledPluginsDir);
+    const directories = new Set([
+      this.pluginsDir,
+      ...this.legacyPluginsDirs,
+      ...this.historicalPluginConflictDirs,
+    ]);
+    for (const directory of directories) {
+      if (path.resolve(directory) === bundledDirectory) continue;
+      let entries: fs.Dirent[];
+      try {
+        const stat = fs.lstatSync(directory);
+        if (!stat.isDirectory() || stat.isSymbolicLink()) {
+          throw new Error(
+            `Plugin definition path ${directory} is not a physical directory`
+          );
+        }
+        entries = fs.readdirSync(directory, { withFileTypes: true });
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
+        throw error;
+      }
+      if (entries.some(entry => entry.name.endsWith('.json'))) {
+        throw new Error(
+          `Local custom plugin definitions exist at ${directory}. PostgreSQL mode requires definitions in the shared database; run the SQLite-to-PostgreSQL migration with the plugin directory before starting any replica.`
+        );
+      }
+    }
+  }
+
+  private parseSharedPluginDefinition(
+    row: StoredPluginDefinition
+  ): Plugin | null {
+    this.sharedDefinitionIds.add(row.plugin_id);
+    if (row.approved_by_user_id === null || row.approved_at === null) {
+      return null;
+    }
+    try {
+      const plugin = JSON.parse(row.definition_json) as Plugin;
+      if (
+        !this.validatePlugin(plugin) ||
+        plugin.id !== row.plugin_id ||
+        getPluginDefinitionFingerprint(plugin) !== row.definition_fingerprint
+      ) {
+        return null;
+      }
+      return applyPluginDefinitionPolicy(plugin);
+    } catch {
+      return null;
+    }
+  }
+
   private discoveredModelsCacheKey(pluginId: string, userId: string): string {
     return `${userId}:${pluginId}`;
   }
@@ -439,36 +611,31 @@ export class PluginService {
     return `${userId}:${pluginId}:${capability}`;
   }
 
-  private getDiscoveredCapabilityModels(
+  private async getDiscoveredCapabilityModels(
     pluginId: string,
     capability: DiscoverableMediaCapability,
     userId?: string
-  ): string[] | undefined {
+  ): Promise<string[] | undefined> {
+    await this.ensureCacheInvalidation();
     const effectiveUserId = userId || 'default';
     const cacheKey = this.discoveredCapabilityModelsCacheKey(
       pluginId,
       capability,
       effectiveUserId
     );
-    if (this.discoveredCapabilityModelsCache.has(cacheKey)) {
+    if (
+      !this.sharedPluginDefinitions &&
+      this.discoveredCapabilityModelsCache.has(cacheKey)
+    ) {
       return this.discoveredCapabilityModelsCache.get(cacheKey) || undefined;
     }
 
-    const db = getDatabaseSafe();
-    if (!db) {
-      this.discoveredCapabilityModelsCache.set(cacheKey, null);
-      return undefined;
-    }
-
     try {
-      const row = db
-        .prepare(
-          `SELECT models_json, updated_at
-           FROM plugin_discovered_capability_models
-           WHERE user_id = ? AND plugin_id = ? AND capability = ?`
-        )
-        .get(effectiveUserId, pluginId, capability) as
-        { models_json: string; updated_at: number } | undefined;
+      const row = await this.repositories().pluginDiscovery.getCapability(
+        pluginId,
+        capability,
+        effectiveUserId
+      );
       if (!row) {
         this.discoveredCapabilityModelsCache.set(cacheKey, null);
         return undefined;
@@ -504,12 +671,13 @@ export class PluginService {
     }
   }
 
-  private storeDiscoveredCapabilityModels(
+  private async storeDiscoveredCapabilityModels(
     pluginId: string,
     capability: DiscoverableMediaCapability,
     models: string[],
     userId?: string
-  ): void {
+  ): Promise<void> {
+    await this.ensureCacheInvalidation();
     const effectiveUserId = userId || 'default';
     const uniqueModels = Array.from(new Set(models));
     const cacheKey = this.discoveredCapabilityModelsCacheKey(
@@ -518,50 +686,42 @@ export class PluginService {
       effectiveUserId
     );
     const discoveredAt = Date.now();
+    await this.repositories().pluginDiscovery.upsertCapability({
+      user_id: effectiveUserId,
+      plugin_id: pluginId,
+      capability,
+      models_json: JSON.stringify(uniqueModels),
+      updated_at: discoveredAt,
+    });
     this.discoveredCapabilityModelsCache.set(cacheKey, uniqueModels);
     this.discoveredCapabilityModelsUpdatedAt.set(cacheKey, discoveredAt);
-
-    const db = getDatabaseSafe();
-    if (!db) return;
-    db.prepare(
-      `INSERT INTO plugin_discovered_capability_models
-         (user_id, plugin_id, capability, models_json, updated_at)
-       VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(user_id, plugin_id, capability) DO UPDATE SET
-         models_json = excluded.models_json,
-         updated_at = excluded.updated_at`
-    ).run(
-      effectiveUserId,
+    await publishPluginCacheInvalidation({
+      version: 1,
+      scope: 'plugin-user',
       pluginId,
-      capability,
-      JSON.stringify(uniqueModels),
-      discoveredAt
-    );
+      userId: effectiveUserId,
+    });
   }
 
-  private getDiscoveredModels(
+  private async getDiscoveredModels(
     pluginId: string,
     userId?: string
-  ): string[] | undefined {
+  ): Promise<string[] | undefined> {
+    await this.ensureCacheInvalidation();
     const effectiveUserId = userId || 'default';
     const cacheKey = this.discoveredModelsCacheKey(pluginId, effectiveUserId);
-    if (this.discoveredModelsCache.has(cacheKey)) {
+    if (
+      !this.sharedPluginDefinitions &&
+      this.discoveredModelsCache.has(cacheKey)
+    ) {
       return this.discoveredModelsCache.get(cacheKey) || undefined;
     }
 
-    const db = getDatabaseSafe();
-    if (!db) {
-      this.discoveredModelsCache.set(cacheKey, null);
-      return undefined;
-    }
-
     try {
-      const row = db
-        .prepare(
-          'SELECT models_json, updated_at FROM plugin_discovered_models WHERE user_id = ? AND plugin_id = ?'
-        )
-        .get(effectiveUserId, pluginId) as
-        { models_json: string; updated_at: number } | undefined;
+      const row = await this.repositories().pluginDiscovery.get(
+        pluginId,
+        effectiveUserId
+      );
       if (!row) {
         this.discoveredModelsCache.set(cacheKey, null);
         return undefined;
@@ -598,35 +758,31 @@ export class PluginService {
     }
   }
 
-  private storeDiscoveredModels(
+  private async storeDiscoveredModels(
     pluginId: string,
     models: string[],
     userId?: string
-  ): void {
+  ): Promise<void> {
+    await this.ensureCacheInvalidation();
     const effectiveUserId = userId || 'default';
     const uniqueModels = Array.from(new Set(models));
     const cacheKey = this.discoveredModelsCacheKey(pluginId, effectiveUserId);
     const discoveredAt = Date.now();
-    this.discoveredModelsCache.set(cacheKey, uniqueModels);
-    this.discoveredModelsUpdatedAt.set(cacheKey, discoveredAt);
-
-    const db = getDatabaseSafe();
-    if (!db) return;
-
     try {
-      db.prepare(
-        `INSERT INTO plugin_discovered_models
-          (user_id, plugin_id, models_json, updated_at)
-         VALUES (?, ?, ?, ?)
-         ON CONFLICT(user_id, plugin_id) DO UPDATE SET
-          models_json = excluded.models_json,
-          updated_at = excluded.updated_at`
-      ).run(
-        effectiveUserId,
+      await this.repositories().pluginDiscovery.upsert({
+        user_id: effectiveUserId,
+        plugin_id: pluginId,
+        models_json: JSON.stringify(uniqueModels),
+        updated_at: discoveredAt,
+      });
+      this.discoveredModelsCache.set(cacheKey, uniqueModels);
+      this.discoveredModelsUpdatedAt.set(cacheKey, discoveredAt);
+      await publishPluginCacheInvalidation({
+        version: 1,
+        scope: 'plugin-user',
         pluginId,
-        JSON.stringify(uniqueModels),
-        discoveredAt
-      );
+        userId: effectiveUserId,
+      });
     } catch (error) {
       logger.warn(
         'Failed to persist discovered models for plugin %s:',
@@ -636,19 +792,19 @@ export class PluginService {
     }
   }
 
-  clearDiscoveredModels(pluginId: string, userId?: string): void {
-    this.clearDiscoveredCapabilityModels(pluginId, userId);
-    const db = getDatabaseSafe();
+  async clearDiscoveredModels(
+    pluginId: string,
+    userId?: string
+  ): Promise<void> {
+    await this.ensureCacheInvalidation();
+    await this.clearDiscoveredCapabilityModels(pluginId, userId);
     if (userId) {
       const cacheKey = this.discoveredModelsCacheKey(pluginId, userId);
       this.discoveredModelsCache.set(cacheKey, null);
       this.discoveredModelsUpdatedAt.delete(cacheKey);
       this.discoveryAttemptedAt.delete(cacheKey);
-      if (!db) return;
       try {
-        db.prepare(
-          'DELETE FROM plugin_discovered_models WHERE user_id = ? AND plugin_id = ?'
-        ).run(userId, pluginId);
+        await this.repositories().pluginDiscovery.delete(pluginId, userId);
       } catch (error) {
         logger.warn(
           'Failed to clear discovered models for plugin %s:',
@@ -656,6 +812,12 @@ export class PluginService {
           error
         );
       }
+      await publishPluginCacheInvalidation({
+        version: 1,
+        scope: 'plugin-user',
+        pluginId,
+        userId,
+      });
       return;
     }
 
@@ -666,11 +828,8 @@ export class PluginService {
         this.discoveryAttemptedAt.delete(key);
       }
     }
-    if (!db) return;
     try {
-      db.prepare(
-        'DELETE FROM plugin_discovered_models WHERE plugin_id = ?'
-      ).run(pluginId);
+      await this.repositories().pluginDiscovery.delete(pluginId);
     } catch (error) {
       logger.warn(
         'Failed to clear discovered models for plugin %s:',
@@ -678,13 +837,17 @@ export class PluginService {
         error
       );
     }
+    await publishPluginCacheInvalidation({
+      version: 1,
+      scope: 'plugin',
+      pluginId,
+    });
   }
 
-  private clearDiscoveredCapabilityModels(
+  private async clearDiscoveredCapabilityModels(
     pluginId: string,
     userId?: string
-  ): void {
-    const db = getDatabaseSafe();
+  ): Promise<void> {
     if (userId) {
       for (const capability of [
         'image',
@@ -702,12 +865,9 @@ export class PluginService {
         this.discoveredCapabilityModelsUpdatedAt.delete(key);
         this.capabilityDiscoveryAttemptedAt.delete(key);
       }
-      if (db) {
-        db.prepare(
-          `DELETE FROM plugin_discovered_capability_models
-           WHERE user_id = ? AND plugin_id = ?`
-        ).run(userId, pluginId);
-      }
+      // The discovery repository removes both completion and capability rows
+      // atomically, which prevents stale partial catalogs after reset.
+      await this.repositories().pluginDiscovery.delete(pluginId, userId);
       return;
     }
 
@@ -722,26 +882,25 @@ export class PluginService {
         this.capabilityDiscoveryAttemptedAt.delete(key);
       }
     }
-    if (db) {
-      db.prepare(
-        'DELETE FROM plugin_discovered_capability_models WHERE plugin_id = ?'
-      ).run(pluginId);
-    }
+    await this.repositories().pluginDiscovery.delete(pluginId);
   }
 
-  private applyDiscoveredModels(plugin: Plugin, userId?: string): Plugin {
+  private async applyDiscoveredModels(
+    plugin: Plugin,
+    userId?: string
+  ): Promise<Plugin> {
     if (
-      !this.canUseStoredConnectionOverrides(userId) &&
-      pluginVariablesService.hasStoredConnectionOverride(
+      !(await this.canUseStoredConnectionOverrides(userId)) &&
+      (await pluginVariablesService.hasStoredConnectionOverride(
         plugin.id,
         userId,
         plugin.variables,
         getPluginConnectionVariableNames(plugin)
-      )
+      ))
     ) {
       return plugin;
     }
-    const models = this.getDiscoveredModels(plugin.id, userId);
+    const models = await this.getDiscoveredModels(plugin.id, userId);
     const capabilities = plugin.capabilities
       ? { ...plugin.capabilities }
       : undefined;
@@ -754,7 +913,7 @@ export class PluginService {
         'video',
       ] as const) {
         const definition = capabilities[capability];
-        const discovered = this.getDiscoveredCapabilityModels(
+        const discovered = await this.getDiscoveredCapabilityModels(
           plugin.id,
           capability,
           userId
@@ -880,25 +1039,16 @@ export class PluginService {
     );
   }
 
-  private isPluginDefinitionApproved(
+  private async isPluginDefinitionApproved(
     plugin: Plugin,
     filePath: string
-  ): boolean {
+  ): Promise<boolean> {
     if (this.isAnchoredBundledDefinition(plugin, filePath)) {
       return true;
     }
 
-    const db = getDatabaseSafe();
-    if (!db) return false;
     try {
-      const row = db
-        .prepare(
-          `SELECT definition_fingerprint, source_path
-           FROM plugin_definition_approvals
-           WHERE plugin_id = ?`
-        )
-        .get(plugin.id) as
-        { definition_fingerprint: string; source_path: string } | undefined;
+      const row = await this.repositories().pluginApprovals.find(plugin.id);
       return (
         row?.definition_fingerprint ===
           getPluginDefinitionFingerprint(plugin) &&
@@ -914,58 +1064,31 @@ export class PluginService {
     }
   }
 
-  private approvePluginDefinition(
+  private async approvePluginDefinition(
     plugin: Plugin,
     filePath: string,
     userId: string
-  ): void {
-    if (!this.canUseStoredConnectionOverrides(userId)) {
+  ): Promise<void> {
+    if (!(await this.canUseStoredConnectionOverrides(userId))) {
       throw new Error('Administrator approval is required');
     }
-    const db = getDatabaseSafe();
-    if (!db) {
-      throw new Error('Database not available for plugin approval');
-    }
-    db.prepare(
-      `INSERT INTO plugin_definition_approvals
-         (plugin_id, definition_fingerprint, source_path,
-          approved_by_user_id, approved_at)
-       VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(plugin_id) DO UPDATE SET
-         definition_fingerprint = excluded.definition_fingerprint,
-         source_path = excluded.source_path,
-         approved_by_user_id = excluded.approved_by_user_id,
-         approved_at = excluded.approved_at`
-    ).run(
-      plugin.id,
-      getPluginDefinitionFingerprint(plugin),
-      path.resolve(filePath),
-      userId,
-      Date.now()
-    );
+    await this.repositories().pluginApprovals.upsert({
+      plugin_id: plugin.id,
+      definition_fingerprint: getPluginDefinitionFingerprint(plugin),
+      source_path: path.resolve(filePath),
+      approved_by_user_id: userId,
+      approved_at: Date.now(),
+    });
   }
 
-  private removePluginDefinitionApproval(pluginId: string): void {
-    const db = getDatabaseSafe();
-    if (!db) return;
-    db.prepare(
-      'DELETE FROM plugin_definition_approvals WHERE plugin_id = ?'
-    ).run(pluginId);
+  private async removePluginDefinitionApproval(
+    pluginId: string
+  ): Promise<void> {
+    await this.repositories().pluginApprovals.delete(pluginId);
   }
 
-  private revokePluginDefinitionConsent(pluginId: string): void {
-    const db = getDatabaseSafe();
-    if (!db) {
-      throw new Error('Database not available for plugin approval');
-    }
-    db.transaction(() => {
-      db.prepare('DELETE FROM plugin_activations WHERE plugin_id = ?').run(
-        pluginId
-      );
-      db.prepare(
-        'DELETE FROM plugin_definition_approvals WHERE plugin_id = ?'
-      ).run(pluginId);
-    })();
+  private async revokePluginDefinitionConsent(pluginId: string): Promise<void> {
+    await this.repositories().pluginApprovals.revokeConsent(pluginId);
   }
 
   private canMigrateLegacyActivation(pluginId: string): boolean {
@@ -1067,6 +1190,12 @@ export class PluginService {
   }
 
   private usesTrustedBundledRouting(plugin: Plugin): boolean {
+    if (
+      this.sharedPluginDefinitions &&
+      this.sharedDefinitionIds.has(plugin.id)
+    ) {
+      return false;
+    }
     const effectivePath = this.resolveEffectivePluginFilePath(plugin.id);
     const bundledPath = this.bundledPluginPath(plugin.id);
     if (!effectivePath || effectivePath !== bundledPath) return false;
@@ -1078,19 +1207,22 @@ export class PluginService {
     );
   }
 
-  private isPluginActive(pluginId: string, userId?: string): boolean {
-    return pluginActivationService.getActivePluginIds(userId).has(pluginId);
+  private async isPluginActive(
+    pluginId: string,
+    userId?: string
+  ): Promise<boolean> {
+    return (await pluginActivationService.getActivePluginIds(userId)).has(
+      pluginId
+    );
   }
 
-  private canUseStoredConnectionOverrides(userId?: string): boolean {
-    const db = getDatabaseSafe();
-    if (!db) return false;
-
+  private async canUseStoredConnectionOverrides(
+    userId?: string
+  ): Promise<boolean> {
     try {
-      const row = db
-        .prepare('SELECT role FROM users WHERE id = ?')
-        .get(userId || 'default') as { role?: string } | undefined;
-      return row?.role === 'admin';
+      return (
+        (await userModel.getUserById(userId || 'default'))?.role === 'admin'
+      );
     } catch (error) {
       logger.warn('Failed to resolve plugin routing permission:', error);
       return false;
@@ -1103,7 +1235,7 @@ export class PluginService {
    * @param userId Optional user ID for per-user credentials
    * @returns The API key or null if not found
    */
-  getApiKey(plugin: Plugin, userId?: string): string | null {
+  async getApiKey(plugin: Plugin, userId?: string): Promise<string | null> {
     if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
       // Resolved from the server's Codex CLI sign-in, never user credentials.
       // A writable same-ID definition must never receive the server user's
@@ -1114,13 +1246,13 @@ export class PluginService {
         : null;
     }
     const hasHonoredConnectionOverride =
-      this.canUseStoredConnectionOverrides(userId) &&
-      pluginVariablesService.hasStoredConnectionOverride(
+      (await this.canUseStoredConnectionOverrides(userId)) &&
+      (await pluginVariablesService.hasStoredConnectionOverride(
         plugin.id,
         userId,
         plugin.variables,
         getPluginConnectionVariableNames(plugin)
-      );
+      ));
     const usesTrustedBundledRouting = this.usesTrustedBundledRouting(plugin);
     const allowTrustedFallback =
       usesTrustedBundledRouting && !hasHonoredConnectionOverride;
@@ -1131,7 +1263,7 @@ export class PluginService {
       {
         allowEnvironmentFallback: allowTrustedFallback,
         expectedRoutingAuthFingerprint:
-          this.getCredentialRoutingAuthFingerprint(plugin, userId),
+          await this.getCredentialRoutingAuthFingerprint(plugin, userId),
         allowLegacyUnboundCredential: allowTrustedFallback,
       }
     );
@@ -1141,8 +1273,11 @@ export class PluginService {
    * Bind a user credential to the exact routing/authentication contract in
    * effect when they save it. Generation controls are intentionally excluded.
    */
-  getCredentialRoutingAuthFingerprint(plugin: Plugin, userId?: string): string {
-    const variables = this.getPluginVariables(plugin, userId);
+  async getCredentialRoutingAuthFingerprint(
+    plugin: Plugin,
+    userId?: string
+  ): Promise<string> {
+    const variables = await this.getPluginVariables(plugin, userId);
     const effectiveConnectionValues = Array.from(
       getPluginConnectionVariableNames(plugin),
       name => {
@@ -1156,7 +1291,13 @@ export class PluginService {
         };
       }
     );
-    const effectivePath = this.resolveEffectivePluginFilePath(plugin.id);
+    const sharedDefinition = this.sharedPluginDefinitions
+      ? await this.repositories().pluginDefinitions.find(plugin.id)
+      : null;
+    if (sharedDefinition) this.sharedDefinitionIds.add(plugin.id);
+    const effectivePath = sharedDefinition
+      ? null
+      : this.resolveEffectivePluginFilePath(plugin.id);
     let effectiveDefinitionFingerprint = getPluginDefinitionFingerprint(plugin);
     if (effectivePath) {
       try {
@@ -1179,7 +1320,11 @@ export class PluginService {
       plugin_id: plugin.id,
       plugin_type: plugin.type,
       trusted_bundled_source: this.usesTrustedBundledRouting(plugin),
-      effective_source_path: effectivePath ? path.resolve(effectivePath) : null,
+      effective_source_path: sharedDefinition
+        ? 'database:plugin_definitions'
+        : effectivePath
+          ? path.resolve(effectivePath)
+          : null,
       effective_definition_fingerprint: effectiveDefinitionFingerprint,
       routing_auth_projection: getPluginRoutingAuthProjection(plugin),
       effective_connection_values: effectiveConnectionValues,
@@ -1190,19 +1335,19 @@ export class PluginService {
   /**
    * Get resolved variable values for a plugin (decrypted, typed).
    */
-  getPluginVariables(
+  async getPluginVariables(
     plugin: Plugin,
     userId?: string
-  ): Record<string, string | number | boolean> {
+  ): Promise<Record<string, string | number | boolean>> {
     if (!plugin.variables || plugin.variables.length === 0) {
       return {};
     }
-    const variables = pluginVariablesService.getResolvedVariables(
+    const variables = await pluginVariablesService.getResolvedVariables(
       plugin.id,
       plugin.variables,
       userId
     );
-    if (this.canUseStoredConnectionOverrides(userId)) return variables;
+    if (await this.canUseStoredConnectionOverrides(userId)) return variables;
 
     return Object.fromEntries(
       Object.entries(variables).map(([name, value]) => {
@@ -1231,10 +1376,13 @@ export class PluginService {
    * boundary ordered prevents a rejected override from ever selecting an
    * environment credential.
    */
-  private resolveOperationEndpoint(plugin: Plugin, userId?: string): string {
+  private async resolveOperationEndpoint(
+    plugin: Plugin,
+    userId?: string
+  ): Promise<string> {
     return resolvePluginApiConfig(
       plugin,
-      this.getPluginVariables(plugin, userId)
+      await this.getPluginVariables(plugin, userId)
     ).endpoint;
   }
 
@@ -1258,6 +1406,7 @@ export class PluginService {
     pluginId: string,
     userId?: string
   ): Promise<PluginModelDiscoveryResult> {
+    await this.ensureCacheInvalidation();
     const cacheKey = this.discoveredModelsCacheKey(
       pluginId,
       userId || 'default'
@@ -1265,9 +1414,14 @@ export class PluginService {
     const inflight = this.inflightDiscovery.get(cacheKey);
     if (inflight) return inflight;
 
-    const attempt = this.runModelDiscovery(pluginId, userId).finally(() => {
-      this.inflightDiscovery.delete(cacheKey);
-    });
+    const revision = this.discoveryCacheRevisions.get(cacheKey) ?? 0;
+    const attempt = this.runModelDiscovery(pluginId, userId, revision).finally(
+      () => {
+        if (this.inflightDiscovery.get(cacheKey) === attempt) {
+          this.inflightDiscovery.delete(cacheKey);
+        }
+      }
+    );
     this.inflightDiscovery.set(cacheKey, attempt);
     return attempt;
   }
@@ -1277,7 +1431,10 @@ export class PluginService {
    * immediately; stored ones age out after the TTL. Both cases are gated by a
    * per-plugin backoff so a failing provider is not probed on every request.
    */
-  private isModelDiscoveryDue(pluginId: string, userId?: string): boolean {
+  private async isModelDiscoveryDue(
+    pluginId: string,
+    userId?: string
+  ): Promise<boolean> {
     const cacheKey = this.discoveredModelsCacheKey(
       pluginId,
       userId || 'default'
@@ -1287,7 +1444,7 @@ export class PluginService {
       return false;
     }
 
-    const models = this.getDiscoveredModels(pluginId, userId);
+    const models = await this.getDiscoveredModels(pluginId, userId);
     const updatedAt = this.discoveredModelsUpdatedAt.get(cacheKey);
     if (!models || !updatedAt) return true;
 
@@ -1301,11 +1458,15 @@ export class PluginService {
    * the next request.
    */
   async refreshStaleModels(userId?: string): Promise<void> {
-    const due = (await this.getActivePlugins(userId)).filter(
-      plugin =>
+    const due: Plugin[] = [];
+    for (const plugin of await this.getActivePlugins(userId)) {
+      if (
         (plugin.type === 'completion' || plugin.type === 'chat') &&
-        this.isModelDiscoveryDue(plugin.id, userId)
-    );
+        (await this.isModelDiscoveryDue(plugin.id, userId))
+      ) {
+        due.push(plugin);
+      }
+    }
     if (due.length === 0) return;
 
     const refreshes = Promise.all(
@@ -1327,6 +1488,7 @@ export class PluginService {
     capability: DiscoverableMediaCapability,
     userId?: string
   ): Promise<PluginModelDiscoveryResult> {
+    await this.ensureCacheInvalidation();
     const cacheKey = this.discoveredCapabilityModelsCacheKey(
       pluginId,
       capability,
@@ -1335,20 +1497,26 @@ export class PluginService {
     const inflight = this.inflightCapabilityDiscovery.get(cacheKey);
     if (inflight) return inflight;
 
+    const revision = this.capabilityDiscoveryCacheRevisions.get(cacheKey) ?? 0;
     const attempt = this.runCapabilityModelDiscovery(
       pluginId,
       capability,
-      userId
-    ).finally(() => this.inflightCapabilityDiscovery.delete(cacheKey));
+      userId,
+      revision
+    ).finally(() => {
+      if (this.inflightCapabilityDiscovery.get(cacheKey) === attempt) {
+        this.inflightCapabilityDiscovery.delete(cacheKey);
+      }
+    });
     this.inflightCapabilityDiscovery.set(cacheKey, attempt);
     return attempt;
   }
 
-  private isCapabilityModelDiscoveryDue(
+  private async isCapabilityModelDiscoveryDue(
     pluginId: string,
     capability: DiscoverableMediaCapability,
     userId?: string
-  ): boolean {
+  ): Promise<boolean> {
     const cacheKey = this.discoveredCapabilityModelsCacheKey(
       pluginId,
       capability,
@@ -1358,7 +1526,7 @@ export class PluginService {
     if (attemptedAt && Date.now() - attemptedAt < modelDiscoveryRetryMs()) {
       return false;
     }
-    const models = this.getDiscoveredCapabilityModels(
+    const models = await this.getDiscoveredCapabilityModels(
       pluginId,
       capability,
       userId
@@ -1373,13 +1541,20 @@ export class PluginService {
     capability: DiscoverableMediaCapability,
     userId?: string
   ): Promise<void> {
-    const due = (await this.getActivePlugins(userId)).filter(plugin => {
+    const due: Plugin[] = [];
+    for (const plugin of await this.getActivePlugins(userId)) {
       const definition = plugin.capabilities?.[capability];
-      return (
+      if (
         Boolean(definition?.models_endpoint) &&
-        this.isCapabilityModelDiscoveryDue(plugin.id, capability, userId)
-      );
-    });
+        (await this.isCapabilityModelDiscoveryDue(
+          plugin.id,
+          capability,
+          userId
+        ))
+      ) {
+        due.push(plugin);
+      }
+    }
     if (due.length === 0) return;
 
     const refreshes = Promise.all(
@@ -1400,7 +1575,8 @@ export class PluginService {
   private async runCapabilityModelDiscovery(
     pluginId: string,
     capability: DiscoverableMediaCapability,
-    userId?: string
+    userId: string | undefined,
+    expectedRevision: number
   ): Promise<PluginModelDiscoveryResult> {
     const plugin = await this.getPlugin(pluginId, userId);
     const definition = plugin?.capabilities?.[capability];
@@ -1426,7 +1602,7 @@ export class PluginService {
         ? (definition.config as Record<string, unknown>)
         : {};
     const modelsEndpointVariable = config.models_endpoint_variable;
-    const pluginVariables = this.getPluginVariables(plugin, userId);
+    const pluginVariables = await this.getPluginVariables(plugin, userId);
     const modelsEndpointOverride =
       typeof modelsEndpointVariable === 'string'
         ? pluginVariables[modelsEndpointVariable]
@@ -1441,7 +1617,7 @@ export class PluginService {
       `${capability} model discovery endpoint`
     );
 
-    const apiKey = this.getApiKey(plugin, userId);
+    const apiKey = await this.getApiKey(plugin, userId);
     if (pluginRequiresApiKey(plugin) && !apiKey) {
       return {
         models: definition.model_map,
@@ -1482,7 +1658,17 @@ export class PluginService {
       }
 
       const previous = definition.model_map;
-      this.storeDiscoveredCapabilityModels(
+      if (
+        (this.capabilityDiscoveryCacheRevisions.get(cacheKey) ?? 0) !==
+        expectedRevision
+      ) {
+        return {
+          models: previous,
+          outcome: 'unavailable',
+          reason: 'Provider configuration changed during discovery',
+        };
+      }
+      await this.storeDiscoveredCapabilityModels(
         pluginId,
         capability,
         models,
@@ -1528,7 +1714,8 @@ export class PluginService {
 
   private async runModelDiscovery(
     pluginId: string,
-    userId?: string
+    userId: string | undefined,
+    expectedRevision: number
   ): Promise<PluginModelDiscoveryResult> {
     const plugin = await this.getPlugin(pluginId, userId);
     if (!plugin) {
@@ -1540,7 +1727,7 @@ export class PluginService {
       Date.now()
     );
 
-    const pluginVars = this.getPluginVariables(plugin, userId);
+    const pluginVars = await this.getPluginVariables(plugin, userId);
     const { endpoint: effectiveEndpoint } = resolvePluginApiConfig(
       plugin,
       pluginVars
@@ -1553,7 +1740,7 @@ export class PluginService {
     );
     assertSafePluginEndpoint(modelsEndpoint, 'model discovery endpoint');
 
-    const apiKey = this.getApiKey(plugin, userId);
+    const apiKey = await this.getApiKey(plugin, userId);
     if (pluginRequiresApiKey(plugin) && !apiKey) {
       logger.debug(
         '[Plugin] Model discovery for %s has no usable API key; keeping the existing catalog',
@@ -1592,8 +1779,23 @@ export class PluginService {
           );
 
           const previousModels = plugin.model_map;
-          this.storeDiscoveredModels(pluginId, models, userId);
-          const stored = this.getDiscoveredModels(pluginId, userId) || models;
+          const cacheKey = this.discoveredModelsCacheKey(
+            pluginId,
+            userId || 'default'
+          );
+          if (
+            (this.discoveryCacheRevisions.get(cacheKey) ?? 0) !==
+            expectedRevision
+          ) {
+            return {
+              models: previousModels,
+              outcome: 'unavailable',
+              reason: 'Provider configuration changed during discovery',
+            };
+          }
+          await this.storeDiscoveredModels(pluginId, models, userId);
+          const stored =
+            (await this.getDiscoveredModels(pluginId, userId)) || models;
           return {
             models: stored,
             outcome:
@@ -1621,9 +1823,11 @@ export class PluginService {
   }
 
   // List all installed plugins
-  private getAllPluginsUnchecked(userId?: string): Plugin[] {
+  private async getAllPluginsUnchecked(userId?: string): Promise<Plugin[]> {
+    await this.ensureLegacyActivationMigration();
     const plugins = new Map<string, Plugin>();
-    const activePluginIds = pluginActivationService.getActivePluginIds(userId);
+    const activePluginIds =
+      await pluginActivationService.getActivePluginIds(userId);
 
     for (const pluginsDir of this.pluginReadDirs) {
       const directoryStat = (() => {
@@ -1669,7 +1873,12 @@ export class PluginService {
                 this.validatePlugin(parsedPlugin) &&
                 parsedPlugin.id === filenameId
               ) {
-                if (!this.isPluginDefinitionApproved(parsedPlugin, filePath)) {
+                if (
+                  !(await this.isPluginDefinitionApproved(
+                    parsedPlugin,
+                    filePath
+                  ))
+                ) {
                   // A later writable definition shadows an earlier bundled
                   // definition even while quarantined.
                   plugins.delete(parsedPlugin.id);
@@ -1679,7 +1888,7 @@ export class PluginService {
                 plugin.active = activePluginIds.has(plugin.id);
                 plugins.set(
                   plugin.id,
-                  this.applyDiscoveredModels(plugin, userId)
+                  await this.applyDiscoveredModels(plugin, userId)
                 );
               } else if (parsedPlugin.id !== filenameId) {
                 plugins.delete(filenameId);
@@ -1703,11 +1912,42 @@ export class PluginService {
       }
     }
 
+    if (this.sharedPluginDefinitions) {
+      const definitions = await this.repositories().pluginDefinitions.list();
+      const currentDefinitionIds = new Set(
+        definitions.map(definition => definition.plugin_id)
+      );
+      for (const pluginId of this.sharedDefinitionIds) {
+        if (!currentDefinitionIds.has(pluginId)) {
+          this.sharedDefinitionIds.delete(pluginId);
+        }
+      }
+      for (const definition of definitions) {
+        // The shared row has precedence over bundled release assets even when
+        // corrupt or unapproved, preserving quarantine rather than silently
+        // changing the provider route on another replica.
+        plugins.delete(definition.plugin_id);
+        const plugin = this.parseSharedPluginDefinition(definition);
+        if (!plugin) {
+          logger.error(
+            'Ignoring invalid or unapproved shared plugin definition %s',
+            definition.plugin_id
+          );
+          continue;
+        }
+        plugin.active = activePluginIds.has(plugin.id);
+        plugins.set(
+          plugin.id,
+          await this.applyDiscoveredModels(plugin, userId)
+        );
+      }
+    }
+
     return Array.from(plugins.values());
   }
 
   async getAllPlugins(userId?: string): Promise<Plugin[]> {
-    const plugins = this.getAllPluginsUnchecked(userId);
+    const plugins = await this.getAllPluginsUnchecked(userId);
     const visible: Plugin[] = [];
     for (const plugin of plugins) {
       if (await this.isPluginVisibleToUser(plugin, userId)) {
@@ -1732,12 +1972,28 @@ export class PluginService {
   }
 
   // Get a specific plugin by ID
-  private loadPlugin(id: string, userId?: string): Plugin | null {
+  private async loadPlugin(
+    id: string,
+    userId?: string
+  ): Promise<Plugin | null> {
+    await this.ensureLegacyActivationMigration();
     // Sanitize the ID to prevent path traversal
     const sanitizedId = sanitize(id);
     if (!sanitizedId || sanitizedId !== id) {
       logger.error('Invalid plugin ID provided:', id);
       return null;
+    }
+
+    if (this.sharedPluginDefinitions) {
+      const definition =
+        await this.repositories().pluginDefinitions.find(sanitizedId);
+      if (definition) {
+        const plugin = this.parseSharedPluginDefinition(definition);
+        if (!plugin) return null;
+        plugin.active = await this.isPluginActive(plugin.id, userId);
+        return this.applyDiscoveredModels(plugin, userId);
+      }
+      this.sharedDefinitionIds.delete(sanitizedId);
     }
 
     const filePath = this.resolveEffectivePluginFilePath(sanitizedId);
@@ -1750,10 +2006,10 @@ export class PluginService {
       if (
         this.validatePlugin(parsedPlugin) &&
         parsedPlugin.id === sanitizedId &&
-        this.isPluginDefinitionApproved(parsedPlugin, filePath)
+        (await this.isPluginDefinitionApproved(parsedPlugin, filePath))
       ) {
         const plugin = applyPluginDefinitionPolicy(parsedPlugin);
-        plugin.active = this.isPluginActive(plugin.id, userId);
+        plugin.active = await this.isPluginActive(plugin.id, userId);
         return this.applyDiscoveredModels(plugin, userId);
       }
     } catch (error) {
@@ -1763,13 +2019,16 @@ export class PluginService {
     return null;
   }
 
-  private getPluginUnchecked(id: string, userId?: string): Plugin | null {
+  private async getPluginUnchecked(
+    id: string,
+    userId?: string
+  ): Promise<Plugin | null> {
     if (id === CODEX_OAUTH_PLUGIN_ID) return null;
     return this.loadPlugin(id, userId);
   }
 
   async getPlugin(id: string, userId?: string): Promise<Plugin | null> {
-    const plugin = this.loadPlugin(id, userId);
+    const plugin = await this.loadPlugin(id, userId);
     if (!plugin || !(await this.isPluginVisibleToUser(plugin, userId))) {
       return null;
     }
@@ -1777,15 +2036,18 @@ export class PluginService {
   }
 
   // Install or update a plugin
-  installPlugin(pluginData: Plugin, approvedByUserId: string): Plugin {
-    this.ensurePluginsDirectory();
+  async installPlugin(
+    pluginData: Plugin,
+    approvedByUserId: string
+  ): Promise<Plugin> {
+    if (!this.sharedPluginDefinitions) this.ensurePluginsDirectory();
     if (!this.validatePlugin(pluginData)) {
       throw new Error('Invalid plugin structure');
     }
     if (pluginData.id === CODEX_OAUTH_PLUGIN_ID) {
       throw new Error('The bundled Codex OAuth plugin ID is reserved');
     }
-    if (!this.canUseStoredConnectionOverrides(approvedByUserId)) {
+    if (!(await this.canUseStoredConnectionOverrides(approvedByUserId))) {
       throw new Error('Administrator approval is required');
     }
 
@@ -1799,6 +2061,20 @@ export class PluginService {
 
     const safeId = plugin.id.replace(/[^a-zA-Z0-9_.-]/g, '');
     if (safeId !== plugin.id) throw new Error('Invalid plugin ID');
+    if (this.sharedPluginDefinitions) {
+      await this.repositories().pluginDefinitions.replaceApproved({
+        plugin_id: plugin.id,
+        definition_json: JSON.stringify(plugin, null, 2),
+        definition_fingerprint: getPluginDefinitionFingerprint(plugin),
+        approved_by_user_id: approvedByUserId,
+        approved_at: now,
+        created_at: plugin.created_at || now,
+        updated_at: now,
+      });
+      this.sharedDefinitionIds.add(plugin.id);
+      await this.clearDiscoveredModels(plugin.id);
+      return plugin;
+    }
     const filePath = path.resolve(this.pluginsDir, `${safeId}.json`);
     if (!filePath.startsWith(path.resolve(this.pluginsDir))) {
       throw new Error('Path traversal detected');
@@ -1806,8 +2082,8 @@ export class PluginService {
     // Revoke definition approval and every user's activation before replacing
     // bytes on disk. Any crash or write failure therefore leaves the provider
     // quarantined and inactive.
-    this.revokePluginDefinitionConsent(plugin.id);
-    this.clearDiscoveredModels(plugin.id);
+    await this.revokePluginDefinitionConsent(plugin.id);
+    await this.clearDiscoveredModels(plugin.id);
     const temporaryPath = path.resolve(
       this.pluginsDir,
       `.${safeId}.${process.pid}.${Date.now()}.tmp`
@@ -1823,13 +2099,13 @@ export class PluginService {
       }
       throw error;
     }
-    this.approvePluginDefinition(plugin, filePath, approvedByUserId);
+    await this.approvePluginDefinition(plugin, filePath, approvedByUserId);
 
     return plugin;
   }
 
   // Delete a plugin
-  deletePlugin(id: string): boolean {
+  async deletePlugin(id: string): Promise<boolean> {
     // Validate the ID parameter using a strict pattern (allows dots for version numbers like 1.6b)
     const idPattern = /^[a-zA-Z0-9._-]+$/;
     if (!idPattern.test(id)) {
@@ -1842,6 +2118,20 @@ export class PluginService {
     if (!sanitizedId || sanitizedId !== id) {
       logger.error('Plugin ID failed sanitization:', id);
       return false;
+    }
+
+    if (this.sharedPluginDefinitions) {
+      try {
+        const removed =
+          await this.repositories().pluginDefinitions.deleteWithState(id);
+        if (!removed) return false;
+        this.sharedDefinitionIds.delete(id);
+        await this.clearDiscoveredModels(id);
+        return true;
+      } catch (error) {
+        logger.error('Failed to delete shared plugin %s:', sanitizedId, error);
+        return false;
+      }
     }
 
     const bundledDirectory = path.resolve(this.bundledPluginsDir);
@@ -1860,13 +2150,13 @@ export class PluginService {
     try {
       fs.unlinkSync(filePath);
 
-      pluginActivationService.deletePlugin(id);
-      this.removePluginDefinitionApproval(id);
+      await pluginActivationService.deletePlugin(id);
+      await this.removePluginDefinitionApproval(id);
 
       // Clean up stored variables
-      pluginVariablesService.deletePluginVariables(id);
-      pluginCredentialsService.deleteAllPluginCredentials(id);
-      this.clearDiscoveredModels(id);
+      await pluginVariablesService.deletePluginVariables(id);
+      await pluginCredentialsService.deleteAllPluginCredentials(id);
+      await this.clearDiscoveredModels(id);
 
       return true;
     } catch (error) {
@@ -1883,30 +2173,35 @@ export class PluginService {
       throw new Error('Plugin not found');
     }
 
-    if (!pluginActivationService.activate(id, userId)) {
+    if (!(await pluginActivationService.activate(id, userId))) {
       throw new Error('Failed to persist plugin activation');
     }
 
     // Wait for discovery so the activation response and the UI's first reload
-    // observe the same user-scoped model catalog.
-    await Promise.all([
-      this.discoverModels(id, userId).catch(() => []),
-      ...(['image', 'stt', 'tts', 'audio', 'video'] as const)
-        .filter(
-          capability => plugin.capabilities?.[capability]?.models_endpoint
-        )
-        .map(capability =>
-          this.discoverCapabilityModels(id, capability, userId).catch(
-            () => undefined
-          )
-        ),
-    ]);
+    // observe the same user-scoped model catalog. These writes are deliberately
+    // sequential: each persisted catalog publishes a cross-replica plugin-user
+    // invalidation. Running sibling discoveries concurrently would make the
+    // first completed catalog advance every sibling's configuration revision,
+    // causing the remaining valid results to be discarded as stale.
+    await this.discoverModels(id, userId).catch(() => []);
+    for (const capability of [
+      'image',
+      'stt',
+      'tts',
+      'audio',
+      'video',
+    ] as const) {
+      if (!plugin.capabilities?.[capability]?.models_endpoint) continue;
+      await this.discoverCapabilityModels(id, capability, userId).catch(
+        () => undefined
+      );
+    }
 
     return true;
   }
 
   // Deactivate a specific plugin
-  deactivatePlugin(id?: string, userId?: string): boolean {
+  deactivatePlugin(id?: string, userId?: string): Promise<boolean> {
     // The legacy no-ID route now deactivates all plugins only for this user.
     return pluginActivationService.deactivate(id, userId);
   }
@@ -1922,7 +2217,7 @@ export class PluginService {
       if (!plugin) {
         throw new Error(`Plugin not found: ${pluginId}`);
       }
-      if (!this.isPluginActive(pluginId, userId)) {
+      if (!(await this.isPluginActive(pluginId, userId))) {
         throw new Error(`Plugin is not active: ${pluginId}`);
       }
       if (!plugin.model_map.includes(model)) {
@@ -1931,8 +2226,8 @@ export class PluginService {
         );
       }
 
-      this.resolveOperationEndpoint(plugin, userId);
-      const apiKey = this.getApiKey(plugin, userId);
+      await this.resolveOperationEndpoint(plugin, userId);
+      const apiKey = await this.getApiKey(plugin, userId);
       if (pluginRequiresApiKey(plugin) && !apiKey) {
         throw new Error(
           `API key not found for plugin ${pluginId} (save a provider credential in Settings)`
@@ -1950,8 +2245,8 @@ export class PluginService {
       if (plugin.model_map.includes(model)) {
         // Local OpenAI-compatible servers can explicitly opt out of auth by
         // leaving both auth fields empty.
-        this.resolveOperationEndpoint(plugin, userId);
-        const apiKey = this.getApiKey(plugin, userId);
+        await this.resolveOperationEndpoint(plugin, userId);
+        const apiKey = await this.getApiKey(plugin, userId);
         if (pluginRequiresApiKey(plugin) && !apiKey) {
           continue;
         }
@@ -1970,8 +2265,8 @@ export class PluginService {
     return activePlugins;
   }
 
-  private getActivePluginsUnchecked(userId?: string): Plugin[] {
-    return this.getAllPluginsUnchecked(userId).filter(
+  private async getActivePluginsUnchecked(userId?: string): Promise<Plugin[]> {
+    return (await this.getAllPluginsUnchecked(userId)).filter(
       plugin => plugin.active && plugin.id !== CODEX_OAUTH_PLUGIN_ID
     );
   }
@@ -1985,13 +2280,15 @@ export class PluginService {
   // Get plugin status
   async getPluginStatus(userId?: string): Promise<PluginStatus[]> {
     const plugins = await this.getAllPlugins(userId);
-    return plugins.map(plugin => ({
-      id: plugin.id,
-      active: plugin.active || false,
-      available:
-        !pluginRequiresApiKey(plugin) ||
-        this.getApiKey(plugin, userId) !== null,
-    }));
+    return Promise.all(
+      plugins.map(async plugin => ({
+        id: plugin.id,
+        active: plugin.active || false,
+        available:
+          !pluginRequiresApiKey(plugin) ||
+          (await this.getApiKey(plugin, userId)) !== null,
+      }))
+    );
   }
 
   // Execute a chat request through the active plugin
@@ -2042,7 +2339,7 @@ export class PluginService {
       } as PluginResponse;
     }
 
-    const pluginVars = this.getPluginVariables(activePlugin, userId);
+    const pluginVars = await this.getPluginVariables(activePlugin, userId);
     const { apiMode, endpoint: effectiveEndpoint } = resolvePluginApiConfig(
       activePlugin,
       pluginVars
@@ -2052,7 +2349,7 @@ export class PluginService {
       model
     );
     assertSafePluginEndpoint(processedEndpoint, 'endpoint URL constructed');
-    const apiKey = this.getApiKey(activePlugin, userId);
+    const apiKey = await this.getApiKey(activePlugin, userId);
     if (pluginRequiresApiKey(activePlugin) && !apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (save a provider credential in Settings)`
@@ -2192,7 +2489,7 @@ export class PluginService {
       await codexOAuthService.ensureFreshToken(signal);
     }
 
-    const pluginVars = this.getPluginVariables(activePlugin, userId);
+    const pluginVars = await this.getPluginVariables(activePlugin, userId);
     const { apiMode, endpoint: effectiveEndpoint } = resolvePluginApiConfig(
       activePlugin,
       pluginVars
@@ -2202,7 +2499,7 @@ export class PluginService {
       model
     );
     assertSafePluginEndpoint(processedEndpoint);
-    const apiKey = this.getApiKey(activePlugin, userId);
+    const apiKey = await this.getApiKey(activePlugin, userId);
     if (pluginRequiresApiKey(activePlugin) && !apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (save a provider credential in Settings)`
@@ -2453,10 +2750,22 @@ export class PluginService {
   }
 
   // Import plugin from JSON data
-  importPlugin(pluginData: unknown, approvedByUserId: string): Plugin {
+  async importPlugin(
+    pluginData: unknown,
+    approvedByUserId: string
+  ): Promise<Plugin> {
     // Validate and clean the plugin data
     if (!this.validatePlugin(pluginData)) {
       throw new Error('Invalid plugin data');
+    }
+
+    if (this.sharedPluginDefinitions) {
+      const existing = await this.repositories().pluginDefinitions.find(
+        pluginData.id
+      );
+      if (existing && this.parseSharedPluginDefinition(existing)) {
+        throw new Error(`Plugin with ID ${pluginData.id} already exists`);
+      }
     }
 
     // Check if plugin already exists
@@ -2471,7 +2780,10 @@ export class PluginService {
         if (
           this.validatePlugin(existingPlugin) &&
           existingPlugin.id === pluginData.id &&
-          this.isPluginDefinitionApproved(existingPlugin, existingPluginPath)
+          (await this.isPluginDefinitionApproved(
+            existingPlugin,
+            existingPluginPath
+          ))
         ) {
           throw new Error(`Plugin with ID ${pluginData.id} already exists`);
         }
@@ -2494,30 +2806,32 @@ export class PluginService {
   // Capability Methods
   // ============================================
 
-  getPluginForTTS(
+  async getPluginForTTS(
     model: string,
     pluginId?: string,
     userId?: string
-  ): Plugin | null {
+  ): Promise<Plugin | null> {
     return this.ttsService.getPluginForTTS(model, pluginId, userId);
   }
 
-  getPluginForEmbedding(
+  async getPluginForEmbedding(
     model: string,
     pluginId?: string,
     userId?: string
-  ): Plugin | null {
+  ): Promise<Plugin | null> {
     return this.embeddingService.getPluginForEmbedding(model, pluginId, userId);
   }
 
-  getAvailableEmbeddingModels(userId?: string): Array<{
-    model: string;
-    plugin: string;
-    pluginName: string;
-    provider: EmbeddingModel['provider'];
-    description?: string;
-    fromEmbeddingCapability?: boolean;
-  }> {
+  async getAvailableEmbeddingModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      pluginName: string;
+      provider: EmbeddingModel['provider'];
+      description?: string;
+      fromEmbeddingCapability?: boolean;
+    }>
+  > {
     return this.embeddingService.getAvailableEmbeddingModels(userId);
   }
 
@@ -2537,19 +2851,23 @@ export class PluginService {
     );
   }
 
-  getAvailableTTSModels(userId?: string): {
-    model: string;
-    plugin: string;
-    config?: TTSConfig;
-  }[] {
+  async getAvailableTTSModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      config?: TTSConfig;
+    }>
+  > {
     return this.ttsService.getAvailableTTSModels(userId);
   }
 
-  getAvailableSTTModels(userId?: string): Array<{
-    model: string;
-    plugin: string;
-    config?: STTConfig;
-  }> {
+  async getAvailableSTTModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      config?: STTConfig;
+    }>
+  > {
     return this.sttService.getAvailableModels(userId);
   }
 
@@ -2601,15 +2919,18 @@ export class PluginService {
     );
   }
 
-  getTTSConfig(pluginId: string, userId?: string): TTSConfig | null {
+  async getTTSConfig(
+    pluginId: string,
+    userId?: string
+  ): Promise<TTSConfig | null> {
     return this.ttsService.getTTSConfig(pluginId, userId);
   }
 
-  getPluginForImageGen(
+  async getPluginForImageGen(
     model: string,
     pluginId: string,
     userId?: string
-  ): Plugin | null {
+  ): Promise<Plugin | null> {
     return this.imageGenerationService.getPluginForImageGen(
       model,
       pluginId,
@@ -2617,11 +2938,13 @@ export class PluginService {
     );
   }
 
-  getAvailableImageGenModels(userId?: string): {
-    model: string;
-    plugin: string;
-    config?: ImageGenConfig;
-  }[] {
+  async getAvailableImageGenModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      config?: ImageGenConfig;
+    }>
+  > {
     return this.imageGenerationService.getAvailableImageGenModels(userId);
   }
 
@@ -2646,25 +2969,30 @@ export class PluginService {
     );
   }
 
-  getImageGenConfig(pluginId: string, userId?: string): ImageGenConfig | null {
+  async getImageGenConfig(
+    pluginId: string,
+    userId?: string
+  ): Promise<ImageGenConfig | null> {
     return this.imageGenerationService.getImageGenConfig(pluginId, userId);
   }
 
-  getPluginsByCapability(
+  async getPluginsByCapability(
     capabilityType: PluginType,
     userId?: string
-  ): Plugin[] {
+  ): Promise<Plugin[]> {
     return this.capabilityRegistryService.getPluginsByCapability(
       capabilityType,
       userId
     );
   }
 
-  getAvailableAudioGenModels(userId?: string): Array<{
-    model: string;
-    plugin: string;
-    config?: AudioGenConfig;
-  }> {
+  async getAvailableAudioGenModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      config?: AudioGenConfig;
+    }>
+  > {
     return this.audioGenerationService.getAvailableModels(userId);
   }
 
@@ -2676,11 +3004,13 @@ export class PluginService {
     return this.audioGenerationService.generate(model, prompt, options);
   }
 
-  getAvailableVideoGenModels(userId?: string): Array<{
-    model: string;
-    plugin: string;
-    config?: VideoGenConfig;
-  }> {
+  async getAvailableVideoGenModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      config?: VideoGenConfig;
+    }>
+  > {
     return this.videoGenerationService.getAvailableModels(userId);
   }
 
@@ -2724,11 +3054,11 @@ export class PluginService {
     );
   }
 
-  canCancelVideoGenRequest(
+  async canCancelVideoGenRequest(
     model: string,
     pluginId: string,
     userId: string
-  ): boolean {
+  ): Promise<boolean> {
     return this.videoGenerationService.supportsCancellation(
       model,
       pluginId,
@@ -2750,6 +3080,21 @@ export class PluginService {
       userId,
       signal
     );
+  }
+
+  async closeCacheInvalidation(): Promise<void> {
+    this.removeCacheInvalidationListener?.();
+    this.removeCacheInvalidationListener = undefined;
+    this.discoveredModelsCache.clear();
+    this.discoveredModelsUpdatedAt.clear();
+    this.discoveryAttemptedAt.clear();
+    this.inflightDiscovery.clear();
+    this.discoveredCapabilityModelsCache.clear();
+    this.discoveredCapabilityModelsUpdatedAt.clear();
+    this.capabilityDiscoveryAttemptedAt.clear();
+    this.inflightCapabilityDiscovery.clear();
+    this.discoveryCacheRevisions.clear();
+    this.capabilityDiscoveryCacheRevisions.clear();
   }
 }
 

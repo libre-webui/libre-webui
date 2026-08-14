@@ -19,6 +19,10 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type Database from 'better-sqlite3';
+import type {
+  PostgresDatabase,
+  PostgresQueryExecutor,
+} from '../../persistence/postgresDatabase.js';
 import { hasKeyDependentApplicationState } from '../../utils/dataDirectory.js';
 import { Aes256GcmKeyring, StorageEncryptionError } from './aesGcmKeyring.js';
 import {
@@ -31,7 +35,16 @@ import {
   type LocalEncryptedBlobStoreOptions,
 } from './localEncryptedBlobStore.js';
 import { SqliteEncryptedVectorStore } from './sqliteEncryptedVectorStore.js';
-import { VectorStoreError, type VectorStore } from './vectorStore.js';
+import {
+  createS3EncryptedBlobStore,
+  type S3BlobEnvironment,
+} from './s3EncryptedBlobStore.js';
+import { PgVectorStore } from './pgVectorStore.js';
+import {
+  VectorStoreError,
+  type VectorPrincipalResolver,
+  type VectorStore,
+} from './vectorStore.js';
 
 export type BlobStoreBackendSelection = 'local' | 's3';
 export type VectorStoreBackendSelection = 'embedded' | 'pgvector';
@@ -46,6 +59,14 @@ export interface StorageKeyringEnvironment {
 export interface StorageFactoryEnvironment extends StorageKeyringEnvironment {
   BLOB_STORE_BACKEND?: string;
   VECTOR_STORE_BACKEND?: string;
+  S3_BUCKET?: string;
+  S3_REGION?: string;
+  S3_ENDPOINT?: string;
+  S3_ACCESS_KEY_ID?: string;
+  S3_SECRET_ACCESS_KEY?: string;
+  S3_SESSION_TOKEN?: string;
+  S3_FORCE_PATH_STYLE?: string;
+  S3_BLOB_PREFIX?: string;
 }
 
 export type StorageKeyConfigurationSource =
@@ -70,14 +91,17 @@ export interface StorageKeyConfigurationInspection {
 export interface LocalBlobStoreFactoryOptions {
   rootDirectory: string;
   env?: StorageFactoryEnvironment;
+  postgresDatabase?: PostgresQueryExecutor;
   quotaPolicy?: BlobQuotaPolicy;
   chunkBytes?: number;
   maxObjectBytes?: number;
 }
 
 export interface EmbeddedVectorStoreFactoryOptions {
-  database: Database.Database;
+  database?: Database.Database;
+  postgresDatabase?: PostgresDatabase;
   env?: StorageFactoryEnvironment;
+  principalResolver?: VectorPrincipalResolver;
   maxCandidates?: number;
   maxCandidateBytes?: number;
   maxScoringComponents?: number;
@@ -584,16 +608,52 @@ export const createStorageKeyringFromEnvironment = (
   }
 };
 
+/**
+ * Read the legacy application key for the offline SQLite migration command.
+ * This is deliberately read-only: it never provisions state, and callers
+ * must keep the returned secret out of logs and reports.
+ */
+export const resolveLegacyEncryptionKeyForMigration = (
+  env: StorageKeyringEnvironment
+): string => {
+  const resolved = resolveStorageKeys(env);
+  if (!resolved?.keys.legacy) {
+    if (resolved) clearKeys(resolved.keys);
+    throw new StorageEncryptionError(
+      'SQLite migration requires the source legacy encryption key'
+    );
+  }
+  try {
+    return resolved.keys.legacy.toString('hex');
+  } finally {
+    clearKeys(resolved.keys);
+  }
+};
+
 export const createBlobStore = (
   options: LocalBlobStoreFactoryOptions
 ): BlobStore => {
   const env = options.env ?? process.env;
   const backend = env.BLOB_STORE_BACKEND?.trim().toLowerCase() || 'local';
   if (backend === 's3') {
-    throw new BlobStoreError(
-      'unavailable',
-      'BLOB_STORE_BACKEND=s3 is unavailable in this release; use local storage until the tested S3 adapter ships'
-    );
+    if (!options.postgresDatabase) {
+      throw new BlobStoreError(
+        'invalid-input',
+        'BLOB_STORE_BACKEND=s3 requires the shared PostgreSQL database'
+      );
+    }
+    return createS3EncryptedBlobStore({
+      database: options.postgresDatabase,
+      keyring: createStorageKeyringFromEnvironment(env),
+      env: env as S3BlobEnvironment,
+      ...(options.quotaPolicy ? { quotaPolicy: options.quotaPolicy } : {}),
+      ...(options.chunkBytes !== undefined
+        ? { chunkBytes: options.chunkBytes }
+        : {}),
+      ...(options.maxObjectBytes !== undefined
+        ? { maxObjectBytes: options.maxObjectBytes }
+        : {}),
+    });
   }
   if (backend !== 'local') {
     throw new BlobStoreError(
@@ -622,10 +682,18 @@ export const createVectorStore = (
   const env = options.env ?? process.env;
   const backend = env.VECTOR_STORE_BACKEND?.trim().toLowerCase() || 'embedded';
   if (backend === 'pgvector') {
-    throw new VectorStoreError(
-      'unavailable',
-      'VECTOR_STORE_BACKEND=pgvector is unavailable in this release; use the encrypted embedded index until the tested PGVector adapter ships'
-    );
+    if (!options.postgresDatabase) {
+      throw new VectorStoreError(
+        'invalid-input',
+        'VECTOR_STORE_BACKEND=pgvector requires the shared PostgreSQL database'
+      );
+    }
+    return new PgVectorStore({
+      database: options.postgresDatabase,
+      ...(options.principalResolver
+        ? { principalResolver: options.principalResolver }
+        : {}),
+    });
   }
   if (backend !== 'embedded') {
     throw new VectorStoreError(
@@ -634,9 +702,19 @@ export const createVectorStore = (
     );
   }
 
+  if (!options.database) {
+    throw new VectorStoreError(
+      'invalid-input',
+      'VECTOR_STORE_BACKEND=embedded requires the selected SQLite database'
+    );
+  }
+
   return new SqliteEncryptedVectorStore({
     database: options.database,
     keyring: createStorageKeyringFromEnvironment(env),
+    ...(options.principalResolver
+      ? { principalResolver: options.principalResolver }
+      : {}),
     ...(options.maxCandidates !== undefined
       ? { maxCandidates: options.maxCandidates }
       : {}),

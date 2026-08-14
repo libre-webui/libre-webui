@@ -17,6 +17,7 @@ import {
 import type { PluginUsageEventInput } from './pluginUsageService.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
+type MaybePromise<T> = T | Promise<T>;
 const MAX_STT_PROVIDER_RESPONSE_BYTES = 1024 * 1024;
 const MAX_TRANSCRIPT_CHARACTERS = 200_000;
 
@@ -34,10 +35,13 @@ export interface STTTranscriptionResult {
 }
 
 export interface PluginSTTServiceDependencies {
-  getAllPlugins(userId?: string): Plugin[];
-  getPlugin(id: string, userId?: string): Plugin | null;
-  getApiKey(plugin: Plugin, userId?: string): string | null;
-  getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
+  getAllPlugins(userId?: string): MaybePromise<Plugin[]>;
+  getPlugin(id: string, userId?: string): MaybePromise<Plugin | null>;
+  getApiKey(plugin: Plugin, userId?: string): MaybePromise<string | null>;
+  getPluginVariables(
+    plugin: Plugin,
+    userId?: string
+  ): MaybePromise<PluginVariables>;
   validateEndpointUrl(endpoint: string): string;
   recordUsage?(usage: PluginUsageEventInput): void;
 }
@@ -55,22 +59,29 @@ export class STTProviderResponseError extends Error {
 export class PluginSTTService {
   constructor(private readonly deps: PluginSTTServiceDependencies) {}
 
-  getAvailableModels(userId?: string): Array<{
-    model: string;
-    plugin: string;
-    config?: STTConfig;
-  }> {
-    return this.deps.getAllPlugins(userId).flatMap(plugin => {
+  async getAvailableModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      config?: STTConfig;
+    }>
+  > {
+    const models: Array<{ model: string; plugin: string; config?: STTConfig }> =
+      [];
+    for (const plugin of await this.deps.getAllPlugins(userId)) {
       const capability = sttCapability(plugin);
-      if (!plugin.active || !capability) return [];
-      const apiKey = this.deps.getApiKey(plugin, userId);
-      if (!apiKey && !capability.config?.no_auth_required) return [];
-      return capability.model_map.map(model => ({
-        model,
-        plugin: plugin.id,
-        config: capability.config,
-      }));
-    });
+      if (!plugin.active || !capability) continue;
+      const apiKey = await this.deps.getApiKey(plugin, userId);
+      if (!apiKey && !capability.config?.no_auth_required) continue;
+      models.push(
+        ...capability.model_map.map(model => ({
+          model,
+          plugin: plugin.id,
+          config: capability.config,
+        }))
+      );
+    }
+    return models;
   }
 
   async transcribe(
@@ -85,7 +96,7 @@ export class PluginSTTService {
     }
   ): Promise<STTTranscriptionResult> {
     validatePluginModel(model);
-    const { plugin, endpoint, config, headers } = this.resolve(
+    const { plugin, endpoint, config, headers } = await this.resolve(
       model,
       options.pluginId,
       options.userId
@@ -149,8 +160,8 @@ export class PluginSTTService {
     }
   }
 
-  private resolve(model: string, pluginId: string, userId: string) {
-    const plugin = this.deps.getPlugin(pluginId, userId);
+  private async resolve(model: string, pluginId: string, userId: string) {
+    const plugin = await this.deps.getPlugin(pluginId, userId);
     const capability = plugin ? sttCapability(plugin) : undefined;
     if (
       !plugin?.active ||
@@ -160,14 +171,14 @@ export class PluginSTTService {
       throw new Error(`No speech-to-text plugin found for model: ${model}`);
     }
 
-    const apiKey = this.deps.getApiKey(plugin, userId);
+    const apiKey = await this.deps.getApiKey(plugin, userId);
     if (!apiKey && !capability.config?.no_auth_required) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
       );
     }
 
-    const variables = this.deps.getPluginVariables(plugin, userId);
+    const variables = await this.deps.getPluginVariables(plugin, userId);
     let endpoint = capability.endpoint;
     const endpointVariable = capability.config?.endpoint_variable;
     if (endpointVariable) {

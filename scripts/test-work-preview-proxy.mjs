@@ -110,11 +110,15 @@ test('Work preview proxy serves remote-safe sandboxed HTTP and WebSocket traffic
   let previewRecord;
   const service = new WorkPreviewProxyService(
     'preview-proxy-test-secret',
-    candidateTaskId => (candidateTaskId === taskId ? previewRecord : undefined),
-    '127.0.0.1'
+    candidateTaskId => (candidateTaskId === taskId ? previewRecord : undefined)
   );
   const previewPath = service.createPreviewUrl(taskId, upstreamPort);
-  previewRecord = { preview_status: 'running', preview_url: previewPath };
+  previewRecord = {
+    preview_status: 'running',
+    preview_url: previewPath,
+    preview_upstream_host: '127.0.0.1',
+    preview_upstream_port: upstreamPort,
+  };
 
   const app = express();
   app.use(WORK_PREVIEW_PROXY_PREFIX, service.handleHttp);
@@ -216,6 +220,8 @@ test('Work preview proxy serves remote-safe sandboxed HTTP and WebSocket traffic
     previewRecord = {
       preview_status: 'running',
       preview_url: restartedPreviewPath,
+      preview_upstream_host: '127.0.0.1',
+      preview_upstream_port: upstreamPort,
     };
     assert.equal(
       (await fetch(`${proxyOrigin}${previewPath}`)).status,
@@ -227,7 +233,12 @@ test('Work preview proxy serves remote-safe sandboxed HTTP and WebSocket traffic
       200
     );
 
-    previewRecord = { preview_status: 'stopped', preview_url: null };
+    previewRecord = {
+      preview_status: 'stopped',
+      preview_url: null,
+      preview_upstream_host: null,
+      preview_upstream_port: null,
+    };
     assert.equal(
       (await fetch(`${proxyOrigin}${restartedPreviewPath}`)).status,
       404,
@@ -253,6 +264,10 @@ test('Work preview proxy is wired before middleware and into upgrades', () => {
     path.join(repoRoot, 'backend', 'src', 'services', 'workRuntimeService.ts'),
     'utf8'
   );
+  const agent = readFileSync(
+    path.join(repoRoot, 'backend', 'src', 'services', 'workAgentService.ts'),
+    'utf8'
+  );
 
   const proxyMiddleware = backendIndex.indexOf(
     'app.use(WORK_PREVIEW_PROXY_PREFIX, workPreviewProxyService.handleHttp)'
@@ -266,11 +281,15 @@ test('Work preview proxy is wired before middleware and into upgrades', () => {
   );
   assert.match(
     runtime,
-    /workPreviewProxyService\.createPreviewUrl\(\s*task\.id,\s*endpoint\.port,\s*endpoint\.host\s*\)/
+    /workPreviewProxyService\.createPreviewUrl\(task\.id, endpoint\.port\)/
+  );
+  assert.match(
+    agent,
+    /updatePreview\(\s*task\.id,\s*'running',\s*previewUrl,\s*endpoint\s*\)/
   );
 });
 
-test('per-task upstream hosts route previews to the sandbox address', async () => {
+test('a separate app replica routes previews from the persisted upstream endpoint', async () => {
   const upstream = createServer((request, response) => {
     response.setHeader('Content-Type', 'text/plain');
     response.end(`per-task-host:${request.url}`);
@@ -278,22 +297,23 @@ test('per-task upstream hosts route previews to the sandbox address', async () =
   const upstreamPort = await listen(upstream);
   const taskId = '0af1c9e2-58c8-4f6e-a9d1-2b7c40de9b11';
   let previewRecord;
-  // The constructor-level upstream host is unresolvable: traffic can only
-  // succeed if the per-task host recorded at createPreviewUrl time wins.
-  const service = new WorkPreviewProxyService(
+  const workerService = new WorkPreviewProxyService(
+    'preview-proxy-test-secret'
+  );
+  const previewPath = workerService.createPreviewUrl(taskId, upstreamPort);
+  previewRecord = {
+    preview_status: 'running',
+    preview_url: previewPath,
+    preview_upstream_host: '127.0.0.1',
+    preview_upstream_port: upstreamPort,
+  };
+  const appReplicaService = new WorkPreviewProxyService(
     'preview-proxy-test-secret',
-    candidateTaskId => (candidateTaskId === taskId ? previewRecord : undefined),
-    'preview-upstream.invalid'
+    candidateTaskId => (candidateTaskId === taskId ? previewRecord : undefined)
   );
-  const previewPath = service.createPreviewUrl(
-    taskId,
-    upstreamPort,
-    '127.0.0.1'
-  );
-  previewRecord = { preview_status: 'running', preview_url: previewPath };
 
   const app = express();
-  app.use(WORK_PREVIEW_PROXY_PREFIX, service.handleHttp);
+  app.use(WORK_PREVIEW_PROXY_PREFIX, appReplicaService.handleHttp);
   const proxy = createServer(app);
   const proxyPort = await listen(proxy);
 
@@ -304,10 +324,15 @@ test('per-task upstream hosts route previews to the sandbox address', async () =
     assert.equal(response.status, 200);
     assert.equal(await response.text(), 'per-task-host:/data.txt');
 
-    // A new preview URL without a host override clears the stored one, so
-    // the proxy falls back to the (unreachable) configured upstream.
-    const fallbackPath = service.createPreviewUrl(taskId, upstreamPort);
-    previewRecord = { preview_status: 'running', preview_url: fallbackPath };
+    // The signed URL alone is insufficient: losing the server-only persisted
+    // endpoint must fail closed rather than proxying to the app container.
+    const fallbackPath = workerService.createPreviewUrl(taskId, upstreamPort);
+    previewRecord = {
+      preview_status: 'running',
+      preview_url: fallbackPath,
+      preview_upstream_host: null,
+      preview_upstream_port: null,
+    };
     const fallbackResponse = await fetch(
       `http://127.0.0.1:${proxyPort}${fallbackPath}data.txt`
     );

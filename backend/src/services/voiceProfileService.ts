@@ -6,7 +6,10 @@
  */
 
 import { randomUUID } from 'crypto';
-import { getDatabaseSafe } from '../db.js';
+import { getPersistence } from '../persistence/index.js';
+import type { StoredVoiceProfile } from '../persistence/extensionTypes.js';
+import { VoiceProfileLimitError } from '../persistence/extensionTypes.js';
+import { createVoiceProfileNameLookup } from '../persistence/voiceProfileNameLookup.js';
 import type { TTSConfig } from '../types/index.js';
 import {
   type ValidatedTTSVoiceCloneAudio,
@@ -46,25 +49,11 @@ export interface CreateVoiceProfileInput {
   referenceText?: string;
 }
 
-interface VoiceProfileRow {
-  id: string;
-  user_id?: string;
-  name: Buffer;
-  plugin_id: string;
-  model: string;
-  routing_fingerprint?: string;
-  reference_audio?: Buffer;
-  reference_text?: Buffer | null;
-  audio_mime_type: string;
-  audio_format?: ValidatedTTSVoiceCloneAudio['format'];
-  audio_size?: number;
-  created_at: number;
-  updated_at: number;
-}
-
 export class VoiceProfileService {
-  validateCreate(userId: string, input: CreateVoiceProfileInput): void {
-    const db = this.database();
+  async validateCreate(
+    userId: string,
+    input: CreateVoiceProfileInput
+  ): Promise<void> {
     const name = this.validateName(input.name);
     this.validatePluginId(input.pluginId);
     validatePluginModel(input.model);
@@ -75,32 +64,34 @@ export class VoiceProfileService {
         `Reference transcript must be at most ${MAX_REFERENCE_TEXT_CHARACTERS} characters`
       );
     }
-    const count = db
-      .prepare('SELECT COUNT(*) AS count FROM voice_profiles WHERE user_id = ?')
-      .get(userId) as { count: number };
-    if (count.count >= MAX_PROFILES_PER_USER) {
+    const profiles = await this.repository().list(
+      userId,
+      {},
+      MAX_PROFILES_PER_USER
+    );
+    if (profiles.length >= MAX_PROFILES_PER_USER) {
       throw new Error(
         `A maximum of ${MAX_PROFILES_PER_USER} saved voice profiles is allowed`
       );
     }
-    const size = db
-      .prepare(
-        'SELECT COALESCE(SUM(audio_size), 0) AS total FROM voice_profiles WHERE user_id = ?'
-      )
-      .get(userId) as { total: number };
+    const totalAudioBytes = profiles.reduce(
+      (total, profile) => total + profile.audio_size,
+      0
+    );
     if (
-      size.total + input.referenceAudio.size >
+      totalAudioBytes + input.referenceAudio.size >
       MAX_TOTAL_REFERENCE_AUDIO_BYTES_PER_USER
     ) {
       throw new Error(
         `Saved voice reference audio is limited to ${MAX_TOTAL_REFERENCE_AUDIO_BYTES_PER_USER} bytes per account`
       );
     }
-    const duplicate = this.list(userId, {
-      pluginId: input.pluginId,
-      model: input.model,
-    }).some(
-      profile => profile.name.toLocaleLowerCase() === name.toLocaleLowerCase()
+    const nameLookup = createVoiceProfileNameLookup(encryptionService, name);
+    const duplicate = profiles.some(
+      profile =>
+        profile.plugin_id === input.pluginId &&
+        profile.model === input.model &&
+        profile.name_lookup === nameLookup
     );
     if (duplicate) {
       throw new Error(
@@ -109,52 +100,31 @@ export class VoiceProfileService {
     }
   }
 
-  list(
+  async list(
     userId: string,
     filters: { pluginId?: string; model?: string } = {}
-  ): VoiceProfileMetadata[] {
-    const db = this.database();
-    const conditions = ['user_id = ?'];
-    const values: Array<string> = [userId];
+  ): Promise<VoiceProfileMetadata[]> {
     if (filters.pluginId) {
       this.validatePluginId(filters.pluginId);
-      conditions.push('plugin_id = ?');
-      values.push(filters.pluginId);
     }
     if (filters.model) {
       validatePluginModel(filters.model);
-      conditions.push('model = ?');
-      values.push(filters.model);
     }
-
-    const rows = db
-      .prepare(
-        `SELECT id, user_id, name, plugin_id, model, audio_mime_type, created_at, updated_at
-         FROM voice_profiles
-         WHERE ${conditions.join(' AND ')}
-         ORDER BY updated_at DESC, id ASC
-         LIMIT ?`
-      )
-      .all(...values, MAX_PROFILES_PER_USER) as VoiceProfileRow[];
+    const rows = await this.repository().list(
+      userId,
+      filters,
+      MAX_PROFILES_PER_USER
+    );
     return rows.map(row => this.metadataFromRow(row));
   }
 
-  get(
+  async get(
     id: string,
     userId: string,
     config?: TTSConfig
-  ): VoiceProfileSecret | null {
-    const db = this.database();
-    const row = db
-      .prepare(
-        `SELECT id, user_id, name, plugin_id, model, reference_audio, reference_text,
-                routing_fingerprint, audio_mime_type, audio_format, audio_size,
-                created_at, updated_at
-         FROM voice_profiles
-         WHERE id = ? AND user_id = ?`
-      )
-      .get(id, userId) as VoiceProfileRow | undefined;
-    if (!row?.reference_audio || !row.audio_format || !row.audio_size) {
+  ): Promise<VoiceProfileSecret | null> {
+    const row = await this.repository().find(id, userId);
+    if (!row) {
       return null;
     }
 
@@ -186,27 +156,24 @@ export class VoiceProfileService {
 
     return {
       ...this.metadataFromRow(row),
-      routingFingerprint: row.routing_fingerprint || '',
+      routingFingerprint: row.routing_fingerprint,
       referenceAudio,
       ...(referenceText ? { referenceText } : {}),
     };
   }
 
-  getMetadata(id: string, userId: string): VoiceProfileMetadata | null {
-    const db = this.database();
-    const row = db
-      .prepare(
-        `SELECT id, user_id, name, plugin_id, model, audio_mime_type,
-                created_at, updated_at
-         FROM voice_profiles
-         WHERE id = ? AND user_id = ?`
-      )
-      .get(id, userId) as VoiceProfileRow | undefined;
+  async getMetadata(
+    id: string,
+    userId: string
+  ): Promise<VoiceProfileMetadata | null> {
+    const row = await this.repository().find(id, userId);
     return row ? this.metadataFromRow(row) : null;
   }
 
-  create(userId: string, input: CreateVoiceProfileInput): VoiceProfileMetadata {
-    const db = this.database();
+  async create(
+    userId: string,
+    input: CreateVoiceProfileInput
+  ): Promise<VoiceProfileMetadata> {
     const name = this.validateName(input.name);
     this.validatePluginId(input.pluginId);
     validatePluginModel(input.model);
@@ -219,70 +186,76 @@ export class VoiceProfileService {
       );
     }
 
-    return db.transaction(() => {
-      this.validateCreate(userId, { ...input, name, referenceAudio });
-
-      const id = randomUUID();
-      const now = Date.now();
-      db.prepare(
-        `INSERT INTO voice_profiles
-           (id, user_id, name, plugin_id, model, reference_audio,
-            reference_text, routing_fingerprint, audio_mime_type, audio_format,
-            audio_size, consent_confirmed_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).run(
-        id,
-        userId,
-        encryptionService.encryptBuffer(
-          Buffer.from(name, 'utf8'),
-          this.additionalData(id, userId, 'name')
-        ),
-        input.pluginId,
-        input.model,
-        encryptionService.encryptBuffer(
-          referenceAudio.buffer,
-          this.additionalData(id, userId, 'audio')
-        ),
-        referenceText
-          ? encryptionService.encryptBuffer(
-              Buffer.from(referenceText, 'utf8'),
-              this.additionalData(id, userId, 'transcript')
-            )
-          : null,
-        input.routingFingerprint,
-        referenceAudio.mimetype,
-        referenceAudio.format,
-        referenceAudio.size,
-        now,
-        now,
-        now
-      );
-
-      return {
-        id,
-        name,
-        pluginId: input.pluginId,
-        model: input.model,
-        mimeType: referenceAudio.mimetype,
-        createdAt: now,
-        updatedAt: now,
-      };
-    })();
-  }
-
-  delete(id: string, userId: string): boolean {
-    const db = this.database();
-    return (
-      db
-        .prepare('DELETE FROM voice_profiles WHERE id = ? AND user_id = ?')
-        .run(id, userId).changes > 0
-    );
-  }
-
-  private metadataFromRow(row: VoiceProfileRow): VoiceProfileMetadata {
-    if (!row.user_id) {
-      throw new Error('Voice profile owner metadata is missing');
+    const id = randomUUID();
+    const now = Date.now();
+    const profile: StoredVoiceProfile = {
+      id,
+      user_id: userId,
+      name: encryptionService.encryptBuffer(
+        Buffer.from(name, 'utf8'),
+        this.additionalData(id, userId, 'name')
+      ),
+      name_lookup: createVoiceProfileNameLookup(encryptionService, name),
+      plugin_id: input.pluginId,
+      model: input.model,
+      reference_audio: encryptionService.encryptBuffer(
+        referenceAudio.buffer,
+        this.additionalData(id, userId, 'audio')
+      ),
+      reference_text: referenceText
+        ? encryptionService.encryptBuffer(
+            Buffer.from(referenceText, 'utf8'),
+            this.additionalData(id, userId, 'transcript')
+          )
+        : null,
+      routing_fingerprint: input.routingFingerprint,
+      audio_mime_type: referenceAudio.mimetype,
+      audio_format: referenceAudio.format,
+      audio_size: referenceAudio.size,
+      consent_confirmed_at: now,
+      created_at: now,
+      updated_at: now,
+    };
+    try {
+      await this.repository().insertWithLimits(profile, {
+        maximumProfiles: MAX_PROFILES_PER_USER,
+        maximumTotalAudioBytes: MAX_TOTAL_REFERENCE_AUDIO_BYTES_PER_USER,
+        additionalAudioBytes: referenceAudio.size,
+      });
+    } catch (error) {
+      if (error instanceof VoiceProfileLimitError) {
+        if (error.kind === 'count') {
+          throw new Error(
+            `A maximum of ${MAX_PROFILES_PER_USER} saved voice profiles is allowed`
+          );
+        }
+        if (error.kind === 'bytes') {
+          throw new Error(
+            `Saved voice reference audio is limited to ${MAX_TOTAL_REFERENCE_AUDIO_BYTES_PER_USER} bytes per account`
+          );
+        }
+        throw new Error(
+          'A saved voice with this name already exists for the selected model'
+        );
+      }
+      throw error;
     }
+    return {
+      id,
+      name,
+      pluginId: input.pluginId,
+      model: input.model,
+      mimeType: referenceAudio.mimetype,
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
+  delete(id: string, userId: string): Promise<boolean> {
+    return this.repository().delete(id, userId);
+  }
+
+  private metadataFromRow(row: StoredVoiceProfile): VoiceProfileMetadata {
     return {
       id: row.id,
       name: encryptionService
@@ -335,10 +308,9 @@ export class VoiceProfileService {
     return Buffer.from(`voice-profile:${id}:${userId}:${field}`, 'utf8');
   }
 
-  private database() {
-    const db = getDatabaseSafe();
-    if (!db) throw new Error('Database is not available');
-    return db;
+  private repository() {
+    return getPersistence(encryptionService).repositories.extensions
+      .voiceProfiles;
   }
 }
 

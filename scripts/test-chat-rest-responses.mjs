@@ -19,8 +19,37 @@ const distModule = relativePath =>
   import(
     pathToFileURL(path.join(repoRoot, 'backend', 'dist', relativePath)).href
   );
+
+const { encryptionService } = await distModule('services/encryptionService.js');
+const persistenceModule = await distModule('persistence/index.js');
+const applicationPersistence = await persistenceModule.initializePersistence({
+  dialect: 'sqlite',
+  emailCodec: encryptionService,
+  env: process.env,
+});
+const platformStorageModule = await distModule(
+  'platform/storage/platformStorageRuntime.js'
+);
+await platformStorageModule.initializePlatformStorageRuntime({
+  persistence: applicationPersistence,
+  cipher: encryptionService,
+  env: process.env,
+});
+const coordinationModule = await distModule('platform/coordination/service.js');
+const coordinator = await coordinationModule.initializeCoordinator();
+const jobsModule = await distModule('platform/jobs/index.js');
+const { CHAT_GENERATE_JOB_TYPE, chatGenerationIdempotencyScope } =
+  await distModule('platform/jobs/domainJobContracts.js');
+const durableRuntime = jobsModule.initializeDurableJobRuntime({
+  role: 'embedded',
+  runWorker: false,
+  handlers: new Map(),
+  env: process.env,
+});
+const eventModule = await distModule('platform/events/index.js');
+eventModule.initializeDurableEventGateway(durableRuntime.service, coordinator);
 const [
-  { closeDatabase, getDatabase },
+  { getDatabase },
   { authService },
   { default: chatRouter },
   { default: chatService },
@@ -76,14 +105,22 @@ const originalPrepareGenerationTarget =
 const originalExecuteNonStreaming = chatGenerationService.executeNonStreaming;
 const originalExecutePluginStreamRequest =
   pluginService.executePluginStreamRequest;
+const originalSaveSessionAndEnqueueGeneration =
+  storageService.saveSessionAndEnqueueGeneration;
 
 after(async () => {
   chatGenerationService.prepareGenerationTarget =
     originalPrepareGenerationTarget;
   chatGenerationService.executeNonStreaming = originalExecuteNonStreaming;
   pluginService.executePluginStreamRequest = originalExecutePluginStreamRequest;
+  storageService.saveSessionAndEnqueueGeneration =
+    originalSaveSessionAndEnqueueGeneration;
   await new Promise(resolve => server.close(resolve));
-  closeDatabase();
+  await eventModule.closeDurableEventGateway();
+  await jobsModule.closeDurableJobRuntime();
+  await coordinationModule.closeCoordinator();
+  await platformStorageModule.closePlatformStorageRuntime();
+  await persistenceModule.closePersistence();
   await rm(dataDir, { recursive: true, force: true });
 });
 
@@ -132,8 +169,15 @@ function parseSse(body) {
   return body
     .split('\n\n')
     .map(block => block.trim())
-    .filter(block => block.startsWith('data:'))
-    .map(block => JSON.parse(block.slice('data:'.length).trim()));
+    .map(block =>
+      block
+        .split('\n')
+        .find(line => line.startsWith('data:'))
+        ?.slice('data:'.length)
+        .trim()
+    )
+    .filter(Boolean)
+    .map(payload => JSON.parse(payload));
 }
 
 function responseMetadata(label) {
@@ -166,6 +210,200 @@ function nonStreamingResult(model, content, providerMetadata) {
     source: 'plugin',
   };
 }
+
+test('chat write lease preserves two concurrent message mutations', async () => {
+  const session = await createPluginSession('concurrent-write');
+  await Promise.all([
+    chatService.addMessage(
+      session.id,
+      { id: 'concurrent-a', role: 'user', content: 'First concurrent write' },
+      'chat-rest-user'
+    ),
+    chatService.addMessage(
+      session.id,
+      { id: 'concurrent-b', role: 'user', content: 'Second concurrent write' },
+      'chat-rest-user'
+    ),
+  ]);
+  const persisted = await storageService.getSession(
+    session.id,
+    'chat-rest-user'
+  );
+  assert.ok(persisted);
+  assert.deepEqual(
+    persisted.messages
+      .filter(message => message.id.startsWith('concurrent-'))
+      .map(message => message.id)
+      .sort(),
+    ['concurrent-a', 'concurrent-b']
+  );
+});
+
+test('stale chat metadata update cannot erase a completed assistant message', async () => {
+  const session = await createPluginSession('stale-metadata');
+  await chatService.addMessage(
+    session.id,
+    { id: 'assistant-authoritative', role: 'assistant', content: 'Completed' },
+    'chat-rest-user'
+  );
+  await chatService.updateSession(
+    session.id,
+    {
+      id: 'attacker-controlled-id',
+      title: 'Renamed safely',
+      messages: [],
+      createdAt: 1,
+      updatedAt: 1,
+    },
+    'chat-rest-user'
+  );
+  const persisted = await storageService.getSession(
+    session.id,
+    'chat-rest-user'
+  );
+  assert.ok(persisted);
+  assert.equal(persisted.id, session.id);
+  assert.equal(persisted.title, 'Renamed safely');
+  assert.ok(
+    persisted.messages.some(message => message.id === 'assistant-authoritative')
+  );
+});
+
+test('chat generation transaction resolves a lost COMMIT acknowledgement', async () => {
+  const session = await createPluginSession('enqueue-ack-loss');
+  let calls = 0;
+  storageService.saveSessionAndEnqueueGeneration = async (...args) => {
+    calls += 1;
+    await originalSaveSessionAndEnqueueGeneration.apply(storageService, args);
+    if (calls === 1) {
+      throw new Error('connection lost after COMMIT');
+    }
+  };
+  try {
+    const result = await chatService.queueDurableGeneration({
+      sessionId: session.id,
+      userId: 'chat-rest-user',
+      userMessageId: 'user-ack-loss',
+      assistantMessageId: 'assistant-ack-loss',
+      message: 'Commit this once',
+    });
+    assert.ok(result);
+    assert.equal(calls, 2);
+    const job = await durableRuntime.service.getByIdempotency(
+      'chat-rest-user',
+      chatGenerationIdempotencyScope(session.id),
+      'assistant-ack-loss'
+    );
+    assert.ok(job);
+    assert.equal(job.id, result.jobId);
+    const persisted = await storageService.getSession(
+      session.id,
+      'chat-rest-user'
+    );
+    assert.equal(
+      persisted.messages.filter(message => message.id === 'user-ack-loss')
+        .length,
+      1
+    );
+  } finally {
+    storageService.saveSessionAndEnqueueGeneration =
+      originalSaveSessionAndEnqueueGeneration;
+  }
+});
+
+test('clear-all cancels a generation queued after its initial actor-wide pass', async () => {
+  const session = await createPluginSession('clear-race');
+  const originalCancelAll = durableRuntime.service.cancelAllForActor.bind(
+    durableRuntime.service
+  );
+  let injectedJob;
+  let calls = 0;
+  durableRuntime.service.cancelAllForActor = async (...args) => {
+    const result = await originalCancelAll(...args);
+    calls += 1;
+    if (calls === 1) {
+      injectedJob = await durableRuntime.service.enqueue({
+        jobType: CHAT_GENERATE_JOB_TYPE,
+        actorUserId: 'chat-rest-user',
+        payload: { mode: 'reference', referenceId: 'chat-clear-race' },
+        idempotencyScope: chatGenerationIdempotencyScope(session.id),
+        idempotencyKey: 'assistant-clear-race',
+      });
+    }
+    return result;
+  };
+  try {
+    await chatService.clearAllSessions('chat-rest-user');
+    assert.ok(injectedJob);
+    assert.equal(
+      (await durableRuntime.service.getMetadata(injectedJob.id)).state,
+      'cancelled'
+    );
+    assert.equal(
+      await chatService.getSession(session.id, 'chat-rest-user'),
+      undefined
+    );
+  } finally {
+    durableRuntime.service.cancelAllForActor = originalCancelAll;
+  }
+});
+
+test('deleting one chat cancels only that session generation', async () => {
+  const first = await createPluginSession('delete-a');
+  const second = await createPluginSession('delete-b');
+  const firstJob = await durableRuntime.service.enqueue({
+    jobType: CHAT_GENERATE_JOB_TYPE,
+    actorUserId: 'chat-rest-user',
+    payload: { mode: 'reference', referenceId: 'chat-delete-a' },
+    idempotencyScope: chatGenerationIdempotencyScope(first.id),
+    idempotencyKey: 'assistant-delete-a',
+  });
+  const firstLease = await durableRuntime.service.claim(
+    'chat-delete-test-worker',
+    30_000
+  );
+  assert.ok(firstLease);
+  assert.equal(firstLease.id, firstJob.id);
+  const secondJob = await durableRuntime.service.enqueue({
+    jobType: CHAT_GENERATE_JOB_TYPE,
+    actorUserId: 'chat-rest-user',
+    payload: { mode: 'reference', referenceId: 'chat-delete-b' },
+    idempotencyScope: chatGenerationIdempotencyScope(second.id),
+    idempotencyKey: 'assistant-delete-b',
+  });
+
+  assert.equal(
+    await chatService.deleteSession(first.id, 'chat-rest-user'),
+    true
+  );
+  assert.equal(
+    (await durableRuntime.service.getMetadata(firstJob.id)).state,
+    'running'
+  );
+  assert.equal(
+    (await durableRuntime.service.getMetadata(firstJob.id))
+      .cancellationRequestedAt !== null,
+    true
+  );
+  assert.equal(
+    (await durableRuntime.service.getMetadata(secondJob.id)).state,
+    'queued'
+  );
+  assert.ok(await chatService.getSession(second.id, 'chat-rest-user'));
+  await durableRuntime.service.complete(firstLease, 'must-not-survive');
+  assert.equal(
+    (await durableRuntime.service.getMetadata(firstJob.id)).state,
+    'cancelled'
+  );
+  assert.equal(
+    await chatService.addMessage(
+      first.id,
+      { id: 'late-assistant', role: 'assistant', content: 'Late response' },
+      'chat-rest-user'
+    ),
+    undefined
+  );
+});
 
 test('Chat REST non-streaming persists Responses state and replays it on the next turn', async () => {
   const session = await createPluginSession('nonstream');
@@ -202,7 +440,10 @@ test('Chat REST non-streaming persists Responses state and replays it on the nex
     responseMetadata('nonstream-1')
   );
 
-  const persisted = storageService.getSession(session.id, 'chat-rest-user');
+  const persisted = await storageService.getSession(
+    session.id,
+    'chat-rest-user'
+  );
   assert.ok(persisted);
   assert.deepEqual(
     persisted.messages.at(-1).providerMetadata,
@@ -259,7 +500,10 @@ test('Chat REST streaming persists done metadata and replays it on the next turn
     responseMetadata('stream-1')
   );
 
-  const persisted = storageService.getSession(session.id, 'chat-rest-user');
+  const persisted = await storageService.getSession(
+    session.id,
+    'chat-rest-user'
+  );
   assert.ok(persisted);
   assert.deepEqual(
     persisted.messages.at(-1).providerMetadata,
@@ -295,7 +539,10 @@ test('Chat REST streaming reports incomplete Responses output and does not persi
     'Provider returned an incomplete response (max_output_tokens)'
   );
 
-  const persisted = storageService.getSession(session.id, 'chat-rest-user');
+  const persisted = await storageService.getSession(
+    session.id,
+    'chat-rest-user'
+  );
   assert.ok(persisted);
   assert.equal(
     persisted.messages.filter(message => message.role === 'user').length,
@@ -354,7 +601,7 @@ test('Chat REST keeps function-call output visible without persisting or replayi
   const firstBody = await first.json();
   assert.match(firstBody.data.content, /scan_project/);
   assert.equal(firstBody.data.providerMetadata, undefined);
-  const persistedAfterFirst = storageService.getSession(
+  const persistedAfterFirst = await storageService.getSession(
     session.id,
     'chat-rest-user'
   );

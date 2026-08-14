@@ -503,7 +503,7 @@ router.post(
 
       const embeddingModel =
         persona.embedding_model ||
-        preferencesService.getDefaultEmbeddingModel(userId);
+        (await preferencesService.getDefaultEmbeddingModel(userId));
 
       const { memoryService } = await import('../services/memoryService.js');
       const result = await memoryService.consolidateMemories(

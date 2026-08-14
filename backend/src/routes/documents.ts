@@ -18,7 +18,9 @@
 import express from 'express';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
-import documentService from '../services/documentService.js';
+import documentService, {
+  DocumentResourceBusyError,
+} from '../services/documentService.js';
 import storageService from '../storage.js';
 import { ApiResponse } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
@@ -33,6 +35,31 @@ router.use(authenticate);
 const requireUserId = (req: express.Request): string => {
   if (!req.user?.userId) throw new Error('Authenticated user context missing');
   return req.user.userId;
+};
+
+const requestAbortSignal = (
+  req: express.Request,
+  res: express.Response
+): { signal: AbortSignal; cleanup: () => void } => {
+  const controller = new AbortController();
+  const abort = () => {
+    if (!controller.signal.aborted) {
+      controller.abort(new Error('Document client disconnected'));
+    }
+  };
+  const responseClosed = () => {
+    if (!res.writableEnded) abort();
+  };
+  req.once('aborted', abort);
+  res.once('close', responseClosed);
+  if (req.aborted || res.destroyed) abort();
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      req.off('aborted', abort);
+      res.off('close', responseClosed);
+    },
+  };
 };
 
 // Configure multer for file uploads
@@ -65,15 +92,16 @@ router.post('/upload', upload.single('document'), async (req, res) => {
 
     const { sessionId } = req.body;
 
-    const document = await documentService.processDocument(
+    const queued = await documentService.queueDocumentProcessing(
       req.file.originalname,
       req.file.buffer,
       req.file.mimetype,
       requireUserId(req),
       sessionId
     );
+    const { document } = queued;
 
-    res.json({
+    res.status(202).json({
       success: true,
       data: {
         id: document.id,
@@ -82,9 +110,11 @@ router.post('/upload', upload.single('document'), async (req, res) => {
         size: document.size,
         sessionId: document.sessionId,
         uploadedAt: document.uploadedAt,
+        jobId: queued.jobId,
+        processingStatus: 'queued',
         // Don't send full content in response
       },
-      message: 'Document uploaded and processed successfully',
+      message: 'Document uploaded; extraction is queued',
     } as ApiResponse);
   } catch (error) {
     logger.error('Document upload error:', error);
@@ -96,11 +126,11 @@ router.post('/upload', upload.single('document'), async (req, res) => {
 });
 
 // Knowledge collections
-router.get('/collections', (req, res) => {
+router.get('/collections', async (req, res) => {
   try {
     const userId = requireUserId(req);
-    const collections = storageService.getKnowledgeCollections(userId);
-    const documents = storageService.getAllDocuments(userId);
+    const collections = await storageService.getKnowledgeCollections(userId);
+    const documents = await storageService.getAllDocuments(userId);
     res.json({
       success: true,
       data: collections.map(collection => ({
@@ -119,7 +149,7 @@ router.get('/collections', (req, res) => {
   }
 });
 
-router.post('/collections', (req, res) => {
+router.post('/collections', async (req, res) => {
   try {
     const { name } = req.body as { name?: string };
     if (!name || !name.trim()) {
@@ -136,7 +166,10 @@ router.post('/collections', (req, res) => {
       createdAt: now,
       updatedAt: now,
     };
-    storageService.saveKnowledgeCollection(collection, requireUserId(req));
+    await storageService.saveKnowledgeCollection(
+      collection,
+      requireUserId(req)
+    );
     res.json({ success: true, data: collection } as ApiResponse);
   } catch (error) {
     res.status(500).json({
@@ -147,9 +180,9 @@ router.post('/collections', (req, res) => {
   }
 });
 
-router.delete('/collections/:collectionId', (req, res) => {
+router.delete('/collections/:collectionId', async (req, res) => {
   try {
-    const deleted = storageService.deleteKnowledgeCollection(
+    const deleted = await storageService.deleteKnowledgeCollection(
       req.params.collectionId as string,
       requireUserId(req)
     );
@@ -171,10 +204,10 @@ router.delete('/collections/:collectionId', (req, res) => {
 });
 
 // Assign a document to a collection (or remove it with collectionId: null)
-router.put('/:documentId/collection', (req, res) => {
+router.put('/:documentId/collection', async (req, res) => {
   try {
     const { collectionId } = req.body as { collectionId?: string | null };
-    const updated = storageService.setDocumentCollection(
+    const updated = await storageService.setDocumentCollection(
       req.params.documentId as string,
       collectionId || null,
       requireUserId(req)
@@ -216,15 +249,16 @@ router.post('/fetch-url', async (req, res) => {
     const filename = `${(page.title || hostname).slice(0, 80)}.txt`;
 
     const header = `${page.title ? `${page.title}\n` : ''}Source: ${page.url}\n\n`;
-    const document = await documentService.processDocument(
+    const queued = await documentService.queueDocumentProcessing(
       filename,
       Buffer.from(header + page.text, 'utf-8'),
       'text/plain',
       requireUserId(req),
       sessionId
     );
+    const { document } = queued;
 
-    res.json({
+    res.status(202).json({
       success: true,
       data: {
         id: document.id,
@@ -233,10 +267,12 @@ router.post('/fetch-url', async (req, res) => {
         size: document.size,
         sessionId: document.sessionId,
         uploadedAt: document.uploadedAt,
+        jobId: queued.jobId,
+        processingStatus: 'queued',
         title: page.title,
         url: page.url,
       },
-      message: 'Webpage attached successfully',
+      message: 'Webpage attached; extraction is queued',
     } as ApiResponse);
   } catch (error) {
     logger.error('Webpage attach error:', error);
@@ -248,10 +284,10 @@ router.post('/fetch-url', async (req, res) => {
 });
 
 // Get documents for a session
-router.get('/session/:sessionId', (req, res) => {
+router.get('/session/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const documents = documentService.getDocuments(
+    const documents = await documentService.getDocuments(
       requireUserId(req),
       sessionId
     );
@@ -281,9 +317,9 @@ router.get('/session/:sessionId', (req, res) => {
 });
 
 // Get all documents
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const documents = documentService.getDocuments(requireUserId(req));
+    const documents = await documentService.getDocuments(requireUserId(req));
 
     // Return documents without full content
     const documentsWithoutContent = documents.map(doc => ({
@@ -343,10 +379,10 @@ router.post('/search', async (req, res) => {
 });
 
 // Delete document
-router.delete('/:documentId', (req, res) => {
+router.delete('/:documentId', async (req, res) => {
   try {
     const { documentId } = req.params;
-    const deleted = documentService.deleteDocument(
+    const deleted = await documentService.deleteDocument(
       documentId,
       requireUserId(req)
     );
@@ -393,27 +429,115 @@ router.get('/embeddings/status', async (req, res) => {
 
 // Regenerate embeddings for all documents
 router.post('/embeddings/regenerate', async (req, res) => {
+  const abort = requestAbortSignal(req, res);
   try {
-    await documentService.regenerateAllEmbeddings(requireUserId(req));
+    const result = await documentService.regenerateAllEmbeddings(
+      requireUserId(req),
+      abort.signal
+    );
     res.json({
       success: true,
-      message: 'Embeddings regenerated successfully',
+      data: result,
+      message:
+        result.documentsSkipped > 0
+          ? `Regenerated ${result.documentsRegenerated} documents; ${result.documentsSkipped} were deleted, disabled, or busy`
+          : `Regenerated embeddings for ${result.documentsRegenerated} documents`,
     } as ApiResponse);
   } catch (error) {
     logger.error('Regenerate embeddings error:', error);
-    res.status(500).json({
+    if (req.aborted || res.destroyed) return;
+    res.status(error instanceof DocumentResourceBusyError ? 409 : 500).json({
       success: false,
-      error: 'Failed to regenerate embeddings',
+      error:
+        error instanceof DocumentResourceBusyError
+          ? error.message
+          : 'Failed to regenerate embeddings',
     } as ApiResponse);
+  } finally {
+    abort.cleanup();
+  }
+});
+
+// Stream the private, encrypted source through the configured blob backend.
+// Only one explicit byte range is accepted; S3/local details never reach the
+// browser and provider object URLs are never persisted or redirected to.
+router.get('/:documentId/source', async (req, res) => {
+  const abort = requestAbortSignal(req, res);
+  try {
+    const rawRange = req.headers.range;
+    let range: { start: number; end?: number } | undefined;
+    if (rawRange) {
+      const match = /^bytes=(\d+)-(\d*)$/.exec(rawRange.trim());
+      if (!match) {
+        res.status(416).set('Accept-Ranges', 'bytes').end();
+        return;
+      }
+      const start = Number(match[1]);
+      const end = match[2] ? Number(match[2]) : undefined;
+      if (
+        !Number.isSafeInteger(start) ||
+        start < 0 ||
+        (end !== undefined && (!Number.isSafeInteger(end) || end < start))
+      ) {
+        res.status(416).set('Accept-Ranges', 'bytes').end();
+        return;
+      }
+      range = { start, ...(end !== undefined ? { end } : {}) };
+    }
+    const source = await documentService.openDocumentSource(
+      req.params.documentId as string,
+      requireUserId(req),
+      range,
+      abort.signal
+    );
+    if (!source) {
+      res
+        .status(404)
+        .json({ success: false, error: 'Document source not found' });
+      return;
+    }
+    res.status(source.range ? 206 : 200);
+    res.set({
+      'Content-Type': source.descriptor.contentType,
+      'Content-Length': String(source.range?.length ?? source.descriptor.size),
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    if (source.range) {
+      res.set(
+        'Content-Range',
+        `bytes ${source.range.start}-${source.range.end}/${source.range.total}`
+      );
+    }
+    source.body.on('error', error => {
+      logger.warn('Document source stream failed', error);
+      res.destroy(error instanceof Error ? error : undefined);
+    });
+    source.body.pipe(res);
+  } catch (error) {
+    if (abort.signal.aborted) return;
+    if (error && typeof error === 'object' && 'code' in error) {
+      if (error.code === 'invalid-range') {
+        res.status(416).set('Accept-Ranges', 'bytes').end();
+        return;
+      }
+    }
+    logger.error('Document source download error:', error);
+    res
+      .status(500)
+      .json({ success: false, error: 'Failed to read document source' });
+  } finally {
+    abort.cleanup();
   }
 });
 
 // Keep this parameterized route after named GET routes such as
 // /embeddings/status so document IDs cannot shadow them.
-router.get('/:documentId', (req, res) => {
+router.get('/:documentId', async (req, res) => {
   try {
     const { documentId } = req.params;
-    const document = documentService.getDocument(
+    const document = await documentService.getDocument(
       documentId,
       requireUserId(req)
     );

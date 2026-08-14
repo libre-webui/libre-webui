@@ -34,6 +34,7 @@ import {
 } from '../types/index.js';
 import {
   pluginUpload as upload,
+  pluginUploadTempDirectory,
   safeCleanupFile,
   type MulterRequest,
 } from '../utils/pluginUpload.js';
@@ -187,7 +188,7 @@ const refreshUserModels = async (
     return;
   }
   if (clearExisting) {
-    pluginService.clearDiscoveredModels(plugin.id, userId);
+    await pluginService.clearDiscoveredModels(plugin.id, userId);
   }
   await Promise.all([
     ...(supportsCompletionModelDiscovery(plugin)
@@ -338,7 +339,7 @@ router.get(
     try {
       res.json({
         success: true,
-        data: pluginUsageService.getAnalytics(days),
+        data: await pluginUsageService.getAnalytics(days),
       });
     } catch (error: unknown) {
       res.status(500).json({
@@ -388,7 +389,7 @@ router.post(
     req: MulterRequest,
     res: Response<ApiResponse<Plugin>>
   ): Promise<void> => {
-    const tempDir = path.resolve('temp/');
+    const tempDir = pluginUploadTempDirectory;
 
     try {
       if (!req.file) {
@@ -401,7 +402,12 @@ router.post(
 
       // Validate file path is within temp directory
       const resolvedFilePath = path.resolve(req.file.path);
-      if (!resolvedFilePath.startsWith(tempDir)) {
+      const relativePath = path.relative(tempDir, resolvedFilePath);
+      if (
+        !relativePath ||
+        relativePath.startsWith('..') ||
+        path.isAbsolute(relativePath)
+      ) {
         safeCleanupFile(req.file.path, tempDir);
         res.status(400).json({
           success: false,
@@ -439,7 +445,7 @@ router.post(
       safeCleanupFile(req.file.path, tempDir);
 
       // Install the plugin
-      const plugin = pluginService.importPlugin(
+      const plugin = await pluginService.importPlugin(
         pluginData,
         getRequestUserId(req)
       );
@@ -484,7 +490,7 @@ router.post(
   async (req: Request, res: Response<ApiResponse<Plugin>>): Promise<void> => {
     try {
       const pluginData = req.body;
-      const plugin = pluginService.installPlugin(
+      const plugin = await pluginService.installPlugin(
         pluginData,
         getRequestUserId(req)
       );
@@ -536,7 +542,7 @@ router.put(
       }
 
       updates.id = id;
-      const plugin = pluginService.installPlugin(
+      const plugin = await pluginService.installPlugin(
         updates,
         getRequestUserId(req)
       );
@@ -562,7 +568,7 @@ router.delete(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const success = pluginService.deletePlugin(id);
+      const success = await pluginService.deletePlugin(id);
 
       if (!success) {
         res.status(404).json({
@@ -655,7 +661,10 @@ router.post(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const success = pluginService.deactivatePlugin(id, getRequestUserId(req));
+      const success = await pluginService.deactivatePlugin(
+        id,
+        getRequestUserId(req)
+      );
 
       res.json({
         success: true,
@@ -676,7 +685,7 @@ router.post(
   pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
-      const success = pluginService.deactivatePlugin(
+      const success = await pluginService.deactivatePlugin(
         undefined,
         getRequestUserId(req)
       );
@@ -700,7 +709,10 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const plugin = pluginService.exportPlugin(id, getRequestUserId(req));
+      const plugin = await pluginService.exportPlugin(
+        id,
+        getRequestUserId(req)
+      );
 
       if (!plugin) {
         res.status(404).json({
@@ -749,9 +761,8 @@ router.get(
       // Get userId from auth context (defaults to 'default' for single-user mode)
       const userId = getRequestUserId(req);
       const credentials = await Promise.all(
-        pluginCredentialsService
-          .getCredentials(userId)
-          .map(async credential => {
+        (await pluginCredentialsService.getCredentials(userId)).map(
+          async credential => {
             const plugin = await pluginService.getPlugin(
               credential.plugin_id,
               userId
@@ -760,9 +771,10 @@ router.get(
               ...credential,
               has_api_key:
                 plugin !== null &&
-                pluginService.getApiKey(plugin, userId) !== null,
+                (await pluginService.getApiKey(plugin, userId)) !== null,
             };
-          })
+          }
+        )
       );
 
       res.json({
@@ -806,11 +818,11 @@ router.post(
         return;
       }
 
-      const success = pluginCredentialsService.setApiKey(
+      const success = await pluginCredentialsService.setApiKey(
         id,
         api_key,
         userId,
-        pluginService.getCredentialRoutingAuthFingerprint(plugin, userId)
+        await pluginService.getCredentialRoutingAuthFingerprint(plugin, userId)
       );
 
       if (success) {
@@ -853,7 +865,7 @@ router.delete(
         return;
       }
 
-      const success = pluginCredentialsService.deleteApiKey(id, userId);
+      const success = await pluginCredentialsService.deleteApiKey(id, userId);
       if (success) {
         await refreshUserModels(plugin, userId, true);
       }
@@ -930,7 +942,7 @@ router.get(
         return;
       }
 
-      const variables = pluginVariablesService.getVariables(
+      const variables = await pluginVariablesService.getVariables(
         id,
         plugin.variables,
         userId,
@@ -1065,12 +1077,13 @@ router.put(
         }
       }
 
-      const previousVariables = pluginVariablesService.getResolvedVariables(
-        id,
-        plugin.variables,
-        userId
-      );
-      const success = pluginVariablesService.setVariables(
+      const previousVariables =
+        await pluginVariablesService.getResolvedVariables(
+          id,
+          plugin.variables,
+          userId
+        );
+      const success = await pluginVariablesService.setVariables(
         id,
         variablesToSet,
         plugin.variables,
@@ -1079,7 +1092,7 @@ router.put(
       );
 
       if (success) {
-        const nextVariables = pluginVariablesService.getResolvedVariables(
+        const nextVariables = await pluginVariablesService.getResolvedVariables(
           id,
           plugin.variables,
           userId
@@ -1128,13 +1141,16 @@ router.delete(
       // endpoint, but reset must not leave dormant values that a later role
       // promotion could reactivate.
       const previousVariables = plugin.variables
-        ? pluginVariablesService.getResolvedVariables(
+        ? await pluginVariablesService.getResolvedVariables(
             id,
             plugin.variables,
             userId
           )
         : {};
-      const success = pluginVariablesService.deletePluginVariables(id, userId);
+      const success = await pluginVariablesService.deletePluginVariables(
+        id,
+        userId
+      );
       if (!success) {
         res.status(500).json({
           success: false,
@@ -1144,7 +1160,7 @@ router.delete(
       }
 
       if (plugin.variables) {
-        const nextVariables = pluginVariablesService.getResolvedVariables(
+        const nextVariables = await pluginVariablesService.getResolvedVariables(
           id,
           plugin.variables,
           userId

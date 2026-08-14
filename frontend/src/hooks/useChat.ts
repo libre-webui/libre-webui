@@ -30,6 +30,11 @@ import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
 import toast from 'react-hot-toast';
 import { isChatModelSelectionAvailable } from '@/utils/chatModelSelection';
+import {
+  cancelDurableChatGeneration,
+  enqueueDurableChatGeneration,
+  streamDurableChatGeneration,
+} from '@/utils/api/chatEventStream';
 
 const logger = createLogger('use-chat');
 const DEFAULT_SESSION_TITLES = new Set(['New Chat', 'New Demo Session']);
@@ -57,6 +62,11 @@ export const useChat = (sessionId: string) => {
   const streamingMessageIdRef = useRef<string | null>(null);
   const cancelRequestedMessageIdsRef = useRef<Set<string>>(new Set());
   const demoGenerationTimerRef = useRef<number | null>(null);
+  const durableGenerationRef = useRef<{
+    jobId?: string;
+    assistantMessageId: string;
+    abort: AbortController;
+  } | null>(null);
 
   // Track the first user message for auto-title generation
   const firstUserMessageRef = useRef<string | null>(null);
@@ -195,7 +205,10 @@ export const useChat = (sessionId: string) => {
   useEffect(() => {
     return () => {
       const assistantMessageId = streamingMessageIdRef.current;
-      if (assistantMessageId && sessionId) {
+      const durable = durableGenerationRef.current;
+      durable?.abort.abort();
+      durableGenerationRef.current = null;
+      if (assistantMessageId && sessionId && !durable) {
         websocketService.send({
           type: 'chat_cancel',
           data: { sessionId, assistantMessageId },
@@ -548,8 +561,10 @@ export const useChat = (sessionId: string) => {
           titleGenerationSessionRef.current = null;
         }
 
+        const userMessageId = generateId();
         // Add user message immediately
         addMessage(sessionId, {
+          id: userMessageId,
           role: 'user',
           content: content.trim(),
           images: images, // Store images in the message if provided
@@ -585,6 +600,57 @@ export const useChat = (sessionId: string) => {
             streamingContentRef.current = '';
             streamingThinkingRef.current = '';
           }, 500);
+          return;
+        }
+
+        if (!isPrivateSession) {
+          const abort = new AbortController();
+          durableGenerationRef.current = {
+            assistantMessageId,
+            abort,
+          };
+          const queued = await enqueueDurableChatGeneration({
+            sessionId,
+            message: content.trim(),
+            images,
+            userMessageId,
+            assistantMessageId,
+            options: {
+              ...(session?.settings?.generationOptions ?? {}),
+              ...(format !== undefined ? { format } : {}),
+            },
+            webSearch: webSearch === true,
+            signal: abort.signal,
+          });
+          if (
+            durableGenerationRef.current?.assistantMessageId ===
+            assistantMessageId
+          ) {
+            durableGenerationRef.current.jobId = queued.jobId;
+          }
+          await streamDurableChatGeneration({
+            sessionId,
+            assistantMessageId,
+            signal: abort.signal,
+            onEvent: payload => {
+              if (payload.type === 'chunk') {
+                websocketService.dispatchMessage('assistant_chunk', payload);
+              } else if (payload.type === 'done') {
+                websocketService.dispatchMessage('assistant_complete', payload);
+              } else if (payload.type === 'error') {
+                websocketService.dispatchMessage('error', {
+                  ...payload,
+                  sessionId,
+                });
+              }
+            },
+          });
+          if (
+            durableGenerationRef.current?.assistantMessageId ===
+            assistantMessageId
+          ) {
+            durableGenerationRef.current = null;
+          }
           return;
         }
 
@@ -632,6 +698,9 @@ export const useChat = (sessionId: string) => {
           },
         });
       } catch (error: unknown) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
         logger.error('Failed to send message:', error);
         setIsStreaming(false);
         resetVisibleStreamingMessage();
@@ -659,6 +728,19 @@ export const useChat = (sessionId: string) => {
       if (demoGenerationTimerRef.current !== null) {
         window.clearTimeout(demoGenerationTimerRef.current);
         demoGenerationTimerRef.current = null;
+        removeMessage(sessionId, assistantMessageId);
+        cancelRequestedMessageIdsRef.current.delete(assistantMessageId);
+      } else if (
+        durableGenerationRef.current?.assistantMessageId === assistantMessageId
+      ) {
+        const durable = durableGenerationRef.current;
+        durable.abort.abort();
+        durableGenerationRef.current = null;
+        if (durable.jobId) {
+          void cancelDurableChatGeneration(durable.jobId).catch(error =>
+            logger.error('Failed to cancel durable chat generation:', error)
+          );
+        }
         removeMessage(sessionId, assistantMessageId);
         cancelRequestedMessageIdsRef.current.delete(assistantMessageId);
       } else {
@@ -772,13 +854,62 @@ export const useChat = (sessionId: string) => {
         isActive: true,
       });
 
-      // Connect WebSocket if not connected
+      const isPrivateSession = session.isPrivate === true;
+      if (!isPrivateSession) {
+        const abort = new AbortController();
+        durableGenerationRef.current = {
+          assistantMessageId: newBranchMessageId,
+          abort,
+        };
+        const queued = await enqueueDurableChatGeneration({
+          sessionId,
+          message: lastUserMessage.content,
+          images: lastUserMessage.images,
+          userMessageId: lastUserMessage.id,
+          assistantMessageId: newBranchMessageId,
+          options: session.settings?.generationOptions ?? {},
+          webSearch: false,
+          regenerate: true,
+          originalMessageId: lastAssistantMessage.id,
+          signal: abort.signal,
+        });
+        if (
+          durableGenerationRef.current?.assistantMessageId ===
+          newBranchMessageId
+        ) {
+          durableGenerationRef.current.jobId = queued.jobId;
+        }
+        await streamDurableChatGeneration({
+          sessionId,
+          assistantMessageId: newBranchMessageId,
+          signal: abort.signal,
+          onEvent: payload => {
+            if (payload.type === 'chunk') {
+              websocketService.dispatchMessage('assistant_chunk', payload);
+            } else if (payload.type === 'done') {
+              websocketService.dispatchMessage('assistant_complete', payload);
+            } else if (payload.type === 'error') {
+              websocketService.dispatchMessage('error', {
+                ...payload,
+                sessionId,
+              });
+            }
+          },
+        });
+        if (
+          durableGenerationRef.current?.assistantMessageId ===
+          newBranchMessageId
+        ) {
+          durableGenerationRef.current = null;
+        }
+        return;
+      }
+
+      // Private chats deliberately remain process-local and never persist.
       if (!websocketService.isConnected) {
         await websocketService.connect();
       }
 
-      // Send chat stream request to regenerate with branching
-      const isPrivateSession = session.isPrivate === true;
       const messageHistory = isPrivateSession
         ? messages
             .filter(message => message.role !== 'system')

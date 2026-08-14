@@ -60,7 +60,7 @@ class AssistantCompletionService {
     );
   }
 
-  completeAssistantMessage({
+  async completeAssistantMessage({
     sessionId,
     session,
     content,
@@ -73,7 +73,7 @@ class AssistantCompletionService {
     originalMessageId,
     statistics,
     providerMetadata,
-  }: AssistantCompletionInput): AssistantCompletionResult {
+  }: AssistantCompletionInput): Promise<AssistantCompletionResult> {
     const branchingFields = this.buildBranchingFields(
       session,
       regenerate,
@@ -96,7 +96,7 @@ class AssistantCompletionService {
       };
     }
 
-    const assistantMessage = chatService.addMessage(
+    const assistantMessage = await chatService.addMessage(
       sessionId,
       {
         role: 'assistant',

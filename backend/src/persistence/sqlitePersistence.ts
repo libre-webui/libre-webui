@@ -24,14 +24,18 @@ import type {
   IdentityUserRecord,
   IdentityUserUpdate,
   PendingApprovalRecord,
-  Persistence,
   PersistenceExecutor,
   PersistenceRepositories,
   PersistenceRunResult,
   PersistenceSyncExecutor,
-  PersistenceUnitOfWork,
+  PersistenceSyncUnitOfWork,
+  SQLitePersistenceContract,
   SynchronousTransactionResult,
 } from './types.js';
+import { createSQLiteResourceRepositories } from './sqliteResourceRepositories.js';
+import { createSQLiteExtensionRepositories } from './sqliteExtensionRepositories.js';
+import { createVoiceProfileNameLookup } from './voiceProfileNameLookup.js';
+import type { IdentityDeletionEnqueuer } from './identityDeletionTypes.js';
 
 type StoredIdentityRecord = { email: string | null };
 
@@ -149,6 +153,73 @@ const migrateLegacyPlaintextEmails = (
     }
   });
   migrate();
+};
+
+const migrateVoiceProfileNameLookups = (
+  database: Database.Database,
+  codec: IdentityEmailCodec
+): void => {
+  const table = database
+    .prepare(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'voice_profiles'"
+    )
+    .get();
+  if (!table) return;
+  const hasLookupColumn = (
+    database.prepare('PRAGMA table_info(voice_profiles)').all() as Array<{
+      name: string;
+    }>
+  ).some(column => column.name === 'name_lookup');
+  if (!hasLookupColumn) return;
+
+  const migrate = database.transaction(() => {
+    const rows = database
+      .prepare(
+        `SELECT id, user_id, name, name_lookup
+           FROM voice_profiles
+          ORDER BY id ASC`
+      )
+      .all() as Array<{
+      id: string;
+      user_id: string;
+      name: Buffer;
+      name_lookup: string | null;
+    }>;
+    const update = database.prepare(
+      'UPDATE voice_profiles SET name_lookup = ? WHERE id = ? AND name_lookup IS NULL'
+    );
+    for (const row of rows) {
+      const plaintextName = codec
+        .decryptBuffer(
+          row.name,
+          Buffer.from(`voice-profile:${row.id}:${row.user_id}:name`, 'utf8')
+        )
+        .toString('utf8');
+      const expected = createVoiceProfileNameLookup(codec, plaintextName);
+      if (row.name_lookup !== null && row.name_lookup !== expected) {
+        throw new Error('Invalid voice profile name lookup token');
+      }
+      if (row.name_lookup === null) update.run(expected, row.id);
+    }
+    const missing = database
+      .prepare(
+        'SELECT COUNT(*) AS count FROM voice_profiles WHERE name_lookup IS NULL'
+      )
+      .get() as { count: number };
+    if (missing.count !== 0) {
+      throw new Error('Voice profile name lookup migration is incomplete');
+    }
+  });
+  try {
+    migrate();
+  } catch (error) {
+    if (error instanceof Error && /unique constraint/i.test(error.message)) {
+      throw new Error(
+        'Duplicate encrypted voice profile names prevent lookup migration'
+      );
+    }
+    throw error;
+  }
 };
 
 class AsyncMutex {
@@ -338,6 +409,23 @@ class SQLiteIdentitySyncRepository implements IdentitySyncRepository {
     );
   }
 
+  beginRetirement(id: string, updatedAt: number): boolean {
+    const changed = this.executor.run(
+      `UPDATE users SET account_status = 'retiring', updated_at = ?
+        WHERE id = ? AND id != 'default'
+          AND account_status IN ('pending', 'active')`,
+      [updatedAt, id]
+    ).changes;
+    if (changed === 1) return true;
+    return Boolean(
+      this.executor.get(
+        `SELECT 1 FROM users
+          WHERE id = ? AND id != 'default' AND account_status = 'retiring'`,
+        [id]
+      )
+    );
+  }
+
   getPendingApprovalSummary(): PendingApprovalRecord {
     return (
       this.executor.get<PendingApprovalRecord>(`
@@ -414,7 +502,8 @@ class SQLiteIdentitySyncRepository implements IdentitySyncRepository {
 class SQLiteIdentityRepository implements IdentityRepository {
   constructor(
     private readonly executor: PersistenceExecutor,
-    private readonly emailCodec: IdentityEmailCodec
+    private readonly emailCodec: IdentityEmailCodec,
+    private readonly database: Database.Database
   ) {}
 
   list(): Promise<IdentityPublicUserRecord[]> {
@@ -513,6 +602,29 @@ class SQLiteIdentityRepository implements IdentityRepository {
       .then(result => result ?? { count: 0, latest_created_at: null });
   }
 
+  async beginRetirement(id: string, updatedAt: number): Promise<boolean> {
+    const operation = this.database.transaction(() => {
+      const changed = this.database
+        .prepare(
+          `UPDATE users SET account_status = 'retiring', updated_at = ?
+            WHERE id = ? AND id != 'default'
+              AND account_status IN ('pending', 'active')`
+        )
+        .run(updatedAt, id);
+      if (changed.changes === 1) return true;
+      return Boolean(
+        this.database
+          .prepare(
+            `SELECT 1 FROM users
+              WHERE id = ? AND id != 'default'
+                AND account_status = 'retiring'`
+          )
+          .get(id)
+      );
+    });
+    return operation.immediate();
+  }
+
   update(id: string, update: IdentityUserUpdate): Promise<boolean> {
     const assignments: string[] = [];
     const parameters: unknown[] = [];
@@ -555,6 +667,33 @@ class SQLiteIdentityRepository implements IdentityRepository {
       .then(result => result.changes > 0);
   }
 
+  async deleteAndEnqueue(
+    id: string,
+    actorUserId: string,
+    enqueuer: IdentityDeletionEnqueuer
+  ): Promise<boolean> {
+    const operation = this.database.transaction(() => {
+      const actor = this.database
+        .prepare('SELECT account_status FROM users WHERE id = ?')
+        .get(actorUserId) as { account_status: string } | undefined;
+      if (actor?.account_status !== 'active') {
+        throw new Error('Identity deletion requires an active actor');
+      }
+      const deleted = this.database
+        .prepare(
+          "DELETE FROM users WHERE id = ? AND account_status = 'retiring'"
+        )
+        .run(id);
+      if (deleted.changes !== 1) return false;
+      enqueuer.enqueueSQLite(new DirectSQLiteExecutor(this.database), {
+        targetUserId: id,
+        actorUserId,
+      });
+      return true;
+    });
+    return operation.immediate();
+  }
+
   usernameExists(username: string): Promise<boolean> {
     return this.executor
       .get('SELECT 1 FROM users WHERE username = ?', [username])
@@ -580,19 +719,22 @@ class SQLiteIdentityRepository implements IdentityRepository {
 
 const repositoriesFor = (
   executor: PersistenceExecutor,
-  emailCodec: IdentityEmailCodec
+  emailCodec: IdentityEmailCodec,
+  database: Database.Database
 ): PersistenceRepositories => ({
-  identity: new SQLiteIdentityRepository(executor, emailCodec),
+  identity: new SQLiteIdentityRepository(executor, emailCodec, database),
+  resources: createSQLiteResourceRepositories(database),
+  extensions: createSQLiteExtensionRepositories(database),
 });
 
 const unitOfWorkFor = (
   executor: PersistenceSyncExecutor,
   emailCodec: IdentityEmailCodec
-): PersistenceUnitOfWork => ({
+): PersistenceSyncUnitOfWork => ({
   identity: new SQLiteIdentitySyncRepository(executor, emailCodec),
 });
 
-export class SQLitePersistence implements Persistence {
+export class SQLitePersistence implements SQLitePersistenceContract {
   readonly dialect = 'sqlite' as const;
   readonly repositories: PersistenceRepositories;
   private readonly mutex = new AsyncMutex();
@@ -604,6 +746,7 @@ export class SQLitePersistence implements Persistence {
     private readonly emailCodec: IdentityEmailCodec
   ) {
     migrateLegacyPlaintextEmails(database, emailCodec);
+    migrateVoiceProfileNameLookups(database, emailCodec);
     this.directExecutor = new DirectSQLiteExecutor(database);
     this.repositories = repositoriesFor(
       new SerializedSQLiteExecutor(
@@ -611,13 +754,41 @@ export class SQLitePersistence implements Persistence {
         this.mutex,
         () => this.transactionActive
       ),
-      emailCodec
+      emailCodec,
+      database
     );
   }
 
+  async health(): Promise<{
+    ready: boolean;
+    dialect: 'sqlite';
+    latencyMs: number;
+    message?: string;
+  }> {
+    const startedAt = performance.now();
+    try {
+      this.database.prepare('SELECT 1').get();
+      return {
+        ready: true,
+        dialect: 'sqlite',
+        latencyMs: performance.now() - startedAt,
+      };
+    } catch {
+      return {
+        ready: false,
+        dialect: 'sqlite',
+        latencyMs: performance.now() - startedAt,
+        message: 'SQLite query failed',
+      };
+    }
+  }
+
+  /** The process-level database owner in db.ts controls SQLite shutdown. */
+  async close(): Promise<void> {}
+
   transaction<T>(
     operation: (
-      unitOfWork: PersistenceUnitOfWork
+      unitOfWork: PersistenceSyncUnitOfWork
     ) => SynchronousTransactionResult<T>
   ): Promise<T> {
     if (this.transactionActive) {

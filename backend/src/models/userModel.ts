@@ -19,6 +19,7 @@ import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { getPersistence } from '../persistence/index.js';
 import { encryptionService } from '../services/encryptionService.js';
+import { transactionalIdentityDeletionEnqueuer } from '../platform/jobs/identityDeletionEnqueuer.js';
 import type {
   IdentityAccountStatus,
   IdentityRepository,
@@ -123,11 +124,27 @@ export class UserModel {
     allowNonBootstrapRegistration = true
   ): Promise<UserPublic | null> {
     const passwordHash = await bcrypt.hash(userData.password, 12);
-    return this.persistenceProvider().transaction(({ identity }) => {
-      const isFirstRealUser = identity.countRealUsers() === 0;
-      if (!isFirstRealUser && !allowNonBootstrapRegistration) return null;
+    const persistence = this.persistenceProvider();
+    if (persistence.dialect === 'sqlite') {
+      return persistence.transaction(({ identity }) => {
+        const isFirstRealUser = identity.countRealUsers() === 0;
+        if (!isFirstRealUser && !allowNonBootstrapRegistration) return null;
 
-      return this.insertUserSynchronously(
+        return this.insertUserSynchronously(
+          identity,
+          {
+            ...userData,
+            role: isFirstRealUser ? 'admin' : 'user',
+          },
+          passwordHash,
+          isFirstRealUser ? 'active' : 'pending'
+        );
+      });
+    }
+    return persistence.transaction(async ({ identity }) => {
+      const isFirstRealUser = (await identity.countRealUsers()) === 0;
+      if (!isFirstRealUser && !allowNonBootstrapRegistration) return null;
+      return this.insertUser(
         identity,
         {
           ...userData,
@@ -191,10 +208,19 @@ export class UserModel {
     id: string,
     approvedBy: string
   ): Promise<UserPublic | null> {
-    return this.persistenceProvider().transaction(({ identity }) => {
+    const persistence = this.persistenceProvider();
+    if (persistence.dialect === 'sqlite') {
+      return persistence.transaction(({ identity }) => {
+        const now = Date.now();
+        if (!identity.approve(id, approvedBy, now)) return null;
+        const user = identity.findPublicById(id);
+        return user ? this.toPublic(user) : null;
+      });
+    }
+    return persistence.transaction(async ({ identity }) => {
       const now = Date.now();
-      if (!identity.approve(id, approvedBy, now)) return null;
-      const user = identity.findPublicById(id);
+      if (!(await identity.approve(id, approvedBy, now))) return null;
+      const user = await identity.findPublicById(id);
       return user ? this.toPublic(user) : null;
     });
   }
@@ -251,6 +277,24 @@ export class UserModel {
 
   deleteUser(id: string): Promise<boolean> {
     return this.persistenceProvider().repositories.identity.delete(id);
+  }
+
+  beginUserRetirement(id: string): Promise<boolean> {
+    return this.persistenceProvider().repositories.identity.beginRetirement(
+      id,
+      Date.now()
+    );
+  }
+
+  deleteUserAndEnqueueCleanup(
+    id: string,
+    actorUserId: string
+  ): Promise<boolean> {
+    return this.persistenceProvider().repositories.identity.deleteAndEnqueue(
+      id,
+      actorUserId,
+      transactionalIdentityDeletionEnqueuer
+    );
   }
 
   async verifyPassword(

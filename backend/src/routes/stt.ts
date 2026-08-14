@@ -101,7 +101,10 @@ router.get('/models', async (req: AuthenticatedRequest, res) => {
   try {
     const id = userId(req);
     await pluginService.refreshStaleCapabilityModels('stt', id);
-    res.json({ success: true, data: pluginService.getAvailableSTTModels(id) });
+    res.json({
+      success: true,
+      data: await pluginService.getAvailableSTTModels(id),
+    });
   } catch (error) {
     logger.error('Failed to load speech-to-text models:', error);
     res.status(500).json({
@@ -152,9 +155,9 @@ router.post('/transcribe', async (req: AuthenticatedRequest, res) => {
       return;
     }
 
-    const selected = pluginService
-      .getAvailableSTTModels(id)
-      .find(entry => entry.model === model && entry.plugin === pluginId);
+    const selected = (await pluginService.getAvailableSTTModels(id)).find(
+      entry => entry.model === model && entry.plugin === pluginId
+    );
     if (!selected) {
       res.status(404).json({
         success: false,

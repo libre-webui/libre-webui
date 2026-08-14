@@ -108,12 +108,12 @@ export interface WorkRuntimeDriver {
   ): Promise<ProcessResult>;
   /**
    * Endpoint the backend can reach the task's preview server on, if any.
-   * A missing host means the proxy's configured upstream host (the Docker
-   * publish interface); Kubernetes returns the sandbox Pod IP.
+   * The host is private server routing state. Docker returns its reachable
+   * publish interface and Kubernetes returns the sandbox Pod IP.
    */
   previewEndpoint(
     task: WorkTaskRecord
-  ): Promise<{ host?: string; port: number } | undefined>;
+  ): Promise<{ host: string; port: number } | undefined>;
   /** Every sandbox this runtime has ever created, by ownership label. */
   listManaged(): Promise<DiscoveredWorkContainer[]>;
   /** Force-remove a managed sandbox whose task record no longer exists. */
@@ -184,7 +184,7 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     try {
       await this.initializeVolume(
         task,
-        workPolicyService.resolve(task.policyId).image
+        (await workPolicyService.resolve(task.policyId)).image
       );
     } catch (error) {
       await this.docker(['volume', 'rm', task.volumeName], {
@@ -195,7 +195,7 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
   }
 
   async ensureRuntime(task: WorkTaskRecord): Promise<void> {
-    const policy = workPolicyService.resolve(task.policyId);
+    const policy = await workPolicyService.resolve(task.policyId);
     await this.ensureWorkNetwork(task);
     if (await this.containerExists(task.containerName)) {
       await this.assertManagedContainer(task);
@@ -288,15 +288,21 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
 
   async previewEndpoint(
     task: WorkTaskRecord
-  ): Promise<{ host?: string; port: number } | undefined> {
+  ): Promise<{ host: string; port: number } | undefined> {
     const portResult = await this.docker([
       'port',
       task.containerName,
       `${config.previewPort}/tcp`,
     ]);
     const port = parsePublishedPort(portResult.stdout, config.previewPort);
-    // No host: the proxy targets its configured upstream (publish) interface.
-    return port === undefined ? undefined : { port };
+    const configuredHost = config.previewBind.trim();
+    const host =
+      !configuredHost || configuredHost === '0.0.0.0'
+        ? '127.0.0.1'
+        : configuredHost === '::' || configuredHost === '[::]'
+          ? '::1'
+          : configuredHost.replace(/^\[|\]$/g, '');
+    return port === undefined ? undefined : { host, port };
   }
 
   /**

@@ -258,7 +258,7 @@ test('a stale catalog is re-discovered when the plugin list is read', async () =
   const admin = upsertTestUser('model-refresh-admin', 'admin');
   const user = upsertTestUser('model-refresh-user', 'user');
   const pluginId = 'refresh-provider';
-  installProvider(service, pluginId, provider.baseUrl, admin.id);
+  await installProvider(service, pluginId, provider.baseUrl, admin.id);
 
   try {
     await service.activatePlugin(pluginId, user.id);
@@ -293,7 +293,7 @@ test('a stale catalog is re-discovered when the plugin list is read', async () =
       'model-c',
     ]);
   } finally {
-    service.deletePlugin(pluginId);
+    await service.deletePlugin(pluginId);
     await provider.close();
   }
 });
@@ -304,7 +304,7 @@ test('GET /api/plugins returns the refreshed catalog after a reload', async () =
   const admin = upsertTestUser('model-refresh-route-admin', 'admin');
   const user = upsertTestUser('model-refresh-route-user', 'user');
   const pluginId = 'refresh-route-provider';
-  installProvider(service, pluginId, provider.baseUrl, admin.id);
+  await installProvider(service, pluginId, provider.baseUrl, admin.id);
 
   const app = express();
   app.use(express.json());
@@ -340,7 +340,7 @@ test('GET /api/plugins returns the refreshed catalog after a reload', async () =
       }
     );
   } finally {
-    service.deletePlugin(pluginId);
+    await service.deletePlugin(pluginId);
     await server.close();
     await provider.close();
   }
@@ -352,7 +352,7 @@ test('an unreachable provider keeps the last known catalog and backs off', async
   const admin = upsertTestUser('model-refresh-offline-admin', 'admin');
   const user = upsertTestUser('model-refresh-offline-user', 'user');
   const pluginId = 'refresh-offline-provider';
-  installProvider(service, pluginId, provider.baseUrl, admin.id);
+  await installProvider(service, pluginId, provider.baseUrl, admin.id);
 
   try {
     await service.activatePlugin(pluginId, user.id);
@@ -380,7 +380,7 @@ test('an unreachable provider keeps the last known catalog and backs off', async
     await failedAttempt;
     assert.deepEqual(await modelsFor(service, pluginId, user.id), ['model-a']);
   } finally {
-    service.deletePlugin(pluginId);
+    await service.deletePlugin(pluginId);
   }
 });
 
@@ -391,8 +391,8 @@ test('a refresh reports what actually happened instead of a bare success', async
   const user = upsertTestUser('model-refresh-outcome-user', 'user');
   const openId = 'refresh-outcome-open-provider';
   const keyedId = 'refresh-outcome-keyed-provider';
-  installProvider(service, openId, provider.baseUrl, admin.id);
-  service.installPlugin(
+  await installProvider(service, openId, provider.baseUrl, admin.id);
+  await service.installPlugin(
     {
       id: keyedId,
       name: 'Keyed provider',
@@ -432,8 +432,8 @@ test('a refresh reports what actually happened instead of a bare success', async
       'the last known catalog is still returned'
     );
   } finally {
-    service.deletePlugin(openId);
-    service.deletePlugin(keyedId);
+    await service.deletePlugin(openId);
+    await service.deletePlugin(keyedId);
   }
 });
 
@@ -443,7 +443,7 @@ test('a slow provider cannot stall the plugin list past the refresh deadline', a
   const admin = upsertTestUser('model-refresh-slow-admin', 'admin');
   const user = upsertTestUser('model-refresh-slow-user', 'user');
   const pluginId = 'refresh-slow-provider';
-  installProvider(service, pluginId, provider.baseUrl, admin.id);
+  await installProvider(service, pluginId, provider.baseUrl, admin.id);
 
   try {
     await service.activatePlugin(pluginId, user.id);
@@ -478,7 +478,7 @@ test('a slow provider cannot stall the plugin list past the refresh deadline', a
       'slow-model',
     ]);
   } finally {
-    service.deletePlugin(pluginId);
+    await service.deletePlugin(pluginId);
     provider.state.delayMs = 0;
     await provider.close();
   }

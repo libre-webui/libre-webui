@@ -110,14 +110,13 @@ job moves through `pending`, `in_progress`, and finally `completed` or
 - `GET /api/media/video/jobs` lists only the authenticated user's saved handles;
   the panel requests up to 100 active handles whenever it opens. A pending job
   can therefore be reopened after navigation, refresh, or disconnect.
-- Progress is client-driven. `POST /api/media/video/jobs/:jobId/resume` checks
-  the provider and downloads a completed result; the existing per-job `GET`
-  performs the same operation for older clients. The UI checks every 30 seconds
-  while it is waiting. There is no background worker, so the provider keeps
-  rendering while the panel is closed and the next resume picks up the result.
-  Concurrent resume requests for one user/job share one in-process completion
-  path, preventing two tabs from saving duplicate gallery items. This relies on
-  Libre's current single-replica deployment contract.
+- A durable `media.video.resume.v1` job polls the provider and downloads a
+  completed result even when the panel is closed. Solo mode runs that handler
+  in the embedded worker; team mode runs it in the external worker. Leases,
+  bounded retry, actor revalidation, and conditional completion let another
+  worker reclaim the job after a process dies without creating a duplicate
+  gallery row or blob reference. The existing resume/GET endpoints remain
+  compatibility and status boundaries; the UI may still poll them for display.
 - Closing the panel or choosing **Stop waiting** aborts only the current status
   or download transport. A provider-side **Cancel job** action appears only
   when that plugin explicitly declares a job-ID cancellation endpoint. On a

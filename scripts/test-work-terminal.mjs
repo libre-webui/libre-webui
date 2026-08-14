@@ -1,12 +1,19 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
+const dataDir = mkdtempSync(path.join(tmpdir(), 'libre-work-terminal-'));
+const previousDataDir = process.env.DATA_DIR;
+process.env.DATA_DIR = dataDir;
 
 const terminalModule = await import(
   pathToFileURL(
@@ -55,6 +62,19 @@ const { userModel } = userModule;
 const { websocketTicketService } = ticketModule;
 const { workTaskService } = taskModule;
 const { workTerminalService } = terminalModule;
+
+const persistenceModule = await import(
+  pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'persistence', 'index.js')
+  ).href
+);
+
+test.after(async () => {
+  await persistenceModule.closePersistence();
+  if (previousDataDir === undefined) delete process.env.DATA_DIR;
+  else process.env.DATA_DIR = previousDataDir;
+  rmSync(dataDir, { recursive: true, force: true });
+});
 
 const activeUser = {
   id: 'user-1',

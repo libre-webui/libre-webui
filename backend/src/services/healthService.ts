@@ -23,7 +23,11 @@ import { Worker } from 'node:worker_threads';
 
 import type Database from 'better-sqlite3';
 
-import { getSQLiteHealthDatabase } from '../persistence/index.js';
+import {
+  getInitializedPersistence,
+  getSQLiteHealthDatabase,
+  type Persistence,
+} from '../persistence/index.js';
 import { inspectSQLiteSchema } from '../persistence/sqliteMigrations.js';
 import { loadAppPackage } from '../utils/packagePaths.js';
 import { resolveDataDirectory } from '../utils/dataDirectory.js';
@@ -66,12 +70,14 @@ export interface HealthDependencyCheck {
 
 export interface HealthServiceDependencies {
   getDatabase: () => Database.Database | null;
+  getPersistence: () => Persistence | undefined;
   getDataDir: () => string;
   now: () => Date;
 }
 
 const defaultDependencies: HealthServiceDependencies = {
   getDatabase: () => getSQLiteHealthDatabase(),
+  getPersistence: () => getInitializedPersistence(),
   getDataDir: () => resolveDataDirectory(),
   now: () => new Date(),
 };
@@ -196,7 +202,15 @@ export class HealthService {
   };
 
   constructor(dependencies: Partial<HealthServiceDependencies> = {}) {
-    this.dependencies = { ...defaultDependencies, ...dependencies };
+    this.dependencies = {
+      ...defaultDependencies,
+      ...dependencies,
+      // Unit tests that inject a synthetic SQLite handle must not accidentally
+      // observe the process-global persistence singleton.
+      ...(dependencies.getDatabase && !dependencies.getPersistence
+        ? { getPersistence: () => undefined }
+        : {}),
+    };
     this.version = loadAppPackage(import.meta.url).version || '0.0.0';
   }
 
@@ -328,9 +342,21 @@ export class HealthService {
   ): Promise<Omit<HealthCheckResult, 'id' | 'required' | 'latencyMs'>> {
     const database = this.dependencies.getDatabase();
     if (!database) {
+      const persistence = this.dependencies.getPersistence();
+      if (!persistence) {
+        return {
+          status: 'fail',
+          message: 'The application database is unavailable.',
+        };
+      }
+      const health = await persistence.health();
       return {
-        status: 'fail',
-        message: 'The application database is unavailable.',
+        status: health.ready ? 'pass' : 'fail',
+        ...(health.message ? { message: health.message } : {}),
+        details: {
+          engine: health.dialect,
+          ...(health.pool ? { pool: health.pool } : {}),
+        },
       };
     }
     database.prepare('SELECT 1 AS healthy').get();
@@ -369,9 +395,21 @@ export class HealthService {
   > {
     const database = this.dependencies.getDatabase();
     if (!database) {
+      const persistence = this.dependencies.getPersistence();
+      if (!persistence) {
+        return {
+          status: 'fail',
+          message: 'The application database is unavailable.',
+        };
+      }
+      const health = await persistence.health();
       return {
-        status: 'fail',
-        message: 'The application database is unavailable.',
+        status: health.ready ? 'pass' : 'fail',
+        ...(health.message ? { message: health.message } : {}),
+        details: {
+          dialect: health.dialect,
+          status: health.ready ? 'compatible' : 'incompatible',
+        },
       };
     }
     const schema = inspectSQLiteSchema(database);

@@ -333,7 +333,7 @@ function initializeTables(): void {
       email TEXT UNIQUE,
       password_hash TEXT NOT NULL,
       role TEXT DEFAULT 'user',
-      account_status TEXT NOT NULL DEFAULT 'active' CHECK(account_status IN ('pending', 'active')),
+      account_status TEXT NOT NULL DEFAULT 'active' CHECK(account_status IN ('pending', 'active', 'retiring')),
       approved_at INTEGER,
       approved_by TEXT,
       avatar TEXT,

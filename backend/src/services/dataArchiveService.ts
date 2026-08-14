@@ -16,8 +16,14 @@
  */
 
 import { createHash } from 'crypto';
-import getDatabase from '../db.js';
 import storageService, { type Document } from '../storage.js';
+import { getPersistence } from '../persistence/index.js';
+import type {
+  ArchiveOwnedResource,
+  DataArchiveApplyPlan,
+  StoredChatSessionAggregate,
+} from '../persistence/resourceTypes.js';
+import { PersistenceResourceDeletionReservedError } from '../persistence/resourceTypes.js';
 import type {
   ChatMessage,
   ChatProviderType,
@@ -36,6 +42,7 @@ import {
   MAX_SESSION_FOLDERS_PER_USER,
 } from '../utils/resourceLimits.js';
 import preferencesService from './preferencesService.js';
+import { encryptionService } from './encryptionService.js';
 
 const logger = createLogger('services:data-archive');
 
@@ -983,11 +990,14 @@ function emptySection(): ArchiveSectionResult {
   return { imported: 0, overwritten: 0, skipped: 0 };
 }
 
-function scopedOwner(table: string, id: string): string | undefined {
-  const row = getDatabase()
-    .prepare(`SELECT user_id FROM ${table} WHERE id = ?`)
-    .get(id) as { user_id: string } | undefined;
-  return row?.user_id;
+const archiveRepository = () =>
+  getPersistence(encryptionService).repositories.resources.archive;
+
+async function scopedOwner(
+  resource: ArchiveOwnedResource,
+  id: string
+): Promise<string | undefined> {
+  return (await archiveRepository().ownerOf(resource, id)) ?? undefined;
 }
 
 function derivedId(
@@ -1003,19 +1013,37 @@ function derivedId(
   return `import-${kind}-${digest}`;
 }
 
-function resolveScopedId(
-  table: string,
+async function resolveScopedId(
+  resource: ArchiveOwnedResource,
   kind: string,
   originalId: string,
   userId: string
-): { id: string; remapped: boolean } {
-  const owner = scopedOwner(table, originalId);
-  if (!owner || owner === userId) return { id: originalId, remapped: false };
+): Promise<{ id: string; remapped: boolean }> {
+  const owner = await scopedOwner(resource, originalId);
+  if (
+    resource !== 'document' ||
+    (owner === userId &&
+      !(await archiveRepository().resourceDeletionReserved(
+        'document',
+        originalId
+      )))
+  ) {
+    if (!owner || owner === userId) {
+      return { id: originalId, remapped: false };
+    }
+  }
 
   for (let attempt = 0; attempt < 100; attempt += 1) {
     const candidate = derivedId(userId, kind, originalId, attempt);
-    const candidateOwner = scopedOwner(table, candidate);
-    if (!candidateOwner || candidateOwner === userId) {
+    const candidateOwner = await scopedOwner(resource, candidate);
+    const reserved =
+      resource === 'document'
+        ? await archiveRepository().resourceDeletionReserved(
+            'document',
+            candidate
+          )
+        : false;
+    if (!reserved && (!candidateOwner || candidateOwner === userId)) {
       return { id: candidate, remapped: true };
     }
   }
@@ -1032,36 +1060,32 @@ function sectionDisposition(
   else section.overwritten += 1;
 }
 
-function currentUserOwns(table: string, id: string, userId: string): boolean {
-  return scopedOwner(table, id) === userId;
+async function currentUserOwns(
+  resource: ArchiveOwnedResource,
+  id: string,
+  userId: string
+): Promise<boolean> {
+  return (await scopedOwner(resource, id)) === userId;
 }
 
-function nestedOwner(
-  table: 'session_messages' | 'document_chunks',
-  ownerJoin: 'sessions' | 'documents',
-  parentColumn: 'session_id' | 'document_id',
+async function nestedOwner(
+  resource: 'session-message' | 'document-chunk',
   id: string
-): { user_id: string; parent_id: string } | undefined {
-  return getDatabase()
-    .prepare(
-      `SELECT owner.user_id, child.${parentColumn} AS parent_id
-       FROM ${table} child
-       JOIN ${ownerJoin} owner ON owner.id = child.${parentColumn}
-       WHERE child.id = ?`
-    )
-    .get(id) as { user_id: string; parent_id: string } | undefined;
+): Promise<{ user_id: string; parent_id: string } | undefined> {
+  const owner = await archiveRepository().nestedOwnerOf(resource, id);
+  return owner
+    ? { user_id: owner.userId, parent_id: owner.parentId }
+    : undefined;
 }
 
-function resolveNestedId(
-  table: 'session_messages' | 'document_chunks',
-  ownerJoin: 'sessions' | 'documents',
-  parentColumn: 'session_id' | 'document_id',
+async function resolveNestedId(
+  resource: 'session-message' | 'document-chunk',
   originalId: string,
   targetParentId: string,
   userId: string,
   kind: string
-): string {
-  const existing = nestedOwner(table, ownerJoin, parentColumn, originalId);
+): Promise<string> {
+  const existing = await nestedOwner(resource, originalId);
   if (
     !existing ||
     (existing.user_id === userId && existing.parent_id === targetParentId)
@@ -1071,7 +1095,7 @@ function resolveNestedId(
 
   for (let attempt = 0; attempt < 100; attempt += 1) {
     const candidate = derivedId(userId, kind, originalId, attempt);
-    const collision = nestedOwner(table, ownerJoin, parentColumn, candidate);
+    const collision = await nestedOwner(resource, candidate);
     if (
       !collision ||
       (collision.user_id === userId && collision.parent_id === targetParentId)
@@ -1082,11 +1106,11 @@ function resolveNestedId(
   throw new DataArchiveValidationError(`Could not safely remap ${kind} ID`);
 }
 
-function buildPlan(
+async function buildPlan(
   normalized: NormalizedArchive,
   strategy: DataArchiveMergeStrategy,
   userId: string
-): ImportPlan {
+): Promise<ImportPlan> {
   const { archive } = normalized;
   const result: DataArchiveImportResult = {
     format: DATA_ARCHIVE_FORMAT,
@@ -1107,33 +1131,34 @@ function buildPlan(
     exclusions: DATA_ARCHIVE_EXCLUSIONS,
   };
 
-  const mapIds = <T extends { id: string }>(
+  const mapIds = async <T extends { id: string }>(
     values: T[],
-    table: string,
+    resource: ArchiveOwnedResource,
     kind: string,
     section: ArchiveSectionResult
-  ): Map<string, string> => {
+  ): Promise<Map<string, string>> => {
     const mapping = new Map<string, string>();
     for (const value of values) {
-      const resolved = resolveScopedId(table, kind, value.id, userId);
+      const resolved = await resolveScopedId(resource, kind, value.id, userId);
       mapping.set(value.id, resolved.id);
       if (resolved.remapped) result.remappedIds += 1;
       sectionDisposition(
         section,
-        currentUserOwns(table, resolved.id, userId),
+        await currentUserOwns(resource, resolved.id, userId),
         strategy
       );
     }
     return mapping;
   };
 
-  const folderIds = mapIds(
+  const folderIds = await mapIds(
     archive.sessionFolders,
-    'session_folders',
+    'session-folder',
     'folder',
     result.sessionFolders
   );
-  const existingFolderCount = storageService.getSessionFolders(userId).length;
+  const existingFolderCount = (await storageService.getSessionFolders(userId))
+    .length;
   if (
     existingFolderCount + result.sessionFolders.imported >
     MAX_SESSION_FOLDERS_PER_USER
@@ -1142,28 +1167,28 @@ function buildPlan(
       `Import would exceed the per-user limit of ${MAX_SESSION_FOLDERS_PER_USER} session folders`
     );
   }
-  const sessionIds = mapIds(
+  const sessionIds = await mapIds(
     archive.sessions,
-    'sessions',
+    'session',
     'session',
     result.sessions
   );
-  const noteIds = mapIds(archive.notes, 'notes', 'note', result.notes);
-  const existingNoteCount = storageService.getNotes(userId).length;
+  const noteIds = await mapIds(archive.notes, 'note', 'note', result.notes);
+  const existingNoteCount = (await storageService.getNotes(userId)).length;
   if (existingNoteCount + result.notes.imported > MAX_NOTES_PER_USER) {
     throw new DataArchiveValidationError(
       `Import would exceed the per-user limit of ${MAX_NOTES_PER_USER} Notes`
     );
   }
-  const collectionIds = mapIds(
+  const collectionIds = await mapIds(
     archive.knowledgeCollections,
-    'knowledge_collections',
+    'knowledge-collection',
     'collection',
     result.knowledgeCollections
   );
-  const documentIds = mapIds(
+  const documentIds = await mapIds(
     archive.documents,
-    'documents',
+    'document',
     'document',
     result.documents
   );
@@ -1172,10 +1197,8 @@ function buildPlan(
   for (const session of archive.sessions) {
     const targetSessionId = sessionIds.get(session.id)!;
     for (const message of session.messages) {
-      const targetMessageId = resolveNestedId(
-        'session_messages',
-        'sessions',
-        'session_id',
+      const targetMessageId = await resolveNestedId(
+        'session-message',
         message.id,
         targetSessionId,
         userId,
@@ -1190,10 +1213,8 @@ function buildPlan(
   for (const document of archive.documents) {
     const targetDocumentId = documentIds.get(document.id)!;
     for (const chunk of document.chunks) {
-      const targetChunkId = resolveNestedId(
-        'document_chunks',
-        'documents',
-        'document_id',
+      const targetChunkId = await resolveNestedId(
+        'document-chunk',
         chunk.id,
         targetDocumentId,
         userId,
@@ -1206,13 +1227,13 @@ function buildPlan(
 
   if (result.remappedIds > 0) {
     result.warnings.push(
-      `${result.remappedIds} archive IDs were deterministically remapped because another user already owns them.`
+      `${result.remappedIds} archive IDs were deterministically remapped to preserve ownership and deletion-incarnation safety.`
     );
   }
   for (const session of archive.sessions) {
     if (
       session.personaId &&
-      !currentUserOwns('personas', session.personaId, userId)
+      !(await currentUserOwns('persona', session.personaId, userId))
     ) {
       result.warnings.push(
         `Session ${session.id} will be detached from persona ${session.personaId} because personas are excluded and the target account does not already own it.`
@@ -1233,152 +1254,201 @@ function buildPlan(
   };
 }
 
-function mapReference(
+async function mapReference(
   originalId: string | null | undefined,
   mapping: Map<string, string>,
-  table: string,
+  resource: ArchiveOwnedResource,
   userId: string
-): string | undefined {
+): Promise<string | undefined> {
   if (!originalId) return undefined;
   return (
     mapping.get(originalId) ??
-    (currentUserOwns(table, originalId, userId) ? originalId : undefined)
+    ((await currentUserOwns(resource, originalId, userId))
+      ? originalId
+      : undefined)
   );
 }
 
-function applyPlan(
+async function applyPlan(
   plan: ImportPlan,
   strategy: DataArchiveMergeStrategy,
   userId: string
-): void {
-  preferencesService.importData(
-    {
-      format: DATA_ARCHIVE_FORMAT,
-      version: String(DATA_ARCHIVE_VERSION),
-      preferences: plan.archive.preferences,
-      exportedAt: plan.archive.exportedAt,
-    },
-    strategy === 'overwrite' ? 'replace' : 'merge',
-    userId
-  );
-
-  for (const folder of plan.archive.sessionFolders) {
-    const targetId = plan.folderIds.get(folder.id)!;
-    if (
-      strategy === 'skip' &&
-      currentUserOwns('session_folders', targetId, userId)
-    ) {
-      continue;
-    }
-    storageService.saveSessionFolder({ ...folder, id: targetId }, userId);
-  }
-
-  for (const note of plan.archive.notes) {
-    const targetId = plan.noteIds.get(note.id)!;
-    if (strategy === 'skip' && currentUserOwns('notes', targetId, userId)) {
-      continue;
-    }
-    storageService.saveNote({ ...note, id: targetId }, userId);
-  }
-
-  for (const collection of plan.archive.knowledgeCollections) {
-    const targetId = plan.collectionIds.get(collection.id)!;
-    if (
-      strategy === 'skip' &&
-      currentUserOwns('knowledge_collections', targetId, userId)
-    ) {
-      continue;
-    }
-    storageService.saveKnowledgeCollection(
-      { ...collection, id: targetId },
-      userId
-    );
-  }
-
+): Promise<void> {
+  const timestamp = Date.now();
+  const sessions: StoredChatSessionAggregate[] = [];
   for (const archivedSession of plan.archive.sessions) {
     const targetId = plan.sessionIds.get(archivedSession.id)!;
-    if (strategy === 'skip' && currentUserOwns('sessions', targetId, userId)) {
-      continue;
-    }
     const settings = archivedSession.settings
       ? { ...archivedSession.settings }
       : undefined;
     if (settings?.knowledgeCollectionIds) {
-      settings.knowledgeCollectionIds = settings.knowledgeCollectionIds
-        .map(collectionId =>
-          mapReference(
-            collectionId,
-            plan.collectionIds,
-            'knowledge_collections',
-            userId
+      settings.knowledgeCollectionIds = (
+        await Promise.all(
+          settings.knowledgeCollectionIds.map(collectionId =>
+            mapReference(
+              collectionId,
+              plan.collectionIds,
+              'knowledge-collection',
+              userId
+            )
           )
         )
-        .filter((id): id is string => Boolean(id));
+      ).filter((id): id is string => Boolean(id));
     }
-    const personaId = mapReference(
+    const personaId = await mapReference(
       archivedSession.personaId,
       new Map(),
-      'personas',
+      'persona',
       userId
     );
-    storageService.saveSession(
-      {
-        ...archivedSession,
+    sessions.push({
+      session: {
         id: targetId,
-        personaId,
-        folderId: mapReference(
-          archivedSession.folderId,
-          plan.folderIds,
-          'session_folders',
-          userId
-        ),
-        settings,
-        messages: archivedSession.messages.map(message => ({
-          ...message,
-          id: plan.messageIds.get(message.id)!,
-          parentId: message.parentId
-            ? plan.messageIds.get(message.parentId)
-            : undefined,
-        })),
+        user_id: userId,
+        title: encryptionService.encrypt(archivedSession.title),
+        model: archivedSession.model,
+        persona_id: personaId ?? null,
+        provider_type: archivedSession.providerType ?? null,
+        provider_id: archivedSession.providerId ?? null,
+        created_at: archivedSession.createdAt,
+        updated_at: archivedSession.updatedAt,
+        archived: archivedSession.archived ? 1 : 0,
+        settings: settings
+          ? encryptionService.encrypt(JSON.stringify(settings))
+          : null,
+        folder_id:
+          (await mapReference(
+            archivedSession.folderId,
+            plan.folderIds,
+            'session-folder',
+            userId
+          )) ?? null,
+        pinned: archivedSession.pinned ? 1 : 0,
       },
-      userId
-    );
+      messages: archivedSession.messages.map((message, index) => ({
+        id: plan.messageIds.get(message.id)!,
+        session_id: targetId,
+        role: message.role,
+        content: encryptionService.encrypt(message.content),
+        thinking: message.thinking
+          ? encryptionService.encrypt(message.thinking)
+          : null,
+        timestamp: message.timestamp,
+        message_index: index,
+        model: message.model ?? null,
+        provider_metadata: message.providerMetadata
+          ? encryptionService.encrypt(JSON.stringify(message.providerMetadata))
+          : null,
+        images: message.images
+          ? encryptionService.encrypt(JSON.stringify(message.images))
+          : null,
+        statistics: message.statistics
+          ? encryptionService.encrypt(JSON.stringify(message.statistics))
+          : null,
+        artifacts: message.artifacts
+          ? encryptionService.encrypt(JSON.stringify(message.artifacts))
+          : null,
+        parent_id: message.parentId
+          ? plan.messageIds.get(message.parentId)!
+          : null,
+        branch_index: message.branchIndex ?? 0,
+        is_active: message.isActive === false ? 0 : 1,
+        rating: message.rating ?? null,
+      })),
+    });
   }
 
-  for (const archivedDocument of plan.archive.documents) {
-    const targetId = plan.documentIds.get(archivedDocument.id)!;
-    if (strategy === 'skip' && currentUserOwns('documents', targetId, userId)) {
-      continue;
-    }
-    const { chunks, ...document } = archivedDocument;
-    storageService.saveDocument(
-      {
-        ...document,
-        id: targetId,
-        sessionId: mapReference(
-          archivedDocument.sessionId,
-          plan.sessionIds,
-          'sessions',
-          userId
-        ),
-        collectionId: mapReference(
-          archivedDocument.collectionId,
-          plan.collectionIds,
-          'knowledge_collections',
-          userId
-        ),
-      },
-      userId
-    );
-    storageService.saveDocumentChunks(
-      targetId,
-      chunks.map(chunk => ({
-        ...chunk,
-        id: plan.chunkIds.get(chunk.id)!,
-        documentId: targetId,
-      }))
-    );
-  }
+  const atomicPlan: DataArchiveApplyPlan = {
+    userId,
+    strategy,
+    timestamp,
+    maximumNotes: MAX_NOTES_PER_USER,
+    maximumSessionFolders: MAX_SESSION_FOLDERS_PER_USER,
+    preferences: current =>
+      storageService.transformStoredPreferences(current, preferences =>
+        preferencesService.prepareImportedPreferences(
+          plan.archive.preferences,
+          strategy === 'overwrite' ? 'replace' : 'merge',
+          preferences
+        )
+      ),
+    sessionFolders: plan.archive.sessionFolders.map(folder => ({
+      id: plan.folderIds.get(folder.id)!,
+      user_id: userId,
+      name: encryptionService.encrypt(folder.name),
+      created_at: folder.createdAt,
+      updated_at: folder.updatedAt,
+    })),
+    sessions,
+    notes: plan.archive.notes.map(note => ({
+      id: plan.noteIds.get(note.id)!,
+      user_id: userId,
+      title: encryptionService.encrypt(note.title),
+      content: encryptionService.encrypt(note.content),
+      created_at: note.createdAt,
+      updated_at: note.updatedAt,
+    })),
+    knowledgeCollections: plan.archive.knowledgeCollections.map(collection => ({
+      id: plan.collectionIds.get(collection.id)!,
+      user_id: userId,
+      name: encryptionService.encrypt(collection.name),
+      created_at: collection.createdAt,
+      updated_at: collection.updatedAt,
+    })),
+    documents: await Promise.all(
+      plan.archive.documents.map(async archivedDocument => {
+        const targetId = plan.documentIds.get(archivedDocument.id)!;
+        return {
+          document: {
+            id: targetId,
+            user_id: userId,
+            filename: archivedDocument.filename,
+            title: archivedDocument.title
+              ? encryptionService.encrypt(archivedDocument.title)
+              : null,
+            content: archivedDocument.content
+              ? encryptionService.encrypt(archivedDocument.content)
+              : null,
+            file_type: archivedDocument.fileType ?? null,
+            size: archivedDocument.size ?? null,
+            session_id:
+              (await mapReference(
+                archivedDocument.sessionId,
+                plan.sessionIds,
+                'session',
+                userId
+              )) ?? null,
+            collection_id:
+              (await mapReference(
+                archivedDocument.collectionId,
+                plan.collectionIds,
+                'knowledge-collection',
+                userId
+              )) ?? null,
+            metadata: archivedDocument.metadata
+              ? encryptionService.encrypt(
+                  JSON.stringify(archivedDocument.metadata)
+                )
+              : null,
+            uploaded_at: archivedDocument.uploadedAt,
+            created_at: archivedDocument.createdAt ?? timestamp,
+            updated_at: timestamp,
+          },
+          chunks: archivedDocument.chunks.map(chunk => ({
+            id: plan.chunkIds.get(chunk.id)!,
+            document_id: targetId,
+            chunk_index: chunk.chunkIndex,
+            content: encryptionService.encrypt(chunk.content),
+            start_char: chunk.startChar ?? null,
+            end_char: chunk.endChar ?? null,
+            embedding: null,
+            created_at: timestamp,
+          })),
+        };
+      })
+    ),
+  };
+  await archiveRepository().applyImport(atomicPlan);
 }
 
 function assertExportIsRestorable(archive: UserDataArchive): void {
@@ -1396,67 +1466,74 @@ function assertExportIsRestorable(archive: UserDataArchive): void {
   }
 }
 
-function assertStoredCountWithinExportLimit(
-  table: 'session_folders' | 'notes',
+async function assertStoredCountWithinExportLimit(
+  resource: 'session-folder' | 'note',
   label: string,
   maximum: number,
   userId: string
-): void {
-  const row = getDatabase()
-    .prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE user_id = ?`)
-    .get(userId) as { count: number };
-  if (row.count > maximum) {
+): Promise<void> {
+  const count = await archiveRepository().countByOwner(resource, userId);
+  if (count > maximum) {
     throw new DataArchiveValidationError(
-      `Account contains ${row.count} ${label}; the portable archive maximum is ${maximum}`
+      `Account contains ${count} ${label}; the portable archive maximum is ${maximum}`
     );
   }
 }
 
 class DataArchiveService {
-  exportUserData(userId: string): UserDataArchive {
+  async exportUserData(userId: string): Promise<UserDataArchive> {
     // These storage readers enforce UI limits with SQL LIMIT. Check the true
     // row counts first so an inconsistent older database is never truncated.
-    assertStoredCountWithinExportLimit(
-      'session_folders',
+    await assertStoredCountWithinExportLimit(
+      'session-folder',
       'session folders',
       MAX_ARCHIVE_FOLDERS,
       userId
     );
-    assertStoredCountWithinExportLimit(
-      'notes',
+    await assertStoredCountWithinExportLimit(
+      'note',
       'Notes',
       MAX_ARCHIVE_NOTES,
       userId
     );
     const preferences = JSON.parse(
-      JSON.stringify(preferencesService.getPreferences(userId))
+      JSON.stringify(await preferencesService.getPreferences(userId))
     ) as Partial<UserPreferences>;
     if (preferences.ttsSettings?.voiceProfileId) {
       delete preferences.ttsSettings.voiceProfileId;
     }
-    const documents: ArchivedDocument[] = storageService
-      .getAllDocuments(userId)
-      .map(document => ({
+    const documents: ArchivedDocument[] = await Promise.all(
+      (await storageService.getAllDocuments(userId)).map(async document => ({
         ...document,
-        chunks: storageService.getDocumentChunks(document.id).map(chunk => ({
-          id: chunk.id,
-          documentId: chunk.documentId,
-          content: chunk.content,
-          chunkIndex: chunk.chunkIndex,
-          startChar: chunk.startChar,
-          endChar: chunk.endChar,
-        })),
-      }));
+        chunks: (await storageService.getDocumentChunks(document.id)).map(
+          chunk => ({
+            id: chunk.id,
+            documentId: chunk.documentId,
+            content: chunk.content,
+            chunkIndex: chunk.chunkIndex,
+            startChar: chunk.startChar,
+            endChar: chunk.endChar,
+          })
+        ),
+      }))
+    );
 
+    const [sessionFolders, sessions, notes, knowledgeCollections] =
+      await Promise.all([
+        storageService.getSessionFolders(userId),
+        storageService.getAllSessions(userId),
+        storageService.getNotes(userId),
+        storageService.getKnowledgeCollections(userId),
+      ]);
     const archive = sealArchive({
       format: DATA_ARCHIVE_FORMAT,
       version: DATA_ARCHIVE_VERSION,
       exportedAt: new Date().toISOString(),
       preferences,
-      sessionFolders: storageService.getSessionFolders(userId),
-      sessions: storageService.getAllSessions(userId),
-      notes: storageService.getNotes(userId),
-      knowledgeCollections: storageService.getKnowledgeCollections(userId),
+      sessionFolders,
+      sessions,
+      notes,
+      knowledgeCollections,
       documents,
       exclusions: DATA_ARCHIVE_EXCLUSIONS,
     });
@@ -1464,13 +1541,13 @@ class DataArchiveService {
     return archive;
   }
 
-  preflight(
+  async preflight(
     value: unknown,
     strategy: DataArchiveMergeStrategy,
     userId: string
-  ): DataArchivePreflight {
+  ): Promise<DataArchivePreflight> {
     const normalized = normalizeArchive(value);
-    const plan = buildPlan(normalized, strategy, userId);
+    const plan = await buildPlan(normalized, strategy, userId);
     const messageCount = normalized.archive.sessions.reduce(
       (count, session) => count + session.messages.length,
       0
@@ -1501,24 +1578,31 @@ class DataArchiveService {
     };
   }
 
-  importUserData(
+  async importUserData(
     value: unknown,
     strategy: DataArchiveMergeStrategy,
     userId: string
-  ): DataArchiveImportResult {
+  ): Promise<DataArchiveImportResult> {
     const normalized = normalizeArchive(value);
-    const transaction = getDatabase().transaction(() => {
-      const plan = buildPlan(normalized, strategy, userId);
-      applyPlan(plan, strategy, userId);
-      return plan.result;
-    });
-
-    try {
-      return transaction();
-    } catch (error) {
-      logger.error('User data archive import rolled back:', error);
-      throw error;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const plan = await buildPlan(normalized, strategy, userId);
+      try {
+        await applyPlan(plan, strategy, userId);
+        return plan.result;
+      } catch (error) {
+        if (
+          error instanceof PersistenceResourceDeletionReservedError &&
+          attempt < 4
+        ) {
+          continue;
+        }
+        logger.error('User data archive import rolled back:', error);
+        throw error;
+      }
     }
+    throw new DataArchiveValidationError(
+      'Archive identifiers changed too frequently to import safely'
+    );
   }
 }
 

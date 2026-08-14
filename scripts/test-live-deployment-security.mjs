@@ -90,7 +90,7 @@ test('Ollama lifecycle operations require the current administrator', () => {
   const accessService = read('backend/src/services/modelAccessService.ts');
   assert.match(
     accessService,
-    /isModelDownloadMode\(row\?\.value\) \? row\.value : 'admins'/
+    /isModelDownloadMode\(value\) \? value : 'admins'/
   );
   assert.match(accessService, /if \(user\.role === 'admin'\) return true;/);
 
@@ -114,10 +114,16 @@ test('document data is scoped to the authenticated user', () => {
     routes.indexOf("router.get('/embeddings/status'") <
       routes.indexOf("router.get('/:documentId'")
   );
-  assert.match(service, /getDocument\(documentId: string, userId: string\)/);
+  assert.match(
+    service,
+    /async getDocument\(\s*documentId: string,\s*userId: string\s*\)/
+  );
   assert.match(service, /storageService\.getDocument\(documentId, userId\)/);
   assert.match(service, /storageService\.getAllDocuments\(userId\)/);
-  assert.match(service, /storageService\.deleteDocument\(documentId, userId\)/);
+  assert.match(
+    service,
+    /domains\.documents\.deleteAndEnqueue\(\s*documentId,\s*userId,/
+  );
 });
 
 test('private deployment template defaults to main and publishes no ports', () => {
@@ -136,23 +142,25 @@ test('private deployment template defaults to main and publishes no ports', () =
 test('deployment health and backups fail closed on incomplete state', () => {
   const dockerfile = read('Dockerfile');
   const backup = read('deploy/private/libre-webui-backup');
+  const restore = read('deploy/private/libre-webui-restore');
   const server = read('backend/src/index.ts');
   const recoveryInventory = read(
     'backend/src/services/recoveryInventoryService.ts'
   );
   assert.match(dockerfile, /HEALTHCHECK[^\n]*--timeout=5s/);
   assert.match(dockerfile, /localhost:3001\/health\/ready/);
-  assert.match(
-    server,
-    /Promise\.resolve\(\)\.then\(\(\) => closeDatabase\(\)\)/
-  );
   assert.ok(
     server.indexOf('registeredWebSockets.close()') <
-      server.indexOf('closeDatabase()'),
-    'SQLite must close only after active HTTP and WebSocket work drains'
+      server.indexOf('closePersistence()'),
+    'selected persistence must close only after active HTTP and WebSocket work drains'
   );
   assert.match(backup, /flock -n/);
-  assert.match(backup, /recoveryInventory\.js/);
+  assert.match(backup, /recoveryBackup\.js create/);
+  assert.match(backup, /recoveryBackup\.js verify/);
+  assert.match(backup, /--offline/);
+  assert.match(backup, /backup-encryption\.key/);
+  assert.match(backup, /backup-signing-private\.pem/);
+  assert.match(backup, /backup-signing-public\.pem/);
   assert.match(backup, /--volumes-from "\$\{container_name\}:ro"/);
   assert.doesNotMatch(
     recoveryInventory,
@@ -160,17 +168,24 @@ test('deployment health and backups fail closed on incomplete state', () => {
     'a quiesced read-only recovery source must not fail backup preflight'
   );
   assert.match(backup, /\.partial/);
-  assert.match(backup, /tar -tzf/);
-  assert.match(backup, /sha256sum/);
   assert.match(backup, /--format '\{\{\.Image\}\}'/);
   assert.match(backup, /stop --timeout 20 libre-webui/);
-  assert.match(backup, /chmod 0733 "\$\{recovery_scratch\}"/);
-  assert.match(backup, /--env TMPDIR=\/recovery-tmp/);
   assert.match(backup, /container_was_running=/);
   assert.match(backup, /if \[\[ "\$\{container_was_running\}" == true \]\]/);
-  assert.ok(
-    (backup.match(/sync -f "\$\{backup_dir\}"/g) || []).length >= 2,
-    'backup final-name and manifest directory entries must be durable'
+  assert.match(backup, /sync -f "\$\{archive\}"/);
+  assert.match(backup, /sync -f "\$\{backup_dir\}"/);
+  assert.match(restore, /Restore refuses an existing Docker volume/);
+  assert.match(restore, /recoveryBackup\.js restore-apply/);
+  assert.match(restore, /signing-public-key/);
+  assert.match(restore, /backup-encryption\.key/);
+  assert.match(restore, /created_volume=false/);
+  assert.match(restore, /install -m 0600/);
+  assert.match(restore, /LIBRE_WEBUI_RESTORE_IMAGE/);
+  assert.match(restore, /--entrypoint sh[\s\\]+"\$\{image_ref\}"/);
+  assert.doesNotMatch(
+    restore,
+    /\balpine:/,
+    'restore must not introduce a second mutable image into the trusted path'
   );
   const backupService = read('deploy/private/libre-webui-backup.service');
   assert.match(backupService, /TimeoutStartSec=6h/);
@@ -190,11 +205,9 @@ test('deployment health and backups fail closed on incomplete state', () => {
       backup.indexOf('docker compose -f "${compose_file}" stop'),
     'restart cleanup must be armed before the application is stopped'
   );
-  assert.ok(
-    backup.indexOf('mv "${manifest_partial}" "${manifest}"') >
-      backup.indexOf('mv "${inventory_partial}" "${inventory}"'),
-    'the manifest must be published last as the completed-set marker'
-  );
+  assert.match(privateDeploymentDocs, /Ed25519|signed manifest/);
+  assert.match(privateDeploymentDocs, /AES-256-GCM|operator-encrypted/);
+  assert.match(privateDeploymentDocs, /libre-webui-restore/);
 });
 
 test('local Compose defaults enable Work without publishing Ollama', () => {

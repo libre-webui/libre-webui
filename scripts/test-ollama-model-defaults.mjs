@@ -97,6 +97,46 @@ test('a trained context is adopted, and capped so the model still loads', () => 
   assert.equal(huge.trainedContextLength, 131072);
 });
 
+test('the validated provider contract controls context adoption and request clients', async () => {
+  const previous = {
+    timeout: process.env.OLLAMA_TIMEOUT,
+    longTimeout: process.env.OLLAMA_LONG_OPERATION_TIMEOUT,
+    maxContext: process.env.OLLAMA_MAX_CONTEXT,
+  };
+  process.env.OLLAMA_TIMEOUT = '210000';
+  process.env.OLLAMA_LONG_OPERATION_TIMEOUT = '610000';
+  process.env.OLLAMA_MAX_CONTEXT = '65536';
+  try {
+    const defaults = parseOllamaModelDefaults({
+      model_info: {
+        'general.architecture': 'llama',
+        'llama.context_length': 131072,
+      },
+    });
+    assert.equal(defaults.options.num_ctx, 65536);
+
+    const { OllamaService } = await import(
+      pathToFileURL(
+        path.join(repoRoot, 'backend', 'dist', 'services', 'ollamaService.js')
+      ).href
+    );
+    const service = new OllamaService();
+    assert.equal(service.client.defaults.timeout, 210000);
+    assert.equal(service.longOperationClient.defaults.timeout, 610000);
+  } finally {
+    if (previous.timeout === undefined) delete process.env.OLLAMA_TIMEOUT;
+    else process.env.OLLAMA_TIMEOUT = previous.timeout;
+    if (previous.longTimeout === undefined) {
+      delete process.env.OLLAMA_LONG_OPERATION_TIMEOUT;
+    } else {
+      process.env.OLLAMA_LONG_OPERATION_TIMEOUT = previous.longTimeout;
+    }
+    if (previous.maxContext === undefined)
+      delete process.env.OLLAMA_MAX_CONTEXT;
+    else process.env.OLLAMA_MAX_CONTEXT = previous.maxContext;
+  }
+});
+
 test("a modelfile's own num_ctx wins over the trained length", () => {
   const result = parseOllamaModelDefaults({
     parameters: 'num_ctx 4096',

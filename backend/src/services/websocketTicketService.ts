@@ -16,11 +16,14 @@
  */
 
 import { createHash, randomBytes } from 'crypto';
+import { getCoordinator } from '../platform/coordination/service.js';
+import type { Coordinator } from '../platform/coordination/types.js';
 
 const DEFAULT_TICKET_TTL_MS = 30_000;
 const MAX_TICKET_TTL_MS = 60_000;
 const MAX_OUTSTANDING_TICKETS_PER_USER = 5;
 const MAX_OUTSTANDING_TICKETS = 10_000;
+const MAX_SHARED_TICKETS_PER_USER_PER_TTL = 100;
 
 interface TicketRecord {
   userId: string;
@@ -43,6 +46,13 @@ export interface ConsumedWebSocketTicket {
 
 export type WebSocketTicketAudience = 'chat' | 'work-terminal';
 
+export class WebSocketTicketRateLimitError extends Error {
+  constructor() {
+    super('Too many WebSocket tickets were requested.');
+    this.name = 'WebSocketTicketRateLimitError';
+  }
+}
+
 const positiveInteger = (
   value: string | undefined,
   fallback: number
@@ -60,25 +70,44 @@ const configuredTicketTtlMs = (): number =>
 const ticketDigest = (ticket: string): string =>
   createHash('sha256').update(ticket).digest('base64url');
 
+const cacheKey = (digest: string): string => `websocket-ticket:${digest}`;
+
+const isTicketRecord = (value: unknown): value is TicketRecord => {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as Partial<TicketRecord>;
+  return (
+    typeof record.userId === 'string' &&
+    record.userId.length > 0 &&
+    (record.audience === 'chat' || record.audience === 'work-terminal') &&
+    (record.resourceId === undefined ||
+      typeof record.resourceId === 'string') &&
+    Number.isSafeInteger(record.expiresAt) &&
+    Number.isSafeInteger(record.sessionExpiresAt) &&
+    Number.isSafeInteger(record.issuedAt)
+  );
+};
+
 /**
- * Keeps one-use WebSocket credentials in process memory. The browser receives
- * only an opaque random value, and the durable login token never enters a URL.
- * The process-local store is intentional while Libre requires one replica.
+ * Stores one-use WebSocket credentials in the selected coordinator. The
+ * browser receives only an opaque random value, and the durable login token
+ * never enters a URL. Redis provides cross-replica atomic consumption in the
+ * team profile; the private map is retained only for isolated unit instances.
  */
 export class WebSocketTicketService {
   private readonly tickets = new Map<string, TicketRecord>();
 
   constructor(
     private readonly ttlMs = configuredTicketTtlMs(),
-    private readonly now: () => number = Date.now
+    private readonly now: () => number = Date.now,
+    private readonly coordinatorProvider?: () => Coordinator
   ) {}
 
-  issue(
+  async issue(
     userId: string,
     sessionExpiresAt: number,
     audience: WebSocketTicketAudience,
     resourceId?: string
-  ): IssuedWebSocketTicket {
+  ): Promise<IssuedWebSocketTicket> {
     const normalizedUserId = userId.trim();
     if (!normalizedUserId) {
       throw new Error('A user ID is required to issue a WebSocket ticket.');
@@ -93,20 +122,41 @@ export class WebSocketTicketService {
     if (audience === 'work-terminal' && !resourceId?.trim()) {
       throw new Error('A task ID is required for a Work terminal ticket.');
     }
-    this.pruneExpired(now);
-    this.evictOldestForUser(normalizedUserId);
-    this.evictOldestGlobal();
-
     const ticket = randomBytes(32).toString('base64url');
     const expiresAt = Math.min(now + this.ttlMs, sessionExpiresAt);
-    this.tickets.set(ticketDigest(ticket), {
+    const record: TicketRecord = {
       userId: normalizedUserId,
       audience,
       ...(resourceId?.trim() ? { resourceId: resourceId.trim() } : {}),
       expiresAt,
       sessionExpiresAt,
       issuedAt: now,
-    });
+    };
+    const digest = ticketDigest(ticket);
+    const coordinator = this.coordinatorProvider?.();
+    if (coordinator) {
+      const [userLimit, globalLimit] = await Promise.all([
+        coordinator.consumeRateLimit(
+          `websocket-ticket.user:${normalizedUserId}`,
+          MAX_SHARED_TICKETS_PER_USER_PER_TTL,
+          this.ttlMs
+        ),
+        coordinator.consumeRateLimit(
+          'websocket-ticket.global',
+          MAX_OUTSTANDING_TICKETS,
+          this.ttlMs
+        ),
+      ]);
+      if (!userLimit.allowed || !globalLimit.allowed) {
+        throw new WebSocketTicketRateLimitError();
+      }
+      await coordinator.setCache(cacheKey(digest), record, expiresAt - now);
+    } else {
+      this.pruneExpired(now);
+      this.evictOldestForUser(normalizedUserId);
+      this.evictOldestGlobal();
+      this.tickets.set(digest, record);
+    }
 
     return {
       ticket,
@@ -114,21 +164,20 @@ export class WebSocketTicketService {
     };
   }
 
-  consume(
+  async consume(
     ticket: string,
     audience: WebSocketTicketAudience,
     resourceId?: string
-  ): ConsumedWebSocketTicket | null {
+  ): Promise<ConsumedWebSocketTicket | null> {
     const normalizedTicket = ticket.trim();
     if (!/^[A-Za-z0-9_-]{43}$/.test(normalizedTicket)) return null;
 
     const digest = ticketDigest(normalizedTicket);
-    const record = this.tickets.get(digest);
-    if (!record) return null;
-
-    // Delete before evaluating it so replay is impossible even at the expiry
-    // boundary or when later authorization checks reject the account.
-    this.tickets.delete(digest);
+    const coordinator = this.coordinatorProvider?.();
+    const record = coordinator
+      ? await coordinator.consumeCache<TicketRecord>(cacheKey(digest))
+      : this.consumeLocal(digest);
+    if (!isTicketRecord(record)) return null;
     if (
       record.expiresAt <= this.now() ||
       record.audience !== audience ||
@@ -141,6 +190,14 @@ export class WebSocketTicketService {
       userId: record.userId,
       sessionExpiresAt: record.sessionExpiresAt,
     };
+  }
+
+  private consumeLocal(digest: string): TicketRecord | null {
+    const record = this.tickets.get(digest) ?? null;
+    // Delete before evaluating it so replay is impossible even at the expiry
+    // boundary or when later authorization checks reject the account.
+    this.tickets.delete(digest);
+    return record;
   }
 
   private pruneExpired(now: number): void {
@@ -175,4 +232,8 @@ export class WebSocketTicketService {
   }
 }
 
-export const websocketTicketService = new WebSocketTicketService();
+export const websocketTicketService = new WebSocketTicketService(
+  configuredTicketTtlMs(),
+  Date.now,
+  getCoordinator
+);

@@ -152,7 +152,10 @@ WORKDIR /app
 # given the Docker socket. The image itself does not mount host resources;
 # the repository's default Compose file does mount the socket for Work, while
 # deployments that omit that mount leave the Docker runtime unavailable.
-RUN apk update && apk upgrade && apk add --no-cache wget docker-cli
+RUN apk update && apk upgrade && apk add --no-cache \
+    wget \
+    docker-cli \
+    postgresql16-client
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
@@ -165,6 +168,12 @@ COPY --from=backend-builder /app/backend/package*.json ./backend/
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/backend/node_modules ./backend/node_modules
 COPY --from=prod-deps /app/package*.json ./
+COPY bin/cli.js bin/runtime-paths.js ./bin/
+
+# Expose the same maintenance/server command used by npm and Homebrew. Keep
+# the link absolute so its backend/frontend resolution stays rooted at /app.
+RUN chmod 0755 /app/bin/cli.js && \
+    ln -s /app/bin/cli.js /usr/local/bin/libre-webui
 
 # Keep the runtime package metadata aligned with the version injected into the
 # frontend build. The auth and diagnostics APIs read these files at startup.

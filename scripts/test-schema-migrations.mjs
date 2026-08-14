@@ -82,6 +82,29 @@ const encryptLegacyText = (plaintext, keyHex) => {
 
 const removeDurableJobsMigration = database => {
   database.exec(`
+    DROP INDEX idx_platform_resource_tombstones_owner;
+    DROP TABLE platform_resource_deletion_tombstones;
+    DELETE FROM _libre_schema_migrations WHERE version = 12;
+    DELETE FROM _libre_schema_migrations WHERE version = 11;
+    DELETE FROM _libre_schema_migrations WHERE version = 10;
+    DELETE FROM _libre_schema_migrations WHERE version = 9;
+    DROP INDEX idx_platform_blob_quota_objects_owner;
+    DROP TABLE platform_blob_quota_objects;
+    DROP INDEX idx_platform_blob_quota_reservations_owner;
+    DROP INDEX idx_platform_blob_quota_reservations_expiry;
+    DROP TABLE platform_blob_quota_reservations;
+    DROP TABLE platform_blob_quota_usage;
+    DELETE FROM _libre_schema_migrations WHERE version = 8;
+    DROP INDEX idx_plugin_definitions_updated;
+    DROP TABLE plugin_definitions;
+    DELETE FROM _libre_schema_migrations WHERE version = 7;
+    DROP INDEX idx_voice_profiles_name_lookup;
+    ALTER TABLE voice_profiles DROP COLUMN name_lookup;
+    DELETE FROM _libre_schema_migrations WHERE version = 6;
+    DROP INDEX idx_platform_blob_references_resource;
+    DROP INDEX idx_platform_blob_references_owner;
+    DROP TABLE platform_blob_references;
+    DELETE FROM _libre_schema_migrations WHERE version = 5;
     DROP INDEX idx_users_email_lookup;
     ALTER TABLE users DROP COLUMN email_lookup;
     DELETE FROM _libre_schema_migrations WHERE version = 4;
@@ -681,8 +704,72 @@ test('legacy SQLite schema is adopted into immutable checksummed migrations', t 
     'abac261ef3848667aa3ad5dbb47c123b119cadbc0738c167c9b9d35b057a43a0',
     'released migration v4 DDL and checksum must stay immutable'
   );
+  assert.equal(
+    createHash('sha256')
+      .update('005-blob-references\n')
+      .update(migrations.SQLITE_BLOB_REFERENCE_SCHEMA_SQL)
+      .digest('hex'),
+    '84a2c0cf783c81f46e90c73ae2e62ca80b89669e672767f94af7ea5d37098b79',
+    'released migration v5 DDL and checksum must stay immutable'
+  );
+  assert.equal(
+    createHash('sha256')
+      .update('006-voice-profile-name-lookup\n')
+      .update(migrations.VOICE_PROFILE_NAME_LOOKUP_SCHEMA_SQL)
+      .digest('hex'),
+    '6162d4feb454f812ea1ddf88c472943f1fc07da5933c29986d4b8b27d6156df6',
+    'released migration v6 DDL and checksum must stay immutable'
+  );
+  assert.equal(
+    createHash('sha256')
+      .update('007-shared-plugin-definitions\n')
+      .update(migrations.PLUGIN_DEFINITION_SCHEMA_SQL)
+      .digest('hex'),
+    '7092b4bb02ad71be4ef7d6106ed5bab6d5b76e9ec8d98f36f7a8a6c3a70c84c6',
+    'released migration v7 DDL and checksum must stay immutable'
+  );
+  assert.equal(
+    createHash('sha256')
+      .update('008-blob-quotas\n')
+      .update(migrations.SQLITE_BLOB_QUOTA_SCHEMA_SQL)
+      .digest('hex'),
+    'c6dd6ff729b92dc935aacd5ea236bbbf6f8f455999abd3ab8f687457ec0ca998',
+    'released migration v8 DDL and checksum must stay immutable'
+  );
+  assert.equal(
+    createHash('sha256')
+      .update('009-identity-account-retirement\n')
+      .update(migrations.IDENTITY_ACCOUNT_RETIREMENT_SCHEMA_SQL)
+      .digest('hex'),
+    '72c57042dd74cba8b1b22395bfe7942e62e269a0041706711094565fb6860657',
+    'released migration v9 DDL and checksum must stay immutable'
+  );
+  assert.equal(
+    createHash('sha256')
+      .update('010-work-preview-upstream\n')
+      .update(migrations.WORK_PREVIEW_UPSTREAM_SCHEMA_SQL)
+      .digest('hex'),
+    'aa2023e736da5a2b63ab2e39c378a3c43fc6f40be9318eec1397dff83c4a9358',
+    'released migration v10 DDL and checksum must stay immutable'
+  );
+  assert.equal(
+    createHash('sha256')
+      .update('011-durable-event-idempotency\n')
+      .update(migrations.DURABLE_EVENT_IDEMPOTENCY_SCHEMA_SQL)
+      .digest('hex'),
+    'fe9aee7dc21dc4ca6a5bdcd0fcd5788104501f68bc2c72e83faf9b6ce6514d44',
+    'released migration v11 DDL and checksum must stay immutable'
+  );
+  assert.equal(
+    createHash('sha256')
+      .update('012-resource-deletion-lifecycle\n')
+      .update(migrations.RESOURCE_DELETION_LIFECYCLE_SCHEMA_SQL)
+      .digest('hex'),
+    'a72e862afe109daf68b7ec8e445ef359bc3550a5ac8973d135cf7a18eb5bf1cc',
+    'released migration v12 DDL and checksum must stay immutable'
+  );
 
-  assert.equal(migrations.getSchemaCompatibilityState().targetVersion, 4);
+  assert.equal(migrations.getSchemaCompatibilityState().targetVersion, 12);
   assert.deepEqual(
     migrations.inspectSQLiteSchema(database).appliedMigrations.map(row => ({
       version: row.version,
@@ -719,6 +806,62 @@ test('legacy SQLite schema is adopted into immutable checksummed migrations', t 
           'abac261ef3848667aa3ad5dbb47c123b119cadbc0738c167c9b9d35b057a43a0',
         checksumMatches: true,
       },
+      {
+        version: 5,
+        name: 'blob-references',
+        checksum:
+          '84a2c0cf783c81f46e90c73ae2e62ca80b89669e672767f94af7ea5d37098b79',
+        checksumMatches: true,
+      },
+      {
+        version: 6,
+        name: 'voice-profile-name-lookup',
+        checksum:
+          '6162d4feb454f812ea1ddf88c472943f1fc07da5933c29986d4b8b27d6156df6',
+        checksumMatches: true,
+      },
+      {
+        version: 7,
+        name: 'shared-plugin-definitions',
+        checksum:
+          '7092b4bb02ad71be4ef7d6106ed5bab6d5b76e9ec8d98f36f7a8a6c3a70c84c6',
+        checksumMatches: true,
+      },
+      {
+        version: 8,
+        name: 'blob-quotas',
+        checksum:
+          'c6dd6ff729b92dc935aacd5ea236bbbf6f8f455999abd3ab8f687457ec0ca998',
+        checksumMatches: true,
+      },
+      {
+        version: 9,
+        name: 'identity-account-retirement',
+        checksum:
+          '72c57042dd74cba8b1b22395bfe7942e62e269a0041706711094565fb6860657',
+        checksumMatches: true,
+      },
+      {
+        version: 10,
+        name: 'work-preview-upstream',
+        checksum:
+          'aa2023e736da5a2b63ab2e39c378a3c43fc6f40be9318eec1397dff83c4a9358',
+        checksumMatches: true,
+      },
+      {
+        version: 11,
+        name: 'durable-event-idempotency',
+        checksum:
+          'fe9aee7dc21dc4ca6a5bdcd0fcd5788104501f68bc2c72e83faf9b6ce6514d44',
+        checksumMatches: true,
+      },
+      {
+        version: 12,
+        name: 'resource-deletion-lifecycle',
+        checksum:
+          'a72e862afe109daf68b7ec8e445ef359bc3550a5ac8973d135cf7a18eb5bf1cc',
+        checksumMatches: true,
+      },
     ]
   );
 
@@ -726,15 +869,15 @@ test('legacy SQLite schema is adopted into immutable checksummed migrations', t 
   assert.deepEqual(migrations.runSQLiteMigrationCoordinator(database), {
     dialect: 'sqlite',
     status: 'compatible',
-    currentVersion: 4,
-    targetVersion: 4,
+    currentVersion: 12,
+    targetVersion: 12,
     minimumSupportedVersion: 1,
   });
   assert.equal(
     database
       .prepare('SELECT COUNT(*) AS count FROM _libre_schema_migrations')
       .get().count,
-    4
+    12
   );
 
   migrations.runSQLiteMigrationCoordinator(database);
@@ -742,7 +885,7 @@ test('legacy SQLite schema is adopted into immutable checksummed migrations', t 
     database
       .prepare('SELECT COUNT(*) AS count FROM _libre_schema_migrations')
       .get().count,
-    4
+    12
   );
 });
 
@@ -765,11 +908,11 @@ test('vector schema is installed only through checksummed migration v2', t => {
   assert.equal(before.currentVersion, 1);
   assert.equal(before.status, 'migrating');
   assert.equal(before.compatible, false);
-  assert.match(before.reason, /requires migration to version 4/);
+  assert.match(before.reason, /requires migration to version 12/);
   assert.ok(before.missing.includes('platform_vector_entries (table)'));
 
   const migrated = migrations.runSQLiteMigrationCoordinator(database);
-  assert.equal(migrated.currentVersion, 4);
+  assert.equal(migrated.currentVersion, 12);
   assert.equal(migrated.status, 'compatible');
   assert.equal(migrations.inspectSQLiteSchema(database).missing.length, 0);
 });
@@ -804,7 +947,7 @@ test('historical vector checksum is repaired only in the atomic live coordinator
     dialect: 'sqlite',
     status: 'migrating',
     currentVersion: 2,
-    targetVersion: 4,
+    targetVersion: 12,
     minimumSupportedVersion: 1,
   });
   assert.deepEqual(
@@ -816,8 +959,8 @@ test('historical vector checksum is repaired only in the atomic live coordinator
   assert.deepEqual(migrations.runSQLiteMigrationCoordinator(database), {
     dialect: 'sqlite',
     status: 'compatible',
-    currentVersion: 4,
-    targetVersion: 4,
+    currentVersion: 12,
+    targetVersion: 12,
     minimumSupportedVersion: 1,
   });
   const repaired = database
@@ -827,7 +970,7 @@ test('historical vector checksum is repaired only in the atomic live coordinator
         ORDER BY version`
     )
     .all();
-  assert.equal(repaired.length, 4);
+  assert.equal(repaired.length, 12);
   assert.equal(repaired[1].checksum, migrationChecksum(2));
   assert.equal(repaired[1].applied_at, appliedAt);
   assert.equal(
@@ -864,8 +1007,8 @@ test('historical vector checksum repairs under coherent later ledger rows', t =>
   assert.deepEqual(migrations.preflightSQLiteMigrationLedger(database), {
     dialect: 'sqlite',
     status: 'migrating',
-    currentVersion: 4,
-    targetVersion: 4,
+    currentVersion: 12,
+    targetVersion: 12,
     minimumSupportedVersion: 1,
   });
   assert.deepEqual(fs.readFileSync(databasePath), beforeBytes);

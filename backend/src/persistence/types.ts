@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 
-export type PersistenceDialect = 'sqlite';
+import type { ApplicationResourceRepositories } from './resourceTypes.js';
+import type { ExtensionRepositories } from './extensionTypes.js';
+import type { IdentityDeletionEnqueuer } from './identityDeletionTypes.js';
+
+export type PersistenceDialect = 'sqlite' | 'postgres';
 
 export interface PersistenceRunResult {
   changes: number;
@@ -44,11 +48,12 @@ export interface PersistenceSyncExecutor {
 export interface IdentityEmailCodec {
   encrypt(plaintext: string): string;
   decryptAuthenticated(ciphertext: string): string;
+  decryptBuffer(ciphertext: Buffer, additionalData?: Buffer): Buffer;
   isEncrypted(value: string): boolean;
   lookupToken(plaintext: string): string;
 }
 
-export type IdentityAccountStatus = 'pending' | 'active';
+export type IdentityAccountStatus = 'pending' | 'active' | 'retiring';
 export type IdentityRole = 'admin' | 'user';
 
 export interface IdentityUserRecord {
@@ -90,9 +95,16 @@ export interface IdentityRepository {
   findByUsername(username: string): Promise<IdentityUserRecord | null>;
   insert(user: IdentityUserRecord): Promise<void>;
   approve(id: string, approvedBy: string, approvedAt: number): Promise<boolean>;
+  /** Idempotently fences an active identity before cross-domain cleanup. */
+  beginRetirement(id: string, updatedAt: number): Promise<boolean>;
   getPendingApprovalSummary(): Promise<PendingApprovalRecord>;
   update(id: string, update: IdentityUserUpdate): Promise<boolean>;
   delete(id: string): Promise<boolean>;
+  deleteAndEnqueue(
+    id: string,
+    actorUserId: string,
+    enqueuer: IdentityDeletionEnqueuer
+  ): Promise<boolean>;
   usernameExists(username: string): Promise<boolean>;
   emailExists(email: string): Promise<boolean>;
   countRealUsers(): Promise<number>;
@@ -104,6 +116,7 @@ export interface IdentitySyncRepository {
   findByUsername(username: string): IdentityUserRecord | null;
   insert(user: IdentityUserRecord): void;
   approve(id: string, approvedBy: string, approvedAt: number): boolean;
+  beginRetirement(id: string, updatedAt: number): boolean;
   getPendingApprovalSummary(): PendingApprovalRecord;
   update(id: string, update: IdentityUserUpdate): boolean;
   delete(id: string): boolean;
@@ -114,21 +127,57 @@ export interface IdentitySyncRepository {
 
 export interface PersistenceRepositories {
   identity: IdentityRepository;
+  resources: ApplicationResourceRepositories;
+  extensions: ExtensionRepositories;
 }
 
 export interface PersistenceUnitOfWork {
+  identity: IdentityRepository;
+  resources: ApplicationResourceRepositories;
+  extensions: ExtensionRepositories;
+}
+
+export interface PersistenceSyncUnitOfWork {
   identity: IdentitySyncRepository;
 }
 
 export type SynchronousTransactionResult<T> =
   T extends PromiseLike<unknown> ? never : T;
 
-export interface Persistence {
+interface PersistenceBase {
   readonly dialect: PersistenceDialect;
   readonly repositories: PersistenceRepositories;
+  health(): Promise<PersistenceHealth>;
+  close(): Promise<void>;
+}
+
+export interface SQLitePersistenceContract extends PersistenceBase {
+  readonly dialect: 'sqlite';
   transaction<T>(
     operation: (
-      unitOfWork: PersistenceUnitOfWork
+      unitOfWork: PersistenceSyncUnitOfWork
     ) => SynchronousTransactionResult<T>
   ): Promise<T>;
+}
+
+export interface PostgresPersistenceContract extends PersistenceBase {
+  readonly dialect: 'postgres';
+  transaction<T>(
+    operation: (unitOfWork: PersistenceUnitOfWork) => Promise<T>
+  ): Promise<T>;
+}
+
+export type Persistence =
+  SQLitePersistenceContract | PostgresPersistenceContract;
+
+export interface PersistenceHealth {
+  ready: boolean;
+  dialect: PersistenceDialect;
+  latencyMs: number;
+  message?: string;
+  pool?: {
+    total: number;
+    idle: number;
+    waiting: number;
+  };
 }

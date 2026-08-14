@@ -164,7 +164,7 @@ export class AuthService {
       hasUsers: userCount > 0,
       userCount,
       signupEnabled: canCreateLocalAccount(userCount),
-      agentsEnabled: getAgentsEnabled(),
+      agentsEnabled: await getAgentsEnabled(),
       version: packageVersion,
       turnstile: turnstileService.getPublicConfig(),
     };

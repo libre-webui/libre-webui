@@ -186,6 +186,7 @@ export interface WorkLiveEventDataMap {
     phase?: 'completed' | 'failed';
     content?: string;
     error?: boolean;
+    outcomeUnknown?: boolean;
     message?: WorkMessage;
   };
   usage: {
@@ -330,6 +331,10 @@ export interface WorkTaskRecord {
   policyId?: string;
   previewUrl?: string;
   previewStatus: WorkPreviewStatus;
+  /** Private runtime endpoint; never serialize this record to a client. */
+  previewUpstreamHost?: string;
+  /** Private runtime endpoint; never serialize this record to a client. */
+  previewUpstreamPort?: number;
   createdAt: number;
   updatedAt: number;
 }

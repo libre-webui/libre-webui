@@ -23,21 +23,37 @@ import {
 import {
   DurableJobError,
   type DurableCancellationCode,
+  type DurableJobActorFilter,
+  type DurableJobCancellationSummary,
   type DurableJobEnqueueInput,
   type DurableJobEvent,
   type DurableJobEventAppendInput,
   type DurableJobLease,
+  type DurableJobListOptions,
+  type DurableJobAttemptMetadata,
+  type DurableLifecycleRecoverySummary,
   type DurableJobMetadata,
   type DurableJobProgress,
+  type DurableResourceDeletionOccurrence,
   type DurableJobState,
   type DurablePayloadInput,
 } from './durableJobTypes.js';
 import {
   SQLiteDurableJobRepository,
   type PreparedDurableEventAppend,
+  type StoredLifecycleRecoveryCandidate,
   type StoredDurableEventRow,
   type StoredDurablePayload,
 } from './sqliteDurableJobRepository.js';
+import {
+  DELETION_LIFECYCLE_RECOVERY_NOT_REQUIRED_REFERENCE,
+  DELETION_LIFECYCLE_RECOVERY_REFERENCE_PREFIX,
+  DELETION_LIFECYCLE_RECOVERY_DELAY_MS,
+  OWNER_DELETE_CONTENT_JOB_TYPE,
+  OWNER_DELETE_CONTENT_RECOVERY_IDEMPOTENCY_SCOPE,
+  RESOURCE_DELETE_JOB_TYPE,
+  RESOURCE_DELETE_RECOVERY_IDEMPOTENCY_SCOPE,
+} from './domainJobContracts.js';
 
 const MAX_IDENTIFIER_BYTES = 256;
 const MAX_REFERENCE_BYTES = 2048;
@@ -170,11 +186,85 @@ const validatePayloadInput = (
   return { canonical: canonicalJson(input.value), mode: input.mode };
 };
 
+const RECOVERY_SCAN_PAGE_SIZE = 100;
+
+const objectPayload = (value: unknown): Record<string, unknown> => {
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    Array.isArray(value) ||
+    Object.getPrototypeOf(value) !== Object.prototype
+  ) {
+    throw new DurableJobError(
+      'storage-error',
+      'Durable lifecycle payload is invalid'
+    );
+  }
+  return value as Record<string, unknown>;
+};
+
+const resourceDeletionOccurrence = (
+  value: unknown,
+  actorUserId: string
+): DurableResourceDeletionOccurrence => {
+  const record = objectPayload(value);
+  const resourceType = record.resourceType;
+  const resourceId = record.resourceId;
+  const deletionIncarnation = record.deletionIncarnation;
+  const deletionToken = record.deletionToken;
+  if (
+    !['document', 'generated-media', 'persona'].includes(
+      String(resourceType)
+    ) ||
+    typeof resourceId !== 'string' ||
+    resourceId.length === 0 ||
+    !Number.isSafeInteger(deletionIncarnation) ||
+    Number(deletionIncarnation) < 1 ||
+    typeof deletionToken !== 'string' ||
+    !/^[0-9a-f]{64}$/.test(deletionToken)
+  ) {
+    throw new DurableJobError(
+      'storage-error',
+      'Durable resource deletion payload is invalid'
+    );
+  }
+  validateText(resourceId, 'resource ID');
+  return {
+    resourceType:
+      resourceType as DurableResourceDeletionOccurrence['resourceType'],
+    resourceId,
+    ownerUserId: actorUserId,
+    deletionIncarnation: Number(deletionIncarnation),
+    deletionToken,
+  };
+};
+
+const ownerDeletionPayload = (
+  value: unknown,
+  actorUserId: string
+): { targetUserId: string; actorUserId: string } => {
+  const record = objectPayload(value);
+  if (
+    typeof record.targetUserId !== 'string' ||
+    typeof record.actorUserId !== 'string' ||
+    record.actorUserId !== actorUserId
+  ) {
+    throw new DurableJobError(
+      'storage-error',
+      'Durable owner deletion payload is invalid'
+    );
+  }
+  validateText(record.targetUserId, 'target user ID');
+  return { targetUserId: record.targetUserId, actorUserId };
+};
+
 /**
  * Validated service boundary for durable jobs and the transactional event log.
  * Payloads are either opaque references or authenticated AES-256-GCM JSON.
  */
 export class DurableJobService {
+  private readonly pendingLifecycleRecoveryIds = new Set<string>();
+
   constructor(
     private readonly repository: SQLiteDurableJobRepository,
     private readonly keyring: Aes256GcmKeyring,
@@ -202,6 +292,48 @@ export class DurableJobService {
       stored: { format: 'encrypted', data: JSON.stringify(envelope) },
       canonical: `encrypted\0${validated.canonical}`,
     };
+  }
+
+  private decodeStoredJobPayload(
+    job: Pick<
+      StoredLifecycleRecoveryCandidate,
+      'id' | 'jobType' | 'actorUserId'
+    >,
+    stored: StoredDurablePayload
+  ): unknown {
+    if (stored.format === 'reference') {
+      return { referenceId: stored.data };
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(stored.data);
+    } catch {
+      throw new DurableJobError(
+        'storage-error',
+        'Durable job payload envelope is invalid'
+      );
+    }
+    const plaintext = this.keyring.decrypt(
+      parseAesGcmEnvelope(parsed),
+      jobPayloadAad(job.id, job.jobType, job.actorUserId)
+    );
+    try {
+      if (plaintext.byteLength > MAX_PAYLOAD_BYTES) {
+        throw new DurableJobError(
+          'storage-error',
+          'Durable job payload exceeds the supported limit'
+        );
+      }
+      return JSON.parse(plaintext.toString('utf8')) as unknown;
+    } catch (error) {
+      if (error instanceof DurableJobError) throw error;
+      throw new DurableJobError(
+        'storage-error',
+        'Durable job payload is not valid JSON'
+      );
+    } finally {
+      plaintext.fill(0);
+    }
   }
 
   enqueue(input: DurableJobEnqueueInput): DurableJobMetadata {
@@ -269,7 +401,23 @@ export class DurableJobService {
   claim(workerId: string, leaseMs: number): DurableJobLease | null {
     validateText(workerId, 'worker ID');
     this.validateLeaseDuration(leaseMs);
-    return this.repository.claim(workerId, leaseMs);
+    this.flushPendingLifecycleRecovery();
+    const claimed = this.repository.claimWithLifecycleRecovery(
+      workerId,
+      leaseMs
+    );
+    for (const id of claimed.terminalLifecycleJobIds) {
+      this.pendingLifecycleRecoveryIds.add(id);
+    }
+    try {
+      this.flushPendingLifecycleRecovery();
+    } catch (error) {
+      // Never discard a lease already committed by the repository. The exact
+      // terminal IDs remain queued in memory and are retried before the next
+      // claim; a process loss is covered by the bounded startup scan.
+      if (!claimed.lease) throw error;
+    }
+    return claimed.lease;
   }
 
   heartbeat(
@@ -297,36 +445,121 @@ export class DurableJobService {
 
   readPayload(lease: DurableJobLease): unknown {
     const stored = this.repository.getStoredPayload(lease);
-    if (stored.format === 'reference') {
-      return { referenceId: stored.data };
-    }
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(stored.data);
-    } catch {
+    return this.decodeStoredJobPayload(lease, stored);
+  }
+
+  private reconcileDeletionLifecycleCandidate(
+    candidate: StoredLifecycleRecoveryCandidate
+  ): 'recovery' | 'skipped' {
+    const decoded = this.decodeStoredJobPayload(candidate, candidate.payload);
+    let recovery: DurableJobMetadata | null = null;
+    if (candidate.jobType === RESOURCE_DELETE_JOB_TYPE) {
+      const occurrence = resourceDeletionOccurrence(
+        decoded,
+        candidate.actorUserId
+      );
+      if (!this.repository.isPendingResourceDeletion(occurrence)) {
+        this.repository.markDeletionLifecycleRecoveryHandled(
+          candidate.id,
+          DELETION_LIFECYCLE_RECOVERY_NOT_REQUIRED_REFERENCE
+        );
+        return 'skipped';
+      }
+      recovery = this.enqueue({
+        jobType: RESOURCE_DELETE_JOB_TYPE,
+        actorUserId: candidate.actorUserId,
+        idempotencyScope: RESOURCE_DELETE_RECOVERY_IDEMPOTENCY_SCOPE,
+        idempotencyKey: candidate.id,
+        payload: { mode: 'encrypted', value: decoded },
+        maxAttempts: 5,
+        priority: candidate.priority,
+        availableAt: candidate.updatedAt + DELETION_LIFECYCLE_RECOVERY_DELAY_MS,
+      });
+    } else if (candidate.jobType === OWNER_DELETE_CONTENT_JOB_TYPE) {
+      const owner = ownerDeletionPayload(decoded, candidate.actorUserId);
+      if (!this.repository.isOwnerCleanupRequired(owner.targetUserId)) {
+        this.repository.markDeletionLifecycleRecoveryHandled(
+          candidate.id,
+          DELETION_LIFECYCLE_RECOVERY_NOT_REQUIRED_REFERENCE
+        );
+        return 'skipped';
+      }
+      recovery = this.enqueue({
+        jobType: OWNER_DELETE_CONTENT_JOB_TYPE,
+        actorUserId: candidate.actorUserId,
+        idempotencyScope: OWNER_DELETE_CONTENT_RECOVERY_IDEMPOTENCY_SCOPE,
+        idempotencyKey: candidate.id,
+        payload: { mode: 'encrypted', value: decoded },
+        maxAttempts: 10,
+        priority: candidate.priority,
+        availableAt: candidate.updatedAt + DELETION_LIFECYCLE_RECOVERY_DELAY_MS,
+      });
+    } else {
       throw new DurableJobError(
         'storage-error',
-        'Durable job payload envelope is invalid'
+        'Unexpected deletion lifecycle job type'
       );
     }
-    const plaintext = this.keyring.decrypt(
-      parseAesGcmEnvelope(parsed),
-      jobPayloadAad(lease.id, lease.jobType, lease.actorUserId)
+    this.repository.markDeletionLifecycleRecoveryHandled(
+      candidate.id,
+      `${DELETION_LIFECYCLE_RECOVERY_REFERENCE_PREFIX}${recovery.id}`
     );
-    if (plaintext.byteLength > MAX_PAYLOAD_BYTES) {
-      throw new DurableJobError(
-        'storage-error',
-        'Durable job payload exceeds the supported limit'
-      );
+    return 'recovery';
+  }
+
+  private reconcilePendingLifecycleRecovery(): void {
+    for (const id of [...this.pendingLifecycleRecoveryIds]) {
+      const candidate =
+        this.repository.getDeletionLifecycleRecoveryCandidate(id);
+      if (candidate) this.reconcileDeletionLifecycleCandidate(candidate);
+      this.pendingLifecycleRecoveryIds.delete(id);
     }
-    try {
-      return JSON.parse(plaintext.toString('utf8')) as unknown;
-    } catch {
-      throw new DurableJobError(
-        'storage-error',
-        'Durable job payload is not valid JSON'
-      );
+  }
+
+  private flushPendingLifecycleRecovery(): void {
+    this.reconcilePendingLifecycleRecovery();
+  }
+
+  reconcileDeletionLifecycleJob(id: string): DurableLifecycleRecoverySummary {
+    validateText(id, 'ID');
+    this.pendingLifecycleRecoveryIds.add(id);
+    const candidate = this.repository.getDeletionLifecycleRecoveryCandidate(id);
+    if (!candidate) {
+      this.pendingLifecycleRecoveryIds.delete(id);
+      return { examined: 0, recoveryJobs: 0, skipped: 0 };
     }
+    const outcome = this.reconcileDeletionLifecycleCandidate(candidate);
+    this.pendingLifecycleRecoveryIds.delete(id);
+    return {
+      examined: 1,
+      recoveryJobs: outcome === 'recovery' ? 1 : 0,
+      skipped: outcome === 'skipped' ? 1 : 0,
+    };
+  }
+
+  reconcileDeletionLifecycleJobs(): DurableLifecycleRecoverySummary {
+    const summary: DurableLifecycleRecoverySummary = {
+      examined: 0,
+      recoveryJobs: 0,
+      skipped: 0,
+    };
+    let afterId = '';
+    for (;;) {
+      const candidates =
+        this.repository.listDeletionLifecycleRecoveryCandidates(
+          afterId,
+          RECOVERY_SCAN_PAGE_SIZE
+        );
+      for (const candidate of candidates) {
+        afterId = candidate.id;
+        summary.examined += 1;
+        const outcome = this.reconcileDeletionLifecycleCandidate(candidate);
+        if (outcome === 'recovery') summary.recoveryJobs += 1;
+        else summary.skipped += 1;
+      }
+      if (candidates.length < RECOVERY_SCAN_PAGE_SIZE) break;
+    }
+    return summary;
   }
 
   reportProgress(lease: DurableJobLease, progress: DurableJobProgress): void {
@@ -391,7 +624,15 @@ export class DurableJobService {
   }
 
   abandon(lease: DurableJobLease): DurableJobState {
-    return this.repository.abandon(lease);
+    const state = this.repository.abandon(lease);
+    if (
+      (state === 'cancelled' || state === 'dead_letter') &&
+      (lease.jobType === RESOURCE_DELETE_JOB_TYPE ||
+        lease.jobType === OWNER_DELETE_CONTENT_JOB_TYPE)
+    ) {
+      this.reconcileDeletionLifecycleJob(lease.id);
+    }
+    return state;
   }
 
   cancel(
@@ -410,7 +651,80 @@ export class DurableJobService {
     if (!allowedReasons.includes(reason)) {
       throw invalid('Invalid durable job cancellation code');
     }
-    return this.repository.requestCancellation(id, actorUserId, reason);
+    const cancelled = this.repository.requestCancellation(
+      id,
+      actorUserId,
+      reason
+    );
+    if (
+      cancelled.state === 'cancelled' &&
+      (cancelled.jobType === RESOURCE_DELETE_JOB_TYPE ||
+        cancelled.jobType === OWNER_DELETE_CONTENT_JOB_TYPE)
+    ) {
+      this.reconcileDeletionLifecycleJob(cancelled.id);
+    }
+    return cancelled;
+  }
+
+  cancelAllForActor(
+    actorUserId: string,
+    reason: DurableCancellationCode,
+    filter: DurableJobActorFilter = {}
+  ): DurableJobCancellationSummary {
+    validateText(actorUserId, 'actor user ID');
+    this.validateActorFilter(filter);
+    return this.repository.requestActorCancellation(
+      actorUserId,
+      reason,
+      filter
+    );
+  }
+
+  countActiveForActor(
+    actorUserId: string,
+    filter: DurableJobActorFilter = {}
+  ): number {
+    validateText(actorUserId, 'actor user ID');
+    this.validateActorFilter(filter);
+    return this.repository.countActiveForActor(actorUserId, filter);
+  }
+
+  countNonSucceededForActor(
+    actorUserId: string,
+    filter: DurableJobActorFilter = {}
+  ): number {
+    validateText(actorUserId, 'actor user ID');
+    this.validateActorFilter(filter);
+    return this.repository.countNonSucceededForActor(actorUserId, filter);
+  }
+
+  private validateActorFilter(filter: DurableJobActorFilter): void {
+    if (
+      filter.excludeHandledLifecycleJobs !== undefined &&
+      typeof filter.excludeHandledLifecycleJobs !== 'boolean'
+    ) {
+      throw invalid('Invalid durable lifecycle job filter');
+    }
+    for (const jobType of filter.jobTypes ?? []) validateText(jobType, 'type');
+    for (const jobType of filter.excludeJobTypes ?? []) {
+      validateText(jobType, 'excluded type');
+    }
+    for (const scope of filter.idempotencyScopes ?? []) {
+      validateText(scope, 'idempotency scope');
+    }
+    for (const id of filter.excludeJobIds ?? []) validateText(id, 'ID');
+    if ((filter.jobTypes?.length ?? 0) > 64) {
+      throw invalid('Too many durable job type filters');
+    }
+    if ((filter.excludeJobTypes?.length ?? 0) > 64) {
+      throw invalid('Too many durable job type exclusions');
+    }
+    if ((filter.excludeJobIds?.length ?? 0) > 64) {
+      throw invalid('Too many durable job exclusions');
+    }
+    if ((filter.idempotencyScopes?.length ?? 0) > 64) {
+      throw invalid('Too many durable job idempotency scope filters');
+    }
   }
 
   getMetadata(id: string): DurableJobMetadata | null {
@@ -418,15 +732,81 @@ export class DurableJobService {
     return this.repository.getMetadata(id);
   }
 
+  getByIdempotency(
+    actorUserId: string,
+    idempotencyScope: string,
+    idempotencyKey: string
+  ): DurableJobMetadata | null {
+    validateText(actorUserId, 'actor user ID');
+    validateText(idempotencyScope, 'idempotency scope');
+    validateText(idempotencyKey, 'idempotency key', MAX_REFERENCE_BYTES);
+    return this.repository.getByIdempotency(
+      actorUserId,
+      idempotencyScope,
+      hash(`${actorUserId}\0${idempotencyScope}\0${idempotencyKey}`)
+    );
+  }
+
+  listJobs(options: DurableJobListOptions = {}): DurableJobMetadata[] {
+    if (options.actorUserId !== undefined) {
+      validateText(options.actorUserId, 'actor user ID');
+    }
+    const states: DurableJobState[] = [
+      'queued',
+      'running',
+      'succeeded',
+      'cancelled',
+      'dead_letter',
+    ];
+    if (options.state !== undefined && !states.includes(options.state)) {
+      throw invalid('Invalid durable job state filter');
+    }
+    const limit = options.limit ?? 50;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 200) {
+      throw invalid('Durable job list limit must be between 1 and 200');
+    }
+    if (
+      options.beforeCreatedAt !== undefined &&
+      (!Number.isSafeInteger(options.beforeCreatedAt) ||
+        options.beforeCreatedAt < 0)
+    ) {
+      throw invalid('Invalid durable job list cursor');
+    }
+    return this.repository.listJobs({ ...options, limit });
+  }
+
+  listAttempts(id: string): DurableJobAttemptMetadata[] {
+    validateText(id, 'ID');
+    return this.repository.listAttempts(id);
+  }
+
   appendEvent(input: DurableJobEventAppendInput): number {
+    validateText(input.eventId, 'event ID');
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        input.eventId
+      )
+    ) {
+      throw invalid('Invalid durable job event ID');
+    }
     validateText(input.streamId, 'event stream ID');
     validateText(input.eventType, 'event type');
     validateText(input.subjectId, 'event subject ID');
     if (input.actorUserId !== null && input.actorUserId !== undefined) {
       validateText(input.actorUserId, 'event actor user ID');
     }
-    const eventId = crypto.randomUUID();
+    const eventId = input.eventId;
     const validated = validatePayloadInput(input.payload);
+    const requestFingerprint = hash(
+      JSON.stringify([
+        input.streamId,
+        input.eventType,
+        input.subjectId,
+        input.actorUserId ?? null,
+        validated.mode,
+        validated.canonical,
+      ])
+    );
     let payload: StoredDurablePayload;
     if (validated.mode === 'reference') {
       payload = { format: 'reference', data: validated.canonical };
@@ -445,6 +825,7 @@ export class DurableJobService {
     }
     const prepared: PreparedDurableEventAppend = {
       eventId,
+      requestFingerprint,
       streamId: input.streamId,
       eventType: input.eventType,
       subjectId: input.subjectId,
@@ -453,6 +834,24 @@ export class DurableJobService {
       occurredAt: this.now(),
     };
     return this.repository.appendEvent(prepared);
+  }
+
+  getEvent(eventId: string): DurableJobEvent | null {
+    validateText(eventId, 'event ID');
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        eventId
+      )
+    ) {
+      throw invalid('Invalid durable job event ID');
+    }
+    const row = this.repository.getStoredEvent(eventId);
+    return row ? this.decodeEvent(row) : null;
+  }
+
+  latestEventCursor(streamId: string): number {
+    validateText(streamId, 'event stream ID');
+    return this.repository.latestStoredEventCursor(streamId);
   }
 
   replayEvents(

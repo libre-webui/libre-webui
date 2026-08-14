@@ -21,11 +21,22 @@ import { assertDurableJobMigrationReady } from '../../persistence/sqliteMigratio
 import {
   DurableJobError,
   type DurableCancellationCode,
+  type DurableJobActorFilter,
+  type DurableJobCancellationSummary,
   type DurableJobAttemptMetadata,
   type DurableJobLease,
+  type DurableJobListOptions,
   type DurableJobMetadata,
+  type DurableResourceDeletionOccurrence,
   type DurableJobState,
 } from './durableJobTypes.js';
+import {
+  DELETION_LIFECYCLE_RECOVERY_REFERENCE_PREFIX,
+  OWNER_DELETE_CONTENT_JOB_TYPE,
+  OWNER_DELETE_CONTENT_RECOVERABLE_ERROR_CODES,
+  RESOURCE_DELETE_JOB_TYPE,
+  RESOURCE_DELETE_RECOVERABLE_ERROR_CODES,
+} from './domainJobContracts.js';
 
 const EXPIRED_REAP_LIMIT = 100;
 
@@ -49,6 +60,7 @@ export interface PreparedDurableJobEnqueue {
 
 export interface PreparedDurableEventAppend {
   eventId: string;
+  requestFingerprint: string;
   streamId: string;
   eventType: string;
   subjectId: string;
@@ -104,6 +116,7 @@ interface AttemptRow {
 export interface StoredDurableEventRow {
   cursor: number;
   event_id: string;
+  request_fingerprint: string;
   stream_id: string;
   stream_sequence: number;
   event_type: string;
@@ -117,6 +130,20 @@ export interface StoredDurableEventRow {
 export interface DurableHeartbeatResult {
   owned: boolean;
   cancellationRequested: boolean;
+}
+
+export interface StoredLifecycleRecoveryCandidate {
+  id: string;
+  jobType: string;
+  actorUserId: string;
+  payload: StoredDurablePayload;
+  priority: number;
+  updatedAt: number;
+}
+
+export interface DurableJobClaimResult {
+  lease: DurableJobLease | null;
+  terminalLifecycleJobIds: string[];
 }
 
 const toMetadata = (row: JobRow): DurableJobMetadata => ({
@@ -199,6 +226,22 @@ export class SQLiteDurableJobRepository {
   }
 
   private appendEventInTransaction(input: PreparedDurableEventAppend): number {
+    const existing = this.database
+      .prepare(
+        `SELECT global_cursor, request_fingerprint
+           FROM platform_events WHERE event_id = ?`
+      )
+      .get(input.eventId) as
+      { global_cursor: number; request_fingerprint: string } | undefined;
+    if (existing) {
+      if (existing.request_fingerprint !== input.requestFingerprint) {
+        throw new DurableJobError(
+          'conflict',
+          'Durable event identity was reused for different content'
+        );
+      }
+      return existing.global_cursor;
+    }
     this.database
       .prepare(
         `INSERT INTO platform_event_stream_heads (stream_id, last_sequence)
@@ -230,12 +273,13 @@ export class SQLiteDurableJobRepository {
     const result = this.database
       .prepare(
         `INSERT INTO platform_events
-           (event_id, stream_id, stream_sequence, event_type, subject_id,
+           (event_id, request_fingerprint, stream_id, stream_sequence, event_type, subject_id,
             actor_user_id, payload_format, payload, occurred_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         input.eventId,
+        input.requestFingerprint,
         input.streamId,
         head.last_sequence,
         input.eventType,
@@ -262,6 +306,10 @@ export class SQLiteDurableJobRepository {
   ): void {
     this.appendEventInTransaction({
       eventId: crypto.randomUUID(),
+      requestFingerprint: crypto
+        .createHash('sha256')
+        .update(`${job.id}\n${eventType}\n${occurredAt}`)
+        .digest('hex'),
       streamId: `job:${job.id}`,
       eventType,
       subjectId: job.id,
@@ -365,7 +413,7 @@ export class SQLiteDurableJobRepository {
       );
   }
 
-  private reapExpired(timestamp: number): void {
+  private reapExpired(timestamp: number): string[] {
     const rows = this.database
       .prepare(
         `SELECT * FROM platform_jobs
@@ -378,6 +426,7 @@ export class SQLiteDurableJobRepository {
       )
       .all(timestamp, EXPIRED_REAP_LIMIT) as JobRow[];
 
+    const terminalLifecycleJobIds: string[] = [];
     for (const row of rows) {
       const cancelled = row.cancellation_requested_at !== null;
       const state: DurableJobState = cancelled ? 'cancelled' : 'dead_letter';
@@ -414,13 +463,23 @@ export class SQLiteDurableJobRepository {
         cancelled ? 'job.cancelled' : 'job.dead-lettered',
         timestamp
       );
+      if (
+        row.job_type === RESOURCE_DELETE_JOB_TYPE ||
+        row.job_type === OWNER_DELETE_CONTENT_JOB_TYPE
+      ) {
+        terminalLifecycleJobIds.push(row.id);
+      }
     }
+    return terminalLifecycleJobIds;
   }
 
-  claim(workerId: string, leaseMs: number): DurableJobLease | null {
+  claimWithLifecycleRecovery(
+    workerId: string,
+    leaseMs: number
+  ): DurableJobClaimResult {
     return this.immediate(() => {
       const timestamp = this.now();
-      this.reapExpired(timestamp);
+      const terminalLifecycleJobIds = this.reapExpired(timestamp);
       const candidate = this.database
         .prepare(
           `SELECT * FROM platform_jobs
@@ -432,7 +491,7 @@ export class SQLiteDurableJobRepository {
            LIMIT 1`
         )
         .get(timestamp, timestamp) as JobRow | undefined;
-      if (!candidate) return null;
+      if (!candidate) return { lease: null, terminalLifecycleJobIds };
 
       if (candidate.state === 'running') {
         this.finishAttempt(candidate, 'abandoned', timestamp);
@@ -463,7 +522,9 @@ export class SQLiteDurableJobRepository {
           timestamp,
           timestamp
         );
-      if (result.changes !== 1) return null;
+      if (result.changes !== 1) {
+        return { lease: null, terminalLifecycleJobIds };
+      }
 
       this.database
         .prepare(
@@ -488,8 +549,12 @@ export class SQLiteDurableJobRepository {
         );
       }
       this.appendJobEvent(claimed, 'job.claimed', timestamp);
-      return toLease(claimed);
+      return { lease: toLease(claimed), terminalLifecycleJobIds };
     });
+  }
+
+  claim(workerId: string, leaseMs: number): DurableJobLease | null {
+    return this.claimWithLifecycleRecovery(workerId, leaseMs).lease;
   }
 
   heartbeat(lease: DurableJobLease, leaseMs: number): DurableHeartbeatResult {
@@ -743,9 +808,411 @@ export class SQLiteDurableJobRepository {
     });
   }
 
+  requestActorCancellation(
+    actorUserId: string,
+    reason: DurableCancellationCode,
+    filter: DurableJobActorFilter = {}
+  ): DurableJobCancellationSummary {
+    return this.immediate(() => {
+      const clauses = [
+        'actor_user_id = ?',
+        "state IN ('queued', 'running')",
+        'cancellation_requested_at IS NULL',
+      ];
+      const bindings: string[] = [actorUserId];
+      if (filter.jobTypes && filter.jobTypes.length > 0) {
+        clauses.push(
+          `job_type IN (${filter.jobTypes.map(() => '?').join(', ')})`
+        );
+        bindings.push(...filter.jobTypes);
+      }
+      if (filter.excludeJobTypes && filter.excludeJobTypes.length > 0) {
+        clauses.push(
+          `job_type NOT IN (${filter.excludeJobTypes.map(() => '?').join(', ')})`
+        );
+        bindings.push(...filter.excludeJobTypes);
+      }
+      if (filter.idempotencyScopes && filter.idempotencyScopes.length > 0) {
+        clauses.push(
+          `idempotency_scope IN (${filter.idempotencyScopes.map(() => '?').join(', ')})`
+        );
+        bindings.push(...filter.idempotencyScopes);
+      }
+      if (filter.excludeJobIds && filter.excludeJobIds.length > 0) {
+        clauses.push(
+          `id NOT IN (${filter.excludeJobIds.map(() => '?').join(', ')})`
+        );
+        bindings.push(...filter.excludeJobIds);
+      }
+      const rows = this.database
+        .prepare(`SELECT * FROM platform_jobs WHERE ${clauses.join(' AND ')}`)
+        .all(...bindings) as JobRow[];
+      const timestamp = this.now();
+      let cancelledQueued = 0;
+      let cancellationRequestedRunning = 0;
+      for (const row of rows) {
+        if (row.state === 'queued') {
+          const result = this.database
+            .prepare(
+              `UPDATE platform_jobs
+                  SET state = 'cancelled', cancellation_requested_at = ?,
+                      cancellation_reason = ?, finished_at = ?, updated_at = ?
+                WHERE id = ? AND state = 'queued'
+                  AND cancellation_requested_at IS NULL`
+            )
+            .run(timestamp, reason, timestamp, timestamp, row.id);
+          if (result.changes === 1) {
+            cancelledQueued += 1;
+            this.appendJobEvent(row, 'job.cancelled', timestamp);
+          }
+          continue;
+        }
+        const result = this.database
+          .prepare(
+            `UPDATE platform_jobs
+                SET cancellation_requested_at = ?, cancellation_reason = ?,
+                    updated_at = ?
+              WHERE id = ? AND state = 'running'
+                AND cancellation_requested_at IS NULL`
+          )
+          .run(timestamp, reason, timestamp, row.id);
+        if (result.changes === 1) {
+          cancellationRequestedRunning += 1;
+          this.appendJobEvent(row, 'job.cancellation-requested', timestamp);
+        }
+      }
+      return { cancelledQueued, cancellationRequestedRunning };
+    });
+  }
+
+  countActiveForActor(
+    actorUserId: string,
+    filter: DurableJobActorFilter = {}
+  ): number {
+    const clauses = ['actor_user_id = ?', "state IN ('queued', 'running')"];
+    const bindings: string[] = [actorUserId];
+    if (filter.jobTypes && filter.jobTypes.length > 0) {
+      clauses.push(
+        `job_type IN (${filter.jobTypes.map(() => '?').join(', ')})`
+      );
+      bindings.push(...filter.jobTypes);
+    }
+    if (filter.excludeJobTypes && filter.excludeJobTypes.length > 0) {
+      clauses.push(
+        `job_type NOT IN (${filter.excludeJobTypes.map(() => '?').join(', ')})`
+      );
+      bindings.push(...filter.excludeJobTypes);
+    }
+    if (filter.idempotencyScopes && filter.idempotencyScopes.length > 0) {
+      clauses.push(
+        `idempotency_scope IN (${filter.idempotencyScopes.map(() => '?').join(', ')})`
+      );
+      bindings.push(...filter.idempotencyScopes);
+    }
+    if (filter.excludeJobIds && filter.excludeJobIds.length > 0) {
+      clauses.push(
+        `id NOT IN (${filter.excludeJobIds.map(() => '?').join(', ')})`
+      );
+      bindings.push(...filter.excludeJobIds);
+    }
+    const row = this.database
+      .prepare(
+        `SELECT COUNT(*) AS count FROM platform_jobs WHERE ${clauses.join(' AND ')}`
+      )
+      .get(...bindings) as { count: number };
+    return row.count;
+  }
+
+  countNonSucceededForActor(
+    actorUserId: string,
+    filter: DurableJobActorFilter = {}
+  ): number {
+    const clauses = ['actor_user_id = ?', "state <> 'succeeded'"];
+    const bindings: string[] = [actorUserId];
+    if (filter.jobTypes && filter.jobTypes.length > 0) {
+      clauses.push(
+        `job_type IN (${filter.jobTypes.map(() => '?').join(', ')})`
+      );
+      bindings.push(...filter.jobTypes);
+    }
+    if (filter.excludeJobTypes && filter.excludeJobTypes.length > 0) {
+      clauses.push(
+        `job_type NOT IN (${filter.excludeJobTypes.map(() => '?').join(', ')})`
+      );
+      bindings.push(...filter.excludeJobTypes);
+    }
+    if (filter.idempotencyScopes && filter.idempotencyScopes.length > 0) {
+      clauses.push(
+        `idempotency_scope IN (${filter.idempotencyScopes.map(() => '?').join(', ')})`
+      );
+      bindings.push(...filter.idempotencyScopes);
+    }
+    if (filter.excludeJobIds && filter.excludeJobIds.length > 0) {
+      clauses.push(
+        `id NOT IN (${filter.excludeJobIds.map(() => '?').join(', ')})`
+      );
+      bindings.push(...filter.excludeJobIds);
+    }
+    if (filter.excludeHandledLifecycleJobs) {
+      clauses.push(
+        `NOT (
+          job_type IN (?, ?)
+          AND state IN ('cancelled', 'dead_letter')
+          AND result_reference LIKE ?
+        )`
+      );
+      bindings.push(
+        RESOURCE_DELETE_JOB_TYPE,
+        OWNER_DELETE_CONTENT_JOB_TYPE,
+        `${DELETION_LIFECYCLE_RECOVERY_REFERENCE_PREFIX}%`
+      );
+    }
+    const row = this.database
+      .prepare(
+        `SELECT COUNT(*) AS count FROM platform_jobs WHERE ${clauses.join(' AND ')}`
+      )
+      .get(...bindings) as { count: number };
+    return row.count;
+  }
+
   getMetadata(id: string): DurableJobMetadata | null {
     const row = this.findRow(id);
     return row ? toMetadata(row) : null;
+  }
+
+  listDeletionLifecycleRecoveryCandidates(
+    afterId: string,
+    limit: number
+  ): StoredLifecycleRecoveryCandidate[] {
+    const resourceCodes = RESOURCE_DELETE_RECOVERABLE_ERROR_CODES;
+    const ownerCodes = OWNER_DELETE_CONTENT_RECOVERABLE_ERROR_CODES;
+    const rows = this.database
+      .prepare(
+        `SELECT jobs.*
+           FROM platform_jobs jobs
+          JOIN users actor ON actor.id = jobs.actor_user_id
+          WHERE jobs.id > ?
+            AND jobs.result_reference IS NULL
+            AND (
+              (
+                jobs.job_type = ?
+                AND actor.account_status = 'active'
+                AND (
+                  (jobs.state = 'dead_letter' AND jobs.error_code IN (${resourceCodes.map(() => '?').join(', ')}))
+                  OR jobs.state = 'cancelled'
+                )
+              )
+              OR
+              (
+                jobs.job_type = ?
+                AND actor.account_status IN ('active', 'retiring')
+                AND (
+                  (jobs.state = 'dead_letter' AND jobs.error_code IN (${ownerCodes.map(() => '?').join(', ')}))
+                  OR jobs.state = 'cancelled'
+                )
+              )
+            )
+          ORDER BY jobs.id ASC
+          LIMIT ?`
+      )
+      .all(
+        afterId,
+        RESOURCE_DELETE_JOB_TYPE,
+        ...resourceCodes,
+        OWNER_DELETE_CONTENT_JOB_TYPE,
+        ...ownerCodes,
+        limit
+      ) as JobRow[];
+    return rows.map(row => ({
+      id: row.id,
+      jobType: row.job_type,
+      actorUserId: row.actor_user_id,
+      payload: { format: row.payload_format, data: row.payload },
+      priority: row.priority,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  getDeletionLifecycleRecoveryCandidate(
+    id: string
+  ): StoredLifecycleRecoveryCandidate | null {
+    const resourceCodes = RESOURCE_DELETE_RECOVERABLE_ERROR_CODES;
+    const ownerCodes = OWNER_DELETE_CONTENT_RECOVERABLE_ERROR_CODES;
+    const row = this.database
+      .prepare(
+        `SELECT jobs.*
+           FROM platform_jobs jobs
+           JOIN users actor ON actor.id = jobs.actor_user_id
+          WHERE jobs.id = ?
+            AND jobs.result_reference IS NULL
+            AND (
+              (
+                jobs.job_type = ?
+                AND actor.account_status = 'active'
+                AND (
+                  (jobs.state = 'dead_letter' AND jobs.error_code IN (${resourceCodes.map(() => '?').join(', ')}))
+                  OR jobs.state = 'cancelled'
+                )
+              )
+              OR
+              (
+                jobs.job_type = ?
+                AND actor.account_status IN ('active', 'retiring')
+                AND (
+                  (jobs.state = 'dead_letter' AND jobs.error_code IN (${ownerCodes.map(() => '?').join(', ')}))
+                  OR jobs.state = 'cancelled'
+                )
+              )
+            )`
+      )
+      .get(
+        id,
+        RESOURCE_DELETE_JOB_TYPE,
+        ...resourceCodes,
+        OWNER_DELETE_CONTENT_JOB_TYPE,
+        ...ownerCodes
+      ) as JobRow | undefined;
+    return row
+      ? {
+          id: row.id,
+          jobType: row.job_type,
+          actorUserId: row.actor_user_id,
+          payload: { format: row.payload_format, data: row.payload },
+          priority: row.priority,
+          updatedAt: row.updated_at,
+        }
+      : null;
+  }
+
+  markDeletionLifecycleRecoveryHandled(
+    id: string,
+    resultReference: string
+  ): void {
+    this.immediate(() => {
+      const updated = this.database
+        .prepare(
+          `UPDATE platform_jobs
+              SET result_reference = ?
+            WHERE id = ?
+              AND job_type IN (?, ?)
+              AND state IN ('cancelled', 'dead_letter')
+              AND result_reference IS NULL`
+        )
+        .run(
+          resultReference,
+          id,
+          RESOURCE_DELETE_JOB_TYPE,
+          OWNER_DELETE_CONTENT_JOB_TYPE
+        );
+      if (updated.changes === 1) return;
+      const existing = this.database
+        .prepare(
+          `SELECT result_reference FROM platform_jobs
+            WHERE id = ? AND job_type IN (?, ?)
+              AND state IN ('cancelled', 'dead_letter')`
+        )
+        .get(id, RESOURCE_DELETE_JOB_TYPE, OWNER_DELETE_CONTENT_JOB_TYPE) as
+        { result_reference: string | null } | undefined;
+      if (
+        existing?.result_reference === resultReference ||
+        existing?.result_reference?.startsWith(
+          DELETION_LIFECYCLE_RECOVERY_REFERENCE_PREFIX
+        )
+      ) {
+        return;
+      }
+      throw new DurableJobError(
+        'storage-error',
+        'Deletion lifecycle recovery marker conflicted'
+      );
+    });
+  }
+
+  isPendingResourceDeletion(input: DurableResourceDeletionOccurrence): boolean {
+    const table = (() => {
+      switch (input.resourceType) {
+        case 'document':
+          return 'documents';
+        case 'generated-media':
+          return 'generated_images';
+        case 'persona':
+          return 'personas';
+      }
+    })();
+    return Boolean(
+      this.database
+        .prepare(
+          `SELECT 1
+             FROM platform_resource_deletion_tombstones tombstone
+            WHERE tombstone.resource_type = ?
+              AND tombstone.resource_id = ?
+              AND tombstone.owner_user_id = ?
+              AND tombstone.deletion_incarnation = ?
+              AND tombstone.deletion_token = ?
+              AND tombstone.completed_at IS NULL
+              AND NOT EXISTS (
+                SELECT 1 FROM ${table} resource
+                 WHERE resource.id = tombstone.resource_id
+                   AND resource.user_id = tombstone.owner_user_id
+              )`
+        )
+        .get(
+          input.resourceType,
+          input.resourceId,
+          input.ownerUserId,
+          input.deletionIncarnation,
+          input.deletionToken
+        )
+    );
+  }
+
+  isOwnerCleanupRequired(targetUserId: string): boolean {
+    return !this.database
+      .prepare('SELECT 1 FROM users WHERE id = ?')
+      .get(targetUserId);
+  }
+
+  getByIdempotency(
+    actorUserId: string,
+    idempotencyScope: string,
+    idempotencyKeyHash: string
+  ): DurableJobMetadata | null {
+    const row = this.database
+      .prepare(
+        `SELECT * FROM platform_jobs
+         WHERE actor_user_id = ?
+           AND idempotency_scope = ?
+           AND idempotency_key_hash = ?`
+      )
+      .get(actorUserId, idempotencyScope, idempotencyKeyHash) as
+      JobRow | undefined;
+    return row ? toMetadata(row) : null;
+  }
+
+  listJobs(options: DurableJobListOptions): DurableJobMetadata[] {
+    const conditions: string[] = [];
+    const bindings: Array<string | number> = [];
+    if (options.actorUserId) {
+      conditions.push('actor_user_id = ?');
+      bindings.push(options.actorUserId);
+    }
+    if (options.state) {
+      conditions.push('state = ?');
+      bindings.push(options.state);
+    }
+    if (options.beforeCreatedAt !== undefined) {
+      conditions.push('created_at < ?');
+      bindings.push(options.beforeCreatedAt);
+    }
+    const rows = this.database
+      .prepare(
+        `SELECT * FROM platform_jobs
+         ${conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''}
+         ORDER BY created_at DESC, id ASC
+         LIMIT ?`
+      )
+      .all(...bindings, options.limit ?? 50) as JobRow[];
+    return rows.map(toMetadata);
   }
 
   getStoredPayload(lease: DurableJobLease): StoredDurablePayload {
@@ -775,6 +1242,40 @@ export class SQLiteDurableJobRepository {
     ).map(toAttempt);
   }
 
+  getStoredEvent(eventId: string): StoredDurableEventRow | null {
+    return (
+      (this.database
+        .prepare(
+          `SELECT global_cursor AS cursor, event_id, stream_id,
+                  stream_sequence, request_fingerprint, event_type, subject_id,
+                  actor_user_id, payload_format, payload, occurred_at
+             FROM platform_events
+            WHERE event_id = ?`
+        )
+        .get(eventId) as StoredDurableEventRow | undefined) ?? null
+    );
+  }
+
+  latestStoredEventCursor(streamId: string): number {
+    const row = this.database
+      .prepare(
+        `SELECT global_cursor AS cursor
+           FROM platform_events
+          WHERE stream_id = ?
+          ORDER BY stream_sequence DESC
+          LIMIT 1`
+      )
+      .get(streamId) as { cursor: number } | undefined;
+    if (!row) return 0;
+    if (!Number.isSafeInteger(row.cursor) || row.cursor < 1) {
+      throw new DurableJobError(
+        'storage-error',
+        'Durable event stream cursor is invalid'
+      );
+    }
+    return row.cursor;
+  }
+
   replayStoredEvents(
     afterCursor: number,
     limit: number,
@@ -784,8 +1285,8 @@ export class SQLiteDurableJobRepository {
       return this.database
         .prepare(
           `SELECT global_cursor AS cursor, event_id, stream_id,
-                  stream_sequence, event_type, subject_id, actor_user_id,
-                  payload_format, payload, occurred_at
+                  stream_sequence, request_fingerprint, event_type, subject_id,
+                  actor_user_id, payload_format, payload, occurred_at
            FROM platform_events
            WHERE global_cursor > ? AND stream_id = ?
            ORDER BY global_cursor ASC LIMIT ?`
@@ -795,8 +1296,8 @@ export class SQLiteDurableJobRepository {
     return this.database
       .prepare(
         `SELECT global_cursor AS cursor, event_id, stream_id, stream_sequence,
-                event_type, subject_id, actor_user_id, payload_format,
-                payload, occurred_at
+                request_fingerprint, event_type, subject_id, actor_user_id,
+                payload_format, payload, occurred_at
          FROM platform_events
          WHERE global_cursor > ?
          ORDER BY global_cursor ASC LIMIT ?`

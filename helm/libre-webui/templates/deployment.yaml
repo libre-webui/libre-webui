@@ -1,8 +1,33 @@
-{{- if or (lt (int .Values.replicaCount) 0) (gt (int .Values.replicaCount) 1) }}
-{{- fail "Libre WebUI currently requires replicaCount=0 or 1 because SQLite and local application state are not safe across multiple replicas." }}
+{{- $team := eq .Values.env.LIBRE_PLATFORM_MODE "team" }}
+{{- if or (lt (int .Values.replicaCount) 0) (and (not $team) (gt (int .Values.replicaCount) 1)) }}
+{{- fail "Solo Libre WebUI requires replicaCount=0 or 1; select the complete team profile before adding replicas." }}
 {{- end }}
-{{- if .Values.autoscaling.enabled }}
-{{- fail "Libre WebUI autoscaling is disabled until shared database and application-state backends are supported." }}
+{{- if and .Values.autoscaling.enabled (not $team) }}
+{{- fail "Libre WebUI autoscaling requires the complete team profile." }}
+{{- end }}
+{{- if and $team (or .Values.autoscaling.enabled (gt (int .Values.replicaCount) 0)) (lt (int .Values.worker.replicaCount) 1) }}
+{{- fail "An active team application requires worker.replicaCount>=1; set both application and worker replicas to zero only for full suspension." }}
+{{- end }}
+{{- if lt (int .Values.env.OLLAMA_LONG_OPERATION_TIMEOUT) (int .Values.env.OLLAMA_TIMEOUT) }}
+{{- fail "OLLAMA_LONG_OPERATION_TIMEOUT must be greater than or equal to OLLAMA_TIMEOUT." }}
+{{- end }}
+{{- if and $team (or (ne .Values.env.DATABASE_BACKEND "postgres") (ne .Values.env.BLOB_STORE_BACKEND "s3") (ne .Values.env.VECTOR_STORE_BACKEND "pgvector") (ne .Values.env.COORDINATION_BACKEND "redis") (ne .Values.env.JOB_WORKER_MODE "external")) }}
+{{- fail "Team mode requires PostgreSQL, S3, PGVector, Redis, and an external durable worker." }}
+{{- end }}
+{{- if and $team (or (ne .Values.env.AGENT_CLI_MODELS_ENABLED "false") (ne .Values.env.CODEX_OAUTH_MODELS_ENABLED "false")) }}
+{{- fail "Team mode does not support node-local Agent CLI or Codex OAuth credentials; keep AGENT_CLI_MODELS_ENABLED=false and CODEX_OAUTH_MODELS_ENABLED=false." }}
+{{- end }}
+{{- if and $team (or (not .Values.secrets.databaseUrl) (not .Values.secrets.redisUrl) (not (trim .Values.secrets.jwtSecret)) (not .Values.secrets.encryptionKey) (not .Values.secrets.storageEncryptionKeys) (not .Values.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID) (not .Values.env.S3_BUCKET) (not .Values.env.S3_REGION)) }}
+{{- fail "Team mode requires PostgreSQL, Redis, stable JWT, legacy/keyring secrets, an active key ID, S3 bucket, and S3 region." }}
+{{- end }}
+{{- if $team }}
+{{- $storageKeys := mustFromJson .Values.secrets.storageEncryptionKeys }}
+{{- if or (not (hasKey $storageKeys "legacy")) (not (hasKey $storageKeys .Values.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID)) }}
+{{- fail "Team storageEncryptionKeys must contain both legacy and the configured active key ID." }}
+{{- end }}
+{{- if ne (index $storageKeys "legacy") .Values.secrets.encryptionKey }}
+{{- fail "Team secrets.encryptionKey must match the legacy entry in storageEncryptionKeys." }}
+{{- end }}
 {{- end }}
 apiVersion: apps/v1
 kind: Deployment
@@ -11,8 +36,10 @@ metadata:
   labels:
     {{- include "libre-webui.labels" . | nindent 4 }}
 spec:
-  # Recreate prevents a rolling upgrade from briefly starting a second pod
-  # against the same SQLite database and local application state.
+  # Libre's supported migration policy is exact schema version. Recreate keeps
+  # solo SQLite single-writer and prevents old/new app pods from overlapping.
+  # Team upgrades must also follow the documented pre-drain procedure because
+  # Kubernetes does not coordinate this Deployment with the worker Deployment.
   strategy:
     type: Recreate
   {{- if not .Values.autoscaling.enabled }}
@@ -74,6 +101,8 @@ spec:
               value: {{ .Values.env.DOCKER_ENV | quote }}
             - name: PORT
               value: {{ .Values.env.PORT | quote }}
+            - name: TRUST_PROXY
+              value: {{ .Values.env.TRUST_PROXY | quote }}
             - name: OLLAMA_BASE_URL
               value: {{ include "libre-webui.ollamaUrl" . | quote }}
             - name: CORS_ORIGIN
@@ -86,18 +115,42 @@ spec:
               value: {{ .Values.env.OLLAMA_TIMEOUT | quote }}
             - name: OLLAMA_LONG_OPERATION_TIMEOUT
               value: {{ .Values.env.OLLAMA_LONG_OPERATION_TIMEOUT | quote }}
+            - name: OLLAMA_MAX_CONTEXT
+              value: {{ .Values.env.OLLAMA_MAX_CONTEXT | quote }}
+            - name: AGENT_CLI_MODELS_ENABLED
+              value: {{ .Values.env.AGENT_CLI_MODELS_ENABLED | quote }}
+            - name: CODEX_OAUTH_MODELS_ENABLED
+              value: {{ .Values.env.CODEX_OAUTH_MODELS_ENABLED | quote }}
             - name: VITE_API_TIMEOUT
               value: {{ .Values.env.VITE_API_TIMEOUT | quote }}
             - name: DATA_DIR
-              value: {{ .Values.env.DATA_DIR | quote }}
+              value: {{ ternary "/tmp/libre-data" .Values.env.DATA_DIR $team | quote }}
             - name: PLATFORM_PREFLIGHT_TMP_DIR
-              value: {{ .Values.env.PLATFORM_PREFLIGHT_TMP_DIR | quote }}
+              value: {{ ternary "/tmp/libre-preflight" .Values.env.PLATFORM_PREFLIGHT_TMP_DIR $team | quote }}
             - name: LIBRE_PLATFORM_MODE
               value: {{ .Values.env.LIBRE_PLATFORM_MODE | quote }}
             - name: DATABASE_BACKEND
               value: {{ .Values.env.DATABASE_BACKEND | quote }}
+            - name: DATABASE_SSL_MODE
+              value: {{ .Values.env.DATABASE_SSL_MODE | quote }}
+            - name: POSTGRES_MIGRATION_MODE
+              value: {{ .Values.env.POSTGRES_MIGRATION_MODE | quote }}
+            - name: POSTGRES_POOL_MAX
+              value: {{ .Values.env.POSTGRES_POOL_MAX | quote }}
+            - name: POSTGRES_CONNECT_TIMEOUT_MS
+              value: {{ .Values.env.POSTGRES_CONNECT_TIMEOUT_MS | quote }}
+            - name: POSTGRES_IDLE_TIMEOUT_MS
+              value: {{ .Values.env.POSTGRES_IDLE_TIMEOUT_MS | quote }}
+            - name: POSTGRES_STATEMENT_TIMEOUT_MS
+              value: {{ .Values.env.POSTGRES_STATEMENT_TIMEOUT_MS | quote }}
+            - name: POSTGRES_MIGRATION_LOCK_TIMEOUT_MS
+              value: {{ .Values.env.POSTGRES_MIGRATION_LOCK_TIMEOUT_MS | quote }}
             - name: BLOB_STORE_BACKEND
               value: {{ .Values.env.BLOB_STORE_BACKEND | quote }}
+            - name: BLOB_QUOTA_BYTES_PER_USER
+              value: {{ .Values.env.BLOB_QUOTA_BYTES_PER_USER | int64 | quote }}
+            - name: BLOB_QUOTA_RESERVATION_TTL_MS
+              value: {{ .Values.env.BLOB_QUOTA_RESERVATION_TTL_MS | int64 | quote }}
             - name: VECTOR_STORE_BACKEND
               value: {{ .Values.env.VECTOR_STORE_BACKEND | quote }}
             - name: COORDINATION_BACKEND
@@ -108,6 +161,16 @@ spec:
               value: {{ .Values.env.REDIS_CONNECT_TIMEOUT_MS | quote }}
             - name: JOB_WORKER_MODE
               value: {{ .Values.env.JOB_WORKER_MODE | quote }}
+            - name: S3_BUCKET
+              value: {{ .Values.env.S3_BUCKET | quote }}
+            - name: S3_REGION
+              value: {{ .Values.env.S3_REGION | quote }}
+            - name: S3_ENDPOINT
+              value: {{ .Values.env.S3_ENDPOINT | quote }}
+            - name: S3_FORCE_PATH_STYLE
+              value: {{ .Values.env.S3_FORCE_PATH_STYLE | quote }}
+            - name: S3_BLOB_PREFIX
+              value: {{ .Values.env.S3_BLOB_PREFIX | quote }}
             {{- if .Values.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID }}
             - name: STORAGE_ENCRYPTION_ACTIVE_KEY_ID
               value: {{ .Values.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID | quote }}
@@ -174,6 +237,27 @@ spec:
                   name: {{ include "libre-webui.fullname" . }}-secrets
                   key: storage-encryption-keys
             {{- end }}
+            {{- if .Values.secrets.s3AccessKeyId }}
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: s3-access-key-id
+            {{- end }}
+            {{- if .Values.secrets.s3SecretAccessKey }}
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: s3-secret-access-key
+            {{- end }}
+            {{- if .Values.secrets.s3SessionToken }}
+            - name: S3_SESSION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: s3-session-token
+            {{- end }}
             {{- if .Values.secrets.githubClientId }}
             - name: GITHUB_CLIENT_ID
               valueFrom:
@@ -199,13 +283,16 @@ spec:
                   key: huggingface-client-secret
             {{- end }}
           volumeMounts:
+            {{- if not $team }}
             - name: data
               mountPath: /app/backend/data
+            {{- end }}
             - name: temp
-              mountPath: /app/backend/temp
+              mountPath: {{ ternary "/tmp" "/app/backend/temp" $team }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
+        {{- if not $team }}
         - name: data
           {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
@@ -213,8 +300,10 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        {{- end }}
         - name: temp
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: {{ .Values.team.tempSizeLimit | quote }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

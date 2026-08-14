@@ -23,6 +23,7 @@ import path from 'node:path';
 import test, { after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import express from 'express';
+import { initializeSQLitePlatformStorageFixture } from './lib/platform-storage-fixture.mjs';
 
 process.env.ENCRYPTION_KEY ||= '8'.repeat(64);
 process.env.JWT_SECRET ||= 'voice-profile-security-test-jwt-secret';
@@ -64,11 +65,13 @@ const ttsRoutes = (
 const mediaRoutes = (
   await import(pathToFileURL(path.join(distRoot, 'routes', 'media.js')).href)
 ).default;
+const closePlatformStorageFixture =
+  await initializeSQLitePlatformStorageFixture(distRoot);
 
 const ROUTING_FINGERPRINT = 'a'.repeat(64);
 
-after(() => {
-  databaseModule.closeDatabase();
+after(async () => {
+  await closePlatformStorageFixture();
   process.chdir(originalWorkingDirectory);
   fs.rmSync(testDataDir, { recursive: true, force: true });
 });
@@ -216,10 +219,10 @@ function sparseWavAudio(size, marker = 'quota-secret') {
   };
 }
 
-test('voice profile secrets are encrypted at rest and authenticated to their row owner', () => {
+test('voice profile secrets are encrypted at rest and authenticated to their row owner', async () => {
   const ownerId = 'voice-profile-encryption-owner';
   upsertUser(ownerId);
-  const profile = createProfile(ownerId);
+  const profile = await createProfile(ownerId);
   const row = databaseModule
     .getDatabase()
     .prepare('SELECT * FROM voice_profiles WHERE id = ?')
@@ -241,7 +244,7 @@ test('voice profile secrets are encrypted at rest and authenticated to their row
     false
   );
 
-  const loaded = voiceProfileService.get(profile.id, ownerId, {
+  const loaded = await voiceProfileService.get(profile.id, ownerId, {
     clone_audio_mime_types: ['audio/wav'],
   });
   assert.equal(loaded.name, 'Private voice');
@@ -275,14 +278,14 @@ test('voice profile secrets are encrypted at rest and authenticated to their row
   }
 });
 
-test('list, get, and delete enforce ownership and expose metadata only', () => {
+test('list, get, and delete enforce ownership and expose metadata only', async () => {
   const ownerId = 'voice-profile-isolation-owner';
   const attackerId = 'voice-profile-isolation-attacker';
   upsertUser(ownerId);
   upsertUser(attackerId);
-  const profile = createProfile(ownerId);
+  const profile = await createProfile(ownerId);
 
-  const ownerList = voiceProfileService.list(ownerId);
+  const ownerList = await voiceProfileService.list(ownerId);
   assert.equal(
     ownerList.some(item => item.id === profile.id),
     true
@@ -290,49 +293,49 @@ test('list, get, and delete enforce ownership and expose metadata only', () => {
   assert.equal('referenceAudio' in ownerList[0], false);
   assert.equal('referenceText' in ownerList[0], false);
 
-  assert.equal(voiceProfileService.list(attackerId).length, 0);
-  assert.equal(voiceProfileService.get(profile.id, attackerId), null);
-  assert.equal(voiceProfileService.delete(profile.id, attackerId), false);
-  assert.ok(voiceProfileService.get(profile.id, ownerId));
-  assert.equal(voiceProfileService.delete(profile.id, ownerId), true);
-  assert.equal(voiceProfileService.get(profile.id, ownerId), null);
+  assert.equal((await voiceProfileService.list(attackerId)).length, 0);
+  assert.equal(await voiceProfileService.get(profile.id, attackerId), null);
+  assert.equal(await voiceProfileService.delete(profile.id, attackerId), false);
+  assert.ok(await voiceProfileService.get(profile.id, ownerId));
+  assert.equal(await voiceProfileService.delete(profile.id, ownerId), true);
+  assert.equal(await voiceProfileService.get(profile.id, ownerId), null);
 });
 
-test('profile queries remain bound to the saved provider and model', () => {
+test('profile queries remain bound to the saved provider and model', async () => {
   const ownerId = 'voice-profile-routing-owner';
   upsertUser(ownerId);
-  const profile = createProfile(ownerId);
+  const profile = await createProfile(ownerId);
 
   assert.deepEqual(
-    voiceProfileService
-      .list(ownerId, {
+    (
+      await voiceProfileService.list(ownerId, {
         pluginId: 'longcat-audiodit',
         model: 'meituan-longcat/LongCat-AudioDiT-3.5B',
       })
-      .map(item => item.id),
+    ).map(item => item.id),
     [profile.id]
   );
   assert.deepEqual(
-    voiceProfileService.list(ownerId, { pluginId: 'different-provider' }),
+    await voiceProfileService.list(ownerId, { pluginId: 'different-provider' }),
     []
   );
   assert.deepEqual(
-    voiceProfileService.list(ownerId, { model: 'different/model' }),
+    await voiceProfileService.list(ownerId, { model: 'different/model' }),
     []
   );
-  assert.throws(
-    () => voiceProfileService.list(ownerId, { pluginId: '../provider' }),
+  await assert.rejects(
+    voiceProfileService.list(ownerId, { pluginId: '../provider' }),
     /Invalid TTS plugin ID/
   );
-  assert.throws(
-    () => voiceProfileService.list(ownerId, { model: '../model' }),
+  await assert.rejects(
+    voiceProfileService.list(ownerId, { model: '../model' }),
     /invalid patterns/
   );
 });
 
 test('saved voice use fails closed after provider routing changes', async () => {
   const owner = upsertUser('voice-profile-routing-change-owner');
-  const profile = createProfile(owner.id);
+  const profile = await createProfile(owner.id);
   const plugin = clonePlugin();
   const app = express();
   app.use(express.json());
@@ -373,7 +376,7 @@ test('saved voice use fails closed after provider routing changes', async () => 
   }
 });
 
-test('profile validation bounds names, transcripts, and per-user storage', () => {
+test('profile validation bounds names, transcripts, and per-user storage', async () => {
   const ownerId = 'voice-profile-limits-owner';
   upsertUser(ownerId);
 
@@ -382,31 +385,31 @@ test('profile validation bounds names, transcripts, and per-user storage', () =>
     ['a'.repeat(81), /at most 80 characters/],
     ['line\nbreak', /unsupported characters/],
   ]) {
-    assert.throws(() => createProfile(ownerId, { name }), pattern);
+    await assert.rejects(createProfile(ownerId, { name }), pattern);
   }
-  assert.throws(
-    () => createProfile(ownerId, { referenceText: 't'.repeat(32_001) }),
+  await assert.rejects(
+    createProfile(ownerId, { referenceText: 't'.repeat(32_001) }),
     /at most 32000 characters/
   );
 
   for (let index = 0; index < 50; index += 1) {
-    createProfile(ownerId, {
+    await createProfile(ownerId, {
       name: `Voice ${index}`,
       referenceText: undefined,
     });
   }
-  assert.throws(
-    () => createProfile(ownerId, { name: 'Voice 51' }),
+  await assert.rejects(
+    createProfile(ownerId, { name: 'Voice 51' }),
     /maximum of 50 saved voice profiles/
   );
 });
 
-test('profile storage enforces duplicate names and aggregate audio quota atomically', () => {
+test('profile storage enforces duplicate names and aggregate audio quota atomically', async () => {
   const duplicateOwnerId = 'voice-profile-duplicate-owner';
   upsertUser(duplicateOwnerId);
-  createProfile(duplicateOwnerId, { name: 'My Voice' });
-  assert.throws(
-    () => createProfile(duplicateOwnerId, { name: 'my voice' }),
+  await createProfile(duplicateOwnerId, { name: 'My Voice' });
+  await assert.rejects(
+    createProfile(duplicateOwnerId, { name: 'my voice' }),
     /already exists/
   );
 
@@ -441,12 +444,11 @@ test('profile storage enforces duplicate names and aggregate audio quota atomica
       now
     );
 
-  assert.throws(
-    () =>
-      createProfile(quotaOwnerId, {
-        name: 'Over quota',
-        referenceAudio: sparseWavAudio(17),
-      }),
+  await assert.rejects(
+    createProfile(quotaOwnerId, {
+      name: 'Over quota',
+      referenceAudio: sparseWavAudio(17),
+    }),
     /limited to 104857600 bytes/
   );
   assert.equal(
@@ -458,10 +460,10 @@ test('profile storage enforces duplicate names and aggregate audio quota atomica
   );
 });
 
-test('deleting a user cascades deletion of encrypted voice profiles', () => {
+test('deleting a user cascades deletion of encrypted voice profiles', async () => {
   const ownerId = 'voice-profile-cascade-owner';
   upsertUser(ownerId);
-  const profile = createProfile(ownerId);
+  const profile = await createProfile(ownerId);
   const database = databaseModule.getDatabase();
 
   assert.equal(
@@ -655,7 +657,7 @@ test('HTTP routes require consent, redact secrets, isolate owners, and bind prof
           { method: 'DELETE', headers: attackerHeaders }
         );
         assert.equal(attackerDelete.status, 404);
-        assert.ok(voiceProfileService.getMetadata(profileId, owner.id));
+        assert.ok(await voiceProfileService.getMetadata(profileId, owner.id));
 
         const ownerDelete = await fetch(
           `${server.baseUrl}/api/tts/voice-profiles/${profileId}`,
@@ -663,7 +665,7 @@ test('HTTP routes require consent, redact secrets, isolate owners, and bind prof
         );
         assert.equal(ownerDelete.status, 204);
         assert.equal(
-          voiceProfileService.getMetadata(profileId, owner.id),
+          await voiceProfileService.getMetadata(profileId, owner.id),
           null
         );
       }
@@ -677,9 +679,13 @@ test('saved-voice generation caps in-flight batches per user and globally across
   const owner = upsertUser('voice-profile-concurrency-owner');
   const peer = upsertUser('voice-profile-concurrency-peer');
   const third = upsertUser('voice-profile-concurrency-third');
-  const profile = createProfile(owner.id, { name: 'Owner concurrent voice' });
-  const peerProfile = createProfile(peer.id, { name: 'Peer concurrent voice' });
-  const thirdProfile = createProfile(third.id, {
+  const profile = await createProfile(owner.id, {
+    name: 'Owner concurrent voice',
+  });
+  const peerProfile = await createProfile(peer.id, {
+    name: 'Peer concurrent voice',
+  });
+  const thirdProfile = await createProfile(third.id, {
     name: 'Third concurrent voice',
   });
   const plugin = clonePlugin();

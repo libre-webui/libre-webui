@@ -157,7 +157,7 @@ export async function requireCurrentTerminalTask(
   if (
     !currentUser ||
     currentUser.status !== 'active' ||
-    !userHasWorkAccess(currentUser)
+    !(await userHasWorkAccess(currentUser))
   ) {
     throw new WorkRuntimeError(
       'Work access required.',
@@ -166,7 +166,7 @@ export async function requireCurrentTerminalTask(
     );
   }
 
-  const task = workTaskService.getTaskRecord(taskId, userId);
+  const task = await workTaskService.getTaskRecord(taskId, userId);
   if (!task) {
     throw new WorkRuntimeError(
       'Work task not found.',

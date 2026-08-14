@@ -26,7 +26,7 @@ test-only canaries are intentionally omitted.
 | ---------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `NODE_ENV`                   | `development`                                            | Runtime mode                                                                                  |
 | `PORT`                       | `3001` in dev, `8080` in production                      | Backend HTTP port                                                                             |
-| `TRUST_PROXY`                | unset                                                    | Express trust proxy setting                                                                   |
+| `TRUST_PROXY`                | unset (`0` in Helm)                                      | Exact trusted reverse-proxy hop count used to derive the client address                       |
 | `CORS_ORIGIN`                | local dev origins                                        | Comma-separated allowed browser origins                                                       |
 | `SERVE_FRONTEND`             | unset                                                    | Serve built frontend from backend when `true`                                                 |
 | `DOCKER_ENV`                 | unset                                                    | Enables Docker-oriented behavior when `true`                                                  |
@@ -66,27 +66,43 @@ separate mounts.
 
 ## Platform Foundation
 
-The supported profile remains `solo`: SQLite, local encrypted blobs,
-embedded vectors, local coordination, an inactive durable-job substrate, and
-one application replica. No domain job handler worker is bootstrapped yet. The
-selectors for the future shared profile are parsed and validated now, but
-PostgreSQL, S3, PGVector, and the external worker fail closed as unavailable in
-this release.
+The default `solo` profile uses SQLite, local encrypted blobs, encrypted
+embedded vectors, local coordination, and an embedded durable worker. The
+`team` profile uses PostgreSQL, private S3-compatible blobs, PGVector, Redis,
+and an external worker. Team configuration is fail-closed: all shared
+dependencies must be selected together.
 
-| Variable                           | Default                                | Purpose                                                                        |
-| ---------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------ |
-| `LIBRE_PLATFORM_MODE`              | `solo`                                 | Select `solo` or the fail-closed future `team` profile                         |
-| `DATABASE_BACKEND`                 | `sqlite`                               | Select `sqlite` or unavailable `postgres`                                      |
-| `DATABASE_URL`                     | unset                                  | PostgreSQL URL; parsed but not usable until its adapter ships                  |
-| `BLOB_STORE_BACKEND`               | `local`                                | Select `local` or unavailable `s3`                                             |
-| `VECTOR_STORE_BACKEND`             | `embedded` with SQLite                 | Select `embedded` or unavailable `pgvector`                                    |
-| `COORDINATION_BACKEND`             | `local` in solo; `redis` in team       | Select process-local or Redis coordination                                     |
-| `REDIS_URL`                        | unset                                  | `redis:` or `rediss:` URL, required with Redis coordination                    |
-| `REDIS_KEY_PREFIX`                 | `libre`                                | 1-64 character namespace for Libre coordination keys                           |
-| `REDIS_CONNECT_TIMEOUT_MS`         | `5000`                                 | Initial Redis connection timeout, capped at 60 seconds                         |
-| `JOB_WORKER_MODE`                  | `embedded` in solo; `external` in team | Selector only; no worker is bootstrapped, and external workers are unavailable |
-| `STORAGE_ENCRYPTION_KEYS`          | unset                                  | Secret JSON key map; currently must include `legacy` matching `ENCRYPTION_KEY` |
-| `STORAGE_ENCRYPTION_ACTIVE_KEY_ID` | unset                                  | Key ID used for new local blob and embedded-vector writes                      |
+| Variable                             | Default                                | Purpose                                                                                         |
+| ------------------------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `LIBRE_PLATFORM_MODE`                | `solo`                                 | Select the coherent `solo` or `team` profile                                                    |
+| `DATABASE_BACKEND`                   | `sqlite`                               | Select `sqlite` or `postgres`                                                                   |
+| `DATABASE_URL`                       | unset                                  | PostgreSQL connection URL, required with `postgres`                                             |
+| `DATABASE_SSL_MODE`                  | `verify-full`                          | PostgreSQL TLS policy: `disable`, `require`, or hostname-verifying `verify-full`                |
+| `POSTGRES_MIGRATION_MODE`            | `apply`                                | Run compatible migrations under the leader lock, or use `validate` for a read-only schema check |
+| `POSTGRES_POOL_MAX`                  | `10`                                   | Maximum PostgreSQL connections per application or worker process (1-100)                        |
+| `POSTGRES_CONNECT_TIMEOUT_MS`        | `5000`                                 | PostgreSQL connection timeout (1-60000 ms)                                                      |
+| `POSTGRES_IDLE_TIMEOUT_MS`           | `30000`                                | PostgreSQL idle connection timeout (1-600000 ms)                                                |
+| `POSTGRES_STATEMENT_TIMEOUT_MS`      | `30000`                                | PostgreSQL statement timeout (1-600000 ms)                                                      |
+| `POSTGRES_MIGRATION_LOCK_TIMEOUT_MS` | `60000`                                | Time to wait for the migration-leader lock (1-600000 ms)                                        |
+| `BLOB_STORE_BACKEND`                 | `local`                                | Select encrypted `local` storage or private `s3`                                                |
+| `VECTOR_STORE_BACKEND`               | `embedded` with SQLite                 | Select encrypted `embedded` vectors or `pgvector`                                               |
+| `COORDINATION_BACKEND`               | `local` in solo; `redis` in team       | Select process-local or Redis coordination                                                      |
+| `REDIS_URL`                          | unset                                  | `redis:` or `rediss:` URL, required with Redis coordination                                     |
+| `REDIS_KEY_PREFIX`                   | `libre`                                | 1-64 character namespace for Libre coordination keys                                            |
+| `REDIS_CONNECT_TIMEOUT_MS`           | `5000`                                 | Initial Redis connection timeout, capped at 60 seconds                                          |
+| `JOB_WORKER_MODE`                    | `embedded` in solo; `external` in team | Run handlers in the app or in the standalone shared worker                                      |
+| `STORAGE_ENCRYPTION_KEYS`            | unset                                  | Secret JSON key map; currently must include `legacy` matching `ENCRYPTION_KEY`                  |
+| `STORAGE_ENCRYPTION_ACTIVE_KEY_ID`   | unset                                  | Key ID used for new local blob and embedded-vector writes                                       |
+| `BLOB_QUOTA_BYTES_PER_USER`          | `10737418240`                          | Durable maximum plaintext blob bytes per owner (positive safe integer)                          |
+| `BLOB_QUOTA_RESERVATION_TTL_MS`      | `3600000`                              | Lifetime of an abandoned streaming quota reservation (at least 60000 ms)                        |
+| `S3_BUCKET`                          | unset                                  | Private S3-compatible bucket, required with `s3`                                                |
+| `S3_REGION`                          | unset                                  | S3 region, required with `s3`                                                                   |
+| `S3_ENDPOINT`                        | provider default                       | Optional absolute HTTP(S) endpoint for MinIO or another compatible service                      |
+| `S3_ACCESS_KEY_ID`                   | SDK credential chain                   | Optional explicit S3 access key                                                                 |
+| `S3_SECRET_ACCESS_KEY`               | SDK credential chain                   | Required when an explicit access key is set                                                     |
+| `S3_SESSION_TOKEN`                   | unset                                  | Optional token accompanying explicit S3 credentials                                             |
+| `S3_FORCE_PATH_STYLE`                | `false`                                | Set `true` for services that require path-style addressing                                      |
+| `S3_BLOB_PREFIX`                     | `libre/blobs`                          | Opaque bucket-key prefix owned by Libre                                                         |
 
 When the versioned storage key map is absent, storage adapters use the existing
 `ENCRYPTION_KEY` as key ID `legacy`; when it is also absent, they read the
@@ -97,31 +113,79 @@ is introduced while a legacy key exists, retain that key under the exact ID
 verified. Conflicts, unsafe file permissions, symlinks, and missing configured
 keys fail closed.
 
-Redis is coordination, not canonical persistence. Selecting it does not make
-SQLite, local files, process-local tickets, or current Work events safe across
-replicas. See [Platform Foundation](./45-PLATFORM_FOUNDATION.md).
+Redis is coordination, not canonical persistence. Selecting it alone does not
+make SQLite, local files, or any other process-owned state safe across replicas.
+See [Platform Foundation](./45-PLATFORM_FOUNDATION.md).
 
-The supplied Compose variants forward every selector above. In the Helm
-chart, non-secret selectors live under `env`; set `secrets.redisUrl`,
+The bundled team Compose profile and Helm chart forward every team platform
+selector and tuning value above to both the application and external worker.
+In the Helm chart, non-secret selectors live under `env`; set `secrets.redisUrl`,
 `secrets.databaseUrl`, and `secrets.storageEncryptionKeys` for connection or
-key material. PostgreSQL remains unavailable even when its URL is rendered.
+key material. PostgreSQL pool limits are per process: budget the database for
+at least `(replicaCount + worker.replicaCount) * POSTGRES_POOL_MAX` connections,
+plus operator and migration headroom. Keep `DATABASE_SSL_MODE=verify-full` for
+managed or remote PostgreSQL. The bundled team Compose profile alone selects
+`disable` because its database listener is isolated on the private project
+network. Team Helm also requires one stable `secrets.jwtSecret` and mounts the
+same Secret key into every application and worker pod; an omitted JWT secret
+would otherwise generate process-local signing material. S3 receives opaque
+keys and ciphertext; bucket URLs and provider URLs are not stored in
+application metadata.
+
+Integrated solo and team archives preserve the PostgreSQL pool and timeout
+settings, Redis connection timeout, both blob-quota settings, platform
+selectors, and S3 addressing settings in their signed and encrypted protected
+configuration. A clean restore can therefore publish the operational values
+needed to recreate the matching deployment without placing them in plaintext
+archive metadata.
+
+The bundled team Compose and Helm application/external-worker pairs receive the same resolved
+`OLLAMA_BASE_URL`, `OLLAMA_TIMEOUT`, `OLLAMA_LONG_OPERATION_TIMEOUT`, and
+`OLLAMA_MAX_CONTEXT`. Provider calls for document embeddings, durable chats,
+and Work runs execute in the worker, so these values must not diverge between
+processes. Both server entrypoints parse the three numeric values as complete
+base-10 positive integers before creating local state or connecting to shared
+state. Partial values such as `300000ms`, exponent/hex notation, out-of-range
+values, and a long-operation timeout below the standard timeout fail startup.
+
+Helm restricts `TRUST_PROXY` to an exact integer hop count from `0` through
+`16` and forwards it only to HTTP application pods. Keep the default `0` for
+direct traffic. Set the exact fixed count for an ingress/load-balancer chain;
+never use the runtime's unbounded `true` form. A wrong count either groups
+clients under a proxy address for shared rate limits or trusts an address a
+client can supply.
+
+PostgreSQL schema compatibility is exact-version. The Helm app and worker use
+`Recreate`; drain and terminate every old pod before a team upgrade, then let
+one new process migrate under the advisory leader lock. Do not run mixed binary
+versions or claim a zero-downtime schema rollout. Rollback means restoring the
+verified pre-upgrade team archive into clean PostgreSQL/S3 targets before
+starting the matching older binary.
+
+An active team application requires `worker.replicaCount >= 1`; Helm rejects a
+live app with no durable worker instead of waiting for readiness to fail. Set
+both application and worker counts to zero for a full suspension. App zero with
+a positive worker count is a deliberate worker-only drain or recovery mode and
+continues consuming queued jobs without serving web traffic.
 
 ## Private Backup Helper
 
 These variables configure `deploy/private/libre-webui-backup` and are read by
 the maintenance script, not the application process:
 
-| Variable                            | Default                         | Purpose                                           |
-| ----------------------------------- | ------------------------------- | ------------------------------------------------- |
-| `LIBRE_WEBUI_STACK_DIR`             | `/opt/libre-webui`              | Directory containing the private Compose file     |
-| `LIBRE_WEBUI_BACKUP_DIR`            | `/var/backups/libre-webui`      | Protected directory for backup sets and lock file |
-| `LIBRE_WEBUI_BACKUP_RETENTION_DAYS` | `14`                            | Age after which completed backup sets are removed |
-| `LIBRE_WEBUI_CONTAINER_NAME`        | `libre-webui`                   | Deployed application container to inspect         |
-| `LIBRE_WEBUI_DATA_VOLUME`           | resolved from the app container | Explicit data-volume name override                |
+| Variable                            | Default                                           | Purpose                                              |
+| ----------------------------------- | ------------------------------------------------- | ---------------------------------------------------- |
+| `LIBRE_WEBUI_STACK_DIR`             | `/opt/libre-webui`                                | Directory containing the private Compose file        |
+| `LIBRE_WEBUI_BACKUP_DIR`            | `/var/backups/libre-webui`                        | Protected directory for backup sets and lock file    |
+| `LIBRE_WEBUI_BACKUP_RETENTION_DAYS` | `14`                                              | Age after which completed backup sets are removed    |
+| `LIBRE_WEBUI_CONTAINER_NAME`        | `libre-webui`                                     | Deployed application container to inspect            |
+| `LIBRE_WEBUI_BACKUP_KEY_DIR`        | `/etc/libre-webui/backup-keys`                    | Private archive-encryption and signing key directory |
+| `LIBRE_WEBUI_RESTORE_IMAGE`         | required for restore                              | Reviewed immutable Libre image ID or digest          |
+| `LIBRE_WEBUI_RESTORE_CONFIG_DIR`    | per-volume path below `/etc/libre-webui/restored` | New directory for recovered configuration            |
 
-The systemd unit loads these overrides from the optional root-owned file
+The systemd unit loads backup overrides from the optional root-owned file
 `/etc/libre-webui/backup.env`. Set it to mode `0600`. Stack directory,
-retention, container name, and data-volume overrides can be set there directly.
+retention, container name, and backup-key directory can be set there directly.
 The unit's filesystem sandbox permits writes only below the default backup
 directory. A custom `LIBRE_WEBUI_BACKUP_DIR` additionally requires that exact,
 pre-created directory in a `ReadWritePaths=` service drop-in; see
@@ -186,12 +250,12 @@ If callback URLs are not set, Libre WebUI builds defaults from `BASE_URL`.
 
 ## Ollama
 
-| Variable                        | Default                  | Purpose                                             |
-| ------------------------------- | ------------------------ | --------------------------------------------------- |
-| `OLLAMA_BASE_URL`               | `http://localhost:11434` | Ollama API base URL                                 |
-| `OLLAMA_TIMEOUT`                | `300000`                 | Standard Ollama request timeout in milliseconds     |
-| `OLLAMA_LONG_OPERATION_TIMEOUT` | `900000`                 | Long operation timeout for pulls and large requests |
-| `OLLAMA_MAX_CONTEXT`            | `32768`                  | Maximum model context adopted automatically         |
+| Variable                        | Default                  | Purpose                                                                           |
+| ------------------------------- | ------------------------ | --------------------------------------------------------------------------------- |
+| `OLLAMA_BASE_URL`               | `http://localhost:11434` | Ollama API base URL                                                               |
+| `OLLAMA_TIMEOUT`                | `300000`                 | Standard Ollama request timeout (1,000-3,600,000 ms)                              |
+| `OLLAMA_LONG_OPERATION_TIMEOUT` | `900000`                 | Long operation timeout (1,000-3,600,000 ms and not shorter than `OLLAMA_TIMEOUT`) |
+| `OLLAMA_MAX_CONTEXT`            | `32768`                  | Maximum model context adopted automatically (128-2,097,152 tokens)                |
 
 ## Web Search
 
@@ -247,6 +311,15 @@ selects Kubernetes when `work.enabled=true`.
 | `CODEX_OAUTH_MODELS_ENABLED`          | `true`                                                                                        | Offer the Codex (ChatGPT) provider to admins                                                                |
 | `CODEX_HOME`                          | `~/.codex`                                                                                    | Where the Codex CLI sign-in (`auth.json`) is read from                                                      |
 
+Agent CLI binaries and Codex OAuth credentials are node-local. They are
+supported only in a solo process, where discovery and execution see the same
+filesystem and environment. Team mode executes durable chat jobs in an
+external worker, so it requires both `AGENT_CLI_MODELS_ENABLED=false` and
+`CODEX_OAUTH_MODELS_ENABLED=false`; startup rejects any other value rather
+than advertising a provider that may exist only on an application replica.
+Use Ollama or a provider plugin whose credentials and routing are stored in
+shared PostgreSQL or forwarded identically to every application and worker.
+
 On the Docker backend, a host workspace bind-mounts a real directory at
 `/workspace`, so the task can read and write those files directly instead of
 working in its own Docker volume. Kubernetes rejects host-folder workspaces.
@@ -298,9 +371,9 @@ in the same durable workspace. Persisted tool output has a separate bound of
 approximately 20,000 source characters plus a truncation marker.
 
 These variables tune a Work runtime that is already reachable. Repository
-Compose deployments enable it by default: the image ships the Docker CLI and
-the Compose files mount the host Docker socket. Two Compose-level variables
-control that wiring:
+single-instance Compose deployments enable it by default: the image ships the
+Docker CLI and those Compose files mount the host Docker socket. Two
+Compose-level variables control that wiring:
 
 | Variable        | Default                | Purpose                                                         |
 | --------------- | ---------------------- | --------------------------------------------------------------- |
@@ -308,14 +381,24 @@ control that wiring:
 | `DOCKER_SOCKET` | `/var/run/docker.sock` | Host path of the Docker socket to mount                         |
 
 `DOCKER_GID` must be the socket's group **as seen inside a container**; a macOS
-host reports a different value. The Helm chart never mounts a node runtime
-socket. Enable its native Pod/PVC Work backend with `work.enabled=true`.
+host reports a different value. The team Compose base mounts no socket and
+keeps Docker-backed Work unavailable until
+`docker-compose.team.work.yml` is added. That production overlay gives both
+the application and worker the same internal filtered proxy endpoint, never a
+socket mount or socket group. The proxy allows only the Docker API sections the
+runtime uses, but container creation remains a Docker-host control credential;
+use a dedicated or rootless Work daemon for a stronger boundary. The Helm chart
+never mounts a node runtime socket. Enable its native Pod/PVC Work backend with
+`work.enabled=true`.
 
-Libre WebUI itself must remain at zero or one application replica while it
-uses SQLite and process-local coordination. The Helm chart accepts zero for a
-deliberate suspension where Libre serves no traffic, rejects larger
-`replicaCount` values and autoscaling, and still lets Work sandbox Pods scale
-independently within the configured runtime limits.
+The `solo` profile must remain at zero or one application replica because it
+uses SQLite, local files, and process-local coordination. The Helm chart accepts
+zero for a deliberate suspension and rejects larger solo replica counts or
+solo autoscaling. A complete `team` profile may use multiple application
+replicas and an external worker because PostgreSQL, S3, PGVector, and Redis own
+the shared state. Work sandbox Pods scale independently in either profile; in
+team mode the external worker receives the same Kubernetes runtime image,
+StorageClass, and `work.env` limits as the application pods.
 
 Repository Compose files also accept `WEBUI_BIND_ADDRESS` (default
 `127.0.0.1`) and `WEBUI_PORT` (default `8080`). Keep the loopback default unless
@@ -434,6 +517,7 @@ ENABLE_SIGNUP=false
 OLLAMA_BASE_URL=http://ollama:11434
 OLLAMA_TIMEOUT=300000
 OLLAMA_LONG_OPERATION_TIMEOUT=900000
+OLLAMA_MAX_CONTEXT=32768
 
 TURNSTILE_SITE_KEY=...
 TURNSTILE_SECRET_KEY=...

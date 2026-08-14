@@ -14,6 +14,7 @@ import {
   type CoordinationEventHandler,
   type CoordinationHealth,
   type CoordinationLease,
+  type CoordinationPermit,
   type CoordinationUnsubscribe,
   type Coordinator,
   type RateLimitResult,
@@ -45,6 +46,12 @@ interface RedisClientLike {
     script: string,
     options: { keys: string[]; arguments: string[] }
   ): Promise<unknown>;
+  zAdd(
+    key: string,
+    members: Array<{ score: number; value: string }>
+  ): Promise<number>;
+  zRangeByScore(key: string, min: number, max: number): Promise<string[]>;
+  zRem(key: string, member: string): Promise<number>;
 }
 
 export interface RedisCoordinatorOptions {
@@ -92,6 +99,45 @@ end
 local ttl = redis.call('PTTL', KEYS[1])
 return { count, ttl }
 `;
+
+const CONSUME_CACHE_SCRIPT = `
+local value = redis.call('GET', KEYS[1])
+if value then
+  redis.call('DEL', KEYS[1])
+end
+return value
+`;
+
+const ACQUIRE_SEMAPHORE_SCRIPT = `
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1])
+if redis.call('ZCARD', KEYS[1]) >= tonumber(ARGV[2]) then
+  return 0
+end
+redis.call('ZADD', KEYS[1], ARGV[3], ARGV[4])
+local latest = redis.call('ZREVRANGE', KEYS[1], 0, 0, 'WITHSCORES')
+if latest[2] then redis.call('PEXPIREAT', KEYS[1], math.floor(latest[2])) end
+return 1
+`;
+
+const EXTEND_SEMAPHORE_SCRIPT = `
+if redis.call('ZSCORE', KEYS[1], ARGV[1]) then
+  redis.call('ZADD', KEYS[1], ARGV[2], ARGV[1])
+  local latest = redis.call('ZREVRANGE', KEYS[1], 0, 0, 'WITHSCORES')
+  if latest[2] then redis.call('PEXPIREAT', KEYS[1], math.floor(latest[2])) end
+  return 1
+end
+return 0
+`;
+
+const LIST_PRESENCE_SCRIPT = `
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1])
+local members = redis.call('ZRANGEBYSCORE', KEYS[1], ARGV[2], '+inf')
+local latest = redis.call('ZREVRANGE', KEYS[1], 0, 0, 'WITHSCORES')
+if latest[2] then redis.call('PEXPIREAT', KEYS[1], math.floor(latest[2])) end
+return members
+`;
+
+const REVOKE_SCRIPT = `return redis.call('INCR', KEYS[1])`;
 
 /** Redis coordination for shared deployments. Durable state remains in SQL. */
 export class RedisCoordinator implements Coordinator {
@@ -299,6 +345,26 @@ export class RedisCoordinator implements Coordinator {
     }
   }
 
+  async consumeCache<T>(key: string): Promise<T | null> {
+    this.requireReady();
+    try {
+      const value = await this.command.eval(CONSUME_CACHE_SCRIPT, {
+        keys: [
+          this.redisKey('cache', assertCoordinationName(key, 'Cache key')),
+        ],
+        arguments: [],
+      });
+      if (value === null) return null;
+      if (typeof value !== 'string') {
+        throw new Error('Redis returned an invalid consumed cache value.');
+      }
+      return this.parse<T>(value);
+    } catch (error) {
+      if (error instanceof CoordinationUnavailableError) throw error;
+      throw this.unavailable('Redis cache consume failed.', error);
+    }
+  }
+
   async deleteCache(key: string): Promise<void> {
     this.requireReady();
     try {
@@ -385,6 +451,151 @@ export class RedisCoordinator implements Coordinator {
       };
     } catch (error) {
       throw this.unavailable('Redis rate-limit operation failed.', error);
+    }
+  }
+
+  async acquireSemaphore(
+    key: string,
+    capacity: number,
+    ttlMs: number
+  ): Promise<CoordinationPermit | null> {
+    this.requireReady();
+    const normalizedKey = assertCoordinationName(key, 'Semaphore key');
+    if (!Number.isSafeInteger(capacity) || capacity < 1 || capacity > 10_000) {
+      throw new Error('Semaphore capacity must be an integer from 1 to 10000.');
+    }
+    const ttl = assertTtl(ttlMs);
+    const ownerToken = randomBytes(24).toString('base64url');
+    const semaphoreKey = this.redisKey('semaphore', normalizedKey);
+    const expiresAt = this.now() + ttl;
+    try {
+      const acquired = Number(
+        await this.command.eval(ACQUIRE_SEMAPHORE_SCRIPT, {
+          keys: [semaphoreKey],
+          arguments: [
+            String(this.now()),
+            String(capacity),
+            String(expiresAt),
+            ownerToken,
+          ],
+        })
+      );
+      if (acquired !== 1) return null;
+      const permit: CoordinationPermit = {
+        key: normalizedKey,
+        ownerToken,
+        expiresAt,
+        extend: async nextTtl => {
+          const next = assertTtl(nextTtl);
+          const nextExpiry = this.now() + next;
+          const extended = Number(
+            await this.command.eval(EXTEND_SEMAPHORE_SCRIPT, {
+              keys: [semaphoreKey],
+              arguments: [ownerToken, String(nextExpiry)],
+            })
+          );
+          if (extended === 1) permit.expiresAt = nextExpiry;
+          return extended === 1;
+        },
+        release: async () =>
+          (await this.command.zRem(semaphoreKey, ownerToken)) === 1,
+      };
+      return permit;
+    } catch (error) {
+      throw this.unavailable('Redis semaphore operation failed.', error);
+    }
+  }
+
+  async setPresence(
+    scope: string,
+    memberId: string,
+    ttlMs: number
+  ): Promise<void> {
+    this.requireReady();
+    const key = this.redisKey(
+      'presence',
+      assertCoordinationName(scope, 'Presence scope')
+    );
+    const member = assertCoordinationName(memberId, 'Presence member ID');
+    try {
+      await this.command.zAdd(key, [
+        { score: this.now() + assertTtl(ttlMs), value: member },
+      ]);
+    } catch (error) {
+      throw this.unavailable('Redis presence update failed.', error);
+    }
+  }
+
+  async listPresence(scope: string): Promise<string[]> {
+    this.requireReady();
+    const key = this.redisKey(
+      'presence',
+      assertCoordinationName(scope, 'Presence scope')
+    );
+    try {
+      const now = this.now();
+      const members = (await this.command.eval(LIST_PRESENCE_SCRIPT, {
+        keys: [key],
+        arguments: [String(now), String(now + 1)],
+      })) as string[];
+      return members.sort();
+    } catch (error) {
+      throw this.unavailable('Redis presence read failed.', error);
+    }
+  }
+
+  async clearPresence(scope: string, memberId: string): Promise<void> {
+    this.requireReady();
+    const key = this.redisKey(
+      'presence',
+      assertCoordinationName(scope, 'Presence scope')
+    );
+    try {
+      await this.command.zRem(
+        key,
+        assertCoordinationName(memberId, 'Presence member ID')
+      );
+    } catch (error) {
+      throw this.unavailable('Redis presence removal failed.', error);
+    }
+  }
+
+  async getRevocationEpoch(subject: string): Promise<number> {
+    this.requireReady();
+    try {
+      const value = await this.command.get(
+        this.redisKey(
+          'revocation',
+          assertCoordinationName(subject, 'Revocation subject')
+        )
+      );
+      const epoch = value === null ? 0 : Number(value);
+      if (!Number.isSafeInteger(epoch) || epoch < 0) {
+        throw new Error('Invalid revocation epoch.');
+      }
+      return epoch;
+    } catch (error) {
+      throw this.unavailable('Redis revocation read failed.', error);
+    }
+  }
+
+  async revoke(subject: string): Promise<number> {
+    this.requireReady();
+    const normalized = assertCoordinationName(subject, 'Revocation subject');
+    try {
+      const epoch = Number(
+        await this.command.eval(REVOKE_SCRIPT, {
+          keys: [this.redisKey('revocation', normalized)],
+          arguments: [],
+        })
+      );
+      if (!Number.isSafeInteger(epoch) || epoch < 1) {
+        throw new Error('Invalid revocation epoch.');
+      }
+      await this.publish('security.revoked', { subject: normalized, epoch });
+      return epoch;
+    } catch (error) {
+      throw this.unavailable('Redis revocation update failed.', error);
     }
   }
 

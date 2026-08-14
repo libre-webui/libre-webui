@@ -1,0 +1,46 @@
+services:
+  fake-ollama:
+    image: node:22.22-alpine
+    command: ['node', '/fixture/fake-ollama.mjs']
+    volumes:
+      - ./deploy/team/fake-ollama.mjs:/fixture/fake-ollama.mjs:ro
+    ports:
+      - '127.0.0.1:${TEST_FAKE_OLLAMA_PORT:?set TEST_FAKE_OLLAMA_PORT}:11434'
+
+  postgres:
+    ports:
+      - '127.0.0.1:${TEST_POSTGRES_PORT:?set TEST_POSTGRES_PORT}:5432'
+
+  redis:
+    ports:
+      - '127.0.0.1:${TEST_REDIS_PORT:?set TEST_REDIS_PORT}:6379'
+
+  minio:
+    ports:
+      - '127.0.0.1:${TEST_MINIO_PORT:?set TEST_MINIO_PORT}:9000'
+
+  libre-webui:
+    environment:
+      ENABLE_SIGNUP: 'true'
+      OLLAMA_BASE_URL: http://fake-ollama:11434
+      OLLAMA_TIMEOUT: '120000'
+      OLLAMA_LONG_OPERATION_TIMEOUT: '120000'
+      OLLAMA_MAX_CONTEXT: '16384'
+      WORK_COMMAND_TIMEOUT_MS: '120000'
+    depends_on:
+      fake-ollama:
+        condition: service_started
+
+  durable-worker:
+    environment:
+      OLLAMA_BASE_URL: http://fake-ollama:11434
+      OLLAMA_TIMEOUT: '120000'
+      OLLAMA_LONG_OPERATION_TIMEOUT: '120000'
+      OLLAMA_MAX_CONTEXT: '16384'
+      WORK_COMMAND_TIMEOUT_MS: '120000'
+      LIBRE_ENABLE_TEST_FAULT_INJECTION: 'true'
+      LIBRE_TEST_FAULT_DELAY_MS: '60000'
+      RESOURCE_LEASE_TTL_MS: '10000'
+    depends_on:
+      fake-ollama:
+        condition: service_started

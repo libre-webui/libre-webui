@@ -3,10 +3,11 @@
 # A socket proxy holds /var/run/docker.sock and forwards only the API
 # sections Work needs (containers, images, volumes, networks, exec, info).
 # Everything else — swarm, secrets, configs, plugins, system/session, build,
-# commit — is denied at the proxy, so a compromised or misbehaving backend
-# cannot mount host paths it was never offered an API for, join the daemon
-# to a swarm, or read secrets. The proxy lives on an internal network that
-# only the app can reach; it publishes no host ports.
+# commit — is denied at the proxy. This narrows the API surface, but it is not
+# a host-security boundary: container creation can request bind mounts or
+# privileged settings and therefore remains root-equivalent Docker-host
+# control. The proxy lives on an internal network that only the app can reach;
+# it publishes no host ports.
 #
 #   docker compose -f docker-compose.socket-proxy.yml up -d
 services:
@@ -85,7 +86,11 @@ services:
       - NETWORKS=1
       - EXEC=1
       - INFO=1
+      - PING=1
+      - VERSION=1
       - POST=1
+      # The proxy image defaults EVENTS to enabled; Work does not use it.
+      - EVENTS=0
       # Never enabled: SWARM, SECRETS, CONFIGS, SERVICES, TASKS, NODES,
       # PLUGINS, BUILD, COMMIT, SESSION, SYSTEM, DISTRIBUTION.
     volumes:

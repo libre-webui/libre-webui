@@ -16,6 +16,7 @@
  */
 
 import express, { Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import rateLimit from 'express-rate-limit';
 import chatService from '../services/chatService.js';
 import ollamaService from '../services/ollamaService.js';
@@ -56,8 +57,52 @@ import {
   isChatGenerationCancelled,
   throwIfChatGenerationCancelled,
 } from '../utils/chatCancellation.js';
+import { getDurableEventGateway } from '../platform/events/index.js';
+import { chatGenerationIdempotencyScope } from '../platform/jobs/domainJobContracts.js';
+import { getDurableJobRuntime } from '../platform/jobs/durableJobRuntime.js';
+import { durableEventId } from '../platform/jobs/durableEventIdentity.js';
+import { getPlatformRuntimeConfig } from '../platform/coordination/service.js';
 
 const logger = createLogger('routes:chat');
+const CHAT_EVENT_MAX_FRAME_BYTES = 128 * 1024;
+const CHAT_EVENT_DRAIN_TIMEOUT_MS = 15_000;
+
+const chatStreamId = (sessionId: string): string => `chat:${sessionId}`;
+
+const writeChatSseFrame = async (
+  res: Response,
+  cursor: number,
+  payload: unknown
+): Promise<void> => {
+  const frame = `id: ${cursor}\ndata: ${JSON.stringify(payload)}\n\n`;
+  if (Buffer.byteLength(frame, 'utf8') > CHAT_EVENT_MAX_FRAME_BYTES) {
+    throw new Error('Chat event frame exceeds the delivery bound.');
+  }
+  if (res.writableEnded || res.destroyed) return;
+  if (res.write(frame)) return;
+  await new Promise<void>((resolve, reject) => {
+    const cleanup = (): void => {
+      clearTimeout(timeout);
+      res.off('drain', drained);
+      res.off('close', closed);
+    };
+    const drained = (): void => {
+      cleanup();
+      resolve();
+    };
+    const closed = (): void => {
+      cleanup();
+      reject(new Error('Chat event stream closed during backpressure.'));
+    };
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('Chat event stream backpressure timed out.'));
+    }, CHAT_EVENT_DRAIN_TIMEOUT_MS);
+    timeout.unref?.();
+    res.once('drain', drained);
+    res.once('close', closed);
+  });
+};
 
 function sendSessionFolderError(
   res: Response<ApiResponse>,
@@ -75,6 +120,17 @@ function sendSessionFolderError(
 }
 
 const router = express.Router();
+
+const rejectProcessLocalTeamGeneration = (res: Response): boolean => {
+  if (getPlatformRuntimeConfig().mode !== 'team') return false;
+  res.status(409).json({
+    success: false,
+    error:
+      'This compatibility endpoint is unavailable in team mode. Queue the generation through /generations and resume it through /events.',
+    code: 'DURABLE_CHAT_REQUIRED',
+  });
+  return true;
+};
 const titleGenerationService = new TitleGenerationService({
   chatService,
   chatGenerationService,
@@ -120,7 +176,7 @@ router.get(
   ): Promise<void> => {
     try {
       const userId = req.user?.userId || 'default';
-      const sessions = chatService.getAllSessions(userId);
+      const sessions = await chatService.getAllSessions(userId);
       res.json({
         success: true,
         data: sessions,
@@ -190,7 +246,7 @@ router.get(
     try {
       const sessionId = req.params.sessionId as string;
       const userId = req.user?.userId || 'default';
-      const session = chatService.getSession(sessionId, userId);
+      const session = await chatService.getSession(sessionId, userId);
 
       if (!session) {
         res.status(404).json({
@@ -265,7 +321,7 @@ router.put(
       const updates = req.body;
       const userId = req.user?.userId || 'default';
 
-      const updatedMessage = chatService.updateMessage(
+      const updatedMessage = await chatService.updateMessage(
         sessionId,
         messageId,
         updates,
@@ -303,7 +359,7 @@ router.delete(
     try {
       const sessionId = req.params.sessionId as string;
       const userId = req.user?.userId || 'default';
-      const deleted = chatService.deleteSession(sessionId, userId);
+      const deleted = await chatService.deleteSession(sessionId, userId);
 
       if (!deleted) {
         res.status(404).json({
@@ -335,7 +391,7 @@ router.delete(
   ): Promise<void> => {
     try {
       const userId = req.user?.userId || 'default';
-      chatService.clearAllSessions(userId);
+      await chatService.clearAllSessions(userId);
       res.json({
         success: true,
         message: 'All chat sessions cleared successfully',
@@ -369,7 +425,7 @@ router.post(
       }
 
       const userId = req.user?.userId || 'default';
-      const session = chatService.getSession(sessionId, userId);
+      const session = await chatService.getSession(sessionId, userId);
       if (!session) {
         res.status(404).json({
           success: false,
@@ -378,7 +434,7 @@ router.post(
         return;
       }
 
-      const message = chatService.addMessage(
+      const message = await chatService.addMessage(
         sessionId,
         {
           role,
@@ -416,6 +472,7 @@ router.post(
     req: AuthenticatedRequest,
     res: Response<ApiResponse<ChatMessage>>
   ): Promise<void> => {
+    if (rejectProcessLocalTeamGeneration(res)) return;
     const { controller, cleanup } = abortChatGenerationOnResponseClose(res);
     const signal = controller.signal;
     try {
@@ -430,7 +487,7 @@ router.post(
         return;
       }
       const userId = req.user?.userId || 'default';
-      const session = chatService.getSession(sessionId, userId);
+      const session = await chatService.getSession(sessionId, userId);
       if (!session) {
         res.status(404).json({
           success: false,
@@ -440,7 +497,7 @@ router.post(
       }
 
       // Add user message to session
-      const userMessage = chatService.addMessage(
+      const userMessage = await chatService.addMessage(
         sessionId,
         {
           role: 'user',
@@ -477,8 +534,8 @@ router.post(
       let hasRelevantContext = documentContext.hasRelevantContext;
       if (
         req.body?.webSearch === true &&
-        isWebSearchAvailable() &&
-        userCanUseWebSearch(await userModel.getUserById(userId))
+        (await isWebSearchAvailable()) &&
+        (await userCanUseWebSearch(await userModel.getUserById(userId)))
       ) {
         try {
           const results: WebSearchResult[] = await runWebSearch(
@@ -509,7 +566,10 @@ router.post(
           session,
           userId,
           options,
-          persistedMessages: chatService.getMessagesForContext(sessionId),
+          persistedMessages: await chatService.getMessagesForContext(
+            sessionId,
+            userId
+          ),
           content: message,
           hasRelevantContext,
           enhancedContent,
@@ -536,7 +596,7 @@ router.post(
 
       // Add assistant response to session with statistics
       const statistics = extractStatistics(generationResult.response);
-      const assistantMessage = chatService.addMessage(
+      const assistantMessage = await chatService.addMessage(
         sessionId,
         {
           role: 'assistant',
@@ -585,12 +645,224 @@ router.post(
   }
 );
 
+// Resume any persisted chat stream from any application replica. SQL is the
+// ordered source of truth; Redis only wakes the subscriber after a commit.
+router.post(
+  '/sessions/:sessionId/generations',
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const sessionId = String(req.params.sessionId || '').trim();
+    const userId = req.user?.userId || 'default';
+    const message =
+      typeof req.body?.message === 'string' ? req.body.message : '';
+    const images = Array.isArray(req.body?.images)
+      ? req.body.images.filter(
+          (image: unknown): image is string =>
+            typeof image === 'string' && image.length > 0
+        )
+      : undefined;
+    const userMessageId =
+      typeof req.body?.userMessageId === 'string'
+        ? req.body.userMessageId.trim()
+        : randomUUID();
+    const assistantMessageId =
+      typeof req.body?.assistantMessageId === 'string'
+        ? req.body.assistantMessageId.trim()
+        : randomUUID();
+    const options =
+      req.body?.options &&
+      typeof req.body.options === 'object' &&
+      !Array.isArray(req.body.options)
+        ? (req.body.options as Record<string, unknown>)
+        : {};
+    const regenerate = req.body?.regenerate === true;
+    const originalMessageId =
+      typeof req.body?.originalMessageId === 'string'
+        ? req.body.originalMessageId.trim()
+        : undefined;
+    if (
+      !sessionId ||
+      (!message.trim() && !images?.length) ||
+      !userMessageId ||
+      !assistantMessageId ||
+      (regenerate && !originalMessageId)
+    ) {
+      res.status(400).json({
+        success: false,
+        error: 'Session, message, and message identifiers are required',
+      });
+      return;
+    }
+    try {
+      const queued = await chatService.queueDurableGeneration({
+        sessionId,
+        userId,
+        userMessageId,
+        assistantMessageId,
+        message,
+        images,
+        options,
+        webSearch: req.body?.webSearch === true,
+        regenerate,
+        originalMessageId,
+      });
+      if (!queued) {
+        res.status(404).json({ success: false, error: 'Session not found' });
+        return;
+      }
+      res.status(202).json({
+        success: true,
+        data: {
+          jobId: queued.jobId,
+          userMessage: queued.userMessage,
+          assistantMessageId,
+          eventStream: `/api/chat/sessions/${encodeURIComponent(sessionId)}/events?generation=${encodeURIComponent(assistantMessageId)}`,
+        },
+      });
+    } catch (error) {
+      res.status(409).json({
+        success: false,
+        error: getErrorMessage(error, 'Unable to queue chat generation'),
+      });
+    }
+  }
+);
+
+router.get(
+  '/sessions/:sessionId/events',
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const sessionId = String(req.params.sessionId || '').trim();
+    const userId = req.user?.userId || 'default';
+    const generationId =
+      typeof req.query.generation === 'string'
+        ? req.query.generation.trim()
+        : undefined;
+    const afterValue =
+      req.query.after ??
+      (typeof req.get('Last-Event-ID') === 'string'
+        ? req.get('Last-Event-ID')
+        : undefined) ??
+      0;
+    const afterCursor = Number(afterValue);
+    if (!Number.isSafeInteger(afterCursor) || afterCursor < 0) {
+      res.status(400).json({ success: false, error: 'Invalid event cursor' });
+      return;
+    }
+    if (!(await chatService.getSession(sessionId, userId))) {
+      res.status(404).json({ success: false, error: 'Session not found' });
+      return;
+    }
+    const generationJob = generationId
+      ? await getDurableJobRuntime().service.getByIdempotency(
+          userId,
+          chatGenerationIdempotencyScope(sessionId),
+          generationId
+        )
+      : null;
+    if (generationId && !generationJob) {
+      res.status(404).json({ success: false, error: 'Generation not found' });
+      return;
+    }
+
+    res.status(200);
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    const abort = new AbortController();
+    let subscription:
+      | Awaited<
+          ReturnType<ReturnType<typeof getDurableEventGateway>['subscribe']>
+        >
+      | undefined;
+    let heartbeat: NodeJS.Timeout | undefined;
+    let heartbeatBusy = false;
+    let terminal = false;
+    const close = (): void => {
+      abort.abort();
+      if (heartbeat) clearInterval(heartbeat);
+      void subscription?.close();
+      if (!res.writableEnded && !res.destroyed) res.end();
+    };
+    res.once('close', close);
+    try {
+      subscription = await getDurableEventGateway().subscribe({
+        afterCursor,
+        streamId: chatStreamId(sessionId),
+        batchSize: 100,
+        maxReplayEvents: 10_000,
+        signal: abort.signal,
+        authorize: async () =>
+          Boolean(await chatService.getSession(sessionId, userId)),
+        onEvent: async event => {
+          if (generationId && event.subjectId !== generationId) return;
+          await writeChatSseFrame(res, event.cursor, event.payload);
+          terminal =
+            event.eventType === 'chat.done.v1' ||
+            event.eventType === 'chat.error.v1';
+          if (terminal) queueMicrotask(close);
+        },
+        onError: () => close(),
+      });
+      if (terminal) {
+        close();
+        return;
+      }
+      heartbeat = setInterval(() => {
+        if (res.writableEnded || res.destroyed) {
+          close();
+          return;
+        }
+        if (heartbeatBusy) return;
+        heartbeatBusy = true;
+        void (async () => {
+          if (generationJob) {
+            const current = await getDurableJobRuntime().service.getMetadata(
+              generationJob.id
+            );
+            if (
+              current?.state === 'cancelled' ||
+              current?.state === 'dead_letter'
+            ) {
+              await writeChatSseFrame(
+                res,
+                subscription?.cursor ?? afterCursor,
+                {
+                  type: 'error',
+                  error:
+                    current.state === 'cancelled'
+                      ? 'Chat generation was cancelled'
+                      : current.errorSummary || 'Chat generation failed',
+                }
+              );
+              close();
+              return;
+            }
+          }
+          res.write(`: heartbeat ${Date.now()}\n\n`);
+        })()
+          .catch(close)
+          .finally(() => {
+            heartbeatBusy = false;
+          });
+      }, 15_000);
+      heartbeat.unref?.();
+    } catch {
+      close();
+    }
+  }
+);
+
 // Generate a chat response with streaming
 router.post(
   '/sessions/:sessionId/generate/stream',
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    if (rejectProcessLocalTeamGeneration(res)) return;
     const { controller, cleanup } = abortChatGenerationOnResponseClose(res);
     const signal = controller.signal;
+    let emitDurable:
+      ((payload: Record<string, unknown>) => Promise<void>) | undefined;
     try {
       const sessionId = req.params.sessionId as string;
       const { message, options = {} } = req.body;
@@ -603,7 +875,7 @@ router.post(
         return;
       }
       const userId = req.user?.userId || 'default';
-      const session = chatService.getSession(sessionId, userId);
+      const session = await chatService.getSession(sessionId, userId);
       if (!session) {
         res.status(404).json({
           success: false,
@@ -618,8 +890,36 @@ router.post(
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('Access-Control-Allow-Origin', '*');
 
+      let eventTail = Promise.resolve();
+      emitDurable = payload => {
+        const operation = eventTail.then(async () => {
+          const type =
+            payload.type === 'done'
+              ? 'chat.done.v1'
+              : payload.type === 'error'
+                ? 'chat.error.v1'
+                : 'chat.stream.v1';
+          const appended = await getDurableEventGateway().append({
+            eventId: durableEventId(
+              'legacy-chat-route',
+              sessionId,
+              type,
+              JSON.stringify(payload)
+            ),
+            streamId: chatStreamId(sessionId),
+            eventType: type,
+            subjectId: sessionId,
+            actorUserId: userId,
+            payload: { mode: 'encrypted', value: payload },
+          });
+          await writeChatSseFrame(res, appended.cursor, payload);
+        });
+        eventTail = operation.catch(() => undefined);
+        return operation;
+      };
+
       // Add user message to session
-      const userMessage = chatService.addMessage(
+      const userMessage = await chatService.addMessage(
         sessionId,
         {
           role: 'user',
@@ -629,9 +929,10 @@ router.post(
       );
 
       if (!userMessage) {
-        res.write(
-          `data: ${JSON.stringify({ error: 'Failed to add user message' })}\n\n`
-        );
+        await emitDurable({
+          type: 'error',
+          error: 'Failed to add user message',
+        });
         res.end();
         return;
       }
@@ -658,12 +959,10 @@ router.post(
       let searchEnhancedContent: string | undefined;
       if (
         req.body?.webSearch === true &&
-        isWebSearchAvailable() &&
-        userCanUseWebSearch(await userModel.getUserById(userId))
+        (await isWebSearchAvailable()) &&
+        (await userCanUseWebSearch(await userModel.getUserById(userId)))
       ) {
-        res.write(
-          `data: ${JSON.stringify({ type: 'search', status: 'searching' })}\n\n`
-        );
+        await emitDurable({ type: 'search', status: 'searching' });
         try {
           const results: WebSearchResult[] = await runWebSearch(
             message,
@@ -681,23 +980,19 @@ router.post(
               url,
             }));
           }
-          res.write(
-            `data: ${JSON.stringify({
-              type: 'search',
-              status: 'done',
-              sources: webSearchSources ?? [],
-            })}\n\n`
-          );
+          await emitDurable({
+            type: 'search',
+            status: 'done',
+            sources: webSearchSources ?? [],
+          });
         } catch (searchError) {
           throwIfChatGenerationCancelled(signal);
           logger.error('Web search failed; answering without it:', searchError);
-          res.write(
-            `data: ${JSON.stringify({
-              type: 'search',
-              status: 'failed',
-              error: getErrorMessage(searchError, 'Web search failed.'),
-            })}\n\n`
-          );
+          await emitDurable({
+            type: 'search',
+            status: 'failed',
+            error: getErrorMessage(searchError, 'Web search failed.'),
+          });
         }
       }
       const withSearchSources = (
@@ -720,7 +1015,10 @@ router.post(
           session,
           userId,
           options,
-          persistedMessages: chatService.getMessagesForContext(sessionId),
+          persistedMessages: await chatService.getMessagesForContext(
+            sessionId,
+            userId
+          ),
           content: message,
           enhancedContent:
             searchEnhancedContent ?? documentContext.enhancedContent,
@@ -760,22 +1058,18 @@ router.post(
         )) {
           if (chunk.type === 'content' && chunk.content) {
             fullResponse += chunk.content;
-            res.write(
-              `data: ${JSON.stringify({
-                type: 'chunk',
-                content: chunk.content,
-                done: false,
-              })}\n\n`
-            );
+            await emitDurable({
+              type: 'chunk',
+              content: chunk.content,
+              done: false,
+            });
           } else if (chunk.type === 'reasoning' && chunk.content) {
             fullThinking += chunk.content;
-            res.write(
-              `data: ${JSON.stringify({
-                type: 'reasoning',
-                content: chunk.content,
-                done: false,
-              })}\n\n`
-            );
+            await emitDurable({
+              type: 'reasoning',
+              content: chunk.content,
+              done: false,
+            });
           } else if (chunk.type === 'done' && chunk.providerMetadata) {
             assistantProviderMetadata = chunk.providerMetadata;
           }
@@ -784,7 +1078,7 @@ router.post(
         throwIfChatGenerationCancelled(signal);
 
         if (fullResponse || fullThinking) {
-          chatService.addMessage(
+          await chatService.addMessage(
             sessionId,
             {
               role: 'assistant',
@@ -796,7 +1090,7 @@ router.post(
             userId
           );
         }
-        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        await emitDurable({ type: 'done' });
         res.end();
         return;
       }
@@ -818,22 +1112,18 @@ router.post(
           )) {
             if (chunk.type === 'content' && chunk.content) {
               fullResponse += chunk.content;
-              res.write(
-                `data: ${JSON.stringify({
-                  type: 'chunk',
-                  content: chunk.content,
-                  done: false,
-                })}\n\n`
-              );
+              await emitDurable({
+                type: 'chunk',
+                content: chunk.content,
+                done: false,
+              });
             } else if (chunk.type === 'reasoning' && chunk.content) {
               fullThinking += chunk.content;
-              res.write(
-                `data: ${JSON.stringify({
-                  type: 'reasoning',
-                  content: chunk.content,
-                  done: false,
-                })}\n\n`
-              );
+              await emitDurable({
+                type: 'reasoning',
+                content: chunk.content,
+                done: false,
+              });
             } else if (chunk.type === 'tool_call' && chunk.toolCall) {
               toolCalls.push(chunk.toolCall);
             } else if (chunk.type === 'done') {
@@ -858,13 +1148,11 @@ router.post(
           const toolContent = formatPluginStreamToolCalls(toolCalls);
           if (toolContent) {
             fullResponse += toolContent;
-            res.write(
-              `data: ${JSON.stringify({
-                type: 'chunk',
-                content: toolContent,
-                done: false,
-              })}\n\n`
-            );
+            await emitDurable({
+              type: 'chunk',
+              content: toolContent,
+              done: false,
+            });
           }
         } else {
           const generationResult =
@@ -881,27 +1169,23 @@ router.post(
           assistantProviderMetadata =
             generationResult.response.message.providerMetadata;
           if (fullThinking) {
-            res.write(
-              `data: ${JSON.stringify({
-                type: 'reasoning',
-                content: fullThinking,
-                done: false,
-              })}\n\n`
-            );
-          }
-          res.write(
-            `data: ${JSON.stringify({
-              type: 'chunk',
-              content: fullResponse,
+            await emitDurable({
+              type: 'reasoning',
+              content: fullThinking,
               done: false,
-            })}\n\n`
-          );
+            });
+          }
+          await emitDurable({
+            type: 'chunk',
+            content: fullResponse,
+            done: false,
+          });
         }
 
         throwIfChatGenerationCancelled(signal);
 
         if (fullResponse || fullThinking) {
-          chatService.addMessage(
+          await chatService.addMessage(
             sessionId,
             {
               role: 'assistant',
@@ -913,7 +1197,7 @@ router.post(
             userId
           );
         }
-        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        await emitDurable({ type: 'done' });
         res.end();
         return;
       }
@@ -925,23 +1209,18 @@ router.post(
           const thinkingDelta = chunk.message.thinking || '';
           if (thinkingDelta) {
             fullThinking += thinkingDelta;
-            res.write(
-              `data: ${JSON.stringify({
-                type: 'reasoning',
-                content: thinkingDelta,
-                done: false,
-              })}\n\n`
-            );
+            void emitDurable!({
+              type: 'reasoning',
+              content: thinkingDelta,
+              done: false,
+            }).catch(() => controller.abort());
           }
 
-          // Send chunk to client
-          res.write(
-            `data: ${JSON.stringify({
-              type: 'chunk',
-              content: chunk.message.content || '',
-              done: chunk.done,
-            })}\n\n`
-          );
+          void emitDurable!({
+            type: 'chunk',
+            content: chunk.message.content || '',
+            done: chunk.done,
+          }).catch(() => controller.abort());
 
           // Accumulate response content
           if (chunk.message.content) {
@@ -950,30 +1229,38 @@ router.post(
         },
         error => {
           if (signal.aborted || res.writableEnded) return;
-          res.write(
-            `data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`
-          );
-          res.end();
+          void emitDurable!({ type: 'error', error: error.message })
+            .catch(() => undefined)
+            .finally(() => res.end());
         },
         () => {
           if (signal.aborted || res.writableEnded) return;
-          // Add complete assistant response to session
-          if (fullResponse || fullThinking) {
-            chatService.addMessage(
-              sessionId,
-              {
-                role: 'assistant',
-                content: fullResponse,
-                thinking: fullThinking || undefined,
-                model: session.model,
-                providerMetadata: withSearchSources(undefined),
-              },
-              userId
-            );
-          }
-
-          res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-          res.end();
+          void (async () => {
+            if (fullResponse || fullThinking) {
+              await chatService.addMessage(
+                sessionId,
+                {
+                  role: 'assistant',
+                  content: fullResponse,
+                  thinking: fullThinking || undefined,
+                  model: session.model,
+                  providerMetadata: withSearchSources(undefined),
+                },
+                userId
+              );
+            }
+            if (signal.aborted || res.writableEnded) return;
+            await emitDurable!({ type: 'done' });
+            res.end();
+          })().catch(error => {
+            if (signal.aborted || res.writableEnded) return;
+            void emitDurable!({
+              type: 'error',
+              error: getErrorMessage(error, 'Failed to save response'),
+            })
+              .catch(() => undefined)
+              .finally(() => res.end());
+          });
         },
         signal,
         { userId }
@@ -992,9 +1279,12 @@ router.post(
           });
         return;
       }
-      res.write(
-        `data: ${JSON.stringify({ type: 'error', error: getErrorMessage(error, 'Failed to generate stream response') })}\n\n`
-      );
+      if (emitDurable) {
+        await emitDurable({
+          type: 'error',
+          error: getErrorMessage(error, 'Failed to generate stream response'),
+        }).catch(() => undefined);
+      }
       res.end();
     } finally {
       cleanup();
@@ -1073,10 +1363,13 @@ router.post(
 // Session folders
 router.get(
   '/folders',
-  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+  async (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
     try {
       const userId = req.user?.userId || 'default';
-      res.json({ success: true, data: chatService.getSessionFolders(userId) });
+      res.json({
+        success: true,
+        data: await chatService.getSessionFolders(userId),
+      });
     } catch (error: unknown) {
       res.status(500).json({
         success: false,
@@ -1088,13 +1381,13 @@ router.get(
 
 router.post(
   '/folders',
-  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+  async (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
     try {
       const { name } = req.body as { name?: unknown };
       const userId = req.user?.userId || 'default';
       res.json({
         success: true,
-        data: chatService.createSessionFolder(name, userId),
+        data: await chatService.createSessionFolder(name, userId),
       });
     } catch (error: unknown) {
       sendSessionFolderError(res, error, 'Failed to create folder');
@@ -1104,11 +1397,11 @@ router.post(
 
 router.put(
   '/folders/:folderId',
-  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+  async (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
     try {
       const { name } = req.body as { name?: unknown };
       const userId = req.user?.userId || 'default';
-      const folder = chatService.renameSessionFolder(
+      const folder = await chatService.renameSessionFolder(
         req.params.folderId as string,
         name,
         userId
@@ -1126,10 +1419,10 @@ router.put(
 
 router.delete(
   '/folders/:folderId',
-  (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
+  async (req: AuthenticatedRequest, res: Response<ApiResponse>) => {
     try {
       const userId = req.user?.userId || 'default';
-      const deleted = chatService.deleteSessionFolder(
+      const deleted = await chatService.deleteSessionFolder(
         req.params.folderId as string,
         userId
       );
@@ -1207,7 +1500,7 @@ router.post(
         return;
       }
 
-      const updatedMessage = chatService.switchMessageBranch(
+      const updatedMessage = await chatService.switchMessageBranch(
         sessionId,
         messageId,
         branchIndex,
@@ -1223,7 +1516,7 @@ router.post(
       }
 
       // Return the updated session
-      const session = chatService.getSession(sessionId, userId);
+      const session = await chatService.getSession(sessionId, userId);
       res.json({
         success: true,
         data: session,
@@ -1252,7 +1545,7 @@ router.get(
       const messageId = req.params.messageId as string;
       const userId = req.user?.userId || 'default';
 
-      const branches = chatService.getMessageBranches(
+      const branches = await chatService.getMessageBranches(
         sessionId,
         messageId,
         userId
@@ -1295,7 +1588,7 @@ router.post(
         return;
       }
 
-      const newBranch = chatService.createMessageBranch(
+      const newBranch = await chatService.createMessageBranch(
         sessionId,
         messageId,
         messageData,

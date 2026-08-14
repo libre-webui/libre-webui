@@ -23,12 +23,17 @@ import {
   StorageEncryptionError,
 } from './aesGcmKeyring.js';
 import {
+  MAX_VECTOR_RECORDS_PER_UPSERT,
+  MAX_VECTOR_RESOURCE_INDEX_ENTRIES,
+  OwnerOnlyVectorPrincipalResolver,
   VectorStoreError,
   type VectorActor,
   type VectorDeleteRequest,
   type VectorGrant,
   type VectorHit,
   type VectorQuery,
+  type VectorResourceIndexProbe,
+  type VectorPrincipalResolver,
   type VectorRecord,
   type VectorStore,
   type VectorUpsertRequest,
@@ -38,7 +43,6 @@ const MAX_IDENTIFIER_BYTES = 256;
 const MAX_ATTRIBUTE_VALUE_BYTES = 2048;
 const MAX_ATTRIBUTES = 32;
 const MAX_GRANTS = 128;
-const MAX_RECORDS_PER_UPSERT = 1000;
 const MAX_QUERY_LIMIT = 100;
 const DEFAULT_MAX_CANDIDATES = 50_000;
 const DEFAULT_MAX_CANDIDATE_BYTES = 64 * 1024 * 1024;
@@ -76,6 +80,7 @@ export interface SqliteEncryptedVectorStoreOptions {
   /** Maximum candidate-count times dimensions scored by one query. */
   maxScoringComponents?: number;
   now?: () => number;
+  principalResolver?: VectorPrincipalResolver;
 }
 
 export interface VectorIntegrityVerificationOptions {
@@ -91,6 +96,12 @@ export interface VectorIntegrityVerificationResult {
   records: number;
   encryptedBytes: number;
   components: number;
+}
+
+export interface VectorMigrationExportOptions {
+  maxRecords?: number;
+  maxEncryptedBytes?: number;
+  maxComponents?: number;
 }
 
 const invalidInput = (message: string): VectorStoreError =>
@@ -116,14 +127,21 @@ const validateString = (value: string, field: string): void => {
   }
 };
 
-const validateActor = (actor: VectorActor): readonly string[] => {
+const validateActor = (actor: VectorActor): void => {
   validateString(actor.userId, 'actor user ID');
-  const groupIds = [...new Set(actor.groupIds ?? [])];
-  if (groupIds.length > MAX_GRANTS) {
-    throw invalidInput('Too many vector actor groups');
+};
+
+const validateResolvedGroups = (
+  groupIds: readonly string[]
+): readonly string[] => {
+  const normalized = [...new Set(groupIds)];
+  if (normalized.length > MAX_GRANTS) {
+    throw invalidInput('Too many trusted vector actor groups');
   }
-  for (const groupId of groupIds) validateString(groupId, 'actor group ID');
-  return groupIds;
+  for (const groupId of normalized) {
+    validateString(groupId, 'trusted actor group ID');
+  }
+  return normalized;
 };
 
 const validateDimensions = (dimensions: number): void => {
@@ -342,6 +360,7 @@ export class SqliteEncryptedVectorStore implements VectorStore {
   private readonly maxCandidateBytes: number;
   private readonly maxScoringComponents: number;
   private readonly now: () => number;
+  private readonly principalResolver: VectorPrincipalResolver;
 
   constructor(options: SqliteEncryptedVectorStoreOptions) {
     if (
@@ -374,6 +393,8 @@ export class SqliteEncryptedVectorStore implements VectorStore {
     this.maxScoringComponents =
       options.maxScoringComponents ?? DEFAULT_MAX_SCORING_COMPONENTS;
     this.now = options.now ?? Date.now;
+    this.principalResolver =
+      options.principalResolver ?? new OwnerOnlyVectorPrincipalResolver();
     this.validateSchema();
   }
 
@@ -426,10 +447,10 @@ export class SqliteEncryptedVectorStore implements VectorStore {
     validateActor(request.actor);
     if (
       request.records.length <= 0 ||
-      request.records.length > MAX_RECORDS_PER_UPSERT
+      request.records.length > MAX_VECTOR_RECORDS_PER_UPSERT
     ) {
       throw invalidInput(
-        `Vector upserts require 1-${MAX_RECORDS_PER_UPSERT} records`
+        `Vector upserts require 1-${MAX_VECTOR_RECORDS_PER_UPSERT} records`
       );
     }
 
@@ -514,8 +535,120 @@ export class SqliteEncryptedVectorStore implements VectorStore {
     transaction();
   }
 
-  private queryRows(request: VectorQuery): VectorRow[] {
-    const groupIds = validateActor(request.actor);
+  /**
+   * Offline authenticated export used by SQLite-to-PGVector migration. The
+   * aggregate budget is checked before any ciphertext is returned, and every
+   * record is authenticated with its identity/model AAD before it is yielded.
+   */
+  async *exportAuthenticatedRecords(
+    options: VectorMigrationExportOptions = {}
+  ): AsyncGenerator<VectorRecord> {
+    const maxRecords = options.maxRecords ?? DEFAULT_MAX_INTEGRITY_RECORDS;
+    const maxEncryptedBytes =
+      options.maxEncryptedBytes ?? DEFAULT_MAX_INTEGRITY_ENCRYPTED_BYTES;
+    const maxComponents =
+      options.maxComponents ?? DEFAULT_MAX_INTEGRITY_COMPONENTS;
+    validateIntegrityLimit(maxRecords, 'vector migration record limit');
+    validateIntegrityLimit(
+      maxEncryptedBytes,
+      'vector migration encrypted-byte limit'
+    );
+    validateIntegrityLimit(maxComponents, 'vector migration component limit');
+    const aggregate = this.database
+      .prepare(
+        `SELECT CAST(COUNT(*) AS REAL) AS records,
+                CAST(COALESCE(SUM(LENGTH(embedding)), 0) AS REAL) AS encrypted_bytes,
+                CAST(COALESCE(SUM(dimensions), 0) AS REAL) AS components
+           FROM platform_vector_entries`
+      )
+      .get() as {
+      records: number;
+      encrypted_bytes: number;
+      components: number;
+    };
+    if (
+      !Number.isSafeInteger(Number(aggregate.records)) ||
+      !Number.isSafeInteger(Number(aggregate.encrypted_bytes)) ||
+      !Number.isSafeInteger(Number(aggregate.components)) ||
+      Number(aggregate.records) > maxRecords ||
+      Number(aggregate.encrypted_bytes) > maxEncryptedBytes ||
+      Number(aggregate.components) > maxComponents
+    ) {
+      throw new VectorStoreError(
+        'verification-limit',
+        'Embedded vectors exceed bounded migration limits'
+      );
+    }
+    const getAttributes = this.database.prepare(
+      `SELECT attribute_key, attribute_value
+         FROM platform_vector_attributes
+        WHERE namespace = ? AND owner_user_id = ? AND vector_id = ?
+        ORDER BY attribute_key`
+    );
+    const getGrants = this.database.prepare(
+      `SELECT principal_type, principal_id
+         FROM platform_vector_acl
+        WHERE namespace = ? AND owner_user_id = ? AND vector_id = ?
+        ORDER BY principal_type, principal_id`
+    );
+    const rows = this.database
+      .prepare(
+        `SELECT namespace, id, owner_user_id, resource_id, model,
+                CAST(dimensions AS REAL) AS dimensions,
+                embedding_version, source_revision, embedding,
+                CAST(created_at AS REAL) AS created_at,
+                CAST(updated_at AS REAL) AS updated_at
+           FROM platform_vector_entries
+          ORDER BY namespace, owner_user_id, id`
+      )
+      .iterate() as Iterable<VectorIntegrityRow>;
+    for (const row of rows) {
+      const record = rowRecord(row);
+      const plaintext = this.keyring.decrypt(
+        deserializeEnvelope(row.embedding),
+        vectorAad(record)
+      );
+      try {
+        const embedding = decodeEmbedding(plaintext, row.dimensions);
+        const attributes = Object.fromEntries(
+          (
+            getAttributes.all(
+              row.namespace,
+              row.owner_user_id,
+              row.id
+            ) as Array<{
+              attribute_key: string;
+              attribute_value: string;
+            }>
+          ).map(item => [item.attribute_key, item.attribute_value])
+        );
+        const grants = (
+          getGrants.all(row.namespace, row.owner_user_id, row.id) as Array<{
+            principal_type: 'user' | 'group';
+            principal_id: string;
+          }>
+        ).map(item => ({
+          type: item.principal_type,
+          id: item.principal_id,
+        }));
+        yield {
+          ...record,
+          embedding,
+          attributes,
+          grants,
+          createdAt: row.created_at,
+        };
+      } finally {
+        plaintext.fill(0);
+      }
+    }
+  }
+
+  private async queryRows(request: VectorQuery): Promise<VectorRow[]> {
+    validateActor(request.actor);
+    const groupIds = validateResolvedGroups(
+      await this.principalResolver.resolveGroupIds(request.actor.userId)
+    );
     validateString(request.namespace, 'namespace');
     validateString(request.model, 'model');
     validateString(request.version, 'version');
@@ -685,7 +818,7 @@ export class SqliteEncryptedVectorStore implements VectorStore {
       request.embedding,
       request.dimensions
     );
-    const rows = this.queryRows(request);
+    const rows = await this.queryRows(request);
     const getAttributes = this.database.prepare(`
       SELECT attribute_key, attribute_value
       FROM platform_vector_attributes
@@ -757,6 +890,90 @@ export class SqliteEncryptedVectorStore implements VectorStore {
           left.id.localeCompare(right.id)
       )
       .slice(0, request.limit);
+  }
+
+  async hasExactResourceIndex(
+    request: VectorResourceIndexProbe
+  ): Promise<boolean> {
+    validateActor(request.actor);
+    validateString(request.namespace, 'namespace');
+    validateString(request.resourceId, 'resource ID');
+    validateString(request.model, 'model');
+    validateString(request.version, 'version');
+    validateDimensions(request.dimensions);
+    if (
+      !Array.isArray(request.entries) ||
+      request.entries.length === 0 ||
+      request.entries.length > MAX_VECTOR_RESOURCE_INDEX_ENTRIES
+    ) {
+      throw invalidInput(
+        `Vector index probes require 1-${MAX_VECTOR_RESOURCE_INDEX_ENTRIES} entries`
+      );
+    }
+    const expected = new Map<string, string>();
+    for (const entry of request.entries) {
+      validateString(entry.id, 'ID');
+      validateString(entry.sourceRevision, 'source revision');
+      if (expected.has(entry.id)) {
+        throw invalidInput('Vector index probe contains duplicate IDs');
+      }
+      expected.set(entry.id, entry.sourceRevision);
+    }
+
+    const inspect = this.database.transaction((): boolean => {
+      const aggregate = this.database
+        .prepare(
+          `SELECT COUNT(*) AS count
+             FROM platform_vector_entries
+            WHERE namespace = ? AND owner_user_id = ? AND resource_id = ?`
+        )
+        .get(request.namespace, request.actor.userId, request.resourceId) as
+        { count: number } | undefined;
+      const count = Number(aggregate?.count ?? -1);
+      if (!Number.isSafeInteger(count) || count !== expected.size) return false;
+
+      const page = this.database.prepare(
+        `SELECT id, model, dimensions, embedding_version, source_revision
+           FROM platform_vector_entries
+          WHERE namespace = ? AND owner_user_id = ? AND resource_id = ?
+            AND (? IS NULL OR id > ?)
+          ORDER BY id
+          LIMIT ?`
+      );
+      let cursor: string | null = null;
+      let seen = 0;
+      while (seen < expected.size) {
+        const rows = page.all(
+          request.namespace,
+          request.actor.userId,
+          request.resourceId,
+          cursor,
+          cursor,
+          MAX_VECTOR_RECORDS_PER_UPSERT
+        ) as {
+          id: string;
+          model: string;
+          dimensions: number;
+          embedding_version: string;
+          source_revision: string;
+        }[];
+        if (rows.length === 0) return false;
+        for (const row of rows) {
+          if (
+            row.model !== request.model ||
+            row.dimensions !== request.dimensions ||
+            row.embedding_version !== request.version ||
+            expected.get(row.id) !== row.source_revision
+          ) {
+            return false;
+          }
+        }
+        seen += rows.length;
+        cursor = rows[rows.length - 1]!.id;
+      }
+      return seen === expected.size;
+    });
+    return inspect();
   }
 
   /**
@@ -917,7 +1134,7 @@ export class SqliteEncryptedVectorStore implements VectorStore {
       );
     }
     const ids = [...new Set(request.ids ?? [])];
-    if (ids.length > MAX_RECORDS_PER_UPSERT) {
+    if (ids.length > MAX_VECTOR_RECORDS_PER_UPSERT) {
       throw invalidInput('Too many vector IDs to delete');
     }
     for (const id of ids) validateString(id, 'ID');

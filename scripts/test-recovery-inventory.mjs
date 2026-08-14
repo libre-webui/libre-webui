@@ -34,30 +34,55 @@ const legacyCiphertextModulePath = path.join(
 const { verifyLegacyCiphertextIntegrity } = await import(
   pathToFileURL(legacyCiphertextModulePath).href
 );
-const storageModulePath = path.join(
+const storageModuleDirectory = path.join(
   repoRoot,
   'backend',
   testSource ? 'src' : 'dist',
   'platform',
-  'storage',
-  testSource ? 'index.ts' : 'index.js'
+  'storage'
 );
-const storageModule = await import(pathToFileURL(storageModulePath).href);
-const {
-  Aes256GcmKeyring,
-  LocalEncryptedBlobStore,
-  SqliteEncryptedVectorStore,
-} = storageModule;
-const jobsModulePath = path.join(
+const moduleExtension = testSource ? '.ts' : '.js';
+const { Aes256GcmKeyring } = await import(
+  pathToFileURL(
+    path.join(storageModuleDirectory, `aesGcmKeyring${moduleExtension}`)
+  ).href
+);
+const { LocalEncryptedBlobStore } = await import(
+  pathToFileURL(
+    path.join(
+      storageModuleDirectory,
+      `localEncryptedBlobStore${moduleExtension}`
+    )
+  ).href
+);
+const { SqliteEncryptedVectorStore } = await import(
+  pathToFileURL(
+    path.join(
+      storageModuleDirectory,
+      `sqliteEncryptedVectorStore${moduleExtension}`
+    )
+  ).href
+);
+const jobsModuleDirectory = path.join(
   repoRoot,
   'backend',
   testSource ? 'src' : 'dist',
   'platform',
-  'jobs',
-  testSource ? 'index.ts' : 'index.js'
+  'jobs'
 );
-const jobsModule = await import(pathToFileURL(jobsModulePath).href);
-const { DurableJobService, SQLiteDurableJobRepository } = jobsModule;
+const { DurableJobService } = await import(
+  pathToFileURL(
+    path.join(jobsModuleDirectory, `durableJobService${moduleExtension}`)
+  ).href
+);
+const { SQLiteDurableJobRepository } = await import(
+  pathToFileURL(
+    path.join(
+      jobsModuleDirectory,
+      `sqliteDurableJobRepository${moduleExtension}`
+    )
+  ).href
+);
 const cliPath = path.join(
   repoRoot,
   'backend',
@@ -289,6 +314,7 @@ const seedDurableState = (
       idempotencyKey: 'reference-job',
     });
     const encryptedCursor = service.appendEvent({
+      eventId: '11111111-1111-4111-8111-111111111111',
       streamId: 'recovery:test',
       eventType: 'recovery.private',
       subjectId: encryptedJob.id,
@@ -299,6 +325,7 @@ const seedDurableState = (
       },
     });
     service.appendEvent({
+      eventId: '22222222-2222-4222-8222-222222222222',
       streamId: 'recovery:test',
       eventType: 'recovery.reference',
       subjectId: encryptedJob.id,
@@ -390,8 +417,8 @@ test('healthy inventory is complete, versioned, and secret-safe', async t => {
   assert.equal(inventory.storage.embeddedVectors.platform.attributeRecords, 1);
   assert.equal(inventory.jobs.durable.substrateAvailable, true);
   assert.equal(inventory.work.activePreviews, 0);
-  assert.equal(inventory.jobs.durable.handlerWorkerBootstrapped, false);
-  assert.equal(inventory.jobs.durable.externalWorkerAvailable, false);
+  assert.equal(inventory.jobs.durable.handlerWorkerBootstrapped, true);
+  assert.equal(inventory.jobs.durable.externalWorkerAvailable, true);
   assert.equal(inventory.jobs.durable.total, 2);
   assert.deepEqual(inventory.jobs.durable.byState, {
     queued: 1,
@@ -418,10 +445,6 @@ test('healthy inventory is complete, versioned, and secret-safe', async t => {
   assert.equal(inventory.jobs.durable.payloadIntegrity.records, 8);
   assert.equal(inventory.jobs.durable.payloadIntegrity.encryptedRecords, 2);
   assert.equal(inventory.jobs.durable.payloadIntegrity.referenceRecords, 6);
-  assert.match(
-    inventory.warnings.join('\n'),
-    /no domain handler worker is bootstrapped/i
-  );
   assert.match(
     inventory.warnings.join('\n'),
     /reference.*target existence.*could not be verified/i

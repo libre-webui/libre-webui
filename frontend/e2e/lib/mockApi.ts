@@ -996,6 +996,192 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   };
 
   await page.addInitScript(streamConfig => {
+    const originalFetch = window.fetch.bind(window);
+    let nextDurableJobId = 1;
+    const durableGenerations = new Map<
+      string,
+      {
+        assistantMessageId: string;
+        jobId: string;
+        cancelled: boolean;
+      }
+    >();
+    const requestUrl = (input: RequestInfo | URL): URL =>
+      new URL(
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url,
+        window.location.href
+      );
+    const requestMethod = (
+      input: RequestInfo | URL,
+      init?: RequestInit
+    ): string =>
+      (init?.method ?? (input instanceof Request ? input.method : 'GET'))
+        .toUpperCase()
+        .trim();
+    const requestSignal = (
+      input: RequestInfo | URL,
+      init?: RequestInit
+    ): AbortSignal | undefined =>
+      init?.signal ?? (input instanceof Request ? input.signal : undefined);
+    const jsonResponse = (data: unknown): Response =>
+      new Response(JSON.stringify({ success: true, data }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+
+    window.fetch = async (input, init) => {
+      const url = requestUrl(input);
+      const method = requestMethod(input, init);
+      const generationMatch = url.pathname.match(
+        /^\/api\/chat\/sessions\/([^/]+)\/generations$/
+      );
+      if (generationMatch && method === 'POST') {
+        const body = JSON.parse(String(init?.body ?? '{}')) as {
+          assistantMessageId?: string;
+          options?: Record<string, unknown>;
+        };
+        if (!body.assistantMessageId) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Missing message ID' }),
+            { status: 400, headers: { 'content-type': 'application/json' } }
+          );
+        }
+        const sent = window as unknown as Record<string, unknown>;
+        ((sent.__libreChatStreams ||= []) as unknown[]).push(body);
+        const jobId = `e2e-chat-job-${nextDurableJobId++}`;
+        durableGenerations.set(body.assistantMessageId, {
+          assistantMessageId: body.assistantMessageId,
+          jobId,
+          cancelled: false,
+        });
+        return jsonResponse({
+          jobId,
+          assistantMessageId: body.assistantMessageId,
+        });
+      }
+
+      const eventsMatch = url.pathname.match(
+        /^\/api\/chat\/sessions\/([^/]+)\/events$/
+      );
+      if (eventsMatch && method === 'GET') {
+        const assistantMessageId = url.searchParams.get('generation') || '';
+        const generation = durableGenerations.get(assistantMessageId);
+        if (!generation) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Generation not found' }),
+            { status: 404, headers: { 'content-type': 'application/json' } }
+          );
+        }
+        const pieces = streamConfig
+          ? [
+              ...streamConfig.chunks,
+              ...(streamConfig.finalChunk === undefined
+                ? []
+                : [streamConfig.finalChunk]),
+            ]
+          : ['Mock assistant response'];
+        const chunkDelayMs = streamConfig?.chunkDelayMs ?? 0;
+        const completionDelayMs = streamConfig?.completionDelayMs ?? 0;
+        const signal = requestSignal(input, init);
+        const timers: number[] = [];
+        let settled = false;
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            const encoder = new TextEncoder();
+            let total = '';
+            const abort = () => {
+              if (settled) return;
+              settled = true;
+              timers.splice(0).forEach(timer => window.clearTimeout(timer));
+              controller.error(
+                signal?.reason ?? new DOMException('Aborted', 'AbortError')
+              );
+            };
+            if (signal?.aborted) {
+              abort();
+              return;
+            }
+            signal?.addEventListener('abort', abort, { once: true });
+            pieces.forEach((content, index) => {
+              total += content;
+              const payload = {
+                type: 'chunk',
+                messageId: assistantMessageId,
+                content,
+                total,
+                done: false,
+              };
+              const timer = window.setTimeout(
+                () => {
+                  if (settled || generation.cancelled) return;
+                  controller.enqueue(
+                    encoder.encode(
+                      `id: ${index + 1}\ndata: ${JSON.stringify(payload)}\n\n`
+                    )
+                  );
+                },
+                chunkDelayMs * (index + 1)
+              );
+              timers.push(timer);
+            });
+            const finalContent = total;
+            const completionTimer = window.setTimeout(
+              () => {
+                if (settled || generation.cancelled) return;
+                settled = true;
+                signal?.removeEventListener('abort', abort);
+                const completion = {
+                  type: 'done',
+                  messageId: assistantMessageId,
+                  content: finalContent,
+                  role: 'assistant',
+                  timestamp: Date.now(),
+                };
+                const block = `id: ${pieces.length + 1}\ndata: ${JSON.stringify(completion)}\n\n`;
+                controller.enqueue(
+                  encoder.encode(
+                    streamConfig?.duplicateCompletion ? block + block : block
+                  )
+                );
+                controller.close();
+              },
+              chunkDelayMs * pieces.length + completionDelayMs
+            );
+            timers.push(completionTimer);
+          },
+          cancel() {
+            settled = true;
+            timers.splice(0).forEach(timer => window.clearTimeout(timer));
+          },
+        });
+        return new Response(body, {
+          status: 200,
+          headers: {
+            'content-type': 'text/event-stream',
+            'cache-control': 'no-cache',
+          },
+        });
+      }
+
+      const cancelMatch = url.pathname.match(/^\/api\/jobs\/([^/]+)\/cancel$/);
+      if (cancelMatch && method === 'POST') {
+        const jobId = decodeURIComponent(cancelMatch[1]);
+        const generation = [...durableGenerations.values()].find(
+          candidate => candidate.jobId === jobId
+        );
+        if (generation) generation.cancelled = true;
+        const sent = window as unknown as Record<string, unknown>;
+        ((sent.__libreChatCancels ||= []) as unknown[]).push({ jobId });
+        return jsonResponse({ cancelled: true });
+      }
+
+      return originalFetch(input, init);
+    };
+
     class MockWebSocket {
       static CONNECTING = 0;
       static OPEN = 1;

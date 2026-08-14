@@ -172,14 +172,14 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
       namespace: this.namespace,
       body: buildWorkspaceClaimManifest(
         task,
-        workPolicyService.resolve(task.policyId).workspaceSize
+        (await workPolicyService.resolve(task.policyId)).workspaceSize
       ),
     });
   }
 
   async ensureRuntime(task: WorkTaskRecord): Promise<void> {
     assertNoHostWorkspace(task);
-    const policy = workPolicyService.resolve(task.policyId);
+    const policy = await workPolicyService.resolve(task.policyId);
     const { core } = await this.client();
     const existing = await this.readPod(task.containerName);
     if (existing) {
@@ -276,7 +276,7 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
 
   async previewEndpoint(
     task: WorkTaskRecord
-  ): Promise<{ host?: string; port: number } | undefined> {
+  ): Promise<{ host: string; port: number } | undefined> {
     // The sandbox publishes nothing: the backend (running in-cluster)
     // reaches the preview server directly on the Pod IP. The IP is valid
     // exactly as long as the Pod, which is exactly as long as the preview.

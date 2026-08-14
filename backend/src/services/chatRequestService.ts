@@ -59,9 +59,11 @@ export interface ChatPersonaLookupService {
 export interface ChatPreferencesLookupService {
   getPreferences(
     userId?: string
-  ): Pick<
-    UserPreferences,
-    'visionModel' | 'visionProviderType' | 'visionProviderId'
+  ): Promise<
+    Pick<
+      UserPreferences,
+      'visionModel' | 'visionProviderType' | 'visionProviderId'
+    >
   >;
 }
 
@@ -269,7 +271,7 @@ export class ChatRequestService {
       this.preferencesService &&
       generationContextContainsImages(messageOptions)
     ) {
-      const preferences = this.preferencesService.getPreferences(userId);
+      const preferences = await this.preferencesService.getPreferences(userId);
       const visionModel = preferences.visionModel?.trim();
 
       if (visionModel) {

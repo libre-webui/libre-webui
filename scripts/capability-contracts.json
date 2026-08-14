@@ -493,9 +493,10 @@
             "method": "post",
             "path": "/video/generate",
             "operationPatterns": [
-              "pluginService\\.submitVideoGenRequest\\(",
-              "mediaGenerationJobService\\.create\\("
-            ]
+              "mediaGenerationJobService\\.queueVideoSubmission\\(",
+              "res\\.status\\(202\\)\\.json\\("
+            ],
+            "forbiddenPatterns": ["pluginService\\.submitVideoGenRequest\\("]
           },
           {
             "kind": "express-route",
@@ -543,7 +544,7 @@
           "file": "docs/38-MEDIA_GENERATION.md",
           "patterns": [
             "Submitting a job\\s+\\(`POST /api/media/video/generate`\\) returns `202`",
-            "The UI checks every 30 seconds"
+            "A durable `media\\.video\\.resume\\.v1` job polls the provider"
           ]
         }
       ],
@@ -557,6 +558,16 @@
             "service\\.poll\\(",
             "service\\.download\\(",
             "downloaded\\.video\\.toString\\(\\), 'video-bytes'"
+          ]
+        },
+        {
+          "file": "scripts/test-openrouter-media-routing.mjs",
+          "runner": "test:package",
+          "name": "prepared video and resume publications resolve lost commit acknowledgements",
+          "behaviorPatterns": [
+            "mediaGenerationJobService\\.queueVideoSubmission\\('default'",
+            "'media\\.video\\.submit\\.v1'",
+            "mediaGenerationJobService\\.acceptSubmittedProviderJob\\("
           ]
         }
       ],

@@ -16,8 +16,9 @@
  */
 
 import { randomUUID } from 'crypto';
-import { getDatabaseSafe } from '../db.js';
+import { getPersistence } from '../persistence/index.js';
 import { createLogger } from '../utils/logger.js';
+import { encryptionService } from './encryptionService.js';
 
 const logger = createLogger('plugin-usage');
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -114,9 +115,7 @@ export interface PluginUsageAnalytics {
   };
 }
 
-type Numberish = number | bigint | null;
-
-const asNumber = (value: Numberish | undefined): number =>
+const asNumber = (value: unknown): number =>
   typeof value === 'bigint' ? Number(value) : Number(value ?? 0);
 
 const nonNegativeInteger = (value: unknown): number | undefined => {
@@ -173,51 +172,43 @@ export function normalizeProviderTokenUsage(
 }
 
 class PluginUsageService {
-  private lastPrunedAt = 0;
-
-  record(input: PluginUsageEventInput): void {
-    const db = getDatabaseSafe();
-    if (!db) return;
-
+  async record(input: PluginUsageEventInput): Promise<void> {
+    const userId = input.userId?.trim();
+    // Usage rows are user-owned and carry a foreign key in team mode. Never
+    // invent a synthetic identity: background callers must propagate the
+    // durable job actor, while genuinely system-scoped calls are not metered.
+    if (!userId) return;
+    const createdAt = input.createdAt ?? Date.now();
+    const tokens = input.tokens;
+    // Metering is intentionally best effort and must never make a provider
+    // request fail. The repository still performs prune+insert atomically.
     try {
-      const createdAt = input.createdAt ?? Date.now();
-      if (createdAt - this.lastPrunedAt >= DAY_MS) {
-        db.prepare('DELETE FROM plugin_usage_events WHERE created_at < ?').run(
-          createdAt - RETENTION_DAYS * DAY_MS
-        );
-        this.lastPrunedAt = createdAt;
-      }
-      const tokens = input.tokens;
-      db.prepare(
-        `INSERT INTO plugin_usage_events
-          (id, user_id, plugin_id, plugin_name, capability, model, status,
-           prompt_tokens, completion_tokens, total_tokens, input_units,
-           output_units, unit_kind, duration_ms, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).run(
-        randomUUID(),
-        input.userId || 'default',
-        input.pluginId,
-        input.pluginName,
-        input.capability,
-        input.model,
-        input.status,
-        tokens?.promptTokens ?? null,
-        tokens?.completionTokens ?? null,
-        tokens?.totalTokens ?? null,
-        Math.max(0, Math.round(input.inputUnits ?? 0)),
-        Math.max(0, Math.round(input.outputUnits ?? 0)),
-        input.unitKind ?? null,
-        Math.max(0, Math.round(input.durationMs)),
-        createdAt
+      await this.repository().recordAndPrune(
+        {
+          id: randomUUID(),
+          user_id: userId,
+          plugin_id: input.pluginId,
+          plugin_name: input.pluginName,
+          capability: input.capability,
+          model: input.model,
+          status: input.status,
+          prompt_tokens: tokens?.promptTokens ?? null,
+          completion_tokens: tokens?.completionTokens ?? null,
+          total_tokens: tokens?.totalTokens ?? null,
+          input_units: Math.max(0, Math.round(input.inputUnits ?? 0)),
+          output_units: Math.max(0, Math.round(input.outputUnits ?? 0)),
+          unit_kind: input.unitKind ?? null,
+          duration_ms: Math.max(0, Math.round(input.durationMs)),
+          created_at: createdAt,
+        },
+        createdAt - RETENTION_DAYS * DAY_MS
       );
     } catch (error) {
-      // Metering must never make a provider request fail.
       logger.warn('Failed to record plugin usage:', error);
     }
   }
 
-  getAnalytics(requestedDays = 30): PluginUsageAnalytics {
+  async getAnalytics(requestedDays = 30): Promise<PluginUsageAnalytics> {
     const days = Math.min(
       MAX_ANALYTICS_DAYS,
       Math.max(MIN_ANALYTICS_DAYS, Math.round(requestedDays))
@@ -226,41 +217,17 @@ class PluginUsageService {
     const startOfToday = new Date(to);
     startOfToday.setUTCHours(0, 0, 0, 0);
     const from = startOfToday.getTime() - (days - 1) * DAY_MS;
-    const empty = this.emptyAnalytics(from, to, days);
-    const db = getDatabaseSafe();
-    if (!db) return empty;
-
-    const totals = db
-      .prepare(
-        `SELECT
-           COUNT(*) AS calls,
-           SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS successful_calls,
-           SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS failed_calls,
-           SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_calls,
-           SUM(CASE WHEN total_tokens IS NOT NULL THEN 1 ELSE 0 END) AS metered_calls,
-           SUM(COALESCE(prompt_tokens, 0)) AS prompt_tokens,
-           SUM(COALESCE(completion_tokens, 0)) AS completion_tokens,
-           SUM(COALESCE(total_tokens, 0)) AS reported_tokens,
-           ROUND(AVG(duration_ms)) AS average_latency_ms,
-           COUNT(DISTINCT user_id) AS unique_users
-         FROM plugin_usage_events
-         WHERE created_at >= ? AND created_at <= ?`
-      )
-      .get(from, to) as Record<string, Numberish>;
-
-    const seriesRows = db
-      .prepare(
-        `SELECT
-           CAST((created_at - ?) / ? AS INTEGER) AS bucket,
-           COUNT(*) AS calls,
-           SUM(COALESCE(total_tokens, 0)) AS tokens,
-           SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errors
-         FROM plugin_usage_events
-         WHERE created_at >= ? AND created_at <= ?
-         GROUP BY bucket
-         ORDER BY bucket ASC`
-      )
-      .all(from, DAY_MS, from, to) as Array<Record<string, Numberish>>;
+    const heatmapFrom = startOfToday.getTime() - (HEATMAP_DAYS - 1) * DAY_MS;
+    const repository = this.repository();
+    const [totals, seriesRows, plugins, models, heatmapRows, capabilities] =
+      await Promise.all([
+        repository.totals(from, to),
+        repository.series(from, to, DAY_MS),
+        repository.plugins(from, to),
+        repository.models(from, to),
+        repository.heatmap(heatmapFrom, to, DAY_MS),
+        repository.capabilities(from, to),
+      ]);
 
     const seriesByBucket = new Map(
       seriesRows.map(row => [asNumber(row.bucket), row])
@@ -275,60 +242,16 @@ class PluginUsageService {
       };
     });
 
-    const plugins = db
-      .prepare(
-        `SELECT plugin_id, plugin_name, COUNT(*) AS calls,
-                SUM(COALESCE(total_tokens, 0)) AS tokens,
-                SUM(CASE WHEN status != 'success' THEN 1 ELSE 0 END) AS errors,
-                ROUND(AVG(duration_ms)) AS average_latency_ms
-         FROM plugin_usage_events
-         WHERE created_at >= ? AND created_at <= ?
-         GROUP BY plugin_id, plugin_name
-         ORDER BY calls DESC, tokens DESC
-         LIMIT 50`
-      )
-      .all(from, to) as Array<Record<string, string | Numberish>>;
-
-    const models = db
-      .prepare(
-        `SELECT model, plugin_id, plugin_name, COUNT(*) AS calls,
-                SUM(COALESCE(total_tokens, 0)) AS tokens,
-                SUM(CASE WHEN status != 'success' THEN 1 ELSE 0 END) AS errors,
-                ROUND(AVG(duration_ms)) AS average_latency_ms
-         FROM plugin_usage_events
-         WHERE created_at >= ? AND created_at <= ?
-         GROUP BY model, plugin_id, plugin_name
-         ORDER BY calls DESC, tokens DESC
-         LIMIT 100`
-      )
-      .all(from, to) as Array<Record<string, string | Numberish>>;
-
-    const heatmapFrom = startOfToday.getTime() - (HEATMAP_DAYS - 1) * DAY_MS;
-    const heatmapRows = db
-      .prepare(
-        `SELECT
-           CAST((created_at - ?) / ? AS INTEGER) AS bucket,
-           model,
-           COUNT(*) AS calls
-         FROM plugin_usage_events
-         WHERE created_at >= ? AND created_at <= ?
-         GROUP BY bucket, model
-         ORDER BY bucket ASC, calls DESC`
-      )
-      .all(heatmapFrom, DAY_MS, heatmapFrom, to) as Array<
-      Record<string, string | Numberish>
-    >;
-
     const heatmapBuckets = new Map<
       number,
       Array<{ model: string; calls: number }>
     >();
     const heatmapModelTotals = new Map<string, number>();
     for (const row of heatmapRows) {
-      const bucket = asNumber(row.bucket as Numberish);
+      const bucket = asNumber(row.bucket);
       if (bucket < 0 || bucket >= HEATMAP_DAYS) continue;
       const model = String(row.model ?? '');
-      const calls = asNumber(row.calls as Numberish);
+      const calls = asNumber(row.calls);
       if (!model || calls <= 0) continue;
       const entries = heatmapBuckets.get(bucket) ?? [];
       entries.push({ model, calls });
@@ -356,19 +279,6 @@ class PluginUsageService {
         })),
     };
 
-    const capabilities = db
-      .prepare(
-        `SELECT capability, COUNT(*) AS calls,
-                SUM(COALESCE(total_tokens, 0)) AS tokens,
-                SUM(input_units) AS input_units,
-                SUM(output_units) AS output_units
-         FROM plugin_usage_events
-         WHERE created_at >= ? AND created_at <= ?
-         GROUP BY capability
-         ORDER BY calls DESC`
-      )
-      .all(from, to) as Array<Record<string, string | Numberish>>;
-
     return {
       range: { from, to, days },
       totals: {
@@ -387,26 +297,26 @@ class PluginUsageService {
       plugins: plugins.map(row => ({
         pluginId: String(row.plugin_id),
         pluginName: String(row.plugin_name),
-        calls: asNumber(row.calls as Numberish),
-        tokens: asNumber(row.tokens as Numberish),
-        errors: asNumber(row.errors as Numberish),
-        averageLatencyMs: asNumber(row.average_latency_ms as Numberish),
+        calls: asNumber(row.calls),
+        tokens: asNumber(row.tokens),
+        errors: asNumber(row.errors),
+        averageLatencyMs: asNumber(row.average_latency_ms),
       })),
       models: models.map(row => ({
         model: String(row.model),
         pluginId: String(row.plugin_id),
         pluginName: String(row.plugin_name),
-        calls: asNumber(row.calls as Numberish),
-        tokens: asNumber(row.tokens as Numberish),
-        errors: asNumber(row.errors as Numberish),
-        averageLatencyMs: asNumber(row.average_latency_ms as Numberish),
+        calls: asNumber(row.calls),
+        tokens: asNumber(row.tokens),
+        errors: asNumber(row.errors),
+        averageLatencyMs: asNumber(row.average_latency_ms),
       })),
       capabilities: capabilities.map(row => ({
         capability: String(row.capability) as PluginUsageCapability,
-        calls: asNumber(row.calls as Numberish),
-        tokens: asNumber(row.tokens as Numberish),
-        inputUnits: asNumber(row.input_units as Numberish),
-        outputUnits: asNumber(row.output_units as Numberish),
+        calls: asNumber(row.calls),
+        tokens: asNumber(row.tokens),
+        inputUnits: asNumber(row.input_units),
+        outputUnits: asNumber(row.output_units),
       })),
       heatmap,
     };
@@ -447,6 +357,11 @@ class PluginUsageService {
         cells: [],
       },
     };
+  }
+
+  private repository() {
+    return getPersistence(encryptionService).repositories.extensions
+      .pluginUsage;
   }
 }
 

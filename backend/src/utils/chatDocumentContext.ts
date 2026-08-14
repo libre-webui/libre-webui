@@ -52,8 +52,9 @@ export async function buildChatDocumentContext(
   // session's own uploads and the user's standing uploads in the
   // searchable scope. searchDocuments picks semantic or keyword retrieval
   // by the embedding settings, so retrieval works either way.
-  const knowledgeCollectionIds = storageService.getSession(sessionId, userId)
-    ?.settings?.knowledgeCollectionIds;
+  const knowledgeCollectionIds = (
+    await storageService.getSession(sessionId, userId)
+  )?.settings?.knowledgeCollectionIds;
 
   const relevantDocuments = await documentService.searchDocuments(
     message,
@@ -73,7 +74,10 @@ export async function buildChatDocumentContext(
   const sources: ChatDocumentSource[] = [];
   for (const chunk of relevantDocuments) {
     if (!documentsMap.has(chunk.documentId)) {
-      const document = documentService.getDocument(chunk.documentId, userId);
+      const document = await documentService.getDocument(
+        chunk.documentId,
+        userId
+      );
       documentsMap.set(chunk.documentId, document);
       sources.push({
         id: chunk.documentId,

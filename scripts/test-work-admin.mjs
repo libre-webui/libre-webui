@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { initializeWorkTestPlatform } from './lib/work-test-platform.mjs';
 
 process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
 
@@ -30,9 +31,10 @@ const taskModule = await import(
 );
 
 const { buildWorkAdminOverview } = adminModule;
+const closeWorkPlatform = await initializeWorkTestPlatform(repoRoot);
 
-test.after(() => {
-  databaseModule.closeDatabase();
+test.after(async () => {
+  await closeWorkPlatform();
   if (previousDataDir === undefined) delete process.env.DATA_DIR;
   else process.env.DATA_DIR = previousDataDir;
   rmSync(dataDir, { recursive: true, force: true });
@@ -125,7 +127,7 @@ test('an unavailable runtime degrades state to unknown, never fails', async () =
   assert.ok(flaky.tasks.every(task => task.running === null));
 });
 
-test('tasks are listed across every user with their owner username', () => {
+test('tasks are listed across every user with their owner username', async () => {
   const db = databaseModule.getDatabase();
   const now = Date.now();
   const insertUser = db.prepare(
@@ -145,7 +147,7 @@ test('tasks are listed across every user with their owner username', () => {
   insertTask.run('tb', 'usr', 'user task', 'm', 'v-b', 'c-b', now, now + 1);
 
   const service = new taskModule.WorkTaskService();
-  const listed = service.listAllTasksWithOwner();
+  const listed = await service.listAllTasksWithOwner();
   assert.deepEqual(
     listed.map(entry => [entry.record.id, entry.ownerUsername]),
     [

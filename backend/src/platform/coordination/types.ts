@@ -32,6 +32,18 @@ export interface CoordinationLease {
   release(): Promise<boolean>;
 }
 
+/**
+ * A bounded shared-capacity permit. The opaque owner token is never suitable
+ * for logging or use as an authorization credential.
+ */
+export interface CoordinationPermit {
+  key: string;
+  ownerToken: string;
+  expiresAt: number;
+  extend(ttlMs: number): Promise<boolean>;
+  release(): Promise<boolean>;
+}
+
 export interface RateLimitResult {
   allowed: boolean;
   remaining: number;
@@ -56,13 +68,28 @@ export interface Coordinator {
   ): Promise<CoordinationUnsubscribe>;
   getCache<T>(key: string): Promise<T | null>;
   setCache<T>(key: string, value: T, ttlMs: number): Promise<void>;
+  /**
+   * Atomically returns and removes a cached value. This is the only safe
+   * primitive for one-use credentials shared by multiple replicas.
+   */
+  consumeCache<T>(key: string): Promise<T | null>;
   deleteCache(key: string): Promise<void>;
   acquireLease(key: string, ttlMs: number): Promise<CoordinationLease | null>;
+  acquireSemaphore(
+    key: string,
+    capacity: number,
+    ttlMs: number
+  ): Promise<CoordinationPermit | null>;
   consumeRateLimit(
     key: string,
     limit: number,
     windowMs: number
   ): Promise<RateLimitResult>;
+  setPresence(scope: string, memberId: string, ttlMs: number): Promise<void>;
+  listPresence(scope: string): Promise<string[]>;
+  clearPresence(scope: string, memberId: string): Promise<void>;
+  getRevocationEpoch(subject: string): Promise<number>;
+  revoke(subject: string): Promise<number>;
 }
 
 export class CoordinationUnavailableError extends Error {

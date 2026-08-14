@@ -102,7 +102,7 @@ test('TTS routes a shared model alias through the selected plugin and user valve
   });
 
   try {
-    const models = service.getAvailableTTSModels('user-42');
+    const models = await service.getAvailableTTSModels('user-42');
     assert.deepEqual(
       models.map(({ model, plugin }) => ({ model, plugin })),
       [
@@ -158,7 +158,7 @@ test('inactive authless TTS plugins are neither listed nor routable', async () =
     validateEndpointUrl: endpoint => endpoint,
   });
 
-  assert.deepEqual(service.getAvailableTTSModels('user-a'), []);
+  assert.deepEqual(await service.getAvailableTTSModels('user-a'), []);
   await assert.rejects(
     service.executeTTSRequest('tts-1-hd', 'hello', {
       pluginId: plugin.id,
@@ -168,7 +168,7 @@ test('inactive authless TTS plugins are neither listed nor routable', async () =
   );
 });
 
-test('a discovered TTS capability cannot fall back to an unloaded root model', () => {
+test('a discovered TTS capability cannot fall back to an unloaded root model', async () => {
   const plugin = createPlugin(
     'single-resident-model',
     'http://127.0.0.1:9/v1/audio/speech'
@@ -183,7 +183,7 @@ test('a discovered TTS capability cannot fall back to an unloaded root model', (
   });
 
   assert.equal(
-    service.getPluginForTTS('unloaded-model', plugin.id, 'user-a'),
+    await service.getPluginForTTS('unloaded-model', plugin.id, 'user-a'),
     null
   );
 });

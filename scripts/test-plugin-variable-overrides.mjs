@@ -103,7 +103,7 @@ test('unsetting an override restores defaults without affecting other users or v
     insertUser.run(secondUserId, secondUserId, 'test', now, now);
 
     assert.deepEqual(
-      pluginVariablesService.getResolvedVariables(
+      await pluginVariablesService.getResolvedVariables(
         pluginId,
         schema,
         firstUserId
@@ -116,7 +116,7 @@ test('unsetting an override restores defaults without affecting other users or v
     );
 
     assert.equal(
-      pluginVariablesService.setVariables(
+      await pluginVariablesService.setVariables(
         pluginId,
         {
           endpoint: 'https://first.example/v1/chat/completions',
@@ -128,7 +128,7 @@ test('unsetting an override restores defaults without affecting other users or v
       true
     );
     assert.equal(
-      pluginVariablesService.setVariables(
+      await pluginVariablesService.setVariables(
         pluginId,
         {
           endpoint: 'https://second.example/v1/chat/completions',
@@ -141,19 +141,28 @@ test('unsetting an override restores defaults without affecting other users or v
 
     // Prime the resolved-value cache before clearing the first user's endpoint.
     assert.equal(
-      pluginVariablesService.getResolvedVariables(pluginId, schema, firstUserId)
-        .endpoint,
+      (
+        await pluginVariablesService.getResolvedVariables(
+          pluginId,
+          schema,
+          firstUserId
+        )
+      ).endpoint,
       'https://first.example/v1/chat/completions'
     );
 
     assert.equal(
-      pluginVariablesService.setVariables(pluginId, {}, schema, firstUserId, [
-        'endpoint',
-      ]),
+      await pluginVariablesService.setVariables(
+        pluginId,
+        {},
+        schema,
+        firstUserId,
+        ['endpoint']
+      ),
       true
     );
 
-    const firstUserDisplay = pluginVariablesService.getVariables(
+    const firstUserDisplay = await pluginVariablesService.getVariables(
       pluginId,
       schema,
       firstUserId,
@@ -169,7 +178,7 @@ test('unsetting an override restores defaults without affecting other users or v
     assert.equal(firstUserDisplay.temperature.value, 0.2);
 
     assert.deepEqual(
-      pluginVariablesService.getResolvedVariables(
+      await pluginVariablesService.getResolvedVariables(
         pluginId,
         schema,
         firstUserId
@@ -181,16 +190,18 @@ test('unsetting an override restores defaults without affecting other users or v
       }
     );
     assert.equal(
-      pluginVariablesService.getResolvedVariables(
-        pluginId,
-        schema,
-        secondUserId
+      (
+        await pluginVariablesService.getResolvedVariables(
+          pluginId,
+          schema,
+          secondUserId
+        )
       ).endpoint,
       'https://second.example/v1/chat/completions'
     );
 
     assert.equal(
-      pluginVariablesService.setVariables(
+      await pluginVariablesService.setVariables(
         pluginId,
         { unknown: 'value' },
         schema,
@@ -199,7 +210,7 @@ test('unsetting an override restores defaults without affecting other users or v
       false
     );
     assert.equal(
-      pluginVariablesService.setVariables(
+      await pluginVariablesService.setVariables(
         pluginId,
         { temperature: 0.9 },
         schema,
@@ -209,13 +220,13 @@ test('unsetting an override restores defaults without affecting other users or v
       false
     );
     assert.equal(
-      pluginVariablesService.getVariables(pluginId, schema, firstUserId)
+      (await pluginVariablesService.getVariables(pluginId, schema, firstUserId))
         .temperature.value,
       0.2
     );
 
     assert.equal(
-      pluginVariablesService.setVariables(
+      await pluginVariablesService.setVariables(
         pluginId,
         {
           endpoint: 'https://rollback.example/v1/chat/completions',
@@ -235,7 +246,7 @@ test('unsetting an override restores defaults without affecting other users or v
         throw new Error('forced encryption failure');
       };
       assert.equal(
-        pluginVariablesService.setVariables(
+        await pluginVariablesService.setVariables(
           pluginId,
           {
             temperature: 0.9,
@@ -251,7 +262,7 @@ test('unsetting an override restores defaults without affecting other users or v
       encryptionService.encrypt = originalEncrypt;
     }
 
-    const valuesAfterRollback = pluginVariablesService.getVariables(
+    const valuesAfterRollback = await pluginVariablesService.getVariables(
       pluginId,
       schema,
       firstUserId
@@ -268,6 +279,128 @@ test('unsetting an override restores defaults without affecting other users or v
       delete process.env.DATA_DIR;
     } else {
       process.env.DATA_DIR = previousDataDirectory;
+    }
+    fs.rmSync(dataDirectory, { recursive: true, force: true });
+  }
+});
+
+test('plugin variable invalidation reaches peer service caches before the write returns', async () => {
+  const dataDirectory = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'libre-webui-plugin-cache-invalidation-')
+  );
+  const previousEnvironment = new Map(
+    [
+      'DATA_DIR',
+      'LIBRE_PLATFORM_MODE',
+      'DATABASE_BACKEND',
+      'COORDINATION_BACKEND',
+    ].map(name => [name, process.env[name]])
+  );
+  process.env.DATA_DIR = dataDirectory;
+  process.env.LIBRE_PLATFORM_MODE = 'solo';
+  process.env.DATABASE_BACKEND = 'sqlite';
+  process.env.COORDINATION_BACKEND = 'local';
+
+  const { closeDatabase, getDatabase } = await import('../backend/dist/db.js');
+  const { PluginVariablesService } =
+    await import('../backend/dist/services/pluginVariablesService.js');
+  const {
+    closePluginCacheInvalidation,
+    getPluginCacheInvalidationHealth,
+    probePluginCacheInvalidationHealth,
+  } = await import('../backend/dist/services/pluginCacheInvalidation.js');
+  const coordination =
+    await import('../backend/dist/platform/coordination/service.js');
+  const writer = new PluginVariablesService();
+  const reader = new PluginVariablesService();
+  const pluginId = 'replicated-provider';
+  const userId = 'replicated-user';
+  const schema = [
+    {
+      name: 'endpoint',
+      type: 'string',
+      label: 'API endpoint',
+      default: 'https://default.example/v1',
+    },
+  ];
+
+  try {
+    await coordination.resetPlatformServicesForTests();
+    await coordination.initializeCoordinator();
+    const database = getDatabase();
+    const now = Date.now();
+    database
+      .prepare(
+        `INSERT INTO users
+           (id, username, email, password_hash, role, created_at, updated_at)
+         VALUES (?, ?, NULL, 'hash', 'user', ?, ?)`
+      )
+      .run(userId, userId, now, now);
+
+    assert.equal(
+      (await reader.getResolvedVariables(pluginId, schema, userId)).endpoint,
+      'https://default.example/v1'
+    );
+    assert.equal(
+      await writer.setVariables(
+        pluginId,
+        { endpoint: 'https://new.example/v1' },
+        schema,
+        userId
+      ),
+      true
+    );
+    assert.equal(
+      (await reader.getResolvedVariables(pluginId, schema, userId)).endpoint,
+      'https://new.example/v1'
+    );
+
+    const coordinator = coordination.getCoordinator();
+    const originalPublish = coordinator.publish.bind(coordinator);
+    coordinator.publish = async () => {
+      throw new Error('forced invalidation publication failure');
+    };
+    try {
+      assert.equal(
+        await writer.setVariables(
+          pluginId,
+          { endpoint: 'https://committed.example/v1' },
+          schema,
+          userId
+        ),
+        true,
+        'a post-commit publication failure must not report the SQL mutation as failed'
+      );
+      assert.equal(getPluginCacheInvalidationHealth().ready, false);
+      assert.equal(
+        (await reader.getResolvedVariables(pluginId, schema, userId)).endpoint,
+        'https://committed.example/v1',
+        'the writer process still invalidates its local peers before publication'
+      );
+    } finally {
+      coordinator.publish = originalPublish;
+    }
+
+    assert.equal(
+      (await probePluginCacheInvalidationHealth()).ready,
+      true,
+      'readiness must recover after the coordinator does, without another mutation'
+    );
+    assert.equal(
+      (await reader.getResolvedVariables(pluginId, schema, userId)).endpoint,
+      'https://committed.example/v1'
+    );
+  } finally {
+    await Promise.all([
+      writer.closeCacheInvalidation(),
+      reader.closeCacheInvalidation(),
+    ]);
+    await closePluginCacheInvalidation();
+    await coordination.closeCoordinator();
+    closeDatabase();
+    for (const [name, value] of previousEnvironment) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
     }
     fs.rmSync(dataDirectory, { recursive: true, force: true });
   }

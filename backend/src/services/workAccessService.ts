@@ -27,7 +27,7 @@
  * server paths and therefore stay admin-only regardless of the setting.
  */
 
-import { getDatabase } from '../db.js';
+import { getSystemSetting, setSystemSetting } from './systemSettingsService.js';
 
 export type WorkAccessMode = 'admins' | 'all-users';
 
@@ -45,37 +45,27 @@ export function isWorkAccessMode(value: unknown): value is WorkAccessMode {
   );
 }
 
-export function getWorkAccessMode(): WorkAccessMode {
-  const row = getDatabase()
-    .prepare('SELECT value FROM system_settings WHERE key = ?')
-    .get(WORK_ACCESS_MODE_KEY) as { value?: string } | undefined;
-  return isWorkAccessMode(row?.value) ? row.value : 'admins';
+export async function getWorkAccessMode(): Promise<WorkAccessMode> {
+  const value = await getSystemSetting(WORK_ACCESS_MODE_KEY);
+  return isWorkAccessMode(value) ? value : 'admins';
 }
 
-export function setWorkAccessMode(mode: WorkAccessMode): void {
+export async function setWorkAccessMode(mode: WorkAccessMode): Promise<void> {
   if (!isWorkAccessMode(mode)) {
     throw new Error(`Invalid Work access mode "${String(mode)}".`);
   }
-  getDatabase()
-    .prepare(
-      `INSERT INTO system_settings (key, value, updated_at)
-       VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET
-         value = excluded.value,
-         updated_at = excluded.updated_at`
-    )
-    .run(WORK_ACCESS_MODE_KEY, mode, Date.now());
+  await setSystemSetting(WORK_ACCESS_MODE_KEY, mode);
 }
 
 /**
  * Whether a user may use Work right now. Administrators always may; other
  * active accounts may when the mode is opened to all users.
  */
-export function userHasWorkAccess(user: {
+export async function userHasWorkAccess(user: {
   role?: string;
   status?: string;
-}): boolean {
+}): Promise<boolean> {
   if (user.status !== undefined && user.status !== 'active') return false;
   if (user.role === 'admin') return true;
-  return getWorkAccessMode() === 'all-users';
+  return (await getWorkAccessMode()) === 'all-users';
 }

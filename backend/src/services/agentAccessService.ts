@@ -24,7 +24,7 @@
  * set, pins the value either way and locks the runtime toggle.
  */
 
-import { getDatabase } from '../db.js';
+import { getSystemSetting, setSystemSetting } from './systemSettingsService.js';
 
 export const AGENTS_ENABLED_KEY = 'agents_enabled';
 
@@ -34,29 +34,18 @@ export function agentsEnabledLockedByEnv(): boolean {
   return env === 'true' || env === 'false';
 }
 
-export function getAgentsEnabled(): boolean {
+export async function getAgentsEnabled(): Promise<boolean> {
   const env = process.env.AGENT_CLI_MODELS_ENABLED;
   if (env === 'false') return false;
   if (env === 'true') return true;
   try {
-    const row = getDatabase()
-      .prepare('SELECT value FROM system_settings WHERE key = ?')
-      .get(AGENTS_ENABLED_KEY) as { value?: string } | undefined;
-    return row?.value === 'true';
+    return (await getSystemSetting(AGENTS_ENABLED_KEY)) === 'true';
   } catch {
     // No database means no persisted opt-in; stay disabled.
     return false;
   }
 }
 
-export function setAgentsEnabled(enabled: boolean): void {
-  getDatabase()
-    .prepare(
-      `INSERT INTO system_settings (key, value, updated_at)
-       VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET
-         value = excluded.value,
-         updated_at = excluded.updated_at`
-    )
-    .run(AGENTS_ENABLED_KEY, enabled ? 'true' : 'false', Date.now());
+export async function setAgentsEnabled(enabled: boolean): Promise<void> {
+  await setSystemSetting(AGENTS_ENABLED_KEY, enabled ? 'true' : 'false');
 }

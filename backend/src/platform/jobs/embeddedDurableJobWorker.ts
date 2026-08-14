@@ -21,14 +21,21 @@ import {
   DurableJobExecutionError,
   type DurableJobLease,
   type DurableJobProgress,
+  type DurableJobState,
 } from './durableJobTypes.js';
 import { DurableJobService } from './durableJobService.js';
+import {
+  OWNER_DELETE_CONTENT_JOB_TYPE,
+  RESOURCE_DELETE_JOB_TYPE,
+} from './domainJobContracts.js';
 
 export interface DurableJobExecutionContext {
   signal: AbortSignal;
   payload: unknown;
   actorUserId: string;
-  reportProgress(progress: DurableJobProgress): void;
+  /** One-based durable attempt number for idempotent fault/recovery control. */
+  attemptCount: number;
+  reportProgress(progress: DurableJobProgress): void | Promise<void>;
   /**
    * A handler must call this immediately before each external side effect.
    * It rechecks actor authority, cancellation, and lease ownership.
@@ -54,6 +61,8 @@ export interface EmbeddedDurableJobWorkerOptions {
   maxRetryBackoffMs?: number;
   shutdownTimeoutMs?: number;
   random?: () => number;
+  /** Reconcile cleanup-only dead letters before this worker can claim work. */
+  reconcileBeforePolling?(): unknown | Promise<unknown>;
 }
 
 export interface EmbeddedDurableJobWorkerStopResult {
@@ -129,8 +138,11 @@ export class EmbeddedDurableJobWorker {
   private readonly maxRetryBackoffMs: number;
   private readonly shutdownTimeoutMs: number;
   private readonly random: () => number;
+  private readonly reconcileBeforePolling?: () => unknown | Promise<unknown>;
   private readonly shutdown = new AbortController();
   private loopPromise: Promise<void> | null = null;
+  private loopError?: Error;
+  private pollHealthy = false;
   private readonly active = new Map<
     string,
     { lease: DurableJobLease; abort: AbortController; promise: Promise<void> }
@@ -144,6 +156,7 @@ export class EmbeddedDurableJobWorker {
     this.leaseMs = options.leaseMs ?? 30_000;
     this.pollIntervalMs = options.pollIntervalMs ?? 500;
     this.maxRetryBackoffMs = options.maxRetryBackoffMs ?? 60_000;
+    this.reconcileBeforePolling = options.reconcileBeforePolling;
     this.shutdownTimeoutMs =
       options.shutdownTimeoutMs ?? Math.min(5000, Math.floor(this.leaseMs / 2));
     const random = options.random ?? Math.random;
@@ -215,10 +228,28 @@ export class EmbeddedDurableJobWorker {
       throw new Error('A stopped durable job worker cannot restart');
     }
     if (this.loopPromise) return;
-    this.loopPromise = this.runLoop();
+    this.loopPromise = this.runLoop().catch(error => {
+      this.loopError =
+        error instanceof Error
+          ? error
+          : new Error('Embedded durable worker loop failed');
+      this.pollHealthy = false;
+      this.shutdown.abort(this.loopError);
+    });
+  }
+
+  isOperational(): boolean {
+    return (
+      Boolean(this.loopPromise) &&
+      !this.shutdown.signal.aborted &&
+      !this.loopError &&
+      this.pollHealthy
+    );
   }
 
   private async runLoop(): Promise<void> {
+    await this.reconcileBeforePolling?.();
+    this.pollHealthy = true;
     while (!this.shutdown.signal.aborted) {
       const lease = this.service.claim(this.workerId, this.leaseMs);
       if (!lease) {
@@ -274,18 +305,39 @@ export class EmbeddedDurableJobWorker {
     return Math.floor(exponential * (0.5 + this.random() * 0.5));
   }
 
+  private reconcileTerminalLifecycleJob(
+    lease: DurableJobLease,
+    state: DurableJobState
+  ): void {
+    if (
+      (state !== 'cancelled' && state !== 'dead_letter') ||
+      (lease.jobType !== RESOURCE_DELETE_JOB_TYPE &&
+        lease.jobType !== OWNER_DELETE_CONTENT_JOB_TYPE)
+    ) {
+      return;
+    }
+    try {
+      this.service.reconcileDeletionLifecycleJob(lease.id);
+    } catch {
+      // The service retains the exact terminal ID and retries it before the
+      // next claim. Do not stop an otherwise healthy worker after the
+      // terminal transition itself has already committed.
+    }
+  }
+
   private async execute(
     lease: DurableJobLease,
     abort: AbortController
   ): Promise<void> {
     const handler = this.handlers.get(lease.jobType);
     if (!handler) {
-      this.service.fail(lease, {
+      const state = this.service.fail(lease, {
         retryable: false,
         errorCode: 'unsupported-job-type',
         errorSummary: 'No handler is registered for this durable job type',
         backoffMs: 0,
       });
+      this.reconcileTerminalLifecycleJob(lease, state);
       return;
     }
 
@@ -307,12 +359,22 @@ export class EmbeddedDurableJobWorker {
         signal: abort.signal,
         payload,
         actorUserId: lease.actorUserId,
+        attemptCount: lease.attemptCount,
         reportProgress: progress =>
           this.service.reportProgress(lease, progress),
         assertSideEffectAllowed: () => this.assertActorAllowed(lease),
       });
       await this.assertActorAllowed(lease);
       this.service.complete(lease, result?.resultReference);
+      if (
+        lease.jobType === RESOURCE_DELETE_JOB_TYPE ||
+        lease.jobType === OWNER_DELETE_CONTENT_JOB_TYPE
+      ) {
+        const metadata = this.service.getMetadata(lease.id);
+        if (metadata) {
+          this.reconcileTerminalLifecycleJob(lease, metadata.state);
+        }
+      }
     } catch (error) {
       if (error instanceof DurableJobError && error.code === 'lease-lost') {
         return;
@@ -335,10 +397,11 @@ export class EmbeddedDurableJobWorker {
             };
           }
         }
-        this.service.fail(lease, {
+        const state = this.service.fail(lease, {
           ...failure,
           backoffMs,
         });
+        this.reconcileTerminalLifecycleJob(lease, state);
       } catch (failure) {
         if (
           !(failure instanceof DurableJobError) ||
@@ -371,7 +434,7 @@ export class EmbeddedDurableJobWorker {
     if (timeout) clearTimeout(timeout);
 
     let abandoned = 0;
-    let failed = 0;
+    let failed = this.loopError ? 1 : 0;
     // If a handler ignores AbortSignal, fencing still protects persisted job
     // state. After this release, a new claimant advances the lease token, so
     // the old handler cannot heartbeat or complete. External side effects must
@@ -391,6 +454,7 @@ export class EmbeddedDurableJobWorker {
     }
     this.active.clear();
     if (drained) this.loopPromise = null;
+    if (this.loopError) failed = 1;
     return { activeAtStop, abandoned, failed };
   }
 }

@@ -162,9 +162,27 @@ export const documentsApi = {
     return api.get('/documents/embeddings/status').then(res => res.data);
   },
 
-  regenerateEmbeddings: (): Promise<ApiResponse<void>> => {
+  regenerateEmbeddings: (): Promise<
+    ApiResponse<{
+      documentsTotal: number;
+      documentsRegenerated: number;
+      documentsSkipped: number;
+      chunksTotal: number;
+      chunksEmbedded: number;
+      model: string;
+      version: string;
+    }>
+  > => {
     if (isDemoMode()) {
-      return createDemoResponse(undefined);
+      return createDemoResponse({
+        documentsTotal: 0,
+        documentsRegenerated: 0,
+        documentsSkipped: 0,
+        chunksTotal: 0,
+        chunksEmbedded: 0,
+        model: 'nomic-embed-text',
+        version: 'v1',
+      });
     }
 
     return api.post('/documents/embeddings/regenerate').then(res => res.data);

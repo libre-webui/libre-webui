@@ -146,8 +146,7 @@ the wrong database or run source that differs from the deployed image.
 
 ```bash
 docker exec libre-webui \
-  node /app/backend/dist/cli/recoveryInventory.js \
-  --json --data-dir /app/backend/data
+  libre-webui recovery-check --json --data-dir /app/backend/data
 ```
 
 Exit status `0` means no recovery-readiness blockers were found, `1` means the
@@ -157,12 +156,34 @@ it never prints a key or other secret value. Keep the inventory with the
 corresponding backup so operators can compare the application version, schema
 fingerprint, expected Work resources, and exclusions before a restore.
 
-Install the provided backup script and systemd units, then enable the timer:
+Create dedicated backup encryption and signing keys with the exact deployed
+image. Keep this directory off the application volume and copy the encryption
+key and signing private key to a separate protected recovery location:
+
+```bash
+install -d -m 0700 /etc/libre-webui/backup-keys
+image_ref=$(docker inspect libre-webui --format '{{.Image}}')
+docker run --rm --user 0:0 --read-only --network none --cap-drop ALL \
+  --security-opt no-new-privileges \
+  --mount type=bind,src=/etc/libre-webui/backup-keys,dst=/backup-keys \
+  --entrypoint /usr/local/bin/libre-webui "$image_ref" \
+  backup keygen \
+  --directory /backup-keys
+```
+
+Key generation refuses existing output files. Never generate new keys over an
+existing backup set: losing either the archive encryption key or the signing
+identity makes the corresponding recovery proof unusable.
+
+Install the provided backup and restore scripts and systemd units, then enable
+the timer:
 
 ```bash
 install -d -m 0700 /var/backups/libre-webui
 install -m 0750 deploy/private/libre-webui-backup \
   /usr/local/sbin/libre-webui-backup
+install -m 0750 deploy/private/libre-webui-restore \
+  /usr/local/sbin/libre-webui-restore
 install -m 0644 deploy/private/libre-webui-backup.{service,timer} \
   /etc/systemd/system/
 systemctl daemon-reload
@@ -179,8 +200,9 @@ install -m 0600 /dev/null /etc/libre-webui/backup.env
 ```
 
 `LIBRE_WEBUI_STACK_DIR`, `LIBRE_WEBUI_BACKUP_RETENTION_DAYS`,
-`LIBRE_WEBUI_CONTAINER_NAME`, and `LIBRE_WEBUI_DATA_VOLUME` can be set there
-directly. Keep the file owned by root and mode `0600`.
+`LIBRE_WEBUI_CONTAINER_NAME`, and `LIBRE_WEBUI_BACKUP_KEY_DIR` can be set there
+directly. Keep the file owned by root and mode `0600`. A custom key directory
+must remain readable by root inside the systemd sandbox.
 
 Changing `LIBRE_WEBUI_BACKUP_DIR` also changes the systemd write boundary. The
 directory must exist before the service starts, and the unit needs a matching
@@ -209,18 +231,32 @@ prevents the timer from writing to a custom location.
 
 The backup service allows up to six hours for large archives. The helper
 acquires a host lock, stops the application only when it was already running,
-and runs the
-inventory against the quiesced volume with the exact deployed image. It then
-creates and validates the data archive, stores the paired inventory, and writes
-a SHA-256 manifest. Each file is renamed atomically and the manifest is
-published last as the completion marker. The helper remains a
-baseline volume backup, not a complete coordinated, signed, or encrypted system
-backup. Copy all three files off-host using encrypted storage and regularly test
-a restore. Back up `.env` separately in a secrets manager; never place it inside
-an unencrypted archive. Ollama models can be pulled again. Docker Work volumes,
-Kubernetes Work PVCs, and host-bound Work folders are outside the application
-data directory and require their own coordinated snapshots and retention
-policy.
+and creates the archive against the quiesced volume with the exact deployed
+image. The archive has a signed manifest and an operator-encrypted payload; it
+includes the data directory plus the runtime and secret configuration required
+to open that state. The helper then independently verifies the complete
+archive before atomically publishing its metadata report. Copy both files and
+the separately protected recovery keys off-host.
+
+Test recovery into a new volume without replacing the live volume:
+
+```bash
+LIBRE_WEBUI_RESTORE_IMAGE="$image_ref" \
+  libre-webui-restore \
+  /var/backups/libre-webui/libre-webui-integrated-YYYYMMDDTHHMMSSZ.lwb \
+  libre-webui-restore-drill
+```
+
+The restore helper refuses an existing volume or configuration target, verifies
+the archive and its internal recovery inventory in disposable storage, then
+copies data into the new volume and writes recovered `runtime.json` and
+`secrets.json` with private permissions. It never rewires or starts the live
+stack. Inspect the recovered configuration, update deployment-specific values
+deliberately, and test the restored volume with an isolated stack.
+
+Ollama models can be pulled again. Docker Work volumes, Kubernetes Work PVCs,
+and host-bound Work folders are outside the application data directory and
+require their own coordinated snapshots and retention policy.
 
 ## Updates
 

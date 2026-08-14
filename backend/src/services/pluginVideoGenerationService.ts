@@ -24,10 +24,19 @@ export interface VideoGenerationJobStatus {
 }
 
 export interface PluginVideoGenerationServiceDependencies {
-  getAllPlugins(userId?: string): Plugin[];
-  getPlugin(id: string, userId?: string): Plugin | null;
-  getApiKey(plugin: Plugin, userId?: string): string | null;
-  getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
+  getAllPlugins(userId?: string): Plugin[] | Promise<Plugin[]>;
+  getPlugin(
+    id: string,
+    userId?: string
+  ): Plugin | null | Promise<Plugin | null>;
+  getApiKey(
+    plugin: Plugin,
+    userId?: string
+  ): string | null | Promise<string | null>;
+  getPluginVariables(
+    plugin: Plugin,
+    userId?: string
+  ): PluginVariables | Promise<PluginVariables>;
   validateEndpointUrl(endpoint: string): string;
   recordUsage?(usage: PluginUsageEventInput): void;
 }
@@ -37,26 +46,36 @@ export class PluginVideoGenerationService {
     private readonly deps: PluginVideoGenerationServiceDependencies
   ) {}
 
-  getAvailableModels(userId?: string): Array<{
-    model: string;
-    plugin: string;
-    config?: VideoGenConfig;
-  }> {
-    return this.deps.getAllPlugins(userId).flatMap(plugin => {
+  async getAvailableModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      config?: VideoGenConfig;
+    }>
+  > {
+    const models: Array<{
+      model: string;
+      plugin: string;
+      config?: VideoGenConfig;
+    }> = [];
+    for (const plugin of await this.deps.getAllPlugins(userId)) {
       const capability = plugin.capabilities?.video;
       if (
         !plugin.active ||
         !capability ||
-        !this.deps.getApiKey(plugin, userId)
+        !(await this.deps.getApiKey(plugin, userId))
       ) {
-        return [];
+        continue;
       }
-      return capability.model_map.map(model => ({
-        model,
-        plugin: plugin.id,
-        config: capability.config,
-      }));
-    });
+      models.push(
+        ...capability.model_map.map(model => ({
+          model,
+          plugin: plugin.id,
+          config: capability.config,
+        }))
+      );
+    }
+    return models;
   }
 
   async submit(
@@ -69,12 +88,16 @@ export class PluginVideoGenerationService {
       resolution?: string;
       aspectRatio?: string;
       generateAudio?: boolean;
+      /** Stable caller key used to reconcile an accepted provider job. */
+      idempotencyKey?: string;
+      /** Shared-worker mode must not call a provider without this guarantee. */
+      requireIdempotency?: boolean;
       /** Cancels only this HTTP submission transport, not a provider job that was already accepted. */
       signal?: AbortSignal;
     }
   ): Promise<{ providerJobId: string; status: string }> {
     validatePluginModel(model);
-    const { plugin, endpoint, config, headers } = this.resolve(
+    const { plugin, endpoint, config, headers } = await this.resolve(
       model,
       options.pluginId,
       options.userId
@@ -82,6 +105,11 @@ export class PluginVideoGenerationService {
     if (config?.max_prompt_length && prompt.length > config.max_prompt_length) {
       throw new Error(
         `Prompt exceeds maximum length of ${config.max_prompt_length} characters`
+      );
+    }
+    if (options.requireIdempotency && config?.supports_idempotency !== true) {
+      throw new Error(
+        'The selected video provider does not declare idempotent submission support'
       );
     }
 
@@ -99,7 +127,9 @@ export class PluginVideoGenerationService {
     const startedAt = Date.now();
     try {
       const response = await axios.post(endpoint, payload, {
-        headers,
+        headers: options.idempotencyKey
+          ? { ...headers, 'Idempotency-Key': options.idempotencyKey }
+          : headers,
         timeout: 30000,
         maxRedirects: 0,
         signal: options.signal,
@@ -142,7 +172,7 @@ export class PluginVideoGenerationService {
     userId: string,
     signal?: AbortSignal
   ): Promise<VideoGenerationJobStatus> {
-    const { endpoint, headers } = this.resolve(model, pluginId, userId);
+    const { endpoint, headers } = await this.resolve(model, pluginId, userId);
     const statusEndpoint = `${endpoint.replace(/\/+$/, '')}/${encodeURIComponent(
       providerJobId
     )}`;
@@ -182,7 +212,7 @@ export class PluginVideoGenerationService {
     userId: string,
     signal?: AbortSignal
   ): Promise<{ video: Buffer; mimeType: string }> {
-    const { endpoint, headers } = this.resolve(model, pluginId, userId);
+    const { endpoint, headers } = await this.resolve(model, pluginId, userId);
     const contentEndpoint = `${endpoint.replace(
       /\/+$/,
       ''
@@ -212,13 +242,13 @@ export class PluginVideoGenerationService {
     }
   }
 
-  supportsCancellation(
+  async supportsCancellation(
     model: string,
     pluginId: string,
     userId: string
-  ): boolean {
+  ): Promise<boolean> {
     try {
-      const { endpoint, config } = this.resolve(model, pluginId, userId);
+      const { endpoint, config } = await this.resolve(model, pluginId, userId);
       const configuredEndpoint = config?.cancel_endpoint;
       const method = config?.cancel_method || 'POST';
       if (
@@ -246,7 +276,11 @@ export class PluginVideoGenerationService {
     userId: string,
     signal?: AbortSignal
   ): Promise<void> {
-    const { endpoint, headers, config } = this.resolve(model, pluginId, userId);
+    const { endpoint, headers, config } = await this.resolve(
+      model,
+      pluginId,
+      userId
+    );
     const configuredEndpoint = config?.cancel_endpoint;
     if (typeof configuredEndpoint !== 'string' || !configuredEndpoint) {
       throw new VideoCancellationUnsupportedError();
@@ -284,8 +318,8 @@ export class PluginVideoGenerationService {
     }
   }
 
-  private resolve(model: string, pluginId: string, userId: string) {
-    const plugin = this.deps.getPlugin(pluginId, userId);
+  private async resolve(model: string, pluginId: string, userId: string) {
+    const plugin = await this.deps.getPlugin(pluginId, userId);
     const capability = plugin?.capabilities?.video;
     if (
       !plugin?.active ||
@@ -294,13 +328,13 @@ export class PluginVideoGenerationService {
     ) {
       throw new Error(`No video generation plugin found for model: ${model}`);
     }
-    const apiKey = this.deps.getApiKey(plugin, userId);
+    const apiKey = await this.deps.getApiKey(plugin, userId);
     if (!apiKey) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
       );
     }
-    const variables = this.deps.getPluginVariables(plugin, userId);
+    const variables = await this.deps.getPluginVariables(plugin, userId);
     let endpoint = capability.endpoint;
     const endpointVariable = capability.config?.endpoint_variable;
     if (endpointVariable) {

@@ -26,18 +26,24 @@ import Database from 'better-sqlite3';
 
 import { inspectSQLiteSchema } from '../persistence/sqliteMigrations.js';
 import {
-  BlobStoreError,
-  LocalEncryptedBlobStore,
-  SqliteEncryptedVectorStore,
-  VectorStoreError,
-  createStorageKeyringFromEnvironment,
-  inspectStorageKeyConfiguration,
   parseAesGcmEnvelope,
   type Aes256GcmKeyring,
+} from '../platform/storage/aesGcmKeyring.js';
+import { BlobStoreError } from '../platform/storage/blobStore.js';
+import {
+  LocalEncryptedBlobStore,
   type BlobIntegrityVerificationOptions,
-  type StorageKeyConfigurationInspection,
+} from '../platform/storage/localEncryptedBlobStore.js';
+import {
+  SqliteEncryptedVectorStore,
   type VectorIntegrityVerificationOptions,
-} from '../platform/storage/index.js';
+} from '../platform/storage/sqliteEncryptedVectorStore.js';
+import {
+  createStorageKeyringFromEnvironment,
+  inspectStorageKeyConfiguration,
+  type StorageKeyConfigurationInspection,
+} from '../platform/storage/storageFactory.js';
+import { VectorStoreError } from '../platform/storage/vectorStore.js';
 import { loadAppPackage } from '../utils/packagePaths.js';
 import {
   BACKEND_DIRECTORY,
@@ -262,15 +268,15 @@ export interface RecoveryInventory {
     }>;
   };
   jobs: {
-    implementation: 'legacy-media-generation';
+    implementation: 'durable-with-legacy-media-compatibility';
     total: number;
     active: number;
     byStatus: Record<string, number>;
-    durableWorkerAvailable: false;
+    durableWorkerAvailable: boolean;
     durable: {
       substrateAvailable: boolean;
-      handlerWorkerBootstrapped: false;
-      externalWorkerAvailable: false;
+      handlerWorkerBootstrapped: boolean;
+      externalWorkerAvailable: boolean;
       total: number;
       running: number;
       byState: Record<DurableJobStateInventory, number>;
@@ -1798,9 +1804,6 @@ export class RecoveryInventoryService {
               'Durable running-job and active-attempt counts are inconsistent.'
             );
           }
-          warnings.push(
-            'The durable job/event substrate is available, but no domain handler worker is bootstrapped.'
-          );
           if (durablePayloadIntegrity.referenceRecords > 0) {
             warnings.push(
               'Opaque durable payload references were syntax-checked, but their target existence and authorization could not be verified.'
@@ -2119,15 +2122,15 @@ export class RecoveryInventoryService {
         workspaces,
       },
       jobs: {
-        implementation: 'legacy-media-generation',
+        implementation: 'durable-with-legacy-media-compatibility',
         total: mediaJobTotal,
         active: mediaJobActive,
         byStatus: mediaJobsByStatus,
-        durableWorkerAvailable: false,
+        durableWorkerAvailable: durableSubstrateAvailable,
         durable: {
           substrateAvailable: durableSubstrateAvailable,
-          handlerWorkerBootstrapped: false,
-          externalWorkerAvailable: false,
+          handlerWorkerBootstrapped: durableSubstrateAvailable,
+          externalWorkerAvailable: durableSubstrateAvailable,
           total: durableJobTotal,
           running: durableJobRunning,
           byState: durableJobsByState,

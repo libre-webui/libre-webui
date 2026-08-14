@@ -6,6 +6,7 @@ import path from 'node:path';
 import test, { after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import express from 'express';
+import { initializeSQLitePlatformStorageFixture } from './lib/platform-storage-fixture.mjs';
 
 process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
 process.env.JWT_SECRET ||= 'openrouter-media-routing-test-secret';
@@ -44,12 +45,58 @@ const galleryService = (
     pathToFileURL(path.join(distRoot, 'services', 'galleryService.js')).href
   )
 ).default;
+const mediaGenerationJobService = (
+  await import(
+    pathToFileURL(
+      path.join(distRoot, 'services', 'mediaGenerationJobService.js')
+    ).href
+  )
+).default;
 const databaseModule = await import(
   pathToFileURL(path.join(distRoot, 'db.js')).href
 );
+const closePlatformStorageFixture =
+  await initializeSQLitePlatformStorageFixture(distRoot);
+const { getPlatformStorageRuntime } = await import(
+  pathToFileURL(
+    path.join(distRoot, 'platform', 'storage', 'platformStorageRuntime.js')
+  ).href
+);
+const { createDomainDurableJobHandlers } = await import(
+  pathToFileURL(
+    path.join(distRoot, 'platform', 'jobs', 'domainJobHandlers.js')
+  ).href
+);
+const { getDurableJobRuntime } = await import(
+  pathToFileURL(
+    path.join(distRoot, 'platform', 'jobs', 'durableJobRuntime.js')
+  ).href
+);
+const { getCoordinator } = await import(
+  pathToFileURL(
+    path.join(distRoot, 'platform', 'coordination', 'service.js')
+  ).href
+);
+const { encryptionService } = await import(
+  pathToFileURL(path.join(distRoot, 'services', 'encryptionService.js')).href
+);
 
-after(() => {
-  databaseModule.closeDatabase();
+const resourceDeleteHandler = createDomainDurableJobHandlers().get(
+  'resource.delete.v1'
+);
+assert.ok(resourceDeleteHandler);
+
+const resourceDeleteContext = (ownerUserId, payload, attemptCount = 1) => ({
+  signal: new AbortController().signal,
+  payload,
+  actorUserId: ownerUserId,
+  attemptCount,
+  reportProgress: async () => undefined,
+  assertSideEffectAllowed: async () => undefined,
+});
+
+after(async () => {
+  await closePlatformStorageFixture();
   fs.rmSync(testRoot, { recursive: true, force: true });
 });
 
@@ -579,7 +626,11 @@ test('video cancellation uses only a declared provider job endpoint', async () =
   try {
     const service = new PluginVideoGenerationService(dependencies(plugin));
     assert.equal(
-      service.supportsCancellation('video-model', plugin.id, 'video-owner'),
+      await service.supportsCancellation(
+        'video-model',
+        plugin.id,
+        'video-owner'
+      ),
       true
     );
     await service.cancel(
@@ -609,7 +660,7 @@ test('video cancellation uses only a declared provider job endpoint', async () =
     dependencies(unsupportedPlugin)
   );
   assert.equal(
-    unsupported.supportsCancellation(
+    await unsupported.supportsCancellation(
       'video-model',
       unsupportedPlugin.id,
       'video-owner'
@@ -644,9 +695,9 @@ test('capability discovery keeps live image, speech, sound, and video catalogs s
   }
   const server = await listen(app);
   const service = new PluginService();
-  const pluginId = 'media-discovery-test';
+  const pluginId = `media-discovery-test-${process.pid}-${Date.now()}`;
   try {
-    service.installPlugin(
+    await service.installPlugin(
       {
         id: pluginId,
         name: 'Media discovery test',
@@ -690,14 +741,14 @@ test('capability discovery keeps live image, speech, sound, and video catalogs s
     assert.deepEqual(plugin.capabilities.audio.model_map, ['audio-live']);
     assert.deepEqual(plugin.capabilities.video.model_map, ['video-live']);
   } finally {
-    service.deletePlugin(pluginId);
+    await service.deletePlugin(pluginId);
     await server.close();
   }
 });
 
-test('Imagine gallery isolates media by user and kind', () => {
+test('Imagine gallery isolates media by user and kind', async () => {
   databaseModule.getDatabase();
-  const first = galleryService.saveMedia('default', {
+  const first = await galleryService.saveMedia('default', {
     kind: 'audio',
     prompt: 'hello',
     model: 'speech-model',
@@ -705,7 +756,7 @@ test('Imagine gallery isolates media by user and kind', () => {
     mediaData: 'data:audio/mpeg;base64,YXVkaW8=',
     mimeType: 'audio/mpeg',
   });
-  const second = galleryService.saveMedia('default', {
+  const second = await galleryService.saveMedia('default', {
     kind: 'video',
     prompt: 'scene',
     model: 'video-model',
@@ -714,12 +765,320 @@ test('Imagine gallery isolates media by user and kind', () => {
     mimeType: 'video/mp4',
   });
   assert.ok(first && second);
-  assert.equal(galleryService.getMedia('default').total, 2);
+  assert.equal((await galleryService.getMedia('default')).total, 2);
   assert.deepEqual(
-    galleryService
-      .getMedia('default', { kind: 'audio' })
-      .media.map(item => item.id),
+    (await galleryService.getMedia('default', { kind: 'audio' })).media.map(
+      item => item.id
+    ),
     [first.id]
   );
-  assert.equal(galleryService.getMedia('another-user').total, 0);
+  assert.equal((await galleryService.getMedia('another-user')).total, 0);
+});
+
+test('deterministic media resolves a committed insert whose acknowledgement is lost', async () => {
+  const runtime = getPlatformStorageRuntime();
+  const repository = runtime.domains.gallery;
+  const originalInsert = repository.insert.bind(repository);
+  repository.insert = async (...args) => {
+    await originalInsert(...args);
+    throw new Error('injected post-commit acknowledgement loss');
+  };
+  try {
+    const media = await galleryService.saveMedia('default', {
+      id: 'deterministic-video-ack-loss',
+      createdAt: 1_700_000_000_000,
+      kind: 'video',
+      prompt: 'deterministic video',
+      model: 'video-model',
+      pluginId: 'openrouter',
+      mediaData: 'data:video/mp4;base64,YWNrLWxvc3M=',
+      mimeType: 'video/mp4',
+    });
+    assert.equal(media?.id, 'deterministic-video-ack-loss');
+    const reference = await runtime.blobReferences.find(
+      'generated-media',
+      'deterministic-video-ack-loss',
+      'gallery.media'
+    );
+    assert.ok(reference);
+    const descriptor = await runtime.blobStore.stat(
+      reference.blobId,
+      'default'
+    );
+    assert.equal(descriptor.size, 8);
+  } finally {
+    repository.insert = originalInsert;
+  }
+});
+
+test('prepared video and resume publications resolve lost commit acknowledgements', async () => {
+  const runtime = getPlatformStorageRuntime();
+  const repository = runtime.domains.mediaJobs;
+  const originalCreate =
+    repository.createPreparedAndEnqueue.bind(repository);
+  repository.createPreparedAndEnqueue = async (...args) => {
+    await originalCreate(...args);
+    throw new Error('injected prepared-video commit acknowledgement loss');
+  };
+  let job;
+  try {
+    job = await mediaGenerationJobService.queueVideoSubmission('default', {
+      pluginId: 'openrouter',
+      model: 'video-model',
+      prompt: 'prepared publication acknowledgement loss',
+      options: { duration: 5 },
+    });
+  } finally {
+    repository.createPreparedAndEnqueue = originalCreate;
+  }
+  assert.equal(job.providerJobId, 'libre:prepared');
+  const submitJob = await getDurableJobRuntime().service.getByIdempotency(
+    'default',
+    'media.video.submit.v1',
+    job.id
+  );
+  assert.equal(submitJob?.jobType, 'media.video.submit.v1');
+
+  const originalAccept =
+    repository.acceptProviderAndEnqueueResume.bind(repository);
+  repository.acceptProviderAndEnqueueResume = async (...args) => {
+    await originalAccept(...args);
+    throw new Error('injected video-resume commit acknowledgement loss');
+  };
+  try {
+    await mediaGenerationJobService.acceptSubmittedProviderJob(
+      job.id,
+      'default',
+      'provider-job-acknowledged'
+    );
+  } finally {
+    repository.acceptProviderAndEnqueueResume = originalAccept;
+  }
+  assert.equal(
+    (await mediaGenerationJobService.get(job.id, 'default'))?.providerJobId,
+    'provider-job-acknowledged'
+  );
+  const resumeJob = await getDurableJobRuntime().service.getByIdempotency(
+    'default',
+    'media.video.resume.v1',
+    job.id
+  );
+  assert.equal(resumeJob?.jobType, 'media.video.resume.v1');
+});
+
+test('ordinary generated media resolves a committed insert whose acknowledgement is lost', async () => {
+  const runtime = getPlatformStorageRuntime();
+  const repository = runtime.domains.gallery;
+  const originalInsert = repository.insert.bind(repository);
+  repository.insert = async (...args) => {
+    await originalInsert(...args);
+    throw new Error('injected post-commit acknowledgement loss');
+  };
+  try {
+    const media = await galleryService.saveMedia('default', {
+      kind: 'image',
+      prompt: 'ordinary generated image',
+      model: 'image-model',
+      mediaData: 'data:image/png;base64,b3JkaW5hcnk=',
+      mimeType: 'image/png',
+    });
+    assert.ok(media?.id);
+    const reference = await runtime.blobReferences.find(
+      'generated-media',
+      media.id,
+      'gallery.media'
+    );
+    assert.ok(reference);
+    const descriptor = await runtime.blobStore.stat(
+      reference.blobId,
+      'default'
+    );
+    assert.equal(descriptor.size, 8);
+  } finally {
+    repository.insert = originalInsert;
+  }
+});
+
+test('a failed cleanup retry cannot resurrect or delete a replacement deterministic media ID', async () => {
+  const runtime = getPlatformStorageRuntime();
+  const mediaId = 'deterministic-video-deletion-occurrence';
+  const initial = await galleryService.saveMedia('default', {
+    id: mediaId,
+    createdAt: 1_700_000_000_100,
+    kind: 'video',
+    prompt: 'first durable occurrence',
+    model: 'video-model',
+    pluginId: 'openrouter',
+    mediaData: 'data:video/mp4;base64,Zmlyc3Q=',
+    mimeType: 'video/mp4',
+  });
+  assert.equal(initial?.id, mediaId);
+  const initialReference = await runtime.blobReferences.find(
+    'generated-media',
+    mediaId,
+    'gallery.media'
+  );
+  assert.ok(initialReference);
+  assert.equal(await galleryService.deleteMedia(mediaId, 'default'), true);
+  const deletion = databaseModule
+    .getDatabase()
+    .prepare(
+      `SELECT deletion_token, deletion_incarnation
+         FROM platform_resource_deletion_tombstones
+        WHERE resource_type = 'generated-media' AND resource_id = ?`
+    )
+    .get(mediaId);
+  assert.match(deletion.deletion_token, /^[0-9a-f]{64}$/);
+
+  const coordinator = getCoordinator();
+  const originalDeleteCache = coordinator.deleteCache.bind(coordinator);
+  coordinator.deleteCache = async () => {
+    throw new Error('injected cache failure after physical cleanup');
+  };
+  try {
+    await assert.rejects(
+      resourceDeleteHandler(
+        resourceDeleteContext('default', {
+          resourceType: 'generated-media',
+          resourceId: mediaId,
+          deletionIncarnation: deletion.deletion_incarnation,
+          deletionToken: deletion.deletion_token,
+        })
+      ),
+      error => error?.safeCode === 'cache-invalidation-failed'
+    );
+  } finally {
+    coordinator.deleteCache = originalDeleteCache;
+  }
+  assert.equal(
+    await runtime.blobReferences.find(
+      'generated-media',
+      mediaId,
+      'gallery.media'
+    ),
+    undefined
+  );
+  await assert.rejects(
+    runtime.blobStore.stat(initialReference.blobId, 'default')
+  );
+
+  const staleCompletion = await galleryService.saveMedia('default', {
+    id: mediaId,
+    createdAt: 1_700_000_000_100,
+    kind: 'video',
+    prompt: 'stale retry must not publish',
+    model: 'video-model',
+    pluginId: 'openrouter',
+    mediaData: 'data:video/mp4;base64,cmVwbGFjZW1lbnQ=',
+    mimeType: 'video/mp4',
+  });
+  assert.equal(staleCompletion, null);
+  assert.equal(await galleryService.getMediaItem(mediaId, 'default'), null);
+  assert.equal(
+    await runtime.blobReferences.find(
+      'generated-media',
+      mediaId,
+      'gallery.media'
+    ),
+    undefined
+  );
+
+  await resourceDeleteHandler(
+    resourceDeleteContext(
+      'default',
+      {
+        resourceType: 'generated-media',
+        resourceId: mediaId,
+        deletionIncarnation: deletion.deletion_incarnation,
+        deletionToken: deletion.deletion_token,
+      },
+      2
+    )
+  );
+  const completed = databaseModule
+    .getDatabase()
+    .prepare(
+      `SELECT completed_at FROM platform_resource_deletion_tombstones
+        WHERE resource_type = 'generated-media' AND resource_id = ?`
+    )
+    .get(mediaId);
+  assert.ok(completed.completed_at);
+});
+
+test('paused legacy inline migration cannot attach a blob after deletion', async () => {
+  const runtime = getPlatformStorageRuntime();
+  const mediaId = 'legacy-inline-adoption-delete-race';
+  const legacyData = 'data:image/png;base64,bGVnYWN5LWltYWdl';
+  const seeded = await galleryService.saveMedia('default', {
+    id: mediaId,
+    createdAt: 1_700_000_000_200,
+    kind: 'image',
+    prompt: 'legacy inline record',
+    model: 'legacy-model',
+    mediaData: legacyData,
+    mimeType: 'image/png',
+  });
+  assert.equal(seeded?.id, mediaId);
+  const originalReference = await runtime.blobReferences.find(
+    'generated-media',
+    mediaId,
+    'gallery.media'
+  );
+  assert.ok(originalReference);
+  await runtime.blobStore.delete({
+    id: originalReference.blobId,
+    ownerUserId: 'default',
+  });
+  await runtime.blobReferences.detach(
+    'generated-media',
+    mediaId,
+    'gallery.media'
+  );
+  databaseModule
+    .getDatabase()
+    .prepare('UPDATE generated_images SET image_data = ? WHERE id = ?')
+    .run(encryptionService.encrypt(legacyData), mediaId);
+
+  const originalPut = runtime.blobStore.put.bind(runtime.blobStore);
+  let releasePut;
+  const putRelease = new Promise(resolve => {
+    releasePut = resolve;
+  });
+  let publishedBlob;
+  let putReachedResolve;
+  const putReached = new Promise(resolve => {
+    putReachedResolve = resolve;
+  });
+  runtime.blobStore.put = async input => {
+    const descriptor = await originalPut(input);
+    publishedBlob = descriptor;
+    putReachedResolve();
+    await putRelease;
+    return descriptor;
+  };
+  const openPromise = galleryService.openMediaContent(mediaId, 'default');
+  try {
+    await putReached;
+    assert.equal(await galleryService.deleteMedia(mediaId, 'default'), true);
+    releasePut();
+    await assert.rejects(
+      openPromise,
+      /(deleted during legacy adoption|permanently reserved by deletion)/
+    );
+  } finally {
+    runtime.blobStore.put = originalPut;
+    releasePut?.();
+    await openPromise.catch(() => undefined);
+  }
+  assert.ok(publishedBlob);
+  assert.equal(await galleryService.getMediaItem(mediaId, 'default'), null);
+  assert.equal(
+    await runtime.blobReferences.find(
+      'generated-media',
+      mediaId,
+      'gallery.media'
+    ),
+    undefined
+  );
+  await assert.rejects(runtime.blobStore.stat(publishedBlob.id, 'default'));
 });

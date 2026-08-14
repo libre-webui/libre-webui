@@ -32,6 +32,7 @@ import {
   TTSProviderResponseError,
 } from '../services/pluginTTSService.js';
 import voiceProfileService from '../services/voiceProfileService.js';
+import type { Plugin } from '../types/index.js';
 
 const logger = createLogger('routes:tts');
 
@@ -172,12 +173,12 @@ function requestAbortSignal(
   };
 }
 
-function selectedCloningPlugin(
+async function selectedCloningPlugin(
   model: string,
   pluginId: string | undefined,
   userId: string
 ) {
-  const plugin = pluginService.getPluginForTTS(model, pluginId, userId);
+  const plugin = await pluginService.getPluginForTTS(model, pluginId, userId);
   const config = plugin?.capabilities?.tts?.config;
   if (!plugin) throw new Error(`No TTS plugin found for model: ${model}`);
   if (!config?.supports_voice_cloning) {
@@ -186,14 +187,14 @@ function selectedCloningPlugin(
   return { plugin, config };
 }
 
-function assertProfileRoutingIsCurrent(
+async function assertProfileRoutingIsCurrent(
   profile: { routingFingerprint: string },
-  plugin: NonNullable<ReturnType<typeof pluginService.getPluginForTTS>>,
+  plugin: Plugin,
   userId: string
-): void {
+): Promise<void> {
   if (
     profile.routingFingerprint !==
-    pluginService.getCredentialRoutingAuthFingerprint(plugin, userId)
+    (await pluginService.getCredentialRoutingAuthFingerprint(plugin, userId))
   ) {
     throw new Error(
       'Saved voice provider routing changed; create a new profile to consent to the current endpoint'
@@ -215,13 +216,13 @@ function profileRequestStatus(message: string): number {
 }
 
 /** Metadata only: reference recordings and transcripts are never returned. */
-router.get('/voice-profiles', (req: AuthenticatedRequest, res) => {
+router.get('/voice-profiles', async (req: AuthenticatedRequest, res) => {
   try {
     const pluginId = requestString(req.query.pluginId);
     const model = requestString(req.query.model);
     res.json({
       success: true,
-      data: voiceProfileService.list(authenticatedUserId(req), {
+      data: await voiceProfileService.list(authenticatedUserId(req), {
         ...(pluginId ? { pluginId } : {}),
         ...(model ? { model } : {}),
       }),
@@ -236,12 +237,14 @@ router.get('/voice-profiles', (req: AuthenticatedRequest, res) => {
 
 router.delete(
   '/voice-profiles/:profileId',
-  (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res) => {
     try {
       const profileId = Array.isArray(req.params.profileId)
         ? req.params.profileId[0]
         : req.params.profileId;
-      if (!voiceProfileService.delete(profileId, authenticatedUserId(req))) {
+      if (
+        !(await voiceProfileService.delete(profileId, authenticatedUserId(req)))
+      ) {
         res
           .status(404)
           .json({ success: false, message: 'Voice profile not found' });
@@ -264,7 +267,7 @@ router.delete(
 router.get('/models', async (req: AuthenticatedRequest, res) => {
   try {
     await pluginService.refreshStaleCapabilityModels('tts', req.user?.userId);
-    const models = pluginService.getAvailableTTSModels(req.user?.userId);
+    const models = await pluginService.getAvailableTTSModels(req.user?.userId);
     res.json({
       success: true,
       data: models,
@@ -285,7 +288,7 @@ router.get('/models', async (req: AuthenticatedRequest, res) => {
 router.get('/voices/:pluginId', async (req: AuthenticatedRequest, res) => {
   try {
     const pluginId = req.params.pluginId as string;
-    const config = pluginService.getTTSConfig(pluginId, req.user?.userId);
+    const config = await pluginService.getTTSConfig(pluginId, req.user?.userId);
 
     if (!config) {
       res.status(404).json({
@@ -415,7 +418,7 @@ router.post(
 
       const userId = authenticatedUserId(req);
       const profileRoute = voiceProfileId
-        ? voiceProfileService.getMetadata(voiceProfileId, userId)
+        ? await voiceProfileService.getMetadata(voiceProfileId, userId)
         : null;
       if (voiceProfileId && !profileRoute) {
         throw new Error('Voice profile not found');
@@ -430,7 +433,7 @@ router.post(
         );
       }
       const routedPluginId = profileRoute?.pluginId || pluginId;
-      const selectedPlugin = pluginService.getPluginForTTS(
+      const selectedPlugin = await pluginService.getPluginForTTS(
         model,
         routedPluginId,
         userId
@@ -445,19 +448,19 @@ router.post(
 
       let audioBuffer: Buffer;
       if (voiceProfileId && profileRoute) {
-        const { plugin, config } = selectedCloningPlugin(
+        const { plugin, config } = await selectedCloningPlugin(
           model,
           profileRoute.pluginId,
           userId
         );
         audioBuffer = await withReusableVoiceSlot(userId, async () => {
-          const profile = voiceProfileService.get(
+          const profile = await voiceProfileService.get(
             voiceProfileId,
             userId,
             config
           );
           if (!profile) throw new Error('Voice profile not found');
-          assertProfileRoutingIsCurrent(profile, plugin, userId);
+          await assertProfileRoutingIsCurrent(profile, plugin, userId);
           return pluginService.executeVoiceCloneRequest(
             model,
             input,
@@ -636,7 +639,7 @@ router.post(
       }
 
       const userId = req.user?.userId;
-      const selectedPlugin = pluginService.getPluginForTTS(
+      const selectedPlugin = await pluginService.getPluginForTTS(
         model,
         pluginId,
         userId
@@ -858,7 +861,7 @@ router.post(
 
       const userId = authenticatedUserId(req);
       const profileRoute = voiceProfileId
-        ? voiceProfileService.getMetadata(voiceProfileId, userId)
+        ? await voiceProfileService.getMetadata(voiceProfileId, userId)
         : null;
       if (voiceProfileId && !profileRoute) {
         throw new Error('Voice profile not found');
@@ -873,7 +876,7 @@ router.post(
         );
       }
       const routedPluginId = profileRoute?.pluginId || pluginId;
-      const selectedPlugin = pluginService.getPluginForTTS(
+      const selectedPlugin = await pluginService.getPluginForTTS(
         model,
         routedPluginId,
         userId
@@ -888,19 +891,19 @@ router.post(
 
       let audioBuffer: Buffer;
       if (voiceProfileId && profileRoute) {
-        const { plugin, config } = selectedCloningPlugin(
+        const { plugin, config } = await selectedCloningPlugin(
           model,
           profileRoute.pluginId,
           userId
         );
         audioBuffer = await withReusableVoiceSlot(userId, async () => {
-          const profile = voiceProfileService.get(
+          const profile = await voiceProfileService.get(
             voiceProfileId,
             userId,
             config
           );
           if (!profile) throw new Error('Voice profile not found');
-          assertProfileRoutingIsCurrent(profile, plugin, userId);
+          await assertProfileRoutingIsCurrent(profile, plugin, userId);
           return pluginService.executeVoiceCloneRequest(
             model,
             input,
@@ -1033,7 +1036,7 @@ router.post(
 router.get('/plugins', async (req: AuthenticatedRequest, res) => {
   try {
     await pluginService.refreshStaleCapabilityModels('tts', req.user?.userId);
-    const plugins = pluginService.getPluginsByCapability(
+    const plugins = await pluginService.getPluginsByCapability(
       'tts',
       req.user?.userId
     );

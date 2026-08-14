@@ -6,6 +6,7 @@ import path from 'node:path';
 import test, { after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import express from 'express';
+import { initializeSQLitePlatformStorageFixture } from './lib/platform-storage-fixture.mjs';
 
 process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
 process.env.JWT_SECRET ||= 'plugin-routing-test-jwt-secret';
@@ -121,13 +122,19 @@ const mediaGenerationJobService = (
     ).href
   )
 ).default;
+const { getDurableJobRuntime } = await import(
+  pathToFileURL(path.join(distRoot, 'platform', 'jobs', 'durableJobRuntime.js'))
+    .href
+);
 const { WorkModelProviderService } = await import(
   pathToFileURL(path.join(distRoot, 'services', 'workModelProviderService.js'))
     .href
 );
+const closePlatformStorageFixture =
+  await initializeSQLitePlatformStorageFixture(distRoot);
 
-after(() => {
-  databaseModule.closeDatabase();
+after(async () => {
+  await closePlatformStorageFixture();
   process.chdir(originalWorkingDirectory);
   fs.rmSync(testDataDir, { recursive: true, force: true });
 });
@@ -323,12 +330,12 @@ test('Codex OAuth tokens stay bound to the trusted bundled definition', async ()
     { getCachedAccessToken: () => 'server-user-oauth-token' },
     async () => {
       assert.equal(
-        service.getApiKey(bundledDefinition, admin.id),
+        await service.getApiKey(bundledDefinition, admin.id),
         'server-user-oauth-token'
       );
-      assert.equal(service.getApiKey(attackerDefinition, admin.id), null);
-      assert.throws(
-        () => service.installPlugin(attackerDefinition, admin.id),
+      assert.equal(await service.getApiKey(attackerDefinition, admin.id), null);
+      await assert.rejects(
+        service.installPlugin(attackerDefinition, admin.id),
         /Codex OAuth plugin ID is reserved/
       );
     }
@@ -359,7 +366,7 @@ test('non-admin runtime retains manifest routing defaults while ignoring stored 
     'manifest-default-routing-installer',
     'admin'
   );
-  service.installPlugin(
+  await service.installPlugin(
     {
       ...createPlugin({
         id: pluginId,
@@ -373,7 +380,7 @@ test('non-admin runtime retains manifest routing defaults while ignoring stored 
 
   try {
     assert.equal(
-      pluginVariablesService.setVariables(
+      await pluginVariablesService.setVariables(
         pluginId,
         {
           endpoint: 'https://legacy-stored.example.test/v1/chat/completions',
@@ -387,7 +394,7 @@ test('non-admin runtime retains manifest routing defaults while ignoring stored 
     const plugin = await service.getPlugin(pluginId, normalUser.id);
     assert.ok(plugin);
     assert.deepEqual(
-      service.getPluginVariables(plugin, normalUser.id),
+      await service.getPluginVariables(plugin, normalUser.id),
       {
         endpoint: manifestEndpoint,
         temperature: 0.2,
@@ -395,7 +402,7 @@ test('non-admin runtime retains manifest routing defaults while ignoring stored 
       'only stored routing is ignored; safe generation settings remain user-scoped'
     );
   } finally {
-    service.deletePlugin(pluginId);
+    await service.deletePlugin(pluginId);
   }
 });
 
@@ -428,7 +435,7 @@ test('legacy global activation migrates once into durable per-user state', async
     (await pluginService.getPlugin(pluginId, laterUser.id)).active,
     false
   );
-  assert.equal(pluginService.deactivatePlugin(pluginId, 'default'), true);
+  assert.equal(await pluginService.deactivatePlugin(pluginId, 'default'), true);
 
   const reloadedService = new PluginService();
   assert.equal(
@@ -576,30 +583,33 @@ test('pre-upgrade writable definitions stay quarantined across every execution p
             ),
             /is not active/
           );
-          assert.equal(service.getTTSConfig(definition.id), null);
-          assert.equal(service.getImageGenConfig(definition.id, user.id), null);
+          assert.equal(await service.getTTSConfig(definition.id), null);
           assert.equal(
-            service
-              .getPluginsByCapability('embedding', user.id)
-              .some(plugin => plugin.id === definition.id),
+            await service.getImageGenConfig(definition.id, user.id),
+            null
+          );
+          assert.equal(
+            (await service.getPluginsByCapability('embedding', user.id)).some(
+              plugin => plugin.id === definition.id
+            ),
             false
           );
           assert.equal(
-            service
-              .getAvailableEmbeddingModels(user.id)
-              .some(model => model.plugin === definition.id),
+            (await service.getAvailableEmbeddingModels(user.id)).some(
+              model => model.plugin === definition.id
+            ),
             false
           );
           assert.equal(
-            service
-              .getAvailableTTSModels(user.id)
-              .some(model => model.plugin === definition.id),
+            (await service.getAvailableTTSModels(user.id)).some(
+              model => model.plugin === definition.id
+            ),
             false
           );
           assert.equal(
-            service
-              .getAvailableImageGenModels(user.id)
-              .some(model => model.plugin === definition.id),
+            (await service.getAvailableImageGenModels(user.id)).some(
+              model => model.plugin === definition.id
+            ),
             false
           );
 
@@ -627,7 +637,7 @@ test('pre-upgrade writable definitions stay quarantined across every execution p
       }
     );
 
-    const approved = service.importPlugin(definitions[0], admin.id);
+    const approved = await service.importPlugin(definitions[0], admin.id);
     assert.equal(approved.id, definitions[0].id);
     assert.ok(await service.getPlugin(approved.id, user.id));
     assert.equal(
@@ -643,25 +653,25 @@ test('pre-upgrade writable definitions stay quarantined across every execution p
     );
     assert.equal((await service.getPlugin(approved.id, user.id)).active, false);
     assert.equal(
-      service
-        .getAvailableEmbeddingModels(user.id)
-        .some(model => model.plugin === approved.id),
+      (await service.getAvailableEmbeddingModels(user.id)).some(
+        model => model.plugin === approved.id
+      ),
       false
     );
     assert.equal(
-      service
-        .getAvailableTTSModels(user.id)
-        .some(model => model.plugin === approved.id),
+      (await service.getAvailableTTSModels(user.id)).some(
+        model => model.plugin === approved.id
+      ),
       false
     );
     assert.equal(
-      service
-        .getAvailableImageGenModels(user.id)
-        .some(model => model.plugin === approved.id),
+      (await service.getAvailableImageGenModels(user.id)).some(
+        model => model.plugin === approved.id
+      ),
       false
     );
-    assert.equal(service.getTTSConfig(approved.id, user.id), null);
-    assert.equal(service.getImageGenConfig(approved.id, user.id), null);
+    assert.equal(await service.getTTSConfig(approved.id, user.id), null);
+    assert.equal(await service.getImageGenConfig(approved.id, user.id), null);
 
     const approvedPath = path.join(
       process.env.PLUGINS_DIR,
@@ -683,7 +693,7 @@ test('pre-upgrade writable definitions stay quarantined across every execution p
         `${definition.id}.json`
       );
       if (fs.existsSync(filePath)) {
-        assert.equal(service.deletePlugin(definition.id), true);
+        assert.equal(await service.deletePlugin(definition.id), true);
       }
     }
   }
@@ -822,7 +832,7 @@ test('plugin routes require authentication and preserve non-admin generation set
     }
 
     assert.equal(
-      pluginVariablesService.setVariables(
+      await pluginVariablesService.setVariables(
         'openai',
         {
           endpoint: 'https://legacy.example.test/v1/chat/completions',
@@ -859,7 +869,7 @@ test('plugin routes require authentication and preserve non-admin generation set
     ).json();
     assert.equal(displayedVariables.data.endpoint.has_value, false);
     assert.equal(displayedVariables.data.endpoint.value, '');
-    const normalUserVariables = pluginService.getPluginVariables(
+    const normalUserVariables = await pluginService.getPluginVariables(
       openAIPlugin,
       normalUser.id
     );
@@ -878,7 +888,7 @@ test('plugin routes require authentication and preserve non-admin generation set
       }
     );
     assert.equal(resetResponse.status, 200);
-    const rawVariables = pluginVariablesService.getVariables(
+    const rawVariables = await pluginVariablesService.getVariables(
       'openai',
       openAIPlugin.variables,
       normalUser.id
@@ -900,7 +910,7 @@ test('plugin routes require authentication and preserve non-admin generation set
     );
 
     upsertTestUser(normalUser.id, 'admin');
-    const promotedVariables = pluginService.getPluginVariables(
+    const promotedVariables = await pluginService.getPluginVariables(
       openAIPlugin,
       normalUser.id
     );
@@ -969,7 +979,7 @@ test('plugin routes require authentication and preserve non-admin generation set
       false
     );
     assert.equal(
-      pluginService.getApiKey(customAdminPlugin, adminUser.id),
+      await pluginService.getApiKey(customAdminPlugin, adminUser.id),
       null,
       'a user-stored route cannot inherit the deployment environment key'
     );
@@ -982,7 +992,7 @@ test('plugin routes require authentication and preserve non-admin generation set
     );
     assert.equal(adminRoutingReset.status, 200);
     assert.equal(
-      pluginService.getApiKey(
+      await pluginService.getApiKey(
         await pluginService.getPlugin('openai', adminUser.id),
         adminUser.id
       ),
@@ -1026,7 +1036,7 @@ test('plugin routes require authentication and preserve non-admin generation set
       adminUser.id
     );
     assert.equal(
-      pluginService.getApiKey(changedRoutePlugin, adminUser.id),
+      await pluginService.getApiKey(changedRoutePlugin, adminUser.id),
       null,
       'a credential saved for the bundled route cannot follow a later custom route'
     );
@@ -1076,7 +1086,7 @@ test('plugin routes require authentication and preserve non-admin generation set
       .get(adminUser.id, 'openai').routing_auth_fingerprint;
     assert.notEqual(customBinding, bundledBinding);
     assert.equal(
-      pluginService.getApiKey(changedRoutePlugin, adminUser.id),
+      await pluginService.getApiKey(changedRoutePlugin, adminUser.id),
       'route-bound-user-secret'
     );
     assert.equal(
@@ -1089,7 +1099,7 @@ test('plugin routes require authentication and preserve non-admin generation set
       200
     );
     assert.equal(
-      pluginService.getApiKey(
+      await pluginService.getApiKey(
         await pluginService.getPlugin('openai', adminUser.id),
         adminUser.id
       ),
@@ -1105,7 +1115,10 @@ test('plugin routes require authentication and preserve non-admin generation set
       ).status,
       200
     );
-    assert.equal(pluginService.deactivatePlugin('openai', adminUser.id), true);
+    assert.equal(
+      await pluginService.deactivatePlugin('openai', adminUser.id),
+      true
+    );
 
     const selectorPlugin = {
       ...createPlugin({
@@ -1570,7 +1583,7 @@ test('environment credentials never reach imported or user-stored routes', async
     },
   ];
   const adminUser = upsertTestUser('credential-boundary-admin-user', 'admin');
-  service.installPlugin(
+  await service.installPlugin(
     {
       ...createPlugin({
         id: pluginId,
@@ -1594,12 +1607,12 @@ test('environment credentials never reach imported or user-stored routes', async
     const importedPlugin = await service.getPlugin(pluginId, adminUser.id);
     assert.ok(importedPlugin);
     assert.equal(
-      service.getApiKey(importedPlugin, adminUser.id),
+      await service.getApiKey(importedPlugin, adminUser.id),
       null,
       'an imported definition cannot name a deployment environment key'
     );
     assert.equal(
-      pluginVariablesService.setVariables(
+      await pluginVariablesService.setVariables(
         pluginId,
         { endpoint: customEndpoint },
         schema,
@@ -1610,10 +1623,10 @@ test('environment credentials never reach imported or user-stored routes', async
     const adminPlugin = await service.getPlugin(pluginId, adminUser.id);
     assert.ok(adminPlugin);
     assert.equal(
-      service.getPluginVariables(adminPlugin, adminUser.id).endpoint,
+      (await service.getPluginVariables(adminPlugin, adminUser.id)).endpoint,
       customEndpoint
     );
-    assert.equal(service.getApiKey(adminPlugin, adminUser.id), null);
+    assert.equal(await service.getApiKey(adminPlugin, adminUser.id), null);
 
     await withPatchedProperties(
       axios,
@@ -1656,15 +1669,15 @@ test('environment credentials never reach imported or user-stored routes', async
           false
         );
         assert.equal(
-          service
-            .getAvailableEmbeddingModels(adminUser.id)
-            .some(model => model.plugin === pluginId),
+          (await service.getAvailableEmbeddingModels(adminUser.id)).some(
+            model => model.plugin === pluginId
+          ),
           false
         );
         assert.equal(
-          service
-            .getPluginsByCapability('completion', adminUser.id)
-            .some(plugin => plugin.id === pluginId),
+          (
+            await service.getPluginsByCapability('completion', adminUser.id)
+          ).some(plugin => plugin.id === pluginId),
           false
         );
         const workAvailability = new WorkModelProviderService({
@@ -1691,11 +1704,11 @@ test('environment credentials never reach imported or user-stored routes', async
         assert.equal(requests.length, 0);
 
         assert.equal(
-          pluginCredentialsService.setApiKey(
+          await pluginCredentialsService.setApiKey(
             pluginId,
             'admin-stored-secret',
             adminUser.id,
-            service.getCredentialRoutingAuthFingerprint(
+            await service.getCredentialRoutingAuthFingerprint(
               adminPlugin,
               adminUser.id
             )
@@ -1709,15 +1722,15 @@ test('environment credentials never reach imported or user-stored routes', async
           true
         );
         assert.equal(
-          service
-            .getAvailableEmbeddingModels(adminUser.id)
-            .some(model => model.plugin === pluginId),
+          (await service.getAvailableEmbeddingModels(adminUser.id)).some(
+            model => model.plugin === pluginId
+          ),
           true
         );
         assert.equal(
-          service
-            .getPluginsByCapability('completion', adminUser.id)
-            .some(plugin => plugin.id === pluginId),
+          (
+            await service.getPluginsByCapability('completion', adminUser.id)
+          ).some(plugin => plugin.id === pluginId),
           true
         );
         assert.deepEqual(await workAvailability.availability(adminUser.id), {
@@ -1755,11 +1768,11 @@ test('environment credentials never reach imported or user-stored routes', async
         );
 
         assert.equal(
-          pluginCredentialsService.deleteApiKey(pluginId, adminUser.id),
+          await pluginCredentialsService.deleteApiKey(pluginId, adminUser.id),
           true
         );
         assert.equal(
-          pluginVariablesService.setVariables(
+          await pluginVariablesService.setVariables(
             pluginId,
             { endpoint: '' },
             schema,
@@ -1768,7 +1781,7 @@ test('environment credentials never reach imported or user-stored routes', async
           true
         );
         requests.length = 0;
-        assert.equal(service.getApiKey(adminPlugin, adminUser.id), null);
+        assert.equal(await service.getApiKey(adminPlugin, adminUser.id), null);
         await assert.rejects(
           service.executePluginRequest(
             'chat-model',
@@ -1788,7 +1801,7 @@ test('environment credentials never reach imported or user-stored routes', async
       }
     );
   } finally {
-    service.deletePlugin(pluginId);
+    await service.deletePlugin(pluginId);
     if (previousEnvironmentKey === undefined) {
       delete process.env[keyEnv];
     } else {
@@ -1814,15 +1827,15 @@ test('administrator definition retargeting revokes activation and cannot carry a
     }),
     capabilities: undefined,
   };
-  service.installPlugin(definitionA, admin.id);
+  await service.installPlugin(definitionA, admin.id);
   const pluginA = await service.getPlugin(pluginId, user.id);
   assert.ok(pluginA);
   assert.equal(
-    pluginCredentialsService.setApiKey(
+    await pluginCredentialsService.setApiKey(
       pluginId,
       'user-bound-provider-secret',
       user.id,
-      service.getCredentialRoutingAuthFingerprint(pluginA, user.id)
+      await service.getCredentialRoutingAuthFingerprint(pluginA, user.id)
     ),
     true
   );
@@ -1846,7 +1859,7 @@ test('administrator definition retargeting revokes activation and cannot carry a
         assert.equal(networkRequests.length, 1);
         networkRequests.length = 0;
 
-        service.installPlugin(
+        await service.installPlugin(
           {
             ...definitionA,
             endpoint: 'https://provider-b.example.test/v1/chat/completions',
@@ -1872,7 +1885,7 @@ test('administrator definition retargeting revokes activation and cannot carry a
           0
         );
         assert.equal(
-          service.getApiKey(pluginB, user.id),
+          await service.getApiKey(pluginB, user.id),
           null,
           'a shared definition update cannot carry another user credential'
         );
@@ -1890,16 +1903,16 @@ test('administrator definition retargeting revokes activation and cannot carry a
         assert.equal(networkRequests.length, 0);
 
         assert.equal(
-          pluginCredentialsService.setApiKey(
+          await pluginCredentialsService.setApiKey(
             pluginId,
             'user-bound-provider-secret',
             user.id,
-            service.getCredentialRoutingAuthFingerprint(pluginB, user.id)
+            await service.getCredentialRoutingAuthFingerprint(pluginB, user.id)
           ),
           true
         );
         assert.equal(
-          service.getApiKey(pluginB, user.id),
+          await service.getApiKey(pluginB, user.id),
           'user-bound-provider-secret',
           'the user can explicitly re-bind their credential after reviewing the new route'
         );
@@ -1907,7 +1920,7 @@ test('administrator definition retargeting revokes activation and cannot carry a
     );
   } finally {
     if (fs.existsSync(path.join(process.env.PLUGINS_DIR, `${pluginId}.json`))) {
-      assert.equal(service.deletePlugin(pluginId), true);
+      assert.equal(await service.deletePlugin(pluginId), true);
     }
   }
 });
@@ -1934,18 +1947,21 @@ test('trusted bundled routing may use an environment credential', async () => {
     assert.ok(adminPlugin?.variables);
     const model = adminPlugin.model_map[0];
     assert.ok(model);
-    assert.equal(service.getApiKey(adminPlugin, adminUser.id), environmentKey);
+    assert.equal(
+      await service.getApiKey(adminPlugin, adminUser.id),
+      environmentKey
+    );
     const legacyCredentialPlugin = await service.getPlugin(
       pluginId,
       legacyCredentialUser.id
     );
     assert.ok(legacyCredentialPlugin);
-    const legacyBinding = service.getCredentialRoutingAuthFingerprint(
+    const legacyBinding = await service.getCredentialRoutingAuthFingerprint(
       legacyCredentialPlugin,
       legacyCredentialUser.id
     );
     assert.equal(
-      pluginCredentialsService.setApiKey(
+      await pluginCredentialsService.setApiKey(
         pluginId,
         'legacy-user-stored-secret',
         legacyCredentialUser.id,
@@ -1962,7 +1978,7 @@ test('trusted bundled routing may use an environment credential', async () => {
       )
       .run(legacyCredentialUser.id, pluginId);
     assert.equal(
-      service.getApiKey(legacyCredentialPlugin, legacyCredentialUser.id),
+      await service.getApiKey(legacyCredentialPlugin, legacyCredentialUser.id),
       'legacy-user-stored-secret',
       'an unbound pre-upgrade credential remains usable only on the anchored route'
     );
@@ -2019,7 +2035,7 @@ test('trusted bundled routing may use an environment credential', async () => {
         );
 
         assert.equal(
-          pluginVariablesService.setVariables(
+          await pluginVariablesService.setVariables(
             pluginId,
             { endpoint: customEndpoint },
             adminPlugin.variables,
@@ -2045,7 +2061,7 @@ test('trusted bundled routing may use an environment credential', async () => {
           );
         const normalPlugin = await service.getPlugin(pluginId, normalUser.id);
         assert.ok(normalPlugin);
-        const normalVariables = service.getPluginVariables(
+        const normalVariables = await service.getPluginVariables(
           normalPlugin,
           normalUser.id
         );
@@ -2056,7 +2072,7 @@ test('trusted bundled routing may use an environment credential', async () => {
         );
         assert.deepEqual(normalPlugin.model_map, adminPlugin.model_map);
         assert.equal(
-          service.getApiKey(normalPlugin, normalUser.id),
+          await service.getApiKey(normalPlugin, normalUser.id),
           environmentKey
         );
         assert.equal(
@@ -2098,13 +2114,16 @@ test('trusted bundled routing may use an environment credential', async () => {
       )
     );
   } finally {
-    service.deactivatePlugin(pluginId, adminUser.id);
-    service.deactivatePlugin(pluginId, normalUser.id);
-    service.clearDiscoveredModels(pluginId, adminUser.id);
-    service.clearDiscoveredModels(pluginId, normalUser.id);
-    pluginVariablesService.deletePluginVariables(pluginId, adminUser.id);
-    pluginVariablesService.deletePluginVariables(pluginId, normalUser.id);
-    pluginCredentialsService.deleteApiKey(pluginId, legacyCredentialUser.id);
+    await service.deactivatePlugin(pluginId, adminUser.id);
+    await service.deactivatePlugin(pluginId, normalUser.id);
+    await service.clearDiscoveredModels(pluginId, adminUser.id);
+    await service.clearDiscoveredModels(pluginId, normalUser.id);
+    await pluginVariablesService.deletePluginVariables(pluginId, adminUser.id);
+    await pluginVariablesService.deletePluginVariables(pluginId, normalUser.id);
+    await pluginCredentialsService.deleteApiKey(
+      pluginId,
+      legacyCredentialUser.id
+    );
     if (previousEnvironmentKey === undefined) {
       delete process.env[keyEnv];
     } else {
@@ -2125,7 +2144,7 @@ test('Docker-style bundled and legacy directory alias preserves anchored environ
     const plugin = await service.getPlugin('openai', user.id);
     assert.ok(plugin);
     assert.equal(
-      service.getApiKey(plugin, user.id),
+      await service.getApiKey(plugin, user.id),
       'docker-layout-environment-secret'
     );
   } finally {
@@ -2177,30 +2196,32 @@ test('mismatched filenames and duplicate variable names cannot confuse trust res
       plugin => plugin.id === 'openai'
     );
     assert.ok(safePlugin);
-    const safeVariables = service.getPluginVariables(safePlugin, normalUser.id);
+    const safeVariables = await service.getPluginVariables(
+      safePlugin,
+      normalUser.id
+    );
     assert.equal(
       pluginValidation.resolvePluginApiConfig(safePlugin, safeVariables)
         .endpoint,
       bundledDefinition.endpoint
     );
     assert.equal(
-      service.getApiKey(safePlugin, normalUser.id),
+      await service.getApiKey(safePlugin, normalUser.id),
       'manifest-ambiguity-environment-secret'
     );
 
-    assert.throws(
-      () =>
-        service.installPlugin(
-          {
-            ...bundledDefinition,
-            id: 'duplicate-variable-provider',
-            variables: [
-              { ...endpointDefinition, default: attackerEndpoint },
-              ...bundledDefinition.variables,
-            ],
-          },
-          adminUser.id
-        ),
+    await assert.rejects(
+      service.installPlugin(
+        {
+          ...bundledDefinition,
+          id: 'duplicate-variable-provider',
+          variables: [
+            { ...endpointDefinition, default: attackerEndpoint },
+            ...bundledDefinition.variables,
+          ],
+        },
+        adminUser.id
+      ),
       /Invalid plugin structure/
     );
 
@@ -2233,12 +2254,12 @@ test('a pre-upgrade same-ID shadow cannot consume a legacy unbound credential', 
   );
   const bundledPlugin = await service.getPlugin('openai', user.id);
   assert.ok(bundledPlugin);
-  const binding = service.getCredentialRoutingAuthFingerprint(
+  const binding = await service.getCredentialRoutingAuthFingerprint(
     bundledPlugin,
     user.id
   );
   assert.equal(
-    pluginCredentialsService.setApiKey(
+    await pluginCredentialsService.setApiKey(
       'openai',
       'legacy-shadow-secret',
       user.id,
@@ -2324,8 +2345,8 @@ test('a pre-upgrade same-ID shadow cannot consume a legacy unbound credential', 
     );
   } finally {
     if (fs.existsSync(shadowPath)) fs.unlinkSync(shadowPath);
-    pluginCredentialsService.deleteApiKey('openai', user.id);
-    service.deactivatePlugin('openai', user.id);
+    await pluginCredentialsService.deleteApiKey('openai', user.id);
+    await service.deactivatePlugin('openai', user.id);
   }
 });
 
@@ -2347,7 +2368,7 @@ test('bundled-ID shadows cannot consume environment credentials', async () => {
   const assertShadowIsBlocked = async () => {
     const shadow = await service.getPlugin(pluginId, adminUser.id);
     assert.ok(shadow);
-    assert.equal(service.getApiKey(shadow, adminUser.id), null);
+    assert.equal(await service.getApiKey(shadow, adminUser.id), null);
     assert.equal(
       (await service.getPluginStatus(adminUser.id)).find(
         status => status.id === pluginId
@@ -2382,7 +2403,7 @@ test('bundled-ID shadows cannot consume environment credentials', async () => {
         },
       },
       async () => {
-        service.installPlugin(
+        await service.installPlugin(
           {
             ...bundledDefinition,
             endpoint: attackerEndpoint,
@@ -2390,9 +2411,9 @@ test('bundled-ID shadows cannot consume environment credentials', async () => {
           adminUser.id
         );
         await assertShadowIsBlocked();
-        assert.equal(service.deletePlugin(pluginId), true);
+        assert.equal(await service.deletePlugin(pluginId), true);
 
-        service.installPlugin(
+        await service.installPlugin(
           {
             ...bundledDefinition,
             variables: bundledDefinition.variables.map(definition =>
@@ -2404,9 +2425,9 @@ test('bundled-ID shadows cannot consume environment credentials', async () => {
           adminUser.id
         );
         await assertShadowIsBlocked();
-        assert.equal(service.deletePlugin(pluginId), true);
+        assert.equal(await service.deletePlugin(pluginId), true);
 
-        service.installPlugin(
+        await service.installPlugin(
           {
             ...bundledDefinition,
             capabilities: {
@@ -2428,11 +2449,14 @@ test('bundled-ID shadows cannot consume environment credentials', async () => {
           adminUser.id
         );
         assert.ok(capabilityShadow);
-        assert.equal(service.getApiKey(capabilityShadow, adminUser.id), null);
         assert.equal(
-          service
-            .getAvailableTTSModels(adminUser.id)
-            .some(model => model.plugin === pluginId),
+          await service.getApiKey(capabilityShadow, adminUser.id),
+          null
+        );
+        assert.equal(
+          (await service.getAvailableTTSModels(adminUser.id)).some(
+            model => model.plugin === pluginId
+          ),
           false
         );
         await assertShadowIsBlocked();
@@ -2441,9 +2465,9 @@ test('bundled-ID shadows cannot consume environment credentials', async () => {
   } finally {
     const customPath = path.join(process.env.PLUGINS_DIR, `${pluginId}.json`);
     if (fs.existsSync(customPath)) {
-      assert.equal(service.deletePlugin(pluginId), true);
+      assert.equal(await service.deletePlugin(pluginId), true);
     }
-    service.deactivatePlugin(pluginId, adminUser.id);
+    await service.deactivatePlugin(pluginId, adminUser.id);
     if (previousEnvironmentKey === undefined) {
       delete process.env[keyEnv];
     } else {
@@ -2467,7 +2491,7 @@ test('environment fallback fails closed when bundled and writable directories al
   service.legacyPluginsDir = aliasDirectory;
   service.pluginsDir = aliasDirectory;
   service.pluginReadDirs = [aliasDirectory];
-  service.installPlugin(
+  await service.installPlugin(
     {
       ...createPlugin({
         id: pluginId,
@@ -2499,7 +2523,7 @@ test('environment fallback fails closed when bundled and writable directories al
       async () => {
         const plugin = await service.getPlugin(pluginId, adminUser.id);
         assert.ok(plugin);
-        assert.equal(service.getApiKey(plugin, adminUser.id), null);
+        assert.equal(await service.getApiKey(plugin, adminUser.id), null);
         assert.equal(
           await service.activatePlugin(pluginId, adminUser.id),
           true
@@ -2518,7 +2542,7 @@ test('environment fallback fails closed when bundled and writable directories al
       }
     );
   } finally {
-    service.deactivatePlugin(pluginId, adminUser.id);
+    await service.deactivatePlugin(pluginId, adminUser.id);
     fs.rmSync(aliasDirectory, { recursive: true, force: true });
     if (previousEnvironmentKey === undefined) {
       delete process.env[keyEnv];
@@ -2939,7 +2963,7 @@ test('discovered models persist per user without mutating the shared plugin mani
 
   const service = new PluginService();
   const providerId = 'model-isolation-provider';
-  service.installPlugin(
+  await service.installPlugin(
     createPlugin({
       id: providerId,
       auth: {
@@ -3049,7 +3073,7 @@ test('discovered models persist per user without mutating the shared plugin mani
     true
   );
   assert.equal(
-    reloadedService.deactivatePlugin(providerId, 'catalog-user-one'),
+    await reloadedService.deactivatePlugin(providerId, 'catalog-user-one'),
     true
   );
   const twiceReloadedService = new PluginService();
@@ -3368,40 +3392,50 @@ test('sound and video routes apply the correct transport lifetime', async () => 
         },
       },
       async () => {
-        const sound = await fetch(
-          `${server.baseUrl}/api/media/sound/generate`,
+        await withPatchedProperties(
+          getDurableJobRuntime().service,
           {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              model: 'sound-model',
-              pluginId: 'sound-provider',
-              prompt: 'A sound',
-            }),
-          }
-        );
-        assert.equal(sound.status, 200);
+            // This test exercises the request-bound direct poll path. A real
+            // queued worker is covered by the durable job integration suite.
+            getByIdempotency: async () => null,
+          },
+          async () => {
+            const sound = await fetch(
+              `${server.baseUrl}/api/media/sound/generate`,
+              {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                  model: 'sound-model',
+                  pluginId: 'sound-provider',
+                  prompt: 'A sound',
+                }),
+              }
+            );
+            assert.equal(sound.status, 200);
 
-        const submitted = await fetch(
-          `${server.baseUrl}/api/media/video/generate`,
-          {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              model: 'video-model',
-              pluginId: 'video-provider',
-              prompt: 'A video',
-            }),
+            const submitted = await fetch(
+              `${server.baseUrl}/api/media/video/generate`,
+              {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                  model: 'video-model',
+                  pluginId: 'video-provider',
+                  prompt: 'A video',
+                }),
+              }
+            );
+            assert.equal(submitted.status, 202);
+            const jobId = (await submitted.json()).data.id;
+            const polled = await fetch(
+              `${server.baseUrl}/api/media/video/jobs/${encodeURIComponent(jobId)}`,
+              { headers }
+            );
+            assert.equal(polled.status, 200);
+            assert.equal((await polled.json()).data.status, 'completed');
           }
         );
-        assert.equal(submitted.status, 202);
-        const jobId = (await submitted.json()).data.id;
-        const polled = await fetch(
-          `${server.baseUrl}/api/media/video/jobs/${encodeURIComponent(jobId)}`,
-          { headers }
-        );
-        assert.equal(polled.status, 200);
-        assert.equal((await polled.json()).data.status, 'completed');
       }
     );
   } finally {
@@ -3410,21 +3444,20 @@ test('sound and video routes apply the correct transport lifetime', async () => 
 
   assert.deepEqual(observed, [
     ['sound', true],
-    ['video-submit', false],
     ['video-poll', true],
     ['video-download', true],
   ]);
 });
 
-test('accepted video jobs survive response disconnects and stay user-scoped', async () => {
+test('durably queued video jobs survive response disconnects and stay user-scoped', async () => {
   const owner = upsertTestUser('durable-video-job-owner', 'user');
   const other = upsertTestUser('durable-video-job-other', 'user');
   const app = express();
   app.use(express.json());
   app.use('/api/media', mediaRoutes);
   const server = await listen(app);
-  const submitStarted = Promise.withResolvers();
-  const releaseSubmit = Promise.withResolvers();
+  const publicationCommitted = Promise.withResolvers();
+  const releaseResponse = Promise.withResolvers();
   const auth = user => ({
     Authorization: `Bearer ${authService.generateToken(user)}`,
     'Content-Type': 'application/json',
@@ -3434,32 +3467,47 @@ test('accepted video jobs survive response disconnects and stay user-scoped', as
     await withPatchedProperties(
       pluginService,
       {
-        submitVideoGenRequest: async () => {
-          submitStarted.resolve();
-          await releaseSubmit.promise;
-          return {
-            providerJobId: 'accepted-after-disconnect',
-            status: 'pending',
-          };
-        },
         canCancelVideoGenRequest: () => false,
       },
       async () => {
-        const controller = new AbortController();
-        const submission = fetch(`${server.baseUrl}/api/media/video/generate`, {
-          method: 'POST',
-          headers: auth(owner),
-          body: JSON.stringify({
-            model: 'video-model',
-            pluginId: 'video-provider',
-            prompt: 'Keep this accepted handle',
-          }),
-          signal: controller.signal,
-        });
-        await submitStarted.promise;
-        controller.abort();
-        await assert.rejects(submission, error => error.name === 'AbortError');
-        releaseSubmit.resolve();
+        const queueVideoSubmission =
+          mediaGenerationJobService.queueVideoSubmission.bind(
+            mediaGenerationJobService
+          );
+        await withPatchedProperties(
+          mediaGenerationJobService,
+          {
+            queueVideoSubmission: async (...args) => {
+              const job = await queueVideoSubmission(...args);
+              publicationCommitted.resolve(job);
+              await releaseResponse.promise;
+              return job;
+            },
+          },
+          async () => {
+            const controller = new AbortController();
+            const submission = fetch(
+              `${server.baseUrl}/api/media/video/generate`,
+              {
+                method: 'POST',
+                headers: auth(owner),
+                body: JSON.stringify({
+                  model: 'video-model',
+                  pluginId: 'video-provider',
+                  prompt: 'Keep this accepted handle',
+                }),
+                signal: controller.signal,
+              }
+            );
+            await publicationCommitted.promise;
+            controller.abort();
+            releaseResponse.resolve();
+            await assert.rejects(
+              submission,
+              error => error.name === 'AbortError'
+            );
+          }
+        );
 
         let ownerJobs = [];
         for (
@@ -3484,9 +3532,11 @@ test('accepted video jobs survive response disconnects and stay user-scoped', as
         assert.equal(unsupportedCancel.status, 409);
         assert.match(
           (await unsupportedCancel.json()).message,
-          /does not declare job cancellation/
+          /submission is still being reconciled/
         );
-        assert.ok(mediaGenerationJobService.get(ownerJobs[0].id, owner.id));
+        assert.ok(
+          await mediaGenerationJobService.get(ownerJobs[0].id, owner.id)
+        );
 
         const otherJobs = await fetch(
           `${server.baseUrl}/api/media/video/jobs`,
@@ -3498,7 +3548,7 @@ test('accepted video jobs survive response disconnects and stay user-scoped', as
       }
     );
   } finally {
-    releaseSubmit.resolve();
+    releaseResponse.resolve();
     server.closeAllConnections();
     await server.close();
   }
@@ -3506,7 +3556,7 @@ test('accepted video jobs survive response disconnects and stay user-scoped', as
 
 test('video job deletion waits for provider cancellation confirmation', async () => {
   const user = upsertTestUser('cancellable-video-job-owner', 'user');
-  const job = mediaGenerationJobService.create(user.id, {
+  const job = await mediaGenerationJobService.create(user.id, {
     providerJobId: 'provider-cancel-handle',
     pluginId: 'cancellable-video-provider',
     model: 'video-model',
@@ -3554,12 +3604,12 @@ test('video job deletion waits for provider cancellation confirmation', async ()
   }
 
   assert.equal(observedProviderJobId, 'provider-cancel-handle');
-  assert.equal(mediaGenerationJobService.get(job.id, user.id), null);
+  assert.equal(await mediaGenerationJobService.get(job.id, user.id), null);
 });
 
 test('concurrent video resume requests save one gallery result', async () => {
   const user = upsertTestUser('single-flight-video-owner', 'user');
-  const job = mediaGenerationJobService.create(user.id, {
+  const job = await mediaGenerationJobService.create(user.id, {
     providerJobId: 'single-flight-provider-job',
     pluginId: 'video-provider',
     model: 'video-model',
@@ -3616,7 +3666,10 @@ test('concurrent video resume requests save one gallery result', async () => {
 
   assert.equal(polls, 1);
   assert.equal(downloads, 1);
-  const gallery = galleryService.getMedia(user.id, { limit: 20, offset: 0 });
+  const gallery = await galleryService.getMedia(user.id, {
+    limit: 20,
+    offset: 0,
+  });
   assert.equal(gallery.total, 1);
 });
 
@@ -4017,13 +4070,16 @@ test('image discovery and requests use the current user endpoint and credentials
       pluginValidation.resolvePluginEndpoint(plugin.endpoint, endpoint),
   });
 
-  assert.deepEqual(imageService.getAvailableImageGenModels('image-user'), [
-    {
-      model: 'image-model',
-      plugin: plugin.id,
-      config: { no_auth_required: true },
-    },
-  ]);
+  assert.deepEqual(
+    await imageService.getAvailableImageGenModels('image-user'),
+    [
+      {
+        model: 'image-model',
+        plugin: plugin.id,
+        config: { no_auth_required: true },
+      },
+    ]
+  );
 
   const imageData = Buffer.from('image-data').toString('base64');
   let request;
@@ -4391,7 +4447,8 @@ test('activation waits for user-scoped model discovery before resolving', async 
           activationResolved = true;
           return result;
         });
-      await Promise.resolve();
+      while (!finishDiscovery)
+        await new Promise(resolve => setImmediate(resolve));
       assert.equal(activationResolved, false);
       finishDiscovery();
       assert.equal(await activation, true);

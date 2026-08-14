@@ -61,7 +61,7 @@ const requireModelDownloadAccess = async (
     return;
   }
   const currentUser = await userModel.getUserById(req.user.userId);
-  if (!currentUser || !userCanDownloadModels(currentUser)) {
+  if (!currentUser || !(await userCanDownloadModels(currentUser))) {
     res.status(403).json({
       success: false,
       message: 'Model downloads are restricted to administrators.',
@@ -136,8 +136,8 @@ router.get(
     res.json({
       success: true,
       data: {
-        mode: getModelDownloadMode(),
-        allowed: currentUser ? userCanDownloadModels(currentUser) : false,
+        mode: await getModelDownloadMode(),
+        allowed: currentUser ? await userCanDownloadModels(currentUser) : false,
       },
     });
   }
@@ -146,7 +146,7 @@ router.get(
 router.put(
   '/models/access',
   requireAdmin,
-  (req: Request, res: Response): void => {
+  async (req: Request, res: Response): Promise<void> => {
     const mode = req.body?.mode;
     if (!isModelDownloadMode(mode)) {
       res.status(400).json({
@@ -155,8 +155,8 @@ router.put(
       });
       return;
     }
-    setModelDownloadMode(mode);
-    res.json({ success: true, data: { mode: getModelDownloadMode() } });
+    await setModelDownloadMode(mode);
+    res.json({ success: true, data: { mode: await getModelDownloadMode() } });
   }
 );
 

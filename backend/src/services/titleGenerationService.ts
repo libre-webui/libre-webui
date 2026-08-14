@@ -61,7 +61,10 @@ export interface SanitizedGeneratedTitle {
 }
 
 interface ChatServiceDependency {
-  getSession(sessionId: string, userId?: string): ChatSession | undefined;
+  getSession(
+    sessionId: string,
+    userId?: string
+  ): Promise<ChatSession | undefined>;
   updateSession(
     sessionId: string,
     updates: Partial<ChatSession>,
@@ -230,7 +233,7 @@ export class TitleGenerationService {
     providerType,
     providerId,
   }: GenerateTitleForSessionOptions): Promise<GenerateTitleForSessionResult | null> {
-    const session = this.chatService.getSession(sessionId, userId);
+    const session = await this.chatService.getSession(sessionId, userId);
     if (!session) {
       return null;
     }

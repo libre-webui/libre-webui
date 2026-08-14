@@ -67,6 +67,7 @@ import {
   isChatGenerationCancelled,
   throwIfChatGenerationCancelled,
 } from './utils/chatCancellation.js';
+import { getPlatformRuntimeConfig } from './platform/coordination/service.js';
 
 const chatRequestService = new ChatRequestService({
   chatGenerationService,
@@ -295,6 +296,15 @@ export function registerWebSocketServer(
             messageHistory,
             webSearch: webSearchRequested,
           } = message.data;
+          if (!isPrivate && getPlatformRuntimeConfig().mode === 'team') {
+            sendError(ws, {
+              error:
+                'Persisted chat streams must use the durable generation and event endpoints in team mode.',
+              code: 'DURABLE_CHAT_REQUIRED',
+              sessionId,
+            });
+            return;
+          }
           if (
             typeof assistantMessageId !== 'string' ||
             !assistantMessageId.trim()
@@ -348,7 +358,7 @@ export function registerWebSocketServer(
             };
           } else {
             // Get session with user authentication
-            session = chatService.getSession(sessionId, userId);
+            session = await chatService.getSession(sessionId, userId);
             if (!session) {
               logger.debug(
                 'Backend: Session not found:',
@@ -372,7 +382,7 @@ export function registerWebSocketServer(
           // Add user message with images if provided (skip for regenerations and private sessions)
           let userMessage;
           if (!regenerate && !isPrivate) {
-            userMessage = chatService.addMessage(
+            userMessage = await chatService.addMessage(
               sessionId,
               {
                 role: 'user',
@@ -433,8 +443,8 @@ export function registerWebSocketServer(
           let searchHasRelevantContext = documentContext.hasRelevantContext;
           if (
             webSearchRequested === true &&
-            isWebSearchAvailable() &&
-            userCanUseWebSearch(currentUser)
+            (await isWebSearchAvailable()) &&
+            (await userCanUseWebSearch(currentUser))
           ) {
             const searchToolCallId = `web-search-${Date.now()}`;
             sendToolStatus(ws, {
@@ -504,7 +514,7 @@ export function registerWebSocketServer(
 
           const persistedMessages = isPrivate
             ? []
-            : chatService.getMessagesForContext(sessionId);
+            : await chatService.getMessagesForContext(sessionId, userId);
           const preparedGeneration =
             await chatRequestService.prepareGenerationRequest({
               session,
@@ -633,7 +643,7 @@ export function registerWebSocketServer(
                 assistantMessageId
               ) {
                 const completion =
-                  assistantCompletionService.completeAssistantMessage({
+                  await assistantCompletionService.completeAssistantMessage({
                     sessionId,
                     session,
                     content: assistantContent,
@@ -775,7 +785,7 @@ export function registerWebSocketServer(
           // Save the complete assistant message with the provided ID (skip for private sessions)
           if ((assistantContent || assistantThinking) && assistantMessageId) {
             const completion =
-              assistantCompletionService.completeAssistantMessage({
+              await assistantCompletionService.completeAssistantMessage({
                 sessionId,
                 session,
                 content: assistantContent,

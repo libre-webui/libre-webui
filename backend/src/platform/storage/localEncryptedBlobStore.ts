@@ -94,6 +94,8 @@ export interface LocalEncryptedBlobStoreOptions {
   chunkBytes?: number;
   maxObjectBytes?: number;
   now?: () => Date;
+  /** Authenticate an existing store without creating paths or changing modes. */
+  readOnly?: boolean;
 }
 
 export interface BlobOrphanCleanupOptions {
@@ -110,6 +112,19 @@ export interface BlobOrphanCleanupResult {
   deletedObjects: number;
   deletedStagingFiles: number;
   retainedObjects: number;
+}
+
+export interface LocalBlobReconciliationOptions extends BlobOrphanCleanupOptions {
+  /** Maximum object/staging candidates inspected during this pass. */
+  maxEntries: number;
+  /** Opaque cursor returned by an earlier incomplete pass. */
+  continuationToken?: string;
+}
+
+export interface LocalBlobReconciliationResult extends BlobOrphanCleanupResult {
+  inspectedEntries: number;
+  complete: boolean;
+  continuationToken?: string;
 }
 
 export interface BlobIntegrityVerificationOptions {
@@ -131,6 +146,11 @@ export interface BlobIntegrityVerificationResult {
 interface BlobIntegrityCandidate {
   id: string;
   stat: fs.Stats;
+}
+
+interface LocalReconciliationCursor {
+  phase: 'objects' | 'staging';
+  after: string;
 }
 
 const storageError = (
@@ -423,6 +443,7 @@ export class LocalEncryptedBlobStore implements BlobStore {
   private readonly chunkBytes: number;
   private readonly maxObjectBytes: number;
   private readonly now: () => Date;
+  private readonly readOnly: boolean;
   private initialized: Promise<void> | null = null;
 
   constructor(options: LocalEncryptedBlobStoreOptions) {
@@ -456,11 +477,17 @@ export class LocalEncryptedBlobStore implements BlobStore {
     this.chunkBytes = chunkBytes;
     this.maxObjectBytes = maxObjectBytes;
     this.now = options.now ?? (() => new Date());
+    this.readOnly = options.readOnly === true;
   }
 
   private async initialize(): Promise<void> {
     if (!this.initialized) {
       this.initialized = (async () => {
+        if (this.readOnly) {
+          await this.assertPrivateDirectory(this.rootDirectory, false);
+          await this.assertPrivateDirectory(this.objectsDirectory, false);
+          return;
+        }
         const rootCreated = await mkdir(this.rootDirectory, {
           recursive: true,
           mode: 0o700,
@@ -494,7 +521,10 @@ export class LocalEncryptedBlobStore implements BlobStore {
     await this.initialized;
   }
 
-  private async assertPrivateDirectory(directory: string): Promise<void> {
+  private async assertPrivateDirectory(
+    directory: string,
+    repairPermissions = true
+  ): Promise<void> {
     const directoryStat = await lstat(directory);
     if (!directoryStat.isDirectory() || directoryStat.isSymbolicLink()) {
       throw storageError(
@@ -502,7 +532,17 @@ export class LocalEncryptedBlobStore implements BlobStore {
         `Local blob path is not a physical directory: ${directory}`
       );
     }
-    await fs.promises.chmod(directory, 0o700);
+    if (repairPermissions) {
+      await fs.promises.chmod(directory, 0o700);
+    } else if (
+      process.platform !== 'win32' &&
+      (directoryStat.mode & 0o077) !== 0
+    ) {
+      throw storageError(
+        'unavailable',
+        `Local blob path is not private: ${directory}`
+      );
+    }
   }
 
   private objectPath(id: string): string {
@@ -962,6 +1002,20 @@ export class LocalEncryptedBlobStore implements BlobStore {
     }
   }
 
+  /**
+   * Offline migration/recovery inventory seam. This authenticates metadata
+   * without requiring the caller to trust relational owner metadata. Runtime
+   * request paths must continue to use owner-scoped stat/open.
+   */
+  async inspectAuthenticated(id: string): Promise<BlobDescriptor> {
+    const opened = await this.openInternal(id);
+    try {
+      return publicDescriptor(opened.metadata);
+    } finally {
+      await disposeOpenedBlob(opened);
+    }
+  }
+
   private async authenticateFullBody(
     opened: OpenedBlob,
     signal?: AbortSignal
@@ -1161,13 +1215,36 @@ export class LocalEncryptedBlobStore implements BlobStore {
     try {
       opened = await this.openInternal(request.id, request.ownerUserId);
     } catch (error) {
-      if (error instanceof BlobNotFoundError) return false;
+      if (error instanceof BlobNotFoundError) {
+        if ('releaseStored' in this.quotaPolicy) {
+          await (
+            this.quotaPolicy as BlobQuotaPolicy & {
+              releaseStored(input: {
+                id: string;
+                ownerUserId: string;
+              }): Promise<void>;
+            }
+          ).releaseStored({ id: request.id, ownerUserId: request.ownerUserId });
+        }
+        return false;
+      }
       throw error;
     }
     await disposeOpenedBlob(opened);
     throwIfAborted(request.signal);
     try {
-      return await this.unlinkDurably(this.objectPath(request.id));
+      const removed = await this.unlinkDurably(this.objectPath(request.id));
+      if (removed && 'releaseStored' in this.quotaPolicy) {
+        await (
+          this.quotaPolicy as BlobQuotaPolicy & {
+            releaseStored(input: {
+              id: string;
+              ownerUserId: string;
+            }): Promise<void>;
+          }
+        ).releaseStored({ id: request.id, ownerUserId: request.ownerUserId });
+      }
+      return removed;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
       throw storageError(
@@ -1414,6 +1491,202 @@ export class LocalEncryptedBlobStore implements BlobStore {
       }
     }
     return paths;
+  }
+
+  private decodeReconciliationCursor(
+    token: string | undefined
+  ): LocalReconciliationCursor {
+    if (token === undefined) return { phase: 'objects', after: '' };
+    if (
+      typeof token !== 'string' ||
+      token.length === 0 ||
+      Buffer.byteLength(token, 'utf8') > 4096
+    ) {
+      throw storageError(
+        'invalid-input',
+        'Invalid local reconciliation cursor'
+      );
+    }
+    try {
+      const parsed = JSON.parse(
+        Buffer.from(token, 'base64url').toString('utf8')
+      ) as Partial<LocalReconciliationCursor>;
+      if (
+        (parsed.phase !== 'objects' && parsed.phase !== 'staging') ||
+        typeof parsed.after !== 'string' ||
+        Buffer.byteLength(parsed.after, 'utf8') > 1024 ||
+        parsed.after.includes('\u0000') ||
+        parsed.after.includes('\\') ||
+        path.posix.isAbsolute(parsed.after) ||
+        parsed.after.split('/').some(part => part === '.' || part === '..') ||
+        (parsed.phase === 'staging' && parsed.after.includes('/'))
+      ) {
+        throw new Error('invalid');
+      }
+      return { phase: parsed.phase, after: parsed.after };
+    } catch {
+      throw storageError(
+        'invalid-input',
+        'Invalid local reconciliation cursor'
+      );
+    }
+  }
+
+  private encodeReconciliationCursor(
+    cursor: LocalReconciliationCursor
+  ): string {
+    return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64url');
+  }
+
+  /**
+   * Bounded, restart-safe local lifecycle reconciliation.
+   *
+   * Object names are traversed in their fixed UUID shard order. A cursor may
+   * therefore resume without materializing the whole object tree. New names
+   * that sort before an active cursor are picked up after the scan completes;
+   * the age grace prevents those in-flight writes from being collected.
+   */
+  async reconcileOrphans(
+    options: LocalBlobReconciliationOptions
+  ): Promise<LocalBlobReconciliationResult> {
+    await this.initialize();
+    if (!Number.isFinite(options.olderThan.getTime())) {
+      throw storageError('invalid-input', 'Invalid blob orphan cutoff');
+    }
+    if (
+      !Number.isSafeInteger(options.maxEntries) ||
+      options.maxEntries < 1 ||
+      options.maxEntries > 100_000
+    ) {
+      throw storageError(
+        'invalid-input',
+        'Invalid local reconciliation entry limit'
+      );
+    }
+    const cutoff = options.olderThan.getTime();
+    const cursor = this.decodeReconciliationCursor(options.continuationToken);
+    let inspectedEntries = 0;
+    let deletedObjects = 0;
+    let retainedObjects = 0;
+    let deletedStagingFiles = 0;
+
+    const incomplete = (
+      phase: LocalReconciliationCursor['phase'],
+      after: string
+    ): LocalBlobReconciliationResult => ({
+      deletedObjects,
+      deletedStagingFiles,
+      retainedObjects,
+      inspectedEntries,
+      complete: false,
+      continuationToken: this.encodeReconciliationCursor({ phase, after }),
+    });
+
+    if (cursor.phase === 'objects') {
+      const firstShards = (
+        await readdir(this.objectsDirectory, { withFileTypes: true })
+      )
+        .filter(entry => entry.isDirectory())
+        .map(entry => entry.name)
+        .sort();
+      for (const firstShard of firstShards) {
+        const firstDirectory = path.join(this.objectsDirectory, firstShard);
+        const secondShards = (
+          await readdir(firstDirectory, { withFileTypes: true }).catch(
+            (error: NodeJS.ErrnoException) => {
+              if (error.code === 'ENOENT') return [];
+              throw error;
+            }
+          )
+        )
+          .filter(entry => entry.isDirectory())
+          .map(entry => entry.name)
+          .sort();
+        for (const secondShard of secondShards) {
+          const secondDirectory = path.join(firstDirectory, secondShard);
+          const files = (
+            await readdir(secondDirectory, { withFileTypes: true }).catch(
+              (error: NodeJS.ErrnoException) => {
+                if (error.code === 'ENOENT') return [];
+                throw error;
+              }
+            )
+          )
+            .filter(entry => entry.isFile() && entry.name.endsWith('.blob'))
+            .map(entry => entry.name)
+            .sort();
+          for (const filename of files) {
+            const relative = `${firstShard}/${secondShard}/${filename}`;
+            if (relative <= cursor.after) continue;
+            throwIfAborted(options.signal);
+            inspectedEntries += 1;
+            const objectPath = path.join(secondDirectory, filename);
+            let objectStat: fs.Stats | undefined;
+            try {
+              objectStat = await lstat(objectPath);
+            } catch (error) {
+              if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+                throw error;
+              }
+            }
+            if (objectStat?.isFile() && !objectStat.isSymbolicLink()) {
+              const blobId = path.basename(filename, '.blob');
+              if (
+                objectStat.mtimeMs >= cutoff ||
+                !BLOB_ID_PATTERN.test(blobId) ||
+                (await options.isReferenced(blobId))
+              ) {
+                retainedObjects += 1;
+              } else if (await this.unlinkDurably(objectPath)) {
+                deletedObjects += 1;
+              }
+            }
+            if (inspectedEntries >= options.maxEntries) {
+              return incomplete('objects', relative);
+            }
+          }
+        }
+      }
+    }
+
+    const stagingAfter = cursor.phase === 'staging' ? cursor.after : '';
+    const stagingEntries = (
+      await readdir(this.stagingDirectory, { withFileTypes: true })
+    )
+      .filter(entry => entry.isFile() && entry.name.endsWith('.tmp'))
+      .map(entry => entry.name)
+      .sort();
+    for (const filename of stagingEntries) {
+      if (filename <= stagingAfter) continue;
+      throwIfAborted(options.signal);
+      inspectedEntries += 1;
+      const stagingPath = path.join(this.stagingDirectory, filename);
+      let stagingStat: fs.Stats | undefined;
+      try {
+        stagingStat = await lstat(stagingPath);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      }
+      if (
+        stagingStat?.isFile() &&
+        !stagingStat.isSymbolicLink() &&
+        stagingStat.mtimeMs < cutoff &&
+        (await this.unlinkDurably(stagingPath))
+      ) {
+        deletedStagingFiles += 1;
+      }
+      if (inspectedEntries >= options.maxEntries) {
+        return incomplete('staging', filename);
+      }
+    }
+
+    return {
+      deletedObjects,
+      deletedStagingFiles,
+      retainedObjects,
+      inspectedEntries,
+      complete: true,
+    };
   }
 
   async cleanupOrphans(

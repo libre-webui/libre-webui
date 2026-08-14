@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { initializeWorkTestPlatform } from './lib/work-test-platform.mjs';
 
 process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
 
@@ -41,38 +42,54 @@ const {
 } = accessModule;
 const { WorkRuntimeService } = runtimeModule;
 const { requireCurrentTerminalTask } = terminalServerModule;
+const closeWorkPlatform = await initializeWorkTestPlatform(repoRoot);
 
-test.after(() => {
-  databaseModule.closeDatabase();
+test.after(async () => {
+  await closeWorkPlatform();
   if (previousDataDir === undefined) delete process.env.DATA_DIR;
   else process.env.DATA_DIR = previousDataDir;
   rmSync(dataDir, { recursive: true, force: true });
 });
 
-test('the Work access mode defaults to admins and persists changes', () => {
-  assert.equal(getWorkAccessMode(), 'admins');
-  setWorkAccessMode('all-users');
-  assert.equal(getWorkAccessMode(), 'all-users');
-  setWorkAccessMode('admins');
-  assert.equal(getWorkAccessMode(), 'admins');
-  assert.throws(() => setWorkAccessMode('everyone'));
+test('the Work access mode defaults to admins and persists changes', async () => {
+  assert.equal(await getWorkAccessMode(), 'admins');
+  await setWorkAccessMode('all-users');
+  assert.equal(await getWorkAccessMode(), 'all-users');
+  await setWorkAccessMode('admins');
+  assert.equal(await getWorkAccessMode(), 'admins');
+  await assert.rejects(setWorkAccessMode('everyone'));
   assert.equal(isWorkAccessMode('all-users'), true);
   assert.equal(isWorkAccessMode('everyone'), false);
 });
 
-test('access follows role, account status, and the persisted mode', () => {
-  setWorkAccessMode('admins');
-  assert.equal(userHasWorkAccess({ role: 'admin', status: 'active' }), true);
-  assert.equal(userHasWorkAccess({ role: 'user', status: 'active' }), false);
+test('access follows role, account status, and the persisted mode', async () => {
+  await setWorkAccessMode('admins');
+  assert.equal(
+    await userHasWorkAccess({ role: 'admin', status: 'active' }),
+    true
+  );
+  assert.equal(
+    await userHasWorkAccess({ role: 'user', status: 'active' }),
+    false
+  );
 
-  setWorkAccessMode('all-users');
-  assert.equal(userHasWorkAccess({ role: 'user', status: 'active' }), true);
+  await setWorkAccessMode('all-users');
+  assert.equal(
+    await userHasWorkAccess({ role: 'user', status: 'active' }),
+    true
+  );
   // Suspended or pending accounts never gain access from the open mode.
-  assert.equal(userHasWorkAccess({ role: 'user', status: 'pending' }), false);
-  assert.equal(userHasWorkAccess({ role: 'admin', status: 'pending' }), false);
+  assert.equal(
+    await userHasWorkAccess({ role: 'user', status: 'pending' }),
+    false
+  );
+  assert.equal(
+    await userHasWorkAccess({ role: 'admin', status: 'pending' }),
+    false
+  );
   // Status unknown to the caller defers to role and mode alone.
-  assert.equal(userHasWorkAccess({ role: 'user' }), true);
-  setWorkAccessMode('admins');
+  assert.equal(await userHasWorkAccess({ role: 'user' }), true);
+  await setWorkAccessMode('admins');
 });
 
 test('runtime mutations honor the owner’s current Work access', async () => {
@@ -120,7 +137,7 @@ test('runtime mutations honor the owner’s current Work access', async () => {
   };
 
   // Admins-only mode: a non-admin owner's mutation is refused.
-  setWorkAccessMode('admins');
+  await setWorkAccessMode('admins');
   await assert.rejects(
     service.removeTask(task),
     error => error?.status === 403 && error?.code === 'WORK_ACCESS_REVOKED'
@@ -128,10 +145,10 @@ test('runtime mutations honor the owner’s current Work access', async () => {
   assert.equal(removed, 0);
 
   // Opening Work to all users lets the same owner proceed.
-  setWorkAccessMode('all-users');
+  await setWorkAccessMode('all-users');
   await service.removeTask(task);
   assert.equal(removed, 1);
-  setWorkAccessMode('admins');
+  await setWorkAccessMode('admins');
 });
 
 test('an established terminal rechecks current access and task ownership', async () => {
@@ -161,7 +178,7 @@ test('an established terminal rechecks current access and task ownership', async
     now
   );
 
-  setWorkAccessMode('all-users');
+  await setWorkAccessMode('all-users');
   assert.equal((await requireCurrentTerminalTask(userId, taskId)).id, taskId);
 
   db.prepare("UPDATE users SET account_status = 'pending' WHERE id = ?").run(
@@ -175,13 +192,13 @@ test('an established terminal rechecks current access and task ownership', async
     userId
   );
 
-  setWorkAccessMode('admins');
+  await setWorkAccessMode('admins');
   await assert.rejects(
     requireCurrentTerminalTask(userId, taskId),
     error => error?.status === 403 && error?.code === 'WORK_TERMINAL_FORBIDDEN'
   );
 
-  setWorkAccessMode('all-users');
+  await setWorkAccessMode('all-users');
   db.prepare('UPDATE work_tasks SET user_id = ? WHERE id = ?').run(
     otherUserId,
     taskId
@@ -191,7 +208,7 @@ test('an established terminal rechecks current access and task ownership', async
     error =>
       error?.status === 404 && error?.code === 'WORK_TERMINAL_TASK_NOT_FOUND'
   );
-  setWorkAccessMode('admins');
+  await setWorkAccessMode('admins');
 });
 
 test('the Work routes gate on Work access, not blanket admin', () => {
@@ -215,7 +232,7 @@ test('the Work routes gate on Work access, not blanket admin', () => {
     path.join(repoRoot, 'backend', 'src', 'workTerminalServer.ts'),
     'utf8'
   );
-  assert.match(terminal, /!userHasWorkAccess\(currentUser\)/);
+  assert.match(terminal, /!\(await userHasWorkAccess\(currentUser\)\)/);
   assert.match(
     terminal,
     /requireCurrentTerminalTask\(\s*userId,\s*task\.id,\s*\(\) => lifecycle\.isShuttingDown/

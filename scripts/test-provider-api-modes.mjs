@@ -2668,7 +2668,7 @@ test('discovered model maps persist per user without mutating the plugin manifes
     insertUser.run('model-admin', 'model-admin', 'test', 'admin', now, now);
 
     const service = new pluginServiceModule.PluginService();
-    service.installPlugin(
+    await service.installPlugin(
       {
         id: 'model-isolation-provider',
         name: 'Model isolation provider',
@@ -2746,7 +2746,7 @@ test('discovered model maps persist per user without mutating the plugin manifes
       ['model-model-user-two']
     );
 
-    reloadedService.clearDiscoveredModels(
+    await reloadedService.clearDiscoveredModels(
       'model-isolation-provider',
       'model-user-one'
     );

@@ -13,6 +13,11 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { initializeWorkTestPlatform } from './lib/work-test-platform.mjs';
+
+// Stateful production modules are imported below. Pin a test-only key before
+// those imports so this suite can never generate or persist developer secrets.
+process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -790,12 +795,13 @@ test('task retirement gates every new mutation before cleanup', async t => {
     ).href
   );
   const service = new taskServiceModule.WorkTaskService();
+  const closeWorkPlatform = await initializeWorkTestPlatform(repoRoot);
   const db = databaseModule.getDatabase();
   const userId = 'retirement-gate-user';
   const now = Date.now();
 
-  t.after(() => {
-    databaseModule.closeDatabase();
+  t.after(async () => {
+    await closeWorkPlatform();
     if (previousDataDir === undefined) delete process.env.DATA_DIR;
     else process.env.DATA_DIR = previousDataDir;
     rmSync(dataDir, { recursive: true, force: true });
@@ -861,7 +867,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   assert.equal(deniedPayload?.message, 'Admin access required');
   db.prepare(`UPDATE users SET role = 'admin' WHERE id = ?`).run(userId);
 
-  const created = service.createTaskWithRun(
+  const created = await service.createTaskWithRun(
     userId,
     'Build a retirement gate',
     'local-tools-model',
@@ -871,69 +877,68 @@ test('task retirement gates every new mutation before cleanup', async t => {
   assert.equal(created.providerId, undefined);
   assert.equal(created.activeRun.providerType, 'ollama');
   assert.equal(created.activeRun.providerId, undefined);
-  service.updateRun(created.activeRun.id, 'completed', { finished: true });
-  service.updateTaskStatus(created.id, 'completed');
+  await service.updateRun(created.activeRun.id, 'completed', {
+    finished: true,
+  });
+  await service.updateTaskStatus(created.id, 'completed');
 
   db.prepare(`UPDATE users SET role = 'user' WHERE id = ?`).run(userId);
-  assert.throws(
-    () =>
-      service.updateTask(created.id, userId, { title: 'Stale admin write' }),
+  await assert.rejects(
+    service.updateTask(created.id, userId, { title: 'Stale admin write' }),
     error => error?.status === 403 && /Admin access/.test(error.message)
   );
   db.prepare(`UPDATE users SET role = 'admin' WHERE id = ?`).run(userId);
 
   const previewUrl = 'http://127.0.0.1:49173';
-  service.updatePreview(created.id, 'running', previewUrl);
-  const policyTask = service.beginNetworkPolicyChange(created.id, userId);
+  await service.updatePreview(created.id, 'running', previewUrl);
+  const policyTask = await service.beginNetworkPolicyChange(created.id, userId);
   assert.equal(policyTask.networkEnabled, false);
-  assert.throws(
-    () =>
-      service.createRun(
-        created.id,
-        userId,
-        'This must not start during a network transition.'
-      ),
+  await assert.rejects(
+    service.createRun(
+      created.id,
+      userId,
+      'This must not start during a network transition.'
+    ),
     error => error?.status === 409 && /network policy/.test(error.message)
   );
-  assert.throws(
-    () => service.beginTaskRetirement(created.id, userId),
+  await assert.rejects(
+    service.beginTaskRetirement(created.id, userId),
     error => error?.status === 409 && /network policy/.test(error.message)
   );
-  service.commitNetworkChange(created.id, userId, {
+  await service.commitNetworkChange(created.id, userId, {
     title: 'Network transition serialized',
     networkEnabled: false,
   });
   service.releaseNetworkPolicyChange(created.id);
-  const unchangedNetwork = service.requireTaskDetail(created.id, userId);
+  const unchangedNetwork = await service.requireTaskDetail(created.id, userId);
   assert.equal(unchangedNetwork.previewStatus, 'running');
   assert.equal(unchangedNetwork.previewUrl, previewUrl);
 
-  service.beginNetworkPolicyChange(created.id, userId);
-  service.commitNetworkChange(created.id, userId, {
+  await service.beginNetworkPolicyChange(created.id, userId);
+  await service.commitNetworkChange(created.id, userId, {
     networkEnabled: true,
   });
   service.releaseNetworkPolicyChange(created.id);
-  const changedNetwork = service.requireTaskDetail(created.id, userId);
+  const changedNetwork = await service.requireTaskDetail(created.id, userId);
   assert.equal(changedNetwork.networkEnabled, true);
   assert.equal(changedNetwork.previewStatus, 'stopped');
   assert.equal(changedNetwork.previewUrl, undefined);
 
-  service.beginTaskRetirement(created.id, userId);
-  assert.throws(
-    () =>
-      service.createRun(
-        created.id,
-        userId,
-        'This must not be inserted during deletion.'
-      ),
+  await service.beginTaskRetirement(created.id, userId);
+  await assert.rejects(
+    service.createRun(
+      created.id,
+      userId,
+      'This must not be inserted during deletion.'
+    ),
     error => error?.status === 409 && /being deleted/.test(error.message)
   );
-  assert.throws(
-    () => service.updateTask(created.id, userId, { title: 'Race won' }),
+  await assert.rejects(
+    service.updateTask(created.id, userId, { title: 'Race won' }),
     error => error?.status === 409 && /being deleted/.test(error.message)
   );
-  assert.throws(
-    () => service.assertTaskMutationAllowed(created.id, userId),
+  await assert.rejects(
+    service.assertTaskMutationAllowed(created.id, userId),
     error => error?.status === 409 && /being deleted/.test(error.message)
   );
   assert.equal(
@@ -945,8 +950,11 @@ test('task retirement gates every new mutation before cleanup', async t => {
 
   service.releaseTaskRetirement(created.id);
   assert.equal(
-    service.updateTask(created.id, userId, { title: 'Retry remains possible' })
-      .title,
+    (
+      await service.updateTask(created.id, userId, {
+        title: 'Retry remains possible',
+      })
+    ).title,
     'Retry remains possible'
   );
 
@@ -963,63 +971,63 @@ test('task retirement gates every new mutation before cleanup', async t => {
   insertAdmin(capacityUserThree);
 
   // Two concurrent runtimes per administrator are admitted; the third is not.
-  const capacityTaskOne = service.createTaskWithRun(
+  const capacityTaskOne = await service.createTaskWithRun(
     userId,
     'Occupy the first per-user Work runtime slot',
     'local-tools-model',
     false
   );
-  const capacityTaskOneB = service.createTaskWithRun(
+  const capacityTaskOneB = await service.createTaskWithRun(
     userId,
     'Occupy the second per-user Work runtime slot',
     'local-tools-model',
     false
   );
-  assert.throws(
-    () =>
-      service.createTaskWithRun(
-        userId,
-        'This third per-user runtime must be rejected',
-        'local-tools-model',
-        false
-      ),
+  await assert.rejects(
+    service.createTaskWithRun(
+      userId,
+      'This third per-user runtime must be rejected',
+      'local-tools-model',
+      false
+    ),
     error => error?.status === 429 && error?.code === 'WORK_USER_RUNTIME_LIMIT'
   );
   // A third administrator is refused once three runtimes are active globally.
-  const capacityTaskTwo = service.createTaskWithRun(
+  const capacityTaskTwo = await service.createTaskWithRun(
     capacityUserTwo,
     'Occupy the last global Work runtime slot',
     'local-tools-model',
     false
   );
-  assert.throws(
-    () =>
-      service.createTaskWithRun(
-        capacityUserThree,
-        'This global runtime must be rejected',
-        'local-tools-model',
-        false
-      ),
+  await assert.rejects(
+    service.createTaskWithRun(
+      capacityUserThree,
+      'This global runtime must be rejected',
+      'local-tools-model',
+      false
+    ),
     error =>
       error?.status === 429 && error?.code === 'WORK_GLOBAL_RUNTIME_LIMIT'
   );
   for (const detail of [capacityTaskOne, capacityTaskOneB, capacityTaskTwo]) {
-    service.updateRun(detail.activeRun.id, 'completed', { finished: true });
-    service.updateTaskStatus(detail.id, 'completed');
+    await service.updateRun(detail.activeRun.id, 'completed', {
+      finished: true,
+    });
+    await service.updateTaskStatus(detail.id, 'completed');
   }
-  const capacityTaskThree = service.createTaskWithRun(
+  const capacityTaskThree = await service.createTaskWithRun(
     capacityUserThree,
     'Create a third idle task after capacity is released',
     'local-tools-model',
     false
   );
-  service.updateRun(capacityTaskThree.activeRun.id, 'completed', {
+  await service.updateRun(capacityTaskThree.activeRun.id, 'completed', {
     finished: true,
   });
-  service.updateTaskStatus(capacityTaskThree.id, 'completed');
+  await service.updateTaskStatus(capacityTaskThree.id, 'completed');
 
   for (let index = 0; index < 209; index += 1) {
-    service.addMessage(
+    await service.addMessage(
       created.id,
       created.activeRun.id,
       'assistant',
@@ -1028,7 +1036,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
     );
   }
   for (let index = 0; index < 15; index += 1) {
-    service.addMessage(
+    await service.addMessage(
       created.id,
       created.activeRun.id,
       'tool',
@@ -1037,21 +1045,20 @@ test('task retirement gates every new mutation before cleanup', async t => {
     );
   }
 
-  const detail = service.requireTaskDetail(created.id, userId);
+  const detail = await service.requireTaskDetail(created.id, userId);
   assert.equal(detail.messages.length, 200);
   assert.equal(detail.messages[0].messageIndex, 25);
   assert.equal(detail.messageCursor, 25);
   assert.equal(detail.hasMoreMessages, true);
 
-  const older = service.getMessagePage(created.id, detail.messageCursor);
+  const older = await service.getMessagePage(created.id, detail.messageCursor);
   assert.equal(older.messages.length, 25);
   assert.equal(older.messages[0].messageIndex, 0);
   assert.equal(older.messages.at(-1).messageIndex, 24);
   assert.equal(older.cursor, undefined);
   assert.equal(older.hasMore, false);
 
-  const expectedContext = service
-    .getMessages(created.id)
+  const expectedContext = (await service.getMessages(created.id))
     .filter(
       message =>
         message.kind === 'message' &&
@@ -1059,13 +1066,13 @@ test('task retirement gates every new mutation before cleanup', async t => {
     )
     .slice(-30);
   assert.deepEqual(
-    service
-      .getRecentConversationMessages(created.id)
-      .map(message => message.messageIndex),
+    (await service.getRecentConversationMessages(created.id)).map(
+      message => message.messageIndex
+    ),
     expectedContext.map(message => message.messageIndex)
   );
 
-  const bounded = service.addMessage(
+  const bounded = await service.addMessage(
     created.id,
     created.activeRun.id,
     'assistant',
@@ -1075,22 +1082,20 @@ test('task retirement gates every new mutation before cleanup', async t => {
   assert.ok(Buffer.byteLength(bounded.content, 'utf8') <= 100_000);
   assert.match(bounded.content, /message truncated/);
   assert.ok(
-    service
-      .getRecentConversationMessages(created.id)
-      .reduce(
-        (bytes, message) => bytes + Buffer.byteLength(message.content, 'utf8'),
-        0
-      ) <= 256_000
+    (await service.getRecentConversationMessages(created.id)).reduce(
+      (bytes, message) => bytes + Buffer.byteLength(message.content, 'utf8'),
+      0
+    ) <= 256_000
   );
 
-  const pluginTask = service.updateTask(created.id, userId, {
+  const pluginTask = await service.updateTask(created.id, userId, {
     model: 'shared-model',
     providerType: 'plugin',
     providerId: 'remote-collision',
   });
   assert.equal(pluginTask.providerType, 'plugin');
   assert.equal(pluginTask.providerId, 'remote-collision');
-  const pluginRunTask = service.createRun(
+  const pluginRunTask = await service.createRun(
     created.id,
     userId,
     'Keep the exact remote route.',
@@ -1109,41 +1114,47 @@ test('task retirement gates every new mutation before cleanup', async t => {
     provider_type: 'plugin',
     provider_id: 'remote-collision',
   });
-  service.updateRun(pluginRunTask.activeRun.id, 'completed', {
+  await service.updateRun(pluginRunTask.activeRun.id, 'completed', {
     finished: true,
   });
-  service.updateTaskStatus(created.id, 'completed');
+  await service.updateTaskStatus(created.id, 'completed');
 
   const capacityRuntime = new runtimeModule.WorkRuntimeService();
   capacityRuntime.ensureImage = async () => {};
   capacityRuntime.withLifecycleLock = async (_taskId, operation) => operation();
   capacityRuntime.prepareWithLock = async () => {};
-  const taskOneRecord = service.requireTaskRecord(capacityTaskOne.id, userId);
-  const taskTwoRecord = service.requireTaskRecord(
+  const taskOneRecord = await service.requireTaskRecord(
+    capacityTaskOne.id,
+    userId
+  );
+  const taskTwoRecord = await service.requireTaskRecord(
     capacityTaskTwo.id,
     capacityUserTwo
   );
-  const taskThreeRecord = service.requireTaskRecord(
+  const taskThreeRecord = await service.requireTaskRecord(
     capacityTaskThree.id,
     capacityUserThree
   );
 
-  const extraUserTask = service.createTaskWithRun(
+  const extraUserTask = await service.createTaskWithRun(
     userId,
     'Provide a third task for lease-capacity checks',
     'local-tools-model',
     false
   );
-  service.updateRun(extraUserTask.activeRun.id, 'completed', {
+  await service.updateRun(extraUserTask.activeRun.id, 'completed', {
     finished: true,
   });
-  service.updateTaskStatus(extraUserTask.id, 'completed');
-  const extraUserRecord = service.requireTaskRecord(extraUserTask.id, userId);
+  await service.updateTaskStatus(extraUserTask.id, 'completed');
+  const extraUserRecord = await service.requireTaskRecord(
+    extraUserTask.id,
+    userId
+  );
 
   // Two leases for one administrator are admitted; the third is refused.
   const releaseUserSlot = await capacityRuntime.prepare(taskOneRecord);
   const releaseUserSlotTwo = await capacityRuntime.prepare(
-    service.requireTaskRecord(created.id, userId)
+    await service.requireTaskRecord(created.id, userId)
   );
   await assert.rejects(
     capacityRuntime.prepare(extraUserRecord),
@@ -1293,15 +1304,17 @@ test('task retirement gates every new mutation before cleanup', async t => {
   );
   blockedRuntime.beginShutdown();
 
-  const retiredTask = service.createTaskWithRun(
+  const retiredTask = await service.createTaskWithRun(
     userId,
     'Delete resources after an administrator is demoted',
     'local-tools-model',
     false
   );
-  service.updateRun(retiredTask.activeRun.id, 'completed', { finished: true });
-  service.updateTaskStatus(retiredTask.id, 'completed');
-  const retiredRecord = service.requireTaskRecord(retiredTask.id, userId);
+  await service.updateRun(retiredTask.activeRun.id, 'completed', {
+    finished: true,
+  });
+  await service.updateTaskStatus(retiredTask.id, 'completed');
+  const retiredRecord = await service.requireTaskRecord(retiredTask.id, userId);
   db.prepare(`UPDATE users SET role = 'user' WHERE id = ?`).run(userId);
 
   const cleanupRuntime = new runtimeModule.WorkRuntimeService();
@@ -1312,7 +1325,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   );
   await cleanupRuntime.removeTask(retiredRecord, true);
   cleanupRuntime.finalizeTaskRemoval(retiredRecord.id);
-  service.deleteTask(retiredRecord.id, userId);
+  await service.deleteTask(retiredRecord.id, userId);
   db.prepare(`UPDATE users SET role = 'admin' WHERE id = ?`).run(userId);
 });
 
@@ -1330,12 +1343,13 @@ test('Work message metadata and model context enforce exact byte bounds', async 
     ).href
   );
   const service = new taskServiceModule.WorkTaskService();
+  const closeWorkPlatform = await initializeWorkTestPlatform(repoRoot);
   const db = databaseModule.getDatabase();
   const userId = 'message-bounds-user';
   const now = Date.now();
 
-  t.after(() => {
-    databaseModule.closeDatabase();
+  t.after(async () => {
+    await closeWorkPlatform();
     if (previousDataDir === undefined) delete process.env.DATA_DIR;
     else process.env.DATA_DIR = previousDataDir;
     rmSync(dataDir, { recursive: true, force: true });
@@ -1354,7 +1368,7 @@ test('Work message metadata and model context enforce exact byte bounds', async 
     now
   );
 
-  const persistenceTask = service.createTaskWithRun(
+  const persistenceTask = await service.createTaskWithRun(
     userId,
     'Preserve exact provider response items',
     'local-tools-model',
@@ -1373,7 +1387,7 @@ test('Work message metadata and model context enforce exact byte bounds', async 
     Buffer.byteLength(JSON.stringify(exactMetadata), 'utf8') <
       taskServiceModule.WORK_MESSAGE_METADATA_MAX_BYTES
   );
-  const exactMessage = service.addMessage(
+  const exactMessage = await service.addMessage(
     persistenceTask.id,
     persistenceTask.activeRun.id,
     'assistant',
@@ -1387,9 +1401,9 @@ test('Work message metadata and model context enforce exact byte bounds', async 
     .get(exactMessage.id).metadata;
   assert.equal(storedExactMetadata, JSON.stringify(exactMetadata));
   assert.deepEqual(
-    service
-      .getRecentModelContextMessages(persistenceTask.id)
-      .find(message => message.id === exactMessage.id)?.metadata,
+    (await service.getRecentModelContextMessages(persistenceTask.id)).find(
+      message => message.id === exactMessage.id
+    )?.metadata,
     exactMetadata
   );
 
@@ -1402,7 +1416,7 @@ test('Work message metadata and model context enforce exact byte bounds', async 
       },
     ],
   };
-  const droppedMessage = service.addMessage(
+  const droppedMessage = await service.addMessage(
     persistenceTask.id,
     persistenceTask.activeRun.id,
     'assistant',
@@ -1417,23 +1431,25 @@ test('Work message metadata and model context enforce exact byte bounds', async 
       .get(droppedMessage.id).metadata,
     null
   );
-  service.updateRun(persistenceTask.activeRun.id, 'completed', {
+  await service.updateRun(persistenceTask.activeRun.id, 'completed', {
     finished: true,
   });
-  service.updateTaskStatus(persistenceTask.id, 'completed');
+  await service.updateTaskStatus(persistenceTask.id, 'completed');
 
   const pageMetadata = { exact: 'p'.repeat(80_000) };
-  const pageMessages = Array.from({ length: 13 }, (_, index) =>
-    service.addMessage(
-      persistenceTask.id,
-      persistenceTask.activeRun.id,
-      'assistant',
-      'message',
-      `page-${index}`,
-      pageMetadata
+  const pageMessages = await Promise.all(
+    Array.from({ length: 13 }, (_, index) =>
+      service.addMessage(
+        persistenceTask.id,
+        persistenceTask.activeRun.id,
+        'assistant',
+        'message',
+        `page-${index}`,
+        pageMetadata
+      )
     )
   );
-  const boundedPage = service.getMessagePage(persistenceTask.id);
+  const boundedPage = await service.getMessagePage(persistenceTask.id);
   assert.equal(boundedPage.messages.length, 12);
   assert.equal(boundedPage.hasMore, true);
   assert.ok(
@@ -1455,14 +1471,14 @@ test('Work message metadata and model context enforce exact byte bounds', async 
     false
   );
 
-  const invalidPageTask = service.createTaskWithRun(
+  const invalidPageTask = await service.createTaskWithRun(
     userId,
     'Advance past an entirely oversized legacy page',
     'local-tools-model',
     false
   );
   for (let index = 0; index < 201; index += 1) {
-    service.addMessage(
+    await service.addMessage(
       invalidPageTask.id,
       invalidPageTask.activeRun.id,
       'assistant',
@@ -1474,23 +1490,23 @@ test('Work message metadata and model context enforce exact byte bounds', async 
     'x'.repeat(100_001),
     invalidPageTask.id
   );
-  const invalidFirstPage = service.getMessagePage(invalidPageTask.id);
+  const invalidFirstPage = await service.getMessagePage(invalidPageTask.id);
   assert.deepEqual(invalidFirstPage.messages, []);
   assert.equal(invalidFirstPage.hasMore, true);
   assert.equal(typeof invalidFirstPage.cursor, 'number');
-  const invalidSecondPage = service.getMessagePage(
+  const invalidSecondPage = await service.getMessagePage(
     invalidPageTask.id,
     invalidFirstPage.cursor
   );
   assert.deepEqual(invalidSecondPage.messages, []);
   assert.equal(invalidSecondPage.hasMore, false);
   assert.equal(invalidSecondPage.cursor, undefined);
-  service.updateRun(invalidPageTask.activeRun.id, 'completed', {
+  await service.updateRun(invalidPageTask.activeRun.id, 'completed', {
     finished: true,
   });
-  service.updateTaskStatus(invalidPageTask.id, 'completed');
+  await service.updateTaskStatus(invalidPageTask.id, 'completed');
 
-  const contextTask = service.createTaskWithRun(
+  const contextTask = await service.createTaskWithRun(
     userId,
     'Skip oversized historical context rows',
     'local-tools-model',
@@ -1505,7 +1521,7 @@ test('Work message metadata and model context enforce exact byte bounds', async 
       },
     ],
   };
-  const firstBudgetMessage = service.addMessage(
+  const firstBudgetMessage = await service.addMessage(
     contextTask.id,
     contextTask.activeRun.id,
     'assistant',
@@ -1513,7 +1529,7 @@ test('Work message metadata and model context enforce exact byte bounds', async 
     'a'.repeat(90_000),
     budgetMetadata
   );
-  const latestBudgetMessage = service.addMessage(
+  const latestBudgetMessage = await service.addMessage(
     contextTask.id,
     contextTask.activeRun.id,
     'assistant',
@@ -1559,13 +1575,15 @@ test('Work message metadata and model context enforce exact byte bounds', async 
     now + 4
   );
 
-  const legacyMessage = service
-    .getMessages(contextTask.id)
-    .find(message => message.id === 'legacy-oversized-metadata');
+  const legacyMessage = (await service.getMessages(contextTask.id)).find(
+    message => message.id === 'legacy-oversized-metadata'
+  );
   assert.ok(legacyMessage);
   assert.equal(legacyMessage.metadata, undefined);
 
-  const retainedContext = service.getRecentModelContextMessages(contextTask.id);
+  const retainedContext = await service.getRecentModelContextMessages(
+    contextTask.id
+  );
   assert.deepEqual(
     retainedContext.map(message => message.id),
     [latestBudgetMessage.id]
@@ -1589,9 +1607,9 @@ test('Work message metadata and model context enforce exact byte bounds', async 
     ) <= 256_000
   );
   assert.deepEqual(
-    service
-      .getRecentConversationMessages(contextTask.id)
-      .map(message => message.id),
+    (await service.getRecentConversationMessages(contextTask.id)).map(
+      message => message.id
+    ),
     [latestBudgetMessage.id]
   );
   assert.notEqual(firstBudgetMessage.id, latestBudgetMessage.id);

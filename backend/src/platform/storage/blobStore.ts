@@ -112,6 +112,21 @@ export interface BlobQuotaPolicy {
   }): Promise<BlobQuotaReservation>;
 }
 
+/** Optional atomic hook when metadata and quota use the same SQL transaction. */
+export interface TransactionalBlobQuotaReservation extends BlobQuotaReservation {
+  commitWithMetadata?(
+    descriptor: BlobDescriptor,
+    operation: (executor: unknown) => Promise<void>
+  ): Promise<void>;
+}
+
+export interface TransactionalBlobQuotaPolicy extends BlobQuotaPolicy {
+  releaseStoredWithMetadata?(
+    request: { id: string; ownerUserId: string },
+    operation: (executor: unknown) => Promise<void>
+  ): Promise<void>;
+}
+
 export class NoopBlobQuotaPolicy implements BlobQuotaPolicy {
   async reserve(): Promise<BlobQuotaReservation> {
     return {

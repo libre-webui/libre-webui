@@ -179,6 +179,50 @@ export const assertPreflightDirectoryOutsideDataDirectory = (
   }
 };
 
+/**
+ * Creates a private process-owned runtime directory without following a
+ * symlink or traversing a world-writable non-sticky ancestor. This is used
+ * only after remote profile/key/schema preflight has succeeded, so an invalid
+ * team configuration remains mutation-free.
+ */
+export const ensurePrivateRuntimeDirectory = (directory: string): string => {
+  const selected = path.resolve(directory);
+  const root = path.parse(selected).root;
+  const segments = selected.slice(root.length).split(path.sep).filter(Boolean);
+  let current = root;
+  for (const segment of segments) {
+    current = path.join(current, segment);
+    try {
+      const stat = fs.lstatSync(current);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) {
+        throw new Error(
+          `Runtime directory path component is not a physical directory: ${current}`
+        );
+      }
+      const worldWritable = (stat.mode & 0o002) !== 0;
+      const sticky = (stat.mode & 0o1000) !== 0;
+      if (worldWritable && !sticky) {
+        throw new Error(
+          `Runtime directory has an unsafe world-writable ancestor: ${current}`
+        );
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      fs.mkdirSync(current, { mode: 0o700 });
+    }
+  }
+  const target = fs.lstatSync(selected);
+  if (target.isSymbolicLink() || !target.isDirectory()) {
+    throw new Error('Runtime directory must be a physical directory.');
+  }
+  fs.chmodSync(selected, 0o700);
+  fs.accessSync(
+    selected,
+    fs.constants.R_OK | fs.constants.W_OK | fs.constants.X_OK
+  );
+  return selected;
+};
+
 export const hasKeyDependentApplicationState = (dataDir: string): boolean => {
   for (const suffix of ['', '-wal', '-shm']) {
     if (fs.existsSync(path.join(dataDir, `data.sqlite${suffix}`))) return true;

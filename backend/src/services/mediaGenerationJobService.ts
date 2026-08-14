@@ -1,13 +1,70 @@
 /*
  * Libre WebUI
  * Copyright (C) 2025 Kroonen AI, Inc.
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import { randomUUID } from 'crypto';
-import { getDatabaseSafe } from '../db.js';
-import { encryptionService } from './encryptionService.js';
+import { randomUUID } from 'node:crypto';
+import { getPlatformStorageRuntime } from '../platform/storage/index.js';
+import type { MediaGenerationStatus } from '../platform/storage/platformDomainRepositories.js';
+import type { GeneratedMedia } from '../types/index.js';
+import galleryService from './galleryService.js';
+import {
+  transactionalVideoResumeEnqueuer,
+  transactionalVideoSubmissionEnqueuer,
+} from '../platform/jobs/videoGenerationEnqueuer.js';
+import {
+  VIDEO_RESUME_IDEMPOTENCY_SCOPE,
+  VIDEO_RESUME_JOB_TYPE,
+  VIDEO_SUBMIT_IDEMPOTENCY_SCOPE,
+  VIDEO_SUBMIT_JOB_TYPE,
+} from '../platform/jobs/domainJobContracts.js';
+import { getDurableJobRuntime } from '../platform/jobs/durableJobRuntime.js';
+
+const MEDIA_POST_SAVE_FAULT_MARKER = 'LIBRE_MEDIA_POST_SAVE_KILL';
+export const PREPARED_VIDEO_PROVIDER_JOB_ID = 'libre:prepared';
+
+const delayAfterMediaSaveForRecoveryDrill = async (
+  prompt: string,
+  attemptCount: number | undefined,
+  signal?: AbortSignal
+): Promise<void> => {
+  if (
+    process.env.LIBRE_ENABLE_TEST_FAULT_INJECTION !== 'true' ||
+    attemptCount !== 1 ||
+    !prompt.includes(MEDIA_POST_SAVE_FAULT_MARKER)
+  ) {
+    return;
+  }
+  const delayMs = Number.parseInt(
+    process.env.LIBRE_TEST_FAULT_DELAY_MS ?? '60000',
+    10
+  );
+  if (!Number.isSafeInteger(delayMs) || delayMs < 1 || delayMs > 300_000) {
+    throw new Error('Invalid recovery-drill fault delay');
+  }
+  await new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(signal.reason ?? new Error('Media generation was cancelled'));
+      return;
+    }
+    let settled = false;
+    let timer: NodeJS.Timeout;
+    const finish = (error?: unknown): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', abort);
+      if (error === undefined) resolve();
+      else reject(error);
+    };
+    const abort = (): void =>
+      finish(signal?.reason ?? new Error('Media generation was cancelled'));
+    timer = setTimeout(finish, delayMs);
+    timer.unref?.();
+    signal?.addEventListener('abort', abort, { once: true });
+  });
+};
 
 export interface MediaGenerationJob {
   id: string;
@@ -16,7 +73,7 @@ export interface MediaGenerationJob {
   pluginId: string;
   model: string;
   prompt: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  status: MediaGenerationStatus;
   options: Record<string, unknown>;
   galleryId?: string;
   error?: string;
@@ -24,54 +81,137 @@ export interface MediaGenerationJob {
   updatedAt: number;
 }
 
-type JobRow = {
-  id: string;
-  user_id: string;
-  provider_job_id: string;
-  plugin_id: string;
-  model: string;
-  prompt: string;
-  status: MediaGenerationJob['status'];
-  options_json: string | null;
-  gallery_id: string | null;
-  error: string | null;
-  created_at: number;
-  updated_at: number;
-};
-
 class MediaGenerationJobService {
-  create(
+  async queueVideoSubmission(
+    userId: string,
+    input: Omit<
+      MediaGenerationJob,
+      'id' | 'userId' | 'providerJobId' | 'status' | 'createdAt' | 'updatedAt'
+    >
+  ): Promise<MediaGenerationJob> {
+    const id = randomUUID();
+    const now = Date.now();
+    const repository = getPlatformStorageRuntime().domains.mediaJobs;
+    await repository.deleteTerminalBefore(now - 30 * 24 * 60 * 60 * 1000);
+    const record: MediaGenerationJob = {
+      id,
+      userId,
+      providerJobId: PREPARED_VIDEO_PROVIDER_JOB_ID,
+      pluginId: input.pluginId,
+      model: input.model,
+      prompt: input.prompt,
+      status: 'pending',
+      options: input.options || {},
+      createdAt: now,
+      updatedAt: now,
+    };
+    try {
+      await repository.createPreparedAndEnqueue(
+        record,
+        transactionalVideoSubmissionEnqueuer
+      );
+    } catch (error) {
+      let committed: MediaGenerationJob | undefined;
+      let durable: { jobType: string; actorUserId: string } | undefined;
+      try {
+        committed = await repository.findByOwner(id, userId);
+        durable =
+          (await getDurableJobRuntime().service.getByIdempotency(
+            userId,
+            VIDEO_SUBMIT_IDEMPOTENCY_SCOPE,
+            id
+          )) ?? undefined;
+      } catch {
+        throw new Error(
+          'Video submission publication outcome is ambiguous; reconciliation is required'
+        );
+      }
+      const exact =
+        committed?.id === record.id &&
+        committed.userId === record.userId &&
+        committed.providerJobId === PREPARED_VIDEO_PROVIDER_JOB_ID &&
+        committed.pluginId === record.pluginId &&
+        committed.model === record.model &&
+        committed.prompt === record.prompt &&
+        JSON.stringify(committed.options) === JSON.stringify(record.options) &&
+        committed.createdAt === record.createdAt &&
+        durable?.jobType === VIDEO_SUBMIT_JOB_TYPE &&
+        durable.actorUserId === userId;
+      if (!exact) {
+        if (!committed && !durable) throw error;
+        throw new Error(
+          'Video submission publication conflicts with authoritative state; reconciliation is required'
+        );
+      }
+    }
+    return record;
+  }
+
+  async acceptSubmittedProviderJob(
+    jobId: string,
+    userId: string,
+    providerJobId: string
+  ): Promise<void> {
+    if (!providerJobId.trim()) throw new Error('Provider job ID is required');
+    const repository = getPlatformStorageRuntime().domains.mediaJobs;
+    let accepted: boolean;
+    try {
+      accepted = await repository.acceptProviderAndEnqueueResume(
+        jobId,
+        userId,
+        providerJobId,
+        Date.now(),
+        PREPARED_VIDEO_PROVIDER_JOB_ID,
+        transactionalVideoResumeEnqueuer
+      );
+    } catch (error) {
+      let committed: MediaGenerationJob | undefined;
+      let durable: { jobType: string; actorUserId: string } | undefined;
+      try {
+        committed = await repository.findByOwner(jobId, userId);
+        durable =
+          (await getDurableJobRuntime().service.getByIdempotency(
+            userId,
+            VIDEO_RESUME_IDEMPOTENCY_SCOPE,
+            jobId
+          )) ?? undefined;
+      } catch {
+        throw new Error(
+          'Video provider acceptance outcome is ambiguous; reconciliation is required'
+        );
+      }
+      if (
+        committed?.providerJobId === providerJobId &&
+        durable?.jobType === VIDEO_RESUME_JOB_TYPE &&
+        durable.actorUserId === userId
+      ) {
+        return;
+      }
+      if (
+        committed?.providerJobId === PREPARED_VIDEO_PROVIDER_JOB_ID &&
+        !durable
+      ) {
+        throw error;
+      }
+      throw new Error(
+        'Video provider acceptance conflicts with authoritative state; reconciliation is required'
+      );
+    }
+    if (!accepted) throw new Error('Media generation job is unavailable');
+  }
+
+  async create(
     userId: string,
     input: Omit<
       MediaGenerationJob,
       'id' | 'userId' | 'status' | 'createdAt' | 'updatedAt'
     >
-  ): MediaGenerationJob {
-    const db = getDatabaseSafe();
-    if (!db) throw new Error('Database is not available');
+  ): Promise<MediaGenerationJob> {
     const id = randomUUID();
     const now = Date.now();
-    db.prepare(
-      `DELETE FROM media_generation_jobs
-       WHERE status IN ('completed', 'failed') AND updated_at < ?`
-    ).run(now - 30 * 24 * 60 * 60 * 1000);
-    db.prepare(
-      `INSERT INTO media_generation_jobs
-         (id, user_id, provider_job_id, plugin_id, model, prompt, status,
-          options_json, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`
-    ).run(
-      id,
-      userId,
-      input.providerJobId,
-      input.pluginId,
-      input.model,
-      encryptionService.encrypt(input.prompt),
-      JSON.stringify(input.options || {}),
-      now,
-      now
-    );
-    return {
+    const repository = getPlatformStorageRuntime().domains.mediaJobs;
+    await repository.deleteTerminalBefore(now - 30 * 24 * 60 * 60 * 1000);
+    const record: MediaGenerationJob = {
       id,
       userId,
       providerJobId: input.providerJobId,
@@ -83,98 +223,112 @@ class MediaGenerationJobService {
       createdAt: now,
       updatedAt: now,
     };
+    await repository.create(record);
+    return record;
   }
 
-  get(id: string, userId: string): MediaGenerationJob | null {
-    const db = getDatabaseSafe();
-    if (!db) return null;
-    const row = db
-      .prepare(
-        `SELECT * FROM media_generation_jobs WHERE id = ? AND user_id = ?`
-      )
-      .get(id, userId) as JobRow | undefined;
-    return row ? fromRow(row) : null;
-  }
-
-  list(
-    userId: string,
-    options: { limit?: number; activeOnly?: boolean } = {}
-  ): MediaGenerationJob[] {
-    const db = getDatabaseSafe();
-    if (!db) return [];
-    const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
-    const rows = db
-      .prepare(
-        `SELECT * FROM media_generation_jobs
-         WHERE user_id = ?
-           ${options.activeOnly ? "AND status IN ('pending', 'in_progress')" : ''}
-         ORDER BY updated_at DESC, id ASC
-         LIMIT ?`
-      )
-      .all(userId, limit) as JobRow[];
-    return rows.map(fromRow);
-  }
-
-  remove(id: string, userId: string): boolean {
-    const db = getDatabaseSafe();
-    if (!db) return false;
+  async get(id: string, userId: string): Promise<MediaGenerationJob | null> {
     return (
-      db
-        .prepare(
-          'DELETE FROM media_generation_jobs WHERE id = ? AND user_id = ?'
-        )
-        .run(id, userId).changes > 0
+      (await getPlatformStorageRuntime().domains.mediaJobs.findByOwner(
+        id,
+        userId
+      )) || null
     );
   }
 
-  update(
-    id: string,
+  async list(
     userId: string,
-    status: MediaGenerationJob['status'],
-    fields: { galleryId?: string; error?: string } = {}
-  ): void {
-    const db = getDatabaseSafe();
-    if (!db) throw new Error('Database is not available');
-    db.prepare(
-      `UPDATE media_generation_jobs
-       SET status = ?, gallery_id = COALESCE(?, gallery_id),
-           error = COALESCE(?, error), updated_at = ?
-       WHERE id = ? AND user_id = ?`
-    ).run(
-      status,
-      fields.galleryId || null,
-      fields.error || null,
-      Date.now(),
+    options: { limit?: number; activeOnly?: boolean } = {}
+  ): Promise<MediaGenerationJob[]> {
+    return getPlatformStorageRuntime().domains.mediaJobs.listByOwner(userId, {
+      limit: Math.min(Math.max(options.limit ?? 20, 1), 100),
+      activeOnly: options.activeOnly === true,
+    });
+  }
+
+  async remove(id: string, userId: string): Promise<boolean> {
+    return getPlatformStorageRuntime().domains.mediaJobs.deleteByOwner(
       id,
       userId
     );
   }
-}
 
-function fromRow(row: JobRow): MediaGenerationJob {
-  let options: Record<string, unknown> = {};
-  try {
-    const parsed = row.options_json ? JSON.parse(row.options_json) : {};
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      options = parsed;
-    }
-  } catch {
-    options = {};
+  async update(
+    id: string,
+    userId: string,
+    status: MediaGenerationStatus,
+    fields: { galleryId?: string; error?: string } = {}
+  ): Promise<void> {
+    const updated =
+      await getPlatformStorageRuntime().domains.mediaJobs.updateStatus(
+        id,
+        userId,
+        status,
+        fields,
+        Date.now()
+      );
+    if (!updated) throw new Error('Media generation job is unavailable');
   }
-  return {
-    id: row.id,
-    userId: row.user_id,
-    providerJobId: row.provider_job_id,
-    pluginId: row.plugin_id,
-    model: row.model,
-    prompt: encryptionService.decrypt(row.prompt),
-    status: row.status,
-    options,
-    ...(row.gallery_id ? { galleryId: row.gallery_id } : {}),
-    ...(row.error ? { error: row.error } : {}),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
+
+  /**
+   * Persist a downloaded provider result and conditionally claim completion.
+   * A losing retry removes its duplicate blob and returns the durable winner.
+   */
+  async completeWithMedia(
+    jobId: string,
+    userId: string,
+    input: {
+      mimeType: string;
+      mediaData: string;
+      metadata?: Record<string, unknown>;
+    },
+    execution: { attemptCount?: number; signal?: AbortSignal } = {}
+  ): Promise<GeneratedMedia> {
+    const repository = getPlatformStorageRuntime().domains.mediaJobs;
+    const job = await repository.findByOwner(jobId, userId);
+    if (!job) throw new Error('Media generation job is unavailable');
+    if (job.galleryId) {
+      const existing = await galleryService.getMediaItem(job.galleryId, userId);
+      if (existing) return existing;
+    }
+    const media = await galleryService.saveMedia(userId, {
+      id: job.id,
+      createdAt: job.createdAt,
+      kind: 'video',
+      prompt: job.prompt,
+      model: job.model,
+      pluginId: job.pluginId,
+      mediaData: input.mediaData,
+      mimeType: input.mimeType,
+      ...(input.metadata ? { metadata: input.metadata } : {}),
+    });
+    if (!media) throw new Error('Unable to persist generated video');
+    await delayAfterMediaSaveForRecoveryDrill(
+      job.prompt,
+      execution.attemptCount,
+      execution.signal
+    );
+    const won = await repository.completeIfUnclaimed(
+      jobId,
+      userId,
+      media.id,
+      Date.now()
+    );
+    if (!won) {
+      await galleryService.deleteMedia(media.id, userId);
+      const winner = await repository.findByOwner(jobId, userId);
+      if (!winner?.galleryId) {
+        throw new Error('Media completion raced without a winner');
+      }
+      const existing = await galleryService.getMediaItem(
+        winner.galleryId,
+        userId
+      );
+      if (!existing) throw new Error('Completed gallery media is unavailable');
+      return existing;
+    }
+    return media;
+  }
 }
 
 export default new MediaGenerationJobService();

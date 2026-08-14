@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import test from 'node:test';
 import { pathToFileURL, fileURLToPath } from 'node:url';
@@ -257,6 +257,20 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
       'packagePaths.js'
     );
     const runtimePathsHelper = path.join(packedRoot, 'bin', 'runtime-paths.js');
+    const postgresMigrationCli = path.join(
+      packedRoot,
+      'backend',
+      'dist',
+      'cli',
+      'migrateSqliteToPostgres.js'
+    );
+    const recoveryBackupCli = path.join(
+      packedRoot,
+      'backend',
+      'dist',
+      'cli',
+      'recoveryBackup.js'
+    );
 
     assert.ok(fs.existsSync(path.join(packedRoot, 'package.json')));
     assert.ok(fs.existsSync(backendPackageJson));
@@ -264,6 +278,8 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
     assert.ok(fs.existsSync(path.join(frontendDist, 'index.html')));
     assert.ok(fs.existsSync(helperPath));
     assert.ok(fs.existsSync(runtimePathsHelper));
+    assert.ok(fs.existsSync(postgresMigrationCli));
+    assert.ok(fs.existsSync(recoveryBackupCli));
     assert.ok(
       fs.existsSync(path.join(packedRoot, 'scripts', 'postinstall.js'))
     );
@@ -345,6 +361,11 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
     );
     assert.equal(pkg.bin?.['libre-webui'], 'bin/cli.js');
     assert.equal(pkg.scripts?.postinstall, 'node scripts/postinstall.js');
+    assert.equal(
+      pkg.scripts?.['migrate:postgres'],
+      'node backend/dist/cli/migrateSqliteToPostgres.js',
+      'the published migration command must execute shipped dist without rebuilding absent source files'
+    );
     const helper = await import(pathToFileURL(helperPath).href);
     const { resolveCliRuntimePaths } = requireFromTest(runtimePathsHelper);
     const backendEntryUrl = pathToFileURL(backendEntry).href;
@@ -408,6 +429,52 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
     );
     assert.equal(fs.existsSync(callerDirectory), false);
     assert.equal(fs.existsSync(fakeHome), false);
+  });
+});
+
+test('packed CLI rejects malformed provider limits without creating its default state', async () => {
+  await withTempPackedProject(async ({ tempDir, packedRoot }) => {
+    linkInstalledDependencies(packedRoot);
+    const callerDirectory = path.join(tempDir, 'invalid-provider-caller');
+    const fakeHome = path.join(tempDir, 'invalid-provider-home');
+    fs.mkdirSync(callerDirectory, { recursive: true });
+    const launchEnv = {
+      ...process.env,
+      HOME: fakeHome,
+      USERPROFILE: fakeHome,
+      OPEN_BROWSER: 'false',
+      OLLAMA_TIMEOUT: '300000ms',
+    };
+    for (const key of [
+      'DATA_DIR',
+      'PLUGINS_DIR',
+      'PLATFORM_PREFLIGHT_TMP_DIR',
+      'ENCRYPTION_KEY',
+      'STORAGE_ENCRYPTION_KEYS',
+      'STORAGE_ENCRYPTION_ACTIVE_KEY_ID',
+    ]) {
+      delete launchEnv[key];
+    }
+    const result = spawnSync(
+      process.execPath,
+      [path.join(packedRoot, 'bin', 'cli.js'), '--port', '31991'],
+      {
+        cwd: callerDirectory,
+        env: launchEnv,
+        encoding: 'utf8',
+        timeout: 15_000,
+      }
+    );
+    assert.notEqual(result.status, 0);
+    assert.match(
+      `${result.stderr}\n${result.stdout}`,
+      /Invalid Ollama configuration[\s\S]*OLLAMA_TIMEOUT/
+    );
+    assert.equal(
+      fs.existsSync(fakeHome),
+      false,
+      'validation must happen before the packaged default data root is created'
+    );
   });
 });
 
@@ -511,6 +578,69 @@ test('packed CLI survives two starts and ignores unrelated caller plugins', asyn
         false
       );
 
+      const recoveryInventory = JSON.parse(
+        execFileSync(process.execPath, [cliPath, 'recovery-check', '--json'], {
+          cwd: callerDirectory,
+          env: launchEnv,
+          encoding: 'utf8',
+        })
+      );
+      assert.equal(recoveryInventory.restoreReady, true);
+      assert.equal(recoveryInventory.storage.dataDirectory.path, dataDirectory);
+      assert.equal(
+        recoveryInventory.database.path,
+        path.join(dataDirectory, 'data.sqlite')
+      );
+
+      const backupKeys = path.join(tempDir, 'backup-keys');
+      const backupArchive = path.join(tempDir, 'packed-home.lwbackup');
+      const keygen = JSON.parse(
+        execFileSync(
+          process.execPath,
+          [cliPath, 'backup', 'keygen', '--directory', backupKeys],
+          {
+            cwd: callerDirectory,
+            env: launchEnv,
+            encoding: 'utf8',
+          }
+        )
+      );
+      assert.equal(
+        keygen.encryptionKeyPath,
+        path.join(backupKeys, 'backup-encryption.key')
+      );
+      const backup = JSON.parse(
+        execFileSync(
+          process.execPath,
+          [
+            cliPath,
+            'backup',
+            'create',
+            '--offline',
+            '--output',
+            backupArchive,
+            '--encryption-key',
+            path.join(backupKeys, 'backup-encryption.key'),
+            '--signing-private-key',
+            path.join(backupKeys, 'backup-signing-private.pem'),
+          ],
+          {
+            cwd: callerDirectory,
+            env: launchEnv,
+            encoding: 'utf8',
+          }
+        )
+      );
+      assert.equal(backup.created, true);
+      assert.equal(backup.signatureVerified, true);
+      assert.equal(backup.payloadVerified, true);
+      assert.ok(fs.existsSync(backupArchive));
+      assert.equal(
+        fs.existsSync(path.join(callerDirectory, 'data.sqlite')),
+        false,
+        'maintenance must use the packaged fake-HOME data root, not caller cwd'
+      );
+
       const second = await launch();
       try {
         const login = await fetch(
@@ -553,6 +683,75 @@ test('packed CLI survives two starts and ignores unrelated caller plugins', asyn
       for (const child of runningChildren) await stopChild(child);
       restoreInstallModes();
     }
+  });
+});
+
+test('packed maintenance help creates no runtime state', async () => {
+  await withTempPackedProject(async ({ tempDir, packedRoot }) => {
+    linkInstalledDependencies(packedRoot);
+    const callerDirectory = path.join(tempDir, 'maintenance-caller');
+    const fakeHome = path.join(tempDir, 'maintenance-home');
+    const xdgCache = path.join(tempDir, 'maintenance-cache');
+    fs.mkdirSync(callerDirectory, { recursive: true });
+    const env = {
+      ...process.env,
+      HOME: fakeHome,
+      USERPROFILE: fakeHome,
+      XDG_CACHE_HOME: xdgCache,
+    };
+    for (const key of [
+      'DATA_DIR',
+      'PLUGINS_DIR',
+      'PLATFORM_PREFLIGHT_TMP_DIR',
+    ]) {
+      delete env[key];
+    }
+    const cliPath = path.join(packedRoot, 'bin', 'cli.js');
+    const recoveryHelp = execFileSync(
+      process.execPath,
+      [cliPath, 'recovery-check', '--help'],
+      { cwd: callerDirectory, env, encoding: 'utf8' }
+    );
+    const backupHelp = execFileSync(
+      process.execPath,
+      [cliPath, 'backup', '--help'],
+      { cwd: callerDirectory, env, encoding: 'utf8' }
+    );
+    const migrationHelp = execFileSync(
+      process.execPath,
+      [cliPath, 'migrate-postgres', '--help'],
+      { cwd: callerDirectory, env, encoding: 'utf8' }
+    );
+    assert.match(recoveryHelp, /libre-webui recovery-check \[--json\]/);
+    assert.match(backupHelp, /libre-webui backup create/);
+    assert.match(migrationHelp, /libre-webui migrate-postgres --source/);
+
+    const blocked = spawnSync(
+      process.execPath,
+      [cliPath, 'recovery-check', '--json'],
+      { cwd: callerDirectory, env, encoding: 'utf8' }
+    );
+    assert.equal(blocked.status, 1);
+    assert.equal(JSON.parse(blocked.stdout).restoreReady, false);
+
+    const invalid = spawnSync(
+      process.execPath,
+      [cliPath, 'recovery-check', '--unknown-option'],
+      { cwd: callerDirectory, env, encoding: 'utf8' }
+    );
+    assert.equal(invalid.status, 2);
+    assert.match(invalid.stderr, /Unknown option: --unknown-option/);
+    assert.equal(fs.existsSync(fakeHome), false);
+    assert.equal(fs.existsSync(xdgCache), false);
+    assert.equal(fs.readdirSync(callerDirectory).length, 0);
+    assert.equal(
+      fs.existsSync(path.join(packedRoot, 'backend', 'data')),
+      false
+    );
+    assert.equal(
+      fs.existsSync(path.join(packedRoot, 'backend', 'temp')),
+      false
+    );
   });
 });
 

@@ -101,9 +101,11 @@ class ChatGenerationService {
     }
   }
 
-  mergeOptions(options: GenerationOptions = {}): GenerationOptions {
+  async mergeOptions(
+    options: GenerationOptions = {}
+  ): Promise<GenerationOptions> {
     return mergeGenerationOptions(
-      preferencesService.getGenerationOptions(),
+      await preferencesService.getGenerationOptions(),
       options
     );
   }
@@ -125,8 +127,10 @@ class ChatGenerationService {
     signal?: AbortSignal,
     includeOllamaDefaults = true
   ): Promise<GenerationOptions> {
-    const global = preferencesService.getGenerationOptions(userId);
-    const pinned = preferencesService.getModelGenerationOptions(model, userId);
+    const [global, pinned] = await Promise.all([
+      preferencesService.getGenerationOptions(userId),
+      preferencesService.getModelGenerationOptions(model, userId),
+    ]);
 
     // Only ask the model when the user has not already answered for it.
     const recommended =

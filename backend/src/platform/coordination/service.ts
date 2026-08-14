@@ -53,6 +53,10 @@ export const getCoordinator = (): Coordinator => {
   return coordinator;
 };
 
+/** Read the lifecycle-owned coordinator without constructing a fallback. */
+export const getInitializedCoordinator = (): Coordinator | undefined =>
+  coordinator;
+
 export const closeCoordinator = async (): Promise<void> => {
   const current = coordinator;
   coordinator = undefined;

@@ -62,10 +62,12 @@ export interface WorkAdminOverview {
 }
 
 interface WorkAdminDeps {
-  listTasksWithOwner: () => Array<{
-    record: WorkTaskRecord;
-    ownerUsername: string;
-  }>;
+  listTasksWithOwner: () => Promise<
+    Array<{
+      record: WorkTaskRecord;
+      ownerUsername: string;
+    }>
+  >;
   listManaged: () => Promise<
     Array<{ name: string; taskId: string; running: boolean }>
   >;
@@ -75,7 +77,7 @@ interface WorkAdminDeps {
   activeGlobal: () => number;
   limits: () => { maxGlobal: number; maxPerUser: number };
   recoveryPending: () => number;
-  accessMode: () => WorkAccessMode;
+  accessMode: () => Promise<WorkAccessMode> | WorkAccessMode;
 }
 
 const defaultDeps: WorkAdminDeps = {
@@ -96,7 +98,7 @@ const defaultDeps: WorkAdminDeps = {
 export async function buildWorkAdminOverview(
   deps: WorkAdminDeps = defaultDeps
 ): Promise<WorkAdminOverview> {
-  const tasks = deps.listTasksWithOwner();
+  const tasks = await deps.listTasksWithOwner();
   const runtimeAvailable = await deps.isRuntimeAvailable();
 
   // One labeled listing answers "what is actually running" for every task
@@ -120,7 +122,7 @@ export async function buildWorkAdminOverview(
   const limits = deps.limits();
   return {
     generatedAt: Date.now(),
-    accessMode: deps.accessMode(),
+    accessMode: await deps.accessMode(),
     runtimeAvailable,
     runtimeReason: runtimeAvailable
       ? undefined

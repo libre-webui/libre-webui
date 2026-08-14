@@ -33,14 +33,18 @@ import { createLogger } from '../utils/logger.js';
 import type { PluginUsageEventInput } from './pluginUsageService.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
+type MaybePromise<T> = T | Promise<T>;
 type ImageGenImage = ImageGenResponse['images'][number];
 const logger = createLogger('services:plugin-image-generation');
 
 export interface PluginImageGenerationServiceDependencies {
-  getAllPlugins(userId?: string): Plugin[];
-  getPlugin(id: string, userId?: string): Plugin | null;
-  getApiKey(plugin: Plugin, userId?: string): string | null;
-  getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
+  getAllPlugins(userId?: string): MaybePromise<Plugin[]>;
+  getPlugin(id: string, userId?: string): MaybePromise<Plugin | null>;
+  getApiKey(plugin: Plugin, userId?: string): MaybePromise<string | null>;
+  getPluginVariables(
+    plugin: Plugin,
+    userId?: string
+  ): MaybePromise<PluginVariables>;
   validateEndpointUrl(endpoint: string): string;
   recordUsage?(usage: PluginUsageEventInput): void;
 }
@@ -50,12 +54,12 @@ export class PluginImageGenerationService {
     private readonly deps: PluginImageGenerationServiceDependencies
   ) {}
 
-  getPluginForImageGen(
+  async getPluginForImageGen(
     model: string,
     pluginId: string,
     userId?: string
-  ): Plugin | null {
-    const plugin = this.deps.getPlugin(pluginId, userId);
+  ): Promise<Plugin | null> {
+    const plugin = await this.deps.getPlugin(pluginId, userId);
     if (!plugin?.active) return null;
 
     const supportedModels =
@@ -68,14 +72,16 @@ export class PluginImageGenerationService {
     return null;
   }
 
-  getAvailableImageGenModels(userId?: string): {
-    model: string;
-    plugin: string;
-    config?: ImageGenConfig;
-  }[] {
+  async getAvailableImageGenModels(userId?: string): Promise<
+    {
+      model: string;
+      plugin: string;
+      config?: ImageGenConfig;
+    }[]
+  > {
     const models: { model: string; plugin: string; config?: ImageGenConfig }[] =
       [];
-    const allPlugins = this.deps.getAllPlugins(userId);
+    const allPlugins = await this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       if (!plugin.active) continue;
@@ -90,7 +96,7 @@ export class PluginImageGenerationService {
       const noAuthRequired =
         (imageCapability?.config as Record<string, unknown> | undefined)
           ?.no_auth_required === true;
-      const apiKey = this.deps.getApiKey(plugin, userId);
+      const apiKey = await this.deps.getApiKey(plugin, userId);
       if (apiKey || noAuthRequired) {
         for (const model of supportedModels) {
           models.push({
@@ -125,7 +131,7 @@ export class PluginImageGenerationService {
       throw new Error('Invalid prompt: must be a non-empty string');
     }
 
-    const plugin = this.getPluginForImageGen(
+    const plugin = await this.getPluginForImageGen(
       model,
       options.pluginId,
       options.userId
@@ -146,7 +152,10 @@ export class PluginImageGenerationService {
       endpoint = plugin.endpoint;
     }
 
-    const imageVars = this.deps.getPluginVariables(plugin, options.userId);
+    const imageVars = await this.deps.getPluginVariables(
+      plugin,
+      options.userId
+    );
     const imageCount = normalizeImageGenerationCount(options.n);
     const endpointVariable =
       imageConfig?.endpoint_variable ||
@@ -177,7 +186,7 @@ export class PluginImageGenerationService {
     const noAuthRequired =
       (imageConfig as Record<string, unknown> | undefined)?.no_auth_required ===
       true;
-    const apiKey = this.deps.getApiKey(plugin, options.userId);
+    const apiKey = await this.deps.getApiKey(plugin, options.userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
@@ -338,8 +347,11 @@ export class PluginImageGenerationService {
     }
   }
 
-  getImageGenConfig(pluginId: string, userId?: string): ImageGenConfig | null {
-    const plugin = this.deps.getPlugin(pluginId, userId);
+  async getImageGenConfig(
+    pluginId: string,
+    userId?: string
+  ): Promise<ImageGenConfig | null> {
+    const plugin = await this.deps.getPlugin(pluginId, userId);
     if (!plugin?.active) return null;
 
     if (plugin.capabilities?.image?.config) {

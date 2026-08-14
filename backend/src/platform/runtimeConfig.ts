@@ -30,6 +30,8 @@ export interface PlatformRuntimeConfig {
   };
   blobs: {
     backend: BlobStoreBackend;
+    bucketConfigured: boolean;
+    endpointConfigured: boolean;
   };
   vectors: {
     backend: VectorStoreBackend;
@@ -170,6 +172,12 @@ export const resolvePlatformRuntimeConfig = (
     'REDIS_URL',
     blockers
   );
+  const s3Endpoint = validateUrl(
+    env.S3_ENDPOINT,
+    ['http:', 'https:'],
+    'S3_ENDPOINT',
+    blockers
+  );
   const keyPrefix = env.REDIS_KEY_PREFIX?.trim() || 'libre';
   if (!/^[A-Za-z0-9][A-Za-z0-9:_-]{0,63}$/.test(keyPrefix)) {
     blockers.push(
@@ -183,31 +191,61 @@ export const resolvePlatformRuntimeConfig = (
   if (coordinationBackend === 'redis' && !redisUrl) {
     blockers.push('REDIS_URL is required when COORDINATION_BACKEND=redis.');
   }
-
-  // Selectors land before remote adapters so a deployment fails with an
-  // actionable error instead of silently using local state under a team
-  // label. Remove each blocker only with its adapter and integration fixture.
-  if (databaseBackend === 'postgres') {
+  if (workerMode === 'external' && coordinationBackend !== 'redis') {
     blockers.push(
-      'DATABASE_BACKEND=postgres is unavailable: the PostgreSQL repositories and migrations are not installed.'
+      'JOB_WORKER_MODE=external requires COORDINATION_BACKEND=redis so application replicas can verify worker presence.'
     );
   }
+  if (workerMode === 'external' && databaseBackend !== 'postgres') {
+    blockers.push(
+      'JOB_WORKER_MODE=external requires DATABASE_BACKEND=postgres; SQLite is not a supported cross-process production queue.'
+    );
+  }
+
   if (blobBackend === 's3') {
+    if (!env.S3_BUCKET?.trim()) {
+      blockers.push('S3_BUCKET is required when BLOB_STORE_BACKEND=s3.');
+    }
+    if (!env.S3_REGION?.trim()) {
+      blockers.push('S3_REGION is required when BLOB_STORE_BACKEND=s3.');
+    }
+    if (
+      Boolean(env.S3_ACCESS_KEY_ID?.trim()) !==
+      Boolean(env.S3_SECRET_ACCESS_KEY?.trim())
+    ) {
+      blockers.push(
+        'S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY must be configured together.'
+      );
+    }
+    if (env.S3_SESSION_TOKEN?.trim() && !env.S3_ACCESS_KEY_ID?.trim()) {
+      blockers.push(
+        'S3_SESSION_TOKEN requires explicit S3 access credentials.'
+      );
+    }
+    const pathStyle = env.S3_FORCE_PATH_STYLE?.trim().toLowerCase();
+    if (pathStyle && pathStyle !== 'true' && pathStyle !== 'false') {
+      blockers.push('S3_FORCE_PATH_STYLE must be true or false.');
+    }
+    if (databaseBackend !== 'postgres') {
+      blockers.push(
+        'BLOB_STORE_BACKEND=s3 requires DATABASE_BACKEND=postgres for durable encrypted object metadata.'
+      );
+    }
+  }
+  if (vectorBackend === 'pgvector' && databaseBackend !== 'postgres') {
     blockers.push(
-      'BLOB_STORE_BACKEND=s3 is unavailable: no tested S3 adapter is installed.'
+      'VECTOR_STORE_BACKEND=pgvector requires DATABASE_BACKEND=postgres.'
     );
   }
-  if (vectorBackend === 'pgvector') {
+  if (vectorBackend === 'embedded' && databaseBackend !== 'sqlite') {
     blockers.push(
-      'VECTOR_STORE_BACKEND=pgvector is unavailable: no tested PGVector adapter is installed.'
-    );
-  }
-  if (workerMode === 'external') {
-    blockers.push(
-      'JOB_WORKER_MODE=external is unavailable: no tested external worker runtime is installed.'
+      'VECTOR_STORE_BACKEND=embedded requires DATABASE_BACKEND=sqlite.'
     );
   }
 
+  // Selectors fail closed instead of silently combining shared and local
+  // state. PostgreSQL, S3, and PGVector are active only as one coherent team
+  // profile; every cross-backend mismatch above remains a startup blocker.
   if (mode === 'team') {
     if (databaseBackend !== 'postgres') {
       blockers.push('Team mode requires DATABASE_BACKEND=postgres.');
@@ -224,6 +262,21 @@ export const resolvePlatformRuntimeConfig = (
     if (workerMode !== 'external') {
       blockers.push('Team mode requires JOB_WORKER_MODE=external.');
     }
+    if (!env.JWT_SECRET?.trim()) {
+      blockers.push(
+        'Team mode requires a stable JWT_SECRET shared by every application replica and worker.'
+      );
+    }
+    if (env.AGENT_CLI_MODELS_ENABLED !== 'false') {
+      blockers.push(
+        'Team mode requires AGENT_CLI_MODELS_ENABLED=false because agent binaries and their credentials are node-local and cannot be routed safely through the external durable worker.'
+      );
+    }
+    if (env.CODEX_OAUTH_MODELS_ENABLED !== 'false') {
+      blockers.push(
+        'Team mode requires CODEX_OAUTH_MODELS_ENABLED=false because the Codex OAuth token file is node-local and cannot be routed safely through the external durable worker.'
+      );
+    }
   }
 
   return {
@@ -232,7 +285,11 @@ export const resolvePlatformRuntimeConfig = (
       backend: databaseBackend,
       ...(databaseUrl ? { url: databaseUrl } : {}),
     },
-    blobs: { backend: blobBackend },
+    blobs: {
+      backend: blobBackend,
+      bucketConfigured: Boolean(env.S3_BUCKET?.trim()),
+      endpointConfigured: Boolean(s3Endpoint),
+    },
     vectors: { backend: vectorBackend },
     coordination: {
       backend: coordinationBackend,
@@ -272,6 +329,8 @@ export const summarizePlatformRuntimeConfig = (
   configured: {
     databaseUrl: Boolean(config.database.url),
     redisUrl: Boolean(config.coordination.redisUrl),
+    s3Bucket: config.blobs.bucketConfigured,
+    s3Endpoint: config.blobs.endpointConfigured,
   },
   blockers: [...config.blockers],
 });

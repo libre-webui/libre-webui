@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
-import test from 'node:test';
+import test, { after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import express from 'express';
 
@@ -11,6 +12,22 @@ const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..'
 );
+const testDataDirectory = fs.mkdtempSync(
+  path.join(os.tmpdir(), 'libre-stt-routing-')
+);
+const previousDataDirectory = process.env.DATA_DIR;
+const previousEncryptionKey = process.env.ENCRYPTION_KEY;
+process.env.DATA_DIR = testDataDirectory;
+process.env.ENCRYPTION_KEY = '7'.repeat(64);
+
+after(() => {
+  if (previousDataDirectory === undefined) delete process.env.DATA_DIR;
+  else process.env.DATA_DIR = previousDataDirectory;
+  if (previousEncryptionKey === undefined) delete process.env.ENCRYPTION_KEY;
+  else process.env.ENCRYPTION_KEY = previousEncryptionKey;
+  fs.rmSync(testDataDirectory, { recursive: true, force: true });
+});
+
 const { PluginSTTService, STTProviderResponseError } = await import(
   pathToFileURL(
     path.join(repoRoot, 'backend/dist/services/pluginSTTService.js')
@@ -249,7 +266,7 @@ test('STT excludes inactive providers and preserves provider status details', as
   });
   candidate.active = false;
   const inactive = serviceFor(candidate);
-  assert.deepEqual(inactive.getAvailableModels('user-a'), []);
+  assert.deepEqual(await inactive.getAvailableModels('user-a'), []);
   await assert.rejects(
     inactive.transcribe('transcribe-model', audio, {
       pluginId: candidate.id,
@@ -299,7 +316,7 @@ test('legacy direct STT plugins execute through their primary route', async () =
   const service = serviceFor(candidate);
 
   try {
-    assert.deepEqual(service.getAvailableModels('user-a'), [
+    assert.deepEqual(await service.getAvailableModels('user-a'), [
       {
         model: 'transcribe-model',
         plugin: 'legacy-stt',

@@ -19,6 +19,7 @@ import {
   EmbeddingModel,
   OllamaEmbeddingsRequest,
   OllamaEmbeddingsResponse,
+  Plugin,
 } from '../types/index.js';
 import ollamaService from './ollamaService.js';
 import pluginService from './pluginService.js';
@@ -111,14 +112,18 @@ class EmbeddingService {
       logger.warn('Failed to load Ollama embedding models:', error);
     }
 
-    const plugins = (await pluginService.getActivePlugins(userId)).filter(
-      plugin =>
+    const plugins: Plugin[] = [];
+    for (const plugin of await pluginService.getActivePlugins(userId)) {
+      if (
         (plugin.capabilities?.embedding ||
           plugin.type === 'embedding' ||
           plugin.type === 'completion' ||
           plugin.type === 'chat') &&
-        Boolean(pluginService.getApiKey(plugin, userId))
-    );
+        Boolean(await pluginService.getApiKey(plugin, userId))
+      ) {
+        plugins.push(plugin);
+      }
+    }
     await Promise.all(
       plugins.map(plugin =>
         pluginService
@@ -127,7 +132,9 @@ class EmbeddingService {
       )
     );
 
-    for (const model of pluginService.getAvailableEmbeddingModels(userId)) {
+    for (const model of await pluginService.getAvailableEmbeddingModels(
+      userId
+    )) {
       const isEmbeddingCandidate =
         model.fromEmbeddingCapability || isLikelyEmbeddingModel(model.model);
 
@@ -191,7 +198,7 @@ class EmbeddingService {
       );
     }
 
-    const plugin = pluginService.getPluginForEmbedding(
+    const plugin = await pluginService.getPluginForEmbedding(
       target.model,
       undefined,
       userId

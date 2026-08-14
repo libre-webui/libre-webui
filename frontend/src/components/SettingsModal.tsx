@@ -1083,8 +1083,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       setRegeneratingEmbeddings(true);
       const response = await documentsApi.regenerateEmbeddings();
-      if (response.success) {
-        toast.success('Embeddings regenerated successfully');
+      if (response.success && response.data) {
+        toast.success(
+          response.data.documentsSkipped > 0
+            ? `Regenerated ${response.data.documentsRegenerated} documents; skipped ${response.data.documentsSkipped}`
+            : `Regenerated embeddings for ${response.data.documentsRegenerated} documents`
+        );
         await queryClient.invalidateQueries({ queryKey: ['embedding-status'] });
       }
     } catch (error: unknown) {

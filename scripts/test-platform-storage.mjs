@@ -27,6 +27,8 @@ import test, { afterEach } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import Database from 'better-sqlite3';
 
+process.env.ENCRYPTION_KEY ||= '7'.repeat(64);
+
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..');
 const storageModule = await import(
@@ -46,6 +48,9 @@ const {
   BlobQuotaExceededError,
   BlobStoreError,
   LocalEncryptedBlobStore,
+  SQLITE_BLOB_REFERENCE_SCHEMA_SQL,
+  SQLITE_BLOB_QUOTA_SCHEMA_SQL,
+  SQLiteDurableBlobQuotaPolicy,
   SqliteEncryptedVectorStore,
   StorageEncryptionError,
   VectorStoreError,
@@ -71,6 +76,32 @@ function temporaryDirectory(prefix) {
   temporaryRoots.push(directory);
   return directory;
 }
+
+test('storage barrel import is side-effect free before bootstrap', () => {
+  const dataDirectory = temporaryDirectory('libre-storage-pure-import-');
+  const barrelUrl = pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'platform', 'storage', 'index.js')
+  ).href;
+  const childEnvironment = { ...process.env, DATA_DIR: dataDirectory };
+  delete childEnvironment.ENCRYPTION_KEY;
+  delete childEnvironment.STORAGE_ENCRYPTION_KEYS;
+  delete childEnvironment.STORAGE_ENCRYPTION_ACTIVE_KEY_ID;
+  const child = spawnSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `const fs = await import('node:fs'); await import(${JSON.stringify(
+        barrelUrl
+      )}); process.stdout.write(JSON.stringify(fs.readdirSync(${JSON.stringify(
+        dataDirectory
+      )})));`,
+    ],
+    { cwd: repoRoot, env: childEnvironment, encoding: 'utf8' }
+  );
+  assert.equal(child.status, 0, `${child.stderr}\n${child.stdout}`);
+  assert.deepEqual(JSON.parse(child.stdout), []);
+});
 
 function keyring(key = Buffer.alloc(32, 0x41), keyId = 'test') {
   return new Aes256GcmKeyring(keyId, { [keyId]: key });
@@ -101,6 +132,17 @@ function sqliteVectorStore(overrides = {}, databaseOptions = {}) {
       keyring: keyring(),
       ...overrides,
     }),
+  };
+}
+
+function sqliteQuotaPolicy(options = {}) {
+  const database = new Database(':memory:');
+  databases.push(database);
+  database.exec(SQLITE_BLOB_REFERENCE_SCHEMA_SQL);
+  database.exec(SQLITE_BLOB_QUOTA_SCHEMA_SQL);
+  return {
+    database,
+    policy: new SQLiteDurableBlobQuotaPolicy(database, options),
   };
 }
 
@@ -639,6 +681,158 @@ test('local blob store releases quota and leaves no object after a streamed fail
   assert.deepEqual(objectFiles, []);
 });
 
+test('durable SQLite quota atomically excludes concurrent over-reservation', async () => {
+  const { database, policy } = sqliteQuotaPolicy({
+    maximumBytesPerOwner: 100,
+  });
+  const attempts = await Promise.allSettled([
+    policy.reserve({
+      ownerUserId: 'quota-owner',
+      purpose: 'gallery.audio',
+      expectedSize: 60,
+    }),
+    policy.reserve({
+      ownerUserId: 'quota-owner',
+      purpose: 'gallery.audio',
+      expectedSize: 60,
+    }),
+  ]);
+  assert.equal(
+    attempts.filter(result => result.status === 'fulfilled').length,
+    1
+  );
+  assert.equal(
+    attempts.filter(result => result.status === 'rejected').length,
+    1
+  );
+  assert.ok(
+    attempts.find(result => result.status === 'rejected').reason instanceof
+      BlobQuotaExceededError
+  );
+  assert.deepEqual(
+    database
+      .prepare(
+        `SELECT stored_bytes AS storedBytes, reserved_bytes AS reservedBytes
+           FROM platform_blob_quota_usage WHERE owner_user_id = ?`
+      )
+      .get('quota-owner'),
+    { storedBytes: 0, reservedBytes: 60 }
+  );
+  await attempts.find(result => result.status === 'fulfilled').value.release();
+  assert.equal(
+    database
+      .prepare(
+        'SELECT reserved_bytes FROM platform_blob_quota_usage WHERE owner_user_id = ?'
+      )
+      .get('quota-owner').reserved_bytes,
+    0
+  );
+});
+
+test('durable SQLite quota releases an aborted stream reservation', async () => {
+  const { database, policy } = sqliteQuotaPolicy({
+    maximumBytesPerOwner: 1_000,
+  });
+  const rootDirectory = temporaryDirectory('libre-durable-quota-abort-');
+  const store = new LocalEncryptedBlobStore({
+    rootDirectory,
+    keyring: keyring(),
+    quotaPolicy: policy,
+  });
+  async function* failedUpload() {
+    yield Buffer.alloc(80, 0x61);
+    throw new Error('simulated disconnected upload');
+  }
+
+  await assert.rejects(
+    store.put({
+      ownerUserId: 'quota-owner',
+      purpose: 'gallery.audio',
+      contentType: 'audio/wav',
+      expectedSize: 100,
+      source: failedUpload(),
+    }),
+    error => error instanceof BlobStoreError && error.code === 'unavailable'
+  );
+  assert.deepEqual(
+    database
+      .prepare(
+        `SELECT stored_bytes AS storedBytes, reserved_bytes AS reservedBytes
+           FROM platform_blob_quota_usage WHERE owner_user_id = ?`
+      )
+      .get('quota-owner'),
+    { storedBytes: 0, reservedBytes: 0 }
+  );
+  assert.equal(
+    database
+      .prepare('SELECT COUNT(*) AS count FROM platform_blob_quota_reservations')
+      .get().count,
+    0
+  );
+  assert.deepEqual(
+    fs
+      .readdirSync(path.join(rootDirectory, 'objects'), { recursive: true })
+      .filter(name => String(name).endsWith('.blob')),
+    []
+  );
+});
+
+test('durable SQLite quota repairs crashed reservations and missing objects', async () => {
+  let now = 1_000;
+  const { database, policy } = sqliteQuotaPolicy({
+    maximumBytesPerOwner: 1_000,
+    reservationTtlMs: 60_000,
+    now: () => now,
+  });
+  const crashed = await policy.reserve({
+    ownerUserId: 'quota-owner',
+    purpose: 'document.source',
+    expectedSize: 40,
+  });
+  await crashed.consume(20);
+  now += 60_000;
+  assert.deepEqual(await policy.reconcileExpiredReservations(), {
+    releasedReservations: 1,
+    releasedBytes: 40,
+  });
+
+  const committed = await policy.reserve({
+    ownerUserId: 'quota-owner',
+    purpose: 'document.source',
+    expectedSize: 25,
+  });
+  await committed.consume(25);
+  await committed.commit({
+    id: 'missing-blob',
+    ownerUserId: 'quota-owner',
+    purpose: 'document.source',
+    contentType: 'text/plain',
+    metadata: {},
+    size: 25,
+    sha256: '0'.repeat(64),
+    createdAt: new Date(now).toISOString(),
+    encryptionKeyId: 'test',
+    formatVersion: 1,
+  });
+  assert.deepEqual(await policy.listStoredObjectIdsByOwner('quota-owner'), [
+    'missing-blob',
+  ]);
+  assert.deepEqual(
+    await policy.reconcileMissingStoredObjects(async () => false),
+    { releasedObjects: 1, releasedBytes: 25, inspectedObjects: 1 }
+  );
+  assert.deepEqual(
+    database
+      .prepare(
+        `SELECT stored_bytes AS storedBytes, reserved_bytes AS reservedBytes
+           FROM platform_blob_quota_usage WHERE owner_user_id = ?`
+      )
+      .get('quota-owner'),
+    { storedBytes: 0, reservedBytes: 0 }
+  );
+  assert.deepEqual(await policy.listStoredObjectIdsByOwner('quota-owner'), []);
+});
+
 test('local blob orphan cleanup respects reference checks and an age grace period', async () => {
   const rootDirectory = temporaryDirectory('libre-blob-store-');
   const store = new LocalEncryptedBlobStore({
@@ -677,6 +871,150 @@ test('local blob orphan cleanup respects reference checks and an age grace perio
   assert.ok(syncedDirectories.includes(path.join(rootDirectory, 'staging')));
   assert.equal((await store.stat(referenced.id, 'owner-a')).id, referenced.id);
   await assert.rejects(store.stat(orphan.id, 'owner-a'), BlobNotFoundError);
+});
+
+test('local blob reconciliation is bounded and resumes from an opaque cursor', async () => {
+  const rootDirectory = temporaryDirectory('libre-blob-reconcile-');
+  const store = new LocalEncryptedBlobStore({
+    rootDirectory,
+    keyring: keyring(),
+    chunkBytes: 64 * 1024,
+  });
+  const descriptors = [];
+  for (const value of ['first', 'second', 'third']) {
+    descriptors.push(await putBlob(store, Buffer.from(value)));
+  }
+  const old = new Date('2020-01-01T00:00:00Z');
+  for (const descriptor of descriptors) {
+    fs.utimesSync(storedObjectPath(rootDirectory, descriptor.id), old, old);
+  }
+
+  let continuationToken;
+  let complete = false;
+  let deletedObjects = 0;
+  for (let pass = 0; pass < 10 && !complete; pass += 1) {
+    const result = await store.reconcileOrphans({
+      olderThan: new Date('2021-01-01T00:00:00Z'),
+      maxEntries: 1,
+      isReferenced: async () => false,
+      ...(continuationToken ? { continuationToken } : {}),
+    });
+    assert.ok(result.inspectedEntries <= 1);
+    deletedObjects += result.deletedObjects;
+    continuationToken = result.continuationToken;
+    complete = result.complete;
+  }
+  assert.equal(complete, true);
+  assert.equal(deletedObjects, descriptors.length);
+  await assert.rejects(
+    store.reconcileOrphans({
+      olderThan: new Date(),
+      maxEntries: 1,
+      isReferenced: async () => false,
+      continuationToken: 'not-a-valid-cursor',
+    }),
+    /Invalid local reconciliation cursor/
+  );
+});
+
+test('SQLite runtime reaps an aged blob left by a hard kill after durable rename', async () => {
+  const dataDirectory = temporaryDirectory('libre-runtime-blob-recovery-');
+  const blobRoot = path.join(dataDirectory, 'blobs');
+  const storageUrl = pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'platform', 'storage', 'index.js')
+  ).href;
+  const persistenceUrl = pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'persistence', 'index.js')
+  ).href;
+  const encryptionUrl = pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'services', 'encryptionService.js')
+  ).href;
+  const childEnvironment = {
+    ...process.env,
+    NODE_ENV: 'test',
+    DATA_DIR: dataDirectory,
+    DATABASE_BACKEND: 'sqlite',
+    BLOB_STORE_BACKEND: 'local',
+    VECTOR_STORE_BACKEND: 'embedded',
+    ENCRYPTION_KEY: '7'.repeat(64),
+  };
+  const killed = spawnSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `const { Readable } = await import('node:stream');
+       const storage = await import(${JSON.stringify(storageUrl)});
+       const quotaPolicy = { async reserve() { return {
+         async consume() {},
+         async commit() {
+           process.kill(process.pid, 'SIGKILL');
+           await new Promise(() => {});
+         },
+         async release() {},
+       }; } };
+       const store = new storage.LocalEncryptedBlobStore({
+         rootDirectory: ${JSON.stringify(blobRoot)},
+         keyring: storage.createStorageKeyringFromEnvironment(process.env),
+         quotaPolicy,
+         chunkBytes: 64 * 1024,
+       });
+       await store.put({
+         ownerUserId: 'killed-owner',
+         purpose: 'document.source',
+         contentType: 'text/plain',
+         expectedSize: 12,
+         source: Readable.from([Buffer.from('killed-bytes')]),
+       });`,
+    ],
+    { cwd: repoRoot, env: childEnvironment, encoding: 'utf8' }
+  );
+  assert.equal(killed.signal, 'SIGKILL', killed.stderr);
+  const objectFiles = () =>
+    fs
+      .readdirSync(path.join(blobRoot, 'objects'), { recursive: true })
+      .map(value => String(value))
+      .filter(value => value.endsWith('.blob'));
+  assert.equal(objectFiles().length, 1);
+
+  const runRuntime = () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--input-type=module',
+        '-e',
+        `const [{ encryptionService }, persistence, storage] = await Promise.all([
+           import(${JSON.stringify(encryptionUrl)}),
+           import(${JSON.stringify(persistenceUrl)}),
+           import(${JSON.stringify(storageUrl)}),
+         ]);
+         const selected = await persistence.initializePersistence({
+           dialect: 'sqlite', emailCodec: encryptionService, env: process.env,
+         });
+         const runtime = await storage.initializePlatformStorageRuntime({
+           persistence: selected, cipher: encryptionService, env: process.env,
+         });
+         process.stdout.write(JSON.stringify(await runtime.health()));
+         await storage.closePlatformStorageRuntime();
+         await persistence.closePersistence();`,
+      ],
+      { cwd: repoRoot, env: childEnvironment, encoding: 'utf8' }
+    );
+    assert.equal(result.status, 0, `${result.stderr}\n${result.stdout}`);
+    assert.equal(JSON.parse(result.stdout).ready, true);
+  };
+
+  runRuntime();
+  assert.equal(
+    objectFiles().length,
+    1,
+    'the grace period preserves recent data'
+  );
+  const orphanPath = path.join(blobRoot, 'objects', objectFiles()[0]);
+  const old = new Date('2020-01-01T00:00:00Z');
+  fs.utimesSync(orphanPath, old, old);
+  runRuntime();
+  assert.equal(objectFiles().length, 0);
 });
 
 const baseVectors = [
@@ -779,7 +1117,14 @@ test('embedded vector store encrypts embeddings and returns deterministic cosine
 });
 
 test('embedded vector ACLs are enforced by SQL before ciphertext is returned', async () => {
-  const { database, store } = sqliteVectorStore();
+  const trustedGroups = new Map([['reader', ['readers']]]);
+  const { database, store } = sqliteVectorStore({
+    principalResolver: {
+      async resolveGroupIds(userId) {
+        return trustedGroups.get(userId) || [];
+      },
+    },
+  });
   await store.upsert({
     actor: { userId: 'owner-a' },
     records: baseVectors,
@@ -791,12 +1136,25 @@ test('embedded vector ACLs are enforced by SQL before ciphertext is returned', a
   const outsider = await store.query(query({ actor: { userId: 'outsider' } }));
   assert.deepEqual(outsider, []);
 
+  const forged = await store.query(
+    query({ actor: { userId: 'outsider', groupIds: ['readers'] } })
+  );
+  assert.deepEqual(forged, []);
+
   const shared = await store.query(
     query({ actor: { userId: 'reader', groupIds: ['readers'] } })
   );
   assert.deepEqual(
     shared.map(hit => hit.id),
     ['beta']
+  );
+  trustedGroups.delete('reader');
+  assert.deepEqual(
+    await store.query(
+      query({ actor: { userId: 'reader', groupIds: ['readers'] } })
+    ),
+    [],
+    'revoked trusted group membership must take effect immediately'
   );
 
   await assert.rejects(
@@ -877,7 +1235,13 @@ test('embedded vector IDs are isolated across owners without existence leaks', a
 });
 
 test('embedded vector upserts replace ACLs and embeddings atomically', async () => {
-  const { store } = sqliteVectorStore();
+  const { store } = sqliteVectorStore({
+    principalResolver: {
+      async resolveGroupIds(userId) {
+        return userId === 'reader' ? ['readers'] : [];
+      },
+    },
+  });
   await store.upsert({
     actor: { userId: 'owner-a' },
     records: [baseVectors[1]],
@@ -1052,7 +1416,10 @@ test('storage factories support only implemented backends and require durable ke
         rootDirectory: temporaryDirectory('libre-blob-store-'),
         env: { ...env, BLOB_STORE_BACKEND: 's3' },
       }),
-    error => error instanceof BlobStoreError && error.code === 'unavailable'
+    error =>
+      error instanceof BlobStoreError &&
+      error.code === 'invalid-input' &&
+      error.message.includes('shared PostgreSQL database')
   );
 
   const database = new Database(':memory:');
@@ -1063,7 +1430,10 @@ test('storage factories support only implemented backends and require durable ke
         database,
         env: { ...env, VECTOR_STORE_BACKEND: 'pgvector' },
       }),
-    error => error instanceof VectorStoreError && error.code === 'unavailable'
+    error =>
+      error instanceof VectorStoreError &&
+      error.code === 'invalid-input' &&
+      error.message.includes('shared PostgreSQL database')
   );
 });
 
@@ -1150,6 +1520,119 @@ test('key bootstrap rolls back a persistence failure before creating application
   assert.equal(fs.existsSync(path.join(dataDirectory, 'data.sqlite')), false);
   assert.equal(fs.existsSync(path.join(dataDirectory, 'plugins')), false);
   assert.equal(fs.existsSync(path.join(dataDirectory, 'blobs')), false);
+});
+
+test('team worker refuses missing deployment keys before creating local state', () => {
+  const root = temporaryDirectory('libre-team-worker-no-key-');
+  const dataDirectory = path.join(root, 'data');
+  const result = spawnSync(
+    process.execPath,
+    [path.join(repoRoot, 'backend', 'dist', 'worker.js')],
+    {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      timeout: 10_000,
+      env: {
+        ...process.env,
+        DATA_DIR: dataDirectory,
+        PLATFORM_PREFLIGHT_TMP_DIR: path.join(root, 'preflight'),
+        LIBRE_PLATFORM_MODE: 'team',
+        DATABASE_BACKEND: 'postgres',
+        DATABASE_URL: 'postgresql://worker.invalid/libre',
+        DATABASE_SSL_MODE: 'disable',
+        BLOB_STORE_BACKEND: 's3',
+        S3_BUCKET: 'worker-test',
+        S3_REGION: 'us-east-1',
+        S3_ACCESS_KEY_ID: 'worker-test',
+        S3_SECRET_ACCESS_KEY: 'worker-test',
+        VECTOR_STORE_BACKEND: 'pgvector',
+        COORDINATION_BACKEND: 'redis',
+        REDIS_URL: 'redis://worker.invalid:6379',
+        JOB_WORKER_MODE: 'external',
+        AGENT_CLI_MODELS_ENABLED: 'false',
+        CODEX_OAUTH_MODELS_ENABLED: 'false',
+        ENCRYPTION_KEY: '',
+        STORAGE_ENCRYPTION_KEYS: '',
+        STORAGE_ENCRYPTION_ACTIVE_KEY_ID: '',
+      },
+    }
+  );
+  assert.notEqual(result.status, 0);
+  assert.match(
+    `${result.stdout}\n${result.stderr}`,
+    /Team mode requires encryption keys supplied by the deployment secret/
+  );
+  assert.equal(fs.existsSync(dataDirectory), false);
+});
+
+test('persona memory indexing removes a vector recreated after persona deletion', async () => {
+  const record = {
+    id: 'memory-race',
+    userId: 'owner-race',
+    personaId: 'persona-race',
+    content: 'A memory racing persona deletion',
+    timestamp: Date.now(),
+    importanceScore: 0.5,
+    memoryType: 'general',
+    accessCount: 0,
+    decayFactor: 1,
+  };
+  let memoryPresent = true;
+  let vectorPresent = false;
+  let releaseUpsert;
+  let markUpsertStarted;
+  const upsertStarted = new Promise(resolve => {
+    markUpsertStarted = resolve;
+  });
+  const upsertReleased = new Promise(resolve => {
+    releaseUpsert = resolve;
+  });
+  const deletedIds = [];
+  const runtime = {
+    domains: {
+      memories: {
+        async findByOwner(id, userId, personaId) {
+          return memoryPresent &&
+            id === record.id &&
+            userId === record.userId &&
+            personaId === record.personaId
+            ? record
+            : undefined;
+        },
+      },
+    },
+    vectorStore: {
+      async upsert() {
+        markUpsertStarted();
+        await upsertReleased;
+        vectorPresent = true;
+      },
+      async delete(request) {
+        deletedIds.push(...(request.ids || []));
+        vectorPresent = false;
+        return request.ids?.length || 0;
+      },
+    },
+  };
+  const indexing = (async () => {
+    await runtime.vectorStore.upsert();
+    await storageModule.assertPersonaMemoryStillReferenced(
+      runtime,
+      record,
+      'persona-memory'
+    );
+  })();
+  await upsertStarted;
+
+  // The relational delete and its first cleanup pass win while the vector
+  // write is paused. Releasing the write recreates the vector after cleanup.
+  memoryPresent = false;
+  vectorPresent = false;
+  releaseUpsert();
+
+  await assert.rejects(indexing, /disappeared while it was being indexed/);
+  assert.equal(vectorPresent, false);
+  assert.deepEqual(deletedIds, [record.id]);
 });
 
 test('legacy encryption service import aborts instead of retaining an unpersisted key', () => {

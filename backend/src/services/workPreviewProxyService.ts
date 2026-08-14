@@ -23,7 +23,7 @@ import http, {
 } from 'node:http';
 import type { Duplex } from 'node:stream';
 import type { Request, Response } from 'express';
-import { getDatabase } from '../db.js';
+import { getWorkPersistence } from '../platform/workPersistence/index.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('services:work-preview-proxy');
@@ -114,9 +114,13 @@ const previewFrameAncestors = (): string => {
 interface PreviewRecord {
   preview_status: string;
   preview_url: string | null;
+  preview_upstream_host: string | null;
+  preview_upstream_port: number | null;
 }
 
-export type PreviewRecordLookup = (taskId: string) => PreviewRecord | undefined;
+export type PreviewRecordLookup = (
+  taskId: string
+) => PreviewRecord | undefined | Promise<PreviewRecord | undefined>;
 
 interface PreviewProxyTarget {
   upstreamHost: string;
@@ -127,19 +131,20 @@ interface PreviewProxyTarget {
 }
 
 const defaultPreviewLookup: PreviewRecordLookup = taskId =>
-  getDatabase()
-    .prepare(
-      `SELECT preview_status, preview_url
-       FROM work_tasks
-       WHERE id = ?`
-    )
-    .get(taskId) as PreviewRecord | undefined;
+  getWorkPersistence().findPreview(taskId);
 
-const previewUpstreamHost = (): string => {
-  const configured = (process.env.WORK_PREVIEW_BIND || '127.0.0.1').trim();
-  if (!configured || configured === '0.0.0.0') return '127.0.0.1';
-  if (configured === '::' || configured === '[::]') return '::1';
-  return configured.replace(/^\[|\]$/g, '');
+export const normalizePreviewUpstreamHost = (value: string): string => {
+  const normalized = value.trim().replace(/^\[|\]$/g, '');
+  if (
+    !normalized ||
+    normalized.length > 253 ||
+    !/^[A-Za-z0-9._:%-]+$/.test(normalized) ||
+    normalized === '0.0.0.0' ||
+    normalized === '::'
+  ) {
+    throw new Error('Work preview upstream host is invalid.');
+  }
+  return normalized;
 };
 
 const secureEqual = (left: string, right: string): boolean => {
@@ -319,15 +324,8 @@ const canRewriteContentType = (contentType: string): boolean => {
 export class WorkPreviewProxyService {
   constructor(
     private readonly secret = WORK_PREVIEW_SECRET,
-    private readonly lookupPreview: PreviewRecordLookup = defaultPreviewLookup,
-    private readonly upstreamHost = previewUpstreamHost()
+    private readonly lookupPreview: PreviewRecordLookup = defaultPreviewLookup
   ) {}
-
-  // Per-task upstream host overrides (the Kubernetes backend targets the
-  // sandbox Pod IP). Server-side only — never part of the signed URL — and
-  // in-memory only, matching preview lifetimes: previews do not survive a
-  // backend restart.
-  private readonly taskUpstreamHosts = new Map<string, string>();
 
   private signature(taskId: string, port: number, nonce: string): string {
     return crypto
@@ -336,30 +334,16 @@ export class WorkPreviewProxyService {
       .digest('base64url');
   }
 
-  createPreviewUrl(
-    taskId: string,
-    port: number,
-    upstreamHost?: string
-  ): string {
+  createPreviewUrl(taskId: string, port: number): string {
     if (!TASK_ID_PATTERN.test(taskId)) {
       throw new Error('Work preview task ID is invalid.');
     }
     if (!Number.isInteger(port) || port < 1 || port > 65_535) {
       throw new Error('Work preview port is invalid.');
     }
-    if (upstreamHost) {
-      this.taskUpstreamHosts.set(taskId, upstreamHost.replace(/^\[|\]$/g, ''));
-    } else {
-      this.taskUpstreamHosts.delete(taskId);
-    }
     const nonce = crypto.randomBytes(16).toString('base64url');
     const signature = this.signature(taskId, port, nonce);
     return `${WORK_PREVIEW_PROXY_PREFIX}/${encodeURIComponent(taskId)}/${port}.${nonce}.${signature}/`;
-  }
-
-  /** Drop a task's upstream override when its preview stops or it is removed. */
-  clearPreviewUpstream(taskId: string): void {
-    this.taskUpstreamHosts.delete(taskId);
   }
 
   private activityListener?: (taskId: string) => void;
@@ -369,7 +353,9 @@ export class WorkPreviewProxyService {
     this.activityListener = listener;
   }
 
-  private parseTarget(rawUrl: string): PreviewProxyTarget | undefined {
+  private async parseTarget(
+    rawUrl: string
+  ): Promise<PreviewProxyTarget | undefined> {
     let url: URL;
     try {
       url = new URL(rawUrl, 'http://libre-preview.local');
@@ -412,11 +398,19 @@ export class WorkPreviewProxyService {
 
     const proxyBasePath = `${WORK_PREVIEW_PROXY_PREFIX}/${encodeURIComponent(taskId)}/${credential}/`;
     if (!url.pathname.startsWith(proxyBasePath)) return undefined;
-    const record = this.lookupPreview(taskId);
+    const record = await this.lookupPreview(taskId);
     if (
       record?.preview_status !== 'running' ||
-      record.preview_url !== proxyBasePath
+      record.preview_url !== proxyBasePath ||
+      record.preview_upstream_port !== port ||
+      !record.preview_upstream_host
     ) {
+      return undefined;
+    }
+    let upstreamHost: string;
+    try {
+      upstreamHost = normalizePreviewUpstreamHost(record.preview_upstream_host);
+    } catch {
       return undefined;
     }
 
@@ -429,7 +423,7 @@ export class WorkPreviewProxyService {
       port,
       proxyBasePath,
       upstreamPath,
-      upstreamHost: this.taskUpstreamHosts.get(taskId) ?? this.upstreamHost,
+      upstreamHost,
     };
   }
 
@@ -525,8 +519,8 @@ export class WorkPreviewProxyService {
     }
   }
 
-  handleHttp = (request: Request, response: Response): void => {
-    const target = this.parseTarget(request.originalUrl || request.url);
+  handleHttp = async (request: Request, response: Response): Promise<void> => {
+    const target = await this.parseTarget(request.originalUrl || request.url);
     if (!target) {
       response.status(404).type('text/plain').send('Preview not found.');
       return;
@@ -631,14 +625,30 @@ export class WorkPreviewProxyService {
     socket: Duplex,
     head: Buffer
   ): boolean {
-    const target = this.parseTarget(request.url || '');
-    if (!target) {
-      if ((request.url || '').startsWith(`${WORK_PREVIEW_PROXY_PREFIX}/`)) {
-        socket.end('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n');
-        return true;
-      }
+    if (!(request.url || '').startsWith(`${WORK_PREVIEW_PROXY_PREFIX}/`)) {
       return false;
     }
+    socket.pause();
+    void this.handleUpgradeAuthorized(request, socket, head);
+    return true;
+  }
+
+  private async handleUpgradeAuthorized(
+    request: IncomingMessage,
+    socket: Duplex,
+    head: Buffer
+  ): Promise<void> {
+    let target: PreviewProxyTarget | undefined;
+    try {
+      target = await this.parseTarget(request.url || '');
+    } catch (error) {
+      logger.warn('Work preview authorization lookup failed:', error);
+    }
+    if (!target) {
+      socket.end('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n');
+      return;
+    }
+    socket.resume();
 
     const headers = this.upstreamRequestHeaders(request.headers, target);
     headers.connection = 'Upgrade';
@@ -695,7 +705,6 @@ export class WorkPreviewProxyService {
       }
     });
     upstreamRequest.end();
-    return true;
   }
 }
 

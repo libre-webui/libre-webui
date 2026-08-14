@@ -4,32 +4,6 @@ import path from 'node:path';
 import test from 'node:test';
 
 const sourceRoot = path.resolve('backend/src');
-const legacyDatabaseConsumers = new Set([
-  'index.ts',
-  'models/personaModel.ts',
-  'services/agentAccessService.ts',
-  'services/dataArchiveService.ts',
-  'services/galleryService.ts',
-  'services/mediaGenerationJobService.ts',
-  'services/memoryService.ts',
-  'services/modelAccessService.ts',
-  'services/mutationEngineService.ts',
-  'services/personaService.ts',
-  'services/pluginActivationService.ts',
-  'services/pluginCredentialsService.ts',
-  'services/pluginService.ts',
-  'services/pluginUsageService.ts',
-  'services/pluginVariablesService.ts',
-  'services/voiceProfileService.ts',
-  'services/webSearchService.ts',
-  'services/workAccessService.ts',
-  'services/workPolicyService.ts',
-  'services/workPreviewProxyService.ts',
-  'services/workRuntimeService.ts',
-  'services/workTaskService.ts',
-  'storage.ts',
-]);
-
 const walk = directory =>
   fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
     const candidate = path.join(directory, entry.name);
@@ -51,9 +25,7 @@ test('new application code cannot import the SQLite database directly', () => {
     const source = fs.readFileSync(filename, 'utf8');
     const importsDatabase =
       /(?:from\s+|import\s*\()\s*['"][^'"]*\/db\.js['"]/.test(source);
-    if (importsDatabase && !legacyDatabaseConsumers.has(relative)) {
-      violations.push(relative);
-    }
+    if (importsDatabase) violations.push(relative);
   }
 
   assert.deepEqual(
@@ -65,7 +37,26 @@ test('new application code cannot import the SQLite database directly', () => {
 
 test('authenticated storage fails closed instead of selecting JSON at runtime', () => {
   const source = fs.readFileSync(path.join(sourceRoot, 'storage.ts'), 'utf8');
-  assert.match(source, /private readonly useSQLite: true/);
-  assert.match(source, /throw new Error\('SQLite application storage is unavailable'\)/);
+  assert.match(source, /getPersistence/);
+  assert.match(source, /getPlatformStorageRuntime/);
+  assert.doesNotMatch(source, /getDatabase(?:Safe)?/);
+  assert.doesNotMatch(source, /useSQLite/);
+  assert.doesNotMatch(source, /readFileSync|writeFileSync|existsSync/);
   assert.doesNotMatch(source, /Storage mode:.*JSON/);
+});
+
+test('stateful entrypoints keep the preflight import graph side-effect free', () => {
+  for (const entrypoint of ['main.ts', 'worker.ts']) {
+    const source = fs.readFileSync(path.join(sourceRoot, entrypoint), 'utf8');
+    assert.match(source, /platform\/storage\/storageFactory\.js/);
+    assert.doesNotMatch(
+      source,
+      /from ['"]\.\/platform\/storage\/index\.js['"]/
+    );
+    assert.ok(
+      source.indexOf('provisionLegacyEncryptionKey') <
+        source.indexOf("import('./services/encryptionService.js')"),
+      `${entrypoint} must provision and validate keys before loading stateful services`
+    );
+  }
 });

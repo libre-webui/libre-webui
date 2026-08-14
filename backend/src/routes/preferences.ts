@@ -173,7 +173,7 @@ router.get(
         return;
       }
 
-      const preferences = preferencesService.getPreferences(userId);
+      const preferences = await preferencesService.getPreferences(userId);
       res.json({
         success: true,
         data: preferences,
@@ -205,7 +205,7 @@ router.put(
       }
 
       const updates = req.body;
-      const updatedPreferences = preferencesService.updatePreferences(
+      const updatedPreferences = await preferencesService.updatePreferences(
         updates,
         userId
       );
@@ -250,7 +250,7 @@ router.put(
         return;
       }
 
-      const updatedPreferences = preferencesService.setDefaultModel(
+      const updatedPreferences = await preferencesService.setDefaultModel(
         model,
         userId,
         { providerType, providerId }
@@ -296,7 +296,7 @@ router.put(
         return;
       }
 
-      const updatedPreferences = preferencesService.setSystemMessage(
+      const updatedPreferences = await preferencesService.setSystemMessage(
         message,
         userId
       );
@@ -341,7 +341,7 @@ router.put(
         return;
       }
 
-      const updatedPreferences = preferencesService.setGenerationOptions(
+      const updatedPreferences = await preferencesService.setGenerationOptions(
         options,
         userId
       );
@@ -399,11 +399,12 @@ router.put(
         return;
       }
 
-      const updatedPreferences = preferencesService.setModelGenerationOptions(
-        model.trim(),
-        options,
-        userId
-      );
+      const updatedPreferences =
+        await preferencesService.setModelGenerationOptions(
+          model.trim(),
+          options,
+          userId
+        );
 
       res.json({
         success: true,
@@ -436,7 +437,7 @@ router.post(
       }
 
       const updatedPreferences =
-        preferencesService.resetGenerationOptions(userId);
+        await preferencesService.resetGenerationOptions(userId);
 
       res.json({
         success: true,
@@ -478,7 +479,7 @@ router.put(
         return;
       }
 
-      const updatedPreferences = preferencesService.setEmbeddingSettings(
+      const updatedPreferences = await preferencesService.setEmbeddingSettings(
         settings,
         userId
       );
@@ -514,7 +515,7 @@ router.post(
       }
 
       const updatedPreferences =
-        preferencesService.resetEmbeddingSettings(userId);
+        await preferencesService.resetEmbeddingSettings(userId);
 
       res.json({
         success: true,
@@ -550,7 +551,7 @@ router.get(
 
       res.json({
         success: true,
-        data: dataArchiveService.exportUserData(userId),
+        data: await dataArchiveService.exportUserData(userId),
       });
     } catch (error: unknown) {
       res.status(archiveErrorStatus(error)).json({
@@ -643,7 +644,7 @@ router.post(
       const { data, strategy } = readArchiveImportRequest(req);
       res.json({
         success: true,
-        data: dataArchiveService.preflight(data, strategy, userId),
+        data: await dataArchiveService.preflight(data, strategy, userId),
       });
     } catch (error: unknown) {
       res.status(archiveErrorStatus(error)).json({
@@ -657,8 +658,8 @@ router.post(
   }
 );
 
-// Import a validated archive in one SQLite transaction. "overwrite" applies
-// only to matching IDs; records absent from the archive are never deleted.
+// Import a validated archive. "overwrite" applies only to matching IDs;
+// records absent from the archive are never deleted.
 router.post(
   '/import',
   markArchiveNoStore,
@@ -679,7 +680,11 @@ router.post(
       }
 
       const { data, strategy } = readArchiveImportRequest(req);
-      const result = dataArchiveService.importUserData(data, strategy, userId);
+      const result = await dataArchiveService.importUserData(
+        data,
+        strategy,
+        userId
+      );
 
       res.json({
         success: true,

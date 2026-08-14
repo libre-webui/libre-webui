@@ -27,12 +27,16 @@ const activeAudioRequestsByUser = new Map<string, number>();
 let activeAudioRequestsGlobal = 0;
 
 type PluginVariables = Record<string, string | number | boolean>;
+type MaybePromise<T> = T | Promise<T>;
 
 export interface PluginAudioGenerationServiceDependencies {
-  getAllPlugins(userId?: string): Plugin[];
-  getPlugin(id: string, userId?: string): Plugin | null;
-  getApiKey(plugin: Plugin, userId?: string): string | null;
-  getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
+  getAllPlugins(userId?: string): MaybePromise<Plugin[]>;
+  getPlugin(id: string, userId?: string): MaybePromise<Plugin | null>;
+  getApiKey(plugin: Plugin, userId?: string): MaybePromise<string | null>;
+  getPluginVariables(
+    plugin: Plugin,
+    userId?: string
+  ): MaybePromise<PluginVariables>;
   validateEndpointUrl(endpoint: string): string;
   recordUsage?(usage: PluginUsageEventInput): void;
 }
@@ -76,26 +80,36 @@ export class PluginAudioGenerationService {
     private readonly deps: PluginAudioGenerationServiceDependencies
   ) {}
 
-  getAvailableModels(userId?: string): Array<{
-    model: string;
-    plugin: string;
-    config?: AudioGenConfig;
-  }> {
-    return this.deps.getAllPlugins(userId).flatMap(plugin => {
+  async getAvailableModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      config?: AudioGenConfig;
+    }>
+  > {
+    const models: Array<{
+      model: string;
+      plugin: string;
+      config?: AudioGenConfig;
+    }> = [];
+    for (const plugin of await this.deps.getAllPlugins(userId)) {
       const capability = plugin.capabilities?.audio;
       if (
         !plugin.active ||
         !capability ||
-        !this.deps.getApiKey(plugin, userId)
+        !(await this.deps.getApiKey(plugin, userId))
       ) {
-        return [];
+        continue;
       }
-      return capability.model_map.map(model => ({
-        model,
-        plugin: plugin.id,
-        config: capability.config,
-      }));
-    });
+      models.push(
+        ...capability.model_map.map(model => ({
+          model,
+          plugin: plugin.id,
+          config: capability.config,
+        }))
+      );
+    }
+    return models;
   }
 
   async generate(
@@ -110,7 +124,7 @@ export class PluginAudioGenerationService {
     }
   ): Promise<AudioGenerationResult> {
     validatePluginModel(model);
-    const { plugin, endpoint, config, headers } = this.resolve(
+    const { plugin, endpoint, config, headers } = await this.resolve(
       model,
       options.pluginId,
       options.userId
@@ -184,8 +198,8 @@ export class PluginAudioGenerationService {
     }
   }
 
-  private resolve(model: string, pluginId: string, userId: string) {
-    const plugin = this.deps.getPlugin(pluginId, userId);
+  private async resolve(model: string, pluginId: string, userId: string) {
+    const plugin = await this.deps.getPlugin(pluginId, userId);
     const capability = plugin?.capabilities?.audio;
     if (
       !plugin?.active ||
@@ -194,13 +208,13 @@ export class PluginAudioGenerationService {
     ) {
       throw new Error(`No audio generation plugin found for model: ${model}`);
     }
-    const apiKey = this.deps.getApiKey(plugin, userId);
+    const apiKey = await this.deps.getApiKey(plugin, userId);
     if (!apiKey) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
       );
     }
-    const variables = this.deps.getPluginVariables(plugin, userId);
+    const variables = await this.deps.getPluginVariables(plugin, userId);
     let endpoint = capability.endpoint;
     const endpointVariable = capability.config?.endpoint_variable;
     if (endpointVariable) {

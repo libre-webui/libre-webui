@@ -69,14 +69,100 @@ semantic `appVersion` image. Set `image.tag` or `image.digest` explicitly only
 when you intentionally want a different image. A non-empty `image.tag` takes
 precedence over the transition digest.
 
-Libre WebUI currently supports at most one application replica. Its SQLite
-database and process-local coordination are not safe behind multiple pods, so
-the chart accepts `replicaCount: 0` for a deliberate suspension or
-`replicaCount: 1` for normal operation, and rejects larger values and the
-HorizontalPodAutoscaler. A zero-replica release provisions its control-plane
-resources but serves no Libre WebUI traffic. Scale model providers and Work
-sandbox pods independently; do not bypass this guard until Libre supports
-shared database and application-state backends.
+The default `solo` profile accepts `replicaCount: 0` for a deliberate suspension
+or `replicaCount: 1` for normal operation. It rejects larger values and the
+HorizontalPodAutoscaler because SQLite, local files, and process-local
+coordination are not safe behind multiple pods. A zero-replica release
+provisions its control-plane resources but serves no Libre WebUI traffic.
+
+For multiple replicas, configure the complete `team` profile. It uses
+PostgreSQL/PGVector, S3-compatible blob storage, Redis, and a separate durable
+worker; the chart refuses a partial mixture of shared and local backends. Start
+from a protected values file like this:
+
+```yaml
+replicaCount: 3
+
+env:
+  LIBRE_PLATFORM_MODE: team
+  DATABASE_BACKEND: postgres
+  DATABASE_SSL_MODE: verify-full
+  POSTGRES_MIGRATION_MODE: apply
+  POSTGRES_POOL_MAX: 10
+  POSTGRES_CONNECT_TIMEOUT_MS: 5000
+  POSTGRES_IDLE_TIMEOUT_MS: 30000
+  POSTGRES_STATEMENT_TIMEOUT_MS: 30000
+  POSTGRES_MIGRATION_LOCK_TIMEOUT_MS: 60000
+  OLLAMA_TIMEOUT: 300000
+  OLLAMA_LONG_OPERATION_TIMEOUT: 900000
+  OLLAMA_MAX_CONTEXT: 32768
+  BLOB_STORE_BACKEND: s3
+  VECTOR_STORE_BACKEND: pgvector
+  COORDINATION_BACKEND: redis
+  JOB_WORKER_MODE: external
+  STORAGE_ENCRYPTION_ACTIVE_KEY_ID: active
+  S3_BUCKET: libre-blobs
+  S3_REGION: us-east-1
+  S3_BLOB_PREFIX: libre/blobs
+
+worker:
+  replicaCount: 1
+
+secrets:
+  databaseUrl: postgresql://libre:replace-me@postgres.example/libre
+  redisUrl: rediss://redis.example:6379/0
+  jwtSecret: '<one-stable-high-entropy-secret-for-every-replica>'
+  encryptionKey: '<legacy-64-character-lowercase-hex-key>'
+  storageEncryptionKeys: '{"legacy":"<legacy-64-character-lowercase-hex-key>","active":"<active-64-character-lowercase-hex-key>"}'
+  s3AccessKeyId: replace-me
+  s3SecretAccessKey: replace-me
+```
+
+`secrets.encryptionKey` must exactly match the `legacy` entry, and the key map
+must also contain `STORAGE_ENCRYPTION_ACTIVE_KEY_ID`. `secrets.jwtSecret` must
+be one stable, high-entropy value shared by every app and worker pod; the chart
+rejects team mode without it so sessions never depend on pod-local generated
+material. Keep verified TLS for managed PostgreSQL; do not add driver TLS
+parameters to `databaseUrl`. Pool limits apply to every app and worker pod, so
+reserve at least
+`(replicaCount + worker.replicaCount) * POSTGRES_POOL_MAX` database connections
+plus operational headroom. Install with the protected values file:
+
+```bash
+helm upgrade --install libre-webui \
+  oci://ghcr.io/libre-webui/charts/libre-webui \
+  --values /absolute/path/to/libre-team-values.yaml
+```
+
+Do not commit that file or pass production secrets through `--set`. Store it
+with a protected encrypted-values workflow. Scale model providers and Work
+sandbox Pods independently; when `work.enabled=true`, the external team worker
+receives the same runtime image, StorageClass, and `work.env` limits as app pods.
+The worker also receives the same resolved Ollama endpoint, request timeouts,
+and maximum automatically adopted context as the app, because document
+embeddings, durable chats, and Work runs execute provider calls there.
+An active team application (a positive `replicaCount`, or enabled autoscaling)
+requires at least one external worker, and the chart rejects a zero-worker
+configuration before installation. Set both `replicaCount` and
+`worker.replicaCount` to zero for a full suspension. Setting only the app count
+to zero is a deliberate worker-only drain or recovery mode: no web traffic is
+served, but the worker continues processing queued durable work.
+
+### Team upgrades and schema compatibility
+
+Libre supports an exact-schema-version policy, not mixed-version or zero-downtime
+database upgrades. The application and external-worker Deployments each use
+`Recreate`, which prevents old and new pods from overlapping within that one
+Deployment. Kubernetes does not coordinate the two Deployments as a single
+upgrade boundary. Before upgrading, stop new ingress, let or cancel active
+durable and Work jobs, scale both old Deployments to zero, take a verified team
+backup, and confirm every old app and worker pod has terminated. Only then
+upgrade the release with `POSTGRES_MIGRATION_MODE=apply`; one new process holds
+the PostgreSQL advisory leader lock while all other new processes wait and
+validate the same migration ledger. Restore the previous verified backup into a
+clean PostgreSQL/S3 target for rollback; never point an older binary at a schema
+it does not exactly support. Expect an intentional service interruption during
+this procedure.
 
 ## Access Locally
 
@@ -136,8 +222,18 @@ origin through the chart:
 helm upgrade libre-webui \
   oci://ghcr.io/libre-webui/charts/libre-webui \
   --reuse-values \
+  --set env.TRUST_PROXY=1 \
   --set-string env.CORS_ORIGIN=https://your-domain.example
 ```
+
+`TRUST_PROXY` is an exact hop count, not a boolean. Its safe chart default is
+`0`, which ignores forwarded client addresses. Use `1` only when one ingress
+proxy connects directly to Libre; count every trusted load balancer or proxy
+hop in a longer fixed chain and keep the Service unreachable around that
+chain. A count that is too small groups clients under a proxy address and can
+exhaust shared login limits; a count that is too large can trust a
+client-supplied address. The chart accepts only `0` through `16`, never
+unbounded `true`, and sends the value only to HTTP application pods.
 
 The current chart does not expose `BASE_URL` or OAuth callback URL values.
 Deployments using OAuth must extend the chart or patch the Deployment to set

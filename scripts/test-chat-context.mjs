@@ -1057,7 +1057,7 @@ test('plugin model routing requires an active plugin and the current user creden
           ).default;
 
           for (const pluginId of ['active-plugin', 'inactive-plugin']) {
-            pluginService.installPlugin(
+            await pluginService.installPlugin(
               JSON.parse(
                 fs.readFileSync(
                   path.join(pluginsDir, `${pluginId}.json`),
@@ -1072,11 +1072,11 @@ test('plugin model routing requires an active plugin and the current user creden
             true
           );
           assert.equal(
-            credentialsService.setApiKey(
+            await credentialsService.setApiKey(
               'active-plugin',
               'alice-key',
               'alice',
-              pluginService.getCredentialRoutingAuthFingerprint(
+              await pluginService.getCredentialRoutingAuthFingerprint(
                 await pluginService.getPlugin('active-plugin', 'alice'),
                 'alice'
               )

@@ -25,7 +25,9 @@ interface CliOptions {
   legacyPluginsDirectories: string[];
 }
 
-const usage = `Usage: recovery-inventory [--json] [--data-dir PATH] [--database PATH] [--legacy-plugins-dir PATH]
+const usage = `Usage: libre-webui recovery-check [--json] [--data-dir PATH] [--database PATH] [--legacy-plugins-dir PATH]
+
+From a source checkout, use "npm run recovery:check --" instead of "libre-webui recovery-check".
 
 Collect a read-only recovery-readiness inventory. Exit status is 0 when no
 blockers are found, 1 when recovery blockers exist, and 2 for invalid usage or

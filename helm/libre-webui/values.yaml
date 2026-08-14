@@ -24,11 +24,18 @@ podSecurityContext:
   # non-root application can create SQLite and local storage safely.
   fsGroup: 1001
   fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
   runAsNonRoot: true
   runAsUser: 1001
   runAsGroup: 1001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
 
 service:
   type: ClusterIP
@@ -60,8 +67,7 @@ resources:
     memory: 256Mi
 
 autoscaling:
-  # Multiple application replicas are unsafe while Libre uses SQLite and
-  # process-local coordination. The chart rejects enabling autoscaling.
+  # Accepted only with the complete team profile below.
   enabled: false
   minReplicas: 1
   maxReplicas: 1
@@ -84,40 +90,76 @@ env:
   NODE_ENV: production
   DOCKER_ENV: 'true'
   PORT: '3001'
+  # Exact number of trusted reverse-proxy hops between a client and the app.
+  # Keep 0 for direct traffic; never use an unbounded `true` policy.
+  TRUST_PROXY: 0
   CORS_ORIGIN: 'http://localhost:8080'
   ENABLE_SIGNUP: 'false'
   JWT_EXPIRES_IN: '7d'
-  OLLAMA_TIMEOUT: '300000'
-  OLLAMA_LONG_OPERATION_TIMEOUT: '900000'
+  OLLAMA_TIMEOUT: 300000
+  OLLAMA_LONG_OPERATION_TIMEOUT: 900000
+  OLLAMA_MAX_CONTEXT: 32768
+  # Team mode requires these node-local credential paths to stay disabled;
+  # durable chat provider execution occurs in the external worker.
+  AGENT_CLI_MODELS_ENABLED: 'false'
+  CODEX_OAUTH_MODELS_ENABLED: 'false'
   VITE_API_TIMEOUT: '300000'
   DATA_DIR: '/app/backend/data'
   PLATFORM_PREFLIGHT_TMP_DIR: '/app/backend/temp/preflight'
   LIBRE_PLATFORM_MODE: 'solo'
   DATABASE_BACKEND: 'sqlite'
+  # Managed PostgreSQL defaults to verified TLS. The bundled team Compose
+  # profile overrides this to disable only on its private project network.
+  DATABASE_SSL_MODE: 'verify-full'
+  POSTGRES_MIGRATION_MODE: 'apply'
+  POSTGRES_POOL_MAX: 10
+  POSTGRES_CONNECT_TIMEOUT_MS: 5000
+  POSTGRES_IDLE_TIMEOUT_MS: 30000
+  POSTGRES_STATEMENT_TIMEOUT_MS: 30000
+  POSTGRES_MIGRATION_LOCK_TIMEOUT_MS: 60000
   BLOB_STORE_BACKEND: 'local'
+  BLOB_QUOTA_BYTES_PER_USER: 10737418240
+  BLOB_QUOTA_RESERVATION_TTL_MS: 3600000
   VECTOR_STORE_BACKEND: 'embedded'
   COORDINATION_BACKEND: 'local'
   REDIS_KEY_PREFIX: 'libre'
   REDIS_CONNECT_TIMEOUT_MS: '5000'
   JOB_WORKER_MODE: 'embedded'
   STORAGE_ENCRYPTION_ACTIVE_KEY_ID: ''
+  S3_BUCKET: ''
+  S3_REGION: ''
+  S3_ENDPOINT: ''
+  S3_FORCE_PATH_STYLE: 'false'
+  S3_BLOB_PREFIX: 'libre/blobs'
 
 # Secrets - provide via --set or external secret management
 secrets:
   jwtSecret: ''
   encryptionKey: ''
   sessionSecret: ''
-  # Platform connection/key material. PostgreSQL remains unavailable; Redis
-  # coordination is supported in solo mode, and storage key rotation is
-  # validated even before resource callers migrate.
+  # Team platform connection and versioned encryption-key material.
   databaseUrl: ''
   redisUrl: ''
   storageEncryptionKeys: ''
+  s3AccessKeyId: ''
+  s3SecretAccessKey: ''
+  s3SessionToken: ''
   # OAuth
   githubClientId: ''
   githubClientSecret: ''
   huggingfaceClientId: ''
   huggingfaceClientSecret: ''
+
+# Team mode runs durable handlers outside application replicas. This
+# Deployment is rendered only when LIBRE_PLATFORM_MODE=team.
+worker:
+  replicaCount: 1
+  resources: {}
+
+# Team application and worker pods use only bounded, ephemeral local scratch.
+# All durable state belongs in PostgreSQL/S3/PGVector.
+team:
+  tempSizeLimit: 1Gi
 
 # Work sandboxes on the Kubernetes runtime backend. No Docker daemon or
 # socket is involved: sandboxes run as Pods in a dedicated namespace, the

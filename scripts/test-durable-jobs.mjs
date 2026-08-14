@@ -25,14 +25,47 @@ import { pathToFileURL } from 'node:url';
 import Database from 'better-sqlite3';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
-const jobsModule = await import(
-  pathToFileURL(
-    path.join(repoRoot, 'backend', 'dist', 'platform', 'jobs', 'index.js')
-  ).href
+process.env.ENCRYPTION_KEY = '11'.repeat(32);
+process.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID = 'test';
+process.env.STORAGE_ENCRYPTION_KEYS = JSON.stringify({
+  test: '41'.repeat(32),
+});
+const jobsDirectory = path.join(
+  repoRoot,
+  'backend',
+  'dist',
+  'platform',
+  'jobs'
 );
+const importJobModule = name =>
+  import(pathToFileURL(path.join(jobsDirectory, `${name}.js`)).href);
+const [
+  durableJobServiceModule,
+  durableJobTypesModule,
+  workerModule,
+  sqliteRepositoryModule,
+  postgresWorkerModule,
+  domainContractsModule,
+  durableEventIdentityModule,
+] = await Promise.all([
+  importJobModule('durableJobService'),
+  importJobModule('durableJobTypes'),
+  importJobModule('embeddedDurableJobWorker'),
+  importJobModule('sqliteDurableJobRepository'),
+  importJobModule('postgresDurableJobWorker'),
+  importJobModule('domainJobContracts'),
+  importJobModule('durableEventIdentity'),
+]);
 const storageModule = await import(
   pathToFileURL(
-    path.join(repoRoot, 'backend', 'dist', 'platform', 'storage', 'index.js')
+    path.join(
+      repoRoot,
+      'backend',
+      'dist',
+      'platform',
+      'storage',
+      'aesGcmKeyring.js'
+    )
   ).href
 );
 const migrationModule = await import(
@@ -40,15 +73,67 @@ const migrationModule = await import(
     path.join(repoRoot, 'backend', 'dist', 'persistence', 'sqliteMigrations.js')
   ).href
 );
+const eventsModule = await import(
+  pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'platform', 'events', 'index.js')
+  ).href
+);
+const coordinationModule = await import(
+  pathToFileURL(
+    path.join(
+      repoRoot,
+      'backend',
+      'dist',
+      'platform',
+      'coordination',
+      'index.js'
+    )
+  ).href
+);
+const workEventModule = await import(
+  pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'services', 'workEventService.js')
+  ).href
+);
+const chatCompletionModule = await import(
+  pathToFileURL(
+    path.join(
+      repoRoot,
+      'backend',
+      'dist',
+      'services',
+      'durableChatCompletion.js'
+    )
+  ).href
+);
 
 const {
-  DurableJobError,
-  DurableJobExecutionError,
-  DurableJobService,
-  EmbeddedDurableJobWorker,
-  SQLiteDurableJobRepository,
-} = jobsModule;
+  DELETION_LIFECYCLE_RECOVERY_REFERENCE_PREFIX,
+  DOCUMENT_INGEST_JOB_TYPE,
+  OWNER_DELETE_CONTENT_JOB_TYPE,
+  RESOURCE_DELETE_JOB_TYPE,
+  RESOURCE_DELETE_RECOVERY_IDEMPOTENCY_SCOPE,
+  VIDEO_RESUME_JOB_TYPE,
+  WORK_EXECUTE_JOB_TYPE,
+} = domainContractsModule;
+const { DurableJobService } = durableJobServiceModule;
+const { DurableJobError, DurableJobExecutionError } = durableJobTypesModule;
+const { EmbeddedDurableJobWorker } = workerModule;
+const { SQLiteDurableJobRepository } = sqliteRepositoryModule;
+const { PostgresDurableJobWorker, waitForPostgresWorkerPoll } =
+  postgresWorkerModule;
+const { durableEventId } = durableEventIdentityModule;
+/*
+ * Deliberately import the durable primitives from their leaf modules. The
+ * production jobs barrel also exports registered domain handlers, whose
+ * application service graph requires a completed bootstrap and must not run
+ * while this isolated repository/worker contract fixture is being created.
+ */
 const { Aes256GcmKeyring } = storageModule;
+const { DurableEventGateway } = eventsModule;
+const { LocalCoordinator } = coordinationModule;
+const { WorkEventService } = workEventModule;
+const { assertDurableChatCompletionEvent } = chatCompletionModule;
 
 function installMigrationFixture(database) {
   database.pragma('foreign_keys = ON');
@@ -71,6 +156,8 @@ function installMigrationFixture(database) {
   }
   database.exec(migrationModule.PLATFORM_VECTOR_SCHEMA_SQL);
   database.exec(migrationModule.DURABLE_JOBS_EVENTS_SCHEMA_SQL);
+  database.exec(migrationModule.DURABLE_EVENT_IDEMPOTENCY_SCHEMA_SQL);
+  database.exec(migrationModule.RESOURCE_DELETION_LIFECYCLE_SCHEMA_SQL);
 }
 
 function harness(options = {}) {
@@ -268,6 +355,472 @@ test('bounded retries stop at the dead-letter ceiling', () => {
   database.close();
 });
 
+test('worker startup reconciles an exhausted deletion without an unbounded retry loop', async () => {
+  const { database, service, advance } = harness();
+  database.exec(`
+    CREATE TABLE users (
+      id TEXT PRIMARY KEY,
+      account_status TEXT NOT NULL
+    );
+    CREATE TABLE documents (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    CREATE TABLE generated_images (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    CREATE TABLE personas (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    INSERT INTO users (id, account_status) VALUES ('actor-1', 'active');
+  `);
+  const deletionToken = 'a'.repeat(64);
+  database
+    .prepare(
+      `INSERT INTO platform_resource_deletion_tombstones
+         (resource_type, resource_id, owner_user_id, deletion_incarnation,
+          deletion_token, deleted_at, completed_at)
+       VALUES ('document', 'document-1', 'actor-1', 1, ?, 1, NULL)`
+    )
+    .run(deletionToken);
+  const input = {
+    jobType: RESOURCE_DELETE_JOB_TYPE,
+    actorUserId: 'actor-1',
+    idempotencyScope: RESOURCE_DELETE_JOB_TYPE,
+    idempotencyKey: deletionToken,
+    payload: {
+      mode: 'encrypted',
+      value: {
+        resourceType: 'document',
+        resourceId: 'document-1',
+        deletionIncarnation: 1,
+        deletionToken,
+      },
+    },
+    maxAttempts: 5,
+  };
+  const exhausted = service.enqueue(input);
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const lease = service.claim(`failed-worker-${attempt}`, 1000);
+    assert.ok(lease);
+    service.fail(lease, {
+      retryable: true,
+      errorCode: 'resource-cleanup-failed',
+      errorSummary: 'Object storage is unavailable',
+      backoffMs: 0,
+    });
+    advance(1);
+  }
+  assert.equal(service.getMetadata(exhausted.id).state, 'dead_letter');
+  assert.equal(service.enqueue(input).id, exhausted.id);
+
+  // The successor has an explicit one-minute availability boundary. Advance
+  // the deterministic repository clock before worker startup so the focused
+  // test does not wait in wall-clock time.
+  advance(60_000);
+  let cleanupCalls = 0;
+  const worker = new EmbeddedDurableJobWorker({
+    service,
+    workerId: 'lifecycle-recovery-worker',
+    leaseMs: 1000,
+    pollIntervalMs: 10,
+    random: () => 0,
+    reconcileBeforePolling: () => service.reconcileDeletionLifecycleJobs(),
+    isActorAuthorized: async () => true,
+    handlers: new Map([
+      [
+        RESOURCE_DELETE_JOB_TYPE,
+        async () => {
+          cleanupCalls += 1;
+          database
+            .prepare(
+              `UPDATE platform_resource_deletion_tombstones
+                  SET completed_at = 2
+                WHERE resource_type = 'document' AND resource_id = 'document-1'`
+            )
+            .run();
+        },
+      ],
+    ]),
+  });
+  worker.start();
+  const deadline = Date.now() + 3000;
+  let recovery;
+  while (Date.now() < deadline) {
+    recovery = service.getByIdempotency(
+      'actor-1',
+      RESOURCE_DELETE_RECOVERY_IDEMPOTENCY_SCOPE,
+      exhausted.id
+    );
+    if (recovery?.state === 'succeeded') break;
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  assert.equal(recovery?.state, 'succeeded');
+  assert.equal(cleanupCalls, 1);
+  assert.equal((await worker.stop()).failed, 0);
+  assert.equal(
+    service.getMetadata(exhausted.id).resultReference,
+    `${DELETION_LIFECYCLE_RECOVERY_REFERENCE_PREFIX}${recovery.id}`
+  );
+  assert.equal(
+    service.countNonSucceededForActor('actor-1', {
+      jobTypes: [RESOURCE_DELETE_JOB_TYPE],
+    }),
+    1
+  );
+  assert.equal(
+    service.countNonSucceededForActor('actor-1', {
+      jobTypes: [RESOURCE_DELETE_JOB_TYPE],
+      excludeHandledLifecycleJobs: true,
+    }),
+    0,
+    'a successful successor resolves its marked terminal predecessor'
+  );
+  assert.deepEqual(service.reconcileDeletionLifecycleJobs(), {
+    examined: 0,
+    recoveryJobs: 0,
+    skipped: 0,
+  });
+  assert.equal(
+    database
+      .prepare(
+        `SELECT COUNT(*) AS count FROM platform_jobs
+          WHERE idempotency_scope = ?`
+      )
+      .get(RESOURCE_DELETE_RECOVERY_IDEMPOTENCY_SCOPE).count,
+    1,
+    'a completed tombstone cannot grow another recovery chain'
+  );
+  database.close();
+});
+
+test('running worker reconciles a newly exhausted deletion without restart', async () => {
+  const { database, service, advance } = harness();
+  database.exec(`
+    CREATE TABLE users (
+      id TEXT PRIMARY KEY,
+      account_status TEXT NOT NULL
+    );
+    CREATE TABLE documents (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    CREATE TABLE generated_images (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    CREATE TABLE personas (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    INSERT INTO users (id, account_status) VALUES ('actor-1', 'active');
+  `);
+  const deletionToken = 'b'.repeat(64);
+  database
+    .prepare(
+      `INSERT INTO platform_resource_deletion_tombstones
+         (resource_type, resource_id, owner_user_id, deletion_incarnation,
+          deletion_token, deleted_at, completed_at)
+       VALUES ('document', 'document-live-recovery', 'actor-1', 1, ?, 1, NULL)`
+    )
+    .run(deletionToken);
+  const exhausted = service.enqueue({
+    jobType: RESOURCE_DELETE_JOB_TYPE,
+    actorUserId: 'actor-1',
+    idempotencyScope: RESOURCE_DELETE_JOB_TYPE,
+    idempotencyKey: deletionToken,
+    payload: {
+      mode: 'encrypted',
+      value: {
+        resourceType: 'document',
+        resourceId: 'document-live-recovery',
+        deletionIncarnation: 1,
+        deletionToken,
+      },
+    },
+    maxAttempts: 1,
+  });
+  let handlerCalls = 0;
+  const worker = new EmbeddedDurableJobWorker({
+    service,
+    workerId: 'live-lifecycle-recovery-worker',
+    leaseMs: 1000,
+    pollIntervalMs: 10,
+    random: () => 0,
+    reconcileBeforePolling: () => service.reconcileDeletionLifecycleJobs(),
+    isActorAuthorized: async () => true,
+    handlers: new Map([
+      [
+        RESOURCE_DELETE_JOB_TYPE,
+        async () => {
+          handlerCalls += 1;
+          if (handlerCalls === 1) {
+            throw new DurableJobExecutionError(
+              true,
+              'resource-cleanup-failed',
+              'Object storage is unavailable'
+            );
+          }
+          database
+            .prepare(
+              `UPDATE platform_resource_deletion_tombstones
+                  SET completed_at = 2
+                WHERE resource_type = 'document'
+                  AND resource_id = 'document-live-recovery'`
+            )
+            .run();
+        },
+      ],
+    ]),
+  });
+  worker.start();
+
+  const terminalDeadline = Date.now() + 3000;
+  let recovery;
+  while (Date.now() < terminalDeadline) {
+    recovery = service.getByIdempotency(
+      'actor-1',
+      RESOURCE_DELETE_RECOVERY_IDEMPOTENCY_SCOPE,
+      exhausted.id
+    );
+    if (recovery?.state === 'queued') break;
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  assert.equal(service.getMetadata(exhausted.id).state, 'dead_letter');
+  assert.equal(recovery?.state, 'queued');
+  assert.equal(worker.isOperational(), true);
+
+  advance(60_000);
+  const recoveryDeadline = Date.now() + 3000;
+  while (Date.now() < recoveryDeadline) {
+    recovery = service.getMetadata(recovery.id);
+    if (recovery?.state === 'succeeded') break;
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  assert.equal(recovery?.state, 'succeeded');
+  assert.equal(handlerCalls, 2);
+  assert.equal(worker.isOperational(), true);
+  assert.equal((await worker.stop()).failed, 0);
+  assert.deepEqual(service.reconcileDeletionLifecycleJobs(), {
+    examined: 0,
+    recoveryJobs: 0,
+    skipped: 0,
+  });
+  database.close();
+});
+
+test('running worker reconciles a cleanup terminalized by process-loss lease expiry', async () => {
+  const { database, service, advance } = harness();
+  database.exec(`
+    CREATE TABLE users (
+      id TEXT PRIMARY KEY,
+      account_status TEXT NOT NULL
+    );
+    CREATE TABLE documents (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    CREATE TABLE generated_images (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    CREATE TABLE personas (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    INSERT INTO users (id, account_status) VALUES ('actor-1', 'active');
+  `);
+  const deletionToken = 'c'.repeat(64);
+  database
+    .prepare(
+      `INSERT INTO platform_resource_deletion_tombstones
+         (resource_type, resource_id, owner_user_id, deletion_incarnation,
+          deletion_token, deleted_at, completed_at)
+       VALUES ('document', 'document-expired-recovery', 'actor-1', 1, ?, 1, NULL)`
+    )
+    .run(deletionToken);
+  const exhausted = service.enqueue({
+    jobType: RESOURCE_DELETE_JOB_TYPE,
+    actorUserId: 'actor-1',
+    idempotencyScope: RESOURCE_DELETE_JOB_TYPE,
+    idempotencyKey: deletionToken,
+    payload: {
+      mode: 'encrypted',
+      value: {
+        resourceType: 'document',
+        resourceId: 'document-expired-recovery',
+        deletionIncarnation: 1,
+        deletionToken,
+      },
+    },
+    maxAttempts: 1,
+  });
+  assert.equal(service.claim('crashed-cleanup-worker', 1000)?.id, exhausted.id);
+
+  let cleanupCalls = 0;
+  const worker = new EmbeddedDurableJobWorker({
+    service,
+    workerId: 'lease-expiry-recovery-worker',
+    leaseMs: 1000,
+    pollIntervalMs: 10,
+    random: () => 0,
+    reconcileBeforePolling: () => service.reconcileDeletionLifecycleJobs(),
+    isActorAuthorized: async () => true,
+    handlers: new Map([
+      [
+        RESOURCE_DELETE_JOB_TYPE,
+        async () => {
+          cleanupCalls += 1;
+          database
+            .prepare(
+              `UPDATE platform_resource_deletion_tombstones
+                  SET completed_at = 3
+                WHERE resource_type = 'document'
+                  AND resource_id = 'document-expired-recovery'`
+            )
+            .run();
+        },
+      ],
+    ]),
+  });
+  worker.start();
+  advance(1001);
+
+  const terminalDeadline = Date.now() + 3000;
+  let recovery;
+  while (Date.now() < terminalDeadline) {
+    recovery = service.getByIdempotency(
+      'actor-1',
+      RESOURCE_DELETE_RECOVERY_IDEMPOTENCY_SCOPE,
+      exhausted.id
+    );
+    if (recovery?.state === 'queued') break;
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  assert.equal(service.getMetadata(exhausted.id).state, 'dead_letter');
+  assert.equal(service.getMetadata(exhausted.id).errorCode, 'lease-expired');
+  assert.equal(recovery?.state, 'queued');
+
+  advance(60_000);
+  const recoveryDeadline = Date.now() + 3000;
+  while (Date.now() < recoveryDeadline) {
+    recovery = service.getMetadata(recovery.id);
+    if (recovery?.state === 'succeeded') break;
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  assert.equal(recovery?.state, 'succeeded');
+  assert.equal(cleanupCalls, 1);
+  assert.equal(worker.isOperational(), true);
+  assert.equal((await worker.stop()).failed, 0);
+  database.close();
+});
+
+test('queued lifecycle cancellation schedules cleanup without a worker restart', async () => {
+  const { database, service, advance } = harness();
+  database.exec(`
+    CREATE TABLE users (
+      id TEXT PRIMARY KEY,
+      account_status TEXT NOT NULL
+    );
+    CREATE TABLE documents (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    CREATE TABLE generated_images (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    CREATE TABLE personas (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL
+    );
+    INSERT INTO users (id, account_status) VALUES ('actor-1', 'active');
+  `);
+  const deletionToken = 'd'.repeat(64);
+  database
+    .prepare(
+      `INSERT INTO platform_resource_deletion_tombstones
+         (resource_type, resource_id, owner_user_id, deletion_incarnation,
+          deletion_token, deleted_at, completed_at)
+       VALUES ('document', 'document-cancel-recovery', 'actor-1', 1, ?, 1, NULL)`
+    )
+    .run(deletionToken);
+
+  let cleanupCalls = 0;
+  const worker = new EmbeddedDurableJobWorker({
+    service,
+    workerId: 'cancelled-lifecycle-recovery-worker',
+    leaseMs: 1000,
+    pollIntervalMs: 10,
+    random: () => 0,
+    reconcileBeforePolling: () => service.reconcileDeletionLifecycleJobs(),
+    isActorAuthorized: async () => true,
+    handlers: new Map([
+      [
+        RESOURCE_DELETE_JOB_TYPE,
+        async () => {
+          cleanupCalls += 1;
+          database
+            .prepare(
+              `UPDATE platform_resource_deletion_tombstones
+                  SET completed_at = 4
+                WHERE resource_type = 'document'
+                  AND resource_id = 'document-cancel-recovery'`
+            )
+            .run();
+        },
+      ],
+    ]),
+  });
+  worker.start();
+  const cancelled = service.enqueue({
+    jobType: RESOURCE_DELETE_JOB_TYPE,
+    actorUserId: 'actor-1',
+    idempotencyScope: RESOURCE_DELETE_JOB_TYPE,
+    idempotencyKey: deletionToken,
+    payload: {
+      mode: 'encrypted',
+      value: {
+        resourceType: 'document',
+        resourceId: 'document-cancel-recovery',
+        deletionIncarnation: 1,
+        deletionToken,
+      },
+    },
+    maxAttempts: 5,
+  });
+  assert.equal(
+    service.cancel(cancelled.id, 'actor-1', 'user-requested').state,
+    'cancelled'
+  );
+  const recovery = service.getByIdempotency(
+    'actor-1',
+    RESOURCE_DELETE_RECOVERY_IDEMPOTENCY_SCOPE,
+    cancelled.id
+  );
+  assert.equal(recovery?.state, 'queued');
+  assert.equal(
+    service.getMetadata(cancelled.id).resultReference,
+    `${DELETION_LIFECYCLE_RECOVERY_REFERENCE_PREFIX}${recovery.id}`
+  );
+
+  advance(60_000);
+  const deadline = Date.now() + 3000;
+  let recovered = recovery;
+  while (Date.now() < deadline) {
+    recovered = service.getMetadata(recovery.id);
+    if (recovered?.state === 'succeeded') break;
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  assert.equal(recovered?.state, 'succeeded');
+  assert.equal(cleanupCalls, 1);
+  assert.equal(worker.isOperational(), true);
+  assert.equal((await worker.stop()).failed, 0);
+  database.close();
+});
+
 test('queued and running cancellation are durable and cooperative', () => {
   const { database, service } = harness();
   const queued = enqueue(service, { idempotencyKey: 'cancel-queued' });
@@ -301,10 +854,100 @@ test('queued and running cancellation are durable and cooperative', () => {
   database.close();
 });
 
+test('actor-wide cancellation drains every job without list pagination', () => {
+  const { database, service } = harness();
+  const running = enqueue(service, {
+    idempotencyKey: 'actor-drain-running',
+    priority: 100,
+  });
+  const lease = service.claim('worker-a', 1000);
+  assert.ok(lease);
+  assert.equal(lease.id, running.id);
+  for (let index = 0; index < 225; index += 1) {
+    enqueue(service, { idempotencyKey: `actor-drain-${index}` });
+  }
+  const otherActor = enqueue(service, {
+    actorUserId: 'actor-2',
+    idempotencyKey: 'other-actor-survives',
+  });
+
+  assert.deepEqual(service.cancelAllForActor('actor-1', 'actor-revoked'), {
+    cancelledQueued: 225,
+    cancellationRequestedRunning: 1,
+  });
+  assert.equal(service.countActiveForActor('actor-1'), 1);
+  assert.equal(service.getMetadata(otherActor.id).state, 'queued');
+  service.complete(lease, 'must-not-survive');
+  assert.equal(service.getMetadata(running.id).state, 'cancelled');
+  assert.equal(service.countActiveForActor('actor-1'), 0);
+  assert.equal(
+    database
+      .prepare(
+        "SELECT COUNT(*) AS count FROM platform_jobs WHERE actor_user_id = 'actor-1' AND state = 'cancelled'"
+      )
+      .get().count,
+    226
+  );
+  database.close();
+});
+
+test('actor retirement excludes and accounts for initiated owner cleanups beyond pagination', () => {
+  const { database, service } = harness();
+  for (let index = 0; index < 225; index += 1) {
+    enqueue(service, { idempotencyKey: `retiring-ordinary-${index}` });
+  }
+  for (let index = 0; index < 3; index += 1) {
+    enqueue(service, {
+      jobType: OWNER_DELETE_CONTENT_JOB_TYPE,
+      idempotencyScope: OWNER_DELETE_CONTENT_JOB_TYPE,
+      idempotencyKey: `deleted-owner-${index}`,
+      priority: 100,
+    });
+  }
+
+  assert.deepEqual(
+    service.cancelAllForActor('actor-1', 'actor-revoked', {
+      excludeJobTypes: [OWNER_DELETE_CONTENT_JOB_TYPE],
+    }),
+    { cancelledQueued: 225, cancellationRequestedRunning: 0 }
+  );
+  assert.equal(
+    service.countActiveForActor('actor-1', {
+      excludeJobTypes: [OWNER_DELETE_CONTENT_JOB_TYPE],
+    }),
+    0
+  );
+  assert.equal(
+    service.countActiveForActor('actor-1', {
+      jobTypes: [OWNER_DELETE_CONTENT_JOB_TYPE],
+    }),
+    3
+  );
+  assert.equal(
+    service.countNonSucceededForActor('actor-1', {
+      jobTypes: [OWNER_DELETE_CONTENT_JOB_TYPE],
+    }),
+    3
+  );
+  for (let index = 0; index < 3; index += 1) {
+    const lease = service.claim('owner-cleanup-worker', 1000);
+    assert.equal(lease?.jobType, OWNER_DELETE_CONTENT_JOB_TYPE);
+    service.complete(lease, `owner:${index}:deleted`);
+  }
+  assert.equal(
+    service.countNonSucceededForActor('actor-1', {
+      jobTypes: [OWNER_DELETE_CONTENT_JOB_TYPE],
+    }),
+    0
+  );
+  database.close();
+});
+
 test('ordered event replay uses global cursors and per-stream sequences', () => {
   const { database, service } = harness();
   const cursors = [
     service.appendEvent({
+      eventId: durableEventId('test', 'session:1', 'created'),
       streamId: 'session:1',
       eventType: 'turn.created',
       subjectId: 'turn-1',
@@ -312,12 +955,14 @@ test('ordered event replay uses global cursors and per-stream sequences', () => 
       payload: { mode: 'encrypted', value: { order: 1 } },
     }),
     service.appendEvent({
+      eventId: durableEventId('test', 'session:2', 'created'),
       streamId: 'session:2',
       eventType: 'turn.created',
       subjectId: 'turn-2',
       payload: { mode: 'reference', referenceId: 'blob:event-2' },
     }),
     service.appendEvent({
+      eventId: durableEventId('test', 'session:1', 'completed'),
       streamId: 'session:1',
       eventType: 'turn.completed',
       subjectId: 'turn-1',
@@ -347,6 +992,196 @@ test('ordered event replay uses global cursors and per-stream sequences', () => 
       .map(event => event.streamSequence),
     [2]
   );
+  database.close();
+});
+
+test('deterministic event identity returns one cursor and rejects semantic reuse', () => {
+  const { database, service } = harness();
+  const eventId = durableEventId('event-idempotency', 'logical-occurrence');
+  const input = {
+    eventId,
+    streamId: 'idempotent:stream',
+    eventType: 'work.tool_result.v1',
+    subjectId: 'run-1',
+    actorUserId: 'actor-1',
+    payload: { mode: 'encrypted', value: { messageId: 'message-1' } },
+  };
+  const first = service.appendEvent(input);
+  const second = service.appendEvent(input);
+  assert.equal(second, first);
+  assert.equal(
+    database
+      .prepare(
+        'SELECT COUNT(*) AS count FROM platform_events WHERE event_id = ?'
+      )
+      .get(eventId).count,
+    1
+  );
+  assert.equal(
+    database
+      .prepare(
+        'SELECT last_sequence FROM platform_event_stream_heads WHERE stream_id = ?'
+      )
+      .get(input.streamId).last_sequence,
+    1,
+    'an idempotent retry must not consume a stream sequence'
+  );
+  assert.throws(
+    () =>
+      service.appendEvent({
+        ...input,
+        payload: { mode: 'encrypted', value: { messageId: 'different' } },
+      }),
+    error => error instanceof DurableJobError && error.code === 'conflict'
+  );
+  database.close();
+});
+
+test('exact terminal-event recovery is independent of a long stream history', () => {
+  const { database, service } = harness();
+  const sessionId = 'long-chat-session';
+  const streamId = `chat:${sessionId}`;
+  for (let index = 0; index < 10_001; index += 1) {
+    service.appendEvent({
+      eventId: durableEventId('long-chat-noise', String(index)),
+      streamId,
+      eventType: 'chat.stream.v1',
+      subjectId: `prior-assistant-${index}`,
+      actorUserId: 'actor-1',
+      payload: {
+        mode: 'reference',
+        referenceId: `chat-stream:${index}`,
+      },
+    });
+  }
+
+  const assistantMessageId = 'recovered-assistant';
+  const completionId = durableEventId(
+    'chat',
+    sessionId,
+    assistantMessageId,
+    'done'
+  );
+  const completionCursor = service.appendEvent({
+    eventId: completionId,
+    streamId,
+    eventType: 'chat.done.v1',
+    subjectId: assistantMessageId,
+    actorUserId: 'actor-1',
+    payload: {
+      mode: 'encrypted',
+      value: {
+        type: 'done',
+        messageId: assistantMessageId,
+        content: 'completed response',
+      },
+    },
+  });
+
+  assert.ok(
+    completionCursor > 10_000,
+    'the terminal event must sit beyond the former bounded forward scan'
+  );
+  assert.deepEqual(service.getEvent(completionId), {
+    cursor: completionCursor,
+    eventId: completionId,
+    streamId,
+    streamSequence: 10_002,
+    eventType: 'chat.done.v1',
+    subjectId: assistantMessageId,
+    actorUserId: 'actor-1',
+    payload: {
+      type: 'done',
+      messageId: assistantMessageId,
+      content: 'completed response',
+    },
+    occurredAt: 1_000_000,
+  });
+  assert.doesNotThrow(() =>
+    assertDurableChatCompletionEvent(service.getEvent(completionId), {
+      eventId: completionId,
+      sessionId,
+      assistantMessageId,
+      actorUserId: 'actor-1',
+    })
+  );
+
+  database
+    .prepare(
+      `UPDATE platform_events
+          SET payload_format = 'reference', payload = 'forged-completion'
+        WHERE event_id = ?`
+    )
+    .run(completionId);
+  const unauthenticated = service.getEvent(completionId);
+  assert.deepEqual(unauthenticated?.payload, {
+    referenceId: 'forged-completion',
+  });
+  assert.throws(
+    () =>
+      assertDurableChatCompletionEvent(unauthenticated, {
+        eventId: completionId,
+        sessionId,
+        assistantMessageId,
+        actorUserId: 'actor-1',
+      }),
+    /completion event payload is inconsistent/
+  );
+  assert.equal(service.getEvent(durableEventId('missing', 'event')), null);
+  database.close();
+});
+
+test('Work event retry after a lost COMMIT acknowledgement reuses its cursor with an advanced clock', async () => {
+  const { database, service } = harness();
+  let appendCalls = 0;
+  const gateway = {
+    async append(input) {
+      appendCalls += 1;
+      const cursor = service.appendEvent(input);
+      if (appendCalls === 1) {
+        throw new Error('connection lost after event COMMIT');
+      }
+      return { cursor, fanoutNotified: true };
+    },
+  };
+  const workEvents = new WorkEventService();
+  workEvents.initializeDurableGateway(gateway);
+  const data = {
+    toolCallId: 'tool-1',
+    name: 'write_file',
+    phase: 'completed',
+    content: 'written',
+    error: false,
+  };
+  await assert.rejects(
+    workEvents.publish(
+      'task-1',
+      'run-1',
+      'tool_result',
+      data,
+      'message:message-1'
+    ),
+    /lost after event COMMIT/
+  );
+  await new Promise(resolve => setTimeout(resolve, 5));
+  const event = await workEvents.publish(
+    'task-1',
+    'run-1',
+    'tool_result',
+    data,
+    'message:message-1'
+  );
+  assert.equal(appendCalls, 2);
+  assert.equal(event.id, 1);
+  assert.equal(
+    database
+      .prepare(
+        "SELECT COUNT(*) AS count FROM platform_events WHERE event_type = 'work.tool_result.v1'"
+      )
+      .get().count,
+    1
+  );
+  assert.equal(workEvents.replay('task-1', 'run-1').events.length, 1);
   database.close();
 });
 
@@ -526,6 +1361,92 @@ test('worker shutdown is bounded and fences an uncooperative handler', async () 
   database.close();
 });
 
+test('extraction, media, and Work jobs reclaim after a worker kill without duplicate effects', async () => {
+  const { database, service } = harness({ now: Date.now() });
+  const jobTypes = [
+    DOCUMENT_INGEST_JOB_TYPE,
+    VIDEO_RESUME_JOB_TYPE,
+    WORK_EXECUTE_JOB_TYPE,
+  ];
+  const jobs = jobTypes.map(jobType =>
+    enqueue(service, {
+      jobType,
+      idempotencyScope: jobType,
+      idempotencyKey: `kill-${jobType}`,
+      payload: { mode: 'encrypted', value: { resourceId: jobType } },
+      maxAttempts: 3,
+    })
+  );
+  let releaseKilled;
+  const killedGate = new Promise(resolve => {
+    releaseKilled = resolve;
+  });
+  let killedStarted;
+  const didStartKilled = new Promise(resolve => {
+    killedStarted = resolve;
+  });
+  const killed = new EmbeddedDurableJobWorker({
+    service,
+    workerId: 'representative-killed-worker',
+    leaseMs: 1000,
+    shutdownTimeoutMs: 100,
+    pollIntervalMs: 10,
+    random: () => 0,
+    isActorAuthorized: async () => true,
+    handlers: new Map(
+      jobTypes.map(jobType => [
+        jobType,
+        async context => {
+          killedStarted();
+          await killedGate;
+          await context.assertSideEffectAllowed();
+          throw new Error('a fenced worker must never reach this point');
+        },
+      ])
+    ),
+  });
+  killed.start();
+  await didStartKilled;
+  const stopped = await killed.stop();
+  assert.equal(stopped.abandoned, 1);
+  releaseKilled();
+
+  const effects = new Map(jobTypes.map(jobType => [jobType, 0]));
+  const replacement = new EmbeddedDurableJobWorker({
+    service,
+    workerId: 'representative-replacement-worker',
+    leaseMs: 1000,
+    pollIntervalMs: 10,
+    random: () => 0,
+    isActorAuthorized: async () => true,
+    handlers: new Map(
+      jobTypes.map(jobType => [
+        jobType,
+        async context => {
+          await context.assertSideEffectAllowed();
+          effects.set(jobType, effects.get(jobType) + 1);
+          return { resultReference: `completed:${jobType}` };
+        },
+      ])
+    ),
+  });
+  replacement.start();
+  const deadline = Date.now() + 5_000;
+  while (
+    jobs.some(job => service.getMetadata(job.id).state !== 'succeeded') &&
+    Date.now() < deadline
+  ) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  const replacementStop = await replacement.stop();
+  assert.equal(replacementStop.failed, 0);
+  for (const job of jobs) {
+    assert.equal(service.getMetadata(job.id).state, 'succeeded');
+  }
+  assert.deepEqual([...effects.values()], [1, 1, 1]);
+  database.close();
+});
+
 test('idle worker polling removes settled AbortSignal listeners', async () => {
   const { database, service } = harness({ now: Date.now() });
   let polls = 0;
@@ -658,4 +1579,474 @@ test('only DurableJobExecutionError can persist a bounded operator summary', () 
   );
   assert.equal(error.retryable, false);
   assert.equal(error.safeCode, 'provider-rejected');
+});
+
+test('PostgreSQL worker polling removes every abort listener after timeout and abort', async () => {
+  const timeoutController = new AbortController();
+  for (let index = 0; index < 250; index += 1) {
+    await waitForPostgresWorkerPoll(0, timeoutController.signal);
+  }
+  assert.equal(getEventListeners(timeoutController.signal, 'abort').length, 0);
+
+  const abortController = new AbortController();
+  const pending = waitForPostgresWorkerPoll(60_000, abortController.signal);
+  assert.equal(getEventListeners(abortController.signal, 'abort').length, 1);
+  abortController.abort();
+  await pending;
+  assert.equal(getEventListeners(abortController.signal, 'abort').length, 0);
+});
+
+test('PostgreSQL worker marks claim failures unhealthy and resumes polling', async () => {
+  let claimCalls = 0;
+  let releaseRecovery;
+  const recoveryGate = new Promise(resolve => {
+    releaseRecovery = resolve;
+  });
+  let observedFailure;
+  const failureObserved = new Promise(resolve => {
+    observedFailure = resolve;
+  });
+  const service = {
+    async claim() {
+      claimCalls += 1;
+      if (claimCalls === 1) return null;
+      if (claimCalls === 2) {
+        observedFailure();
+        throw new Error('transient database failure');
+      }
+      if (claimCalls === 3) await recoveryGate;
+      return null;
+    },
+  };
+  const worker = new PostgresDurableJobWorker({
+    service,
+    handlers: new Map(),
+    workerId: 'postgres-claim-recovery',
+    leaseMs: 1000,
+    shutdownTimeoutMs: 100,
+    pollIntervalMs: 10,
+    isActorAuthorized: async () => true,
+  });
+  worker.start();
+  const healthyDeadline = Date.now() + 1000;
+  while (!worker.isOperational() && Date.now() < healthyDeadline) {
+    await new Promise(resolve => setTimeout(resolve, 1));
+  }
+  assert.equal(worker.isOperational(), true);
+  await failureObserved;
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(
+    worker.isOperational(),
+    false,
+    'readiness must drop while PostgreSQL polling is unavailable'
+  );
+  releaseRecovery();
+  const recoveredDeadline = Date.now() + 1000;
+  while (!worker.isOperational() && Date.now() < recoveredDeadline) {
+    await new Promise(resolve => setTimeout(resolve, 1));
+  }
+  assert.equal(worker.isOperational(), true);
+  assert.ok(claimCalls >= 3);
+  assert.equal((await worker.stop()).failed, 0);
+});
+
+test('PostgreSQL worker survives a committed failure transition with lost acknowledgement', async () => {
+  const lease = {
+    id: 'job-ack-loss',
+    jobType: 'test.echo',
+    actorUserId: 'actor-1',
+    state: 'running',
+    priority: 0,
+    attemptCount: 1,
+    maxAttempts: 3,
+    availableAt: 0,
+    cancellationRequestedAt: null,
+    progressCurrent: 0,
+    progressTotal: 0,
+    progressMessage: null,
+    resultReference: null,
+    errorCode: null,
+    errorSummary: null,
+    createdAt: 1,
+    updatedAt: 1,
+    startedAt: 1,
+    finishedAt: null,
+    workerId: 'postgres-fail-ack-loss',
+    leaseToken: 1,
+    leaseExpiresAt: Date.now() + 1000,
+  };
+  let claimCalls = 0;
+  let failCalls = 0;
+  const service = {
+    async claim() {
+      claimCalls += 1;
+      return claimCalls === 1 ? lease : null;
+    },
+    async heartbeat() {
+      return { owned: true, cancellationRequested: false };
+    },
+    async readPayload() {
+      return {};
+    },
+    async fail() {
+      failCalls += 1;
+      throw new Error('connection lost after retry transition COMMIT');
+    },
+    async getMetadata() {
+      throw new Error('database still temporarily unavailable');
+    },
+  };
+  const worker = new PostgresDurableJobWorker({
+    service,
+    handlers: new Map([
+      [
+        'test.echo',
+        async () => {
+          throw new Error('handler failure');
+        },
+      ],
+    ]),
+    workerId: 'postgres-fail-ack-loss',
+    leaseMs: 1000,
+    shutdownTimeoutMs: 100,
+    pollIntervalMs: 10,
+    isActorAuthorized: async () => true,
+  });
+  worker.start();
+  const deadline = Date.now() + 1000;
+  while (claimCalls < 2 && Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 1));
+  }
+  assert.equal(failCalls, 1);
+  assert.ok(claimCalls >= 2, 'the consumer loop must continue after ack loss');
+  assert.equal(worker.isOperational(), true);
+  assert.equal((await worker.stop()).failed, 0);
+});
+
+test('PostgreSQL worker schedules lifecycle recovery at terminal exhaustion without restart', async () => {
+  const lease = {
+    id: '00000000-0000-4000-8000-000000000021',
+    jobType: RESOURCE_DELETE_JOB_TYPE,
+    actorUserId: 'actor-1',
+    state: 'running',
+    priority: 0,
+    attemptCount: 5,
+    maxAttempts: 5,
+    availableAt: 0,
+    cancellationRequestedAt: null,
+    progressCurrent: 0,
+    progressTotal: 0,
+    progressMessage: null,
+    resultReference: null,
+    errorCode: null,
+    errorSummary: null,
+    createdAt: 1,
+    updatedAt: 1,
+    startedAt: 1,
+    finishedAt: null,
+    workerId: 'postgres-lifecycle-recovery',
+    leaseToken: 5,
+    leaseExpiresAt: Date.now() + 1000,
+  };
+  let claimCalls = 0;
+  let recoveryCalls = 0;
+  const service = {
+    async claim() {
+      claimCalls += 1;
+      return claimCalls === 1 ? lease : null;
+    },
+    async heartbeat() {
+      return { owned: true, cancellationRequested: false };
+    },
+    async readPayload() {
+      return {};
+    },
+    async fail() {
+      return 'dead_letter';
+    },
+    async reconcileDeletionLifecycleJob(id) {
+      assert.equal(id, lease.id);
+      recoveryCalls += 1;
+      return { examined: 1, recoveryJobs: 1, skipped: 0 };
+    },
+  };
+  const worker = new PostgresDurableJobWorker({
+    service,
+    handlers: new Map([
+      [
+        RESOURCE_DELETE_JOB_TYPE,
+        async () => {
+          throw new DurableJobExecutionError(
+            true,
+            'resource-cleanup-failed',
+            'Object storage is unavailable'
+          );
+        },
+      ],
+    ]),
+    workerId: 'postgres-lifecycle-recovery',
+    leaseMs: 1000,
+    shutdownTimeoutMs: 100,
+    pollIntervalMs: 10,
+    isActorAuthorized: async () => true,
+  });
+  worker.start();
+  const deadline = Date.now() + 1000;
+  while ((recoveryCalls === 0 || claimCalls < 2) && Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 1));
+  }
+  assert.equal(recoveryCalls, 1);
+  assert.ok(claimCalls >= 2, 'the same external worker must keep polling');
+  assert.equal(worker.isOperational(), true);
+  assert.equal((await worker.stop()).failed, 0);
+});
+
+test('PostgreSQL worker resolves a successful COMMIT with lost acknowledgement', async () => {
+  const lease = {
+    id: 'job-complete-ack-loss',
+    jobType: 'test.echo',
+    actorUserId: 'actor-1',
+    state: 'running',
+    priority: 0,
+    attemptCount: 1,
+    maxAttempts: 3,
+    availableAt: 0,
+    cancellationRequestedAt: null,
+    progressCurrent: 0,
+    progressTotal: 0,
+    progressMessage: null,
+    resultReference: null,
+    errorCode: null,
+    errorSummary: null,
+    createdAt: 1,
+    updatedAt: 1,
+    startedAt: 1,
+    finishedAt: null,
+    workerId: 'postgres-complete-ack-loss',
+    leaseToken: 1,
+    leaseExpiresAt: Date.now() + 1000,
+  };
+  let claimCalls = 0;
+  let handlerCalls = 0;
+  let failCalls = 0;
+  const service = {
+    async claim() {
+      claimCalls += 1;
+      return claimCalls === 1 ? lease : null;
+    },
+    async heartbeat() {
+      return { owned: true, cancellationRequested: false };
+    },
+    async readPayload() {
+      return {};
+    },
+    async complete() {
+      throw new Error('connection lost after successful COMMIT');
+    },
+    async getMetadata() {
+      return { ...lease, state: 'succeeded', finishedAt: Date.now() };
+    },
+    async fail() {
+      failCalls += 1;
+      return 'queued';
+    },
+  };
+  const worker = new PostgresDurableJobWorker({
+    service,
+    handlers: new Map([
+      [
+        'test.echo',
+        async () => {
+          handlerCalls += 1;
+          return { resultReference: 'effect:one' };
+        },
+      ],
+    ]),
+    workerId: 'postgres-complete-ack-loss',
+    leaseMs: 1000,
+    shutdownTimeoutMs: 100,
+    pollIntervalMs: 10,
+    isActorAuthorized: async () => true,
+  });
+  worker.start();
+  const deadline = Date.now() + 1000;
+  while (claimCalls < 2 && Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 1));
+  }
+  assert.equal(handlerCalls, 1);
+  assert.equal(failCalls, 0, 'a committed success must not be failed/retried');
+  assert.ok(claimCalls >= 2);
+  assert.equal(worker.isOperational(), true);
+  assert.equal((await worker.stop()).failed, 0);
+});
+
+test('durable event gateway replays SQL before fan-out and preserves backpressure', async t => {
+  const { database, service } = harness();
+  t.after(() => database.close());
+  const coordinator = new LocalCoordinator();
+  await coordinator.connect();
+  t.after(() => coordinator.close());
+  const producer = new DurableEventGateway(service, coordinator);
+  const consumer = new DurableEventGateway(service, coordinator);
+  t.after(() => Promise.all([producer.close(), consumer.close()]));
+
+  await producer.append({
+    eventId: durableEventId('test', 'chat:one', 'created'),
+    streamId: 'chat:one',
+    eventType: 'chat.created',
+    subjectId: 'one',
+    actorUserId: 'actor-1',
+    payload: { mode: 'encrypted', value: { sequence: 1 } },
+  });
+
+  const delivered = [];
+  let releaseSecond;
+  const secondGate = new Promise(resolve => {
+    releaseSecond = resolve;
+  });
+  const subscription = await consumer.subscribe({
+    afterCursor: 0,
+    streamId: 'chat:one',
+    pollIntervalMs: 60_000,
+    async onEvent(event) {
+      delivered.push(event.payload.sequence);
+      if (event.payload.sequence === 2) await secondGate;
+    },
+  });
+  assert.deepEqual(delivered, [1], 'initial replay must precede live fan-out');
+
+  const secondAppend = producer.append({
+    eventId: durableEventId('test', 'chat:one', 'updated'),
+    streamId: 'chat:one',
+    eventType: 'chat.updated',
+    subjectId: 'one',
+    actorUserId: 'actor-1',
+    payload: { mode: 'encrypted', value: { sequence: 2 } },
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(delivered, [1, 2]);
+  assert.equal(
+    subscription.cursor,
+    1,
+    'cursor advances only after handler acknowledgement'
+  );
+  releaseSecond();
+  await secondAppend;
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(subscription.cursor, 2);
+  await subscription.close();
+});
+
+function trackingCoordinator() {
+  const handlers = new Set();
+  return {
+    coordinator: {
+      async subscribe(_topic, handler) {
+        handlers.add(handler);
+        return async () => {
+          handlers.delete(handler);
+        };
+      },
+    },
+    handlers,
+  };
+}
+
+test('durable event gateway rejects and closes an over-bound initial replay', async t => {
+  const events = Array.from({ length: 5 }, (_, index) => ({
+    cursor: index + 1,
+    streamId: 'bounded-replay',
+  }));
+  let replayCalls = 0;
+  const service = {
+    async replayEvents(afterCursor, options) {
+      replayCalls += 1;
+      return events
+        .filter(event => event.cursor > afterCursor)
+        .slice(0, options.limit);
+    },
+  };
+  const { coordinator, handlers } = trackingCoordinator();
+  const gateway = new DurableEventGateway(service, coordinator);
+  t.after(() => gateway.close());
+  const delivered = [];
+  const reported = [];
+  let rejected;
+
+  await assert.rejects(
+    gateway.subscribe({
+      afterCursor: 0,
+      batchSize: 5,
+      pollIntervalMs: 100,
+      maxReplayEvents: 2,
+      onEvent: event => delivered.push(event.cursor),
+      onError: error => reported.push(error),
+    }),
+    error => {
+      rejected = error;
+      return /replay exceeded the configured delivery bound/.test(
+        error.message
+      );
+    }
+  );
+
+  assert.deepEqual(delivered, [1, 2]);
+  assert.deepEqual(reported, [rejected], 'the failure must be reported once');
+  assert.equal(handlers.size, 0, 'the Redis wake subscription must be removed');
+  assert.equal(gateway.subscriptions.size, 0);
+  const callsAfterRejection = replayCalls;
+  await new Promise(resolve => setTimeout(resolve, 180));
+  assert.equal(
+    replayCalls,
+    callsAfterRejection,
+    'the replay timer must be cleared before subscribe rejects'
+  );
+  assert.deepEqual(
+    delivered,
+    [1, 2],
+    'replay must not resume as live delivery'
+  );
+});
+
+test('durable event gateway rejects and closes revoked initial authorization', async t => {
+  let replayCalls = 0;
+  const service = {
+    async replayEvents() {
+      replayCalls += 1;
+      return [{ cursor: 1, streamId: 'revoked-replay' }];
+    },
+  };
+  const { coordinator, handlers } = trackingCoordinator();
+  const gateway = new DurableEventGateway(service, coordinator);
+  t.after(() => gateway.close());
+  const delivered = [];
+  const reported = [];
+  let rejected;
+
+  await assert.rejects(
+    gateway.subscribe({
+      afterCursor: 0,
+      pollIntervalMs: 100,
+      authorize: async () => false,
+      onEvent: event => delivered.push(event.cursor),
+      onError: error => reported.push(error),
+    }),
+    error => {
+      rejected = error;
+      return /authorization was revoked/.test(error.message);
+    }
+  );
+
+  assert.deepEqual(delivered, []);
+  assert.deepEqual(reported, [rejected], 'the failure must be reported once');
+  assert.equal(handlers.size, 0, 'the Redis wake subscription must be removed');
+  assert.equal(gateway.subscriptions.size, 0);
+  const callsAfterRejection = replayCalls;
+  await new Promise(resolve => setTimeout(resolve, 180));
+  assert.equal(
+    replayCalls,
+    callsAfterRejection,
+    'the replay timer must be cleared before subscribe rejects'
+  );
+  assert.deepEqual(delivered, []);
 });

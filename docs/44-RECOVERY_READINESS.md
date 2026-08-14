@@ -13,9 +13,13 @@ conditions block a snapshot. It does not acquire a maintenance lock, copy,
 encrypt, upload, delete, repair, or restore data.
 
 ```bash
-npm run build:backend
-npm run --silent recovery:check -- --json > recovery-inventory.json
+libre-webui recovery-check --json > recovery-inventory.json
 ```
+
+From a source checkout, run `npm run build:backend` once and replace
+`libre-webui recovery-check` with `npm run recovery:check --`. Packaged npx and
+Homebrew installs inspect `~/.libre-webui` by default; `DATA_DIR` and explicit
+path options override that location.
 
 The command exits with status `0` when no blockers are found, `1` when the
 report is complete but recovery blockers exist, and `2` for invalid arguments
@@ -40,8 +44,7 @@ the report describes that container's mounted volume, code, and secrets:
 
 ```bash
 docker exec libre-webui \
-  node /app/backend/dist/cli/recoveryInventory.js \
-  --json --data-dir /app/backend/data
+  libre-webui recovery-check --json --data-dir /app/backend/data
 ```
 
 ## What the inventory checks
@@ -124,13 +127,45 @@ not have this derived lookup column.
 
 ## Current backup boundary
 
-The private-deployment backup helper archives the `libre-webui-data` volume,
-validates it, and pairs it with the quiesced recovery inventory and a SHA-256
-manifest. The archive remains unencrypted and unsigned. It does not include
-Docker Work volumes, Kubernetes PVCs, host-bound workspace folders, external
-model/provider state, or protected environment configuration. Keep those
-exclusions visible and back them up independently until coordinated,
-manifest-signed, operator-encrypted backup and clean-restore tooling lands.
+The private-deployment helper stops the application when it was running and
+uses that container's immutable image, mounted data volume, and environment to
+create an integrated solo archive. The manifest is Ed25519-signed and the
+complete payload is encrypted with an operator-held AES-256-GCM backup key. It
+contains SQLite, local blobs and embedded vectors, runtime selectors, and the
+protected configuration needed to decrypt restored state. The helper verifies
+the signature, ciphertext checksum, and decrypted payload before publishing
+the archive and metadata report. `libre-webui-restore` accepts only a new
+Docker volume, verifies the decrypted recovery inventory before copying any
+data, and publishes recovered configuration as private files in a new target
+directory.
+
+Protected runtime configuration includes the PostgreSQL pool, connection,
+idle, statement, and migration-lock timeouts; the Redis connection timeout;
+both durable blob-quota settings; the platform selectors; and the S3 prefix and
+addressing mode. These values are inside the signed and encrypted payload, not
+the plaintext manifest, and are republished as mode-`0600` configuration on an
+applied restore.
+
+The solo archive does not include Docker Work volumes, Kubernetes PVCs,
+host-bound workspace folders, Ollama models, or external provider state. Keep
+those signed-manifest exclusions visible and snapshot external Work storage
+separately. The team profile uses the separate offline team workflow: a
+PostgreSQL exported snapshot, exact versioned S3 ciphertext objects, PGVector
+inventory, runtime configuration, and key identity are sealed into the same
+signed/encrypted archive format and verified against a clean PostgreSQL/S3
+target during restore. Redis cache, presence, wake-ups, and leases are rebuilt
+from canonical SQL state.
+
+Team backup also authenticates every bounded encrypted durable job and event
+payload inside the exact exported PostgreSQL snapshot. Its protected signed
+inventory records the job, event, stream, cursor, envelope, reference, and
+authenticated-plaintext totals. Every event stream must contain exactly the
+contiguous sequence `1..last_sequence`, and PostgreSQL's global cursor sequence
+must not lag the greatest stored cursor. Restore repeats these checks against
+the clean target and requires the complete result to match the signed source
+inventory before it reports success. Gaps between distinct global cursor values
+are valid because PostgreSQL identity allocation is not transactional;
+per-stream sequences are the contiguous ordering contract.
 
 When `PLUGINS_DIR` points outside `DATA_DIR`, recovery inventories that exact
 directory and marks it as excluded from the application-volume archive. Any
@@ -139,13 +174,114 @@ matching plugin-directory snapshot. The same rule applies to active legacy
 plugin directories. Symlinked, non-regular, or unreadable JSON definitions are
 always blockers and are never followed or silently omitted.
 
-The v3 durable jobs/events schema is included in SQLite recovery inventory, but
-no domain feature calls it, no handler worker is bootstrapped, and no admin API
-or external worker exists. Its current rows can be checked and restored; this
-does not claim production job processing is enabled.
+Durable jobs and ordered events are active in both profiles. Recovery blocks
+while a job attempt or Work execution is active, validates job/event payloads
+and contiguous stream heads, and preserves their canonical SQL state. Solo
+runs the bounded embedded worker; team runs the same registered handlers in an
+external worker and uses Redis only for wake-up and fan-out.
 
 For production, store encryption and JWT secrets in a protected secret
 manager, keep backup archives off-host and encrypted, and test restores into a
 clean compatible environment. The inventory is a preflight snapshot of known
 state, not a maintenance lock or independent proof that every external resource
 can be restored.
+
+## Signed and encrypted backup commands
+
+The examples below use the installed `libre-webui` command from global npm or
+Homebrew. Without installing globally, replace `libre-webui` with
+`npx --yes libre-webui@latest`. From a source checkout, build the backend once
+and replace `libre-webui backup` with `npm run recovery:backup --`.
+The production Docker image exposes the same command at
+`/usr/local/bin/libre-webui`. Team backup and restore additionally require
+PostgreSQL 16 `pg_dump` and `pg_restore`; they are included in the production
+image and on the Homebrew formula's command path. Install a compatible
+PostgreSQL client explicitly before using these commands from plain npm/npx.
+
+Generate the
+operator-held AES-256-GCM archive key and Ed25519 signing keypair in a private
+directory, then move the private keys to protected off-host storage:
+
+```bash
+install -d -m 0700 /absolute/private/libre-backup-keys
+libre-webui backup keygen \
+  --directory /absolute/private/libre-backup-keys
+```
+
+For a quiesced solo data directory, create and independently verify an archive:
+
+```bash
+libre-webui backup create \
+  --offline \
+  --data-dir /absolute/path/to/libre-data \
+  --output /absolute/backups/libre-solo.lwbackup \
+  --encryption-key /absolute/private/libre-backup-keys/backup-encryption.key \
+  --signing-private-key /absolute/private/libre-backup-keys/backup-signing-private.pem
+
+libre-webui backup verify \
+  --archive /absolute/backups/libre-solo.lwbackup \
+  --encryption-key /absolute/private/libre-backup-keys/backup-encryption.key \
+  --signing-public-key /absolute/private/libre-backup-keys/backup-signing-public.pem
+```
+
+Restore first as a preflight, then apply only to a new, empty target directory:
+
+```bash
+libre-webui backup restore-preflight \
+  --archive /absolute/backups/libre-solo.lwbackup \
+  --target /absolute/restore/libre-data \
+  --encryption-key /absolute/private/libre-backup-keys/backup-encryption.key \
+  --signing-public-key /absolute/private/libre-backup-keys/backup-signing-public.pem
+
+libre-webui backup restore-apply \
+  --archive /absolute/backups/libre-solo.lwbackup \
+  --target /absolute/restore/libre-data \
+  --encryption-key /absolute/private/libre-backup-keys/backup-encryption.key \
+  --signing-public-key /absolute/private/libre-backup-keys/backup-signing-public.pem
+
+libre-webui backup restore-verify \
+  --target /absolute/restore/libre-data
+```
+
+For team mode, stop all application replicas and workers, keep the source
+PostgreSQL/S3/keyring environment loaded, and create the coordinated archive:
+
+```bash
+libre-webui backup create-team \
+  --offline \
+  --output /absolute/backups/libre-team.lwbackup \
+  --encryption-key /absolute/private/libre-backup-keys/backup-encryption.key \
+  --signing-private-key /absolute/private/libre-backup-keys/backup-signing-private.pem
+```
+
+Load environment variables for a distinct, empty PostgreSQL database and an
+empty versioned S3 bucket before restore. Preflight verifies the signature and
+encrypted archive, validates the protected inventory, and proves the selected
+target database and bucket prefix are empty without publishing data. Apply
+restores into those clean targets, verifies the resulting PostgreSQL schema,
+exact S3 objects, and PGVector records, and writes the protected runtime
+configuration into a new private directory:
+
+```bash
+libre-webui backup restore-team-preflight \
+  --archive /absolute/backups/libre-team.lwbackup \
+  --encryption-key /absolute/private/libre-backup-keys/backup-encryption.key \
+  --signing-public-key /absolute/private/libre-backup-keys/backup-signing-public.pem
+
+libre-webui backup restore-team-apply \
+  --archive /absolute/backups/libre-team.lwbackup \
+  --configuration-output /absolute/restore/libre-team-config \
+  --encryption-key /absolute/private/libre-backup-keys/backup-encryption.key \
+  --signing-public-key /absolute/private/libre-backup-keys/backup-signing-public.pem
+```
+
+Never point a restore at the source database, source bucket, an existing data
+directory, or a configuration directory containing files. Keep the public
+signing key with the restore runbook; possession of the archive and public key
+alone cannot decrypt the payload.
+
+If team restore reports that rollback was incomplete, treat both selected
+targets as dirty and do not retry immediately. Inspect and clean the target
+PostgreSQL database, then enumerate and remove every object version and delete
+marker under the exact target S3 prefix. Run `restore-team-preflight` again;
+apply is safe to retry only after that clean-target preflight succeeds.

@@ -28,6 +28,15 @@ See the [Docker deployment documentation](https://docs.librewebui.org/DOCKER) fo
 
 > The repository's Compose files mount the Docker socket so Work can create isolated task containers. Docker socket access is root-equivalent access to the host. Remove that mount when Work is not required.
 
+The image includes the same operational command as npm and Homebrew. For
+example, inspect a running container's mounted data without using internal
+build paths:
+
+```bash
+docker exec libre-webui libre-webui recovery-check --json
+docker exec libre-webui libre-webui backup --help
+```
+
 ## Image tags
 
 - `latest` — current stable image from the production branch

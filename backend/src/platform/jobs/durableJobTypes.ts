@@ -83,6 +83,8 @@ export interface DurableJobAttemptMetadata {
 }
 
 export interface DurableJobEventAppendInput {
+  /** Stable identity for this logical occurrence across retries/replicas. */
+  eventId: string;
   streamId: string;
   eventType: string;
   subjectId: string;
@@ -106,6 +108,50 @@ export interface DurableJobProgress {
   current: number;
   total: number;
   message?: string | null;
+}
+
+export interface DurableJobListOptions {
+  actorUserId?: string;
+  state?: DurableJobState;
+  limit?: number;
+  beforeCreatedAt?: number;
+}
+
+export interface DurableJobActorFilter {
+  /** Restrict the operation to these exact durable job types. */
+  jobTypes?: readonly string[];
+  /** Exclude lifecycle jobs that must finish before their actor is deleted. */
+  excludeJobTypes?: readonly string[];
+  /** Restrict the operation to exact idempotency scopes. */
+  idempotencyScopes?: readonly string[];
+  /** Jobs executing the cleanup itself can be excluded explicitly. */
+  excludeJobIds?: readonly string[];
+  /**
+   * While draining an actor, ignore terminal lifecycle predecessors that have
+   * a durable successor (or an authoritative no-work marker). The unresolved
+   * leaf of each cleanup chain remains counted.
+   */
+  excludeHandledLifecycleJobs?: boolean;
+}
+
+export interface DurableJobCancellationSummary {
+  cancelledQueued: number;
+  cancellationRequestedRunning: number;
+}
+
+/** Result of a bounded deletion-lifecycle reconciliation pass. */
+export interface DurableLifecycleRecoverySummary {
+  examined: number;
+  recoveryJobs: number;
+  skipped: number;
+}
+
+export interface DurableResourceDeletionOccurrence {
+  resourceType: 'document' | 'generated-media' | 'persona';
+  resourceId: string;
+  ownerUserId: string;
+  deletionIncarnation: number;
+  deletionToken: string;
 }
 
 export type DurableCancellationCode =

@@ -3,6 +3,9 @@ import path from 'node:path';
 import test from 'node:test';
 import { pathToFileURL } from 'node:url';
 
+process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
+process.env.JWT_SECRET ||= 'registration-policy-test-secret';
+
 const modulePath = pathToFileURL(
   path.resolve('backend/dist/services/registrationPolicy.js')
 ).href;

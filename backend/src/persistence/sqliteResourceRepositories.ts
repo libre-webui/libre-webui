@@ -1,0 +1,1002 @@
+/*
+ * Libre WebUI
+ * Copyright (C) 2025 Kroonen AI, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type Database from 'better-sqlite3';
+import { v4 as uuidv4 } from 'uuid';
+import type {
+  ApplicationResourceRepositories,
+  ChatSessionRepository,
+  DataArchiveApplyPlan,
+  DataArchiveRepository,
+  KnowledgeCollectionRepository,
+  NoteRepository,
+  PreferenceRepository,
+  SessionFolderRepository,
+  StoredChatMessageRecord,
+  StoredChatSessionAggregate,
+  StoredChatSessionRecord,
+  StoredNamedResourceRecord,
+  StoredNotePatch,
+  StoredNoteRecord,
+  StoredPreferenceRecord,
+  SystemSettingRepository,
+} from './resourceTypes.js';
+import {
+  PersistenceResourceConflictError,
+  PersistenceResourceDeletionReservedError,
+  PersistenceResourceLimitError,
+} from './resourceTypes.js';
+import type {
+  ChatGenerationEnqueueInput,
+  ChatGenerationEnqueuer,
+} from './chatGenerationTypes.js';
+import type { PersistenceSyncExecutor } from './types.js';
+
+const synchronousExecutor = (
+  database: Database.Database
+): PersistenceSyncExecutor => ({
+  run(sql, parameters = []) {
+    const result = database.prepare(sql).run(...parameters);
+    return { changes: result.changes };
+  },
+  get<T>(sql: string, parameters: readonly unknown[] = []): T | undefined {
+    return database.prepare(sql).get(...parameters) as T | undefined;
+  },
+  all<T>(sql: string, parameters: readonly unknown[] = []): T[] {
+    return database.prepare(sql).all(...parameters) as T[];
+  },
+});
+
+const ensureSameOwner = (
+  database: Database.Database,
+  table: string,
+  id: string,
+  owner: string
+): boolean => {
+  const row = database
+    .prepare(`SELECT user_id FROM ${table} WHERE id = ?`)
+    .get(id) as { user_id: string } | undefined;
+  if (row && row.user_id !== owner) {
+    throw new PersistenceResourceConflictError();
+  }
+  return Boolean(row);
+};
+
+class SQLiteChatSessionRepository implements ChatSessionRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  private replaceAggregate(aggregate: StoredChatSessionAggregate): void {
+    ensureSameOwner(
+      this.database,
+      'sessions',
+      aggregate.session.id,
+      aggregate.session.user_id
+    );
+    this.database
+      .prepare(
+        `INSERT INTO sessions
+           (id, user_id, title, model, persona_id, provider_type, provider_id,
+            created_at, updated_at, archived, settings, folder_id, pinned)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           title = excluded.title,
+           model = excluded.model,
+           persona_id = excluded.persona_id,
+           provider_type = excluded.provider_type,
+           provider_id = excluded.provider_id,
+           updated_at = excluded.updated_at,
+           archived = excluded.archived,
+           settings = excluded.settings,
+           folder_id = excluded.folder_id,
+           pinned = excluded.pinned
+         WHERE sessions.user_id = excluded.user_id`
+      )
+      .run(
+        aggregate.session.id,
+        aggregate.session.user_id,
+        aggregate.session.title,
+        aggregate.session.model,
+        aggregate.session.persona_id,
+        aggregate.session.provider_type,
+        aggregate.session.provider_id,
+        aggregate.session.created_at,
+        aggregate.session.updated_at,
+        aggregate.session.archived,
+        aggregate.session.settings,
+        aggregate.session.folder_id,
+        aggregate.session.pinned
+      );
+    this.database
+      .prepare('DELETE FROM session_messages WHERE session_id = ?')
+      .run(aggregate.session.id);
+    const insert = this.database.prepare(
+      `INSERT INTO session_messages
+         (id, session_id, role, content, thinking, timestamp, message_index,
+          model, provider_metadata, images, statistics, artifacts, parent_id,
+          branch_index, is_active, rating)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    );
+    for (const message of aggregate.messages) {
+      if (message.session_id !== aggregate.session.id) {
+        throw new Error('A chat message does not belong to its aggregate');
+      }
+      insert.run(
+        message.id,
+        message.session_id,
+        message.role,
+        message.content,
+        message.thinking,
+        message.timestamp,
+        message.message_index,
+        message.model,
+        message.provider_metadata,
+        message.images,
+        message.statistics,
+        message.artifacts,
+        message.parent_id,
+        message.branch_index,
+        message.is_active,
+        message.rating
+      );
+    }
+  }
+
+  async listByOwner(userId: string): Promise<StoredChatSessionAggregate[]> {
+    const sessions = this.database
+      .prepare(
+        'SELECT * FROM sessions WHERE user_id = ? ORDER BY updated_at DESC'
+      )
+      .all(userId) as StoredChatSessionRecord[];
+    const messages = this.database.prepare(
+      `SELECT * FROM session_messages
+       WHERE session_id = ?
+       ORDER BY message_index ASC, branch_index ASC`
+    );
+    return sessions.map(session => ({
+      session,
+      messages: messages.all(session.id) as StoredChatMessageRecord[],
+    }));
+  }
+
+  async findByOwner(
+    sessionId: string,
+    userId: string
+  ): Promise<StoredChatSessionAggregate | null> {
+    const session = this.database
+      .prepare('SELECT * FROM sessions WHERE id = ? AND user_id = ?')
+      .get(sessionId, userId) as StoredChatSessionRecord | undefined;
+    if (!session) return null;
+    const messages = this.database
+      .prepare(
+        `SELECT * FROM session_messages
+         WHERE session_id = ?
+         ORDER BY message_index ASC, branch_index ASC`
+      )
+      .all(sessionId) as StoredChatMessageRecord[];
+    return { session, messages };
+  }
+
+  async replace(aggregate: StoredChatSessionAggregate): Promise<void> {
+    const replace = this.database.transaction(() => {
+      this.replaceAggregate(aggregate);
+    });
+    replace.immediate();
+  }
+
+  async replaceAndEnqueue(
+    aggregate: StoredChatSessionAggregate,
+    enqueuer: ChatGenerationEnqueuer,
+    input: ChatGenerationEnqueueInput
+  ): Promise<void> {
+    if (
+      input.sessionId !== aggregate.session.id ||
+      input.actorUserId !== aggregate.session.user_id
+    ) {
+      throw new Error('Chat generation enqueue does not match its aggregate');
+    }
+    const replace = this.database.transaction(() => {
+      this.replaceAggregate(aggregate);
+      enqueuer.enqueueSQLite(synchronousExecutor(this.database), input);
+    });
+    replace.immediate();
+  }
+
+  async deleteByOwner(sessionId: string, userId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM sessions WHERE id = ? AND user_id = ?')
+        .run(sessionId, userId).changes > 0
+    );
+  }
+
+  async deleteAllByOwner(userId: string): Promise<number> {
+    return this.database
+      .prepare('DELETE FROM sessions WHERE user_id = ?')
+      .run(userId).changes;
+  }
+}
+
+class SQLiteKnowledgeCollectionRepository implements KnowledgeCollectionRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listByOwner(userId: string): Promise<StoredNamedResourceRecord[]> {
+    return this.database
+      .prepare(
+        'SELECT * FROM knowledge_collections WHERE user_id = ? ORDER BY name COLLATE NOCASE ASC'
+      )
+      .all(userId) as StoredNamedResourceRecord[];
+  }
+
+  async replace(collection: StoredNamedResourceRecord): Promise<void> {
+    ensureSameOwner(
+      this.database,
+      'knowledge_collections',
+      collection.id,
+      collection.user_id
+    );
+    this.database
+      .prepare(
+        `INSERT INTO knowledge_collections
+           (id, user_id, name, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           name = excluded.name,
+           updated_at = excluded.updated_at
+         WHERE knowledge_collections.user_id = excluded.user_id`
+      )
+      .run(
+        collection.id,
+        collection.user_id,
+        collection.name,
+        collection.created_at,
+        collection.updated_at
+      );
+  }
+
+  async deleteAndDetach(
+    collectionId: string,
+    userId: string
+  ): Promise<boolean> {
+    const remove = this.database.transaction(() => {
+      this.database
+        .prepare(
+          'UPDATE documents SET collection_id = NULL WHERE collection_id = ? AND user_id = ?'
+        )
+        .run(collectionId, userId);
+      return this.database
+        .prepare(
+          'DELETE FROM knowledge_collections WHERE id = ? AND user_id = ?'
+        )
+        .run(collectionId, userId).changes;
+    });
+    return remove() > 0;
+  }
+}
+
+class SQLiteNoteRepository implements NoteRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredNoteRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM notes
+         WHERE user_id = ?
+         ORDER BY updated_at DESC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredNoteRecord[];
+  }
+
+  async findByOwner(
+    noteId: string,
+    userId: string
+  ): Promise<StoredNoteRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM notes WHERE id = ? AND user_id = ?')
+        .get(noteId, userId) as StoredNoteRecord | undefined) ?? null
+    );
+  }
+
+  async replaceWithLimit(
+    note: StoredNoteRecord,
+    maximum: number
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      const exists = ensureSameOwner(
+        this.database,
+        'notes',
+        note.id,
+        note.user_id
+      );
+      if (!exists) {
+        const row = this.database
+          .prepare('SELECT COUNT(*) AS count FROM notes WHERE user_id = ?')
+          .get(note.user_id) as { count: number };
+        if (row.count >= maximum) {
+          throw new PersistenceResourceLimitError('note', maximum);
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO notes
+             (id, user_id, title, content, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             title = excluded.title,
+             content = excluded.content,
+             updated_at = excluded.updated_at
+           WHERE notes.user_id = excluded.user_id`
+        )
+        .run(
+          note.id,
+          note.user_id,
+          note.title,
+          note.content,
+          note.created_at,
+          note.updated_at
+        );
+    });
+    replace();
+  }
+
+  async patchByOwner(
+    noteId: string,
+    userId: string,
+    patch: StoredNotePatch
+  ): Promise<StoredNoteRecord | null> {
+    const update = this.database.transaction(() => {
+      const assignments: string[] = [];
+      const values: Array<string | number> = [];
+      if (patch.title !== undefined) {
+        assignments.push('title = ?');
+        values.push(patch.title);
+      }
+      if (patch.content !== undefined) {
+        assignments.push('content = ?');
+        values.push(patch.content);
+      }
+      assignments.push('updated_at = ?');
+      values.push(patch.updated_at);
+
+      const result = this.database
+        .prepare(
+          `UPDATE notes SET ${assignments.join(', ')}
+            WHERE id = ? AND user_id = ?`
+        )
+        .run(...values, noteId, userId);
+      if (result.changes !== 1) return null;
+      return this.database
+        .prepare('SELECT * FROM notes WHERE id = ? AND user_id = ?')
+        .get(noteId, userId) as StoredNoteRecord;
+    });
+    return update.immediate();
+  }
+
+  async deleteByOwner(noteId: string, userId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM notes WHERE id = ? AND user_id = ?')
+        .run(noteId, userId).changes > 0
+    );
+  }
+}
+
+class SQLiteSessionFolderRepository implements SessionFolderRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredNamedResourceRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM session_folders
+         WHERE user_id = ?
+         ORDER BY name COLLATE NOCASE ASC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredNamedResourceRecord[];
+  }
+
+  async replaceWithLimit(
+    folder: StoredNamedResourceRecord,
+    maximum: number
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      const exists = ensureSameOwner(
+        this.database,
+        'session_folders',
+        folder.id,
+        folder.user_id
+      );
+      if (!exists) {
+        const row = this.database
+          .prepare(
+            'SELECT COUNT(*) AS count FROM session_folders WHERE user_id = ?'
+          )
+          .get(folder.user_id) as { count: number };
+        if (row.count >= maximum) {
+          throw new PersistenceResourceLimitError('session-folder', maximum);
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO session_folders
+             (id, user_id, name, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             name = excluded.name,
+             updated_at = excluded.updated_at
+           WHERE session_folders.user_id = excluded.user_id`
+        )
+        .run(
+          folder.id,
+          folder.user_id,
+          folder.name,
+          folder.created_at,
+          folder.updated_at
+        );
+    });
+    replace();
+  }
+
+  async deleteAndDetach(folderId: string, userId: string): Promise<boolean> {
+    const remove = this.database.transaction(() => {
+      this.database
+        .prepare(
+          'UPDATE sessions SET folder_id = NULL WHERE folder_id = ? AND user_id = ?'
+        )
+        .run(folderId, userId);
+      return this.database
+        .prepare('DELETE FROM session_folders WHERE id = ? AND user_id = ?')
+        .run(folderId, userId).changes;
+    });
+    return remove() > 0;
+  }
+}
+
+class SQLitePreferenceRepository implements PreferenceRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async resolveOwner(userId?: string): Promise<string | null> {
+    if (userId) return userId;
+    const row = this.database
+      .prepare('SELECT id FROM users ORDER BY created_at ASC, id ASC LIMIT 1')
+      .get() as { id: string } | undefined;
+    return row?.id ?? null;
+  }
+
+  async listByOwner(userId: string): Promise<StoredPreferenceRecord[]> {
+    return this.database
+      .prepare(
+        'SELECT key, value FROM user_preferences WHERE user_id = ? ORDER BY key ASC'
+      )
+      .all(userId) as StoredPreferenceRecord[];
+  }
+
+  async mutateAll(
+    userId: string | undefined,
+    timestamp: number,
+    mutation: (
+      preferences: readonly StoredPreferenceRecord[]
+    ) => readonly StoredPreferenceRecord[] | undefined
+  ): Promise<{
+    userId: string;
+    preferences: StoredPreferenceRecord[];
+  } | null> {
+    const mutate = this.database.transaction(() => {
+      const owner = userId
+        ? (this.database
+            .prepare('SELECT id FROM users WHERE id = ?')
+            .get(userId) as { id: string } | undefined)
+        : (this.database
+            .prepare(
+              'SELECT id FROM users ORDER BY created_at ASC, id ASC LIMIT 1'
+            )
+            .get() as { id: string } | undefined);
+      if (!owner) {
+        if (userId) throw new Error('Resource owner does not exist');
+        return null;
+      }
+
+      const current = this.database
+        .prepare(
+          'SELECT key, value FROM user_preferences WHERE user_id = ? ORDER BY key ASC'
+        )
+        .all(owner.id) as StoredPreferenceRecord[];
+      const requested = mutation(current);
+      if (requested === undefined) {
+        return { userId: owner.id, preferences: current };
+      }
+
+      const preferences = [...requested].sort((left, right) =>
+        left.key < right.key ? -1 : left.key > right.key ? 1 : 0
+      );
+      if (
+        new Set(preferences.map(preference => preference.key)).size !==
+        preferences.length
+      ) {
+        throw new Error('Preference mutation returned duplicate keys');
+      }
+      this.database
+        .prepare('DELETE FROM user_preferences WHERE user_id = ?')
+        .run(owner.id);
+      const insert = this.database.prepare(
+        `INSERT INTO user_preferences
+           (id, user_id, key, value, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      );
+      for (const preference of preferences) {
+        insert.run(
+          uuidv4(),
+          owner.id,
+          preference.key,
+          preference.value,
+          timestamp,
+          timestamp
+        );
+      }
+      return { userId: owner.id, preferences };
+    });
+    return mutate.immediate();
+  }
+
+  async replaceAll(
+    userId: string,
+    preferences: readonly StoredPreferenceRecord[],
+    timestamp: number
+  ): Promise<void> {
+    await this.mutateAll(userId, timestamp, () => preferences);
+  }
+
+  async deleteKeys(userId: string, keys: readonly string[]): Promise<number> {
+    if (keys.length === 0) return 0;
+    const remove = this.database.transaction(() => {
+      const statement = this.database.prepare(
+        'DELETE FROM user_preferences WHERE user_id = ? AND key = ?'
+      );
+      let removed = 0;
+      for (const key of keys) removed += statement.run(userId, key).changes;
+      return removed;
+    });
+    return remove();
+  }
+}
+
+class SQLiteSystemSettingRepository implements SystemSettingRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async get(key: string): Promise<string | null> {
+    const row = this.database
+      .prepare('SELECT value FROM system_settings WHERE key = ?')
+      .get(key) as { value: string } | undefined;
+    return row?.value ?? null;
+  }
+
+  async getMany(keys: readonly string[]): Promise<Record<string, string>> {
+    if (keys.length === 0) return {};
+    const statement = this.database.prepare(
+      'SELECT value FROM system_settings WHERE key = ?'
+    );
+    const values: Record<string, string> = {};
+    for (const key of keys) {
+      const row = statement.get(key) as { value: string } | undefined;
+      if (row) values[key] = row.value;
+    }
+    return values;
+  }
+
+  async upsert(key: string, value: string, updatedAt: number): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO system_settings (key, value, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(key) DO UPDATE SET
+           value = excluded.value,
+           updated_at = excluded.updated_at`
+      )
+      .run(key, value, updatedAt);
+  }
+
+  async upsertMany(
+    values: Readonly<Record<string, string>>,
+    updatedAt: number
+  ): Promise<void> {
+    const save = this.database.transaction(() => {
+      const statement = this.database.prepare(
+        `INSERT INTO system_settings (key, value, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(key) DO UPDATE SET
+           value = excluded.value,
+           updated_at = excluded.updated_at`
+      );
+      for (const [key, value] of Object.entries(values)) {
+        statement.run(key, value, updatedAt);
+      }
+    });
+    save();
+  }
+}
+
+const ARCHIVE_TABLES = {
+  session: 'sessions',
+  'session-folder': 'session_folders',
+  note: 'notes',
+  'knowledge-collection': 'knowledge_collections',
+  document: 'documents',
+  persona: 'personas',
+} as const;
+
+class SQLiteDataArchiveRepository implements DataArchiveRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async ownerOf(
+    resource: keyof typeof ARCHIVE_TABLES,
+    id: string
+  ): Promise<string | null> {
+    const row = this.database
+      .prepare(`SELECT user_id FROM ${ARCHIVE_TABLES[resource]} WHERE id = ?`)
+      .get(id) as { user_id: string } | undefined;
+    return row?.user_id ?? null;
+  }
+
+  async nestedOwnerOf(
+    resource: 'session-message' | 'document-chunk',
+    id: string
+  ): Promise<{ userId: string; parentId: string } | null> {
+    const definition =
+      resource === 'session-message'
+        ? {
+            child: 'session_messages',
+            owner: 'sessions',
+            parent: 'session_id',
+          }
+        : {
+            child: 'document_chunks',
+            owner: 'documents',
+            parent: 'document_id',
+          };
+    const row = this.database
+      .prepare(
+        `SELECT owner.user_id, child.${definition.parent} AS parent_id
+           FROM ${definition.child} child
+           JOIN ${definition.owner} owner ON owner.id = child.${definition.parent}
+          WHERE child.id = ?`
+      )
+      .get(id) as { user_id: string; parent_id: string } | undefined;
+    return row ? { userId: row.user_id, parentId: row.parent_id } : null;
+  }
+
+  async countByOwner(
+    resource: 'session-folder' | 'note',
+    userId: string
+  ): Promise<number> {
+    const table = resource === 'session-folder' ? 'session_folders' : 'notes';
+    const row = this.database
+      .prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE user_id = ?`)
+      .get(userId) as { count: number };
+    return row.count;
+  }
+
+  async resourceDeletionReserved(
+    resource: 'document',
+    id: string
+  ): Promise<boolean> {
+    return Boolean(
+      this.database
+        .prepare(
+          `SELECT 1 FROM platform_resource_deletion_tombstones
+            WHERE resource_type = ? AND resource_id = ?`
+        )
+        .get(resource, id)
+    );
+  }
+
+  async applyImport(plan: DataArchiveApplyPlan): Promise<void> {
+    const apply = this.database.transaction(() => {
+      const owner = this.database
+        .prepare('SELECT id FROM users WHERE id = ?')
+        .get(plan.userId);
+      if (!owner) throw new Error('Archive import owner does not exist');
+
+      const shouldWrite = (table: string, id: string): boolean => {
+        const exists = ensureSameOwner(this.database, table, id, plan.userId);
+        return !exists || plan.strategy === 'overwrite';
+      };
+      const enforceLimit = (
+        table: 'notes' | 'session_folders',
+        id: string,
+        maximum: number
+      ): void => {
+        const existing = this.database
+          .prepare(`SELECT user_id FROM ${table} WHERE id = ?`)
+          .get(id) as { user_id: string } | undefined;
+        if (existing) return;
+        const row = this.database
+          .prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE user_id = ?`)
+          .get(plan.userId) as { count: number };
+        if (row.count >= maximum) {
+          throw new PersistenceResourceLimitError(
+            table === 'notes' ? 'note' : 'session-folder',
+            maximum
+          );
+        }
+      };
+
+      const currentPreferences = this.database
+        .prepare(
+          'SELECT key, value FROM user_preferences WHERE user_id = ? ORDER BY key ASC'
+        )
+        .all(plan.userId) as StoredPreferenceRecord[];
+      const preferences =
+        typeof plan.preferences === 'function'
+          ? [...plan.preferences(currentPreferences)]
+          : plan.preferences;
+      this.database
+        .prepare('DELETE FROM user_preferences WHERE user_id = ?')
+        .run(plan.userId);
+      const insertPreference = this.database.prepare(
+        `INSERT INTO user_preferences
+           (id, user_id, key, value, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      );
+      for (const preference of preferences) {
+        insertPreference.run(
+          uuidv4(),
+          plan.userId,
+          preference.key,
+          preference.value,
+          plan.timestamp,
+          plan.timestamp
+        );
+      }
+
+      const upsertFolder = this.database.prepare(
+        `INSERT INTO session_folders
+           (id, user_id, name, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           name = excluded.name,
+           updated_at = excluded.updated_at
+         WHERE session_folders.user_id = excluded.user_id`
+      );
+      for (const folder of plan.sessionFolders) {
+        if (!shouldWrite('session_folders', folder.id)) continue;
+        enforceLimit('session_folders', folder.id, plan.maximumSessionFolders);
+        upsertFolder.run(
+          folder.id,
+          plan.userId,
+          folder.name,
+          folder.created_at,
+          folder.updated_at
+        );
+      }
+
+      const upsertNote = this.database.prepare(
+        `INSERT INTO notes
+           (id, user_id, title, content, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           title = excluded.title,
+           content = excluded.content,
+           updated_at = excluded.updated_at
+         WHERE notes.user_id = excluded.user_id`
+      );
+      for (const note of plan.notes) {
+        if (!shouldWrite('notes', note.id)) continue;
+        enforceLimit('notes', note.id, plan.maximumNotes);
+        upsertNote.run(
+          note.id,
+          plan.userId,
+          note.title,
+          note.content,
+          note.created_at,
+          note.updated_at
+        );
+      }
+
+      const upsertCollection = this.database.prepare(
+        `INSERT INTO knowledge_collections
+           (id, user_id, name, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           name = excluded.name,
+           updated_at = excluded.updated_at
+         WHERE knowledge_collections.user_id = excluded.user_id`
+      );
+      for (const collection of plan.knowledgeCollections) {
+        if (!shouldWrite('knowledge_collections', collection.id)) continue;
+        upsertCollection.run(
+          collection.id,
+          plan.userId,
+          collection.name,
+          collection.created_at,
+          collection.updated_at
+        );
+      }
+
+      const upsertSession = this.database.prepare(
+        `INSERT INTO sessions
+           (id, user_id, title, model, persona_id, provider_type, provider_id,
+            created_at, updated_at, archived, settings, folder_id, pinned)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           title = excluded.title,
+           model = excluded.model,
+           persona_id = excluded.persona_id,
+           provider_type = excluded.provider_type,
+           provider_id = excluded.provider_id,
+           updated_at = excluded.updated_at,
+           archived = excluded.archived,
+           settings = excluded.settings,
+           folder_id = excluded.folder_id,
+           pinned = excluded.pinned
+         WHERE sessions.user_id = excluded.user_id`
+      );
+      const insertMessage = this.database.prepare(
+        `INSERT INTO session_messages
+           (id, session_id, role, content, thinking, timestamp, message_index,
+            model, provider_metadata, images, statistics, artifacts, parent_id,
+            branch_index, is_active, rating)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      );
+      const updateMessageParent = this.database.prepare(
+        'UPDATE session_messages SET parent_id = ? WHERE id = ? AND session_id = ?'
+      );
+      for (const aggregate of plan.sessions) {
+        const { session } = aggregate;
+        if (!shouldWrite('sessions', session.id)) continue;
+        upsertSession.run(
+          session.id,
+          plan.userId,
+          session.title,
+          session.model,
+          session.persona_id,
+          session.provider_type,
+          session.provider_id,
+          session.created_at,
+          session.updated_at,
+          session.archived,
+          session.settings,
+          session.folder_id,
+          session.pinned
+        );
+        this.database
+          .prepare('DELETE FROM session_messages WHERE session_id = ?')
+          .run(session.id);
+        for (const message of aggregate.messages) {
+          if (message.session_id !== session.id) {
+            throw new Error('A chat message does not belong to its aggregate');
+          }
+          insertMessage.run(
+            message.id,
+            message.session_id,
+            message.role,
+            message.content,
+            message.thinking,
+            message.timestamp,
+            message.message_index,
+            message.model,
+            message.provider_metadata,
+            message.images,
+            message.statistics,
+            message.artifacts,
+            null,
+            message.branch_index,
+            message.is_active,
+            message.rating
+          );
+        }
+        for (const message of aggregate.messages) {
+          if (message.parent_id) {
+            updateMessageParent.run(message.parent_id, message.id, session.id);
+          }
+        }
+      }
+
+      const upsertDocument = this.database.prepare(
+        `INSERT INTO documents
+           (id, user_id, filename, title, content, file_type, size, session_id,
+            collection_id, metadata, uploaded_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           filename = excluded.filename,
+           title = excluded.title,
+           content = excluded.content,
+           file_type = excluded.file_type,
+           size = excluded.size,
+           session_id = excluded.session_id,
+           collection_id = excluded.collection_id,
+           metadata = excluded.metadata,
+           uploaded_at = excluded.uploaded_at,
+           updated_at = excluded.updated_at
+         WHERE documents.user_id = excluded.user_id`
+      );
+      const insertChunk = this.database.prepare(
+        `INSERT INTO document_chunks
+           (id, document_id, chunk_index, content, start_char, end_char,
+            embedding, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      );
+      for (const aggregate of plan.documents) {
+        const { document } = aggregate;
+        const reserved = this.database
+          .prepare(
+            `SELECT 1 FROM platform_resource_deletion_tombstones
+              WHERE resource_type = 'document' AND resource_id = ?`
+          )
+          .get(document.id);
+        if (reserved) {
+          throw new PersistenceResourceDeletionReservedError(document.id);
+        }
+        if (!shouldWrite('documents', document.id)) continue;
+        upsertDocument.run(
+          document.id,
+          plan.userId,
+          document.filename,
+          document.title,
+          document.content,
+          document.file_type,
+          document.size,
+          document.session_id,
+          document.collection_id,
+          document.metadata,
+          document.uploaded_at,
+          document.created_at,
+          document.updated_at
+        );
+        this.database
+          .prepare('DELETE FROM document_chunks WHERE document_id = ?')
+          .run(document.id);
+        for (const chunk of aggregate.chunks) {
+          if (chunk.document_id !== document.id) {
+            throw new Error(
+              'A document chunk does not belong to its aggregate'
+            );
+          }
+          insertChunk.run(
+            chunk.id,
+            chunk.document_id,
+            chunk.chunk_index,
+            chunk.content,
+            chunk.start_char,
+            chunk.end_char,
+            null,
+            chunk.created_at
+          );
+        }
+      }
+    });
+    apply.immediate();
+  }
+}
+
+export const createSQLiteResourceRepositories = (
+  database: Database.Database
+): ApplicationResourceRepositories => ({
+  chatSessions: new SQLiteChatSessionRepository(database),
+  knowledgeCollections: new SQLiteKnowledgeCollectionRepository(database),
+  notes: new SQLiteNoteRepository(database),
+  sessionFolders: new SQLiteSessionFolderRepository(database),
+  preferences: new SQLitePreferenceRepository(database),
+  systemSettings: new SQLiteSystemSettingRepository(database),
+  archive: new SQLiteDataArchiveRepository(database),
+});

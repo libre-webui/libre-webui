@@ -25,6 +25,9 @@ process.env.CORS_ORIGIN = 'http://allowed.example.test';
 const importDist = relativePath =>
   import(pathToFileURL(path.join(distRoot, relativePath)).href);
 
+const coordinationModule = await importDist('platform/coordination/service.js');
+await coordinationModule.initializeCoordinator();
+
 const [
   databaseModule,
   { authService },
@@ -113,6 +116,7 @@ const WEBSOCKET_TEST_TIMEOUT_MS = 5_000;
 after(async () => {
   await registeredWebSockets.close();
   await new Promise(resolve => server.close(resolve));
+  await coordinationModule.closeCoordinator();
   databaseModule.closeDatabase();
   fs.rmSync(testRoot, { recursive: true, force: true });
 });
@@ -245,63 +249,89 @@ async function closeWebSocket(socket) {
   await closed;
 }
 
-test('WebSocket tickets rotate, are opaque, and are single-use', () => {
+test('WebSocket tickets rotate, are opaque, and are single-use', async () => {
   const service = new WebSocketTicketService(30_000);
   const sessionExpiresAt = Date.now() + 60_000;
-  const first = service.issue('user-a', sessionExpiresAt, 'chat');
-  const rotated = service.issue('user-a', sessionExpiresAt, 'chat');
+  const first = await service.issue('user-a', sessionExpiresAt, 'chat');
+  const rotated = await service.issue('user-a', sessionExpiresAt, 'chat');
 
   assert.match(first.ticket, /^[A-Za-z0-9_-]{43}$/);
   assert.match(rotated.ticket, /^[A-Za-z0-9_-]{43}$/);
   assert.notEqual(first.ticket, rotated.ticket);
-  assert.deepEqual(service.consume(first.ticket, 'chat'), {
+  assert.deepEqual(await service.consume(first.ticket, 'chat'), {
     userId: 'user-a',
     sessionExpiresAt,
   });
-  assert.equal(service.consume(first.ticket, 'chat'), null);
+  assert.equal(await service.consume(first.ticket, 'chat'), null);
 });
 
-test('expired tickets and tickets from expired sessions cannot be consumed', () => {
+test('expired tickets and tickets from expired sessions cannot be consumed', async () => {
   let clock = 1_000;
   const service = new WebSocketTicketService(500, () => clock);
-  const ticketExpired = service.issue('user-a', clock + 60_000, 'chat');
+  const ticketExpired = await service.issue('user-a', clock + 60_000, 'chat');
   clock += 500;
-  assert.equal(service.consume(ticketExpired.ticket, 'chat'), null);
+  assert.equal(await service.consume(ticketExpired.ticket, 'chat'), null);
 
-  const sessionExpired = service.issue('user-a', clock + 250, 'chat');
+  const sessionExpired = await service.issue('user-a', clock + 250, 'chat');
   clock += 250;
-  assert.equal(service.consume(sessionExpired.ticket, 'chat'), null);
+  assert.equal(await service.consume(sessionExpired.ticket, 'chat'), null);
 });
 
-test('wrong audience and Work task attempts consume the ticket', () => {
+test('wrong audience and Work task attempts consume the ticket', async () => {
   const service = new WebSocketTicketService(30_000);
   const expiresAt = Date.now() + 60_000;
-  const wrongAudience = service.issue(
+  const wrongAudience = await service.issue(
     'user-a',
     expiresAt,
     'work-terminal',
     'task-a'
   );
-  assert.equal(service.consume(wrongAudience.ticket, 'chat'), null);
+  assert.equal(await service.consume(wrongAudience.ticket, 'chat'), null);
   assert.equal(
-    service.consume(wrongAudience.ticket, 'work-terminal', 'task-a'),
+    await service.consume(wrongAudience.ticket, 'work-terminal', 'task-a'),
     null
   );
 
-  const wrongTask = service.issue(
+  const wrongTask = await service.issue(
     'user-a',
     expiresAt,
     'work-terminal',
     'task-a'
   );
   assert.equal(
-    service.consume(wrongTask.ticket, 'work-terminal', 'task-b'),
+    await service.consume(wrongTask.ticket, 'work-terminal', 'task-b'),
     null
   );
   assert.equal(
-    service.consume(wrongTask.ticket, 'work-terminal', 'task-a'),
+    await service.consume(wrongTask.ticket, 'work-terminal', 'task-a'),
     null
   );
+});
+
+test('independent replicas consume one shared ticket exactly once', async () => {
+  const coordinator = coordinationModule.getCoordinator();
+  const firstReplica = new WebSocketTicketService(
+    30_000,
+    Date.now,
+    () => coordinator
+  );
+  const secondReplica = new WebSocketTicketService(
+    30_000,
+    Date.now,
+    () => coordinator
+  );
+  const sessionExpiresAt = Date.now() + 60_000;
+  const issued = await firstReplica.issue(
+    'cross-replica-user',
+    sessionExpiresAt,
+    'chat'
+  );
+
+  assert.deepEqual(await secondReplica.consume(issued.ticket, 'chat'), {
+    userId: 'cross-replica-user',
+    sessionExpiresAt,
+  });
+  assert.equal(await firstReplica.consume(issued.ticket, 'chat'), null);
 });
 
 test('production exchange, frontend URL, and chat upgrade keep JWTs out of logs', async () => {
@@ -458,7 +488,7 @@ test('shutdown drains in-flight chat handlers without unhandled rejection', asyn
 
   const isolatedAddress = isolatedServer.address();
   assert.ok(isolatedAddress && typeof isolatedAddress === 'object');
-  const issued = websocketTicketService.issue(
+  const issued = await websocketTicketService.issue(
     user.id,
     Date.now() + 60_000,
     'chat'

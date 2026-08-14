@@ -27,6 +27,11 @@ import {
   TTSVoiceCloneUploadError,
   validateTTSVoiceCloneAudio,
 } from '../utils/ttsVoiceCloneUpload.js';
+import {
+  getDurableJobRuntime,
+  VIDEO_RESUME_IDEMPOTENCY_SCOPE,
+  VIDEO_SUBMIT_IDEMPOTENCY_SCOPE,
+} from '../platform/jobs/index.js';
 
 const logger = createLogger('routes:media');
 const router = express.Router();
@@ -105,17 +110,18 @@ router.get('/models', async (req: AuthenticatedRequest, res) => {
       pluginService.refreshStaleCapabilityModels('tts', id),
       pluginService.refreshStaleCapabilityModels('audio', id),
     ]);
+    const [videoModels, audioModels, ttsModels] = await Promise.all([
+      pluginService.getAvailableVideoGenModels(id),
+      pluginService.getAvailableAudioGenModels(id),
+      pluginService.getAvailableTTSModels(id),
+    ]);
     res.json({
       success: true,
       data: {
-        video: pluginService.getAvailableVideoGenModels(id),
+        video: videoModels,
         audio: [
-          ...pluginService
-            .getAvailableAudioGenModels(id)
-            .map(model => ({ ...model, mode: 'sound' as const })),
-          ...pluginService
-            .getAvailableTTSModels(id)
-            .map(model => ({ ...model, mode: 'speech' as const })),
+          ...audioModels.map(model => ({ ...model, mode: 'sound' as const })),
+          ...ttsModels.map(model => ({ ...model, mode: 'speech' as const })),
         ],
       },
     });
@@ -149,7 +155,11 @@ router.post(
         return;
       }
       const id = userId(req);
-      const selectedPlugin = pluginService.getPluginForTTS(model, pluginId, id);
+      const selectedPlugin = await pluginService.getPluginForTTS(
+        model,
+        pluginId,
+        id
+      );
       const configuredFormat =
         selectedPlugin?.capabilities?.tts?.config?.default_format;
       const format = isAudioFormat(response_format)
@@ -168,7 +178,7 @@ router.post(
       if (requestAbort.signal.aborted) return;
       const mimeType = audioMimeType(format);
       const mediaData = `data:${mimeType};base64,${audio.toString('base64')}`;
-      const saved = galleryService.saveMedia(id, {
+      const saved = await galleryService.saveMedia(id, {
         kind: 'audio',
         prompt: input.trim(),
         model,
@@ -269,7 +279,11 @@ router.post(
       }
 
       const id = userId(req);
-      const selectedPlugin = pluginService.getPluginForTTS(model, pluginId, id);
+      const selectedPlugin = await pluginService.getPluginForTTS(
+        model,
+        pluginId,
+        id
+      );
       const config = selectedPlugin?.capabilities?.tts?.config;
       if (!selectedPlugin || !config?.supports_voice_cloning) {
         res.status(400).json({
@@ -299,7 +313,7 @@ router.post(
               pluginId: selectedPlugin.id,
               model,
               routingFingerprint:
-                pluginService.getCredentialRoutingAuthFingerprint(
+                await pluginService.getCredentialRoutingAuthFingerprint(
                   selectedPlugin,
                   id
                 ),
@@ -309,7 +323,8 @@ router.post(
                 : {}),
             }
           : null;
-      if (profileInput) voiceProfileService.validateCreate(id, profileInput);
+      if (profileInput)
+        await voiceProfileService.validateCreate(id, profileInput);
       const audio = await pluginService.executeVoiceCloneRequest(
         model,
         input.trim(),
@@ -324,7 +339,7 @@ router.post(
       );
       if (requestAbort.signal.aborted) return;
       const mimeType = audioMimeType(format);
-      const saved = galleryService.saveMedia(id, {
+      const saved = await galleryService.saveMedia(id, {
         kind: 'audio',
         prompt: input.trim(),
         model,
@@ -339,9 +354,9 @@ router.post(
       // the caller never receives a partial success.
       if (profileInput) {
         try {
-          voiceProfileService.create(id, profileInput);
+          await voiceProfileService.create(id, profileInput);
         } catch (error) {
-          galleryService.deleteMedia(saved.id, id);
+          await galleryService.deleteMedia(saved.id, id);
           throw error;
         }
       }
@@ -431,7 +446,7 @@ router.post(
       const mediaData = `data:${generated.mimeType};base64,${generated.audio.toString(
         'base64'
       )}`;
-      const saved = galleryService.saveMedia(id, {
+      const saved = await galleryService.saveMedia(id, {
         kind: 'audio',
         prompt: prompt.trim(),
         model,
@@ -503,23 +518,16 @@ router.post(
           ? { generateAudio: generate_audio }
           : {}),
       };
-      // Submission deliberately outlives the response transport. Once a
-      // provider accepts work, persist its handle even when the panel closed
-      // while the provider was replying.
-      const submitted = await pluginService.submitVideoGenRequest(
-        model,
-        prompt.trim(),
-        { pluginId, userId: id, ...options }
-      );
-      const job = mediaGenerationJobService.create(id, {
-        providerJobId: submitted.providerJobId,
+      // The prepared row and submission job are one transaction. Provider
+      // acceptance runs in the external worker with a stable idempotency key.
+      const job = await mediaGenerationJobService.queueVideoSubmission(id, {
         pluginId,
         model,
         prompt: prompt.trim(),
         options,
       });
       if (requestAbort.signal.aborted) return;
-      res.status(202).json({ success: true, data: publicJob(job, id) });
+      res.status(202).json({ success: true, data: await publicJob(job, id) });
     } catch (error) {
       if (requestAbort.signal.aborted) return;
       logger.error('Video generation submission failed:', error);
@@ -537,16 +545,16 @@ router.post(
 router.get(
   '/video/jobs',
   pollingRateLimiter,
-  (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res) => {
     const id = userId(req);
     const requestedLimit = Number(req.query.limit);
-    const jobs = mediaGenerationJobService.list(id, {
+    const jobs = await mediaGenerationJobService.list(id, {
       limit: Number.isInteger(requestedLimit) ? requestedLimit : 20,
       activeOnly: req.query.active === 'true',
     });
     res.json({
       success: true,
-      data: { jobs: jobs.map(job => publicJob(job, id)) },
+      data: { jobs: await Promise.all(jobs.map(job => publicJob(job, id))) },
     });
   }
 );
@@ -566,7 +574,7 @@ async function resumeVideoJob(
     if (requestAbort.signal.aborted) return;
     // Reload only after acquiring the lock: another tab may have completed and
     // persisted this job while this request waited.
-    const job = mediaGenerationJobService.get(jobId, id);
+    const job = await mediaGenerationJobService.get(jobId, id);
     if (!job) {
       res.status(404).json({ success: false, message: 'Video job not found' });
       return;
@@ -575,14 +583,73 @@ async function resumeVideoJob(
       res.json({
         success: true,
         data: {
-          ...publicJob(job, id),
-          media: publicMedia(galleryService.getMediaItem(job.galleryId!, id)),
+          ...(await publicJob(job, id)),
+          media: publicMedia(
+            await galleryService.getMediaItem(job.galleryId!, id)
+          ),
         },
       });
       return;
     }
     if (job.status === 'failed') {
-      res.json({ success: true, data: publicJob(job, id) });
+      res.json({ success: true, data: await publicJob(job, id) });
+      return;
+    }
+
+    const durable =
+      (await getDurableJobRuntime().service.getByIdempotency(
+        id,
+        VIDEO_RESUME_IDEMPOTENCY_SCOPE,
+        job.id
+      )) ||
+      (await getDurableJobRuntime().service.getByIdempotency(
+        id,
+        VIDEO_SUBMIT_IDEMPOTENCY_SCOPE,
+        job.id
+      ));
+    if (durable?.state === 'queued' || durable?.state === 'running') {
+      res.json({
+        success: true,
+        data: {
+          ...(await publicJob(job, id)),
+          durable: {
+            id: durable.id,
+            state: durable.state,
+            progressCurrent: durable.progressCurrent,
+            progressTotal: durable.progressTotal,
+            progressMessage: durable.progressMessage,
+          },
+        },
+      });
+      return;
+    }
+    if (durable?.state === 'dead_letter') {
+      await mediaGenerationJobService.update(job.id, id, 'failed', {
+        error: durable.errorSummary || 'Video processing failed',
+      });
+      res.json({
+        success: true,
+        data: {
+          ...(await publicJob(job, id)),
+          status: 'failed',
+          error: durable.errorSummary || 'Video processing failed',
+        },
+      });
+      return;
+    }
+
+    if (process.env.LIBRE_PLATFORM_MODE === 'team') {
+      // Team media work belongs exclusively to the external durable worker.
+      // A polling app replica must never become an unleased provider worker.
+      res.status(202).json({
+        success: true,
+        data: {
+          ...(await publicJob(job, id)),
+          durable: durable
+            ? { id: durable.id, state: durable.state }
+            : undefined,
+        },
+      });
       return;
     }
 
@@ -595,13 +662,13 @@ async function resumeVideoJob(
     );
     if (requestAbort.signal.aborted) return;
     if (status.status === 'failed') {
-      mediaGenerationJobService.update(job.id, id, 'failed', {
+      await mediaGenerationJobService.update(job.id, id, 'failed', {
         error: status.error || 'Video provider reported failure',
       });
       res.json({
         success: true,
         data: {
-          ...publicJob(job, id),
+          ...(await publicJob(job, id)),
           status: 'failed',
           error: status.error,
         },
@@ -609,10 +676,10 @@ async function resumeVideoJob(
       return;
     }
     if (status.status !== 'completed') {
-      mediaGenerationJobService.update(job.id, id, status.status);
+      await mediaGenerationJobService.update(job.id, id, status.status);
       res.json({
         success: true,
-        data: { ...publicJob(job, id), status: status.status },
+        data: { ...(await publicJob(job, id)), status: status.status },
       });
       return;
     }
@@ -625,25 +692,21 @@ async function resumeVideoJob(
       requestAbort.signal
     );
     if (requestAbort.signal.aborted) return;
-    const media = galleryService.saveMedia(id, {
-      kind: 'video',
-      prompt: job.prompt,
-      model: job.model,
-      pluginId: job.pluginId,
-      mediaData: `data:${downloaded.mimeType};base64,${downloaded.video.toString(
-        'base64'
-      )}`,
-      mimeType: downloaded.mimeType,
-      metadata: { ...job.options, usage: status.usage || null },
-    });
-    if (!media) throw new Error('Failed to save generated video');
-    mediaGenerationJobService.update(job.id, id, 'completed', {
-      galleryId: media.id,
-    });
+    const media = await mediaGenerationJobService.completeWithMedia(
+      job.id,
+      id,
+      {
+        mediaData: `data:${downloaded.mimeType};base64,${downloaded.video.toString(
+          'base64'
+        )}`,
+        mimeType: downloaded.mimeType,
+        metadata: { ...job.options, usage: status.usage || null },
+      }
+    );
     res.json({
       success: true,
       data: {
-        ...publicJob(job, id),
+        ...(await publicJob(job, id)),
         status: 'completed',
         media: publicMedia(media),
       },
@@ -678,7 +741,7 @@ router.delete(
         : req.params.jobId;
       releaseJobLock = await acquireVideoJobLock(`${id}:${jobId}`);
       if (requestAbort.signal.aborted) return;
-      const job = mediaGenerationJobService.get(jobId, id);
+      const job = await mediaGenerationJobService.get(jobId, id);
       if (!job) {
         res
           .status(404)
@@ -692,8 +755,19 @@ router.delete(
         });
         return;
       }
+      if (job.providerJobId === 'libre:prepared') {
+        res.status(409).json({
+          success: false,
+          message: 'The provider submission is still being reconciled',
+        });
+        return;
+      }
       if (
-        !pluginService.canCancelVideoGenRequest(job.model, job.pluginId, id)
+        !(await pluginService.canCancelVideoGenRequest(
+          job.model,
+          job.pluginId,
+          id
+        ))
       ) {
         res.status(409).json({
           success: false,
@@ -709,7 +783,22 @@ router.delete(
         id,
         requestAbort.signal
       );
-      mediaGenerationJobService.remove(job.id, id);
+      const durable = await getDurableJobRuntime().service.getByIdempotency(
+        id,
+        VIDEO_RESUME_IDEMPOTENCY_SCOPE,
+        job.id
+      );
+      if (
+        durable &&
+        (durable.state === 'queued' || durable.state === 'running')
+      ) {
+        await getDurableJobRuntime().service.cancel(
+          durable.id,
+          id,
+          'user-requested'
+        );
+      }
+      await mediaGenerationJobService.remove(job.id, id);
       if (requestAbort.signal.aborted) return;
       res.json({ success: true });
     } catch (error) {
@@ -743,80 +832,99 @@ async function acquireVideoJobLock(key: string): Promise<() => void> {
   };
 }
 
-router.get('/gallery', galleryRateLimiter, (req: AuthenticatedRequest, res) => {
-  const kind = req.query.kind;
-  if (kind && !['image', 'video', 'audio'].includes(String(kind))) {
-    res.status(400).json({ success: false, message: 'Invalid media kind' });
-    return;
+router.get(
+  '/gallery',
+  galleryRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    const kind = req.query.kind;
+    if (kind && !['image', 'video', 'audio'].includes(String(kind))) {
+      res.status(400).json({ success: false, message: 'Invalid media kind' });
+      return;
+    }
+    const result = await galleryService.getMedia(userId(req), {
+      limit: Number(req.query.limit) || 20,
+      offset: Number(req.query.offset) || 0,
+      ...(kind ? { kind: kind as GeneratedMediaKind } : {}),
+    });
+    res.json({
+      success: true,
+      data: { ...result, media: result.media.map(publicMedia) },
+    });
   }
-  const result = galleryService.getMedia(userId(req), {
-    limit: Number(req.query.limit) || 20,
-    offset: Number(req.query.offset) || 0,
-    ...(kind ? { kind: kind as GeneratedMediaKind } : {}),
-  });
-  res.json({
-    success: true,
-    data: { ...result, media: result.media.map(publicMedia) },
-  });
-});
+);
 
 router.get(
   '/gallery/:mediaId/content',
   galleryRateLimiter,
-  (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res) => {
+    const requestAbort = requestAbortSignal(req, res);
     const mediaId = Array.isArray(req.params.mediaId)
       ? req.params.mediaId[0]
       : req.params.mediaId;
-    const item = galleryService.getMediaItem(mediaId, userId(req));
-    if (!item) {
-      res.status(404).json({ success: false, message: 'Media not found' });
-      return;
-    }
-
-    const match =
-      /^data:([a-z0-9.+-]+\/[a-z0-9.+-]+);base64,([a-z0-9+/]+={0,2})$/i.exec(
-        item.mediaData
+    try {
+      const rawRange = req.headers.range;
+      let range: { start: number; end?: number } | undefined;
+      if (rawRange) {
+        const match = /^bytes=(\d+)-(\d*)$/.exec(rawRange.trim());
+        if (!match) {
+          res.status(416).set('Accept-Ranges', 'bytes').end();
+          return;
+        }
+        range = {
+          start: Number(match[1]),
+          ...(match[2] ? { end: Number(match[2]) } : {}),
+        };
+      }
+      const opened = await galleryService.openMediaContent(
+        mediaId,
+        userId(req),
+        range,
+        requestAbort.signal
       );
-    if (match) {
-      const encodedMimeType = match[1].toLowerCase();
-      if (
-        encodedMimeType !== item.mimeType.toLowerCase() ||
-        !isSafeMediaMimeType(item.kind, encodedMimeType)
-      ) {
+      if (!opened) {
+        res.status(404).json({ success: false, message: 'Media not found' });
+        return;
+      }
+      if (!isSafeMediaMimeType(opened.record.kind, opened.record.mimeType)) {
         res
           .status(422)
           .json({ success: false, message: 'Stored media type is invalid' });
         return;
       }
-      const data = Buffer.from(match[2], 'base64');
-      if (data.length > 200 * 1024 * 1024) {
-        res.status(413).json({ success: false, message: 'Media is too large' });
-        return;
-      }
+      res.status(opened.content.range ? 206 : 200);
       res.set({
-        'Content-Type': encodedMimeType,
-        'Content-Length': String(data.length),
+        'Content-Type': opened.record.mimeType,
+        'Content-Length': String(
+          opened.content.range?.length ?? opened.content.descriptor.size
+        ),
+        'Accept-Ranges': 'bytes',
         'Cache-Control': 'private, max-age=300',
         'Content-Security-Policy': "default-src 'none'; sandbox",
         'X-Content-Type-Options': 'nosniff',
       });
-      res.send(data);
-      return;
-    }
-
-    try {
-      const url = new URL(item.mediaData);
-      if (
-        item.kind !== 'image' ||
-        (url.protocol !== 'http:' && url.protocol !== 'https:')
-      ) {
-        throw new Error();
+      if (opened.content.range) {
+        res.set(
+          'Content-Range',
+          `bytes ${opened.content.range.start}-${opened.content.range.end}/${opened.content.range.total}`
+        );
       }
-      res.redirect(302, url.toString());
-    } catch {
-      res
-        .status(422)
-        .json({ success: false, message: 'Stored media is invalid' });
+      opened.content.body.on('error', error => res.destroy(error));
+      opened.content.body.pipe(res);
+    } catch (error) {
+      if (requestAbort.signal.aborted) return;
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === 'invalid-range'
+      ) {
+        res.status(416).set('Accept-Ranges', 'bytes').end();
+        return;
+      }
+      logger.error('Gallery media stream failed:', error);
+      res.status(500).json({ success: false, message: 'Failed to read media' });
+    } finally {
+      requestAbort.cleanup();
     }
   }
 );
@@ -824,11 +932,11 @@ router.get(
 router.delete(
   '/gallery/:mediaId',
   galleryRateLimiter,
-  (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res) => {
     const mediaId = Array.isArray(req.params.mediaId)
       ? req.params.mediaId[0]
       : req.params.mediaId;
-    const deleted = galleryService.deleteMedia(mediaId, userId(req));
+    const deleted = await galleryService.deleteMedia(mediaId, userId(req));
     if (!deleted) {
       res.status(404).json({ success: false, message: 'Media not found' });
       return;
@@ -898,7 +1006,7 @@ function isGeneratedAudioFormat(
   );
 }
 
-function publicJob(
+async function publicJob(
   job: {
     id: string;
     status: string;
@@ -909,9 +1017,10 @@ function publicJob(
     createdAt: number;
     updatedAt: number;
     prompt?: string;
+    providerJobId?: string;
   },
   id: string
-) {
+): Promise<Record<string, unknown>> {
   return {
     id: job.id,
     status: job.status,
@@ -924,7 +1033,12 @@ function publicJob(
     prompt: job.prompt,
     cancellable:
       (job.status === 'pending' || job.status === 'in_progress') &&
-      pluginService.canCancelVideoGenRequest(job.model, job.pluginId, id),
+      job.providerJobId !== 'libre:prepared' &&
+      (await pluginService.canCancelVideoGenRequest(
+        job.model,
+        job.pluginId,
+        id
+      )),
   };
 }
 

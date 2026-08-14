@@ -77,6 +77,7 @@ import systemDiagnosticsRoutes from './routes/systemDiagnostics.js';
 import artifactsRoutes from './routes/artifacts.js';
 import searchRoutes from './routes/search.js';
 import healthRoutes from './routes/health.js';
+import jobsRoutes from './routes/jobs.js';
 import ollamaService from './services/ollamaService.js';
 import workRuntimeService from './services/workRuntimeService.js';
 import workTaskService from './services/workTaskService.js';
@@ -88,19 +89,37 @@ import workPreviewProxyService, {
 import { GitHubOAuthService } from './services/simpleGitHubOAuth.js';
 import { HuggingFaceOAuthService } from './services/simpleHuggingFaceOAuth.js';
 import { encryptionService as _encryptionService } from './services/encryptionService.js';
-import { getPersistence } from './persistence/index.js';
+import { closePersistence, getPersistence } from './persistence/index.js';
 import { loadAppPackage, resolveFrontendDist } from './utils/packagePaths.js';
 import { registerWebSocketServer } from './websocketServer.js';
 import { createLogger } from './utils/logger.js';
 import {
-  closeDatabase,
-  getDatabase,
-  getSchemaCompatibilityState,
-} from './db.js';
-import {
   closeCoordinator,
+  getPlatformRuntimeConfig,
   initializeCoordinator,
 } from './platform/coordination/service.js';
+import {
+  closeDurableJobRuntime,
+  createDomainDurableJobHandlers,
+  initializeDurableJobRuntime,
+} from './platform/jobs/index.js';
+import {
+  closeDurableEventGateway,
+  initializeDurableEventGateway,
+} from './platform/events/index.js';
+import workEventService from './services/workEventService.js';
+import {
+  closePlatformStorageRuntime,
+  initializePlatformStorageRuntime,
+} from './platform/storage/index.js';
+import {
+  getSystemSetting,
+  setSystemSetting,
+} from './services/systemSettingsService.js';
+import {
+  closePluginCacheInvalidation,
+  probePluginCacheInvalidationHealth,
+} from './services/pluginCacheInvalidation.js';
 
 const pkg = loadAppPackage(import.meta.url);
 const app = express();
@@ -125,6 +144,17 @@ healthService.registerDependencyCheck({
     };
   },
 });
+healthService.registerDependencyCheck({
+  id: 'plugin-cache-invalidation',
+  required: true,
+  check: async () => {
+    const health = await probePluginCacheInvalidationHealth();
+    return {
+      status: health.ready ? 'pass' : 'fail',
+      ...(health.message ? { message: health.message } : {}),
+    };
+  },
+});
 
 // Containers are execution state, while each task's named volume is durable.
 // On startup, reconcile the labeled Work containers Docker actually has
@@ -133,16 +163,24 @@ healthService.registerDependencyCheck({
 // supervising process, containers at rest are left alone, and labeled
 // containers whose task row is gone are removed. Runs even with an empty
 // task table, so a restored database still sweeps leftover containers.
-const workRecovery = workTaskService.recoverOnStartup();
-const workCleanup = await workRuntimeService.beginRecovery(workRecovery.tasks);
-if (workCleanup.failed > 0) {
-  logger.warn(
-    `Work is fail-closed while ${workCleanup.failed} startup container cleanup(s) are retried.`
+if (getPlatformRuntimeConfig().jobs.workerMode === 'embedded') {
+  const workRecovery = await workTaskService.recoverOnStartup();
+  const workCleanup = await workRuntimeService.beginRecovery(
+    workRecovery.tasks
   );
-}
-if (workRecovery.interruptedRuns > 0 || workRecovery.activePreviews > 0) {
+  if (workCleanup.failed > 0) {
+    logger.warn(
+      `Work is fail-closed while ${workCleanup.failed} startup container cleanup(s) are retried.`
+    );
+  }
+  if (workRecovery.interruptedRuns > 0 || workRecovery.activePreviews > 0) {
+    logger.info(
+      `Recovered ${workRecovery.interruptedRuns} interrupted Work run(s) and ${workRecovery.activePreviews} preview(s).`
+    );
+  }
+} else {
   logger.info(
-    `Recovered ${workRecovery.interruptedRuns} interrupted Work run(s) and ${workRecovery.activePreviews} preview(s).`
+    'External worker owns Work startup recovery and global runtime sweeps.'
   );
 }
 
@@ -592,6 +630,7 @@ app.use('/api/work', workRateLimiter, workRoutes);
 app.use('/api/system', systemDiagnosticsRoutes);
 app.use('/api/artifacts', artifactsRoutes);
 app.use('/api/search', chatRateLimiter, searchRoutes);
+app.use('/api/jobs', jobsRoutes);
 
 // Serve frontend static files in production (for npx libre-webui)
 if (
@@ -647,21 +686,72 @@ if (
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Complete schema initialization before binding a network socket. Migration
-// failures and compatibility mismatches are startup failures, never a partial
-// application mode.
-getDatabase();
-// Construct the identity repository before the socket is bound. This
-// authenticates existing encrypted emails and atomically upgrades legacy
-// plaintext rows, so no request can observe mixed storage formats.
-getPersistence(_encryptionService);
-const schemaCompatibility = getSchemaCompatibilityState();
-if (schemaCompatibility.status === 'incompatible') {
+// main.ts initializes the selected database before importing this module.
+// Direct SQLite test entrypoints retain the repository's legacy lazy path, but
+// PostgreSQL can never create a local fallback here.
+const applicationPersistence = getPersistence(_encryptionService);
+const persistenceHealth = await applicationPersistence.health();
+if (!persistenceHealth.ready) {
   throw new Error(
-    `Database schema is incompatible: ${schemaCompatibility.reason || 'migration failed'}`
+    persistenceHealth.message ||
+      `${applicationPersistence.dialect} persistence is not ready.`
   );
 }
-
+const platformStorage = await initializePlatformStorageRuntime({
+  persistence: applicationPersistence,
+  cipher: _encryptionService,
+  env: process.env,
+});
+healthService.registerDependencyCheck({
+  id: 'platform-storage',
+  required: true,
+  check: async () => {
+    const health = await platformStorage.health();
+    return {
+      status: health.ready ? 'pass' : 'fail',
+      ...(health.message ? { message: health.message } : {}),
+      details: {
+        dialect: health.dialect,
+        blobs: health.blobs,
+        vectors: health.vectors,
+      },
+    };
+  },
+});
+const durableJobRuntime = initializeDurableJobRuntime({
+  role: getPlatformRuntimeConfig().jobs.workerMode,
+  runWorker: getPlatformRuntimeConfig().jobs.workerMode === 'embedded',
+  handlers: createDomainDurableJobHandlers(),
+});
+const durableEventGateway = initializeDurableEventGateway(
+  durableJobRuntime.service,
+  platformCoordinator
+);
+workEventService.initializeDurableGateway(durableEventGateway);
+healthService.registerDependencyCheck({
+  id: 'durable-jobs',
+  required: true,
+  check: async () => {
+    const status = durableJobRuntime.status();
+    const workerExpected = status.role === 'embedded';
+    const externalWorkers = workerExpected
+      ? []
+      : await platformCoordinator.listPresence('durable-workers');
+    return {
+      status:
+        status.started &&
+        (workerExpected ? status.workerId !== null : externalWorkers.length > 0)
+          ? 'pass'
+          : 'fail',
+      details: {
+        workerMode: status.role,
+        workerRunning: status.workerId !== null,
+        externalWorkerCount: externalWorkers.length,
+        registeredJobTypes: status.registeredJobTypes,
+      },
+    };
+  },
+});
 // Create HTTP server
 const server = createServer(app);
 
@@ -680,24 +770,19 @@ server.listen({ port, host }, () => {
 
   // One quiet line on the very first boot, never repeated. Not a nag, not a
   // modal, no telemetry — the flag lives in the local database only.
-  try {
-    const db = getDatabase();
-    const seen = db
-      .prepare('SELECT value FROM system_settings WHERE key = ?')
-      .get('first_run_star_note') as { value: string } | undefined;
-    if (!seen) {
-      db.prepare(
-        `INSERT INTO system_settings (key, value, updated_at)
-         VALUES (?, ?, ?)
-         ON CONFLICT(key) DO NOTHING`
-      ).run('first_run_star_note', 'shown', Date.now());
-      logger.info(
-        'If Libre WebUI is useful to you, a star helps others find it: https://github.com/libre-webui/libre-webui'
-      );
+  void (async () => {
+    try {
+      const seen = await getSystemSetting('first_run_star_note');
+      if (!seen) {
+        await setSystemSetting('first_run_star_note', 'shown');
+        logger.info(
+          'If Libre WebUI is useful to you, a star helps others find it: https://github.com/libre-webui/libre-webui'
+        );
+      }
+    } catch {
+      // A read-only database must never affect startup.
     }
-  } catch {
-    // A missing table or read-only database must never affect startup.
-  }
+  })();
 
   // Open browser in production mode
   if (
@@ -773,26 +858,40 @@ const shutdown = async (signal: 'SIGTERM' | 'SIGINT'): Promise<void> => {
     const timer = setTimeout(() => resolve('timeout'), 15_000);
     timer.unref();
   });
-  const stopWork = workAgentService.shutdown().then(summary => {
-    if (summary.failed > 0) {
-      throw new Error(
-        `Failed to stop ${summary.failed} Work container${summary.failed === 1 ? '' : 's'} during shutdown.`
-      );
-    }
-    logger.info(`Stopped ${summary.stopped} Work container(s).`);
-  });
+  const stopWork =
+    getPlatformRuntimeConfig().jobs.workerMode === 'embedded'
+      ? workAgentService.shutdown().then(summary => {
+          if (summary.failed > 0) {
+            throw new Error(
+              `Failed to stop ${summary.failed} Work container${summary.failed === 1 ? '' : 's'} during shutdown.`
+            );
+          }
+          logger.info(`Stopped ${summary.stopped} Work container(s).`);
+        })
+      : Promise.resolve();
   const cleanup = Promise.allSettled([
     registeredWebSockets.close(),
     stopWork,
-    closeCoordinator(),
+    closeDurableJobRuntime(),
     httpClosed,
   ]).then(async initialResults => {
-    // Close SQLite only after request, socket, and Work users have drained so
-    // WAL state is settled before an operator snapshots the data directory.
-    const databaseResults = await Promise.allSettled([
-      Promise.resolve().then(() => closeDatabase()),
+    const pluginCacheResults = await Promise.allSettled([
+      closePluginCacheInvalidation(),
     ]);
-    return [...initialResults, ...databaseResults];
+    const platformResults = await Promise.allSettled([
+      closeDurableEventGateway(),
+      closeCoordinator(),
+      closePlatformStorageRuntime(),
+    ]);
+    // Close the selected persistence backend only after request, socket, and
+    // Work users have drained so SQL state is settled before backup.
+    const databaseResults = await Promise.allSettled([closePersistence()]);
+    return [
+      ...initialResults,
+      ...pluginCacheResults,
+      ...platformResults,
+      ...databaseResults,
+    ];
   });
   const result = await Promise.race([cleanup, timeout]);
   if (result === 'timeout') {

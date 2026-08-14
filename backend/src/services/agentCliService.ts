@@ -158,7 +158,7 @@ const MAX_OUTPUT_CHARS = 2_000_000;
 const MAX_STDERR_CHARS = 8_000;
 const MAX_CONTEXT_MESSAGES = 30;
 
-const agentsEnabled = (): boolean => getAgentsEnabled();
+const agentsEnabled = (): Promise<boolean> => getAgentsEnabled();
 
 function resolveBinary(command: string): string | null {
   const pathValue = process.env.PATH || '';
@@ -462,7 +462,7 @@ export function parsePiLine(
 
 export class AgentCliService {
   async listAgentModels(): Promise<AgentCliModel[]> {
-    if (!agentsEnabled()) return [];
+    if (!(await agentsEnabled())) return [];
     const models: AgentCliModel[] = [];
     for (const definition of AGENT_CLI_DEFINITIONS) {
       const binaryPath = resolveBinary(definition.command);
@@ -509,7 +509,7 @@ export class AgentCliService {
   }
 
   async assertAgentAccess(userId: string): Promise<AgentCliDefinition[]> {
-    if (!agentsEnabled()) {
+    if (!(await agentsEnabled())) {
       throw new Error('Agent CLI models are disabled on this server.');
     }
     if (!(await this.isAdminUser(userId))) {

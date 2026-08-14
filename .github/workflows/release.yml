@@ -12,6 +12,29 @@ on:
 jobs:
   release-preflight:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.1-pg16
+        env:
+          POSTGRES_USER: libre
+          POSTGRES_PASSWORD: libre-ci-password
+          POSTGRES_DB: libre_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U libre -d libre_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+      redis:
+        image: redis:7.4.5-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
 
     steps:
       - name: Checkout code
@@ -31,10 +54,40 @@ jobs:
           npm ci
           npm run install:all
 
+      - name: Start MinIO storage fixture
+        run: |
+          docker run --detach --name libre-ci-minio \
+            --publish 9000:9000 \
+            --env MINIO_ROOT_USER=libreminio \
+            --env MINIO_ROOT_PASSWORD=libre-ci-minio-password \
+            minio/minio:RELEASE.2025-07-23T15-54-02Z server /data
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:9000/minio/health/live >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs libre-ci-minio
+          exit 1
+
       - name: Run release preflight
         run: npm run release:check
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          TEST_POSTGRES_URL: postgresql://libre:libre-ci-password@127.0.0.1:5432/libre_test
+          TEST_REDIS_URL: redis://127.0.0.1:6379/0
+          TEST_S3_ENDPOINT: http://127.0.0.1:9000
+          TEST_S3_BUCKET: libre-ci-storage
+          TEST_S3_REGION: us-east-1
+          TEST_S3_ACCESS_KEY_ID: libreminio
+          TEST_S3_SECRET_ACCESS_KEY: libre-ci-minio-password
+          TEST_STORAGE_ENCRYPTION_KEY: 9191919191919191919191919191919191919191919191919191919191919191
+          TEST_TEAM_PLATFORM: '1'
+
+      - name: Run three-replica team platform drill
+        run: npm run test:team-platform
+        env:
+          TEST_TEAM_PLATFORM: '1'
 
   # Create the GitHub release. Desktop installers are built by the
   # libre-webui-desktop repository, which this workflow dispatches below;
@@ -67,11 +120,6 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Run tests and build
-        run: npm run release:check
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Generate release notes
         id: release_notes

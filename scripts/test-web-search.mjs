@@ -58,15 +58,21 @@ after(() => {
   rmSync(dataDir, { recursive: true, force: true });
 });
 
-test('web search ships disabled and validates its configuration', () => {
-  const config = getWebSearchConfig();
+test('web search ships disabled and validates its configuration', async () => {
+  const config = await getWebSearchConfig();
   assert.equal(config.enabled, false);
   assert.equal(config.available, false);
   // Use is admins-only until an administrator opens it in User Management.
-  assert.equal(getWebSearchAccessMode(), 'admins');
-  assert.equal(userCanUseWebSearch({ role: 'admin', status: 'active' }), true);
-  assert.equal(userCanUseWebSearch({ role: 'user', status: 'active' }), false);
-  assert.equal(userCanUseWebSearch(undefined), false);
+  assert.equal(await getWebSearchAccessMode(), 'admins');
+  assert.equal(
+    await userCanUseWebSearch({ role: 'admin', status: 'active' }),
+    true
+  );
+  assert.equal(
+    await userCanUseWebSearch({ role: 'user', status: 'active' }),
+    false
+  );
+  assert.equal(await userCanUseWebSearch(undefined), false);
 
   assert.throws(() => normalizeWebSearchUrl('ftp://host'), /http or https/);
   assert.throws(() => normalizeWebSearchUrl('not a url'), /valid http/);
@@ -76,15 +82,15 @@ test('web search ships disabled and validates its configuration', () => {
   );
 
   // Enabling requires a URL.
-  assert.throws(
-    () => setWebSearchConfig({ enabled: true, url: '' }),
+  await assert.rejects(
+    setWebSearchConfig({ enabled: true, url: '' }),
     /SearXNG URL/
   );
 
   // Retrieval settings default sensibly and clamp to the ceiling.
   assert.equal(config.maxResults, 6);
   assert.equal(config.safeSearch, true);
-  const tuned = setWebSearchConfig({
+  const tuned = await setWebSearchConfig({
     enabled: false,
     url: 'http://searxng:8080',
     maxResults: 99,
@@ -92,7 +98,7 @@ test('web search ships disabled and validates its configuration', () => {
   });
   assert.equal(tuned.maxResults, 10);
   assert.equal(tuned.safeSearch, false);
-  setWebSearchConfig({
+  await setWebSearchConfig({
     enabled: false,
     url: 'http://searxng:8080',
     maxResults: 6,
@@ -134,19 +140,19 @@ test('web search queries the configured instance and bounds results', async () =
   const port = server.address().port;
 
   try {
-    setWebSearchConfig({
+    await setWebSearchConfig({
       enabled: true,
       url: `http://127.0.0.1:${port}`,
       maxResults: 1,
       safeSearch: true,
     });
-    assert.equal(isWebSearchAvailable(), true);
+    assert.equal(await isWebSearchAvailable(), true);
 
     // The admin ceiling caps any requested count.
     const capped = await webSearch('libre webui', 5);
     assert.equal(capped.length, 1);
 
-    setWebSearchConfig({
+    await setWebSearchConfig({
       enabled: true,
       url: `http://127.0.0.1:${port}`,
       maxResults: 6,
@@ -166,8 +172,11 @@ test('web search queries the configured instance and bounds results', async () =
     assert.match(enhanced, /User message: hello/);
 
     // Disabled again: unavailable and queries refuse to run.
-    setWebSearchConfig({ enabled: false, url: `http://127.0.0.1:${port}` });
-    assert.equal(isWebSearchAvailable(), false);
+    await setWebSearchConfig({
+      enabled: false,
+      url: `http://127.0.0.1:${port}`,
+    });
+    assert.equal(await isWebSearchAvailable(), false);
     await assert.rejects(webSearch('anything'), /not enabled/);
   } finally {
     server.close();
@@ -186,22 +195,22 @@ test('Work offers web_search by search state, task network, and owner access', a
   const adminTask = { networkEnabled: true, userId: 'search-admin' };
   const userTask = { networkEnabled: true, userId: 'search-user' };
 
-  setWebSearchConfig({ enabled: false, url: 'http://searxng:8080' });
+  await setWebSearchConfig({ enabled: false, url: 'http://searxng:8080' });
   assert.deepEqual(await workToolSchemasForTask(adminTask), WORK_TOOL_SCHEMAS);
 
-  setWebSearchConfig({ enabled: true, url: 'http://searxng:8080' });
+  await setWebSearchConfig({ enabled: true, url: 'http://searxng:8080' });
   const withSearch = await workToolSchemasForTask(adminTask);
   assert.equal(withSearch.length, WORK_TOOL_SCHEMAS.length + 1);
   assert.equal(withSearch.at(-1).function.name, 'web_search');
 
   // Regular users follow the persisted access mode, admins-only by default.
   assert.deepEqual(await workToolSchemasForTask(userTask), WORK_TOOL_SCHEMAS);
-  setWebSearchAccessMode('all-users');
+  await setWebSearchAccessMode('all-users');
   assert.equal(
     (await workToolSchemasForTask(userTask)).at(-1).function.name,
     'web_search'
   );
-  setWebSearchAccessMode('admins');
+  await setWebSearchAccessMode('admins');
 
   // An offline task stays offline regardless of role.
   assert.deepEqual(
@@ -211,7 +220,7 @@ test('Work offers web_search by search state, task network, and owner access', a
     }),
     WORK_TOOL_SCHEMAS
   );
-  setWebSearchConfig({ enabled: false, url: 'http://searxng:8080' });
+  await setWebSearchConfig({ enabled: false, url: 'http://searxng:8080' });
 });
 
 test('search routes gate configuration behind the administrator', () => {

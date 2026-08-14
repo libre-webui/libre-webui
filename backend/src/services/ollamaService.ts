@@ -16,6 +16,7 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
+import { getOllamaRuntimeConfig } from '../platform/ollamaRuntimeConfig.js';
 import {
   OllamaModel,
   OllamaGenerateRequest,
@@ -137,7 +138,7 @@ async function parseStreamedErrorBody(error: unknown): Promise<void> {
 
 const MODEL_DEFAULTS_TTL_MS = 10 * 60 * 1000;
 
-class OllamaService {
+export class OllamaService {
   private modelDefaultsCache = new Map<
     string,
     { defaults: OllamaModelDefaults; at: number }
@@ -148,16 +149,11 @@ class OllamaService {
 
   constructor() {
     this.baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-    // Use environment variable for timeout, default to 5 minutes for large models on multiple GPUs
-    const timeout = parseInt(process.env.OLLAMA_TIMEOUT || '300000');
-    // Use extended timeout for model operations (pulling, loading), default to 15 minutes
-    const longOperationTimeout = parseInt(
-      process.env.OLLAMA_LONG_OPERATION_TIMEOUT || '900000'
-    );
+    const { timeoutMs, longOperationTimeoutMs } = getOllamaRuntimeConfig();
 
     this.client = axios.create({
       baseURL: this.baseUrl,
-      timeout: timeout,
+      timeout: timeoutMs,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -165,7 +161,7 @@ class OllamaService {
 
     this.longOperationClient = axios.create({
       baseURL: this.baseUrl,
-      timeout: longOperationTimeout,
+      timeout: longOperationTimeoutMs,
       headers: {
         'Content-Type': 'application/json',
       },

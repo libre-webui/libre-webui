@@ -198,14 +198,14 @@ export class WorkModelProviderService {
     if (!plugin || !plugin.active || !plugin.model_map.includes(model)) {
       return undefined;
     }
-    const variables = this.dependencies.plugins.getPluginVariables(
+    const variables = await this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
     );
     const apiConfig = resolvePluginApiConfig(plugin, variables);
     if (apiConfig.apiMode !== 'responses') return undefined;
     const endpoint = applyModelEndpointTemplate(apiConfig.endpoint, model);
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    const apiKey = await this.dependencies.plugins.getApiKey(plugin, userId);
     if (pluginRequiresApiKey(plugin) && !apiKey) return undefined;
     return createOpenAIResponsesStateScope(
       plugin.id,
@@ -238,14 +238,14 @@ export class WorkModelProviderService {
       model,
       userId
     );
-    const variables = this.dependencies.plugins.getPluginVariables(
+    const variables = await this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
     );
     const apiConfig = resolvePluginApiConfig(plugin, variables);
     const endpoint = applyModelEndpointTemplate(apiConfig.endpoint, model);
     assertSafePluginEndpoint(endpoint, 'Work model endpoint');
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    const apiKey = await this.dependencies.plugins.getApiKey(plugin, userId);
     return createHash('sha256')
       .update(
         JSON.stringify({
@@ -269,7 +269,9 @@ export class WorkModelProviderService {
   ): Promise<OllamaChatResponse> {
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
-      return this.dependencies.ollama.generateChatResponse(request, signal);
+      return this.dependencies.ollama.generateChatResponse(request, signal, {
+        userId,
+      });
     }
     const plugin = await this.requireExactPlugin(
       provider.providerId,
@@ -289,7 +291,7 @@ export class WorkModelProviderService {
     const streamRequest = { ...request, stream: true };
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
-      return this.generateOllamaStream(streamRequest, observer, signal);
+      return this.generateOllamaStream(streamRequest, userId, observer, signal);
     }
     const plugin = await this.requireExactPlugin(
       provider.providerId,
@@ -306,14 +308,18 @@ export class WorkModelProviderService {
   }
 
   private async hasConfiguredPlugin(userId: string): Promise<boolean> {
-    return (await this.dependencies.plugins.getActivePlugins(userId))
-      .filter(isWorkPlugin)
-      .some(
-        plugin =>
-          plugin.model_map.length > 0 &&
-          (!pluginRequiresApiKey(plugin) ||
-            Boolean(this.dependencies.plugins.getApiKey(plugin, userId)))
-      );
+    for (const plugin of (
+      await this.dependencies.plugins.getActivePlugins(userId)
+    ).filter(isWorkPlugin)) {
+      if (
+        plugin.model_map.length > 0 &&
+        (!pluginRequiresApiKey(plugin) ||
+          Boolean(await this.dependencies.plugins.getApiKey(plugin, userId)))
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private async requireExactPlugin(
@@ -350,11 +356,11 @@ export class WorkModelProviderService {
     }
     resolvePluginApiConfig(
       plugin,
-      this.dependencies.plugins.getPluginVariables(plugin, userId)
+      await this.dependencies.plugins.getPluginVariables(plugin, userId)
     );
     if (
       pluginRequiresApiKey(plugin) &&
-      !this.dependencies.plugins.getApiKey(plugin, userId)
+      !(await this.dependencies.plugins.getApiKey(plugin, userId))
     ) {
       throw new WorkModelProviderError(
         `API key not found for plugin ${plugin.id}.`,
@@ -383,7 +389,7 @@ export class WorkModelProviderService {
         signal
       );
     }
-    const variables = this.dependencies.plugins.getPluginVariables(
+    const variables = await this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
     );
@@ -393,7 +399,7 @@ export class WorkModelProviderService {
       request.model
     );
     assertSafePluginEndpoint(endpoint, 'Work model endpoint');
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    const apiKey = await this.dependencies.plugins.getApiKey(plugin, userId);
     if (pluginRequiresApiKey(plugin) && !apiKey) {
       throw new WorkModelProviderError(
         `API key not found for plugin ${plugin.id}.`,
@@ -474,6 +480,7 @@ export class WorkModelProviderService {
 
   private async generateOllamaStream(
     request: OllamaChatRequest,
+    userId: string,
     observer: WorkModelStreamObserver,
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
@@ -481,7 +488,8 @@ export class WorkModelProviderService {
     if (!stream) {
       const response = await this.dependencies.ollama.generateChatResponse(
         { ...request, stream: false },
-        signal
+        signal,
+        { userId }
       );
       if (response.message?.thinking) {
         observer.onReasoning?.(response.message.thinking);
@@ -550,7 +558,8 @@ export class WorkModelProviderService {
           },
           error => finish(error),
           () => finish(),
-          signal
+          signal,
+          { userId }
         )
         .catch(error =>
           finish(error instanceof Error ? error : new Error(String(error)))
@@ -569,7 +578,7 @@ export class WorkModelProviderService {
     if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
       await codexOAuthService.ensureFreshToken(signal);
     }
-    const variables = this.dependencies.plugins.getPluginVariables(
+    const variables = await this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
     );
@@ -579,7 +588,7 @@ export class WorkModelProviderService {
       request.model
     );
     assertSafePluginEndpoint(endpoint, 'Work model endpoint');
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    const apiKey = await this.dependencies.plugins.getApiKey(plugin, userId);
     if (pluginRequiresApiKey(plugin) && !apiKey) {
       throw new WorkModelProviderError(
         `API key not found for plugin ${plugin.id}.`,

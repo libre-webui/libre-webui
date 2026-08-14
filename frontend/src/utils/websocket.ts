@@ -185,6 +185,11 @@ class WebSocketService {
     this.messageHandlers.delete(type);
   }
 
+  /** Deliver a transport-neutral event through the existing chat handlers. */
+  dispatchMessage(type: string, data: unknown): void {
+    this.messageHandlers.get(type)?.(data);
+  }
+
   private attemptReconnect() {
     if (isDemoMode()) {
       logger.debug('Demo mode active: skipping WebSocket reconnection.');

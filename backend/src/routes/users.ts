@@ -400,27 +400,20 @@ router.delete(
         return;
       }
 
-      // Docker resources are external to SQLite and must be removed before
-      // the user row cascades its Work metadata. Any cleanup failure leaves
-      // the user intact so an administrator can safely retry.
-      await workAgentService.removeTasksForUser(id);
-      let deleted: boolean;
-      try {
-        deleted = await userModel.deleteUser(id);
-      } catch (error) {
-        workAgentService.releaseUserRetirement(id);
-        throw error;
-      }
+      // Retirement is durable and cross-replica. A failed job drain or Work
+      // resource teardown leaves the account fail-closed and retryable; the
+      // identity delete and owner-cleanup enqueue remain one transaction.
+      const deleted = await workAgentService.retireAndDeleteUser(
+        id,
+        req.user!.userId
+      );
       if (!deleted) {
-        workAgentService.releaseUserRetirement(id);
         res.status(404).json({
           success: false,
           message: 'User not found',
         });
         return;
       }
-      workAgentService.releaseUserRetirement(id);
-
       res.json({
         success: true,
         message: 'User deleted successfully',

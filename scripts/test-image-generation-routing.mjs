@@ -167,7 +167,7 @@ test('inactive image providers are excluded from selection and generation', asyn
     validateEndpointUrl: endpoint => endpoint,
   });
 
-  assert.deepEqual(service.getAvailableImageGenModels('user-42'), []);
+  assert.deepEqual(await service.getAvailableImageGenModels('user-42'), []);
   await assert.rejects(
     service.executeImageGenRequest(
       'shared-image-model',
@@ -230,7 +230,7 @@ test('image generation uses the selected provider and user-scoped OpenAI setting
   });
 
   try {
-    const models = service.getAvailableImageGenModels('user-42');
+    const models = await service.getAvailableImageGenModels('user-42');
     assert.deepEqual(
       models.map(({ model, plugin }) => ({ model, plugin })),
       [
@@ -699,7 +699,7 @@ test('an explicit image provider cannot fall through to a same-named plugin', as
   );
 });
 
-test('image capability models take precedence without duplicating legacy image models', () => {
+test('image capability models take precedence without duplicating legacy image models', async () => {
   const config = {
     default_size: '1024x1024',
     default_quality: 'standard',
@@ -724,7 +724,7 @@ test('image capability models take precedence without duplicating legacy image m
     validateEndpointUrl: endpoint => endpoint,
   });
 
-  assert.deepEqual(service.getAvailableImageGenModels('user-42'), [
+  assert.deepEqual(await service.getAvailableImageGenModels('user-42'), [
     {
       model: 'shared-image-model',
       plugin: 'dual-image-provider',
@@ -735,11 +735,17 @@ test('image capability models take precedence without duplicating legacy image m
     { pluginId: 'dual-image-provider', userId: 'user-42' },
   ]);
   assert.equal(
-    service.getPluginForImageGen('shared-image-model', 'dual-image-provider'),
+    await service.getPluginForImageGen(
+      'shared-image-model',
+      'dual-image-provider'
+    ),
     plugin
   );
   assert.equal(
-    service.getPluginForImageGen('legacy-only-model', 'dual-image-provider'),
+    await service.getPluginForImageGen(
+      'legacy-only-model',
+      'dual-image-provider'
+    ),
     null
   );
 });

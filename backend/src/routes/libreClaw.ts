@@ -38,14 +38,14 @@ router.use(authenticate, requireAdmin);
  * this is how an administrator turns it on. Everything below the gate
  * requires the feature to be enabled.
  */
-router.get('/access', (_req: Request, res: Response): void => {
+router.get('/access', async (_req: Request, res: Response): Promise<void> => {
   sendSuccess(res, {
-    enabled: getAgentsEnabled(),
+    enabled: await getAgentsEnabled(),
     lockedByEnv: agentsEnabledLockedByEnv(),
   });
 });
 
-router.put('/access', (req: Request, res: Response): void => {
+router.put('/access', async (req: Request, res: Response): Promise<void> => {
   const enabled = req.body?.enabled;
   if (typeof enabled !== 'boolean') {
     res.status(400).json({
@@ -62,12 +62,15 @@ router.put('/access', (req: Request, res: Response): void => {
     } satisfies ApiResponse);
     return;
   }
-  setAgentsEnabled(enabled);
-  sendSuccess(res, { enabled: getAgentsEnabled(), lockedByEnv: false });
+  await setAgentsEnabled(enabled);
+  sendSuccess(res, {
+    enabled: await getAgentsEnabled(),
+    lockedByEnv: false,
+  });
 });
 
-router.use((_req: Request, res: Response, next): void => {
-  if (!getAgentsEnabled()) {
+router.use(async (_req: Request, res: Response, next): Promise<void> => {
+  if (!(await getAgentsEnabled())) {
     res.status(403).json({
       success: false,
       error: 'The Agents feature is disabled on this server.',

@@ -127,16 +127,63 @@ test('readiness fails closed for a missing database or schema', async t => {
 test('readiness fails closed while a valid older schema awaits migration', async t => {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-health-'));
   const database = createHealthyDatabase(dataDir);
+  database.pragma('foreign_keys = OFF');
   database.exec(`
-    DROP INDEX idx_users_email_lookup;
-    ALTER TABLE users DROP COLUMN email_lookup;
+    CREATE TABLE users__health_v2 (
+      id TEXT PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('admin', 'user')),
+      account_status TEXT NOT NULL DEFAULT 'active'
+        CHECK(account_status IN ('pending', 'active')),
+      approved_at INTEGER,
+      approved_by TEXT,
+      avatar TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    INSERT INTO users__health_v2 (
+      id, username, email, password_hash, role, account_status, approved_at,
+      approved_by, avatar, created_at, updated_at
+    )
+    SELECT id, username, email, password_hash, role, account_status,
+           approved_at, approved_by, avatar, created_at, updated_at
+      FROM users;
+    DROP TABLE users;
+    ALTER TABLE users__health_v2 RENAME TO users;
+    DROP INDEX idx_plugin_definitions_updated;
+    DROP TABLE plugin_definitions;
+    DROP INDEX idx_voice_profiles_name_lookup;
+    ALTER TABLE voice_profiles DROP COLUMN name_lookup;
+    DROP INDEX idx_platform_blob_references_resource;
+    DROP INDEX idx_platform_blob_references_owner;
+    DROP INDEX idx_platform_blob_quota_reservations_expiry;
+    DROP INDEX idx_platform_blob_quota_reservations_owner;
+    DROP INDEX idx_platform_blob_quota_objects_owner;
+    DROP TABLE platform_blob_references;
+    DROP TABLE platform_blob_quota_reservations;
+    DROP TABLE platform_blob_quota_objects;
+    DROP TABLE platform_blob_quota_usage;
+    DROP TABLE platform_resource_deletion_tombstones;
+    ALTER TABLE work_tasks DROP COLUMN preview_upstream_port;
+    ALTER TABLE work_tasks DROP COLUMN preview_upstream_host;
     DROP TABLE platform_events;
     DROP TABLE platform_event_stream_heads;
     DROP TABLE platform_job_attempts;
     DROP TABLE platform_jobs;
+    DELETE FROM _libre_schema_migrations WHERE version = 12;
+    DELETE FROM _libre_schema_migrations WHERE version = 11;
+    DELETE FROM _libre_schema_migrations WHERE version = 10;
+    DELETE FROM _libre_schema_migrations WHERE version = 9;
+    DELETE FROM _libre_schema_migrations WHERE version = 8;
+    DELETE FROM _libre_schema_migrations WHERE version = 7;
+    DELETE FROM _libre_schema_migrations WHERE version = 6;
+    DELETE FROM _libre_schema_migrations WHERE version = 5;
     DELETE FROM _libre_schema_migrations WHERE version = 4;
     DELETE FROM _libre_schema_migrations WHERE version = 3;
   `);
+  database.pragma('foreign_keys = ON');
   t.after(() => {
     database.close();
     fs.rmSync(dataDir, { recursive: true, force: true });
