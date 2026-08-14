@@ -1234,10 +1234,11 @@ test(
       if (response.ok) break;
       const payload = await response.json();
       assert.equal(
-        payload.error,
+        payload.message,
         'WORK_RUNTIME_LEASE_CONFLICT',
         `unexpected Work deletion conflict: ${JSON.stringify(payload)}`
       );
+      assert.match(payload.error, /lifecycle operation on another replica/i);
       assert.ok(
         Date.now() < workDeleteDeadline,
         'timed out waiting for the completed Work lifecycle lease to release'
