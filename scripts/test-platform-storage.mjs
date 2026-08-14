@@ -1549,6 +1549,8 @@ test('team worker refuses missing deployment keys before creating local state', 
         COORDINATION_BACKEND: 'redis',
         REDIS_URL: 'redis://worker.invalid:6379',
         JOB_WORKER_MODE: 'external',
+        JWT_SECRET:
+          'team-worker-no-key-jwt-secret-team-worker-no-key-jwt-secret',
         AGENT_CLI_MODELS_ENABLED: 'false',
         CODEX_OAUTH_MODELS_ENABLED: 'false',
         ENCRYPTION_KEY: '',
