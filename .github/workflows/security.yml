@@ -58,27 +58,22 @@ jobs:
           echo 'npm audit reported a moderate-or-higher vulnerability.' >&2
           exit 1
 
-  codeql:
-    name: CodeQL (JavaScript and TypeScript)
+  codeql-default-setup:
+    name: Verify CodeQL default setup
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write
+      security-events: read
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: javascript-typescript
-          build-mode: none
-
-      - name: Analyze source
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: /language:javascript-typescript
+      - name: Verify JavaScript and TypeScript scanning
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh api "repos/${GH_REPO}/code-scanning/default-setup" \
+            --jq 'select(.state == "configured" and (.languages | index("javascript-typescript") != null)) | .state' \
+            | grep -qx configured
 
   secret-scan:
     name: Secret scan

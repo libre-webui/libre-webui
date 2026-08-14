@@ -34,16 +34,18 @@ test('security workflow runs on normal pushes and every pull request', () => {
 
 test('security workflow covers dependency, SAST, secret, SBOM, and image gates', () => {
   const dependency = getJob('dependency-and-sbom');
-  const codeql = getJob('codeql');
+  const codeql = getJob('codeql-default-setup');
   const secrets = getJob('secret-scan');
   const container = getJob('container-scan');
 
   assert.match(dependency, /npm audit --audit-level=moderate --json/);
   assert.match(dependency, /uses: anchore\/sbom-action@v0/);
   assert.match(dependency, /format: cyclonedx-json/);
-  assert.match(codeql, /uses: github\/codeql-action\/init@v4/);
-  assert.match(codeql, /languages: javascript-typescript/);
-  assert.match(codeql, /uses: github\/codeql-action\/analyze@v4/);
+  assert.match(codeql, /security-events: read/);
+  assert.match(codeql, /code-scanning\/default-setup/);
+  assert.match(codeql, /\.state == "configured"/);
+  assert.match(codeql, /index\("javascript-typescript"\)/);
+  assert.doesNotMatch(codeql, /github\/codeql-action\/(?:init|analyze)@/);
   assert.match(secrets, /uses: aquasecurity\/trivy-action@v0\.36\.0/);
   assert.match(secrets, /scanners: secret/);
   assert.match(container, /uses: docker\/build-push-action@v7/);
