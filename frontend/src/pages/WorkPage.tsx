@@ -37,6 +37,7 @@ import {
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useBlocker, useLocation, useNavigate, useParams } from 'react-router';
+import { LogoMark } from '@/components/LogoMark';
 import { WorkComposer } from '@/components/work/WorkComposer';
 import { WorkConversation } from '@/components/work/WorkConversation';
 import { WorkSplitPane } from '@/components/work/WorkSplitPane';
@@ -1221,12 +1222,19 @@ export default function WorkPage() {
               className='relative z-[1] mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center px-4 py-20 sm:px-8 sm:py-24'
             >
               <div className='flex flex-col items-center text-center'>
-                <h2 className='max-w-3xl text-balance text-[clamp(2.65rem,7vw,5.25rem)] font-light leading-[0.98] tracking-[-0.055em] text-ink rtl:leading-[1.12] rtl:tracking-normal'>
-                  {t('work.landing.title', {
-                    defaultValue: 'Start a new Work task',
-                  })}
-                </h2>
-                <p className='mt-4 max-w-xl text-balance text-base leading-relaxed text-ink-muted sm:text-lg'>
+                <div className='mb-3 flex items-center justify-center gap-3'>
+                  <LogoMark
+                    size='sm'
+                    label={null}
+                    className='h-9 w-9 shrink-0 p-0 text-ink'
+                  />
+                  <h2 className='max-w-3xl text-balance text-[clamp(1.75rem,3.5vw,2.35rem)] font-medium leading-tight tracking-[-0.02em] text-ink rtl:tracking-normal'>
+                    {t('work.landing.title', {
+                      defaultValue: 'Start a new Work task',
+                    })}
+                  </h2>
+                </div>
+                <p className='max-w-xl text-balance text-[15px] leading-relaxed text-ink-subtle'>
                   {t('work.landing.description', {
                     defaultValue:
                       'Give a local model a durable, isolated workspace. It can inspect files, run tools, and continue where it left off when you return.',
