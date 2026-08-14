@@ -453,11 +453,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       ]);
       return {
         models:
-          modelsResponse.success && modelsResponse.data
+          modelsResponse.success && Array.isArray(modelsResponse.data)
             ? modelsResponse.data
             : [],
         plugins:
-          pluginsResponse.success && pluginsResponse.data
+          pluginsResponse.success && Array.isArray(pluginsResponse.data)
             ? pluginsResponse.data
             : [],
       };

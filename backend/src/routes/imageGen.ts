@@ -99,7 +99,7 @@ router.get('/models', async (req: AuthenticatedRequest, res) => {
       'image',
       getRequestUserId(req)
     );
-    const models = pluginService.getAvailableImageGenModels(
+    const models = await pluginService.getAvailableImageGenModels(
       getRequestUserId(req)
     );
     res.json({
@@ -122,7 +122,7 @@ router.get('/models', async (req: AuthenticatedRequest, res) => {
 router.get('/config/:pluginId', async (req: AuthenticatedRequest, res) => {
   try {
     const pluginId = req.params.pluginId as string;
-    const config = pluginService.getImageGenConfig(
+    const config = await pluginService.getImageGenConfig(
       pluginId,
       getRequestUserId(req)
     );

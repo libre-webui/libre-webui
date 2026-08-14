@@ -4159,7 +4159,7 @@ test('image routes forward the authenticated user and selected plugin', async ()
   await withPatchedProperties(
     pluginService,
     {
-      getAvailableImageGenModels: userId => {
+      getAvailableImageGenModels: async userId => {
         calls.push({ operation: 'models', userId });
         return [];
       },
@@ -4167,7 +4167,7 @@ test('image routes forward the authenticated user and selected plugin', async ()
         calls.push({ operation: capability, userId });
         return [];
       },
-      getImageGenConfig: (pluginId, userId) => {
+      getImageGenConfig: async (pluginId, userId) => {
         calls.push({ operation: 'config', pluginId, userId });
         return { default_size: '1024x1024' };
       },
