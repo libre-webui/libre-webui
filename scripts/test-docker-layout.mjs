@@ -28,6 +28,10 @@ const teamWorkCompose = fs.readFileSync(
   path.join(repoRoot, 'docker-compose.team.work.yml'),
   'utf8'
 );
+const teamEnvironmentExample = fs.readFileSync(
+  path.join(repoRoot, 'deploy', 'team', '.env.example'),
+  'utf8'
+);
 const teamTestCompose = fs.readFileSync(
   path.join(repoRoot, 'docker-compose.team.test.yml'),
   'utf8'
@@ -271,6 +275,87 @@ test('team Compose forwards platform and provider tuning identically to app and 
       ])
     ),
     expected
+  );
+});
+
+test('team environment example renders the shipped PostgreSQL and Work profiles', () => {
+  const values = Object.fromEntries(
+    teamEnvironmentExample
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#'))
+      .map(line => {
+        const separator = line.indexOf('=');
+        assert.ok(separator > 0, `invalid team environment line: ${line}`);
+        return [line.slice(0, separator), line.slice(separator + 1)];
+      })
+  );
+  for (const name of [
+    'POSTGRES_PASSWORD',
+    'MINIO_ROOT_USER',
+    'MINIO_ROOT_PASSWORD',
+    'JWT_SECRET',
+    'ENCRYPTION_KEY',
+    'STORAGE_ENCRYPTION_ACTIVE_KEY_ID',
+    'STORAGE_ENCRYPTION_KEYS',
+  ]) {
+    assert.ok(values[name], `team environment example is missing ${name}`);
+  }
+  assert.match(values.POSTGRES_PASSWORD, /^REPLACE_WITH_[A-Z0-9_]+$/);
+  assert.match(values.JWT_SECRET, /^REPLACE_WITH_[A-Z0-9_]+$/);
+  assert.match(values.ENCRYPTION_KEY, /^REPLACE_WITH_[A-Z0-9_]+$/);
+  const keyring = JSON.parse(values.STORAGE_ENCRYPTION_KEYS);
+  assert.equal(keyring.legacy, values.ENCRYPTION_KEY);
+  assert.equal(
+    keyring[values.STORAGE_ENCRYPTION_ACTIVE_KEY_ID],
+    'REPLACE_WITH_DIFFERENT_64_HEX_ACTIVE_KEY'
+  );
+
+  const rendered = JSON.parse(
+    execFileSync(
+      'docker',
+      [
+        'compose',
+        '--project-name',
+        'libre-team-example-render-test',
+        '--env-file',
+        'deploy/team/.env.example',
+        '-f',
+        'docker-compose.team.yml',
+        '-f',
+        'docker-compose.team.work.yml',
+        'config',
+        '--format',
+        'json',
+      ],
+      { cwd: repoRoot, encoding: 'utf8' }
+    )
+  );
+  for (const name of ['libre-webui', 'durable-worker']) {
+    const environment = rendered.services[name].environment;
+    assert.equal(environment.LIBRE_PLATFORM_MODE, 'team');
+    assert.equal(environment.DATABASE_BACKEND, 'postgres');
+    assert.equal(environment.BLOB_STORE_BACKEND, 's3');
+    assert.equal(environment.VECTOR_STORE_BACKEND, 'pgvector');
+    assert.equal(environment.COORDINATION_BACKEND, 'redis');
+    assert.equal(environment.JOB_WORKER_MODE, 'external');
+    assert.equal(environment.ENCRYPTION_KEY, values.ENCRYPTION_KEY);
+    assert.equal(
+      environment.STORAGE_ENCRYPTION_KEYS,
+      values.STORAGE_ENCRYPTION_KEYS
+    );
+  }
+  assert.equal(
+    rendered.services.postgres.environment.POSTGRES_PASSWORD,
+    values.POSTGRES_PASSWORD
+  );
+  assert.equal(
+    rendered.services.minio.environment.MINIO_ROOT_USER,
+    values.MINIO_ROOT_USER
+  );
+  assert.equal(
+    rendered.services['docker-socket-proxy'].volumes[0].read_only,
+    true
   );
 });
 

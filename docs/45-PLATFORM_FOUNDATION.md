@@ -91,21 +91,35 @@ active key plus the matching `legacy` entry.
 
 ### Run the bundled team profile
 
-Set `POSTGRES_PASSWORD`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`,
-`JWT_SECRET`, `ENCRYPTION_KEY`, `STORAGE_ENCRYPTION_ACTIVE_KEY_ID`, and
-`STORAGE_ENCRYPTION_KEYS` in a root-only environment file. The same file may
-set `POSTGRES_MIGRATION_MODE`, `POSTGRES_POOL_MAX`, the supported PostgreSQL
-timeouts, `REDIS_CONNECT_TIMEOUT_MS`, `OLLAMA_BASE_URL`, `OLLAMA_TIMEOUT`,
-`OLLAMA_LONG_OPERATION_TIMEOUT`, and `OLLAMA_MAX_CONTEXT`; the shared Compose
-environment sends each value identically to the application and external
-worker. The provider timeouts accept 1,000-3,600,000 milliseconds, maximum
-context accepts 128-2,097,152 tokens, and the long timeout cannot be shorter
-than the standard timeout; malformed values fail both server entrypoints before
-state is created. Node-local Agent CLI binaries and Codex OAuth token files are
-not supported by external durable workers, so the team profile pins both
-provider paths off and startup rejects attempts to enable them. Then start the
-three application replicas, external durable worker, PostgreSQL/PGVector,
-Redis, versioned MinIO bucket, and gateway:
+Start from the shipped fail-closed template. Keep the completed environment
+file outside the repository and restrict it to its operator:
+
+```bash
+cp deploy/team/.env.example /absolute/path/to/libre-team.env
+chmod 600 /absolute/path/to/libre-team.env
+```
+
+Replace every `REPLACE_*` value before startup. Generate the PostgreSQL
+password with a URL-safe alphabet (for example, `openssl rand -hex 32`) because
+the same literal is both the server password and part of `DATABASE_URL`.
+`ENCRYPTION_KEY` and every value inside `STORAGE_ENCRYPTION_KEYS` must be
+exactly 64 hexadecimal characters. On a fresh installation the `legacy` entry
+must equal `ENCRYPTION_KEY`; for SQLite migration both must equal the source
+key. Keep a different active key for new blob writes and retain old keys until
+the object inventory proves they are unused.
+
+The same file may set `POSTGRES_MIGRATION_MODE`, `POSTGRES_POOL_MAX`, the
+supported PostgreSQL timeouts, `REDIS_CONNECT_TIMEOUT_MS`, `OLLAMA_BASE_URL`,
+`OLLAMA_TIMEOUT`, `OLLAMA_LONG_OPERATION_TIMEOUT`, and `OLLAMA_MAX_CONTEXT`;
+the shared Compose environment sends each value identically to the application
+and external worker. The provider timeouts accept 1,000-3,600,000 milliseconds,
+maximum context accepts 128-2,097,152 tokens, and the long timeout cannot be
+shorter than the standard timeout; malformed values fail both server
+entrypoints before state is created. Node-local Agent CLI binaries and Codex
+OAuth token files are not supported by external durable workers, so the team
+profile pins both provider paths off and startup rejects attempts to enable
+them. Then start the application replicas, external durable worker,
+PostgreSQL/PGVector, Redis, versioned MinIO bucket, and gateway:
 
 ```bash
 docker compose --env-file /absolute/path/to/libre-team.env \
