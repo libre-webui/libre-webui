@@ -1,0 +1,209 @@
+name: Security
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+
+jobs:
+  dependency-and-sbom:
+    name: Dependency audit and source SBOM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.22'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run dependency audit
+        id: dependency-audit
+        continue-on-error: true
+        run: |
+          mkdir -p security-artifacts
+          npm audit --audit-level=moderate --json > security-artifacts/npm-audit.json
+
+      - name: Generate CycloneDX source SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: security-artifacts/libre-webui-source.cdx.json
+          artifact-name: libre-webui-source-sbom.cdx.json
+          upload-artifact-retention: 30
+          upload-release-assets: false
+
+      - name: Retain dependency audit report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dependency-audit
+          path: security-artifacts/npm-audit.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce dependency audit
+        if: steps.dependency-audit.outcome == 'failure'
+        run: |
+          echo 'npm audit reported a moderate-or-higher vulnerability.' >&2
+          exit 1
+
+  codeql:
+    name: CodeQL (JavaScript and TypeScript)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          build-mode: none
+
+      - name: Analyze source
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:javascript-typescript
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Create report directory
+        run: mkdir -p security-artifacts
+
+      - name: Scan the repository for secrets
+        id: trivy-secrets
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: secret
+          format: sarif
+          output: security-artifacts/trivy-secrets.sarif
+          exit-code: '1'
+
+      - name: Upload secret findings to code scanning
+        if: >-
+          always() &&
+          (github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: security-artifacts/trivy-secrets.sarif
+          category: trivy-secrets
+
+      - name: Retain secret scan report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: secret-scan
+          path: security-artifacts/trivy-secrets.sarif
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce secret scan
+        if: steps.trivy-secrets.outcome == 'failure'
+        run: |
+          echo 'Trivy found a committed secret.' >&2
+          exit 1
+
+  container-scan:
+    name: Container scan and image SBOM
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Create report directory
+        run: mkdir -p security-artifacts
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build the runtime image without publishing it
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          push: false
+          tags: libre-webui:security-${{ github.sha }}
+          build-args: APP_VERSION=security-${{ github.sha }}
+          cache-from: type=gha,scope=security-image
+          cache-to: type=gha,mode=max,scope=security-image
+
+      - name: Generate CycloneDX image SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: libre-webui:security-${{ github.sha }}
+          format: cyclonedx-json
+          output-file: security-artifacts/libre-webui-image.cdx.json
+          artifact-name: libre-webui-image-sbom.cdx.json
+          upload-artifact-retention: 30
+          upload-release-assets: false
+
+      - name: Scan the runtime image
+        id: trivy-container
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: libre-webui:security-${{ github.sha }}
+          scanners: vuln
+          vuln-type: os,library
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: security-artifacts/trivy-container.sarif
+          exit-code: '1'
+
+      - name: Upload container findings to code scanning
+        if: >-
+          always() &&
+          (github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: security-artifacts/trivy-container.sarif
+          category: trivy-container
+
+      - name: Retain container scan report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: container-scan
+          path: security-artifacts/trivy-container.sarif
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce container scan
+        if: steps.trivy-container.outcome == 'failure'
+        run: |
+          echo 'Trivy found a fixed high-or-critical container vulnerability.' >&2
+          exit 1

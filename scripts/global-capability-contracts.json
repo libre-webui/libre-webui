@@ -1,0 +1,2896 @@
+{
+  "schemaVersion": 3,
+  "scope": {
+    "uiSource": "frontend/src/App.tsx",
+    "backendSource": "backend/src/index.ts",
+    "excludedUiRoutes": ["/*"],
+    "providerContract": "scripts/capability-contracts.json",
+    "backendRouteDirectory": "backend/src/routes",
+    "websocketSource": "backend/src/websocketServer.ts"
+  },
+  "capabilities": [
+    {
+      "id": "home",
+      "title": "Home",
+      "uiRoutes": ["/"],
+      "documentation": [
+        {
+          "file": "docs/00-README.md",
+          "patterns": ["Home greets you, offers what to start"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "frontend/e2e/welcome-prompts.spec.ts",
+          "runner": "test:e2e",
+          "name": "new chats rotate through distinct creator prompts",
+          "behaviorPatterns": [
+            "page\\.goto\\('/chat'\\)",
+            "What should we make\\?"
+          ]
+        }
+      ],
+      "backendRoutes": [],
+      "contractSurfaces": {
+        "schemas": {
+          "notApplicable": "The Home page is a navigation and composition surface with no independent request or response payload."
+        },
+        "manifests": {
+          "notApplicable": "The Home page is built into the application and is not installed or discovered through a manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "frontend/src/utils/welcomePrompts.ts",
+              "patterns": ["WELCOME_PROMPT_IDS", "getWelcomePromptId"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "chat",
+      "title": "Chat",
+      "uiRoutes": ["/chat", "/c/:sessionId"],
+      "documentation": [
+        {
+          "file": "docs/01-QUICK_START.md",
+          "patterns": [
+            "Chat, documents, artifacts, and provider-backed features do not require Docker"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-chat-context.mjs",
+          "runner": "test:package",
+          "name": "ChatRequestService prepares target, persona prompt, and shared messages",
+          "behaviorPatterns": [
+            "service\\.prepareGenerationRequest",
+            "actualModelName, 'resolved-model'"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "GET",
+          "path": "/sessions"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "GET",
+          "path": "/sessions/:sessionId"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "PUT",
+          "path": "/sessions/:sessionId"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "PUT",
+          "path": "/sessions/:sessionId/messages/:messageId"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "DELETE",
+          "path": "/sessions/:sessionId"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "DELETE",
+          "path": "/sessions"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/messages"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/generate"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/generations"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/generations/:assistantMessageId/cancel"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "GET",
+          "path": "/sessions/:sessionId/events"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/generate/stream"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/generate-title"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "GET",
+          "path": "/folders"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/folders"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "PUT",
+          "path": "/folders/:folderId"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "DELETE",
+          "path": "/folders/:folderId"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/followups"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/messages/:messageId/branch"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "GET",
+          "path": "/sessions/:sessionId/messages/:messageId/branches"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/messages/:messageId/branches"
+        }
+      ],
+      "websocketRoutes": [
+        {
+          "file": "backend/src/websocketServer.ts",
+          "path": "/ws",
+          "authenticationEvidence": [
+            {
+              "file": "backend/src/websocketServer.ts",
+              "patterns": [
+                "pathname === '/ws'",
+                "authorizeChatUpgrade\\(",
+                "websocketTicketService\\.consume\\("
+              ]
+            },
+            {
+              "file": "scripts/test-websocket-tickets.mjs",
+              "patterns": [
+                "production upgrade rejects wrong audience",
+                "expectUpgradeStatus\\(originUrl, 403"
+              ]
+            }
+          ]
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface ChatSession",
+                "export interface ChatMessage"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "scripts/capability-contracts.json",
+              "patterns": [
+                "\"id\": \"completion\"",
+                "\"requiresBundledDefinition\": true"
+              ]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/preferencesService.ts",
+              "patterns": [
+                "private defaultPreferences",
+                "systemMessage: 'You are a helpful assistant"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "model-management",
+      "title": "Model management",
+      "uiRoutes": ["/models"],
+      "documentation": [
+        {
+          "file": "docs/02-WORKING_WITH_MODELS.md",
+          "patterns": ["## Model Manager"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "frontend/e2e/model-manager.spec.ts",
+          "runner": "test:e2e",
+          "name": "cloud library pulls append the Ollama cloud suffix automatically",
+          "behaviorPatterns": ["/api/ollama/pull/stream", "gpt-oss:cloud"]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
+          "path": "/health"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
+          "path": "/models"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
+          "path": "/models/access"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "PUT",
+          "path": "/models/access"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/models/pull-all"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
+          "path": "/models/pull-all/stream"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/models/pull"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
+          "path": "/pull/stream"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "DELETE",
+          "path": "/models"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
+          "path": "/models/show"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
+          "path": "/models/:modelName/defaults"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/models"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/models/copy"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/models/push"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/embed"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
+          "path": "/running"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/models/unload"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/models/unload-all"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
+          "path": "/version"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/chat"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/chat/stream"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "HEAD",
+          "path": "/blobs/:digest"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/blobs/:digest"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "POST",
+          "path": "/embeddings"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
+          "path": "/library"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "GET",
+          "path": "/active"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "GET",
+          "path": "/active/current"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "GET",
+          "path": "/status/all"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "GET",
+          "path": "/:id"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "POST",
+          "path": "/upload"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "POST",
+          "path": "/install"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "PUT",
+          "path": "/:id"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "DELETE",
+          "path": "/:id"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "POST",
+          "path": "/activate/:id"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "POST",
+          "path": "/discover/:id"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "POST",
+          "path": "/deactivate/:id"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "POST",
+          "path": "/deactivate"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "GET",
+          "path": "/:id/export"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "GET",
+          "path": "/credentials/all"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "POST",
+          "path": "/:id/credentials"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "DELETE",
+          "path": "/:id/credentials"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "GET",
+          "path": "/:id/credentials/check"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "GET",
+          "path": "/:id/variables"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "PUT",
+          "path": "/:id/variables"
+        },
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "DELETE",
+          "path": "/:id/variables"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface OllamaCreateRequest",
+                "export interface OllamaShowRequest"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "scripts/capability-contracts.json",
+              "patterns": [
+                "\"pluginTypes\": \\[\"chat\", \"completion\"\\]",
+                "\"pluginTypes\": \\[\"embedding\"\\]"
+              ]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/ollamaService.ts",
+              "patterns": ["modelDefaultsCache", "getModelDefaults"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "personas",
+      "title": "Personas",
+      "uiRoutes": ["/personas"],
+      "documentation": [
+        {
+          "file": "docs/16-PERSONA_DEVELOPMENT_FRAMEWORK.md",
+          "patterns": ["Personas let you save a reusable assistant profile"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-memory-reliability.mjs",
+          "runner": "test:package",
+          "name": "memory insert acknowledgement loss resolves the committed row and retry is idempotent",
+          "behaviorPatterns": [
+            "service\\.storeMemory",
+            "assert\\.equal\\(rows\\.size, 1\\)"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "GET",
+          "path": "/:id"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "PUT",
+          "path": "/:id"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "DELETE",
+          "path": "/:id"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "GET",
+          "path": "/:id/export"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "POST",
+          "path": "/import"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "GET",
+          "path": "/stats/count"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "GET",
+          "path": "/defaults/parameters"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "GET",
+          "path": "/:id/download"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "GET",
+          "path": "/:id/backup"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "GET",
+          "path": "/:id/export/dna"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface CreatePersonaRequest",
+                "export interface PersonaExport"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Personas are account resources persisted by Libre and do not use an installable or discovery manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "frontend/src/components/persona-form/defaults.ts",
+              "patterns": ["DEFAULT_FORM_DATA", "memory_settings"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "media-gallery",
+      "title": "Media gallery",
+      "uiRoutes": ["/gallery"],
+      "documentation": [
+        {
+          "file": "docs/38-MEDIA_GENERATION.md",
+          "patterns": ["Open \\*\\*Imagine\\*\\* \\(`/gallery`\\)"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "frontend/e2e/media-generation.spec.ts",
+          "runner": "test:e2e",
+          "name": "video jobs can stop waiting, reopen, and resume without losing the handle",
+          "behaviorPatterns": [
+            "videoGenerationRequests\\.length",
+            "videoResumeRequests"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/imageGen.ts",
+          "mount": "/api/image-gen",
+          "method": "GET",
+          "path": "/models"
+        },
+        {
+          "file": "backend/src/routes/imageGen.ts",
+          "mount": "/api/image-gen",
+          "method": "GET",
+          "path": "/config/:pluginId"
+        },
+        {
+          "file": "backend/src/routes/imageGen.ts",
+          "mount": "/api/image-gen",
+          "method": "GET",
+          "path": "/plugins"
+        },
+        {
+          "file": "backend/src/routes/imageGen.ts",
+          "mount": "/api/image-gen",
+          "method": "POST",
+          "path": "/generate"
+        },
+        {
+          "file": "backend/src/routes/imageGen.ts",
+          "mount": "/api/image-gen",
+          "method": "GET",
+          "path": "/gallery"
+        },
+        {
+          "file": "backend/src/routes/imageGen.ts",
+          "mount": "/api/image-gen",
+          "method": "GET",
+          "path": "/gallery/:imageId"
+        },
+        {
+          "file": "backend/src/routes/imageGen.ts",
+          "mount": "/api/image-gen",
+          "method": "DELETE",
+          "path": "/gallery/:imageId"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "GET",
+          "path": "/models"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "POST",
+          "path": "/audio/generate"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "POST",
+          "path": "/audio/voice-clone"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "POST",
+          "path": "/sound/generate"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "POST",
+          "path": "/video/generate"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "GET",
+          "path": "/video/jobs"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "GET",
+          "path": "/video/jobs/:jobId"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "POST",
+          "path": "/video/jobs/:jobId/resume"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "DELETE",
+          "path": "/video/jobs/:jobId"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "GET",
+          "path": "/gallery"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "GET",
+          "path": "/gallery/:mediaId/content"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "DELETE",
+          "path": "/gallery/:mediaId"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface ImageGenRequest",
+                "export interface VideoGenRequest"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "scripts/capability-contracts.json",
+              "patterns": ["\"id\": \"image\"", "\"id\": \"video\""]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "scripts/test-capability-contracts.mjs",
+              "patterns": ["default_duration", "default_format"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "notes",
+      "title": "Notes",
+      "uiRoutes": ["/notes"],
+      "documentation": [
+        {
+          "file": "docs/03-PRO_TIPS.md",
+          "patterns": ["## Keep Durable Notes Beside Your Work"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "frontend/e2e/notes.spec.ts",
+          "runner": "test:e2e",
+          "name": "notes open in Markdown preview and make editing explicit",
+          "behaviorPatterns": ["notes-preview", "notes-preview-toggle"]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "PUT",
+          "path": "/:noteId"
+        },
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "DELETE",
+          "path": "/:noteId"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": ["export interface Note", "updatedAt: number"]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Notes are first-party account resources and have no installable or discovery manifest."
+        },
+        "defaults": {
+          "notApplicable": "Notes have no implicit content or presentation default beyond explicit user-supplied fields."
+        }
+      }
+    },
+    {
+      "id": "work",
+      "title": "Work",
+      "uiRoutes": ["/work", "/work/:taskId"],
+      "documentation": [
+        {
+          "file": "docs/33-WORKSPACES.md",
+          "patterns": [
+            "Select \\*\\*Work\\*\\* beside \\*\\*Chat\\*\\* in the sidebar"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-work-runtime.mjs",
+          "runner": "test:package",
+          "name": "runtime limits expose admission capacity and live occupancy",
+          "behaviorPatterns": ["maxActiveRuntimesGlobal", "activeRuntimeCounts"]
+        },
+        {
+          "file": "scripts/test-websocket-tickets.mjs",
+          "runner": "test:package",
+          "name": "production Work upgrade applies task-bound ticket authentication",
+          "behaviorPatterns": [
+            "fetchTicket\\('work-terminal', 'task-a'\\)",
+            "expectAuthenticatedSocketClose\\(wrongTaskUrl, 4401\\)"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/access"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "PUT",
+          "path": "/access"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/capabilities"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/policies"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/policies"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "PUT",
+          "path": "/policies/:id"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "DELETE",
+          "path": "/policies/:id"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/admin/overview"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/tasks"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/tasks/:id"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/tasks/:id/messages"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/tasks/:taskId/runs/:runId/events"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "PATCH",
+          "path": "/tasks/:id"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "DELETE",
+          "path": "/tasks/:id"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks/:id/runs"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks/:id/cancel"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/tasks/:id/files"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/tasks/:id/file"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "PUT",
+          "path": "/tasks/:id/file"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/tasks/:id/git"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "GET",
+          "path": "/tasks/:id/git/diff"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks/:id/git/init"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks/:id/git/stage"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks/:id/git/commit"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks/:id/git/branches"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks/:id/git/switch"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks/:id/preview/start"
+        },
+        {
+          "file": "backend/src/routes/work.ts",
+          "mount": "/api/work",
+          "method": "POST",
+          "path": "/tasks/:id/preview/stop"
+        }
+      ],
+      "websocketRoutes": [
+        {
+          "file": "backend/src/websocketServer.ts",
+          "path": "/ws/work-terminal",
+          "authenticationEvidence": [
+            {
+              "file": "backend/src/workTerminalServer.ts",
+              "patterns": [
+                "WORK_TERMINAL_WS_PATH = '/ws/work-terminal'",
+                "websocketTicketService\\.consume\\(",
+                "'work-terminal'",
+                "requireCurrentTerminalTask\\("
+              ]
+            },
+            {
+              "file": "scripts/test-websocket-tickets.mjs",
+              "patterns": [
+                "production Work upgrade applies task-bound ticket authentication",
+                "expectAuthenticatedSocketClose\\(wrongTaskUrl, 4401\\)"
+              ]
+            }
+          ]
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/work.ts",
+              "patterns": [
+                "export interface WorkTaskDetail",
+                "export interface WorkCapabilities"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "scripts/capability-contracts.json",
+              "patterns": ["\"id\": \"completion\"", "Work can use active"]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/workRuntimeShared.ts",
+              "patterns": [
+                "WORK_RUNTIME_DEFAULTS",
+                "WORK_RUNTIME_ADMISSION_DEFAULTS"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "agent-cli",
+      "title": "Agent CLI models",
+      "uiRoutes": ["/agents"],
+      "documentation": [
+        {
+          "file": "docs/36-AGENT_CLI_MODELS.md",
+          "patterns": ["# Use an Installed Coding Agent as a Chat Model"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-agent-cli-chat.mjs",
+          "runner": "test:package",
+          "name": "every agent CLI passes an explicit model through to its argv",
+          "behaviorPatterns": [
+            "buildArgs\\('opus'\\)",
+            "buildArgs\\('gpt-5\\.4'\\)"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/agentCli.ts",
+          "mount": "/api/agent-clis",
+          "method": "GET",
+          "path": "/models"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/services/agentCliService.ts",
+              "patterns": [
+                "export interface AgentCliDefinition",
+                "export interface AgentCliModel"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Agent CLI adapters are compiled first-party definitions and are not loaded from provider manifests."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/agentAccessService.ts",
+              "patterns": ["AGENTS_ENABLED_KEY", "stay disabled"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "artifacts",
+      "title": "Artifacts",
+      "uiRoutes": ["/artifacts"],
+      "documentation": [
+        {
+          "file": "docs/13-ARTIFACTS_FEATURE.md",
+          "patterns": ["Artifacts turn model-generated files and code blocks"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "frontend/e2e/artifacts.spec.ts",
+          "runner": "test:e2e",
+          "name": "chat detects multi-file HTML artifacts and renders them in the slide-out panel",
+          "behaviorPatterns": ["artifact-slide-out-panel", "allow-same-origin"]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/artifacts.ts",
+          "mount": "/api/artifacts",
+          "method": "GET",
+          "path": "/sandbox"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "frontend/src/utils/artifactParser.ts",
+              "patterns": [
+                "export interface ArtifactParseResult",
+                "artifacts: Artifact"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "frontend/src/artifact-runtime/manifest.ts",
+              "patterns": ["single source of truth", "ARTIFACT_MODULES"]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "frontend/src/components/ArtifactSlideOutPanel.tsx",
+              "patterns": [
+                "DEFAULT_PANEL_WIDTH",
+                "useState\\(DEFAULT_PANEL_WIDTH\\)"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "usage",
+      "title": "Provider usage",
+      "uiRoutes": ["/usage"],
+      "documentation": [
+        {
+          "file": "docs/37-SYSTEM_MONITORING.md",
+          "patterns": [
+            "The Usage page \\(`/usage`\\) charts outbound provider traffic"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-plugin-usage-analytics.mjs",
+          "runner": "test:package",
+          "name": "the usage endpoint is explicitly protected by administrator middleware",
+          "behaviorPatterns": ["routeSource", "requireAdmin"]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/plugins.ts",
+          "mount": "/api/plugins",
+          "method": "GET",
+          "path": "/usage"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/services/pluginUsageService.ts",
+              "patterns": [
+                "export interface PluginUsageEventInput",
+                "export interface PluginUsageAnalytics"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Usage analytics consume provider events but define no installable or discovery manifest of their own."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/pluginUsageService.ts",
+              "patterns": ["MAX_ANALYTICS_DAYS", "RETENTION_DAYS"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "system-diagnostics",
+      "title": "System diagnostics",
+      "uiRoutes": ["/system"],
+      "documentation": [
+        {
+          "file": "docs/37-SYSTEM_MONITORING.md",
+          "patterns": ["The System page \\(`/system`\\) reports"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-system-diagnostics.mjs",
+          "runner": "test:package",
+          "name": "system route requires both authentication and current administrator status",
+          "behaviorPatterns": ["authenticate", "requireAdmin"]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/health.ts",
+          "mount": "/health",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/health.ts",
+          "mount": "/health",
+          "method": "GET",
+          "path": "/live"
+        },
+        {
+          "file": "backend/src/routes/health.ts",
+          "mount": "/health",
+          "method": "GET",
+          "path": "/ready"
+        },
+        {
+          "file": "backend/src/routes/health.ts",
+          "mount": "/health",
+          "method": "GET",
+          "path": "/deep"
+        },
+        {
+          "file": "backend/src/routes/systemDiagnostics.ts",
+          "mount": "/api/system",
+          "method": "GET",
+          "path": "/"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/services/systemDiagnosticsService.ts",
+              "patterns": [
+                "export interface SystemDiagnostics",
+                "export interface DockerContainerSummary"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "System diagnostics are a built-in authenticated report and have no installable or discovery manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/healthService.ts",
+              "patterns": ["READINESS_CACHE_MS", "HEALTH_CHECK_TIMEOUT_MS"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "user-administration",
+      "title": "User administration",
+      "uiRoutes": ["/users"],
+      "documentation": [
+        {
+          "file": "docs/12-AUTHENTICATION.md",
+          "patterns": [
+            "Approval \\(`PATCH /api/users/:id/approve`, admin-only\\)"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-user-approval.mjs",
+          "runner": "test:package",
+          "name": "public registrations require administrator approval before authentication",
+          "behaviorPatterns": [
+            "registration\\?\\.status, 'pending'",
+            "responseBody\\.code, 'ACCOUNT_PENDING'"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/users.ts",
+          "mount": "/api/users",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/users.ts",
+          "mount": "/api/users",
+          "method": "GET",
+          "path": "/pending-approvals"
+        },
+        {
+          "file": "backend/src/routes/users.ts",
+          "mount": "/api/users",
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/users.ts",
+          "mount": "/api/users",
+          "method": "PATCH",
+          "path": "/me/avatar"
+        },
+        {
+          "file": "backend/src/routes/users.ts",
+          "mount": "/api/users",
+          "method": "PATCH",
+          "path": "/:id/approve"
+        },
+        {
+          "file": "backend/src/routes/users.ts",
+          "mount": "/api/users",
+          "method": "PATCH",
+          "path": "/:id"
+        },
+        {
+          "file": "backend/src/routes/users.ts",
+          "mount": "/api/users",
+          "method": "DELETE",
+          "path": "/:id"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface UserCreateRequest",
+                "export interface UserUpdateRequest"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "User administration is a built-in identity capability and has no installable or discovery manifest."
+        },
+        "defaults": {
+          "notApplicable": "User role and account status are selected by bootstrap or approval policy rather than a reusable capability default."
+        }
+      }
+    },
+    {
+      "id": "authentication",
+      "title": "Authentication",
+      "uiRoutes": ["/login"],
+      "documentation": [
+        {
+          "file": "docs/12-AUTHENTICATION.md",
+          "patterns": [
+            "Passwords are hashed with bcrypt before storage\\. Login and signup routes are rate-limited"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "frontend/e2e/auth.spec.ts",
+          "runner": "test:e2e",
+          "name": "password login requires and submits a Turnstile token",
+          "behaviorPatterns": ["Security verification", "verified-login-token"]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/websocket-ticket"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/login"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/logout"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/verify"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/system-info"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/encryption-key"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/signup"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/oauth/github"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/oauth/github/callback"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/oauth/github/status"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/oauth/huggingface"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/oauth/huggingface/callback"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/oauth/huggingface/status"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/oauth/exchange"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/me"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface LoginRequest",
+                "export interface LoginResponse"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Authentication is a built-in security boundary and is not installed or discovered through a manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/registrationPolicy.ts",
+              "patterns": [
+                "Public account registration is disabled",
+                "userCount === 0"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "data-portability",
+      "title": "Data portability",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/services/dataArchiveService.ts",
+          "patterns": [
+            "class DataArchiveService",
+            "async exportUserData\\(",
+            "async importUserData\\("
+          ]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/41-DATA_PORTABILITY.md",
+          "patterns": [
+            "Settings → Data Management",
+            "GET`  \\| `/api/preferences/export"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-data-archive.mjs",
+          "runner": "test:package",
+          "name": "v3 export is complete, checksummed, user-scoped, and explicit about exclusions",
+          "behaviorPatterns": [
+            "archive\\.version, 3",
+            "archive\\.integrity\\.algorithm"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "GET",
+          "path": "/export"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "POST",
+          "path": "/import/preflight"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "POST",
+          "path": "/import"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/services/dataArchiveService.ts",
+              "patterns": [
+                "export interface UserDataArchive",
+                "export interface DataArchivePreflight"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "backend/src/services/dataArchiveService.ts",
+              "patterns": ["DATA_ARCHIVE_FORMAT", "DataArchiveIntegrity"]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/dataArchiveService.ts",
+              "patterns": [
+                "DATA_ARCHIVE_VERSION = 3",
+                "DATA_ARCHIVE_CANONICALIZATION"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "document-knowledge",
+      "title": "Document knowledge and retrieval",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/services/documentService.ts",
+          "patterns": [
+            "keywordSearchDocuments\\(",
+            "semanticSearchDocuments\\("
+          ]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/09-RAG_FEATURE.md",
+          "patterns": [
+            "Document Chat lets Libre WebUI search uploaded documents",
+            "POST /api/documents/search"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-rag-retrieval.mjs",
+          "runner": "test:package",
+          "name": "keyword retrieval sees session documents AND user-scoped uploads",
+          "behaviorPatterns": [
+            "documentService\\.searchDocuments",
+            "user-scoped upload must join the session scope"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "POST",
+          "path": "/upload"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "GET",
+          "path": "/collections"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "POST",
+          "path": "/collections"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "DELETE",
+          "path": "/collections/:collectionId"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "PUT",
+          "path": "/:documentId/collection"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "POST",
+          "path": "/fetch-url"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "GET",
+          "path": "/session/:sessionId"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "POST",
+          "path": "/search"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "DELETE",
+          "path": "/:documentId"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "GET",
+          "path": "/embeddings/status"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "POST",
+          "path": "/embeddings/regenerate"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "GET",
+          "path": "/:documentId/source"
+        },
+        {
+          "file": "backend/src/routes/documents.ts",
+          "mount": "/api/documents",
+          "method": "GET",
+          "path": "/:documentId"
+        },
+        {
+          "file": "backend/src/routes/embeddings.ts",
+          "mount": "/api/embeddings",
+          "method": "GET",
+          "path": "/models"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface Document",
+                "export interface DocumentChunk"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "scripts/capability-contracts.json",
+              "patterns": [
+                "\"id\": \"embedding\"",
+                "\"catalogLabel\": \"Embedding\""
+              ]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/preferencesService.ts",
+              "patterns": ["embeddingSettings:", "model: 'nomic-embed-text'"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "persona-memory",
+      "title": "Persona memory",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/services/memoryService.ts",
+          "patterns": [
+            "export class MemoryService",
+            "async storeMemory\\(",
+            "async searchMemories\\("
+          ]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/16-PERSONA_DEVELOPMENT_FRAMEWORK.md",
+          "patterns": [
+            "## Memory",
+            "Persona memory stores selected interactions as searchable memories"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-memory-reliability.mjs",
+          "runner": "test:package",
+          "name": "persona deletion during vector publication still removes the recreated vector",
+          "behaviorPatterns": [
+            "service\\.storeMemory",
+            "assert\\.equal\\(vectors\\.size, 0\\)"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "GET",
+          "path": "/:id/memory/status"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "DELETE",
+          "path": "/:id/memory"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "GET",
+          "path": "/:id/memory/stats"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "POST",
+          "path": "/:id/memory/consolidate"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "POST",
+          "path": "/:id/memory/decay"
+        },
+        {
+          "file": "backend/src/routes/personas.ts",
+          "mount": "/api/personas",
+          "method": "GET",
+          "path": "/:id/memory/core"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface PersonaMemoryEntry",
+                "export interface PersonaMutation"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Persona memory is an internal persona resource and has no installable or discovery manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "frontend/src/components/persona-form/defaults.ts",
+              "patterns": ["memory_settings:", "mutation_settings:"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "web-search",
+      "title": "Web search",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/services/webSearchService.ts",
+          "patterns": [
+            "export async function webSearch\\(",
+            "WEB_SEARCH_RESULTS_CEILING"
+          ]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/39-WEB_SEARCH.md",
+          "patterns": [
+            "Give chats and Work tasks live web search",
+            "Settings > Connections > \\*\\*Search\\*\\*"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-web-search.mjs",
+          "runner": "test:package",
+          "name": "web search ships disabled and validates its configuration",
+          "behaviorPatterns": [
+            "config\\.enabled, false",
+            "config\\.maxResults, 6"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/search.ts",
+          "mount": "/api/search",
+          "method": "GET",
+          "path": "/config"
+        },
+        {
+          "file": "backend/src/routes/search.ts",
+          "mount": "/api/search",
+          "method": "GET",
+          "path": "/access"
+        },
+        {
+          "file": "backend/src/routes/search.ts",
+          "mount": "/api/search",
+          "method": "PUT",
+          "path": "/access"
+        },
+        {
+          "file": "backend/src/routes/search.ts",
+          "mount": "/api/search",
+          "method": "PUT",
+          "path": "/config"
+        },
+        {
+          "file": "backend/src/routes/search.ts",
+          "mount": "/api/search",
+          "method": "POST",
+          "path": "/test"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/services/webSearchService.ts",
+              "patterns": [
+                "export interface WebSearchResult",
+                "export interface WebSearchConfig"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Web search uses administrator connection settings rather than an installable provider manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/webSearchService.ts",
+              "patterns": [
+                "WEB_SEARCH_DEFAULT_MAX_RESULTS",
+                "WEB_SEARCH_RESULTS_CEILING"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "settings-preferences",
+      "title": "Settings and preferences",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/services/preferencesService.ts",
+          "patterns": ["getPreferences\\(", "updatePreferences\\("]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/35-PROVIDER_CONNECTIONS.md",
+          "patterns": [
+            "\\*\\*Settings > Plugins\\*\\*",
+            "## Open Provider Connections"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "frontend/e2e/settings.spec.ts",
+          "runner": "test:e2e",
+          "name": "theme preference survives refresh and retries a failed save",
+          "behaviorPatterns": ["/api/preferences", "themeSyncPending"]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "PUT",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "PUT",
+          "path": "/default-model"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "PUT",
+          "path": "/system-message"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "PUT",
+          "path": "/generation-options"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "PUT",
+          "path": "/model-generation-options"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "POST",
+          "path": "/generation-options/reset"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "PUT",
+          "path": "/embedding-settings"
+        },
+        {
+          "file": "backend/src/routes/preferences.ts",
+          "mount": "/api/preferences",
+          "method": "POST",
+          "path": "/embedding-settings/reset"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface UserPreferences",
+                "export interface GenerationOptions"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Settings aggregate first-party and provider configuration but do not define a separate installable manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/preferencesService.ts",
+              "patterns": ["private defaultPreferences", "mode: 'dark'"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "speech",
+      "title": "Speech input and output",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/routes/stt.ts",
+          "patterns": ["router.post\\('/transcribe'", "executeSTTRequest\\("]
+        },
+        {
+          "file": "backend/src/routes/tts.ts",
+          "patterns": ["router.post\\(", "executeTTSRequest\\("]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/42-SPEECH_TO_TEXT.md",
+          "patterns": [
+            "# Speech to Text",
+            "Select a named provider explicitly to use provider-backed STT"
+          ]
+        },
+        {
+          "file": "docs/27-QWEN3_TTS.md",
+          "patterns": ["text-to-speech", "Qwen3-TTS"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-stt-routing.mjs",
+          "runner": "test:package",
+          "name": "STT sends an OpenAI-compatible multipart request to the selected route",
+          "behaviorPatterns": ["service\\.transcribe", "name=\"model\""]
+        },
+        {
+          "file": "frontend/e2e/stt.spec.ts",
+          "runner": "test:e2e",
+          "name": "provider speech input discloses its route and transcribes recorded audio",
+          "behaviorPatterns": [
+            "SUPPORTED_OPUS_WEBM_BYTES",
+            "toContain\\('OpusHead'\\)"
+          ]
+        },
+        {
+          "file": "frontend/e2e/stt.spec.ts",
+          "runner": "test:e2e",
+          "name": "invalid provider audio is rejected safely without inserting a transcript",
+          "behaviorPatterns": ["status: 400", "toHaveValue\\(''\\)"]
+        },
+        {
+          "file": "scripts/test-tts-routing.mjs",
+          "runner": "test:package",
+          "name": "TTS routes a shared model alias through the selected plugin and user valve",
+          "behaviorPatterns": ["executeTTSRequest", "apiKeyLookups"]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/stt.ts",
+          "mount": "/api/stt",
+          "method": "GET",
+          "path": "/models"
+        },
+        {
+          "file": "backend/src/routes/stt.ts",
+          "mount": "/api/stt",
+          "method": "POST",
+          "path": "/transcribe"
+        },
+        {
+          "file": "backend/src/routes/tts.ts",
+          "mount": "/api/tts",
+          "method": "GET",
+          "path": "/voice-profiles"
+        },
+        {
+          "file": "backend/src/routes/tts.ts",
+          "mount": "/api/tts",
+          "method": "DELETE",
+          "path": "/voice-profiles/:profileId"
+        },
+        {
+          "file": "backend/src/routes/tts.ts",
+          "mount": "/api/tts",
+          "method": "GET",
+          "path": "/models"
+        },
+        {
+          "file": "backend/src/routes/tts.ts",
+          "mount": "/api/tts",
+          "method": "GET",
+          "path": "/voices/:pluginId"
+        },
+        {
+          "file": "backend/src/routes/tts.ts",
+          "mount": "/api/tts",
+          "method": "POST",
+          "path": "/generate"
+        },
+        {
+          "file": "backend/src/routes/tts.ts",
+          "mount": "/api/tts",
+          "method": "POST",
+          "path": "/voice-clone"
+        },
+        {
+          "file": "backend/src/routes/tts.ts",
+          "mount": "/api/tts",
+          "method": "POST",
+          "path": "/generate-base64"
+        },
+        {
+          "file": "backend/src/routes/tts.ts",
+          "mount": "/api/tts",
+          "method": "GET",
+          "path": "/plugins"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface TTSRequest",
+                "export interface STTConfig"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "scripts/capability-contracts.json",
+              "patterns": ["\"id\": \"stt\"", "\"id\": \"tts\""]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "scripts/test-capability-contracts.mjs",
+              "patterns": ["default_voice", "default_format"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "hugging-face-hub",
+      "title": "Hugging Face Hub",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/routes/huggingfaceHub.ts",
+          "patterns": ["router.use\\(authenticate\\)", "router.get\\("]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/29-HUGGINGFACE_HUB.md",
+          "patterns": ["# Hugging Face Hub", "## Model Browser"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-huggingface-hub-routes.mjs",
+          "runner": "test:package",
+          "name": "Hugging Face Hub task discovery is authenticated route behavior",
+          "behaviorPatterns": [
+            "unauthenticated\\.status, 401",
+            "authenticated\\.status, 200"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/huggingfaceHub.ts",
+          "mount": "/api/huggingface-hub",
+          "method": "GET",
+          "path": "/models"
+        },
+        {
+          "file": "backend/src/routes/huggingfaceHub.ts",
+          "mount": "/api/huggingface-hub",
+          "method": "GET",
+          "path": "/models/:author/:modelName"
+        },
+        {
+          "file": "backend/src/routes/huggingfaceHub.ts",
+          "mount": "/api/huggingface-hub",
+          "method": "GET",
+          "path": "/tasks"
+        },
+        {
+          "file": "backend/src/routes/huggingfaceHub.ts",
+          "mount": "/api/huggingface-hub",
+          "method": "POST",
+          "path": "/cache/clear"
+        },
+        {
+          "file": "backend/src/routes/huggingfaceHub.ts",
+          "mount": "/api/huggingface-hub",
+          "method": "GET",
+          "path": "/trending"
+        },
+        {
+          "file": "backend/src/routes/huggingfaceHub.ts",
+          "mount": "/api/huggingface-hub",
+          "method": "GET",
+          "path": "/models/:author/:modelName/gguf"
+        },
+        {
+          "file": "backend/src/routes/huggingfaceHub.ts",
+          "mount": "/api/huggingface-hub",
+          "method": "GET",
+          "path": "/models/:author/:modelName/has-gguf"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/routes/huggingfaceHub.ts",
+              "patterns": [
+                "interface HuggingFaceModelResponse",
+                "interface GgufFileInfo"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Hub model metadata is remote API data; Libre defines no local installable manifest for the browser capability."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/routes/huggingfaceHub.ts",
+              "patterns": ["CACHE_TTL = 24", "VALID_HF_ID_PATTERN"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "libre-claw",
+      "title": "Libre Claw",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "patterns": [
+            "router.use\\(authenticate, requireAdmin\\)",
+            "router.post\\('/runs'"
+          ]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/31-LIBRE_CLAW_INTEGRATION.md",
+          "patterns": [
+            "# Libre Claw Integration",
+            "All Libre Claw routes require an authenticated admin user"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "frontend/e2e/sidebar-create-actions.spec.ts",
+          "runner": "test:e2e",
+          "name": "Work and Agents are hidden and route-protected for non-admin users",
+          "behaviorPatterns": ["/api/libre-claw", "libreClawRequests"]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/access"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "PUT",
+          "path": "/access"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/status"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/health"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/dashboard"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/config/model"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "PATCH",
+          "path": "/config/model"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/config/fallback"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "PATCH",
+          "path": "/config/fallback"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "PATCH",
+          "path": "/config/theme"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/runs"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "POST",
+          "path": "/runs"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/runs/:runId"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/runs/:runId/events"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "POST",
+          "path": "/runs/:runId/cancel"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "POST",
+          "path": "/runs/:runId/permissions/:toolCallId"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/usage"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/automations"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "POST",
+          "path": "/automations"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "GET",
+          "path": "/automations/:automationId"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "PATCH",
+          "path": "/automations/:automationId"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "PUT",
+          "path": "/automations/:automationId"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "POST",
+          "path": "/automations/:automationId/pause"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "POST",
+          "path": "/automations/:automationId/resume"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "POST",
+          "path": "/automations/:automationId/run"
+        },
+        {
+          "file": "backend/src/routes/libreClaw.ts",
+          "mount": "/api/libre-claw",
+          "method": "DELETE",
+          "path": "/automations/:automationId"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/services/libreClawService.ts",
+              "patterns": [
+                "export interface LibreClawRun",
+                "export interface LibreClawAutomation"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Libre Claw is an explicitly configured service integration and does not use a Libre provider manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/libreClawService.ts",
+              "patterns": ["DEFAULT_BASE_URL", "LIBRE_CLAW_TIMEOUT_MS"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "durable-jobs",
+      "title": "Durable jobs and events",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/routes/jobs.ts",
+          "patterns": [
+            "router.get\\('/:jobId/events'",
+            "router.post\\('/:jobId/cancel'"
+          ]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/45-PLATFORM_FOUNDATION.md",
+          "patterns": ["## Durable jobs and events", "idempotent enqueue"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-durable-jobs.mjs",
+          "runner": "test:package",
+          "name": "ordered event replay uses global cursors and per-stream sequences",
+          "behaviorPatterns": [
+            "streamSequence",
+            "replayEvents\\(cursors\\[0\\]"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/jobs.ts",
+          "mount": "/api/jobs",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/jobs.ts",
+          "mount": "/api/jobs",
+          "method": "GET",
+          "path": "/:jobId"
+        },
+        {
+          "file": "backend/src/routes/jobs.ts",
+          "mount": "/api/jobs",
+          "method": "GET",
+          "path": "/:jobId/events"
+        },
+        {
+          "file": "backend/src/routes/jobs.ts",
+          "mount": "/api/jobs",
+          "method": "POST",
+          "path": "/:jobId/cancel"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/platform/jobs/durableJobTypes.ts",
+              "patterns": [
+                "export interface DurableJobMetadata",
+                "export interface DurableJobEvent"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Durable jobs use registered handler types and persisted payload contracts, not installable manifests."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/platform/jobs/embeddedDurableJobWorker.ts",
+              "patterns": [
+                "options.leaseMs \\?\\? 30_000",
+                "options.pollIntervalMs \\?\\? 500"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "deployment-profiles",
+      "title": "Solo and team deployment profiles",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/platform/runtimeConfig.ts",
+          "patterns": [
+            "export type PlatformMode = 'solo' \\| 'team'",
+            "Team mode requires DATABASE_BACKEND=postgres"
+          ]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/45-PLATFORM_FOUNDATION.md",
+          "patterns": ["## Runtime profiles", "LIBRE_PLATFORM_MODE=team"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-platform-coordination.mjs",
+          "runner": "test:package",
+          "name": "real Redis coordinates independent replicas and fails closed after shutdown",
+          "behaviorPatterns": [
+            "subscribe\\('replica.events'",
+            "acquireSemaphore\\('shared-capacity'"
+          ]
+        }
+      ],
+      "backendRoutes": [],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/platform/runtimeConfig.ts",
+              "patterns": [
+                "export interface PlatformRuntimeConfig",
+                "assertPlatformRuntimeConfig"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "helm/libre-webui/values.schema.json",
+              "patterns": ["replicaCount", "\"worker\": \\{"]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "helm/libre-webui/values.yaml",
+              "patterns": ["replicaCount: 1", "ENABLE_SIGNUP: 'false'"]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "recovery-backup",
+      "title": "Recovery and backup",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/cli/recoveryBackup.ts",
+          "patterns": ["createBackupArchive", "restore-team-apply"]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/44-RECOVERY_READINESS.md",
+          "patterns": [
+            "## Signed and encrypted backup commands",
+            "backup restore-apply"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-integrated-backup.mjs",
+          "runner": "test:package",
+          "name": "integrated backup is signed, encrypted, tamper-evident, and clean-restorable",
+          "behaviorPatterns": [
+            "created\\.signatureVerified, true",
+            "checksum verification failed"
+          ]
+        },
+        {
+          "file": "scripts/test-team-backup.mjs",
+          "runner": "test:package",
+          "name": "team backup restores a clean PostgreSQL and versioned S3 target with authenticated PGVector state",
+          "behaviorPatterns": [
+            "restoreTeamBackupArchive",
+            "restoredEvents\\.length, 2"
+          ]
+        }
+      ],
+      "backendRoutes": [],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/services/recoveryInventoryService.ts",
+              "patterns": [
+                "export interface RecoveryInventory",
+                "export interface RecoveryInventoryOptions"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "backend/src/platform/recovery/backupArchive.ts",
+              "patterns": [
+                "export interface BackupArchiveManifest",
+                "format: 'libre-webui-integrated-backup'"
+              ]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/recoveryInventoryService.ts",
+              "patterns": [
+                "DEFAULT_MAX_DURABLE_PAYLOAD_RECORDS",
+                "DEFAULT_MAX_DURABLE_CIPHERTEXT_BYTES"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

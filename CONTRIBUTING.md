@@ -15,8 +15,9 @@ npm install
 npm run dev
 ```
 
-The frontend runs on http://localhost:8080 and the backend on
-http://localhost:3001. Both hot-reload.
+The normal development frontend runs on http://localhost:5173 and the backend
+on http://localhost:3001. Both hot-reload. `npm run dev:host` instead binds the
+frontend to the network on port 8080 for LAN testing.
 
 ## Where to start
 
@@ -34,10 +35,11 @@ the approach before you invest time.
 | Path        | What it is                                            |
 | ----------- | ----------------------------------------------------- |
 | `frontend/` | React + Vite + Tailwind + zustand                     |
-| `backend/`  | Express + SQLite (better-sqlite3)                     |
+| `backend/`  | Express + SQLite/PostgreSQL persistence               |
 | `docs/`     | User documentation (published to docs.librewebui.org) |
 | `scripts/`  | Release tooling and the node test suites              |
-| `deploy/`   | Docker Compose stacks and Helm chart                  |
+| `deploy/`   | Docker Compose profiles and deployment examples       |
+| `helm/`     | Helm chart                                            |
 
 Target the **`dev`** branch for all PRs — `main` only moves at release time.
 See [docs/17-DEV_BRANCH.md](docs/17-DEV_BRANCH.md).
