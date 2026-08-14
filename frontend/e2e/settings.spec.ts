@@ -1046,12 +1046,12 @@ test('accent palette can adapt the full light and dark interface and persists', 
   // saved neutral palette before comparing later accent-only updates.
   await expect
     .poll(async () => (await getThemeSnapshot()).sidebar)
-    .toBe('rgb(241, 245, 249)');
+    .toBe('rgb(249, 250, 251)');
   const initialTheme = await getThemeSnapshot();
   expect(initialTheme.style).toBe('default');
   expect(initialTheme.inlineGray100).toBe('');
   expect(initialTheme.gray100).toBe('241 245 249');
-  expect(initialTheme.canvas).toBe('247 247 245');
+  expect(initialTheme.canvas).toBe('255 255 255');
 
   await page.keyboard.press('Control+,');
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
@@ -1121,10 +1121,10 @@ test('accent palette can adapt the full light and dark interface and persists', 
     .toBe('default');
   await expect
     .poll(async () => (await getThemeSnapshot()).sidebar)
-    .toBe('rgb(10, 10, 11)');
+    .toBe('rgb(27, 27, 28)');
   const defaultDarkTheme = await getThemeSnapshot();
   expect(defaultDarkTheme.inlineGray100).toBe('');
-  expect(defaultDarkTheme.canvas).toBe('13 13 12');
+  expect(defaultDarkTheme.canvas).toBe('21 21 23');
 
   await page.getByRole('button', { name: 'Adapt to accent' }).click();
   await expect

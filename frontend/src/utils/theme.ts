@@ -90,6 +90,7 @@ const SHADE_KEYS = [
 const NEUTRAL_SHADE_KEYS = ['25', ...SHADE_KEYS] as const;
 const INTERFACE_ROLE_KEYS = [
   'canvas',
+  'sidebar',
   'surface',
   'surface-subtle',
   'surface-raised',
@@ -163,6 +164,7 @@ const DARK_NEUTRAL_LIGHTNESS: Record<NeutralShade, number> = {
 
 const LIGHT_INTERFACE_ROLES: Record<InterfaceRole, InterfaceRoleDefinition> = {
   canvas: { lightness: 96, saturationFactor: 1 },
+  sidebar: { lightness: 94, saturationFactor: 1 },
   surface: { lightness: 98, saturationFactor: 0.9 },
   'surface-subtle': { lightness: 93, saturationFactor: 1 },
   'surface-raised': { lightness: 99, saturationFactor: 0.8 },
@@ -178,6 +180,7 @@ const LIGHT_INTERFACE_ROLES: Record<InterfaceRole, InterfaceRoleDefinition> = {
 
 const DARK_INTERFACE_ROLES: Record<InterfaceRole, InterfaceRoleDefinition> = {
   canvas: { lightness: 5, saturationFactor: 0.9 },
+  sidebar: { lightness: 8, saturationFactor: 1 },
   surface: { lightness: 7, saturationFactor: 0.9 },
   'surface-subtle': { lightness: 9, saturationFactor: 1 },
   'surface-raised': { lightness: 11, saturationFactor: 1 },
