@@ -214,7 +214,9 @@ test('data and preflight paths are stable across launch working directories', t 
   ).href;
   const resolveFrom = cwd => {
     const childEnv = { ...process.env };
-    delete childEnv.DATA_DIR;
+    // Keep DATA_DIR present but empty so dotenv cannot inject a developer's
+    // ignored backend/.env value into this default-path fixture.
+    childEnv.DATA_DIR = '';
     const result = spawnSync(
       process.execPath,
       [
@@ -227,13 +229,10 @@ test('data and preflight paths are stable across launch working directories', t 
     assert.equal(result.status, 0, result.stderr);
     return result.stdout;
   };
-  assert.equal(
-    resolveFrom(repoRoot),
-    path.join(repoRoot, 'backend', 'backend', 'data')
-  );
+  assert.equal(resolveFrom(repoRoot), path.join(repoRoot, 'backend', 'data'));
   assert.equal(
     resolveFrom(path.join(repoRoot, 'backend')),
-    path.join(repoRoot, 'backend', 'backend', 'data')
+    path.join(repoRoot, 'backend', 'data')
   );
   assert.throws(
     () =>
@@ -569,8 +568,8 @@ test('main rejects invalid existing databases before durable singleton writes', 
       NODE_ENV: 'production',
       JWT_SECRET: 'bootstrap-audit-jwt-secret-bootstrap-audit',
       SESSION_SECRET: 'bootstrap-audit-session-bootstrap-audit',
+      ENCRYPTION_KEY: '42'.repeat(32),
     };
-    delete env.ENCRYPTION_KEY;
     delete env.STORAGE_ENCRYPTION_KEYS;
     delete env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID;
 
@@ -601,8 +600,10 @@ test('main rejects invalid existing databases before durable singleton writes', 
     DATA_DIR: corruptDir,
     PLUGINS_DIR: path.join(corruptDir, 'plugins'),
     NODE_ENV: 'production',
+    ENCRYPTION_KEY: '42'.repeat(32),
   };
-  delete corruptEnv.ENCRYPTION_KEY;
+  delete corruptEnv.STORAGE_ENCRYPTION_KEYS;
+  delete corruptEnv.STORAGE_ENCRYPTION_ACTIVE_KEY_ID;
   const corrupt = spawnSync(
     process.execPath,
     [path.join(repoRoot, 'backend', 'dist', 'main.js')],

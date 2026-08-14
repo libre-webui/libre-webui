@@ -440,6 +440,14 @@ test('real-service CI uses the exact shipped team dependency image tags', () => 
     releaseMinio ? `minio/minio:${releaseMinio}` : undefined,
     composeMinio
   );
+  const testStorageKey = '91'.repeat(32);
+  for (const workflow of [formatWorkflow, releasePreflight]) {
+    assert.match(
+      workflow,
+      new RegExp(`^\\s+TEST_STORAGE_ENCRYPTION_KEY: '${testStorageKey}'$`, 'm'),
+      'workflow test key must remain a quoted YAML string'
+    );
+  }
 });
 
 test('tag release creation depends on real-service and three-replica preflight', () => {
