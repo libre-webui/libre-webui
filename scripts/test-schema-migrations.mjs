@@ -131,6 +131,94 @@ const markHistoricalVectorChecksum = database => {
     .run();
 };
 
+const downgradeToMigrationV8 = database => {
+  const foreignKeysEnabled = database.pragma('foreign_keys', { simple: true });
+  database.pragma('foreign_keys = OFF');
+  try {
+    database.transaction(() => {
+      database.exec(`
+        DROP INDEX idx_platform_resource_tombstones_owner;
+        DROP TABLE platform_resource_deletion_tombstones;
+        ALTER TABLE work_tasks DROP COLUMN preview_upstream_port;
+        ALTER TABLE work_tasks DROP COLUMN preview_upstream_host;
+        ALTER TABLE platform_events DROP COLUMN request_fingerprint;
+        DELETE FROM _libre_schema_migrations WHERE version > 8;
+
+        DROP INDEX idx_users_email_lookup;
+        CREATE TABLE users__v8 (
+          id TEXT PRIMARY KEY,
+          username TEXT UNIQUE NOT NULL,
+          email TEXT UNIQUE,
+          password_hash TEXT NOT NULL,
+          role TEXT DEFAULT 'user',
+          account_status TEXT NOT NULL DEFAULT 'active'
+            CHECK(account_status IN ('pending', 'active')),
+          approved_at INTEGER,
+          approved_by TEXT,
+          avatar TEXT,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          email_lookup TEXT
+        );
+        INSERT INTO users__v8 (
+          id, username, email, password_hash, role, account_status,
+          approved_at, approved_by, avatar, created_at, updated_at,
+          email_lookup
+        )
+        SELECT id, username, email, password_hash, role, account_status,
+               approved_at, approved_by, avatar, created_at, updated_at,
+               email_lookup
+          FROM users;
+        DROP TABLE users;
+        ALTER TABLE users__v8 RENAME TO users;
+        CREATE UNIQUE INDEX idx_users_email_lookup
+          ON users(email_lookup)
+          WHERE email_lookup IS NOT NULL;
+      `);
+    })();
+    assert.deepEqual(database.pragma('foreign_key_check'), []);
+  } finally {
+    database.pragma(
+      `foreign_keys = ${foreignKeysEnabled === 1 ? 'ON' : 'OFF'}`
+    );
+  }
+};
+
+const snapshotTables = (database, tables) =>
+  Object.fromEntries(
+    tables.map(table => {
+      const columns = database
+        .prepare(`PRAGMA table_info("${table}")`)
+        .all()
+        .map(column => column.name);
+      const projection = columns
+        .map(column => `"${column.replaceAll('"', '""')}"`)
+        .join(', ');
+      return [
+        table,
+        {
+          columns,
+          rows: database
+            .prepare(`SELECT ${projection} FROM "${table}" ORDER BY 1`)
+            .all(),
+        },
+      ];
+    })
+  );
+
+const assertTableSnapshots = (database, expected) => {
+  for (const [table, snapshot] of Object.entries(expected)) {
+    const projection = snapshot.columns
+      .map(column => `"${column.replaceAll('"', '""')}"`)
+      .join(', ');
+    assert.deepEqual(
+      database.prepare(`SELECT ${projection} FROM "${table}" ORDER BY 1`).all(),
+      snapshot.rows,
+      `${table} rows must survive the v8 to current migration`
+    );
+  }
+};
+
 test('fresh SQLite state uses private filesystem permissions', t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-private-state-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -888,6 +976,302 @@ test('legacy SQLite schema is adopted into immutable checksummed migrations', t 
       .get().count,
     12
   );
+});
+
+test('v8 startup preserves user-owned and durable state through v9-v12', t => {
+  const dataDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'libre-schema-v8-preservation-')
+  );
+  t.after(() => fs.rmSync(dataDir, { recursive: true, force: true }));
+  const databasePath = initializeApplicationDatabase(dataDir);
+  const database = new Database(databasePath);
+  database.pragma('foreign_keys = ON');
+  downgradeToMigrationV8(database);
+  assert.deepEqual(migrations.preflightSQLiteMigrationLedger(database), {
+    dialect: 'sqlite',
+    status: 'migrating',
+    currentVersion: 8,
+    targetVersion: 12,
+    minimumSupportedVersion: 1,
+  });
+
+  database.exec(`
+    INSERT INTO users (
+      id, username, email, email_lookup, password_hash, role,
+      account_status, approved_at, approved_by, avatar, created_at,
+      updated_at
+    ) VALUES (
+      'v8-user', 'v8-user', 'v8@example.test', 'v8-email-lookup',
+      'password', 'admin', 'active', 1, 'default', 'avatar', 1, 2
+    );
+    INSERT INTO personas (
+      id, user_id, name, description, model, parameters, avatar,
+      background, embedding_model, memory_settings, mutation_settings,
+      created_at, updated_at
+    ) VALUES (
+      'v8-persona', 'v8-user', 'persona', 'description', 'model', '{}',
+      'avatar', 'background', 'embedding-model', '{}', '{}', 1, 2
+    );
+    INSERT INTO session_folders (id, user_id, name, created_at, updated_at)
+      VALUES ('v8-folder', 'v8-user', 'folder', 1, 2);
+    INSERT INTO sessions (
+      id, user_id, title, model, persona_id, provider_type, provider_id,
+      created_at, updated_at, archived, settings, folder_id, pinned
+    ) VALUES (
+      'v8-session', 'v8-user', 'session', 'model', 'v8-persona',
+      'ollama', NULL, 1, 2, 0, '{}', 'v8-folder', 1
+    );
+    INSERT INTO session_messages (
+      id, session_id, role, content, thinking, timestamp, message_index,
+      model, provider_metadata, images, statistics, artifacts, parent_id,
+      branch_index, is_active, rating
+    ) VALUES (
+      'v8-message', 'v8-session', 'assistant', 'message', 'thinking', 1, 0,
+      'model', '{}', '[]', '{}', '[]', NULL, 0, 1, 1
+    );
+    INSERT INTO knowledge_collections (
+      id, user_id, name, created_at, updated_at
+    ) VALUES ('v8-collection', 'v8-user', 'collection', 1, 2);
+    INSERT INTO notes (id, user_id, title, content, created_at, updated_at)
+      VALUES ('v8-note', 'v8-user', 'note', 'content', 1, 2);
+    INSERT INTO documents (
+      id, user_id, filename, title, content, file_type, size, session_id,
+      collection_id, metadata, uploaded_at, created_at, updated_at
+    ) VALUES (
+      'v8-document', 'v8-user', 'document.txt', 'document', 'content',
+      'text/plain', 7, 'v8-session', 'v8-collection', '{}', 1, 1, 2
+    );
+    INSERT INTO document_chunks (
+      id, document_id, chunk_index, content, start_char, end_char,
+      embedding, created_at
+    ) VALUES ('v8-chunk', 'v8-document', 0, 'content', 0, 7, '[1]', 1);
+    INSERT INTO user_preferences (
+      id, user_id, key, value, created_at, updated_at
+    ) VALUES ('v8-preference', 'v8-user', 'theme', '"dark"', 1, 2);
+    INSERT INTO plugin_credentials (
+      id, user_id, plugin_id, api_key, routing_auth_fingerprint,
+      created_at, updated_at
+    ) VALUES (
+      'v8-credential', 'v8-user', 'plugin', 'ciphertext', 'route', 1, 2
+    );
+    INSERT INTO plugin_variables (
+      id, user_id, plugin_id, variable_name, variable_value, is_encrypted,
+      created_at, updated_at
+    ) VALUES (
+      'v8-variable', 'v8-user', 'plugin', 'variable', 'value', 1, 1, 2
+    );
+    INSERT INTO plugin_discovered_models (
+      user_id, plugin_id, models_json, updated_at
+    ) VALUES ('v8-user', 'plugin', '["model"]', 2);
+    INSERT INTO plugin_discovered_capability_models (
+      user_id, plugin_id, capability, models_json, updated_at
+    ) VALUES ('v8-user', 'plugin', 'image', '["image-model"]', 2);
+    INSERT INTO plugin_activations (user_id, plugin_id, activated_at)
+      VALUES ('v8-user', 'plugin', 1);
+    INSERT INTO plugin_definition_approvals (
+      plugin_id, definition_fingerprint, source_path, approved_by_user_id,
+      approved_at
+    ) VALUES ('plugin', 'fingerprint', '/plugin.json', 'v8-user', 1);
+    INSERT INTO plugin_usage_events (
+      id, user_id, plugin_id, plugin_name, capability, model, status,
+      prompt_tokens, completion_tokens, total_tokens, input_units,
+      output_units, unit_kind, duration_ms, created_at
+    ) VALUES (
+      'v8-usage', 'v8-user', 'plugin', 'Plugin', 'chat', 'model', 'success',
+      1, 2, 3, 4, 5, 'tokens', 6, 1
+    );
+    INSERT INTO voice_profiles (
+      id, user_id, name, plugin_id, model, routing_fingerprint,
+      reference_audio, reference_text, audio_mime_type, audio_format,
+      audio_size, consent_confirmed_at, created_at, updated_at, name_lookup
+    ) VALUES (
+      'v8-voice', 'v8-user', X'01', 'plugin', 'model', 'route', X'02',
+      X'03', 'audio/wav', 'wav', 1, 1, 1, 2, 'voice-lookup'
+    );
+    INSERT INTO generated_images (
+      id, user_id, kind, prompt, model, plugin_id, image_data, mime_type,
+      size, quality, metadata, created_at
+    ) VALUES (
+      'v8-media', 'v8-user', 'image', 'prompt', 'model', 'plugin', 'data',
+      'image/png', 'small', 'high', '{}', 1
+    );
+    INSERT INTO media_generation_jobs (
+      id, user_id, provider_job_id, plugin_id, model, prompt, status,
+      options_json, gallery_id, error, created_at, updated_at
+    ) VALUES (
+      'v8-media-job', 'v8-user', 'provider-job', 'plugin', 'model', 'prompt',
+      'completed', '{}', 'v8-media', NULL, 1, 2
+    );
+    INSERT INTO work_policies (
+      id, name, image, memory_limit, cpu_limit, pids_limit, network_default,
+      workspace_size, idle_timeout_ms, created_at, updated_at
+    ) VALUES (
+      'v8-policy', 'policy', 'image', '1g', '1', 10, 1, '1g', 1000, 1, 2
+    );
+    INSERT INTO work_tasks (
+      id, user_id, title, model, provider_type, provider_id, status,
+      network_enabled, volume_name, container_name, host_path, preview_url,
+      preview_status, policy_id, created_at, updated_at
+    ) VALUES (
+      'v8-task', 'v8-user', 'task', 'model', 'ollama', NULL, 'completed', 1,
+      'v8-volume', 'v8-container', NULL, NULL, 'stopped', 'v8-policy', 1, 2
+    );
+    INSERT INTO work_runs (
+      id, task_id, model, provider_type, provider_id, status, error,
+      created_at, started_at, finished_at
+    ) VALUES (
+      'v8-run', 'v8-task', 'model', 'ollama', NULL, 'completed', NULL,
+      1, 1, 2
+    );
+    INSERT INTO work_messages (
+      id, task_id, run_id, role, kind, content, metadata, message_index,
+      created_at
+    ) VALUES (
+      'v8-work-message', 'v8-task', 'v8-run', 'assistant', 'text', 'content',
+      '{}', 0, 1
+    );
+    INSERT INTO persona_memories (
+      id, user_id, persona_id, content, embedding, timestamp, context,
+      importance_score, memory_type, access_count, last_accessed,
+      decay_factor, consolidated_from
+    ) VALUES (
+      'v8-memory', 'v8-user', 'v8-persona', 'memory', X'04', 1, 'context',
+      0.5, 'general', 1, 2, 1.0, NULL
+    );
+    INSERT INTO persona_states (
+      persona_id, user_id, runtime_state, mutation_log, last_updated, version
+    ) VALUES ('v8-persona', 'v8-user', '{}', '[]', 2, 1);
+    INSERT INTO platform_vector_entries (
+      namespace, id, owner_user_id, resource_id, model, dimensions,
+      embedding_version, source_revision, embedding, created_at, updated_at
+    ) VALUES (
+      'document-chunk', 'v8-vector', 'v8-user', 'v8-document', 'model', 1,
+      '1', '1', X'05', 1, 2
+    );
+    INSERT INTO platform_vector_acl (
+      namespace, owner_user_id, vector_id, principal_type, principal_id
+    ) VALUES ('document-chunk', 'v8-user', 'v8-vector', 'user', 'v8-user');
+    INSERT INTO platform_vector_attributes (
+      namespace, owner_user_id, vector_id, attribute_key, attribute_value
+    ) VALUES ('document-chunk', 'v8-user', 'v8-vector', 'key', 'value');
+    INSERT INTO platform_blob_references (
+      blob_id, owner_user_id, resource_type, resource_id, purpose, created_at
+    ) VALUES (
+      'v8-blob', 'v8-user', 'document', 'v8-document', 'document-source', 1
+    );
+    INSERT INTO platform_blob_quota_usage (
+      owner_user_id, stored_bytes, reserved_bytes, updated_at
+    ) VALUES ('v8-user', 7, 0, 2);
+    INSERT INTO platform_blob_quota_reservations (
+      id, owner_user_id, purpose, reserved_bytes, consumed_bytes,
+      expires_at, created_at, updated_at
+    ) VALUES ('v8-reservation', 'v8-user', 'document-source', 7, 0, 3, 1, 2);
+    INSERT INTO platform_blob_quota_objects (
+      blob_id, owner_user_id, purpose, stored_bytes, created_at
+    ) VALUES ('v8-blob', 'v8-user', 'document-source', 7, 1);
+    INSERT INTO platform_jobs (
+      id, job_type, actor_user_id, state, payload_format, payload,
+      idempotency_scope, idempotency_key_hash, request_fingerprint,
+      priority, attempt_count, max_attempts, available_at, lease_owner,
+      lease_token, lease_expires_at, cancellation_requested_at,
+      cancellation_reason, progress_current, progress_total,
+      progress_message, result_reference, error_code, error_summary,
+      created_at, updated_at, started_at, finished_at
+    ) VALUES (
+      'v8-job', 'fixture.v1', 'v8-user', 'succeeded', 'encrypted', 'payload',
+      'fixture', 'key-hash', '${'a'.repeat(64)}', 0, 1, 3, 1, NULL, 1, NULL,
+      NULL, NULL, 100, 100, 'done', 'result', NULL, NULL, 1, 2, 1, 2
+    );
+    INSERT INTO platform_job_attempts (
+      job_id, attempt_number, lease_token, worker_id, started_at,
+      last_heartbeat_at, finished_at, outcome, error_code, error_summary
+    ) VALUES ('v8-job', 1, 1, 'worker', 1, 2, 2, 'succeeded', NULL, NULL);
+    INSERT INTO platform_event_stream_heads (stream_id, last_sequence)
+      VALUES ('v8-stream', 1);
+    INSERT INTO platform_events (
+      event_id, stream_id, stream_sequence, event_type, subject_id,
+      actor_user_id, payload_format, payload, occurred_at
+    ) VALUES (
+      'v8-event', 'v8-stream', 1, 'fixture.created.v1', 'v8-subject',
+      'v8-user', 'encrypted', 'payload', 1
+    );
+  `);
+
+  const preservedTables = [
+    'users',
+    'personas',
+    'sessions',
+    'session_messages',
+    'session_folders',
+    'knowledge_collections',
+    'notes',
+    'documents',
+    'document_chunks',
+    'user_preferences',
+    'plugin_credentials',
+    'plugin_variables',
+    'plugin_discovered_models',
+    'plugin_discovered_capability_models',
+    'plugin_activations',
+    'plugin_definition_approvals',
+    'plugin_usage_events',
+    'voice_profiles',
+    'generated_images',
+    'media_generation_jobs',
+    'work_policies',
+    'work_tasks',
+    'work_runs',
+    'work_messages',
+    'persona_memories',
+    'persona_states',
+    'platform_vector_entries',
+    'platform_vector_acl',
+    'platform_vector_attributes',
+    'platform_blob_references',
+    'platform_blob_quota_usage',
+    'platform_blob_quota_reservations',
+    'platform_blob_quota_objects',
+    'platform_jobs',
+    'platform_job_attempts',
+    'platform_event_stream_heads',
+    'platform_events',
+  ];
+  const before = snapshotTables(database, preservedTables);
+  assert.throws(
+    () =>
+      database.transaction(() => {
+        migrations.runSQLiteMigrationCoordinator(database);
+      })(),
+    /requires foreign keys to be disabled before its transaction begins/i
+  );
+  assert.equal(database.pragma('foreign_keys', { simple: true }), 1);
+  assert.equal(
+    database
+      .prepare('SELECT MAX(version) AS version FROM _libre_schema_migrations')
+      .get().version,
+    8
+  );
+  assertTableSnapshots(database, before);
+  database.close();
+
+  const child = startApplicationDatabase(dataDir);
+  assert.equal(child.status, 0, `${child.stderr}\n${child.stdout}`);
+
+  const migrated = new Database(databasePath, {
+    readonly: true,
+    fileMustExist: true,
+  });
+  t.after(() => migrated.close());
+  assert.equal(migrated.pragma('quick_check', { simple: true }), 'ok');
+  assert.deepEqual(migrated.pragma('foreign_key_check'), []);
+  assertTableSnapshots(migrated, before);
+  assert.deepEqual(migrations.preflightSQLiteMigrationLedger(migrated), {
+    dialect: 'sqlite',
+    status: 'compatible',
+    currentVersion: 12,
+    targetVersion: 12,
+    minimumSupportedVersion: 1,
+  });
 });
 
 test('vector schema is installed only through checksummed migration v2', t => {

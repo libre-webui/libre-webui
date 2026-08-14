@@ -26,6 +26,7 @@ import {
   preflightSQLiteMigrationLedger,
   recordSQLiteSchemaFailure,
   runSQLiteMigrationCoordinator,
+  sqliteMigrationsRequireForeignKeysDisabledAfter,
 } from './persistence/sqliteMigrations.js';
 export type { SchemaCompatibilityState } from './persistence/sqliteMigrations.js';
 export { getSchemaCompatibilityState };
@@ -240,7 +241,7 @@ export function getDatabase(): Database.Database {
       // This check is deliberately read-only and precedes every persistent
       // PRAGMA and historical inline CREATE/ALTER migration. An unsupported
       // or tampered ledger must fail startup without changing the database.
-      preflightSQLiteMigrationLedger(db);
+      const schemaCompatibility = preflightSQLiteMigrationLedger(db);
 
       // Enable foreign keys
       db.pragma('foreign_keys = ON');
@@ -255,7 +256,7 @@ export function getDatabase(): Database.Database {
       logger.debug('✅ Database initialized with application-level encryption');
 
       schemaInitializationStarted = true;
-      bootstrapSQLiteSchema(db);
+      bootstrapSQLiteSchema(db, schemaCompatibility.currentVersion);
 
       db.pragma('journal_mode = WAL');
       for (const suffix of ['-wal', '-shm']) {
@@ -283,7 +284,10 @@ export function getDatabase(): Database.Database {
   return db;
 }
 
-const bootstrapSQLiteSchema = (database: Database.Database): void => {
+const bootstrapSQLiteSchema = (
+  database: Database.Database,
+  initialSchemaVersion: number
+): void => {
   const previousDatabase = db;
   if (previousDatabase && previousDatabase !== database) {
     throw new Error(
@@ -292,7 +296,23 @@ const bootstrapSQLiteSchema = (database: Database.Database): void => {
   }
 
   db = database;
+  const requiresForeignKeysDisabled =
+    sqliteMigrationsRequireForeignKeysDisabledAfter(initialSchemaVersion);
+  const foreignKeysEnabled = database.pragma('foreign_keys', {
+    simple: true,
+  }) as number;
   try {
+    if (requiresForeignKeysDisabled) {
+      if (database.inTransaction) {
+        throw new Error(
+          'SQLite bootstrap cannot suspend foreign keys inside a transaction'
+        );
+      }
+      database.pragma('foreign_keys = OFF');
+      if (database.pragma('foreign_keys', { simple: true }) !== 0) {
+        throw new Error('SQLite bootstrap could not suspend foreign keys');
+      }
+    }
     const initializeSchema = database.transaction(() => {
       // Historical inline initialization and durable ledger adoption form one
       // atomic bootstrap. Pre-start validation checks the same structural
@@ -300,9 +320,22 @@ const bootstrapSQLiteSchema = (database: Database.Database): void => {
       initializeTables();
       runMigrations();
       runSQLiteMigrationCoordinator(database);
+      if (
+        requiresForeignKeysDisabled &&
+        (database.pragma('foreign_key_check') as unknown[]).length > 0
+      ) {
+        throw new Error(
+          'SQLite bootstrap migrations left foreign-key violations'
+        );
+      }
     });
     initializeSchema();
   } finally {
+    if (requiresForeignKeysDisabled) {
+      database.pragma(
+        `foreign_keys = ${foreignKeysEnabled === 1 ? 'ON' : 'OFF'}`
+      );
+    }
     db = previousDatabase;
   }
 };

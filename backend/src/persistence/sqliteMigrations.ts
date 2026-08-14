@@ -2086,6 +2086,21 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
   },
 ];
 
+/**
+ * Whether a pending migration needs foreign-key enforcement suspended before
+ * its surrounding transaction begins. SQLite ignores `PRAGMA foreign_keys`
+ * changes while a transaction is active, so bootstrap must establish this
+ * connection state before opening its atomic schema transaction.
+ */
+export const sqliteMigrationsRequireForeignKeysDisabledAfter = (
+  currentVersion: number
+): boolean =>
+  MIGRATIONS.some(
+    migration =>
+      migration.version > currentVersion &&
+      migration.requiresForeignKeysDisabled === true
+  );
+
 /** Public, read-only migration identities for adapters and conformance tests. */
 export const SQLITE_MIGRATION_CONTRACT = Object.freeze(
   MIGRATIONS.map(migration =>
@@ -2545,6 +2560,15 @@ export function runSQLiteMigrationCoordinator(
           }`
       );
     }
+    if (
+      database.inTransaction &&
+      database.pragma('foreign_keys', { simple: true }) === 1 &&
+      sqliteMigrationsRequireForeignKeysDisabledAfter(currentVersion)
+    ) {
+      throw new Error(
+        'SQLite migration requires foreign keys to be disabled before its transaction begins'
+      );
+    }
     if (validation.legacyPlatformVectorChecksumRepairRequired) {
       database.transaction(() => {
         const repairValidation = validateAppliedMigrationsForLiveRepair(
@@ -2633,6 +2657,11 @@ export function runSQLiteMigrationCoordinator(
           simple: true,
         }) as number;
         database.pragma('foreign_keys = OFF');
+        if (database.pragma('foreign_keys', { simple: true }) !== 0) {
+          throw new Error(
+            'SQLite migration requires foreign keys to be disabled before its transaction begins'
+          );
+        }
         try {
           database.transaction(() => {
             applyMigration();
