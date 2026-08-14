@@ -155,10 +155,8 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
 }) => (
   <div
     className={cn(
-      'flex h-dvh min-h-0 text-gray-950 dark:text-dark-900 relative overflow-hidden',
-      hasBackground
-        ? 'bg-gray-100/60 dark:bg-dark-50/60'
-        : 'bg-gray-100 dark:bg-dark-50'
+      'flex h-dvh min-h-0 text-ink relative overflow-hidden',
+      hasBackground ? 'bg-sidebar/60' : 'bg-sidebar'
     )}
   >
     <ElectronTitleBar />
@@ -183,8 +181,8 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
         className={cn(
           'min-h-0 flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
           hasBackground
-            ? 'bg-white/30 dark:bg-dark-100/35 backdrop-blur-sm'
-            : 'bg-gray-50 dark:bg-dark-100'
+            ? 'bg-white/30 dark:bg-dark-50/35 backdrop-blur-sm'
+            : 'bg-canvas'
         )}
       >
         <ErrorBoundary>

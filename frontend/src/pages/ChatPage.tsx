@@ -25,7 +25,7 @@ import React, {
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
-  Send,
+  ArrowUp,
   Plus,
   Paperclip,
   Minus,
@@ -38,6 +38,7 @@ import { ChatInput } from '@/components/ChatInput';
 import { ChatControlsPanel } from '@/components/ChatControlsPanel';
 import { ChatSourcesPanel } from '@/components/ChatSourcesPanel';
 import { CodeAwareTextarea } from '@/components/CodeAwareTextarea';
+import { LogoMark } from '@/components/LogoMark';
 import { ModelSelector } from '@/components/ModelSelector';
 import { PersonaIndicator } from '@/components/PersonaIndicator';
 import { Button } from '@/components/ui';
@@ -712,13 +713,20 @@ export const ChatPage: React.FC = () => {
           <div className='relative z-[1] mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center'>
             <div
               key={welcomePrompt.id}
-              className='mb-10 flex flex-col items-center text-center animate-fade-in sm:mb-12'
+              className='mb-8 flex flex-col items-center text-center animate-fade-in sm:mb-10'
               aria-live='polite'
             >
-              <h1 className='mb-4 max-w-3xl text-balance text-[clamp(2.65rem,7vw,5.25rem)] font-light leading-[0.98] tracking-[-0.055em] text-gray-950 dark:text-dark-950 rtl:leading-[1.12] rtl:tracking-normal'>
-                {welcomePrompt.title}
-              </h1>
-              <p className='max-w-xl text-balance text-base leading-relaxed text-gray-500 dark:text-dark-600 sm:text-lg'>
+              <div className='mb-3 flex items-center justify-center gap-3'>
+                <LogoMark
+                  size='sm'
+                  label={null}
+                  className='h-9 w-9 shrink-0 p-0 text-ink'
+                />
+                <h1 className='max-w-3xl text-balance text-[clamp(1.75rem,3.5vw,2.35rem)] font-medium leading-tight tracking-[-0.02em] text-ink rtl:tracking-normal'>
+                  {welcomePrompt.title}
+                </h1>
+              </div>
+              <p className='max-w-xl text-balance text-[15px] leading-relaxed text-ink-subtle'>
                 {welcomePrompt.subtitle}
               </p>
             </div>
@@ -765,119 +773,118 @@ export const ChatPage: React.FC = () => {
                   </div>
                 )}
 
-                {/* ChatGPT-style unified input */}
+                {/* Floating composer card: text row on top, controls below. */}
                 <form onSubmit={handleWelcomeSubmit}>
                   <div
                     className={cn(
-                      'flex items-end gap-2 rounded-[1.35rem] border p-2 transition-[border-color,box-shadow,background-color] duration-200',
-                      'border-black/[0.08] bg-surface/90 dark:border-white/[0.09] dark:bg-dark-200/90',
-                      'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl',
-                      'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_22px_65px_rgba(15,23,42,0.12)]'
+                      'rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
+                      'border-black/[0.08] bg-surface dark:border-white/[0.09] dark:bg-surface-subtle',
+                      'shadow-lv2 focus-within:shadow-lv3'
                     )}
                   >
-                    {/* Attachment button */}
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      onClick={() =>
-                        setShowWelcomeAdvanced(!showWelcomeAdvanced)
-                      }
-                      className={cn(
-                        'h-9 w-9 sm:h-10 sm:w-10 !p-0 rounded-full flex-shrink-0',
-                        'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300 transition-colors touch-manipulation',
-                        hasAdvancedFeatures &&
-                          'text-primary-600 dark:text-primary-400',
-                        showWelcomeAdvanced && 'bg-gray-100 dark:bg-dark-300'
-                      )}
-                      title={t('chat.input.attachImages')}
-                    >
-                      {hasAdvancedFeatures ? (
-                        <div className='relative flex items-center justify-center'>
-                          <Paperclip className='h-4 w-4' />
-                          <div className='absolute -top-0.5 -end-0.5 h-1.5 w-1.5 bg-primary-500 rounded-full' />
-                        </div>
-                      ) : showWelcomeAdvanced ? (
-                        <Minus className='h-4 w-4' />
-                      ) : (
-                        <Plus className='h-4 w-4' />
-                      )}
-                    </Button>
-
                     {/* Text Input */}
-                    <div className='flex-1 min-w-0'>
-                      <CodeAwareTextarea
-                        ref={welcomeTextareaRef}
-                        value={welcomeMessage}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                          setWelcomeMessage(e.target.value)
-                        }
-                        onKeyDown={handleWelcomeKeyDown}
-                        placeholder={t('chat.input.messagePlaceholder')}
-                        className='!m-0 block min-h-9 max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !px-1.5 !py-1.5 sm:!min-h-10 sm:!py-2 max-[768px]:!min-h-11 max-[768px]:!py-[10.5px] !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-[0.9375rem] leading-relaxed touch-manipulation'
-                        rows={1}
-                      />
-                    </div>
+                    <CodeAwareTextarea
+                      ref={welcomeTextareaRef}
+                      value={welcomeMessage}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setWelcomeMessage(e.target.value)
+                      }
+                      onKeyDown={handleWelcomeKeyDown}
+                      placeholder={t('chat.input.messagePlaceholder')}
+                      className='!m-0 block w-full min-h-9 max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !px-2 !pt-1.5 !pb-2 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-ink-subtle focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 text-[0.9375rem] leading-relaxed touch-manipulation'
+                      rows={1}
+                    />
 
-                    {/* Web search toggle */}
-                    {welcomeWebSearchAllowed && (
+                    {/* Controls row */}
+                    <div className='flex items-center gap-1.5'>
                       <Button
                         type='button'
                         variant='ghost'
                         size='sm'
-                        onClick={() => setWelcomeWebSearch(active => !active)}
-                        className={cn(
-                          'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                          'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
-                          'transition-colors duration-150 touch-manipulation',
-                          welcomeWebSearch &&
-                            'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
-                        )}
-                        title={
-                          welcomeWebSearch
-                            ? t('chat.input.webSearchOn')
-                            : t('chat.input.webSearchOff')
+                        onClick={() =>
+                          setShowWelcomeAdvanced(!showWelcomeAdvanced)
                         }
-                        aria-pressed={welcomeWebSearch}
+                        className={cn(
+                          'h-9 w-9 !p-0 rounded-full flex-shrink-0',
+                          'bg-surface-subtle text-ink-muted hover:bg-hover-solid hover:text-ink dark:bg-surface-raised dark:hover:bg-surface-overlay transition-colors touch-manipulation',
+                          hasAdvancedFeatures &&
+                            'text-primary-600 dark:text-primary-400',
+                          showWelcomeAdvanced && 'bg-hover-solid text-ink'
+                        )}
+                        title={t('chat.input.attachImages')}
                       >
-                        <Globe className='h-4 w-4' />
+                        {hasAdvancedFeatures ? (
+                          <div className='relative flex items-center justify-center'>
+                            <Paperclip className='h-4 w-4' />
+                            <div className='absolute -top-0.5 -end-0.5 h-1.5 w-1.5 bg-primary-500 rounded-full' />
+                          </div>
+                        ) : showWelcomeAdvanced ? (
+                          <Minus className='h-4 w-4' />
+                        ) : (
+                          <Plus className='h-4 w-4' />
+                        )}
                       </Button>
-                    )}
 
-                    {/* Model selector (compact) */}
-                    <div className='hidden sm:block'>
-                      <ModelSelector
-                        models={welcomeModels}
-                        selectedModel={selectedModelKey}
-                        onModelChange={handleModelChange}
-                        getModelValue={chatModelOptionKey}
-                        className='min-w-[140px] max-w-[210px]'
-                        compact
-                        showImageGen={showImageGeneration}
-                      />
-                    </div>
-
-                    {/* Send button */}
-                    <Button
-                      type='submit'
-                      variant='ghost'
-                      size='sm'
-                      disabled={
-                        !welcomeMessage.trim() ||
-                        !selectedModel ||
-                        !selectedModelAvailable
-                      }
-                      className={cn(
-                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                        'bg-gray-950 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
-                        'disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-dark-300 dark:disabled:text-dark-500 disabled:hover:bg-gray-100 dark:disabled:hover:bg-dark-300',
-                        'transition-colors duration-150 touch-manipulation',
-                        welcomeMessage.trim() && selectedModel && 'shadow-sm'
+                      {welcomeWebSearchAllowed && (
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='sm'
+                          onClick={() => setWelcomeWebSearch(active => !active)}
+                          className={cn(
+                            'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                            'text-ink-muted hover:bg-interactive-hover hover:text-ink',
+                            'transition-colors duration-150 touch-manipulation',
+                            welcomeWebSearch &&
+                              'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
+                          )}
+                          title={
+                            welcomeWebSearch
+                              ? t('chat.input.webSearchOn')
+                              : t('chat.input.webSearchOff')
+                          }
+                          aria-pressed={welcomeWebSearch}
+                        >
+                          <Globe className='h-4 w-4' />
+                        </Button>
                       )}
-                      title={t('chat.input.sendMessage')}
-                    >
-                      <Send className='h-4 w-4' />
-                    </Button>
+
+                      <div className='min-w-0 flex-1' />
+
+                      {/* Model selector pill */}
+                      <div className='hidden sm:block'>
+                        <ModelSelector
+                          models={welcomeModels}
+                          selectedModel={selectedModelKey}
+                          onModelChange={handleModelChange}
+                          getModelValue={chatModelOptionKey}
+                          className='min-w-[140px] max-w-[210px]'
+                          compact
+                          showImageGen={showImageGeneration}
+                        />
+                      </div>
+
+                      {/* Send: circular accent button */}
+                      <Button
+                        type='submit'
+                        variant='ghost'
+                        size='sm'
+                        disabled={
+                          !welcomeMessage.trim() ||
+                          !selectedModel ||
+                          !selectedModelAvailable
+                        }
+                        className={cn(
+                          'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                          'bg-primary-500 text-white hover:bg-primary-400',
+                          'disabled:bg-primary-300/50 disabled:text-white/80 dark:disabled:bg-primary-800/60 dark:disabled:text-white/40 disabled:hover:bg-primary-300/50 dark:disabled:hover:bg-primary-800/60',
+                          'transition-colors duration-150 touch-manipulation'
+                        )}
+                        title={t('chat.input.sendMessage')}
+                      >
+                        <ArrowUp className='h-4 w-4' />
+                      </Button>
+                    </div>
                   </div>
                 </form>
 

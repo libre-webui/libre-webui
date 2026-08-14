@@ -24,7 +24,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Send,
+  ArrowUp,
   Square,
   Paperclip,
   Plus,
@@ -884,395 +884,391 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         {/* Main Input Area - Unified Input Bar */}
         <div className='pb-2.5 pt-1.5 sm:pb-3'>
           <form onSubmit={handleSubmit}>
-            {/* Unified Input Container */}
+            {/* Unified Input Container: text row above, controls row below. */}
             <div
               className={cn(
-                'flex items-end gap-2 rounded-[1.35rem] border p-2 transition-[border-color,box-shadow,background-color] duration-200',
-                'bg-surface/[0.92] dark:bg-dark-200/[0.92] backdrop-blur-xl',
+                'rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
+                'bg-surface dark:bg-surface-subtle',
                 'border-black/[0.08] dark:border-white/[0.09]',
-                'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_14px_42px_rgba(15,23,42,0.08)]',
-                'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_52px_rgba(15,23,42,0.11)]'
+                'shadow-lv2 focus-within:shadow-lv3'
               )}
             >
-              {/* Attach menu - Integrated Left */}
-              <div ref={attachMenuRef} className='relative flex-shrink-0'>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => {
-                    if (showAdvanced) {
-                      setShowAdvanced(false);
-                      return;
-                    }
-                    setAttachMenuOpen(open => !open);
-                    setWebpageUrl(null);
-                  }}
-                  className={cn(
-                    'h-9 w-9 sm:h-10 sm:w-10 !p-0 rounded-full flex-shrink-0',
-                    'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
-                    'transition-colors duration-150 touch-manipulation',
-                    hasAdvancedFeatures &&
-                      'text-primary-600 dark:text-primary-400',
-                    (showAdvanced || attachMenuOpen) &&
-                      'bg-gray-100 dark:bg-dark-300'
-                  )}
-                  title={t('chat.input.attachments')}
-                >
-                  {uploadingDocument || attachingWebpage ? (
-                    <Loader2 className='h-4 w-4 animate-spin' />
-                  ) : hasAdvancedFeatures ? (
-                    <div className='relative flex items-center justify-center'>
-                      <Paperclip className='h-4 w-4' />
-                      <div className='absolute -top-0.5 -end-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
-                    </div>
-                  ) : showAdvanced ? (
-                    <Minus className='h-4 w-4' />
-                  ) : (
-                    <Plus className='h-4 w-4' />
-                  )}
-                </Button>
+              {/* Text Input Area */}
+              <CodeAwareTextarea
+                ref={textareaRef}
+                value={message}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setMessage(e.target.value)
+                }
+                onKeyDown={handleKeyDown}
+                placeholder={t('chat.input.placeholder')}
+                disabled={disabled}
+                className='!m-0 block w-full min-h-9 max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !px-2 !pt-1.5 !pb-2 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-ink-subtle focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 text-[0.9375rem] leading-relaxed touch-manipulation'
+                rows={1}
+              />
 
-                {attachMenuOpen && (
-                  <div className='absolute bottom-full start-0 z-30 mb-2 w-64 rounded-2xl border border-black/[0.08] bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'>
-                    {knowledgeMenuOpen ? (
-                      <div className='p-1'>
-                        <p className='mb-1 px-1.5 text-[11px] font-medium text-gray-500 dark:text-dark-600'>
-                          {t('chat.input.menu.attachKnowledge')}
-                        </p>
-                        {collections.length === 0 ? (
-                          <p className='px-1.5 pb-1 text-[12px] text-gray-400 dark:text-dark-500'>
-                            {t('chat.input.menu.noCollections')}
-                          </p>
-                        ) : (
-                          collections.map(collection => {
-                            const attached = attachedCollectionIds.includes(
-                              collection.id
-                            );
-                            return (
-                              <button
-                                key={collection.id}
-                                type='button'
-                                onClick={() =>
-                                  void toggleCollection(collection.id)
-                                }
-                                className={cn(
-                                  'flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
-                                  attached &&
-                                    'text-primary-600 dark:text-primary-400'
-                                )}
-                                aria-pressed={attached}
-                              >
-                                <span className='flex min-w-0 items-center gap-2'>
-                                  <BookOpen className='h-4 w-4 shrink-0' />
-                                  <span className='truncate'>
-                                    {collection.name}
-                                  </span>
-                                </span>
-                                {attached && (
-                                  <Check className='h-3.5 w-3.5 shrink-0' />
-                                )}
-                              </button>
-                            );
-                          })
-                        )}
-                        <button
-                          type='button'
-                          onClick={() => setKnowledgeMenuOpen(false)}
-                          className='mt-1 w-full rounded-lg border-t border-gray-100 px-2.5 py-1.5 text-start text-xs text-gray-500 hover:bg-gray-100 dark:border-dark-300 dark:text-dark-600 dark:hover:bg-dark-200'
-                        >
-                          {t('common.back')}
-                        </button>
+              <div className='flex items-center gap-1.5'>
+                {/* Attach menu - Integrated Left */}
+                <div ref={attachMenuRef} className='relative flex-shrink-0'>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => {
+                      if (showAdvanced) {
+                        setShowAdvanced(false);
+                        return;
+                      }
+                      setAttachMenuOpen(open => !open);
+                      setWebpageUrl(null);
+                    }}
+                    className={cn(
+                      'h-9 w-9 !p-0 rounded-full flex-shrink-0',
+                      'bg-surface-subtle text-ink-muted hover:bg-hover-solid hover:text-ink dark:bg-surface-raised dark:hover:bg-surface-overlay',
+                      'transition-colors duration-150 touch-manipulation',
+                      hasAdvancedFeatures &&
+                        'text-primary-600 dark:text-primary-400',
+                      (showAdvanced || attachMenuOpen) &&
+                        'bg-hover-solid text-ink'
+                    )}
+                    title={t('chat.input.attachments')}
+                  >
+                    {uploadingDocument || attachingWebpage ? (
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                    ) : hasAdvancedFeatures ? (
+                      <div className='relative flex items-center justify-center'>
+                        <Paperclip className='h-4 w-4' />
+                        <div className='absolute -top-0.5 -end-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
                       </div>
-                    ) : webpageUrl !== null ? (
-                      <div className='p-1.5'>
-                        <label className='mb-1.5 block text-[11px] font-medium text-gray-500 dark:text-dark-600'>
-                          {t('chat.input.menu.attachWebpage')}
-                        </label>
-                        <input
-                          type='url'
-                          value={webpageUrl}
-                          onChange={event => setWebpageUrl(event.target.value)}
-                          onKeyDown={event => {
-                            if (event.key === 'Enter') {
-                              event.preventDefault();
-                              void handleAttachWebpage();
-                            } else if (event.key === 'Escape') {
-                              setWebpageUrl(null);
-                            }
-                          }}
-                          placeholder='https://…'
-                          autoFocus
-                          dir='ltr'
-                          className='w-full rounded-lg border border-black/[0.08] bg-white px-2.5 py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
-                        />
-                        <div className='mt-2 flex justify-end gap-1.5'>
+                    ) : showAdvanced ? (
+                      <Minus className='h-4 w-4' />
+                    ) : (
+                      <Plus className='h-4 w-4' />
+                    )}
+                  </Button>
+
+                  {attachMenuOpen && (
+                    <div className='absolute bottom-full start-0 z-30 mb-2 w-64 rounded-2xl border border-black/[0.08] bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'>
+                      {knowledgeMenuOpen ? (
+                        <div className='p-1'>
+                          <p className='mb-1 px-1.5 text-[11px] font-medium text-gray-500 dark:text-dark-600'>
+                            {t('chat.input.menu.attachKnowledge')}
+                          </p>
+                          {collections.length === 0 ? (
+                            <p className='px-1.5 pb-1 text-[12px] text-gray-400 dark:text-dark-500'>
+                              {t('chat.input.menu.noCollections')}
+                            </p>
+                          ) : (
+                            collections.map(collection => {
+                              const attached = attachedCollectionIds.includes(
+                                collection.id
+                              );
+                              return (
+                                <button
+                                  key={collection.id}
+                                  type='button'
+                                  onClick={() =>
+                                    void toggleCollection(collection.id)
+                                  }
+                                  className={cn(
+                                    'flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
+                                    attached &&
+                                      'text-primary-600 dark:text-primary-400'
+                                  )}
+                                  aria-pressed={attached}
+                                >
+                                  <span className='flex min-w-0 items-center gap-2'>
+                                    <BookOpen className='h-4 w-4 shrink-0' />
+                                    <span className='truncate'>
+                                      {collection.name}
+                                    </span>
+                                  </span>
+                                  {attached && (
+                                    <Check className='h-3.5 w-3.5 shrink-0' />
+                                  )}
+                                </button>
+                              );
+                            })
+                          )}
                           <button
                             type='button'
-                            onClick={() => setWebpageUrl(null)}
-                            className='rounded-lg px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-100 dark:text-dark-600 dark:hover:bg-dark-200'
+                            onClick={() => setKnowledgeMenuOpen(false)}
+                            className='mt-1 w-full rounded-lg border-t border-gray-100 px-2.5 py-1.5 text-start text-xs text-gray-500 hover:bg-gray-100 dark:border-dark-300 dark:text-dark-600 dark:hover:bg-dark-200'
                           >
-                            {t('common.cancel')}
-                          </button>
-                          <button
-                            type='button'
-                            onClick={() => void handleAttachWebpage()}
-                            disabled={!webpageUrl.trim() || attachingWebpage}
-                            className='rounded-lg bg-gray-900 px-2.5 py-1 text-xs text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-dark-300 dark:hover:bg-dark-400'
-                          >
-                            {attachingWebpage ? (
-                              <Loader2 className='h-3.5 w-3.5 animate-spin' />
-                            ) : (
-                              t('chat.input.menu.attach')
-                            )}
+                            {t('common.back')}
                           </button>
                         </div>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          type='button'
-                          onClick={() => {
-                            setShowAdvanced(true);
-                            closeAttachMenu();
-                          }}
-                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
-                        >
-                          <ImageIcon className='h-4 w-4 text-gray-500 dark:text-dark-600' />
-                          {t('chat.input.menu.uploadImages')}
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() => documentInputRef.current?.click()}
-                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
-                        >
-                          <FileText className='h-4 w-4 text-gray-500 dark:text-dark-600' />
-                          {t('chat.input.menu.attachDocument')}
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() => setWebpageUrl('')}
-                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
-                        >
-                          <Globe className='h-4 w-4 text-gray-500 dark:text-dark-600' />
-                          {t('chat.input.menu.attachWebpage')}
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() => setKnowledgeMenuOpen(true)}
-                          className='flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
-                        >
-                          <span className='flex items-center gap-2.5'>
-                            <BookOpen className='h-4 w-4 text-gray-500 dark:text-dark-600' />
-                            {t('chat.input.menu.attachKnowledge')}
-                          </span>
-                          {attachedCollectionIds.length > 0 && (
-                            <span className='rounded-full bg-primary-50 px-1.5 text-[10px] font-medium tabular-nums text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'>
-                              {attachedCollectionIds.length}
+                      ) : webpageUrl !== null ? (
+                        <div className='p-1.5'>
+                          <label className='mb-1.5 block text-[11px] font-medium text-gray-500 dark:text-dark-600'>
+                            {t('chat.input.menu.attachWebpage')}
+                          </label>
+                          <input
+                            type='url'
+                            value={webpageUrl}
+                            onChange={event =>
+                              setWebpageUrl(event.target.value)
+                            }
+                            onKeyDown={event => {
+                              if (event.key === 'Enter') {
+                                event.preventDefault();
+                                void handleAttachWebpage();
+                              } else if (event.key === 'Escape') {
+                                setWebpageUrl(null);
+                              }
+                            }}
+                            placeholder='https://…'
+                            autoFocus
+                            dir='ltr'
+                            className='w-full rounded-lg border border-black/[0.08] bg-white px-2.5 py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
+                          />
+                          <div className='mt-2 flex justify-end gap-1.5'>
+                            <button
+                              type='button'
+                              onClick={() => setWebpageUrl(null)}
+                              className='rounded-lg px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-100 dark:text-dark-600 dark:hover:bg-dark-200'
+                            >
+                              {t('common.cancel')}
+                            </button>
+                            <button
+                              type='button'
+                              onClick={() => void handleAttachWebpage()}
+                              disabled={!webpageUrl.trim() || attachingWebpage}
+                              className='rounded-lg bg-gray-900 px-2.5 py-1 text-xs text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-dark-300 dark:hover:bg-dark-400'
+                            >
+                              {attachingWebpage ? (
+                                <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                              ) : (
+                                t('chat.input.menu.attach')
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type='button'
+                            onClick={() => {
+                              setShowAdvanced(true);
+                              closeAttachMenu();
+                            }}
+                            className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                          >
+                            <ImageIcon className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                            {t('chat.input.menu.uploadImages')}
+                          </button>
+                          <button
+                            type='button'
+                            onClick={() => documentInputRef.current?.click()}
+                            className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                          >
+                            <FileText className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                            {t('chat.input.menu.attachDocument')}
+                          </button>
+                          <button
+                            type='button'
+                            onClick={() => setWebpageUrl('')}
+                            className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                          >
+                            <Globe className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                            {t('chat.input.menu.attachWebpage')}
+                          </button>
+                          <button
+                            type='button'
+                            onClick={() => setKnowledgeMenuOpen(true)}
+                            className='flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                          >
+                            <span className='flex items-center gap-2.5'>
+                              <BookOpen className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                              {t('chat.input.menu.attachKnowledge')}
                             </span>
-                          )}
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() => {
-                            setShowAdvanced(true);
-                            closeAttachMenu();
-                          }}
-                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
-                        >
-                          <Braces className='h-4 w-4 text-gray-500 dark:text-dark-600' />
-                          {t('chat.input.menu.structuredOutput')}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
+                            {attachedCollectionIds.length > 0 && (
+                              <span className='rounded-full bg-primary-50 px-1.5 text-[10px] font-medium tabular-nums text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'>
+                                {attachedCollectionIds.length}
+                              </span>
+                            )}
+                          </button>
+                          <button
+                            type='button'
+                            onClick={() => {
+                              setShowAdvanced(true);
+                              closeAttachMenu();
+                            }}
+                            className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                          >
+                            <Braces className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                            {t('chat.input.menu.structuredOutput')}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
 
-                <input
-                  ref={documentInputRef}
-                  type='file'
-                  accept='.pdf,.txt,application/pdf,text/plain'
-                  className='hidden'
-                  onChange={event => void handleDocumentSelected(event)}
-                />
-              </div>
+                  <input
+                    ref={documentInputRef}
+                    type='file'
+                    accept='.pdf,.txt,application/pdf,text/plain'
+                    className='hidden'
+                    onChange={event => void handleDocumentSelected(event)}
+                  />
+                </div>
 
-              {/* Text Input Area */}
-              <div className='flex-1 min-w-0'>
-                <CodeAwareTextarea
-                  ref={textareaRef}
-                  value={message}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setMessage(e.target.value)
-                  }
-                  onKeyDown={handleKeyDown}
-                  placeholder={t('chat.input.placeholder')}
-                  disabled={disabled}
-                  className='!m-0 block min-h-9 max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !px-1.5 !py-1.5 sm:!min-h-10 sm:!py-2 max-[768px]:!min-h-11 max-[768px]:!py-[10.5px] !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-[0.9375rem] leading-relaxed touch-manipulation'
-                  rows={1}
-                />
-              </div>
+                {/* Integrated Controls Row */}
+                <div className='ms-auto flex flex-shrink-0 items-center gap-1 sm:gap-1.5'>
+                  {/* Model Selector - Integrated */}
+                  {currentSession && selectorModels.length > 0 && (
+                    <div className='hidden sm:block'>
+                      <ModelSelector
+                        models={selectorModels}
+                        selectedModel={sessionModelKey}
+                        onModelChange={handleModelOrPersonaChange}
+                        getModelValue={chatModelOptionKey}
+                        currentPersona={currentPersona}
+                        className='min-w-[150px] max-w-[230px]'
+                        compact
+                        showImageGen={showImageGeneration}
+                      />
+                    </div>
+                  )}
 
-              {/* Integrated Controls Row */}
-              <div className='flex flex-shrink-0 items-center gap-1 sm:gap-2'>
-                {/* Model Selector - Integrated */}
-                {currentSession && selectorModels.length > 0 && (
-                  <div className='hidden sm:block'>
-                    <ModelSelector
-                      models={selectorModels}
-                      selectedModel={sessionModelKey}
-                      onModelChange={handleModelOrPersonaChange}
-                      getModelValue={chatModelOptionKey}
-                      currentPersona={currentPersona}
-                      className='min-w-[150px] max-w-[230px]'
-                      compact
-                      showImageGen={showImageGeneration}
-                    />
-                  </div>
-                )}
+                  {/* Web search toggle */}
+                  {webSearchAvailable && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => setWebSearchActive(active => !active)}
+                      className={cn(
+                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                        'transition-colors duration-150 touch-manipulation',
+                        webSearchActive &&
+                          'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
+                      )}
+                      title={
+                        webSearchActive
+                          ? t('chat.input.webSearchOn')
+                          : t('chat.input.webSearchOff')
+                      }
+                      aria-pressed={webSearchActive}
+                    >
+                      <Globe className='h-4 w-4' />
+                    </Button>
+                  )}
 
-                {/* Web search toggle */}
-                {webSearchAvailable && (
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => setWebSearchActive(active => !active)}
-                    className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
-                      'transition-colors duration-150 touch-manipulation',
-                      webSearchActive &&
-                        'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
-                    )}
-                    title={
-                      webSearchActive
-                        ? t('chat.input.webSearchOn')
-                        : t('chat.input.webSearchOff')
-                    }
-                    aria-pressed={webSearchActive}
-                  >
-                    <Globe className='h-4 w-4' />
-                  </Button>
-                )}
-
-                {/* Voice input. Selecting a provider makes the audio transfer
+                  {/* Voice input. Selecting a provider makes the audio transfer
                     explicit before the user starts recording. */}
-                {selectableSttModels.length > 0 && (
-                  <select
-                    value={activeSpeechInputSource}
-                    onChange={event => setSpeechInputSource(event.target.value)}
-                    disabled={speechStarting || listening || transcribing}
-                    aria-label={t('chat.input.transcriptionSource')}
-                    title={
-                      providerSttModel
-                        ? t('chat.input.providerTranscriptionDisclosure', {
-                            provider: providerSttModel.plugin,
-                          })
-                        : t('chat.input.transcriptionSource')
-                    }
-                    className='h-8 max-w-32 rounded-lg border border-black/[0.08] bg-transparent px-1.5 text-[11px] text-gray-500 outline-none focus:border-primary-500/40 dark:border-white/[0.09] dark:text-dark-600'
-                  >
-                    {browserSpeechSupported && (
-                      <option value='browser'>
-                        {t('chat.input.browserSpeech')}
-                      </option>
-                    )}
-                    {selectableSttModels.map(model => (
-                      <option
-                        key={sttModelKey(model)}
-                        value={sttModelKey(model)}
-                      >
-                        {model.plugin} · {model.model}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {speechSupported && (
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => void toggleDictation()}
-                    className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
-                      'transition-colors duration-150 touch-manipulation',
-                      (speechStarting || listening || transcribing) &&
-                        'bg-red-50 text-red-500 animate-pulse dark:bg-red-900/20 dark:text-red-400'
-                    )}
-                    title={
-                      transcribing
-                        ? t('common.cancel')
-                        : speechStarting
+                  {selectableSttModels.length > 0 && (
+                    <select
+                      value={activeSpeechInputSource}
+                      onChange={event =>
+                        setSpeechInputSource(event.target.value)
+                      }
+                      disabled={speechStarting || listening || transcribing}
+                      aria-label={t('chat.input.transcriptionSource')}
+                      title={
+                        providerSttModel
+                          ? t('chat.input.providerTranscriptionDisclosure', {
+                              provider: providerSttModel.plugin,
+                            })
+                          : t('chat.input.transcriptionSource')
+                      }
+                      className='h-8 max-w-32 rounded-lg border border-black/[0.08] bg-transparent px-1.5 text-[11px] text-gray-500 outline-none focus:border-primary-500/40 dark:border-white/[0.09] dark:text-dark-600'
+                    >
+                      {browserSpeechSupported && (
+                        <option value='browser'>
+                          {t('chat.input.browserSpeech')}
+                        </option>
+                      )}
+                      {selectableSttModels.map(model => (
+                        <option
+                          key={sttModelKey(model)}
+                          value={sttModelKey(model)}
+                        >
+                          {model.plugin} · {model.model}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {speechSupported && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => void toggleDictation()}
+                      className={cn(
+                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                        'transition-colors duration-150 touch-manipulation',
+                        (speechStarting || listening || transcribing) &&
+                          'bg-red-50 text-red-500 animate-pulse dark:bg-red-900/20 dark:text-red-400'
+                      )}
+                      title={
+                        transcribing
                           ? t('common.cancel')
-                          : listening
-                            ? t('chat.input.voiceStop')
-                            : providerSttModel
-                              ? t(
-                                  'chat.input.providerTranscriptionDisclosure',
-                                  {
-                                    provider: providerSttModel.plugin,
-                                  }
-                                )
-                              : t('chat.input.voiceInput')
-                    }
-                    aria-pressed={speechStarting || listening || transcribing}
-                  >
-                    {speechStarting ? (
-                      <Loader2 className='h-4 w-4 animate-spin' />
-                    ) : transcribing ? (
-                      <Square className='h-4 w-4' />
-                    ) : (
-                      <Mic className='h-4 w-4' />
-                    )}
-                  </Button>
-                )}
+                          : speechStarting
+                            ? t('common.cancel')
+                            : listening
+                              ? t('chat.input.voiceStop')
+                              : providerSttModel
+                                ? t(
+                                    'chat.input.providerTranscriptionDisclosure',
+                                    {
+                                      provider: providerSttModel.plugin,
+                                    }
+                                  )
+                                : t('chat.input.voiceInput')
+                      }
+                      aria-pressed={speechStarting || listening || transcribing}
+                    >
+                      {speechStarting ? (
+                        <Loader2 className='h-4 w-4 animate-spin' />
+                      ) : transcribing ? (
+                        <Square className='h-4 w-4' />
+                      ) : (
+                        <Mic className='h-4 w-4' />
+                      )}
+                    </Button>
+                  )}
 
-                {/* Send/Stop Button - Integrated Right */}
-                {isGenerating ? (
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='sm'
-                    onClick={handleStopGeneration}
-                    className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'bg-red-50 dark:bg-red-900/20',
-                      'text-red-500 dark:text-red-400',
-                      'hover:bg-red-100 dark:hover:bg-red-900/30',
-                      'transition-colors duration-150 touch-manipulation'
-                    )}
-                    title={t('chat.input.stopGeneration')}
-                  >
-                    <Square className='h-4 w-4' />
-                  </Button>
-                ) : (
-                  <Button
-                    type='submit'
-                    variant='ghost'
-                    size='sm'
-                    disabled={
-                      !message.trim() || disabled || !sessionModelAvailable
-                    }
-                    className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'bg-gray-100 text-gray-400 dark:bg-dark-300 dark:text-dark-500',
-                      'disabled:cursor-not-allowed disabled:opacity-70',
-                      'transition-colors duration-150 touch-manipulation',
-                      message.trim() &&
-                        !disabled &&
-                        sessionModelAvailable && [
-                          'bg-gray-950 text-white hover:bg-gray-800',
-                          'dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
-                          'shadow-sm',
-                        ]
-                    )}
-                    title={t('chat.input.sendMessage')}
-                  >
-                    <Send className='h-4 w-4' />
-                  </Button>
-                )}
+                  {/* Send/Stop Button - Integrated Right */}
+                  {isGenerating ? (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={handleStopGeneration}
+                      className={cn(
+                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'bg-red-50 dark:bg-red-900/20',
+                        'text-red-500 dark:text-red-400',
+                        'hover:bg-red-100 dark:hover:bg-red-900/30',
+                        'transition-colors duration-150 touch-manipulation'
+                      )}
+                      title={t('chat.input.stopGeneration')}
+                    >
+                      <Square className='h-4 w-4' />
+                    </Button>
+                  ) : (
+                    <Button
+                      type='submit'
+                      variant='ghost'
+                      size='sm'
+                      disabled={
+                        !message.trim() || disabled || !sessionModelAvailable
+                      }
+                      className={cn(
+                        'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'bg-primary-500 text-white hover:bg-primary-400',
+                        'disabled:cursor-not-allowed disabled:bg-primary-300/50 disabled:text-white/80 dark:disabled:bg-primary-800/60 dark:disabled:text-white/40 disabled:hover:bg-primary-300/50 dark:disabled:hover:bg-primary-800/60',
+                        'transition-colors duration-150 touch-manipulation'
+                      )}
+                      title={t('chat.input.sendMessage')}
+                    >
+                      <ArrowUp className='h-4 w-4' />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </form>
