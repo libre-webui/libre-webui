@@ -138,10 +138,12 @@ test(
       const upstream = response.headers.get('x-libre-upstream');
       if (upstream) upstreams.add(upstream);
       if (expected !== undefined) {
-        assert.equal(
-          response.status,
-          expected,
-          `${method} ${path} returned ${response.status}: ${await response.clone().text()}`
+        const expectedStatuses = Array.isArray(expected)
+          ? expected
+          : [expected];
+        assert.ok(
+          expectedStatuses.includes(response.status),
+          `${method} ${path} returned ${response.status}, expected ${expectedStatuses.join(' or ')}: ${await response.clone().text()}`
         );
       } else {
         assert.ok(
@@ -1221,10 +1223,27 @@ test(
       1,
       'reclaimed Work job must have one terminal success'
     );
-    await request(`/api/work/tasks/${work.data.id}`, {
-      token: adminToken,
-      method: 'DELETE',
-    });
+    const workDeleteDeadline = Date.now() + 30_000;
+    while (true) {
+      const response = await request(`/api/work/tasks/${work.data.id}`, {
+        token: adminToken,
+        method: 'DELETE',
+        expected: [200, 202, 204, 409],
+        raw: true,
+      });
+      if (response.ok) break;
+      const payload = await response.json();
+      assert.equal(
+        payload.error,
+        'WORK_RUNTIME_LEASE_CONFLICT',
+        `unexpected Work deletion conflict: ${JSON.stringify(payload)}`
+      );
+      assert.ok(
+        Date.now() < workDeleteDeadline,
+        'timed out waiting for the completed Work lifecycle lease to release'
+      );
+      await sleep(500);
+    }
 
     // Document deletion is its own retriable lifecycle, separate from account
     // deletion. Relational tombstone + enqueue are atomic; physical vectors,
