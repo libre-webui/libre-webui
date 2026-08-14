@@ -1629,6 +1629,71 @@ test(
         1,
         1
       );
+    source
+      .prepare(
+        `INSERT INTO sessions
+           (id, user_id, title, model, persona_id, provider_type, provider_id,
+            created_at, updated_at, archived, settings, folder_id, pinned)
+         VALUES (?, ?, ?, ?, NULL, NULL, NULL, ?, ?, 0, NULL, NULL, 0)`
+      )
+      .run(
+        'import-session',
+        'import-user',
+        'opaque-session-title-ciphertext',
+        'import-model',
+        2,
+        2
+      );
+    const insertSourceMessage = source.prepare(
+      `INSERT INTO session_messages
+         (id, session_id, role, content, thinking, timestamp, message_index,
+          model, provider_metadata, images, statistics, artifacts, parent_id,
+          branch_index, is_active, rating)
+       VALUES (?, 'import-session', 'assistant', ?, NULL, ?, ?, 'import-model',
+               NULL, NULL, NULL, NULL, ?, ?, 1, NULL)`
+    );
+    // IDs force the child to sort before its parent. The cycle exercises the
+    // same two-pass import without relying on a topological row order.
+    insertSourceMessage.run(
+      'a-out-of-order-child',
+      'opaque-child-ciphertext',
+      3,
+      0,
+      'z-out-of-order-parent',
+      1
+    );
+    insertSourceMessage.run(
+      'b-cycle-left',
+      'opaque-cycle-left-ciphertext',
+      4,
+      1,
+      'c-cycle-right',
+      0
+    );
+    insertSourceMessage.run(
+      'c-cycle-right',
+      'opaque-cycle-right-ciphertext',
+      5,
+      2,
+      'b-cycle-left',
+      1
+    );
+    insertSourceMessage.run(
+      'd-dangling-child',
+      'opaque-dangling-ciphertext',
+      6,
+      3,
+      'missing-original-message',
+      2
+    );
+    insertSourceMessage.run(
+      'z-out-of-order-parent',
+      'opaque-parent-ciphertext',
+      2,
+      4,
+      null,
+      0
+    );
     const pluginsDirectory = path.join(sourceDirectory, 'plugins');
     fs.mkdirSync(pluginsDirectory, { mode: 0o700 });
     const pluginDefinition = {
@@ -1752,19 +1817,117 @@ test(
       .run('blocked-media');
     cleanupSource.close();
 
+    const interruptedImportPhase = {
+      async analyze() {
+        return {
+          name: 'test-interrupted-relational-import',
+          items: 0,
+          checksum: 'f'.repeat(64),
+          warnings: [],
+          blockers: [],
+        };
+      },
+      async apply({ target, resume }) {
+        if (resume) {
+          await target.query(
+            'DROP TRIGGER IF EXISTS reject_session_message_import ON session_messages'
+          );
+          await target.query(
+            'DROP FUNCTION IF EXISTS reject_session_message_import()'
+          );
+          return;
+        }
+        await target.query(`
+          CREATE FUNCTION reject_session_message_import() RETURNS trigger
+          LANGUAGE plpgsql AS $$
+          BEGIN
+            RAISE EXCEPTION 'sentinel interrupted session-message import';
+          END;
+          $$;
+          CREATE TRIGGER reject_session_message_import
+            BEFORE INSERT ON session_messages
+            FOR EACH ROW EXECUTE FUNCTION reject_session_message_import();
+        `);
+      },
+      async validate() {},
+    };
     const dryRun = await migrateSQLiteToPostgres({
       sourcePath,
       postgres: config,
       mode: 'dry-run',
+      storagePhase: interruptedImportPhase,
     });
     assert.equal(dryRun.compatible, true);
     assert.equal(dryRun.targetEmpty, true);
+    assert.match(
+      dryRun.warnings.join('\n'),
+      /1 session-message parent reference points.*imported as NULL.*source checksums remain unchanged/
+    );
+    assert.equal(
+      dryRun.tables.find(row => row.sourceTable === 'session_messages')?.rows,
+      5
+    );
+    await assert.rejects(
+      migrateSQLiteToPostgres({
+        sourcePath,
+        postgres: config,
+        mode: 'apply',
+        storagePhase: interruptedImportPhase,
+      }),
+      /sentinel interrupted session-message import/
+    );
+    const interruptedTarget = createPostgresDatabase(config);
+    assert.deepEqual(
+      (
+        await interruptedTarget.query(
+          `SELECT
+             (SELECT status FROM libre_sqlite_imports) AS status,
+             (SELECT source_fingerprint FROM libre_sqlite_imports)
+               AS source_fingerprint,
+             (SELECT COUNT(*)::text FROM sessions) AS sessions,
+             (SELECT COUNT(*)::text FROM session_messages) AS messages,
+             (SELECT COUNT(*)::text
+                FROM libre_sqlite_import_tables
+               WHERE source_table = 'sessions') AS session_journal,
+             (SELECT COUNT(*)::text
+                FROM libre_sqlite_import_tables
+               WHERE source_table = 'session_messages') AS message_journal`
+        )
+      ).rows[0],
+      {
+        status: 'failed',
+        source_fingerprint: dryRun.sourceFingerprint,
+        sessions: '1',
+        messages: '0',
+        session_journal: '1',
+        message_journal: '0',
+      }
+    );
+    await interruptedTarget.query(
+      'DROP TRIGGER reject_session_message_import ON session_messages'
+    );
+    await interruptedTarget.query(
+      'DROP FUNCTION reject_session_message_import()'
+    );
+    await interruptedTarget.close();
+    await assert.rejects(
+      migrateSQLiteToPostgres({
+        sourcePath,
+        postgres: config,
+        mode: 'apply',
+        storagePhase: interruptedImportPhase,
+      }),
+      /resume enabled/i
+    );
     const applied = await migrateSQLiteToPostgres({
       sourcePath,
       postgres: config,
       mode: 'apply',
+      resume: true,
+      storagePhase: interruptedImportPhase,
     });
     assert.equal(applied.compatible, true);
+    assert.equal(applied.resumed, true);
     assert.equal(
       applied.tables.every(row => row.status === 'verified'),
       true
@@ -1805,6 +1968,50 @@ test(
       content: 'opaque-content-ciphertext',
     });
     assert.equal(credential.rows[0].api_key, 'opaque-api-key-ciphertext');
+    const messages = await target.query(
+      `SELECT id, content, parent_id
+         FROM session_messages
+        WHERE session_id = 'import-session'
+        ORDER BY id`
+    );
+    assert.deepEqual(messages.rows, [
+      {
+        id: 'a-out-of-order-child',
+        content: 'opaque-child-ciphertext',
+        parent_id: 'z-out-of-order-parent',
+      },
+      {
+        id: 'b-cycle-left',
+        content: 'opaque-cycle-left-ciphertext',
+        parent_id: 'c-cycle-right',
+      },
+      {
+        id: 'c-cycle-right',
+        content: 'opaque-cycle-right-ciphertext',
+        parent_id: 'b-cycle-left',
+      },
+      {
+        id: 'd-dangling-child',
+        content: 'opaque-dangling-ciphertext',
+        parent_id: null,
+      },
+      {
+        id: 'z-out-of-order-parent',
+        content: 'opaque-parent-ciphertext',
+        parent_id: null,
+      },
+    ]);
+    const messageJournal = await target.query(
+      `SELECT checksum
+         FROM libre_sqlite_import_tables
+        WHERE source_table = 'session_messages'`
+    );
+    assert.equal(
+      messageJournal.rows[0].checksum,
+      dryRun.tables.find(row => row.sourceTable === 'session_messages')
+        ?.checksum,
+      'the journal retains the raw SQLite checksum when the target projection clears a dangling reference'
+    );
     const importedPlugin = await target.query(
       `SELECT definition_json, definition_fingerprint,
               approved_by_user_id, approved_at::text AS approved_at
@@ -1839,6 +2046,7 @@ test(
         sourcePath,
         postgres: config,
         mode: 'apply',
+        storagePhase: interruptedImportPhase,
       }),
       /resume enabled/i
     );
@@ -1847,6 +2055,7 @@ test(
       postgres: config,
       mode: 'apply',
       resume: true,
+      storagePhase: interruptedImportPhase,
     });
     assert.equal(resumed.resumed, true);
     assert.equal(
@@ -1857,6 +2066,7 @@ test(
       sourcePath,
       postgres: config,
       mode: 'validate',
+      storagePhase: interruptedImportPhase,
     });
     assert.equal(validated.compatible, true);
     assert.equal(
@@ -1872,6 +2082,7 @@ test(
         sourcePath,
         postgres: config,
         mode: 'validate',
+        storagePhase: interruptedImportPhase,
       }),
       /verification failed/i
     );

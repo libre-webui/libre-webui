@@ -51,6 +51,10 @@ interface TableMapping {
   sourceKey: readonly string[];
   targetKey: readonly string[];
   deferredColumns?: readonly string[];
+  projectSourceRow?: (
+    database: Database.Database,
+    row: Record<string, unknown>
+  ) => Record<string, unknown>;
   overridingSystemValue?: boolean;
   afterImport?: (client: PoolClient) => Promise<void>;
 }
@@ -59,6 +63,7 @@ export interface SQLiteToPostgresTableReport {
   sourceTable: string;
   targetTable: string;
   rows: number;
+  /** Checksum of the exact, untouched SQLite source rows. */
   checksum: string;
   status: 'planned' | 'imported' | 'resumed' | 'verified';
 }
@@ -127,7 +132,10 @@ export interface SQLiteToPostgresMigrationOptions {
 interface SourceTableManifest {
   mapping: TableMapping;
   rows: number;
+  /** Checksum of the untouched SQLite rows; this is part of import identity. */
   checksum: string;
+  /** Checksum of the deterministic rows expected in PostgreSQL. */
+  targetChecksum: string;
 }
 
 interface SourceAnalysis {
@@ -216,7 +224,10 @@ const table = (
   options: Parameters<typeof mappedColumns>[1] &
     Pick<
       TableMapping,
-      'deferredColumns' | 'overridingSystemValue' | 'afterImport'
+      | 'deferredColumns'
+      | 'projectSourceRow'
+      | 'overridingSystemValue'
+      | 'afterImport'
     > = {}
 ): TableMapping => ({
   source,
@@ -227,9 +238,37 @@ const table = (
   ...(options.deferredColumns
     ? { deferredColumns: options.deferredColumns }
     : {}),
+  ...(options.projectSourceRow
+    ? { projectSourceRow: options.projectSourceRow }
+    : {}),
   ...(options.overridingSystemValue ? { overridingSystemValue: true } : {}),
   ...(options.afterImport ? { afterImport: options.afterImport } : {}),
 });
+
+const sessionMessageParentLookups = new WeakMap<
+  Database.Database,
+  (parentId: unknown) => boolean
+>();
+
+const projectSessionMessageRow = (
+  database: Database.Database,
+  row: Record<string, unknown>
+): Record<string, unknown> => {
+  const parentId = row.parent_id;
+  if (parentId === null || parentId === undefined) return row;
+  let parentExists = sessionMessageParentLookups.get(database);
+  if (!parentExists) {
+    const statement = database.prepare(
+      'SELECT 1 FROM session_messages WHERE id = ?'
+    );
+    parentExists = candidate => Boolean(statement.get(candidate));
+    sessionMessageParentLookups.set(database, parentExists);
+  }
+  // SQLite never constrained this legacy branch-group pointer. PostgreSQL
+  // does, so preserve every resolvable value and deterministically clear only
+  // references whose message no longer exists.
+  return parentExists(parentId) ? row : { ...row, parent_id: null };
+};
 
 const timestamps = [
   'created_at',
@@ -359,6 +398,7 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
         'rating',
       ],
       deferredColumns: ['parent_id'],
+      projectSourceRow: projectSessionMessageRow,
     }
   ),
   table(
@@ -921,7 +961,32 @@ const sourceManifest = (
       `SELECT ${selected} FROM ${quote(mapping.source)} ORDER BY ${order}`
     )
     .iterate() as Iterable<Record<string, unknown>>;
-  return { mapping, ...checksumRows(rows, mapping.columns, 'source') };
+  const source = checksumRows(rows, mapping.columns, 'source');
+  if (!mapping.projectSourceRow) {
+    return { mapping, ...source, targetChecksum: source.checksum };
+  }
+  const projectedRows = database
+    .prepare(
+      `SELECT ${selected} FROM ${quote(mapping.source)} ORDER BY ${order}`
+    )
+    .iterate() as Iterable<Record<string, unknown>>;
+  const target = checksumRows(
+    (function* () {
+      for (const row of projectedRows) {
+        yield mapping.projectSourceRow!(database, row);
+      }
+    })(),
+    mapping.columns,
+    'source'
+  );
+  if (target.rows !== source.rows) {
+    throw new Error('SQLite import projection changed a table row count');
+  }
+  return {
+    mapping,
+    ...source,
+    targetChecksum: target.checksum,
+  };
 };
 
 const safeCount = (value: unknown): number => {
@@ -1004,16 +1069,35 @@ const sourceWarnings = (
   database: Database.Database,
   storagePhaseConfigured: boolean
 ): string[] => {
-  if (storagePhaseConfigured) return [];
-  const embeddedMemories = sqliteCount(
+  const warnings: string[] = [];
+  const danglingMessageParents = sqliteCount(
     database,
-    'SELECT COUNT(*) AS count FROM persona_memories WHERE embedding IS NOT NULL'
+    `SELECT COUNT(*) AS count
+       FROM session_messages AS child
+       LEFT JOIN session_messages AS parent ON parent.id = child.parent_id
+      WHERE child.parent_id IS NOT NULL AND parent.id IS NULL`
   );
-  return embeddedMemories > 0
-    ? [
-        `${embeddedMemories} legacy persona-memory embedding(s) are derived data and must be rebuilt in the selected PostgreSQL vector store; encrypted memory payloads are preserved exactly.`,
-      ]
-    : [];
+  if (danglingMessageParents > 0) {
+    const subject =
+      danglingMessageParents === 1
+        ? 'session-message parent reference points'
+        : 'session-message parent references point';
+    warnings.push(
+      `${danglingMessageParents} ${subject} to absent messages and will be imported as NULL; source rows and source checksums remain unchanged.`
+    );
+  }
+  if (!storagePhaseConfigured) {
+    const embeddedMemories = sqliteCount(
+      database,
+      'SELECT COUNT(*) AS count FROM persona_memories WHERE embedding IS NOT NULL'
+    );
+    if (embeddedMemories > 0) {
+      warnings.push(
+        `${embeddedMemories} legacy persona-memory embedding(s) are derived data and must be rebuilt in the selected PostgreSQL vector store; encrypted memory payloads are preserved exactly.`
+      );
+    }
+  }
+  return warnings;
 };
 
 interface SourceFile {
@@ -1584,7 +1668,10 @@ const assertManifest = (
   source: SourceTableManifest,
   actual: { rows: number; checksum: string }
 ): void => {
-  if (actual.rows !== source.rows || actual.checksum !== source.checksum) {
+  if (
+    actual.rows !== source.rows ||
+    actual.checksum !== source.targetChecksum
+  ) {
     throw new Error(
       `PostgreSQL verification failed for imported table ${source.mapping.target}`
     );
@@ -1612,7 +1699,10 @@ const insertSourceRows = async (
       .all(BATCH_SIZE, offset) as Array<Record<string, unknown>>;
     if (sourceRows.length === 0) break;
     const values: unknown[] = [];
-    const tuples = sourceRows.map(row => {
+    const tuples = sourceRows.map(sourceRow => {
+      const row = mapping.projectSourceRow
+        ? mapping.projectSourceRow(database, sourceRow)
+        : sourceRow;
       const parameters = mapping.columns.map(column => {
         values.push(
           mapping.deferredColumns?.includes(column.target)
@@ -1642,19 +1732,22 @@ const insertSourceRows = async (
     }
     const updates = database
       .prepare(
-        `SELECT ${quote(primarySource)} AS import_key,
-                ${quote(column.source)} AS import_value
+        `SELECT ${selected}
            FROM ${quote(mapping.source)}
           WHERE ${quote(column.source)} IS NOT NULL
           ORDER BY ${quote(primarySource)}`
       )
-      .iterate() as Iterable<{ import_key: unknown; import_value: unknown }>;
-    for (const update of updates) {
+      .iterate() as Iterable<Record<string, unknown>>;
+    for (const sourceRow of updates) {
+      const update = mapping.projectSourceRow
+        ? mapping.projectSourceRow(database, sourceRow)
+        : sourceRow;
+      if (update[column.source] === null) continue;
       await client.query(
         `UPDATE ${quote(mapping.target)}
             SET ${quote(targetColumn)} = $1
           WHERE ${quote(primaryTarget)} = $2`,
-        [update.import_value, update.import_key]
+        [update[column.source], update[primarySource]]
       );
     }
   }
