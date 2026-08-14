@@ -67,7 +67,7 @@ export function SidebarWorkTasks({
       <div className={cn('px-3 py-3', sidebarCompact && 'px-2')}>
         {!sidebarCompact && tasks.length > 0 && (
           <div className='mb-2 flex items-center justify-between px-1'>
-            <h3 className='text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-500 dark:text-dark-500 rtl:tracking-normal'>
+            <h3 className='text-xs font-medium text-ink-subtle'>
               {t('work.tasks.title', { defaultValue: 'Work tasks' })}
             </h3>
             <span className='text-[10px] font-medium tabular-nums text-gray-400 dark:text-dark-500'>
@@ -214,8 +214,8 @@ export function SidebarWorkTasks({
                       ? 'flex items-center justify-center rounded-xl p-1'
                       : 'rounded-xl px-3 py-2.5',
                     selected
-                      ? 'bg-white ring-1 ring-black/[0.04] dark:bg-dark-200 dark:ring-white/[0.05]'
-                      : 'hover:bg-white/60 dark:hover:bg-dark-200/60'
+                      ? 'bg-interactive-active'
+                      : 'hover:bg-interactive-hover'
                   )}
                 >
                   <button

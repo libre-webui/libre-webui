@@ -1846,13 +1846,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className='fixed inset-0 z-50 bg-black/55 backdrop-blur-sm transition-opacity duration-200'
+        className='fixed inset-0 z-50 bg-[var(--overlay-mask)] backdrop-blur-[2px] transition-opacity duration-200'
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
-        className='fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 lg:p-6'
+        className='fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-6'
         role='dialog'
         aria-modal='true'
         aria-labelledby={settingsTitleId}
@@ -1862,37 +1862,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       >
         <div
           data-testid='settings-modal-panel'
-          className='flex h-full w-full flex-col overscroll-behavior-contain border border-gray-200/80 bg-surface/95 shadow-2xl backdrop-blur-xl animate-scale-in dark:border-white/10 dark:bg-dark-25/95 sm:max-h-[94vh] sm:max-w-6xl sm:rounded-3xl'
+          className='flex h-full w-full flex-col overscroll-behavior-contain bg-surface shadow-lv3 animate-scale-in sm:h-[min(800px,calc(100vh-3rem))] sm:max-w-[920px] sm:rounded-[24px] sm:border sm:border-black/[0.04] sm:dark:border-white/[0.06]'
         >
-          {/* Header */}
-          <div className='sticky top-0 z-10 flex items-center justify-between border-b border-gray-200/70 px-4 py-4 dark:border-white/[0.08] sm:px-6 sm:py-5'>
-            <h2
-              id={settingsTitleId}
-              className='text-xl font-normal tracking-[-0.025em] text-gray-950 dark:text-dark-950 sm:text-2xl rtl:tracking-normal'
-            >
+          {/* Mobile-only header; on sm+ the title lives in the nav rail. */}
+          <div className='flex items-center justify-between border-b border-line px-4 py-4 sm:hidden'>
+            <h2 className='text-xl font-medium text-ink'>
               {t('settings.title')}
             </h2>
             <Button
               variant='ghost'
               size='sm'
               onClick={onClose}
-              autoFocus
-              className='h-9 w-9 touch-manipulation p-0 hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-white/[0.06] dark:active:bg-white/10'
+              className='h-9 w-9 touch-manipulation rounded-full p-0 hover:bg-interactive-hover'
               title={t('common.close', { defaultValue: 'Close' })}
             >
-              <X className='h-5 w-5 sm:h-4 sm:w-4' />
+              <X className='h-5 w-5' />
             </Button>
           </div>
 
           <div className='flex min-h-0 flex-1 flex-col overscroll-behavior-contain sm:flex-row'>
             {/* Sidebar Tabs */}
             <div
-              className='w-full shrink-0 overflow-x-auto border-b border-gray-200/70 p-2 scrollbar-thin dark:border-white/[0.08] sm:w-56 sm:overflow-x-hidden sm:overflow-y-auto sm:border-b-0 sm:border-e sm:p-3 lg:w-64'
+              className='w-full shrink-0 overflow-x-auto border-b border-line p-2 scrollbar-thin sm:w-[210px] sm:overflow-x-hidden sm:overflow-y-auto sm:border-b-0 sm:px-3 sm:pb-3 sm:pt-[22px]'
               style={{
                 WebkitOverflowScrolling: 'touch',
               }}
             >
-              <div className='relative mb-1 hidden sm:block'>
+              <h2
+                id={settingsTitleId}
+                className='hidden px-3 pb-4 text-base font-medium leading-6 text-ink sm:block'
+              >
+                {t('settings.title')}
+              </h2>
+              <div className='relative mb-2 hidden sm:block'>
                 <Search className='pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-subtle' />
                 <input
                   type='search'
@@ -1917,7 +1919,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     }
                   }}
                   placeholder={t('common.search')}
-                  className='w-full rounded-lg border border-transparent bg-black/[0.04] py-1.5 pe-2.5 ps-8 text-[13px] text-ink placeholder:text-ink-subtle focus:border-primary-500/40 focus:outline-none dark:bg-white/[0.05]'
+                  className='h-9 w-full rounded-xl border border-transparent bg-surface-subtle pe-2.5 ps-8 text-[13px] text-ink placeholder:text-ink-subtle focus:border-primary-500/40 focus:outline-none'
                 />
               </div>
               <nav
@@ -1938,7 +1940,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     >
                       <p
                         aria-hidden='true'
-                        className='hidden px-2.5 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-subtle sm:block'
+                        className='hidden px-3 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-subtle sm:block'
                       >
                         {group.label}
                       </p>
@@ -1951,20 +1953,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={cn(
-                              'flex shrink-0 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
+                              'flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
                               isActive
-                                ? 'bg-black/[0.06] text-ink dark:bg-white/[0.08]'
-                                : 'text-ink-muted hover:bg-black/[0.04] hover:text-ink dark:hover:bg-white/[0.05]'
+                                ? 'bg-nav-active text-ink'
+                                : 'text-ink hover:bg-hover-solid'
                             )}
                             role='tab'
                             aria-selected={isActive}
                             aria-controls='settings-tab-panel'
                           >
                             <Icon
-                              className='h-4 w-4 flex-shrink-0'
+                              className='h-4 w-4 flex-shrink-0 text-ink-muted'
                               aria-hidden='true'
                             />
-                            <span className='truncate whitespace-nowrap text-[13px]'>
+                            <span className='truncate whitespace-nowrap text-sm'>
                               {tab.label}
                             </span>
                           </button>
@@ -1976,13 +1978,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* Tab Content */}
-            <div
-              data-testid='settings-scroll-region'
-              className='scroll-region min-h-0 flex-1 p-4 scrollbar-thin sm:p-6 lg:p-8'
-              id='settings-tab-panel'
-              role='tabpanel'
-            >
-              {renderTabContent()}
+            <div className='flex min-h-0 flex-1 flex-col'>
+              <div className='hidden h-[54px] shrink-0 items-center justify-end px-3.5 pb-2 pt-5 sm:flex'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={onClose}
+                  autoFocus
+                  className='h-7 w-7 touch-manipulation rounded-full p-0 text-ink hover:bg-interactive-hover'
+                  title={t('common.close', { defaultValue: 'Close' })}
+                >
+                  <X className='h-4 w-4' />
+                </Button>
+              </div>
+              <div
+                data-testid='settings-scroll-region'
+                className='scroll-region min-h-0 flex-1 p-4 pt-2 scrollbar-thin sm:px-6 sm:pb-6 sm:pt-0'
+                id='settings-tab-panel'
+                role='tabpanel'
+              >
+                {renderTabContent()}
+              </div>
             </div>
           </div>
         </div>

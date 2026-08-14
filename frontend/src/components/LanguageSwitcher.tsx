@@ -17,13 +17,17 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import {
   changeAppLanguage,
   normalizeLanguageCode,
   supportedLanguages,
 } from '@/i18n';
 
+/**
+ * Language setting row: label and description on the left, a pill-shaped
+ * select on the right.
+ */
 export const LanguageSwitcher: React.FC = () => {
   const { t, i18n } = useTranslation();
 
@@ -33,28 +37,30 @@ export const LanguageSwitcher: React.FC = () => {
   };
 
   return (
-    <div className='space-y-3'>
-      <div className='flex items-center gap-2'>
-        <Globe className='h-4 w-4 text-gray-500 dark:text-gray-400' />
-        <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+    <div className='flex items-center gap-4 py-4'>
+      <div className='min-w-0 flex-1'>
+        <h4 className='text-sm leading-[22px] text-ink'>
           {t('settings.appearance.language.title')}
         </h4>
+        <p className='mt-0.5 text-xs text-ink-subtle'>
+          {t('settings.appearance.language.description')}
+        </p>
       </div>
-      <p className='text-xs text-gray-500 dark:text-gray-400'>
-        {t('settings.appearance.language.description')}
-      </p>
-      <select
-        data-testid='language-switcher-select'
-        value={normalizeLanguageCode(i18n.language)}
-        onChange={handleLanguageChange}
-        className='w-full px-3 py-2 text-sm border border-gray-200 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-100 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500'
-      >
-        {supportedLanguages.map(lang => (
-          <option key={lang.code} value={lang.code}>
-            {lang.nativeName} ({lang.name})
-          </option>
-        ))}
-      </select>
+      <div className='relative shrink-0'>
+        <select
+          data-testid='language-switcher-select'
+          value={normalizeLanguageCode(i18n.language)}
+          onChange={handleLanguageChange}
+          className='h-9 max-w-[220px] cursor-pointer appearance-none rounded-full bg-surface-subtle pe-9 ps-3.5 text-sm text-ink transition-colors hover:bg-hover-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40'
+        >
+          {supportedLanguages.map(lang => (
+            <option key={lang.code} value={lang.code}>
+              {lang.nativeName} ({lang.name})
+            </option>
+          ))}
+        </select>
+        <ChevronDown className='pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted' />
+      </div>
     </div>
   );
 };

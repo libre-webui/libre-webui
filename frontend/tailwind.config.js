@@ -47,6 +47,7 @@ export default {
         // Semantic roles. These are the preferred colors for all shared UI and
         // resolve automatically in light and dark mode.
         canvas: variableColor('canvas'),
+        sidebar: variableColor('sidebar'),
         surface: {
           DEFAULT: variableColor('surface'),
           subtle: variableColor('surface-subtle'),
@@ -156,7 +157,17 @@ export default {
         '2xl': '1rem',
         '3xl': '1.5rem',
       },
+      backgroundColor: {
+        // Alpha interaction washes; compose over any surface fill.
+        'interactive-hover': 'var(--interactive-hover)',
+        'interactive-active': 'var(--interactive-active)',
+        'hover-solid': 'rgb(var(--interactive-hover-solid) / <alpha-value>)',
+        'nav-active': 'rgb(var(--nav-item-active) / <alpha-value>)',
+      },
       boxShadow: {
+        // Elevation ladder used by menus, modals, and floating surfaces.
+        lv2: 'var(--shadow-lv2)',
+        lv3: 'var(--shadow-lv3)',
         // Legacy glow names remain as restrained compatibility aliases.
         glow: '0 0 0 1px rgb(var(--color-primary-500) / 0.12), 0 6px 20px -14px rgb(var(--color-primary-500) / 0.18)',
         'glow-lg':

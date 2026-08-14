@@ -160,7 +160,7 @@ function SessionHoverPreview({ preview }: { preview: HoverPreviewState }) {
 
 export function SidebarSessions({
   sessions,
-  personas,
+  personas: _personas,
   currentSessionId,
   generatingTitleForSession,
   sidebarCompact,
@@ -413,24 +413,24 @@ export function SidebarSessions({
     >
       <div className={cn('px-3 py-3', sidebarCompact && 'px-2')}>
         {!sidebarCompact && sessions.length > 0 && (
-          <div className='flex items-center justify-between mb-2 px-1'>
-            <h3 className='text-[10px] font-semibold text-gray-500 dark:text-dark-500 uppercase tracking-[0.16em] rtl:tracking-normal'>
+          <div className='mb-1 flex h-7 items-center justify-between px-1.5'>
+            <h3 className='text-xs font-medium text-ink-subtle'>
               {t('chat.session.chats')}
             </h3>
-            <div className='flex items-center gap-1'>
+            <div className='flex items-center gap-0.5'>
               {onCreateFolder && (
                 <button
                   onClick={() => {
                     setCreatingFolder(true);
                     setFolderNameDraft('');
                   }}
-                  className='rounded-md p-0.5 text-gray-400 transition-colors hover:bg-white/70 hover:text-gray-700 dark:text-dark-500 dark:hover:bg-dark-200 dark:hover:text-dark-800'
+                  className='flex h-6 w-6 items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-interactive-hover hover:text-ink'
                   title={t('chat.session.folder.new')}
                 >
                   <FolderPlus className='h-3.5 w-3.5' />
                 </button>
               )}
-              <span className='text-[10px] tabular-nums text-gray-400 dark:text-dark-500 font-medium'>
+              <span className='text-[10px] tabular-nums text-ink-subtle font-medium'>
                 {sessions.length}
               </span>
             </div>
@@ -551,7 +551,7 @@ export function SidebarSessions({
                       group.folder.id
                     )}
                     className={cn(
-                      'group/folder mb-1 flex items-center justify-between rounded-md px-1 transition-colors',
+                      'group/folder mb-0.5 flex h-[34px] items-center justify-between rounded-lg px-2 transition-colors hover:bg-interactive-hover',
                       dropTarget === `folder:${group.folder.id}` &&
                         'bg-primary-500/10 ring-1 ring-primary-500/40'
                     )}
@@ -578,17 +578,17 @@ export function SidebarSessions({
                           onClick={() =>
                             toggleFolderCollapsed(group.folder!.id)
                           }
-                          className='flex min-w-0 flex-1 items-center gap-1 text-[11px] font-semibold text-gray-500 transition-colors hover:text-gray-800 dark:text-dark-600 dark:hover:text-dark-800'
+                          className='flex min-w-0 flex-1 items-center gap-1.5 text-sm text-ink transition-colors'
                           aria-expanded={!collapsedFolders.has(group.folder.id)}
                         >
                           {collapsedFolders.has(group.folder.id) ? (
-                            <ChevronRight className='h-3 w-3 shrink-0 rtl:rotate-180' />
+                            <ChevronRight className='h-3.5 w-3.5 shrink-0 text-ink-subtle rtl:rotate-180' />
                           ) : (
-                            <ChevronDown className='h-3 w-3 shrink-0' />
+                            <ChevronDown className='h-3.5 w-3.5 shrink-0 text-ink-subtle' />
                           )}
-                          <Folder className='h-3 w-3 shrink-0' />
+                          <Folder className='h-4 w-4 shrink-0 text-ink-subtle' />
                           <span className='truncate'>{group.folder.name}</span>
-                          <span className='text-[10px] font-medium tabular-nums text-gray-400 dark:text-dark-500'>
+                          <span className='text-[10px] font-medium tabular-nums text-ink-subtle'>
                             {group.sessions.length}
                           </span>
                         </button>
@@ -631,7 +631,7 @@ export function SidebarSessions({
                   <p
                     {...dropTargetProps(`group:${group.key}`, null)}
                     className={cn(
-                      'mb-1 rounded-md px-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 dark:text-dark-500 rtl:tracking-normal transition-colors',
+                      'mb-0.5 mt-1 rounded-md px-2 text-[11px] font-medium text-ink-subtle transition-colors',
                       dropTarget === `group:${group.key}` &&
                         draggingSession?.folderId &&
                         'bg-primary-500/10 ring-1 ring-primary-500/40 text-primary-600 dark:text-primary-400'
@@ -647,9 +647,8 @@ export function SidebarSessions({
                   >
                     {group.sessions.map(session => {
                       const isActive = currentSessionId === session.id;
-                      const persona = session.personaId
-                        ? personas[session.personaId]
-                        : null;
+                      const menuOpenForRow =
+                        sessionMenu?.sessionId === session.id;
 
                       return (
                         <div
@@ -674,10 +673,10 @@ export function SidebarSessions({
                             'group relative cursor-pointer transition-colors duration-150 touch-manipulation outline-none',
                             sidebarCompact
                               ? 'rounded-xl p-1 flex items-center justify-center'
-                              : 'rounded-lg px-2.5 py-2',
+                              : 'rounded-lg px-2',
                             isActive
-                              ? 'bg-white ring-1 ring-black/[0.04] dark:bg-dark-200 dark:ring-white/[0.05]'
-                              : 'hover:bg-white/60 dark:hover:bg-dark-200/60',
+                              ? 'bg-interactive-active'
+                              : 'hover:bg-interactive-hover',
                             draggingSessionId === session.id && 'opacity-40'
                           )}
                           onClick={() => {
@@ -747,110 +746,56 @@ export function SidebarSessions({
                               </Button>
                             </div>
                           ) : (
-                            <div className='flex items-center justify-between w-full'>
-                              <div className='flex-1 min-w-0 me-2'>
-                                <h3 className='text-[13px] font-medium truncate leading-tight text-gray-900 dark:text-dark-900'>
-                                  {generatingTitleForSession === session.id ? (
-                                    <span className='inline-flex items-center gap-1'>
-                                      <span className='animate-pulse'>
-                                        {t('chat.session.generatingTitle')}
+                            <div className='flex h-8 w-full items-center'>
+                              <h3
+                                className='min-w-0 flex-1 truncate text-sm leading-5 text-ink'
+                                title={session.title}
+                              >
+                                {generatingTitleForSession === session.id ? (
+                                  <span className='inline-flex items-center gap-1'>
+                                    <span className='animate-pulse'>
+                                      {t('chat.session.generatingTitle')}
+                                    </span>
+                                    <span className='inline-flex'>
+                                      <span
+                                        className='animate-bounce'
+                                        style={{ animationDelay: '0ms' }}
+                                      >
+                                        .
                                       </span>
-                                      <span className='inline-flex'>
-                                        <span
-                                          className='animate-bounce'
-                                          style={{ animationDelay: '0ms' }}
-                                        >
-                                          .
-                                        </span>
-                                        <span
-                                          className='animate-bounce'
-                                          style={{ animationDelay: '150ms' }}
-                                        >
-                                          .
-                                        </span>
-                                        <span
-                                          className='animate-bounce'
-                                          style={{ animationDelay: '300ms' }}
-                                        >
-                                          .
-                                        </span>
+                                      <span
+                                        className='animate-bounce'
+                                        style={{ animationDelay: '150ms' }}
+                                      >
+                                        .
+                                      </span>
+                                      <span
+                                        className='animate-bounce'
+                                        style={{ animationDelay: '300ms' }}
+                                      >
+                                        .
                                       </span>
                                     </span>
-                                  ) : (
-                                    truncateText(session.title, 32)
-                                  )}
-                                </h3>
-                                <div className='flex items-center gap-1.5 mt-0.5'>
-                                  <span
-                                    dir='auto'
-                                    className={cn(
-                                      'text-[11px] tabular-nums',
-                                      isActive
-                                        ? 'text-gray-500 dark:text-dark-600'
-                                        : 'text-gray-400 dark:text-dark-500'
-                                    )}
-                                  >
-                                    {formatTimestamp(
-                                      session.updatedAt,
-                                      i18n.language
-                                    )}
                                   </span>
-                                  <span className='text-gray-300 dark:text-dark-400'>
-                                    •
-                                  </span>
-                                  {session.personaId ? (
-                                    persona ? (
-                                      <span
-                                        className={cn(
-                                          'flex items-center gap-1 text-[11px] font-medium',
-                                          isActive
-                                            ? 'text-primary-600 dark:text-primary-400'
-                                            : 'text-primary-500 dark:text-primary-500'
-                                        )}
-                                        title={
-                                          persona.description || persona.name
-                                        }
-                                      >
-                                        {persona.avatar &&
-                                          !persona.avatar.startsWith(
-                                            'data:'
-                                          ) && (
-                                            <span className='text-[10px]'>
-                                              {persona.avatar}
-                                            </span>
-                                          )}
-                                        <span className='truncate max-w-[100px]'>
-                                          {persona.name}
-                                        </span>
-                                      </span>
-                                    ) : (
-                                      <span
-                                        className={cn(
-                                          'text-[11px] font-medium italic',
-                                          isActive
-                                            ? 'text-gray-500 dark:text-gray-500'
-                                            : 'text-gray-400 dark:text-gray-600'
-                                        )}
-                                      >
-                                        Persona
-                                      </span>
-                                    )
-                                  ) : (
-                                    <span
-                                      dir='ltr'
-                                      className={cn(
-                                        'font-mono text-[10px] truncate max-w-[108px]',
-                                        isActive
-                                          ? 'text-gray-700 dark:text-gray-300'
-                                          : 'text-gray-600 dark:text-gray-400'
-                                      )}
-                                      title={session.model}
-                                    >
-                                      {session.model}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                                ) : (
+                                  truncateText(session.title, 40)
+                                )}
+                              </h3>
+
+                              {/* Relative time swaps for the row menu on hover. */}
+                              <span
+                                dir='auto'
+                                className={cn(
+                                  'ms-2 shrink-0 text-xs leading-5 tabular-nums text-ink-subtle max-sm:hidden',
+                                  'sm:group-hover:hidden sm:group-focus-within:hidden',
+                                  menuOpenForRow && 'sm:hidden'
+                                )}
+                              >
+                                {formatTimestamp(
+                                  session.updatedAt,
+                                  i18n.language
+                                )}
+                              </span>
 
                               <Button
                                 variant='ghost'
@@ -868,7 +813,13 @@ export function SidebarSessions({
                                 <MoreHorizontal className='h-4 w-4' />
                               </Button>
 
-                              <div className='hidden shrink-0 sm:block'>
+                              <div
+                                className={cn(
+                                  'hidden shrink-0',
+                                  'sm:group-hover:block sm:group-focus-within:block',
+                                  menuOpenForRow && 'sm:block'
+                                )}
+                              >
                                 <Button
                                   variant='ghost'
                                   size='sm'
@@ -876,16 +827,13 @@ export function SidebarSessions({
                                     openSessionMenu(session, event)
                                   }
                                   className={cn(
-                                    'h-7 w-7 rounded-lg p-0 opacity-0 transition-opacity duration-150 hover:bg-gray-100 group-hover:opacity-100 group-focus-within:opacity-100 dark:hover:bg-dark-300 touch-manipulation',
-                                    sessionMenu?.sessionId === session.id &&
-                                      'bg-gray-100 opacity-100 dark:bg-dark-300'
+                                    'h-6 w-6 rounded-md p-0 text-ink-subtle hover:text-ink hover:bg-transparent touch-manipulation',
+                                    menuOpenForRow && 'text-ink'
                                   )}
                                   title={t('palette.actions')}
                                   aria-label={t('palette.actions')}
                                   aria-haspopup='menu'
-                                  aria-expanded={
-                                    sessionMenu?.sessionId === session.id
-                                  }
+                                  aria-expanded={menuOpenForRow}
                                   data-testid='sidebar-session-actions'
                                 >
                                   <MoreHorizontal className='h-4 w-4' />
@@ -919,7 +867,7 @@ export function SidebarSessions({
               role='menu'
               aria-label={sessionMenuSession.title}
               data-testid='sidebar-session-menu'
-              className='absolute overflow-y-auto rounded-2xl border border-black/[0.08] bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.2)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'
+              className='absolute overflow-y-auto rounded-xl border border-black/[0.04] bg-surface-overlay p-1 shadow-lv3 animate-scale-in dark:border-white/[0.06]'
               style={{
                 top: sessionMenu.top,
                 left: sessionMenu.left,
@@ -934,7 +882,7 @@ export function SidebarSessions({
                   setSessionMenu(null);
                   openSessionInNewTab(sessionMenuSession);
                 }}
-                className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover'
               >
                 <ExternalLink className='h-3.5 w-3.5 shrink-0' />
                 {t('chat.session.openNewTab')}
@@ -946,7 +894,7 @@ export function SidebarSessions({
                   setSessionMenu(null);
                   onStartEditing(sessionMenuSession, event);
                 }}
-                className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover'
               >
                 <Edit3 className='h-3.5 w-3.5 shrink-0' />
                 {t('chat.session.renameChat')}
@@ -962,7 +910,7 @@ export function SidebarSessions({
                       !sessionMenuSession.pinned
                     );
                   }}
-                  className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                  className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover'
                 >
                   {sessionMenuSession.pinned ? (
                     <PinOff className='h-3.5 w-3.5 shrink-0' />
@@ -982,7 +930,7 @@ export function SidebarSessions({
                     setSessionMenu(null);
                     onArchiveSession(sessionMenuSession.id, event);
                   }}
-                  className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                  className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover'
                 >
                   <Archive className='h-3.5 w-3.5 shrink-0' />
                   {t('chat.session.archiveChat')}
@@ -1003,7 +951,7 @@ export function SidebarSessions({
                         onMoveSession(sessionMenuSession.id, folder.id);
                       }}
                       className={cn(
-                        'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
+                        'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover',
                         sessionMenuSession.folderId === folder.id &&
                           'text-primary-600 dark:text-primary-400'
                       )}
@@ -1020,7 +968,7 @@ export function SidebarSessions({
                         setSessionMenu(null);
                         onMoveSession(sessionMenuSession.id, null);
                       }}
-                      className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-gray-500 hover:bg-gray-100 dark:text-dark-600 dark:hover:bg-dark-200'
+                      className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink-muted hover:bg-interactive-hover'
                     >
                       <X className='h-3.5 w-3.5 shrink-0' />
                       {t('chat.session.folder.remove')}
@@ -1082,7 +1030,7 @@ export function SidebarSessions({
                   setMobileActionSessionId(null);
                   onStartEditing(mobileActionSession, event);
                 }}
-                className='flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                className='flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-ink hover:bg-interactive-hover'
               >
                 <Edit3 className='h-4 w-4 shrink-0' />
                 {t('chat.session.renameChat')}
@@ -1098,7 +1046,7 @@ export function SidebarSessions({
                       !mobileActionSession.pinned
                     );
                   }}
-                  className='flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                  className='flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-ink hover:bg-interactive-hover'
                 >
                   {mobileActionSession.pinned ? (
                     <PinOff className='h-4 w-4 shrink-0' />
@@ -1118,7 +1066,7 @@ export function SidebarSessions({
                     setMobileActionSessionId(null);
                     void onArchiveSession(mobileActionSession.id, event);
                   }}
-                  className='flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                  className='flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-ink hover:bg-interactive-hover'
                 >
                   <Archive className='h-4 w-4 shrink-0' />
                   {t('chat.session.archiveChat')}
@@ -1139,7 +1087,7 @@ export function SidebarSessions({
                         onMoveSession(mobileActionSession.id, folder.id);
                       }}
                       className={cn(
-                        'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
+                        'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-start text-sm text-ink hover:bg-interactive-hover',
                         mobileActionSession.folderId === folder.id &&
                           'text-primary-600 dark:text-primary-400'
                       )}

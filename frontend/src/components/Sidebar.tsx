@@ -365,17 +365,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ref={sidebarRef}
         data-testid='sidebar'
         className={cn(
-          'fixed inset-y-0 start-0 z-50 border-e border-black/[0.06] dark:border-white/[0.06] transform transition-[width,transform,background-color] duration-200 ease-out shadow-[0_24px_80px_rgba(15,23,42,0.12)]',
+          'fixed inset-y-0 start-0 z-50 border-e border-black/[0.04] dark:border-white/[0.06] transform transition-[width,transform,background-color] duration-200 ease-out shadow-[0_24px_80px_rgba(15,23,42,0.12)]',
           sidebarCompact
-            ? 'w-20'
+            ? 'w-16'
             : 'w-72 max-sm:w-[calc(100vw-4.5rem)] max-sm:max-w-80',
           isOpen
             ? 'translate-x-0'
             : 'ltr:-translate-x-full rtl:translate-x-full',
           'lg:shadow-none',
-          backgroundImage
-            ? 'bg-gray-100/75 dark:bg-dark-50/75 backdrop-blur-xl'
-            : 'bg-gray-100 dark:bg-dark-50',
+          backgroundImage ? 'bg-sidebar/75 backdrop-blur-xl' : 'bg-sidebar',
           'overscroll-behavior-contain',
           className
         )}
