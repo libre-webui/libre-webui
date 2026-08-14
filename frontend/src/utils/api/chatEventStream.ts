@@ -11,6 +11,127 @@ export interface QueuedChatGeneration {
   assistantMessageId: string;
 }
 
+export interface DurableGenerationReservation {
+  sessionId: string;
+  assistantMessageId: string;
+  abort: AbortController;
+  jobId?: string;
+  cancelRequested?: boolean;
+}
+
+export interface DurableChatCancellationDecision {
+  completed: boolean;
+  pending: boolean;
+  jobId?: string;
+  state?: string;
+}
+
+export type DurableGenerationDisposition = 'stream' | 'cancelled' | 'completed';
+
+interface DurableChatSessionSnapshot {
+  id: string;
+  messages: Array<{ id: string; role: string }>;
+}
+
+/** Stop does not abort an enqueue whose durable identity is not known yet. */
+export const requestDurableGenerationStop = (
+  reservation: DurableGenerationReservation,
+  cancelledMessageIds?: Set<string>
+): void => {
+  cancelledMessageIds?.add(reservation.assistantMessageId);
+  reservation.cancelRequested = true;
+  if (reservation.jobId) reservation.abort.abort();
+};
+
+/**
+ * Route a rejected enqueue through the cancellation decision path. Returning
+ * true tells an unmounted caller to skip component state and toast handling.
+ */
+export const reconcileCancelledDurableGeneration = async (input: {
+  sessionId: string;
+  assistantMessageId: string;
+  cancelledMessageIds: ReadonlySet<string>;
+  cancelByIdentity?: (
+    sessionId: string,
+    assistantMessageId: string
+  ) => Promise<DurableChatCancellationDecision>;
+  settle: (decision: DurableChatCancellationDecision) => Promise<void>;
+  onError?: (error: unknown) => void;
+}): Promise<boolean> => {
+  if (!input.cancelledMessageIds.has(input.assistantMessageId)) return false;
+  try {
+    const decision = await (
+      input.cancelByIdentity ?? cancelDurableChatGenerationByIdentity
+    )(input.sessionId, input.assistantMessageId);
+    await input.settle(decision);
+  } catch (error) {
+    input.onError?.(error);
+  }
+  return true;
+};
+
+/** The outstanding enqueue owner decides when its cancellation fence is done. */
+export const releaseDurableGenerationCancellationFence = (input: {
+  assistantMessageId: string;
+  cancelledMessageIds: Set<string>;
+  decision: DurableChatCancellationDecision;
+  retainForContinuation?: boolean;
+}): void => {
+  if (input.retainForContinuation) return;
+  input.cancelledMessageIds.delete(input.assistantMessageId);
+};
+
+export const acceptDurableGenerationJob = async (
+  reservation: DurableGenerationReservation,
+  queued: QueuedChatGeneration,
+  cancellers: {
+    byJob?: (jobId: string) => Promise<void>;
+    byIdentity?: (
+      sessionId: string,
+      assistantMessageId: string
+    ) => Promise<DurableChatCancellationDecision>;
+  } = {}
+): Promise<DurableGenerationDisposition> => {
+  reservation.jobId = queued.jobId;
+  if (!reservation.cancelRequested) return 'stream';
+  reservation.abort.abort();
+  const [, identityCancellation] = await Promise.allSettled([
+    (cancellers.byJob ?? cancelDurableChatGeneration)(queued.jobId),
+    (cancellers.byIdentity ?? cancelDurableChatGenerationByIdentity)(
+      reservation.sessionId,
+      reservation.assistantMessageId
+    ),
+  ]);
+  if (identityCancellation.status === 'rejected') {
+    throw identityCancellation.reason;
+  }
+  return identityCancellation.value.completed ? 'completed' : 'cancelled';
+};
+
+/** Reload the exact SQL-backed session when completion beat Stop. */
+export const reconcileCompletedDurableGeneration = async <
+  Session extends DurableChatSessionSnapshot,
+>(input: {
+  sessionId: string;
+  assistantMessageId: string;
+  loadSession: (sessionId: string) => Promise<Session>;
+  applySession: (session: Session) => void;
+}): Promise<Session> => {
+  const session = await input.loadSession(input.sessionId);
+  if (session.id !== input.sessionId) {
+    throw new Error('Reloaded chat session does not match the completed turn.');
+  }
+  const assistant = session.messages.find(
+    message =>
+      message.id === input.assistantMessageId && message.role === 'assistant'
+  );
+  if (!assistant) {
+    throw new Error('Completed assistant message is absent from chat storage.');
+  }
+  input.applySession(session);
+  return session;
+};
+
 const errorFrom = async (response: Response): Promise<Error> => {
   try {
     const payload = (await response.json()) as {
@@ -99,9 +220,12 @@ const consumeSse = async (
     }
     if (!Number.isSafeInteger(eventCursor) || !data.length) return;
     const payload = JSON.parse(data.join('\n')) as Record<string, unknown>;
-    cursor = eventCursor as number;
-    terminal = payload.type === 'done' || payload.type === 'error';
-    onEvent(cursor, payload);
+    const deliveredCursor = eventCursor as number;
+    const deliveredTerminal =
+      payload.type === 'done' || payload.type === 'error';
+    onEvent(deliveredCursor, payload);
+    cursor = deliveredCursor;
+    terminal = deliveredTerminal;
   };
   try {
     for (;;) {
@@ -132,6 +256,9 @@ export const streamDurableChatGeneration = async (input: {
   signal: AbortSignal;
   onEvent: (payload: Record<string, unknown>) => void;
 }): Promise<void> => {
+  // Zero is an intentional authoritative replay point: the server filters in
+  // SQL by session and generation before applying its catch-up bound. Event
+  // IDs remain global, so reconnects may legitimately jump over other turns.
   let after = 0;
   let failures = 0;
   while (!input.signal.aborted) {
@@ -150,8 +277,8 @@ export const streamDurableChatGeneration = async (input: {
       });
       if (!response.ok) throw await errorFrom(response);
       const result = await consumeSse(response, (cursor, payload) => {
-        after = cursor;
         input.onEvent(payload);
+        after = cursor;
       });
       if (result.terminal) return;
       failures = 0;
@@ -191,4 +318,41 @@ export const cancelDurableChatGeneration = async (
     }
   );
   if (!response.ok) throw await errorFrom(response);
+};
+
+export const cancelDurableChatGenerationByIdentity = async (
+  sessionId: string,
+  assistantMessageId: string
+): Promise<DurableChatCancellationDecision> => {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/sessions/${encodeURIComponent(sessionId)}/generations/${encodeURIComponent(assistantMessageId)}/cancel`,
+    {
+      method: 'POST',
+      headers: headers(),
+      credentials: 'same-origin',
+    }
+  );
+  if (!response.ok) throw await errorFrom(response);
+  const payload = (await response.json()) as {
+    data?: {
+      completed?: unknown;
+      pending?: unknown;
+      jobId?: unknown;
+      state?: unknown;
+    };
+  };
+  const data = payload.data;
+  if (!data) {
+    throw new Error('Chat cancellation response did not include a decision.');
+  }
+  const jobId = typeof data.jobId === 'string' ? data.jobId : undefined;
+  if (data.completed !== true && data.pending !== true && !jobId) {
+    throw new Error('Chat cancellation response did not include a decision.');
+  }
+  return {
+    completed: data.completed === true,
+    pending: data.pending === true,
+    ...(jobId ? { jobId } : {}),
+    ...(typeof data.state === 'string' ? { state: data.state } : {}),
+  };
 };

@@ -9,6 +9,10 @@ import type {
   Coordinator,
   CoordinationUnsubscribe,
 } from '../coordination/index.js';
+import {
+  SHARED_COORDINATION_OPERATION_TIMEOUT_MS,
+  withCoordinationTimeout,
+} from '../coordination/sharedAdmission.js';
 import type {
   DurableJobEvent,
   DurableJobEventAppendInput,
@@ -22,6 +26,8 @@ const DEFAULT_BATCH_SIZE = 100;
 export interface DurableEventSubscriptionOptions {
   afterCursor: number;
   streamId?: string;
+  /** Optional durable subject within the stream (for example one chat generation). */
+  subjectId?: string;
   batchSize?: number;
   pollIntervalMs?: number;
   signal?: AbortSignal;
@@ -52,7 +58,8 @@ export class DurableEventGateway {
 
   constructor(
     private readonly service: DurableJobRuntimeService,
-    private readonly coordinator: Coordinator
+    private readonly coordinator: Coordinator,
+    private readonly coordinationTimeoutMs = SHARED_COORDINATION_OPERATION_TIMEOUT_MS
   ) {}
 
   async append(
@@ -74,9 +81,12 @@ export class DurableEventGateway {
    */
   async notify(cursor?: number): Promise<boolean> {
     try {
-      await this.coordinator.publish(WAKE_TOPIC, {
-        ...(cursor === undefined ? {} : { cursor }),
-      });
+      await withCoordinationTimeout(
+        this.coordinator.publish(WAKE_TOPIC, {
+          ...(cursor === undefined ? {} : { cursor }),
+        }),
+        this.coordinationTimeoutMs
+      );
       return true;
     } catch {
       return false;
@@ -172,6 +182,7 @@ export class DurableEventGateway {
             const events = await this.service.replayEvents(cursor, {
               limit: batchSize,
               ...(options.streamId ? { streamId: options.streamId } : {}),
+              ...(options.subjectId ? { subjectId: options.subjectId } : {}),
             });
             if (events.length === 0) break;
             for (const event of events) {
@@ -181,6 +192,7 @@ export class DurableEventGateway {
                   'Durable event subscription authorization was revoked.'
                 );
               }
+              if (closed || options.signal?.aborted) return;
               if (initialReplay) replayed += 1;
               if (initialReplay && replayed > maxReplayEvents) {
                 throw new Error(
@@ -207,7 +219,12 @@ export class DurableEventGateway {
         if (timer) clearInterval(timer);
         timer = undefined;
         options.signal?.removeEventListener('abort', closeOnAbort);
-        await unsubscribe?.().catch(report);
+        if (unsubscribe) {
+          await withCoordinationTimeout(
+            unsubscribe(),
+            this.coordinationTimeoutMs
+          ).catch(report);
+        }
         unsubscribe = undefined;
         // The operation that initiated shutdown reports its own delivery
         // failure. Waiting here must not report that same rejection twice.
@@ -222,19 +239,70 @@ export class DurableEventGateway {
         report(error);
       });
 
-    // Subscribe before the initial SQL replay. A commit between these two
-    // operations produces a wake and/or is observed by the replay itself.
-    unsubscribe = await this.coordinator.subscribe(WAKE_TOPIC, drainLive);
-    timer = setInterval(() => void drainLive(), pollIntervalMs);
-    timer.unref?.();
+    // Make an in-flight subscription setup visible to gateway shutdown and
+    // request cancellation before awaiting Redis. If the generic coordinator
+    // resolves after our deadline, tear down that late handler as well.
     options.signal?.addEventListener('abort', closeOnAbort, { once: true });
     this.subscriptions.add(close);
+    if (this.closing || options.signal?.aborted) {
+      await close();
+      if (options.signal?.aborted) {
+        throw options.signal.reason ?? new Error('Subscription cancelled.');
+      }
+      throw new Error('Durable event gateway is closing.');
+    }
+
+    // Subscribe before the initial SQL replay. A commit between these two
+    // operations produces a wake and/or is observed by the replay itself.
+    const pendingSubscribe = this.coordinator.subscribe(WAKE_TOPIC, drainLive);
+    try {
+      const candidate = await withCoordinationTimeout(
+        pendingSubscribe,
+        this.coordinationTimeoutMs
+      );
+      if (closed || this.closing || options.signal?.aborted) {
+        await withCoordinationTimeout(
+          candidate(),
+          this.coordinationTimeoutMs
+        ).catch(report);
+      } else {
+        unsubscribe = candidate;
+      }
+    } catch {
+      // Redis fan-out is only a wake optimization. SQL polling below remains
+      // authoritative when subscription setup is unavailable or stalls.
+      unsubscribe = undefined;
+      void pendingSubscribe
+        .then(lateUnsubscribe =>
+          withCoordinationTimeout(
+            lateUnsubscribe(),
+            this.coordinationTimeoutMs
+          ).catch(report)
+        )
+        .catch(() => undefined);
+    }
+    if (closed || this.closing || options.signal?.aborted) {
+      await close();
+      if (options.signal?.aborted) {
+        throw options.signal.reason ?? new Error('Subscription cancelled.');
+      }
+      throw new Error('Durable event gateway is closing.');
+    }
+    timer = setInterval(() => void drainLive(), pollIntervalMs);
+    timer.unref?.();
     try {
       await drain();
     } catch (error) {
       const safe = report(error);
       await close();
       throw safe;
+    }
+    if (closed || this.closing || options.signal?.aborted) {
+      await close();
+      if (options.signal?.aborted) {
+        throw options.signal.reason ?? new Error('Subscription cancelled.');
+      }
+      throw new Error('Durable event gateway is closing.');
     }
     initialReplay = false;
 

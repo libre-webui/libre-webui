@@ -150,6 +150,18 @@ if (!recoveryLease) {
 } else {
   const ownedRecoveryLease = recoveryLease;
   let recoveryLeaseLost = false;
+  const assertRecoveryLease = async (): Promise<void> => {
+    if (recoveryLeaseLost) {
+      throw new Error('Lost the Work startup recovery lease.');
+    }
+    try {
+      if (await ownedRecoveryLease.extend(120_000)) return;
+    } catch {
+      // Report expiry and coordination outages through one safe fence.
+    }
+    recoveryLeaseLost = true;
+    throw new Error('Lost the Work startup recovery lease.');
+  };
   const recoveryLeaseTimer = setInterval(() => {
     void ownedRecoveryLease
       .extend(120_000)
@@ -166,8 +178,10 @@ if (!recoveryLease) {
     // after a full outage reconciles container state without globally rewriting
     // shared Work runs; durable job reclaim owns per-run recovery.
     if ((await coordinator.listPresence('durable-workers')).length === 0) {
+      await assertRecoveryLease();
       const workCleanup = await workRuntimeService.beginRecovery(
-        await workTaskService.listAllTaskRecords()
+        await workTaskService.listAllTaskRecords(),
+        assertRecoveryLease
       );
       if (workCleanup.failed > 0) {
         throw new Error(

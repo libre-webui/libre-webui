@@ -26,6 +26,7 @@ import {
   POSTGRES_SQLITE_IMPORT_SCHEMA_SQL,
   SQLITE_IMPORT_TABLE as IMPORT_TABLE,
   SQLITE_IMPORT_TABLE_STATE as IMPORT_TABLE_STATE,
+  SQLITE_STORAGE_IMPORT_TABLE as STORAGE_IMPORT_TABLE,
 } from './postgresImportState.js';
 import {
   preflightSQLiteMigrationLedger,
@@ -957,6 +958,14 @@ const TARGET_DOMAIN_TABLES = Object.freeze([
   ]),
 ]);
 
+const TARGET_CONTROL_TABLES = new Set([
+  'libre_schema_migrations',
+  'libre_schema_compatibility',
+  IMPORT_TABLE,
+  IMPORT_TABLE_STATE,
+  STORAGE_IMPORT_TABLE,
+]);
+
 const canonical = (value: unknown, kind: ValueKind): string => {
   if (value === null || value === undefined) return 'null';
   if (kind === 'binary') {
@@ -1556,8 +1565,7 @@ const targetTablesPresent = async (
     `SELECT table_name
        FROM information_schema.tables
       WHERE table_schema = current_schema()
-        AND table_name = ANY($1::text[])`,
-    [TARGET_DOMAIN_TABLES]
+        AND table_type = 'BASE TABLE'`
   );
   return new Set(result.rows.map(row => row.table_name));
 };
@@ -1566,6 +1574,13 @@ const targetIsEmpty = async (
   database: PostgresQueryExecutor,
   present: ReadonlySet<string>
 ): Promise<boolean> => {
+  const knownTables = new Set([
+    ...TARGET_DOMAIN_TABLES,
+    ...TARGET_CONTROL_TABLES,
+  ]);
+  if ([...present].some(tableName => !knownTables.has(tableName))) {
+    return false;
+  }
   for (const tableName of TARGET_DOMAIN_TABLES) {
     if (!present.has(tableName)) continue;
     const result = await database.query<{ count: string }>(
@@ -1589,7 +1604,13 @@ const inspectTarget = async (
   const ledgerExists = Boolean(tables.rows[0]?.ledger);
   const importsExist = Boolean(tables.rows[0]?.imports);
   const present = await targetTablesPresent(database);
-  const empty = await targetIsEmpty(database, present);
+  // Before Libre has initialized the schema, *any* base table is structural
+  // drift that the migration coordinator would reject. Once the exact ledger
+  // exists, the application/control tables themselves are expected and
+  // emptiness means they contain no imported domain rows and no unknown table.
+  const empty = ledgerExists
+    ? await targetIsEmpty(database, present)
+    : present.size === 0;
   let schemaVersion: number | null = null;
   let structurallyCompatible = false;
   let resumableSchemaPrefix = false;
@@ -1611,22 +1632,34 @@ const inspectTarget = async (
           ledger.rows[index]?.name === migration.name &&
           ledger.rows[index]?.checksum === migration.checksum
       );
+    const prefixMigrations = POSTGRES_MIGRATIONS.slice(0, ledger.rows.length);
+    const workMessageContentVersion = POSTGRES_MIGRATIONS.find(
+      migration => migration.name === 'work-message-content-json'
+    )?.version;
+    const supportedResumablePrefixes = new Set([
+      POSTGRES_MIGRATIONS.length - 1,
+      ...(workMessageContentVersion === undefined
+        ? []
+        : [workMessageContentVersion - 1]),
+    ]);
+    const ledgerPrefixCompatible =
+      ledger.rows.length > 0 &&
+      ledger.rows.length < POSTGRES_MIGRATIONS.length &&
+      supportedResumablePrefixes.has(ledger.rows.length) &&
+      prefixMigrations.every(
+        (migration, index) =>
+          Number(ledger.rows[index]?.version) === migration.version &&
+          ledger.rows[index]?.name === migration.name &&
+          ledger.rows[index]?.checksum === migration.checksum
+      );
     schemaVersion = Number(ledger.rows[ledger.rows.length - 1]?.version ?? 0);
     if (ledgerCompatible) {
       structurallyCompatible = (
         await inspectPostgresSchema(database, POSTGRES_MIGRATIONS)
       ).compatible;
-    } else if (
-      ledger.rows.length === POSTGRES_MIGRATIONS.length - 1 &&
-      POSTGRES_MIGRATIONS.slice(0, -1).every(
-        (migration, index) =>
-          Number(ledger.rows[index]?.version) === migration.version &&
-          ledger.rows[index]?.name === migration.name &&
-          ledger.rows[index]?.checksum === migration.checksum
-      )
-    ) {
+    } else if (ledgerPrefixCompatible) {
       resumableSchemaPrefix = (
-        await inspectPostgresSchema(database, POSTGRES_MIGRATIONS.slice(0, -1))
+        await inspectPostgresSchema(database, prefixMigrations)
       ).compatible;
     }
   }
@@ -1663,12 +1696,42 @@ const baseReport = (
   mode: SQLiteToPostgresMigrationMode,
   source: SourceAnalysis,
   target: TargetInspection,
-  status: SQLiteToPostgresTableReport['status']
+  status: SQLiteToPostgresTableReport['status'],
+  resume: boolean
 ): SQLiteToPostgresMigrationReport => {
-  const resumableUpgrade =
-    target.resumableSchemaPrefix &&
-    (target.importStatus === 'running' || target.importStatus === 'failed') &&
-    target.importFingerprint === source.fingerprint;
+  const hasImportIdentity = target.importStatus !== 'absent';
+  const matchingImport =
+    hasImportIdentity && target.importFingerprint === source.fingerprint;
+  const completedImport = matchingImport && target.importStatus === 'complete';
+  const incompleteImport =
+    matchingImport &&
+    (target.importStatus === 'running' || target.importStatus === 'failed');
+  const resumableSchemaCandidate =
+    target.resumableSchemaPrefix && incompleteImport;
+  const resumableUpgrade = resumableSchemaCandidate && resume;
+  const uninitializedTargetIsDirty = !target.initialized && !target.empty;
+  const unjournaledInitializedTargetIsDirty =
+    target.initialized &&
+    target.structurallyCompatible &&
+    !hasImportIdentity &&
+    !target.empty;
+  const mismatchedImport = hasImportIdentity && !matchingImport;
+  const incompleteImportNeedsResume = incompleteImport && !resume;
+  const currentSchemaCanApply =
+    target.structurallyCompatible &&
+    ((!hasImportIdentity && target.empty) ||
+      completedImport ||
+      (incompleteImport && resume));
+  const targetCompatible =
+    mode === 'validate'
+      ? target.structurallyCompatible && completedImport
+      : (!target.initialized && target.empty) ||
+        currentSchemaCanApply ||
+        resumableUpgrade;
+  const unsupportedInitializedSchema =
+    target.initialized &&
+    !target.structurallyCompatible &&
+    !resumableSchemaCandidate;
   return {
     mode,
     sourceSchemaVersion: source.schemaVersion,
@@ -1676,11 +1739,7 @@ const baseReport = (
     targetSchemaVersion: target.schemaVersion,
     targetInitialized: target.initialized,
     targetEmpty: target.empty,
-    compatible:
-      source.blockers.length === 0 &&
-      (!target.initialized ||
-        target.structurallyCompatible ||
-        resumableUpgrade),
+    compatible: source.blockers.length === 0 && targetCompatible,
     resumed: false,
     tables: source.tables.map(manifest => ({
       sourceTable: manifest.mapping.source,
@@ -1699,11 +1758,43 @@ const baseReport = (
       ...source.warnings,
       ...(resumableUpgrade
         ? [
-            `PostgreSQL has the exact version ${target.schemaVersion} migration-ledger prefix and matching incomplete SQLite import; --resume can safely apply version ${POSTGRES_TARGET_SCHEMA_VERSION} before continuing.`,
+            `PostgreSQL has the exact version ${target.schemaVersion} migration-ledger prefix and matching incomplete SQLite import; --resume can safely apply through version ${POSTGRES_TARGET_SCHEMA_VERSION} before continuing.`,
           ]
         : []),
     ],
-    blockers: [...source.blockers],
+    blockers: [
+      ...source.blockers,
+      ...(uninitializedTargetIsDirty
+        ? [
+            'PostgreSQL target schema is not empty; use a clean schema or the exact matching resumable import.',
+          ]
+        : []),
+      ...(unjournaledInitializedTargetIsDirty
+        ? [
+            'PostgreSQL target contains domain rows without a SQLite import identity; use a clean schema or validate the original completed import.',
+          ]
+        : []),
+      ...(mismatchedImport
+        ? [
+            'PostgreSQL target is associated with a different SQLite snapshot; use the exact matching source or a clean target.',
+          ]
+        : []),
+      ...(incompleteImportNeedsResume
+        ? [
+            'PostgreSQL contains a matching incomplete SQLite import; rerun with resume enabled because this operation requires --resume.',
+          ]
+        : []),
+      ...(unsupportedInitializedSchema
+        ? [
+            'PostgreSQL target schema is not structurally compatible with this SQLite import.',
+          ]
+        : []),
+      ...(mode === 'validate' && !targetCompatible
+        ? [
+            'Validation requires the current PostgreSQL schema and the completed import identity for this SQLite snapshot.',
+          ]
+        : []),
+    ],
   };
 };
 
@@ -1975,6 +2066,7 @@ const applyImport = async (
   await database.withClient(async client => {
     await client.query('SELECT pg_advisory_lock($1::bigint)', [IMPORT_LOCK]);
     let primaryError: unknown;
+    let ownsImportIdentity = false;
     try {
       await createImportJournal(client);
       const imports = await client.query<ImportRow>(
@@ -1991,6 +2083,7 @@ const applyImport = async (
           'PostgreSQL was already associated with a different SQLite snapshot'
         );
       }
+      ownsImportIdentity = existing !== undefined;
       if (!existing) {
         const present = await targetTablesPresent(client);
         if (!(await targetIsEmpty(client, present))) {
@@ -2010,6 +2103,7 @@ const applyImport = async (
             Date.now(),
           ]
         );
+        ownsImportIdentity = true;
       } else if (existing.status === 'complete') {
         report.resumed = true;
         await validateCompletedImport(client, source, report);
@@ -2091,19 +2185,21 @@ const applyImport = async (
       );
     } catch (error) {
       primaryError = error;
-      await client
-        .query(
-          `UPDATE ${IMPORT_TABLE}
-              SET status = 'failed', updated_at = $2
-            WHERE source_fingerprint = $1`,
-          [source.fingerprint, Date.now()]
-        )
-        .catch(() => undefined);
-      await updateCompatibility(
-        client,
-        'incompatible',
-        'sqlite_import_incomplete'
-      ).catch(() => undefined);
+      if (ownsImportIdentity) {
+        await client
+          .query(
+            `UPDATE ${IMPORT_TABLE}
+                SET status = 'failed', updated_at = $2
+              WHERE source_fingerprint = $1`,
+            [source.fingerprint, Date.now()]
+          )
+          .catch(() => undefined);
+        await updateCompatibility(
+          client,
+          'incompatible',
+          'sqlite_import_incomplete'
+        ).catch(() => undefined);
+      }
     }
     try {
       await client.query('SELECT pg_advisory_unlock($1::bigint)', [
@@ -2139,7 +2235,13 @@ export const migrateSQLiteToPostgres = async (
         const database = createPostgresDatabase(options.postgres);
         try {
           let target = await inspectTarget(database);
-          let report = baseReport(options.mode, source, target, 'planned');
+          let report = baseReport(
+            options.mode,
+            source,
+            target,
+            'planned',
+            options.resume === true
+          );
 
           if (options.mode === 'dry-run') return report;
           if (source.blockers.length > 0) {
@@ -2173,6 +2275,13 @@ export const migrateSQLiteToPostgres = async (
             return report;
           }
 
+          if (!report.compatible) {
+            throw new SQLiteToPostgresMigrationError(
+              `PostgreSQL target failed SQLite import preflight: ${report.blockers.join('; ')}`,
+              report
+            );
+          }
+
           if (!target.initialized) {
             await runPostgresMigrationCoordinator(
               database,
@@ -2183,7 +2292,13 @@ export const migrateSQLiteToPostgres = async (
               POSTGRES_MIGRATIONS
             );
             target = await inspectTarget(database);
-            report = baseReport(options.mode, source, target, 'planned');
+            report = baseReport(
+              options.mode,
+              source,
+              target,
+              'planned',
+              options.resume === true
+            );
           } else if (!target.structurallyCompatible) {
             const resumableUpgrade =
               target.resumableSchemaPrefix &&
@@ -2219,13 +2334,26 @@ export const migrateSQLiteToPostgres = async (
               }
             }
             target = await inspectTarget(database);
-            report = baseReport(options.mode, source, target, 'planned');
+            report = baseReport(
+              options.mode,
+              source,
+              target,
+              'planned',
+              options.resume === true
+            );
             if (!target.structurallyCompatible) {
               throw new SQLiteToPostgresMigrationError(
                 'PostgreSQL target schema did not reach the resumable import version',
                 report
               );
             }
+          }
+
+          if (!report.compatible) {
+            throw new SQLiteToPostgresMigrationError(
+              `PostgreSQL target failed SQLite import preflight after schema initialization: ${report.blockers.join('; ')}`,
+              report
+            );
           }
 
           await applyImport(database, source, report, options.resume === true);

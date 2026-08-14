@@ -16,7 +16,7 @@
  */
 
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import { userModel, UserPublic } from '../models/userModel.js';
 import {
   authenticate,
@@ -33,6 +33,7 @@ const router = express.Router();
 
 // Rate limiter for user management routes: 30 requests per 15 minutes
 const userRateLimiter = rateLimit({
+  keyPrefix: 'users-admin',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 30, // limit each IP to 30 requests per 15 minutes
   message: {

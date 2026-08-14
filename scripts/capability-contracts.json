@@ -258,7 +258,7 @@
             "path": "/transcribe",
             "operationPatterns": [
               "pluginService\\.executeSTTRequest\\(",
-              "signal: abort\\.signal"
+              "signal: operationSignal"
             ]
           }
         ],

@@ -97,7 +97,6 @@ test('retirement drains initiated owner cleanups before deleting their actor', a
     role: 'embedded',
     runWorker: false,
     handlers: new Map(),
-    database: persistence.getSQLiteAdapterDatabase(),
     env: process.env,
   });
   jobsReady = true;
@@ -147,8 +146,9 @@ test('retirement drains initiated owner cleanups before deleting their actor', a
   });
   await workTaskService.updateTaskStatus(acknowledgedTask.id, 'completed');
 
-  const originalCreateRun =
-    selectedWorkPersistence.createRun.bind(selectedWorkPersistence);
+  const originalCreateRun = selectedWorkPersistence.createRun.bind(
+    selectedWorkPersistence
+  );
   selectedWorkPersistence.createRun = async (...args) => {
     await originalCreateRun(...args);
     throw new Error('injected Work run post-commit acknowledgement loss');
@@ -164,20 +164,14 @@ test('retirement drains initiated owner cleanups before deleting their actor', a
     selectedWorkPersistence.createRun = originalCreateRun;
   }
   assert.ok(acknowledgedRun.activeRun?.id);
-  assert.notEqual(
-    acknowledgedRun.activeRun.id,
-    acknowledgedTask.activeRun.id
-  );
+  assert.notEqual(acknowledgedRun.activeRun.id, acknowledgedTask.activeRun.id);
   assert.equal(
     database
       .prepare(
         `SELECT COUNT(*) AS count FROM platform_jobs
           WHERE actor_user_id = ? AND job_type = ?`
       )
-      .get(
-        acknowledgementActor,
-        domainContracts.WORK_EXECUTE_JOB_TYPE
-      ).count,
+      .get(acknowledgementActor, domainContracts.WORK_EXECUTE_JOB_TYPE).count,
     2,
     'each committed task/run publication must have exactly one durable job'
   );
@@ -202,10 +196,7 @@ test('retirement drains initiated owner cleanups before deleting their actor', a
 
   assert.equal(await userModel.beginUserRetirement(deletedOwner), true);
   assert.equal(
-    await userModel.deleteUserAndEnqueueCleanup(
-      deletedOwner,
-      initiatingAdmin
-    ),
+    await userModel.deleteUserAndEnqueueCleanup(deletedOwner, initiatingAdmin),
     true
   );
   const initialRuntime = jobs.getDurableJobRuntime();
@@ -271,16 +262,12 @@ test('retirement drains initiated owner cleanups before deleting their actor', a
     role: 'embedded',
     runWorker: true,
     handlers,
-    database: persistence.getSQLiteAdapterDatabase(),
     env: process.env,
   });
   jobsReady = true;
 
   assert.equal(
-    await workAgentService.retireAndDeleteUser(
-      initiatingAdmin,
-      deletingAdmin
-    ),
+    await workAgentService.retireAndDeleteUser(initiatingAdmin, deletingAdmin),
     true
   );
   assert.equal(cleanupObservedRetiringActor, true);
@@ -313,7 +300,8 @@ test('retirement drains initiated owner cleanups before deleting their actor', a
 
   const inactiveActor = 'retirement-inactive-actor';
   const fencedTarget = 'retirement-fenced-target';
-  for (const id of [inactiveActor, fencedTarget]) insertUser.run(id, id, now, now);
+  for (const id of [inactiveActor, fencedTarget])
+    insertUser.run(id, id, now, now);
   assert.equal(await userModel.beginUserRetirement(inactiveActor), true);
   assert.equal(await userModel.beginUserRetirement(fencedTarget), true);
   await assert.rejects(

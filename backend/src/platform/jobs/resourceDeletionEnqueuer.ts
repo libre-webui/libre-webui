@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import { getSQLiteAdapterDatabase } from '../../persistence/index.js';
+import { assertSelectedSQLiteTransaction } from '../../persistence/index.js';
 import type {
   TransactionalResourceDeletionEnqueuer,
   TransactionalResourceDeletionInput,
@@ -35,12 +35,8 @@ const durableInput = (input: TransactionalResourceDeletionInput) => ({
 
 export const transactionalResourceDeletionEnqueuer: TransactionalResourceDeletionEnqueuer =
   {
-    enqueueSQLite(database, input) {
-      if (database !== getSQLiteAdapterDatabase() || !database.inTransaction) {
-        throw new Error(
-          'SQLite resource deletion enqueue requires the selected owning transaction.'
-        );
-      }
+    enqueueSQLite(_executor, input) {
+      assertSelectedSQLiteTransaction();
       const service = getDurableJobRuntime().service;
       if (service instanceof PostgresDurableJobService) {
         throw new Error('Selected durable job service is not SQLite.');

@@ -92,6 +92,7 @@ export interface PendingApprovalRecord {
 export interface IdentityRepository {
   list(): Promise<IdentityPublicUserRecord[]>;
   findPublicById(id: string): Promise<IdentityPublicUserRecord | null>;
+  findAccountStatusById(id: string): Promise<IdentityAccountStatus | null>;
   findByUsername(username: string): Promise<IdentityUserRecord | null>;
   insert(user: IdentityUserRecord): Promise<void>;
   approve(id: string, approvedBy: string, approvedAt: number): Promise<boolean>;
@@ -113,6 +114,7 @@ export interface IdentityRepository {
 export interface IdentitySyncRepository {
   list(): IdentityPublicUserRecord[];
   findPublicById(id: string): IdentityPublicUserRecord | null;
+  findAccountStatusById(id: string): IdentityAccountStatus | null;
   findByUsername(username: string): IdentityUserRecord | null;
   insert(user: IdentityUserRecord): void;
   approve(id: string, approvedBy: string, approvedAt: number): boolean;

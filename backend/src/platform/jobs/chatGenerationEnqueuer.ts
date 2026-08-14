@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import { getSQLiteAdapterDatabase } from '../../persistence/index.js';
+import { assertSelectedSQLiteTransaction } from '../../persistence/index.js';
 import type {
   ChatGenerationEnqueuer,
   ChatGenerationEnqueueInput,
@@ -15,6 +15,7 @@ import {
 } from './domainJobContracts.js';
 import { getDurableJobRuntime } from './durableJobRuntime.js';
 import { PostgresDurableJobService } from './postgresDurableJobService.js';
+import { durableEventId } from './durableEventIdentity.js';
 
 const durableInput = (input: ChatGenerationEnqueueInput) => ({
   jobType: CHAT_GENERATE_JOB_TYPE,
@@ -22,22 +23,48 @@ const durableInput = (input: ChatGenerationEnqueueInput) => ({
   idempotencyScope: chatGenerationIdempotencyScope(input.sessionId),
   idempotencyKey: input.assistantMessageId,
   payload: { mode: 'encrypted' as const, value: input },
-  maxAttempts: 5,
+  // Permit exactly one reclaim after worker death without blocking later
+  // prompts behind a long sequence of provider retries.
+  maxAttempts: 2,
+});
+
+const cancellationIdentity = (input: ChatGenerationEnqueueInput) => ({
+  eventId: durableEventId(
+    'chat',
+    input.sessionId,
+    input.assistantMessageId,
+    'cancel-requested',
+    input.actorUserId
+  ),
+  streamId: `chat:${input.sessionId}`,
+  subjectId: input.assistantMessageId,
+  actorUserId: input.actorUserId,
 });
 
 export const transactionalChatGenerationEnqueuer: ChatGenerationEnqueuer = {
   enqueueSQLite(_executor, input) {
-    const database = getSQLiteAdapterDatabase();
-    if (!database.inTransaction) {
-      throw new Error(
-        'SQLite chat generation enqueue requires the selected owning transaction.'
-      );
-    }
+    assertSelectedSQLiteTransaction();
     const service = getDurableJobRuntime().service;
     if (service instanceof PostgresDurableJobService) {
       throw new Error('Selected durable job service is not SQLite.');
     }
-    service.enqueue(durableInput(input));
+    const cancellation = cancellationIdentity(input);
+    const cancellationCommitted = service.getEvent(cancellation.eventId);
+    const existing = service.getByIdempotency(
+      input.actorUserId,
+      chatGenerationIdempotencyScope(input.sessionId),
+      input.assistantMessageId
+    );
+    const job = service.enqueue(durableInput(input));
+    if (
+      cancellationCommitted?.streamId === cancellation.streamId &&
+      cancellationCommitted.eventType === 'chat.cancel-requested.v1' &&
+      cancellationCommitted.subjectId === cancellation.subjectId &&
+      cancellationCommitted.actorUserId === cancellation.actorUserId
+    ) {
+      service.cancel(job.id, input.actorUserId, 'user-requested');
+    }
+    return { created: existing === null };
   },
 
   async enqueuePostgres(executor, input) {
@@ -45,6 +72,11 @@ export const transactionalChatGenerationEnqueuer: ChatGenerationEnqueuer = {
     if (!(service instanceof PostgresDurableJobService)) {
       throw new Error('Selected durable job service is not PostgreSQL.');
     }
-    await service.enqueueWithExecutor(executor, durableInput(input));
+    const enqueue = await service.enqueueChatGenerationWithExecutor(
+      executor,
+      durableInput(input),
+      cancellationIdentity(input)
+    );
+    return { created: enqueue.created };
   },
 };

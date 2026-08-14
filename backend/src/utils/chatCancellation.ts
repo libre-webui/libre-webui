@@ -96,7 +96,10 @@ export class ChatGenerationRegistry {
   }
 }
 
-/** Bounds provider work across every Chat WebSocket owned by one user. */
+/**
+ * Cancels duplicate generations across this replica's sockets. Shared account
+ * capacity is enforced separately by the platform coordinator.
+ */
 export class UserChatGenerationRegistry {
   private readonly generationsByUser = new Map<
     string,

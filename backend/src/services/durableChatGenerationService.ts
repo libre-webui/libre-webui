@@ -9,6 +9,8 @@ import { getDurableEventGateway } from '../platform/events/index.js';
 import { getDurableJobRuntime } from '../platform/jobs/durableJobRuntime.js';
 import { durableEventId } from '../platform/jobs/durableEventIdentity.js';
 import type { DurableJobExecutionContext } from '../platform/jobs/embeddedDurableJobWorker.js';
+import { DurableJobExecutionError } from '../platform/jobs/durableJobTypes.js';
+import { CHAT_GENERATE_JOB_TYPE } from '../platform/jobs/domainJobContracts.js';
 import type { GenerationOptions } from '../types/index.js';
 import type { OllamaChatResponse } from '../types/index.js';
 import {
@@ -17,6 +19,7 @@ import {
 } from '../utils/chatDocumentContext.js';
 import { extractStatistics } from '../utils/generationUtils.js';
 import { formatPluginStreamToolCalls } from '../utils/pluginStreaming.js';
+import { createChatStreamCoalescer } from '../utils/chatStreamCoalescer.js';
 import agentCliService from './agentCliService.js';
 import chatGenerationService from './chatGenerationService.js';
 import { ChatRequestService } from './chatRequestService.js';
@@ -115,10 +118,12 @@ const streamGeneratedAssistant = async (
   let providerMetadata: Record<string, unknown> | undefined;
   let finalResponse: OllamaChatResponse | undefined;
   let streamEventSequence = 0;
-  const publish = async (
-    contentDelta = '',
-    thinkingDelta = ''
-  ): Promise<void> => {
+  const publish = async (batch: {
+    contentDelta: string;
+    thinkingDelta: string;
+    contentTotal: string;
+    thinkingTotal: string;
+  }): Promise<void> => {
     await context.assertSideEffectAllowed();
     await append(
       input,
@@ -126,12 +131,12 @@ const streamGeneratedAssistant = async (
       {
         type: 'chunk',
         messageId: input.assistantMessageId,
-        content: contentDelta,
-        total: content,
-        ...(thinkingDelta
+        content: batch.contentDelta,
+        total: batch.contentTotal,
+        ...(batch.thinkingDelta
           ? {
-              thinking: thinkingDelta,
-              thinkingTotal: thinking,
+              thinking: batch.thinkingDelta,
+              thinkingTotal: batch.thinkingTotal,
             }
           : {}),
         done: false,
@@ -139,23 +144,36 @@ const streamGeneratedAssistant = async (
       `attempt:${context.attemptCount}:stream:${++streamEventSequence}`
     );
   };
+  const streamPublisher = createChatStreamCoalescer(publish);
+  const queuePublish = (contentDelta = '', thinkingDelta = ''): void => {
+    streamPublisher.queue({
+      contentDelta,
+      thinkingDelta,
+      contentTotal: content,
+      thinkingTotal: thinking,
+    });
+  };
 
   if (prepared.target.providerType === 'agent' && prepared.target.providerId) {
-    for await (const chunk of agentCliService.executeAgentStreamRequest(
-      prepared.target.providerId,
-      prepared.pluginMessages,
-      input.actorUserId,
-      { model: prepared.target.actualModelName, signal: context.signal }
-    )) {
-      if (chunk.type === 'content' && chunk.content) {
-        content += chunk.content;
-        await publish(chunk.content);
-      } else if (chunk.type === 'reasoning' && chunk.content) {
-        thinking += chunk.content;
-        await publish('', chunk.content);
-      } else if (chunk.type === 'done' && chunk.providerMetadata) {
-        providerMetadata = chunk.providerMetadata;
+    try {
+      for await (const chunk of agentCliService.executeAgentStreamRequest(
+        prepared.target.providerId,
+        prepared.pluginMessages,
+        input.actorUserId,
+        { model: prepared.target.actualModelName, signal: context.signal }
+      )) {
+        if (chunk.type === 'content' && chunk.content) {
+          content += chunk.content;
+          queuePublish(chunk.content);
+        } else if (chunk.type === 'reasoning' && chunk.content) {
+          thinking += chunk.content;
+          queuePublish('', chunk.content);
+        } else if (chunk.type === 'done' && chunk.providerMetadata) {
+          providerMetadata = chunk.providerMetadata;
+        }
       }
+    } finally {
+      await streamPublisher.drain();
     }
     return {
       response: chatGenerationService.createPluginChatResponse(
@@ -175,35 +193,40 @@ const streamGeneratedAssistant = async (
       name: string;
       arguments: string;
     }> = [];
-    for await (const chunk of pluginService.executePluginStreamRequest(
-      prepared.target.actualModelName,
-      prepared.pluginMessages,
-      prepared.target.mergedOptions,
-      input.actorUserId,
-      prepared.target.activePlugin.id,
-      context.signal
-    )) {
-      if (chunk.type === 'content' && chunk.content) {
-        content += chunk.content;
-        await publish(chunk.content);
-      } else if (chunk.type === 'reasoning' && chunk.content) {
-        thinking += chunk.content;
-        await publish('', chunk.content);
-      } else if (chunk.type === 'tool_call' && chunk.toolCall) {
-        toolCalls.push(chunk.toolCall);
-      } else if (chunk.type === 'done') {
-        if (chunk.doneReason?.startsWith('incomplete:')) {
-          throw new Error(
-            `Provider returned an incomplete response (${chunk.doneReason.slice('incomplete:'.length) || 'unknown'})`
-          );
+    try {
+      for await (const chunk of pluginService.executePluginStreamRequest(
+        prepared.target.actualModelName,
+        prepared.pluginMessages,
+        prepared.target.mergedOptions,
+        input.actorUserId,
+        prepared.target.activePlugin.id,
+        context.signal
+      )) {
+        if (chunk.type === 'content' && chunk.content) {
+          content += chunk.content;
+          queuePublish(chunk.content);
+        } else if (chunk.type === 'reasoning' && chunk.content) {
+          thinking += chunk.content;
+          queuePublish('', chunk.content);
+        } else if (chunk.type === 'tool_call' && chunk.toolCall) {
+          toolCalls.push(chunk.toolCall);
+        } else if (chunk.type === 'done') {
+          if (chunk.doneReason?.startsWith('incomplete:')) {
+            throw new Error(
+              `Provider returned an incomplete response (${chunk.doneReason.slice('incomplete:'.length) || 'unknown'})`
+            );
+          }
+          providerMetadata = chunk.providerMetadata;
         }
-        providerMetadata = chunk.providerMetadata;
       }
+    } finally {
+      await streamPublisher.drain();
     }
     const toolContent = formatPluginStreamToolCalls(toolCalls);
     if (toolContent) {
       content += toolContent;
-      await publish(toolContent);
+      queuePublish(toolContent);
+      await streamPublisher.drain();
     }
     return {
       response: chatGenerationService.createPluginChatResponse(
@@ -228,7 +251,12 @@ const streamGeneratedAssistant = async (
     });
     content = generated.assistantContent;
     thinking = generated.assistantThinking || '';
-    await publish(content, thinking);
+    await publish({
+      contentDelta: content,
+      thinkingDelta: thinking,
+      contentTotal: content,
+      thinkingTotal: thinking,
+    });
     return {
       response: generated.response,
       content,
@@ -236,24 +264,6 @@ const streamGeneratedAssistant = async (
     };
   }
 
-  // Ollama's callback is synchronous. Coalesce into one pending SQL write so
-  // a fast provider cannot build an unbounded in-memory event backlog while
-  // still exposing partial ordered totals to subscribers.
-  let pending: { contentDelta: string; thinkingDelta: string } | undefined;
-  let flush: Promise<void> | undefined;
-  const queuePublish = (contentDelta: string, thinkingDelta: string): void => {
-    pending = { contentDelta, thinkingDelta };
-    if (flush) return;
-    flush = (async () => {
-      while (pending) {
-        const current = pending;
-        pending = undefined;
-        await publish(current.contentDelta, current.thinkingDelta);
-      }
-    })().finally(() => {
-      flush = undefined;
-    });
-  };
   let streamError: Error | undefined;
   await ollamaService.generateChatStreamResponse(
     {
@@ -279,7 +289,7 @@ const streamGeneratedAssistant = async (
     context.signal,
     { userId: input.actorUserId }
   );
-  await flush;
+  await streamPublisher.drain();
   if (streamError) throw streamError;
   if (!finalResponse) throw new Error('Provider stream produced no response');
   return {
@@ -301,7 +311,7 @@ class DurableChatGenerationService {
     input: DurableChatGenerationInput,
     context: Pick<
       DurableJobExecutionContext,
-      'signal' | 'attemptCount' | 'assertSideEffectAllowed'
+      'signal' | 'attemptCount' | 'assertSideEffectAllowed' | 'sideEffectLease'
     >
   ): Promise<void> {
     const session = await chatService.getSession(
@@ -312,10 +322,27 @@ class DurableChatGenerationService {
     const existing = session.messages.find(
       message => message.id === input.assistantMessageId
     );
-    if (existing && (await completionAlreadyPublished(input))) return;
+    const completionPublished = await completionAlreadyPublished(input);
+    if (completionPublished) {
+      if (!existing) {
+        throw new DurableJobExecutionError(
+          false,
+          'chat-completion-inconsistent',
+          'The chat completion event has no assistant message'
+        );
+      }
+      return;
+    }
+    if (existing) {
+      throw new DurableJobExecutionError(
+        false,
+        'chat-message-conflict',
+        'The assistant message identity is already in use'
+      );
+    }
 
-    let assistant = existing;
-    if (!assistant) {
+    let assistant;
+    {
       let documentContext = EMPTY_CHAT_DOCUMENT_CONTEXT(input.message);
       try {
         documentContext = await buildChatDocumentContext(
@@ -392,7 +419,6 @@ class DurableChatGenerationService {
         context
       );
       await context.assertSideEffectAllowed();
-      await context.assertSideEffectAllowed();
       const authoritative = await chatService.getSession(
         input.sessionId,
         input.actorUserId
@@ -400,63 +426,83 @@ class DurableChatGenerationService {
       if (!authoritative) {
         throw new Error('Chat session disappeared during generation');
       }
-      assistant = authoritative.messages.find(
+      const conflicting = authoritative.messages.find(
         message => message.id === input.assistantMessageId
       );
-      if (!assistant) {
-        assistant = await chatService.addMessage(
-          input.sessionId,
-          {
-            id: input.assistantMessageId,
-            role: 'assistant',
-            content: generated.content,
-            thinking: generated.thinking,
-            model: authoritative.model,
-            statistics: extractStatistics(generated.response),
-            providerMetadata:
-              webSearchSources?.length || documentContext.sources.length > 0
-                ? {
-                    ...(generated.response.message.providerMetadata ?? {}),
-                    ...(webSearchSources?.length ? { webSearchSources } : {}),
-                    ...(documentContext.sources.length > 0
-                      ? { ragSources: documentContext.sources }
-                      : {}),
-                  }
-                : generated.response.message.providerMetadata,
-            ...(input.regenerate && input.originalMessageId
-              ? (() => {
-                  const original = authoritative.messages.find(
-                    message => message.id === input.originalMessageId
-                  );
-                  const parentId =
-                    original?.parentId || input.originalMessageId;
-                  return { parentId, isActive: true };
-                })()
-              : {}),
-          },
-          input.actorUserId
+      if (conflicting) {
+        throw new DurableJobExecutionError(
+          false,
+          'chat-message-conflict',
+          'The assistant message identity is already in use'
         );
       }
-      if (!assistant) {
-        throw new Error('Chat session disappeared during generation');
-      }
-    }
-    await context.assertSideEffectAllowed();
-    await append(
-      input,
-      'chat.done.v1',
-      {
-        type: 'done',
-        messageId: input.assistantMessageId,
-        content: assistant.content,
-        ...(assistant.thinking ? { thinking: assistant.thinking } : {}),
-        ...(assistant.statistics ? { statistics: assistant.statistics } : {}),
-        ...(assistant.providerMetadata
-          ? { providerMetadata: assistant.providerMetadata }
+      assistant = {
+        id: input.assistantMessageId,
+        role: 'assistant' as const,
+        content: generated.content,
+        thinking: generated.thinking,
+        model: authoritative.model,
+        timestamp: Date.now(),
+        statistics: extractStatistics(generated.response),
+        providerMetadata:
+          webSearchSources?.length || documentContext.sources.length > 0
+            ? {
+                ...(generated.response.message.providerMetadata ?? {}),
+                ...(webSearchSources?.length ? { webSearchSources } : {}),
+                ...(documentContext.sources.length > 0
+                  ? { ragSources: documentContext.sources }
+                  : {}),
+              }
+            : generated.response.message.providerMetadata,
+        ...(input.regenerate && input.originalMessageId
+          ? (() => {
+              const original = authoritative.messages.find(
+                message => message.id === input.originalMessageId
+              );
+              return {
+                parentId: original?.parentId || input.originalMessageId,
+                isActive: true,
+              };
+            })()
           : {}),
+      };
+    }
+
+    const cursor = await chatService.publishDurableChatCompletion({
+      sessionId: input.sessionId,
+      userId: input.actorUserId,
+      message: assistant,
+      lease: context.sideEffectLease,
+      expectedJobType: CHAT_GENERATE_JOB_TYPE,
+      event: {
+        eventId: durableEventId(
+          'chat',
+          input.sessionId,
+          input.assistantMessageId,
+          'done'
+        ),
+        streamId: streamId(input.sessionId),
+        eventType: 'chat.done.v1',
+        subjectId: input.assistantMessageId,
+        actorUserId: input.actorUserId,
+        payload: {
+          mode: 'encrypted',
+          value: {
+            type: 'done',
+            messageId: input.assistantMessageId,
+            content: assistant.content,
+            ...(assistant.thinking ? { thinking: assistant.thinking } : {}),
+            ...(assistant.statistics
+              ? { statistics: assistant.statistics }
+              : {}),
+            ...(assistant.providerMetadata
+              ? { providerMetadata: assistant.providerMetadata }
+              : {}),
+          },
+        },
       },
-      'done'
-    );
+    });
+    await getDurableEventGateway().notify(cursor);
   }
 }
 

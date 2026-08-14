@@ -243,6 +243,11 @@ export class PostgresDurableJobWorker {
         payload,
         actorUserId: lease.actorUserId,
         attemptCount: lease.attemptCount,
+        sideEffectLease: {
+          jobId: lease.id,
+          workerId: lease.workerId,
+          leaseToken: lease.leaseToken,
+        },
         reportProgress: progress =>
           this.options.service.reportProgress(lease, progress),
         assertSideEffectAllowed: () => this.allowed(lease),

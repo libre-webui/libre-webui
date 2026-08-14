@@ -48,6 +48,8 @@ export interface RateLimitResult {
   allowed: boolean;
   remaining: number;
   resetAt: number;
+  /** Opaque identity required for a conditional refund of this exact window. */
+  windowToken: string;
 }
 
 export type CoordinationEventHandler<T = unknown> = (
@@ -85,6 +87,11 @@ export interface Coordinator {
     limit: number,
     windowMs: number
   ): Promise<RateLimitResult>;
+  /**
+   * Atomically returns one admitted request to its current fixed window. This
+   * supports failure-only limits without a replica-local compensating counter.
+   */
+  refundRateLimit(key: string, windowToken: string): Promise<boolean>;
   setPresence(scope: string, memberId: string, ttlMs: number): Promise<void>;
   listPresence(scope: string): Promise<string[]>;
   clearPresence(scope: string, memberId: string): Promise<void>;

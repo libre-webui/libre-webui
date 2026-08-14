@@ -7,6 +7,11 @@
 import { createHash } from 'node:crypto';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { getCoordinator } from '../platform/coordination/service.js';
+import {
+  SHARED_COORDINATION_OPERATION_TIMEOUT_MS,
+  withCoordinationTimeout,
+} from '../platform/coordination/sharedAdmission.js';
+import type { Coordinator } from '../platform/coordination/types.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('coordinated-rate-limit');
@@ -16,6 +21,9 @@ export interface CoordinatedRateLimitOptions {
   limit: number;
   windowMs: number;
   message: string;
+  /** Test seam; production uses the lifecycle-owned platform coordinator. */
+  coordinator?: Coordinator;
+  operationTimeoutMs?: number;
 }
 
 /**
@@ -44,10 +52,14 @@ export const coordinatedRateLimit = (
     const peer = request.ip || request.socket.remoteAddress || 'unknown';
     const peerDigest = createHash('sha256').update(peer).digest('base64url');
     try {
-      const result = await getCoordinator().consumeRateLimit(
-        `${options.keyPrefix}:${peerDigest}`,
-        options.limit,
-        options.windowMs
+      const coordinator = options.coordinator ?? getCoordinator();
+      const result = await withCoordinationTimeout(
+        coordinator.consumeRateLimit(
+          `${options.keyPrefix}:${peerDigest}`,
+          options.limit,
+          options.windowMs
+        ),
+        options.operationTimeoutMs ?? SHARED_COORDINATION_OPERATION_TIMEOUT_MS
       );
       const resetSeconds = Math.max(
         0,

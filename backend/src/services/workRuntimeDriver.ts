@@ -82,24 +82,27 @@ export interface WorkRuntimeDriver {
   /** Make a runtime image available. No cross-call deduplication. */
   ensureImage(image?: string): Promise<void>;
   /** Create the task workspace if needed; verify ownership if it exists. */
-  ensureWorkspace(task: WorkTaskRecord): Promise<void>;
+  ensureWorkspace(task: WorkTaskRecord, signal?: AbortSignal): Promise<void>;
   /**
    * Bring the sandbox to a running state with a policy-fresh configuration,
    * recreating it when its recorded policy is stale.
    */
-  ensureRuntime(task: WorkTaskRecord): Promise<void>;
+  ensureRuntime(task: WorkTaskRecord, signal?: AbortSignal): Promise<void>;
   /** Current sandbox state; verifies ownership when the sandbox exists. */
   runtimeState(task: WorkTaskRecord): Promise<WorkRuntimeState>;
   /** Stop the sandbox if it exists. Ownership-checked; absent is a no-op. */
-  stopRuntime(task: WorkTaskRecord): Promise<void>;
+  stopRuntime(task: WorkTaskRecord, signal?: AbortSignal): Promise<void>;
   /** Remove the sandbox if it exists. Ownership-checked; absent is a no-op. */
-  removeRuntime(task: WorkTaskRecord): Promise<void>;
+  removeRuntime(task: WorkTaskRecord, signal?: AbortSignal): Promise<void>;
   /**
    * Remove the sandbox and workspace together. Every destructive target is
    * ownership-validated before either is removed, so a conflicting unmanaged
    * resource cannot cause partial cleanup.
    */
-  removeTaskResources(task: WorkTaskRecord): Promise<void>;
+  removeTaskResources(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void>;
   /** Run a command inside the sandbox as the unprivileged sandbox user. */
   exec(
     task: WorkTaskRecord,
@@ -127,7 +130,10 @@ export interface WorkRuntimeDriver {
   /** Why interactive terminals are unavailable on this backend, if so. */
   terminalUnavailableReason(): string | null;
   /** Open an interactive TTY inside the sandbox as the unprivileged user. */
-  openTerminal(containerName: string): Promise<WorkTerminalTransport>;
+  openTerminal(
+    containerName: string,
+    signal?: AbortSignal
+  ): Promise<WorkTerminalTransport>;
 }
 
 export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
@@ -164,20 +170,27 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     await this.docker(['pull', image], { timeoutMs: 900_000 });
   }
 
-  async ensureWorkspace(task: WorkTaskRecord): Promise<void> {
+  async ensureWorkspace(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
+    signal?.throwIfAborted();
     if (await this.volumeExists(task.volumeName)) {
       await this.assertManagedVolume(task);
       return;
     }
-    await this.docker([
-      'volume',
-      'create',
-      '--label',
-      'ai.libre-webui.managed=true',
-      '--label',
-      `ai.libre-webui.task=${task.id}`,
-      task.volumeName,
-    ]);
+    await this.docker(
+      [
+        'volume',
+        'create',
+        '--label',
+        'ai.libre-webui.managed=true',
+        '--label',
+        `ai.libre-webui.task=${task.id}`,
+        task.volumeName,
+      ],
+      { abortSignal: signal }
+    );
     // Docker returns an existing volume from `volume create` if another
     // process wins the name race, so prove ownership before mounting it.
     await this.assertManagedVolume(task);
@@ -194,7 +207,11 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     }
   }
 
-  async ensureRuntime(task: WorkTaskRecord): Promise<void> {
+  async ensureRuntime(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
+    signal?.throwIfAborted();
     const policy = await workPolicyService.resolve(task.policyId);
     await this.ensureWorkNetwork(task);
     if (await this.containerExists(task.containerName)) {
@@ -203,8 +220,12 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
         logger.warn(
           `Recreating Work container ${task.containerName} because its isolation policy is stale.`
         );
-        await this.docker(['rm', '-f', task.containerName]);
-        await this.docker(buildWorkContainerRunArgs(task, policy));
+        await this.docker(['rm', '-f', task.containerName], {
+          abortSignal: signal,
+        });
+        await this.docker(buildWorkContainerRunArgs(task, policy), {
+          abortSignal: signal,
+        });
         return;
       }
       const state = await this.docker([
@@ -214,11 +235,15 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
         task.containerName,
       ]);
       if (state.stdout.trim() !== 'true') {
-        await this.docker(['start', task.containerName]);
+        await this.docker(['start', task.containerName], {
+          abortSignal: signal,
+        });
       }
       return;
     }
-    await this.docker(buildWorkContainerRunArgs(task, policy));
+    await this.docker(buildWorkContainerRunArgs(task, policy), {
+      abortSignal: signal,
+    });
   }
 
   async runtimeState(task: WorkTaskRecord): Promise<WorkRuntimeState> {
@@ -229,21 +254,33 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
       : 'stopped';
   }
 
-  async stopRuntime(task: WorkTaskRecord): Promise<void> {
+  async stopRuntime(task: WorkTaskRecord, signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted();
     if (!(await this.containerExists(task.containerName))) return;
     await this.assertManagedContainer(task);
     await this.docker(['stop', '--time', '1', task.containerName], {
       timeoutMs: 10_000,
+      abortSignal: signal,
     });
   }
 
-  async removeRuntime(task: WorkTaskRecord): Promise<void> {
+  async removeRuntime(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
+    signal?.throwIfAborted();
     if (!(await this.containerExists(task.containerName))) return;
     await this.assertManagedContainer(task);
-    await this.docker(['rm', '-f', task.containerName]);
+    await this.docker(['rm', '-f', task.containerName], {
+      abortSignal: signal,
+    });
   }
 
-  async removeTaskResources(task: WorkTaskRecord): Promise<void> {
+  async removeTaskResources(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
+    signal?.throwIfAborted();
     const [hasContainer, hasVolume] = await Promise.all([
       this.containerExists(task.containerName),
       this.volumeExists(task.volumeName),
@@ -259,11 +296,13 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     if (hasContainer) {
       await this.docker(['rm', '-f', task.containerName], {
         timeoutMs: 15_000,
+        abortSignal: signal,
       });
     }
     if (hasVolume) {
       await this.docker(['volume', 'rm', task.volumeName], {
         timeoutMs: 15_000,
+        abortSignal: signal,
       });
     }
   }
@@ -353,14 +392,18 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     return null;
   }
 
-  async openTerminal(containerName: string): Promise<WorkTerminalTransport> {
+  async openTerminal(
+    containerName: string,
+    signal?: AbortSignal
+  ): Promise<WorkTerminalTransport> {
     const created = await this.terminalApi(
       'POST',
       `/containers/${encodeURIComponent(containerName)}/exec`,
-      buildExecCreatePayload()
+      buildExecCreatePayload(),
+      signal
     );
     const execId = parseExecId(created);
-    const stream = await this.startExecStream(execId);
+    const stream = await this.startExecStream(execId, signal);
     return {
       stream,
       resize: async (cols: number, rows: number) => {
@@ -399,7 +442,8 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
   private terminalApi(
     method: 'GET' | 'POST',
     path: string,
-    payload?: unknown
+    payload?: unknown,
+    signal?: AbortSignal
   ): Promise<DockerApiResponse> {
     return new Promise((resolve, reject) => {
       const body = payload === undefined ? undefined : JSON.stringify(payload);
@@ -408,6 +452,7 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
         {
           ...options,
           method,
+          signal,
           path,
           headers: {
             ...hostHeader,
@@ -443,13 +488,17 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
     });
   }
 
-  private startExecStream(execId: string): Promise<Duplex> {
+  private startExecStream(
+    execId: string,
+    signal?: AbortSignal
+  ): Promise<Duplex> {
     return new Promise((resolve, reject) => {
       const body = JSON.stringify({ Detach: false, Tty: true });
       const { options, hostHeader } = this.terminalTransport();
       const request = http.request({
         ...options,
         method: 'POST',
+        signal,
         path: `/exec/${encodeURIComponent(execId)}/start`,
         headers: {
           ...hostHeader,
@@ -460,6 +509,13 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
         },
       });
       request.on('upgrade', (_response, socket, head) => {
+        if (signal?.aborted) {
+          socket.destroy(
+            signal.reason instanceof Error ? signal.reason : undefined
+          );
+          reject(signal.reason);
+          return;
+        }
         // With Tty:true the hijacked stream is raw terminal bytes in both
         // directions; no stream-multiplexing frames to parse.
         if (head.length > 0) socket.unshift(head);
@@ -486,6 +542,9 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
             'WORK_TERMINAL_UNAVAILABLE'
           )
         );
+      });
+      request.setTimeout(10_000, () => {
+        request.destroy(new Error('Docker terminal stream timed out.'));
       });
       request.write(body);
       request.end();
@@ -945,6 +1004,7 @@ async function runProcess(
   args: string[],
   options: ProcessOptions
 ): Promise<ProcessResult> {
+  options.abortSignal?.throwIfAborted();
   const timeoutMs = options.timeoutMs ?? config.commandTimeoutMs;
   const maxOutputChars = options.maxOutputChars ?? config.maxOutputChars;
   return new Promise((resolve, reject) => {
@@ -959,10 +1019,24 @@ async function runProcess(
     let settled = false;
     let stdinError: Error | undefined;
     let timer: NodeJS.Timeout | undefined;
+    const abortProcess = (): void => {
+      child.kill('SIGKILL');
+      if (!claimSettlement()) return;
+      reject(
+        options.abortSignal?.reason instanceof Error
+          ? options.abortSignal.reason
+          : new WorkRuntimeError(
+              'The Work runtime operation lost distributed authority.',
+              503,
+              'WORK_RUNTIME_LEASE_CONFLICT'
+            )
+      );
+    };
     const claimSettlement = (): boolean => {
       if (settled) return false;
       settled = true;
       if (timer) clearTimeout(timer);
+      options.abortSignal?.removeEventListener('abort', abortProcess);
       return true;
     };
     const append = (current: string, chunk: Buffer): string => {
@@ -986,6 +1060,10 @@ async function runProcess(
         stdinError = error;
       }
     });
+    options.abortSignal?.addEventListener('abort', abortProcess, {
+      once: true,
+    });
+    if (options.abortSignal?.aborted) abortProcess();
     child.on('error', error => {
       activeDockerProcesses.delete(child);
       if (!claimSettlement()) return;

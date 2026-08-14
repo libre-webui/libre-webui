@@ -46,8 +46,31 @@ import {
   chatGenerationIdempotencyScope,
 } from '../platform/jobs/domainJobContracts.js';
 import { getDurableJobRuntime } from '../platform/jobs/durableJobRuntime.js';
+import type {
+  DurableJobEventAppendInput,
+  DurableJobLeaseIdentity,
+} from '../platform/jobs/durableJobTypes.js';
 
 const logger = createLogger('chat-service');
+
+export interface ChatMessagePersistenceOptions {
+  /**
+   * Assert that the caller still owns this generation before its assistant
+   * message becomes authoritative. The assertion runs while the session write
+   * lease is held, immediately before and after persistence.
+   */
+  assertPersistenceAllowed?: () => void | Promise<void>;
+}
+
+export class ChatCancellationCompensationError extends Error {
+  constructor(
+    readonly cancellationError: unknown,
+    readonly compensationError: unknown
+  ) {
+    super('Chat cancellation compensation failed');
+    this.name = 'ChatCancellationCompensationError';
+  }
+}
 
 class ChatService {
   private sessions: Map<string, ChatSession> = new Map();
@@ -55,7 +78,7 @@ class ChatService {
   private async withSessionWriteLease<T>(
     sessionId: string,
     userId: string,
-    operation: () => Promise<T>
+    operation: (assertHeld: () => Promise<void>) => Promise<T>
   ): Promise<T> {
     const coordinator = getCoordinator();
     const deadline = Date.now() + 10_000;
@@ -75,21 +98,34 @@ class ChatService {
     let closed = false;
     let leaseLost = false;
     let renewalTimer: NodeJS.Timeout | undefined;
+    const leaseLostError = (): Error =>
+      new Error('The shared chat write lease was lost');
+    const markLost = (): void => {
+      leaseLost = true;
+    };
+    const assertHeld = async (): Promise<void> => {
+      if (closed || leaseLost) throw leaseLostError();
+      try {
+        if (await lease.extend(30_000)) return;
+      } catch {
+        // Report expiry and coordination outages through one safe fence.
+      }
+      markLost();
+      throw leaseLostError();
+    };
     const renew = async (): Promise<void> => {
       if (closed) return;
       try {
-        if (!(await lease.extend(30_000))) leaseLost = true;
+        if (!(await lease.extend(30_000))) markLost();
       } catch {
-        leaseLost = true;
+        markLost();
       }
       if (!closed && !leaseLost) renewalTimer = setTimeout(renew, 10_000);
     };
     renewalTimer = setTimeout(renew, 10_000);
     try {
-      const result = await operation();
-      if (leaseLost) {
-        throw new Error('The shared chat write lease was lost');
-      }
+      await assertHeld();
+      const result = await operation(assertHeld);
       return result;
     } finally {
       closed = true;
@@ -214,15 +250,16 @@ class ChatService {
     updates: Partial<ChatSession>,
     userId: string = 'default'
   ): Promise<ChatSession | undefined> {
-    return this.withSessionWriteLease(sessionId, userId, () =>
-      this.updateSessionWithLeaseHeld(sessionId, updates, userId)
+    return this.withSessionWriteLease(sessionId, userId, assertHeld =>
+      this.updateSessionWithLeaseHeld(sessionId, updates, userId, assertHeld)
     );
   }
 
   private async updateSessionWithLeaseHeld(
     sessionId: string,
     updates: Partial<ChatSession>,
-    userId: string
+    userId: string,
+    assertHeld: () => Promise<void>
   ): Promise<ChatSession | undefined> {
     // First verify the session belongs to the user
     const session = await this.getSession(sessionId, userId);
@@ -280,24 +317,33 @@ class ChatService {
     }
 
     this.sessions.set(sessionId, updatedSession);
-    await storageService.saveSession(updatedSession, userId);
+    await assertHeld();
+    await storageService.saveSession(updatedSession, userId, assertHeld);
     return updatedSession;
   }
 
   async addMessage(
     sessionId: string,
     message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string },
-    userId: string = 'default'
+    userId: string = 'default',
+    options: ChatMessagePersistenceOptions = {}
   ): Promise<ChatMessage | undefined> {
-    return this.withSessionWriteLease(sessionId, userId, () =>
-      this.addMessageWithLeaseHeld(sessionId, message, userId)
+    return this.withSessionWriteLease(sessionId, userId, assertHeld =>
+      this.addMessageWithLeaseHeld(sessionId, message, userId, {
+        ...options,
+        assertPersistenceAllowed: async () => {
+          await options.assertPersistenceAllowed?.();
+          await assertHeld();
+        },
+      })
     );
   }
 
   private async addMessageWithLeaseHeld(
     sessionId: string,
     message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string },
-    userId: string
+    userId: string,
+    options: ChatMessagePersistenceOptions
   ): Promise<ChatMessage | undefined> {
     // First verify the session belongs to the user
     const session = await this.getSession(sessionId, userId);
@@ -306,6 +352,8 @@ class ChatService {
     }
 
     const messageId = message.id || uuidv4();
+
+    await options.assertPersistenceAllowed?.();
 
     // Check if message with this ID already exists to prevent duplicates
     const existingMessage = session.messages.find(msg => msg.id === messageId);
@@ -318,6 +366,15 @@ class ChatService {
       id: messageId,
       timestamp: Date.now(),
     });
+    const previousSessionUpdatedAt = session.updatedAt;
+    const previousActiveMessageId = newMessage.parentId
+      ? session.messages.find(
+          candidate =>
+            (candidate.id === newMessage.parentId ||
+              candidate.parentId === newMessage.parentId) &&
+            candidate.isActive !== false
+        )?.id
+      : undefined;
 
     // If this is a branch message (has parentId), update sibling messages
     if (newMessage.parentId) {
@@ -345,8 +402,55 @@ class ChatService {
 
     session.messages.push(newMessage);
     session.updatedAt = Date.now();
+    const persistedSessionUpdatedAt = session.updatedAt;
 
-    // Process advanced persona features if applicable
+    this.sessions.set(sessionId, session);
+    let persistenceError: unknown;
+    try {
+      await options.assertPersistenceAllowed?.();
+      await storageService.saveSession(
+        session,
+        userId,
+        options.assertPersistenceAllowed
+      );
+    } catch (error) {
+      persistenceError = error;
+    }
+
+    try {
+      // This is the critical post-COMMIT fence. A transport may ignore Abort,
+      // or a PostgreSQL acknowledgement may arrive after Stop. In either case
+      // the assistant response is not allowed to survive as a ghost message.
+      await options.assertPersistenceAllowed?.();
+    } catch (cancellationError) {
+      try {
+        await storageService.removeSessionMessageIfCurrent({
+          sessionId,
+          userId,
+          messageId: newMessage.id,
+          expectedTimestamp: newMessage.timestamp,
+          expectedSessionUpdatedAt: persistedSessionUpdatedAt,
+          previousSessionUpdatedAt,
+          previousActiveMessageId,
+        });
+        // Persistence is authoritative; discard the mutated process snapshot
+        // instead of replacing a possibly newer cross-replica aggregate.
+        this.sessions.delete(sessionId);
+      } catch (compensationError) {
+        this.sessions.delete(sessionId);
+        // The aggregate's durable state is unknown, so do not pretend this was
+        // an ordinary cancellation that callers may silently swallow.
+        throw new ChatCancellationCompensationError(
+          cancellationError,
+          compensationError
+        );
+      }
+      throw cancellationError;
+    }
+    if (persistenceError) throw persistenceError;
+
+    // Persona-derived side effects must not run for a response rolled back by
+    // Stop. Start them only after the post-persistence cancellation fence.
     if (session.personaId) {
       if (message.role === 'user') {
         this.processAdvancedPersonaInteraction(
@@ -368,8 +472,6 @@ class ChatService {
       }
     }
 
-    this.sessions.set(sessionId, session);
-    await storageService.saveSession(session, userId);
     return newMessage;
   }
 
@@ -389,7 +491,7 @@ class ChatService {
     return this.withSessionWriteLease(
       input.sessionId,
       input.userId,
-      async () => {
+      async assertHeld => {
         const session = await this.getSession(input.sessionId, input.userId);
         if (!session) return undefined;
         const existingJob =
@@ -398,6 +500,17 @@ class ChatService {
             chatGenerationIdempotencyScope(input.sessionId),
             input.assistantMessageId
           );
+        if (input.userMessageId === input.assistantMessageId) {
+          throw new Error('Chat message identifiers must be distinct');
+        }
+        if (
+          !existingJob &&
+          session.messages.some(
+            message => message.id === input.assistantMessageId
+          )
+        ) {
+          throw new Error('The assistant message identity is already in use');
+        }
         let userMessage = session.messages.find(
           message => message.id === input.userMessageId
         );
@@ -464,9 +577,11 @@ class ChatService {
             session,
             input.userId,
             transactionalChatGenerationEnqueuer,
-            enqueueInput
+            enqueueInput,
+            assertHeld
           );
         try {
+          await assertHeld();
           await persistAndEnqueue();
         } catch {
           // This SQL transaction can commit while the client loses only its
@@ -475,6 +590,31 @@ class ChatService {
           // committed job or rejects an inconsistent reuse. It also completes
           // a transaction that genuinely rolled back, so the caller never gets
           // a false conflict for a user turn already persisted by PostgreSQL.
+          const committedJob =
+            await getDurableJobRuntime().service.getByIdempotency(
+              input.userId,
+              chatGenerationIdempotencyScope(input.sessionId),
+              input.assistantMessageId
+            );
+          const committedSession = await storageService.getSession(
+            input.sessionId,
+            input.userId
+          );
+          const committedMessage = committedSession?.messages.find(
+            candidate => candidate.id === input.userMessageId
+          );
+          if (
+            committedJob?.jobType === CHAT_GENERATE_JOB_TYPE &&
+            committedJob.actorUserId === input.userId &&
+            committedMessage?.role === 'user' &&
+            committedMessage.content === input.message &&
+            JSON.stringify(committedMessage.images ?? []) ===
+              JSON.stringify(input.images ?? [])
+          ) {
+            this.sessions.delete(input.sessionId);
+            return { userMessage: committedMessage, jobId: committedJob.id };
+          }
+          await assertHeld();
           await persistAndEnqueue();
         }
         this.sessions.set(input.sessionId, session);
@@ -523,14 +663,75 @@ class ChatService {
     );
   }
 
+  /**
+   * Publish the final assistant row while holding the same distributed write
+   * lease as ordinary read/modify/replace chat mutations. The SQL operation
+   * then applies the durable job fence and commits the row plus terminal event.
+   */
+  async publishDurableChatCompletion(input: {
+    sessionId: string;
+    userId: string;
+    message: ChatMessage & { role: 'assistant' };
+    lease: DurableJobLeaseIdentity;
+    expectedJobType: string;
+    event: DurableJobEventAppendInput;
+  }): Promise<number> {
+    return this.withSessionWriteLease(
+      input.sessionId,
+      input.userId,
+      async assertHeld => {
+        const authoritative = await storageService.getSession(
+          input.sessionId,
+          input.userId
+        );
+        if (!authoritative) {
+          throw new Error('Chat completion session is unavailable');
+        }
+        if (
+          authoritative.messages.some(
+            message => message.id === input.message.id
+          )
+        ) {
+          throw new Error('The assistant message identity is already in use');
+        }
+        if (
+          input.message.parentId &&
+          !authoritative.messages.some(
+            message =>
+              message.id === input.message.parentId &&
+              message.role === 'assistant'
+          )
+        ) {
+          throw new Error('Chat completion branch root is unavailable');
+        }
+
+        await assertHeld();
+        const cursor = await storageService.publishDurableChatCompletion({
+          ...input,
+          beforeCommit: assertHeld,
+        });
+        // Force every later mutation on this process to reread the atomically
+        // published assistant instead of retaining a pre-publication aggregate.
+        this.sessions.delete(input.sessionId);
+        return cursor;
+      }
+    );
+  }
+
   async updateMessage(
     sessionId: string,
     messageId: string,
     updates: Partial<ChatMessage>,
     userId: string = 'default'
   ): Promise<ChatMessage | undefined> {
-    return this.withSessionWriteLease(sessionId, userId, () =>
-      this.updateMessageWithLeaseHeld(sessionId, messageId, updates, userId)
+    return this.withSessionWriteLease(sessionId, userId, assertHeld =>
+      this.updateMessageWithLeaseHeld(
+        sessionId,
+        messageId,
+        updates,
+        userId,
+        assertHeld
+      )
     );
   }
 
@@ -538,7 +739,8 @@ class ChatService {
     sessionId: string,
     messageId: string,
     updates: Partial<ChatMessage>,
-    userId: string
+    userId: string,
+    assertHeld: () => Promise<void>
   ): Promise<ChatMessage | undefined> {
     // First verify the session belongs to the user
     const session = await this.getSession(sessionId, userId);
@@ -573,7 +775,8 @@ class ChatService {
 
     // Save updated session
     this.sessions.set(sessionId, session);
-    await storageService.saveSession(session, userId);
+    await assertHeld();
+    await storageService.saveSession(session, userId, assertHeld);
 
     return updatedMessage;
   }
@@ -582,7 +785,7 @@ class ChatService {
     sessionId: string,
     userId: string = 'default'
   ): Promise<boolean> {
-    return this.withSessionWriteLease(sessionId, userId, async () => {
+    return this.withSessionWriteLease(sessionId, userId, async assertHeld => {
       await getDurableJobRuntime().service.cancelAllForActor(
         userId,
         'superseded',
@@ -591,19 +794,25 @@ class ChatService {
           idempotencyScopes: [chatGenerationIdempotencyScope(sessionId)],
         }
       );
-      return this.deleteSessionWithLeaseHeld(sessionId, userId);
+      return this.deleteSessionWithLeaseHeld(sessionId, userId, assertHeld);
     });
   }
 
   private async deleteSessionWithLeaseHeld(
     sessionId: string,
-    userId: string
+    userId: string,
+    assertHeld: () => Promise<void>
   ): Promise<boolean> {
     // First verify the session belongs to the user
     const session = await this.getSession(sessionId, userId);
     if (!session) return false;
 
-    const deleted = await storageService.deleteSession(sessionId, userId);
+    await assertHeld();
+    const deleted = await storageService.deleteSession(
+      sessionId,
+      userId,
+      assertHeld
+    );
     if (deleted) {
       this.sessions.delete(sessionId);
     }
@@ -685,7 +894,7 @@ class ChatService {
     );
     const userSessions = await this.getAllSessions(userId);
     for (const session of userSessions) {
-      await this.withSessionWriteLease(session.id, userId, async () => {
+      await this.withSessionWriteLease(session.id, userId, async assertHeld => {
         // A generation may have committed after the actor-wide cancellation
         // but before this session lease was acquired. Cancel the exact scope
         // under the same serialization boundary immediately before deletion.
@@ -697,7 +906,7 @@ class ChatService {
             idempotencyScopes: [chatGenerationIdempotencyScope(session.id)],
           }
         );
-        await this.deleteSessionWithLeaseHeld(session.id, userId);
+        await this.deleteSessionWithLeaseHeld(session.id, userId, assertHeld);
       });
     }
   }
@@ -931,7 +1140,7 @@ Guidelines:
 - If memories conflict with current information, prioritize the most recent
 [END MEMORY CONTEXT]`;
 
-      await this.withSessionWriteLease(session.id, userId, async () => {
+      await this.withSessionWriteLease(session.id, userId, async assertHeld => {
         const authoritative = await this.getSession(session.id, userId);
         if (!authoritative) return;
         const systemMessageIndex = authoritative.messages.findIndex(
@@ -953,7 +1162,8 @@ Guidelines:
         }
         authoritative.updatedAt = Date.now();
         this.sessions.set(authoritative.id, authoritative);
-        await storageService.saveSession(authoritative, userId);
+        await assertHeld();
+        await storageService.saveSession(authoritative, userId, assertHeld);
       });
     } catch (error) {
       logger.error(`Error updating system message with memories:`, error);
@@ -1012,12 +1222,13 @@ Guidelines:
     newMessage: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string },
     userId: string = 'default'
   ): Promise<ChatMessage | undefined> {
-    return this.withSessionWriteLease(sessionId, userId, () =>
+    return this.withSessionWriteLease(sessionId, userId, assertHeld =>
       this.createMessageBranchWithLeaseHeld(
         sessionId,
         originalMessageId,
         newMessage,
-        userId
+        userId,
+        assertHeld
       )
     );
   }
@@ -1026,7 +1237,8 @@ Guidelines:
     sessionId: string,
     originalMessageId: string,
     newMessage: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string },
-    userId: string
+    userId: string,
+    assertHeld: () => Promise<void>
   ): Promise<ChatMessage | undefined> {
     const session = await this.getSession(sessionId, userId);
     if (!session) return undefined;
@@ -1070,7 +1282,8 @@ Guidelines:
     session.updatedAt = Date.now();
 
     this.sessions.set(sessionId, session);
-    await storageService.saveSession(session, userId);
+    await assertHeld();
+    await storageService.saveSession(session, userId, assertHeld);
 
     return newBranchMessage;
   }
@@ -1084,12 +1297,13 @@ Guidelines:
     targetBranchIndex: number,
     userId: string = 'default'
   ): Promise<ChatMessage | undefined> {
-    return this.withSessionWriteLease(sessionId, userId, () =>
+    return this.withSessionWriteLease(sessionId, userId, assertHeld =>
       this.switchMessageBranchWithLeaseHeld(
         sessionId,
         messageId,
         targetBranchIndex,
-        userId
+        userId,
+        assertHeld
       )
     );
   }
@@ -1098,7 +1312,8 @@ Guidelines:
     sessionId: string,
     messageId: string,
     targetBranchIndex: number,
-    userId: string
+    userId: string,
+    assertHeld: () => Promise<void>
   ): Promise<ChatMessage | undefined> {
     const session = await this.getSession(sessionId, userId);
     if (!session) return undefined;
@@ -1123,7 +1338,8 @@ Guidelines:
 
     session.updatedAt = Date.now();
     this.sessions.set(sessionId, session);
-    await storageService.saveSession(session, userId);
+    await assertHeld();
+    await storageService.saveSession(session, userId, assertHeld);
 
     return targetMessage;
   }

@@ -54,16 +54,16 @@ const getStoredLogLevel = (): LogLevel | undefined => {
 };
 
 const defaultLogLevel = (): LogLevel => {
-  if (isDemoMode() || import.meta.env.PROD) {
+  if (isDemoMode() || import.meta.env?.PROD) {
     return 'warn';
   }
 
-  return import.meta.env.VITE_DEBUG_VERBOSE === 'true' ? 'debug' : 'warn';
+  return import.meta.env?.VITE_DEBUG_VERBOSE === 'true' ? 'debug' : 'warn';
 };
 
 export const getLogLevel = (): LogLevel =>
   getStoredLogLevel() ||
-  normalizeLogLevel(import.meta.env.VITE_LOG_LEVEL) ||
+  normalizeLogLevel(import.meta.env?.VITE_LOG_LEVEL) ||
   defaultLogLevel();
 
 export const isLogLevelEnabled = (level: Exclude<LogLevel, 'silent'>) => {

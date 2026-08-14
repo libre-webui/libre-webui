@@ -99,9 +99,9 @@ timestamps, content bounds, and included relationships, and plans conflicts and
 reference remapping without writing data. Dangling folder, collection,
 message-parent, or document associations are rejected instead of being
 silently dropped. The backend repeats validation and conflict planning for the
-actual import. All writes occur in one SQLite transaction; an error rolls back
-preferences, folders, sessions/messages, Notes, collections, documents, and
-chunks together.
+actual import. All writes occur in one database transaction on both supported
+SQLite and PostgreSQL backends; an error rolls back preferences, folders,
+sessions/messages, Notes, collections, documents, and chunks together.
 
 Two conflict policies are available:
 

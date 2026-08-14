@@ -45,8 +45,14 @@ const taskModule = await import(
     path.join(repoRoot, 'backend', 'dist', 'services', 'workTaskService.js')
   ).href
 );
+const runtimeServiceModule = await import(
+  pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeService.js')
+  ).href
+);
 
 const {
+  WorkTerminalService,
   WORK_TERMINAL_DEFAULTS,
   boundedDimension,
   buildExecCreatePayload,
@@ -62,14 +68,22 @@ const { userModel } = userModule;
 const { websocketTicketService } = ticketModule;
 const { workTaskService } = taskModule;
 const { workTerminalService } = terminalModule;
+const { default: workRuntimeService } = runtimeServiceModule;
 
 const persistenceModule = await import(
   pathToFileURL(
     path.join(repoRoot, 'backend', 'dist', 'persistence', 'index.js')
   ).href
 );
+const coordinationModule = await import(
+  pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'platform', 'coordination', 'service.js')
+  ).href
+);
+await coordinationModule.initializeCoordinator();
 
 test.after(async () => {
+  await coordinationModule.closeCoordinator();
   await persistenceModule.closePersistence();
   if (previousDataDir === undefined) delete process.env.DATA_DIR;
   else process.env.DATA_DIR = previousDataDir;
@@ -359,6 +373,81 @@ test('terminal shutdown drains an in-flight open and its late cleanup failure', 
     process.off('unhandledRejection', captureUnhandledRejection);
     releaseOpen?.();
   }
+});
+
+test('a client close during terminal opening cancels and cleans the late session', async t => {
+  let releaseOpen;
+  const openGate = new Promise(resolve => {
+    releaseOpen = resolve;
+  });
+  let openStarted;
+  const didStartOpen = new Promise(resolve => {
+    openStarted = resolve;
+  });
+  let openingSignal;
+  let cleanupCalls = 0;
+  installTerminalMocks(t, {
+    open: async (_task, signal) => {
+      openingSignal = signal;
+      openStarted();
+      await openGate;
+      return {
+        stream: new PassThrough(),
+        resize: async () => {},
+        close: async () => {
+          cleanupCalls += 1;
+        },
+      };
+    },
+  });
+
+  const server = createWorkTerminalServer();
+  const socket = new FakeWebSocket();
+  server.emit('connection', socket, terminalRequest);
+  await didStartOpen;
+  socket.close();
+  await nextTurn();
+  assert.equal(openingSignal.aborted, true);
+  releaseOpen();
+  await closeTerminalServer(server);
+  assert.equal(cleanupCalls, 1);
+});
+
+test('terminal preparation and stream opening observe cancellation', async t => {
+  const originalAcquireHold = workRuntimeService.acquireTerminalHold;
+  const originalOpenTerminal = workRuntimeService.driver.openTerminal;
+  let holdReleases = 0;
+  let streamOpeningStarted;
+  const didStartStreamOpening = new Promise(resolve => {
+    streamOpeningStarted = resolve;
+  });
+  workRuntimeService.acquireTerminalHold = async (_task, signal) => {
+    signal?.throwIfAborted();
+    return async () => {
+      holdReleases += 1;
+    };
+  };
+  workRuntimeService.driver.openTerminal = async (_name, signal) => {
+    streamOpeningStarted();
+    return new Promise((_resolve, reject) => {
+      const abort = () => reject(signal.reason);
+      signal.addEventListener('abort', abort, { once: true });
+    });
+  };
+  t.after(() => {
+    workRuntimeService.acquireTerminalHold = originalAcquireHold;
+    workRuntimeService.driver.openTerminal = originalOpenTerminal;
+  });
+
+  const service = new WorkTerminalService();
+  const cancellation = new AbortController();
+  const opening = service.open(terminalTask, cancellation.signal);
+  await didStartStreamOpening;
+  const rejectedOpening = assert.rejects(opening, /forced admission loss/);
+  cancellation.abort(new Error('forced admission loss'));
+  await rejectedOpening;
+  assert.equal(holdReleases, 1);
+  assert.equal(service.sessionCount(terminalTask.id), 0);
 });
 
 test('terminal shutdown drains input authorization and prevents a late shell write', async t => {

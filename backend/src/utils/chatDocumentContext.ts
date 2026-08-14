@@ -55,6 +55,7 @@ export async function buildChatDocumentContext(
   const knowledgeCollectionIds = (
     await storageService.getSession(sessionId, userId)
   )?.settings?.knowledgeCollectionIds;
+  throwIfChatGenerationCancelled(signal);
 
   const relevantDocuments = await documentService.searchDocuments(
     message,
@@ -73,11 +74,13 @@ export async function buildChatDocumentContext(
   const documentsMap = new Map();
   const sources: ChatDocumentSource[] = [];
   for (const chunk of relevantDocuments) {
+    throwIfChatGenerationCancelled(signal);
     if (!documentsMap.has(chunk.documentId)) {
       const document = await documentService.getDocument(
         chunk.documentId,
         userId
       );
+      throwIfChatGenerationCancelled(signal);
       documentsMap.set(chunk.documentId, document);
       sources.push({
         id: chunk.documentId,
@@ -85,6 +88,7 @@ export async function buildChatDocumentContext(
       });
     }
   }
+  throwIfChatGenerationCancelled(signal);
 
   const documentContext =
     '\n\n--- RELEVANT DOCUMENTS ---\n' +

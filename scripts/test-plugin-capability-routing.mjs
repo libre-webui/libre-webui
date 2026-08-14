@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
-import test from 'node:test';
+import test, { after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import ts from 'typescript';
 
@@ -43,6 +43,20 @@ const [
     ).href
   ),
 ]);
+const coordinationModule = await import(
+  pathToFileURL(
+    path.join(
+      repoRoot,
+      'backend',
+      'dist',
+      'platform',
+      'coordination',
+      'service.js'
+    )
+  ).href
+);
+await coordinationModule.initializeCoordinator();
+after(() => coordinationModule.closeCoordinator());
 
 function startServer(server) {
   return new Promise(resolve => {

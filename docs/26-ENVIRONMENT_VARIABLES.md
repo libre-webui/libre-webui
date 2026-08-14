@@ -115,6 +115,11 @@ keys fail closed.
 
 Redis is coordination, not canonical persistence. Selecting it alone does not
 make SQLite, local files, or any other process-owned state safe across replicas.
+In team mode, HTTP rate limits, chat/WebSocket connections, STT/TTS/audio
+provider work, archive imports, and Work terminal sessions use Redis-backed
+shared admission. Capacities apply across all replicas rather than once per
+process. Admission and renewable-permit failures return `503` or abort the
+in-flight operation; Libre never falls back to an independent local counter.
 See [Platform Foundation](./45-PLATFORM_FOUNDATION.md).
 
 The bundled team Compose profile and Helm chart forward every team platform

@@ -1444,3 +1444,38 @@ test('the chat context builder reports which documents contributed', async () =>
   const names = context.sources.map(source => source.filename);
   assert.ok(names.includes('session-notes.txt'));
 });
+
+test('chat retrieval propagates Stop while keyword storage is in flight', async () => {
+  const originalGetAllDocuments = storageService.getAllDocuments;
+  const controller = new AbortController();
+  const cancellation = new Error('retrieval stopped');
+  let releaseRetrieval;
+  const retrievalBlocked = new Promise(resolve => {
+    releaseRetrieval = resolve;
+  });
+  let observeRetrieval;
+  const retrievalStarted = new Promise(resolve => {
+    observeRetrieval = resolve;
+  });
+  storageService.getAllDocuments = async (...args) => {
+    observeRetrieval();
+    await retrievalBlocked;
+    return originalGetAllDocuments.apply(storageService, args);
+  };
+
+  try {
+    const retrieval = buildChatDocumentContext(
+      'pelican refunds invoice',
+      SESSION,
+      USER,
+      controller.signal
+    );
+    await retrievalStarted;
+    controller.abort(cancellation);
+    releaseRetrieval();
+    await assert.rejects(retrieval, error => error === cancellation);
+  } finally {
+    releaseRetrieval?.();
+    storageService.getAllDocuments = originalGetAllDocuments;
+  }
+});

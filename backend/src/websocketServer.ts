@@ -59,7 +59,10 @@ import { OllamaChatRequest, ChatSession } from './types/index.js';
 import { normalizeChatProviderSelection } from './utils/chatProviderSelection.js';
 import workPreviewProxyService from './services/workPreviewProxyService.js';
 import { userModel } from './models/userModel.js';
-import { websocketTicketService } from './services/websocketTicketService.js';
+import {
+  WebSocketTicketCoordinationError,
+  websocketTicketService,
+} from './services/websocketTicketService.js';
 import {
   type ActiveChatGeneration,
   ChatGenerationRegistry,
@@ -68,6 +71,11 @@ import {
   throwIfChatGenerationCancelled,
 } from './utils/chatCancellation.js';
 import { getPlatformRuntimeConfig } from './platform/coordination/service.js';
+import {
+  acquireSharedCapacity,
+  SharedCapacityExceededError,
+  type SharedCapacityReservation,
+} from './platform/coordination/sharedAdmission.js';
 
 const chatRequestService = new ChatRequestService({
   chatGenerationService,
@@ -94,32 +102,18 @@ const CHAT_WS_MAX_CONNECTIONS_PER_USER = positiveInteger(
 const activeGenerationsByUser = new UserChatGenerationRegistry(
   CHAT_WS_MAX_ACTIVE_GENERATIONS_PER_USER
 );
-const activeConnectionsByUser = new Map<string, number>();
 
 interface AuthenticatedChatRequest extends IncomingMessage {
   chatAuth?: {
     userId: string;
     sessionExpiresAt: number;
   };
+  chatAdmission?: SharedCapacityReservation;
 }
 
 function positiveInteger(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(value || '', 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-function reserveChatConnection(userId: string): (() => void) | null {
-  const active = activeConnectionsByUser.get(userId) || 0;
-  if (active >= CHAT_WS_MAX_CONNECTIONS_PER_USER) return null;
-  activeConnectionsByUser.set(userId, active + 1);
-  let released = false;
-  return () => {
-    if (released) return;
-    released = true;
-    const remaining = (activeConnectionsByUser.get(userId) || 1) - 1;
-    if (remaining > 0) activeConnectionsByUser.set(userId, remaining);
-    else activeConnectionsByUser.delete(userId);
-  };
 }
 
 export const isAllowedWebSocketOrigin = (
@@ -163,19 +157,28 @@ const authorizeChatUpgrade = async (
       userId: currentUser.id,
       sessionExpiresAt: consumed.sessionExpiresAt,
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof WebSocketTicketCoordinationError) throw error;
     return null;
   }
 };
 
 const rejectUpgrade = (
   socket: Duplex,
-  status: 401 | 403,
+  status: 401 | 403 | 429 | 503,
   message: string
 ): void => {
   const body = JSON.stringify({ success: false, message });
+  const statusText =
+    status === 401
+      ? 'Unauthorized'
+      : status === 403
+        ? 'Forbidden'
+        : status === 429
+          ? 'Too Many Requests'
+          : 'Service Unavailable';
   socket.end(
-    `HTTP/1.1 ${status} ${status === 401 ? 'Unauthorized' : 'Forbidden'}\r\n` +
+    `HTTP/1.1 ${status} ${statusText}\r\n` +
       'Connection: close\r\n' +
       'Content-Type: application/json\r\n' +
       `Content-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`
@@ -209,23 +212,31 @@ export function registerWebSocketServer(
   });
 
   wss.on('connection', (ws, rawRequest) => {
+    const req = rawRequest as AuthenticatedChatRequest;
     if (shuttingDown) {
+      void req.chatAdmission?.release();
       ws.terminate();
       return;
     }
     logger.debug('WebSocket client connected');
-    const req = rawRequest as AuthenticatedChatRequest;
     const chatAuth = req.chatAuth;
     if (!chatAuth) {
+      void req.chatAdmission?.release();
       ws.close(1008, 'Authentication required');
       return;
     }
     const { userId, sessionExpiresAt } = chatAuth;
-    const releaseConnection = reserveChatConnection(userId);
-    if (!releaseConnection) {
-      ws.close(1008, 'Too many active Chat connections');
+    const connectionSlot = req.chatAdmission;
+    if (!connectionSlot) {
+      ws.close(1013, 'Chat connection admission is unavailable');
       return;
     }
+    const onAdmissionLost = () =>
+      ws.close(1013, 'Chat connection admission was lost');
+    connectionSlot.signal.addEventListener('abort', onAdmissionLost, {
+      once: true,
+    });
+    if (connectionSlot.signal.aborted) onAdmissionLost();
     const activeGenerations = new ChatGenerationRegistry();
     const sessionExpiryTimer = setTimeout(
       () => ws.close(1008, 'Session expired'),
@@ -237,6 +248,7 @@ export function registerWebSocketServer(
     const handleMessage = async (data: RawData): Promise<void> => {
       let currentGeneration: ActiveChatGeneration | undefined;
       let globallyReserved = false;
+      let generationSlot: SharedCapacityReservation | undefined;
       try {
         const now = Date.now();
         if (now - messageWindowStartedAt >= 60_000) {
@@ -323,6 +335,33 @@ export function registerWebSocketServer(
           );
           activeGenerationsByUser.start(userId, currentGeneration);
           globallyReserved = true;
+          try {
+            generationSlot = await acquireSharedCapacity({
+              limits: [
+                {
+                  scope: 'chat-generation.user',
+                  subject: userId,
+                  capacity: CHAT_WS_MAX_ACTIVE_GENERATIONS_PER_USER,
+                },
+              ],
+            });
+          } catch (error) {
+            if (error instanceof SharedCapacityExceededError) {
+              throw new Error(
+                `This account already has ${CHAT_WS_MAX_ACTIVE_GENERATIONS_PER_USER} active chat generations.`
+              );
+            }
+            throw error;
+          }
+          const generationController = currentGeneration.controller;
+          generationSlot.signal.addEventListener(
+            'abort',
+            () => generationController.abort(generationSlot?.signal.reason),
+            { once: true }
+          );
+          if (generationSlot.signal.aborted) {
+            generationController.abort(generationSlot.signal.reason);
+          }
           const generationSignal = currentGeneration.controller.signal;
           const requestProviderSelection = isPrivate
             ? normalizeChatProviderSelection({ providerType, providerId })
@@ -657,6 +696,7 @@ export function registerWebSocketServer(
                     providerMetadata: withContextSources(
                       assistantProviderMetadata
                     ),
+                    signal: generationSignal,
                   });
 
                 if (isPrivate) {
@@ -798,6 +838,7 @@ export function registerWebSocketServer(
                 originalMessageId,
                 statistics: ollamaStream.statistics,
                 providerMetadata: withContextSources(undefined),
+                signal: generationSignal,
               });
 
             if (isPrivate) {
@@ -888,6 +929,7 @@ export function registerWebSocketServer(
             activeGenerationsByUser.finish(userId, currentGeneration);
           }
         }
+        await generationSlot?.release();
       }
     };
 
@@ -909,7 +951,8 @@ export function registerWebSocketServer(
 
     ws.on('close', () => {
       clearTimeout(sessionExpiryTimer);
-      releaseConnection();
+      connectionSlot.signal.removeEventListener('abort', onAdmissionLost);
+      void connectionSlot.release();
       activeGenerations.cancelAll(
         'The WebSocket closed before generation completed.'
       );
@@ -968,7 +1011,7 @@ export function registerWebSocketServer(
       socket.pause();
       let authorization: Promise<void>;
       authorization = authorizeChatUpgrade(authenticatedRequest)
-        .then(chatAuth => {
+        .then(async chatAuth => {
           if (shuttingDown) {
             socket.destroy();
             return;
@@ -977,16 +1020,62 @@ export function registerWebSocketServer(
             rejectUpgrade(socket, 401, 'WebSocket authentication is required');
             return;
           }
+          let admission: SharedCapacityReservation;
+          try {
+            admission = await acquireSharedCapacity({
+              limits: [
+                {
+                  scope: 'chat-websocket.user',
+                  subject: chatAuth.userId,
+                  capacity: CHAT_WS_MAX_CONNECTIONS_PER_USER,
+                },
+              ],
+            });
+          } catch (error) {
+            if (error instanceof SharedCapacityExceededError) {
+              rejectUpgrade(socket, 429, 'Too many active Chat connections');
+            } else {
+              rejectUpgrade(
+                socket,
+                503,
+                'Chat connection admission is temporarily unavailable'
+              );
+            }
+            return;
+          }
+          if (shuttingDown || socket.destroyed) {
+            await admission.release();
+            socket.destroy();
+            return;
+          }
           authenticatedRequest.chatAuth = chatAuth;
-          wss.handleUpgrade(request, socket, head, ws => {
-            wss.emit('connection', ws, request);
-          });
+          authenticatedRequest.chatAdmission = admission;
+          try {
+            wss.handleUpgrade(request, socket, head, ws => {
+              wss.emit('connection', ws, request);
+            });
+          } catch (error) {
+            await admission.release();
+            throw error;
+          }
           socket.resume();
         })
         .catch(error => {
           logger.error('WebSocket upgrade authorization failed:', error);
           if (!shuttingDown) {
-            rejectUpgrade(socket, 401, 'WebSocket authentication is required');
+            if (error instanceof WebSocketTicketCoordinationError) {
+              rejectUpgrade(
+                socket,
+                503,
+                'WebSocket authentication is temporarily unavailable'
+              );
+            } else {
+              rejectUpgrade(
+                socket,
+                401,
+                'WebSocket authentication is required'
+              );
+            }
           }
         })
         .finally(() => activeUpgradeAuthorizations.delete(authorization));

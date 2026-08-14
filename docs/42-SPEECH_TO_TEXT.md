@@ -39,8 +39,10 @@ uncompressed PCM WAV and Opus WebM recordings. It validates the filename
 extension, declared MIME type, container structure, codec identifier, sample
 rate, channels, decoded-size ratio, and duration before forwarding audio.
 Requests are limited to 25 MiB and 300 seconds globally (or a lower manifest
-limit), bounded to two concurrent transcriptions per user and six per process,
-and aborted when the browser disconnects.
+limit), bounded to two concurrent transcriptions per user and six across the
+deployment, and aborted when the browser disconnects or the renewable shared
+admission permit is lost. Redis admission failure in team mode fails closed;
+it never creates an independent per-replica allowance.
 
 Provider credentials remain on the backend. Libre refuses redirects so an
 authorization header or audio recording cannot be forwarded to a different

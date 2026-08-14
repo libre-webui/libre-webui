@@ -20,14 +20,19 @@ export interface ChatGenerationEnqueueInput {
   originalMessageId?: string;
 }
 
+export interface ChatGenerationEnqueueResult {
+  /** False means an exact durable job already existed before this transaction. */
+  created: boolean;
+}
+
 /** Transactional durable-generation seam used by chat repositories. */
 export interface ChatGenerationEnqueuer {
   enqueueSQLite(
     executor: PersistenceSyncExecutor,
     input: ChatGenerationEnqueueInput
-  ): void;
+  ): ChatGenerationEnqueueResult;
   enqueuePostgres(
     executor: PostgresQueryExecutor,
     input: ChatGenerationEnqueueInput
-  ): Promise<void>;
+  ): Promise<ChatGenerationEnqueueResult>;
 }

@@ -64,19 +64,38 @@ export interface StoredChatSessionAggregate {
   messages: StoredChatMessageRecord[];
 }
 
+export type PersistenceCommitFence = () => void | Promise<void>;
+
 export interface ChatSessionRepository {
   listByOwner(userId: string): Promise<StoredChatSessionAggregate[]>;
   findByOwner(
     sessionId: string,
     userId: string
   ): Promise<StoredChatSessionAggregate | null>;
-  replace(aggregate: StoredChatSessionAggregate): Promise<void>;
+  replace(
+    aggregate: StoredChatSessionAggregate,
+    beforeCommit?: PersistenceCommitFence
+  ): Promise<void>;
   replaceAndEnqueue(
     aggregate: StoredChatSessionAggregate,
     enqueuer: ChatGenerationEnqueuer,
-    input: ChatGenerationEnqueueInput
+    input: ChatGenerationEnqueueInput,
+    beforeCommit?: PersistenceCommitFence
   ): Promise<void>;
-  deleteByOwner(sessionId: string, userId: string): Promise<boolean>;
+  removeMessageIfCurrent(
+    sessionId: string,
+    userId: string,
+    messageId: string,
+    expectedTimestamp: number,
+    expectedSessionUpdatedAt: number,
+    previousSessionUpdatedAt: number,
+    previousActiveMessageId?: string
+  ): Promise<boolean>;
+  deleteByOwner(
+    sessionId: string,
+    userId: string,
+    beforeCommit?: PersistenceCommitFence
+  ): Promise<boolean>;
   deleteAllByOwner(userId: string): Promise<number>;
 }
 
@@ -235,6 +254,8 @@ export interface DataArchiveApplyPlan {
   timestamp: number;
   maximumNotes: number;
   maximumSessionFolders: number;
+  /** Fail-closed synchronous fence evaluated immediately before commit. */
+  assertCanCommit?: () => void;
   /**
    * Overwrite imports carry a fixed protected set. Merge imports derive the
    * protected set synchronously from rows read after the owner lock is held.

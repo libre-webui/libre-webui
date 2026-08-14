@@ -99,6 +99,13 @@ Create personas for workflows you repeat:
 
 Personas store the selected model, system prompt, generation parameters, avatar/background, and optional memory/mutation settings. They can also be exported and imported as JSON.
 
+## Keep Durable Notes Beside Your Work
+
+Open **Notes** from the create menu when information should remain independent
+of one chat or Work task. Notes support Markdown preview, explicit editing,
+search, and automatic saving. They are account-scoped and are included in a
+full user archive.
+
 ## Make Artifacts More Reliable
 
 Libre WebUI detects explicit artifact tags, fenced code blocks, standalone HTML documents, and common multi-file HTML bundles. To get the best artifact output from a model, ask for:

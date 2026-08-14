@@ -27,6 +27,8 @@ export interface PostgresQueryExecutor {
 export interface PostgresTransactionOptions {
   isolationLevel?: 'read committed' | 'repeatable read' | 'serializable';
   readOnly?: boolean;
+  /** Last-moment authority fence awaited directly before COMMIT is sent. */
+  beforeCommit?: () => void | Promise<void>;
 }
 
 export interface PostgresPoolLike extends PostgresQueryExecutor {
@@ -118,6 +120,7 @@ export class PostgresDatabase implements PostgresQueryExecutor {
       await client.query(beginStatement(options));
       try {
         const result = await operation(client);
+        await options.beforeCommit?.();
         await client.query('COMMIT');
         return result;
       } catch (error) {

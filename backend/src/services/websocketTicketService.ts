@@ -17,6 +17,10 @@
 
 import { createHash, randomBytes } from 'crypto';
 import { getCoordinator } from '../platform/coordination/service.js';
+import {
+  SHARED_COORDINATION_OPERATION_TIMEOUT_MS,
+  withCoordinationTimeout,
+} from '../platform/coordination/sharedAdmission.js';
 import type { Coordinator } from '../platform/coordination/types.js';
 
 const DEFAULT_TICKET_TTL_MS = 30_000;
@@ -50,6 +54,16 @@ export class WebSocketTicketRateLimitError extends Error {
   constructor() {
     super('Too many WebSocket tickets were requested.');
     this.name = 'WebSocketTicketRateLimitError';
+  }
+}
+
+export class WebSocketTicketCoordinationError extends Error {
+  readonly cause?: unknown;
+
+  constructor(cause?: unknown) {
+    super('WebSocket ticket coordination is unavailable.');
+    this.name = 'WebSocketTicketCoordinationError';
+    this.cause = cause;
   }
 }
 
@@ -99,7 +113,8 @@ export class WebSocketTicketService {
   constructor(
     private readonly ttlMs = configuredTicketTtlMs(),
     private readonly now: () => number = Date.now,
-    private readonly coordinatorProvider?: () => Coordinator
+    private readonly coordinatorProvider?: () => Coordinator,
+    private readonly operationTimeoutMs = SHARED_COORDINATION_OPERATION_TIMEOUT_MS
   ) {}
 
   async issue(
@@ -135,22 +150,28 @@ export class WebSocketTicketService {
     const digest = ticketDigest(ticket);
     const coordinator = this.coordinatorProvider?.();
     if (coordinator) {
-      const [userLimit, globalLimit] = await Promise.all([
-        coordinator.consumeRateLimit(
-          `websocket-ticket.user:${normalizedUserId}`,
-          MAX_SHARED_TICKETS_PER_USER_PER_TTL,
-          this.ttlMs
-        ),
-        coordinator.consumeRateLimit(
-          'websocket-ticket.global',
-          MAX_OUTSTANDING_TICKETS,
-          this.ttlMs
-        ),
-      ]);
+      const [userLimit, globalLimit] = await withCoordinationTimeout(
+        Promise.all([
+          coordinator.consumeRateLimit(
+            `websocket-ticket.user:${normalizedUserId}`,
+            MAX_SHARED_TICKETS_PER_USER_PER_TTL,
+            this.ttlMs
+          ),
+          coordinator.consumeRateLimit(
+            'websocket-ticket.global',
+            MAX_OUTSTANDING_TICKETS,
+            this.ttlMs
+          ),
+        ]),
+        this.operationTimeoutMs
+      );
       if (!userLimit.allowed || !globalLimit.allowed) {
         throw new WebSocketTicketRateLimitError();
       }
-      await coordinator.setCache(cacheKey(digest), record, expiresAt - now);
+      await withCoordinationTimeout(
+        coordinator.setCache(cacheKey(digest), record, expiresAt - now),
+        this.operationTimeoutMs
+      );
     } else {
       this.pruneExpired(now);
       this.evictOldestForUser(normalizedUserId);
@@ -174,9 +195,17 @@ export class WebSocketTicketService {
 
     const digest = ticketDigest(normalizedTicket);
     const coordinator = this.coordinatorProvider?.();
-    const record = coordinator
-      ? await coordinator.consumeCache<TicketRecord>(cacheKey(digest))
-      : this.consumeLocal(digest);
+    let record: TicketRecord | null;
+    try {
+      record = coordinator
+        ? await withCoordinationTimeout(
+            coordinator.consumeCache<TicketRecord>(cacheKey(digest)),
+            this.operationTimeoutMs
+          )
+        : this.consumeLocal(digest);
+    } catch (error) {
+      throw new WebSocketTicketCoordinationError(error);
+    }
     if (!isTicketRecord(record)) return null;
     if (
       record.expiresAt <= this.now() ||

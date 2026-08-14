@@ -178,7 +178,7 @@ class ChatGenerationService {
       includeOllamaDefaults
     );
     const pluginVariables = activePlugin
-      ? pluginService.getPluginVariables(activePlugin, userId)
+      ? await pluginService.getPluginVariables(activePlugin, userId)
       : {};
 
     return {

@@ -16,7 +16,7 @@
  */
 
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import pluginService from '../services/pluginService.js';
 import galleryService from '../services/galleryService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
@@ -63,6 +63,7 @@ function requestAbortSignal(
 
 // Rate limiter for image generation routes: 10 requests per minute
 const imageGenRateLimiter = rateLimit({
+  keyPrefix: 'image-generation',
   windowMs: 60 * 1000, // 1 minute
   max: 10, // limit each IP to 10 requests per windowMs
   message: {
@@ -75,6 +76,7 @@ const imageGenRateLimiter = rateLimit({
 
 // Rate limiter for gallery routes: 60 requests per minute
 const galleryRateLimiter = rateLimit({
+  keyPrefix: 'image-gallery',
   windowMs: 60 * 1000, // 1 minute
   max: 60, // limit each IP to 60 requests per windowMs
   message: {

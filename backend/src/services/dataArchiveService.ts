@@ -1017,9 +1017,12 @@ async function resolveScopedId(
   resource: ArchiveOwnedResource,
   kind: string,
   originalId: string,
-  userId: string
+  userId: string,
+  signal?: AbortSignal
 ): Promise<{ id: string; remapped: boolean }> {
+  signal?.throwIfAborted();
   const owner = await scopedOwner(resource, originalId);
+  signal?.throwIfAborted();
   if (
     resource !== 'document' ||
     (owner === userId &&
@@ -1034,6 +1037,7 @@ async function resolveScopedId(
   }
 
   for (let attempt = 0; attempt < 100; attempt += 1) {
+    signal?.throwIfAborted();
     const candidate = derivedId(userId, kind, originalId, attempt);
     const candidateOwner = await scopedOwner(resource, candidate);
     const reserved =
@@ -1043,6 +1047,7 @@ async function resolveScopedId(
             candidate
           )
         : false;
+    signal?.throwIfAborted();
     if (!reserved && (!candidateOwner || candidateOwner === userId)) {
       return { id: candidate, remapped: true };
     }
@@ -1083,9 +1088,12 @@ async function resolveNestedId(
   originalId: string,
   targetParentId: string,
   userId: string,
-  kind: string
+  kind: string,
+  signal?: AbortSignal
 ): Promise<string> {
+  signal?.throwIfAborted();
   const existing = await nestedOwner(resource, originalId);
+  signal?.throwIfAborted();
   if (
     !existing ||
     (existing.user_id === userId && existing.parent_id === targetParentId)
@@ -1094,8 +1102,10 @@ async function resolveNestedId(
   }
 
   for (let attempt = 0; attempt < 100; attempt += 1) {
+    signal?.throwIfAborted();
     const candidate = derivedId(userId, kind, originalId, attempt);
     const collision = await nestedOwner(resource, candidate);
+    signal?.throwIfAborted();
     if (
       !collision ||
       (collision.user_id === userId && collision.parent_id === targetParentId)
@@ -1109,8 +1119,10 @@ async function resolveNestedId(
 async function buildPlan(
   normalized: NormalizedArchive,
   strategy: DataArchiveMergeStrategy,
-  userId: string
+  userId: string,
+  signal?: AbortSignal
 ): Promise<ImportPlan> {
+  signal?.throwIfAborted();
   const { archive } = normalized;
   const result: DataArchiveImportResult = {
     format: DATA_ARCHIVE_FORMAT,
@@ -1139,7 +1151,14 @@ async function buildPlan(
   ): Promise<Map<string, string>> => {
     const mapping = new Map<string, string>();
     for (const value of values) {
-      const resolved = await resolveScopedId(resource, kind, value.id, userId);
+      signal?.throwIfAborted();
+      const resolved = await resolveScopedId(
+        resource,
+        kind,
+        value.id,
+        userId,
+        signal
+      );
       mapping.set(value.id, resolved.id);
       if (resolved.remapped) result.remappedIds += 1;
       sectionDisposition(
@@ -1147,6 +1166,7 @@ async function buildPlan(
         await currentUserOwns(resource, resolved.id, userId),
         strategy
       );
+      signal?.throwIfAborted();
     }
     return mapping;
   };
@@ -1159,6 +1179,7 @@ async function buildPlan(
   );
   const existingFolderCount = (await storageService.getSessionFolders(userId))
     .length;
+  signal?.throwIfAborted();
   if (
     existingFolderCount + result.sessionFolders.imported >
     MAX_SESSION_FOLDERS_PER_USER
@@ -1175,6 +1196,7 @@ async function buildPlan(
   );
   const noteIds = await mapIds(archive.notes, 'note', 'note', result.notes);
   const existingNoteCount = (await storageService.getNotes(userId)).length;
+  signal?.throwIfAborted();
   if (existingNoteCount + result.notes.imported > MAX_NOTES_PER_USER) {
     throw new DataArchiveValidationError(
       `Import would exceed the per-user limit of ${MAX_NOTES_PER_USER} Notes`
@@ -1195,14 +1217,17 @@ async function buildPlan(
 
   const messageIds = new Map<string, string>();
   for (const session of archive.sessions) {
+    signal?.throwIfAborted();
     const targetSessionId = sessionIds.get(session.id)!;
     for (const message of session.messages) {
+      signal?.throwIfAborted();
       const targetMessageId = await resolveNestedId(
         'session-message',
         message.id,
         targetSessionId,
         userId,
-        'message'
+        'message',
+        signal
       );
       messageIds.set(message.id, targetMessageId);
       if (targetMessageId !== message.id) result.remappedIds += 1;
@@ -1211,14 +1236,17 @@ async function buildPlan(
 
   const chunkIds = new Map<string, string>();
   for (const document of archive.documents) {
+    signal?.throwIfAborted();
     const targetDocumentId = documentIds.get(document.id)!;
     for (const chunk of document.chunks) {
+      signal?.throwIfAborted();
       const targetChunkId = await resolveNestedId(
         'document-chunk',
         chunk.id,
         targetDocumentId,
         userId,
-        'chunk'
+        'chunk',
+        signal
       );
       chunkIds.set(chunk.id, targetChunkId);
       if (targetChunkId !== chunk.id) result.remappedIds += 1;
@@ -1231,6 +1259,7 @@ async function buildPlan(
     );
   }
   for (const session of archive.sessions) {
+    signal?.throwIfAborted();
     if (
       session.personaId &&
       !(await currentUserOwns('persona', session.personaId, userId))
@@ -1239,6 +1268,7 @@ async function buildPlan(
         `Session ${session.id} will be detached from persona ${session.personaId} because personas are excluded and the target account does not already own it.`
       );
     }
+    signal?.throwIfAborted();
   }
 
   return {
@@ -1272,11 +1302,14 @@ async function mapReference(
 async function applyPlan(
   plan: ImportPlan,
   strategy: DataArchiveMergeStrategy,
-  userId: string
+  userId: string,
+  signal?: AbortSignal
 ): Promise<void> {
+  signal?.throwIfAborted();
   const timestamp = Date.now();
   const sessions: StoredChatSessionAggregate[] = [];
   for (const archivedSession of plan.archive.sessions) {
+    signal?.throwIfAborted();
     const targetId = plan.sessionIds.get(archivedSession.id)!;
     const settings = archivedSession.settings
       ? { ...archivedSession.settings }
@@ -1294,6 +1327,7 @@ async function applyPlan(
           )
         )
       ).filter((id): id is string => Boolean(id));
+      signal?.throwIfAborted();
     }
     const personaId = await mapReference(
       archivedSession.personaId,
@@ -1301,6 +1335,7 @@ async function applyPlan(
       'persona',
       userId
     );
+    signal?.throwIfAborted();
     sessions.push({
       session: {
         id: targetId,
@@ -1356,14 +1391,17 @@ async function applyPlan(
         rating: message.rating ?? null,
       })),
     });
+    signal?.throwIfAborted();
   }
 
+  signal?.throwIfAborted();
   const atomicPlan: DataArchiveApplyPlan = {
     userId,
     strategy,
     timestamp,
     maximumNotes: MAX_NOTES_PER_USER,
     maximumSessionFolders: MAX_SESSION_FOLDERS_PER_USER,
+    assertCanCommit: () => signal?.throwIfAborted(),
     preferences: current =>
       storageService.transformStoredPreferences(current, preferences =>
         preferencesService.prepareImportedPreferences(
@@ -1397,8 +1435,9 @@ async function applyPlan(
     })),
     documents: await Promise.all(
       plan.archive.documents.map(async archivedDocument => {
+        signal?.throwIfAborted();
         const targetId = plan.documentIds.get(archivedDocument.id)!;
-        return {
+        const document = {
           document: {
             id: targetId,
             user_id: userId,
@@ -1445,9 +1484,12 @@ async function applyPlan(
             created_at: timestamp,
           })),
         };
+        signal?.throwIfAborted();
+        return document;
       })
     ),
   };
+  signal?.throwIfAborted();
   await archiveRepository().applyImport(atomicPlan);
 }
 
@@ -1544,10 +1586,13 @@ class DataArchiveService {
   async preflight(
     value: unknown,
     strategy: DataArchiveMergeStrategy,
-    userId: string
+    userId: string,
+    signal?: AbortSignal
   ): Promise<DataArchivePreflight> {
+    signal?.throwIfAborted();
     const normalized = normalizeArchive(value);
-    const plan = await buildPlan(normalized, strategy, userId);
+    const plan = await buildPlan(normalized, strategy, userId, signal);
+    signal?.throwIfAborted();
     const messageCount = normalized.archive.sessions.reduce(
       (count, session) => count + session.messages.length,
       0
@@ -1581,13 +1626,16 @@ class DataArchiveService {
   async importUserData(
     value: unknown,
     strategy: DataArchiveMergeStrategy,
-    userId: string
+    userId: string,
+    signal?: AbortSignal
   ): Promise<DataArchiveImportResult> {
+    signal?.throwIfAborted();
     const normalized = normalizeArchive(value);
     for (let attempt = 0; attempt < 5; attempt += 1) {
-      const plan = await buildPlan(normalized, strategy, userId);
+      const plan = await buildPlan(normalized, strategy, userId, signal);
+      signal?.throwIfAborted();
       try {
-        await applyPlan(plan, strategy, userId);
+        await applyPlan(plan, strategy, userId, signal);
         return plan.result;
       } catch (error) {
         if (

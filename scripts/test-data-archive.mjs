@@ -16,7 +16,7 @@
  */
 
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -492,9 +492,8 @@ test('deleted document archive IDs are retained tombstones and re-import as fres
       },
     ],
   });
-  const deleteHandler = createDomainDurableJobHandlers().get(
-    'resource.delete.v1'
-  );
+  const deleteHandler =
+    createDomainDurableJobHandlers().get('resource.delete.v1');
   assert.ok(deleteHandler);
   await deleteHandler({
     signal: new AbortController().signal,
@@ -517,10 +516,7 @@ test('deleted document archive IDs are retained tombstones and re-import as fres
     version: '1',
     embedding: [0, 1],
     limit: 10,
-    resourceIds: [
-      'portable-incarnation-document',
-      restored[0].id,
-    ],
+    resourceIds: ['portable-incarnation-document', restored[0].id],
   });
   assert.deepEqual(
     survivingVectors.map(vector => vector.id),
@@ -578,8 +574,9 @@ test('archive apply re-resolves a document tombstoned after preflight mapping', 
     owner
   );
   const archive = await dataArchiveService.exportUserData(owner);
-  const archiveRepository = (await import(backendModule('persistence/index.js')))
-    .getInitializedPersistence().repositories.resources.archive;
+  const archiveRepository = (
+    await import(backendModule('persistence/index.js'))
+  ).getInitializedPersistence().repositories.resources.archive;
   const originalApply = archiveRepository.applyImport.bind(archiveRepository);
   let injected = false;
   archiveRepository.applyImport = async plan => {
@@ -906,6 +903,34 @@ test('authenticated routes export only the caller and accept multipart preflight
 
   const unauthenticated = await fetch(`${baseUrl}/export`);
   assert.equal(unauthenticated.status, 401);
+});
+
+test('archive admission loss responds before draining a partial upload', () => {
+  const source = readFileSync(
+    path.join(repoRoot, 'backend/src/routes/preferences.ts'),
+    'utf8'
+  );
+  const receiveStart = source.indexOf('function receiveArchiveFile(');
+  const receiveEnd = source.indexOf(
+    'function markArchiveNoStore(',
+    receiveStart
+  );
+  assert.ok(receiveStart >= 0 && receiveEnd > receiveStart);
+  const receiveSource = source.slice(receiveStart, receiveEnd);
+  const failStart = receiveSource.indexOf('const failAdmission =');
+  const responseIndex = receiveSource.indexOf(
+    'res.status(503).json(',
+    failStart
+  );
+  const requestErrorIndex = receiveSource.indexOf(
+    "req.emit(\n        'error'",
+    failStart
+  );
+  assert.ok(failStart >= 0);
+  assert.ok(responseIndex > failStart);
+  assert.ok(requestErrorIndex > responseIndex);
+  assert.match(receiveSource, /if \(uploadSettled\) return;/);
+  assert.match(receiveSource, /if \(signal\?\.aborted\) \{\s+failAdmission/);
 });
 
 test('archive export route returns precise safe validation failures', async () => {

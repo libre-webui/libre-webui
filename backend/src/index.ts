@@ -36,7 +36,9 @@ import './env.js';
  */
 
 import express from 'express';
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import { ipKeyGenerator } from 'express-rate-limit';
+import rateLimit from './middleware/sharedRateLimit.js';
+import { isChatCancellationSafetyRequest } from './middleware/chatCancellationAdmission.js';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -431,6 +433,7 @@ app.use('/health', healthRoutes);
 
 // Rate limiter for the /api/personas route
 const personasRateLimiter = rateLimit({
+  keyPrefix: 'api-personas',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: {
@@ -443,6 +446,7 @@ const personasRateLimiter = rateLimit({
 
 // Rate limiter for the /api/preferences route
 const preferencesRateLimiter = rateLimit({
+  keyPrefix: 'api-preferences',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: {
@@ -455,6 +459,7 @@ const preferencesRateLimiter = rateLimit({
 
 // Rate limiter for the /api/ollama route
 const ollamaRateLimiter = rateLimit({
+  keyPrefix: 'api-ollama',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10000, // limit each IP to 10000 requests per windowMs (very high limit for streaming chunks)
   message: {
@@ -467,6 +472,7 @@ const ollamaRateLimiter = rateLimit({
 
 // Rate limiter for the /api/documents route
 const documentsRateLimiter = rateLimit({
+  keyPrefix: 'api-documents',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: {
@@ -479,6 +485,7 @@ const documentsRateLimiter = rateLimit({
 
 // Rate limiter for the /api/auth route (general limit, specific limits applied within route)
 const authRateLimiter = rateLimit({
+  keyPrefix: 'api-auth',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs (higher level limit)
   message: {
@@ -491,6 +498,7 @@ const authRateLimiter = rateLimit({
 
 // Rate limiter for the /api/users route (general limit, specific limits applied within route)
 const usersRateLimiter = rateLimit({
+  keyPrefix: 'api-users',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 50, // limit each IP to 50 requests per windowMs (moderate limit for user management)
   message: {
@@ -503,6 +511,7 @@ const usersRateLimiter = rateLimit({
 
 // Rate limiter for the /api/chat route (general limit, specific limits applied within route)
 const chatRateLimiter = rateLimit({
+  keyPrefix: 'api-chat',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // limit each IP to 1000 requests per windowMs (high limit for chat interactions)
   message: {
@@ -511,10 +520,12 @@ const chatRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: isChatCancellationSafetyRequest,
 });
 
 // Rate limiter for TTS routes (higher limit for info endpoints, generation has stricter limits in route)
 const ttsRateLimiter = rateLimit({
+  keyPrefix: 'api-tts',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 500, // limit each IP to 500 requests per windowMs
   message: {
@@ -527,6 +538,7 @@ const ttsRateLimiter = rateLimit({
 
 // Rate limiter for image generation routes (stricter limits applied within route)
 const imageGenRateLimiter = rateLimit({
+  keyPrefix: 'api-image-gen',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200, // limit each IP to 200 requests per windowMs
   message: {
@@ -540,6 +552,7 @@ const imageGenRateLimiter = rateLimit({
 
 // Rate limiter for Libre Claw agent routes
 const libreClawRateLimiter = rateLimit({
+  keyPrefix: 'api-libre-claw',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 500, // agent dashboards poll run/event state while active
   message: {
@@ -552,6 +565,7 @@ const libreClawRateLimiter = rateLimit({
 
 // Rate limiter for isolated Work task APIs
 const workRateLimiter = rateLimit({
+  keyPrefix: 'api-work',
   windowMs: 15 * 60 * 1000, // 15 minutes
   // The active pane currently polls both the task list and selected task once
   // per second; keep useful abuse protection without throttling normal runs.
@@ -567,6 +581,7 @@ const workRateLimiter = rateLimit({
 // Bound authentication work before parsing bearer tokens without accumulating
 // successful requests into one long-lived shared-proxy quota.
 const pluginAuthBurstRateLimiter = rateLimit({
+  keyPrefix: 'api-plugin-auth-burst',
   windowMs: 60 * 1000,
   max: 100,
   skipSuccessfulRequests: true,
@@ -581,6 +596,7 @@ const pluginAuthBurstRateLimiter = rateLimit({
 // Authenticated users receive independent discovery quotas, while writes retain
 // stricter route-specific limits.
 const pluginRouteRateLimiter = rateLimit({
+  keyPrefix: 'api-plugins',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000,
   keyGenerator: req => {
@@ -644,6 +660,7 @@ if (
 
     // Rate limiter for static files
     const staticRateLimiter = rateLimit({
+      keyPrefix: 'static-assets',
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 1000, // limit each IP to 1000 requests per windowMs
       message: 'Too many requests, please try again later.',
@@ -749,6 +766,21 @@ healthService.registerDependencyCheck({
         externalWorkerCount: externalWorkers.length,
         registeredJobTypes: status.registeredJobTypes,
       },
+    };
+  },
+});
+healthService.registerDependencyCheck({
+  id: 'ollama-provider',
+  required: false,
+  depths: ['deep'],
+  check: async () => {
+    const healthy = await ollamaService.isHealthy();
+    return {
+      status: healthy ? 'pass' : 'warn',
+      ...(!healthy
+        ? { message: 'The optional Ollama provider is unavailable.' }
+        : {}),
+      details: { provider: 'ollama' },
     };
   },
 });

@@ -17,13 +17,15 @@
 
 import express, { type Response } from 'express';
 import multer from 'multer';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import pluginService from '../services/pluginService.js';
 import { authenticate, type AuthenticatedRequest } from '../middleware/auth.js';
 import { createLogger } from '../utils/logger.js';
 import {
   parseTTSVoiceCloneUpload,
+  reserveTTSVoiceCloneUpload,
   TTS_VOICE_CLONE_GLOBAL_MAX_AUDIO_BYTES,
+  TTSVoiceCloneConcurrencyError,
   TTSVoiceCloneUploadError,
   validateTTSVoiceCloneAudio,
 } from '../utils/ttsVoiceCloneUpload.js';
@@ -33,6 +35,13 @@ import {
 } from '../services/pluginTTSService.js';
 import voiceProfileService from '../services/voiceProfileService.js';
 import type { Plugin } from '../types/index.js';
+import {
+  acquireSharedCapacity,
+  combineAbortSignals,
+  SharedCapacityExceededError,
+  SharedCapacityUnavailableError,
+  type SharedCapacityReservation,
+} from '../platform/coordination/sharedAdmission.js';
 
 const logger = createLogger('routes:tts');
 
@@ -74,6 +83,7 @@ const providerResponseStatus = (status: number): number =>
 // Sentence-aware playback can issue many small provider-safe batches. Keep a
 // bounded per-minute ceiling while allowing a long response to finish.
 const ttsRateLimiter = rateLimit({
+  keyPrefix: 'text-to-speech',
   windowMs: 60 * 1000, // 1 minute
   max: 120,
   message: {
@@ -87,6 +97,7 @@ const ttsRateLimiter = rateLimit({
 // Voice cloning carries a memory-backed upload and is substantially more
 // expensive than one sentence batch. Limit it independently per account.
 const voiceCloneRateLimiter = rateLimit({
+  keyPrefix: 'voice-cloning',
   windowMs: 60 * 1000,
   max: 6,
   keyGenerator: req =>
@@ -99,9 +110,7 @@ const voiceCloneRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const reusableVoiceRequestsByUser = new Map<string, number>();
 const MAX_REUSABLE_VOICE_REQUESTS_PER_USER = 4;
-let reusableVoiceRequestsGlobal = 0;
 const MAX_REUSABLE_VOICE_REQUESTS_GLOBAL = 8;
 
 class ReusableVoiceConcurrencyError extends Error {
@@ -113,24 +122,34 @@ class ReusableVoiceConcurrencyError extends Error {
 
 async function withReusableVoiceSlot<T>(
   userId: string,
-  operation: () => Promise<T>
+  clientSignal: AbortSignal,
+  operation: (signal: AbortSignal) => Promise<T>
 ): Promise<T> {
-  const active = reusableVoiceRequestsByUser.get(userId) || 0;
-  if (
-    active >= MAX_REUSABLE_VOICE_REQUESTS_PER_USER ||
-    reusableVoiceRequestsGlobal >= MAX_REUSABLE_VOICE_REQUESTS_GLOBAL
-  ) {
-    throw new ReusableVoiceConcurrencyError();
-  }
-  reusableVoiceRequestsByUser.set(userId, active + 1);
-  reusableVoiceRequestsGlobal += 1;
+  let slot: SharedCapacityReservation;
   try {
-    return await operation();
+    slot = await acquireSharedCapacity({
+      limits: [
+        {
+          scope: 'saved-voice.global',
+          capacity: MAX_REUSABLE_VOICE_REQUESTS_GLOBAL,
+        },
+        {
+          scope: 'saved-voice.user',
+          subject: userId,
+          capacity: MAX_REUSABLE_VOICE_REQUESTS_PER_USER,
+        },
+      ],
+    });
+  } catch (error) {
+    if (error instanceof SharedCapacityExceededError) {
+      throw new ReusableVoiceConcurrencyError();
+    }
+    throw error;
+  }
+  try {
+    return await operation(combineAbortSignals(clientSignal, slot.signal));
   } finally {
-    reusableVoiceRequestsGlobal = Math.max(0, reusableVoiceRequestsGlobal - 1);
-    const remaining = (reusableVoiceRequestsByUser.get(userId) || 1) - 1;
-    if (remaining > 0) reusableVoiceRequestsByUser.set(userId, remaining);
-    else reusableVoiceRequestsByUser.delete(userId);
+    await slot.release();
   }
 }
 
@@ -453,27 +472,31 @@ router.post(
           profileRoute.pluginId,
           userId
         );
-        audioBuffer = await withReusableVoiceSlot(userId, async () => {
-          const profile = await voiceProfileService.get(
-            voiceProfileId,
-            userId,
-            config
-          );
-          if (!profile) throw new Error('Voice profile not found');
-          await assertProfileRoutingIsCurrent(profile, plugin, userId);
-          return pluginService.executeVoiceCloneRequest(
-            model,
-            input,
-            profile.referenceAudio,
-            {
-              referenceText: profile.referenceText,
-              response_format: format,
-              pluginId: profile.pluginId,
+        audioBuffer = await withReusableVoiceSlot(
+          userId,
+          requestAbort.signal,
+          async sharedSignal => {
+            const profile = await voiceProfileService.get(
+              voiceProfileId,
               userId,
-              signal: requestAbort.signal,
-            }
-          );
-        });
+              config
+            );
+            if (!profile) throw new Error('Voice profile not found');
+            await assertProfileRoutingIsCurrent(profile, plugin, userId);
+            return pluginService.executeVoiceCloneRequest(
+              model,
+              input,
+              profile.referenceAudio,
+              {
+                referenceText: profile.referenceText,
+                response_format: format,
+                pluginId: profile.pluginId,
+                userId,
+                signal: sharedSignal,
+              }
+            );
+          }
+        );
       } else {
         audioBuffer = await pluginService.executeTTSRequest(model, input, {
           voice,
@@ -516,6 +539,13 @@ router.post(
       }
       if (error instanceof ReusableVoiceConcurrencyError) {
         res.status(429).json({ success: false, message: error.message });
+        return;
+      }
+      if (error instanceof SharedCapacityUnavailableError) {
+        res.status(503).json({
+          success: false,
+          message: 'TTS admission is temporarily unavailable',
+        });
         return;
       }
       if (error instanceof TTSVoiceCloneUploadError) {
@@ -576,8 +606,15 @@ router.post(
   voiceCloneRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);
+    let uploadSlot: SharedCapacityReservation | undefined;
     try {
-      await parseTTSVoiceCloneUpload(req, res);
+      const userId = authenticatedUserId(req);
+      uploadSlot = await reserveTTSVoiceCloneUpload(userId);
+      const operationSignal = combineAbortSignals(
+        requestAbort.signal,
+        uploadSlot.signal
+      );
+      await parseTTSVoiceCloneUpload(req, res, operationSignal);
 
       const {
         model,
@@ -638,7 +675,6 @@ router.post(
         return;
       }
 
-      const userId = req.user?.userId;
       const selectedPlugin = await pluginService.getPluginForTTS(
         model,
         pluginId,
@@ -690,11 +726,11 @@ router.post(
           response_format: format,
           pluginId: selectedPlugin.id,
           userId,
-          signal: requestAbort.signal,
+          signal: operationSignal,
         }
       );
 
-      if (requestAbort.signal.aborted) return;
+      if (operationSignal.aborted) return;
 
       res.set({
         'Content-Type': ttsContentType(format),
@@ -706,6 +742,17 @@ router.post(
       if (requestAbort.signal.aborted) return;
       if (error instanceof TTSConcurrencyError) {
         res.status(429).json({ success: false, message: error.message });
+        return;
+      }
+      if (error instanceof TTSVoiceCloneConcurrencyError) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
+      if (error instanceof SharedCapacityUnavailableError) {
+        res.status(503).json({
+          success: false,
+          message: 'TTS admission is temporarily unavailable',
+        });
         return;
       }
       if (error instanceof multer.MulterError) {
@@ -759,6 +806,7 @@ router.post(
         message: errorMessage,
       });
     } finally {
+      await uploadSlot?.release();
       requestAbort.cleanup();
     }
   }
@@ -896,27 +944,31 @@ router.post(
           profileRoute.pluginId,
           userId
         );
-        audioBuffer = await withReusableVoiceSlot(userId, async () => {
-          const profile = await voiceProfileService.get(
-            voiceProfileId,
-            userId,
-            config
-          );
-          if (!profile) throw new Error('Voice profile not found');
-          await assertProfileRoutingIsCurrent(profile, plugin, userId);
-          return pluginService.executeVoiceCloneRequest(
-            model,
-            input,
-            profile.referenceAudio,
-            {
-              referenceText: profile.referenceText,
-              response_format: requestedFormat,
-              pluginId: profile.pluginId,
+        audioBuffer = await withReusableVoiceSlot(
+          userId,
+          requestAbort.signal,
+          async sharedSignal => {
+            const profile = await voiceProfileService.get(
+              voiceProfileId,
               userId,
-              signal: requestAbort.signal,
-            }
-          );
-        });
+              config
+            );
+            if (!profile) throw new Error('Voice profile not found');
+            await assertProfileRoutingIsCurrent(profile, plugin, userId);
+            return pluginService.executeVoiceCloneRequest(
+              model,
+              input,
+              profile.referenceAudio,
+              {
+                referenceText: profile.referenceText,
+                response_format: requestedFormat,
+                pluginId: profile.pluginId,
+                userId,
+                signal: sharedSignal,
+              }
+            );
+          }
+        );
       } else {
         audioBuffer = await pluginService.executeTTSRequest(model, input, {
           voice,
@@ -980,6 +1032,13 @@ router.post(
       }
       if (error instanceof ReusableVoiceConcurrencyError) {
         res.status(429).json({ success: false, message: error.message });
+        return;
+      }
+      if (error instanceof SharedCapacityUnavailableError) {
+        res.status(503).json({
+          success: false,
+          message: 'TTS admission is temporarily unavailable',
+        });
         return;
       }
       if (error instanceof TTSVoiceCloneUploadError) {

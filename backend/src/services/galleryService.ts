@@ -121,7 +121,7 @@ class GalleryService {
   private async withMediaWriteLease<T>(
     mediaId: string,
     userId: string,
-    operation: () => Promise<T>
+    operation: (assertHeld: () => Promise<void>) => Promise<T>
   ): Promise<T> {
     const coordinator = getCoordinator();
     const deadline = Date.now() + 15_000;
@@ -137,9 +137,39 @@ class GalleryService {
       );
     }
     if (!lease) throw new Error('Generated media is still being updated');
+    let closed = false;
+    let lost = false;
+    let renewalTimer: NodeJS.Timeout | undefined;
+    const assertHeld = async (): Promise<void> => {
+      if (closed || lost) {
+        throw new Error('The shared generated media write lease was lost');
+      }
+      try {
+        if (await lease.extend(30_000)) return;
+      } catch {
+        // Report expiry and coordination outages through one safe fence.
+      }
+      lost = true;
+      throw new Error('The shared generated media write lease was lost');
+    };
+    const renew = async (): Promise<void> => {
+      if (closed || lost) return;
+      try {
+        if (!(await lease.extend(30_000))) lost = true;
+      } catch {
+        lost = true;
+      }
+      if (!closed && !lost) renewalTimer = setTimeout(renew, 10_000);
+    };
+    renewalTimer = setTimeout(renew, 10_000);
+    renewalTimer.unref?.();
     try {
-      return await operation();
+      await assertHeld();
+      const result = await operation(assertHeld);
+      return result;
     } finally {
+      closed = true;
+      if (renewalTimer) clearTimeout(renewalTimer);
       await lease.release().catch(() => false);
     }
   }
@@ -457,11 +487,12 @@ class GalleryService {
 
   async deleteMedia(mediaId: string, userId: string): Promise<boolean> {
     await this.cancelVideoLifecycle(mediaId, userId);
-    return this.withMediaWriteLease(mediaId, userId, async () => {
+    return this.withMediaWriteLease(mediaId, userId, async assertHeld => {
       await this.cancelVideoLifecycle(mediaId, userId);
       const platform = getPlatformStorageRuntime();
       const existing = await this.getRecord(mediaId, userId);
       if (!existing) return false;
+      await assertHeld();
       return platform.domains.gallery.deleteAndEnqueue(
         mediaId,
         userId,

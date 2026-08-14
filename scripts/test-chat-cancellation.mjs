@@ -31,6 +31,7 @@ import { streamOllamaChatResponse } from '../backend/dist/utils/ollamaStreaming.
 import ollamaService from '../backend/dist/services/ollamaService.js';
 import { streamPluginResponse } from '../backend/dist/utils/pluginStreaming.js';
 import { streamAssistantFakeChunks } from '../backend/dist/utils/websocketMessages.js';
+import { createChatStreamCoalescer } from '../backend/dist/utils/chatStreamCoalescer.js';
 
 const socket = () => {
   const messages = [];
@@ -41,6 +42,59 @@ const socket = () => {
     },
   };
 };
+
+test('durable chat streaming does not serialize provider tokens behind event storage', async () => {
+  let releaseFirstPublish;
+  let markFirstPublishStarted;
+  const firstPublishStarted = new Promise(resolve => {
+    markFirstPublishStarted = resolve;
+  });
+  const firstPublishGate = new Promise(resolve => {
+    releaseFirstPublish = resolve;
+  });
+  const published = [];
+  const coalescer = createChatStreamCoalescer(async batch => {
+    published.push(batch);
+    if (published.length === 1) {
+      markFirstPublishStarted();
+      await firstPublishGate;
+    }
+  });
+
+  let total = 'token-0';
+  coalescer.queue({
+    contentDelta: total,
+    thinkingDelta: '',
+    contentTotal: total,
+    thinkingTotal: '',
+  });
+  await firstPublishStarted;
+  const laterTokens = Array.from(
+    { length: 100 },
+    (_, index) => `|${index + 1}`
+  );
+  for (const token of laterTokens) {
+    total += token;
+    coalescer.queue({
+      contentDelta: token,
+      thinkingDelta: '',
+      contentTotal: total,
+      thinkingTotal: '',
+    });
+  }
+  assert.equal(
+    published.length,
+    1,
+    'a slow SQLite/PostgreSQL event write must not backpressure token consumption'
+  );
+
+  releaseFirstPublish();
+  await coalescer.drain();
+  assert.equal(published.length, 2);
+  assert.equal(published[0].contentDelta, 'token-0');
+  assert.equal(published[1].contentDelta, laterTokens.join(''));
+  assert.equal(published[1].contentTotal, total);
+});
 
 test('Ollama streaming receives the caller signal and cancellation is not sent as an error', async () => {
   const ws = socket();

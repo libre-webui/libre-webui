@@ -16,7 +16,7 @@
  */
 
 import express, { type Request, type Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 
 const router = express.Router();
 
@@ -151,6 +151,7 @@ const SANDBOX_HOST_DOCUMENT = `<!DOCTYPE html>
 
 router.use(
   rateLimit({
+    keyPrefix: 'artifacts',
     windowMs: 15 * 60 * 1000,
     max: 600,
     message: 'Too many artifact requests, please try again later.',

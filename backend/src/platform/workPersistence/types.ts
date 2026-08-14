@@ -135,11 +135,13 @@ export class WorkPersistenceError extends Error {
 export interface WorkPersistenceRepository {
   createTaskWithRun(
     input: CreateWorkTaskBundle,
-    enqueuer: TransactionalWorkExecutionEnqueuer
+    enqueuer: TransactionalWorkExecutionEnqueuer,
+    beforeCommit?: () => void | Promise<void>
   ): Promise<void>;
   createRun(
     input: CreateWorkRunBundle,
-    enqueuer: TransactionalWorkExecutionEnqueuer
+    enqueuer: TransactionalWorkExecutionEnqueuer,
+    beforeCommit?: () => void | Promise<void>
   ): Promise<void>;
   listTasks(userId: string): Promise<WorkTaskRow[]>;
   listTaskRecords(userId?: string): Promise<WorkTaskRow[]>;

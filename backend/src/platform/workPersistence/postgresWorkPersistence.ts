@@ -210,7 +210,8 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
 
   async createTaskWithRun(
     input: CreateWorkTaskBundle,
-    enqueuer: TransactionalWorkExecutionEnqueuer
+    enqueuer: TransactionalWorkExecutionEnqueuer,
+    beforeCommit?: () => void | Promise<void>
   ): Promise<void> {
     await this.database.transaction(
       async client => {
@@ -243,13 +244,14 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
           runId: input.run.id,
         });
       },
-      { isolationLevel: 'serializable' }
+      { isolationLevel: 'serializable', beforeCommit }
     );
   }
 
   async createRun(
     input: CreateWorkRunBundle,
-    enqueuer: TransactionalWorkExecutionEnqueuer
+    enqueuer: TransactionalWorkExecutionEnqueuer,
+    beforeCommit?: () => void | Promise<void>
   ): Promise<void> {
     await this.database.transaction(
       async client => {
@@ -301,7 +303,7 @@ export class PostgresWorkPersistence implements WorkPersistenceRepository {
           runId: input.run.id,
         });
       },
-      { isolationLevel: 'serializable' }
+      { isolationLevel: 'serializable', beforeCommit }
     );
   }
 

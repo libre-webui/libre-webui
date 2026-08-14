@@ -7,7 +7,7 @@
 
 import express from 'express';
 import multer from 'multer';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import { authenticate, type AuthenticatedRequest } from '../middleware/auth.js';
 import galleryService from '../services/galleryService.js';
 import mediaGenerationJobService from '../services/mediaGenerationJobService.js';
@@ -23,7 +23,9 @@ import type { GeneratedMediaKind } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import {
   parseTTSVoiceCloneUpload,
+  reserveTTSVoiceCloneUpload,
   TTS_VOICE_CLONE_GLOBAL_MAX_AUDIO_BYTES,
+  TTSVoiceCloneConcurrencyError,
   TTSVoiceCloneUploadError,
   validateTTSVoiceCloneAudio,
 } from '../utils/ttsVoiceCloneUpload.js';
@@ -32,23 +34,31 @@ import {
   VIDEO_RESUME_IDEMPOTENCY_SCOPE,
   VIDEO_SUBMIT_IDEMPOTENCY_SCOPE,
 } from '../platform/jobs/index.js';
+import {
+  combineAbortSignals,
+  SharedCapacityUnavailableError,
+  type SharedCapacityReservation,
+} from '../platform/coordination/sharedAdmission.js';
 
 const logger = createLogger('routes:media');
 const router = express.Router();
 const videoJobLocks = new Map<string, Promise<void>>();
 const generationRateLimiter = rateLimit({
+  keyPrefix: 'media-generate',
   windowMs: 60_000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
 });
 const pollingRateLimiter = rateLimit({
+  keyPrefix: 'media-poll',
   windowMs: 60_000,
   max: 60,
   standardHeaders: true,
   legacyHeaders: false,
 });
 const galleryRateLimiter = rateLimit({
+  keyPrefix: 'media-gallery',
   windowMs: 60_000,
   max: 120,
   standardHeaders: true,
@@ -56,6 +66,7 @@ const galleryRateLimiter = rateLimit({
 });
 // Umbrella limit ahead of authentication; per-route limiters below stay tighter.
 const routerRateLimiter = rateLimit({
+  keyPrefix: 'media-router',
   windowMs: 60_000,
   max: 240,
   standardHeaders: true,
@@ -191,6 +202,13 @@ router.post(
       res.json({ success: true, data: publicMedia(saved) });
     } catch (error) {
       if (requestAbort.signal.aborted) return;
+      if (error instanceof SharedCapacityUnavailableError) {
+        res.status(503).json({
+          success: false,
+          message: 'Media admission is temporarily unavailable',
+        });
+        return;
+      }
       if (error instanceof TTSConcurrencyError) {
         res.status(429).json({ success: false, message: error.message });
         return;
@@ -223,8 +241,15 @@ router.post(
   generationRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);
+    let uploadSlot: SharedCapacityReservation | undefined;
     try {
-      await parseTTSVoiceCloneUpload(req, res);
+      const id = userId(req);
+      uploadSlot = await reserveTTSVoiceCloneUpload(id);
+      const operationSignal = combineAbortSignals(
+        requestAbort.signal,
+        uploadSlot.signal
+      );
+      await parseTTSVoiceCloneUpload(req, res, operationSignal);
       const {
         model,
         pluginId,
@@ -278,7 +303,6 @@ router.post(
         return;
       }
 
-      const id = userId(req);
       const selectedPlugin = await pluginService.getPluginForTTS(
         model,
         pluginId,
@@ -334,10 +358,10 @@ router.post(
           userId: id,
           referenceText: reference_text?.trim() || undefined,
           response_format: format,
-          signal: requestAbort.signal,
+          signal: operationSignal,
         }
       );
-      if (requestAbort.signal.aborted) return;
+      if (operationSignal.aborted) return;
       const mimeType = audioMimeType(format);
       const saved = await galleryService.saveMedia(id, {
         kind: 'audio',
@@ -363,7 +387,18 @@ router.post(
       res.json({ success: true, data: publicMedia(saved) });
     } catch (error) {
       if (requestAbort.signal.aborted) return;
+      if (error instanceof SharedCapacityUnavailableError) {
+        res.status(503).json({
+          success: false,
+          message: 'Media admission is temporarily unavailable',
+        });
+        return;
+      }
       if (error instanceof TTSConcurrencyError) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
+      if (error instanceof TTSVoiceCloneConcurrencyError) {
         res.status(429).json({ success: false, message: error.message });
         return;
       }
@@ -406,6 +441,7 @@ router.post(
         )
         .json({ success: false, message });
     } finally {
+      await uploadSlot?.release();
       requestAbort.cleanup();
     }
   }
@@ -464,6 +500,13 @@ router.post(
       res.json({ success: true, data: publicMedia(saved) });
     } catch (error) {
       if (requestAbort.signal.aborted) return;
+      if (error instanceof SharedCapacityUnavailableError) {
+        res.status(503).json({
+          success: false,
+          message: 'Media admission is temporarily unavailable',
+        });
+        return;
+      }
       if (error instanceof AudioGenerationConcurrencyError) {
         res.status(429).json({ success: false, message: error.message });
         return;

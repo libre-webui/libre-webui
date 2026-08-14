@@ -13,6 +13,7 @@ import type {
 import {
   DurableJobError,
   type DurableCancellationCode,
+  type DurableChatCancellationDecision,
   type DurableJobActorFilter,
   type DurableJobCancellationSummary,
   type DurableJobAttemptMetadata,
@@ -32,6 +33,8 @@ import {
 import type {
   DurableJobClaimResult,
   DurableHeartbeatResult,
+  PreparedDurableChatCancellation,
+  PreparedDurableChatCompletion,
   PreparedDurableEventAppend,
   PreparedDurableJobEnqueue,
   StoredLifecycleRecoveryCandidate,
@@ -46,6 +49,8 @@ type PgJobRow = QueryResultRow & {
   state: DurableJobState;
   payload_format: StoredDurablePayload['format'];
   payload: string;
+  idempotency_scope: string;
+  idempotency_key_hash: string;
   priority: number;
   attempt_count: number;
   max_attempts: number;
@@ -394,6 +399,477 @@ export class PostgresDurableJobRepository {
     }
   }
 
+  async requestChatCancellation(
+    input: PreparedDurableChatCancellation
+  ): Promise<DurableChatCancellationDecision> {
+    try {
+      return await this.database.transaction(async client => {
+        await client.query(
+          `INSERT INTO platform_event_stream_heads (stream_id, last_sequence)
+           VALUES ($1, 0) ON CONFLICT (stream_id) DO NOTHING`,
+          [input.event.streamId]
+        );
+        await client.query(
+          `SELECT last_sequence FROM platform_event_stream_heads
+            WHERE stream_id = $1 FOR UPDATE`,
+          [input.event.streamId]
+        );
+        const completion = await client.query<{
+          global_cursor: string | number;
+        }>(
+          `SELECT global_cursor FROM platform_events
+            WHERE event_id = $1 AND stream_id = $2
+              AND event_type = 'chat.done.v1'
+              AND subject_id = $3 AND actor_user_id = $4`,
+          [
+            input.doneEventId,
+            input.event.streamId,
+            input.event.subjectId,
+            input.actorUserId,
+          ]
+        );
+        if (completion.rows[0]) {
+          return {
+            outcome: 'completion-won',
+            cursor: integer(completion.rows[0].global_cursor, 'event cursor'),
+            job: null,
+          };
+        }
+
+        const cursor = await this.appendEvent(client, input.event);
+        const naturalJob = await client.query<PgJobRow>(
+          `SELECT * FROM platform_jobs
+            WHERE actor_user_id = $1 AND idempotency_scope = $2
+              AND idempotency_key_hash = $3 FOR UPDATE`,
+          [input.actorUserId, input.idempotencyScope, input.idempotencyKeyHash]
+        );
+        return {
+          outcome: 'cancellation-recorded',
+          cursor,
+          job: naturalJob.rows[0]
+            ? await this.requestCancellationWithExecutor(
+                client,
+                naturalJob.rows[0].id,
+                input.actorUserId,
+                'user-requested'
+              )
+            : null,
+        };
+      });
+    } catch (error) {
+      // Resolve an exact decision whose COMMIT acknowledgement was lost.
+      try {
+        const cancellation = await this.database.query<{
+          global_cursor: string | number;
+          request_fingerprint: string;
+        }>(
+          `SELECT global_cursor, request_fingerprint FROM platform_events
+            WHERE event_id = $1 AND stream_id = $2
+              AND event_type = 'chat.cancel-requested.v1'
+              AND subject_id = $3 AND actor_user_id = $4`,
+          [
+            input.event.eventId,
+            input.event.streamId,
+            input.event.subjectId,
+            input.actorUserId,
+          ]
+        );
+        if (cancellation.rows[0]) {
+          if (
+            cancellation.rows[0].request_fingerprint !==
+            input.event.requestFingerprint
+          ) {
+            throw new DurableJobError(
+              'conflict',
+              'Chat cancellation identity was reused'
+            );
+          }
+          const job = await this.database.query<PgJobRow>(
+            `SELECT * FROM platform_jobs
+              WHERE actor_user_id = $1 AND idempotency_scope = $2
+                AND idempotency_key_hash = $3`,
+            [
+              input.actorUserId,
+              input.idempotencyScope,
+              input.idempotencyKeyHash,
+            ]
+          );
+          return {
+            outcome: 'cancellation-recorded',
+            cursor: integer(cancellation.rows[0].global_cursor, 'event cursor'),
+            job: job.rows[0] ? metadata(job.rows[0]) : null,
+          };
+        }
+        const completion = await this.database.query<{
+          global_cursor: string | number;
+        }>(
+          `SELECT global_cursor FROM platform_events
+            WHERE event_id = $1 AND stream_id = $2
+              AND event_type = 'chat.done.v1'
+              AND subject_id = $3 AND actor_user_id = $4`,
+          [
+            input.doneEventId,
+            input.event.streamId,
+            input.event.subjectId,
+            input.actorUserId,
+          ]
+        );
+        if (completion.rows[0]) {
+          return {
+            outcome: 'completion-won',
+            cursor: integer(completion.rows[0].global_cursor, 'event cursor'),
+            job: null,
+          };
+        }
+      } catch (resolutionError) {
+        if (resolutionError instanceof DurableJobError) throw resolutionError;
+      }
+      throw error;
+    }
+  }
+
+  private async publishChatCompletionWithExecutor(
+    executor: PostgresQueryExecutor,
+    input: PreparedDurableChatCompletion
+  ): Promise<number> {
+    // Lock order is stream decision -> job lease -> chat session. Enqueue and
+    // cancellation use the same prefix, so no path can invert head and job.
+    await executor.query(
+      `INSERT INTO platform_event_stream_heads (stream_id, last_sequence)
+       VALUES ($1, 0) ON CONFLICT (stream_id) DO NOTHING`,
+      [input.event.streamId]
+    );
+    await executor.query(
+      `SELECT last_sequence FROM platform_event_stream_heads
+        WHERE stream_id = $1 FOR UPDATE`,
+      [input.event.streamId]
+    );
+    const cancellation = await executor.query(
+      `SELECT 1 FROM platform_events
+        WHERE event_id = $1 AND stream_id = $2
+          AND event_type = 'chat.cancel-requested.v1'
+          AND subject_id = $3 AND actor_user_id = $4`,
+      [
+        input.cancellationEventId,
+        input.event.streamId,
+        input.message.id,
+        input.actorUserId,
+      ]
+    );
+    if (cancellation.rows[0]) {
+      throw new DurableJobError('cancelled', 'Durable job was cancelled');
+    }
+
+    const job = await this.find(executor, input.lease.jobId, true);
+    if (!job) {
+      throw new DurableJobError('lease-lost', 'Durable job lease was lost');
+    }
+    if (
+      job.actor_user_id !== input.actorUserId ||
+      job.job_type !== input.expectedJobType ||
+      job.idempotency_scope !== input.expectedIdempotencyScope ||
+      job.idempotency_key_hash !== input.expectedIdempotencyKeyHash
+    ) {
+      throw new DurableJobError(
+        'conflict',
+        'Chat completion does not match its durable job'
+      );
+    }
+    const assertLease = (timestamp: number): void => {
+      if (job.cancellation_requested_at !== null) {
+        throw new DurableJobError('cancelled', 'Durable job was cancelled');
+      }
+      if (
+        job.state !== 'running' ||
+        job.lease_owner !== input.lease.workerId ||
+        integer(job.lease_token, 'lease_token') !== input.lease.leaseToken ||
+        job.lease_expires_at === null ||
+        integer(job.lease_expires_at, 'lease_expires_at') <= timestamp
+      ) {
+        throw new DurableJobError('lease-lost', 'Durable job lease was lost');
+      }
+    };
+    assertLease(this.now());
+
+    const session = await executor.query<{ user_id: string }>(
+      'SELECT user_id FROM sessions WHERE id = $1 FOR UPDATE',
+      [input.sessionId]
+    );
+    if (
+      !session.rows[0] ||
+      session.rows[0].user_id !== input.actorUserId ||
+      input.message.sessionId !== input.sessionId
+    ) {
+      throw new DurableJobError(
+        'conflict',
+        'Chat completion session is unavailable'
+      );
+    }
+    // The session lock can wait behind another chat mutation while this
+    // transaction holds the job row, preventing its heartbeat from extending.
+    // Never authorize publication with the pre-wait lease sample.
+    assertLease(this.now());
+
+    const existingEvent = await executor.query(
+      'SELECT 1 FROM platform_events WHERE event_id = $1',
+      [input.event.eventId]
+    );
+    const existingMessage = await executor.query<{ role: string }>(
+      `SELECT role FROM session_messages
+        WHERE id = $1 AND session_id = $2`,
+      [input.message.id, input.sessionId]
+    );
+    if (existingEvent.rows[0]) {
+      if (existingMessage.rows[0]?.role !== 'assistant') {
+        throw new DurableJobError(
+          'storage-error',
+          'Durable chat completion event has no assistant message'
+        );
+      }
+      return this.appendEvent(executor, input.event);
+    }
+    if (existingMessage.rows[0]) {
+      throw new DurableJobError(
+        'conflict',
+        'Assistant message identity already exists without completion'
+      );
+    }
+
+    let branchIndex = 0;
+    if (input.message.parentId) {
+      const branchRoot = await executor.query<{ role: string }>(
+        `SELECT role FROM session_messages
+          WHERE id = $1 AND session_id = $2`,
+        [input.message.parentId, input.sessionId]
+      );
+      if (branchRoot.rows[0]?.role !== 'assistant') {
+        throw new DurableJobError(
+          'conflict',
+          'Chat completion branch root is unavailable'
+        );
+      }
+      const branch = await executor.query<{ next_index: string | number }>(
+        `SELECT COALESCE(MAX(branch_index), 0) + 1 AS next_index
+           FROM session_messages
+          WHERE session_id = $1 AND (id = $2 OR parent_id = $2)`,
+        [input.sessionId, input.message.parentId]
+      );
+      if (!branch.rows[0]) {
+        throw new DurableJobError(
+          'storage-error',
+          'Chat branch index is unavailable'
+        );
+      }
+      branchIndex = integer(branch.rows[0].next_index, 'branch index');
+    }
+    const position = await executor.query<{ next_index: string | number }>(
+      `SELECT COALESCE(MAX(message_index), -1) + 1 AS next_index
+         FROM session_messages WHERE session_id = $1`,
+      [input.sessionId]
+    );
+    if (!position.rows[0]) {
+      throw new DurableJobError(
+        'storage-error',
+        'Chat message position is unavailable'
+      );
+    }
+    // Re-sample immediately before the first publication side effect. The same
+    // fresh fence is carried through the terminal job UPDATE below.
+    const timestamp = this.now();
+    assertLease(timestamp);
+    if (input.message.parentId) {
+      await executor.query(
+        `UPDATE session_messages SET is_active = 0
+          WHERE session_id = $1 AND (id = $2 OR parent_id = $2)`,
+        [input.sessionId, input.message.parentId]
+      );
+    }
+    await executor.query(
+      `INSERT INTO session_messages
+         (id, session_id, role, content, thinking, timestamp, message_index,
+          model, provider_metadata, images, statistics, artifacts,
+          parent_id, branch_index, is_active, rating)
+       VALUES ($1, $2, 'assistant', $3, $4, $5, $6, $7, $8, $9, $10,
+               $11, $12, $13, $14, $15)`,
+      [
+        input.message.id,
+        input.sessionId,
+        input.message.content,
+        input.message.thinking,
+        input.message.timestamp,
+        integer(position.rows[0].next_index, 'message index'),
+        input.message.model,
+        input.message.providerMetadata,
+        input.message.images,
+        input.message.statistics,
+        input.message.artifacts,
+        input.message.parentId,
+        branchIndex,
+        input.message.parentId ? 1 : input.message.isActive,
+        input.message.rating,
+      ]
+    );
+    await executor.query(
+      `UPDATE sessions SET updated_at = GREATEST(updated_at, $1)
+        WHERE id = $2 AND user_id = $3`,
+      [timestamp, input.sessionId, input.actorUserId]
+    );
+    const completionCursor = await this.appendEvent(executor, input.event);
+    // Message and event writes can themselves wait. Re-sample before the
+    // attempt/job terminal fence; throwing here rolls every prior write back.
+    const terminalTimestamp = this.now();
+    assertLease(terminalTimestamp);
+    if (
+      (await this.finishAttempt(
+        executor,
+        job,
+        'succeeded',
+        terminalTimestamp
+      )) !== 1
+    ) {
+      throw new DurableJobError('lease-lost', 'Durable job attempt was lost');
+    }
+    const resultReference = `chat-message:${input.message.id}`;
+    const terminal = await executor.query(
+      `UPDATE platform_jobs
+          SET state = 'succeeded', result_reference = $1,
+              lease_owner = NULL, lease_expires_at = NULL,
+              progress_current = progress_total,
+              progress_message = 'Chat response saved',
+              finished_at = $2, updated_at = $2
+        WHERE id = $3 AND state = 'running' AND lease_owner = $4
+          AND lease_token = $5 AND lease_expires_at > $6
+          AND actor_user_id = $7 AND job_type = $8
+          AND idempotency_scope = $9 AND idempotency_key_hash = $10
+          AND cancellation_requested_at IS NULL`,
+      [
+        resultReference,
+        terminalTimestamp,
+        job.id,
+        input.lease.workerId,
+        input.lease.leaseToken,
+        terminalTimestamp,
+        input.actorUserId,
+        input.expectedJobType,
+        input.expectedIdempotencyScope,
+        input.expectedIdempotencyKeyHash,
+      ]
+    );
+    if (terminal.rowCount !== 1) {
+      throw new DurableJobError('lease-lost', 'Durable job lease was lost');
+    }
+    await this.appendJobEvent(
+      executor,
+      job,
+      'job.succeeded',
+      terminalTimestamp
+    );
+    return completionCursor;
+  }
+
+  async publishChatCompletion(
+    input: PreparedDurableChatCompletion
+  ): Promise<number> {
+    try {
+      return await this.database.transaction(
+        client => this.publishChatCompletionWithExecutor(client, input),
+        { beforeCommit: input.beforeCommit }
+      );
+    } catch (error) {
+      // Resolve an exact COMMIT whose acknowledgement was lost. Both rows are
+      // required; observing only one would prove an invariant violation.
+      try {
+        const committed = await this.database.query<{
+          global_cursor: string | number;
+          request_fingerprint: string;
+          role: string;
+          state: string;
+          result_reference: string | null;
+          attempt_outcome: string;
+          attempt_finished_at: string | number | null;
+        }>(
+          `SELECT e.global_cursor, e.request_fingerprint, m.role,
+                  j.state, j.result_reference,
+                  a.outcome AS attempt_outcome,
+                  a.finished_at AS attempt_finished_at
+             FROM platform_events e
+             JOIN session_messages m
+               ON m.id = $2 AND m.session_id = $3
+             JOIN platform_jobs j ON j.id = $4
+             JOIN platform_job_attempts a
+               ON a.job_id = j.id
+              AND a.attempt_number = j.attempt_count
+              AND a.lease_token = $5
+            WHERE e.event_id = $1
+              AND j.actor_user_id = $6
+              AND j.job_type = $7
+              AND j.idempotency_scope = $8
+              AND j.idempotency_key_hash = $9`,
+          [
+            input.event.eventId,
+            input.message.id,
+            input.sessionId,
+            input.lease.jobId,
+            input.lease.leaseToken,
+            input.actorUserId,
+            input.expectedJobType,
+            input.expectedIdempotencyScope,
+            input.expectedIdempotencyKeyHash,
+          ]
+        );
+        const row = committed.rows[0];
+        if (row) {
+          if (
+            row.request_fingerprint !== input.event.requestFingerprint ||
+            row.role !== 'assistant' ||
+            row.state !== 'succeeded' ||
+            row.result_reference !== `chat-message:${input.message.id}` ||
+            row.attempt_outcome !== 'succeeded' ||
+            row.attempt_finished_at === null
+          ) {
+            throw new DurableJobError(
+              'conflict',
+              'Durable chat completion identity was reused'
+            );
+          }
+          return integer(row.global_cursor, 'event cursor');
+        }
+      } catch (resolutionError) {
+        if (resolutionError instanceof DurableJobError) throw resolutionError;
+      }
+      throw error;
+    }
+  }
+
+  async lockChatCancellationDecision(
+    executor: PostgresQueryExecutor,
+    input: {
+      eventId: string;
+      streamId: string;
+      subjectId: string;
+      actorUserId: string;
+    }
+  ): Promise<boolean> {
+    await executor.query(
+      `INSERT INTO platform_event_stream_heads (stream_id, last_sequence)
+       VALUES ($1, 0) ON CONFLICT (stream_id) DO NOTHING`,
+      [input.streamId]
+    );
+    await executor.query(
+      `SELECT last_sequence FROM platform_event_stream_heads
+        WHERE stream_id = $1 FOR UPDATE`,
+      [input.streamId]
+    );
+    const cancellation = await executor.query(
+      `SELECT 1 FROM platform_events
+        WHERE event_id = $1 AND stream_id = $2
+          AND event_type = 'chat.cancel-requested.v1'
+          AND subject_id = $3 AND actor_user_id = $4`,
+      [input.eventId, input.streamId, input.subjectId, input.actorUserId]
+    );
+    return cancellation.rows[0] !== undefined;
+  }
+
   private async finishAttempt(
     executor: PostgresQueryExecutor,
     row: PgJobRow,
@@ -401,8 +877,8 @@ export class PostgresDurableJobRepository {
     timestamp: number,
     errorCode: string | null = null,
     errorSummary: string | null = null
-  ): Promise<void> {
-    await executor.query(
+  ): Promise<number> {
+    const result = await executor.query(
       `UPDATE platform_job_attempts
           SET last_heartbeat_at = $1, finished_at = $1, outcome = $2,
               error_code = $3, error_summary = $4
@@ -418,6 +894,7 @@ export class PostgresDurableJobRepository {
         integer(row.lease_token, 'lease_token'),
       ]
     );
+    return result.rowCount ?? 0;
   }
 
   private async reapExpired(
@@ -696,50 +1173,59 @@ export class PostgresDurableJobRepository {
     );
   }
 
+  async requestCancellationWithExecutor(
+    client: PostgresQueryExecutor,
+    id: string,
+    actorUserId: string,
+    reason: DurableCancellationCode
+  ): Promise<DurableJobMetadata> {
+    const timestamp = this.now();
+    const row = await this.find(client, id, true);
+    if (!row || row.actor_user_id !== actorUserId) {
+      throw new DurableJobError('not-found', 'Durable job not found');
+    }
+    if (
+      ['succeeded', 'cancelled', 'dead_letter'].includes(row.state) ||
+      row.cancellation_requested_at !== null
+    ) {
+      return metadata(row);
+    }
+    const queued = row.state === 'queued';
+    const updated = await client.query<PgJobRow>(
+      `UPDATE platform_jobs
+            SET state = $1, cancellation_requested_at = $2,
+                cancellation_reason = $3, finished_at = $4, updated_at = $2
+          WHERE id = $5 RETURNING *`,
+      [
+        queued ? 'cancelled' : 'running',
+        timestamp,
+        reason,
+        queued ? timestamp : null,
+        row.id,
+      ]
+    );
+    await this.appendJobEvent(
+      client,
+      row,
+      queued ? 'job.cancelled' : 'job.cancellation-requested',
+      timestamp
+    );
+    if (!updated.rows[0])
+      throw new DurableJobError(
+        'storage-error',
+        'Cancelled PostgreSQL job disappeared'
+      );
+    return metadata(updated.rows[0]);
+  }
+
   async requestCancellation(
     id: string,
     actorUserId: string,
     reason: DurableCancellationCode
   ): Promise<DurableJobMetadata> {
-    return this.database.transaction(async client => {
-      const timestamp = this.now();
-      const row = await this.find(client, id, true);
-      if (!row || row.actor_user_id !== actorUserId) {
-        throw new DurableJobError('not-found', 'Durable job not found');
-      }
-      if (
-        ['succeeded', 'cancelled', 'dead_letter'].includes(row.state) ||
-        row.cancellation_requested_at !== null
-      ) {
-        return metadata(row);
-      }
-      const queued = row.state === 'queued';
-      const updated = await client.query<PgJobRow>(
-        `UPDATE platform_jobs
-            SET state = $1, cancellation_requested_at = $2,
-                cancellation_reason = $3, finished_at = $4, updated_at = $2
-          WHERE id = $5 RETURNING *`,
-        [
-          queued ? 'cancelled' : 'running',
-          timestamp,
-          reason,
-          queued ? timestamp : null,
-          row.id,
-        ]
-      );
-      await this.appendJobEvent(
-        client,
-        row,
-        queued ? 'job.cancelled' : 'job.cancellation-requested',
-        timestamp
-      );
-      if (!updated.rows[0])
-        throw new DurableJobError(
-          'storage-error',
-          'Cancelled PostgreSQL job disappeared'
-        );
-      return metadata(updated.rows[0]);
-    });
+    return this.database.transaction(client =>
+      this.requestCancellationWithExecutor(client, id, actorUserId, reason)
+    );
   }
 
   async requestActorCancellation(
@@ -1181,18 +1667,25 @@ export class PostgresDurableJobRepository {
   async replayStoredEvents(
     afterCursor: number,
     limit: number,
-    streamId?: string
+    options: { streamId?: string; subjectId?: string } = {}
   ): Promise<StoredDurableEventRow[]> {
     const parameters: unknown[] = [afterCursor];
-    const stream = streamId ? ` AND stream_id = $2` : '';
-    if (streamId) parameters.push(streamId);
+    const predicates = ['global_cursor > $1'];
+    if (options.streamId) {
+      parameters.push(options.streamId);
+      predicates.push(`stream_id = $${parameters.length}`);
+    }
+    if (options.subjectId) {
+      parameters.push(options.subjectId);
+      predicates.push(`subject_id = $${parameters.length}`);
+    }
     parameters.push(limit);
     const result = await this.database.query<PgEventRow>(
       `SELECT global_cursor AS cursor, event_id, stream_id, stream_sequence,
               request_fingerprint, event_type, subject_id, actor_user_id,
               payload_format, payload, occurred_at
          FROM platform_events
-        WHERE global_cursor > $1${stream}
+        WHERE ${predicates.join(' AND ')}
         ORDER BY global_cursor ASC LIMIT $${parameters.length}`,
       parameters
     );

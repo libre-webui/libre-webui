@@ -41,7 +41,6 @@ export const initializeWorkTestPlatform = async repoRoot => {
       role: 'embedded',
       runWorker: false,
       handlers: new Map(),
-      database: persistence.getSQLiteAdapterDatabase(),
       env: process.env,
     });
     jobsInitialized = true;

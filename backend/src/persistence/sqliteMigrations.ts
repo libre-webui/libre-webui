@@ -732,6 +732,11 @@ export const DURABLE_EVENT_IDEMPOTENCY_SCHEMA_SQL = `
     );
 `;
 
+export const DURABLE_EVENT_REPLAY_INDEX_SCHEMA_SQL = `
+  CREATE INDEX IF NOT EXISTS idx_platform_events_stream_subject_cursor
+    ON platform_events(stream_id, subject_id, global_cursor);
+`;
+
 export const RESOURCE_DELETION_LIFECYCLE_SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS platform_resource_deletion_tombstones (
     resource_type TEXT NOT NULL
@@ -874,6 +879,7 @@ interface SQLiteMigration {
 interface AppliedMigrationValidation {
   currentVersion: number;
   legacyPlatformVectorChecksumRepairRequired: boolean;
+  legacyDurableEventReplayIndexChecksumRepairRequired: boolean;
 }
 
 const addColumnIfMissing = (
@@ -1252,6 +1258,11 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     columns: ['stream_id', 'global_cursor'],
   },
   {
+    name: 'idx_platform_events_stream_subject_cursor',
+    table: 'platform_events',
+    columns: ['stream_id', 'subject_id', 'global_cursor'],
+  },
+  {
     name: 'idx_platform_events_occurred',
     table: 'platform_events',
     columns: ['occurred_at', 'global_cursor'],
@@ -1341,6 +1352,38 @@ const normalizeSchemaObjectSql = (sql: string): string =>
     .replace(/^CREATE\s+(TABLE|INDEX)\s+IF\s+NOT\s+EXISTS\s+/, 'CREATE $1 ')
     .replace(/\s+/g, ' ')
     .replace(/\s*([(),>])\s*/g, '$1');
+
+const CANONICAL_DURABLE_EVENT_REPLAY_INDEX_SQL = normalizeSchemaObjectSql(
+  DURABLE_EVENT_REPLAY_INDEX_SCHEMA_SQL.trim().replace(/;$/, '')
+);
+
+const collectDurableEventReplayIndexIdentityMismatches = (
+  database: Database.Database
+): string[] => {
+  const observed = database
+    .prepare(
+      `SELECT type, tbl_name, sql
+         FROM sqlite_master
+        WHERE name = 'idx_platform_events_stream_subject_cursor'`
+    )
+    .get() as
+    { type: string; tbl_name: string; sql: string | null } | undefined;
+  if (!observed) {
+    return ['idx_platform_events_stream_subject_cursor is missing'];
+  }
+  if (
+    observed.type !== 'index' ||
+    observed.tbl_name !== 'platform_events' ||
+    observed.sql === null ||
+    normalizeSchemaObjectSql(observed.sql) !==
+      CANONICAL_DURABLE_EVENT_REPLAY_INDEX_SQL
+  ) {
+    return [
+      'idx_platform_events_stream_subject_cursor does not match its canonical definition',
+    ];
+  }
+  return [];
+};
 
 interface CanonicalSchemaObject {
   type: 'table' | 'index';
@@ -1676,10 +1719,18 @@ const collectMissingDurableJobsEventsSchema = (
   ...collectMissingStructuralInvariants(database).filter(
     item =>
       item.includes('platform_job') ||
-      item.includes('platform_event') ||
+      (item.includes('platform_event') &&
+        !item.includes('idx_platform_events_stream_subject_cursor')) ||
       item.includes('durable job')
   ),
 ];
+
+const collectMissingDurableEventReplayIndexSchema = (
+  database: Database.Database
+): string[] =>
+  collectMissingStructuralInvariants(database).filter(item =>
+    item.includes('idx_platform_events_stream_subject_cursor')
+  );
 
 const collectMissingBlobReferenceSchema = (
   database: Database.Database
@@ -1781,6 +1832,9 @@ function collectMissingSchemaAtVersion(
     ...(version >= 12
       ? collectMissingResourceDeletionLifecycleSchema(database)
       : []),
+    ...(version >= 13
+      ? collectMissingDurableEventReplayIndexSchema(database)
+      : []),
   ];
 }
 
@@ -1858,6 +1912,10 @@ const DURABLE_EVENT_IDEMPOTENCY_MIGRATION_CHECKSUM =
   'fe9aee7dc21dc4ca6a5bdcd0fcd5788104501f68bc2c72e83faf9b6ce6514d44';
 const RESOURCE_DELETION_LIFECYCLE_MIGRATION_CHECKSUM =
   'a72e862afe109daf68b7ec8e445ef359bc3550a5ac8973d135cf7a18eb5bf1cc';
+const DURABLE_EVENT_REPLAY_INDEX_MIGRATION_CHECKSUM =
+  '7d6b769ceadd08791c77ac5c5a1d7bd61a63d87cac87da56ae847c4067cacdad';
+const LEGACY_DURABLE_EVENT_REPLAY_INDEX_MIGRATION_CHECKSUM =
+  'DURABLE_EVENT_REPLAY_INDEX_CHECKSUM_TO_FREEZE';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -2084,6 +2142,20 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       }
     },
   },
+  {
+    version: 13,
+    name: 'durable-event-replay-index',
+    checksum: DURABLE_EVENT_REPLAY_INDEX_MIGRATION_CHECKSUM,
+    apply(database) {
+      database.exec(DURABLE_EVENT_REPLAY_INDEX_SCHEMA_SQL);
+      const missing = collectMissingDurableEventReplayIndexSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite durable event replay index is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
 ];
 
 /**
@@ -2128,10 +2200,14 @@ const readAppliedMigrations = (
 
 const validateAppliedMigrations = (
   applied: readonly AppliedMigrationRow[],
-  options: { allowLegacyPlatformVectorChecksum?: boolean } = {}
+  options: {
+    allowLegacyPlatformVectorChecksum?: boolean;
+    allowLegacyDurableEventReplayIndexChecksum?: boolean;
+  } = {}
 ): AppliedMigrationValidation => {
   const currentVersion = applied[applied.length - 1]?.version ?? 0;
   let legacyPlatformVectorChecksumRepairRequired = false;
+  let legacyDurableEventReplayIndexChecksumRepairRequired = false;
   if (currentVersion > targetVersion) {
     throw new Error(
       `Database schema version ${currentVersion} is newer than supported version ${targetVersion}`
@@ -2163,6 +2239,15 @@ const validateAppliedMigrations = (
         legacyPlatformVectorChecksumRepairRequired = true;
         continue;
       }
+      if (
+        options.allowLegacyDurableEventReplayIndexChecksum === true &&
+        row.version === 13 &&
+        row.name === 'durable-event-replay-index' &&
+        row.checksum === LEGACY_DURABLE_EVENT_REPLAY_INDEX_MIGRATION_CHECKSUM
+      ) {
+        legacyDurableEventReplayIndexChecksumRepairRequired = true;
+        continue;
+      }
       throw new Error(
         `Database migration ${row.version} checksum mismatch for ${row.name}`
       );
@@ -2171,6 +2256,7 @@ const validateAppliedMigrations = (
   return {
     currentVersion,
     legacyPlatformVectorChecksumRepairRequired,
+    legacyDurableEventReplayIndexChecksumRepairRequired,
   };
 };
 
@@ -2180,6 +2266,7 @@ const validateAppliedMigrationsForLiveRepair = (
 ): AppliedMigrationValidation => {
   const validation = validateAppliedMigrations(applied, {
     allowLegacyPlatformVectorChecksum: true,
+    allowLegacyDurableEventReplayIndexChecksum: true,
   });
   if (validation.legacyPlatformVectorChecksumRepairRequired) {
     const mismatches = collectPlatformVectorSchemaIdentityMismatches(database);
@@ -2187,6 +2274,16 @@ const validateAppliedMigrationsForLiveRepair = (
       throw new Error(
         'Database migration 2 legacy checksum cannot be repaired because ' +
           `the platform vector schema is not canonical: ${mismatches.join(', ')}`
+      );
+    }
+  }
+  if (validation.legacyDurableEventReplayIndexChecksumRepairRequired) {
+    const mismatches =
+      collectDurableEventReplayIndexIdentityMismatches(database);
+    if (mismatches.length > 0) {
+      throw new Error(
+        'Database migration 13 legacy checksum cannot be repaired because ' +
+          `the durable event replay index is not canonical: ${mismatches.join(', ')}`
       );
     }
   }
@@ -2338,11 +2435,11 @@ export function inspectSQLiteSchema(
           validation.currentVersion
         );
         if (
-          validation.legacyPlatformVectorChecksumRepairRequired &&
+          (validation.legacyPlatformVectorChecksumRepairRequired ||
+            validation.legacyDurableEventReplayIndexChecksumRepairRequired) &&
           requiredAtCurrentVersion.length === 0
         ) {
-          reason =
-            'Database migration 2 uses a recognized historical checksum and requires canonical repair';
+          reason = `Database migration ${invalid.version} uses a recognized historical checksum and requires canonical repair`;
           canMigrate = true;
         } else {
           reason = `Database migration ${invalid.version} ledger entry does not match the application migration`;
@@ -2449,8 +2546,11 @@ export function preflightSQLiteMigrationLedger(
   const applied = readAppliedMigrations(database);
   const observedVersion = applied[applied.length - 1]?.version ?? 0;
   try {
-    const { currentVersion, legacyPlatformVectorChecksumRepairRequired } =
-      validateAppliedMigrationsForLiveRepair(database, applied);
+    const {
+      currentVersion,
+      legacyPlatformVectorChecksumRepairRequired,
+      legacyDurableEventReplayIndexChecksumRepairRequired,
+    } = validateAppliedMigrationsForLiveRepair(database, applied);
     const missing = collectMissingSchemaAtVersion(database, currentVersion);
     if (missing.length > 0) {
       throw new Error(
@@ -2464,7 +2564,8 @@ export function preflightSQLiteMigrationLedger(
       dialect: 'sqlite',
       status:
         currentVersion === targetVersion &&
-        !legacyPlatformVectorChecksumRepairRequired
+        !legacyPlatformVectorChecksumRepairRequired &&
+        !legacyDurableEventReplayIndexChecksumRepairRequired
           ? 'compatible'
           : 'migrating',
       currentVersion,
@@ -2569,15 +2670,21 @@ export function runSQLiteMigrationCoordinator(
         'SQLite migration requires foreign keys to be disabled before its transaction begins'
       );
     }
-    if (validation.legacyPlatformVectorChecksumRepairRequired) {
+    if (
+      validation.legacyPlatformVectorChecksumRepairRequired ||
+      validation.legacyDurableEventReplayIndexChecksumRepairRequired
+    ) {
       database.transaction(() => {
         const repairValidation = validateAppliedMigrationsForLiveRepair(
           database,
           readAppliedMigrations(database)
         );
         if (
-          !repairValidation.legacyPlatformVectorChecksumRepairRequired ||
-          repairValidation.currentVersion !== currentVersion
+          repairValidation.currentVersion !== currentVersion ||
+          repairValidation.legacyPlatformVectorChecksumRepairRequired !==
+            validation.legacyPlatformVectorChecksumRepairRequired ||
+          repairValidation.legacyDurableEventReplayIndexChecksumRepairRequired !==
+            validation.legacyDurableEventReplayIndexChecksumRepairRequired
         ) {
           throw new Error(
             'Database migration ledger changed during legacy checksum repair'
@@ -2597,22 +2704,45 @@ export function runSQLiteMigrationCoordinator(
               }`
           );
         }
-        const result = database
-          .prepare(
-            `UPDATE ${MIGRATION_TABLE}
-                SET checksum = ?
-              WHERE version = 2
-                AND name = 'platform-vector-storage'
-                AND checksum = ?`
-          )
-          .run(
-            PLATFORM_VECTOR_MIGRATION_CHECKSUM,
-            LEGACY_PLATFORM_VECTOR_MIGRATION_CHECKSUM
-          );
-        if (result.changes !== 1) {
-          throw new Error(
-            'Database migration 2 changed during legacy checksum repair'
-          );
+        if (repairValidation.legacyPlatformVectorChecksumRepairRequired) {
+          const result = database
+            .prepare(
+              `UPDATE ${MIGRATION_TABLE}
+                  SET checksum = ?
+                WHERE version = 2
+                  AND name = 'platform-vector-storage'
+                  AND checksum = ?`
+            )
+            .run(
+              PLATFORM_VECTOR_MIGRATION_CHECKSUM,
+              LEGACY_PLATFORM_VECTOR_MIGRATION_CHECKSUM
+            );
+          if (result.changes !== 1) {
+            throw new Error(
+              'Database migration 2 changed during legacy checksum repair'
+            );
+          }
+        }
+        if (
+          repairValidation.legacyDurableEventReplayIndexChecksumRepairRequired
+        ) {
+          const result = database
+            .prepare(
+              `UPDATE ${MIGRATION_TABLE}
+                  SET checksum = ?
+                WHERE version = 13
+                  AND name = 'durable-event-replay-index'
+                  AND checksum = ?`
+            )
+            .run(
+              DURABLE_EVENT_REPLAY_INDEX_MIGRATION_CHECKSUM,
+              LEGACY_DURABLE_EVENT_REPLAY_INDEX_MIGRATION_CHECKSUM
+            );
+          if (result.changes !== 1) {
+            throw new Error(
+              'Database migration 13 changed during legacy checksum repair'
+            );
+          }
         }
         const repairedValidation = validateAppliedMigrations(
           readAppliedMigrations(database)

@@ -17,6 +17,7 @@
 
 import type Database from 'better-sqlite3';
 import type {
+  IdentityAccountStatus,
   IdentityEmailCodec,
   IdentityPublicUserRecord,
   IdentityRepository,
@@ -363,6 +364,15 @@ class SQLiteIdentitySyncRepository implements IdentitySyncRepository {
     return user ? decodeIdentityRecord(this.emailCodec, user) : null;
   }
 
+  findAccountStatusById(id: string): IdentityAccountStatus | null {
+    return (
+      this.executor.get<{ account_status: IdentityAccountStatus }>(
+        'SELECT account_status FROM users WHERE id = ?',
+        [id]
+      )?.account_status ?? null
+    );
+  }
+
   findByUsername(username: string): IdentityUserRecord | null {
     const user =
       this.executor.get<IdentityUserRecord>(
@@ -534,6 +544,15 @@ class SQLiteIdentityRepository implements IdentityRepository {
       .then(user =>
         user ? decodeIdentityRecord(this.emailCodec, user) : null
       );
+  }
+
+  findAccountStatusById(id: string): Promise<IdentityAccountStatus | null> {
+    return this.executor
+      .get<{ account_status: IdentityAccountStatus }>(
+        'SELECT account_status FROM users WHERE id = ?',
+        [id]
+      )
+      .then(user => user?.account_status ?? null);
   }
 
   findByUsername(username: string): Promise<IdentityUserRecord | null> {

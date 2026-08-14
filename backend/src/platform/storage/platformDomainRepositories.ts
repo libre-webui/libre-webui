@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import type Database from 'better-sqlite3';
 import type { PostgresQueryExecutor } from '../../persistence/postgresDatabase.js';
+import type { PersistenceSyncExecutor } from '../../persistence/types.js';
 import type { Document } from '../../storageMappers.js';
 import type {
   DocumentChunk,
@@ -33,7 +33,7 @@ export interface TransactionalResourceDeletionInput {
  */
 export interface TransactionalResourceDeletionEnqueuer {
   enqueueSQLite(
-    database: Database.Database,
+    executor: PersistenceSyncExecutor,
     input: TransactionalResourceDeletionInput
   ): void;
   enqueuePostgres(
@@ -75,7 +75,7 @@ export interface TransactionalDocumentIngestionInput {
 
 export interface TransactionalDocumentIngestionEnqueuer {
   enqueueSQLite(
-    database: Database.Database,
+    executor: PersistenceSyncExecutor,
     input: TransactionalDocumentIngestionInput
   ): void;
   enqueuePostgres(
@@ -91,7 +91,7 @@ export interface TransactionalVideoJobInput {
 
 export interface TransactionalVideoSubmissionEnqueuer {
   enqueueSQLite(
-    database: Database.Database,
+    executor: PersistenceSyncExecutor,
     input: TransactionalVideoJobInput
   ): void;
   enqueuePostgres(

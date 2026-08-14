@@ -153,7 +153,11 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     // surfaced by ensureRuntime through the container waiting state.
   }
 
-  async ensureWorkspace(task: WorkTaskRecord): Promise<void> {
+  async ensureWorkspace(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
+    signal?.throwIfAborted();
     assertNoHostWorkspace(task);
     const { core } = await this.client();
     const existing = await ignoreNotFound(
@@ -166,6 +170,7 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
       assertOwnedWorkspace(existing.metadata?.labels, task);
       return;
     }
+    signal?.throwIfAborted();
     // fsGroup on the Pod makes the kubelet hand the volume to the sandbox
     // user on mount; no chown init step is needed.
     await core.createNamespacedPersistentVolumeClaim({
@@ -177,7 +182,11 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     });
   }
 
-  async ensureRuntime(task: WorkTaskRecord): Promise<void> {
+  async ensureRuntime(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
+    signal?.throwIfAborted();
     assertNoHostWorkspace(task);
     const policy = await workPolicyService.resolve(task.policyId);
     const { core } = await this.client();
@@ -197,17 +206,18 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
             `Recreating Work sandbox Pod ${task.containerName} because its isolation policy is stale.`
           );
         }
-        await this.deletePodAndWait(task.containerName);
+        await this.deletePodAndWait(task.containerName, signal);
       } else {
-        await this.waitForPodRunning(task.containerName);
+        await this.waitForPodRunning(task.containerName, signal);
         return;
       }
     }
+    signal?.throwIfAborted();
     await core.createNamespacedPod({
       namespace: this.namespace,
       body: buildWorkPodManifest(task, policy),
     });
-    await this.waitForPodRunning(task.containerName);
+    await this.waitForPodRunning(task.containerName, signal);
   }
 
   async runtimeState(task: WorkTaskRecord): Promise<WorkRuntimeState> {
@@ -217,20 +227,28 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     return mapPodPhase(pod.status?.phase);
   }
 
-  async stopRuntime(task: WorkTaskRecord): Promise<void> {
+  async stopRuntime(task: WorkTaskRecord, signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted();
     const pod = await this.readPod(task.containerName);
     if (!pod) return;
     assertOwnedRuntime(pod.metadata?.labels, task);
     // A sandbox at rest is simply no Pod: the durable state is the PVC, so
     // stop and remove are the same operation on this backend.
-    await this.deletePodAndWait(task.containerName);
+    await this.deletePodAndWait(task.containerName, signal);
   }
 
-  async removeRuntime(task: WorkTaskRecord): Promise<void> {
-    await this.stopRuntime(task);
+  async removeRuntime(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
+    await this.stopRuntime(task, signal);
   }
 
-  async removeTaskResources(task: WorkTaskRecord): Promise<void> {
+  async removeTaskResources(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
+    signal?.throwIfAborted();
     const { core } = await this.client();
     const [pod, claim] = await Promise.all([
       this.readPod(task.containerName),
@@ -250,9 +268,10 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
       assertOwnedWorkspace(claim.metadata?.labels, task);
     }
     if (pod) {
-      await this.deletePodAndWait(task.containerName);
+      await this.deletePodAndWait(task.containerName, signal);
     }
     if (claim) {
+      signal?.throwIfAborted();
       await ignoreNotFound(
         core.deleteNamespacedPersistentVolumeClaim({
           name: task.volumeName,
@@ -328,14 +347,17 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
    * resize channel, driven by the client library watching our stdout-side
    * stream for TTY-style resize events.
    */
-  async openTerminal(containerName: string): Promise<WorkTerminalTransport> {
+  async openTerminal(
+    containerName: string,
+    signal?: AbortSignal
+  ): Promise<WorkTerminalTransport> {
     const { lib, kubeConfig } = await this.client();
     const stdinStream = new PassThrough();
     const outputStream = new ResizableOutputStream();
     const exec = new lib.Exec(kubeConfig);
     let socket: import('isomorphic-ws').WebSocket;
     try {
-      socket = await exec.exec(
+      const pendingSocket = exec.exec(
         this.namespace,
         containerName,
         WORK_CONTAINER_NAME,
@@ -345,6 +367,27 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
         stdinStream,
         true
       );
+      socket = signal
+        ? await new Promise((resolve, reject) => {
+            const onAbort = () => reject(signal.reason);
+            signal.addEventListener('abort', onAbort, { once: true });
+            void pendingSocket.then(
+              openedSocket => {
+                signal.removeEventListener('abort', onAbort);
+                if (signal.aborted) {
+                  openedSocket.close();
+                  reject(signal.reason);
+                } else {
+                  resolve(openedSocket);
+                }
+              },
+              error => {
+                signal.removeEventListener('abort', onAbort);
+                reject(error);
+              }
+            );
+          })
+        : await pendingSocket;
     } catch (error) {
       throw new WorkRuntimeError(
         `Could not open the terminal stream: ${error instanceof Error ? error.message : String(error)}`,
@@ -381,7 +424,11 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     );
   }
 
-  private async deletePodAndWait(name: string): Promise<void> {
+  private async deletePodAndWait(
+    name: string,
+    signal?: AbortSignal
+  ): Promise<void> {
+    signal?.throwIfAborted();
     const { core } = await this.client();
     await ignoreNotFound(
       core.deleteNamespacedPod({
@@ -392,6 +439,7 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
     );
     const deadline = Date.now() + k8sConfig.podGoneTimeoutMs;
     while (await this.readPod(name)) {
+      signal?.throwIfAborted();
       if (Date.now() >= deadline) {
         throw new WorkRuntimeError(
           `Work sandbox Pod "${name}" was not removed within ${k8sConfig.podGoneTimeoutMs}ms.`,
@@ -399,13 +447,17 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
           'WORK_KUBERNETES_POD_STUCK'
         );
       }
-      await sleep(POD_POLL_INTERVAL_MS);
+      await sleep(POD_POLL_INTERVAL_MS, signal);
     }
   }
 
-  private async waitForPodRunning(name: string): Promise<void> {
+  private async waitForPodRunning(
+    name: string,
+    signal?: AbortSignal
+  ): Promise<void> {
     const deadline = Date.now() + k8sConfig.podReadyTimeoutMs;
     while (true) {
+      signal?.throwIfAborted();
       const pod = await this.readPod(name);
       if (!pod) {
         throw new WorkRuntimeError(
@@ -438,7 +490,7 @@ export class KubernetesWorkRuntimeDriver implements WorkRuntimeDriver {
           'WORK_KUBERNETES_POD_STUCK'
         );
       }
-      await sleep(POD_POLL_INTERVAL_MS);
+      await sleep(POD_POLL_INTERVAL_MS, signal);
     }
   }
 
@@ -797,8 +849,22 @@ async function ignoreNotFound<T>(promise: Promise<T>): Promise<T | undefined> {
   }
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(signal.reason);
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', abort);
+      resolve();
+    }, ms);
+    const abort = (): void => {
+      clearTimeout(timer);
+      reject(signal?.reason);
+    };
+    signal?.addEventListener('abort', abort, { once: true });
+  });
 }
 
 /**

@@ -18,6 +18,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import {
   ChatSession,
+  ChatMessage,
   DocumentChunk,
   KnowledgeCollection,
   Note,
@@ -49,8 +50,14 @@ import type {
 } from './persistence/chatGenerationTypes.js';
 import type {
   StoredChatSessionAggregate,
+  StoredChatMessageRecord,
   StoredPreferenceRecord,
 } from './persistence/resourceTypes.js';
+import type {
+  DurableJobEventAppendInput,
+  DurableJobLeaseIdentity,
+} from './platform/jobs/durableJobTypes.js';
+import { getDurableJobRuntime } from './platform/jobs/durableJobRuntime.js';
 
 const logger = createLogger('storage');
 export type { Document } from './storageMappers.js';
@@ -89,6 +96,41 @@ class StorageService {
     );
   }
 
+  private protectMessage(
+    sessionId: string,
+    message: ChatMessage,
+    messageIndex: number
+  ): StoredChatMessageRecord {
+    return {
+      id: message.id || uuidv4(),
+      session_id: sessionId,
+      role: message.role,
+      content: encryptionService.encrypt(message.content),
+      thinking: message.thinking
+        ? encryptionService.encrypt(message.thinking)
+        : null,
+      timestamp: message.timestamp,
+      message_index: messageIndex,
+      model: message.model || null,
+      provider_metadata: message.providerMetadata
+        ? encryptionService.encrypt(JSON.stringify(message.providerMetadata))
+        : null,
+      images: message.images
+        ? encryptionService.encrypt(JSON.stringify(message.images))
+        : null,
+      statistics: message.statistics
+        ? encryptionService.encrypt(JSON.stringify(message.statistics))
+        : null,
+      artifacts: message.artifacts
+        ? encryptionService.encrypt(JSON.stringify(message.artifacts))
+        : null,
+      parent_id: message.parentId || null,
+      branch_index: message.branchIndex ?? 0,
+      is_active: message.isActive !== false ? 1 : 0,
+      rating: message.rating ?? null,
+    };
+  }
+
   private protectSession(
     session: ChatSession,
     userId: string
@@ -111,42 +153,22 @@ class StorageService {
         folder_id: session.folderId || null,
         pinned: session.pinned ? 1 : 0,
       },
-      messages: (session.messages || []).map((message, index) => ({
-        id: message.id || uuidv4(),
-        session_id: session.id,
-        role: message.role,
-        content: encryptionService.encrypt(message.content),
-        thinking: message.thinking
-          ? encryptionService.encrypt(message.thinking)
-          : null,
-        timestamp: message.timestamp,
-        message_index: index,
-        model: message.model || null,
-        provider_metadata: message.providerMetadata
-          ? encryptionService.encrypt(JSON.stringify(message.providerMetadata))
-          : null,
-        images: message.images
-          ? encryptionService.encrypt(JSON.stringify(message.images))
-          : null,
-        statistics: message.statistics
-          ? encryptionService.encrypt(JSON.stringify(message.statistics))
-          : null,
-        artifacts: message.artifacts
-          ? encryptionService.encrypt(JSON.stringify(message.artifacts))
-          : null,
-        parent_id: message.parentId || null,
-        branch_index: message.branchIndex ?? 0,
-        is_active: message.isActive !== false ? 1 : 0,
-        rating: message.rating ?? null,
-      })),
+      messages: (session.messages || []).map((message, index) =>
+        this.protectMessage(session.id, message, index)
+      ),
     };
   }
 
-  async saveSession(session: ChatSession, userId = 'default'): Promise<void> {
-    await getPersistence(
-      encryptionService
-    ).repositories.resources.chatSessions.replace(
-      this.protectSession(session, userId)
+  async saveSession(
+    session: ChatSession,
+    userId = 'default',
+    beforeCommit?: () => void | Promise<void>
+  ): Promise<void> {
+    const persistence = getPersistence(encryptionService);
+    if (beforeCommit && persistence.dialect === 'sqlite') await beforeCommit();
+    await persistence.repositories.resources.chatSessions.replace(
+      this.protectSession(session, userId),
+      persistence.dialect === 'postgres' ? beforeCommit : undefined
     );
   }
 
@@ -154,21 +176,95 @@ class StorageService {
     session: ChatSession,
     userId: string,
     enqueuer: ChatGenerationEnqueuer,
-    input: ChatGenerationEnqueueInput
+    input: ChatGenerationEnqueueInput,
+    beforeCommit?: () => void | Promise<void>
   ): Promise<void> {
-    await getPersistence(
-      encryptionService
-    ).repositories.resources.chatSessions.replaceAndEnqueue(
+    const persistence = getPersistence(encryptionService);
+    if (beforeCommit && persistence.dialect === 'sqlite') await beforeCommit();
+    await persistence.repositories.resources.chatSessions.replaceAndEnqueue(
       this.protectSession(session, userId),
       enqueuer,
-      input
+      input,
+      persistence.dialect === 'postgres' ? beforeCommit : undefined
     );
   }
 
-  async deleteSession(sessionId: string, userId = 'default'): Promise<boolean> {
+  async publishDurableChatCompletion(input: {
+    sessionId: string;
+    userId: string;
+    message: ChatMessage & { role: 'assistant' };
+    lease: DurableJobLeaseIdentity;
+    expectedJobType: string;
+    event: DurableJobEventAppendInput;
+    beforeCommit?: () => void | Promise<void>;
+  }): Promise<number> {
+    const message = this.protectMessage(input.sessionId, input.message, 0);
+    const persistence = getPersistence(encryptionService);
+    if (input.beforeCommit && persistence.dialect === 'sqlite') {
+      await input.beforeCommit();
+    }
+    return getDurableJobRuntime().service.publishChatCompletion({
+      lease: input.lease,
+      actorUserId: input.userId,
+      sessionId: input.sessionId,
+      expectedJobType: input.expectedJobType,
+      message: {
+        id: message.id,
+        sessionId: message.session_id,
+        role: 'assistant',
+        content: message.content,
+        thinking: message.thinking,
+        timestamp: message.timestamp,
+        model: message.model,
+        providerMetadata: message.provider_metadata,
+        images: message.images,
+        statistics: message.statistics,
+        artifacts: message.artifacts,
+        parentId: message.parent_id,
+        isActive: message.is_active,
+        rating: message.rating,
+      },
+      event: input.event,
+      ...(persistence.dialect === 'postgres' && input.beforeCommit
+        ? { beforeCommit: input.beforeCommit }
+        : {}),
+    });
+  }
+
+  async removeSessionMessageIfCurrent(input: {
+    sessionId: string;
+    userId: string;
+    messageId: string;
+    expectedTimestamp: number;
+    expectedSessionUpdatedAt: number;
+    previousSessionUpdatedAt: number;
+    previousActiveMessageId?: string;
+  }): Promise<boolean> {
     return getPersistence(
       encryptionService
-    ).repositories.resources.chatSessions.deleteByOwner(sessionId, userId);
+    ).repositories.resources.chatSessions.removeMessageIfCurrent(
+      input.sessionId,
+      input.userId,
+      input.messageId,
+      input.expectedTimestamp,
+      input.expectedSessionUpdatedAt,
+      input.previousSessionUpdatedAt,
+      input.previousActiveMessageId
+    );
+  }
+
+  async deleteSession(
+    sessionId: string,
+    userId = 'default',
+    beforeCommit?: () => void | Promise<void>
+  ): Promise<boolean> {
+    const persistence = getPersistence(encryptionService);
+    if (beforeCommit && persistence.dialect === 'sqlite') await beforeCommit();
+    return persistence.repositories.resources.chatSessions.deleteByOwner(
+      sessionId,
+      userId,
+      persistence.dialect === 'postgres' ? beforeCommit : undefined
+    );
   }
 
   private siblingCounts(messages: MessageRow[]): Array<{

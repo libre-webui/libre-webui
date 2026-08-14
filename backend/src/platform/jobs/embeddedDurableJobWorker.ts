@@ -20,6 +20,7 @@ import {
   DurableJobError,
   DurableJobExecutionError,
   type DurableJobLease,
+  type DurableJobLeaseIdentity,
   type DurableJobProgress,
   type DurableJobState,
 } from './durableJobTypes.js';
@@ -35,6 +36,8 @@ export interface DurableJobExecutionContext {
   actorUserId: string;
   /** One-based durable attempt number for idempotent fault/recovery control. */
   attemptCount: number;
+  /** SQL-verifiable ownership for atomic domain/outbox publication. */
+  sideEffectLease: DurableJobLeaseIdentity;
   reportProgress(progress: DurableJobProgress): void | Promise<void>;
   /**
    * A handler must call this immediately before each external side effect.
@@ -360,6 +363,11 @@ export class EmbeddedDurableJobWorker {
         payload,
         actorUserId: lease.actorUserId,
         attemptCount: lease.attemptCount,
+        sideEffectLease: {
+          jobId: lease.id,
+          workerId: lease.workerId,
+          leaseToken: lease.leaseToken,
+        },
         reportProgress: progress =>
           this.service.reportProgress(lease, progress),
         assertSideEffectAllowed: () => this.assertActorAllowed(lease),

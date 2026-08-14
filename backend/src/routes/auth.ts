@@ -16,7 +16,7 @@
  */
 
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import { githubOAuthService } from '../services/simpleGitHubOAuth.js';
 import { huggingFaceOAuthService } from '../services/simpleHuggingFaceOAuth.js';
 import { authService } from '../services/authService.js';
@@ -89,6 +89,7 @@ const signupRateLimiter = coordinatedRateLimit({
 
 // Rate limiter for general auth routes: 100 requests per 15 minutes
 const generalAuthRateLimiter = rateLimit({
+  keyPrefix: 'auth-general',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: {

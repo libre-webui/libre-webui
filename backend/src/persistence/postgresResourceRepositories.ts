@@ -13,6 +13,7 @@ import type {
   DataArchiveRepository,
   KnowledgeCollectionRepository,
   NoteRepository,
+  PersistenceCommitFence,
   PreferenceRepository,
   SessionFolderRepository,
   StoredChatMessageRecord,
@@ -214,19 +215,23 @@ class PostgresChatSessionRepository implements ChatSessionRepository {
     };
   }
 
-  async replace(aggregate: StoredChatSessionAggregate): Promise<void> {
+  async replace(
+    aggregate: StoredChatSessionAggregate,
+    beforeCommit?: PersistenceCommitFence
+  ): Promise<void> {
     await this.database.transaction(
       async client => {
         await this.replaceAggregate(client, aggregate);
       },
-      { isolationLevel: 'serializable' }
+      { isolationLevel: 'serializable', beforeCommit }
     );
   }
 
   async replaceAndEnqueue(
     aggregate: StoredChatSessionAggregate,
     enqueuer: ChatGenerationEnqueuer,
-    input: ChatGenerationEnqueueInput
+    input: ChatGenerationEnqueueInput,
+    beforeCommit?: PersistenceCommitFence
   ): Promise<void> {
     if (
       input.sessionId !== aggregate.session.id ||
@@ -236,23 +241,105 @@ class PostgresChatSessionRepository implements ChatSessionRepository {
     }
     await this.database.transaction(
       async client => {
-        await this.replaceAggregate(client, aggregate);
-        await enqueuer.enqueuePostgres(client, input);
+        const enqueue = await enqueuer.enqueuePostgres(client, input);
+        if (enqueue.created) await this.replaceAggregate(client, aggregate);
+      },
+      { isolationLevel: 'serializable', beforeCommit }
+    );
+  }
+
+  async removeMessageIfCurrent(
+    sessionId: string,
+    userId: string,
+    messageId: string,
+    expectedTimestamp: number,
+    expectedSessionUpdatedAt: number,
+    previousSessionUpdatedAt: number,
+    previousActiveMessageId?: string
+  ): Promise<boolean> {
+    return this.database.transaction(
+      async client => {
+        const owner = await client.query<{ user_id: string }>(
+          'SELECT user_id FROM sessions WHERE id = $1 FOR UPDATE',
+          [sessionId]
+        );
+        if (owner.rows[0]?.user_id !== userId) return false;
+        const target = await client.query<{
+          timestamp: string | number;
+          parent_id: string | null;
+          is_active: string | number;
+        }>(
+          `SELECT timestamp, parent_id, is_active
+             FROM session_messages
+            WHERE id = $1 AND session_id = $2 FOR UPDATE`,
+          [messageId, sessionId]
+        );
+        const row = target.rows[0];
+        if (
+          !row ||
+          number(row.timestamp, 'message timestamp') !== expectedTimestamp
+        )
+          return false;
+        const deleted = await client.query(
+          `DELETE FROM session_messages
+            WHERE id = $1 AND session_id = $2 AND timestamp = $3`,
+          [messageId, sessionId, expectedTimestamp]
+        );
+        if (changes(deleted.rowCount) > 0) {
+          await client.query(
+            `UPDATE sessions SET updated_at = $1
+              WHERE id = $2 AND user_id = $3 AND updated_at = $4`,
+            [
+              previousSessionUpdatedAt,
+              sessionId,
+              userId,
+              expectedSessionUpdatedAt,
+            ]
+          );
+        }
+        if (
+          changes(deleted.rowCount) > 0 &&
+          number(row.is_active, 'message active state') === 1 &&
+          row.parent_id &&
+          previousActiveMessageId
+        ) {
+          const active = await client.query(
+            `SELECT 1 FROM session_messages
+              WHERE session_id = $1 AND (id = $2 OR parent_id = $2)
+                AND is_active = 1 LIMIT 1`,
+            [sessionId, row.parent_id]
+          );
+          if (!active.rows[0]) {
+            await client.query(
+              `UPDATE session_messages SET is_active = 1
+                WHERE id = $1 AND session_id = $2
+                  AND (id = $3 OR parent_id = $3)`,
+              [previousActiveMessageId, sessionId, row.parent_id]
+            );
+          }
+        }
+        return changes(deleted.rowCount) > 0;
       },
       { isolationLevel: 'serializable' }
     );
   }
 
-  async deleteByOwner(sessionId: string, userId: string): Promise<boolean> {
-    return (
-      changes(
-        (
-          await this.database.query(
-            'DELETE FROM sessions WHERE id = $1 AND user_id = $2',
-            [sessionId, userId]
-          )
-        ).rowCount
-      ) > 0
+  async deleteByOwner(
+    sessionId: string,
+    userId: string,
+    beforeCommit?: PersistenceCommitFence
+  ): Promise<boolean> {
+    return this.database.transaction(
+      async client =>
+        changes(
+          (
+            await client.query(
+              'DELETE FROM sessions WHERE id = $1 AND user_id = $2',
+              [sessionId, userId]
+            )
+          ).rowCount
+        ) > 0,
+      { isolationLevel: 'serializable', beforeCommit }
     );
   }
 
@@ -1071,7 +1158,10 @@ class PostgresDataArchiveRepository implements DataArchiveRepository {
       // Every owner-scoped archive and preference mutation takes the users row
       // lock first. READ COMMITTED lets a transaction that waited for that
       // lock reread the preceding writer's committed preferences before merge.
-      { isolationLevel: 'read committed' }
+      {
+        isolationLevel: 'read committed',
+        beforeCommit: plan.assertCanCommit,
+      }
     );
   }
 }

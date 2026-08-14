@@ -16,7 +16,7 @@
  */
 
 import express, { type NextFunction, Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import multer from 'multer';
 import preferencesService from '../services/preferencesService.js';
 import {
@@ -35,6 +35,13 @@ import dataArchiveService, {
   type UserDataArchive,
 } from '../services/dataArchiveService.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  acquireSharedCapacity,
+  combineAbortSignals,
+  SharedCapacityExceededError,
+  SharedCapacityUnavailableError,
+  type SharedCapacityReservation,
+} from '../platform/coordination/sharedAdmission.js';
 
 const router = express.Router();
 const logger = createLogger('routes:preferences');
@@ -65,46 +72,92 @@ const archiveUpload = multer({
   },
 });
 
-const activeArchiveImportsByUser = new Map<string, number>();
-let activeArchiveImportsGlobal = 0;
 const MAX_ACTIVE_ARCHIVE_IMPORTS_PER_USER = 1;
 const MAX_ACTIVE_ARCHIVE_IMPORTS_GLOBAL = 2;
 
-function reserveArchiveImport(
+interface ArchiveImportAdmission {
+  slot: SharedCapacityReservation;
+  signal: AbortSignal;
+  cleanupClientSignal: () => void;
+  released: boolean;
+}
+
+function archiveImportAdmission(
+  res: Response
+): ArchiveImportAdmission | undefined {
+  return res.locals.archiveImportAdmission as
+    ArchiveImportAdmission | undefined;
+}
+
+async function releaseArchiveImport(res: Response): Promise<void> {
+  const admission = archiveImportAdmission(res);
+  if (!admission || admission.released) return;
+  admission.released = true;
+  admission.cleanupClientSignal();
+  await admission.slot.release();
+}
+
+async function reserveArchiveImport(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-): void {
+): Promise<void> {
   const userId = req.user?.userId;
   if (!userId) {
     res.status(401).json({ success: false, error: 'Authentication required' });
     return;
   }
-  const activeForUser = activeArchiveImportsByUser.get(userId) || 0;
-  if (
-    activeForUser >= MAX_ACTIVE_ARCHIVE_IMPORTS_PER_USER ||
-    activeArchiveImportsGlobal >= MAX_ACTIVE_ARCHIVE_IMPORTS_GLOBAL
-  ) {
-    res.status(429).json({
+  let slot: SharedCapacityReservation;
+  try {
+    slot = await acquireSharedCapacity({
+      limits: [
+        {
+          scope: 'archive-import.global',
+          capacity: MAX_ACTIVE_ARCHIVE_IMPORTS_GLOBAL,
+        },
+        {
+          scope: 'archive-import.user',
+          subject: userId,
+          capacity: MAX_ACTIVE_ARCHIVE_IMPORTS_PER_USER,
+        },
+      ],
+    });
+  } catch (error) {
+    if (error instanceof SharedCapacityExceededError) {
+      res.status(429).json({
+        success: false,
+        error: 'Another user data archive is already being processed',
+      });
+      return;
+    }
+    res.status(503).json({
       success: false,
-      error: 'Another user data archive is already being processed',
+      error: 'Archive import admission is temporarily unavailable',
     });
     return;
   }
-
-  activeArchiveImportsByUser.set(userId, activeForUser + 1);
-  activeArchiveImportsGlobal += 1;
-  let released = false;
-  const release = () => {
-    if (released) return;
-    released = true;
-    activeArchiveImportsGlobal = Math.max(0, activeArchiveImportsGlobal - 1);
-    const remaining = (activeArchiveImportsByUser.get(userId) || 1) - 1;
-    if (remaining > 0) activeArchiveImportsByUser.set(userId, remaining);
-    else activeArchiveImportsByUser.delete(userId);
+  const clientAbort = new AbortController();
+  const abortClient = () => {
+    if (!clientAbort.signal.aborted) {
+      clientAbort.abort(new Error('Archive import client disconnected'));
+    }
   };
-  res.once('finish', release);
-  res.once('close', release);
+  const responseClosed = () => {
+    if (!res.writableEnded) abortClient();
+  };
+  req.once('aborted', abortClient);
+  res.once('close', responseClosed);
+  const signal = combineAbortSignals(slot.signal, clientAbort.signal);
+  res.locals.archiveImportAdmission = {
+    slot,
+    signal,
+    released: false,
+    cleanupClientSignal: () => {
+      req.off('aborted', abortClient);
+      res.off('close', responseClosed);
+    },
+  } satisfies ArchiveImportAdmission;
+  res.locals.sharedCapacitySignal = signal;
   next();
 }
 
@@ -113,7 +166,49 @@ function receiveArchiveFile(
   res: Response,
   next: NextFunction
 ): void {
+  const signal = archiveImportAdmission(res)?.signal;
+  let uploadSettled = false;
+  const failAdmission = (reason: unknown): void => {
+    if (uploadSettled) return;
+    uploadSettled = true;
+    void releaseArchiveImport(res);
+    if (!res.destroyed && !res.headersSent) {
+      res.status(503).json({
+        success: false,
+        error: 'Archive import admission is temporarily unavailable',
+      });
+    }
+    // Reject the route before waiting for a slow sender to finish. Multer
+    // receives the request error in the same turn and destroys its partial
+    // Busboy upload; its later callback is ignored by uploadSettled.
+    if (!req.destroyed) {
+      req.emit(
+        'error',
+        reason instanceof Error
+          ? reason
+          : new Error('Archive upload admission was lost')
+      );
+    }
+  };
+  const abortUpload = () => {
+    const reason =
+      signal?.reason instanceof Error
+        ? signal.reason
+        : new Error('Archive upload admission was lost');
+    failAdmission(reason);
+  };
+  if (signal?.aborted) {
+    failAdmission(signal.reason);
+    return;
+  }
   archiveUpload.single('archive')(req, res, error => {
+    if (uploadSettled) return;
+    signal?.removeEventListener('abort', abortUpload);
+    if (signal?.aborted) {
+      failAdmission(signal.reason);
+      return;
+    }
+    uploadSettled = true;
     if (!error) {
       next();
       return;
@@ -126,7 +221,12 @@ function receiveArchiveFile(
         ? 'Portable archive exceeds the 50 MB import limit'
         : getErrorMessage(error, 'Failed to read portable archive'),
     });
+    void releaseArchiveImport(res);
   });
+  if (!uploadSettled) {
+    signal?.addEventListener('abort', abortUpload, { once: true });
+    if (signal?.aborted) abortUpload();
+  }
 }
 
 function markArchiveNoStore(
@@ -140,6 +240,7 @@ function markArchiveNoStore(
 
 // Rate limiter for preferences routes: 30 requests per minute (reasonable for settings)
 const preferencesRateLimiter = rateLimit({
+  keyPrefix: 'preferences-routes',
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 30, // limit each IP to 30 requests per minute
   message: {
@@ -602,6 +703,7 @@ function readArchiveImportRequest(req: AuthenticatedRequest): {
 }
 
 function archiveErrorStatus(error: unknown): number {
+  if (error instanceof SharedCapacityUnavailableError) return 503;
   if (error instanceof DataArchiveValidationError) return error.statusCode;
   if (
     error &&
@@ -642,18 +744,28 @@ router.post(
         return;
       }
       const { data, strategy } = readArchiveImportRequest(req);
+      const signal = res.locals.sharedCapacitySignal as AbortSignal | undefined;
       res.json({
         success: true,
-        data: await dataArchiveService.preflight(data, strategy, userId),
-      });
-    } catch (error: unknown) {
-      res.status(archiveErrorStatus(error)).json({
-        success: false,
-        error: archiveErrorMessage(
-          error,
-          'Failed to validate user data archive'
+        data: await dataArchiveService.preflight(
+          data,
+          strategy,
+          userId,
+          signal
         ),
       });
+    } catch (error: unknown) {
+      if (!res.destroyed && !res.headersSent) {
+        res.status(archiveErrorStatus(error)).json({
+          success: false,
+          error: archiveErrorMessage(
+            error,
+            'Failed to validate user data archive'
+          ),
+        });
+      }
+    } finally {
+      await releaseArchiveImport(res);
     }
   }
 );
@@ -680,10 +792,12 @@ router.post(
       }
 
       const { data, strategy } = readArchiveImportRequest(req);
+      const signal = res.locals.sharedCapacitySignal as AbortSignal | undefined;
       const result = await dataArchiveService.importUserData(
         data,
         strategy,
-        userId
+        userId,
+        signal
       );
 
       res.json({
@@ -691,10 +805,17 @@ router.post(
         data: result,
       });
     } catch (error: unknown) {
-      res.status(archiveErrorStatus(error)).json({
-        success: false,
-        error: archiveErrorMessage(error, 'Failed to import user data archive'),
-      });
+      if (!res.destroyed && !res.headersSent) {
+        res.status(archiveErrorStatus(error)).json({
+          success: false,
+          error: archiveErrorMessage(
+            error,
+            'Failed to import user data archive'
+          ),
+        });
+      }
+    } finally {
+      await releaseArchiveImport(res);
     }
   }
 );

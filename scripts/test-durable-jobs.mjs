@@ -25,6 +25,13 @@ import { pathToFileURL } from 'node:url';
 import Database from 'better-sqlite3';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
+const testDataDirectory = fs.mkdtempSync(
+  path.join(os.tmpdir(), 'libre-durable-jobs-data-')
+);
+test.after(() =>
+  fs.rmSync(testDataDirectory, { recursive: true, force: true })
+);
+process.env.DATA_DIR = testDataDirectory;
 process.env.ENCRYPTION_KEY = '11'.repeat(32);
 process.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID = 'test';
 process.env.STORAGE_ENCRYPTION_KEYS = JSON.stringify({
@@ -47,6 +54,7 @@ const [
   postgresWorkerModule,
   domainContractsModule,
   durableEventIdentityModule,
+  domainJobHandlersModule,
 ] = await Promise.all([
   importJobModule('durableJobService'),
   importJobModule('durableJobTypes'),
@@ -55,6 +63,7 @@ const [
   importJobModule('postgresDurableJobWorker'),
   importJobModule('domainJobContracts'),
   importJobModule('durableEventIdentity'),
+  importJobModule('domainJobHandlers'),
 ]);
 const storageModule = await import(
   pathToFileURL(
@@ -106,6 +115,11 @@ const chatCompletionModule = await import(
     )
   ).href
 );
+const { extractStatistics } = await import(
+  pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'utils', 'generationUtils.js')
+  ).href
+);
 
 const {
   DELETION_LIFECYCLE_RECOVERY_REFERENCE_PREFIX,
@@ -123,6 +137,7 @@ const { SQLiteDurableJobRepository } = sqliteRepositoryModule;
 const { PostgresDurableJobWorker, waitForPostgresWorkerPoll } =
   postgresWorkerModule;
 const { durableEventId } = durableEventIdentityModule;
+const { acquireResourceLease } = domainJobHandlersModule;
 /*
  * Deliberately import the durable primitives from their leaf modules. The
  * production jobs barrel also exports registered domain handlers, whose
@@ -1037,6 +1052,40 @@ test('deterministic event identity returns one cursor and rejects semantic reuse
   database.close();
 });
 
+test('plugin completion statistics contain only durable JSON values', () => {
+  const statistics = extractStatistics({
+    model: 'local-plugin-model',
+    created_at: '2026-08-14T16:00:00.000Z',
+    message: { role: 'assistant', content: 'complete' },
+    done: true,
+  });
+  assert.deepEqual(statistics, {
+    created_at: '2026-08-14T16:00:00.000Z',
+    model: 'local-plugin-model',
+  });
+
+  const { database, service } = harness();
+  assert.doesNotThrow(() =>
+    service.appendEvent({
+      eventId: durableEventId('chat-statistics', 'plugin-completion'),
+      streamId: 'chat:plugin-statistics',
+      eventType: 'chat.done.v1',
+      subjectId: 'assistant-plugin-statistics',
+      actorUserId: 'actor-1',
+      payload: {
+        mode: 'encrypted',
+        value: {
+          type: 'done',
+          messageId: 'assistant-plugin-statistics',
+          content: 'complete',
+          statistics,
+        },
+      },
+    })
+  );
+  database.close();
+});
+
 test('exact terminal-event recovery is independent of a long stream history', () => {
   const { database, service } = harness();
   const sessionId = 'long-chat-session';
@@ -1104,6 +1153,17 @@ test('exact terminal-event recovery is independent of a long stream history', ()
       assistantMessageId,
       actorUserId: 'actor-1',
     })
+  );
+  assert.deepEqual(
+    service
+      .replayEvents(0, {
+        streamId,
+        subjectId: assistantMessageId,
+        limit: 2,
+      })
+      .map(event => [event.cursor, event.subjectId, event.eventType]),
+    [[completionCursor, assistantMessageId, 'chat.done.v1']],
+    'generation replay must skip more than 10,000 events from other subjects'
   );
 
   database
@@ -1934,6 +1994,243 @@ test('durable event gateway replays SQL before fan-out and preserves backpressur
   await secondAppend;
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(subscription.cursor, 2);
+  await subscription.close();
+});
+
+test('durable event Redis blackholes preserve SQL append and polling fallback', async () => {
+  let appendCalls = 0;
+  let replayCalls = 0;
+  const service = {
+    async appendEvent() {
+      appendCalls += 1;
+      return 41;
+    },
+    async replayEvents() {
+      replayCalls += 1;
+      return [];
+    },
+  };
+  const coordinator = {
+    publish: () => new Promise(() => {}),
+    subscribe: () => new Promise(() => {}),
+  };
+  const gateway = new DurableEventGateway(service, coordinator, 10);
+  const startedAt = Date.now();
+  assert.deepEqual(await gateway.append({}), {
+    cursor: 41,
+    fanoutNotified: false,
+  });
+  assert.ok(Date.now() - startedAt < 200);
+  assert.equal(appendCalls, 1);
+
+  const subscription = await gateway.subscribe({
+    afterCursor: 0,
+    pollIntervalMs: 100,
+    onEvent() {},
+  });
+  assert.ok(replayCalls >= 1, 'SQL replay remains authoritative');
+  await subscription.close();
+  await gateway.close();
+});
+
+test('durable event subscription cancellation cleans a late Redis handler', async () => {
+  let subscribeCalls = 0;
+  let lateUnsubscribeCalls = 0;
+  let resolveSubscribe;
+  const pendingSubscribe = new Promise(resolve => {
+    resolveSubscribe = resolve;
+  });
+  const service = {
+    async replayEvents() {
+      return [];
+    },
+  };
+  const coordinator = {
+    subscribe() {
+      subscribeCalls += 1;
+      return pendingSubscribe;
+    },
+  };
+  const preAborted = new AbortController();
+  preAborted.abort(new Error('pre-aborted subscription'));
+  const gateway = new DurableEventGateway(service, coordinator, 10);
+  await assert.rejects(
+    gateway.subscribe({
+      afterCursor: 0,
+      pollIntervalMs: 100,
+      signal: preAborted.signal,
+      onEvent() {},
+    }),
+    /pre-aborted subscription/
+  );
+  assert.equal(subscribeCalls, 0);
+
+  const controller = new AbortController();
+  const opening = gateway.subscribe({
+    afterCursor: 0,
+    pollIntervalMs: 100,
+    signal: controller.signal,
+    onEvent() {},
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  controller.abort(new Error('cancelled during Redis subscribe'));
+  await assert.rejects(opening, /cancelled during Redis subscribe/);
+  resolveSubscribe(async () => {
+    lateUnsubscribeCalls += 1;
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(lateUnsubscribeCalls, 1);
+  assert.equal(gateway.subscriptions.size, 0);
+  await gateway.close();
+});
+
+test('durable resource lease command blackholes are bounded and mark loss', async () => {
+  const signal = new AbortController().signal;
+  const context = {
+    signal,
+    payload: {},
+    actorUserId: 'actor-lease-blackhole',
+    attemptCount: 1,
+    sideEffectLease: {
+      jobId: 'job-lease-blackhole',
+      workerId: 'worker-lease-blackhole',
+      leaseToken: 'token-lease-blackhole',
+    },
+    async reportProgress() {},
+    async assertSideEffectAllowed() {},
+  };
+  const startedAt = Date.now();
+  await assert.rejects(
+    acquireResourceLease(
+      context,
+      'document',
+      'resource-blackhole',
+      { acquireLease: () => new Promise(() => {}) },
+      10
+    ),
+    error =>
+      error instanceof DurableJobExecutionError &&
+      error.safeCode === 'coordination-unavailable'
+  );
+  assert.ok(Date.now() - startedAt < 200);
+
+  const reservation = await acquireResourceLease(
+    context,
+    'document',
+    'resource-renew-blackhole',
+    {
+      async acquireLease(key) {
+        return {
+          key,
+          ownerToken: 'owner',
+          fencingToken: 1,
+          expiresAt: Date.now() + 30_000,
+          extend: () => new Promise(() => {}),
+          release: () => new Promise(() => {}),
+        };
+      },
+    },
+    10
+  );
+  const extendStartedAt = Date.now();
+  assert.equal(await reservation.extend(), false);
+  assert.ok(Date.now() - extendStartedAt < 200);
+  assert.equal(reservation.signal.aborted, true);
+  const releaseStartedAt = Date.now();
+  assert.equal(await reservation.release(), false);
+  assert.ok(Date.now() - releaseStartedAt < 200);
+});
+
+test('durable event gateway bounds generation replay without counting unrelated chat history', async t => {
+  const streamId = 'chat:long-lived-session';
+  const subjectId = 'current-assistant';
+  const events = Array.from({ length: 10_001 }, (_, index) => ({
+    cursor: index + 1,
+    streamId,
+    subjectId: `prior-assistant-${index}`,
+    payload: { sequence: index + 1 },
+  }));
+  events.push({
+    cursor: 10_002,
+    streamId,
+    subjectId,
+    payload: { sequence: 1 },
+  });
+  const replayOptions = [];
+  const service = {
+    async replayEvents(afterCursor, options) {
+      replayOptions.push(options);
+      return events
+        .filter(
+          event =>
+            event.cursor > afterCursor &&
+            (!options.streamId || event.streamId === options.streamId) &&
+            (!options.subjectId || event.subjectId === options.subjectId)
+        )
+        .slice(0, options.limit);
+    },
+  };
+  const { coordinator, handlers } = trackingCoordinator();
+  const gateway = new DurableEventGateway(service, coordinator);
+  t.after(() => gateway.close());
+  const delivered = [];
+  let releaseLive;
+  const liveGate = new Promise(resolve => {
+    releaseLive = resolve;
+  });
+  const subscription = await gateway.subscribe({
+    afterCursor: 0,
+    streamId,
+    subjectId,
+    batchSize: 2,
+    maxReplayEvents: 2,
+    pollIntervalMs: 60_000,
+    async onEvent(event) {
+      delivered.push(event.cursor);
+      if (event.cursor === 10_004) await liveGate;
+    },
+  });
+
+  assert.deepEqual(delivered, [10_002]);
+  assert.equal(subscription.cursor, 10_002);
+  assert.ok(
+    replayOptions.every(
+      options =>
+        options.streamId === streamId && options.subjectId === subjectId
+    ),
+    'every SQL replay must retain both authoritative filters'
+  );
+
+  events.push(
+    {
+      cursor: 10_003,
+      streamId,
+      subjectId: 'unrelated-live-assistant',
+      payload: { sequence: 2 },
+    },
+    {
+      cursor: 10_004,
+      streamId,
+      subjectId,
+      payload: { sequence: 2 },
+    }
+  );
+  const wake = [...handlers][0]?.();
+  assert.ok(wake, 'the Redis wake handler must be registered');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(
+    delivered,
+    [10_002, 10_004],
+    'a global cursor gap from another generation must not block live delivery'
+  );
+  assert.equal(
+    subscription.cursor,
+    10_002,
+    'the generation cursor advances only after its handler acknowledges'
+  );
+  releaseLive();
+  await wake;
+  assert.equal(subscription.cursor, 10_004);
   await subscription.close();
 });
 

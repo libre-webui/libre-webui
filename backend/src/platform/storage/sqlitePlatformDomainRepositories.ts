@@ -5,6 +5,7 @@
  */
 
 import type Database from 'better-sqlite3';
+import { createSQLiteSyncExecutor } from '../../persistence/sqliteSyncExecutor.js';
 import type {
   DocumentChunk,
   Persona,
@@ -285,7 +286,7 @@ class SQLiteDocumentRepository {
           reference.purpose,
           reference.createdAt
         );
-      enqueuer.enqueueSQLite(this.database, {
+      enqueuer.enqueueSQLite(createSQLiteSyncExecutor(this.database), {
         documentId: document.id,
         ownerUserId: userId,
       });
@@ -420,7 +421,7 @@ class SQLiteDocumentRepository {
       if (deleted.changes !== 1) {
         throw new Error('Document disappeared while deletion was serialized');
       }
-      enqueuer.enqueueSQLite(this.database, deletion);
+      enqueuer.enqueueSQLite(createSQLiteSyncExecutor(this.database), deletion);
       return true;
     });
     return remove.immediate();
@@ -796,7 +797,7 @@ class SQLiteGalleryMetadataRepository implements GalleryMetadataRepository {
       if (deleted.changes !== 1) {
         throw new Error('Generated media disappeared during deletion');
       }
-      enqueuer.enqueueSQLite(this.database, deletion);
+      enqueuer.enqueueSQLite(createSQLiteSyncExecutor(this.database), deletion);
       return true;
     });
     return remove.immediate();
@@ -882,7 +883,7 @@ class SQLiteMediaGenerationJobRepository implements MediaGenerationJobRepository
     this.database
       .transaction(() => {
         this.insert(record);
-        enqueuer.enqueueSQLite(this.database, {
+        enqueuer.enqueueSQLite(createSQLiteSyncExecutor(this.database), {
           mediaJobId: record.id,
           ownerUserId: record.userId,
         });
@@ -921,7 +922,7 @@ class SQLiteMediaGenerationJobRepository implements MediaGenerationJobRepository
               WHERE id = ? AND user_id = ?`
           )
           .run(providerJobId, updatedAt, id, userId);
-        enqueuer.enqueueSQLite(this.database, {
+        enqueuer.enqueueSQLite(createSQLiteSyncExecutor(this.database), {
           mediaJobId: id,
           ownerUserId: userId,
         });
@@ -1577,7 +1578,7 @@ class SQLitePersonaRepository implements PersonaRepository {
       if (deleted.changes !== 1) {
         throw new Error('Persona disappeared during deletion');
       }
-      enqueuer.enqueueSQLite(this.database, deletion);
+      enqueuer.enqueueSQLite(createSQLiteSyncExecutor(this.database), deletion);
       return true;
     });
     return remove.immediate();

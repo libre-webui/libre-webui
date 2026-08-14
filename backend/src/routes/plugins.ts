@@ -18,7 +18,7 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import pluginService, {
   type PluginModelDiscoveryResult,
 } from '../services/pluginService.js';
@@ -204,6 +204,7 @@ const refreshUserModels = async (
 
 // Rate limiting for plugin operations
 const pluginRateLimit = rateLimit({
+  keyPrefix: 'plugins-operations',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
   message: {
@@ -214,6 +215,7 @@ const pluginRateLimit = rateLimit({
 
 // More restrictive rate limiting for upload operations
 const uploadRateLimit = rateLimit({
+  keyPrefix: 'plugins-upload',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10, // Limit each IP to 10 uploads per windowMs
   message: {

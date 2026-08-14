@@ -63,6 +63,7 @@ export interface PublicHealthReport {
 export interface HealthDependencyCheck {
   id: string;
   required: boolean;
+  depths?: readonly HealthDepth[];
   check: (
     depth: HealthDepth
   ) => Promise<Omit<HealthCheckResult, 'id' | 'required' | 'latencyMs'>>;
@@ -221,6 +222,16 @@ export class HealthService {
     if (this.registeredChecks.has(check.id)) {
       throw new Error(`Health dependency is already registered: ${check.id}`);
     }
+    if (check.depths) {
+      const uniqueDepths = new Set(check.depths);
+      if (
+        check.depths.length === 0 ||
+        uniqueDepths.size !== check.depths.length ||
+        [...uniqueDepths].some(depth => depth !== 'ready' && depth !== 'deep')
+      ) {
+        throw new Error(`Invalid health dependency depths: ${check.id}`);
+      }
+    }
     this.registeredChecks.set(check.id, check);
     this.readyCache = undefined;
     return () => {
@@ -273,9 +284,9 @@ export class HealthService {
       },
     ];
     const checks = await Promise.all(
-      [...builtInChecks, ...this.registeredChecks.values()].map(check =>
-        this.runCheck(check, depth)
-      )
+      [...builtInChecks, ...this.registeredChecks.values()]
+        .filter(check => !check.depths || check.depths.includes(depth))
+        .map(check => this.runCheck(check, depth))
     );
     return {
       status: checks.some(check => check.required && check.status === 'fail')

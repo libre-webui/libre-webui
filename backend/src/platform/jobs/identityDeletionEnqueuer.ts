@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import { getSQLiteAdapterDatabase } from '../../persistence/index.js';
+import { assertSelectedSQLiteTransaction } from '../../persistence/index.js';
 import type {
   IdentityDeletionEnqueuer,
   IdentityDeletionInput,
@@ -28,12 +28,7 @@ const durableInput = (input: IdentityDeletionInput) => ({
 
 export const transactionalIdentityDeletionEnqueuer: IdentityDeletionEnqueuer = {
   enqueueSQLite(_executor, input) {
-    const database = getSQLiteAdapterDatabase();
-    if (!database.inTransaction) {
-      throw new Error(
-        'SQLite identity deletion enqueue requires the selected owning transaction.'
-      );
-    }
+    assertSelectedSQLiteTransaction();
     const service = getDurableJobRuntime().service;
     if (service instanceof PostgresDurableJobService) {
       throw new Error('Selected durable job service is not SQLite.');

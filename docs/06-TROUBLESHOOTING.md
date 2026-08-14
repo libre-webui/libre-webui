@@ -80,12 +80,14 @@ application:
 - `/health` and `/health/live` return `200` while the backend process can serve
   HTTP. Optional model providers do not affect liveness.
 - `/health/ready` returns `503` when a required database, schema, storage, or
-  registered platform dependency is unavailable. Its public response omits
-  error messages and internal details.
+  registered platform dependency is unavailable. It does not wait for optional
+  model providers. Its public response omits error messages and internal
+  details.
 - `/health/deep` performs SQLite integrity and foreign-key checks in a bounded
-  worker so the scan cannot block process liveness indefinitely. It requires a
-  current administrator bearer token and is not suitable for a frequent
-  orchestrator probe.
+  worker and aggregates optional server-level provider probes such as Ollama.
+  An optional provider outage appears as a warning and does not make required
+  dependencies unready. The endpoint requires a current administrator bearer
+  token and is not suitable for a frequent orchestrator probe.
 
 ```bash
 curl -H "Authorization: Bearer $LIBRE_ADMIN_TOKEN" \

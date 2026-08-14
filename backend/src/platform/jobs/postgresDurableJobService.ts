@@ -13,6 +13,8 @@ import {
 import {
   DurableJobError,
   type DurableCancellationCode,
+  type DurableChatCancellationDecision,
+  type DurableChatCompletionPublishInput,
   type DurableJobActorFilter,
   type DurableJobCancellationSummary,
   type DurableJobAttemptMetadata,
@@ -42,9 +44,12 @@ import {
   DELETION_LIFECYCLE_RECOVERY_DELAY_MS,
   OWNER_DELETE_CONTENT_JOB_TYPE,
   OWNER_DELETE_CONTENT_RECOVERY_IDEMPOTENCY_SCOPE,
+  CHAT_GENERATE_JOB_TYPE,
+  chatGenerationIdempotencyScope,
   RESOURCE_DELETE_JOB_TYPE,
   RESOURCE_DELETE_RECOVERY_IDEMPOTENCY_SCOPE,
 } from './domainJobContracts.js';
+import { durableEventId } from './durableEventIdentity.js';
 
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_IDENTIFIER_BYTES = 256;
@@ -344,6 +349,65 @@ export class PostgresDurableJobService {
       executor,
       this.prepareEnqueue(input)
     );
+  }
+
+  async enqueueChatGenerationWithExecutor(
+    executor: PostgresQueryExecutor,
+    input: DurableJobEnqueueInput,
+    cancellation: {
+      eventId: string;
+      streamId: string;
+      subjectId: string;
+      actorUserId: string;
+    }
+  ): Promise<{ job: DurableJobMetadata; created: boolean }> {
+    const sessionId = cancellation.streamId.startsWith('chat:')
+      ? cancellation.streamId.slice('chat:'.length)
+      : '';
+    const expectedScope = chatGenerationIdempotencyScope(sessionId);
+    if (
+      !sessionId ||
+      input.jobType !== CHAT_GENERATE_JOB_TYPE ||
+      input.actorUserId !== cancellation.actorUserId ||
+      input.idempotencyScope !== expectedScope ||
+      input.idempotencyKey !== cancellation.subjectId ||
+      cancellation.eventId !==
+        durableEventId(
+          'chat',
+          sessionId,
+          cancellation.subjectId,
+          'cancel-requested',
+          cancellation.actorUserId
+        )
+    ) {
+      throw invalid('Invalid chat generation cancellation identity');
+    }
+    const cancellationCommitted =
+      await this.repository.lockChatCancellationDecision(
+        executor,
+        cancellation
+      );
+    const prepared = this.prepareEnqueue(input);
+    const existing = await executor.query(
+      `SELECT id FROM platform_jobs
+        WHERE actor_user_id = $1 AND idempotency_scope = $2
+          AND idempotency_key_hash = $3`,
+      [
+        prepared.actorUserId,
+        prepared.idempotencyScope,
+        prepared.idempotencyKeyHash,
+      ]
+    );
+    let job = await this.repository.enqueueWithExecutor(executor, prepared);
+    if (cancellationCommitted) {
+      job = await this.repository.requestCancellationWithExecutor(
+        executor,
+        job.id,
+        input.actorUserId,
+        'user-requested'
+      );
+    }
+    return { job, created: existing.rows[0] === undefined };
   }
 
   async claim(
@@ -701,7 +765,9 @@ export class PostgresDurableJobService {
     return this.repository.listAttempts(id);
   }
 
-  async appendEvent(input: DurableJobEventAppendInput): Promise<number> {
+  private prepareEvent(
+    input: DurableJobEventAppendInput
+  ): PreparedDurableEventAppend {
     text(input.eventId, 'event ID');
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -744,7 +810,7 @@ export class PostgresDurableJobService {
               )
             ),
           };
-    const prepared: PreparedDurableEventAppend = {
+    return {
       eventId,
       requestFingerprint,
       streamId: input.streamId,
@@ -754,7 +820,100 @@ export class PostgresDurableJobService {
       payload: stored,
       occurredAt: this.now(),
     };
-    return this.repository.appendEventTransaction(prepared);
+  }
+
+  async appendEvent(input: DurableJobEventAppendInput): Promise<number> {
+    return this.repository.appendEventTransaction(this.prepareEvent(input));
+  }
+
+  async requestChatCancellation(input: {
+    actorUserId: string;
+    sessionId: string;
+    assistantMessageId: string;
+  }): Promise<DurableChatCancellationDecision> {
+    text(input.actorUserId, 'chat cancellation actor user ID');
+    text(input.sessionId, 'chat cancellation session ID');
+    text(input.assistantMessageId, 'chat cancellation message ID');
+    const scope = chatGenerationIdempotencyScope(input.sessionId);
+    return this.repository.requestChatCancellation({
+      actorUserId: input.actorUserId,
+      idempotencyScope: scope,
+      idempotencyKeyHash: digest(
+        `${input.actorUserId}\0${scope}\0${input.assistantMessageId}`
+      ),
+      doneEventId: durableEventId(
+        'chat',
+        input.sessionId,
+        input.assistantMessageId,
+        'done'
+      ),
+      event: this.prepareEvent({
+        eventId: durableEventId(
+          'chat',
+          input.sessionId,
+          input.assistantMessageId,
+          'cancel-requested',
+          input.actorUserId
+        ),
+        streamId: `chat:${input.sessionId}`,
+        eventType: 'chat.cancel-requested.v1',
+        subjectId: input.assistantMessageId,
+        actorUserId: input.actorUserId,
+        payload: {
+          mode: 'encrypted',
+          value: {
+            type: 'cancel-requested',
+            messageId: input.assistantMessageId,
+          },
+        },
+      }),
+    });
+  }
+
+  async publishChatCompletion(
+    input: DurableChatCompletionPublishInput
+  ): Promise<number> {
+    text(input.lease.jobId, 'chat completion job ID');
+    text(input.lease.workerId, 'chat completion worker ID');
+    if (!Number.isSafeInteger(input.lease.leaseToken)) {
+      throw invalid('Invalid durable chat completion lease token');
+    }
+    text(input.actorUserId, 'chat completion actor user ID');
+    text(input.sessionId, 'chat completion session ID');
+    text(input.expectedJobType, 'chat completion job type');
+    text(input.message.id, 'chat completion message ID');
+    if (
+      input.expectedJobType !== CHAT_GENERATE_JOB_TYPE ||
+      input.message.sessionId !== input.sessionId
+    ) {
+      throw invalid('Invalid durable chat completion identity');
+    }
+    const expectedScope = chatGenerationIdempotencyScope(input.sessionId);
+    if (
+      input.event.eventId !==
+        durableEventId('chat', input.sessionId, input.message.id, 'done') ||
+      input.event.streamId !== `chat:${input.sessionId}` ||
+      input.event.eventType !== 'chat.done.v1' ||
+      input.event.subjectId !== input.message.id ||
+      input.event.actorUserId !== input.actorUserId
+    ) {
+      throw invalid('Invalid durable chat completion event');
+    }
+    return this.repository.publishChatCompletion({
+      ...input,
+      expectedIdempotencyScope: expectedScope,
+      expectedIdempotencyKeyHash: digest(
+        `${input.actorUserId}\0${expectedScope}\0${input.message.id}`
+      ),
+      cancellationEventId: durableEventId(
+        'chat',
+        input.sessionId,
+        input.message.id,
+        'cancel-requested',
+        input.actorUserId
+      ),
+      event: this.prepareEvent(input.event),
+    });
   }
 
   async getEvent(eventId: string): Promise<DurableJobEvent | null> {
@@ -777,18 +936,21 @@ export class PostgresDurableJobService {
 
   async replayEvents(
     afterCursor: number,
-    options: { limit?: number; streamId?: string } = {}
+    options: { limit?: number; streamId?: string; subjectId?: string } = {}
   ): Promise<DurableJobEvent[]> {
     if (!Number.isSafeInteger(afterCursor) || afterCursor < 0)
       throw invalid('Invalid durable event cursor');
     const limit = options.limit ?? 100;
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500)
       throw invalid('Invalid durable event replay limit');
-    const rows = await this.repository.replayStoredEvents(
-      afterCursor,
-      limit,
-      options.streamId
-    );
+    if (options.streamId !== undefined)
+      text(options.streamId, 'event stream ID');
+    if (options.subjectId !== undefined)
+      text(options.subjectId, 'event subject ID');
+    const rows = await this.repository.replayStoredEvents(afterCursor, limit, {
+      streamId: options.streamId,
+      subjectId: options.subjectId,
+    });
     return rows.map(row => this.decodeEvent(row));
   }
 

@@ -54,6 +54,13 @@ interface RedisClientLike {
   zRem(key: string, member: string): Promise<number>;
 }
 
+interface RedisSubscriptionState {
+  readonly rawSetup: Promise<void>;
+  ready: Promise<void>;
+  failed: boolean;
+  teardown?: Promise<void>;
+}
+
 export interface RedisCoordinatorOptions {
   url: string;
   keyPrefix?: string;
@@ -92,12 +99,27 @@ return 0
 `;
 
 const RATE_LIMIT_SCRIPT = `
-local count = redis.call('INCR', KEYS[1])
-if count == 1 then
-  redis.call('PEXPIRE', KEYS[1], ARGV[1])
+local token = redis.call('GET', KEYS[2])
+if redis.call('EXISTS', KEYS[1]) == 0 or not token then
+  token = ARGV[2]
+  redis.call('PSETEX', KEYS[1], ARGV[1], 1)
+  redis.call('PSETEX', KEYS[2], ARGV[1], token)
+  return { 1, tonumber(ARGV[1]), token }
 end
+local count = redis.call('INCR', KEYS[1])
 local ttl = redis.call('PTTL', KEYS[1])
-return { count, ttl }
+return { count, ttl, token }
+`;
+
+const REFUND_RATE_LIMIT_SCRIPT = `
+if redis.call('GET', KEYS[2]) ~= ARGV[1] or redis.call('EXISTS', KEYS[1]) == 0 then
+  return 0
+end
+local count = redis.call('DECR', KEYS[1])
+if count <= 0 then
+  redis.call('DEL', KEYS[1], KEYS[2])
+end
+return 1
 `;
 
 const CONSUME_CACHE_SCRIPT = `
@@ -109,35 +131,65 @@ return value
 `;
 
 const ACQUIRE_SEMAPHORE_SCRIPT = `
-redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1])
+local redisTime = redis.call('TIME')
+local now = tonumber(redisTime[1]) * 1000 + math.floor(tonumber(redisTime[2]) / 1000)
+local ttl = tonumber(ARGV[1])
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', now)
 if redis.call('ZCARD', KEYS[1]) >= tonumber(ARGV[2]) then
-  return 0
+  return { 0, now }
 end
-redis.call('ZADD', KEYS[1], ARGV[3], ARGV[4])
+local expiresAt = now + ttl
+redis.call('ZADD', KEYS[1], expiresAt, ARGV[3])
 local latest = redis.call('ZREVRANGE', KEYS[1], 0, 0, 'WITHSCORES')
 if latest[2] then redis.call('PEXPIREAT', KEYS[1], math.floor(latest[2])) end
-return 1
+return { 1, expiresAt }
 `;
 
 const EXTEND_SEMAPHORE_SCRIPT = `
+local redisTime = redis.call('TIME')
+local now = tonumber(redisTime[1]) * 1000 + math.floor(tonumber(redisTime[2]) / 1000)
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', now)
 if redis.call('ZSCORE', KEYS[1], ARGV[1]) then
-  redis.call('ZADD', KEYS[1], ARGV[2], ARGV[1])
+  local expiresAt = now + tonumber(ARGV[2])
+  redis.call('ZADD', KEYS[1], expiresAt, ARGV[1])
   local latest = redis.call('ZREVRANGE', KEYS[1], 0, 0, 'WITHSCORES')
   if latest[2] then redis.call('PEXPIREAT', KEYS[1], math.floor(latest[2])) end
-  return 1
+  return expiresAt
 end
 return 0
 `;
 
+const SET_PRESENCE_SCRIPT = `
+local redisTime = redis.call('TIME')
+local now = tonumber(redisTime[1]) * 1000 + math.floor(tonumber(redisTime[2]) / 1000)
+local expiresAt = now + tonumber(ARGV[1])
+redis.call('ZADD', KEYS[1], expiresAt, ARGV[2])
+local latest = redis.call('ZREVRANGE', KEYS[1], 0, 0, 'WITHSCORES')
+if latest[2] then redis.call('PEXPIREAT', KEYS[1], math.floor(latest[2])) end
+return expiresAt
+`;
+
 const LIST_PRESENCE_SCRIPT = `
-redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1])
-local members = redis.call('ZRANGEBYSCORE', KEYS[1], ARGV[2], '+inf')
+local redisTime = redis.call('TIME')
+local now = tonumber(redisTime[1]) * 1000 + math.floor(tonumber(redisTime[2]) / 1000)
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', now)
+local members = redis.call('ZRANGE', KEYS[1], 0, -1)
 local latest = redis.call('ZREVRANGE', KEYS[1], 0, 0, 'WITHSCORES')
 if latest[2] then redis.call('PEXPIREAT', KEYS[1], math.floor(latest[2])) end
 return members
 `;
 
-const REVOKE_SCRIPT = `return redis.call('INCR', KEYS[1])`;
+const REVOKE_SCRIPT = `
+local epoch = redis.call('INCR', KEYS[1])
+local event = cjson.encode({
+  id = ARGV[1],
+  topic = ARGV[2],
+  emittedAt = ARGV[3],
+  payload = { subject = ARGV[4], epoch = epoch }
+})
+redis.call('PUBLISH', KEYS[2], event)
+return epoch
+`;
 
 /** Redis coordination for shared deployments. Durable state remains in SQL. */
 export class RedisCoordinator implements Coordinator {
@@ -147,6 +199,10 @@ export class RedisCoordinator implements Coordinator {
   private readonly handlers = new Map<
     string,
     Set<CoordinationEventHandler<unknown>>
+  >();
+  private readonly subscriptionStates = new Map<
+    string,
+    RedisSubscriptionState
   >();
   private readonly now: () => number;
   private readonly prefix: string;
@@ -182,7 +238,11 @@ export class RedisCoordinator implements Coordinator {
         this.connectTimeoutMs,
         'Redis connection timed out.'
       );
-      await this.command.ping();
+      await this.withTimeout(
+        this.command.ping(),
+        this.connectTimeoutMs,
+        'Redis readiness ping timed out.'
+      );
       this.lastError = undefined;
     } catch (error) {
       this.command.destroy();
@@ -195,6 +255,7 @@ export class RedisCoordinator implements Coordinator {
     if (this.closePromise) return this.closePromise;
     this.closing = true;
     this.handlers.clear();
+    this.subscriptionStates.clear();
     this.closePromise = (async () => {
       // A subscriber callback can still be awaiting an application handler
       // after node-redis has delivered the message. Keep Redis and any
@@ -252,9 +313,13 @@ export class RedisCoordinator implements Coordinator {
     };
     const serialized = this.serialize(event);
     try {
-      await this.command.publish(
-        this.redisKey('event', normalizedTopic),
-        serialized
+      await this.withTimeout(
+        this.command.publish(
+          this.redisKey('event', normalizedTopic),
+          serialized
+        ),
+        this.connectTimeoutMs,
+        'Redis publish timed out.'
       );
       return event;
     } catch (error) {
@@ -269,40 +334,87 @@ export class RedisCoordinator implements Coordinator {
     this.requireReady();
     const normalizedTopic = assertCoordinationName(topic, 'Topic');
     const channel = this.redisKey('event', normalizedTopic);
+    const tearingDown = this.subscriptionStates.get(channel)?.teardown;
+    if (tearingDown) {
+      try {
+        await tearingDown;
+      } catch (error) {
+        throw this.unavailable('Redis subscription teardown failed.', error);
+      }
+      this.requireReady();
+    }
     const handlers = this.handlers.get(channel) || new Set();
     const untypedHandler = handler as CoordinationEventHandler<unknown>;
     handlers.add(untypedHandler);
     this.handlers.set(channel, handlers);
-    if (handlers.size === 1) {
-      try {
-        await this.subscriber.subscribe(channel, message => {
-          if (this.closing) return;
-          // node-redis does not observe rejected async listener promises.
-          // Contain malformed events and individual handler failures here so
-          // a hostile/corrupt pub-sub message cannot become an unhandled
-          // process rejection.
-          let dispatch: Promise<void>;
-          dispatch = this.dispatchSubscriptionMessage(
-            channel,
-            normalizedTopic,
-            message
+    let state = this.subscriptionStates.get(channel);
+    if (!state) {
+      const rawSetup = this.subscriber.subscribe(channel, message => {
+        if (this.closing) return;
+        // node-redis does not observe rejected async listener promises.
+        // Contain malformed events and individual handler failures here so
+        // a hostile/corrupt pub-sub message cannot become an unhandled
+        // process rejection.
+        let dispatch: Promise<void>;
+        dispatch = this.dispatchSubscriptionMessage(
+          channel,
+          normalizedTopic,
+          message
+        )
+          .catch(() => {
+            this.lastError = new Error(
+              'Redis subscription event processing failed.'
+            );
+          })
+          .finally(() => this.activeSubscriptionDispatches.delete(dispatch));
+        this.activeSubscriptionDispatches.add(dispatch);
+      });
+      const created = {
+        rawSetup,
+        failed: false,
+      } as RedisSubscriptionState;
+      created.ready = this.withTimeout(
+        rawSetup,
+        this.connectTimeoutMs,
+        'Redis subscription timed out.'
+      ).catch(error => {
+        created.failed = true;
+        void rawSetup
+          .then(() =>
+            this.withTimeout(
+              this.subscriber.unsubscribe(channel),
+              this.connectTimeoutMs,
+              'Redis late subscription cleanup timed out.'
+            )
+              .catch(() => undefined)
+              .finally(() => {
+                if (this.subscriptionStates.get(channel) === created) {
+                  this.subscriptionStates.delete(channel);
+                }
+              })
           )
-            .catch(() => {
-              this.lastError = new Error(
-                'Redis subscription event processing failed.'
-              );
-            })
-            .finally(() => this.activeSubscriptionDispatches.delete(dispatch));
-          this.activeSubscriptionDispatches.add(dispatch);
-        });
-        if (this.closing) {
-          throw new Error('Redis coordinator is closing.');
-        }
-      } catch (error) {
-        handlers.delete(untypedHandler);
-        this.handlers.delete(channel);
-        throw this.unavailable('Redis subscription failed.', error);
+          .catch(() => {
+            if (this.subscriptionStates.get(channel) === created) {
+              this.subscriptionStates.delete(channel);
+            }
+          });
+        throw error;
+      });
+      state = created;
+      this.subscriptionStates.set(channel, state);
+    }
+    try {
+      if (state.failed) {
+        throw new Error('Redis subscription setup previously failed.');
       }
+      await state.ready;
+      if (this.closing) {
+        throw new Error('Redis coordinator is closing.');
+      }
+    } catch (error) {
+      handlers.delete(untypedHandler);
+      if (handlers.size === 0) this.handlers.delete(channel);
+      throw this.unavailable('Redis subscription failed.', error);
     }
 
     return async () => {
@@ -310,8 +422,35 @@ export class RedisCoordinator implements Coordinator {
       current?.delete(untypedHandler);
       if (current && current.size === 0) {
         this.handlers.delete(channel);
+        const currentState = this.subscriptionStates.get(channel);
+        if (!currentState || currentState.failed) return;
+        const pendingUnsubscribe = this.subscriber.unsubscribe(channel);
+        currentState.teardown = this.withTimeout(
+          pendingUnsubscribe,
+          this.connectTimeoutMs,
+          'Redis unsubscribe timed out.'
+        )
+          .then(() => {
+            if (this.subscriptionStates.get(channel) === currentState) {
+              this.subscriptionStates.delete(channel);
+            }
+          })
+          .catch(error => {
+            currentState.failed = true;
+            void pendingUnsubscribe
+              .then(() => {
+                if (this.subscriptionStates.get(channel) === currentState) {
+                  this.subscriptionStates.delete(channel);
+                }
+              })
+              .catch(() => undefined);
+            throw error;
+          });
         try {
-          await this.subscriber.unsubscribe(channel);
+          await currentState.teardown;
+          if (this.subscriptionStates.get(channel) === currentState) {
+            this.subscriptionStates.delete(channel);
+          }
         } catch (error) {
           throw this.unavailable('Redis unsubscribe failed.', error);
         }
@@ -322,8 +461,12 @@ export class RedisCoordinator implements Coordinator {
   async getCache<T>(key: string): Promise<T | null> {
     this.requireReady();
     try {
-      const value = await this.command.get(
-        this.redisKey('cache', assertCoordinationName(key, 'Cache key'))
+      const value = await this.withTimeout(
+        this.command.get(
+          this.redisKey('cache', assertCoordinationName(key, 'Cache key'))
+        ),
+        this.connectTimeoutMs,
+        'Redis cache read timed out.'
       );
       return value === null ? null : this.parse<T>(value);
     } catch (error) {
@@ -335,10 +478,14 @@ export class RedisCoordinator implements Coordinator {
   async setCache<T>(key: string, value: T, ttlMs: number): Promise<void> {
     this.requireReady();
     try {
-      await this.command.set(
-        this.redisKey('cache', assertCoordinationName(key, 'Cache key')),
-        this.serialize(value),
-        { PX: assertTtl(ttlMs) }
+      await this.withTimeout(
+        this.command.set(
+          this.redisKey('cache', assertCoordinationName(key, 'Cache key')),
+          this.serialize(value),
+          { PX: assertTtl(ttlMs) }
+        ),
+        this.connectTimeoutMs,
+        'Redis cache write timed out.'
       );
     } catch (error) {
       throw this.unavailable('Redis cache write failed.', error);
@@ -348,12 +495,16 @@ export class RedisCoordinator implements Coordinator {
   async consumeCache<T>(key: string): Promise<T | null> {
     this.requireReady();
     try {
-      const value = await this.command.eval(CONSUME_CACHE_SCRIPT, {
-        keys: [
-          this.redisKey('cache', assertCoordinationName(key, 'Cache key')),
-        ],
-        arguments: [],
-      });
+      const value = await this.withTimeout(
+        this.command.eval(CONSUME_CACHE_SCRIPT, {
+          keys: [
+            this.redisKey('cache', assertCoordinationName(key, 'Cache key')),
+          ],
+          arguments: [],
+        }),
+        this.connectTimeoutMs,
+        'Redis cache consume timed out.'
+      );
       if (value === null) return null;
       if (typeof value !== 'string') {
         throw new Error('Redis returned an invalid consumed cache value.');
@@ -368,8 +519,12 @@ export class RedisCoordinator implements Coordinator {
   async deleteCache(key: string): Promise<void> {
     this.requireReady();
     try {
-      await this.command.del(
-        this.redisKey('cache', assertCoordinationName(key, 'Cache key'))
+      await this.withTimeout(
+        this.command.del(
+          this.redisKey('cache', assertCoordinationName(key, 'Cache key'))
+        ),
+        this.connectTimeoutMs,
+        'Redis cache delete timed out.'
       );
     } catch (error) {
       throw this.unavailable('Redis cache delete failed.', error);
@@ -387,12 +542,43 @@ export class RedisCoordinator implements Coordinator {
     const leaseKey = this.redisKey('lease', normalizedKey);
     const fenceKey = this.redisKey('fence', normalizedKey);
     try {
-      const result = Number(
-        await this.command.eval(ACQUIRE_LEASE_SCRIPT, {
-          keys: [leaseKey, fenceKey],
-          arguments: [String(ttl), ownerToken],
+      let abandoned = false;
+      const pendingAcquire = this.command.eval(ACQUIRE_LEASE_SCRIPT, {
+        keys: [leaseKey, fenceKey],
+        arguments: [String(ttl), ownerToken],
+      });
+      void pendingAcquire
+        .then(value => {
+          const fencingToken = Number(value);
+          if (
+            !abandoned ||
+            !Number.isSafeInteger(fencingToken) ||
+            fencingToken <= 0
+          ) {
+            return;
+          }
+          void this.withTimeout(
+            this.command.eval(RELEASE_LEASE_SCRIPT, {
+              keys: [leaseKey],
+              arguments: [`${ownerToken}:${fencingToken}`],
+            }),
+            this.connectTimeoutMs,
+            'Redis late lease cleanup timed out.'
+          ).catch(() => undefined);
         })
-      );
+        .catch(() => undefined);
+      let acquired: unknown;
+      try {
+        acquired = await this.withTimeout(
+          pendingAcquire,
+          this.connectTimeoutMs,
+          'Redis lease acquisition timed out.'
+        );
+      } catch (error) {
+        abandoned = true;
+        throw error;
+      }
+      const result = Number(acquired);
       if (!Number.isSafeInteger(result) || result <= 0) return null;
       const storedValue = `${ownerToken}:${result}`;
       const lease: CoordinationLease = {
@@ -402,22 +588,41 @@ export class RedisCoordinator implements Coordinator {
         expiresAt: this.now() + ttl,
         extend: async nextTtl => {
           const next = assertTtl(nextTtl);
-          const extended = Number(
-            await this.command.eval(EXTEND_LEASE_SCRIPT, {
-              keys: [leaseKey],
-              arguments: [storedValue, String(next)],
-            })
-          );
-          if (extended === 1) lease.expiresAt = this.now() + next;
-          return extended === 1;
+          try {
+            const extended = Number(
+              await this.withTimeout(
+                this.command.eval(EXTEND_LEASE_SCRIPT, {
+                  keys: [leaseKey],
+                  arguments: [storedValue, String(next)],
+                }),
+                this.connectTimeoutMs,
+                'Redis lease renewal timed out.'
+              )
+            );
+            if (extended === 1) lease.expiresAt = this.now() + next;
+            return extended === 1;
+          } catch (error) {
+            throw this.unavailable('Redis lease renewal failed.', error);
+          }
         },
-        release: async () =>
-          Number(
-            await this.command.eval(RELEASE_LEASE_SCRIPT, {
-              keys: [leaseKey],
-              arguments: [storedValue],
-            })
-          ) === 1,
+        release: async () => {
+          try {
+            return (
+              Number(
+                await this.withTimeout(
+                  this.command.eval(RELEASE_LEASE_SCRIPT, {
+                    keys: [leaseKey],
+                    arguments: [storedValue],
+                  }),
+                  this.connectTimeoutMs,
+                  'Redis lease release timed out.'
+                )
+              ) === 1
+            );
+          } catch (error) {
+            throw this.unavailable('Redis lease release failed.', error);
+          }
+        },
       };
       return lease;
     } catch (error) {
@@ -436,21 +641,61 @@ export class RedisCoordinator implements Coordinator {
     }
     const window = assertTtl(windowMs);
     try {
-      const result = (await this.command.eval(RATE_LIMIT_SCRIPT, {
-        keys: [
-          this.redisKey('rate', assertCoordinationName(key, 'Rate-limit key')),
-        ],
-        arguments: [String(window)],
-      })) as [number | string, number | string];
+      const result = (await this.withTimeout(
+        this.command.eval(RATE_LIMIT_SCRIPT, {
+          keys: [
+            this.redisKey(
+              'rate',
+              assertCoordinationName(key, 'Rate-limit key')
+            ),
+            this.redisKey(
+              'rate-window',
+              assertCoordinationName(key, 'Rate-limit key')
+            ),
+          ],
+          arguments: [String(window), randomUUID()],
+        }),
+        this.connectTimeoutMs,
+        'Redis rate-limit operation timed out.'
+      )) as [number | string, number | string, string];
       const count = Number(result[0]);
       const remainingTtl = Math.max(0, Number(result[1]));
       return {
         allowed: count <= limit,
         remaining: Math.max(0, limit - count),
         resetAt: this.now() + remainingTtl,
+        windowToken: result[2],
       };
     } catch (error) {
       throw this.unavailable('Redis rate-limit operation failed.', error);
+    }
+  }
+
+  async refundRateLimit(key: string, windowToken: string): Promise<boolean> {
+    this.requireReady();
+    try {
+      const normalizedKey = assertCoordinationName(key, 'Rate-limit key');
+      const normalizedWindowToken = assertCoordinationName(
+        windowToken,
+        'Rate-limit window token'
+      );
+      return (
+        Number(
+          await this.withTimeout(
+            this.command.eval(REFUND_RATE_LIMIT_SCRIPT, {
+              keys: [
+                this.redisKey('rate', normalizedKey),
+                this.redisKey('rate-window', normalizedKey),
+              ],
+              arguments: [normalizedWindowToken],
+            }),
+            this.connectTimeoutMs,
+            'Redis rate-limit refund timed out.'
+          )
+        ) === 1
+      );
+    } catch (error) {
+      throw this.unavailable('Redis rate-limit refund failed.', error);
     }
   }
 
@@ -467,38 +712,62 @@ export class RedisCoordinator implements Coordinator {
     const ttl = assertTtl(ttlMs);
     const ownerToken = randomBytes(24).toString('base64url');
     const semaphoreKey = this.redisKey('semaphore', normalizedKey);
-    const expiresAt = this.now() + ttl;
     try {
-      const acquired = Number(
-        await this.command.eval(ACQUIRE_SEMAPHORE_SCRIPT, {
-          keys: [semaphoreKey],
-          arguments: [
-            String(this.now()),
-            String(capacity),
-            String(expiresAt),
-            ownerToken,
-          ],
+      let abandoned = false;
+      const pendingAcquire = this.command.eval(ACQUIRE_SEMAPHORE_SCRIPT, {
+        keys: [semaphoreKey],
+        arguments: [String(ttl), String(capacity), ownerToken],
+      });
+      void pendingAcquire
+        .then(value => {
+          const late = value as [number | string, number | string];
+          if (!abandoned || Number(late[0]) !== 1) return;
+          void this.withTimeout(
+            this.command.zRem(semaphoreKey, ownerToken),
+            this.connectTimeoutMs,
+            'Redis late semaphore cleanup timed out.'
+          ).catch(() => undefined);
         })
-      );
-      if (acquired !== 1) return null;
+        .catch(() => undefined);
+      let acquired: unknown;
+      try {
+        acquired = await this.withTimeout(
+          pendingAcquire,
+          this.connectTimeoutMs,
+          'Redis semaphore acquisition timed out.'
+        );
+      } catch (error) {
+        abandoned = true;
+        throw error;
+      }
+      const result = acquired as [number | string, number | string];
+      if (Number(result[0]) !== 1) return null;
+      const expiresAt = Number(result[1]);
       const permit: CoordinationPermit = {
         key: normalizedKey,
         ownerToken,
         expiresAt,
         extend: async nextTtl => {
           const next = assertTtl(nextTtl);
-          const nextExpiry = this.now() + next;
-          const extended = Number(
-            await this.command.eval(EXTEND_SEMAPHORE_SCRIPT, {
-              keys: [semaphoreKey],
-              arguments: [ownerToken, String(nextExpiry)],
-            })
+          const nextExpiry = Number(
+            await this.withTimeout(
+              this.command.eval(EXTEND_SEMAPHORE_SCRIPT, {
+                keys: [semaphoreKey],
+                arguments: [ownerToken, String(next)],
+              }),
+              this.connectTimeoutMs,
+              'Redis semaphore renewal timed out.'
+            )
           );
-          if (extended === 1) permit.expiresAt = nextExpiry;
-          return extended === 1;
+          if (nextExpiry > 0) permit.expiresAt = nextExpiry;
+          return nextExpiry > 0;
         },
         release: async () =>
-          (await this.command.zRem(semaphoreKey, ownerToken)) === 1,
+          (await this.withTimeout(
+            this.command.zRem(semaphoreKey, ownerToken),
+            this.connectTimeoutMs,
+            'Redis semaphore release timed out.'
+          )) === 1,
       };
       return permit;
     } catch (error) {
@@ -518,9 +787,14 @@ export class RedisCoordinator implements Coordinator {
     );
     const member = assertCoordinationName(memberId, 'Presence member ID');
     try {
-      await this.command.zAdd(key, [
-        { score: this.now() + assertTtl(ttlMs), value: member },
-      ]);
+      await this.withTimeout(
+        this.command.eval(SET_PRESENCE_SCRIPT, {
+          keys: [key],
+          arguments: [String(assertTtl(ttlMs)), member],
+        }),
+        this.connectTimeoutMs,
+        'Redis presence update timed out.'
+      );
     } catch (error) {
       throw this.unavailable('Redis presence update failed.', error);
     }
@@ -533,11 +807,14 @@ export class RedisCoordinator implements Coordinator {
       assertCoordinationName(scope, 'Presence scope')
     );
     try {
-      const now = this.now();
-      const members = (await this.command.eval(LIST_PRESENCE_SCRIPT, {
-        keys: [key],
-        arguments: [String(now), String(now + 1)],
-      })) as string[];
+      const members = (await this.withTimeout(
+        this.command.eval(LIST_PRESENCE_SCRIPT, {
+          keys: [key],
+          arguments: [],
+        }),
+        this.connectTimeoutMs,
+        'Redis presence read timed out.'
+      )) as string[];
       return members.sort();
     } catch (error) {
       throw this.unavailable('Redis presence read failed.', error);
@@ -551,9 +828,13 @@ export class RedisCoordinator implements Coordinator {
       assertCoordinationName(scope, 'Presence scope')
     );
     try {
-      await this.command.zRem(
-        key,
-        assertCoordinationName(memberId, 'Presence member ID')
+      await this.withTimeout(
+        this.command.zRem(
+          key,
+          assertCoordinationName(memberId, 'Presence member ID')
+        ),
+        this.connectTimeoutMs,
+        'Redis presence removal timed out.'
       );
     } catch (error) {
       throw this.unavailable('Redis presence removal failed.', error);
@@ -563,11 +844,15 @@ export class RedisCoordinator implements Coordinator {
   async getRevocationEpoch(subject: string): Promise<number> {
     this.requireReady();
     try {
-      const value = await this.command.get(
-        this.redisKey(
-          'revocation',
-          assertCoordinationName(subject, 'Revocation subject')
-        )
+      const value = await this.withTimeout(
+        this.command.get(
+          this.redisKey(
+            'revocation',
+            assertCoordinationName(subject, 'Revocation subject')
+          )
+        ),
+        this.connectTimeoutMs,
+        'Redis revocation read timed out.'
       );
       const epoch = value === null ? 0 : Number(value);
       if (!Number.isSafeInteger(epoch) || epoch < 0) {
@@ -582,17 +867,29 @@ export class RedisCoordinator implements Coordinator {
   async revoke(subject: string): Promise<number> {
     this.requireReady();
     const normalized = assertCoordinationName(subject, 'Revocation subject');
+    const topic = 'security.revoked';
     try {
       const epoch = Number(
-        await this.command.eval(REVOKE_SCRIPT, {
-          keys: [this.redisKey('revocation', normalized)],
-          arguments: [],
-        })
+        await this.withTimeout(
+          this.command.eval(REVOKE_SCRIPT, {
+            keys: [
+              this.redisKey('revocation', normalized),
+              this.redisKey('event', topic),
+            ],
+            arguments: [
+              randomUUID(),
+              topic,
+              new Date(this.now()).toISOString(),
+              normalized,
+            ],
+          }),
+          this.connectTimeoutMs,
+          'Redis revocation update timed out.'
+        )
       );
       if (!Number.isSafeInteger(epoch) || epoch < 1) {
         throw new Error('Invalid revocation epoch.');
       }
-      await this.publish('security.revoked', { subject: normalized, epoch });
       return epoch;
     } catch (error) {
       throw this.unavailable('Redis revocation update failed.', error);
@@ -613,7 +910,11 @@ export class RedisCoordinator implements Coordinator {
       return;
     }
     try {
-      await client.close();
+      await this.withTimeout(
+        client.close(),
+        this.connectTimeoutMs,
+        'Redis client close timed out.'
+      );
     } catch {
       client.destroy();
     }
@@ -704,7 +1005,6 @@ export class RedisCoordinator implements Coordinator {
         promise,
         new Promise<never>((_, reject) => {
           timer = setTimeout(() => reject(new Error(message)), timeoutMs);
-          timer.unref?.();
         }),
       ]);
     } finally {

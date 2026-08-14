@@ -23,6 +23,8 @@ import {
 import {
   DurableJobError,
   type DurableCancellationCode,
+  type DurableChatCancellationDecision,
+  type DurableChatCompletionPublishInput,
   type DurableJobActorFilter,
   type DurableJobCancellationSummary,
   type DurableJobEnqueueInput,
@@ -51,9 +53,12 @@ import {
   DELETION_LIFECYCLE_RECOVERY_DELAY_MS,
   OWNER_DELETE_CONTENT_JOB_TYPE,
   OWNER_DELETE_CONTENT_RECOVERY_IDEMPOTENCY_SCOPE,
+  CHAT_GENERATE_JOB_TYPE,
+  chatGenerationIdempotencyScope,
   RESOURCE_DELETE_JOB_TYPE,
   RESOURCE_DELETE_RECOVERY_IDEMPOTENCY_SCOPE,
 } from './domainJobContracts.js';
+import { durableEventId } from './durableEventIdentity.js';
 
 const MAX_IDENTIFIER_BYTES = 256;
 const MAX_REFERENCE_BYTES = 2048;
@@ -780,7 +785,9 @@ export class DurableJobService {
     return this.repository.listAttempts(id);
   }
 
-  appendEvent(input: DurableJobEventAppendInput): number {
+  private prepareEvent(
+    input: DurableJobEventAppendInput
+  ): PreparedDurableEventAppend {
     validateText(input.eventId, 'event ID');
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -823,7 +830,7 @@ export class DurableJobService {
       );
       payload = { format: 'encrypted', data: JSON.stringify(envelope) };
     }
-    const prepared: PreparedDurableEventAppend = {
+    return {
       eventId,
       requestFingerprint,
       streamId: input.streamId,
@@ -833,7 +840,98 @@ export class DurableJobService {
       payload,
       occurredAt: this.now(),
     };
-    return this.repository.appendEvent(prepared);
+  }
+
+  appendEvent(input: DurableJobEventAppendInput): number {
+    return this.repository.appendEvent(this.prepareEvent(input));
+  }
+
+  requestChatCancellation(input: {
+    actorUserId: string;
+    sessionId: string;
+    assistantMessageId: string;
+  }): DurableChatCancellationDecision {
+    validateText(input.actorUserId, 'chat cancellation actor user ID');
+    validateText(input.sessionId, 'chat cancellation session ID');
+    validateText(input.assistantMessageId, 'chat cancellation message ID');
+    const scope = chatGenerationIdempotencyScope(input.sessionId);
+    return this.repository.requestChatCancellation({
+      actorUserId: input.actorUserId,
+      idempotencyScope: scope,
+      idempotencyKeyHash: hash(
+        `${input.actorUserId}\0${scope}\0${input.assistantMessageId}`
+      ),
+      doneEventId: durableEventId(
+        'chat',
+        input.sessionId,
+        input.assistantMessageId,
+        'done'
+      ),
+      event: this.prepareEvent({
+        eventId: durableEventId(
+          'chat',
+          input.sessionId,
+          input.assistantMessageId,
+          'cancel-requested',
+          input.actorUserId
+        ),
+        streamId: `chat:${input.sessionId}`,
+        eventType: 'chat.cancel-requested.v1',
+        subjectId: input.assistantMessageId,
+        actorUserId: input.actorUserId,
+        payload: {
+          mode: 'encrypted',
+          value: {
+            type: 'cancel-requested',
+            messageId: input.assistantMessageId,
+          },
+        },
+      }),
+    });
+  }
+
+  publishChatCompletion(input: DurableChatCompletionPublishInput): number {
+    validateText(input.lease.jobId, 'chat completion job ID');
+    validateText(input.lease.workerId, 'chat completion worker ID');
+    if (!Number.isSafeInteger(input.lease.leaseToken)) {
+      throw invalid('Invalid durable chat completion lease token');
+    }
+    validateText(input.actorUserId, 'chat completion actor user ID');
+    validateText(input.sessionId, 'chat completion session ID');
+    validateText(input.expectedJobType, 'chat completion job type');
+    validateText(input.message.id, 'chat completion message ID');
+    if (
+      input.expectedJobType !== CHAT_GENERATE_JOB_TYPE ||
+      input.message.sessionId !== input.sessionId
+    ) {
+      throw invalid('Invalid durable chat completion identity');
+    }
+    const expectedScope = chatGenerationIdempotencyScope(input.sessionId);
+    if (
+      input.event.eventId !==
+        durableEventId('chat', input.sessionId, input.message.id, 'done') ||
+      input.event.streamId !== `chat:${input.sessionId}` ||
+      input.event.eventType !== 'chat.done.v1' ||
+      input.event.subjectId !== input.message.id ||
+      input.event.actorUserId !== input.actorUserId
+    ) {
+      throw invalid('Invalid durable chat completion event');
+    }
+    return this.repository.publishChatCompletion({
+      ...input,
+      expectedIdempotencyScope: expectedScope,
+      expectedIdempotencyKeyHash: hash(
+        `${input.actorUserId}\0${expectedScope}\0${input.message.id}`
+      ),
+      cancellationEventId: durableEventId(
+        'chat',
+        input.sessionId,
+        input.message.id,
+        'cancel-requested',
+        input.actorUserId
+      ),
+      event: this.prepareEvent(input.event),
+    });
   }
 
   getEvent(eventId: string): DurableJobEvent | null {
@@ -856,7 +954,7 @@ export class DurableJobService {
 
   replayEvents(
     afterCursor: number,
-    options: { limit?: number; streamId?: string } = {}
+    options: { limit?: number; streamId?: string; subjectId?: string } = {}
   ): DurableJobEvent[] {
     if (!Number.isSafeInteger(afterCursor) || afterCursor < 0) {
       throw invalid('Invalid durable event cursor');
@@ -870,8 +968,14 @@ export class DurableJobService {
     if (options.streamId !== undefined) {
       validateText(options.streamId, 'event stream ID');
     }
+    if (options.subjectId !== undefined) {
+      validateText(options.subjectId, 'event subject ID');
+    }
     return this.repository
-      .replayStoredEvents(afterCursor, limit, options.streamId)
+      .replayStoredEvents(afterCursor, limit, {
+        streamId: options.streamId,
+        subjectId: options.subjectId,
+      })
       .map(row => this.decodeEvent(row));
   }
 

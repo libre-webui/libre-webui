@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
-import test from 'node:test';
+import test, { after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import express from 'express';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +15,20 @@ const pluginTTSModule = await import(
   ).href
 );
 const { PluginTTSService } = pluginTTSModule;
+const coordinationModule = await import(
+  pathToFileURL(
+    path.join(
+      repoRoot,
+      'backend',
+      'dist',
+      'platform',
+      'coordination',
+      'service.js'
+    )
+  ).href
+);
+await coordinationModule.initializeCoordinator();
+after(() => coordinationModule.closeCoordinator());
 const voiceCloneUploadModule = await import(
   pathToFileURL(
     path.join(repoRoot, 'backend', 'dist', 'utils', 'ttsVoiceCloneUpload.js')
@@ -20,8 +36,11 @@ const voiceCloneUploadModule = await import(
 );
 const {
   TTS_VOICE_CLONE_GLOBAL_MAX_AUDIO_BYTES,
+  TTSVoiceCloneConcurrencyError,
   TTSVoiceCloneUploadError,
   getTTSVoiceCloneMaxAudioBytes,
+  parseTTSVoiceCloneUpload,
+  reserveTTSVoiceCloneUpload,
   validateTTSVoiceCloneAudio,
 } = voiceCloneUploadModule;
 
@@ -582,6 +601,99 @@ test('voice clone audio validation enforces MIME, signature, and manifest size',
       error instanceof TTSVoiceCloneUploadError &&
       error.code === 'file_too_large'
   );
+});
+
+test('voice clone upload admission preserves the six-per-user shared ceiling', async () => {
+  const held = await Promise.all(
+    Array.from({ length: 6 }, () =>
+      reserveTTSVoiceCloneUpload('voice-upload-user')
+    )
+  );
+  try {
+    await assert.rejects(
+      reserveTTSVoiceCloneUpload('voice-upload-user'),
+      TTSVoiceCloneConcurrencyError
+    );
+  } finally {
+    await Promise.all(held.map(slot => slot.release()));
+  }
+  const afterRelease = await reserveTTSVoiceCloneUpload('voice-upload-user');
+  await afterRelease.release();
+});
+
+test('both voice clone routes reserve shared capacity before memory upload', () => {
+  for (const route of ['tts.ts', 'media.ts']) {
+    const source = fs.readFileSync(
+      path.join(repoRoot, 'backend', 'src', 'routes', route),
+      'utf8'
+    );
+    const reserve = source.indexOf('await reserveTTSVoiceCloneUpload(');
+    const parse = source.indexOf('await parseTTSVoiceCloneUpload(');
+    assert.ok(reserve >= 0 && reserve < parse, route);
+    assert.match(
+      source.slice(parse, parse + 120),
+      /operationSignal/,
+      `${route} must cancel buffering when admission is lost`
+    );
+  }
+});
+
+test('voice clone upload buffering stops when its shared permit is lost', async () => {
+  const app = express();
+  app.post('/upload', async (req, res) => {
+    const controller = new AbortController();
+    req.once('data', () =>
+      controller.abort(new Error('shared voice upload permit was lost'))
+    );
+    try {
+      await parseTTSVoiceCloneUpload(req, res, controller.signal);
+      res.status(200).end();
+    } catch (error) {
+      res.status(503).json({ error: error.message, buffered: req.file?.size });
+    }
+  });
+  const server = http.createServer(app);
+  const port = await startServer(server);
+  const boundary = 'libre-stalled-voice-upload';
+  let uploadRequest;
+  try {
+    const response = await new Promise((resolve, reject) => {
+      const request = http.request(
+        {
+          host: '127.0.0.1',
+          port,
+          path: '/upload',
+          method: 'POST',
+          headers: {
+            'content-type': `multipart/form-data; boundary=${boundary}`,
+          },
+        },
+        incoming => {
+          let body = '';
+          incoming.setEncoding('utf8');
+          incoming.on('data', chunk => {
+            body += chunk;
+          });
+          incoming.on('end', () =>
+            resolve({ status: incoming.statusCode, body })
+          );
+        }
+      );
+      uploadRequest = request;
+      request.once('error', reject);
+      request.write(
+        `--${boundary}\r\nContent-Disposition: form-data; name="reference_audio"; filename="slow.wav"\r\nContent-Type: audio/wav\r\n\r\n`
+      );
+      request.write(Buffer.alloc(64 * 1024, 0x61));
+    });
+    assert.equal(response.status, 503);
+    assert.match(response.body, /shared voice upload permit was lost/);
+    assert.doesNotMatch(response.body, /"buffered":\s*[1-9]/);
+  } finally {
+    uploadRequest?.destroy();
+    server.closeAllConnections?.();
+    await new Promise(resolve => server.close(resolve));
+  }
 });
 
 test('ordinary TTS rejects oversized text instead of concatenating encoded audio containers', async () => {

@@ -192,6 +192,14 @@ injected health checks. Runtime storage is initialized from the selected
 `Persistence`; PostgreSQL activation never falls through to the SQLite
 singleton or historical cwd-dependent JSON files.
 
+The common durable-job runtime also stays driver-neutral. Actor authorization
+is read through the selected identity repository, while native job repository
+construction is confined to one adapter-composition boundary. Transactional
+domain publishers receive an opaque synchronous executor in SQLite and a
+transaction-bound executor in PostgreSQL; they never receive a
+`better-sqlite3` handle. The persistence-boundary test rejects native driver
+handles in common job, resource, identity, chat, and Work contracts.
+
 ## Blob and vector storage foundation
 
 Generated gallery media and document source files use `BlobStore`; document
@@ -397,6 +405,12 @@ state, and replay by global cursor. Encrypted JSON payloads use the platform
 keyring with job/event identity as authenticated data; payload references are
 opaque bounded identifiers.
 
+SQLite migration v13 and PostgreSQL migration v12 add the matching
+`(stream_id, subject_id, global_cursor)` index used by generation-scoped chat
+replay. Stream and subject filters are applied before the catch-up limit, so a
+long session's earlier generations neither consume the current generation's
+replay budget nor force a full event-stream scan.
+
 Application and standalone-worker bootstraps register audited handlers for
 document ingestion, media continuation, and retriable resource cleanup. The
 admin boundary exposes bounded inspection and cancellation. Enqueue is
@@ -428,9 +442,12 @@ Deployment probes now distinguish process liveness from dependency readiness:
 
 - `/health` and `/health/live` are process-only;
 - `/health/ready` checks the database, canonical schema ledger, writable data
-  storage, and registered required dependencies while redacting details; and
+  storage, and registered required dependencies while redacting details. It
+  does not wait for optional providers; and
 - `/health/deep` requires a current administrator and runs SQLite integrity and
-  foreign-key checks in a bounded worker outside the HTTP event loop.
+  foreign-key checks in a bounded worker outside the HTTP event loop. It also
+  aggregates optional server-level provider probes such as Ollama as warnings,
+  without changing core readiness.
 
 Run `libre-webui recovery-check --json`; from a source checkout, build the
 backend once and use `npm run recovery:check -- --json`. The inventory is

@@ -183,6 +183,25 @@ test('SQLite identity repository satisfies the async persistence contract', asyn
       })
     );
     await identity.insert(user('waiting'));
+    await identity.insert(
+      user('status-only', {
+        email: 'status-only@example.test',
+        account_status: 'active',
+      })
+    );
+    database
+      .prepare('UPDATE users SET email = ? WHERE id = ?')
+      .run('00:00:00', 'status-only');
+    assert.equal(
+      await identity.findAccountStatusById('status-only'),
+      'active',
+      'authorization status must not decode unrelated identity ciphertext'
+    );
+    await assert.rejects(
+      identity.findPublicById('status-only'),
+      /Invalid encrypted identity email/
+    );
+    database.prepare('DELETE FROM users WHERE id = ?').run('status-only');
 
     const storedWaitingEmail = database
       .prepare('SELECT email FROM users WHERE id = ?')
@@ -572,6 +591,32 @@ test('SQLite preference, archive, note, and persona patches preserve concurrent 
       { key: 'theme', value: 'dark' },
     ]);
 
+    const beforeAdmissionLoss = await preferences.listByOwner('a-oldest');
+    await assert.rejects(
+      repositories.archive.applyImport({
+        userId: 'a-oldest',
+        strategy: 'skip',
+        timestamp: 104,
+        maximumNotes: 10,
+        maximumSessionFolders: 10,
+        preferences: add('must-rollback', 'never-committed'),
+        sessionFolders: [],
+        sessions: [],
+        notes: [],
+        knowledgeCollections: [],
+        documents: [],
+        assertCanCommit: () => {
+          throw new Error('shared archive admission was lost');
+        },
+      }),
+      /shared archive admission was lost/
+    );
+    assert.deepEqual(
+      await preferences.listByOwner('a-oldest'),
+      beforeAdmissionLoss,
+      'admission loss at the SQLite commit fence must roll back every section'
+    );
+
     await repositories.notes.replaceWithLimit(
       {
         id: 'concurrent-note',
@@ -814,6 +859,7 @@ test('SQLite chat persistence and durable enqueue commit or roll back together',
          VALUES (?, ?)`,
         [value.assistantMessageId, value.sessionId]
       );
+      return { created: true };
     },
     async enqueuePostgres() {
       throw new Error('wrong persistence dialect');

@@ -364,10 +364,10 @@ export class WorkAgentService {
   }
 
   async removeTasksForUser(userId: string): Promise<void> {
-    await workTaskService.withUserLifecycleLease(userId, async () => {
+    await workTaskService.withUserLifecycleLease(userId, async assertHeld => {
       workTaskService.beginUserRetirement(userId);
       try {
-        await this.removeTasksWithRetirementHeld(userId);
+        await this.removeTasksWithRetirementHeld(userId, assertHeld);
       } finally {
         workTaskService.releaseUserRetirement(userId);
       }
@@ -383,16 +383,18 @@ export class WorkAgentService {
     userId: string,
     actorUserId: string
   ): Promise<boolean> {
-    return workTaskService.withUserLifecycleLease(userId, async () => {
+    return workTaskService.withUserLifecycleLease(userId, async assertHeld => {
       workTaskService.beginUserRetirement(userId);
       try {
+        await assertHeld();
         if (!(await userModel.beginUserRetirement(userId))) return false;
         await this.drainDurableJobsForUser(userId);
-        await this.removeTasksWithRetirementHeld(userId);
+        await this.removeTasksWithRetirementHeld(userId, assertHeld);
         // Catch a request admitted before retirement that committed its job
         // after the first zero observation. Retiring actors cannot be claimed,
         // and this pass terminalizes any such late queue entry.
         await this.drainDurableJobsForUser(userId);
+        await assertHeld();
         return userModel.deleteUserAndEnqueueCleanup(userId, actorUserId);
       } finally {
         workTaskService.releaseUserRetirement(userId);
@@ -400,9 +402,13 @@ export class WorkAgentService {
     });
   }
 
-  private async removeTasksWithRetirementHeld(userId: string): Promise<void> {
+  private async removeTasksWithRetirementHeld(
+    userId: string,
+    assertHeld: () => Promise<void> = async () => undefined
+  ): Promise<void> {
     const tasks = await workTaskService.listTaskRecords(userId);
     for (const task of tasks) {
+      await assertHeld();
       await this.removeTaskInternal(task.id, userId, true);
     }
   }
@@ -456,14 +462,15 @@ export class WorkAgentService {
     userId: string,
     revoke: () => Promise<T>
   ): Promise<T> {
-    return workTaskService.withUserLifecycleLease(userId, () =>
-      this.revokeWorkAccessWithLeaseHeld(userId, revoke)
+    return workTaskService.withUserLifecycleLease(userId, assertHeld =>
+      this.revokeWorkAccessWithLeaseHeld(userId, revoke, assertHeld)
     );
   }
 
   private async revokeWorkAccessWithLeaseHeld<T>(
     userId: string,
-    revoke: () => Promise<T>
+    revoke: () => Promise<T>,
+    assertHeld: () => Promise<void>
   ): Promise<T> {
     workTaskService.beginUserRetirement(userId);
     const tasks = await workTaskService.listTaskRecords(userId);
@@ -477,6 +484,7 @@ export class WorkAgentService {
       // Persist revocation before depending on Docker cleanup. Even when a
       // daemon outage prevents teardown, current-role authorization denies
       // every subsequent Work request and a retry/restart can finish cleanup.
+      await assertHeld();
       const result = await revoke();
       const activeRuns = new Map(
         await Promise.all(

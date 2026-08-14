@@ -8,6 +8,12 @@
 import axios from 'axios';
 import type { AudioGenConfig, Plugin } from '../types/index.js';
 import {
+  acquireSharedCapacity,
+  combineAbortSignals,
+  SharedCapacityExceededError,
+  type SharedCapacityReservation,
+} from '../platform/coordination/sharedAdmission.js';
+import {
   assertSafePluginEndpoint,
   buildPluginAuthHeaders,
   resolvePluginOperationEndpoint,
@@ -23,8 +29,6 @@ const MAX_ENCODED_AUDIO_BYTES = 80 * 1024 * 1024;
 const MAX_AUDIO_STREAM_BYTES = 120 * 1024 * 1024;
 const MAX_ACTIVE_AUDIO_REQUESTS_PER_USER = 2;
 const MAX_ACTIVE_AUDIO_REQUESTS_GLOBAL = 6;
-const activeAudioRequestsByUser = new Map<string, number>();
-let activeAudioRequestsGlobal = 0;
 
 type PluginVariables = Record<string, string | number | boolean>;
 type MaybePromise<T> = T | Promise<T>;
@@ -54,25 +58,29 @@ export class AudioGenerationConcurrencyError extends Error {
   }
 }
 
-function reserveAudioProviderRequest(userId: string): () => void {
-  const activeForUser = activeAudioRequestsByUser.get(userId) || 0;
-  if (
-    activeForUser >= MAX_ACTIVE_AUDIO_REQUESTS_PER_USER ||
-    activeAudioRequestsGlobal >= MAX_ACTIVE_AUDIO_REQUESTS_GLOBAL
-  ) {
-    throw new AudioGenerationConcurrencyError();
+async function reserveAudioProviderRequest(
+  userId: string
+): Promise<SharedCapacityReservation> {
+  try {
+    return await acquireSharedCapacity({
+      limits: [
+        {
+          scope: 'provider-audio.global',
+          capacity: MAX_ACTIVE_AUDIO_REQUESTS_GLOBAL,
+        },
+        {
+          scope: 'provider-audio.user',
+          subject: userId,
+          capacity: MAX_ACTIVE_AUDIO_REQUESTS_PER_USER,
+        },
+      ],
+    });
+  } catch (error) {
+    if (error instanceof SharedCapacityExceededError) {
+      throw new AudioGenerationConcurrencyError();
+    }
+    throw error;
   }
-  activeAudioRequestsByUser.set(userId, activeForUser + 1);
-  activeAudioRequestsGlobal += 1;
-  let released = false;
-  return () => {
-    if (released) return;
-    released = true;
-    activeAudioRequestsGlobal = Math.max(0, activeAudioRequestsGlobal - 1);
-    const remaining = (activeAudioRequestsByUser.get(userId) || 1) - 1;
-    if (remaining > 0) activeAudioRequestsByUser.set(userId, remaining);
-    else activeAudioRequestsByUser.delete(userId);
-  };
 }
 
 export class PluginAudioGenerationService {
@@ -148,7 +156,11 @@ export class PluginAudioGenerationService {
       stream: true,
     };
 
-    const releaseProviderSlot = reserveAudioProviderRequest(options.userId);
+    const providerSlot = await reserveAudioProviderRequest(options.userId);
+    const providerSignal = combineAbortSignals(
+      options.signal,
+      providerSlot.signal
+    );
     const startedAt = Date.now();
     try {
       const response = await axios.post(endpoint, payload, {
@@ -156,9 +168,9 @@ export class PluginAudioGenerationService {
         timeout: 300000,
         responseType: 'stream',
         maxRedirects: 0,
-        signal: options.signal,
+        signal: providerSignal,
       });
-      const result = await collectAudioStream(response.data, options.signal);
+      const result = await collectAudioStream(response.data, providerSignal);
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -177,7 +189,7 @@ export class PluginAudioGenerationService {
         ...(result.transcript ? { transcript: result.transcript } : {}),
       };
     } catch (error) {
-      const cancelled = axios.isCancel(error) || options.signal?.aborted;
+      const cancelled = axios.isCancel(error) || providerSignal.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -188,13 +200,13 @@ export class PluginAudioGenerationService {
         durationMs: Date.now() - startedAt,
       });
       if (cancelled) {
-        throw options.signal?.reason instanceof Error
-          ? options.signal.reason
+        throw providerSignal.reason instanceof Error
+          ? providerSignal.reason
           : new Error('Audio provider request was cancelled');
       }
       throw audioGenerationError(error);
     } finally {
-      releaseProviderSlot();
+      await providerSlot.release();
     }
   }
 

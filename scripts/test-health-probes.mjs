@@ -172,6 +172,7 @@ test('readiness fails closed while a valid older schema awaits migration', async
     DROP TABLE platform_event_stream_heads;
     DROP TABLE platform_job_attempts;
     DROP TABLE platform_jobs;
+    DELETE FROM _libre_schema_migrations WHERE version = 13;
     DELETE FROM _libre_schema_migrations WHERE version = 12;
     DELETE FROM _libre_schema_migrations WHERE version = 11;
     DELETE FROM _libre_schema_migrations WHERE version = 10;
@@ -204,7 +205,7 @@ test('readiness fails closed while a valid older schema awaits migration', async
   );
 });
 
-test('registered dependencies are injectable and required checks fail readiness', async t => {
+test('deep health aggregates optional providers without delaying or failing readiness', async t => {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-health-'));
   const database = createHealthyDatabase(dataDir);
   t.after(() => {
@@ -215,15 +216,27 @@ test('registered dependencies are injectable and required checks fail readiness'
     getDatabase: () => database,
     getDataDir: () => dataDir,
   });
-  const unregisterOptional = service.registerDependencyCheck({
+  let optionalCalls = 0;
+  service.registerDependencyCheck({
     id: 'optional_provider',
     required: false,
+    depths: ['deep'],
     check: async () => {
+      optionalCalls += 1;
       throw new Error('provider endpoint and credential detail');
     },
   });
   let report = await service.readiness();
   assert.equal(report.status, 'ready');
+  assert.equal(optionalCalls, 0);
+  assert.equal(
+    report.checks.some(check => check.id === 'optional_provider'),
+    false
+  );
+
+  report = await service.readiness('deep');
+  assert.equal(report.status, 'ready');
+  assert.equal(optionalCalls, 1);
   assert.equal(
     report.checks.find(check => check.id === 'optional_provider')?.status,
     'warn'
@@ -232,7 +245,6 @@ test('registered dependencies are injectable and required checks fail readiness'
     JSON.stringify(service.toPublicReport(report)),
     /credential|endpoint/
   );
-  unregisterOptional();
 
   service.registerDependencyCheck({
     id: 'required_coordination',
@@ -241,6 +253,44 @@ test('registered dependencies are injectable and required checks fail readiness'
   });
   report = await service.readiness();
   assert.equal(report.status, 'not_ready');
+});
+
+test('dependency registrations reject empty, duplicate, or unknown depths', () => {
+  const service = new healthModule.HealthService({
+    getDatabase: () => null,
+    getDataDir: () => '/definitely/missing',
+  });
+  const check = async () => ({ status: 'pass' });
+  assert.throws(
+    () =>
+      service.registerDependencyCheck({
+        id: 'empty_depths',
+        required: false,
+        depths: [],
+        check,
+      }),
+    /Invalid health dependency depths/
+  );
+  assert.throws(
+    () =>
+      service.registerDependencyCheck({
+        id: 'duplicate_depths',
+        required: false,
+        depths: ['deep', 'deep'],
+        check,
+      }),
+    /Invalid health dependency depths/
+  );
+  assert.throws(
+    () =>
+      service.registerDependencyCheck({
+        id: 'unknown_depth',
+        required: false,
+        depths: ['provider'],
+        check,
+      }),
+    /Invalid health dependency depths/
+  );
 });
 
 test('public readiness deduplicates concurrent storage checks', async t => {
@@ -299,4 +349,12 @@ test('deep health runs integrity checks and the route requires a current admin',
   );
   assert.match(routeSource, /Cache-Control['"], ['"]no-store/);
   assert.match(routeSource, /\/ready/);
+
+  const serverSource = fs.readFileSync(
+    path.join(repoRoot, 'backend', 'src', 'index.ts'),
+    'utf8'
+  );
+  assert.match(serverSource, /id: 'ollama-provider'/);
+  assert.match(serverSource, /depths: \['deep'\]/);
+  assert.match(serverSource, /ollamaService\.isHealthy\(\)/);
 });

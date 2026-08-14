@@ -606,6 +606,31 @@ test(
       'reclaimed extraction must publish one terminal success'
     );
 
+    // A fresh generation must not replay or count the session's prior
+    // generations against the bounded SSE catch-up. Seed this in one SQL
+    // statement so the three-replica route regression remains deterministic.
+    const chatStreamId = `chat:${sessionId}`;
+    sql(`
+      INSERT INTO platform_event_stream_heads (stream_id, last_sequence)
+      VALUES ('${chatStreamId}', 10001);
+      INSERT INTO platform_events
+        (event_id, request_fingerprint, stream_id, stream_sequence, event_type,
+         subject_id, actor_user_id, payload_format, payload, occurred_at)
+      SELECT md5('${sessionId}:prior:' || sequence)::uuid,
+             repeat('0', 64), '${chatStreamId}', sequence, 'chat.stream.v1',
+             'prior-assistant-' || sequence, NULL, 'reference',
+             'prior-chat-event', sequence
+        FROM generate_series(1, 10001) AS sequence;
+    `);
+    assert.equal(
+      Number(
+        sql(
+          `SELECT count(*) FROM platform_events WHERE stream_id = '${chatStreamId}'`
+        )
+      ),
+      10_001
+    );
+
     const generationId = `assistant-${randomBytes(8).toString('hex')}`;
     const durableUserMessageId = `user-${randomBytes(8).toString('hex')}`;
     const queued = await request(
@@ -1520,10 +1545,13 @@ test(
       body: { username: 'nobody', password: 'never-valid' },
     });
 
+    const jobsBeforeCoordinationOutageMutation = Number(
+      sql('SELECT count(*) FROM platform_jobs')
+    );
     await request(`/api/chat/sessions/${sessionId}/generations`, {
       token: adminToken,
       method: 'POST',
-      expected: 409,
+      expected: 503,
       body: {
         message: 'must not enqueue without coordination',
         userMessageId: `user-${randomBytes(8).toString('hex')}`,
@@ -1532,6 +1560,11 @@ test(
         webSearch: false,
       },
     });
+    assert.equal(
+      Number(sql('SELECT count(*) FROM platform_jobs')),
+      jobsBeforeCoordinationOutageMutation,
+      'shared admission failure must not enqueue a generation job'
+    );
     // Revoke the actor in authoritative SQL without asking the job service to
     // cancel it. The in-flight worker must perform its own database-backed
     // actor recheck after the delayed provider returns, even with Redis down.
@@ -1542,16 +1575,16 @@ test(
       sql(`SELECT account_status FROM users WHERE id = '${userId}'`),
       'retiring'
     );
-    await request('/api/preferences', { token: userToken, expected: 403 });
+    await request('/api/preferences', { token: userToken, expected: 503 });
     await request('/api/auth/websocket-ticket', {
       token: userToken,
       method: 'POST',
       body: { audience: 'chat' },
-      expected: 403,
+      expected: 503,
     });
     await request(`/api/chat/sessions/${userSession.data.id}`, {
       token: adminToken,
-      expected: 404,
+      expected: 503,
     });
     await waitFor(
       'retired actor job rejection while Redis is unavailable',
@@ -1574,6 +1607,19 @@ test(
     await waitFor('Redis reconnection', async () => {
       const response = await fetch(`${baseUrl}/health/ready`);
       return response.status === 200;
+    });
+    // Once shared admission is available again, authoritative SQL must still
+    // reject the retired actor and preserve cross-user resource isolation.
+    await request('/api/preferences', { token: userToken, expected: 403 });
+    await request('/api/auth/websocket-ticket', {
+      token: userToken,
+      method: 'POST',
+      body: { audience: 'chat' },
+      expected: 403,
+    });
+    await request(`/api/chat/sessions/${userSession.data.id}`, {
+      token: adminToken,
+      expected: 404,
     });
 
     // Keep Redis available for the authorized deletion transaction, but make

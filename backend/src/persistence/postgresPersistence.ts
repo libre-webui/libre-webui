@@ -24,6 +24,7 @@ import {
   createPostgresTransactionalExtensionRepositories,
 } from './postgresExtensionRepositories.js';
 import type {
+  IdentityAccountStatus,
   IdentityEmailCodec,
   IdentityPublicUserRecord,
   IdentityRepository,
@@ -174,6 +175,15 @@ class PostgresIdentityRepository implements IdentityRepository {
           false
         ) as IdentityPublicUserRecord)
       : null;
+  }
+
+  async findAccountStatusById(
+    id: string
+  ): Promise<IdentityAccountStatus | null> {
+    const result = await this.executor.query<{
+      account_status: IdentityAccountStatus;
+    }>('SELECT account_status FROM users WHERE id = $1', [id]);
+    return result.rows[0]?.account_status ?? null;
   }
 
   async findByUsername(username: string): Promise<IdentityUserRecord | null> {

@@ -20,7 +20,10 @@ import { WebSocketServer, type WebSocket } from 'ws';
 
 import { userModel } from './models/userModel.js';
 import { userHasWorkAccess } from './services/workAccessService.js';
-import { websocketTicketService } from './services/websocketTicketService.js';
+import {
+  WebSocketTicketCoordinationError,
+  websocketTicketService,
+} from './services/websocketTicketService.js';
 import workTaskService from './services/workTaskService.js';
 import workTerminalService from './services/workTerminalService.js';
 import { WorkRuntimeError } from './services/workRuntimeService.js';
@@ -197,11 +200,23 @@ async function authorizeTerminalRequest(
       'WORK_TERMINAL_UNAUTHORIZED'
     );
   }
-  const consumed = await websocketTicketService.consume(
-    ticket,
-    'work-terminal',
-    taskId
-  );
+  let consumed;
+  try {
+    consumed = await websocketTicketService.consume(
+      ticket,
+      'work-terminal',
+      taskId
+    );
+  } catch (error) {
+    if (error instanceof WebSocketTicketCoordinationError) {
+      throw new WorkRuntimeError(
+        'Work terminal authentication is temporarily unavailable.',
+        503,
+        'WORK_TERMINAL_AUTH_UNAVAILABLE'
+      );
+    }
+    throw error;
+  }
   if (!consumed) {
     throw new WorkRuntimeError(
       'Invalid or expired terminal session ticket.',
@@ -243,6 +258,14 @@ async function handleTerminalConnection(
     ws.terminate();
     return;
   }
+  const clientAbort = new AbortController();
+  const abortOpening = () => {
+    if (!clientAbort.signal.aborted) {
+      clientAbort.abort(new Error('Work terminal client disconnected'));
+    }
+  };
+  ws.once('close', abortOpening);
+  ws.once('error', abortOpening);
   let task: WorkTaskRecord;
   let userId: string;
   let sessionExpiresAt: number;
@@ -254,23 +277,25 @@ async function handleTerminalConnection(
   } catch (error) {
     const detail =
       error instanceof WorkRuntimeError
-        ? { message: error.message, code: error.code }
+        ? { message: error.message, code: error.code, status: error.status }
         : {
             message: 'Terminal authorization failed.',
             code: 'WORK_TERMINAL_UNAUTHORIZED',
+            status: 401,
           };
     sendControl(ws, { type: 'error', ...detail });
-    ws.close(4401, detail.code);
+    ws.close(detail.status === 503 ? 4503 : 4401, detail.code);
     return;
   }
   if (lifecycle.isShuttingDown) {
     ws.terminate();
     return;
   }
+  if (clientAbort.signal.aborted || ws.readyState !== ws.OPEN) return;
 
   let session;
   try {
-    session = await workTerminalService.open(task);
+    session = await workTerminalService.open(task, clientAbort.signal);
   } catch (error) {
     const detail =
       error instanceof WorkRuntimeError
@@ -294,6 +319,10 @@ async function handleTerminalConnection(
       );
     }
     ws.terminate();
+    return;
+  }
+  if (clientAbort.signal.aborted || ws.readyState !== ws.OPEN) {
+    await session.close();
     return;
   }
 

@@ -17,6 +17,12 @@
 
 import axios from 'axios';
 import { Plugin, TTSConfig } from '../types/index.js';
+import {
+  acquireSharedCapacity,
+  combineAbortSignals,
+  SharedCapacityExceededError,
+  type SharedCapacityReservation,
+} from '../platform/coordination/sharedAdmission.js';
 import { createLogger } from '../utils/logger.js';
 import {
   assertSafePluginEndpoint,
@@ -38,8 +44,6 @@ type PluginVariables = Record<string, string | number | boolean>;
 export const TTS_MAX_PROVIDER_RESPONSE_BYTES = 50 * 1024 * 1024;
 const MAX_ACTIVE_TTS_REQUESTS_PER_USER = 6;
 const MAX_ACTIVE_TTS_REQUESTS_GLOBAL = 16;
-const activeTTSRequestsByUser = new Map<string, number>();
-let activeTTSRequestsGlobal = 0;
 
 export class TTSConcurrencyError extends Error {
   constructor() {
@@ -48,27 +52,30 @@ export class TTSConcurrencyError extends Error {
   }
 }
 
-function reserveTTSProviderRequest(userId?: string): () => void {
+async function reserveTTSProviderRequest(
+  userId?: string
+): Promise<SharedCapacityReservation> {
   const owner = userId?.trim() || 'authenticated-user';
-  const activeForUser = activeTTSRequestsByUser.get(owner) || 0;
-  if (
-    activeForUser >= MAX_ACTIVE_TTS_REQUESTS_PER_USER ||
-    activeTTSRequestsGlobal >= MAX_ACTIVE_TTS_REQUESTS_GLOBAL
-  ) {
-    throw new TTSConcurrencyError();
+  try {
+    return await acquireSharedCapacity({
+      limits: [
+        {
+          scope: 'provider-tts.global',
+          capacity: MAX_ACTIVE_TTS_REQUESTS_GLOBAL,
+        },
+        {
+          scope: 'provider-tts.user',
+          subject: owner,
+          capacity: MAX_ACTIVE_TTS_REQUESTS_PER_USER,
+        },
+      ],
+    });
+  } catch (error) {
+    if (error instanceof SharedCapacityExceededError) {
+      throw new TTSConcurrencyError();
+    }
+    throw error;
   }
-
-  activeTTSRequestsByUser.set(owner, activeForUser + 1);
-  activeTTSRequestsGlobal += 1;
-  let released = false;
-  return () => {
-    if (released) return;
-    released = true;
-    activeTTSRequestsGlobal = Math.max(0, activeTTSRequestsGlobal - 1);
-    const remaining = (activeTTSRequestsByUser.get(owner) || 1) - 1;
-    if (remaining > 0) activeTTSRequestsByUser.set(owner, remaining);
-    else activeTTSRequestsByUser.delete(owner);
-  };
 }
 
 function cancellationReason(signal: AbortSignal | undefined, fallback: string) {
@@ -421,7 +428,11 @@ export class PluginTTSService {
       buildPluginAttributionHeaders(plugin, processedEndpoint)
     );
 
-    const releaseProviderSlot = reserveTTSProviderRequest(options.userId);
+    const providerSlot = await reserveTTSProviderRequest(options.userId);
+    const providerSignal = combineAbortSignals(
+      options.signal,
+      providerSlot.signal
+    );
     const startedAt = Date.now();
     try {
       const response = await axios.post(processedEndpoint, payload, {
@@ -430,7 +441,7 @@ export class PluginTTSService {
         responseType: 'arraybuffer',
         maxRedirects: 0,
         maxContentLength: TTS_MAX_PROVIDER_RESPONSE_BYTES,
-        signal: options.signal,
+        signal: providerSignal,
       });
 
       const audio = Buffer.from(response.data);
@@ -447,7 +458,7 @@ export class PluginTTSService {
       });
       return audio;
     } catch (error: unknown) {
-      const cancelled = axios.isCancel(error) || options.signal?.aborted;
+      const cancelled = axios.isCancel(error) || providerSignal.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -468,7 +479,7 @@ export class PluginTTSService {
 
       if (cancelled) {
         throw cancellationReason(
-          options.signal,
+          providerSignal,
           'TTS provider request was cancelled'
         );
       }
@@ -518,7 +529,7 @@ export class PluginTTSService {
         throw new Error(`TTS error: ${errorMessage}`);
       }
     } finally {
-      releaseProviderSlot();
+      await providerSlot.release();
     }
   }
 
@@ -636,7 +647,11 @@ export class PluginTTSService {
     }
     form.append('response_format', responseFormat);
 
-    const releaseProviderSlot = reserveTTSProviderRequest(options.userId);
+    const providerSlot = await reserveTTSProviderRequest(options.userId);
+    const providerSignal = combineAbortSignals(
+      options.signal,
+      providerSlot.signal
+    );
     const startedAt = Date.now();
     try {
       const response = await axios.post(processedEndpoint, form, {
@@ -645,7 +660,7 @@ export class PluginTTSService {
         responseType: 'arraybuffer',
         maxRedirects: 0,
         maxContentLength: TTS_MAX_PROVIDER_RESPONSE_BYTES,
-        signal: options.signal,
+        signal: providerSignal,
       });
       const audio = Buffer.from(response.data);
       this.deps.recordUsage?.({
@@ -661,7 +676,7 @@ export class PluginTTSService {
       });
       return audio;
     } catch (error: unknown) {
-      const cancelled = axios.isCancel(error) || options.signal?.aborted;
+      const cancelled = axios.isCancel(error) || providerSignal.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -682,7 +697,7 @@ export class PluginTTSService {
 
       if (cancelled) {
         throw cancellationReason(
-          options.signal,
+          providerSignal,
           'TTS voice clone request was cancelled'
         );
       }
@@ -717,7 +732,7 @@ export class PluginTTSService {
         error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`TTS voice clone error: ${errorMessage}`);
     } finally {
-      releaseProviderSlot();
+      await providerSlot.release();
     }
   }
 

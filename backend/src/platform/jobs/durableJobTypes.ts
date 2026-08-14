@@ -61,6 +61,48 @@ export interface DurableJobLease extends DurableJobMetadata {
   leaseExpiresAt: number;
 }
 
+/** Immutable identity used to fence a domain side effect in SQL. */
+export interface DurableJobLeaseIdentity {
+  jobId: string;
+  workerId: string;
+  leaseToken: number;
+}
+
+/** Protected chat row published atomically with its terminal event. */
+export interface DurableChatCompletionMessage {
+  id: string;
+  sessionId: string;
+  role: 'assistant';
+  content: string;
+  thinking: string | null;
+  timestamp: number;
+  model: string | null;
+  providerMetadata: string | null;
+  images: string | null;
+  statistics: string | null;
+  artifacts: string | null;
+  parentId: string | null;
+  isActive: number;
+  rating: number | null;
+}
+
+export interface DurableChatCompletionPublishInput {
+  lease: DurableJobLeaseIdentity;
+  actorUserId: string;
+  sessionId: string;
+  expectedJobType: string;
+  message: DurableChatCompletionMessage;
+  event: DurableJobEventAppendInput;
+  /** PostgreSQL authority fence awaited immediately before COMMIT. */
+  beforeCommit?: () => void | Promise<void>;
+}
+
+export interface DurableChatCancellationDecision {
+  outcome: 'cancellation-recorded' | 'completion-won';
+  cursor: number;
+  job: DurableJobMetadata | null;
+}
+
 export type DurableJobAttemptOutcome =
   | 'running'
   | 'succeeded'

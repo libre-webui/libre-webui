@@ -32,7 +32,11 @@ const [
   databaseModule,
   { authService },
   { default: authRouter },
-  { WebSocketTicketService, websocketTicketService },
+  {
+    WebSocketTicketCoordinationError,
+    WebSocketTicketService,
+    websocketTicketService,
+  },
   { registerWebSocketServer },
   { userModel },
   frontendUrls,
@@ -332,6 +336,43 @@ test('independent replicas consume one shared ticket exactly once', async () => 
     sessionExpiresAt,
   });
   assert.equal(await firstReplica.consume(issued.ticket, 'chat'), null);
+});
+
+test('WebSocket ticket coordination stalls fail closed within a deadline', async () => {
+  const stalledCoordinator = {
+    consumeRateLimit: () => new Promise(() => {}),
+    setCache: () => new Promise(() => {}),
+    consumeCache: () => new Promise(() => {}),
+  };
+  const service = new WebSocketTicketService(
+    30_000,
+    Date.now,
+    () => stalledCoordinator,
+    10
+  );
+  const issueStartedAt = Date.now();
+  await assert.rejects(
+    () => service.issue('stalled-user', Date.now() + 60_000, 'chat'),
+    /timed out/
+  );
+  assert.ok(Date.now() - issueStartedAt < 200);
+
+  const local = new WebSocketTicketService(30_000);
+  const opaqueTicket = await local.issue(
+    'stalled-user',
+    Date.now() + 60_000,
+    'chat'
+  );
+  const consumeStartedAt = Date.now();
+  await assert.rejects(
+    () => service.consume(opaqueTicket.ticket, 'chat'),
+    error => {
+      assert.ok(error instanceof WebSocketTicketCoordinationError);
+      assert.equal(error.cause?.name, 'CoordinationOperationTimeoutError');
+      return true;
+    }
+  );
+  assert.ok(Date.now() - consumeStartedAt < 200);
 });
 
 test('production exchange, frontend URL, and chat upgrade keep JWTs out of logs', async () => {

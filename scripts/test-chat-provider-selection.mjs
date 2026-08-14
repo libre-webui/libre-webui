@@ -123,6 +123,14 @@ const pluginDefinition = (id, keyEnv) => ({
     key_env: keyEnv,
   },
   model_map: [sharedModel],
+  variables: [
+    {
+      name: 'stream',
+      type: 'boolean',
+      label: 'Stream Response',
+      default: true,
+    },
+  ],
 });
 
 const pluginDefinitions = [
@@ -610,6 +618,21 @@ test('provider-qualified targets distinguish Ollama and colliding plugins', asyn
   assert.equal(pluginBTarget.activePlugin?.id, pluginBId);
   assert.equal(pluginBTarget.providerType, 'plugin');
   assert.equal(pluginBTarget.providerId, pluginBId);
+  assert.equal(pluginBTarget.pluginVariables.stream, true);
+
+  const pluginBRequest = await new ChatRequestService({
+    chatGenerationService,
+  }).prepareGenerationRequest({
+    session: {
+      model: sharedModel,
+      providerType: 'plugin',
+      providerId: pluginBId,
+    },
+    userId,
+    persistedMessages: [],
+    content: 'Stream this response',
+  });
+  assert.equal(pluginBRequest.shouldStreamPlugin, true);
 
   const legacyTarget = await chatGenerationService.prepareGenerationTarget(
     sharedModel,

@@ -6,6 +6,7 @@
 
 import { POSTGRES_DURABLE_JOBS_EVENTS_MIGRATION } from '../platform/jobs/postgresDurableJobMigration.js';
 import { POSTGRES_DURABLE_EVENT_IDEMPOTENCY_MIGRATION } from '../platform/jobs/postgresDurableEventIdempotencyMigration.js';
+import { POSTGRES_DURABLE_EVENT_REPLAY_INDEX_MIGRATION } from '../platform/jobs/postgresDurableEventReplayIndexMigration.js';
 import {
   POSTGRES_BLOB_MIGRATION,
   POSTGRES_VECTOR_MIGRATION,
@@ -36,6 +37,7 @@ export const POSTGRES_MIGRATIONS: readonly PostgresMigration[] =
         POSTGRES_DURABLE_EVENT_IDEMPOTENCY_MIGRATION,
         POSTGRES_RESOURCE_DELETION_LIFECYCLE_MIGRATION,
         POSTGRES_WORK_MESSAGE_CONTENT_MIGRATION,
+        POSTGRES_DURABLE_EVENT_REPLAY_INDEX_MIGRATION,
       ].map(migration => Object.freeze({ ...migration }))
     )
   );

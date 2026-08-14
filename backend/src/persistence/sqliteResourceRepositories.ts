@@ -44,22 +44,7 @@ import type {
   ChatGenerationEnqueueInput,
   ChatGenerationEnqueuer,
 } from './chatGenerationTypes.js';
-import type { PersistenceSyncExecutor } from './types.js';
-
-const synchronousExecutor = (
-  database: Database.Database
-): PersistenceSyncExecutor => ({
-  run(sql, parameters = []) {
-    const result = database.prepare(sql).run(...parameters);
-    return { changes: result.changes };
-  },
-  get<T>(sql: string, parameters: readonly unknown[] = []): T | undefined {
-    return database.prepare(sql).get(...parameters) as T | undefined;
-  },
-  all<T>(sql: string, parameters: readonly unknown[] = []): T[] {
-    return database.prepare(sql).all(...parameters) as T[];
-  },
-});
+import { createSQLiteSyncExecutor } from './sqliteSyncExecutor.js';
 
 const ensureSameOwner = (
   database: Database.Database,
@@ -209,10 +194,88 @@ class SQLiteChatSessionRepository implements ChatSessionRepository {
       throw new Error('Chat generation enqueue does not match its aggregate');
     }
     const replace = this.database.transaction(() => {
-      this.replaceAggregate(aggregate);
-      enqueuer.enqueueSQLite(synchronousExecutor(this.database), input);
+      const enqueue = enqueuer.enqueueSQLite(
+        createSQLiteSyncExecutor(this.database),
+        input
+      );
+      if (enqueue.created) this.replaceAggregate(aggregate);
     });
     replace.immediate();
+  }
+
+  async removeMessageIfCurrent(
+    sessionId: string,
+    userId: string,
+    messageId: string,
+    expectedTimestamp: number,
+    expectedSessionUpdatedAt: number,
+    previousSessionUpdatedAt: number,
+    previousActiveMessageId?: string
+  ): Promise<boolean> {
+    const remove = this.database.transaction(() => {
+      const owner = this.database
+        .prepare('SELECT user_id FROM sessions WHERE id = ?')
+        .get(sessionId) as { user_id: string } | undefined;
+      if (!owner || owner.user_id !== userId) return false;
+      const target = this.database
+        .prepare(
+          `SELECT timestamp, parent_id, is_active
+             FROM session_messages WHERE id = ? AND session_id = ?`
+        )
+        .get(messageId, sessionId) as
+        | { timestamp: number; parent_id: string | null; is_active: number }
+        | undefined;
+      if (!target || target.timestamp !== expectedTimestamp) return false;
+      const deleted = this.database
+        .prepare(
+          `DELETE FROM session_messages
+            WHERE id = ? AND session_id = ? AND timestamp = ?`
+        )
+        .run(messageId, sessionId, expectedTimestamp).changes;
+      if (deleted > 0) {
+        this.database
+          .prepare(
+            `UPDATE sessions SET updated_at = ?
+              WHERE id = ? AND user_id = ? AND updated_at = ?`
+          )
+          .run(
+            previousSessionUpdatedAt,
+            sessionId,
+            userId,
+            expectedSessionUpdatedAt
+          );
+      }
+      if (
+        deleted > 0 &&
+        target.is_active === 1 &&
+        target.parent_id &&
+        previousActiveMessageId
+      ) {
+        const active = this.database
+          .prepare(
+            `SELECT 1 FROM session_messages
+              WHERE session_id = ? AND (id = ? OR parent_id = ?)
+                AND is_active = 1 LIMIT 1`
+          )
+          .get(sessionId, target.parent_id, target.parent_id);
+        if (!active) {
+          this.database
+            .prepare(
+              `UPDATE session_messages SET is_active = 1
+                WHERE id = ? AND session_id = ?
+                  AND (id = ? OR parent_id = ?)`
+            )
+            .run(
+              previousActiveMessageId,
+              sessionId,
+              target.parent_id,
+              target.parent_id
+            );
+        }
+      }
+      return deleted > 0;
+    });
+    return remove.immediate();
   }
 
   async deleteByOwner(sessionId: string, userId: string): Promise<boolean> {
@@ -984,6 +1047,7 @@ class SQLiteDataArchiveRepository implements DataArchiveRepository {
           );
         }
       }
+      plan.assertCanCommit?.();
     });
     apply.immediate();
   }

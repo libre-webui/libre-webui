@@ -163,6 +163,23 @@ export const getSQLiteAdapterDatabase = (): Database.Database => {
   return current.sqliteDatabase;
 };
 
+/**
+ * Assert that a SQLite domain repository is currently inside the selected
+ * process-wide owning transaction. Transactional outbox publishers use this
+ * opaque guard instead of receiving or rediscovering a native driver handle.
+ */
+export const assertSelectedSQLiteTransaction = (): void => {
+  if (
+    current?.dialect !== 'sqlite' ||
+    !current.sqliteDatabase ||
+    !current.sqliteDatabase.inTransaction
+  ) {
+    throw new Error(
+      'SQLite durable enqueue requires the selected owning transaction.'
+    );
+  }
+};
+
 /** Native handles are restricted to backend adapter composition. */
 export const getPostgresAdapterDatabase = (): PostgresDatabase => {
   if (current?.dialect !== 'postgres' || !current.postgresDatabase) {

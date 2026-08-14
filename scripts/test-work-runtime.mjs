@@ -102,6 +102,9 @@ const optionValues = (args, option) =>
     value === option && index + 1 < args.length ? [args[index + 1]] : []
   );
 
+const runWithHeldLifecycleLease = (_taskId, operation) =>
+  operation(async () => {}, new AbortController().signal);
+
 test('Work Git commands disable ambient config, prompts, hooks, and protocols', () => {
   const command = buildWorkGitCommand(['status', '--short']);
   assert.equal(command[0], 'env');
@@ -240,6 +243,96 @@ test('runtime limits expose admission capacity and live occupancy', () => {
     user: 0,
   });
   assert.deepEqual(service.activeRuntimeCounts(), { global: 0, user: 0 });
+});
+
+test('run command keeps the lifecycle lease through exec and teardown', async () => {
+  const service = new WorkRuntimeService();
+  let lifecycleHeld = false;
+  let lifecycleEntries = 0;
+  let lifecycleSignal;
+  let execSignal;
+  let stopSignal;
+  let heldWhenExecStarted = false;
+  let heldWhenContainerStopped = false;
+  let releaseCalls = 0;
+  let stopCalls = 0;
+  let resolveExecStarted;
+  let resolveExec;
+  const execStarted = new Promise(resolve => {
+    resolveExecStarted = resolve;
+  });
+  const execResult = new Promise(resolve => {
+    resolveExec = resolve;
+  });
+
+  service.acquireRuntimeLease = async () => () => {
+    releaseCalls += 1;
+  };
+  service.ensureImage = async () => {};
+  service.assertTaskIsActive = async () => {};
+  service.prepareWithLock = async (_task, signal) => {
+    assert.equal(signal, lifecycleSignal);
+  };
+  service.previewProcessCheckWithLock = async (_task, signal) => {
+    assert.equal(signal, lifecycleSignal);
+    return 'dead';
+  };
+  service.withLifecycleLock = async (_taskId, operation) => {
+    assert.equal(lifecycleHeld, false);
+    lifecycleEntries += 1;
+    lifecycleHeld = true;
+    const controller = new AbortController();
+    lifecycleSignal = controller.signal;
+    try {
+      return await operation(
+        async () => assert.equal(lifecycleHeld, true),
+        controller.signal
+      );
+    } finally {
+      lifecycleHeld = false;
+    }
+  };
+  service.driver.exec = async (_task, _command, options) => {
+    heldWhenExecStarted = lifecycleHeld;
+    execSignal = options.abortSignal;
+    resolveExecStarted();
+    return execResult;
+  };
+  service.stopContainerWithLock = async (_task, signal) => {
+    stopCalls += 1;
+    heldWhenContainerStopped = lifecycleHeld;
+    stopSignal = signal;
+  };
+  service.releasePreviewLease = () => {};
+  service.markPreviewStopped = async () => {};
+  service.completeRecoveryTask = () => {};
+
+  const commandResult = service.runCommand(task, 'printf ready', 10_000);
+  await execStarted;
+  const heldWhileExecPending = lifecycleHeld;
+  resolveExec({
+    exitCode: 0,
+    stdout: 'ready',
+    stderr: '',
+    truncated: false,
+  });
+
+  assert.deepEqual(await commandResult, {
+    exitCode: 0,
+    stdout: 'ready',
+    stderr: '',
+    truncated: false,
+  });
+  assert.equal(heldWhenExecStarted, true);
+  assert.equal(heldWhileExecPending, true);
+  assert.equal(heldWhenContainerStopped, true);
+  assert.equal(execSignal, lifecycleSignal);
+  assert.equal(stopSignal, lifecycleSignal);
+  assert.equal(lifecycleEntries, 1);
+  assert.equal(stopCalls, 1);
+  assert.equal(releaseCalls, 1);
+  assert.equal(lifecycleHeld, false);
+  assert.equal(service.activeCommands.size, 0);
 });
 
 test('network-disabled containers use a non-root, least-privilege policy', () => {
@@ -650,7 +743,7 @@ test('preview startup wires detected targets into safe Docker launch arguments',
     service.assertTaskIsActive = () => {};
     service.assertCurrentNetworkPolicy = () => {};
     service.prepareWithLock = async () => {};
-    service.withLifecycleLock = async (_taskId, operation) => operation();
+    service.withLifecycleLock = runWithHeldLifecycleLease;
     service.driver.docker = async args => {
       dockerCalls.push(args);
       if (args.includes(PREVIEW_TARGET_SCRIPT)) {
@@ -735,7 +828,7 @@ test('failed preview discovery stops the container and releases its lease', asyn
   service.assertTaskIsActive = () => {};
   service.assertCurrentNetworkPolicy = () => {};
   service.prepareWithLock = async () => {};
-  service.withLifecycleLock = async (_taskId, operation) => operation();
+  service.withLifecycleLock = runWithHeldLifecycleLease;
   service.stopContainerWithLock = async () => {
     cleanupCalls += 1;
   };
@@ -1150,7 +1243,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
 
   const capacityRuntime = new runtimeModule.WorkRuntimeService();
   capacityRuntime.ensureImage = async () => {};
-  capacityRuntime.withLifecycleLock = async (_taskId, operation) => operation();
+  capacityRuntime.withLifecycleLock = runWithHeldLifecycleLease;
   capacityRuntime.prepareWithLock = async () => {};
   const taskOneRecord = await service.requireTaskRecord(
     capacityTaskOne.id,

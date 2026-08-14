@@ -20,6 +20,12 @@ import {
   MAX_VECTOR_RESOURCE_INDEX_ENTRIES,
 } from '../storage/index.js';
 import { getCoordinator } from '../coordination/service.js';
+import {
+  combineAbortSignals,
+  SHARED_COORDINATION_OPERATION_TIMEOUT_MS,
+  withCoordinationTimeout,
+} from '../coordination/sharedAdmission.js';
+import type { CoordinationLease, Coordinator } from '../coordination/types.js';
 import { DurableJobExecutionError } from './durableJobTypes.js';
 import type { DurableJobHandler } from './embeddedDurableJobWorker.js';
 import {
@@ -51,18 +57,70 @@ const resourceLeaseTtlMs = (): number => {
 };
 
 const RESOURCE_LEASE_TTL_MS = resourceLeaseTtlMs();
+const RESOURCE_LEASE_OPERATION_TIMEOUT_MS = Math.min(
+  SHARED_COORDINATION_OPERATION_TIMEOUT_MS,
+  Math.max(1_000, Math.floor(RESOURCE_LEASE_TTL_MS / 3))
+);
 
-const acquireResourceLease = async (
+export interface ResourceLeaseReservation {
+  readonly signal: AbortSignal;
+  extend(): Promise<boolean>;
+  release(): Promise<boolean>;
+}
+
+const waitForResourceLeaseOperation = async <T>(
+  operation: Promise<T>,
+  signal: AbortSignal,
+  operationTimeoutMs: number
+): Promise<T> => {
+  if (signal.aborted) throw signal.reason;
+  let abortListener: (() => void) | undefined;
+  try {
+    return await Promise.race([
+      withCoordinationTimeout(operation, operationTimeoutMs),
+      new Promise<never>((_resolve, reject) => {
+        abortListener = () => reject(signal.reason);
+        signal.addEventListener('abort', abortListener, { once: true });
+      }),
+    ]);
+  } finally {
+    if (abortListener) signal.removeEventListener('abort', abortListener);
+  }
+};
+
+export const acquireResourceLease = async (
   context: DurableJobExecutionContext,
   resourceType: string,
-  resourceId: string
-) => {
+  resourceId: string,
+  coordinator: Coordinator = getCoordinator(),
+  operationTimeoutMs = RESOURCE_LEASE_OPERATION_TIMEOUT_MS
+): Promise<ResourceLeaseReservation> => {
   await context.assertSideEffectAllowed();
   try {
-    const lease = await getCoordinator().acquireLease(
+    let abandoned = false;
+    const pendingLease = coordinator.acquireLease(
       `resource:${context.actorUserId}:${resourceType}:${resourceId}`,
       RESOURCE_LEASE_TTL_MS
     );
+    void pendingLease
+      .then(lease => {
+        if (!abandoned || !lease) return;
+        void withCoordinationTimeout(lease.release(), operationTimeoutMs).catch(
+          () => undefined
+        );
+      })
+      .catch(() => undefined);
+    let lease: CoordinationLease | null;
+    try {
+      lease = await waitForResourceLeaseOperation(
+        pendingLease,
+        context.signal,
+        operationTimeoutMs
+      );
+    } catch (error) {
+      abandoned = true;
+      throw error;
+    }
     if (!lease) {
       throw new DurableJobExecutionError(
         true,
@@ -72,15 +130,31 @@ const acquireResourceLease = async (
     }
     let stopped = false;
     let lost = false;
+    const lossController = new AbortController();
     let renewal: ReturnType<typeof setTimeout> | undefined;
+    const markLost = (): void => {
+      if (lost) return;
+      lost = true;
+      lossController.abort(
+        new Error('The resource coordination lease was lost')
+      );
+    };
     const scheduleRenewal = (): void => {
       if (stopped || lost) return;
       renewal = setTimeout(
         async () => {
           try {
-            if (!(await lease.extend(RESOURCE_LEASE_TTL_MS))) lost = true;
+            if (
+              !(await waitForResourceLeaseOperation(
+                lease.extend(RESOURCE_LEASE_TTL_MS),
+                context.signal,
+                operationTimeoutMs
+              ))
+            ) {
+              markLost();
+            }
           } catch {
-            lost = true;
+            markLost();
           }
           scheduleRenewal();
         },
@@ -90,14 +164,19 @@ const acquireResourceLease = async (
     };
     scheduleRenewal();
     return {
+      signal: lossController.signal,
       async extend(): Promise<boolean> {
         if (stopped || lost) return false;
         try {
-          const extended = await lease.extend(RESOURCE_LEASE_TTL_MS);
-          if (!extended) lost = true;
+          const extended = await waitForResourceLeaseOperation(
+            lease.extend(RESOURCE_LEASE_TTL_MS),
+            context.signal,
+            operationTimeoutMs
+          );
+          if (!extended) markLost();
           return extended;
         } catch {
-          lost = true;
+          markLost();
           return false;
         }
       },
@@ -105,7 +184,10 @@ const acquireResourceLease = async (
         if (stopped) return false;
         stopped = true;
         if (renewal) clearTimeout(renewal);
-        return lease.release();
+        return withCoordinationTimeout(
+          lease.release(),
+          operationTimeoutMs
+        ).catch(() => false);
       },
     };
   } catch (error) {
@@ -134,6 +216,18 @@ const assertResourceLease = async (
     'The resource coordination lease was lost'
   );
 };
+
+const withResourceLeaseFence = (
+  context: DurableJobExecutionContext,
+  lease: Awaited<ReturnType<typeof acquireResourceLease>>
+): DurableJobExecutionContext => ({
+  ...context,
+  signal: combineAbortSignals(context.signal, lease.signal),
+  assertSideEffectAllowed: async () => {
+    await context.assertSideEffectAllowed();
+    await assertResourceLease(context, lease);
+  },
+});
 
 const delay = (milliseconds: number, signal: AbortSignal): Promise<void> =>
   new Promise((resolve, reject) => {
@@ -549,7 +643,7 @@ const withVideoResourceLease =
       legacyJobId
     );
     try {
-      return await handler(context);
+      return await handler(withResourceLeaseFence(context, lease));
     } finally {
       await lease.release().catch(() => false);
     }
@@ -698,6 +792,7 @@ const deleteResource: DurableJobHandler = async context => {
 const ingestDocument: DurableJobHandler = async context => {
   const { documentId } = readDocumentPayload(context.payload);
   const lease = await acquireResourceLease(context, 'document', documentId);
+  const leasedContext = withResourceLeaseFence(context, lease);
   try {
     await context.reportProgress({
       current: 1,
@@ -709,8 +804,8 @@ const ingestDocument: DurableJobHandler = async context => {
       result = await documentService.reprocessDocument(
         documentId,
         context.actorUserId,
-        context.signal,
-        () => assertResourceLease(context, lease),
+        leasedContext.signal,
+        leasedContext.assertSideEffectAllowed,
         context.attemptCount
       );
     } catch (error) {
@@ -785,7 +880,9 @@ const deleteOwnerContent: DurableJobHandler = async context => {
     );
   }
   const lease = await acquireResourceLease(context, 'owner', targetUserId);
+  const leasedContext = withResourceLeaseFence(context, lease);
   try {
+    await leasedContext.assertSideEffectAllowed();
     const service = getDurableJobRuntime().service;
     await service.cancelAllForActor(targetUserId, 'actor-revoked');
     const activeJobCount = await service.countActiveForActor(targetUserId);
@@ -796,10 +893,11 @@ const deleteOwnerContent: DurableJobHandler = async context => {
         'Deleted owner jobs are still draining'
       );
     }
-    await assertResourceLease(context, lease);
+    await leasedContext.assertSideEffectAllowed();
     const result = await cleanupPlatformOwnerContent(targetUserId);
-    await assertResourceLease(context, lease);
+    await leasedContext.assertSideEffectAllowed();
     await getCoordinator().deleteCache(`user:${targetUserId}`);
+    await leasedContext.assertSideEffectAllowed();
     await getCoordinator().revoke(`user:${targetUserId}`);
     return {
       resultReference:

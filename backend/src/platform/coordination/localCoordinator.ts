@@ -36,16 +36,21 @@ interface LocalLeaseRecord {
 export class LocalCoordinator implements Coordinator {
   readonly backend = 'local' as const;
   private readonly cache = new Map<string, ExpiringValue>();
+  private nextCacheExpiry = Number.POSITIVE_INFINITY;
   private readonly leases = new Map<string, LocalLeaseRecord>();
+  private nextLeaseExpiry = Number.POSITIVE_INFINITY;
   private readonly rateLimits = new Map<
     string,
-    { count: number; resetAt: number }
+    { count: number; resetAt: number; windowToken: string }
   >();
+  private nextRateLimitExpiry = Number.POSITIVE_INFINITY;
   private readonly semaphores = new Map<
     string,
     Map<string, { expiresAt: number }>
   >();
+  private nextSemaphoreExpiry = Number.POSITIVE_INFINITY;
   private readonly presence = new Map<string, Map<string, number>>();
+  private nextPresenceExpiry = Number.POSITIVE_INFINITY;
   private readonly revocations = new Map<string, number>();
   private readonly handlers = new Map<
     string,
@@ -63,10 +68,15 @@ export class LocalCoordinator implements Coordinator {
   async close(): Promise<void> {
     this.connected = false;
     this.cache.clear();
+    this.nextCacheExpiry = Number.POSITIVE_INFINITY;
     this.leases.clear();
+    this.nextLeaseExpiry = Number.POSITIVE_INFINITY;
     this.rateLimits.clear();
+    this.nextRateLimitExpiry = Number.POSITIVE_INFINITY;
     this.semaphores.clear();
+    this.nextSemaphoreExpiry = Number.POSITIVE_INFINITY;
     this.presence.clear();
+    this.nextPresenceExpiry = Number.POSITIVE_INFINITY;
     this.revocations.clear();
     this.handlers.clear();
   }
@@ -114,27 +124,30 @@ export class LocalCoordinator implements Coordinator {
 
   async getCache<T>(key: string): Promise<T | null> {
     this.requireConnected();
+    this.sweepExpiredCache(this.now());
     const normalizedKey = assertCoordinationName(key, 'Cache key');
     const entry = this.cache.get(normalizedKey);
     if (!entry) return null;
-    if (entry.expiresAt <= this.now()) {
-      this.cache.delete(normalizedKey);
-      return null;
-    }
     return structuredClone(entry.value) as T;
   }
 
   async setCache<T>(key: string, value: T, ttlMs: number): Promise<void> {
     this.requireConnected();
     const normalizedKey = assertCoordinationName(key, 'Cache key');
+    const now = this.now();
+    this.sweepExpiredCache(now);
+    const expiresAt = now + assertTtl(ttlMs);
     this.cache.set(normalizedKey, {
       value: structuredClone(value),
-      expiresAt: this.now() + assertTtl(ttlMs),
+      expiresAt,
     });
+    this.nextCacheExpiry = Math.min(this.nextCacheExpiry, expiresAt);
   }
 
   async consumeCache<T>(key: string): Promise<T | null> {
     this.requireConnected();
+    const now = this.now();
+    this.sweepExpiredCache(now);
     const normalizedKey = assertCoordinationName(key, 'Cache key');
     const entry = this.cache.get(normalizedKey);
     if (!entry) return null;
@@ -142,7 +155,6 @@ export class LocalCoordinator implements Coordinator {
     // Delete before checking expiry or returning the value so concurrent and
     // invalid consumers can never replay a one-use credential.
     this.cache.delete(normalizedKey);
-    if (entry.expiresAt <= this.now()) return null;
     return structuredClone(entry.value) as T;
   }
 
@@ -158,6 +170,7 @@ export class LocalCoordinator implements Coordinator {
     this.requireConnected();
     const normalizedKey = assertCoordinationName(key, 'Lease key');
     const ttl = assertTtl(ttlMs);
+    this.sweepExpiredLeases(this.now());
     const existing = this.leases.get(normalizedKey);
     if (existing && existing.expiresAt > this.now()) return null;
 
@@ -168,6 +181,7 @@ export class LocalCoordinator implements Coordinator {
       expiresAt: this.now() + ttl,
     };
     this.leases.set(normalizedKey, record);
+    this.nextLeaseExpiry = Math.min(this.nextLeaseExpiry, record.expiresAt);
 
     return {
       key: normalizedKey,
@@ -184,6 +198,10 @@ export class LocalCoordinator implements Coordinator {
           return false;
         }
         current.expiresAt = this.now() + assertTtl(nextTtl);
+        this.nextLeaseExpiry = Math.min(
+          this.nextLeaseExpiry,
+          current.expiresAt
+        );
         return true;
       },
       release: async () => {
@@ -207,17 +225,43 @@ export class LocalCoordinator implements Coordinator {
     }
     const window = assertTtl(windowMs);
     const now = this.now();
+    this.sweepExpiredRateLimits(now);
     let bucket = this.rateLimits.get(normalizedKey);
     if (!bucket || bucket.resetAt <= now) {
-      bucket = { count: 0, resetAt: now + window };
+      bucket = {
+        count: 0,
+        resetAt: now + window,
+        windowToken: randomUUID(),
+      };
       this.rateLimits.set(normalizedKey, bucket);
+      this.nextRateLimitExpiry = Math.min(
+        this.nextRateLimitExpiry,
+        bucket.resetAt
+      );
     }
     bucket.count += 1;
     return {
       allowed: bucket.count <= limit,
       remaining: Math.max(0, limit - bucket.count),
       resetAt: bucket.resetAt,
+      windowToken: bucket.windowToken,
     };
+  }
+
+  async refundRateLimit(key: string, windowToken: string): Promise<boolean> {
+    this.requireConnected();
+    const normalizedKey = assertCoordinationName(key, 'Rate-limit key');
+    const normalizedWindowToken = assertCoordinationName(
+      windowToken,
+      'Rate-limit window token'
+    );
+    this.sweepExpiredRateLimits(this.now());
+    const bucket = this.rateLimits.get(normalizedKey);
+    if (!bucket) return false;
+    if (bucket.windowToken !== normalizedWindowToken) return false;
+    bucket.count -= 1;
+    if (bucket.count <= 0) this.rateLimits.delete(normalizedKey);
+    return true;
   }
 
   async acquireSemaphore(
@@ -232,6 +276,7 @@ export class LocalCoordinator implements Coordinator {
     }
     const ttl = assertTtl(ttlMs);
     const now = this.now();
+    this.sweepExpiredSemaphores(now);
     const holders = this.semaphores.get(normalizedKey) || new Map();
     for (const [token, record] of holders) {
       if (record.expiresAt <= now) holders.delete(token);
@@ -241,21 +286,46 @@ export class LocalCoordinator implements Coordinator {
     const record = { expiresAt: now + ttl };
     holders.set(ownerToken, record);
     this.semaphores.set(normalizedKey, holders);
+    this.nextSemaphoreExpiry = Math.min(
+      this.nextSemaphoreExpiry,
+      record.expiresAt
+    );
     const permit: CoordinationPermit = {
       key: normalizedKey,
       ownerToken,
       expiresAt: record.expiresAt,
       extend: async nextTtl => {
+        this.requireConnected();
         const current = holders.get(ownerToken);
         if (!current || current.expiresAt <= this.now()) {
           holders.delete(ownerToken);
+          if (
+            holders.size === 0 &&
+            this.semaphores.get(normalizedKey) === holders
+          ) {
+            this.semaphores.delete(normalizedKey);
+          }
           return false;
         }
         current.expiresAt = this.now() + assertTtl(nextTtl);
+        this.nextSemaphoreExpiry = Math.min(
+          this.nextSemaphoreExpiry,
+          current.expiresAt
+        );
         permit.expiresAt = current.expiresAt;
         return true;
       },
-      release: async () => holders.delete(ownerToken),
+      release: async () => {
+        this.requireConnected();
+        const deleted = holders.delete(ownerToken);
+        if (
+          holders.size === 0 &&
+          this.semaphores.get(normalizedKey) === holders
+        ) {
+          this.semaphores.delete(normalizedKey);
+        }
+        return deleted;
+      },
     };
     return permit;
   }
@@ -266,25 +336,26 @@ export class LocalCoordinator implements Coordinator {
     ttlMs: number
   ): Promise<void> {
     this.requireConnected();
+    const now = this.now();
+    this.sweepExpiredPresence(now);
     const normalizedScope = assertCoordinationName(scope, 'Presence scope');
     const normalizedMember = assertCoordinationName(
       memberId,
       'Presence member ID'
     );
     const members = this.presence.get(normalizedScope) || new Map();
-    members.set(normalizedMember, this.now() + assertTtl(ttlMs));
+    const expiresAt = now + assertTtl(ttlMs);
+    members.set(normalizedMember, expiresAt);
     this.presence.set(normalizedScope, members);
+    this.nextPresenceExpiry = Math.min(this.nextPresenceExpiry, expiresAt);
   }
 
   async listPresence(scope: string): Promise<string[]> {
     this.requireConnected();
+    this.sweepExpiredPresence(this.now());
     const normalizedScope = assertCoordinationName(scope, 'Presence scope');
     const members = this.presence.get(normalizedScope);
     if (!members) return [];
-    const now = this.now();
-    for (const [member, expiresAt] of members) {
-      if (expiresAt <= now) members.delete(member);
-    }
     return [...members.keys()].sort();
   }
 
@@ -295,7 +366,9 @@ export class LocalCoordinator implements Coordinator {
       memberId,
       'Presence member ID'
     );
-    this.presence.get(normalizedScope)?.delete(normalizedMember);
+    const members = this.presence.get(normalizedScope);
+    members?.delete(normalizedMember);
+    if (members?.size === 0) this.presence.delete(normalizedScope);
   }
 
   async getRevocationEpoch(subject: string): Promise<number> {
@@ -324,5 +397,75 @@ export class LocalCoordinator implements Coordinator {
 
   private requireConnected(): void {
     if (!this.connected) throw new Error('Local coordinator is not connected.');
+  }
+
+  private sweepExpiredRateLimits(now: number): void {
+    if (now < this.nextRateLimitExpiry) return;
+    this.nextRateLimitExpiry = Number.POSITIVE_INFINITY;
+    for (const [key, bucket] of this.rateLimits) {
+      if (bucket.resetAt <= now) this.rateLimits.delete(key);
+      else {
+        this.nextRateLimitExpiry = Math.min(
+          this.nextRateLimitExpiry,
+          bucket.resetAt
+        );
+      }
+    }
+  }
+
+  private sweepExpiredCache(now: number): void {
+    if (now < this.nextCacheExpiry) return;
+    this.nextCacheExpiry = Number.POSITIVE_INFINITY;
+    for (const [key, entry] of this.cache) {
+      if (entry.expiresAt <= now) this.cache.delete(key);
+      else {
+        this.nextCacheExpiry = Math.min(this.nextCacheExpiry, entry.expiresAt);
+      }
+    }
+  }
+
+  private sweepExpiredLeases(now: number): void {
+    if (now < this.nextLeaseExpiry) return;
+    this.nextLeaseExpiry = Number.POSITIVE_INFINITY;
+    for (const [key, lease] of this.leases) {
+      if (lease.expiresAt <= now) this.leases.delete(key);
+      else {
+        this.nextLeaseExpiry = Math.min(this.nextLeaseExpiry, lease.expiresAt);
+      }
+    }
+  }
+
+  private sweepExpiredSemaphores(now: number): void {
+    if (now < this.nextSemaphoreExpiry) return;
+    this.nextSemaphoreExpiry = Number.POSITIVE_INFINITY;
+    for (const [key, holders] of this.semaphores) {
+      for (const [token, record] of holders) {
+        if (record.expiresAt <= now) holders.delete(token);
+        else {
+          this.nextSemaphoreExpiry = Math.min(
+            this.nextSemaphoreExpiry,
+            record.expiresAt
+          );
+        }
+      }
+      if (holders.size === 0) this.semaphores.delete(key);
+    }
+  }
+
+  private sweepExpiredPresence(now: number): void {
+    if (now < this.nextPresenceExpiry) return;
+    this.nextPresenceExpiry = Number.POSITIVE_INFINITY;
+    for (const [scope, members] of this.presence) {
+      for (const [member, expiresAt] of members) {
+        if (expiresAt <= now) members.delete(member);
+        else {
+          this.nextPresenceExpiry = Math.min(
+            this.nextPresenceExpiry,
+            expiresAt
+          );
+        }
+      }
+      if (members.size === 0) this.presence.delete(scope);
+    }
   }
 }

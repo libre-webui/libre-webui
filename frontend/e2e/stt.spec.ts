@@ -8,6 +8,19 @@
 import { expect, test } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
 
+// This 102-byte single-track Opus/WebM fixture is the same minimal container
+// shape exercised by the backend validator: EBML/WebM headers, one A_OPUS
+// track with OpusHead metadata, and one non-laced audio block.
+const SUPPORTED_OPUS_WEBM_BYTES = [
+  26, 69, 223, 163, 135, 66, 130, 132, 119, 101, 98, 109, 24, 83, 128, 103, 213,
+  21, 73, 169, 102, 135, 42, 215, 177, 131, 15, 66, 64, 22, 84, 174, 107, 181,
+  174, 179, 215, 129, 1, 131, 129, 2, 134, 134, 65, 95, 79, 80, 85, 83, 99, 162,
+  147, 79, 112, 117, 115, 72, 101, 97, 100, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  225, 141, 181, 136, 64, 231, 112, 0, 0, 0, 0, 0, 159, 129, 1, 31, 67, 182,
+  117, 138, 231, 129, 0, 163, 133, 129, 0, 0, 0, 248,
+];
+const TRUNCATED_WEBM_BYTES = [0x1a, 0x45, 0xdf, 0xa3];
+
 test('provider speech input discloses its route and transcribes recorded audio', async ({
   page,
 }) => {
@@ -33,7 +46,7 @@ test('provider speech input discloses its route and transcribes recorded audio',
     ],
   });
 
-  await page.addInitScript(() => {
+  await page.addInitScript(audioBytes => {
     localStorage.setItem('auth-token', 'e2e-token');
     Object.defineProperty(window, 'SpeechRecognition', {
       configurable: true,
@@ -74,7 +87,7 @@ test('provider speech input discloses its route and transcribes recorded audio',
       stop() {
         this.state = 'inactive';
         this.ondataavailable?.({
-          data: new Blob([new Uint8Array([0x1a, 0x45, 0xdf, 0xa3])], {
+          data: new Blob([new Uint8Array(audioBytes)], {
             type: this.mimeType,
           }),
         });
@@ -86,7 +99,7 @@ test('provider speech input discloses its route and transcribes recorded audio',
       configurable: true,
       value: MockMediaRecorder,
     });
-  });
+  }, SUPPORTED_OPUS_WEBM_BYTES);
 
   await page.goto('/c/stt-session');
 
@@ -119,26 +132,26 @@ test('provider speech input discloses its route and transcribes recorded audio',
     'gpt-4o-mini-transcribe'
   );
   expect(mockApi.sttTranscriptionRequests[0].body).toContain('openai');
+  expect(mockApi.sttTranscriptionRequests[0].body).toContain('A_OPUS');
+  expect(mockApi.sttTranscriptionRequests[0].body).toContain('OpusHead');
 });
 
-test('provider transcription remains cancellable while the request is running', async ({
+test('invalid provider audio is rejected safely without inserting a transcript', async ({
   page,
 }) => {
   const now = Date.now();
-  const mockApi = await mockLibreWebUiApi(page, {
+  await mockLibreWebUiApi(page, {
     sttModels: [
       {
-        model: 'cancel-transcription',
+        model: 'gpt-4o-mini-transcribe',
         plugin: 'openai',
-        config: { formats: ['webm'], max_duration_seconds: 300 },
+        config: { formats: ['webm'], max_audio_bytes: 25 * 1024 * 1024 },
       },
     ],
-    sttTranscript: 'This cancelled transcript must not be inserted.',
-    sttTranscriptionDelayMs: 400,
     sessions: [
       {
-        id: 'stt-cancel',
-        title: 'Cancel transcription',
+        id: 'stt-invalid-media',
+        title: 'Invalid speech recording',
         model: 'llama3.2:3b',
         createdAt: now,
         updatedAt: now,
@@ -146,8 +159,22 @@ test('provider transcription remains cancellable while the request is running', 
       },
     ],
   });
+  let rejectedUploads = 0;
+  await page.route('**/api/stt/transcribe', async route => {
+    rejectedUploads += 1;
+    const body = route.request().postDataBuffer()?.toString('latin1') || '';
+    expect(body).not.toContain('OpusHead');
+    await route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: false,
+        message: 'Audio content does not match its declared MIME type',
+      }),
+    });
+  });
 
-  await page.addInitScript(() => {
+  await page.addInitScript(audioBytes => {
     localStorage.setItem('i18nextLng', 'en');
     localStorage.setItem('auth-token', 'e2e-token');
     Object.defineProperty(window, 'SpeechRecognition', {
@@ -184,7 +211,7 @@ test('provider transcription remains cancellable while the request is running', 
       stop() {
         this.state = 'inactive';
         this.ondataavailable?.({
-          data: new Blob([new Uint8Array([0x1a, 0x45, 0xdf, 0xa3])], {
+          data: new Blob([new Uint8Array(audioBytes)], {
             type: this.mimeType,
           }),
         });
@@ -195,7 +222,100 @@ test('provider transcription remains cancellable while the request is running', 
       configurable: true,
       value: MockMediaRecorder,
     });
+  }, TRUNCATED_WEBM_BYTES);
+
+  await page.goto('/c/stt-invalid-media');
+  const microphone = page.getByRole('button', {
+    name: 'Record and send audio to openai for transcription',
   });
+  await microphone.click();
+  await page.getByTitle('Stop listening').click();
+
+  await expect.poll(() => rejectedUploads).toBe(1);
+  await expect(page.locator('textarea').last()).toHaveValue('');
+  await expect(microphone).toBeVisible();
+  await expect(
+    page
+      .getByRole('status')
+      .filter({ hasText: 'Request failed with status code 400' })
+  ).toBeVisible();
+});
+
+test('provider transcription remains cancellable while the request is running', async ({
+  page,
+}) => {
+  const now = Date.now();
+  const mockApi = await mockLibreWebUiApi(page, {
+    sttModels: [
+      {
+        model: 'cancel-transcription',
+        plugin: 'openai',
+        config: { formats: ['webm'], max_duration_seconds: 300 },
+      },
+    ],
+    sttTranscript: 'This cancelled transcript must not be inserted.',
+    sttTranscriptionDelayMs: 400,
+    sessions: [
+      {
+        id: 'stt-cancel',
+        title: 'Cancel transcription',
+        model: 'llama3.2:3b',
+        createdAt: now,
+        updatedAt: now,
+        messages: [],
+      },
+    ],
+  });
+
+  await page.addInitScript(audioBytes => {
+    localStorage.setItem('i18nextLng', 'en');
+    localStorage.setItem('auth-token', 'e2e-token');
+    Object.defineProperty(window, 'SpeechRecognition', {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(window, 'webkitSpeechRecognition', {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: async () => ({
+          getTracks: () => [{ stop: () => undefined }],
+        }),
+      },
+    });
+    class MockMediaRecorder {
+      static isTypeSupported() {
+        return true;
+      }
+
+      state: 'inactive' | 'recording' = 'inactive';
+      mimeType = 'audio/webm;codecs=opus';
+      ondataavailable: ((event: { data: Blob }) => void) | null = null;
+      onerror: (() => void) | null = null;
+      onstop: (() => void) | null = null;
+
+      start() {
+        this.state = 'recording';
+      }
+
+      stop() {
+        this.state = 'inactive';
+        this.ondataavailable?.({
+          data: new Blob([new Uint8Array(audioBytes)], {
+            type: this.mimeType,
+          }),
+        });
+        queueMicrotask(() => this.onstop?.());
+      }
+    }
+    Object.defineProperty(window, 'MediaRecorder', {
+      configurable: true,
+      value: MockMediaRecorder,
+    });
+  }, SUPPORTED_OPUS_WEBM_BYTES);
 
   await page.goto('/c/stt-cancel');
   await page

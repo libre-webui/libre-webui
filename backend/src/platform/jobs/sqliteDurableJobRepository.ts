@@ -21,6 +21,8 @@ import { assertDurableJobMigrationReady } from '../../persistence/sqliteMigratio
 import {
   DurableJobError,
   type DurableCancellationCode,
+  type DurableChatCancellationDecision,
+  type DurableChatCompletionMessage,
   type DurableJobActorFilter,
   type DurableJobCancellationSummary,
   type DurableJobAttemptMetadata,
@@ -67,6 +69,31 @@ export interface PreparedDurableEventAppend {
   actorUserId: string | null;
   payload: StoredDurablePayload;
   occurredAt: number;
+}
+
+export interface PreparedDurableChatCompletion {
+  lease: {
+    jobId: string;
+    workerId: string;
+    leaseToken: number;
+  };
+  actorUserId: string;
+  sessionId: string;
+  expectedJobType: string;
+  expectedIdempotencyScope: string;
+  expectedIdempotencyKeyHash: string;
+  cancellationEventId: string;
+  message: DurableChatCompletionMessage;
+  event: PreparedDurableEventAppend;
+  beforeCommit?: () => void | Promise<void>;
+}
+
+export interface PreparedDurableChatCancellation {
+  actorUserId: string;
+  idempotencyScope: string;
+  idempotencyKeyHash: string;
+  doneEventId: string;
+  event: PreparedDurableEventAppend;
 }
 
 interface JobRow {
@@ -386,14 +413,268 @@ export class SQLiteDurableJobRepository {
     return this.immediate(() => this.appendEventInTransaction(input));
   }
 
+  requestChatCancellation(
+    input: PreparedDurableChatCancellation
+  ): DurableChatCancellationDecision {
+    return this.immediate(() => {
+      const completion = this.database
+        .prepare(
+          `SELECT global_cursor FROM platform_events
+            WHERE event_id = ? AND stream_id = ?
+              AND event_type = 'chat.done.v1'
+              AND subject_id = ? AND actor_user_id = ?`
+        )
+        .get(
+          input.doneEventId,
+          input.event.streamId,
+          input.event.subjectId,
+          input.actorUserId
+        ) as { global_cursor: number } | undefined;
+      if (completion) {
+        return {
+          outcome: 'completion-won',
+          cursor: completion.global_cursor,
+          job: null,
+        };
+      }
+
+      const cursor = this.appendEventInTransaction(input.event);
+      const job = this.database
+        .prepare(
+          `SELECT * FROM platform_jobs
+            WHERE actor_user_id = ? AND idempotency_scope = ?
+              AND idempotency_key_hash = ?`
+        )
+        .get(
+          input.actorUserId,
+          input.idempotencyScope,
+          input.idempotencyKeyHash
+        ) as JobRow | undefined;
+      return {
+        outcome: 'cancellation-recorded',
+        cursor,
+        job: job
+          ? this.requestCancellationInTransaction(
+              job.id,
+              input.actorUserId,
+              'user-requested'
+            )
+          : null,
+      };
+    });
+  }
+
+  /**
+   * Linearize the assistant row and its terminal event under the durable job
+   * fence. A worker crash can therefore expose both effects or neither.
+   */
+  publishChatCompletion(input: PreparedDurableChatCompletion): number {
+    return this.immediate(() => {
+      const timestamp = this.now();
+      const job = this.findRow(input.lease.jobId);
+      if (!job) {
+        throw new DurableJobError('lease-lost', 'Durable job lease was lost');
+      }
+      if (
+        job.actor_user_id !== input.actorUserId ||
+        job.job_type !== input.expectedJobType ||
+        job.idempotency_scope !== input.expectedIdempotencyScope ||
+        job.idempotency_key_hash !== input.expectedIdempotencyKeyHash
+      ) {
+        throw new DurableJobError(
+          'conflict',
+          'Chat completion does not match its durable job'
+        );
+      }
+      if (job.cancellation_requested_at !== null) {
+        throw new DurableJobError('cancelled', 'Durable job was cancelled');
+      }
+      if (
+        job.state !== 'running' ||
+        job.lease_owner !== input.lease.workerId ||
+        job.lease_token !== input.lease.leaseToken ||
+        job.lease_expires_at === null ||
+        job.lease_expires_at <= timestamp
+      ) {
+        throw new DurableJobError('lease-lost', 'Durable job lease was lost');
+      }
+
+      const session = this.database
+        .prepare('SELECT user_id FROM sessions WHERE id = ?')
+        .get(input.sessionId) as { user_id: string } | undefined;
+      if (!session || session.user_id !== input.actorUserId) {
+        throw new DurableJobError(
+          'conflict',
+          'Chat completion session is unavailable'
+        );
+      }
+      if (input.message.sessionId !== input.sessionId) {
+        throw new DurableJobError(
+          'conflict',
+          'Chat completion message does not match its session'
+        );
+      }
+
+      const cancellation = this.database
+        .prepare(
+          `SELECT 1 FROM platform_events
+            WHERE event_id = ? AND stream_id = ?
+              AND event_type = 'chat.cancel-requested.v1'
+              AND subject_id = ? AND actor_user_id = ?`
+        )
+        .get(
+          input.cancellationEventId,
+          input.event.streamId,
+          input.message.id,
+          input.actorUserId
+        );
+      if (cancellation) {
+        throw new DurableJobError('cancelled', 'Durable job was cancelled');
+      }
+
+      const existingEvent = this.database
+        .prepare('SELECT 1 FROM platform_events WHERE event_id = ?')
+        .get(input.event.eventId);
+      const existingMessage = this.database
+        .prepare(
+          'SELECT role FROM session_messages WHERE id = ? AND session_id = ?'
+        )
+        .get(input.message.id, input.sessionId) as { role: string } | undefined;
+      if (existingEvent) {
+        if (!existingMessage || existingMessage.role !== 'assistant') {
+          throw new DurableJobError(
+            'storage-error',
+            'Durable chat completion event has no assistant message'
+          );
+        }
+        return this.appendEventInTransaction(input.event);
+      }
+      if (existingMessage) {
+        throw new DurableJobError(
+          'conflict',
+          'Assistant message identity already exists without completion'
+        );
+      }
+
+      let branchIndex = 0;
+      if (input.message.parentId) {
+        const branchRoot = this.database
+          .prepare(
+            `SELECT role FROM session_messages
+              WHERE id = ? AND session_id = ?`
+          )
+          .get(input.message.parentId, input.sessionId) as
+          { role: string } | undefined;
+        if (branchRoot?.role !== 'assistant') {
+          throw new DurableJobError(
+            'conflict',
+            'Chat completion branch root is unavailable'
+          );
+        }
+        const branch = this.database
+          .prepare(
+            `SELECT COALESCE(MAX(branch_index), 0) + 1 AS next_index
+               FROM session_messages
+              WHERE session_id = ? AND (id = ? OR parent_id = ?)`
+          )
+          .get(
+            input.sessionId,
+            input.message.parentId,
+            input.message.parentId
+          ) as { next_index: number };
+        branchIndex = branch.next_index;
+        this.database
+          .prepare(
+            `UPDATE session_messages SET is_active = 0
+              WHERE session_id = ? AND (id = ? OR parent_id = ?)`
+          )
+          .run(input.sessionId, input.message.parentId, input.message.parentId);
+      }
+      const position = this.database
+        .prepare(
+          `SELECT COALESCE(MAX(message_index), -1) + 1 AS next_index
+             FROM session_messages WHERE session_id = ?`
+        )
+        .get(input.sessionId) as { next_index: number };
+      this.database
+        .prepare(
+          `INSERT INTO session_messages
+             (id, session_id, role, content, thinking, timestamp, message_index,
+              model, provider_metadata, images, statistics, artifacts,
+              parent_id, branch_index, is_active, rating)
+           VALUES (?, ?, 'assistant', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(
+          input.message.id,
+          input.sessionId,
+          input.message.content,
+          input.message.thinking,
+          input.message.timestamp,
+          position.next_index,
+          input.message.model,
+          input.message.providerMetadata,
+          input.message.images,
+          input.message.statistics,
+          input.message.artifacts,
+          input.message.parentId,
+          branchIndex,
+          input.message.parentId ? 1 : input.message.isActive,
+          input.message.rating
+        );
+      this.database
+        .prepare(
+          `UPDATE sessions SET updated_at = MAX(updated_at, ?)
+            WHERE id = ? AND user_id = ?`
+        )
+        .run(timestamp, input.sessionId, input.actorUserId);
+      const completionCursor = this.appendEventInTransaction(input.event);
+      if (this.finishAttempt(job, 'succeeded', timestamp) !== 1) {
+        throw new DurableJobError('lease-lost', 'Durable job attempt was lost');
+      }
+      const resultReference = `chat-message:${input.message.id}`;
+      const terminal = this.database
+        .prepare(
+          `UPDATE platform_jobs
+              SET state = 'succeeded', result_reference = ?,
+                  lease_owner = NULL, lease_expires_at = NULL,
+                  progress_current = progress_total,
+                  progress_message = 'Chat response saved',
+                  finished_at = ?, updated_at = ?
+            WHERE id = ? AND state = 'running' AND lease_owner = ?
+              AND lease_token = ? AND lease_expires_at > ?
+              AND actor_user_id = ? AND job_type = ?
+              AND idempotency_scope = ? AND idempotency_key_hash = ?
+              AND cancellation_requested_at IS NULL`
+        )
+        .run(
+          resultReference,
+          timestamp,
+          timestamp,
+          job.id,
+          input.lease.workerId,
+          input.lease.leaseToken,
+          timestamp,
+          input.actorUserId,
+          input.expectedJobType,
+          input.expectedIdempotencyScope,
+          input.expectedIdempotencyKeyHash
+        );
+      if (terminal.changes !== 1) {
+        throw new DurableJobError('lease-lost', 'Durable job lease was lost');
+      }
+      this.appendJobEvent(job, 'job.succeeded', timestamp);
+      return completionCursor;
+    });
+  }
+
   private finishAttempt(
     job: JobRow,
     outcome: DurableJobAttemptMetadata['outcome'],
     timestamp: number,
     errorCode: string | null = null,
     errorSummary: string | null = null
-  ): void {
-    this.database
+  ): number {
+    return this.database
       .prepare(
         `UPDATE platform_job_attempts
          SET last_heartbeat_at = ?, finished_at = ?, outcome = ?,
@@ -410,7 +691,7 @@ export class SQLiteDurableJobRepository {
         job.id,
         job.attempt_count,
         job.lease_token
-      );
+      ).changes;
   }
 
   private reapExpired(timestamp: number): string[] {
@@ -756,56 +1037,64 @@ export class SQLiteDurableJobRepository {
     );
   }
 
+  private requestCancellationInTransaction(
+    id: string,
+    actorUserId: string,
+    reason: DurableCancellationCode
+  ): DurableJobMetadata {
+    const timestamp = this.now();
+    const row = this.findRow(id);
+    if (!row || row.actor_user_id !== actorUserId) {
+      throw new DurableJobError('not-found', 'Durable job not found');
+    }
+    if (
+      row.state === 'succeeded' ||
+      row.state === 'cancelled' ||
+      row.state === 'dead_letter'
+    ) {
+      return toMetadata(row);
+    }
+    if (row.cancellation_requested_at !== null) return toMetadata(row);
+
+    if (row.state === 'queued') {
+      this.database
+        .prepare(
+          `UPDATE platform_jobs
+             SET state = 'cancelled', cancellation_requested_at = ?,
+                 cancellation_reason = ?, finished_at = ?, updated_at = ?
+             WHERE id = ? AND state = 'queued'`
+        )
+        .run(timestamp, reason, timestamp, timestamp, id);
+      this.appendJobEvent(row, 'job.cancelled', timestamp);
+    } else {
+      this.database
+        .prepare(
+          `UPDATE platform_jobs
+             SET cancellation_requested_at = ?, cancellation_reason = ?,
+                 updated_at = ?
+             WHERE id = ? AND state = 'running'`
+        )
+        .run(timestamp, reason, timestamp, id);
+      this.appendJobEvent(row, 'job.cancellation-requested', timestamp);
+    }
+    const updated = this.findRow(id);
+    if (!updated) {
+      throw new DurableJobError(
+        'storage-error',
+        'Cancelled durable job disappeared'
+      );
+    }
+    return toMetadata(updated);
+  }
+
   requestCancellation(
     id: string,
     actorUserId: string,
     reason: DurableCancellationCode
   ): DurableJobMetadata {
-    return this.immediate(() => {
-      const timestamp = this.now();
-      const row = this.findRow(id);
-      if (!row || row.actor_user_id !== actorUserId) {
-        throw new DurableJobError('not-found', 'Durable job not found');
-      }
-      if (
-        row.state === 'succeeded' ||
-        row.state === 'cancelled' ||
-        row.state === 'dead_letter'
-      ) {
-        return toMetadata(row);
-      }
-      if (row.cancellation_requested_at !== null) return toMetadata(row);
-
-      if (row.state === 'queued') {
-        this.database
-          .prepare(
-            `UPDATE platform_jobs
-             SET state = 'cancelled', cancellation_requested_at = ?,
-                 cancellation_reason = ?, finished_at = ?, updated_at = ?
-             WHERE id = ? AND state = 'queued'`
-          )
-          .run(timestamp, reason, timestamp, timestamp, id);
-        this.appendJobEvent(row, 'job.cancelled', timestamp);
-      } else {
-        this.database
-          .prepare(
-            `UPDATE platform_jobs
-             SET cancellation_requested_at = ?, cancellation_reason = ?,
-                 updated_at = ?
-             WHERE id = ? AND state = 'running'`
-          )
-          .run(timestamp, reason, timestamp, id);
-        this.appendJobEvent(row, 'job.cancellation-requested', timestamp);
-      }
-      const updated = this.findRow(id);
-      if (!updated) {
-        throw new DurableJobError(
-          'storage-error',
-          'Cancelled durable job disappeared'
-        );
-      }
-      return toMetadata(updated);
-    });
+    return this.immediate(() =>
+      this.requestCancellationInTransaction(id, actorUserId, reason)
+    );
   }
 
   requestActorCancellation(
@@ -1279,29 +1568,28 @@ export class SQLiteDurableJobRepository {
   replayStoredEvents(
     afterCursor: number,
     limit: number,
-    streamId?: string
+    options: { streamId?: string; subjectId?: string } = {}
   ): StoredDurableEventRow[] {
-    if (streamId) {
-      return this.database
-        .prepare(
-          `SELECT global_cursor AS cursor, event_id, stream_id,
-                  stream_sequence, request_fingerprint, event_type, subject_id,
-                  actor_user_id, payload_format, payload, occurred_at
-           FROM platform_events
-           WHERE global_cursor > ? AND stream_id = ?
-           ORDER BY global_cursor ASC LIMIT ?`
-        )
-        .all(afterCursor, streamId, limit) as StoredDurableEventRow[];
+    const predicates = ['global_cursor > ?'];
+    const parameters: Array<number | string> = [afterCursor];
+    if (options.streamId) {
+      predicates.push('stream_id = ?');
+      parameters.push(options.streamId);
     }
+    if (options.subjectId) {
+      predicates.push('subject_id = ?');
+      parameters.push(options.subjectId);
+    }
+    parameters.push(limit);
     return this.database
       .prepare(
         `SELECT global_cursor AS cursor, event_id, stream_id, stream_sequence,
                 request_fingerprint, event_type, subject_id, actor_user_id,
                 payload_format, payload, occurred_at
          FROM platform_events
-         WHERE global_cursor > ?
+         WHERE ${predicates.join(' AND ')}
          ORDER BY global_cursor ASC LIMIT ?`
       )
-      .all(afterCursor, limit) as StoredDurableEventRow[];
+      .all(...parameters) as StoredDurableEventRow[];
   }
 }

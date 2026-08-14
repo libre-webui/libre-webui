@@ -153,7 +153,7 @@ export class WorkTaskService {
 
   async withUserLifecycleLease<T>(
     userId: string,
-    operation: () => Promise<T>
+    operation: (assertHeld: () => Promise<void>) => Promise<T>
   ): Promise<T> {
     const coordinator = getCoordinator();
     const deadline = Date.now() + 10_000;
@@ -176,23 +176,34 @@ export class WorkTaskService {
     let closed = false;
     let leaseLost = false;
     let renewalTimer: NodeJS.Timeout | undefined;
+    const leaseLostError = (): WorkConflictError =>
+      new WorkConflictError('The shared Work lifecycle lease was lost.');
+    const markLost = (): void => {
+      leaseLost = true;
+    };
+    const assertHeld = async (): Promise<void> => {
+      if (closed || leaseLost) throw leaseLostError();
+      try {
+        if (await lease.extend(60_000)) return;
+      } catch {
+        // Report expiry and coordination outages through one safe fence.
+      }
+      markLost();
+      throw leaseLostError();
+    };
     const renew = async (): Promise<void> => {
       if (closed) return;
       try {
-        if (!(await lease.extend(60_000))) leaseLost = true;
+        if (!(await lease.extend(60_000))) markLost();
       } catch {
-        leaseLost = true;
+        markLost();
       }
       if (!closed && !leaseLost) renewalTimer = setTimeout(renew, 20_000);
     };
     renewalTimer = setTimeout(renew, 20_000);
     try {
-      const result = await operation();
-      if (leaseLost) {
-        throw new WorkConflictError(
-          'The shared Work lifecycle lease was lost.'
-        );
-      }
+      await assertHeld();
+      const result = await operation(assertHeld);
       return result;
     } finally {
       closed = true;
@@ -210,7 +221,7 @@ export class WorkTaskService {
     hostPath?: string,
     policyId?: string
   ): Promise<WorkTaskDetail> {
-    return this.withUserLifecycleLease(userId, () =>
+    return this.withUserLifecycleLease(userId, assertHeld =>
       this.createTaskWithRunWithLeaseHeld(
         userId,
         message,
@@ -218,7 +229,8 @@ export class WorkTaskService {
         networkEnabled,
         provider,
         hostPath,
-        policyId
+        policyId,
+        assertHeld
       )
     );
   }
@@ -230,7 +242,8 @@ export class WorkTaskService {
     networkEnabled: boolean,
     provider: WorkProviderSelection,
     hostPath?: string,
-    policyId?: string
+    policyId?: string,
+    assertHeld: () => Promise<void> = async () => undefined
   ): Promise<WorkTaskDetail> {
     await this.assertUserIsActive(userId);
     const selectedProvider = normalizeProvider(provider);
@@ -285,6 +298,7 @@ export class WorkTaskService {
       created_at: now,
     };
     try {
+      await assertHeld();
       await getWorkPersistence().createTaskWithRun(
         {
           task: taskRow,
@@ -292,7 +306,8 @@ export class WorkTaskService {
           message: messageRow,
           limits: workAdmissionLimits,
         },
-        transactionalWorkExecutionEnqueuer
+        transactionalWorkExecutionEnqueuer,
+        assertHeld
       );
     } catch (error) {
       const outcome = await this.resolveExecutionPublication(
@@ -320,8 +335,15 @@ export class WorkTaskService {
     model?: string,
     provider?: WorkProviderSelection
   ): Promise<WorkTaskDetail> {
-    return this.withUserLifecycleLease(userId, () =>
-      this.createRunWithLeaseHeld(taskId, userId, message, model, provider)
+    return this.withUserLifecycleLease(userId, assertHeld =>
+      this.createRunWithLeaseHeld(
+        taskId,
+        userId,
+        message,
+        model,
+        provider,
+        assertHeld
+      )
     );
   }
 
@@ -330,7 +352,8 @@ export class WorkTaskService {
     userId: string,
     message: string,
     model?: string,
-    provider?: WorkProviderSelection
+    provider?: WorkProviderSelection,
+    assertHeld: () => Promise<void> = async () => undefined
   ): Promise<WorkTaskDetail> {
     const task = await this.requireMutableTaskRecord(taskId, userId);
     if (await this.getActiveRun(taskId)) {
@@ -371,6 +394,7 @@ export class WorkTaskService {
       created_at: now,
     };
     try {
+      await assertHeld();
       await getWorkPersistence().createRun(
         {
           taskId,
@@ -379,7 +403,8 @@ export class WorkTaskService {
           message: messageRow,
           limits: workAdmissionLimits,
         },
-        transactionalWorkExecutionEnqueuer
+        transactionalWorkExecutionEnqueuer,
+        assertHeld
       );
     } catch (error) {
       const expectedTask: TaskRow = {

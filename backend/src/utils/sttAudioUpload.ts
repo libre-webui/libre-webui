@@ -612,12 +612,40 @@ const upload = multer({
 
 export function parseSTTAudioUpload(
   req: Request,
-  res: Response
+  res: Response,
+  signal?: AbortSignal
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    upload.single('audio')(req, res, error => {
+    if (signal?.aborted) {
+      reject(signal.reason);
+      return;
+    }
+    let settled = false;
+    const finish = (error?: unknown): void => {
+      if (settled) return;
+      settled = true;
+      signal?.removeEventListener('abort', abortUpload);
       if (error) reject(error);
       else resolve();
+    };
+    const abortUpload = (): void => {
+      const reason =
+        signal?.reason instanceof Error
+          ? signal.reason
+          : new Error('Speech-to-text upload admission was lost');
+      // Reject immediately so the route can fail closed without waiting for a
+      // slow sender to finish. Multer still receives the request error in the
+      // same turn, which unpipes and destroys Busboy and discards its partial
+      // in-memory file. Its later callback is ignored by the settled guard.
+      finish(reason);
+      if (!req.destroyed) req.emit('error', reason);
+    };
+    upload.single('audio')(req, res, error => {
+      finish(error);
     });
+    if (!settled) {
+      signal?.addEventListener('abort', abortUpload, { once: true });
+      if (signal?.aborted) abortUpload();
+    }
   });
 }

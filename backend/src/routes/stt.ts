@@ -7,11 +7,18 @@
 
 import express, { type Response } from 'express';
 import multer from 'multer';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import { authenticate, type AuthenticatedRequest } from '../middleware/auth.js';
 import pluginService from '../services/pluginService.js';
 import { STTProviderResponseError } from '../services/pluginSTTService.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  acquireSharedCapacity,
+  combineAbortSignals,
+  SharedCapacityExceededError,
+  SharedCapacityUnavailableError,
+  type SharedCapacityReservation,
+} from '../platform/coordination/sharedAdmission.js';
 import {
   parseSTTAudioUpload,
   STTAudioUploadError,
@@ -24,6 +31,7 @@ const router = express.Router();
 router.use(authenticate);
 router.use(
   rateLimit({
+    keyPrefix: 'speech-to-text',
     windowMs: 60_000,
     max: 30,
     keyGenerator: req =>
@@ -37,8 +45,6 @@ router.use(
   })
 );
 
-const activeByUser = new Map<string, number>();
-let activeGlobal = 0;
 const MAX_ACTIVE_PER_USER = 2;
 const MAX_ACTIVE_GLOBAL = 6;
 
@@ -47,22 +53,26 @@ function userId(req: AuthenticatedRequest): string {
   return req.user.userId;
 }
 
-function reserveTranscriptionSlot(id: string): () => void {
-  const active = activeByUser.get(id) || 0;
-  if (active >= MAX_ACTIVE_PER_USER || activeGlobal >= MAX_ACTIVE_GLOBAL) {
-    throw new Error('Too many concurrent speech-to-text requests');
+async function reserveTranscriptionSlot(
+  id: string
+): Promise<SharedCapacityReservation> {
+  try {
+    return await acquireSharedCapacity({
+      limits: [
+        { scope: 'provider-stt.global', capacity: MAX_ACTIVE_GLOBAL },
+        {
+          scope: 'provider-stt.user',
+          subject: id,
+          capacity: MAX_ACTIVE_PER_USER,
+        },
+      ],
+    });
+  } catch (error) {
+    if (error instanceof SharedCapacityExceededError) {
+      throw new Error('Too many concurrent speech-to-text requests');
+    }
+    throw error;
   }
-  activeByUser.set(id, active + 1);
-  activeGlobal += 1;
-  let released = false;
-  return () => {
-    if (released) return;
-    released = true;
-    activeGlobal = Math.max(0, activeGlobal - 1);
-    const remaining = (activeByUser.get(id) || 1) - 1;
-    if (remaining > 0) activeByUser.set(id, remaining);
-    else activeByUser.delete(id);
-  };
 }
 
 export function requestAbortSignal(
@@ -116,15 +126,16 @@ router.get('/models', async (req: AuthenticatedRequest, res) => {
 
 router.post('/transcribe', async (req: AuthenticatedRequest, res) => {
   const abort = requestAbortSignal(req, res);
-  let releaseSlot: (() => void) | undefined;
+  let slot: SharedCapacityReservation | undefined;
   try {
     if (abort.signal.aborted) return;
     const id = userId(req);
     // Reserve before multer buffers the recording. The same per-user/global
     // ceiling therefore bounds both upload memory and provider work.
-    releaseSlot = reserveTranscriptionSlot(id);
-    await parseSTTAudioUpload(req, res);
-    if (abort.signal.aborted) return;
+    slot = await reserveTranscriptionSlot(id);
+    const operationSignal = combineAbortSignals(abort.signal, slot.signal);
+    await parseSTTAudioUpload(req, res, operationSignal);
+    if (operationSignal.aborted) throw operationSignal.reason;
     const { model, pluginId, language, prompt } = req.body || {};
     if (typeof model !== 'string' || typeof pluginId !== 'string') {
       res.status(400).json({
@@ -166,15 +177,15 @@ router.post('/transcribe', async (req: AuthenticatedRequest, res) => {
       return;
     }
     const audio = validateSTTAudio(req.file, selected.config);
-    if (abort.signal.aborted) return;
+    if (operationSignal.aborted) throw operationSignal.reason;
     const result = await pluginService.executeSTTRequest(model, audio, {
       pluginId,
       userId: id,
       ...(language ? { language } : {}),
       ...(prompt?.trim() ? { prompt: prompt.trim() } : {}),
-      signal: abort.signal,
+      signal: operationSignal,
     });
-    if (!abort.signal.aborted) {
+    if (!operationSignal.aborted) {
       res.json({ success: true, data: result });
     }
   } catch (error) {
@@ -212,6 +223,13 @@ router.post('/transcribe', async (req: AuthenticatedRequest, res) => {
       res.status(429).json({ success: false, message });
       return;
     }
+    if (error instanceof SharedCapacityUnavailableError) {
+      res.status(503).json({
+        success: false,
+        message: 'Speech-to-text admission is temporarily unavailable',
+      });
+      return;
+    }
     if (/cancelled|disconnected/i.test(message)) return;
     logger.error('Speech transcription failed:', error);
     res.status(500).json({
@@ -220,7 +238,7 @@ router.post('/transcribe', async (req: AuthenticatedRequest, res) => {
     });
   } finally {
     abort.cleanup();
-    releaseSlot?.();
+    await slot?.release();
   }
 });
 

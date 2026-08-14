@@ -5,6 +5,7 @@
  */
 
 import type Database from 'better-sqlite3';
+import { createSQLiteSyncExecutor } from '../../persistence/sqliteSyncExecutor.js';
 import type { WorkPreviewStatus, WorkTaskStatus } from '../../types/work.js';
 import {
   WorkPersistenceError,
@@ -140,7 +141,7 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
           );
         this.insertRunSync(input.run);
         this.insertMessageSync(input.message);
-        enqueuer.enqueueSQLite(this.database, {
+        enqueuer.enqueueSQLite(createSQLiteSyncExecutor(this.database), {
           actorUserId: input.task.user_id,
           taskId: input.task.id,
           runId: input.run.id,
@@ -190,7 +191,7 @@ export class SQLiteWorkPersistence implements WorkPersistenceRepository {
             input.taskId,
             input.userId
           );
-        enqueuer.enqueueSQLite(this.database, {
+        enqueuer.enqueueSQLite(createSQLiteSyncExecutor(this.database), {
           actorUserId: input.userId,
           taskId: input.taskId,
           runId: input.run.id,

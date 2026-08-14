@@ -20,6 +20,12 @@ import type { Duplex } from 'node:stream';
 import workRuntimeService, { WorkRuntimeError } from './workRuntimeService.js';
 import type { WorkTaskRecord } from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  acquireSharedCapacity,
+  combineAbortSignals,
+  SharedCapacityExceededError,
+  type SharedCapacityReservation,
+} from '../platform/coordination/sharedAdmission.js';
 
 const logger = createLogger('services:work-terminal');
 
@@ -69,24 +75,52 @@ export class WorkTerminalService {
     return this.sessionCounts.get(taskId) ?? 0;
   }
 
-  async open(task: WorkTaskRecord): Promise<WorkTerminalSession> {
+  async open(
+    task: WorkTaskRecord,
+    cancellationSignal?: AbortSignal
+  ): Promise<WorkTerminalSession> {
     const unavailable = this.unavailableReason();
     if (unavailable) {
       throw new WorkRuntimeError(unavailable, 503, 'WORK_TERMINAL_UNAVAILABLE');
     }
-    const current = this.sessionCount(task.id);
-    if (current >= config.maxSessionsPerTask) {
+    let sharedSlot: SharedCapacityReservation;
+    try {
+      sharedSlot = await acquireSharedCapacity({
+        limits: [
+          {
+            scope: 'work-terminal.task',
+            subject: task.id,
+            capacity: config.maxSessionsPerTask,
+          },
+        ],
+      });
+    } catch (error) {
+      if (error instanceof SharedCapacityExceededError) {
+        throw new WorkRuntimeError(
+          `This Work task already has ${config.maxSessionsPerTask} open terminal session(s). Close one first.`,
+          429,
+          'WORK_TERMINAL_SESSION_LIMIT'
+        );
+      }
       throw new WorkRuntimeError(
-        `This Work task already has ${config.maxSessionsPerTask} open terminal session(s). Close one first.`,
-        429,
-        'WORK_TERMINAL_SESSION_LIMIT'
+        'Work terminal admission is temporarily unavailable.',
+        503,
+        'WORK_TERMINAL_ADMISSION_UNAVAILABLE'
       );
     }
+    const current = this.sessionCount(task.id);
     this.sessionCounts.set(task.id, current + 1);
+    const operationSignal = combineAbortSignals(
+      cancellationSignal,
+      sharedSlot.signal
+    );
 
     let releaseHold: (() => Promise<void>) | undefined;
     let stream: Duplex | undefined;
+    let cleaned = false;
     const cleanup = async () => {
+      if (cleaned) return;
+      cleaned = true;
       const count = (this.sessionCounts.get(task.id) ?? 1) - 1;
       if (count <= 0) {
         this.sessionCounts.delete(task.id);
@@ -99,14 +133,21 @@ export class WorkTerminalService {
         releaseHold = undefined;
         await release();
       }
+      await sharedSlot.release();
     };
 
     try {
-      releaseHold = await workRuntimeService.acquireTerminalHold(task);
+      releaseHold = await workRuntimeService.acquireTerminalHold(
+        task,
+        operationSignal
+      );
+      operationSignal.throwIfAborted();
       const transport = await workRuntimeService.driver.openTerminal(
-        task.containerName
+        task.containerName,
+        operationSignal
       );
       stream = transport.stream;
+      operationSignal.throwIfAborted();
       const activeStream = stream;
       let closed = false;
       const close = async () => {
@@ -117,6 +158,13 @@ export class WorkTerminalService {
       activeStream.on('close', () => {
         void close();
       });
+      operationSignal.addEventListener(
+        'abort',
+        () => {
+          void close();
+        },
+        { once: true }
+      );
       return {
         stream: activeStream,
         resize: async (cols: number, rows: number) => {

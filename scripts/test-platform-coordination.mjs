@@ -8,9 +8,12 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
+import { createServer } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import express from 'express';
+import ts from 'typescript';
 
 import {
   assertPlatformRuntimeConfig,
@@ -30,6 +33,13 @@ import {
   LocalCoordinator,
   RedisCoordinator,
 } from '../backend/dist/platform/coordination/index.js';
+import {
+  acquireSharedCapacity,
+  SharedCapacityExceededError,
+  SharedCapacityUnavailableError,
+} from '../backend/dist/platform/coordination/sharedAdmission.js';
+import { sharedRateLimit } from '../backend/dist/middleware/sharedRateLimit.js';
+import { coordinatedRateLimit } from '../backend/dist/middleware/coordinatedRateLimit.js';
 import { ensurePrivateRuntimeDirectory } from '../backend/dist/utils/dataDirectory.js';
 
 test('Ollama runtime configuration has one strict normalized contract', () => {
@@ -430,11 +440,20 @@ test('local coordinator provides isolated cache, events, leases, and limits', as
   assert.ok(second);
   assert.ok(second.fencingToken > first.fencingToken);
 
-  assert.deepEqual(await coordinator.consumeRateLimit('api:user-a', 2, 100), {
-    allowed: true,
-    remaining: 1,
-    resetAt: now + 100,
-  });
+  const firstRateWindow = await coordinator.consumeRateLimit(
+    'api:user-a',
+    2,
+    100
+  );
+  assert.deepEqual(
+    {
+      allowed: firstRateWindow.allowed,
+      remaining: firstRateWindow.remaining,
+      resetAt: firstRateWindow.resetAt,
+    },
+    { allowed: true, remaining: 1, resetAt: now + 100 }
+  );
+  assert.equal(typeof firstRateWindow.windowToken, 'string');
   assert.equal(
     (await coordinator.consumeRateLimit('api:user-a', 2, 100)).allowed,
     true
@@ -461,12 +480,374 @@ test('local coordinator provides isolated cache, events, leases, and limits', as
   assert.deepEqual(await coordinator.listPresence('workers'), ['worker-b']);
 
   assert.equal(await coordinator.getRevocationEpoch('session:user-a'), 0);
+  const revocations = [];
+  const unsubscribeRevocations = await coordinator.subscribe(
+    'security.revoked',
+    event => revocations.push(event.payload)
+  );
   assert.equal(await coordinator.revoke('session:user-a'), 1);
   assert.equal(await coordinator.revoke('session:user-a'), 2);
   assert.equal(await coordinator.getRevocationEpoch('session:user-a'), 2);
+  assert.deepEqual(revocations, [
+    { subject: 'session:user-a', epoch: 1 },
+    { subject: 'session:user-a', epoch: 2 },
+  ]);
+  await unsubscribeRevocations();
 
   await coordinator.close();
   assert.equal((await coordinator.health()).ready, false);
+});
+
+test('rate-limit refunds never decrement a newer fixed window', async () => {
+  let now = 1_000;
+  const coordinator = new LocalCoordinator(() => now);
+  await coordinator.connect();
+  const oldWindow = await coordinator.consumeRateLimit('refund-race', 2, 100);
+  now = oldWindow.resetAt + 1;
+  const newWindow = await coordinator.consumeRateLimit('refund-race', 2, 100);
+  assert.notEqual(newWindow.windowToken, oldWindow.windowToken);
+  assert.equal(
+    await coordinator.refundRateLimit('refund-race', oldWindow.windowToken),
+    false
+  );
+  assert.deepEqual(await coordinator.consumeRateLimit('refund-race', 2, 100), {
+    allowed: true,
+    remaining: 0,
+    resetAt: newWindow.resetAt,
+    windowToken: newWindow.windowToken,
+  });
+  assert.equal(
+    await coordinator.refundRateLimit('refund-race', newWindow.windowToken),
+    true
+  );
+  await coordinator.close();
+});
+
+test('local coordinator reclaims expired and empty admission state', async () => {
+  let now = 1_000;
+  const coordinator = new LocalCoordinator(() => now);
+  await coordinator.connect();
+  for (let index = 0; index < 1_000; index += 1) {
+    await coordinator.setCache(`one-off-cache-${index}`, index, 100);
+    assert.ok(await coordinator.acquireLease(`one-off-lease-${index}`, 100));
+  }
+  assert.equal(coordinator.cache.size, 1_000);
+  assert.equal(coordinator.leases.size, 1_000);
+  now += 101;
+  await coordinator.setCache('current-cache', true, 100);
+  assert.ok(await coordinator.acquireLease('current-lease', 100));
+  assert.equal(coordinator.cache.size, 1);
+  assert.equal(coordinator.leases.size, 1);
+
+  for (let index = 0; index < 1_000; index += 1) {
+    await coordinator.consumeRateLimit(`one-off-rate-${index}`, 1, 100);
+  }
+  assert.equal(coordinator.rateLimits.size, 1_000);
+  now += 101;
+  await coordinator.consumeRateLimit('current-rate', 1, 100);
+  assert.equal(coordinator.rateLimits.size, 1);
+
+  const released = await coordinator.acquireSemaphore(
+    'released-capacity',
+    1,
+    100
+  );
+  assert.ok(released);
+  await released.release();
+  assert.equal(coordinator.semaphores.has('released-capacity'), false);
+  assert.ok(await coordinator.acquireSemaphore('expired-capacity', 1, 100));
+  now += 101;
+  assert.ok(await coordinator.acquireSemaphore('current-capacity', 1, 100));
+  assert.equal(coordinator.semaphores.has('expired-capacity'), false);
+
+  await coordinator.setPresence('expired-presence', 'member-a', 100);
+  now += 101;
+  await coordinator.setPresence('current-presence', 'member-b', 100);
+  assert.equal(coordinator.presence.has('expired-presence'), false);
+  await coordinator.clearPresence('current-presence', 'member-b');
+  assert.equal(coordinator.presence.has('current-presence'), false);
+  await coordinator.close();
+});
+
+test('shared capacity rolls back partial admission and aborts on renewal loss', async () => {
+  await assert.rejects(
+    () =>
+      acquireSharedCapacity({
+        coordinator: {
+          acquireSemaphore: () => new Promise(() => {}),
+        },
+        operationTimeoutMs: 10,
+        limits: [{ scope: 'test-stalled-acquire.global', capacity: 1 }],
+      }),
+    SharedCapacityUnavailableError
+  );
+
+  const coordinator = new LocalCoordinator();
+  await coordinator.connect();
+  const heldSubject = await acquireSharedCapacity({
+    coordinator,
+    limits: [{ scope: 'test-partial.subject', subject: 'one', capacity: 1 }],
+  });
+  await assert.rejects(
+    () =>
+      acquireSharedCapacity({
+        coordinator,
+        limits: [
+          { scope: 'test-partial.global', capacity: 1 },
+          { scope: 'test-partial.subject', subject: 'one', capacity: 1 },
+        ],
+      }),
+    SharedCapacityExceededError
+  );
+  const globalAfterRollback = await acquireSharedCapacity({
+    coordinator,
+    limits: [{ scope: 'test-partial.global', capacity: 1 }],
+  });
+  await globalAfterRollback.release();
+  await globalAfterRollback.release();
+  await heldSubject.release();
+  const subjectAfterRelease = await acquireSharedCapacity({
+    coordinator,
+    limits: [{ scope: 'test-partial.subject', subject: 'one', capacity: 1 }],
+  });
+  await subjectAfterRelease.release();
+  await coordinator.close();
+
+  const failedCoordinator = new LocalCoordinator();
+  await failedCoordinator.connect();
+  const renewable = await acquireSharedCapacity({
+    coordinator: failedCoordinator,
+    ttlMs: 30,
+    renewIntervalMs: 5,
+    limits: [{ scope: 'test-renewal.global', capacity: 1 }],
+  });
+  await failedCoordinator.close();
+  await Promise.race([
+    new Promise(resolve => renewable.signal.addEventListener('abort', resolve)),
+    new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error('Shared-capacity renewal did not fail closed')),
+        200
+      )
+    ),
+  ]);
+  assert.equal(renewable.signal.aborted, true);
+  assert.ok(renewable.signal.reason instanceof SharedCapacityUnavailableError);
+  await renewable.release();
+
+  const stalledRenewal = await acquireSharedCapacity({
+    coordinator: {
+      acquireSemaphore: async key => ({
+        key,
+        ownerToken: 'stalled-renewal-owner',
+        expiresAt: Date.now() + 50,
+        extend: () => new Promise(() => {}),
+        release: async () => true,
+      }),
+    },
+    ttlMs: 50,
+    renewIntervalMs: 5,
+    operationTimeoutMs: 10,
+    limits: [{ scope: 'test-stalled-renewal.global', capacity: 1 }],
+  });
+  await Promise.race([
+    new Promise(resolve =>
+      stalledRenewal.signal.addEventListener('abort', resolve)
+    ),
+    new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error('A stalled renewal did not abort before TTL')),
+        100
+      )
+    ),
+  ]);
+  const releaseStartedAt = Date.now();
+  await stalledRenewal.release();
+  assert.ok(Date.now() - releaseStartedAt < 50);
+
+  let finishRelease;
+  const releaseGate = new Promise(resolve => {
+    finishRelease = resolve;
+  });
+  const coalesced = await acquireSharedCapacity({
+    coordinator: {
+      acquireSemaphore: async key => ({
+        key,
+        ownerToken: 'coalesced-release-owner',
+        expiresAt: Date.now() + 1_000,
+        extend: async () => true,
+        release: () => releaseGate.then(() => true),
+      }),
+    },
+    limits: [{ scope: 'test-coalesced-release.global', capacity: 1 }],
+  });
+  const firstRelease = coalesced.release();
+  const secondRelease = coalesced.release();
+  assert.equal(firstRelease, secondRelease);
+  let secondSettled = false;
+  void secondRelease.then(() => {
+    secondSettled = true;
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(secondSettled, false);
+  finishRelease();
+  await Promise.all([firstRelease, secondRelease]);
+});
+
+test('shared HTTP rate limits span replica middleware and fail closed', async t => {
+  const coordinator = new LocalCoordinator();
+  await coordinator.connect();
+
+  const startReplica = async limiter => {
+    const app = express();
+    app.get('/request', limiter, (_request, response) => {
+      response.json({ success: true });
+    });
+    app.get('/failure', limiter, (_request, response) => {
+      response.status(500).json({ success: false });
+    });
+    const server = createServer(app);
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    t.after(() => new Promise(resolve => server.close(resolve)));
+    const address = server.address();
+    assert.ok(address && typeof address === 'object');
+    return `http://127.0.0.1:${address.port}`;
+  };
+
+  const firstReplica = await startReplica(
+    sharedRateLimit({
+      coordinator,
+      keyPrefix: 'test-replica-rate',
+      windowMs: 1_000,
+      max: 2,
+      standardHeaders: true,
+      legacyHeaders: false,
+    })
+  );
+  const secondReplica = await startReplica(
+    sharedRateLimit({
+      coordinator,
+      keyPrefix: 'test-replica-rate',
+      windowMs: 1_000,
+      max: 2,
+      standardHeaders: true,
+      legacyHeaders: false,
+    })
+  );
+  assert.equal((await fetch(`${firstReplica}/request`)).status, 200);
+  const second = await fetch(`${secondReplica}/request`);
+  assert.equal(second.status, 200);
+  assert.equal(second.headers.get('ratelimit-remaining'), '0');
+  const limited = await fetch(`${firstReplica}/request`);
+  assert.equal(limited.status, 429);
+  assert.equal(limited.headers.has('retry-after'), true);
+
+  const refundReplica = await startReplica(
+    sharedRateLimit({
+      coordinator,
+      keyPrefix: 'test-success-refund',
+      windowMs: 1_000,
+      max: 1,
+      skipSuccessfulRequests: true,
+    })
+  );
+  assert.equal((await fetch(`${refundReplica}/request`)).status, 200);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal((await fetch(`${refundReplica}/request`)).status, 200);
+
+  const failureReplica = await startReplica(
+    sharedRateLimit({
+      coordinator,
+      keyPrefix: 'test-failure-retained',
+      windowMs: 1_000,
+      max: 1,
+      skipSuccessfulRequests: true,
+    })
+  );
+  assert.equal((await fetch(`${failureReplica}/failure`)).status, 500);
+  assert.equal((await fetch(`${failureReplica}/request`)).status, 429);
+
+  await coordinator.close();
+  const unavailable = await fetch(`${firstReplica}/request`);
+  assert.equal(unavailable.status, 503);
+  assert.deepEqual(await unavailable.json(), {
+    success: false,
+    message: 'Request admission is temporarily unavailable',
+  });
+
+  const stalledReplica = await startReplica(
+    sharedRateLimit({
+      coordinator: {
+        consumeRateLimit: () => new Promise(() => {}),
+      },
+      operationTimeoutMs: 10,
+      keyPrefix: 'test-stalled-rate',
+      windowMs: 1_000,
+      max: 1,
+    })
+  );
+  const stalledStartedAt = Date.now();
+  assert.equal((await fetch(`${stalledReplica}/request`)).status, 503);
+  assert.ok(Date.now() - stalledStartedAt < 200);
+
+  let safetyCoordinatorCalls = 0;
+  const safetyReplica = await startReplica(
+    sharedRateLimit({
+      coordinator: {
+        consumeRateLimit: () => {
+          safetyCoordinatorCalls += 1;
+          return new Promise(() => {});
+        },
+      },
+      operationTimeoutMs: 10,
+      keyPrefix: 'test-safety-bypass',
+      windowMs: 1_000,
+      max: 1,
+      skip: request => request.path === '/request',
+    })
+  );
+  assert.equal((await fetch(`${safetyReplica}/request`)).status, 200);
+  assert.equal(safetyCoordinatorCalls, 0);
+  assert.equal((await fetch(`${safetyReplica}/failure`)).status, 503);
+  assert.equal(safetyCoordinatorCalls, 1);
+});
+
+test('security rate limits fail closed when coordinator commands stall', async t => {
+  const app = express();
+  app.get(
+    '/login',
+    coordinatedRateLimit({
+      coordinator: {
+        consumeRateLimit: () => new Promise(() => {}),
+      },
+      operationTimeoutMs: 10,
+      keyPrefix: 'test-stalled-security-rate',
+      windowMs: 1_000,
+      limit: 1,
+      message: 'Too many authentication attempts',
+    }),
+    (_request, response) => response.json({ success: true })
+  );
+  const server = createServer(app);
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const address = server.address();
+  assert.ok(address && typeof address === 'object');
+
+  const startedAt = Date.now();
+  const response = await fetch(`http://127.0.0.1:${address.port}/login`);
+  assert.equal(response.status, 503);
+  assert.ok(Date.now() - startedAt < 200);
+  assert.deepEqual(await response.json(), {
+    success: false,
+    message: 'Authentication protection is temporarily unavailable',
+  });
 });
 
 test('local leases never release or extend a newer owner', async () => {
@@ -521,6 +902,284 @@ test('Redis coordinator fails closed and never falls back to local state', async
     latencyMs: 0,
     message: 'connection refused',
   });
+});
+
+test('every asynchronous Redis command path has an explicit deadline', () => {
+  const filename = path.resolve(
+    'backend/src/platform/coordination/redisCoordinator.ts'
+  );
+  const sourceText = fs.readFileSync(filename, 'utf8');
+  const source = ts.createSourceFile(
+    filename,
+    sourceText,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  const unbounded = [];
+  const pendingOperations = [];
+
+  const isTimeoutCall = node =>
+    ts.isCallExpression(node) &&
+    ts.isPropertyAccessExpression(node.expression) &&
+    node.expression.expression.kind === ts.SyntaxKind.ThisKeyword &&
+    node.expression.name.text === 'withTimeout';
+
+  const visit = node => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ts.isPropertyAccessExpression(node.expression.expression) &&
+      node.expression.expression.expression.kind === ts.SyntaxKind.ThisKeyword
+    ) {
+      const client = node.expression.expression.name.text;
+      const method = node.expression.name.text;
+      if (
+        (client === 'command' || client === 'subscriber') &&
+        method !== 'on' &&
+        method !== 'destroy'
+      ) {
+        let ancestor = node.parent;
+        let bounded = false;
+        while (ancestor && !ts.isStatement(ancestor)) {
+          if (isTimeoutCall(ancestor)) bounded = true;
+          ancestor = ancestor.parent;
+        }
+        if (!bounded) {
+          const declaration = node.parent;
+          if (
+            ts.isVariableDeclaration(declaration) &&
+            ts.isIdentifier(declaration.name) &&
+            ((method === 'eval' &&
+              declaration.name.text === 'pendingAcquire') ||
+              (method === 'subscribe' &&
+                declaration.name.text === 'rawSetup') ||
+              (method === 'unsubscribe' &&
+                declaration.name.text === 'pendingUnsubscribe'))
+          ) {
+            pendingOperations.push(node.getStart(source));
+          } else {
+            const location = source.getLineAndCharacterOfPosition(
+              node.getStart(source)
+            );
+            unbounded.push(`${client}.${method}:${location.line + 1}`);
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+
+  assert.deepEqual(unbounded, []);
+  assert.equal(pendingOperations.length, 4);
+  assert.equal(
+    (sourceText.match(/await this\.withTimeout\(\s*pendingAcquire/g) || [])
+      .length,
+    2
+  );
+  assert.equal(
+    (sourceText.match(/void pendingAcquire\s*\.then/g) || []).length,
+    2,
+    'timed-out acquisitions must clean up any late lease or permit'
+  );
+});
+
+test('Redis command blackholes settle fail closed within the configured deadline', async () => {
+  const never = () => new Promise(() => {});
+  class HangingClient {
+    isReady = false;
+    on() {
+      return this;
+    }
+    async connect() {
+      this.isReady = true;
+    }
+    async close() {
+      this.isReady = false;
+    }
+    destroy() {
+      this.isReady = false;
+    }
+    async ping() {
+      return 'PONG';
+    }
+    get = never;
+    set = never;
+    del = never;
+    publish = never;
+    subscribe = never;
+    unsubscribe = never;
+    eval = never;
+    zAdd = never;
+    zRangeByScore = never;
+    zRem = never;
+  }
+
+  const command = new HangingClient();
+  const subscriber = new HangingClient();
+  const coordinator = new RedisCoordinator({
+    url: 'redis://redis.example.test:6379',
+    connectTimeoutMs: 10,
+    clientFactory: () => ({ command, subscriber }),
+  });
+  await coordinator.connect();
+  const operations = [
+    () => coordinator.publish('blackhole.topic', {}),
+    () => coordinator.subscribe('blackhole.topic', async () => undefined),
+    () => coordinator.getCache('blackhole-cache'),
+    () => coordinator.setCache('blackhole-cache', true, 1_000),
+    () => coordinator.consumeCache('blackhole-cache'),
+    () => coordinator.deleteCache('blackhole-cache'),
+    () => coordinator.acquireLease('blackhole-lease', 1_000),
+    () => coordinator.consumeRateLimit('blackhole-rate', 1, 1_000),
+    () => coordinator.refundRateLimit('blackhole-rate', randomUUID()),
+    () => coordinator.acquireSemaphore('blackhole-semaphore', 1, 1_000),
+    () => coordinator.setPresence('blackhole-presence', 'member', 1_000),
+    () => coordinator.listPresence('blackhole-presence'),
+    () => coordinator.clearPresence('blackhole-presence', 'member'),
+    () => coordinator.getRevocationEpoch('blackhole-revocation'),
+    () => coordinator.revoke('blackhole-revocation'),
+  ];
+  for (const operation of operations) {
+    const startedAt = Date.now();
+    await assert.rejects(operation, CoordinationUnavailableError);
+    assert.ok(Date.now() - startedAt < 250);
+  }
+  await coordinator.close();
+});
+
+test('concurrent Redis subscribers share setup and retry only after late cleanup', async () => {
+  class CommandClient {
+    isReady = false;
+    on() {
+      return this;
+    }
+    async connect() {
+      this.isReady = true;
+    }
+    async close() {
+      this.isReady = false;
+    }
+    destroy() {
+      this.isReady = false;
+    }
+    async ping() {
+      return 'PONG';
+    }
+  }
+  class DelayedSubscriber extends CommandClient {
+    unsubscribeCalls = 0;
+    first = true;
+    resolveFirst;
+    subscribe() {
+      if (!this.first) return Promise.resolve();
+      this.first = false;
+      return new Promise(resolve => {
+        this.resolveFirst = resolve;
+      });
+    }
+    async unsubscribe() {
+      this.unsubscribeCalls += 1;
+    }
+  }
+
+  const command = new CommandClient();
+  const subscriber = new DelayedSubscriber();
+  const coordinator = new RedisCoordinator({
+    url: 'redis://redis.example.test:6379',
+    connectTimeoutMs: 10,
+    clientFactory: () => ({ command, subscriber }),
+  });
+  await coordinator.connect();
+  const firstOpening = coordinator.subscribe(
+    'late-subscribe',
+    async () => undefined
+  );
+  const secondOpening = coordinator.subscribe(
+    'late-subscribe',
+    async () => undefined
+  );
+  await Promise.all([
+    assert.rejects(firstOpening, CoordinationUnavailableError),
+    assert.rejects(secondOpening, CoordinationUnavailableError),
+  ]);
+  assert.equal(subscriber.first, false);
+  await assert.rejects(
+    coordinator.subscribe('late-subscribe', async () => undefined),
+    CoordinationUnavailableError,
+    'retry remains fail-closed until the abandoned client command settles'
+  );
+  subscriber.resolveFirst();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(subscriber.unsubscribeCalls, 1);
+  const liveUnsubscribe = await coordinator.subscribe(
+    'late-subscribe',
+    async () => undefined
+  );
+  await liveUnsubscribe();
+  assert.equal(subscriber.unsubscribeCalls, 2);
+  await coordinator.close();
+});
+
+test('Redis semaphore expiry uses Redis time instead of replica clocks', async () => {
+  const redisNow = 1_900_000_000_000;
+  const evalCalls = [];
+  class FakeClient {
+    isReady = false;
+    on() {
+      return this;
+    }
+    async connect() {
+      this.isReady = true;
+    }
+    async close() {
+      this.isReady = false;
+    }
+    destroy() {
+      this.isReady = false;
+    }
+    async ping() {
+      return 'PONG';
+    }
+    async eval(script, options) {
+      evalCalls.push({ script, options });
+      if (
+        script.includes("redis.call('TIME')") &&
+        options.arguments.length === 3
+      ) {
+        return [1, redisNow + Number(options.arguments[0])];
+      }
+      if (
+        script.includes("redis.call('TIME')") &&
+        options.arguments.length === 2
+      ) {
+        return redisNow + Number(options.arguments[1]);
+      }
+      throw new Error('Unexpected test command');
+    }
+    async zRem() {
+      return 1;
+    }
+  }
+
+  const command = new FakeClient();
+  const subscriber = new FakeClient();
+  const coordinator = new RedisCoordinator({
+    url: 'redis://redis.example.test:6379',
+    now: () => redisNow + 31_536_000_000,
+    clientFactory: () => ({ command, subscriber }),
+  });
+  await coordinator.connect();
+  const permit = await coordinator.acquireSemaphore('clock-skew', 1, 5_000);
+  assert.ok(permit);
+  assert.equal(permit.expiresAt, redisNow + 5_000);
+  assert.deepEqual(evalCalls[0].options.arguments.slice(0, 2), ['5000', '1']);
+  assert.equal(evalCalls[0].options.arguments.length, 3);
+  assert.equal(await permit.extend(7_000), true);
+  assert.equal(permit.expiresAt, redisNow + 7_000);
+  assert.equal(evalCalls[1].options.arguments.length, 2);
+  await coordinator.close();
 });
 
 test('Redis subscriptions contain malformed messages and handler failures', async () => {
@@ -753,6 +1412,43 @@ test(
     ]);
     assert.equal(consumed.filter(Boolean).length, 1);
     assert.deepEqual(consumed.find(Boolean), { value: 8 });
+
+    const sharedRateKey = `replica-rate:${randomUUID()}`;
+    const firstRate = await first.consumeRateLimit(sharedRateKey, 2, 5_000);
+    const secondRate = await second.consumeRateLimit(sharedRateKey, 2, 5_000);
+    assert.equal(firstRate.allowed, true);
+    assert.equal(secondRate.remaining, 0);
+    assert.equal(
+      await second.refundRateLimit(sharedRateKey, firstRate.windowToken),
+      true
+    );
+    assert.equal(
+      (await first.consumeRateLimit(sharedRateKey, 2, 5_000)).allowed,
+      true
+    );
+    assert.equal(
+      (await second.consumeRateLimit(sharedRateKey, 2, 5_000)).allowed,
+      false
+    );
+
+    const rotatingRateKey = `rotating-rate:${randomUUID()}`;
+    const oldRateWindow = await first.consumeRateLimit(rotatingRateKey, 2, 25);
+    await new Promise(resolve => setTimeout(resolve, 40));
+    const newRateWindow = await second.consumeRateLimit(
+      rotatingRateKey,
+      2,
+      1_000
+    );
+    assert.notEqual(newRateWindow.windowToken, oldRateWindow.windowToken);
+    assert.equal(
+      await first.refundRateLimit(rotatingRateKey, oldRateWindow.windowToken),
+      false
+    );
+    assert.equal(
+      (await second.consumeRateLimit(rotatingRateKey, 2, 1_000)).remaining,
+      0
+    );
+
     const lease = await first.acquireLease('shared-lock', 5_000);
     assert.ok(lease);
     assert.equal(await second.acquireLease('shared-lock', 5_000), null);
@@ -769,10 +1465,93 @@ test(
     );
     await Promise.all(permits.map(permit => permit.release()));
 
+    const expiringHolder = await first.acquireSemaphore(
+      'staggered-capacity',
+      2,
+      100
+    );
+    assert.ok(expiringHolder);
+    await new Promise(resolve => setTimeout(resolve, 20));
+    const laterHolder = await second.acquireSemaphore(
+      'staggered-capacity',
+      2,
+      1_000
+    );
+    assert.ok(laterHolder);
+    await new Promise(resolve => setTimeout(resolve, 120));
+    assert.equal(
+      await expiringHolder.extend(1_000),
+      false,
+      'an expired holder must not be resurrected while a later holder keeps the key alive'
+    );
+    assert.ok(await first.acquireSemaphore('staggered-capacity', 2, 1_000));
+    await laterHolder.release();
+
+    const normalClock = new RedisCoordinator({
+      url: process.env.TEST_REDIS_URL,
+      keyPrefix: prefix,
+      now: Date.now,
+    });
+    const clockAheadReplica = new RedisCoordinator({
+      url: process.env.TEST_REDIS_URL,
+      keyPrefix: prefix,
+      now: () => Date.now() + 31_536_000_000,
+    });
+    await Promise.all([normalClock.connect(), clockAheadReplica.connect()]);
+    t.after(() =>
+      Promise.allSettled([normalClock.close(), clockAheadReplica.close()])
+    );
+    const liveHolder = await normalClock.acquireSemaphore(
+      'clock-skew-capacity',
+      1,
+      5_000
+    );
+    assert.ok(liveHolder);
+    assert.equal(
+      await clockAheadReplica.acquireSemaphore('clock-skew-capacity', 1, 5_000),
+      null,
+      'an app clock that is one year ahead must not evict a live holder'
+    );
+    await liveHolder.release();
+
+    await normalClock.setPresence('clock-skew-presence', 'normal', 5_000);
+    assert.deepEqual(
+      await clockAheadReplica.listPresence('clock-skew-presence'),
+      ['normal'],
+      'an app clock that is one year ahead must not evict live presence'
+    );
+    await clockAheadReplica.setPresence('clock-skew-presence', 'ahead', 5_000);
+    assert.deepEqual(
+      await normalClock.listPresence('clock-skew-presence'),
+      ['ahead', 'normal'],
+      'a skewed publisher must still use the Redis expiry clock'
+    );
+
     await first.setPresence('apps', 'replica-a', 5_000);
     assert.deepEqual(await second.listPresence('apps'), ['replica-a']);
+    let revokeDelivered;
+    const revokeDelivery = new Promise(resolve => {
+      revokeDelivered = resolve;
+    });
+    const unsubscribeRevocation = await first.subscribe(
+      'security.revoked',
+      event => revokeDelivered(event.payload)
+    );
     const epoch = await second.revoke('user:one');
     assert.equal(await first.getRevocationEpoch('user:one'), epoch);
+    assert.deepEqual(
+      await Promise.race([
+        revokeDelivery,
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Redis revoke event timed out')),
+            3_000
+          )
+        ),
+      ]),
+      { subject: 'user:one', epoch }
+    );
+    await unsubscribeRevocation();
 
     await first.close();
     await assert.rejects(

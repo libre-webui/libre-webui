@@ -17,7 +17,8 @@
 
 import express, { Response } from 'express';
 import { randomUUID } from 'node:crypto';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
+import { isChatCancellationSafetyRequest } from '../middleware/chatCancellationAdmission.js';
 import chatService from '../services/chatService.js';
 import ollamaService from '../services/ollamaService.js';
 import pluginService from '../services/pluginService.js';
@@ -68,6 +69,18 @@ const CHAT_EVENT_MAX_FRAME_BYTES = 128 * 1024;
 const CHAT_EVENT_DRAIN_TIMEOUT_MS = 15_000;
 
 const chatStreamId = (sessionId: string): string => `chat:${sessionId}`;
+
+const cancelChatGenerationByIdentity = async (
+  userId: string,
+  sessionId: string,
+  assistantMessageId: string
+) => {
+  return getDurableJobRuntime().service.requestChatCancellation({
+    actorUserId: userId,
+    sessionId,
+    assistantMessageId,
+  });
+};
 
 const writeChatSseFrame = async (
   res: Response,
@@ -151,6 +164,7 @@ const followUpService = new FollowUpService({
 
 // Rate limiter for chat routes: 60 requests per minute (reasonable for chat)
 const chatRateLimiter = rateLimit({
+  keyPrefix: 'chat-routes',
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 60, // limit each IP to 60 requests per minute
   message: {
@@ -159,6 +173,7 @@ const chatRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: isChatCancellationSafetyRequest,
 });
 
 // Apply rate limiter to all chat routes
@@ -615,7 +630,11 @@ router.post(
                 }
               : generationResult.response.message.providerMetadata,
         },
-        userId
+        userId,
+        {
+          assertPersistenceAllowed: () =>
+            throwIfChatGenerationCancelled(signal),
+        }
       );
 
       if (!assistantMessage) {
@@ -692,6 +711,46 @@ router.post(
       });
       return;
     }
+
+    let responseFinished = false;
+    let prematureClose = req.aborted || res.destroyed;
+    let queuedJobId: string | undefined;
+    let disconnectCancellation: Promise<unknown> | undefined;
+    const cancelCommittedJob = (): Promise<unknown> => {
+      if (disconnectCancellation) return disconnectCancellation;
+      disconnectCancellation = cancelChatGenerationByIdentity(
+        userId,
+        sessionId,
+        assistantMessageId
+      );
+      return disconnectCancellation;
+    };
+    const onPrematureClose = (): void => {
+      if (responseFinished) return;
+      prematureClose = true;
+      if (queuedJobId) {
+        void cancelCommittedJob().catch(error =>
+          logger.error('Failed to cancel disconnected chat generation:', error)
+        );
+      }
+    };
+    const cleanupCloseFence = (): void => {
+      req.off('aborted', onPrematureClose);
+      req.socket.off('close', onPrematureClose);
+      res.off('close', onPrematureClose);
+      res.off('finish', onResponseFinished);
+    };
+    const onResponseFinished = (): void => {
+      responseFinished = true;
+      cleanupCloseFence();
+    };
+    // Arm before enqueue: the SQL transaction may commit while the client
+    // closes before receiving its 202. That close becomes cancellation intent
+    // against the exact deterministic generation identity.
+    req.once('aborted', onPrematureClose);
+    req.socket.once('close', onPrematureClose);
+    res.once('close', onPrematureClose);
+    res.once('finish', onResponseFinished);
     try {
       const queued = await chatService.queueDurableGeneration({
         sessionId,
@@ -706,7 +765,20 @@ router.post(
         originalMessageId,
       });
       if (!queued) {
+        cleanupCloseFence();
         res.status(404).json({ success: false, error: 'Session not found' });
+        return;
+      }
+      queuedJobId = queued.jobId;
+      if (
+        prematureClose ||
+        req.aborted ||
+        req.socket.destroyed ||
+        res.destroyed
+      ) {
+        prematureClose = true;
+        await cancelCommittedJob();
+        cleanupCloseFence();
         return;
       }
       res.status(202).json({
@@ -719,11 +791,65 @@ router.post(
         },
       });
     } catch (error) {
+      if (
+        prematureClose ||
+        req.aborted ||
+        req.socket.destroyed ||
+        res.destroyed
+      ) {
+        prematureClose = true;
+        await cancelCommittedJob().catch(cancellationError =>
+          logger.error(
+            'Failed to resolve disconnected chat generation:',
+            cancellationError
+          )
+        );
+        cleanupCloseFence();
+        return;
+      }
       res.status(409).json({
         success: false,
         error: getErrorMessage(error, 'Unable to queue chat generation'),
       });
     }
+  }
+);
+
+router.post(
+  '/sessions/:sessionId/generations/:assistantMessageId/cancel',
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const sessionId = String(req.params.sessionId || '').trim();
+    const assistantMessageId = String(
+      req.params.assistantMessageId || ''
+    ).trim();
+    const userId = req.user?.userId || 'default';
+    if (!sessionId || !assistantMessageId) {
+      res.status(400).json({ success: false, error: 'Generation is required' });
+      return;
+    }
+    if (!(await chatService.getSession(sessionId, userId))) {
+      res.status(404).json({ success: false, error: 'Session not found' });
+      return;
+    }
+
+    // This is one SQL decision: completion already committed, or cancellation
+    // intent plus any existing natural-key job cancellation commit together.
+    // When the job is not present yet, enqueue consumes the durable intent and
+    // creates it directly in a terminal cancelled state.
+    const decision = await cancelChatGenerationByIdentity(
+      userId,
+      sessionId,
+      assistantMessageId
+    );
+    res.status(202).json({
+      success: true,
+      data:
+        decision.outcome === 'completion-won'
+          ? { completed: true }
+          : decision.job
+            ? { jobId: decision.job.id, state: decision.job.state }
+            : { pending: true },
+    });
   }
 );
 
@@ -790,6 +916,7 @@ router.get(
       subscription = await getDurableEventGateway().subscribe({
         afterCursor,
         streamId: chatStreamId(sessionId),
+        ...(generationId ? { subjectId: generationId } : {}),
         batchSize: 100,
         maxReplayEvents: 10_000,
         signal: abort.signal,
@@ -1087,7 +1214,11 @@ router.post(
               model: session.model,
               providerMetadata: withSearchSources(assistantProviderMetadata),
             },
-            userId
+            userId,
+            {
+              assertPersistenceAllowed: () =>
+                throwIfChatGenerationCancelled(signal),
+            }
           );
         }
         await emitDurable({ type: 'done' });
@@ -1194,7 +1325,11 @@ router.post(
               model: session.model,
               providerMetadata: withSearchSources(assistantProviderMetadata),
             },
-            userId
+            userId,
+            {
+              assertPersistenceAllowed: () =>
+                throwIfChatGenerationCancelled(signal),
+            }
           );
         }
         await emitDurable({ type: 'done' });
@@ -1246,7 +1381,11 @@ router.post(
                   model: session.model,
                   providerMetadata: withSearchSources(undefined),
                 },
-                userId
+                userId,
+                {
+                  assertPersistenceAllowed: () =>
+                    throwIfChatGenerationCancelled(signal),
+                }
               );
             }
             if (signal.aborted || res.writableEnded) return;

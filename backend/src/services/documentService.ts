@@ -58,6 +58,7 @@ import { getDurableJobRuntime } from '../platform/jobs/durableJobRuntime.js';
 import { transactionalResourceDeletionEnqueuer } from '../platform/jobs/resourceDeletionEnqueuer.js';
 import preferencesService from './preferencesService.js';
 import { createLogger } from '../utils/logger.js';
+import { throwIfChatGenerationCancelled } from '../utils/chatCancellation.js';
 
 const logger = createLogger('documents');
 
@@ -1475,7 +1476,8 @@ export class DocumentService {
       userId,
       sessionId,
       limit,
-      collectionIds
+      collectionIds,
+      signal
     );
   }
 
@@ -1507,7 +1509,8 @@ export class DocumentService {
           userId,
           sessionId,
           limit,
-          collectionIds
+          collectionIds,
+          signal
         );
       }
 
@@ -1521,8 +1524,10 @@ export class DocumentService {
       >();
       const unembedded: { chunk: DocumentChunk; document: Document }[] = [];
       for (const document of documents) {
+        throwIfChatGenerationCancelled(signal);
         let searchableDocument = document;
         let documentChunks = await this.loadDocumentChunks(document.id);
+        throwIfChatGenerationCancelled(signal);
 
         if (
           platform.dialect === 'sqlite' &&
@@ -1664,6 +1669,7 @@ export class DocumentService {
         offset < resourceIds.length;
         offset += MAX_VECTOR_RESOURCE_FILTERS
       ) {
+        throwIfChatGenerationCancelled(signal);
         hits.push(
           ...(await platform.vectorStore.query({
             actor: { userId },
@@ -1680,6 +1686,7 @@ export class DocumentService {
             ),
           }))
         );
+        throwIfChatGenerationCancelled(signal);
       }
       hits.sort(
         (left, right) =>
@@ -1728,7 +1735,8 @@ export class DocumentService {
         userId,
         sessionId,
         limit,
-        collectionIds
+        collectionIds,
+        signal
       );
     } catch (error) {
       if (signal?.aborted) throw error;
@@ -1741,7 +1749,8 @@ export class DocumentService {
         userId,
         sessionId,
         limit,
-        collectionIds
+        collectionIds,
+        signal
       );
     }
   }
@@ -1778,12 +1787,16 @@ export class DocumentService {
     userId: string,
     sessionId?: string,
     limit = 5,
-    collectionIds?: string[]
+    collectionIds?: string[],
+    signal?: AbortSignal
   ): Promise<DocumentChunk[]> {
     const candidates: { chunk: DocumentChunk; document: Document }[] = [];
 
+    throwIfChatGenerationCancelled(signal);
     for (const document of await storageService.getAllDocuments(userId)) {
+      throwIfChatGenerationCancelled(signal);
       const documentChunks = await this.loadDocumentChunks(document.id);
+      throwIfChatGenerationCancelled(signal);
 
       if (!this.documentInScope(document, sessionId, collectionIds)) continue;
 
@@ -1791,6 +1804,7 @@ export class DocumentService {
         candidates.push({ chunk, document });
       }
     }
+    throwIfChatGenerationCancelled(signal);
     const results = this.scoreChunksByKeywords(query, candidates);
 
     return results.slice(0, limit).map(result => ({

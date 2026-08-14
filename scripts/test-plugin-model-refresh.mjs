@@ -23,6 +23,13 @@ process.env.DATA_DIR = path.join(testDataDir, 'data');
 fs.mkdirSync(process.env.PLUGINS_DIR, { recursive: true });
 process.chdir(testDataDir);
 
+const coordinationModule = await import(
+  pathToFileURL(
+    path.join(distRoot, 'platform', 'coordination', 'service.js')
+  ).href
+);
+await coordinationModule.initializeCoordinator();
+
 const pluginServiceModule = await import(
   pathToFileURL(path.join(distRoot, 'services', 'pluginService.js')).href
 );
@@ -40,7 +47,8 @@ const { authService } = await import(
   pathToFileURL(path.join(distRoot, 'services', 'authService.js')).href
 );
 
-after(() => {
+after(async () => {
+  await coordinationModule.closeCoordinator();
   databaseModule.closeDatabase();
   process.chdir(originalWorkingDirectory);
   fs.rmSync(testDataDir, { recursive: true, force: true });

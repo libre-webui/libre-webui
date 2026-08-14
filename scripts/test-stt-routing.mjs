@@ -504,6 +504,63 @@ test('STT upload accepts only the bounded transcription form', async () => {
   }
 });
 
+test('STT upload buffering stops immediately when shared admission is lost', async () => {
+  const app = express();
+  app.post('/upload', async (req, res) => {
+    const controller = new AbortController();
+    req.once('data', () =>
+      controller.abort(new Error('shared STT upload permit was lost'))
+    );
+    try {
+      await parseSTTAudioUpload(req, res, controller.signal);
+      res.status(200).end();
+    } catch (error) {
+      res.status(503).json({ error: error.message, buffered: req.file?.size });
+    }
+  });
+  const { server, port } = await startServer(app);
+  const boundary = 'libre-stalled-stt-upload';
+  let uploadRequest;
+  try {
+    const response = await new Promise((resolve, reject) => {
+      const request = http.request(
+        {
+          host: '127.0.0.1',
+          port,
+          path: '/upload',
+          method: 'POST',
+          headers: {
+            'content-type': `multipart/form-data; boundary=${boundary}`,
+          },
+        },
+        incoming => {
+          let body = '';
+          incoming.setEncoding('utf8');
+          incoming.on('data', chunk => {
+            body += chunk;
+          });
+          incoming.on('end', () =>
+            resolve({ status: incoming.statusCode, body })
+          );
+        }
+      );
+      uploadRequest = request;
+      request.once('error', reject);
+      request.write(
+        `--${boundary}\r\nContent-Disposition: form-data; name="audio"; filename="slow.wav"\r\nContent-Type: audio/wav\r\n\r\n`
+      );
+      request.write(Buffer.alloc(64 * 1024, 0x61));
+    });
+    assert.equal(response.status, 503);
+    assert.match(response.body, /shared STT upload permit was lost/);
+    assert.doesNotMatch(response.body, /"buffered":\s*[1-9]/);
+  } finally {
+    uploadRequest?.destroy();
+    server.closeAllConnections?.();
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
 test('STT observes disconnects before upload parsing and provider dispatch', () => {
   const routeSource = fs.readFileSync(
     path.join(repoRoot, 'backend/src/routes/stt.ts'),
@@ -513,7 +570,7 @@ test('STT observes disconnects before upload parsing and provider dispatch', () 
     'const abort = requestAbortSignal(req, res);'
   );
   const uploadIndex = routeSource.indexOf(
-    'await parseSTTAudioUpload(req, res);'
+    'await parseSTTAudioUpload(req, res, operationSignal);'
   );
   assert.ok(signalIndex >= 0 && signalIndex < uploadIndex);
 

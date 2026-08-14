@@ -35,10 +35,12 @@ import { PostgresDurableJobRepository } from '../backend/dist/platform/jobs/post
 import { PostgresDurableJobService } from '../backend/dist/platform/jobs/postgresDurableJobService.js';
 import { durableEventId } from '../backend/dist/platform/jobs/durableEventIdentity.js';
 import {
+  CHAT_GENERATE_JOB_TYPE,
   OWNER_DELETE_CONTENT_JOB_TYPE,
   OWNER_DELETE_CONTENT_RECOVERY_IDEMPOTENCY_SCOPE,
   RESOURCE_DELETE_JOB_TYPE,
   RESOURCE_DELETE_RECOVERY_IDEMPOTENCY_SCOPE,
+  chatGenerationIdempotencyScope,
 } from '../backend/dist/platform/jobs/domainJobContracts.js';
 import { Aes256GcmKeyring } from '../backend/dist/platform/storage/aesGcmKeyring.js';
 import { getPluginDefinitionFingerprint } from '../backend/dist/utils/pluginDefinitionTrust.js';
@@ -78,13 +80,18 @@ test('PostgreSQL configuration rejects ambiguous TLS and unsafe bounds', () => {
 test('PostgreSQL migration registry is contiguous, checksummed, and frozen', () => {
   assert.deepEqual(
     POSTGRES_MIGRATIONS.map(migration => migration.version),
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
   );
   validatePostgresMigrationRegistry(POSTGRES_MIGRATIONS);
   assert.equal(Object.isFrozen(POSTGRES_MIGRATIONS), true);
   assert.equal(POSTGRES_MIGRATIONS.every(Object.isFrozen), true);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 12);
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 11);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 13);
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 12);
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'durable-event-replay-index');
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    /CREATE INDEX idx_platform_events_stream_subject_cursor\s+ON platform_events \(stream_id, subject_id, global_cursor\)/
+  );
   assert.equal(
     SQLITE_MIGRATION_CONTRACT.some(
       migration => migration.name === 'blob-quotas'
@@ -105,13 +112,46 @@ test('PostgreSQL migration registry is contiguous, checksummed, and frozen', () 
   );
 });
 
+test('PostgreSQL event replay applies stream and subject filters before its limit', async () => {
+  let observed;
+  const repository = new PostgresDurableJobRepository({
+    async query(text, parameters) {
+      observed = { text, parameters };
+      return { rows: [], rowCount: 0 };
+    },
+  });
+
+  assert.deepEqual(
+    await repository.replayStoredEvents(10_001, 100, {
+      streamId: 'chat:long-session',
+      subjectId: 'current-assistant',
+    }),
+    []
+  );
+  assert.match(
+    observed.text,
+    /WHERE global_cursor > \$1 AND stream_id = \$2 AND subject_id = \$3\s+ORDER BY global_cursor ASC LIMIT \$4/
+  );
+  assert.deepEqual(observed.parameters, [
+    10_001,
+    'chat:long-session',
+    'current-assistant',
+    100,
+  ]);
+});
+
 class FakeClient {
   queries = [];
   releasedWith = undefined;
 
+  constructor(onQuery) {
+    this.onQuery = onQuery;
+  }
+
   async query(text, parameters = []) {
     this.queries.push({ text, parameters });
     if (text === 'SELECT fail') throw new Error('sentinel failure');
+    this.onQuery?.(text);
     return { rows: [{ healthy: 1 }], rowCount: 1 };
   }
 
@@ -128,6 +168,7 @@ class FakePool {
   ended = false;
   endCalls = 0;
   clients = [];
+  onClientQuery;
 
   async query(text, parameters = []) {
     this.directQueries.push({ text, parameters });
@@ -135,7 +176,7 @@ class FakePool {
   }
 
   async connect() {
-    const client = new FakeClient();
+    const client = new FakeClient(this.onClientQuery);
     this.clients.push(client);
     return client;
   }
@@ -171,6 +212,51 @@ test('PostgresDatabase pins, commits, rolls back, releases, and closes', async (
     ['BEGIN ISOLATION LEVEL READ COMMITTED', 'SELECT fail', 'ROLLBACK']
   );
   assert.match(pool.clients[1].releasedWith.message, /sentinel failure/);
+
+  const deniedCommit = new AbortController();
+  deniedCommit.abort(new Error('shared archive admission was lost'));
+  await assert.rejects(
+    database.transaction(
+      async client => {
+        await client.query('INSERT fenced');
+      },
+      { beforeCommit: () => deniedCommit.signal.throwIfAborted() }
+    ),
+    /shared archive admission was lost/
+  );
+  assert.deepEqual(
+    pool.clients[2].queries.map(query => query.text),
+    ['BEGIN ISOLATION LEVEL READ COMMITTED', 'INSERT fenced', 'ROLLBACK']
+  );
+
+  const lossAfterCommitDecision = new AbortController();
+  pool.onClientQuery = statement => {
+    if (statement === 'COMMIT') {
+      lossAfterCommitDecision.abort(
+        new Error('renewal failed after COMMIT was selected')
+      );
+    }
+  };
+  assert.equal(
+    await database.transaction(
+      async client => {
+        await client.query('INSERT committed-after-fence');
+        return 'committed';
+      },
+      { beforeCommit: () => lossAfterCommitDecision.signal.throwIfAborted() }
+    ),
+    'committed'
+  );
+  assert.equal(lossAfterCommitDecision.signal.aborted, true);
+  assert.deepEqual(
+    pool.clients[3].queries.map(query => query.text),
+    [
+      'BEGIN ISOLATION LEVEL READ COMMITTED',
+      'INSERT committed-after-fence',
+      'COMMIT',
+    ]
+  );
+  pool.onClientQuery = undefined;
 
   const health = await database.health();
   assert.equal(health.ready, true);
@@ -252,7 +338,7 @@ test(
         initializePostgresPersistence(config, codec),
       ]);
       assert.equal(first.schemaCompatibility.status, 'compatible');
-      assert.equal(second.schemaCompatibility.currentVersion, 11);
+      assert.equal(second.schemaCompatibility.currentVersion, 12);
       assert.equal((await first.health()).ready, true);
 
       const assertStructuralDamage = async (mutation, expected) => {
@@ -297,6 +383,10 @@ test(
       await assertStructuralDamage(
         'CREATE INDEX audit_unexpected_index ON users(updated_at)',
         /unexpected index audit_unexpected_index/i
+      );
+      await assertStructuralDamage(
+        'DROP INDEX idx_platform_events_stream_subject_cursor',
+        /missing index idx_platform_events_stream_subject_cursor/i
       );
       await assertStructuralDamage(
         `CREATE FUNCTION audit_unexpected_trigger_function()
@@ -405,6 +495,32 @@ test(
         created_at: 2,
         updated_at: 2,
       });
+      await identity.insert({
+        id: 'status-only',
+        username: 'status-only',
+        email: 'status-only@example.test',
+        password_hash: 'hash-status-only',
+        role: 'user',
+        account_status: 'active',
+        approved_at: 2,
+        approved_by: 'default',
+        avatar: null,
+        created_at: 2,
+        updated_at: 2,
+      });
+      await first.database.query(
+        "UPDATE users SET email = '00:00:00' WHERE id = 'status-only'"
+      );
+      assert.equal(
+        await identity.findAccountStatusById('status-only'),
+        'active',
+        'authorization status must not decode unrelated identity ciphertext'
+      );
+      await assert.rejects(
+        identity.findPublicById('status-only'),
+        /Invalid encrypted identity email/
+      );
+      await first.database.query("DELETE FROM users WHERE id = 'status-only'");
       assert.equal(await identity.emailExists('waiting@example.test'), true);
       assert.equal(
         (await identity.findByUsername('waiting')).email,
@@ -781,6 +897,619 @@ test(
         error => error?.code === 'conflict'
       );
 
+      const cancellationIdentity = (sessionId, assistantMessageId) => ({
+        eventId: durableEventId(
+          'chat',
+          sessionId,
+          assistantMessageId,
+          'cancel-requested',
+          'waiting'
+        ),
+        streamId: `chat:${sessionId}`,
+        subjectId: assistantMessageId,
+        actorUserId: 'waiting',
+      });
+      const chatJobInput = (sessionId, assistantMessageId) => ({
+        jobType: CHAT_GENERATE_JOB_TYPE,
+        actorUserId: 'waiting',
+        idempotencyScope: chatGenerationIdempotencyScope(sessionId),
+        idempotencyKey: assistantMessageId,
+        payload: {
+          mode: 'encrypted',
+          value: { sessionId, assistantMessageId },
+        },
+        priority: 100,
+      });
+      const chatCompletionInput = (sessionId, assistantMessageId, lease) => ({
+        lease: {
+          jobId: lease.id,
+          workerId: lease.workerId,
+          leaseToken: lease.leaseToken,
+        },
+        actorUserId: 'waiting',
+        sessionId,
+        expectedJobType: CHAT_GENERATE_JOB_TYPE,
+        message: {
+          id: assistantMessageId,
+          sessionId,
+          role: 'assistant',
+          content: `protected-${assistantMessageId}`,
+          thinking: null,
+          timestamp: Date.now(),
+          model: 'postgres-model',
+          providerMetadata: null,
+          images: null,
+          statistics: null,
+          artifacts: null,
+          parentId: null,
+          isActive: 1,
+          rating: null,
+        },
+        event: {
+          eventId: durableEventId(
+            'chat',
+            sessionId,
+            assistantMessageId,
+            'done'
+          ),
+          streamId: `chat:${sessionId}`,
+          eventType: 'chat.done.v1',
+          subjectId: assistantMessageId,
+          actorUserId: 'waiting',
+          payload: {
+            mode: 'encrypted',
+            value: {
+              type: 'done',
+              messageId: assistantMessageId,
+              content: `answer-${assistantMessageId}`,
+            },
+          },
+        },
+      });
+      const insertChatSession = sessionId =>
+        first.database.query(
+          `INSERT INTO sessions
+             (id, user_id, title, model, persona_id, provider_type,
+              provider_id, created_at, updated_at, archived, settings,
+              folder_id, pinned)
+           VALUES ($1, 'waiting', $2, 'postgres-model', NULL, NULL, NULL,
+                   $3, $3, 0, NULL, NULL, 0)`,
+          [sessionId, `protected-${sessionId}`, Date.now()]
+        );
+
+      const preCancelledSession = 'postgres-pre-cancelled-chat';
+      const preCancelledAssistant = 'postgres-pre-cancelled-assistant';
+      const preDecision = await durableServices[0].requestChatCancellation({
+        actorUserId: 'waiting',
+        sessionId: preCancelledSession,
+        assistantMessageId: preCancelledAssistant,
+      });
+      assert.equal(preDecision.outcome, 'cancellation-recorded');
+      assert.equal(preDecision.job, null);
+      const preCancelledEnqueue = await first.database.transaction(client =>
+        durableServices[0].enqueueChatGenerationWithExecutor(
+          client,
+          chatJobInput(preCancelledSession, preCancelledAssistant),
+          cancellationIdentity(preCancelledSession, preCancelledAssistant)
+        )
+      );
+      assert.equal(preCancelledEnqueue.created, true);
+      assert.equal(preCancelledEnqueue.job.state, 'cancelled');
+      assert.equal(preCancelledEnqueue.job.attemptCount, 0);
+
+      const acknowledgementSession = 'postgres-chat-ack-loss';
+      const acknowledgementAssistant = 'postgres-assistant-ack-loss';
+      await insertChatSession(acknowledgementSession);
+      let loseCompletionAcknowledgement = false;
+      const acknowledgementDatabase = {
+        query: first.database.query.bind(first.database),
+        async transaction(operation, options) {
+          const result = await first.database.transaction(operation, options);
+          if (loseCompletionAcknowledgement) {
+            loseCompletionAcknowledgement = false;
+            throw new Error('connection lost after chat completion COMMIT');
+          }
+          return result;
+        },
+      };
+      const acknowledgementService = new PostgresDurableJobService(
+        new PostgresDurableJobRepository(acknowledgementDatabase),
+        durableKeyring
+      );
+      const acknowledgementJob = await acknowledgementService.enqueue(
+        chatJobInput(acknowledgementSession, acknowledgementAssistant)
+      );
+      const acknowledgementLease = await acknowledgementService.claim(
+        'postgres-chat-ack-worker',
+        30_000
+      );
+      assert.equal(acknowledgementLease?.id, acknowledgementJob.id);
+      loseCompletionAcknowledgement = true;
+      const acknowledgementCursor =
+        await acknowledgementService.publishChatCompletion(
+          chatCompletionInput(
+            acknowledgementSession,
+            acknowledgementAssistant,
+            acknowledgementLease
+          )
+        );
+      assert.ok(acknowledgementCursor > 0);
+      const acknowledgementMetadata = await acknowledgementService.getMetadata(
+        acknowledgementJob.id
+      );
+      assert.equal(acknowledgementMetadata.state, 'succeeded');
+      assert.equal(
+        acknowledgementMetadata.resultReference,
+        `chat-message:${acknowledgementAssistant}`
+      );
+      assert.equal(
+        acknowledgementMetadata.progressCurrent,
+        acknowledgementMetadata.progressTotal
+      );
+      assert.equal(
+        (await acknowledgementService.listAttempts(acknowledgementJob.id))[0]
+          .outcome,
+        'succeeded'
+      );
+      const completionWon =
+        await acknowledgementService.requestChatCancellation({
+          actorUserId: 'waiting',
+          sessionId: acknowledgementSession,
+          assistantMessageId: acknowledgementAssistant,
+        });
+      assert.equal(completionWon.outcome, 'completion-won');
+      assert.equal(
+        (
+          await first.database.query(
+            `SELECT COUNT(*)::text AS count FROM platform_events
+              WHERE event_id = $1`,
+            [
+              cancellationIdentity(
+                acknowledgementSession,
+                acknowledgementAssistant
+              ).eventId,
+            ]
+          )
+        ).rows[0].count,
+        '0'
+      );
+
+      const cancellationSession = 'postgres-cancel-publish-race';
+      const cancellationAssistant = 'postgres-cancel-publish-assistant';
+      await insertChatSession(cancellationSession);
+      const cancellationJob = await durableServices[0].enqueue(
+        chatJobInput(cancellationSession, cancellationAssistant)
+      );
+      const cancellationLease = await durableServices[0].claim(
+        'postgres-cancel-publish-worker',
+        30_000
+      );
+      assert.equal(cancellationLease?.id, cancellationJob.id);
+      await first.database.query(
+        `INSERT INTO platform_event_stream_heads
+           (stream_id, last_sequence) VALUES ($1, 0)
+         ON CONFLICT (stream_id) DO NOTHING`,
+        [`chat:${cancellationSession}`]
+      );
+      let releaseChatHead;
+      let chatHeadReadyResolve;
+      const chatHeadRelease = new Promise(resolve => {
+        releaseChatHead = resolve;
+      });
+      const chatHeadReady = new Promise(resolve => {
+        chatHeadReadyResolve = resolve;
+      });
+      const heldChatHead = first.database.withClient(async client => {
+        await client.query('BEGIN');
+        try {
+          await client.query(
+            `SELECT last_sequence FROM platform_event_stream_heads
+              WHERE stream_id = $1 FOR UPDATE`,
+            [`chat:${cancellationSession}`]
+          );
+          chatHeadReadyResolve();
+          await chatHeadRelease;
+          await client.query('COMMIT');
+        } catch (error) {
+          await client.query('ROLLBACK');
+          throw error;
+        }
+      });
+      await chatHeadReady;
+      const cancellationDecision = durableServices[1].requestChatCancellation({
+        actorUserId: 'waiting',
+        sessionId: cancellationSession,
+        assistantMessageId: cancellationAssistant,
+      });
+      let cancellationWaiterObserved = false;
+      let rejectedCompletion;
+      try {
+        for (let attempt = 0; attempt < 100; attempt += 1) {
+          const waiters = await first.database.query(
+            `SELECT 1 FROM pg_stat_activity
+              WHERE datname = current_database()
+                AND wait_event_type = 'Lock'
+                AND query LIKE '%platform_event_stream_heads%FOR UPDATE%'
+              LIMIT 1`
+          );
+          if (waiters.rowCount === 1) {
+            cancellationWaiterObserved = true;
+            break;
+          }
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+        rejectedCompletion = durableServices[0].publishChatCompletion(
+          chatCompletionInput(
+            cancellationSession,
+            cancellationAssistant,
+            cancellationLease
+          )
+        );
+      } finally {
+        releaseChatHead();
+        await heldChatHead;
+      }
+      assert.equal(cancellationWaiterObserved, true);
+      const cancellationResult = await cancellationDecision;
+      assert.equal(cancellationResult.outcome, 'cancellation-recorded');
+      assert.equal(
+        cancellationResult.job?.cancellationRequestedAt !== null,
+        true
+      );
+      await assert.rejects(
+        rejectedCompletion,
+        error => error?.code === 'cancelled'
+      );
+      assert.equal(
+        (
+          await first.database.query(
+            `SELECT COUNT(*)::text AS count FROM session_messages
+              WHERE id = $1`,
+            [cancellationAssistant]
+          )
+        ).rows[0].count,
+        '0'
+      );
+      assert.equal(
+        await durableServices[0].fail(cancellationLease, {
+          retryable: false,
+          errorCode: 'cancelled-at-publish',
+          errorSummary: 'Cancellation won the PostgreSQL publish barrier',
+          backoffMs: 0,
+        }),
+        'cancelled'
+      );
+
+      const expirySession = 'postgres-chat-expired-after-head-wait';
+      const expiryAssistant = 'postgres-expired-assistant';
+      await insertChatSession(expirySession);
+      let fencedNow = 1_000_000;
+      const fencedService = new PostgresDurableJobService(
+        new PostgresDurableJobRepository(first.database, () => fencedNow),
+        durableKeyring,
+        () => fencedNow
+      );
+      const expiryJob = await fencedService.enqueue(
+        chatJobInput(expirySession, expiryAssistant)
+      );
+      const expiryLease = await fencedService.claim(
+        'postgres-expiry-worker',
+        1000
+      );
+      assert.equal(expiryLease?.id, expiryJob.id);
+      await first.database.query(
+        `INSERT INTO platform_event_stream_heads
+           (stream_id, last_sequence) VALUES ($1, 0)
+         ON CONFLICT (stream_id) DO NOTHING`,
+        [`chat:${expirySession}`]
+      );
+      let releaseExpiryHead;
+      let expiryHeadReadyResolve;
+      const expiryHeadRelease = new Promise(resolve => {
+        releaseExpiryHead = resolve;
+      });
+      const expiryHeadReady = new Promise(resolve => {
+        expiryHeadReadyResolve = resolve;
+      });
+      const heldExpiryHead = first.database.withClient(async client => {
+        await client.query('BEGIN');
+        try {
+          await client.query(
+            `SELECT last_sequence FROM platform_event_stream_heads
+              WHERE stream_id = $1 FOR UPDATE`,
+            [`chat:${expirySession}`]
+          );
+          expiryHeadReadyResolve();
+          await expiryHeadRelease;
+          await client.query('COMMIT');
+        } catch (error) {
+          await client.query('ROLLBACK');
+          throw error;
+        }
+      });
+      await expiryHeadReady;
+      const expiredCompletion = fencedService.publishChatCompletion(
+        chatCompletionInput(expirySession, expiryAssistant, expiryLease)
+      );
+      let expiryWaiterObserved = false;
+      try {
+        for (let attempt = 0; attempt < 100; attempt += 1) {
+          const waiters = await first.database.query(
+            `SELECT 1 FROM pg_stat_activity
+              WHERE datname = current_database()
+                AND wait_event_type = 'Lock'
+                AND query LIKE '%platform_event_stream_heads%FOR UPDATE%'
+              LIMIT 1`
+          );
+          if (waiters.rowCount === 1) {
+            expiryWaiterObserved = true;
+            break;
+          }
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+        fencedNow = expiryLease.leaseExpiresAt + 1;
+      } finally {
+        releaseExpiryHead();
+        await heldExpiryHead;
+      }
+      assert.equal(expiryWaiterObserved, true);
+      await assert.rejects(
+        expiredCompletion,
+        error => error?.code === 'lease-lost'
+      );
+      assert.equal(
+        (
+          await first.database.query(
+            `SELECT COUNT(*)::text AS count FROM platform_events
+              WHERE event_id = $1`,
+            [durableEventId('chat', expirySession, expiryAssistant, 'done')]
+          )
+        ).rows[0].count,
+        '0'
+      );
+      assert.equal(
+        (
+          await fencedService.requestChatCancellation({
+            actorUserId: 'waiting',
+            sessionId: expirySession,
+            assistantMessageId: expiryAssistant,
+          })
+        ).outcome,
+        'cancellation-recorded'
+      );
+
+      const sessionExpirySession = 'postgres-chat-expired-after-session-wait';
+      const sessionExpiryAssistant = 'postgres-session-expired-assistant';
+      await insertChatSession(sessionExpirySession);
+      let sessionFenceNow = 2_000_000;
+      const sessionFencedService = new PostgresDurableJobService(
+        new PostgresDurableJobRepository(first.database, () => sessionFenceNow),
+        durableKeyring,
+        () => sessionFenceNow
+      );
+      const sessionExpiryJob = await sessionFencedService.enqueue(
+        chatJobInput(sessionExpirySession, sessionExpiryAssistant)
+      );
+      const sessionExpiryLease = await sessionFencedService.claim(
+        'postgres-session-expiry-worker',
+        1000
+      );
+      assert.equal(sessionExpiryLease?.id, sessionExpiryJob.id);
+      let releaseSessionLock;
+      let sessionLockReadyResolve;
+      const sessionLockRelease = new Promise(resolve => {
+        releaseSessionLock = resolve;
+      });
+      const sessionLockReady = new Promise(resolve => {
+        sessionLockReadyResolve = resolve;
+      });
+      const heldSessionLock = first.database.withClient(async client => {
+        await client.query('BEGIN');
+        try {
+          await client.query(
+            'SELECT user_id FROM sessions WHERE id = $1 FOR UPDATE',
+            [sessionExpirySession]
+          );
+          sessionLockReadyResolve();
+          await sessionLockRelease;
+          await client.query('COMMIT');
+        } catch (error) {
+          await client.query('ROLLBACK');
+          throw error;
+        }
+      });
+      await sessionLockReady;
+      const sessionExpiredCompletion =
+        sessionFencedService.publishChatCompletion(
+          chatCompletionInput(
+            sessionExpirySession,
+            sessionExpiryAssistant,
+            sessionExpiryLease
+          )
+        );
+      let sessionWaiterObserved = false;
+      try {
+        for (let attempt = 0; attempt < 100; attempt += 1) {
+          const waiters = await first.database.query(
+            `SELECT 1 FROM pg_stat_activity
+              WHERE datname = current_database()
+                AND wait_event_type = 'Lock'
+                AND query LIKE '%SELECT user_id FROM sessions%FOR UPDATE%'
+              LIMIT 1`
+          );
+          if (waiters.rowCount === 1) {
+            sessionWaiterObserved = true;
+            break;
+          }
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+        sessionFenceNow = sessionExpiryLease.leaseExpiresAt + 1;
+      } finally {
+        releaseSessionLock();
+        await heldSessionLock;
+      }
+      assert.equal(sessionWaiterObserved, true);
+      await assert.rejects(
+        sessionExpiredCompletion,
+        error => error?.code === 'lease-lost'
+      );
+      const sessionExpiredEventId = durableEventId(
+        'chat',
+        sessionExpirySession,
+        sessionExpiryAssistant,
+        'done'
+      );
+      assert.deepEqual(
+        (
+          await first.database.query(
+            `SELECT
+               (SELECT COUNT(*)::text FROM session_messages WHERE id = $1)
+                 AS messages,
+               (SELECT COUNT(*)::text FROM platform_events WHERE event_id = $2)
+                 AS events,
+               (SELECT state FROM platform_jobs WHERE id = $3) AS job_state,
+               (SELECT result_reference FROM platform_jobs WHERE id = $3)
+                 AS result_reference,
+               (SELECT outcome FROM platform_job_attempts
+                 WHERE job_id = $3 AND attempt_number = $4) AS attempt_outcome`,
+            [
+              sessionExpiryAssistant,
+              sessionExpiredEventId,
+              sessionExpiryJob.id,
+              sessionExpiryLease.attemptCount,
+            ]
+          )
+        ).rows[0],
+        {
+          messages: '0',
+          events: '0',
+          job_state: 'running',
+          result_reference: null,
+          attempt_outcome: 'running',
+        },
+        'an expired publisher must not commit an assistant, done event, or job success after the session lock wait'
+      );
+      assert.equal(
+        (
+          await sessionFencedService.requestChatCancellation({
+            actorUserId: 'waiting',
+            sessionId: sessionExpirySession,
+            assistantMessageId: sessionExpiryAssistant,
+          })
+        ).outcome,
+        'cancellation-recorded'
+      );
+
+      const sideEffectExpirySession =
+        'postgres-chat-expired-during-event-write';
+      const sideEffectExpiryAssistant =
+        'postgres-side-effect-expired-assistant';
+      const sideEffectExpiryEventId = durableEventId(
+        'chat',
+        sideEffectExpirySession,
+        sideEffectExpiryAssistant,
+        'done'
+      );
+      await insertChatSession(sideEffectExpirySession);
+      let sideEffectFenceNow = 3_000_000;
+      let sideEffectLeaseExpiresAt = Number.POSITIVE_INFINITY;
+      let sideEffectFenceArmed = false;
+      const sideEffectFenceDatabase = {
+        query: first.database.query.bind(first.database),
+        async transaction(operation, options) {
+          return first.database.transaction(
+            client =>
+              operation({
+                async query(statement, values) {
+                  const result = await client.query(statement, values);
+                  if (
+                    sideEffectFenceArmed &&
+                    typeof statement === 'string' &&
+                    statement.includes('INSERT INTO platform_events') &&
+                    values?.[0] === sideEffectExpiryEventId
+                  ) {
+                    sideEffectFenceNow = sideEffectLeaseExpiresAt + 1;
+                  }
+                  return result;
+                },
+              }),
+            options
+          );
+        },
+      };
+      const sideEffectFencedService = new PostgresDurableJobService(
+        new PostgresDurableJobRepository(
+          sideEffectFenceDatabase,
+          () => sideEffectFenceNow
+        ),
+        durableKeyring,
+        () => sideEffectFenceNow
+      );
+      const sideEffectExpiryJob = await sideEffectFencedService.enqueue(
+        chatJobInput(sideEffectExpirySession, sideEffectExpiryAssistant)
+      );
+      const sideEffectExpiryLease = await sideEffectFencedService.claim(
+        'postgres-side-effect-expiry-worker',
+        1000
+      );
+      assert.equal(sideEffectExpiryLease?.id, sideEffectExpiryJob.id);
+      sideEffectLeaseExpiresAt = sideEffectExpiryLease.leaseExpiresAt;
+      sideEffectFenceArmed = true;
+      await assert.rejects(
+        sideEffectFencedService.publishChatCompletion(
+          chatCompletionInput(
+            sideEffectExpirySession,
+            sideEffectExpiryAssistant,
+            sideEffectExpiryLease
+          )
+        ),
+        error => error?.code === 'lease-lost'
+      );
+      assert.equal(
+        sideEffectFenceNow > sideEffectExpiryLease.leaseExpiresAt,
+        true
+      );
+      assert.deepEqual(
+        (
+          await first.database.query(
+            `SELECT
+               (SELECT COUNT(*)::text FROM session_messages WHERE id = $1)
+                 AS messages,
+               (SELECT COUNT(*)::text FROM platform_events WHERE event_id = $2)
+                 AS events,
+               (SELECT state FROM platform_jobs WHERE id = $3) AS job_state,
+               (SELECT result_reference FROM platform_jobs WHERE id = $3)
+                 AS result_reference,
+               (SELECT outcome FROM platform_job_attempts
+                 WHERE job_id = $3 AND attempt_number = $4) AS attempt_outcome`,
+            [
+              sideEffectExpiryAssistant,
+              sideEffectExpiryEventId,
+              sideEffectExpiryJob.id,
+              sideEffectExpiryLease.attemptCount,
+            ]
+          )
+        ).rows[0],
+        {
+          messages: '0',
+          events: '0',
+          job_state: 'running',
+          result_reference: null,
+          attempt_outcome: 'running',
+        },
+        'an event write that crosses lease expiry must roll back the assistant, done event, and job success'
+      );
+      assert.equal(
+        (
+          await sideEffectFencedService.requestChatCancellation({
+            actorUserId: 'waiting',
+            sessionId: sideEffectExpirySession,
+            assistantMessageId: sideEffectExpiryAssistant,
+          })
+        ).outcome,
+        'cancellation-recorded'
+      );
+
       const completionEventId = durableEventId(
         'chat',
         'postgres-long-session',
@@ -817,6 +1546,32 @@ test(
           payload: { type: 'done', messageId: 'postgres-assistant' },
           occurredAt: true,
         }
+      );
+      await durableServices[0].appendEvent({
+        eventId: durableEventId(
+          'chat',
+          'postgres-long-session',
+          'other-assistant',
+          'done'
+        ),
+        streamId: 'chat:postgres-long-session',
+        eventType: 'chat.done.v1',
+        subjectId: 'other-assistant',
+        actorUserId: 'waiting',
+        payload: {
+          mode: 'encrypted',
+          value: { type: 'done', messageId: 'other-assistant' },
+        },
+      });
+      assert.deepEqual(
+        (
+          await durableServices[1].replayEvents(0, {
+            streamId: 'chat:postgres-long-session',
+            subjectId: 'postgres-assistant',
+          })
+        ).map(event => event.eventId),
+        [completionEventId],
+        'PostgreSQL generation replay must exclude other chat subjects'
       );
 
       const deletionToken = 'e'.repeat(64);
@@ -1478,6 +2233,7 @@ test(
                VALUES ($1, $2, $3)`,
               [`chat:${input.assistantMessageId}`, input.sessionId, 5]
             );
+            return { created: true };
           },
         },
         chatInput
@@ -1927,6 +2683,67 @@ test(
       .run('Imported Work task', workTaskId);
     restoreSource.close();
 
+    const cleanTargetPhase = {
+      async analyze() {
+        return {
+          name: 'test-clean-target-preflight',
+          items: 0,
+          checksum: 'e'.repeat(64),
+          warnings: [],
+          blockers: [],
+        };
+      },
+      async apply() {},
+      async validate() {},
+    };
+    const dirtyTarget = createPostgresDatabase(config);
+    try {
+      await dirtyTarget.query(
+        'CREATE TABLE dry_run_unknown_sentinel (id integer PRIMARY KEY)'
+      );
+      const dirtyTargetDryRun = await migrateSQLiteToPostgres({
+        sourcePath,
+        postgres: config,
+        mode: 'dry-run',
+        storagePhase: cleanTargetPhase,
+      });
+      assert.equal(dirtyTargetDryRun.targetInitialized, false);
+      assert.equal(dirtyTargetDryRun.targetEmpty, false);
+      assert.equal(dirtyTargetDryRun.compatible, false);
+      assert.match(
+        dirtyTargetDryRun.blockers.join('\n'),
+        /PostgreSQL target schema is not empty/
+      );
+      assert.equal(
+        (
+          await dirtyTarget.query(
+            "SELECT to_regclass('dry_run_unknown_sentinel')::text AS sentinel"
+          )
+        ).rows[0].sentinel,
+        'dry_run_unknown_sentinel',
+        'dry-run must report an unknown target table without mutating it'
+      );
+      await dirtyTarget.query('DROP TABLE dry_run_unknown_sentinel');
+      await dirtyTarget.query('CREATE TABLE users (id text PRIMARY KEY)');
+      const partialTargetDryRun = await migrateSQLiteToPostgres({
+        sourcePath,
+        postgres: config,
+        mode: 'dry-run',
+        storagePhase: cleanTargetPhase,
+      });
+      assert.equal(partialTargetDryRun.targetInitialized, false);
+      assert.equal(partialTargetDryRun.targetEmpty, false);
+      assert.equal(partialTargetDryRun.compatible, false);
+      assert.match(
+        partialTargetDryRun.blockers.join('\n'),
+        /PostgreSQL target schema is not empty/
+      );
+    } finally {
+      await dirtyTarget.query('DROP TABLE IF EXISTS dry_run_unknown_sentinel');
+      await dirtyTarget.query('DROP TABLE IF EXISTS users');
+      await dirtyTarget.close();
+    }
+
     const interruptedImportPhase = {
       async analyze() {
         return {
@@ -2024,6 +2841,25 @@ test(
       'DROP FUNCTION reject_session_message_import()'
     );
     await interruptedTarget.close();
+    const incompleteDryRun = await migrateSQLiteToPostgres({
+      sourcePath,
+      postgres: config,
+      mode: 'dry-run',
+      storagePhase: interruptedImportPhase,
+    });
+    assert.equal(incompleteDryRun.compatible, false);
+    assert.match(
+      incompleteDryRun.blockers.join('\n'),
+      /matching incomplete SQLite import.*resume enabled/i
+    );
+    const resumableDryRun = await migrateSQLiteToPostgres({
+      sourcePath,
+      postgres: config,
+      mode: 'dry-run',
+      resume: true,
+      storagePhase: interruptedImportPhase,
+    });
+    assert.equal(resumableDryRun.compatible, true);
     await assert.rejects(
       migrateSQLiteToPostgres({
         sourcePath,
@@ -2069,6 +2905,91 @@ test(
     });
     assert.equal((await healthyImport.health()).ready, true);
     await healthyImport.close();
+
+    const healthyImportState = (
+      await target.query(
+        `SELECT
+           (SELECT status FROM libre_schema_compatibility WHERE singleton = 1)
+             AS compatibility_status,
+           (SELECT failure_code FROM libre_schema_compatibility
+             WHERE singleton = 1) AS failure_code,
+           (SELECT source_fingerprint FROM libre_sqlite_imports)
+             AS source_fingerprint,
+           (SELECT status FROM libre_sqlite_imports) AS import_status,
+           (SELECT COUNT(*)::text FROM libre_sqlite_imports) AS import_count`
+      )
+    ).rows[0];
+    assert.deepEqual(healthyImportState, {
+      compatibility_status: 'compatible',
+      failure_code: null,
+      source_fingerprint: dryRun.sourceFingerprint,
+      import_status: 'complete',
+      import_count: '1',
+    });
+
+    const differentSnapshot = new Database(sourcePath);
+    differentSnapshot
+      .prepare('UPDATE notes SET title = ? WHERE id = ?')
+      .run('opaque-title-from-different-snapshot', 'import-note');
+    differentSnapshot.close();
+    try {
+      const mismatchedDryRun = await migrateSQLiteToPostgres({
+        sourcePath,
+        postgres: config,
+        mode: 'dry-run',
+        storagePhase: interruptedImportPhase,
+      });
+      assert.notEqual(
+        mismatchedDryRun.sourceFingerprint,
+        dryRun.sourceFingerprint
+      );
+      assert.equal(mismatchedDryRun.compatible, false);
+      assert.match(
+        mismatchedDryRun.blockers.join('\n'),
+        /different SQLite snapshot/i
+      );
+      await assert.rejects(
+        migrateSQLiteToPostgres({
+          sourcePath,
+          postgres: config,
+          mode: 'apply',
+          resume: true,
+          storagePhase: interruptedImportPhase,
+        }),
+        error => {
+          assert.match(
+            error?.report?.blockers?.join('\n') ?? '',
+            /different SQLite snapshot/i
+          );
+          return true;
+        }
+      );
+      assert.deepEqual(
+        (
+          await target.query(
+            `SELECT
+               (SELECT status FROM libre_schema_compatibility
+                 WHERE singleton = 1) AS compatibility_status,
+               (SELECT failure_code FROM libre_schema_compatibility
+                 WHERE singleton = 1) AS failure_code,
+               (SELECT source_fingerprint FROM libre_sqlite_imports)
+                 AS source_fingerprint,
+               (SELECT status FROM libre_sqlite_imports) AS import_status,
+               (SELECT COUNT(*)::text FROM libre_sqlite_imports)
+                 AS import_count`
+          )
+        ).rows[0],
+        healthyImportState,
+        'a mismatched pre-import rejection must not poison a healthy target'
+      );
+    } finally {
+      const restoreSnapshot = new Database(sourcePath);
+      restoreSnapshot
+        .prepare('UPDATE notes SET title = ? WHERE id = ?')
+        .run('opaque-title-ciphertext', 'import-note');
+      restoreSnapshot.close();
+    }
+
     const note = await target.query(
       'SELECT title, content FROM notes WHERE id = $1',
       ['import-note']
@@ -2196,7 +3117,11 @@ test(
             [content]
           );
         }
-        await client.query(POSTGRES_MIGRATIONS.at(-1).sql);
+        await client.query(
+          POSTGRES_MIGRATIONS.find(
+            migration => migration.name === 'work-message-content-json'
+          ).sql
+        );
         assert.deepEqual(
           (
             await client.query(
@@ -2248,12 +3173,16 @@ test(
       `ALTER TABLE work_messages
          DROP CONSTRAINT work_messages_content_json_string_check`
     );
+    await target.query('DROP INDEX idx_platform_events_stream_subject_cursor');
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 12'
+    );
     await target.query(
       'DELETE FROM libre_schema_migrations WHERE version = 11'
     );
     const v10Structure = await (
       await import('../backend/dist/persistence/postgresSchemaInspector.js')
-    ).inspectPostgresSchema(target, POSTGRES_MIGRATIONS.slice(0, -1));
+    ).inspectPostgresSchema(target, POSTGRES_MIGRATIONS.slice(0, 10));
     assert.equal(v10Structure.compatible, true);
     await target.query(
       `UPDATE libre_sqlite_imports
@@ -2291,6 +3220,7 @@ test(
       sourcePath,
       postgres: config,
       mode: 'dry-run',
+      resume: true,
       storagePhase: interruptedImportPhase,
     });
     assert.equal(prefixDryRun.compatible, true);
@@ -2298,7 +3228,7 @@ test(
     assert.equal(prefixDryRun.sourceFingerprint, dryRun.sourceFingerprint);
     assert.match(
       prefixDryRun.warnings.join('\n'),
-      /exact version 10 migration-ledger prefix.*--resume can safely apply version 11/i
+      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 12/i
     );
     const codec = {
       encrypt: value => value,
@@ -2328,7 +3258,7 @@ test(
       resumed.tables.every(row => row.status === 'verified'),
       true
     );
-    assert.equal(resumed.targetSchemaVersion, 11);
+    assert.equal(resumed.targetSchemaVersion, 12);
     const resumedState = await target.query(
       `SELECT
          (SELECT MAX(version)::text FROM libre_schema_migrations)
@@ -2341,7 +3271,7 @@ test(
          (SELECT COUNT(*)::text FROM work_messages) AS work_messages`
     );
     assert.deepEqual(resumedState.rows[0], {
-      schema_version: '11',
+      schema_version: '12',
       import_status: 'complete',
       journal_count: String(dryRun.tables.length),
       work_journal: '1',

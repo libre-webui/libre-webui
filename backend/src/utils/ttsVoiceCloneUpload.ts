@@ -17,9 +17,48 @@
 
 import type { Request, Response } from 'express';
 import multer from 'multer';
+import {
+  acquireSharedCapacity,
+  SharedCapacityExceededError,
+  type SharedCapacityReservation,
+} from '../platform/coordination/sharedAdmission.js';
 import type { TTSConfig } from '../types/index.js';
 
 export const TTS_VOICE_CLONE_GLOBAL_MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+export const TTS_VOICE_CLONE_MAX_ACTIVE_PER_USER = 6;
+export const TTS_VOICE_CLONE_MAX_ACTIVE_GLOBAL = 16;
+
+export class TTSVoiceCloneConcurrencyError extends Error {
+  constructor() {
+    super('Too many concurrent voice-cloning requests');
+    this.name = 'TTSVoiceCloneConcurrencyError';
+  }
+}
+
+export async function reserveTTSVoiceCloneUpload(
+  userId: string
+): Promise<SharedCapacityReservation> {
+  try {
+    return await acquireSharedCapacity({
+      limits: [
+        {
+          scope: 'voice-clone-upload.global',
+          capacity: TTS_VOICE_CLONE_MAX_ACTIVE_GLOBAL,
+        },
+        {
+          scope: 'voice-clone-upload.user',
+          subject: userId,
+          capacity: TTS_VOICE_CLONE_MAX_ACTIVE_PER_USER,
+        },
+      ],
+    });
+  } catch (error) {
+    if (error instanceof SharedCapacityExceededError) {
+      throw new TTSVoiceCloneConcurrencyError();
+    }
+    throw error;
+  }
+}
 
 export const TTS_VOICE_CLONE_DEFAULT_AUDIO_MIME_TYPES = [
   'audio/wav',
@@ -240,15 +279,39 @@ const voiceCloneUpload = multer({
 /** Parse one in-memory `reference_audio` file without persisting it. */
 export function parseTTSVoiceCloneUpload(
   req: Request,
-  res: Response
+  res: Response,
+  signal?: AbortSignal
 ): Promise<void> {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(signal.reason);
+      return;
+    }
+    let settled = false;
+    const finish = (error?: unknown): void => {
+      if (settled) return;
+      settled = true;
+      signal?.removeEventListener('abort', abortUpload);
+      if (error) reject(error);
+      else resolve();
+    };
+    const abortUpload = (): void => {
+      const reason =
+        signal?.reason instanceof Error
+          ? signal.reason
+          : new Error('Voice-clone upload admission was lost');
+      // Reject before waiting for a slow sender to finish. Multer receives the
+      // request error in the same turn and destroys its partial Busboy upload;
+      // the settled guard ignores Multer's later callback.
+      finish(reason);
+      if (!req.destroyed) req.emit('error', reason);
+    };
     voiceCloneUpload.single('reference_audio')(req, res, error => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve();
+      finish(error);
     });
+    if (!settled) {
+      signal?.addEventListener('abort', abortUpload, { once: true });
+      if (signal?.aborted) abortUpload();
+    }
   });
 }
