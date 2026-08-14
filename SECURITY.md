@@ -43,10 +43,11 @@ authorization or isolation boundaries is in scope.
 ## CI security findings and triage
 
 Every push to `dev` or `main` and every pull request runs the normal Security
-workflow. It performs an npm dependency audit, verifies that GitHub's
-JavaScript/TypeScript CodeQL default setup is enabled, scans repository secrets,
-generates source and runtime-image SBOMs, and scans high/critical container
-vulnerabilities. The dependency audit fails on
+workflow. It performs an npm dependency audit, Semgrep OWASP static analysis,
+repository secret scanning, source and runtime-image SBOM generation, and a
+high/critical container vulnerability scan. GitHub's configured
+JavaScript/TypeScript CodeQL default setup runs independently. The dependency
+audit fails on
 moderate-or-higher advisories. The container gate fails on high or critical
 findings that have a published fix. Scanner reports and CycloneDX SBOMs are
 retained as workflow artifacts for 30 days; SARIF findings are also uploaded to

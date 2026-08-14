@@ -906,7 +906,8 @@ export class LocalEncryptedBlobStore implements BlobStore {
         const decipher = crypto.createDecipheriv(
           'aes-256-gcm',
           dataKey,
-          metadataIv
+          metadataIv,
+          { authTagLength: AUTH_TAG_BYTES }
         );
         decipher.setAAD(metadataAad(id));
         decipher.setAuthTag(metadataTag);
@@ -1045,7 +1046,8 @@ export class LocalEncryptedBlobStore implements BlobStore {
         const decipher = crypto.createDecipheriv(
           'aes-256-gcm',
           opened.dataKey,
-          createChunkIv(bodyNonce, chunkIndex)
+          createChunkIv(bodyNonce, chunkIndex),
+          { authTagLength: AUTH_TAG_BYTES }
         );
         decipher.setAAD(chunkAad(metadata, chunkIndex, plaintextBytes));
         decipher.setAuthTag(encryptedChunk.subarray(plaintextBytes));
@@ -1153,7 +1155,8 @@ export class LocalEncryptedBlobStore implements BlobStore {
             const decipher = crypto.createDecipheriv(
               'aes-256-gcm',
               opened.dataKey,
-              createChunkIv(bodyNonce, chunkIndex)
+              createChunkIv(bodyNonce, chunkIndex),
+              { authTagLength: AUTH_TAG_BYTES }
             );
             decipher.setAAD(chunkAad(metadata, chunkIndex, plaintextBytes));
             decipher.setAuthTag(encryptedChunk.subarray(plaintextBytes));

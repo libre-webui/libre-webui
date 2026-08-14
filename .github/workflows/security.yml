@@ -58,22 +58,59 @@ jobs:
           echo 'npm audit reported a moderate-or-higher vulnerability.' >&2
           exit 1
 
-  codeql-default-setup:
-    name: Verify CodeQL default setup
+  sast:
+    name: Semgrep OWASP SAST
     runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep@sha256:65dcd4408adda7c183a6b4550cb1e9b19f7f627a6fbb7e0559bd466bedc44d7b
     permissions:
       contents: read
-      security-events: read
+      security-events: write
 
     steps:
-      - name: Verify JavaScript and TypeScript scanning
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Create report directory
+        run: mkdir -p security-artifacts
+
+      - name: Scan source with OWASP rules
+        id: semgrep
+        continue-on-error: true
         run: |
-          gh api "repos/${GH_REPO}/code-scanning/default-setup" \
-            --jq 'select(.state == "configured" and (.languages | index("javascript-typescript") != null)) | .state' \
-            | grep -qx configured
+          semgrep scan \
+            --config p/owasp-top-ten \
+            --severity ERROR \
+            --error \
+            --metrics=off \
+            --sarif \
+            --output security-artifacts/semgrep.sarif \
+            backend/src frontend/src .github/workflows
+
+      - name: Upload SAST findings to code scanning
+        if: >-
+          always() &&
+          (github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: security-artifacts/semgrep.sarif
+          category: semgrep-owasp
+
+      - name: Retain SAST report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sast-scan
+          path: security-artifacts/semgrep.sarif
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce SAST scan
+        if: steps.semgrep.outcome == 'failure'
+        run: |
+          echo 'Semgrep found an OWASP security error.' >&2
+          exit 1
 
   secret-scan:
     name: Secret scan

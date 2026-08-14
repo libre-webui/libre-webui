@@ -33,7 +33,7 @@ const logger = createLogger('encryption');
 export class EncryptionService {
   private static instance: EncryptionService;
   private encryptionKey: Buffer;
-  private algorithm = 'aes-256-gcm';
+  private readonly algorithm = 'aes-256-gcm' as const;
   private readonly binaryEnvelopeMagic = Buffer.from('LWB1', 'ascii');
 
   /**
@@ -309,7 +309,8 @@ export class EncryptionService {
       const decipher = crypto.createDecipheriv(
         this.algorithm,
         this.encryptionKey,
-        iv
+        iv,
+        { authTagLength: 16 }
       );
       (decipher as crypto.DecipherGCM).setAuthTag(authTag);
 
@@ -398,7 +399,8 @@ export class EncryptionService {
       const decipher = crypto.createDecipheriv(
         this.algorithm,
         this.encryptionKey,
-        encryptedData.subarray(ivStart, tagStart)
+        encryptedData.subarray(ivStart, tagStart),
+        { authTagLength }
       ) as crypto.DecipherGCM;
       if (additionalData) decipher.setAAD(additionalData);
       decipher.setAuthTag(encryptedData.subarray(tagStart, encryptedStart));

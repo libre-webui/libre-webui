@@ -942,7 +942,8 @@ export class S3EncryptedBlobStore implements BlobStore {
       const decipher = crypto.createDecipheriv(
         'aes-256-gcm',
         dataKey,
-        row.metadata_iv
+        row.metadata_iv,
+        { authTagLength: AUTH_TAG_BYTES }
       );
       decipher.setAAD(metadataAad(row.id, row.object_key));
       decipher.setAuthTag(row.metadata_tag);
@@ -1530,7 +1531,8 @@ export class S3EncryptedBlobStore implements BlobStore {
             const decipher = crypto.createDecipheriv(
               'aes-256-gcm',
               dataKey,
-              createChunkIv(bodyNonce, index)
+              createChunkIv(bodyNonce, index),
+              { authTagLength: AUTH_TAG_BYTES }
             );
             decipher.setAAD(chunkAad(metadata, index, plaintextBytes));
             decipher.setAuthTag(encrypted.subarray(plaintextBytes));

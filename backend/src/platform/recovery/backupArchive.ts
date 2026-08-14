@@ -598,7 +598,9 @@ const decryptInto = (
     key.fill(0);
     throw new Error('Backup encryption envelope is invalid.');
   }
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv, {
+    authTagLength: 16,
+  });
   const aad = Buffer.from(canonicalJson(header.manifest), 'utf8');
   decipher.setAAD(aad);
   decipher.setAuthTag(tag);

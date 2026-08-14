@@ -140,7 +140,9 @@ export class Aes256GcmKeyring {
         undefined,
         'ciphertext'
       );
-      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv, {
+        authTagLength: TAG_BYTES,
+      });
       decipher.setAAD(additionalData);
       decipher.setAuthTag(tag);
       return Buffer.concat([decipher.update(ciphertext), decipher.final()]);

@@ -195,7 +195,8 @@ const decryptTextStrict = (value: string, key: Buffer): Buffer => {
     const decipher = crypto.createDecipheriv(
       'aes-256-gcm',
       key,
-      Buffer.from(ivHex, 'hex')
+      Buffer.from(ivHex, 'hex'),
+      { authTagLength: AUTH_TAG_BYTES }
     ) as crypto.DecipherGCM;
     decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
     return Buffer.concat([
@@ -226,7 +227,8 @@ const decryptBinaryStrict = (
     const decipher = crypto.createDecipheriv(
       'aes-256-gcm',
       key,
-      value.subarray(ivStart, tagStart)
+      value.subarray(ivStart, tagStart),
+      { authTagLength: AUTH_TAG_BYTES }
     ) as crypto.DecipherGCM;
     decipher.setAAD(additionalData);
     decipher.setAuthTag(value.subarray(tagStart, ciphertextStart));

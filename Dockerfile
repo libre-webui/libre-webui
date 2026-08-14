@@ -152,10 +152,15 @@ WORKDIR /app
 # given the Docker socket. The image itself does not mount host resources;
 # the repository's default Compose file does mount the socket for Work, while
 # deployments that omit that mount leave the Docker runtime unavailable.
+# npm and npx are build-stage tools; production starts the compiled application
+# and maintenance CLI directly with Node. Remove npm's global dependency tree
+# from the runtime image so build-tool vulnerabilities are not shipped.
 RUN apk update && apk upgrade && apk add --no-cache \
     wget \
     docker-cli \
-    postgresql16-client
+    postgresql16-client && \
+    rm -rf /usr/local/lib/node_modules/npm && \
+    rm -f /usr/local/bin/npm /usr/local/bin/npx
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
