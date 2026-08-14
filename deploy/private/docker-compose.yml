@@ -42,6 +42,8 @@ services:
       DATABASE_BACKEND: ${DATABASE_BACKEND:-sqlite}
       DATABASE_URL: ${DATABASE_URL:-}
       BLOB_STORE_BACKEND: ${BLOB_STORE_BACKEND:-local}
+      BLOB_QUOTA_BYTES_PER_USER: ${BLOB_QUOTA_BYTES_PER_USER:-10737418240}
+      BLOB_QUOTA_RESERVATION_TTL_MS: ${BLOB_QUOTA_RESERVATION_TTL_MS:-3600000}
       VECTOR_STORE_BACKEND: ${VECTOR_STORE_BACKEND:-embedded}
       COORDINATION_BACKEND: ${COORDINATION_BACKEND:-local}
       REDIS_URL: ${REDIS_URL:-}
@@ -65,7 +67,9 @@ services:
       ollama:
         condition: service_healthy
     labels:
-      com.centurylinklabs.watchtower.enable: 'true'
+      # Application upgrades are coordinated with a verified backup and an
+      # operator-reviewed image. Never let Watchtower replace this service.
+      com.centurylinklabs.watchtower.enable: 'false'
     healthcheck:
       test:
         - CMD

@@ -42,6 +42,7 @@ created_volume=true
 docker run --rm \
   --user 0:0 \
   --read-only \
+  --tmpfs /tmp:rw,nosuid,nodev,noexec \
   --network none \
   --cap-drop ALL \
   --security-opt no-new-privileges \

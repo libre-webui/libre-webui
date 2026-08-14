@@ -14,6 +14,14 @@ without publishing the application or Ollama ports. Cloudflare Access is the
 outer identity boundary; Libre WebUI authentication remains the inner boundary.
 Work and Watchtower are separate, root-equivalent opt-ins.
 
+This template is the single-replica `solo` topology: SQLite, local encrypted
+blobs, embedded vectors, local coordination, and an embedded job worker share
+the application data volume. Do not turn it into a team deployment by changing
+backend selectors in `.env`. Team deployments must use the repository's
+`docker-compose.team.yml` (and `docker-compose.team.work.yml` when Work is
+enabled), which provisions PostgreSQL/PGVector, versioned S3 storage, Redis,
+an external worker, and the gateway as one coordinated topology.
+
 Use [`deploy/private/docker-compose.yml`](https://github.com/libre-webui/libre-webui/blob/main/deploy/private/docker-compose.yml)
 as the starting point. It defaults to the `main` image:
 
@@ -55,14 +63,18 @@ hardening layer, not as multi-tenant isolation.
 The raw-socket alternatives remain the largest trust boundary: the
 `docker-compose.work.yml` and Watchtower overrides give a container a
 process that can issue arbitrary Docker API calls, which can control the
-host. A read-only socket mount does not make Docker API access read-only.
+host. A read-only socket mount does not make Docker API access read-only. The
+integrated backup helper refuses to inherit a raw Docker socket; migrate Work
+to the filtered proxy before relying on scheduled integrated backups.
 
 ## Bootstrap
 
 1. Create a non-root sudo operator and verify key-based SSH login before
    disabling root SSH.
 2. Copy `deploy/private/.env.example` to `/opt/libre-webui/.env`, set mode
-   `0600`, and generate unique secrets.
+   `0600`, generate unique secrets, and size `BLOB_QUOTA_BYTES_PER_USER` for
+   the host. `BLOB_QUOTA_RESERVATION_TTL_MS` expires abandoned upload
+   reservations; its default is one hour.
 3. If Work will be enabled, set `DOCKER_GID` to the numeric group that owns
    `/var/run/docker.sock`.
 4. Store the Cloudflare tunnel token in
@@ -235,8 +247,23 @@ and creates the archive against the quiesced volume with the exact deployed
 image. The archive has a signed manifest and an operator-encrypted payload; it
 includes the data directory plus the runtime and secret configuration required
 to open that state. The helper then independently verifies the complete
-archive before atomically publishing its metadata report. Copy both files and
-the separately protected recovery keys off-host.
+archive before atomically publishing its metadata report. Its read-only
+maintenance containers receive a private writable `/tmp` tmpfs for SQLite
+inspection and authenticated archive verification; no temporary plaintext is
+persisted in the container layer. Copy both files and the separately protected
+recovery keys off-host.
+
+When Work uses `docker-compose.work-proxy.yml`, recovery must also prove that
+every database-referenced Work volume still exists. The helper reads the
+deployed application's `DOCKER_HOST`, locates the socket-proxy service in the
+same live Compose project, and discovers their one shared internal network from
+Docker's actual network attachments. Compose prefixes that network with the
+project name, so do not configure or hardcode a guessed network name. Only the
+archive-creation container joins that internal network and can reach the
+filtered proxy; it receives no raw socket. Independent archive verification
+continues with `--network none`. A missing proxy, an unexpected endpoint, an
+external or ambiguous shared network, or a raw-socket mount fails before the
+application is stopped and before an archive is published.
 
 Test recovery into a new volume without replacing the live volume:
 
@@ -260,9 +287,40 @@ require their own coordinated snapshots and retention policy.
 
 ## Updates
 
-Update pinned images manually after reviewing and backing up the deployment. If
-automatic updates are an accepted risk, add the socket-bearing Watchtower
-override explicitly:
+Libre WebUI is stateful even when its image tag is mutable. The base Compose
+file permanently labels the application as excluded from Watchtower. Upgrade
+it only as a coordinated operator action:
+
+1. Record the running image ID and resolve the reviewed replacement to an
+   immutable digest.
+2. Run `libre-webui recovery-check`, start the backup service, and require a
+   newly created archive and verification report before continuing.
+3. Set `LIBRE_WEBUI_IMAGE` to the reviewed digest, pull it, and recreate only
+   `libre-webui` with Docker Compose. Do not remove or recreate its data volume.
+4. Require `/health/ready`, sign-in, session/history, document retrieval, and
+   Work smoke tests to pass. Roll back to the recorded image digest if they do
+   not; preserve both the failed state and the verified backup for diagnosis.
+
+The host-side sequence is intentionally manual. Replace the digest only after
+reviewing it, and inspect the newest `.lwb` and `.json` pair before the pull:
+
+```bash
+docker inspect libre-webui --format '{{.Config.Image}} {{.Image}}'
+docker exec libre-webui \
+  libre-webui recovery-check --json --data-dir /app/backend/data
+systemctl start libre-webui-backup.service
+systemctl --no-pager --full status libre-webui-backup.service
+ls -lt /var/backups/libre-webui/libre-webui-integrated-* | head
+
+# Set LIBRE_WEBUI_IMAGE=ghcr.io/libre-webui/libre-webui@sha256:REVIEWED_DIGEST
+# in the root-owned .env, then recreate only the application.
+docker compose pull libre-webui
+docker compose up -d --no-deps libre-webui
+docker inspect libre-webui --format '{{.State.Health.Status}} {{.Image}}'
+```
+
+The optional socket-bearing Watchtower override remains available only for the
+sidecars explicitly labelled in the base file:
 
 ```bash
 docker compose \
@@ -271,7 +329,10 @@ docker compose \
   up -d
 ```
 
-Watchtower then checks labelled application and Ollama images every 30 minutes.
-A client deployment follows `main`; an experimental instance may override
-`LIBRE_WEBUI_IMAGE` with `:dev`. Keep health checks and an off-host backup so a
-bad update can be rolled back to a previously recorded digest.
+Watchtower checks Ollama and SearXNG every 30 minutes. Ollama model data remains
+in its named volume, and SearXNG configuration remains in its bind mount. It
+does not update Libre WebUI, cloudflared, the Work socket proxy, or Work
+sandboxes. A client deployment follows `main`; an experimental instance may
+select `:dev`, but the application still requires the same backup-gated manual
+upgrade. Never attach this private solo stack to team persistence services;
+deploy the complete team topology instead.
