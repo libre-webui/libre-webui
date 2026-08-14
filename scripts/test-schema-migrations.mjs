@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { pathToFileURL } from 'node:url';
+import { gunzipSync } from 'node:zlib';
 import Database from 'better-sqlite3';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
@@ -24,6 +25,52 @@ const dataDirectoryHelpers = await import(
   ).href
 );
 
+// This fixture was created by the unmodified SQLite initializer from
+// origin/main at 24eb9ec814b0729ddc321fd758746bb798599e42 (v0.21.3), using
+// that release's exact better-sqlite3 13.0.2 / SQLite 3.53.4 and tsx 4.23.1
+// dependencies.
+// It is ledgerless and contains 25 inert rows spanning all 24 legacy tables.
+const releasedMainSQLiteFixture = Object.freeze({
+  path: path.join(
+    repoRoot,
+    'scripts',
+    'fixtures',
+    'sqlite',
+    'libre-webui-v0.21.3-main.sqlite.gz'
+  ),
+  gzipSha256:
+    '3ad476251490df7e21e12bab73231e0dc52d0241aadd5da7d9e4a7458f9a1999',
+  databaseSha256:
+    'f06c4f1c6ae5e5b28683dc2a5461207d3218adfc4b0fc90db1ad3b1d0d0165ac',
+});
+
+const releasedMainSQLiteTables = Object.freeze([
+  'document_chunks',
+  'documents',
+  'generated_images',
+  'knowledge_collections',
+  'media_generation_jobs',
+  'notes',
+  'personas',
+  'plugin_activations',
+  'plugin_credentials',
+  'plugin_definition_approvals',
+  'plugin_discovered_capability_models',
+  'plugin_discovered_models',
+  'plugin_usage_events',
+  'plugin_variables',
+  'session_folders',
+  'session_messages',
+  'sessions',
+  'system_settings',
+  'user_preferences',
+  'users',
+  'work_messages',
+  'work_policies',
+  'work_runs',
+  'work_tasks',
+]);
+
 const startApplicationDatabase = dataDir =>
   spawnSync(
     process.execPath,
@@ -40,6 +87,35 @@ const startApplicationDatabase = dataDir =>
       encoding: 'utf8',
     }
   );
+
+const startPreflightedApplicationDatabase = (dataDir, scratchDir) => {
+  const databasePath = path.join(dataDir, 'data.sqlite');
+  return spawnSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `const database = await import(${JSON.stringify(
+        databaseModuleUrl
+      )}); database.preflightExistingSQLiteDatabase(${JSON.stringify(
+        databasePath
+      )}, ${JSON.stringify(
+        scratchDir
+      )}); try { database.getDatabase(); } finally { database.closeDatabase(); }`,
+    ],
+    {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        DATA_DIR: dataDir,
+        NODE_ENV: 'test',
+        LOG_LEVEL: 'silent',
+      },
+      encoding: 'utf8',
+      timeout: 10_000,
+    }
+  );
+};
 
 const initializeApplicationDatabase = dataDir => {
   const child = startApplicationDatabase(dataDir);
@@ -218,6 +294,26 @@ const snapshotTables = (database, tables) =>
     })
   );
 
+const snapshotForeignKeys = (database, tables) =>
+  Object.fromEntries(
+    tables.map(table => [
+      table,
+      database
+        .prepare(`PRAGMA foreign_key_list("${table.replaceAll('"', '""')}")`)
+        .all()
+        .map(row => ({
+          id: row.id,
+          seq: row.seq,
+          table: row.table,
+          from: row.from,
+          to: row.to,
+          on_update: row.on_update,
+          on_delete: row.on_delete,
+          match: row.match,
+        })),
+    ])
+  );
+
 const assertTableSnapshots = (database, expected) => {
   for (const [table, snapshot] of Object.entries(expected)) {
     const projection = snapshot.columns
@@ -226,7 +322,7 @@ const assertTableSnapshots = (database, expected) => {
     assert.deepEqual(
       database.prepare(`SELECT ${projection} FROM "${table}" ORDER BY 1`).all(),
       snapshot.rows,
-      `${table} rows must survive the v8 to current migration`
+      `${table} rows must survive the SQLite migration`
     );
   }
 };
@@ -770,6 +866,207 @@ test('main rejects invalid existing databases before durable singleton writes', 
     'wrong-key startup must leave database bytes unchanged'
   );
   assert.deepEqual(fs.readdirSync(wrongKeyDir).sort(), wrongKeyFiles);
+});
+
+test('released v0.21.3 main SQLite state upgrades through startup', t => {
+  const root = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'libre-main-sqlite-upgrade-')
+  );
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const dataDir = path.join(root, 'data');
+  const scratchDir = path.join(root, 'preflight');
+  const databasePath = path.join(dataDir, 'data.sqlite');
+  fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
+
+  const compressedFixture = fs.readFileSync(releasedMainSQLiteFixture.path);
+  assert.equal(
+    createHash('sha256').update(compressedFixture).digest('hex'),
+    releasedMainSQLiteFixture.gzipSha256,
+    'the released-main fixture gzip must retain its reviewed provenance'
+  );
+  const fixtureBytes = gunzipSync(compressedFixture);
+  assert.equal(
+    createHash('sha256').update(fixtureBytes).digest('hex'),
+    releasedMainSQLiteFixture.databaseSha256,
+    'the released-main SQLite database must retain its reviewed provenance'
+  );
+  fs.writeFileSync(databasePath, fixtureBytes, {
+    flag: 'wx',
+    mode: 0o600,
+  });
+
+  const filesBeforePreflight = fs.readdirSync(dataDir).sort();
+  databaseHelpers.preflightExistingSQLiteDatabase(databasePath, scratchDir);
+  assertFileUnchanged(
+    databasePath,
+    fixtureBytes,
+    'startup preflight must not alter the released-main database'
+  );
+  assert.deepEqual(fs.readdirSync(dataDir).sort(), filesBeforePreflight);
+  assert.deepEqual(fs.readdirSync(scratchDir), []);
+
+  let legacySnapshot;
+  let legacyForeignKeys;
+  const released = new Database(databasePath, {
+    readonly: true,
+    fileMustExist: true,
+  });
+  try {
+    assert.equal(released.pragma('quick_check', { simple: true }), 'ok');
+    assert.deepEqual(released.pragma('foreign_key_check'), []);
+    assert.equal(
+      released
+        .prepare(
+          `SELECT 1
+             FROM sqlite_master
+            WHERE type = 'table' AND name = '_libre_schema_migrations'`
+        )
+        .get(),
+      undefined,
+      'v0.21.3 main must remain a real ledgerless upgrade boundary'
+    );
+    const tables = released
+      .prepare(
+        `SELECT name
+           FROM sqlite_master
+          WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+          ORDER BY name`
+      )
+      .all()
+      .map(row => row.name);
+    assert.deepEqual(tables, releasedMainSQLiteTables);
+    const rowCount = tables.reduce(
+      (count, table) =>
+        count +
+        released
+          .prepare(
+            `SELECT COUNT(*) AS count
+               FROM "${table.replaceAll('"', '""')}"`
+          )
+          .get().count,
+      0
+    );
+    assert.equal(rowCount, 25);
+    assert.ok(
+      tables.every(
+        table =>
+          released
+            .prepare(
+              `SELECT COUNT(*) AS count
+                 FROM "${table.replaceAll('"', '""')}"`
+            )
+            .get().count > 0
+      ),
+      'every released-main table must carry representative state'
+    );
+    legacySnapshot = snapshotTables(released, tables);
+    legacyForeignKeys = snapshotForeignKeys(released, tables);
+  } finally {
+    released.close();
+  }
+
+  const firstStartup = startPreflightedApplicationDatabase(dataDir, scratchDir);
+  assert.equal(
+    firstStartup.status,
+    0,
+    `${firstStartup.stderr}\n${firstStartup.stdout}`
+  );
+
+  let firstLedger;
+  const upgraded = new Database(databasePath, {
+    readonly: true,
+    fileMustExist: true,
+  });
+  try {
+    assert.equal(upgraded.pragma('quick_check', { simple: true }), 'ok');
+    assert.deepEqual(upgraded.pragma('foreign_key_check'), []);
+    assertTableSnapshots(upgraded, legacySnapshot);
+    assert.deepEqual(
+      snapshotForeignKeys(upgraded, releasedMainSQLiteTables),
+      legacyForeignKeys,
+      'the account-retirement table rebuild must preserve every legacy foreign key'
+    );
+
+    firstLedger = upgraded
+      .prepare(
+        `SELECT version, name, checksum, applied_at
+           FROM _libre_schema_migrations
+          ORDER BY version`
+      )
+      .all();
+    assert.deepEqual(
+      firstLedger.map(row => ({
+        version: row.version,
+        name: row.name,
+        checksum: row.checksum,
+      })),
+      migrations.SQLITE_MIGRATION_CONTRACT
+    );
+    assert.deepEqual(
+      firstLedger.map(row => row.version),
+      Array.from({ length: 13 }, (_, index) => index + 1),
+      'the adopted ledger must be canonical, contiguous, and complete'
+    );
+    assert.ok(
+      firstLedger.every(
+        row => Number.isSafeInteger(row.applied_at) && row.applied_at > 0
+      )
+    );
+    assert.deepEqual(migrations.preflightSQLiteMigrationLedger(upgraded), {
+      dialect: 'sqlite',
+      status: 'compatible',
+      currentVersion: 13,
+      targetVersion: 13,
+      minimumSupportedVersion: 1,
+    });
+  } finally {
+    upgraded.close();
+  }
+
+  const secondStartup = startPreflightedApplicationDatabase(
+    dataDir,
+    scratchDir
+  );
+  assert.equal(
+    secondStartup.status,
+    0,
+    `${secondStartup.stderr}\n${secondStartup.stdout}`
+  );
+
+  const reopened = new Database(databasePath, {
+    readonly: true,
+    fileMustExist: true,
+  });
+  try {
+    assert.equal(reopened.pragma('quick_check', { simple: true }), 'ok');
+    assert.deepEqual(reopened.pragma('foreign_key_check'), []);
+    assertTableSnapshots(reopened, legacySnapshot);
+    assert.deepEqual(
+      snapshotForeignKeys(reopened, releasedMainSQLiteTables),
+      legacyForeignKeys
+    );
+    assert.deepEqual(
+      reopened
+        .prepare(
+          `SELECT version, name, checksum, applied_at
+             FROM _libre_schema_migrations
+            ORDER BY version`
+        )
+        .all(),
+      firstLedger,
+      'a second startup must not rewrite the canonical migration ledger'
+    );
+    assert.deepEqual(migrations.preflightSQLiteMigrationLedger(reopened), {
+      dialect: 'sqlite',
+      status: 'compatible',
+      currentVersion: 13,
+      targetVersion: 13,
+      minimumSupportedVersion: 1,
+    });
+  } finally {
+    reopened.close();
+  }
+  assert.deepEqual(fs.readdirSync(scratchDir), []);
 });
 
 test('legacy SQLite schema is adopted into immutable checksummed migrations', t => {
