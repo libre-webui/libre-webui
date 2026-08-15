@@ -11,7 +11,11 @@ import {
   type DurableJobLease,
   type DurableJobState,
 } from './durableJobTypes.js';
-import type { DurableJobHandler } from './embeddedDurableJobWorker.js';
+import {
+  DEFAULT_MAX_CONCURRENT_JOBS,
+  MAX_CONCURRENT_JOBS_LIMIT,
+  type DurableJobHandler,
+} from './embeddedDurableJobWorker.js';
 import { PostgresDurableJobService } from './postgresDurableJobService.js';
 import {
   OWNER_DELETE_CONTENT_JOB_TYPE,
@@ -51,6 +55,7 @@ export interface PostgresDurableJobWorkerOptions {
   leaseMs?: number;
   pollIntervalMs?: number;
   shutdownTimeoutMs?: number;
+  maxConcurrentJobs?: number;
   /** Reconcile cleanup-only dead letters before this worker can claim work. */
   reconcileBeforePolling?(): unknown | Promise<unknown>;
 }
@@ -66,17 +71,19 @@ export class PostgresDurableJobWorker {
   private loopError?: Error;
   private pollHealthy = false;
   private consecutivePollFailures = 0;
-  private active?: {
-    lease: DurableJobLease;
-    abort: AbortController;
-    promise: Promise<void>;
-  };
+  private readonly maxConcurrentJobs: number;
+  private readonly active = new Map<
+    string,
+    { lease: DurableJobLease; abort: AbortController; promise: Promise<void> }
+  >();
 
   constructor(private readonly options: PostgresDurableJobWorkerOptions) {
     this.workerId = options.workerId ?? `postgres-${crypto.randomUUID()}`;
     this.leaseMs = options.leaseMs ?? 30_000;
     this.pollIntervalMs = options.pollIntervalMs ?? 500;
     this.shutdownTimeoutMs = options.shutdownTimeoutMs ?? 5_000;
+    this.maxConcurrentJobs =
+      options.maxConcurrentJobs ?? DEFAULT_MAX_CONCURRENT_JOBS;
     if (
       !Number.isSafeInteger(this.leaseMs) ||
       this.leaseMs < MIN_LEASE_MS ||
@@ -100,6 +107,15 @@ export class PostgresDurableJobWorker {
     ) {
       throw new Error(
         'PostgreSQL worker shutdown timeout must fit within half its lease'
+      );
+    }
+    if (
+      !Number.isSafeInteger(this.maxConcurrentJobs) ||
+      this.maxConcurrentJobs < 1 ||
+      this.maxConcurrentJobs > MAX_CONCURRENT_JOBS_LIMIT
+    ) {
+      throw new Error(
+        `PostgreSQL worker concurrency must be between 1 and ${MAX_CONCURRENT_JOBS_LIMIT}`
       );
     }
   }
@@ -128,6 +144,10 @@ export class PostgresDurableJobWorker {
   private async run(): Promise<void> {
     await this.options.reconcileBeforePolling?.();
     while (!this.shutdown.signal.aborted) {
+      if (this.active.size >= this.maxConcurrentJobs) {
+        await Promise.race([...this.active.values()].map(item => item.promise));
+        continue;
+      }
       let lease: DurableJobLease | null;
       try {
         lease = await this.options.service.claim(this.workerId, this.leaseMs);
@@ -147,19 +167,37 @@ export class PostgresDurableJobWorker {
         continue;
       }
       if (!lease) {
-        await waitForPostgresWorkerPoll(
-          this.pollIntervalMs,
-          this.shutdown.signal
-        );
+        // A finishing job can commit an immediately claimable follow-up
+        // (retry, lifecycle reconcile), so completions cut the poll wait.
+        await Promise.race([
+          waitForPostgresWorkerPoll(this.pollIntervalMs, this.shutdown.signal),
+          ...[...this.active.values()].map(item => item.promise),
+        ]);
         continue;
       }
       const abort = new AbortController();
-      const promise = this.execute(lease, abort).finally(() => {
-        this.active = undefined;
-      });
-      this.active = { lease, abort, promise };
-      await promise;
+      const promise = this.execute(lease, abort)
+        .catch(error => {
+          // execute() resolves its own failures; anything landing here would
+          // otherwise be an unhandled rejection, so treat it as a loop
+          // failure: unhealthy and shutting down.
+          const failure =
+            error instanceof Error
+              ? error
+              : new Error('PostgreSQL durable worker loop failed');
+          this.loopError ??= failure;
+          this.pollHealthy = false;
+          this.shutdown.abort(failure);
+        })
+        .finally(() => {
+          this.active.delete(lease.id);
+        });
+      this.active.set(lease.id, { lease, abort, promise });
     }
+    // The loop only returns once every spawned handler has settled, so a
+    // caller awaiting the loop cannot observe running work it does not know
+    // about. Promises above never reject.
+    await Promise.all([...this.active.values()].map(item => item.promise));
   }
 
   private async allowed(lease: DurableJobLease): Promise<void> {
@@ -361,27 +399,37 @@ export class PostgresDurableJobWorker {
     failed: number;
   }> {
     this.shutdown.abort();
-    const active = this.active;
-    active?.abort.abort();
-    let drained = !active;
-    if (active) {
-      drained = await Promise.race([
-        active.promise.then(() => true),
-        new Promise<boolean>(resolve =>
-          setTimeout(() => resolve(false), this.shutdownTimeoutMs)
-        ),
+    const activeAtStop = this.active.size;
+    for (const item of this.active.values()) item.abort.abort();
+    const drainPromises = [...this.active.values()].map(item => item.promise);
+    if (drainPromises.length > 0) {
+      let timer: NodeJS.Timeout | undefined;
+      await Promise.race([
+        Promise.allSettled(drainPromises),
+        new Promise<void>(resolve => {
+          timer = setTimeout(resolve, this.shutdownTimeoutMs);
+        }),
       ]);
+      if (timer) clearTimeout(timer);
     }
     let abandoned = 0;
     let failed = this.loopError ? 1 : 0;
-    if (active && !drained) {
+    // Anything still active ignored its abort within the timeout; release the
+    // leases so another worker can reclaim immediately.
+    for (const item of this.active.values()) {
       try {
-        const state = await this.options.service.abandon(active.lease);
-        if (state === 'queued' || state === 'cancelled') abandoned = 1;
-      } catch {
-        failed = 1;
+        const state = await this.options.service.abandon(item.lease);
+        if (state === 'queued' || state === 'cancelled') abandoned += 1;
+      } catch (error) {
+        if (
+          !(error instanceof DurableJobError) ||
+          error.code !== 'lease-lost'
+        ) {
+          failed += 1;
+        }
       }
     }
+    this.active.clear();
     if (this.loop) {
       const loopStopped = await Promise.race([
         this.loop.then(() => true),
@@ -396,6 +444,6 @@ export class PostgresDurableJobWorker {
       if (!loopStopped) failed = 1;
     }
     if (this.loopError) failed = 1;
-    return { activeAtStop: active ? 1 : 0, abandoned, failed };
+    return { activeAtStop, abandoned, failed };
   }
 }

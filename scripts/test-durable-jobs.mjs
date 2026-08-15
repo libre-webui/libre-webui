@@ -1334,6 +1334,77 @@ test('embedded worker revalidates a revoked actor before side effects', async ()
   database.close();
 });
 
+test('embedded worker runs jobs concurrently up to its limit', async () => {
+  const { database, service } = harness({ now: Date.now() });
+  const started = [];
+  const resolvers = [];
+  const worker = new EmbeddedDurableJobWorker({
+    service,
+    workerId: 'embedded-concurrent',
+    leaseMs: 1000,
+    pollIntervalMs: 10,
+    maxConcurrentJobs: 2,
+    random: () => 0,
+    isActorAuthorized: async () => true,
+    handlers: new Map([
+      [
+        'test.echo',
+        async () => {
+          started.push(started.length + 1);
+          await new Promise(resolve => resolvers.push(resolve));
+        },
+      ],
+    ]),
+  });
+  const jobs = [
+    enqueue(service, { idempotencyKey: 'concurrent-1' }),
+    enqueue(service, { idempotencyKey: 'concurrent-2' }),
+    enqueue(service, { idempotencyKey: 'concurrent-3' }),
+  ];
+  worker.start();
+  const waitFor = async (predicate, deadlineMs = 3000) => {
+    const deadline = Date.now() + deadlineMs;
+    while (!predicate() && Date.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    return predicate();
+  };
+  assert.ok(await waitFor(() => started.length === 2));
+  // The limit holds while both slots are blocked.
+  await new Promise(resolve => setTimeout(resolve, 100));
+  assert.equal(started.length, 2);
+  resolvers.shift()();
+  assert.ok(await waitFor(() => started.length === 3));
+  while (resolvers.length > 0) resolvers.shift()();
+  assert.ok(
+    await waitFor(() =>
+      jobs.every(job => service.getMetadata(job.id).state === 'succeeded')
+    )
+  );
+  const stop = await worker.stop();
+  assert.equal(stop.failed, 0);
+  database.close();
+});
+
+test('embedded worker rejects an invalid concurrency limit', () => {
+  for (const maxConcurrentJobs of [0, -1, 1.5, 33]) {
+    assert.throws(
+      () =>
+        new EmbeddedDurableJobWorker({
+          service: {},
+          workerId: 'embedded-invalid-concurrency',
+          leaseMs: 1000,
+          pollIntervalMs: 10,
+          maxConcurrentJobs,
+          random: () => 0,
+          isActorAuthorized: async () => true,
+          handlers: new Map(),
+        }),
+      /concurrency/
+    );
+  }
+});
+
 test('worker persists only handler-declared safe errors', async () => {
   const { database, service } = harness({ now: Date.now() });
   const secret = 'credential-from-stack';
@@ -1451,6 +1522,8 @@ test('extraction, media, and Work jobs reclaim after a worker kill without dupli
     leaseMs: 1000,
     shutdownTimeoutMs: 100,
     pollIntervalMs: 10,
+    // One claim at a time keeps exactly one job in flight at the kill.
+    maxConcurrentJobs: 1,
     random: () => 0,
     isActorAuthorized: async () => true,
     handlers: new Map(

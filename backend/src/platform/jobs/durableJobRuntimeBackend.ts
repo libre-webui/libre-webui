@@ -37,6 +37,7 @@ export interface DurableJobBackendOptions {
     jobType: string
   ) => Promise<boolean>;
   workerId?: string;
+  maxConcurrentJobs?: number;
 }
 
 export interface DurableJobRuntimeBackend {
@@ -92,6 +93,9 @@ export const createDurableJobRuntimeBackend = (
         workerId,
         reconcileBeforePolling: () => service.reconcileDeletionLifecycleJobs(),
         isActorAuthorized,
+        ...(options.maxConcurrentJobs !== undefined
+          ? { maxConcurrentJobs: options.maxConcurrentJobs }
+          : {}),
       }),
     };
   }
@@ -108,6 +112,9 @@ export const createDurableJobRuntimeBackend = (
       workerId,
       reconcileBeforePolling: () => service.reconcileDeletionLifecycleJobs(),
       isActorAuthorized,
+      ...(options.maxConcurrentJobs !== undefined
+        ? { maxConcurrentJobs: options.maxConcurrentJobs }
+        : {}),
     }),
   };
 };

@@ -738,6 +738,7 @@ healthService.registerDependencyCheck({
 const durableJobRuntime = initializeDurableJobRuntime({
   role: getPlatformRuntimeConfig().jobs.workerMode,
   runWorker: getPlatformRuntimeConfig().jobs.workerMode === 'embedded',
+  maxConcurrentJobs: getPlatformRuntimeConfig().jobs.concurrency,
   handlers: createDomainDurableJobHandlers(),
 });
 const durableEventGateway = initializeDurableEventGateway(

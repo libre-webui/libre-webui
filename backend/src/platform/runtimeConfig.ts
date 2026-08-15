@@ -44,6 +44,8 @@ export interface PlatformRuntimeConfig {
   };
   jobs: {
     workerMode: JobWorkerMode;
+    /** Jobs one worker may run at the same time. */
+    concurrency: number;
   };
   blockers: string[];
 }
@@ -158,6 +160,13 @@ export const resolvePlatformRuntimeConfig = (
     ['embedded', 'external'] as const,
     'JOB_WORKER_MODE',
     blockers
+  );
+  const jobConcurrency = positiveInteger(
+    env.JOB_WORKER_CONCURRENCY,
+    4,
+    'JOB_WORKER_CONCURRENCY',
+    blockers,
+    32
   );
 
   const databaseUrl = validateUrl(
@@ -302,7 +311,7 @@ export const resolvePlatformRuntimeConfig = (
         blockers
       ),
     },
-    jobs: { workerMode },
+    jobs: { workerMode, concurrency: jobConcurrency },
     blockers: [...new Set(blockers)],
   };
 };

@@ -200,6 +200,7 @@ if (!recoveryLease) {
 const runtime = initializeDurableJobRuntime({
   role: 'external',
   runWorker: true,
+  maxConcurrentJobs: config.jobs.concurrency,
   handlers: createDomainDurableJobHandlers(),
 });
 const { closeDurableEventGateway, initializeDurableEventGateway } =

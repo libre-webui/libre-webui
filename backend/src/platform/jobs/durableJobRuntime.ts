@@ -27,6 +27,7 @@ export interface DurableJobRuntimeOptions {
     jobType: string
   ) => Promise<boolean>;
   workerId?: string;
+  maxConcurrentJobs?: number;
   /** App replicas in external mode expose enqueue/query without claiming work. */
   runWorker?: boolean;
 }

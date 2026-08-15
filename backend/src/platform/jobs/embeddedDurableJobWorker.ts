@@ -63,6 +63,7 @@ export interface EmbeddedDurableJobWorkerOptions {
   pollIntervalMs?: number;
   maxRetryBackoffMs?: number;
   shutdownTimeoutMs?: number;
+  maxConcurrentJobs?: number;
   random?: () => number;
   /** Reconcile cleanup-only dead letters before this worker can claim work. */
   reconcileBeforePolling?(): unknown | Promise<unknown>;
@@ -78,6 +79,8 @@ const MIN_LEASE_MS = 1000;
 const MAX_LEASE_MS = 15 * 60 * 1000;
 const MIN_RETRY_BACKOFF_MS = 1000;
 const MAX_RETRY_BACKOFF_MS = 15 * 60 * 1000;
+export const DEFAULT_MAX_CONCURRENT_JOBS = 4;
+export const MAX_CONCURRENT_JOBS_LIMIT = 32;
 
 const delay = (milliseconds: number, signal: AbortSignal): Promise<void> =>
   new Promise(resolve => {
@@ -140,6 +143,7 @@ export class EmbeddedDurableJobWorker {
   private readonly pollIntervalMs: number;
   private readonly maxRetryBackoffMs: number;
   private readonly shutdownTimeoutMs: number;
+  private readonly maxConcurrentJobs: number;
   private readonly random: () => number;
   private readonly reconcileBeforePolling?: () => unknown | Promise<unknown>;
   private readonly shutdown = new AbortController();
@@ -159,6 +163,8 @@ export class EmbeddedDurableJobWorker {
     this.leaseMs = options.leaseMs ?? 30_000;
     this.pollIntervalMs = options.pollIntervalMs ?? 500;
     this.maxRetryBackoffMs = options.maxRetryBackoffMs ?? 60_000;
+    this.maxConcurrentJobs =
+      options.maxConcurrentJobs ?? DEFAULT_MAX_CONCURRENT_JOBS;
     this.reconcileBeforePolling = options.reconcileBeforePolling;
     this.shutdownTimeoutMs =
       options.shutdownTimeoutMs ?? Math.min(5000, Math.floor(this.leaseMs / 2));
@@ -224,6 +230,15 @@ export class EmbeddedDurableJobWorker {
         'Durable job worker shutdown timeout must fit within half its lease'
       );
     }
+    if (
+      !Number.isSafeInteger(this.maxConcurrentJobs) ||
+      this.maxConcurrentJobs < 1 ||
+      this.maxConcurrentJobs > MAX_CONCURRENT_JOBS_LIMIT
+    ) {
+      throw new Error(
+        `Durable job worker concurrency must be between 1 and ${MAX_CONCURRENT_JOBS_LIMIT}`
+      );
+    }
   }
 
   start(): void {
@@ -254,9 +269,18 @@ export class EmbeddedDurableJobWorker {
     await this.reconcileBeforePolling?.();
     this.pollHealthy = true;
     while (!this.shutdown.signal.aborted) {
+      if (this.active.size >= this.maxConcurrentJobs) {
+        await Promise.race([...this.active.values()].map(item => item.promise));
+        continue;
+      }
       const lease = this.service.claim(this.workerId, this.leaseMs);
       if (!lease) {
-        await delay(this.pollIntervalMs, this.shutdown.signal);
+        // A finishing job can commit an immediately claimable follow-up
+        // (retry, lifecycle reconcile), so completions cut the poll wait.
+        await Promise.race([
+          delay(this.pollIntervalMs, this.shutdown.signal),
+          ...[...this.active.values()].map(item => item.promise),
+        ]);
         continue;
       }
       const abort = new AbortController();
@@ -264,13 +288,29 @@ export class EmbeddedDurableJobWorker {
       this.shutdown.signal.addEventListener('abort', relayAbort, {
         once: true,
       });
-      const promise = this.execute(lease, abort).finally(() => {
-        this.shutdown.signal.removeEventListener('abort', relayAbort);
-        this.active.delete(lease.id);
-      });
+      const promise = this.execute(lease, abort)
+        .catch(error => {
+          // Only rethrown failure-state persistence errors land here. Losing
+          // them would silently drop jobs, so surface them exactly like a
+          // loop failure: unhealthy and shutting down.
+          const failure =
+            error instanceof Error
+              ? error
+              : new Error('Embedded durable worker loop failed');
+          this.loopError ??= failure;
+          this.pollHealthy = false;
+          this.shutdown.abort(failure);
+        })
+        .finally(() => {
+          this.shutdown.signal.removeEventListener('abort', relayAbort);
+          this.active.delete(lease.id);
+        });
       this.active.set(lease.id, { lease, abort, promise });
-      await promise;
     }
+    // The loop only returns once every spawned handler has settled, so a
+    // caller awaiting the loop cannot observe running work it does not know
+    // about. Promises above never reject.
+    await Promise.all([...this.active.values()].map(item => item.promise));
   }
 
   private async assertActorAllowed(lease: DurableJobLease): Promise<void> {
