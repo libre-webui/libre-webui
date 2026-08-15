@@ -63,11 +63,17 @@ export const rtlLanguages = ['ar', 'he', 'fa', 'ur'] as const;
 
 type SupportedLanguageCode = (typeof supportedLanguages)[number]['code'];
 type LocaleMessages = typeof en;
+// Locales may briefly trail en.json between a feature landing and its
+// translation pass; i18next falls back to English per missing key, so the
+// loaders only require a subset of the English catalog.
+type PartialLocaleMessages<T = LocaleMessages> = {
+  [K in keyof T]?: T[K] extends string ? string : PartialLocaleMessages<T[K]>;
+};
 
 const languageCodes = supportedLanguages.map(language => language.code);
 const localeLoaders: Record<
   SupportedLanguageCode,
-  () => Promise<LocaleMessages>
+  () => Promise<PartialLocaleMessages>
 > = {
   en: () => Promise.resolve(en),
   ar: () => import('./locales/ar.json').then(module => module.default),

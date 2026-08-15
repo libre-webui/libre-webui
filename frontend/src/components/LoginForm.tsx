@@ -24,6 +24,7 @@ import { authApi } from '@/utils/api';
 import { Clock3, Eye, EyeOff, LogIn } from 'lucide-react';
 import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 import { HuggingFaceAuthButton } from '@/components/HuggingFaceAuthButton';
+import { OidcAuthButton } from '@/components/OidcAuthButton';
 import { isDemoMode } from '@/utils/demoMode';
 import { useOAuthProviders } from '@/hooks/useOAuthProviders';
 import { cn } from '@/utils';
@@ -304,6 +305,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               <div className='mt-6 space-y-3'>
                 {oauth.github && <GitHubAuthButton />}
                 {oauth.huggingface && <HuggingFaceAuthButton />}
+                {oauth.oidc && (
+                  <OidcAuthButton displayName={oauth.oidcDisplayName} />
+                )}
               </div>
             </div>
           )}

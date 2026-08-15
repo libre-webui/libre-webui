@@ -36,6 +36,8 @@ import {
   Volume2,
   ImageIcon,
   Keyboard,
+  KeyRound,
+  MonitorSmartphone,
   Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -50,6 +52,8 @@ import { SettingsModelsTab } from '@/components/settings/SettingsModelsTab';
 import { SettingsShortcutsTab } from '@/components/settings/SettingsShortcutsTab';
 import { SettingsPluginsTab } from '@/components/settings/SettingsPluginsTab';
 import { SettingsSearchTab } from '@/components/settings/SettingsSearchTab';
+import { SettingsSessionsTab } from '@/components/settings/SettingsSessionsTab';
+import { SettingsApiKeysTab } from '@/components/settings/SettingsApiKeysTab';
 import { useAuthStore } from '@/store/authStore';
 import { SettingsTtsTab } from '@/components/settings/SettingsTtsTab';
 import { useSettingsDataImport } from '@/components/settings/useSettingsDataImport';
@@ -1582,6 +1586,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     plugins: 'api key provider connection openai anthropic groq gemini',
     search: 'web search searxng internet browse sources',
     shortcuts: 'keyboard keys hotkeys shortcut command palette',
+    sessions: 'sessions devices sign out logout revoke security login',
+    'api-keys': 'api key token scope secret bearer security integration',
   };
 
   const settingsQueryText = settingsQuery.trim().toLowerCase();
@@ -1602,6 +1608,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           icon: Palette,
         },
         { id: 'data', label: t('settings.tabs.data'), icon: HardDrive },
+        {
+          id: 'sessions',
+          label: t('settings.tabs.sessions', 'Sessions'),
+          icon: MonitorSmartphone,
+        },
+        {
+          id: 'api-keys',
+          label: t('settings.tabs.apiKeys', 'API keys'),
+          icon: KeyRound,
+        },
         {
           id: 'shortcuts',
           label: t('settings.tabs.shortcuts'),
@@ -1753,6 +1769,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       case 'search':
         return <SettingsSearchTab />;
+
+      case 'sessions':
+        return <SettingsSessionsTab />;
+
+      case 'api-keys':
+        return <SettingsApiKeysTab />;
 
       case 'plugins':
         return (

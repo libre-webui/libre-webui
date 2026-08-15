@@ -32,6 +32,50 @@ import { api, createDemoResponse, logger } from './client';
 
 const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.0';
 
+/** One signed-in session (browser login or OAuth) as reported by the backend. */
+export interface AuthSession {
+  id: string;
+  kind: string;
+  userAgent: string | null;
+  createdAt: string;
+  lastSeenAt: string | null;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  /** True for the session making the request. */
+  current: boolean;
+}
+
+/** A scoped API token. The plaintext token is only returned at creation. */
+export interface ApiTokenRecord {
+  id: string;
+  name: string;
+  tokenPrefix: string;
+  scopes: string[];
+  createdAt: string;
+  expiresAt: string | null;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+}
+
+export interface ApiTokenCreateResponse {
+  /** Shown once; never retrievable again. */
+  token: string;
+  record: ApiTokenRecord;
+}
+
+/** Scopes an API token can carry. 'admin' is mintable by administrators only. */
+export const API_TOKEN_SCOPES = [
+  'chat',
+  'models',
+  'documents',
+  'notes',
+  'personas',
+  'media',
+  'work',
+  'admin',
+] as const;
+export type ApiTokenScope = (typeof API_TOKEN_SCOPES)[number];
+
 // Authentication API
 export const authApi = {
   login: (credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
@@ -166,6 +210,81 @@ export const authApi = {
     }
 
     return api.get('/auth/encryption-key').then(res => res.data);
+  },
+
+  getSessions: (): Promise<ApiResponse<AuthSession[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<AuthSession[]>([
+        {
+          id: 'demo-session',
+          kind: 'password',
+          userAgent: navigator.userAgent,
+          createdAt: new Date().toISOString(),
+          lastSeenAt: new Date().toISOString(),
+          expiresAt: null,
+          revokedAt: null,
+          current: true,
+        },
+      ]);
+    }
+
+    return api.get('/auth/sessions').then(res => res.data);
+  },
+
+  revokeSession: (id: string): Promise<ApiResponse<void>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(undefined);
+    }
+
+    return api.delete(`/auth/sessions/${id}`).then(res => res.data);
+  },
+
+  revokeOtherSessions: (): Promise<ApiResponse<{ revokedCount: number }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ revokedCount: 0 });
+    }
+
+    return api.post('/auth/sessions/revoke-others').then(res => res.data);
+  },
+
+  listApiTokens: (): Promise<ApiResponse<ApiTokenRecord[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<ApiTokenRecord[]>([]);
+    }
+
+    return api.get('/auth/tokens').then(res => res.data);
+  },
+
+  createApiToken: (payload: {
+    name: string;
+    scopes: string[];
+    expiresInDays?: number;
+  }): Promise<ApiResponse<ApiTokenCreateResponse>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<ApiTokenCreateResponse>({
+        token: 'lwui_demo_not_a_real_token',
+        record: {
+          id: 'demo-token-' + Date.now(),
+          name: payload.name,
+          tokenPrefix: 'lwui_demo',
+          scopes: payload.scopes,
+          createdAt: new Date().toISOString(),
+          expiresAt: null,
+          lastUsedAt: null,
+          revokedAt: null,
+        },
+      });
+    }
+
+    return api.post('/auth/tokens', payload).then(res => res.data);
+  },
+
+  revokeApiToken: (id: string): Promise<ApiResponse<void>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(undefined);
+    }
+
+    return api.delete(`/auth/tokens/${id}`).then(res => res.data);
   },
 };
 

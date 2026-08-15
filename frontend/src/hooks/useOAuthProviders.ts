@@ -21,20 +21,30 @@ import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('hooks:oauth-providers');
 
-export type OAuthProvider = 'github' | 'huggingface';
+export type OAuthProvider = 'github' | 'huggingface' | 'oidc';
 
-const probe = async (provider: OAuthProvider): Promise<boolean> => {
+interface ProviderStatus {
+  configured: boolean;
+  /** Instance-chosen label for generic OIDC (e.g. "Acme SSO"). */
+  displayName?: string;
+}
+
+const probe = async (provider: OAuthProvider): Promise<ProviderStatus> => {
   try {
     const response = await fetch(
       `${API_BASE_URL}/auth/oauth/${provider}/status`,
       { method: 'GET', credentials: 'include' }
     );
-    if (!response.ok) return false;
+    if (!response.ok) return { configured: false };
     const data = await response.json();
-    return Boolean(data.configured);
+    return {
+      configured: Boolean(data.configured),
+      displayName:
+        typeof data.displayName === 'string' ? data.displayName : undefined,
+    };
   } catch (error) {
     logger.debug(`${provider} OAuth not configured:`, error);
-    return false;
+    return { configured: false };
   }
 };
 
@@ -46,13 +56,23 @@ export const useOAuthProviders = () => {
   const [providers, setProviders] = useState<Record<OAuthProvider, boolean>>({
     github: false,
     huggingface: false,
+    oidc: false,
   });
+  const [oidcDisplayName, setOidcDisplayName] = useState<string | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     let active = true;
-    Promise.all([probe('github'), probe('huggingface')]).then(
-      ([github, huggingface]) => {
-        if (active) setProviders({ github, huggingface });
+    Promise.all([probe('github'), probe('huggingface'), probe('oidc')]).then(
+      ([github, huggingface, oidc]) => {
+        if (!active) return;
+        setProviders({
+          github: github.configured,
+          huggingface: huggingface.configured,
+          oidc: oidc.configured,
+        });
+        setOidcDisplayName(oidc.displayName);
       }
     );
     return () => {
@@ -62,6 +82,7 @@ export const useOAuthProviders = () => {
 
   return {
     ...providers,
-    hasAny: providers.github || providers.huggingface,
+    oidcDisplayName,
+    hasAny: providers.github || providers.huggingface || providers.oidc,
   };
 };
