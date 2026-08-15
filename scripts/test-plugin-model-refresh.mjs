@@ -306,6 +306,69 @@ test('a stale catalog is re-discovered when the plugin list is read', async () =
   }
 });
 
+test('a model missing from a due catalog is re-discovered before rejection', async () => {
+  const provider = await startProvider();
+  const service = new PluginService();
+  const admin = upsertTestUser('model-skew-admin', 'admin');
+  const user = upsertTestUser('model-skew-user', 'user');
+  const pluginId = 'skew-provider';
+  await installProvider(service, pluginId, provider.baseUrl, admin.id);
+
+  try {
+    await service.activatePlugin(pluginId, user.id);
+    assert.deepEqual(await modelsFor(service, pluginId, user.id), ['model-a']);
+
+    // The provider ships a new model that the stored catalog does not carry
+    // yet — the skew a worker sees when a chat is sent from a live UI list.
+    provider.state.models = ['model-a', 'model-b'];
+
+    // A fresh catalog is authoritative: the miss rejects without a probe.
+    const requestsBeforeFreshMiss = provider.state.requests;
+    await assert.rejects(
+      () => service.getActivePluginForModel('model-b', user.id, pluginId),
+      /not supported by plugin/
+    );
+    assert.equal(provider.state.requests, requestsBeforeFreshMiss);
+
+    // A due catalog is refreshed once and the request then resolves.
+    await withEnv(
+      {
+        PLUGIN_MODEL_DISCOVERY_TTL_MS: '1',
+        PLUGIN_MODEL_DISCOVERY_RETRY_MS: '1',
+      },
+      async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const resolved = await service.getActivePluginForModel(
+          'model-b',
+          user.id,
+          pluginId
+        );
+        assert.ok(resolved);
+        assert.ok(resolved.model_map.includes('model-b'));
+      }
+    );
+
+    // A model the provider never served still rejects after the refresh.
+    await withEnv(
+      {
+        PLUGIN_MODEL_DISCOVERY_TTL_MS: '1',
+        PLUGIN_MODEL_DISCOVERY_RETRY_MS: '1',
+      },
+      async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        await assert.rejects(
+          () =>
+            service.getActivePluginForModel('model-missing', user.id, pluginId),
+          /not supported by plugin/
+        );
+      }
+    );
+  } finally {
+    await service.deletePlugin(pluginId);
+    await provider.close();
+  }
+});
+
 test('GET /api/plugins returns the refreshed catalog after a reload', async () => {
   const provider = await startProvider();
   const service = new PluginService();

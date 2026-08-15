@@ -2213,7 +2213,7 @@ export class PluginService {
     pluginId?: string
   ): Promise<Plugin | null> {
     if (pluginId) {
-      const plugin = await this.getPlugin(pluginId, userId);
+      let plugin = await this.getPlugin(pluginId, userId);
       if (!plugin) {
         throw new Error(`Plugin not found: ${pluginId}`);
       }
@@ -2221,9 +2221,22 @@ export class PluginService {
         throw new Error(`Plugin is not active: ${pluginId}`);
       }
       if (!plugin.model_map.includes(model)) {
-        throw new Error(
-          `Model ${model} is not supported by plugin ${pluginId}`
-        );
+        // The UI offers a live-fetched catalog, so a just-released provider
+        // model can be requested before the shared store carries it — and an
+        // external worker resolves from the shared store only. Refresh a due
+        // catalog once before rejecting; the discovery backoff keeps a
+        // mistyped model from probing the provider on every request.
+        if (await this.isModelDiscoveryDue(pluginId, userId)) {
+          await this.discoverModelsResult(pluginId, userId).catch(
+            () => undefined
+          );
+          plugin = await this.getPlugin(pluginId, userId);
+        }
+        if (!plugin?.model_map.includes(model)) {
+          throw new Error(
+            `Model ${model} is not supported by plugin ${pluginId}`
+          );
+        }
       }
 
       await this.resolveOperationEndpoint(plugin, userId);
@@ -2252,6 +2265,33 @@ export class PluginService {
         }
 
         return plugin;
+      }
+    }
+
+    // Same store-vs-catalog skew guard for sessions without an explicit
+    // provider: refresh every due catalog once, then rescan before giving up.
+    let refreshedAnyCatalog = false;
+    for (const plugin of activePlugins) {
+      if (
+        (plugin.type === 'completion' || plugin.type === 'chat') &&
+        (await this.isModelDiscoveryDue(plugin.id, userId))
+      ) {
+        await this.discoverModelsResult(plugin.id, userId).catch(
+          () => undefined
+        );
+        refreshedAnyCatalog = true;
+      }
+    }
+    if (refreshedAnyCatalog) {
+      for (const plugin of await this.getActivePlugins(userId)) {
+        if (plugin.model_map.includes(model)) {
+          await this.resolveOperationEndpoint(plugin, userId);
+          const apiKey = await this.getApiKey(plugin, userId);
+          if (pluginRequiresApiKey(plugin) && !apiKey) {
+            continue;
+          }
+          return plugin;
+        }
       }
     }
 
