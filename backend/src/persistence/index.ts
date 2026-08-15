@@ -21,6 +21,10 @@ import {
   getDatabase,
   getDatabaseSafe,
   preflightExistingSQLiteDatabase,
+  preflightIdentityMatchesMarker,
+  readPreflightVerificationMarker,
+  readSQLitePreflightIdentity,
+  writePreflightVerificationMarker,
 } from '../db.js';
 import type { PostgresDatabase } from './postgresDatabase.js';
 import { createSQLitePersistence } from './sqlitePersistence.js';
@@ -210,7 +214,13 @@ export const getSQLiteHealthDatabase = (): Database.Database | null =>
     ? null
     : (current?.sqliteDatabase ?? getDatabaseSafe());
 
-export { preflightExistingSQLiteDatabase };
+export {
+  preflightExistingSQLiteDatabase,
+  preflightIdentityMatchesMarker,
+  readPreflightVerificationMarker,
+  readSQLitePreflightIdentity,
+  writePreflightVerificationMarker,
+};
 
 export type {
   IdentityAccountStatus,

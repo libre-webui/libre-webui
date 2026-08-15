@@ -14,6 +14,10 @@ import {
   getPersistence,
   initializePersistence,
   preflightExistingSQLiteDatabase,
+  preflightIdentityMatchesMarker,
+  readPreflightVerificationMarker,
+  readSQLitePreflightIdentity,
+  writePreflightVerificationMarker,
 } from './persistence/index.js';
 import {
   assertPlatformRuntimeConfig,
@@ -38,12 +42,6 @@ import {
   LegacyCiphertextIntegrityError,
   verifyLegacyCiphertextIntegrity,
 } from './services/legacyCiphertextIntegrity.js';
-import {
-  preflightIdentityMatchesMarker,
-  readPreflightVerificationMarker,
-  readSQLitePreflightIdentity,
-  writePreflightVerificationMarker,
-} from './db.js';
 import { createLogger } from './utils/logger.js';
 
 const logger = createLogger('durable-worker');

@@ -24,13 +24,11 @@ import {
 import {
   initializePersistence,
   preflightExistingSQLiteDatabase,
-} from './persistence/index.js';
-import {
   preflightIdentityMatchesMarker,
   readPreflightVerificationMarker,
   readSQLitePreflightIdentity,
   writePreflightVerificationMarker,
-} from './db.js';
+} from './persistence/index.js';
 import {
   LegacyCiphertextIntegrityError,
   verifyLegacyCiphertextIntegrity,
