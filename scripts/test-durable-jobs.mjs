@@ -1435,6 +1435,108 @@ test('cancellation is observed inside the authority recheck window', async () =>
   database.close();
 });
 
+test('history pruning removes aged events and terminal jobs but spares lifecycle rows', async () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const start = 1_000_000;
+  const { database, service, setNow } = harness({ now: start });
+
+  const appendAt = (time, eventType, occurrence) => {
+    setNow(time);
+    service.appendEvent({
+      eventId: durableEventId('prune-test', eventType, occurrence),
+      streamId: 'chat:prune-session',
+      eventType,
+      subjectId: 'subject-1',
+      actorUserId: 'actor-1',
+      payload: { mode: 'encrypted', value: { occurrence } },
+    });
+  };
+  appendAt(start, 'chat.stream.v1', 'old-chunk-1');
+  appendAt(start + 1, 'chat.stream.v1', 'old-chunk-2');
+  appendAt(start + 2, 'chat.done.v1', 'old-done');
+  const nowTime = start + 40 * DAY;
+  appendAt(nowTime - 1000, 'chat.stream.v1', 'fresh-chunk');
+  appendAt(nowTime - 1000, 'chat.done.v1', 'fresh-done');
+
+  setNow(start);
+  const finish = (jobType, key) => {
+    const job = enqueue(service, {
+      jobType,
+      idempotencyScope: jobType,
+      idempotencyKey: key,
+    });
+    const lease = service.claim('prune-worker', 30000);
+    service.complete(lease);
+    return job;
+  };
+  const oldPlain = finish('test.echo', 'prune-old-plain');
+  const oldLifecycle = finish(RESOURCE_DELETE_JOB_TYPE, 'prune-old-lifecycle');
+  setNow(nowTime - 1000);
+  const freshPlain = finish('test.echo', 'prune-fresh-plain');
+
+  setNow(nowTime);
+  const removed = service.pruneHistory({
+    chatStreamEventCutoff: nowTime - DAY,
+    eventCutoff: nowTime - 30 * DAY,
+    jobCutoff: nowTime - 30 * DAY,
+    limit: 100,
+  });
+  // The two old chunks go through the chat-stream window; the old done event
+  // and the old jobs' own job.* audit events go through the general window.
+  assert.equal(removed.chatStreamEvents, 2);
+  assert.ok(removed.events >= 1);
+  assert.equal(removed.jobs, 1);
+  const remainingEvents = database
+    .prepare(
+      `SELECT event_type FROM platform_events
+        WHERE stream_id = 'chat:prune-session' ORDER BY global_cursor`
+    )
+    .all()
+    .map(row => row.event_type);
+  assert.deepEqual(remainingEvents, ['chat.stream.v1', 'chat.done.v1']);
+  assert.equal(service.getMetadata(oldPlain.id), null);
+  assert.equal(service.getMetadata(oldLifecycle.id)?.state, 'succeeded');
+  assert.equal(service.getMetadata(freshPlain.id)?.state, 'succeeded');
+
+  // An idle follow-up sweep removes nothing and leaves the survivors alone.
+  const idle = service.pruneHistory({
+    chatStreamEventCutoff: nowTime - DAY,
+    eventCutoff: nowTime - 30 * DAY,
+    jobCutoff: nowTime - 30 * DAY,
+    limit: 100,
+  });
+  assert.deepEqual(idle, { chatStreamEvents: 0, events: 0, jobs: 0 });
+  database.close();
+});
+
+test('deleting one event stream leaves other streams intact', () => {
+  const { database, service } = harness({ now: Date.now() });
+  const append = (streamId, occurrence) =>
+    service.appendEvent({
+      eventId: durableEventId('stream-delete', streamId, occurrence),
+      streamId,
+      eventType: 'chat.stream.v1',
+      subjectId: 'subject-1',
+      actorUserId: 'actor-1',
+      payload: { mode: 'encrypted', value: { occurrence } },
+    });
+  append('chat:doomed', 'a');
+  append('chat:doomed', 'b');
+  append('chat:kept', 'c');
+  assert.equal(service.deleteEventStream('chat:doomed'), 2);
+  const streams = database
+    .prepare('SELECT DISTINCT stream_id FROM platform_events')
+    .all()
+    .map(row => row.stream_id);
+  assert.deepEqual(streams, ['chat:kept']);
+  const heads = database
+    .prepare('SELECT stream_id FROM platform_event_stream_heads')
+    .all()
+    .map(row => row.stream_id);
+  assert.deepEqual(heads, ['chat:kept']);
+  database.close();
+});
+
 test('embedded worker rejects an invalid concurrency limit', () => {
   for (const maxConcurrentJobs of [0, -1, 1.5, 33]) {
     assert.throws(

@@ -43,6 +43,7 @@ import { getCoordinator } from '../platform/coordination/service.js';
 import { transactionalChatGenerationEnqueuer } from '../platform/jobs/chatGenerationEnqueuer.js';
 import {
   CHAT_GENERATE_JOB_TYPE,
+  chatEventStreamId,
   chatGenerationIdempotencyScope,
 } from '../platform/jobs/domainJobContracts.js';
 import { getDurableJobRuntime } from '../platform/jobs/durableJobRuntime.js';
@@ -815,6 +816,15 @@ class ChatService {
     );
     if (deleted) {
       this.sessions.delete(sessionId);
+      try {
+        // The session is gone; its durable event stream is dead transport.
+        // A failure here leaves rows for the retention sweep, not the user.
+        await getDurableJobRuntime().service.deleteEventStream(
+          chatEventStreamId(sessionId)
+        );
+      } catch {
+        // Retention prunes anything this best-effort cleanup missed.
+      }
     }
     return deleted;
   }

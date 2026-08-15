@@ -100,6 +100,11 @@ coverage/
 # Temporary files
 temp/
 tmp/
+backend/temp/
+
+# Local runtime data written by source launches
+backend/backend/
+backend/data/
 
 # Database files
 *.sqlite

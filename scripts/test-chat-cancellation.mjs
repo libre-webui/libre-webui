@@ -61,12 +61,9 @@ test('durable chat streaming does not serialize provider tokens behind event sto
     }
   });
 
-  let total = 'token-0';
   coalescer.queue({
-    contentDelta: total,
+    contentDelta: 'token-0',
     thinkingDelta: '',
-    contentTotal: total,
-    thinkingTotal: '',
   });
   await firstPublishStarted;
   const laterTokens = Array.from(
@@ -74,12 +71,9 @@ test('durable chat streaming does not serialize provider tokens behind event sto
     (_, index) => `|${index + 1}`
   );
   for (const token of laterTokens) {
-    total += token;
     coalescer.queue({
       contentDelta: token,
       thinkingDelta: '',
-      contentTotal: total,
-      thinkingTotal: '',
     });
   }
   assert.equal(
@@ -93,7 +87,6 @@ test('durable chat streaming does not serialize provider tokens behind event sto
   assert.equal(published.length, 2);
   assert.equal(published[0].contentDelta, 'token-0');
   assert.equal(published[1].contentDelta, laterTokens.join(''));
-  assert.equal(published[1].contentTotal, total);
 });
 
 test('Ollama streaming receives the caller signal and cancellation is not sent as an error', async () => {

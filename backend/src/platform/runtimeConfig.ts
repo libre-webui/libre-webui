@@ -46,6 +46,12 @@ export interface PlatformRuntimeConfig {
     workerMode: JobWorkerMode;
     /** Jobs one worker may run at the same time. */
     concurrency: number;
+    /** Aged durable-history retention windows. */
+    retention: {
+      chatStreamEventMs: number;
+      eventMs: number;
+      jobMs: number;
+    };
   };
   blockers: string[];
 }
@@ -167,6 +173,27 @@ export const resolvePlatformRuntimeConfig = (
     'JOB_WORKER_CONCURRENCY',
     blockers,
     32
+  );
+  const chatStreamRetentionHours = positiveInteger(
+    env.CHAT_STREAM_EVENT_RETENTION_HOURS,
+    24,
+    'CHAT_STREAM_EVENT_RETENTION_HOURS',
+    blockers,
+    24 * 365
+  );
+  const eventRetentionDays = positiveInteger(
+    env.PLATFORM_EVENT_RETENTION_DAYS,
+    30,
+    'PLATFORM_EVENT_RETENTION_DAYS',
+    blockers,
+    3650
+  );
+  const jobRetentionDays = positiveInteger(
+    env.PLATFORM_JOB_RETENTION_DAYS,
+    30,
+    'PLATFORM_JOB_RETENTION_DAYS',
+    blockers,
+    3650
   );
 
   const databaseUrl = validateUrl(
@@ -311,7 +338,15 @@ export const resolvePlatformRuntimeConfig = (
         blockers
       ),
     },
-    jobs: { workerMode, concurrency: jobConcurrency },
+    jobs: {
+      workerMode,
+      concurrency: jobConcurrency,
+      retention: {
+        chatStreamEventMs: chatStreamRetentionHours * 60 * 60 * 1000,
+        eventMs: eventRetentionDays * 24 * 60 * 60 * 1000,
+        jobMs: jobRetentionDays * 24 * 60 * 60 * 1000,
+      },
+    },
     blockers: [...new Set(blockers)],
   };
 };

@@ -18,6 +18,8 @@ export const CHAT_GENERATE_JOB_TYPE = 'chat.generate.v1';
 export const CHAT_GENERATE_IDEMPOTENCY_SCOPE = 'chat.generate.v1';
 export const chatGenerationIdempotencyScope = (sessionId: string): string =>
   `${CHAT_GENERATE_IDEMPOTENCY_SCOPE}:${sessionId}`;
+export const chatEventStreamId = (sessionId: string): string =>
+  `chat:${sessionId}`;
 export const OWNER_DELETE_CONTENT_JOB_TYPE = 'owner.delete-content.v1';
 export const OWNER_DELETE_CONTENT_IDEMPOTENCY_SCOPE = 'owner.delete-content.v1';
 export const OWNER_DELETE_CONTENT_RECOVERY_IDEMPOTENCY_SCOPE =

@@ -22,6 +22,7 @@ import {
 } from '../storage/aesGcmKeyring.js';
 import {
   DurableJobError,
+  validatePruneHistoryInput,
   type DurableCancellationCode,
   type DurableChatCancellationDecision,
   type DurableChatCompletionPublishInput,
@@ -442,6 +443,23 @@ export class DurableJobService {
     cancellationRequested: boolean;
   } {
     return this.repository.inspectLease(lease);
+  }
+
+  /** Bounded removal of aged events and terminal non-lifecycle jobs. */
+  pruneHistory(input: {
+    chatStreamEventCutoff: number;
+    eventCutoff: number;
+    jobCutoff: number;
+    limit: number;
+  }): { chatStreamEvents: number; events: number; jobs: number } {
+    validatePruneHistoryInput(input);
+    return this.repository.pruneHistory(input);
+  }
+
+  /** Remove one finished stream's events, for example a deleted chat. */
+  deleteEventStream(streamId: string): number {
+    validateText(streamId, 'event stream ID');
+    return this.repository.deleteEventStream(streamId);
   }
 
   private validateLeaseDuration(leaseMs: number): void {

@@ -739,6 +739,7 @@ const durableJobRuntime = initializeDurableJobRuntime({
   role: getPlatformRuntimeConfig().jobs.workerMode,
   runWorker: getPlatformRuntimeConfig().jobs.workerMode === 'embedded',
   maxConcurrentJobs: getPlatformRuntimeConfig().jobs.concurrency,
+  retention: getPlatformRuntimeConfig().jobs.retention,
   handlers: createDomainDurableJobHandlers(),
 });
 const durableEventGateway = initializeDurableEventGateway(

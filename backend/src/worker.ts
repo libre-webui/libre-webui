@@ -201,6 +201,7 @@ const runtime = initializeDurableJobRuntime({
   role: 'external',
   runWorker: true,
   maxConcurrentJobs: config.jobs.concurrency,
+  retention: config.jobs.retention,
   handlers: createDomainDurableJobHandlers(),
 });
 const { closeDurableEventGateway, initializeDurableEventGateway } =

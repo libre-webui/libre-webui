@@ -914,6 +914,100 @@ export class SQLiteDurableJobRepository {
     };
   }
 
+  /**
+   * `global_cursor` is autoincrement and `occurred_at` comes from the same
+   * clock that orders appends, so the oldest row by cursor is also the oldest
+   * by time. The probe keeps an idle sweep at one row read instead of a scan.
+   */
+  private oldestEventOccurredAt(eventType?: string): number | undefined {
+    const row = this.database
+      .prepare(
+        `SELECT occurred_at FROM platform_events
+          ${eventType ? 'WHERE event_type = ?' : ''}
+          ORDER BY global_cursor ASC LIMIT 1`
+      )
+      .get(...(eventType ? [eventType] : [])) as
+      { occurred_at: number } | undefined;
+    return row?.occurred_at;
+  }
+
+  private deleteOldestEvents(
+    cutoff: number,
+    limit: number,
+    eventType?: string
+  ): number {
+    const oldest = this.oldestEventOccurredAt(eventType);
+    if (oldest === undefined || oldest >= cutoff) return 0;
+    return this.immediate(
+      () =>
+        this.database
+          .prepare(
+            `DELETE FROM platform_events
+              WHERE global_cursor IN (
+                SELECT global_cursor FROM platform_events
+                 WHERE ${eventType ? 'event_type = ? AND ' : ''}occurred_at < ?
+                 ORDER BY global_cursor ASC LIMIT ?
+              )`
+          )
+          .run(...(eventType ? [eventType] : []), cutoff, limit).changes
+    );
+  }
+
+  /**
+   * Bounded removal of aged history. Chat stream chunks are transient live
+   * catch-up transport and dominate volume, so they get their own shorter
+   * window. Deletion-lifecycle job types are excluded: their terminal rows
+   * feed cleanup recovery and are reconciled by their own path.
+   */
+  pruneHistory(input: {
+    chatStreamEventCutoff: number;
+    eventCutoff: number;
+    jobCutoff: number;
+    limit: number;
+  }): { chatStreamEvents: number; events: number; jobs: number } {
+    const chatStreamEvents = this.deleteOldestEvents(
+      input.chatStreamEventCutoff,
+      input.limit,
+      'chat.stream.v1'
+    );
+    const events = this.deleteOldestEvents(input.eventCutoff, input.limit);
+    const jobs = this.immediate(
+      () =>
+        this.database
+          .prepare(
+            `DELETE FROM platform_jobs
+              WHERE id IN (
+                SELECT id FROM platform_jobs
+                 WHERE state IN ('succeeded', 'cancelled', 'dead_letter')
+                   AND job_type NOT IN (?, ?)
+                   AND finished_at IS NOT NULL
+                   AND finished_at < ?
+                 LIMIT ?
+              )`
+          )
+          .run(
+            RESOURCE_DELETE_JOB_TYPE,
+            OWNER_DELETE_CONTENT_JOB_TYPE,
+            input.jobCutoff,
+            input.limit
+          ).changes
+    );
+    return { chatStreamEvents, events, jobs };
+  }
+
+  /** Remove one finished stream and its head; events cascade with the head. */
+  deleteEventStream(streamId: string): number {
+    return this.immediate(() => {
+      const events = this.database
+        .prepare(`DELETE FROM platform_events WHERE stream_id = ?`)
+        .run(streamId).changes;
+      this.database
+        .prepare(`DELETE FROM platform_event_stream_heads WHERE stream_id = ?`)
+        .run(streamId);
+      return events;
+    });
+  }
+
   updateProgress(
     lease: DurableJobLease,
     current: number,

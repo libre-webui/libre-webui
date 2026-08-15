@@ -657,8 +657,10 @@ test(
     const firstUpstream = firstStream.headers.get('x-libre-upstream');
     const firstEvent = await readSseEvent(firstStream);
     assert.equal(firstEvent.payload.type, 'chunk');
-    assert.equal(firstEvent.payload.total, 'fixture-live-part-1:');
-    const observedLiveTotals = [firstEvent.payload.total];
+    // Chunk events carry only their delta; consumers accumulate in order.
+    assert.equal(firstEvent.payload.content, 'fixture-live-part-1:');
+    assert.equal(firstEvent.payload.total, undefined);
+    const observedLiveDeltas = [firstEvent.payload.content];
     const observedLiveCursors = [firstEvent.cursor];
     let afterCursor = firstEvent.cursor;
     let crossedReplica = false;
@@ -681,7 +683,7 @@ test(
       afterCursor = resumed.cursor;
       observedLiveCursors.push(resumed.cursor);
       if (resumed.payload.type === 'chunk') {
-        observedLiveTotals.push(resumed.payload.total);
+        observedLiveDeltas.push(resumed.payload.content);
       }
       if (resumed.payload.type === 'done') terminalEvent = resumed;
     }
@@ -691,10 +693,14 @@ test(
       'an active stream reconnect must cross replicas'
     );
     assert.equal(terminalEvent?.payload.type, 'done');
-    assert.deepEqual(observedLiveTotals, [
+    assert.deepEqual(observedLiveDeltas, [
       'fixture-live-part-1:',
-      'fixture-live-part-1:fixture-live-part-2',
+      'fixture-live-part-2',
     ]);
+    assert.equal(
+      observedLiveDeltas.join(''),
+      'fixture-live-part-1:fixture-live-part-2'
+    );
     assert.equal(
       terminalEvent?.payload.content,
       'fixture-live-part-1:fixture-live-part-2'

@@ -118,11 +118,12 @@ const streamGeneratedAssistant = async (
   let providerMetadata: Record<string, unknown> | undefined;
   let finalResponse: OllamaChatResponse | undefined;
   let streamEventSequence = 0;
+  // Chunk events carry only their delta. Persisting the accumulated total in
+  // every event made storage quadratic in message length; consumers rebuild
+  // the message by replaying the generation's ordered deltas.
   const publish = async (batch: {
     contentDelta: string;
     thinkingDelta: string;
-    contentTotal: string;
-    thinkingTotal: string;
   }): Promise<void> => {
     await context.assertSideEffectAllowed();
     await append(
@@ -132,13 +133,7 @@ const streamGeneratedAssistant = async (
         type: 'chunk',
         messageId: input.assistantMessageId,
         content: batch.contentDelta,
-        total: batch.contentTotal,
-        ...(batch.thinkingDelta
-          ? {
-              thinking: batch.thinkingDelta,
-              thinkingTotal: batch.thinkingTotal,
-            }
-          : {}),
+        ...(batch.thinkingDelta ? { thinking: batch.thinkingDelta } : {}),
         done: false,
       },
       `attempt:${context.attemptCount}:stream:${++streamEventSequence}`
@@ -149,8 +144,6 @@ const streamGeneratedAssistant = async (
     streamPublisher.queue({
       contentDelta,
       thinkingDelta,
-      contentTotal: content,
-      thinkingTotal: thinking,
     });
   };
 
@@ -254,8 +247,6 @@ const streamGeneratedAssistant = async (
     await publish({
       contentDelta: content,
       thinkingDelta: thinking,
-      contentTotal: content,
-      thinkingTotal: thinking,
     });
     return {
       response: generated.response,

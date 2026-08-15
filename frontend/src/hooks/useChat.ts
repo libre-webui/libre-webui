@@ -340,7 +340,7 @@ export const useChat = (sessionId: string) => {
       // Type guard to ensure data has the expected structure
       const chunkData = data as {
         content: string;
-        total: string;
+        total?: string;
         thinking?: string;
         thinkingTotal?: string;
         done: boolean;
@@ -362,18 +362,27 @@ export const useChat = (sessionId: string) => {
       }
 
       if (messageId) {
-        // Always update the content buffer and UI immediately for responsive streaming
-        streamingContentRef.current = chunkData.total;
+        // Always update the content buffer and UI immediately for responsive
+        // streaming. WebSocket chunks carry the accumulated total; durable
+        // replay events carry only their delta, and the buffer accumulates
+        // them in event order.
+        if (typeof chunkData.total === 'string') {
+          streamingContentRef.current = chunkData.total;
+        } else if (typeof chunkData.content === 'string') {
+          streamingContentRef.current += chunkData.content;
+        }
         if (typeof chunkData.thinkingTotal === 'string') {
           streamingThinkingRef.current = chunkData.thinkingTotal;
+        } else if (typeof chunkData.thinking === 'string') {
+          streamingThinkingRef.current += chunkData.thinking;
         }
         trackThinkingProgress(
           messageId,
-          chunkData.total,
+          streamingContentRef.current,
           streamingThinkingRef.current
         );
         publishStreamingMessage(
-          chunkData.total,
+          streamingContentRef.current,
           chunkData.done,
           streamingThinkingRef.current
         );

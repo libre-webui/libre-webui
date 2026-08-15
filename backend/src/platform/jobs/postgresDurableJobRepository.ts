@@ -1070,6 +1070,108 @@ export class PostgresDurableJobRepository {
     };
   }
 
+  /**
+   * `global_cursor` is a sequence and `occurred_at` comes from the same clock
+   * that orders appends, so the oldest row by cursor is also the oldest by
+   * time. The probe keeps an idle sweep at one row read instead of a scan.
+   */
+  private async oldestEventOccurredAt(
+    eventType?: string
+  ): Promise<number | undefined> {
+    const result = await this.database.query<{
+      occurred_at: string | number;
+    }>(
+      `SELECT occurred_at FROM platform_events
+        ${eventType ? 'WHERE event_type = $1' : ''}
+        ORDER BY global_cursor ASC LIMIT 1`,
+      eventType ? [eventType] : []
+    );
+    const row = result.rows[0];
+    return row ? integer(row.occurred_at, 'event occurred_at') : undefined;
+  }
+
+  private async deleteOldestEvents(
+    cutoff: number,
+    limit: number,
+    eventType?: string
+  ): Promise<number> {
+    const oldest = await this.oldestEventOccurredAt(eventType);
+    if (oldest === undefined || oldest >= cutoff) return 0;
+    const result = await this.database.query(
+      eventType
+        ? `DELETE FROM platform_events
+            WHERE global_cursor IN (
+              SELECT global_cursor FROM platform_events
+               WHERE event_type = $1 AND occurred_at < $2
+               ORDER BY global_cursor ASC LIMIT $3
+            )`
+        : `DELETE FROM platform_events
+            WHERE global_cursor IN (
+              SELECT global_cursor FROM platform_events
+               WHERE occurred_at < $1
+               ORDER BY global_cursor ASC LIMIT $2
+            )`,
+      eventType ? [eventType, cutoff, limit] : [cutoff, limit]
+    );
+    return result.rowCount ?? 0;
+  }
+
+  /**
+   * Bounded removal of aged history. Chat stream chunks are transient live
+   * catch-up transport and dominate volume, so they get their own shorter
+   * window. Deletion-lifecycle job types are excluded: their terminal rows
+   * feed cleanup recovery and are reconciled by their own path.
+   */
+  async pruneHistory(input: {
+    chatStreamEventCutoff: number;
+    eventCutoff: number;
+    jobCutoff: number;
+    limit: number;
+  }): Promise<{ chatStreamEvents: number; events: number; jobs: number }> {
+    const chatStreamEvents = await this.deleteOldestEvents(
+      input.chatStreamEventCutoff,
+      input.limit,
+      'chat.stream.v1'
+    );
+    const events = await this.deleteOldestEvents(
+      input.eventCutoff,
+      input.limit
+    );
+    const jobs = await this.database.query(
+      `DELETE FROM platform_jobs
+        WHERE id IN (
+          SELECT id FROM platform_jobs
+           WHERE state IN ('succeeded', 'cancelled', 'dead_letter')
+             AND job_type NOT IN ($1, $2)
+             AND finished_at IS NOT NULL
+             AND finished_at < $3
+           LIMIT $4
+        )`,
+      [
+        RESOURCE_DELETE_JOB_TYPE,
+        OWNER_DELETE_CONTENT_JOB_TYPE,
+        input.jobCutoff,
+        input.limit,
+      ]
+    );
+    return { chatStreamEvents, events, jobs: jobs.rowCount ?? 0 };
+  }
+
+  /** Remove one finished stream and its head; events cascade with the head. */
+  async deleteEventStream(streamId: string): Promise<number> {
+    return this.database.transaction(async client => {
+      const events = await client.query(
+        `DELETE FROM platform_events WHERE stream_id = $1`,
+        [streamId]
+      );
+      await client.query(
+        `DELETE FROM platform_event_stream_heads WHERE stream_id = $1`,
+        [streamId]
+      );
+      return events.rowCount ?? 0;
+    });
+  }
+
   async updateProgress(
     job: DurableJobLease,
     current: number,

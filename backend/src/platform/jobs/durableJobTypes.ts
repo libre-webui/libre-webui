@@ -215,6 +215,41 @@ export class DurableJobError extends Error {
   }
 }
 
+export interface DurableHistoryPruneInput {
+  /** Remove chat.stream.v1 chunk events that occurred before this time. */
+  chatStreamEventCutoff: number;
+  /** Remove any event that occurred before this time. */
+  eventCutoff: number;
+  /** Remove terminal non-lifecycle jobs finished before this time. */
+  jobCutoff: number;
+  /** Maximum rows removed per category in one pass. */
+  limit: number;
+}
+
+export const validatePruneHistoryInput = (
+  input: DurableHistoryPruneInput
+): void => {
+  for (const field of [
+    'chatStreamEventCutoff',
+    'eventCutoff',
+    'jobCutoff',
+    'limit',
+  ] as const) {
+    if (!Number.isSafeInteger(input[field]) || input[field] < 0) {
+      throw new DurableJobError(
+        'invalid-input',
+        `Invalid durable history ${field}`
+      );
+    }
+  }
+  if (input.limit < 1 || input.limit > 100_000) {
+    throw new DurableJobError(
+      'invalid-input',
+      'Durable history prune limit must be between 1 and 100000'
+    );
+  }
+};
+
 /**
  * A handler may expose only a stable code and an operator-safe summary. The
  * worker never persists an arbitrary exception message because it can contain

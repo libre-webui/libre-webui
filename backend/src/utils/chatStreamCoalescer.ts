@@ -7,8 +7,6 @@
 export interface ChatStreamBatch {
   contentDelta: string;
   thinkingDelta: string;
-  contentTotal: string;
-  thinkingTotal: string;
 }
 
 export interface ChatStreamCoalescer {
@@ -54,8 +52,6 @@ export const createChatStreamCoalescer = (
         ? {
             contentDelta: pending.contentDelta + batch.contentDelta,
             thinkingDelta: pending.thinkingDelta + batch.thinkingDelta,
-            contentTotal: batch.contentTotal,
-            thinkingTotal: batch.thinkingTotal,
           }
         : { ...batch };
       start();
