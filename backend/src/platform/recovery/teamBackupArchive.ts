@@ -605,6 +605,13 @@ const verifyDurablePayload = (
   }
 };
 
+/**
+ * Stream-head invariants: every event's stream must have a head, and a head
+ * may never sit behind its newest retained event. A head may legitimately
+ * exceed the retained events: chat cancellation commits a zero-event head as
+ * its lock anchor when Stop wins before any durable event exists, and the
+ * retention sweep removes aged events without rewriting heads.
+ */
 const verifyDurableDatabaseIntegrity = async (
   executor: PostgresQueryExecutor,
   keyring: Aes256GcmKeyring
@@ -646,10 +653,7 @@ const verifyDurableDatabaseIntegrity = async (
           FROM platform_event_stream_heads heads
           FULL OUTER JOIN event_groups events ON events.stream_id = heads.stream_id
          WHERE heads.stream_id IS NULL
-            OR events.stream_id IS NULL
-            OR events.first_sequence != 1
-            OR events.event_count != heads.last_sequence
-            OR events.last_sequence != heads.last_sequence) AS inconsistent_heads
+            OR events.last_sequence > heads.last_sequence) AS inconsistent_heads
        FROM payloads`
   );
   const row = aggregate.rows[0];

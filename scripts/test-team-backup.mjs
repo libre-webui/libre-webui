@@ -433,6 +433,30 @@ test(
         actorUserId: ownerUserId,
         payload: { mode: 'encrypted', value: durableEventPayload },
       });
+      // Legitimate head shapes the backup must accept: a zero-event lock
+      // anchor (Stop before any durable event) and a stream whose oldest
+      // events the retention sweep removed without rewriting the head.
+      await sourcePersistence.database.query(
+        `INSERT INTO platform_event_stream_heads (stream_id, last_sequence)
+         VALUES ($1, 0) ON CONFLICT (stream_id) DO NOTHING`,
+        ['chat:cancellation-anchor-fixture']
+      );
+      let prunedStreamLastCursor = durableEventCursor;
+      for (const occurrence of ['pruned-1', 'kept-2']) {
+        prunedStreamLastCursor = await durableService.appendEvent({
+          eventId: randomUUID(),
+          streamId: 'chat:pruned-stream-fixture',
+          eventType: 'chat.stream.v1',
+          subjectId: 'pruned-stream-message',
+          actorUserId: ownerUserId,
+          payload: { mode: 'encrypted', value: { occurrence } },
+        });
+      }
+      await sourcePersistence.database.query(
+        `DELETE FROM platform_events
+          WHERE stream_id = $1 AND stream_sequence = 1`,
+        ['chat:pruned-stream-fixture']
+      );
       await sourcePersistence.close();
       sourcePersistence = undefined;
 
@@ -482,12 +506,14 @@ test(
         },
         {
           jobs: 1,
-          events: 2,
-          streams: 1,
-          records: 3,
-          encryptedRecords: 2,
+          // The explicit job event, its job audit event, and the retained
+          // half of the pruned-stream fixture.
+          events: 3,
+          streams: 3,
+          records: 4,
+          encryptedRecords: 3,
           referenceRecords: 1,
-          lastGlobalCursor: durableEventCursor,
+          lastGlobalCursor: prunedStreamLastCursor,
         }
       );
       assert.equal(created.inventory.durable.verified, true);
