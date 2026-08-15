@@ -172,6 +172,14 @@ test('readiness fails closed while a valid older schema awaits migration', async
     DROP TABLE platform_event_stream_heads;
     DROP TABLE platform_job_attempts;
     DROP TABLE platform_jobs;
+    DROP TABLE security_audit_events;
+    DROP TABLE oauth_identities;
+    DROP TABLE api_tokens;
+    DROP TABLE auth_sessions;
+    DROP TABLE resource_grants;
+    DROP TABLE user_group_members;
+    DROP TABLE user_groups;
+    DELETE FROM _libre_schema_migrations WHERE version = 14;
     DELETE FROM _libre_schema_migrations WHERE version = 13;
     DELETE FROM _libre_schema_migrations WHERE version = 12;
     DELETE FROM _libre_schema_migrations WHERE version = 11;
