@@ -1108,7 +1108,26 @@ export class WorkRuntimeService {
     task: WorkTaskRecord,
     operation: () => Promise<T>
   ): Promise<T> {
-    const releaseLease = await this.acquireRuntimeLease(task);
+    let releaseLease: () => void;
+    try {
+      releaseLease = await this.acquireRuntimeLease(task);
+    } catch (error) {
+      // In team mode the lease holder is usually this deployment's own
+      // durable worker executing the task's run. When the sandbox is already
+      // up and reachable through the shared container runtime, workspace
+      // helpers attach to it instead of failing the Files pane; lifecycle
+      // transitions (start, stop, recreate, preview) stay lease-guarded.
+      if (
+        error instanceof WorkRuntimeError &&
+        error.code === 'WORK_RUNTIME_LEASE_CONFLICT'
+      ) {
+        await this.assertTaskIsActive(task);
+        if ((await this.driver.runtimeState(task)) === 'running') {
+          return operation();
+        }
+      }
+      throw error;
+    }
     try {
       await this.ensureImage(task);
       await this.assertTaskIsActive(task);

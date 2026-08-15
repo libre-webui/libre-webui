@@ -227,6 +227,50 @@ test('Work runtime defaults pin the image and bound resource use', () => {
   });
 });
 
+test('workspace helpers attach to a running sandbox when the lease is held elsewhere', async () => {
+  const sharedModule = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeShared.js')
+    ).href
+  );
+  const service = new WorkRuntimeService();
+  // In team mode the durable worker holds the per-task runtime lease for the
+  // whole run. The Files pane must attach to the running sandbox instead of
+  // reporting "active on another replica".
+  service.acquireRuntimeLease = async () => {
+    throw new sharedModule.WorkRuntimeError(
+      'This Work task is active on another replica.',
+      409,
+      'WORK_RUNTIME_LEASE_CONFLICT'
+    );
+  };
+  service.assertTaskIsActive = async () => {};
+  let runtimeState = 'running';
+  service.driver = { runtimeState: async () => runtimeState };
+  service.exec = async () => ({
+    stdout: JSON.stringify({ entries: [] }),
+    stderr: '',
+    exitCode: 0,
+  });
+
+  const task = {
+    id: 'task-lease-attach',
+    userId: 'admin-a',
+    containerName: 'container-lease-attach',
+    volumeName: 'volume-lease-attach',
+  };
+  const listed = await service.listFiles(task, '.');
+  assert.deepEqual(listed.entries, []);
+
+  // Without a reachable running sandbox the conflict still surfaces:
+  // the holder really is another replica.
+  runtimeState = 'stopped';
+  await assert.rejects(
+    () => service.listFiles(task, '.'),
+    error => error.code === 'WORK_RUNTIME_LEASE_CONFLICT'
+  );
+});
+
 test('runtime limits expose admission capacity and live occupancy', () => {
   const service = new WorkRuntimeService();
   assert.equal(
