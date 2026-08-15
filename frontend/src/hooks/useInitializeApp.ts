@@ -41,6 +41,7 @@ export const useInitializeApp = () => {
     loadPreferences: loadChatPreferences,
     setSelectedModel,
     models,
+    ollamaConnected,
   } = useChatStore();
   const { loadPreferences: loadAppPreferences } = useAppStore();
   const { loadPlugins, plugins } = usePluginStore();
@@ -211,4 +212,31 @@ export const useInitializeApp = () => {
     window.addEventListener(MODELS_CHANGED_EVENT, reload);
     return () => window.removeEventListener(MODELS_CHANGED_EVENT, reload);
   }, [loadModels]);
+
+  // Providers that are still starting when the app loads — a booting stack or
+  // an Ollama daemon launched afterwards — must show up without a page
+  // reload. While no provider-backed model is available, poll quietly; once
+  // some are, an offline Ollama is only re-checked when the window regains
+  // focus, so a deliberately plugin-only setup is not polled forever.
+  useEffect(() => {
+    if (ollamaConnected) return;
+    const auth = useAuthStore.getState();
+    if (auth.requiresAuth() && !auth.isAuthenticated) return;
+
+    const reload = () => {
+      if (document.visibilityState !== 'visible') return;
+      logger.debug('Provider offline at startup, re-checking availability...');
+      void loadModels({ quiet: true });
+    };
+
+    const hasProviderModels = models.some(model => !model.isPersona);
+    const timer = hasProviderModels
+      ? undefined
+      : window.setInterval(reload, 10_000);
+    window.addEventListener('focus', reload);
+    return () => {
+      if (timer !== undefined) window.clearInterval(timer);
+      window.removeEventListener('focus', reload);
+    };
+  }, [ollamaConnected, models, loadModels]);
 };

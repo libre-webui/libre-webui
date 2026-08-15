@@ -127,7 +127,9 @@ interface ChatState {
 
   // Models
   models: OllamaModel[];
-  loadModels: () => Promise<void>;
+  /** False when the last model load could not reach the Ollama endpoint. */
+  ollamaConnected: boolean;
+  loadModels: (options?: { quiet?: boolean }) => Promise<void>;
   loadPreferences: () => Promise<void>;
   selectedModel: string;
   selectedProviderType: ChatProviderType | null;
@@ -702,9 +704,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // Models
   models: [],
-  loadModels: async () => {
+  ollamaConnected: false,
+  loadModels: async (options?: { quiet?: boolean }) => {
+    const quiet = options?.quiet === true;
     try {
-      set({ loading: true, error: null });
+      if (!quiet) {
+        set({ loading: true, error: null });
+      }
       logger.debug('Loading models from API...');
 
       let allModels: OllamaModel[] = [];
@@ -843,10 +849,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
         set({
           models: allModels,
+          ollamaConnected: !ollamaLoadError,
           loading: false,
           error: unavailableError,
         });
-        toast.error(unavailableError);
+        if (!quiet) {
+          toast.error(unavailableError);
+        }
         return;
       }
 
@@ -858,6 +867,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         );
         set({
           models: allModels,
+          ollamaConnected: !ollamaLoadError,
           loading: false,
           selectedModel: fallbackSelection.model,
           selectedProviderType: fallbackSelection.providerType || null,
@@ -879,9 +889,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
           })
         );
       } else {
-        set({ models: allModels, loading: false, error: providerLoadError });
+        set({
+          models: allModels,
+          ollamaConnected: !ollamaLoadError,
+          loading: false,
+          error: providerLoadError,
+        });
       }
-      if (providerLoadError) {
+      if (providerLoadError && !quiet) {
         toast.error(providerLoadError);
       }
     } catch (error: unknown) {
@@ -890,8 +905,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
         error,
         i18n.t('chat.toasts.modelsLoadFailed')
       );
-      set({ error: errorMessage, loading: false });
-      toast.error(errorMessage);
+      set({ ollamaConnected: false, error: errorMessage, loading: false });
+      if (!quiet) {
+        toast.error(errorMessage);
+      }
     }
   },
 
