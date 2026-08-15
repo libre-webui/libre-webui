@@ -64,10 +64,15 @@ export async function setModelDownloadMode(
 
 /** Whether a user may pull models right now. */
 export async function userCanDownloadModels(user: {
+  id?: string;
   role?: string;
   status?: string;
 }): Promise<boolean> {
-  if (user.status !== undefined && user.status !== 'active') return false;
-  if (user.role === 'admin') return true;
-  return (await getModelDownloadMode()) === 'all-users';
+  const { authorize } = await import('./authorizationService.js');
+  const decision = await authorize(
+    { userId: user.id ?? '', role: user.role, status: user.status },
+    'use',
+    { type: 'feature', id: 'model-download' }
+  );
+  return decision.allowed;
 }

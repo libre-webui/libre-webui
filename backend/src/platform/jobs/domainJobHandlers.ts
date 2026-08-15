@@ -905,6 +905,14 @@ const deleteOwnerContent: DurableJobHandler = async context => {
     await leasedContext.assertSideEffectAllowed();
     const result = await cleanupPlatformOwnerContent(targetUserId);
     await leasedContext.assertSideEffectAllowed();
+    // Security principals: group memberships and grants naming this user
+    // (rows owned by the user are removed by foreign-key cascade).
+    {
+      const { removeUserFromSecurityPrincipals } =
+        await import('../../services/groupService.js');
+      await removeUserFromSecurityPrincipals(targetUserId);
+    }
+    await leasedContext.assertSideEffectAllowed();
     await getCoordinator().deleteCache(`user:${targetUserId}`);
     await leasedContext.assertSideEffectAllowed();
     await getCoordinator().revoke(`user:${targetUserId}`);

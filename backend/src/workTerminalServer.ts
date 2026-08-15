@@ -19,6 +19,7 @@ import type { IncomingMessage } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
 
 import { userModel } from './models/userModel.js';
+import { registerSessionRevocationListener } from './services/authSessionService.js';
 import { userHasWorkAccess } from './services/workAccessService.js';
 import {
   WebSocketTicketCoordinationError,
@@ -74,6 +75,7 @@ interface TerminalAuthResult {
   task: WorkTaskRecord;
   userId: string;
   sessionExpiresAt: number;
+  sessionId?: string;
 }
 
 class DrainingWorkTerminalServer extends WebSocketServer {
@@ -240,6 +242,7 @@ async function authorizeTerminalRequest(
     task,
     userId: consumed.userId,
     sessionExpiresAt: consumed.sessionExpiresAt,
+    ...(consumed.sessionId ? { sessionId: consumed.sessionId } : {}),
   };
 }
 
@@ -269,11 +272,10 @@ async function handleTerminalConnection(
   let task: WorkTaskRecord;
   let userId: string;
   let sessionExpiresAt: number;
+  let sessionId: string | undefined;
   try {
-    ({ task, userId, sessionExpiresAt } = await authorizeTerminalRequest(
-      req,
-      lifecycle
-    ));
+    ({ task, userId, sessionExpiresAt, sessionId } =
+      await authorizeTerminalRequest(req, lifecycle));
   } catch (error) {
     const detail =
       error instanceof WorkRuntimeError
@@ -384,6 +386,19 @@ async function handleTerminalConnection(
     Math.max(0, Math.min(sessionExpiresAt - Date.now(), 2_147_483_647))
   );
   sessionExpiryTimer.unref?.();
+
+  // Close the shell immediately when the backing auth session is revoked.
+  const unsubscribeRevocation = registerSessionRevocationListener(event => {
+    if (event.userId !== userId) return;
+    if (sessionId && !event.sessionIds.includes(sessionId)) return;
+    sendControl(ws, {
+      type: 'error',
+      code: 'WORK_TERMINAL_SESSION_EXPIRED',
+      message: 'The authenticated session was revoked.',
+    });
+    void endSession(4401, 'session-revoked');
+  });
+  ws.once('close', unsubscribeRevocation);
 
   armIdleTimer();
 

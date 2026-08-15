@@ -188,12 +188,16 @@ export async function setWebSearchAccessMode(
 
 /** Whether this user may run web searches right now (search must also be available). */
 export async function userCanUseWebSearch(
-  user: { role?: string; status?: string } | undefined | null
+  user: { id?: string; role?: string; status?: string } | undefined | null
 ): Promise<boolean> {
   if (!user) return false;
-  if (user.status !== undefined && user.status !== 'active') return false;
-  if (user.role === 'admin') return true;
-  return (await getWebSearchAccessMode()) === 'all-users';
+  const { authorize } = await import('./authorizationService.js');
+  const decision = await authorize(
+    { userId: user.id ?? '', role: user.role, status: user.status },
+    'use',
+    { type: 'feature', id: 'web-search' }
+  );
+  return decision.allowed;
 }
 
 interface SearxngResult {

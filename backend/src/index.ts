@@ -80,11 +80,15 @@ import artifactsRoutes from './routes/artifacts.js';
 import searchRoutes from './routes/search.js';
 import healthRoutes from './routes/health.js';
 import jobsRoutes from './routes/jobs.js';
+import groupsRoutes from './routes/groups.js';
+import accessRoutes from './routes/access.js';
+import auditRoutes from './routes/audit.js';
 import ollamaService from './services/ollamaService.js';
 import workRuntimeService from './services/workRuntimeService.js';
 import workTaskService from './services/workTaskService.js';
 import workAgentService from './services/workAgentService.js';
 import healthService from './services/healthService.js';
+import { groupVectorPrincipalResolver } from './services/groupVectorPrincipalResolver.js';
 import workPreviewProxyService, {
   WORK_PREVIEW_PROXY_PREFIX,
 } from './services/workPreviewProxyService.js';
@@ -648,6 +652,9 @@ app.use('/api/system', systemDiagnosticsRoutes);
 app.use('/api/artifacts', artifactsRoutes);
 app.use('/api/search', chatRateLimiter, searchRoutes);
 app.use('/api/jobs', jobsRoutes);
+app.use('/api/groups', groupsRoutes);
+app.use('/api/access', accessRoutes);
+app.use('/api/audit', auditRoutes);
 
 // Serve frontend static files in production (for npx libre-webui)
 if (
@@ -719,6 +726,7 @@ const platformStorage = await initializePlatformStorageRuntime({
   persistence: applicationPersistence,
   cipher: _encryptionService,
   env: process.env,
+  principalResolver: groupVectorPrincipalResolver,
 });
 healthService.registerDependencyCheck({
   id: 'platform-storage',

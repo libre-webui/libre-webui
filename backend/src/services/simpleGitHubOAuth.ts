@@ -184,8 +184,10 @@ export class GitHubOAuthService {
       if (!user) return null;
       if (user.status !== 'active') return null;
 
-      // Generate JWT token
-      const jwtToken = authService.generateToken(user);
+      // Issue a revocable session-bound JWT
+      const jwtToken = await authService.issueSession(user, {
+        kind: 'oauth:github',
+      });
 
       return { user, token: jwtToken };
     } catch (error) {

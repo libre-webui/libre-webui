@@ -33,6 +33,7 @@ interface TicketRecord {
   userId: string;
   audience: WebSocketTicketAudience;
   resourceId?: string;
+  sessionId?: string;
   expiresAt: number;
   sessionExpiresAt: number;
   issuedAt: number;
@@ -46,6 +47,8 @@ export interface IssuedWebSocketTicket {
 export interface ConsumedWebSocketTicket {
   userId: string;
   sessionExpiresAt: number;
+  /** Auth session backing the ticket; used to close sockets on revocation. */
+  sessionId?: string;
 }
 
 export type WebSocketTicketAudience = 'chat' | 'work-terminal';
@@ -95,6 +98,7 @@ const isTicketRecord = (value: unknown): value is TicketRecord => {
     (record.audience === 'chat' || record.audience === 'work-terminal') &&
     (record.resourceId === undefined ||
       typeof record.resourceId === 'string') &&
+    (record.sessionId === undefined || typeof record.sessionId === 'string') &&
     Number.isSafeInteger(record.expiresAt) &&
     Number.isSafeInteger(record.sessionExpiresAt) &&
     Number.isSafeInteger(record.issuedAt)
@@ -121,7 +125,8 @@ export class WebSocketTicketService {
     userId: string,
     sessionExpiresAt: number,
     audience: WebSocketTicketAudience,
-    resourceId?: string
+    resourceId?: string,
+    sessionId?: string
   ): Promise<IssuedWebSocketTicket> {
     const normalizedUserId = userId.trim();
     if (!normalizedUserId) {
@@ -143,6 +148,7 @@ export class WebSocketTicketService {
       userId: normalizedUserId,
       audience,
       ...(resourceId?.trim() ? { resourceId: resourceId.trim() } : {}),
+      ...(sessionId?.trim() ? { sessionId: sessionId.trim() } : {}),
       expiresAt,
       sessionExpiresAt,
       issuedAt: now,
@@ -218,6 +224,7 @@ export class WebSocketTicketService {
     return {
       userId: record.userId,
       sessionExpiresAt: record.sessionExpiresAt,
+      ...(record.sessionId ? { sessionId: record.sessionId } : {}),
     };
   }
 

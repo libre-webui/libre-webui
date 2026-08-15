@@ -164,10 +164,13 @@ const { initializeSelectedWorkPersistence } =
 initializeSelectedWorkPersistence(config.database.backend);
 const { closePlatformStorageRuntime, initializePlatformStorageRuntime } =
   await import('./platform/storage/platformStorageRuntime.js');
+const { groupVectorPrincipalResolver } =
+  await import('./services/groupVectorPrincipalResolver.js');
 await initializePlatformStorageRuntime({
   persistence: getPersistence(encryptionService),
   cipher: encryptionService,
   env: process.env,
+  principalResolver: groupVectorPrincipalResolver,
 });
 const { closeCoordinator, initializeCoordinator } =
   await import('./platform/coordination/service.js');

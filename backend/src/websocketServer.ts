@@ -42,6 +42,11 @@ import { streamOllamaChatResponse } from './utils/ollamaStreaming.js';
 import { streamPluginResponse } from './utils/pluginStreaming.js';
 import { createLogger } from './utils/logger.js';
 import {
+  ensureSessionRevocationSubscription,
+  getValidSession,
+  registerSessionRevocationListener,
+} from './services/authSessionService.js';
+import {
   sendAssistantChunk,
   sendAssistantCancelled,
   sendAssistantComplete,
@@ -107,6 +112,7 @@ interface AuthenticatedChatRequest extends IncomingMessage {
   chatAuth?: {
     userId: string;
     sessionExpiresAt: number;
+    sessionId?: string;
   };
   chatAdmission?: SharedCapacityReservation;
 }
@@ -144,7 +150,11 @@ export const isAllowedWebSocketOrigin = (
 
 const authorizeChatUpgrade = async (
   request: AuthenticatedChatRequest
-): Promise<{ userId: string; sessionExpiresAt: number } | null> => {
+): Promise<{
+  userId: string;
+  sessionExpiresAt: number;
+  sessionId?: string;
+} | null> => {
   try {
     const url = new URL(request.url || '', `http://${request.headers.host}`);
     const ticket = url.searchParams.get('ticket')?.trim() || '';
@@ -153,9 +163,15 @@ const authorizeChatUpgrade = async (
     if (!consumed) return null;
     const currentUser = await userModel.getUserById(consumed.userId);
     if (!currentUser || currentUser.status !== 'active') return null;
+    if (consumed.sessionId) {
+      // The backing auth session must still be live at upgrade time.
+      const session = await getValidSession(consumed.sessionId);
+      if (!session || session.user_id !== currentUser.id) return null;
+    }
     return {
       userId: currentUser.id,
       sessionExpiresAt: consumed.sessionExpiresAt,
+      ...(consumed.sessionId ? { sessionId: consumed.sessionId } : {}),
     };
   } catch (error) {
     if (error instanceof WebSocketTicketCoordinationError) throw error;
@@ -199,6 +215,10 @@ const closeWebSocketServer = (server: WebSocketServer): Promise<void> => {
 export function registerWebSocketServer(
   server: Server
 ): RegisteredWebSocketServers {
+  // Cross-replica session revocations must reach live sockets.
+  void ensureSessionRevocationSubscription().catch(() =>
+    logger.warn('Session revocation subscription is unavailable')
+  );
   let shuttingDown = false;
   let closePromise: Promise<void> | undefined;
   const activeMessageHandlers = new Set<Promise<void>>();
@@ -225,7 +245,7 @@ export function registerWebSocketServer(
       ws.close(1008, 'Authentication required');
       return;
     }
-    const { userId, sessionExpiresAt } = chatAuth;
+    const { userId, sessionExpiresAt, sessionId } = chatAuth;
     const connectionSlot = req.chatAdmission;
     if (!connectionSlot) {
       ws.close(1013, 'Chat connection admission is unavailable');
@@ -242,6 +262,13 @@ export function registerWebSocketServer(
       () => ws.close(1008, 'Session expired'),
       Math.max(0, Math.min(sessionExpiresAt - Date.now(), 2_147_483_647))
     );
+    // Close the socket the moment its auth session (or, for legacy
+    // sessions, any session of this user) is revoked on any replica.
+    const unsubscribeRevocation = registerSessionRevocationListener(event => {
+      if (event.userId !== userId) return;
+      if (sessionId && !event.sessionIds.includes(sessionId)) return;
+      ws.close(1008, 'Session revoked');
+    });
     let messageWindowStartedAt = Date.now();
     let messageCount = 0;
 
@@ -269,6 +296,10 @@ export function registerWebSocketServer(
           sessionExpiresAt <= Date.now()
         ) {
           ws.close(1008, 'Session expired or account unavailable');
+          return;
+        }
+        if (sessionId && !(await getValidSession(sessionId))) {
+          ws.close(1008, 'Session revoked');
           return;
         }
 
@@ -951,6 +982,7 @@ export function registerWebSocketServer(
 
     ws.on('close', () => {
       clearTimeout(sessionExpiryTimer);
+      unsubscribeRevocation();
       connectionSlot.signal.removeEventListener('abort', onAdmissionLost);
       void connectionSlot.release();
       activeGenerations.cancelAll(

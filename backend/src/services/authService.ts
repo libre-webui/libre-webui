@@ -76,12 +76,41 @@ export const parseJwtLifetime = (
 
 export const JWT_EXPIRES_IN = parseJwtLifetime();
 
+/** The configured JWT lifetime in milliseconds. */
+export const jwtLifetimeMs = (
+  lifetime: SignOptions['expiresIn'] = JWT_EXPIRES_IN
+): number => {
+  if (typeof lifetime === 'number') return lifetime * 1000;
+  const match = /^(\d+)(ms|s|m|h|d|w|y)$/i.exec(String(lifetime ?? '7d'));
+  if (!match) return 7 * 24 * 60 * 60 * 1000;
+  const amount = Number.parseInt(match[1], 10);
+  const unit = match[2].toLowerCase();
+  const unitMs: Record<string, number> = {
+    ms: 1,
+    s: 1000,
+    m: 60_000,
+    h: 3_600_000,
+    d: 86_400_000,
+    w: 7 * 86_400_000,
+    y: 365 * 86_400_000,
+  };
+  return amount * (unitMs[unit] ?? 86_400_000);
+};
+
 export interface AuthTokenPayload {
   userId: string;
   username: string;
   role: 'admin' | 'user';
+  /** Server-side auth session id; absent only on legacy tokens. */
+  sid?: string;
   iat?: number;
   exp?: number;
+}
+
+export interface SessionMetadata {
+  kind: string;
+  ip?: string | undefined;
+  userAgent?: string | undefined;
 }
 
 export type AuthResult =
@@ -100,9 +129,10 @@ export interface SystemInfo {
 
 export class AuthService {
   /**
-   * Generate JWT token for user
+   * Generate JWT token for user. When a server-side session id is provided
+   * the token carries it as `sid`, making the token revocable.
    */
-  generateToken(user: UserPublic): string {
+  generateToken(user: UserPublic, sessionId?: string): string {
     if (user.status !== 'active') {
       throw new Error('Cannot create a session for an inactive account');
     }
@@ -111,9 +141,28 @@ export class AuthService {
       userId: user.id,
       username: user.username,
       role: user.role,
+      ...(sessionId ? { sid: sessionId } : {}),
     };
 
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  }
+
+  /**
+   * Create a server-side auth session and mint the JWT bound to it. All
+   * login paths (password, signup bootstrap, OAuth, OIDC) issue through
+   * here so every new token is revocable from the session inventory.
+   */
+  async issueSession(
+    user: UserPublic,
+    metadata: SessionMetadata
+  ): Promise<string> {
+    const { createAuthSession } = await import('./authSessionService.js');
+    const session = await createAuthSession(
+      user.id,
+      metadata,
+      Date.now() + jwtLifetimeMs()
+    );
+    return this.generateToken(user, session.id);
   }
 
   /**
@@ -139,7 +188,11 @@ export class AuthService {
   /**
    * Login user
    */
-  async login(username: string, password: string): Promise<AuthResult | null> {
+  async login(
+    username: string,
+    password: string,
+    metadata?: SessionMetadata
+  ): Promise<AuthResult | null> {
     const user = await userModel.verifyPassword(username, password);
     if (!user) return null;
 
@@ -149,7 +202,10 @@ export class AuthService {
       return { status: 'pending', user: userPublic };
     }
 
-    const token = this.generateToken(userPublic);
+    const token = await this.issueSession(userPublic, {
+      kind: 'password',
+      ...metadata,
+    });
     return { status: 'authenticated', user: userPublic, token };
   }
 
@@ -207,7 +263,8 @@ export class AuthService {
   async signup(
     username: string,
     password: string,
-    email?: string
+    email?: string,
+    metadata?: SessionMetadata
   ): Promise<AuthResult | null> {
     try {
       if (!(await this.canCreateLocalAccount())) {
@@ -240,7 +297,10 @@ export class AuthService {
         return { status: 'pending', user };
       }
 
-      const token = this.generateToken(user);
+      const token = await this.issueSession(user, {
+        kind: 'signup',
+        ...metadata,
+      });
       return { status: 'authenticated', user, token };
     } catch (error) {
       logger.error('Signup error:', error);

@@ -29,8 +29,10 @@ import { encryptionService } from '../services/encryptionService.js';
 import { turnstileService } from '../services/turnstileService.js';
 import {
   beginOAuthFlow,
+  beginOAuthFlowWithPayload,
   consumeOAuthSessionCookie,
   consumeOAuthState,
+  consumeOAuthStatePayload,
   setOAuthSessionCookie,
 } from '../services/oauthSecurity.js';
 import { validatePasswordStrength } from '../utils/hash.js';
@@ -40,6 +42,25 @@ import {
   websocketTicketService,
 } from '../services/websocketTicketService.js';
 import { coordinatedRateLimit } from '../middleware/coordinatedRateLimit.js';
+import {
+  findSessionById,
+  listSessionsForUser,
+  revokeAllAuthSessions,
+  revokeAuthSession,
+} from '../services/authSessionService.js';
+import {
+  createApiToken,
+  findTokenById,
+  isApiTokenScope,
+  listTokensForUser,
+  revokeApiToken,
+  toPublicToken,
+} from '../services/apiTokenService.js';
+import {
+  hashClientIp,
+  recordAuditEvent,
+} from '../services/securityAuditService.js';
+import { OidcError, oidcOAuthService } from '../services/simpleOidcOAuth.js';
 
 const router = express.Router();
 const logger = createLogger('auth-routes');
@@ -136,7 +157,8 @@ router.post(
         req.user!.userId,
         sessionExpiresAt,
         audience,
-        audience === 'work-terminal' ? taskId.trim() : undefined
+        audience === 'work-terminal' ? taskId.trim() : undefined,
+        req.auth?.kind === 'session' ? req.auth.sessionId : undefined
       );
       res.json({ success: true, data: ticket });
     } catch (error) {
@@ -182,14 +204,31 @@ router.post('/login', loginRateLimiter, async (req, res) => {
       return;
     }
 
-    const result = await authService.login(username, password);
+    const result = await authService.login(username, password, {
+      kind: 'password',
+      ip: getClientIp(req),
+      userAgent: req.headers['user-agent'],
+    });
     if (!result) {
+      void recordAuditEvent({
+        action: 'auth.login',
+        result: 'failure',
+        ipHash: hashClientIp(getClientIp(req)),
+        details: { username: String(username).slice(0, 64) },
+      });
       res.status(401).json({
         success: false,
         message: 'Invalid credentials',
       });
       return;
     }
+    void recordAuditEvent({
+      action: 'auth.login',
+      result: result.status === 'authenticated' ? 'success' : 'denied',
+      actorUserId: result.user.id,
+      ipHash: hashClientIp(getClientIp(req)),
+      details: { method: 'password', status: result.status },
+    });
     if (result.status === 'pending') {
       res.status(403).json({
         success: false,
@@ -227,9 +266,16 @@ router.post(
   authenticate,
   async (req: AuthenticatedRequest, res) => {
     try {
-      // In a stateless JWT system, logout is handled client-side
-      // But we can log it for audit purposes
-      logger.debug(`User ${req.user?.username} logged out`);
+      // Revoke the server-side session so the JWT stops working everywhere,
+      // not just in this browser.
+      if (req.auth?.kind === 'session' && req.user) {
+        await revokeAuthSession(req.auth.sessionId, req.user.userId);
+      }
+      void recordAuditEvent({
+        action: 'auth.logout',
+        result: 'success',
+        actorUserId: req.user?.userId ?? null,
+      });
 
       res.json({
         success: true,
@@ -241,6 +287,204 @@ router.post(
         success: false,
         message: 'Internal server error',
       });
+    }
+  }
+);
+
+/** List this account's sessions, newest activity first. */
+router.get(
+  '/sessions',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const sessions = await listSessionsForUser(req.user!.userId);
+      const currentSessionId =
+        req.auth?.kind === 'session' ? req.auth.sessionId : null;
+      res.json({
+        success: true,
+        data: sessions.map(session => ({
+          id: session.id,
+          kind: session.kind,
+          userAgent: session.user_agent,
+          createdAt: new Date(session.created_at).toISOString(),
+          lastSeenAt: new Date(session.last_seen_at).toISOString(),
+          expiresAt: new Date(session.expires_at).toISOString(),
+          revokedAt: session.revoked_at
+            ? new Date(session.revoked_at).toISOString()
+            : null,
+          current: session.id === currentSessionId,
+        })),
+      });
+    } catch (error) {
+      logger.error('Session inventory error:', error);
+      res
+        .status(500)
+        .json({ success: false, message: 'Internal server error' });
+    }
+  }
+);
+
+/** Revoke every other session ("sign out everywhere else"). */
+router.post(
+  '/sessions/revoke-others',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const currentSessionId =
+        req.auth?.kind === 'session' ? req.auth.sessionId : undefined;
+      const revoked = await revokeAllAuthSessions(
+        req.user!.userId,
+        req.user!.userId,
+        currentSessionId
+      );
+      void recordAuditEvent({
+        action: 'session.revoke-others',
+        result: 'success',
+        actorUserId: req.user!.userId,
+        details: { revokedCount: revoked.length },
+      });
+      res.json({ success: true, data: { revokedCount: revoked.length } });
+    } catch (error) {
+      logger.error('Session revocation error:', error);
+      res
+        .status(500)
+        .json({ success: false, message: 'Internal server error' });
+    }
+  }
+);
+
+/** Revoke one session by id (own sessions only; admins may revoke any). */
+router.delete(
+  '/sessions/:id',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const session = await findSessionById(req.params.id as string);
+      const isOwn = session?.user_id === req.user!.userId;
+      const isAdmin = req.user!.role === 'admin';
+      if (!session || (!isOwn && !isAdmin)) {
+        res.status(404).json({ success: false, message: 'Session not found' });
+        return;
+      }
+      const revoked = await revokeAuthSession(session.id, req.user!.userId);
+      void recordAuditEvent({
+        action: 'session.revoke',
+        result: 'success',
+        actorUserId: req.user!.userId,
+        targetType: 'auth-session',
+        targetId: session.id,
+        details: { targetUserId: session.user_id },
+      });
+      res.json({ success: true, data: { revoked } });
+    } catch (error) {
+      logger.error('Session revocation error:', error);
+      res
+        .status(500)
+        .json({ success: false, message: 'Internal server error' });
+    }
+  }
+);
+
+/** List this account's API tokens (hashes never leave the server). */
+router.get(
+  '/tokens',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const tokens = await listTokensForUser(req.user!.userId);
+      res.json({ success: true, data: tokens.map(toPublicToken) });
+    } catch (error) {
+      logger.error('Token list error:', error);
+      res
+        .status(500)
+        .json({ success: false, message: 'Internal server error' });
+    }
+  }
+);
+
+/** Create a scoped API token; the secret is returned exactly once. */
+router.post(
+  '/tokens',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.auth?.kind === 'api-token') {
+        res.status(403).json({
+          success: false,
+          message: 'API tokens cannot create other tokens',
+        });
+        return;
+      }
+      const { name, scopes, expiresInDays } = req.body ?? {};
+      const requestedScopes = Array.isArray(scopes)
+        ? scopes.filter(isApiTokenScope)
+        : [];
+      if (requestedScopes.includes('admin') && req.user!.role !== 'admin') {
+        res.status(403).json({
+          success: false,
+          message: 'Only administrators may mint admin-scoped tokens',
+        });
+        return;
+      }
+      const created = await createApiToken(req.user!.userId, {
+        name: typeof name === 'string' ? name : '',
+        scopes: requestedScopes,
+        ...(typeof expiresInDays === 'number' ? { expiresInDays } : {}),
+      });
+      void recordAuditEvent({
+        action: 'token.create',
+        result: 'success',
+        actorUserId: req.user!.userId,
+        targetType: 'api-token',
+        targetId: created.record.id,
+        details: { name: created.record.name, scopes: requestedScopes },
+      });
+      res.status(201).json({
+        success: true,
+        data: { token: created.token, record: toPublicToken(created.record) },
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Internal server error';
+      res.status(400).json({ success: false, message });
+    }
+  }
+);
+
+/** Revoke an API token (own tokens; admins may revoke any). */
+router.delete(
+  '/tokens/:id',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const record = await findTokenById(req.params.id as string);
+      const isOwn = record?.user_id === req.user!.userId;
+      const isAdmin = req.user!.role === 'admin';
+      if (!record || (!isOwn && !isAdmin)) {
+        res.status(404).json({ success: false, message: 'Token not found' });
+        return;
+      }
+      const revoked = await revokeApiToken(record.id);
+      void recordAuditEvent({
+        action: 'token.revoke',
+        result: 'success',
+        actorUserId: req.user!.userId,
+        targetType: 'api-token',
+        targetId: record.id,
+        details: { targetUserId: record.user_id },
+      });
+      res.json({ success: true, data: { revoked } });
+    } catch (error) {
+      logger.error('Token revocation error:', error);
+      res
+        .status(500)
+        .json({ success: false, message: 'Internal server error' });
     }
   }
 );
@@ -393,7 +637,11 @@ router.post('/signup', signupRateLimiter, async (req, res) => {
       return;
     }
 
-    const result = await authService.signup(username, password, email);
+    const result = await authService.signup(username, password, email, {
+      kind: 'signup',
+      ip: getClientIp(req),
+      userAgent: req.headers['user-agent'],
+    });
     if (!result) {
       res.status(500).json({
         success: false,
@@ -401,6 +649,13 @@ router.post('/signup', signupRateLimiter, async (req, res) => {
       });
       return;
     }
+    void recordAuditEvent({
+      action: 'auth.signup',
+      result: 'success',
+      actorUserId: result.user.id,
+      ipHash: hashClientIp(getClientIp(req)),
+      details: { status: result.status },
+    });
 
     const systemInfo = await authService.getSystemInfo();
 
@@ -501,8 +756,19 @@ router.get(
         return res.redirect(pendingApprovalRedirect());
       }
 
-      // Generate JWT token using existing auth service
-      const token = authService.generateToken(user);
+      // Issue a revocable session-bound JWT
+      const token = await authService.issueSession(user, {
+        kind: 'oauth:github',
+        ip: getClientIp(req),
+        userAgent: req.headers['user-agent'],
+      });
+      void recordAuditEvent({
+        action: 'auth.login',
+        result: 'success',
+        actorUserId: user.id,
+        ipHash: hashClientIp(getClientIp(req)),
+        details: { method: 'oauth:github' },
+      });
 
       logger.debug('GitHub OAuth successful for user:', user.username);
 
@@ -591,8 +857,19 @@ router.get(
         return res.redirect(pendingApprovalRedirect());
       }
 
-      // Generate JWT token
-      const token = authService.generateToken(user);
+      // Issue a revocable session-bound JWT
+      const token = await authService.issueSession(user, {
+        kind: 'oauth:huggingface',
+        ip: getClientIp(req),
+        userAgent: req.headers['user-agent'],
+      });
+      void recordAuditEvent({
+        action: 'auth.login',
+        result: 'success',
+        actorUserId: user.id,
+        ipHash: hashClientIp(getClientIp(req)),
+        details: { method: 'oauth:huggingface' },
+      });
 
       logger.debug('Hugging Face OAuth successful for user:', user.username);
 
@@ -610,6 +887,118 @@ router.get(
  */
 router.get('/oauth/huggingface/status', generalAuthRateLimiter, (req, res) => {
   res.json({ configured: isHuggingFaceConfigured });
+});
+
+/**
+ * Generic OIDC - Start authentication (PKCE + state + nonce)
+ */
+router.get('/oauth/oidc', generalAuthRateLimiter, async (req, res) => {
+  if (!oidcOAuthService.isConfigured()) {
+    return res.status(404).json({ error: 'OIDC is not configured' });
+  }
+  try {
+    const pkce = oidcOAuthService.createPkcePair();
+    const nonce = oidcOAuthService.createNonce();
+    const state = beginOAuthFlowWithPayload(req, res, 'oidc', {
+      verifier: pkce.verifier,
+      nonce,
+    });
+    const authUrl = await oidcOAuthService.getAuthUrl(
+      state,
+      nonce,
+      pkce.challenge
+    );
+    res.redirect(authUrl);
+  } catch (error) {
+    logger.error('OIDC start error:', error);
+    res.redirect(oauthErrorRedirect('oauth_failed'));
+  }
+});
+
+/**
+ * Generic OIDC - Handle callback: verify state, exchange with PKCE,
+ * validate the ID token against JWKS, then issue a session-bound JWT.
+ */
+router.get('/oauth/oidc/callback', generalAuthRateLimiter, async (req, res) => {
+  try {
+    if (!oidcOAuthService.isConfigured()) {
+      return res.redirect(oauthErrorRedirect('oauth_not_configured'));
+    }
+    const { code, state } = req.query;
+    const payload = consumeOAuthStatePayload(
+      req,
+      res,
+      'oidc',
+      typeof state === 'string' ? state : ''
+    );
+    if (
+      !payload ||
+      !payload.verifier ||
+      !payload.nonce ||
+      !code ||
+      typeof code !== 'string'
+    ) {
+      return res.redirect(oauthErrorRedirect('oauth_failed'));
+    }
+
+    const exchanged = await oidcOAuthService.exchangeCode(
+      code,
+      payload.verifier
+    );
+    const claims = await oidcOAuthService.verifyIdToken(
+      exchanged.idToken,
+      payload.nonce
+    );
+    const user = await oidcOAuthService.processClaims(claims);
+
+    if (user.status !== 'active') {
+      return res.redirect(pendingApprovalRedirect());
+    }
+
+    const token = await authService.issueSession(user, {
+      kind: 'oidc',
+      ip: getClientIp(req),
+      userAgent: req.headers['user-agent'],
+    });
+    void recordAuditEvent({
+      action: 'auth.login',
+      result: 'success',
+      actorUserId: user.id,
+      ipHash: hashClientIp(getClientIp(req)),
+      details: { method: 'oidc' },
+    });
+
+    setOAuthSessionCookie(req, res, token);
+    res.redirect(frontendRedirect('?auth=success'));
+  } catch (error) {
+    logger.error('OIDC callback error:', error);
+    void recordAuditEvent({
+      action: 'auth.login',
+      result: 'failure',
+      ipHash: hashClientIp(getClientIp(req)),
+      details: {
+        method: 'oidc',
+        reason: error instanceof OidcError ? error.code : 'unknown',
+      },
+    });
+    const reason =
+      error instanceof OidcError &&
+      (error.code === 'registration-disabled' || error.code === 'email-in-use')
+        ? error.code.replace(/-/g, '_')
+        : 'oauth_failed';
+    res.redirect(oauthErrorRedirect(reason));
+  }
+});
+
+/**
+ * Check if generic OIDC is configured (includes the login button label)
+ */
+router.get('/oauth/oidc/status', generalAuthRateLimiter, (req, res) => {
+  const configured = oidcOAuthService.isConfigured();
+  res.json({
+    configured,
+    ...(configured ? { displayName: oidcOAuthService.displayName } : {}),
+  });
 });
 
 /**

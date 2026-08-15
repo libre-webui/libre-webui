@@ -18,7 +18,7 @@
 import { randomBytes, timingSafeEqual } from 'crypto';
 import type { CookieOptions, Request, Response } from 'express';
 
-export type OAuthProvider = 'github' | 'huggingface';
+export type OAuthProvider = 'github' | 'huggingface' | 'oidc';
 
 const STATE_TTL_MS = 10 * 60 * 1000;
 const SESSION_TRANSFER_TTL_MS = 60 * 1000;
@@ -95,6 +95,66 @@ export const beginOAuthFlow = (
     cookieOptions(req, stateCookiePath(provider), STATE_TTL_MS)
   );
   return state;
+};
+
+/**
+ * Start a browser-bound OAuth flow that also needs per-flow secrets (PKCE
+ * verifier, OIDC nonce). The payload rides in the same HttpOnly state
+ * cookie, encoded alongside the CSRF state.
+ */
+export const beginOAuthFlowWithPayload = (
+  req: Request,
+  res: Response,
+  provider: OAuthProvider,
+  payload: Record<string, string>
+): string => {
+  const state = randomBytes(32).toString('base64url');
+  const envelope = Buffer.from(
+    JSON.stringify({ state, ...payload }),
+    'utf8'
+  ).toString('base64url');
+  res.cookie(
+    stateCookieName(provider),
+    envelope,
+    cookieOptions(req, stateCookiePath(provider), STATE_TTL_MS)
+  );
+  return state;
+};
+
+/**
+ * Validate state and return the per-flow payload stored at flow start.
+ * The cookie is always cleared, so a callback cannot be replayed.
+ */
+export const consumeOAuthStatePayload = (
+  req: Request,
+  res: Response,
+  provider: OAuthProvider,
+  receivedState: string
+): Record<string, string> | null => {
+  const path = stateCookiePath(provider);
+  const raw = readCookie(req, stateCookieName(provider));
+  res.clearCookie(stateCookieName(provider), clearCookieOptions(req, path));
+  if (!raw || !receivedState) return null;
+  try {
+    const parsed: unknown = JSON.parse(
+      Buffer.from(raw, 'base64url').toString('utf8')
+    );
+    if (!parsed || typeof parsed !== 'object') return null;
+    const envelope = parsed as Record<string, unknown>;
+    if (
+      typeof envelope.state !== 'string' ||
+      !secureEqual(envelope.state, receivedState)
+    ) {
+      return null;
+    }
+    const payload: Record<string, string> = {};
+    for (const [key, value] of Object.entries(envelope)) {
+      if (key !== 'state' && typeof value === 'string') payload[key] = value;
+    }
+    return payload;
+  } catch {
+    return null;
+  }
 };
 
 /** Validate and clear OAuth state so a callback cannot be replayed in-browser. */

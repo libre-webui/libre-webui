@@ -62,10 +62,15 @@ export async function setWorkAccessMode(mode: WorkAccessMode): Promise<void> {
  * active accounts may when the mode is opened to all users.
  */
 export async function userHasWorkAccess(user: {
+  id?: string;
   role?: string;
   status?: string;
 }): Promise<boolean> {
-  if (user.status !== undefined && user.status !== 'active') return false;
-  if (user.role === 'admin') return true;
-  return (await getWorkAccessMode()) === 'all-users';
+  const { authorize } = await import('./authorizationService.js');
+  const decision = await authorize(
+    { userId: user.id ?? '', role: user.role, status: user.status },
+    'use',
+    { type: 'feature', id: 'work' }
+  );
+  return decision.allowed;
 }
