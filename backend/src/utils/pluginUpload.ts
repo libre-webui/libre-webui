@@ -29,26 +29,25 @@ export const pluginUploadTempDirectory = path.resolve(
     path.join(os.tmpdir(), 'libre-webui-plugin-uploads')
 );
 
-const isWithinDirectory = (filePath: string, directory: string): boolean => {
-  const relative = path.relative(directory, filePath);
-  return (
-    relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative)
-  );
-};
-
 export interface MulterRequest extends Request {
   file?: Express.Multer.File;
 }
 
 export function safeCleanupFile(filePath: string, tempDir: string): void {
   try {
-    const resolvedPath = path.resolve(filePath);
     const resolvedTempDir = path.resolve(tempDir);
-
+    const relative = path.relative(resolvedTempDir, path.resolve(filePath));
     if (
-      isWithinDirectory(resolvedPath, resolvedTempDir) &&
-      fs.existsSync(resolvedPath)
+      relative === '' ||
+      relative.startsWith('..') ||
+      path.isAbsolute(relative)
     ) {
+      return;
+    }
+    // Rebuild the target from the validated relative segment so the deleted
+    // path can only ever name an entry inside the upload temp directory.
+    const resolvedPath = path.join(resolvedTempDir, relative);
+    if (fs.existsSync(resolvedPath)) {
       fs.unlinkSync(resolvedPath);
     }
   } catch (error) {
