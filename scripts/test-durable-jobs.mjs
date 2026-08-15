@@ -1304,6 +1304,9 @@ test('embedded worker revalidates a revoked actor before side effects', async ()
     workerId: 'embedded-test',
     leaseMs: 1000,
     pollIntervalMs: 10,
+    // Revocation must be observed on the very next side effect here; the
+    // production default tolerates a bounded recheck window instead.
+    authorityRecheckIntervalMs: 0,
     random: () => 0,
     isActorAuthorized: async () => authorized,
     handlers: new Map([
@@ -1383,6 +1386,52 @@ test('embedded worker runs jobs concurrently up to its limit', async () => {
   );
   const stop = await worker.stop();
   assert.equal(stop.failed, 0);
+  database.close();
+});
+
+test('cancellation is observed inside the authority recheck window', async () => {
+  const { database, service } = harness({ now: Date.now() });
+  let job;
+  let outcome;
+  const worker = new EmbeddedDurableJobWorker({
+    service,
+    workerId: 'embedded-throttled-cancel',
+    leaseMs: 5000,
+    pollIntervalMs: 10,
+    authorityRecheckIntervalMs: 60_000,
+    random: () => 0,
+    isActorAuthorized: async () => true,
+    handlers: new Map([
+      [
+        'test.echo',
+        async context => {
+          // First assertion is inside the recheck window (the pre-handler
+          // full check just ran) and must still be authoritative for
+          // cancellation because it reads lease state directly.
+          service.cancel(job.id, 'actor-1');
+          try {
+            await context.assertSideEffectAllowed();
+            outcome = 'allowed';
+          } catch (error) {
+            outcome = error?.code;
+            throw error;
+          }
+        },
+      ],
+    ]),
+  });
+  job = enqueue(service, { idempotencyKey: 'throttled-cancel' });
+  worker.start();
+  const deadline = Date.now() + 3000;
+  while (
+    service.getMetadata(job.id).state !== 'cancelled' &&
+    Date.now() < deadline
+  ) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  await worker.stop();
+  assert.equal(outcome, 'cancelled');
+  assert.equal(service.getMetadata(job.id).state, 'cancelled');
   database.close();
 });
 

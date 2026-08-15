@@ -436,6 +436,14 @@ export class DurableJobService {
     return this.repository.heartbeat(lease, leaseMs);
   }
 
+  /** Read-only ownership and cancellation check; never extends the lease. */
+  inspectLease(lease: DurableJobLease): {
+    owned: boolean;
+    cancellationRequested: boolean;
+  } {
+    return this.repository.inspectLease(lease);
+  }
+
   private validateLeaseDuration(leaseMs: number): void {
     if (
       !Number.isSafeInteger(leaseMs) ||

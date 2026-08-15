@@ -1033,6 +1033,43 @@ export class PostgresDurableJobRepository {
     });
   }
 
+  /**
+   * Read-only ownership and cancellation check. Unlike heartbeat this never
+   * extends the lease and never writes, so hot paths can call it per side
+   * effect without paying a transaction commit.
+   */
+  async inspectLease(job: DurableJobLease): Promise<DurableHeartbeatResult> {
+    const timestamp = this.now();
+    const result = await this.database.query<{
+      state: string;
+      lease_owner: string | null;
+      lease_token: string | null;
+      lease_expires_at: string | number | null;
+      cancellation_requested_at: string | number | null;
+    }>(
+      `SELECT state, lease_owner, lease_token, lease_expires_at,
+              cancellation_requested_at
+         FROM platform_jobs WHERE id = $1`,
+      [job.id]
+    );
+    const row = result.rows[0];
+    const owned = Boolean(
+      row &&
+      row.state === 'running' &&
+      row.lease_owner === job.workerId &&
+      row.lease_token !== null &&
+      Number(row.lease_token) === job.leaseToken &&
+      row.lease_expires_at !== null &&
+      Number(row.lease_expires_at) > timestamp
+    );
+    return {
+      owned,
+      cancellationRequested: owned
+        ? row!.cancellation_requested_at !== null
+        : false,
+    };
+  }
+
   async updateProgress(
     job: DurableJobLease,
     current: number,

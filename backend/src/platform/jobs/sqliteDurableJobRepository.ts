@@ -876,6 +876,44 @@ export class SQLiteDurableJobRepository {
     });
   }
 
+  /**
+   * Read-only ownership and cancellation check. Unlike heartbeat this never
+   * extends the lease and never writes, so hot paths can call it per side
+   * effect without paying a transaction commit.
+   */
+  inspectLease(lease: DurableJobLease): DurableHeartbeatResult {
+    const timestamp = this.now();
+    const row = this.database
+      .prepare(
+        `SELECT state, lease_owner, lease_token, lease_expires_at,
+                cancellation_requested_at
+           FROM platform_jobs WHERE id = ?`
+      )
+      .get(lease.id) as
+      | {
+          state: string;
+          lease_owner: string | null;
+          lease_token: number | null;
+          lease_expires_at: number | null;
+          cancellation_requested_at: number | null;
+        }
+      | undefined;
+    const owned = Boolean(
+      row &&
+      row.state === 'running' &&
+      row.lease_owner === lease.workerId &&
+      row.lease_token === lease.leaseToken &&
+      typeof row.lease_expires_at === 'number' &&
+      row.lease_expires_at > timestamp
+    );
+    return {
+      owned,
+      cancellationRequested: owned
+        ? row!.cancellation_requested_at !== null
+        : false,
+    };
+  }
+
   updateProgress(
     lease: DurableJobLease,
     current: number,

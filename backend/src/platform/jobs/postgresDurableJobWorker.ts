@@ -12,7 +12,9 @@ import {
   type DurableJobState,
 } from './durableJobTypes.js';
 import {
+  DEFAULT_AUTHORITY_RECHECK_INTERVAL_MS,
   DEFAULT_MAX_CONCURRENT_JOBS,
+  MAX_AUTHORITY_RECHECK_INTERVAL_MS,
   MAX_CONCURRENT_JOBS_LIMIT,
   type DurableJobHandler,
 } from './embeddedDurableJobWorker.js';
@@ -56,6 +58,8 @@ export interface PostgresDurableJobWorkerOptions {
   pollIntervalMs?: number;
   shutdownTimeoutMs?: number;
   maxConcurrentJobs?: number;
+  /** 0 revalidates actor authority on every side-effect assertion. */
+  authorityRecheckIntervalMs?: number;
   /** Reconcile cleanup-only dead letters before this worker can claim work. */
   reconcileBeforePolling?(): unknown | Promise<unknown>;
 }
@@ -72,6 +76,7 @@ export class PostgresDurableJobWorker {
   private pollHealthy = false;
   private consecutivePollFailures = 0;
   private readonly maxConcurrentJobs: number;
+  private readonly authorityRecheckIntervalMs: number;
   private readonly active = new Map<
     string,
     { lease: DurableJobLease; abort: AbortController; promise: Promise<void> }
@@ -84,6 +89,9 @@ export class PostgresDurableJobWorker {
     this.shutdownTimeoutMs = options.shutdownTimeoutMs ?? 5_000;
     this.maxConcurrentJobs =
       options.maxConcurrentJobs ?? DEFAULT_MAX_CONCURRENT_JOBS;
+    this.authorityRecheckIntervalMs =
+      options.authorityRecheckIntervalMs ??
+      DEFAULT_AUTHORITY_RECHECK_INTERVAL_MS;
     if (
       !Number.isSafeInteger(this.leaseMs) ||
       this.leaseMs < MIN_LEASE_MS ||
@@ -116,6 +124,15 @@ export class PostgresDurableJobWorker {
     ) {
       throw new Error(
         `PostgreSQL worker concurrency must be between 1 and ${MAX_CONCURRENT_JOBS_LIMIT}`
+      );
+    }
+    if (
+      !Number.isSafeInteger(this.authorityRecheckIntervalMs) ||
+      this.authorityRecheckIntervalMs < 0 ||
+      this.authorityRecheckIntervalMs > MAX_AUTHORITY_RECHECK_INTERVAL_MS
+    ) {
+      throw new Error(
+        `PostgreSQL worker authority recheck interval must be between 0 and ${MAX_AUTHORITY_RECHECK_INTERVAL_MS} ms`
       );
     }
   }
@@ -273,8 +290,37 @@ export class PostgresDurableJobWorker {
       Math.max(250, Math.floor(this.leaseMs / 3))
     );
     heartbeat.unref?.();
+    // Every side-effect assertion checks lease ownership and cancellation
+    // through a read-only lookup. The full check, which also extends the
+    // lease and revalidates actor authority, is throttled so streaming
+    // handlers asserting per token batch do not pay two lease writes and an
+    // authorization read each time. The heartbeat timer keeps the lease
+    // alive independently.
+    let lastAuthorityCheckAt = 0;
+    const assertSideEffectAllowed = async (): Promise<void> => {
+      const timestamp = Date.now();
+      if (
+        this.authorityRecheckIntervalMs === 0 ||
+        timestamp - lastAuthorityCheckAt >= this.authorityRecheckIntervalMs
+      ) {
+        await this.allowed(lease);
+        lastAuthorityCheckAt = timestamp;
+        return;
+      }
+      const state = await this.options.service.inspectLease(lease);
+      if (!state.owned) {
+        throw new DurableJobError(
+          'lease-lost',
+          'The durable job lease was lost'
+        );
+      }
+      if (state.cancellationRequested) {
+        throw new DurableJobError('cancelled', 'The durable job was cancelled');
+      }
+    };
     try {
       await this.allowed(lease);
+      lastAuthorityCheckAt = Date.now();
       const payload = await this.options.service.readPayload(lease);
       const result = await handler({
         signal: abort.signal,
@@ -288,7 +334,7 @@ export class PostgresDurableJobWorker {
         },
         reportProgress: progress =>
           this.options.service.reportProgress(lease, progress),
-        assertSideEffectAllowed: () => this.allowed(lease),
+        assertSideEffectAllowed,
       });
       await this.allowed(lease);
       try {

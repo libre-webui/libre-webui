@@ -41,7 +41,9 @@ export interface DurableJobExecutionContext {
   reportProgress(progress: DurableJobProgress): void | Promise<void>;
   /**
    * A handler must call this immediately before each external side effect.
-   * It rechecks actor authority, cancellation, and lease ownership.
+   * Every call rechecks cancellation and lease ownership; actor authority is
+   * fully revalidated at least once per authorityRecheckIntervalMs (default
+   * five seconds), so a revoked actor stops within that bound.
    */
   assertSideEffectAllowed(): Promise<void>;
 }
@@ -64,6 +66,8 @@ export interface EmbeddedDurableJobWorkerOptions {
   maxRetryBackoffMs?: number;
   shutdownTimeoutMs?: number;
   maxConcurrentJobs?: number;
+  /** 0 revalidates actor authority on every side-effect assertion. */
+  authorityRecheckIntervalMs?: number;
   random?: () => number;
   /** Reconcile cleanup-only dead letters before this worker can claim work. */
   reconcileBeforePolling?(): unknown | Promise<unknown>;
@@ -81,6 +85,8 @@ const MIN_RETRY_BACKOFF_MS = 1000;
 const MAX_RETRY_BACKOFF_MS = 15 * 60 * 1000;
 export const DEFAULT_MAX_CONCURRENT_JOBS = 4;
 export const MAX_CONCURRENT_JOBS_LIMIT = 32;
+export const DEFAULT_AUTHORITY_RECHECK_INTERVAL_MS = 5_000;
+export const MAX_AUTHORITY_RECHECK_INTERVAL_MS = 60_000;
 
 const delay = (milliseconds: number, signal: AbortSignal): Promise<void> =>
   new Promise(resolve => {
@@ -144,6 +150,7 @@ export class EmbeddedDurableJobWorker {
   private readonly maxRetryBackoffMs: number;
   private readonly shutdownTimeoutMs: number;
   private readonly maxConcurrentJobs: number;
+  private readonly authorityRecheckIntervalMs: number;
   private readonly random: () => number;
   private readonly reconcileBeforePolling?: () => unknown | Promise<unknown>;
   private readonly shutdown = new AbortController();
@@ -165,6 +172,9 @@ export class EmbeddedDurableJobWorker {
     this.maxRetryBackoffMs = options.maxRetryBackoffMs ?? 60_000;
     this.maxConcurrentJobs =
       options.maxConcurrentJobs ?? DEFAULT_MAX_CONCURRENT_JOBS;
+    this.authorityRecheckIntervalMs =
+      options.authorityRecheckIntervalMs ??
+      DEFAULT_AUTHORITY_RECHECK_INTERVAL_MS;
     this.reconcileBeforePolling = options.reconcileBeforePolling;
     this.shutdownTimeoutMs =
       options.shutdownTimeoutMs ?? Math.min(5000, Math.floor(this.leaseMs / 2));
@@ -237,6 +247,15 @@ export class EmbeddedDurableJobWorker {
     ) {
       throw new Error(
         `Durable job worker concurrency must be between 1 and ${MAX_CONCURRENT_JOBS_LIMIT}`
+      );
+    }
+    if (
+      !Number.isSafeInteger(this.authorityRecheckIntervalMs) ||
+      this.authorityRecheckIntervalMs < 0 ||
+      this.authorityRecheckIntervalMs > MAX_AUTHORITY_RECHECK_INTERVAL_MS
+    ) {
+      throw new Error(
+        `Durable job worker authority recheck interval must be between 0 and ${MAX_AUTHORITY_RECHECK_INTERVAL_MS} ms`
       );
     }
   }
@@ -395,8 +414,37 @@ export class EmbeddedDurableJobWorker {
     }, heartbeatInterval);
     heartbeat.unref?.();
 
+    // Every side-effect assertion checks lease ownership and cancellation
+    // through a read-only lookup. The full check, which also extends the
+    // lease and revalidates actor authority, is throttled so streaming
+    // handlers asserting per token batch do not pay two lease writes and an
+    // authorization read each time. The heartbeat timer keeps the lease
+    // alive independently.
+    let lastAuthorityCheckAt = 0;
+    const assertSideEffectAllowed = async (): Promise<void> => {
+      const timestamp = Date.now();
+      if (
+        this.authorityRecheckIntervalMs === 0 ||
+        timestamp - lastAuthorityCheckAt >= this.authorityRecheckIntervalMs
+      ) {
+        await this.assertActorAllowed(lease);
+        lastAuthorityCheckAt = timestamp;
+        return;
+      }
+      const state = this.service.inspectLease(lease);
+      if (!state.owned) {
+        throw new DurableJobError(
+          'lease-lost',
+          'The durable job lease was lost'
+        );
+      }
+      if (state.cancellationRequested) {
+        throw new DurableJobError('cancelled', 'The durable job was cancelled');
+      }
+    };
     try {
       await this.assertActorAllowed(lease);
+      lastAuthorityCheckAt = Date.now();
       const payload = this.service.readPayload(lease);
       const result = await handler({
         signal: abort.signal,
@@ -410,7 +458,7 @@ export class EmbeddedDurableJobWorker {
         },
         reportProgress: progress =>
           this.service.reportProgress(lease, progress),
-        assertSideEffectAllowed: () => this.assertActorAllowed(lease),
+        assertSideEffectAllowed,
       });
       await this.assertActorAllowed(lease);
       this.service.complete(lease, result?.resultReference);

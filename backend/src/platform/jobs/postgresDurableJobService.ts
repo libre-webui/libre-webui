@@ -440,6 +440,11 @@ export class PostgresDurableJobService {
     return this.repository.heartbeat(job, leaseMs);
   }
 
+  /** Read-only ownership and cancellation check; never extends the lease. */
+  inspectLease(job: DurableJobLease) {
+    return this.repository.inspectLease(job);
+  }
+
   private leaseDuration(value: number): void {
     if (!Number.isSafeInteger(value) || value < 1_000 || value > 15 * 60_000) {
       throw invalid('Durable job lease must be between 1000 and 900000 ms');

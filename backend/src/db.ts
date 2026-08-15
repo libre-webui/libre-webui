@@ -259,6 +259,11 @@ export function getDatabase(): Database.Database {
       bootstrapSQLiteSchema(db, schemaCompatibility.currentVersion);
 
       db.pragma('journal_mode = WAL');
+      // Under WAL, NORMAL keeps the database consistent through power loss;
+      // only the most recent commits can roll back. FULL stays in effect for
+      // the schema work above, but steady-state runs without a per-commit
+      // fsync, which chat streaming pays on every persisted event batch.
+      db.pragma('synchronous = NORMAL');
       for (const suffix of ['-wal', '-shm']) {
         const companion = `${dbPath}${suffix}`;
         if (fs.existsSync(companion)) fs.chmodSync(companion, 0o600);
