@@ -18,6 +18,10 @@
 import type { ApplicationResourceRepositories } from './resourceTypes.js';
 import type { ExtensionRepositories } from './extensionTypes.js';
 import type { IdentityDeletionEnqueuer } from './identityDeletionTypes.js';
+import type {
+  SecurityRepositories,
+  SecuritySyncRepositories,
+} from './securityTypes.js';
 
 export type PersistenceDialect = 'sqlite' | 'postgres';
 
@@ -131,16 +135,19 @@ export interface PersistenceRepositories {
   identity: IdentityRepository;
   resources: ApplicationResourceRepositories;
   extensions: ExtensionRepositories;
+  security: SecurityRepositories;
 }
 
 export interface PersistenceUnitOfWork {
   identity: IdentityRepository;
   resources: ApplicationResourceRepositories;
   extensions: ExtensionRepositories;
+  security: SecurityRepositories;
 }
 
 export interface PersistenceSyncUnitOfWork {
   identity: IdentitySyncRepository;
+  security: SecuritySyncRepositories;
 }
 
 export type SynchronousTransactionResult<T> =

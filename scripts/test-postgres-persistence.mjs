@@ -80,17 +80,28 @@ test('PostgreSQL configuration rejects ambiguous TLS and unsafe bounds', () => {
 test('PostgreSQL migration registry is contiguous, checksummed, and frozen', () => {
   assert.deepEqual(
     POSTGRES_MIGRATIONS.map(migration => migration.version),
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
   );
   validatePostgresMigrationRegistry(POSTGRES_MIGRATIONS);
   assert.equal(Object.isFrozen(POSTGRES_MIGRATIONS), true);
   assert.equal(POSTGRES_MIGRATIONS.every(Object.isFrozen), true);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 13);
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 12);
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'durable-event-replay-index');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 14);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'trust-foundation');
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 12);
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'durable-event-replay-index');
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
+    /CREATE INDEX idx_platform_events_stream_subject_cursor\s+ON platform_events \(stream_id, subject_id, global_cursor\)/
+  );
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 13);
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'trust-foundation');
   assert.match(
     POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
-    /CREATE INDEX idx_platform_events_stream_subject_cursor\s+ON platform_events \(stream_id, subject_id, global_cursor\)/
+    /CREATE TABLE user_groups/
+  );
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    /CREATE TABLE security_audit_events/
   );
   assert.equal(
     SQLITE_MIGRATION_CONTRACT.some(
@@ -338,7 +349,7 @@ test(
         initializePostgresPersistence(config, codec),
       ]);
       assert.equal(first.schemaCompatibility.status, 'compatible');
-      assert.equal(second.schemaCompatibility.currentVersion, 12);
+      assert.equal(second.schemaCompatibility.currentVersion, 13);
       assert.equal((await first.health()).ready, true);
 
       const assertStructuralDamage = async (mutation, expected) => {
@@ -3173,6 +3184,16 @@ test(
       `ALTER TABLE work_messages
          DROP CONSTRAINT work_messages_content_json_string_check`
     );
+    await target.query('DROP TABLE security_audit_events');
+    await target.query('DROP TABLE oauth_identities');
+    await target.query('DROP TABLE api_tokens');
+    await target.query('DROP TABLE auth_sessions');
+    await target.query('DROP TABLE resource_grants');
+    await target.query('DROP TABLE user_group_members');
+    await target.query('DROP TABLE user_groups');
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 13'
+    );
     await target.query('DROP INDEX idx_platform_events_stream_subject_cursor');
     await target.query(
       'DELETE FROM libre_schema_migrations WHERE version = 12'
@@ -3228,7 +3249,7 @@ test(
     assert.equal(prefixDryRun.sourceFingerprint, dryRun.sourceFingerprint);
     assert.match(
       prefixDryRun.warnings.join('\n'),
-      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 12/i
+      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 13/i
     );
     const codec = {
       encrypt: value => value,
@@ -3258,7 +3279,7 @@ test(
       resumed.tables.every(row => row.status === 'verified'),
       true
     );
-    assert.equal(resumed.targetSchemaVersion, 12);
+    assert.equal(resumed.targetSchemaVersion, 13);
     const resumedState = await target.query(
       `SELECT
          (SELECT MAX(version)::text FROM libre_schema_migrations)
@@ -3271,7 +3292,7 @@ test(
          (SELECT COUNT(*)::text FROM work_messages) AS work_messages`
     );
     assert.deepEqual(resumedState.rows[0], {
-      schema_version: '12',
+      schema_version: '13',
       import_status: 'complete',
       journal_count: String(dryRun.tables.length),
       work_journal: '1',

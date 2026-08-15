@@ -35,6 +35,10 @@ import type {
 } from './types.js';
 import { createSQLiteResourceRepositories } from './sqliteResourceRepositories.js';
 import { createSQLiteExtensionRepositories } from './sqliteExtensionRepositories.js';
+import {
+  createSQLiteSecurityRepositories,
+  createSQLiteSecuritySyncRepositories,
+} from './sqliteSecurityRepositories.js';
 import { createVoiceProfileNameLookup } from './voiceProfileNameLookup.js';
 import type { IdentityDeletionEnqueuer } from './identityDeletionTypes.js';
 
@@ -744,6 +748,7 @@ const repositoriesFor = (
   identity: new SQLiteIdentityRepository(executor, emailCodec, database),
   resources: createSQLiteResourceRepositories(database),
   extensions: createSQLiteExtensionRepositories(database),
+  security: createSQLiteSecurityRepositories(database),
 });
 
 const unitOfWorkFor = (
@@ -751,6 +756,7 @@ const unitOfWorkFor = (
   emailCodec: IdentityEmailCodec
 ): PersistenceSyncUnitOfWork => ({
   identity: new SQLiteIdentitySyncRepository(executor, emailCodec),
+  security: createSQLiteSecuritySyncRepositories(executor),
 });
 
 export class SQLitePersistence implements SQLitePersistenceContract {

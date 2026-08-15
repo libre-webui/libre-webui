@@ -658,6 +658,74 @@ const RESOURCE_DELETION_LIFECYCLE_REQUIRED_SCHEMA = {
   ],
 } as const;
 
+const TRUST_FOUNDATION_REQUIRED_SCHEMA = {
+  user_groups: [
+    'id',
+    'name',
+    'description',
+    'created_by',
+    'created_at',
+    'updated_at',
+  ],
+  user_group_members: ['group_id', 'user_id', 'added_by', 'added_at'],
+  resource_grants: [
+    'id',
+    'resource_type',
+    'resource_id',
+    'owner_user_id',
+    'principal_type',
+    'principal_id',
+    'permission',
+    'created_by',
+    'created_at',
+  ],
+  auth_sessions: [
+    'id',
+    'user_id',
+    'kind',
+    'ip_hash',
+    'user_agent',
+    'created_at',
+    'last_seen_at',
+    'expires_at',
+    'revoked_at',
+    'revoked_by',
+  ],
+  api_tokens: [
+    'id',
+    'user_id',
+    'name',
+    'token_hash',
+    'token_prefix',
+    'scopes',
+    'created_at',
+    'expires_at',
+    'last_used_at',
+    'revoked_at',
+  ],
+  oauth_identities: [
+    'provider',
+    'subject',
+    'user_id',
+    'email',
+    'created_at',
+    'updated_at',
+  ],
+  security_audit_events: [
+    'id',
+    'occurred_at',
+    'actor_user_id',
+    'actor_kind',
+    'action',
+    'target_type',
+    'target_id',
+    'result',
+    'request_id',
+    'ip_hash',
+    'details',
+  ],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -763,6 +831,118 @@ export const RESOURCE_DELETION_LIFECYCLE_SCHEMA_SQL = `
       resource_type,
       resource_id
     );
+`;
+
+export const TRUST_FOUNDATION_SCHEMA_SQL = `
+  CREATE TABLE IF NOT EXISTS user_groups (
+    id TEXT PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL CHECK (length(name) BETWEEN 1 AND 128),
+    description TEXT,
+    created_by TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS user_group_members (
+    group_id TEXT NOT NULL REFERENCES user_groups(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    added_by TEXT,
+    added_at INTEGER NOT NULL,
+    PRIMARY KEY (group_id, user_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_user_group_members_user
+    ON user_group_members(user_id, group_id);
+
+  CREATE TABLE IF NOT EXISTS resource_grants (
+    id TEXT PRIMARY KEY,
+    resource_type TEXT NOT NULL CHECK (length(resource_type) BETWEEN 1 AND 64),
+    resource_id TEXT NOT NULL CHECK (length(resource_id) BETWEEN 1 AND 256),
+    owner_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    principal_type TEXT NOT NULL CHECK (principal_type IN ('user', 'group')),
+    principal_id TEXT NOT NULL,
+    permission TEXT NOT NULL CHECK (permission IN ('read', 'write', 'admin')),
+    created_by TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    UNIQUE (resource_type, resource_id, principal_type, principal_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_resource_grants_resource
+    ON resource_grants(resource_type, resource_id);
+
+  CREATE INDEX IF NOT EXISTS idx_resource_grants_principal
+    ON resource_grants(principal_type, principal_id);
+
+  CREATE TABLE IF NOT EXISTS auth_sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    ip_hash TEXT,
+    user_agent TEXT,
+    created_at INTEGER NOT NULL,
+    last_seen_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    revoked_at INTEGER,
+    revoked_by TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_auth_sessions_user
+    ON auth_sessions(user_id, last_seen_at);
+
+  CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires
+    ON auth_sessions(expires_at);
+
+  CREATE TABLE IF NOT EXISTS api_tokens (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 128),
+    token_hash TEXT UNIQUE NOT NULL,
+    token_prefix TEXT NOT NULL,
+    scopes TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER,
+    last_used_at INTEGER,
+    revoked_at INTEGER
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_api_tokens_user
+    ON api_tokens(user_id, created_at);
+
+  CREATE TABLE IF NOT EXISTS oauth_identities (
+    provider TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    email TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (provider, subject)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_oauth_identities_user
+    ON oauth_identities(user_id);
+
+  CREATE TABLE IF NOT EXISTS security_audit_events (
+    id TEXT PRIMARY KEY,
+    occurred_at INTEGER NOT NULL,
+    actor_user_id TEXT,
+    actor_kind TEXT NOT NULL,
+    action TEXT NOT NULL CHECK (length(action) BETWEEN 1 AND 128),
+    target_type TEXT,
+    target_id TEXT,
+    result TEXT NOT NULL CHECK (result IN ('success', 'denied', 'failure')),
+    request_id TEXT,
+    ip_hash TEXT,
+    details TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_security_audit_occurred
+    ON security_audit_events(occurred_at, id);
+
+  CREATE INDEX IF NOT EXISTS idx_security_audit_actor
+    ON security_audit_events(actor_user_id, occurred_at);
+
+  CREATE INDEX IF NOT EXISTS idx_security_audit_action
+    ON security_audit_events(action, occurred_at);
 `;
 
 const REQUIRED_SCHEMA = {
@@ -1033,6 +1213,13 @@ const REQUIRED_PRIMARY_KEYS: Readonly<Record<string, readonly string[]>> = {
   platform_blob_quota_objects: ['blob_id'],
   plugin_definitions: ['plugin_id'],
   platform_resource_deletion_tombstones: ['resource_type', 'resource_id'],
+  user_groups: ['id'],
+  user_group_members: ['group_id', 'user_id'],
+  resource_grants: ['id'],
+  auth_sessions: ['id'],
+  api_tokens: ['id'],
+  oauth_identities: ['provider', 'subject'],
+  security_audit_events: ['id'],
 };
 
 const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
@@ -1048,6 +1235,11 @@ const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
   platform_events: [['event_id'], ['stream_id', 'stream_sequence']],
   platform_blob_references: [['resource_type', 'resource_id', 'purpose']],
   platform_resource_deletion_tombstones: [['deletion_token']],
+  user_groups: [['name']],
+  resource_grants: [
+    ['resource_type', 'resource_id', 'principal_type', 'principal_id'],
+  ],
+  api_tokens: [['token_hash']],
 };
 
 const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
@@ -1147,6 +1339,48 @@ const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
     columns: ['stream_id'],
     referencedTable: 'platform_event_stream_heads',
     referencedColumns: ['stream_id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'user_group_members',
+    columns: ['group_id'],
+    referencedTable: 'user_groups',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'user_group_members',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'resource_grants',
+    columns: ['owner_user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'auth_sessions',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'api_tokens',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'oauth_identities',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
     onDelete: 'CASCADE',
   },
 ];
@@ -1297,6 +1531,56 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     table: 'platform_resource_deletion_tombstones',
     columns: ['owner_user_id', 'deleted_at', 'resource_type', 'resource_id'],
   },
+  {
+    name: 'idx_user_group_members_user',
+    table: 'user_group_members',
+    columns: ['user_id', 'group_id'],
+  },
+  {
+    name: 'idx_resource_grants_resource',
+    table: 'resource_grants',
+    columns: ['resource_type', 'resource_id'],
+  },
+  {
+    name: 'idx_resource_grants_principal',
+    table: 'resource_grants',
+    columns: ['principal_type', 'principal_id'],
+  },
+  {
+    name: 'idx_auth_sessions_user',
+    table: 'auth_sessions',
+    columns: ['user_id', 'last_seen_at'],
+  },
+  {
+    name: 'idx_auth_sessions_expires',
+    table: 'auth_sessions',
+    columns: ['expires_at'],
+  },
+  {
+    name: 'idx_api_tokens_user',
+    table: 'api_tokens',
+    columns: ['user_id', 'created_at'],
+  },
+  {
+    name: 'idx_oauth_identities_user',
+    table: 'oauth_identities',
+    columns: ['user_id'],
+  },
+  {
+    name: 'idx_security_audit_occurred',
+    table: 'security_audit_events',
+    columns: ['occurred_at', 'id'],
+  },
+  {
+    name: 'idx_security_audit_actor',
+    table: 'security_audit_events',
+    columns: ['actor_user_id', 'occurred_at'],
+  },
+  {
+    name: 'idx_security_audit_action',
+    table: 'security_audit_events',
+    columns: ['action', 'occurred_at'],
+  },
 ];
 
 const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
@@ -1331,6 +1615,11 @@ const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
     "resource_type IN ('document', 'generated-media', 'persona')",
     'CHECK(deletion_incarnation > 0)',
   ],
+  resource_grants: [
+    "principal_type IN ('user', 'group')",
+    "permission IN ('read', 'write', 'admin')",
+  ],
+  security_audit_events: ["result IN ('success', 'denied', 'failure')"],
 };
 
 const quoteIdentifier = (identifier: string): string =>
@@ -1671,6 +1960,7 @@ const collectMissingSchema = (database: Database.Database): string[] => [
   ...collectMissingWorkPreviewUpstreamSchema(database),
   ...collectMissingDurableEventIdempotencySchema(database),
   ...collectMissingResourceDeletionLifecycleSchema(database),
+  ...collectMissingTrustFoundationSchema(database),
 ];
 
 const collectMissingMigrationLedgerSchema = (
@@ -1790,6 +2080,21 @@ const collectMissingResourceDeletionLifecycleSchema = (
   ),
 ];
 
+const collectMissingTrustFoundationSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, TRUST_FOUNDATION_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(
+    item =>
+      item.includes('user_group') ||
+      item.includes('resource_grants') ||
+      item.includes('auth_sessions') ||
+      item.includes('api_tokens') ||
+      item.includes('oauth_identities') ||
+      item.includes('security_audit')
+  ),
+];
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -1835,6 +2140,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 13
       ? collectMissingDurableEventReplayIndexSchema(database)
       : []),
+    ...(version >= 14 ? collectMissingTrustFoundationSchema(database) : []),
   ];
 }
 
@@ -1914,6 +2220,8 @@ const RESOURCE_DELETION_LIFECYCLE_MIGRATION_CHECKSUM =
   'a72e862afe109daf68b7ec8e445ef359bc3550a5ac8973d135cf7a18eb5bf1cc';
 const DURABLE_EVENT_REPLAY_INDEX_MIGRATION_CHECKSUM =
   '7d6b769ceadd08791c77ac5c5a1d7bd61a63d87cac87da56ae847c4067cacdad';
+const TRUST_FOUNDATION_MIGRATION_CHECKSUM =
+  'c5a73245de3cd3e37db8877c8457c975d789f98c1c71ae1e4fc891ba09e8de5a';
 const LEGACY_DURABLE_EVENT_REPLAY_INDEX_MIGRATION_CHECKSUM =
   'DURABLE_EVENT_REPLAY_INDEX_CHECKSUM_TO_FREEZE';
 
@@ -2152,6 +2460,20 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite durable event replay index is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 14,
+    name: 'trust-foundation',
+    checksum: TRUST_FOUNDATION_MIGRATION_CHECKSUM,
+    apply(database) {
+      database.exec(TRUST_FOUNDATION_SCHEMA_SQL);
+      const missing = collectMissingTrustFoundationSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite trust foundation schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

@@ -23,6 +23,10 @@ import {
   createPostgresExtensionRepositories,
   createPostgresTransactionalExtensionRepositories,
 } from './postgresExtensionRepositories.js';
+import {
+  createPostgresSecurityRepositories,
+  createPostgresTransactionalSecurityRepositories,
+} from './postgresSecurityRepositories.js';
 import type {
   IdentityAccountStatus,
   IdentityEmailCodec,
@@ -384,6 +388,9 @@ const repositoriesFor = (
   extensions: client
     ? createPostgresTransactionalExtensionRepositories(client)
     : createPostgresExtensionRepositories(database),
+  security: client
+    ? createPostgresTransactionalSecurityRepositories(database, client)
+    : createPostgresSecurityRepositories(database),
 });
 
 export class PostgresPersistence implements PostgresPersistenceContract {

@@ -78,6 +78,7 @@ test('SQLite driver imports stay inside audited adapter and recovery boundaries'
     'persistence/sqliteMigrations.ts',
     'persistence/sqlitePersistence.ts',
     'persistence/sqliteResourceRepositories.ts',
+    'persistence/sqliteSecurityRepositories.ts',
     'persistence/sqliteSyncExecutor.ts',
     'persistence/sqliteToPostgresMigration.ts',
     'platform/jobs/sqliteDurableJobRepository.ts',

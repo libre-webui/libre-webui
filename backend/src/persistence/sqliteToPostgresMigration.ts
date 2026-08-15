@@ -900,6 +900,103 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       projectSourceRow: projectWorkMessageRow,
     }
   ),
+  table(
+    'user_groups',
+    'user_groups',
+    ['id', 'name', 'description', 'created_by', 'created_at', 'updated_at'],
+    ['id'],
+    { integers: timestamps }
+  ),
+  table(
+    'user_group_members',
+    'user_group_members',
+    ['group_id', 'user_id', 'added_by', 'added_at'],
+    ['group_id', 'user_id'],
+    { integers: [...timestamps, 'added_at'] }
+  ),
+  table(
+    'resource_grants',
+    'resource_grants',
+    [
+      'id',
+      'resource_type',
+      'resource_id',
+      'owner_user_id',
+      'principal_type',
+      'principal_id',
+      'permission',
+      'created_by',
+      'created_at',
+    ],
+    ['id'],
+    { integers: timestamps }
+  ),
+  table(
+    'auth_sessions',
+    'auth_sessions',
+    [
+      'id',
+      'user_id',
+      'kind',
+      'ip_hash',
+      'user_agent',
+      'created_at',
+      'last_seen_at',
+      'expires_at',
+      'revoked_at',
+      'revoked_by',
+    ],
+    ['id'],
+    {
+      integers: [...timestamps, 'last_seen_at', 'expires_at', 'revoked_at'],
+    }
+  ),
+  table(
+    'api_tokens',
+    'api_tokens',
+    [
+      'id',
+      'user_id',
+      'name',
+      'token_hash',
+      'token_prefix',
+      'scopes',
+      'created_at',
+      'expires_at',
+      'last_used_at',
+      'revoked_at',
+    ],
+    ['id'],
+    {
+      integers: [...timestamps, 'expires_at', 'last_used_at', 'revoked_at'],
+    }
+  ),
+  table(
+    'oauth_identities',
+    'oauth_identities',
+    ['provider', 'subject', 'user_id', 'email', 'created_at', 'updated_at'],
+    ['provider', 'subject'],
+    { integers: timestamps }
+  ),
+  table(
+    'security_audit_events',
+    'security_audit_events',
+    [
+      'id',
+      'occurred_at',
+      'actor_user_id',
+      'actor_kind',
+      'action',
+      'target_type',
+      'target_id',
+      'result',
+      'request_id',
+      'ip_hash',
+      'details',
+    ],
+    ['id'],
+    { integers: timestamps }
+  ),
 ]);
 
 interface SourceTextNulField {
