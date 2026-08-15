@@ -15,6 +15,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.22.1] - 2026-08-15
+
+A same-day repair release for 0.22.0. If 0.22.0 refused to start after an upgrade with "Invalid platform storage encryption configuration", or the interface came up empty after signing in, this release fixes both — no manual steps needed.
+
+### 🐛 Bug Fixes
+
+- **Signing in no longer requires a page refresh.** On deployments with authentication, the app initialized once before login, marked itself done, and never loaded models, sessions, or plugins after the login landed — leaving an empty interface until a manual reload. Initialization now runs again the moment authentication completes.
+- **Providers that start late appear without a reload.** If Ollama or the backend was still starting when the page loaded, the model list stayed empty forever. The app now quietly re-checks until a provider shows up, and re-checks a previously offline Ollama when the window regains focus — without polling forever on deliberately plugin-only setups.
+- **Upgrades no longer fail on legacy key file permissions.** Installations whose `.encryption_key` was created by an older release carried default file permissions, and 0.22.0's hardened startup refused them outright — every such npx, npm, source, and Docker upgrade crashed on boot. Startup now tightens the key file to owner-only permissions in place when it is a regular, single-link file owned by the server user; symlinks, multi-link files, and files owned by someone else still fail closed. Startup errors also name the actual problem now instead of a generic line.
+- **Brand-new provider models work as soon as the provider ships them.** Chatting with a model a provider had just released could fail with a generic error: the model picker shows the provider's live catalog, but the request resolved against the stored one. A missed lookup now refreshes a due catalog once before rejecting, which also covers team deployments where the external worker only sees the stored catalog.
+- **Failed generations keep their real reason.** A crashed chat generation logged nothing anywhere — the durable job record kept only a sanitized summary. The worker now logs the underlying error before sanitizing, so a dead-lettered generation can actually be diagnosed.
+
+### 🔧 Improvements
+
+- **The jobs API is rate limited.** The durable jobs endpoints gained the same per-user shared rate limit as every other API surface.
+- **Plugin upload cleanup hardened.** Temporary-file deletion now rebuilds its target from a validated relative path — the canonical containment pattern — instead of checking and deleting the incoming path.
+
 ## [0.22.0] - 2026-08-15
 
 The largest release so far. Libre WebUI now scales past a single machine: a new team profile runs on PostgreSQL, Redis, and S3-compatible storage with external workers, while the solo SQLite setup stays the default and works exactly as before. Around it: speech input, voice cloning, a redesigned interface, real data portability, and integrated backup tooling. The local database schema migrates automatically on first start — back up your data directory before upgrading, as always.
