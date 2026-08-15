@@ -25,8 +25,60 @@ import {
   WorkRun,
   WorkTaskDetail,
 } from '../types/work.js';
+import { createHash } from 'node:crypto';
 import type { DurableEventGateway } from '../platform/events/index.js';
 import { durableEventId } from '../platform/jobs/durableEventIdentity.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:work-events');
+
+// Durable job payloads reject above 64 KiB; leave room for the envelope.
+const WORK_DURABLE_PAYLOAD_BUDGET_BYTES = 56_000;
+
+/** Deterministic, small identity component for arbitrary event data. */
+const occurrenceDigest = (value: unknown): string =>
+  createHash('sha256').update(JSON.stringify(value)).digest('hex');
+
+/**
+ * Bound an event's durable copy. Delta events drop their accumulated `total`
+ * (live consumers rebuild it from the deltas), and any remaining oversized
+ * string fields are trimmed in place so one giant event can never exceed the
+ * durable payload cap. The full event still reaches live listeners.
+ */
+const boundedDurableData = (type: string, data: unknown): unknown => {
+  let value = data;
+  if (
+    (type === 'reasoning_delta' || type === 'assistant_delta') &&
+    value &&
+    typeof value === 'object' &&
+    'total' in value
+  ) {
+    const { total: _dropped, ...rest } = value as Record<string, unknown>;
+    value = rest;
+  }
+  if (
+    Buffer.byteLength(JSON.stringify(value) ?? '', 'utf8') <=
+    WORK_DURABLE_PAYLOAD_BUDGET_BYTES
+  ) {
+    return value;
+  }
+  const trim = (input: unknown): unknown => {
+    if (typeof input === 'string') {
+      return input.length > 8_000 ? `${input.slice(0, 8_000)}…` : input;
+    }
+    if (Array.isArray(input)) return input.map(trim);
+    if (input && typeof input === 'object') {
+      return Object.fromEntries(
+        Object.entries(input as Record<string, unknown>).map(([key, entry]) => [
+          key,
+          trim(entry),
+        ])
+      );
+    }
+    return input;
+  };
+  return trim(value);
+};
 
 export const WORK_EVENT_REPLAY_LIMIT = 512;
 export const WORK_EVENT_REPLAY_MAX_BYTES = 1_000_000;
@@ -164,32 +216,48 @@ export class WorkEventService {
     const operation = previous
       .catch(() => undefined)
       .then(async () => {
-        const appended = await this.durableGateway!.append({
-          eventId: durableEventId(
-            'work',
-            taskId,
-            runId,
-            type,
-            attemptIdentity ?? 'logical',
-            occurrenceId ?? JSON.stringify(data)
-          ),
-          streamId: durableStreamId(taskId, runId),
-          eventType: `work.${type}.v1`,
-          subjectId: runId,
-          payload: {
-            mode: 'encrypted',
-            value: { type, taskId, runId, data },
-          },
-        });
-        const existing = this.streams
-          .get(key)
-          ?.events.find(stored => stored.event.id === appended.cursor)?.event;
-        event = existing
-          ? (existing as WorkLiveEvent<T>)
-          : this.publishLocal(taskId, runId, type, data, {
-              id: appended.cursor,
-              timestamp,
-            });
+        try {
+          const appended = await this.durableGateway!.append({
+            eventId: durableEventId(
+              'work',
+              taskId,
+              runId,
+              type,
+              attemptIdentity ?? 'logical',
+              occurrenceId ?? occurrenceDigest(data)
+            ),
+            streamId: durableStreamId(taskId, runId),
+            eventType: `work.${type}.v1`,
+            subjectId: runId,
+            payload: {
+              mode: 'encrypted',
+              value: {
+                type,
+                taskId,
+                runId,
+                data: boundedDurableData(type, data),
+              },
+            },
+          });
+          const existing = this.streams
+            .get(key)
+            ?.events.find(stored => stored.event.id === appended.cursor)?.event;
+          event = existing
+            ? (existing as WorkLiveEvent<T>)
+            : this.publishLocal(taskId, runId, type, data, {
+                id: appended.cursor,
+                timestamp,
+              });
+        } catch (error) {
+          // A durable append must never take a running task down with it.
+          // Live listeners still receive the event; only replay fidelity for
+          // this single event is reduced.
+          logger.error(
+            `Durable work event append failed for ${type} on run ${runId}:`,
+            error
+          );
+          event = this.publishLocal(taskId, runId, type, data);
+        }
       });
     this.durableTails.set(key, operation);
     const clearTail = (): void => {

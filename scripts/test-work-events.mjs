@@ -571,12 +571,45 @@ test('durable Work SSE compacts more than 512 events and replays the checkpoint 
     assert.equal(snapshot.data.data.replayTruncated, true);
     assert.equal(gap.event, 'assistant_delta');
     assert.equal(gap.id, checkpoint + 1);
-    assert.equal(gap.data.data.total, 'checkpoint gap');
+    // Durable delta copies carry no accumulated total; the delta is the
+    // replayable content.
+    assert.equal(gap.data.data.delta, 'gap');
+    assert.equal(gap.data.data.total, undefined);
     await stream.cancel();
   } finally {
     controller.abort();
     workTaskService.requireTaskDetail = originalRequireTaskDetail;
   }
+});
+
+test('an oversized delta event neither rejects nor wedges the durable stream', async () => {
+  const runtime = getDurableJobRuntime().service;
+  const streamId = 'work:task-a:run-a';
+  const before = await runtime.latestEventCursor(streamId);
+
+  // 100 KB accumulated total: over the 64 KiB durable payload cap and over
+  // the 2 KiB identity component cap. This crashed the whole server before.
+  const big = 'x'.repeat(100_000);
+  const event = await workEventService.publish(
+    'task-a',
+    'run-a',
+    'assistant_delta',
+    { delta: 'tail', total: big }
+  );
+  // The durable copy drops the accumulated total (consumers rebuild it from
+  // deltas); the delta itself must survive untouched.
+  assert.equal(event.data.delta, 'tail');
+
+  const followUp = await workEventService.publish('task-a', 'run-a', 'usage', {
+    durationMs: 1,
+  });
+  assert.ok(followUp.id > event.id, 'the stream continues after the event');
+
+  const after = await runtime.latestEventCursor(streamId);
+  assert.ok(
+    after >= before + 2,
+    'both events must reach the durable log (total stripped, not dropped)'
+  );
 });
 
 function createSseReader(response) {
