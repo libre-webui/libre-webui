@@ -34,7 +34,16 @@ import {
   inspectStorageKeyConfiguration,
   provisionLegacyEncryptionKey,
 } from './platform/storage/storageFactory.js';
-import { verifyLegacyCiphertextIntegrity } from './services/legacyCiphertextIntegrity.js';
+import {
+  LegacyCiphertextIntegrityError,
+  verifyLegacyCiphertextIntegrity,
+} from './services/legacyCiphertextIntegrity.js';
+import {
+  preflightIdentityMatchesMarker,
+  readPreflightVerificationMarker,
+  readSQLitePreflightIdentity,
+  writePreflightVerificationMarker,
+} from './db.js';
 import { createLogger } from './utils/logger.js';
 
 const logger = createLogger('durable-worker');
@@ -73,20 +82,53 @@ if (storageKeys.status !== 'configured') {
 let legacyKey: Buffer | undefined;
 try {
   if (config.database.backend === 'sqlite' && fs.existsSync(databasePath)) {
-    legacyKey = Buffer.from(encryptionKeyHex, 'hex');
-    preflightExistingSQLiteDatabase(
-      databasePath,
-      preflightDirectory,
-      database =>
-        verifyLegacyCiphertextIntegrity(
-          database,
-          legacyKey,
-          {},
-          {
-            requireIdentityLookupToken: false,
-          }
-        )
-    );
+    // Same cached preflight as the application entrypoint: data verified once
+    // stays verified until the schema generation or the file itself changes.
+    const marker = readPreflightVerificationMarker(dataDir);
+    const verifiedBefore =
+      marker !== null &&
+      preflightIdentityMatchesMarker(
+        readSQLitePreflightIdentity(databasePath),
+        marker
+      );
+    const skipScanByEnv = process.env.LIBRE_SKIP_STARTUP_INTEGRITY_SCAN === '1';
+    if (!verifiedBefore) {
+      legacyKey = Buffer.from(encryptionKeyHex, 'hex');
+      try {
+        preflightExistingSQLiteDatabase(
+          databasePath,
+          preflightDirectory,
+          skipScanByEnv
+            ? undefined
+            : database =>
+                verifyLegacyCiphertextIntegrity(
+                  database,
+                  legacyKey,
+                  {},
+                  {
+                    requireIdentityLookupToken: false,
+                  }
+                )
+        );
+      } catch (error) {
+        if (
+          error instanceof LegacyCiphertextIntegrityError &&
+          error.code === 'verification-limit'
+        ) {
+          // A database beyond the scan caps must still be able to start.
+          logger.warn(
+            'Legacy ciphertext verification exceeded its scan limits; continuing without full verification.'
+          );
+        } else {
+          throw error;
+        }
+      }
+      if (skipScanByEnv) {
+        logger.warn(
+          'LIBRE_SKIP_STARTUP_INTEGRITY_SCAN=1: skipping legacy ciphertext verification.'
+        );
+      }
+    }
   }
 } finally {
   legacyKey?.fill(0);
@@ -98,6 +140,14 @@ await initializePersistence({
   emailCodec: encryptionService,
   env: process.env,
 });
+if (config.database.backend === 'sqlite') {
+  // Record the settled post-migration identity so the next start can skip
+  // the copy and deep scan until the schema generation or file changes.
+  const settledIdentity = readSQLitePreflightIdentity(databasePath);
+  if (settledIdentity) {
+    writePreflightVerificationMarker(dataDir, settledIdentity);
+  }
+}
 if (config.mode === 'team') {
   ensurePrivateRuntimeDirectory(dataDir);
   ensurePrivateRuntimeDirectory(preflightDirectory);

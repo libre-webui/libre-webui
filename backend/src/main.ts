@@ -25,7 +25,17 @@ import {
   initializePersistence,
   preflightExistingSQLiteDatabase,
 } from './persistence/index.js';
-import { verifyLegacyCiphertextIntegrity } from './services/legacyCiphertextIntegrity.js';
+import {
+  preflightIdentityMatchesMarker,
+  readPreflightVerificationMarker,
+  readSQLitePreflightIdentity,
+  writePreflightVerificationMarker,
+} from './db.js';
+import {
+  LegacyCiphertextIntegrityError,
+  verifyLegacyCiphertextIntegrity,
+} from './services/legacyCiphertextIntegrity.js';
+import { createLogger } from './utils/logger.js';
 import {
   assertNoLegacyDataDirectoryConflict,
   assertPreflightDirectoryOutsideDataDirectory,
@@ -82,30 +92,70 @@ const storageKeys = inspectStorageKeyConfiguration(process.env);
 if (storageKeys.status !== 'configured') {
   throw new Error('Invalid platform storage encryption configuration.');
 }
+const startupLogger = createLogger('startup');
 let legacyEncryptionKey: Buffer | undefined;
 try {
   if (
     platformConfig.database.backend === 'sqlite' &&
     fs.existsSync(databasePath)
   ) {
-    legacyEncryptionKey = Buffer.from(encryptionKeyHex, 'hex');
-    preflightExistingSQLiteDatabase(
-      databasePath,
-      preflightDirectory,
-      database =>
-        verifyLegacyCiphertextIntegrity(
-          database,
-          legacyEncryptionKey,
-          {},
-          {
-            // Migration v4 commits its nullable lookup column before the
-            // identity repository can backfill it. Allow a missing token with
-            // either an authenticated envelope or a non-envelope legacy value
-            // through this crash-recovery window.
-            requireIdentityLookupToken: false,
-          }
-        )
-    );
+    // The deep preflight copies the whole database and authenticates every
+    // encrypted row. Data verified once stays verified: later rows are
+    // written by this code generation, so the scan only reruns when the
+    // schema generation or the database file itself changes. The identity
+    // probe opens the database and may create WAL bookkeeping, so it runs
+    // only when a marker from an earlier successful start exists; a first
+    // or rejected bootstrap keeps the source directory untouched.
+    const marker = readPreflightVerificationMarker(dataDir);
+    const verifiedBefore =
+      marker !== null &&
+      preflightIdentityMatchesMarker(
+        readSQLitePreflightIdentity(databasePath),
+        marker
+      );
+    const skipScanByEnv = process.env.LIBRE_SKIP_STARTUP_INTEGRITY_SCAN === '1';
+    if (!verifiedBefore) {
+      legacyEncryptionKey = Buffer.from(encryptionKeyHex, 'hex');
+      try {
+        preflightExistingSQLiteDatabase(
+          databasePath,
+          preflightDirectory,
+          skipScanByEnv
+            ? undefined
+            : database =>
+                verifyLegacyCiphertextIntegrity(
+                  database,
+                  legacyEncryptionKey,
+                  {},
+                  {
+                    // Migration v4 commits its nullable lookup column before
+                    // the identity repository can backfill it. Allow a
+                    // missing token with either an authenticated envelope or
+                    // a non-envelope legacy value through this
+                    // crash-recovery window.
+                    requireIdentityLookupToken: false,
+                  }
+                )
+        );
+      } catch (error) {
+        if (
+          error instanceof LegacyCiphertextIntegrityError &&
+          error.code === 'verification-limit'
+        ) {
+          // A database beyond the scan caps must still be able to start.
+          startupLogger.warn(
+            'Legacy ciphertext verification exceeded its scan limits; continuing without full verification.'
+          );
+        } else {
+          throw error;
+        }
+      }
+      if (skipScanByEnv) {
+        startupLogger.warn(
+          'LIBRE_SKIP_STARTUP_INTEGRITY_SCAN=1: skipping legacy ciphertext verification.'
+        );
+      }
+    }
   }
 } finally {
   legacyEncryptionKey?.fill(0);
@@ -120,6 +170,14 @@ await initializePersistence({
   emailCodec: encryptionService,
   env: process.env,
 });
+if (platformConfig.database.backend === 'sqlite') {
+  // Record the settled post-migration identity so the next start can skip
+  // the copy and deep scan until the schema generation or file changes.
+  const settledIdentity = readSQLitePreflightIdentity(databasePath);
+  if (settledIdentity) {
+    writePreflightVerificationMarker(dataDir, settledIdentity);
+  }
+}
 if (platformConfig.mode === 'team') {
   const teamPreflightDirectory = resolvePreflightDirectory();
   assertPreflightDirectoryOutsideDataDirectory(dataDir, teamPreflightDirectory);

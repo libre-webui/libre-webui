@@ -2447,3 +2447,86 @@ test('failed ledgerless adoption rolls back inline schema and Work data migratio
     afterFailure.close();
   }
 });
+
+test('preflight verification marker tracks schema generation and file identity', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-marker-'));
+  try {
+    const databasePath = path.join(directory, 'data.sqlite');
+    const database = new Database(databasePath);
+    database.exec('CREATE TABLE alpha (id INTEGER PRIMARY KEY, value TEXT)');
+    database.close();
+
+    const first = databaseHelpers.readSQLitePreflightIdentity(databasePath);
+    assert.ok(first);
+    assert.ok(Number.isSafeInteger(first.schemaCookie));
+
+    // No marker yet: nothing matches.
+    assert.equal(
+      databaseHelpers.preflightIdentityMatchesMarker(
+        first,
+        databaseHelpers.readPreflightVerificationMarker(directory)
+      ),
+      false
+    );
+
+    databaseHelpers.writePreflightVerificationMarker(directory, first);
+    assert.equal(
+      databaseHelpers.preflightIdentityMatchesMarker(
+        databaseHelpers.readSQLitePreflightIdentity(databasePath),
+        databaseHelpers.readPreflightVerificationMarker(directory)
+      ),
+      true
+    );
+
+    // Ordinary row writes keep the identity stable.
+    const writer = new Database(databasePath);
+    writer.prepare('INSERT INTO alpha (value) VALUES (?)').run('row');
+    writer.close();
+    assert.equal(
+      databaseHelpers.preflightIdentityMatchesMarker(
+        databaseHelpers.readSQLitePreflightIdentity(databasePath),
+        databaseHelpers.readPreflightVerificationMarker(directory)
+      ),
+      true
+    );
+
+    // DDL (a migration) invalidates the marker.
+    const migrator = new Database(databasePath);
+    migrator.exec('CREATE TABLE beta (id INTEGER PRIMARY KEY)');
+    migrator.close();
+    assert.equal(
+      databaseHelpers.preflightIdentityMatchesMarker(
+        databaseHelpers.readSQLitePreflightIdentity(databasePath),
+        databaseHelpers.readPreflightVerificationMarker(directory)
+      ),
+      false
+    );
+
+    // Replacing the file invalidates the marker even with identical schema.
+    const settled = databaseHelpers.readSQLitePreflightIdentity(databasePath);
+    databaseHelpers.writePreflightVerificationMarker(directory, settled);
+    const copyPath = `${databasePath}.copy`;
+    fs.copyFileSync(databasePath, copyPath);
+    fs.rmSync(databasePath);
+    fs.renameSync(copyPath, databasePath);
+    assert.equal(
+      databaseHelpers.preflightIdentityMatchesMarker(
+        databaseHelpers.readSQLitePreflightIdentity(databasePath),
+        databaseHelpers.readPreflightVerificationMarker(directory)
+      ),
+      false
+    );
+
+    // A corrupt marker reads as absent.
+    fs.writeFileSync(
+      path.join(directory, '.preflight-verification.json'),
+      'not json'
+    );
+    assert.equal(
+      databaseHelpers.readPreflightVerificationMarker(directory),
+      null
+    );
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});

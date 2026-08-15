@@ -95,6 +95,7 @@ dependencies must be selected together.
 | `CHAT_STREAM_EVENT_RETENTION_HOURS`  | `24`                                   | Hours chat stream chunk events stay before the hourly sweep removes them                        |
 | `PLATFORM_EVENT_RETENTION_DAYS`      | `30`                                   | Days any durable event stays before the hourly sweep removes it                                 |
 | `PLATFORM_JOB_RETENTION_DAYS`        | `30`                                   | Days finished non-lifecycle jobs stay before the hourly sweep removes them                      |
+| `LIBRE_SKIP_STARTUP_INTEGRITY_SCAN`  | unset                                  | `1` skips the deep legacy-ciphertext scan on the next start (escape hatch; scan is otherwise cached per schema generation) |
 | `STORAGE_ENCRYPTION_KEYS`            | unset                                  | Secret JSON key map; currently must include `legacy` matching `ENCRYPTION_KEY`                  |
 | `STORAGE_ENCRYPTION_ACTIVE_KEY_ID`   | unset                                  | Key ID used for new local blob and embedded-vector writes                                       |
 | `BLOB_QUOTA_BYTES_PER_USER`          | `10737418240`                          | Durable maximum plaintext blob bytes per owner (positive safe integer)                          |

@@ -37,6 +37,120 @@ const logger = createLogger('database');
 let db: Database.Database | null = null;
 let dbInitializationFailed = false;
 
+const PREFLIGHT_MARKER_FILE = '.preflight-verification.json';
+const PREFLIGHT_MARKER_FORMAT = 'libre-preflight-verification';
+
+/**
+ * Cheap identity of an existing database for preflight caching: the inode
+ * pair detects a replaced or restored file, and the schema cookie changes
+ * exactly when a migration (or any DDL) runs. Ordinary row writes change
+ * neither, so a healthy instance keeps one stable identity between upgrades.
+ * The cookie is read through a readonly connection so a version still
+ * sitting in the WAL is observed the same way on both sides of the marker.
+ */
+export interface SQLitePreflightIdentity {
+  dev: number;
+  ino: number;
+  schemaCookie: number;
+}
+
+export function readSQLitePreflightIdentity(
+  databasePath: string
+): SQLitePreflightIdentity | null {
+  try {
+    const stat = fs.lstatSync(databasePath);
+    if (!stat.isFile() || stat.isSymbolicLink()) return null;
+    const probe = new Database(databasePath, {
+      readonly: true,
+      fileMustExist: true,
+    });
+    try {
+      const schemaCookie = probe.pragma('schema_version', {
+        simple: true,
+      }) as number;
+      if (!Number.isSafeInteger(schemaCookie)) return null;
+      return { dev: stat.dev, ino: stat.ino, schemaCookie };
+    } finally {
+      probe.close();
+    }
+  } catch {
+    return null;
+  }
+}
+
+export function readPreflightVerificationMarker(
+  dataDir: string
+): SQLitePreflightIdentity | null {
+  try {
+    const parsed = JSON.parse(
+      fs.readFileSync(path.join(dataDir, PREFLIGHT_MARKER_FILE), 'utf8')
+    ) as {
+      format?: string;
+      version?: number;
+      database?: { dev?: number; ino?: number; schemaCookie?: number };
+    };
+    if (
+      parsed?.format !== PREFLIGHT_MARKER_FORMAT ||
+      parsed.version !== 1 ||
+      !Number.isSafeInteger(parsed.database?.dev) ||
+      !Number.isSafeInteger(parsed.database?.ino) ||
+      !Number.isSafeInteger(parsed.database?.schemaCookie)
+    ) {
+      return null;
+    }
+    return {
+      dev: parsed.database!.dev!,
+      ino: parsed.database!.ino!,
+      schemaCookie: parsed.database!.schemaCookie!,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Delete the marker file to force a full preflight on the next start. */
+export function writePreflightVerificationMarker(
+  dataDir: string,
+  identity: SQLitePreflightIdentity
+): void {
+  const target = path.join(dataDir, PREFLIGHT_MARKER_FILE);
+  const staging = `${target}.tmp-${process.pid}`;
+  try {
+    fs.writeFileSync(
+      staging,
+      `${JSON.stringify(
+        {
+          format: PREFLIGHT_MARKER_FORMAT,
+          version: 1,
+          database: identity,
+          verifiedAt: new Date().toISOString(),
+        },
+        null,
+        2
+      )}\n`,
+      { mode: 0o600 }
+    );
+    fs.renameSync(staging, target);
+  } catch {
+    fs.rmSync(staging, { force: true });
+    // The marker is an optimization; a failed write only means the next
+    // start repeats the full preflight.
+  }
+}
+
+export function preflightIdentityMatchesMarker(
+  identity: SQLitePreflightIdentity | null,
+  marker: SQLitePreflightIdentity | null
+): boolean {
+  return Boolean(
+    identity &&
+    marker &&
+    identity.dev === marker.dev &&
+    identity.ino === marker.ino &&
+    identity.schemaCookie === marker.schemaCookie
+  );
+}
+
 const assertSQLiteIntegrity = (database: Database.Database): void => {
   const result = database.pragma('quick_check', { simple: true });
   if (result !== 'ok') {
