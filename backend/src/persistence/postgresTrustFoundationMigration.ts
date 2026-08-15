@@ -22,9 +22,12 @@ import type { PostgresMigration } from './postgresMigrationTypes.js';
  * Trust-foundation schema: groups, resource grants, auth sessions, API
  * tokens, OAuth identities, and the append-only security audit log.
  */
+// CHECK expressions use the exact form PostgreSQL reconstructs in
+// pg_get_constraintdef (no BETWEEN), so the schema inspector's declared and
+// actual constraint texts normalize identically.
 export const POSTGRES_TRUST_FOUNDATION_SQL = `CREATE TABLE user_groups (
   id text PRIMARY KEY,
-  name text NOT NULL UNIQUE CHECK (length(name) BETWEEN 1 AND 128),
+  name text NOT NULL UNIQUE CHECK (length(name) >= 1 AND length(name) <= 128),
   description text,
   created_by text,
   created_at bigint NOT NULL,
@@ -44,8 +47,10 @@ CREATE INDEX idx_user_group_members_user
 
 CREATE TABLE resource_grants (
   id text PRIMARY KEY,
-  resource_type text NOT NULL CHECK (length(resource_type) BETWEEN 1 AND 64),
-  resource_id text NOT NULL CHECK (length(resource_id) BETWEEN 1 AND 256),
+  resource_type text NOT NULL
+    CHECK (length(resource_type) >= 1 AND length(resource_type) <= 64),
+  resource_id text NOT NULL
+    CHECK (length(resource_id) >= 1 AND length(resource_id) <= 256),
   owner_user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   principal_type text NOT NULL CHECK (principal_type IN ('user', 'group')),
   principal_id text NOT NULL,
@@ -83,7 +88,7 @@ CREATE INDEX idx_auth_sessions_expires
 CREATE TABLE api_tokens (
   id text PRIMARY KEY,
   user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  name text NOT NULL CHECK (length(name) BETWEEN 1 AND 128),
+  name text NOT NULL CHECK (length(name) >= 1 AND length(name) <= 128),
   token_hash text NOT NULL UNIQUE,
   token_prefix text NOT NULL,
   scopes text NOT NULL,
@@ -114,7 +119,7 @@ CREATE TABLE security_audit_events (
   occurred_at bigint NOT NULL,
   actor_user_id text,
   actor_kind text NOT NULL,
-  action text NOT NULL CHECK (length(action) BETWEEN 1 AND 128),
+  action text NOT NULL CHECK (length(action) >= 1 AND length(action) <= 128),
   target_type text,
   target_id text,
   result text NOT NULL CHECK (result IN ('success', 'denied', 'failure')),
