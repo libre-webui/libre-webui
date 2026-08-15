@@ -1213,16 +1213,17 @@ test('Work event retry after a lost COMMIT acknowledgement reuses its cursor wit
     content: 'written',
     error: false,
   };
-  await assert.rejects(
-    workEvents.publish(
-      'task-1',
-      'run-1',
-      'tool_result',
-      data,
-      'message:message-1'
-    ),
-    /lost after event COMMIT/
+  // A lost COMMIT acknowledgement no longer rejects the caller: live viewers
+  // still receive the event through the local fallback, and only this one
+  // event's replay fidelity is reduced until the retry lands.
+  const fallback = await workEvents.publish(
+    'task-1',
+    'run-1',
+    'tool_result',
+    data,
+    'message:message-1'
   );
+  assert.equal(fallback.id, 1);
   await new Promise(resolve => setTimeout(resolve, 5));
   const event = await workEvents.publish(
     'task-1',
