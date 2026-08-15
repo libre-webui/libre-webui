@@ -26,6 +26,7 @@ import {
   withCoordinationTimeout,
 } from '../coordination/sharedAdmission.js';
 import type { CoordinationLease, Coordinator } from '../coordination/types.js';
+import { createLogger } from '../../utils/logger.js';
 import { DurableJobExecutionError } from './durableJobTypes.js';
 import type { DurableJobHandler } from './embeddedDurableJobWorker.js';
 import {
@@ -42,6 +43,8 @@ import {
 } from './domainJobContracts.js';
 import { getDurableJobRuntime } from './durableJobRuntime.js';
 import type { DurableJobExecutionContext } from './embeddedDurableJobWorker.js';
+
+const handlerLogger = createLogger('platform:job-handlers');
 
 const resourceLeaseTtlMs = (): number => {
   const value = Number.parseInt(
@@ -856,6 +859,12 @@ const generateChat: DurableJobHandler = async context => {
     if (error instanceof DurableJobExecutionError || context.signal.aborted) {
       throw error;
     }
+    // The stored job record keeps only a sanitized summary; without this line
+    // the real failure is unrecoverable from any log or table.
+    handlerLogger.error(
+      `Chat generation ${input.assistantMessageId} failed:`,
+      error
+    );
     throw new DurableJobExecutionError(
       true,
       'chat-generation-failed',

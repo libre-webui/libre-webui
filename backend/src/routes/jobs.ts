@@ -6,6 +6,7 @@
 
 import express from 'express';
 import { authenticate, type AuthenticatedRequest } from '../middleware/auth.js';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import {
   DurableJobError,
   getDurableJobRuntime,
@@ -14,6 +15,17 @@ import {
 
 const router = express.Router();
 router.use(authenticate);
+router.use(
+  rateLimit({
+    keyPrefix: 'durable-jobs',
+    windowMs: 60_000,
+    max: 240,
+    keyGenerator: req =>
+      (req as AuthenticatedRequest).user?.userId || 'unauthenticated',
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+);
 
 const identity = (
   req: AuthenticatedRequest
