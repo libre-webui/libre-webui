@@ -24,6 +24,7 @@ import {
   DurableJobError,
   validatePruneHistoryInput,
   type DurableCancellationCode,
+  type DurableJobCancellationObserver,
   type DurableChatCancellationDecision,
   type DurableChatCompletionPublishInput,
   type DurableJobActorFilter,
@@ -274,8 +275,18 @@ export class DurableJobService {
   constructor(
     private readonly repository: SQLiteDurableJobRepository,
     private readonly keyring: Aes256GcmKeyring,
-    private readonly now: () => number = Date.now
+    private readonly now: () => number = Date.now,
+    private readonly onCancellationRequested?: DurableJobCancellationObserver
   ) {}
+
+  /** Observers speed up abort delivery; they must not affect the result. */
+  private notifyCancellationRequested(jobId: string): void {
+    try {
+      this.onCancellationRequested?.(jobId);
+    } catch {
+      // The durable cancellation request already committed.
+    }
+  }
 
   private encodeJobPayload(
     jobId: string,
@@ -694,6 +705,9 @@ export class DurableJobService {
     ) {
       this.reconcileDeletionLifecycleJob(cancelled.id);
     }
+    if (cancelled.state === 'running') {
+      this.notifyCancellationRequested(cancelled.id);
+    }
     return cancelled;
   }
 
@@ -881,7 +895,7 @@ export class DurableJobService {
     validateText(input.sessionId, 'chat cancellation session ID');
     validateText(input.assistantMessageId, 'chat cancellation message ID');
     const scope = chatGenerationIdempotencyScope(input.sessionId);
-    return this.repository.requestChatCancellation({
+    const decision = this.repository.requestChatCancellation({
       actorUserId: input.actorUserId,
       idempotencyScope: scope,
       idempotencyKeyHash: hash(
@@ -914,6 +928,13 @@ export class DurableJobService {
         },
       }),
     });
+    if (
+      decision.outcome === 'cancellation-recorded' &&
+      decision.job?.state === 'running'
+    ) {
+      this.notifyCancellationRequested(decision.job.id);
+    }
+    return decision;
   }
 
   publishChatCompletion(input: DurableChatCompletionPublishInput): number {

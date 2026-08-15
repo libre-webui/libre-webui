@@ -1537,6 +1537,84 @@ test('deleting one event stream leaves other streams intact', () => {
   database.close();
 });
 
+test('a cancellation wake aborts an active handler ahead of the heartbeat', async () => {
+  const { database, service } = harness({ now: Date.now() });
+  let job;
+  let markStarted;
+  const started = new Promise(resolve => {
+    markStarted = resolve;
+  });
+  const worker = new EmbeddedDurableJobWorker({
+    service,
+    workerId: 'embedded-wake',
+    // A long lease keeps the heartbeat far away, so only the wake path can
+    // finish this test quickly.
+    leaseMs: 60_000,
+    pollIntervalMs: 10,
+    random: () => 0,
+    isActorAuthorized: async () => true,
+    handlers: new Map([
+      [
+        'test.echo',
+        context =>
+          new Promise((_, reject) => {
+            markStarted();
+            context.signal.addEventListener(
+              'abort',
+              () =>
+                reject(
+                  new DurableJobError(
+                    'cancelled',
+                    'The durable job was cancelled'
+                  )
+                ),
+              { once: true }
+            );
+          }),
+      ],
+    ]),
+  });
+  job = enqueue(service, { idempotencyKey: 'cancellation-wake' });
+  worker.start();
+  await started;
+  assert.equal(service.cancel(job.id, 'actor-1').state, 'running');
+  assert.equal(worker.abortJob(job.id), true);
+  const deadline = Date.now() + 3000;
+  while (
+    service.getMetadata(job.id).state !== 'cancelled' &&
+    Date.now() < deadline
+  ) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  assert.equal(service.getMetadata(job.id).state, 'cancelled');
+  assert.equal(worker.abortJob(job.id), false);
+  const stop = await worker.stop();
+  assert.equal(stop.failed, 0);
+  database.close();
+});
+
+test('the cancellation observer fires for running jobs only', () => {
+  const { database, repository, service } = harness({ now: Date.now() });
+  const observed = [];
+  // Shares the harness repository; only cancellations go through it so the
+  // frozen harness clock keeps governing enqueue and claim.
+  const observing = new DurableJobService(
+    repository,
+    new Aes256GcmKeyring('test', { test: Buffer.alloc(32, 0x41) }),
+    undefined,
+    jobId => observed.push(jobId)
+  );
+  const queued = enqueue(service, { idempotencyKey: 'observer-queued' });
+  observing.cancel(queued.id, 'actor-1');
+  assert.deepEqual(observed, []);
+  const running = enqueue(service, { idempotencyKey: 'observer-running' });
+  const lease = service.claim('observer-worker', 30_000);
+  assert.equal(lease.id, running.id);
+  observing.cancel(running.id, 'actor-1');
+  assert.deepEqual(observed, [running.id]);
+  database.close();
+});
+
 test('embedded worker rejects an invalid concurrency limit', () => {
   for (const maxConcurrentJobs of [0, -1, 1.5, 33]) {
     assert.throws(

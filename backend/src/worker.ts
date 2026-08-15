@@ -261,6 +261,20 @@ const { default: workEventService } =
 workEventService.initializeDurableGateway(
   initializeDurableEventGateway(runtime.service, coordinator)
 );
+const { JOB_CANCELLATION_WAKE_TOPIC } =
+  await import('./platform/jobs/index.js');
+// Application replicas publish this wake after a cancellation request
+// commits so an in-flight handler here aborts without waiting for its next
+// heartbeat. SQL remains the authoritative cancellation record.
+const unsubscribeCancellationWake = await coordinator.subscribe(
+  JOB_CANCELLATION_WAKE_TOPIC,
+  event => {
+    const jobId = (event.payload as { jobId?: unknown } | undefined)?.jobId;
+    if (typeof jobId === 'string' && jobId.length > 0) {
+      runtime.abortActiveJob(jobId);
+    }
+  }
+);
 const workerId = runtime.status().workerId;
 if (!workerId) throw new Error('Durable worker failed to start.');
 const presenceScope = 'durable-workers';
@@ -295,6 +309,7 @@ const shutdown = async (signal: string): Promise<void> => {
   stopping = true;
   logger.info(`${signal} received: stopping durable worker.`);
   clearInterval(presenceTimer);
+  await unsubscribeCancellationWake().catch(() => undefined);
   const result = await closeDurableJobRuntime();
   // Closing the durable runtime first aborts and drains this worker's active
   // handlers. Stop only this process's sweep/control client; never enumerate

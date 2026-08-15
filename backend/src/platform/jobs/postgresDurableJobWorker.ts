@@ -158,6 +158,18 @@ export class PostgresDurableJobWorker {
     );
   }
 
+  /**
+   * Abort one active handler immediately, ahead of the heartbeat noticing a
+   * durable cancellation. SQL remains authoritative: a wake for a job this
+   * worker does not hold is a no-op.
+   */
+  abortJob(jobId: string): boolean {
+    const item = this.active.get(jobId);
+    if (!item) return false;
+    item.abort.abort();
+    return true;
+  }
+
   private async run(): Promise<void> {
     await this.options.reconcileBeforePolling?.();
     while (!this.shutdown.signal.aborted) {

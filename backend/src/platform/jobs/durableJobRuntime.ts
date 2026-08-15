@@ -28,6 +28,8 @@ export interface DurableJobRuntimeOptions {
   ) => Promise<boolean>;
   workerId?: string;
   maxConcurrentJobs?: number;
+  /** Called after a running job's cancellation request commits. */
+  onCancellationRequested?: (jobId: string) => void;
   /** Aged-history retention windows; omitted disables the sweep. */
   retention?: {
     chatStreamEventMs: number;
@@ -125,6 +127,12 @@ export class DurableJobRuntime {
     const interval = setInterval(sweep, PRUNE_INTERVAL_MS);
     interval.unref?.();
     this.pruneTimers = [initial, interval];
+  }
+
+  /** Abort a locally active handler; a job held elsewhere is a no-op. */
+  abortActiveJob(jobId: string): boolean {
+    if (!this.started || this.options.runWorker === false) return false;
+    return this.worker.abortJob(jobId);
   }
 
   status(): DurableJobRuntimeStatus {

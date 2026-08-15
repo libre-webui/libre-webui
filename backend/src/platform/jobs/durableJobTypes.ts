@@ -215,6 +215,16 @@ export class DurableJobError extends Error {
   }
 }
 
+/**
+ * Coordination topic that wakes worker processes to abort a cancelled job's
+ * in-flight handler. Best effort: the durable cancellation request commits
+ * first, and the per-side-effect and heartbeat checks remain the guaranteed
+ * observation path.
+ */
+export const JOB_CANCELLATION_WAKE_TOPIC = 'platform.jobs.cancelled';
+
+export type DurableJobCancellationObserver = (jobId: string) => void;
+
 export interface DurableHistoryPruneInput {
   /** Remove chat.stream.v1 chunk events that occurred before this time. */
   chatStreamEventCutoff: number;

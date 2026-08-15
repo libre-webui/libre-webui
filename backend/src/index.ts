@@ -104,6 +104,7 @@ import {
   closeDurableJobRuntime,
   createDomainDurableJobHandlers,
   initializeDurableJobRuntime,
+  JOB_CANCELLATION_WAKE_TOPIC,
 } from './platform/jobs/index.js';
 import {
   closeDurableEventGateway,
@@ -741,6 +742,21 @@ const durableJobRuntime = initializeDurableJobRuntime({
   maxConcurrentJobs: getPlatformRuntimeConfig().jobs.concurrency,
   retention: getPlatformRuntimeConfig().jobs.retention,
   handlers: createDomainDurableJobHandlers(),
+  onCancellationRequested: jobId => {
+    // The durable request already committed. Abort an embedded handler at
+    // once and wake external workers; a lost wake falls back to the
+    // per-side-effect and heartbeat checks.
+    queueMicrotask(() => {
+      try {
+        durableJobRuntime.abortActiveJob(jobId);
+      } catch {
+        // Best effort only.
+      }
+    });
+    void platformCoordinator
+      .publish(JOB_CANCELLATION_WAKE_TOPIC, { jobId })
+      .catch(() => undefined);
+  },
 });
 const durableEventGateway = initializeDurableEventGateway(
   durableJobRuntime.service,

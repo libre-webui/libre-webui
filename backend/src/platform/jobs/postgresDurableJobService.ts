@@ -14,6 +14,7 @@ import {
   DurableJobError,
   validatePruneHistoryInput,
   type DurableCancellationCode,
+  type DurableJobCancellationObserver,
   type DurableChatCancellationDecision,
   type DurableChatCompletionPublishInput,
   type DurableJobActorFilter,
@@ -234,8 +235,18 @@ export class PostgresDurableJobService {
   constructor(
     private readonly repository: PostgresDurableJobRepository,
     private readonly keyring: Aes256GcmKeyring,
-    private readonly now: () => number = Date.now
+    private readonly now: () => number = Date.now,
+    private readonly onCancellationRequested?: DurableJobCancellationObserver
   ) {}
+
+  /** Observers speed up abort delivery; they must not affect the result. */
+  private notifyCancellationRequested(jobId: string): void {
+    try {
+      this.onCancellationRequested?.(jobId);
+    } catch {
+      // The durable cancellation request already committed.
+    }
+  }
 
   private decodeStoredJobPayload(
     job: Pick<
@@ -699,6 +710,9 @@ export class PostgresDurableJobService {
     ) {
       await this.reconcileDeletionLifecycleJob(cancelled.id);
     }
+    if (cancelled.state === 'running') {
+      this.notifyCancellationRequested(cancelled.id);
+    }
     return cancelled;
   }
 
@@ -858,7 +872,7 @@ export class PostgresDurableJobService {
     text(input.sessionId, 'chat cancellation session ID');
     text(input.assistantMessageId, 'chat cancellation message ID');
     const scope = chatGenerationIdempotencyScope(input.sessionId);
-    return this.repository.requestChatCancellation({
+    const decision = await this.repository.requestChatCancellation({
       actorUserId: input.actorUserId,
       idempotencyScope: scope,
       idempotencyKeyHash: digest(
@@ -891,6 +905,13 @@ export class PostgresDurableJobService {
         },
       }),
     });
+    if (
+      decision.outcome === 'cancellation-recorded' &&
+      decision.job?.state === 'running'
+    ) {
+      this.notifyCancellationRequested(decision.job.id);
+    }
+    return decision;
   }
 
   async publishChatCompletion(

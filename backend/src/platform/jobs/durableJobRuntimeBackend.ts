@@ -38,6 +38,7 @@ export interface DurableJobBackendOptions {
   ) => Promise<boolean>;
   workerId?: string;
   maxConcurrentJobs?: number;
+  onCancellationRequested?: (jobId: string) => void;
 }
 
 export interface DurableJobRuntimeBackend {
@@ -83,7 +84,9 @@ export const createDurableJobRuntimeBackend = (
   if (persistence.dialect === 'postgres') {
     const service = new PostgresDurableJobService(
       new PostgresDurableJobRepository(getPostgresAdapterDatabase()),
-      keyring
+      keyring,
+      undefined,
+      options.onCancellationRequested
     );
     return {
       service,
@@ -102,7 +105,9 @@ export const createDurableJobRuntimeBackend = (
 
   const service = new DurableJobService(
     new SQLiteDurableJobRepository(getSQLiteAdapterDatabase()),
-    keyring
+    keyring,
+    undefined,
+    options.onCancellationRequested
   );
   return {
     service,
