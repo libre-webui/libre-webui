@@ -1,3 +1,9 @@
+---
+description: 'Export and import a versioned per-user data archive.'
+slug: /DATA_PORTABILITY
+keywords: [data portability, export, import, archive, backup]
+---
+
 # Data portability
 
 Libre WebUI can export and import a versioned, per-user JSON archive from
