@@ -45,6 +45,9 @@ export const useInitializeApp = () => {
   } = useChatStore();
   const { loadPreferences: loadAppPreferences } = useAppStore();
   const { loadPlugins, plugins } = usePluginStore();
+  // Re-run protected initialization when a login lands: the first pass runs
+  // before authentication and must not permanently swallow the app's data.
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
 
   useEffect(() => {
     if (initialized.current || initializing.current) return;
@@ -62,7 +65,10 @@ export const useInitializeApp = () => {
           logger.debug(
             'Authentication required; deferring protected app initialization'
           );
-          initialized.current = true;
+          // Deliberately NOT marking initialized: the login flipping
+          // isAuthenticated re-runs this effect and loads everything the
+          // interface needs, instead of showing an empty app until a manual
+          // page refresh.
           return;
         }
 
@@ -111,6 +117,7 @@ export const useInitializeApp = () => {
 
     initialize();
   }, [
+    isAuthenticated,
     loadAppPreferences,
     loadChatPreferences,
     loadModels,
