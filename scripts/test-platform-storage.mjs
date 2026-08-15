@@ -1810,17 +1810,21 @@ test('storage key factory reads the persistent data key without mutating it and 
   );
 });
 
-test('storage key factory rejects unsafe persistent key files', () => {
+test('storage key factory tightens loose owned key files and rejects symlinks', () => {
   if (process.platform === 'win32') return;
 
   const dataDirectory = temporaryDirectory('libre-storage-key-mode-');
   const keyPath = path.join(dataDirectory, '.encryption_key');
   fs.writeFileSync(keyPath, '66'.repeat(32), { mode: 0o644 });
   fs.chmodSync(keyPath, 0o644);
-  assert.throws(
-    () => createStorageKeyringFromEnvironment({ DATA_DIR: dataDirectory }),
-    StorageEncryptionError
-  );
+  // Releases before the 0600 write published this file with default
+  // permissions. An owned regular file is tightened in place so existing
+  // installations keep starting after an upgrade.
+  const tightened = createStorageKeyringFromEnvironment({
+    DATA_DIR: dataDirectory,
+  });
+  assert.equal(tightened.activeKeyId, 'legacy');
+  assert.equal(fs.statSync(keyPath).mode & 0o777, 0o600);
 
   fs.rmSync(keyPath);
   const targetPath = path.join(dataDirectory, 'actual-key');
@@ -1891,6 +1895,7 @@ test('storage key inspection is deterministic and never returns key bytes', () =
       source: 'versioned-keyring',
       activeKeyId: null,
       keyFingerprints: [],
+      reason: 'STORAGE_ENCRYPTION_KEYS must be a valid JSON object',
     }
   );
 });

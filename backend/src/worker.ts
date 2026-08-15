@@ -59,7 +59,11 @@ process.env.DATA_DIR = dataDir;
 process.env.PLATFORM_PREFLIGHT_TMP_DIR = preflightDirectory;
 const initialStorageKeys = inspectStorageKeyConfiguration(process.env);
 if (initialStorageKeys.status === 'invalid') {
-  throw new Error('Invalid platform storage encryption configuration.');
+  throw new Error(
+    `Invalid platform storage encryption configuration${
+      initialStorageKeys.reason ? `: ${initialStorageKeys.reason}` : '.'
+    }`
+  );
 }
 if (
   config.mode === 'team' &&
@@ -75,7 +79,11 @@ const encryptionKeyHex = provisionLegacyEncryptionKey(process.env);
 process.env.ENCRYPTION_KEY = encryptionKeyHex;
 const storageKeys = inspectStorageKeyConfiguration(process.env);
 if (storageKeys.status !== 'configured') {
-  throw new Error('Invalid platform storage encryption configuration.');
+  throw new Error(
+    `Invalid platform storage encryption configuration${
+      storageKeys.reason ? `: ${storageKeys.reason}` : '.'
+    }`
+  );
 }
 let legacyKey: Buffer | undefined;
 try {

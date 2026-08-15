@@ -578,6 +578,22 @@ test('packed CLI survives two starts and ignores unrelated caller plugins', asyn
         false
       );
 
+      // Installs created before the 0600 key write carry a 0644 key file. A
+      // relaunch must tighten it in place instead of refusing to start.
+      const persistentKeyPath = path.join(dataDirectory, '.encryption_key');
+      fs.chmodSync(persistentKeyPath, 0o644);
+      const legacyPermissions = await launch();
+      try {
+        assert.equal(
+          fs.statSync(persistentKeyPath).mode & 0o777,
+          0o600,
+          'a loose owned key file must be tightened to 0600 on startup'
+        );
+      } finally {
+        await stopChild(legacyPermissions.child);
+        runningChildren.delete(legacyPermissions.child);
+      }
+
       const recoveryInventory = JSON.parse(
         execFileSync(process.execPath, [cliPath, 'recovery-check', '--json'], {
           cwd: callerDirectory,

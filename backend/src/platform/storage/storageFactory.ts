@@ -86,6 +86,8 @@ export interface StorageKeyConfigurationInspection {
   source: StorageKeyConfigurationSource;
   activeKeyId: string | null;
   keyFingerprints: readonly StorageKeyFingerprint[];
+  /** Static, non-secret failure description when status is 'invalid'. */
+  reason?: string;
 }
 
 export interface LocalBlobStoreFactoryOptions {
@@ -218,7 +220,7 @@ const readPersistentStorageKey = (
   }
 
   try {
-    const before = fs.fstatSync(descriptor);
+    let before = fs.fstatSync(descriptor);
     const named = fs.lstatSync(keyPath);
     if (
       !before.isFile() ||
@@ -234,9 +236,16 @@ const readPersistentStorageKey = (
       );
     }
     if (process.platform !== 'win32' && (before.mode & 0o077) !== 0) {
-      throw new StorageEncryptionError(
-        'Persistent storage encryption key permissions must be 0600 or stricter'
-      );
+      // Releases before the 0600 write published this file with default
+      // permissions. A verified regular single-link file owned by this
+      // process is tightened in place; any other loose file fails closed.
+      if (before.uid !== process.getuid?.()) {
+        throw new StorageEncryptionError(
+          'Persistent storage encryption key permissions must be 0600 or stricter'
+        );
+      }
+      fs.fchmodSync(descriptor, 0o600);
+      before = fs.fstatSync(descriptor);
     }
 
     content = Buffer.alloc(MAX_PERSISTENT_KEY_FILE_BYTES + 1);
@@ -568,7 +577,7 @@ export const inspectStorageKeyConfiguration = (
     } finally {
       clearKeys(resolved.keys);
     }
-  } catch {
+  } catch (error) {
     const source: StorageKeyConfigurationSource =
       env.STORAGE_ENCRYPTION_KEYS?.trim() ||
       env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID?.trim()
@@ -583,6 +592,11 @@ export const inspectStorageKeyConfiguration = (
       source,
       activeKeyId: null,
       keyFingerprints: [],
+      // StorageEncryptionError messages are static descriptions and never
+      // carry key material; anything else stays unreflected.
+      ...(error instanceof StorageEncryptionError
+        ? { reason: error.message }
+        : {}),
     };
   }
 };
