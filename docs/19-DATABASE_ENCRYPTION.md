@@ -31,13 +31,13 @@ openssl rand -hex 32
 Libre WebUI loads the key in this order:
 
 1. `ENCRYPTION_KEY` from the environment.
-2. A persisted `.encryption_key` file under `DATA_DIR` or `backend/data` for Docker/data-dir installs.
-3. A newly generated key.
+2. A persisted `.encryption_key` file under the selected `DATA_DIR`.
+3. On a fresh store only, a newly generated key that is durably written to
+   `DATA_DIR/.encryption_key` before the database starts.
 
-If no key is found, the backend generates one and stores it:
-
-- In persistent data storage when `DATA_DIR` is set or Docker mode is enabled.
-- In `backend/.env` for regular development.
+If both the environment and persistent file provide a key, they must match or
+startup fails. Existing encrypted state without its original key also fails
+closed; Libre never generates a replacement for an existing store.
 
 ## Important Key Rules
 
@@ -93,7 +93,8 @@ Confirm the same `ENCRYPTION_KEY` is used and the same `DATA_DIR` volume is moun
 
 **Development generated a new key**
 
-Restart after the backend writes the generated key to `backend/.env`, or set `ENCRYPTION_KEY` manually.
+Keep `DATA_DIR/.encryption_key` with the database. You may instead set the same
+value through `ENCRYPTION_KEY`; if both sources exist, they must match.
 
 ## Related Docs
 

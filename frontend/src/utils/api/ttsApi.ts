@@ -32,6 +32,11 @@ export interface TTSModel {
     default_format?: TTSResponseFormat;
     max_characters?: number;
     supports_streaming?: boolean;
+    allows_custom_voice?: boolean;
+    supports_voice_cloning?: boolean;
+    clone_requires_transcript?: boolean;
+    clone_audio_mime_types?: string[];
+    clone_max_audio_bytes?: number;
   };
 }
 
@@ -47,8 +52,19 @@ export interface TTSGenerateRequest {
   pluginId?: string;
   input: string;
   voice?: string;
+  voiceProfileId?: string;
   response_format?: TTSResponseFormat;
   speed?: number;
+}
+
+export interface TTSVoiceProfile {
+  id: string;
+  name: string;
+  pluginId: string;
+  model: string;
+  mimeType: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface TTSGenerateBase64Response {
@@ -124,6 +140,29 @@ export const ttsApi = {
     return api.get('/tts/plugins').then(res => res.data);
   },
 
+  getVoiceProfiles: (
+    filters: {
+      pluginId?: string;
+      model?: string;
+    } = {}
+  ): Promise<ApiResponse<TTSVoiceProfile[]>> => {
+    if (isDemoMode()) return createDemoResponse<TTSVoiceProfile[]>([]);
+
+    return api
+      .get('/tts/voice-profiles', {
+        params: {
+          pluginId: filters.pluginId || undefined,
+          model: filters.model || undefined,
+        },
+      })
+      .then(res => res.data);
+  },
+
+  deleteVoiceProfile: async (id: string): Promise<void> => {
+    if (isDemoMode()) return;
+    await api.delete(`/tts/voice-profiles/${encodeURIComponent(id)}`);
+  },
+
   // Get voices for a specific plugin
   getVoices: (
     pluginId: string
@@ -135,6 +174,11 @@ export const ttsApi = {
       default_format: string;
       max_characters?: number;
       supports_streaming: boolean;
+      allows_custom_voice?: boolean;
+      supports_voice_cloning: boolean;
+      clone_requires_transcript: boolean;
+      clone_audio_mime_types?: string[];
+      clone_max_audio_bytes?: number;
     }>
   > => {
     if (isDemoMode()) {
@@ -145,6 +189,8 @@ export const ttsApi = {
         default_format: 'mp3',
         max_characters: 4096,
         supports_streaming: false,
+        supports_voice_cloning: false,
+        clone_requires_transcript: false,
       });
     }
 
@@ -174,7 +220,10 @@ export const ttsApi = {
   },
 
   // Generate speech and get as blob (for direct playback)
-  generate: async (request: TTSGenerateRequest): Promise<Blob> => {
+  generate: async (
+    request: TTSGenerateRequest,
+    options: { signal?: AbortSignal } = {}
+  ): Promise<Blob> => {
     if (isDemoMode()) {
       // Return empty blob for demo
       return new Blob([], { type: 'audio/mpeg' });
@@ -187,6 +236,7 @@ export const ttsApi = {
 
     const response = await api.post('/tts/generate', payload, {
       responseType: 'blob',
+      signal: options.signal,
     });
     return response.data;
   },
@@ -198,6 +248,7 @@ export const ttsApi = {
       model?: string;
       pluginId?: string;
       voice?: string;
+      voiceProfileId?: string;
       speed?: number;
       responseFormat?: TTSResponseFormat;
       onStart?: () => void;
@@ -213,6 +264,7 @@ export const ttsApi = {
         pluginId: options.pluginId,
         input: text,
         voice: options.voice,
+        voiceProfileId: options.voiceProfileId,
         speed: options.speed,
         response_format: options.responseFormat,
       });

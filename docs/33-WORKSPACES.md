@@ -1,7 +1,7 @@
 ---
 sidebar_position: 8
 title: 'Work: Isolated Workspaces'
-description: 'Use Libre WebUI Work for persistent, task-scoped coding workspaces backed by isolated Docker containers'
+description: 'Use Libre WebUI Work for persistent coding workspaces backed by isolated Docker or Kubernetes sandboxes'
 slug: /WORKSPACES
 keywords:
   [
@@ -9,6 +9,7 @@ keywords:
     workspace,
     coding agent,
     docker,
+    kubernetes,
     ollama,
     ollama cloud,
     model provider,
@@ -22,7 +23,8 @@ keywords:
 Work is Libre WebUI's native coding-agent surface. Each Work task combines a
 durable conversation, an explicit model-provider route, and a dedicated
 filesystem at `/workspace`. The selected model can inspect and edit files, run
-commands in a task-scoped Docker container, and start a browser preview.
+commands in a task-scoped Docker container or Kubernetes Pod, and start a
+browser preview.
 
 Work is implemented directly in Libre WebUI. It does not require Libre Claw or
 another agent daemon.
@@ -34,9 +36,9 @@ default that means administrators only; an administrator can open Work to
 all active users from the User Management page (host-folder workspaces stay
 admin-only regardless, because they bind-mount server paths). Work
 deliberately lets a model execute arbitrary shell commands inside a
-container, and current UI-created Work containers have network egress.
-Treat everyone you grant Work access as a trusted runtime operator, not
-merely as a chat user.
+sandbox. Tasks use network egress unless their selected named runtime policy
+disables it. Treat everyone you grant Work access as a trusted runtime
+operator, not merely as a chat user.
 
 :::
 
@@ -49,8 +51,9 @@ This release introduces Work as a complete task workflow:
 - Work tasks in the normal sidebar instead of a second task rail. Existing
   task positions remain stable while runs update, and the selected task can be
   deleted directly.
-- A dedicated Docker container identity and persistent named volume for every
-  task. Containers can be stopped or recreated without deleting task files.
+- A dedicated sandbox identity and persistent Docker volume or Kubernetes PVC
+  for every task. Sandboxes can be stopped or recreated without deleting task
+  files.
 - Durable conversation, run state, tool activity, model selection, and task
   ownership in Libre WebUI's database.
 - A live, authenticated run stream for assistant text, provider-exposed
@@ -80,12 +83,12 @@ needed while retaining its named volume.
 ```mermaid
 flowchart LR
     UI["Work interface"]
-    API["Authenticated admin-only /api/work API"]
+    API["Authenticated /api/work API"]
     DB["Libre WebUI database"]
     AGENT["Native model/tool loop"]
     PROVIDER["Selected Ollama or plugin provider"]
-    CONTAINER["Task-scoped Docker container"]
-    VOLUME["Task-scoped named volume"]
+    CONTAINER["Task-scoped sandbox"]
+    VOLUME["Task-scoped volume or PVC"]
     PREVIEW["Loopback browser preview"]
 
     UI --> API
@@ -98,8 +101,8 @@ flowchart LR
     CONTAINER --> PREVIEW
 ```
 
-Libre WebUI, rather than the model or browser, chooses the container name,
-volume name, image, mount, user, limits, network mode, and preview port. The
+Libre WebUI, rather than the model or browser, chooses the sandbox and
+workspace names, image, mount, user, limits, network mode, and preview port. The
 model receives only these tools:
 
 - `list_files`
@@ -124,18 +127,25 @@ the Work container and do not depend on the container's network policy.
 
 ## Requirements
 
-Work needs all of the following on the machine running the Libre WebUI backend:
+Work needs a configured sandbox backend:
 
-- Docker installed, with a reachable daemon.
-- Permission for the backend process to invoke `docker`, or the executable
-  configured through `WORK_DOCKER_COMMAND`.
+- The default backend needs Docker installed with a reachable daemon and
+  permission for the backend process to invoke `docker` (or the executable
+  configured through `WORK_DOCKER_COMMAND`).
+- The Kubernetes backend needs API credentials plus the namespace-scoped Role,
+  RoleBinding, sandbox namespace, and NetworkPolicies created by the Helm chart
+  when `work.enabled=true`.
+
+Every backend also needs:
+
 - A tool-capable model exposed through:
   - a healthy Ollama service, including models reached through Ollama Cloud; or
   - an active completion/chat plugin with an exact configured model and
     credentials for the current administrator.
-- Enough Docker storage for the runtime image, generated projects, and
-  project-local dependencies.
-- An authenticated administrator account.
+- Enough runtime storage for the image, generated projects, and project-local
+  dependencies.
+- An authenticated account with Work access. Work is admin-only by default;
+  an administrator can open it to all active users.
 
 Libre WebUI checks Ollama's advertised model capabilities before creating a
 run and rejects an Ollama model that does not advertise `tools`. Plugin-backed
@@ -355,10 +365,18 @@ interface to the same boundary, not a way around it.
 
 Operational behavior:
 
-- **Authentication** — the WebSocket at `/ws/work-terminal` requires a valid
-  token and re-checks the administrator role against the database on every
-  connection, so a demotion takes effect immediately. The task must belong to
-  the authenticated administrator.
+- **Authentication** — the browser exchanges its normal Authorization header
+  over HTTP for a short-lived, one-use ticket bound to the Work-terminal
+  protocol and exact task. Only that ticket and the task ID appear on the
+  `/ws/work-terminal` upgrade URL. Before every shell input, Libre re-checks
+  the current account status, Work access, task existence, and task ownership.
+  Revocation closes the shell and releases its runtime lease immediately.
+- **Origin checks** — when `CORS_ORIGIN` or `BASE_URL` is configured, browser
+  upgrades must match one of those origins. Configure at least one for remote
+  deployments. Originless upgrades remain available for Electron and
+  non-browser clients, but still require the same task-bound ticket and live
+  authorization checks; use TLS, firewall, and reverse-proxy policy to control
+  those clients.
 - **Admission** — an open terminal takes a runtime lease exactly like a
   command or preview, and counts against `WORK_MAX_ACTIVE_RUNTIMES_*`.
 - **Container lifetime** — an attached terminal keeps the container running
@@ -450,8 +468,8 @@ backend model requests and are never mounted into the Work container.
 Application-layer credential encryption is not whole-task encryption. Work
 conversations, tool results, command output, and task metadata are ordinary
 database content, while workspace files and dependencies are ordinary files in
-the task's Docker volume. Use host access controls and disk encryption when the
-deployment's threat model requires encryption at rest.
+the task's Docker volume or Kubernetes PVC. Use host access controls and disk
+encryption when the deployment's threat model requires encryption at rest.
 
 ### Remote-provider disclosure
 
@@ -472,9 +490,10 @@ billable provider requests.
 
 ## Host Folder Workspaces (Opt-In)
 
-By default a task's `/workspace` is a Docker named volume that exists only for
-that task, so the model can never reach your real files. A deployment can
-instead allow a task to be bound to an actual folder on the host.
+On the Docker backend, a task's `/workspace` is normally a named volume that
+exists only for that task, so the model cannot reach your real files. A Docker
+deployment can instead allow a task to be bound to an actual folder on the
+host. Kubernetes rejects host-folder workspaces and uses a task-owned PVC.
 
 Set both variables, then restart the backend:
 
@@ -509,25 +528,27 @@ directories that are under version control.
 
 Libre WebUI separates durable state from execution state:
 
-| State                                       | Storage                           | Lifetime                                                                   |
-| ------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------- |
-| Task ownership, title, provider, and status | Libre WebUI database              | Until the task or owning user is deleted                                   |
-| Runs, errors, messages, and tool activity   | Libre WebUI database              | Until the task is deleted                                                  |
-| Workspace files                             | Task-specific Docker named volume | Survive run cancellation, preview stop, container restart, and app restart |
-| Root filesystem and temporary files         | Task-specific Docker container    | Disposable; may be stopped or recreated                                    |
-| Preview process                             | Running task container            | Ephemeral; retained only while verified healthy                            |
-| Unsaved editor draft                        | Browser session storage           | Temporary browser-session convenience state                                |
+| State                                       | Storage                                | Lifetime                                                                 |
+| ------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------ |
+| Task ownership, title, provider, and status | Libre WebUI database                   | Until the task or owning user is deleted                                 |
+| Runs, errors, messages, and tool activity   | Libre WebUI database                   | Until the task is deleted                                                |
+| Workspace files                             | Task-specific Docker volume or K8s PVC | Survive run cancellation, preview stop, sandbox restart, and app restart |
+| Root filesystem and temporary files         | Task-specific container or Pod         | Disposable; may be stopped or recreated                                  |
+| Preview process                             | Running task sandbox                   | Ephemeral; retained only while verified healthy                          |
+| Unsaved editor draft                        | Browser session storage                | Temporary browser-session convenience state                              |
 
-Every task gets a server-generated UUID. Its container and volume names are
+Every task gets a server-generated UUID. Its sandbox and workspace names are
 derived on the backend and are never accepted from a browser request. Libre
-WebUI creates both resources with managed and task-ownership labels. Before
+WebUI creates the runtime resources with managed and task-ownership labels.
+Before
 reuse or deletion, it verifies the task-ownership label and refuses a resource
 whose label belongs to another task.
 
-Containers are prepared on demand. File-helper operations stop an otherwise
-idle container, commands stop the container after completion, and a verified
-preview may keep it running so the user can inspect the app. The named volume
-stays mounted again when the same task container is restarted or recreated.
+Sandboxes are prepared on demand. File-helper operations stop an otherwise
+idle sandbox, commands stop the sandbox after completion, and a verified
+preview may keep it running so the user can inspect the app. The durable
+workspace is mounted again when the same task sandbox is restarted or
+recreated.
 
 Administrators can define **named runtime policies** from the User
 Management page: presets combining a runtime image, memory/CPU/PID limits,
@@ -547,39 +568,33 @@ cheap and the workspace persists, so an idled preview simply restarts on
 the next use. The default (`0`) keeps today's behavior: a preview runs
 until it is stopped explicitly.
 
-On backend startup, active runs are marked failed and preview state is
-cleared — the agent loop and the preview proxy died with the process and
-cannot be resumed. Containers are then reconciled against Docker in a single
-labeled query rather than stopped blind, one task at a time: running
-containers owned by known tasks are stopped, because an interrupted command
-may still be executing without a supervising process; containers already at
-rest are left exactly as they are; and managed containers whose task row no
-longer exists — a crash during task deletion, or a database restored without
-its Docker resources — are removed. Ownership is decided by the task label
-stamped at creation, never by name. Orphan removal assumes one Libre WebUI
-instance per Docker daemon: a second instance sharing the daemon would see
-the first instance's labeled containers as orphans and remove them at
-startup. Run each instance against its own daemon (or a dedicated rootless
-daemon, as recommended below). A task with no container at all needs no
-Docker call, so startup cost follows what is actually running, not the size
-of the task list. If Docker cannot prove a running container was stopped or
-an orphan was removed, that cleanup remains tracked, new mutable Work
-operations stay blocked, and Libre WebUI retries every 10 seconds. An old
-command or preview may still be running while Docker is unavailable, so
-restore daemon access and let recovery complete before treating the runtime
-as stopped.
+On backend startup, active runs are marked failed and preview state is cleared
+— the agent loop and preview proxy died with the process and cannot be resumed.
+The selected driver then lists its managed containers or Pods in one labeled
+query. Running sandboxes owned by known tasks are stopped because an
+interrupted command may still be executing without a supervisor; sandboxes
+already at rest remain unchanged; and managed sandboxes whose task row no
+longer exists are removed. Ownership comes from the task label, never the
+resource name. Orphan removal assumes one Libre WebUI instance owns a runtime
+namespace or Docker daemon. Do not point two instances at the same Work
+resources. If the driver cannot prove cleanup, Work stays fail-closed, retries
+every 10 seconds, and blocks new mutable operations until runtime access is
+restored.
 
 ## Network Behavior
 
-:::caution Work is not offline
+:::caution Verify the selected network policy
 
-Current UI-created Work tasks use Docker bridge networking from creation.
-Existing tasks are migrated to the same network-enabled state. There is no
-network on/off control in the Work interface.
+Tasks without a named runtime policy start network-enabled. An administrator
+can define a named policy whose network default is off, and the creator can
+select that policy when creating a task. There is no independent per-task
+network switch, and changing the policy later requires recreating the sandbox
+before the new runtime configuration takes effect.
 
 :::
 
-Networked tasks attach to a dedicated managed Docker bridge network
+On the Docker backend, networked tasks attach to a dedicated managed bridge
+network
 (`libre-webui-work` by default, `WORK_NETWORK_NAME`) created with
 inter-container communication disabled
 (`com.docker.network.bridge.enable_icc=false`). Two consequences follow:
@@ -592,6 +607,12 @@ inter-container communication disabled
 Libre WebUI refuses to start a networked task if a network with the configured
 name already exists but is not the managed one, rather than silently attaching
 sandboxes to an operator's network.
+
+On Kubernetes, the sandbox Pod carries the same network-enabled label. The
+Helm chart installs a default-deny NetworkPolicy, preview-only ingress, and
+internet egress only for network-enabled Pods, excluding the configured
+`work.networkPolicy.blockedEgressCidrs`. NetworkPolicy is effective only when
+the cluster CNI enforces it; see the [Kubernetes guide](./KUBERNETES).
 
 Egress to the outside world is still permitted, because package downloads,
 remote Git operations, and external APIs are what makes Work useful. This is
@@ -606,36 +627,38 @@ not an outbound firewall. Generated code may still be able to reach:
 
 For a stricter boundary, use these in combination:
 
-- **`WORK_RUNTIME_DNS`** — comma-separated IPv4/IPv6 resolver addresses forced
-  onto every networked sandbox (`--dns`). Pointing this at a filtering
+- **`WORK_RUNTIME_DNS` (Docker)** — comma-separated IPv4/IPv6 resolver
+  addresses forced onto every networked sandbox (`--dns`). Pointing this at a filtering
   resolver gives you name-based allow/deny lists without patching Libre WebUI.
   Non-address entries are rejected and logged, so the value can never inject
   additional Docker flags.
-- **Host or upstream firewall rules** on the managed bridge's subnet, which is
-  stable because the network is named and managed.
-- **`WORK_NETWORK_NAME`** pointed at a network you pre-create yourself with
+- **Host or upstream firewall rules (Docker)** on the managed bridge's subnet,
+  which is stable because the network is named and managed.
+- **`WORK_NETWORK_NAME` (Docker)** pointed at a network you pre-create with
   your own driver options — Libre WebUI verifies it carries the managed label
   and ICC-disabled option, so create it with both.
 
 DNS filtering constrains name resolution, not raw IP egress. A deployment that
-must guarantee no direct-IP egress needs host-level firewall rules as well.
+must guarantee no direct-IP egress needs host-, cluster-, or upstream-level
+firewall rules as well.
 
 Do not assume that placing code in Work prevents it from transmitting data.
-Grant Work access only to trusted users. There is no Work environment
-variable that changes the UI-created task default to offline mode.
+Grant Work access only to trusted users. Use a named network-disabled runtime
+policy when a task should start offline; there is no deployment-wide
+environment variable that changes the default policy.
 
 Network access does not add credentials. Libre WebUI does not mount SSH keys,
 cloud credentials, browser profiles, the host home directory, or the Docker
 socket into task containers. Code can still transmit any credentials or
 secrets that a user or model writes into `/workspace`.
 
-This container traffic is separate from model traffic. Ollama and plugin
+This sandbox traffic is separate from model traffic. Ollama and plugin
 requests are always sent by the Libre WebUI backend to the explicitly selected
 provider route.
 
-## Container Security Boundary
+## Sandbox Security Boundary
 
-A current UI-created Work container:
+A Docker Work container:
 
 - runs as non-root UID/GID `1000:1000`;
 - uses `/workspace` as its working directory;
@@ -658,20 +681,33 @@ container label. A container whose policy predates a Libre WebUI upgrade is
 destroyed and recreated rather than reused, so a hardening change reaches
 existing tasks automatically.
 
+The Kubernetes driver applies the equivalent Pod security context: non-root
+UID/GID, read-only root filesystem, `RuntimeDefault` seccomp, no privilege
+escalation, all capabilities dropped, bounded ephemeral storage, resource
+limits, no ServiceAccount token, and a task-owned PVC at `/workspace`. It
+verifies task labels and the policy fingerprint before reusing or deleting a
+Pod or PVC.
+
 Path validation rejects absolute paths, traversal segments, backslashes, NUL
 characters, and overlong paths. File helpers resolve real paths and reject
 symlink escapes. Writes use a temporary file and atomic rename.
 
 These controls reduce accidental host exposure; they do not make Work a
 virtual machine or a safe malware-analysis environment. Containers share the
-Docker host's kernel. A Docker, runtime, image, dependency, or kernel
+runtime host's kernel. A Docker, Kubernetes, runtime, image, dependency, or kernel
 vulnerability can cross the intended boundary.
 
-Work volumes do not have an independent disk quota. A generated project or
-package installation can exhaust Docker storage. Monitor volume growth and
-apply host-level storage limits where needed.
+Docker named volumes do not have an independent disk quota. A generated
+project or package installation can exhaust Docker storage, so monitor volume
+growth and apply host-level storage limits. Kubernetes requests a PVC size;
+actual quota enforcement depends on the selected storage provisioner.
 
-## Production Hardening Checklist
+## Docker Production Hardening Checklist
+
+This checklist is specific to the Docker backend. Kubernetes operators should
+also validate the chart's namespace-scoped RBAC, Pod security context, storage
+class, and CNI NetworkPolicy enforcement as described in the
+[Kubernetes guide](./KUBERNETES).
 
 The application can set container flags, validate workspace paths, and guard
 its own API. It cannot enforce host firewall policy, storage-driver quotas, or
@@ -735,11 +771,11 @@ rules. DNS filtering alone is bypassable with a literal IP address. An HTTP
 proxy alone is also insufficient while arbitrary commands can open direct
 network connections; enforce the routing policy outside the container.
 
-Maintain separate profiles when clients need different behavior, for example
+Maintain separate named runtime policies when clients need different behavior, for example
 an offline/no-network runtime, a package-registry-only runtime, and an open
-egress runtime. Libre WebUI currently creates networked UI tasks, so those
-profiles require operator-owned network policy rather than a cosmetic UI
-toggle.
+egress runtime. The named policy controls whether Libre attaches the sandbox
+network; external firewall and proxy rules still enforce destination-level
+restrictions for a network-enabled policy.
 
 ### 4. Enforce real storage quotas
 
@@ -767,12 +803,13 @@ an accidentally published Docker or preview port.
 
 ## Preview Security and Reachability
 
-For each task, Docker publishes the configured container preview port to a
-dynamically assigned port on `127.0.0.1`. The model and browser cannot choose
-an arbitrary host port. Libre WebUI signs a capability URL for that exact task
-and port, verifies that the preview is still running on every request, and
-proxies HTTP and WebSocket traffic through `/api/work/previews`. Stopping or
-restarting the preview revokes the old URL.
+For a Docker task, the driver publishes the configured preview port to a
+dynamically assigned port on backend loopback. For Kubernetes, the in-cluster
+backend targets the sandbox Pod IP directly. The model and browser cannot
+choose an arbitrary upstream. Libre WebUI signs a capability URL for the exact
+task and endpoint, verifies that the preview is still running on every request,
+and proxies HTTP and WebSocket traffic through `/api/work/previews`. Stopping
+or restarting the preview revokes the old URL.
 
 Preview responses strip Libre WebUI credentials and upstream cookies. HTML is
 constrained by both an iframe sandbox and response CSP that allow scripts,
@@ -783,9 +820,10 @@ from its own workspace or browser inputs. Treat a running preview URL as a
 short-lived secret and do not share it.
 
 Because the browser loads the proxy on Libre WebUI's own public origin, remote
-browsers and HTTPS reverse proxies work without exposing dynamic Docker ports
-or triggering mixed-content blocking. Reverse proxies must preserve WebSocket
-upgrades for `/api/work/previews/`; the provided Nginx configuration does so.
+browsers and HTTPS reverse proxies work without exposing Docker ports or Pod
+IPs and without triggering mixed-content blocking. Reverse proxies must
+preserve WebSocket upgrades for `/api/work/previews/`; the provided Nginx
+configuration does so.
 
 The main application permits only its own origin and Cloudflare Turnstile as
 frame sources. Preview responses bypass the main Helmet policy so they can
@@ -867,10 +905,10 @@ run a second task while the first is busy. The capabilities response reports
 both limits and the live occupancy. Raise them if the host has memory and CPU
 to spare.
 
-Kubernetes support would require a separate runtime implementation with
-tightly scoped RBAC, a Pod and persistent volume design for each task, cleanup
-reconciliation, and a preview-routing design. The current Docker runtime must
-not be described as Kubernetes-native.
+For Kubernetes, install the chart with `work.enabled=true` instead of exposing
+a node runtime socket. The chart creates the scoped RBAC, sandbox namespace,
+network policies, and Pod/PVC configuration described in the
+[Kubernetes guide](./KUBERNETES).
 
 ## Runtime Configuration
 
@@ -878,8 +916,9 @@ Work reads these variables in the backend process:
 
 | Variable                              | Default                                                                                       | Purpose                                                    |
 | ------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `WORK_RUNTIME_IMAGE`                  | `node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3` | Image used for task containers                             |
-| `WORK_DOCKER_COMMAND`                 | `docker`                                                                                      | Docker CLI executable                                      |
+| `WORK_RUNTIME_BACKEND`                | `docker`                                                                                      | Sandbox driver: `docker` or `kubernetes`                   |
+| `WORK_RUNTIME_IMAGE`                  | `node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3` | Image used for task sandboxes                              |
+| `WORK_DOCKER_COMMAND`                 | `docker`                                                                                      | Docker-backend CLI executable                              |
 | `WORK_COMMAND_TIMEOUT_MS`             | `120000`                                                                                      | Default command timeout                                    |
 | `WORK_MAX_OUTPUT_CHARS`               | `50000`                                                                                       | Maximum captured command/search output                     |
 | `WORK_MAX_AGENT_ROUNDS`               | `48`                                                                                          | Provider-agnostic model/tool round budget per run          |
@@ -898,12 +937,17 @@ Work reads these variables in the backend process:
 | `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous interactive terminals per task                |
 | `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session closes              |
 | `WORK_RUNTIME_IDLE_TIMEOUT_MS`        | `0` (disabled)                                                                                | Stop a sandbox after this much inactivity (previews too)   |
+| `WORK_K8S_NAMESPACE`                  | `libre-webui-work`                                                                            | Kubernetes sandbox Pod/PVC namespace                       |
+| `WORK_K8S_STORAGE_CLASS`              | cluster default                                                                               | StorageClass for Kubernetes workspace PVCs                 |
+| `WORK_K8S_WORKSPACE_SIZE`             | `5Gi`                                                                                         | Default per-task Kubernetes PVC size                       |
+| `WORK_K8S_POD_READY_TIMEOUT_MS`       | `900000`                                                                                      | Maximum wait for a sandbox Pod to become ready             |
+| `WORK_K8S_POD_GONE_TIMEOUT_MS`        | `60000`                                                                                       | Maximum wait for a deleted sandbox Pod to disappear        |
 
 Use a fixed image version or digest in production. A mutable image tag can
 change both the available command-line tools and the security boundary without
 changing Libre WebUI.
 
-Run, preview, file-helper, command, and container-recreation operations share
+Run, preview, file-helper, command, and sandbox-recreation operations share
 the same in-process capacity accounting. A nested operation on an already
 counted task does not count as another task. Requests over a task or runtime
 admission limit return HTTP 429.
@@ -940,43 +984,44 @@ editor, and a file larger than 2 MB cannot be opened through the Work file API.
 
 ## API Summary
 
-All endpoints are under `/api/work`, require authentication, and require the
-current database role to be `admin`.
+All endpoints are under `/api/work` and require authentication plus current
+Work access from the database. Work is admin-only by default; an administrator
+can open ordinary task operations to active users. Host-folder selection and
+administrative policy/access endpoints remain admin-only.
 
-| Method   | Path                                | Purpose                                        |
-| -------- | ----------------------------------- | ---------------------------------------------- |
-| `GET`    | `/capabilities`                     | Docker/provider availability and limits        |
-| `GET`    | `/tasks`                            | List the current administrator's tasks         |
-| `POST`   | `/tasks`                            | Create a task and its first asynchronous run   |
-| `GET`    | `/tasks/:id`                        | Load task state and recent messages            |
-| `GET`    | `/tasks/:id/messages`               | Page older messages                            |
-| `PATCH`  | `/tasks/:id`                        | Rename or change the explicit model route      |
-| `DELETE` | `/tasks/:id`                        | Remove the task and durable workspace          |
-| `POST`   | `/tasks/:id/runs`                   | Start a follow-up run                          |
-| `GET`    | `/tasks/:taskId/runs/:runId/events` | Stream authenticated live run events using SSE |
-| `POST`   | `/tasks/:id/cancel`                 | Cancel the active run                          |
-| `GET`    | `/tasks/:id/files`                  | List a workspace directory                     |
-| `GET`    | `/tasks/:id/file`                   | Read a workspace text file                     |
-| `PUT`    | `/tasks/:id/file`                   | Save a workspace text file                     |
-| `GET`    | `/tasks/:id/git`                    | Read guarded local Git status and history      |
-| `GET`    | `/tasks/:id/git/diff`               | Read a bounded local diff                      |
-| `POST`   | `/tasks/:id/git/init`               | Initialize local Git                           |
-| `POST`   | `/tasks/:id/git/stage`              | Stage explicit workspace paths                 |
-| `POST`   | `/tasks/:id/git/commit`             | Commit staged changes                          |
-| `POST`   | `/tasks/:id/git/branches`           | Create a local branch                          |
-| `POST`   | `/tasks/:id/git/switch`             | Switch to an existing clean local branch       |
-| `POST`   | `/tasks/:id/preview/start`          | Start the managed preview                      |
-| `POST`   | `/tasks/:id/preview/stop`           | Stop the managed preview                       |
+| Method   | Path                                | Purpose                                           |
+| -------- | ----------------------------------- | ------------------------------------------------- |
+| `GET`    | `/capabilities`                     | Selected runtime/provider availability and limits |
+| `GET`    | `/tasks`                            | List the current administrator's tasks            |
+| `POST`   | `/tasks`                            | Create a task and its first asynchronous run      |
+| `GET`    | `/tasks/:id`                        | Load task state and recent messages               |
+| `GET`    | `/tasks/:id/messages`               | Page older messages                               |
+| `PATCH`  | `/tasks/:id`                        | Rename or change the explicit model route         |
+| `DELETE` | `/tasks/:id`                        | Remove the task and durable workspace             |
+| `POST`   | `/tasks/:id/runs`                   | Start a follow-up run                             |
+| `GET`    | `/tasks/:taskId/runs/:runId/events` | Stream authenticated live run events using SSE    |
+| `POST`   | `/tasks/:id/cancel`                 | Cancel the active run                             |
+| `GET`    | `/tasks/:id/files`                  | List a workspace directory                        |
+| `GET`    | `/tasks/:id/file`                   | Read a workspace text file                        |
+| `PUT`    | `/tasks/:id/file`                   | Save a workspace text file                        |
+| `GET`    | `/tasks/:id/git`                    | Read guarded local Git status and history         |
+| `GET`    | `/tasks/:id/git/diff`               | Read a bounded local diff                         |
+| `POST`   | `/tasks/:id/git/init`               | Initialize local Git                              |
+| `POST`   | `/tasks/:id/git/stage`              | Stage explicit workspace paths                    |
+| `POST`   | `/tasks/:id/git/commit`             | Commit staged changes                             |
+| `POST`   | `/tasks/:id/git/branches`           | Create a local branch                             |
+| `POST`   | `/tasks/:id/git/switch`             | Switch to an existing clean local branch          |
+| `POST`   | `/tasks/:id/preview/start`          | Start the managed preview                         |
+| `POST`   | `/tasks/:id/preview/stop`           | Stop the managed preview                          |
 
-The task ID is always checked against the authenticated owner. Current-role
-authorization is read from the database on each request, so demoting an
-administrator takes effect even if an older JWT still says that user was an
-administrator.
+The task ID is always checked against the authenticated owner. Current account
+status, role, and Work-access policy are read from the database on each request,
+so revocation takes effect even if an older JWT contains stale role claims.
 
 The task update schema retains a backend `networkEnabled` field for internal
-compatibility. It is not exposed as a supported Work UI control, and database
-migration restores existing tasks to the current network-enabled behavior. Do
-not use that field as a durable offline-mode configuration.
+compatibility. It is not exposed as an independent Work UI control. Select a
+named runtime policy with the intended network default when creating the task;
+do not use the raw field as a durable configuration API.
 
 ## Deletion, Account Changes, and Backup
 
@@ -986,16 +1031,16 @@ Task deletion is intentionally destructive:
 
 1. The backend marks the task as retiring so no new mutable operation can
    begin.
-2. An active run is cancelled and the task container is stopped.
-3. Libre WebUI validates the task-ownership labels on both Docker resources.
-4. The container and named volume are removed.
+2. An active run is cancelled and the task sandbox is stopped.
+3. Libre WebUI validates the task-ownership labels on the runtime resources.
+4. The container/Pod and named volume/PVC are removed.
 5. The database task is deleted, cascading its runs and messages.
 6. Browser drafts for that task are cleared after the API succeeds.
 
-If Docker cleanup fails, Libre WebUI retains the task database record and
-returns an error so the administrator can repair Docker and retry. It does not
-silently delete the metadata while leaving an untracked workspace container or
-volume.
+If runtime cleanup fails, Libre WebUI retains the task database record and
+returns an error so the operator can repair the Docker or Kubernetes backend
+and retry. It does not silently delete metadata while leaving an untracked
+sandbox or workspace.
 
 Stopping a run or preview is different from deletion: it stops execution but
 preserves the named volume and conversation.
@@ -1003,14 +1048,15 @@ preserves the named volume and conversation.
 ### Administrator demotion and user deletion
 
 When an administrator is demoted, Libre WebUI persists the role revocation
-before depending on Docker cleanup. Every later Work request checks the current
-role. The backend then suspends the user's Work tasks and attempts to abort
-active runs and stop their containers. If cleanup fails, Work access remains
-revoked and the role update reports the failure so an operator can restore
-Docker and retry the same update.
+before depending on runtime cleanup. Every later Work request checks the
+current role and access mode. The backend then suspends the user's Work tasks
+when the new role no longer has access and attempts to abort active runs and
+stop their sandboxes. If cleanup fails, revoked access remains revoked and the
+role update reports the failure so an operator can restore the runtime and
+retry.
 
 Deleting another user first removes all of that user's managed Work resources.
-If external Docker cleanup fails, the user record is retained so an
+If external runtime cleanup fails, the user record is retained so an
 administrator can retry instead of losing the ownership metadata needed for
 safe cleanup.
 
@@ -1019,23 +1065,23 @@ safe cleanup.
 A complete Work backup needs both:
 
 - the Libre WebUI database, which contains task ownership, Docker resource
-  names, provider routing, runs, messages, and activity; and
-- every Docker volume labeled `ai.libre-webui.managed=true`, which contains
-  the Work files.
+  or Kubernetes resource names, provider routing, runs, messages, and activity;
+  and
+- every Docker volume or Kubernetes PVC labeled
+  `ai.libre-webui.managed=true`, which contains the Work files.
 
 The disposable containers and preview processes do not need to be backed up.
 For a consistent backup, stop new Work activity and stop the backend before
-capturing the database and task volumes. Follow Docker's documented
-volume-backup procedure for the storage driver in use.
+capturing the database and task workspaces. Follow the Docker volume or
+Kubernetes storage-provider snapshot procedure for the backend in use.
 
-Restore the database and its matching volumes together. Recreate each volume
-under the exact name recorded in the database and restore its task-ownership
-metadata, including `ai.libre-webui.task=<task UUID>`; also restore
-`ai.libre-webui.managed=true` so operator inventory remains accurate. Copying
-only a volume's files does not preserve Docker labels. Restoring only the
-database produces task records whose files are absent; restoring only volumes
-loses the task ownership and generated resource names that Libre WebUI uses to
-find and validate them.
+Restore the database and its matching workspaces together. Recreate each
+volume or PVC under the exact name recorded in the database and restore its
+task-ownership metadata, including `ai.libre-webui.task=<task UUID>` and
+`ai.libre-webui.managed=true`. Copying only files does not preserve Docker or
+Kubernetes labels. Restoring only the database produces task records whose
+files are absent; restoring only storage loses the task ownership and generated
+resource names that Libre WebUI uses to find and validate it.
 
 If the installation also uses encrypted provider credentials, follow the main
 Libre WebUI backup guidance for its data directory and encryption key.
@@ -1087,9 +1133,10 @@ mount, or a socket group the container user is not in. For the last one, set
 `DOCKER_GID` and recreate the container. See
 [Running Work when Libre WebUI is itself in Docker](#running-work-when-libre-webui-is-itself-in-docker).
 
-Kubernetes is different: the Helm chart provides no Work runtime, so
-**Runtime unavailable** is expected there. Do not mount a node's
-container-runtime socket to clear the status.
+On Kubernetes, enable the native runtime with `--set work.enabled=true`.
+Libre then reports `kubernetes`, probes the Kubernetes API, and runs sandboxes
+as Pods with PVC workspaces. Do not mount a node's container-runtime socket;
+see the [Kubernetes guide](./KUBERNETES).
 
 ### No Work-compatible models
 
@@ -1106,10 +1153,11 @@ Work never routes to another provider as a fallback.
 
 ### A package install or remote Git command fails
 
-Current UI-created tasks already have bridge egress; there is no Work network
-toggle to enable. Inspect DNS, proxy, firewall, registry, certificate, Docker
-daemon, and upstream service configuration. Also confirm that the selected
-runtime image contains the command being invoked.
+Confirm that the task's selected named runtime policy enables network access.
+There is no independent per-task network toggle. Then inspect DNS, proxy,
+firewall/NetworkPolicy, registry, certificate, runtime, and upstream service
+configuration. Also confirm that the selected runtime image contains the
+command being invoked.
 
 The Git tab is local-only and never performs a remote operation. Use the
 Terminal or model command surface only when the task's network and credential
@@ -1166,16 +1214,16 @@ Syntax highlighting intentionally switches to plain text above 8,000
 characters or 400 lines. Formatting has a separate 100,000-character and
 4,000-line limit and supports only the documented file families.
 
-### Work says it is recovering containers
+### Work says it is recovering sandboxes
 
-Startup or teardown could not prove that one or more known containers stopped.
+Startup or teardown could not prove that one or more known sandboxes stopped.
 Work remains fail-closed and retries every 10 seconds. Restore Docker daemon
-access and inspect the backend log. Do not delete the task database rows while
-their labeled Docker resources still need reconciliation.
+or Kubernetes API access and inspect the backend log. Do not delete task
+database rows while their labeled runtime resources still need reconciliation.
 
 ### Task deletion fails
 
-Make sure Docker is reachable. A conflicting resource without the expected
+Make sure the selected runtime is reachable. A conflicting resource without the expected
 `ai.libre-webui.task` label is intentionally rejected rather than removed.
 Resolve that name/ownership conflict carefully, then retry deletion.
 
@@ -1186,10 +1234,12 @@ Before enabling Work for an installation, remember:
 - Work is admins-only by default; opening it to all users makes every
   active account a sandbox operator, so decide deliberately. Host-folder
   workspaces stay admin-only in every mode.
-- The backend must control a Docker daemon.
+- The backend must control its configured Docker daemon or Kubernetes sandbox
+  namespace.
 - Containers reduce filesystem exposure but are not virtual machines.
-- Current UI-created Work tasks have bridge network egress and no UI network
-  switch.
+- Tasks without a named offline policy have network egress; named policies
+  select the default, while destination-level restrictions remain an operator
+  responsibility.
 - Work volumes have no independent disk quota.
 - The Git tab is local-only; remote credentials are never mounted or accepted
   by its API.
@@ -1199,8 +1249,8 @@ Before enabling Work for an installation, remember:
   per run.
 - Preview ports stay on backend loopback and are exposed only through signed,
   revocable proxy URLs.
-- Standard Docker Compose and current Kubernetes/Helm deployments do not
-  provide the Work runtime.
+- Standard Docker Compose provides the Docker runtime, and Kubernetes/Helm
+  provides the native Pod/PVC runtime when `work.enabled=true`.
 - A complete backup requires both the Libre WebUI database and Work volumes.
 
 ## Related Docs

@@ -18,18 +18,21 @@
 import { Plugin, PluginType } from '../types/index.js';
 
 export interface PluginCapabilityRegistryDependencies {
-  getAllPlugins(userId?: string): Plugin[];
-  getApiKey(plugin: Plugin, userId?: string): string | null;
+  getAllPlugins(userId?: string): Plugin[] | Promise<Plugin[]>;
+  getApiKey(
+    plugin: Plugin,
+    userId?: string
+  ): string | null | Promise<string | null>;
 }
 
 export class PluginCapabilityRegistryService {
   constructor(private readonly deps: PluginCapabilityRegistryDependencies) {}
 
-  getPluginsByCapability(
+  async getPluginsByCapability(
     capabilityType: PluginType,
     userId?: string
-  ): Plugin[] {
-    const allPlugins = this.deps.getAllPlugins(userId);
+  ): Promise<Plugin[]> {
+    const allPlugins = await this.deps.getAllPlugins(userId);
     const result: Plugin[] = [];
 
     for (const plugin of allPlugins) {
@@ -37,13 +40,15 @@ export class PluginCapabilityRegistryService {
         const capabilityConfig =
           capabilityType === 'tts'
             ? plugin.capabilities?.tts?.config
-            : capabilityType === 'image'
-              ? plugin.capabilities?.image?.config
-              : undefined;
+            : capabilityType === 'stt'
+              ? plugin.capabilities?.stt?.config
+              : capabilityType === 'image'
+                ? plugin.capabilities?.image?.config
+                : undefined;
         const noAuthRequired =
           (capabilityConfig as Record<string, unknown> | undefined)
             ?.no_auth_required === true;
-        const apiKey = this.deps.getApiKey(plugin, userId);
+        const apiKey = await this.deps.getApiKey(plugin, userId);
         if (apiKey || noAuthRequired) {
           result.push(plugin);
         }
@@ -65,6 +70,11 @@ export class PluginCapabilityRegistryService {
             break;
           case 'stt':
             hasCapability = !!plugin.capabilities.stt;
+            noAuthRequired =
+              (
+                plugin.capabilities.stt?.config as
+                  Record<string, unknown> | undefined
+              )?.no_auth_required === true;
             break;
           case 'embedding':
             hasCapability = !!plugin.capabilities.embedding;
@@ -90,7 +100,7 @@ export class PluginCapabilityRegistryService {
         }
 
         if (hasCapability) {
-          const apiKey = this.deps.getApiKey(plugin, userId);
+          const apiKey = await this.deps.getApiKey(plugin, userId);
           if (apiKey || noAuthRequired) {
             result.push(plugin);
           }

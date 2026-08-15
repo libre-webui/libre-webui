@@ -16,7 +16,7 @@
  */
 
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import { githubOAuthService } from '../services/simpleGitHubOAuth.js';
 import { huggingFaceOAuthService } from '../services/simpleHuggingFaceOAuth.js';
 import { authService } from '../services/authService.js';
@@ -35,6 +35,11 @@ import {
 } from '../services/oauthSecurity.js';
 import { validatePasswordStrength } from '../utils/hash.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  WebSocketTicketRateLimitError,
+  websocketTicketService,
+} from '../services/websocketTicketService.js';
+import { coordinatedRateLimit } from '../middleware/coordinatedRateLimit.js';
 
 const router = express.Router();
 const logger = createLogger('auth-routes');
@@ -68,19 +73,23 @@ const getClientIp = (req: express.Request): string | undefined => {
 };
 
 // Rate limiter for authentication routes: 5 login attempts per 15 minutes
-const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs for auth
-  message: {
-    success: false,
-    message: 'Too many authentication attempts, please try again later',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
+const loginRateLimiter = coordinatedRateLimit({
+  keyPrefix: 'security.login',
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  message: 'Too many authentication attempts, please try again later',
+});
+
+const signupRateLimiter = coordinatedRateLimit({
+  keyPrefix: 'security.signup',
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  message: 'Too many authentication attempts, please try again later',
 });
 
 // Rate limiter for general auth routes: 100 requests per 15 minutes
 const generalAuthRateLimiter = rateLimit({
+  keyPrefix: 'auth-general',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: {
@@ -92,9 +101,62 @@ const generalAuthRateLimiter = rateLimit({
 });
 
 /**
+ * Exchange the normal Authorization header for a short-lived, one-use
+ * WebSocket ticket. This keeps the durable JWT out of URLs, proxy logs, and
+ * browser history while retaining browser-compatible WebSocket authentication.
+ */
+router.post(
+  '/websocket-ticket',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    res.set('Cache-Control', 'no-store');
+    const audience = req.body?.audience;
+    const taskId = req.body?.taskId;
+    if (audience !== 'chat' && audience !== 'work-terminal') {
+      res.status(400).json({
+        success: false,
+        message: 'WebSocket ticket audience must be chat or work-terminal',
+      });
+      return;
+    }
+    if (
+      audience === 'work-terminal' &&
+      (typeof taskId !== 'string' || !taskId.trim() || taskId.length > 256)
+    ) {
+      res.status(400).json({
+        success: false,
+        message: 'A valid taskId is required for a Work terminal ticket',
+      });
+      return;
+    }
+    const sessionExpiresAt = (req.user?.exp ?? 0) * 1000;
+    try {
+      const ticket = await websocketTicketService.issue(
+        req.user!.userId,
+        sessionExpiresAt,
+        audience,
+        audience === 'work-terminal' ? taskId.trim() : undefined
+      );
+      res.json({ success: true, data: ticket });
+    } catch (error) {
+      if (error instanceof WebSocketTicketRateLimitError) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
+      logger.warn('Shared WebSocket ticket storage is unavailable');
+      res.status(503).json({
+        success: false,
+        message: 'WebSocket authentication is temporarily unavailable',
+      });
+    }
+  }
+);
+
+/**
  * Login endpoint
  */
-router.post('/login', authRateLimiter, async (req, res) => {
+router.post('/login', loginRateLimiter, async (req, res) => {
   try {
     const { username, password, turnstileToken } = req.body;
 
@@ -137,7 +199,7 @@ router.post('/login', authRateLimiter, async (req, res) => {
       return;
     }
 
-    const systemInfo = authService.getSystemInfo();
+    const systemInfo = await authService.getSystemInfo();
 
     res.json({
       success: true,
@@ -222,7 +284,7 @@ router.get(
  */
 router.get('/system-info', async (req, res) => {
   try {
-    const systemInfo = authService.getSystemInfo();
+    const systemInfo = await authService.getSystemInfo();
     res.json({
       success: true,
       data: systemInfo,
@@ -247,7 +309,7 @@ router.get(
   requireAdmin,
   async (_req, res) => {
     try {
-      const systemInfo = authService.getSystemInfo();
+      const systemInfo = await authService.getSystemInfo();
 
       // Keep the first-time setup behavior, but bind disclosure to the
       // authenticated administrator created by that setup.
@@ -277,9 +339,9 @@ router.get(
 /**
  * Signup endpoint
  */
-router.post('/signup', authRateLimiter, async (req, res) => {
+router.post('/signup', signupRateLimiter, async (req, res) => {
   try {
-    if (!authService.canCreateLocalAccount()) {
+    if (!(await authService.canCreateLocalAccount())) {
       res.status(403).json({
         success: false,
         message: 'Registration is disabled',
@@ -340,7 +402,7 @@ router.post('/signup', authRateLimiter, async (req, res) => {
       return;
     }
 
-    const systemInfo = authService.getSystemInfo();
+    const systemInfo = await authService.getSystemInfo();
 
     if (result.status === 'pending') {
       res.status(202).json({
@@ -577,7 +639,7 @@ router.post('/oauth/exchange', generalAuthRateLimiter, async (req, res) => {
     data: {
       user,
       token,
-      systemInfo: authService.getSystemInfo(),
+      systemInfo: await authService.getSystemInfo(),
     },
   });
 });

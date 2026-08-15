@@ -195,7 +195,14 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 export function embeddingBufferToArray(embedding: Buffer): number[] {
-  return Array.from(new Float32Array(embedding.buffer));
+  if (embedding.byteLength % Float32Array.BYTES_PER_ELEMENT !== 0) {
+    throw new Error('Stored memory embedding has an invalid byte length');
+  }
+  const values: number[] = [];
+  for (let offset = 0; offset < embedding.byteLength; offset += 4) {
+    values.push(embedding.readFloatLE(offset));
+  }
+  return values;
 }
 
 export function embeddingArrayToBuffer(embedding: number[]): Buffer {

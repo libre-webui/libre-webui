@@ -31,6 +31,10 @@ const suites = [
     pattern: 'test*_security.py',
   },
   {
+    directory: 'examples/longcat-audiodit-server',
+    pattern: 'test_server.py',
+  },
+  {
     directory: 'examples/mlx-lm-server',
     pattern: 'test_server.py',
   },

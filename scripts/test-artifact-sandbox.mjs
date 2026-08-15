@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
-import test from 'node:test';
+import test, { after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import express from 'express';
 import helmet from 'helmet';
@@ -17,6 +17,20 @@ const artifactsModule = await import(
 );
 
 const artifactsRouter = artifactsModule.default;
+const coordinationModule = await import(
+  pathToFileURL(
+    path.join(
+      repoRoot,
+      'backend',
+      'dist',
+      'platform',
+      'coordination',
+      'service.js'
+    )
+  ).href
+);
+await coordinationModule.initializeCoordinator();
+after(() => coordinationModule.closeCoordinator());
 
 const listen = server =>
   new Promise((resolve, reject) => {

@@ -13,10 +13,19 @@ Libre WebUI stores application data in SQLite by default. The storage layer keep
 
 ## Database Location
 
-The backend uses this location order:
+Source launches use this location order:
 
-1. `DATA_DIR` when set.
-2. `backend/data` from the project root.
+1. `DATA_DIR` when set; relative values resolve from the backend directory.
+2. `backend/data` when it is unset.
+
+For backward compatibility, an unset source profile keeps using
+`backend/backend/data` when that is the only existing durable store. If both
+locations contain state, startup requires an explicit selection and never
+copies or merges them.
+
+The packaged npm/Homebrew launcher instead defaults to `~/.libre-webui` and
+resolves an explicit relative `DATA_DIR` from the caller's working directory.
+Docker and Kubernetes deployments supply absolute container paths.
 
 The SQLite file is named `data.sqlite`.
 

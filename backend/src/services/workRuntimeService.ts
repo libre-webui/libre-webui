@@ -16,7 +16,18 @@
  */
 
 import path from 'node:path';
-import { getDatabase } from '../db.js';
+import { randomUUID } from 'node:crypto';
+import { getWorkPersistence } from '../platform/workPersistence/index.js';
+import {
+  getCoordinator,
+  getPlatformRuntimeConfig,
+} from '../platform/coordination/service.js';
+import type { CoordinationLease } from '../platform/coordination/types.js';
+import {
+  combineAbortSignals,
+  SHARED_COORDINATION_OPERATION_TIMEOUT_MS,
+  withCoordinationTimeout,
+} from '../platform/coordination/sharedAdmission.js';
 import {
   WorkFileEntry,
   WorkGitDiff,
@@ -34,7 +45,9 @@ import {
 } from '../utils/workGit.js';
 import { userHasWorkAccess } from './workAccessService.js';
 import workPolicyService from './workPolicyService.js';
-import workPreviewProxyService from './workPreviewProxyService.js';
+import workPreviewProxyService, {
+  normalizePreviewUpstreamHost,
+} from './workPreviewProxyService.js';
 import workTaskService from './workTaskService.js';
 import { KubernetesWorkRuntimeDriver } from './workKubernetesDriver.js';
 import {
@@ -78,10 +91,13 @@ const PREVIEW_READY_TIMEOUT_MS = 15_000;
 const PREVIEW_POLL_INTERVAL_MS = 250;
 
 interface PreviewStateHooks {
-  onStarting?: () => void;
-  onRunning?: (url: string) => void;
-  onFailed?: () => void;
-  onStopped?: () => void;
+  onStarting?: () => void | Promise<void>;
+  onRunning?: (
+    url: string,
+    endpoint: { host: string; port: number }
+  ) => void | Promise<void>;
+  onFailed?: () => void | Promise<void>;
+  onStopped?: () => void | Promise<void>;
 }
 
 type PreviewLaunch =
@@ -105,10 +121,15 @@ interface PreviewDetection {
 interface RuntimeLease {
   userId: string;
   holders: number;
+  presenceTimer?: NodeJS.Timeout;
+  sharedLease?: CoordinationLease;
+  sharedLeaseTimer?: NodeJS.Timeout;
+  sharedLeaseLost?: boolean;
 }
 
 export class WorkRuntimeService {
   readonly driver: WorkRuntimeDriver;
+  readonly runtimeKind: 'docker' | 'kubernetes';
   readonly image = config.image;
   readonly previewPort = config.previewPort;
   readonly limits = {
@@ -124,27 +145,33 @@ export class WorkRuntimeService {
   private retiringTasks = new Set<string>();
   private networkPolicies = new Map<string, boolean>();
   private activeCommands = new Set<string>();
-  private lastDockerUnavailableReason: string | null = null;
+  private lastRuntimeUnavailableReason: string | null = null;
   private runtimeLeases = new Map<string, RuntimeLease>();
   private previewLeaseReleases = new Map<string, () => void>();
   private terminalHolds = new Map<string, number>();
   private recoveryTasks = new Map<string, WorkTaskRecord>();
   private recoveryOrphans = new Map<string, DiscoveredWorkContainer>();
   private recoveryInventory?: WorkTaskRecord[];
-  // Sweeps left for the empty-inventory case before giving up on a daemon
-  // that never appears (30 × 10s: covers a socket proxy starting late
-  // without probing a Docker-less deployment forever).
+  // Sweeps left for the empty-inventory case before giving up on a runtime
+  // that never appears (30 × 10s covers a late Docker socket proxy or
+  // Kubernetes API without probing an intentionally disabled backend forever).
   private emptyInventorySweepsLeft = 30;
   private recoveryTimer?: NodeJS.Timeout;
   private shuttingDown = false;
+  private readonly activityMemberId =
+    `${process.env.LIBRE_PROCESS_ROLE || 'standalone'}-${process.pid}-` +
+    randomUUID();
 
   constructor(driver: WorkRuntimeDriver = new DockerWorkRuntimeDriver()) {
     this.driver = driver;
+    this.runtimeKind = driver.kind;
     // Authorized preview traffic keeps its task's idle clock fresh.
     workPreviewProxyService.onPreviewActivity(taskId =>
       this.noteTaskActivity(taskId)
     );
-    this.scheduleIdleSweep();
+    if (process.env.LIBRE_PROCESS_ROLE !== 'app-external') {
+      this.scheduleIdleSweep();
+    }
   }
 
   // Last observed activity per task, feeding the idle sweep: a finished
@@ -155,6 +182,13 @@ export class WorkRuntimeService {
 
   noteTaskActivity(taskId: string): void {
     this.taskActivity.set(taskId, Date.now());
+    if (getPlatformRuntimeConfig().mode === 'team') {
+      void getCoordinator()
+        .setCache(`work-task-activity:${taskId}`, Date.now(), 86_400_000)
+        .catch(error =>
+          logger.warn(`Could not persist Work activity for ${taskId}:`, error)
+        );
+    }
   }
 
   get recoveryPending(): boolean {
@@ -188,25 +222,24 @@ export class WorkRuntimeService {
     }
   }
 
-  async isDockerAvailable(): Promise<boolean> {
+  async isRuntimeAvailable(): Promise<boolean> {
     try {
       await this.driver.probe();
-      this.lastDockerUnavailableReason = null;
+      this.lastRuntimeUnavailableReason = null;
       return true;
     } catch (error) {
-      this.lastDockerUnavailableReason =
+      this.lastRuntimeUnavailableReason =
         error instanceof Error ? error.message : String(error);
       return false;
     }
   }
 
   /**
-   * Why the last availability probe failed. "Docker is not available" cannot be
-   * acted on: a containerized deployment fails for a missing CLI, an unreadable
-   * socket, or a stopped daemon, and each needs a different change.
+   * Why the last availability probe failed. A generic "runtime unavailable"
+   * message cannot be acted on, so drivers return their operator-facing cause.
    */
-  get dockerUnavailableReason(): string | null {
-    return this.lastDockerUnavailableReason;
+  get runtimeUnavailableReason(): string | null {
+    return this.lastRuntimeUnavailableReason;
   }
 
   /**
@@ -224,16 +257,30 @@ export class WorkRuntimeService {
   }
 
   async beginRecovery(
-    tasks: WorkTaskRecord[]
+    tasks: WorkTaskRecord[],
+    assertRecoveryLease?: () => Promise<void>
   ): Promise<{ stopped: number; failed: number }> {
     this.recoveryInventory = tasks;
-    const result = await this.sweepRecoveryTasks();
-    this.scheduleRecoverySweep();
+    const result = await this.sweepRecoveryTasks(assertRecoveryLease);
+    if (assertRecoveryLease) {
+      // An external worker must never hand unfinished destructive recovery to
+      // an unfenced background retry after releasing the global startup lease.
+      if (this.recoveryInventory !== undefined && result.failed === 0) {
+        return { ...result, failed: 1 };
+      }
+    } else {
+      this.scheduleRecoverySweep();
+    }
     return result;
   }
 
-  private acquireRuntimeLease(task: WorkTaskRecord): () => void {
-    this.assertTaskIsActive(task);
+  private async acquireRuntimeLease(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<() => void> {
+    signal?.throwIfAborted();
+    await this.assertTaskIsActive(task);
+    signal?.throwIfAborted();
     const existing = this.runtimeLeases.get(task.id);
     if (existing) {
       if (existing.userId !== task.userId) {
@@ -262,25 +309,144 @@ export class WorkRuntimeService {
           'WORK_GLOBAL_RUNTIME_LIMIT'
         );
       }
-      this.runtimeLeases.set(task.id, { userId: task.userId, holders: 1 });
+      const runtimeLease: RuntimeLease = {
+        userId: task.userId,
+        holders: 1,
+      };
+      if (getPlatformRuntimeConfig().mode === 'team') {
+        let abandoned = false;
+        const pendingSharedLease = getCoordinator().acquireLease(
+          `work-task-runtime:${task.id}`,
+          60_000
+        );
+        void pendingSharedLease
+          .then(lease => {
+            if (!abandoned || !lease) return;
+            void withCoordinationTimeout(
+              lease.release(),
+              SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+            ).catch(() => undefined);
+          })
+          .catch(() => undefined);
+        let sharedLease: CoordinationLease | null;
+        try {
+          sharedLease = await waitForAbortSignal(
+            withCoordinationTimeout(
+              pendingSharedLease,
+              SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+            ),
+            signal
+          );
+        } catch (error) {
+          abandoned = true;
+          throw error;
+        }
+        if (!sharedLease) {
+          throw new WorkRuntimeError(
+            'This Work task is active on another replica.',
+            409,
+            'WORK_RUNTIME_LEASE_CONFLICT'
+          );
+        }
+        runtimeLease.sharedLease = sharedLease;
+        runtimeLease.sharedLeaseTimer = setInterval(() => {
+          void withCoordinationTimeout(
+            sharedLease.extend(60_000),
+            SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+          )
+            .then(extended => {
+              if (!extended) throw new Error('lease ownership was lost');
+            })
+            .catch(error => {
+              if (runtimeLease.sharedLeaseLost) return;
+              runtimeLease.sharedLeaseLost = true;
+              logger.error(
+                `Shared Work runtime lease was lost for task ${task.id}; stopping its sandbox:`,
+                error
+              );
+              void this.driver
+                .stopRuntime(task)
+                .catch(stopError =>
+                  logger.error(
+                    `Could not stop Work task ${task.id} after lease loss:`,
+                    stopError
+                  )
+                );
+            });
+        }, 20_000);
+        runtimeLease.sharedLeaseTimer.unref?.();
+        const refreshPresence = (): Promise<void> =>
+          withCoordinationTimeout(
+            getCoordinator().setPresence(
+              `work-task-active:${task.id}`,
+              this.activityMemberId,
+              30_000
+            ),
+            SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+          );
+        try {
+          await waitForAbortSignal(refreshPresence(), signal);
+        } catch (error) {
+          if (runtimeLease.sharedLeaseTimer) {
+            clearInterval(runtimeLease.sharedLeaseTimer);
+          }
+          await withCoordinationTimeout(
+            sharedLease.release(),
+            SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+          ).catch(() => false);
+          throw error;
+        }
+        runtimeLease.presenceTimer = setInterval(() => {
+          void refreshPresence().catch(error =>
+            logger.warn(
+              `Could not refresh Work activity for ${task.id}:`,
+              error
+            )
+          );
+        }, 10_000);
+        runtimeLease.presenceTimer.unref?.();
+      }
+      this.runtimeLeases.set(task.id, runtimeLease);
     }
 
     let released = false;
     return () => {
       if (released) return;
       released = true;
-      const lease = this.runtimeLeases.get(task.id);
-      if (!lease || lease.userId !== task.userId) return;
-      lease.holders -= 1;
-      if (lease.holders <= 0) {
-        this.runtimeLeases.delete(task.id);
-      }
+      this.releaseRuntimeLease(task.id, task.userId);
     };
+  }
+
+  private releaseRuntimeLease(
+    taskId: string,
+    expectedUserId?: string,
+    force = false
+  ): void {
+    const lease = this.runtimeLeases.get(taskId);
+    if (!lease || (expectedUserId && lease.userId !== expectedUserId)) return;
+    if (!force) lease.holders -= 1;
+    if (!force && lease.holders > 0) return;
+    if (lease.presenceTimer) clearInterval(lease.presenceTimer);
+    if (lease.sharedLeaseTimer) clearInterval(lease.sharedLeaseTimer);
+    this.runtimeLeases.delete(taskId);
+    void lease.sharedLease?.release().catch(() => false);
+    if (getPlatformRuntimeConfig().mode === 'team') {
+      void getCoordinator()
+        .clearPresence(`work-task-active:${taskId}`, this.activityMemberId)
+        .catch(error =>
+          logger.warn(`Could not clear Work activity for ${taskId}:`, error)
+        );
+    }
   }
 
   private assertRuntimeLease(task: WorkTaskRecord): void {
     const lease = this.runtimeLeases.get(task.id);
-    if (!lease || lease.userId !== task.userId || lease.holders < 1) {
+    if (
+      !lease ||
+      lease.userId !== task.userId ||
+      lease.holders < 1 ||
+      lease.sharedLeaseLost
+    ) {
       throw new WorkRuntimeError(
         'Work container acquisition requires a runtime capacity lease.',
         503,
@@ -302,8 +468,8 @@ export class WorkRuntimeService {
     task: WorkTaskRecord,
     signal?: AbortSignal
   ): Promise<() => void> {
-    const releaseLease = this.acquireRuntimeLease(task);
-    this.assertTaskIsActive(task);
+    const releaseLease = await this.acquireRuntimeLease(task, signal);
+    await this.assertTaskIsActive(task);
     const active = this.preparations.get(task.id);
     if (active) {
       try {
@@ -317,12 +483,16 @@ export class WorkRuntimeService {
     let tracked: Promise<void>;
     tracked = (async () => {
       await waitForAbortSignal(this.ensureImage(task), signal);
-      this.assertTaskIsActive(task);
-      await this.withLifecycleLock(task.id, async () => {
-        this.assertTaskIsActive(task);
-        await this.prepareWithLock(task);
-        this.assertTaskIsActive(task);
-      });
+      await this.assertTaskIsActive(task);
+      await this.withLifecycleLock(
+        task.id,
+        async (_assertHeld, leaseSignal) => {
+          const operationSignal = combineAbortSignals(signal, leaseSignal);
+          await this.assertTaskIsActive(task);
+          await this.prepareWithLock(task, operationSignal);
+          await this.assertTaskIsActive(task);
+        }
+      );
     })().finally(() => {
       if (this.preparations.get(task.id) === tracked) {
         this.preparations.delete(task.id);
@@ -345,7 +515,8 @@ export class WorkRuntimeService {
    * idle-stop path from tearing the container down while a shell is attached.
    */
   async acquireTerminalHold(
-    task: WorkTaskRecord
+    task: WorkTaskRecord,
+    signal?: AbortSignal
   ): Promise<() => Promise<void>> {
     if (this.activeCommands.has(task.id)) {
       throw new WorkRuntimeError(
@@ -354,7 +525,7 @@ export class WorkRuntimeService {
         'WORK_TERMINAL_COMMAND_ACTIVE'
       );
     }
-    const releaseLease = await this.prepare(task);
+    const releaseLease = await this.prepare(task, signal);
     this.terminalHolds.set(task.id, (this.terminalHolds.get(task.id) ?? 0) + 1);
     let released = false;
     return async () => {
@@ -369,8 +540,8 @@ export class WorkRuntimeService {
       }
       try {
         if (remaining <= 0 && !this.shuttingDown) {
-          await this.withLifecycleLock(task.id, () =>
-            this.stopContainerIfIdleWithLock(task)
+          await this.withLifecycleLock(task.id, (_assertHeld, signal) =>
+            this.stopContainerIfIdleWithLock(task, signal)
           );
         }
       } catch (error) {
@@ -398,6 +569,12 @@ export class WorkRuntimeService {
       clearTimeout(this.idleTimer);
       this.idleTimer = undefined;
     }
+    for (const taskId of [...this.previewLeaseReleases.keys()]) {
+      this.releasePreviewLease(taskId);
+    }
+    for (const taskId of [...this.runtimeLeases.keys()]) {
+      this.releaseRuntimeLease(taskId, undefined, true);
+    }
     this.driver.shutdown();
   }
 
@@ -416,7 +593,9 @@ export class WorkRuntimeService {
     this.retiringTasks.delete(taskId);
   }
 
-  private async sweepRecoveryTasks(): Promise<{
+  private async sweepRecoveryTasks(
+    assertRecoveryLease: () => Promise<void> = async () => undefined
+  ): Promise<{
     stopped: number;
     failed: number;
   }> {
@@ -427,13 +606,12 @@ export class WorkRuntimeService {
     ) {
       return { stopped: 0, failed: 0 };
     }
-    if (this.shuttingDown || !(await this.isDockerAvailable())) {
+    if (this.shuttingDown || !(await this.isRuntimeAvailable())) {
       if (this.recoveryInventory?.length === 0) {
         // No tasks to supervise, so nothing fail-closes — but leftover
-        // containers may still exist (a restored database, a daemon or
-        // socket proxy that comes up after the backend). Keep retrying the
-        // reconciliation quietly for a bounded window, then give up so a
-        // deployment without Docker is not probed forever.
+        // sandboxes may still exist after a database restore, or the runtime
+        // control plane may start after the backend. Retry for a bounded
+        // window without probing an intentionally disabled runtime forever.
         if (this.shuttingDown || this.emptyInventorySweepsLeft <= 0) {
           this.recoveryInventory = undefined;
           return { stopped: 0, failed: 0 };
@@ -451,6 +629,7 @@ export class WorkRuntimeService {
       // by a task whose database row is gone.
       let discovered: DiscoveredWorkContainer[];
       try {
+        await assertRecoveryLease();
         discovered = await this.driver.listManaged();
       } catch (error) {
         logger.warn(
@@ -483,9 +662,19 @@ export class WorkRuntimeService {
     const tasks = [...this.recoveryTasks.values()];
     const orphans = [...this.recoveryOrphans.values()];
     const [taskResults, orphanResults] = await Promise.all([
-      Promise.allSettled(tasks.map(task => this.stopContainer(task))),
       Promise.allSettled(
-        orphans.map(orphan => this.driver.removeOrphan(orphan.name))
+        tasks.map(async task => {
+          await assertRecoveryLease();
+          await this.stopContainer(task);
+          await assertRecoveryLease();
+        })
+      ),
+      Promise.allSettled(
+        orphans.map(async orphan => {
+          await assertRecoveryLease();
+          await this.driver.removeOrphan(orphan.name);
+          await assertRecoveryLease();
+        })
       ),
     ]);
     let stopped = 0;
@@ -556,13 +745,17 @@ export class WorkRuntimeService {
    * on a guess.
    */
   async sweepIdleRuntimes(now = Date.now()): Promise<{ stopped: number }> {
-    if (this.shuttingDown || this.recoveryPending) {
+    if (
+      process.env.LIBRE_PROCESS_ROLE === 'app-external' ||
+      this.shuttingDown ||
+      this.recoveryPending
+    ) {
       return { stopped: 0 };
     }
     // Idle-stop can come from the global knob or from any named policy.
     if (
       config.idleTimeoutMs <= 0 &&
-      !workPolicyService.anyIdleTimeoutConfigured()
+      !(await workPolicyService.anyIdleTimeoutConfigured())
     ) {
       return { stopped: 0 };
     }
@@ -574,7 +767,7 @@ export class WorkRuntimeService {
       return { stopped: 0 };
     }
     const records = new Map(
-      workTaskService.listAllTaskRecords().map(task => [task.id, task])
+      (await workTaskService.listAllTaskRecords()).map(task => [task.id, task])
     );
     let stopped = 0;
     for (const entry of discovered) {
@@ -582,19 +775,31 @@ export class WorkRuntimeService {
       const task = records.get(entry.taskId);
       // Containers without a task row are startup reconciliation's business.
       if (!task) continue;
+      if (
+        getPlatformRuntimeConfig().mode === 'team' &&
+        (await getCoordinator().listPresence(`work-task-active:${task.id}`))
+          .length > 0
+      ) {
+        continue;
+      }
       const busy =
         this.activeCommands.has(task.id) ||
         (this.terminalHolds.get(task.id) ?? 0) > 0 ||
         (this.runtimeLeases.has(task.id) &&
           !this.previewLeaseReleases.has(task.id));
-      const lastActivity = this.taskActivity.get(task.id);
+      const sharedActivity =
+        getPlatformRuntimeConfig().mode === 'team'
+          ? await getCoordinator().getCache<number>(
+              `work-task-activity:${task.id}`
+            )
+          : null;
+      const lastActivity = sharedActivity ?? this.taskActivity.get(task.id);
       if (busy || lastActivity === undefined) {
         this.noteTaskActivity(task.id);
         continue;
       }
-      const idleAfterMs = workPolicyService.resolve(
-        task.policyId
-      ).idleTimeoutMs;
+      const idleAfterMs = (await workPolicyService.resolve(task.policyId))
+        .idleTimeoutMs;
       if (idleAfterMs <= 0 || now - lastActivity < idleAfterMs) continue;
       try {
         if (this.previewLeaseReleases.has(task.id)) {
@@ -686,15 +891,16 @@ export class WorkRuntimeService {
     }
   }
 
-  private markPreviewStopped(taskId: string): void {
+  private async markPreviewStopped(taskId: string): Promise<void> {
     try {
-      getDatabase()
-        .prepare(
-          `UPDATE work_tasks
-           SET preview_status = 'stopped', preview_url = NULL, updated_at = ?
-           WHERE id = ?`
-        )
-        .run(Date.now(), taskId);
+      await getWorkPersistence().updatePreview(
+        taskId,
+        'stopped',
+        null,
+        null,
+        null,
+        Date.now()
+      );
     } catch (error) {
       logger.warn(
         `Could not persist stopped preview state for Work task ${taskId}:`,
@@ -703,33 +909,37 @@ export class WorkRuntimeService {
     }
   }
 
-  private async prepareWithLock(task: WorkTaskRecord): Promise<void> {
+  private async prepareWithLock(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
+    signal?.throwIfAborted();
     this.assertRuntimeLease(task);
     this.assertCurrentNetworkPolicy(task);
-    this.assertTaskIsActive(task);
-    await this.driver.ensureWorkspace(task);
-    this.assertTaskIsActive(task);
+    await this.assertTaskIsActive(task);
+    await this.driver.ensureWorkspace(task, signal);
+    await this.assertTaskIsActive(task);
     this.assertRuntimeLease(task);
-    await this.driver.ensureRuntime(task);
+    await this.driver.ensureRuntime(task, signal);
     if (this.shuttingDown) {
-      await this.stopContainerWithLock(task);
-      this.assertTaskIsActive(task);
+      await this.stopContainerWithLock(task, signal);
+      await this.assertTaskIsActive(task);
     }
   }
 
   async recreateContainer(task: WorkTaskRecord): Promise<void> {
-    const releaseLease = this.acquireRuntimeLease(task);
+    const releaseLease = await this.acquireRuntimeLease(task);
     try {
       await this.ensureImage(task);
-      this.assertTaskIsActive(task);
-      await this.withLifecycleLock(task.id, async () => {
-        this.assertTaskIsActive(task);
-        await this.recreateContainerWithLock(task);
-        await this.stopContainerWithLock(task);
+      await this.assertTaskIsActive(task);
+      await this.withLifecycleLock(task.id, async (_assertHeld, signal) => {
+        await this.assertTaskIsActive(task);
+        await this.recreateContainerWithLock(task, signal);
+        await this.stopContainerWithLock(task, signal);
         this.networkPolicies.set(task.id, task.networkEnabled);
       });
       this.releasePreviewLease(task.id);
-      this.markPreviewStopped(task.id);
+      await this.markPreviewStopped(task.id);
     } finally {
       releaseLease();
     }
@@ -738,77 +948,86 @@ export class WorkRuntimeService {
   async changeNetworkPolicy<T>(
     before: WorkTaskRecord,
     desired: WorkTaskRecord,
-    commit: () => T
+    commit: () => T | Promise<T>
   ): Promise<T> {
-    this.assertTaskIsActive(before);
+    await this.assertTaskIsActive(before);
     if (desired.networkEnabled === before.networkEnabled) {
-      return this.withLifecycleLock(before.id, async () => {
-        this.assertTaskIsActive(before);
+      return this.withLifecycleLock(before.id, async assertHeld => {
+        await this.assertTaskIsActive(before);
         this.assertCurrentNetworkPolicy(before);
-        const result = commit();
+        await assertHeld();
+        const result = await commit();
         this.networkPolicies.set(desired.id, desired.networkEnabled);
         return result;
       });
     }
 
-    const releaseLease = this.acquireRuntimeLease(before);
+    const releaseLease = await this.acquireRuntimeLease(before);
     let previewStopped = false;
     try {
       await this.ensureImage(before);
-      this.assertTaskIsActive(before);
-      return await this.withLifecycleLock(before.id, async () => {
-        this.assertTaskIsActive(before);
-        this.assertCurrentNetworkPolicy(before);
-        try {
-          await this.recreateContainerWithLock(desired);
-          await this.stopContainerWithLock(desired);
-          previewStopped = true;
-          const result = commit();
-          this.networkPolicies.set(desired.id, desired.networkEnabled);
-          return result;
-        } catch (error) {
+      await this.assertTaskIsActive(before);
+      return await this.withLifecycleLock(
+        before.id,
+        async (assertHeld, signal) => {
+          await this.assertTaskIsActive(before);
+          this.assertCurrentNetworkPolicy(before);
           try {
-            await this.recreateContainerWithLock(before);
-            await this.stopContainerWithLock(before);
+            await this.recreateContainerWithLock(desired, signal);
+            await assertHeld();
+            await this.stopContainerWithLock(desired, signal);
             previewStopped = true;
-            this.networkPolicies.set(before.id, before.networkEnabled);
-          } catch (rollbackError) {
-            logger.error(
-              `Could not restore prior network policy for Work task ${before.id}:`,
-              rollbackError
-            );
+            await assertHeld();
+            const result = await commit();
+            this.networkPolicies.set(desired.id, desired.networkEnabled);
+            return result;
+          } catch (error) {
+            try {
+              await this.recreateContainerWithLock(before, signal);
+              await this.stopContainerWithLock(before, signal);
+              previewStopped = true;
+              this.networkPolicies.set(before.id, before.networkEnabled);
+            } catch (rollbackError) {
+              logger.error(
+                `Could not restore prior network policy for Work task ${before.id}:`,
+                rollbackError
+              );
+            }
+            throw error;
           }
-          throw error;
         }
-      });
+      );
     } finally {
       if (previewStopped) {
         this.releasePreviewLease(before.id);
-        this.markPreviewStopped(before.id);
+        await this.markPreviewStopped(before.id);
       }
       releaseLease();
     }
   }
 
-  private async recreateContainerWithLock(task: WorkTaskRecord): Promise<void> {
+  private async recreateContainerWithLock(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
     this.assertRuntimeLease(task);
-    this.assertTaskIsActive(task);
-    await this.driver.ensureWorkspace(task);
-    this.assertTaskIsActive(task);
-    await this.driver.removeRuntime(task);
-    await this.driver.ensureRuntime(task);
+    await this.assertTaskIsActive(task);
+    await this.driver.ensureWorkspace(task, signal);
+    await this.assertTaskIsActive(task);
+    await this.driver.removeRuntime(task, signal);
+    await this.driver.ensureRuntime(task, signal);
     if (this.shuttingDown) {
-      await this.stopContainerWithLock(task);
-      this.assertTaskIsActive(task);
+      await this.stopContainerWithLock(task, signal);
+      await this.assertTaskIsActive(task);
     }
   }
 
   async stopContainer(task: WorkTaskRecord): Promise<void> {
-    await this.withLifecycleLock(task.id, () =>
-      this.stopContainerWithLock(task)
+    await this.withLifecycleLock(task.id, (_assertHeld, signal) =>
+      this.stopContainerWithLock(task, signal)
     );
     this.releasePreviewLease(task.id);
-    this.markPreviewStopped(task.id);
+    await this.markPreviewStopped(task.id);
     this.completeRecoveryTask(task.id);
   }
 
@@ -821,13 +1040,16 @@ export class WorkRuntimeService {
   async interruptContainer(task: WorkTaskRecord): Promise<void> {
     await this.stopContainerWithLock(task);
     this.releasePreviewLease(task.id);
-    this.markPreviewStopped(task.id);
+    await this.markPreviewStopped(task.id);
     this.completeRecoveryTask(task.id);
   }
 
-  private async stopContainerWithLock(task: WorkTaskRecord): Promise<void> {
+  private async stopContainerWithLock(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
     try {
-      await this.driver.stopRuntime(task);
+      await this.driver.stopRuntime(task, signal);
     } catch (error) {
       this.queueFailedCleanup(task, error);
       throw error;
@@ -839,14 +1061,14 @@ export class WorkRuntimeService {
     allowRevokedOwner = false
   ): Promise<void> {
     if (allowRevokedOwner) {
-      this.assertTaskStillOwned(task);
+      await this.assertTaskStillOwned(task);
     } else {
-      this.assertTaskOwnerHasWorkAccess(task);
+      await this.assertTaskOwnerHasWorkAccess(task);
     }
     this.retiringTasks.add(task.id);
     try {
-      await this.withLifecycleLock(task.id, () =>
-        this.driver.removeTaskResources(task)
+      await this.withLifecycleLock(task.id, (_assertHeld, signal) =>
+        this.driver.removeTaskResources(task, signal)
       );
     } catch (error) {
       this.retiringTasks.delete(task.id);
@@ -860,9 +1082,8 @@ export class WorkRuntimeService {
     this.preparations.delete(taskId);
     this.activeCommands.delete(taskId);
     this.releasePreviewLease(taskId);
-    this.runtimeLeases.delete(taskId);
+    this.releaseRuntimeLease(taskId, undefined, true);
     this.taskActivity.delete(taskId);
-    workPreviewProxyService.clearPreviewUpstream(taskId);
   }
 
   async listFiles(
@@ -887,27 +1108,31 @@ export class WorkRuntimeService {
     task: WorkTaskRecord,
     operation: () => Promise<T>
   ): Promise<T> {
-    const releaseLease = this.acquireRuntimeLease(task);
+    const releaseLease = await this.acquireRuntimeLease(task);
     try {
       await this.ensureImage(task);
-      this.assertTaskIsActive(task);
-      return await this.withLifecycleLock(task.id, async () => {
-        this.assertTaskIsActive(task);
-        await this.prepareWithLock(task);
-        this.assertTaskIsActive(task);
-        try {
-          return await operation();
-        } finally {
-          await this.stopContainerIfIdleWithLock(task);
+      await this.assertTaskIsActive(task);
+      return await this.withLifecycleLock(
+        task.id,
+        async (_assertHeld, signal) => {
+          await this.assertTaskIsActive(task);
+          await this.prepareWithLock(task, signal);
+          await this.assertTaskIsActive(task);
+          try {
+            return await operation();
+          } finally {
+            await this.stopContainerIfIdleWithLock(task, signal);
+          }
         }
-      });
+      );
     } finally {
       releaseLease();
     }
   }
 
   private async stopContainerIfIdleWithLock(
-    task: WorkTaskRecord
+    task: WorkTaskRecord,
+    signal?: AbortSignal
   ): Promise<void> {
     if (this.activeCommands.has(task.id)) return;
     // An attached terminal session owns the running container exactly like a
@@ -915,7 +1140,7 @@ export class WorkRuntimeService {
     if ((this.terminalHolds.get(task.id) ?? 0) > 0) return;
     try {
       if (
-        (await this.previewProcessCheckWithLock(task)) === 'ready' &&
+        (await this.previewProcessCheckWithLock(task, signal)) === 'ready' &&
         this.previewLeaseReleases.has(task.id)
       ) {
         return;
@@ -926,9 +1151,9 @@ export class WorkRuntimeService {
         error
       );
     }
-    await this.stopContainerWithLock(task);
+    await this.stopContainerWithLock(task, signal);
     this.releasePreviewLease(task.id);
-    this.markPreviewStopped(task.id);
+    await this.markPreviewStopped(task.id);
     this.completeRecoveryTask(task.id);
   }
 
@@ -1368,66 +1593,87 @@ export class WorkRuntimeService {
       );
     }
     const boundedTimeout = Math.min(Math.max(timeoutMs, 1_000), 600_000);
-    const releaseLease = this.acquireRuntimeLease(task);
+    const releaseLease = await this.acquireRuntimeLease(task);
     let commandRegistered = false;
+    let containerStopped = false;
     try {
       await this.ensureImage(task);
-      this.assertTaskIsActive(task);
-      await this.withLifecycleLock(task.id, async () => {
-        this.assertTaskIsActive(task);
-        try {
-          await this.prepareWithLock(task);
-          this.assertTaskIsActive(task);
-          if (this.activeCommands.has(task.id)) {
-            throw new WorkRuntimeError(
-              'This Work task already has an active command.',
-              409,
-              'WORK_COMMAND_ACTIVE'
+      await this.assertTaskIsActive(task);
+      return await this.withLifecycleLock(
+        task.id,
+        async (assertHeld, signal) => {
+          await this.assertTaskIsActive(task);
+          try {
+            await this.prepareWithLock(task, signal);
+            await this.assertTaskIsActive(task);
+            if (this.activeCommands.has(task.id)) {
+              throw new WorkRuntimeError(
+                'This Work task already has an active command.',
+                409,
+                'WORK_COMMAND_ACTIVE'
+              );
+            }
+            const previewState = await this.previewProcessCheckWithLock(
+              task,
+              signal
             );
+            if (previewState === 'ready' || previewState === 'alive') {
+              throw new WorkRuntimeError(
+                'Stop the Work preview before running another command.',
+                409,
+                'WORK_COMMAND_REQUIRES_STOPPED_PREVIEW'
+              );
+            }
+            this.activeCommands.add(task.id);
+            commandRegistered = true;
+          } catch (error) {
+            await this.stopContainerIfIdleWithLock(task, signal);
+            throw error;
           }
-          const previewState = await this.previewProcessCheckWithLock(task);
-          if (previewState === 'ready' || previewState === 'alive') {
-            throw new WorkRuntimeError(
-              'Stop the Work preview before running another command.',
-              409,
-              'WORK_COMMAND_REQUIRES_STOPPED_PREVIEW'
+
+          try {
+            const result = await this.exec(
+              task,
+              [
+                'timeout',
+                '--signal=TERM',
+                '--kill-after=3s',
+                `${Math.ceil(boundedTimeout / 1000)}s`,
+                '/bin/bash',
+                '-c',
+                MANAGED_COMMAND_SCRIPT,
+                '--',
+                command,
+              ],
+              {
+                timeoutMs: boundedTimeout + 5_000,
+                maxOutputChars: config.maxOutputChars,
+                acceptFailure: true,
+                abortSignal: signal,
+              }
             );
+            await assertHeld();
+            return result;
+          } finally {
+            if (commandRegistered) {
+              // Keep the distributed lifecycle fence through teardown. A
+              // second replica must never stop or recreate this sandbox in
+              // the gap between preparation and Docker exec.
+              await this.stopContainerWithLock(task, signal);
+              containerStopped = true;
+            }
           }
-          this.activeCommands.add(task.id);
-          commandRegistered = true;
-        } catch (error) {
-          await this.stopContainerIfIdleWithLock(task);
-          throw error;
-        }
-      });
-      return await this.exec(
-        task,
-        [
-          'timeout',
-          '--signal=TERM',
-          '--kill-after=3s',
-          `${Math.ceil(boundedTimeout / 1000)}s`,
-          '/bin/bash',
-          '-c',
-          MANAGED_COMMAND_SCRIPT,
-          '--',
-          command,
-        ],
-        {
-          timeoutMs: boundedTimeout + 5_000,
-          maxOutputChars: config.maxOutputChars,
-          acceptFailure: true,
         }
       );
     } finally {
+      this.activeCommands.delete(task.id);
       try {
-        if (commandRegistered) {
-          // This also kills intentionally detached descendants that escaped
-          // the managed process group. The named volume remains durable.
-          await this.stopContainer(task);
+        if (containerStopped) {
+          this.releasePreviewLease(task.id);
+          await this.markPreviewStopped(task.id);
+          this.completeRecoveryTask(task.id);
         }
       } finally {
-        this.activeCommands.delete(task.id);
         releaseLease();
       }
     }
@@ -1453,45 +1699,51 @@ export class WorkRuntimeService {
         'WORK_INVALID_COMMAND'
       );
     }
-    const releaseLease = this.acquireRuntimeLease(task);
+    const releaseLease = await this.acquireRuntimeLease(task);
     let leaseRetained = false;
     try {
       await this.ensureImage(task);
-      this.assertTaskIsActive(task);
-      const url = await this.withLifecycleLock(task.id, async () => {
-        this.assertTaskIsActive(task);
-        this.assertCurrentNetworkPolicy(task);
-        if (this.activeCommands.has(task.id)) {
-          throw new WorkRuntimeError(
-            'Wait for the active command to finish before starting a preview.',
-            409,
-            'WORK_PREVIEW_COMMAND_ACTIVE'
-          );
+      await this.assertTaskIsActive(task);
+      const url = await this.withLifecycleLock(
+        task.id,
+        async (assertHeld, signal) => {
+          await this.assertTaskIsActive(task);
+          this.assertCurrentNetworkPolicy(task);
+          if (this.activeCommands.has(task.id)) {
+            throw new WorkRuntimeError(
+              'Wait for the active command to finish before starting a preview.',
+              409,
+              'WORK_PREVIEW_COMMAND_ACTIVE'
+            );
+          }
+          await assertHeld();
+          await hooks.onStarting?.();
+          try {
+            await this.prepareWithLock(task, signal);
+            await this.assertTaskIsActive(task);
+            const previewLaunch: PreviewLaunch = previewCommand
+              ? {
+                  kind: 'shell',
+                  workdir: '/workspace',
+                  command: previewCommand,
+                }
+              : await this.detectPreviewLaunch(task, signal);
+            const preview = await this.startPreviewPrepared(
+              task,
+              previewLaunch,
+              signal
+            );
+            await this.assertTaskIsActive(task);
+            await assertHeld();
+            await hooks.onRunning?.(preview.url, preview.endpoint);
+            return preview.url;
+          } catch (error) {
+            await hooks.onFailed?.();
+            this.releasePreviewLease(task.id);
+            throw error;
+          }
         }
-        hooks.onStarting?.();
-        try {
-          await this.prepareWithLock(task);
-          this.assertTaskIsActive(task);
-          const previewLaunch: PreviewLaunch = previewCommand
-            ? {
-                kind: 'shell',
-                workdir: '/workspace',
-                command: previewCommand,
-              }
-            : await this.detectPreviewLaunch(task);
-          const previewUrl = await this.startPreviewPrepared(
-            task,
-            previewLaunch
-          );
-          this.assertTaskIsActive(task);
-          hooks.onRunning?.(previewUrl);
-          return previewUrl;
-        } catch (error) {
-          hooks.onFailed?.();
-          this.releasePreviewLease(task.id);
-          throw error;
-        }
-      });
+      );
       if (this.previewLeaseReleases.has(task.id)) {
         releaseLease();
       } else {
@@ -1507,7 +1759,8 @@ export class WorkRuntimeService {
   }
 
   private async detectPreviewLaunch(
-    task: WorkTaskRecord
+    task: WorkTaskRecord,
+    signal?: AbortSignal
   ): Promise<PreviewLaunch> {
     try {
       const result = await this.driver.exec(
@@ -1517,6 +1770,7 @@ export class WorkRuntimeService {
           acceptFailure: true,
           timeoutMs: 5_000,
           maxOutputChars: 10_000,
+          abortSignal: signal,
         }
       );
       if (result.exitCode !== 0) {
@@ -1584,7 +1838,7 @@ export class WorkRuntimeService {
       };
     } catch (error) {
       try {
-        await this.stopPreviewPrepared(task);
+        await this.stopPreviewPrepared(task, signal);
       } catch (cleanupError) {
         logger.warn(
           `Could not clean up failed preview detection for Work task ${task.id}:`,
@@ -1597,8 +1851,12 @@ export class WorkRuntimeService {
 
   private async startPreviewPrepared(
     task: WorkTaskRecord,
-    previewLaunch: PreviewLaunch
-  ): Promise<string> {
+    previewLaunch: PreviewLaunch,
+    signal?: AbortSignal
+  ): Promise<{
+    url: string;
+    endpoint: { host: string; port: number };
+  }> {
     try {
       const launch = await this.driver.exec(
         task,
@@ -1630,6 +1888,7 @@ export class WorkRuntimeService {
           workdir: previewLaunch.workdir,
           acceptFailure: true,
           timeoutMs: 5_000,
+          abortSignal: signal,
         }
       );
       if (launch.exitCode !== 0 && launch.exitCode !== 17) {
@@ -1651,7 +1910,12 @@ export class WorkRuntimeService {
             '--',
             String(config.previewPort),
           ],
-          { acceptFailure: true, timeoutMs: 2_000, maxOutputChars: 2_000 }
+          {
+            acceptFailure: true,
+            timeoutMs: 2_000,
+            maxOutputChars: 2_000,
+            abortSignal: signal,
+          }
         );
         if (readiness.exitCode === 0) break;
         if (readiness.exitCode !== 3) {
@@ -1667,8 +1931,9 @@ export class WorkRuntimeService {
             `Preview did not listen on port ${config.previewPort} within ${PREVIEW_READY_TIMEOUT_MS / 1000} seconds.`
           );
         }
-        await new Promise(resolve =>
-          setTimeout(resolve, PREVIEW_POLL_INTERVAL_MS)
+        await waitForAbortSignal(
+          new Promise(resolve => setTimeout(resolve, PREVIEW_POLL_INTERVAL_MS)),
+          signal
         );
       }
       const endpoint = await this.driver.previewEndpoint(task);
@@ -1679,14 +1944,17 @@ export class WorkRuntimeService {
           'WORK_PREVIEW_PORT_UNAVAILABLE'
         );
       }
-      return workPreviewProxyService.createPreviewUrl(
-        task.id,
-        endpoint.port,
-        endpoint.host
-      );
+      const upstream = {
+        host: normalizePreviewUpstreamHost(endpoint.host),
+        port: endpoint.port,
+      };
+      return {
+        url: workPreviewProxyService.createPreviewUrl(task.id, endpoint.port),
+        endpoint: upstream,
+      };
     } catch (error) {
       try {
-        await this.stopPreviewPrepared(task);
+        await this.stopPreviewPrepared(task, signal);
       } catch (cleanupError) {
         logger.warn(
           `Could not clean up failed preview for Work task ${task.id}:`,
@@ -1727,7 +1995,7 @@ export class WorkRuntimeService {
   ): Promise<void> {
     let stopped = false;
     try {
-      await this.withLifecycleLock(task.id, async () => {
+      await this.withLifecycleLock(task.id, async (assertHeld, signal) => {
         this.assertCurrentNetworkPolicy(task);
         if (this.activeCommands.has(task.id)) {
           throw new WorkRuntimeError(
@@ -1736,9 +2004,10 @@ export class WorkRuntimeService {
             'WORK_PREVIEW_COMMAND_ACTIVE'
           );
         }
-        await this.stopPreviewPrepared(task);
+        await this.stopPreviewPrepared(task, signal);
         stopped = true;
-        hooks.onStopped?.();
+        await assertHeld();
+        await hooks.onStopped?.();
       });
     } finally {
       if (stopped) {
@@ -1748,20 +2017,20 @@ export class WorkRuntimeService {
   }
 
   async isPreviewRunning(task: WorkTaskRecord): Promise<boolean> {
-    return this.withLifecycleLock(task.id, async () => {
+    return this.withLifecycleLock(task.id, async (_assertHeld, signal) => {
       this.assertCurrentNetworkPolicy(task);
       // An ordinary command owns this running container and will stop it when
       // it finishes. Preview reconciliation must not interrupt that command.
       if (this.activeCommands.has(task.id)) return false;
-      const state = await this.previewProcessCheckWithLock(task);
+      const state = await this.previewProcessCheckWithLock(task, signal);
       if (state === 'ready' && this.previewLeaseReleases.has(task.id)) {
         return true;
       }
       if (state === 'dead' || state === 'alive') {
-        await this.stopPreviewPrepared(task);
+        await this.stopPreviewPrepared(task, signal);
       }
       if (state === 'ready') {
-        await this.stopPreviewPrepared(task);
+        await this.stopPreviewPrepared(task, signal);
       }
       this.releasePreviewLease(task.id);
       return false;
@@ -1769,13 +2038,19 @@ export class WorkRuntimeService {
   }
 
   private async previewProcessCheckWithLock(
-    task: WorkTaskRecord
+    task: WorkTaskRecord,
+    signal?: AbortSignal
   ): Promise<'ready' | 'alive' | 'dead' | 'absent'> {
     if ((await this.driver.runtimeState(task)) !== 'running') return 'absent';
     const readiness = await this.driver.exec(
       task,
       ['node', '-e', PREVIEW_READY_SCRIPT, '--', String(config.previewPort)],
-      { acceptFailure: true, timeoutMs: 2_000, maxOutputChars: 2_000 }
+      {
+        acceptFailure: true,
+        timeoutMs: 2_000,
+        maxOutputChars: 2_000,
+        abortSignal: signal,
+      }
     );
     if (readiness.exitCode === 0) return 'ready';
     if (readiness.exitCode === 3) return 'alive';
@@ -1787,19 +2062,21 @@ export class WorkRuntimeService {
     );
   }
 
-  private async stopPreviewPrepared(task: WorkTaskRecord): Promise<void> {
-    workPreviewProxyService.clearPreviewUpstream(task.id);
+  private async stopPreviewPrepared(
+    task: WorkTaskRecord,
+    signal?: AbortSignal
+  ): Promise<void> {
     // Stop the container, not only the recorded process group. A custom
     // preview command can intentionally double-fork or create a new session;
     // Docker's container boundary guarantees those descendants are gone.
     // The named /workspace volume remains persistent across the restart.
-    await this.stopContainerWithLock(task);
+    await this.stopContainerWithLock(task, signal);
   }
 
   private async ensureImage(task: WorkTaskRecord): Promise<void> {
     // Pulls are deduplicated per image, not globally: tasks under different
     // policies may run different images.
-    const image = workPolicyService.resolve(task.policyId).image;
+    const image = (await workPolicyService.resolve(task.policyId)).image;
     let preparation = this.imagePreparations.get(image);
     if (!preparation) {
       preparation = this.driver.ensureImage(image).catch(error => {
@@ -1811,7 +2088,7 @@ export class WorkRuntimeService {
     await preparation;
   }
 
-  private assertTaskIsActive(task: WorkTaskRecord): void {
+  private async assertTaskIsActive(task: WorkTaskRecord): Promise<void> {
     this.assertAcceptingWork();
     if (this.retiringTasks.has(task.id)) {
       throw new WorkRuntimeError(
@@ -1820,19 +2097,16 @@ export class WorkRuntimeService {
         'WORK_TASK_REMOVING'
       );
     }
-    this.assertTaskOwnerHasWorkAccess(task);
+    await this.assertTaskOwnerHasWorkAccess(task);
   }
 
-  private assertTaskOwnerHasWorkAccess(task: WorkTaskRecord): void {
-    const access = getDatabase()
-      .prepare(
-        `SELECT users.role AS role, users.account_status AS status
-         FROM work_tasks
-         JOIN users ON users.id = work_tasks.user_id
-         WHERE work_tasks.id = ? AND work_tasks.user_id = ?`
-      )
-      .get(task.id, task.userId) as
-      { role: string; status: string } | undefined;
+  private async assertTaskOwnerHasWorkAccess(
+    task: WorkTaskRecord
+  ): Promise<void> {
+    const access = await getWorkPersistence().findTaskOwnerAccess(
+      task.id,
+      task.userId
+    );
     if (!access) {
       throw new WorkRuntimeError(
         'This Work task no longer exists.',
@@ -1840,7 +2114,7 @@ export class WorkRuntimeService {
         'WORK_TASK_REMOVING'
       );
     }
-    if (!userHasWorkAccess(access)) {
+    if (!(await userHasWorkAccess(access))) {
       throw new WorkRuntimeError(
         'Work access for this task was revoked.',
         403,
@@ -1849,15 +2123,13 @@ export class WorkRuntimeService {
     }
   }
 
-  private assertTaskStillOwned(task: WorkTaskRecord): void {
-    const persisted = getDatabase()
-      .prepare(
-        `SELECT 1
-         FROM work_tasks
-         WHERE id = ? AND user_id = ?
-           AND volume_name = ? AND container_name = ?`
-      )
-      .get(task.id, task.userId, task.volumeName, task.containerName);
+  private async assertTaskStillOwned(task: WorkTaskRecord): Promise<void> {
+    const persisted = await getWorkPersistence().taskStillOwnsResources({
+      taskId: task.id,
+      userId: task.userId,
+      volumeName: task.volumeName,
+      containerName: task.containerName,
+    });
     if (!persisted) {
       throw new WorkRuntimeError(
         'This Work task no longer exists or its managed resources changed.',
@@ -1884,10 +2156,126 @@ export class WorkRuntimeService {
 
   private async withLifecycleLock<T>(
     taskId: string,
-    operation: () => Promise<T>
+    operation: (
+      assertHeld: () => Promise<void>,
+      signal: AbortSignal
+    ) => Promise<T>
   ): Promise<T> {
     const previous = this.lifecycleTails.get(taskId) || Promise.resolve();
-    const current = previous.catch(() => undefined).then(operation);
+    const current = previous
+      .catch(() => undefined)
+      .then(async () => {
+        let sharedLease: CoordinationLease | null = null;
+        if (getPlatformRuntimeConfig().mode === 'team') {
+          const deadline = Date.now() + 10_000;
+          do {
+            let abandoned = false;
+            const pendingLease = getCoordinator().acquireLease(
+              `work-task-lifecycle:${taskId}`,
+              60_000
+            );
+            void pendingLease
+              .then(lease => {
+                if (!abandoned || !lease) return;
+                void withCoordinationTimeout(
+                  lease.release(),
+                  SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+                ).catch(() => undefined);
+              })
+              .catch(() => undefined);
+            try {
+              sharedLease = await withCoordinationTimeout(
+                pendingLease,
+                SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+              );
+            } catch (_error) {
+              abandoned = true;
+              throw new WorkRuntimeError(
+                'Work task lifecycle coordination is unavailable.',
+                503,
+                'WORK_RUNTIME_LEASE_CONFLICT'
+              );
+            }
+            if (!sharedLease) {
+              await new Promise(resolve => setTimeout(resolve, 25));
+            }
+          } while (!sharedLease && Date.now() < deadline);
+          if (!sharedLease) {
+            throw new WorkRuntimeError(
+              'This Work task has a lifecycle operation on another replica.',
+              409,
+              'WORK_RUNTIME_LEASE_CONFLICT'
+            );
+          }
+        }
+        let closed = false;
+        let lost = false;
+        const lossController = new AbortController();
+        let renewalTimer: NodeJS.Timeout | undefined;
+        const leaseLostError = (): WorkRuntimeError =>
+          new WorkRuntimeError(
+            'The shared Work task lifecycle lease was lost.',
+            503,
+            'WORK_RUNTIME_LEASE_CONFLICT'
+          );
+        const markLost = (): void => {
+          if (lost) return;
+          lost = true;
+          lossController.abort(leaseLostError());
+        };
+        const assertHeld = async (): Promise<void> => {
+          if (!sharedLease) return;
+          if (closed || lost) throw leaseLostError();
+          try {
+            if (
+              await withCoordinationTimeout(
+                sharedLease.extend(60_000),
+                SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+              )
+            ) {
+              return;
+            }
+          } catch {
+            // Report expiry and coordination outages through one safe fence.
+          }
+          markLost();
+          throw leaseLostError();
+        };
+        if (sharedLease) {
+          const renew = async (): Promise<void> => {
+            if (closed) return;
+            try {
+              if (
+                !(await withCoordinationTimeout(
+                  sharedLease?.extend(60_000) ?? Promise.resolve(false),
+                  SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+                ))
+              ) {
+                markLost();
+              }
+            } catch {
+              markLost();
+            }
+            if (!closed && !lost) renewalTimer = setTimeout(renew, 20_000);
+          };
+          renewalTimer = setTimeout(renew, 20_000);
+          renewalTimer.unref?.();
+        }
+        try {
+          await assertHeld();
+          const result = await operation(assertHeld, lossController.signal);
+          return result;
+        } finally {
+          closed = true;
+          if (renewalTimer) clearTimeout(renewalTimer);
+          if (sharedLease) {
+            await withCoordinationTimeout(
+              sharedLease.release(),
+              SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+            ).catch(() => false);
+          }
+        }
+      });
     const tail = current.then(
       () => undefined,
       () => undefined

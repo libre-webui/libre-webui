@@ -24,10 +24,19 @@ export interface VideoGenerationJobStatus {
 }
 
 export interface PluginVideoGenerationServiceDependencies {
-  getAllPlugins(userId?: string): Plugin[];
-  getPlugin(id: string, userId?: string): Plugin | null;
-  getApiKey(plugin: Plugin, userId?: string): string | null;
-  getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
+  getAllPlugins(userId?: string): Plugin[] | Promise<Plugin[]>;
+  getPlugin(
+    id: string,
+    userId?: string
+  ): Plugin | null | Promise<Plugin | null>;
+  getApiKey(
+    plugin: Plugin,
+    userId?: string
+  ): string | null | Promise<string | null>;
+  getPluginVariables(
+    plugin: Plugin,
+    userId?: string
+  ): PluginVariables | Promise<PluginVariables>;
   validateEndpointUrl(endpoint: string): string;
   recordUsage?(usage: PluginUsageEventInput): void;
 }
@@ -37,26 +46,36 @@ export class PluginVideoGenerationService {
     private readonly deps: PluginVideoGenerationServiceDependencies
   ) {}
 
-  getAvailableModels(userId?: string): Array<{
-    model: string;
-    plugin: string;
-    config?: VideoGenConfig;
-  }> {
-    return this.deps.getAllPlugins(userId).flatMap(plugin => {
+  async getAvailableModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      config?: VideoGenConfig;
+    }>
+  > {
+    const models: Array<{
+      model: string;
+      plugin: string;
+      config?: VideoGenConfig;
+    }> = [];
+    for (const plugin of await this.deps.getAllPlugins(userId)) {
       const capability = plugin.capabilities?.video;
       if (
         !plugin.active ||
         !capability ||
-        !this.deps.getApiKey(plugin, userId)
+        !(await this.deps.getApiKey(plugin, userId))
       ) {
-        return [];
+        continue;
       }
-      return capability.model_map.map(model => ({
-        model,
-        plugin: plugin.id,
-        config: capability.config,
-      }));
-    });
+      models.push(
+        ...capability.model_map.map(model => ({
+          model,
+          plugin: plugin.id,
+          config: capability.config,
+        }))
+      );
+    }
+    return models;
   }
 
   async submit(
@@ -69,10 +88,16 @@ export class PluginVideoGenerationService {
       resolution?: string;
       aspectRatio?: string;
       generateAudio?: boolean;
+      /** Stable caller key used to reconcile an accepted provider job. */
+      idempotencyKey?: string;
+      /** Shared-worker mode must not call a provider without this guarantee. */
+      requireIdempotency?: boolean;
+      /** Cancels only this HTTP submission transport, not a provider job that was already accepted. */
+      signal?: AbortSignal;
     }
   ): Promise<{ providerJobId: string; status: string }> {
     validatePluginModel(model);
-    const { plugin, endpoint, config, headers } = this.resolve(
+    const { plugin, endpoint, config, headers } = await this.resolve(
       model,
       options.pluginId,
       options.userId
@@ -80,6 +105,11 @@ export class PluginVideoGenerationService {
     if (config?.max_prompt_length && prompt.length > config.max_prompt_length) {
       throw new Error(
         `Prompt exceeds maximum length of ${config.max_prompt_length} characters`
+      );
+    }
+    if (options.requireIdempotency && config?.supports_idempotency !== true) {
+      throw new Error(
+        'The selected video provider does not declare idempotent submission support'
       );
     }
 
@@ -97,9 +127,12 @@ export class PluginVideoGenerationService {
     const startedAt = Date.now();
     try {
       const response = await axios.post(endpoint, payload, {
-        headers,
+        headers: options.idempotencyKey
+          ? { ...headers, 'Idempotency-Key': options.idempotencyKey }
+          : headers,
         timeout: 30000,
         maxRedirects: 0,
+        signal: options.signal,
       });
       const providerJobId = response.data?.id;
       if (typeof providerJobId !== 'string' || providerJobId.length === 0) {
@@ -118,7 +151,16 @@ export class PluginVideoGenerationService {
       });
       return { providerJobId, status: response.data?.status || 'pending' };
     } catch (error) {
-      this.recordError(plugin, model, options.userId, startedAt);
+      const cancelled = axios.isCancel(error) || options.signal?.aborted;
+      this.recordError(
+        plugin,
+        model,
+        options.userId,
+        startedAt,
+        cancelled ? 'cancelled' : 'error'
+      );
+      if (cancelled)
+        throw cancellationReason(options.signal, 'Video submission');
       throw toVideoError(error);
     }
   }
@@ -127,9 +169,10 @@ export class PluginVideoGenerationService {
     model: string,
     providerJobId: string,
     pluginId: string,
-    userId: string
+    userId: string,
+    signal?: AbortSignal
   ): Promise<VideoGenerationJobStatus> {
-    const { endpoint, headers } = this.resolve(model, pluginId, userId);
+    const { endpoint, headers } = await this.resolve(model, pluginId, userId);
     const statusEndpoint = `${endpoint.replace(/\/+$/, '')}/${encodeURIComponent(
       providerJobId
     )}`;
@@ -139,6 +182,7 @@ export class PluginVideoGenerationService {
         headers,
         timeout: 15000,
         maxRedirects: 0,
+        signal,
       });
       const status = response.data?.status;
       if (!['pending', 'in_progress', 'completed', 'failed'].includes(status)) {
@@ -154,6 +198,9 @@ export class PluginVideoGenerationService {
           : {}),
       };
     } catch (error) {
+      if (axios.isCancel(error) || signal?.aborted) {
+        throw cancellationReason(signal, 'Video status request');
+      }
       throw toVideoError(error);
     }
   }
@@ -162,9 +209,10 @@ export class PluginVideoGenerationService {
     model: string,
     providerJobId: string,
     pluginId: string,
-    userId: string
+    userId: string,
+    signal?: AbortSignal
   ): Promise<{ video: Buffer; mimeType: string }> {
-    const { endpoint, headers } = this.resolve(model, pluginId, userId);
+    const { endpoint, headers } = await this.resolve(model, pluginId, userId);
     const contentEndpoint = `${endpoint.replace(
       /\/+$/,
       ''
@@ -177,6 +225,7 @@ export class PluginVideoGenerationService {
         responseType: 'arraybuffer',
         maxRedirects: 0,
         maxContentLength: 200 * 1024 * 1024,
+        signal,
       });
       const mimeType = String(response.headers['content-type'] || 'video/mp4')
         .split(';')[0]
@@ -186,12 +235,91 @@ export class PluginVideoGenerationService {
       }
       return { video: Buffer.from(response.data), mimeType };
     } catch (error) {
+      if (axios.isCancel(error) || signal?.aborted) {
+        throw cancellationReason(signal, 'Video download');
+      }
       throw toVideoError(error);
     }
   }
 
-  private resolve(model: string, pluginId: string, userId: string) {
-    const plugin = this.deps.getPlugin(pluginId, userId);
+  async supportsCancellation(
+    model: string,
+    pluginId: string,
+    userId: string
+  ): Promise<boolean> {
+    try {
+      const { endpoint, config } = await this.resolve(model, pluginId, userId);
+      const configuredEndpoint = config?.cancel_endpoint;
+      const method = config?.cancel_method || 'POST';
+      if (
+        typeof configuredEndpoint !== 'string' ||
+        !configuredEndpoint.includes('{job_id}') ||
+        (method !== 'POST' && method !== 'DELETE')
+      ) {
+        return false;
+      }
+      const candidate = resolveRelativeOperationEndpoint(
+        endpoint,
+        configuredEndpoint.replace('{job_id}', 'job-id')
+      );
+      assertSafePluginEndpoint(candidate, 'video cancellation endpoint');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async cancel(
+    model: string,
+    providerJobId: string,
+    pluginId: string,
+    userId: string,
+    signal?: AbortSignal
+  ): Promise<void> {
+    const { endpoint, headers, config } = await this.resolve(
+      model,
+      pluginId,
+      userId
+    );
+    const configuredEndpoint = config?.cancel_endpoint;
+    if (typeof configuredEndpoint !== 'string' || !configuredEndpoint) {
+      throw new VideoCancellationUnsupportedError();
+    }
+    const expandedEndpoint = configuredEndpoint.replace(
+      /\{job_id\}/g,
+      encodeURIComponent(providerJobId)
+    );
+    if (!configuredEndpoint.includes('{job_id}')) {
+      throw new Error('Video cancel endpoint must contain {job_id}');
+    }
+    const cancelEndpoint = resolveRelativeOperationEndpoint(
+      endpoint,
+      expandedEndpoint
+    );
+    assertSafePluginEndpoint(cancelEndpoint, 'video cancellation endpoint');
+    const method = config.cancel_method || 'POST';
+    if (method !== 'POST' && method !== 'DELETE') {
+      throw new Error('Video cancel method must be POST or DELETE');
+    }
+    try {
+      await axios.request({
+        url: cancelEndpoint,
+        method,
+        headers,
+        timeout: 15000,
+        maxRedirects: 0,
+        signal,
+      });
+    } catch (error) {
+      if (axios.isCancel(error) || signal?.aborted) {
+        throw cancellationReason(signal, 'Video cancellation request');
+      }
+      throw toVideoError(error);
+    }
+  }
+
+  private async resolve(model: string, pluginId: string, userId: string) {
+    const plugin = await this.deps.getPlugin(pluginId, userId);
     const capability = plugin?.capabilities?.video;
     if (
       !plugin?.active ||
@@ -200,13 +328,13 @@ export class PluginVideoGenerationService {
     ) {
       throw new Error(`No video generation plugin found for model: ${model}`);
     }
-    const apiKey = this.deps.getApiKey(plugin, userId);
+    const apiKey = await this.deps.getApiKey(plugin, userId);
     if (!apiKey) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
       );
     }
-    const variables = this.deps.getPluginVariables(plugin, userId);
+    const variables = await this.deps.getPluginVariables(plugin, userId);
     let endpoint = capability.endpoint;
     const endpointVariable = capability.config?.endpoint_variable;
     if (endpointVariable) {
@@ -230,7 +358,8 @@ export class PluginVideoGenerationService {
     plugin: Plugin,
     model: string,
     userId: string,
-    startedAt: number
+    startedAt: number,
+    status: 'error' | 'cancelled'
   ) {
     this.deps.recordUsage?.({
       userId,
@@ -238,12 +367,46 @@ export class PluginVideoGenerationService {
       pluginName: plugin.name,
       capability: 'video',
       model,
-      status: 'error',
+      status,
       durationMs: Date.now() - startedAt,
       outputUnits: 0,
       unitKind: 'jobs',
     });
   }
+}
+
+export class VideoCancellationUnsupportedError extends Error {
+  constructor() {
+    super('The selected video provider does not declare job cancellation');
+    this.name = 'VideoCancellationUnsupportedError';
+  }
+}
+
+function resolveRelativeOperationEndpoint(
+  generationEndpoint: string,
+  configuredEndpoint: string
+): string {
+  try {
+    return new URL(configuredEndpoint).toString();
+  } catch {
+    const generationUrl = new URL(generationEndpoint);
+    if (configuredEndpoint.startsWith('/')) {
+      return new URL(configuredEndpoint, generationUrl.origin).toString();
+    }
+    const base = generationEndpoint.endsWith('/')
+      ? generationEndpoint
+      : `${generationEndpoint}/`;
+    return new URL(configuredEndpoint, base).toString();
+  }
+}
+
+function cancellationReason(
+  signal: AbortSignal | undefined,
+  operation: string
+) {
+  return signal?.reason instanceof Error
+    ? signal.reason
+    : new Error(`${operation} was cancelled`);
 }
 
 function toVideoError(error: unknown): Error {

@@ -38,6 +38,10 @@ Open [http://localhost:8080](http://localhost:8080). Create the first account;
 that account becomes the administrator. Later public registration remains
 disabled unless you explicitly set `ENABLE_SIGNUP=true`.
 
+The packaged launcher keeps persistent state in `~/.libre-webui`. Set an
+absolute `DATA_DIR` to choose another location; relative values are resolved
+from the directory where you run `npx`.
+
 ## Install Ollama
 
 Install [Ollama](https://ollama.com), then pull a small general model:

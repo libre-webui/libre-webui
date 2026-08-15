@@ -10,7 +10,6 @@ services:
       - OLLAMA_BASE_URL=http://ollama:11434
       # For network access, add your IP/hostname to CORS_ORIGIN:
       - CORS_ORIGIN=http://localhost:8080
-      - SINGLE_USER_MODE=false
       - ENABLE_SIGNUP=${ENABLE_SIGNUP:-false}
       # JWT_SECRET: Generate with 'openssl rand -hex 64' and set via .env file or environment
       - JWT_SECRET=${JWT_SECRET:-}
@@ -18,12 +17,27 @@ services:
       # Encryption: Optional 64-character hex key. If not provided, one will be auto-generated
       # and stored in the persistent data volume for security across container restarts
       - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}
+      # Platform foundation selectors. Shared backends remain fail-closed;
+      # Redis coordination is usable in solo mode with an external REDIS_URL.
+      - LIBRE_PLATFORM_MODE=${LIBRE_PLATFORM_MODE:-solo}
+      - DATABASE_BACKEND=${DATABASE_BACKEND:-sqlite}
+      - DATABASE_URL=${DATABASE_URL:-}
+      - BLOB_STORE_BACKEND=${BLOB_STORE_BACKEND:-local}
+      - VECTOR_STORE_BACKEND=${VECTOR_STORE_BACKEND:-embedded}
+      - COORDINATION_BACKEND=${COORDINATION_BACKEND:-local}
+      - REDIS_URL=${REDIS_URL:-}
+      - REDIS_KEY_PREFIX=${REDIS_KEY_PREFIX:-libre}
+      - REDIS_CONNECT_TIMEOUT_MS=${REDIS_CONNECT_TIMEOUT_MS:-5000}
+      - JOB_WORKER_MODE=${JOB_WORKER_MODE:-embedded}
+      - STORAGE_ENCRYPTION_KEYS=${STORAGE_ENCRYPTION_KEYS:-}
+      - STORAGE_ENCRYPTION_ACTIVE_KEY_ID=${STORAGE_ENCRYPTION_ACTIVE_KEY_ID:-}
       # Timeout configuration for large models on multiple GPUs
       - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-300000}
       - OLLAMA_LONG_OPERATION_TIMEOUT=${OLLAMA_LONG_OPERATION_TIMEOUT:-900000}
       - VITE_API_TIMEOUT=${VITE_API_TIMEOUT:-300000}
       # Database path - points to the volume mount
       - DATA_DIR=/app/backend/data
+      - PLATFORM_PREFLIGHT_TMP_DIR=/app/backend/temp/preflight
       # GitHub OAuth2 SSO Configuration
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}

@@ -18,14 +18,13 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { createLogger } from '../utils/logger.js';
+import {
+  BACKEND_DIRECTORY,
+  resolveDataDirectory,
+} from '../utils/dataDirectory.js';
 
 const logger = createLogger('encryption');
-
-// ESM __dirname equivalent
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * Encryption service for sensitive data
@@ -34,7 +33,8 @@ const __dirname = path.dirname(__filename);
 export class EncryptionService {
   private static instance: EncryptionService;
   private encryptionKey: Buffer;
-  private algorithm = 'aes-256-gcm';
+  private readonly algorithm = 'aes-256-gcm' as const;
+  private readonly binaryEnvelopeMagic = Buffer.from('LWB1', 'ascii');
 
   /**
    * Automatically add the encryption key to the .env file or persistent storage
@@ -57,8 +57,7 @@ export class EncryptionService {
    */
   private saveKeyToPersistentStorage(encryptionKey: string): void {
     try {
-      const dataDir =
-        process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
+      const dataDir = resolveDataDirectory();
       const keyPath = path.join(dataDir, '.encryption_key');
 
       // Ensure data directory exists
@@ -81,8 +80,8 @@ export class EncryptionService {
         '❌ Failed to save ENCRYPTION_KEY to persistent storage:',
         error
       );
-      logger.warn(
-        '   Set ENCRYPTION_KEY through protected configuration before restarting.'
+      throw new Error(
+        'Unable to persist ENCRYPTION_KEY; refusing to continue with an ephemeral key'
       );
     }
   }
@@ -91,29 +90,7 @@ export class EncryptionService {
    * Find the .env file location - checks multiple possible locations
    */
   private findEnvFilePath(): string {
-    // Possible .env file locations in order of priority
-    const possiblePaths = [
-      path.join(process.cwd(), 'backend', '.env'), // Running from project root (npm run dev)
-      path.join(process.cwd(), '.env'), // Running from backend directory
-      path.join(__dirname, '..', '..', '.env'), // Relative to this file (backend/src/services -> backend/)
-    ];
-
-    // Find the first existing .env file
-    for (const envPath of possiblePaths) {
-      if (fs.existsSync(envPath)) {
-        return envPath;
-      }
-    }
-
-    // If no .env exists, prefer the backend/.env location if backend dir exists
-    const backendEnvPath = path.join(process.cwd(), 'backend', '.env');
-    const backendDir = path.dirname(backendEnvPath);
-    if (fs.existsSync(backendDir)) {
-      return backendEnvPath;
-    }
-
-    // Fallback to cwd/.env
-    return path.join(process.cwd(), '.env');
+    return path.join(BACKEND_DIRECTORY, '.env');
   }
 
   /**
@@ -177,8 +154,8 @@ export class EncryptionService {
         '❌ Failed to automatically add ENCRYPTION_KEY to .env file:',
         error
       );
-      logger.warn(
-        '   Set ENCRYPTION_KEY through protected configuration before restarting.'
+      throw new Error(
+        'Unable to persist ENCRYPTION_KEY; refusing to continue with an ephemeral key'
       );
     }
   }
@@ -188,8 +165,7 @@ export class EncryptionService {
    */
   private loadKeyFromPersistentStorage(): string | null {
     try {
-      const dataDir =
-        process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
+      const dataDir = resolveDataDirectory();
       const keyPath = path.join(dataDir, '.encryption_key');
 
       if (fs.existsSync(keyPath)) {
@@ -214,11 +190,10 @@ export class EncryptionService {
     // Get encryption key from environment, persistent storage, or generate one
     let keyString = process.env.ENCRYPTION_KEY;
 
-    // If no environment variable, try loading from persistent storage (Docker or npx)
-    if (
-      !keyString &&
-      (process.env.DOCKER_ENV === 'true' || process.env.DATA_DIR)
-    ) {
+    // A persistent key is valid for every launch mode. Restricting this lookup
+    // to Docker or an explicit DATA_DIR could generate a replacement key when
+    // the same canonical data directory is opened from a different entrypoint.
+    if (!keyString) {
       const persistentKey = this.loadKeyFromPersistentStorage();
       if (persistentKey) {
         keyString = persistentKey;
@@ -243,7 +218,12 @@ export class EncryptionService {
       logger.warn('⚠️  No ENCRYPTION_KEY found. Generated a new key.');
 
       // Automatically add the key to appropriate storage (Docker/npx vs dev)
-      this.addKeyToStorage(newKeyString);
+      try {
+        this.addKeyToStorage(newKeyString);
+      } catch (error) {
+        this.encryptionKey.fill(0);
+        throw error;
+      }
 
       if (process.env.DOCKER_ENV === 'true' || process.env.DATA_DIR) {
         logger.info('🔐 Generated encryption key saved to persistent storage');
@@ -293,6 +273,56 @@ export class EncryptionService {
     }
   }
 
+  private parseTextEnvelope(encryptedData: string): {
+    iv: Buffer;
+    authTag: Buffer;
+    encrypted: string;
+  } {
+    const parts = encryptedData.split(':');
+    const [ivHex, authTagHex, encrypted] = parts;
+    if (
+      parts.length !== 3 ||
+      !ivHex ||
+      !authTagHex ||
+      encrypted === undefined ||
+      !/^[a-fA-F0-9]{32}$/.test(ivHex) ||
+      !/^[a-fA-F0-9]{32}$/.test(authTagHex) ||
+      !/^(?:[a-fA-F0-9]{2})*$/.test(encrypted)
+    ) {
+      throw new Error('Invalid encrypted text data');
+    }
+    return {
+      iv: Buffer.from(ivHex, 'hex'),
+      authTag: Buffer.from(authTagHex, 'hex'),
+      encrypted,
+    };
+  }
+
+  /**
+   * Decrypt a canonical text envelope without the legacy plaintext fallback.
+   * Persistence boundaries use this form so a wrong key or damaged identity
+   * value can never be returned to an API as if it were an email address.
+   */
+  public decryptAuthenticated(encryptedData: string): string {
+    const { iv, authTag, encrypted } = this.parseTextEnvelope(encryptedData);
+    try {
+      const decipher = crypto.createDecipheriv(
+        this.algorithm,
+        this.encryptionKey,
+        iv,
+        { authTagLength: 16 }
+      );
+      (decipher as crypto.DecipherGCM).setAuthTag(authTag);
+
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    } catch {
+      logger.error('Authenticated text decryption failed');
+      throw new Error('Failed to decrypt authenticated text data');
+    }
+  }
+
   /**
    * Decrypt encrypted text data
    */
@@ -308,42 +338,80 @@ export class EncryptionService {
     }
 
     try {
-      const parts = encryptedData.split(':');
-      if (parts.length !== 3) {
-        logger.warn(
-          `Decryption: Invalid format (expected 3 parts, got ${parts.length}), treating as unencrypted data`
-        );
-        return encryptedData;
-      }
-
-      const [ivHex, authTagHex, encrypted] = parts;
-
-      // Validate hex format before attempting to convert
-      if (!/^[a-fA-F0-9]+$/.test(ivHex) || !/^[a-fA-F0-9]+$/.test(authTagHex)) {
-        logger.warn(
-          'Decryption: Invalid hex format, treating as unencrypted data'
-        );
-        return encryptedData;
-      }
-
-      const iv = Buffer.from(ivHex, 'hex');
-      const authTag = Buffer.from(authTagHex, 'hex');
-
-      const decipher = crypto.createDecipheriv(
-        this.algorithm,
-        this.encryptionKey,
-        iv
-      );
-      (decipher as crypto.DecipherGCM).setAuthTag(authTag);
-
-      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-      decrypted += decipher.final('utf8');
-
-      return decrypted;
+      return this.decryptAuthenticated(encryptedData);
     } catch (error) {
       logger.error('Decryption error:', error);
       logger.warn('Treating as unencrypted data for backward compatibility');
       return encryptedData; // Return original data if decryption fails
+    }
+  }
+
+  /**
+   * Encrypt arbitrary bytes in a versioned AES-256-GCM envelope.
+   *
+   * Binary payloads must not be converted to text before encryption: doing so
+   * can corrupt audio and other non-UTF-8 data. The envelope is self-checking
+   * and intentionally has no plaintext fallback.
+   */
+  public encryptBuffer(plaintext: Buffer, additionalData?: Buffer): Buffer {
+    try {
+      const iv = crypto.randomBytes(12);
+      const cipher = crypto.createCipheriv(
+        this.algorithm,
+        this.encryptionKey,
+        iv
+      ) as crypto.CipherGCM;
+      if (additionalData) cipher.setAAD(additionalData);
+      const encrypted = Buffer.concat([
+        cipher.update(plaintext),
+        cipher.final(),
+      ]);
+      const authTag = cipher.getAuthTag();
+
+      return Buffer.concat([this.binaryEnvelopeMagic, iv, authTag, encrypted]);
+    } catch (error) {
+      logger.error('Binary encryption error:', error);
+      throw new Error('Failed to encrypt binary data');
+    }
+  }
+
+  /**
+   * Decrypt bytes produced by encryptBuffer(). Authentication failures are
+   * fatal so corrupted or plaintext data can never be mistaken for a secret.
+   */
+  public decryptBuffer(encryptedData: Buffer, additionalData?: Buffer): Buffer {
+    const magicLength = this.binaryEnvelopeMagic.length;
+    const ivLength = 12;
+    const authTagLength = 16;
+    const minimumLength = magicLength + ivLength + authTagLength;
+
+    if (
+      encryptedData.length < minimumLength ||
+      !encryptedData.subarray(0, magicLength).equals(this.binaryEnvelopeMagic)
+    ) {
+      throw new Error('Invalid encrypted binary data');
+    }
+
+    try {
+      const ivStart = magicLength;
+      const tagStart = ivStart + ivLength;
+      const encryptedStart = tagStart + authTagLength;
+      const decipher = crypto.createDecipheriv(
+        this.algorithm,
+        this.encryptionKey,
+        encryptedData.subarray(ivStart, tagStart),
+        { authTagLength }
+      ) as crypto.DecipherGCM;
+      if (additionalData) decipher.setAAD(additionalData);
+      decipher.setAuthTag(encryptedData.subarray(tagStart, encryptedStart));
+
+      return Buffer.concat([
+        decipher.update(encryptedData.subarray(encryptedStart)),
+        decipher.final(),
+      ]);
+    } catch (error) {
+      logger.error('Binary decryption error:', error);
+      throw new Error('Failed to decrypt binary data');
     }
   }
 
@@ -366,7 +434,25 @@ export class EncryptionService {
    * Check if data appears to be encrypted
    */
   public isEncrypted(data: string): boolean {
-    return Boolean(data && data.includes(':') && data.split(':').length === 3);
+    try {
+      this.parseTextEnvelope(data);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Produce an equality-only lookup token for an identity email. Randomized
+   * ciphertext remains the stored value; this keyed token restores atomic
+   * uniqueness without exposing the address or using deterministic encryption.
+   */
+  public lookupToken(plaintext: string): string {
+    return crypto
+      .createHmac('sha256', this.encryptionKey)
+      .update('libre:identity-email:v1\0', 'utf8')
+      .update(plaintext, 'utf8')
+      .digest('hex');
   }
 
   /**

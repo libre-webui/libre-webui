@@ -35,6 +35,10 @@ import {
   userCanDownloadModels,
 } from '../services/modelAccessService.js';
 import { userModel } from '../models/userModel.js';
+import {
+  abortChatGenerationOnResponseClose,
+  isChatGenerationCancelled,
+} from '../utils/chatCancellation.js';
 
 const router = express.Router();
 router.use(authenticate);
@@ -44,11 +48,11 @@ router.use(authenticate);
  * active users pass when an administrator has opened model downloads to all
  * users. Authorization follows current database state on every request.
  */
-const requireModelDownloadAccess = (
+const requireModelDownloadAccess = async (
   req: AuthenticatedRequest,
   res: Response,
   next: express.NextFunction
-): void => {
+): Promise<void> => {
   if (!req.user) {
     res.status(403).json({
       success: false,
@@ -56,8 +60,8 @@ const requireModelDownloadAccess = (
     });
     return;
   }
-  const currentUser = userModel.getUserById(req.user.userId);
-  if (!currentUser || !userCanDownloadModels(currentUser)) {
+  const currentUser = await userModel.getUserById(req.user.userId);
+  if (!currentUser || !(await userCanDownloadModels(currentUser))) {
     res.status(403).json({
       success: false,
       message: 'Model downloads are restricted to administrators.',
@@ -123,21 +127,26 @@ router.get(
 // Who may pull models. Read is open to any authenticated user so the
 // interface can decide whether to offer download affordances; changing the
 // mode is admin-only.
-router.get('/models/access', (req: AuthenticatedRequest, res: Response) => {
-  const currentUser = req.user ? userModel.getUserById(req.user.userId) : null;
-  res.json({
-    success: true,
-    data: {
-      mode: getModelDownloadMode(),
-      allowed: currentUser ? userCanDownloadModels(currentUser) : false,
-    },
-  });
-});
+router.get(
+  '/models/access',
+  async (req: AuthenticatedRequest, res: Response) => {
+    const currentUser = req.user
+      ? await userModel.getUserById(req.user.userId)
+      : null;
+    res.json({
+      success: true,
+      data: {
+        mode: await getModelDownloadMode(),
+        allowed: currentUser ? await userCanDownloadModels(currentUser) : false,
+      },
+    });
+  }
+);
 
 router.put(
   '/models/access',
   requireAdmin,
-  (req: Request, res: Response): void => {
+  async (req: Request, res: Response): Promise<void> => {
     const mode = req.body?.mode;
     if (!isModelDownloadMode(mode)) {
       res.status(400).json({
@@ -146,8 +155,8 @@ router.put(
       });
       return;
     }
-    setModelDownloadMode(mode);
-    res.json({ success: true, data: { mode: getModelDownloadMode() } });
+    await setModelDownloadMode(mode);
+    res.json({ success: true, data: { mode: await getModelDownloadMode() } });
   }
 );
 
@@ -536,18 +545,25 @@ router.get(
 router.post(
   '/chat',
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+    const { controller, cleanup } = abortChatGenerationOnResponseClose(res);
     try {
       const data = await ollamaService.generateChatResponse(
         req.body,
-        undefined,
+        controller.signal,
         { userId: (req as AuthenticatedRequest).user?.userId }
       );
       res.json({ success: true, data });
     } catch (error: unknown) {
+      if (isChatGenerationCancelled(error, controller.signal)) {
+        if (!res.writableEnded) res.status(499).end();
+        return;
+      }
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to generate chat response'),
       });
+    } finally {
+      cleanup();
     }
   }
 );
@@ -556,6 +572,8 @@ router.post(
 router.post(
   '/chat/stream',
   async (req: Request, res: Response): Promise<void> => {
+    const { controller, cleanup } = abortChatGenerationOnResponseClose(res);
+    const signal = controller.signal;
     try {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
@@ -564,24 +582,33 @@ router.post(
       await ollamaService.generateChatStreamResponse(
         req.body,
         chunk => {
+          if (signal.aborted || res.writableEnded) return;
           res.write(`data: ${JSON.stringify(chunk)}\n\n`);
         },
         error => {
+          if (signal.aborted || res.writableEnded) return;
           res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
           res.end();
         },
         () => {
+          if (signal.aborted || res.writableEnded) return;
           res.write('data: [DONE]\n\n');
           res.end();
         },
-        undefined,
+        signal,
         { userId: (req as AuthenticatedRequest).user?.userId }
       );
     } catch (error: unknown) {
+      if (isChatGenerationCancelled(error, signal)) {
+        if (!res.writableEnded) res.end();
+        return;
+      }
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to stream chat response'),
       });
+    } finally {
+      cleanup();
     }
   }
 );

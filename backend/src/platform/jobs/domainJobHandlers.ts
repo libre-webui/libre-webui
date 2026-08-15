@@ -1,0 +1,957 @@
+/*
+ * Libre WebUI
+ * Copyright (C) 2025 Kroonen AI, Inc.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ */
+
+import mediaGenerationJobService from '../../services/mediaGenerationJobService.js';
+import documentService, {
+  DocumentChunkLimitError,
+} from '../../services/documentService.js';
+import durableChatGenerationService, {
+  type DurableChatGenerationInput,
+} from '../../services/durableChatGenerationService.js';
+import pluginService from '../../services/pluginService.js';
+import workAgentService from '../../services/workAgentService.js';
+import {
+  cleanupPlatformOwnerContent,
+  cleanupPlatformResourceContent,
+  getPlatformStorageRuntime,
+  MAX_VECTOR_RESOURCE_INDEX_ENTRIES,
+} from '../storage/index.js';
+import { getCoordinator } from '../coordination/service.js';
+import {
+  combineAbortSignals,
+  SHARED_COORDINATION_OPERATION_TIMEOUT_MS,
+  withCoordinationTimeout,
+} from '../coordination/sharedAdmission.js';
+import type { CoordinationLease, Coordinator } from '../coordination/types.js';
+import { DurableJobExecutionError } from './durableJobTypes.js';
+import type { DurableJobHandler } from './embeddedDurableJobWorker.js';
+import {
+  CHAT_GENERATE_JOB_TYPE,
+  DOCUMENT_INGEST_IDEMPOTENCY_SCOPE,
+  DOCUMENT_INGEST_JOB_TYPE,
+  OWNER_DELETE_CONTENT_JOB_TYPE,
+  RESOURCE_DELETE_JOB_TYPE,
+  VIDEO_RESUME_IDEMPOTENCY_SCOPE,
+  VIDEO_RESUME_JOB_TYPE,
+  VIDEO_SUBMIT_IDEMPOTENCY_SCOPE,
+  VIDEO_SUBMIT_JOB_TYPE,
+  WORK_EXECUTE_JOB_TYPE,
+} from './domainJobContracts.js';
+import { getDurableJobRuntime } from './durableJobRuntime.js';
+import type { DurableJobExecutionContext } from './embeddedDurableJobWorker.js';
+
+const resourceLeaseTtlMs = (): number => {
+  const value = Number.parseInt(
+    process.env.RESOURCE_LEASE_TTL_MS ?? '30000',
+    10
+  );
+  if (!Number.isSafeInteger(value) || value < 5_000 || value > 300_000) {
+    throw new Error(
+      'RESOURCE_LEASE_TTL_MS must be between 5000 and 300000 milliseconds'
+    );
+  }
+  return value;
+};
+
+const RESOURCE_LEASE_TTL_MS = resourceLeaseTtlMs();
+const RESOURCE_LEASE_OPERATION_TIMEOUT_MS = Math.min(
+  SHARED_COORDINATION_OPERATION_TIMEOUT_MS,
+  Math.max(1_000, Math.floor(RESOURCE_LEASE_TTL_MS / 3))
+);
+
+export interface ResourceLeaseReservation {
+  readonly signal: AbortSignal;
+  extend(): Promise<boolean>;
+  release(): Promise<boolean>;
+}
+
+const waitForResourceLeaseOperation = async <T>(
+  operation: Promise<T>,
+  signal: AbortSignal,
+  operationTimeoutMs: number
+): Promise<T> => {
+  if (signal.aborted) throw signal.reason;
+  let abortListener: (() => void) | undefined;
+  try {
+    return await Promise.race([
+      withCoordinationTimeout(operation, operationTimeoutMs),
+      new Promise<never>((_resolve, reject) => {
+        abortListener = () => reject(signal.reason);
+        signal.addEventListener('abort', abortListener, { once: true });
+      }),
+    ]);
+  } finally {
+    if (abortListener) signal.removeEventListener('abort', abortListener);
+  }
+};
+
+export const acquireResourceLease = async (
+  context: DurableJobExecutionContext,
+  resourceType: string,
+  resourceId: string,
+  coordinator: Coordinator = getCoordinator(),
+  operationTimeoutMs = RESOURCE_LEASE_OPERATION_TIMEOUT_MS
+): Promise<ResourceLeaseReservation> => {
+  await context.assertSideEffectAllowed();
+  try {
+    let abandoned = false;
+    const pendingLease = coordinator.acquireLease(
+      `resource:${context.actorUserId}:${resourceType}:${resourceId}`,
+      RESOURCE_LEASE_TTL_MS
+    );
+    void pendingLease
+      .then(lease => {
+        if (!abandoned || !lease) return;
+        void withCoordinationTimeout(lease.release(), operationTimeoutMs).catch(
+          () => undefined
+        );
+      })
+      .catch(() => undefined);
+    let lease: CoordinationLease | null;
+    try {
+      lease = await waitForResourceLeaseOperation(
+        pendingLease,
+        context.signal,
+        operationTimeoutMs
+      );
+    } catch (error) {
+      abandoned = true;
+      throw error;
+    }
+    if (!lease) {
+      throw new DurableJobExecutionError(
+        true,
+        'resource-busy',
+        'The resource is being changed by another worker'
+      );
+    }
+    let stopped = false;
+    let lost = false;
+    const lossController = new AbortController();
+    let renewal: ReturnType<typeof setTimeout> | undefined;
+    const markLost = (): void => {
+      if (lost) return;
+      lost = true;
+      lossController.abort(
+        new Error('The resource coordination lease was lost')
+      );
+    };
+    const scheduleRenewal = (): void => {
+      if (stopped || lost) return;
+      renewal = setTimeout(
+        async () => {
+          try {
+            if (
+              !(await waitForResourceLeaseOperation(
+                lease.extend(RESOURCE_LEASE_TTL_MS),
+                context.signal,
+                operationTimeoutMs
+              ))
+            ) {
+              markLost();
+            }
+          } catch {
+            markLost();
+          }
+          scheduleRenewal();
+        },
+        Math.max(1_000, Math.floor(RESOURCE_LEASE_TTL_MS / 3))
+      );
+      renewal.unref?.();
+    };
+    scheduleRenewal();
+    return {
+      signal: lossController.signal,
+      async extend(): Promise<boolean> {
+        if (stopped || lost) return false;
+        try {
+          const extended = await waitForResourceLeaseOperation(
+            lease.extend(RESOURCE_LEASE_TTL_MS),
+            context.signal,
+            operationTimeoutMs
+          );
+          if (!extended) markLost();
+          return extended;
+        } catch {
+          markLost();
+          return false;
+        }
+      },
+      async release(): Promise<boolean> {
+        if (stopped) return false;
+        stopped = true;
+        if (renewal) clearTimeout(renewal);
+        return withCoordinationTimeout(
+          lease.release(),
+          operationTimeoutMs
+        ).catch(() => false);
+      },
+    };
+  } catch (error) {
+    if (error instanceof DurableJobExecutionError) throw error;
+    throw new DurableJobExecutionError(
+      true,
+      'coordination-unavailable',
+      'Resource coordination is unavailable'
+    );
+  }
+};
+
+const assertResourceLease = async (
+  context: DurableJobExecutionContext,
+  lease: Awaited<ReturnType<typeof acquireResourceLease>>
+): Promise<void> => {
+  await context.assertSideEffectAllowed();
+  try {
+    if (await lease.extend()) return;
+  } catch {
+    // Report the same safe failure as an expired fencing lease.
+  }
+  throw new DurableJobExecutionError(
+    true,
+    'resource-lease-lost',
+    'The resource coordination lease was lost'
+  );
+};
+
+const withResourceLeaseFence = (
+  context: DurableJobExecutionContext,
+  lease: Awaited<ReturnType<typeof acquireResourceLease>>
+): DurableJobExecutionContext => ({
+  ...context,
+  signal: combineAbortSignals(context.signal, lease.signal),
+  assertSideEffectAllowed: async () => {
+    await context.assertSideEffectAllowed();
+    await assertResourceLease(context, lease);
+  },
+});
+
+const delay = (milliseconds: number, signal: AbortSignal): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(signal.reason ?? new Error('Cancelled'));
+      return;
+    }
+    let settled = false;
+    let timer: NodeJS.Timeout;
+    const finish = (error?: unknown): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      signal.removeEventListener('abort', abort);
+      if (error === undefined) resolve();
+      else reject(error);
+    };
+    const abort = (): void => finish(signal.reason ?? new Error('Cancelled'));
+    timer = setTimeout(finish, milliseconds);
+    timer.unref?.();
+    signal.addEventListener('abort', abort, { once: true });
+  });
+
+const delayRecoveryDrillFault = async (
+  marker: string,
+  value: string,
+  context: DurableJobExecutionContext
+): Promise<void> => {
+  if (
+    process.env.LIBRE_ENABLE_TEST_FAULT_INJECTION !== 'true' ||
+    context.attemptCount !== 1 ||
+    !value.includes(marker)
+  ) {
+    return;
+  }
+  const delayMs = Number.parseInt(
+    process.env.LIBRE_TEST_FAULT_DELAY_MS ?? '60000',
+    10
+  );
+  if (!Number.isSafeInteger(delayMs) || delayMs < 1 || delayMs > 300_000) {
+    throw new DurableJobExecutionError(
+      false,
+      'fault-injection-invalid',
+      'The recovery-drill fault configuration is invalid'
+    );
+  }
+  await delay(delayMs, context.signal);
+};
+
+const readVideoPayload = (value: unknown): { legacyJobId: string } => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The media job payload is invalid'
+    );
+  }
+  const legacyJobId = (value as Record<string, unknown>).legacyJobId;
+  if (typeof legacyJobId !== 'string' || !legacyJobId.trim()) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The media job payload is invalid'
+    );
+  }
+  return { legacyJobId };
+};
+
+const readResourceDeletePayload = (
+  value: unknown
+): {
+  resourceType: 'document' | 'generated-media' | 'persona';
+  resourceId: string;
+  deletionIncarnation: number;
+  deletionToken: string;
+} => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The resource deletion payload is invalid'
+    );
+  }
+  const record = value as Record<string, unknown>;
+  const resourceType = record.resourceType;
+  const resourceId = record.resourceId;
+  const deletionIncarnation = record.deletionIncarnation;
+  const deletionToken = record.deletionToken;
+  if (
+    !['document', 'generated-media', 'persona'].includes(
+      String(resourceType)
+    ) ||
+    typeof resourceId !== 'string' ||
+    !resourceId.trim() ||
+    !Number.isSafeInteger(deletionIncarnation) ||
+    Number(deletionIncarnation) <= 0 ||
+    typeof deletionToken !== 'string' ||
+    !/^[0-9a-f]{64}$/.test(deletionToken)
+  ) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The resource deletion payload is invalid'
+    );
+  }
+  return {
+    resourceType: resourceType as 'document' | 'generated-media' | 'persona',
+    resourceId,
+    deletionIncarnation: Number(deletionIncarnation),
+    deletionToken,
+  };
+};
+
+const readWorkPayload = (value: unknown): { taskId: string; runId: string } => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The Work execution payload is invalid'
+    );
+  }
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.taskId !== 'string' ||
+    !record.taskId.trim() ||
+    typeof record.runId !== 'string' ||
+    !record.runId.trim()
+  ) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The Work execution payload is invalid'
+    );
+  }
+  return { taskId: record.taskId, runId: record.runId };
+};
+
+const readDocumentPayload = (value: unknown): { documentId: string } => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The document ingestion payload is invalid'
+    );
+  }
+  const documentId = (value as Record<string, unknown>).documentId;
+  if (typeof documentId !== 'string' || !documentId.trim()) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The document ingestion payload is invalid'
+    );
+  }
+  return { documentId };
+};
+
+const readOwnerDeletePayload = (
+  value: unknown
+): { targetUserId: string; actorUserId: string } => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The owner cleanup payload is invalid'
+    );
+  }
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.targetUserId !== 'string' ||
+    !record.targetUserId.trim() ||
+    typeof record.actorUserId !== 'string' ||
+    !record.actorUserId.trim()
+  ) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The owner cleanup payload is invalid'
+    );
+  }
+  return {
+    targetUserId: record.targetUserId,
+    actorUserId: record.actorUserId,
+  };
+};
+
+const readChatPayload = (value: unknown): DurableChatGenerationInput => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The chat generation payload is invalid'
+    );
+  }
+  const record = value as Record<string, unknown>;
+  for (const field of [
+    'sessionId',
+    'actorUserId',
+    'userMessageId',
+    'assistantMessageId',
+  ] as const) {
+    if (typeof record[field] !== 'string' || !record[field].trim()) {
+      throw new DurableJobExecutionError(
+        false,
+        'payload-invalid',
+        'The chat generation payload is invalid'
+      );
+    }
+  }
+  if (
+    typeof record.message !== 'string' ||
+    (!record.message.trim() && record.hasImages !== true) ||
+    typeof record.hasImages !== 'boolean' ||
+    !record.options ||
+    typeof record.options !== 'object' ||
+    Array.isArray(record.options) ||
+    typeof record.webSearch !== 'boolean' ||
+    (record.regenerate !== undefined &&
+      typeof record.regenerate !== 'boolean') ||
+    (record.regenerate === true &&
+      (typeof record.originalMessageId !== 'string' ||
+        !record.originalMessageId.trim()))
+  ) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The chat generation payload is invalid'
+    );
+  }
+  return {
+    ...(record as unknown as DurableChatGenerationInput),
+    regenerate: record.regenerate === true,
+  };
+};
+
+const submitVideo: DurableJobHandler = async context => {
+  const { legacyJobId } = readVideoPayload(context.payload);
+  const job = await mediaGenerationJobService.get(
+    legacyJobId,
+    context.actorUserId
+  );
+  if (!job) {
+    throw new DurableJobExecutionError(
+      false,
+      'media-job-missing',
+      'The media job no longer exists'
+    );
+  }
+  let providerJobId = job.providerJobId;
+  if (providerJobId === 'libre:prepared') {
+    await context.assertSideEffectAllowed();
+    try {
+      const submitted = await pluginService.submitVideoGenRequest(
+        job.model,
+        job.prompt,
+        {
+          pluginId: job.pluginId,
+          userId: context.actorUserId,
+          ...job.options,
+          idempotencyKey: job.id,
+          requireIdempotency: process.env.LIBRE_PLATFORM_MODE === 'team',
+          signal: context.signal,
+        }
+      );
+      providerJobId = submitted.providerJobId;
+      // Test-only exact fault window: provider accepted the stable idempotency
+      // key, but the reconciled handle has not committed yet.
+      await delayRecoveryDrillFault(
+        'LIBRE_VIDEO_POST_SUBMIT_KILL',
+        job.prompt,
+        context
+      );
+    } catch {
+      throw new DurableJobExecutionError(
+        true,
+        'provider-submit-failed',
+        'The media provider did not accept the submission'
+      );
+    }
+  }
+  await context.assertSideEffectAllowed();
+  await mediaGenerationJobService.acceptSubmittedProviderJob(
+    job.id,
+    context.actorUserId,
+    providerJobId
+  );
+  return { resultReference: `media-job:${job.id}:submitted` };
+};
+
+const resumeVideo: DurableJobHandler = async context => {
+  const { legacyJobId } = readVideoPayload(context.payload);
+  let pollCount = 0;
+  for (;;) {
+    if (context.signal.aborted) throw context.signal.reason;
+    const job = await mediaGenerationJobService.get(
+      legacyJobId,
+      context.actorUserId
+    );
+    if (!job) {
+      throw new DurableJobExecutionError(
+        false,
+        'media-job-missing',
+        'The media job no longer exists'
+      );
+    }
+    if (job.status === 'completed') {
+      return {
+        resultReference: job.galleryId ? `gallery:${job.galleryId}` : null,
+      };
+    }
+    if (job.status === 'failed') {
+      throw new DurableJobExecutionError(
+        false,
+        'provider-job-failed',
+        'The media provider reported failure'
+      );
+    }
+    await context.assertSideEffectAllowed();
+    let status: Awaited<ReturnType<typeof pluginService.pollVideoGenRequest>>;
+    try {
+      status = await pluginService.pollVideoGenRequest(
+        job.model,
+        job.providerJobId,
+        job.pluginId,
+        context.actorUserId,
+        context.signal
+      );
+    } catch {
+      throw new DurableJobExecutionError(
+        true,
+        'provider-poll-failed',
+        'The media provider could not be reached'
+      );
+    }
+    pollCount += 1;
+    await context.reportProgress({
+      current: Math.min(95, pollCount),
+      total: 100,
+      message: 'Waiting for the media provider',
+    });
+    if (status.status === 'failed') {
+      await mediaGenerationJobService.update(
+        job.id,
+        context.actorUserId,
+        'failed',
+        {
+          error: 'Video provider reported failure',
+        }
+      );
+      throw new DurableJobExecutionError(
+        false,
+        'provider-job-failed',
+        'The media provider reported failure'
+      );
+    }
+    if (status.status !== 'completed') {
+      await mediaGenerationJobService.update(
+        job.id,
+        context.actorUserId,
+        status.status
+      );
+      await delay(5_000, context.signal);
+      continue;
+    }
+    await context.assertSideEffectAllowed();
+    let downloaded: Awaited<
+      ReturnType<typeof pluginService.downloadVideoGenResult>
+    >;
+    try {
+      downloaded = await pluginService.downloadVideoGenResult(
+        job.model,
+        job.providerJobId,
+        job.pluginId,
+        context.actorUserId,
+        context.signal
+      );
+    } catch {
+      throw new DurableJobExecutionError(
+        true,
+        'provider-download-failed',
+        'The completed media result could not be downloaded'
+      );
+    }
+    await context.assertSideEffectAllowed();
+    const media = await mediaGenerationJobService.completeWithMedia(
+      job.id,
+      context.actorUserId,
+      {
+        mimeType: downloaded.mimeType,
+        mediaData: `data:${downloaded.mimeType};base64,${downloaded.video.toString('base64')}`,
+        metadata: { ...job.options, usage: status.usage || null },
+      },
+      {
+        attemptCount: context.attemptCount,
+        signal: context.signal,
+      }
+    );
+    await context.reportProgress({
+      current: 100,
+      total: 100,
+      message: 'Media saved',
+    });
+    return { resultReference: `gallery:${media.id}` };
+  }
+};
+
+const withVideoResourceLease =
+  (handler: DurableJobHandler): DurableJobHandler =>
+  async context => {
+    const { legacyJobId } = readVideoPayload(context.payload);
+    const lease = await acquireResourceLease(
+      context,
+      'generated-media',
+      legacyJobId
+    );
+    try {
+      return await handler(withResourceLeaseFence(context, lease));
+    } finally {
+      await lease.release().catch(() => false);
+    }
+  };
+
+const deleteResource: DurableJobHandler = async context => {
+  const { resourceType, resourceId, deletionIncarnation, deletionToken } =
+    readResourceDeletePayload(context.payload);
+  const deletion = {
+    resourceType,
+    resourceId,
+    ownerUserId: context.actorUserId,
+    deletionIncarnation,
+    deletionToken,
+  };
+  const lease = await acquireResourceLease(context, resourceType, resourceId);
+  try {
+    if (
+      !(await getPlatformStorageRuntime().domains.resourceDeletions.isCleanupAuthorized(
+        deletion
+      ))
+    ) {
+      return { resultReference: `${resourceType}:${resourceId}:superseded` };
+    }
+    if (resourceType === 'document') {
+      const service = getDurableJobRuntime().service;
+      const ingestion = await service.getByIdempotency(
+        context.actorUserId,
+        DOCUMENT_INGEST_IDEMPOTENCY_SCOPE,
+        resourceId
+      );
+      if (ingestion?.state === 'queued' || ingestion?.state === 'running') {
+        const cancelled = await service.cancel(
+          ingestion.id,
+          context.actorUserId,
+          'superseded'
+        );
+        if (cancelled.state === 'running') {
+          throw new DurableJobExecutionError(
+            true,
+            'resource-work-draining',
+            'Queued resource work is still stopping'
+          );
+        }
+      }
+    } else if (resourceType === 'generated-media') {
+      const service = getDurableJobRuntime().service;
+      for (const scope of [
+        VIDEO_SUBMIT_IDEMPOTENCY_SCOPE,
+        VIDEO_RESUME_IDEMPOTENCY_SCOPE,
+      ]) {
+        const mediaJob = await service.getByIdempotency(
+          context.actorUserId,
+          scope,
+          resourceId
+        );
+        if (mediaJob?.state === 'queued' || mediaJob?.state === 'running') {
+          const cancelled = await service.cancel(
+            mediaJob.id,
+            context.actorUserId,
+            'superseded'
+          );
+          if (cancelled.state === 'running') {
+            throw new DurableJobExecutionError(
+              true,
+              'resource-work-draining',
+              'Queued resource work is still stopping'
+            );
+          }
+        }
+      }
+    }
+    await assertResourceLease(context, lease);
+    if (
+      !(await getPlatformStorageRuntime().domains.resourceDeletions.isCleanupAuthorized(
+        deletion
+      ))
+    ) {
+      return { resultReference: `${resourceType}:${resourceId}:superseded` };
+    }
+    await context.reportProgress({
+      current: 1,
+      total: 3,
+      message: 'Removing indexed content',
+    });
+    try {
+      const cleanup =
+        await getPlatformStorageRuntime().domains.resourceDeletions.withAuthorizedCleanup(
+          deletion,
+          () =>
+            cleanupPlatformResourceContent({
+              resourceType,
+              resourceId,
+              ownerUserId: context.actorUserId,
+            })
+        );
+      if (!cleanup.authorized) {
+        return { resultReference: `${resourceType}:${resourceId}:superseded` };
+      }
+    } catch {
+      throw new DurableJobExecutionError(
+        true,
+        'resource-cleanup-failed',
+        'Resource content cleanup could not be completed'
+      );
+    }
+    await assertResourceLease(context, lease);
+    await context.reportProgress({
+      current: 2,
+      total: 3,
+      message: 'Invalidating shared cache',
+    });
+    try {
+      await getCoordinator().deleteCache(
+        `resource:${context.actorUserId}:${resourceType}:${resourceId}`
+      );
+    } catch {
+      throw new DurableJobExecutionError(
+        true,
+        'cache-invalidation-failed',
+        'Resource cache invalidation could not be completed'
+      );
+    }
+    if (
+      !(await getPlatformStorageRuntime().domains.resourceDeletions.markCleanupCompleted(
+        deletion
+      ))
+    ) {
+      throw new DurableJobExecutionError(
+        true,
+        'resource-tombstone-lost',
+        'Resource deletion state could not be finalized'
+      );
+    }
+    await context.reportProgress({
+      current: 3,
+      total: 3,
+      message: 'Resource cleanup completed',
+    });
+    return { resultReference: `${resourceType}:${resourceId}:deleted` };
+  } finally {
+    await lease.release().catch(() => false);
+  }
+};
+
+const ingestDocument: DurableJobHandler = async context => {
+  const { documentId } = readDocumentPayload(context.payload);
+  const lease = await acquireResourceLease(context, 'document', documentId);
+  const leasedContext = withResourceLeaseFence(context, lease);
+  try {
+    await context.reportProgress({
+      current: 1,
+      total: 3,
+      message: 'Extracting document content',
+    });
+    let result: Awaited<ReturnType<typeof documentService.reprocessDocument>>;
+    try {
+      result = await documentService.reprocessDocument(
+        documentId,
+        context.actorUserId,
+        leasedContext.signal,
+        leasedContext.assertSideEffectAllowed,
+        context.attemptCount
+      );
+    } catch (error) {
+      if (context.signal.aborted) throw error;
+      if (error instanceof DocumentChunkLimitError) {
+        throw new DurableJobExecutionError(
+          false,
+          'document-chunk-limit',
+          `The document exceeds the ${MAX_VECTOR_RESOURCE_INDEX_ENTRIES}-chunk indexing limit; increase the embedding chunk size or remove excessive paragraph breaks`
+        );
+      }
+      throw new DurableJobExecutionError(
+        true,
+        'document-ingestion-failed',
+        'Document extraction or embedding did not complete'
+      );
+    }
+    await context.reportProgress({
+      current: 3,
+      total: 3,
+      message: 'Document indexed',
+    });
+    return {
+      resultReference: `document:${documentId}:chunks:${result.chunks}`,
+    };
+  } finally {
+    await lease.release().catch(() => false);
+  }
+};
+
+const generateChat: DurableJobHandler = async context => {
+  const input = readChatPayload(context.payload);
+  if (input.actorUserId !== context.actorUserId) {
+    throw new DurableJobExecutionError(
+      false,
+      'actor-mismatch',
+      'The chat generation actor does not match its durable job'
+    );
+  }
+  await context.reportProgress({
+    current: 1,
+    total: 2,
+    message: 'Generating chat response',
+  });
+  try {
+    await durableChatGenerationService.execute(input, context);
+  } catch (error) {
+    if (error instanceof DurableJobExecutionError || context.signal.aborted) {
+      throw error;
+    }
+    throw new DurableJobExecutionError(
+      true,
+      'chat-generation-failed',
+      'The chat response could not be completed'
+    );
+  }
+  await context.reportProgress({
+    current: 2,
+    total: 2,
+    message: 'Chat response saved',
+  });
+  return { resultReference: `chat-message:${input.assistantMessageId}` };
+};
+
+const deleteOwnerContent: DurableJobHandler = async context => {
+  const { targetUserId, actorUserId } = readOwnerDeletePayload(context.payload);
+  if (actorUserId !== context.actorUserId) {
+    throw new DurableJobExecutionError(
+      false,
+      'actor-mismatch',
+      'The owner cleanup actor does not match its durable job'
+    );
+  }
+  const lease = await acquireResourceLease(context, 'owner', targetUserId);
+  const leasedContext = withResourceLeaseFence(context, lease);
+  try {
+    await leasedContext.assertSideEffectAllowed();
+    const service = getDurableJobRuntime().service;
+    await service.cancelAllForActor(targetUserId, 'actor-revoked');
+    const activeJobCount = await service.countActiveForActor(targetUserId);
+    if (activeJobCount > 0) {
+      throw new DurableJobExecutionError(
+        true,
+        'owner-jobs-draining',
+        'Deleted owner jobs are still draining'
+      );
+    }
+    await leasedContext.assertSideEffectAllowed();
+    const result = await cleanupPlatformOwnerContent(targetUserId);
+    await leasedContext.assertSideEffectAllowed();
+    await getCoordinator().deleteCache(`user:${targetUserId}`);
+    await leasedContext.assertSideEffectAllowed();
+    await getCoordinator().revoke(`user:${targetUserId}`);
+    return {
+      resultReference:
+        `owner:${targetUserId}:vectors:${result.deletedVectors}:` +
+        `blobs:${result.deletedBlobs}`,
+    };
+  } catch (error) {
+    if (error instanceof DurableJobExecutionError) throw error;
+    throw new DurableJobExecutionError(
+      true,
+      'owner-cleanup-failed',
+      'Deleted owner content cleanup did not complete'
+    );
+  } finally {
+    await lease.release().catch(() => false);
+  }
+};
+
+const executeWork: DurableJobHandler = async context => {
+  const { taskId, runId } = readWorkPayload(context.payload);
+  await context.assertSideEffectAllowed();
+  await context.reportProgress({
+    current: 1,
+    total: 2,
+    message: 'Running isolated Work task',
+  });
+  try {
+    await workAgentService.executeDurable(taskId, runId, context.actorUserId);
+  } catch (error) {
+    if (error instanceof DurableJobExecutionError) throw error;
+    throw new DurableJobExecutionError(
+      true,
+      'work-execution-interrupted',
+      'The isolated Work execution was interrupted'
+    );
+  }
+  await context.reportProgress({
+    current: 2,
+    total: 2,
+    message: 'Work execution settled',
+  });
+  return { resultReference: `work-run:${runId}` };
+};
+
+export const createDomainDurableJobHandlers = (): ReadonlyMap<
+  string,
+  DurableJobHandler
+> =>
+  new Map([
+    [VIDEO_SUBMIT_JOB_TYPE, withVideoResourceLease(submitVideo)],
+    [VIDEO_RESUME_JOB_TYPE, withVideoResourceLease(resumeVideo)],
+    [CHAT_GENERATE_JOB_TYPE, generateChat],
+    [DOCUMENT_INGEST_JOB_TYPE, ingestDocument],
+    [OWNER_DELETE_CONTENT_JOB_TYPE, deleteOwnerContent],
+    [RESOURCE_DELETE_JOB_TYPE, deleteResource],
+    [WORK_EXECUTE_JOB_TYPE, executeWork],
+  ]);

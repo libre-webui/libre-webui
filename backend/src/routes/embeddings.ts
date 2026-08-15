@@ -16,7 +16,7 @@
  */
 
 import express, { Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import {
   ApiResponse,
   EmbeddingModel,
@@ -29,6 +29,7 @@ const router = express.Router();
 
 // Rate limiter for embeddings routes: 60 requests per minute
 const embeddingsRateLimiter = rateLimit({
+  keyPrefix: 'embeddings',
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 60, // limit each IP to 60 requests per minute
   message: {

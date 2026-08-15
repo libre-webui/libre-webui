@@ -48,8 +48,8 @@ const { getAgentsEnabled, setAgentsEnabled, agentsEnabledLockedByEnv } =
 const { closeDatabase } = await import(distUrl('db.js'));
 
 // The feature ships disabled; opt in for the tests that list models.
-assert.equal(getAgentsEnabled(), false);
-setAgentsEnabled(true);
+assert.equal(await getAgentsEnabled(), false);
+await setAgentsEnabled(true);
 
 after(() => {
   closeDatabase();
@@ -228,24 +228,27 @@ test('listAgentModels expands CLIs into per-model entries with a shared agentId'
 
 test('agents follow the persisted opt-in and the environment pin', async () => {
   // Disabled: no models are offered and access assertions fail closed.
-  setAgentsEnabled(false);
-  assert.equal(getAgentsEnabled(), false);
+  await setAgentsEnabled(false);
+  assert.equal(await getAgentsEnabled(), false);
   assert.deepEqual(await agentCliService.listAgentModels(), []);
-  assert.throws(() => agentCliService.assertAgentAccess('nobody'), /disabled/i);
+  await assert.rejects(
+    agentCliService.assertAgentAccess('nobody'),
+    /disabled/i
+  );
 
   // Enabled again: the persisted setting turns the feature back on.
-  setAgentsEnabled(true);
-  assert.equal(getAgentsEnabled(), true);
+  await setAgentsEnabled(true);
+  assert.equal(await getAgentsEnabled(), true);
 
   // The environment variable pins the value either way and locks the toggle.
   process.env.AGENT_CLI_MODELS_ENABLED = 'false';
   try {
-    assert.equal(getAgentsEnabled(), false);
+    assert.equal(await getAgentsEnabled(), false);
     assert.equal(agentsEnabledLockedByEnv(), true);
     assert.deepEqual(await agentCliService.listAgentModels(), []);
   } finally {
     delete process.env.AGENT_CLI_MODELS_ENABLED;
   }
   assert.equal(agentsEnabledLockedByEnv(), false);
-  assert.equal(getAgentsEnabled(), true);
+  assert.equal(await getAgentsEnabled(), true);
 });

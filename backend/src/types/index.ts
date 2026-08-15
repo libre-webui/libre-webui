@@ -157,6 +157,7 @@ export interface TTSSettings {
   autoPlay: boolean;
   model: string;
   voice: string;
+  voiceProfileId?: string;
   speed: number;
   pluginId?: string;
   streamSentences?: boolean; // Play sentence by sentence instead of full message
@@ -426,7 +427,16 @@ export interface TTSConfig {
   max_characters?: number; // Maximum text length
   supports_streaming?: boolean; // Whether streaming is supported
   endpoint_variable?: string; // Capability-specific endpoint override variable
+  models_endpoint_variable?: string; // Capability model-discovery endpoint override variable
   allows_custom_voice?: boolean; // Whether arbitrary provider voice IDs are accepted
+  supports_voice_cloning?: boolean; // Whether reference-audio voice cloning is supported
+  voice_clone_endpoint?: string; // Multipart voice-cloning endpoint
+  voice_clone_endpoint_variable?: string; // Per-user voice-cloning endpoint override variable
+  clone_requires_transcript?: boolean; // Whether reference_text must accompany the audio
+  clone_audio_mime_types?: string[]; // Accepted reference-audio MIME types
+  clone_max_audio_bytes?: number; // Maximum reference-audio upload size
+  no_auth_required?: boolean; // Whether the capability can run without an API key
+  request_variables?: string[]; // Allowlisted plugin variables forwarded to provider requests
 }
 
 // Image Generation-specific configuration
@@ -462,6 +472,11 @@ export interface VideoGenConfig {
   endpoint_variable?: string;
   poll_interval_ms?: number;
   timeout_ms?: number;
+  /** Provider guarantees repeated Idempotency-Key submissions return one job. */
+  supports_idempotency?: boolean;
+  /** Optional provider operation for cancelling an accepted job. Use {job_id}. */
+  cancel_endpoint?: string;
+  cancel_method?: 'POST' | 'DELETE';
 }
 
 export interface AudioGenConfig {
@@ -471,6 +486,20 @@ export interface AudioGenConfig {
   default_format?: string;
   max_prompt_length?: number;
   endpoint_variable?: string;
+}
+
+// Speech-to-text configuration. Providers either accept an OpenAI-compatible
+// multipart upload or raw audio bytes at a model-qualified endpoint.
+export interface STTConfig {
+  formats?: string[];
+  max_audio_bytes?: number;
+  max_duration_seconds?: number;
+  languages?: string[];
+  supports_timestamps?: boolean;
+  request_mode?: 'multipart' | 'raw';
+  endpoint_variable?: string;
+  models_endpoint_variable?: string;
+  no_auth_required?: boolean;
 }
 
 // Embedding-specific configuration
@@ -498,6 +527,8 @@ export interface PluginCapabilities {
   stt?: {
     endpoint: string;
     model_map: string[];
+    models_endpoint?: string;
+    config?: STTConfig;
   };
   embedding?: {
     endpoint: string;

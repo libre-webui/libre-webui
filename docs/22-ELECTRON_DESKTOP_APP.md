@@ -84,13 +84,17 @@ runtime. Work availability is determined by the server it connects to:
 
 - a native backend that can run `docker info` can create task-scoped Work
   containers and named volumes;
-- a backend running in the standard Libre WebUI Docker image reports Work as
-  unavailable; and
+- the standard repository Compose deployment provides Docker-backed Work by
+  mounting the host Docker socket, while a custom container deployment without
+  a reachable runtime reports Work as unavailable;
+- a Kubernetes server provides Pod/PVC-backed Work when the Helm chart is
+  installed with `work.enabled=true`; and
 - the app continues to support Chat when Work is unavailable.
 
-Work files live on the server's Docker host, not inside the desktop app. The
-embedded preview uses a dynamically assigned loopback port on that host, so
-preview works only when the desktop client and server are on the same machine.
+Work files live on the server's Docker host or Kubernetes storage, not inside
+the desktop app. Previews travel through Libre WebUI's signed same-origin
+proxy, so local and remote desktop clients can use them when the server's
+reverse proxy preserves HTTP and WebSocket traffic.
 
 ## 🎨 Desktop Integration
 
@@ -105,7 +109,8 @@ preview works only when the desktop client and server are on the same machine.
 - **macOS architecture**: current macOS packages support Apple Silicon
   (`arm64`) only
 - **Requires a server**: the app does not bundle the backend
-- **Work depends on the server's Docker**: no container runtime is included
+- **Work depends on the server runtime**: no Docker or Kubernetes runtime is
+  included
 - **No auto-updates**: updates require downloading a new package
 
 ---

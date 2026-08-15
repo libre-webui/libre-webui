@@ -853,22 +853,30 @@ const PluginUsagePage: React.FC = () => {
                             ? t('usageAnalytics.capabilities.characters', {
                                 count: formatCount(capability.inputUnits),
                               })
-                            : capability.capability === 'image'
-                              ? t('usageAnalytics.capabilities.images', {
-                                  count: formatCount(capability.outputUnits),
+                            : capability.capability === 'stt'
+                              ? t('usageAnalytics.capabilities.bytes', {
+                                  count: formatCount(capability.inputUnits),
                                 })
-                              : capability.capability === 'video'
-                                ? t('usageAnalytics.capabilities.jobs', {
-                                    count: formatCount(capability.calls),
+                              : capability.capability === 'image'
+                                ? t('usageAnalytics.capabilities.images', {
+                                    count: formatCount(capability.outputUnits),
                                   })
-                                : capability.capability === 'embedding'
-                                  ? t('usageAnalytics.capabilities.inputs', {
-                                      count: formatCount(capability.inputUnits),
+                                : capability.capability === 'video'
+                                  ? t('usageAnalytics.capabilities.jobs', {
+                                      count: formatCount(capability.calls),
                                     })
-                                  : t(
-                                      'usageAnalytics.capabilities.reportedTokens',
-                                      { count: formatCount(capability.tokens) }
-                                    )}
+                                  : capability.capability === 'embedding'
+                                    ? t('usageAnalytics.capabilities.inputs', {
+                                        count: formatCount(
+                                          capability.inputUnits
+                                        ),
+                                      })
+                                    : t(
+                                        'usageAnalytics.capabilities.reportedTokens',
+                                        {
+                                          count: formatCount(capability.tokens),
+                                        }
+                                      )}
                         </div>
                       </div>
                     ))}

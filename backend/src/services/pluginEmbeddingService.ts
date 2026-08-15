@@ -32,11 +32,15 @@ import {
 import type { PluginUsageEventInput } from './pluginUsageService.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
+type MaybePromise<T> = T | Promise<T>;
 
 export interface PluginEmbeddingServiceDependencies {
-  getAllPlugins(userId?: string): Plugin[];
-  getApiKey(plugin: Plugin, userId?: string): string | null;
-  getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
+  getAllPlugins(userId?: string): MaybePromise<Plugin[]>;
+  getApiKey(plugin: Plugin, userId?: string): MaybePromise<string | null>;
+  getPluginVariables(
+    plugin: Plugin,
+    userId?: string
+  ): MaybePromise<PluginVariables>;
   validateEndpointUrl(endpoint: string): string;
   recordUsage?(usage: PluginUsageEventInput): void;
 }
@@ -44,12 +48,12 @@ export interface PluginEmbeddingServiceDependencies {
 export class PluginEmbeddingService {
   constructor(private readonly deps: PluginEmbeddingServiceDependencies) {}
 
-  getPluginForEmbedding(
+  async getPluginForEmbedding(
     model: string,
     pluginId?: string,
     userId?: string
-  ): Plugin | null {
-    const allPlugins = this.deps.getAllPlugins(userId);
+  ): Promise<Plugin | null> {
+    const allPlugins = await this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       if (pluginId && plugin.id !== pluginId) {
@@ -71,7 +75,7 @@ export class PluginEmbeddingService {
       const noAuthRequired =
         (embeddingCapability?.config as Record<string, unknown> | undefined)
           ?.no_auth_required === true;
-      const apiKey = this.deps.getApiKey(plugin, userId);
+      const apiKey = await this.deps.getApiKey(plugin, userId);
       if (apiKey || noAuthRequired) {
         return plugin;
       }
@@ -80,14 +84,16 @@ export class PluginEmbeddingService {
     return null;
   }
 
-  getAvailableEmbeddingModels(userId?: string): Array<{
-    model: string;
-    plugin: string;
-    pluginName: string;
-    provider: EmbeddingModel['provider'];
-    description?: string;
-    fromEmbeddingCapability?: boolean;
-  }> {
+  async getAvailableEmbeddingModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      pluginName: string;
+      provider: EmbeddingModel['provider'];
+      description?: string;
+      fromEmbeddingCapability?: boolean;
+    }>
+  > {
     const models: Array<{
       model: string;
       plugin: string;
@@ -96,14 +102,14 @@ export class PluginEmbeddingService {
       description?: string;
       fromEmbeddingCapability?: boolean;
     }> = [];
-    const allPlugins = this.deps.getAllPlugins(userId);
+    const allPlugins = await this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       const embeddingCapability = this.getEmbeddingCapability(plugin);
       const noAuthRequired =
         (embeddingCapability?.config as Record<string, unknown> | undefined)
           ?.no_auth_required === true;
-      const apiKey = this.deps.getApiKey(plugin, userId);
+      const apiKey = await this.deps.getApiKey(plugin, userId);
       if (!apiKey && !noAuthRequired) {
         continue;
       }
@@ -140,11 +146,12 @@ export class PluginEmbeddingService {
     model: string,
     input: string | string[],
     pluginId?: string,
-    userId?: string
+    userId?: string,
+    signal?: AbortSignal
   ): Promise<OllamaEmbeddingsResponse> {
     validatePluginModel(model);
 
-    const plugin = this.getPluginForEmbedding(model, pluginId, userId);
+    const plugin = await this.getPluginForEmbedding(model, pluginId, userId);
     if (!plugin) {
       throw new Error(`No embedding plugin found for model: ${model}`);
     }
@@ -153,7 +160,7 @@ export class PluginEmbeddingService {
     const noAuthRequired =
       (embeddingCapability?.config as Record<string, unknown> | undefined)
         ?.no_auth_required === true;
-    const pluginVars = this.deps.getPluginVariables(plugin, userId);
+    const pluginVars = await this.deps.getPluginVariables(plugin, userId);
     const endpointVariable =
       embeddingCapability?.config?.endpoint_variable ||
       (embeddingCapability && plugin.type !== 'embedding'
@@ -181,7 +188,7 @@ export class PluginEmbeddingService {
         : getEmbeddingEndpoint(effectiveEndpoint);
     assertSafePluginEndpoint(processedEndpoint, 'embedding endpoint');
 
-    const apiKey = this.deps.getApiKey(plugin, userId);
+    const apiKey = await this.deps.getApiKey(plugin, userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
@@ -199,6 +206,7 @@ export class PluginEmbeddingService {
           headers,
           timeout: 60000,
           maxRedirects: 0,
+          signal,
         }
       );
 
@@ -259,13 +267,14 @@ export class PluginEmbeddingService {
       });
       return result;
     } catch (error) {
+      const cancelled = signal?.aborted === true || axios.isCancel(error);
       this.deps.recordUsage?.({
         userId,
         pluginId: plugin.id,
         pluginName: plugin.name,
         capability: 'embedding',
         model,
-        status: 'error',
+        status: cancelled ? 'cancelled' : 'error',
         durationMs: Date.now() - startedAt,
         inputUnits: Array.isArray(input) ? input.length : 1,
         unitKind: 'inputs',

@@ -55,6 +55,8 @@ The in-app browser lets you:
 - Pull compatible GGUF files through Ollama when supported.
 
 The browser fetches Hub metadata through the backend proxy and caches results for performance.
+The backend requires an active Libre session for Hub discovery, and only a
+current administrator can clear the shared model cache.
 
 ## GGUF and Ollama
 

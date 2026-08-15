@@ -24,7 +24,7 @@
  * bandwidth on the server, which is an administrator's call to share.
  */
 
-import { getDatabase } from '../db.js';
+import { getSystemSetting, setSystemSetting } from './systemSettingsService.js';
 
 export type ModelDownloadMode = 'admins' | 'all-users';
 
@@ -44,38 +44,30 @@ export function isModelDownloadMode(
   );
 }
 
-export function getModelDownloadMode(): ModelDownloadMode {
+export async function getModelDownloadMode(): Promise<ModelDownloadMode> {
   try {
-    const row = getDatabase()
-      .prepare('SELECT value FROM system_settings WHERE key = ?')
-      .get(MODEL_DOWNLOAD_MODE_KEY) as { value?: string } | undefined;
-    return isModelDownloadMode(row?.value) ? row.value : 'admins';
+    const value = await getSystemSetting(MODEL_DOWNLOAD_MODE_KEY);
+    return isModelDownloadMode(value) ? value : 'admins';
   } catch {
     return 'admins';
   }
 }
 
-export function setModelDownloadMode(mode: ModelDownloadMode): void {
+export async function setModelDownloadMode(
+  mode: ModelDownloadMode
+): Promise<void> {
   if (!isModelDownloadMode(mode)) {
     throw new Error(`Invalid model download mode "${String(mode)}".`);
   }
-  getDatabase()
-    .prepare(
-      `INSERT INTO system_settings (key, value, updated_at)
-       VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET
-         value = excluded.value,
-         updated_at = excluded.updated_at`
-    )
-    .run(MODEL_DOWNLOAD_MODE_KEY, mode, Date.now());
+  await setSystemSetting(MODEL_DOWNLOAD_MODE_KEY, mode);
 }
 
 /** Whether a user may pull models right now. */
-export function userCanDownloadModels(user: {
+export async function userCanDownloadModels(user: {
   role?: string;
   status?: string;
-}): boolean {
+}): Promise<boolean> {
   if (user.status !== undefined && user.status !== 'active') return false;
   if (user.role === 'admin') return true;
-  return getModelDownloadMode() === 'all-users';
+  return (await getModelDownloadMode()) === 'all-users';
 }

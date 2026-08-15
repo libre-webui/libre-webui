@@ -75,21 +75,21 @@ router.use(authenticate);
  * state rather than the role cached in a still-valid JWT, so a demotion or
  * a mode change takes effect immediately.
  */
-const requireWorkAccess = (
+const requireWorkAccess = async (
   req: AuthenticatedRequest,
   res: Response<ApiResponse>,
   next: NextFunction
-): void => {
+): Promise<void> => {
   if (!req.user) {
     res.status(403).json({ success: false, message: 'Work access required' });
     return;
   }
   try {
-    const currentUser = userModel.getUserById(req.user.userId);
+    const currentUser = await userModel.getUserById(req.user.userId);
     if (
       !currentUser ||
       currentUser.status !== 'active' ||
-      !userHasWorkAccess(currentUser)
+      !(await userHasWorkAccess(currentUser))
     ) {
       res.status(403).json({ success: false, message: 'Work access required' });
       return;
@@ -112,20 +112,20 @@ const requireWorkAccess = (
 // to offer Work before it may call anything behind requireWorkAccess.
 router.get(
   '/access',
-  (
+  async (
     req: AuthenticatedRequest,
     res: Response<ApiResponse<{ mode: WorkAccessMode; allowed: boolean }>>
-  ): void => {
+  ): Promise<void> => {
     try {
       const currentUser = req.user
-        ? userModel.getUserById(req.user.userId)
+        ? await userModel.getUserById(req.user.userId)
         : undefined;
       sendSuccess(res, {
-        mode: getWorkAccessMode(),
+        mode: await getWorkAccessMode(),
         allowed: Boolean(
           currentUser &&
           currentUser.status === 'active' &&
-          userHasWorkAccess(currentUser)
+          (await userHasWorkAccess(currentUser))
         ),
       });
     } catch (error) {
@@ -137,10 +137,10 @@ router.get(
 router.put(
   '/access',
   requireAdmin,
-  (
+  async (
     req: AuthenticatedRequest,
     res: Response<ApiResponse<{ mode: WorkAccessMode }>>
-  ): void => {
+  ): Promise<void> => {
     try {
       const mode: unknown = req.body?.mode;
       if (!isWorkAccessMode(mode)) {
@@ -149,7 +149,7 @@ router.put(
           400
         );
       }
-      setWorkAccessMode(mode);
+      await setWorkAccessMode(mode);
       sendSuccess(res, { mode });
     } catch (error) {
       sendError(res, error);
@@ -166,27 +166,27 @@ router.get(
     res: Response<ApiResponse<WorkCapabilities>>
   ): Promise<void> => {
     const userId = requireUserId(req);
-    const [dockerAvailable, providers] = await Promise.all([
-      workRuntimeService.isDockerAvailable(),
+    const [runtimeAvailable, providers] = await Promise.all([
+      workRuntimeService.isRuntimeAvailable(),
       workModelProviderService.availability(userId),
     ]);
     const providerAvailable =
       providers.ollamaAvailable || providers.pluginAvailable;
     const recoveryPending = workRuntimeService.recoveryPending;
-    const available = dockerAvailable && !recoveryPending && providerAvailable;
+    const available = runtimeAvailable && !recoveryPending && providerAvailable;
     const reason = recoveryPending
-      ? `Work is safely retrying ${workRuntimeService.recoveryPendingCount} container cleanup(s). New operations remain blocked until Docker proves they are stopped.`
-      : !dockerAvailable
-        ? workRuntimeService.dockerUnavailableReason ||
-          'Docker is not available to the Libre WebUI backend.'
+      ? `Work is safely retrying ${workRuntimeService.recoveryPendingCount} sandbox cleanup(s). New operations remain blocked until the configured runtime proves they are stopped.`
+      : !runtimeAvailable
+        ? workRuntimeService.runtimeUnavailableReason ||
+          `The ${workRuntimeService.runtimeKind} runtime is not available to the Libre WebUI backend.`
         : !providerAvailable
           ? 'No Ollama or configured plugin model provider is available.'
           : undefined;
     sendSuccess(res, {
       available,
-      runtime: 'docker',
+      runtime: workRuntimeService.runtimeKind,
       image: workRuntimeService.image,
-      dockerAvailable,
+      runtimeAvailable,
       ollamaAvailable: providers.ollamaAvailable,
       pluginAvailable: providers.pluginAvailable,
       runtimeImage: workRuntimeService.image,
@@ -194,7 +194,7 @@ router.get(
       limits: workRuntimeService.limits,
       activeRuntimes: workRuntimeService.activeRuntimeCounts(userId),
       terminal: {
-        available: dockerAvailable && !workTerminalService.unavailableReason(),
+        available: runtimeAvailable && !workTerminalService.unavailableReason(),
         reason: workTerminalService.unavailableReason() ?? undefined,
         maxSessionsPerTask: workTerminalService.maxSessionsPerTask,
         idleTimeoutMs: workTerminalService.idleTimeoutMs,
@@ -218,12 +218,12 @@ router.get(
 // the fail-closed gate: policies are configuration, not runtime mutations.
 router.get(
   '/policies',
-  (
+  async (
     _req: AuthenticatedRequest,
     res: Response<ApiResponse<WorkPolicyRecord[]>>
-  ): void => {
+  ): Promise<void> => {
     try {
-      sendSuccess(res, workPolicyService.list());
+      sendSuccess(res, await workPolicyService.list());
     } catch (error) {
       sendError(res, error);
     }
@@ -233,14 +233,15 @@ router.get(
 router.post(
   '/policies',
   requireAdmin,
-  (
+  async (
     req: AuthenticatedRequest,
     res: Response<ApiResponse<WorkPolicyRecord>>
-  ): void => {
+  ): Promise<void> => {
     try {
-      res
-        .status(201)
-        .json({ success: true, data: workPolicyService.create(req.body) });
+      res.status(201).json({
+        success: true,
+        data: await workPolicyService.create(req.body),
+      });
     } catch (error) {
       sendError(res, error);
     }
@@ -250,14 +251,14 @@ router.post(
 router.put(
   '/policies/:id',
   requireAdmin,
-  (
+  async (
     req: AuthenticatedRequest,
     res: Response<ApiResponse<WorkPolicyRecord>>
-  ): void => {
+  ): Promise<void> => {
     try {
       sendSuccess(
         res,
-        workPolicyService.update(String(req.params.id || ''), req.body)
+        await workPolicyService.update(String(req.params.id || ''), req.body)
       );
     } catch (error) {
       sendError(res, error);
@@ -268,13 +269,13 @@ router.put(
 router.delete(
   '/policies/:id',
   requireAdmin,
-  (
+  async (
     req: AuthenticatedRequest,
     res: Response<ApiResponse<{ id: string; deleted: true }>>
-  ): void => {
+  ): Promise<void> => {
     try {
       const id = String(req.params.id || '');
-      workPolicyService.remove(id);
+      await workPolicyService.remove(id);
       sendSuccess(res, { id, deleted: true });
     } catch (error) {
       sendError(res, error);
@@ -336,21 +337,18 @@ router.get(
   ): Promise<void> => {
     try {
       const userId = requireUserId(req);
-      const previews = workTaskService
-        .listTaskRecords(userId)
-        .filter(
-          task =>
-            task.previewStatus === 'starting' ||
-            task.previewStatus === 'running'
-        );
+      const previews = (await workTaskService.listTaskRecords(userId)).filter(
+        task =>
+          task.previewStatus === 'starting' || task.previewStatus === 'running'
+      );
       await Promise.allSettled(
         previews.map(async task => {
           if (!(await workRuntimeService.isPreviewRunning(task))) {
-            workTaskService.updatePreview(task.id, 'stopped');
+            await workTaskService.updatePreview(task.id, 'stopped');
           }
         })
       );
-      sendSuccess(res, workTaskService.listTasks(userId));
+      sendSuccess(res, await workTaskService.listTasks(userId));
     } catch (error) {
       sendError(res, error);
     }
@@ -365,7 +363,7 @@ router.post(
   ): Promise<void> => {
     try {
       const message = requireBodyString(req.body?.message, 'message', 65_536);
-      const model = requireBodyString(req.body?.model, 'model', 500);
+      const model = requirePostgresBodyString(req.body?.model, 'model', 500);
       const userId = requireUserId(req);
       const provider = readProviderSelection(req.body);
       const requestedHostPath =
@@ -385,7 +383,7 @@ router.post(
         typeof req.body?.policyId === 'string' ? req.body.policyId.trim() : '';
       let policy: WorkPolicyRecord | undefined;
       if (requestedPolicyId) {
-        policy = workPolicyService.get(requestedPolicyId);
+        policy = await workPolicyService.get(requestedPolicyId);
         if (!policy) {
           throw new WorkRouteError(
             'The selected Work policy no longer exists.',
@@ -398,7 +396,7 @@ router.post(
         provider,
         userId
       );
-      const detail = workTaskService.createTaskWithRun(
+      const detail = await workTaskService.createTaskWithRun(
         userId,
         message,
         model,
@@ -411,7 +409,6 @@ router.post(
       if (!runId) {
         throw new Error('Work run was not created.');
       }
-      workAgentService.start(detail.id, runId, userId);
       res.status(201).json({ success: true, data: detail });
     } catch (error) {
       sendError(res, error);
@@ -428,15 +425,15 @@ router.get(
     try {
       const taskId = readTaskId(req);
       const userId = requireUserId(req);
-      const task = workTaskService.requireTaskRecord(taskId, userId);
+      const task = await workTaskService.requireTaskRecord(taskId, userId);
       if (
         task.previewStatus === 'running' ||
         task.previewStatus === 'starting'
       ) {
         const running = await workRuntimeService.isPreviewRunning(task);
-        if (!running) workTaskService.updatePreview(taskId, 'stopped');
+        if (!running) await workTaskService.updatePreview(taskId, 'stopped');
       }
-      sendSuccess(res, workTaskService.requireTaskDetail(taskId, userId));
+      sendSuccess(res, await workTaskService.requireTaskDetail(taskId, userId));
     } catch (error) {
       sendError(res, error);
     }
@@ -445,19 +442,23 @@ router.get(
 
 router.get(
   '/tasks/:id/messages',
-  (
+  async (
     req: AuthenticatedRequest,
     res: Response<ApiResponse<WorkMessagePage>>
-  ): void => {
+  ): Promise<void> => {
     try {
       const taskId = readTaskId(req);
       const userId = requireUserId(req);
-      workTaskService.requireTaskRecord(taskId, userId);
+      await workTaskService.requireTaskRecord(taskId, userId);
       const before = optionalNonNegativeInteger(req.query.before, 'before');
       const limit = optionalPositiveInteger(req.query.limit, 'limit') ?? 200;
       sendSuccess(
         res,
-        workTaskService.getMessagePage(taskId, before, Math.min(limit, 200))
+        await workTaskService.getMessagePage(
+          taskId,
+          before,
+          Math.min(limit, 200)
+        )
       );
     } catch (error) {
       sendError(res, error);
@@ -467,8 +468,8 @@ router.get(
 
 router.get(
   '/tasks/:taskId/runs/:runId/events',
-  (req: AuthenticatedRequest, res: Response): void => {
-    let unsubscribe = (): void => undefined;
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    let unsubscribe = async (): Promise<void> => undefined;
     let heartbeat: ReturnType<typeof setInterval> | undefined;
     let backpressureTimer: ReturnType<typeof setTimeout> | undefined;
     let closed = false;
@@ -488,7 +489,7 @@ router.get(
       if (heartbeat) clearInterval(heartbeat);
       if (backpressureTimer) clearTimeout(backpressureTimer);
       res.off('drain', flushQueuedFrames);
-      unsubscribe();
+      void unsubscribe();
       queuedFrames.length = 0;
       queuedBytes = 0;
       return true;
@@ -579,8 +580,8 @@ router.get(
       const taskId = String(req.params.taskId || '').trim();
       const runId = String(req.params.runId || '').trim();
       const userId = requireUserId(req);
-      workTaskService.requireTaskRecord(taskId, userId);
-      const run = workTaskService.getRun(runId);
+      await workTaskService.requireTaskRecord(taskId, userId);
+      const run = await workTaskService.getRun(runId);
       if (!run || run.taskId !== taskId) {
         throw new WorkNotFoundError('Work run not found.');
       }
@@ -611,50 +612,111 @@ router.get(
       };
 
       res.once('close', close);
-      let replaying = true;
-      const bufferedLiveEvents: WorkLiveEvent[] = [];
-      workEventService.advanceCursor(taskId, runId, after);
-      unsubscribe = workEventService.subscribe(taskId, runId, event => {
-        if (replaying) {
-          bufferedLiveEvents.push(event);
+      const checkpoint = await workEventService.checkpoint(taskId, runId);
+      const authorize = async (): Promise<boolean> => {
+        try {
+          const current = await workTaskService.requireTaskRecord(
+            taskId,
+            userId
+          );
+          const currentRun = await workTaskService.getRun(runId);
+          return current.id === taskId && currentRun?.taskId === taskId;
+        } catch {
+          return false;
+        }
+      };
+      let replayingLocal = !checkpoint.durable;
+      const bufferedLocalEvents: WorkLiveEvent[] = [];
+      if (!checkpoint.durable) {
+        // A process-local stream has no SQL catch-up query. Subscribe before
+        // taking its compact snapshot and buffer the live edge so the snapshot
+        // boundary cannot lose an event.
+        const localUnsubscribe = await workEventService.subscribeDurable(
+          taskId,
+          runId,
+          after,
+          authorize,
+          event => {
+            if (replayingLocal) bufferedLocalEvents.push(event);
+            else if (event.id > latestEventId) writeEvent(event);
+          },
+          () => close()
+        );
+        unsubscribe = localUnsubscribe;
+        if (closed) {
+          await localUnsubscribe();
           return;
         }
-        writeEvent(event);
-      });
-      const task = workTaskService.requireTaskDetail(taskId, userId);
-      const replay = workEventService.replay(taskId, runId, after);
-      const snapshotRun = workTaskService.getRun(runId) ?? run;
-      const snapshotStatus = replay.snapshot.status ?? snapshotRun.status;
+      }
+
+      // In durable mode, compact every committed event through this exact SQL
+      // checkpoint into one authoritative persistence snapshot. The gateway
+      // subscribes from that cursor after the snapshot is written; SQL replay
+      // covers every commit in the intervening gap without replaying history.
+      const task = await workTaskService.requireTaskDetail(taskId, userId);
+      const snapshotRun = (await workTaskService.getRun(runId)) ?? run;
+      const localReplay = checkpoint.durable
+        ? undefined
+        : workEventService.replay(taskId, runId, after);
+      const snapshotCursor = checkpoint.durable
+        ? Math.max(after, checkpoint.cursor)
+        : localReplay!.latestEventId;
+      const compactSnapshot = checkpoint.durable
+        ? workEventService.snapshotFromPersistence(task, snapshotRun)
+        : localReplay!.snapshot;
+      const snapshotStatus = compactSnapshot.status ?? snapshotRun.status;
       const snapshotTerminal =
-        replay.snapshot.terminal || isTerminalWorkRunStatus(snapshotStatus);
+        compactSnapshot.terminal || isTerminalWorkRunStatus(snapshotStatus);
       workEventService.emitSnapshot(
         taskId,
         runId,
-        replay.latestEventId,
+        snapshotCursor,
         {
           task,
           liveRun: {
-            ...replay.snapshot,
+            ...compactSnapshot,
             status: snapshotStatus,
-            phase: replay.snapshot.phase ?? snapshotStatus,
-            error: replay.snapshot.error ?? snapshotRun.error,
+            phase: compactSnapshot.phase ?? snapshotStatus,
+            error: compactSnapshot.error ?? snapshotRun.error,
             terminal: snapshotTerminal,
           },
-          replayTruncated: replay.truncated,
+          replayTruncated: checkpoint.durable
+            ? checkpoint.cursor > after
+            : localReplay!.truncated,
         },
         writeEvent
       );
-      replaying = false;
-      for (const event of bufferedLiveEvents
-        .filter(event => event.id > replay.latestEventId)
-        .sort((left, right) => left.id - right.id)) {
-        writeEvent(event);
-        if (closed) return;
+      if (closed) return;
+
+      if (checkpoint.durable) {
+        const connectedUnsubscribe = await workEventService.subscribeDurable(
+          taskId,
+          runId,
+          snapshotCursor,
+          authorize,
+          event => {
+            if (event.id > latestEventId) writeEvent(event);
+          },
+          () => close()
+        );
+        unsubscribe = connectedUnsubscribe;
+        if (closed) {
+          await connectedUnsubscribe();
+          return;
+        }
+      } else {
+        replayingLocal = false;
+        for (const event of bufferedLocalEvents
+          .filter(event => event.id > snapshotCursor)
+          .sort((left, right) => left.id - right.id)) {
+          writeEvent(event);
+          if (closed) return;
+        }
       }
 
-      const currentRun = workTaskService.getRun(runId) ?? snapshotRun;
-      const terminalStatus = isTerminalWorkRunStatus(replay.snapshot.status)
-        ? replay.snapshot.status
+      const currentRun = (await workTaskService.getRun(runId)) ?? snapshotRun;
+      const terminalStatus = isTerminalWorkRunStatus(compactSnapshot.status)
+        ? compactSnapshot.status
         : isTerminalWorkRunStatus(currentRun.status)
           ? currentRun.status
           : undefined;
@@ -667,8 +729,8 @@ router.get(
           timestamp: Date.now(),
           data: {
             status: terminalStatus,
-            error: replay.snapshot.error ?? currentRun.error,
-            budgetReason: replay.snapshot.budgetReason,
+            error: compactSnapshot.error ?? currentRun.error,
+            budgetReason: compactSnapshot.budgetReason,
           },
         });
       }
@@ -701,14 +763,21 @@ router.patch(
     try {
       const taskId = readTaskId(req);
       const userId = requireUserId(req);
-      const before = workTaskService.requireMutableTaskRecord(taskId, userId);
+      const title =
+        typeof req.body?.title === 'string'
+          ? rejectPostgresTextNul(req.body.title, 'title')
+          : undefined;
+      const before = await workTaskService.requireMutableTaskRecord(
+        taskId,
+        userId
+      );
       const networkEnabled =
         typeof req.body?.networkEnabled === 'boolean'
           ? req.body.networkEnabled
           : undefined;
       const model =
         typeof req.body?.model === 'string'
-          ? requireBodyString(req.body.model, 'model', 500)
+          ? requirePostgresBodyString(req.body.model, 'model', 500)
           : undefined;
       const providerChanged =
         req.body?.providerType !== undefined ||
@@ -724,20 +793,17 @@ router.patch(
           userId
         );
       }
-      workTaskService.assertTaskMutationAllowed(taskId, userId);
+      await workTaskService.assertTaskMutationAllowed(taskId, userId);
       if (networkEnabled !== undefined) {
-        const current = workTaskService.beginNetworkPolicyChange(
+        const current = await workTaskService.beginNetworkPolicyChange(
           taskId,
           userId
         );
         try {
           const desired = { ...current, networkEnabled };
           await workRuntimeService.changeNetworkPolicy(current, desired, () => {
-            workTaskService.commitNetworkChange(taskId, userId, {
-              title:
-                typeof req.body?.title === 'string'
-                  ? req.body.title
-                  : undefined,
+            return workTaskService.commitNetworkChange(taskId, userId, {
+              title,
               model,
               providerType: provider?.providerType,
               providerId: provider?.providerId,
@@ -747,11 +813,14 @@ router.patch(
         } finally {
           workTaskService.releaseNetworkPolicyChange(taskId);
         }
-        sendSuccess(res, workTaskService.requireTaskDetail(taskId, userId));
+        sendSuccess(
+          res,
+          await workTaskService.requireTaskDetail(taskId, userId)
+        );
         return;
       }
-      const detail = workTaskService.updateTask(taskId, userId, {
-        title: typeof req.body?.title === 'string' ? req.body.title : undefined,
+      const detail = await workTaskService.updateTask(taskId, userId, {
+        title,
         model,
         providerType: provider?.providerType,
         providerId: provider?.providerId,
@@ -791,10 +860,13 @@ router.post(
       const taskId = readTaskId(req);
       const userId = requireUserId(req);
       const message = requireBodyString(req.body?.message, 'message', 65_536);
-      const current = workTaskService.requireMutableTaskRecord(taskId, userId);
+      const current = await workTaskService.requireMutableTaskRecord(
+        taskId,
+        userId
+      );
       const model =
         typeof req.body?.model === 'string' && req.body.model.trim()
-          ? req.body.model.trim()
+          ? requirePostgresBodyString(req.body.model, 'model', 500)
           : current.model;
       const provider = readProviderSelection(req.body, current);
       await workModelProviderService.assertModelSupportsTools(
@@ -802,7 +874,7 @@ router.post(
         provider,
         userId
       );
-      const detail = workTaskService.createRun(
+      const detail = await workTaskService.createRun(
         taskId,
         userId,
         message,
@@ -811,7 +883,6 @@ router.post(
       );
       const runId = detail.activeRun?.id;
       if (!runId) throw new Error('Work run was not created.');
-      workAgentService.start(taskId, runId, userId);
       res.status(202).json({ success: true, data: detail });
     } catch (error) {
       sendError(res, error);
@@ -843,7 +914,7 @@ router.get(
     res: Response<ApiResponse>
   ): Promise<void> => {
     try {
-      const task = workTaskService.requireMutableTaskRecord(
+      const task = await workTaskService.requireMutableTaskRecord(
         readTaskId(req),
         requireUserId(req)
       );
@@ -864,7 +935,7 @@ router.get(
     res: Response<ApiResponse>
   ): Promise<void> => {
     try {
-      const task = workTaskService.requireMutableTaskRecord(
+      const task = await workTaskService.requireMutableTaskRecord(
         readTaskId(req),
         requireUserId(req)
       );
@@ -885,7 +956,7 @@ router.put(
     res: Response<ApiResponse>
   ): Promise<void> => {
     try {
-      const task = workTaskService.requireMutableTaskRecord(
+      const task = await workTaskService.requireMutableTaskRecord(
         readTaskId(req),
         requireUserId(req)
       );
@@ -922,7 +993,7 @@ router.get(
     res: Response<ApiResponse<WorkGitStatus>>
   ): Promise<void> => {
     try {
-      const task = workTaskService.requireMutableTaskRecord(
+      const task = await workTaskService.requireMutableTaskRecord(
         readTaskId(req),
         requireUserId(req)
       );
@@ -940,7 +1011,7 @@ router.get(
     res: Response<ApiResponse<WorkGitDiff>>
   ): Promise<void> => {
     try {
-      const task = workTaskService.requireMutableTaskRecord(
+      const task = await workTaskService.requireMutableTaskRecord(
         readTaskId(req),
         requireUserId(req)
       );
@@ -963,7 +1034,7 @@ router.post(
     res: Response<ApiResponse<WorkGitStatus>>
   ): Promise<void> => {
     try {
-      const task = requireIdleGitTask(req);
+      const task = await requireIdleGitTask(req);
       sendSuccess(res, await workRuntimeService.initializeGit(task));
     } catch (error) {
       sendError(res, error);
@@ -984,7 +1055,7 @@ router.post(
       ) {
         throw new WorkRouteError('Field "paths" must be a string array.', 400);
       }
-      const task = requireIdleGitTask(req);
+      const task = await requireIdleGitTask(req);
       sendSuccess(
         res,
         await workRuntimeService.stageGitPaths(task, req.body.paths)
@@ -1003,8 +1074,8 @@ router.post(
   ): Promise<void> => {
     try {
       const userId = requireUserId(req);
-      const task = requireIdleGitTask(req);
-      const user = userModel.getUserById(userId);
+      const task = await requireIdleGitTask(req);
+      const user = await userModel.getUserById(userId);
       if (!user) throw new WorkRouteError('User account was not found.', 404);
       sendSuccess(
         res,
@@ -1030,7 +1101,7 @@ router.post(
     res: Response<ApiResponse<WorkGitStatus>>
   ): Promise<void> => {
     try {
-      const task = requireIdleGitTask(req);
+      const task = await requireIdleGitTask(req);
       sendSuccess(
         res,
         await workRuntimeService.createGitBranch(
@@ -1051,7 +1122,7 @@ router.post(
     res: Response<ApiResponse<WorkGitStatus>>
   ): Promise<void> => {
     try {
-      const task = requireIdleGitTask(req);
+      const task = await requireIdleGitTask(req);
       sendSuccess(
         res,
         await workRuntimeService.switchGitBranch(
@@ -1074,18 +1145,21 @@ router.post(
     const taskId = readTaskId(req);
     const userId = requireUserId(req);
     try {
-      const task = workTaskService.requireMutableTaskRecord(taskId, userId);
+      const task = await workTaskService.requireMutableTaskRecord(
+        taskId,
+        userId
+      );
       await workRuntimeService.startPreview(
         task,
         typeof req.body?.command === 'string' ? req.body.command : undefined,
         {
           onStarting: () => workTaskService.beginPreview(taskId, userId),
-          onRunning: url =>
-            workTaskService.updatePreview(taskId, 'running', url),
+          onRunning: (url, endpoint) =>
+            workTaskService.updatePreview(taskId, 'running', url, endpoint),
           onFailed: () => workTaskService.updatePreview(taskId, 'failed'),
         }
       );
-      sendSuccess(res, workTaskService.requireTaskDetail(taskId, userId));
+      sendSuccess(res, await workTaskService.requireTaskDetail(taskId, userId));
     } catch (error) {
       sendError(res, error);
     }
@@ -1101,11 +1175,14 @@ router.post(
     try {
       const taskId = readTaskId(req);
       const userId = requireUserId(req);
-      const task = workTaskService.requireMutableTaskRecord(taskId, userId);
+      const task = await workTaskService.requireMutableTaskRecord(
+        taskId,
+        userId
+      );
       await workRuntimeService.stopPreview(task, {
         onStopped: () => workTaskService.updatePreview(taskId, 'stopped'),
       });
-      sendSuccess(res, workTaskService.requireTaskDetail(taskId, userId));
+      sendSuccess(res, await workTaskService.requireTaskDetail(taskId, userId));
     } catch (error) {
       sendError(res, error);
     }
@@ -1132,13 +1209,15 @@ function readTaskId(req: AuthenticatedRequest): string {
   return String(req.params.id || '').trim();
 }
 
-function requireIdleGitTask(req: AuthenticatedRequest): WorkTaskRecord {
+async function requireIdleGitTask(
+  req: AuthenticatedRequest
+): Promise<WorkTaskRecord> {
   const taskId = readTaskId(req);
-  const task = workTaskService.requireMutableTaskRecord(
+  const task = await workTaskService.requireMutableTaskRecord(
     taskId,
     requireUserId(req)
   );
-  if (workTaskService.getActiveRun(taskId)) {
+  if (await workTaskService.getActiveRun(taskId)) {
     throw new WorkRouteError(
       'Stop the active Work run before changing Git state.',
       409
@@ -1208,6 +1287,21 @@ function requireBodyString(
     );
   }
   return value.trim();
+}
+
+function rejectPostgresTextNul(value: string, name: string): string {
+  if (value.includes('\u0000')) {
+    throw new WorkRouteError(`Field "${name}" cannot contain U+0000.`, 400);
+  }
+  return value;
+}
+
+function requirePostgresBodyString(
+  value: unknown,
+  name: string,
+  maxLength: number
+): string {
+  return rejectPostgresTextNul(requireBodyString(value, name, maxLength), name);
 }
 
 function optionalNonNegativeInteger(

@@ -1,0 +1,77 @@
+# Production opt-in for Docker-backed Work in the bundled team profile.
+#
+# Libre WebUI and its external worker receive only a private TCP endpoint. The
+# socket stays in this dedicated proxy, which exposes the smallest Docker API
+# sections used by the Work runtime: transport negotiation, info, images,
+# containers, exec, volumes, and networks, with POST enabled for lifecycle
+# operations. Do not attach any other service to docker-proxy.
+#
+# This is API-surface reduction, not a tenant or host-security boundary.
+# Docker container creation can request host bind mounts, so access to this
+# endpoint remains equivalent to control of the Docker host. Keep Work on a
+# dedicated/rootless daemon when stronger isolation is required.
+#
+#   docker compose --env-file /absolute/path/to/libre-team.env \
+#     -f docker-compose.team.yml -f docker-compose.team.work.yml up -d
+services:
+  libre-webui:
+    environment:
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+      # Host workspaces are deliberately unavailable through this production
+      # overlay; task state remains in Docker-managed workspace volumes.
+      WORK_HOST_WORKSPACES_ENABLED: 'false'
+    depends_on:
+      docker-socket-proxy:
+        condition: service_started
+    networks:
+      - default
+      - docker-proxy
+
+  durable-worker:
+    environment:
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+      WORK_HOST_WORKSPACES_ENABLED: 'false'
+    depends_on:
+      docker-socket-proxy:
+        condition: service_started
+    networks:
+      - default
+      - docker-proxy
+
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:v0.4.2
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    environment:
+      CONTAINERS: 1
+      IMAGES: 1
+      VOLUMES: 1
+      NETWORKS: 1
+      EXEC: 1
+      INFO: 1
+      PING: 1
+      VERSION: 1
+      POST: 1
+      # The proxy image enables the event stream by default; Work does not use
+      # it, so the production overlay closes it explicitly.
+      EVENTS: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - docker-proxy
+    labels:
+      com.centurylinklabs.watchtower.enable: 'false'
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '3'
+
+networks:
+  docker-proxy:
+    driver: bridge
+    internal: true

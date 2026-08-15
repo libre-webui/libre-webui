@@ -67,7 +67,7 @@ export function SidebarWorkTasks({
       <div className={cn('px-3 py-3', sidebarCompact && 'px-2')}>
         {!sidebarCompact && tasks.length > 0 && (
           <div className='mb-2 flex items-center justify-between px-1'>
-            <h3 className='text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-500 dark:text-dark-500 rtl:tracking-normal'>
+            <h3 className='text-xs font-medium text-ink-subtle'>
               {t('work.tasks.title', { defaultValue: 'Work tasks' })}
             </h3>
             <span className='text-[10px] font-medium tabular-nums text-gray-400 dark:text-dark-500'>
@@ -212,10 +212,10 @@ export function SidebarWorkTasks({
                     'group relative transition-colors duration-150 outline-none',
                     sidebarCompact
                       ? 'flex items-center justify-center rounded-xl p-1'
-                      : 'rounded-xl px-3 py-2.5',
+                      : 'rounded-lg px-2',
                     selected
-                      ? 'bg-white ring-1 ring-black/[0.04] dark:bg-dark-200 dark:ring-white/[0.05]'
-                      : 'hover:bg-white/60 dark:hover:bg-dark-200/60'
+                      ? 'bg-interactive-active'
+                      : 'hover:bg-interactive-hover'
                   )}
                 >
                   <button
@@ -223,9 +223,7 @@ export function SidebarWorkTasks({
                     aria-current={selected ? 'page' : undefined}
                     className={cn(
                       'w-full text-start outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
-                      sidebarCompact
-                        ? 'flex h-10 items-center justify-center'
-                        : 'pe-8'
+                      sidebarCompact && 'flex h-10 items-center justify-center'
                     )}
                     title={
                       sidebarCompact
@@ -258,49 +256,38 @@ export function SidebarWorkTasks({
                         />
                       </span>
                     ) : (
-                      <>
-                        <span className='flex items-center gap-2'>
-                          <span
-                            aria-hidden='true'
-                            data-testid='sidebar-work-task-status'
-                            data-status-label={statusLabel}
-                            className={cn(
-                              'h-2 w-2 shrink-0 rounded-full',
-                              status.animated && 'animate-pulse',
-                              task.status === 'idle' &&
-                                'ring-1 ring-black/20 dark:ring-white/20'
-                            )}
-                            style={{ backgroundColor: status.color }}
-                          />
-                          <span
-                            dir='auto'
-                            className='min-w-0 flex-1 truncate text-[13px] font-medium leading-tight text-gray-900 dark:text-dark-900'
-                          >
-                            {truncateText(
-                              task.title ||
-                                t('work.tasks.untitled', {
-                                  defaultValue: 'Untitled task',
-                                }),
-                              32
-                            )}
-                          </span>
+                      <span
+                        className='flex h-8 items-center gap-2'
+                        title={`${task.title} · ${task.model}`}
+                      >
+                        <span
+                          aria-hidden='true'
+                          data-testid='sidebar-work-task-status'
+                          data-status-label={statusLabel}
+                          className={cn(
+                            'h-2 w-2 shrink-0 rounded-full',
+                            status.animated && 'animate-pulse',
+                            task.status === 'idle' &&
+                              'ring-1 ring-black/20 dark:ring-white/20'
+                          )}
+                          style={{ backgroundColor: status.color }}
+                        />
+                        <span
+                          dir='auto'
+                          className='min-w-0 flex-1 truncate text-sm leading-5 text-ink'
+                        >
+                          {truncateText(
+                            task.title ||
+                              t('work.tasks.untitled', {
+                                defaultValue: 'Untitled task',
+                              }),
+                            40
+                          )}
                         </span>
-                        <span className='mt-1 flex items-center gap-1.5 ps-4 text-[11px] text-gray-400 dark:text-dark-500'>
-                          <span className='tabular-nums'>
-                            {formatTimestamp(task.updatedAt, i18n.language)}
-                          </span>
-                          <span className='text-gray-300 dark:text-dark-400'>
-                            •
-                          </span>
-                          <span
-                            dir='ltr'
-                            className='min-w-0 truncate font-medium text-gray-600 dark:text-gray-400'
-                            title={task.model}
-                          >
-                            {task.model}
-                          </span>
+                        <span className='shrink-0 text-xs leading-5 tabular-nums text-ink-subtle group-hover:hidden group-focus-within:hidden'>
+                          {formatTimestamp(task.updatedAt, i18n.language)}
                         </span>
-                      </>
+                      </span>
                     )}
                     <span className='sr-only'>
                       {t('work.tasks.status', {

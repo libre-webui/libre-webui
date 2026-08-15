@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { ChatMessage as ChatMessageType } from '@/types';
@@ -51,6 +57,17 @@ import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { createLogger } from '@/utils/logger';
 import { triggerHapticFeedback } from '@/utils/haptics';
+import {
+  activateTTSPlaybackSession,
+  batchTextForTTS,
+  createTTSPlaybackSession,
+  isTTSPlaybackAbort,
+  isTTSPlaybackBlocked,
+  type TTSPlaybackSession,
+  type TTSPlaybackState,
+  type TTSAudioUnlockState,
+  unlockTTSAudioPlayback,
+} from '@/utils/ttsBatching';
 
 const logger = createLogger('components:chat-message');
 
@@ -163,9 +180,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isSystemMessageExpanded, setIsSystemMessageExpanded] = useState(false);
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [autoPlayState, setAutoPlayState] = useState<TTSPlaybackState>('idle');
   const [isCopied, setIsCopied] = useState(false);
-  const autoPlayAudioRef = useRef<HTMLAudioElement | null>(null);
+  const autoPlaySessionRef = useRef<TTSPlaybackSession | null>(null);
+  const autoPlayRunRef = useRef(0);
   const wasStreamingRef = useRef(isStreaming);
   const hasAutoPlayedRef = useRef(false);
 
@@ -243,13 +261,131 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     : (message.statistics?.thinking_duration_ms ??
       peekThinkingDuration(message.id));
 
-  // Auto-play TTS when streaming completes (if enabled)
+  const startAutoPlayback = useCallback(
+    async (audioUnlock?: Promise<TTSAudioUnlockState>) => {
+      const runId = autoPlayRunRef.current + 1;
+      autoPlayRunRef.current = runId;
+      autoPlaySessionRef.current?.cancel();
+      autoPlaySessionRef.current = null;
+      setAutoPlayState('loading');
+
+      try {
+        if (audioUnlock) {
+          const audioUnlockState = await audioUnlock;
+          if (autoPlayRunRef.current !== runId) return;
+          if (audioUnlockState === 'blocked') {
+            setAutoPlayState('blocked');
+            return;
+          }
+        }
+
+        const modelsResponse = await ttsApi.getModels();
+        if (autoPlayRunRef.current !== runId) return;
+        const availableModels =
+          modelsResponse.success && modelsResponse.data
+            ? modelsResponse.data
+            : [];
+        const savedSettings = preferences.ttsSettings;
+        const selectedModel = resolveTTSModel(
+          availableModels,
+          savedSettings?.model,
+          savedSettings?.pluginId
+        );
+        const savedSelection = findTTSModel(
+          availableModels,
+          savedSettings?.model,
+          savedSettings?.pluginId
+        );
+
+        const model = selectedModel?.model || savedSettings?.model || 'tts-1';
+        const pluginId = selectedModel?.plugin || savedSettings?.pluginId;
+        const voice = savedSelection
+          ? savedSettings?.voice || selectedModel?.config?.default_voice
+          : selectedModel?.config?.default_voice;
+        const voiceProfileId = savedSelection
+          ? savedSettings?.voiceProfileId || undefined
+          : undefined;
+        const providerMaxChars = Math.max(
+          1,
+          selectedModel?.config?.max_characters || 600
+        );
+        const maxChars = Math.min(providerMaxChars, 600);
+        const shouldBatch =
+          savedSettings?.streamSentences !== false ||
+          parsedContent.length > maxChars;
+        const batches = shouldBatch
+          ? batchTextForTTS(parsedContent, {
+              locale: i18n.language,
+              maxChars,
+              targetChars: Math.min(maxChars, 420),
+              minChars: Math.min(maxChars, 80),
+            })
+          : [parsedContent.trim()];
+        if (batches.length === 0) {
+          setAutoPlayState('idle');
+          return;
+        }
+
+        const session = createTTSPlaybackSession({
+          concurrency: 3,
+          initialBufferSize: Math.min(2, batches.length),
+          generate: (input, { signal }) =>
+            ttsApi.generate(
+              {
+                model,
+                pluginId,
+                input,
+                voice: voiceProfileId ? undefined : voice || undefined,
+                voiceProfileId,
+                speed: savedSettings?.speed || 1.0,
+                response_format: selectedModel?.config?.default_format,
+              },
+              { signal }
+            ),
+          onStateChange: state => {
+            if (autoPlayRunRef.current === runId) setAutoPlayState(state);
+          },
+        });
+        if (autoPlayRunRef.current !== runId) {
+          session.cancel();
+          return;
+        }
+        autoPlaySessionRef.current = session;
+        const releaseExclusivePlayback = activateTTSPlaybackSession(session);
+        try {
+          await session.play(batches);
+        } finally {
+          releaseExclusivePlayback();
+          if (autoPlaySessionRef.current === session) {
+            autoPlaySessionRef.current = null;
+          }
+          if (
+            autoPlayRunRef.current === runId &&
+            (session.state === 'ended' || session.state === 'cancelled')
+          ) {
+            setAutoPlayState('idle');
+          }
+        }
+      } catch (error) {
+        if (autoPlayRunRef.current !== runId) return;
+        if (isTTSPlaybackAbort(error)) {
+          setAutoPlayState('idle');
+        } else if (isTTSPlaybackBlocked(error)) {
+          setAutoPlayState('blocked');
+        } else {
+          logger.error('Auto-play TTS failed:', error);
+          setAutoPlayState('error');
+        }
+      }
+    },
+    [i18n.language, parsedContent, preferences.ttsSettings]
+  );
+
+  // Auto-play exactly once when the live assistant stream completes.
   useEffect(() => {
-    // Check if streaming just completed (was streaming, now not streaming)
     const streamingJustCompleted = wasStreamingRef.current && !isStreaming;
     wasStreamingRef.current = isStreaming;
 
-    // Only auto-play once per message
     if (
       streamingJustCompleted &&
       !hasAutoPlayedRef.current &&
@@ -257,78 +393,43 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       !isSystem &&
       parsedContent &&
       preferences.ttsSettings?.enabled &&
-      preferences.ttsSettings?.autoPlay
+      preferences.ttsSettings.autoPlay
     ) {
       hasAutoPlayedRef.current = true;
-
-      // Auto-play the message (parsedContent already has thinking removed)
-      const playMessage = async () => {
-        setIsAutoPlaying(true);
-        try {
-          const modelsResponse = await ttsApi.getModels();
-          const availableModels =
-            modelsResponse.success && modelsResponse.data
-              ? modelsResponse.data
-              : [];
-          const savedSettings = preferences.ttsSettings;
-          const selectedModel = resolveTTSModel(
-            availableModels,
-            savedSettings?.model,
-            savedSettings?.pluginId
-          );
-          const savedSelection = findTTSModel(
-            availableModels,
-            savedSettings?.model,
-            savedSettings?.pluginId
-          );
-
-          const response = await ttsApi.generateBase64({
-            model: selectedModel?.model || savedSettings?.model || 'tts-1',
-            pluginId: selectedModel?.plugin || savedSettings?.pluginId,
-            input: parsedContent,
-            voice: savedSelection
-              ? savedSettings?.voice ||
-                selectedModel?.config?.default_voice ||
-                'alloy'
-              : selectedModel?.config?.default_voice || 'alloy',
-            speed: savedSettings?.speed || 1.0,
-            response_format: selectedModel?.config?.default_format,
-          });
-
-          if (response.success && response.data?.audio) {
-            const audioUrl = `data:${response.data.mimeType};base64,${response.data.audio}`;
-            const audio = new Audio(audioUrl);
-            autoPlayAudioRef.current = audio;
-
-            audio.onended = () => {
-              setIsAutoPlaying(false);
-              autoPlayAudioRef.current = null;
-            };
-
-            audio.onerror = () => {
-              setIsAutoPlaying(false);
-              autoPlayAudioRef.current = null;
-            };
-
-            await audio.play();
-          }
-        } catch (error) {
-          logger.error('Auto-play TTS failed:', error);
-          setIsAutoPlaying(false);
-        }
-      };
-
-      playMessage();
+      void startAutoPlayback();
     }
+  }, [
+    isStreaming,
+    isUser,
+    isSystem,
+    parsedContent,
+    preferences.ttsSettings?.autoPlay,
+    preferences.ttsSettings?.enabled,
+    startAutoPlayback,
+  ]);
 
-    // Cleanup on unmount
-    return () => {
-      if (autoPlayAudioRef.current) {
-        autoPlayAudioRef.current.pause();
-        autoPlayAudioRef.current = null;
-      }
-    };
-  }, [isStreaming, isUser, isSystem, parsedContent, preferences.ttsSettings]);
+  // A session survives ordinary rerenders, but never outlives its message.
+  useEffect(
+    () => () => {
+      autoPlayRunRef.current += 1;
+      autoPlaySessionRef.current?.cancel();
+      autoPlaySessionRef.current = null;
+    },
+    []
+  );
+
+  const retryAutoPlayback = () => {
+    // Keep the resume call in this click stack, before starting async work.
+    const audioUnlock = unlockTTSAudioPlayback();
+    void startAutoPlayback(audioUnlock);
+  };
+
+  const stopAutoPlayback = () => {
+    autoPlayRunRef.current += 1;
+    autoPlaySessionRef.current?.cancel();
+    autoPlaySessionRef.current = null;
+    setAutoPlayState('idle');
+  };
 
   // Determine display name for messages
   const getDisplayName = () => {
@@ -717,7 +818,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               <div
                 className={cn(
                   'flex items-center gap-0.5 text-gray-400 dark:text-dark-500',
-                  'sm:opacity-0 sm:transition-opacity sm:duration-150 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100',
+                  'sm:transition-opacity sm:duration-150 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100',
+                  !isUser &&
+                    [
+                      'loading',
+                      'generating',
+                      'buffering',
+                      'blocked',
+                      'playing',
+                    ].includes(autoPlayState)
+                    ? 'sm:opacity-100'
+                    : 'sm:opacity-0',
                   isUser ? 'mt-1 justify-end' : 'mt-1'
                 )}
               >
@@ -735,9 +846,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   <TTSButton
                     text={parsedContent}
                     size='sm'
+                    externalPlaybackState={autoPlayState}
+                    onStopExternal={stopAutoPlayback}
+                    onRetryExternal={retryAutoPlayback}
                     className={cn(
                       'transition-colors',
-                      isAutoPlaying &&
+                      autoPlayState === 'playing' &&
                         'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
                     )}
                   />

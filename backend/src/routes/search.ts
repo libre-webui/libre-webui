@@ -38,10 +38,10 @@ router.use(authenticate);
  * composer knows whether to offer the toggle; the SearXNG URL itself is
  * admin configuration and only returned to administrators.
  */
-router.get('/config', (req: Request, res: Response): void => {
-  const config = getWebSearchConfig();
+router.get('/config', async (req: Request, res: Response): Promise<void> => {
+  const config = await getWebSearchConfig();
   const userId = (req as { user?: { userId?: string } }).user?.userId;
-  const currentUser = userId ? userModel.getUserById(userId) : null;
+  const currentUser = userId ? await userModel.getUserById(userId) : null;
   // Authorization follows current database state, like requireAdmin.
   const isAdmin =
     currentUser?.status === 'active' && currentUser.role === 'admin';
@@ -52,11 +52,11 @@ router.get('/config', (req: Request, res: Response): void => {
       available: config.available,
       // Whether this account may use search right now — drives the
       // composer toggle. The backend re-checks on every request.
-      allowed: config.available && userCanUseWebSearch(currentUser),
+      allowed: config.available && (await userCanUseWebSearch(currentUser)),
       ...(isAdmin
         ? {
             url: config.url,
-            access: getWebSearchAccessMode(),
+            access: await getWebSearchAccessMode(),
             maxResults: config.maxResults,
             safeSearch: config.safeSearch,
           }
@@ -70,80 +70,97 @@ router.get('/config', (req: Request, res: Response): void => {
  * the mode is admin-only and lives in User Management next to the other
  * access controls.
  */
-router.get('/access', (req: Request, res: Response): void => {
+router.get('/access', async (req: Request, res: Response): Promise<void> => {
   const userId = (req as { user?: { userId?: string } }).user?.userId;
-  const currentUser = userId ? userModel.getUserById(userId) : null;
+  const currentUser = userId ? await userModel.getUserById(userId) : null;
   res.json({
     success: true,
     data: {
-      mode: getWebSearchAccessMode(),
+      mode: await getWebSearchAccessMode(),
       allowed:
-        getWebSearchConfig().available && userCanUseWebSearch(currentUser),
+        (await getWebSearchConfig()).available &&
+        (await userCanUseWebSearch(currentUser)),
     },
   });
 });
 
-router.put('/access', requireAdmin, (req: Request, res: Response): void => {
-  const mode = req.body?.mode;
-  if (!isWebSearchAccessMode(mode)) {
-    res.status(400).json({
-      success: false,
-      error: 'mode must be "admins" or "all-users".',
-    });
-    return;
-  }
-  setWebSearchAccessMode(mode);
-  res.json({ success: true, data: { mode: getWebSearchAccessMode() } });
-});
-
-router.put('/config', requireAdmin, (req: Request, res: Response): void => {
-  const enabled = req.body?.enabled;
-  const url = req.body?.url;
-  const maxResults = req.body?.maxResults;
-  const safeSearch = req.body?.safeSearch;
-  if (typeof enabled !== 'boolean' || typeof url !== 'string') {
-    res.status(400).json({
-      success: false,
-      error: 'enabled (boolean) and url (string) are required.',
-    });
-    return;
-  }
-  if (
-    maxResults !== undefined &&
-    (!Number.isInteger(maxResults) || maxResults < 1 || maxResults > 10)
-  ) {
-    res.status(400).json({
-      success: false,
-      error: 'maxResults must be an integer between 1 and 10.',
-    });
-    return;
-  }
-  if (safeSearch !== undefined && typeof safeSearch !== 'boolean') {
-    res.status(400).json({
-      success: false,
-      error: 'safeSearch must be a boolean.',
-    });
-    return;
-  }
-  try {
-    const config = setWebSearchConfig({ enabled, url, maxResults, safeSearch });
+router.put(
+  '/access',
+  requireAdmin,
+  async (req: Request, res: Response): Promise<void> => {
+    const mode = req.body?.mode;
+    if (!isWebSearchAccessMode(mode)) {
+      res.status(400).json({
+        success: false,
+        error: 'mode must be "admins" or "all-users".',
+      });
+      return;
+    }
+    await setWebSearchAccessMode(mode);
     res.json({
       success: true,
-      data: {
-        enabled: config.enabled,
-        available: config.available,
-        url: config.url,
-        maxResults: config.maxResults,
-        safeSearch: config.safeSearch,
-      },
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: getErrorMessage(error, 'Could not update the search settings.'),
+      data: { mode: await getWebSearchAccessMode() },
     });
   }
-});
+);
+
+router.put(
+  '/config',
+  requireAdmin,
+  async (req: Request, res: Response): Promise<void> => {
+    const enabled = req.body?.enabled;
+    const url = req.body?.url;
+    const maxResults = req.body?.maxResults;
+    const safeSearch = req.body?.safeSearch;
+    if (typeof enabled !== 'boolean' || typeof url !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'enabled (boolean) and url (string) are required.',
+      });
+      return;
+    }
+    if (
+      maxResults !== undefined &&
+      (!Number.isInteger(maxResults) || maxResults < 1 || maxResults > 10)
+    ) {
+      res.status(400).json({
+        success: false,
+        error: 'maxResults must be an integer between 1 and 10.',
+      });
+      return;
+    }
+    if (safeSearch !== undefined && typeof safeSearch !== 'boolean') {
+      res.status(400).json({
+        success: false,
+        error: 'safeSearch must be a boolean.',
+      });
+      return;
+    }
+    try {
+      const config = await setWebSearchConfig({
+        enabled,
+        url,
+        maxResults,
+        safeSearch,
+      });
+      res.json({
+        success: true,
+        data: {
+          enabled: config.enabled,
+          available: config.available,
+          url: config.url,
+          maxResults: config.maxResults,
+          safeSearch: config.safeSearch,
+        },
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        error: getErrorMessage(error, 'Could not update the search settings.'),
+      });
+    }
+  }
+);
 
 /** Admin connectivity probe: run a tiny query against the configured instance. */
 router.post(

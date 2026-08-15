@@ -4,6 +4,9 @@ import path from 'node:path';
 import test from 'node:test';
 import { pathToFileURL } from 'node:url';
 
+process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
+process.env.JWT_SECRET ||= 'oauth-security-test-secret';
+
 const importBuilt = file =>
   import(pathToFileURL(path.resolve('backend/dist', file)).href);
 

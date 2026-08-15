@@ -5,41 +5,212 @@ umask 077
 
 stack_dir=${LIBRE_WEBUI_STACK_DIR:-/opt/libre-webui}
 backup_dir=${LIBRE_WEBUI_BACKUP_DIR:-/var/backups/libre-webui}
+key_dir=${LIBRE_WEBUI_BACKUP_KEY_DIR:-/etc/libre-webui/backup-keys}
 retention_days=${LIBRE_WEBUI_BACKUP_RETENTION_DAYS:-14}
 compose_file=${stack_dir}/docker-compose.yml
-data_volume=${LIBRE_WEBUI_DATA_VOLUME:-}
+container_name=${LIBRE_WEBUI_CONTAINER_NAME:-libre-webui}
 timestamp=$(date -u +%Y%m%dT%H%M%SZ)
-archive=${backup_dir}/libre-webui-data-${timestamp}.tar.gz
+archive=${backup_dir}/libre-webui-integrated-${timestamp}.lwb
+report=${backup_dir}/libre-webui-integrated-${timestamp}.json
+report_partial=${report}.partial
+encryption_key=${key_dir}/backup-encryption.key
+signing_private_key=${key_dir}/backup-signing-private.pem
+signing_public_key=${key_dir}/backup-signing-public.pem
 
 install -d -m 0700 "${backup_dir}"
-if [[ -z "${data_volume}" ]]; then
-  data_volume=$(docker inspect libre-webui --format '{{range .Mounts}}{{if eq .Destination "/app/backend/data"}}{{.Name}}{{end}}{{end}}')
-fi
-if [[ -z "${data_volume}" ]]; then
-  echo 'Could not resolve the Libre WebUI data volume.' >&2
+for key_file in "${encryption_key}" "${signing_private_key}" "${signing_public_key}"; do
+  if [[ ! -f "${key_file}" || -L "${key_file}" ]]; then
+    echo "Missing physical backup key file: ${key_file}" >&2
+    exit 1
+  fi
+done
+container_env=$(mktemp)
+chmod 0600 "${container_env}"
+app_networks_file=''
+proxy_networks_file=''
+exec 9>"${backup_dir}/.backup.lock"
+if ! flock -n 9; then
+  echo 'Another Libre WebUI backup is already running.' >&2
+  rm -f "${container_env}"
   exit 1
 fi
-docker compose -f "${compose_file}" stop libre-webui
-restart_app=true
+
+restart_app=false
 cleanup() {
+  rm -f "${report_partial}" "${container_env}"
+  if [[ -n "${app_networks_file}" ]]; then
+    rm -f "${app_networks_file}"
+  fi
+  if [[ -n "${proxy_networks_file}" ]]; then
+    rm -f "${proxy_networks_file}"
+  fi
   if [[ "${restart_app}" == true ]]; then
-    docker compose -f "${compose_file}" start libre-webui >/dev/null
+    docker compose -f "${compose_file}" start libre-webui >/dev/null || true
   fi
 }
 trap cleanup EXIT
 
+image_ref=$(docker inspect "${container_name}" --format '{{.Image}}')
+container_was_running=$(docker inspect "${container_name}" --format '{{.State.Running}}')
+docker inspect "${container_name}" \
+  --format '{{range .Config.Env}}{{println .}}{{end}}' >"${container_env}"
+
+raw_socket_mount=$(docker inspect "${container_name}" \
+  --format '{{range .Mounts}}{{if eq .Destination "/var/run/docker.sock"}}present{{end}}{{end}}')
+if [[ -n "${raw_socket_mount}" ]]; then
+  echo 'Backup refuses to inherit the raw Docker socket. Deploy Work with docker-compose.work-proxy.yml.' >&2
+  exit 1
+fi
+
+# The recovery inventory invokes the Docker CLI only when the database contains
+# Docker-backed Work tasks. A deployed filtered proxy is named by DOCKER_HOST;
+# discover its actual Compose network from the running endpoints because the
+# engine prefixes network names with the active project name. The maintenance
+# container may join that one internal network, but it never receives the raw
+# socket. Any unexpected or ambiguous topology fails before the app is stopped.
+docker_host=''
+docker_host_seen=false
+while IFS= read -r environment_entry; do
+  if [[ "${environment_entry}" == DOCKER_HOST=* ]]; then
+    if [[ "${docker_host_seen}" == true ]]; then
+      echo 'Backup refuses a container with duplicate DOCKER_HOST entries.' >&2
+      exit 1
+    fi
+    docker_host=${environment_entry#DOCKER_HOST=}
+    docker_host_seen=true
+  fi
+done <"${container_env}"
+
+create_network_args=(--network none)
+if [[ -n "${docker_host}" ]]; then
+  if [[ "${docker_host}" != 'tcp://docker-socket-proxy:2375' ]]; then
+    echo 'Backup refuses an unexpected Docker endpoint; use the shipped filtered Work proxy.' >&2
+    exit 1
+  fi
+
+  compose_project=$(docker inspect "${container_name}" \
+    --format '{{index .Config.Labels "com.docker.compose.project"}}')
+  if [[ -z "${compose_project}" ]]; then
+    echo 'Backup cannot resolve the application Compose project.' >&2
+    exit 1
+  fi
+  proxy_candidates=$(docker ps \
+    --filter "label=com.docker.compose.project=${compose_project}" \
+    --filter 'label=com.docker.compose.service=docker-socket-proxy' \
+    --format '{{.ID}}')
+  proxy_container_id=''
+  while IFS= read -r candidate; do
+    [[ -z "${candidate}" ]] && continue
+    if [[ -n "${proxy_container_id}" ]]; then
+      echo 'Backup found multiple Work socket proxies in the application Compose project.' >&2
+      exit 1
+    fi
+    proxy_container_id=${candidate}
+  done <<<"${proxy_candidates}"
+  if [[ -z "${proxy_container_id}" ]]; then
+    echo 'Backup cannot find the running Work socket proxy in the application Compose project.' >&2
+    exit 1
+  fi
+  proxy_running=$(docker inspect "${proxy_container_id}" \
+    --format '{{.State.Running}}')
+  if [[ "${proxy_running}" != true ]]; then
+    echo 'Backup requires the filtered Work socket proxy to be running.' >&2
+    exit 1
+  fi
+
+  app_networks_file=$(mktemp)
+  proxy_networks_file=$(mktemp)
+  chmod 0600 "${app_networks_file}" "${proxy_networks_file}"
+  docker inspect "${container_name}" \
+    --format '{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}' \
+    >"${app_networks_file}"
+  docker inspect "${proxy_container_id}" \
+    --format '{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}' \
+    >"${proxy_networks_file}"
+
+  proxy_network=''
+  while IFS= read -r app_network; do
+    [[ -z "${app_network}" ]] && continue
+    if grep -Fqx -- "${app_network}" "${proxy_networks_file}"; then
+      if [[ -n "${proxy_network}" ]]; then
+        echo 'Backup found multiple shared networks with the Work socket proxy.' >&2
+        exit 1
+      fi
+      proxy_network=${app_network}
+    fi
+  done <"${app_networks_file}"
+  if [[ -z "${proxy_network}" ]]; then
+    echo 'Backup cannot find a shared network with the Work socket proxy.' >&2
+    exit 1
+  fi
+  proxy_network_internal=$(docker network inspect "${proxy_network}" \
+    --format '{{.Internal}}')
+  if [[ "${proxy_network_internal}" != true ]]; then
+    echo 'Backup refuses a Work socket proxy network that is not internal.' >&2
+    exit 1
+  fi
+  create_network_args=(--network "${proxy_network}")
+fi
+
+if [[ "${container_was_running}" == true ]]; then
+  restart_app=true
+  docker compose -f "${compose_file}" stop --timeout 20 libre-webui
+fi
+
+# The archive is created by the exact deployed image while the application is
+# quiesced. Its manifest is Ed25519-signed and its complete payload (database,
+# local blobs/vectors, runtime selection, and recovery secrets) is AES-256-GCM
+# encrypted. The command authenticates and decrypts its own result before it
+# publishes success.
 docker run --rm \
+  --user 0:0 \
   --read-only \
+  --tmpfs /tmp:rw,nosuid,nodev,noexec \
+  "${create_network_args[@]}" \
+  --cap-drop ALL \
+  --security-opt no-new-privileges \
+  --volumes-from "${container_name}:ro" \
+  --mount type=bind,src="${backup_dir}",dst=/backup \
+  --mount type=bind,src="${key_dir}",dst=/backup-keys,readonly \
+  --env-file "${container_env}" \
+  --entrypoint node \
+  "${image_ref}" \
+  /app/backend/dist/cli/recoveryBackup.js create \
+  --offline \
+  --data-dir /app/backend/data \
+  --output "/backup/$(basename "${archive}")" \
+  --encryption-key /backup-keys/backup-encryption.key \
+  --signing-private-key /backup-keys/backup-signing-private.pem \
+  >"${report_partial}"
+
+docker run --rm \
+  --user 0:0 \
+  --read-only \
+  --tmpfs /tmp:rw,nosuid,nodev,noexec \
   --network none \
   --cap-drop ALL \
   --security-opt no-new-privileges \
-  --mount type=volume,src="${data_volume}",dst=/data,readonly \
-  --mount type=bind,src="${backup_dir}",dst=/backup \
-  alpine:3.22 \
-  tar -C /data -czf "/backup/$(basename "${archive}")" .
-chmod 0600 "${archive}"
+  --mount type=bind,src="${backup_dir}",dst=/backup,readonly \
+  --mount type=bind,src="${key_dir}",dst=/backup-keys,readonly \
+  --entrypoint node \
+  "${image_ref}" \
+  /app/backend/dist/cli/recoveryBackup.js verify \
+  --archive "/backup/$(basename "${archive}")" \
+  --encryption-key /backup-keys/backup-encryption.key \
+  --signing-public-key /backup-keys/backup-signing-public.pem \
+  >/dev/null
 
-docker compose -f "${compose_file}" start libre-webui >/dev/null
-restart_app=false
-find "${backup_dir}" -type f -name 'libre-webui-data-*.tar.gz' \
+chmod 0600 "${archive}" "${report_partial}"
+sync -f "${archive}"
+sync -f "${report_partial}"
+mv "${report_partial}" "${report}"
+sync -f "${backup_dir}"
+
+if [[ "${restart_app}" == true ]]; then
+  docker compose -f "${compose_file}" start libre-webui >/dev/null
+  restart_app=false
+fi
+find "${backup_dir}" -type f \
+  \( -name 'libre-webui-integrated-*.lwb' \
+     -o -name 'libre-webui-integrated-*.json' \) \
   -mtime "+${retention_days}" -delete

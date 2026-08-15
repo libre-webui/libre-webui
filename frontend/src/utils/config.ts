@@ -25,7 +25,7 @@ const logger = createLogger('config');
 
 export const getApiBaseUrl = (): string => {
   // Check for explicit env var first
-  if (import.meta.env.VITE_API_BASE_URL) {
+  if (import.meta.env?.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
 
@@ -36,7 +36,7 @@ export const getApiBaseUrl = (): string => {
 
   // In production (npx, docker), API is on same origin
   // In development, API is on port 3001
-  if (import.meta.env.PROD) {
+  if (import.meta.env?.PROD) {
     return `${window.location.origin}/api`;
   }
 

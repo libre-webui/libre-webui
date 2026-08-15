@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { createServer, ServerResponse } from 'node:http';
 import { createConnection } from 'node:net';
@@ -7,6 +8,7 @@ import path from 'node:path';
 import test, { after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import express from 'express';
+import { initializeWorkTestPlatform } from './lib/work-test-platform.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,16 +23,25 @@ const distModule = relativePath =>
     pathToFileURL(path.join(repoRoot, 'backend', 'dist', relativePath)).href
   );
 const [
-  { closeDatabase, getDatabase },
+  { getDatabase },
   { authService },
   { default: workRouter },
   { WORK_EVENT_MAX_RESUME_CURSOR, WorkEventService, workEventService },
+  { getDurableJobRuntime },
+  { getCoordinator },
+  { closeDurableEventGateway, initializeDurableEventGateway },
+  { default: workTaskService },
 ] = await Promise.all([
   distModule('db.js'),
   distModule('services/authService.js'),
   distModule('routes/work.js'),
   distModule('services/workEventService.js'),
+  distModule('platform/jobs/durableJobRuntime.js'),
+  distModule('platform/coordination/service.js'),
+  distModule('platform/events/service.js'),
+  distModule('services/workTaskService.js'),
 ]);
+const closeWorkPlatform = await initializeWorkTestPlatform(repoRoot);
 
 const now = Date.now();
 const db = getDatabase();
@@ -103,7 +114,8 @@ const baseUrl = `http://127.0.0.1:${address.port}/api/work`;
 after(async () => {
   workEventService.reset();
   await new Promise(resolve => server.close(resolve));
-  closeDatabase();
+  await closeDurableEventGateway();
+  await closeWorkPlatform();
   await rm(dataDir, { recursive: true, force: true });
 });
 
@@ -448,6 +460,122 @@ test('Work SSE enforces admin role, ownership, run identity, and cursor input', 
       response.headers.get('content-type') || '',
       /application\/json/
     );
+  }
+});
+
+test('solo Work SSE snapshots an event published during snapshot construction', async () => {
+  workEventService.reset();
+  const originalRequireTaskDetail = workTaskService.requireTaskDetail;
+  let injected = false;
+  workTaskService.requireTaskDetail = async (...args) => {
+    const detail = await originalRequireTaskDetail.apply(workTaskService, args);
+    if (!injected) {
+      injected = true;
+      workEventService.publish('task-a', 'run-a', 'assistant_delta', {
+        delta: 'solo gap',
+        total: 'solo gap',
+      });
+    }
+    return detail;
+  };
+
+  const controller = new AbortController();
+  try {
+    const response = await fetch(
+      `${baseUrl}/tasks/task-a/runs/run-a/events?after=0`,
+      {
+        headers: { Authorization: `Bearer ${tokenFor('admin-a', 'admin')}` },
+        signal: controller.signal,
+      }
+    );
+    assert.equal(response.status, 200);
+    const stream = createSseReader(response);
+    const snapshot = await stream.next();
+    assert.equal(snapshot.event, 'snapshot');
+    assert.equal(snapshot.id, 1);
+    assert.equal(snapshot.data.data.liveRun.response, 'solo gap');
+
+    workEventService.publish('task-a', 'run-a', 'assistant_delta', {
+      delta: ' live',
+      total: 'solo gap live',
+    });
+    const live = await stream.next();
+    assert.equal(live.event, 'assistant_delta');
+    assert.equal(live.id, 2);
+    assert.equal(live.data.data.total, 'solo gap live');
+    await stream.cancel();
+  } finally {
+    controller.abort();
+    workTaskService.requireTaskDetail = originalRequireTaskDetail;
+  }
+});
+
+test('durable Work SSE compacts more than 512 events and replays the checkpoint gap', async () => {
+  workEventService.reset();
+  const service = getDurableJobRuntime().service;
+  const streamId = 'work:task-a:run-a';
+  for (let index = 0; index < 513; index += 1) {
+    await service.appendEvent({
+      eventId: randomUUID(),
+      streamId,
+      eventType: 'work.usage.v1',
+      subjectId: 'run-a',
+      payload: {
+        mode: 'encrypted',
+        value: {
+          type: 'usage',
+          taskId: 'task-a',
+          runId: 'run-a',
+          data: { durationMs: index },
+        },
+      },
+    });
+  }
+  const checkpoint = await service.latestEventCursor(streamId);
+  assert.equal(checkpoint, 513);
+
+  const gateway = initializeDurableEventGateway(service, getCoordinator());
+  workEventService.initializeDurableGateway(gateway);
+  const originalRequireTaskDetail = workTaskService.requireTaskDetail;
+  let injected = false;
+  workTaskService.requireTaskDetail = async (...args) => {
+    const detail = await originalRequireTaskDetail.apply(workTaskService, args);
+    if (!injected) {
+      injected = true;
+      await workEventService.publish(
+        'task-a',
+        'run-a',
+        'assistant_delta',
+        { delta: 'gap', total: 'checkpoint gap' },
+        'checkpoint-gap'
+      );
+    }
+    return detail;
+  };
+
+  const controller = new AbortController();
+  try {
+    const response = await fetch(
+      `${baseUrl}/tasks/task-a/runs/run-a/events?after=0`,
+      {
+        headers: { Authorization: `Bearer ${tokenFor('admin-a', 'admin')}` },
+        signal: controller.signal,
+      }
+    );
+    assert.equal(response.status, 200);
+    const stream = createSseReader(response);
+    const snapshot = await stream.next();
+    const gap = await stream.next();
+    assert.equal(snapshot.event, 'snapshot');
+    assert.equal(snapshot.id, checkpoint);
+    assert.equal(snapshot.data.data.replayTruncated, true);
+    assert.equal(gap.event, 'assistant_delta');
+    assert.equal(gap.id, checkpoint + 1);
+    assert.equal(gap.data.data.total, 'checkpoint gap');
+    await stream.cancel();
+  } finally {
+    controller.abort();
+    workTaskService.requireTaskDetail = originalRequireTaskDetail;
   }
 });
 

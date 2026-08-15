@@ -16,7 +16,20 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabase } from '../db.js';
+import {
+  getWorkPersistence,
+  replaceWorkTextNul,
+  WorkPersistenceError,
+  type WorkMessageRow,
+  type WorkRunRow,
+  type WorkTaskRow,
+} from '../platform/workPersistence/index.js';
+import { transactionalWorkExecutionEnqueuer } from '../platform/jobs/workExecutionEnqueuer.js';
+import {
+  WORK_EXECUTE_IDEMPOTENCY_SCOPE,
+  WORK_EXECUTE_JOB_TYPE,
+} from '../platform/jobs/domainJobContracts.js';
+import { getDurableJobRuntime } from '../platform/jobs/durableJobRuntime.js';
 import {
   WorkMessage,
   WorkMessagePage,
@@ -31,10 +44,9 @@ import {
   WorkTaskStatus,
 } from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
+import { getCoordinator } from '../platform/coordination/service.js';
 
 const logger = createLogger('services:work-task');
-const ACTIVE_RUN_STATUSES: WorkRunStatus[] = ['queued', 'preparing', 'running'];
-const ACTIVE_PREVIEW_STATUSES: WorkPreviewStatus[] = ['starting', 'running'];
 export const WORK_MESSAGE_PAGE_SIZE = 200;
 export const WORK_MESSAGE_MAX_BYTES = 100_000;
 export const WORK_MESSAGE_METADATA_MAX_BYTES = 100_000;
@@ -68,56 +80,139 @@ const workAdmissionLimits = {
   ),
 };
 
-interface TaskRow {
-  id: string;
-  user_id: string;
-  title: string;
-  model: string;
-  provider_type: WorkProviderType;
-  provider_id: string | null;
-  status: WorkTaskStatus;
-  network_enabled: number;
-  volume_name: string;
-  container_name: string;
-  host_path: string | null;
-  policy_id: string | null;
-  preview_url: string | null;
-  preview_status: WorkPreviewStatus;
-  created_at: number;
-  updated_at: number;
-}
-
-interface RunRow {
-  id: string;
-  task_id: string;
-  model: string;
-  provider_type: WorkProviderType;
-  provider_id: string | null;
-  status: WorkRunStatus;
-  error: string | null;
-  created_at: number;
-  started_at: number | null;
-  finished_at: number | null;
-}
-
-interface MessageRow {
-  id: string;
-  task_id: string;
-  run_id: string | null;
-  message_index: number;
-  role: WorkMessage['role'];
-  kind: WorkMessage['kind'];
-  content: string;
-  metadata: string | null;
-  created_at: number;
-}
+type TaskRow = WorkTaskRow;
+type RunRow = WorkRunRow;
+type MessageRow = WorkMessageRow;
 
 export class WorkTaskService {
   private retiringUsers = new Set<string>();
   private retiringTasks = new Set<string>();
   private networkPolicyChanges = new Set<string>();
 
-  createTaskWithRun(
+  private async resolveExecutionPublication(
+    expectedTask: TaskRow,
+    expectedRun: RunRow,
+    expectedMessage: MessageRow,
+    taskMayPreexist = false
+  ): Promise<'absent' | 'committed' | 'ambiguous'> {
+    try {
+      const persistence = getWorkPersistence();
+      const [task, run, messages, job] = await Promise.all([
+        persistence.findTask(expectedTask.id, expectedTask.user_id),
+        persistence.findRun(expectedRun.id),
+        persistence.listMessages({ taskId: expectedTask.id, mode: 'all' }),
+        getDurableJobRuntime().service.getByIdempotency(
+          expectedTask.user_id,
+          WORK_EXECUTE_IDEMPOTENCY_SCOPE,
+          expectedRun.id
+        ),
+      ]);
+      const message = messages.find(row => row.id === expectedMessage.id);
+      if (!run && !message && !job && (taskMayPreexist || !task)) {
+        return 'absent';
+      }
+      const exactTask =
+        task?.id === expectedTask.id &&
+        task.user_id === expectedTask.user_id &&
+        task.title === expectedTask.title &&
+        task.model === expectedTask.model &&
+        task.provider_type === expectedTask.provider_type &&
+        task.provider_id === expectedTask.provider_id &&
+        task.network_enabled === expectedTask.network_enabled &&
+        task.volume_name === expectedTask.volume_name &&
+        task.container_name === expectedTask.container_name &&
+        task.host_path === expectedTask.host_path &&
+        task.policy_id === expectedTask.policy_id &&
+        task.created_at === expectedTask.created_at;
+      const exactRun =
+        run?.id === expectedRun.id &&
+        run.task_id === expectedRun.task_id &&
+        run.model === expectedRun.model &&
+        run.provider_type === expectedRun.provider_type &&
+        run.provider_id === expectedRun.provider_id &&
+        run.created_at === expectedRun.created_at;
+      const exactMessage =
+        message?.id === expectedMessage.id &&
+        message.task_id === expectedMessage.task_id &&
+        message.run_id === expectedMessage.run_id &&
+        message.role === expectedMessage.role &&
+        message.kind === expectedMessage.kind &&
+        message.content === expectedMessage.content &&
+        message.metadata === expectedMessage.metadata &&
+        message.created_at === expectedMessage.created_at;
+      const exactJob =
+        job?.jobType === WORK_EXECUTE_JOB_TYPE &&
+        job.actorUserId === expectedTask.user_id;
+      return exactTask && exactRun && exactMessage && exactJob
+        ? 'committed'
+        : 'ambiguous';
+    } catch {
+      return 'ambiguous';
+    }
+  }
+
+  async withUserLifecycleLease<T>(
+    userId: string,
+    operation: (assertHeld: () => Promise<void>) => Promise<T>
+  ): Promise<T> {
+    const coordinator = getCoordinator();
+    const deadline = Date.now() + 10_000;
+    let lease = await coordinator.acquireLease(
+      `work-user-lifecycle:${userId}`,
+      60_000
+    );
+    while (!lease && Date.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 25));
+      lease = await coordinator.acquireLease(
+        `work-user-lifecycle:${userId}`,
+        60_000
+      );
+    }
+    if (!lease) {
+      throw new WorkConflictError(
+        'This user already has a Work lifecycle operation in progress.'
+      );
+    }
+    let closed = false;
+    let leaseLost = false;
+    let renewalTimer: NodeJS.Timeout | undefined;
+    const leaseLostError = (): WorkConflictError =>
+      new WorkConflictError('The shared Work lifecycle lease was lost.');
+    const markLost = (): void => {
+      leaseLost = true;
+    };
+    const assertHeld = async (): Promise<void> => {
+      if (closed || leaseLost) throw leaseLostError();
+      try {
+        if (await lease.extend(60_000)) return;
+      } catch {
+        // Report expiry and coordination outages through one safe fence.
+      }
+      markLost();
+      throw leaseLostError();
+    };
+    const renew = async (): Promise<void> => {
+      if (closed) return;
+      try {
+        if (!(await lease.extend(60_000))) markLost();
+      } catch {
+        markLost();
+      }
+      if (!closed && !leaseLost) renewalTimer = setTimeout(renew, 20_000);
+    };
+    renewalTimer = setTimeout(renew, 20_000);
+    try {
+      await assertHeld();
+      const result = await operation(assertHeld);
+      return result;
+    } finally {
+      closed = true;
+      if (renewalTimer) clearTimeout(renewalTimer);
+      await lease.release().catch(() => false);
+    }
+  }
+
+  async createTaskWithRun(
     userId: string,
     message: string,
     model: string,
@@ -125,77 +220,149 @@ export class WorkTaskService {
     provider: WorkProviderSelection = { providerType: 'ollama' },
     hostPath?: string,
     policyId?: string
-  ): WorkTaskDetail {
-    this.assertUserIsActive(userId);
+  ): Promise<WorkTaskDetail> {
+    return this.withUserLifecycleLease(userId, assertHeld =>
+      this.createTaskWithRunWithLeaseHeld(
+        userId,
+        message,
+        model,
+        networkEnabled,
+        provider,
+        hostPath,
+        policyId,
+        assertHeld
+      )
+    );
+  }
+
+  private async createTaskWithRunWithLeaseHeld(
+    userId: string,
+    message: string,
+    model: string,
+    networkEnabled: boolean,
+    provider: WorkProviderSelection,
+    hostPath?: string,
+    policyId?: string,
+    assertHeld: () => Promise<void> = async () => undefined
+  ): Promise<WorkTaskDetail> {
+    await this.assertUserIsActive(userId);
     const selectedProvider = normalizeProvider(provider);
-    const db = getDatabase();
     const taskId = uuidv4();
     const runId = uuidv4();
     const messageId = uuidv4();
     const compactId = taskId.replace(/-/g, '');
     const now = Date.now();
     const title = deriveTitle(message);
-    const transaction = db.transaction(() => {
-      this.assertTaskAdmission(userId);
-      this.assertRuntimeAdmission(userId);
-      db.prepare(
-        `INSERT INTO work_tasks (
-          id, user_id, title, model, provider_type, provider_id, status,
-          network_enabled, volume_name, container_name, host_path, policy_id,
-          preview_status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, 'preparing', ?, ?, ?, ?, ?, 'stopped', ?, ?)`
-      ).run(
-        taskId,
-        userId,
-        title,
-        model,
-        selectedProvider.providerType,
-        selectedProvider.providerId || null,
-        networkEnabled ? 1 : 0,
-        `libre-work-${compactId}`,
-        `libre-work-${compactId}`,
-        hostPath || null,
-        policyId || null,
-        now,
-        now
+    const selectedModel = cleanRequired(model);
+    const taskRow: TaskRow = {
+      id: taskId,
+      user_id: userId,
+      title,
+      model: selectedModel,
+      provider_type: selectedProvider.providerType,
+      provider_id: selectedProvider.providerId || null,
+      status: 'preparing',
+      network_enabled: networkEnabled ? 1 : 0,
+      volume_name: `libre-work-${compactId}`,
+      container_name: `libre-work-${compactId}`,
+      host_path: hostPath || null,
+      policy_id: policyId || null,
+      preview_url: null,
+      preview_status: 'stopped',
+      preview_upstream_host: null,
+      preview_upstream_port: null,
+      created_at: now,
+      updated_at: now,
+    };
+    const runRow: RunRow = {
+      id: runId,
+      task_id: taskId,
+      model: selectedModel,
+      provider_type: selectedProvider.providerType,
+      provider_id: selectedProvider.providerId || null,
+      status: 'queued',
+      error: null,
+      created_at: now,
+      started_at: null,
+      finished_at: null,
+    };
+    const messageRow: MessageRow = {
+      id: messageId,
+      task_id: taskId,
+      run_id: runId,
+      role: 'user',
+      kind: 'message',
+      content: message,
+      metadata: null,
+      message_index: 0,
+      created_at: now,
+    };
+    try {
+      await assertHeld();
+      await getWorkPersistence().createTaskWithRun(
+        {
+          task: taskRow,
+          run: runRow,
+          message: messageRow,
+          limits: workAdmissionLimits,
+        },
+        transactionalWorkExecutionEnqueuer,
+        assertHeld
       );
-      db.prepare(
-        `INSERT INTO work_runs (
-          id, task_id, model, provider_type, provider_id, status, created_at
-        ) VALUES (?, ?, ?, ?, ?, 'queued', ?)`
-      ).run(
-        runId,
-        taskId,
-        model,
-        selectedProvider.providerType,
-        selectedProvider.providerId || null,
-        now
+    } catch (error) {
+      const outcome = await this.resolveExecutionPublication(
+        taskRow,
+        runRow,
+        messageRow
       );
-      db.prepare(
-        `INSERT INTO work_messages (
-          id, task_id, run_id, role, kind, content, message_index, created_at
-        ) VALUES (?, ?, ?, 'user', 'message', ?, 0, ?)`
-      ).run(messageId, taskId, runId, message, now);
-    });
-    transaction();
+      if (outcome === 'committed') {
+        return this.requireTaskDetail(taskId, userId);
+      }
+      if (outcome === 'ambiguous') {
+        throw new WorkConflictError(
+          'The Work task publication outcome is ambiguous. Reload before retrying.'
+        );
+      }
+      throw translatePersistenceError(error);
+    }
     return this.requireTaskDetail(taskId, userId);
   }
 
-  createRun(
+  async createRun(
     taskId: string,
     userId: string,
     message: string,
     model?: string,
     provider?: WorkProviderSelection
-  ): WorkTaskDetail {
-    const task = this.requireMutableTaskRecord(taskId, userId);
-    if (this.getActiveRun(taskId)) {
+  ): Promise<WorkTaskDetail> {
+    return this.withUserLifecycleLease(userId, assertHeld =>
+      this.createRunWithLeaseHeld(
+        taskId,
+        userId,
+        message,
+        model,
+        provider,
+        assertHeld
+      )
+    );
+  }
+
+  private async createRunWithLeaseHeld(
+    taskId: string,
+    userId: string,
+    message: string,
+    model?: string,
+    provider?: WorkProviderSelection,
+    assertHeld: () => Promise<void> = async () => undefined
+  ): Promise<WorkTaskDetail> {
+    const task = await this.requireMutableTaskRecord(taskId, userId);
+    if (await this.getActiveRun(taskId)) {
       throw new WorkConflictError('This Work task already has an active run.');
     }
-    const db = getDatabase();
     const runId = uuidv4();
     const messageId = uuidv4();
-    const selectedModel = model?.trim() || task.model;
+    const selectedModel =
+      model === undefined ? task.model : cleanRequired(model);
     const selectedProvider = normalizeProvider(
       provider || {
         providerType: task.providerType,
@@ -203,96 +370,104 @@ export class WorkTaskService {
       }
     );
     const now = Date.now();
-    const transaction = db.transaction(() => {
-      if (this.getActiveRun(taskId)) {
+    const runRow: RunRow = {
+      id: runId,
+      task_id: taskId,
+      model: selectedModel,
+      provider_type: selectedProvider.providerType,
+      provider_id: selectedProvider.providerId || null,
+      status: 'queued',
+      error: null,
+      created_at: now,
+      started_at: null,
+      finished_at: null,
+    };
+    const messageRow: MessageRow = {
+      id: messageId,
+      task_id: taskId,
+      run_id: runId,
+      role: 'user',
+      kind: 'message',
+      content: message,
+      metadata: null,
+      message_index: 0,
+      created_at: now,
+    };
+    try {
+      await assertHeld();
+      await getWorkPersistence().createRun(
+        {
+          taskId,
+          userId,
+          run: runRow,
+          message: messageRow,
+          limits: workAdmissionLimits,
+        },
+        transactionalWorkExecutionEnqueuer,
+        assertHeld
+      );
+    } catch (error) {
+      const expectedTask: TaskRow = {
+        id: task.id,
+        user_id: task.userId,
+        title: task.title,
+        model: selectedModel,
+        provider_type: selectedProvider.providerType,
+        provider_id: selectedProvider.providerId || null,
+        status: 'preparing',
+        network_enabled: task.networkEnabled ? 1 : 0,
+        volume_name: task.volumeName,
+        container_name: task.containerName,
+        host_path: task.hostPath || null,
+        policy_id: task.policyId || null,
+        preview_url: task.previewUrl || null,
+        preview_status: task.previewStatus,
+        preview_upstream_host: task.previewUpstreamHost || null,
+        preview_upstream_port: task.previewUpstreamPort || null,
+        created_at: task.createdAt,
+        updated_at: task.updatedAt,
+      };
+      const outcome = await this.resolveExecutionPublication(
+        expectedTask,
+        runRow,
+        messageRow,
+        true
+      );
+      if (outcome === 'committed') {
+        return this.requireTaskDetail(taskId, userId);
+      }
+      if (outcome === 'ambiguous') {
         throw new WorkConflictError(
-          'This Work task already has an active run.'
+          'The Work run publication outcome is ambiguous. Reload before retrying.'
         );
       }
-      if (ACTIVE_PREVIEW_STATUSES.includes(task.previewStatus)) {
-        throw new WorkConflictError(
-          'Stop this Work task preview before starting another run.'
-        );
-      }
-      this.assertRuntimeAdmission(userId, taskId);
-      const nextIndex = this.nextMessageIndex(taskId);
-      db.prepare(
-        `INSERT INTO work_runs (
-          id, task_id, model, provider_type, provider_id, status, created_at
-        ) VALUES (?, ?, ?, ?, ?, 'queued', ?)`
-      ).run(
-        runId,
-        taskId,
-        selectedModel,
-        selectedProvider.providerType,
-        selectedProvider.providerId || null,
-        now
-      );
-      db.prepare(
-        `INSERT INTO work_messages (
-          id, task_id, run_id, role, kind, content, message_index, created_at
-        ) VALUES (?, ?, ?, 'user', 'message', ?, ?, ?)`
-      ).run(messageId, taskId, runId, message, nextIndex, now);
-      db.prepare(
-        `UPDATE work_tasks
-         SET model = ?, provider_type = ?, provider_id = ?,
-             status = 'preparing', updated_at = ?
-         WHERE id = ?`
-      ).run(
-        selectedModel,
-        selectedProvider.providerType,
-        selectedProvider.providerId || null,
-        now,
-        taskId
-      );
-    });
-    transaction();
+      throw translatePersistenceError(error);
+    }
     return this.requireTaskDetail(taskId, userId);
   }
 
-  listTasks(userId: string): WorkTaskSummary[] {
-    const rows = getDatabase()
-      .prepare(
-        `SELECT * FROM work_tasks
-         WHERE user_id = ?
-         ORDER BY updated_at DESC`
-      )
-      .all(userId) as TaskRow[];
-    return rows.map(row => this.summaryFromRow(row));
+  async listTasks(userId: string): Promise<WorkTaskSummary[]> {
+    const rows = await getWorkPersistence().listTasks(userId);
+    return Promise.all(rows.map(row => this.summaryFromRow(row)));
   }
 
-  listTaskRecords(userId: string): WorkTaskRecord[] {
-    const rows = getDatabase()
-      .prepare(
-        `SELECT * FROM work_tasks
-         WHERE user_id = ?
-         ORDER BY created_at ASC`
-      )
-      .all(userId) as TaskRow[];
+  async listTaskRecords(userId: string): Promise<WorkTaskRecord[]> {
+    const rows = await getWorkPersistence().listTaskRecords(userId);
     return rows.map(mapTaskRecord);
   }
 
-  listAllTaskRecords(): WorkTaskRecord[] {
-    return (
-      getDatabase()
-        .prepare('SELECT * FROM work_tasks ORDER BY created_at ASC')
-        .all() as TaskRow[]
-    ).map(mapTaskRecord);
+  async listAllTaskRecords(): Promise<WorkTaskRecord[]> {
+    return (await getWorkPersistence().listTaskRecords()).map(mapTaskRecord);
   }
 
   /** Every task with its owner's username, for the admin overview. */
-  listAllTasksWithOwner(): Array<{
-    record: WorkTaskRecord;
-    ownerUsername: string;
-  }> {
-    const rows = getDatabase()
-      .prepare(
-        `SELECT work_tasks.*, users.username AS owner_username
-         FROM work_tasks
-         JOIN users ON users.id = work_tasks.user_id
-         ORDER BY work_tasks.updated_at DESC`
-      )
-      .all() as Array<TaskRow & { owner_username: string }>;
+  async listAllTasksWithOwner(): Promise<
+    Array<{
+      record: WorkTaskRecord;
+      ownerUsername: string;
+    }>
+  > {
+    const rows = await getWorkPersistence().listTasksWithOwners();
     return rows.map(row => ({
       record: mapTaskRecord(row),
       ownerUsername: row.owner_username,
@@ -312,15 +487,15 @@ export class WorkTaskService {
     this.retiringUsers.delete(userId);
   }
 
-  beginTaskRetirement(
+  async beginTaskRetirement(
     taskId: string,
     userId: string,
     allowRetiringUser = false
-  ): WorkTaskRecord {
+  ): Promise<WorkTaskRecord> {
     if (!allowRetiringUser) {
-      this.assertUserIsActive(userId);
+      await this.assertUserIsActive(userId);
     }
-    const task = this.requireTaskRecord(taskId, userId);
+    const task = await this.requireTaskRecord(taskId, userId);
     this.assertNetworkPolicyStable(taskId);
     if (this.retiringTasks.has(taskId)) {
       throw new WorkConflictError('This Work task is already being deleted.');
@@ -337,26 +512,29 @@ export class WorkTaskService {
     this.retiringTasks.delete(taskId);
   }
 
-  requireMutableTaskRecord(taskId: string, userId: string): WorkTaskRecord {
-    this.assertUserIsActive(userId);
-    const task = this.requireTaskRecord(taskId, userId);
+  async requireMutableTaskRecord(
+    taskId: string,
+    userId: string
+  ): Promise<WorkTaskRecord> {
+    await this.assertUserIsActive(userId);
+    const task = await this.requireTaskRecord(taskId, userId);
     this.assertTaskIsActive(taskId);
     this.assertNetworkPolicyStable(taskId);
     return task;
   }
 
-  assertTaskMutationAllowed(taskId: string, userId: string): void {
-    this.requireMutableTaskRecord(taskId, userId);
+  async assertTaskMutationAllowed(
+    taskId: string,
+    userId: string
+  ): Promise<void> {
+    await this.requireMutableTaskRecord(taskId, userId);
   }
 
-  private assertUserIsActive(userId: string): void {
+  private async assertUserIsActive(userId: string): Promise<void> {
     if (this.retiringUsers.has(userId)) {
       throw new WorkConflictError('This user is being deleted.');
     }
-    const current = getDatabase()
-      .prepare('SELECT role FROM users WHERE id = ?')
-      .get(userId) as { role: string } | undefined;
-    if (current?.role !== 'admin') {
+    if (!(await getWorkPersistence().userCanUseWork(userId))) {
       throw new WorkForbiddenError();
     }
   }
@@ -375,9 +553,12 @@ export class WorkTaskService {
     }
   }
 
-  beginNetworkPolicyChange(taskId: string, userId: string): WorkTaskRecord {
-    const task = this.requireMutableTaskRecord(taskId, userId);
-    if (this.getActiveRun(taskId)) {
+  async beginNetworkPolicyChange(
+    taskId: string,
+    userId: string
+  ): Promise<WorkTaskRecord> {
+    const task = await this.requireMutableTaskRecord(taskId, userId);
+    if (await this.getActiveRun(taskId)) {
       throw new WorkConflictError(
         'Network access cannot be changed during an active run.'
       );
@@ -390,50 +571,64 @@ export class WorkTaskService {
     this.networkPolicyChanges.delete(taskId);
   }
 
-  beginPreview(taskId: string, userId: string, allowActiveRun = false): void {
-    const transaction = getDatabase().transaction(() => {
-      const task = this.requireMutableTaskRecord(taskId, userId);
-      const activeRun = this.getActiveRun(taskId);
-      if (activeRun && !allowActiveRun) {
-        throw new WorkConflictError(
-          'Wait for the active Work run to finish before starting a preview.'
-        );
-      }
-      this.assertRuntimeAdmission(userId, taskId);
-      if (!ACTIVE_PREVIEW_STATUSES.includes(task.previewStatus)) {
-        this.updatePreview(taskId, 'starting');
-      }
-    });
-    transaction();
+  async beginPreview(
+    taskId: string,
+    userId: string,
+    allowActiveRun = false
+  ): Promise<void> {
+    await this.requireMutableTaskRecord(taskId, userId);
+    try {
+      await getWorkPersistence().beginPreview({
+        taskId,
+        userId,
+        allowActiveRun,
+        limits: workAdmissionLimits,
+        updatedAt: Date.now(),
+      });
+    } catch (error) {
+      throw translatePersistenceError(error, true);
+    }
   }
 
-  getTaskDetail(taskId: string, userId: string): WorkTaskDetail | undefined {
-    const row = this.getTaskRow(taskId, userId);
+  async getTaskDetail(
+    taskId: string,
+    userId: string
+  ): Promise<WorkTaskDetail | undefined> {
+    const row = await getWorkPersistence().findTask(taskId, userId);
     return row ? this.detailFromRow(row) : undefined;
   }
 
-  requireTaskDetail(taskId: string, userId: string): WorkTaskDetail {
-    const task = this.getTaskDetail(taskId, userId);
+  async requireTaskDetail(
+    taskId: string,
+    userId: string
+  ): Promise<WorkTaskDetail> {
+    const task = await this.getTaskDetail(taskId, userId);
     if (!task) {
       throw new WorkNotFoundError();
     }
     return task;
   }
 
-  getTaskRecord(taskId: string, userId: string): WorkTaskRecord | undefined {
-    const row = this.getTaskRow(taskId, userId);
+  async getTaskRecord(
+    taskId: string,
+    userId: string
+  ): Promise<WorkTaskRecord | undefined> {
+    const row = await getWorkPersistence().findTask(taskId, userId);
     return row ? mapTaskRecord(row) : undefined;
   }
 
-  requireTaskRecord(taskId: string, userId: string): WorkTaskRecord {
-    const task = this.getTaskRecord(taskId, userId);
+  async requireTaskRecord(
+    taskId: string,
+    userId: string
+  ): Promise<WorkTaskRecord> {
+    const task = await this.getTaskRecord(taskId, userId);
     if (!task) {
       throw new WorkNotFoundError();
     }
     return task;
   }
 
-  updateTask(
+  async updateTask(
     taskId: string,
     userId: string,
     updates: {
@@ -443,12 +638,12 @@ export class WorkTaskService {
       providerId?: string;
       networkEnabled?: boolean;
     }
-  ): WorkTaskDetail {
-    const task = this.requireMutableTaskRecord(taskId, userId);
+  ): Promise<WorkTaskDetail> {
+    const task = await this.requireMutableTaskRecord(taskId, userId);
     if (
       updates.networkEnabled !== undefined &&
       updates.networkEnabled !== task.networkEnabled &&
-      this.getActiveRun(taskId)
+      (await this.getActiveRun(taskId))
     ) {
       throw new WorkConflictError(
         'Network access cannot be changed during an active run.'
@@ -468,27 +663,24 @@ export class WorkTaskService {
             : updates.providerId,
     });
     const networkEnabled = updates.networkEnabled ?? task.networkEnabled;
-    getDatabase()
-      .prepare(
-        `UPDATE work_tasks
-         SET title = ?, model = ?, provider_type = ?, provider_id = ?,
-             network_enabled = ?, updated_at = ?
-         WHERE id = ? AND user_id = ?`
-      )
-      .run(
+    try {
+      await getWorkPersistence().updateTask({
+        taskId,
+        userId,
         title,
         model,
-        provider.providerType,
-        provider.providerId || null,
-        networkEnabled ? 1 : 0,
-        Date.now(),
-        taskId,
-        userId
-      );
+        providerType: provider.providerType,
+        providerId: provider.providerId || null,
+        networkEnabled,
+        updatedAt: Date.now(),
+      });
+    } catch (error) {
+      throw translatePersistenceError(error);
+    }
     return this.requireTaskDetail(taskId, userId);
   }
 
-  commitNetworkChange(
+  async commitNetworkChange(
     taskId: string,
     userId: string,
     updates: {
@@ -498,9 +690,9 @@ export class WorkTaskService {
       providerId?: string;
       networkEnabled: boolean;
     }
-  ): void {
-    this.assertUserIsActive(userId);
-    const task = this.requireTaskRecord(taskId, userId);
+  ): Promise<void> {
+    await this.assertUserIsActive(userId);
+    const task = await this.requireTaskRecord(taskId, userId);
     this.assertTaskIsActive(taskId);
     if (!this.networkPolicyChanges.has(taskId)) {
       throw new WorkConflictError(
@@ -509,7 +701,7 @@ export class WorkTaskService {
     }
     if (
       updates.networkEnabled !== task.networkEnabled &&
-      this.getActiveRun(taskId)
+      (await this.getActiveRun(taskId))
     ) {
       throw new WorkConflictError(
         'Network access cannot be changed during an active run.'
@@ -528,146 +720,53 @@ export class WorkTaskService {
             ? task.providerId
             : updates.providerId,
     });
-    const networkChanged = updates.networkEnabled !== task.networkEnabled;
-    getDatabase()
-      .prepare(
-        `UPDATE work_tasks
-         SET title = ?, model = ?, provider_type = ?, provider_id = ?,
-             network_enabled = ?,
-             preview_status = CASE
-               WHEN ? = 1 THEN 'stopped'
-               ELSE preview_status
-             END,
-             preview_url = CASE
-               WHEN ? = 1 THEN NULL
-               ELSE preview_url
-             END,
-             updated_at = ?
-         WHERE id = ? AND user_id = ?`
-      )
-      .run(
+    try {
+      await getWorkPersistence().updateTask({
+        taskId,
+        userId,
         title,
         model,
-        provider.providerType,
-        provider.providerId || null,
-        updates.networkEnabled ? 1 : 0,
-        networkChanged ? 1 : 0,
-        networkChanged ? 1 : 0,
-        Date.now(),
-        taskId,
-        userId
-      );
-  }
-
-  private assertTaskAdmission(userId: string): void {
-    const counts = getDatabase()
-      .prepare(
-        `SELECT
-           COUNT(*) AS total,
-           COALESCE(SUM(CASE WHEN user_id = ? THEN 1 ELSE 0 END), 0) AS per_user
-         FROM work_tasks`
-      )
-      .get(userId) as { total: number; per_user: number };
-    if (counts.per_user >= workAdmissionLimits.maxTasksPerUser) {
-      throw new WorkAdmissionError(
-        `This administrator already has the maximum of ${workAdmissionLimits.maxTasksPerUser} Work tasks.`,
-        'WORK_USER_TASK_LIMIT'
-      );
-    }
-    if (counts.total >= workAdmissionLimits.maxTasksGlobal) {
-      throw new WorkAdmissionError(
-        `This Libre WebUI instance already has the maximum of ${workAdmissionLimits.maxTasksGlobal} Work tasks.`,
-        'WORK_GLOBAL_TASK_LIMIT'
-      );
+        providerType: provider.providerType,
+        providerId: provider.providerId || null,
+        networkEnabled: updates.networkEnabled,
+        updatedAt: Date.now(),
+        requireNetworkChangeLease: true,
+      });
+    } catch (error) {
+      throw translatePersistenceError(error);
     }
   }
 
-  private assertRuntimeAdmission(userId: string, taskId?: string): void {
-    const activeRunPlaceholders = ACTIVE_RUN_STATUSES.map(() => '?').join(', ');
-    const activePreviewPlaceholders = ACTIVE_PREVIEW_STATUSES.map(
-      () => '?'
-    ).join(', ');
-    const counts = getDatabase()
-      .prepare(
-        `WITH active_tasks AS (
-           SELECT DISTINCT work_tasks.id AS task_id, work_tasks.user_id
-           FROM work_tasks
-           JOIN work_runs ON work_runs.task_id = work_tasks.id
-           WHERE work_runs.status IN (${activeRunPlaceholders})
-           UNION
-           SELECT id AS task_id, user_id
-           FROM work_tasks
-           WHERE preview_status IN (${activePreviewPlaceholders})
-         )
-         SELECT
-           COUNT(*) AS total,
-           COALESCE(SUM(CASE WHEN user_id = ? THEN 1 ELSE 0 END), 0) AS per_user
-         FROM active_tasks
-         WHERE ? IS NULL OR task_id != ?`
-      )
-      .get(
-        ...ACTIVE_RUN_STATUSES,
-        ...ACTIVE_PREVIEW_STATUSES,
-        userId,
-        taskId || null,
-        taskId || null
-      ) as { total: number; per_user: number };
-    if (counts.per_user >= workAdmissionLimits.maxActiveRuntimesPerUser) {
-      throw new WorkAdmissionError(
-        `This administrator already has ${workAdmissionLimits.maxActiveRuntimesPerUser} active Work runtime(s). Wait for a run or preview to stop.`,
-        'WORK_USER_RUNTIME_LIMIT'
-      );
-    }
-    if (counts.total >= workAdmissionLimits.maxActiveRuntimesGlobal) {
-      throw new WorkAdmissionError(
-        `This Libre WebUI instance already has ${workAdmissionLimits.maxActiveRuntimesGlobal} active Work runtime(s). Wait for a run or preview to stop.`,
-        'WORK_GLOBAL_RUNTIME_LIMIT'
-      );
-    }
-  }
-
-  deleteTask(taskId: string, userId: string): WorkTaskRecord {
-    const task = this.requireTaskRecord(taskId, userId);
-    const result = getDatabase()
-      .prepare('DELETE FROM work_tasks WHERE id = ? AND user_id = ?')
-      .run(taskId, userId);
-    if (!result.changes) {
+  async deleteTask(taskId: string, userId: string): Promise<WorkTaskRecord> {
+    const task = await this.requireTaskRecord(taskId, userId);
+    if (!(await getWorkPersistence().deleteTask(taskId, userId))) {
       throw new WorkNotFoundError();
     }
     return task;
   }
 
-  addMessage(
+  async addMessage(
     taskId: string,
     runId: string | undefined,
     role: WorkMessage['role'],
     kind: WorkMessage['kind'],
     content: string,
     metadata?: Record<string, unknown>
-  ): WorkMessage {
-    const db = getDatabase();
+  ): Promise<WorkMessage> {
     const id = uuidv4();
     const createdAt = Date.now();
-    const messageIndex = this.nextMessageIndex(taskId);
     const boundedContent = boundUtf8(content, WORK_MESSAGE_MAX_BYTES);
     const serializedMetadata = serializeMetadata(metadata);
-    db.prepare(
-      `INSERT INTO work_messages (
-        id, task_id, run_id, role, kind, content, metadata,
-        message_index, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(
+    const messageIndex = await getWorkPersistence().insertMessage({
       id,
-      taskId,
-      runId || null,
+      task_id: taskId,
+      run_id: runId || null,
       role,
       kind,
-      boundedContent,
-      serializedMetadata || null,
-      messageIndex,
-      createdAt
-    );
-    this.touchTask(taskId);
+      content: boundedContent,
+      metadata: serializedMetadata || null,
+      created_at: createdAt,
+    });
     return {
       id,
       taskId,
@@ -681,33 +780,24 @@ export class WorkTaskService {
     };
   }
 
-  getMessages(taskId: string): WorkMessage[] {
-    const rows = getDatabase()
-      .prepare(
-        `SELECT id, task_id, run_id, message_index, role, kind, content,
-                metadata, created_at
-         FROM work_messages
-         WHERE task_id = ? AND kind <> 'provider_state'
-         ORDER BY message_index ASC`
-      )
-      .all(taskId) as MessageRow[];
+  async getMessages(taskId: string): Promise<WorkMessage[]> {
+    const rows = await getWorkPersistence().listMessages({
+      taskId,
+      mode: 'all',
+    });
     return rows.map(mapMessage);
   }
 
-  getRecentConversationMessages(taskId: string, limit = 30): WorkMessage[] {
+  async getRecentConversationMessages(
+    taskId: string,
+    limit = 30
+  ): Promise<WorkMessage[]> {
     const boundedLimit = Math.min(30, Math.max(1, Math.trunc(limit)));
-    const rows = getDatabase()
-      .prepare(
-        `SELECT id, task_id, run_id, message_index, role, kind, content,
-                metadata, created_at
-         FROM work_messages
-         WHERE task_id = ?
-           AND kind = 'message'
-           AND role IN ('user', 'assistant')
-         ORDER BY message_index DESC
-         LIMIT ?`
-      )
-      .all(taskId, boundedLimit) as MessageRow[];
+    const rows = await getWorkPersistence().listMessages({
+      taskId,
+      mode: 'conversation',
+      limit: boundedLimit,
+    });
     const selected: MessageRow[] = [];
     let selectedBytes = 0;
     for (const row of rows) {
@@ -724,24 +814,17 @@ export class WorkTaskService {
     return selected.reverse().map(mapMessage);
   }
 
-  getRecentModelContextMessages(taskId: string, limit = 30): WorkMessage[] {
+  async getRecentModelContextMessages(
+    taskId: string,
+    limit = 30
+  ): Promise<WorkMessage[]> {
     const boundedLimit = Math.min(30, Math.max(1, Math.trunc(limit)));
     const rowLimit = boundedLimit * 6;
-    const rows = getDatabase()
-      .prepare(
-        `SELECT id, task_id, run_id, message_index, role, kind, content,
-                metadata, created_at
-         FROM work_messages
-         WHERE task_id = ?
-           AND (
-             (kind = 'message' AND role IN ('user', 'assistant'))
-             OR (kind = 'provider_state' AND role = 'assistant')
-             OR (kind = 'tool_result' AND role = 'tool')
-           )
-         ORDER BY message_index DESC
-         LIMIT ?`
-      )
-      .all(taskId, rowLimit) as MessageRow[];
+    const rows = await getWorkPersistence().listMessages({
+      taskId,
+      mode: 'model-context',
+      limit: rowLimit,
+    });
     const selected: MessageRow[] = [];
     let selectedBytes = 0;
     for (const row of rows) {
@@ -765,39 +848,21 @@ export class WorkTaskService {
     return chronological.map(mapMessage);
   }
 
-  getMessagePage(
+  async getMessagePage(
     taskId: string,
     before?: number,
     limit = WORK_MESSAGE_PAGE_SIZE
-  ): WorkMessagePage {
+  ): Promise<WorkMessagePage> {
     const pageSize = Math.min(
       WORK_MESSAGE_PAGE_SIZE,
       Math.max(1, Math.trunc(limit))
     );
-    const rows = (
-      before === undefined
-        ? getDatabase()
-            .prepare(
-              `SELECT id, task_id, run_id, message_index, role, kind, content,
-                      metadata, created_at
-               FROM work_messages
-               WHERE task_id = ? AND kind <> 'provider_state'
-               ORDER BY message_index DESC
-               LIMIT ?`
-            )
-            .all(taskId, pageSize + 1)
-        : getDatabase()
-            .prepare(
-              `SELECT id, task_id, run_id, message_index, role, kind, content,
-                      metadata, created_at
-               FROM work_messages
-               WHERE task_id = ? AND message_index < ?
-                 AND kind <> 'provider_state'
-               ORDER BY message_index DESC
-               LIMIT ?`
-            )
-            .all(taskId, before, pageSize + 1)
-    ) as MessageRow[];
+    const rows = await getWorkPersistence().listMessages({
+      taskId,
+      mode: 'page',
+      before,
+      limit: pageSize + 1,
+    });
     const selectedRows: MessageRow[] = [];
     let selectedBytes = 0;
     let examinedRows = 0;
@@ -826,90 +891,68 @@ export class WorkTaskService {
     };
   }
 
-  getRun(runId: string): WorkRun | undefined {
-    const row = getDatabase()
-      .prepare('SELECT * FROM work_runs WHERE id = ?')
-      .get(runId) as RunRow | undefined;
+  async getRun(runId: string): Promise<WorkRun | undefined> {
+    const row = await getWorkPersistence().findRun(runId);
     return row ? mapRun(row) : undefined;
   }
 
-  getActiveRun(taskId: string): WorkRun | undefined {
-    const placeholders = ACTIVE_RUN_STATUSES.map(() => '?').join(', ');
-    const row = getDatabase()
-      .prepare(
-        `SELECT * FROM work_runs
-         WHERE task_id = ? AND status IN (${placeholders})
-         ORDER BY created_at DESC LIMIT 1`
-      )
-      .get(taskId, ...ACTIVE_RUN_STATUSES) as RunRow | undefined;
+  async getActiveRun(taskId: string): Promise<WorkRun | undefined> {
+    const row = await getWorkPersistence().findActiveRun(taskId);
     return row ? mapRun(row) : undefined;
   }
 
-  updateRun(
+  async updateRun(
     runId: string,
     status: WorkRunStatus,
     options: { error?: string; started?: boolean; finished?: boolean } = {}
-  ): WorkRun {
+  ): Promise<WorkRun> {
     const now = Date.now();
-    getDatabase()
-      .prepare(
-        `UPDATE work_runs
-         SET status = ?,
-             error = ?,
-             started_at = CASE WHEN ? = 1 THEN COALESCE(started_at, ?) ELSE started_at END,
-             finished_at = CASE WHEN ? = 1 THEN ? ELSE finished_at END
-         WHERE id = ?`
-      )
-      .run(
-        status,
-        options.error || null,
-        options.started ? 1 : 0,
-        now,
-        options.finished ? 1 : 0,
-        now,
-        runId
-      );
-    const run = this.getRun(runId);
+    await getWorkPersistence().updateRun({
+      runId,
+      status,
+      error: options.error ? replaceWorkTextNul(options.error) : null,
+      started: Boolean(options.started),
+      finished: Boolean(options.finished),
+      now,
+    });
+    const run = await this.getRun(runId);
     if (!run) {
       throw new WorkNotFoundError('Work run not found.');
     }
     return run;
   }
 
-  updateTaskStatus(taskId: string, status: WorkTaskStatus): void {
-    getDatabase()
-      .prepare(
-        `UPDATE work_tasks
-         SET status = ?, updated_at = ?
-         WHERE id = ?`
-      )
-      .run(status, Date.now(), taskId);
+  async updateTaskStatus(
+    taskId: string,
+    status: WorkTaskStatus
+  ): Promise<void> {
+    await getWorkPersistence().updateTaskStatus(taskId, status, Date.now());
   }
 
-  updatePreview(
+  async updatePreview(
     taskId: string,
     status: WorkPreviewStatus,
-    previewUrl?: string
-  ): void {
-    getDatabase()
-      .prepare(
-        `UPDATE work_tasks
-         SET preview_status = ?, preview_url = ?, updated_at = ?
-         WHERE id = ?`
-      )
-      .run(status, previewUrl || null, Date.now(), taskId);
+    previewUrl?: string,
+    upstream?: { host: string; port: number }
+  ): Promise<void> {
+    await getWorkPersistence().updatePreview(
+      taskId,
+      status,
+      previewUrl || null,
+      upstream?.host ?? null,
+      upstream?.port ?? null,
+      Date.now()
+    );
   }
 
-  recoverOnStartup(): {
+  async recoverOnStartup(): Promise<{
     tasks: WorkTaskRecord[];
     interruptedRuns: number;
     activePreviews: number;
-  } {
-    let db: ReturnType<typeof getDatabase>;
-    let taskRows: TaskRow[];
+  }> {
+    let recovered;
     try {
-      db = getDatabase();
-      taskRows = db.prepare('SELECT * FROM work_tasks').all() as TaskRow[];
+      recovered = await getWorkPersistence().recoverOnStartup(Date.now());
     } catch (error) {
       logger.error('Failed to read Work tasks for startup recovery:', error);
       // Without the complete task inventory we cannot prove that every
@@ -918,85 +961,33 @@ export class WorkTaskService {
       throw error;
     }
 
-    let interruptedRuns = 0;
-    let activePreviews = 0;
-    try {
-      interruptedRuns = (
-        db
-          .prepare(
-            `SELECT COUNT(*) AS count FROM work_runs
-             WHERE status IN ('queued', 'preparing', 'running')`
-          )
-          .get() as { count: number }
-      ).count;
-      activePreviews = (
-        db
-          .prepare(
-            `SELECT COUNT(*) AS count FROM work_tasks
-             WHERE preview_status IN ('starting', 'running')`
-          )
-          .get() as { count: number }
-      ).count;
-    } catch (error) {
-      logger.error('Failed to count interrupted Work state:', error);
-    }
-
-    try {
-      const now = Date.now();
-      const transaction = db.transaction(() => {
-        db.prepare(
-          `UPDATE work_tasks
-           SET status = 'failed', updated_at = ?
-           WHERE status IN ('preparing', 'running')
-              OR id IN (
-                SELECT task_id FROM work_runs
-                WHERE status IN ('queued', 'preparing', 'running')
-              )`
-        ).run(now);
-        db.prepare(
-          `UPDATE work_tasks
-           SET preview_status = 'stopped', preview_url = NULL, updated_at = ?
-           WHERE preview_status != 'stopped' OR preview_url IS NOT NULL`
-        ).run(now);
-        db.prepare(
-          `UPDATE work_runs
-           SET status = 'failed',
-               error = 'Backend restarted while this run was active.',
-               finished_at = ?
-           WHERE status IN ('queued', 'preparing', 'running')`
-        ).run(now);
-      });
-      transaction();
-    } catch (error) {
+    if (recovered.persistenceError) {
       // Container teardown is the security-critical half of recovery. Return
       // the rows already read even if SQLite cannot persist terminal states,
       // so startup can still stop every known command and preview process.
-      logger.error('Failed to persist recovered Work state on startup:', error);
+      logger.error(
+        'Failed to persist recovered Work state on startup:',
+        recovered.persistenceError
+      );
     }
     return {
-      tasks: taskRows.map(mapTaskRecord),
-      interruptedRuns,
-      activePreviews,
+      tasks: recovered.tasks.map(mapTaskRecord),
+      interruptedRuns: recovered.interruptedRuns,
+      activePreviews: recovered.activePreviews,
     };
   }
 
-  private getTaskRow(taskId: string, userId: string): TaskRow | undefined {
-    return getDatabase()
-      .prepare('SELECT * FROM work_tasks WHERE id = ? AND user_id = ?')
-      .get(taskId, userId) as TaskRow | undefined;
-  }
-
-  private detailFromRow(row: TaskRow): WorkTaskDetail {
-    const messagePage = this.getMessagePage(row.id);
+  private async detailFromRow(row: TaskRow): Promise<WorkTaskDetail> {
+    const messagePage = await this.getMessagePage(row.id);
     return {
-      ...this.summaryFromRow(row),
+      ...(await this.summaryFromRow(row)),
       messages: messagePage.messages,
       messageCursor: messagePage.cursor,
       hasMoreMessages: messagePage.hasMore,
     };
   }
 
-  private summaryFromRow(row: TaskRow): WorkTaskSummary {
+  private async summaryFromRow(row: TaskRow): Promise<WorkTaskSummary> {
     return {
       id: row.id,
       title: row.title,
@@ -1007,29 +998,13 @@ export class WorkTaskService {
       networkEnabled: Boolean(row.network_enabled),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      activeRun: this.getActiveRun(row.id),
+      activeRun: await this.getActiveRun(row.id),
       previewUrl: row.preview_url || undefined,
       previewStatus: row.preview_status,
       workspacePath: '/workspace',
       hostPath: row.host_path || undefined,
       policyId: row.policy_id || undefined,
     };
-  }
-
-  private nextMessageIndex(taskId: string): number {
-    const row = getDatabase()
-      .prepare(
-        `SELECT COALESCE(MAX(message_index), -1) + 1 AS next_index
-         FROM work_messages WHERE task_id = ?`
-      )
-      .get(taskId) as { next_index: number };
-    return row.next_index;
-  }
-
-  private touchTask(taskId: string): void {
-    getDatabase()
-      .prepare('UPDATE work_tasks SET updated_at = ? WHERE id = ?')
-      .run(Date.now(), taskId);
   }
 }
 
@@ -1071,6 +1046,60 @@ export class WorkAdmissionError extends Error {
   }
 }
 
+export class WorkInputError extends Error {
+  readonly status = 400;
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'WorkInputError';
+  }
+}
+
+const translatePersistenceError = (
+  error: unknown,
+  previewContext = false
+): unknown => {
+  if (!(error instanceof WorkPersistenceError)) return error;
+  switch (error.code) {
+    case 'WORK_USER_FORBIDDEN':
+      return new WorkForbiddenError();
+    case 'WORK_USER_TASK_LIMIT':
+      return new WorkAdmissionError(
+        `This administrator already has the maximum of ${workAdmissionLimits.maxTasksPerUser} Work tasks.`,
+        error.code
+      );
+    case 'WORK_GLOBAL_TASK_LIMIT':
+      return new WorkAdmissionError(
+        `This Libre WebUI instance already has the maximum of ${workAdmissionLimits.maxTasksGlobal} Work tasks.`,
+        error.code
+      );
+    case 'WORK_USER_RUNTIME_LIMIT':
+      return new WorkAdmissionError(
+        `This administrator already has ${workAdmissionLimits.maxActiveRuntimesPerUser} active Work runtime(s). Wait for a run or preview to stop.`,
+        error.code
+      );
+    case 'WORK_GLOBAL_RUNTIME_LIMIT':
+      return new WorkAdmissionError(
+        `This Libre WebUI instance already has ${workAdmissionLimits.maxActiveRuntimesGlobal} active Work runtime(s). Wait for a run or preview to stop.`,
+        error.code
+      );
+    case 'WORK_ACTIVE_RUN':
+      return new WorkConflictError(
+        previewContext
+          ? 'Wait for the active Work run to finish before starting a preview.'
+          : 'This Work task already has an active run.'
+      );
+    case 'WORK_PREVIEW_ACTIVE':
+      return new WorkConflictError(
+        'Stop this Work task preview before starting another run.'
+      );
+    case 'WORK_TASK_NOT_FOUND':
+      return new WorkNotFoundError();
+    default:
+      return error;
+  }
+};
+
 const mapTaskRecord = (row: TaskRow): WorkTaskRecord => ({
   id: row.id,
   userId: row.user_id,
@@ -1086,6 +1115,8 @@ const mapTaskRecord = (row: TaskRow): WorkTaskRecord => ({
   policyId: row.policy_id || undefined,
   previewUrl: row.preview_url || undefined,
   previewStatus: row.preview_status,
+  previewUpstreamHost: row.preview_upstream_host || undefined,
+  previewUpstreamPort: row.preview_upstream_port || undefined,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -1169,11 +1200,18 @@ const deriveTitle = (message: string): string => {
   return cleanTitle(firstLine.slice(0, 80));
 };
 
+const rejectWorkTextNul = (value: string, field: string): string => {
+  if (value.includes('\u0000')) {
+    throw new WorkInputError(`${field} cannot contain U+0000.`);
+  }
+  return value;
+};
+
 const cleanTitle = (value: string): string =>
-  value.trim().slice(0, 120) || 'New Work';
+  replaceWorkTextNul(value).trim().slice(0, 120) || 'New Work';
 
 const cleanRequired = (value: string): string => {
-  const cleaned = value.trim();
+  const cleaned = rejectWorkTextNul(value, 'Work model').trim();
   if (!cleaned) {
     throw new Error('Model cannot be empty.');
   }

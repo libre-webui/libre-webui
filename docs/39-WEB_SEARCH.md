@@ -102,7 +102,7 @@ survives restarts and takes effect immediately without redeploying.
 - Searches run **server-side**. Browsers never contact the search engine,
   and no API key or account is involved anywhere.
 - Result text is bounded before it reaches model context (500 characters
-  per result, at most 8 results), and only `http(s)` result URLs are kept.
+  per result, at most 10 results), and only `http(s)` result URLs are kept.
 - The bundled instance is reachable only on the stack's internal network.
   Its rate limiter is off for that reason; do not publish it.
 

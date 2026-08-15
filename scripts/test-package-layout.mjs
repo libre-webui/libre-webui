@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import test from 'node:test';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { x as extractTarball } from 'tar';
@@ -12,6 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const requireFromTest = createRequire(import.meta.url);
 
 function packProject(outputDir) {
   try {
@@ -218,9 +220,33 @@ async function stopChild(child) {
   }
 }
 
+function makeInstallTreeReadOnly(root) {
+  if (process.platform === 'win32') return () => undefined;
+  const originalModes = [];
+  const visit = candidate => {
+    const stat = fs.lstatSync(candidate);
+    if (stat.isSymbolicLink()) return;
+    originalModes.push([candidate, stat.mode & 0o777]);
+    if (stat.isDirectory()) {
+      for (const entry of fs.readdirSync(candidate)) {
+        visit(path.join(candidate, entry));
+      }
+      fs.chmodSync(candidate, 0o555);
+    } else {
+      fs.chmodSync(candidate, 0o444);
+    }
+  };
+  visit(root);
+  return () => {
+    for (const [candidate, mode] of originalModes) {
+      fs.chmodSync(candidate, mode);
+    }
+  };
+}
+
 test('packed npm artifact resolves package metadata and frontend dist', async () => {
   await withTempPackedProject(async ({ packedRoot }) => {
-    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'index.js');
+    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'main.js');
     const backendPackageJson = path.join(packedRoot, 'backend', 'package.json');
     const frontendDist = path.join(packedRoot, 'frontend', 'dist');
     const helperPath = path.join(
@@ -230,12 +256,30 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
       'utils',
       'packagePaths.js'
     );
+    const runtimePathsHelper = path.join(packedRoot, 'bin', 'runtime-paths.js');
+    const postgresMigrationCli = path.join(
+      packedRoot,
+      'backend',
+      'dist',
+      'cli',
+      'migrateSqliteToPostgres.js'
+    );
+    const recoveryBackupCli = path.join(
+      packedRoot,
+      'backend',
+      'dist',
+      'cli',
+      'recoveryBackup.js'
+    );
 
     assert.ok(fs.existsSync(path.join(packedRoot, 'package.json')));
     assert.ok(fs.existsSync(backendPackageJson));
     assert.ok(fs.existsSync(backendEntry));
     assert.ok(fs.existsSync(path.join(frontendDist, 'index.html')));
     assert.ok(fs.existsSync(helperPath));
+    assert.ok(fs.existsSync(runtimePathsHelper));
+    assert.ok(fs.existsSync(postgresMigrationCli));
+    assert.ok(fs.existsSync(recoveryBackupCli));
     assert.ok(
       fs.existsSync(path.join(packedRoot, 'scripts', 'postinstall.js'))
     );
@@ -317,7 +361,13 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
     );
     assert.equal(pkg.bin?.['libre-webui'], 'bin/cli.js');
     assert.equal(pkg.scripts?.postinstall, 'node scripts/postinstall.js');
+    assert.equal(
+      pkg.scripts?.['migrate:postgres'],
+      'node backend/dist/cli/migrateSqliteToPostgres.js',
+      'the published migration command must execute shipped dist without rebuilding absent source files'
+    );
     const helper = await import(pathToFileURL(helperPath).href);
+    const { resolveCliRuntimePaths } = requireFromTest(runtimePathsHelper);
     const backendEntryUrl = pathToFileURL(backendEntry).href;
 
     assert.equal(helper.resolveAppPackageRoot(backendEntryUrl), packedRoot);
@@ -329,6 +379,386 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
         path.join(packedRoot, 'unrelated-caller')
       ),
       path.join(packedRoot, 'plugins')
+    );
+
+    const callerDirectory = path.join(packedRoot, 'caller');
+    const fakeHome = path.join(packedRoot, 'home');
+    assert.equal(fs.existsSync(callerDirectory), false);
+    assert.equal(fs.existsSync(fakeHome), false);
+    const linuxPaths = resolveCliRuntimePaths(
+      { XDG_CACHE_HOME: path.join(fakeHome, 'cache') },
+      {
+        cwd: callerDirectory,
+        homeDirectory: fakeHome,
+        platform: 'linux',
+        tempDirectory: path.join(packedRoot, 'tmp'),
+        uid: 123,
+      }
+    );
+    assert.equal(linuxPaths.dataDirectory, path.join(fakeHome, '.libre-webui'));
+    assert.equal(
+      linuxPaths.preflightDirectory,
+      path.join(fakeHome, 'cache', 'libre-webui', 'preflight')
+    );
+    assert.equal(
+      linuxPaths.pluginsDirectory,
+      path.join(fakeHome, '.libre-webui', 'plugins')
+    );
+    assert.equal(fs.existsSync(callerDirectory), false);
+    assert.equal(fs.existsSync(fakeHome), false);
+
+    const configuredPaths = resolveCliRuntimePaths(
+      {
+        DATA_DIR: './state',
+        PLUGINS_DIR: './plugins',
+        PLATFORM_PREFLIGHT_TMP_DIR: './scratch',
+      },
+      { cwd: callerDirectory, homeDirectory: fakeHome, platform: 'linux' }
+    );
+    assert.equal(
+      configuredPaths.dataDirectory,
+      path.join(callerDirectory, 'state')
+    );
+    assert.equal(
+      configuredPaths.preflightDirectory,
+      path.join(callerDirectory, 'scratch')
+    );
+    assert.equal(
+      configuredPaths.pluginsDirectory,
+      path.join(callerDirectory, 'plugins')
+    );
+    assert.equal(fs.existsSync(callerDirectory), false);
+    assert.equal(fs.existsSync(fakeHome), false);
+  });
+});
+
+test('packed CLI rejects malformed provider limits without creating its default state', async () => {
+  await withTempPackedProject(async ({ tempDir, packedRoot }) => {
+    linkInstalledDependencies(packedRoot);
+    const callerDirectory = path.join(tempDir, 'invalid-provider-caller');
+    const fakeHome = path.join(tempDir, 'invalid-provider-home');
+    fs.mkdirSync(callerDirectory, { recursive: true });
+    const launchEnv = {
+      ...process.env,
+      HOME: fakeHome,
+      USERPROFILE: fakeHome,
+      OPEN_BROWSER: 'false',
+      OLLAMA_TIMEOUT: '300000ms',
+    };
+    for (const key of [
+      'DATA_DIR',
+      'PLUGINS_DIR',
+      'PLATFORM_PREFLIGHT_TMP_DIR',
+      'ENCRYPTION_KEY',
+      'STORAGE_ENCRYPTION_KEYS',
+      'STORAGE_ENCRYPTION_ACTIVE_KEY_ID',
+    ]) {
+      delete launchEnv[key];
+    }
+    const result = spawnSync(
+      process.execPath,
+      [path.join(packedRoot, 'bin', 'cli.js'), '--port', '31991'],
+      {
+        cwd: callerDirectory,
+        env: launchEnv,
+        encoding: 'utf8',
+        timeout: 15_000,
+      }
+    );
+    assert.notEqual(result.status, 0);
+    assert.match(
+      `${result.stderr}\n${result.stdout}`,
+      /Invalid Ollama configuration[\s\S]*OLLAMA_TIMEOUT/
+    );
+    assert.equal(
+      fs.existsSync(fakeHome),
+      false,
+      'validation must happen before the packaged default data root is created'
+    );
+  });
+});
+
+test('packed CLI survives two starts and ignores unrelated caller plugins', async () => {
+  await withTempPackedProject(async ({ tempDir, packedRoot }) => {
+    linkInstalledDependencies(packedRoot);
+    const restoreInstallModes = makeInstallTreeReadOnly(packedRoot);
+    const callerDirectory = path.join(tempDir, 'cli-caller');
+    const fakeHome = path.join(tempDir, 'cli-home');
+    const xdgCache = path.join(tempDir, 'cli-cache');
+    const localAppData = path.join(tempDir, 'cli-local-app-data');
+    fs.mkdirSync(callerDirectory, { recursive: true });
+    fs.mkdirSync(fakeHome, { recursive: true });
+    const unrelatedCallerPlugin = path.join(
+      callerDirectory,
+      'plugins',
+      'unrelated.json'
+    );
+    fs.mkdirSync(path.dirname(unrelatedCallerPlugin), { recursive: true });
+    fs.writeFileSync(unrelatedCallerPlugin, '{}\n');
+    const unrelatedCallerPluginBefore = fs.readFileSync(unrelatedCallerPlugin);
+
+    const launchEnv = {
+      ...process.env,
+      HOME: fakeHome,
+      USERPROFILE: fakeHome,
+      XDG_CACHE_HOME: xdgCache,
+      LOCALAPPDATA: localAppData,
+      OPEN_BROWSER: 'false',
+      OLLAMA_BASE_URL: 'http://127.0.0.1:9',
+      JWT_SECRET: 'packed-cli-jwt-secret-packed-cli-jwt-secret',
+      SESSION_SECRET: 'packed-cli-session-secret',
+      TURNSTILE_SITE_KEY: '',
+      TURNSTILE_SECRET_KEY: '',
+      TURNSTILE_EXPECTED_HOSTNAME: '',
+      LOG_LEVEL: 'warn',
+    };
+    for (const key of [
+      'DATA_DIR',
+      'PLUGINS_DIR',
+      'PLATFORM_PREFLIGHT_TMP_DIR',
+      'ENCRYPTION_KEY',
+      'STORAGE_ENCRYPTION_KEYS',
+      'STORAGE_ENCRYPTION_ACTIVE_KEY_ID',
+    ]) {
+      delete launchEnv[key];
+    }
+
+    const cliPath = path.join(packedRoot, 'bin', 'cli.js');
+    const runningChildren = new Set();
+    const launch = async () => {
+      const portProbe = http.createServer();
+      const port = await startServer(portProbe);
+      await new Promise(resolve => portProbe.close(resolve));
+      const child = spawn(process.execPath, [cliPath, '--port', String(port)], {
+        cwd: callerDirectory,
+        env: launchEnv,
+        stdio: 'pipe',
+      });
+      runningChildren.add(child);
+      let logs = '';
+      child.stdout.on('data', chunk => {
+        logs += chunk.toString();
+      });
+      child.stderr.on('data', chunk => {
+        logs += chunk.toString();
+      });
+      try {
+        await waitForServer(`http://127.0.0.1:${port}/health/ready`, child);
+      } catch (error) {
+        throw new Error(
+          `${error instanceof Error ? error.message : String(error)}\n\nPacked CLI logs:\n${logs}`
+        );
+      }
+      return { child, port, logs: () => logs };
+    };
+
+    try {
+      const first = await launch();
+      try {
+        const signup = await signupPackedUser(
+          `http://127.0.0.1:${first.port}`,
+          'packed-cli-admin'
+        );
+        assert.equal(signup.user.username, 'packed-cli-admin');
+      } finally {
+        await stopChild(first.child);
+        runningChildren.delete(first.child);
+      }
+
+      const dataDirectory = path.join(fakeHome, '.libre-webui');
+      assert.ok(fs.existsSync(path.join(dataDirectory, 'data.sqlite')));
+      assert.ok(fs.existsSync(path.join(dataDirectory, '.encryption_key')));
+      assert.deepEqual(
+        fs.readFileSync(unrelatedCallerPlugin),
+        unrelatedCallerPluginBefore,
+        'the packaged launcher must neither import nor mutate caller plugins'
+      );
+      assert.equal(
+        fs.existsSync(path.join(dataDirectory, 'plugins', 'unrelated.json')),
+        false
+      );
+
+      const recoveryInventory = JSON.parse(
+        execFileSync(process.execPath, [cliPath, 'recovery-check', '--json'], {
+          cwd: callerDirectory,
+          env: launchEnv,
+          encoding: 'utf8',
+        })
+      );
+      assert.equal(recoveryInventory.restoreReady, true);
+      assert.equal(recoveryInventory.storage.dataDirectory.path, dataDirectory);
+      assert.equal(
+        recoveryInventory.database.path,
+        path.join(dataDirectory, 'data.sqlite')
+      );
+
+      const backupKeys = path.join(tempDir, 'backup-keys');
+      const backupArchive = path.join(tempDir, 'packed-home.lwbackup');
+      const keygen = JSON.parse(
+        execFileSync(
+          process.execPath,
+          [cliPath, 'backup', 'keygen', '--directory', backupKeys],
+          {
+            cwd: callerDirectory,
+            env: launchEnv,
+            encoding: 'utf8',
+          }
+        )
+      );
+      assert.equal(
+        keygen.encryptionKeyPath,
+        path.join(backupKeys, 'backup-encryption.key')
+      );
+      const backup = JSON.parse(
+        execFileSync(
+          process.execPath,
+          [
+            cliPath,
+            'backup',
+            'create',
+            '--offline',
+            '--output',
+            backupArchive,
+            '--encryption-key',
+            path.join(backupKeys, 'backup-encryption.key'),
+            '--signing-private-key',
+            path.join(backupKeys, 'backup-signing-private.pem'),
+          ],
+          {
+            cwd: callerDirectory,
+            env: launchEnv,
+            encoding: 'utf8',
+          }
+        )
+      );
+      assert.equal(backup.created, true);
+      assert.equal(backup.signatureVerified, true);
+      assert.equal(backup.payloadVerified, true);
+      assert.ok(fs.existsSync(backupArchive));
+      assert.equal(
+        fs.existsSync(path.join(callerDirectory, 'data.sqlite')),
+        false,
+        'maintenance must use the packaged fake-HOME data root, not caller cwd'
+      );
+
+      // The first start recorded a preflight verification marker, which
+      // would let the second start skip the deep preflight entirely.
+      // Removing it forces a real preflight so this test still proves the
+      // packaged launcher puts preflight scratch in the OS cache location.
+      fs.rmSync(path.join(dataDirectory, '.preflight-verification.json'), {
+        force: true,
+      });
+
+      const second = await launch();
+      try {
+        const login = await fetch(
+          `http://127.0.0.1:${second.port}/api/auth/login`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: 'packed-cli-admin',
+              password: 'Packed-Test-Password-123',
+            }),
+          }
+        );
+        assert.equal(login.status, 200, second.logs());
+        const payload = await login.json();
+        assert.equal(payload.data?.user?.username, 'packed-cli-admin');
+      } finally {
+        await stopChild(second.child);
+        runningChildren.delete(second.child);
+      }
+
+      const expectedPreflight =
+        process.platform === 'win32'
+          ? path.join(localAppData, 'libre-webui', 'preflight')
+          : process.platform === 'darwin'
+            ? path.join(
+                fakeHome,
+                'Library',
+                'Caches',
+                'libre-webui',
+                'preflight'
+              )
+            : path.join(xdgCache, 'libre-webui', 'preflight');
+      assert.ok(fs.existsSync(expectedPreflight));
+      assert.equal(
+        fs.existsSync(path.join(packedRoot, 'backend', 'temp')),
+        false
+      );
+    } finally {
+      for (const child of runningChildren) await stopChild(child);
+      restoreInstallModes();
+    }
+  });
+});
+
+test('packed maintenance help creates no runtime state', async () => {
+  await withTempPackedProject(async ({ tempDir, packedRoot }) => {
+    linkInstalledDependencies(packedRoot);
+    const callerDirectory = path.join(tempDir, 'maintenance-caller');
+    const fakeHome = path.join(tempDir, 'maintenance-home');
+    const xdgCache = path.join(tempDir, 'maintenance-cache');
+    fs.mkdirSync(callerDirectory, { recursive: true });
+    const env = {
+      ...process.env,
+      HOME: fakeHome,
+      USERPROFILE: fakeHome,
+      XDG_CACHE_HOME: xdgCache,
+    };
+    for (const key of [
+      'DATA_DIR',
+      'PLUGINS_DIR',
+      'PLATFORM_PREFLIGHT_TMP_DIR',
+    ]) {
+      delete env[key];
+    }
+    const cliPath = path.join(packedRoot, 'bin', 'cli.js');
+    const recoveryHelp = execFileSync(
+      process.execPath,
+      [cliPath, 'recovery-check', '--help'],
+      { cwd: callerDirectory, env, encoding: 'utf8' }
+    );
+    const backupHelp = execFileSync(
+      process.execPath,
+      [cliPath, 'backup', '--help'],
+      { cwd: callerDirectory, env, encoding: 'utf8' }
+    );
+    const migrationHelp = execFileSync(
+      process.execPath,
+      [cliPath, 'migrate-postgres', '--help'],
+      { cwd: callerDirectory, env, encoding: 'utf8' }
+    );
+    assert.match(recoveryHelp, /libre-webui recovery-check \[--json\]/);
+    assert.match(backupHelp, /libre-webui backup create/);
+    assert.match(migrationHelp, /libre-webui migrate-postgres --source/);
+
+    const blocked = spawnSync(
+      process.execPath,
+      [cliPath, 'recovery-check', '--json'],
+      { cwd: callerDirectory, env, encoding: 'utf8' }
+    );
+    assert.equal(blocked.status, 1);
+    assert.equal(JSON.parse(blocked.stdout).restoreReady, false);
+
+    const invalid = spawnSync(
+      process.execPath,
+      [cliPath, 'recovery-check', '--unknown-option'],
+      { cwd: callerDirectory, env, encoding: 'utf8' }
+    );
+    assert.equal(invalid.status, 2);
+    assert.match(invalid.stderr, /Unknown option: --unknown-option/);
+    assert.equal(fs.existsSync(fakeHome), false);
+    assert.equal(fs.existsSync(xdgCache), false);
+    assert.equal(fs.readdirSync(callerDirectory).length, 0);
+    assert.equal(
+      fs.existsSync(path.join(packedRoot, 'backend', 'data')),
+      false
+    );
+    assert.equal(
+      fs.existsSync(path.join(packedRoot, 'backend', 'temp')),
+      false
     );
   });
 });
@@ -350,7 +780,7 @@ test('packed npm artifact serves SPA routes from a dot-directory install', async
     const backendPort = await startServer(portProbe);
     await new Promise(resolve => portProbe.close(resolve));
 
-    const backendEntry = path.join(movedRoot, 'backend', 'dist', 'index.js');
+    const backendEntry = path.join(movedRoot, 'backend', 'dist', 'main.js');
     const backendProcess = spawn(process.execPath, [backendEntry], {
       cwd: tempDir,
       env: {
@@ -454,7 +884,7 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
     const callerDir = path.join(tempDir, 'embedding-caller');
     const dataDir = path.join(tempDir, 'embedding-runtime-data');
     fs.mkdirSync(callerDir, { recursive: true });
-    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'index.js');
+    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'main.js');
     const backendProcess = spawn(process.execPath, [backendEntry], {
       cwd: callerDir,
       env: {
@@ -748,7 +1178,7 @@ test('packed npm artifact routes TTS through the selected plugin valve from any 
     const callerDir = path.join(tempDir, 'unrelated-caller');
     const dataDir = path.join(tempDir, 'runtime-data');
     fs.mkdirSync(callerDir, { recursive: true });
-    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'index.js');
+    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'main.js');
     const backendProcess = spawn(process.execPath, [backendEntry], {
       cwd: callerDir,
       env: {
@@ -910,7 +1340,8 @@ test('every external import in the packed backend is a declared dependency', asy
         if (declared.has(name)) continue;
         // Bare specifiers that are Node built-ins without the node: prefix.
         if (process.getBuiltinModule?.(name)) continue;
-        if (!missing.has(name)) missing.set(name, path.relative(repoRoot, full));
+        if (!missing.has(name))
+          missing.set(name, path.relative(repoRoot, full));
       }
     }
   };

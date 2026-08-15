@@ -1,0 +1,580 @@
+{
+  "schemaVersion": 2,
+  "capabilities": [
+    {
+      "id": "completion",
+      "title": "Chat / completion",
+      "pluginTypes": ["chat", "completion"],
+      "catalogLabel": "Chat",
+      "execution": {
+        "registration": {
+          "kind": "websocket-server",
+          "file": "backend/src/index.ts",
+          "function": "registerWebSocketServer"
+        },
+        "routes": [
+          {
+            "kind": "websocket-message",
+            "file": "backend/src/websocketServer.ts",
+            "path": "/ws",
+            "messageType": "chat_stream",
+            "operationPatterns": [
+              "pluginService\\.executePluginStreamRequest\\(",
+              "generationSignal"
+            ]
+          }
+        ],
+        "clientCalls": [
+          {
+            "kind": "websocket-message",
+            "file": "frontend/src/hooks/useChat.ts",
+            "pathFile": "frontend/src/utils/websocketUrl.ts",
+            "pathConstant": "CHAT_WEBSOCKET_PATH",
+            "path": "/ws",
+            "messageType": "chat_stream"
+          }
+        ]
+      },
+      "ui": {
+        "file": "frontend/src/pages/ChatPage.tsx",
+        "action": "handleSendMessage",
+        "operationPatterns": ["sendMessage\\("],
+        "trigger": {
+          "file": "frontend/src/pages/ChatPage.tsx",
+          "patterns": ["onSendMessage=\\{handleSendMessage\\}"]
+        }
+      },
+      "documentation": [
+        {
+          "file": "docs/08-PLUGIN_ARCHITECTURE.md",
+          "patterns": [
+            "\\| Chat/completion\\s+\\| Text and chat models from provider APIs",
+            "Work can use active `completion` and `chat` plugins"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-chat-provider-selection.mjs",
+          "runner": "test:package",
+          "name": "exact plugin routing reaches the selected provider for regular and streaming requests",
+          "behaviorPatterns": [
+            "pluginService\\.executePluginRequest\\(",
+            "pluginService\\.executePluginStreamRequest\\(",
+            "requests\\[0\\]\\.authorization, 'Bearer provider-b-key'"
+          ]
+        }
+      ],
+      "manifest": {
+        "exposure": "root-or-capability",
+        "requiresBundledDefinition": true
+      }
+    },
+    {
+      "id": "embedding",
+      "title": "Embeddings",
+      "pluginTypes": ["embedding"],
+      "catalogLabel": "Embedding",
+      "execution": {
+        "registration": {
+          "kind": "express-mount",
+          "file": "backend/src/index.ts",
+          "mount": "/api/ollama",
+          "router": "ollamaRoutes"
+        },
+        "routes": [
+          {
+            "kind": "express-route",
+            "file": "backend/src/routes/ollama.ts",
+            "method": "post",
+            "path": "/embed",
+            "operationPatterns": [
+              "embeddingService\\.generateEmbeddings\\(",
+              "req\\.user\\?\\.userId"
+            ]
+          }
+        ],
+        "clientCalls": [
+          {
+            "kind": "http",
+            "file": "frontend/src/utils/api/modelApi.ts",
+            "callee": "api",
+            "method": "post",
+            "path": "/ollama/embed"
+          }
+        ],
+        "discoveryOnly": [
+          {
+            "label": "GET /api/embeddings/models",
+            "registration": {
+              "kind": "express-mount",
+              "file": "backend/src/index.ts",
+              "mount": "/api/embeddings",
+              "router": "embeddingsRoutes"
+            },
+            "route": {
+              "kind": "express-route",
+              "file": "backend/src/routes/embeddings.ts",
+              "method": "get",
+              "path": "/models",
+              "operationPatterns": ["embeddingService\\.getAvailableModels\\("],
+              "forbiddenPatterns": [
+                "generateEmbeddings\\(",
+                "executeEmbeddingRequest\\("
+              ]
+            }
+          }
+        ]
+      },
+      "ui": {
+        "file": "frontend/src/components/ModelManager.tsx",
+        "action": "handleGenerateEmbeddings",
+        "operationPatterns": [
+          "ollamaApi\\.generateEmbeddings\\(",
+          "setEmbeddingsResult\\(embeddings\\)"
+        ],
+        "trigger": {
+          "file": "frontend/src/components/model-manager/ModelManagerModals.tsx",
+          "patterns": ["onClick=\\{handleGenerateEmbeddings\\}"]
+        }
+      },
+      "documentation": [
+        {
+          "file": "docs/09-RAG_FEATURE.md",
+          "patterns": [
+            "Semantic search\\s+\\| Embeddings enabled in Settings",
+            "You can use local Ollama embedding models or embedding-capable provider plugins\\."
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-plugin-capability-routing.mjs",
+          "runner": "test:package",
+          "name": "Hugging Face capabilities ignore the generic Chat endpoint and use task payloads",
+          "behaviorPatterns": [
+            "embeddings\\.executeEmbeddingRequest\\(",
+            "\\{ embeddings: \\[\\[0\\.25, 0\\.75\\]\\] \\}",
+            "'/embedding/sentence-transformers/all-MiniLM-L6-v2'"
+          ]
+        }
+      ],
+      "manifest": {
+        "exposure": "root-or-capability",
+        "requiresBundledDefinition": true
+      }
+    },
+    {
+      "id": "image",
+      "title": "Image generation",
+      "pluginTypes": ["image"],
+      "catalogLabel": "Image",
+      "execution": {
+        "registration": {
+          "kind": "express-mount",
+          "file": "backend/src/index.ts",
+          "mount": "/api/image-gen",
+          "router": "imageGenRoutes"
+        },
+        "routes": [
+          {
+            "kind": "express-route",
+            "file": "backend/src/routes/imageGen.ts",
+            "method": "post",
+            "path": "/generate",
+            "operationPatterns": [
+              "pluginService\\.executeImageGenRequest\\(",
+              "galleryService\\.saveImage\\("
+            ]
+          }
+        ],
+        "clientCalls": [
+          {
+            "kind": "http",
+            "file": "frontend/src/utils/api/imageGenApi.ts",
+            "callee": "api",
+            "method": "post",
+            "path": "/image-gen/generate"
+          }
+        ]
+      },
+      "ui": {
+        "file": "frontend/src/components/ImageGenerationPanel.tsx",
+        "action": "handleGenerate",
+        "operationPatterns": [
+          "imageGenApi\\.generate\\(",
+          "getImageGenImageSource\\(response\\.data\\.images\\[0\\]\\)"
+        ],
+        "trigger": {
+          "file": "frontend/src/components/ImageGenerationPanel.tsx",
+          "patterns": [
+            "onClick=\\{isGenerating \\? handleCancelGeneration : handleGenerate\\}"
+          ]
+        }
+      },
+      "documentation": [
+        {
+          "file": "docs/38-MEDIA_GENERATION.md",
+          "patterns": [
+            "\"image\":\\s+\\{ \"endpoint\": \"\\.\\.\\.\"",
+            "Image generation follows the same disconnect-cancellation\\s+contract\\."
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-image-generation-routing.mjs",
+          "runner": "test:package",
+          "name": "image generation uses the selected provider and user-scoped OpenAI settings",
+          "behaviorPatterns": [
+            "service\\.executeImageGenRequest\\(",
+            "requests\\[0\\]\\.url, '/v1/images/generations'",
+            "requests\\[0\\]\\.authorization, 'Bearer user-openai-key'"
+          ]
+        }
+      ],
+      "manifest": {
+        "exposure": "root-or-capability",
+        "requiresBundledDefinition": true
+      }
+    },
+    {
+      "id": "stt",
+      "title": "Speech to text",
+      "pluginTypes": ["stt"],
+      "catalogLabel": "Transcription",
+      "execution": {
+        "registration": {
+          "kind": "express-mount",
+          "file": "backend/src/index.ts",
+          "mount": "/api/stt",
+          "router": "sttRoutes"
+        },
+        "routes": [
+          {
+            "kind": "express-route",
+            "file": "backend/src/routes/stt.ts",
+            "method": "post",
+            "path": "/transcribe",
+            "operationPatterns": [
+              "pluginService\\.executeSTTRequest\\(",
+              "signal: operationSignal"
+            ]
+          }
+        ],
+        "clientCalls": [
+          {
+            "kind": "http",
+            "file": "frontend/src/utils/api/sttApi.ts",
+            "callee": "api",
+            "method": "post",
+            "path": "/stt/transcribe"
+          }
+        ]
+      },
+      "ui": {
+        "file": "frontend/src/components/ChatInput.tsx",
+        "action": "toggleDictation",
+        "operationPatterns": [
+          "navigator\\.mediaDevices\\.getUserMedia\\(",
+          "sttApi\\s*\\.transcribe\\(recording, providerModel"
+        ],
+        "trigger": {
+          "file": "frontend/src/components/ChatInput.tsx",
+          "patterns": ["onClick=\\{\\(\\) => void toggleDictation\\(\\)\\}"]
+        }
+      },
+      "documentation": [
+        {
+          "file": "docs/42-SPEECH_TO_TEXT.md",
+          "patterns": [
+            "Select a named provider explicitly to use provider-backed STT\\.",
+            "Libre inserts the returned transcript into the\\s+composer\\."
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-stt-routing.mjs",
+          "runner": "test:package",
+          "name": "STT sends an OpenAI-compatible multipart request to the selected route",
+          "behaviorPatterns": [
+            "service\\.transcribe\\(",
+            "received\\.url, '/v1/audio/transcriptions'",
+            "received\\.headers\\.authorization, 'Bearer key-user-a'"
+          ]
+        },
+        {
+          "file": "frontend/e2e/stt.spec.ts",
+          "runner": "test:e2e",
+          "name": "provider speech input discloses its route and transcribes recorded audio",
+          "behaviorPatterns": [
+            "await microphone\\.click\\(\\)",
+            "'Provider transcription works\\.'",
+            "mockApi\\.sttTranscriptionRequests\\[0\\]\\.body"
+          ]
+        }
+      ],
+      "manifest": {
+        "exposure": "root-or-capability",
+        "requiresBundledDefinition": true
+      }
+    },
+    {
+      "id": "tts",
+      "title": "Text to speech",
+      "pluginTypes": ["tts"],
+      "catalogLabel": "Speech",
+      "execution": {
+        "registration": {
+          "kind": "express-mount",
+          "file": "backend/src/index.ts",
+          "mount": "/api/tts",
+          "router": "ttsRoutes"
+        },
+        "routes": [
+          {
+            "kind": "express-route",
+            "file": "backend/src/routes/tts.ts",
+            "method": "post",
+            "path": "/generate",
+            "operationPatterns": [
+              "pluginService\\.executeTTSRequest\\(",
+              "signal: requestAbort\\.signal"
+            ]
+          }
+        ],
+        "clientCalls": [
+          {
+            "kind": "http",
+            "file": "frontend/src/utils/api/ttsApi.ts",
+            "callee": "api",
+            "method": "post",
+            "path": "/tts/generate"
+          }
+        ]
+      },
+      "ui": {
+        "file": "frontend/src/components/TTSButton.tsx",
+        "action": "handlePlay",
+        "operationPatterns": [
+          "createTTSPlaybackSession\\(",
+          "ttsApi\\.generate\\("
+        ],
+        "trigger": {
+          "file": "frontend/src/components/TTSButton.tsx",
+          "patterns": ["onClick=\\{handlePlay\\}"]
+        }
+      },
+      "documentation": [
+        {
+          "file": "docs/38-MEDIA_GENERATION.md",
+          "patterns": [
+            "`tts` is speech: text is read aloud in a selected voice\\.",
+            "Speech and sound generation are synchronous:"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-tts-routing.mjs",
+          "runner": "test:package",
+          "name": "TTS routes a shared model alias through the selected plugin and user valve",
+          "behaviorPatterns": [
+            "service\\.executeTTSRequest\\(",
+            "requests\\[0\\]\\.url, '/v1/audio/speech'",
+            "audio\\.subarray\\(0, 4\\)\\.toString\\('ascii'\\), 'RIFF'"
+          ]
+        },
+        {
+          "file": "frontend/e2e/tts-playback.spec.ts",
+          "runner": "test:e2e",
+          "name": "batched read-aloud reuses the selected saved voice for every batch",
+          "behaviorPatterns": [
+            "await readAloud\\.click\\(\\)",
+            "mockApi\\.ttsGenerationRequests\\.length",
+            "request\\.voiceProfileId === voiceProfileId"
+          ]
+        }
+      ],
+      "manifest": {
+        "exposure": "root-or-capability",
+        "requiresBundledDefinition": true
+      }
+    },
+    {
+      "id": "audio",
+      "title": "Audio generation",
+      "pluginTypes": ["audio"],
+      "catalogLabel": "Audio",
+      "execution": {
+        "registration": {
+          "kind": "express-mount",
+          "file": "backend/src/index.ts",
+          "mount": "/api/media",
+          "router": "mediaRoutes"
+        },
+        "routes": [
+          {
+            "kind": "express-route",
+            "file": "backend/src/routes/media.ts",
+            "method": "post",
+            "path": "/sound/generate",
+            "operationPatterns": [
+              "pluginService\\.executeAudioGenRequest\\(",
+              "galleryService\\.saveMedia\\("
+            ]
+          }
+        ],
+        "clientCalls": [
+          {
+            "kind": "http",
+            "file": "frontend/src/utils/api/mediaApi.ts",
+            "callee": "api",
+            "method": "post",
+            "path": "/media/sound/generate"
+          }
+        ]
+      },
+      "ui": {
+        "file": "frontend/src/components/MediaGenerationPanel.tsx",
+        "action": "handleGenerate",
+        "operationPatterns": [
+          "audioModel\\?\\.mode === 'sound'",
+          "mediaApi\\.generateSound\\("
+        ],
+        "trigger": {
+          "file": "frontend/src/components/MediaGenerationPanel.tsx",
+          "patterns": ["\\? handleCancelGeneration\\s*:\\s*handleGenerate"]
+        }
+      },
+      "documentation": [
+        {
+          "file": "docs/38-MEDIA_GENERATION.md",
+          "patterns": [
+            "`audio` is sound: a model generates audio content from a prompt\\.",
+            "Speech and sound generation are synchronous:"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-openrouter-media-routing.mjs",
+          "runner": "test:package",
+          "name": "OpenRouter audio-output models stream generated sound bytes",
+          "behaviorPatterns": [
+            "service\\.generate\\('audio-model', 'A warm synth chord'",
+            "modalities: \\['text', 'audio'\\]",
+            "result\\.audio\\.toString\\(\\), 'sound-bytes'"
+          ]
+        }
+      ],
+      "manifest": {
+        "exposure": "root-or-capability",
+        "requiresBundledDefinition": true
+      }
+    },
+    {
+      "id": "video",
+      "title": "Video generation",
+      "pluginTypes": ["video"],
+      "catalogLabel": "Video",
+      "execution": {
+        "registration": {
+          "kind": "express-mount",
+          "file": "backend/src/index.ts",
+          "mount": "/api/media",
+          "router": "mediaRoutes"
+        },
+        "routes": [
+          {
+            "kind": "express-route",
+            "file": "backend/src/routes/media.ts",
+            "method": "post",
+            "path": "/video/generate",
+            "operationPatterns": [
+              "mediaGenerationJobService\\.queueVideoSubmission\\(",
+              "res\\.status\\(202\\)\\.json\\("
+            ],
+            "forbiddenPatterns": ["pluginService\\.submitVideoGenRequest\\("]
+          },
+          {
+            "kind": "express-route",
+            "file": "backend/src/routes/media.ts",
+            "method": "post",
+            "path": "/video/jobs/:jobId/resume",
+            "handler": "resumeVideoJob",
+            "operationPatterns": [
+              "pluginService\\.pollVideoGenRequest\\(",
+              "pluginService\\.downloadVideoGenResult\\("
+            ]
+          }
+        ],
+        "clientCalls": [
+          {
+            "kind": "http",
+            "file": "frontend/src/utils/api/mediaApi.ts",
+            "callee": "api",
+            "method": "post",
+            "path": "/media/video/generate"
+          },
+          {
+            "kind": "http-template",
+            "file": "frontend/src/utils/api/mediaApi.ts",
+            "callee": "api",
+            "method": "post",
+            "path": "/media/video/jobs/:jobId/resume"
+          }
+        ]
+      },
+      "ui": {
+        "file": "frontend/src/components/MediaGenerationPanel.tsx",
+        "action": "handleGenerate",
+        "operationPatterns": [
+          "mediaApi\\.generateVideo\\(",
+          "followVideoJob\\(submittedJob, controller, true\\)"
+        ],
+        "trigger": {
+          "file": "frontend/src/components/MediaGenerationPanel.tsx",
+          "patterns": ["\\? handleCancelGeneration\\s*:\\s*handleGenerate"]
+        }
+      },
+      "documentation": [
+        {
+          "file": "docs/38-MEDIA_GENERATION.md",
+          "patterns": [
+            "Submitting a job\\s+\\(`POST /api/media/video/generate`\\) returns `202`",
+            "A durable `media\\.video\\.resume\\.v1` job polls the provider"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-openrouter-media-routing.mjs",
+          "runner": "test:package",
+          "name": "video generation submits, polls, and downloads through the provider endpoint",
+          "behaviorPatterns": [
+            "service\\.submit\\('video-model', 'A moving scene'",
+            "service\\.poll\\(",
+            "service\\.download\\(",
+            "downloaded\\.video\\.toString\\(\\), 'video-bytes'"
+          ]
+        },
+        {
+          "file": "scripts/test-openrouter-media-routing.mjs",
+          "runner": "test:package",
+          "name": "prepared video and resume publications resolve lost commit acknowledgements",
+          "behaviorPatterns": [
+            "mediaGenerationJobService\\.queueVideoSubmission\\('default'",
+            "'media\\.video\\.submit\\.v1'",
+            "mediaGenerationJobService\\.acceptSubmittedProviderJob\\("
+          ]
+        }
+      ],
+      "manifest": {
+        "exposure": "root-or-capability",
+        "requiresBundledDefinition": true
+      }
+    }
+  ]
+}

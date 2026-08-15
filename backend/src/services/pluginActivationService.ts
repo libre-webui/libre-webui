@@ -17,8 +17,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import { getDatabaseSafe } from '../db.js';
+import { getPersistence } from '../persistence/index.js';
 import { createLogger } from '../utils/logger.js';
+import { encryptionService } from './encryptionService.js';
 
 const logger = createLogger('services:plugin-activation-service');
 const LEGACY_MIGRATION_KEY = 'plugin_activations_legacy_migrated_v1';
@@ -30,103 +31,67 @@ type LegacyStatus = {
 };
 
 export class PluginActivationService {
-  migrateLegacyStatus(
+  async migrateLegacyStatus(
     statusDirectories: string[],
     canMigratePlugin: (pluginId: string) => boolean = () => true
-  ): void {
-    const db = getDatabaseSafe();
-    if (!db) return;
-
+  ): Promise<void> {
     try {
-      const migrated = db
-        .prepare('SELECT value FROM system_settings WHERE key = ?')
-        .get(LEGACY_MIGRATION_KEY) as { value?: string } | undefined;
-      if (migrated?.value === 'true') return;
-
       const status = this.readLegacyStatus(statusDirectories);
       const now = Date.now();
-      const migrate = db.transaction(() => {
-        const insertActivation = db.prepare(
-          `INSERT OR IGNORE INTO plugin_activations
-             (user_id, plugin_id, activated_at)
-           VALUES (?, ?, ?)`
-        );
-        const users = db.prepare('SELECT id FROM users').all() as Array<{
-          id: string;
-        }>;
-        const validUserIds = new Set(users.map(user => user.id));
+      const users = await this.repository().listUserIds();
+      const validUserIds = new Set(users);
+      const activations = new Map<string, readonly string[]>();
 
-        if (
-          status?.activePluginsByUser &&
-          typeof status.activePluginsByUser === 'object' &&
-          !Array.isArray(status.activePluginsByUser)
-        ) {
-          for (const [userId, pluginIds] of Object.entries(
-            status.activePluginsByUser
-          )) {
-            if (!validUserIds.has(userId) || !Array.isArray(pluginIds)) {
-              continue;
-            }
-            for (const pluginId of validPluginIds(pluginIds).filter(
-              canMigratePlugin
-            )) {
-              insertActivation.run(userId, pluginId, now);
-            }
+      if (
+        status?.activePluginsByUser &&
+        typeof status.activePluginsByUser === 'object' &&
+        !Array.isArray(status.activePluginsByUser)
+      ) {
+        for (const [userId, pluginIds] of Object.entries(
+          status.activePluginsByUser
+        )) {
+          if (!validUserIds.has(userId) || !Array.isArray(pluginIds)) {
+            continue;
           }
-        } else {
-          const legacyPluginIds = Array.isArray(status?.activePlugins)
-            ? validPluginIds(status.activePlugins).filter(canMigratePlugin)
-            : typeof status?.activePlugin === 'string'
-              ? [status.activePlugin].filter(canMigratePlugin)
-              : [];
-          for (const { id: userId } of users) {
-            for (const pluginId of legacyPluginIds) {
-              insertActivation.run(userId, pluginId, now);
-            }
-          }
+          activations.set(
+            userId,
+            validPluginIds(pluginIds).filter(canMigratePlugin)
+          );
         }
-
-        db.prepare(
-          `INSERT INTO system_settings (key, value, updated_at)
-           VALUES (?, 'true', ?)
-           ON CONFLICT(key) DO UPDATE SET
-             value = excluded.value,
-             updated_at = excluded.updated_at`
-        ).run(LEGACY_MIGRATION_KEY, now);
-      });
-
-      migrate();
+      } else {
+        const legacyPluginIds = Array.isArray(status?.activePlugins)
+          ? validPluginIds(status.activePlugins).filter(canMigratePlugin)
+          : typeof status?.activePlugin === 'string'
+            ? [status.activePlugin].filter(canMigratePlugin)
+            : [];
+        for (const userId of users) activations.set(userId, legacyPluginIds);
+      }
+      await this.repository().migrateLegacy(
+        activations,
+        now,
+        LEGACY_MIGRATION_KEY
+      );
     } catch (error) {
       logger.error('Failed to migrate legacy plugin activation status:', error);
     }
   }
 
-  getActivePluginIds(userId?: string): Set<string> {
-    const db = getDatabaseSafe();
-    if (!db) return new Set();
-
+  async getActivePluginIds(userId?: string): Promise<Set<string>> {
     try {
-      const rows = db
-        .prepare('SELECT plugin_id FROM plugin_activations WHERE user_id = ?')
-        .all(userId || 'default') as Array<{ plugin_id: string }>;
-      return new Set(rows.map(row => row.plugin_id));
+      return new Set(await this.repository().list(userId || 'default'));
     } catch (error) {
       logger.error('Failed to read plugin activations:', error);
       return new Set();
     }
   }
 
-  activate(pluginId: string, userId?: string): boolean {
-    const db = getDatabaseSafe();
-    if (!db) return false;
-
+  async activate(pluginId: string, userId?: string): Promise<boolean> {
     try {
-      db.prepare(
-        `INSERT INTO plugin_activations (user_id, plugin_id, activated_at)
-         VALUES (?, ?, ?)
-         ON CONFLICT(user_id, plugin_id) DO UPDATE SET
-           activated_at = excluded.activated_at`
-      ).run(userId || 'default', pluginId, Date.now());
+      await this.repository().activate(
+        pluginId,
+        userId || 'default',
+        Date.now()
+      );
       return true;
     } catch (error) {
       logger.error('Failed to activate plugin %s:', pluginId, error);
@@ -134,20 +99,12 @@ export class PluginActivationService {
     }
   }
 
-  deactivate(pluginId: string | undefined, userId?: string): boolean {
-    const db = getDatabaseSafe();
-    if (!db) return false;
-
+  async deactivate(
+    pluginId: string | undefined,
+    userId?: string
+  ): Promise<boolean> {
     try {
-      if (pluginId) {
-        db.prepare(
-          'DELETE FROM plugin_activations WHERE user_id = ? AND plugin_id = ?'
-        ).run(userId || 'default', pluginId);
-      } else {
-        db.prepare('DELETE FROM plugin_activations WHERE user_id = ?').run(
-          userId || 'default'
-        );
-      }
+      await this.repository().deactivate(pluginId, userId || 'default');
       return true;
     } catch (error) {
       logger.error('Failed to deactivate plugin:', error);
@@ -155,14 +112,9 @@ export class PluginActivationService {
     }
   }
 
-  deletePlugin(pluginId: string): boolean {
-    const db = getDatabaseSafe();
-    if (!db) return false;
-
+  async deletePlugin(pluginId: string): Promise<boolean> {
     try {
-      db.prepare('DELETE FROM plugin_activations WHERE plugin_id = ?').run(
-        pluginId
-      );
+      await this.repository().deleteByPlugin(pluginId);
       return true;
     } catch (error) {
       logger.error(
@@ -193,6 +145,11 @@ export class PluginActivationService {
       }
     }
     return undefined;
+  }
+
+  private repository() {
+    return getPersistence(encryptionService).repositories.extensions
+      .pluginActivations;
   }
 }
 

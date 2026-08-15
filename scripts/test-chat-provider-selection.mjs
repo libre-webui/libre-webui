@@ -123,6 +123,14 @@ const pluginDefinition = (id, keyEnv) => ({
     key_env: keyEnv,
   },
   model_map: [sharedModel],
+  variables: [
+    {
+      name: 'stream',
+      type: 'boolean',
+      label: 'Stream Response',
+      default: true,
+    },
+  ],
 });
 
 const pluginDefinitions = [
@@ -155,7 +163,9 @@ legacyDatabase.exec(`
     model TEXT NOT NULL,
     persona_id TEXT,
     created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE SET NULL
   )
 `);
 legacyDatabase.close();
@@ -169,6 +179,12 @@ delete process.env.CHAT_PROVIDER_INACTIVE_TEST_KEY;
 delete process.env.CHAT_PROVIDER_NO_KEY_TEST_KEY;
 
 const dbModule = await import(pathToFileURL(path.join(distRoot, 'db.js')).href);
+const coordinationModule = await import(
+  pathToFileURL(
+    path.join(distRoot, 'platform', 'coordination', 'service.js')
+  ).href
+);
+await coordinationModule.initializeCoordinator();
 const storageService = (
   await import(pathToFileURL(path.join(distRoot, 'storage.js')).href)
 ).default;
@@ -237,7 +253,7 @@ db.prepare(
   now
 );
 for (const plugin of pluginDefinitions) {
-  pluginService.installPlugin(plugin, 'chat-provider-fixture-admin');
+  await pluginService.installPlugin(plugin, 'chat-provider-fixture-admin');
 }
 const activatePlugin = db.prepare(
   `INSERT INTO plugin_activations (user_id, plugin_id, activated_at)
@@ -247,24 +263,24 @@ for (const pluginId of [pluginAId, pluginBId, missingCredentialPluginId]) {
   activatePlugin.run(userId, pluginId, now);
 }
 assert.equal(
-  credentialsService.setApiKey(
+  await credentialsService.setApiKey(
     pluginAId,
     'provider-a-key',
     userId,
-    pluginService.getCredentialRoutingAuthFingerprint(
-      pluginService.getPlugin(pluginAId, userId),
+    await pluginService.getCredentialRoutingAuthFingerprint(
+      await pluginService.getPlugin(pluginAId, userId),
       userId
     )
   ),
   true
 );
 assert.equal(
-  credentialsService.setApiKey(
+  await credentialsService.setApiKey(
     pluginBId,
     'provider-b-key',
     userId,
-    pluginService.getCredentialRoutingAuthFingerprint(
-      pluginService.getPlugin(pluginBId, userId),
+    await pluginService.getCredentialRoutingAuthFingerprint(
+      await pluginService.getPlugin(pluginBId, userId),
       userId
     )
   ),
@@ -272,6 +288,7 @@ assert.equal(
 );
 
 after(async () => {
+  await coordinationModule.closeCoordinator();
   dbModule.closeDatabase();
   await new Promise(resolve => providerServer.close(resolve));
   fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -285,7 +302,7 @@ after(async () => {
   }
 });
 
-test('Chat session provider columns migrate additively and round-trip nullable selections', () => {
+test('Chat session provider columns migrate additively and round-trip nullable selections', async () => {
   const columns = db.prepare('PRAGMA table_info(sessions)').all();
   const columnNames = columns.map(column => column.name);
   assert.ok(columnNames.includes('provider_type'));
@@ -299,7 +316,7 @@ test('Chat session provider columns migrate additively and round-trip nullable s
     createdAt: now,
     updatedAt: now,
   };
-  storageService.saveSession(legacySession, userId);
+  await storageService.saveSession(legacySession, userId);
 
   assert.deepEqual(
     db
@@ -311,7 +328,7 @@ test('Chat session provider columns migrate additively and round-trip nullable s
       .get(legacySession.id),
     { provider_type: null, provider_id: null }
   );
-  const loadedLegacy = storageService.getSession(legacySession.id, userId);
+  const loadedLegacy = await storageService.getSession(legacySession.id, userId);
   assert.equal(loadedLegacy.providerType, undefined);
   assert.equal(loadedLegacy.providerId, undefined);
 
@@ -322,7 +339,7 @@ test('Chat session provider columns migrate additively and round-trip nullable s
     providerType: 'plugin',
     providerId: pluginBId,
   };
-  storageService.saveSession(qualifiedSession, userId);
+  await storageService.saveSession(qualifiedSession, userId);
 
   assert.deepEqual(
     db
@@ -334,7 +351,7 @@ test('Chat session provider columns migrate additively and round-trip nullable s
       .get(qualifiedSession.id),
     { provider_type: 'plugin', provider_id: pluginBId }
   );
-  const loadedQualified = storageService.getSession(
+  const loadedQualified = await storageService.getSession(
     qualifiedSession.id,
     userId
   );
@@ -342,7 +359,7 @@ test('Chat session provider columns migrate additively and round-trip nullable s
   assert.equal(loadedQualified.providerId, pluginBId);
 });
 
-test('Responses provider state is encrypted and round-trips with Chat messages', () => {
+test('Responses provider state is encrypted and round-trips with Chat messages', async () => {
   const providerMetadata = {
     openAIResponsesOutputItems: [
       {
@@ -382,7 +399,7 @@ test('Responses provider state is encrypted and round-trips with Chat messages',
     updatedAt: now,
   };
 
-  storageService.saveSession(session, userId);
+  await storageService.saveSession(session, userId);
 
   const columns = db.prepare('PRAGMA table_info(session_messages)').all();
   assert.ok(columns.some(column => column.name === 'provider_metadata'));
@@ -400,7 +417,7 @@ test('Responses provider state is encrypted and round-trips with Chat messages',
     false
   );
   assert.equal(stored.thinking.includes('Private reasoning summary'), false);
-  const loadedMessage = storageService.getSession(session.id, userId)
+  const loadedMessage = (await storageService.getSession(session.id, userId))
     .messages[0];
   assert.deepEqual(loadedMessage.providerMetadata, providerMetadata);
   assert.equal(loadedMessage.thinking, 'Private reasoning summary');
@@ -445,17 +462,17 @@ test('session updates preserve provider metadata until an unqualified model chan
   );
 });
 
-test('default, vision, and title model preferences round-trip and clear provider identity', () => {
-  preferencesService.setDefaultModel(sharedModel, userId, {
+test('default, vision, and title model preferences round-trip and clear provider identity', async () => {
+  await preferencesService.setDefaultModel(sharedModel, userId, {
     providerType: 'plugin',
     providerId: pluginBId,
   });
-  let preferences = preferencesService.getPreferences(userId);
+  let preferences = await preferencesService.getPreferences(userId);
   assert.equal(preferences.defaultModel, sharedModel);
   assert.equal(preferences.defaultProviderType, 'plugin');
   assert.equal(preferences.defaultProviderId, pluginBId);
 
-  preferences = preferencesService.updatePreferences(
+  preferences = await preferencesService.updatePreferences(
     {
       visionModel: sharedModel,
       visionProviderType: 'plugin',
@@ -467,7 +484,7 @@ test('default, vision, and title model preferences round-trip and clear provider
   assert.equal(preferences.visionProviderType, 'plugin');
   assert.equal(preferences.visionProviderId, pluginBId);
 
-  preferences = preferencesService.updatePreferences(
+  preferences = await preferencesService.updatePreferences(
     { showUsername: true },
     userId
   );
@@ -476,7 +493,7 @@ test('default, vision, and title model preferences round-trip and clear provider
   assert.equal(preferences.visionProviderType, 'plugin');
   assert.equal(preferences.visionProviderId, pluginBId);
 
-  preferences = preferencesService.updatePreferences(
+  preferences = await preferencesService.updatePreferences(
     {
       titleSettings: {
         autoTitle: true,
@@ -490,18 +507,18 @@ test('default, vision, and title model preferences round-trip and clear provider
   assert.equal(preferences.titleSettings.taskProviderType, 'plugin');
   assert.equal(preferences.titleSettings.taskProviderId, pluginBId);
 
-  preferences = preferencesService.getPreferences(userId);
+  preferences = await preferencesService.getPreferences(userId);
   assert.equal(preferences.titleSettings.taskProviderType, 'plugin');
   assert.equal(preferences.titleSettings.taskProviderId, pluginBId);
 
-  preferences = preferencesService.setDefaultModel(
+  preferences = await preferencesService.setDefaultModel(
     'chat-provider-default-changed',
     userId
   );
   assert.equal(preferences.defaultProviderType, undefined);
   assert.equal(preferences.defaultProviderId, undefined);
 
-  preferences = preferencesService.updatePreferences(
+  preferences = await preferencesService.updatePreferences(
     {
       titleSettings: {
         taskModel: 'chat-provider-title-changed',
@@ -512,7 +529,7 @@ test('default, vision, and title model preferences round-trip and clear provider
   assert.equal(preferences.titleSettings.taskProviderType, undefined);
   assert.equal(preferences.titleSettings.taskProviderId, undefined);
 
-  preferences = preferencesService.updatePreferences(
+  preferences = await preferencesService.updatePreferences(
     { visionModel: 'chat-provider-vision-changed' },
     userId
   );
@@ -520,7 +537,7 @@ test('default, vision, and title model preferences round-trip and clear provider
   assert.equal(preferences.visionProviderId, undefined);
 });
 
-test('provider-qualified image preferences persist across unrelated updates', () => {
+test('provider-qualified image preferences persist across unrelated updates', async () => {
   const imageSettings = {
     enabled: true,
     model: sharedModel,
@@ -530,19 +547,19 @@ test('provider-qualified image preferences persist across unrelated updates', ()
     style: 'vivid',
   };
 
-  let preferences = preferencesService.updatePreferences(
+  let preferences = await preferencesService.updatePreferences(
     { imageGenSettings: imageSettings },
     userId
   );
   assert.deepEqual(preferences.imageGenSettings, imageSettings);
 
-  preferences = preferencesService.updatePreferences(
+  preferences = await preferencesService.updatePreferences(
     { showUsername: !preferences.showUsername },
     userId
   );
   assert.deepEqual(preferences.imageGenSettings, imageSettings);
   assert.deepEqual(
-    preferencesService.getPreferences(userId).imageGenSettings,
+    (await preferencesService.getPreferences(userId)).imageGenSettings,
     imageSettings
   );
 });
@@ -601,6 +618,21 @@ test('provider-qualified targets distinguish Ollama and colliding plugins', asyn
   assert.equal(pluginBTarget.activePlugin?.id, pluginBId);
   assert.equal(pluginBTarget.providerType, 'plugin');
   assert.equal(pluginBTarget.providerId, pluginBId);
+  assert.equal(pluginBTarget.pluginVariables.stream, true);
+
+  const pluginBRequest = await new ChatRequestService({
+    chatGenerationService,
+  }).prepareGenerationRequest({
+    session: {
+      model: sharedModel,
+      providerType: 'plugin',
+      providerId: pluginBId,
+    },
+    userId,
+    persistedMessages: [],
+    content: 'Stream this response',
+  });
+  assert.equal(pluginBRequest.shouldStreamPlugin, true);
 
   const legacyTarget = await chatGenerationService.prepareGenerationTarget(
     sharedModel,
@@ -609,6 +641,78 @@ test('provider-qualified targets distinguish Ollama and colliding plugins', asyn
   assert.equal(legacyTarget.activePlugin?.id, pluginAId);
   assert.equal(legacyTarget.providerType, undefined);
   assert.equal(legacyTarget.providerId, undefined);
+});
+
+test('plugin, agent, and legacy plugin targets do not probe Ollama defaults', async () => {
+  const originalGetModelDefaults = ollamaService.getModelDefaults;
+  const globalNumCtx = (await preferencesService.getGenerationOptions(userId))
+    .num_ctx;
+  const probedModels = [];
+  ollamaService.getModelDefaults = async model => {
+    probedModels.push(model);
+    return { options: { num_ctx: 12345 }, contextCapped: false };
+  };
+
+  try {
+    const pluginTarget = await chatGenerationService.prepareGenerationTarget(
+      sharedModel,
+      userId,
+      { temperature: 0.25 },
+      { providerType: 'plugin', providerId: pluginBId }
+    );
+    const agentTarget = await chatGenerationService.prepareGenerationTarget(
+      sharedModel,
+      userId,
+      {},
+      { providerType: 'agent', providerId: 'test-agent' }
+    );
+    const legacyPluginTarget =
+      await chatGenerationService.prepareGenerationTarget(sharedModel, userId);
+
+    assert.equal(pluginTarget.activePlugin?.id, pluginBId);
+    assert.equal(pluginTarget.mergedOptions.temperature, 0.25);
+    assert.equal(pluginTarget.mergedOptions.num_ctx, globalNumCtx);
+    assert.equal(agentTarget.activePlugin, null);
+    assert.equal(agentTarget.mergedOptions.num_ctx, globalNumCtx);
+    assert.equal(legacyPluginTarget.activePlugin?.id, pluginAId);
+    assert.equal(legacyPluginTarget.mergedOptions.num_ctx, globalNumCtx);
+    assert.deepEqual(probedModels, []);
+  } finally {
+    ollamaService.getModelDefaults = originalGetModelDefaults;
+  }
+});
+
+test('explicit Ollama and unclaimed legacy targets retain Ollama defaults', async () => {
+  const originalGetModelDefaults = ollamaService.getModelDefaults;
+  const ollamaOnlyModel = 'chat-provider-ollama-only-model';
+  const probedModels = [];
+  ollamaService.getModelDefaults = async model => {
+    probedModels.push(model);
+    return { options: { num_ctx: 12345 }, contextCapped: false };
+  };
+
+  try {
+    const explicitOllamaTarget =
+      await chatGenerationService.prepareGenerationTarget(
+        sharedModel,
+        userId,
+        {},
+        { providerType: 'ollama' }
+      );
+    const legacyOllamaTarget =
+      await chatGenerationService.prepareGenerationTarget(
+        ollamaOnlyModel,
+        userId
+      );
+
+    assert.equal(explicitOllamaTarget.activePlugin, null);
+    assert.equal(explicitOllamaTarget.mergedOptions.num_ctx, 12345);
+    assert.equal(legacyOllamaTarget.activePlugin, null);
+    assert.equal(legacyOllamaTarget.mergedOptions.num_ctx, 12345);
+    assert.deepEqual(probedModels, [sharedModel, ollamaOnlyModel]);
+  } finally {
+    ollamaService.getModelDefaults = originalGetModelDefaults;
+  }
 });
 
 test('persisted legacy sessions ignore unpersisted request provider identity', async () => {

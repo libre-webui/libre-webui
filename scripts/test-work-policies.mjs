@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { initializeWorkTestPlatform } from './lib/work-test-platform.mjs';
 
 process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
 
@@ -34,9 +35,10 @@ const {
 } = sharedModule;
 const { buildWorkContainerRunArgs } = driverModule;
 const { buildWorkPodManifest, buildWorkspaceClaimManifest } = kubernetesModule;
+const closeWorkPlatform = await initializeWorkTestPlatform(repoRoot);
 
-test.after(() => {
-  databaseModule.closeDatabase();
+test.after(async () => {
+  await closeWorkPlatform();
   if (previousDataDir === undefined) delete process.env.DATA_DIR;
   else process.env.DATA_DIR = previousDataDir;
   rmSync(dataDir, { recursive: true, force: true });
@@ -101,6 +103,7 @@ test('policy input validation accepts sane values and rejects the rest', () => {
 
   for (const bad of [
     { name: '' },
+    { name: 'bad\u0000name' },
     { name: 'x'.repeat(101) },
     { name: 'ok', image: 'two words' },
     // A reference is anchored to the registry/repo charset, so nothing
@@ -128,8 +131,8 @@ test('policy input validation accepts sane values and rejects the rest', () => {
   }
 });
 
-test('policies are created, listed, updated, and name-unique', () => {
-  const created = workPolicyService.create({
+test('policies are created, listed, updated, and name-unique', async () => {
+  const created = await workPolicyService.create({
     name: 'heavy',
     memoryLimit: '4g',
     cpuLimit: '4',
@@ -138,12 +141,12 @@ test('policies are created, listed, updated, and name-unique', () => {
   assert.equal(created.memoryLimit, '4g');
   assert.equal(created.image, undefined);
 
-  assert.throws(
-    () => workPolicyService.create({ name: 'heavy' }),
+  await assert.rejects(
+    workPolicyService.create({ name: 'heavy' }),
     error => error?.code === 'WORK_POLICY_NAME_CONFLICT'
   );
 
-  const updated = workPolicyService.update(created.id, {
+  const updated = await workPolicyService.update(created.id, {
     name: 'heavy',
     memoryLimit: '8g',
   });
@@ -151,37 +154,40 @@ test('policies are created, listed, updated, and name-unique', () => {
   // Fields omitted from the update are cleared back to inherit.
   assert.equal(updated.cpuLimit, undefined);
 
-  workPolicyService.create({ name: 'light', cpuLimit: '1' });
+  await workPolicyService.create({ name: 'light', cpuLimit: '1' });
   assert.deepEqual(
-    workPolicyService.list().map(policy => policy.name),
+    (await workPolicyService.list()).map(policy => policy.name),
     ['heavy', 'light']
   );
 });
 
-test('resolution merges policy overrides onto the global defaults', () => {
-  assert.deepEqual(workPolicyService.resolve(undefined), defaultRuntimePolicy);
-  assert.deepEqual(workPolicyService.resolve(null), defaultRuntimePolicy);
+test('resolution merges policy overrides onto the global defaults', async () => {
+  assert.deepEqual(
+    await workPolicyService.resolve(undefined),
+    defaultRuntimePolicy
+  );
+  assert.deepEqual(await workPolicyService.resolve(null), defaultRuntimePolicy);
   // An unknown id resolves to the hardened defaults, never a failure.
   assert.deepEqual(
-    workPolicyService.resolve('never-existed'),
+    await workPolicyService.resolve('never-existed'),
     defaultRuntimePolicy
   );
 
-  const heavy = workPolicyService.list().find(p => p.name === 'heavy');
-  const resolved = workPolicyService.resolve(heavy.id);
+  const heavy = (await workPolicyService.list()).find(p => p.name === 'heavy');
+  const resolved = await workPolicyService.resolve(heavy.id);
   assert.equal(resolved.policyId, heavy.id);
   assert.equal(resolved.memoryLimit, '8g');
   // Unset fields inherit the global configuration.
   assert.equal(resolved.cpuLimit, workRuntimeConfig.cpuLimit);
   assert.equal(resolved.image, workRuntimeConfig.image);
 
-  assert.equal(workPolicyService.anyIdleTimeoutConfigured(), false);
-  workPolicyService.update(heavy.id, {
+  assert.equal(await workPolicyService.anyIdleTimeoutConfigured(), false);
+  await workPolicyService.update(heavy.id, {
     name: 'heavy',
     memoryLimit: '8g',
     idleTimeoutMs: 60000,
   });
-  assert.equal(workPolicyService.anyIdleTimeoutConfigured(), true);
+  assert.equal(await workPolicyService.anyIdleTimeoutConfigured(), true);
 });
 
 test('the default-policy fingerprint is unchanged by the policy feature', () => {
@@ -232,7 +238,7 @@ test('container args and Pod manifests are built from the resolved policy', () =
   assert.equal(claim.spec.resources.requests.storage, '20Gi');
 });
 
-test('tasks store their policy and fall back when it is deleted', () => {
+test('tasks store their policy and fall back when it is deleted', async () => {
   const db = databaseModule.getDatabase();
   const now = Date.now();
   db.prepare(
@@ -241,9 +247,9 @@ test('tasks store their policy and fall back when it is deleted', () => {
     ) VALUES ('policy-user', 'policy-user', 'p@example.invalid', 'x', 'admin', ?, ?)`
   ).run(now, now);
 
-  const light = workPolicyService.list().find(p => p.name === 'light');
+  const light = (await workPolicyService.list()).find(p => p.name === 'light');
   const service = new taskModule.WorkTaskService();
-  const detail = service.createTaskWithRun(
+  const detail = await service.createTaskWithRun(
     'policy-user',
     'build something',
     'test-model',
@@ -253,16 +259,16 @@ test('tasks store their policy and fall back when it is deleted', () => {
     light.id
   );
   assert.equal(detail.policyId, light.id);
-  const record = service.getTaskRecord(detail.id, 'policy-user');
+  const record = await service.getTaskRecord(detail.id, 'policy-user');
   assert.equal(record.policyId, light.id);
 
   // Deleting the policy clears the reference (SET NULL semantics) and the
   // task resolves back to the global defaults.
-  workPolicyService.remove(light.id);
-  const after = service.getTaskRecord(detail.id, 'policy-user');
+  await workPolicyService.remove(light.id);
+  const after = await service.getTaskRecord(detail.id, 'policy-user');
   assert.equal(after.policyId, undefined);
   assert.deepEqual(
-    workPolicyService.resolve(after.policyId),
+    await workPolicyService.resolve(after.policyId),
     defaultRuntimePolicy
   );
 });
@@ -273,7 +279,7 @@ test('policy routes gate mutations behind admin and honor networkDefault', () =>
     'utf8'
   );
   // Reading is open to Work users; every mutation requires admin.
-  assert.match(source, /router\.get\(\s*'\/policies',\s*\(/);
+  assert.match(source, /router\.get\(\s*'\/policies',\s*async \(/);
   assert.match(source, /router\.post\(\s*'\/policies',\s*requireAdmin/);
   assert.match(source, /router\.put\(\s*'\/policies\/:id',\s*requireAdmin/);
   assert.match(source, /router\.delete\(\s*'\/policies\/:id',\s*requireAdmin/);

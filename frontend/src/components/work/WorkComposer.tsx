@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { CircleAlert, Loader2, Send, Square, X } from 'lucide-react';
+import { ArrowUp, CircleAlert, Loader2, Square, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ModelSelector } from '@/components/ModelSelector';
@@ -233,102 +233,100 @@ export function WorkComposer({
         <div
           data-testid='work-composer-surface'
           className={cn(
-            'flex items-end gap-2 rounded-[1.6rem] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200 sm:p-3',
-            'border-black/[0.08] bg-surface/90 dark:border-white/[0.09] dark:bg-dark-200/90',
-            'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl',
-            'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_22px_65px_rgba(15,23,42,0.12)]'
+            'rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
+            'border-black/[0.08] bg-surface dark:border-white/[0.09] dark:bg-surface-subtle',
+            'shadow-lv2 focus-within:shadow-lv3'
           )}
         >
-          <div className='min-w-0 flex-1'>
-            <textarea
-              ref={textareaRef}
-              data-testid='work-composer-input'
-              dir='auto'
-              value={message}
-              onChange={event => setMessage(event.target.value)}
-              onKeyDown={event => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  void submit();
-                }
-              }}
-              disabled={disabled || running}
-              rows={1}
-              className='m-0 block max-h-[160px] min-h-10 w-full resize-none overflow-y-auto rounded-none border-0 bg-transparent p-2 text-base leading-relaxed text-ink shadow-none outline-none placeholder:text-ink-subtle focus:border-0 focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60'
-              placeholder={t('work.composer.placeholder', {
-                defaultValue: 'Describe what you want to build or change…',
-              })}
-            />
-          </div>
-
-          <div className='hidden shrink-0 sm:block'>
-            <ModelSelector
-              models={effectiveSelectorModels}
-              selectedModel={modelKey}
-              onModelChange={event => changeModel(event.target.value)}
-              onModelsRefresh={() => void onModelsRefresh()}
-              getModelValue={workSelectorModelValue}
-              getModelLabel={workSelectorModelLabel}
-              getModelTitle={model => model.name}
-              triggerRef={desktopModelTriggerRef}
-              triggerTestId='work-model-selector-trigger'
-              selectTestId='work-model-select'
-              ariaLabel={t('work.composer.model', {
-                defaultValue: 'Work model',
-              })}
-              disabled={running || models.length === 0}
-              className='min-w-[150px] max-w-[230px]'
-              compact
-            />
-          </div>
-
-          {running ? (
-            <Button
-              data-testid='work-cancel-button'
-              type='button'
-              variant='ghost'
-              size='sm'
-              disabled={loading}
-              className='flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full bg-error-500/15 p-0 text-error-600 transition-colors duration-150 hover:bg-error-500/25 dark:text-error-400 sm:h-10 sm:w-10'
-              title={t('work.composer.cancel', { defaultValue: 'Stop' })}
-              aria-label={t('work.composer.cancel', {
-                defaultValue: 'Stop',
-              })}
-              onClick={() => void onCancel()}
-            >
-              {loading ? (
-                <Loader2 className='h-4 w-4 animate-spin' />
-              ) : (
-                <Square className='h-4 w-4 fill-current' />
-              )}
-            </Button>
-          ) : (
-            <Button
-              data-testid='work-submit-button'
-              type='submit'
-              variant='ghost'
-              size='sm'
-              disabled={
-                loading || disabled || !message.trim() || !selectedModel
+          <textarea
+            ref={textareaRef}
+            data-testid='work-composer-input'
+            dir='auto'
+            value={message}
+            onChange={event => setMessage(event.target.value)}
+            onKeyDown={event => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                void submit();
               }
-              className={cn(
-                'flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full p-0 transition-colors duration-150 sm:h-10 sm:w-10',
-                'bg-gray-950 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
-                'disabled:bg-gray-100 disabled:text-gray-400 disabled:hover:bg-gray-100 dark:disabled:bg-dark-300 dark:disabled:text-dark-500 dark:disabled:hover:bg-dark-300',
-                message.trim() && selectedModel && !disabled && 'shadow-sm'
-              )}
-              title={t('work.composer.send', { defaultValue: 'Run' })}
-              aria-label={t('work.composer.send', {
-                defaultValue: 'Run',
-              })}
-            >
-              {loading ? (
-                <Loader2 className='h-4 w-4 animate-spin' />
-              ) : (
-                <Send className='h-4 w-4' />
-              )}
-            </Button>
-          )}
+            }}
+            disabled={disabled || running}
+            rows={1}
+            className='m-0 block max-h-[160px] min-h-9 w-full resize-none overflow-y-auto rounded-none border-0 bg-transparent px-2 pt-1.5 pb-2 text-[0.9375rem] leading-relaxed text-ink shadow-none outline-none placeholder:text-ink-subtle focus:border-0 focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60'
+            placeholder={t('work.composer.placeholder', {
+              defaultValue: 'Describe what you want to build or change…',
+            })}
+          />
+
+          <div className='flex items-center justify-end gap-1.5'>
+            <div className='hidden shrink-0 sm:block'>
+              <ModelSelector
+                models={effectiveSelectorModels}
+                selectedModel={modelKey}
+                onModelChange={event => changeModel(event.target.value)}
+                onModelsRefresh={() => void onModelsRefresh()}
+                getModelValue={workSelectorModelValue}
+                getModelLabel={workSelectorModelLabel}
+                getModelTitle={model => model.name}
+                triggerRef={desktopModelTriggerRef}
+                triggerTestId='work-model-selector-trigger'
+                selectTestId='work-model-select'
+                ariaLabel={t('work.composer.model', {
+                  defaultValue: 'Work model',
+                })}
+                disabled={running || models.length === 0}
+                className='min-w-[150px] max-w-[230px]'
+                compact
+              />
+            </div>
+
+            {running ? (
+              <Button
+                data-testid='work-cancel-button'
+                type='button'
+                variant='ghost'
+                size='sm'
+                disabled={loading}
+                className='flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full bg-error-500/15 p-0 text-error-600 transition-colors duration-150 hover:bg-error-500/25 dark:text-error-400 sm:h-10 sm:w-10'
+                title={t('work.composer.cancel', { defaultValue: 'Stop' })}
+                aria-label={t('work.composer.cancel', {
+                  defaultValue: 'Stop',
+                })}
+                onClick={() => void onCancel()}
+              >
+                {loading ? (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                ) : (
+                  <Square className='h-4 w-4 fill-current' />
+                )}
+              </Button>
+            ) : (
+              <Button
+                data-testid='work-submit-button'
+                type='submit'
+                variant='ghost'
+                size='sm'
+                disabled={
+                  loading || disabled || !message.trim() || !selectedModel
+                }
+                className={cn(
+                  'flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full p-0 transition-colors duration-150',
+                  'bg-primary-500 text-white hover:bg-primary-400',
+                  'disabled:bg-primary-300/50 disabled:text-white/80 dark:disabled:bg-primary-800/60 dark:disabled:text-white/40 disabled:hover:bg-primary-300/50 dark:disabled:hover:bg-primary-800/60'
+                )}
+                title={t('work.composer.send', { defaultValue: 'Run' })}
+                aria-label={t('work.composer.send', {
+                  defaultValue: 'Run',
+                })}
+              >
+                {loading ? (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                ) : (
+                  <ArrowUp className='h-4 w-4' />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </form>
 

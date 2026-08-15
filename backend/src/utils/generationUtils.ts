@@ -41,12 +41,24 @@ export const extractStatistics = (
   response: OllamaChatResponse
 ): GenerationStatistics => {
   const stats: GenerationStatistics = {
-    total_duration: response.total_duration,
-    load_duration: response.load_duration,
-    prompt_eval_count: response.prompt_eval_count,
-    prompt_eval_duration: response.prompt_eval_duration,
-    eval_count: response.eval_count,
-    eval_duration: response.eval_duration,
+    ...(response.total_duration !== undefined
+      ? { total_duration: response.total_duration }
+      : {}),
+    ...(response.load_duration !== undefined
+      ? { load_duration: response.load_duration }
+      : {}),
+    ...(response.prompt_eval_count !== undefined
+      ? { prompt_eval_count: response.prompt_eval_count }
+      : {}),
+    ...(response.prompt_eval_duration !== undefined
+      ? { prompt_eval_duration: response.prompt_eval_duration }
+      : {}),
+    ...(response.eval_count !== undefined
+      ? { eval_count: response.eval_count }
+      : {}),
+    ...(response.eval_duration !== undefined
+      ? { eval_duration: response.eval_duration }
+      : {}),
     created_at: response.created_at,
     model: response.model,
   };

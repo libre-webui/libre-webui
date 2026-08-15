@@ -149,9 +149,18 @@ WORKDIR /app
 
 # Install security updates.
 # docker-cli lets the Work runtime drive the host daemon when this image is
-# given the Docker socket. The socket is never mounted by default; without it
-# the CLI is inert and Work simply reports that no daemon is reachable.
-RUN apk update && apk upgrade && apk add --no-cache wget docker-cli
+# given the Docker socket. The image itself does not mount host resources;
+# the repository's default Compose file does mount the socket for Work, while
+# deployments that omit that mount leave the Docker runtime unavailable.
+# npm and npx are build-stage tools; production starts the compiled application
+# and maintenance CLI directly with Node. Remove npm's global dependency tree
+# from the runtime image so build-tool vulnerabilities are not shipped.
+RUN apk update && apk upgrade && apk add --no-cache \
+    wget \
+    docker-cli \
+    postgresql16-client && \
+    rm -rf /usr/local/lib/node_modules/npm && \
+    rm -f /usr/local/bin/npm /usr/local/bin/npx
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
@@ -164,6 +173,12 @@ COPY --from=backend-builder /app/backend/package*.json ./backend/
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/backend/node_modules ./backend/node_modules
 COPY --from=prod-deps /app/package*.json ./
+COPY bin/cli.js bin/runtime-paths.js ./bin/
+
+# Expose the same maintenance/server command used by npm and Homebrew. Keep
+# the link absolute so its backend/frontend resolution stays rooted at /app.
+RUN chmod 0755 /app/bin/cli.js && \
+    ln -s /app/bin/cli.js /usr/local/bin/libre-webui
 
 # Keep the runtime package metadata aligned with the version injected into the
 # frontend build. The auth and diagnostics APIs read these files at startup.
@@ -189,6 +204,9 @@ USER nodejs
 # Backend serves both API and frontend on the same port
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV DOCKER_ENV=true
+ENV DATA_DIR=/app/backend/data
+ENV PLATFORM_PREFLIGHT_TMP_DIR=/app/backend/temp/preflight
 
 # Set Ollama URL to connect to host machine when running in container
 ENV OLLAMA_BASE_URL=http://host.docker.internal:11434
@@ -200,11 +218,11 @@ ENV OLLAMA_BASE_URL=http://host.docker.internal:11434
 EXPOSE 3001
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health/ready || exit 1
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start backend (which also serves frontend static files)
-CMD ["node", "./backend/dist/index.js"]
+CMD ["node", "./backend/dist/main.js"]

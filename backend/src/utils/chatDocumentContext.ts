@@ -17,6 +17,7 @@
 
 import documentService from '../services/documentService.js';
 import storageService from '../storage.js';
+import { throwIfChatGenerationCancelled } from './chatCancellation.js';
 
 export interface ChatDocumentSource {
   id: string;
@@ -43,22 +44,28 @@ export const EMPTY_CHAT_DOCUMENT_CONTEXT = (
 export async function buildChatDocumentContext(
   message: string,
   sessionId: string,
-  userId: string
+  userId: string,
+  signal?: AbortSignal
 ): Promise<ChatDocumentContext> {
+  throwIfChatGenerationCancelled(signal);
   // Documents from knowledge collections attached to this chat join the
   // session's own uploads and the user's standing uploads in the
   // searchable scope. searchDocuments picks semantic or keyword retrieval
   // by the embedding settings, so retrieval works either way.
-  const knowledgeCollectionIds = storageService.getSession(sessionId, userId)
-    ?.settings?.knowledgeCollectionIds;
+  const knowledgeCollectionIds = (
+    await storageService.getSession(sessionId, userId)
+  )?.settings?.knowledgeCollectionIds;
+  throwIfChatGenerationCancelled(signal);
 
   const relevantDocuments = await documentService.searchDocuments(
     message,
     userId,
     sessionId,
     5,
-    knowledgeCollectionIds
+    knowledgeCollectionIds,
+    signal
   );
+  throwIfChatGenerationCancelled(signal);
 
   if (relevantDocuments.length === 0) {
     return EMPTY_CHAT_DOCUMENT_CONTEXT(message);
@@ -67,8 +74,13 @@ export async function buildChatDocumentContext(
   const documentsMap = new Map();
   const sources: ChatDocumentSource[] = [];
   for (const chunk of relevantDocuments) {
+    throwIfChatGenerationCancelled(signal);
     if (!documentsMap.has(chunk.documentId)) {
-      const document = documentService.getDocument(chunk.documentId, userId);
+      const document = await documentService.getDocument(
+        chunk.documentId,
+        userId
+      );
+      throwIfChatGenerationCancelled(signal);
       documentsMap.set(chunk.documentId, document);
       sources.push({
         id: chunk.documentId,
@@ -76,6 +88,7 @@ export async function buildChatDocumentContext(
       });
     }
   }
+  throwIfChatGenerationCancelled(signal);
 
   const documentContext =
     '\n\n--- RELEVANT DOCUMENTS ---\n' +

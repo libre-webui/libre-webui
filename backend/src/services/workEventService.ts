@@ -21,7 +21,12 @@ import {
   WorkLiveRunSnapshot,
   WorkLiveRunSnapshotTool,
   WorkLiveEventType,
+  WorkMessage,
+  WorkRun,
+  WorkTaskDetail,
 } from '../types/work.js';
+import type { DurableEventGateway } from '../platform/events/index.js';
+import { durableEventId } from '../platform/jobs/durableEventIdentity.js';
 
 export const WORK_EVENT_REPLAY_LIMIT = 512;
 export const WORK_EVENT_REPLAY_MAX_BYTES = 1_000_000;
@@ -39,6 +44,11 @@ export interface WorkEventReplay {
   snapshotEventId: number;
   truncated: boolean;
   snapshot: WorkLiveRunSnapshot;
+}
+
+export interface WorkEventCheckpoint {
+  cursor: number;
+  durable: boolean;
 }
 
 interface StoredWorkEvent {
@@ -66,6 +76,8 @@ export class WorkEventService {
   private readonly replayLimit: number;
   private readonly replayMaxBytes: number;
   private readonly retentionMs: number;
+  private durableGateway?: DurableEventGateway;
+  private readonly durableTails = new Map<string, Promise<void>>();
 
   constructor(options: WorkEventServiceOptions = {}) {
     this.replayLimit = positiveInteger(
@@ -82,22 +94,135 @@ export class WorkEventService {
     );
   }
 
+  initializeDurableGateway(gateway: DurableEventGateway): void {
+    if (this.durableGateway && this.durableGateway !== gateway) {
+      throw new Error('Work durable event gateway is already initialized.');
+    }
+    this.durableGateway = gateway;
+  }
+
+  async checkpoint(
+    taskId: string,
+    runId: string
+  ): Promise<WorkEventCheckpoint> {
+    if (!this.durableGateway) {
+      return {
+        cursor: this.replay(taskId, runId).latestEventId,
+        durable: false,
+      };
+    }
+    return {
+      cursor: await this.durableGateway.latestCursor(
+        durableStreamId(taskId, runId)
+      ),
+      durable: true,
+    };
+  }
+
+  snapshotFromPersistence(
+    task: WorkTaskDetail,
+    run: WorkRun
+  ): WorkLiveRunSnapshot {
+    return persistedWorkSnapshot(task, run);
+  }
+
   publish<T extends Exclude<WorkLiveEventType, 'snapshot'>>(
     taskId: string,
     runId: string,
     type: T,
-    data: WorkLiveEventDataMap[T]
+    data: WorkLiveEventDataMap[T],
+    occurrenceId?: string,
+    attemptIdentity?: string
+  ): WorkLiveEvent<T> | Promise<WorkLiveEvent<T>> {
+    if (this.durableGateway) {
+      return this.publishDurable(
+        taskId,
+        runId,
+        type,
+        data,
+        occurrenceId,
+        attemptIdentity
+      );
+    }
+    return this.publishLocal(taskId, runId, type, data);
+  }
+
+  private async publishDurable<
+    T extends Exclude<WorkLiveEventType, 'snapshot'>,
+  >(
+    taskId: string,
+    runId: string,
+    type: T,
+    data: WorkLiveEventDataMap[T],
+    occurrenceId?: string,
+    attemptIdentity?: string
+  ): Promise<WorkLiveEvent<T>> {
+    const timestamp = Date.now();
+    const key = streamKey(taskId, runId);
+    const previous = this.durableTails.get(key) ?? Promise.resolve();
+    let event: WorkLiveEvent<T> | undefined;
+    const operation = previous
+      .catch(() => undefined)
+      .then(async () => {
+        const appended = await this.durableGateway!.append({
+          eventId: durableEventId(
+            'work',
+            taskId,
+            runId,
+            type,
+            attemptIdentity ?? 'logical',
+            occurrenceId ?? JSON.stringify(data)
+          ),
+          streamId: durableStreamId(taskId, runId),
+          eventType: `work.${type}.v1`,
+          subjectId: runId,
+          payload: {
+            mode: 'encrypted',
+            value: { type, taskId, runId, data },
+          },
+        });
+        const existing = this.streams
+          .get(key)
+          ?.events.find(stored => stored.event.id === appended.cursor)?.event;
+        event = existing
+          ? (existing as WorkLiveEvent<T>)
+          : this.publishLocal(taskId, runId, type, data, {
+              id: appended.cursor,
+              timestamp,
+            });
+      });
+    this.durableTails.set(key, operation);
+    const clearTail = (): void => {
+      if (this.durableTails.get(key) === operation) {
+        this.durableTails.delete(key);
+      }
+    };
+    void operation.then(clearTail, clearTail);
+    // Some provider callbacks cannot await. Attach a rejection observer while
+    // still returning the rejecting operation to normal async callers.
+    void operation.catch(() => undefined);
+    await operation;
+    return event!;
+  }
+
+  private publishLocal<T extends Exclude<WorkLiveEventType, 'snapshot'>>(
+    taskId: string,
+    runId: string,
+    type: T,
+    data: WorkLiveEventDataMap[T],
+    persisted?: { id: number; timestamp: number }
   ): WorkLiveEvent<T> {
     const stream = this.requireStream(taskId, runId);
     this.cancelCleanup(stream);
     const event = {
-      id: stream.nextEventId++,
+      id: persisted?.id ?? stream.nextEventId++,
       type,
       taskId,
       runId,
-      timestamp: Date.now(),
+      timestamp: persisted?.timestamp ?? Date.now(),
       data,
     } as WorkLiveEvent<T>;
+    stream.nextEventId = Math.max(stream.nextEventId, event.id + 1);
     const bytes = Buffer.byteLength(JSON.stringify(event), 'utf8');
     stream.events.push({ event, bytes });
     stream.replayBytes += bytes;
@@ -117,6 +242,60 @@ export class WorkEventService {
       this.scheduleCleanup(taskId, runId, stream);
     }
     return event;
+  }
+
+  async subscribeDurable(
+    taskId: string,
+    runId: string,
+    afterCursor: number,
+    authorize: () => boolean | Promise<boolean>,
+    listener: WorkLiveEventListener,
+    onError?: (error: Error) => void
+  ): Promise<() => Promise<void>> {
+    if (!this.durableGateway) {
+      // Solo mode has no SQL event ledger to recover the last allocated
+      // cursor after a process restart. Preserve the authenticated client's
+      // resume cursor so newly emitted events remain strictly monotonic.
+      this.advanceCursor(taskId, runId, afterCursor);
+      const unsubscribe = this.subscribe(taskId, runId, listener);
+      return async () => unsubscribe();
+    }
+    const subscription = await this.durableGateway.subscribe({
+      afterCursor,
+      streamId: durableStreamId(taskId, runId),
+      authorize,
+      maxReplayEvents: WORK_EVENT_REPLAY_LIMIT,
+      onError,
+      onEvent: event => {
+        const decoded = decodeDurableWorkEvent(
+          event.payload,
+          event.cursor,
+          event.occurredAt
+        );
+        if (
+          decoded.taskId !== taskId ||
+          decoded.runId !== runId ||
+          decoded.id <= afterCursor
+        ) {
+          return;
+        }
+        const stream = this.requireStream(taskId, runId);
+        if (!stream.events.some(stored => stored.event.id === decoded.id)) {
+          this.publishLocal(
+            taskId,
+            runId,
+            decoded.type as Exclude<WorkLiveEventType, 'snapshot'>,
+            decoded.data as WorkLiveEventDataMap[Exclude<
+              WorkLiveEventType,
+              'snapshot'
+            >],
+            { id: decoded.id, timestamp: decoded.timestamp }
+          );
+        }
+        listener(decoded);
+      },
+    });
+    return () => subscription.close();
   }
 
   subscribe(
@@ -217,6 +396,7 @@ export class WorkEventService {
       stream.listeners.clear();
     }
     this.streams.clear();
+    this.durableTails.clear();
   }
 
   private requireStream(taskId: string, runId: string): WorkEventStream {
@@ -282,6 +462,88 @@ function emptySnapshot(): WorkLiveRunSnapshot {
     skills: [],
     terminal: false,
   };
+}
+
+function persistedWorkSnapshot(
+  task: WorkTaskDetail,
+  run: WorkRun
+): WorkLiveRunSnapshot {
+  const snapshot = emptySnapshot();
+  snapshot.status = run.status;
+  snapshot.phase = run.status;
+  snapshot.error = run.error;
+  snapshot.terminal = [
+    'completed',
+    'needs_input',
+    'failed',
+    'cancelled',
+  ].includes(run.status);
+
+  const reasoning: string[] = [];
+  const response: string[] = [];
+  for (const message of task.messages.filter(item => item.runId === run.id)) {
+    if (message.kind === 'reasoning' && message.content) {
+      reasoning.push(message.content);
+      continue;
+    }
+    if (
+      message.kind === 'message' &&
+      message.role === 'assistant' &&
+      message.content
+    ) {
+      response.push(message.content);
+      continue;
+    }
+    applyPersistedToolMessage(snapshot, message);
+    if (message.kind === 'error') {
+      snapshot.error = message.content || snapshot.error;
+    }
+  }
+  snapshot.reasoning = liveText(reasoning.join('\n\n'));
+  snapshot.response = liveText(response.join('\n\n'));
+  return cloneSnapshot(snapshot);
+}
+
+function applyPersistedToolMessage(
+  snapshot: WorkLiveRunSnapshot,
+  message: WorkMessage
+): void {
+  if (message.kind !== 'tool_call' && message.kind !== 'tool_result') return;
+  const metadata = message.metadata ?? {};
+  const toolCallId =
+    typeof metadata.toolCallId === 'string' && metadata.toolCallId
+      ? metadata.toolCallId
+      : message.id;
+  const name =
+    typeof metadata.name === 'string' && metadata.name
+      ? metadata.name
+      : typeof metadata.toolName === 'string' && metadata.toolName
+        ? metadata.toolName
+        : 'tool';
+  const existing = snapshot.tools.find(tool => tool.id === toolCallId);
+  if (message.kind === 'tool_call') {
+    upsertSnapshotTool(snapshot, {
+      id: toolCallId,
+      name,
+      status: 'running',
+      arguments: { ...metadata },
+      metadata: { ...metadata },
+      startedAt: message.createdAt,
+    });
+    return;
+  }
+  const failed = metadata.error === true;
+  upsertSnapshotTool(snapshot, {
+    ...existing,
+    id: toolCallId,
+    name,
+    status: failed ? 'failed' : 'completed',
+    isError: failed || undefined,
+    metadata: { ...existing?.metadata, ...metadata },
+    output: boundedTail(message.content, WORK_LIVE_TOOL_OUTPUT_MAX_BYTES),
+    startedAt: existing?.startedAt,
+    finishedAt: message.createdAt,
+  });
 }
 
 function cloneSnapshot(snapshot: WorkLiveRunSnapshot): WorkLiveRunSnapshot {
@@ -416,6 +678,40 @@ function boundedTail(value: string, maxBytes: number): string {
 
 function streamKey(taskId: string, runId: string): string {
   return `${taskId}\u0000${runId}`;
+}
+
+function durableStreamId(taskId: string, runId: string): string {
+  return `work:${taskId}:${runId}`;
+}
+
+function decodeDurableWorkEvent(
+  payload: unknown,
+  cursor: number,
+  occurredAt: number
+): WorkLiveEvent {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new Error('Durable Work event payload is invalid.');
+  }
+  const value = payload as Partial<WorkLiveEvent>;
+  if (
+    typeof value.type !== 'string' ||
+    value.type === 'snapshot' ||
+    typeof value.taskId !== 'string' ||
+    typeof value.runId !== 'string' ||
+    !value.data ||
+    typeof value.data !== 'object'
+  ) {
+    throw new Error('Durable Work event payload is invalid.');
+  }
+  return {
+    ...value,
+    id: cursor,
+    timestamp:
+      typeof value.timestamp === 'number' &&
+      Number.isSafeInteger(value.timestamp)
+        ? value.timestamp
+        : occurredAt,
+  } as WorkLiveEvent;
 }
 
 function positiveInteger(value: number | undefined, fallback: number): number {

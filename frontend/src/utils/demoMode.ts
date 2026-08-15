@@ -25,7 +25,7 @@
  */
 export const isDemoMode = (): boolean => {
   // Check explicit demo mode environment variable
-  if (import.meta.env.VITE_DEMO_MODE === 'true') {
+  if (import.meta.env?.VITE_DEMO_MODE === 'true') {
     return true;
   }
 

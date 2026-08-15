@@ -46,7 +46,7 @@ export const NotesPage: React.FC = () => {
   const [query, setQuery] = useState('');
   const [titleDraft, setTitleDraft] = useState('');
   const [contentDraft, setContentDraft] = useState('');
-  const [previewing, setPreviewing] = useState(false);
+  const [previewing, setPreviewing] = useState(true);
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'idle'>(
     'idle'
   );
@@ -76,12 +76,12 @@ export const NotesPage: React.FC = () => {
     };
   }, []);
 
-  const selectNote = (note: Note) => {
+  const selectNote = (note: Note, mode: 'preview' | 'edit' = 'preview') => {
     flushPendingSave();
     setSelectedId(note.id);
     setTitleDraft(note.title);
     setContentDraft(note.content);
-    setPreviewing(false);
+    setPreviewing(mode === 'preview');
     setSaveState('idle');
   };
 
@@ -142,7 +142,7 @@ export const NotesPage: React.FC = () => {
       if (response.success && response.data) {
         const note = response.data;
         setNotes(previous => [note, ...previous]);
-        selectNote(note);
+        selectNote(note, 'edit');
       }
     } catch (error) {
       logger.error('Failed to create note:', error);
@@ -283,7 +283,7 @@ export const NotesPage: React.FC = () => {
                 onClick={() => {
                   flushPendingSave();
                   setSelectedId(null);
-                  setPreviewing(false);
+                  setPreviewing(true);
                 }}
                 className='h-9 w-9 shrink-0 p-0 md:hidden'
                 title={`${t('common.back')}: ${t('notes.title')}`}
@@ -292,35 +292,50 @@ export const NotesPage: React.FC = () => {
               >
                 <ArrowLeft className='h-4 w-4 rtl:rotate-180' />
               </Button>
-              <input
-                data-testid='notes-title-editor'
-                dir='auto'
-                value={titleDraft}
-                onChange={event => {
-                  setTitleDraft(event.target.value);
-                  scheduleSave(
-                    selectedNote.id,
-                    event.target.value,
-                    contentDraft
-                  );
-                }}
-                placeholder={t('notes.untitled')}
-                className='min-w-0 flex-1 bg-transparent text-base font-semibold text-gray-950 placeholder:text-gray-400 focus:outline-none dark:text-dark-950 dark:placeholder:text-dark-500 sm:text-lg'
-              />
-              <span
-                className='hidden shrink-0 text-[11px] text-gray-400 dark:text-dark-500 sm:inline'
-                aria-live='polite'
-              >
-                {saveState === 'saving'
-                  ? t('common.saving')
-                  : saveState === 'saved'
-                    ? t('notes.saved')
-                    : ''}
-              </span>
+              {previewing ? (
+                <h2
+                  data-testid='notes-title-preview'
+                  dir='auto'
+                  className='min-w-0 flex-1 truncate text-base font-semibold text-gray-950 dark:text-dark-950 sm:text-lg'
+                >
+                  {titleDraft || t('notes.untitled')}
+                </h2>
+              ) : (
+                <>
+                  <input
+                    data-testid='notes-title-editor'
+                    dir='auto'
+                    value={titleDraft}
+                    onChange={event => {
+                      setTitleDraft(event.target.value);
+                      scheduleSave(
+                        selectedNote.id,
+                        event.target.value,
+                        contentDraft
+                      );
+                    }}
+                    placeholder={t('notes.untitled')}
+                    className='min-w-0 flex-1 bg-transparent text-base font-semibold text-gray-950 placeholder:text-gray-400 focus:outline-none dark:text-dark-950 dark:placeholder:text-dark-500 sm:text-lg'
+                  />
+                  <span
+                    className='hidden shrink-0 text-[11px] text-gray-400 dark:text-dark-500 sm:inline'
+                    aria-live='polite'
+                  >
+                    {saveState === 'saving'
+                      ? t('common.saving')
+                      : saveState === 'saved'
+                        ? t('notes.saved')
+                        : ''}
+                  </span>
+                </>
+              )}
               <Button
                 size='sm'
                 variant='ghost'
-                onClick={() => setPreviewing(previous => !previous)}
+                onClick={() => {
+                  if (!previewing) flushPendingSave();
+                  setPreviewing(previous => !previous);
+                }}
                 className='h-9 w-9 shrink-0 gap-1.5 p-0 text-xs sm:h-8 sm:w-auto sm:px-2.5'
                 title={previewing ? t('common.edit') : t('artifacts.preview')}
                 aria-label={
@@ -348,7 +363,10 @@ export const NotesPage: React.FC = () => {
                 data-testid='notes-preview'
                 className='scroll-region min-h-0 flex-1 overflow-y-auto px-4 py-3 scrollbar-thin sm:px-5 sm:py-4'
               >
-                <RichMessageContent content={contentDraft} />
+                <RichMessageContent
+                  content={contentDraft}
+                  className='mx-auto w-full max-w-5xl pb-12'
+                />
               </div>
             ) : (
               <textarea

@@ -61,9 +61,11 @@ jobs:
       # Get version from package.json and append -dev suffix for dev branch
       - name: Get version
         id: version
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          if [ "${{ github.ref_name }}" = "dev" ]; then
+          if [ "$REF_NAME" = "dev" ]; then
             VERSION="${VERSION}-dev"
           fi
           if [[ "$GITHUB_REF" == refs/tags/v* && "${GITHUB_REF_NAME#v}" != "$VERSION" ]]; then
@@ -169,9 +171,11 @@ jobs:
       # Get version from package.json and append -dev suffix for dev branch
       - name: Get version
         id: version
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          if [ "${{ github.ref_name }}" = "dev" ]; then
+          if [ "$REF_NAME" = "dev" ]; then
             VERSION="${VERSION}-dev"
           fi
           if [[ "$GITHUB_REF" == refs/tags/v* && "${GITHUB_REF_NAME#v}" != "$VERSION" ]]; then

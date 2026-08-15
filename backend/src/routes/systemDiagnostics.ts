@@ -16,7 +16,7 @@
  */
 
 import express, { Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 
 import {
   authenticate,
@@ -32,6 +32,7 @@ const router = express.Router();
 
 router.use(
   rateLimit({
+    keyPrefix: 'system-diagnostics',
     windowMs: 15 * 60 * 1000,
     max: 120,
     message: {

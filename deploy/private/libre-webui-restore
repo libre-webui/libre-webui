@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+umask 077
+
+if [[ $# -ne 2 ]]; then
+  echo 'Usage: libre-webui-restore ARCHIVE NEW_DOCKER_VOLUME' >&2
+  exit 2
+fi
+
+archive=$(realpath "$1")
+target_volume=$2
+key_dir=${LIBRE_WEBUI_BACKUP_KEY_DIR:-/etc/libre-webui/backup-keys}
+config_dir=${LIBRE_WEBUI_RESTORE_CONFIG_DIR:-/etc/libre-webui/restored/${target_volume}}
+image_ref=${LIBRE_WEBUI_RESTORE_IMAGE:?set LIBRE_WEBUI_RESTORE_IMAGE to the reviewed immutable Libre WebUI image ID or digest}
+encryption_key=${key_dir}/backup-encryption.key
+signing_public_key=${key_dir}/backup-signing-public.pem
+scratch=$(mktemp -d)
+chmod 0700 "${scratch}"
+created_volume=false
+cleanup() {
+  rm -rf -- "${scratch}"
+  if [[ "${created_volume}" == true ]]; then
+    docker volume rm "${target_volume}" >/dev/null 2>&1 || true
+  fi
+}
+trap cleanup EXIT
+
+if docker volume inspect "${target_volume}" >/dev/null 2>&1; then
+  echo 'Restore refuses an existing Docker volume; choose a new volume name.' >&2
+  exit 1
+fi
+if [[ -e "${config_dir}" ]]; then
+  echo 'Restore configuration target already exists; move it or choose another volume.' >&2
+  exit 1
+fi
+docker volume create "${target_volume}" >/dev/null
+created_volume=true
+
+# Decrypt only into a disposable host directory. The application recovery
+# inventory must pass there before any bytes are copied into the new volume.
+docker run --rm \
+  --user 0:0 \
+  --read-only \
+  --tmpfs /tmp:rw,nosuid,nodev,noexec \
+  --network none \
+  --cap-drop ALL \
+  --security-opt no-new-privileges \
+  --mount type=bind,src="$(dirname "${archive}")",dst=/backup,readonly \
+  --mount type=bind,src="${key_dir}",dst=/backup-keys,readonly \
+  --mount type=bind,src="${scratch}",dst=/restore \
+  --entrypoint node \
+  "${image_ref}" \
+  /app/backend/dist/cli/recoveryBackup.js restore-apply \
+  --archive "/backup/$(basename "${archive}")" \
+  --target /restore/restored \
+  --encryption-key /backup-keys/backup-encryption.key \
+  --signing-public-key /backup-keys/backup-signing-public.pem
+
+docker run --rm \
+  --user 0:0 \
+  --read-only \
+  --network none \
+  --cap-drop ALL \
+  --security-opt no-new-privileges \
+  --mount type=bind,src="${scratch}/restored/data",dst=/source,readonly \
+  --mount type=volume,src="${target_volume}",dst=/target \
+  --entrypoint sh \
+  "${image_ref}" \
+  -eu -c 'test -z "$(find /target -mindepth 1 -maxdepth 1 -print -quit)"; cp -a /source/. /target/; sync'
+
+install -d -m 0700 "${config_dir}"
+install -m 0600 "${scratch}/restored/configuration/runtime.json" \
+  "${config_dir}/runtime.json"
+install -m 0600 "${scratch}/restored/configuration/secrets.json" \
+  "${config_dir}/secrets.json"
+
+created_volume=false
+printf 'Restore verified. New volume: %s\n' "${target_volume}"
+printf 'Recovered protected configuration: %s\n' "${config_dir}"

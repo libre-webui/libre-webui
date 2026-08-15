@@ -19,7 +19,7 @@ import { Theme } from '@/types';
 
 export const DEFAULT_THEME_MODE: Theme['mode'] = 'dark';
 export const DEFAULT_ACCENT = 'blue';
-export const DEFAULT_CUSTOM_ACCENT = '#2563eb';
+export const DEFAULT_CUSTOM_ACCENT = '#4176e6';
 
 export const ACCENT_OPTIONS = [
   {
@@ -31,7 +31,7 @@ export const ACCENT_OPTIONS = [
   {
     id: 'blue',
     label: 'Blue',
-    color: '#2563eb',
+    color: '#4176e6',
     foreground: '#ffffff',
   },
   {
@@ -90,6 +90,7 @@ const SHADE_KEYS = [
 const NEUTRAL_SHADE_KEYS = ['25', ...SHADE_KEYS] as const;
 const INTERFACE_ROLE_KEYS = [
   'canvas',
+  'sidebar',
   'surface',
   'surface-subtle',
   'surface-raised',
@@ -163,6 +164,7 @@ const DARK_NEUTRAL_LIGHTNESS: Record<NeutralShade, number> = {
 
 const LIGHT_INTERFACE_ROLES: Record<InterfaceRole, InterfaceRoleDefinition> = {
   canvas: { lightness: 96, saturationFactor: 1 },
+  sidebar: { lightness: 94, saturationFactor: 1 },
   surface: { lightness: 98, saturationFactor: 0.9 },
   'surface-subtle': { lightness: 93, saturationFactor: 1 },
   'surface-raised': { lightness: 99, saturationFactor: 0.8 },
@@ -178,6 +180,7 @@ const LIGHT_INTERFACE_ROLES: Record<InterfaceRole, InterfaceRoleDefinition> = {
 
 const DARK_INTERFACE_ROLES: Record<InterfaceRole, InterfaceRoleDefinition> = {
   canvas: { lightness: 5, saturationFactor: 0.9 },
+  sidebar: { lightness: 8, saturationFactor: 1 },
   surface: { lightness: 7, saturationFactor: 0.9 },
   'surface-subtle': { lightness: 9, saturationFactor: 1 },
   'surface-raised': { lightness: 11, saturationFactor: 1 },
@@ -206,17 +209,17 @@ const ACCENT_PALETTES: Record<AccentId, AccentPalette> = {
     950: '#2e1065',
   },
   blue: {
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    300: '#93c5fd',
-    400: '#60a5fa',
-    500: '#2563eb',
-    600: '#1d4ed8',
-    700: '#1e40af',
-    800: '#1e3a8a',
-    900: '#172554',
-    950: '#0f172a',
+    50: '#edf3fe',
+    100: '#e4edfd',
+    200: '#d3e2ff',
+    300: '#b7c8fe',
+    400: '#679efe',
+    500: '#4176e6',
+    600: '#4868b2',
+    700: '#2f4c8f',
+    800: '#34415b',
+    900: '#283142',
+    950: '#1e2635',
   },
   cyan: {
     50: '#ecfeff',

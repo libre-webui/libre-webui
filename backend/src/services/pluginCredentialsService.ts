@@ -16,7 +16,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { getDatabaseSafe } from '../db.js';
+import { getPersistence } from '../persistence/index.js';
 import { encryptionService } from './encryptionService.js';
 import { createLogger } from '../utils/logger.js';
 
@@ -31,79 +31,50 @@ export interface PluginCredential {
   updated_at: number;
 }
 
-interface _PluginCredentialRow {
-  id: string;
-  user_id: string;
-  plugin_id: string;
-  api_key: string; // Encrypted API key from DB
-  routing_auth_fingerprint: string | null;
-  created_at: number;
-  updated_at: number;
-}
-
 class PluginCredentialsService {
   /**
    * Get only the API key stored for a specific plugin and user.
    */
-  getStoredApiKey(
+  async getStoredApiKey(
     pluginId: string,
     userId: string | undefined,
     options: {
       expectedRoutingAuthFingerprint: string;
       allowLegacyUnboundCredential: boolean;
     }
-  ): string | null {
+  ): Promise<string | null> {
     const effectiveUserId = userId || 'default';
-    const db = getDatabaseSafe();
-
-    if (db) {
-      try {
-        const row = db
-          .prepare(
-            `SELECT id, api_key, routing_auth_fingerprint
-             FROM plugin_credentials
-             WHERE plugin_id = ? AND user_id = ?`
-          )
-          .get(pluginId, effectiveUserId) as
-          | {
-              id: string;
-              api_key: string;
-              routing_auth_fingerprint: string | null;
-            }
-          | undefined;
-
-        if (row?.api_key) {
-          const bindingMatches =
-            row.routing_auth_fingerprint ===
-            options.expectedRoutingAuthFingerprint;
-          const trustedLegacyCredential =
-            row.routing_auth_fingerprint === null &&
-            options.allowLegacyUnboundCredential;
-          if (!bindingMatches && !trustedLegacyCredential) {
+    try {
+      const row = await this.repository().find(pluginId, effectiveUserId);
+      if (row?.api_key) {
+        const bindingMatches =
+          row.routing_auth_fingerprint ===
+          options.expectedRoutingAuthFingerprint;
+        const trustedLegacyCredential =
+          row.routing_auth_fingerprint === null &&
+          options.allowLegacyUnboundCredential;
+        if (!bindingMatches && !trustedLegacyCredential) {
+          return null;
+        }
+        if (trustedLegacyCredential) {
+          if (
+            !(await this.repository().bindLegacy(
+              row.id,
+              options.expectedRoutingAuthFingerprint
+            ))
+          ) {
             return null;
           }
-          if (trustedLegacyCredential) {
-            const result = db
-              .prepare(
-                `UPDATE plugin_credentials
-                 SET routing_auth_fingerprint = ?
-                 WHERE id = ? AND routing_auth_fingerprint IS NULL`
-              )
-              .run(options.expectedRoutingAuthFingerprint, row.id);
-            if (result.changes !== 1) {
-              return null;
-            }
-          }
-
-          // Decrypt the API key
-          const decryptedKey = encryptionService.decrypt(row.api_key);
-          if (decryptedKey) {
-            return decryptedKey;
-          }
         }
-      } catch (error) {
-        logger.error('Failed to get API key for plugin %s:', pluginId, error);
+
+        // Decrypt the API key
+        const decryptedKey = encryptionService.decrypt(row.api_key);
+        if (decryptedKey) {
+          return decryptedKey;
+        }
       }
+    } catch (error) {
+      logger.error('Failed to get API key for plugin %s:', pluginId, error);
     }
 
     return null;
@@ -114,7 +85,7 @@ class PluginCredentialsService {
    * Environment fallback must be disabled when the effective route comes from
    * a user-stored connection override.
    */
-  getApiKey(
+  async getApiKey(
     pluginId: string,
     keyEnv: string,
     userId: string | undefined,
@@ -123,8 +94,8 @@ class PluginCredentialsService {
       expectedRoutingAuthFingerprint: string;
       allowLegacyUnboundCredential: boolean;
     }
-  ): string | null {
-    const storedApiKey = this.getStoredApiKey(pluginId, userId, options);
+  ): Promise<string | null> {
+    const storedApiKey = await this.getStoredApiKey(pluginId, userId, options);
     if (storedApiKey) return storedApiKey;
     if (!options.allowEnvironmentFallback) return null;
     return process.env[keyEnv] || null;
@@ -133,28 +104,17 @@ class PluginCredentialsService {
   /**
    * Get all credentials for a user (API keys are masked for security)
    */
-  getCredentials(userId?: string): Array<{
-    plugin_id: string;
-    has_api_key: boolean;
-    updated_at: number;
-  }> {
+  async getCredentials(userId?: string): Promise<
+    Array<{
+      plugin_id: string;
+      has_api_key: boolean;
+      updated_at: number;
+    }>
+  > {
     const effectiveUserId = userId || 'default';
-    const db = getDatabaseSafe();
-
-    if (!db) {
-      return [];
-    }
 
     try {
-      const rows = db
-        .prepare(
-          'SELECT plugin_id, api_key, updated_at FROM plugin_credentials WHERE user_id = ?'
-        )
-        .all(effectiveUserId) as Array<{
-        plugin_id: string;
-        api_key: string;
-        updated_at: number;
-      }>;
+      const rows = await this.repository().listByUser(effectiveUserId);
 
       return rows.map(row => ({
         plugin_id: row.plugin_id,
@@ -170,19 +130,13 @@ class PluginCredentialsService {
   /**
    * Set or update API key for a plugin
    */
-  setApiKey(
+  async setApiKey(
     pluginId: string,
     apiKey: string,
     userId: string | undefined,
     routingAuthFingerprint: string
-  ): boolean {
+  ): Promise<boolean> {
     const effectiveUserId = userId || 'default';
-    const db = getDatabaseSafe();
-
-    if (!db) {
-      logger.error('Database not available for storing plugin credentials');
-      return false;
-    }
     if (!routingAuthFingerprint) {
       logger.error('Routing/auth binding is required for plugin credentials');
       return false;
@@ -192,38 +146,16 @@ class PluginCredentialsService {
       const now = Date.now();
       const encryptedKey = encryptionService.encrypt(apiKey);
 
-      // Check if credential already exists
-      const existing = db
-        .prepare(
-          'SELECT id FROM plugin_credentials WHERE plugin_id = ? AND user_id = ?'
-        )
-        .get(pluginId, effectiveUserId) as { id: string } | undefined;
-
-      if (existing) {
-        // Update existing credential
-        db.prepare(
-          `UPDATE plugin_credentials
-           SET api_key = ?, routing_auth_fingerprint = ?, updated_at = ?
-           WHERE id = ?`
-        ).run(encryptedKey, routingAuthFingerprint, now, existing.id);
-      } else {
-        // Insert new credential
-        const id = uuidv4();
-        db.prepare(
-          `INSERT INTO plugin_credentials
-             (id, user_id, plugin_id, api_key, routing_auth_fingerprint,
-              created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`
-        ).run(
-          id,
-          effectiveUserId,
-          pluginId,
-          encryptedKey,
-          routingAuthFingerprint,
-          now,
-          now
-        );
-      }
+      const existing = await this.repository().find(pluginId, effectiveUserId);
+      await this.repository().upsert({
+        id: existing?.id ?? uuidv4(),
+        user_id: effectiveUserId,
+        plugin_id: pluginId,
+        api_key: encryptedKey,
+        routing_auth_fingerprint: routingAuthFingerprint,
+        created_at: existing?.created_at ?? now,
+        updated_at: now,
+      });
 
       logger.debug(
         `API key ${existing ? 'updated' : 'set'} for plugin ${pluginId} (user: ${effectiveUserId})`
@@ -238,22 +170,12 @@ class PluginCredentialsService {
   /**
    * Delete API key for a plugin
    */
-  deleteApiKey(pluginId: string, userId?: string): boolean {
+  async deleteApiKey(pluginId: string, userId?: string): Promise<boolean> {
     const effectiveUserId = userId || 'default';
-    const db = getDatabaseSafe();
-
-    if (!db) {
-      return false;
-    }
 
     try {
-      const result = db
-        .prepare(
-          'DELETE FROM plugin_credentials WHERE plugin_id = ? AND user_id = ?'
-        )
-        .run(pluginId, effectiveUserId);
-
-      if (result.changes > 0) {
+      const deleted = await this.repository().delete(pluginId, effectiveUserId);
+      if (deleted) {
         logger.debug(
           `API key deleted for plugin ${pluginId} (user: ${effectiveUserId})`
         );
@@ -269,17 +191,9 @@ class PluginCredentialsService {
   /**
    * Delete all credentials for a user (used when user account is deleted)
    */
-  deleteAllUserCredentials(userId: string): boolean {
-    const db = getDatabaseSafe();
-
-    if (!db) {
-      return false;
-    }
-
+  async deleteAllUserCredentials(userId: string): Promise<boolean> {
     try {
-      db.prepare('DELETE FROM plugin_credentials WHERE user_id = ?').run(
-        userId
-      );
+      await this.repository().deleteByUser(userId);
       logger.debug(`All plugin credentials deleted for user ${userId}`);
       return true;
     } catch (error) {
@@ -294,17 +208,9 @@ class PluginCredentialsService {
   /**
    * Delete all credentials for a plugin (used when plugin is deleted)
    */
-  deleteAllPluginCredentials(pluginId: string): boolean {
-    const db = getDatabaseSafe();
-
-    if (!db) {
-      return false;
-    }
-
+  async deleteAllPluginCredentials(pluginId: string): Promise<boolean> {
     try {
-      db.prepare('DELETE FROM plugin_credentials WHERE plugin_id = ?').run(
-        pluginId
-      );
+      await this.repository().deleteByPlugin(pluginId);
       logger.debug(`All credentials deleted for plugin ${pluginId}`);
       return true;
     } catch (error) {
@@ -314,6 +220,11 @@ class PluginCredentialsService {
       );
       return false;
     }
+  }
+
+  private repository() {
+    return getPersistence(encryptionService).repositories.extensions
+      .pluginCredentials;
   }
 }
 

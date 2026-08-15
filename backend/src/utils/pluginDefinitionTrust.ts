@@ -35,7 +35,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   github: '482f22da003d73fe0d6684572dc2d959b46d7f8dbecf0f92205c2b4ef2f03817',
   groq: 'd03908e9caddae5ad838de9967fdc0b5dfb249d13f24391af1c9822fcf28e823',
   huggingface:
-    '6130d437e3d8b25b5de3e9f3b30eda617edd44703dd4c9dd2c1fb061df2642ca',
+    'be7e0840746816d6adaf6638a36d1339b7a557f7a2b0994c1574782977578a24',
   'kimi-code':
     '0b861caf086e5fdeeb029b6053447e673f2f8e121246d79b8102b157c109b557',
   'kyutai-tts-1.6b':
@@ -43,12 +43,14 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   'kyutai-tts':
     '22b48b58b8d7d3021e6c0163771830e2e4e4d973466e700def41fe85ec90644f',
   'llama-cpp':
-    'cb29e46330199af61f0ee677b7c72d6026f7141bacdb4423588f05ecd29f46ca',
+    'df2a449df1f367400999599e48df53b05a104d59e5df269eb13ed1d9720073f8',
+  'longcat-audiodit':
+    'ac898aaad95181722b4f53303edd4939a9f9b0fcd0c5a8126f39fa80e45cba25',
   mistral: 'a8a188cc75799a4b0a4c8fa4b448a8601b5ed72babc358ee460683459a75fbed',
   'mlx-lm': 'c5aad700fd557216a1e1eda361c0d67f92d51d1fe46d9c2028354f8ca8f25503',
   'openai-tts':
     'ebc3677f4f0ef2ec1628408d59a9e273059cc50d2f9d462e7a3b7f0c4eefe843',
-  openai: '1f91bdec0091a9951e23fda7f9e32b956c040170644ae10b9ebb90025e0a6d17',
+  openai: '992eac06973a3fb5565adc693ded077858b1aa37de327218727a93a6f8aa1ba8',
   openrouter:
     '83cd1e5918d6c3176bb2929fbed6e325677e5d2e0c1ceda2da7a75f64df8365f',
   'qwen-tts':

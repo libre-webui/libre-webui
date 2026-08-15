@@ -66,6 +66,7 @@ import {
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import websocketService from '@/utils/websocket';
+import { armTTSAudioPlaybackUnlock } from '@/utils/ttsBatching';
 import toast from 'react-hot-toast';
 
 const logger = createLogger('app');
@@ -127,7 +128,7 @@ const SidebarLayoutSpacer: React.FC<{ isOpen: boolean; compact: boolean }> = ({
     aria-hidden='true'
     className={cn(
       'hidden lg:block flex-shrink-0 transition-[width] duration-200 ease-out',
-      isOpen ? (compact ? 'w-20' : 'w-72') : 'w-0'
+      isOpen ? (compact ? 'w-16' : 'w-72') : 'w-0'
     )}
   />
 );
@@ -154,10 +155,8 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
 }) => (
   <div
     className={cn(
-      'flex h-dvh min-h-0 text-gray-950 dark:text-dark-900 relative overflow-hidden',
-      hasBackground
-        ? 'bg-gray-100/60 dark:bg-dark-50/60'
-        : 'bg-gray-100 dark:bg-dark-50'
+      'flex h-dvh min-h-0 text-ink relative overflow-hidden',
+      hasBackground ? 'bg-sidebar/60' : 'bg-sidebar'
     )}
   >
     <ElectronTitleBar />
@@ -172,7 +171,7 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
         // Mobile behavior:
         // - Compact sidebar: push content away to avoid overlap
         // - Expanded sidebar: overlay (no transform)
-        sidebarOpen && sidebarCompact ? 'max-lg:ms-20' : 'max-lg:ms-0',
+        sidebarOpen && sidebarCompact ? 'max-lg:ms-16' : 'max-lg:ms-0',
         hasBackground ? 'bg-white/10 dark:bg-dark-50/10' : 'bg-transparent'
       )}
     >
@@ -182,8 +181,8 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
         className={cn(
           'min-h-0 flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
           hasBackground
-            ? 'bg-white/30 dark:bg-dark-100/35 backdrop-blur-sm'
-            : 'bg-gray-50 dark:bg-dark-100'
+            ? 'bg-white/30 dark:bg-dark-50/35 backdrop-blur-sm'
+            : 'bg-canvas'
         )}
       >
         <ErrorBoundary>
@@ -226,6 +225,19 @@ const AppContent: React.FC = () => {
   const hasWorkspaceAccess =
     systemInfo?.requiresAuth === false || isAuthenticated;
   const whatsNew = useWhatsNew();
+
+  // Browser autoplay permission is transient. Arm the shared TTS output on
+  // the next real gesture so a response can start speaking after its network
+  // request completes, even when auto-play was saved in an earlier session.
+  React.useEffect(() => {
+    if (
+      !preferences.ttsSettings?.enabled ||
+      !preferences.ttsSettings.autoPlay
+    ) {
+      return;
+    }
+    return armTTSAudioPlaybackUnlock();
+  }, [preferences.ttsSettings?.autoPlay, preferences.ttsSettings?.enabled]);
 
   // Handle OAuth callback FIRST - before any routing or initialization
   const [oauthProcessed, setOauthProcessed] = React.useState(false);

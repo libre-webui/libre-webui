@@ -26,8 +26,14 @@
  * configuration — treated like the Ollama endpoint, not user input.
  */
 
-import { getDatabase } from '../db.js';
 import { createLogger } from '../utils/logger.js';
+import { throwIfChatGenerationCancelled } from '../utils/chatCancellation.js';
+import {
+  getSystemSetting,
+  getSystemSettings,
+  setSystemSetting,
+  setSystemSettings,
+} from './systemSettingsService.js';
 
 const logger = createLogger('services:web-search');
 
@@ -75,27 +81,12 @@ export function normalizeWebSearchMaxResults(value: unknown): number {
   return Math.min(Math.max(parsed, 1), WEB_SEARCH_RESULTS_CEILING);
 }
 
-function readSetting(key: string): string | undefined {
+async function readSetting(key: string): Promise<string | undefined> {
   try {
-    const row = getDatabase()
-      .prepare('SELECT value FROM system_settings WHERE key = ?')
-      .get(key) as { value?: string } | undefined;
-    return row?.value;
+    return (await getSystemSetting(key)) ?? undefined;
   } catch {
     return undefined;
   }
-}
-
-function writeSetting(key: string, value: string): void {
-  getDatabase()
-    .prepare(
-      `INSERT INTO system_settings (key, value, updated_at)
-       VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET
-         value = excluded.value,
-         updated_at = excluded.updated_at`
-    )
-    .run(key, value, Date.now());
 }
 
 export function normalizeWebSearchUrl(value: unknown): string {
@@ -121,12 +112,18 @@ export function normalizeWebSearchUrl(value: unknown): string {
   return trimmed;
 }
 
-export function getWebSearchConfig(): WebSearchConfig {
-  const enabled = readSetting(WEB_SEARCH_ENABLED_KEY) === 'true';
-  const storedUrl = readSetting(WEB_SEARCH_URL_KEY);
+export async function getWebSearchConfig(): Promise<WebSearchConfig> {
+  const stored = await getSystemSettings([
+    WEB_SEARCH_ENABLED_KEY,
+    WEB_SEARCH_URL_KEY,
+    WEB_SEARCH_MAX_RESULTS_KEY,
+    WEB_SEARCH_SAFE_SEARCH_KEY,
+  ]);
+  const enabled = stored[WEB_SEARCH_ENABLED_KEY] === 'true';
+  const storedUrl = stored[WEB_SEARCH_URL_KEY];
   const url =
     storedUrl !== undefined ? storedUrl : (process.env.SEARXNG_URL ?? '');
-  const storedMax = readSetting(WEB_SEARCH_MAX_RESULTS_KEY);
+  const storedMax = stored[WEB_SEARCH_MAX_RESULTS_KEY];
   return {
     enabled,
     url,
@@ -136,39 +133,38 @@ export function getWebSearchConfig(): WebSearchConfig {
         ? normalizeWebSearchMaxResults(storedMax)
         : WEB_SEARCH_DEFAULT_MAX_RESULTS,
     // Safe search is on unless an administrator turned it off.
-    safeSearch: readSetting(WEB_SEARCH_SAFE_SEARCH_KEY) !== 'false',
+    safeSearch: stored[WEB_SEARCH_SAFE_SEARCH_KEY] !== 'false',
   };
 }
 
-export function setWebSearchConfig(input: {
+export async function setWebSearchConfig(input: {
   enabled: boolean;
   url: string;
   maxResults?: number;
   safeSearch?: boolean;
-}): WebSearchConfig {
+}): Promise<WebSearchConfig> {
   const url = normalizeWebSearchUrl(input.url);
   if (input.enabled && !url) {
     throw new Error('Enable web search only with a SearXNG URL configured.');
   }
-  writeSetting(WEB_SEARCH_ENABLED_KEY, input.enabled ? 'true' : 'false');
-  writeSetting(WEB_SEARCH_URL_KEY, url);
+  const updates: Record<string, string> = {
+    [WEB_SEARCH_ENABLED_KEY]: input.enabled ? 'true' : 'false',
+    [WEB_SEARCH_URL_KEY]: url,
+  };
   if (input.maxResults !== undefined) {
-    writeSetting(
-      WEB_SEARCH_MAX_RESULTS_KEY,
-      String(normalizeWebSearchMaxResults(input.maxResults))
+    updates[WEB_SEARCH_MAX_RESULTS_KEY] = String(
+      normalizeWebSearchMaxResults(input.maxResults)
     );
   }
   if (input.safeSearch !== undefined) {
-    writeSetting(
-      WEB_SEARCH_SAFE_SEARCH_KEY,
-      input.safeSearch ? 'true' : 'false'
-    );
+    updates[WEB_SEARCH_SAFE_SEARCH_KEY] = input.safeSearch ? 'true' : 'false';
   }
+  await setSystemSettings(updates);
   return getWebSearchConfig();
 }
 
-export function isWebSearchAvailable(): boolean {
-  return getWebSearchConfig().available;
+export async function isWebSearchAvailable(): Promise<boolean> {
+  return (await getWebSearchConfig()).available;
 }
 
 /**
@@ -176,26 +172,28 @@ export function isWebSearchAvailable(): boolean {
  * always may; other active users only when an administrator opens it up in
  * User Management. Defaults to admins-only and fails closed.
  */
-export function getWebSearchAccessMode(): WebSearchAccessMode {
-  const value = readSetting(WEB_SEARCH_ACCESS_KEY);
+export async function getWebSearchAccessMode(): Promise<WebSearchAccessMode> {
+  const value = await readSetting(WEB_SEARCH_ACCESS_KEY);
   return isWebSearchAccessMode(value) ? value : 'admins';
 }
 
-export function setWebSearchAccessMode(mode: WebSearchAccessMode): void {
+export async function setWebSearchAccessMode(
+  mode: WebSearchAccessMode
+): Promise<void> {
   if (!isWebSearchAccessMode(mode)) {
     throw new Error(`Invalid web search access mode "${String(mode)}".`);
   }
-  writeSetting(WEB_SEARCH_ACCESS_KEY, mode);
+  await setSystemSetting(WEB_SEARCH_ACCESS_KEY, mode);
 }
 
 /** Whether this user may run web searches right now (search must also be available). */
-export function userCanUseWebSearch(
+export async function userCanUseWebSearch(
   user: { role?: string; status?: string } | undefined | null
-): boolean {
+): Promise<boolean> {
   if (!user) return false;
   if (user.status !== undefined && user.status !== 'active') return false;
   if (user.role === 'admin') return true;
-  return getWebSearchAccessMode() === 'all-users';
+  return (await getWebSearchAccessMode()) === 'all-users';
 }
 
 interface SearxngResult {
@@ -212,9 +210,11 @@ const bounded = (value: unknown, max: number): string =>
 
 export async function webSearch(
   query: string,
-  maxResults?: number
+  maxResults?: number,
+  signal?: AbortSignal
 ): Promise<WebSearchResult[]> {
-  const config = getWebSearchConfig();
+  throwIfChatGenerationCancelled(signal);
+  const config = await getWebSearchConfig();
   if (!config.available) {
     throw new Error('Web search is not enabled on this server.');
   }
@@ -237,6 +237,9 @@ export async function webSearch(
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SEARCH_TIMEOUT_MS);
+  const cancel = () => controller.abort(signal?.reason);
+  signal?.addEventListener('abort', cancel, { once: true });
+  if (signal?.aborted) cancel();
   let response: globalThis.Response;
   try {
     response = await fetch(target, {
@@ -244,12 +247,14 @@ export async function webSearch(
       headers: { Accept: 'application/json' },
     });
   } catch (error) {
+    throwIfChatGenerationCancelled(signal);
     logger.warn('Web search request failed:', error);
     throw new Error(
       'The search service could not be reached. Check the SearXNG URL.'
     );
   } finally {
     clearTimeout(timer);
+    signal?.removeEventListener('abort', cancel);
   }
   if (!response.ok) {
     throw new Error(

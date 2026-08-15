@@ -39,7 +39,10 @@ A plugin definition declares each media capability as its own block:
 Every block has an `endpoint`, a `model_map` fallback list, an optional
 `models_endpoint` for live model discovery, and a `config` object with
 capability-specific options — sizes and aspect ratios for images, voices and
-formats for speech, resolutions, aspect ratios, and durations for video.
+formats for speech, resolutions, aspect ratios, and durations for video. A
+video provider may also declare a prompt-ID `cancel_endpoint` and
+`cancel_method`; Libre does not infer cancellation support from an ordinary
+generation endpoint.
 
 Two audio capabilities exist and both end up in the gallery as audio:
 
@@ -58,7 +61,41 @@ Open **Imagine** (`/gallery`). The header offers **Generate** for images (when
 image generation is enabled in Settings), plus **Video** and **Audio** panels.
 
 Speech and sound generation are synchronous: the request runs, the result is
-saved to the gallery, and the response returns the finished item.
+saved to the gallery, and the response returns the finished item. **Cancel**
+aborts the browser request and Libre's outbound provider request; a cancelled
+result is not saved. Image generation follows the same disconnect-cancellation
+contract.
+
+For an accepted ComfyUI workflow, Libre sends both the prompt-ID job-cancel
+operation and a prompt-ID queue deletion, then waits up to three seconds for
+that teardown before releasing the request. It never calls ComfyUI's unscoped
+interrupt operation, which could stop another user's workflow. Current ComfyUI
+releases expose `/api/jobs/:promptId/cancel` for a running workflow. On an old
+release without that operation, Libre can still remove the exact pending queue
+item, but cannot safely stop an already-running workflow; upgrade ComfyUI for
+the complete cancellation contract.
+
+TTS plugins can also declare voice cloning. For those models, the Audio panel
+shows a reference-audio upload and, when the provider requires it, an exact
+transcript field. Libre WebUI validates the manifest's file type and size
+limits, holds the upload in memory, and forwards it only to the selected
+provider. Only the generated speech is placed in the gallery.
+
+A clone can optionally be saved as a reusable, named voice for the same plugin
+and model. Saving requires a separate storage-consent confirmation. Libre WebUI
+encrypts the original reference and transcript in a user-owned voice profile;
+it does not use generated speech as the reference. Saved profiles can be
+selected or permanently deleted under **Settings → Text-to-Speech**. The
+configured provider receives the stored reference again whenever it generates
+a Speech batch. The profile is bound to that provider's approved routing; if
+the plugin definition or endpoint changes, recreate the profile to consent to
+the new destination. Only use recordings from speakers who consented to both
+the cloning request and any requested storage.
+
+Voice profiles are intentionally omitted from Libre WebUI's general data
+export because they contain biometric source material. Back up the encrypted
+application database and `ENCRYPTION_KEY` together if you need disaster
+recovery; otherwise recreate profiles from the original consented recordings.
 
 ### Video Job Lifecycle
 
@@ -67,16 +104,28 @@ Video generation is asynchronous. Submitting a job
 job moves through `pending`, `in_progress`, and finally `completed` or
 `failed`.
 
-- Progress is client-driven. The provider is contacted only when the job is
-  polled (`GET /api/media/video/jobs/:jobId`); the UI polls every 30 seconds
-  while the panel is open. There is no background worker, so nothing advances
-  a job while nobody is polling it — the provider keeps rendering, and the
-  next poll picks up the result.
+- Submission is detached from the browser response after validation. Libre
+  persists the provider job ID immediately after acceptance even if the panel
+  or network connection closes while the provider is replying.
+- `GET /api/media/video/jobs` lists only the authenticated user's saved handles;
+  the panel requests up to 100 active handles whenever it opens. A pending job
+  can therefore be reopened after navigation, refresh, or disconnect.
+- A durable `media.video.resume.v1` job polls the provider and downloads a
+  completed result even when the panel is closed. Solo mode runs that handler
+  in the embedded worker; team mode runs it in the external worker. Leases,
+  bounded retry, actor revalidation, and conditional completion let another
+  worker reclaim the job after a process dies without creating a duplicate
+  gallery row or blob reference. The existing resume/GET endpoints remain
+  compatibility and status boundaries; the UI may still poll them for display.
+- Closing the panel or choosing **Stop waiting** aborts only the current status
+  or download transport. A provider-side **Cancel job** action appears only
+  when that plugin explicitly declares a job-ID cancellation endpoint. On a
+  confirmed provider cancellation, Libre removes the saved local handle.
 - On completion the backend downloads the video (200 MB cap, HTTP redirects
   not followed) and saves it to the gallery.
 - The job record stores the plugin, model, options, status, and the prompt
-  (encrypted at rest). Job records older than 30 days are pruned
-  opportunistically.
+  (encrypted at rest). Completed and failed job records older than 30 days are
+  pruned opportunistically; pending handles are not expired by that cleanup.
 
 ## The Unified Gallery
 

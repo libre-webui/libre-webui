@@ -19,6 +19,7 @@ import {
   EmbeddingModel,
   OllamaEmbeddingsRequest,
   OllamaEmbeddingsResponse,
+  Plugin,
 } from '../types/index.js';
 import ollamaService from './ollamaService.js';
 import pluginService from './pluginService.js';
@@ -111,16 +112,18 @@ class EmbeddingService {
       logger.warn('Failed to load Ollama embedding models:', error);
     }
 
-    const plugins = pluginService
-      .getActivePlugins(userId)
-      .filter(
-        plugin =>
-          (plugin.capabilities?.embedding ||
-            plugin.type === 'embedding' ||
-            plugin.type === 'completion' ||
-            plugin.type === 'chat') &&
-          Boolean(pluginService.getApiKey(plugin, userId))
-      );
+    const plugins: Plugin[] = [];
+    for (const plugin of await pluginService.getActivePlugins(userId)) {
+      if (
+        (plugin.capabilities?.embedding ||
+          plugin.type === 'embedding' ||
+          plugin.type === 'completion' ||
+          plugin.type === 'chat') &&
+        Boolean(await pluginService.getApiKey(plugin, userId))
+      ) {
+        plugins.push(plugin);
+      }
+    }
     await Promise.all(
       plugins.map(plugin =>
         pluginService
@@ -129,7 +132,9 @@ class EmbeddingService {
       )
     );
 
-    for (const model of pluginService.getAvailableEmbeddingModels(userId)) {
+    for (const model of await pluginService.getAvailableEmbeddingModels(
+      userId
+    )) {
       const isEmbeddingCandidate =
         model.fromEmbeddingCapability || isLikelyEmbeddingModel(model.model);
 
@@ -179,7 +184,8 @@ class EmbeddingService {
 
   async generateEmbeddings(
     payload: OllamaEmbeddingsRequest,
-    userId?: string
+    userId?: string,
+    signal?: AbortSignal
   ): Promise<OllamaEmbeddingsResponse> {
     const target = parseModelTarget(payload.model);
     if (target.pluginId) {
@@ -187,11 +193,12 @@ class EmbeddingService {
         target.model,
         payload.input,
         target.pluginId,
-        userId
+        userId,
+        signal
       );
     }
 
-    const plugin = pluginService.getPluginForEmbedding(
+    const plugin = await pluginService.getPluginForEmbedding(
       target.model,
       undefined,
       userId
@@ -201,14 +208,18 @@ class EmbeddingService {
         target.model,
         payload.input,
         undefined,
-        userId
+        userId,
+        signal
       );
     }
 
-    return ollamaService.generateEmbeddings({
-      ...payload,
-      model: target.model,
-    });
+    return ollamaService.generateEmbeddings(
+      {
+        ...payload,
+        model: target.model,
+      },
+      signal
+    );
   }
 }
 

@@ -88,7 +88,12 @@ export class CodexOAuthService {
   private cachedAccessToken: string | null = null;
   private cachedAccountId: string | undefined;
   private cachedExpiryMs = 0;
-  private refreshPromise: Promise<void> | null = null;
+  private refreshFlight: {
+    controller: AbortController;
+    promise: Promise<void>;
+    settled: boolean;
+    waiters: number;
+  } | null = null;
 
   /** Whether the Codex CLI sign-in exists on this server. */
   isAvailable(): boolean {
@@ -118,7 +123,8 @@ export class CodexOAuthService {
   }
 
   /** Refresh the access token when missing or near expiry (single flight). */
-  async ensureFreshToken(): Promise<void> {
+  async ensureFreshToken(signal?: AbortSignal): Promise<void> {
+    throwIfAborted(signal);
     if (!codexEnabled()) return;
     if (!this.cachedAccessToken) this.loadFromDisk();
     if (
@@ -127,12 +133,37 @@ export class CodexOAuthService {
     ) {
       return;
     }
-    if (!this.refreshPromise) {
-      this.refreshPromise = this.refresh().finally(() => {
-        this.refreshPromise = null;
+    if (!this.refreshFlight) {
+      const controller = new AbortController();
+      const flight = {
+        controller,
+        promise: Promise.resolve(),
+        settled: false,
+        waiters: 0,
+      };
+      flight.promise = this.refresh(controller.signal).finally(() => {
+        flight.settled = true;
+        if (this.refreshFlight === flight) this.refreshFlight = null;
       });
+      this.refreshFlight = flight;
     }
-    await this.refreshPromise;
+    const flight = this.refreshFlight;
+    flight.waiters += 1;
+    try {
+      await waitForSharedRefresh(flight.promise, signal);
+    } finally {
+      flight.waiters = Math.max(0, flight.waiters - 1);
+      if (
+        flight.waiters === 0 &&
+        !flight.settled &&
+        this.refreshFlight === flight
+      ) {
+        // Every interested generation has gone away. Keep the aborted flight
+        // registered until Axios settles so an immediate retry cannot overlap
+        // a refresh-token exchange that is still tearing down.
+        flight.controller.abort(new Error('Codex token refresh was cancelled'));
+      }
+    }
   }
 
   private loadFromDisk(): void {
@@ -152,7 +183,7 @@ export class CodexOAuthService {
     }
   }
 
-  private async refresh(): Promise<void> {
+  private async refresh(signal?: AbortSignal): Promise<void> {
     const file = authFilePath();
     let parsed: CodexAuthFile;
     try {
@@ -179,6 +210,7 @@ export class CodexOAuthService {
       {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         timeout: 30_000,
+        signal,
       }
     );
     const tokens = response.data as {
@@ -218,6 +250,43 @@ export class CodexOAuthService {
     }
     logger.info('Refreshed Codex OAuth access token.');
   }
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (!signal?.aborted) return;
+  throw signal.reason instanceof Error
+    ? signal.reason
+    : new Error('Codex token refresh was cancelled');
+}
+
+function waitForSharedRefresh(
+  promise: Promise<void>,
+  signal?: AbortSignal
+): Promise<void> {
+  if (!signal) return promise;
+  throwIfAborted(signal);
+  return new Promise<void>((resolve, reject) => {
+    const cleanup = () => signal.removeEventListener('abort', abort);
+    const abort = () => {
+      cleanup();
+      reject(
+        signal.reason instanceof Error
+          ? signal.reason
+          : new Error('Codex token refresh was cancelled')
+      );
+    };
+    signal.addEventListener('abort', abort, { once: true });
+    promise.then(
+      () => {
+        cleanup();
+        resolve();
+      },
+      error => {
+        cleanup();
+        reject(error);
+      }
+    );
+  });
 }
 
 const codexOAuthService = new CodexOAuthService();

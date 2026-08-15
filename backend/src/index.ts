@@ -36,7 +36,9 @@ import './env.js';
  */
 
 import express from 'express';
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import { ipKeyGenerator } from 'express-rate-limit';
+import rateLimit from './middleware/sharedRateLimit.js';
+import { isChatCancellationSafetyRequest } from './middleware/chatCancellationAdmission.js';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -66,6 +68,7 @@ import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
 import personaRoutes from './routes/personas.js';
 import ttsRoutes from './routes/tts.js';
+import sttRoutes from './routes/stt.js';
 import imageGenRoutes from './routes/imageGen.js';
 import mediaRoutes from './routes/media.js';
 import embeddingsRoutes from './routes/embeddings.js';
@@ -75,24 +78,86 @@ import workRoutes from './routes/work.js';
 import systemDiagnosticsRoutes from './routes/systemDiagnostics.js';
 import artifactsRoutes from './routes/artifacts.js';
 import searchRoutes from './routes/search.js';
+import healthRoutes from './routes/health.js';
+import jobsRoutes from './routes/jobs.js';
 import ollamaService from './services/ollamaService.js';
 import workRuntimeService from './services/workRuntimeService.js';
 import workTaskService from './services/workTaskService.js';
 import workAgentService from './services/workAgentService.js';
+import healthService from './services/healthService.js';
 import workPreviewProxyService, {
   WORK_PREVIEW_PROXY_PREFIX,
 } from './services/workPreviewProxyService.js';
 import { GitHubOAuthService } from './services/simpleGitHubOAuth.js';
 import { HuggingFaceOAuthService } from './services/simpleHuggingFaceOAuth.js';
 import { encryptionService as _encryptionService } from './services/encryptionService.js';
+import { closePersistence, getPersistence } from './persistence/index.js';
 import { loadAppPackage, resolveFrontendDist } from './utils/packagePaths.js';
 import { registerWebSocketServer } from './websocketServer.js';
 import { createLogger } from './utils/logger.js';
-import { getDatabase } from './db.js';
+import {
+  closeCoordinator,
+  getPlatformRuntimeConfig,
+  initializeCoordinator,
+} from './platform/coordination/service.js';
+import {
+  closeDurableJobRuntime,
+  createDomainDurableJobHandlers,
+  initializeDurableJobRuntime,
+  JOB_CANCELLATION_WAKE_TOPIC,
+} from './platform/jobs/index.js';
+import {
+  closeDurableEventGateway,
+  initializeDurableEventGateway,
+} from './platform/events/index.js';
+import workEventService from './services/workEventService.js';
+import {
+  closePlatformStorageRuntime,
+  initializePlatformStorageRuntime,
+} from './platform/storage/index.js';
+import {
+  getSystemSetting,
+  setSystemSetting,
+} from './services/systemSettingsService.js';
+import {
+  closePluginCacheInvalidation,
+  probePluginCacheInvalidationHealth,
+} from './services/pluginCacheInvalidation.js';
 
 const pkg = loadAppPackage(import.meta.url);
 const app = express();
 const logger = createLogger('server');
+
+// Coordination is an explicit platform dependency. Solo mode uses one local
+// coordinator; Redis selections fail startup/readiness instead of silently
+// falling back to process-local state.
+const platformCoordinator = await initializeCoordinator();
+healthService.registerDependencyCheck({
+  id: 'coordination',
+  required: true,
+  check: async () => {
+    const health = await platformCoordinator.health();
+    return {
+      status: health.ready ? 'pass' : 'fail',
+      ...(health.message ? { message: health.message } : {}),
+      details: {
+        backend: health.backend,
+        providerLatencyMs: health.latencyMs,
+      },
+    };
+  },
+});
+healthService.registerDependencyCheck({
+  id: 'plugin-cache-invalidation',
+  required: true,
+  check: async () => {
+    const health = await probePluginCacheInvalidationHealth();
+    return {
+      status: health.ready ? 'pass' : 'fail',
+      ...(health.message ? { message: health.message } : {}),
+    };
+  },
+});
 
 // Containers are execution state, while each task's named volume is durable.
 // On startup, reconcile the labeled Work containers Docker actually has
@@ -101,16 +166,24 @@ const logger = createLogger('server');
 // supervising process, containers at rest are left alone, and labeled
 // containers whose task row is gone are removed. Runs even with an empty
 // task table, so a restored database still sweeps leftover containers.
-const workRecovery = workTaskService.recoverOnStartup();
-const workCleanup = await workRuntimeService.beginRecovery(workRecovery.tasks);
-if (workCleanup.failed > 0) {
-  logger.warn(
-    `Work is fail-closed while ${workCleanup.failed} startup container cleanup(s) are retried.`
+if (getPlatformRuntimeConfig().jobs.workerMode === 'embedded') {
+  const workRecovery = await workTaskService.recoverOnStartup();
+  const workCleanup = await workRuntimeService.beginRecovery(
+    workRecovery.tasks
   );
-}
-if (workRecovery.interruptedRuns > 0 || workRecovery.activePreviews > 0) {
+  if (workCleanup.failed > 0) {
+    logger.warn(
+      `Work is fail-closed while ${workCleanup.failed} startup container cleanup(s) are retried.`
+    );
+  }
+  if (workRecovery.interruptedRuns > 0 || workRecovery.activePreviews > 0) {
+    logger.info(
+      `Recovered ${workRecovery.interruptedRuns} interrupted Work run(s) and ${workRecovery.activePreviews} preview(s).`
+    );
+  }
+} else {
   logger.info(
-    `Recovered ${workRecovery.interruptedRuns} interrupted Work run(s) and ${workRecovery.activePreviews} preview(s).`
+    'External worker owns Work startup recovery and global runtime sweeps.'
   );
 }
 
@@ -351,20 +424,17 @@ app.use(requestLogger);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Libre WebUI Backend is running',
-    timestamp: new Date().toISOString(),
-  });
-});
+// Process liveness, dependency readiness, and authenticated deep diagnostics.
+// These routes are intentionally outside /api so deployment probes do not
+// depend on API rate limits or optional provider configuration.
+app.use('/health', healthRoutes);
 
 // Static files are served by a separate frontend server on port 8080
 // Backend only serves API endpoints
 
 // Rate limiter for the /api/personas route
 const personasRateLimiter = rateLimit({
+  keyPrefix: 'api-personas',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: {
@@ -377,6 +447,7 @@ const personasRateLimiter = rateLimit({
 
 // Rate limiter for the /api/preferences route
 const preferencesRateLimiter = rateLimit({
+  keyPrefix: 'api-preferences',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: {
@@ -389,6 +460,7 @@ const preferencesRateLimiter = rateLimit({
 
 // Rate limiter for the /api/ollama route
 const ollamaRateLimiter = rateLimit({
+  keyPrefix: 'api-ollama',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10000, // limit each IP to 10000 requests per windowMs (very high limit for streaming chunks)
   message: {
@@ -401,6 +473,7 @@ const ollamaRateLimiter = rateLimit({
 
 // Rate limiter for the /api/documents route
 const documentsRateLimiter = rateLimit({
+  keyPrefix: 'api-documents',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: {
@@ -413,6 +486,7 @@ const documentsRateLimiter = rateLimit({
 
 // Rate limiter for the /api/auth route (general limit, specific limits applied within route)
 const authRateLimiter = rateLimit({
+  keyPrefix: 'api-auth',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs (higher level limit)
   message: {
@@ -425,6 +499,7 @@ const authRateLimiter = rateLimit({
 
 // Rate limiter for the /api/users route (general limit, specific limits applied within route)
 const usersRateLimiter = rateLimit({
+  keyPrefix: 'api-users',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 50, // limit each IP to 50 requests per windowMs (moderate limit for user management)
   message: {
@@ -437,6 +512,7 @@ const usersRateLimiter = rateLimit({
 
 // Rate limiter for the /api/chat route (general limit, specific limits applied within route)
 const chatRateLimiter = rateLimit({
+  keyPrefix: 'api-chat',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // limit each IP to 1000 requests per windowMs (high limit for chat interactions)
   message: {
@@ -445,10 +521,12 @@ const chatRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: isChatCancellationSafetyRequest,
 });
 
 // Rate limiter for TTS routes (higher limit for info endpoints, generation has stricter limits in route)
 const ttsRateLimiter = rateLimit({
+  keyPrefix: 'api-tts',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 500, // limit each IP to 500 requests per windowMs
   message: {
@@ -461,6 +539,7 @@ const ttsRateLimiter = rateLimit({
 
 // Rate limiter for image generation routes (stricter limits applied within route)
 const imageGenRateLimiter = rateLimit({
+  keyPrefix: 'api-image-gen',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200, // limit each IP to 200 requests per windowMs
   message: {
@@ -474,6 +553,7 @@ const imageGenRateLimiter = rateLimit({
 
 // Rate limiter for Libre Claw agent routes
 const libreClawRateLimiter = rateLimit({
+  keyPrefix: 'api-libre-claw',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 500, // agent dashboards poll run/event state while active
   message: {
@@ -486,6 +566,7 @@ const libreClawRateLimiter = rateLimit({
 
 // Rate limiter for isolated Work task APIs
 const workRateLimiter = rateLimit({
+  keyPrefix: 'api-work',
   windowMs: 15 * 60 * 1000, // 15 minutes
   // The active pane currently polls both the task list and selected task once
   // per second; keep useful abuse protection without throttling normal runs.
@@ -501,6 +582,7 @@ const workRateLimiter = rateLimit({
 // Bound authentication work before parsing bearer tokens without accumulating
 // successful requests into one long-lived shared-proxy quota.
 const pluginAuthBurstRateLimiter = rateLimit({
+  keyPrefix: 'api-plugin-auth-burst',
   windowMs: 60 * 1000,
   max: 100,
   skipSuccessfulRequests: true,
@@ -515,6 +597,7 @@ const pluginAuthBurstRateLimiter = rateLimit({
 // Authenticated users receive independent discovery quotas, while writes retain
 // stricter route-specific limits.
 const pluginRouteRateLimiter = rateLimit({
+  keyPrefix: 'api-plugins',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000,
   keyGenerator: req => {
@@ -555,6 +638,7 @@ app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/notes', documentsRateLimiter, notesRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 app.use('/api/tts', ttsRateLimiter, optionalAuth, ttsRoutes);
+app.use('/api/stt', sttRoutes);
 app.use('/api/image-gen', imageGenRateLimiter, optionalAuth, imageGenRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/huggingface-hub', huggingfaceHubRoutes);
@@ -563,6 +647,7 @@ app.use('/api/work', workRateLimiter, workRoutes);
 app.use('/api/system', systemDiagnosticsRoutes);
 app.use('/api/artifacts', artifactsRoutes);
 app.use('/api/search', chatRateLimiter, searchRoutes);
+app.use('/api/jobs', jobsRoutes);
 
 // Serve frontend static files in production (for npx libre-webui)
 if (
@@ -576,6 +661,7 @@ if (
 
     // Rate limiter for static files
     const staticRateLimiter = rateLimit({
+      keyPrefix: 'static-assets',
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 1000, // limit each IP to 1000 requests per windowMs
       message: 'Too many requests, please try again later.',
@@ -618,10 +704,108 @@ if (
 app.use(notFoundHandler);
 app.use(errorHandler);
 
+// main.ts initializes the selected database before importing this module.
+// Direct SQLite test entrypoints retain the repository's legacy lazy path, but
+// PostgreSQL can never create a local fallback here.
+const applicationPersistence = getPersistence(_encryptionService);
+const persistenceHealth = await applicationPersistence.health();
+if (!persistenceHealth.ready) {
+  throw new Error(
+    persistenceHealth.message ||
+      `${applicationPersistence.dialect} persistence is not ready.`
+  );
+}
+const platformStorage = await initializePlatformStorageRuntime({
+  persistence: applicationPersistence,
+  cipher: _encryptionService,
+  env: process.env,
+});
+healthService.registerDependencyCheck({
+  id: 'platform-storage',
+  required: true,
+  check: async () => {
+    const health = await platformStorage.health();
+    return {
+      status: health.ready ? 'pass' : 'fail',
+      ...(health.message ? { message: health.message } : {}),
+      details: {
+        dialect: health.dialect,
+        blobs: health.blobs,
+        vectors: health.vectors,
+      },
+    };
+  },
+});
+const durableJobRuntime = initializeDurableJobRuntime({
+  role: getPlatformRuntimeConfig().jobs.workerMode,
+  runWorker: getPlatformRuntimeConfig().jobs.workerMode === 'embedded',
+  maxConcurrentJobs: getPlatformRuntimeConfig().jobs.concurrency,
+  retention: getPlatformRuntimeConfig().jobs.retention,
+  handlers: createDomainDurableJobHandlers(),
+  onCancellationRequested: jobId => {
+    // The durable request already committed. Abort an embedded handler at
+    // once and wake external workers; a lost wake falls back to the
+    // per-side-effect and heartbeat checks.
+    queueMicrotask(() => {
+      try {
+        durableJobRuntime.abortActiveJob(jobId);
+      } catch {
+        // Best effort only.
+      }
+    });
+    void platformCoordinator
+      .publish(JOB_CANCELLATION_WAKE_TOPIC, { jobId })
+      .catch(() => undefined);
+  },
+});
+const durableEventGateway = initializeDurableEventGateway(
+  durableJobRuntime.service,
+  platformCoordinator
+);
+workEventService.initializeDurableGateway(durableEventGateway);
+healthService.registerDependencyCheck({
+  id: 'durable-jobs',
+  required: true,
+  check: async () => {
+    const status = durableJobRuntime.status();
+    const workerExpected = status.role === 'embedded';
+    const externalWorkers = workerExpected
+      ? []
+      : await platformCoordinator.listPresence('durable-workers');
+    return {
+      status:
+        status.started &&
+        (workerExpected ? status.workerId !== null : externalWorkers.length > 0)
+          ? 'pass'
+          : 'fail',
+      details: {
+        workerMode: status.role,
+        workerRunning: status.workerId !== null,
+        externalWorkerCount: externalWorkers.length,
+        registeredJobTypes: status.registeredJobTypes,
+      },
+    };
+  },
+});
+healthService.registerDependencyCheck({
+  id: 'ollama-provider',
+  required: false,
+  depths: ['deep'],
+  check: async () => {
+    const healthy = await ollamaService.isHealthy();
+    return {
+      status: healthy ? 'pass' : 'warn',
+      ...(!healthy
+        ? { message: 'The optional Ollama provider is unavailable.' }
+        : {}),
+      details: { provider: 'ollama' },
+    };
+  },
+});
 // Create HTTP server
 const server = createServer(app);
 
-registerWebSocketServer(server);
+const registeredWebSockets = registerWebSocketServer(server);
 
 // Start server
 server.listen({ port, host }, () => {
@@ -636,24 +820,19 @@ server.listen({ port, host }, () => {
 
   // One quiet line on the very first boot, never repeated. Not a nag, not a
   // modal, no telemetry — the flag lives in the local database only.
-  try {
-    const db = getDatabase();
-    const seen = db
-      .prepare('SELECT value FROM system_settings WHERE key = ?')
-      .get('first_run_star_note') as { value: string } | undefined;
-    if (!seen) {
-      db.prepare(
-        `INSERT INTO system_settings (key, value, updated_at)
-         VALUES (?, ?, ?)
-         ON CONFLICT(key) DO NOTHING`
-      ).run('first_run_star_note', 'shown', Date.now());
-      logger.info(
-        'If Libre WebUI is useful to you, a star helps others find it: https://github.com/libre-webui/libre-webui'
-      );
+  void (async () => {
+    try {
+      const seen = await getSystemSetting('first_run_star_note');
+      if (!seen) {
+        await setSystemSetting('first_run_star_note', 'shown');
+        logger.info(
+          'If Libre WebUI is useful to you, a star helps others find it: https://github.com/libre-webui/libre-webui'
+        );
+      }
+    } catch {
+      // A read-only database must never affect startup.
     }
-  } catch {
-    // A missing table or read-only database must never affect startup.
-  }
+  })();
 
   // Open browser in production mode
   if (
@@ -714,31 +893,72 @@ server.listen({ port, host }, () => {
 
 // Graceful shutdown
 let shutdownStarted = false;
-const shutdown = (signal: 'SIGTERM' | 'SIGINT'): void => {
+const shutdown = async (signal: 'SIGTERM' | 'SIGINT'): Promise<void> => {
   if (shutdownStarted) return;
   shutdownStarted = true;
-  logger.info(`${signal} signal received: stopping Work containers`);
-  server.close(() => {
-    logger.info('HTTP server closed');
+  logger.info(`${signal} signal received: shutting down`);
+  const httpClosed = new Promise<void>(resolve => {
+    server.close(() => {
+      logger.info('HTTP server closed');
+      resolve();
+    });
   });
+  server.closeIdleConnections?.();
   const timeout = new Promise<'timeout'>(resolve => {
     const timer = setTimeout(() => resolve('timeout'), 15_000);
     timer.unref();
   });
-  void Promise.race([workAgentService.shutdown(), timeout]).then(result => {
-    if (result === 'timeout') {
-      logger.warn('Timed out waiting for Work containers to stop.');
-    } else if (result.failed > 0) {
-      logger.warn(
-        `Failed to stop ${result.failed} Work container(s) during shutdown.`
-      );
-    } else {
-      logger.info(`Stopped ${result.stopped} Work container(s).`);
-    }
+  const stopWork =
+    getPlatformRuntimeConfig().jobs.workerMode === 'embedded'
+      ? workAgentService.shutdown().then(summary => {
+          if (summary.failed > 0) {
+            throw new Error(
+              `Failed to stop ${summary.failed} Work container${summary.failed === 1 ? '' : 's'} during shutdown.`
+            );
+          }
+          logger.info(`Stopped ${summary.stopped} Work container(s).`);
+        })
+      : Promise.resolve();
+  const cleanup = Promise.allSettled([
+    registeredWebSockets.close(),
+    stopWork,
+    closeDurableJobRuntime(),
+    httpClosed,
+  ]).then(async initialResults => {
+    const pluginCacheResults = await Promise.allSettled([
+      closePluginCacheInvalidation(),
+    ]);
+    const platformResults = await Promise.allSettled([
+      closeDurableEventGateway(),
+      closeCoordinator(),
+      closePlatformStorageRuntime(),
+    ]);
+    // Close the selected persistence backend only after request, socket, and
+    // Work users have drained so SQL state is settled before backup.
+    const databaseResults = await Promise.allSettled([closePersistence()]);
+    return [
+      ...initialResults,
+      ...pluginCacheResults,
+      ...platformResults,
+      ...databaseResults,
+    ];
   });
+  const result = await Promise.race([cleanup, timeout]);
+  if (result === 'timeout') {
+    logger.error(
+      'Shutdown exceeded 15 seconds; forcing remaining sockets closed.'
+    );
+    server.closeAllConnections?.();
+    process.exit(1);
+  }
+  const rejected = result.filter(item => item.status === 'rejected');
+  if (rejected.length > 0) {
+    logger.warn(`${rejected.length} shutdown operation(s) failed.`);
+    process.exitCode = 1;
+  }
 };
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));
 
 export default app;

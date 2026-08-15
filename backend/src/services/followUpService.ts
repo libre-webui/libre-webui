@@ -73,7 +73,10 @@ export function parseFollowUpSuggestions(raw: string): string[] {
 }
 
 interface ChatServiceDependency {
-  getSession(sessionId: string, userId?: string): ChatSession | undefined;
+  getSession(
+    sessionId: string,
+    userId?: string
+  ): Promise<ChatSession | undefined>;
 }
 
 interface ChatGenerationServiceDependency {
@@ -144,7 +147,7 @@ export class FollowUpService {
     sessionId: string,
     userId = 'default'
   ): Promise<string[] | null> {
-    const session = this.chatService.getSession(sessionId, userId);
+    const session = await this.chatService.getSession(sessionId, userId);
     if (!session) {
       return null;
     }

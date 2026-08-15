@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import { userModel, UserPublic } from '../models/userModel.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -59,10 +59,29 @@ export const JWT_SECRET =
     return generatedSecret;
   })();
 
+export const parseJwtLifetime = (
+  value = process.env.JWT_EXPIRES_IN
+): SignOptions['expiresIn'] => {
+  const normalized = value?.trim();
+  if (!normalized) return '7d';
+  if (/^\d+$/.test(normalized)) return Number.parseInt(normalized, 10);
+  if (/^\d+(?:ms|s|m|h|d|w|y)$/i.test(normalized)) {
+    return normalized as SignOptions['expiresIn'];
+  }
+  logger.warn(
+    `Ignoring invalid JWT_EXPIRES_IN value "${normalized}"; using 7d.`
+  );
+  return '7d';
+};
+
+export const JWT_EXPIRES_IN = parseJwtLifetime();
+
 export interface AuthTokenPayload {
   userId: string;
   username: string;
   role: 'admin' | 'user';
+  iat?: number;
+  exp?: number;
 }
 
 export type AuthResult =
@@ -94,7 +113,7 @@ export class AuthService {
       role: user.role,
     };
 
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
   }
 
   /**
@@ -124,7 +143,7 @@ export class AuthService {
     const user = await userModel.verifyPassword(username, password);
     if (!user) return null;
 
-    const userPublic = userModel.getUserById(user.id);
+    const userPublic = await userModel.getUserById(user.id);
     if (!userPublic) return null;
     if (userPublic.status !== 'active') {
       return { status: 'pending', user: userPublic };
@@ -137,15 +156,15 @@ export class AuthService {
   /**
    * Get system information
    */
-  getSystemInfo(): SystemInfo {
-    const userCount = userModel.getUserCount();
+  async getSystemInfo(): Promise<SystemInfo> {
+    const userCount = await userModel.getUserCount();
 
     return {
       requiresAuth: true, // For now, always require auth
       hasUsers: userCount > 0,
       userCount,
       signupEnabled: canCreateLocalAccount(userCount),
-      agentsEnabled: getAgentsEnabled(),
+      agentsEnabled: await getAgentsEnabled(),
       version: packageVersion,
       turnstile: turnstileService.getPublicConfig(),
     };
@@ -157,8 +176,8 @@ export class AuthService {
   }
 
   /** Whether the local signup endpoint may create an account right now. */
-  canCreateLocalAccount(): boolean {
-    return canCreateLocalAccount(userModel.getUserCount());
+  async canCreateLocalAccount(): Promise<boolean> {
+    return canCreateLocalAccount(await userModel.getUserCount());
   }
 
   /**
@@ -168,7 +187,7 @@ export class AuthService {
     const payload = this.verifyToken(token);
     if (!payload) return null;
 
-    const user = userModel.getUserById(payload.userId);
+    const user = await userModel.getUserById(payload.userId);
     return user?.status === 'active' ? user : null;
   }
 
@@ -176,7 +195,7 @@ export class AuthService {
    * Get user by username
    */
   async getUserByUsername(username: string): Promise<UserPublic | null> {
-    const user = userModel.getUserByUsername(username);
+    const user = await userModel.getUserByUsername(username);
     if (!user) return null;
 
     return userModel.getUserById(user.id);
@@ -191,7 +210,7 @@ export class AuthService {
     email?: string
   ): Promise<AuthResult | null> {
     try {
-      if (!this.canCreateLocalAccount()) {
+      if (!(await this.canCreateLocalAccount())) {
         logger.warn(
           'Blocked account creation because registration is disabled'
         );

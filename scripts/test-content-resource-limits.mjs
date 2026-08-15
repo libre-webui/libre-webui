@@ -110,7 +110,7 @@ test('note payloads and per-user storage are bounded', async () => {
 
   for (let index = 0; index < limits.MAX_NOTES_PER_USER; index += 1) {
     const timestamp = now + index;
-    storageService.saveNote(
+    await storageService.saveNote(
       {
         id: `note-${index}`,
         title: `Note ${index}`,
@@ -123,31 +123,45 @@ test('note payloads and per-user storage are bounded', async () => {
   }
 
   assert.equal(
-    storageService.getNotes(user.id).length,
+    (await storageService.getNotes(user.id)).length,
     limits.MAX_NOTES_PER_USER
   );
-  assert.throws(
-    () =>
-      storageService.saveNote(
-        {
-          id: 'note-over-quota',
-          title: 'Over quota',
-          content: '',
-          createdAt: now,
-          updatedAt: now,
-        },
-        user.id
-      ),
+  await assert.rejects(
+    storageService.saveNote(
+      {
+        id: 'note-over-quota',
+        title: 'Over quota',
+        content: '',
+        createdAt: now,
+        updatedAt: now,
+      },
+      user.id
+    ),
     error =>
       error instanceof limits.ResourcePolicyError && error.statusCode === 409
   );
 
-  const existing = storageService.getNote('note-0', user.id);
+  const existing = await storageService.getNote('note-0', user.id);
   assert.ok(existing);
-  storageService.saveNote(
+  await storageService.saveNote(
     { ...existing, title: 'Updated while at quota', updatedAt: Date.now() },
     user.id
   );
+
+  response = await fetch(`${notesUrl}/note-0`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({ content: 'Patched content' }),
+  });
+  assert.equal(response.status, 200);
+  const patched = await response.json();
+  assert.equal(patched.data.title, 'Updated while at quota');
+  assert.equal(patched.data.content, 'Patched content');
+  const storedPatch = database
+    .prepare('SELECT title, content FROM notes WHERE id = ?')
+    .get('note-0');
+  assert.notEqual(storedPatch.title, 'Updated while at quota');
+  assert.notEqual(storedPatch.content, 'Patched content');
 
   response = await fetch(notesUrl, {
     method: 'POST',
@@ -162,25 +176,24 @@ test('note payloads and per-user storage are bounded', async () => {
   assert.equal(body.data.length, limits.MAX_NOTES_PER_USER);
 });
 
-test('session-folder names and per-user storage are bounded', () => {
-  assert.throws(
-    () => chatService.createSessionFolder({ unexpected: true }, user.id),
+test('session-folder names and per-user storage are bounded', async () => {
+  await assert.rejects(
+    chatService.createSessionFolder({ unexpected: true }, user.id),
     error =>
       error instanceof limits.ResourcePolicyError && error.statusCode === 400
   );
-  assert.throws(
-    () =>
-      chatService.createSessionFolder(
-        'x'.repeat(limits.MAX_SESSION_FOLDER_NAME_LENGTH + 1),
-        user.id
-      ),
+  await assert.rejects(
+    chatService.createSessionFolder(
+      'x'.repeat(limits.MAX_SESSION_FOLDER_NAME_LENGTH + 1),
+      user.id
+    ),
     error =>
       error instanceof limits.ResourcePolicyError && error.statusCode === 400
   );
 
   for (let index = 0; index < limits.MAX_SESSION_FOLDERS_PER_USER; index += 1) {
     const timestamp = now + index;
-    storageService.saveSessionFolder(
+    await storageService.saveSessionFolder(
       {
         id: `folder-${index}`,
         name: `Folder ${index}`,
@@ -192,19 +205,33 @@ test('session-folder names and per-user storage are bounded', () => {
   }
 
   assert.equal(
-    storageService.getSessionFolders(user.id).length,
+    (await storageService.getSessionFolders(user.id)).length,
     limits.MAX_SESSION_FOLDERS_PER_USER
   );
-  assert.throws(
-    () => chatService.createSessionFolder('Over quota', user.id),
+  await assert.rejects(
+    chatService.createSessionFolder('Over quota', user.id),
     error =>
       error instanceof limits.ResourcePolicyError && error.statusCode === 409
   );
 
-  const renamed = chatService.renameSessionFolder(
+  const renamed = await chatService.renameSessionFolder(
     'folder-0',
     'Renamed while at quota',
     user.id
   );
   assert.equal(renamed?.name, 'Renamed while at quota');
+});
+
+test('the welcome document picker matches the PDF and text upload contract', () => {
+  const picker = fs.readFileSync(
+    path.join(repoRoot, 'frontend', 'src', 'pages', 'ChatPage.tsx'),
+    'utf8'
+  );
+  const route = fs.readFileSync(
+    path.join(repoRoot, 'backend', 'src', 'routes', 'documents.ts'),
+    'utf8'
+  );
+  assert.match(picker, /accept='\.pdf,\.txt'/);
+  assert.doesNotMatch(picker, /accept='\.pdf,\.txt,\.md'/);
+  assert.match(route, /Only PDF and TXT files are allowed/);
 });

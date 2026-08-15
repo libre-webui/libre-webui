@@ -40,6 +40,43 @@ Docker host. Behavior that requires a trusted administrator to intentionally
 run a command is not, by itself, a vulnerability. Escaping the documented Work
 authorization or isolation boundaries is in scope.
 
+## CI security findings and triage
+
+Every push to `dev` or `main` and every pull request runs the normal Security
+workflow. It performs an npm dependency audit, Semgrep OWASP static analysis,
+repository secret scanning, source and runtime-image SBOM generation, and a
+high/critical container vulnerability scan. GitHub's configured
+JavaScript/TypeScript CodeQL default setup runs independently. The dependency
+audit fails on
+moderate-or-higher advisories. The container gate fails on high or critical
+findings that have a published fix. Scanner reports and CycloneDX SBOMs are
+retained as workflow artifacts for 30 days; SARIF findings are also uploaded to
+GitHub code scanning when the event has permission to do so.
+
+Treat a secret finding as an incident, not an ordinary false-positive queue:
+revoke or rotate the credential first, remove it from the current tree and Git
+history as appropriate, and notify affected operators through a private
+channel. Never paste the value into an issue, pull request, suppression file,
+or CI log.
+
+The pull-request owner must disposition every other blocking finding as one of:
+
+- **fixed**, with the correcting commit and a regression test when behavior is
+  involved;
+- **false positive**, with evidence that identifies the exact rule and safe
+  code or package; or
+- **accepted risk**, with a named owner, narrowly scoped suppression,
+  compensating control, and an expiry date.
+
+Do not add blanket scanner exclusions or lower a workflow severity threshold to
+make a build green. Prefer updating or overriding a vulnerable dependency. Any
+unavoidable Trivy suppression must identify the specific vulnerability or rule
+and record its owner, rationale, and expiry in the same pull request. Critical
+findings are release-blocking and require immediate triage; high findings are
+release-blocking and should be resolved within seven days; moderate dependency
+findings should be resolved within 30 days. Re-open an accepted risk when its
+expiry, package version, container base, or affected code changes.
+
 ## Safe harbor
 
 Good-faith research that avoids privacy violations, data destruction, service

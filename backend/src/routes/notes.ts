@@ -65,18 +65,18 @@ function readNoteField(
   return value;
 }
 
-router.get('/', (req: AuthenticatedRequest, res) => {
+router.get('/', async (req: AuthenticatedRequest, res) => {
   try {
     res.json({
       success: true,
-      data: storageService.getNotes(userIdOf(req)),
+      data: await storageService.getNotes(userIdOf(req)),
     } as ApiResponse<Note[]>);
   } catch (error) {
     sendNoteError(res, error, 'Failed to load notes');
   }
 });
 
-router.post('/', (req: AuthenticatedRequest, res) => {
+router.post('/', async (req: AuthenticatedRequest, res) => {
   try {
     const { title, content } = req.body as {
       title?: unknown;
@@ -90,53 +90,56 @@ router.post('/', (req: AuthenticatedRequest, res) => {
       createdAt: now,
       updatedAt: now,
     };
-    storageService.saveNote(note, userIdOf(req));
+    await storageService.saveNote(note, userIdOf(req));
     res.json({ success: true, data: note } as ApiResponse<Note>);
   } catch (error) {
     sendNoteError(res, error, 'Failed to create note');
   }
 });
 
-router.put('/:noteId', (req: AuthenticatedRequest, res) => {
+router.put('/:noteId', async (req: AuthenticatedRequest, res) => {
   try {
     const userId = userIdOf(req);
-    const existing = storageService.getNote(
+    const { title, content } = req.body as {
+      title?: unknown;
+      content?: unknown;
+    };
+    const updated = await storageService.updateNote(
       req.params.noteId as string,
+      {
+        ...(title !== undefined
+          ? {
+              title: readNoteField(title, 'title', MAX_NOTE_TITLE_LENGTH),
+            }
+          : {}),
+        ...(content !== undefined
+          ? {
+              content: readNoteField(
+                content,
+                'content',
+                MAX_NOTE_CONTENT_LENGTH
+              ),
+            }
+          : {}),
+      },
       userId
     );
-    if (!existing) {
+    if (!updated) {
       res.status(404).json({
         success: false,
         error: 'Note not found',
       } as ApiResponse);
       return;
     }
-    const { title, content } = req.body as {
-      title?: unknown;
-      content?: unknown;
-    };
-    const updated: Note = {
-      ...existing,
-      title:
-        title !== undefined
-          ? readNoteField(title, 'title', MAX_NOTE_TITLE_LENGTH)
-          : existing.title,
-      content:
-        content !== undefined
-          ? readNoteField(content, 'content', MAX_NOTE_CONTENT_LENGTH)
-          : existing.content,
-      updatedAt: Date.now(),
-    };
-    storageService.saveNote(updated, userId);
     res.json({ success: true, data: updated } as ApiResponse<Note>);
   } catch (error) {
     sendNoteError(res, error, 'Failed to update note');
   }
 });
 
-router.delete('/:noteId', (req: AuthenticatedRequest, res) => {
+router.delete('/:noteId', async (req: AuthenticatedRequest, res) => {
   try {
-    const deleted = storageService.deleteNote(
+    const deleted = await storageService.deleteNote(
       req.params.noteId as string,
       userIdOf(req)
     );

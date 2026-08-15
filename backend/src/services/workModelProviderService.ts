@@ -125,7 +125,7 @@ export class WorkModelProviderService {
   async availability(userId: string): Promise<WorkProviderAvailability> {
     const [ollamaAvailable, pluginAvailable] = await Promise.all([
       this.dependencies.ollama.isHealthy(),
-      Promise.resolve(this.hasConfiguredPlugin(userId)),
+      this.hasConfiguredPlugin(userId),
     ]);
     return { ollamaAvailable, pluginAvailable };
   }
@@ -144,7 +144,7 @@ export class WorkModelProviderService {
       );
     }
     if (provider.providerType === 'plugin') {
-      this.requireExactPlugin(provider.providerId, cleaned, userId);
+      await this.requireExactPlugin(provider.providerId, cleaned, userId);
       return;
     }
     if (
@@ -183,26 +183,29 @@ export class WorkModelProviderService {
     }
   }
 
-  getResponsesStateScope(
+  async getResponsesStateScope(
     model: string,
     provider: WorkProviderSelection,
     userId: string
-  ): string | undefined {
+  ): Promise<string | undefined> {
     if (provider.providerType !== 'plugin') return undefined;
     const providerId = provider.providerId?.trim();
     if (!providerId) return undefined;
-    const plugin = this.dependencies.plugins.getPlugin(providerId, userId);
+    const plugin = await this.dependencies.plugins.getPlugin(
+      providerId,
+      userId
+    );
     if (!plugin || !plugin.active || !plugin.model_map.includes(model)) {
       return undefined;
     }
-    const variables = this.dependencies.plugins.getPluginVariables(
+    const variables = await this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
     );
     const apiConfig = resolvePluginApiConfig(plugin, variables);
     if (apiConfig.apiMode !== 'responses') return undefined;
     const endpoint = applyModelEndpointTemplate(apiConfig.endpoint, model);
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    const apiKey = await this.dependencies.plugins.getApiKey(plugin, userId);
     if (pluginRequiresApiKey(plugin) && !apiKey) return undefined;
     return createOpenAIResponsesStateScope(
       plugin.id,
@@ -212,11 +215,11 @@ export class WorkModelProviderService {
     );
   }
 
-  getRoutingFingerprint(
+  async getRoutingFingerprint(
     model: string,
     provider: WorkProviderSelection,
     userId: string
-  ): string {
+  ): Promise<string> {
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
       return createHash('sha256')
@@ -230,15 +233,19 @@ export class WorkModelProviderService {
         .digest('hex');
     }
 
-    const plugin = this.requireExactPlugin(provider.providerId, model, userId);
-    const variables = this.dependencies.plugins.getPluginVariables(
+    const plugin = await this.requireExactPlugin(
+      provider.providerId,
+      model,
+      userId
+    );
+    const variables = await this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
     );
     const apiConfig = resolvePluginApiConfig(plugin, variables);
     const endpoint = applyModelEndpointTemplate(apiConfig.endpoint, model);
     assertSafePluginEndpoint(endpoint, 'Work model endpoint');
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    const apiKey = await this.dependencies.plugins.getApiKey(plugin, userId);
     return createHash('sha256')
       .update(
         JSON.stringify({
@@ -262,9 +269,11 @@ export class WorkModelProviderService {
   ): Promise<OllamaChatResponse> {
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
-      return this.dependencies.ollama.generateChatResponse(request, signal);
+      return this.dependencies.ollama.generateChatResponse(request, signal, {
+        userId,
+      });
     }
-    const plugin = this.requireExactPlugin(
+    const plugin = await this.requireExactPlugin(
       provider.providerId,
       request.model,
       userId
@@ -282,9 +291,9 @@ export class WorkModelProviderService {
     const streamRequest = { ...request, stream: true };
     if (provider.providerType === 'ollama') {
       assertOllamaProvider(provider);
-      return this.generateOllamaStream(streamRequest, observer, signal);
+      return this.generateOllamaStream(streamRequest, userId, observer, signal);
     }
-    const plugin = this.requireExactPlugin(
+    const plugin = await this.requireExactPlugin(
       provider.providerId,
       request.model,
       userId
@@ -298,23 +307,26 @@ export class WorkModelProviderService {
     );
   }
 
-  private hasConfiguredPlugin(userId: string): boolean {
-    return this.dependencies.plugins
-      .getActivePlugins(userId)
-      .filter(isWorkPlugin)
-      .some(
-        plugin =>
-          plugin.model_map.length > 0 &&
-          (!pluginRequiresApiKey(plugin) ||
-            Boolean(this.dependencies.plugins.getApiKey(plugin, userId)))
-      );
+  private async hasConfiguredPlugin(userId: string): Promise<boolean> {
+    for (const plugin of (
+      await this.dependencies.plugins.getActivePlugins(userId)
+    ).filter(isWorkPlugin)) {
+      if (
+        plugin.model_map.length > 0 &&
+        (!pluginRequiresApiKey(plugin) ||
+          Boolean(await this.dependencies.plugins.getApiKey(plugin, userId)))
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  private requireExactPlugin(
+  private async requireExactPlugin(
     providerId: string | undefined,
     model: string,
     userId: string
-  ): Plugin {
+  ): Promise<Plugin> {
     const cleanedProviderId = providerId?.trim();
     if (!cleanedProviderId) {
       throw new WorkModelProviderError(
@@ -323,7 +335,7 @@ export class WorkModelProviderService {
         'WORK_PLUGIN_ID_REQUIRED'
       );
     }
-    const plugin = this.dependencies.plugins.getPlugin(
+    const plugin = await this.dependencies.plugins.getPlugin(
       cleanedProviderId,
       userId
     );
@@ -344,11 +356,11 @@ export class WorkModelProviderService {
     }
     resolvePluginApiConfig(
       plugin,
-      this.dependencies.plugins.getPluginVariables(plugin, userId)
+      await this.dependencies.plugins.getPluginVariables(plugin, userId)
     );
     if (
       pluginRequiresApiKey(plugin) &&
-      !this.dependencies.plugins.getApiKey(plugin, userId)
+      !(await this.dependencies.plugins.getApiKey(plugin, userId))
     ) {
       throw new WorkModelProviderError(
         `API key not found for plugin ${plugin.id}.`,
@@ -367,7 +379,7 @@ export class WorkModelProviderService {
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
     if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
-      await codexOAuthService.ensureFreshToken();
+      await codexOAuthService.ensureFreshToken(signal);
       // The codex endpoint only answers as an SSE stream; aggregate it.
       return this.generatePluginStream(
         plugin,
@@ -377,7 +389,7 @@ export class WorkModelProviderService {
         signal
       );
     }
-    const variables = this.dependencies.plugins.getPluginVariables(
+    const variables = await this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
     );
@@ -387,7 +399,7 @@ export class WorkModelProviderService {
       request.model
     );
     assertSafePluginEndpoint(endpoint, 'Work model endpoint');
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    const apiKey = await this.dependencies.plugins.getApiKey(plugin, userId);
     if (pluginRequiresApiKey(plugin) && !apiKey) {
       throw new WorkModelProviderError(
         `API key not found for plugin ${plugin.id}.`,
@@ -468,6 +480,7 @@ export class WorkModelProviderService {
 
   private async generateOllamaStream(
     request: OllamaChatRequest,
+    userId: string,
     observer: WorkModelStreamObserver,
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
@@ -475,7 +488,8 @@ export class WorkModelProviderService {
     if (!stream) {
       const response = await this.dependencies.ollama.generateChatResponse(
         { ...request, stream: false },
-        signal
+        signal,
+        { userId }
       );
       if (response.message?.thinking) {
         observer.onReasoning?.(response.message.thinking);
@@ -544,7 +558,8 @@ export class WorkModelProviderService {
           },
           error => finish(error),
           () => finish(),
-          signal
+          signal,
+          { userId }
         )
         .catch(error =>
           finish(error instanceof Error ? error : new Error(String(error)))
@@ -561,9 +576,9 @@ export class WorkModelProviderService {
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
     if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
-      await codexOAuthService.ensureFreshToken();
+      await codexOAuthService.ensureFreshToken(signal);
     }
-    const variables = this.dependencies.plugins.getPluginVariables(
+    const variables = await this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
     );
@@ -573,7 +588,7 @@ export class WorkModelProviderService {
       request.model
     );
     assertSafePluginEndpoint(endpoint, 'Work model endpoint');
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    const apiKey = await this.dependencies.plugins.getApiKey(plugin, userId);
     if (pluginRequiresApiKey(plugin) && !apiKey) {
       throw new WorkModelProviderError(
         `API key not found for plugin ${plugin.id}.`,

@@ -24,11 +24,28 @@ test('Homebrew templates match current release packaging', () => {
   );
   assert.match(formula, /sha256 "\{\{NPM_SHA256\}\}"/);
   assert.match(formula, /depends_on "node"/);
+  assert.match(formula, /depends_on "libpq@16"/);
   assert.match(
     formula,
     /system "npm", "install", \*std_npm_args\(ignore_scripts: false\)/
   );
-  assert.match(formula, /bin\.install_symlink libexec\.glob\("bin\/\*"\)/);
+  assert.match(
+    formula,
+    /\(bin\/"libre-webui"\)\.write_env_script\([\s\S]*?libexec\/"bin\/libre-webui"[\s\S]*?formula_opt_bin\("libpq@16"\)/
+  );
+  assert.match(
+    formula,
+    /DATA_DIR:\s+File\.join\(Dir\.home, "\.libre-webui"\)/
+  );
+  assert.match(
+    formula,
+    /PLATFORM_PREFLIGHT_TMP_DIR:\s+\(var\/"libre-webui"\/"preflight"\)\.to_s/
+  );
+  assert.match(formula, /Data is stored in: ~\/\.libre-webui/);
+  assert.match(formula, /libre-webui recovery-check --help/);
+  assert.match(formula, /libre-webui backup --help/);
+  assert.match(formula, /libre-webui migrate-postgres --help/);
+  assert.match(formula, /bundled PostgreSQL 16 client tools/);
   assert.doesNotMatch(
     formula,
     /node@20|python-setuptools|npm", "run", "build"/

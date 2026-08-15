@@ -27,7 +27,11 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { getDatabase } from '../db.js';
+import {
+  getWorkPersistence,
+  WorkPersistenceError,
+  type WorkPolicyRow,
+} from '../platform/workPersistence/index.js';
 import { createLogger } from '../utils/logger.js';
 import {
   ResolvedWorkRuntimePolicy,
@@ -113,19 +117,7 @@ export interface WorkPolicyInput {
   idleTimeoutMs?: number | null;
 }
 
-interface PolicyRow {
-  id: string;
-  name: string;
-  image: string | null;
-  memory_limit: string | null;
-  cpu_limit: string | null;
-  pids_limit: number | null;
-  network_default: number | null;
-  workspace_size: string | null;
-  idle_timeout_ms: number | null;
-  created_at: number;
-  updated_at: number;
-}
+type PolicyRow = WorkPolicyRow;
 
 const invalid = (message: string): WorkRuntimeError =>
   new WorkRuntimeError(message, 400, 'WORK_POLICY_INVALID');
@@ -158,9 +150,9 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
   idleTimeoutMs: number | null;
 } {
   const name = typeof input.name === 'string' ? input.name.trim() : '';
-  if (!name || name.length > NAME_MAX_LENGTH) {
+  if (!name || name.length > NAME_MAX_LENGTH || name.includes('\u0000')) {
     throw invalid(
-      `Policy name is required and must be at most ${NAME_MAX_LENGTH} characters.`
+      `Policy name is required, cannot contain U+0000, and must be at most ${NAME_MAX_LENGTH} characters.`
     );
   }
 
@@ -270,48 +262,40 @@ export function validateWorkPolicyInput(input: WorkPolicyInput): {
 }
 
 export class WorkPolicyService {
-  list(): WorkPolicyRecord[] {
-    const rows = getDatabase()
-      .prepare('SELECT * FROM work_policies ORDER BY name ASC')
-      .all() as PolicyRow[];
+  async list(): Promise<WorkPolicyRecord[]> {
+    const rows = await getWorkPersistence().listPolicies();
     return rows.map(mapPolicy);
   }
 
-  get(id: string): WorkPolicyRecord | undefined {
-    const row = getDatabase()
-      .prepare('SELECT * FROM work_policies WHERE id = ?')
-      .get(id) as PolicyRow | undefined;
+  async get(id: string): Promise<WorkPolicyRecord | undefined> {
+    const row = await getWorkPersistence().findPolicy(id);
     return row ? mapPolicy(row) : undefined;
   }
 
-  create(input: WorkPolicyInput): WorkPolicyRecord {
+  async create(input: WorkPolicyInput): Promise<WorkPolicyRecord> {
     const fields = validateWorkPolicyInput(input);
     const id = uuidv4();
     const now = Date.now();
     try {
-      getDatabase()
-        .prepare(
-          `INSERT INTO work_policies (
-            id, name, image, memory_limit, cpu_limit, pids_limit,
-            network_default, workspace_size, idle_timeout_ms,
-            created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        )
-        .run(
-          id,
-          fields.name,
-          fields.image,
-          fields.memoryLimit,
-          fields.cpuLimit,
-          fields.pidsLimit,
+      await getWorkPersistence().insertPolicy({
+        id,
+        name: fields.name,
+        image: fields.image,
+        memory_limit: fields.memoryLimit,
+        cpu_limit: fields.cpuLimit,
+        pids_limit: fields.pidsLimit,
+        network_default:
           fields.networkDefault === null ? null : fields.networkDefault ? 1 : 0,
-          fields.workspaceSize,
-          fields.idleTimeoutMs,
-          now,
-          now
-        );
+        workspace_size: fields.workspaceSize,
+        idle_timeout_ms: fields.idleTimeoutMs,
+        created_at: now,
+        updated_at: now,
+      });
     } catch (error) {
-      if (/UNIQUE/.test(error instanceof Error ? error.message : '')) {
+      if (
+        error instanceof WorkPersistenceError &&
+        error.code === 'WORK_POLICY_NAME_CONFLICT'
+      ) {
         throw new WorkRuntimeError(
           `A Work policy named "${fields.name}" already exists.`,
           409,
@@ -320,13 +304,13 @@ export class WorkPolicyService {
       }
       throw error;
     }
-    const created = this.get(id);
+    const created = await this.get(id);
     if (!created) throw new Error('Work policy was not created.');
     return created;
   }
 
-  update(id: string, input: WorkPolicyInput): WorkPolicyRecord {
-    const existing = this.get(id);
+  async update(id: string, input: WorkPolicyInput): Promise<WorkPolicyRecord> {
+    const existing = await this.get(id);
     if (!existing) {
       throw new WorkRuntimeError(
         'This Work policy no longer exists.',
@@ -336,28 +320,25 @@ export class WorkPolicyService {
     }
     const fields = validateWorkPolicyInput(input);
     try {
-      getDatabase()
-        .prepare(
-          `UPDATE work_policies SET
-            name = ?, image = ?, memory_limit = ?, cpu_limit = ?,
-            pids_limit = ?, network_default = ?, workspace_size = ?,
-            idle_timeout_ms = ?, updated_at = ?
-          WHERE id = ?`
-        )
-        .run(
-          fields.name,
-          fields.image,
-          fields.memoryLimit,
-          fields.cpuLimit,
-          fields.pidsLimit,
+      await getWorkPersistence().updatePolicy({
+        id,
+        name: fields.name,
+        image: fields.image,
+        memory_limit: fields.memoryLimit,
+        cpu_limit: fields.cpuLimit,
+        pids_limit: fields.pidsLimit,
+        network_default:
           fields.networkDefault === null ? null : fields.networkDefault ? 1 : 0,
-          fields.workspaceSize,
-          fields.idleTimeoutMs,
-          Date.now(),
-          id
-        );
+        workspace_size: fields.workspaceSize,
+        idle_timeout_ms: fields.idleTimeoutMs,
+        created_at: existing.createdAt,
+        updated_at: Date.now(),
+      });
     } catch (error) {
-      if (/UNIQUE/.test(error instanceof Error ? error.message : '')) {
+      if (
+        error instanceof WorkPersistenceError &&
+        error.code === 'WORK_POLICY_NAME_CONFLICT'
+      ) {
         throw new WorkRuntimeError(
           `A Work policy named "${fields.name}" already exists.`,
           409,
@@ -366,7 +347,7 @@ export class WorkPolicyService {
       }
       throw error;
     }
-    const updated = this.get(id);
+    const updated = await this.get(id);
     if (!updated) throw new Error('Work policy was not updated.');
     return updated;
   }
@@ -376,24 +357,14 @@ export class WorkPolicyService {
    * defaults (the SET NULL semantic); their fingerprint changes, so their
    * sandbox is recreated with default limits on next use.
    */
-  remove(id: string): void {
-    const db = getDatabase();
-    const transaction = db.transaction(() => {
-      db.prepare(
-        'UPDATE work_tasks SET policy_id = NULL WHERE policy_id = ?'
-      ).run(id);
-      const result = db
-        .prepare('DELETE FROM work_policies WHERE id = ?')
-        .run(id);
-      if (result.changes === 0) {
-        throw new WorkRuntimeError(
-          'This Work policy no longer exists.',
-          404,
-          'WORK_POLICY_NOT_FOUND'
-        );
-      }
-    });
-    transaction();
+  async remove(id: string): Promise<void> {
+    if (!(await getWorkPersistence().deletePolicy(id))) {
+      throw new WorkRuntimeError(
+        'This Work policy no longer exists.',
+        404,
+        'WORK_POLICY_NOT_FOUND'
+      );
+    }
   }
 
   /**
@@ -402,11 +373,13 @@ export class WorkPolicyService {
    * unreachable database resolves to the global defaults — the hardened
    * baseline — with a warning.
    */
-  resolve(policyId: string | null | undefined): ResolvedWorkRuntimePolicy {
+  async resolve(
+    policyId: string | null | undefined
+  ): Promise<ResolvedWorkRuntimePolicy> {
     if (!policyId) return defaultRuntimePolicy;
     let policy: WorkPolicyRecord | undefined;
     try {
-      policy = this.get(policyId);
+      policy = await this.get(policyId);
     } catch (error) {
       logger.warn(`Could not resolve Work policy ${policyId}:`, error);
       return defaultRuntimePolicy;
@@ -429,14 +402,9 @@ export class WorkPolicyService {
   }
 
   /** Whether any policy enables idle-stop when the global knob is off. */
-  anyIdleTimeoutConfigured(): boolean {
+  async anyIdleTimeoutConfigured(): Promise<boolean> {
     try {
-      const row = getDatabase()
-        .prepare(
-          'SELECT 1 FROM work_policies WHERE idle_timeout_ms > 0 LIMIT 1'
-        )
-        .get();
-      return row !== undefined;
+      return await getWorkPersistence().anyIdleTimeoutConfigured();
     } catch {
       return false;
     }

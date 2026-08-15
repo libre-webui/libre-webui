@@ -111,36 +111,45 @@ class PreferencesService {
     // Don't automatically create preferences - let them be created per user when needed
   }
 
-  private ensurePreferencesExist(userId?: string) {
-    try {
-      const preferences = storageService.getPreferences(userId);
-      if (!preferences) {
-        // Create default preferences for this user if none exist
-        storageService.savePreferences(this.defaultPreferences, userId);
-        logger.debug(
-          `Created default preferences for user: ${userId || 'default'}`
-        );
-      }
-    } catch (error) {
-      logger.error('Failed to ensure preferences exist:', error);
-    }
+  private async mutatePreferences(
+    operation: (current: UserPreferences) => UserPreferences,
+    userId?: string
+  ): Promise<UserPreferences> {
+    const updated = await storageService.mutatePreferences(
+      current =>
+        operation(this.mergeWithDefaults(current ?? this.defaultPreferences)),
+      userId
+    );
+    if (!updated) throw new Error('No users found in database');
+    return this.mergeWithDefaults(updated);
   }
 
-  getPreferences(userId?: string): UserPreferences {
+  async getPreferences(userId?: string): Promise<UserPreferences> {
     try {
-      // Ensure preferences exist for this user
-      this.ensurePreferencesExist(userId);
-
-      const preferences = storageService.getPreferences(userId);
+      const preferences = await storageService.getPreferences(userId);
       if (preferences) {
         // Merge with defaults to ensure all fields exist
         return this.mergeWithDefaults(preferences);
+      }
+
+      // A first read and a concurrent patch must not race to replace one
+      // another. Initialize only if the serialized re-read is still empty.
+      const initialized = await storageService.mutatePreferences(
+        current =>
+          current ? undefined : this.mergeWithDefaults(this.defaultPreferences),
+        userId
+      );
+      if (initialized) {
+        logger.debug(
+          `Created default preferences for user: ${userId || 'default'}`
+        );
+        return this.mergeWithDefaults(initialized);
       }
     } catch (error) {
       logger.error('Failed to get preferences:', error);
     }
 
-    return this.defaultPreferences;
+    return this.mergeWithDefaults(this.defaultPreferences);
   }
 
   private mergeWithDefaults(preferences: UserPreferences): UserPreferences {
@@ -174,11 +183,10 @@ class PreferencesService {
     };
   }
 
-  updatePreferences(
-    updates: Partial<UserPreferences>,
-    userId?: string
+  private applyPreferenceUpdates(
+    currentPreferences: UserPreferences,
+    updates: Partial<UserPreferences>
   ): UserPreferences {
-    const currentPreferences = this.getPreferences(userId);
     const normalizedUpdates = { ...updates };
     const hasDefaultProviderUpdate =
       Object.prototype.hasOwnProperty.call(updates, 'defaultProviderType') ||
@@ -249,7 +257,7 @@ class PreferencesService {
       normalizedUpdates.titleSettings = titleSettings;
     }
 
-    const updatedPreferences: UserPreferences = {
+    return {
       ...currentPreferences,
       ...normalizedUpdates,
       theme: {
@@ -285,21 +293,28 @@ class PreferencesService {
           }
         : currentPreferences.imageGenSettings,
     };
+  }
 
+  async updatePreferences(
+    updates: Partial<UserPreferences>,
+    userId?: string
+  ): Promise<UserPreferences> {
     try {
-      storageService.savePreferences(updatedPreferences, userId);
-      return updatedPreferences;
+      return await this.mutatePreferences(
+        current => this.applyPreferenceUpdates(current, updates),
+        userId
+      );
     } catch (error) {
       logger.error('Failed to update preferences:', error);
       throw error;
     }
   }
 
-  setDefaultModel(
+  async setDefaultModel(
     model: string,
     userId?: string,
     providerSelection?: ChatProviderSelection
-  ): UserPreferences {
+  ): Promise<UserPreferences> {
     const provider = normalizeChatProviderSelection(providerSelection);
     return this.updatePreferences(
       {
@@ -311,35 +326,39 @@ class PreferencesService {
     );
   }
 
-  setTheme(
+  async setTheme(
     theme: 'light' | 'dark' | 'ophelia',
     userId?: string
-  ): UserPreferences {
+  ): Promise<UserPreferences> {
     return this.updatePreferences({ theme: { mode: theme } }, userId);
   }
 
-  setSystemMessage(systemMessage: string, userId?: string): UserPreferences {
+  async setSystemMessage(
+    systemMessage: string,
+    userId?: string
+  ): Promise<UserPreferences> {
     return this.updatePreferences({ systemMessage }, userId);
   }
 
-  getSystemMessage(userId?: string): string {
-    return this.getPreferences(userId).systemMessage;
+  async getSystemMessage(userId?: string): Promise<string> {
+    return (await this.getPreferences(userId)).systemMessage;
   }
 
-  getDefaultModel(userId?: string): string {
-    return this.getPreferences(userId).defaultModel;
+  async getDefaultModel(userId?: string): Promise<string> {
+    return (await this.getPreferences(userId)).defaultModel;
   }
 
-  getGenerationOptions(userId?: string): GenerationOptions {
-    return this.getPreferences(userId).generationOptions;
+  async getGenerationOptions(userId?: string): Promise<GenerationOptions> {
+    return (await this.getPreferences(userId)).generationOptions;
   }
 
   /** Whatever the user has pinned for one model, if anything. */
-  getModelGenerationOptions(
+  async getModelGenerationOptions(
     model: string,
     userId?: string
-  ): Partial<GenerationOptions> {
-    const overrides = this.getPreferences(userId).modelGenerationOptions;
+  ): Promise<Partial<GenerationOptions>> {
+    const overrides = (await this.getPreferences(userId))
+      .modelGenerationOptions;
     return overrides?.[model] ? { ...overrides[model] } : {};
   }
 
@@ -347,57 +366,43 @@ class PreferencesService {
    * Pins options for one model. Passing an empty object clears them, which is
    * what returning a model to its own recommended settings amounts to.
    */
-  setModelGenerationOptions(
+  async setModelGenerationOptions(
     model: string,
     options: Partial<GenerationOptions>,
     userId?: string
-  ): UserPreferences {
-    const preferences = this.getPreferences(userId);
-    const overrides = { ...(preferences.modelGenerationOptions ?? {}) };
-
-    if (Object.keys(options).length === 0) {
-      delete overrides[model];
-    } else {
-      overrides[model] = options;
-    }
-
-    return this.updatePreferences(
-      { modelGenerationOptions: overrides },
-      userId
-    );
+  ): Promise<UserPreferences> {
+    return this.mutatePreferences(current => {
+      const overrides = { ...(current.modelGenerationOptions ?? {}) };
+      if (Object.keys(options).length === 0) delete overrides[model];
+      else overrides[model] = options;
+      return this.applyPreferenceUpdates(current, {
+        modelGenerationOptions: overrides,
+      });
+    }, userId);
   }
 
-  getDefaultEmbeddingModel(userId?: string): string {
+  async getDefaultEmbeddingModel(userId?: string): Promise<string> {
     return (
-      this.getPreferences(userId).embeddingSettings?.model ||
+      (await this.getPreferences(userId)).embeddingSettings?.model ||
       this.defaultPreferences.embeddingSettings.model
     );
   }
 
-  updateGenerationOptions(
+  async updateGenerationOptions(
     options: Partial<GenerationOptions>,
     userId?: string
-  ): UserPreferences {
-    const currentPreferences = this.getPreferences(userId);
-    return this.updatePreferences(
-      {
-        generationOptions: {
-          ...currentPreferences.generationOptions,
-          ...options,
-        },
-      },
-      userId
-    );
-  }
-
-  setGenerationOptions(
-    options: GenerationOptions,
-    userId?: string
-  ): UserPreferences {
+  ): Promise<UserPreferences> {
     return this.updatePreferences({ generationOptions: options }, userId);
   }
 
-  resetGenerationOptions(userId?: string): UserPreferences {
+  async setGenerationOptions(
+    options: GenerationOptions,
+    userId?: string
+  ): Promise<UserPreferences> {
+    return this.updatePreferences({ generationOptions: options }, userId);
+  }
+
+  async resetGenerationOptions(userId?: string): Promise<UserPreferences> {
     return this.updatePreferences(
       {
         generationOptions: this.defaultPreferences.generationOptions,
@@ -406,34 +411,34 @@ class PreferencesService {
     );
   }
 
-  getEmbeddingSettings(userId?: string): EmbeddingSettings {
-    return this.getPreferences(userId).embeddingSettings;
+  async getEmbeddingSettings(userId?: string): Promise<EmbeddingSettings> {
+    return (await this.getPreferences(userId)).embeddingSettings;
   }
 
-  updateEmbeddingSettings(
+  async updateEmbeddingSettings(
     settings: Partial<EmbeddingSettings>,
     userId?: string
-  ): UserPreferences {
-    const currentPreferences = this.getPreferences(userId);
-    return this.updatePreferences(
-      {
-        embeddingSettings: {
-          ...currentPreferences.embeddingSettings,
-          ...settings,
-        },
-      },
+  ): Promise<UserPreferences> {
+    return this.mutatePreferences(
+      current =>
+        this.applyPreferenceUpdates(current, {
+          embeddingSettings: {
+            ...current.embeddingSettings,
+            ...settings,
+          },
+        }),
       userId
     );
   }
 
-  setEmbeddingSettings(
+  async setEmbeddingSettings(
     settings: EmbeddingSettings,
     userId?: string
-  ): UserPreferences {
+  ): Promise<UserPreferences> {
     return this.updatePreferences({ embeddingSettings: settings }, userId);
   }
 
-  resetEmbeddingSettings(userId?: string): UserPreferences {
+  async resetEmbeddingSettings(userId?: string): Promise<UserPreferences> {
     return this.updatePreferences(
       {
         embeddingSettings: this.defaultPreferences.embeddingSettings,
@@ -442,64 +447,102 @@ class PreferencesService {
     );
   }
 
-  resetToDefaults(userId?: string): UserPreferences {
+  async resetToDefaults(userId?: string): Promise<UserPreferences> {
     try {
-      storageService.savePreferences(this.defaultPreferences, userId);
-      return this.defaultPreferences;
+      return await this.mutatePreferences(
+        () => this.mergeWithDefaults(this.defaultPreferences),
+        userId
+      );
     } catch (error) {
       logger.error('Failed to reset preferences to defaults:', error);
       throw error;
     }
   }
 
-  importData(
+  async importData(
     data: ExportData,
     mergeStrategy: 'merge' | 'replace' = 'merge',
     userId?: string
-  ): UserPreferences {
+  ): Promise<UserPreferences> {
     try {
-      // Validate that the data has preferences
-      if (!data || !data.preferences) {
-        throw new Error('Invalid import data: missing preferences');
-      }
-
-      let updatedPreferences: UserPreferences;
-
-      if (mergeStrategy === 'replace') {
-        // Replace existing preferences entirely
-        updatedPreferences = this.mergeWithDefaults(
-          data.preferences as UserPreferences
-        );
-      } else {
-        // Merge with existing preferences
-        const currentPreferences = this.getPreferences(userId);
-        updatedPreferences = {
-          ...currentPreferences,
-          ...data.preferences,
-          generationOptions: {
-            ...currentPreferences.generationOptions,
-            ...data.preferences.generationOptions,
-          },
-          embeddingSettings: {
-            ...currentPreferences.embeddingSettings,
-            ...data.preferences.embeddingSettings,
-          },
-          imageGenSettings: data.preferences.imageGenSettings
-            ? {
-                ...currentPreferences.imageGenSettings,
-                ...data.preferences.imageGenSettings,
-              }
-            : currentPreferences.imageGenSettings,
-        };
-      }
-
-      // Save the updated preferences
-      storageService.savePreferences(updatedPreferences, userId);
-      return updatedPreferences;
+      this.assertImportData(data);
+      return await this.mutatePreferences(
+        current =>
+          this.prepareImportDataFromCurrent(data, mergeStrategy, current),
+        userId
+      );
     } catch (error) {
       logger.error('Failed to import preferences data:', error);
       throw error;
     }
+  }
+
+  private assertImportData(data: ExportData): void {
+    if (!data || !data.preferences) {
+      throw new Error('Invalid import data: missing preferences');
+    }
+  }
+
+  private prepareImportDataFromCurrent(
+    data: ExportData,
+    mergeStrategy: 'merge' | 'replace',
+    currentPreferences: UserPreferences
+  ): UserPreferences {
+    return this.prepareImportedPreferences(
+      data.preferences,
+      mergeStrategy,
+      currentPreferences
+    );
+  }
+
+  prepareImportedPreferences(
+    imported: Partial<UserPreferences>,
+    mergeStrategy: 'merge' | 'replace',
+    current: UserPreferences | null
+  ): UserPreferences {
+    if (mergeStrategy === 'replace') {
+      return this.mergeWithDefaults(imported as UserPreferences);
+    }
+    const currentPreferences = this.mergeWithDefaults(
+      current ?? this.defaultPreferences
+    );
+    return {
+      ...currentPreferences,
+      ...imported,
+      generationOptions: {
+        ...currentPreferences.generationOptions,
+        ...imported.generationOptions,
+      },
+      embeddingSettings: {
+        ...currentPreferences.embeddingSettings,
+        ...imported.embeddingSettings,
+      },
+      imageGenSettings: imported.imageGenSettings
+        ? {
+            ...currentPreferences.imageGenSettings,
+            ...imported.imageGenSettings,
+          }
+        : currentPreferences.imageGenSettings,
+    };
+  }
+
+  /**
+   * Calculate an archive preference import without writing it. Portable
+   * archive imports use this to include preferences in the same database
+   * transaction as every other archive section.
+   */
+  async prepareImportData(
+    data: ExportData,
+    mergeStrategy: 'merge' | 'replace' = 'merge',
+    userId?: string
+  ): Promise<UserPreferences> {
+    this.assertImportData(data);
+    const currentPreferences = await this.getPreferences(userId);
+    return this.prepareImportDataFromCurrent(
+      data,
+      mergeStrategy,
+      currentPreferences
+    );
   }
 }
 

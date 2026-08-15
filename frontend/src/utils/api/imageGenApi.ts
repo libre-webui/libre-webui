@@ -20,6 +20,36 @@ import { isDemoMode } from '@/utils/demoMode';
 import type { ImageGenImage, ImageGenModel } from '@/utils/imageGenModels';
 import { api, createDemoResponse } from './client';
 
+function abortable<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) {
+    return Promise.reject(
+      signal.reason ??
+        new DOMException('The operation was aborted', 'AbortError')
+    );
+  }
+
+  return new Promise((resolve, reject) => {
+    const onAbort = () => {
+      reject(
+        signal.reason ??
+          new DOMException('The operation was aborted', 'AbortError')
+      );
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+    promise.then(
+      value => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(value);
+      },
+      error => {
+        signal.removeEventListener('abort', onAbort);
+        reject(error);
+      }
+    );
+  });
+}
+
 // Image Generation API
 export type { ImageGenImage, ImageGenModel } from '@/utils/imageGenModels';
 export {
@@ -120,22 +150,28 @@ export const imageGenApi = {
 
   // Generate image
   generate: (
-    request: ImageGenRequest
+    request: ImageGenRequest,
+    signal?: AbortSignal
   ): Promise<ApiResponse<ImageGenResponse>> => {
     if (isDemoMode()) {
-      return createDemoResponse<ImageGenResponse>({
-        images: [
-          {
-            url: 'https://placehold.co/1024x1024/purple/white?text=Demo+Image',
-            revised_prompt: request.prompt,
-          },
-        ],
-        model: request.model,
-        pluginId: request.pluginId,
-      });
+      return abortable(
+        createDemoResponse<ImageGenResponse>({
+          images: [
+            {
+              url: 'https://placehold.co/1024x1024/purple/white?text=Demo+Image',
+              revised_prompt: request.prompt,
+            },
+          ],
+          model: request.model,
+          pluginId: request.pluginId,
+        }),
+        signal
+      );
     }
 
-    return api.post('/image-gen/generate', request).then(res => res.data);
+    return api
+      .post('/image-gen/generate', request, { signal })
+      .then(res => res.data);
   },
 
   // Gallery endpoints

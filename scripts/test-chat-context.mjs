@@ -958,8 +958,8 @@ test('streamPluginResponse rejects incomplete provider streams with their reason
 
 test('plugin model routing requires an active plugin and the current user credentials', async () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-plugin-route-'));
-  const pluginsDir = path.join(tempDir, 'plugins');
   const dataDir = path.join(tempDir, 'data');
+  const pluginsDir = path.join(dataDir, 'plugins');
   const previousCwd = process.cwd();
 
   const writePlugin = plugin => {
@@ -1005,6 +1005,7 @@ test('plugin model routing requires an active plugin and the current user creden
         ACTIVE_PLUGIN_TEST_KEY: undefined,
         INACTIVE_PLUGIN_TEST_KEY: undefined,
         DATA_DIR: dataDir,
+        PLUGINS_DIR: pluginsDir,
         ENCRYPTION_KEY:
           '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
       },
@@ -1056,7 +1057,7 @@ test('plugin model routing requires an active plugin and the current user creden
           ).default;
 
           for (const pluginId of ['active-plugin', 'inactive-plugin']) {
-            pluginService.installPlugin(
+            await pluginService.installPlugin(
               JSON.parse(
                 fs.readFileSync(
                   path.join(pluginsDir, `${pluginId}.json`),
@@ -1071,12 +1072,12 @@ test('plugin model routing requires an active plugin and the current user creden
             true
           );
           assert.equal(
-            credentialsService.setApiKey(
+            await credentialsService.setApiKey(
               'active-plugin',
               'alice-key',
               'alice',
-              pluginService.getCredentialRoutingAuthFingerprint(
-                pluginService.getPlugin('active-plugin', 'alice'),
+              await pluginService.getCredentialRoutingAuthFingerprint(
+                await pluginService.getPlugin('active-plugin', 'alice'),
                 'alice'
               )
             ),
@@ -1886,10 +1887,13 @@ test('generated titles never leak model thinking', () => {
   }
 
   // Ordinary titles pass through untouched.
-  assert.deepEqual(sanitizeGeneratedTitleResult('Garden Planning Help', source), {
-    title: 'Garden Planning Help',
-    usedFallback: false,
-  });
+  assert.deepEqual(
+    sanitizeGeneratedTitleResult('Garden Planning Help', source),
+    {
+      title: 'Garden Planning Help',
+      usedFallback: false,
+    }
+  );
 
   // The prompt itself tells reasoning models to keep their thinking out.
   assert.match(buildTitlePrompt(source), /do not think out loud/i);

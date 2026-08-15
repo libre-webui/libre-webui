@@ -17,6 +17,12 @@
 
 import axios from 'axios';
 import { Plugin, TTSConfig } from '../types/index.js';
+import {
+  acquireSharedCapacity,
+  combineAbortSignals,
+  SharedCapacityExceededError,
+  type SharedCapacityReservation,
+} from '../platform/coordination/sharedAdmission.js';
 import { createLogger } from '../utils/logger.js';
 import {
   assertSafePluginEndpoint,
@@ -25,32 +31,171 @@ import {
   resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import {
+  validateTTSVoiceCloneAudio,
+  type TTSVoiceCloneAudioFile,
+} from '../utils/ttsVoiceCloneUpload.js';
 import type { PluginUsageEventInput } from './pluginUsageService.js';
 
 const logger = createLogger('plugin-tts');
 
 type PluginVariables = Record<string, string | number | boolean>;
 
+export const TTS_MAX_PROVIDER_RESPONSE_BYTES = 50 * 1024 * 1024;
+const MAX_ACTIVE_TTS_REQUESTS_PER_USER = 6;
+const MAX_ACTIVE_TTS_REQUESTS_GLOBAL = 16;
+
+export class TTSConcurrencyError extends Error {
+  constructor() {
+    super('Too many concurrent TTS provider requests');
+    this.name = 'TTSConcurrencyError';
+  }
+}
+
+async function reserveTTSProviderRequest(
+  userId?: string
+): Promise<SharedCapacityReservation> {
+  const owner = userId?.trim() || 'authenticated-user';
+  try {
+    return await acquireSharedCapacity({
+      limits: [
+        {
+          scope: 'provider-tts.global',
+          capacity: MAX_ACTIVE_TTS_REQUESTS_GLOBAL,
+        },
+        {
+          scope: 'provider-tts.user',
+          subject: owner,
+          capacity: MAX_ACTIVE_TTS_REQUESTS_PER_USER,
+        },
+      ],
+    });
+  } catch (error) {
+    if (error instanceof SharedCapacityExceededError) {
+      throw new TTSConcurrencyError();
+    }
+    throw error;
+  }
+}
+
+function cancellationReason(signal: AbortSignal | undefined, fallback: string) {
+  return signal?.reason instanceof Error && signal.reason.name !== 'AbortError'
+    ? signal.reason
+    : new Error(fallback);
+}
+
+const TTS_STANDARD_REQUEST_FIELDS = new Set([
+  'model',
+  'model_id',
+  'input',
+  'text',
+  'voice',
+  'voice_settings',
+  'response_format',
+  'speed',
+  'reference_audio',
+  'reference_text',
+]);
+
+function getForwardedTTSVariables(
+  config: TTSConfig | undefined,
+  variables: PluginVariables
+): Record<string, string | number | boolean> {
+  const forwarded: Record<string, string | number | boolean> = {};
+  for (const name of config?.request_variables || []) {
+    if (
+      typeof name !== 'string' ||
+      name.length === 0 ||
+      !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name) ||
+      TTS_STANDARD_REQUEST_FIELDS.has(name) ||
+      name === '__proto__' ||
+      name === 'constructor' ||
+      name === 'prototype'
+    ) {
+      continue;
+    }
+    const value = variables[name];
+    if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      forwarded[name] = value;
+    }
+  }
+  return forwarded;
+}
+
+function describeTTSRequestFailure(error: unknown):
+  | string
+  | {
+      message: string;
+      code?: string;
+      status?: number;
+    } {
+  if (!axios.isAxiosError(error)) {
+    return error instanceof Error ? error.message : 'Unknown TTS error';
+  }
+
+  return {
+    message: error.message,
+    ...(typeof error.code === 'string' ? { code: error.code } : {}),
+    ...(typeof error.response?.status === 'number'
+      ? { status: error.response.status }
+      : {}),
+  };
+}
+
 export interface PluginTTSServiceDependencies {
-  getAllPlugins(userId?: string): Plugin[];
-  getPlugin(id: string, userId?: string): Plugin | null;
-  getApiKey(plugin: Plugin, userId?: string): string | null;
-  getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
+  getAllPlugins(userId?: string): Plugin[] | Promise<Plugin[]>;
+  getPlugin(
+    id: string,
+    userId?: string
+  ): Plugin | null | Promise<Plugin | null>;
+  getApiKey(
+    plugin: Plugin,
+    userId?: string
+  ): string | null | Promise<string | null>;
+  getPluginVariables(
+    plugin: Plugin,
+    userId?: string
+  ): PluginVariables | Promise<PluginVariables>;
   validateEndpointUrl(endpoint: string): string;
   recordUsage?(usage: PluginUsageEventInput): void;
+}
+
+export interface VoiceCloneRequestOptions {
+  referenceText?: string;
+  response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
+  pluginId?: string;
+  userId?: string;
+  signal?: AbortSignal;
+}
+
+export class TTSProviderResponseError extends Error {
+  constructor(
+    readonly providerStatus: number,
+    message: string
+  ) {
+    super(message);
+    this.name = 'TTSProviderResponseError';
+  }
 }
 
 export class PluginTTSService {
   constructor(private readonly deps: PluginTTSServiceDependencies) {}
 
-  getPluginForTTS(
+  async getPluginForTTS(
     model: string,
     pluginId?: string,
     userId?: string
-  ): Plugin | null {
-    const allPlugins = this.deps.getAllPlugins(userId);
+  ): Promise<Plugin | null> {
+    const allPlugins = await this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
+      if (!plugin.active) {
+        continue;
+      }
       if (pluginId && plugin.id !== pluginId) {
         continue;
       }
@@ -62,23 +207,21 @@ export class PluginTTSService {
             (ttsCapability.config as Record<string, unknown> | undefined)
               ?.no_auth_required === true;
 
-          const apiKey = this.deps.getApiKey(plugin, userId);
+          const apiKey = await this.deps.getApiKey(plugin, userId);
           if (!apiKey && !noAuthRequired) {
             continue;
           }
 
           return plugin;
         }
-      }
-
-      if (plugin.type === 'tts' && plugin.model_map.includes(model)) {
+      } else if (plugin.type === 'tts' && plugin.model_map.includes(model)) {
         const noAuthRequired =
           (
             plugin.capabilities?.tts?.config as
               Record<string, unknown> | undefined
           )?.no_auth_required === true;
 
-        const apiKey = this.deps.getApiKey(plugin, userId);
+        const apiKey = await this.deps.getApiKey(plugin, userId);
         if (!apiKey && !noAuthRequired) {
           continue;
         }
@@ -90,15 +233,20 @@ export class PluginTTSService {
     return null;
   }
 
-  getAvailableTTSModels(userId?: string): {
-    model: string;
-    plugin: string;
-    config?: TTSConfig;
-  }[] {
+  async getAvailableTTSModels(userId?: string): Promise<
+    {
+      model: string;
+      plugin: string;
+      config?: TTSConfig;
+    }[]
+  > {
     const models: { model: string; plugin: string; config?: TTSConfig }[] = [];
-    const allPlugins = this.deps.getAllPlugins(userId);
+    const allPlugins = await this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
+      if (!plugin.active) {
+        continue;
+      }
       const ttsCapability = plugin.capabilities?.tts;
       const supportedModels =
         ttsCapability?.model_map ||
@@ -110,7 +258,7 @@ export class PluginTTSService {
       const noAuthRequired =
         (ttsCapability?.config as Record<string, unknown> | undefined)
           ?.no_auth_required === true;
-      const apiKey = this.deps.getApiKey(plugin, userId);
+      const apiKey = await this.deps.getApiKey(plugin, userId);
       if (apiKey || noAuthRequired) {
         for (const model of supportedModels) {
           models.push({
@@ -134,11 +282,12 @@ export class PluginTTSService {
       speed?: number;
       pluginId?: string;
       userId?: string;
+      signal?: AbortSignal;
     } = {}
   ): Promise<Buffer> {
     validatePluginModel(model);
 
-    const plugin = this.getPluginForTTS(
+    const plugin = await this.getPluginForTTS(
       model,
       options.pluginId,
       options.userId
@@ -157,7 +306,7 @@ export class PluginTTSService {
       endpoint = plugin.endpoint;
     }
 
-    const ttsVars = this.deps.getPluginVariables(plugin, options.userId);
+    const ttsVars = await this.deps.getPluginVariables(plugin, options.userId);
     const endpointVariable =
       ttsConfig?.endpoint_variable ||
       (plugin.type === 'tts' ? 'endpoint' : 'tts_endpoint');
@@ -175,7 +324,7 @@ export class PluginTTSService {
       (ttsConfig as Record<string, unknown> | undefined)?.no_auth_required ===
       true;
 
-    const apiKey = this.deps.getApiKey(plugin, options.userId);
+    const apiKey = await this.deps.getApiKey(plugin, options.userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
@@ -200,25 +349,9 @@ export class PluginTTSService {
 
     const maxChars = ttsConfig?.max_characters || 4096;
     if (input.length > maxChars) {
-      const chunks = splitTextForTTS(input, maxChars);
-      logger.debug(
-        `[TTS] Input too long (${input.length} chars), splitting into ${chunks.length} chunks`
+      throw new Error(
+        `TTS input exceeds maximum length of ${maxChars} characters; split it into batches`
       );
-
-      const audioBuffers: Buffer[] = [];
-      for (let i = 0; i < chunks.length; i++) {
-        logger.debug(
-          `[TTS] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`
-        );
-        const chunkAudio = await this.executeTTSRequest(
-          model,
-          chunks[i],
-          options
-        );
-        audioBuffers.push(chunkAudio);
-      }
-
-      return Buffer.concat(audioBuffers);
     }
 
     let payload: Record<string, unknown>;
@@ -284,12 +417,22 @@ export class PluginTTSService {
       processedEndpoint = endpoint.replace('{model}', sanitizedModel);
     }
 
+    payload = {
+      ...getForwardedTTSVariables(ttsConfig, ttsVars),
+      ...payload,
+    };
+
     assertSafePluginEndpoint(processedEndpoint, 'TTS endpoint URL constructed');
     Object.assign(
       headers,
       buildPluginAttributionHeaders(plugin, processedEndpoint)
     );
 
+    const providerSlot = await reserveTTSProviderRequest(options.userId);
+    const providerSignal = combineAbortSignals(
+      options.signal,
+      providerSlot.signal
+    );
     const startedAt = Date.now();
     try {
       const response = await axios.post(processedEndpoint, payload, {
@@ -297,6 +440,8 @@ export class PluginTTSService {
         timeout: 120000,
         responseType: 'arraybuffer',
         maxRedirects: 0,
+        maxContentLength: TTS_MAX_PROVIDER_RESPONSE_BYTES,
+        signal: providerSignal,
       });
 
       const audio = Buffer.from(response.data);
@@ -313,18 +458,31 @@ export class PluginTTSService {
       });
       return audio;
     } catch (error: unknown) {
+      const cancelled = axios.isCancel(error) || providerSignal.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
         pluginName: plugin.name,
         capability: 'tts',
         model,
-        status: 'error',
+        status: cancelled ? 'cancelled' : 'error',
         durationMs: Date.now() - startedAt,
         inputUnits: input.length,
         unitKind: 'characters',
       });
-      logger.error(`TTS plugin request failed for ${plugin.id}:`, error);
+      if (!cancelled) {
+        logger.error(
+          `TTS plugin request failed for ${plugin.id}:`,
+          describeTTSRequestFailure(error)
+        );
+      }
+
+      if (cancelled) {
+        throw cancellationReason(
+          providerSignal,
+          'TTS provider request was cancelled'
+        );
+      }
 
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as {
@@ -357,7 +515,8 @@ export class PluginTTSService {
           }
         }
 
-        throw new Error(
+        throw new TTSProviderResponseError(
+          axiosError.response.status,
           `TTS API error: ${axiosError.response.status} - ${errorMessage}`
         );
       } else if (error && typeof error === 'object' && 'request' in error) {
@@ -369,11 +528,219 @@ export class PluginTTSService {
           error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`TTS error: ${errorMessage}`);
       }
+    } finally {
+      await providerSlot.release();
     }
   }
 
-  getTTSConfig(pluginId: string, userId?: string): TTSConfig | null {
-    const plugin = this.deps.getPlugin(pluginId, userId);
+  async executeVoiceCloneRequest(
+    model: string,
+    input: string,
+    referenceAudio: TTSVoiceCloneAudioFile,
+    options: VoiceCloneRequestOptions = {}
+  ): Promise<Buffer> {
+    validatePluginModel(model);
+
+    const plugin = await this.getPluginForTTS(
+      model,
+      options.pluginId,
+      options.userId
+    );
+    if (!plugin) {
+      throw new Error(`No TTS plugin found for model: ${model}`);
+    }
+
+    const ttsConfig = plugin.capabilities?.tts?.config;
+    if (!ttsConfig?.supports_voice_cloning) {
+      throw new Error(`TTS plugin ${plugin.id} does not support voice cloning`);
+    }
+    if (!ttsConfig.voice_clone_endpoint) {
+      throw new Error(
+        `TTS plugin ${plugin.id} has no voice clone endpoint configured`
+      );
+    }
+    if (!input || input.trim().length === 0) {
+      throw new Error('TTS input text is required for voice cloning');
+    }
+
+    const maxChars = ttsConfig.max_characters || 4096;
+    if (input.length > maxChars) {
+      throw new Error(
+        `TTS input exceeds maximum length of ${maxChars} characters; split it into batches`
+      );
+    }
+
+    const referenceText = options.referenceText?.trim();
+    if (ttsConfig.clone_requires_transcript && !referenceText) {
+      throw new Error(
+        `TTS plugin ${plugin.id} requires a reference audio transcript for voice cloning`
+      );
+    }
+
+    const validatedAudio = validateTTSVoiceCloneAudio(
+      referenceAudio,
+      ttsConfig
+    );
+    const ttsVars = await this.deps.getPluginVariables(plugin, options.userId);
+    let endpoint = ttsConfig.voice_clone_endpoint;
+    const endpointVariable = ttsConfig.voice_clone_endpoint_variable;
+    if (endpointVariable) {
+      const endpointOverride = ttsVars[endpointVariable];
+      if (
+        typeof endpointOverride === 'string' &&
+        endpointOverride.trim().length > 0
+      ) {
+        endpoint = this.deps.validateEndpointUrl(endpointOverride.trim());
+      } else if (endpointOverride !== undefined && endpointOverride !== '') {
+        throw new Error(
+          `Voice clone endpoint override ${endpointVariable} must be a URL string`
+        );
+      }
+    }
+
+    const processedEndpoint = applyModelEndpointTemplate(endpoint, model);
+    assertSafePluginEndpoint(
+      processedEndpoint,
+      'TTS voice clone endpoint URL constructed'
+    );
+
+    const apiKey = await this.deps.getApiKey(plugin, options.userId);
+    if (!apiKey && !ttsConfig.no_auth_required) {
+      throw new Error(
+        `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
+      );
+    }
+
+    const headers: Record<string, string> = buildPluginAttributionHeaders(
+      plugin,
+      processedEndpoint
+    );
+    if (apiKey && plugin.auth.header) {
+      headers[plugin.auth.header] = plugin.auth.prefix
+        ? `${plugin.auth.prefix}${apiKey}`
+        : apiKey;
+    }
+
+    const responseFormat =
+      options.response_format || ttsConfig.default_format || 'wav';
+    const form = new FormData();
+    for (const [name, value] of Object.entries(
+      getForwardedTTSVariables(ttsConfig, ttsVars)
+    )) {
+      form.append(name, String(value));
+    }
+    form.append('model', model);
+    form.append('input', input);
+    const audioBytes = Uint8Array.from(validatedAudio.buffer);
+    const audioBlob = new Blob([audioBytes], {
+      type: validatedAudio.mimetype,
+    });
+    const originalBaseName =
+      validatedAudio.originalname.split(/[\\/]/).pop() ||
+      `reference.${validatedAudio.format}`;
+    const safeFilename =
+      originalBaseName.replace(/[\r\n"]/g, '_').slice(0, 255) ||
+      `reference.${validatedAudio.format}`;
+    form.append('reference_audio', audioBlob, safeFilename);
+    if (referenceText) {
+      form.append('reference_text', referenceText);
+    }
+    form.append('response_format', responseFormat);
+
+    const providerSlot = await reserveTTSProviderRequest(options.userId);
+    const providerSignal = combineAbortSignals(
+      options.signal,
+      providerSlot.signal
+    );
+    const startedAt = Date.now();
+    try {
+      const response = await axios.post(processedEndpoint, form, {
+        headers,
+        timeout: 120000,
+        responseType: 'arraybuffer',
+        maxRedirects: 0,
+        maxContentLength: TTS_MAX_PROVIDER_RESPONSE_BYTES,
+        signal: providerSignal,
+      });
+      const audio = Buffer.from(response.data);
+      this.deps.recordUsage?.({
+        userId: options.userId,
+        pluginId: plugin.id,
+        pluginName: plugin.name,
+        capability: 'tts',
+        model,
+        status: 'success',
+        durationMs: Date.now() - startedAt,
+        inputUnits: input.length,
+        unitKind: 'characters',
+      });
+      return audio;
+    } catch (error: unknown) {
+      const cancelled = axios.isCancel(error) || providerSignal.aborted;
+      this.deps.recordUsage?.({
+        userId: options.userId,
+        pluginId: plugin.id,
+        pluginName: plugin.name,
+        capability: 'tts',
+        model,
+        status: cancelled ? 'cancelled' : 'error',
+        durationMs: Date.now() - startedAt,
+        inputUnits: input.length,
+        unitKind: 'characters',
+      });
+      if (!cancelled) {
+        logger.error(
+          `TTS voice clone request failed for ${plugin.id}:`,
+          describeTTSRequestFailure(error)
+        );
+      }
+
+      if (cancelled) {
+        throw cancellationReason(
+          providerSignal,
+          'TTS voice clone request was cancelled'
+        );
+      }
+
+      if (axios.isAxiosError(error) && error.response) {
+        let errorMessage = error.response.statusText;
+        if (error.response.data) {
+          try {
+            const errorText = Buffer.from(error.response.data).toString('utf8');
+            const errorJson = JSON.parse(errorText);
+            errorMessage =
+              errorJson.error?.message ||
+              errorJson.detail ||
+              errorJson.message ||
+              errorMessage;
+          } catch {
+            const rawText = Buffer.from(error.response.data).toString('utf8');
+            if (rawText) errorMessage = rawText.substring(0, 200);
+          }
+        }
+        throw new TTSProviderResponseError(
+          error.response.status,
+          `TTS voice clone API error: ${error.response.status} - ${errorMessage}`
+        );
+      }
+      if (axios.isAxiosError(error) && error.request) {
+        throw new Error(
+          `TTS voice clone connection error: Unable to reach ${processedEndpoint}`
+        );
+      }
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`TTS voice clone error: ${errorMessage}`);
+    } finally {
+      await providerSlot.release();
+    }
+  }
+
+  async getTTSConfig(
+    pluginId: string,
+    userId?: string
+  ): Promise<TTSConfig | null> {
+    const plugin = await this.deps.getPlugin(pluginId, userId);
     if (!plugin?.active) return null;
 
     if (plugin.capabilities?.tts?.config) {

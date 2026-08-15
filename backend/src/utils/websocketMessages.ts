@@ -43,6 +43,7 @@ type WebSocketMessageType =
   | 'user_message'
   | 'assistant_chunk'
   | 'assistant_complete'
+  | 'assistant_cancelled'
   | 'tool_status'
   | 'error';
 
@@ -89,6 +90,14 @@ export function sendAssistantComplete(
   return sendWebSocketMessage(ws, 'assistant_complete', data);
 }
 
+export function sendAssistantCancelled(
+  ws: WebSocketLike,
+  data: unknown,
+  options?: SendOptions
+): boolean {
+  return sendWebSocketMessage(ws, 'assistant_cancelled', data, options);
+}
+
 export function sendToolStatus(
   ws: WebSocketLike,
   data: ToolStatusData,
@@ -129,15 +138,26 @@ export async function streamAssistantFakeChunks(
   ws: WebSocketLike,
   content: string,
   messageId?: string,
-  delayMs: number = 100
+  delayMs: number = 100,
+  signal?: AbortSignal
 ): Promise<void> {
   const chunks = buildAssistantFakeStreamChunks(content, messageId);
 
   for (const [index, chunk] of chunks.entries()) {
+    if (signal?.aborted) return;
     sendAssistantChunk(ws, chunk);
 
     if (index < chunks.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, delayMs));
+      await new Promise<void>(resolve => {
+        const timer = setTimeout(finish, delayMs);
+        const abort = () => finish();
+        function finish() {
+          clearTimeout(timer);
+          signal?.removeEventListener('abort', abort);
+          resolve();
+        }
+        signal?.addEventListener('abort', abort, { once: true });
+      });
     }
   }
 }

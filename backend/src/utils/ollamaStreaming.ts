@@ -27,6 +27,10 @@ import {
   sendError,
   type WebSocketLike,
 } from './websocketMessages.js';
+import {
+  ChatGenerationCancelledError,
+  isChatGenerationCancelled,
+} from './chatCancellation.js';
 
 export interface OllamaChatStreamGenerator {
   generateChatStreamResponse(
@@ -46,6 +50,7 @@ export interface StreamOllamaChatResponseOptions {
   messageId?: string;
   /** Attributes the metered usage of this call to a user. */
   userId?: string;
+  signal?: AbortSignal;
 }
 
 export interface StreamOllamaChatResponseResult {
@@ -62,12 +67,16 @@ export async function streamOllamaChatResponse({
   streamSource,
   messageId,
   userId,
+  signal,
 }: StreamOllamaChatResponseOptions): Promise<StreamOllamaChatResponseResult> {
   return new Promise(resolve => {
     let content = '';
     let thinking = '';
     let statistics: GenerationStatistics | undefined;
     let resolved = false;
+    let terminalResult:
+      Omit<StreamOllamaChatResponseResult, 'content'> | undefined;
+    let providerErrorReported = false;
     const thinkingTimer = new ThinkingPhaseTimer();
 
     const finish = (
@@ -78,6 +87,7 @@ export async function streamOllamaChatResponse({
       }
 
       resolved = true;
+      signal?.removeEventListener('abort', handleAbort);
       resolve({
         content,
         ...(thinking ? { thinking } : {}),
@@ -87,7 +97,7 @@ export async function streamOllamaChatResponse({
     };
 
     const handleChunk = (chunk: OllamaChatResponse) => {
-      if (resolved) {
+      if (resolved || terminalResult || signal?.aborted) {
         return;
       }
 
@@ -125,30 +135,67 @@ export async function streamOllamaChatResponse({
             thinking_duration_ms: thinkingDurationMs,
           };
         }
-        finish({ completed: true });
+        terminalResult = { completed: true };
       }
     };
 
     const handleError = (error: Error) => {
-      if (resolved) {
+      if (resolved || terminalResult) {
         return;
       }
 
-      sendError(ws, { error: error.message });
-      finish({ completed: false, error });
+      if (!isChatGenerationCancelled(error, signal) && !providerErrorReported) {
+        providerErrorReported = true;
+        sendError(ws, { error: error.message });
+      }
+      terminalResult = { completed: false, error };
     };
 
-    streamSource
-      .generateChatStreamResponse(
-        request,
-        handleChunk,
-        handleError,
-        () => finish({ completed: true }),
-        undefined,
-        { userId }
-      )
-      .catch(error => {
+    const handleAbort = () => {
+      const error =
+        signal?.reason instanceof Error
+          ? signal.reason
+          : new ChatGenerationCancelledError();
+      // Keep the wrapper pending until the provider transport promise settles.
+      // The caller releases its generation/provider slots after this promise,
+      // so resolving at AbortSignal delivery would permit an overlapping retry
+      // while an abort-ignoring transport is still tearing down.
+      terminalResult = { completed: false, error };
+    };
+
+    signal?.addEventListener('abort', handleAbort, { once: true });
+    if (signal?.aborted) {
+      handleAbort();
+    }
+
+    void (async () => {
+      try {
+        await streamSource.generateChatStreamResponse(
+          request,
+          handleChunk,
+          handleError,
+          () => {
+            if (!terminalResult) terminalResult = { completed: true };
+          },
+          signal,
+          { userId }
+        );
+      } catch (error) {
         handleError(error instanceof Error ? error : new Error(String(error)));
-      });
+      } finally {
+        finish(
+          terminalResult ||
+            (signal?.aborted
+              ? {
+                  completed: false,
+                  error:
+                    signal.reason instanceof Error
+                      ? signal.reason
+                      : new ChatGenerationCancelledError(),
+                }
+              : { completed: true })
+        );
+      }
+    })();
   });
 }

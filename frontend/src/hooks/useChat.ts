@@ -30,6 +30,19 @@ import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
 import toast from 'react-hot-toast';
 import { isChatModelSelectionAvailable } from '@/utils/chatModelSelection';
+import {
+  acceptDurableGenerationJob,
+  cancelDurableChatGeneration,
+  cancelDurableChatGenerationByIdentity,
+  type DurableChatCancellationDecision,
+  type DurableGenerationReservation,
+  enqueueDurableChatGeneration,
+  reconcileCancelledDurableGeneration,
+  reconcileCompletedDurableGeneration,
+  releaseDurableGenerationCancellationFence,
+  requestDurableGenerationStop,
+  streamDurableChatGeneration,
+} from '@/utils/api/chatEventStream';
 
 const logger = createLogger('use-chat');
 const DEFAULT_SESSION_TITLES = new Set(['New Chat', 'New Demo Session']);
@@ -51,9 +64,15 @@ export const useChat = (sessionId: string) => {
     updateMessageWithStatistics,
     applySessionTitle,
     setGeneratingTitleForSession,
+    removeMessage,
   } = useChatStore();
   const { setIsGenerating } = useAppStore();
   const streamingMessageIdRef = useRef<string | null>(null);
+  const cancelRequestedMessageIdsRef = useRef<Set<string>>(new Set());
+  const demoGenerationTimerRef = useRef<number | null>(null);
+  const durableGenerationRef = useRef<DurableGenerationReservation | null>(
+    null
+  );
 
   // Track the first user message for auto-title generation
   const firstUserMessageRef = useRef<string | null>(null);
@@ -110,6 +129,70 @@ export const useChat = (sessionId: string) => {
     setStreamingMessage('');
     setStreamingThinking('');
   }, [cancelQueuedStreamingFrame]);
+
+  const reloadCompletedDurableGeneration = useCallback(
+    async (targetSessionId: string, assistantMessageId: string) => {
+      await reconcileCompletedDurableGeneration({
+        sessionId: targetSessionId,
+        assistantMessageId,
+        loadSession: async requestedSessionId => {
+          const response = await chatApi.getSession(requestedSessionId);
+          if (!response.success || !response.data) {
+            throw new Error(
+              response.error || 'Completed chat session could not be reloaded.'
+            );
+          }
+          return response.data;
+        },
+        applySession: authoritativeSession => {
+          useChatStore.setState(state => {
+            const sessions = state.sessions.some(
+              session => session.id === authoritativeSession.id
+            )
+              ? state.sessions.map(session =>
+                  session.id === authoritativeSession.id
+                    ? authoritativeSession
+                    : session
+                )
+              : [authoritativeSession, ...state.sessions];
+            return {
+              sessions,
+              currentSession:
+                state.currentSession?.id === authoritativeSession.id
+                  ? authoritativeSession
+                  : state.currentSession,
+            };
+          });
+        },
+      });
+    },
+    []
+  );
+
+  const settleDurableCancellation = useCallback(
+    async (
+      targetSessionId: string,
+      assistantMessageId: string,
+      decision: DurableChatCancellationDecision,
+      options: { retainForContinuation?: boolean } = {}
+    ) => {
+      if (decision.completed) {
+        await reloadCompletedDurableGeneration(
+          targetSessionId,
+          assistantMessageId
+        );
+      } else {
+        removeMessage(targetSessionId, assistantMessageId);
+      }
+      releaseDurableGenerationCancellationFence({
+        assistantMessageId,
+        cancelledMessageIds: cancelRequestedMessageIdsRef.current,
+        decision,
+        retainForContinuation: options.retainForContinuation,
+      });
+    },
+    [reloadCompletedDurableGeneration, removeMessage]
+  );
 
   const clearQueuedTitleGeneration = useCallback(() => {
     firstUserMessageRef.current = null;
@@ -190,15 +273,50 @@ export const useChat = (sessionId: string) => {
 
   // Clean up handlers when component unmounts or sessionId changes
   useEffect(() => {
+    const cancelledMessageIds = cancelRequestedMessageIdsRef.current;
     return () => {
+      const assistantMessageId = streamingMessageIdRef.current;
+      const durable = durableGenerationRef.current;
+      if (durable) {
+        const retainForContinuation = !durable.jobId;
+        requestDurableGenerationStop(durable, cancelledMessageIds);
+        void cancelDurableChatGenerationByIdentity(
+          durable.sessionId,
+          durable.assistantMessageId
+        )
+          .then(decision =>
+            settleDurableCancellation(
+              durable.sessionId,
+              durable.assistantMessageId,
+              decision,
+              { retainForContinuation }
+            )
+          )
+          .catch(error =>
+            logger.error('Failed to cancel durable chat generation:', error)
+          );
+        if (durable.jobId) {
+          void cancelDurableChatGeneration(durable.jobId).catch(error =>
+            logger.error('Failed to cancel durable chat generation:', error)
+          );
+        }
+        durableGenerationRef.current = null;
+      }
+      if (assistantMessageId && sessionId && !durable) {
+        websocketService.send({
+          type: 'chat_cancel',
+          data: { sessionId, assistantMessageId },
+        });
+      }
       // Clean up WebSocket handlers when component unmounts
       websocketService.offMessage('user_message');
       websocketService.offMessage('assistant_chunk');
       websocketService.offMessage('assistant_complete');
+      websocketService.offMessage('assistant_cancelled');
       websocketService.offMessage('tool_status');
       websocketService.offMessage('error');
     };
-  }, [sessionId]);
+  }, [sessionId, settleDurableCancellation]);
 
   // Set up WebSocket handlers once per session
   useEffect(() => {
@@ -207,6 +325,7 @@ export const useChat = (sessionId: string) => {
       websocketService.offMessage('user_message');
       websocketService.offMessage('assistant_chunk');
       websocketService.offMessage('assistant_complete');
+      websocketService.offMessage('assistant_cancelled');
       websocketService.offMessage('tool_status');
       websocketService.offMessage('error');
       return;
@@ -221,7 +340,7 @@ export const useChat = (sessionId: string) => {
       // Type guard to ensure data has the expected structure
       const chunkData = data as {
         content: string;
-        total: string;
+        total?: string;
         thinking?: string;
         thinkingTotal?: string;
         done: boolean;
@@ -231,19 +350,39 @@ export const useChat = (sessionId: string) => {
       // Use messageId from backend if provided, otherwise fall back to current streaming ID
       const messageId = chunkData.messageId || streamingMessageIdRef.current;
 
+      // A cancelled stream can still have buffered network chunks in flight.
+      // Never let them overwrite a newer retry or resurrect stopped UI.
+      if (
+        (messageId && cancelRequestedMessageIdsRef.current.has(messageId)) ||
+        (messageId &&
+          streamingMessageIdRef.current &&
+          messageId !== streamingMessageIdRef.current)
+      ) {
+        return;
+      }
+
       if (messageId) {
-        // Always update the content buffer and UI immediately for responsive streaming
-        streamingContentRef.current = chunkData.total;
+        // Always update the content buffer and UI immediately for responsive
+        // streaming. WebSocket chunks carry the accumulated total; durable
+        // replay events carry only their delta, and the buffer accumulates
+        // them in event order.
+        if (typeof chunkData.total === 'string') {
+          streamingContentRef.current = chunkData.total;
+        } else if (typeof chunkData.content === 'string') {
+          streamingContentRef.current += chunkData.content;
+        }
         if (typeof chunkData.thinkingTotal === 'string') {
           streamingThinkingRef.current = chunkData.thinkingTotal;
+        } else if (typeof chunkData.thinking === 'string') {
+          streamingThinkingRef.current += chunkData.thinking;
         }
         trackThinkingProgress(
           messageId,
-          chunkData.total,
+          streamingContentRef.current,
           streamingThinkingRef.current
         );
         publishStreamingMessage(
-          chunkData.total,
+          streamingContentRef.current,
           chunkData.done,
           streamingThinkingRef.current
         );
@@ -313,14 +452,35 @@ export const useChat = (sessionId: string) => {
         !!completeData.statistics
       );
 
+      // Use messageId from backend if provided, otherwise fall back to current
+      // streaming ID. A completion can win a close cancellation race; update
+      // that message without clearing a newer generation's state.
+      const messageId = completeData.messageId || streamingMessageIdRef.current;
+      const isCurrentGeneration =
+        !messageId || messageId === streamingMessageIdRef.current;
+      if (messageId) {
+        cancelRequestedMessageIdsRef.current.delete(messageId);
+      }
+
+      if (!isCurrentGeneration) {
+        if (messageId) {
+          updateMessageWithStatistics(
+            sessionId,
+            messageId,
+            completeData.content,
+            completeData.statistics,
+            completeData.providerMetadata,
+            completeData.thinking
+          );
+        }
+        return;
+      }
+
       // Clear streaming state immediately for better UX
       setIsStreaming(false);
       resetVisibleStreamingMessage();
       setIsGenerating(false);
       setToolActivities([]);
-
-      // Use messageId from backend if provided, otherwise fall back to current streaming ID
-      const messageId = completeData.messageId || streamingMessageIdRef.current;
 
       if (completeData && messageId) {
         // Ensure final update with the complete content
@@ -362,6 +522,32 @@ export const useChat = (sessionId: string) => {
         clearTimeout(storeUpdateTimer.current);
       }
       lastStoreUpdate.current = 0;
+    });
+
+    websocketService.onMessage('assistant_cancelled', (data: unknown) => {
+      const cancelledData = data as {
+        assistantMessageId?: string;
+        sessionId?: string;
+        cancelled?: boolean;
+      };
+      const messageId = cancelledData.assistantMessageId;
+      if (!messageId || cancelledData.sessionId !== sessionId) return;
+      if (!cancelRequestedMessageIdsRef.current.has(messageId)) return;
+
+      cancelRequestedMessageIdsRef.current.delete(messageId);
+      // Cancelled assistant placeholders are client-side only: the backend
+      // deliberately does not persist a partial reply as a completed answer.
+      removeMessage(sessionId, messageId);
+
+      if (streamingMessageIdRef.current !== messageId) return;
+      setIsStreaming(false);
+      resetVisibleStreamingMessage();
+      setStreamingMessageId(null);
+      setIsGenerating(false);
+      setToolActivities([]);
+      streamingMessageIdRef.current = null;
+      streamingContentRef.current = '';
+      streamingThinkingRef.current = '';
     });
 
     websocketService.onMessage('error', (data: unknown) => {
@@ -416,6 +602,7 @@ export const useChat = (sessionId: string) => {
     cancelQueuedStreamingFrame,
     maybeGenerateTitle,
     clearQueuedTitleGeneration,
+    removeMessage,
   ]);
 
   const sendMessage = useCallback(
@@ -429,6 +616,7 @@ export const useChat = (sessionId: string) => {
       if (!sessionId || (!content.trim() && (!images || images.length === 0)))
         return;
 
+      let attemptedDurableAssistantId: string | undefined;
       try {
         const chatState = useChatStore.getState();
         const session = chatState.currentSession;
@@ -447,6 +635,8 @@ export const useChat = (sessionId: string) => {
         setIsGenerating(true);
         setIsStreaming(true);
         resetVisibleStreamingMessage();
+        streamingContentRef.current = '';
+        streamingThinkingRef.current = '';
 
         // Reset batching timers for new stream
         if (storeUpdateTimer.current) {
@@ -475,8 +665,10 @@ export const useChat = (sessionId: string) => {
           titleGenerationSessionRef.current = null;
         }
 
+        const userMessageId = generateId();
         // Add user message immediately
         addMessage(sessionId, {
+          id: userMessageId,
           role: 'user',
           content: content.trim(),
           images: images, // Store images in the message if provided
@@ -484,6 +676,7 @@ export const useChat = (sessionId: string) => {
 
         // Create placeholder for assistant message
         const assistantMessageId = generateId();
+        attemptedDurableAssistantId = assistantMessageId;
         streamingMessageIdRef.current = assistantMessageId;
         streamingThinkingRef.current = '';
         setStreamingMessageId(assistantMessageId);
@@ -497,7 +690,11 @@ export const useChat = (sessionId: string) => {
         if (isDemoMode()) {
           const demoResponse = `Demo response for: ${content.trim()}`;
 
-          window.setTimeout(() => {
+          demoGenerationTimerRef.current = window.setTimeout(() => {
+            demoGenerationTimerRef.current = null;
+            if (cancelRequestedMessageIdsRef.current.has(assistantMessageId)) {
+              return;
+            }
             updateMessage(sessionId, assistantMessageId, demoResponse);
             setIsStreaming(false);
             resetVisibleStreamingMessage();
@@ -508,6 +705,68 @@ export const useChat = (sessionId: string) => {
             streamingContentRef.current = '';
             streamingThinkingRef.current = '';
           }, 500);
+          return;
+        }
+
+        if (!isPrivateSession) {
+          const abort = new AbortController();
+          const reservation: DurableGenerationReservation = {
+            sessionId,
+            assistantMessageId,
+            abort,
+          };
+          durableGenerationRef.current = reservation;
+          const queued = await enqueueDurableChatGeneration({
+            sessionId,
+            message: content.trim(),
+            images,
+            userMessageId,
+            assistantMessageId,
+            options: {
+              ...(session?.settings?.generationOptions ?? {}),
+              ...(format !== undefined ? { format } : {}),
+            },
+            webSearch: webSearch === true,
+            signal: abort.signal,
+          });
+          const disposition = await acceptDurableGenerationJob(
+            reservation,
+            queued
+          );
+          if (disposition !== 'stream') {
+            await settleDurableCancellation(sessionId, assistantMessageId, {
+              completed: disposition === 'completed',
+              pending: false,
+              state: disposition === 'completed' ? 'succeeded' : 'cancelled',
+            });
+            if (durableGenerationRef.current === reservation) {
+              durableGenerationRef.current = null;
+            }
+            return;
+          }
+          await streamDurableChatGeneration({
+            sessionId,
+            assistantMessageId,
+            signal: abort.signal,
+            onEvent: payload => {
+              if (payload.type === 'chunk') {
+                websocketService.dispatchMessage('assistant_chunk', payload);
+              } else if (payload.type === 'done') {
+                websocketService.dispatchMessage('assistant_complete', payload);
+              } else if (payload.type === 'error') {
+                websocketService.dispatchMessage('error', {
+                  ...payload,
+                  sessionId,
+                });
+              }
+            },
+          });
+          if (
+            durableGenerationRef.current?.assistantMessageId ===
+            assistantMessageId
+          ) {
+            durableGenerationRef.current = null;
+          }
           return;
         }
 
@@ -555,6 +814,39 @@ export const useChat = (sessionId: string) => {
           },
         });
       } catch (error: unknown) {
+        const durableAssistantMessageId = attemptedDurableAssistantId;
+        if (durableAssistantMessageId) {
+          const cancellationHandled = await reconcileCancelledDurableGeneration(
+            {
+              sessionId,
+              assistantMessageId: durableAssistantMessageId,
+              cancelledMessageIds: cancelRequestedMessageIdsRef.current,
+              settle: decision =>
+                settleDurableCancellation(
+                  sessionId,
+                  durableAssistantMessageId,
+                  decision
+                ),
+              onError: cancelError =>
+                logger.error(
+                  'Failed to resolve cancelled durable chat generation:',
+                  cancelError
+                ),
+            }
+          );
+          if (cancellationHandled) {
+            if (
+              durableGenerationRef.current?.assistantMessageId ===
+              durableAssistantMessageId
+            ) {
+              durableGenerationRef.current = null;
+            }
+            return;
+          }
+        }
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
         logger.error('Failed to send message:', error);
         setIsStreaming(false);
         resetVisibleStreamingMessage();
@@ -572,19 +864,80 @@ export const useChat = (sessionId: string) => {
       setIsGenerating,
       resetVisibleStreamingMessage,
       maybeGenerateTitle,
+      settleDurableCancellation,
     ]
   );
 
   const stopGeneration = useCallback(() => {
+    const assistantMessageId = streamingMessageIdRef.current;
+    if (assistantMessageId) {
+      cancelRequestedMessageIdsRef.current.add(assistantMessageId);
+      if (demoGenerationTimerRef.current !== null) {
+        window.clearTimeout(demoGenerationTimerRef.current);
+        demoGenerationTimerRef.current = null;
+        removeMessage(sessionId, assistantMessageId);
+        cancelRequestedMessageIdsRef.current.delete(assistantMessageId);
+      } else if (
+        durableGenerationRef.current?.assistantMessageId === assistantMessageId
+      ) {
+        const durable = durableGenerationRef.current;
+        const retainForContinuation = !durable.jobId;
+        requestDurableGenerationStop(durable);
+        void cancelDurableChatGenerationByIdentity(
+          sessionId,
+          assistantMessageId
+        )
+          .then(async decision => {
+            await settleDurableCancellation(
+              sessionId,
+              assistantMessageId,
+              decision,
+              { retainForContinuation }
+            );
+            if (durableGenerationRef.current === durable) {
+              durableGenerationRef.current = null;
+            }
+          })
+          .catch(error =>
+            logger.error('Failed to cancel durable chat generation:', error)
+          );
+        if (durable.jobId) {
+          void cancelDurableChatGeneration(durable.jobId).catch(error =>
+            logger.error('Failed to cancel durable chat generation:', error)
+          );
+        }
+      } else {
+        const sent = websocketService.send({
+          type: 'chat_cancel',
+          data: { sessionId, assistantMessageId },
+        });
+        if (!sent) {
+          removeMessage(sessionId, assistantMessageId);
+          cancelRequestedMessageIdsRef.current.delete(assistantMessageId);
+        }
+      }
+    }
+
+    if (storeUpdateTimer.current) {
+      clearTimeout(storeUpdateTimer.current);
+      storeUpdateTimer.current = undefined;
+    }
     setIsStreaming(false);
     resetVisibleStreamingMessage();
     setStreamingMessageId(null);
     setIsGenerating(false);
     streamingMessageIdRef.current = null;
+    streamingContentRef.current = '';
     streamingThinkingRef.current = '';
-    // Note: WebSocket connection doesn't have a built-in stop mechanism
-    // You might want to implement this on the backend
-  }, [setIsGenerating, resetVisibleStreamingMessage]);
+    clearQueuedTitleGeneration();
+  }, [
+    setIsGenerating,
+    resetVisibleStreamingMessage,
+    removeMessage,
+    sessionId,
+    clearQueuedTitleGeneration,
+    settleDurableCancellation,
+  ]);
 
   // Regenerate the last assistant message (creates a new branch)
   const regenerateLastMessage = useCallback(async () => {
@@ -634,11 +987,14 @@ export const useChat = (sessionId: string) => {
 
     const lastUserMessage = messages[lastUserMessageIndex];
     const lastAssistantMessage = messages[lastAssistantMessageIndex];
+    let attemptedDurableAssistantId: string | undefined;
 
     try {
       setIsGenerating(true);
       setIsStreaming(true);
       resetVisibleStreamingMessage();
+      streamingContentRef.current = '';
+      streamingThinkingRef.current = '';
 
       // Reset batching timers for new stream
       if (storeUpdateTimer.current) {
@@ -648,6 +1004,7 @@ export const useChat = (sessionId: string) => {
 
       // Generate a new message ID for the branch
       const newBranchMessageId = generateId();
+      attemptedDurableAssistantId = newBranchMessageId;
       streamingMessageIdRef.current = newBranchMessageId;
       streamingThinkingRef.current = '';
       setStreamingMessageId(newBranchMessageId);
@@ -663,13 +1020,73 @@ export const useChat = (sessionId: string) => {
         isActive: true,
       });
 
-      // Connect WebSocket if not connected
+      const isPrivateSession = session.isPrivate === true;
+      if (!isPrivateSession) {
+        const abort = new AbortController();
+        const reservation: DurableGenerationReservation = {
+          sessionId,
+          assistantMessageId: newBranchMessageId,
+          abort,
+        };
+        durableGenerationRef.current = reservation;
+        const queued = await enqueueDurableChatGeneration({
+          sessionId,
+          message: lastUserMessage.content,
+          images: lastUserMessage.images,
+          userMessageId: lastUserMessage.id,
+          assistantMessageId: newBranchMessageId,
+          options: session.settings?.generationOptions ?? {},
+          webSearch: false,
+          regenerate: true,
+          originalMessageId: lastAssistantMessage.id,
+          signal: abort.signal,
+        });
+        const disposition = await acceptDurableGenerationJob(
+          reservation,
+          queued
+        );
+        if (disposition !== 'stream') {
+          await settleDurableCancellation(sessionId, newBranchMessageId, {
+            completed: disposition === 'completed',
+            pending: false,
+            state: disposition === 'completed' ? 'succeeded' : 'cancelled',
+          });
+          if (durableGenerationRef.current === reservation) {
+            durableGenerationRef.current = null;
+          }
+          return;
+        }
+        await streamDurableChatGeneration({
+          sessionId,
+          assistantMessageId: newBranchMessageId,
+          signal: abort.signal,
+          onEvent: payload => {
+            if (payload.type === 'chunk') {
+              websocketService.dispatchMessage('assistant_chunk', payload);
+            } else if (payload.type === 'done') {
+              websocketService.dispatchMessage('assistant_complete', payload);
+            } else if (payload.type === 'error') {
+              websocketService.dispatchMessage('error', {
+                ...payload,
+                sessionId,
+              });
+            }
+          },
+        });
+        if (
+          durableGenerationRef.current?.assistantMessageId ===
+          newBranchMessageId
+        ) {
+          durableGenerationRef.current = null;
+        }
+        return;
+      }
+
+      // Private chats deliberately remain process-local and never persist.
       if (!websocketService.isConnected) {
         await websocketService.connect();
       }
 
-      // Send chat stream request to regenerate with branching
-      const isPrivateSession = session.isPrivate === true;
       const messageHistory = isPrivateSession
         ? messages
             .filter(message => message.role !== 'system')
@@ -703,6 +1120,34 @@ export const useChat = (sessionId: string) => {
         },
       });
     } catch (error: unknown) {
+      const durableAssistantMessageId = attemptedDurableAssistantId;
+      if (durableAssistantMessageId) {
+        const cancellationHandled = await reconcileCancelledDurableGeneration({
+          sessionId,
+          assistantMessageId: durableAssistantMessageId,
+          cancelledMessageIds: cancelRequestedMessageIdsRef.current,
+          settle: decision =>
+            settleDurableCancellation(
+              sessionId,
+              durableAssistantMessageId,
+              decision
+            ),
+          onError: cancelError =>
+            logger.error(
+              'Failed to resolve cancelled durable chat regeneration:',
+              cancelError
+            ),
+        });
+        if (cancellationHandled) {
+          if (
+            durableGenerationRef.current?.assistantMessageId ===
+            durableAssistantMessageId
+          ) {
+            durableGenerationRef.current = null;
+          }
+          return;
+        }
+      }
       logger.error('Failed to regenerate message:', error);
       setIsStreaming(false);
       resetVisibleStreamingMessage();
@@ -712,7 +1157,13 @@ export const useChat = (sessionId: string) => {
       streamingThinkingRef.current = '';
       toast.error('Failed to regenerate message');
     }
-  }, [sessionId, setIsGenerating, resetVisibleStreamingMessage, addMessage]);
+  }, [
+    sessionId,
+    setIsGenerating,
+    resetVisibleStreamingMessage,
+    addMessage,
+    settleDurableCancellation,
+  ]);
 
   // Select a specific branch by message ID (for side-by-side UI)
   const selectBranch = useCallback(

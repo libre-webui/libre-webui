@@ -49,19 +49,36 @@
   color-scheme: light;
 
   /* Quiet, semantic neutrals. Components should consume these roles rather
-     than choosing a numeric gray for each theme. */
-  --color-canvas: 247 247 245;
-  --color-surface: 252 252 250;
-  --color-surface-subtle: 241 241 238;
-  --color-surface-raised: 255 255 253;
+     than choosing a numeric gray for each theme. Values follow a cool
+     "bluish neutral" ramp: white canvas, #F9FAFB panels, hairline borders. */
+  --color-canvas: 255 255 255;
+  --color-surface: 255 255 255;
+  --color-surface-subtle: 245 246 247;
+  --color-surface-raised: 255 255 255;
   --color-surface-overlay: 255 255 255;
-  --color-surface-inverse: 24 24 22;
-  --color-ink: 24 24 22;
-  --color-ink-muted: 98 98 91;
-  --color-ink-subtle: 136 136 128;
-  --color-ink-inverse: 250 250 247;
-  --color-line: 226 226 221;
-  --color-line-strong: 203 203 196;
+  --color-surface-inverse: 15 17 21;
+  --color-ink: 15 17 21;
+  --color-ink-muted: 97 102 107;
+  --color-ink-subtle: 129 133 140;
+  --color-ink-inverse: 249 250 251;
+  --color-line: 233 236 242;
+  --color-line-strong: 207 211 214;
+
+  /* Sidebar column + interaction fills (hover/active are alpha washes so they
+     compose over any fill). */
+  --color-sidebar: 249 250 251;
+  --interactive-hover: rgba(38, 49, 72, 0.06);
+  --interactive-active: rgba(38, 49, 72, 0.1);
+  --interactive-hover-solid: 241 243 245;
+  --nav-item-active: 235 238 242;
+
+  /* Elevation + overlay mask. */
+  --shadow-lv2:
+    0 4px 12px 0 rgba(0, 0, 0, 0.02), 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+  --shadow-lv3:
+    0 0 1px 0 rgba(0, 0, 0, 0.2), 0 0 4px 0 rgba(0, 0, 0, 0.02),
+    0 12px 32px 0 rgba(0, 0, 0, 0.08);
+  --overlay-mask: rgba(0, 0, 0, 0.24);
 
   /* Runtime-compatible legacy neutral scales. Accent adaptation can replace
      these without requiring component-specific theme variants. */
@@ -78,34 +95,34 @@
   --color-gray-900: 17 24 39;
   --color-gray-950: 11 16 32;
 
-  --color-dark-25: 32 32 35;
-  --color-dark-50: 10 10 11;
-  --color-dark-100: 17 17 19;
-  --color-dark-200: 24 24 27;
-  --color-dark-300: 39 39 42;
-  --color-dark-400: 63 63 70;
-  --color-dark-500: 113 113 122;
-  --color-dark-600: 161 161 170;
-  --color-dark-700: 212 212 216;
-  --color-dark-800: 228 228 231;
-  --color-dark-900: 244 244 245;
-  --color-dark-950: 255 255 255;
+  --color-dark-25: 44 44 46;
+  --color-dark-50: 21 21 23;
+  --color-dark-100: 27 27 28;
+  --color-dark-200: 35 35 36;
+  --color-dark-300: 53 54 56;
+  --color-dark-400: 67 69 74;
+  --color-dark-500: 97 102 107;
+  --color-dark-600: 129 133 140;
+  --color-dark-700: 173 178 184;
+  --color-dark-800: 207 211 214;
+  --color-dark-900: 233 236 242;
+  --color-dark-950: 249 250 251;
 
   --motion-fast: 140ms;
   --motion-standard: 180ms;
   --ease-product: cubic-bezier(0.22, 1, 0.36, 1);
 
-  --color-primary-50: 239 246 255;
-  --color-primary-100: 219 234 254;
-  --color-primary-200: 191 219 254;
-  --color-primary-300: 147 197 253;
-  --color-primary-400: 96 165 250;
-  --color-primary-500: 37 99 235;
-  --color-primary-600: 29 78 216;
-  --color-primary-700: 30 64 175;
-  --color-primary-800: 30 58 138;
-  --color-primary-900: 23 37 84;
-  --color-primary-950: 15 23 42;
+  --color-primary-50: 237 243 254;
+  --color-primary-100: 228 237 253;
+  --color-primary-200: 211 226 255;
+  --color-primary-300: 183 200 254;
+  --color-primary-400: 103 158 254;
+  --color-primary-500: 65 118 230;
+  --color-primary-600: 72 104 178;
+  --color-primary-700: 47 76 143;
+  --color-primary-800: 52 65 91;
+  --color-primary-900: 40 49 66;
+  --color-primary-950: 30 38 53;
   --color-accent-50: var(--color-primary-50);
   --color-accent-100: var(--color-primary-100);
   --color-accent-200: var(--color-primary-200);
@@ -135,18 +152,31 @@ html[data-runtime='electron'] {
 .dark {
   color-scheme: dark;
 
-  --color-canvas: 13 13 12;
-  --color-surface: 18 18 17;
-  --color-surface-subtle: 23 23 22;
-  --color-surface-raised: 27 27 26;
-  --color-surface-overlay: 31 31 29;
-  --color-surface-inverse: 244 244 240;
-  --color-ink: 244 244 240;
-  --color-ink-muted: 166 166 156;
-  --color-ink-subtle: 117 117 110;
-  --color-ink-inverse: 18 18 17;
-  --color-line: 43 43 40;
-  --color-line-strong: 67 67 62;
+  --color-canvas: 21 21 23;
+  --color-surface: 27 27 28;
+  --color-surface-subtle: 35 35 36;
+  --color-surface-raised: 44 44 46;
+  --color-surface-overlay: 53 54 56;
+  --color-surface-inverse: 249 250 251;
+  --color-ink: 249 250 251;
+  --color-ink-muted: 173 178 184;
+  --color-ink-subtle: 129 133 140;
+  --color-ink-inverse: 21 21 23;
+  --color-line: 45 46 48;
+  --color-line-strong: 67 69 74;
+
+  --color-sidebar: 27 27 28;
+  --interactive-hover: rgba(255, 255, 255, 0.08);
+  --interactive-active: rgba(255, 255, 255, 0.14);
+  --interactive-hover-solid: 53 54 56;
+  --nav-item-active: 67 69 74;
+
+  --shadow-lv2:
+    0 4px 12px 0 rgba(0, 0, 0, 0.12), 0 2px 8px 0 rgba(0, 0, 0, 0.16);
+  --shadow-lv3:
+    0 0 1px 0 rgba(0, 0, 0, 0.4), 0 0 4px 0 rgba(0, 0, 0, 0.08),
+    0 12px 32px 0 rgba(0, 0, 0, 0.32);
+  --overlay-mask: rgba(0, 0, 0, 0.5);
 
   --toast-bg: rgb(var(--color-surface-overlay));
   --toast-color: rgb(var(--color-ink));

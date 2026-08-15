@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { getDatabaseSafe } from '../db.js';
+import { getPlatformStorageRuntime } from '../platform/storage/index.js';
 import { memoryService } from './memoryService.js';
 import preferencesService from './preferencesService.js';
 import {
@@ -25,55 +25,8 @@ import {
   Persona,
 } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
-import { createLogger } from '../utils/logger.js';
-
-const logger = createLogger('services:mutation-engine-service');
 
 export class MutationEngineService {
-  private db = getDatabaseSafe();
-
-  constructor() {
-    this.initializeTables();
-  }
-
-  /**
-   * Ensure database is available
-   */
-  private ensureDatabase() {
-    if (!this.db) {
-      throw new Error('Database not available');
-    }
-    return this.db;
-  }
-
-  private initializeTables(): void {
-    if (!this.db) {
-      logger.warn(
-        'MutationEngineService: Database not available, skipping table initialization'
-      );
-      return;
-    }
-    // Persona states table
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS persona_states (
-        persona_id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        runtime_state TEXT NOT NULL, -- JSON
-        mutation_log TEXT NOT NULL, -- JSON array
-        last_updated INTEGER NOT NULL,
-        version INTEGER NOT NULL DEFAULT 1,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE CASCADE
-      )
-    `);
-
-    // Create indexes
-    this.db.exec(`
-      CREATE INDEX IF NOT EXISTS idx_persona_states_user ON persona_states(user_id);
-      CREATE INDEX IF NOT EXISTS idx_persona_states_updated ON persona_states(last_updated);
-    `);
-  }
-
   /**
    * Initialize persona state if not exists
    */
@@ -101,20 +54,7 @@ export class MutationEngineService {
       version: 1,
     };
 
-    const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      INSERT INTO persona_states (persona_id, user_id, runtime_state, mutation_log, last_updated, version)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
-
-    stmt.run(
-      personaId,
-      userId,
-      JSON.stringify(state.runtime_state),
-      JSON.stringify(state.mutation_log),
-      state.last_updated,
-      state.version
-    );
+    await getPlatformStorageRuntime().domains.personaStates.upsert(state);
 
     return state;
   }
@@ -126,56 +66,19 @@ export class MutationEngineService {
     personaId: string,
     userId: string
   ): Promise<PersonaState | null> {
-    const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      SELECT persona_id, user_id, runtime_state, mutation_log, last_updated, version
-      FROM persona_states
-      WHERE persona_id = ? AND user_id = ?
-    `);
-
-    const row = stmt.get(personaId, userId) as
-      | {
-          persona_id: string;
-          user_id: string;
-          runtime_state: string;
-          mutation_log: string;
-          last_updated: number;
-          version: number;
-        }
-      | undefined;
-
-    if (!row) {
-      return null;
-    }
-
-    return {
-      persona_id: row.persona_id,
-      user_id: row.user_id,
-      runtime_state: JSON.parse(row.runtime_state),
-      mutation_log: JSON.parse(row.mutation_log),
-      last_updated: row.last_updated,
-      version: row.version,
-    };
+    return (
+      (await getPlatformStorageRuntime().domains.personaStates.findByOwner(
+        personaId,
+        userId
+      )) || null
+    );
   }
 
   /**
    * Save persona state
    */
   async savePersonaState(state: PersonaState): Promise<void> {
-    const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      INSERT OR REPLACE INTO persona_states (persona_id, user_id, runtime_state, mutation_log, last_updated, version)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
-
-    stmt.run(
-      state.persona_id,
-      state.user_id,
-      JSON.stringify(state.runtime_state),
-      JSON.stringify(state.mutation_log),
-      state.last_updated,
-      state.version
-    );
+    await getPlatformStorageRuntime().domains.personaStates.upsert(state);
   }
 
   /**
@@ -356,7 +259,7 @@ export class MutationEngineService {
         newMemory.user_id,
         newMemory.persona_id,
         newMemory.content,
-        preferencesService.getDefaultEmbeddingModel(newMemory.user_id),
+        await preferencesService.getDefaultEmbeddingModel(newMemory.user_id),
         newMemory.context,
         newMemory.importance_score
       );
@@ -367,6 +270,8 @@ export class MutationEngineService {
       if (update.updates.importance_score !== undefined) {
         await memoryService.updateMemoryImportance(
           update.id,
+          userId,
+          personaId,
           update.updates.importance_score
         );
       }
@@ -602,13 +507,10 @@ export class MutationEngineService {
    * Reset persona state
    */
   async resetPersonaState(personaId: string, userId: string): Promise<void> {
-    const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      DELETE FROM persona_states
-      WHERE persona_id = ? AND user_id = ?
-    `);
-
-    stmt.run(personaId, userId);
+    await getPlatformStorageRuntime().domains.personaStates.deleteByOwner(
+      personaId,
+      userId
+    );
   }
 }
 

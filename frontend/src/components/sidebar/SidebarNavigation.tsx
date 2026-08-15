@@ -83,10 +83,10 @@ export function SidebarNavigation({
               aria-current={active ? 'page' : undefined}
               className={cn(
                 'relative flex items-center justify-center rounded-xl transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
-                sidebarCompact ? 'h-11 w-11' : 'h-9 flex-1',
+                sidebarCompact ? 'h-9 w-9' : 'h-9 flex-1',
                 active
-                  ? 'bg-primary-500/10 text-primary-700 ring-1 ring-primary-500/10 dark:bg-primary-500/15 dark:text-primary-300 dark:ring-primary-400/10'
-                  : 'text-gray-500 hover:bg-white/60 hover:text-gray-950 dark:text-dark-600 dark:hover:bg-dark-200/60 dark:hover:text-dark-950'
+                  ? 'bg-nav-active text-ink'
+                  : 'text-ink-muted hover:bg-interactive-hover hover:text-ink'
               )}
             >
               {sidebarCompact && active && (

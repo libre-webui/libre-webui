@@ -20,25 +20,42 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const { resolveCliRuntimePaths } = require('./runtime-paths');
 
-// Parse command line arguments
-const args = process.argv.slice(2);
 const helpFlags = ['-h', '--help'];
 const versionFlags = ['-v', '--version'];
+const maintenanceCommands = new Map([
+  ['recovery-check', 'cli/recoveryInventory.js'],
+  ['backup', 'cli/recoveryBackup.js'],
+  ['migrate-postgres', 'cli/migrateSqliteToPostgres.js'],
+]);
 
-if (args.some(arg => helpFlags.includes(arg))) {
+const printHelp = () => {
   console.log(`
 Libre WebUI - Local-First AI Workspace
 
-Usage: npx libre-webui [options]
+Usage:
+  npx libre-webui [options]
+  npx libre-webui recovery-check [options]
+  npx libre-webui backup <command> [options]
+  npx libre-webui migrate-postgres [options]
 
 Options:
   -h, --help      Show this help message
   -v, --version   Show version number
   -p, --port      Set the port (default: 8080)
 
+Maintenance Commands:
+  recovery-check    Collect a read-only recovery-readiness inventory
+  backup            Create, verify, inspect, or restore a protected backup
+  migrate-postgres  Analyze, apply, resume, or validate a SQLite migration
+
 Environment Variables:
   PORT                    Server port (default: 8080)
+  DATA_DIR                Persistent data directory (default: ~/.libre-webui)
+  PLUGINS_DIR             Custom plugin directory (default: DATA_DIR/plugins)
+  PLATFORM_PREFLIGHT_TMP_DIR
+                          Writable database-inspection scratch directory
   OLLAMA_BASE_URL         Ollama API URL (default: http://localhost:11434)
   OPENAI_API_KEY          OpenAI API key (optional)
   ANTHROPIC_API_KEY       Anthropic API key (optional)
@@ -46,86 +63,115 @@ Environment Variables:
 Examples:
   npx libre-webui
   npx libre-webui --port 3000
+  npx libre-webui recovery-check --json
+  npx libre-webui backup --help
+  npx libre-webui migrate-postgres --help
   PORT=3000 npx libre-webui
 
 Documentation: https://docs.librewebui.org
 `);
-  process.exit(0);
-}
-
-if (args.some(arg => versionFlags.includes(arg))) {
-  const packageJson = require('../package.json');
-  console.log(`libre-webui v${packageJson.version}`);
-  process.exit(0);
-}
-
-// Handle --port argument
-const portArgIndex = args.findIndex(arg => arg === '-p' || arg === '--port');
-if (portArgIndex !== -1 && args[portArgIndex + 1]) {
-  process.env.PORT = args[portArgIndex + 1];
-}
-
-// Find the backend entry point
-const possibleBackendPaths = [
-  path.join(__dirname, '../backend/dist/index.js'),
-  path.join(__dirname, '../dist/backend/index.js'),
-];
-
-let backendPath = '';
-for (const p of possibleBackendPaths) {
-  if (fs.existsSync(p)) {
-    backendPath = p;
-    break;
-  }
-}
-
-if (!backendPath) {
-  console.error('Error: Backend not found. The package may be corrupted.');
-  console.error('Please try reinstalling: npm install -g libre-webui');
-  process.exit(1);
-}
-
-// Check if frontend exists
-const possibleFrontendPaths = [
-  path.join(__dirname, '../frontend/dist/index.html'),
-  path.join(__dirname, '../dist/frontend/index.html'),
-];
-
-let frontendExists = false;
-for (const p of possibleFrontendPaths) {
-  if (fs.existsSync(p)) {
-    frontendExists = true;
-    break;
-  }
-}
-
-if (!frontendExists) {
-  console.error('Error: Frontend not found. The package may be corrupted.');
-  console.error('Please try reinstalling: npm install -g libre-webui');
-  process.exit(1);
-}
-
-// Set up persistent data directory in user's home
-const os = require('os');
-const dataDir = process.env.DATA_DIR || path.join(os.homedir(), '.libre-webui');
-
-// Create data directory if it doesn't exist
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-  console.log(`📁 Created data directory: ${dataDir}`);
-}
-
-// Set production environment
-const env = {
-  ...process.env,
-  NODE_ENV: 'production',
-  SERVE_FRONTEND: 'true',
-  DATA_DIR: dataDir,
 };
 
-const port = env.PORT || '8080';
+const resolveBackendArtifact = relativePath => {
+  const roots = [
+    path.join(__dirname, '../backend/dist'),
+    path.join(__dirname, '../dist/backend'),
+  ];
+  return roots
+    .map(root => path.join(root, relativePath))
+    .find(candidate => fs.existsSync(candidate));
+};
 
-console.log(`
+const runtimeEnvironment = () => {
+  // Resolve packaged state before importing a maintenance command. This keeps
+  // npx and Homebrew data outside their immutable installation directories;
+  // the resolver is intentionally read-only and creates no paths.
+  const { dataDirectory, pluginsDirectory, preflightDirectory } =
+    resolveCliRuntimePaths(process.env);
+  return {
+    ...process.env,
+    NODE_ENV: 'production',
+    DATA_DIR: dataDirectory,
+    PLUGINS_DIR: pluginsDirectory,
+    PLATFORM_PREFLIGHT_TMP_DIR: preflightDirectory,
+  };
+};
+
+const launch = (artifactPath, forwardedArgs, env) => {
+  const child = spawn(process.execPath, [artifactPath, ...forwardedArgs], {
+    stdio: 'inherit',
+    env,
+  });
+
+  child.on('error', error => {
+    console.error('Failed to start Libre WebUI:', error.message);
+    process.exit(1);
+  });
+
+  child.on('close', code => {
+    process.exit(code ?? 1);
+  });
+
+  process.on('SIGINT', () => child.kill('SIGINT'));
+  process.on('SIGTERM', () => child.kill('SIGTERM'));
+};
+
+const requireArtifact = relativePath => {
+  const artifact = resolveBackendArtifact(relativePath);
+  if (!artifact) {
+    console.error('Error: Backend not found. The package may be corrupted.');
+    console.error('Please try reinstalling: npm install -g libre-webui');
+    process.exit(1);
+  }
+  return artifact;
+};
+
+const main = () => {
+  const args = process.argv.slice(2);
+  const maintenanceArtifact = maintenanceCommands.get(args[0]);
+  if (maintenanceArtifact) {
+    launch(
+      requireArtifact(maintenanceArtifact),
+      args.slice(1),
+      runtimeEnvironment()
+    );
+    return;
+  }
+
+  if (args.some(arg => helpFlags.includes(arg))) {
+    printHelp();
+    return;
+  }
+
+  if (args.some(arg => versionFlags.includes(arg))) {
+    const packageJson = require('../package.json');
+    console.log(`libre-webui v${packageJson.version}`);
+    return;
+  }
+
+  const portArgIndex = args.findIndex(arg => arg === '-p' || arg === '--port');
+  if (portArgIndex !== -1 && args[portArgIndex + 1]) {
+    process.env.PORT = args[portArgIndex + 1];
+  }
+
+  const backendPath = requireArtifact('main.js');
+  const frontendPaths = [
+    path.join(__dirname, '../frontend/dist/index.html'),
+    path.join(__dirname, '../dist/frontend/index.html'),
+  ];
+  if (!frontendPaths.some(candidate => fs.existsSync(candidate))) {
+    console.error('Error: Frontend not found. The package may be corrupted.');
+    console.error('Please try reinstalling: npm install -g libre-webui');
+    process.exit(1);
+  }
+
+  const env = {
+    ...runtimeEnvironment(),
+    SERVE_FRONTEND: 'true',
+  };
+  const port = env.PORT || '8080';
+
+  console.log(`
 ╭─────────────────────────────────────────────────╮
 │                                                 │
 │   Libre WebUI                                   │
@@ -136,26 +182,7 @@ console.log(`
 Starting server...
 `);
 
-// Start the backend server
-const server = spawn('node', [backendPath], {
-  stdio: 'inherit',
-  env,
-});
+  launch(backendPath, [], env);
+};
 
-server.on('error', err => {
-  console.error('Failed to start server:', err.message);
-  process.exit(1);
-});
-
-server.on('close', code => {
-  process.exit(code || 0);
-});
-
-// Handle graceful shutdown
-process.on('SIGINT', () => {
-  server.kill('SIGINT');
-});
-
-process.on('SIGTERM', () => {
-  server.kill('SIGTERM');
-});
+main();

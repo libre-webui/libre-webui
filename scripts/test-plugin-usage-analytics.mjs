@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-plugin-usage-'));
+process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
 process.env.DATA_DIR = tempDir;
 
 const usageModule = await import(
@@ -46,10 +47,10 @@ test('normalizes provider token usage without estimating missing counters', () =
   );
 });
 
-test('aggregates calls, provider-reported tokens, failures, and capability units', () => {
+test('aggregates calls, provider-reported tokens, failures, and capability units', async () => {
   const service = new usageModule.PluginUsageService();
   const now = Date.now();
-  service.record({
+  await service.record({
     userId: 'user-one',
     pluginId: 'openai',
     pluginName: 'OpenAI',
@@ -60,7 +61,7 @@ test('aggregates calls, provider-reported tokens, failures, and capability units
     tokens: { promptTokens: 100, completionTokens: 40, totalTokens: 140 },
     createdAt: now - 60_000,
   });
-  service.record({
+  await service.record({
     userId: 'user-two',
     pluginId: 'openai',
     pluginName: 'OpenAI',
@@ -70,7 +71,7 @@ test('aggregates calls, provider-reported tokens, failures, and capability units
     durationMs: 1200,
     createdAt: now - 30_000,
   });
-  service.record({
+  await service.record({
     userId: 'user-one',
     pluginId: 'image-provider',
     pluginName: 'Image Provider',
@@ -82,8 +83,17 @@ test('aggregates calls, provider-reported tokens, failures, and capability units
     unitKind: 'images',
     createdAt: now - 10_000,
   });
+  await service.record({
+    pluginId: 'system-probe',
+    pluginName: 'System Probe',
+    capability: 'chat',
+    model: 'probe',
+    status: 'success',
+    durationMs: 1,
+    createdAt: now,
+  });
 
-  const analytics = service.getAnalytics(7);
+  const analytics = await service.getAnalytics(7);
   assert.equal(analytics.totals.calls, 3);
   assert.equal(analytics.totals.successfulCalls, 2);
   assert.equal(analytics.totals.failedCalls, 1);
@@ -134,10 +144,10 @@ test('aggregates calls, provider-reported tokens, failures, and capability units
   assert.ok(!columns.includes('error_body'));
 });
 
-test('rejects analytics windows larger than the public API permits by clamping service input', () => {
+test('rejects analytics windows larger than the public API permits by clamping service input', async () => {
   const service = new usageModule.PluginUsageService();
-  assert.equal(service.getAnalytics(0).range.days, 1);
-  assert.equal(service.getAnalytics(999).range.days, 365);
+  assert.equal((await service.getAnalytics(0)).range.days, 1);
+  assert.equal((await service.getAnalytics(999)).range.days, 365);
 });
 
 test('the usage endpoint is explicitly protected by administrator middleware', () => {

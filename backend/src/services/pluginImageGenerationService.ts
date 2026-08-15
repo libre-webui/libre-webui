@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { randomUUID } from 'crypto';
 import axios from 'axios';
 import { ImageGenConfig, ImageGenResponse, Plugin } from '../types/index.js';
 import {
@@ -28,16 +29,22 @@ import {
   resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import { createLogger } from '../utils/logger.js';
 import type { PluginUsageEventInput } from './pluginUsageService.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
+type MaybePromise<T> = T | Promise<T>;
 type ImageGenImage = ImageGenResponse['images'][number];
+const logger = createLogger('services:plugin-image-generation');
 
 export interface PluginImageGenerationServiceDependencies {
-  getAllPlugins(userId?: string): Plugin[];
-  getPlugin(id: string, userId?: string): Plugin | null;
-  getApiKey(plugin: Plugin, userId?: string): string | null;
-  getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
+  getAllPlugins(userId?: string): MaybePromise<Plugin[]>;
+  getPlugin(id: string, userId?: string): MaybePromise<Plugin | null>;
+  getApiKey(plugin: Plugin, userId?: string): MaybePromise<string | null>;
+  getPluginVariables(
+    plugin: Plugin,
+    userId?: string
+  ): MaybePromise<PluginVariables>;
   validateEndpointUrl(endpoint: string): string;
   recordUsage?(usage: PluginUsageEventInput): void;
 }
@@ -47,12 +54,12 @@ export class PluginImageGenerationService {
     private readonly deps: PluginImageGenerationServiceDependencies
   ) {}
 
-  getPluginForImageGen(
+  async getPluginForImageGen(
     model: string,
     pluginId: string,
     userId?: string
-  ): Plugin | null {
-    const plugin = this.deps.getPlugin(pluginId, userId);
+  ): Promise<Plugin | null> {
+    const plugin = await this.deps.getPlugin(pluginId, userId);
     if (!plugin?.active) return null;
 
     const supportedModels =
@@ -65,14 +72,16 @@ export class PluginImageGenerationService {
     return null;
   }
 
-  getAvailableImageGenModels(userId?: string): {
-    model: string;
-    plugin: string;
-    config?: ImageGenConfig;
-  }[] {
+  async getAvailableImageGenModels(userId?: string): Promise<
+    {
+      model: string;
+      plugin: string;
+      config?: ImageGenConfig;
+    }[]
+  > {
     const models: { model: string; plugin: string; config?: ImageGenConfig }[] =
       [];
-    const allPlugins = this.deps.getAllPlugins(userId);
+    const allPlugins = await this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       if (!plugin.active) continue;
@@ -87,7 +96,7 @@ export class PluginImageGenerationService {
       const noAuthRequired =
         (imageCapability?.config as Record<string, unknown> | undefined)
           ?.no_auth_required === true;
-      const apiKey = this.deps.getApiKey(plugin, userId);
+      const apiKey = await this.deps.getApiKey(plugin, userId);
       if (apiKey || noAuthRequired) {
         for (const model of supportedModels) {
           models.push({
@@ -113,6 +122,7 @@ export class PluginImageGenerationService {
       response_format?: 'url' | 'b64_json';
       pluginId: string;
       userId?: string;
+      signal?: AbortSignal;
     }
   ): Promise<ImageGenResponse> {
     validatePluginModel(model);
@@ -121,7 +131,7 @@ export class PluginImageGenerationService {
       throw new Error('Invalid prompt: must be a non-empty string');
     }
 
-    const plugin = this.getPluginForImageGen(
+    const plugin = await this.getPluginForImageGen(
       model,
       options.pluginId,
       options.userId
@@ -142,7 +152,10 @@ export class PluginImageGenerationService {
       endpoint = plugin.endpoint;
     }
 
-    const imageVars = this.deps.getPluginVariables(plugin, options.userId);
+    const imageVars = await this.deps.getPluginVariables(
+      plugin,
+      options.userId
+    );
     const imageCount = normalizeImageGenerationCount(options.n);
     const endpointVariable =
       imageConfig?.endpoint_variable ||
@@ -173,7 +186,7 @@ export class PluginImageGenerationService {
     const noAuthRequired =
       (imageConfig as Record<string, unknown> | undefined)?.no_auth_required ===
       true;
-    const apiKey = this.deps.getApiKey(plugin, options.userId);
+    const apiKey = await this.deps.getApiKey(plugin, options.userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
@@ -242,6 +255,7 @@ export class PluginImageGenerationService {
           model,
           pluginId: plugin.id,
           pluginVars: imageVars,
+          signal: options.signal,
         });
       } else if (plugin.id === 'huggingface') {
         const [width, height] = String(payload.size)
@@ -260,6 +274,8 @@ export class PluginImageGenerationService {
             timeout: 120000,
             responseType: 'arraybuffer',
             maxRedirects: 0,
+            maxContentLength: 50 * 1024 * 1024,
+            signal: options.signal,
           }
         );
         const mimeType = normalizeImageMediaType(
@@ -280,6 +296,8 @@ export class PluginImageGenerationService {
           headers,
           timeout: 300000,
           maxRedirects: 0,
+          maxContentLength: 80 * 1024 * 1024,
+          signal: options.signal,
         });
         result = {
           images: normalizeImageGenerationResponse(response.data),
@@ -301,17 +319,23 @@ export class PluginImageGenerationService {
       });
       return result;
     } catch (error) {
+      const cancelled = axios.isCancel(error) || options.signal?.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
         pluginName: plugin.name,
         capability: 'image',
         model,
-        status: 'error',
+        status: cancelled ? 'cancelled' : 'error',
         durationMs: Date.now() - startedAt,
         outputUnits: 0,
         unitKind: 'images',
       });
+      if (cancelled) {
+        throw options.signal?.reason instanceof Error
+          ? options.signal.reason
+          : new Error('Image provider request was cancelled');
+      }
       if (axios.isAxiosError(error)) {
         const message =
           error.response?.data?.error?.message ||
@@ -323,8 +347,11 @@ export class PluginImageGenerationService {
     }
   }
 
-  getImageGenConfig(pluginId: string, userId?: string): ImageGenConfig | null {
-    const plugin = this.deps.getPlugin(pluginId, userId);
+  async getImageGenConfig(
+    pluginId: string,
+    userId?: string
+  ): Promise<ImageGenConfig | null> {
+    const plugin = await this.deps.getPlugin(pluginId, userId);
     if (!plugin?.active) return null;
 
     if (plugin.capabilities?.image?.config) {
@@ -546,6 +573,7 @@ async function executeComfyUIRequest(
     pluginId?: string;
     pluginVars?: PluginVariables;
     headers?: Record<string, string>;
+    signal?: AbortSignal;
   } = {}
 ): Promise<ImageGenResponse> {
   const promptEndpoint = new URL(baseUrl);
@@ -696,24 +724,53 @@ async function executeComfyUIRequest(
     };
   }
 
+  let promptId: string | undefined;
+  let cancellation: Promise<void> | undefined;
+  const cancelAcceptedPrompt = () => {
+    if (!promptId) return;
+    cancellation ??= cancelComfyUIPrompt(
+      createOperationUrl,
+      promptId,
+      requestHeaders
+    );
+  };
+  options.signal?.addEventListener('abort', cancelAcceptedPrompt, {
+    once: true,
+  });
+
   try {
     const clientId = `libre-webui-${Date.now()}`;
+    const requestedPromptId = randomUUID();
+    // Keep the client-selected ID before dispatch so a disconnect after the
+    // provider accepts, but before Axios receives the response, still has an
+    // exact and safe cancellation target.
+    promptId = requestedPromptId;
     const promptResponse = await axios.post(
       promptEndpoint.toString(),
       {
         prompt: workflow,
         client_id: clientId,
+        prompt_id: requestedPromptId,
       },
       {
         headers: requestHeaders,
         timeout: 10000,
         maxRedirects: 0,
+        signal: options.signal,
       }
     );
 
-    const promptId = promptResponse.data.prompt_id;
-    if (!promptId) {
+    const acceptedPromptId = promptResponse.data.prompt_id;
+    if (!acceptedPromptId) {
       throw new Error('Failed to get prompt ID from ComfyUI');
+    }
+    if (acceptedPromptId !== requestedPromptId) {
+      throw new Error('ComfyUI returned an unexpected prompt ID');
+    }
+    if (options.signal?.aborted) {
+      cancelAcceptedPrompt();
+      await cancellation;
+      throw cancellationReason(options.signal);
     }
 
     let completed = false;
@@ -721,7 +778,7 @@ async function executeComfyUIRequest(
     const maxAttempts = 120;
 
     while (!completed && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await abortableDelay(1000, options.signal);
       attempts++;
 
       const historyResponse = await axios.get(
@@ -732,6 +789,7 @@ async function executeComfyUIRequest(
           headers: requestHeaders,
           timeout: 5000,
           maxRedirects: 0,
+          signal: options.signal,
         }
       );
 
@@ -754,6 +812,8 @@ async function executeComfyUIRequest(
                 responseType: 'arraybuffer',
                 timeout: 30000,
                 maxRedirects: 0,
+                maxContentLength: 50 * 1024 * 1024,
+                signal: options.signal,
               });
 
               const base64Image = Buffer.from(imageResponse.data).toString(
@@ -786,6 +846,10 @@ async function executeComfyUIRequest(
 
     throw new Error('No image output found from ComfyUI');
   } catch (error) {
+    if (promptId && options.signal?.aborted) {
+      cancelAcceptedPrompt();
+      await cancellation;
+    }
     if (axios.isAxiosError(error)) {
       const message =
         error.response?.data?.error ||
@@ -794,5 +858,91 @@ async function executeComfyUIRequest(
       throw new Error(`ComfyUI generation failed: ${message}`);
     }
     throw error;
+  } finally {
+    options.signal?.removeEventListener('abort', cancelAcceptedPrompt);
   }
+}
+
+async function cancelComfyUIPrompt(
+  createOperationUrl: (operationPath: string) => URL,
+  promptId: string,
+  headers: Record<string, string>
+): Promise<void> {
+  const teardown = new AbortController();
+  const timeout = setTimeout(
+    () => teardown.abort(new Error('ComfyUI cancellation timed out')),
+    3000
+  );
+  const encodedPromptId = encodeURIComponent(promptId);
+  try {
+    const [jobCancellation, queueDeletion] = await Promise.allSettled([
+      axios.post(
+        createOperationUrl(`api/jobs/${encodedPromptId}/cancel`).toString(),
+        {},
+        {
+          headers,
+          timeout: 2500,
+          maxRedirects: 0,
+          signal: teardown.signal,
+        }
+      ),
+      axios.post(
+        createOperationUrl('queue').toString(),
+        { delete: [promptId] },
+        {
+          headers,
+          timeout: 2500,
+          maxRedirects: 0,
+          signal: teardown.signal,
+        }
+      ),
+    ]);
+    if (
+      jobCancellation.status === 'rejected' ||
+      jobCancellation.value.data?.cancelled !== true
+    ) {
+      logger.warn(
+        `ComfyUI did not confirm a running-job cancellation for prompt ${promptId}; it may already have finished or the server may need an upgrade`
+      );
+    }
+    if (queueDeletion.status === 'rejected') {
+      logger.warn(
+        `ComfyUI did not confirm queued-job deletion for prompt ${promptId}`
+      );
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function cancellationReason(signal?: AbortSignal): Error {
+  return signal?.reason instanceof Error
+    ? signal.reason
+    : new Error('Image provider request was cancelled');
+}
+
+async function abortableDelay(
+  milliseconds: number,
+  signal?: AbortSignal
+): Promise<void> {
+  if (signal?.aborted) {
+    throw signal.reason instanceof Error
+      ? signal.reason
+      : new Error('Image provider request was cancelled');
+  }
+  await new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', abort);
+      resolve();
+    }, milliseconds);
+    const abort = () => {
+      clearTimeout(timer);
+      reject(
+        signal?.reason instanceof Error
+          ? signal.reason
+          : new Error('Image provider request was cancelled')
+      );
+    };
+    signal?.addEventListener('abort', abort, { once: true });
+  });
 }

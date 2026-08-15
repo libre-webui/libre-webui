@@ -25,8 +25,11 @@ Start with the layer that is failing: browser, frontend, backend, Ollama, provid
 # App branch and local changes
 git status
 
-# Backend health
-curl http://localhost:3001/api/health
+# Backend process liveness
+curl http://localhost:3001/health/live
+
+# Backend dependency readiness (SQLite, schema, and writable data storage)
+curl http://localhost:3001/health/ready
 
 # Ollama health
 curl http://localhost:11434/api/tags
@@ -61,7 +64,35 @@ Stop the old process or configure another port.
 
 **Backend cannot write data**
 
-The backend stores data under `DATA_DIR` when set, otherwise under `backend/data` from the project root. Make sure that directory is writable.
+The backend stores data under `DATA_DIR` when set, otherwise under
+`backend/data`. Source launches resolve a relative `DATA_DIR` from the backend
+directory, not the shell's current directory. Thus `DATA_DIR=./data` selects
+`backend/data`, while the historically supported `DATA_DIR=./backend/data`
+selects `backend/backend/data`. Make sure the selected directory is writable.
+With `DATA_DIR` unset, Libre preserves the historical directory when it is the
+only existing store. If both locations contain data, stop Libre, back up both,
+and choose or migrate deliberately; Libre never merges or copies divergent
+databases.
+
+The health endpoints deliberately distinguish a running process from a usable
+application:
+
+- `/health` and `/health/live` return `200` while the backend process can serve
+  HTTP. Optional model providers do not affect liveness.
+- `/health/ready` returns `503` when a required database, schema, storage, or
+  registered platform dependency is unavailable. It does not wait for optional
+  model providers. Its public response omits error messages and internal
+  details.
+- `/health/deep` performs SQLite integrity and foreign-key checks in a bounded
+  worker and aggregates optional server-level provider probes such as Ollama.
+  An optional provider outage appears as a warning and does not make required
+  dependencies unready. The endpoint requires a current administrator bearer
+  token and is not suitable for a frequent orchestrator probe.
+
+```bash
+curl -H "Authorization: Bearer $LIBRE_ADMIN_TOKEN" \
+  http://localhost:3001/health/deep
+```
 
 ## Browser Cannot Reach the Backend
 
@@ -73,6 +104,12 @@ Frontend `.env` example:
 VITE_API_BASE_URL=http://localhost:3001/api
 VITE_WS_BASE_URL=ws://localhost:3001
 ```
+
+`VITE_WS_BASE_URL` is optional, but when set it is the shared base for Chat and
+Work terminal sockets. Use an absolute `ws:` or `wss:` URL; a path prefix such
+as `wss://example.com/libre` is supported. Do not include credentials, query
+parameters, or fragments. Restart/rebuild the frontend after changing a Vite
+variable.
 
 Backend `.env` example:
 
@@ -91,6 +128,14 @@ npm run dev:host
 The typical symptom is that messages send but no reply ever renders, while the
 browser console shows a WebSocket connection failure. Confirm that the proxy
 allows WebSocket upgrades and does not close long-lived connections.
+
+When either value is configured, browser upgrades that send an `Origin` header
+are checked against `CORS_ORIGIN` and `BASE_URL`. Set at least one for a remote
+deployment; with neither configured, the Origin filter remains permissive for
+local development. Electron and other non-browser clients may omit `Origin`,
+but they still must first exchange their Authorization header for a short-
+lived, one-use ticket. Keep the backend behind TLS and the same network or
+reverse-proxy access controls used for the HTTP API.
 
 For a public hostname, allow that browser origin in the Libre WebUI service:
 
@@ -383,14 +428,16 @@ docker info
 docker version
 ```
 
-Confirm Docker is running and that the operating-system user running the
-backend can invoke the configured `WORK_DOCKER_COMMAND`. Installing Libre WebUI
-with `npx` does not install Docker. If Docker is missing, Libre WebUI keeps the
-rest of the application available and does not fall back to executing model
-commands on the host.
+For the default Docker backend, confirm Docker is running and that the
+operating-system user running Libre WebUI can invoke the configured
+`WORK_DOCKER_COMMAND`. Installing Libre WebUI with `npx` does not install
+Docker. If the runtime is missing, Libre WebUI keeps the rest of the
+application available and does not fall back to executing model commands on
+the host.
 
-The repository Compose files enable Work by mounting the host Docker socket. The
-Helm chart does not, so Work stays unavailable on Kubernetes. When a Compose
+The repository Compose files enable Work by mounting the host Docker socket.
+On Kubernetes, enable the native Pod/PVC runtime with Helm value
+`work.enabled=true`; do not mount a node's runtime socket. When a Compose
 deployment still reports **Runtime unavailable**, the Work page names which of
 these applies:
 

@@ -235,6 +235,33 @@ function combinePluginBaseUrlAndPath(baseUrl: string, apiPath: string): string {
   return base.toString();
 }
 
+/**
+ * Older connection editors exposed only a full `endpoint` field. Users of an
+ * OpenAI-compatible provider commonly saved its advertised API root there
+ * (for example, `/v1`) because model discovery still succeeded at
+ * `/v1/models`. Once a manifest declares a structured base URL, treat an
+ * endpoint override with that same API-root path as a base URL too. Explicit
+ * operation paths remain exact overrides.
+ */
+function matchesDeclaredPluginBasePath(
+  endpointOverride: string,
+  declaredBaseUrl: string
+): boolean {
+  try {
+    const candidate = new URL(endpointOverride);
+    const declared = new URL(declaredBaseUrl);
+    if (candidate.search || candidate.hash) return false;
+
+    const normalizePath = (pathname: string): string =>
+      pathname.replace(/\/+$/, '') || '/';
+    return (
+      normalizePath(candidate.pathname) === normalizePath(declared.pathname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function resolvePluginApiConfig(
   plugin: Pick<Plugin, 'endpoint' | 'api_mode' | 'base_url' | 'api_path'>,
   variables: Record<string, string | number | boolean> = {}
@@ -256,6 +283,12 @@ export function resolvePluginApiConfig(
     optionalPluginString(variables.api_url);
   const configuredBaseUrl = optionalPluginString(variables.base_url);
   const configuredApiPath = optionalPluginString(variables.api_path);
+  const declaredBaseUrl = optionalPluginString(plugin.base_url);
+  const endpointOverrideIsStructuredBase = Boolean(
+    endpointOverride &&
+    declaredBaseUrl &&
+    matchesDeclaredPluginBasePath(endpointOverride, declaredBaseUrl)
+  );
   const hasStructuredApiOverride =
     (configuredBaseUrl !== undefined &&
       configuredBaseUrl !== optionalPluginString(plugin.base_url)) ||
@@ -267,6 +300,7 @@ export function resolvePluginApiConfig(
   // upgraded users can change Base URL without first clearing stale data.
   if (
     endpointOverride &&
+    !endpointOverrideIsStructuredBase &&
     (endpointOverride !== plugin.endpoint || !hasStructuredApiOverride)
   ) {
     const endpoint = resolvePluginEndpoint(plugin.endpoint, endpointOverride);
@@ -274,7 +308,10 @@ export function resolvePluginApiConfig(
     return { apiMode, endpoint };
   }
 
-  const baseUrl = configuredBaseUrl || optionalPluginString(plugin.base_url);
+  const baseUrl =
+    (endpointOverrideIsStructuredBase ? endpointOverride : undefined) ||
+    configuredBaseUrl ||
+    declaredBaseUrl;
   if (baseUrl) {
     const modeOverridesManifest =
       userConfiguredMode !== undefined &&

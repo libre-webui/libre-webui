@@ -16,12 +16,25 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import type { Request } from 'express';
 import multer, { FileFilterCallback } from 'multer';
 import { createLogger } from './logger.js';
 
 const logger = createLogger('utils:plugin-upload');
+
+export const pluginUploadTempDirectory = path.resolve(
+  process.env.PLUGIN_UPLOAD_TEMP_DIR?.trim() ||
+    path.join(os.tmpdir(), 'libre-webui-plugin-uploads')
+);
+
+const isWithinDirectory = (filePath: string, directory: string): boolean => {
+  const relative = path.relative(directory, filePath);
+  return (
+    relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative)
+  );
+};
 
 export interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -33,7 +46,7 @@ export function safeCleanupFile(filePath: string, tempDir: string): void {
     const resolvedTempDir = path.resolve(tempDir);
 
     if (
-      resolvedPath.startsWith(resolvedTempDir) &&
+      isWithinDirectory(resolvedPath, resolvedTempDir) &&
       fs.existsSync(resolvedPath)
     ) {
       fs.unlinkSync(resolvedPath);
@@ -44,7 +57,7 @@ export function safeCleanupFile(filePath: string, tempDir: string): void {
 }
 
 export const pluginUpload = multer({
-  dest: 'temp/',
+  dest: pluginUploadTempDirectory,
   fileFilter: (
     req: Request,
     file: Express.Multer.File,

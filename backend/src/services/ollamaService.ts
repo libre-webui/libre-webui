@@ -16,6 +16,7 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
+import { getOllamaRuntimeConfig } from '../platform/ollamaRuntimeConfig.js';
 import {
   OllamaModel,
   OllamaGenerateRequest,
@@ -137,7 +138,7 @@ async function parseStreamedErrorBody(error: unknown): Promise<void> {
 
 const MODEL_DEFAULTS_TTL_MS = 10 * 60 * 1000;
 
-class OllamaService {
+export class OllamaService {
   private modelDefaultsCache = new Map<
     string,
     { defaults: OllamaModelDefaults; at: number }
@@ -148,16 +149,11 @@ class OllamaService {
 
   constructor() {
     this.baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-    // Use environment variable for timeout, default to 5 minutes for large models on multiple GPUs
-    const timeout = parseInt(process.env.OLLAMA_TIMEOUT || '300000');
-    // Use extended timeout for model operations (pulling, loading), default to 15 minutes
-    const longOperationTimeout = parseInt(
-      process.env.OLLAMA_LONG_OPERATION_TIMEOUT || '900000'
-    );
+    const { timeoutMs, longOperationTimeoutMs } = getOllamaRuntimeConfig();
 
     this.client = axios.create({
       baseURL: this.baseUrl,
-      timeout: timeout,
+      timeout: timeoutMs,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -165,7 +161,7 @@ class OllamaService {
 
     this.longOperationClient = axios.create({
       baseURL: this.baseUrl,
-      timeout: longOperationTimeout,
+      timeout: longOperationTimeoutMs,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -455,18 +451,22 @@ class OllamaService {
    * on every message, and a model's own parameters do not change while it is
    * installed.
    */
-  async getModelDefaults(modelName: string): Promise<OllamaModelDefaults> {
+  async getModelDefaults(
+    modelName: string,
+    signal?: AbortSignal
+  ): Promise<OllamaModelDefaults> {
     const cached = this.modelDefaultsCache.get(modelName);
     if (cached && Date.now() - cached.at < MODEL_DEFAULTS_TTL_MS) {
       return cached.defaults;
     }
 
     try {
-      const show = await this.showModel(modelName, false);
+      const show = await this.showModel(modelName, false, signal);
       const defaults = parseOllamaModelDefaults(show);
       this.modelDefaultsCache.set(modelName, { defaults, at: Date.now() });
       return defaults;
     } catch (error) {
+      if (signal?.aborted) throw error;
       // A model that cannot be inspected simply contributes no defaults; the
       // application's own settings still apply.
       logger.debug(
@@ -478,15 +478,21 @@ class OllamaService {
 
   async showModel(
     modelName: string,
-    verbose = false
+    verbose = false,
+    signal?: AbortSignal
   ): Promise<Record<string, unknown>> {
     try {
-      const response = await this.client.post('/api/show', {
-        model: modelName,
-        verbose,
-      });
+      const response = await this.client.post(
+        '/api/show',
+        {
+          model: modelName,
+          verbose,
+        },
+        { signal }
+      );
       return response.data;
     } catch (error: unknown) {
+      if (signal?.aborted) throw error;
       logger.error('Failed to show model:', error);
       throw new Error(getErrorMessage(error, 'Failed to show model'));
     }
@@ -520,12 +526,16 @@ class OllamaService {
   }
 
   async generateEmbeddings(
-    payload: OllamaEmbeddingsRequest
+    payload: OllamaEmbeddingsRequest,
+    signal?: AbortSignal
   ): Promise<OllamaEmbeddingsResponse> {
     try {
-      const response = await this.client.post('/api/embed', payload);
+      const response = await this.client.post('/api/embed', payload, {
+        signal,
+      });
       return response.data;
     } catch (error: unknown) {
+      if (signal?.aborted) throw error;
       logger.error('Failed to generate embeddings:', error);
       throw new Error(getErrorMessage(error, 'Failed to generate embeddings'));
     }
@@ -693,38 +703,69 @@ class OllamaService {
       );
 
       let buffer = '';
+      await new Promise<void>(resolve => {
+        let settled = false;
+        const finish = (
+          kind: 'complete' | 'error',
+          finalChunk?: OllamaChatResponse,
+          error?: Error
+        ) => {
+          if (settled) return;
+          settled = true;
+          signal?.removeEventListener('abort', abortStream);
+          if (kind === 'error') {
+            recordOnce(signal?.aborted ? 'cancelled' : 'error');
+            onError(error ?? new Error('Ollama stream failed'));
+          } else {
+            recordOnce(signal?.aborted ? 'cancelled' : 'success', finalChunk);
+            onComplete();
+          }
+          resolve();
+        };
+        const abortStream = () => {
+          response.data.destroy(
+            signal?.reason instanceof Error ? signal.reason : undefined
+          );
+        };
 
-      response.data.on('data', (chunk: Buffer) => {
-        buffer += chunk.toString();
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        response.data.on('data', (chunk: Buffer) => {
+          if (settled || signal?.aborted) return;
+          buffer += chunk.toString();
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
 
-        for (const line of lines) {
-          if (line.trim()) {
+          for (const line of lines) {
+            if (!line.trim()) continue;
             try {
-              const data = JSON.parse(line);
+              const data = JSON.parse(line) as OllamaChatResponse;
               onChunk(data);
               if (data.done) {
-                recordOnce('success', data);
-                onComplete();
+                finish('complete', data);
                 return;
               }
             } catch (parseError) {
               logger.error('Failed to parse chunk:', parseError);
             }
           }
-        }
-      });
+        });
 
-      response.data.on('error', (error: Error) => {
-        recordOnce(signal?.aborted ? 'cancelled' : 'error');
-        onError(error);
-      });
+        response.data.once('error', (error: Error) => {
+          finish('error', undefined, error);
+        });
 
-      response.data.on('end', () => {
-        // A stream that ends without a done chunk was cut short.
-        recordOnce(signal?.aborted ? 'cancelled' : 'success');
-        onComplete();
+        response.data.once('end', () => {
+          // A stream that ends without a done chunk was cut short.
+          finish(
+            'error',
+            undefined,
+            signal?.reason instanceof Error
+              ? signal.reason
+              : new Error('Ollama stream ended before completion')
+          );
+        });
+
+        signal?.addEventListener('abort', abortStream, { once: true });
+        if (signal?.aborted) abortStream();
       });
     } catch (error: unknown) {
       recordOnce(signal?.aborted ? 'cancelled' : 'error');

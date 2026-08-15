@@ -25,6 +25,7 @@ import type {
   ChatSession,
   GenerationStatistics,
 } from '../types/index.js';
+import { throwIfChatGenerationCancelled } from '../utils/chatCancellation.js';
 
 export interface AssistantCompletionInput {
   sessionId: string;
@@ -39,6 +40,7 @@ export interface AssistantCompletionInput {
   originalMessageId?: string;
   statistics?: GenerationStatistics;
   providerMetadata?: Record<string, unknown>;
+  signal?: AbortSignal;
 }
 
 export interface AssistantCompletionResult {
@@ -60,7 +62,7 @@ class AssistantCompletionService {
     );
   }
 
-  completeAssistantMessage({
+  async completeAssistantMessage({
     sessionId,
     session,
     content,
@@ -73,7 +75,9 @@ class AssistantCompletionService {
     originalMessageId,
     statistics,
     providerMetadata,
-  }: AssistantCompletionInput): AssistantCompletionResult {
+    signal,
+  }: AssistantCompletionInput): Promise<AssistantCompletionResult> {
+    throwIfChatGenerationCancelled(signal);
     const branchingFields = this.buildBranchingFields(
       session,
       regenerate,
@@ -96,7 +100,7 @@ class AssistantCompletionService {
       };
     }
 
-    const assistantMessage = chatService.addMessage(
+    const assistantMessage = await chatService.addMessage(
       sessionId,
       {
         role: 'assistant',
@@ -108,7 +112,10 @@ class AssistantCompletionService {
         providerMetadata,
         ...branchingFields,
       },
-      userId
+      userId,
+      {
+        assertPersistenceAllowed: () => throwIfChatGenerationCancelled(signal),
+      }
     );
 
     return {

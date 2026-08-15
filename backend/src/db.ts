@@ -19,12 +19,280 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import { createLogger } from './utils/logger.js';
+import { resolveDataDirectory } from './utils/dataDirectory.js';
+import {
+  getSchemaCompatibilityState,
+  preflightSQLiteBootstrapSchema,
+  preflightSQLiteMigrationLedger,
+  recordSQLiteSchemaFailure,
+  runSQLiteMigrationCoordinator,
+  sqliteMigrationsRequireForeignKeysDisabledAfter,
+} from './persistence/sqliteMigrations.js';
+export type { SchemaCompatibilityState } from './persistence/sqliteMigrations.js';
+export { getSchemaCompatibilityState };
 
 const logger = createLogger('database');
 
 // Database instance
 let db: Database.Database | null = null;
 let dbInitializationFailed = false;
+
+const PREFLIGHT_MARKER_FILE = '.preflight-verification.json';
+const PREFLIGHT_MARKER_FORMAT = 'libre-preflight-verification';
+
+/**
+ * Cheap identity of an existing database for preflight caching: the inode
+ * pair detects a replaced or restored file, and the schema cookie changes
+ * exactly when a migration (or any DDL) runs. Ordinary row writes change
+ * neither, so a healthy instance keeps one stable identity between upgrades.
+ * The cookie is read through a readonly connection so a version still
+ * sitting in the WAL is observed the same way on both sides of the marker.
+ */
+export interface SQLitePreflightIdentity {
+  dev: number;
+  ino: number;
+  schemaCookie: number;
+}
+
+export function readSQLitePreflightIdentity(
+  databasePath: string
+): SQLitePreflightIdentity | null {
+  try {
+    const stat = fs.lstatSync(databasePath);
+    if (!stat.isFile() || stat.isSymbolicLink()) return null;
+    const probe = new Database(databasePath, {
+      readonly: true,
+      fileMustExist: true,
+    });
+    try {
+      const schemaCookie = probe.pragma('schema_version', {
+        simple: true,
+      }) as number;
+      if (!Number.isSafeInteger(schemaCookie)) return null;
+      return { dev: stat.dev, ino: stat.ino, schemaCookie };
+    } finally {
+      probe.close();
+    }
+  } catch {
+    return null;
+  }
+}
+
+export function readPreflightVerificationMarker(
+  dataDir: string
+): SQLitePreflightIdentity | null {
+  try {
+    const parsed = JSON.parse(
+      fs.readFileSync(path.join(dataDir, PREFLIGHT_MARKER_FILE), 'utf8')
+    ) as {
+      format?: string;
+      version?: number;
+      database?: { dev?: number; ino?: number; schemaCookie?: number };
+    };
+    if (
+      parsed?.format !== PREFLIGHT_MARKER_FORMAT ||
+      parsed.version !== 1 ||
+      !Number.isSafeInteger(parsed.database?.dev) ||
+      !Number.isSafeInteger(parsed.database?.ino) ||
+      !Number.isSafeInteger(parsed.database?.schemaCookie)
+    ) {
+      return null;
+    }
+    return {
+      dev: parsed.database!.dev!,
+      ino: parsed.database!.ino!,
+      schemaCookie: parsed.database!.schemaCookie!,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Delete the marker file to force a full preflight on the next start. */
+export function writePreflightVerificationMarker(
+  dataDir: string,
+  identity: SQLitePreflightIdentity
+): void {
+  const target = path.join(dataDir, PREFLIGHT_MARKER_FILE);
+  const staging = `${target}.tmp-${process.pid}`;
+  try {
+    fs.writeFileSync(
+      staging,
+      `${JSON.stringify(
+        {
+          format: PREFLIGHT_MARKER_FORMAT,
+          version: 1,
+          database: identity,
+          verifiedAt: new Date().toISOString(),
+        },
+        null,
+        2
+      )}\n`,
+      { mode: 0o600 }
+    );
+    fs.renameSync(staging, target);
+  } catch {
+    fs.rmSync(staging, { force: true });
+    // The marker is an optimization; a failed write only means the next
+    // start repeats the full preflight.
+  }
+}
+
+export function preflightIdentityMatchesMarker(
+  identity: SQLitePreflightIdentity | null,
+  marker: SQLitePreflightIdentity | null
+): boolean {
+  return Boolean(
+    identity &&
+    marker &&
+    identity.dev === marker.dev &&
+    identity.ino === marker.ino &&
+    identity.schemaCookie === marker.schemaCookie
+  );
+}
+
+const assertSQLiteIntegrity = (database: Database.Database): void => {
+  const result = database.pragma('quick_check', { simple: true });
+  if (result !== 'ok') {
+    throw new Error('SQLite quick_check reported an integrity failure');
+  }
+};
+
+/**
+ * Validate an existing database before importing stateful application
+ * singletons. This reads bounded integrity and schema metadata only; missing
+ * database files remain a supported fresh-install state.
+ */
+export function preflightExistingSQLiteDatabase(
+  databasePath: string,
+  scratchRoot?: string,
+  inspect?: (database: Database.Database) => void
+): void {
+  let databaseStat: fs.Stats;
+  try {
+    databaseStat = fs.lstatSync(databasePath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+    throw new Error('Unable to inspect the SQLite bootstrap source');
+  }
+  if (
+    !databaseStat.isFile() ||
+    databaseStat.isSymbolicLink() ||
+    databaseStat.nlink !== 1
+  ) {
+    throw new Error(
+      'SQLite bootstrap database must be a single-link regular file'
+    );
+  }
+
+  const sources = ['', '-wal', '-shm'].flatMap(suffix => {
+    const sourcePath = `${databasePath}${suffix}`;
+    let stat: fs.Stats;
+    try {
+      stat = fs.lstatSync(sourcePath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+      throw new Error('Unable to inspect a SQLite bootstrap companion');
+    }
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1) {
+      throw new Error(
+        'SQLite bootstrap sources must be single-link regular files'
+      );
+    }
+    return [{ sourcePath, suffix, stat }];
+  });
+
+  // SQLite may create WAL shared-memory bookkeeping beside a database even
+  // when the connection itself is readonly. Inspect a private on-disk clone
+  // so startup validation cannot mutate the source directory. COPYFILE_FICLONE
+  // uses a copy-on-write clone where the filesystem supports it and safely
+  // falls back to a regular file copy elsewhere without buffering the database
+  // in process memory.
+  if (scratchRoot) {
+    fs.mkdirSync(scratchRoot, { recursive: true, mode: 0o700 });
+    const scratchStat = fs.lstatSync(scratchRoot);
+    if (!scratchStat.isDirectory() || scratchStat.isSymbolicLink()) {
+      throw new Error('SQLite bootstrap scratch path must be a directory');
+    }
+  }
+  const inspectionDirectory = fs.mkdtempSync(
+    path.join(scratchRoot || path.dirname(databasePath), '.libre-bootstrap-')
+  );
+  const inspectionDatabasePath = path.join(
+    inspectionDirectory,
+    path.basename(databasePath)
+  );
+  let inspectionDatabase: Database.Database | undefined;
+  try {
+    try {
+      for (const source of sources) {
+        const sourceDescriptor = fs.openSync(
+          source.sourcePath,
+          fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0)
+        );
+        let destinationDescriptor: number | undefined;
+        const buffer = Buffer.allocUnsafe(1024 * 1024);
+        try {
+          const openedStat = fs.fstatSync(sourceDescriptor);
+          if (
+            !openedStat.isFile() ||
+            openedStat.dev !== source.stat.dev ||
+            openedStat.ino !== source.stat.ino ||
+            openedStat.nlink !== 1
+          ) {
+            throw new Error('SQLite bootstrap source changed during preflight');
+          }
+          destinationDescriptor = fs.openSync(
+            `${inspectionDatabasePath}${source.suffix}`,
+            fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL,
+            0o600
+          );
+          let bytesRead = 0;
+          while (
+            (bytesRead = fs.readSync(
+              sourceDescriptor,
+              buffer,
+              0,
+              buffer.length,
+              null
+            )) > 0
+          ) {
+            let offset = 0;
+            while (offset < bytesRead) {
+              offset += fs.writeSync(
+                destinationDescriptor,
+                buffer,
+                offset,
+                bytesRead - offset
+              );
+            }
+          }
+          fs.fsyncSync(destinationDescriptor);
+        } finally {
+          buffer.fill(0);
+          if (destinationDescriptor !== undefined)
+            fs.closeSync(destinationDescriptor);
+          fs.closeSync(sourceDescriptor);
+        }
+      }
+    } catch {
+      throw new Error(
+        'Unable to create a safe SQLite bootstrap inspection snapshot'
+      );
+    }
+
+    inspectionDatabase = new Database(inspectionDatabasePath, {
+      readonly: true,
+      fileMustExist: true,
+    });
+    assertSQLiteIntegrity(inspectionDatabase);
+    preflightSQLiteBootstrapSchema(inspectionDatabase);
+    inspect?.(inspectionDatabase);
+  } finally {
+    inspectionDatabase?.close();
+    fs.rmSync(inspectionDirectory, { recursive: true, force: true });
+  }
+}
 
 /**
  * Check if SQLite/better-sqlite3 is available
@@ -50,6 +318,7 @@ export function getDatabase(): Database.Database {
   }
 
   if (!db) {
+    let schemaInitializationStarted = false;
     // Check if SQLite is available first
     if (!isSQLiteAvailable()) {
       logger.error(
@@ -62,47 +331,133 @@ export function getDatabase(): Database.Database {
 
     try {
       // Use environment variable for database path, default to data directory
-      const dataDir =
-        process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
+      const dataDir = resolveDataDirectory();
       const dbPath = path.join(dataDir, 'data.sqlite');
 
       // Ensure the directory exists
       const dir = path.dirname(dbPath);
       if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+        fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
       }
+      const dataDirectoryStat = fs.lstatSync(dir);
+      if (
+        !dataDirectoryStat.isDirectory() ||
+        dataDirectoryStat.isSymbolicLink()
+      ) {
+        throw new Error('DATA_DIR must be a physical directory');
+      }
+      fs.chmodSync(dir, 0o700);
 
       // Initialize database
       db = new Database(dbPath);
+      fs.chmodSync(dbPath, 0o600);
+
+      // This check is deliberately read-only and precedes every persistent
+      // PRAGMA and historical inline CREATE/ALTER migration. An unsupported
+      // or tampered ledger must fail startup without changing the database.
+      const schemaCompatibility = preflightSQLiteMigrationLedger(db);
 
       // Enable foreign keys
       db.pragma('foreign_keys = ON');
 
-      // Set additional security pragmas
-      db.pragma('journal_mode = WAL');
+      // Set connection-local safety and performance pragmas first. WAL is a
+      // persistent database change, so it is enabled only after schema
+      // initialization commits successfully.
       db.pragma('synchronous = FULL');
       db.pragma('temp_store = MEMORY');
       db.pragma('mmap_size = 268435456'); // 256MB
 
       logger.debug('✅ Database initialized with application-level encryption');
 
-      // Create tables if they don't exist
-      initializeTables();
+      schemaInitializationStarted = true;
+      bootstrapSQLiteSchema(db, schemaCompatibility.currentVersion);
 
-      // Run migrations
-      runMigrations();
+      db.pragma('journal_mode = WAL');
+      // Under WAL, NORMAL keeps the database consistent through power loss;
+      // only the most recent commits can roll back. FULL stays in effect for
+      // the schema work above, but steady-state runs without a per-commit
+      // fsync, which chat streaming pays on every persisted event batch.
+      db.pragma('synchronous = NORMAL');
+      for (const suffix of ['-wal', '-shm']) {
+        const companion = `${dbPath}${suffix}`;
+        if (fs.existsSync(companion)) fs.chmodSync(companion, 0o600);
+      }
 
       logger.debug(`SQLite database initialized at: ${dbPath}`);
     } catch (error) {
       logger.error('Error initializing SQLite database:', error);
       logger.debug('Storage mode: JSON');
+      if (schemaInitializationStarted) {
+        recordSQLiteSchemaFailure(error);
+      }
+      if (db) {
+        db.close();
+        db = null;
+      }
       dbInitializationFailed = true;
-      throw new Error('SQLite database initialization failed');
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(`SQLite database initialization failed: ${detail}`);
     }
   }
 
   return db;
 }
+
+const bootstrapSQLiteSchema = (
+  database: Database.Database,
+  initialSchemaVersion: number
+): void => {
+  const previousDatabase = db;
+  if (previousDatabase && previousDatabase !== database) {
+    throw new Error(
+      'Cannot validate another SQLite database after application initialization'
+    );
+  }
+
+  db = database;
+  const requiresForeignKeysDisabled =
+    sqliteMigrationsRequireForeignKeysDisabledAfter(initialSchemaVersion);
+  const foreignKeysEnabled = database.pragma('foreign_keys', {
+    simple: true,
+  }) as number;
+  try {
+    if (requiresForeignKeysDisabled) {
+      if (database.inTransaction) {
+        throw new Error(
+          'SQLite bootstrap cannot suspend foreign keys inside a transaction'
+        );
+      }
+      database.pragma('foreign_keys = OFF');
+      if (database.pragma('foreign_keys', { simple: true }) !== 0) {
+        throw new Error('SQLite bootstrap could not suspend foreign keys');
+      }
+    }
+    const initializeSchema = database.transaction(() => {
+      // Historical inline initialization and durable ledger adoption form one
+      // atomic bootstrap. Pre-start validation checks the same structural
+      // contract against a private on-disk snapshot first.
+      initializeTables();
+      runMigrations();
+      runSQLiteMigrationCoordinator(database);
+      if (
+        requiresForeignKeysDisabled &&
+        (database.pragma('foreign_key_check') as unknown[]).length > 0
+      ) {
+        throw new Error(
+          'SQLite bootstrap migrations left foreign-key violations'
+        );
+      }
+    });
+    initializeSchema();
+  } finally {
+    if (requiresForeignKeysDisabled) {
+      database.pragma(
+        `foreign_keys = ${foreignKeysEnabled === 1 ? 'ON' : 'OFF'}`
+      );
+    }
+    db = previousDatabase;
+  }
+};
 
 /**
  * Safely get the database connection, returns null if not available
@@ -130,7 +485,7 @@ function initializeTables(): void {
       email TEXT UNIQUE,
       password_hash TEXT NOT NULL,
       role TEXT DEFAULT 'user',
-      account_status TEXT NOT NULL DEFAULT 'active' CHECK(account_status IN ('pending', 'active')),
+      account_status TEXT NOT NULL DEFAULT 'active' CHECK(account_status IN ('pending', 'active', 'retiring')),
       approved_at INTEGER,
       approved_by TEXT,
       avatar TEXT,
@@ -170,8 +525,9 @@ function initializeTables(): void {
       db.exec('ALTER TABLE users ADD COLUMN approved_by TEXT');
       logger.debug('Migration: Added account approver to users table');
     }
-  } catch {
-    // Column might already exist or table doesn't exist yet
+  } catch (error) {
+    logger.error('Failed to migrate the users table:', error);
+    throw error;
   }
 
   // Sessions table - migrated from sessions.json
@@ -392,7 +748,7 @@ function initializeTables(): void {
     CREATE TABLE IF NOT EXISTS plugin_discovered_capability_models (
       user_id TEXT DEFAULT 'default',
       plugin_id TEXT NOT NULL,
-      capability TEXT NOT NULL CHECK(capability IN ('image', 'tts', 'audio', 'video')),
+      capability TEXT NOT NULL CHECK(capability IN ('image', 'stt', 'tts', 'audio', 'video')),
       models_json TEXT NOT NULL,
       updated_at INTEGER NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -433,7 +789,7 @@ function initializeTables(): void {
       user_id TEXT NOT NULL,
       plugin_id TEXT NOT NULL,
       plugin_name TEXT NOT NULL,
-      capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'tts', 'audio', 'video')),
+      capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'stt', 'tts', 'audio', 'video')),
       model TEXT NOT NULL,
       status TEXT NOT NULL CHECK(status IN ('success', 'error', 'cancelled')),
       prompt_tokens INTEGER,
@@ -446,6 +802,42 @@ function initializeTables(): void {
       created_at INTEGER NOT NULL
     )
   `);
+
+  // Reusable, user-owned TTS voice profiles. User-provided names, reference
+  // recordings, and exact transcripts are AES-GCM encrypted binary envelopes;
+  // only the routing and validation metadata remains queryable.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS voice_profiles (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      name BLOB NOT NULL,
+      plugin_id TEXT NOT NULL,
+      model TEXT NOT NULL,
+      routing_fingerprint TEXT NOT NULL,
+      reference_audio BLOB NOT NULL,
+      reference_text BLOB,
+      audio_mime_type TEXT NOT NULL,
+      audio_format TEXT NOT NULL CHECK(audio_format IN ('wav', 'mp3', 'flac', 'ogg', 'm4a')),
+      audio_size INTEGER NOT NULL CHECK(audio_size > 0),
+      consent_confirmed_at INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+  const voiceProfileColumns = db
+    .prepare('PRAGMA table_info(voice_profiles)')
+    .all() as Array<{ name: string }>;
+  if (
+    !voiceProfileColumns.some(column => column.name === 'routing_fingerprint')
+  ) {
+    // This table first existed on the unreleased dev branch. Preserve any
+    // profiles created by that build, but require explicit re-creation before
+    // reuse because their original provider route was not consent-bound.
+    db.exec(
+      "ALTER TABLE voice_profiles ADD COLUMN routing_fingerprint TEXT NOT NULL DEFAULT ''"
+    );
+  }
 
   // Generated images table - for image gallery
   db.exec(`
@@ -605,6 +997,8 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_plugin_created ON plugin_usage_events(plugin_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_model_created ON plugin_usage_events(model, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_user_created ON plugin_usage_events(user_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_voice_profiles_user_updated ON voice_profiles(user_id, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_voice_profiles_user_route ON voice_profiles(user_id, plugin_id, model);
     CREATE INDEX IF NOT EXISTS idx_generated_images_user_id ON generated_images(user_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_created_at ON generated_images(created_at);
     CREATE INDEX IF NOT EXISTS idx_media_generation_jobs_user_created ON media_generation_jobs(user_id, created_at DESC);
@@ -642,6 +1036,7 @@ function createDefaultUserIfNeeded(): void {
     }
   } catch (error) {
     logger.error('Failed to create default user:', error);
+    throw error;
   }
 }
 
@@ -662,7 +1057,8 @@ function runMigrations(): void {
     if (
       usageTableSql?.sql &&
       (!usageTableSql.sql.includes("'video'") ||
-        !usageTableSql.sql.includes("'audio'"))
+        !usageTableSql.sql.includes("'audio'") ||
+        !usageTableSql.sql.includes("'stt'"))
     ) {
       migrationDb.transaction(() => {
         migrationDb.exec(`
@@ -671,7 +1067,7 @@ function runMigrations(): void {
             user_id TEXT NOT NULL,
             plugin_id TEXT NOT NULL,
             plugin_name TEXT NOT NULL,
-            capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'tts', 'audio', 'video')),
+            capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'stt', 'tts', 'audio', 'video')),
             model TEXT NOT NULL,
             status TEXT NOT NULL CHECK(status IN ('success', 'error', 'cancelled')),
             prompt_tokens INTEGER,
@@ -690,6 +1086,38 @@ function runMigrations(): void {
           CREATE INDEX idx_plugin_usage_events_plugin_created ON plugin_usage_events(plugin_id, created_at DESC);
           CREATE INDEX idx_plugin_usage_events_model_created ON plugin_usage_events(model, created_at DESC);
           CREATE INDEX idx_plugin_usage_events_user_created ON plugin_usage_events(user_id, created_at DESC);
+        `);
+      })();
+    }
+
+    const capabilityModelsTableSql = migrationDb
+      .prepare(
+        `SELECT sql FROM sqlite_master
+         WHERE type = 'table' AND name = 'plugin_discovered_capability_models'`
+      )
+      .get() as { sql?: string } | undefined;
+    if (
+      capabilityModelsTableSql?.sql &&
+      !capabilityModelsTableSql.sql.includes("'stt'")
+    ) {
+      migrationDb.transaction(() => {
+        migrationDb.exec(`
+          CREATE TABLE plugin_discovered_capability_models_next (
+            user_id TEXT DEFAULT 'default',
+            plugin_id TEXT NOT NULL,
+            capability TEXT NOT NULL CHECK(capability IN ('image', 'stt', 'tts', 'audio', 'video')),
+            models_json TEXT NOT NULL,
+            updated_at INTEGER NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            PRIMARY KEY (user_id, plugin_id, capability)
+          );
+          INSERT INTO plugin_discovered_capability_models_next
+            SELECT * FROM plugin_discovered_capability_models;
+          DROP TABLE plugin_discovered_capability_models;
+          ALTER TABLE plugin_discovered_capability_models_next
+            RENAME TO plugin_discovered_capability_models;
+          CREATE INDEX idx_plugin_discovered_capability_models_plugin_id
+            ON plugin_discovered_capability_models(plugin_id);
         `);
       })();
     }
@@ -904,6 +1332,7 @@ function runMigrations(): void {
     ).run();
   } catch (error) {
     logger.error('Error running migrations:', error);
+    throw error;
   }
 }
 

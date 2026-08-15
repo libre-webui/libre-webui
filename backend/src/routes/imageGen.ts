@@ -16,7 +16,7 @@
  */
 
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import pluginService from '../services/pluginService.js';
 import galleryService from '../services/galleryService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
@@ -36,8 +36,34 @@ const getRequestUserId = (req: AuthenticatedRequest): string => {
   return req.user.userId;
 };
 
+function requestAbortSignal(
+  req: AuthenticatedRequest,
+  res: express.Response
+): { signal: AbortSignal; cleanup: () => void } {
+  const controller = new AbortController();
+  const abort = () => {
+    if (!controller.signal.aborted) {
+      controller.abort(new Error('Image generation client disconnected'));
+    }
+  };
+  const abortOnResponseClose = () => {
+    if (!res.writableEnded) abort();
+  };
+  req.once?.('aborted', abort);
+  res.once?.('close', abortOnResponseClose);
+  if (req.aborted || res.destroyed) abort();
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      req.off?.('aborted', abort);
+      res.off?.('close', abortOnResponseClose);
+    },
+  };
+}
+
 // Rate limiter for image generation routes: 10 requests per minute
 const imageGenRateLimiter = rateLimit({
+  keyPrefix: 'image-generation',
   windowMs: 60 * 1000, // 1 minute
   max: 10, // limit each IP to 10 requests per windowMs
   message: {
@@ -50,6 +76,7 @@ const imageGenRateLimiter = rateLimit({
 
 // Rate limiter for gallery routes: 60 requests per minute
 const galleryRateLimiter = rateLimit({
+  keyPrefix: 'image-gallery',
   windowMs: 60 * 1000, // 1 minute
   max: 60, // limit each IP to 60 requests per windowMs
   message: {
@@ -74,7 +101,7 @@ router.get('/models', async (req: AuthenticatedRequest, res) => {
       'image',
       getRequestUserId(req)
     );
-    const models = pluginService.getAvailableImageGenModels(
+    const models = await pluginService.getAvailableImageGenModels(
       getRequestUserId(req)
     );
     res.json({
@@ -97,7 +124,7 @@ router.get('/models', async (req: AuthenticatedRequest, res) => {
 router.get('/config/:pluginId', async (req: AuthenticatedRequest, res) => {
   try {
     const pluginId = req.params.pluginId as string;
-    const config = pluginService.getImageGenConfig(
+    const config = await pluginService.getImageGenConfig(
       pluginId,
       getRequestUserId(req)
     );
@@ -133,9 +160,9 @@ router.get('/plugins', async (req: AuthenticatedRequest, res) => {
       'image',
       getRequestUserId(req)
     );
-    const plugins = pluginService
-      .getPluginsByCapability('image', getRequestUserId(req))
-      .filter(plugin => plugin.active);
+    const plugins = (
+      await pluginService.getPluginsByCapability('image', getRequestUserId(req))
+    ).filter(plugin => plugin.active);
     res.json({
       success: true,
       data: plugins.map(p => ({
@@ -165,6 +192,7 @@ router.post(
   '/generate',
   imageGenRateLimiter,
   async (req: AuthenticatedRequest, res) => {
+    const requestAbort = requestAbortSignal(req, res);
     try {
       const {
         model,
@@ -240,7 +268,10 @@ router.post(
         response_format,
         pluginId,
         userId,
+        signal: requestAbort.signal,
       });
+
+      if (requestAbort.signal.aborted) return;
 
       // Auto-save generated images to gallery
       const savedImages: string[] = [];
@@ -258,7 +289,7 @@ router.post(
           }
 
           if (imageData) {
-            const saved = galleryService.saveImage(userId, {
+            const saved = await galleryService.saveImage(userId, {
               prompt,
               model,
               imageData,
@@ -280,6 +311,7 @@ router.post(
         },
       });
     } catch (error) {
+      if (requestAbort.signal.aborted) return;
       logger.error('Image generation failed:', error);
 
       const errorMessage =
@@ -302,6 +334,8 @@ router.post(
         success: false,
         message: errorMessage,
       });
+    } finally {
+      requestAbort.cleanup();
     }
   }
 );
@@ -319,7 +353,7 @@ router.get(
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
 
-      const result = galleryService.getImages(userId, { limit, offset });
+      const result = await galleryService.getImages(userId, { limit, offset });
 
       res.json({
         success: true,
@@ -347,7 +381,7 @@ router.get(
       const userId = getRequestUserId(req);
       const imageId = req.params.imageId as string;
 
-      const image = galleryService.getImage(imageId, userId);
+      const image = await galleryService.getImage(imageId, userId);
 
       if (!image) {
         res.status(404).json({
@@ -383,7 +417,7 @@ router.delete(
       const userId = getRequestUserId(req);
       const imageId = req.params.imageId as string;
 
-      const deleted = galleryService.deleteImage(imageId, userId);
+      const deleted = await galleryService.deleteImage(imageId, userId);
 
       if (!deleted) {
         res.status(404).json({

@@ -3,21 +3,33 @@
   "name": "llama.cpp",
   "type": "completion",
   "endpoint": "http://localhost:8080/v1/chat/completions",
+  "api_mode": "chat_completions",
+  "base_url": "http://localhost:8080/v1",
   "auth": {
     "header": "",
     "prefix": "",
     "key_env": ""
   },
-  "model_map": [
-    "qwen3-35b-a3b"
-  ],
+  "model_map": ["qwen3-35b-a3b"],
   "variables": [
+    {
+      "name": "base_url",
+      "type": "string",
+      "label": "Base URL",
+      "description": "OpenAI-compatible API root. Libre appends /chat/completions by default.",
+      "default": "http://localhost:8080/v1"
+    },
+    {
+      "name": "api_path",
+      "type": "string",
+      "label": "API Path",
+      "description": "Optional path relative to Base URL. Leave blank to use /chat/completions."
+    },
     {
       "name": "endpoint",
       "type": "string",
-      "label": "API Endpoint",
-      "description": "llama.cpp server endpoint URL. Default: http://localhost:8080/v1/chat/completions",
-      "default": "http://localhost:8080/v1/chat/completions"
+      "label": "Legacy Full Endpoint",
+      "description": "Optional complete request URL. This overrides Base URL and API Path when it includes an operation path."
     },
     {
       "name": "temperature",

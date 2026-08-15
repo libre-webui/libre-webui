@@ -71,22 +71,34 @@ function addHeaderToFile(filePath) {
 
   try {
     const content = fs.readFileSync(filePath, 'utf8');
-    
-    if (hasHeader(content)) {
+
+    // Preserve a shebang line: the header must go after it, and the
+    // header check must look past it.
+    let shebang = '';
+    let body = content;
+    if (content.startsWith('#!')) {
+      const newlineIndex = content.indexOf('\n');
+      if (newlineIndex !== -1) {
+        shebang = content.substring(0, newlineIndex + 1);
+        body = content.substring(newlineIndex + 1);
+      }
+    }
+
+    if (hasHeader(body)) {
       console.log(`Header already exists: ${filePath}`);
       return false;
     }
 
     // Remove any existing header comments at the top
-    let cleanContent = content;
-    if (content.startsWith('/*')) {
-      const headerEndIndex = content.indexOf('*/');
+    let cleanContent = body;
+    if (body.startsWith('/*')) {
+      const headerEndIndex = body.indexOf('*/');
       if (headerEndIndex !== -1) {
-        cleanContent = content.substring(headerEndIndex + 2).replace(/^\s*\n/, '');
+        cleanContent = body.substring(headerEndIndex + 2).replace(/^\s*\n/, '');
       }
     }
 
-    const newContent = COPYRIGHT_HEADER + cleanContent;
+    const newContent = shebang + COPYRIGHT_HEADER + cleanContent;
     fs.writeFileSync(filePath, newContent, 'utf8');
     console.log(`Added header to: ${filePath}`);
     return true;

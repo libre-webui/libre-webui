@@ -49,12 +49,17 @@ import {
   WorkToolCall,
 } from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
+import { getDurableJobRuntime } from '../platform/jobs/durableJobRuntime.js';
 import {
   boundedOpenAIResponsesOutputItems,
   OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
   OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY,
   OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY,
 } from '../utils/openAIResponsesAdapter.js';
+import {
+  OWNER_DELETE_CONTENT_JOB_TYPE,
+  WORK_EXECUTE_IDEMPOTENCY_SCOPE,
+} from '../platform/jobs/domainJobContracts.js';
 
 const logger = createLogger('services:work-agent');
 export const WORK_PROVIDER_STATE_METADATA_KEY = 'workProviderState';
@@ -66,6 +71,8 @@ const WORK_EMPTY_ROUND_NUDGE_LIMIT = 2;
 // Cross-run replay only needs the shape of past tool calls, not full
 // write_file payloads; bound each persisted argument set.
 const WORK_CHAT_TOOL_CALL_ARGUMENTS_MAX_BYTES = 4_096;
+const INTERRUPTED_TOOL_RESULT =
+  'Tool execution was interrupted; outcome unknown. Inspect the workspace before retrying.';
 
 export const WORK_TOOL_SCHEMAS: Record<string, unknown>[] = [
   functionTool('list_files', 'List direct children of a workspace directory.', {
@@ -165,13 +172,13 @@ export const WORK_WEB_SEARCH_TOOL_SCHEMA: Record<string, unknown> =
     ['query']
   );
 
-export function workToolSchemasForTask(task: {
+export async function workToolSchemasForTask(task: {
   networkEnabled: boolean;
   userId: string;
-}): Record<string, unknown>[] {
+}): Promise<Record<string, unknown>[]> {
   return task.networkEnabled &&
-    isWebSearchAvailable() &&
-    userCanUseWebSearch(userModel.getUserById(task.userId))
+    (await isWebSearchAvailable()) &&
+    (await userCanUseWebSearch(await userModel.getUserById(task.userId)))
     ? [...WORK_TOOL_SCHEMAS, WORK_WEB_SEARCH_TOOL_SCHEMA]
     : WORK_TOOL_SCHEMAS;
 }
@@ -195,8 +202,127 @@ export class WorkAgentService {
     });
   }
 
+  /**
+   * Durable worker entrypoint. An interrupted active run is moved back to the
+   * queue while its persisted provider/tool transcript is retained. Missing
+   * tool results are restored as "outcome unknown", so the exact external
+   * call is not blindly replayed after a worker crash.
+   */
+  async executeDurable(
+    taskId: string,
+    runId: string,
+    userId: string
+  ): Promise<void> {
+    const task = await workTaskService.requireTaskRecord(taskId, userId);
+    const run = await workTaskService.getRun(runId);
+    if (!run || run.taskId !== taskId) {
+      throw new WorkNotFoundError('Work run not found.');
+    }
+    if (!isActiveRunStatus(run.status)) return;
+    if (run.status !== 'queued') {
+      // A worker can disappear while its sandbox continues running. Fence all
+      // other lifecycle operations, stop that unknown execution, and only then
+      // reconcile the durable transcript. Replaying against the old container
+      // would allow both workers to mutate one workspace concurrently.
+      workRuntimeService.beginTaskSuspension(taskId);
+      try {
+        await workRuntimeService.interruptContainer(task);
+      } finally {
+        workRuntimeService.releaseTaskSuspension(taskId);
+      }
+      await this.reconcileInterruptedToolCalls(taskId, runId);
+      await workTaskService.updateRun(runId, 'queued');
+      // Tasks deliberately have no queued state: idle means durable work is
+      // admitted but no container/provider side effect has started yet.
+      await workTaskService.updateTaskStatus(taskId, 'idle');
+    }
+    await this.execute(taskId, runId, userId);
+  }
+
+  /**
+   * Materialize every tool intent whose worker disappeared before its result
+   * commit. This must run while the caller owns the durable job lease. The
+   * persisted result is both user-visible and part of the next model request;
+   * checking the transcript first makes a crash after the insert safe to
+   * reclaim without duplicating the result.
+   */
+  async reconcileInterruptedToolCalls(
+    taskId: string,
+    runId: string
+  ): Promise<number> {
+    const messages = await workTaskService.getMessages(taskId);
+    const settled = new Set(
+      messages
+        .filter(
+          message =>
+            message.runId === runId &&
+            message.role === 'tool' &&
+            message.kind === 'tool_result'
+        )
+        .map(message => message.metadata?.toolCallId)
+        .filter((value): value is string =>
+          Boolean(typeof value === 'string' && value)
+        )
+    );
+    const pending = new Map<string, { name: string; message: WorkMessage }>();
+    for (const message of messages) {
+      if (message.runId !== runId || message.kind !== 'tool_call') continue;
+      const toolCallId = message.metadata?.toolCallId;
+      const name = message.metadata?.name;
+      if (
+        typeof toolCallId !== 'string' ||
+        !toolCallId ||
+        typeof name !== 'string' ||
+        !name ||
+        settled.has(toolCallId)
+      ) {
+        continue;
+      }
+      pending.set(toolCallId, { name, message });
+    }
+
+    let reconciled = 0;
+    for (const [toolCallId, { name }] of pending) {
+      if (settled.has(toolCallId)) continue;
+      const metadata = {
+        name,
+        toolName: name,
+        toolCallId,
+        error: true,
+        outcomeUnknown: true,
+        interrupted: true,
+      };
+      const result = await workTaskService.addMessage(
+        taskId,
+        runId,
+        'tool',
+        'tool_result',
+        INTERRUPTED_TOOL_RESULT,
+        metadata
+      );
+      settled.add(toolCallId);
+      reconciled += 1;
+      await workEventService.publish(
+        taskId,
+        runId,
+        'tool_result',
+        {
+          toolCallId,
+          name,
+          phase: 'failed',
+          content: INTERRUPTED_TOOL_RESULT,
+          error: true,
+          outcomeUnknown: true,
+          message: result,
+        },
+        `message:${result.id}`
+      );
+    }
+    return reconciled;
+  }
+
   async cancel(taskId: string, userId: string): Promise<WorkTaskDetail> {
-    const task = workTaskService.requireMutableTaskRecord(taskId, userId);
+    const task = await workTaskService.requireMutableTaskRecord(taskId, userId);
     return this.cancelTask(task, userId);
   }
 
@@ -209,38 +335,126 @@ export class WorkAgentService {
     userId: string
   ): Promise<WorkTaskDetail> {
     const taskId = task.id;
-    const run = workTaskService.getActiveRun(taskId);
+    const run = await workTaskService.getActiveRun(taskId);
     if (!run) {
       throw new WorkConflictError('This Work task has no active run.');
     }
     this.controllers.get(run.id)?.abort();
     await workRuntimeService.stopContainer(task);
     await this.executions.get(run.id);
-    if (isActiveRunStatus(workTaskService.getRun(run.id)?.status)) {
-      workTaskService.updateRun(run.id, 'cancelled', {
+    if (isActiveRunStatus((await workTaskService.getRun(run.id))?.status)) {
+      await workTaskService.updateRun(run.id, 'cancelled', {
         error: 'Cancelled by user.',
         finished: true,
       });
-      workTaskService.updateTaskStatus(taskId, 'cancelled');
-      workTaskService.updatePreview(taskId, 'stopped');
-      workEventService.publish(taskId, run.id, 'done', {
-        status: 'cancelled',
-        error: 'Cancelled by user.',
-      });
+      await workTaskService.updateTaskStatus(taskId, 'cancelled');
+      await workTaskService.updatePreview(taskId, 'stopped');
+      await workEventService.publish(
+        taskId,
+        run.id,
+        'done',
+        {
+          status: 'cancelled',
+          error: 'Cancelled by user.',
+        },
+        'terminal:cancelled'
+      );
     }
     return workTaskService.requireTaskDetail(taskId, userId);
   }
 
   async removeTasksForUser(userId: string): Promise<void> {
-    workTaskService.beginUserRetirement(userId);
-    try {
-      const tasks = workTaskService.listTaskRecords(userId);
-      for (const task of tasks) {
-        await this.removeTaskInternal(task.id, userId, true);
+    await workTaskService.withUserLifecycleLease(userId, async assertHeld => {
+      workTaskService.beginUserRetirement(userId);
+      try {
+        await this.removeTasksWithRetirementHeld(userId, assertHeld);
+      } finally {
+        workTaskService.releaseUserRetirement(userId);
       }
-    } catch (error) {
-      workTaskService.releaseUserRetirement(userId);
-      throw error;
+    });
+  }
+
+  /**
+   * Persist a cross-replica account fence before deleting external state.
+   * A failed drain deliberately leaves the account `retiring`, so a retry can
+   * continue while authentication and all new Work admission stay denied.
+   */
+  async retireAndDeleteUser(
+    userId: string,
+    actorUserId: string
+  ): Promise<boolean> {
+    return workTaskService.withUserLifecycleLease(userId, async assertHeld => {
+      workTaskService.beginUserRetirement(userId);
+      try {
+        await assertHeld();
+        if (!(await userModel.beginUserRetirement(userId))) return false;
+        await this.drainDurableJobsForUser(userId);
+        await this.removeTasksWithRetirementHeld(userId, assertHeld);
+        // Catch a request admitted before retirement that committed its job
+        // after the first zero observation. Retiring actors cannot be claimed,
+        // and this pass terminalizes any such late queue entry.
+        await this.drainDurableJobsForUser(userId);
+        await assertHeld();
+        return userModel.deleteUserAndEnqueueCleanup(userId, actorUserId);
+      } finally {
+        workTaskService.releaseUserRetirement(userId);
+      }
+    });
+  }
+
+  private async removeTasksWithRetirementHeld(
+    userId: string,
+    assertHeld: () => Promise<void> = async () => undefined
+  ): Promise<void> {
+    const tasks = await workTaskService.listTaskRecords(userId);
+    for (const task of tasks) {
+      await assertHeld();
+      await this.removeTaskInternal(task.id, userId, true);
+    }
+  }
+
+  private async drainDurableJobsForUser(userId: string): Promise<void> {
+    const service = getDurableJobRuntime().service;
+    const deadline = Date.now() + 60_000;
+    while (true) {
+      // Cleanup jobs initiated by this actor protect other already-deleted
+      // owners. They retain audit attribution to the actor and must reach
+      // success before this identity can disappear; cancelling them strands
+      // the other owner's vectors/blobs forever.
+      await service.cancelAllForActor(userId, 'actor-revoked', {
+        excludeJobTypes: [OWNER_DELETE_CONTENT_JOB_TYPE],
+      });
+      const ordinaryActive = await service.countActiveForActor(userId, {
+        excludeJobTypes: [OWNER_DELETE_CONTENT_JOB_TYPE],
+      });
+      const cleanupActive = await service.countActiveForActor(userId, {
+        jobTypes: [OWNER_DELETE_CONTENT_JOB_TYPE],
+      });
+      const cleanupNotSucceeded = await service.countNonSucceededForActor(
+        userId,
+        {
+          jobTypes: [OWNER_DELETE_CONTENT_JOB_TYPE],
+          excludeHandledLifecycleJobs: true,
+        }
+      );
+      if (
+        ordinaryActive === 0 &&
+        cleanupActive === 0 &&
+        cleanupNotSucceeded === 0
+      ) {
+        return;
+      }
+      if (cleanupActive === 0 && cleanupNotSucceeded > 0) {
+        throw new WorkConflictError(
+          'This account remains retired because an initiated owner cleanup did not succeed.'
+        );
+      }
+      if (Date.now() >= deadline) {
+        throw new WorkConflictError(
+          'This account remains retired while its jobs and initiated owner cleanups finish draining.'
+        );
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
 
@@ -248,8 +462,18 @@ export class WorkAgentService {
     userId: string,
     revoke: () => Promise<T>
   ): Promise<T> {
+    return workTaskService.withUserLifecycleLease(userId, assertHeld =>
+      this.revokeWorkAccessWithLeaseHeld(userId, revoke, assertHeld)
+    );
+  }
+
+  private async revokeWorkAccessWithLeaseHeld<T>(
+    userId: string,
+    revoke: () => Promise<T>,
+    assertHeld: () => Promise<void>
+  ): Promise<T> {
     workTaskService.beginUserRetirement(userId);
-    const tasks = workTaskService.listTaskRecords(userId);
+    const tasks = await workTaskService.listTaskRecords(userId);
     const suspendedTaskIds: string[] = [];
     try {
       for (const task of tasks) {
@@ -260,9 +484,15 @@ export class WorkAgentService {
       // Persist revocation before depending on Docker cleanup. Even when a
       // daemon outage prevents teardown, current-role authorization denies
       // every subsequent Work request and a retry/restart can finish cleanup.
+      await assertHeld();
       const result = await revoke();
       const activeRuns = new Map(
-        tasks.map(task => [task.id, workTaskService.getActiveRun(task.id)])
+        await Promise.all(
+          tasks.map(
+            async task =>
+              [task.id, await workTaskService.getActiveRun(task.id)] as const
+          )
+        )
       );
       for (const run of activeRuns.values()) {
         if (run) this.controllers.get(run.id)?.abort();
@@ -285,19 +515,25 @@ export class WorkAgentService {
           await workRuntimeService.stopContainer(task);
           if (
             run &&
-            isActiveRunStatus(workTaskService.getRun(run.id)?.status)
+            isActiveRunStatus((await workTaskService.getRun(run.id))?.status)
           ) {
-            workTaskService.updateRun(run.id, 'cancelled', {
+            await workTaskService.updateRun(run.id, 'cancelled', {
               error: 'Administrator access was revoked.',
               finished: true,
             });
-            workTaskService.updateTaskStatus(task.id, 'cancelled');
-            workEventService.publish(task.id, run.id, 'done', {
-              status: 'cancelled',
-              error: 'Administrator access was revoked.',
-            });
+            await workTaskService.updateTaskStatus(task.id, 'cancelled');
+            await workEventService.publish(
+              task.id,
+              run.id,
+              'done',
+              {
+                status: 'cancelled',
+                error: 'Administrator access was revoked.',
+              },
+              'terminal:cancelled'
+            );
           }
-          workTaskService.updatePreview(task.id, 'stopped');
+          await workTaskService.updatePreview(task.id, 'stopped');
           if (run) await this.executions.get(run.id);
         })
       );
@@ -325,18 +561,18 @@ export class WorkAgentService {
     userId: string,
     allowRetiringUser: boolean
   ): Promise<void> {
-    const task = workTaskService.beginTaskRetirement(
+    const task = await workTaskService.beginTaskRetirement(
       taskId,
       userId,
       allowRetiringUser
     );
     try {
-      if (workTaskService.getActiveRun(taskId)) {
+      if (await workTaskService.getActiveRun(taskId)) {
         await this.cancelTask(task, userId);
       }
       await workRuntimeService.removeTask(task, allowRetiringUser);
       try {
-        workTaskService.deleteTask(taskId, userId);
+        await workTaskService.deleteTask(taskId, userId);
       } finally {
         workRuntimeService.finalizeTaskRemoval(taskId);
       }
@@ -352,7 +588,7 @@ export class WorkAgentService {
     for (const controller of this.controllers.values()) {
       controller.abort();
     }
-    const tasks = workTaskService.listAllTaskRecords();
+    const tasks = await workTaskService.listAllTaskRecords();
     const results = await Promise.allSettled(
       tasks.map(task => workRuntimeService.stopContainer(task))
     );
@@ -369,6 +605,15 @@ export class WorkAgentService {
     userId: string
   ): Promise<void> {
     const controller = new AbortController();
+    const durableAttemptIdentity = String(
+      (
+        await getDurableJobRuntime().service.getByIdempotency(
+          userId,
+          WORK_EXECUTE_IDEMPOTENCY_SCOPE,
+          runId
+        )
+      )?.attemptCount ?? 0
+    );
     this.controllers.set(runId, controller);
     let task: WorkTaskRecord | undefined;
     let releaseExecutionLease: (() => void) | undefined;
@@ -379,8 +624,8 @@ export class WorkAgentService {
       executionContainerSettled = true;
     };
     try {
-      task = workTaskService.requireTaskRecord(taskId, userId);
-      const run = workTaskService.getRun(runId);
+      task = await workTaskService.requireTaskRecord(taskId, userId);
+      const run = await workTaskService.getRun(runId);
       if (!run || run.taskId !== taskId) {
         throw new WorkNotFoundError('Work run not found.');
       }
@@ -389,26 +634,40 @@ export class WorkAgentService {
       if (run.status !== 'queued') {
         return;
       }
-      workTaskService.updateRun(runId, 'preparing', { started: true });
-      workTaskService.updateTaskStatus(taskId, 'preparing');
-      workEventService.publish(taskId, runId, 'run_state', {
-        status: 'preparing',
-        phase: 'preparing',
-      });
+      await workTaskService.updateRun(runId, 'preparing', { started: true });
+      await workTaskService.updateTaskStatus(taskId, 'preparing');
+      await workEventService.publish(
+        taskId,
+        runId,
+        'run_state',
+        {
+          status: 'preparing',
+          phase: 'preparing',
+        },
+        'transition:preparing',
+        durableAttemptIdentity
+      );
       for (const skill of WORK_AGENT_SKILLS) {
-        workEventService.publish(taskId, runId, 'skill_loaded', {
-          id: skill.id,
-          name: skill.title,
-          description: skill.instructions[0],
-        });
+        await workEventService.publish(
+          taskId,
+          runId,
+          'skill_loaded',
+          {
+            id: skill.id,
+            name: skill.title,
+            description: skill.instructions[0],
+          },
+          `skill:${skill.id}`,
+          durableAttemptIdentity
+        );
       }
       releaseExecutionLease = await workRuntimeService.prepare(
         task,
         controller.signal
       );
-      this.throwIfCancelled(runId, controller);
-      workTaskService.updateRun(runId, 'running', { started: true });
-      workTaskService.updateTaskStatus(taskId, 'running');
+      await this.throwIfCancelled(runId, controller);
+      await workTaskService.updateRun(runId, 'running', { started: true });
+      await workTaskService.updateTaskStatus(taskId, 'running');
       const roundLimit = workRuntimeService.limits.maxRounds;
       const toolCallLimit = workToolCallBudget(roundLimit);
       const providerSelection = {
@@ -416,18 +675,18 @@ export class WorkAgentService {
         providerId: run.providerId,
       } as const;
       const providerRoutingFingerprint =
-        workModelProviderService.getRoutingFingerprint(
+        await workModelProviderService.getRoutingFingerprint(
           run.model,
           providerSelection,
           userId
         );
       const providerStateScope =
-        workModelProviderService.getResponsesStateScope(
+        await workModelProviderService.getResponsesStateScope(
           run.model,
           providerSelection,
           userId
         );
-      const messages = this.contextMessages(
+      const messages = await this.contextMessages(
         task,
         roundLimit,
         providerStateScope,
@@ -442,31 +701,42 @@ export class WorkAgentService {
       let emptyRoundNudges = 0;
 
       roundLoop: for (let round = 0; round < roundLimit; round++) {
-        this.throwIfCancelled(runId, controller);
-        workEventService.publish(taskId, runId, 'run_state', {
-          status: 'running',
-          phase: 'thinking',
-          round: round + 1,
-          roundLimit,
-        });
+        await this.throwIfCancelled(runId, controller);
+        await workEventService.publish(
+          taskId,
+          runId,
+          'run_state',
+          {
+            status: 'running',
+            phase: 'thinking',
+            round: round + 1,
+            roundLimit,
+          },
+          `round:${round + 1}:thinking`,
+          durableAttemptIdentity
+        );
         const contentStream = new WorkDeltaPublisher(
           taskId,
           runId,
           'assistant_delta',
-          streamedAssistantTotal
+          streamedAssistantTotal,
+          `round:${round + 1}`,
+          durableAttemptIdentity
         );
         const reasoningStream = new WorkDeltaPublisher(
           taskId,
           runId,
           'reasoning_delta',
-          streamedReasoningTotal
+          streamedReasoningTotal,
+          `round:${round + 1}`,
+          durableAttemptIdentity
         );
         let roundInputTokens = 0;
         let roundOutputTokens = 0;
         const roundStartedAt = Date.now();
         let response: OllamaChatResponse;
         try {
-          this.assertStableProviderRouting(
+          await this.assertStableProviderRouting(
             run,
             userId,
             providerRoutingFingerprint
@@ -475,7 +745,7 @@ export class WorkAgentService {
             {
               model: run.model,
               messages,
-              tools: workToolSchemasForTask(task),
+              tools: await workToolSchemasForTask(task),
               stream: true,
             },
             providerSelection,
@@ -486,7 +756,7 @@ export class WorkAgentService {
               onUsage: usage => {
                 roundInputTokens = usage.promptTokens ?? roundInputTokens;
                 roundOutputTokens = usage.completionTokens ?? roundOutputTokens;
-                workEventService.publish(taskId, runId, 'usage', {
+                void workEventService.publish(taskId, runId, 'usage', {
                   inputTokens: accumulatedInputTokens + roundInputTokens,
                   outputTokens: accumulatedOutputTokens + roundOutputTokens,
                   totalTokens:
@@ -506,7 +776,7 @@ export class WorkAgentService {
           streamedAssistantTotal = contentStream.currentTotal;
           streamedReasoningTotal = reasoningStream.currentTotal;
         }
-        this.throwIfCancelled(runId, controller);
+        await this.throwIfCancelled(runId, controller);
         assertCompleteProviderResponse(response);
         accumulatedInputTokens += roundInputTokens;
         accumulatedOutputTokens += roundOutputTokens;
@@ -559,7 +829,7 @@ export class WorkAgentService {
           100_000
         );
         if (reasoningContent) {
-          workTaskService.addMessage(
+          await workTaskService.addMessage(
             taskId,
             runId,
             'assistant',
@@ -585,7 +855,7 @@ export class WorkAgentService {
               });
             }
             if (providerStateMetadata) {
-              workTaskService.addMessage(
+              await workTaskService.addMessage(
                 taskId,
                 runId,
                 'assistant',
@@ -603,7 +873,7 @@ export class WorkAgentService {
           const finalContent =
             assistantContent ||
             'The model completed without returning a text response.';
-          workTaskService.addMessage(
+          await workTaskService.addMessage(
             taskId,
             runId,
             'assistant',
@@ -623,15 +893,25 @@ export class WorkAgentService {
           // stopped or been retained for a verified live preview. Consumers
           // can then refresh files immediately without racing teardown.
           await settleExecutionContainer();
-          this.throwIfCancelled(runId, controller);
-          if (!isActiveRunStatus(workTaskService.getRun(runId)?.status)) {
+          await this.throwIfCancelled(runId, controller);
+          if (
+            !isActiveRunStatus((await workTaskService.getRun(runId))?.status)
+          ) {
             return;
           }
-          workTaskService.updateRun(runId, 'completed', { finished: true });
-          workTaskService.updateTaskStatus(taskId, 'completed');
-          workEventService.publish(taskId, runId, 'done', {
-            status: 'completed',
+          await workTaskService.updateRun(runId, 'completed', {
+            finished: true,
           });
+          await workTaskService.updateTaskStatus(taskId, 'completed');
+          await workEventService.publish(
+            taskId,
+            runId,
+            'done',
+            {
+              status: 'completed',
+            },
+            'terminal:completed'
+          );
           return;
         }
         const toolValidationErrors = new Map<WorkToolCall, string>();
@@ -655,7 +935,7 @@ export class WorkAgentService {
         const persistedAssistantMetadata =
           providerStateMetadata ?? toPersistedWorkChatToolCalls(run, toolCalls);
         if (assistantContent) {
-          workTaskService.addMessage(
+          await workTaskService.addMessage(
             taskId,
             runId,
             'assistant',
@@ -664,7 +944,7 @@ export class WorkAgentService {
             persistedAssistantMetadata
           );
         } else if (persistedAssistantMetadata) {
-          workTaskService.addMessage(
+          await workTaskService.addMessage(
             taskId,
             runId,
             'assistant',
@@ -674,9 +954,9 @@ export class WorkAgentService {
           );
         }
         for (const call of toolCalls) {
-          this.throwIfCancelled(runId, controller);
+          await this.throwIfCancelled(runId, controller);
           const toolCallMetadata = summarizeToolCall(call);
-          const toolCallMessage = workTaskService.addMessage(
+          const toolCallMessage = await workTaskService.addMessage(
             taskId,
             runId,
             'assistant',
@@ -684,20 +964,33 @@ export class WorkAgentService {
             `Calling ${call.function.name}`,
             toolCallMetadata
           );
-          workEventService.publish(taskId, runId, 'run_state', {
-            status: 'running',
-            phase: 'using_tool',
-            round: round + 1,
-            roundLimit,
-          });
-          workEventService.publish(taskId, runId, 'tool_call', {
-            toolCallId: call.id,
-            name: call.function.name,
-            arguments: toolCallMetadata,
-            metadata: toolCallMetadata,
-            phase: 'running',
-            message: toolCallMessage,
-          });
+          await workEventService.publish(
+            taskId,
+            runId,
+            'run_state',
+            {
+              status: 'running',
+              phase: 'using_tool',
+              round: round + 1,
+              roundLimit,
+            },
+            `tool:${call.id}:state`,
+            durableAttemptIdentity
+          );
+          await workEventService.publish(
+            taskId,
+            runId,
+            'tool_call',
+            {
+              toolCallId: call.id,
+              name: call.function.name,
+              arguments: toolCallMetadata,
+              metadata: toolCallMetadata,
+              phase: 'running',
+              message: toolCallMessage,
+            },
+            `message:${toolCallMessage.id}`
+          );
           let toolOutput: string;
           let toolMetadata: Record<string, unknown> = {
             name: call.function.name,
@@ -735,7 +1028,7 @@ export class WorkAgentService {
             toolMetadata.outputTruncated = true;
             toolOutput = boundedOutput;
           }
-          const toolResultMessage = workTaskService.addMessage(
+          const toolResultMessage = await workTaskService.addMessage(
             taskId,
             runId,
             'tool',
@@ -743,14 +1036,20 @@ export class WorkAgentService {
             toolOutput,
             toolMetadata
           );
-          workEventService.publish(taskId, runId, 'tool_result', {
-            toolCallId: call.id,
-            name: call.function.name,
-            phase: toolMetadata.error ? 'failed' : 'completed',
-            content: toolOutput,
-            error: toolMetadata.error === true,
-            message: toolResultMessage,
-          });
+          await workEventService.publish(
+            taskId,
+            runId,
+            'tool_result',
+            {
+              toolCallId: call.id,
+              name: call.function.name,
+              phase: toolMetadata.error ? 'failed' : 'completed',
+              content: toolOutput,
+              error: toolMetadata.error === true,
+              message: toolResultMessage,
+            },
+            `message:${toolResultMessage.id}`
+          );
           messages.push({
             role: 'tool',
             content: toolOutput,
@@ -759,24 +1058,35 @@ export class WorkAgentService {
           });
         }
       }
-      this.throwIfCancelled(runId, controller);
-      workEventService.publish(taskId, runId, 'run_state', {
-        status: 'running',
-        phase: 'responding',
-        round: roundLimit,
-        roundLimit,
-      });
+      await this.throwIfCancelled(runId, controller);
+      await workEventService.publish(
+        taskId,
+        runId,
+        'run_state',
+        {
+          status: 'running',
+          phase: 'responding',
+          round: roundLimit,
+          roundLimit,
+        },
+        'handoff:responding',
+        durableAttemptIdentity
+      );
       const handoffContentStream = new WorkDeltaPublisher(
         taskId,
         runId,
         'assistant_delta',
-        streamedAssistantTotal
+        streamedAssistantTotal,
+        'handoff',
+        durableAttemptIdentity
       );
       const handoffReasoningStream = new WorkDeltaPublisher(
         taskId,
         runId,
         'reasoning_delta',
-        streamedReasoningTotal
+        streamedReasoningTotal,
+        'handoff',
+        durableAttemptIdentity
       );
       let handoffInputTokens = 0;
       let handoffOutputTokens = 0;
@@ -784,7 +1094,7 @@ export class WorkAgentService {
       let handoffResponse: OllamaChatResponse;
       try {
         try {
-          this.assertStableProviderRouting(
+          await this.assertStableProviderRouting(
             run,
             userId,
             providerRoutingFingerprint
@@ -816,7 +1126,7 @@ export class WorkAgentService {
                   handoffInputTokens = usage.promptTokens ?? handoffInputTokens;
                   handoffOutputTokens =
                     usage.completionTokens ?? handoffOutputTokens;
-                  workEventService.publish(taskId, runId, 'usage', {
+                  void workEventService.publish(taskId, runId, 'usage', {
                     inputTokens: accumulatedInputTokens + handoffInputTokens,
                     outputTokens: accumulatedOutputTokens + handoffOutputTokens,
                     totalTokens:
@@ -851,13 +1161,13 @@ export class WorkAgentService {
         handoffContentStream.flush();
         handoffReasoningStream.flush();
       }
-      this.throwIfCancelled(runId, controller);
+      await this.throwIfCancelled(runId, controller);
       const handoffReasoning = boundUtf8(
         handoffResponse.message?.thinking?.trim() || '',
         100_000
       );
       if (handoffReasoning) {
-        workTaskService.addMessage(
+        await workTaskService.addMessage(
           taskId,
           runId,
           'assistant',
@@ -875,7 +1185,7 @@ export class WorkAgentService {
         run,
         handoffResponse.message.providerMetadata
       );
-      workTaskService.addMessage(
+      await workTaskService.addMessage(
         taskId,
         runId,
         'assistant',
@@ -888,32 +1198,47 @@ export class WorkAgentService {
         }
       );
       await settleExecutionContainer();
-      this.throwIfCancelled(runId, controller);
-      if (!isActiveRunStatus(workTaskService.getRun(runId)?.status)) return;
-      workTaskService.updateRun(runId, 'needs_input', { finished: true });
-      workTaskService.updateTaskStatus(taskId, 'needs_input');
-      workEventService.publish(taskId, runId, 'done', {
-        status: 'needs_input',
-        budgetReason,
-      });
+      await this.throwIfCancelled(runId, controller);
+      if (!isActiveRunStatus((await workTaskService.getRun(runId))?.status))
+        return;
+      await workTaskService.updateRun(runId, 'needs_input', { finished: true });
+      await workTaskService.updateTaskStatus(taskId, 'needs_input');
+      await workEventService.publish(
+        taskId,
+        runId,
+        'done',
+        {
+          status: 'needs_input',
+          budgetReason,
+        },
+        'terminal:needs_input'
+      );
     } catch (error) {
-      const currentRun = workTaskService.getRun(runId);
+      const currentRun = await workTaskService.getRun(runId);
       if (currentRun?.status === 'cancelled' || controller.signal.aborted) {
         if (task) {
           try {
             await workRuntimeService.stopContainer(task);
             executionContainerSettled = true;
-            if (isActiveRunStatus(workTaskService.getRun(runId)?.status)) {
-              workTaskService.updateRun(runId, 'cancelled', {
+            if (
+              isActiveRunStatus((await workTaskService.getRun(runId))?.status)
+            ) {
+              await workTaskService.updateRun(runId, 'cancelled', {
                 error: 'Cancelled by user.',
                 finished: true,
               });
-              workTaskService.updateTaskStatus(taskId, 'cancelled');
-              workTaskService.updatePreview(taskId, 'stopped');
-              workEventService.publish(taskId, runId, 'done', {
-                status: 'cancelled',
-                error: 'Cancelled by user.',
-              });
+              await workTaskService.updateTaskStatus(taskId, 'cancelled');
+              await workTaskService.updatePreview(taskId, 'stopped');
+              await workEventService.publish(
+                taskId,
+                runId,
+                'done',
+                {
+                  status: 'cancelled',
+                  error: 'Cancelled by user.',
+                },
+                'terminal:cancelled'
+              );
             }
           } catch (cleanupError) {
             logger.error(
@@ -929,39 +1254,63 @@ export class WorkAgentService {
           ? error.message
           : 'Work run failed unexpectedly.';
       await settleExecutionContainer();
-      const settledRun = workTaskService.getRun(runId);
+      const settledRun = await workTaskService.getRun(runId);
       if (controller.signal.aborted || settledRun?.status === 'cancelled') {
         if (isActiveRunStatus(settledRun?.status)) {
-          workTaskService.updateRun(runId, 'cancelled', {
+          await workTaskService.updateRun(runId, 'cancelled', {
             error: 'Cancelled by user.',
             finished: true,
           });
-          workTaskService.updateTaskStatus(taskId, 'cancelled');
-          workTaskService.updatePreview(taskId, 'stopped');
-          workEventService.publish(taskId, runId, 'done', {
-            status: 'cancelled',
-            error: 'Cancelled by user.',
-          });
+          await workTaskService.updateTaskStatus(taskId, 'cancelled');
+          await workTaskService.updatePreview(taskId, 'stopped');
+          await workEventService.publish(
+            taskId,
+            runId,
+            'done',
+            {
+              status: 'cancelled',
+              error: 'Cancelled by user.',
+            },
+            'terminal:cancelled'
+          );
         }
         return;
       }
       if (!isActiveRunStatus(settledRun?.status)) {
         return;
       }
-      workTaskService.addMessage(taskId, runId, 'assistant', 'error', message);
-      workTaskService.updateRun(runId, 'failed', {
+      await workTaskService.addMessage(
+        taskId,
+        runId,
+        'assistant',
+        'error',
+        message
+      );
+      await workTaskService.updateRun(runId, 'failed', {
         error: message,
         finished: true,
       });
-      workTaskService.updateTaskStatus(taskId, 'failed');
-      workEventService.publish(taskId, runId, 'error', {
-        message,
-        code: error instanceof WorkAgentHttpError ? error.code : undefined,
-      });
-      workEventService.publish(taskId, runId, 'done', {
-        status: 'failed',
-        error: message,
-      });
+      await workTaskService.updateTaskStatus(taskId, 'failed');
+      await workEventService.publish(
+        taskId,
+        runId,
+        'error',
+        {
+          message,
+          code: error instanceof WorkAgentHttpError ? error.code : undefined,
+        },
+        'terminal:error'
+      );
+      await workEventService.publish(
+        taskId,
+        runId,
+        'done',
+        {
+          status: 'failed',
+          error: message,
+        },
+        'terminal:failed'
+      );
     } finally {
       this.controllers.delete(runId);
       try {
@@ -988,8 +1337,8 @@ export class WorkAgentService {
 
     try {
       await workRuntimeService.stopContainer(task);
-      if (workTaskService.getTaskRecord(task.id, task.userId)) {
-        workTaskService.updatePreview(task.id, 'stopped');
+      if (await workTaskService.getTaskRecord(task.id, task.userId)) {
+        await workTaskService.updatePreview(task.id, 'stopped');
       }
     } catch (error) {
       // Cleanup failures must remain visible without obscuring the model
@@ -1001,19 +1350,20 @@ export class WorkAgentService {
     }
   }
 
-  private assertStableProviderRouting(
+  private async assertStableProviderRouting(
     run: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
     userId: string,
     expectedFingerprint: string
-  ): void {
-    const currentFingerprint = workModelProviderService.getRoutingFingerprint(
-      run.model,
-      {
-        providerType: run.providerType,
-        providerId: run.providerId,
-      },
-      userId
-    );
+  ): Promise<void> {
+    const currentFingerprint =
+      await workModelProviderService.getRoutingFingerprint(
+        run.model,
+        {
+          providerType: run.providerType,
+          providerId: run.providerId,
+        },
+        userId
+      );
     if (currentFingerprint !== expectedFingerprint) {
       throw new WorkAgentHttpError(
         'The provider routing changed while this Work run was active. Start a new run with the updated provider configuration.',
@@ -1023,14 +1373,14 @@ export class WorkAgentService {
     }
   }
 
-  private contextMessages(
+  private async contextMessages(
     task: WorkTaskRecord,
     roundLimit: number,
     providerStateScope?: string,
     provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'> = task
-  ): OllamaChatMessage[] {
+  ): Promise<OllamaChatMessage[]> {
     const persisted = restorePersistedWorkContext(
-      workTaskService.getRecentModelContextMessages(task.id, 30),
+      await workTaskService.getRecentModelContextMessages(task.id, 30),
       provider,
       providerStateScope
     );
@@ -1124,8 +1474,8 @@ export class WorkAgentService {
       case 'web_search': {
         if (
           !task.networkEnabled ||
-          !isWebSearchAvailable() ||
-          !userCanUseWebSearch(userModel.getUserById(task.userId))
+          !(await isWebSearchAvailable()) ||
+          !(await userCanUseWebSearch(await userModel.getUserById(task.userId)))
         ) {
           throw new WorkAgentHttpError(
             'Web search is not available for this task.',
@@ -1170,8 +1520,13 @@ export class WorkAgentService {
           {
             onStarting: () =>
               workTaskService.beginPreview(task.id, task.userId, true),
-            onRunning: previewUrl =>
-              workTaskService.updatePreview(task.id, 'running', previewUrl),
+            onRunning: (previewUrl, endpoint) =>
+              workTaskService.updatePreview(
+                task.id,
+                'running',
+                previewUrl,
+                endpoint
+              ),
             onFailed: () => workTaskService.updatePreview(task.id, 'failed'),
           }
         );
@@ -1194,10 +1549,13 @@ export class WorkAgentService {
     }
   }
 
-  private throwIfCancelled(runId: string, controller: AbortController): void {
+  private async throwIfCancelled(
+    runId: string,
+    controller: AbortController
+  ): Promise<void> {
     if (
       controller.signal.aborted ||
-      workTaskService.getRun(runId)?.status === 'cancelled'
+      (await workTaskService.getRun(runId))?.status === 'cancelled'
     ) {
       throw new WorkAgentHttpError(
         'Work run was cancelled.',
@@ -1213,12 +1571,15 @@ class WorkDeltaPublisher {
   private total = '';
   private separatorPending = '';
   private timer?: ReturnType<typeof setTimeout>;
+  private sequence = 0;
 
   constructor(
     private readonly taskId: string,
     private readonly runId: string,
     private readonly type: 'assistant_delta' | 'reasoning_delta',
-    initialTotal = ''
+    initialTotal = '',
+    private readonly occurrenceScope = 'stream',
+    private readonly attemptIdentity = '0'
   ) {
     this.total = initialTotal;
     this.separatorPending = initialTotal ? '\n\n' : '';
@@ -1247,9 +1608,14 @@ class WorkDeltaPublisher {
     if (!this.pending) return;
     const delta = this.pending;
     this.pending = '';
-    workEventService.publish(this.taskId, this.runId, this.type, {
-      delta,
-    });
+    workEventService.publish(
+      this.taskId,
+      this.runId,
+      this.type,
+      { delta, total: this.total },
+      `${this.occurrenceScope}:${++this.sequence}`,
+      this.attemptIdentity
+    );
   }
 }
 
@@ -1444,8 +1810,7 @@ export function restorePersistedWorkContext(
       if (pendingGroup.resultIds.has(call.id)) continue;
       restored.push({
         role: 'tool',
-        content:
-          'Tool execution was interrupted; outcome unknown. Inspect the workspace before retrying.',
+        content: INTERRUPTED_TOOL_RESULT,
         tool_name: call.name,
         tool_call_id: call.id,
       });

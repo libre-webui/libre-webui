@@ -49,5 +49,10 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'webkit-tts',
+      testMatch: /tts-playback\.spec\.ts/,
+      use: { ...devices['Desktop Safari'] },
+    },
   ],
 });

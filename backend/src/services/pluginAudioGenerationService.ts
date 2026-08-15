@@ -8,6 +8,12 @@
 import axios from 'axios';
 import type { AudioGenConfig, Plugin } from '../types/index.js';
 import {
+  acquireSharedCapacity,
+  combineAbortSignals,
+  SharedCapacityExceededError,
+  type SharedCapacityReservation,
+} from '../platform/coordination/sharedAdmission.js';
+import {
   assertSafePluginEndpoint,
   buildPluginAuthHeaders,
   resolvePluginOperationEndpoint,
@@ -20,14 +26,21 @@ import {
 
 const MAX_SSE_LINE_BYTES = 2 * 1024 * 1024;
 const MAX_ENCODED_AUDIO_BYTES = 80 * 1024 * 1024;
+const MAX_AUDIO_STREAM_BYTES = 120 * 1024 * 1024;
+const MAX_ACTIVE_AUDIO_REQUESTS_PER_USER = 2;
+const MAX_ACTIVE_AUDIO_REQUESTS_GLOBAL = 6;
 
 type PluginVariables = Record<string, string | number | boolean>;
+type MaybePromise<T> = T | Promise<T>;
 
 export interface PluginAudioGenerationServiceDependencies {
-  getAllPlugins(userId?: string): Plugin[];
-  getPlugin(id: string, userId?: string): Plugin | null;
-  getApiKey(plugin: Plugin, userId?: string): string | null;
-  getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
+  getAllPlugins(userId?: string): MaybePromise<Plugin[]>;
+  getPlugin(id: string, userId?: string): MaybePromise<Plugin | null>;
+  getApiKey(plugin: Plugin, userId?: string): MaybePromise<string | null>;
+  getPluginVariables(
+    plugin: Plugin,
+    userId?: string
+  ): MaybePromise<PluginVariables>;
   validateEndpointUrl(endpoint: string): string;
   recordUsage?(usage: PluginUsageEventInput): void;
 }
@@ -38,31 +51,73 @@ export interface AudioGenerationResult {
   transcript?: string;
 }
 
+export class AudioGenerationConcurrencyError extends Error {
+  constructor() {
+    super('Too many concurrent audio provider requests');
+    this.name = 'AudioGenerationConcurrencyError';
+  }
+}
+
+async function reserveAudioProviderRequest(
+  userId: string
+): Promise<SharedCapacityReservation> {
+  try {
+    return await acquireSharedCapacity({
+      limits: [
+        {
+          scope: 'provider-audio.global',
+          capacity: MAX_ACTIVE_AUDIO_REQUESTS_GLOBAL,
+        },
+        {
+          scope: 'provider-audio.user',
+          subject: userId,
+          capacity: MAX_ACTIVE_AUDIO_REQUESTS_PER_USER,
+        },
+      ],
+    });
+  } catch (error) {
+    if (error instanceof SharedCapacityExceededError) {
+      throw new AudioGenerationConcurrencyError();
+    }
+    throw error;
+  }
+}
+
 export class PluginAudioGenerationService {
   constructor(
     private readonly deps: PluginAudioGenerationServiceDependencies
   ) {}
 
-  getAvailableModels(userId?: string): Array<{
-    model: string;
-    plugin: string;
-    config?: AudioGenConfig;
-  }> {
-    return this.deps.getAllPlugins(userId).flatMap(plugin => {
+  async getAvailableModels(userId?: string): Promise<
+    Array<{
+      model: string;
+      plugin: string;
+      config?: AudioGenConfig;
+    }>
+  > {
+    const models: Array<{
+      model: string;
+      plugin: string;
+      config?: AudioGenConfig;
+    }> = [];
+    for (const plugin of await this.deps.getAllPlugins(userId)) {
       const capability = plugin.capabilities?.audio;
       if (
         !plugin.active ||
         !capability ||
-        !this.deps.getApiKey(plugin, userId)
+        !(await this.deps.getApiKey(plugin, userId))
       ) {
-        return [];
+        continue;
       }
-      return capability.model_map.map(model => ({
-        model,
-        plugin: plugin.id,
-        config: capability.config,
-      }));
-    });
+      models.push(
+        ...capability.model_map.map(model => ({
+          model,
+          plugin: plugin.id,
+          config: capability.config,
+        }))
+      );
+    }
+    return models;
   }
 
   async generate(
@@ -73,10 +128,11 @@ export class PluginAudioGenerationService {
       userId: string;
       voice?: string;
       format?: string;
+      signal?: AbortSignal;
     }
   ): Promise<AudioGenerationResult> {
     validatePluginModel(model);
-    const { plugin, endpoint, config, headers } = this.resolve(
+    const { plugin, endpoint, config, headers } = await this.resolve(
       model,
       options.pluginId,
       options.userId
@@ -100,6 +156,11 @@ export class PluginAudioGenerationService {
       stream: true,
     };
 
+    const providerSlot = await reserveAudioProviderRequest(options.userId);
+    const providerSignal = combineAbortSignals(
+      options.signal,
+      providerSlot.signal
+    );
     const startedAt = Date.now();
     try {
       const response = await axios.post(endpoint, payload, {
@@ -107,8 +168,9 @@ export class PluginAudioGenerationService {
         timeout: 300000,
         responseType: 'stream',
         maxRedirects: 0,
+        signal: providerSignal,
       });
-      const result = await collectAudioStream(response.data);
+      const result = await collectAudioStream(response.data, providerSignal);
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
@@ -127,21 +189,29 @@ export class PluginAudioGenerationService {
         ...(result.transcript ? { transcript: result.transcript } : {}),
       };
     } catch (error) {
+      const cancelled = axios.isCancel(error) || providerSignal.aborted;
       this.deps.recordUsage?.({
         userId: options.userId,
         pluginId: plugin.id,
         pluginName: plugin.name,
         capability: 'audio',
         model,
-        status: 'error',
+        status: cancelled ? 'cancelled' : 'error',
         durationMs: Date.now() - startedAt,
       });
+      if (cancelled) {
+        throw providerSignal.reason instanceof Error
+          ? providerSignal.reason
+          : new Error('Audio provider request was cancelled');
+      }
       throw audioGenerationError(error);
+    } finally {
+      await providerSlot.release();
     }
   }
 
-  private resolve(model: string, pluginId: string, userId: string) {
-    const plugin = this.deps.getPlugin(pluginId, userId);
+  private async resolve(model: string, pluginId: string, userId: string) {
+    const plugin = await this.deps.getPlugin(pluginId, userId);
     const capability = plugin?.capabilities?.audio;
     if (
       !plugin?.active ||
@@ -150,13 +220,13 @@ export class PluginAudioGenerationService {
     ) {
       throw new Error(`No audio generation plugin found for model: ${model}`);
     }
-    const apiKey = this.deps.getApiKey(plugin, userId);
+    const apiKey = await this.deps.getApiKey(plugin, userId);
     if (!apiKey) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
       );
     }
-    const variables = this.deps.getPluginVariables(plugin, userId);
+    const variables = await this.deps.getPluginVariables(plugin, userId);
     let endpoint = capability.endpoint;
     const endpointVariable = capability.config?.endpoint_variable;
     if (endpointVariable) {
@@ -178,7 +248,8 @@ export class PluginAudioGenerationService {
 }
 
 async function collectAudioStream(
-  stream: AsyncIterable<Buffer | string>
+  stream: AsyncIterable<Buffer | string>,
+  signal?: AbortSignal
 ): Promise<{
   audio: Buffer;
   transcript?: string;
@@ -187,6 +258,7 @@ async function collectAudioStream(
   let pending = '';
   let encodedAudio = '';
   let transcript = '';
+  let receivedBytes = 0;
   let usage: ReturnType<typeof normalizeProviderTokenUsage>;
 
   const consumeLine = (rawLine: string) => {
@@ -218,7 +290,17 @@ async function collectAudioStream(
   };
 
   for await (const part of stream) {
-    pending += Buffer.isBuffer(part) ? part.toString('utf8') : String(part);
+    if (signal?.aborted) {
+      throw signal.reason instanceof Error
+        ? signal.reason
+        : new Error('Audio provider request was cancelled');
+    }
+    const text = Buffer.isBuffer(part) ? part.toString('utf8') : String(part);
+    receivedBytes += Buffer.byteLength(text);
+    if (receivedBytes > MAX_AUDIO_STREAM_BYTES) {
+      throw new Error('Audio provider response exceeded the size limit');
+    }
+    pending += text;
     if (pending.length > MAX_SSE_LINE_BYTES && !pending.includes('\n')) {
       throw new Error('Audio provider returned an oversized stream event');
     }

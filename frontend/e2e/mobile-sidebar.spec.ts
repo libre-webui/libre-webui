@@ -134,9 +134,9 @@ test('Arabic mobile navigation mirrors the sidebar and content offset', async ({
   await page.waitForURL('**/models');
 
   await expect
-    // Compact rail is w-20 (5rem) against the app's 15px root font.
+    // Compact rail is w-16 (4rem) against the app's 15px root font.
     .poll(async () => (await sidebar.boundingBox())?.width ?? 0)
-    .toBeCloseTo(75, 0);
+    .toBeCloseTo(60, 0);
 
   await expect
     .poll(async () => {

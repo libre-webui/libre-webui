@@ -26,6 +26,7 @@
  */
 
 import { GenerationOptions } from '../types/index.js';
+import { getOllamaRuntimeConfig } from '../platform/ollamaRuntimeConfig.js';
 import { createLogger } from './logger.js';
 
 const logger = createLogger('ollama:model-defaults');
@@ -36,14 +37,7 @@ const logger = createLogger('ollama:model-defaults');
  * whatever is asked: adopting 128k unprompted would fail to load or swap.
  * Raise it with OLLAMA_MAX_CONTEXT where the hardware allows.
  */
-const DEFAULT_MAX_ADOPTED_CONTEXT = 32768;
-
-const maxAdoptedContext = (): number => {
-  const configured = Number(process.env.OLLAMA_MAX_CONTEXT);
-  return Number.isFinite(configured) && configured > 0
-    ? configured
-    : DEFAULT_MAX_ADOPTED_CONTEXT;
-};
+const maxAdoptedContext = (): number => getOllamaRuntimeConfig().maxContext;
 
 /** Numeric `PARAMETER` names that map straight onto a generation option. */
 const NUMERIC_PARAMETERS = new Set([

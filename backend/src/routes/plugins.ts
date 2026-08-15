@@ -18,7 +18,7 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import pluginService, {
   type PluginModelDiscoveryResult,
 } from '../services/pluginService.js';
@@ -34,6 +34,7 @@ import {
 } from '../types/index.js';
 import {
   pluginUpload as upload,
+  pluginUploadTempDirectory,
   safeCleanupFile,
   type MulterRequest,
 } from '../utils/pluginUpload.js';
@@ -63,12 +64,12 @@ const getRequestUserId = (req: Request): string => {
   return userId;
 };
 
-const requestUserIsAdmin = (req: Request): boolean => {
+const requestUserIsAdmin = async (req: Request): Promise<boolean> => {
   const userId = (req as AuthenticatedRequest).user?.userId;
   if (!userId) return false;
 
   try {
-    return userModel.getUserById(userId)?.role === 'admin';
+    return (await userModel.getUserById(userId))?.role === 'admin';
   } catch {
     return false;
   }
@@ -76,6 +77,13 @@ const requestUserIsAdmin = (req: Request): boolean => {
 
 const supportsCompletionModelDiscovery = (plugin: Plugin): boolean =>
   plugin.type === 'completion' || plugin.type === 'chat';
+
+const DISCOVERABLE_MEDIA_CAPABILITIES = [
+  'image',
+  'tts',
+  'audio',
+  'video',
+] as const;
 
 const getModelDiscoveryVariableNames = (
   plugin: Plugin
@@ -91,10 +99,14 @@ const getModelDiscoveryVariableNames = (
       capabilityRecord.config && typeof capabilityRecord.config === 'object'
         ? (capabilityRecord.config as Record<string, unknown>)
         : {};
-    const selector =
-      config.endpoint_variable ?? capabilityRecord.endpoint_variable;
-    if (typeof selector === 'string' && selector.trim()) {
-      names.add(selector.trim());
+    const selectors = [
+      config.endpoint_variable ?? capabilityRecord.endpoint_variable,
+      config.models_endpoint_variable,
+    ];
+    for (const selector of selectors) {
+      if (typeof selector === 'string' && selector.trim()) {
+        names.add(selector.trim());
+      }
     }
   }
 
@@ -135,13 +147,20 @@ const matchesInheritedDefault = (
           capabilityRecord.config && typeof capabilityRecord.config === 'object'
             ? (capabilityRecord.config as Record<string, unknown>)
             : {};
-        const selector =
+        const endpointSelector =
           config.endpoint_variable ?? capabilityRecord.endpoint_variable;
         if (
-          selector === definition.name &&
+          endpointSelector === definition.name &&
           typeof capabilityRecord.endpoint === 'string'
         ) {
           inheritedValue = capabilityRecord.endpoint;
+          break;
+        }
+        if (
+          config.models_endpoint_variable === definition.name &&
+          typeof capabilityRecord.models_endpoint === 'string'
+        ) {
+          inheritedValue = capabilityRecord.models_endpoint;
           break;
         }
       }
@@ -162,15 +181,30 @@ const refreshUserModels = async (
   userId: string,
   clearExisting = true
 ): Promise<void> => {
-  if (!supportsCompletionModelDiscovery(plugin)) return;
-  if (clearExisting) {
-    pluginService.clearDiscoveredModels(plugin.id, userId);
+  const capabilities = DISCOVERABLE_MEDIA_CAPABILITIES.filter(
+    capability => plugin.capabilities?.[capability]?.models_endpoint
+  );
+  if (!supportsCompletionModelDiscovery(plugin) && capabilities.length === 0) {
+    return;
   }
-  await pluginService.discoverModels(plugin.id, userId).catch(() => {});
+  if (clearExisting) {
+    await pluginService.clearDiscoveredModels(plugin.id, userId);
+  }
+  await Promise.all([
+    ...(supportsCompletionModelDiscovery(plugin)
+      ? [pluginService.discoverModels(plugin.id, userId).catch(() => {})]
+      : []),
+    ...capabilities.map(capability =>
+      pluginService
+        .discoverCapabilityModels(plugin.id, capability, userId)
+        .catch(() => {})
+    ),
+  ]);
 };
 
 // Rate limiting for plugin operations
 const pluginRateLimit = rateLimit({
+  keyPrefix: 'plugins-operations',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
   message: {
@@ -181,6 +215,7 @@ const pluginRateLimit = rateLimit({
 
 // More restrictive rate limiting for upload operations
 const uploadRateLimit = rateLimit({
+  keyPrefix: 'plugins-upload',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10, // Limit each IP to 10 uploads per windowMs
   message: {
@@ -198,7 +233,7 @@ router.get(
       // Keep provider catalogs current: a stale or never-discovered model list
       // is refreshed here so a browser reload reflects the provider's models.
       await pluginService.refreshStaleModels(userId).catch(() => {});
-      const plugins = pluginService.getAllPlugins(userId);
+      const plugins = await pluginService.getAllPlugins(userId);
       res.json({
         success: true,
         data: plugins,
@@ -217,7 +252,7 @@ router.get(
   '/active',
   async (req: Request, res: Response<ApiResponse<Plugin[]>>): Promise<void> => {
     try {
-      const activePlugins = pluginService.getActivePlugins(
+      const activePlugins = await pluginService.getActivePlugins(
         getRequestUserId(req)
       );
 
@@ -242,7 +277,9 @@ router.get(
     res: Response<ApiResponse<Plugin | null>>
   ): Promise<void> => {
     try {
-      const activePlugin = pluginService.getActivePlugin(getRequestUserId(req));
+      const activePlugin = await pluginService.getActivePlugin(
+        getRequestUserId(req)
+      );
 
       res.json({
         success: true,
@@ -265,7 +302,7 @@ router.get(
     res: Response<ApiResponse<PluginStatus[]>>
   ): Promise<void> => {
     try {
-      const status = pluginService.getPluginStatus(getRequestUserId(req));
+      const status = await pluginService.getPluginStatus(getRequestUserId(req));
 
       res.json({
         success: true,
@@ -304,7 +341,7 @@ router.get(
     try {
       res.json({
         success: true,
-        data: pluginUsageService.getAnalytics(days),
+        data: await pluginUsageService.getAnalytics(days),
       });
     } catch (error: unknown) {
       res.status(500).json({
@@ -321,7 +358,7 @@ router.get(
   async (req: Request, res: Response<ApiResponse<Plugin>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const plugin = pluginService.getPlugin(id, getRequestUserId(req));
+      const plugin = await pluginService.getPlugin(id, getRequestUserId(req));
 
       if (!plugin) {
         res.status(404).json({
@@ -354,7 +391,7 @@ router.post(
     req: MulterRequest,
     res: Response<ApiResponse<Plugin>>
   ): Promise<void> => {
-    const tempDir = path.resolve('temp/');
+    const tempDir = pluginUploadTempDirectory;
 
     try {
       if (!req.file) {
@@ -367,7 +404,12 @@ router.post(
 
       // Validate file path is within temp directory
       const resolvedFilePath = path.resolve(req.file.path);
-      if (!resolvedFilePath.startsWith(tempDir)) {
+      const relativePath = path.relative(tempDir, resolvedFilePath);
+      if (
+        !relativePath ||
+        relativePath.startsWith('..') ||
+        path.isAbsolute(relativePath)
+      ) {
         safeCleanupFile(req.file.path, tempDir);
         res.status(400).json({
           success: false,
@@ -405,7 +447,7 @@ router.post(
       safeCleanupFile(req.file.path, tempDir);
 
       // Install the plugin
-      const plugin = pluginService.importPlugin(
+      const plugin = await pluginService.importPlugin(
         pluginData,
         getRequestUserId(req)
       );
@@ -450,7 +492,7 @@ router.post(
   async (req: Request, res: Response<ApiResponse<Plugin>>): Promise<void> => {
     try {
       const pluginData = req.body;
-      const plugin = pluginService.installPlugin(
+      const plugin = await pluginService.installPlugin(
         pluginData,
         getRequestUserId(req)
       );
@@ -502,7 +544,7 @@ router.put(
       }
 
       updates.id = id;
-      const plugin = pluginService.installPlugin(
+      const plugin = await pluginService.installPlugin(
         updates,
         getRequestUserId(req)
       );
@@ -528,7 +570,7 @@ router.delete(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const success = pluginService.deletePlugin(id);
+      const success = await pluginService.deletePlugin(id);
 
       if (!success) {
         res.status(404).json({
@@ -621,7 +663,10 @@ router.post(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const success = pluginService.deactivatePlugin(id, getRequestUserId(req));
+      const success = await pluginService.deactivatePlugin(
+        id,
+        getRequestUserId(req)
+      );
 
       res.json({
         success: true,
@@ -642,7 +687,7 @@ router.post(
   pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
-      const success = pluginService.deactivatePlugin(
+      const success = await pluginService.deactivatePlugin(
         undefined,
         getRequestUserId(req)
       );
@@ -666,7 +711,10 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const plugin = pluginService.exportPlugin(id, getRequestUserId(req));
+      const plugin = await pluginService.exportPlugin(
+        id,
+        getRequestUserId(req)
+      );
 
       if (!plugin) {
         res.status(404).json({
@@ -714,17 +762,22 @@ router.get(
     try {
       // Get userId from auth context (defaults to 'default' for single-user mode)
       const userId = getRequestUserId(req);
-      const credentials = pluginCredentialsService
-        .getCredentials(userId)
-        .map(credential => {
-          const plugin = pluginService.getPlugin(credential.plugin_id, userId);
-          return {
-            ...credential,
-            has_api_key:
-              plugin !== null &&
-              pluginService.getApiKey(plugin, userId) !== null,
-          };
-        });
+      const credentials = await Promise.all(
+        (await pluginCredentialsService.getCredentials(userId)).map(
+          async credential => {
+            const plugin = await pluginService.getPlugin(
+              credential.plugin_id,
+              userId
+            );
+            return {
+              ...credential,
+              has_api_key:
+                plugin !== null &&
+                (await pluginService.getApiKey(plugin, userId)) !== null,
+            };
+          }
+        )
+      );
 
       res.json({
         success: true,
@@ -758,7 +811,7 @@ router.post(
       }
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id, userId);
+      const plugin = await pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -767,11 +820,11 @@ router.post(
         return;
       }
 
-      const success = pluginCredentialsService.setApiKey(
+      const success = await pluginCredentialsService.setApiKey(
         id,
         api_key,
         userId,
-        pluginService.getCredentialRoutingAuthFingerprint(plugin, userId)
+        await pluginService.getCredentialRoutingAuthFingerprint(plugin, userId)
       );
 
       if (success) {
@@ -805,7 +858,7 @@ router.delete(
       const userId = getRequestUserId(req);
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id, userId);
+      const plugin = await pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -814,7 +867,7 @@ router.delete(
         return;
       }
 
-      const success = pluginCredentialsService.deleteApiKey(id, userId);
+      const success = await pluginCredentialsService.deleteApiKey(id, userId);
       if (success) {
         await refreshUserModels(plugin, userId, true);
       }
@@ -841,7 +894,7 @@ router.get(
       const userId = getRequestUserId(req);
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id, userId);
+      const plugin = await pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -880,7 +933,7 @@ router.get(
       const id = req.params.id as string;
       const userId = getRequestUserId(req);
 
-      const plugin = pluginService.getPlugin(id, userId);
+      const plugin = await pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
@@ -891,13 +944,13 @@ router.get(
         return;
       }
 
-      const variables = pluginVariablesService.getVariables(
+      const variables = await pluginVariablesService.getVariables(
         id,
         plugin.variables,
         userId,
         true // forDisplay - mask sensitive values
       );
-      if (!requestUserIsAdmin(req)) {
+      if (!(await requestUserIsAdmin(req))) {
         for (const definition of plugin.variables) {
           if (!isPluginConnectionVariableForPlugin(plugin, definition.name)) {
             continue;
@@ -942,7 +995,7 @@ router.put(
         return;
       }
 
-      const plugin = pluginService.getPlugin(id, userId);
+      const plugin = await pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
@@ -961,7 +1014,7 @@ router.put(
         ? unset.filter((name): name is string => typeof name === 'string')
         : [];
       if (
-        !requestUserIsAdmin(req) &&
+        !(await requestUserIsAdmin(req)) &&
         [...submittedNames, ...requestedUnsetNames].some(name =>
           isPluginConnectionVariableForPlugin(plugin, name)
         )
@@ -1026,12 +1079,13 @@ router.put(
         }
       }
 
-      const previousVariables = pluginVariablesService.getResolvedVariables(
-        id,
-        plugin.variables,
-        userId
-      );
-      const success = pluginVariablesService.setVariables(
+      const previousVariables =
+        await pluginVariablesService.getResolvedVariables(
+          id,
+          plugin.variables,
+          userId
+        );
+      const success = await pluginVariablesService.setVariables(
         id,
         variablesToSet,
         plugin.variables,
@@ -1040,7 +1094,7 @@ router.put(
       );
 
       if (success) {
-        const nextVariables = pluginVariablesService.getResolvedVariables(
+        const nextVariables = await pluginVariablesService.getResolvedVariables(
           id,
           plugin.variables,
           userId
@@ -1078,7 +1132,7 @@ router.delete(
       const id = req.params.id as string;
       const userId = getRequestUserId(req);
 
-      const plugin = pluginService.getPlugin(id, userId);
+      const plugin = await pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
@@ -1089,13 +1143,16 @@ router.delete(
       // endpoint, but reset must not leave dormant values that a later role
       // promotion could reactivate.
       const previousVariables = plugin.variables
-        ? pluginVariablesService.getResolvedVariables(
+        ? await pluginVariablesService.getResolvedVariables(
             id,
             plugin.variables,
             userId
           )
         : {};
-      const success = pluginVariablesService.deletePluginVariables(id, userId);
+      const success = await pluginVariablesService.deletePluginVariables(
+        id,
+        userId
+      );
       if (!success) {
         res.status(500).json({
           success: false,
@@ -1105,7 +1162,7 @@ router.delete(
       }
 
       if (plugin.variables) {
-        const nextVariables = pluginVariablesService.getResolvedVariables(
+        const nextVariables = await pluginVariablesService.getResolvedVariables(
           id,
           plugin.variables,
           userId

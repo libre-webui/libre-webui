@@ -17,31 +17,43 @@
 
 import React, { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { preferencesApi } from '@/utils/api';
-import type { ChatSession, UserPreferences } from '@/types';
+import type {
+  ArchiveSectionResult,
+  DataArchiveExclusion,
+  DataArchivePreflight,
+} from '@/utils/api/preferencesApi';
+import { parsePortableArchiveJson } from '@/utils/dataArchive';
 
-export type ImportMergeStrategy = 'skip' | 'overwrite' | 'merge';
+export type ImportMergeStrategy = 'skip' | 'overwrite';
 
 export interface SettingsImportResult {
   preferences: { imported: boolean; error: string | null };
-  sessions: { imported: number; skipped: number; errors: string[] };
-  documents: { imported: number; skipped: number; errors: string[] };
+  sessionFolders: ArchiveSectionResult;
+  sessions: ArchiveSectionResult;
+  notes: ArchiveSectionResult;
+  knowledgeCollections: ArchiveSectionResult;
+  documents: ArchiveSectionResult;
+  warnings: string[];
+  exclusions: DataArchiveExclusion[];
 }
 
 interface UseSettingsDataImportOptions {
-  preferences: UserPreferences;
-  sessions: ChatSession[];
   loadPreferences: () => Promise<void>;
   loadSessions: () => Promise<void>;
+  loadFolders: () => Promise<void>;
 }
 
 export function useSettingsDataImport({
-  preferences,
-  sessions,
   loadPreferences,
   loadSessions,
+  loadFolders,
 }: UseSettingsDataImportOptions) {
+  const { t } = useTranslation();
   const [importing, setImporting] = useState(false);
+  const [preflighting, setPreflighting] = useState(false);
+  const [preflight, setPreflight] = useState<DataArchivePreflight | null>(null);
   const [showImportOptions, setShowImportOptions] = useState(false);
   const [mergeStrategy, setMergeStrategy] =
     useState<ImportMergeStrategy>('skip');
@@ -52,37 +64,75 @@ export function useSettingsDataImport({
     null
   );
   const importFileInputRef = useRef<HTMLInputElement>(null);
+  const preflightRequestIdRef = useRef(0);
 
   const resetImportState = () => {
+    preflightRequestIdRef.current += 1;
+    setPreflight(null);
+    setPreflighting(false);
     setSelectedImportFile(null);
     if (importFileInputRef.current) {
       importFileInputRef.current.value = '';
     }
   };
 
-  const handleExportData = () => {
-    const data = {
-      format: 'libre-webui-export',
-      version: '1.0',
-      preferences,
-      sessions,
-      documents: [],
-      exportedAt: new Date().toISOString(),
-    };
+  const handleExportData = async () => {
+    try {
+      const response = await preferencesApi.exportData();
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Export failed');
+      }
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `libre-webui-user-data-v3-${
+        new Date().toISOString().split('T')[0]
+      }.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Portable data archive exported');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Export failed');
+    }
+  };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `libre-webui-export-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast.success('Data exported successfully');
+  const runPreflight = async (
+    file: File,
+    strategy: ImportMergeStrategy
+  ): Promise<void> => {
+    const requestId = preflightRequestIdRef.current + 1;
+    preflightRequestIdRef.current = requestId;
+    setPreflighting(true);
+    setPreflight(null);
+    try {
+      parsePortableArchiveJson(await file.text());
+      const response = await preferencesApi.preflightImport(file, strategy);
+      if (!response.success || !response.data?.valid) {
+        throw new Error(
+          response.error || t('settings.data.archiveValidationFailed')
+        );
+      }
+      if (preflightRequestIdRef.current === requestId) {
+        setPreflight(response.data);
+      }
+    } catch (error) {
+      if (preflightRequestIdRef.current === requestId) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t('settings.data.archiveValidationFailed')
+        );
+      }
+    } finally {
+      if (preflightRequestIdRef.current === requestId) {
+        setPreflighting(false);
+      }
+    }
   };
 
   const handleImportFileSelect = (
@@ -93,38 +143,58 @@ export function useSettingsDataImport({
       setSelectedImportFile(file);
       setShowImportOptions(true);
       setImportResult(null);
+      void runPreflight(file, mergeStrategy);
+    }
+  };
+
+  const handleMergeStrategyChange = (strategy: ImportMergeStrategy) => {
+    setMergeStrategy(strategy);
+    if (selectedImportFile) {
+      void runPreflight(selectedImportFile, strategy);
     }
   };
 
   const handleConfirmImport = async () => {
-    if (!selectedImportFile) return;
+    if (
+      !selectedImportFile ||
+      !preflight ||
+      preflight.strategy !== mergeStrategy
+    ) {
+      return;
+    }
 
     setImporting(true);
     try {
-      const fileContent = await selectedImportFile.text();
-      const importData = JSON.parse(fileContent);
-
-      if (!importData.format || importData.format !== 'libre-webui-export') {
-        throw new Error(
-          'Invalid export format. Please use a valid Libre WebUI export file.'
-        );
-      }
-
       const result = await preferencesApi.importData(
-        importData,
-        mergeStrategy === 'overwrite' ? 'replace' : 'merge'
+        selectedImportFile,
+        mergeStrategy
       );
 
       if (result.success && result.data) {
         setImportResult({
-          preferences: { imported: true, error: null },
-          sessions: { imported: 0, skipped: 0, errors: [] },
-          documents: { imported: 0, skipped: 0, errors: [] },
+          preferences: {
+            imported: result.data.preferences.imported,
+            error: null,
+          },
+          sessionFolders: result.data.sessionFolders,
+          sessions: result.data.sessions,
+          notes: result.data.notes,
+          knowledgeCollections: result.data.knowledgeCollections,
+          documents: result.data.documents,
+          warnings: result.data.warnings,
+          exclusions: result.data.exclusions,
         });
-        toast.success('Data imported successfully');
+        toast.success('Portable data archive imported');
 
-        await loadPreferences();
-        await loadSessions();
+        const reloads = await Promise.allSettled([
+          loadPreferences(),
+          loadSessions(),
+          loadFolders(),
+        ]);
+        if (reloads.some(reload => reload.status === 'rejected')) {
+          toast.error(t('settings.data.refreshAfterImportFailed'));
+        }
+        window.dispatchEvent(new Event('libre:documents-updated'));
       } else {
         throw new Error(result.error || 'Import failed');
       }
@@ -146,14 +216,16 @@ export function useSettingsDataImport({
 
   return {
     importing,
+    preflighting,
+    preflight,
     showImportOptions,
     mergeStrategy,
-    setMergeStrategy,
     importResult,
     setImportResult,
     importFileInputRef,
     handleExportData,
     handleImportFileSelect,
+    handleMergeStrategyChange,
     handleConfirmImport,
     handleCancelImport,
   };

@@ -181,6 +181,8 @@ export interface ProcessOptions {
   maxOutputChars?: number;
   input?: string;
   acceptFailure?: boolean;
+  /** Cancels the underlying runtime command when distributed authority is lost. */
+  abortSignal?: AbortSignal;
 }
 
 export interface ProcessResult extends WorkCommandResult {

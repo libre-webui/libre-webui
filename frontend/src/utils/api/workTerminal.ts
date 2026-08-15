@@ -15,15 +15,18 @@
  * limitations under the License.
  */
 
-export const WORK_TERMINAL_PATH = '/ws/work-terminal';
+import { api } from './client';
+import type { ApiResponse } from '@/types';
+import {
+  buildWorkTerminalUrl as buildSharedWorkTerminalUrl,
+  WORK_TERMINAL_WEBSOCKET_PATH,
+  type WebSocketUrlEnvironment,
+} from '@/utils/websocketUrl';
 
-interface TerminalUrlEnvironment {
-  protocol: string;
-  host: string;
-  hostname: string;
-  apiBaseUrl?: string;
-  production: boolean;
-  token: string | null;
+export const WORK_TERMINAL_PATH = WORK_TERMINAL_WEBSOCKET_PATH;
+
+interface TerminalUrlEnvironment extends WebSocketUrlEnvironment {
+  ticket: string;
 }
 
 /**
@@ -35,33 +38,25 @@ export function buildWorkTerminalUrl(
   taskId: string,
   environment: TerminalUrlEnvironment
 ): string {
-  let origin: string;
-  if (environment.protocol === 'file:') {
-    origin = 'ws://localhost:3001';
-  } else if (environment.apiBaseUrl) {
-    origin = environment.apiBaseUrl
-      .replace(/\/api$/, '')
-      .replace(/^http:/, 'ws:')
-      .replace(/^https:/, 'wss:');
-  } else {
-    const scheme = environment.protocol === 'https:' ? 'wss:' : 'ws:';
-    origin = environment.production
-      ? `${scheme}//${environment.host}`
-      : `${scheme}//${environment.hostname}:3001`;
-  }
-  const url = new URL(`${origin}${WORK_TERMINAL_PATH}`);
-  url.searchParams.set('taskId', taskId);
-  if (environment.token) url.searchParams.set('token', environment.token);
-  return url.toString();
+  return buildSharedWorkTerminalUrl(taskId, environment.ticket, environment);
 }
 
-export function workTerminalUrl(taskId: string): string {
+export async function workTerminalUrl(taskId: string): Promise<string> {
+  const response = await api.post<
+    ApiResponse<{ ticket: string; expiresAt: string }>
+  >('/auth/websocket-ticket', {
+    audience: 'work-terminal',
+    taskId,
+  });
+  const ticket = response.data.data?.ticket;
+  if (!ticket) throw new Error('The server did not issue a terminal ticket.');
   return buildWorkTerminalUrl(taskId, {
     protocol: window.location.protocol,
     host: window.location.host,
     hostname: window.location.hostname,
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+    websocketBaseUrl: import.meta.env.VITE_WS_BASE_URL,
     production: import.meta.env.PROD,
-    token: localStorage.getItem('auth-token'),
+    ticket,
   });
 }

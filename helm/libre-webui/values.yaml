@@ -6,25 +6,36 @@ image:
   repository: librewebui/libre-webui
   pullPolicy: IfNotPresent
   # Optional digest override; release automation clears the 0.14.1 transition pin.
-  tag: ""
-  digest: ""
+  tag: ''
+  digest: ''
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: ''
+fullnameOverride: ''
 
 serviceAccount:
   create: true
   annotations: {}
-  name: ""
+  name: ''
 
 podAnnotations: {}
-podSecurityContext: {}
+podSecurityContext:
+  # Fresh PVCs are commonly root-owned. Kubernetes applies this group so the
+  # non-root application can create SQLite and local storage safely.
+  fsGroup: 1001
+  fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
   runAsNonRoot: true
   runAsUser: 1001
   runAsGroup: 1001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
 
 service:
   type: ClusterIP
@@ -33,7 +44,7 @@ service:
 
 ingress:
   enabled: false
-  className: ""
+  className: ''
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -56,9 +67,10 @@ resources:
     memory: 256Mi
 
 autoscaling:
+  # Accepted only with the complete team profile below.
   enabled: false
   minReplicas: 1
-  maxReplicas: 5
+  maxReplicas: 1
   targetCPUUtilizationPercentage: 80
 
 nodeSelector: {}
@@ -68,7 +80,7 @@ affinity: {}
 # Persistence for data
 persistence:
   enabled: true
-  storageClass: ""
+  storageClass: ''
   accessMode: ReadWriteOnce
   size: 5Gi
   annotations: {}
@@ -76,27 +88,78 @@ persistence:
 # Environment configuration
 env:
   NODE_ENV: production
-  DOCKER_ENV: "true"
-  PORT: "3001"
-  CORS_ORIGIN: "http://localhost:8080"
-  SINGLE_USER_MODE: "false"
-  ENABLE_SIGNUP: "true"
-  JWT_EXPIRES_IN: "7d"
-  OLLAMA_TIMEOUT: "300000"
-  OLLAMA_LONG_OPERATION_TIMEOUT: "900000"
-  VITE_API_TIMEOUT: "300000"
-  DATA_DIR: "/app/backend/data"
+  DOCKER_ENV: 'true'
+  PORT: '3001'
+  # Exact number of trusted reverse-proxy hops between a client and the app.
+  # Keep 0 for direct traffic; never use an unbounded `true` policy.
+  TRUST_PROXY: 0
+  CORS_ORIGIN: 'http://localhost:8080'
+  ENABLE_SIGNUP: 'false'
+  JWT_EXPIRES_IN: '7d'
+  OLLAMA_TIMEOUT: 300000
+  OLLAMA_LONG_OPERATION_TIMEOUT: 900000
+  OLLAMA_MAX_CONTEXT: 32768
+  # Team mode requires these node-local credential paths to stay disabled;
+  # durable chat provider execution occurs in the external worker.
+  AGENT_CLI_MODELS_ENABLED: 'false'
+  CODEX_OAUTH_MODELS_ENABLED: 'false'
+  VITE_API_TIMEOUT: '300000'
+  DATA_DIR: '/app/backend/data'
+  PLATFORM_PREFLIGHT_TMP_DIR: '/app/backend/temp/preflight'
+  LIBRE_PLATFORM_MODE: 'solo'
+  DATABASE_BACKEND: 'sqlite'
+  # Managed PostgreSQL defaults to verified TLS. The bundled team Compose
+  # profile overrides this to disable only on its private project network.
+  DATABASE_SSL_MODE: 'verify-full'
+  POSTGRES_MIGRATION_MODE: 'apply'
+  POSTGRES_POOL_MAX: 10
+  POSTGRES_CONNECT_TIMEOUT_MS: 5000
+  POSTGRES_IDLE_TIMEOUT_MS: 30000
+  POSTGRES_STATEMENT_TIMEOUT_MS: 30000
+  POSTGRES_MIGRATION_LOCK_TIMEOUT_MS: 60000
+  BLOB_STORE_BACKEND: 'local'
+  BLOB_QUOTA_BYTES_PER_USER: 10737418240
+  BLOB_QUOTA_RESERVATION_TTL_MS: 3600000
+  VECTOR_STORE_BACKEND: 'embedded'
+  COORDINATION_BACKEND: 'local'
+  REDIS_KEY_PREFIX: 'libre'
+  REDIS_CONNECT_TIMEOUT_MS: '5000'
+  JOB_WORKER_MODE: 'embedded'
+  STORAGE_ENCRYPTION_ACTIVE_KEY_ID: ''
+  S3_BUCKET: ''
+  S3_REGION: ''
+  S3_ENDPOINT: ''
+  S3_FORCE_PATH_STYLE: 'false'
+  S3_BLOB_PREFIX: 'libre/blobs'
 
 # Secrets - provide via --set or external secret management
 secrets:
-  jwtSecret: ""
-  encryptionKey: ""
-  sessionSecret: ""
+  jwtSecret: ''
+  encryptionKey: ''
+  sessionSecret: ''
+  # Team platform connection and versioned encryption-key material.
+  databaseUrl: ''
+  redisUrl: ''
+  storageEncryptionKeys: ''
+  s3AccessKeyId: ''
+  s3SecretAccessKey: ''
+  s3SessionToken: ''
   # OAuth
-  githubClientId: ""
-  githubClientSecret: ""
-  huggingfaceClientId: ""
-  huggingfaceClientSecret: ""
+  githubClientId: ''
+  githubClientSecret: ''
+  huggingfaceClientId: ''
+  huggingfaceClientSecret: ''
+
+# Team mode runs durable handlers outside application replicas. This
+# Deployment is rendered only when LIBRE_PLATFORM_MODE=team.
+worker:
+  replicaCount: 1
+  resources: {}
+
+# Team application and worker pods use only bounded, ephemeral local scratch.
+# All durable state belongs in PostgreSQL/S3/PGVector.
+team:
+  tempSizeLimit: 1Gi
 
 # Work sandboxes on the Kubernetes runtime backend. No Docker daemon or
 # socket is involved: sandboxes run as Pods in a dedicated namespace, the
@@ -107,11 +170,11 @@ work:
   namespace: libre-webui-work
   createNamespace: true
   # StorageClass for workspace PVCs; empty uses the cluster default.
-  storageClass: ""
+  storageClass: ''
   # Per-task workspace size - a real disk quota, enforced by the provisioner.
   workspaceSize: 5Gi
   # Override the Work runtime image (WORK_RUNTIME_IMAGE). Pin a digest.
-  runtimeImage: ""
+  runtimeImage: ''
   # Extra WORK_* environment for the backend, e.g. WORK_MEMORY_LIMIT: "4g".
   env: {}
   networkPolicy:
@@ -130,15 +193,15 @@ work:
       - 172.16.0.0/12
       - 192.168.0.0/16
       - 169.254.0.0/16
-      - "fc00::/7"
-      - "fe80::/10"
+      - 'fc00::/7'
+      - 'fe80::/10'
 
 # Ollama configuration
 ollama:
   # Use external Ollama instance
   external:
     enabled: false
-    url: "http://ollama.default.svc.cluster.local:11434"
+    url: 'http://ollama.default.svc.cluster.local:11434'
 
   # Deploy Ollama as part of this chart
   bundled:
@@ -156,7 +219,7 @@ ollama:
         memory: 2Gi
     persistence:
       enabled: true
-      storageClass: ""
+      storageClass: ''
       accessMode: ReadWriteOnce
       size: 50Gi
     # GPU support (NVIDIA)

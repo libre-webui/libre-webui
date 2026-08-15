@@ -16,7 +16,7 @@
  */
 
 import express, { Request, Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import axios from 'axios';
 import { ApiResponse, getErrorMessage } from '../types/index.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
@@ -112,6 +112,7 @@ function sanitizeHfId(id: unknown, fieldName: string): string {
 
 // Rate limiting for Hub API requests
 const hubRateLimit = rateLimit({
+  keyPrefix: 'huggingface-hub',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200, // Limit each IP to 200 requests per window
   message: {

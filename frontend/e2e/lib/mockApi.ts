@@ -84,6 +84,8 @@ type MockTTSModel = {
     default_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
     max_characters?: number;
     supports_streaming?: boolean;
+    supports_voice_cloning?: boolean;
+    clone_requires_transcript?: boolean;
   };
 };
 
@@ -92,6 +94,17 @@ type MockTTSPlugin = {
   name: string;
   models: string[];
   config?: MockTTSModel['config'];
+};
+
+type MockSTTModel = {
+  model: string;
+  plugin: string;
+  config?: {
+    formats?: string[];
+    max_audio_bytes?: number;
+    max_duration_seconds?: number;
+    languages?: string[];
+  };
 };
 
 type MockImageGenModel = {
@@ -147,6 +160,30 @@ type MockSoundGenerationRequest = {
   format?: string;
 };
 
+type MockVideoGenerationRequest = {
+  model: string;
+  pluginId: string;
+  prompt: string;
+  duration?: number;
+  resolution?: string;
+  aspect_ratio?: string;
+  generate_audio?: boolean;
+};
+
+type MockVideoGenerationJob = {
+  id: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  model: string;
+  pluginId: string;
+  prompt?: string;
+  cancellable: boolean;
+  galleryId?: string;
+  error?: string;
+  createdAt: number;
+  updatedAt: number;
+  media?: Record<string, unknown>;
+};
+
 type MockPlugin = {
   id: string;
   name: string;
@@ -196,8 +233,19 @@ type MockTTSGenerationRequest = {
   pluginId?: string;
   input: string;
   voice?: string;
+  voiceProfileId?: string;
   response_format?: string;
   speed?: number;
+};
+
+type MockTTSVoiceProfile = {
+  id: string;
+  name: string;
+  pluginId: string;
+  model: string;
+  mimeType: string;
+  createdAt: number;
+  updatedAt: number;
 };
 
 type MockMessage = {
@@ -248,14 +296,15 @@ type MockChatStream = {
   finalChunk?: string;
   chunkDelayMs?: number;
   completionDelayMs?: number;
+  duplicateCompletion?: boolean;
 };
 
 type MockWorkCapabilities = {
   available: boolean;
-  runtime: 'docker';
+  runtime: 'docker' | 'kubernetes';
   image: string;
   reason?: string;
-  dockerAvailable?: boolean;
+  runtimeAvailable?: boolean;
   ollamaAvailable?: boolean;
   pluginAvailable?: boolean;
   runtimeImage?: string;
@@ -395,9 +444,14 @@ type MockOptions = {
   cloudLibraryModels?: MockLibraryModel[];
   ttsModels?: MockTTSModel[];
   ttsPlugins?: MockTTSPlugin[];
+  ttsVoiceProfiles?: MockTTSVoiceProfile[];
+  sttModels?: MockSTTModel[];
+  sttTranscript?: string;
+  sttTranscriptionDelayMs?: number;
   imageGenModels?: MockImageGenModel[];
   imageGenPlugins?: MockImageGenPlugin[];
   mediaModels?: MockMediaModels;
+  mediaVideoJobs?: MockVideoGenerationJob[];
   preferences?: Partial<typeof defaultPreferences>;
   preferenceUpdateFailures?: number;
   deferPreferenceUpdates?: boolean;
@@ -475,6 +529,7 @@ const defaultPreferences = {
     autoPlay: false,
     model: '',
     voice: '',
+    voiceProfileId: '',
     speed: 1,
     pluginId: '',
     streamSentences: false,
@@ -527,7 +582,7 @@ const defaultWorkCapabilities: MockWorkCapabilities = {
   available: true,
   runtime: 'docker',
   image: 'ghcr.io/libre-webui/work-runtime:0.1.0-e2e',
-  dockerAvailable: true,
+  runtimeAvailable: true,
   ollamaAvailable: true,
   runtimeImage: 'ghcr.io/libre-webui/work-runtime:0.1.0-e2e',
   limits: {
@@ -593,9 +648,13 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     options.cloudLibraryModels ?? defaultCloudLibraryModels;
   const ttsModels = options.ttsModels ?? [];
   const ttsPlugins = options.ttsPlugins ?? [];
+  let ttsVoiceProfiles = structuredClone(options.ttsVoiceProfiles ?? []);
+  const sttModels = options.sttModels ?? [];
+  const sttTranscript = options.sttTranscript ?? 'Transcribed speech';
   const imageGenModels = options.imageGenModels ?? [];
   const imageGenPlugins = options.imageGenPlugins ?? [];
   const mediaModels = options.mediaModels ?? { video: [], audio: [] };
+  let mediaVideoJobs = structuredClone(options.mediaVideoJobs ?? []);
   const workCapabilities = options.workCapabilities ?? defaultWorkCapabilities;
   const workTaskTransition = options.workTaskTransition;
   const workTasks = structuredClone(options.workTasks ?? []);
@@ -647,12 +706,25 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         finalChunk: options.chatStream.finalChunk,
         chunkDelayMs: options.chatStream.chunkDelayMs ?? 40,
         completionDelayMs: options.chatStream.completionDelayMs ?? 40,
+        duplicateCompletion: options.chatStream.duplicateCompletion ?? false,
       }
     : null;
   const pullStreamUrls: string[] = [];
   const ttsGenerationRequests: MockTTSGenerationRequest[] = [];
+  const sttTranscriptionRequests: Array<{
+    body: string;
+    contentType: string;
+  }> = [];
+  const ttsVoiceProfileDeleteRequests: string[] = [];
   const imageGenerationRequests: MockImageGenerationRequest[] = [];
   const soundGenerationRequests: MockSoundGenerationRequest[] = [];
+  const videoGenerationRequests: MockVideoGenerationRequest[] = [];
+  const videoResumeRequests: string[] = [];
+  const videoCancelRequests: string[] = [];
+  const voiceCloneRequests: Array<{
+    body: string;
+    contentType: string;
+  }> = [];
   const titleGenerationRequests: Array<{
     sessionId: string;
     model: string;
@@ -924,6 +996,192 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   };
 
   await page.addInitScript(streamConfig => {
+    const originalFetch = window.fetch.bind(window);
+    let nextDurableJobId = 1;
+    const durableGenerations = new Map<
+      string,
+      {
+        assistantMessageId: string;
+        jobId: string;
+        cancelled: boolean;
+      }
+    >();
+    const requestUrl = (input: RequestInfo | URL): URL =>
+      new URL(
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url,
+        window.location.href
+      );
+    const requestMethod = (
+      input: RequestInfo | URL,
+      init?: RequestInit
+    ): string =>
+      (init?.method ?? (input instanceof Request ? input.method : 'GET'))
+        .toUpperCase()
+        .trim();
+    const requestSignal = (
+      input: RequestInfo | URL,
+      init?: RequestInit
+    ): AbortSignal | undefined =>
+      init?.signal ?? (input instanceof Request ? input.signal : undefined);
+    const jsonResponse = (data: unknown): Response =>
+      new Response(JSON.stringify({ success: true, data }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+
+    window.fetch = async (input, init) => {
+      const url = requestUrl(input);
+      const method = requestMethod(input, init);
+      const generationMatch = url.pathname.match(
+        /^\/api\/chat\/sessions\/([^/]+)\/generations$/
+      );
+      if (generationMatch && method === 'POST') {
+        const body = JSON.parse(String(init?.body ?? '{}')) as {
+          assistantMessageId?: string;
+          options?: Record<string, unknown>;
+        };
+        if (!body.assistantMessageId) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Missing message ID' }),
+            { status: 400, headers: { 'content-type': 'application/json' } }
+          );
+        }
+        const sent = window as unknown as Record<string, unknown>;
+        ((sent.__libreChatStreams ||= []) as unknown[]).push(body);
+        const jobId = `e2e-chat-job-${nextDurableJobId++}`;
+        durableGenerations.set(body.assistantMessageId, {
+          assistantMessageId: body.assistantMessageId,
+          jobId,
+          cancelled: false,
+        });
+        return jsonResponse({
+          jobId,
+          assistantMessageId: body.assistantMessageId,
+        });
+      }
+
+      const eventsMatch = url.pathname.match(
+        /^\/api\/chat\/sessions\/([^/]+)\/events$/
+      );
+      if (eventsMatch && method === 'GET') {
+        const assistantMessageId = url.searchParams.get('generation') || '';
+        const generation = durableGenerations.get(assistantMessageId);
+        if (!generation) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Generation not found' }),
+            { status: 404, headers: { 'content-type': 'application/json' } }
+          );
+        }
+        const pieces = streamConfig
+          ? [
+              ...streamConfig.chunks,
+              ...(streamConfig.finalChunk === undefined
+                ? []
+                : [streamConfig.finalChunk]),
+            ]
+          : ['Mock assistant response'];
+        const chunkDelayMs = streamConfig?.chunkDelayMs ?? 0;
+        const completionDelayMs = streamConfig?.completionDelayMs ?? 0;
+        const signal = requestSignal(input, init);
+        const timers: number[] = [];
+        let settled = false;
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            const encoder = new TextEncoder();
+            let total = '';
+            const abort = () => {
+              if (settled) return;
+              settled = true;
+              timers.splice(0).forEach(timer => window.clearTimeout(timer));
+              controller.error(
+                signal?.reason ?? new DOMException('Aborted', 'AbortError')
+              );
+            };
+            if (signal?.aborted) {
+              abort();
+              return;
+            }
+            signal?.addEventListener('abort', abort, { once: true });
+            pieces.forEach((content, index) => {
+              total += content;
+              const payload = {
+                type: 'chunk',
+                messageId: assistantMessageId,
+                content,
+                total,
+                done: false,
+              };
+              const timer = window.setTimeout(
+                () => {
+                  if (settled || generation.cancelled) return;
+                  controller.enqueue(
+                    encoder.encode(
+                      `id: ${index + 1}\ndata: ${JSON.stringify(payload)}\n\n`
+                    )
+                  );
+                },
+                chunkDelayMs * (index + 1)
+              );
+              timers.push(timer);
+            });
+            const finalContent = total;
+            const completionTimer = window.setTimeout(
+              () => {
+                if (settled || generation.cancelled) return;
+                settled = true;
+                signal?.removeEventListener('abort', abort);
+                const completion = {
+                  type: 'done',
+                  messageId: assistantMessageId,
+                  content: finalContent,
+                  role: 'assistant',
+                  timestamp: Date.now(),
+                };
+                const block = `id: ${pieces.length + 1}\ndata: ${JSON.stringify(completion)}\n\n`;
+                controller.enqueue(
+                  encoder.encode(
+                    streamConfig?.duplicateCompletion ? block + block : block
+                  )
+                );
+                controller.close();
+              },
+              chunkDelayMs * pieces.length + completionDelayMs
+            );
+            timers.push(completionTimer);
+          },
+          cancel() {
+            settled = true;
+            timers.splice(0).forEach(timer => window.clearTimeout(timer));
+          },
+        });
+        return new Response(body, {
+          status: 200,
+          headers: {
+            'content-type': 'text/event-stream',
+            'cache-control': 'no-cache',
+          },
+        });
+      }
+
+      const cancelMatch = url.pathname.match(/^\/api\/jobs\/([^/]+)\/cancel$/);
+      if (cancelMatch && method === 'POST') {
+        const jobId = decodeURIComponent(cancelMatch[1]);
+        const generation = [...durableGenerations.values()].find(
+          candidate => candidate.jobId === jobId
+        );
+        if (generation) generation.cancelled = true;
+        const sent = window as unknown as Record<string, unknown>;
+        ((sent.__libreChatCancels ||= []) as unknown[]).push({ jobId });
+        return jsonResponse({ cancelled: true });
+      }
+
+      return originalFetch(input, init);
+    };
+
     class MockWebSocket {
       static CONNECTING = 0;
       static OPEN = 1;
@@ -945,6 +1203,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           type?: string;
           data?: {
             assistantMessageId?: string;
+            sessionId?: string;
             options?: Record<string, unknown>;
           };
         };
@@ -952,6 +1211,24 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         try {
           message = JSON.parse(rawMessage);
         } catch {
+          return;
+        }
+
+        if (message.type === 'chat_cancel') {
+          const sent = window as unknown as Record<string, unknown>;
+          ((sent.__libreChatCancels ||= []) as unknown[]).push(message.data);
+          this.onmessage?.(
+            new MessageEvent('message', {
+              data: JSON.stringify({
+                type: 'assistant_cancelled',
+                data: {
+                  assistantMessageId: message.data?.assistantMessageId,
+                  sessionId: message.data?.sessionId,
+                  cancelled: true,
+                },
+              }),
+            })
+          );
           return;
         }
 
@@ -1011,12 +1288,16 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
 
         window.setTimeout(
           () => {
-            dispatch('assistant_complete', {
+            const completion = {
               content: cumulativeChunks[cumulativeChunks.length - 1].total,
               role: 'assistant',
               timestamp: Date.now(),
               messageId,
-            });
+            };
+            dispatch('assistant_complete', completion);
+            if (streamConfig.duplicateCompletion) {
+              queueMicrotask(() => dispatch('assistant_complete', completion));
+            }
           },
           streamConfig.chunkDelayMs * cumulativeChunks.length +
             streamConfig.completionDelayMs
@@ -1133,6 +1414,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
 
       if (path === '/auth/system-info' && method === 'GET') {
         await fulfillJson(route, systemInfo);
+        return;
+      }
+
+      if (path === '/auth/websocket-ticket' && method === 'POST') {
+        await fulfillJson(route, {
+          ticket: 'e2e-websocket-ticket',
+          expiresAt: new Date(Date.now() + 30_000).toISOString(),
+        });
         return;
       }
 
@@ -2081,8 +2370,87 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/media/video/jobs' && method === 'GET') {
+        await fulfillJson(route, { jobs: mediaVideoJobs });
+        return;
+      }
+
+      if (path === '/media/video/generate' && method === 'POST') {
+        const request = route
+          .request()
+          .postDataJSON() as MockVideoGenerationRequest;
+        videoGenerationRequests.push(request);
+        const now = Date.now();
+        const job: MockVideoGenerationJob = {
+          id: `video-job-${videoGenerationRequests.length}`,
+          status: 'pending',
+          model: request.model,
+          pluginId: request.pluginId,
+          prompt: request.prompt,
+          cancellable: false,
+          createdAt: now,
+          updatedAt: now,
+        };
+        mediaVideoJobs = [job, ...mediaVideoJobs];
+        await fulfillJson(route, job);
+        return;
+      }
+
+      const mediaVideoJobMatch = path.match(/^\/media\/video\/jobs\/([^/]+)$/);
+      const mediaVideoResumeMatch = path.match(
+        /^\/media\/video\/jobs\/([^/]+)\/resume$/
+      );
+      if (mediaVideoResumeMatch && method === 'POST') {
+        const jobId = decodeURIComponent(mediaVideoResumeMatch[1]);
+        videoResumeRequests.push(jobId);
+        const job = mediaVideoJobs.find(candidate => candidate.id === jobId);
+        if (!job) {
+          await fulfillJson(route, null, false);
+          return;
+        }
+        const completed: MockVideoGenerationJob = {
+          ...job,
+          status: 'completed',
+          galleryId: `gallery-${jobId}`,
+          cancellable: false,
+          updatedAt: Date.now(),
+          media: { id: `gallery-${jobId}`, kind: 'video' },
+        };
+        mediaVideoJobs = mediaVideoJobs.map(candidate =>
+          candidate.id === jobId ? completed : candidate
+        );
+        await fulfillJson(route, completed);
+        return;
+      }
+      if (mediaVideoJobMatch && method === 'DELETE') {
+        const jobId = decodeURIComponent(mediaVideoJobMatch[1]);
+        videoCancelRequests.push(jobId);
+        mediaVideoJobs = mediaVideoJobs.filter(job => job.id !== jobId);
+        await fulfillJson(route, undefined);
+        return;
+      }
+
       if (path === '/media/gallery' && method === 'GET') {
         await fulfillJson(route, { media: [], total: 0 });
+        return;
+      }
+
+      if (path === '/media/audio/voice-clone' && method === 'POST') {
+        voiceCloneRequests.push({
+          body: route.request().postDataBuffer()?.toString('utf8') || '',
+          contentType: route.request().headers()['content-type'] || '',
+        });
+        await fulfillJson(route, {
+          id: 'generated-voice-clone',
+          userId: 'default',
+          kind: 'audio',
+          prompt: 'Cloned speech',
+          model: 'meituan-longcat/LongCat-AudioDiT-1B',
+          pluginId: 'longcat-audiodit',
+          mediaData: '/api/media/gallery/generated-voice-clone/content',
+          mimeType: 'audio/wav',
+          createdAt: Date.now(),
+        });
         return;
       }
 
@@ -2110,8 +2478,59 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/stt/models' && method === 'GET') {
+        await fulfillJson(route, sttModels);
+        return;
+      }
+
+      if (path === '/stt/transcribe' && method === 'POST') {
+        sttTranscriptionRequests.push({
+          body: route.request().postDataBuffer()?.toString('latin1') || '',
+          contentType: route.request().headers()['content-type'] || '',
+        });
+        if (options.sttTranscriptionDelayMs) {
+          await new Promise(resolve =>
+            setTimeout(resolve, options.sttTranscriptionDelayMs)
+          );
+        }
+        try {
+          await fulfillJson(route, { text: sttTranscript, language: 'en' });
+        } catch {
+          // A cancelled transcription can close the intercepted request before
+          // its delayed provider response is ready.
+        }
+        return;
+      }
+
       if (path === '/tts/plugins' && method === 'GET') {
         await fulfillJson(route, ttsPlugins);
+        return;
+      }
+
+      if (path === '/tts/voice-profiles' && method === 'GET') {
+        const pluginId = url.searchParams.get('pluginId');
+        const model = url.searchParams.get('model');
+        await fulfillJson(
+          route,
+          ttsVoiceProfiles.filter(
+            profile =>
+              (!pluginId || profile.pluginId === pluginId) &&
+              (!model || profile.model === model)
+          )
+        );
+        return;
+      }
+
+      const ttsVoiceProfileMatch = path.match(
+        /^\/tts\/voice-profiles\/([^/]+)$/
+      );
+      if (ttsVoiceProfileMatch && method === 'DELETE') {
+        const id = decodeURIComponent(ttsVoiceProfileMatch[1]);
+        ttsVoiceProfileDeleteRequests.push(id);
+        ttsVoiceProfiles = ttsVoiceProfiles.filter(
+          profile => profile.id !== id
+        );
+        await route.fulfill({ status: 204, body: '' });
         return;
       }
 
@@ -2124,6 +2543,18 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           format: 'wav',
           mimeType: 'audio/wav',
           size: 4,
+        });
+        return;
+      }
+
+      if (path === '/tts/generate' && method === 'POST') {
+        ttsGenerationRequests.push(
+          route.request().postDataJSON() as MockTTSGenerationRequest
+        );
+        await route.fulfill({
+          status: 200,
+          contentType: 'audio/wav',
+          body: Buffer.from('RIFF0000WAVEfmt '),
         });
         return;
       }
@@ -2161,8 +2592,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         .forEach(releasePreferenceUpdate => releasePreferenceUpdate());
     },
     ttsGenerationRequests,
+    sttTranscriptionRequests,
+    ttsVoiceProfileDeleteRequests,
     imageGenerationRequests,
     soundGenerationRequests,
+    videoGenerationRequests,
+    videoResumeRequests,
+    videoCancelRequests,
+    voiceCloneRequests,
     titleGenerationRequests,
     sessionUpdateRequests,
     folderCreateRequests,

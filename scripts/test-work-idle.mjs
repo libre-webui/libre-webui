@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { initializeWorkTestPlatform } from './lib/work-test-platform.mjs';
 
 process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
 // Must be set before the dist modules load: the runtime config is read once
@@ -31,12 +32,13 @@ const sharedModule = await import(
     path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeShared.js')
   ).href
 );
+const closeWorkPlatform = await initializeWorkTestPlatform(repoRoot);
 
 const { WorkRuntimeService, WORK_RUNTIME_DEFAULTS } = runtimeModule;
 const IDLE_MS = 60_000;
 
-test.after(() => {
-  databaseModule.closeDatabase();
+test.after(async () => {
+  await closeWorkPlatform();
   if (previousDataDir === undefined) delete process.env.DATA_DIR;
   else process.env.DATA_DIR = previousDataDir;
   rmSync(dataDir, { recursive: true, force: true });
@@ -69,8 +71,16 @@ const makeTask = id => {
       id, user_id, title, model, volume_name, container_name,
       created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, task.userId, task.title, task.model, task.volumeName,
-    task.containerName, now, now);
+  ).run(
+    id,
+    task.userId,
+    task.title,
+    task.model,
+    task.volumeName,
+    task.containerName,
+    now,
+    now
+  );
   return task;
 };
 
@@ -106,6 +116,33 @@ test('the idle sweep is off by default and off while recovering', async () => {
   const swept = await service.sweepIdleRuntimes(Date.now() + IDLE_MS * 10);
   assert.deepEqual(swept, { stopped: 0 });
   service.beginShutdown();
+});
+
+test('an external-worker HTTP replica never owns the global idle sweep', async () => {
+  const previousRole = process.env.LIBRE_PROCESS_ROLE;
+  process.env.LIBRE_PROCESS_ROLE = 'app-external';
+  const service = new WorkRuntimeService();
+  let listed = 0;
+  service.driver.listManaged = async () => {
+    listed += 1;
+    return [];
+  };
+  try {
+    assert.equal(service.idleTimer, undefined);
+    assert.deepEqual(
+      await service.sweepIdleRuntimes(Date.now() + IDLE_MS * 10),
+      { stopped: 0 }
+    );
+    assert.equal(
+      listed,
+      0,
+      'an app replica must not inspect or stop worker-owned sandboxes'
+    );
+  } finally {
+    service.beginShutdown();
+    if (previousRole === undefined) delete process.env.LIBRE_PROCESS_ROLE;
+    else process.env.LIBRE_PROCESS_ROLE = previousRole;
+  }
 });
 
 test('a first-seen running sandbox starts its clock instead of stopping', async () => {
@@ -156,9 +193,9 @@ test('busy sandboxes refresh their clock and are never stopped', async () => {
 
 test('an idle preview is stopped through the preview path', async () => {
   const task = makeTask('idle-preview');
-  db.prepare(`UPDATE work_tasks SET preview_status = 'running' WHERE id = ?`).run(
-    task.id
-  );
+  db.prepare(
+    `UPDATE work_tasks SET preview_status = 'running' WHERE id = ?`
+  ).run(task.id);
   const service = new WorkRuntimeService();
   const calls = [];
   stubDocker(service, task, calls);
@@ -202,7 +239,12 @@ test('preview traffic through the signed proxy refreshes the idle clock', async 
     'idle-test-secret',
     taskId =>
       taskId === taskRecordId
-        ? { preview_status: 'running', preview_url: previewPath }
+        ? {
+            preview_status: 'running',
+            preview_url: previewPath,
+            preview_upstream_host: '127.0.0.1',
+            preview_upstream_port: 4173,
+          }
         : undefined
   );
   service.onPreviewActivity(taskId => activity.push(taskId));
@@ -210,12 +252,12 @@ test('preview traffic through the signed proxy refreshes the idle clock', async 
   const previewPath = service.createPreviewUrl(taskRecordId, 4173);
 
   // Resolving an authorized target is the activity signal.
-  const target = service.parseTarget(`${previewPath}index.html`);
+  const target = await service.parseTarget(`${previewPath}index.html`);
   assert.ok(target);
   assert.deepEqual(activity, [taskRecordId]);
 
   // A tampered signature resolves to nothing and records no activity.
   const tampered = previewPath.replace(/.\/$/, 'x/');
-  assert.equal(service.parseTarget(`${tampered}index.html`), undefined);
+  assert.equal(await service.parseTarget(`${tampered}index.html`), undefined);
   assert.deepEqual(activity, [taskRecordId]);
 });

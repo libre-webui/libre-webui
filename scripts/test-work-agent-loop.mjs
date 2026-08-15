@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test, { after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { initializeWorkTestPlatform } from './lib/work-test-platform.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,7 +20,7 @@ const distModule = relativePath =>
     pathToFileURL(path.join(repoRoot, 'backend', 'dist', relativePath)).href
   );
 const [
-  { closeDatabase, getDatabase },
+  { getDatabase },
   {
     default: workAgentService,
     normalizeToolCalls,
@@ -43,6 +44,7 @@ const [
   distModule('services/workRuntimeService.js'),
   distModule('services/workTaskService.js'),
 ]);
+const closeWorkPlatform = await initializeWorkTestPlatform(repoRoot);
 
 const restorers = [];
 const replaceMethod = (target, key, replacement) => {
@@ -64,7 +66,7 @@ replaceMethod(
 after(async () => {
   for (const restore of restorers.reverse()) restore();
   workEventService.reset();
-  closeDatabase();
+  await closeWorkPlatform();
   await rm(dataDir, { recursive: true, force: true });
 });
 
@@ -175,7 +177,7 @@ test('plugin Work runs use the configured round budget and finish with a no-tool
     }
   );
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'Exercise the complete agent budget.',
     'test-model',
@@ -199,16 +201,23 @@ test('plugin Work runs use the configured round budget and finish with a no-tool
   assert.ok(requests.slice(0, 13).every(request => request.tools.length > 0));
   assert.deepEqual(requests[13].tools, []);
 
-  const run = workTaskService.getRun(runId);
+  const run = await workTaskService.getRun(runId);
   assert.equal(run.status, 'needs_input');
   assert.equal(run.error, undefined);
-  const task = workTaskService.requireTaskRecord(detail.id, userId);
+  const task = await workTaskService.requireTaskRecord(detail.id, userId);
   assert.equal(task.status, 'needs_input');
   const done = events.findLast(event => event.type === 'done');
   assert.equal(done?.data.status, 'needs_input');
   assert.equal(done?.data.budgetReason, 'round');
+  const handoffDelta = events.findLast(
+    event => event.type === 'assistant_delta'
+  );
+  assert.equal(
+    handoffDelta?.data.total,
+    'Completed the configured-round handoff.'
+  );
 
-  const messages = workTaskService.getMessages(detail.id);
+  const messages = await workTaskService.getMessages(detail.id);
   const handoff = messages.at(-1);
   assert.equal(handoff.kind, 'message');
   assert.equal(handoff.content, 'Completed the configured-round handoff.');
@@ -343,7 +352,7 @@ test('invalid provider tool arguments prevent partial writes and guide a smaller
     }
   );
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'Recover from a truncated tool call.',
     'test-model',
@@ -356,9 +365,9 @@ test('invalid provider tool arguments prevent partial writes and guide a smaller
   await workAgentService.execute(detail.id, runId, userId);
 
   assert.deepEqual(writes, [{ path: 'safe.js', content: 'ok' }]);
-  assert.equal(workTaskService.getRun(runId).status, 'completed');
+  assert.equal((await workTaskService.getRun(runId)).status, 'completed');
   assert.equal(
-    workTaskService.getMessages(detail.id).at(-1).content,
+    (await workTaskService.getMessages(detail.id)).at(-1).content,
     'Recovered with a smaller write.'
   );
 });
@@ -392,7 +401,7 @@ test('incomplete provider responses fail Work with the provider reason', async (
     }
   );
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'Do not accept truncated provider output.',
     'test-model',
@@ -412,7 +421,7 @@ test('incomplete provider responses fail Work with the provider reason', async (
     unsubscribe();
   }
 
-  const run = workTaskService.getRun(runId);
+  const run = await workTaskService.getRun(runId);
   assert.equal(run.status, 'failed');
   assert.match(run.error, /incomplete response \(max_output_tokens\)/);
   const errorEvent = events.find(event => event.type === 'error');
@@ -531,7 +540,7 @@ test('Responses state and exact tool call IDs survive a persisted Work resume', 
     }
   );
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'List the workspace and finish.',
     'test-model',
@@ -541,7 +550,10 @@ test('Responses state and exact tool call IDs survive a persisted Work resume', 
   const initialRunId = detail.activeRun?.id;
   assert.ok(initialRunId);
   await workAgentService.execute(detail.id, initialRunId, userId);
-  assert.equal(workTaskService.getRun(initialRunId).status, 'completed');
+  assert.equal(
+    (await workTaskService.getRun(initialRunId)).status,
+    'completed'
+  );
 
   const hiddenRows = getDatabase()
     .prepare(
@@ -552,20 +564,20 @@ test('Responses state and exact tool call IDs survive a persisted Work resume', 
     .all(detail.id);
   assert.equal(hiddenRows.length, 1);
   assert.equal(
-    workTaskService
-      .getMessages(detail.id)
-      .some(message => message.kind === 'provider_state'),
+    (await workTaskService.getMessages(detail.id)).some(
+      message => message.kind === 'provider_state'
+    ),
     false
   );
   assert.equal(
-    workTaskService
-      .getMessagePage(detail.id)
-      .messages.some(message => message.kind === 'provider_state'),
+    (await workTaskService.getMessagePage(detail.id)).messages.some(
+      message => message.kind === 'provider_state'
+    ),
     false
   );
 
   phase = 'resumed';
-  const resumedDetail = workTaskService.createRun(
+  const resumedDetail = await workTaskService.createRun(
     detail.id,
     userId,
     'Continue from persisted state.'
@@ -573,7 +585,10 @@ test('Responses state and exact tool call IDs survive a persisted Work resume', 
   const resumedRunId = resumedDetail.activeRun?.id;
   assert.ok(resumedRunId);
   await workAgentService.execute(detail.id, resumedRunId, userId);
-  assert.equal(workTaskService.getRun(resumedRunId).status, 'completed');
+  assert.equal(
+    (await workTaskService.getRun(resumedRunId)).status,
+    'completed'
+  );
   assert.ok(resumedRequest);
 
   const restoredToolResult = resumedRequest.messages.find(
@@ -611,7 +626,7 @@ test('Responses state and exact tool call IDs survive a persisted Work resume', 
   );
 });
 
-test('truncated Work context drops orphaned provider state and tool results', () => {
+test('truncated Work context drops orphaned provider state and tool results', async () => {
   const now = Date.now();
   const userId = 'agent-loop-context-truncation-admin';
   getDatabase()
@@ -622,7 +637,7 @@ test('truncated Work context drops orphaned provider state and tool results', ()
     )
     .run(userId, userId, now, now);
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'Old prompt outside the retained row window.',
     'test-model',
@@ -630,7 +645,7 @@ test('truncated Work context drops orphaned provider state and tool results', ()
   );
   const runId = detail.activeRun?.id;
   assert.ok(runId);
-  workTaskService.addMessage(
+  await workTaskService.addMessage(
     detail.id,
     runId,
     'assistant',
@@ -638,7 +653,7 @@ test('truncated Work context drops orphaned provider state and tool results', ()
     '',
     { workProviderState: { providerMetadata: {} } }
   );
-  workTaskService.addMessage(
+  await workTaskService.addMessage(
     detail.id,
     runId,
     'tool',
@@ -646,28 +661,28 @@ test('truncated Work context drops orphaned provider state and tool results', ()
     'orphaned result',
     { name: 'list_files', toolCallId: 'orphan-call' }
   );
-  workTaskService.addMessage(
+  await workTaskService.addMessage(
     detail.id,
     runId,
     'assistant',
     'message',
     'Safe retained boundary.'
   );
-  workTaskService.addMessage(
+  await workTaskService.addMessage(
     detail.id,
     runId,
     'user',
     'message',
     'Follow-up one.'
   );
-  workTaskService.addMessage(
+  await workTaskService.addMessage(
     detail.id,
     runId,
     'assistant',
     'message',
     'Answer one.'
   );
-  workTaskService.addMessage(
+  await workTaskService.addMessage(
     detail.id,
     runId,
     'user',
@@ -675,7 +690,10 @@ test('truncated Work context drops orphaned provider state and tool results', ()
     'Follow-up two.'
   );
 
-  const retained = workTaskService.getRecentModelContextMessages(detail.id, 1);
+  const retained = await workTaskService.getRecentModelContextMessages(
+    detail.id,
+    1
+  );
   assert.equal(retained[0].content, 'Safe retained boundary.');
   assert.equal(
     retained.some(
@@ -767,6 +785,62 @@ test('persisted Responses batches synthesize exact outputs for interrupted tools
         content: 'Continue safely.',
       },
     ]
+  );
+});
+
+test('a reclaimed Work run durably settles an interrupted tool intent once', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-interrupted-tool-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Recover an interrupted command.',
+    'test-model',
+    false,
+    { providerType: 'ollama' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workTaskService.addMessage(
+    detail.id,
+    runId,
+    'assistant',
+    'tool_call',
+    'Calling run_command',
+    { name: 'run_command', toolCallId: 'interrupted-command' }
+  );
+  await workTaskService.updateRun(runId, 'running', { started: true });
+  await workTaskService.updateTaskStatus(detail.id, 'running');
+
+  assert.equal(
+    await workAgentService.reconcileInterruptedToolCalls(detail.id, runId),
+    1
+  );
+  assert.equal(
+    await workAgentService.reconcileInterruptedToolCalls(detail.id, runId),
+    0
+  );
+  const results = (await workTaskService.getMessages(detail.id)).filter(
+    message =>
+      message.runId === runId &&
+      message.kind === 'tool_result' &&
+      message.metadata?.toolCallId === 'interrupted-command'
+  );
+  assert.equal(results.length, 1);
+  assert.match(results[0].content, /outcome unknown/i);
+  assert.equal(results[0].metadata?.interrupted, true);
+  assert.equal(
+    workEventService
+      .replay(detail.id, runId, 0)
+      .events.filter(event => event.type === 'tool_result').length,
+    1
   );
 });
 
@@ -936,7 +1010,7 @@ test('oversized Responses tool state fails before Work performs a side effect', 
     })
   );
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'Do not execute an unpersistable call.',
     'test-model',
@@ -948,7 +1022,7 @@ test('oversized Responses tool state fails before Work performs a side effect', 
   await workAgentService.execute(detail.id, runId, userId);
 
   assert.equal(sideEffects, 0);
-  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  assert.equal((await workTaskService.getRun(runId)).status, 'failed');
   const events = workEventService.replay(detail.id, runId, 0).events;
   assert.equal(
     events.find(event => event.type === 'error')?.data.code,
@@ -1012,7 +1086,7 @@ test('Responses metadata cannot execute tools after a chat-completions scope rac
     })
   );
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'Reject tool calls from a newly selected Responses route.',
     'test-model',
@@ -1024,7 +1098,7 @@ test('Responses metadata cannot execute tools after a chat-completions scope rac
   await workAgentService.execute(detail.id, runId, userId);
 
   assert.equal(sideEffects, 0);
-  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  assert.equal((await workTaskService.getRun(runId)).status, 'failed');
   assert.equal(
     workEventService
       .replay(detail.id, runId, 0)
@@ -1093,7 +1167,7 @@ test('Responses tool state must fit the exact persisted metadata wrapper', async
     })
   );
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'Do not execute state that the database cannot preserve.',
     `model-${'m'.repeat(15_000)}`,
@@ -1105,7 +1179,7 @@ test('Responses tool state must fit the exact persisted metadata wrapper', async
   await workAgentService.execute(detail.id, runId, userId);
 
   assert.equal(sideEffects, 0);
-  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  assert.equal((await workTaskService.getRun(runId)).status, 'failed');
   assert.equal(
     workEventService
       .replay(detail.id, runId, 0)
@@ -1179,7 +1253,7 @@ test('Work stops before a second provider request after credential rotation', as
     }
   );
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'Stop before sending state to changed provider routing.',
     'test-model',
@@ -1192,7 +1266,7 @@ test('Work stops before a second provider request after credential rotation', as
 
   assert.equal(requests, 1);
   assert.equal(sideEffects, 1);
-  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  assert.equal((await workTaskService.getRun(runId)).status, 'failed');
   assert.equal(
     workEventService
       .replay(detail.id, runId, 0)
@@ -1274,7 +1348,7 @@ test('chat-mode tool history survives a persisted Work resume', async () => {
     }
   );
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'Build the road.',
     'test-model',
@@ -1284,19 +1358,22 @@ test('chat-mode tool history survives a persisted Work resume', async () => {
   const initialRunId = detail.activeRun?.id;
   assert.ok(initialRunId);
   await workAgentService.execute(detail.id, initialRunId, userId);
-  assert.equal(workTaskService.getRun(initialRunId).status, 'completed');
+  assert.equal(
+    (await workTaskService.getRun(initialRunId)).status,
+    'completed'
+  );
 
   // The chat round persisted its tool calls for cross-run replay.
-  const persistedState = workTaskService
-    .getRecentModelContextMessages(detail.id, 30)
-    .find(message => message.kind === 'provider_state');
+  const persistedState = (
+    await workTaskService.getRecentModelContextMessages(detail.id, 30)
+  ).find(message => message.kind === 'provider_state');
   assert.ok(persistedState);
   assert.deepEqual(persistedState.metadata.workProviderState.toolCalls, [
     { id: 'chat-call-1', name: 'list_files', arguments: '{"path":"."}' },
   ]);
 
   phase = 'resumed';
-  const resumedDetail = workTaskService.createRun(
+  const resumedDetail = await workTaskService.createRun(
     detail.id,
     userId,
     'Continue the road.'
@@ -1304,7 +1381,10 @@ test('chat-mode tool history survives a persisted Work resume', async () => {
   const resumedRunId = resumedDetail.activeRun?.id;
   assert.ok(resumedRunId);
   await workAgentService.execute(detail.id, resumedRunId, userId);
-  assert.equal(workTaskService.getRun(resumedRunId).status, 'completed');
+  assert.equal(
+    (await workTaskService.getRun(resumedRunId)).status,
+    'completed'
+  );
   assert.ok(resumedRequest);
 
   // The resumed request replays the assistant tool-call turn and its result,
@@ -1454,7 +1534,7 @@ test('empty rounds are nudged back to work instead of completing', async () => {
     }
   );
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'Diagnose the missing road.',
     'test-model',
@@ -1466,8 +1546,8 @@ test('empty rounds are nudged back to work instead of completing', async () => {
   await workAgentService.execute(detail.id, runId, userId);
 
   assert.equal(requests, 3);
-  assert.equal(workTaskService.getRun(runId).status, 'completed');
-  const persisted = workTaskService.getMessages(detail.id);
+  assert.equal((await workTaskService.getRun(runId)).status, 'completed');
+  const persisted = await workTaskService.getMessages(detail.id);
   assert.ok(
     persisted.some(message => message.content === 'Recovered final answer.')
   );
@@ -1511,7 +1591,7 @@ test('a run that stays empty completes with a placeholder hidden from replay', a
     }
   );
 
-  const detail = workTaskService.createTaskWithRun(
+  const detail = await workTaskService.createTaskWithRun(
     userId,
     'Say something.',
     'test-model',
@@ -1524,18 +1604,16 @@ test('a run that stays empty completes with a placeholder hidden from replay', a
 
   // Initial round plus the two bounded nudges, then an honest completion.
   assert.equal(requests, 3);
-  assert.equal(workTaskService.getRun(runId).status, 'completed');
-  const placeholder = workTaskService
-    .getMessages(detail.id)
-    .find(message =>
-      message.content.includes('without returning a text response')
-    );
+  assert.equal((await workTaskService.getRun(runId)).status, 'completed');
+  const placeholder = (await workTaskService.getMessages(detail.id)).find(
+    message => message.content.includes('without returning a text response')
+  );
   assert.ok(placeholder);
   assert.equal(placeholder.metadata.emptyModelResponse, true);
 
   // The placeholder stays user-visible but never re-enters model context.
   const restored = restorePersistedWorkContext(
-    workTaskService.getRecentModelContextMessages(detail.id, 30),
+    await workTaskService.getRecentModelContextMessages(detail.id, 30),
     { providerType: 'plugin', providerId: 'test-plugin', model: 'test-model' },
     undefined
   );

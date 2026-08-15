@@ -24,6 +24,8 @@ import {
   PersonaExport,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
+import { getPlatformStorageRuntime } from '../platform/storage/index.js';
+import { transactionalResourceDeletionEnqueuer } from '../platform/jobs/resourceDeletionEnqueuer.js';
 
 const logger = createLogger('services:persona-service');
 
@@ -74,88 +76,36 @@ export class PersonaService {
     };
   }> {
     try {
-      const { getDatabase } = await import('../db.js');
-      const db = getDatabase();
-
-      // Retrieve the embedding_model and other advanced features from the database
-      const personaAdvancedData = db
-        .prepare(
-          `
-          SELECT embedding_model, memory_settings, mutation_settings 
-          FROM personas 
-          WHERE id = ? AND user_id = ?
-        `
-        )
-        .get(personaId, userId) as
-        | {
-            embedding_model?: string;
-            memory_settings?: string;
-            mutation_settings?: string;
-          }
-        | undefined;
-
-      if (!personaAdvancedData) {
-        return {};
-      }
-
-      // Parse JSON settings or use defaults
-      let memorySettings;
-      let mutationSettings;
-
-      try {
-        memorySettings = personaAdvancedData.memory_settings
-          ? JSON.parse(personaAdvancedData.memory_settings)
-          : undefined;
-      } catch {
-        memorySettings = undefined;
-      }
-
-      try {
-        mutationSettings = personaAdvancedData.mutation_settings
-          ? JSON.parse(personaAdvancedData.mutation_settings)
-          : undefined;
-      } catch {
-        mutationSettings = undefined;
-      }
-
-      // Check if persona has memory entries to determine if it has advanced features
-      const memoryCheck = db
-        .prepare(
-          `
-        SELECT COUNT(*) as count FROM persona_memories 
-        WHERE persona_id = ? AND user_id = ?
-      `
-        )
-        .get(personaId, userId) as { count: number } | undefined;
-
-      const stateCheck = db
-        .prepare(
-          `
-        SELECT * FROM persona_states 
-        WHERE persona_id = ? AND user_id = ?
-      `
-        )
-        .get(personaId, userId) as Record<string, unknown> | undefined;
+      const platform = getPlatformStorageRuntime();
+      const persona = await platform.domains.personas.findByOwner(
+        personaId,
+        userId
+      );
+      if (!persona) return {};
+      const [memoryCount, state] = await Promise.all([
+        platform.domains.memories.countByOwner(userId, personaId),
+        platform.domains.personaStates.findByOwner(personaId, userId),
+      ]);
 
       // If persona has memories, state, or stored advanced settings, return advanced features
       if (
-        (memoryCheck?.count ?? 0) > 0 ||
-        stateCheck ||
-        personaAdvancedData.embedding_model ||
-        memorySettings ||
-        mutationSettings
+        memoryCount > 0 ||
+        state ||
+        persona.embedding_model ||
+        persona.memory_settings ||
+        persona.mutation_settings
       ) {
         return {
           embedding_model:
-            personaAdvancedData.embedding_model ||
-            preferencesService.getDefaultEmbeddingModel(userId),
-          memory_settings: memorySettings || {
+            persona.embedding_model ||
+            (await preferencesService.getDefaultEmbeddingModel(userId)),
+          memory_settings: persona.memory_settings || {
             enabled: true,
             max_memories: 1000,
             auto_cleanup: true,
             retention_days: 90,
           },
-          mutation_settings: mutationSettings || {
+          mutation_settings: persona.mutation_settings || {
             enabled: true,
             sensitivity: 'medium' as const,
             auto_adapt: true,
@@ -432,7 +382,11 @@ export class PersonaService {
       throw new Error('Persona not found');
     }
 
-    return await personaModel.deletePersona(id, userId);
+    return getPlatformStorageRuntime().domains.personas.deleteAndEnqueue(
+      id,
+      userId,
+      transactionalResourceDeletionEnqueuer
+    );
   }
 
   /**

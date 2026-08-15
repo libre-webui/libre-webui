@@ -16,43 +16,42 @@
  */
 
 import { WebSocketMessage } from '@/types';
+import type { ApiResponse } from '@/types';
+import { api } from '@/utils/api/client';
 import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
+import {
+  buildChatWebSocketUrl,
+  resolveWebSocketBaseUrl,
+  type WebSocketUrlEnvironment,
+} from '@/utils/websocketUrl';
 
 const logger = createLogger('websocket');
 
 class WebSocketService {
   private ws: WebSocket | null = null;
-  private url: string;
+  private readonly urlEnvironment: WebSocketUrlEnvironment;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private messageHandlers: Map<string, (data: unknown) => void> = new Map();
+  private connectPromise: Promise<void> | null = null;
+  private shouldReconnect = false;
+  private connectionEpoch = 0;
 
   constructor() {
-    // For WebSocket, we need to connect to the backend server (port 3001)
-    // When running in Electron with file:// protocol, use localhost
-    let wsUrl: string;
-
-    if (window.location.protocol === 'file:') {
-      // Electron app - use localhost directly
-      wsUrl = 'ws://localhost:3001';
-    } else if (import.meta.env.VITE_API_BASE_URL) {
-      // Explicit API URL configured
-      const apiUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '');
-      wsUrl = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://');
-    } else if (import.meta.env.PROD) {
-      // Production (npx, docker): use same origin
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsUrl = `${protocol}//${window.location.host}`;
-    } else {
-      // Development: derive from window location with port 3001
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsUrl = `${protocol}//${window.location.hostname}:3001`;
-    }
-
-    this.url = `${wsUrl}/ws`;
-    logger.debug('WebSocket URL constructed:', this.url);
+    this.urlEnvironment = {
+      protocol: window.location.protocol,
+      host: window.location.host,
+      hostname: window.location.hostname,
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+      websocketBaseUrl: import.meta.env.VITE_WS_BASE_URL,
+      production: import.meta.env.PROD,
+    };
+    logger.debug(
+      'WebSocket base URL resolved:',
+      resolveWebSocketBaseUrl(this.urlEnvironment)
+    );
   }
 
   connect(): Promise<void> {
@@ -61,30 +60,61 @@ class WebSocketService {
       return Promise.resolve();
     }
 
-    logger.debug('WebSocket: Attempting to connect to:', this.url);
+    if (this.ws?.readyState === WebSocket.OPEN) return Promise.resolve();
+    if (this.connectPromise) return this.connectPromise;
+
+    this.shouldReconnect = true;
+    const epoch = ++this.connectionEpoch;
+    const attempt = this.openWithTicket(epoch).finally(() => {
+      if (this.connectPromise === attempt) this.connectPromise = null;
+    });
+    this.connectPromise = attempt;
+    return attempt;
+  }
+
+  private async openWithTicket(epoch: number): Promise<void> {
+    let response;
+    try {
+      response = await api.post<
+        ApiResponse<{ ticket: string; expiresAt: string }>
+      >('/auth/websocket-ticket', { audience: 'chat' });
+    } catch (error) {
+      if (this.shouldReconnect && epoch === this.connectionEpoch) {
+        this.attemptReconnect();
+      }
+      throw error;
+    }
+    const ticket = response.data.data?.ticket;
+    if (!ticket)
+      throw new Error('The server did not issue a WebSocket ticket.');
+    if (!this.shouldReconnect || epoch !== this.connectionEpoch) return;
+
+    logger.debug('WebSocket: Attempting to connect');
 
     return new Promise((resolve, reject) => {
       try {
-        // Include auth token in WebSocket connection
-        const token = localStorage.getItem('auth-token');
-        const wsUrlWithAuth = token
-          ? `${this.url}?token=${encodeURIComponent(token)}`
-          : this.url;
-
-        logger.debug(
-          'WebSocket: Connecting to:',
-          wsUrlWithAuth.replace(/token=[^&]+/, 'token=***')
+        const wsUrlWithAuth = buildChatWebSocketUrl(
+          ticket,
+          this.urlEnvironment
         );
 
-        this.ws = new WebSocket(wsUrlWithAuth);
+        logger.debug('WebSocket: Connecting with a one-use ticket');
 
-        this.ws.onopen = () => {
+        const socket = new WebSocket(wsUrlWithAuth);
+        this.ws = socket;
+
+        socket.onopen = () => {
+          if (!this.shouldReconnect || epoch !== this.connectionEpoch) {
+            socket.close();
+            resolve();
+            return;
+          }
           logger.debug('WebSocket connected successfully');
           this.reconnectAttempts = 0;
           resolve();
         };
 
-        this.ws.onmessage = event => {
+        socket.onmessage = event => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
             const handler = this.messageHandlers.get(message.type);
@@ -103,13 +133,15 @@ class WebSocketService {
           }
         };
 
-        this.ws.onclose = () => {
+        socket.onclose = () => {
           logger.debug('WebSocket disconnected');
-          this.ws = null;
-          this.attemptReconnect();
+          if (this.ws === socket) this.ws = null;
+          if (this.shouldReconnect && epoch === this.connectionEpoch) {
+            this.attemptReconnect();
+          }
         };
 
-        this.ws.onerror = error => {
+        socket.onerror = error => {
           logger.error('WebSocket error:', error);
           reject(error);
         };
@@ -120,21 +152,26 @@ class WebSocketService {
   }
 
   disconnect() {
+    this.shouldReconnect = false;
+    this.connectionEpoch += 1;
+    this.connectPromise = null;
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
   }
 
-  send(message: WebSocketMessage | Record<string, unknown>) {
+  send(message: WebSocketMessage | Record<string, unknown>): boolean {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       logger.debug('WebSocket: Sending message:', message);
       this.ws.send(JSON.stringify(message));
+      return true;
     } else {
       logger.warn(
         'WebSocket is not connected. ReadyState:',
         this.ws?.readyState
       );
+      return false;
     }
   }
 
@@ -146,6 +183,11 @@ class WebSocketService {
 
   offMessage(type: string) {
     this.messageHandlers.delete(type);
+  }
+
+  /** Deliver a transport-neutral event through the existing chat handlers. */
+  dispatchMessage(type: string, data: unknown): void {
+    this.messageHandlers.get(type)?.(data);
   }
 
   private attemptReconnect() {
@@ -160,6 +202,7 @@ class WebSocketService {
       );
 
       setTimeout(() => {
+        if (!this.shouldReconnect) return;
         this.connect().catch(() => {
           // Will try again if this fails
         });

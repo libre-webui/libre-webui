@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
-import { X, ImageIcon, Loader2, Download, Sparkles } from 'lucide-react';
+import { X, ImageIcon, Download, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn } from '@/utils';
 import {
@@ -132,6 +132,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
   const [style, setStyle] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const generationControllerRef = useRef<AbortController | null>(null);
   const [availableSizes, setAvailableSizes] = useState<string[]>([
     '512x512',
     '768x768',
@@ -228,6 +229,23 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
     };
   }, [isOpen, onClose]);
 
+  useEffect(
+    () => () => {
+      generationControllerRef.current?.abort();
+      generationControllerRef.current = null;
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!isOpen) generationControllerRef.current?.abort();
+  }, [isOpen]);
+
+  const handleClose = () => {
+    generationControllerRef.current?.abort();
+    onClose();
+  };
+
   const handlePluginChange = (pluginId: string) => {
     const plugin = plugins.find(candidate => candidate.id === pluginId);
     if (!plugin) return;
@@ -260,18 +278,25 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
       return;
     }
 
+    const controller = new AbortController();
+    generationControllerRef.current?.abort();
+    generationControllerRef.current = controller;
     setIsGenerating(true);
     setGeneratedImage(null);
 
     try {
-      const response = await imageGenApi.generate({
-        model: selectedModel,
-        pluginId: selectedPlugin,
-        prompt: prompt.trim(),
-        size,
-        quality,
-        ...(style ? { style } : {}),
-      });
+      const response = await imageGenApi.generate(
+        {
+          model: selectedModel,
+          pluginId: selectedPlugin,
+          prompt: prompt.trim(),
+          size,
+          quality,
+          ...(style ? { style } : {}),
+        },
+        controller.signal
+      );
+      if (controller.signal.aborted) return;
 
       if (
         response.success &&
@@ -298,13 +323,21 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         toast.error(t('imageGeneration.failed'));
       }
     } catch (error) {
+      if (controller.signal.aborted) return;
       logger.error('Image generation failed:', error);
       const message =
         error instanceof Error ? error.message : t('imageGeneration.failed');
       toast.error(message);
     } finally {
-      setIsGenerating(false);
+      if (generationControllerRef.current === controller) {
+        generationControllerRef.current = null;
+        setIsGenerating(false);
+      }
     }
+  };
+
+  const handleCancelGeneration = () => {
+    generationControllerRef.current?.abort();
   };
 
   const handleDownload = () => {
@@ -334,7 +367,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
       {/* Backdrop */}
       <div
         className='absolute inset-0 bg-black/55 backdrop-blur-sm'
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       {/* Panel */}
@@ -358,7 +391,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
             </h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className='rounded-xl p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-500 dark:hover:bg-white/[0.06] dark:hover:text-dark-900'
             title={t('common.close', { defaultValue: 'Close' })}
           >
@@ -573,13 +606,13 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         {currentPlugin && (
           <div className='border-t border-gray-200/70 p-4 dark:border-white/[0.08] sm:px-6 sm:py-5'>
             <Button
-              onClick={handleGenerate}
+              onClick={isGenerating ? handleCancelGeneration : handleGenerate}
               disabled={
-                isGenerating ||
-                !imageGenerationEnabled ||
-                !prompt.trim() ||
-                !selectedPlugin ||
-                !selectedModel
+                !isGenerating &&
+                (!imageGenerationEnabled ||
+                  !prompt.trim() ||
+                  !selectedPlugin ||
+                  !selectedModel)
               }
               className={cn(
                 'w-full py-2.5 rounded-xl font-medium',
@@ -592,8 +625,8 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
             >
               {isGenerating ? (
                 <span className='flex items-center justify-center gap-2'>
-                  <Loader2 className='h-4 w-4 animate-spin' />
-                  {t('imageGeneration.generating')}
+                  <X className='h-4 w-4' />
+                  {t('common.cancel')}
                 </span>
               ) : (
                 <span className='flex items-center justify-center gap-2'>

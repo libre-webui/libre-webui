@@ -138,7 +138,10 @@ The backend signs JWTs with `JWT_SECRET`. Set a stable secret in production:
 JWT_SECRET=replace-with-a-long-random-secret
 ```
 
-Changing `JWT_SECRET` invalidates existing sessions. Local login tokens are currently issued by the main auth service with a 24-hour expiration.
+Changing `JWT_SECRET` invalidates existing sessions. Local and OAuth login
+tokens use `JWT_EXPIRES_IN`, which defaults to `7d`; changing that value affects
+new sessions. WebSocket connections exchange the durable token for a
+short-lived, one-use ticket and close when the underlying session expires.
 
 ## Cloudflare Turnstile
 

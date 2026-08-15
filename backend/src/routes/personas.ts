@@ -16,7 +16,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit from '../middleware/sharedRateLimit.js';
 import { personaService } from '../services/personaService.js';
 import preferencesService from '../services/preferencesService.js';
 import { ApiResponse, getErrorMessage } from '../types/index.js';
@@ -27,6 +27,7 @@ router.use(authenticate);
 
 // Rate limiting for persona operations (temporarily disabled for development)
 const personaRateLimit = rateLimit({
+  keyPrefix: 'personas-read',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10000, // Very high limit for development
   message: {
@@ -39,6 +40,7 @@ const personaRateLimit = rateLimit({
 
 // More restrictive rate limiting for create/update/delete operations
 const personaWriteRateLimit = rateLimit({
+  keyPrefix: 'personas-write',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 30, // Limit each IP to 30 write operations per windowMs
   message: {
@@ -503,7 +505,7 @@ router.post(
 
       const embeddingModel =
         persona.embedding_model ||
-        preferencesService.getDefaultEmbeddingModel(userId);
+        (await preferencesService.getDefaultEmbeddingModel(userId));
 
       const { memoryService } = await import('../services/memoryService.js');
       const result = await memoryService.consolidateMemories(

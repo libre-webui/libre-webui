@@ -15,10 +15,16 @@
  * limitations under the License.
  */
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Send,
+  ArrowUp,
   Square,
   Paperclip,
   Plus,
@@ -46,7 +52,9 @@ import {
   imageGenApi,
   documentsApi,
   searchApi,
+  sttApi,
 } from '@/utils/api';
+import type { STTModel } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
 import { Persona, KnowledgeCollection, ChatSession } from '@/types';
@@ -88,6 +96,31 @@ const getSpeechRecognition = (): SpeechRecognitionConstructor | undefined => {
   return w.SpeechRecognition || w.webkitSpeechRecognition;
 };
 
+const RECORDING_MIME_TYPES = [
+  { mimeType: 'audio/webm;codecs=opus', format: 'webm' },
+] as const;
+
+const DEFAULT_MAX_RECORDING_SECONDS = 5 * 60;
+const RECORDING_DURATION_HEADROOM_SECONDS = 0.25;
+
+type SpeechInputPhase = 'idle' | 'starting' | 'recording' | 'transcribing';
+
+const sttModelKey = (model: STTModel): string =>
+  `${encodeURIComponent(model.plugin)}:${encodeURIComponent(model.model)}`;
+
+function preferredRecordingMimeType(model: STTModel): string | undefined {
+  if (typeof MediaRecorder === 'undefined') return undefined;
+  const accepted = new Set(
+    (model.config?.formats || []).map(format => format.toLowerCase())
+  );
+  return RECORDING_MIME_TYPES.find(
+    candidate =>
+      (accepted.size === 0 || accepted.has(candidate.format)) &&
+      (typeof MediaRecorder.isTypeSupported !== 'function' ||
+        MediaRecorder.isTypeSupported(candidate.mimeType))
+  )?.mimeType;
+}
+
 interface ChatInputProps {
   onSendMessage: (
     message: string,
@@ -106,10 +139,76 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const [message, setMessage] = useState('');
+  const [speechStarting, setSpeechStarting] = useState(false);
   const [listening, setListening] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const [sttModels, setSttModels] = useState<STTModel[]>([]);
+  const [speechInputSource, setSpeechInputSource] = useState(() =>
+    typeof window !== 'undefined' &&
+    window.isSecureContext &&
+    typeof navigator !== 'undefined' &&
+    navigator.mediaDevices &&
+    getSpeechRecognition()
+      ? 'browser'
+      : ''
+  );
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const transcriptionAbortRef = useRef<AbortController | null>(null);
+  const recordingTimeoutRef = useRef<number | null>(null);
+  const speechRunRef = useRef(0);
+  const speechPhaseRef = useRef<SpeechInputPhase>('idle');
+  const sessionIdRef = useRef<string | undefined>(undefined);
   const dictationBaseRef = useRef('');
-  const speechSupported = useMemo(() => Boolean(getSpeechRecognition()), []);
+  const browserSpeechSupported = useMemo(
+    () =>
+      typeof window !== 'undefined' &&
+      window.isSecureContext &&
+      typeof navigator !== 'undefined' &&
+      Boolean(navigator.mediaDevices) &&
+      Boolean(getSpeechRecognition()),
+    []
+  );
+  const compatibleSttModels = useMemo(
+    () => sttModels.filter(model => Boolean(preferredRecordingMimeType(model))),
+    [sttModels]
+  );
+  const providerMicrophoneSupported =
+    typeof window !== 'undefined' &&
+    window.isSecureContext &&
+    typeof navigator !== 'undefined' &&
+    Boolean(navigator.mediaDevices?.getUserMedia);
+  const selectableSttModels = useMemo(
+    () => (providerMicrophoneSupported ? compatibleSttModels : []),
+    [compatibleSttModels, providerMicrophoneSupported]
+  );
+  const activeSpeechInputSource = useMemo(() => {
+    if (speechInputSource === 'browser' && browserSpeechSupported) {
+      return speechInputSource;
+    }
+    if (
+      selectableSttModels.some(
+        model => sttModelKey(model) === speechInputSource
+      )
+    ) {
+      return speechInputSource;
+    }
+    return browserSpeechSupported
+      ? 'browser'
+      : selectableSttModels[0]
+        ? sttModelKey(selectableSttModels[0])
+        : '';
+  }, [browserSpeechSupported, selectableSttModels, speechInputSource]);
+  const providerSttModel = useMemo(
+    () =>
+      selectableSttModels.find(
+        model => sttModelKey(model) === activeSpeechInputSource
+      ),
+    [activeSpeechInputSource, selectableSttModels]
+  );
+  const providerSpeechSupported = Boolean(providerSttModel);
+  const speechSupported = browserSpeechSupported || providerSpeechSupported;
 
   const [images, setImages] = useState<string[]>([]);
   const [format, setFormat] = useState<string | Record<string, unknown> | null>(
@@ -137,6 +236,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    sttApi
+      .getModels()
+      .then(response => {
+        if (!cancelled && response.success && response.data) {
+          setSttModels(response.data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSttModels([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [webpageUrl, setWebpageUrl] = useState<string | null>(null);
   const [knowledgeMenuOpen, setKnowledgeMenuOpen] = useState(false);
   const [collections, setCollections] = useState<KnowledgeCollection[]>([]);
@@ -152,6 +268,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   );
   const showImageGeneration = imageGenerationEnabled && hasImageGenPlugins;
   const { currentSession, models } = useChatStore();
+  const currentSessionId = currentSession?.id;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sessionSelection = useMemo(
     () => ({
@@ -282,28 +399,219 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  // Stop dictation when unmounting.
-  useEffect(
-    () => () => {
-      recognitionRef.current?.stop();
-    },
-    []
-  );
+  const clearRecordingTimeout = useCallback(() => {
+    if (recordingTimeoutRef.current !== null) {
+      window.clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+  }, []);
 
-  const toggleDictation = () => {
-    if (listening) {
-      recognitionRef.current?.stop();
+  const setSpeechPhase = useCallback((phase: SpeechInputPhase) => {
+    speechPhaseRef.current = phase;
+    setSpeechStarting(phase === 'starting');
+    setListening(phase === 'recording');
+    setTranscribing(phase === 'transcribing');
+  }, []);
+
+  const cancelSpeechInput = useCallback(() => {
+    speechRunRef.current += 1;
+    clearRecordingTimeout();
+
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+    transcriptionAbortRef.current?.abort();
+    transcriptionAbortRef.current = null;
+
+    const recorder = mediaRecorderRef.current;
+    mediaRecorderRef.current = null;
+    if (recorder) {
+      recorder.ondataavailable = null;
+      recorder.onerror = null;
+      recorder.onstop = null;
+      if (recorder.state === 'recording') recorder.stop();
+    }
+    mediaStreamRef.current?.getTracks().forEach(track => track.stop());
+    mediaStreamRef.current = null;
+
+    setSpeechPhase('idle');
+  }, [clearRecordingTimeout, setSpeechPhase]);
+
+  // A recording belongs to exactly one chat. Cancel pending microphone
+  // permission, recording, and provider work before the component unmounts or
+  // the active session changes.
+  useEffect(() => {
+    sessionIdRef.current = currentSessionId;
+    return cancelSpeechInput;
+  }, [cancelSpeechInput, currentSessionId]);
+
+  const toggleDictation = async () => {
+    const phase = speechPhaseRef.current;
+    if (phase === 'starting' || phase === 'transcribing') {
+      cancelSpeechInput();
       return;
     }
+    if (phase === 'recording') {
+      if (mediaRecorderRef.current?.state === 'recording') {
+        // Make a second click a real cancellation even before MediaRecorder's
+        // asynchronous stop callback creates the provider request.
+        setSpeechPhase('transcribing');
+        mediaRecorderRef.current.stop();
+      } else {
+        cancelSpeechInput();
+      }
+      return;
+    }
+
+    const providerModel = providerSttModel;
+    if (providerModel && providerSpeechSupported) {
+      const runId = speechRunRef.current + 1;
+      speechRunRef.current = runId;
+      const sessionId = currentSession?.id;
+      dictationBaseRef.current = message;
+      setSpeechPhase('starting');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        if (
+          speechRunRef.current !== runId ||
+          sessionIdRef.current !== sessionId
+        ) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+        mediaStreamRef.current = stream;
+        const mimeType = preferredRecordingMimeType(providerModel);
+        const recorder = mimeType
+          ? new MediaRecorder(stream, { mimeType })
+          : new MediaRecorder(stream);
+        const chunks: Blob[] = [];
+        recorder.ondataavailable = event => {
+          if (event.data.size > 0) chunks.push(event.data);
+        };
+        recorder.onerror = () => {
+          stream.getTracks().forEach(track => track.stop());
+          clearRecordingTimeout();
+          if (speechRunRef.current !== runId) return;
+          mediaRecorderRef.current = null;
+          mediaStreamRef.current = null;
+          setSpeechPhase('idle');
+          toast.error(t('chat.input.menu.attachFailed'));
+        };
+        recorder.onstop = () => {
+          stream.getTracks().forEach(track => track.stop());
+          clearRecordingTimeout();
+          if (
+            speechRunRef.current !== runId ||
+            sessionIdRef.current !== sessionId
+          ) {
+            return;
+          }
+          mediaRecorderRef.current = null;
+          mediaStreamRef.current = null;
+          if (chunks.length === 0) {
+            setSpeechPhase('idle');
+            return;
+          }
+          const recording = new Blob(chunks, {
+            type: recorder.mimeType || chunks[0].type || 'audio/webm',
+          });
+          const controller = new AbortController();
+          transcriptionAbortRef.current = controller;
+          setSpeechPhase('transcribing');
+          void sttApi
+            .transcribe(recording, providerModel, {
+              language: i18n.language,
+              signal: controller.signal,
+            })
+            .then(result => {
+              if (
+                speechRunRef.current !== runId ||
+                sessionIdRef.current !== sessionId ||
+                controller.signal.aborted
+              ) {
+                return;
+              }
+              const base = dictationBaseRef.current;
+              setMessage(
+                base ? `${base} ${result.text.trim()}` : result.text.trim()
+              );
+            })
+            .catch(error => {
+              if (!controller.signal.aborted) {
+                logger.error('Provider transcription failed:', error);
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : t('chat.input.menu.attachFailed')
+                );
+              }
+            })
+            .finally(() => {
+              if (
+                transcriptionAbortRef.current === controller &&
+                speechRunRef.current === runId
+              ) {
+                transcriptionAbortRef.current = null;
+                setSpeechPhase('idle');
+              }
+            });
+        };
+        mediaRecorderRef.current = recorder;
+        recorder.start(250);
+        const configuredDuration = providerModel.config?.max_duration_seconds;
+        const maxDurationSeconds =
+          typeof configuredDuration === 'number' && configuredDuration > 0
+            ? Math.min(configuredDuration, DEFAULT_MAX_RECORDING_SECONDS)
+            : DEFAULT_MAX_RECORDING_SECONDS;
+        recordingTimeoutRef.current = window.setTimeout(
+          () => {
+            if (
+              speechRunRef.current === runId &&
+              recorder.state === 'recording'
+            ) {
+              recorder.stop();
+            }
+          },
+          Math.max(
+            0.1,
+            maxDurationSeconds - RECORDING_DURATION_HEADROOM_SECONDS
+          ) * 1000
+        );
+        setSpeechPhase('recording');
+        return;
+      } catch (error) {
+        if (speechRunRef.current !== runId) return;
+        logger.error('Failed to start provider dictation:', error);
+        clearRecordingTimeout();
+        mediaStreamRef.current?.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+        mediaRecorderRef.current = null;
+        setSpeechPhase('idle');
+        toast.error(t('chat.input.menu.attachFailed'));
+        return;
+      }
+    }
+
     const SpeechRecognitionCtor = getSpeechRecognition();
     if (!SpeechRecognitionCtor) return;
 
+    const runId = speechRunRef.current + 1;
+    speechRunRef.current = runId;
+    const sessionId = currentSession?.id;
     const recognition = new SpeechRecognitionCtor();
     recognition.lang = i18n.language;
     recognition.continuous = true;
     recognition.interimResults = true;
     dictationBaseRef.current = message;
     recognition.onresult = event => {
+      if (
+        speechRunRef.current !== runId ||
+        sessionIdRef.current !== sessionId ||
+        recognitionRef.current !== recognition
+      ) {
+        return;
+      }
       let transcript = '';
       for (let i = 0; i < event.results.length; i++) {
         transcript += event.results[i][0]?.transcript ?? '';
@@ -312,20 +620,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       setMessage(base ? `${base} ${transcript.trim()}` : transcript.trim());
     };
     recognition.onend = () => {
+      if (speechRunRef.current !== runId) return;
       recognitionRef.current = null;
-      setListening(false);
+      setSpeechPhase('idle');
     };
     recognition.onerror = () => {
+      if (speechRunRef.current !== runId) return;
       recognitionRef.current = null;
-      setListening(false);
+      setSpeechPhase('idle');
     };
     recognitionRef.current = recognition;
+    setSpeechPhase('recording');
     try {
       recognition.start();
-      setListening(true);
     } catch (error) {
       logger.error('Failed to start dictation:', error);
       recognitionRef.current = null;
+      setSpeechPhase('idle');
     }
   };
 
@@ -573,350 +884,405 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         {/* Main Input Area - Unified Input Bar */}
         <div className='pb-2.5 pt-1.5 sm:pb-3'>
           <form onSubmit={handleSubmit}>
-            {/* Unified Input Container */}
+            {/* Unified Input Container: text row above, controls row below. */}
             <div
               className={cn(
-                'flex items-end gap-2 rounded-[1.35rem] border p-2 transition-[border-color,box-shadow,background-color] duration-200',
-                'bg-surface/[0.92] dark:bg-dark-200/[0.92] backdrop-blur-xl',
+                'rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
+                'bg-surface dark:bg-surface-subtle',
                 'border-black/[0.08] dark:border-white/[0.09]',
-                'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_14px_42px_rgba(15,23,42,0.08)]',
-                'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_52px_rgba(15,23,42,0.11)]'
+                'shadow-lv2 focus-within:shadow-lv3'
               )}
             >
-              {/* Attach menu - Integrated Left */}
-              <div ref={attachMenuRef} className='relative flex-shrink-0'>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => {
-                    if (showAdvanced) {
-                      setShowAdvanced(false);
-                      return;
-                    }
-                    setAttachMenuOpen(open => !open);
-                    setWebpageUrl(null);
-                  }}
-                  className={cn(
-                    'h-9 w-9 sm:h-10 sm:w-10 !p-0 rounded-full flex-shrink-0',
-                    'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
-                    'transition-colors duration-150 touch-manipulation',
-                    hasAdvancedFeatures &&
-                      'text-primary-600 dark:text-primary-400',
-                    (showAdvanced || attachMenuOpen) &&
-                      'bg-gray-100 dark:bg-dark-300'
-                  )}
-                  title={t('chat.input.attachments')}
-                >
-                  {uploadingDocument || attachingWebpage ? (
-                    <Loader2 className='h-4 w-4 animate-spin' />
-                  ) : hasAdvancedFeatures ? (
-                    <div className='relative flex items-center justify-center'>
-                      <Paperclip className='h-4 w-4' />
-                      <div className='absolute -top-0.5 -end-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
-                    </div>
-                  ) : showAdvanced ? (
-                    <Minus className='h-4 w-4' />
-                  ) : (
-                    <Plus className='h-4 w-4' />
-                  )}
-                </Button>
+              {/* Text Input Area */}
+              <CodeAwareTextarea
+                ref={textareaRef}
+                value={message}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setMessage(e.target.value)
+                }
+                onKeyDown={handleKeyDown}
+                placeholder={t('chat.input.placeholder')}
+                disabled={disabled}
+                className='!m-0 block w-full min-h-9 max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !px-2 !pt-1.5 !pb-2 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-ink-subtle focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 text-[0.9375rem] leading-relaxed touch-manipulation'
+                rows={1}
+              />
 
-                {attachMenuOpen && (
-                  <div className='absolute bottom-full start-0 z-30 mb-2 w-64 rounded-2xl border border-black/[0.08] bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'>
-                    {knowledgeMenuOpen ? (
-                      <div className='p-1'>
-                        <p className='mb-1 px-1.5 text-[11px] font-medium text-gray-500 dark:text-dark-600'>
-                          {t('chat.input.menu.attachKnowledge')}
-                        </p>
-                        {collections.length === 0 ? (
-                          <p className='px-1.5 pb-1 text-[12px] text-gray-400 dark:text-dark-500'>
-                            {t('chat.input.menu.noCollections')}
-                          </p>
-                        ) : (
-                          collections.map(collection => {
-                            const attached = attachedCollectionIds.includes(
-                              collection.id
-                            );
-                            return (
-                              <button
-                                key={collection.id}
-                                type='button'
-                                onClick={() =>
-                                  void toggleCollection(collection.id)
-                                }
-                                className={cn(
-                                  'flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
-                                  attached &&
-                                    'text-primary-600 dark:text-primary-400'
-                                )}
-                                aria-pressed={attached}
-                              >
-                                <span className='flex min-w-0 items-center gap-2'>
-                                  <BookOpen className='h-4 w-4 shrink-0' />
-                                  <span className='truncate'>
-                                    {collection.name}
-                                  </span>
-                                </span>
-                                {attached && (
-                                  <Check className='h-3.5 w-3.5 shrink-0' />
-                                )}
-                              </button>
-                            );
-                          })
-                        )}
-                        <button
-                          type='button'
-                          onClick={() => setKnowledgeMenuOpen(false)}
-                          className='mt-1 w-full rounded-lg border-t border-gray-100 px-2.5 py-1.5 text-start text-xs text-gray-500 hover:bg-gray-100 dark:border-dark-300 dark:text-dark-600 dark:hover:bg-dark-200'
-                        >
-                          {t('common.back')}
-                        </button>
+              <div className='flex items-center gap-1.5'>
+                {/* Attach menu - Integrated Left */}
+                <div ref={attachMenuRef} className='relative flex-shrink-0'>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => {
+                      if (showAdvanced) {
+                        setShowAdvanced(false);
+                        return;
+                      }
+                      setAttachMenuOpen(open => !open);
+                      setWebpageUrl(null);
+                    }}
+                    className={cn(
+                      'h-9 w-9 !p-0 rounded-full flex-shrink-0',
+                      'bg-surface-subtle text-ink-muted hover:bg-hover-solid hover:text-ink dark:bg-surface-raised dark:hover:bg-surface-overlay',
+                      'transition-colors duration-150 touch-manipulation',
+                      hasAdvancedFeatures &&
+                        'text-primary-600 dark:text-primary-400',
+                      (showAdvanced || attachMenuOpen) &&
+                        'bg-hover-solid text-ink'
+                    )}
+                    title={t('chat.input.attachments')}
+                  >
+                    {uploadingDocument || attachingWebpage ? (
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                    ) : hasAdvancedFeatures ? (
+                      <div className='relative flex items-center justify-center'>
+                        <Paperclip className='h-4 w-4' />
+                        <div className='absolute -top-0.5 -end-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
                       </div>
-                    ) : webpageUrl !== null ? (
-                      <div className='p-1.5'>
-                        <label className='mb-1.5 block text-[11px] font-medium text-gray-500 dark:text-dark-600'>
-                          {t('chat.input.menu.attachWebpage')}
-                        </label>
-                        <input
-                          type='url'
-                          value={webpageUrl}
-                          onChange={event => setWebpageUrl(event.target.value)}
-                          onKeyDown={event => {
-                            if (event.key === 'Enter') {
-                              event.preventDefault();
-                              void handleAttachWebpage();
-                            } else if (event.key === 'Escape') {
-                              setWebpageUrl(null);
-                            }
-                          }}
-                          placeholder='https://…'
-                          autoFocus
-                          dir='ltr'
-                          className='w-full rounded-lg border border-black/[0.08] bg-white px-2.5 py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
-                        />
-                        <div className='mt-2 flex justify-end gap-1.5'>
+                    ) : showAdvanced ? (
+                      <Minus className='h-4 w-4' />
+                    ) : (
+                      <Plus className='h-4 w-4' />
+                    )}
+                  </Button>
+
+                  {attachMenuOpen && (
+                    <div className='absolute bottom-full start-0 z-30 mb-2 w-64 rounded-2xl border border-black/[0.08] bg-surface/95 p-1.5 shadow-[0_16px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95'>
+                      {knowledgeMenuOpen ? (
+                        <div className='p-1'>
+                          <p className='mb-1 px-1.5 text-[11px] font-medium text-gray-500 dark:text-dark-600'>
+                            {t('chat.input.menu.attachKnowledge')}
+                          </p>
+                          {collections.length === 0 ? (
+                            <p className='px-1.5 pb-1 text-[12px] text-gray-400 dark:text-dark-500'>
+                              {t('chat.input.menu.noCollections')}
+                            </p>
+                          ) : (
+                            collections.map(collection => {
+                              const attached = attachedCollectionIds.includes(
+                                collection.id
+                              );
+                              return (
+                                <button
+                                  key={collection.id}
+                                  type='button'
+                                  onClick={() =>
+                                    void toggleCollection(collection.id)
+                                  }
+                                  className={cn(
+                                    'flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
+                                    attached &&
+                                      'text-primary-600 dark:text-primary-400'
+                                  )}
+                                  aria-pressed={attached}
+                                >
+                                  <span className='flex min-w-0 items-center gap-2'>
+                                    <BookOpen className='h-4 w-4 shrink-0' />
+                                    <span className='truncate'>
+                                      {collection.name}
+                                    </span>
+                                  </span>
+                                  {attached && (
+                                    <Check className='h-3.5 w-3.5 shrink-0' />
+                                  )}
+                                </button>
+                              );
+                            })
+                          )}
                           <button
                             type='button'
-                            onClick={() => setWebpageUrl(null)}
-                            className='rounded-lg px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-100 dark:text-dark-600 dark:hover:bg-dark-200'
+                            onClick={() => setKnowledgeMenuOpen(false)}
+                            className='mt-1 w-full rounded-lg border-t border-gray-100 px-2.5 py-1.5 text-start text-xs text-gray-500 hover:bg-gray-100 dark:border-dark-300 dark:text-dark-600 dark:hover:bg-dark-200'
                           >
-                            {t('common.cancel')}
-                          </button>
-                          <button
-                            type='button'
-                            onClick={() => void handleAttachWebpage()}
-                            disabled={!webpageUrl.trim() || attachingWebpage}
-                            className='rounded-lg bg-gray-900 px-2.5 py-1 text-xs text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-dark-300 dark:hover:bg-dark-400'
-                          >
-                            {attachingWebpage ? (
-                              <Loader2 className='h-3.5 w-3.5 animate-spin' />
-                            ) : (
-                              t('chat.input.menu.attach')
-                            )}
+                            {t('common.back')}
                           </button>
                         </div>
-                      </div>
-                    ) : (
-                      <>
-                        <button
-                          type='button'
-                          onClick={() => {
-                            setShowAdvanced(true);
-                            closeAttachMenu();
-                          }}
-                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
-                        >
-                          <ImageIcon className='h-4 w-4 text-gray-500 dark:text-dark-600' />
-                          {t('chat.input.menu.uploadImages')}
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() => documentInputRef.current?.click()}
-                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
-                        >
-                          <FileText className='h-4 w-4 text-gray-500 dark:text-dark-600' />
-                          {t('chat.input.menu.attachDocument')}
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() => setWebpageUrl('')}
-                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
-                        >
-                          <Globe className='h-4 w-4 text-gray-500 dark:text-dark-600' />
-                          {t('chat.input.menu.attachWebpage')}
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() => setKnowledgeMenuOpen(true)}
-                          className='flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
-                        >
-                          <span className='flex items-center gap-2.5'>
-                            <BookOpen className='h-4 w-4 text-gray-500 dark:text-dark-600' />
-                            {t('chat.input.menu.attachKnowledge')}
-                          </span>
-                          {attachedCollectionIds.length > 0 && (
-                            <span className='rounded-full bg-primary-50 px-1.5 text-[10px] font-medium tabular-nums text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'>
-                              {attachedCollectionIds.length}
+                      ) : webpageUrl !== null ? (
+                        <div className='p-1.5'>
+                          <label className='mb-1.5 block text-[11px] font-medium text-gray-500 dark:text-dark-600'>
+                            {t('chat.input.menu.attachWebpage')}
+                          </label>
+                          <input
+                            type='url'
+                            value={webpageUrl}
+                            onChange={event =>
+                              setWebpageUrl(event.target.value)
+                            }
+                            onKeyDown={event => {
+                              if (event.key === 'Enter') {
+                                event.preventDefault();
+                                void handleAttachWebpage();
+                              } else if (event.key === 'Escape') {
+                                setWebpageUrl(null);
+                              }
+                            }}
+                            placeholder='https://…'
+                            autoFocus
+                            dir='ltr'
+                            className='w-full rounded-lg border border-black/[0.08] bg-white px-2.5 py-1.5 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
+                          />
+                          <div className='mt-2 flex justify-end gap-1.5'>
+                            <button
+                              type='button'
+                              onClick={() => setWebpageUrl(null)}
+                              className='rounded-lg px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-100 dark:text-dark-600 dark:hover:bg-dark-200'
+                            >
+                              {t('common.cancel')}
+                            </button>
+                            <button
+                              type='button'
+                              onClick={() => void handleAttachWebpage()}
+                              disabled={!webpageUrl.trim() || attachingWebpage}
+                              className='rounded-lg bg-gray-900 px-2.5 py-1 text-xs text-white hover:bg-gray-700 disabled:opacity-50 dark:bg-dark-300 dark:hover:bg-dark-400'
+                            >
+                              {attachingWebpage ? (
+                                <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                              ) : (
+                                t('chat.input.menu.attach')
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type='button'
+                            onClick={() => {
+                              setShowAdvanced(true);
+                              closeAttachMenu();
+                            }}
+                            className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                          >
+                            <ImageIcon className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                            {t('chat.input.menu.uploadImages')}
+                          </button>
+                          <button
+                            type='button'
+                            onClick={() => documentInputRef.current?.click()}
+                            className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                          >
+                            <FileText className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                            {t('chat.input.menu.attachDocument')}
+                          </button>
+                          <button
+                            type='button'
+                            onClick={() => setWebpageUrl('')}
+                            className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                          >
+                            <Globe className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                            {t('chat.input.menu.attachWebpage')}
+                          </button>
+                          <button
+                            type='button'
+                            onClick={() => setKnowledgeMenuOpen(true)}
+                            className='flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                          >
+                            <span className='flex items-center gap-2.5'>
+                              <BookOpen className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                              {t('chat.input.menu.attachKnowledge')}
                             </span>
-                          )}
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() => {
-                            setShowAdvanced(true);
-                            closeAttachMenu();
-                          }}
-                          className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                            {attachedCollectionIds.length > 0 && (
+                              <span className='rounded-full bg-primary-50 px-1.5 text-[10px] font-medium tabular-nums text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'>
+                                {attachedCollectionIds.length}
+                              </span>
+                            )}
+                          </button>
+                          <button
+                            type='button'
+                            onClick={() => {
+                              setShowAdvanced(true);
+                              closeAttachMenu();
+                            }}
+                            className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                          >
+                            <Braces className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                            {t('chat.input.menu.structuredOutput')}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  <input
+                    ref={documentInputRef}
+                    type='file'
+                    accept='.pdf,.txt,application/pdf,text/plain'
+                    className='hidden'
+                    onChange={event => void handleDocumentSelected(event)}
+                  />
+                </div>
+
+                {/* Integrated Controls Row */}
+                <div className='ms-auto flex flex-shrink-0 items-center gap-1 sm:gap-1.5'>
+                  {/* Model Selector - Integrated */}
+                  {currentSession && selectorModels.length > 0 && (
+                    <div className='hidden sm:block'>
+                      <ModelSelector
+                        models={selectorModels}
+                        selectedModel={sessionModelKey}
+                        onModelChange={handleModelOrPersonaChange}
+                        getModelValue={chatModelOptionKey}
+                        currentPersona={currentPersona}
+                        className='min-w-[150px] max-w-[230px]'
+                        compact
+                        showImageGen={showImageGeneration}
+                      />
+                    </div>
+                  )}
+
+                  {/* Web search toggle */}
+                  {webSearchAvailable && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => setWebSearchActive(active => !active)}
+                      className={cn(
+                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                        'transition-colors duration-150 touch-manipulation',
+                        webSearchActive &&
+                          'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
+                      )}
+                      title={
+                        webSearchActive
+                          ? t('chat.input.webSearchOn')
+                          : t('chat.input.webSearchOff')
+                      }
+                      aria-pressed={webSearchActive}
+                    >
+                      <Globe className='h-4 w-4' />
+                    </Button>
+                  )}
+
+                  {/* Voice input. Selecting a provider makes the audio transfer
+                    explicit before the user starts recording. */}
+                  {selectableSttModels.length > 0 && (
+                    <select
+                      value={activeSpeechInputSource}
+                      onChange={event =>
+                        setSpeechInputSource(event.target.value)
+                      }
+                      disabled={speechStarting || listening || transcribing}
+                      aria-label={t('chat.input.transcriptionSource')}
+                      title={
+                        providerSttModel
+                          ? t('chat.input.providerTranscriptionDisclosure', {
+                              provider: providerSttModel.plugin,
+                            })
+                          : t('chat.input.transcriptionSource')
+                      }
+                      className='h-8 max-w-32 rounded-lg border border-black/[0.08] bg-transparent px-1.5 text-[11px] text-gray-500 outline-none focus:border-primary-500/40 dark:border-white/[0.09] dark:text-dark-600'
+                    >
+                      {browserSpeechSupported && (
+                        <option value='browser'>
+                          {t('chat.input.browserSpeech')}
+                        </option>
+                      )}
+                      {selectableSttModels.map(model => (
+                        <option
+                          key={sttModelKey(model)}
+                          value={sttModelKey(model)}
                         >
-                          <Braces className='h-4 w-4 text-gray-500 dark:text-dark-600' />
-                          {t('chat.input.menu.structuredOutput')}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
+                          {model.plugin} · {model.model}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {speechSupported && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => void toggleDictation()}
+                      className={cn(
+                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                        'transition-colors duration-150 touch-manipulation',
+                        (speechStarting || listening || transcribing) &&
+                          'bg-red-50 text-red-500 animate-pulse dark:bg-red-900/20 dark:text-red-400'
+                      )}
+                      title={
+                        transcribing
+                          ? t('common.cancel')
+                          : speechStarting
+                            ? t('common.cancel')
+                            : listening
+                              ? t('chat.input.voiceStop')
+                              : providerSttModel
+                                ? t(
+                                    'chat.input.providerTranscriptionDisclosure',
+                                    {
+                                      provider: providerSttModel.plugin,
+                                    }
+                                  )
+                                : t('chat.input.voiceInput')
+                      }
+                      aria-pressed={speechStarting || listening || transcribing}
+                    >
+                      {speechStarting ? (
+                        <Loader2 className='h-4 w-4 animate-spin' />
+                      ) : transcribing ? (
+                        <Square className='h-4 w-4' />
+                      ) : (
+                        <Mic className='h-4 w-4' />
+                      )}
+                    </Button>
+                  )}
 
-                <input
-                  ref={documentInputRef}
-                  type='file'
-                  accept='.pdf,.txt,application/pdf,text/plain'
-                  className='hidden'
-                  onChange={event => void handleDocumentSelected(event)}
-                />
-              </div>
-
-              {/* Text Input Area */}
-              <div className='flex-1 min-w-0'>
-                <CodeAwareTextarea
-                  ref={textareaRef}
-                  value={message}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setMessage(e.target.value)
-                  }
-                  onKeyDown={handleKeyDown}
-                  placeholder={t('chat.input.placeholder')}
-                  disabled={disabled}
-                  className='!m-0 block min-h-9 max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !px-1.5 !py-1.5 sm:!min-h-10 sm:!py-2 max-[768px]:!min-h-11 max-[768px]:!py-[10.5px] !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-[0.9375rem] leading-relaxed touch-manipulation'
-                  rows={1}
-                />
-              </div>
-
-              {/* Integrated Controls Row */}
-              <div className='flex flex-shrink-0 items-center gap-1 sm:gap-2'>
-                {/* Model Selector - Integrated */}
-                {currentSession && selectorModels.length > 0 && (
-                  <div className='hidden sm:block'>
-                    <ModelSelector
-                      models={selectorModels}
-                      selectedModel={sessionModelKey}
-                      onModelChange={handleModelOrPersonaChange}
-                      getModelValue={chatModelOptionKey}
-                      currentPersona={currentPersona}
-                      className='min-w-[150px] max-w-[230px]'
-                      compact
-                      showImageGen={showImageGeneration}
-                    />
-                  </div>
-                )}
-
-                {/* Web search toggle */}
-                {webSearchAvailable && (
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => setWebSearchActive(active => !active)}
-                    className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
-                      'transition-colors duration-150 touch-manipulation',
-                      webSearchActive &&
-                        'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
-                    )}
-                    title={
-                      webSearchActive
-                        ? t('chat.input.webSearchOn')
-                        : t('chat.input.webSearchOff')
-                    }
-                    aria-pressed={webSearchActive}
-                  >
-                    <Globe className='h-4 w-4' />
-                  </Button>
-                )}
-
-                {/* Voice input */}
-                {speechSupported && (
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='sm'
-                    onClick={toggleDictation}
-                    className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
-                      'transition-colors duration-150 touch-manipulation',
-                      listening &&
-                        'bg-red-50 text-red-500 animate-pulse dark:bg-red-900/20 dark:text-red-400'
-                    )}
-                    title={
-                      listening
-                        ? t('chat.input.voiceStop')
-                        : t('chat.input.voiceInput')
-                    }
-                    aria-pressed={listening}
-                  >
-                    <Mic className='h-4 w-4' />
-                  </Button>
-                )}
-
-                {/* Send/Stop Button - Integrated Right */}
-                {isGenerating ? (
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='sm'
-                    onClick={handleStopGeneration}
-                    className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'bg-red-50 dark:bg-red-900/20',
-                      'text-red-500 dark:text-red-400',
-                      'hover:bg-red-100 dark:hover:bg-red-900/30',
-                      'transition-colors duration-150 touch-manipulation'
-                    )}
-                    title={t('chat.input.stopGeneration')}
-                  >
-                    <Square className='h-4 w-4' />
-                  </Button>
-                ) : (
-                  <Button
-                    type='submit'
-                    variant='ghost'
-                    size='sm'
-                    disabled={
-                      !message.trim() || disabled || !sessionModelAvailable
-                    }
-                    className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'bg-gray-100 text-gray-400 dark:bg-dark-300 dark:text-dark-500',
-                      'disabled:cursor-not-allowed disabled:opacity-70',
-                      'transition-colors duration-150 touch-manipulation',
-                      message.trim() &&
-                        !disabled &&
-                        sessionModelAvailable && [
-                          'bg-gray-950 text-white hover:bg-gray-800',
-                          'dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
-                          'shadow-sm',
-                        ]
-                    )}
-                    title={t('chat.input.sendMessage')}
-                  >
-                    <Send className='h-4 w-4' />
-                  </Button>
-                )}
+                  {/* Send/Stop Button - Integrated Right */}
+                  {isGenerating ? (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={handleStopGeneration}
+                      className={cn(
+                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'bg-red-50 dark:bg-red-900/20',
+                        'text-red-500 dark:text-red-400',
+                        'hover:bg-red-100 dark:hover:bg-red-900/30',
+                        'transition-colors duration-150 touch-manipulation'
+                      )}
+                      title={t('chat.input.stopGeneration')}
+                    >
+                      <Square className='h-4 w-4' />
+                    </Button>
+                  ) : (
+                    <Button
+                      type='submit'
+                      variant='ghost'
+                      size='sm'
+                      disabled={
+                        !message.trim() || disabled || !sessionModelAvailable
+                      }
+                      className={cn(
+                        'h-9 w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'bg-primary-500 text-white hover:bg-primary-400',
+                        'disabled:cursor-not-allowed disabled:bg-primary-300/50 disabled:text-white/80 dark:disabled:bg-primary-800/60 dark:disabled:text-white/40 disabled:hover:bg-primary-300/50 dark:disabled:hover:bg-primary-800/60',
+                        'transition-colors duration-150 touch-manipulation'
+                      )}
+                      title={t('chat.input.sendMessage')}
+                    >
+                      <ArrowUp className='h-4 w-4' />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </form>
+
+          {providerSttModel && providerSpeechSupported && (
+            <p
+              role='note'
+              className='mt-1.5 text-center text-[10px] leading-relaxed text-amber-700 dark:text-amber-300'
+            >
+              {t('chat.input.providerTranscriptionDisclosure', {
+                provider: providerSttModel.plugin,
+              })}
+            </p>
+          )}
 
           {/* Mobile-only Model Selector */}
           {currentSession && selectorModels.length > 0 && (

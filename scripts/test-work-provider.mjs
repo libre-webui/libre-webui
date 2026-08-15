@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -8,6 +10,15 @@ process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
+const dataDir = mkdtempSync(path.join(tmpdir(), 'libre-work-provider-'));
+const previousDataDir = process.env.DATA_DIR;
+process.env.DATA_DIR = dataDir;
+
+const persistenceModule = await import(
+  pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'persistence', 'index.js')
+  ).href
+);
 const providerModule = await import(
   pathToFileURL(
     path.join(
@@ -19,6 +30,13 @@ const providerModule = await import(
     )
   ).href
 );
+
+test.after(async () => {
+  await persistenceModule.closePersistence();
+  if (previousDataDir === undefined) delete process.env.DATA_DIR;
+  else process.env.DATA_DIR = previousDataDir;
+  rmSync(dataDir, { recursive: true, force: true });
+});
 const validationModule = await import(
   pathToFileURL(
     path.join(repoRoot, 'backend', 'dist', 'utils', 'pluginValidation.js')
@@ -795,6 +813,7 @@ test('Work rejects HTTP-200 Gemini SSE error events', async () => {
 });
 
 test('Work aggregates Ollama thinking and content chunks', async () => {
+  let recordedUsageActor;
   const service = new WorkModelProviderService({
     ollama: {
       isHealthy: async () => true,
@@ -806,8 +825,11 @@ test('Work aggregates Ollama thinking and content chunks', async () => {
         request,
         onChunk,
         _onError,
-        onComplete
+        onComplete,
+        _signal,
+        usage
       ) => {
+        recordedUsageActor = usage?.userId;
         onChunk({
           model: request.model,
           created_at: new Date().toISOString(),
@@ -865,6 +887,7 @@ test('Work aggregates Ollama thinking and content chunks', async () => {
   assert.equal(reasoning.join(''), 'Checking ');
   assert.equal(response.message.content, 'Ready.');
   assert.equal(response.message.thinking, 'Checking ');
+  assert.equal(recordedUsageActor, 'test-user');
   assert.deepEqual(usage.at(-1), {
     promptTokens: 5,
     completionTokens: 3,
