@@ -1017,32 +1017,54 @@ router.post(
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('Access-Control-Allow-Origin', '*');
 
-      let eventTail = Promise.resolve();
-      emitDurable = payload => {
-        const operation = eventTail.then(async () => {
-          const type =
-            payload.type === 'done'
-              ? 'chat.done.v1'
-              : payload.type === 'error'
-                ? 'chat.error.v1'
-                : 'chat.stream.v1';
-          const appended = await getDurableEventGateway().append({
+      // Event identity is a per-request nonce plus a monotonic sequence.
+      // Deriving it from payload content silently deduplicated repeated
+      // identical deltas out of the durable log and rejected payloads over
+      // the identity component bound.
+      let eventTail: Promise<{ cursor: number } | undefined> =
+        Promise.resolve(undefined);
+      let eventFailure: unknown;
+      const requestNonce = randomUUID();
+      let eventSequence = 0;
+      emitDurable = async payload => {
+        if (eventFailure) throw eventFailure;
+        const type =
+          payload.type === 'done'
+            ? 'chat.done.v1'
+            : payload.type === 'error'
+              ? 'chat.error.v1'
+              : 'chat.stream.v1';
+        const occurrence = String(++eventSequence);
+        const operation = eventTail.then(() =>
+          getDurableEventGateway().append({
             eventId: durableEventId(
               'legacy-chat-route',
               sessionId,
-              type,
-              JSON.stringify(payload)
+              requestNonce,
+              occurrence
             ),
             streamId: chatStreamId(sessionId),
             eventType: type,
             subjectId: sessionId,
             actorUserId: userId,
             payload: { mode: 'encrypted', value: payload },
-          });
-          await writeChatSseFrame(res, appended.cursor, payload);
+          })
+        );
+        eventTail = operation.catch(error => {
+          eventFailure = error;
+          return undefined;
         });
-        eventTail = operation.catch(() => undefined);
-        return operation;
+        if (type === 'chat.stream.v1') {
+          // The direct response is the transport of record for this route;
+          // the durable append continues behind it so a slow event write
+          // cannot throttle delivery.
+          await writeChatSseFrame(res, 0, payload);
+          return;
+        }
+        // Terminal events commit durably before the response settles so
+        // `/events` replay consumers always observe an ordered terminal.
+        const appended = await operation;
+        await writeChatSseFrame(res, appended.cursor, payload);
       };
 
       // Add user message to session

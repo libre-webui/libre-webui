@@ -1281,6 +1281,55 @@ test('Chat REST streaming persists done metadata and replays it on the next turn
   );
 });
 
+test('REST streaming keeps repeated identical and oversized deltas in the durable log', async () => {
+  const session = await createPluginSession('delta-identity');
+  configurePluginTarget(true);
+  const oversized = 'x'.repeat(4096);
+  pluginService.executePluginStreamRequest = async function* () {
+    yield { type: 'content', content: ' the' };
+    yield { type: 'content', content: ' the' };
+    yield { type: 'content', content: oversized };
+    yield { type: 'done', providerMetadata: responseMetadata('delta') };
+  };
+
+  const response = await postGeneration(
+    session.id,
+    'generate/stream',
+    'Delta identity prompt'
+  );
+  assert.equal(response.status, 200);
+  const events = parseSse(await response.text());
+  const streamed = events
+    .filter(event => event.type === 'chunk')
+    .map(event => event.content)
+    .join('');
+  assert.equal(streamed, ` the the${oversized}`);
+  assert.equal(events.at(-1).type, 'done');
+
+  // The durable log must carry the same bytes: repeated identical deltas are
+  // distinct events and a large payload does not break event identity.
+  const replayed = [];
+  let cursor = 0;
+  for (;;) {
+    const page = durableRuntime.service.replayEvents(cursor, {
+      streamId: `chat:${session.id}`,
+      limit: 100,
+    });
+    if (page.length === 0) break;
+    replayed.push(...page);
+    cursor = page.at(-1).cursor;
+  }
+  const durable = replayed
+    .filter(event => event.eventType === 'chat.stream.v1')
+    .map(event => event.payload.content)
+    .join('');
+  assert.equal(durable, ` the the${oversized}`);
+  assert.equal(
+    replayed.filter(event => event.eventType === 'chat.done.v1').length,
+    1
+  );
+});
+
 test('Chat REST streaming reports incomplete Responses output and does not persist it', async () => {
   const session = await createPluginSession('incomplete');
   configurePluginTarget(true);
