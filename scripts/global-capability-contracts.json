@@ -1541,6 +1541,13 @@
           "patterns": [
             "Passwords are hashed with bcrypt before storage\\. Login and signup routes are rate-limited"
           ]
+        },
+        {
+          "file": "docs/12-AUTHENTICATION.md",
+          "patterns": [
+            "Every login also creates a server-side session record bound into the JWT",
+            "Settings → API keys mints personal access tokens"
+          ]
         }
       ],
       "focusedTests": [
@@ -1549,6 +1556,33 @@
           "runner": "test:e2e",
           "name": "password login requires and submits a Turnstile token",
           "behaviorPatterns": ["Security verification", "verified-login-token"]
+        },
+        {
+          "file": "scripts/test-auth-sessions.mjs",
+          "runner": "test:package",
+          "name": "revoking the session rejects its token with 401",
+          "behaviorPatterns": [
+            "revokeAuthSession\\(bootstrapSid",
+            "outcome\\.status, 401"
+          ]
+        },
+        {
+          "file": "scripts/test-api-tokens.mjs",
+          "runner": "test:package",
+          "name": "scope-to-path matrix: notes scope on notes, chat, and auth routes",
+          "behaviorPatterns": [
+            "notes scope allows /api/notes",
+            "auth routes barred for API tokens"
+          ]
+        },
+        {
+          "file": "scripts/test-oidc-provider.mjs",
+          "runner": "test:package",
+          "name": "verifyIdToken accepts a good token and returns its claims",
+          "behaviorPatterns": [
+            "verifyIdToken\\(token, 'expected-nonce'\\)",
+            "claims\\.sub, 'verify-sub'"
+          ]
         }
       ],
       "backendRoutes": [
@@ -1641,6 +1675,60 @@
           "mount": "/api/auth",
           "method": "GET",
           "path": "/me"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/sessions"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/sessions/revoke-others"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "DELETE",
+          "path": "/sessions/:id"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/tokens"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/tokens"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "DELETE",
+          "path": "/tokens/:id"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/oauth/oidc"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/oauth/oidc/callback"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/oauth/oidc/status"
         }
       ],
       "contractSurfaces": {
@@ -1665,6 +1753,135 @@
               "patterns": [
                 "Public account registration is disabled",
                 "userCount === 0"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "access-control",
+      "title": "Access Control",
+      "uiRoutes": [],
+      "documentation": [
+        {
+          "file": "docs/12-AUTHENTICATION.md",
+          "patterns": [
+            "### Groups and Resource Grants",
+            "### Security Audit Log"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-authorization.mjs",
+          "runner": "test:package",
+          "name": "group grants reach members and die with the membership",
+          "behaviorPatterns": ["addGroupMember", "removeGroupMember"]
+        },
+        {
+          "file": "scripts/test-security-audit.mjs",
+          "runner": "test:package",
+          "name": "a rolled-back duplicate group create leaves no audit row",
+          "behaviorPatterns": ["group\\.create", "createGroup"]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/groups.ts",
+          "mount": "/api/groups",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/groups.ts",
+          "mount": "/api/groups",
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/groups.ts",
+          "mount": "/api/groups",
+          "method": "PATCH",
+          "path": "/:id"
+        },
+        {
+          "file": "backend/src/routes/groups.ts",
+          "mount": "/api/groups",
+          "method": "DELETE",
+          "path": "/:id"
+        },
+        {
+          "file": "backend/src/routes/groups.ts",
+          "mount": "/api/groups",
+          "method": "POST",
+          "path": "/:id/members"
+        },
+        {
+          "file": "backend/src/routes/groups.ts",
+          "mount": "/api/groups",
+          "method": "DELETE",
+          "path": "/:id/members/:userId"
+        },
+        {
+          "file": "backend/src/routes/groups.ts",
+          "mount": "/api/groups",
+          "method": "GET",
+          "path": "/effective/:userId"
+        },
+        {
+          "file": "backend/src/routes/access.ts",
+          "mount": "/api/access",
+          "method": "GET",
+          "path": "/grants"
+        },
+        {
+          "file": "backend/src/routes/access.ts",
+          "mount": "/api/access",
+          "method": "POST",
+          "path": "/grants"
+        },
+        {
+          "file": "backend/src/routes/access.ts",
+          "mount": "/api/access",
+          "method": "DELETE",
+          "path": "/grants/:id"
+        },
+        {
+          "file": "backend/src/routes/access.ts",
+          "mount": "/api/access",
+          "method": "GET",
+          "path": "/shared-with-me"
+        },
+        {
+          "file": "backend/src/routes/audit.ts",
+          "mount": "/api/audit",
+          "method": "GET",
+          "path": "/"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/persistence/securityTypes.ts",
+              "patterns": [
+                "export interface StoredResourceGrantRecord",
+                "export interface StoredSecurityAuditEventRecord"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Access control is a built-in security boundary and is not installed or discovered through a manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/authorizationService.ts",
+              "patterns": [
+                "private by default",
+                "'insufficient-permission' : 'no-grant'"
               ]
             }
           ]

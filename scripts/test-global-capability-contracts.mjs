@@ -46,6 +46,7 @@ const canonicalCapabilityIds = [
   'system-diagnostics',
   'user-administration',
   'authentication',
+  'access-control',
   'data-portability',
   'document-knowledge',
   'persona-memory',
