@@ -1,0 +1,49 @@
+name: CodeQL
+
+# Advanced CodeQL setup replacing GitHub's default setup. The default setup
+# cannot exclude individual queries; js/missing-rate-limiting is excluded here
+# because it only recognizes known npm limiter packages and flags every route
+# behind the custom Redis-coordinated sharedRateLimit middleware
+# (backend/src/middleware/sharedRateLimit.ts).
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  schedule:
+    - cron: '26 4 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          config: |
+            query-filters:
+              - exclude:
+                  id: js/missing-rate-limiting
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: '/language:${{ matrix.language }}'
