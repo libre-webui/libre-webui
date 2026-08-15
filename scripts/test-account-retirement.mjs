@@ -261,6 +261,10 @@ test('retirement drains initiated owner cleanups before deleting their actor', a
   jobs.initializeDurableJobRuntime({
     role: 'embedded',
     runWorker: true,
+    // The blocked protected cleanup must hold the only slot so the inert
+    // ordinary jobs stay queued until retirement cancels them; extra slots
+    // would claim them and dead-letter their unregistered job type.
+    maxConcurrentJobs: 1,
     handlers,
     env: process.env,
   });

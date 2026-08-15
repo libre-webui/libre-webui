@@ -641,6 +641,14 @@ test('packed CLI survives two starts and ignores unrelated caller plugins', asyn
         'maintenance must use the packaged fake-HOME data root, not caller cwd'
       );
 
+      // The first start recorded a preflight verification marker, which
+      // would let the second start skip the deep preflight entirely.
+      // Removing it forces a real preflight so this test still proves the
+      // packaged launcher puts preflight scratch in the OS cache location.
+      fs.rmSync(path.join(dataDirectory, '.preflight-verification.json'), {
+        force: true,
+      });
+
       const second = await launch();
       try {
         const login = await fetch(
