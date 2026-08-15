@@ -10,7 +10,7 @@ image: /img/social/21.png
 
 # Single Sign-On
 
-Libre WebUI supports OAuth login with GitHub and Hugging Face. OAuth users are still stored as local Libre WebUI users and receive the `user` role by default.
+Libre WebUI supports OAuth login with GitHub and Hugging Face, plus any OpenID Connect provider through the generic OIDC integration. OAuth users are still stored as local Libre WebUI users and receive the `user` role by default (OIDC can optionally map roles and groups from claims).
 
 ## GitHub OAuth
 
@@ -64,6 +64,50 @@ HUGGINGFACE_CALLBACK_URL=https://your-domain.example/api/auth/oauth/huggingface/
 
 New users are created with `hf_`-prefixed usernames.
 
+## Generic OIDC
+
+Any provider with an OpenID Connect discovery document works: Keycloak,
+Authentik, Authelia, Okta, Entra ID, Google Workspace, and others. The flow
+uses PKCE (S256), CSRF state, and a nonce that is verified inside the
+signature-checked ID token; signing keys come from the provider's JWKS.
+
+Register a confidential client with this callback URL:
+
+```text
+https://your-domain.example/api/auth/oauth/oidc/callback
+```
+
+Backend `.env`:
+
+```env
+OIDC_ISSUER_URL=https://id.example.com/realms/main
+OIDC_CLIENT_ID=libre-webui
+OIDC_CLIENT_SECRET=...
+OIDC_DISPLAY_NAME=Example SSO
+```
+
+Optional policies:
+
+```env
+# Require a verified email in one of these domains
+OIDC_ALLOWED_EMAIL_DOMAINS=example.com,example.org
+
+# Grant/remove the admin role based on a group claim on every login
+OIDC_GROUP_CLAIM=groups
+OIDC_ADMIN_GROUPS=libre-admins
+
+# Reconcile Libre group memberships with the group claim on every login
+OIDC_SYNC_GROUPS=true
+```
+
+Identities are linked on the stable `sub` claim, so a renamed provider
+account keeps its Libre account. New users are created with `oidc_`-prefixed
+usernames when registration allows it. An email already owned by an unlinked
+local account is rejected instead of silently merged. With
+`OIDC_SYNC_GROUPS=true`, membership of every Libre group whose name matches a
+claim value is claim-driven for OIDC users — create matching groups from the
+User Management page first.
+
 ## Shared Settings
 
 Set the public backend URL:
@@ -77,7 +121,7 @@ If callback URLs are not set explicitly, Libre WebUI builds defaults from `BASE_
 
 ## Limits
 
-Libre WebUI does not currently expose SAML, SCIM provisioning, domain allowlists, or OAuth auto-role mapping in the app configuration. Manage roles from the admin UI after users are created.
+Libre WebUI does not currently expose SAML or SCIM provisioning. Domain allowlists and role/group mapping are available for the generic OIDC provider only; GitHub and Hugging Face users are always created with the `user` role and managed from the admin UI.
 
 ## Troubleshooting
 

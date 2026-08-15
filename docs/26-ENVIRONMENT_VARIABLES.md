@@ -220,6 +220,38 @@ Turnstile is enabled only when both Turnstile keys are present.
 database, then blocks additional local and OAuth accounts. Protect a remotely
 reachable bootstrap route with an outer identity boundary before first start.
 
+Every issued JWT is bound to a server-side session (`sid` claim), so signing
+out or revoking a session from Settings → Sessions invalidates the token
+immediately on every replica and closes live WebSocket connections. Security
+audit retention is configurable:
+
+| Variable               | Default | Purpose                                              |
+| ---------------------- | ------- | ---------------------------------------------------- |
+| `AUDIT_RETENTION_DAYS` | `180`   | Days to retain rows in the security audit event log |
+
+### Generic OIDC single sign-on
+
+Any OpenID Connect provider with a discovery document can be used for login.
+The flow uses PKCE (S256), CSRF state, and a nonce verified inside the
+signature-checked ID token. Identities are linked on the stable `sub` claim.
+
+| Variable                     | Default                              | Purpose                                                                              |
+| ---------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------ |
+| `OIDC_ISSUER_URL`            | unset                                | Issuer base URL; discovery is fetched from `<issuer>/.well-known/openid-configuration` |
+| `OIDC_CLIENT_ID`             | unset                                | OAuth client id registered with the provider                                         |
+| `OIDC_CLIENT_SECRET`         | unset                                | OAuth client secret                                                                  |
+| `OIDC_DISPLAY_NAME`          | `Single Sign-On`                     | Label shown on the login button                                                      |
+| `OIDC_SCOPES`                | `openid profile email`               | Requested scopes                                                                     |
+| `OIDC_CALLBACK_URL`          | `BASE_URL` + OIDC callback route     | Redirect URI registered with the provider                                            |
+| `OIDC_ALLOWED_EMAIL_DOMAINS` | unset                                | Comma list; when set, a verified email in one of these domains is required           |
+| `OIDC_GROUP_CLAIM`           | `groups`                             | ID-token claim holding group names                                                   |
+| `OIDC_ADMIN_GROUPS`          | unset                                | Comma list; when set, the admin role follows claim membership on every login         |
+| `OIDC_SYNC_GROUPS`           | `false`                              | `true` reconciles Libre group memberships with the group claim on every login        |
+
+OIDC is enabled only when the issuer URL, client id, and client secret are all
+present. An email already used by an unlinked local account is rejected rather
+than silently merged, and account creation still honors `ENABLE_SIGNUP`.
+
 Chat WebSocket admission can be tuned without weakening authentication:
 
 | Variable                                  | Default | Purpose                                                 |

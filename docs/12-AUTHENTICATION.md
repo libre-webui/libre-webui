@@ -130,6 +130,31 @@ account and database records. If Docker cannot prove that cleanup succeeded,
 the account deletion fails so an administrator can correct the runtime problem
 and retry.
 
+### Groups and Resource Grants
+
+Administrators can create groups and manage memberships from the User
+Management page. Groups are principals for resource grants: the owner of a
+chat, note, document, knowledge collection, folder, or persona can grant
+`read`, `write`, or `admin` access to a user or a group through the access
+API. Resources stay private by default — the global `admin` role does not
+grant access to other users' content. Membership is evaluated at request
+time, so removing a member revokes group-granted access immediately. The
+"effective access" view on the User Management page answers "why can this
+user access this?" by listing their role, groups, feature access, and every
+grant that reaches them.
+
+### Security Audit Log
+
+Security-sensitive actions — logins and failures, logouts, session and token
+revocations, user, group, grant, and token changes — are recorded in an
+append-only audit log that is separate from usage analytics. Details are
+redacted before they are stored: secret-like keys are dropped and payload
+sizes are capped, so passwords, tokens, and prompt content never enter the
+log. Group and grant mutations write their audit event inside the same
+database transaction, so a change cannot exist without its trail.
+Administrators can query the log from the User Management page; retention
+defaults to 180 days (`AUDIT_RETENTION_DAYS`).
+
 ## Sessions
 
 The backend signs JWTs with `JWT_SECRET`. Set a stable secret in production:
@@ -142,6 +167,28 @@ Changing `JWT_SECRET` invalidates existing sessions. Local and OAuth login
 tokens use `JWT_EXPIRES_IN`, which defaults to `7d`; changing that value affects
 new sessions. WebSocket connections exchange the durable token for a
 short-lived, one-use ticket and close when the underlying session expires.
+
+Every login also creates a server-side session record bound into the JWT.
+Settings → Sessions lists each device with its sign-in method, first and last
+activity, and expiry. Revoking a session there (or "Sign out other sessions")
+invalidates its token immediately on every replica and closes its live
+WebSocket connections; logout revokes the current session the same way.
+Tokens issued before this feature carry no session id and remain valid until
+expiry, except that "sign out other sessions" from a fresh login also stamps
+a per-account cutoff that rejects them.
+
+## API Tokens
+
+Settings → API keys mints personal access tokens (prefix `lwk_`) for
+programmatic use. The secret is shown once and stored only as a hash. Each
+token carries an explicit scope list (`chat`, `models`, `documents`, `notes`,
+`personas`, `media`, `work`, `admin`); the backend maps every route family to
+a required scope, so a notes-only token cannot touch chats or administration,
+and session management is never reachable with a token. Tokens support
+optional expiry, track last use, can be revoked at any time, and are
+rate-limited per token across replicas. Admin-scoped tokens can be minted
+only by administrators and still require the account to hold the admin role
+when used.
 
 ## Cloudflare Turnstile
 
