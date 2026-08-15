@@ -94,7 +94,17 @@ test('Ollama lifecycle operations require the current administrator', () => {
     accessService,
     /isModelDownloadMode\(value\) \? value : 'admins'/
   );
-  assert.match(accessService, /if \(user\.role === 'admin'\) return true;/);
+  // The admin-always-allowed rule now lives in the central authorization
+  // service; the per-feature predicate must delegate there.
+  assert.match(accessService, /authorize\(/);
+  assert.match(accessService, /id: 'model-download'/);
+  const authorizationService = read(
+    'backend/src/services/authorizationService.ts'
+  );
+  assert.match(
+    authorizationService,
+    /if \(actor\.role === 'admin'\) return \{ allowed: true, reason: 'admin-role' \};/
+  );
 
   const deleteRoute = source.slice(
     source.indexOf("router.delete(\n  '/models'")
