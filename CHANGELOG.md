@@ -15,6 +15,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.22.0] - 2026-08-15
+
+The largest release so far. Libre WebUI now scales past a single machine: a new team profile runs on PostgreSQL, Redis, and S3-compatible storage with external workers, while the solo SQLite setup stays the default and works exactly as before. Around it: speech input, voice cloning, a redesigned interface, real data portability, and integrated backup tooling. The local database schema migrates automatically on first start — back up your data directory before upgrading, as always.
+
+### ✨ New Features
+
+- **Team deployments.** A shared `team` profile brings PostgreSQL persistence, S3-compatible encrypted blob storage, PGVector document search, Redis coordination, and external durable job workers — with a ready-made Docker Compose stack and a Helm worker deployment. A packaged CLI migrates an existing SQLite database to PostgreSQL. Solo stays local-first on SQLite with an embedded worker; startup refuses mixed or half-configured profiles instead of silently splitting state. See the [Platform Foundation guide](https://docs.librewebui.org/PLATFORM_FOUNDATION).
+- **Durable chat and media generation.** Generations now run as durable jobs with a replayable event stream: workers run concurrently, responses are recorded as they stream, Stop actually cancels the upstream provider request instead of letting it burn tokens, and accepted media jobs recover after a crash instead of vanishing. Old streams are pruned on a retention schedule.
+- **Speech to text.** A microphone button in Chat transcribes voice into the composer. The browser's own speech recognition is used by default when available; otherwise recordings go to a configured provider with a speech-to-text capability, with explicit disclosure of where the audio is sent.
+- **Voice cloning and natural speech playback.** LongCat AudioDiT joins as a local text-to-speech provider (a ready-to-run example server is included) with consent-based voice cloning: a reference recording plus its exact transcript, entered in Imagine → Audio. Cloned voices can be saved as encrypted, owner-bound profiles and reused for Speech playback anywhere. Playback itself got natural: phrase-aware batches generate through a look-ahead window and play in order, so speech starts before the full reply is finished.
+- **Data portability.** Settings → Data Management exports a versioned per-user archive of your data and imports it into any Libre WebUI installation. Exports are verifiable and restorable — not a dump that only looks complete — and deleting a user account now sweeps every store the account touched.
+- **Backup and recovery tooling.** A read-only recovery inventory reports what state exists and what would block a snapshot, and packaged maintenance commands produce signed, verifiable backups and restore them — for solo and team deployments alike. See [Recovery Readiness](https://docs.librewebui.org/RECOVERY_READINESS).
+
+### 🔧 Improvements
+
+- **Interface redesign.** The sidebar collapses to an icon rail with elevated New Chat and Work actions, Settings moved into a redesigned window with a searchable navigation rail, and both Chat and Work got a floating two-row composer. The whole app sits on a refreshed neutral palette with layered surfaces and an adaptive accent.
+- **Security hardening.** Real-time connections authenticate with short-lived one-use tickets instead of query-string tokens, AES-GCM decryption enforces explicit authentication-tag lengths, the runtime Docker image no longer carries build-only npm tooling, replicas share coordinated rate limits, and a new Security workflow gates every push with static analysis.
+- **Health probes.** Dependency-aware liveness and readiness endpoints report the actual state of the database, storage, and coordination backends, so orchestrators restart the right thing.
+- **Capability contracts.** Every provider capability is now inventoried in a generated, test-enforced contract: schema, handler, client, UI action, documentation, and tests must agree before a capability counts as shipped.
+- **Private deployments upgrade deliberately.** The app container is excluded from unattended replacement; upgrades are digest-pinned and manual, taken from a verified recovery point.
+- **Notes are readable first.** Existing notes open in a read-only preview instead of the editor, and Markdown tables render as real tables across notes and chat instead of raw pipe-delimited text.
+- **Helm grew up with the platform.** The chart validates its values against a published schema, deploys the external durable worker for team mode, and supports suspending a deployment by scaling it to zero.
+- **TypeScript 7.** The whole project moved to the new toolchain.
+
+### 🐛 Bug Fixes
+
+- **Discovered OpenAI-compatible models failed at request time.** Model discovery accepted API roots while Chat sent them as complete operation URLs, so every discovered model 404ed unhelpfully. Standard roots are now composed with the correct path, custom operation URLs stay exact, and explicit plugin targets skip Ollama metadata probes.
+- **Settings survived malformed provider data.** Image model and configuration discovery is awaited before responses serialize, and malformed model or plugin payloads are treated as empty collections instead of breaking the Settings page.
+- **Speech playback no longer stalls on autoplay policies.** Audio output is unlocked before synthesis starts, so the first spoken reply plays instead of waiting for another click.
+
+### 📚 Documentation
+
+- **Six new guides**: [Platform Foundation](https://docs.librewebui.org/PLATFORM_FOUNDATION), [Data Portability](https://docs.librewebui.org/DATA_PORTABILITY), [Speech to Text](https://docs.librewebui.org/SPEECH_TO_TEXT), [Recovery Readiness](https://docs.librewebui.org/RECOVERY_READINESS), [LongCat AudioDiT](https://docs.librewebui.org/LONGCAT_AUDIODIT), and the generated [Capability Contracts](https://docs.librewebui.org/CAPABILITY_CONTRACTS) inventory.
+
 ## [0.21.3] - 2026-08-10
 
 Documents attached to chats are finally manageable: see what is in a conversation's context, remove what should not be there, and delete collections with real feedback. Model pulls also stop pretending to succeed when they failed, and reasoning models no longer leak their deliberation into chat titles.
