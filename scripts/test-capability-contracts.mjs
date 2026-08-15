@@ -768,27 +768,27 @@ async function renderInventory(manifests) {
       .join(', ');
     const discoveryOnly = (capability.execution.discoveryOnly || [])
       .map(discovery => `\`${discovery.label}\` (discovery only)`)
-      .join('<br>');
+      .join('<br />');
     const routeCell = [
       ...publicRouteLabels(capability).map(value => `\`${value}\``),
       ...(discoveryOnly ? [discoveryOnly] : []),
-    ].join('<br>');
+    ].join('<br />');
     const clientCell = capability.execution.clientCalls
       .map(client => `\`${client.file}\``)
-      .join('<br>');
+      .join('<br />');
     const testCell = capability.focusedTests
       .map(
         testEvidence =>
           `\`${testEvidence.file}\` (\`${testEvidence.runner}\`) — ${testEvidence.name}`
       )
-      .join('<br>');
+      .join('<br />');
     const cells = [
       capability.title,
       capability.pluginTypes.map(value => `\`${value}\``).join(', '),
       routeCell,
       clientCell,
       `\`${capability.ui.file}\` — \`${capability.ui.action}\``,
-      capability.documentation.map(value => `\`${value.file}\``).join('<br>'),
+      capability.documentation.map(value => `\`${value.file}\``).join('<br />'),
       testCell,
       definitions,
     ];

@@ -495,7 +495,7 @@ function assertFocusedTests(capability, rootPackage, frontendPackage) {
 
 function describeSurface(surface) {
   if (surface.evidence) {
-    return surface.evidence.map(value => `\`${value.file}\``).join('<br>');
+    return surface.evidence.map(value => `\`${value.file}\``).join('<br />');
   }
   return `N/A — ${surface.notApplicable}`;
 }
@@ -523,7 +523,7 @@ async function renderInventory() {
 
   for (const capability of contracts.capabilities) {
     lines.push(
-      `| ${capability.title} | ${capability.uiRoutes.map(value => `\`${value}\``).join('<br>') || '—'} | ${capability.backendRoutes.length} | ${capability.websocketRoutes?.length || 0} | ${describeSurface(capability.contractSurfaces.schemas)} | ${describeSurface(capability.contractSurfaces.manifests)} | ${describeSurface(capability.contractSurfaces.defaults)} | ${capability.documentation.map(value => `\`${value.file}\``).join('<br>')} | ${capability.focusedTests.map(value => `\`${value.name}\`<br>\`${value.file}\` (\`${value.runner}\`)`).join('<br>')} |`
+      `| ${capability.title} | ${capability.uiRoutes.map(value => `\`${value}\``).join('<br />') || '—'} | ${capability.backendRoutes.length} | ${capability.websocketRoutes?.length || 0} | ${describeSurface(capability.contractSurfaces.schemas)} | ${describeSurface(capability.contractSurfaces.manifests)} | ${describeSurface(capability.contractSurfaces.defaults)} | ${capability.documentation.map(value => `\`${value.file}\``).join('<br />')} | ${capability.focusedTests.map(value => `\`${value.name}\`<br />\`${value.file}\` (\`${value.runner}\`)`).join('<br />')} |`
     );
   }
 
