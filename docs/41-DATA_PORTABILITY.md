@@ -51,7 +51,7 @@ Each archive includes an `exclusions` list. Version 3 deliberately excludes:
 Use a database/data-directory backup with the same `ENCRYPTION_KEY` for full
 server recovery. Work also requires a consistent backup of its named volumes.
 See [SQLite migration and backup](./10-SQLITE_MIGRATION.md) and
-[Work workspaces](./33-WORKSPACES.md#backup-and-restore).
+[Work workspaces](./33-WORKSPACES.md#deletion-account-changes-and-backup).
 
 ## Integrity and export validation
 
