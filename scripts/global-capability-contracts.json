@@ -69,6 +69,15 @@
             "service\\.prepareGenerationRequest",
             "actualModelName, 'resolved-model'"
           ]
+        },
+        {
+          "file": "scripts/test-context-compaction.mjs",
+          "runner": "test:package",
+          "name": "oversized history compacts into one summary on a user-turn boundary",
+          "behaviorPatterns": [
+            "summarizer ran once",
+            "survivors start on a user turn"
+          ]
         }
       ],
       "backendRoutes": [
@@ -203,6 +212,18 @@
           "mount": "/api/chat",
           "method": "POST",
           "path": "/sessions/:sessionId/messages/:messageId/branches"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "GET",
+          "path": "/compaction-config"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "PUT",
+          "path": "/compaction-config"
         }
       ],
       "websocketRoutes": [
@@ -558,6 +579,18 @@
           "mount": "/api/plugins",
           "method": "DELETE",
           "path": "/:id/variables"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "GET",
+          "path": "/models/visibility"
+        },
+        {
+          "file": "backend/src/routes/ollama.ts",
+          "mount": "/api/ollama",
+          "method": "PUT",
+          "path": "/models/visibility"
         }
       ],
       "contractSurfaces": {
@@ -1546,7 +1579,7 @@
           "file": "docs/12-AUTHENTICATION.md",
           "patterns": [
             "Every login also creates a server-side session record bound into the JWT",
-            "Settings → API keys mints personal access tokens"
+            "Settings \u2192 API keys mints personal access tokens"
           ]
         }
       ],
@@ -1906,7 +1939,7 @@
         {
           "file": "docs/41-DATA_PORTABILITY.md",
           "patterns": [
-            "Settings → Data Management",
+            "Settings \u2192 Data Management",
             "GET`  \\| `/api/preferences/export"
           ]
         }
@@ -3103,6 +3136,91 @@
               "patterns": [
                 "DEFAULT_MAX_DURABLE_PAYLOAD_RECORDS",
                 "DEFAULT_MAX_DURABLE_CIPHERTEXT_BYTES"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "openai-compatible-api",
+      "title": "OpenAI-compatible API",
+      "uiRoutes": [],
+      "sourceEvidence": [
+        {
+          "file": "backend/src/routes/openaiCompat.ts",
+          "patterns": ["const compatRateLimiter", "chat\\.completion\\.chunk"]
+        },
+        {
+          "file": "backend/src/services/modelCatalogService.ts",
+          "patterns": ["export const listChatModels", "NON_CHAT_MODEL_PATTERNS"]
+        }
+      ],
+      "documentation": [
+        {
+          "file": "docs/47-OPENAI_COMPATIBLE_API.md",
+          "patterns": [
+            "Point any OpenAI SDK or tool at your Libre WebUI server",
+            "600 requests per 5 minutes"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-openai-compat.mjs",
+          "runner": "test:package",
+          "name": "non-streaming completion returns an OpenAI chat.completion with usage",
+          "behaviorPatterns": [
+            "body\\.object, 'chat\\.completion'",
+            "prompt_tokens: 7"
+          ]
+        },
+        {
+          "file": "scripts/test-openai-compat.mjs",
+          "runner": "test:package",
+          "name": "lwk_ tokens are scope-checked: chat passes, notes is rejected",
+          "behaviorPatterns": [
+            "scopes: \\['notes'\\]",
+            "rejected\\.status, 403"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/openaiCompat.ts",
+          "mount": "/v1",
+          "method": "GET",
+          "path": "/models"
+        },
+        {
+          "file": "backend/src/routes/openaiCompat.ts",
+          "mount": "/v1",
+          "method": "POST",
+          "path": "/chat/completions"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/routes/openaiCompat.ts",
+              "patterns": [
+                "interface OpenAiErrorBody",
+                "object: 'chat\\.completion'"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "The /v1 surface is built into the server and authenticated with personal API keys rather than installed through a manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/apiTokenService.ts",
+              "patterns": [
+                "prefix: '/v1/chat', scope: 'chat'",
+                "prefix: '/v1/models', scope: 'models'"
               ]
             }
           ]

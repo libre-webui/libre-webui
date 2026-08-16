@@ -94,6 +94,7 @@ export const listChatModels = async (
   try {
     const ollamaModels = await ollamaService.getModels();
     for (const model of ollamaModels) {
+      if (!isChatCapableModelId(model.name)) continue;
       if (seen.has(model.name)) continue;
       seen.add(model.name);
       models.push({
