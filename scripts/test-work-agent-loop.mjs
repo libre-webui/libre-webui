@@ -1624,3 +1624,85 @@ test('a run that stays empty completes with a placeholder hidden from replay', a
     false
   );
 });
+
+test('reasoning-only runs finish with the reasoning, replayed through the nudges', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-reasoning-salvage-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => undefined
+  );
+
+  let requests = 0;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests += 1;
+      if (requests > 1) {
+        // The nudge must carry the model's own reasoning back as the
+        // assistant turn, not silently drop it from context.
+        const assistantTurns = request.messages.filter(
+          message => message.role === 'assistant'
+        );
+        assert.ok(
+          assistantTurns.some(message =>
+            message.content.includes('The canvas needs a fixed timestep loop')
+          )
+        );
+      }
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: {
+          role: 'assistant',
+          content: '',
+          thinking:
+            requests === 3
+              ? 'Final plan: the game is complete in index.html.'
+              : 'The canvas needs a fixed timestep loop.',
+        },
+        done: true,
+      };
+    }
+  );
+
+  const detail = await workTaskService.createTaskWithRun(
+    userId,
+    'Build the canvas game.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(requests, 3);
+  assert.equal((await workTaskService.getRun(runId)).status, 'completed');
+  const persisted = await workTaskService.getMessages(detail.id);
+  // The final visible message is the model's last reasoning, not the
+  // placeholder, and it stays flagged out of future model context.
+  const finalMessage = persisted.find(
+    message =>
+      message.kind === 'message' &&
+      message.content.includes('Final plan: the game is complete')
+  );
+  assert.ok(finalMessage);
+  assert.equal(finalMessage.metadata.emptyModelResponse, true);
+  assert.equal(
+    persisted.some(message =>
+      message.content.includes('without returning a text response')
+    ),
+    false
+  );
+});

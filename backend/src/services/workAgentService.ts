@@ -699,6 +699,11 @@ export class WorkAgentService {
       let streamedReasoningTotal = '';
       let budgetReason = 'round';
       let emptyRoundNudges = 0;
+      // Reasoning-channel models (DeepSeek and friends) sometimes place
+      // their entire answer in reasoning and leave content empty. Keep the
+      // last reasoning so a run can end with the model's actual findings
+      // instead of a placeholder.
+      let lastReasoningContent = '';
 
       roundLoop: for (let round = 0; round < roundLimit; round++) {
         await this.throwIfCancelled(runId, controller);
@@ -829,6 +834,7 @@ export class WorkAgentService {
           100_000
         );
         if (reasoningContent) {
+          lastReasoningContent = reasoningContent;
           await workTaskService.addMessage(
             taskId,
             runId,
@@ -853,6 +859,16 @@ export class WorkAgentService {
                 content: '',
                 providerMetadata: response.message.providerMetadata,
               });
+            } else if (reasoningContent) {
+              // Without provider replay state, dropping the turn makes the
+              // model's reasoning vanish from its own context — it then
+              // repeats itself until the nudges run out. Replay the
+              // reasoning as the assistant turn so the nudge continues the
+              // thought instead of restarting it.
+              messages.push({
+                role: 'assistant',
+                content: reasoningContent,
+              });
             }
             if (providerStateMetadata) {
               await workTaskService.addMessage(
@@ -870,8 +886,13 @@ export class WorkAgentService {
             });
             continue;
           }
+          // Fall back to the model's reasoning before the placeholder: a
+          // reasoning-channel model's findings beat a dead-end notice. The
+          // metadata flag below keeps either fallback out of future model
+          // context.
           const finalContent =
             assistantContent ||
+            lastReasoningContent ||
             'The model completed without returning a text response.';
           await workTaskService.addMessage(
             taskId,
