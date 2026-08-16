@@ -58,7 +58,6 @@ const canonicalCapabilityIds = [
   'durable-jobs',
   'deployment-profiles',
   'recovery-backup',
-  'openai-compatible-api',
 ];
 
 function sorted(values) {

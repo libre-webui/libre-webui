@@ -20,18 +20,25 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
+  Bot,
   Briefcase,
+  ChartNoAxesCombined,
+  Database,
   Ghost,
   Home,
   ListX,
   MessageSquare,
+  NotebookPen,
   Package,
   PanelRightClose,
   Plus,
+  Server,
+  Sparkles,
   SquareX,
+  User as UserIcon,
+  Users,
   X,
 } from 'lucide-react';
-import { APP_SECTIONS } from '@/config/appSections';
 import { useTabStore, AppTab } from '@/store/tabStore';
 import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
@@ -45,15 +52,17 @@ import {
 
 type IconComponent = React.ComponentType<{ className?: string }>;
 
-// Page metadata is derived from the shared section registry so the tab bar,
-// pinned navigation, and user menu stay in sync.
-const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> =
-  Object.fromEntries(
-    APP_SECTIONS.map(section => [
-      section.path,
-      { icon: section.icon, labelKey: section.labelKey },
-    ])
-  );
+const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> = {
+  '/notes': { icon: NotebookPen, labelKey: 'sidebar.navigation.notes' },
+  '/models': { icon: Database, labelKey: 'sidebar.navigation.models' },
+  '/personas': { icon: UserIcon, labelKey: 'sidebar.navigation.personas' },
+  '/gallery': { icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
+  '/agents': { icon: Bot, labelKey: 'sidebar.navigation.agents' },
+  '/users': { icon: Users, labelKey: 'sidebar.navigation.userManagement' },
+  '/usage': { icon: ChartNoAxesCombined, labelKey: 'usageAnalytics.title' },
+  '/system': { icon: Server, labelKey: 'systemPage.title' },
+  '/artifacts': { icon: Package, labelKey: 'tabs.artifacts' },
+};
 
 const tabIcon = (tab: AppTab): IconComponent => {
   if (tab.kind === 'home') return Home;

@@ -209,7 +209,6 @@ export const useAppStore = create<AppState>()(
         showUsername: false, // Default to showing "you" instead of username
         hapticFeedbackEnabled: false,
         workRemoteProviderDisclosureDismissed: false,
-        pinnedNavItems: [],
         backgroundSettings: {
           enabled: false,
           imageUrl: '',
@@ -413,7 +412,6 @@ export const useAppStore = create<AppState>()(
             },
             showUsername: false,
             workRemoteProviderDisclosureDismissed: false,
-            pinnedNavItems: [],
             backgroundSettings: {
               enabled: false,
               imageUrl: '',

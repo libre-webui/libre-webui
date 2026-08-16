@@ -83,7 +83,6 @@ import jobsRoutes from './routes/jobs.js';
 import groupsRoutes from './routes/groups.js';
 import accessRoutes from './routes/access.js';
 import auditRoutes from './routes/audit.js';
-import openaiCompatRoutes from './routes/openaiCompat.js';
 import ollamaService from './services/ollamaService.js';
 import workRuntimeService from './services/workRuntimeService.js';
 import workTaskService from './services/workTaskService.js';
@@ -658,7 +657,6 @@ app.use('/api/access', accessRoutes);
 app.use('/api/audit', auditRoutes);
 // OpenAI-compatible surface for external SDKs; authenticated by scoped
 // personal API keys (or a normal session token).
-app.use('/v1', openaiCompatRoutes);
 
 // Serve frontend static files in production (for npx libre-webui)
 if (

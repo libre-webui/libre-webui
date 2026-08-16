@@ -220,7 +220,6 @@ export interface UserPreferences {
   showFollowUpSuggestions?: boolean; // Suggest follow-up messages after responses // If true, show username in chat; if false, show "you"
   hapticFeedbackEnabled?: boolean; // Android Vibration API; unsupported platforms no-op
   workRemoteProviderDisclosureDismissed: boolean;
-  pinnedNavItems?: string[]; // App section ids pinned to the sidebar navigation
   backgroundSettings?: {
     enabled: boolean;
     imageUrl: string;

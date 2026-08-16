@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { ComponentType, ReactNode, RefObject } from 'react';
+import type { RefObject } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,19 +23,13 @@ import {
   ChartNoAxesCombined,
   ChevronRight,
   LogOut,
-  Pin,
   Server,
   Settings,
   Shield,
   User as UserIcon,
 } from 'lucide-react';
 import type { User } from '@/types';
-import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
-import { preferencesApi } from '@/utils/api';
-import { createLogger } from '@/utils/logger';
-
-const logger = createLogger('components:sidebar-user-section');
 
 interface SidebarUserSectionProps {
   requiresAuth?: boolean;
@@ -76,67 +70,6 @@ function UserAvatar({ user, size }: { user: User; size: 'sm' | 'md' }) {
   );
 }
 
-interface MenuNavRowProps {
-  to: string;
-  sectionId: string;
-  icon: ComponentType<{ className?: string }>;
-  label: string;
-  badge?: ReactNode;
-  pinned: boolean;
-  onNavigate: () => void;
-  onTogglePin: (sectionId: string) => void;
-}
-
-/**
- * A navigation entry in the user menu: the link itself plus a small toggle
- * that pins or unpins the section in the sidebar.
- */
-function MenuNavRow({
-  to,
-  sectionId,
-  icon: Icon,
-  label,
-  badge,
-  pinned,
-  onNavigate,
-  onTogglePin,
-}: MenuNavRowProps) {
-  const { t } = useTranslation();
-  const pinTitle = pinned
-    ? t('sidebar.pinned.unpin', 'Unpin from sidebar')
-    : t('sidebar.pinned.pin', 'Pin to sidebar');
-
-  return (
-    <div className='flex w-full items-center'>
-      <Link
-        to={to}
-        onClick={onNavigate}
-        className='flex min-w-0 flex-1 items-center gap-3 py-2.5 ps-3 pe-1 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
-      >
-        <Icon className='h-4 w-4 shrink-0' />
-        <span className='min-w-0 flex-1 text-start'>{label}</span>
-        {badge}
-      </Link>
-      <button
-        type='button'
-        onClick={() => onTogglePin(sectionId)}
-        aria-pressed={pinned}
-        aria-label={pinTitle}
-        title={pinTitle}
-        data-testid={`pin-nav-toggle-${sectionId}`}
-        className='me-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-ink-subtle transition-colors duration-150 hover:bg-interactive-hover hover:text-ink'
-      >
-        <Pin
-          className={cn(
-            'h-3.5 w-3.5',
-            pinned && 'fill-current text-primary-500'
-          )}
-        />
-      </button>
-    </div>
-  );
-}
-
 export function SidebarUserSection({
   requiresAuth,
   user,
@@ -153,20 +86,6 @@ export function SidebarUserSection({
   onCloseUserMenu,
 }: SidebarUserSectionProps) {
   const { t } = useTranslation();
-  const pinnedNavItems = useAppStore(state => state.preferences.pinnedNavItems);
-  const setPreferences = useAppStore(state => state.setPreferences);
-  const pinned = pinnedNavItems ?? [];
-
-  const handleTogglePinned = (sectionId: string) => {
-    const next = pinned.includes(sectionId)
-      ? pinned.filter(item => item !== sectionId)
-      : [...pinned, sectionId];
-    setPreferences({ pinnedNavItems: next });
-    preferencesApi.updatePreferences({ pinnedNavItems: next }).catch(error => {
-      logger.error('Failed to save pinned navigation preference:', error);
-    });
-  };
-
   if (!requiresAuth || !user) return null;
 
   return (
@@ -242,55 +161,56 @@ export function SidebarUserSection({
 
               <div className='py-1'>
                 {isAdmin && (
-                  <MenuNavRow
+                  <Link
                     to='/users'
-                    sectionId='users'
-                    icon={UserIcon}
-                    label={t('user.menu.userManagement')}
-                    badge={
-                      pendingApprovalCount > 0 ? (
-                        <span className='rounded-md bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
-                          {pendingApprovalCount > 99
-                            ? '99+'
-                            : pendingApprovalCount}
-                        </span>
-                      ) : undefined
-                    }
-                    pinned={pinned.includes('users')}
-                    onNavigate={() => {
+                    onClick={() => {
                       onCloseUserMenu();
                       onMobileNavigate();
                     }}
-                    onTogglePin={handleTogglePinned}
-                  />
+                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
+                  >
+                    <UserIcon className='h-4 w-4 shrink-0' />
+                    <span className='min-w-0 flex-1 text-start'>
+                      {t('user.menu.userManagement')}
+                    </span>
+                    {pendingApprovalCount > 0 && (
+                      <span className='rounded-md bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
+                        {pendingApprovalCount > 99
+                          ? '99+'
+                          : pendingApprovalCount}
+                      </span>
+                    )}
+                  </Link>
                 )}
                 {isAdmin && (
-                  <MenuNavRow
+                  <Link
                     to='/system'
-                    sectionId='system'
-                    icon={Server}
-                    label={t('user.menu.system')}
-                    pinned={pinned.includes('system')}
-                    onNavigate={() => {
+                    onClick={() => {
                       onCloseUserMenu();
                       onMobileNavigate();
                     }}
-                    onTogglePin={handleTogglePinned}
-                  />
+                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
+                  >
+                    <Server className='h-4 w-4 shrink-0' />
+                    <span className='min-w-0 flex-1 text-start'>
+                      {t('user.menu.system')}
+                    </span>
+                  </Link>
                 )}
                 {isAdmin && (
-                  <MenuNavRow
+                  <Link
                     to='/usage'
-                    sectionId='usage'
-                    icon={ChartNoAxesCombined}
-                    label={t('user.menu.usageAnalytics')}
-                    pinned={pinned.includes('usage')}
-                    onNavigate={() => {
+                    onClick={() => {
                       onCloseUserMenu();
                       onMobileNavigate();
                     }}
-                    onTogglePin={handleTogglePinned}
-                  />
+                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
+                  >
+                    <ChartNoAxesCombined className='h-4 w-4 shrink-0' />
+                    <span className='min-w-0 flex-1 text-start'>
+                      {t('user.menu.usageAnalytics')}
+                    </span>
+                  </Link>
                 )}
                 <div className='my-1 border-t border-gray-100 dark:border-dark-200/50' />
                 <button
@@ -395,57 +315,58 @@ export function SidebarUserSection({
                 </button>
 
                 {isAdmin && (
-                  <MenuNavRow
+                  <Link
                     to='/users'
-                    sectionId='users'
-                    icon={UserIcon}
-                    label={t('user.menu.userManagement')}
-                    badge={
-                      pendingApprovalCount > 0 ? (
-                        <span className='ms-2 rounded-full bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
-                          {pendingApprovalCount > 99
-                            ? '99+'
-                            : pendingApprovalCount}
-                        </span>
-                      ) : undefined
-                    }
-                    pinned={pinned.includes('users')}
-                    onNavigate={() => {
+                    onClick={() => {
                       onCloseUserMenu();
                       onMobileNavigate();
                     }}
-                    onTogglePin={handleTogglePinned}
-                  />
+                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
+                  >
+                    <UserIcon className='h-4 w-4 shrink-0' />
+                    <span className='min-w-0 flex-1 text-start'>
+                      {t('user.menu.userManagement')}
+                    </span>
+                    {pendingApprovalCount > 0 && (
+                      <span className='rounded-md bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
+                        {pendingApprovalCount > 99
+                          ? '99+'
+                          : pendingApprovalCount}
+                      </span>
+                    )}
+                  </Link>
                 )}
 
                 {isAdmin && (
-                  <MenuNavRow
+                  <Link
                     to='/system'
-                    sectionId='system'
-                    icon={Server}
-                    label={t('user.menu.system')}
-                    pinned={pinned.includes('system')}
-                    onNavigate={() => {
+                    onClick={() => {
                       onCloseUserMenu();
                       onMobileNavigate();
                     }}
-                    onTogglePin={handleTogglePinned}
-                  />
+                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
+                  >
+                    <Server className='h-4 w-4 shrink-0' />
+                    <span className='min-w-0 flex-1 text-start'>
+                      {t('user.menu.system')}
+                    </span>
+                  </Link>
                 )}
 
                 {isAdmin && (
-                  <MenuNavRow
+                  <Link
                     to='/usage'
-                    sectionId='usage'
-                    icon={ChartNoAxesCombined}
-                    label={t('user.menu.usageAnalytics')}
-                    pinned={pinned.includes('usage')}
-                    onNavigate={() => {
+                    onClick={() => {
                       onCloseUserMenu();
                       onMobileNavigate();
                     }}
-                    onTogglePin={handleTogglePinned}
-                  />
+                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
+                  >
+                    <ChartNoAxesCombined className='h-4 w-4 shrink-0' />
+                    <span className='min-w-0 flex-1 text-start'>
+                      {t('user.menu.usageAnalytics')}
+                    </span>
+                  </Link>
                 )}
 
                 <div className='border-t border-gray-100 dark:border-dark-200/50 my-1'></div>

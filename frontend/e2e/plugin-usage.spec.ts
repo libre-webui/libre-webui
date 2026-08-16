@@ -137,18 +137,13 @@ test('administrators open provider usage from the user menu', async ({
   await page.getByTestId('app-tab-new').click();
 
   await page.getByRole('button', { name: /admin/i }).last().click();
-  // Each admin navigation link is followed by an icon-only pin toggle
-  // (empty text) that pins the section to the sidebar.
   await expect(
     page.getByTestId('sidebar-user-menu').locator('button, a')
   ).toHaveText([
     'Change Picture',
     'User Management',
-    '',
     'System',
-    '',
     'Provider Usage',
-    '',
     'Settings',
     'Log out',
   ]);
