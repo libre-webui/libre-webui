@@ -55,6 +55,22 @@ const thrownError = (error: unknown, fallback: string): string => {
   return fallback;
 };
 
+/**
+ * A 409 from a workspace read means the sandbox is momentarily unservable —
+ * typically the durable worker holds the runtime lease while it is still
+ * creating the container at run start. That resolves by itself within
+ * seconds, so it is retried quietly instead of surfacing an error banner.
+ */
+const isWorkspaceBusyConflict = (error: unknown): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  'response' in error &&
+  (error as { response?: { status?: number } }).response?.status === 409;
+
+const FILE_CONFLICT_RETRY_DELAY_MS = 2_500;
+const FILE_CONFLICT_RETRY_LIMIT = 24; // ~1 minute of quiet retries
+const fileConflictRetries = new Map<string, number>();
+
 const sortTasks = (tasks: WorkTaskSummary[]): WorkTaskSummary[] =>
   [...tasks].sort(
     (a, b) =>
@@ -730,16 +746,37 @@ export const useWorkStore = create<WorkState>((set, get) => {
           requestId === latestFileListRequest &&
           get().selectedTaskId === taskId
         ) {
+          fileConflictRetries.delete(taskId);
           set({ files: response.data });
         }
         return response.data;
       } catch (error) {
-        const message = thrownError(error, 'Could not load workspace files.');
-        if (
+        const stillCurrent =
           requestId === latestFileListRequest &&
           isCurrentEpoch(requestEpoch) &&
-          get().selectedTaskId === taskId
-        ) {
+          get().selectedTaskId === taskId;
+        if (isWorkspaceBusyConflict(error)) {
+          // The sandbox is being prepared by the run; retry quietly instead
+          // of showing a replica-conflict banner for a self-resolving state.
+          const attempts = fileConflictRetries.get(taskId) ?? 0;
+          if (stillCurrent && attempts < FILE_CONFLICT_RETRY_LIMIT) {
+            fileConflictRetries.set(taskId, attempts + 1);
+            setTimeout(() => {
+              if (
+                requestId === latestFileListRequest &&
+                isCurrentEpoch(requestEpoch) &&
+                get().selectedTaskId === taskId
+              ) {
+                void get()
+                  .loadFiles(taskId, path)
+                  .catch(() => undefined);
+              }
+            }, FILE_CONFLICT_RETRY_DELAY_MS);
+          }
+          return get().files;
+        }
+        const message = thrownError(error, 'Could not load workspace files.');
+        if (stillCurrent) {
           set({ error: message });
         }
         throw new Error(message);
