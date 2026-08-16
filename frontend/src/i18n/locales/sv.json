@@ -59,11 +59,11 @@
       "loginSuccess": "Inloggningen lyckades!",
       "loginFailed": "Inloggningen misslyckades",
       "checkCredentials": "Inloggningen misslyckades. Kontrollera dina uppgifter.",
+      "approvalPending": "Ditt konto väntar på administratörsgodkännande.",
       "enterBoth": "Ange både användarnamn och lösenord",
       "githubSuccess": "GitHub-inloggningen lyckades!",
       "githubFailed": "GitHub-autentiseringen misslyckades",
       "githubVerifyFailed": "Kunde inte verifiera GitHub-autentiseringen",
-      "approvalPending": "Ditt konto väntar på administratörsgodkännande.",
       "verificationFailed": "Säkerhetsverifieringen misslyckades. Uppdatera sidan och försök igen."
     },
     "signup": {
@@ -82,15 +82,15 @@
       "hasAccount": "Har du redan ett konto?",
       "signInHere": "Logga in här",
       "signupSuccess": "Kontot skapades!",
+      "approvalPending": "Registrering mottagen. En administratör måste godkänna ditt konto.",
+      "awaitingApproval": "Väntar på godkännande",
+      "awaitingApprovalDescription": "Ditt konto har skapats, men en administratör måste aktivera det innan du kan logga in.",
+      "backToSignIn": "Tillbaka till inloggning",
       "signupFailed": "Registreringen misslyckades",
       "tryAgain": "Registreringen misslyckades. Försök igen.",
       "usernameRequired": "Användarnamn och lösenord krävs",
       "passwordMismatch": "Lösenorden matchar inte",
-      "passwordTooShort": "Lösenordet måste vara minst 6 tecken långt",
-      "approvalPending": "Registrering mottagen. En administratör måste godkänna ditt konto.",
-      "awaitingApproval": "Väntar på godkännande",
-      "awaitingApprovalDescription": "Ditt konto har skapats, men en administratör måste aktivera det innan du kan logga in.",
-      "backToSignIn": "Tillbaka till inloggning"
+      "passwordTooShort": "Lösenordet måste vara minst 6 tecken långt"
     },
     "logout": {
       "button": "Logga ut",
@@ -166,9 +166,9 @@
       "createAdmin": "Skapa administratör",
       "success": "Administratörskontot skapades!",
       "failed": "Kunde inte skapa administratörskonto",
+      "approvalUnexpected": "Den initiala administratören kunde inte aktiveras. Försök igen.",
       "fillAllFields": "Fyll i alla fält",
-      "note": "Detta blir det primära administratörskontot för din Libre WebUI-instans",
-      "approvalUnexpected": "Den initiala administratören kunde inte aktiveras. Försök igen."
+      "note": "Detta blir det primära administratörskontot för din Libre WebUI-instans"
     },
     "encryptionKey": {
       "title": "Spara din krypteringsnyckel",
@@ -277,6 +277,7 @@
       "work": "Arbete",
       "chat": "Chatt",
       "private": "Privat",
+      "incognito": "Inkognitochatt",
       "privateMode": "Privat läge",
       "privateDescription": "Denna konversation sparas inte",
       "privateTooltip": "Starta en privat konversation som inte sparas",
@@ -290,7 +291,6 @@
       "pinChat": "Fäst",
       "unpinChat": "Lossa",
       "deleteChat": "Radera chatt",
-      "incognito": "Inkognitochatt",
       "archiveChat": "Arkivera chatt",
       "groups": {
         "pinned": "Fästa",
@@ -410,32 +410,27 @@
       "models": "Modeller",
       "personas": "Personas",
       "imagine": "Skapa bild",
-      "settings": "Inställningar",
-      "userManagement": "Användarhantering",
-      "signOut": "Logga ut",
       "agents": "Agenter",
       "work": "Arbete",
-      "exploreLabel": "Utforska",
+      "settings": "Inställningar",
       "usageAnalytics": "Leverantörsanvändning",
       "system": "System",
+      "userManagement": "Användarhantering",
+      "signOut": "Logga ut",
+      "exploreLabel": "Utforska",
       "notes": "Anteckningar"
     },
     "toggleSize": "Växla sidofältets storlek",
-    "expandSidebar": "Expandera sidofältet",
-    "pinned": {
-      "label": "Fästa",
-      "pin": "Fäst i sidofältet",
-      "unpin": "Lossa från sidofältet"
-    }
+    "expandSidebar": "Expandera sidofältet"
   },
   "user": {
     "menu": {
       "changePicture": "Ändra bild",
       "settings": "Inställningar",
-      "userManagement": "Användarhantering",
-      "logout": "Logga ut",
       "usageAnalytics": "Leverantörsanvändning",
-      "system": "System"
+      "system": "System",
+      "userManagement": "Användarhantering",
+      "logout": "Logga ut"
     },
     "avatar": {
       "title": "Ändra profilbild",
@@ -478,8 +473,7 @@
       "shortcuts": "Kortkommandon",
       "about": "Om",
       "sessions": "Sessioner",
-      "apiKeys": "API-nycklar",
-      "connections": "Anslutningar"
+      "apiKeys": "API-nycklar"
     },
     "appearance": {
       "title": "Utseende",
@@ -531,6 +525,13 @@
       "defaultModel": "Standardmodell",
       "defaultModelDescription": "Denna modell används som standard för nya konversationer",
       "selectModel": "Välj en modell",
+      "specializedModels": "Specialiserade modeller",
+      "visionModel": "Synmodell",
+      "selectVisionModel": "Använd nuvarande chattmodell",
+      "visionModelDescription": "Används automatiskt när den utgående chattkontexten innehåller bilder. Välj en modell som stöder bildindata.",
+      "visionModelUpdateFailed": "Det gick inte att uppdatera synmodellen: {{error}}",
+      "visionModelNoProvider": "Den här synmodellen saknar leverantörsidentitet. Välj en tillgänglig modell.",
+      "persona": "Persona",
       "updateAll": "Uppdatera alla modeller",
       "updateAllDescription": "Sök efter uppdateringar och hämta senaste versionerna av alla installerade modeller",
       "updateAllButton": "Uppdatera alla",
@@ -553,15 +554,8 @@
         "selectTaskModel": "Välj uppgiftsmodell",
         "taskModelDescription": "Modell som används för att generera konversationstitlar"
       },
-      "persona": "Persona",
       "updatingModel": "Uppdaterar {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} av {{total}} modeller",
-      "specializedModels": "Specialiserade modeller",
-      "visionModel": "Synmodell",
-      "selectVisionModel": "Använd nuvarande chattmodell",
-      "visionModelDescription": "Används automatiskt när den utgående chattkontexten innehåller bilder. Välj en modell som stöder bildindata.",
-      "visionModelUpdateFailed": "Det gick inte att uppdatera synmodellen: {{error}}",
-      "visionModelNoProvider": "Den här synmodellen saknar leverantörsidentitet. Välj en tillgänglig modell."
+      "modelsProgress": "{{current}} av {{total}} modeller"
     },
     "systemMessage": {
       "title": "Systemmeddelande",
@@ -573,6 +567,13 @@
     "plugins": {
       "title": "Tillägg",
       "description": "Hantera dina installerade tillägg",
+      "providerConnections": "Leverantörsanslutningar",
+      "providerConnectionsDescription": "Anslut, konfigurera och inspektera modellleverantörer via plugins.",
+      "providers": "Leverantörer",
+      "searchProviders": "Sök leverantörer",
+      "noProvidersFound": "Inga leverantörer matchar din sökning.",
+      "selectProvider": "Välj en leverantör",
+      "selectProviderDescription": "Välj en leverantör för att inspektera dess anslutning och modellkatalog.",
       "addNew": "Lägg till nytt tillägg",
       "upload": "Ladda upp tillägg",
       "addJson": "Lägg till JSON",
@@ -591,33 +592,12 @@
       "models": "modeller",
       "apiKeySet": "API-nyckel inställd",
       "apiKeyConfiguration": "API-nyckelkonfiguration",
+      "apiKeyDescription": "Lagra en personlig API-nyckel för {{name}}.",
       "apiKeyEnvAlternative": "Alternativt, ställ in",
       "environmentVariable": "miljövariabel",
       "apiKeyConfigured": "API-nyckel konfigurerad",
       "apiKeyPlaceholder": "Ange din API-nyckel...",
       "saveApiKey": "Spara API-nyckel",
-      "apiKey": {
-        "title": "API-nyckel",
-        "placeholder": "Ange API-nyckel",
-        "save": "Spara nyckel",
-        "remove": "Ta bort nyckel",
-        "configured": "API-nyckel konfigurerad",
-        "notConfigured": "API-nyckel krävs",
-        "saved": "API-nyckeln sparades",
-        "removed": "API-nyckeln togs bort",
-        "saveFailed": "Kunde inte spara API-nyckel",
-        "removeFailed": "Kunde inte ta bort API-nyckel",
-        "enterKey": "Ange en API-nyckel"
-      },
-      "variables": "Variables",
-      "providerConnections": "Leverantörsanslutningar",
-      "providerConnectionsDescription": "Anslut, konfigurera och inspektera modellleverantörer via plugins.",
-      "providers": "Leverantörer",
-      "searchProviders": "Sök leverantörer",
-      "noProvidersFound": "Inga leverantörer matchar din sökning.",
-      "selectProvider": "Välj en leverantör",
-      "selectProviderDescription": "Välj en leverantör för att inspektera dess anslutning och modellkatalog.",
-      "apiKeyDescription": "Lagra en personlig API-nyckel för {{name}}.",
       "showApiKey": "Visa API-nyckel",
       "hideApiKey": "Dölj API-nyckel",
       "configure": "Konfigurera",
@@ -643,7 +623,21 @@
         "transcription": "Transkription"
       },
       "exportPlugin": "Exportera plugin",
-      "deletePlugin": "Ta bort plugin"
+      "deletePlugin": "Ta bort plugin",
+      "apiKey": {
+        "title": "API-nyckel",
+        "placeholder": "Ange API-nyckel",
+        "save": "Spara nyckel",
+        "remove": "Ta bort nyckel",
+        "configured": "API-nyckel konfigurerad",
+        "notConfigured": "API-nyckel krävs",
+        "saved": "API-nyckeln sparades",
+        "removed": "API-nyckeln togs bort",
+        "saveFailed": "Kunde inte spara API-nyckel",
+        "removeFailed": "Kunde inte ta bort API-nyckel",
+        "enterKey": "Ange en API-nyckel"
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Genereringsalternativ",
@@ -653,6 +647,8 @@
       "scopeModel": "Endast {{model}}",
       "scopeAllHint": "Värdena som varje modell använder om den inte har egna.",
       "scopeModelHint": "Sparas bara för den här modellen och vinner över de allmänna värdena.",
+      "advancedSettings": "Avancerade genereringsinställningar",
+      "advancedSettingsDescription": "Sampling, token-gränser, kontext, straff och stoppsekvenser",
       "coreParameters": "Kärnparametrar",
       "temperature": "Temperatur",
       "temperatureDescription": "Styr slumpmässighet. Lägre värden är mer fokuserade, högre värden mer kreativa.",
@@ -684,9 +680,7 @@
       "resetDefaults": "Återställ till standardvärden",
       "saveOptions": "Spara alternativ",
       "embeddingSettings": "Inbäddningsinställningar",
-      "enableEmbeddings": "Aktivera dokumentinbäddningar",
-      "advancedSettings": "Avancerade genereringsinställningar",
-      "advancedSettingsDescription": "Sampling, token-gränser, kontext, straff och stoppsekvenser"
+      "enableEmbeddings": "Aktivera dokumentinbäddningar"
     },
     "documents": {
       "title": "Dokumentinställningar",
@@ -796,6 +790,7 @@
       "title": "Datahantering",
       "export": "Exportera data",
       "exportDescription": "Ladda ner ett portabelt arkiv med inställningar, chattmappar, sessioner och meddelanden, anteckningar, kunskapssamlingar och extraherad dokumenttext.",
+      "archiveScopeV3": "Omfattar inställningar, chattar, mappar, anteckningar, kunskapssamlingar och extraherad dokumenttext. Konton och hemligheter, biometriskt klonade röster, genererade medier, personas och minne samt Work-data eller -volymer ingår inte.",
       "exportAll": "Exportera all data",
       "import": "Importera data",
       "importDescription": "Importera data från en tidigare export.",
@@ -836,8 +831,7 @@
         "title": "Arkiverade chattar",
         "empty": "Inga arkiverade chattar",
         "unarchive": "Återställ"
-      },
-      "archiveScopeV3": "Omfattar inställningar, chattar, mappar, anteckningar, kunskapssamlingar och extraherad dokumenttext. Konton och hemligheter, biometriskt klonade röster, genererade medier, personas och minne samt Work-data eller -volymer ingår inte."
+      }
     },
     "about": {
       "title": "Om",
@@ -927,41 +921,6 @@
       "promptDescription": "Mallvariablerna {{previousSummaryVariable}} och {{messagesVariable}} ersätts med den föregående sammanfattningen och meddelandena som sammanfattas.",
       "saved": "Komprimeringsinställningar sparade",
       "saveFailed": "Kunde inte spara komprimeringsinställningarna"
-    },
-    "connections": {
-      "title": "Anslutningar",
-      "description": "Modelleverantörerna som den här servern pratar med: den lokala Ollama-miljön och OpenAI-kompatibla ändpunkter.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Lokal modellmiljö.",
-      "version": "Version {{version}}.",
-      "statusChecking": "Kontrollerar…",
-      "statusOnline": "Online",
-      "statusOffline": "Offline",
-      "providersTitle": "OpenAI-kompatibla anslutningar",
-      "providersDescription": "Varje anslutning är en kompletteringsleverantör vars modeller visas i chattens modellväljare. API-nycklar lagras på servern.",
-      "noConnections": "Inga anslutningar har konfigurerats ännu.",
-      "modelsCount": "{{total}} modeller",
-      "pendingDiscovery": "Modeller väntar på upptäckt",
-      "apiKeyMissing": "Ingen API-nyckel",
-      "deleteConfirm": "Ta bort den här anslutningen? Chattar som använder dess modeller förlorar åtkomsten till dem.",
-      "addTitle": "Lägg till anslutning",
-      "addDescription": "Registrera en OpenAI-kompatibel chat completions-ändpunkt som leverantör.",
-      "nameLabel": "Visningsnamn",
-      "namePlaceholder": "Min leverantör",
-      "idPreview": "Anslutnings-ID: {{id}}",
-      "endpointLabel": "Ändpunkts-URL",
-      "endpointDescription": "Fullständig chat completions-URL, till exempel https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "API-nyckel",
-      "apiKeyOptionalHint": "(valfri, kan läggas till senare)",
-      "nameRequired": "Ange ett visningsnamn för anslutningen.",
-      "endpointInvalid": "Ange en giltig http(s)-ändpunkts-URL.",
-      "alreadyExists": "En anslutning med detta ID finns redan.",
-      "add": "Lägg till anslutning",
-      "adding": "Lägger till…",
-      "added": "Anslutning tillagd",
-      "addFailed": "Kunde inte lägga till anslutningen",
-      "keySaveFailed": "Anslutningen lades till, men API-nyckeln kunde inte sparas",
-      "activateFailed": "Anslutningen lades till, men den kunde inte aktiveras"
     },
     "sessions": {
       "title": "Sessioner",
@@ -1115,25 +1074,33 @@
     "sections": {
       "pull": "Hämta ny modell",
       "library": "Bläddra i bibliotek",
+      "huggingface": "HuggingFace Hub",
       "running": "Aktiva modeller",
       "local": "Lokala modeller",
       "advanced": "Avancerade åtgärder",
-      "huggingface": "HuggingFace Hub",
       "catalog": "Modellkatalog"
     },
     "catalog": {
-      "models": "tillgängliga",
       "searchPlaceholder": "Sök modeller efter namn eller leverantör...",
       "noModels": "Inga modeller är tillgängliga ännu.",
       "empty": "Inga modeller matchar din sökning.",
       "providerOllama": "Ollama",
-      "default": "Standard",
-      "makeDefault": "Gör till standard",
-      "defaultSet": "{{model}} är nu din standardmodell.",
       "hidden": "Dold",
+      "visibilityFailed": "Kunde inte uppdatera modellens synlighet.",
+      "filterAll": "Alla modeller",
+      "filterLocal": "Lokala",
+      "filterProviders": "Leverantörer",
+      "filterHidden": "Dolda",
+      "enableAll": "Aktivera visade",
+      "disableAll": "Inaktivera visade",
+      "rename": "Redigera namn och bild",
+      "setPicture": "Ange bild",
+      "clearPicture": "Ta bort bild",
+      "pictureInvalid": "Välj en bildfil.",
+      "pictureTooLarge": "Bilder måste vara under 192 KB.",
+      "saving": "Sparar…",
       "hide": "Dölj för användare",
-      "show": "Visa för användare",
-      "visibilityFailed": "Kunde inte uppdatera modellens synlighet."
+      "show": "Visa för användare"
     },
     "pull": {
       "placeholder": "Ange modellnamn (t.ex. llama3.2:3b, deepseek-r1:14b)",
@@ -1163,6 +1130,37 @@
       "installed": "Installerad",
       "more": "+{{count}} fler",
       "refresh": "Uppdatera bibliotek"
+    },
+    "huggingface": {
+      "browseAll": "Bläddra bland alla på HuggingFace",
+      "checkingGguf": "Söker efter GGUF-filer...",
+      "noGgufAvailable": "Inga GGUF-filer tillgängliga för direkt Ollama-hämtning",
+      "ggufFilesCount": "GGUF-filer ({{count}}) - Hämta direkt till Ollama",
+      "noModelsFound": "Inga modeller hittades",
+      "noResults": "Inga modeller hittades. Försök justera din sökning eller filter.",
+      "browseAllLink": "Visa alla",
+      "search": "Sök HuggingFace-modeller...",
+      "by": "av",
+      "gated": "Begränsad åtkomst",
+      "viewOnHF": "Visa på HuggingFace",
+      "sortDownloads": "Nedladdningar",
+      "sortLikes": "Gillar",
+      "sortRecent": "Senaste",
+      "taskTextGeneration": "Textgenerering",
+      "taskTextToSpeech": "Text till tal",
+      "taskTextToImage": "Text till bild",
+      "taskSpeechRecognition": "Taligenkänning",
+      "tasks": {
+        "textGen": "Textgenerering",
+        "tts": "Text till tal",
+        "image": "Text till bild",
+        "stt": "Taligenkänning"
+      },
+      "sort": {
+        "downloads": "Mest nedladdade",
+        "likes": "Mest gillade",
+        "recent": "Nyligen uppdaterade"
+      }
     },
     "local": {
       "noModels": "Inga modeller installerade ännu",
@@ -1241,37 +1239,6 @@
         "success": "Genererade {{count}}-dimensionell inbäddningsvektor",
         "failed": "Kunde inte generera inbäddningar",
         "enterBoth": "Välj en modell och ange text"
-      }
-    },
-    "huggingface": {
-      "browseAll": "Bläddra bland alla på HuggingFace",
-      "checkingGguf": "Söker efter GGUF-filer...",
-      "noGgufAvailable": "Inga GGUF-filer tillgängliga för direkt Ollama-hämtning",
-      "ggufFilesCount": "GGUF-filer ({{count}}) - Hämta direkt till Ollama",
-      "noModelsFound": "Inga modeller hittades",
-      "noResults": "Inga modeller hittades. Försök justera din sökning eller filter.",
-      "browseAllLink": "Visa alla",
-      "search": "Sök HuggingFace-modeller...",
-      "by": "av",
-      "gated": "Begränsad åtkomst",
-      "viewOnHF": "Visa på HuggingFace",
-      "sortDownloads": "Nedladdningar",
-      "sortLikes": "Gillar",
-      "sortRecent": "Senaste",
-      "taskTextGeneration": "Textgenerering",
-      "taskTextToSpeech": "Text till tal",
-      "taskTextToImage": "Text till bild",
-      "taskSpeechRecognition": "Taligenkänning",
-      "tasks": {
-        "textGen": "Textgenerering",
-        "tts": "Text till tal",
-        "image": "Text till bild",
-        "stt": "Taligenkänning"
-      },
-      "sort": {
-        "downloads": "Mest nedladdade",
-        "likes": "Mest gillade",
-        "recent": "Nyligen uppdaterade"
       }
     }
   },
@@ -1445,6 +1412,17 @@
     "deleteSuccess": "Användaren raderades",
     "deleteFailed": "Kunde inte radera användare",
     "cannotDeleteSelf": "Du kan inte radera ditt eget konto",
+    "approval": {
+      "title": "Väntande godkännanden",
+      "description": "Granska nya registreringar innan de tillåts i denna instans.",
+      "registered": "Registrerad",
+      "activate": "Aktivera konto",
+      "reject": "Neka registrering",
+      "approved": "{{name}} kan nu logga in.",
+      "failed": "Kontot kunde inte godkännas.",
+      "notification": "{{count}} registrering(ar) väntar på ditt godkännande.",
+      "notificationBadge": "{{count}} väntande användargodkännanden"
+    },
     "form": {
       "title": {
         "create": "Skapa användare",
@@ -1466,17 +1444,6 @@
       "updateSuccess": "Användaren uppdaterades",
       "createFailed": "Kunde inte skapa användare",
       "updateFailed": "Kunde inte uppdatera användare"
-    },
-    "approval": {
-      "title": "Väntande godkännanden",
-      "description": "Granska nya registreringar innan de tillåts i denna instans.",
-      "registered": "Registrerad",
-      "activate": "Aktivera konto",
-      "reject": "Neka registrering",
-      "approved": "{{name}} kan nu logga in.",
-      "failed": "Kontot kunde inte godkännas.",
-      "notification": "{{count}} registrering(ar) väntar på ditt godkännande.",
-      "notificationBadge": "{{count}} väntande användargodkännanden"
     },
     "workAccess": {
       "title": "Work-åtkomst",
@@ -1582,6 +1549,174 @@
       "target": "Mål"
     }
   },
+  "usageAnalytics": {
+    "eyebrow": "Administration",
+    "title": "Leverantörsanvändning",
+    "description": "Följ utgående API-anrop och modellförbrukning över de aktiverade pluginsen i denna instans.",
+    "days": "{{count}} dagar",
+    "refresh": "Uppdatera användning",
+    "loadFailed": "Leverantörsanvändning kunde inte laddas.",
+    "metrics": {
+      "calls": "Anrop",
+      "tokens": "Tokens"
+    },
+    "cards": {
+      "calls": "API-anrop",
+      "callsDetail": "Över {{count}} aktiv(a) användare",
+      "tokens": "Rapporterade tokens",
+      "tokensDetail": "Användning rapporterad på {{count}} anrop",
+      "success": "Framgångsfrekvens",
+      "successDetail": "{{count}} misslyckade anrop",
+      "latency": "Genomsnittlig latens",
+      "latencyDetail": "Leverantörens tid från ände till ände"
+    },
+    "activity": {
+      "title": "Förbrukning över tid",
+      "callsDescription": "Dagliga utgående förfrågningar till aktiverade plugins",
+      "tokensDescription": "Dagliga token-totaler rapporterade av leverantörer",
+      "chartLabel": "Dagligt diagram över leverantörens {{metric}}"
+    },
+    "models": {
+      "title": "Modellförbrukning",
+      "description": "Modellerna med mest trafik under denna period.",
+      "model": "Modell",
+      "success": "Lyckade",
+      "latency": "Latens"
+    },
+    "providers": {
+      "title": "Trafik för aktiverade plugins"
+    },
+    "capabilities": {
+      "title": "Kapabilitetsmix",
+      "characters": "{{count}} tecken",
+      "bytes": "{{count}} byte",
+      "images": "{{count}} bilder",
+      "jobs": "{{count}} videojobb",
+      "inputs": "{{count}} indata",
+      "reportedTokens": "{{count}} rapporterade tokens"
+    },
+    "empty": {
+      "title": "Inga leverantörsanrop ännu",
+      "description": "Anrop visas här efter att en aktiverad plugin hanterar chatt-, Work-, inbäddnings-, bild-, tal-, ljud- eller videoförfrågningar."
+    },
+    "privacyNote": "Användning mäts på servern vid den utgående plugin-gränsen. Libre WebUI lagrar leverantör, modell, tidsmätning, status och rapporterade räknare—aldrig prompts, svar, ändpunkter, autentiseringsuppgifter eller leverantörsfelkroppar. Token-totaler inkluderar endast anrop där leverantören returnerade användningsmetadata.",
+    "heatmap": {
+      "title": "Ett år av aktivitet",
+      "description": "Dagliga leverantörsanrop under det senaste året, färgade efter dagens mest använda modell.",
+      "calls": "anrop",
+      "noCalls": "Inga anrop",
+      "other": "Övriga modeller",
+      "less": "Mindre",
+      "more": "Mer",
+      "yearTotal": "{{formatted}} anrop under det senaste året"
+    }
+  },
+  "systemPage": {
+    "eyebrow": "Administration",
+    "title": "System",
+    "description": "Övervaka maskinen och körningsmiljön som är värd för denna Libre WebUI-instans.",
+    "updated": "Uppdaterad {{date}}",
+    "refresh": "Uppdatera systeminformation",
+    "loadFailed": "Systeminformation kunde inte läsas in.",
+    "cards": {
+      "uptime": "Värdens drifttid",
+      "uptimeDetail": "Körs sedan {{date}}",
+      "memory": "Använt minne",
+      "memoryDetail": "{{used}} av {{total}}",
+      "freeSpace": "Ledigt utrymme",
+      "freeSpaceDetail": "{{label}} · {{total}} totalt",
+      "containers": "Körande containrar",
+      "containersDetail": "{{total}} container(s) kända av Docker",
+      "dockerUnavailable": "Docker otillgänglig",
+      "unavailable": "Otillgänglig"
+    },
+    "host": {
+      "title": "Värd & körningsmiljö",
+      "description": "Operativsystem, processor och Libre WebUI-processdetaljer.",
+      "container": "Container-körningsmiljö",
+      "native": "Inbyggd körning",
+      "hostname": "Värdnamn",
+      "operatingSystem": "Operativsystem",
+      "processor": "Processor",
+      "logicalCpus": "logiska CPU:er",
+      "loadAverage": "Belastningsmedelvärde · 1 / 5 / 15 min",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Process",
+      "workingDirectory": "Arbetskatalog"
+    },
+    "memory": {
+      "title": "Minne",
+      "description": "Systemminne synligt vid körning samt processanvändning för applikationen.",
+      "usedOf": "{{used}} använt av {{total}}",
+      "free": "{{value}} ledigt",
+      "processRss": "Process-RSS",
+      "heapUsed": "V8-heap använt",
+      "heapTotal": "V8-heap totalt",
+      "external": "Externt minne"
+    },
+    "storage": {
+      "title": "Lagring",
+      "description": "Tillgängligt utrymme för körningsmiljöns filsystem och beständig applikationsdata.",
+      "used": "{{value}} använt",
+      "free": "{{value}} ledigt",
+      "empty": "Filsystemsinformation är inte tillgänglig i denna körningsmiljö."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Skrivskyddad Docker Engine-status och en begränsad lista över containrar.",
+      "connected": "Ansluten",
+      "unavailable": "Otillgänglig",
+      "unavailableDetail": "Docker Engine-diagnostik är otillgänglig.",
+      "socketStatus": "Lokal socket: {{status}}",
+      "mounted": "monterad",
+      "notMounted": "inte monterad",
+      "running": "Körs",
+      "stopped": "Stoppad",
+      "paused": "Pausad",
+      "total": "Totalt",
+      "version": "Version",
+      "host": "Värd",
+      "architecture": "Arkitektur",
+      "cpus": "CPU:er",
+      "memory": "Minne",
+      "container": "Container",
+      "image": "Avbildning",
+      "state": "Tillstånd",
+      "created": "Skapad",
+      "empty": "Docker är anslutet och inga containrar listas för närvarande."
+    },
+    "network": {
+      "title": "Nätverk",
+      "description": "Körningsmiljöns synliga gränssnitt, adresser och Linux-trafikräknare.",
+      "internal": "intern",
+      "empty": "Inga nätverksgränssnitt är synliga för programmets körningsmiljö."
+    },
+    "securityNote": "Denna sida är begränsad till administratörer. Servern returnerar endast driftsammanfattningar: den exponerar inte miljövariabler, autentiseringsuppgifter, Docker-etiketter, monteringar, container-kommandon eller inspektionsnyttolaster. När Libre WebUI körs i en container kommer värdnivåns CPU- och minnesdetaljer från Docker Engine när dess lokala socket är tillgänglig; andra värden beskriver programmets körningsmiljö.",
+    "work": {
+      "title": "Work",
+      "description": "Sandlådor för alla användare",
+      "access": "Åtkomst",
+      "accessAdmins": "Endast administratörer",
+      "accessAllUsers": "Alla användare",
+      "runtimeAvailable": "Tillgänglig",
+      "runtimeUnavailable": "Otillgänglig",
+      "activeRuntimes": "Aktiva körmiljöer",
+      "pendingCleanups": "Väntande rensningar",
+      "orphans": "Föräldralösa containrar",
+      "owner": "Ägare",
+      "task": "Uppgift",
+      "state": "Tillstånd",
+      "preview": "Förhandsvisning",
+      "terminals": "Terminaler",
+      "updated": "Uppdaterad",
+      "stateRunning": "Körs",
+      "stateStopped": "Stoppad",
+      "stateStarting": "Startar",
+      "stateUnknown": "Okänd",
+      "noTasks": "Inga Work-uppgifter ännu."
+    }
+  },
   "chatHistory": {
     "label": "Konversationshistorik",
     "jumpToTurn": "Gå till tur {{index}} av {{total}}"
@@ -1650,6 +1785,57 @@
     "failed": "Kunde inte generera bild",
     "enterPrompt": "Ange en prompt",
     "promptTooLong": "Prompten överstiger maxlängden på {{max}} tecken"
+  },
+  "mediaGeneration": {
+    "title": "Generera media",
+    "description": "Skapa video, ljud, musik eller tal med en aktiverad medieleverantör.",
+    "image": "Bild",
+    "video": "Video",
+    "audio": "Ljud",
+    "sound": "Ljud",
+    "speech": "Tal",
+    "model": "Modell",
+    "voice": "Röst eller röst-ID",
+    "cloneVoice": "Klona en referensröst",
+    "cloneVoiceDescription": "Generera talet utifrån en referensinspelning i stället för en förinställd röst.",
+    "referenceAudio": "Referensljud",
+    "referenceTranscript": "Exakt transkription av referensen",
+    "referenceTranscriptPlaceholder": "Ange exakt vad som sägs i referensinspelningen…",
+    "referenceAudioTooLarge": "Referensljudet får vara högst {{max}}.",
+    "cloneConsent": "Klona bara en röst när du har talarens tillstånd. Inspelningen skickas till den valda leverantören för denna generering och sparas inte av Libre WebUI.",
+    "saveVoiceProfile": "Spara som en återanvändbar röst",
+    "saveVoiceProfileDescription": "Spara referensinspelningen och transkriptionen säkert. Libre WebUI skickar dem till den valda leverantören för varje talbatch som använder rösten.",
+    "voiceProfileName": "Namn på sparad röst",
+    "voiceProfileNamePlaceholder": "Till exempel Min röst",
+    "voiceStorageConsent": "Jag bekräftar att jag har talarens tillstånd att klona och spara rösten. Referensen sparas tills jag tar bort den.",
+    "resolution": "Upplösning",
+    "aspectRatio": "Bildförhållande",
+    "duration": "Längd",
+    "providerDefault": "Leverantörens standard",
+    "generateAudio": "Generera ljud med videon när det stöds",
+    "prompt": "Prompt",
+    "text": "Text att läsa upp",
+    "videoPlaceholder": "Beskriv scenen, rörelsen, kameran och ljussättningen...",
+    "audioPlaceholder": "Skriv in texten du vill att rösten ska läsa upp...",
+    "soundPlaceholder": "Beskriv ljudet, musiken, atmosfären eller det talade svaret du vill ha...",
+    "generate": "Generera",
+    "generating": "Genererar… detta kan ta flera minuter",
+    "success": "Media genererad och sparad till Imagine",
+    "successWithSavedVoice": "Mediet har skapats och ”{{name}}” är nu tillgänglig i talinställningarna",
+    "failed": "Misslyckades att generera media",
+    "loadFailed": "Misslyckades att ladda medieleverantörer",
+    "noModels": "Inga {{kind}}-modeller är tillgängliga. Aktivera en kompatibel leverantör och spara dess autentiseringsuppgifter först."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} objekt",
+    "empty": "Ingen genererad media ännu",
+    "emptyHint": "Generera en bild, video eller ett röstklipp så visas det här.",
+    "filters": {
+      "all": "Alla",
+      "image": "Bilder",
+      "video": "Videor",
+      "audio": "Ljud"
+    }
   },
   "errorBoundary": {
     "title": "Något gick fel",
@@ -1802,8 +1988,8 @@
       "saveFailed": "Kunde inte spara variabler",
       "resetDefaults": "Återställ standard",
       "reset": "Variabler återställda",
-      "sensitiveSet": "Värde är satt (ange nytt för att ändra)",
       "resetFailed": "Det gick inte att återställa variabler",
+      "sensitiveSet": "Värde är satt (ange nytt för att ändra)",
       "showValue": "Visa {{label}}-värde",
       "hideValue": "Dölj {{label}}-värde",
       "connection": "Anslutning",
@@ -1841,45 +2027,6 @@
   "demoMode": {
     "title": "Demoläge",
     "github": "GitHub"
-  },
-  "personaBackground": {
-    "label": "Bakgrundsbild",
-    "uploadBackgroundImage": "Ladda upp bakgrundsbild",
-    "dragAndDrop": "Dra och släpp en bild eller klicka för att bläddra",
-    "chooseImage": "Välj bild",
-    "uploading": "Laddar upp...",
-    "enterImageUrl": "Eller ange bild-URL",
-    "supportedFormats": "Stöder: JPG, PNG, GIF, WebP (max 5MB). Breda landskapsbilder fungerar bäst.",
-    "customBackground": "Anpassad bakgrundsbild",
-    "clickToChange": "Klicka för att ändra eller ta bort",
-    "removed": "Bakgrund borttagen",
-    "uploaded": "Bakgrund uppladdad",
-    "invalidFile": "Välj en giltig bildfil",
-    "fileTooLarge": "Bakgrundsbildens storlek måste vara mindre än 5MB",
-    "readFailed": "Kunde inte läsa bildfil",
-    "uploadFailed": "Kunde inte ladda upp bakgrundsbild"
-  },
-  "modelSelector": {
-    "searchInstalled": "Sök installerade modeller...",
-    "searchOllama": "Sök i Ollama-biblioteket...",
-    "searchHuggingFace": "Sök på HuggingFace...",
-    "selectModel": "Välj modell",
-    "personas": "Personas",
-    "ollamaModels": "Ollama-modeller",
-    "pluginModels": "Plugin-modeller",
-    "actions": "Åtgärder",
-    "installed": "Installerad",
-    "use": "Använd",
-    "pull": "Ladda ner",
-    "pullRestricted": "Modellinstallation är begränsad till administratörer på denna instans.",
-    "adminOnlyPull": "Endast administratörer",
-    "legacyProvider": "leverantör ej registrerad",
-    "providerNotRecorded": "Leverantör ej registrerad",
-    "providerUnavailable": "leverantör otillgänglig",
-    "reselectProvider": "välj leverantör igen för att fästa denna modell",
-    "unavailable": "otillgänglig",
-    "unavailableSelections": "Otillgängliga val",
-    "agentModels": "Agenter"
   },
   "libreClaw": {
     "title": "Agenter",
@@ -2223,224 +2370,44 @@
       "warning": "Uppgiften kan läsa och skriva denna mapp direkt. Lämna tomt för en isolerad arbetsyta."
     }
   },
-  "usageAnalytics": {
-    "eyebrow": "Administration",
-    "title": "Leverantörsanvändning",
-    "description": "Följ utgående API-anrop och modellförbrukning över de aktiverade pluginsen i denna instans.",
-    "days": "{{count}} dagar",
-    "refresh": "Uppdatera användning",
-    "loadFailed": "Leverantörsanvändning kunde inte laddas.",
-    "metrics": {
-      "calls": "Anrop",
-      "tokens": "Tokens"
-    },
-    "cards": {
-      "calls": "API-anrop",
-      "callsDetail": "Över {{count}} aktiv(a) användare",
-      "tokens": "Rapporterade tokens",
-      "tokensDetail": "Användning rapporterad på {{count}} anrop",
-      "success": "Framgångsfrekvens",
-      "successDetail": "{{count}} misslyckade anrop",
-      "latency": "Genomsnittlig latens",
-      "latencyDetail": "Leverantörens tid från ände till ände"
-    },
-    "activity": {
-      "title": "Förbrukning över tid",
-      "callsDescription": "Dagliga utgående förfrågningar till aktiverade plugins",
-      "tokensDescription": "Dagliga token-totaler rapporterade av leverantörer",
-      "chartLabel": "Dagligt diagram över leverantörens {{metric}}"
-    },
-    "models": {
-      "title": "Modellförbrukning",
-      "description": "Modellerna med mest trafik under denna period.",
-      "model": "Modell",
-      "success": "Lyckade",
-      "latency": "Latens"
-    },
-    "providers": {
-      "title": "Trafik för aktiverade plugins"
-    },
-    "capabilities": {
-      "title": "Kapabilitetsmix",
-      "characters": "{{count}} tecken",
-      "bytes": "{{count}} byte",
-      "images": "{{count}} bilder",
-      "jobs": "{{count}} videojobb",
-      "inputs": "{{count}} indata",
-      "reportedTokens": "{{count}} rapporterade tokens"
-    },
-    "empty": {
-      "title": "Inga leverantörsanrop ännu",
-      "description": "Anrop visas här efter att en aktiverad plugin hanterar chatt-, Work-, inbäddnings-, bild-, tal-, ljud- eller videoförfrågningar."
-    },
-    "privacyNote": "Användning mäts på servern vid den utgående plugin-gränsen. Libre WebUI lagrar leverantör, modell, tidsmätning, status och rapporterade räknare—aldrig prompts, svar, ändpunkter, autentiseringsuppgifter eller leverantörsfelkroppar. Token-totaler inkluderar endast anrop där leverantören returnerade användningsmetadata.",
-    "heatmap": {
-      "title": "Ett år av aktivitet",
-      "description": "Dagliga leverantörsanrop under det senaste året, färgade efter dagens mest använda modell.",
-      "calls": "anrop",
-      "noCalls": "Inga anrop",
-      "other": "Övriga modeller",
-      "less": "Mindre",
-      "more": "Mer",
-      "yearTotal": "{{formatted}} anrop under det senaste året"
-    }
+  "personaBackground": {
+    "label": "Bakgrundsbild",
+    "uploadBackgroundImage": "Ladda upp bakgrundsbild",
+    "dragAndDrop": "Dra och släpp en bild eller klicka för att bläddra",
+    "chooseImage": "Välj bild",
+    "uploading": "Laddar upp...",
+    "enterImageUrl": "Eller ange bild-URL",
+    "supportedFormats": "Stöder: JPG, PNG, GIF, WebP (max 5MB). Breda landskapsbilder fungerar bäst.",
+    "customBackground": "Anpassad bakgrundsbild",
+    "clickToChange": "Klicka för att ändra eller ta bort",
+    "removed": "Bakgrund borttagen",
+    "uploaded": "Bakgrund uppladdad",
+    "invalidFile": "Välj en giltig bildfil",
+    "fileTooLarge": "Bakgrundsbildens storlek måste vara mindre än 5MB",
+    "readFailed": "Kunde inte läsa bildfil",
+    "uploadFailed": "Kunde inte ladda upp bakgrundsbild"
   },
-  "systemPage": {
-    "eyebrow": "Administration",
-    "title": "System",
-    "description": "Övervaka maskinen och körningsmiljön som är värd för denna Libre WebUI-instans.",
-    "updated": "Uppdaterad {{date}}",
-    "refresh": "Uppdatera systeminformation",
-    "loadFailed": "Systeminformation kunde inte läsas in.",
-    "cards": {
-      "uptime": "Värdens drifttid",
-      "uptimeDetail": "Körs sedan {{date}}",
-      "memory": "Använt minne",
-      "memoryDetail": "{{used}} av {{total}}",
-      "freeSpace": "Ledigt utrymme",
-      "freeSpaceDetail": "{{label}} · {{total}} totalt",
-      "containers": "Körande containrar",
-      "containersDetail": "{{total}} container(s) kända av Docker",
-      "dockerUnavailable": "Docker otillgänglig",
-      "unavailable": "Otillgänglig"
-    },
-    "host": {
-      "title": "Värd & körningsmiljö",
-      "description": "Operativsystem, processor och Libre WebUI-processdetaljer.",
-      "container": "Container-körningsmiljö",
-      "native": "Inbyggd körning",
-      "hostname": "Värdnamn",
-      "operatingSystem": "Operativsystem",
-      "processor": "Processor",
-      "logicalCpus": "logiska CPU:er",
-      "loadAverage": "Belastningsmedelvärde · 1 / 5 / 15 min",
-      "libreVersion": "Libre WebUI",
-      "nodeVersion": "Node.js",
-      "process": "Process",
-      "workingDirectory": "Arbetskatalog"
-    },
-    "memory": {
-      "title": "Minne",
-      "description": "Systemminne synligt vid körning samt processanvändning för applikationen.",
-      "usedOf": "{{used}} använt av {{total}}",
-      "free": "{{value}} ledigt",
-      "processRss": "Process-RSS",
-      "heapUsed": "V8-heap använt",
-      "heapTotal": "V8-heap totalt",
-      "external": "Externt minne"
-    },
-    "storage": {
-      "title": "Lagring",
-      "description": "Tillgängligt utrymme för körningsmiljöns filsystem och beständig applikationsdata.",
-      "used": "{{value}} använt",
-      "free": "{{value}} ledigt",
-      "empty": "Filsystemsinformation är inte tillgänglig i denna körningsmiljö."
-    },
-    "docker": {
-      "title": "Docker",
-      "description": "Skrivskyddad Docker Engine-status och en begränsad lista över containrar.",
-      "connected": "Ansluten",
-      "unavailable": "Otillgänglig",
-      "unavailableDetail": "Docker Engine-diagnostik är otillgänglig.",
-      "socketStatus": "Lokal socket: {{status}}",
-      "mounted": "monterad",
-      "notMounted": "inte monterad",
-      "running": "Körs",
-      "stopped": "Stoppad",
-      "paused": "Pausad",
-      "total": "Totalt",
-      "version": "Version",
-      "host": "Värd",
-      "architecture": "Arkitektur",
-      "cpus": "CPU:er",
-      "memory": "Minne",
-      "container": "Container",
-      "image": "Avbildning",
-      "state": "Tillstånd",
-      "created": "Skapad",
-      "empty": "Docker är anslutet och inga containrar listas för närvarande."
-    },
-    "network": {
-      "title": "Nätverk",
-      "description": "Körningsmiljöns synliga gränssnitt, adresser och Linux-trafikräknare.",
-      "internal": "intern",
-      "empty": "Inga nätverksgränssnitt är synliga för programmets körningsmiljö."
-    },
-    "securityNote": "Denna sida är begränsad till administratörer. Servern returnerar endast driftsammanfattningar: den exponerar inte miljövariabler, autentiseringsuppgifter, Docker-etiketter, monteringar, container-kommandon eller inspektionsnyttolaster. När Libre WebUI körs i en container kommer värdnivåns CPU- och minnesdetaljer från Docker Engine när dess lokala socket är tillgänglig; andra värden beskriver programmets körningsmiljö.",
-    "work": {
-      "title": "Work",
-      "description": "Sandlådor för alla användare",
-      "access": "Åtkomst",
-      "accessAdmins": "Endast administratörer",
-      "accessAllUsers": "Alla användare",
-      "runtimeAvailable": "Tillgänglig",
-      "runtimeUnavailable": "Otillgänglig",
-      "activeRuntimes": "Aktiva körmiljöer",
-      "pendingCleanups": "Väntande rensningar",
-      "orphans": "Föräldralösa containrar",
-      "owner": "Ägare",
-      "task": "Uppgift",
-      "state": "Tillstånd",
-      "preview": "Förhandsvisning",
-      "terminals": "Terminaler",
-      "updated": "Uppdaterad",
-      "stateRunning": "Körs",
-      "stateStopped": "Stoppad",
-      "stateStarting": "Startar",
-      "stateUnknown": "Okänd",
-      "noTasks": "Inga Work-uppgifter ännu."
-    }
-  },
-  "mediaGeneration": {
-    "title": "Generera media",
-    "description": "Skapa video, ljud, musik eller tal med en aktiverad medieleverantör.",
-    "image": "Bild",
-    "video": "Video",
-    "audio": "Ljud",
-    "sound": "Ljud",
-    "speech": "Tal",
-    "model": "Modell",
-    "voice": "Röst eller röst-ID",
-    "cloneVoice": "Klona en referensröst",
-    "cloneVoiceDescription": "Generera talet utifrån en referensinspelning i stället för en förinställd röst.",
-    "referenceAudio": "Referensljud",
-    "referenceTranscript": "Exakt transkription av referensen",
-    "referenceTranscriptPlaceholder": "Ange exakt vad som sägs i referensinspelningen…",
-    "referenceAudioTooLarge": "Referensljudet får vara högst {{max}}.",
-    "cloneConsent": "Klona bara en röst när du har talarens tillstånd. Inspelningen skickas till den valda leverantören för denna generering och sparas inte av Libre WebUI.",
-    "saveVoiceProfile": "Spara som en återanvändbar röst",
-    "saveVoiceProfileDescription": "Spara referensinspelningen och transkriptionen säkert. Libre WebUI skickar dem till den valda leverantören för varje talbatch som använder rösten.",
-    "voiceProfileName": "Namn på sparad röst",
-    "voiceProfileNamePlaceholder": "Till exempel Min röst",
-    "voiceStorageConsent": "Jag bekräftar att jag har talarens tillstånd att klona och spara rösten. Referensen sparas tills jag tar bort den.",
-    "successWithSavedVoice": "Mediet har skapats och ”{{name}}” är nu tillgänglig i talinställningarna",
-    "resolution": "Upplösning",
-    "aspectRatio": "Bildförhållande",
-    "duration": "Längd",
-    "providerDefault": "Leverantörens standard",
-    "generateAudio": "Generera ljud med videon när det stöds",
-    "prompt": "Prompt",
-    "text": "Text att läsa upp",
-    "videoPlaceholder": "Beskriv scenen, rörelsen, kameran och ljussättningen...",
-    "audioPlaceholder": "Skriv in texten du vill att rösten ska läsa upp...",
-    "soundPlaceholder": "Beskriv ljudet, musiken, atmosfären eller det talade svaret du vill ha...",
-    "generate": "Generera",
-    "generating": "Genererar… detta kan ta flera minuter",
-    "success": "Media genererad och sparad till Imagine",
-    "failed": "Misslyckades att generera media",
-    "loadFailed": "Misslyckades att ladda medieleverantörer",
-    "noModels": "Inga {{kind}}-modeller är tillgängliga. Aktivera en kompatibel leverantör och spara dess autentiseringsuppgifter först."
-  },
-  "mediaGallery": {
-    "itemCount": "{{count}} objekt",
-    "empty": "Ingen genererad media ännu",
-    "emptyHint": "Generera en bild, video eller ett röstklipp så visas det här.",
-    "filters": {
-      "all": "Alla",
-      "image": "Bilder",
-      "video": "Videor",
-      "audio": "Ljud"
-    }
+  "modelSelector": {
+    "searchInstalled": "Sök installerade modeller...",
+    "searchOllama": "Sök i Ollama-biblioteket...",
+    "searchHuggingFace": "Sök på HuggingFace...",
+    "selectModel": "Välj modell",
+    "personas": "Personas",
+    "ollamaModels": "Ollama-modeller",
+    "pluginModels": "Plugin-modeller",
+    "actions": "Åtgärder",
+    "installed": "Installerad",
+    "use": "Använd",
+    "pull": "Ladda ner",
+    "pullRestricted": "Modellinstallation är begränsad till administratörer på denna instans.",
+    "adminOnlyPull": "Endast administratörer",
+    "legacyProvider": "leverantör ej registrerad",
+    "providerNotRecorded": "Leverantör ej registrerad",
+    "providerUnavailable": "leverantör otillgänglig",
+    "reselectProvider": "välj leverantör igen för att fästa denna modell",
+    "unavailable": "otillgänglig",
+    "unavailableSelections": "Otillgängliga val",
+    "agentModels": "Agenter"
   },
   "whatsNew": {
     "title": "Nyheter",

@@ -48,7 +48,6 @@ import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import { HuggingFaceSection } from './model-manager/HuggingFaceSection';
 import { LocalModelsSection } from './model-manager/LocalModelsSection';
-import { ModelCatalogSection } from './model-manager/ModelCatalogSection';
 import { ModelLibrarySection } from './model-manager/ModelLibrarySection';
 import { PullModelSection } from './model-manager/PullModelSection';
 import type {
@@ -162,7 +161,7 @@ export const ModelManager: React.FC = () => {
 
   // Expanded sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['pull', 'local', 'catalog'])
+    new Set(['pull', 'local'])
   );
 
   const toggleSection = (section: string) => {
@@ -728,11 +727,6 @@ export const ModelManager: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <ModelCatalogSection
-        expanded={expandedSections.has('catalog')}
-        onToggle={() => toggleSection('catalog')}
-      />
 
       <PullModelSection
         expanded={expandedSections.has('pull')}

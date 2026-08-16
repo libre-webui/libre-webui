@@ -421,12 +421,7 @@
       "notes": "Notatki"
     },
     "toggleSize": "Zmień rozmiar panelu bocznego",
-    "expandSidebar": "Rozwiń panel boczny",
-    "pinned": {
-      "label": "Przypięte",
-      "pin": "Przypnij do panelu bocznego",
-      "unpin": "Odepnij z panelu bocznego"
-    }
+    "expandSidebar": "Rozwiń panel boczny"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "Skróty",
       "about": "O programie",
       "sessions": "Sesje",
-      "apiKeys": "Klucze API",
-      "connections": "Połączenia"
+      "apiKeys": "Klucze API"
     },
     "appearance": {
       "title": "Wygląd",
@@ -928,41 +922,6 @@
       "saved": "Zapisano ustawienia kompaktowania",
       "saveFailed": "Nie udało się zapisać ustawień kompaktowania"
     },
-    "connections": {
-      "title": "Połączenia",
-      "description": "Dostawcy modeli, z którymi rozmawia ten serwer: lokalne środowisko Ollama i punkty końcowe zgodne z OpenAI.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Lokalne środowisko uruchomieniowe modeli.",
-      "version": "Wersja {{version}}.",
-      "statusChecking": "Sprawdzanie…",
-      "statusOnline": "Online",
-      "statusOffline": "Offline",
-      "providersTitle": "Połączenia zgodne z OpenAI",
-      "providersDescription": "Każde połączenie to dostawca uzupełnień, którego modele pojawiają się w selektorze modeli czatu. Klucze API są przechowywane po stronie serwera.",
-      "noConnections": "Nie skonfigurowano jeszcze żadnych połączeń.",
-      "modelsCount": "Modele: {{total}}",
-      "pendingDiscovery": "Modele oczekują na wykrycie",
-      "apiKeyMissing": "Brak klucza API",
-      "deleteConfirm": "Usunąć to połączenie? Czaty korzystające z jego modeli stracą do nich dostęp.",
-      "addTitle": "Dodaj połączenie",
-      "addDescription": "Zarejestruj jako dostawcę punkt końcowy chat completions zgodny z OpenAI.",
-      "nameLabel": "Nazwa wyświetlana",
-      "namePlaceholder": "Mój dostawca",
-      "idPreview": "Identyfikator połączenia: {{id}}",
-      "endpointLabel": "Adres URL punktu końcowego",
-      "endpointDescription": "Pełny adres URL chat completions, na przykład https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "Klucz API",
-      "apiKeyOptionalHint": "(opcjonalny, można dodać później)",
-      "nameRequired": "Wpisz nazwę wyświetlaną połączenia.",
-      "endpointInvalid": "Wpisz prawidłowy adres URL punktu końcowego http(s).",
-      "alreadyExists": "Połączenie o tym identyfikatorze już istnieje.",
-      "add": "Dodaj połączenie",
-      "adding": "Dodawanie…",
-      "added": "Dodano połączenie",
-      "addFailed": "Nie udało się dodać połączenia",
-      "keySaveFailed": "Dodano połączenie, ale nie udało się zapisać klucza API",
-      "activateFailed": "Dodano połączenie, ale nie udało się go aktywować"
-    },
     "sessions": {
       "title": "Sesje",
       "description": "Wszystkie miejsca, w których to konto jest zalogowane. Wylogowanie sesji działa natychmiast; ponowne logowanie przywraca dostęp.",
@@ -1122,18 +1081,26 @@
       "catalog": "Katalog modeli"
     },
     "catalog": {
-      "models": "dostępnych",
       "searchPlaceholder": "Szukaj modeli według nazwy lub dostawcy...",
       "noModels": "Nie ma jeszcze dostępnych modeli.",
       "empty": "Żaden model nie pasuje do wyszukiwania.",
       "providerOllama": "Ollama",
-      "default": "Domyślny",
-      "makeDefault": "Ustaw jako domyślny",
-      "defaultSet": "{{model}} jest teraz Twoim domyślnym modelem.",
       "hidden": "Ukryty",
+      "visibilityFailed": "Nie udało się zmienić widoczności modelu.",
+      "filterAll": "Wszystkie modele",
+      "filterLocal": "Lokalne",
+      "filterProviders": "Dostawcy",
+      "filterHidden": "Ukryte",
+      "enableAll": "Włącz widoczne",
+      "disableAll": "Wyłącz widoczne",
+      "rename": "Edytuj nazwę i obraz",
+      "setPicture": "Ustaw obraz",
+      "clearPicture": "Usuń obraz",
+      "pictureInvalid": "Wybierz plik obrazu.",
+      "pictureTooLarge": "Obrazy muszą mieć mniej niż 192 KB.",
+      "saving": "Zapisywanie…",
       "hide": "Ukryj przed użytkownikami",
-      "show": "Pokaż użytkownikom",
-      "visibilityFailed": "Nie udało się zmienić widoczności modelu."
+      "show": "Pokaż użytkownikom"
     },
     "pull": {
       "placeholder": "Wprowadź nazwę modelu (np. llama3.2:3b, deepseek-r1:14b)",

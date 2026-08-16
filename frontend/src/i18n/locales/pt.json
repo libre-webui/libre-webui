@@ -59,11 +59,11 @@
       "loginSuccess": "Login realizado com sucesso!",
       "loginFailed": "Falha no login",
       "checkCredentials": "Falha no login. Por favor, verifique suas credenciais.",
+      "approvalPending": "A sua conta está a aguardar aprovação do administrador.",
       "enterBoth": "Por favor, digite o usuário e a senha",
       "githubSuccess": "Login com GitHub realizado com sucesso!",
       "githubFailed": "Falha na autenticação do GitHub",
       "githubVerifyFailed": "Falha ao verificar autenticação do GitHub",
-      "approvalPending": "A sua conta está a aguardar aprovação do administrador.",
       "verificationFailed": "A verificação de segurança falhou. Atualize a página e tente novamente."
     },
     "signup": {
@@ -82,15 +82,15 @@
       "hasAccount": "Já tem uma conta?",
       "signInHere": "Entre aqui",
       "signupSuccess": "Conta criada com sucesso!",
+      "approvalPending": "Registo recebido. Um administrador tem de aprovar a sua conta.",
+      "awaitingApproval": "A aguardar aprovação",
+      "awaitingApprovalDescription": "A sua conta foi criada, mas um administrador tem de a ativar antes de poder iniciar sessão.",
+      "backToSignIn": "Voltar ao início de sessão",
       "signupFailed": "Falha no cadastro",
       "tryAgain": "Falha no cadastro. Por favor, tente novamente.",
       "usernameRequired": "Usuário e senha são obrigatórios",
       "passwordMismatch": "As senhas não coincidem",
-      "passwordTooShort": "A senha deve ter pelo menos 6 caracteres",
-      "approvalPending": "Registo recebido. Um administrador tem de aprovar a sua conta.",
-      "awaitingApproval": "A aguardar aprovação",
-      "awaitingApprovalDescription": "A sua conta foi criada, mas um administrador tem de a ativar antes de poder iniciar sessão.",
-      "backToSignIn": "Voltar ao início de sessão"
+      "passwordTooShort": "A senha deve ter pelo menos 6 caracteres"
     },
     "logout": {
       "button": "Sair",
@@ -166,9 +166,9 @@
       "createAdmin": "Criar Admin",
       "success": "Conta de administrador criada com sucesso!",
       "failed": "Falha ao criar conta de administrador",
+      "approvalUnexpected": "O administrador inicial não pôde ser ativado. Por favor, tente novamente.",
       "fillAllFields": "Por favor, preencha todos os campos",
-      "note": "Esta será a conta de administrador principal da sua instância do Libre WebUI",
-      "approvalUnexpected": "O administrador inicial não pôde ser ativado. Por favor, tente novamente."
+      "note": "Esta será a conta de administrador principal da sua instância do Libre WebUI"
     },
     "encryptionKey": {
       "title": "Salve sua chave de criptografia",
@@ -277,6 +277,7 @@
       "work": "Trabalho",
       "chat": "Chat",
       "private": "Privado",
+      "incognito": "Chat Incógnito",
       "privateMode": "Modo Privado",
       "privateDescription": "Esta conversa não será salva",
       "privateTooltip": "Iniciar uma conversa privada que não será salva",
@@ -290,7 +291,6 @@
       "pinChat": "Fixar",
       "unpinChat": "Desafixar",
       "deleteChat": "Excluir conversa",
-      "incognito": "Chat Incógnito",
       "archiveChat": "Arquivar conversa",
       "groups": {
         "pinned": "Fixados",
@@ -410,32 +410,27 @@
       "models": "Modelos",
       "personas": "Personas",
       "imagine": "Imaginar",
-      "settings": "Configurações",
-      "userManagement": "Gerenciamento de Usuários",
-      "signOut": "Sair",
       "agents": "Agentes",
       "work": "Trabalho",
-      "exploreLabel": "Explorar",
+      "settings": "Configurações",
       "usageAnalytics": "Uso de Fornecedores",
       "system": "Sistema",
+      "userManagement": "Gerenciamento de Usuários",
+      "signOut": "Sair",
+      "exploreLabel": "Explorar",
       "notes": "Notas"
     },
     "toggleSize": "Alternar tamanho da barra lateral",
-    "expandSidebar": "Expandir barra lateral",
-    "pinned": {
-      "label": "Fixados",
-      "pin": "Fixar na barra lateral",
-      "unpin": "Desafixar da barra lateral"
-    }
+    "expandSidebar": "Expandir barra lateral"
   },
   "user": {
     "menu": {
       "changePicture": "Alterar foto",
       "settings": "Configurações",
-      "userManagement": "Gerenciamento de Usuários",
-      "logout": "Sair",
       "usageAnalytics": "Uso de Fornecedores",
-      "system": "Sistema"
+      "system": "Sistema",
+      "userManagement": "Gerenciamento de Usuários",
+      "logout": "Sair"
     },
     "avatar": {
       "title": "Alterar foto de perfil",
@@ -478,8 +473,7 @@
       "shortcuts": "Atalhos",
       "about": "Sobre",
       "sessions": "Sessões",
-      "apiKeys": "Chaves de API",
-      "connections": "Conexões"
+      "apiKeys": "Chaves de API"
     },
     "appearance": {
       "title": "Aparência",
@@ -531,6 +525,13 @@
       "defaultModel": "Modelo Padrão",
       "defaultModelDescription": "Este modelo será usado por padrão para novas conversas",
       "selectModel": "Selecione um modelo",
+      "specializedModels": "Modelos Especializados",
+      "visionModel": "Modelo de Visão",
+      "selectVisionModel": "Usar o modelo de chat atual",
+      "visionModelDescription": "Usado automaticamente sempre que o contexto de chat enviado contém imagens. Escolha um modelo que suporte entrada de imagens.",
+      "visionModelUpdateFailed": "Falha ao atualizar o modelo de visão: {{error}}",
+      "visionModelNoProvider": "Este modelo de visão não tem identidade de provedor. Selecione um modelo disponível.",
+      "persona": "Persona",
       "updateAll": "Atualizar Todos os Modelos",
       "updateAllDescription": "Verificar atualizações e baixar as versões mais recentes de todos os modelos instalados",
       "updateAllButton": "Atualizar Todos",
@@ -553,15 +554,8 @@
         "selectTaskModel": "Selecione o modelo de tarefas",
         "taskModelDescription": "Modelo usado para gerar títulos das conversas"
       },
-      "persona": "Persona",
       "updatingModel": "Atualizando {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} de {{total}} modelos",
-      "specializedModels": "Modelos Especializados",
-      "visionModel": "Modelo de Visão",
-      "selectVisionModel": "Usar o modelo de chat atual",
-      "visionModelDescription": "Usado automaticamente sempre que o contexto de chat enviado contém imagens. Escolha um modelo que suporte entrada de imagens.",
-      "visionModelUpdateFailed": "Falha ao atualizar o modelo de visão: {{error}}",
-      "visionModelNoProvider": "Este modelo de visão não tem identidade de provedor. Selecione um modelo disponível."
+      "modelsProgress": "{{current}} de {{total}} modelos"
     },
     "systemMessage": {
       "title": "Mensagem do Sistema",
@@ -573,6 +567,13 @@
     "plugins": {
       "title": "Plugins",
       "description": "Gerencie seus plugins instalados",
+      "providerConnections": "Ligações de fornecedores",
+      "providerConnectionsDescription": "Ligue, configure e inspecione fornecedores de modelos através de plugins.",
+      "providers": "Fornecedores",
+      "searchProviders": "Pesquisar fornecedores",
+      "noProvidersFound": "Nenhum fornecedor corresponde à sua pesquisa.",
+      "selectProvider": "Selecione um fornecedor",
+      "selectProviderDescription": "Escolha um fornecedor para inspecionar a sua ligação e catálogo de modelos.",
       "addNew": "Adicionar Novo Plugin",
       "upload": "Enviar Plugin",
       "addJson": "Adicionar JSON",
@@ -591,33 +592,12 @@
       "models": "modelos",
       "apiKeySet": "Chave de API Definida",
       "apiKeyConfiguration": "Configuração da Chave de API",
+      "apiKeyDescription": "Guarde uma chave API pessoal para {{name}}.",
       "apiKeyEnvAlternative": "Alternativamente, defina a",
       "environmentVariable": "variável de ambiente",
       "apiKeyConfigured": "Chave de API configurada",
       "apiKeyPlaceholder": "Digite sua chave de API...",
       "saveApiKey": "Salvar Chave de API",
-      "apiKey": {
-        "title": "Chave de API",
-        "placeholder": "Digite a chave de API",
-        "save": "Salvar Chave",
-        "remove": "Remover Chave",
-        "configured": "Chave de API Configurada",
-        "notConfigured": "Chave de API Necessária",
-        "saved": "Chave de API salva com sucesso",
-        "removed": "Chave de API removida",
-        "saveFailed": "Falha ao salvar chave de API",
-        "removeFailed": "Falha ao remover chave de API",
-        "enterKey": "Por favor, digite uma chave de API"
-      },
-      "variables": "Variables",
-      "providerConnections": "Ligações de fornecedores",
-      "providerConnectionsDescription": "Ligue, configure e inspecione fornecedores de modelos através de plugins.",
-      "providers": "Fornecedores",
-      "searchProviders": "Pesquisar fornecedores",
-      "noProvidersFound": "Nenhum fornecedor corresponde à sua pesquisa.",
-      "selectProvider": "Selecione um fornecedor",
-      "selectProviderDescription": "Escolha um fornecedor para inspecionar a sua ligação e catálogo de modelos.",
-      "apiKeyDescription": "Guarde uma chave API pessoal para {{name}}.",
       "showApiKey": "Mostrar chave API",
       "hideApiKey": "Ocultar chave API",
       "configure": "Configurar",
@@ -643,7 +623,21 @@
         "transcription": "Transcrição"
       },
       "exportPlugin": "Exportar plugin",
-      "deletePlugin": "Excluir plugin"
+      "deletePlugin": "Excluir plugin",
+      "apiKey": {
+        "title": "Chave de API",
+        "placeholder": "Digite a chave de API",
+        "save": "Salvar Chave",
+        "remove": "Remover Chave",
+        "configured": "Chave de API Configurada",
+        "notConfigured": "Chave de API Necessária",
+        "saved": "Chave de API salva com sucesso",
+        "removed": "Chave de API removida",
+        "saveFailed": "Falha ao salvar chave de API",
+        "removeFailed": "Falha ao remover chave de API",
+        "enterKey": "Por favor, digite uma chave de API"
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Opções de Geração",
@@ -653,6 +647,8 @@
       "scopeModel": "Apenas {{model}}",
       "scopeAllHint": "Os valores que cada modelo usa, a menos que tenha os seus.",
       "scopeModelHint": "Salvo apenas para este modelo e prevalece sobre os valores gerais.",
+      "advancedSettings": "Configurações avançadas de geração",
+      "advancedSettingsDescription": "Amostragem, limites de tokens, contexto, penalidades e sequências de parada",
       "coreParameters": "Parâmetros Principais",
       "temperature": "Temperatura",
       "temperatureDescription": "Controla a aleatoriedade. Valores baixos são mais focados, valores altos mais criativos.",
@@ -684,9 +680,7 @@
       "resetDefaults": "Restaurar Padrões",
       "saveOptions": "Salvar Opções",
       "embeddingSettings": "Configurações de Embedding",
-      "enableEmbeddings": "Ativar Embeddings de Documentos",
-      "advancedSettings": "Configurações avançadas de geração",
-      "advancedSettingsDescription": "Amostragem, limites de tokens, contexto, penalidades e sequências de parada"
+      "enableEmbeddings": "Ativar Embeddings de Documentos"
     },
     "documents": {
       "title": "Configurações de Documentos",
@@ -796,6 +790,7 @@
       "title": "Gerenciamento de Dados",
       "export": "Exportar Dados",
       "exportDescription": "Baixe um arquivo portátil com preferências, pastas de conversas, sessões e mensagens, notas, coleções de conhecimento e texto extraído de documentos.",
+      "archiveScopeV3": "Inclui preferências, conversas, pastas, notas, coleções de conhecimento e texto extraído de documentos. Exclui contas e segredos, vozes clonadas biometricamente, mídia gerada, personas e memória, além de dados ou volumes do Work.",
       "exportAll": "Exportar Todos os Dados",
       "import": "Importar Dados",
       "importDescription": "Importe dados de uma exportação anterior.",
@@ -836,8 +831,7 @@
         "title": "Conversas arquivadas",
         "empty": "Nenhuma conversa arquivada",
         "unarchive": "Desarquivar"
-      },
-      "archiveScopeV3": "Inclui preferências, conversas, pastas, notas, coleções de conhecimento e texto extraído de documentos. Exclui contas e segredos, vozes clonadas biometricamente, mídia gerada, personas e memória, além de dados ou volumes do Work."
+      }
     },
     "about": {
       "title": "Sobre",
@@ -927,41 +921,6 @@
       "promptDescription": "As variáveis de modelo {{previousSummaryVariable}} e {{messagesVariable}} são substituídas pelo resumo anterior e pelas mensagens sendo resumidas.",
       "saved": "Configurações de compactação salvas",
       "saveFailed": "Não foi possível salvar as configurações de compactação"
-    },
-    "connections": {
-      "title": "Conexões",
-      "description": "Os provedores de modelos com que este servidor se comunica: o runtime local do Ollama e endpoints compatíveis com OpenAI.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Runtime local de modelos.",
-      "version": "Versão {{version}}.",
-      "statusChecking": "Verificando…",
-      "statusOnline": "Online",
-      "statusOffline": "Offline",
-      "providersTitle": "Conexões compatíveis com OpenAI",
-      "providersDescription": "Cada conexão é um provedor de conclusões cujos modelos aparecem no seletor de modelos do chat. As chaves de API são armazenadas no servidor.",
-      "noConnections": "Nenhuma conexão configurada ainda.",
-      "modelsCount": "{{total}} modelos",
-      "pendingDiscovery": "Modelos aguardando descoberta",
-      "apiKeyMissing": "Sem chave de API",
-      "deleteConfirm": "Excluir esta conexão? Os chats que usam seus modelos perderão acesso a eles.",
-      "addTitle": "Adicionar conexão",
-      "addDescription": "Registre um endpoint de chat completions compatível com OpenAI como provedor.",
-      "nameLabel": "Nome de exibição",
-      "namePlaceholder": "Meu provedor",
-      "idPreview": "ID da conexão: {{id}}",
-      "endpointLabel": "URL do endpoint",
-      "endpointDescription": "URL completa de chat completions, por exemplo https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "Chave de API",
-      "apiKeyOptionalHint": "(opcional, pode ser adicionada depois)",
-      "nameRequired": "Digite um nome de exibição para a conexão.",
-      "endpointInvalid": "Digite uma URL de endpoint http(s) válida.",
-      "alreadyExists": "Já existe uma conexão com este ID.",
-      "add": "Adicionar conexão",
-      "adding": "Adicionando…",
-      "added": "Conexão adicionada",
-      "addFailed": "Não foi possível adicionar a conexão",
-      "keySaveFailed": "Conexão adicionada, mas não foi possível salvar a chave de API",
-      "activateFailed": "Conexão adicionada, mas não foi possível ativá-la"
     },
     "sessions": {
       "title": "Sessões",
@@ -1115,25 +1074,33 @@
     "sections": {
       "pull": "Baixar Novo Modelo",
       "library": "Explorar Biblioteca",
+      "huggingface": "HuggingFace Hub",
       "running": "Modelos em Execução",
       "local": "Modelos Locais",
       "advanced": "Ações Avançadas",
-      "huggingface": "HuggingFace Hub",
       "catalog": "Catálogo de Modelos"
     },
     "catalog": {
-      "models": "disponíveis",
       "searchPlaceholder": "Pesquisar modelos por nome ou provedor...",
       "noModels": "Nenhum modelo disponível ainda.",
       "empty": "Nenhum modelo corresponde à sua pesquisa.",
       "providerOllama": "Ollama",
-      "default": "Padrão",
-      "makeDefault": "Tornar padrão",
-      "defaultSet": "{{model}} agora é seu modelo padrão.",
       "hidden": "Oculto",
-      "hide": "Ocultar dos usuários",
-      "show": "Mostrar aos usuários",
-      "visibilityFailed": "Não foi possível atualizar a visibilidade do modelo."
+      "visibilityFailed": "Não foi possível atualizar a visibilidade do modelo.",
+      "filterAll": "Todos os modelos",
+      "filterLocal": "Local",
+      "filterProviders": "Fornecedores",
+      "filterHidden": "Ocultos",
+      "enableAll": "Ativar os apresentados",
+      "disableAll": "Desativar os apresentados",
+      "rename": "Editar nome e imagem",
+      "setPicture": "Definir imagem",
+      "clearPicture": "Remover imagem",
+      "pictureInvalid": "Escolha um ficheiro de imagem.",
+      "pictureTooLarge": "As imagens têm de ter menos de 192 KB.",
+      "saving": "A guardar…",
+      "hide": "Ocultar dos utilizadores",
+      "show": "Mostrar aos utilizadores"
     },
     "pull": {
       "placeholder": "Digite o nome do modelo (ex.: llama3.2:3b, deepseek-r1:14b)",
@@ -1163,6 +1130,37 @@
       "installed": "Instalado",
       "more": "+{{count}} mais",
       "refresh": "Atualizar Biblioteca"
+    },
+    "huggingface": {
+      "browseAll": "Ver tudo no HuggingFace",
+      "checkingGguf": "Verificando arquivos GGUF...",
+      "noGgufAvailable": "Nenhum arquivo GGUF disponível para pull direto do Ollama",
+      "ggufFilesCount": "Arquivos GGUF ({{count}}) - Pull direto para Ollama",
+      "noModelsFound": "Nenhum modelo encontrado",
+      "noResults": "Nenhum modelo encontrado. Tente ajustar sua pesquisa ou filtros.",
+      "browseAllLink": "Ver tudo",
+      "search": "Pesquisar modelos HuggingFace...",
+      "by": "por",
+      "gated": "Acesso restrito",
+      "viewOnHF": "Ver no HuggingFace",
+      "sortDownloads": "Downloads",
+      "sortLikes": "Curtidas",
+      "sortRecent": "Recente",
+      "taskTextGeneration": "Geração de texto",
+      "taskTextToSpeech": "Texto para fala",
+      "taskTextToImage": "Texto para imagem",
+      "taskSpeechRecognition": "Reconhecimento de voz",
+      "tasks": {
+        "textGen": "Geração de texto",
+        "tts": "Texto para fala",
+        "image": "Texto para imagem",
+        "stt": "Reconhecimento de voz"
+      },
+      "sort": {
+        "downloads": "Mais baixados",
+        "likes": "Mais curtidos",
+        "recent": "Atualizados recentemente"
+      }
     },
     "local": {
       "noModels": "Nenhum modelo instalado ainda",
@@ -1241,37 +1239,6 @@
         "success": "Vetor de embedding de {{count}} dimensões gerado",
         "failed": "Falha ao gerar embeddings",
         "enterBoth": "Por favor, selecione um modelo e digite o texto"
-      }
-    },
-    "huggingface": {
-      "browseAll": "Ver tudo no HuggingFace",
-      "checkingGguf": "Verificando arquivos GGUF...",
-      "noGgufAvailable": "Nenhum arquivo GGUF disponível para pull direto do Ollama",
-      "ggufFilesCount": "Arquivos GGUF ({{count}}) - Pull direto para Ollama",
-      "noModelsFound": "Nenhum modelo encontrado",
-      "noResults": "Nenhum modelo encontrado. Tente ajustar sua pesquisa ou filtros.",
-      "browseAllLink": "Ver tudo",
-      "search": "Pesquisar modelos HuggingFace...",
-      "by": "por",
-      "gated": "Acesso restrito",
-      "viewOnHF": "Ver no HuggingFace",
-      "sortDownloads": "Downloads",
-      "sortLikes": "Curtidas",
-      "sortRecent": "Recente",
-      "taskTextGeneration": "Geração de texto",
-      "taskTextToSpeech": "Texto para fala",
-      "taskTextToImage": "Texto para imagem",
-      "taskSpeechRecognition": "Reconhecimento de voz",
-      "tasks": {
-        "textGen": "Geração de texto",
-        "tts": "Texto para fala",
-        "image": "Texto para imagem",
-        "stt": "Reconhecimento de voz"
-      },
-      "sort": {
-        "downloads": "Mais baixados",
-        "likes": "Mais curtidos",
-        "recent": "Atualizados recentemente"
       }
     }
   },
@@ -1445,6 +1412,17 @@
     "deleteSuccess": "Usuário excluído com sucesso",
     "deleteFailed": "Falha ao excluir usuário",
     "cannotDeleteSelf": "Você não pode excluir sua própria conta",
+    "approval": {
+      "title": "Aprovações pendentes",
+      "description": "Revise novos registros antes de permiti-los nesta instância.",
+      "registered": "Registrado",
+      "activate": "Ativar conta",
+      "reject": "Rejeitar registro",
+      "approved": "{{name}} já pode entrar.",
+      "failed": "A conta não pôde ser aprovada.",
+      "notification": "{{count}} registro(s) aguardando sua aprovação.",
+      "notificationBadge": "{{count}} aprovações de usuário pendentes"
+    },
     "form": {
       "title": {
         "create": "Criar Usuário",
@@ -1466,17 +1444,6 @@
       "updateSuccess": "Usuário atualizado com sucesso",
       "createFailed": "Falha ao criar usuário",
       "updateFailed": "Falha ao atualizar usuário"
-    },
-    "approval": {
-      "title": "Aprovações pendentes",
-      "description": "Revise novos registros antes de permiti-los nesta instância.",
-      "registered": "Registrado",
-      "activate": "Ativar conta",
-      "reject": "Rejeitar registro",
-      "approved": "{{name}} já pode entrar.",
-      "failed": "A conta não pôde ser aprovada.",
-      "notification": "{{count}} registro(s) aguardando sua aprovação.",
-      "notificationBadge": "{{count}} aprovações de usuário pendentes"
     },
     "workAccess": {
       "title": "Acesso ao Work",
@@ -1582,6 +1549,174 @@
       "target": "Alvo"
     }
   },
+  "usageAnalytics": {
+    "eyebrow": "Administração",
+    "title": "Uso do provedor",
+    "description": "Acompanhe as chamadas de API de saída e o consumo de modelos nos plugins habilitados nesta instância.",
+    "days": "{{count}} dias",
+    "refresh": "Atualizar uso",
+    "loadFailed": "O uso do provedor não pôde ser carregado.",
+    "metrics": {
+      "calls": "Chamadas",
+      "tokens": "Tokens"
+    },
+    "cards": {
+      "calls": "Chamadas de API",
+      "callsDetail": "Entre {{count}} usuário(s) ativo(s)",
+      "tokens": "Tokens relatados",
+      "tokensDetail": "Uso relatado em {{count}} chamada(s)",
+      "success": "Taxa de sucesso",
+      "successDetail": "{{count}} chamada(s) com falha",
+      "latency": "Latência média",
+      "latencyDetail": "Tempo total do provedor"
+    },
+    "activity": {
+      "title": "Consumo ao longo do tempo",
+      "callsDescription": "Solicitações diárias de saída para plugins ativados",
+      "tokensDescription": "Totais diários de tokens reportados pelos provedores",
+      "chartLabel": "Gráfico diário de {{metric}} do provedor"
+    },
+    "models": {
+      "title": "Consumo por modelo",
+      "description": "Os modelos com maior tráfego neste período.",
+      "model": "Modelo",
+      "success": "Sucesso",
+      "latency": "Latência"
+    },
+    "providers": {
+      "title": "Tráfego de plugins ativados"
+    },
+    "capabilities": {
+      "title": "Mix de capacidades",
+      "characters": "{{count}} caracteres",
+      "bytes": "{{count}} bytes",
+      "images": "{{count}} imagens",
+      "jobs": "{{count}} trabalhos de vídeo",
+      "inputs": "{{count}} entradas",
+      "reportedTokens": "{{count}} tokens reportados"
+    },
+    "empty": {
+      "title": "Nenhuma chamada de provedor ainda",
+      "description": "As chamadas aparecerão aqui após um plugin ativado processar solicitações de chat, trabalho, incorporação, imagem, fala, som ou vídeo."
+    },
+    "privacyNote": "O uso é medido no servidor no limite do plugin de saída. O Libre WebUI armazena provedor, modelo, tempo, status e contadores reportados — nunca prompts, respostas, endpoints, credenciais ou corpos de erro do provedor. Os totais de tokens incluem apenas chamadas em que o provedor retornou metadados de uso.",
+    "heatmap": {
+      "title": "Um ano de atividade",
+      "description": "Chamadas diárias a provedores no último ano, coloridas pelo modelo mais usado de cada dia.",
+      "calls": "chamadas",
+      "noCalls": "Sem chamadas",
+      "other": "Outros modelos",
+      "less": "Menos",
+      "more": "Mais",
+      "yearTotal": "{{formatted}} chamadas no último ano"
+    }
+  },
+  "systemPage": {
+    "eyebrow": "Administração",
+    "title": "Sistema",
+    "description": "Monitore a máquina e o tempo de execução que hospedam esta instância do Libre WebUI.",
+    "updated": "Atualizado em {{date}}",
+    "refresh": "Atualizar informações do sistema",
+    "loadFailed": "Não foi possível carregar as informações do sistema.",
+    "cards": {
+      "uptime": "Tempo de atividade do host",
+      "uptimeDetail": "Em execução desde {{date}}",
+      "memory": "Memória usada",
+      "memoryDetail": "{{used}} de {{total}}",
+      "freeSpace": "Espaço livre",
+      "freeSpaceDetail": "{{label}} · {{total}} total",
+      "containers": "Contêineres em execução",
+      "containersDetail": "{{total}} contêiner(es) conhecidos pelo Docker",
+      "dockerUnavailable": "Docker indisponível",
+      "unavailable": "Indisponível"
+    },
+    "host": {
+      "title": "Host e tempo de execução",
+      "description": "Detalhes do sistema operacional, processador e processo do Libre WebUI.",
+      "container": "Tempo de execução do contêiner",
+      "native": "Runtime nativo",
+      "hostname": "Nome do host",
+      "operatingSystem": "Sistema operacional",
+      "processor": "Processador",
+      "logicalCpus": "CPUs lógicos",
+      "loadAverage": "Carga média · 1 / 5 / 15 min",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Processo",
+      "workingDirectory": "Diretório de trabalho"
+    },
+    "memory": {
+      "title": "Memória",
+      "description": "Memória do sistema visível ao runtime e uso do processo da aplicação.",
+      "usedOf": "{{used}} usados de {{total}}",
+      "free": "{{value}} livres",
+      "processRss": "RSS do processo",
+      "heapUsed": "Heap V8 usado",
+      "heapTotal": "Heap V8 total",
+      "external": "Memória externa"
+    },
+    "storage": {
+      "title": "Armazenamento",
+      "description": "Espaço disponível para o sistema de arquivos do runtime e dados persistentes da aplicação.",
+      "used": "{{value}} usados",
+      "free": "{{value}} livres",
+      "empty": "As informações do sistema de arquivos estão indisponíveis neste runtime."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Status somente leitura do Docker Engine e uma lista reduzida de contêineres.",
+      "connected": "Conectado",
+      "unavailable": "Indisponível",
+      "unavailableDetail": "Os diagnósticos do Docker Engine estão indisponíveis.",
+      "socketStatus": "Socket local: {{status}}",
+      "mounted": "montado",
+      "notMounted": "não montado",
+      "running": "Em execução",
+      "stopped": "Parado",
+      "paused": "Pausado",
+      "total": "Total",
+      "version": "Versão",
+      "host": "Host",
+      "architecture": "Arquitetura",
+      "cpus": "CPUs",
+      "memory": "Memória",
+      "container": "Container",
+      "image": "Imagem",
+      "state": "Estado",
+      "created": "Criado",
+      "empty": "Docker está conectado e nenhum container está listado no momento."
+    },
+    "network": {
+      "title": "Rede",
+      "description": "Interfaces, endereços e contadores de tráfego Linux visíveis em tempo de execução.",
+      "internal": "interno",
+      "empty": "Nenhuma interface de rede está visível ao runtime da aplicação."
+    },
+    "securityNote": "Esta página é restrita a administradores. O servidor retorna apenas resumos operacionais: não expõe variáveis de ambiente, credenciais, rótulos do Docker, montagens, comandos de container ou payloads de inspeção. Quando o Libre WebUI é executado em um container, os detalhes de CPU e memória em nível de host vêm do Docker Engine quando seu socket local está disponível; outros valores descrevem o runtime da aplicação.",
+    "work": {
+      "title": "Work",
+      "description": "Sandboxes de todos os usuários",
+      "access": "Acesso",
+      "accessAdmins": "Somente administradores",
+      "accessAllUsers": "Todos os usuários",
+      "runtimeAvailable": "Disponível",
+      "runtimeUnavailable": "Indisponível",
+      "activeRuntimes": "Runtimes ativos",
+      "pendingCleanups": "Limpezas pendentes",
+      "orphans": "Contêineres órfãos",
+      "owner": "Proprietário",
+      "task": "Tarefa",
+      "state": "Estado",
+      "preview": "Pré-visualização",
+      "terminals": "Terminais",
+      "updated": "Atualizado",
+      "stateRunning": "Em execução",
+      "stateStopped": "Parado",
+      "stateStarting": "Iniciando",
+      "stateUnknown": "Desconhecido",
+      "noTasks": "Ainda não há tarefas do Work."
+    }
+  },
   "chatHistory": {
     "label": "Histórico da conversa",
     "jumpToTurn": "Ir para a interação {{index}} de {{total}}"
@@ -1650,6 +1785,57 @@
     "failed": "Falha ao gerar imagem",
     "enterPrompt": "Por favor, digite um prompt",
     "promptTooLong": "O prompt excede o comprimento máximo de {{max}} caracteres"
+  },
+  "mediaGeneration": {
+    "title": "Gerar mídia",
+    "description": "Crie vídeo, som, música ou fala com um provedor de mídia ativado.",
+    "image": "Imagem",
+    "video": "Vídeo",
+    "audio": "Áudio",
+    "sound": "Som",
+    "speech": "Fala",
+    "model": "Modelo",
+    "voice": "Voz ou ID da voz",
+    "cloneVoice": "Clonar uma voz de referência",
+    "cloneVoiceDescription": "Gere esta fala com base numa gravação de referência em vez de uma voz predefinida.",
+    "referenceAudio": "Áudio de referência",
+    "referenceTranscript": "Transcrição exata da referência",
+    "referenceTranscriptPlaceholder": "Introduza exatamente o que é dito na gravação de referência…",
+    "referenceAudioTooLarge": "O áudio de referência deve ter {{max}} ou menos.",
+    "cloneConsent": "Clone uma voz apenas quando tiver a autorização da pessoa que fala. A gravação é enviada ao fornecedor selecionado para esta geração e não é guardada pelo Libre WebUI.",
+    "saveVoiceProfile": "Guardar como voz reutilizável",
+    "saveVoiceProfileDescription": "Guarde esta gravação de referência e a transcrição em segurança. O Libre WebUI envia-as ao fornecedor selecionado para cada lote de Fala que usa esta voz.",
+    "voiceProfileName": "Nome da voz guardada",
+    "voiceProfileNamePlaceholder": "Por exemplo, A minha voz",
+    "voiceStorageConsent": "Confirmo que tenho autorização da pessoa que fala para clonar e guardar esta voz. A referência permanecerá guardada até eu a eliminar.",
+    "resolution": "Resolução",
+    "aspectRatio": "Proporção",
+    "duration": "Duração",
+    "providerDefault": "Padrão do provedor",
+    "generateAudio": "Gerar áudio com o vídeo quando suportado",
+    "prompt": "Prompt",
+    "text": "Texto para falar",
+    "videoPlaceholder": "Descreva a cena, movimento, câmera e iluminação...",
+    "audioPlaceholder": "Digite o texto que você quer que a voz fale...",
+    "soundPlaceholder": "Descreva o som, música, atmosfera ou resposta falada que você deseja...",
+    "generate": "Gerar",
+    "generating": "Gerando… isso pode levar vários minutos",
+    "success": "Mídia gerada e salva no Imagine",
+    "successWithSavedVoice": "Conteúdo multimédia gerado e «{{name}}» está agora disponível nas definições de Fala",
+    "failed": "Falha ao gerar mídia",
+    "loadFailed": "Falha ao carregar provedores de mídia",
+    "noModels": "Nenhum modelo {{kind}} está disponível. Ative um provedor compatível e salve sua credencial primeiro."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} itens",
+    "empty": "Nenhuma mídia gerada ainda",
+    "emptyHint": "Gere uma imagem, vídeo ou clipe de voz e ele aparecerá aqui.",
+    "filters": {
+      "all": "Todos",
+      "image": "Imagens",
+      "video": "Vídeos",
+      "audio": "Áudio"
+    }
   },
   "errorBoundary": {
     "title": "Algo deu errado",
@@ -1802,8 +1988,8 @@
       "saveFailed": "Falha ao salvar variáveis",
       "resetDefaults": "Restaurar padrões",
       "reset": "Variáveis restauradas",
-      "sensitiveSet": "Valor definido (insira novo valor para alterar)",
       "resetFailed": "Falha ao redefinir variáveis",
+      "sensitiveSet": "Valor definido (insira novo valor para alterar)",
       "showValue": "Mostrar valor de {{label}}",
       "hideValue": "Ocultar valor de {{label}}",
       "connection": "Conexão",
@@ -1841,45 +2027,6 @@
   "demoMode": {
     "title": "Modo demo",
     "github": "GitHub"
-  },
-  "personaBackground": {
-    "label": "Imagem de fundo",
-    "uploadBackgroundImage": "Enviar imagem de fundo",
-    "dragAndDrop": "Arraste e solte uma imagem ou clique para navegar",
-    "chooseImage": "Escolher imagem",
-    "uploading": "Enviando...",
-    "enterImageUrl": "Ou insira a URL da imagem",
-    "supportedFormats": "Suporta: JPG, PNG, GIF, WebP (máx 5MB). Imagens paisagem largas funcionam melhor.",
-    "customBackground": "Imagem de fundo personalizada",
-    "clickToChange": "Clique para alterar ou remover",
-    "removed": "Fundo removido",
-    "uploaded": "Fundo enviado com sucesso",
-    "invalidFile": "Por favor selecione um arquivo de imagem válido",
-    "fileTooLarge": "O tamanho da imagem de fundo deve ser menor que 5MB",
-    "readFailed": "Falha ao ler o arquivo de imagem",
-    "uploadFailed": "Falha ao enviar a imagem de fundo"
-  },
-  "modelSelector": {
-    "searchInstalled": "Pesquisar modelos instalados...",
-    "searchOllama": "Pesquisar na biblioteca Ollama...",
-    "searchHuggingFace": "Pesquisar no HuggingFace...",
-    "selectModel": "Selecionar modelo",
-    "personas": "Personas",
-    "ollamaModels": "Modelos Ollama",
-    "pluginModels": "Modelos de plugins",
-    "actions": "Ações",
-    "installed": "Instalado",
-    "use": "Usar",
-    "pull": "Baixar",
-    "pullRestricted": "A instalação de modelos está restrita a administradores nesta instância.",
-    "adminOnlyPull": "Apenas administradores",
-    "legacyProvider": "provedor não registrado",
-    "providerNotRecorded": "Provedor não registrado",
-    "providerUnavailable": "provedor indisponível",
-    "reselectProvider": "selecione novamente um provedor para fixar este modelo",
-    "unavailable": "indisponível",
-    "unavailableSelections": "Seleções indisponíveis",
-    "agentModels": "Agentes"
   },
   "libreClaw": {
     "title": "Agentes",
@@ -2223,224 +2370,44 @@
       "warning": "A tarefa pode ler e escrever esta pasta diretamente. Deixe em branco para um espaço isolado."
     }
   },
-  "usageAnalytics": {
-    "eyebrow": "Administração",
-    "title": "Uso do provedor",
-    "description": "Acompanhe as chamadas de API de saída e o consumo de modelos nos plugins habilitados nesta instância.",
-    "days": "{{count}} dias",
-    "refresh": "Atualizar uso",
-    "loadFailed": "O uso do provedor não pôde ser carregado.",
-    "metrics": {
-      "calls": "Chamadas",
-      "tokens": "Tokens"
-    },
-    "cards": {
-      "calls": "Chamadas de API",
-      "callsDetail": "Entre {{count}} usuário(s) ativo(s)",
-      "tokens": "Tokens relatados",
-      "tokensDetail": "Uso relatado em {{count}} chamada(s)",
-      "success": "Taxa de sucesso",
-      "successDetail": "{{count}} chamada(s) com falha",
-      "latency": "Latência média",
-      "latencyDetail": "Tempo total do provedor"
-    },
-    "activity": {
-      "title": "Consumo ao longo do tempo",
-      "callsDescription": "Solicitações diárias de saída para plugins ativados",
-      "tokensDescription": "Totais diários de tokens reportados pelos provedores",
-      "chartLabel": "Gráfico diário de {{metric}} do provedor"
-    },
-    "models": {
-      "title": "Consumo por modelo",
-      "description": "Os modelos com maior tráfego neste período.",
-      "model": "Modelo",
-      "success": "Sucesso",
-      "latency": "Latência"
-    },
-    "providers": {
-      "title": "Tráfego de plugins ativados"
-    },
-    "capabilities": {
-      "title": "Mix de capacidades",
-      "characters": "{{count}} caracteres",
-      "bytes": "{{count}} bytes",
-      "images": "{{count}} imagens",
-      "jobs": "{{count}} trabalhos de vídeo",
-      "inputs": "{{count}} entradas",
-      "reportedTokens": "{{count}} tokens reportados"
-    },
-    "empty": {
-      "title": "Nenhuma chamada de provedor ainda",
-      "description": "As chamadas aparecerão aqui após um plugin ativado processar solicitações de chat, trabalho, incorporação, imagem, fala, som ou vídeo."
-    },
-    "privacyNote": "O uso é medido no servidor no limite do plugin de saída. O Libre WebUI armazena provedor, modelo, tempo, status e contadores reportados — nunca prompts, respostas, endpoints, credenciais ou corpos de erro do provedor. Os totais de tokens incluem apenas chamadas em que o provedor retornou metadados de uso.",
-    "heatmap": {
-      "title": "Um ano de atividade",
-      "description": "Chamadas diárias a provedores no último ano, coloridas pelo modelo mais usado de cada dia.",
-      "calls": "chamadas",
-      "noCalls": "Sem chamadas",
-      "other": "Outros modelos",
-      "less": "Menos",
-      "more": "Mais",
-      "yearTotal": "{{formatted}} chamadas no último ano"
-    }
+  "personaBackground": {
+    "label": "Imagem de fundo",
+    "uploadBackgroundImage": "Enviar imagem de fundo",
+    "dragAndDrop": "Arraste e solte uma imagem ou clique para navegar",
+    "chooseImage": "Escolher imagem",
+    "uploading": "Enviando...",
+    "enterImageUrl": "Ou insira a URL da imagem",
+    "supportedFormats": "Suporta: JPG, PNG, GIF, WebP (máx 5MB). Imagens paisagem largas funcionam melhor.",
+    "customBackground": "Imagem de fundo personalizada",
+    "clickToChange": "Clique para alterar ou remover",
+    "removed": "Fundo removido",
+    "uploaded": "Fundo enviado com sucesso",
+    "invalidFile": "Por favor selecione um arquivo de imagem válido",
+    "fileTooLarge": "O tamanho da imagem de fundo deve ser menor que 5MB",
+    "readFailed": "Falha ao ler o arquivo de imagem",
+    "uploadFailed": "Falha ao enviar a imagem de fundo"
   },
-  "systemPage": {
-    "eyebrow": "Administração",
-    "title": "Sistema",
-    "description": "Monitore a máquina e o tempo de execução que hospedam esta instância do Libre WebUI.",
-    "updated": "Atualizado em {{date}}",
-    "refresh": "Atualizar informações do sistema",
-    "loadFailed": "Não foi possível carregar as informações do sistema.",
-    "cards": {
-      "uptime": "Tempo de atividade do host",
-      "uptimeDetail": "Em execução desde {{date}}",
-      "memory": "Memória usada",
-      "memoryDetail": "{{used}} de {{total}}",
-      "freeSpace": "Espaço livre",
-      "freeSpaceDetail": "{{label}} · {{total}} total",
-      "containers": "Contêineres em execução",
-      "containersDetail": "{{total}} contêiner(es) conhecidos pelo Docker",
-      "dockerUnavailable": "Docker indisponível",
-      "unavailable": "Indisponível"
-    },
-    "host": {
-      "title": "Host e tempo de execução",
-      "description": "Detalhes do sistema operacional, processador e processo do Libre WebUI.",
-      "container": "Tempo de execução do contêiner",
-      "native": "Runtime nativo",
-      "hostname": "Nome do host",
-      "operatingSystem": "Sistema operacional",
-      "processor": "Processador",
-      "logicalCpus": "CPUs lógicos",
-      "loadAverage": "Carga média · 1 / 5 / 15 min",
-      "libreVersion": "Libre WebUI",
-      "nodeVersion": "Node.js",
-      "process": "Processo",
-      "workingDirectory": "Diretório de trabalho"
-    },
-    "memory": {
-      "title": "Memória",
-      "description": "Memória do sistema visível ao runtime e uso do processo da aplicação.",
-      "usedOf": "{{used}} usados de {{total}}",
-      "free": "{{value}} livres",
-      "processRss": "RSS do processo",
-      "heapUsed": "Heap V8 usado",
-      "heapTotal": "Heap V8 total",
-      "external": "Memória externa"
-    },
-    "storage": {
-      "title": "Armazenamento",
-      "description": "Espaço disponível para o sistema de arquivos do runtime e dados persistentes da aplicação.",
-      "used": "{{value}} usados",
-      "free": "{{value}} livres",
-      "empty": "As informações do sistema de arquivos estão indisponíveis neste runtime."
-    },
-    "docker": {
-      "title": "Docker",
-      "description": "Status somente leitura do Docker Engine e uma lista reduzida de contêineres.",
-      "connected": "Conectado",
-      "unavailable": "Indisponível",
-      "unavailableDetail": "Os diagnósticos do Docker Engine estão indisponíveis.",
-      "socketStatus": "Socket local: {{status}}",
-      "mounted": "montado",
-      "notMounted": "não montado",
-      "running": "Em execução",
-      "stopped": "Parado",
-      "paused": "Pausado",
-      "total": "Total",
-      "version": "Versão",
-      "host": "Host",
-      "architecture": "Arquitetura",
-      "cpus": "CPUs",
-      "memory": "Memória",
-      "container": "Container",
-      "image": "Imagem",
-      "state": "Estado",
-      "created": "Criado",
-      "empty": "Docker está conectado e nenhum container está listado no momento."
-    },
-    "network": {
-      "title": "Rede",
-      "description": "Interfaces, endereços e contadores de tráfego Linux visíveis em tempo de execução.",
-      "internal": "interno",
-      "empty": "Nenhuma interface de rede está visível ao runtime da aplicação."
-    },
-    "securityNote": "Esta página é restrita a administradores. O servidor retorna apenas resumos operacionais: não expõe variáveis de ambiente, credenciais, rótulos do Docker, montagens, comandos de container ou payloads de inspeção. Quando o Libre WebUI é executado em um container, os detalhes de CPU e memória em nível de host vêm do Docker Engine quando seu socket local está disponível; outros valores descrevem o runtime da aplicação.",
-    "work": {
-      "title": "Work",
-      "description": "Sandboxes de todos os usuários",
-      "access": "Acesso",
-      "accessAdmins": "Somente administradores",
-      "accessAllUsers": "Todos os usuários",
-      "runtimeAvailable": "Disponível",
-      "runtimeUnavailable": "Indisponível",
-      "activeRuntimes": "Runtimes ativos",
-      "pendingCleanups": "Limpezas pendentes",
-      "orphans": "Contêineres órfãos",
-      "owner": "Proprietário",
-      "task": "Tarefa",
-      "state": "Estado",
-      "preview": "Pré-visualização",
-      "terminals": "Terminais",
-      "updated": "Atualizado",
-      "stateRunning": "Em execução",
-      "stateStopped": "Parado",
-      "stateStarting": "Iniciando",
-      "stateUnknown": "Desconhecido",
-      "noTasks": "Ainda não há tarefas do Work."
-    }
-  },
-  "mediaGeneration": {
-    "title": "Gerar mídia",
-    "description": "Crie vídeo, som, música ou fala com um provedor de mídia ativado.",
-    "image": "Imagem",
-    "video": "Vídeo",
-    "audio": "Áudio",
-    "sound": "Som",
-    "speech": "Fala",
-    "model": "Modelo",
-    "voice": "Voz ou ID da voz",
-    "cloneVoice": "Clonar uma voz de referência",
-    "cloneVoiceDescription": "Gere esta fala com base numa gravação de referência em vez de uma voz predefinida.",
-    "referenceAudio": "Áudio de referência",
-    "referenceTranscript": "Transcrição exata da referência",
-    "referenceTranscriptPlaceholder": "Introduza exatamente o que é dito na gravação de referência…",
-    "referenceAudioTooLarge": "O áudio de referência deve ter {{max}} ou menos.",
-    "cloneConsent": "Clone uma voz apenas quando tiver a autorização da pessoa que fala. A gravação é enviada ao fornecedor selecionado para esta geração e não é guardada pelo Libre WebUI.",
-    "saveVoiceProfile": "Guardar como voz reutilizável",
-    "saveVoiceProfileDescription": "Guarde esta gravação de referência e a transcrição em segurança. O Libre WebUI envia-as ao fornecedor selecionado para cada lote de Fala que usa esta voz.",
-    "voiceProfileName": "Nome da voz guardada",
-    "voiceProfileNamePlaceholder": "Por exemplo, A minha voz",
-    "voiceStorageConsent": "Confirmo que tenho autorização da pessoa que fala para clonar e guardar esta voz. A referência permanecerá guardada até eu a eliminar.",
-    "successWithSavedVoice": "Conteúdo multimédia gerado e «{{name}}» está agora disponível nas definições de Fala",
-    "resolution": "Resolução",
-    "aspectRatio": "Proporção",
-    "duration": "Duração",
-    "providerDefault": "Padrão do provedor",
-    "generateAudio": "Gerar áudio com o vídeo quando suportado",
-    "prompt": "Prompt",
-    "text": "Texto para falar",
-    "videoPlaceholder": "Descreva a cena, movimento, câmera e iluminação...",
-    "audioPlaceholder": "Digite o texto que você quer que a voz fale...",
-    "soundPlaceholder": "Descreva o som, música, atmosfera ou resposta falada que você deseja...",
-    "generate": "Gerar",
-    "generating": "Gerando… isso pode levar vários minutos",
-    "success": "Mídia gerada e salva no Imagine",
-    "failed": "Falha ao gerar mídia",
-    "loadFailed": "Falha ao carregar provedores de mídia",
-    "noModels": "Nenhum modelo {{kind}} está disponível. Ative um provedor compatível e salve sua credencial primeiro."
-  },
-  "mediaGallery": {
-    "itemCount": "{{count}} itens",
-    "empty": "Nenhuma mídia gerada ainda",
-    "emptyHint": "Gere uma imagem, vídeo ou clipe de voz e ele aparecerá aqui.",
-    "filters": {
-      "all": "Todos",
-      "image": "Imagens",
-      "video": "Vídeos",
-      "audio": "Áudio"
-    }
+  "modelSelector": {
+    "searchInstalled": "Pesquisar modelos instalados...",
+    "searchOllama": "Pesquisar na biblioteca Ollama...",
+    "searchHuggingFace": "Pesquisar no HuggingFace...",
+    "selectModel": "Selecionar modelo",
+    "personas": "Personas",
+    "ollamaModels": "Modelos Ollama",
+    "pluginModels": "Modelos de plugins",
+    "actions": "Ações",
+    "installed": "Instalado",
+    "use": "Usar",
+    "pull": "Baixar",
+    "pullRestricted": "A instalação de modelos está restrita a administradores nesta instância.",
+    "adminOnlyPull": "Apenas administradores",
+    "legacyProvider": "provedor não registrado",
+    "providerNotRecorded": "Provedor não registrado",
+    "providerUnavailable": "provedor indisponível",
+    "reselectProvider": "selecione novamente um provedor para fixar este modelo",
+    "unavailable": "indisponível",
+    "unavailableSelections": "Seleções indisponíveis",
+    "agentModels": "Agentes"
   },
   "whatsNew": {
     "title": "Novidades",

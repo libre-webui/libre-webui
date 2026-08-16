@@ -59,11 +59,11 @@
       "loginSuccess": "Innskráning tókst!",
       "loginFailed": "Innskráning mistókst",
       "checkCredentials": "Innskráning mistókst. Athugaðu innskráningarupplýsingarnar.",
+      "approvalPending": "Aðgangurinn þinn bíður samþykkis stjórnanda.",
       "enterBoth": "Sláðu inn bæði notandanafn og lykilorð",
       "githubSuccess": "GitHub innskráning tókst!",
       "githubFailed": "GitHub auðkenning mistókst",
       "githubVerifyFailed": "Ekki tókst að staðfesta GitHub auðkenningu",
-      "approvalPending": "Aðgangurinn þinn bíður samþykkis stjórnanda.",
       "verificationFailed": "Öryggisstaðfesting mistókst. Endurhladdu síðunni og reyndu aftur."
     },
     "signup": {
@@ -82,15 +82,15 @@
       "hasAccount": "Ertu nú þegar með reikning?",
       "signInHere": "Skráðu þig inn hér",
       "signupSuccess": "Reikningur stofnaður!",
+      "approvalPending": "Skráning móttekin. Stjórnandi verður að samþykkja aðganginn þinn.",
+      "awaitingApproval": "Bíður samþykkis",
+      "awaitingApprovalDescription": "Aðgangurinn þinn hefur verið búinn til, en stjórnandi verður að virkja hann áður en þú getur skráð þig inn.",
+      "backToSignIn": "Til baka til innskráningar",
       "signupFailed": "Nýskráning mistókst",
       "tryAgain": "Nýskráning mistókst. Reyndu aftur.",
       "usernameRequired": "Notandanafn og lykilorð eru nauðsynleg",
       "passwordMismatch": "Lykilorðin stemma ekki",
-      "passwordTooShort": "Lykilorð verður að vera að minnsta kosti 6 stafir",
-      "approvalPending": "Skráning móttekin. Stjórnandi verður að samþykkja aðganginn þinn.",
-      "awaitingApproval": "Bíður samþykkis",
-      "awaitingApprovalDescription": "Aðgangurinn þinn hefur verið búinn til, en stjórnandi verður að virkja hann áður en þú getur skráð þig inn.",
-      "backToSignIn": "Til baka til innskráningar"
+      "passwordTooShort": "Lykilorð verður að vera að minnsta kosti 6 stafir"
     },
     "logout": {
       "button": "Skrá út",
@@ -166,9 +166,9 @@
       "createAdmin": "Stofna stjórnanda",
       "success": "Stjórnandareikningur stofnaður!",
       "failed": "Ekki tókst að stofna stjórnendareikning",
+      "approvalUnexpected": "Ekki tókst að virkja upphaflega stjórnandann. Reyndu aftur.",
       "fillAllFields": "Fylltu út alla reiti",
-      "note": "Þetta verður aðal stjórnandareikningurinn fyrir Libre WebUI",
-      "approvalUnexpected": "Ekki tókst að virkja upphaflega stjórnandann. Reyndu aftur."
+      "note": "Þetta verður aðal stjórnandareikningurinn fyrir Libre WebUI"
     },
     "encryptionKey": {
       "title": "Vistaðu dulritunarlyklinn þinn",
@@ -277,6 +277,7 @@
       "work": "Vinna",
       "chat": "Spjall",
       "private": "Einkamál",
+      "incognito": "Huliðspjall",
       "privateMode": "Einkahamur",
       "privateDescription": "Þetta samtal verður ekki vistað",
       "privateTooltip": "Hefja einkasamtal sem verður ekki vistað",
@@ -290,7 +291,6 @@
       "pinChat": "Festa",
       "unpinChat": "Losa",
       "deleteChat": "Eyða spjalli",
-      "incognito": "Huliðspjall",
       "archiveChat": "Setja spjall í geymslu",
       "groups": {
         "pinned": "Fest",
@@ -410,32 +410,27 @@
       "models": "Líkön",
       "personas": "Persónur",
       "imagine": "Myndsköpun",
-      "settings": "Stillingar",
-      "userManagement": "Notendastjórnun",
-      "signOut": "Skrá út",
       "agents": "Fulltrúar",
       "work": "Vinna",
-      "exploreLabel": "Kanna",
+      "settings": "Stillingar",
       "usageAnalytics": "Notkun þjónustuaðila",
       "system": "Kerfi",
+      "userManagement": "Notendastjórnun",
+      "signOut": "Skrá út",
+      "exploreLabel": "Kanna",
       "notes": "Glósur"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
-    "expandSidebar": "Stækka hliðarspjald",
-    "pinned": {
-      "label": "Fest",
-      "pin": "Festa á hliðarspjald",
-      "unpin": "Losa af hliðarspjaldi"
-    }
+    "expandSidebar": "Stækka hliðarspjald"
   },
   "user": {
     "menu": {
       "changePicture": "Breyta mynd",
       "settings": "Stillingar",
-      "userManagement": "Notendastjórnun",
-      "logout": "Skrá út",
       "usageAnalytics": "Notkun þjónustuaðila",
-      "system": "Kerfi"
+      "system": "Kerfi",
+      "userManagement": "Notendastjórnun",
+      "logout": "Skrá út"
     },
     "avatar": {
       "title": "Breyta prófílmynd",
@@ -478,8 +473,7 @@
       "shortcuts": "Flýtileiðir",
       "about": "Um",
       "sessions": "Setur",
-      "apiKeys": "API lyklar",
-      "connections": "Tengingar"
+      "apiKeys": "API lyklar"
     },
     "appearance": {
       "title": "Útlit",
@@ -531,6 +525,13 @@
       "defaultModel": "Sjálfgefið líkan",
       "defaultModelDescription": "Þetta líkan verður notað sjálfgefið fyrir ný samtöl",
       "selectModel": "Veldu líkan",
+      "specializedModels": "Sérhæfð líkön",
+      "visionModel": "Sjónlíkan",
+      "selectVisionModel": "Nota núverandi spjalllíkan",
+      "visionModelDescription": "Notað sjálfkrafa þegar útgönguspjallsamhengi inniheldur myndir. Veldu líkan sem styður myndainntak.",
+      "visionModelUpdateFailed": "Ekki tókst að uppfæra sjónlíkanið: {{error}}",
+      "visionModelNoProvider": "Þetta sjónlíkan hefur ekkert auðkenni veitanda. Veldu tiltækt líkan.",
+      "persona": "Persóna",
       "updateAll": "Uppfæra öll líkön",
       "updateAllDescription": "Athuga uppfærslur og sækja nýjustu útgáfur allra uppsettra líkana",
       "updateAllButton": "Uppfæra öll",
@@ -553,15 +554,8 @@
         "selectTaskModel": "Veldu verkefnislíkan",
         "taskModelDescription": "Líkan notað til að búa til samtalstitla"
       },
-      "persona": "Persóna",
       "updatingModel": "Uppfæri {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} af {{total}} módel",
-      "specializedModels": "Sérhæfð líkön",
-      "visionModel": "Sjónlíkan",
-      "selectVisionModel": "Nota núverandi spjalllíkan",
-      "visionModelDescription": "Notað sjálfkrafa þegar útgönguspjallsamhengi inniheldur myndir. Veldu líkan sem styður myndainntak.",
-      "visionModelUpdateFailed": "Ekki tókst að uppfæra sjónlíkanið: {{error}}",
-      "visionModelNoProvider": "Þetta sjónlíkan hefur ekkert auðkenni veitanda. Veldu tiltækt líkan."
+      "modelsProgress": "{{current}} af {{total}} módel"
     },
     "systemMessage": {
       "title": "Kerfisskilaboð",
@@ -573,6 +567,13 @@
     "plugins": {
       "title": "Viðbætur",
       "description": "Stjórnaðu uppsettu viðbótunum þínum",
+      "providerConnections": "Tengingar þjónustuaðila",
+      "providerConnectionsDescription": "Tengdu, stilltu og skoðaðu líkanaveitur í gegnum viðbætur.",
+      "providers": "Þjónustuaðilar",
+      "searchProviders": "Leita að þjónustuaðilum",
+      "noProvidersFound": "Engir þjónustuaðilar samsvara leitinni.",
+      "selectProvider": "Veldu þjónustuaðila",
+      "selectProviderDescription": "Veldu þjónustuaðila til að skoða tengingu hans og líkanasafn.",
       "addNew": "Bæta við nýrri viðbót",
       "upload": "Hlaða upp viðbót",
       "addJson": "Bæta við JSON",
@@ -591,33 +592,12 @@
       "models": "líkön",
       "apiKeySet": "API lykill stilltur",
       "apiKeyConfiguration": "Stilling API lykils",
+      "apiKeyDescription": "Geyma persónulegan API-lykil fyrir {{name}}.",
       "apiKeyEnvAlternative": "Að öðrum kosti, stilltu",
       "environmentVariable": "umhverfisbreytu",
       "apiKeyConfigured": "API lykill stilltur",
       "apiKeyPlaceholder": "Sláðu inn API lykilinn þinn...",
       "saveApiKey": "Vista API lykil",
-      "apiKey": {
-        "title": "API lykill",
-        "placeholder": "Sláðu inn API lykil",
-        "save": "Vista lykil",
-        "remove": "Fjarlægja lykil",
-        "configured": "API lykill stilltur",
-        "notConfigured": "API lykils krafist",
-        "saved": "API lykill vistaður",
-        "removed": "API lykill fjarlægður",
-        "saveFailed": "Ekki tókst að vista API lykil",
-        "removeFailed": "Ekki tókst að fjarlægja API lykil",
-        "enterKey": "Sláðu inn API lykil"
-      },
-      "variables": "Variables",
-      "providerConnections": "Tengingar þjónustuaðila",
-      "providerConnectionsDescription": "Tengdu, stilltu og skoðaðu líkanaveitur í gegnum viðbætur.",
-      "providers": "Þjónustuaðilar",
-      "searchProviders": "Leita að þjónustuaðilum",
-      "noProvidersFound": "Engir þjónustuaðilar samsvara leitinni.",
-      "selectProvider": "Veldu þjónustuaðila",
-      "selectProviderDescription": "Veldu þjónustuaðila til að skoða tengingu hans og líkanasafn.",
-      "apiKeyDescription": "Geyma persónulegan API-lykil fyrir {{name}}.",
       "showApiKey": "Sýna API-lykil",
       "hideApiKey": "Fela API-lykil",
       "configure": "Stilla",
@@ -643,7 +623,21 @@
         "transcription": "Ritskráning"
       },
       "exportPlugin": "Flytja út viðbót",
-      "deletePlugin": "Eyða viðbót"
+      "deletePlugin": "Eyða viðbót",
+      "apiKey": {
+        "title": "API lykill",
+        "placeholder": "Sláðu inn API lykil",
+        "save": "Vista lykil",
+        "remove": "Fjarlægja lykil",
+        "configured": "API lykill stilltur",
+        "notConfigured": "API lykils krafist",
+        "saved": "API lykill vistaður",
+        "removed": "API lykill fjarlægður",
+        "saveFailed": "Ekki tókst að vista API lykil",
+        "removeFailed": "Ekki tókst að fjarlægja API lykil",
+        "enterKey": "Sláðu inn API lykil"
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Myndunarstillingar",
@@ -653,6 +647,8 @@
       "scopeModel": "Aðeins {{model}}",
       "scopeAllHint": "Gildin sem hvert líkan notar nema það hafi sín eigin.",
       "scopeModelHint": "Vistað aðeins fyrir þetta líkan og gengur framar almennu gildunum.",
+      "advancedSettings": "Ítarlegar stillingar myndunar",
+      "advancedSettingsDescription": "Úrtak, takmörk tókna, samhengi, viðurlög og stopp-runar",
       "coreParameters": "Grunnfæribreytur",
       "temperature": "Hitastig",
       "temperatureDescription": "Stýrir tilviljun. Lægri gildi eru markvissari, hærri gildi skapandi.",
@@ -684,9 +680,7 @@
       "resetDefaults": "Endurstilla á sjálfgefið",
       "saveOptions": "Vista stillingar",
       "embeddingSettings": "Innfellinga stillingar",
-      "enableEmbeddings": "Virkja innfellingar skjala",
-      "advancedSettings": "Ítarlegar stillingar myndunar",
-      "advancedSettingsDescription": "Úrtak, takmörk tókna, samhengi, viðurlög og stopp-runar"
+      "enableEmbeddings": "Virkja innfellingar skjala"
     },
     "documents": {
       "title": "Skjalastillingar",
@@ -796,6 +790,7 @@
       "title": "Gagnastjórnun",
       "export": "Flytja út gögn",
       "exportDescription": "Sæktu færanlegt safn með kjörstillingum, spjallmöppum, setum og skilaboðum, glósum, þekkingarsöfnum og útdregnum texta skjala.",
+      "archiveScopeV3": "Inniheldur kjörstillingar, spjöll, möppur, glósur, þekkingarsöfn og útdreginn texta skjala. Undanskilur reikninga og leyndarmál, lífkennilega klónaðar raddir, myndað efni, persónur og minni, ásamt Work-gögnum eða -diskum.",
       "exportAll": "Flytja út öll gögn",
       "import": "Flytja inn gögn",
       "importDescription": "Flytja inn gögn frá fyrri útflutningi.",
@@ -836,8 +831,7 @@
         "title": "Spjall í geymslu",
         "empty": "Ekkert spjall í geymslu",
         "unarchive": "Taka úr geymslu"
-      },
-      "archiveScopeV3": "Inniheldur kjörstillingar, spjöll, möppur, glósur, þekkingarsöfn og útdreginn texta skjala. Undanskilur reikninga og leyndarmál, lífkennilega klónaðar raddir, myndað efni, persónur og minni, ásamt Work-gögnum eða -diskum."
+      }
     },
     "about": {
       "title": "Um",
@@ -927,41 +921,6 @@
       "promptDescription": "Sniðmátsbreyturnar {{previousSummaryVariable}} og {{messagesVariable}} eru fylltar með fyrri samantekt og skilaboðunum sem verið er að taka saman.",
       "saved": "Samþjöppunarstillingar vistaðar",
       "saveFailed": "Ekki tókst að vista samþjöppunarstillingarnar"
-    },
-    "connections": {
-      "title": "Tengingar",
-      "description": "Líkanaveiturnar sem þessi þjónn talar við: staðbundna Ollama keyrsluumhverfið og endapunktar samhæfðir OpenAI.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Staðbundið keyrsluumhverfi líkana.",
-      "version": "Útgáfa {{version}}.",
-      "statusChecking": "Athuga…",
-      "statusOnline": "Tengt",
-      "statusOffline": "Ótengt",
-      "providersTitle": "OpenAI-samhæfðar tengingar",
-      "providersDescription": "Hver tenging er veita fyrir svör (completions) og líkön hennar birtast í líkanavali spjallsins. API lyklar eru geymdir þjónsmegin.",
-      "noConnections": "Engar tengingar hafa verið stilltar enn.",
-      "modelsCount": "{{total}} líkön",
-      "pendingDiscovery": "Líkön bíða uppgötvunar",
-      "apiKeyMissing": "Enginn API lykill",
-      "deleteConfirm": "Eyða þessari tengingu? Spjöll sem nota líkön hennar missa aðgang að þeim.",
-      "addTitle": "Bæta við tengingu",
-      "addDescription": "Skráðu OpenAI-samhæfðan chat completions endapunkt sem veitu.",
-      "nameLabel": "Birtingarnafn",
-      "namePlaceholder": "Veitan mín",
-      "idPreview": "Auðkenni tengingar: {{id}}",
-      "endpointLabel": "Vefslóð endapunkts",
-      "endpointDescription": "Full chat completions vefslóð, til dæmis https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "API lykill",
-      "apiKeyOptionalHint": "(valfrjálst, hægt að bæta við síðar)",
-      "nameRequired": "Sláðu inn birtingarnafn fyrir tenginguna.",
-      "endpointInvalid": "Sláðu inn gilda http(s) vefslóð endapunkts.",
-      "alreadyExists": "Tenging með þessu auðkenni er þegar til.",
-      "add": "Bæta við tengingu",
-      "adding": "Bæti við…",
-      "added": "Tengingu bætt við",
-      "addFailed": "Ekki tókst að bæta tengingunni við",
-      "keySaveFailed": "Tengingu bætt við en ekki tókst að vista API lykilinn",
-      "activateFailed": "Tengingu bætt við en ekki tókst að virkja hana"
     },
     "sessions": {
       "title": "Setur",
@@ -1115,25 +1074,33 @@
     "sections": {
       "pull": "Sækja nýtt líkan",
       "library": "Skoða safn",
+      "huggingface": "HuggingFace Hub",
       "running": "Líkön í gangi",
       "local": "Staðbundin líkön",
       "advanced": "Ítarlegar aðgerðir",
-      "huggingface": "HuggingFace Hub",
       "catalog": "Líkanaskrá"
     },
     "catalog": {
-      "models": "í boði",
       "searchPlaceholder": "Leita að líkönum eftir nafni eða veitu...",
       "noModels": "Engin líkön eru í boði enn.",
       "empty": "Engin líkön passa við leitina.",
       "providerOllama": "Ollama",
-      "default": "Sjálfgefið",
-      "makeDefault": "Gera sjálfgefið",
-      "defaultSet": "{{model}} er nú sjálfgefna líkanið þitt.",
       "hidden": "Falið",
+      "visibilityFailed": "Ekki tókst að uppfæra sýnileika líkansins.",
+      "filterAll": "Öll líkön",
+      "filterLocal": "Staðbundin",
+      "filterProviders": "Þjónustuaðilar",
+      "filterHidden": "Falin",
+      "enableAll": "Virkja sýnd",
+      "disableAll": "Afvirkja sýnd",
+      "rename": "Breyta nafni og mynd",
+      "setPicture": "Velja mynd",
+      "clearPicture": "Fjarlægja mynd",
+      "pictureInvalid": "Veldu myndskrá.",
+      "pictureTooLarge": "Myndir verða að vera undir 192 KB.",
+      "saving": "Vistar…",
       "hide": "Fela fyrir notendum",
-      "show": "Sýna notendum",
-      "visibilityFailed": "Ekki tókst að uppfæra sýnileika líkansins."
+      "show": "Sýna notendum"
     },
     "pull": {
       "placeholder": "Sláðu inn nafn líkans (t.d. llama3.2:3b, deepseek-r1:14b)",
@@ -1163,6 +1130,37 @@
       "installed": "Uppsett",
       "more": "+{{count}} fleiri",
       "refresh": "Endurhlaða safni"
+    },
+    "huggingface": {
+      "browseAll": "Skoða allt á HuggingFace",
+      "checkingGguf": "Leita að GGUF skrám...",
+      "noGgufAvailable": "Engar GGUF skrár tiltækar fyrir beina Ollama niðurhal",
+      "ggufFilesCount": "GGUF skrár ({{count}}) - Sækja beint í Ollama",
+      "noModelsFound": "Engin líkön fundust",
+      "noResults": "Engin líkön fundust. Prófaðu að breyta leit eða síum.",
+      "browseAllLink": "Skoða allt",
+      "search": "Leita í HuggingFace líkönum...",
+      "by": "eftir",
+      "gated": "Takmarkaður aðgangur",
+      "viewOnHF": "Skoða á HuggingFace",
+      "sortDownloads": "Niðurhal",
+      "sortLikes": "Líkar við",
+      "sortRecent": "Nýlegt",
+      "taskTextGeneration": "Textagerð",
+      "taskTextToSpeech": "Texti í tal",
+      "taskTextToImage": "Texti í mynd",
+      "taskSpeechRecognition": "Talgreining",
+      "tasks": {
+        "textGen": "Textagerð",
+        "tts": "Texti í tal",
+        "image": "Texti í mynd",
+        "stt": "Talgreining"
+      },
+      "sort": {
+        "downloads": "Mest niðurhlaðið",
+        "likes": "Mest vinsælt",
+        "recent": "Nýlega uppfært"
+      }
     },
     "local": {
       "noModels": "Engin líkön uppsett ennþá",
@@ -1241,37 +1239,6 @@
         "success": "Búin til {{count}}-vídd innfellingavigur",
         "failed": "Ekki tókst að búa til innfellingar",
         "enterBoth": "Veldu líkan og sláðu inn texta"
-      }
-    },
-    "huggingface": {
-      "browseAll": "Skoða allt á HuggingFace",
-      "checkingGguf": "Leita að GGUF skrám...",
-      "noGgufAvailable": "Engar GGUF skrár tiltækar fyrir beina Ollama niðurhal",
-      "ggufFilesCount": "GGUF skrár ({{count}}) - Sækja beint í Ollama",
-      "noModelsFound": "Engin líkön fundust",
-      "noResults": "Engin líkön fundust. Prófaðu að breyta leit eða síum.",
-      "browseAllLink": "Skoða allt",
-      "search": "Leita í HuggingFace líkönum...",
-      "by": "eftir",
-      "gated": "Takmarkaður aðgangur",
-      "viewOnHF": "Skoða á HuggingFace",
-      "sortDownloads": "Niðurhal",
-      "sortLikes": "Líkar við",
-      "sortRecent": "Nýlegt",
-      "taskTextGeneration": "Textagerð",
-      "taskTextToSpeech": "Texti í tal",
-      "taskTextToImage": "Texti í mynd",
-      "taskSpeechRecognition": "Talgreining",
-      "tasks": {
-        "textGen": "Textagerð",
-        "tts": "Texti í tal",
-        "image": "Texti í mynd",
-        "stt": "Talgreining"
-      },
-      "sort": {
-        "downloads": "Mest niðurhlaðið",
-        "likes": "Mest vinsælt",
-        "recent": "Nýlega uppfært"
       }
     }
   },
@@ -1445,6 +1412,17 @@
     "deleteSuccess": "Notanda eytt",
     "deleteFailed": "Ekki tókst að eyða notanda",
     "cannotDeleteSelf": "Þú getur ekki eytt þínum eigin reikningi",
+    "approval": {
+      "title": "Bíðandi samþykki",
+      "description": "Yfirfarðu nýjar skráningar áður en þeim er leyft aðgang að þessu tilviki.",
+      "registered": "Skráð",
+      "activate": "Virkja reikning",
+      "reject": "Hafna skráningu",
+      "approved": "{{name}} getur núna skráð sig inn.",
+      "failed": "Ekki tókst að samþykkja reikninginn.",
+      "notification": "{{count}} skráning(ar) bíða samþykkis þíns.",
+      "notificationBadge": "{{count}} bíðandi notandasamþykki"
+    },
     "form": {
       "title": {
         "create": "Búa til notanda",
@@ -1466,17 +1444,6 @@
       "updateSuccess": "Notandi uppfærður",
       "createFailed": "Ekki tókst að stofna notanda",
       "updateFailed": "Ekki tókst að uppfæra notanda"
-    },
-    "approval": {
-      "title": "Bíðandi samþykki",
-      "description": "Yfirfarðu nýjar skráningar áður en þeim er leyft aðgang að þessu tilviki.",
-      "registered": "Skráð",
-      "activate": "Virkja reikning",
-      "reject": "Hafna skráningu",
-      "approved": "{{name}} getur núna skráð sig inn.",
-      "failed": "Ekki tókst að samþykkja reikninginn.",
-      "notification": "{{count}} skráning(ar) bíða samþykkis þíns.",
-      "notificationBadge": "{{count}} bíðandi notandasamþykki"
     },
     "workAccess": {
       "title": "Work-aðgangur",
@@ -1582,6 +1549,174 @@
       "target": "Viðfang"
     }
   },
+  "usageAnalytics": {
+    "eyebrow": "Stjórnun",
+    "title": "Notkun veitu",
+    "description": "Fylgstu með útbundnum API köllum og líkananotkun yfir virkar viðbætur á þessu tilviki.",
+    "days": "{{count}} dagar",
+    "refresh": "Uppfæra notkun",
+    "loadFailed": "Ekki tókst að hlaða notkun veitu.",
+    "metrics": {
+      "calls": "Köll",
+      "tokens": "Tókn"
+    },
+    "cards": {
+      "calls": "API köll",
+      "callsDetail": "Hjá {{count}} virkum notend(a)",
+      "tokens": "Skráð tókn",
+      "tokensDetail": "Notkun skráð á {{count}} köll",
+      "success": "Árangursprósent",
+      "successDetail": "{{count}} misheppnuð köll",
+      "latency": "Meðaltal seinkunar",
+      "latencyDetail": "Heildartími þjónustu"
+    },
+    "activity": {
+      "title": "Notkun yfir tíma",
+      "callsDescription": "Daglegar útleiðarbeiningar til virkra viðbóta",
+      "tokensDescription": "Daglegar tölur um tákn frá þjónustum",
+      "chartLabel": "Daglegt graf yfir {{metric}} þjónustu"
+    },
+    "models": {
+      "title": "Notkun líkana",
+      "description": "Líkönin með mest umferð á þessu tímabili.",
+      "model": "Líkan",
+      "success": "Tókst",
+      "latency": "Seinkun"
+    },
+    "providers": {
+      "title": "Umferð virkra viðbóta"
+    },
+    "capabilities": {
+      "title": "Fjölbreytni getu",
+      "characters": "{{count}} stafir",
+      "bytes": "{{count}} bæti",
+      "images": "{{count}} myndir",
+      "jobs": "{{count}} myndbandaverk",
+      "inputs": "{{count}} inntök",
+      "reportedTokens": "{{count}} skráð tákn"
+    },
+    "empty": {
+      "title": "Engar beiningar til þjónustu enn",
+      "description": "Beiningar birtast hér eftir að virk viðbót sér um spjall, vinnu, ígræðslu, mynd, tal, hljóð eða myndbandabeiningar."
+    },
+    "privacyNote": "Notkun er mæld á netþjóninum við jaðar útleiðarviðbótar. Libre WebUI geymir þjónustu, líkan, tímasetningu, stöðu og skráða teljara—aldrei kvaðningu, svör, endapunkta, skilríki eða villumeldingar þjónustu. Heildarfjöldi táknanna inniheldur aðeins beiningar þar sem þjónustan skilaði notkunarmetögögnum.",
+    "heatmap": {
+      "title": "Ár af virkni",
+      "description": "Dagleg köll til veitna síðastliðið ár, lituð eftir mest notaða líkani hvers dags.",
+      "calls": "köll",
+      "noCalls": "Engin köll",
+      "other": "Önnur líkön",
+      "less": "Minna",
+      "more": "Meira",
+      "yearTotal": "{{formatted}} köll síðastliðið ár"
+    }
+  },
+  "systemPage": {
+    "eyebrow": "Stjórnun",
+    "title": "Kerfi",
+    "description": "Fylgstu með vél og keyrsluumhverfi sem hýsa þetta Libre WebUI tilvik.",
+    "updated": "Uppfært {{date}}",
+    "refresh": "Endurlesa kerfisupplýsingar",
+    "loadFailed": "Ekki tókst að hlaða kerfisupplýsingum.",
+    "cards": {
+      "uptime": "Uppitími netþjóns",
+      "uptimeDetail": "Í gangi síðan {{date}}",
+      "memory": "Minni notað",
+      "memoryDetail": "{{used}} af {{total}}",
+      "freeSpace": "Laust pláss",
+      "freeSpaceDetail": "{{label}} · {{total}} samtals",
+      "containers": "Gámar í gangi",
+      "containersDetail": "{{total}} gámar þekktir af Docker",
+      "dockerUnavailable": "Docker ekki tiltækt",
+      "unavailable": "Ekki tiltækt"
+    },
+    "host": {
+      "title": "Netþjónn & keyrsluumhverfi",
+      "description": "Stýrikerfi, örgjörvi og upplýsingar um Libre WebUI ferli.",
+      "container": "Keyrsluumhverfi gáms",
+      "native": "Native keyrsluumhverfi",
+      "hostname": "Vélarheiti",
+      "operatingSystem": "Stýrikerfi",
+      "processor": "Örgjörvi",
+      "logicalCpus": "logical CPUs",
+      "loadAverage": "Meðalálag · 1 / 5 / 15 mín",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Ferli",
+      "workingDirectory": "Vinnuskrá"
+    },
+    "memory": {
+      "title": "Minni",
+      "description": "Minni kerfis sýnilegt í keyrsluumhverfi og notkun ferlis forritsins.",
+      "usedOf": "{{used}} notað af {{total}}",
+      "free": "{{value}} laust",
+      "processRss": "Ferli RSS",
+      "heapUsed": "V8 hrúga notuð",
+      "heapTotal": "V8 hrúga samtals",
+      "external": "Utanaðkomandi minni"
+    },
+    "storage": {
+      "title": "Geymsla",
+      "description": "Tiltækt pláss fyrir skráarkerfi keyrsluumhverfis og varanleg gögn forritsins.",
+      "used": "{{value}} notað",
+      "free": "{{value}} laust",
+      "empty": "Upplýsingar um skráarkerfi eru ekki tiltæk í þessu keyrsluumhverfi."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Skrifvarð staða Docker Engine og styttur listi yfir gáma.",
+      "connected": "Tengt",
+      "unavailable": "Ekki tiltækt",
+      "unavailableDetail": "Greining Docker Engine er ekki tiltæk.",
+      "socketStatus": "Staðbundin sökkull: {{status}}",
+      "mounted": "tengt",
+      "notMounted": "ekki tengt",
+      "running": "Í keyrslu",
+      "stopped": "Stöðvað",
+      "paused": "Í bið",
+      "total": "Samtals",
+      "version": "Útgáfa",
+      "host": "Hýsil",
+      "architecture": "Tölvuarkitektúr",
+      "cpus": "CPU",
+      "memory": "Minni",
+      "container": "Gámur",
+      "image": "Mynd",
+      "state": "Staða",
+      "created": "Búið til",
+      "empty": "Docker er tengt og engir gámar eru skráðir sem stendur."
+    },
+    "network": {
+      "title": "Netkerfi",
+      "description": "Viðmót, vistfang og Linux umferðarteljarar sem sjálfvirkur keyrslutími sér.",
+      "internal": "innra",
+      "empty": "Engin netkerfisviðmót eru sjáanleg keyrslutíma forritsins."
+    },
+    "securityNote": "Þessi síða er aðeins fyrir kerfisstjóra. Þjónninn skilar aðeins rekstraryfirliti: hann gefur ekki upp umhverfisbreytur, skilríki, Docker merki, tengipunkta, gámaskipanir eða inspect gagnalöð. Þegar Libre WebUI keyrir í gámi koma upplýsingar um CPU og minni hýsitölvu frá Docker Engine þegar staðbundinn sökkull þess er tiltækur; aðrar gildi lýsa keyrslutíma forritsins.",
+    "work": {
+      "title": "Work",
+      "description": "Sandkassar allra notenda",
+      "access": "Aðgangur",
+      "accessAdmins": "Aðeins stjórnendur",
+      "accessAllUsers": "Allir notendur",
+      "runtimeAvailable": "Tiltækt",
+      "runtimeUnavailable": "Ótiltækt",
+      "activeRuntimes": "Virk keyrsluumhverfi",
+      "pendingCleanups": "Hreinsanir í bið",
+      "orphans": "Munaðarlausir gámar",
+      "owner": "Eigandi",
+      "task": "Verkefni",
+      "state": "Staða",
+      "preview": "Forskoðun",
+      "terminals": "Skjáhermar",
+      "updated": "Uppfært",
+      "stateRunning": "Í keyrslu",
+      "stateStopped": "Stöðvað",
+      "stateStarting": "Ræsist",
+      "stateUnknown": "Óþekkt",
+      "noTasks": "Engin Work-verkefni ennþá."
+    }
+  },
   "chatHistory": {
     "label": "Samtalsferill",
     "jumpToTurn": "Fara í umferð {{index}} af {{total}}"
@@ -1650,6 +1785,57 @@
     "failed": "Ekki tókst að búa til mynd",
     "enterPrompt": "Sláðu inn fyrirmæli",
     "promptTooLong": "Fyrirmæli fara yfir hámarkslengd {{max}} stafa"
+  },
+  "mediaGeneration": {
+    "title": "Búa til miðil",
+    "description": "Búðu til myndband, hljóð, tónlist eða tal með virkjaðri miðilaveitu.",
+    "image": "Mynd",
+    "video": "Myndband",
+    "audio": "Hljóð",
+    "sound": "Hljóðmerki",
+    "speech": "Tal",
+    "model": "Líkan",
+    "voice": "Rödd eða röddarauðkenni",
+    "cloneVoice": "Klóna viðmiðunarrödd",
+    "cloneVoiceDescription": "Byggja þetta tal á viðmiðunarupptöku í stað forstilltrar raddar.",
+    "referenceAudio": "Viðmiðunarhljóð",
+    "referenceTranscript": "Nákvæm afritun viðmiðunarupptöku",
+    "referenceTranscriptPlaceholder": "Sláðu nákvæmlega inn það sem sagt er í viðmiðunarupptökunni…",
+    "referenceAudioTooLarge": "Viðmiðunarhljóðið má að hámarki vera {{max}}.",
+    "cloneConsent": "Klónaðu aðeins rödd með leyfi mælandans. Upptakan er send völdum þjónustuveitanda fyrir þessa myndun og Libre WebUI vistar hana ekki.",
+    "saveVoiceProfile": "Vista sem endurnýtanlega rödd",
+    "saveVoiceProfileDescription": "Vistaðu þessa viðmiðunarupptöku og afritun á öruggan hátt. Libre WebUI sendir þær völdum þjónustuveitanda fyrir hverja tallotu sem notar röddina.",
+    "voiceProfileName": "Heiti vistaðrar raddar",
+    "voiceProfileNamePlaceholder": "Til dæmis Röddin mín",
+    "voiceStorageConsent": "Ég staðfesti að ég hafi leyfi mælandans til að klóna og vista þessa rödd. Viðmiðið verður vistað þar til ég eyði því.",
+    "resolution": "Upplausn",
+    "aspectRatio": "Stærðarhlutfall",
+    "duration": "Lengd",
+    "providerDefault": "Sjálfgefið frá veitu",
+    "generateAudio": "Búa til hljóð með myndbandi þegar stutt er",
+    "prompt": "Kvaðning",
+    "text": "Texti til að tala",
+    "videoPlaceholder": "Lýstu senunni, hreyfingu, myndavél og lýsingu...",
+    "audioPlaceholder": "Sláðu inn textann sem þú vilt að röddin tali...",
+    "soundPlaceholder": "Lýstu hljóðmerki, tónlist, andrúmlofti eða töluðu svari sem þú vilt...",
+    "generate": "Búa til",
+    "generating": "Bý til… þetta getur tekið nokkrar mínútur",
+    "success": "Miðill búinn til og vistaður í Imagine",
+    "successWithSavedVoice": "Miðillinn var búinn til og „{{name}}“ er nú í boði í talstillingum",
+    "failed": "Mistókst að búa til miðil",
+    "loadFailed": "Mistókst að hlaða miðilaveitur",
+    "noModels": "Engin {{kind}} líkön eru tiltæk. Virkjaðu samhæfa veitu og vistaðu skilríki hennar fyrst."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} hlutir",
+    "empty": "Engir miðlar búnir til ennþá",
+    "emptyHint": "Búðu til mynd, myndband eða röddarklippu og hún birtist hér.",
+    "filters": {
+      "all": "Allt",
+      "image": "Myndir",
+      "video": "Myndbönd",
+      "audio": "Hljóð"
+    }
   },
   "errorBoundary": {
     "title": "Eitthvað fór úrskeiðis",
@@ -1802,8 +1988,8 @@
       "saveFailed": "Ekki tókst að vista breytur",
       "resetDefaults": "Endurstilla sjálfgefin gildi",
       "reset": "Breytur endurstilltar",
-      "sensitiveSet": "Gildi er sett (sláðu inn nýtt til að breyta)",
       "resetFailed": "Tókst ekki að endurstilla breytur",
+      "sensitiveSet": "Gildi er sett (sláðu inn nýtt til að breyta)",
       "showValue": "Sýna gildi fyrir {{label}}",
       "hideValue": "Fela gildi fyrir {{label}}",
       "connection": "Tenging",
@@ -1841,45 +2027,6 @@
   "demoMode": {
     "title": "Kynningarhamur",
     "github": "GitHub"
-  },
-  "personaBackground": {
-    "label": "Bakgrunnsmynd",
-    "uploadBackgroundImage": "Hlaða upp bakgrunnsmynd",
-    "dragAndDrop": "Dragðu og slepptu mynd eða smelltu til að fletta",
-    "chooseImage": "Velja mynd",
-    "uploading": "Hleð upp...",
-    "enterImageUrl": "Eða sláðu inn myndslóð",
-    "supportedFormats": "Styður: JPG, PNG, GIF, WebP (hámark 5MB). Breiðar landslagsmyndir virka best.",
-    "customBackground": "Sérsniðin bakgrunnsmynd",
-    "clickToChange": "Smelltu til að breyta eða fjarlægja",
-    "removed": "Bakgrunni fjarlægður",
-    "uploaded": "Bakgrunni hlaðið upp",
-    "invalidFile": "Vinsamlegast veldu gilda myndaskrá",
-    "fileTooLarge": "Bakgrunnsmynd verður að vera minni en 5MB",
-    "readFailed": "Ekki tókst að lesa myndaskrá",
-    "uploadFailed": "Ekki tókst að hlaða upp bakgrunnsmynd"
-  },
-  "modelSelector": {
-    "searchInstalled": "Search installed models...",
-    "searchOllama": "Search Ollama library...",
-    "searchHuggingFace": "Search HuggingFace...",
-    "selectModel": "Select Model",
-    "personas": "Personas",
-    "ollamaModels": "Ollama Models",
-    "pluginModels": "Plugin Models",
-    "actions": "Actions",
-    "installed": "Installed",
-    "use": "Use",
-    "pull": "Pull",
-    "pullRestricted": "Uppsetning líkana er takmörkuð við stjórnendur á þessu tilviki.",
-    "adminOnlyPull": "Aðeins stjórnendur",
-    "legacyProvider": "veitandi ekki skráður",
-    "providerNotRecorded": "Veitandi ekki skráður",
-    "providerUnavailable": "veitandi ófáanlegur",
-    "reselectProvider": "veldu veitanda aftur til að festa þetta líkan",
-    "unavailable": "ófáanlegt",
-    "unavailableSelections": "Ófáanlegar valkostir",
-    "agentModels": "Fulltrúar"
   },
   "libreClaw": {
     "title": "Fulltrúar",
@@ -2223,224 +2370,44 @@
       "warning": "Verkið getur lesið og skrifað þessa möppu beint. Skildu eftir autt fyrir einangrað vinnusvæði."
     }
   },
-  "usageAnalytics": {
-    "eyebrow": "Stjórnun",
-    "title": "Notkun veitu",
-    "description": "Fylgstu með útbundnum API köllum og líkananotkun yfir virkar viðbætur á þessu tilviki.",
-    "days": "{{count}} dagar",
-    "refresh": "Uppfæra notkun",
-    "loadFailed": "Ekki tókst að hlaða notkun veitu.",
-    "metrics": {
-      "calls": "Köll",
-      "tokens": "Tókn"
-    },
-    "cards": {
-      "calls": "API köll",
-      "callsDetail": "Hjá {{count}} virkum notend(a)",
-      "tokens": "Skráð tókn",
-      "tokensDetail": "Notkun skráð á {{count}} köll",
-      "success": "Árangursprósent",
-      "successDetail": "{{count}} misheppnuð köll",
-      "latency": "Meðaltal seinkunar",
-      "latencyDetail": "Heildartími þjónustu"
-    },
-    "activity": {
-      "title": "Notkun yfir tíma",
-      "callsDescription": "Daglegar útleiðarbeiningar til virkra viðbóta",
-      "tokensDescription": "Daglegar tölur um tákn frá þjónustum",
-      "chartLabel": "Daglegt graf yfir {{metric}} þjónustu"
-    },
-    "models": {
-      "title": "Notkun líkana",
-      "description": "Líkönin með mest umferð á þessu tímabili.",
-      "model": "Líkan",
-      "success": "Tókst",
-      "latency": "Seinkun"
-    },
-    "providers": {
-      "title": "Umferð virkra viðbóta"
-    },
-    "capabilities": {
-      "title": "Fjölbreytni getu",
-      "characters": "{{count}} stafir",
-      "bytes": "{{count}} bæti",
-      "images": "{{count}} myndir",
-      "jobs": "{{count}} myndbandaverk",
-      "inputs": "{{count}} inntök",
-      "reportedTokens": "{{count}} skráð tákn"
-    },
-    "empty": {
-      "title": "Engar beiningar til þjónustu enn",
-      "description": "Beiningar birtast hér eftir að virk viðbót sér um spjall, vinnu, ígræðslu, mynd, tal, hljóð eða myndbandabeiningar."
-    },
-    "privacyNote": "Notkun er mæld á netþjóninum við jaðar útleiðarviðbótar. Libre WebUI geymir þjónustu, líkan, tímasetningu, stöðu og skráða teljara—aldrei kvaðningu, svör, endapunkta, skilríki eða villumeldingar þjónustu. Heildarfjöldi táknanna inniheldur aðeins beiningar þar sem þjónustan skilaði notkunarmetögögnum.",
-    "heatmap": {
-      "title": "Ár af virkni",
-      "description": "Dagleg köll til veitna síðastliðið ár, lituð eftir mest notaða líkani hvers dags.",
-      "calls": "köll",
-      "noCalls": "Engin köll",
-      "other": "Önnur líkön",
-      "less": "Minna",
-      "more": "Meira",
-      "yearTotal": "{{formatted}} köll síðastliðið ár"
-    }
+  "personaBackground": {
+    "label": "Bakgrunnsmynd",
+    "uploadBackgroundImage": "Hlaða upp bakgrunnsmynd",
+    "dragAndDrop": "Dragðu og slepptu mynd eða smelltu til að fletta",
+    "chooseImage": "Velja mynd",
+    "uploading": "Hleð upp...",
+    "enterImageUrl": "Eða sláðu inn myndslóð",
+    "supportedFormats": "Styður: JPG, PNG, GIF, WebP (hámark 5MB). Breiðar landslagsmyndir virka best.",
+    "customBackground": "Sérsniðin bakgrunnsmynd",
+    "clickToChange": "Smelltu til að breyta eða fjarlægja",
+    "removed": "Bakgrunni fjarlægður",
+    "uploaded": "Bakgrunni hlaðið upp",
+    "invalidFile": "Vinsamlegast veldu gilda myndaskrá",
+    "fileTooLarge": "Bakgrunnsmynd verður að vera minni en 5MB",
+    "readFailed": "Ekki tókst að lesa myndaskrá",
+    "uploadFailed": "Ekki tókst að hlaða upp bakgrunnsmynd"
   },
-  "systemPage": {
-    "eyebrow": "Stjórnun",
-    "title": "Kerfi",
-    "description": "Fylgstu með vél og keyrsluumhverfi sem hýsa þetta Libre WebUI tilvik.",
-    "updated": "Uppfært {{date}}",
-    "refresh": "Endurlesa kerfisupplýsingar",
-    "loadFailed": "Ekki tókst að hlaða kerfisupplýsingum.",
-    "cards": {
-      "uptime": "Uppitími netþjóns",
-      "uptimeDetail": "Í gangi síðan {{date}}",
-      "memory": "Minni notað",
-      "memoryDetail": "{{used}} af {{total}}",
-      "freeSpace": "Laust pláss",
-      "freeSpaceDetail": "{{label}} · {{total}} samtals",
-      "containers": "Gámar í gangi",
-      "containersDetail": "{{total}} gámar þekktir af Docker",
-      "dockerUnavailable": "Docker ekki tiltækt",
-      "unavailable": "Ekki tiltækt"
-    },
-    "host": {
-      "title": "Netþjónn & keyrsluumhverfi",
-      "description": "Stýrikerfi, örgjörvi og upplýsingar um Libre WebUI ferli.",
-      "container": "Keyrsluumhverfi gáms",
-      "native": "Native keyrsluumhverfi",
-      "hostname": "Vélarheiti",
-      "operatingSystem": "Stýrikerfi",
-      "processor": "Örgjörvi",
-      "logicalCpus": "logical CPUs",
-      "loadAverage": "Meðalálag · 1 / 5 / 15 mín",
-      "libreVersion": "Libre WebUI",
-      "nodeVersion": "Node.js",
-      "process": "Ferli",
-      "workingDirectory": "Vinnuskrá"
-    },
-    "memory": {
-      "title": "Minni",
-      "description": "Minni kerfis sýnilegt í keyrsluumhverfi og notkun ferlis forritsins.",
-      "usedOf": "{{used}} notað af {{total}}",
-      "free": "{{value}} laust",
-      "processRss": "Ferli RSS",
-      "heapUsed": "V8 hrúga notuð",
-      "heapTotal": "V8 hrúga samtals",
-      "external": "Utanaðkomandi minni"
-    },
-    "storage": {
-      "title": "Geymsla",
-      "description": "Tiltækt pláss fyrir skráarkerfi keyrsluumhverfis og varanleg gögn forritsins.",
-      "used": "{{value}} notað",
-      "free": "{{value}} laust",
-      "empty": "Upplýsingar um skráarkerfi eru ekki tiltæk í þessu keyrsluumhverfi."
-    },
-    "docker": {
-      "title": "Docker",
-      "description": "Skrifvarð staða Docker Engine og styttur listi yfir gáma.",
-      "connected": "Tengt",
-      "unavailable": "Ekki tiltækt",
-      "unavailableDetail": "Greining Docker Engine er ekki tiltæk.",
-      "socketStatus": "Staðbundin sökkull: {{status}}",
-      "mounted": "tengt",
-      "notMounted": "ekki tengt",
-      "running": "Í keyrslu",
-      "stopped": "Stöðvað",
-      "paused": "Í bið",
-      "total": "Samtals",
-      "version": "Útgáfa",
-      "host": "Hýsil",
-      "architecture": "Tölvuarkitektúr",
-      "cpus": "CPU",
-      "memory": "Minni",
-      "container": "Gámur",
-      "image": "Mynd",
-      "state": "Staða",
-      "created": "Búið til",
-      "empty": "Docker er tengt og engir gámar eru skráðir sem stendur."
-    },
-    "network": {
-      "title": "Netkerfi",
-      "description": "Viðmót, vistfang og Linux umferðarteljarar sem sjálfvirkur keyrslutími sér.",
-      "internal": "innra",
-      "empty": "Engin netkerfisviðmót eru sjáanleg keyrslutíma forritsins."
-    },
-    "securityNote": "Þessi síða er aðeins fyrir kerfisstjóra. Þjónninn skilar aðeins rekstraryfirliti: hann gefur ekki upp umhverfisbreytur, skilríki, Docker merki, tengipunkta, gámaskipanir eða inspect gagnalöð. Þegar Libre WebUI keyrir í gámi koma upplýsingar um CPU og minni hýsitölvu frá Docker Engine þegar staðbundinn sökkull þess er tiltækur; aðrar gildi lýsa keyrslutíma forritsins.",
-    "work": {
-      "title": "Work",
-      "description": "Sandkassar allra notenda",
-      "access": "Aðgangur",
-      "accessAdmins": "Aðeins stjórnendur",
-      "accessAllUsers": "Allir notendur",
-      "runtimeAvailable": "Tiltækt",
-      "runtimeUnavailable": "Ótiltækt",
-      "activeRuntimes": "Virk keyrsluumhverfi",
-      "pendingCleanups": "Hreinsanir í bið",
-      "orphans": "Munaðarlausir gámar",
-      "owner": "Eigandi",
-      "task": "Verkefni",
-      "state": "Staða",
-      "preview": "Forskoðun",
-      "terminals": "Skjáhermar",
-      "updated": "Uppfært",
-      "stateRunning": "Í keyrslu",
-      "stateStopped": "Stöðvað",
-      "stateStarting": "Ræsist",
-      "stateUnknown": "Óþekkt",
-      "noTasks": "Engin Work-verkefni ennþá."
-    }
-  },
-  "mediaGeneration": {
-    "title": "Búa til miðil",
-    "description": "Búðu til myndband, hljóð, tónlist eða tal með virkjaðri miðilaveitu.",
-    "image": "Mynd",
-    "video": "Myndband",
-    "audio": "Hljóð",
-    "sound": "Hljóðmerki",
-    "speech": "Tal",
-    "model": "Líkan",
-    "voice": "Rödd eða röddarauðkenni",
-    "cloneVoice": "Klóna viðmiðunarrödd",
-    "cloneVoiceDescription": "Byggja þetta tal á viðmiðunarupptöku í stað forstilltrar raddar.",
-    "referenceAudio": "Viðmiðunarhljóð",
-    "referenceTranscript": "Nákvæm afritun viðmiðunarupptöku",
-    "referenceTranscriptPlaceholder": "Sláðu nákvæmlega inn það sem sagt er í viðmiðunarupptökunni…",
-    "referenceAudioTooLarge": "Viðmiðunarhljóðið má að hámarki vera {{max}}.",
-    "cloneConsent": "Klónaðu aðeins rödd með leyfi mælandans. Upptakan er send völdum þjónustuveitanda fyrir þessa myndun og Libre WebUI vistar hana ekki.",
-    "saveVoiceProfile": "Vista sem endurnýtanlega rödd",
-    "saveVoiceProfileDescription": "Vistaðu þessa viðmiðunarupptöku og afritun á öruggan hátt. Libre WebUI sendir þær völdum þjónustuveitanda fyrir hverja tallotu sem notar röddina.",
-    "voiceProfileName": "Heiti vistaðrar raddar",
-    "voiceProfileNamePlaceholder": "Til dæmis Röddin mín",
-    "voiceStorageConsent": "Ég staðfesti að ég hafi leyfi mælandans til að klóna og vista þessa rödd. Viðmiðið verður vistað þar til ég eyði því.",
-    "successWithSavedVoice": "Miðillinn var búinn til og „{{name}}“ er nú í boði í talstillingum",
-    "resolution": "Upplausn",
-    "aspectRatio": "Stærðarhlutfall",
-    "duration": "Lengd",
-    "providerDefault": "Sjálfgefið frá veitu",
-    "generateAudio": "Búa til hljóð með myndbandi þegar stutt er",
-    "prompt": "Kvaðning",
-    "text": "Texti til að tala",
-    "videoPlaceholder": "Lýstu senunni, hreyfingu, myndavél og lýsingu...",
-    "audioPlaceholder": "Sláðu inn textann sem þú vilt að röddin tali...",
-    "soundPlaceholder": "Lýstu hljóðmerki, tónlist, andrúmlofti eða töluðu svari sem þú vilt...",
-    "generate": "Búa til",
-    "generating": "Bý til… þetta getur tekið nokkrar mínútur",
-    "success": "Miðill búinn til og vistaður í Imagine",
-    "failed": "Mistókst að búa til miðil",
-    "loadFailed": "Mistókst að hlaða miðilaveitur",
-    "noModels": "Engin {{kind}} líkön eru tiltæk. Virkjaðu samhæfa veitu og vistaðu skilríki hennar fyrst."
-  },
-  "mediaGallery": {
-    "itemCount": "{{count}} hlutir",
-    "empty": "Engir miðlar búnir til ennþá",
-    "emptyHint": "Búðu til mynd, myndband eða röddarklippu og hún birtist hér.",
-    "filters": {
-      "all": "Allt",
-      "image": "Myndir",
-      "video": "Myndbönd",
-      "audio": "Hljóð"
-    }
+  "modelSelector": {
+    "searchInstalled": "Search installed models...",
+    "searchOllama": "Search Ollama library...",
+    "searchHuggingFace": "Search HuggingFace...",
+    "selectModel": "Select Model",
+    "personas": "Personas",
+    "ollamaModels": "Ollama Models",
+    "pluginModels": "Plugin Models",
+    "actions": "Actions",
+    "installed": "Installed",
+    "use": "Use",
+    "pull": "Pull",
+    "pullRestricted": "Uppsetning líkana er takmörkuð við stjórnendur á þessu tilviki.",
+    "adminOnlyPull": "Aðeins stjórnendur",
+    "legacyProvider": "veitandi ekki skráður",
+    "providerNotRecorded": "Veitandi ekki skráður",
+    "providerUnavailable": "veitandi ófáanlegur",
+    "reselectProvider": "veldu veitanda aftur til að festa þetta líkan",
+    "unavailable": "ófáanlegt",
+    "unavailableSelections": "Ófáanlegar valkostir",
+    "agentModels": "Fulltrúar"
   },
   "whatsNew": {
     "title": "Nýjungar",

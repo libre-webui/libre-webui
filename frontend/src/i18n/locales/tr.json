@@ -59,11 +59,11 @@
       "loginSuccess": "Giriş başarılı!",
       "loginFailed": "Giriş başarısız",
       "checkCredentials": "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.",
+      "approvalPending": "Hesabınız yönetici onayı bekliyor.",
       "enterBoth": "Lütfen kullanıcı adı ve şifrenizi girin",
       "githubSuccess": "GitHub girişi başarılı!",
       "githubFailed": "GitHub kimlik doğrulaması başarısız",
       "githubVerifyFailed": "GitHub kimlik doğrulaması doğrulanamadı",
-      "approvalPending": "Hesabınız yönetici onayı bekliyor.",
       "verificationFailed": "Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin."
     },
     "signup": {
@@ -82,15 +82,15 @@
       "hasAccount": "Zaten hesabınız var mı?",
       "signInHere": "Buradan giriş yapın",
       "signupSuccess": "Hesap başarıyla oluşturuldu!",
+      "approvalPending": "Kayıt alındı. Hesabınızın bir yönetici tarafından onaylanması gerekiyor.",
+      "awaitingApproval": "Onay bekleniyor",
+      "awaitingApprovalDescription": "Hesabınız oluşturuldu, ancak oturum açmadan önce bir yönetici tarafından etkinleştirilmesi gerekiyor.",
+      "backToSignIn": "Oturum açmaya geri dön",
       "signupFailed": "Kayıt başarısız",
       "tryAgain": "Kayıt başarısız. Lütfen tekrar deneyin.",
       "usernameRequired": "Kullanıcı adı ve şifre gereklidir",
       "passwordMismatch": "Şifreler eşleşmiyor",
-      "passwordTooShort": "Şifre en az 6 karakter olmalıdır",
-      "approvalPending": "Kayıt alındı. Hesabınızın bir yönetici tarafından onaylanması gerekiyor.",
-      "awaitingApproval": "Onay bekleniyor",
-      "awaitingApprovalDescription": "Hesabınız oluşturuldu, ancak oturum açmadan önce bir yönetici tarafından etkinleştirilmesi gerekiyor.",
-      "backToSignIn": "Oturum açmaya geri dön"
+      "passwordTooShort": "Şifre en az 6 karakter olmalıdır"
     },
     "logout": {
       "button": "Çıkış Yap",
@@ -166,9 +166,9 @@
       "createAdmin": "Yönetici Oluştur",
       "success": "Yönetici hesabı başarıyla oluşturuldu!",
       "failed": "Yönetici hesabı oluşturulamadı",
+      "approvalUnexpected": "İlk yönetici etkinleştirilemedi. Lütfen tekrar deneyin.",
       "fillAllFields": "Lütfen tüm alanları doldurun",
-      "note": "Bu, Libre WebUI kurulumunuz için ana yönetici hesabı olacaktır",
-      "approvalUnexpected": "İlk yönetici etkinleştirilemedi. Lütfen tekrar deneyin."
+      "note": "Bu, Libre WebUI kurulumunuz için ana yönetici hesabı olacaktır"
     },
     "encryptionKey": {
       "title": "Şifreleme Anahtarınızı Kaydedin",
@@ -277,6 +277,7 @@
       "work": "Çalışma",
       "chat": "Sohbet",
       "private": "Gizli",
+      "incognito": "Gizli Sohbet",
       "privateMode": "Gizli Mod",
       "privateDescription": "Bu konuşma kaydedilmeyecek",
       "privateTooltip": "Kaydedilmeyecek gizli bir konuşma başlat",
@@ -290,7 +291,6 @@
       "pinChat": "Sabitle",
       "unpinChat": "Sabitlemeyi kaldır",
       "deleteChat": "Sohbeti sil",
-      "incognito": "Gizli Sohbet",
       "archiveChat": "Sohbeti arşivle",
       "groups": {
         "pinned": "Sabitlenenler",
@@ -410,32 +410,27 @@
       "models": "Modeller",
       "personas": "Personalar",
       "imagine": "Hayal Et",
-      "settings": "Ayarlar",
-      "userManagement": "Kullanıcı Yönetimi",
-      "signOut": "Çıkış Yap",
       "agents": "Ajanlar",
       "work": "Çalışma",
-      "exploreLabel": "Keşfet",
+      "settings": "Ayarlar",
       "usageAnalytics": "Sağlayıcı Kullanımı",
       "system": "Sistem",
+      "userManagement": "Kullanıcı Yönetimi",
+      "signOut": "Çıkış Yap",
+      "exploreLabel": "Keşfet",
       "notes": "Notlar"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
-    "expandSidebar": "Kenar çubuğunu genişlet",
-    "pinned": {
-      "label": "Sabitlenenler",
-      "pin": "Kenar çubuğuna sabitle",
-      "unpin": "Kenar çubuğundan kaldır"
-    }
+    "expandSidebar": "Kenar çubuğunu genişlet"
   },
   "user": {
     "menu": {
       "changePicture": "Resmi Değiştir",
       "settings": "Ayarlar",
-      "userManagement": "Kullanıcı Yönetimi",
-      "logout": "Çıkış Yap",
       "usageAnalytics": "Sağlayıcı Kullanımı",
-      "system": "Sistem"
+      "system": "Sistem",
+      "userManagement": "Kullanıcı Yönetimi",
+      "logout": "Çıkış Yap"
     },
     "avatar": {
       "title": "Profil Resmini Değiştir",
@@ -478,8 +473,7 @@
       "shortcuts": "Kısayollar",
       "about": "Hakkında",
       "sessions": "Oturumlar",
-      "apiKeys": "API Anahtarları",
-      "connections": "Bağlantılar"
+      "apiKeys": "API Anahtarları"
     },
     "appearance": {
       "title": "Görünüm",
@@ -531,6 +525,13 @@
       "defaultModel": "Varsayılan Model",
       "defaultModelDescription": "Bu model yeni konuşmalarda varsayılan olarak kullanılacak",
       "selectModel": "Bir model seçin",
+      "specializedModels": "Özelleştirilmiş Modeller",
+      "visionModel": "Görüntü Modeli",
+      "selectVisionModel": "Mevcut sohbet modelini kullan",
+      "visionModelDescription": "Giden sohbet bağlamı görüntü içerdiğinde otomatik olarak kullanılır. Görüntü girişini destekleyen bir model seçin.",
+      "visionModelUpdateFailed": "Görüntü modeli güncellenemedi: {{error}}",
+      "visionModelNoProvider": "Bu görüntü modelinin sağlayıcı kimliği yok. Kullanılabilir bir model seçin.",
+      "persona": "Kişilik",
       "updateAll": "Tüm Modelleri Güncelle",
       "updateAllDescription": "Güncellemeleri kontrol et ve tüm yüklü modellerin en son sürümlerini çek",
       "updateAllButton": "Tümünü Güncelle",
@@ -553,15 +554,8 @@
         "selectTaskModel": "Görev modelini seçin",
         "taskModelDescription": "Konuşma başlıkları oluşturmak için kullanılan model"
       },
-      "persona": "Kişilik",
       "updatingModel": "{{name}} güncelleniyor ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} modelden {{current}}",
-      "specializedModels": "Özelleştirilmiş Modeller",
-      "visionModel": "Görüntü Modeli",
-      "selectVisionModel": "Mevcut sohbet modelini kullan",
-      "visionModelDescription": "Giden sohbet bağlamı görüntü içerdiğinde otomatik olarak kullanılır. Görüntü girişini destekleyen bir model seçin.",
-      "visionModelUpdateFailed": "Görüntü modeli güncellenemedi: {{error}}",
-      "visionModelNoProvider": "Bu görüntü modelinin sağlayıcı kimliği yok. Kullanılabilir bir model seçin."
+      "modelsProgress": "{{total}} modelden {{current}}"
     },
     "systemMessage": {
       "title": "Sistem Mesajı",
@@ -573,6 +567,13 @@
     "plugins": {
       "title": "Eklentiler",
       "description": "Yüklü eklentilerinizi yönetin",
+      "providerConnections": "Sağlayıcı bağlantıları",
+      "providerConnectionsDescription": "Eklentiler aracılığıyla model sağlayıcılarını bağlayın, yapılandırın ve inceleyin.",
+      "providers": "Sağlayıcılar",
+      "searchProviders": "Sağlayıcı ara",
+      "noProvidersFound": "Aramanızla eşleşen sağlayıcı yok.",
+      "selectProvider": "Bir sağlayıcı seçin",
+      "selectProviderDescription": "Bağlantısını ve model kataloğunu incelemek için bir sağlayıcı seçin.",
       "addNew": "Yeni Eklenti Ekle",
       "upload": "Eklenti Yükle",
       "addJson": "JSON Ekle",
@@ -591,33 +592,12 @@
       "models": "model",
       "apiKeySet": "API Anahtarı Ayarlandı",
       "apiKeyConfiguration": "API Anahtarı Yapılandırması",
+      "apiKeyDescription": "{{name}} için kişisel bir API anahtarı depolayın.",
       "apiKeyEnvAlternative": "Alternatif olarak,",
       "environmentVariable": "ortam değişkenini ayarlayın",
       "apiKeyConfigured": "API anahtarı yapılandırıldı",
       "apiKeyPlaceholder": "API anahtarınızı girin...",
       "saveApiKey": "API Anahtarını Kaydet",
-      "apiKey": {
-        "title": "API Anahtarı",
-        "placeholder": "API anahtarını girin",
-        "save": "Anahtarı Kaydet",
-        "remove": "Anahtarı Kaldır",
-        "configured": "API Anahtarı Yapılandırıldı",
-        "notConfigured": "API Anahtarı Gerekli",
-        "saved": "API anahtarı başarıyla kaydedildi",
-        "removed": "API anahtarı kaldırıldı",
-        "saveFailed": "API anahtarı kaydedilemedi",
-        "removeFailed": "API anahtarı kaldırılamadı",
-        "enterKey": "Lütfen bir API anahtarı girin"
-      },
-      "variables": "Variables",
-      "providerConnections": "Sağlayıcı bağlantıları",
-      "providerConnectionsDescription": "Eklentiler aracılığıyla model sağlayıcılarını bağlayın, yapılandırın ve inceleyin.",
-      "providers": "Sağlayıcılar",
-      "searchProviders": "Sağlayıcı ara",
-      "noProvidersFound": "Aramanızla eşleşen sağlayıcı yok.",
-      "selectProvider": "Bir sağlayıcı seçin",
-      "selectProviderDescription": "Bağlantısını ve model kataloğunu incelemek için bir sağlayıcı seçin.",
-      "apiKeyDescription": "{{name}} için kişisel bir API anahtarı depolayın.",
       "showApiKey": "API anahtarını göster",
       "hideApiKey": "API anahtarını gizle",
       "configure": "Yapılandır",
@@ -643,7 +623,21 @@
         "transcription": "Transkripsiyon"
       },
       "exportPlugin": "Eklentiyi dışa aktar",
-      "deletePlugin": "Eklentiyi sil"
+      "deletePlugin": "Eklentiyi sil",
+      "apiKey": {
+        "title": "API Anahtarı",
+        "placeholder": "API anahtarını girin",
+        "save": "Anahtarı Kaydet",
+        "remove": "Anahtarı Kaldır",
+        "configured": "API Anahtarı Yapılandırıldı",
+        "notConfigured": "API Anahtarı Gerekli",
+        "saved": "API anahtarı başarıyla kaydedildi",
+        "removed": "API anahtarı kaldırıldı",
+        "saveFailed": "API anahtarı kaydedilemedi",
+        "removeFailed": "API anahtarı kaldırılamadı",
+        "enterKey": "Lütfen bir API anahtarı girin"
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Üretim Seçenekleri",
@@ -653,6 +647,8 @@
       "scopeModel": "Yalnızca {{model}}",
       "scopeAllHint": "Kendi değerleri yoksa her modelin kullandığı değerler.",
       "scopeModelHint": "Yalnızca bu model için kaydedilir ve genel değerlerin önüne geçer.",
+      "advancedSettings": "Gelişmiş üretim ayarları",
+      "advancedSettingsDescription": "Örnekleme, belirteç limitleri, bağlam, cezalar ve durdurma dizileri",
       "coreParameters": "Temel Parametreler",
       "temperature": "Sıcaklık",
       "temperatureDescription": "Rastgeleliği kontrol eder. Düşük değerler daha odaklı, yüksek değerler daha yaratıcıdır.",
@@ -684,9 +680,7 @@
       "resetDefaults": "Varsayılanlara Sıfırla",
       "saveOptions": "Seçenekleri Kaydet",
       "embeddingSettings": "Gömme Ayarları",
-      "enableEmbeddings": "Belge Gömmelerini Etkinleştir",
-      "advancedSettings": "Gelişmiş üretim ayarları",
-      "advancedSettingsDescription": "Örnekleme, belirteç limitleri, bağlam, cezalar ve durdurma dizileri"
+      "enableEmbeddings": "Belge Gömmelerini Etkinleştir"
     },
     "documents": {
       "title": "Belge Ayarları",
@@ -796,6 +790,7 @@
       "title": "Veri Yönetimi",
       "export": "Veriyi Dışa Aktar",
       "exportDescription": "Tercihler, sohbet klasörleri, oturumlar ve mesajlar, notlar, bilgi koleksiyonları ve çıkarılmış belge metninden oluşan taşınabilir bir arşiv indirin.",
+      "archiveScopeV3": "Tercihleri, sohbetleri, klasörleri, notları, bilgi koleksiyonlarını ve çıkarılmış belge metnini içerir. Hesapları ve gizli bilgileri, biyometrik olarak klonlanmış sesleri, oluşturulan medyayı, kişilikleri ve belleği, ayrıca Work verilerini veya birimlerini içermez.",
       "exportAll": "Tüm Verileri Dışa Aktar",
       "import": "Veriyi İçe Aktar",
       "importDescription": "Önceki bir dışa aktarmadan veri içe aktarın.",
@@ -836,8 +831,7 @@
         "title": "Arşivlenmiş sohbetler",
         "empty": "Arşivlenmiş sohbet yok",
         "unarchive": "Arşivden çıkar"
-      },
-      "archiveScopeV3": "Tercihleri, sohbetleri, klasörleri, notları, bilgi koleksiyonlarını ve çıkarılmış belge metnini içerir. Hesapları ve gizli bilgileri, biyometrik olarak klonlanmış sesleri, oluşturulan medyayı, kişilikleri ve belleği, ayrıca Work verilerini veya birimlerini içermez."
+      }
     },
     "about": {
       "title": "Hakkında",
@@ -927,41 +921,6 @@
       "promptDescription": "Şablon değişkenleri {{previousSummaryVariable}} ve {{messagesVariable}}, önceki özet ve özetlenen mesajlarla değiştirilir.",
       "saved": "Sıkıştırma ayarları kaydedildi",
       "saveFailed": "Sıkıştırma ayarları kaydedilemedi"
-    },
-    "connections": {
-      "title": "Bağlantılar",
-      "description": "Bu sunucunun iletişim kurduğu model sağlayıcıları: yerel Ollama çalışma ortamı ve OpenAI uyumlu uç noktalar.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Yerel model çalışma ortamı.",
-      "version": "Sürüm {{version}}.",
-      "statusChecking": "Kontrol ediliyor…",
-      "statusOnline": "Çevrimiçi",
-      "statusOffline": "Çevrimdışı",
-      "providersTitle": "OpenAI uyumlu bağlantılar",
-      "providersDescription": "Her bağlantı, modelleri sohbetin model seçicisinde görünen bir tamamlama sağlayıcısıdır. API anahtarları sunucu tarafında saklanır.",
-      "noConnections": "Henüz yapılandırılmış bağlantı yok.",
-      "modelsCount": "{{total}} model",
-      "pendingDiscovery": "Modeller keşif bekliyor",
-      "apiKeyMissing": "API anahtarı yok",
-      "deleteConfirm": "Bu bağlantı silinsin mi? Modellerini kullanan sohbetler bu modellere erişimi kaybedecek.",
-      "addTitle": "Bağlantı ekle",
-      "addDescription": "OpenAI uyumlu bir chat completions uç noktasını sağlayıcı olarak kaydedin.",
-      "nameLabel": "Görünen ad",
-      "namePlaceholder": "Sağlayıcım",
-      "idPreview": "Bağlantı kimliği: {{id}}",
-      "endpointLabel": "Uç nokta URL'si",
-      "endpointDescription": "Tam chat completions URL'si, örneğin https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "API anahtarı",
-      "apiKeyOptionalHint": "(isteğe bağlı, sonra eklenebilir)",
-      "nameRequired": "Bağlantı için bir görünen ad girin.",
-      "endpointInvalid": "Geçerli bir http(s) uç nokta URL'si girin.",
-      "alreadyExists": "Bu kimliğe sahip bir bağlantı zaten var.",
-      "add": "Bağlantı ekle",
-      "adding": "Ekleniyor…",
-      "added": "Bağlantı eklendi",
-      "addFailed": "Bağlantı eklenemedi",
-      "keySaveFailed": "Bağlantı eklendi ancak API anahtarı kaydedilemedi",
-      "activateFailed": "Bağlantı eklendi ancak etkinleştirilemedi"
     },
     "sessions": {
       "title": "Oturumlar",
@@ -1115,25 +1074,33 @@
     "sections": {
       "pull": "Yeni Model Çek",
       "library": "Kütüphaneye Göz At",
+      "huggingface": "HuggingFace Hub",
       "running": "Çalışan Modeller",
       "local": "Yerel Modeller",
       "advanced": "Gelişmiş İşlemler",
-      "huggingface": "HuggingFace Hub",
       "catalog": "Model Kataloğu"
     },
     "catalog": {
-      "models": "kullanılabilir",
       "searchPlaceholder": "Modelleri ada veya sağlayıcıya göre arayın...",
       "noModels": "Henüz kullanılabilir model yok.",
       "empty": "Aramanızla eşleşen model yok.",
       "providerOllama": "Ollama",
-      "default": "Varsayılan",
-      "makeDefault": "Varsayılan yap",
-      "defaultSet": "{{model}} artık varsayılan modeliniz.",
       "hidden": "Gizli",
+      "visibilityFailed": "Model görünürlüğü güncellenemedi.",
+      "filterAll": "Tüm modeller",
+      "filterLocal": "Yerel",
+      "filterProviders": "Sağlayıcılar",
+      "filterHidden": "Gizli",
+      "enableAll": "Gösterilenleri etkinleştir",
+      "disableAll": "Gösterilenleri devre dışı bırak",
+      "rename": "Adı ve görseli düzenle",
+      "setPicture": "Görsel belirle",
+      "clearPicture": "Görseli kaldır",
+      "pictureInvalid": "Bir görsel dosyası seçin.",
+      "pictureTooLarge": "Görseller 192 KB'den küçük olmalı.",
+      "saving": "Kaydediliyor…",
       "hide": "Kullanıcılardan gizle",
-      "show": "Kullanıcılara göster",
-      "visibilityFailed": "Model görünürlüğü güncellenemedi."
+      "show": "Kullanıcılara göster"
     },
     "pull": {
       "placeholder": "Model adını girin (ör., llama3.2:3b, deepseek-r1:14b)",
@@ -1163,6 +1130,37 @@
       "installed": "Yüklü",
       "more": "+{{count}} daha",
       "refresh": "Kütüphaneyi Yenile"
+    },
+    "huggingface": {
+      "browseAll": "HuggingFace'te tümünü görüntüle",
+      "checkingGguf": "GGUF dosyaları aranıyor...",
+      "noGgufAvailable": "Doğrudan Ollama çekmesi için GGUF dosyası yok",
+      "ggufFilesCount": "GGUF Dosyaları ({{count}}) - Doğrudan Ollama'ya çek",
+      "noModelsFound": "Model bulunamadı",
+      "noResults": "Model bulunamadı. Aramanızı veya filtrelerinizi ayarlamayı deneyin.",
+      "browseAllLink": "Tümünü görüntüle",
+      "search": "HuggingFace modellerini ara...",
+      "by": "tarafından",
+      "gated": "Kısıtlı erişim",
+      "viewOnHF": "HuggingFace'te görüntüle",
+      "sortDownloads": "İndirmeler",
+      "sortLikes": "Beğeniler",
+      "sortRecent": "Son",
+      "taskTextGeneration": "Metin Oluşturma",
+      "taskTextToSpeech": "Metinden Konuşmaya",
+      "taskTextToImage": "Metinden Görüntüye",
+      "taskSpeechRecognition": "Konuşma Tanıma",
+      "tasks": {
+        "textGen": "Metin Oluşturma",
+        "tts": "Metinden Konuşmaya",
+        "image": "Metinden Görüntüye",
+        "stt": "Konuşma Tanıma"
+      },
+      "sort": {
+        "downloads": "En Çok İndirilen",
+        "likes": "En Beğenilen",
+        "recent": "Son Güncellenen"
+      }
     },
     "local": {
       "noModels": "Henüz yüklü model yok",
@@ -1241,37 +1239,6 @@
         "success": "{{count}} boyutlu gömme vektörü oluşturuldu",
         "failed": "Gömme oluşturulamadı",
         "enterBoth": "Lütfen bir model seçin ve metin girin"
-      }
-    },
-    "huggingface": {
-      "browseAll": "HuggingFace'te tümünü görüntüle",
-      "checkingGguf": "GGUF dosyaları aranıyor...",
-      "noGgufAvailable": "Doğrudan Ollama çekmesi için GGUF dosyası yok",
-      "ggufFilesCount": "GGUF Dosyaları ({{count}}) - Doğrudan Ollama'ya çek",
-      "noModelsFound": "Model bulunamadı",
-      "noResults": "Model bulunamadı. Aramanızı veya filtrelerinizi ayarlamayı deneyin.",
-      "browseAllLink": "Tümünü görüntüle",
-      "search": "HuggingFace modellerini ara...",
-      "by": "tarafından",
-      "gated": "Kısıtlı erişim",
-      "viewOnHF": "HuggingFace'te görüntüle",
-      "sortDownloads": "İndirmeler",
-      "sortLikes": "Beğeniler",
-      "sortRecent": "Son",
-      "taskTextGeneration": "Metin Oluşturma",
-      "taskTextToSpeech": "Metinden Konuşmaya",
-      "taskTextToImage": "Metinden Görüntüye",
-      "taskSpeechRecognition": "Konuşma Tanıma",
-      "tasks": {
-        "textGen": "Metin Oluşturma",
-        "tts": "Metinden Konuşmaya",
-        "image": "Metinden Görüntüye",
-        "stt": "Konuşma Tanıma"
-      },
-      "sort": {
-        "downloads": "En Çok İndirilen",
-        "likes": "En Beğenilen",
-        "recent": "Son Güncellenen"
       }
     }
   },
@@ -1445,6 +1412,17 @@
     "deleteSuccess": "Kullanıcı başarıyla silindi",
     "deleteFailed": "Kullanıcı silinemedi",
     "cannotDeleteSelf": "Kendi hesabınızı silemezsiniz",
+    "approval": {
+      "title": "Bekleyen onaylar",
+      "description": "Yeni kayıtların bu örneğe erişmesine izin vermeden önce inceleyin.",
+      "registered": "Kayıtlı",
+      "activate": "Hesabı etkinleştir",
+      "reject": "Kaydı reddet",
+      "approved": "{{name}} artık oturum açabilir.",
+      "failed": "Hesap onaylanamadı.",
+      "notification": "{{count}} kayıt onayınızı bekliyor.",
+      "notificationBadge": "{{count}} bekleyen kullanıcı onayı"
+    },
     "form": {
       "title": {
         "create": "Kullanıcı Oluştur",
@@ -1466,17 +1444,6 @@
       "updateSuccess": "Kullanıcı başarıyla güncellendi",
       "createFailed": "Kullanıcı oluşturulamadı",
       "updateFailed": "Kullanıcı güncellenemedi"
-    },
-    "approval": {
-      "title": "Bekleyen onaylar",
-      "description": "Yeni kayıtların bu örneğe erişmesine izin vermeden önce inceleyin.",
-      "registered": "Kayıtlı",
-      "activate": "Hesabı etkinleştir",
-      "reject": "Kaydı reddet",
-      "approved": "{{name}} artık oturum açabilir.",
-      "failed": "Hesap onaylanamadı.",
-      "notification": "{{count}} kayıt onayınızı bekliyor.",
-      "notificationBadge": "{{count}} bekleyen kullanıcı onayı"
     },
     "workAccess": {
       "title": "Work erişimi",
@@ -1582,6 +1549,174 @@
       "target": "Hedef"
     }
   },
+  "usageAnalytics": {
+    "eyebrow": "Yönetim",
+    "title": "Sağlayıcı Kullanımı",
+    "description": "Bu örnekteki etkin eklentiler genelinde giden API çağrılarını ve model tüketimini takip edin.",
+    "days": "{{count}} gün",
+    "refresh": "Kullanımı yenile",
+    "loadFailed": "Sağlayıcı kullanımı yüklenemedi.",
+    "metrics": {
+      "calls": "Çağrılar",
+      "tokens": "Belirteçler"
+    },
+    "cards": {
+      "calls": "API çağrıları",
+      "callsDetail": "{{count}} aktif kullanıcı genelinde",
+      "tokens": "Raporlanan belirteçler",
+      "tokensDetail": "{{count}} çağrıda raporlanan kullanım",
+      "success": "Başarı oranı",
+      "successDetail": "{{count}} başarısız çağrı",
+      "latency": "Ortalama gecikme",
+      "latencyDetail": "Uçtan uca sağlayıcı süresi"
+    },
+    "activity": {
+      "title": "Zamanla tüketim",
+      "callsDescription": "Etkin eklentilere günlük giden istekler",
+      "tokensDescription": "Sağlayıcılar tarafından bildirilen günlük token toplamları",
+      "chartLabel": "Günlük sağlayıcı {{metric}} grafiği"
+    },
+    "models": {
+      "title": "Model tüketimi",
+      "description": "Bu dönemde en çok trafiği taşıyan modeller.",
+      "model": "Model",
+      "success": "Başarı",
+      "latency": "Gecikme"
+    },
+    "providers": {
+      "title": "Etkin eklenti trafiği"
+    },
+    "capabilities": {
+      "title": "Yetenek dağılımı",
+      "characters": "{{count}} karakter",
+      "bytes": "{{count}} bayt",
+      "images": "{{count}} görüntü",
+      "jobs": "{{count}} video işi",
+      "inputs": "{{count}} girdi",
+      "reportedTokens": "{{count}} bildirilen token"
+    },
+    "empty": {
+      "title": "Henüz sağlayıcı çağrısı yok",
+      "description": "Etkin bir eklenti sohbet, Work, gömme, görüntü, konuşma, ses veya video isteklerini işledikten sonra çağrılar burada görünecektir."
+    },
+    "privacyNote": "Kullanım, sunucuda giden eklenti sınırında ölçülür. Libre WebUI; sağlayıcı, model, zamanlama, durum ve bildirilen sayaçları saklar—asla istemleri, yanıtları, uç noktaları, kimlik bilgilerini veya sağlayıcı hata gövdelerini saklamaz. Token toplamları yalnızca sağlayıcının kullanım meta verilerini döndürdüğü çağrıları içerir.",
+    "heatmap": {
+      "title": "Bir yıllık etkinlik",
+      "description": "Son bir yıldaki günlük sağlayıcı çağrıları, her günün en çok kullanılan modeline göre renklendirilmiştir.",
+      "calls": "çağrı",
+      "noCalls": "Çağrı yok",
+      "other": "Diğer modeller",
+      "less": "Az",
+      "more": "Çok",
+      "yearTotal": "Son bir yılda {{formatted}} çağrı"
+    }
+  },
+  "systemPage": {
+    "eyebrow": "Yönetim",
+    "title": "Sistem",
+    "description": "Bu Libre WebUI örneğini barındıran makineyi ve çalışma zamanını izleyin.",
+    "updated": "Güncellendi {{date}}",
+    "refresh": "Sistem bilgilerini yenile",
+    "loadFailed": "Sistem bilgileri yüklenemedi.",
+    "cards": {
+      "uptime": "Ana makine çalışma süresi",
+      "uptimeDetail": "{{date}} tarihinden beri çalışıyor",
+      "memory": "Kullanılan bellek",
+      "memoryDetail": "{{used}} / {{total}}",
+      "freeSpace": "Boş alan",
+      "freeSpaceDetail": "{{label}} · Toplam {{total}}",
+      "containers": "Çalışan kapsayıcılar",
+      "containersDetail": "Docker tarafından bilinen {{total}} kapsayıcı",
+      "dockerUnavailable": "Docker kullanılamıyor",
+      "unavailable": "Kullanılamıyor"
+    },
+    "host": {
+      "title": "Ana makine ve çalışma zamanı",
+      "description": "İşletim sistemi, işlemci ve Libre WebUI işlem ayrıntıları.",
+      "container": "Kapsayıcı çalışma zamanı",
+      "native": "Yerel çalışma zamanı",
+      "hostname": "Sunucu adı",
+      "operatingSystem": "İşletim sistemi",
+      "processor": "İşlemci",
+      "logicalCpus": "mantıksal CPU",
+      "loadAverage": "Yük ortalaması · 1 / 5 / 15 dk",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Süreç",
+      "workingDirectory": "Çalışma dizini"
+    },
+    "memory": {
+      "title": "Bellek",
+      "description": "Çalışma zamanında görülebilen sistem belleği ve uygulama süreç kullanımı.",
+      "usedOf": "{{used}} / {{total}} kullanıldı",
+      "free": "{{value}} boş",
+      "processRss": "Süreç RSS",
+      "heapUsed": "V8 heap kullanılan",
+      "heapTotal": "V8 heap toplam",
+      "external": "Harici bellek"
+    },
+    "storage": {
+      "title": "Depolama",
+      "description": "Çalışma zamanı dosya sistemi ve kalıcı uygulama verileri için kullanılabilir alan.",
+      "used": "{{value}} kullanıldı",
+      "free": "{{value}} boş",
+      "empty": "Bu çalışma zamanında dosya sistemi bilgisi kullanılamıyor."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Salt okunur Docker Engine durumu ve kapsamlı bir konteyner listesi.",
+      "connected": "Bağlı",
+      "unavailable": "Kullanılamıyor",
+      "unavailableDetail": "Docker Engine tanılamaları kullanılamıyor.",
+      "socketStatus": "Yerel soket: {{status}}",
+      "mounted": "bağlı",
+      "notMounted": "bağlı değil",
+      "running": "Çalışıyor",
+      "stopped": "Durduruldu",
+      "paused": "Duraklatıldı",
+      "total": "Toplam",
+      "version": "Sürüm",
+      "host": "Sunucu",
+      "architecture": "Mimari",
+      "cpus": "CPU",
+      "memory": "Bellek",
+      "container": "Konteyner",
+      "image": "İmaj",
+      "state": "Durum",
+      "created": "Oluşturulma",
+      "empty": "Docker bağlı ve şu anda listelenen konteyner yok."
+    },
+    "network": {
+      "title": "Ağ",
+      "description": "Çalışma zamanında görünen arayüzler, adresler ve Linux trafik sayaçları.",
+      "internal": "dahili",
+      "empty": "Uygulama çalışma zamanına görünür ağ arayüzü yok."
+    },
+    "securityNote": "Bu sayfa yöneticilerle sınırlıdır. Sunucu yalnızca operasyonel özetler döndürür: ortam değişkenlerini, kimlik bilgilerini, Docker etiketlerini, bağlamaları, konteyner komutlarını veya inceleme yüklerini açıklamaz. Libre WebUI bir konteynerde çalıştığında, ana makine düzeyindeki CPU ve bellek ayrıntıları yerel soketi kullanılabilir olduğunda Docker Engine'den gelir; diğer değerler uygulama çalışma zamanını tanımlar.",
+    "work": {
+      "title": "Work",
+      "description": "Tüm kullanıcıların korumalı alanları",
+      "access": "Erişim",
+      "accessAdmins": "Yalnızca yöneticiler",
+      "accessAllUsers": "Tüm kullanıcılar",
+      "runtimeAvailable": "Kullanılabilir",
+      "runtimeUnavailable": "Kullanılamıyor",
+      "activeRuntimes": "Etkin çalışma ortamları",
+      "pendingCleanups": "Bekleyen temizlikler",
+      "orphans": "Sahipsiz kapsayıcılar",
+      "owner": "Sahip",
+      "task": "Görev",
+      "state": "Durum",
+      "preview": "Önizleme",
+      "terminals": "Terminaller",
+      "updated": "Güncellendi",
+      "stateRunning": "Çalışıyor",
+      "stateStopped": "Durduruldu",
+      "stateStarting": "Başlatılıyor",
+      "stateUnknown": "Bilinmiyor",
+      "noTasks": "Henüz Work görevi yok."
+    }
+  },
   "chatHistory": {
     "label": "Konuşma geçmişi",
     "jumpToTurn": "{{total}} turdan {{index}}. tura git"
@@ -1650,6 +1785,57 @@
     "failed": "Görsel oluşturulamadı",
     "enterPrompt": "Lütfen bir komut girin",
     "promptTooLong": "İstem {{max}} karakter maksimum uzunluğunu aşıyor"
+  },
+  "mediaGeneration": {
+    "title": "Medya oluştur",
+    "description": "Etkinleştirilmiş bir medya sağlayıcısıyla video, ses, müzik veya konuşma oluşturun.",
+    "image": "Görüntü",
+    "video": "Video",
+    "audio": "Ses",
+    "sound": "Ses",
+    "speech": "Konuşma",
+    "model": "Model",
+    "voice": "Ses veya ses kimliği",
+    "cloneVoice": "Referans sesi klonla",
+    "cloneVoiceDescription": "Bu konuşmayı önceden ayarlanmış bir ses yerine referans kaydına göre oluşturun.",
+    "referenceAudio": "Referans ses",
+    "referenceTranscript": "Referans kaydının eksiksiz dökümü",
+    "referenceTranscriptPlaceholder": "Referans kaydında söylenenleri olduğu gibi girin…",
+    "referenceAudioTooLarge": "Referans sesin boyutu en fazla {{max}} olabilir.",
+    "cloneConsent": "Bir sesi yalnızca konuşmacının izni olduğunda klonlayın. Kayıt, bu oluşturma işlemi için seçilen sağlayıcıya gönderilir ve Libre WebUI tarafından kaydedilmez.",
+    "saveVoiceProfile": "Yeniden kullanılabilir ses olarak kaydet",
+    "saveVoiceProfileDescription": "Bu referans kaydını ve dökümünü güvenli şekilde saklayın. Libre WebUI, bu sesi kullanan her Konuşma grubu için bunları seçilen sağlayıcıya gönderir.",
+    "voiceProfileName": "Kaydedilmiş ses adı",
+    "voiceProfileNamePlaceholder": "Örneğin, Sesim",
+    "voiceStorageConsent": "Bu sesi klonlamak ve saklamak için konuşmacının iznini aldığımı onaylıyorum. Referans, ben silene kadar kayıtlı kalacak.",
+    "resolution": "Çözünürlük",
+    "aspectRatio": "En boy oranı",
+    "duration": "Süre",
+    "providerDefault": "Sağlayıcı varsayılanı",
+    "generateAudio": "Desteklendiğinde videoyla birlikte ses oluştur",
+    "prompt": "İstem",
+    "text": "Konuşulacak metin",
+    "videoPlaceholder": "Sahneyi, hareketi, kamerayı ve aydınlatmayı açıklayın...",
+    "audioPlaceholder": "Sesin konuşmasını istediğiniz metni girin...",
+    "soundPlaceholder": "İstediğiniz sesi, müziği, atmosferi veya sözlü yanıtı açıklayın...",
+    "generate": "Oluştur",
+    "generating": "Oluşturuluyor… bu birkaç dakika sürebilir",
+    "success": "Medya oluşturuldu ve Imagine'a kaydedildi",
+    "successWithSavedVoice": "Medya oluşturuldu ve “{{name}}” artık Konuşma ayarlarında kullanılabilir",
+    "failed": "Medya oluşturulamadı",
+    "loadFailed": "Medya sağlayıcıları yüklenemedi",
+    "noModels": "Kullanılabilir {{kind}} modeli yok. Önce uyumlu bir sağlayıcı etkinleştirin ve kimlik bilgilerini kaydedin."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} öğe",
+    "empty": "Henüz oluşturulmuş medya yok",
+    "emptyHint": "Bir görüntü, video veya ses klibi oluşturun ve burada görünecektir.",
+    "filters": {
+      "all": "Tümü",
+      "image": "Görüntüler",
+      "video": "Videolar",
+      "audio": "Ses"
+    }
   },
   "errorBoundary": {
     "title": "Bir şeyler yanlış gitti",
@@ -1802,8 +1988,8 @@
       "saveFailed": "Değişkenler kaydedilemedi",
       "resetDefaults": "Varsayılanlara sıfırla",
       "reset": "Değişkenler sıfırlandı",
-      "sensitiveSet": "Değer ayarlandı (değiştirmek için yeni değer girin)",
       "resetFailed": "Değişkenler sıfırlanamadı",
+      "sensitiveSet": "Değer ayarlandı (değiştirmek için yeni değer girin)",
       "showValue": "{{label}} değerini göster",
       "hideValue": "{{label}} değerini gizle",
       "connection": "Bağlantı",
@@ -1841,45 +2027,6 @@
   "demoMode": {
     "title": "Demo modu",
     "github": "GitHub"
-  },
-  "personaBackground": {
-    "label": "Arka Plan Görüntüsü",
-    "uploadBackgroundImage": "Arka plan görüntüsü yükle",
-    "dragAndDrop": "Bir görüntü sürükleyip bırakın veya göz atmak için tıklayın",
-    "chooseImage": "Görüntü Seç",
-    "uploading": "Yükleniyor...",
-    "enterImageUrl": "Veya görüntü URL'si girin",
-    "supportedFormats": "Desteklenen: JPG, PNG, GIF, WebP (maks 5MB). Geniş yatay görüntüler en iyi çalışır.",
-    "customBackground": "Özel arka plan görüntüsü",
-    "clickToChange": "Değiştirmek veya kaldırmak için tıklayın",
-    "removed": "Arka plan kaldırıldı",
-    "uploaded": "Arka plan başarıyla yüklendi",
-    "invalidFile": "Lütfen geçerli bir görüntü dosyası seçin",
-    "fileTooLarge": "Arka plan görüntü boyutu 5MB'dan küçük olmalıdır",
-    "readFailed": "Görüntü dosyası okunamadı",
-    "uploadFailed": "Arka plan görüntüsü yüklenemedi"
-  },
-  "modelSelector": {
-    "searchInstalled": "Yüklü modelleri ara...",
-    "searchOllama": "Ollama kütüphanesinde ara...",
-    "searchHuggingFace": "HuggingFace'ta ara...",
-    "selectModel": "Model seç",
-    "personas": "Personalar",
-    "ollamaModels": "Ollama Modelleri",
-    "pluginModels": "Eklenti Modelleri",
-    "actions": "Eylemler",
-    "installed": "Yüklü",
-    "use": "Kullan",
-    "pull": "İndir",
-    "pullRestricted": "Bu örnekte model kurulumu yalnızca yöneticilerle sınırlandırılmıştır.",
-    "adminOnlyPull": "Yalnızca yöneticiler",
-    "legacyProvider": "sağlayıcı kayıtlı değil",
-    "providerNotRecorded": "Sağlayıcı kayıtlı değil",
-    "providerUnavailable": "sağlayıcı kullanılamıyor",
-    "reselectProvider": "bu modeli sabitlemek için sağlayıcıyı yeniden seçin",
-    "unavailable": "kullanılamıyor",
-    "unavailableSelections": "Kullanılamayan seçimler",
-    "agentModels": "Ajanlar"
   },
   "libreClaw": {
     "title": "Ajanlar",
@@ -2223,224 +2370,44 @@
       "warning": "Görev bu klasörü doğrudan okuyup yazabilir. İzole çalışma alanı için boş bırakın."
     }
   },
-  "usageAnalytics": {
-    "eyebrow": "Yönetim",
-    "title": "Sağlayıcı Kullanımı",
-    "description": "Bu örnekteki etkin eklentiler genelinde giden API çağrılarını ve model tüketimini takip edin.",
-    "days": "{{count}} gün",
-    "refresh": "Kullanımı yenile",
-    "loadFailed": "Sağlayıcı kullanımı yüklenemedi.",
-    "metrics": {
-      "calls": "Çağrılar",
-      "tokens": "Belirteçler"
-    },
-    "cards": {
-      "calls": "API çağrıları",
-      "callsDetail": "{{count}} aktif kullanıcı genelinde",
-      "tokens": "Raporlanan belirteçler",
-      "tokensDetail": "{{count}} çağrıda raporlanan kullanım",
-      "success": "Başarı oranı",
-      "successDetail": "{{count}} başarısız çağrı",
-      "latency": "Ortalama gecikme",
-      "latencyDetail": "Uçtan uca sağlayıcı süresi"
-    },
-    "activity": {
-      "title": "Zamanla tüketim",
-      "callsDescription": "Etkin eklentilere günlük giden istekler",
-      "tokensDescription": "Sağlayıcılar tarafından bildirilen günlük token toplamları",
-      "chartLabel": "Günlük sağlayıcı {{metric}} grafiği"
-    },
-    "models": {
-      "title": "Model tüketimi",
-      "description": "Bu dönemde en çok trafiği taşıyan modeller.",
-      "model": "Model",
-      "success": "Başarı",
-      "latency": "Gecikme"
-    },
-    "providers": {
-      "title": "Etkin eklenti trafiği"
-    },
-    "capabilities": {
-      "title": "Yetenek dağılımı",
-      "characters": "{{count}} karakter",
-      "bytes": "{{count}} bayt",
-      "images": "{{count}} görüntü",
-      "jobs": "{{count}} video işi",
-      "inputs": "{{count}} girdi",
-      "reportedTokens": "{{count}} bildirilen token"
-    },
-    "empty": {
-      "title": "Henüz sağlayıcı çağrısı yok",
-      "description": "Etkin bir eklenti sohbet, Work, gömme, görüntü, konuşma, ses veya video isteklerini işledikten sonra çağrılar burada görünecektir."
-    },
-    "privacyNote": "Kullanım, sunucuda giden eklenti sınırında ölçülür. Libre WebUI; sağlayıcı, model, zamanlama, durum ve bildirilen sayaçları saklar—asla istemleri, yanıtları, uç noktaları, kimlik bilgilerini veya sağlayıcı hata gövdelerini saklamaz. Token toplamları yalnızca sağlayıcının kullanım meta verilerini döndürdüğü çağrıları içerir.",
-    "heatmap": {
-      "title": "Bir yıllık etkinlik",
-      "description": "Son bir yıldaki günlük sağlayıcı çağrıları, her günün en çok kullanılan modeline göre renklendirilmiştir.",
-      "calls": "çağrı",
-      "noCalls": "Çağrı yok",
-      "other": "Diğer modeller",
-      "less": "Az",
-      "more": "Çok",
-      "yearTotal": "Son bir yılda {{formatted}} çağrı"
-    }
+  "personaBackground": {
+    "label": "Arka Plan Görüntüsü",
+    "uploadBackgroundImage": "Arka plan görüntüsü yükle",
+    "dragAndDrop": "Bir görüntü sürükleyip bırakın veya göz atmak için tıklayın",
+    "chooseImage": "Görüntü Seç",
+    "uploading": "Yükleniyor...",
+    "enterImageUrl": "Veya görüntü URL'si girin",
+    "supportedFormats": "Desteklenen: JPG, PNG, GIF, WebP (maks 5MB). Geniş yatay görüntüler en iyi çalışır.",
+    "customBackground": "Özel arka plan görüntüsü",
+    "clickToChange": "Değiştirmek veya kaldırmak için tıklayın",
+    "removed": "Arka plan kaldırıldı",
+    "uploaded": "Arka plan başarıyla yüklendi",
+    "invalidFile": "Lütfen geçerli bir görüntü dosyası seçin",
+    "fileTooLarge": "Arka plan görüntü boyutu 5MB'dan küçük olmalıdır",
+    "readFailed": "Görüntü dosyası okunamadı",
+    "uploadFailed": "Arka plan görüntüsü yüklenemedi"
   },
-  "systemPage": {
-    "eyebrow": "Yönetim",
-    "title": "Sistem",
-    "description": "Bu Libre WebUI örneğini barındıran makineyi ve çalışma zamanını izleyin.",
-    "updated": "Güncellendi {{date}}",
-    "refresh": "Sistem bilgilerini yenile",
-    "loadFailed": "Sistem bilgileri yüklenemedi.",
-    "cards": {
-      "uptime": "Ana makine çalışma süresi",
-      "uptimeDetail": "{{date}} tarihinden beri çalışıyor",
-      "memory": "Kullanılan bellek",
-      "memoryDetail": "{{used}} / {{total}}",
-      "freeSpace": "Boş alan",
-      "freeSpaceDetail": "{{label}} · Toplam {{total}}",
-      "containers": "Çalışan kapsayıcılar",
-      "containersDetail": "Docker tarafından bilinen {{total}} kapsayıcı",
-      "dockerUnavailable": "Docker kullanılamıyor",
-      "unavailable": "Kullanılamıyor"
-    },
-    "host": {
-      "title": "Ana makine ve çalışma zamanı",
-      "description": "İşletim sistemi, işlemci ve Libre WebUI işlem ayrıntıları.",
-      "container": "Kapsayıcı çalışma zamanı",
-      "native": "Yerel çalışma zamanı",
-      "hostname": "Sunucu adı",
-      "operatingSystem": "İşletim sistemi",
-      "processor": "İşlemci",
-      "logicalCpus": "mantıksal CPU",
-      "loadAverage": "Yük ortalaması · 1 / 5 / 15 dk",
-      "libreVersion": "Libre WebUI",
-      "nodeVersion": "Node.js",
-      "process": "Süreç",
-      "workingDirectory": "Çalışma dizini"
-    },
-    "memory": {
-      "title": "Bellek",
-      "description": "Çalışma zamanında görülebilen sistem belleği ve uygulama süreç kullanımı.",
-      "usedOf": "{{used}} / {{total}} kullanıldı",
-      "free": "{{value}} boş",
-      "processRss": "Süreç RSS",
-      "heapUsed": "V8 heap kullanılan",
-      "heapTotal": "V8 heap toplam",
-      "external": "Harici bellek"
-    },
-    "storage": {
-      "title": "Depolama",
-      "description": "Çalışma zamanı dosya sistemi ve kalıcı uygulama verileri için kullanılabilir alan.",
-      "used": "{{value}} kullanıldı",
-      "free": "{{value}} boş",
-      "empty": "Bu çalışma zamanında dosya sistemi bilgisi kullanılamıyor."
-    },
-    "docker": {
-      "title": "Docker",
-      "description": "Salt okunur Docker Engine durumu ve kapsamlı bir konteyner listesi.",
-      "connected": "Bağlı",
-      "unavailable": "Kullanılamıyor",
-      "unavailableDetail": "Docker Engine tanılamaları kullanılamıyor.",
-      "socketStatus": "Yerel soket: {{status}}",
-      "mounted": "bağlı",
-      "notMounted": "bağlı değil",
-      "running": "Çalışıyor",
-      "stopped": "Durduruldu",
-      "paused": "Duraklatıldı",
-      "total": "Toplam",
-      "version": "Sürüm",
-      "host": "Sunucu",
-      "architecture": "Mimari",
-      "cpus": "CPU",
-      "memory": "Bellek",
-      "container": "Konteyner",
-      "image": "İmaj",
-      "state": "Durum",
-      "created": "Oluşturulma",
-      "empty": "Docker bağlı ve şu anda listelenen konteyner yok."
-    },
-    "network": {
-      "title": "Ağ",
-      "description": "Çalışma zamanında görünen arayüzler, adresler ve Linux trafik sayaçları.",
-      "internal": "dahili",
-      "empty": "Uygulama çalışma zamanına görünür ağ arayüzü yok."
-    },
-    "securityNote": "Bu sayfa yöneticilerle sınırlıdır. Sunucu yalnızca operasyonel özetler döndürür: ortam değişkenlerini, kimlik bilgilerini, Docker etiketlerini, bağlamaları, konteyner komutlarını veya inceleme yüklerini açıklamaz. Libre WebUI bir konteynerde çalıştığında, ana makine düzeyindeki CPU ve bellek ayrıntıları yerel soketi kullanılabilir olduğunda Docker Engine'den gelir; diğer değerler uygulama çalışma zamanını tanımlar.",
-    "work": {
-      "title": "Work",
-      "description": "Tüm kullanıcıların korumalı alanları",
-      "access": "Erişim",
-      "accessAdmins": "Yalnızca yöneticiler",
-      "accessAllUsers": "Tüm kullanıcılar",
-      "runtimeAvailable": "Kullanılabilir",
-      "runtimeUnavailable": "Kullanılamıyor",
-      "activeRuntimes": "Etkin çalışma ortamları",
-      "pendingCleanups": "Bekleyen temizlikler",
-      "orphans": "Sahipsiz kapsayıcılar",
-      "owner": "Sahip",
-      "task": "Görev",
-      "state": "Durum",
-      "preview": "Önizleme",
-      "terminals": "Terminaller",
-      "updated": "Güncellendi",
-      "stateRunning": "Çalışıyor",
-      "stateStopped": "Durduruldu",
-      "stateStarting": "Başlatılıyor",
-      "stateUnknown": "Bilinmiyor",
-      "noTasks": "Henüz Work görevi yok."
-    }
-  },
-  "mediaGeneration": {
-    "title": "Medya oluştur",
-    "description": "Etkinleştirilmiş bir medya sağlayıcısıyla video, ses, müzik veya konuşma oluşturun.",
-    "image": "Görüntü",
-    "video": "Video",
-    "audio": "Ses",
-    "sound": "Ses",
-    "speech": "Konuşma",
-    "model": "Model",
-    "voice": "Ses veya ses kimliği",
-    "cloneVoice": "Referans sesi klonla",
-    "cloneVoiceDescription": "Bu konuşmayı önceden ayarlanmış bir ses yerine referans kaydına göre oluşturun.",
-    "referenceAudio": "Referans ses",
-    "referenceTranscript": "Referans kaydının eksiksiz dökümü",
-    "referenceTranscriptPlaceholder": "Referans kaydında söylenenleri olduğu gibi girin…",
-    "referenceAudioTooLarge": "Referans sesin boyutu en fazla {{max}} olabilir.",
-    "cloneConsent": "Bir sesi yalnızca konuşmacının izni olduğunda klonlayın. Kayıt, bu oluşturma işlemi için seçilen sağlayıcıya gönderilir ve Libre WebUI tarafından kaydedilmez.",
-    "saveVoiceProfile": "Yeniden kullanılabilir ses olarak kaydet",
-    "saveVoiceProfileDescription": "Bu referans kaydını ve dökümünü güvenli şekilde saklayın. Libre WebUI, bu sesi kullanan her Konuşma grubu için bunları seçilen sağlayıcıya gönderir.",
-    "voiceProfileName": "Kaydedilmiş ses adı",
-    "voiceProfileNamePlaceholder": "Örneğin, Sesim",
-    "voiceStorageConsent": "Bu sesi klonlamak ve saklamak için konuşmacının iznini aldığımı onaylıyorum. Referans, ben silene kadar kayıtlı kalacak.",
-    "successWithSavedVoice": "Medya oluşturuldu ve “{{name}}” artık Konuşma ayarlarında kullanılabilir",
-    "resolution": "Çözünürlük",
-    "aspectRatio": "En boy oranı",
-    "duration": "Süre",
-    "providerDefault": "Sağlayıcı varsayılanı",
-    "generateAudio": "Desteklendiğinde videoyla birlikte ses oluştur",
-    "prompt": "İstem",
-    "text": "Konuşulacak metin",
-    "videoPlaceholder": "Sahneyi, hareketi, kamerayı ve aydınlatmayı açıklayın...",
-    "audioPlaceholder": "Sesin konuşmasını istediğiniz metni girin...",
-    "soundPlaceholder": "İstediğiniz sesi, müziği, atmosferi veya sözlü yanıtı açıklayın...",
-    "generate": "Oluştur",
-    "generating": "Oluşturuluyor… bu birkaç dakika sürebilir",
-    "success": "Medya oluşturuldu ve Imagine'a kaydedildi",
-    "failed": "Medya oluşturulamadı",
-    "loadFailed": "Medya sağlayıcıları yüklenemedi",
-    "noModels": "Kullanılabilir {{kind}} modeli yok. Önce uyumlu bir sağlayıcı etkinleştirin ve kimlik bilgilerini kaydedin."
-  },
-  "mediaGallery": {
-    "itemCount": "{{count}} öğe",
-    "empty": "Henüz oluşturulmuş medya yok",
-    "emptyHint": "Bir görüntü, video veya ses klibi oluşturun ve burada görünecektir.",
-    "filters": {
-      "all": "Tümü",
-      "image": "Görüntüler",
-      "video": "Videolar",
-      "audio": "Ses"
-    }
+  "modelSelector": {
+    "searchInstalled": "Yüklü modelleri ara...",
+    "searchOllama": "Ollama kütüphanesinde ara...",
+    "searchHuggingFace": "HuggingFace'ta ara...",
+    "selectModel": "Model seç",
+    "personas": "Personalar",
+    "ollamaModels": "Ollama Modelleri",
+    "pluginModels": "Eklenti Modelleri",
+    "actions": "Eylemler",
+    "installed": "Yüklü",
+    "use": "Kullan",
+    "pull": "İndir",
+    "pullRestricted": "Bu örnekte model kurulumu yalnızca yöneticilerle sınırlandırılmıştır.",
+    "adminOnlyPull": "Yalnızca yöneticiler",
+    "legacyProvider": "sağlayıcı kayıtlı değil",
+    "providerNotRecorded": "Sağlayıcı kayıtlı değil",
+    "providerUnavailable": "sağlayıcı kullanılamıyor",
+    "reselectProvider": "bu modeli sabitlemek için sağlayıcıyı yeniden seçin",
+    "unavailable": "kullanılamıyor",
+    "unavailableSelections": "Kullanılamayan seçimler",
+    "agentModels": "Ajanlar"
   },
   "whatsNew": {
     "title": "Yenilikler",

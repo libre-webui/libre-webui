@@ -59,11 +59,11 @@
       "loginSuccess": "เข้าสู่ระบบสำเร็จ!",
       "loginFailed": "เข้าสู่ระบบล้มเหลว",
       "checkCredentials": "เข้าสู่ระบบล้มเหลว กรุณาตรวจสอบข้อมูลประจำตัว",
+      "approvalPending": "บัญชีของคุณกำลังรอการอนุมัติจากผู้ดูแลระบบ",
       "enterBoth": "กรุณาป้อนชื่อผู้ใช้และรหัสผ่าน",
       "githubSuccess": "เข้าสู่ระบบ GitHub สำเร็จ!",
       "githubFailed": "การยืนยันตัวตน GitHub ล้มเหลว",
       "githubVerifyFailed": "ไม่สามารถยืนยันการยืนยันตัวตน GitHub",
-      "approvalPending": "บัญชีของคุณกำลังรอการอนุมัติจากผู้ดูแลระบบ",
       "verificationFailed": "การยืนยันความปลอดภัยล้มเหลว โปรดรีเฟรชหน้าแล้วลองอีกครั้ง"
     },
     "signup": {
@@ -82,15 +82,15 @@
       "hasAccount": "มีบัญชีอยู่แล้ว?",
       "signInHere": "เข้าสู่ระบบที่นี่",
       "signupSuccess": "สร้างบัญชีสำเร็จ!",
+      "approvalPending": "ได้รับการลงทะเบียนแล้ว ผู้ดูแลระบบต้องอนุมัติบัญชีของคุณ",
+      "awaitingApproval": "กำลังรอการอนุมัติ",
+      "awaitingApprovalDescription": "บัญชีของคุณถูกสร้างขึ้นแล้ว แต่ผู้ดูแลระบบต้องเปิดใช้งานก่อนจึงจะสามารถเข้าสู่ระบบได้",
+      "backToSignIn": "กลับไปเข้าสู่ระบบ",
       "signupFailed": "สมัครสมาชิกล้มเหลว",
       "tryAgain": "สมัครสมาชิกล้มเหลว กรุณาลองอีกครั้ง",
       "usernameRequired": "ต้องระบุชื่อผู้ใช้และรหัสผ่าน",
       "passwordMismatch": "รหัสผ่านไม่ตรงกัน",
-      "passwordTooShort": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร",
-      "approvalPending": "ได้รับการลงทะเบียนแล้ว ผู้ดูแลระบบต้องอนุมัติบัญชีของคุณ",
-      "awaitingApproval": "กำลังรอการอนุมัติ",
-      "awaitingApprovalDescription": "บัญชีของคุณถูกสร้างขึ้นแล้ว แต่ผู้ดูแลระบบต้องเปิดใช้งานก่อนจึงจะสามารถเข้าสู่ระบบได้",
-      "backToSignIn": "กลับไปเข้าสู่ระบบ"
+      "passwordTooShort": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร"
     },
     "logout": {
       "button": "ออกจากระบบ",
@@ -166,9 +166,9 @@
       "createAdmin": "สร้างผู้ดูแลระบบ",
       "success": "สร้างบัญชีผู้ดูแลระบบสำเร็จ!",
       "failed": "ไม่สามารถสร้างบัญชีผู้ดูแลระบบ",
+      "approvalUnexpected": "ไม่สามารถเปิดใช้งานผู้ดูแลระบบเริ่มต้นได้ โปรดลองอีกครั้ง",
       "fillAllFields": "กรุณากรอกข้อมูลทุกช่อง",
-      "note": "นี่จะเป็นบัญชีผู้ดูแลระบบหลักสำหรับ Libre WebUI ของคุณ",
-      "approvalUnexpected": "ไม่สามารถเปิดใช้งานผู้ดูแลระบบเริ่มต้นได้ โปรดลองอีกครั้ง"
+      "note": "นี่จะเป็นบัญชีผู้ดูแลระบบหลักสำหรับ Libre WebUI ของคุณ"
     },
     "encryptionKey": {
       "title": "บันทึกคีย์เข้ารหัสของคุณ",
@@ -277,6 +277,7 @@
       "work": "งาน",
       "chat": "แชท",
       "private": "ส่วนตัว",
+      "incognito": "แชทไม่ระบุตัวตน",
       "privateMode": "โหมดส่วนตัว",
       "privateDescription": "การสนทนานี้จะไม่ถูกบันทึก",
       "privateTooltip": "เริ่มการสนทนาส่วนตัวที่จะไม่ถูกบันทึก",
@@ -290,7 +291,6 @@
       "pinChat": "ปักหมุด",
       "unpinChat": "เลิกปักหมุด",
       "deleteChat": "ลบแชท",
-      "incognito": "แชทไม่ระบุตัวตน",
       "archiveChat": "เก็บแชทถาวร",
       "groups": {
         "pinned": "ปักหมุดแล้ว",
@@ -410,32 +410,27 @@
       "models": "โมเดล",
       "personas": "เพอร์โซน่า",
       "imagine": "จินตนาการ",
-      "settings": "การตั้งค่า",
-      "userManagement": "จัดการผู้ใช้",
-      "signOut": "ออกจากระบบ",
       "agents": "เอเจนต์",
       "work": "งาน",
-      "exploreLabel": "สำรวจ",
+      "settings": "การตั้งค่า",
       "usageAnalytics": "การใช้งานผู้ให้บริการ",
       "system": "ระบบ",
+      "userManagement": "จัดการผู้ใช้",
+      "signOut": "ออกจากระบบ",
+      "exploreLabel": "สำรวจ",
       "notes": "บันทึกย่อ"
     },
     "toggleSize": "สลับขนาดแถบด้านข้าง",
-    "expandSidebar": "ขยายแถบด้านข้าง",
-    "pinned": {
-      "label": "ปักหมุดไว้",
-      "pin": "ปักหมุดไว้ที่แถบด้านข้าง",
-      "unpin": "เลิกปักหมุดจากแถบด้านข้าง"
-    }
+    "expandSidebar": "ขยายแถบด้านข้าง"
   },
   "user": {
     "menu": {
       "changePicture": "เปลี่ยนรูปภาพ",
       "settings": "การตั้งค่า",
-      "userManagement": "จัดการผู้ใช้",
-      "logout": "ออกจากระบบ",
       "usageAnalytics": "การใช้งานผู้ให้บริการ",
-      "system": "ระบบ"
+      "system": "ระบบ",
+      "userManagement": "จัดการผู้ใช้",
+      "logout": "ออกจากระบบ"
     },
     "avatar": {
       "title": "เปลี่ยนรูปโปรไฟล์",
@@ -478,8 +473,7 @@
       "shortcuts": "ทางลัด",
       "about": "เกี่ยวกับ",
       "sessions": "เซสชัน",
-      "apiKeys": "คีย์ API",
-      "connections": "การเชื่อมต่อ"
+      "apiKeys": "คีย์ API"
     },
     "appearance": {
       "title": "รูปลักษณ์",
@@ -531,6 +525,13 @@
       "defaultModel": "โมเดลเริ่มต้น",
       "defaultModelDescription": "โมเดลนี้จะถูกใช้เป็นค่าเริ่มต้นสำหรับการสนทนาใหม่",
       "selectModel": "เลือกโมเดล",
+      "specializedModels": "โมเดลเฉพาะทาง",
+      "visionModel": "โมเดลรูปภาพ",
+      "selectVisionModel": "ใช้โมเดลแชทปัจจุบัน",
+      "visionModelDescription": "ใช้โดยอัตโนมัติเมื่อบริบทแชทขาออกมีรูปภาพ เลือกโมเดลที่รองรับการป้อนรูปภาพ",
+      "visionModelUpdateFailed": "ไม่สามารถอัปเดตโมเดลรูปภาพได้: {{error}}",
+      "visionModelNoProvider": "โมเดลรูปภาพนี้ไม่มีข้อมูลผู้ให้บริการ โปรดเลือกโมเดลที่พร้อมใช้งาน",
+      "persona": "เพอร์โซน่า",
       "updateAll": "อัปเดตโมเดลทั้งหมด",
       "updateAllDescription": "ตรวจสอบการอัปเดตและดาวน์โหลดเวอร์ชันล่าสุดของโมเดลที่ติดตั้งทั้งหมด",
       "updateAllButton": "อัปเดตทั้งหมด",
@@ -553,15 +554,8 @@
         "selectTaskModel": "เลือกโมเดลงาน",
         "taskModelDescription": "โมเดลที่ใช้สำหรับสร้างชื่อเรื่องการสนทนา"
       },
-      "persona": "เพอร์โซน่า",
       "updatingModel": "กำลังอัปเดต {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} จาก {{total}} โมเดล",
-      "specializedModels": "โมเดลเฉพาะทาง",
-      "visionModel": "โมเดลรูปภาพ",
-      "selectVisionModel": "ใช้โมเดลแชทปัจจุบัน",
-      "visionModelDescription": "ใช้โดยอัตโนมัติเมื่อบริบทแชทขาออกมีรูปภาพ เลือกโมเดลที่รองรับการป้อนรูปภาพ",
-      "visionModelUpdateFailed": "ไม่สามารถอัปเดตโมเดลรูปภาพได้: {{error}}",
-      "visionModelNoProvider": "โมเดลรูปภาพนี้ไม่มีข้อมูลผู้ให้บริการ โปรดเลือกโมเดลที่พร้อมใช้งาน"
+      "modelsProgress": "{{current}} จาก {{total}} โมเดล"
     },
     "systemMessage": {
       "title": "ข้อความระบบ",
@@ -573,6 +567,13 @@
     "plugins": {
       "title": "ปลั๊กอิน",
       "description": "จัดการปลั๊กอินที่ติดตั้ง",
+      "providerConnections": "การเชื่อมต่อผู้ให้บริการ",
+      "providerConnectionsDescription": "เชื่อมต่อ กำหนดค่า และตรวจสอบผู้ให้บริการโมเดลผ่านปลั๊กอิน",
+      "providers": "ผู้ให้บริการ",
+      "searchProviders": "ค้นหาผู้ให้บริการ",
+      "noProvidersFound": "ไม่พบผู้ให้บริการที่ตรงกับการค้นหาของคุณ",
+      "selectProvider": "เลือกผู้ให้บริการ",
+      "selectProviderDescription": "เลือกผู้ให้บริการเพื่อตรวจสอบการเชื่อมต่อและแคตตาล็อกโมเดล",
       "addNew": "เพิ่มปลั๊กอินใหม่",
       "upload": "อัปโหลดปลั๊กอิน",
       "addJson": "เพิ่ม JSON",
@@ -591,33 +592,12 @@
       "models": "โมเดล",
       "apiKeySet": "ตั้ง API Key แล้ว",
       "apiKeyConfiguration": "การกำหนดค่า API Key",
+      "apiKeyDescription": "จัดเก็บ API key ส่วนตัวสำหรับ {{name}}",
       "apiKeyEnvAlternative": "หรือตั้งค่าตัวแปร",
       "environmentVariable": "ตัวแปรสภาพแวดล้อม",
       "apiKeyConfigured": "กำหนดค่า API Key แล้ว",
       "apiKeyPlaceholder": "ป้อน API Key ของคุณ...",
       "saveApiKey": "บันทึก API Key",
-      "apiKey": {
-        "title": "API Key",
-        "placeholder": "ป้อน API Key",
-        "save": "บันทึก Key",
-        "remove": "ลบ Key",
-        "configured": "กำหนดค่า API Key แล้ว",
-        "notConfigured": "ต้องการ API Key",
-        "saved": "บันทึก API Key สำเร็จ",
-        "removed": "ลบ API Key แล้ว",
-        "saveFailed": "ไม่สามารถบันทึก API Key",
-        "removeFailed": "ไม่สามารถลบ API Key",
-        "enterKey": "กรุณาป้อน API Key"
-      },
-      "variables": "Variables",
-      "providerConnections": "การเชื่อมต่อผู้ให้บริการ",
-      "providerConnectionsDescription": "เชื่อมต่อ กำหนดค่า และตรวจสอบผู้ให้บริการโมเดลผ่านปลั๊กอิน",
-      "providers": "ผู้ให้บริการ",
-      "searchProviders": "ค้นหาผู้ให้บริการ",
-      "noProvidersFound": "ไม่พบผู้ให้บริการที่ตรงกับการค้นหาของคุณ",
-      "selectProvider": "เลือกผู้ให้บริการ",
-      "selectProviderDescription": "เลือกผู้ให้บริการเพื่อตรวจสอบการเชื่อมต่อและแคตตาล็อกโมเดล",
-      "apiKeyDescription": "จัดเก็บ API key ส่วนตัวสำหรับ {{name}}",
       "showApiKey": "แสดง API key",
       "hideApiKey": "ซ่อน API key",
       "configure": "กำหนดค่า",
@@ -643,7 +623,21 @@
         "transcription": "การถอดเสียง"
       },
       "exportPlugin": "ส่งออกปลั๊กอิน",
-      "deletePlugin": "ลบปลั๊กอิน"
+      "deletePlugin": "ลบปลั๊กอิน",
+      "apiKey": {
+        "title": "API Key",
+        "placeholder": "ป้อน API Key",
+        "save": "บันทึก Key",
+        "remove": "ลบ Key",
+        "configured": "กำหนดค่า API Key แล้ว",
+        "notConfigured": "ต้องการ API Key",
+        "saved": "บันทึก API Key สำเร็จ",
+        "removed": "ลบ API Key แล้ว",
+        "saveFailed": "ไม่สามารถบันทึก API Key",
+        "removeFailed": "ไม่สามารถลบ API Key",
+        "enterKey": "กรุณาป้อน API Key"
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "ตัวเลือกการสร้าง",
@@ -653,6 +647,8 @@
       "scopeModel": "เฉพาะ {{model}}",
       "scopeAllHint": "ค่าที่ทุกโมเดลใช้ เว้นแต่โมเดลนั้นมีค่าของตัวเอง",
       "scopeModelHint": "บันทึกเฉพาะโมเดลนี้ และมีความสำคัญเหนือค่าทั่วไป",
+      "advancedSettings": "การตั้งค่าการสร้างขั้นสูง",
+      "advancedSettingsDescription": "การสุ่มตัวอย่าง, ขีดจำกัดโทเค็น, บริบท, การลดค่า และลำดับการหยุด",
       "coreParameters": "พารามิเตอร์หลัก",
       "temperature": "อุณหภูมิ",
       "temperatureDescription": "ควบคุมความสุ่ม ค่าต่ำกว่าจะเน้นมากขึ้น ค่าสูงกว่าจะสร้างสรรค์มากขึ้น",
@@ -684,9 +680,7 @@
       "resetDefaults": "รีเซ็ตเป็นค่าเริ่มต้น",
       "saveOptions": "บันทึกตัวเลือก",
       "embeddingSettings": "การตั้งค่า Embedding",
-      "enableEmbeddings": "เปิดใช้ Document Embeddings",
-      "advancedSettings": "การตั้งค่าการสร้างขั้นสูง",
-      "advancedSettingsDescription": "การสุ่มตัวอย่าง, ขีดจำกัดโทเค็น, บริบท, การลดค่า และลำดับการหยุด"
+      "enableEmbeddings": "เปิดใช้ Document Embeddings"
     },
     "documents": {
       "title": "การตั้งค่าเอกสาร",
@@ -796,6 +790,7 @@
       "title": "การจัดการข้อมูล",
       "export": "ส่งออกข้อมูล",
       "exportDescription": "ดาวน์โหลดคลังแบบพกพาที่มีการตั้งค่า โฟลเดอร์แชท เซสชันและข้อความ โน้ต คอลเลกชันความรู้ และข้อความที่แยกจากเอกสาร",
+      "archiveScopeV3": "รวมการตั้งค่า แชท โฟลเดอร์ โน้ต คอลเลกชันความรู้ และข้อความที่แยกจากเอกสาร ไม่รวมบัญชีและข้อมูลลับ เสียงโคลนไบโอเมตริก สื่อที่สร้างขึ้น เพอร์โซนาและหน่วยความจำ รวมถึงข้อมูลหรือโวลุ่ม Work",
       "exportAll": "ส่งออกข้อมูลทั้งหมด",
       "import": "นำเข้าข้อมูล",
       "importDescription": "นำเข้าข้อมูลจากการส่งออกก่อนหน้า",
@@ -836,8 +831,7 @@
         "title": "แชทที่เก็บถาวร",
         "empty": "ไม่มีแชทที่เก็บถาวร",
         "unarchive": "เลิกเก็บถาวร"
-      },
-      "archiveScopeV3": "รวมการตั้งค่า แชท โฟลเดอร์ โน้ต คอลเลกชันความรู้ และข้อความที่แยกจากเอกสาร ไม่รวมบัญชีและข้อมูลลับ เสียงโคลนไบโอเมตริก สื่อที่สร้างขึ้น เพอร์โซนาและหน่วยความจำ รวมถึงข้อมูลหรือโวลุ่ม Work"
+      }
     },
     "about": {
       "title": "เกี่ยวกับ",
@@ -927,41 +921,6 @@
       "promptDescription": "ตัวแปรเทมเพลต {{previousSummaryVariable}} และ {{messagesVariable}} จะถูกแทนที่ด้วยบทสรุปก่อนหน้าและข้อความที่กำลังถูกสรุป",
       "saved": "บันทึกการตั้งค่าการบีบอัดแล้ว",
       "saveFailed": "ไม่สามารถบันทึกการตั้งค่าการบีบอัดได้"
-    },
-    "connections": {
-      "title": "การเชื่อมต่อ",
-      "description": "ผู้ให้บริการโมเดลที่เซิร์ฟเวอร์นี้ติดต่อด้วย: รันไทม์ Ollama ในเครื่องและเอนด์พอยต์ที่เข้ากันได้กับ OpenAI",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "รันไทม์โมเดลในเครื่อง",
-      "version": "เวอร์ชัน {{version}}",
-      "statusChecking": "กำลังตรวจสอบ…",
-      "statusOnline": "ออนไลน์",
-      "statusOffline": "ออฟไลน์",
-      "providersTitle": "การเชื่อมต่อที่เข้ากันได้กับ OpenAI",
-      "providersDescription": "การเชื่อมต่อแต่ละรายการคือผู้ให้บริการการตอบสนองซึ่งโมเดลจะปรากฏในตัวเลือกโมเดลของแชท คีย์ API ถูกเก็บไว้ฝั่งเซิร์ฟเวอร์",
-      "noConnections": "ยังไม่มีการเชื่อมต่อที่กำหนดค่าไว้",
-      "modelsCount": "{{total}} โมเดล",
-      "pendingDiscovery": "โมเดลรอการค้นพบ",
-      "apiKeyMissing": "ไม่มีคีย์ API",
-      "deleteConfirm": "ลบการเชื่อมต่อนี้หรือไม่ แชทที่ใช้โมเดลของการเชื่อมต่อนี้จะเข้าถึงโมเดลเหล่านั้นไม่ได้อีก",
-      "addTitle": "เพิ่มการเชื่อมต่อ",
-      "addDescription": "ลงทะเบียนเอนด์พอยต์ chat completions ที่เข้ากันได้กับ OpenAI เป็นผู้ให้บริการ",
-      "nameLabel": "ชื่อที่แสดง",
-      "namePlaceholder": "ผู้ให้บริการของฉัน",
-      "idPreview": "ID การเชื่อมต่อ: {{id}}",
-      "endpointLabel": "URL เอนด์พอยต์",
-      "endpointDescription": "URL แบบเต็มของ chat completions เช่น https://api.example.com/v1/chat/completions",
-      "apiKeyLabel": "คีย์ API",
-      "apiKeyOptionalHint": "(ไม่บังคับ เพิ่มภายหลังได้)",
-      "nameRequired": "ป้อนชื่อที่แสดงสำหรับการเชื่อมต่อ",
-      "endpointInvalid": "ป้อน URL เอนด์พอยต์ http(s) ที่ถูกต้อง",
-      "alreadyExists": "มีการเชื่อมต่อที่ใช้ ID นี้อยู่แล้ว",
-      "add": "เพิ่มการเชื่อมต่อ",
-      "adding": "กำลังเพิ่ม…",
-      "added": "เพิ่มการเชื่อมต่อแล้ว",
-      "addFailed": "ไม่สามารถเพิ่มการเชื่อมต่อได้",
-      "keySaveFailed": "เพิ่มการเชื่อมต่อแล้ว แต่ไม่สามารถบันทึกคีย์ API ได้",
-      "activateFailed": "เพิ่มการเชื่อมต่อแล้ว แต่ไม่สามารถเปิดใช้งานได้"
     },
     "sessions": {
       "title": "เซสชัน",
@@ -1115,25 +1074,33 @@
     "sections": {
       "pull": "ดาวน์โหลดโมเดลใหม่",
       "library": "เรียกดูไลบรารี",
+      "huggingface": "HuggingFace Hub",
       "running": "โมเดลที่กำลังทำงาน",
       "local": "โมเดลในเครื่อง",
       "advanced": "การดำเนินการขั้นสูง",
-      "huggingface": "HuggingFace Hub",
       "catalog": "แคตตาล็อกโมเดล"
     },
     "catalog": {
-      "models": "พร้อมใช้งาน",
       "searchPlaceholder": "ค้นหาโมเดลตามชื่อหรือผู้ให้บริการ...",
       "noModels": "ยังไม่มีโมเดลพร้อมใช้งาน",
       "empty": "ไม่มีโมเดลที่ตรงกับการค้นหาของคุณ",
       "providerOllama": "Ollama",
-      "default": "ค่าเริ่มต้น",
-      "makeDefault": "ตั้งเป็นค่าเริ่มต้น",
-      "defaultSet": "{{model}} เป็นโมเดลเริ่มต้นของคุณแล้ว",
       "hidden": "ซ่อนอยู่",
+      "visibilityFailed": "ไม่สามารถอัปเดตการมองเห็นของโมเดลได้",
+      "filterAll": "โมเดลทั้งหมด",
+      "filterLocal": "ในเครื่อง",
+      "filterProviders": "ผู้ให้บริการ",
+      "filterHidden": "ที่ซ่อนไว้",
+      "enableAll": "เปิดใช้รายการที่แสดง",
+      "disableAll": "ปิดใช้รายการที่แสดง",
+      "rename": "แก้ไขชื่อและรูปภาพ",
+      "setPicture": "ตั้งรูปภาพ",
+      "clearPicture": "ลบรูปภาพ",
+      "pictureInvalid": "โปรดเลือกไฟล์รูปภาพ",
+      "pictureTooLarge": "รูปภาพต้องมีขนาดต่ำกว่า 192 KB",
+      "saving": "กำลังบันทึก…",
       "hide": "ซ่อนจากผู้ใช้",
-      "show": "แสดงให้ผู้ใช้เห็น",
-      "visibilityFailed": "ไม่สามารถอัปเดตการมองเห็นของโมเดลได้"
+      "show": "แสดงต่อผู้ใช้"
     },
     "pull": {
       "placeholder": "ป้อนชื่อโมเดล (เช่น llama3.2:3b, deepseek-r1:14b)",
@@ -1163,6 +1130,37 @@
       "installed": "ติดตั้งแล้ว",
       "more": "+{{count}} เพิ่มเติม",
       "refresh": "รีเฟรชไลบรารี"
+    },
+    "huggingface": {
+      "browseAll": "ดูทั้งหมดบน HuggingFace",
+      "checkingGguf": "กำลังค้นหาไฟล์ GGUF...",
+      "noGgufAvailable": "ไม่มีไฟล์ GGUF สำหรับดึงไปยัง Ollama โดยตรง",
+      "ggufFilesCount": "ไฟล์ GGUF ({{count}}) - ดึงไปยัง Ollama โดยตรง",
+      "noModelsFound": "ไม่พบโมเดล",
+      "noResults": "ไม่พบโมเดล ลองปรับการค้นหาหรือตัวกรอง",
+      "browseAllLink": "ดูทั้งหมด",
+      "search": "ค้นหาโมเดล HuggingFace...",
+      "by": "โดย",
+      "gated": "การเข้าถึงจำกัด",
+      "viewOnHF": "ดูบน HuggingFace",
+      "sortDownloads": "ดาวน์โหลด",
+      "sortLikes": "ถูกใจ",
+      "sortRecent": "ล่าสุด",
+      "taskTextGeneration": "การสร้างข้อความ",
+      "taskTextToSpeech": "ข้อความเป็นเสียง",
+      "taskTextToImage": "ข้อความเป็นภาพ",
+      "taskSpeechRecognition": "การรู้จำเสียง",
+      "tasks": {
+        "textGen": "การสร้างข้อความ",
+        "tts": "ข้อความเป็นเสียง",
+        "image": "ข้อความเป็นภาพ",
+        "stt": "การรู้จำเสียง"
+      },
+      "sort": {
+        "downloads": "ดาวน์โหลดมากที่สุด",
+        "likes": "ถูกใจมากที่สุด",
+        "recent": "อัปเดตล่าสุด"
+      }
     },
     "local": {
       "noModels": "ยังไม่มีโมเดลที่ติดตั้ง",
@@ -1241,37 +1239,6 @@
         "success": "สร้างเวกเตอร์ embedding {{count}} มิติ",
         "failed": "ไม่สามารถสร้าง embeddings",
         "enterBoth": "กรุณาเลือกโมเดลและป้อนข้อความ"
-      }
-    },
-    "huggingface": {
-      "browseAll": "ดูทั้งหมดบน HuggingFace",
-      "checkingGguf": "กำลังค้นหาไฟล์ GGUF...",
-      "noGgufAvailable": "ไม่มีไฟล์ GGUF สำหรับดึงไปยัง Ollama โดยตรง",
-      "ggufFilesCount": "ไฟล์ GGUF ({{count}}) - ดึงไปยัง Ollama โดยตรง",
-      "noModelsFound": "ไม่พบโมเดล",
-      "noResults": "ไม่พบโมเดล ลองปรับการค้นหาหรือตัวกรอง",
-      "browseAllLink": "ดูทั้งหมด",
-      "search": "ค้นหาโมเดล HuggingFace...",
-      "by": "โดย",
-      "gated": "การเข้าถึงจำกัด",
-      "viewOnHF": "ดูบน HuggingFace",
-      "sortDownloads": "ดาวน์โหลด",
-      "sortLikes": "ถูกใจ",
-      "sortRecent": "ล่าสุด",
-      "taskTextGeneration": "การสร้างข้อความ",
-      "taskTextToSpeech": "ข้อความเป็นเสียง",
-      "taskTextToImage": "ข้อความเป็นภาพ",
-      "taskSpeechRecognition": "การรู้จำเสียง",
-      "tasks": {
-        "textGen": "การสร้างข้อความ",
-        "tts": "ข้อความเป็นเสียง",
-        "image": "ข้อความเป็นภาพ",
-        "stt": "การรู้จำเสียง"
-      },
-      "sort": {
-        "downloads": "ดาวน์โหลดมากที่สุด",
-        "likes": "ถูกใจมากที่สุด",
-        "recent": "อัปเดตล่าสุด"
       }
     }
   },
@@ -1445,6 +1412,17 @@
     "deleteSuccess": "ลบผู้ใช้สำเร็จ",
     "deleteFailed": "ไม่สามารถลบผู้ใช้",
     "cannotDeleteSelf": "คุณไม่สามารถลบบัญชีของตัวเอง",
+    "approval": {
+      "title": "การอนุมัติที่รอดำเนินการ",
+      "description": "ตรวจสอบการลงทะเบียนใหม่ก่อนอนุญาตให้เข้าใช้งานอินสแตนซ์นี้",
+      "registered": "ลงทะเบียนแล้ว",
+      "activate": "เปิดใช้งานบัญชี",
+      "reject": "ปฏิเสธการลงทะเบียน",
+      "approved": "{{name}} สามารถเข้าสู่ระบบได้แล้ว",
+      "failed": "ไม่สามารถอนุมัติบัญชีได้",
+      "notification": "มี {{count}} การลงทะเบียนรอการอนุมัติของคุณ",
+      "notificationBadge": "{{count}} การอนุมัติผู้ใช้ที่รอดำเนินการ"
+    },
     "form": {
       "title": {
         "create": "สร้างผู้ใช้",
@@ -1466,17 +1444,6 @@
       "updateSuccess": "อัปเดตผู้ใช้สำเร็จ",
       "createFailed": "ไม่สามารถสร้างผู้ใช้",
       "updateFailed": "ไม่สามารถอัปเดตผู้ใช้"
-    },
-    "approval": {
-      "title": "การอนุมัติที่รอดำเนินการ",
-      "description": "ตรวจสอบการลงทะเบียนใหม่ก่อนอนุญาตให้เข้าใช้งานอินสแตนซ์นี้",
-      "registered": "ลงทะเบียนแล้ว",
-      "activate": "เปิดใช้งานบัญชี",
-      "reject": "ปฏิเสธการลงทะเบียน",
-      "approved": "{{name}} สามารถเข้าสู่ระบบได้แล้ว",
-      "failed": "ไม่สามารถอนุมัติบัญชีได้",
-      "notification": "มี {{count}} การลงทะเบียนรอการอนุมัติของคุณ",
-      "notificationBadge": "{{count}} การอนุมัติผู้ใช้ที่รอดำเนินการ"
     },
     "workAccess": {
       "title": "การเข้าถึง Work",
@@ -1582,6 +1549,174 @@
       "target": "เป้าหมาย"
     }
   },
+  "usageAnalytics": {
+    "eyebrow": "การดูแลระบบ",
+    "title": "การใช้งานผู้ให้บริการ",
+    "description": "ติดตามการเรียก API ขาออกและการใช้งานโมเดลในปลั๊กอินที่เปิดใช้งานบนอินสแตนซ์นี้",
+    "days": "{{count}} วัน",
+    "refresh": "รีเฟรชการใช้งาน",
+    "loadFailed": "ไม่สามารถโหลดการใช้งานผู้ให้บริการได้",
+    "metrics": {
+      "calls": "การเรียก",
+      "tokens": "โทเค็น"
+    },
+    "cards": {
+      "calls": "การเรียก API",
+      "callsDetail": "จาก {{count}} ผู้ใช้งานที่ใช้งานอยู่",
+      "tokens": "โทเค็นที่รายงาน",
+      "tokensDetail": "การใช้งานที่รายงานจาก {{count}} การเรียก",
+      "success": "อัตราความสำเร็จ",
+      "successDetail": "{{count}} การเรียกที่ล้มเหลว",
+      "latency": "ความหน่วงเฉลี่ย",
+      "latencyDetail": "เวลาของผู้ให้บริการจากต้นทางถึงปลายทาง"
+    },
+    "activity": {
+      "title": "การใช้งานตามช่วงเวลา",
+      "callsDescription": "คำขอขาออกรายวันไปยังปลั๊กอินที่เปิดใช้งาน",
+      "tokensDescription": "จำนวนโทเคนรวมรายวันที่รายงานโดยผู้ให้บริการ",
+      "chartLabel": "แผนภูมิ {{metric}} ของผู้ให้บริการรายวัน"
+    },
+    "models": {
+      "title": "การใช้งานโมเดล",
+      "description": "โมเดลที่มีการใช้งานมากที่สุดในช่วงเวลานี้",
+      "model": "โมเดล",
+      "success": "สำเร็จ",
+      "latency": "ความหน่วง"
+    },
+    "providers": {
+      "title": "การรับส่งข้อมูลของปลั๊กอินที่เปิดใช้งาน"
+    },
+    "capabilities": {
+      "title": "สัดส่วนความสามารถ",
+      "characters": "{{count}} ตัวอักษร",
+      "bytes": "{{count}} ไบต์",
+      "images": "{{count}} รูปภาพ",
+      "jobs": "{{count}} งานวิดีโอ",
+      "inputs": "{{count}} อินพุต",
+      "reportedTokens": "{{count}} โทเคนที่รายงาน"
+    },
+    "empty": {
+      "title": "ยังไม่มีการเรียกผู้ให้บริการ",
+      "description": "การเรียกจะปรากฏที่นี่หลังจากที่ปลั๊กอินที่เปิดใช้งานจัดการคำขอแชท, Work, การฝังข้อมูล, รูปภาพ, คำพูด, เสียง หรือวิดีโอ"
+    },
+    "privacyNote": "การใช้งานจะถูกวัดที่เซิร์ฟเวอร์ ณ ขอบเขตปลั๊กอินขาออก Libre WebUI จัดเก็บผู้ให้บริการ, โมเดล, เวลา, สถานะ และตัวนับที่รายงานเท่านั้น ไม่เก็บพร้อมต์, การตอบกลับ, เอนด์พอยต์, ข้อมูลประจำตัว หรือเนื้อหาข้อผิดพลาดของผู้ให้บริการ จำนวนโทเคนรวมรวมเฉพาะการเรียกที่ผู้ให้บริการส่งกลับข้อมูลเมตาของการใช้งานเท่านั้น",
+    "heatmap": {
+      "title": "กิจกรรมตลอดหนึ่งปี",
+      "description": "การเรียกผู้ให้บริการรายวันในปีที่ผ่านมา แสดงสีตามโมเดลที่ใช้มากที่สุดของแต่ละวัน",
+      "calls": "ครั้ง",
+      "noCalls": "ไม่มีการเรียก",
+      "other": "โมเดลอื่น ๆ",
+      "less": "น้อย",
+      "more": "มาก",
+      "yearTotal": "{{formatted}} ครั้งในปีที่ผ่านมา"
+    }
+  },
+  "systemPage": {
+    "eyebrow": "การดูแลระบบ",
+    "title": "ระบบ",
+    "description": "ตรวจสอบเครื่องจักรและรันไทม์ที่โฮสต์อินสแตนซ์ Libre WebUI นี้",
+    "updated": "อัปเดตเมื่อ {{date}}",
+    "refresh": "รีเฟรชข้อมูลระบบ",
+    "loadFailed": "ไม่สามารถโหลดข้อมูลระบบได้",
+    "cards": {
+      "uptime": "เวลาทำงานของโฮสต์",
+      "uptimeDetail": "ทำงานตั้งแต่ {{date}}",
+      "memory": "หน่วยความจำที่ใช้",
+      "memoryDetail": "{{used}} จาก {{total}}",
+      "freeSpace": "พื้นที่ว่าง",
+      "freeSpaceDetail": "{{label}} · รวม {{total}}",
+      "containers": "คอนเทนเนอร์ที่กำลังทำงาน",
+      "containersDetail": "{{total}} คอนเทนเนอร์ที่ Docker รู้จัก",
+      "dockerUnavailable": "Docker ไม่พร้อมใช้งาน",
+      "unavailable": "ไม่พร้อมใช้งาน"
+    },
+    "host": {
+      "title": "โฮสต์และรันไทม์",
+      "description": "รายละเอียดระบบปฏิบัติการ, โปรเซสเซอร์ และโปรเซสของ Libre WebUI",
+      "container": "รันไทม์ของคอนเทนเนอร์",
+      "native": "รันไทม์เนทีฟ",
+      "hostname": "ชื่อโฮสต์",
+      "operatingSystem": "ระบบปฏิบัติการ",
+      "processor": "โปรเซสเซอร์",
+      "logicalCpus": "logical CPUs",
+      "loadAverage": "ค่าเฉลี่ยโหลด · 1 / 5 / 15 นาที",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "โปรเซส",
+      "workingDirectory": "ไดเรกทอรีการทำงาน"
+    },
+    "memory": {
+      "title": "หน่วยความจำ",
+      "description": "หน่วยความจำของระบบที่รันไทม์มองเห็นได้และการใช้งานโปรเซสของแอปพลิเคชัน",
+      "usedOf": "ใช้ไป {{used}} จาก {{total}}",
+      "free": "{{value}} ว่าง",
+      "processRss": "Process RSS",
+      "heapUsed": "V8 heap ที่ใช้",
+      "heapTotal": "V8 heap รวม",
+      "external": "หน่วยความจำภายนอก"
+    },
+    "storage": {
+      "title": "พื้นที่จัดเก็บข้อมูล",
+      "description": "พื้นที่ว่างสำหรับระบบไฟล์รันไทม์และข้อมูลแอปพลิเคชันถาวร",
+      "used": "ใช้ไป {{value}}",
+      "free": "{{value}} ว่าง",
+      "empty": "ข้อมูลระบบไฟล์ไม่พร้อมใช้งานในรันไทม์นี้"
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "สถานะ Docker Engine แบบอ่านอย่างเดียวและรายการคอนเทนเนอร์แบบย่อ",
+      "connected": "เชื่อมต่อแล้ว",
+      "unavailable": "ไม่พร้อมใช้งาน",
+      "unavailableDetail": "การวินิจฉัย Docker Engine ไม่พร้อมใช้งาน",
+      "socketStatus": "ซ็อกเก็ตภายในเครื่อง: {{status}}",
+      "mounted": "เมานต์แล้ว",
+      "notMounted": "ยังไม่ได้เมานต์",
+      "running": "กำลังทำงาน",
+      "stopped": "หยุดแล้ว",
+      "paused": "หยุดชั่วคราว",
+      "total": "รวม",
+      "version": "เวอร์ชัน",
+      "host": "โฮสต์",
+      "architecture": "สถาปัตยกรรม",
+      "cpus": "CPUs",
+      "memory": "หน่วยความจำ",
+      "container": "คอนเทนเนอร์",
+      "image": "อิมเมจ",
+      "state": "สถานะ",
+      "created": "สร้างเมื่อ",
+      "empty": "เชื่อมต่อกับ Docker แล้ว และไม่มีคอนเทนเนอร์อยู่ในรายการในขณะนี้"
+    },
+    "network": {
+      "title": "เครือข่าย",
+      "description": "อินเทอร์เฟซ ที่อยู่ และตัวนับการรับส่งข้อมูลของ Linux ที่มองเห็นได้ในขณะรันไทม์",
+      "internal": "ภายใน",
+      "empty": "ไม่มีอินเทอร์เฟซเครือข่ายที่มองเห็นได้โดยรันไทม์ของแอปพลิเคชัน"
+    },
+    "securityNote": "หน้านี้จำกัดเฉพาะผู้ดูแลระบบ เซิร์ฟเวอร์จะส่งกลับเฉพาะสรุปการทำงาน: จะไม่เปิดเผยตัวแปรสภาพแวดล้อม ข้อมูลประจำตัว ป้ายกำกับ Docker การเมานต์ คำสั่งคอนเทนเนอร์ หรือเพย์โหลดการตรวจสอบ เมื่อ Libre WebUI ทำงานในคอนเทนเนอร์ รายละเอียด CPU และหน่วยความจำระดับโฮสต์จะมาจาก Docker Engine เมื่อซ็อกเก็ตภายในเครื่องพร้อมใช้งาน ค่าอื่นๆ จะอธิบายรันไทม์ของแอปพลิเคชัน",
+    "work": {
+      "title": "Work",
+      "description": "แซนด์บ็อกซ์ของผู้ใช้ทุกคน",
+      "access": "การเข้าถึง",
+      "accessAdmins": "ผู้ดูแลระบบเท่านั้น",
+      "accessAllUsers": "ผู้ใช้ทุกคน",
+      "runtimeAvailable": "พร้อมใช้งาน",
+      "runtimeUnavailable": "ไม่พร้อมใช้งาน",
+      "activeRuntimes": "รันไทม์ที่ทำงานอยู่",
+      "pendingCleanups": "การล้างข้อมูลที่รอดำเนินการ",
+      "orphans": "คอนเทนเนอร์กำพร้า",
+      "owner": "เจ้าของ",
+      "task": "งาน",
+      "state": "สถานะ",
+      "preview": "ตัวอย่าง",
+      "terminals": "เทอร์มินัล",
+      "updated": "อัปเดตเมื่อ",
+      "stateRunning": "กำลังทำงาน",
+      "stateStopped": "หยุดแล้ว",
+      "stateStarting": "กำลังเริ่ม",
+      "stateUnknown": "ไม่ทราบ",
+      "noTasks": "ยังไม่มีงาน Work"
+    }
+  },
   "chatHistory": {
     "label": "ประวัติการสนทนา",
     "jumpToTurn": "ไปยังช่วงที่ {{index}} จาก {{total}}"
@@ -1650,6 +1785,57 @@
     "failed": "ไม่สามารถสร้างรูปภาพ",
     "enterPrompt": "กรุณาป้อน prompt",
     "promptTooLong": "พรอมต์เกินความยาวสูงสุด {{max}} ตัวอักษร"
+  },
+  "mediaGeneration": {
+    "title": "สร้างสื่อ",
+    "description": "สร้างวิดีโอ เสียง เพลง หรือคำพูดด้วยผู้ให้บริการสื่อที่เปิดใช้งาน",
+    "image": "รูปภาพ",
+    "video": "วิดีโอ",
+    "audio": "เสียง",
+    "sound": "เสียง",
+    "speech": "คำพูด",
+    "model": "โมเดล",
+    "voice": "เสียงหรือรหัสเสียง",
+    "cloneVoice": "โคลนเสียงอ้างอิง",
+    "cloneVoiceDescription": "สร้างคำพูดนี้จากเสียงบันทึกอ้างอิงแทนเสียงที่ตั้งไว้ล่วงหน้า",
+    "referenceAudio": "เสียงอ้างอิง",
+    "referenceTranscript": "ข้อความถอดเสียงอ้างอิงที่ตรงทั้งหมด",
+    "referenceTranscriptPlaceholder": "ป้อนสิ่งที่พูดในเสียงบันทึกอ้างอิงให้ตรงทุกคำ…",
+    "referenceAudioTooLarge": "เสียงอ้างอิงต้องมีขนาดไม่เกิน {{max}}",
+    "cloneConsent": "โคลนเสียงเฉพาะเมื่อคุณได้รับอนุญาตจากผู้พูดแล้วเท่านั้น เสียงบันทึกจะถูกส่งไปยังผู้ให้บริการที่เลือกเพื่อการสร้างครั้งนี้ และ Libre WebUI จะไม่บันทึกไว้",
+    "saveVoiceProfile": "บันทึกเป็นเสียงที่นำกลับมาใช้ได้",
+    "saveVoiceProfileDescription": "จัดเก็บเสียงบันทึกอ้างอิงและข้อความถอดเสียงนี้อย่างปลอดภัย Libre WebUI จะส่งทั้งสองรายการไปยังผู้ให้บริการที่เลือกสำหรับทุกชุดเสียงพูดที่ใช้เสียงนี้",
+    "voiceProfileName": "ชื่อเสียงที่บันทึกไว้",
+    "voiceProfileNamePlaceholder": "ตัวอย่างเช่น เสียงของฉัน",
+    "voiceStorageConsent": "ฉันยืนยันว่าได้รับอนุญาตจากผู้พูดให้โคลนและจัดเก็บเสียงนี้ ข้อมูลอ้างอิงจะถูกเก็บไว้จนกว่าฉันจะลบ",
+    "resolution": "ความละเอียด",
+    "aspectRatio": "สัดส่วนภาพ",
+    "duration": "ระยะเวลา",
+    "providerDefault": "ค่าเริ่มต้นของผู้ให้บริการ",
+    "generateAudio": "สร้างเสียงพร้อมวิดีโอเมื่อรองรับ",
+    "prompt": "พรอมต์",
+    "text": "ข้อความที่จะพูด",
+    "videoPlaceholder": "อธิบายฉาก การเคลื่อนไหว กล้อง และแสงสว่าง...",
+    "audioPlaceholder": "ป้อนข้อความที่คุณต้องการให้เสียงพูด...",
+    "soundPlaceholder": "อธิบายเสียง เพลง บรรยากาศ หรือคำตอบที่พูดที่คุณต้องการ...",
+    "generate": "สร้าง",
+    "generating": "กำลังสร้าง… อาจใช้เวลาหลายนาที",
+    "success": "สร้างสื่อและบันทึกไปยัง Imagine แล้ว",
+    "successWithSavedVoice": "สร้างสื่อแล้ว และ “{{name}}” พร้อมใช้งานในการตั้งค่าเสียงพูดแล้ว",
+    "failed": "ไม่สามารถสร้างสื่อได้",
+    "loadFailed": "ไม่สามารถโหลดผู้ให้บริการสื่อได้",
+    "noModels": "ไม่มีโมเดล {{kind}} ที่พร้อมใช้งาน โปรดเปิดใช้งานผู้ให้บริการที่รองรับและบันทึกข้อมูลประจำตัวก่อน"
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} รายการ",
+    "empty": "ยังไม่มีสื่อที่สร้างขึ้น",
+    "emptyHint": "สร้างรูปภาพ วิดีโอ หรือคลิปเสียง แล้วจะปรากฏที่นี่",
+    "filters": {
+      "all": "ทั้งหมด",
+      "image": "รูปภาพ",
+      "video": "วิดีโอ",
+      "audio": "เสียง"
+    }
   },
   "errorBoundary": {
     "title": "เกิดข้อผิดพลาด",
@@ -1802,8 +1988,8 @@
       "saveFailed": "ไม่สามารถบันทึกตัวแปรได้",
       "resetDefaults": "รีเซ็ตค่าเริ่มต้น",
       "reset": "รีเซ็ตตัวแปรแล้ว",
-      "sensitiveSet": "ตั้งค่าแล้ว (ป้อนค่าใหม่เพื่อเปลี่ยน)",
       "resetFailed": "รีเซ็ตตัวแปรไม่สำเร็จ",
+      "sensitiveSet": "ตั้งค่าแล้ว (ป้อนค่าใหม่เพื่อเปลี่ยน)",
       "showValue": "แสดงค่า {{label}}",
       "hideValue": "ซ่อนค่า {{label}}",
       "connection": "การเชื่อมต่อ",
@@ -1841,45 +2027,6 @@
   "demoMode": {
     "title": "โหมดสาธิต",
     "github": "GitHub"
-  },
-  "personaBackground": {
-    "label": "รูปภาพพื้นหลัง",
-    "uploadBackgroundImage": "อัปโหลดรูปภาพพื้นหลัง",
-    "dragAndDrop": "ลากและวางรูปภาพหรือคลิกเพื่อเรียกดู",
-    "chooseImage": "เลือกรูปภาพ",
-    "uploading": "กำลังอัปโหลด...",
-    "enterImageUrl": "หรือใส่ URL รูปภาพ",
-    "supportedFormats": "รองรับ: JPG, PNG, GIF, WebP (สูงสุด 5MB) รูปภาพแนวนอนกว้างทำงานได้ดีที่สุด",
-    "customBackground": "รูปภาพพื้นหลังที่กำหนดเอง",
-    "clickToChange": "คลิกเพื่อเปลี่ยนหรือลบ",
-    "removed": "ลบพื้นหลังแล้ว",
-    "uploaded": "อัปโหลดพื้นหลังสำเร็จ",
-    "invalidFile": "กรุณาเลือกไฟล์รูปภาพที่ถูกต้อง",
-    "fileTooLarge": "ขนาดรูปภาพพื้นหลังต้องน้อยกว่า 5MB",
-    "readFailed": "ไม่สามารถอ่านไฟล์รูปภาพ",
-    "uploadFailed": "ไม่สามารถอัปโหลดรูปภาพพื้นหลัง"
-  },
-  "modelSelector": {
-    "searchInstalled": "ค้นหาโมเดลที่ติดตั้ง...",
-    "searchOllama": "ค้นหาในไลบรารี Ollama...",
-    "searchHuggingFace": "ค้นหาใน HuggingFace...",
-    "selectModel": "เลือกโมเดล",
-    "personas": "บุคลิก",
-    "ollamaModels": "โมเดล Ollama",
-    "pluginModels": "โมเดลปลั๊กอิน",
-    "actions": "การดำเนินการ",
-    "installed": "ติดตั้งแล้ว",
-    "use": "ใช้",
-    "pull": "ดาวน์โหลด",
-    "pullRestricted": "การติดตั้งโมเดลบนอินสแตนซ์นี้จำกัดเฉพาะผู้ดูแลระบบเท่านั้น",
-    "adminOnlyPull": "ผู้ดูแลระบบเท่านั้น",
-    "legacyProvider": "ไม่ได้บันทึกผู้ให้บริการ",
-    "providerNotRecorded": "ไม่ได้บันทึกผู้ให้บริการ",
-    "providerUnavailable": "ผู้ให้บริการไม่พร้อมใช้งาน",
-    "reselectProvider": "เลือกผู้ให้บริการใหม่เพื่อปักหมุดโมเดลนี้",
-    "unavailable": "ไม่พร้อมใช้งาน",
-    "unavailableSelections": "ตัวเลือกที่ไม่พร้อมใช้งาน",
-    "agentModels": "เอเจนต์"
   },
   "libreClaw": {
     "title": "เอเจนต์",
@@ -2223,224 +2370,44 @@
       "warning": "งานสามารถอ่านและเขียนโฟลเดอร์นี้โดยตรง เว้นว่างเพื่อใช้พื้นที่ทำงานแยก"
     }
   },
-  "usageAnalytics": {
-    "eyebrow": "การดูแลระบบ",
-    "title": "การใช้งานผู้ให้บริการ",
-    "description": "ติดตามการเรียก API ขาออกและการใช้งานโมเดลในปลั๊กอินที่เปิดใช้งานบนอินสแตนซ์นี้",
-    "days": "{{count}} วัน",
-    "refresh": "รีเฟรชการใช้งาน",
-    "loadFailed": "ไม่สามารถโหลดการใช้งานผู้ให้บริการได้",
-    "metrics": {
-      "calls": "การเรียก",
-      "tokens": "โทเค็น"
-    },
-    "cards": {
-      "calls": "การเรียก API",
-      "callsDetail": "จาก {{count}} ผู้ใช้งานที่ใช้งานอยู่",
-      "tokens": "โทเค็นที่รายงาน",
-      "tokensDetail": "การใช้งานที่รายงานจาก {{count}} การเรียก",
-      "success": "อัตราความสำเร็จ",
-      "successDetail": "{{count}} การเรียกที่ล้มเหลว",
-      "latency": "ความหน่วงเฉลี่ย",
-      "latencyDetail": "เวลาของผู้ให้บริการจากต้นทางถึงปลายทาง"
-    },
-    "activity": {
-      "title": "การใช้งานตามช่วงเวลา",
-      "callsDescription": "คำขอขาออกรายวันไปยังปลั๊กอินที่เปิดใช้งาน",
-      "tokensDescription": "จำนวนโทเคนรวมรายวันที่รายงานโดยผู้ให้บริการ",
-      "chartLabel": "แผนภูมิ {{metric}} ของผู้ให้บริการรายวัน"
-    },
-    "models": {
-      "title": "การใช้งานโมเดล",
-      "description": "โมเดลที่มีการใช้งานมากที่สุดในช่วงเวลานี้",
-      "model": "โมเดล",
-      "success": "สำเร็จ",
-      "latency": "ความหน่วง"
-    },
-    "providers": {
-      "title": "การรับส่งข้อมูลของปลั๊กอินที่เปิดใช้งาน"
-    },
-    "capabilities": {
-      "title": "สัดส่วนความสามารถ",
-      "characters": "{{count}} ตัวอักษร",
-      "bytes": "{{count}} ไบต์",
-      "images": "{{count}} รูปภาพ",
-      "jobs": "{{count}} งานวิดีโอ",
-      "inputs": "{{count}} อินพุต",
-      "reportedTokens": "{{count}} โทเคนที่รายงาน"
-    },
-    "empty": {
-      "title": "ยังไม่มีการเรียกผู้ให้บริการ",
-      "description": "การเรียกจะปรากฏที่นี่หลังจากที่ปลั๊กอินที่เปิดใช้งานจัดการคำขอแชท, Work, การฝังข้อมูล, รูปภาพ, คำพูด, เสียง หรือวิดีโอ"
-    },
-    "privacyNote": "การใช้งานจะถูกวัดที่เซิร์ฟเวอร์ ณ ขอบเขตปลั๊กอินขาออก Libre WebUI จัดเก็บผู้ให้บริการ, โมเดล, เวลา, สถานะ และตัวนับที่รายงานเท่านั้น ไม่เก็บพร้อมต์, การตอบกลับ, เอนด์พอยต์, ข้อมูลประจำตัว หรือเนื้อหาข้อผิดพลาดของผู้ให้บริการ จำนวนโทเคนรวมรวมเฉพาะการเรียกที่ผู้ให้บริการส่งกลับข้อมูลเมตาของการใช้งานเท่านั้น",
-    "heatmap": {
-      "title": "กิจกรรมตลอดหนึ่งปี",
-      "description": "การเรียกผู้ให้บริการรายวันในปีที่ผ่านมา แสดงสีตามโมเดลที่ใช้มากที่สุดของแต่ละวัน",
-      "calls": "ครั้ง",
-      "noCalls": "ไม่มีการเรียก",
-      "other": "โมเดลอื่น ๆ",
-      "less": "น้อย",
-      "more": "มาก",
-      "yearTotal": "{{formatted}} ครั้งในปีที่ผ่านมา"
-    }
+  "personaBackground": {
+    "label": "รูปภาพพื้นหลัง",
+    "uploadBackgroundImage": "อัปโหลดรูปภาพพื้นหลัง",
+    "dragAndDrop": "ลากและวางรูปภาพหรือคลิกเพื่อเรียกดู",
+    "chooseImage": "เลือกรูปภาพ",
+    "uploading": "กำลังอัปโหลด...",
+    "enterImageUrl": "หรือใส่ URL รูปภาพ",
+    "supportedFormats": "รองรับ: JPG, PNG, GIF, WebP (สูงสุด 5MB) รูปภาพแนวนอนกว้างทำงานได้ดีที่สุด",
+    "customBackground": "รูปภาพพื้นหลังที่กำหนดเอง",
+    "clickToChange": "คลิกเพื่อเปลี่ยนหรือลบ",
+    "removed": "ลบพื้นหลังแล้ว",
+    "uploaded": "อัปโหลดพื้นหลังสำเร็จ",
+    "invalidFile": "กรุณาเลือกไฟล์รูปภาพที่ถูกต้อง",
+    "fileTooLarge": "ขนาดรูปภาพพื้นหลังต้องน้อยกว่า 5MB",
+    "readFailed": "ไม่สามารถอ่านไฟล์รูปภาพ",
+    "uploadFailed": "ไม่สามารถอัปโหลดรูปภาพพื้นหลัง"
   },
-  "systemPage": {
-    "eyebrow": "การดูแลระบบ",
-    "title": "ระบบ",
-    "description": "ตรวจสอบเครื่องจักรและรันไทม์ที่โฮสต์อินสแตนซ์ Libre WebUI นี้",
-    "updated": "อัปเดตเมื่อ {{date}}",
-    "refresh": "รีเฟรชข้อมูลระบบ",
-    "loadFailed": "ไม่สามารถโหลดข้อมูลระบบได้",
-    "cards": {
-      "uptime": "เวลาทำงานของโฮสต์",
-      "uptimeDetail": "ทำงานตั้งแต่ {{date}}",
-      "memory": "หน่วยความจำที่ใช้",
-      "memoryDetail": "{{used}} จาก {{total}}",
-      "freeSpace": "พื้นที่ว่าง",
-      "freeSpaceDetail": "{{label}} · รวม {{total}}",
-      "containers": "คอนเทนเนอร์ที่กำลังทำงาน",
-      "containersDetail": "{{total}} คอนเทนเนอร์ที่ Docker รู้จัก",
-      "dockerUnavailable": "Docker ไม่พร้อมใช้งาน",
-      "unavailable": "ไม่พร้อมใช้งาน"
-    },
-    "host": {
-      "title": "โฮสต์และรันไทม์",
-      "description": "รายละเอียดระบบปฏิบัติการ, โปรเซสเซอร์ และโปรเซสของ Libre WebUI",
-      "container": "รันไทม์ของคอนเทนเนอร์",
-      "native": "รันไทม์เนทีฟ",
-      "hostname": "ชื่อโฮสต์",
-      "operatingSystem": "ระบบปฏิบัติการ",
-      "processor": "โปรเซสเซอร์",
-      "logicalCpus": "logical CPUs",
-      "loadAverage": "ค่าเฉลี่ยโหลด · 1 / 5 / 15 นาที",
-      "libreVersion": "Libre WebUI",
-      "nodeVersion": "Node.js",
-      "process": "โปรเซส",
-      "workingDirectory": "ไดเรกทอรีการทำงาน"
-    },
-    "memory": {
-      "title": "หน่วยความจำ",
-      "description": "หน่วยความจำของระบบที่รันไทม์มองเห็นได้และการใช้งานโปรเซสของแอปพลิเคชัน",
-      "usedOf": "ใช้ไป {{used}} จาก {{total}}",
-      "free": "{{value}} ว่าง",
-      "processRss": "Process RSS",
-      "heapUsed": "V8 heap ที่ใช้",
-      "heapTotal": "V8 heap รวม",
-      "external": "หน่วยความจำภายนอก"
-    },
-    "storage": {
-      "title": "พื้นที่จัดเก็บข้อมูล",
-      "description": "พื้นที่ว่างสำหรับระบบไฟล์รันไทม์และข้อมูลแอปพลิเคชันถาวร",
-      "used": "ใช้ไป {{value}}",
-      "free": "{{value}} ว่าง",
-      "empty": "ข้อมูลระบบไฟล์ไม่พร้อมใช้งานในรันไทม์นี้"
-    },
-    "docker": {
-      "title": "Docker",
-      "description": "สถานะ Docker Engine แบบอ่านอย่างเดียวและรายการคอนเทนเนอร์แบบย่อ",
-      "connected": "เชื่อมต่อแล้ว",
-      "unavailable": "ไม่พร้อมใช้งาน",
-      "unavailableDetail": "การวินิจฉัย Docker Engine ไม่พร้อมใช้งาน",
-      "socketStatus": "ซ็อกเก็ตภายในเครื่อง: {{status}}",
-      "mounted": "เมานต์แล้ว",
-      "notMounted": "ยังไม่ได้เมานต์",
-      "running": "กำลังทำงาน",
-      "stopped": "หยุดแล้ว",
-      "paused": "หยุดชั่วคราว",
-      "total": "รวม",
-      "version": "เวอร์ชัน",
-      "host": "โฮสต์",
-      "architecture": "สถาปัตยกรรม",
-      "cpus": "CPUs",
-      "memory": "หน่วยความจำ",
-      "container": "คอนเทนเนอร์",
-      "image": "อิมเมจ",
-      "state": "สถานะ",
-      "created": "สร้างเมื่อ",
-      "empty": "เชื่อมต่อกับ Docker แล้ว และไม่มีคอนเทนเนอร์อยู่ในรายการในขณะนี้"
-    },
-    "network": {
-      "title": "เครือข่าย",
-      "description": "อินเทอร์เฟซ ที่อยู่ และตัวนับการรับส่งข้อมูลของ Linux ที่มองเห็นได้ในขณะรันไทม์",
-      "internal": "ภายใน",
-      "empty": "ไม่มีอินเทอร์เฟซเครือข่ายที่มองเห็นได้โดยรันไทม์ของแอปพลิเคชัน"
-    },
-    "securityNote": "หน้านี้จำกัดเฉพาะผู้ดูแลระบบ เซิร์ฟเวอร์จะส่งกลับเฉพาะสรุปการทำงาน: จะไม่เปิดเผยตัวแปรสภาพแวดล้อม ข้อมูลประจำตัว ป้ายกำกับ Docker การเมานต์ คำสั่งคอนเทนเนอร์ หรือเพย์โหลดการตรวจสอบ เมื่อ Libre WebUI ทำงานในคอนเทนเนอร์ รายละเอียด CPU และหน่วยความจำระดับโฮสต์จะมาจาก Docker Engine เมื่อซ็อกเก็ตภายในเครื่องพร้อมใช้งาน ค่าอื่นๆ จะอธิบายรันไทม์ของแอปพลิเคชัน",
-    "work": {
-      "title": "Work",
-      "description": "แซนด์บ็อกซ์ของผู้ใช้ทุกคน",
-      "access": "การเข้าถึง",
-      "accessAdmins": "ผู้ดูแลระบบเท่านั้น",
-      "accessAllUsers": "ผู้ใช้ทุกคน",
-      "runtimeAvailable": "พร้อมใช้งาน",
-      "runtimeUnavailable": "ไม่พร้อมใช้งาน",
-      "activeRuntimes": "รันไทม์ที่ทำงานอยู่",
-      "pendingCleanups": "การล้างข้อมูลที่รอดำเนินการ",
-      "orphans": "คอนเทนเนอร์กำพร้า",
-      "owner": "เจ้าของ",
-      "task": "งาน",
-      "state": "สถานะ",
-      "preview": "ตัวอย่าง",
-      "terminals": "เทอร์มินัล",
-      "updated": "อัปเดตเมื่อ",
-      "stateRunning": "กำลังทำงาน",
-      "stateStopped": "หยุดแล้ว",
-      "stateStarting": "กำลังเริ่ม",
-      "stateUnknown": "ไม่ทราบ",
-      "noTasks": "ยังไม่มีงาน Work"
-    }
-  },
-  "mediaGeneration": {
-    "title": "สร้างสื่อ",
-    "description": "สร้างวิดีโอ เสียง เพลง หรือคำพูดด้วยผู้ให้บริการสื่อที่เปิดใช้งาน",
-    "image": "รูปภาพ",
-    "video": "วิดีโอ",
-    "audio": "เสียง",
-    "sound": "เสียง",
-    "speech": "คำพูด",
-    "model": "โมเดล",
-    "voice": "เสียงหรือรหัสเสียง",
-    "cloneVoice": "โคลนเสียงอ้างอิง",
-    "cloneVoiceDescription": "สร้างคำพูดนี้จากเสียงบันทึกอ้างอิงแทนเสียงที่ตั้งไว้ล่วงหน้า",
-    "referenceAudio": "เสียงอ้างอิง",
-    "referenceTranscript": "ข้อความถอดเสียงอ้างอิงที่ตรงทั้งหมด",
-    "referenceTranscriptPlaceholder": "ป้อนสิ่งที่พูดในเสียงบันทึกอ้างอิงให้ตรงทุกคำ…",
-    "referenceAudioTooLarge": "เสียงอ้างอิงต้องมีขนาดไม่เกิน {{max}}",
-    "cloneConsent": "โคลนเสียงเฉพาะเมื่อคุณได้รับอนุญาตจากผู้พูดแล้วเท่านั้น เสียงบันทึกจะถูกส่งไปยังผู้ให้บริการที่เลือกเพื่อการสร้างครั้งนี้ และ Libre WebUI จะไม่บันทึกไว้",
-    "saveVoiceProfile": "บันทึกเป็นเสียงที่นำกลับมาใช้ได้",
-    "saveVoiceProfileDescription": "จัดเก็บเสียงบันทึกอ้างอิงและข้อความถอดเสียงนี้อย่างปลอดภัย Libre WebUI จะส่งทั้งสองรายการไปยังผู้ให้บริการที่เลือกสำหรับทุกชุดเสียงพูดที่ใช้เสียงนี้",
-    "voiceProfileName": "ชื่อเสียงที่บันทึกไว้",
-    "voiceProfileNamePlaceholder": "ตัวอย่างเช่น เสียงของฉัน",
-    "voiceStorageConsent": "ฉันยืนยันว่าได้รับอนุญาตจากผู้พูดให้โคลนและจัดเก็บเสียงนี้ ข้อมูลอ้างอิงจะถูกเก็บไว้จนกว่าฉันจะลบ",
-    "successWithSavedVoice": "สร้างสื่อแล้ว และ “{{name}}” พร้อมใช้งานในการตั้งค่าเสียงพูดแล้ว",
-    "resolution": "ความละเอียด",
-    "aspectRatio": "สัดส่วนภาพ",
-    "duration": "ระยะเวลา",
-    "providerDefault": "ค่าเริ่มต้นของผู้ให้บริการ",
-    "generateAudio": "สร้างเสียงพร้อมวิดีโอเมื่อรองรับ",
-    "prompt": "พรอมต์",
-    "text": "ข้อความที่จะพูด",
-    "videoPlaceholder": "อธิบายฉาก การเคลื่อนไหว กล้อง และแสงสว่าง...",
-    "audioPlaceholder": "ป้อนข้อความที่คุณต้องการให้เสียงพูด...",
-    "soundPlaceholder": "อธิบายเสียง เพลง บรรยากาศ หรือคำตอบที่พูดที่คุณต้องการ...",
-    "generate": "สร้าง",
-    "generating": "กำลังสร้าง… อาจใช้เวลาหลายนาที",
-    "success": "สร้างสื่อและบันทึกไปยัง Imagine แล้ว",
-    "failed": "ไม่สามารถสร้างสื่อได้",
-    "loadFailed": "ไม่สามารถโหลดผู้ให้บริการสื่อได้",
-    "noModels": "ไม่มีโมเดล {{kind}} ที่พร้อมใช้งาน โปรดเปิดใช้งานผู้ให้บริการที่รองรับและบันทึกข้อมูลประจำตัวก่อน"
-  },
-  "mediaGallery": {
-    "itemCount": "{{count}} รายการ",
-    "empty": "ยังไม่มีสื่อที่สร้างขึ้น",
-    "emptyHint": "สร้างรูปภาพ วิดีโอ หรือคลิปเสียง แล้วจะปรากฏที่นี่",
-    "filters": {
-      "all": "ทั้งหมด",
-      "image": "รูปภาพ",
-      "video": "วิดีโอ",
-      "audio": "เสียง"
-    }
+  "modelSelector": {
+    "searchInstalled": "ค้นหาโมเดลที่ติดตั้ง...",
+    "searchOllama": "ค้นหาในไลบรารี Ollama...",
+    "searchHuggingFace": "ค้นหาใน HuggingFace...",
+    "selectModel": "เลือกโมเดล",
+    "personas": "บุคลิก",
+    "ollamaModels": "โมเดล Ollama",
+    "pluginModels": "โมเดลปลั๊กอิน",
+    "actions": "การดำเนินการ",
+    "installed": "ติดตั้งแล้ว",
+    "use": "ใช้",
+    "pull": "ดาวน์โหลด",
+    "pullRestricted": "การติดตั้งโมเดลบนอินสแตนซ์นี้จำกัดเฉพาะผู้ดูแลระบบเท่านั้น",
+    "adminOnlyPull": "ผู้ดูแลระบบเท่านั้น",
+    "legacyProvider": "ไม่ได้บันทึกผู้ให้บริการ",
+    "providerNotRecorded": "ไม่ได้บันทึกผู้ให้บริการ",
+    "providerUnavailable": "ผู้ให้บริการไม่พร้อมใช้งาน",
+    "reselectProvider": "เลือกผู้ให้บริการใหม่เพื่อปักหมุดโมเดลนี้",
+    "unavailable": "ไม่พร้อมใช้งาน",
+    "unavailableSelections": "ตัวเลือกที่ไม่พร้อมใช้งาน",
+    "agentModels": "เอเจนต์"
   },
   "whatsNew": {
     "title": "มีอะไรใหม่",

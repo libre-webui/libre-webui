@@ -59,11 +59,11 @@
       "loginSuccess": "Login berhasil!",
       "loginFailed": "Login gagal",
       "checkCredentials": "Login gagal. Silakan periksa kredensial Anda.",
+      "approvalPending": "Akun Anda menunggu persetujuan administrator.",
       "enterBoth": "Silakan masukkan nama pengguna dan kata sandi",
       "githubSuccess": "Login GitHub berhasil!",
       "githubFailed": "Autentikasi GitHub gagal",
       "githubVerifyFailed": "Gagal memverifikasi autentikasi GitHub",
-      "approvalPending": "Akun Anda menunggu persetujuan administrator.",
       "verificationFailed": "Verifikasi keamanan gagal. Muat ulang halaman dan coba lagi."
     },
     "signup": {
@@ -82,15 +82,15 @@
       "hasAccount": "Sudah punya akun?",
       "signInHere": "Masuk di sini",
       "signupSuccess": "Akun berhasil dibuat!",
+      "approvalPending": "Pendaftaran diterima. Administrator harus menyetujui akun Anda.",
+      "awaitingApproval": "Menunggu persetujuan",
+      "awaitingApprovalDescription": "Akun Anda telah dibuat, tetapi administrator harus mengaktifkannya sebelum Anda dapat masuk.",
+      "backToSignIn": "Kembali ke masuk",
       "signupFailed": "Pendaftaran gagal",
       "tryAgain": "Pendaftaran gagal. Silakan coba lagi.",
       "usernameRequired": "Nama pengguna dan kata sandi wajib diisi",
       "passwordMismatch": "Kata sandi tidak cocok",
-      "passwordTooShort": "Kata sandi harus minimal 6 karakter",
-      "approvalPending": "Pendaftaran diterima. Administrator harus menyetujui akun Anda.",
-      "awaitingApproval": "Menunggu persetujuan",
-      "awaitingApprovalDescription": "Akun Anda telah dibuat, tetapi administrator harus mengaktifkannya sebelum Anda dapat masuk.",
-      "backToSignIn": "Kembali ke masuk"
+      "passwordTooShort": "Kata sandi harus minimal 6 karakter"
     },
     "logout": {
       "button": "Keluar",
@@ -166,9 +166,9 @@
       "createAdmin": "Buat Admin",
       "success": "Akun admin berhasil dibuat!",
       "failed": "Gagal membuat akun admin",
+      "approvalUnexpected": "Administrator awal tidak dapat diaktifkan. Silakan coba lagi.",
       "fillAllFields": "Silakan isi semua field",
-      "note": "Ini akan menjadi akun administrator utama untuk instance Libre WebUI Anda",
-      "approvalUnexpected": "Administrator awal tidak dapat diaktifkan. Silakan coba lagi."
+      "note": "Ini akan menjadi akun administrator utama untuk instance Libre WebUI Anda"
     },
     "encryptionKey": {
       "title": "Simpan Kunci Enkripsi Anda",
@@ -277,6 +277,7 @@
       "work": "Kerja",
       "chat": "Chat",
       "private": "Privat",
+      "incognito": "Chat Incognito",
       "privateMode": "Mode Privat",
       "privateDescription": "Percakapan ini tidak akan disimpan",
       "privateTooltip": "Mulai percakapan privat yang tidak akan disimpan",
@@ -290,7 +291,6 @@
       "pinChat": "Sematkan",
       "unpinChat": "Lepas sematan",
       "deleteChat": "Hapus chat",
-      "incognito": "Chat Incognito",
       "archiveChat": "Arsipkan obrolan",
       "groups": {
         "pinned": "Disematkan",
@@ -410,32 +410,27 @@
       "models": "Model",
       "personas": "Persona",
       "imagine": "Imajinasi",
-      "settings": "Pengaturan",
-      "userManagement": "Manajemen Pengguna",
-      "signOut": "Keluar",
       "agents": "Agen",
       "work": "Kerja",
-      "exploreLabel": "Jelajahi",
+      "settings": "Pengaturan",
       "usageAnalytics": "Penggunaan Penyedia",
       "system": "Sistem",
+      "userManagement": "Manajemen Pengguna",
+      "signOut": "Keluar",
+      "exploreLabel": "Jelajahi",
       "notes": "Catatan"
     },
     "toggleSize": "Ubah ukuran sidebar",
-    "expandSidebar": "Perluas sidebar",
-    "pinned": {
-      "label": "Disematkan",
-      "pin": "Sematkan ke sidebar",
-      "unpin": "Lepas sematan dari sidebar"
-    }
+    "expandSidebar": "Perluas sidebar"
   },
   "user": {
     "menu": {
       "changePicture": "Ubah Gambar",
       "settings": "Pengaturan",
-      "userManagement": "Manajemen Pengguna",
-      "logout": "Keluar",
       "usageAnalytics": "Penggunaan Penyedia",
-      "system": "Sistem"
+      "system": "Sistem",
+      "userManagement": "Manajemen Pengguna",
+      "logout": "Keluar"
     },
     "avatar": {
       "title": "Ubah Foto Profil",
@@ -478,8 +473,7 @@
       "shortcuts": "Pintasan",
       "about": "Tentang",
       "sessions": "Sesi",
-      "apiKeys": "API key",
-      "connections": "Koneksi"
+      "apiKeys": "API key"
     },
     "appearance": {
       "title": "Tampilan",
@@ -531,6 +525,13 @@
       "defaultModel": "Model Default",
       "defaultModelDescription": "Model ini akan digunakan secara default untuk percakapan baru",
       "selectModel": "Pilih model",
+      "specializedModels": "Model Khusus",
+      "visionModel": "Model Visi",
+      "selectVisionModel": "Gunakan model chat saat ini",
+      "visionModelDescription": "Digunakan secara otomatis setiap kali konteks chat keluar berisi gambar. Pilih model yang mendukung input gambar.",
+      "visionModelUpdateFailed": "Gagal memperbarui model visi: {{error}}",
+      "visionModelNoProvider": "Model visi ini tidak memiliki identitas penyedia. Pilih model yang tersedia.",
+      "persona": "Persona",
       "updateAll": "Perbarui Semua Model",
       "updateAllDescription": "Periksa pembaruan dan unduh versi terbaru semua model yang terinstal",
       "updateAllButton": "Perbarui Semua",
@@ -553,15 +554,8 @@
         "selectTaskModel": "Pilih model tugas",
         "taskModelDescription": "Model yang digunakan untuk membuat judul percakapan"
       },
-      "persona": "Persona",
       "updatingModel": "Memperbarui {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} dari {{total}} model",
-      "specializedModels": "Model Khusus",
-      "visionModel": "Model Visi",
-      "selectVisionModel": "Gunakan model chat saat ini",
-      "visionModelDescription": "Digunakan secara otomatis setiap kali konteks chat keluar berisi gambar. Pilih model yang mendukung input gambar.",
-      "visionModelUpdateFailed": "Gagal memperbarui model visi: {{error}}",
-      "visionModelNoProvider": "Model visi ini tidak memiliki identitas penyedia. Pilih model yang tersedia."
+      "modelsProgress": "{{current}} dari {{total}} model"
     },
     "systemMessage": {
       "title": "Pesan Sistem",
@@ -573,6 +567,13 @@
     "plugins": {
       "title": "Plugin",
       "description": "Kelola plugin yang terinstal",
+      "providerConnections": "Koneksi penyedia",
+      "providerConnectionsDescription": "Hubungkan, konfigurasikan, dan periksa penyedia model melalui plugin.",
+      "providers": "Penyedia",
+      "searchProviders": "Cari penyedia",
+      "noProvidersFound": "Tidak ada penyedia yang cocok dengan pencarian Anda.",
+      "selectProvider": "Pilih penyedia",
+      "selectProviderDescription": "Pilih penyedia untuk memeriksa koneksi dan katalog modelnya.",
       "addNew": "Tambah Plugin Baru",
       "upload": "Unggah Plugin",
       "addJson": "Tambah JSON",
@@ -591,33 +592,12 @@
       "models": "model",
       "apiKeySet": "API Key Diatur",
       "apiKeyConfiguration": "Konfigurasi API Key",
+      "apiKeyDescription": "Simpan kunci API pribadi untuk {{name}}.",
       "apiKeyEnvAlternative": "Atau, atur variabel",
       "environmentVariable": "variabel lingkungan",
       "apiKeyConfigured": "API key dikonfigurasi",
       "apiKeyPlaceholder": "Masukkan API key Anda...",
       "saveApiKey": "Simpan API Key",
-      "apiKey": {
-        "title": "API Key",
-        "placeholder": "Masukkan API key",
-        "save": "Simpan Key",
-        "remove": "Hapus Key",
-        "configured": "API Key Dikonfigurasi",
-        "notConfigured": "API Key Diperlukan",
-        "saved": "API key berhasil disimpan",
-        "removed": "API key dihapus",
-        "saveFailed": "Gagal menyimpan API key",
-        "removeFailed": "Gagal menghapus API key",
-        "enterKey": "Silakan masukkan API key"
-      },
-      "variables": "Variables",
-      "providerConnections": "Koneksi penyedia",
-      "providerConnectionsDescription": "Hubungkan, konfigurasikan, dan periksa penyedia model melalui plugin.",
-      "providers": "Penyedia",
-      "searchProviders": "Cari penyedia",
-      "noProvidersFound": "Tidak ada penyedia yang cocok dengan pencarian Anda.",
-      "selectProvider": "Pilih penyedia",
-      "selectProviderDescription": "Pilih penyedia untuk memeriksa koneksi dan katalog modelnya.",
-      "apiKeyDescription": "Simpan kunci API pribadi untuk {{name}}.",
       "showApiKey": "Tampilkan kunci API",
       "hideApiKey": "Sembunyikan kunci API",
       "configure": "Konfigurasi",
@@ -643,7 +623,21 @@
         "transcription": "Transkripsi"
       },
       "exportPlugin": "Ekspor plugin",
-      "deletePlugin": "Hapus plugin"
+      "deletePlugin": "Hapus plugin",
+      "apiKey": {
+        "title": "API Key",
+        "placeholder": "Masukkan API key",
+        "save": "Simpan Key",
+        "remove": "Hapus Key",
+        "configured": "API Key Dikonfigurasi",
+        "notConfigured": "API Key Diperlukan",
+        "saved": "API key berhasil disimpan",
+        "removed": "API key dihapus",
+        "saveFailed": "Gagal menyimpan API key",
+        "removeFailed": "Gagal menghapus API key",
+        "enterKey": "Silakan masukkan API key"
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Opsi Pembuatan",
@@ -653,6 +647,8 @@
       "scopeModel": "Hanya {{model}}",
       "scopeAllHint": "Nilai yang dipakai setiap model kecuali model itu punya nilainya sendiri.",
       "scopeModelHint": "Disimpan hanya untuk model ini dan mengalahkan nilai umum.",
+      "advancedSettings": "Pengaturan pembuatan lanjutan",
+      "advancedSettingsDescription": "Pengambilan sampel, batas token, konteks, penalti, dan urutan berhenti",
       "coreParameters": "Parameter Inti",
       "temperature": "Temperatur",
       "temperatureDescription": "Mengontrol keacakan. Nilai lebih rendah lebih fokus, nilai lebih tinggi lebih kreatif.",
@@ -684,9 +680,7 @@
       "resetDefaults": "Reset ke Default",
       "saveOptions": "Simpan Opsi",
       "embeddingSettings": "Pengaturan Embedding",
-      "enableEmbeddings": "Aktifkan Embedding Dokumen",
-      "advancedSettings": "Pengaturan pembuatan lanjutan",
-      "advancedSettingsDescription": "Pengambilan sampel, batas token, konteks, penalti, dan urutan berhenti"
+      "enableEmbeddings": "Aktifkan Embedding Dokumen"
     },
     "documents": {
       "title": "Pengaturan Dokumen",
@@ -796,6 +790,7 @@
       "title": "Manajemen Data",
       "export": "Ekspor Data",
       "exportDescription": "Unduh arsip portabel berisi preferensi, folder obrolan, sesi dan pesan, catatan, koleksi pengetahuan, serta teks dokumen yang diekstrak.",
+      "archiveScopeV3": "Mencakup preferensi, obrolan, folder, catatan, koleksi pengetahuan, dan teks dokumen yang diekstrak. Tidak mencakup akun dan rahasia, suara kloning biometrik, media yang dihasilkan, persona dan memori, serta data atau volume Work.",
       "exportAll": "Ekspor Semua Data",
       "import": "Impor Data",
       "importDescription": "Impor data dari ekspor sebelumnya.",
@@ -836,8 +831,7 @@
         "title": "Obrolan diarsipkan",
         "empty": "Tidak ada obrolan yang diarsipkan",
         "unarchive": "Batalkan arsip"
-      },
-      "archiveScopeV3": "Mencakup preferensi, obrolan, folder, catatan, koleksi pengetahuan, dan teks dokumen yang diekstrak. Tidak mencakup akun dan rahasia, suara kloning biometrik, media yang dihasilkan, persona dan memori, serta data atau volume Work."
+      }
     },
     "about": {
       "title": "Tentang",
@@ -927,41 +921,6 @@
       "promptDescription": "Variabel templat {{previousSummaryVariable}} dan {{messagesVariable}} akan diganti dengan rangkuman sebelumnya dan pesan-pesan yang sedang dirangkum.",
       "saved": "Pengaturan pemadatan disimpan",
       "saveFailed": "Tidak dapat menyimpan pengaturan pemadatan"
-    },
-    "connections": {
-      "title": "Koneksi",
-      "description": "Penyedia model yang terhubung dengan server ini: runtime Ollama lokal dan endpoint yang kompatibel dengan OpenAI.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Runtime model lokal.",
-      "version": "Versi {{version}}.",
-      "statusChecking": "Memeriksa…",
-      "statusOnline": "Online",
-      "statusOffline": "Offline",
-      "providersTitle": "Koneksi kompatibel OpenAI",
-      "providersDescription": "Setiap koneksi adalah penyedia completion yang model-modelnya muncul di pemilih model chat. API key disimpan di sisi server.",
-      "noConnections": "Belum ada koneksi yang dikonfigurasi.",
-      "modelsCount": "{{total}} model",
-      "pendingDiscovery": "Model menunggu penemuan",
-      "apiKeyMissing": "Tanpa API key",
-      "deleteConfirm": "Hapus koneksi ini? Chat yang menggunakan model-modelnya akan kehilangan akses ke model tersebut.",
-      "addTitle": "Tambah koneksi",
-      "addDescription": "Daftarkan endpoint chat completions yang kompatibel dengan OpenAI sebagai penyedia.",
-      "nameLabel": "Nama tampilan",
-      "namePlaceholder": "Penyedia saya",
-      "idPreview": "ID koneksi: {{id}}",
-      "endpointLabel": "URL endpoint",
-      "endpointDescription": "URL chat completions lengkap, misalnya https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "API key",
-      "apiKeyOptionalHint": "(opsional, dapat ditambahkan nanti)",
-      "nameRequired": "Masukkan nama tampilan untuk koneksi.",
-      "endpointInvalid": "Masukkan URL endpoint http(s) yang valid.",
-      "alreadyExists": "Koneksi dengan ID ini sudah ada.",
-      "add": "Tambah koneksi",
-      "adding": "Menambahkan…",
-      "added": "Koneksi ditambahkan",
-      "addFailed": "Tidak dapat menambahkan koneksi",
-      "keySaveFailed": "Koneksi ditambahkan, tetapi API key tidak dapat disimpan",
-      "activateFailed": "Koneksi ditambahkan, tetapi tidak dapat diaktifkan"
     },
     "sessions": {
       "title": "Sesi",
@@ -1115,25 +1074,33 @@
     "sections": {
       "pull": "Unduh Model Baru",
       "library": "Telusuri Pustaka",
+      "huggingface": "HuggingFace Hub",
       "running": "Model Berjalan",
       "local": "Model Lokal",
       "advanced": "Tindakan Lanjutan",
-      "huggingface": "HuggingFace Hub",
       "catalog": "Katalog Model"
     },
     "catalog": {
-      "models": "tersedia",
       "searchPlaceholder": "Cari model berdasarkan nama atau penyedia...",
       "noModels": "Belum ada model yang tersedia.",
       "empty": "Tidak ada model yang cocok dengan pencarian Anda.",
       "providerOllama": "Ollama",
-      "default": "Default",
-      "makeDefault": "Jadikan default",
-      "defaultSet": "{{model}} sekarang menjadi model default Anda.",
       "hidden": "Disembunyikan",
+      "visibilityFailed": "Tidak dapat memperbarui visibilitas model.",
+      "filterAll": "Semua model",
+      "filterLocal": "Lokal",
+      "filterProviders": "Penyedia",
+      "filterHidden": "Disembunyikan",
+      "enableAll": "Aktifkan yang tampil",
+      "disableAll": "Nonaktifkan yang tampil",
+      "rename": "Ubah nama dan gambar",
+      "setPicture": "Atur gambar",
+      "clearPicture": "Hapus gambar",
+      "pictureInvalid": "Pilih berkas gambar.",
+      "pictureTooLarge": "Gambar harus di bawah 192 KB.",
+      "saving": "Menyimpan…",
       "hide": "Sembunyikan dari pengguna",
-      "show": "Tampilkan ke pengguna",
-      "visibilityFailed": "Tidak dapat memperbarui visibilitas model."
+      "show": "Tampilkan ke pengguna"
     },
     "pull": {
       "placeholder": "Masukkan nama model (mis., llama3.2:3b, deepseek-r1:14b)",
@@ -1163,6 +1130,37 @@
       "installed": "Terinstal",
       "more": "+{{count}} lagi",
       "refresh": "Segarkan Pustaka"
+    },
+    "huggingface": {
+      "browseAll": "Jelajahi semua di HuggingFace",
+      "checkingGguf": "Mencari file GGUF...",
+      "noGgufAvailable": "Tidak ada file GGUF yang tersedia untuk pull langsung ke Ollama",
+      "ggufFilesCount": "File GGUF ({{count}}) - Pull langsung ke Ollama",
+      "noModelsFound": "Tidak ada model ditemukan",
+      "noResults": "Tidak ada model ditemukan. Coba sesuaikan pencarian atau filter.",
+      "browseAllLink": "Lihat semua",
+      "search": "Cari model HuggingFace...",
+      "by": "oleh",
+      "gated": "Akses terbatas",
+      "viewOnHF": "Lihat di HuggingFace",
+      "sortDownloads": "Unduhan",
+      "sortLikes": "Suka",
+      "sortRecent": "Terbaru",
+      "taskTextGeneration": "Pembuatan Teks",
+      "taskTextToSpeech": "Teks ke Suara",
+      "taskTextToImage": "Teks ke Gambar",
+      "taskSpeechRecognition": "Pengenalan Suara",
+      "tasks": {
+        "textGen": "Pembuatan Teks",
+        "tts": "Teks ke Suara",
+        "image": "Teks ke Gambar",
+        "stt": "Pengenalan Suara"
+      },
+      "sort": {
+        "downloads": "Paling Banyak Diunduh",
+        "likes": "Paling Disukai",
+        "recent": "Baru Diperbarui"
+      }
     },
     "local": {
       "noModels": "Belum ada model terinstal",
@@ -1241,37 +1239,6 @@
         "success": "Dibuat vektor embedding {{count}} dimensi",
         "failed": "Gagal membuat embedding",
         "enterBoth": "Silakan pilih model dan masukkan teks"
-      }
-    },
-    "huggingface": {
-      "browseAll": "Jelajahi semua di HuggingFace",
-      "checkingGguf": "Mencari file GGUF...",
-      "noGgufAvailable": "Tidak ada file GGUF yang tersedia untuk pull langsung ke Ollama",
-      "ggufFilesCount": "File GGUF ({{count}}) - Pull langsung ke Ollama",
-      "noModelsFound": "Tidak ada model ditemukan",
-      "noResults": "Tidak ada model ditemukan. Coba sesuaikan pencarian atau filter.",
-      "browseAllLink": "Lihat semua",
-      "search": "Cari model HuggingFace...",
-      "by": "oleh",
-      "gated": "Akses terbatas",
-      "viewOnHF": "Lihat di HuggingFace",
-      "sortDownloads": "Unduhan",
-      "sortLikes": "Suka",
-      "sortRecent": "Terbaru",
-      "taskTextGeneration": "Pembuatan Teks",
-      "taskTextToSpeech": "Teks ke Suara",
-      "taskTextToImage": "Teks ke Gambar",
-      "taskSpeechRecognition": "Pengenalan Suara",
-      "tasks": {
-        "textGen": "Pembuatan Teks",
-        "tts": "Teks ke Suara",
-        "image": "Teks ke Gambar",
-        "stt": "Pengenalan Suara"
-      },
-      "sort": {
-        "downloads": "Paling Banyak Diunduh",
-        "likes": "Paling Disukai",
-        "recent": "Baru Diperbarui"
       }
     }
   },
@@ -1445,6 +1412,17 @@
     "deleteSuccess": "Pengguna berhasil dihapus",
     "deleteFailed": "Gagal menghapus pengguna",
     "cannotDeleteSelf": "Anda tidak dapat menghapus akun Anda sendiri",
+    "approval": {
+      "title": "Persetujuan tertunda",
+      "description": "Tinjau pendaftaran baru sebelum mengizinkan mereka masuk ke instance ini.",
+      "registered": "Terdaftar",
+      "activate": "Aktifkan akun",
+      "reject": "Tolak pendaftaran",
+      "approved": "{{name}} kini dapat masuk.",
+      "failed": "Akun tidak dapat disetujui.",
+      "notification": "{{count}} pendaftaran menunggu persetujuan Anda.",
+      "notificationBadge": "{{count}} persetujuan pengguna tertunda"
+    },
     "form": {
       "title": {
         "create": "Buat Pengguna",
@@ -1466,17 +1444,6 @@
       "updateSuccess": "Pengguna berhasil diperbarui",
       "createFailed": "Gagal membuat pengguna",
       "updateFailed": "Gagal memperbarui pengguna"
-    },
-    "approval": {
-      "title": "Persetujuan tertunda",
-      "description": "Tinjau pendaftaran baru sebelum mengizinkan mereka masuk ke instance ini.",
-      "registered": "Terdaftar",
-      "activate": "Aktifkan akun",
-      "reject": "Tolak pendaftaran",
-      "approved": "{{name}} kini dapat masuk.",
-      "failed": "Akun tidak dapat disetujui.",
-      "notification": "{{count}} pendaftaran menunggu persetujuan Anda.",
-      "notificationBadge": "{{count}} persetujuan pengguna tertunda"
     },
     "workAccess": {
       "title": "Akses Work",
@@ -1582,6 +1549,174 @@
       "target": "Target"
     }
   },
+  "usageAnalytics": {
+    "eyebrow": "Administrasi",
+    "title": "Penggunaan Penyedia",
+    "description": "Pantau panggilan API keluar dan konsumsi model di seluruh plugin yang diaktifkan pada instance ini.",
+    "days": "{{count}} hari",
+    "refresh": "Segarkan penggunaan",
+    "loadFailed": "Penggunaan penyedia tidak dapat dimuat.",
+    "metrics": {
+      "calls": "Panggilan",
+      "tokens": "Token"
+    },
+    "cards": {
+      "calls": "Panggilan API",
+      "callsDetail": "Di seluruh {{count}} pengguna aktif",
+      "tokens": "Token yang dilaporkan",
+      "tokensDetail": "Penggunaan dilaporkan pada {{count}} panggilan",
+      "success": "Tingkat keberhasilan",
+      "successDetail": "{{count}} panggilan gagal",
+      "latency": "Latensi rata-rata",
+      "latencyDetail": "Waktu provider end-to-end"
+    },
+    "activity": {
+      "title": "Konsumsi dari waktu ke waktu",
+      "callsDescription": "Permintaan keluar harian ke plugin yang diaktifkan",
+      "tokensDescription": "Total token harian yang dilaporkan provider",
+      "chartLabel": "Bagan {{metric}} provider harian"
+    },
+    "models": {
+      "title": "Konsumsi model",
+      "description": "Model dengan traffic terbanyak pada periode ini.",
+      "model": "Model",
+      "success": "Berhasil",
+      "latency": "Latensi"
+    },
+    "providers": {
+      "title": "Traffic plugin aktif"
+    },
+    "capabilities": {
+      "title": "Bauran kapabilitas",
+      "characters": "{{count}} karakter",
+      "bytes": "{{count}} byte",
+      "images": "{{count}} gambar",
+      "jobs": "{{count}} pekerjaan video",
+      "inputs": "{{count}} input",
+      "reportedTokens": "{{count}} token yang dilaporkan"
+    },
+    "empty": {
+      "title": "Belum ada panggilan provider",
+      "description": "Panggilan akan muncul di sini setelah plugin aktif menangani permintaan chat, Work, embedding, gambar, ucapan, suara, atau video."
+    },
+    "privacyNote": "Penggunaan diukur di server pada batas plugin keluar. Libre WebUI menyimpan provider, model, waktu, status, dan penghitung yang dilaporkan—tidak pernah menyimpan prompt, respons, endpoint, kredensial, atau isi error provider. Total token hanya mencakup panggilan di mana provider mengembalikan metadata penggunaan.",
+    "heatmap": {
+      "title": "Setahun aktivitas",
+      "description": "Panggilan penyedia harian selama setahun terakhir, diwarnai berdasarkan model yang paling banyak digunakan setiap hari.",
+      "calls": "panggilan",
+      "noCalls": "Tidak ada panggilan",
+      "other": "Model lainnya",
+      "less": "Sedikit",
+      "more": "Banyak",
+      "yearTotal": "{{formatted}} panggilan dalam setahun terakhir"
+    }
+  },
+  "systemPage": {
+    "eyebrow": "Administrasi",
+    "title": "Sistem",
+    "description": "Pantau mesin dan runtime yang menampung instance Libre WebUI ini.",
+    "updated": "Diperbarui {{date}}",
+    "refresh": "Segarkan informasi sistem",
+    "loadFailed": "Informasi sistem tidak dapat dimuat.",
+    "cards": {
+      "uptime": "Waktu aktif host",
+      "uptimeDetail": "Berjalan sejak {{date}}",
+      "memory": "Memori terpakai",
+      "memoryDetail": "{{used}} dari {{total}}",
+      "freeSpace": "Ruang kosong",
+      "freeSpaceDetail": "{{label}} · {{total}} total",
+      "containers": "Container berjalan",
+      "containersDetail": "{{total}} container dikenal oleh Docker",
+      "dockerUnavailable": "Docker tidak tersedia",
+      "unavailable": "Tidak tersedia"
+    },
+    "host": {
+      "title": "Host & runtime",
+      "description": "Detail sistem operasi, prosesor, dan proses Libre WebUI.",
+      "container": "Runtime container",
+      "native": "Runtime native",
+      "hostname": "Nama host",
+      "operatingSystem": "Sistem operasi",
+      "processor": "Prosesor",
+      "logicalCpus": "CPU logis",
+      "loadAverage": "Rata-rata beban · 1 / 5 / 15 menit",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Proses",
+      "workingDirectory": "Direktori kerja"
+    },
+    "memory": {
+      "title": "Memori",
+      "description": "Memori sistem yang terlihat oleh runtime dan penggunaan proses aplikasi.",
+      "usedOf": "{{used}} digunakan dari {{total}}",
+      "free": "{{value}} tersedia",
+      "processRss": "RSS Proses",
+      "heapUsed": "Heap V8 digunakan",
+      "heapTotal": "Total heap V8",
+      "external": "Memori eksternal"
+    },
+    "storage": {
+      "title": "Penyimpanan",
+      "description": "Ruang yang tersedia untuk sistem berkas runtime dan data aplikasi persisten.",
+      "used": "{{value}} digunakan",
+      "free": "{{value}} tersedia",
+      "empty": "Informasi sistem berkas tidak tersedia di runtime ini."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Status Docker Engine hanya-baca dan daftar kontainer yang dikurangi.",
+      "connected": "Terhubung",
+      "unavailable": "Tidak tersedia",
+      "unavailableDetail": "Diagnostik Docker Engine tidak tersedia.",
+      "socketStatus": "Soket lokal: {{status}}",
+      "mounted": "terpasang",
+      "notMounted": "tidak terpasang",
+      "running": "Berjalan",
+      "stopped": "Berhenti",
+      "paused": "Dijeda",
+      "total": "Total",
+      "version": "Versi",
+      "host": "Host",
+      "architecture": "Arsitektur",
+      "cpus": "CPU",
+      "memory": "Memori",
+      "container": "Container",
+      "image": "Image",
+      "state": "Status",
+      "created": "Dibuat",
+      "empty": "Docker terhubung dan tidak ada container yang terdaftar saat ini."
+    },
+    "network": {
+      "title": "Jaringan",
+      "description": "Antarmuka, alamat, dan penghitung lalu lintas Linux yang terlihat oleh runtime.",
+      "internal": "internal",
+      "empty": "Tidak ada antarmuka jaringan yang terlihat oleh runtime aplikasi."
+    },
+    "securityNote": "Halaman ini dibatasi untuk administrator. Server hanya mengembalikan ringkasan operasional: tidak mengekspos variabel lingkungan, kredensial, label Docker, mount, perintah container, atau payload inspect. Saat Libre WebUI berjalan di dalam container, detail CPU dan memori tingkat host berasal dari Docker Engine ketika soket lokalnya tersedia; nilai lainnya menjelaskan runtime aplikasi.",
+    "work": {
+      "title": "Work",
+      "description": "Sandbox semua pengguna",
+      "access": "Akses",
+      "accessAdmins": "Hanya administrator",
+      "accessAllUsers": "Semua pengguna",
+      "runtimeAvailable": "Tersedia",
+      "runtimeUnavailable": "Tidak tersedia",
+      "activeRuntimes": "Runtime aktif",
+      "pendingCleanups": "Pembersihan tertunda",
+      "orphans": "Kontainer yatim",
+      "owner": "Pemilik",
+      "task": "Tugas",
+      "state": "Status",
+      "preview": "Pratinjau",
+      "terminals": "Terminal",
+      "updated": "Diperbarui",
+      "stateRunning": "Berjalan",
+      "stateStopped": "Berhenti",
+      "stateStarting": "Memulai",
+      "stateUnknown": "Tidak diketahui",
+      "noTasks": "Belum ada tugas Work."
+    }
+  },
   "chatHistory": {
     "label": "Riwayat percakapan",
     "jumpToTurn": "Buka giliran {{index}} dari {{total}}"
@@ -1650,6 +1785,57 @@
     "failed": "Gagal membuat gambar",
     "enterPrompt": "Silakan masukkan prompt",
     "promptTooLong": "Prompt melebihi panjang maksimum {{max}} karakter"
+  },
+  "mediaGeneration": {
+    "title": "Hasilkan media",
+    "description": "Buat video, suara, musik, atau ucapan dengan penyedia media yang diaktifkan.",
+    "image": "Gambar",
+    "video": "Video",
+    "audio": "Audio",
+    "sound": "Suara",
+    "speech": "Ucapan",
+    "model": "Model",
+    "voice": "Suara atau ID suara",
+    "cloneVoice": "Kloning suara referensi",
+    "cloneVoiceDescription": "Buat ucapan ini berdasarkan rekaman referensi, bukan suara prasetel.",
+    "referenceAudio": "Audio referensi",
+    "referenceTranscript": "Transkrip referensi yang persis",
+    "referenceTranscriptPlaceholder": "Masukkan persis apa yang diucapkan dalam rekaman referensi…",
+    "referenceAudioTooLarge": "Ukuran audio referensi harus {{max}} atau kurang.",
+    "cloneConsent": "Kloning suara hanya jika Anda memiliki izin dari penutur. Rekaman dikirim ke penyedia yang dipilih untuk pembuatan ini dan tidak disimpan oleh Libre WebUI.",
+    "saveVoiceProfile": "Simpan sebagai suara yang dapat digunakan kembali",
+    "saveVoiceProfileDescription": "Simpan rekaman referensi dan transkrip ini dengan aman. Libre WebUI mengirim keduanya ke penyedia yang dipilih untuk setiap batch Ucapan yang menggunakan suara ini.",
+    "voiceProfileName": "Nama suara tersimpan",
+    "voiceProfileNamePlaceholder": "Contoh: Suara saya",
+    "voiceStorageConsent": "Saya menyatakan telah mendapat izin penutur untuk mengkloning dan menyimpan suara ini. Referensi tetap tersimpan hingga saya menghapusnya.",
+    "resolution": "Resolusi",
+    "aspectRatio": "Rasio aspek",
+    "duration": "Durasi",
+    "providerDefault": "Bawaan penyedia",
+    "generateAudio": "Hasilkan audio dengan video jika didukung",
+    "prompt": "Prompt",
+    "text": "Teks untuk diucapkan",
+    "videoPlaceholder": "Deskripsikan adegan, gerakan, kamera, dan pencahayaan...",
+    "audioPlaceholder": "Masukkan teks yang ingin diucapkan oleh suara...",
+    "soundPlaceholder": "Deskripsikan suara, musik, suasana, atau respons lisan yang Anda inginkan...",
+    "generate": "Hasilkan",
+    "generating": "Menghasilkan… ini bisa memakan waktu beberapa menit",
+    "success": "Media dihasilkan dan disimpan ke Imagine",
+    "successWithSavedVoice": "Media dibuat dan “{{name}}” kini tersedia di pengaturan Ucapan",
+    "failed": "Gagal menghasilkan media",
+    "loadFailed": "Gagal memuat penyedia media",
+    "noModels": "Tidak ada model {{kind}} yang tersedia. Aktifkan penyedia yang kompatibel dan simpan kredensialnya terlebih dahulu."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} item",
+    "empty": "Belum ada media yang dihasilkan",
+    "emptyHint": "Hasilkan gambar, video, atau klip suara dan akan muncul di sini.",
+    "filters": {
+      "all": "Semua",
+      "image": "Gambar",
+      "video": "Video",
+      "audio": "Audio"
+    }
   },
   "errorBoundary": {
     "title": "Terjadi kesalahan",
@@ -1802,8 +1988,8 @@
       "saveFailed": "Gagal menyimpan variabel",
       "resetDefaults": "Reset ke Default",
       "reset": "Variabel direset",
-      "sensitiveSet": "Nilai telah diatur (masukkan nilai baru untuk mengubah)",
       "resetFailed": "Gagal mereset variabel",
+      "sensitiveSet": "Nilai telah diatur (masukkan nilai baru untuk mengubah)",
       "showValue": "Tampilkan nilai {{label}}",
       "hideValue": "Sembunyikan nilai {{label}}",
       "connection": "Koneksi",
@@ -1841,45 +2027,6 @@
   "demoMode": {
     "title": "Mode demo",
     "github": "GitHub"
-  },
-  "personaBackground": {
-    "label": "Gambar Latar Belakang",
-    "uploadBackgroundImage": "Unggah gambar latar belakang",
-    "dragAndDrop": "Seret dan lepas gambar atau klik untuk menjelajah",
-    "chooseImage": "Pilih Gambar",
-    "uploading": "Mengunggah...",
-    "enterImageUrl": "Atau masukkan URL gambar",
-    "supportedFormats": "Mendukung: JPG, PNG, GIF, WebP (maks 5MB). Gambar lanskap lebar berfungsi terbaik.",
-    "customBackground": "Gambar latar belakang kustom",
-    "clickToChange": "Klik untuk mengubah atau menghapus",
-    "removed": "Latar belakang dihapus",
-    "uploaded": "Latar belakang berhasil diunggah",
-    "invalidFile": "Silakan pilih file gambar yang valid",
-    "fileTooLarge": "Ukuran gambar latar belakang harus kurang dari 5MB",
-    "readFailed": "Gagal membaca file gambar",
-    "uploadFailed": "Gagal mengunggah gambar latar belakang"
-  },
-  "modelSelector": {
-    "searchInstalled": "Cari model yang terinstal...",
-    "searchOllama": "Cari di perpustakaan Ollama...",
-    "searchHuggingFace": "Cari di HuggingFace...",
-    "selectModel": "Pilih model",
-    "personas": "Persona",
-    "ollamaModels": "Model Ollama",
-    "pluginModels": "Model Plugin",
-    "actions": "Aksi",
-    "installed": "Terinstal",
-    "use": "Gunakan",
-    "pull": "Unduh",
-    "pullRestricted": "Instalasi model dibatasi hanya untuk administrator pada instance ini.",
-    "adminOnlyPull": "Hanya admin",
-    "legacyProvider": "penyedia tidak tercatat",
-    "providerNotRecorded": "Penyedia tidak tercatat",
-    "providerUnavailable": "penyedia tidak tersedia",
-    "reselectProvider": "pilih ulang penyedia untuk menyematkan model ini",
-    "unavailable": "tidak tersedia",
-    "unavailableSelections": "Pilihan tidak tersedia",
-    "agentModels": "Agen"
   },
   "libreClaw": {
     "title": "Agen",
@@ -2223,224 +2370,44 @@
       "warning": "Tugas dapat membaca dan menulis folder ini langsung. Biarkan kosong untuk ruang kerja terisolasi."
     }
   },
-  "usageAnalytics": {
-    "eyebrow": "Administrasi",
-    "title": "Penggunaan Penyedia",
-    "description": "Pantau panggilan API keluar dan konsumsi model di seluruh plugin yang diaktifkan pada instance ini.",
-    "days": "{{count}} hari",
-    "refresh": "Segarkan penggunaan",
-    "loadFailed": "Penggunaan penyedia tidak dapat dimuat.",
-    "metrics": {
-      "calls": "Panggilan",
-      "tokens": "Token"
-    },
-    "cards": {
-      "calls": "Panggilan API",
-      "callsDetail": "Di seluruh {{count}} pengguna aktif",
-      "tokens": "Token yang dilaporkan",
-      "tokensDetail": "Penggunaan dilaporkan pada {{count}} panggilan",
-      "success": "Tingkat keberhasilan",
-      "successDetail": "{{count}} panggilan gagal",
-      "latency": "Latensi rata-rata",
-      "latencyDetail": "Waktu provider end-to-end"
-    },
-    "activity": {
-      "title": "Konsumsi dari waktu ke waktu",
-      "callsDescription": "Permintaan keluar harian ke plugin yang diaktifkan",
-      "tokensDescription": "Total token harian yang dilaporkan provider",
-      "chartLabel": "Bagan {{metric}} provider harian"
-    },
-    "models": {
-      "title": "Konsumsi model",
-      "description": "Model dengan traffic terbanyak pada periode ini.",
-      "model": "Model",
-      "success": "Berhasil",
-      "latency": "Latensi"
-    },
-    "providers": {
-      "title": "Traffic plugin aktif"
-    },
-    "capabilities": {
-      "title": "Bauran kapabilitas",
-      "characters": "{{count}} karakter",
-      "bytes": "{{count}} byte",
-      "images": "{{count}} gambar",
-      "jobs": "{{count}} pekerjaan video",
-      "inputs": "{{count}} input",
-      "reportedTokens": "{{count}} token yang dilaporkan"
-    },
-    "empty": {
-      "title": "Belum ada panggilan provider",
-      "description": "Panggilan akan muncul di sini setelah plugin aktif menangani permintaan chat, Work, embedding, gambar, ucapan, suara, atau video."
-    },
-    "privacyNote": "Penggunaan diukur di server pada batas plugin keluar. Libre WebUI menyimpan provider, model, waktu, status, dan penghitung yang dilaporkan—tidak pernah menyimpan prompt, respons, endpoint, kredensial, atau isi error provider. Total token hanya mencakup panggilan di mana provider mengembalikan metadata penggunaan.",
-    "heatmap": {
-      "title": "Setahun aktivitas",
-      "description": "Panggilan penyedia harian selama setahun terakhir, diwarnai berdasarkan model yang paling banyak digunakan setiap hari.",
-      "calls": "panggilan",
-      "noCalls": "Tidak ada panggilan",
-      "other": "Model lainnya",
-      "less": "Sedikit",
-      "more": "Banyak",
-      "yearTotal": "{{formatted}} panggilan dalam setahun terakhir"
-    }
+  "personaBackground": {
+    "label": "Gambar Latar Belakang",
+    "uploadBackgroundImage": "Unggah gambar latar belakang",
+    "dragAndDrop": "Seret dan lepas gambar atau klik untuk menjelajah",
+    "chooseImage": "Pilih Gambar",
+    "uploading": "Mengunggah...",
+    "enterImageUrl": "Atau masukkan URL gambar",
+    "supportedFormats": "Mendukung: JPG, PNG, GIF, WebP (maks 5MB). Gambar lanskap lebar berfungsi terbaik.",
+    "customBackground": "Gambar latar belakang kustom",
+    "clickToChange": "Klik untuk mengubah atau menghapus",
+    "removed": "Latar belakang dihapus",
+    "uploaded": "Latar belakang berhasil diunggah",
+    "invalidFile": "Silakan pilih file gambar yang valid",
+    "fileTooLarge": "Ukuran gambar latar belakang harus kurang dari 5MB",
+    "readFailed": "Gagal membaca file gambar",
+    "uploadFailed": "Gagal mengunggah gambar latar belakang"
   },
-  "systemPage": {
-    "eyebrow": "Administrasi",
-    "title": "Sistem",
-    "description": "Pantau mesin dan runtime yang menampung instance Libre WebUI ini.",
-    "updated": "Diperbarui {{date}}",
-    "refresh": "Segarkan informasi sistem",
-    "loadFailed": "Informasi sistem tidak dapat dimuat.",
-    "cards": {
-      "uptime": "Waktu aktif host",
-      "uptimeDetail": "Berjalan sejak {{date}}",
-      "memory": "Memori terpakai",
-      "memoryDetail": "{{used}} dari {{total}}",
-      "freeSpace": "Ruang kosong",
-      "freeSpaceDetail": "{{label}} · {{total}} total",
-      "containers": "Container berjalan",
-      "containersDetail": "{{total}} container dikenal oleh Docker",
-      "dockerUnavailable": "Docker tidak tersedia",
-      "unavailable": "Tidak tersedia"
-    },
-    "host": {
-      "title": "Host & runtime",
-      "description": "Detail sistem operasi, prosesor, dan proses Libre WebUI.",
-      "container": "Runtime container",
-      "native": "Runtime native",
-      "hostname": "Nama host",
-      "operatingSystem": "Sistem operasi",
-      "processor": "Prosesor",
-      "logicalCpus": "CPU logis",
-      "loadAverage": "Rata-rata beban · 1 / 5 / 15 menit",
-      "libreVersion": "Libre WebUI",
-      "nodeVersion": "Node.js",
-      "process": "Proses",
-      "workingDirectory": "Direktori kerja"
-    },
-    "memory": {
-      "title": "Memori",
-      "description": "Memori sistem yang terlihat oleh runtime dan penggunaan proses aplikasi.",
-      "usedOf": "{{used}} digunakan dari {{total}}",
-      "free": "{{value}} tersedia",
-      "processRss": "RSS Proses",
-      "heapUsed": "Heap V8 digunakan",
-      "heapTotal": "Total heap V8",
-      "external": "Memori eksternal"
-    },
-    "storage": {
-      "title": "Penyimpanan",
-      "description": "Ruang yang tersedia untuk sistem berkas runtime dan data aplikasi persisten.",
-      "used": "{{value}} digunakan",
-      "free": "{{value}} tersedia",
-      "empty": "Informasi sistem berkas tidak tersedia di runtime ini."
-    },
-    "docker": {
-      "title": "Docker",
-      "description": "Status Docker Engine hanya-baca dan daftar kontainer yang dikurangi.",
-      "connected": "Terhubung",
-      "unavailable": "Tidak tersedia",
-      "unavailableDetail": "Diagnostik Docker Engine tidak tersedia.",
-      "socketStatus": "Soket lokal: {{status}}",
-      "mounted": "terpasang",
-      "notMounted": "tidak terpasang",
-      "running": "Berjalan",
-      "stopped": "Berhenti",
-      "paused": "Dijeda",
-      "total": "Total",
-      "version": "Versi",
-      "host": "Host",
-      "architecture": "Arsitektur",
-      "cpus": "CPU",
-      "memory": "Memori",
-      "container": "Container",
-      "image": "Image",
-      "state": "Status",
-      "created": "Dibuat",
-      "empty": "Docker terhubung dan tidak ada container yang terdaftar saat ini."
-    },
-    "network": {
-      "title": "Jaringan",
-      "description": "Antarmuka, alamat, dan penghitung lalu lintas Linux yang terlihat oleh runtime.",
-      "internal": "internal",
-      "empty": "Tidak ada antarmuka jaringan yang terlihat oleh runtime aplikasi."
-    },
-    "securityNote": "Halaman ini dibatasi untuk administrator. Server hanya mengembalikan ringkasan operasional: tidak mengekspos variabel lingkungan, kredensial, label Docker, mount, perintah container, atau payload inspect. Saat Libre WebUI berjalan di dalam container, detail CPU dan memori tingkat host berasal dari Docker Engine ketika soket lokalnya tersedia; nilai lainnya menjelaskan runtime aplikasi.",
-    "work": {
-      "title": "Work",
-      "description": "Sandbox semua pengguna",
-      "access": "Akses",
-      "accessAdmins": "Hanya administrator",
-      "accessAllUsers": "Semua pengguna",
-      "runtimeAvailable": "Tersedia",
-      "runtimeUnavailable": "Tidak tersedia",
-      "activeRuntimes": "Runtime aktif",
-      "pendingCleanups": "Pembersihan tertunda",
-      "orphans": "Kontainer yatim",
-      "owner": "Pemilik",
-      "task": "Tugas",
-      "state": "Status",
-      "preview": "Pratinjau",
-      "terminals": "Terminal",
-      "updated": "Diperbarui",
-      "stateRunning": "Berjalan",
-      "stateStopped": "Berhenti",
-      "stateStarting": "Memulai",
-      "stateUnknown": "Tidak diketahui",
-      "noTasks": "Belum ada tugas Work."
-    }
-  },
-  "mediaGeneration": {
-    "title": "Hasilkan media",
-    "description": "Buat video, suara, musik, atau ucapan dengan penyedia media yang diaktifkan.",
-    "image": "Gambar",
-    "video": "Video",
-    "audio": "Audio",
-    "sound": "Suara",
-    "speech": "Ucapan",
-    "model": "Model",
-    "voice": "Suara atau ID suara",
-    "cloneVoice": "Kloning suara referensi",
-    "cloneVoiceDescription": "Buat ucapan ini berdasarkan rekaman referensi, bukan suara prasetel.",
-    "referenceAudio": "Audio referensi",
-    "referenceTranscript": "Transkrip referensi yang persis",
-    "referenceTranscriptPlaceholder": "Masukkan persis apa yang diucapkan dalam rekaman referensi…",
-    "referenceAudioTooLarge": "Ukuran audio referensi harus {{max}} atau kurang.",
-    "cloneConsent": "Kloning suara hanya jika Anda memiliki izin dari penutur. Rekaman dikirim ke penyedia yang dipilih untuk pembuatan ini dan tidak disimpan oleh Libre WebUI.",
-    "saveVoiceProfile": "Simpan sebagai suara yang dapat digunakan kembali",
-    "saveVoiceProfileDescription": "Simpan rekaman referensi dan transkrip ini dengan aman. Libre WebUI mengirim keduanya ke penyedia yang dipilih untuk setiap batch Ucapan yang menggunakan suara ini.",
-    "voiceProfileName": "Nama suara tersimpan",
-    "voiceProfileNamePlaceholder": "Contoh: Suara saya",
-    "voiceStorageConsent": "Saya menyatakan telah mendapat izin penutur untuk mengkloning dan menyimpan suara ini. Referensi tetap tersimpan hingga saya menghapusnya.",
-    "successWithSavedVoice": "Media dibuat dan “{{name}}” kini tersedia di pengaturan Ucapan",
-    "resolution": "Resolusi",
-    "aspectRatio": "Rasio aspek",
-    "duration": "Durasi",
-    "providerDefault": "Bawaan penyedia",
-    "generateAudio": "Hasilkan audio dengan video jika didukung",
-    "prompt": "Prompt",
-    "text": "Teks untuk diucapkan",
-    "videoPlaceholder": "Deskripsikan adegan, gerakan, kamera, dan pencahayaan...",
-    "audioPlaceholder": "Masukkan teks yang ingin diucapkan oleh suara...",
-    "soundPlaceholder": "Deskripsikan suara, musik, suasana, atau respons lisan yang Anda inginkan...",
-    "generate": "Hasilkan",
-    "generating": "Menghasilkan… ini bisa memakan waktu beberapa menit",
-    "success": "Media dihasilkan dan disimpan ke Imagine",
-    "failed": "Gagal menghasilkan media",
-    "loadFailed": "Gagal memuat penyedia media",
-    "noModels": "Tidak ada model {{kind}} yang tersedia. Aktifkan penyedia yang kompatibel dan simpan kredensialnya terlebih dahulu."
-  },
-  "mediaGallery": {
-    "itemCount": "{{count}} item",
-    "empty": "Belum ada media yang dihasilkan",
-    "emptyHint": "Hasilkan gambar, video, atau klip suara dan akan muncul di sini.",
-    "filters": {
-      "all": "Semua",
-      "image": "Gambar",
-      "video": "Video",
-      "audio": "Audio"
-    }
+  "modelSelector": {
+    "searchInstalled": "Cari model yang terinstal...",
+    "searchOllama": "Cari di perpustakaan Ollama...",
+    "searchHuggingFace": "Cari di HuggingFace...",
+    "selectModel": "Pilih model",
+    "personas": "Persona",
+    "ollamaModels": "Model Ollama",
+    "pluginModels": "Model Plugin",
+    "actions": "Aksi",
+    "installed": "Terinstal",
+    "use": "Gunakan",
+    "pull": "Unduh",
+    "pullRestricted": "Instalasi model dibatasi hanya untuk administrator pada instance ini.",
+    "adminOnlyPull": "Hanya admin",
+    "legacyProvider": "penyedia tidak tercatat",
+    "providerNotRecorded": "Penyedia tidak tercatat",
+    "providerUnavailable": "penyedia tidak tersedia",
+    "reselectProvider": "pilih ulang penyedia untuk menyematkan model ini",
+    "unavailable": "tidak tersedia",
+    "unavailableSelections": "Pilihan tidak tersedia",
+    "agentModels": "Agen"
   },
   "whatsNew": {
     "title": "Yang baru",

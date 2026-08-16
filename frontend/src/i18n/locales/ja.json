@@ -421,12 +421,7 @@
       "notes": "ノート"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
-    "expandSidebar": "サイドバーを展開",
-    "pinned": {
-      "label": "ピン留め",
-      "pin": "サイドバーにピン留め",
-      "unpin": "サイドバーからピン留めを解除"
-    }
+    "expandSidebar": "サイドバーを展開"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "ショートカット",
       "about": "概要",
       "sessions": "セッション",
-      "apiKeys": "APIキー",
-      "connections": "接続"
+      "apiKeys": "APIキー"
     },
     "appearance": {
       "title": "外観",
@@ -928,41 +922,6 @@
       "saved": "圧縮の設定を保存しました",
       "saveFailed": "圧縮の設定を保存できませんでした"
     },
-    "connections": {
-      "title": "接続",
-      "description": "このサーバーが通信するモデルプロバイダー: ローカルの Ollama ランタイムと OpenAI 互換のエンドポイントです。",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "ローカルのモデルランタイム。",
-      "version": "バージョン {{version}}。",
-      "statusChecking": "確認中…",
-      "statusOnline": "オンライン",
-      "statusOffline": "オフライン",
-      "providersTitle": "OpenAI 互換の接続",
-      "providersDescription": "各接続は補完プロバイダーで、そのモデルはチャットのモデル選択に表示されます。API キーはサーバー側に保存されます。",
-      "noConnections": "接続はまだ設定されていません。",
-      "modelsCount": "{{total}} 個のモデル",
-      "pendingDiscovery": "モデルの検出待ち",
-      "apiKeyMissing": "API キーなし",
-      "deleteConfirm": "この接続を削除しますか？そのモデルを使っているチャットはアクセスできなくなります。",
-      "addTitle": "接続を追加",
-      "addDescription": "OpenAI 互換の chat completions エンドポイントをプロバイダーとして登録します。",
-      "nameLabel": "表示名",
-      "namePlaceholder": "自分のプロバイダー",
-      "idPreview": "接続 ID: {{id}}",
-      "endpointLabel": "エンドポイント URL",
-      "endpointDescription": "chat completions の完全な URL。例: https://api.example.com/v1/chat/completions",
-      "apiKeyLabel": "API キー",
-      "apiKeyOptionalHint": "(任意、後から追加できます)",
-      "nameRequired": "接続の表示名を入力してください。",
-      "endpointInvalid": "有効な http(s) のエンドポイント URL を入力してください。",
-      "alreadyExists": "この ID の接続はすでに存在します。",
-      "add": "接続を追加",
-      "adding": "追加中…",
-      "added": "接続を追加しました",
-      "addFailed": "接続を追加できませんでした",
-      "keySaveFailed": "接続は追加されましたが、API キーを保存できませんでした",
-      "activateFailed": "接続は追加されましたが、有効化できませんでした"
-    },
     "sessions": {
       "title": "セッション",
       "description": "このアカウントがサインインしているすべての場所です。セッションのサインアウトは即時に反映され、再度サインインするとアクセスが復元されます。",
@@ -1122,18 +1081,26 @@
       "catalog": "モデルカタログ"
     },
     "catalog": {
-      "models": "利用可能",
       "searchPlaceholder": "名前またはプロバイダーでモデルを検索...",
       "noModels": "利用できるモデルがまだありません。",
       "empty": "検索に一致するモデルはありません。",
       "providerOllama": "Ollama",
-      "default": "既定",
-      "makeDefault": "既定にする",
-      "defaultSet": "{{model}} が既定のモデルになりました。",
       "hidden": "非表示",
-      "hide": "ユーザーに非表示",
-      "show": "ユーザーに表示",
-      "visibilityFailed": "モデルの表示設定を更新できませんでした。"
+      "visibilityFailed": "モデルの表示設定を更新できませんでした。",
+      "filterAll": "すべてのモデル",
+      "filterLocal": "ローカル",
+      "filterProviders": "プロバイダー",
+      "filterHidden": "非表示",
+      "enableAll": "表示中を有効化",
+      "disableAll": "表示中を無効化",
+      "rename": "名前と画像を編集",
+      "setPicture": "画像を設定",
+      "clearPicture": "画像を削除",
+      "pictureInvalid": "画像ファイルを選んでください。",
+      "pictureTooLarge": "画像は 192 KB 未満にしてください。",
+      "saving": "保存中…",
+      "hide": "ユーザーに非表示にする",
+      "show": "ユーザーに表示する"
     },
     "pull": {
       "placeholder": "モデル名を入力（例: llama3.2:3b, deepseek-r1:14b）",

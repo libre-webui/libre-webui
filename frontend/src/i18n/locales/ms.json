@@ -421,12 +421,7 @@
       "notes": "Nota"
     },
     "toggleSize": "Togol saiz bar sisi",
-    "expandSidebar": "Kembangkan bar sisi",
-    "pinned": {
-      "label": "Disematkan",
-      "pin": "Sematkan pada bar sisi",
-      "unpin": "Nyahsemat daripada bar sisi"
-    }
+    "expandSidebar": "Kembangkan bar sisi"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "Pintasan",
       "about": "Perihal",
       "sessions": "Sesi",
-      "apiKeys": "Kunci API",
-      "connections": "Sambungan"
+      "apiKeys": "Kunci API"
     },
     "appearance": {
       "title": "Penampilan",
@@ -928,41 +922,6 @@
       "saved": "Tetapan pemadatan disimpan",
       "saveFailed": "Tetapan pemadatan tidak dapat disimpan"
     },
-    "connections": {
-      "title": "Sambungan",
-      "description": "Penyedia model yang dihubungi pelayan ini: masa jalan Ollama tempatan dan titik akhir serasi OpenAI.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Masa jalan model tempatan.",
-      "version": "Versi {{version}}.",
-      "statusChecking": "Menyemak…",
-      "statusOnline": "Dalam talian",
-      "statusOffline": "Luar talian",
-      "providersTitle": "Sambungan serasi OpenAI",
-      "providersDescription": "Setiap sambungan ialah penyedia penyiapan yang modelnya muncul dalam pemilih model sembang. Kunci API disimpan di pelayan.",
-      "noConnections": "Belum ada sambungan dikonfigurasikan.",
-      "modelsCount": "{{total}} model",
-      "pendingDiscovery": "Model menunggu penemuan",
-      "apiKeyMissing": "Tiada kunci API",
-      "deleteConfirm": "Padam sambungan ini? Sembang yang menggunakan modelnya akan hilang akses kepadanya.",
-      "addTitle": "Tambah sambungan",
-      "addDescription": "Daftarkan titik akhir chat completions serasi OpenAI sebagai penyedia.",
-      "nameLabel": "Nama paparan",
-      "namePlaceholder": "Penyedia saya",
-      "idPreview": "ID sambungan: {{id}}",
-      "endpointLabel": "URL titik akhir",
-      "endpointDescription": "URL chat completions penuh, contohnya https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "Kunci API",
-      "apiKeyOptionalHint": "(pilihan, boleh ditambah kemudian)",
-      "nameRequired": "Masukkan nama paparan untuk sambungan ini.",
-      "endpointInvalid": "Masukkan URL titik akhir http(s) yang sah.",
-      "alreadyExists": "Sambungan dengan ID ini sudah wujud.",
-      "add": "Tambah sambungan",
-      "adding": "Menambah…",
-      "added": "Sambungan ditambah",
-      "addFailed": "Sambungan tidak dapat ditambah",
-      "keySaveFailed": "Sambungan ditambah, tetapi kunci API tidak dapat disimpan",
-      "activateFailed": "Sambungan ditambah, tetapi ia tidak dapat diaktifkan"
-    },
     "sessions": {
       "title": "Sesi",
       "description": "Semua tempat akaun ini dilog masuk. Melog keluar sesi berkuat kuasa serta-merta; log masuk semula akan memulihkan akses.",
@@ -1122,18 +1081,26 @@
       "catalog": "Katalog Model"
     },
     "catalog": {
-      "models": "tersedia",
       "searchPlaceholder": "Cari model mengikut nama atau penyedia...",
       "noModels": "Belum ada model tersedia.",
       "empty": "Tiada model sepadan dengan carian anda.",
       "providerOllama": "Ollama",
-      "default": "Lalai",
-      "makeDefault": "Jadikan lalai",
-      "defaultSet": "{{model}} kini model lalai anda.",
       "hidden": "Tersembunyi",
+      "visibilityFailed": "Keterlihatan model tidak dapat dikemas kini.",
+      "filterAll": "Semua model",
+      "filterLocal": "Tempatan",
+      "filterProviders": "Penyedia",
+      "filterHidden": "Tersembunyi",
+      "enableAll": "Aktifkan yang dipaparkan",
+      "disableAll": "Nyahaktifkan yang dipaparkan",
+      "rename": "Sunting nama dan gambar",
+      "setPicture": "Tetapkan gambar",
+      "clearPicture": "Buang gambar",
+      "pictureInvalid": "Pilih fail imej.",
+      "pictureTooLarge": "Gambar mestilah bawah 192 KB.",
+      "saving": "Menyimpan…",
       "hide": "Sembunyikan daripada pengguna",
-      "show": "Tunjukkan kepada pengguna",
-      "visibilityFailed": "Keterlihatan model tidak dapat dikemas kini."
+      "show": "Tunjukkan kepada pengguna"
     },
     "pull": {
       "placeholder": "Masukkan nama model (cth., llama3.2:3b, deepseek-r1:14b)",

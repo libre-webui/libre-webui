@@ -421,12 +421,7 @@
       "notes": "Notities"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
-    "expandSidebar": "Zijbalk uitvouwen",
-    "pinned": {
-      "label": "Vastgezet",
-      "pin": "Vastzetten in zijbalk",
-      "unpin": "Losmaken uit zijbalk"
-    }
+    "expandSidebar": "Zijbalk uitvouwen"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "Sneltoetsen",
       "about": "Over",
       "sessions": "Sessies",
-      "apiKeys": "API-sleutels",
-      "connections": "Verbindingen"
+      "apiKeys": "API-sleutels"
     },
     "appearance": {
       "title": "Weergave",
@@ -928,41 +922,6 @@
       "saved": "Compactie-instellingen opgeslagen",
       "saveFailed": "De compactie-instellingen konden niet worden opgeslagen"
     },
-    "connections": {
-      "title": "Verbindingen",
-      "description": "De modelaanbieders waarmee deze server praat: de lokale Ollama-runtime en OpenAI-compatibele endpoints.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Lokale modelruntime.",
-      "version": "Versie {{version}}.",
-      "statusChecking": "Controleren…",
-      "statusOnline": "Online",
-      "statusOffline": "Offline",
-      "providersTitle": "OpenAI-compatibele verbindingen",
-      "providersDescription": "Elke verbinding is een completion-aanbieder waarvan de modellen in de modelkiezer van de chat verschijnen. API-sleutels worden op de server bewaard.",
-      "noConnections": "Nog geen verbindingen ingesteld.",
-      "modelsCount": "{{total}} modellen",
-      "pendingDiscovery": "Modellen worden nog ontdekt",
-      "apiKeyMissing": "Geen API-sleutel",
-      "deleteConfirm": "Deze verbinding verwijderen? Chats die haar modellen gebruiken verliezen daar de toegang toe.",
-      "addTitle": "Verbinding toevoegen",
-      "addDescription": "Een OpenAI-compatibel chat completions-endpoint als aanbieder registreren.",
-      "nameLabel": "Weergavenaam",
-      "namePlaceholder": "Mijn aanbieder",
-      "idPreview": "Verbindings-ID: {{id}}",
-      "endpointLabel": "Endpoint-URL",
-      "endpointDescription": "Volledige chat completions-URL, bijvoorbeeld https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "API-sleutel",
-      "apiKeyOptionalHint": "(optioneel, kan later worden toegevoegd)",
-      "nameRequired": "Voer een weergavenaam voor de verbinding in.",
-      "endpointInvalid": "Voer een geldige http(s)-endpoint-URL in.",
-      "alreadyExists": "Er bestaat al een verbinding met dit ID.",
-      "add": "Verbinding toevoegen",
-      "adding": "Toevoegen…",
-      "added": "Verbinding toegevoegd",
-      "addFailed": "De verbinding kon niet worden toegevoegd",
-      "keySaveFailed": "Verbinding toegevoegd, maar de API-sleutel kon niet worden opgeslagen",
-      "activateFailed": "Verbinding toegevoegd, maar ze kon niet worden geactiveerd"
-    },
     "sessions": {
       "title": "Sessies",
       "description": "Alle plekken waar dit account is ingelogd. Het uitloggen van een sessie werkt direct; opnieuw inloggen herstelt de toegang.",
@@ -1122,18 +1081,26 @@
       "catalog": "Modelcatalogus"
     },
     "catalog": {
-      "models": "beschikbaar",
       "searchPlaceholder": "Zoek modellen op naam of aanbieder...",
       "noModels": "Er zijn nog geen modellen beschikbaar.",
       "empty": "Geen modellen komen overeen met je zoekopdracht.",
       "providerOllama": "Ollama",
-      "default": "Standaard",
-      "makeDefault": "Als standaard instellen",
-      "defaultSet": "{{model}} is nu je standaardmodel.",
       "hidden": "Verborgen",
+      "visibilityFailed": "De zichtbaarheid van het model kon niet worden bijgewerkt.",
+      "filterAll": "Alle modellen",
+      "filterLocal": "Lokaal",
+      "filterProviders": "Aanbieders",
+      "filterHidden": "Verborgen",
+      "enableAll": "Getoonde inschakelen",
+      "disableAll": "Getoonde uitschakelen",
+      "rename": "Naam en afbeelding bewerken",
+      "setPicture": "Afbeelding instellen",
+      "clearPicture": "Afbeelding verwijderen",
+      "pictureInvalid": "Kies een afbeeldingsbestand.",
+      "pictureTooLarge": "Afbeeldingen moeten kleiner zijn dan 192 KB.",
+      "saving": "Opslaan…",
       "hide": "Verbergen voor gebruikers",
-      "show": "Tonen aan gebruikers",
-      "visibilityFailed": "De zichtbaarheid van het model kon niet worden bijgewerkt."
+      "show": "Tonen aan gebruikers"
     },
     "pull": {
       "placeholder": "Voer modelnaam in (bijv. llama3.2:3b, deepseek-r1:14b)",

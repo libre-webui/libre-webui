@@ -421,12 +421,7 @@
       "notes": "الملاحظات"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
-    "expandSidebar": "توسيع الشريط الجانبي",
-    "pinned": {
-      "label": "المثبّتة",
-      "pin": "تثبيت في الشريط الجانبي",
-      "unpin": "إلغاء التثبيت من الشريط الجانبي"
-    }
+    "expandSidebar": "توسيع الشريط الجانبي"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "الاختصارات",
       "about": "حول",
       "sessions": "الجلسات",
-      "apiKeys": "مفاتيح API",
-      "connections": "الاتصالات"
+      "apiKeys": "مفاتيح API"
     },
     "appearance": {
       "title": "المظهر",
@@ -928,41 +922,6 @@
       "saved": "تم حفظ إعدادات الضغط",
       "saveFailed": "تعذّر حفظ إعدادات الضغط"
     },
-    "connections": {
-      "title": "الاتصالات",
-      "description": "مزوّدو النماذج الذين يتواصل معهم هذا الخادم: بيئة تشغيل Ollama المحلية والنقاط الطرفية المتوافقة مع OpenAI.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "بيئة تشغيل النماذج المحلية.",
-      "version": "الإصدار {{version}}.",
-      "statusChecking": "جارٍ التحقق…",
-      "statusOnline": "متصل",
-      "statusOffline": "غير متصل",
-      "providersTitle": "الاتصالات المتوافقة مع OpenAI",
-      "providersDescription": "كل اتصال هو مزوّد إكمال تظهر نماذجه في محدّد النماذج داخل المحادثة. تُخزَّن مفاتيح API على الخادم.",
-      "noConnections": "لم يُضبط أي اتصال بعد.",
-      "modelsCount": "{{total}} نموذج",
-      "pendingDiscovery": "النماذج بانتظار الاكتشاف",
-      "apiKeyMissing": "لا يوجد مفتاح API",
-      "deleteConfirm": "حذف هذا الاتصال؟ ستفقد المحادثات التي تستخدم نماذجه إمكانية الوصول إليها.",
-      "addTitle": "إضافة اتصال",
-      "addDescription": "سجّل نقطة طرفية chat completions متوافقة مع OpenAI كمزوّد.",
-      "nameLabel": "الاسم المعروض",
-      "namePlaceholder": "مزوّدي",
-      "idPreview": "معرّف الاتصال: {{id}}",
-      "endpointLabel": "رابط النقطة الطرفية",
-      "endpointDescription": "رابط chat completions الكامل، مثل https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "مفتاح API",
-      "apiKeyOptionalHint": "(اختياري، يمكن إضافته لاحقًا)",
-      "nameRequired": "أدخل اسمًا معروضًا للاتصال.",
-      "endpointInvalid": "أدخل رابط نقطة طرفية http(s) صالحًا.",
-      "alreadyExists": "يوجد اتصال بهذا المعرّف بالفعل.",
-      "add": "إضافة اتصال",
-      "adding": "جارٍ الإضافة…",
-      "added": "تمت إضافة الاتصال",
-      "addFailed": "تعذّرت إضافة الاتصال",
-      "keySaveFailed": "تمت إضافة الاتصال، لكن تعذّر حفظ مفتاح API",
-      "activateFailed": "تمت إضافة الاتصال، لكن تعذّر تفعيله"
-    },
     "sessions": {
       "title": "الجلسات",
       "description": "جميع الأماكن التي سُجّل فيها الدخول إلى هذا الحساب. يسري تسجيل خروج الجلسة فورًا، ويعيد تسجيل الدخول مجددًا الوصول.",
@@ -1122,18 +1081,26 @@
       "catalog": "دليل النماذج"
     },
     "catalog": {
-      "models": "متاح",
       "searchPlaceholder": "ابحث عن النماذج بالاسم أو المزوّد...",
       "noModels": "لا توجد نماذج متاحة بعد.",
       "empty": "لا توجد نماذج تطابق بحثك.",
       "providerOllama": "Ollama",
-      "default": "الافتراضي",
-      "makeDefault": "تعيينه افتراضيًا",
-      "defaultSet": "أصبح {{model}} نموذجك الافتراضي.",
       "hidden": "مخفي",
+      "visibilityFailed": "تعذّر تحديث ظهور النموذج.",
+      "filterAll": "كل النماذج",
+      "filterLocal": "محلية",
+      "filterProviders": "المزوّدون",
+      "filterHidden": "المخفية",
+      "enableAll": "تفعيل المعروضة",
+      "disableAll": "تعطيل المعروضة",
+      "rename": "تحرير الاسم والصورة",
+      "setPicture": "تعيين صورة",
+      "clearPicture": "إزالة الصورة",
+      "pictureInvalid": "اختر ملف صورة.",
+      "pictureTooLarge": "يجب أن تكون الصور أقل من 192 كيلوبايت.",
+      "saving": "جارٍ الحفظ…",
       "hide": "إخفاؤه عن المستخدمين",
-      "show": "إظهاره للمستخدمين",
-      "visibilityFailed": "تعذّر تحديث ظهور النموذج."
+      "show": "إظهاره للمستخدمين"
     },
     "pull": {
       "placeholder": "أدخل اسم النموذج (مثل llama3.2:3b، deepseek-r1:14b)",

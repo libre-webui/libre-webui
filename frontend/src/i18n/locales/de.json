@@ -421,12 +421,7 @@
       "notes": "Notizen"
     },
     "toggleSize": "Seitenleistengröße umschalten",
-    "expandSidebar": "Seitenleiste erweitern",
-    "pinned": {
-      "label": "Angeheftet",
-      "pin": "An Seitenleiste anheften",
-      "unpin": "Von Seitenleiste lösen"
-    }
+    "expandSidebar": "Seitenleiste erweitern"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "Tastenkürzel",
       "about": "Über",
       "sessions": "Sitzungen",
-      "apiKeys": "API-Schlüssel",
-      "connections": "Verbindungen"
+      "apiKeys": "API-Schlüssel"
     },
     "appearance": {
       "title": "Darstellung",
@@ -928,41 +922,6 @@
       "saved": "Einstellungen zur Verdichtung gespeichert",
       "saveFailed": "Die Einstellungen zur Verdichtung konnten nicht gespeichert werden"
     },
-    "connections": {
-      "title": "Verbindungen",
-      "description": "Die Modellanbieter, mit denen dieser Server spricht: die lokale Ollama-Laufzeitumgebung und OpenAI-kompatible Endpunkte.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Lokale Modell-Laufzeitumgebung.",
-      "version": "Version {{version}}.",
-      "statusChecking": "Wird geprüft…",
-      "statusOnline": "Online",
-      "statusOffline": "Offline",
-      "providersTitle": "OpenAI-kompatible Verbindungen",
-      "providersDescription": "Jede Verbindung ist ein Completion-Anbieter, dessen Modelle in der Modellauswahl des Chats erscheinen. API-Schlüssel werden serverseitig gespeichert.",
-      "noConnections": "Noch keine Verbindungen eingerichtet.",
-      "modelsCount": "{{total}} Modelle",
-      "pendingDiscovery": "Modelle werden noch ermittelt",
-      "apiKeyMissing": "Kein API-Schlüssel",
-      "deleteConfirm": "Diese Verbindung löschen? Chats, die ihre Modelle nutzen, verlieren den Zugriff darauf.",
-      "addTitle": "Verbindung hinzufügen",
-      "addDescription": "Einen OpenAI-kompatiblen Chat-Completions-Endpunkt als Anbieter registrieren.",
-      "nameLabel": "Anzeigename",
-      "namePlaceholder": "Mein Anbieter",
-      "idPreview": "Verbindungs-ID: {{id}}",
-      "endpointLabel": "Endpunkt-URL",
-      "endpointDescription": "Vollständige Chat-Completions-URL, zum Beispiel https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "API-Schlüssel",
-      "apiKeyOptionalHint": "(optional, kann später ergänzt werden)",
-      "nameRequired": "Geben Sie einen Anzeigenamen für die Verbindung ein.",
-      "endpointInvalid": "Geben Sie eine gültige http(s)-Endpunkt-URL ein.",
-      "alreadyExists": "Eine Verbindung mit dieser ID existiert bereits.",
-      "add": "Verbindung hinzufügen",
-      "adding": "Wird hinzugefügt…",
-      "added": "Verbindung hinzugefügt",
-      "addFailed": "Die Verbindung konnte nicht hinzugefügt werden",
-      "keySaveFailed": "Verbindung hinzugefügt, aber der API-Schlüssel konnte nicht gespeichert werden",
-      "activateFailed": "Verbindung hinzugefügt, aber sie konnte nicht aktiviert werden"
-    },
     "sessions": {
       "title": "Sitzungen",
       "description": "Überall, wo dieses Konto angemeldet ist. Das Abmelden einer Sitzung wirkt sofort; eine erneute Anmeldung stellt den Zugriff wieder her.",
@@ -1122,18 +1081,26 @@
       "catalog": "Modellkatalog"
     },
     "catalog": {
-      "models": "verfügbar",
       "searchPlaceholder": "Modelle nach Name oder Anbieter suchen...",
       "noModels": "Es sind noch keine Modelle verfügbar.",
       "empty": "Keine Modelle passen zu Ihrer Suche.",
       "providerOllama": "Ollama",
-      "default": "Standard",
-      "makeDefault": "Als Standard festlegen",
-      "defaultSet": "{{model}} ist jetzt Ihr Standardmodell.",
       "hidden": "Ausgeblendet",
+      "visibilityFailed": "Die Sichtbarkeit des Modells konnte nicht geändert werden.",
+      "filterAll": "Alle Modelle",
+      "filterLocal": "Lokal",
+      "filterProviders": "Anbieter",
+      "filterHidden": "Ausgeblendet",
+      "enableAll": "Angezeigte aktivieren",
+      "disableAll": "Angezeigte deaktivieren",
+      "rename": "Name und Bild bearbeiten",
+      "setPicture": "Bild festlegen",
+      "clearPicture": "Bild entfernen",
+      "pictureInvalid": "Wählen Sie eine Bilddatei.",
+      "pictureTooLarge": "Bilder müssen kleiner als 192 KB sein.",
+      "saving": "Wird gespeichert…",
       "hide": "Vor Benutzern ausblenden",
-      "show": "Benutzern anzeigen",
-      "visibilityFailed": "Die Sichtbarkeit des Modells konnte nicht geändert werden."
+      "show": "Benutzern anzeigen"
     },
     "pull": {
       "placeholder": "Modellname eingeben (z.B. llama3.2:3b, deepseek-r1:14b)",

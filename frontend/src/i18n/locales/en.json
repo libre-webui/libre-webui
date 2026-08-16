@@ -421,12 +421,7 @@
       "notes": "Notes"
     },
     "toggleSize": "Toggle sidebar size",
-    "expandSidebar": "Expand sidebar",
-    "pinned": {
-      "label": "Pinned",
-      "pin": "Pin to sidebar",
-      "unpin": "Unpin from sidebar"
-    }
+    "expandSidebar": "Expand sidebar"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "Shortcuts",
       "about": "About",
       "sessions": "Sessions",
-      "apiKeys": "API keys",
-      "connections": "Connections"
+      "apiKeys": "API keys"
     },
     "appearance": {
       "title": "Appearance",
@@ -928,41 +922,6 @@
       "saved": "Compaction settings saved",
       "saveFailed": "Could not save the compaction settings"
     },
-    "connections": {
-      "title": "Connections",
-      "description": "The model providers this server talks to: the local Ollama runtime and OpenAI-compatible endpoints.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Local model runtime.",
-      "version": "Version {{version}}.",
-      "statusChecking": "Checking…",
-      "statusOnline": "Online",
-      "statusOffline": "Offline",
-      "providersTitle": "OpenAI-compatible connections",
-      "providersDescription": "Each connection is a completion provider whose models appear in the chat model picker. API keys are stored server-side.",
-      "noConnections": "No connections configured yet.",
-      "modelsCount": "{{total}} models",
-      "pendingDiscovery": "Models pending discovery",
-      "apiKeyMissing": "No API key",
-      "deleteConfirm": "Delete this connection? Chats using its models will lose access to them.",
-      "addTitle": "Add connection",
-      "addDescription": "Register an OpenAI-compatible chat completions endpoint as a provider.",
-      "nameLabel": "Display name",
-      "namePlaceholder": "My provider",
-      "idPreview": "Connection ID: {{id}}",
-      "endpointLabel": "Endpoint URL",
-      "endpointDescription": "Full chat completions URL, for example https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "API key",
-      "apiKeyOptionalHint": "(optional, can be added later)",
-      "nameRequired": "Enter a display name for the connection.",
-      "endpointInvalid": "Enter a valid http(s) endpoint URL.",
-      "alreadyExists": "A connection with this ID already exists.",
-      "add": "Add connection",
-      "adding": "Adding…",
-      "added": "Connection added",
-      "addFailed": "Could not add the connection",
-      "keySaveFailed": "Connection added, but the API key could not be saved",
-      "activateFailed": "Connection added, but it could not be activated"
-    },
     "sessions": {
       "title": "Sessions",
       "description": "Everywhere this account is signed in. Signing a session out takes effect immediately; signing in again restores access.",
@@ -1122,18 +1081,26 @@
       "catalog": "Model Catalog"
     },
     "catalog": {
-      "models": "available",
       "searchPlaceholder": "Search models by name or provider...",
       "noModels": "No models are available yet.",
       "empty": "No models match your search.",
       "providerOllama": "Ollama",
-      "default": "Default",
-      "makeDefault": "Make default",
-      "defaultSet": "{{model}} is now your default model.",
       "hidden": "Hidden",
+      "visibilityFailed": "Could not update model visibility.",
+      "filterAll": "All models",
+      "filterLocal": "Local",
+      "filterProviders": "Providers",
+      "filterHidden": "Hidden",
+      "enableAll": "Enable shown",
+      "disableAll": "Disable shown",
+      "rename": "Edit name and picture",
+      "setPicture": "Set picture",
+      "clearPicture": "Remove picture",
+      "pictureInvalid": "Choose an image file.",
+      "pictureTooLarge": "Pictures must be under 192 KB.",
+      "saving": "Saving…",
       "hide": "Hide from users",
-      "show": "Show to users",
-      "visibilityFailed": "Could not update model visibility."
+      "show": "Show to users"
     },
     "pull": {
       "placeholder": "Enter model name (e.g., llama3.2:3b, deepseek-r1:14b)",

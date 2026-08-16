@@ -421,12 +421,7 @@
       "notes": "笔记"
     },
     "toggleSize": "切换侧边栏大小",
-    "expandSidebar": "展开侧边栏",
-    "pinned": {
-      "label": "已固定",
-      "pin": "固定到侧边栏",
-      "unpin": "从侧边栏取消固定"
-    }
+    "expandSidebar": "展开侧边栏"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "快捷键",
       "about": "关于",
       "sessions": "登录会话",
-      "apiKeys": "API 密钥",
-      "connections": "连接"
+      "apiKeys": "API 密钥"
     },
     "appearance": {
       "title": "外观",
@@ -928,41 +922,6 @@
       "saved": "已保存压缩设置",
       "saveFailed": "无法保存压缩设置"
     },
-    "connections": {
-      "title": "连接",
-      "description": "本服务器所连接的模型提供方：本地 Ollama 运行时和 OpenAI 兼容端点。",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "本地模型运行时。",
-      "version": "版本 {{version}}。",
-      "statusChecking": "检查中…",
-      "statusOnline": "在线",
-      "statusOffline": "离线",
-      "providersTitle": "OpenAI 兼容连接",
-      "providersDescription": "每个连接都是一个补全提供方，其模型会出现在聊天的模型选择器中。API 密钥保存在服务器端。",
-      "noConnections": "尚未配置任何连接。",
-      "modelsCount": "{{total}} 个模型",
-      "pendingDiscovery": "模型待发现",
-      "apiKeyMissing": "无 API 密钥",
-      "deleteConfirm": "删除此连接？使用其模型的聊天将无法再访问这些模型。",
-      "addTitle": "添加连接",
-      "addDescription": "将 OpenAI 兼容的 chat completions 端点注册为提供方。",
-      "nameLabel": "显示名称",
-      "namePlaceholder": "我的提供方",
-      "idPreview": "连接 ID：{{id}}",
-      "endpointLabel": "端点 URL",
-      "endpointDescription": "完整的 chat completions URL，例如 https://api.example.com/v1/chat/completions。",
-      "apiKeyLabel": "API 密钥",
-      "apiKeyOptionalHint": "（可选，可稍后添加）",
-      "nameRequired": "请输入连接的显示名称。",
-      "endpointInvalid": "请输入有效的 http(s) 端点 URL。",
-      "alreadyExists": "已存在使用该 ID 的连接。",
-      "add": "添加连接",
-      "adding": "正在添加…",
-      "added": "已添加连接",
-      "addFailed": "无法添加该连接",
-      "keySaveFailed": "已添加连接，但无法保存 API 密钥",
-      "activateFailed": "已添加连接，但无法启用"
-    },
     "sessions": {
       "title": "登录会话",
       "description": "此账户已登录的所有位置。退出某个会话会立即生效；重新登录即可恢复访问。",
@@ -1122,18 +1081,26 @@
       "catalog": "模型目录"
     },
     "catalog": {
-      "models": "可用",
       "searchPlaceholder": "按名称或提供方搜索模型...",
       "noModels": "暂无可用模型。",
       "empty": "没有模型符合您的搜索。",
       "providerOllama": "Ollama",
-      "default": "默认",
-      "makeDefault": "设为默认",
-      "defaultSet": "{{model}} 现在是您的默认模型。",
       "hidden": "已隐藏",
+      "visibilityFailed": "无法更新模型的可见性。",
+      "filterAll": "全部模型",
+      "filterLocal": "本地",
+      "filterProviders": "提供方",
+      "filterHidden": "已隐藏",
+      "enableAll": "启用当前显示",
+      "disableAll": "停用当前显示",
+      "rename": "编辑名称和图片",
+      "setPicture": "设置图片",
+      "clearPicture": "移除图片",
+      "pictureInvalid": "请选择图片文件。",
+      "pictureTooLarge": "图片必须小于 192 KB。",
+      "saving": "正在保存…",
       "hide": "对用户隐藏",
-      "show": "对用户显示",
-      "visibilityFailed": "无法更新模型的可见性。"
+      "show": "对用户显示"
     },
     "pull": {
       "placeholder": "输入模型名称（例如：llama3.2:3b、deepseek-r1:14b）",

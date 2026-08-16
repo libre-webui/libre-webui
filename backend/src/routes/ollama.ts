@@ -36,7 +36,12 @@ import {
 } from '../services/modelAccessService.js';
 import {
   getHiddenModels,
+  getModelMetadata,
+  getModelOrder,
   setHiddenModels,
+  setModelMetadata,
+  setModelOrder,
+  type ModelMetadata,
 } from '../services/modelVisibilityService.js';
 import { userModel } from '../models/userModel.js';
 import {
@@ -181,7 +186,12 @@ router.put(
 router.get(
   '/models/visibility',
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    res.json({ success: true, data: { hidden: await getHiddenModels() } });
+    const [hidden, order, metadata] = await Promise.all([
+      getHiddenModels(),
+      getModelOrder(),
+      getModelMetadata(),
+    ]);
+    res.json({ success: true, data: { hidden, order, metadata } });
   }
 );
 
@@ -190,12 +200,27 @@ router.put(
   requireAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const hidden = await setHiddenModels(req.body?.hidden);
-      res.json({ success: true, data: { hidden } });
+      // Every field is optional: the catalog saves whichever parts changed.
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const hidden =
+        body.hidden !== undefined
+          ? await setHiddenModels(body.hidden as string[])
+          : await getHiddenModels();
+      const order =
+        body.order !== undefined
+          ? await setModelOrder(body.order as string[])
+          : await getModelOrder();
+      const metadata =
+        body.metadata !== undefined
+          ? await setModelMetadata(
+              body.metadata as Record<string, ModelMetadata>
+            )
+          : await getModelMetadata();
+      res.json({ success: true, data: { hidden, order, metadata } });
     } catch (error: unknown) {
       res.status(400).json({
         success: false,
-        error: getErrorMessage(error, 'Invalid hidden model list'),
+        error: getErrorMessage(error, 'Invalid model catalog settings'),
       });
     }
   }

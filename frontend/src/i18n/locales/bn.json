@@ -421,12 +421,7 @@
       "notes": "নোট"
     },
     "toggleSize": "সাইডবার সাইজ টগল করুন",
-    "expandSidebar": "সাইডবার প্রসারিত করুন",
-    "pinned": {
-      "label": "পিন করা",
-      "pin": "সাইডবারে পিন করুন",
-      "unpin": "সাইডবার থেকে পিন সরান"
-    }
+    "expandSidebar": "সাইডবার প্রসারিত করুন"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "শর্টকাট",
       "about": "সম্পর্কে",
       "sessions": "সেশন",
-      "apiKeys": "API কী",
-      "connections": "সংযোগ"
+      "apiKeys": "API কী"
     },
     "appearance": {
       "title": "চেহারা",
@@ -928,41 +922,6 @@
       "saved": "সংকোচনের সেটিংস সংরক্ষিত হয়েছে",
       "saveFailed": "সংকোচনের সেটিংস সংরক্ষণ করা যায়নি"
     },
-    "connections": {
-      "title": "সংযোগ",
-      "description": "এই সার্ভার যেসব মডেল সরবরাহকারীর সঙ্গে যোগাযোগ করে: স্থানীয় Ollama রানটাইম এবং OpenAI-সঙ্গতিপূর্ণ এন্ডপয়েন্ট।",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "স্থানীয় মডেল রানটাইম।",
-      "version": "সংস্করণ {{version}}।",
-      "statusChecking": "যাচাই করা হচ্ছে…",
-      "statusOnline": "অনলাইন",
-      "statusOffline": "অফলাইন",
-      "providersTitle": "OpenAI-সঙ্গতিপূর্ণ সংযোগ",
-      "providersDescription": "প্রতিটি সংযোগ একটি কমপ্লিশন সরবরাহকারী, যার মডেলগুলো চ্যাটের মডেল নির্বাচকে দেখা যায়। API কী সার্ভারে সংরক্ষিত হয়।",
-      "noConnections": "এখনো কোনো সংযোগ কনফিগার করা হয়নি।",
-      "modelsCount": "{{total}}টি মডেল",
-      "pendingDiscovery": "মডেল শনাক্তকরণ বাকি",
-      "apiKeyMissing": "কোনো API কী নেই",
-      "deleteConfirm": "এই সংযোগ মুছে ফেলবেন? এর মডেল ব্যবহারকারী চ্যাটগুলো সেগুলোতে প্রবেশাধিকার হারাবে।",
-      "addTitle": "সংযোগ যোগ করুন",
-      "addDescription": "একটি OpenAI-সঙ্গতিপূর্ণ chat completions এন্ডপয়েন্টকে সরবরাহকারী হিসেবে নিবন্ধন করুন।",
-      "nameLabel": "প্রদর্শিত নাম",
-      "namePlaceholder": "আমার সরবরাহকারী",
-      "idPreview": "সংযোগ ID: {{id}}",
-      "endpointLabel": "এন্ডপয়েন্ট URL",
-      "endpointDescription": "সম্পূর্ণ chat completions URL, যেমন https://api.example.com/v1/chat/completions।",
-      "apiKeyLabel": "API কী",
-      "apiKeyOptionalHint": "(ঐচ্ছিক, পরে যোগ করা যায়)",
-      "nameRequired": "সংযোগের জন্য একটি প্রদর্শিত নাম লিখুন।",
-      "endpointInvalid": "একটি বৈধ http(s) এন্ডপয়েন্ট URL লিখুন।",
-      "alreadyExists": "এই ID-এর একটি সংযোগ ইতিমধ্যে আছে।",
-      "add": "সংযোগ যোগ করুন",
-      "adding": "যোগ করা হচ্ছে…",
-      "added": "সংযোগ যোগ করা হয়েছে",
-      "addFailed": "সংযোগ যোগ করা যায়নি",
-      "keySaveFailed": "সংযোগ যোগ হয়েছে, কিন্তু API কী সংরক্ষণ করা যায়নি",
-      "activateFailed": "সংযোগ যোগ হয়েছে, কিন্তু এটি সক্রিয় করা যায়নি"
-    },
     "sessions": {
       "title": "সেশন",
       "description": "এই অ্যাকাউন্ট যেসব জায়গায় লগ ইন করা আছে। কোনো সেশন লগ আউট করলে তা সঙ্গে সঙ্গে কার্যকর হয়; আবার লগ ইন করলে অ্যাক্সেস ফিরে আসে।",
@@ -1122,18 +1081,26 @@
       "catalog": "মডেল তালিকা"
     },
     "catalog": {
-      "models": "উপলব্ধ",
       "searchPlaceholder": "নাম বা সরবরাহকারী দিয়ে মডেল খুঁজুন...",
       "noModels": "এখনো কোনো মডেল উপলব্ধ নেই।",
       "empty": "আপনার অনুসন্ধানের সঙ্গে কোনো মডেল মেলেনি।",
       "providerOllama": "Ollama",
-      "default": "ডিফল্ট",
-      "makeDefault": "ডিফল্ট করুন",
-      "defaultSet": "{{model}} এখন আপনার ডিফল্ট মডেল।",
       "hidden": "লুকানো",
+      "visibilityFailed": "মডেলের দৃশ্যমানতা হালনাগাদ করা যায়নি।",
+      "filterAll": "সব মডেল",
+      "filterLocal": "স্থানীয়",
+      "filterProviders": "সরবরাহকারী",
+      "filterHidden": "লুকানো",
+      "enableAll": "দেখানো গুলো চালু করুন",
+      "disableAll": "দেখানো গুলো বন্ধ করুন",
+      "rename": "নাম ও ছবি সম্পাদনা",
+      "setPicture": "ছবি নির্ধারণ",
+      "clearPicture": "ছবি সরান",
+      "pictureInvalid": "একটি ছবি ফাইল বাছুন।",
+      "pictureTooLarge": "ছবি ১৯২ KB-এর কম হতে হবে।",
+      "saving": "সংরক্ষণ হচ্ছে…",
       "hide": "ব্যবহারকারীদের থেকে লুকান",
-      "show": "ব্যবহারকারীদের দেখান",
-      "visibilityFailed": "মডেলের দৃশ্যমানতা হালনাগাদ করা যায়নি।"
+      "show": "ব্যবহারকারীদের দেখান"
     },
     "pull": {
       "placeholder": "মডেলের নাম লিখুন (যেমন llama3.2:3b, deepseek-r1:14b)",

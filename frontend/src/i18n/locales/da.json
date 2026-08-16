@@ -421,12 +421,7 @@
       "notes": "Noter"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
-    "expandSidebar": "Udvid sidebjælke",
-    "pinned": {
-      "label": "Fastgjorte",
-      "pin": "Fastgør til sidepanelet",
-      "unpin": "Frigør fra sidepanelet"
-    }
+    "expandSidebar": "Udvid sidebjælke"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "Genveje",
       "about": "Om",
       "sessions": "Sessioner",
-      "apiKeys": "API-nøgler",
-      "connections": "Forbindelser"
+      "apiKeys": "API-nøgler"
     },
     "appearance": {
       "title": "Udseende",
@@ -928,41 +922,6 @@
       "saved": "Indstillinger for komprimering gemt",
       "saveFailed": "Indstillingerne for komprimering kunne ikke gemmes"
     },
-    "connections": {
-      "title": "Forbindelser",
-      "description": "De modeludbydere, denne server taler med: den lokale Ollama-runtime og OpenAI-kompatible endepunkter.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Lokal modelruntime.",
-      "version": "Version {{version}}.",
-      "statusChecking": "Kontrollerer…",
-      "statusOnline": "Online",
-      "statusOffline": "Offline",
-      "providersTitle": "OpenAI-kompatible forbindelser",
-      "providersDescription": "Hver forbindelse er en completion-udbyder, hvis modeller vises i chattens modelvælger. API-nøgler gemmes på serveren.",
-      "noConnections": "Der er endnu ingen forbindelser.",
-      "modelsCount": "{{total}} modeller",
-      "pendingDiscovery": "Modeller afventer registrering",
-      "apiKeyMissing": "Ingen API-nøgle",
-      "deleteConfirm": "Slet denne forbindelse? Chats, der bruger dens modeller, mister adgangen til dem.",
-      "addTitle": "Tilføj forbindelse",
-      "addDescription": "Registrer et OpenAI-kompatibelt chat completions-endepunkt som udbyder.",
-      "nameLabel": "Vist navn",
-      "namePlaceholder": "Min udbyder",
-      "idPreview": "Forbindelses-id: {{id}}",
-      "endpointLabel": "Endepunkts-URL",
-      "endpointDescription": "Fuld chat completions-URL, for eksempel https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "API-nøgle",
-      "apiKeyOptionalHint": "(valgfri, kan tilføjes senere)",
-      "nameRequired": "Indtast et vist navn til forbindelsen.",
-      "endpointInvalid": "Indtast en gyldig http(s)-endepunkts-URL.",
-      "alreadyExists": "Der findes allerede en forbindelse med dette id.",
-      "add": "Tilføj forbindelse",
-      "adding": "Tilføjer…",
-      "added": "Forbindelse tilføjet",
-      "addFailed": "Forbindelsen kunne ikke tilføjes",
-      "keySaveFailed": "Forbindelsen blev tilføjet, men API-nøglen kunne ikke gemmes",
-      "activateFailed": "Forbindelsen blev tilføjet, men den kunne ikke aktiveres"
-    },
     "sessions": {
       "title": "Sessioner",
       "description": "Alle steder, hvor denne konto er logget ind. At logge en session ud træder i kraft med det samme; adgangen gendannes, når der logges ind igen.",
@@ -1122,18 +1081,26 @@
       "catalog": "Modelkatalog"
     },
     "catalog": {
-      "models": "tilgængelige",
       "searchPlaceholder": "Søg efter modeller på navn eller udbyder...",
       "noModels": "Der er endnu ingen tilgængelige modeller.",
       "empty": "Ingen modeller matcher din søgning.",
       "providerOllama": "Ollama",
-      "default": "Standard",
-      "makeDefault": "Gør til standard",
-      "defaultSet": "{{model}} er nu din standardmodel.",
       "hidden": "Skjult",
+      "visibilityFailed": "Modellens synlighed kunne ikke opdateres.",
+      "filterAll": "Alle modeller",
+      "filterLocal": "Lokale",
+      "filterProviders": "Udbydere",
+      "filterHidden": "Skjulte",
+      "enableAll": "Aktivér de viste",
+      "disableAll": "Deaktivér de viste",
+      "rename": "Rediger navn og billede",
+      "setPicture": "Vælg billede",
+      "clearPicture": "Fjern billede",
+      "pictureInvalid": "Vælg en billedfil.",
+      "pictureTooLarge": "Billeder skal fylde under 192 KB.",
+      "saving": "Gemmer…",
       "hide": "Skjul for brugere",
-      "show": "Vis for brugere",
-      "visibilityFailed": "Modellens synlighed kunne ikke opdateres."
+      "show": "Vis for brugere"
     },
     "pull": {
       "placeholder": "Indtast modelnavn (f.eks. llama3.2:3b, deepseek-r1:14b)",

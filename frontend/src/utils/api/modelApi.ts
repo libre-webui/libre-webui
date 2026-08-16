@@ -109,6 +109,19 @@ const notifyModelsChanged = (): void => {
   window.dispatchEvent(new Event(MODELS_CHANGED_EVENT));
 };
 
+/** Presentation an administrator set for a single model. */
+export interface ModelPresentation {
+  label?: string;
+  avatar?: string;
+}
+
+/** Administrator-managed model catalog: what is hidden, in what order, shown how. */
+export interface ModelCatalogConfig {
+  hidden: string[];
+  order: string[];
+  metadata: Record<string, ModelPresentation>;
+}
+
 export const ollamaApi = {
   // Health check
   checkHealth: (): Promise<ApiResponse<{ status: string }>> => {
@@ -148,22 +161,24 @@ export const ollamaApi = {
 
   // Which models administrators hid from the shared model pickers. Ollama
   // models are keyed by name, plugin models by `${pluginId}/${modelName}`.
-  getModelVisibility: (): Promise<ApiResponse<{ hidden: string[] }>> => {
+  getModelVisibility: (): Promise<ApiResponse<ModelCatalogConfig>> => {
     if (isDemoMode()) {
-      return createDemoResponse({ hidden: [] as string[] });
+      return createDemoResponse({ hidden: [], order: [], metadata: {} });
     }
     return api.get('/ollama/models/visibility').then(res => res.data);
   },
 
   setModelVisibility: (
-    hidden: string[]
-  ): Promise<ApiResponse<{ hidden: string[] }>> => {
+    update: Partial<ModelCatalogConfig>
+  ): Promise<ApiResponse<ModelCatalogConfig>> => {
     if (isDemoMode()) {
-      return createDemoResponse({ hidden });
+      return createDemoResponse({
+        hidden: update.hidden ?? [],
+        order: update.order ?? [],
+        metadata: update.metadata ?? {},
+      });
     }
-    return api
-      .put('/ollama/models/visibility', { hidden })
-      .then(res => res.data);
+    return api.put('/ollama/models/visibility', update).then(res => res.data);
   },
 
   pullModel: (modelName: string): Promise<ApiResponse> => {

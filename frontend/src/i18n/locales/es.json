@@ -421,12 +421,7 @@
       "notes": "Notas"
     },
     "toggleSize": "Cambiar tamaño de barra lateral",
-    "expandSidebar": "Expandir barra lateral",
-    "pinned": {
-      "label": "Fijados",
-      "pin": "Fijar en la barra lateral",
-      "unpin": "Quitar de la barra lateral"
-    }
+    "expandSidebar": "Expandir barra lateral"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "Atajos",
       "about": "Acerca de",
       "sessions": "Sesiones",
-      "apiKeys": "Claves API",
-      "connections": "Conexiones"
+      "apiKeys": "Claves API"
     },
     "appearance": {
       "title": "Apariencia",
@@ -928,41 +922,6 @@
       "saved": "Ajustes de compactación guardados",
       "saveFailed": "No se pudieron guardar los ajustes de compactación"
     },
-    "connections": {
-      "title": "Conexiones",
-      "description": "Los proveedores de modelos con los que habla este servidor: el entorno local de Ollama y los endpoints compatibles con OpenAI.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Entorno de ejecución de modelos local.",
-      "version": "Versión {{version}}.",
-      "statusChecking": "Comprobando…",
-      "statusOnline": "En línea",
-      "statusOffline": "Sin conexión",
-      "providersTitle": "Conexiones compatibles con OpenAI",
-      "providersDescription": "Cada conexión es un proveedor de completado cuyos modelos aparecen en el selector de modelos del chat. Las claves API se guardan en el servidor.",
-      "noConnections": "Todavía no hay conexiones configuradas.",
-      "modelsCount": "{{total}} modelos",
-      "pendingDiscovery": "Modelos pendientes de detectar",
-      "apiKeyMissing": "Sin clave API",
-      "deleteConfirm": "¿Eliminar esta conexión? Los chats que usen sus modelos perderán el acceso a ellos.",
-      "addTitle": "Añadir conexión",
-      "addDescription": "Registrar un endpoint de chat completions compatible con OpenAI como proveedor.",
-      "nameLabel": "Nombre visible",
-      "namePlaceholder": "Mi proveedor",
-      "idPreview": "ID de conexión: {{id}}",
-      "endpointLabel": "URL del endpoint",
-      "endpointDescription": "URL completa de chat completions, por ejemplo https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "Clave API",
-      "apiKeyOptionalHint": "(opcional, se puede añadir después)",
-      "nameRequired": "Escribe un nombre visible para la conexión.",
-      "endpointInvalid": "Escribe una URL de endpoint http(s) válida.",
-      "alreadyExists": "Ya existe una conexión con este ID.",
-      "add": "Añadir conexión",
-      "adding": "Añadiendo…",
-      "added": "Conexión añadida",
-      "addFailed": "No se pudo añadir la conexión",
-      "keySaveFailed": "Conexión añadida, pero no se pudo guardar la clave API",
-      "activateFailed": "Conexión añadida, pero no se pudo activar"
-    },
     "sessions": {
       "title": "Sesiones",
       "description": "Todos los lugares donde esta cuenta tiene la sesión iniciada. Cerrar una sesión surte efecto de inmediato; iniciar sesión de nuevo restaura el acceso.",
@@ -1122,18 +1081,26 @@
       "catalog": "Catálogo de modelos"
     },
     "catalog": {
-      "models": "disponibles",
       "searchPlaceholder": "Buscar modelos por nombre o proveedor...",
       "noModels": "Todavía no hay modelos disponibles.",
       "empty": "Ningún modelo coincide con tu búsqueda.",
       "providerOllama": "Ollama",
-      "default": "Predeterminado",
-      "makeDefault": "Hacer predeterminado",
-      "defaultSet": "{{model}} ya es tu modelo predeterminado.",
       "hidden": "Oculto",
+      "visibilityFailed": "No se pudo actualizar la visibilidad del modelo.",
+      "filterAll": "Todos los modelos",
+      "filterLocal": "Local",
+      "filterProviders": "Proveedores",
+      "filterHidden": "Ocultos",
+      "enableAll": "Activar los mostrados",
+      "disableAll": "Desactivar los mostrados",
+      "rename": "Editar nombre e imagen",
+      "setPicture": "Establecer imagen",
+      "clearPicture": "Quitar imagen",
+      "pictureInvalid": "Elige un archivo de imagen.",
+      "pictureTooLarge": "Las imágenes deben pesar menos de 192 KB.",
+      "saving": "Guardando…",
       "hide": "Ocultar a los usuarios",
-      "show": "Mostrar a los usuarios",
-      "visibilityFailed": "No se pudo actualizar la visibilidad del modelo."
+      "show": "Mostrar a los usuarios"
     },
     "pull": {
       "placeholder": "Ingresa nombre del modelo (ej. llama3.2:3b, deepseek-r1:14b)",

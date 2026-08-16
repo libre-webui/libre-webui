@@ -26,6 +26,8 @@ import {
   findChatModelForSelection,
   withUnavailableChatModel,
 } from '@/utils/chatModelSelection';
+import { SettingsModelCatalog } from '@/components/settings/SettingsModelCatalog';
+import { useAuthStore } from '@/store/authStore';
 
 interface SelectOption {
   value: string;
@@ -87,6 +89,9 @@ export function SettingsModelsTab({
   onVisionModelChange,
   onUpdateAllModels,
 }: SettingsModelsTabProps) {
+  const { user, systemInfo } = useAuthStore();
+  const isSettingsAdmin =
+    user?.role === 'admin' || systemInfo?.requiresAuth === false;
   const { t } = useTranslation();
   const selectedSelection = {
     model: selectedModel,
@@ -302,6 +307,12 @@ export function SettingsModelsTab({
           </div>
         </div>
       </div>
+
+      {isSettingsAdmin && (
+        <div className='rounded-lg border border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100 p-4'>
+          <SettingsModelCatalog />
+        </div>
+      )}
     </div>
   );
 }

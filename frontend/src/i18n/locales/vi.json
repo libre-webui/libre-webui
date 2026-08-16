@@ -59,11 +59,11 @@
       "loginSuccess": "Đăng nhập thành công!",
       "loginFailed": "Đăng nhập thất bại",
       "checkCredentials": "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.",
+      "approvalPending": "Tài khoản của bạn đang chờ quản trị viên phê duyệt.",
       "enterBoth": "Vui lòng nhập cả tên người dùng và mật khẩu",
       "githubSuccess": "Đăng nhập GitHub thành công!",
       "githubFailed": "Xác thực GitHub thất bại",
       "githubVerifyFailed": "Không thể xác minh xác thực GitHub",
-      "approvalPending": "Tài khoản của bạn đang chờ quản trị viên phê duyệt.",
       "verificationFailed": "Xác minh bảo mật thất bại. Hãy tải lại trang và thử lại."
     },
     "signup": {
@@ -82,15 +82,15 @@
       "hasAccount": "Đã có tài khoản?",
       "signInHere": "Đăng nhập tại đây",
       "signupSuccess": "Tạo tài khoản thành công!",
+      "approvalPending": "Đã nhận đăng ký. Quản trị viên phải phê duyệt tài khoản của bạn.",
+      "awaitingApproval": "Đang chờ phê duyệt",
+      "awaitingApprovalDescription": "Tài khoản của bạn đã được tạo, nhưng quản trị viên phải kích hoạt nó trước khi bạn có thể đăng nhập.",
+      "backToSignIn": "Quay lại đăng nhập",
       "signupFailed": "Đăng ký thất bại",
       "tryAgain": "Đăng ký thất bại. Vui lòng thử lại.",
       "usernameRequired": "Tên người dùng và mật khẩu là bắt buộc",
       "passwordMismatch": "Mật khẩu không khớp",
-      "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự",
-      "approvalPending": "Đã nhận đăng ký. Quản trị viên phải phê duyệt tài khoản của bạn.",
-      "awaitingApproval": "Đang chờ phê duyệt",
-      "awaitingApprovalDescription": "Tài khoản của bạn đã được tạo, nhưng quản trị viên phải kích hoạt nó trước khi bạn có thể đăng nhập.",
-      "backToSignIn": "Quay lại đăng nhập"
+      "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự"
     },
     "logout": {
       "button": "Đăng xuất",
@@ -166,9 +166,9 @@
       "createAdmin": "Tạo quản trị viên",
       "success": "Tạo tài khoản quản trị thành công!",
       "failed": "Không thể tạo tài khoản quản trị",
+      "approvalUnexpected": "Không thể kích hoạt quản trị viên ban đầu. Vui lòng thử lại.",
       "fillAllFields": "Vui lòng điền tất cả các trường",
-      "note": "Đây sẽ là tài khoản quản trị chính cho phiên bản Libre WebUI của bạn",
-      "approvalUnexpected": "Không thể kích hoạt quản trị viên ban đầu. Vui lòng thử lại."
+      "note": "Đây sẽ là tài khoản quản trị chính cho phiên bản Libre WebUI của bạn"
     },
     "encryptionKey": {
       "title": "Lưu khóa mã hóa của bạn",
@@ -277,6 +277,7 @@
       "work": "Công việc",
       "chat": "Trò chuyện",
       "private": "Riêng tư",
+      "incognito": "Trò chuyện ẩn danh",
       "privateMode": "Chế độ riêng tư",
       "privateDescription": "Cuộc trò chuyện này sẽ không được lưu",
       "privateTooltip": "Bắt đầu cuộc trò chuyện riêng tư sẽ không được lưu",
@@ -290,7 +291,6 @@
       "pinChat": "Ghim",
       "unpinChat": "Bỏ ghim",
       "deleteChat": "Xóa cuộc trò chuyện",
-      "incognito": "Trò chuyện ẩn danh",
       "archiveChat": "Lưu trữ cuộc trò chuyện",
       "groups": {
         "pinned": "Đã ghim",
@@ -410,32 +410,27 @@
       "models": "Mô hình",
       "personas": "Personas",
       "imagine": "Tưởng tượng",
-      "settings": "Cài đặt",
-      "userManagement": "Quản lý người dùng",
-      "signOut": "Đăng xuất",
       "agents": "Tác nhân",
       "work": "Công việc",
-      "exploreLabel": "Khám phá",
+      "settings": "Cài đặt",
       "usageAnalytics": "Mức sử dụng nhà cung cấp",
       "system": "Hệ thống",
+      "userManagement": "Quản lý người dùng",
+      "signOut": "Đăng xuất",
+      "exploreLabel": "Khám phá",
       "notes": "Ghi chú"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
-    "expandSidebar": "Mở rộng thanh bên",
-    "pinned": {
-      "label": "Đã ghim",
-      "pin": "Ghim vào thanh bên",
-      "unpin": "Bỏ ghim khỏi thanh bên"
-    }
+    "expandSidebar": "Mở rộng thanh bên"
   },
   "user": {
     "menu": {
       "changePicture": "Đổi ảnh đại diện",
       "settings": "Cài đặt",
-      "userManagement": "Quản lý người dùng",
-      "logout": "Đăng xuất",
       "usageAnalytics": "Mức sử dụng nhà cung cấp",
-      "system": "Hệ thống"
+      "system": "Hệ thống",
+      "userManagement": "Quản lý người dùng",
+      "logout": "Đăng xuất"
     },
     "avatar": {
       "title": "Đổi ảnh hồ sơ",
@@ -478,8 +473,7 @@
       "shortcuts": "Phím tắt",
       "about": "Giới thiệu",
       "sessions": "Phiên đăng nhập",
-      "apiKeys": "Khóa API",
-      "connections": "Kết nối"
+      "apiKeys": "Khóa API"
     },
     "appearance": {
       "title": "Giao diện",
@@ -531,6 +525,13 @@
       "defaultModel": "Mô hình mặc định",
       "defaultModelDescription": "Mô hình này sẽ được sử dụng mặc định cho các cuộc trò chuyện mới",
       "selectModel": "Chọn mô hình",
+      "specializedModels": "Mô hình chuyên biệt",
+      "visionModel": "Mô hình thị giác",
+      "selectVisionModel": "Sử dụng mô hình trò chuyện hiện tại",
+      "visionModelDescription": "Được sử dụng tự động bất cứ khi nào ngữ cảnh trò chuyện gửi đi có chứa hình ảnh. Chọn một mô hình hỗ trợ đầu vào hình ảnh.",
+      "visionModelUpdateFailed": "Không thể cập nhật mô hình thị giác: {{error}}",
+      "visionModelNoProvider": "Mô hình thị giác này không có thông tin nhà cung cấp. Hãy chọn một mô hình khả dụng.",
+      "persona": "Persona",
       "updateAll": "Cập nhật tất cả mô hình",
       "updateAllDescription": "Kiểm tra cập nhật và tải phiên bản mới nhất của tất cả mô hình đã cài đặt",
       "updateAllButton": "Cập nhật tất cả",
@@ -553,15 +554,8 @@
         "selectTaskModel": "Chọn mô hình tác vụ",
         "taskModelDescription": "Mô hình được sử dụng để tạo tiêu đề cuộc trò chuyện"
       },
-      "persona": "Persona",
       "updatingModel": "Đang cập nhật {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} trong {{total}} mô hình",
-      "specializedModels": "Mô hình chuyên biệt",
-      "visionModel": "Mô hình thị giác",
-      "selectVisionModel": "Sử dụng mô hình trò chuyện hiện tại",
-      "visionModelDescription": "Được sử dụng tự động bất cứ khi nào ngữ cảnh trò chuyện gửi đi có chứa hình ảnh. Chọn một mô hình hỗ trợ đầu vào hình ảnh.",
-      "visionModelUpdateFailed": "Không thể cập nhật mô hình thị giác: {{error}}",
-      "visionModelNoProvider": "Mô hình thị giác này không có thông tin nhà cung cấp. Hãy chọn một mô hình khả dụng."
+      "modelsProgress": "{{current}} trong {{total}} mô hình"
     },
     "systemMessage": {
       "title": "Tin nhắn hệ thống",
@@ -573,6 +567,13 @@
     "plugins": {
       "title": "Plugin",
       "description": "Quản lý các plugin đã cài đặt của bạn",
+      "providerConnections": "Kết nối nhà cung cấp",
+      "providerConnectionsDescription": "Kết nối, cấu hình và kiểm tra các nhà cung cấp mô hình thông qua plugin.",
+      "providers": "Nhà cung cấp",
+      "searchProviders": "Tìm kiếm nhà cung cấp",
+      "noProvidersFound": "Không có nhà cung cấp nào khớp với tìm kiếm của bạn.",
+      "selectProvider": "Chọn một nhà cung cấp",
+      "selectProviderDescription": "Chọn một nhà cung cấp để kiểm tra kết nối và danh mục mô hình của nó.",
       "addNew": "Thêm plugin mới",
       "upload": "Tải lên plugin",
       "addJson": "Thêm JSON",
@@ -591,33 +592,12 @@
       "models": "mô hình",
       "apiKeySet": "Đã đặt khóa API",
       "apiKeyConfiguration": "Cấu hình khóa API",
+      "apiKeyDescription": "Lưu trữ khóa API cá nhân cho {{name}}.",
       "apiKeyEnvAlternative": "Hoặc, đặt biến",
       "environmentVariable": "biến môi trường",
       "apiKeyConfigured": "Đã cấu hình khóa API",
       "apiKeyPlaceholder": "Nhập khóa API của bạn...",
       "saveApiKey": "Lưu khóa API",
-      "apiKey": {
-        "title": "Khóa API",
-        "placeholder": "Nhập khóa API",
-        "save": "Lưu khóa",
-        "remove": "Xóa khóa",
-        "configured": "Đã cấu hình khóa API",
-        "notConfigured": "Cần khóa API",
-        "saved": "Đã lưu khóa API thành công",
-        "removed": "Đã xóa khóa API",
-        "saveFailed": "Không thể lưu khóa API",
-        "removeFailed": "Không thể xóa khóa API",
-        "enterKey": "Vui lòng nhập khóa API"
-      },
-      "variables": "Variables",
-      "providerConnections": "Kết nối nhà cung cấp",
-      "providerConnectionsDescription": "Kết nối, cấu hình và kiểm tra các nhà cung cấp mô hình thông qua plugin.",
-      "providers": "Nhà cung cấp",
-      "searchProviders": "Tìm kiếm nhà cung cấp",
-      "noProvidersFound": "Không có nhà cung cấp nào khớp với tìm kiếm của bạn.",
-      "selectProvider": "Chọn một nhà cung cấp",
-      "selectProviderDescription": "Chọn một nhà cung cấp để kiểm tra kết nối và danh mục mô hình của nó.",
-      "apiKeyDescription": "Lưu trữ khóa API cá nhân cho {{name}}.",
       "showApiKey": "Hiển thị khóa API",
       "hideApiKey": "Ẩn khóa API",
       "configure": "Cấu hình",
@@ -643,7 +623,21 @@
         "transcription": "Chuyển ngữ"
       },
       "exportPlugin": "Xuất plugin",
-      "deletePlugin": "Xóa plugin"
+      "deletePlugin": "Xóa plugin",
+      "apiKey": {
+        "title": "Khóa API",
+        "placeholder": "Nhập khóa API",
+        "save": "Lưu khóa",
+        "remove": "Xóa khóa",
+        "configured": "Đã cấu hình khóa API",
+        "notConfigured": "Cần khóa API",
+        "saved": "Đã lưu khóa API thành công",
+        "removed": "Đã xóa khóa API",
+        "saveFailed": "Không thể lưu khóa API",
+        "removeFailed": "Không thể xóa khóa API",
+        "enterKey": "Vui lòng nhập khóa API"
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Tùy chọn tạo nội dung",
@@ -653,6 +647,8 @@
       "scopeModel": "Chỉ {{model}}",
       "scopeAllHint": "Các giá trị mọi mô hình dùng, trừ khi mô hình đó có giá trị riêng.",
       "scopeModelHint": "Chỉ lưu cho mô hình này và được ưu tiên hơn giá trị chung.",
+      "advancedSettings": "Cài đặt tạo nâng cao",
+      "advancedSettingsDescription": "Lấy mẫu, giới hạn token, ngữ cảnh, hình phạt và chuỗi dừng",
       "coreParameters": "Tham số cốt lõi",
       "temperature": "Nhiệt độ",
       "temperatureDescription": "Kiểm soát tính ngẫu nhiên. Giá trị thấp hơn tập trung hơn, giá trị cao hơn sáng tạo hơn.",
@@ -684,9 +680,7 @@
       "resetDefaults": "Đặt lại mặc định",
       "saveOptions": "Lưu tùy chọn",
       "embeddingSettings": "Cài đặt nhúng",
-      "enableEmbeddings": "Bật nhúng tài liệu",
-      "advancedSettings": "Cài đặt tạo nâng cao",
-      "advancedSettingsDescription": "Lấy mẫu, giới hạn token, ngữ cảnh, hình phạt và chuỗi dừng"
+      "enableEmbeddings": "Bật nhúng tài liệu"
     },
     "documents": {
       "title": "Cài đặt tài liệu",
@@ -796,6 +790,7 @@
       "title": "Quản lý dữ liệu",
       "export": "Xuất dữ liệu",
       "exportDescription": "Tải xuống một tệp lưu trữ di động gồm tùy chọn, thư mục trò chuyện, phiên và tin nhắn, ghi chú, bộ sưu tập kiến thức và văn bản trích xuất từ tài liệu.",
+      "archiveScopeV3": "Bao gồm tùy chọn, cuộc trò chuyện, thư mục, ghi chú, bộ sưu tập kiến thức và văn bản trích xuất từ tài liệu. Không bao gồm tài khoản và bí mật, giọng nói nhân bản sinh trắc học, nội dung đa phương tiện đã tạo, persona và bộ nhớ, cũng như dữ liệu hoặc ổ đĩa Work.",
       "exportAll": "Xuất tất cả dữ liệu",
       "import": "Nhập dữ liệu",
       "importDescription": "Nhập dữ liệu từ bản xuất trước đó.",
@@ -836,8 +831,7 @@
         "title": "Cuộc trò chuyện đã lưu trữ",
         "empty": "Không có cuộc trò chuyện nào được lưu trữ",
         "unarchive": "Bỏ lưu trữ"
-      },
-      "archiveScopeV3": "Bao gồm tùy chọn, cuộc trò chuyện, thư mục, ghi chú, bộ sưu tập kiến thức và văn bản trích xuất từ tài liệu. Không bao gồm tài khoản và bí mật, giọng nói nhân bản sinh trắc học, nội dung đa phương tiện đã tạo, persona và bộ nhớ, cũng như dữ liệu hoặc ổ đĩa Work."
+      }
     },
     "about": {
       "title": "Giới thiệu",
@@ -927,41 +921,6 @@
       "promptDescription": "Các biến mẫu {{previousSummaryVariable}} và {{messagesVariable}} được thay bằng bản tóm tắt trước đó và các tin nhắn đang được tóm tắt.",
       "saved": "Đã lưu cài đặt nén",
       "saveFailed": "Không thể lưu cài đặt nén"
-    },
-    "connections": {
-      "title": "Kết nối",
-      "description": "Các nhà cung cấp mô hình mà máy chủ này liên lạc: môi trường chạy Ollama cục bộ và các điểm cuối tương thích OpenAI.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Môi trường chạy mô hình cục bộ.",
-      "version": "Phiên bản {{version}}.",
-      "statusChecking": "Đang kiểm tra…",
-      "statusOnline": "Trực tuyến",
-      "statusOffline": "Ngoại tuyến",
-      "providersTitle": "Kết nối tương thích OpenAI",
-      "providersDescription": "Mỗi kết nối là một nhà cung cấp hoàn thành có mô hình xuất hiện trong bộ chọn mô hình của chat. Khóa API được lưu phía máy chủ.",
-      "noConnections": "Chưa có kết nối nào được cấu hình.",
-      "modelsCount": "{{total}} mô hình",
-      "pendingDiscovery": "Mô hình đang chờ khám phá",
-      "apiKeyMissing": "Không có khóa API",
-      "deleteConfirm": "Xóa kết nối này? Các cuộc trò chuyện dùng mô hình của nó sẽ mất quyền truy cập.",
-      "addTitle": "Thêm kết nối",
-      "addDescription": "Đăng ký một điểm cuối chat completions tương thích OpenAI làm nhà cung cấp.",
-      "nameLabel": "Tên hiển thị",
-      "namePlaceholder": "Nhà cung cấp của tôi",
-      "idPreview": "ID kết nối: {{id}}",
-      "endpointLabel": "URL điểm cuối",
-      "endpointDescription": "URL chat completions đầy đủ, ví dụ https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "Khóa API",
-      "apiKeyOptionalHint": "(tùy chọn, có thể thêm sau)",
-      "nameRequired": "Nhập tên hiển thị cho kết nối.",
-      "endpointInvalid": "Nhập URL điểm cuối http(s) hợp lệ.",
-      "alreadyExists": "Đã tồn tại kết nối với ID này.",
-      "add": "Thêm kết nối",
-      "adding": "Đang thêm…",
-      "added": "Đã thêm kết nối",
-      "addFailed": "Không thể thêm kết nối",
-      "keySaveFailed": "Đã thêm kết nối, nhưng không thể lưu khóa API",
-      "activateFailed": "Đã thêm kết nối, nhưng không thể kích hoạt"
     },
     "sessions": {
       "title": "Phiên đăng nhập",
@@ -1115,25 +1074,33 @@
     "sections": {
       "pull": "Tải mô hình mới",
       "library": "Duyệt thư viện",
+      "huggingface": "HuggingFace Hub",
       "running": "Mô hình đang chạy",
       "local": "Mô hình cục bộ",
       "advanced": "Hành động nâng cao",
-      "huggingface": "HuggingFace Hub",
       "catalog": "Danh mục mô hình"
     },
     "catalog": {
-      "models": "khả dụng",
       "searchPlaceholder": "Tìm mô hình theo tên hoặc nhà cung cấp...",
       "noModels": "Chưa có mô hình nào khả dụng.",
       "empty": "Không có mô hình nào khớp với tìm kiếm của bạn.",
       "providerOllama": "Ollama",
-      "default": "Mặc định",
-      "makeDefault": "Đặt làm mặc định",
-      "defaultSet": "{{model}} giờ là mô hình mặc định của bạn.",
       "hidden": "Đã ẩn",
+      "visibilityFailed": "Không thể cập nhật hiển thị của mô hình.",
+      "filterAll": "Tất cả mô hình",
+      "filterLocal": "Cục bộ",
+      "filterProviders": "Nhà cung cấp",
+      "filterHidden": "Đã ẩn",
+      "enableAll": "Bật các mục đang hiện",
+      "disableAll": "Tắt các mục đang hiện",
+      "rename": "Sửa tên và ảnh",
+      "setPicture": "Đặt ảnh",
+      "clearPicture": "Xóa ảnh",
+      "pictureInvalid": "Hãy chọn một tệp ảnh.",
+      "pictureTooLarge": "Ảnh phải nhỏ hơn 192 KB.",
+      "saving": "Đang lưu…",
       "hide": "Ẩn với người dùng",
-      "show": "Hiện với người dùng",
-      "visibilityFailed": "Không thể cập nhật hiển thị của mô hình."
+      "show": "Hiện với người dùng"
     },
     "pull": {
       "placeholder": "Nhập tên mô hình (vd: llama3.2:3b, deepseek-r1:14b)",
@@ -1163,6 +1130,37 @@
       "installed": "Đã cài đặt",
       "more": "+{{count}} thêm",
       "refresh": "Làm mới thư viện"
+    },
+    "huggingface": {
+      "browseAll": "Xem tất cả trên HuggingFace",
+      "checkingGguf": "Đang tìm tệp GGUF...",
+      "noGgufAvailable": "Không có tệp GGUF để tải trực tiếp vào Ollama",
+      "ggufFilesCount": "Tệp GGUF ({{count}}) - Tải trực tiếp vào Ollama",
+      "noModelsFound": "Không tìm thấy mô hình",
+      "noResults": "Không tìm thấy mô hình. Thử điều chỉnh tìm kiếm hoặc bộ lọc.",
+      "browseAllLink": "Xem tất cả",
+      "search": "Tìm kiếm mô hình HuggingFace...",
+      "by": "bởi",
+      "gated": "Truy cập hạn chế",
+      "viewOnHF": "Xem trên HuggingFace",
+      "sortDownloads": "Lượt tải",
+      "sortLikes": "Lượt thích",
+      "sortRecent": "Gần đây",
+      "taskTextGeneration": "Tạo văn bản",
+      "taskTextToSpeech": "Văn bản thành giọng nói",
+      "taskTextToImage": "Văn bản thành hình ảnh",
+      "taskSpeechRecognition": "Nhận dạng giọng nói",
+      "tasks": {
+        "textGen": "Tạo văn bản",
+        "tts": "Văn bản thành giọng nói",
+        "image": "Văn bản thành hình ảnh",
+        "stt": "Nhận dạng giọng nói"
+      },
+      "sort": {
+        "downloads": "Tải nhiều nhất",
+        "likes": "Được thích nhiều nhất",
+        "recent": "Cập nhật gần đây"
+      }
     },
     "local": {
       "noModels": "Chưa có mô hình nào được cài đặt",
@@ -1241,37 +1239,6 @@
         "success": "Đã tạo vector nhúng {{count}} chiều",
         "failed": "Không thể tạo nhúng",
         "enterBoth": "Vui lòng chọn mô hình và nhập văn bản"
-      }
-    },
-    "huggingface": {
-      "browseAll": "Xem tất cả trên HuggingFace",
-      "checkingGguf": "Đang tìm tệp GGUF...",
-      "noGgufAvailable": "Không có tệp GGUF để tải trực tiếp vào Ollama",
-      "ggufFilesCount": "Tệp GGUF ({{count}}) - Tải trực tiếp vào Ollama",
-      "noModelsFound": "Không tìm thấy mô hình",
-      "noResults": "Không tìm thấy mô hình. Thử điều chỉnh tìm kiếm hoặc bộ lọc.",
-      "browseAllLink": "Xem tất cả",
-      "search": "Tìm kiếm mô hình HuggingFace...",
-      "by": "bởi",
-      "gated": "Truy cập hạn chế",
-      "viewOnHF": "Xem trên HuggingFace",
-      "sortDownloads": "Lượt tải",
-      "sortLikes": "Lượt thích",
-      "sortRecent": "Gần đây",
-      "taskTextGeneration": "Tạo văn bản",
-      "taskTextToSpeech": "Văn bản thành giọng nói",
-      "taskTextToImage": "Văn bản thành hình ảnh",
-      "taskSpeechRecognition": "Nhận dạng giọng nói",
-      "tasks": {
-        "textGen": "Tạo văn bản",
-        "tts": "Văn bản thành giọng nói",
-        "image": "Văn bản thành hình ảnh",
-        "stt": "Nhận dạng giọng nói"
-      },
-      "sort": {
-        "downloads": "Tải nhiều nhất",
-        "likes": "Được thích nhiều nhất",
-        "recent": "Cập nhật gần đây"
       }
     }
   },
@@ -1445,6 +1412,17 @@
     "deleteSuccess": "Đã xóa người dùng thành công",
     "deleteFailed": "Không thể xóa người dùng",
     "cannotDeleteSelf": "Bạn không thể xóa tài khoản của chính mình",
+    "approval": {
+      "title": "Phê duyệt đang chờ xử lý",
+      "description": "Xem xét các đăng ký mới trước khi cho phép họ vào phiên bản này.",
+      "registered": "Đã đăng ký",
+      "activate": "Kích hoạt tài khoản",
+      "reject": "Từ chối đăng ký",
+      "approved": "{{name}} hiện có thể đăng nhập.",
+      "failed": "Không thể phê duyệt tài khoản.",
+      "notification": "{{count}} đăng ký đang chờ bạn phê duyệt.",
+      "notificationBadge": "{{count}} phê duyệt người dùng đang chờ xử lý"
+    },
     "form": {
       "title": {
         "create": "Tạo người dùng",
@@ -1466,17 +1444,6 @@
       "updateSuccess": "Đã cập nhật người dùng thành công",
       "createFailed": "Không thể tạo người dùng",
       "updateFailed": "Không thể cập nhật người dùng"
-    },
-    "approval": {
-      "title": "Phê duyệt đang chờ xử lý",
-      "description": "Xem xét các đăng ký mới trước khi cho phép họ vào phiên bản này.",
-      "registered": "Đã đăng ký",
-      "activate": "Kích hoạt tài khoản",
-      "reject": "Từ chối đăng ký",
-      "approved": "{{name}} hiện có thể đăng nhập.",
-      "failed": "Không thể phê duyệt tài khoản.",
-      "notification": "{{count}} đăng ký đang chờ bạn phê duyệt.",
-      "notificationBadge": "{{count}} phê duyệt người dùng đang chờ xử lý"
     },
     "workAccess": {
       "title": "Quyền truy cập Work",
@@ -1582,6 +1549,174 @@
       "target": "Đối tượng"
     }
   },
+  "usageAnalytics": {
+    "eyebrow": "Quản trị",
+    "title": "Mức sử dụng nhà cung cấp",
+    "description": "Theo dõi các cuộc gọi API gửi đi và mức tiêu thụ mô hình trên các plugin đã bật trong phiên bản này.",
+    "days": "{{count}} ngày",
+    "refresh": "Làm mới mức sử dụng",
+    "loadFailed": "Không thể tải mức sử dụng của nhà cung cấp.",
+    "metrics": {
+      "calls": "Cuộc gọi",
+      "tokens": "Token"
+    },
+    "cards": {
+      "calls": "Cuộc gọi API",
+      "callsDetail": "Trên {{count}} người dùng đang hoạt động",
+      "tokens": "Token đã báo cáo",
+      "tokensDetail": "Mức sử dụng được báo cáo trên {{count}} cuộc gọi",
+      "success": "Tỷ lệ thành công",
+      "successDetail": "{{count}} cuộc gọi thất bại",
+      "latency": "Độ trễ trung bình",
+      "latencyDetail": "Thời gian nhà cung cấp từ đầu đến cuối"
+    },
+    "activity": {
+      "title": "Mức sử dụng theo thời gian",
+      "callsDescription": "Yêu cầu gửi đi hàng ngày tới các plugin đã bật",
+      "tokensDescription": "Tổng token hàng ngày được báo cáo bởi nhà cung cấp",
+      "chartLabel": "Biểu đồ {{metric}} nhà cung cấp hàng ngày"
+    },
+    "models": {
+      "title": "Mức sử dụng theo mô hình",
+      "description": "Các mô hình có lượng truy cập cao nhất trong giai đoạn này.",
+      "model": "Mô hình",
+      "success": "Thành công",
+      "latency": "Độ trễ"
+    },
+    "providers": {
+      "title": "Lưu lượng plugin đã bật"
+    },
+    "capabilities": {
+      "title": "Phân bổ khả năng",
+      "characters": "{{count}} ký tự",
+      "bytes": "{{count}} byte",
+      "images": "{{count}} hình ảnh",
+      "jobs": "{{count}} tác vụ video",
+      "inputs": "{{count}} đầu vào",
+      "reportedTokens": "{{count}} token đã báo cáo"
+    },
+    "empty": {
+      "title": "Chưa có lệnh gọi nhà cung cấp",
+      "description": "Các lệnh gọi sẽ hiển thị tại đây sau khi một plugin đã bật xử lý yêu cầu trò chuyện, Work, nhúng, hình ảnh, giọng nói, âm thanh hoặc video."
+    },
+    "privacyNote": "Mức sử dụng được đo trên máy chủ tại ranh giới plugin gửi đi. Libre WebUI lưu trữ nhà cung cấp, mô hình, thời gian, trạng thái và bộ đếm đã báo cáo—không bao gồm lời nhắc, phản hồi, điểm cuối, thông tin xác thực hoặc nội dung lỗi của nhà cung cấp. Tổng token chỉ bao gồm các lệnh gọi mà nhà cung cấp trả về siêu dữ liệu sử dụng.",
+    "heatmap": {
+      "title": "Một năm hoạt động",
+      "description": "Lượt gọi nhà cung cấp hằng ngày trong năm qua, tô màu theo mô hình được dùng nhiều nhất mỗi ngày.",
+      "calls": "lượt gọi",
+      "noCalls": "Không có lượt gọi",
+      "other": "Mô hình khác",
+      "less": "Ít",
+      "more": "Nhiều",
+      "yearTotal": "{{formatted}} lượt gọi trong năm qua"
+    }
+  },
+  "systemPage": {
+    "eyebrow": "Quản trị",
+    "title": "Hệ thống",
+    "description": "Giám sát máy và môi trường chạy lưu trữ phiên bản Libre WebUI này.",
+    "updated": "Đã cập nhật {{date}}",
+    "refresh": "Làm mới thông tin hệ thống",
+    "loadFailed": "Không thể tải thông tin hệ thống.",
+    "cards": {
+      "uptime": "Thời gian hoạt động máy chủ",
+      "uptimeDetail": "Hoạt động từ {{date}}",
+      "memory": "Bộ nhớ đã dùng",
+      "memoryDetail": "{{used}} trên {{total}}",
+      "freeSpace": "Không gian trống",
+      "freeSpaceDetail": "{{label}} · {{total}} tổng",
+      "containers": "Container đang chạy",
+      "containersDetail": "{{total}} container được Docker nhận biết",
+      "dockerUnavailable": "Docker không khả dụng",
+      "unavailable": "Không khả dụng"
+    },
+    "host": {
+      "title": "Máy chủ & môi trường chạy",
+      "description": "Hệ điều hành, bộ xử lý và chi tiết tiến trình Libre WebUI.",
+      "container": "Môi trường chạy container",
+      "native": "Runtime gốc",
+      "hostname": "Tên máy chủ",
+      "operatingSystem": "Hệ điều hành",
+      "processor": "Bộ xử lý",
+      "logicalCpus": "CPU logic",
+      "loadAverage": "Tải trung bình · 1 / 5 / 15 phút",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Tiến trình",
+      "workingDirectory": "Thư mục làm việc"
+    },
+    "memory": {
+      "title": "Bộ nhớ",
+      "description": "Bộ nhớ hệ thống hiển thị trong runtime và mức sử dụng tiến trình ứng dụng.",
+      "usedOf": "Đã dùng {{used}} trên {{total}}",
+      "free": "{{value}} trống",
+      "processRss": "RSS tiến trình",
+      "heapUsed": "V8 heap đã dùng",
+      "heapTotal": "Tổng V8 heap",
+      "external": "Bộ nhớ ngoài"
+    },
+    "storage": {
+      "title": "Lưu trữ",
+      "description": "Dung lượng khả dụng cho hệ thống tệp runtime và dữ liệu ứng dụng cố định.",
+      "used": "Đã dùng {{value}}",
+      "free": "{{value}} trống",
+      "empty": "Thông tin hệ thống tệp không có sẵn trong runtime này."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Trạng thái Docker Engine chỉ đọc và danh sách rút gọn các container.",
+      "connected": "Đã kết nối",
+      "unavailable": "Không khả dụng",
+      "unavailableDetail": "Không thể chẩn đoán Docker Engine.",
+      "socketStatus": "Socket cục bộ: {{status}}",
+      "mounted": "đã gắn",
+      "notMounted": "chưa gắn",
+      "running": "Đang chạy",
+      "stopped": "Đã dừng",
+      "paused": "Đã tạm dừng",
+      "total": "Tổng",
+      "version": "Phiên bản",
+      "host": "Máy chủ",
+      "architecture": "Kiến trúc",
+      "cpus": "CPU",
+      "memory": "Bộ nhớ",
+      "container": "Container",
+      "image": "Image",
+      "state": "Trạng thái",
+      "created": "Đã tạo",
+      "empty": "Docker đã được kết nối và hiện không có container nào được liệt kê."
+    },
+    "network": {
+      "title": "Mạng",
+      "description": "Các giao diện, địa chỉ hiển thị trong thời gian chạy và bộ đếm lưu lượng Linux.",
+      "internal": "nội bộ",
+      "empty": "Không có giao diện mạng nào hiển thị với thời gian chạy của ứng dụng."
+    },
+    "securityNote": "Trang này chỉ dành cho quản trị viên. Máy chủ chỉ trả về tóm tắt hoạt động: nó không tiết lộ biến môi trường, thông tin xác thực, nhãn Docker, điểm gắn kết, lệnh container hoặc payload kiểm tra. Khi Libre WebUI chạy trong container, chi tiết CPU và bộ nhớ cấp máy chủ đến từ Docker Engine khi socket cục bộ của nó khả dụng; các giá trị khác mô tả thời gian chạy của ứng dụng.",
+    "work": {
+      "title": "Work",
+      "description": "Sandbox của mọi người dùng",
+      "access": "Quyền truy cập",
+      "accessAdmins": "Chỉ quản trị viên",
+      "accessAllUsers": "Tất cả người dùng",
+      "runtimeAvailable": "Khả dụng",
+      "runtimeUnavailable": "Không khả dụng",
+      "activeRuntimes": "Môi trường đang hoạt động",
+      "pendingCleanups": "Dọn dẹp đang chờ",
+      "orphans": "Container mồ côi",
+      "owner": "Chủ sở hữu",
+      "task": "Tác vụ",
+      "state": "Trạng thái",
+      "preview": "Xem trước",
+      "terminals": "Terminal",
+      "updated": "Đã cập nhật",
+      "stateRunning": "Đang chạy",
+      "stateStopped": "Đã dừng",
+      "stateStarting": "Đang khởi động",
+      "stateUnknown": "Không rõ",
+      "noTasks": "Chưa có tác vụ Work nào."
+    }
+  },
   "chatHistory": {
     "label": "Lịch sử cuộc trò chuyện",
     "jumpToTurn": "Chuyển đến lượt {{index}} / {{total}}"
@@ -1650,6 +1785,57 @@
     "failed": "Không thể tạo hình ảnh",
     "enterPrompt": "Vui lòng nhập prompt",
     "promptTooLong": "Prompt vượt quá độ dài tối đa {{max}} ký tự"
+  },
+  "mediaGeneration": {
+    "title": "Tạo phương tiện",
+    "description": "Tạo video, âm thanh, nhạc hoặc giọng nói với nhà cung cấp phương tiện đã kích hoạt.",
+    "image": "Hình ảnh",
+    "video": "Video",
+    "audio": "Âm thanh",
+    "sound": "Âm thanh",
+    "speech": "Giọng nói",
+    "model": "Mô hình",
+    "voice": "Giọng nói hoặc ID giọng nói",
+    "cloneVoice": "Sao chép giọng tham chiếu",
+    "cloneVoiceDescription": "Tạo lời nói này dựa trên bản ghi tham chiếu thay vì giọng đặt sẵn.",
+    "referenceAudio": "Âm thanh tham chiếu",
+    "referenceTranscript": "Bản chép lời tham chiếu chính xác",
+    "referenceTranscriptPlaceholder": "Nhập chính xác nội dung được nói trong bản ghi tham chiếu…",
+    "referenceAudioTooLarge": "Âm thanh tham chiếu phải có dung lượng {{max}} trở xuống.",
+    "cloneConsent": "Chỉ sao chép giọng khi bạn có sự cho phép của người nói. Bản ghi được gửi đến nhà cung cấp đã chọn cho lần tạo này và Libre WebUI không lưu bản ghi.",
+    "saveVoiceProfile": "Lưu làm giọng có thể tái sử dụng",
+    "saveVoiceProfileDescription": "Lưu an toàn bản ghi tham chiếu và bản chép lời này. Libre WebUI gửi chúng đến nhà cung cấp đã chọn cho mỗi lô Giọng nói sử dụng giọng này.",
+    "voiceProfileName": "Tên giọng đã lưu",
+    "voiceProfileNamePlaceholder": "Ví dụ: Giọng của tôi",
+    "voiceStorageConsent": "Tôi xác nhận đã được người nói cho phép sao chép và lưu giọng này. Bản tham chiếu sẽ được lưu cho đến khi tôi xóa.",
+    "resolution": "Độ phân giải",
+    "aspectRatio": "Tỷ lệ khung hình",
+    "duration": "Thời lượng",
+    "providerDefault": "Mặc định của nhà cung cấp",
+    "generateAudio": "Tạo âm thanh cùng với video khi được hỗ trợ",
+    "prompt": "Lời nhắc",
+    "text": "Văn bản để đọc",
+    "videoPlaceholder": "Mô tả cảnh, chuyển động, góc máy và ánh sáng...",
+    "audioPlaceholder": "Nhập văn bản bạn muốn giọng nói đọc...",
+    "soundPlaceholder": "Mô tả âm thanh, nhạc, bầu không khí hoặc phản hồi bằng giọng nói mà bạn muốn...",
+    "generate": "Tạo",
+    "generating": "Đang tạo… việc này có thể mất vài phút",
+    "success": "Đã tạo phương tiện và lưu vào Imagine",
+    "successWithSavedVoice": "Đã tạo nội dung và “{{name}}” hiện có trong cài đặt Giọng nói",
+    "failed": "Không thể tạo phương tiện",
+    "loadFailed": "Không thể tải nhà cung cấp phương tiện",
+    "noModels": "Không có mô hình {{kind}} nào khả dụng. Kích hoạt nhà cung cấp tương thích và lưu thông tin xác thực của nó trước."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} mục",
+    "empty": "Chưa có phương tiện nào được tạo",
+    "emptyHint": "Tạo hình ảnh, video hoặc đoạn giọng nói và nó sẽ hiển thị tại đây.",
+    "filters": {
+      "all": "Tất cả",
+      "image": "Hình ảnh",
+      "video": "Video",
+      "audio": "Âm thanh"
+    }
   },
   "errorBoundary": {
     "title": "Đã xảy ra lỗi",
@@ -1802,8 +1988,8 @@
       "saveFailed": "Không thể lưu biến",
       "resetDefaults": "Đặt lại mặc định",
       "reset": "Đã đặt lại biến",
-      "sensitiveSet": "Giá trị đã được đặt (nhập giá trị mới để thay đổi)",
       "resetFailed": "Không thể đặt lại biến",
+      "sensitiveSet": "Giá trị đã được đặt (nhập giá trị mới để thay đổi)",
       "showValue": "Hiển thị giá trị {{label}}",
       "hideValue": "Ẩn giá trị {{label}}",
       "connection": "Kết nối",
@@ -1841,45 +2027,6 @@
   "demoMode": {
     "title": "Chế độ demo",
     "github": "GitHub"
-  },
-  "personaBackground": {
-    "label": "Hình nền",
-    "uploadBackgroundImage": "Tải lên hình nền",
-    "dragAndDrop": "Kéo và thả hình ảnh hoặc nhấp để duyệt",
-    "chooseImage": "Chọn hình ảnh",
-    "uploading": "Đang tải lên...",
-    "enterImageUrl": "Hoặc nhập URL hình ảnh",
-    "supportedFormats": "Hỗ trợ: JPG, PNG, GIF, WebP (tối đa 5MB). Hình ảnh ngang rộng hoạt động tốt nhất.",
-    "customBackground": "Hình nền tùy chỉnh",
-    "clickToChange": "Nhấp để thay đổi hoặc xóa",
-    "removed": "Đã xóa hình nền",
-    "uploaded": "Tải lên hình nền thành công",
-    "invalidFile": "Vui lòng chọn tệp hình ảnh hợp lệ",
-    "fileTooLarge": "Kích thước hình nền phải nhỏ hơn 5MB",
-    "readFailed": "Không thể đọc tệp hình ảnh",
-    "uploadFailed": "Không thể tải lên hình nền"
-  },
-  "modelSelector": {
-    "searchInstalled": "Tìm kiếm mô hình đã cài...",
-    "searchOllama": "Tìm trong thư viện Ollama...",
-    "searchHuggingFace": "Tìm trên HuggingFace...",
-    "selectModel": "Chọn mô hình",
-    "personas": "Nhân vật",
-    "ollamaModels": "Mô hình Ollama",
-    "pluginModels": "Mô hình plugin",
-    "actions": "Hành động",
-    "installed": "Đã cài",
-    "use": "Dùng",
-    "pull": "Tải",
-    "pullRestricted": "Việc cài đặt mô hình trên phiên bản này chỉ dành cho quản trị viên.",
-    "adminOnlyPull": "Chỉ quản trị viên",
-    "legacyProvider": "nhà cung cấp chưa được ghi",
-    "providerNotRecorded": "Nhà cung cấp chưa được ghi",
-    "providerUnavailable": "nhà cung cấp không khả dụng",
-    "reselectProvider": "chọn lại nhà cung cấp để ghim mô hình này",
-    "unavailable": "không khả dụng",
-    "unavailableSelections": "Lựa chọn không khả dụng",
-    "agentModels": "Tác nhân"
   },
   "libreClaw": {
     "title": "Tác nhân",
@@ -2223,224 +2370,44 @@
       "warning": "Tác vụ có thể đọc và ghi thư mục này trực tiếp. Để trống để dùng không gian cô lập."
     }
   },
-  "usageAnalytics": {
-    "eyebrow": "Quản trị",
-    "title": "Mức sử dụng nhà cung cấp",
-    "description": "Theo dõi các cuộc gọi API gửi đi và mức tiêu thụ mô hình trên các plugin đã bật trong phiên bản này.",
-    "days": "{{count}} ngày",
-    "refresh": "Làm mới mức sử dụng",
-    "loadFailed": "Không thể tải mức sử dụng của nhà cung cấp.",
-    "metrics": {
-      "calls": "Cuộc gọi",
-      "tokens": "Token"
-    },
-    "cards": {
-      "calls": "Cuộc gọi API",
-      "callsDetail": "Trên {{count}} người dùng đang hoạt động",
-      "tokens": "Token đã báo cáo",
-      "tokensDetail": "Mức sử dụng được báo cáo trên {{count}} cuộc gọi",
-      "success": "Tỷ lệ thành công",
-      "successDetail": "{{count}} cuộc gọi thất bại",
-      "latency": "Độ trễ trung bình",
-      "latencyDetail": "Thời gian nhà cung cấp từ đầu đến cuối"
-    },
-    "activity": {
-      "title": "Mức sử dụng theo thời gian",
-      "callsDescription": "Yêu cầu gửi đi hàng ngày tới các plugin đã bật",
-      "tokensDescription": "Tổng token hàng ngày được báo cáo bởi nhà cung cấp",
-      "chartLabel": "Biểu đồ {{metric}} nhà cung cấp hàng ngày"
-    },
-    "models": {
-      "title": "Mức sử dụng theo mô hình",
-      "description": "Các mô hình có lượng truy cập cao nhất trong giai đoạn này.",
-      "model": "Mô hình",
-      "success": "Thành công",
-      "latency": "Độ trễ"
-    },
-    "providers": {
-      "title": "Lưu lượng plugin đã bật"
-    },
-    "capabilities": {
-      "title": "Phân bổ khả năng",
-      "characters": "{{count}} ký tự",
-      "bytes": "{{count}} byte",
-      "images": "{{count}} hình ảnh",
-      "jobs": "{{count}} tác vụ video",
-      "inputs": "{{count}} đầu vào",
-      "reportedTokens": "{{count}} token đã báo cáo"
-    },
-    "empty": {
-      "title": "Chưa có lệnh gọi nhà cung cấp",
-      "description": "Các lệnh gọi sẽ hiển thị tại đây sau khi một plugin đã bật xử lý yêu cầu trò chuyện, Work, nhúng, hình ảnh, giọng nói, âm thanh hoặc video."
-    },
-    "privacyNote": "Mức sử dụng được đo trên máy chủ tại ranh giới plugin gửi đi. Libre WebUI lưu trữ nhà cung cấp, mô hình, thời gian, trạng thái và bộ đếm đã báo cáo—không bao gồm lời nhắc, phản hồi, điểm cuối, thông tin xác thực hoặc nội dung lỗi của nhà cung cấp. Tổng token chỉ bao gồm các lệnh gọi mà nhà cung cấp trả về siêu dữ liệu sử dụng.",
-    "heatmap": {
-      "title": "Một năm hoạt động",
-      "description": "Lượt gọi nhà cung cấp hằng ngày trong năm qua, tô màu theo mô hình được dùng nhiều nhất mỗi ngày.",
-      "calls": "lượt gọi",
-      "noCalls": "Không có lượt gọi",
-      "other": "Mô hình khác",
-      "less": "Ít",
-      "more": "Nhiều",
-      "yearTotal": "{{formatted}} lượt gọi trong năm qua"
-    }
+  "personaBackground": {
+    "label": "Hình nền",
+    "uploadBackgroundImage": "Tải lên hình nền",
+    "dragAndDrop": "Kéo và thả hình ảnh hoặc nhấp để duyệt",
+    "chooseImage": "Chọn hình ảnh",
+    "uploading": "Đang tải lên...",
+    "enterImageUrl": "Hoặc nhập URL hình ảnh",
+    "supportedFormats": "Hỗ trợ: JPG, PNG, GIF, WebP (tối đa 5MB). Hình ảnh ngang rộng hoạt động tốt nhất.",
+    "customBackground": "Hình nền tùy chỉnh",
+    "clickToChange": "Nhấp để thay đổi hoặc xóa",
+    "removed": "Đã xóa hình nền",
+    "uploaded": "Tải lên hình nền thành công",
+    "invalidFile": "Vui lòng chọn tệp hình ảnh hợp lệ",
+    "fileTooLarge": "Kích thước hình nền phải nhỏ hơn 5MB",
+    "readFailed": "Không thể đọc tệp hình ảnh",
+    "uploadFailed": "Không thể tải lên hình nền"
   },
-  "systemPage": {
-    "eyebrow": "Quản trị",
-    "title": "Hệ thống",
-    "description": "Giám sát máy và môi trường chạy lưu trữ phiên bản Libre WebUI này.",
-    "updated": "Đã cập nhật {{date}}",
-    "refresh": "Làm mới thông tin hệ thống",
-    "loadFailed": "Không thể tải thông tin hệ thống.",
-    "cards": {
-      "uptime": "Thời gian hoạt động máy chủ",
-      "uptimeDetail": "Hoạt động từ {{date}}",
-      "memory": "Bộ nhớ đã dùng",
-      "memoryDetail": "{{used}} trên {{total}}",
-      "freeSpace": "Không gian trống",
-      "freeSpaceDetail": "{{label}} · {{total}} tổng",
-      "containers": "Container đang chạy",
-      "containersDetail": "{{total}} container được Docker nhận biết",
-      "dockerUnavailable": "Docker không khả dụng",
-      "unavailable": "Không khả dụng"
-    },
-    "host": {
-      "title": "Máy chủ & môi trường chạy",
-      "description": "Hệ điều hành, bộ xử lý và chi tiết tiến trình Libre WebUI.",
-      "container": "Môi trường chạy container",
-      "native": "Runtime gốc",
-      "hostname": "Tên máy chủ",
-      "operatingSystem": "Hệ điều hành",
-      "processor": "Bộ xử lý",
-      "logicalCpus": "CPU logic",
-      "loadAverage": "Tải trung bình · 1 / 5 / 15 phút",
-      "libreVersion": "Libre WebUI",
-      "nodeVersion": "Node.js",
-      "process": "Tiến trình",
-      "workingDirectory": "Thư mục làm việc"
-    },
-    "memory": {
-      "title": "Bộ nhớ",
-      "description": "Bộ nhớ hệ thống hiển thị trong runtime và mức sử dụng tiến trình ứng dụng.",
-      "usedOf": "Đã dùng {{used}} trên {{total}}",
-      "free": "{{value}} trống",
-      "processRss": "RSS tiến trình",
-      "heapUsed": "V8 heap đã dùng",
-      "heapTotal": "Tổng V8 heap",
-      "external": "Bộ nhớ ngoài"
-    },
-    "storage": {
-      "title": "Lưu trữ",
-      "description": "Dung lượng khả dụng cho hệ thống tệp runtime và dữ liệu ứng dụng cố định.",
-      "used": "Đã dùng {{value}}",
-      "free": "{{value}} trống",
-      "empty": "Thông tin hệ thống tệp không có sẵn trong runtime này."
-    },
-    "docker": {
-      "title": "Docker",
-      "description": "Trạng thái Docker Engine chỉ đọc và danh sách rút gọn các container.",
-      "connected": "Đã kết nối",
-      "unavailable": "Không khả dụng",
-      "unavailableDetail": "Không thể chẩn đoán Docker Engine.",
-      "socketStatus": "Socket cục bộ: {{status}}",
-      "mounted": "đã gắn",
-      "notMounted": "chưa gắn",
-      "running": "Đang chạy",
-      "stopped": "Đã dừng",
-      "paused": "Đã tạm dừng",
-      "total": "Tổng",
-      "version": "Phiên bản",
-      "host": "Máy chủ",
-      "architecture": "Kiến trúc",
-      "cpus": "CPU",
-      "memory": "Bộ nhớ",
-      "container": "Container",
-      "image": "Image",
-      "state": "Trạng thái",
-      "created": "Đã tạo",
-      "empty": "Docker đã được kết nối và hiện không có container nào được liệt kê."
-    },
-    "network": {
-      "title": "Mạng",
-      "description": "Các giao diện, địa chỉ hiển thị trong thời gian chạy và bộ đếm lưu lượng Linux.",
-      "internal": "nội bộ",
-      "empty": "Không có giao diện mạng nào hiển thị với thời gian chạy của ứng dụng."
-    },
-    "securityNote": "Trang này chỉ dành cho quản trị viên. Máy chủ chỉ trả về tóm tắt hoạt động: nó không tiết lộ biến môi trường, thông tin xác thực, nhãn Docker, điểm gắn kết, lệnh container hoặc payload kiểm tra. Khi Libre WebUI chạy trong container, chi tiết CPU và bộ nhớ cấp máy chủ đến từ Docker Engine khi socket cục bộ của nó khả dụng; các giá trị khác mô tả thời gian chạy của ứng dụng.",
-    "work": {
-      "title": "Work",
-      "description": "Sandbox của mọi người dùng",
-      "access": "Quyền truy cập",
-      "accessAdmins": "Chỉ quản trị viên",
-      "accessAllUsers": "Tất cả người dùng",
-      "runtimeAvailable": "Khả dụng",
-      "runtimeUnavailable": "Không khả dụng",
-      "activeRuntimes": "Môi trường đang hoạt động",
-      "pendingCleanups": "Dọn dẹp đang chờ",
-      "orphans": "Container mồ côi",
-      "owner": "Chủ sở hữu",
-      "task": "Tác vụ",
-      "state": "Trạng thái",
-      "preview": "Xem trước",
-      "terminals": "Terminal",
-      "updated": "Đã cập nhật",
-      "stateRunning": "Đang chạy",
-      "stateStopped": "Đã dừng",
-      "stateStarting": "Đang khởi động",
-      "stateUnknown": "Không rõ",
-      "noTasks": "Chưa có tác vụ Work nào."
-    }
-  },
-  "mediaGeneration": {
-    "title": "Tạo phương tiện",
-    "description": "Tạo video, âm thanh, nhạc hoặc giọng nói với nhà cung cấp phương tiện đã kích hoạt.",
-    "image": "Hình ảnh",
-    "video": "Video",
-    "audio": "Âm thanh",
-    "sound": "Âm thanh",
-    "speech": "Giọng nói",
-    "model": "Mô hình",
-    "voice": "Giọng nói hoặc ID giọng nói",
-    "cloneVoice": "Sao chép giọng tham chiếu",
-    "cloneVoiceDescription": "Tạo lời nói này dựa trên bản ghi tham chiếu thay vì giọng đặt sẵn.",
-    "referenceAudio": "Âm thanh tham chiếu",
-    "referenceTranscript": "Bản chép lời tham chiếu chính xác",
-    "referenceTranscriptPlaceholder": "Nhập chính xác nội dung được nói trong bản ghi tham chiếu…",
-    "referenceAudioTooLarge": "Âm thanh tham chiếu phải có dung lượng {{max}} trở xuống.",
-    "cloneConsent": "Chỉ sao chép giọng khi bạn có sự cho phép của người nói. Bản ghi được gửi đến nhà cung cấp đã chọn cho lần tạo này và Libre WebUI không lưu bản ghi.",
-    "saveVoiceProfile": "Lưu làm giọng có thể tái sử dụng",
-    "saveVoiceProfileDescription": "Lưu an toàn bản ghi tham chiếu và bản chép lời này. Libre WebUI gửi chúng đến nhà cung cấp đã chọn cho mỗi lô Giọng nói sử dụng giọng này.",
-    "voiceProfileName": "Tên giọng đã lưu",
-    "voiceProfileNamePlaceholder": "Ví dụ: Giọng của tôi",
-    "voiceStorageConsent": "Tôi xác nhận đã được người nói cho phép sao chép và lưu giọng này. Bản tham chiếu sẽ được lưu cho đến khi tôi xóa.",
-    "successWithSavedVoice": "Đã tạo nội dung và “{{name}}” hiện có trong cài đặt Giọng nói",
-    "resolution": "Độ phân giải",
-    "aspectRatio": "Tỷ lệ khung hình",
-    "duration": "Thời lượng",
-    "providerDefault": "Mặc định của nhà cung cấp",
-    "generateAudio": "Tạo âm thanh cùng với video khi được hỗ trợ",
-    "prompt": "Lời nhắc",
-    "text": "Văn bản để đọc",
-    "videoPlaceholder": "Mô tả cảnh, chuyển động, góc máy và ánh sáng...",
-    "audioPlaceholder": "Nhập văn bản bạn muốn giọng nói đọc...",
-    "soundPlaceholder": "Mô tả âm thanh, nhạc, bầu không khí hoặc phản hồi bằng giọng nói mà bạn muốn...",
-    "generate": "Tạo",
-    "generating": "Đang tạo… việc này có thể mất vài phút",
-    "success": "Đã tạo phương tiện và lưu vào Imagine",
-    "failed": "Không thể tạo phương tiện",
-    "loadFailed": "Không thể tải nhà cung cấp phương tiện",
-    "noModels": "Không có mô hình {{kind}} nào khả dụng. Kích hoạt nhà cung cấp tương thích và lưu thông tin xác thực của nó trước."
-  },
-  "mediaGallery": {
-    "itemCount": "{{count}} mục",
-    "empty": "Chưa có phương tiện nào được tạo",
-    "emptyHint": "Tạo hình ảnh, video hoặc đoạn giọng nói và nó sẽ hiển thị tại đây.",
-    "filters": {
-      "all": "Tất cả",
-      "image": "Hình ảnh",
-      "video": "Video",
-      "audio": "Âm thanh"
-    }
+  "modelSelector": {
+    "searchInstalled": "Tìm kiếm mô hình đã cài...",
+    "searchOllama": "Tìm trong thư viện Ollama...",
+    "searchHuggingFace": "Tìm trên HuggingFace...",
+    "selectModel": "Chọn mô hình",
+    "personas": "Nhân vật",
+    "ollamaModels": "Mô hình Ollama",
+    "pluginModels": "Mô hình plugin",
+    "actions": "Hành động",
+    "installed": "Đã cài",
+    "use": "Dùng",
+    "pull": "Tải",
+    "pullRestricted": "Việc cài đặt mô hình trên phiên bản này chỉ dành cho quản trị viên.",
+    "adminOnlyPull": "Chỉ quản trị viên",
+    "legacyProvider": "nhà cung cấp chưa được ghi",
+    "providerNotRecorded": "Nhà cung cấp chưa được ghi",
+    "providerUnavailable": "nhà cung cấp không khả dụng",
+    "reselectProvider": "chọn lại nhà cung cấp để ghim mô hình này",
+    "unavailable": "không khả dụng",
+    "unavailableSelections": "Lựa chọn không khả dụng",
+    "agentModels": "Tác nhân"
   },
   "whatsNew": {
     "title": "Có gì mới",

@@ -421,12 +421,7 @@
       "notes": "Poznámky"
     },
     "toggleSize": "Změnit velikost postranního panelu",
-    "expandSidebar": "Rozbalit postranní panel",
-    "pinned": {
-      "label": "Připnuté",
-      "pin": "Připnout na postranní panel",
-      "unpin": "Odepnout z postranního panelu"
-    }
+    "expandSidebar": "Rozbalit postranní panel"
   },
   "user": {
     "menu": {
@@ -478,8 +473,7 @@
       "shortcuts": "Zkratky",
       "about": "O aplikaci",
       "sessions": "Relace",
-      "apiKeys": "API klíče",
-      "connections": "Připojení"
+      "apiKeys": "API klíče"
     },
     "appearance": {
       "title": "Vzhled",
@@ -928,41 +922,6 @@
       "saved": "Nastavení zhutnění uloženo",
       "saveFailed": "Nastavení zhutnění se nepodařilo uložit"
     },
-    "connections": {
-      "title": "Připojení",
-      "description": "Poskytovatelé modelů, se kterými tento server komunikuje: místní běhové prostředí Ollama a endpointy kompatibilní s OpenAI.",
-      "ollamaTitle": "Ollama",
-      "ollamaDescription": "Místní běhové prostředí modelů.",
-      "version": "Verze {{version}}.",
-      "statusChecking": "Kontroluje se…",
-      "statusOnline": "Online",
-      "statusOffline": "Offline",
-      "providersTitle": "Připojení kompatibilní s OpenAI",
-      "providersDescription": "Každé připojení je poskytovatel doplňování, jehož modely se objeví ve výběru modelů v chatu. Klíče API se ukládají na serveru.",
-      "noConnections": "Zatím nejsou nastavena žádná připojení.",
-      "modelsCount": "Modelů: {{total}}",
-      "pendingDiscovery": "Modely čekají na zjištění",
-      "apiKeyMissing": "Bez klíče API",
-      "deleteConfirm": "Smazat toto připojení? Chaty používající jeho modely k nim ztratí přístup.",
-      "addTitle": "Přidat připojení",
-      "addDescription": "Zaregistrovat endpoint chat completions kompatibilní s OpenAI jako poskytovatele.",
-      "nameLabel": "Zobrazovaný název",
-      "namePlaceholder": "Můj poskytovatel",
-      "idPreview": "ID připojení: {{id}}",
-      "endpointLabel": "URL endpointu",
-      "endpointDescription": "Úplná URL chat completions, například https://api.example.com/v1/chat/completions.",
-      "apiKeyLabel": "Klíč API",
-      "apiKeyOptionalHint": "(volitelný, lze doplnit později)",
-      "nameRequired": "Zadejte zobrazovaný název připojení.",
-      "endpointInvalid": "Zadejte platnou http(s) URL endpointu.",
-      "alreadyExists": "Připojení s tímto ID již existuje.",
-      "add": "Přidat připojení",
-      "adding": "Přidává se…",
-      "added": "Připojení přidáno",
-      "addFailed": "Připojení se nepodařilo přidat",
-      "keySaveFailed": "Připojení přidáno, ale klíč API se nepodařilo uložit",
-      "activateFailed": "Připojení přidáno, ale nepodařilo se ho aktivovat"
-    },
     "sessions": {
       "title": "Relace",
       "description": "Všechna místa, kde je tento účet přihlášen. Odhlášení relace se projeví okamžitě; opětovné přihlášení přístup obnoví.",
@@ -1122,18 +1081,26 @@
       "catalog": "Katalog modelů"
     },
     "catalog": {
-      "models": "k dispozici",
       "searchPlaceholder": "Hledat modely podle názvu nebo poskytovatele...",
       "noModels": "Zatím nejsou k dispozici žádné modely.",
       "empty": "Vašemu hledání neodpovídají žádné modely.",
       "providerOllama": "Ollama",
-      "default": "Výchozí",
-      "makeDefault": "Nastavit jako výchozí",
-      "defaultSet": "{{model}} je nyní váš výchozí model.",
       "hidden": "Skrytý",
+      "visibilityFailed": "Viditelnost modelu se nepodařilo změnit.",
+      "filterAll": "Všechny modely",
+      "filterLocal": "Místní",
+      "filterProviders": "Poskytovatelé",
+      "filterHidden": "Skryté",
+      "enableAll": "Zapnout zobrazené",
+      "disableAll": "Vypnout zobrazené",
+      "rename": "Upravit název a obrázek",
+      "setPicture": "Nastavit obrázek",
+      "clearPicture": "Odebrat obrázek",
+      "pictureInvalid": "Vyberte obrázkový soubor.",
+      "pictureTooLarge": "Obrázky musí být menší než 192 KB.",
+      "saving": "Ukládání…",
       "hide": "Skrýt uživatelům",
-      "show": "Zobrazit uživatelům",
-      "visibilityFailed": "Viditelnost modelu se nepodařilo změnit."
+      "show": "Zobrazit uživatelům"
     },
     "pull": {
       "placeholder": "Zadejte název modelu (např. llama3.2:3b, deepseek-r1:14b)",
