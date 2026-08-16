@@ -48,6 +48,7 @@ import {
   chatModelSelectionFromModel,
   findChatModelForSelection,
 } from '@/utils/chatModelSelection';
+import { modelVisibilityKey } from '@/utils/modelVisibility';
 
 const logger = createLogger('chat-store');
 
@@ -127,6 +128,14 @@ interface ChatState {
 
   // Models
   models: OllamaModel[];
+  /**
+   * Model keys an administrator hid from the pickers (Ollama models by name,
+   * plugin models as `${pluginId}/${modelName}`). Non-administrators never
+   * see hidden entries in `models`; administrators keep the full list and
+   * use this set to show visibility state.
+   */
+  hiddenModels: string[];
+  setHiddenModels: (keys: string[]) => void;
   /** False when the last model load could not reach the Ollama endpoint. */
   ollamaConnected: boolean;
   loadModels: (options?: { quiet?: boolean }) => Promise<void>;
@@ -338,6 +347,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       sessions: [],
       currentSession: null,
       models: [],
+      hiddenModels: [],
       selectedModel: '',
       selectedProviderType: null,
       selectedProviderId: null,
@@ -704,6 +714,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // Models
   models: [],
+  hiddenModels: [],
+  setHiddenModels: (keys: string[]) => set({ hiddenModels: keys }),
   ollamaConnected: false,
   loadModels: async (options?: { quiet?: boolean }) => {
     const quiet = options?.quiet === true;
@@ -813,6 +825,38 @@ export const useChatStore = create<ChatState>((set, get) => ({
         logger.error('❌ Failed to load personas:', personaError);
         // Continue without personas
       }
+
+      // Which models an administrator hid from the pickers. Administrators
+      // keep the full list; everyone else's selectable models drop the
+      // hidden entries (Ollama and plugin alike). Fail open: visibility is a
+      // listing refinement, never a reason to blank the picker.
+      let hiddenModels: string[] = [];
+      try {
+        const visibilityResponse = await ollamaApi.getModelVisibility();
+        if (visibilityResponse.success && visibilityResponse.data) {
+          hiddenModels = visibilityResponse.data.hidden;
+        }
+      } catch (visibilityError) {
+        logger.warn(
+          'Model visibility unavailable; showing all models:',
+          visibilityError
+        );
+      }
+      try {
+        const { useAuthStore } = await import('@/store/authStore');
+        const authState = useAuthStore.getState();
+        const viewerIsAdmin =
+          authState.isAdmin() || authState.systemInfo?.requiresAuth === false;
+        if (!viewerIsAdmin && hiddenModels.length > 0) {
+          const hidden = new Set(hiddenModels);
+          allModels = allModels.filter(
+            model => !hidden.has(modelVisibilityKey(model))
+          );
+        }
+      } catch (authError) {
+        logger.warn('Could not resolve viewer role for model list:', authError);
+      }
+      set({ hiddenModels });
 
       logger.debug('Total models loaded:', allModels.length);
       const providerLoadError =

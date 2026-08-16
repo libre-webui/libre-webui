@@ -34,6 +34,10 @@ import {
   setModelDownloadMode,
   userCanDownloadModels,
 } from '../services/modelAccessService.js';
+import {
+  getHiddenModels,
+  setHiddenModels,
+} from '../services/modelVisibilityService.js';
 import { userModel } from '../models/userModel.js';
 import {
   abortChatGenerationOnResponseClose,
@@ -106,14 +110,24 @@ router.get(
 router.get(
   '/models',
   async (
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response<ApiResponse<OllamaModel[]>>
   ): Promise<void> => {
     try {
       const models = await ollamaService.getModels();
+      // Administrators always see the full list; for other users the models
+      // an administrator hid stay out of the listing. This trims what the
+      // pickers offer — it is not a chat authorization gate.
+      let visibleModels = models;
+      if (req.user?.role !== 'admin') {
+        const hidden = new Set(await getHiddenModels());
+        if (hidden.size > 0) {
+          visibleModels = models.filter(model => !hidden.has(model.name));
+        }
+      }
       res.json({
         success: true,
-        data: models,
+        data: visibleModels,
       });
     } catch (error: unknown) {
       res.status(500).json({
@@ -157,6 +171,33 @@ router.put(
     }
     await setModelDownloadMode(mode);
     res.json({ success: true, data: { mode: await getModelDownloadMode() } });
+  }
+);
+
+// Which models administrators hid from the shared model pickers. Read is
+// open to any authenticated user so every interface can trim its lists;
+// changing the set is admin-only. Registered before /models/:modelName so
+// "visibility" is never taken for a model name.
+router.get(
+  '/models/visibility',
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    res.json({ success: true, data: { hidden: await getHiddenModels() } });
+  }
+);
+
+router.put(
+  '/models/visibility',
+  requireAdmin,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const hidden = await setHiddenModels(req.body?.hidden);
+      res.json({ success: true, data: { hidden } });
+    } catch (error: unknown) {
+      res.status(400).json({
+        success: false,
+        error: getErrorMessage(error, 'Invalid hidden model list'),
+      });
+    }
   }
 );
 

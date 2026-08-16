@@ -146,6 +146,26 @@ export const ollamaApi = {
     return api.put('/ollama/models/access', { mode }).then(res => res.data);
   },
 
+  // Which models administrators hid from the shared model pickers. Ollama
+  // models are keyed by name, plugin models by `${pluginId}/${modelName}`.
+  getModelVisibility: (): Promise<ApiResponse<{ hidden: string[] }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ hidden: [] as string[] });
+    }
+    return api.get('/ollama/models/visibility').then(res => res.data);
+  },
+
+  setModelVisibility: (
+    hidden: string[]
+  ): Promise<ApiResponse<{ hidden: string[] }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ hidden });
+    }
+    return api
+      .put('/ollama/models/visibility', { hidden })
+      .then(res => res.data);
+  },
+
   pullModel: (modelName: string): Promise<ApiResponse> => {
     if (isDemoMode()) {
       return createDemoResponse(null, false);
