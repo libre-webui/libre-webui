@@ -40,6 +40,11 @@ import {
   ResourcePolicyError,
 } from '../utils/resourceLimits.js';
 import { getCoordinator } from '../platform/coordination/service.js';
+import {
+  COMPACTION_SUMMARY_PREFIX,
+  planCompaction,
+  type CompactionPlan,
+} from './contextCompactionService.js';
 import { transactionalChatGenerationEnqueuer } from '../platform/jobs/chatGenerationEnqueuer.js';
 import {
   CHAT_GENERATE_JOB_TYPE,
@@ -929,9 +934,71 @@ class ChatService {
     const session = await this.getSession(sessionId, userId);
     if (!session) return [];
 
-    return selectChatMessagesForContext(session.messages, maxMessages).map(
+    // Context compaction (admin-configured, default off): summarize older
+    // history into a system message so it keeps informing the model instead
+    // of silently falling out of the context window. Fails open.
+    let messages = session.messages;
+    const plan = await planCompaction(session, userId);
+    if (plan) {
+      try {
+        messages = await this.applyContextCompaction(sessionId, userId, plan);
+      } catch (error) {
+        logger.warn(
+          `Applying context compaction failed for session ${sessionId}:`,
+          error
+        );
+      }
+    }
+
+    return selectChatMessagesForContext(messages, maxMessages).map(
       sanitizeChatMessageProviderState
     );
+  }
+
+  /**
+   * Persist a compaction plan under the session write lease: deactivate the
+   * summarized messages and insert the summary after the last of them.
+   * Returns the updated message list.
+   */
+  private async applyContextCompaction(
+    sessionId: string,
+    userId: string,
+    plan: CompactionPlan
+  ): Promise<ChatMessage[]> {
+    return this.withSessionWriteLease(sessionId, userId, async assertHeld => {
+      const session = await this.getSession(sessionId, userId);
+      if (!session) throw new Error('The session disappeared mid-compaction');
+
+      const deactivate = new Set(plan.deactivateIds);
+      // Another replica compacted first: a live summary we did not plan to
+      // replace means our plan is stale — keep theirs.
+      const foreignSummary = session.messages.some(
+        message =>
+          message.isActive !== false &&
+          message.role === 'system' &&
+          message.content.startsWith(COMPACTION_SUMMARY_PREFIX) &&
+          !deactivate.has(message.id)
+      );
+      if (foreignSummary) return session.messages;
+
+      const updated: ChatMessage[] = session.messages.map(message =>
+        deactivate.has(message.id) ? { ...message, isActive: false } : message
+      );
+      let insertAt = 0;
+      for (let index = 0; index < session.messages.length; index += 1) {
+        if (deactivate.has(session.messages[index].id)) insertAt = index + 1;
+      }
+      updated.splice(insertAt, 0, plan.summaryMessage);
+
+      const updatedSession = {
+        ...session,
+        messages: updated,
+        updatedAt: Date.now(),
+      };
+      this.sessions.set(sessionId, updatedSession);
+      await storageService.saveSession(updatedSession, userId, assertHeld);
+      return updated;
+    });
   }
 
   private async updateSystemMessageForPersona(

@@ -23,7 +23,15 @@ import chatService from '../services/chatService.js';
 import ollamaService from '../services/ollamaService.js';
 import pluginService from '../services/pluginService.js';
 import { personaService } from '../services/personaService.js';
-import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  authenticate,
+  requireAdmin,
+  AuthenticatedRequest,
+} from '../middleware/auth.js';
+import {
+  getCompactionConfig,
+  setCompactionConfig,
+} from '../services/contextCompactionService.js';
 import { extractStatistics } from '../utils/generationUtils.js';
 import agentCliService from '../services/agentCliService.js';
 import {
@@ -1777,5 +1785,37 @@ router.post(
     }
   }
 );
+
+/** Context compaction settings: readable by any user, set by admins. */
+router.get('/compaction-config', async (_req, res) => {
+  try {
+    res.json({ success: true, data: await getCompactionConfig() });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: getErrorMessage(error, 'Failed to load compaction settings'),
+    });
+  }
+});
+
+router.put('/compaction-config', requireAdmin, async (req, res) => {
+  try {
+    const { enabled, thresholdTokens, keepRecentMessages, model, prompt } =
+      req.body ?? {};
+    const data = await setCompactionConfig({
+      ...(typeof enabled === 'boolean' ? { enabled } : {}),
+      ...(typeof thresholdTokens === 'number' ? { thresholdTokens } : {}),
+      ...(typeof keepRecentMessages === 'number' ? { keepRecentMessages } : {}),
+      ...(typeof model === 'string' ? { model } : {}),
+      ...(typeof prompt === 'string' ? { prompt } : {}),
+    });
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: getErrorMessage(error, 'Failed to update compaction settings'),
+    });
+  }
+});
 
 export default router;
