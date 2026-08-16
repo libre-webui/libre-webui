@@ -198,7 +198,16 @@ class ChatGenerationService {
     model: string,
     assistantContent: string,
     assistantThinking?: string,
-    providerMetadata?: Record<string, unknown>
+    providerMetadata?: Record<string, unknown>,
+    usage?: { prompt_tokens?: number; completion_tokens?: number },
+    timings?: {
+      /** Whole request, request sent to last chunk. */
+      totalNs?: number;
+      /** Request sent to first token: the provider's think-and-prefill time. */
+      firstTokenNs?: number;
+      /** First token to last token: the actual generation. */
+      generationNs?: number;
+    }
   ): OllamaChatResponse {
     return {
       model,
@@ -210,6 +219,26 @@ class ChatGenerationService {
         ...(providerMetadata ? { providerMetadata } : {}),
       },
       done: true,
+      // Providers report OpenAI-style token counts; the statistics strip
+      // reads Ollama's names, so carry them across rather than showing
+      // "0 tokens" for every provider-backed reply.
+      ...(usage?.prompt_tokens !== undefined
+        ? { prompt_eval_count: usage.prompt_tokens }
+        : {}),
+      ...(usage?.completion_tokens !== undefined
+        ? { eval_count: usage.completion_tokens }
+        : {}),
+      // Providers on this path report counts but no timings, so these are
+      // measured here. They are wall-clock, which includes network time.
+      ...(timings?.totalNs !== undefined
+        ? { total_duration: timings.totalNs }
+        : {}),
+      ...(timings?.firstTokenNs !== undefined
+        ? { prompt_eval_duration: timings.firstTokenNs }
+        : {}),
+      ...(timings?.generationNs !== undefined
+        ? { eval_duration: timings.generationNs }
+        : {}),
     } as OllamaChatResponse;
   }
 
@@ -289,7 +318,8 @@ class ChatGenerationService {
             target.actualModelName,
             assistantContent,
             assistantThinking,
-            pluginResponse.providerMetadata
+            pluginResponse.providerMetadata,
+            pluginResponse.usage
           ),
           assistantContent,
           ...(assistantThinking ? { assistantThinking } : {}),

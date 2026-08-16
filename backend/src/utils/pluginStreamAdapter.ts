@@ -38,11 +38,22 @@ export interface PluginStreamUsage {
   totalTokens?: number;
 }
 
+/**
+ * Generation timings a server reports for itself. llama.cpp and the servers
+ * that copy its shape return these beside `usage`; they are not part of the
+ * OpenAI schema.
+ */
+export interface PluginStreamTimings {
+  promptMs?: number;
+  predictedMs?: number;
+  predictedPerSecond?: number;
+}
+
 export type PluginStreamChunk =
   | { type: 'content'; content: string }
   | { type: 'reasoning'; content: string }
   | { type: 'tool_call'; toolCall: PluginToolCall }
-  | { type: 'usage'; usage: PluginStreamUsage }
+  | { type: 'usage'; usage?: PluginStreamUsage; timings?: PluginStreamTimings }
   | {
       type: 'done';
       doneReason?: string;
@@ -213,8 +224,13 @@ export async function* streamOpenAICompatibleResponse(
           throw new Error(`Plugin API error: ${providerError}`);
         }
         const usage = parseOpenAIUsage(payload.usage);
-        if (usage) {
-          yield { type: 'usage', usage };
+        const timings = parseProviderTimings(payload.timings);
+        if (usage || timings) {
+          yield {
+            type: 'usage',
+            ...(usage ? { usage } : {}),
+            ...(timings ? { timings } : {}),
+          };
         }
         const delta = getChoiceDelta(payload);
         if (!delta) {
@@ -279,6 +295,32 @@ function pluginStreamError(
           ? payload.message
           : undefined;
   return message?.slice(0, 500);
+}
+
+/**
+ * Servers in the llama.cpp family report their own generation timings beside
+ * `usage`. They are not part of the OpenAI schema, so they arrive untyped and
+ * would otherwise be dropped, leaving speed and durations blank.
+ */
+function parseProviderTimings(value: unknown): PluginStreamTimings | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  const numeric = (key: string): number | undefined =>
+    typeof record[key] === 'number' && Number.isFinite(record[key] as number)
+      ? (record[key] as number)
+      : undefined;
+  const timings: PluginStreamTimings = {
+    ...(numeric('prompt_ms') !== undefined
+      ? { promptMs: numeric('prompt_ms') }
+      : {}),
+    ...(numeric('predicted_ms') !== undefined
+      ? { predictedMs: numeric('predicted_ms') }
+      : {}),
+    ...(numeric('predicted_per_second') !== undefined
+      ? { predictedPerSecond: numeric('predicted_per_second') }
+      : {}),
+  };
+  return Object.keys(timings).length > 0 ? timings : undefined;
 }
 
 function parseOpenAIUsage(value: unknown): PluginStreamUsage | undefined {

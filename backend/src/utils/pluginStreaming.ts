@@ -49,6 +49,16 @@ export type PluginStreamChunk =
         completionTokens?: number;
         totalTokens?: number;
       };
+      /**
+       * Server-reported timings. llama.cpp and its relatives return these
+       * alongside usage; measuring them here instead would only report our
+       * own network round trip.
+       */
+      timings?: {
+        promptMs?: number;
+        predictedMs?: number;
+        predictedPerSecond?: number;
+      };
     }
   | {
       type: 'done';

@@ -115,6 +115,37 @@ import type { StoredPluginDefinition } from '../persistence/extensionTypes.js';
 
 const logger = createLogger('plugins');
 
+/**
+ * Server-reported generation timings. llama.cpp (and servers that copy its
+ * shape) return this next to `usage` on the OpenAI-compatible endpoint; it is
+ * not part of the OpenAI schema, so it arrives untyped.
+ */
+const readProviderTimings = (
+  payload: unknown
+):
+  | { promptMs?: number; predictedMs?: number; predictedPerSecond?: number }
+  | undefined => {
+  const timings = (payload as { timings?: unknown } | null)?.timings;
+  if (!timings || typeof timings !== 'object') return undefined;
+  const record = timings as Record<string, unknown>;
+  const numeric = (key: string): number | undefined =>
+    typeof record[key] === 'number' && Number.isFinite(record[key] as number)
+      ? (record[key] as number)
+      : undefined;
+  const result = {
+    ...(numeric('prompt_ms') !== undefined
+      ? { promptMs: numeric('prompt_ms') }
+      : {}),
+    ...(numeric('predicted_ms') !== undefined
+      ? { predictedMs: numeric('predicted_ms') }
+      : {}),
+    ...(numeric('predicted_per_second') !== undefined
+      ? { predictedPerSecond: numeric('predicted_per_second') }
+      : {}),
+  };
+  return Object.keys(result).length > 0 ? result : undefined;
+};
+
 const hasSymlinkPathComponentFromRoot = (
   root: string,
   target: string
@@ -2585,6 +2616,10 @@ export class PluginService {
         max_tokens: params.maxTokens,
         stop: options.stop,
         stream: true,
+        // OpenAI-compatible servers omit token counts from a stream unless
+        // they are asked for, which is why provider-backed replies used to
+        // report zero tokens.
+        stream_options: { include_usage: true },
       };
     }
 
@@ -2675,14 +2710,20 @@ export class PluginService {
               },
             };
           }
-          if (normalized.usage) {
+          const providerTimings = readProviderTimings(normalized);
+          if (normalized.usage || providerTimings) {
             const usageChunk: PluginStreamChunk = {
               type: 'usage',
-              usage: {
-                promptTokens: normalized.usage.prompt_tokens,
-                completionTokens: normalized.usage.completion_tokens,
-                totalTokens: normalized.usage.total_tokens,
-              },
+              ...(normalized.usage
+                ? {
+                    usage: {
+                      promptTokens: normalized.usage.prompt_tokens,
+                      completionTokens: normalized.usage.completion_tokens,
+                      totalTokens: normalized.usage.total_tokens,
+                    },
+                  }
+                : {}),
+              ...(providerTimings ? { timings: providerTimings } : {}),
             };
             captureUsage(usageChunk);
             yield usageChunk;
