@@ -26,6 +26,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   X,
   Bot,
+  Cable,
   Database,
   HardDrive,
   Palette,
@@ -51,6 +52,7 @@ import { SettingsImageGenerationTab } from '@/components/settings/SettingsImageG
 import { SettingsModelsTab } from '@/components/settings/SettingsModelsTab';
 import { SettingsShortcutsTab } from '@/components/settings/SettingsShortcutsTab';
 import { SettingsPluginsTab } from '@/components/settings/SettingsPluginsTab';
+import { SettingsConnectionsTab } from '@/components/settings/SettingsConnectionsTab';
 import { SettingsSearchTab } from '@/components/settings/SettingsSearchTab';
 import { SettingsSessionsTab } from '@/components/settings/SettingsSessionsTab';
 import { SettingsApiKeysTab } from '@/components/settings/SettingsApiKeysTab';
@@ -1584,6 +1586,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     tts: 'voice speech audio speak read aloud',
     'image-gen': 'image generation size quality style',
     plugins: 'api key provider connection openai anthropic groq gemini',
+    connections: 'provider endpoint ollama openai compatible api key models',
     search: 'web search searxng internet browse sources',
     shortcuts: 'keyboard keys hotkeys shortcut command palette',
     sessions: 'sessions devices sign out logout revoke security login',
@@ -1661,7 +1664,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       tabs: [
         { id: 'plugins', label: t('settings.tabs.plugins'), icon: Puzzle },
         ...(isSettingsAdmin
-          ? [{ id: 'search', label: t('settings.tabs.search'), icon: Globe }]
+          ? [
+              {
+                id: 'connections',
+                label: t('settings.tabs.connections', 'Connections'),
+                icon: Cable,
+              },
+              { id: 'search', label: t('settings.tabs.search'), icon: Globe },
+            ]
           : []),
       ],
     },
@@ -1769,6 +1779,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       case 'search':
         return <SettingsSearchTab />;
+
+      case 'connections':
+        return <SettingsConnectionsTab />;
 
       case 'sessions':
         return <SettingsSessionsTab />;
