@@ -92,14 +92,16 @@ function StreamingCodeBlock({
     }
   }, [displayedContent, highlightSource]);
 
-  const handleScroll = () => {
+  // Reads refs only, so it is stable: the memoised pre below depends on it
+  // and must keep its identity across streamed chunks.
+  const handleScroll = React.useCallback(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
 
     const distanceFromBottom =
       viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
     shouldFollowTailRef.current = distanceFromBottom < 24;
-  };
+  }, []);
 
   // The highlighter renders through this pre so the scroll viewport, the
   // tail-follow behavior, and the `pre code` structure stay identical to the
@@ -122,7 +124,7 @@ function StreamingCodeBlock({
       </pre>
     );
     return PreTag;
-  }, []);
+  }, [setViewport, handleScroll]);
 
   const plainBody = (
     <pre
