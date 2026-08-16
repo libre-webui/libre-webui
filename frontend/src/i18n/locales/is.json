@@ -194,10 +194,6 @@
       "evening": "Gott kvöld",
       "night": "Góða nótt"
     },
-    "overlay": {
-      "title": "Spjall",
-      "close": "Loka fljótandi spjalli"
-    },
     "followUp": "Framhald",
     "welcome": {
       "helpToday": "Hvernig get ég aðstoðað í dag?",
@@ -1727,11 +1723,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Útgáfa {{current}} af {{total}}",
     "previousVersion": "Fyrri útgáfa",
-    "nextVersion": "Næsta útgáfa",
-    "fullscreen": "Fullskjár",
-    "exitFullscreen": "Hætta í fullskjá",
-    "showChatOverlay": "Sýna fljótandi spjall",
-    "hideChatOverlay": "Fela fljótandi spjall"
+    "nextVersion": "Næsta útgáfa"
   },
   "personaImportExport": {
     "title": "Flytja inn og út persónur",

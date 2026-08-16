@@ -194,10 +194,6 @@
       "evening": "Godaften",
       "night": "Godnat"
     },
-    "overlay": {
-      "title": "Chat",
-      "close": "Luk den flydende chat"
-    },
     "followUp": "Opfølgning",
     "welcome": {
       "helpToday": "Hvad kan jeg hjælpe med i dag?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} af {{total}}",
     "previousVersion": "Forrige version",
-    "nextVersion": "Næste version",
-    "fullscreen": "Fuld skærm",
-    "exitFullscreen": "Forlad fuld skærm",
-    "showChatOverlay": "Vis flydende chat",
-    "hideChatOverlay": "Skjul flydende chat"
+    "nextVersion": "Næste version"
   },
   "personaImportExport": {
     "title": "Import og eksport af personaer",

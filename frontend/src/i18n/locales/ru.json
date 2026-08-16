@@ -194,10 +194,6 @@
       "evening": "Добрый вечер",
       "night": "Доброй ночи"
     },
-    "overlay": {
-      "title": "Чат",
-      "close": "Закрыть плавающий чат"
-    },
     "followUp": "Продолжить",
     "welcome": {
       "helpToday": "Чем могу помочь сегодня?",
@@ -1727,11 +1723,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Версия {{current}} из {{total}}",
     "previousVersion": "Предыдущая версия",
-    "nextVersion": "Следующая версия",
-    "fullscreen": "Во весь экран",
-    "exitFullscreen": "Выйти из полноэкранного режима",
-    "showChatOverlay": "Показать плавающий чат",
-    "hideChatOverlay": "Скрыть плавающий чат"
+    "nextVersion": "Следующая версия"
   },
   "personaImportExport": {
     "title": "Импорт и экспорт персон",

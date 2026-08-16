@@ -194,10 +194,6 @@
       "evening": "晚上好",
       "night": "夜深了"
     },
-    "overlay": {
-      "title": "聊天",
-      "close": "关闭悬浮聊天"
-    },
     "followUp": "后续问题",
     "welcome": {
       "helpToday": "今天我能帮您什么？",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "第 {{current}} 版，共 {{total}} 版",
     "previousVersion": "上一版本",
-    "nextVersion": "下一版本",
-    "fullscreen": "全屏",
-    "exitFullscreen": "退出全屏",
-    "showChatOverlay": "显示悬浮聊天",
-    "hideChatOverlay": "隐藏悬浮聊天"
+    "nextVersion": "下一版本"
   },
   "personaImportExport": {
     "title": "导入和导出角色",

@@ -194,10 +194,6 @@
       "evening": "God kväll",
       "night": "God natt"
     },
-    "overlay": {
-      "title": "Chatt",
-      "close": "Stäng flytande chatt"
-    },
     "followUp": "Uppföljning",
     "welcome": {
       "helpToday": "Vad kan jag hjälpa till med idag?",
@@ -1727,11 +1723,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} av {{total}}",
     "previousVersion": "Föregående version",
-    "nextVersion": "Nästa version",
-    "fullscreen": "Helskärm",
-    "exitFullscreen": "Avsluta helskärm",
-    "showChatOverlay": "Visa flytande chatt",
-    "hideChatOverlay": "Dölj flytande chatt"
+    "nextVersion": "Nästa version"
   },
   "personaImportExport": {
     "title": "Importera och exportera personas",

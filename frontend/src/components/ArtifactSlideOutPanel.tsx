@@ -33,9 +33,6 @@ import {
   GripVertical,
   ChevronLeft,
   ChevronRight,
-  Maximize2,
-  MessageSquare,
-  Minimize2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
@@ -71,12 +68,8 @@ export const ArtifactSlideOutPanel: React.FC = () => {
   const {
     artifactPanelOpen,
     artifactPanelArtifact,
-    artifactPanelFullscreen,
     openArtifactPanel,
     closeArtifactPanel,
-    setArtifactPanelFullscreen,
-    chatOverlayOpen,
-    setChatOverlayOpen,
     theme,
   } = useAppStore();
   const currentSession = useChatStore(state => state.currentSession);
@@ -230,20 +223,10 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     return () => window.removeEventListener('resize', handleWindowResize);
   }, [panelWidth]);
 
-  // Events originating inside the floating chat overlay belong to the chat,
-  // not the panel: they must not close it.
-  const isFloatingChatOverlayEvent = (target: EventTarget | null) =>
-    target instanceof Element &&
-    Boolean(target.closest('[data-testid="floating-chat-overlay"]'));
-
   // Handle escape key to close panel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.key === 'Escape' &&
-        artifactPanelOpen &&
-        !isFloatingChatOverlayEvent(e.target)
-      ) {
+      if (e.key === 'Escape' && artifactPanelOpen) {
         closeArtifactPanel();
       }
     };
@@ -255,7 +238,6 @@ export const ArtifactSlideOutPanel: React.FC = () => {
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (isResizing) return; // Don't close while resizing
-      if (isFloatingChatOverlayEvent(e.target)) return;
 
       if (
         panelRef.current &&
@@ -523,10 +505,9 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     );
   };
 
-  // On mobile or in fullscreen, use full width
+  // On mobile, use full width
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-  const effectiveWidth =
-    isMobile || artifactPanelFullscreen ? '100%' : `${panelWidth}px`;
+  const effectiveWidth = isMobile ? '100%' : `${panelWidth}px`;
 
   const panel = (
     <>
@@ -561,8 +542,8 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             : 'translate-x-full rtl:-translate-x-full'
         )}
       >
-        {/* Resize Handle - only show on non-mobile, non-fullscreen */}
-        {!isMobile && !artifactPanelFullscreen && (
+        {/* Resize Handle - only show on non-mobile */}
+        {!isMobile && (
           <div
             onPointerDown={handleResizeStart}
             data-testid='artifact-resize-handle'
@@ -722,44 +703,6 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                 {t('artifacts.open')}
               </Button>
             )}
-
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() =>
-                setArtifactPanelFullscreen(!artifactPanelFullscreen)
-              }
-              aria-pressed={artifactPanelFullscreen}
-              data-testid='artifact-fullscreen-toggle'
-              className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
-              title={
-                artifactPanelFullscreen
-                  ? t('artifacts.exitFullscreen')
-                  : t('artifacts.fullscreen')
-              }
-            >
-              {artifactPanelFullscreen ? (
-                <Minimize2 className='h-3.5 w-3.5' />
-              ) : (
-                <Maximize2 className='h-3.5 w-3.5' />
-              )}
-            </Button>
-
-            <Button
-              variant={chatOverlayOpen ? 'primary' : 'ghost'}
-              size='sm'
-              onClick={() => setChatOverlayOpen(!chatOverlayOpen)}
-              aria-pressed={chatOverlayOpen}
-              data-testid='artifact-chat-overlay-toggle'
-              className='h-8 w-8 p-0'
-              title={
-                chatOverlayOpen
-                  ? t('artifacts.hideChatOverlay')
-                  : t('artifacts.showChatOverlay')
-              }
-            >
-              <MessageSquare className='h-3.5 w-3.5' />
-            </Button>
           </div>
         </div>
 
@@ -782,7 +725,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               {t('artifacts.created')}:{' '}
               {new Date(artifact.createdAt).toLocaleString()}
             </div>
-            {!isMobile && !artifactPanelFullscreen && (
+            {!isMobile && (
               <div className='text-xs text-gray-400 dark:text-dark-500'>
                 {t('artifacts.dragEdgeToResize')}
               </div>

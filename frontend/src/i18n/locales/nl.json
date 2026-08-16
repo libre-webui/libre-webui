@@ -194,10 +194,6 @@
       "evening": "Goedenavond",
       "night": "Goedenacht"
     },
-    "overlay": {
-      "title": "Chat",
-      "close": "Zwevende chat sluiten"
-    },
     "followUp": "Vervolg",
     "welcome": {
       "helpToday": "Waarmee kan ik u vandaag helpen?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Versie {{current}} van {{total}}",
     "previousVersion": "Vorige versie",
-    "nextVersion": "Volgende versie",
-    "fullscreen": "Volledig scherm",
-    "exitFullscreen": "Volledig scherm verlaten",
-    "showChatOverlay": "Zwevende chat tonen",
-    "hideChatOverlay": "Zwevende chat verbergen"
+    "nextVersion": "Volgende versie"
   },
   "personaImportExport": {
     "title": "Personas importeren & exporteren",

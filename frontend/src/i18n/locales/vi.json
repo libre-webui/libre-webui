@@ -194,10 +194,6 @@
       "evening": "Chào buổi tối",
       "night": "Chúc ngủ ngon"
     },
-    "overlay": {
-      "title": "Chat",
-      "close": "Đóng cửa sổ chat nổi"
-    },
     "followUp": "Tiếp tục",
     "welcome": {
       "helpToday": "Tôi có thể giúp gì cho bạn hôm nay?",
@@ -1727,11 +1723,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Phiên bản {{current}} / {{total}}",
     "previousVersion": "Phiên bản trước",
-    "nextVersion": "Phiên bản sau",
-    "fullscreen": "Toàn màn hình",
-    "exitFullscreen": "Thoát toàn màn hình",
-    "showChatOverlay": "Hiện cửa sổ chat nổi",
-    "hideChatOverlay": "Ẩn cửa sổ chat nổi"
+    "nextVersion": "Phiên bản sau"
   },
   "personaImportExport": {
     "title": "Nhập & Xuất Personas",

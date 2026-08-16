@@ -194,10 +194,6 @@
       "evening": "Dobrý večer",
       "night": "Dobrou noc"
     },
-    "overlay": {
-      "title": "Chat",
-      "close": "Zavřít plovoucí chat"
-    },
     "followUp": "Navázat",
     "welcome": {
       "helpToday": "S čím vám mohu dnes pomoci?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Verze {{current}} z {{total}}",
     "previousVersion": "Předchozí verze",
-    "nextVersion": "Další verze",
-    "fullscreen": "Celá obrazovka",
-    "exitFullscreen": "Ukončit celou obrazovku",
-    "showChatOverlay": "Zobrazit plovoucí chat",
-    "hideChatOverlay": "Skrýt plovoucí chat"
+    "nextVersion": "Další verze"
   },
   "personaImportExport": {
     "title": "Import a export person",

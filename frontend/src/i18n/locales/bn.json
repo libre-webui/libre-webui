@@ -194,10 +194,6 @@
       "evening": "শুভ সন্ধ্যা",
       "night": "শুভ রাত্রি"
     },
-    "overlay": {
-      "title": "চ্যাট",
-      "close": "ভাসমান চ্যাট বন্ধ করুন"
-    },
     "followUp": "ফলো-আপ",
     "welcome": {
       "helpToday": "আজ আমি কীভাবে সাহায্য করতে পারি?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "সংস্করণ {{current}} / {{total}}",
     "previousVersion": "পূর্ববর্তী সংস্করণ",
-    "nextVersion": "পরবর্তী সংস্করণ",
-    "fullscreen": "পূর্ণ পর্দা",
-    "exitFullscreen": "পূর্ণ পর্দা থেকে বেরিয়ে আসুন",
-    "showChatOverlay": "ভাসমান চ্যাট দেখান",
-    "hideChatOverlay": "ভাসমান চ্যাট লুকান"
+    "nextVersion": "পরবর্তী সংস্করণ"
   },
   "personaImportExport": {
     "title": "পার্সোনা ইম্পোর্ট এবং এক্সপোর্ট",

@@ -194,10 +194,6 @@
       "evening": "Guten Abend",
       "night": "Gute Nacht"
     },
-    "overlay": {
-      "title": "Chat",
-      "close": "Schwebenden Chat schließen"
-    },
     "followUp": "Weiterführend",
     "welcome": {
       "helpToday": "Wie kann ich Ihnen heute helfen?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} von {{total}}",
     "previousVersion": "Vorherige Version",
-    "nextVersion": "Nächste Version",
-    "fullscreen": "Vollbild",
-    "exitFullscreen": "Vollbild beenden",
-    "showChatOverlay": "Schwebenden Chat anzeigen",
-    "hideChatOverlay": "Schwebenden Chat ausblenden"
+    "nextVersion": "Nächste Version"
   },
   "personaImportExport": {
     "title": "Personas importieren & exportieren",

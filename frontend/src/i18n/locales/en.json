@@ -194,10 +194,6 @@
       "evening": "Good evening",
       "night": "Good night"
     },
-    "overlay": {
-      "title": "Chat",
-      "close": "Close floating chat"
-    },
     "followUp": "Follow up",
     "welcome": {
       "helpToday": "What can I help with today?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} of {{total}}",
     "previousVersion": "Previous version",
-    "nextVersion": "Next version",
-    "fullscreen": "Fullscreen",
-    "exitFullscreen": "Exit fullscreen",
-    "showChatOverlay": "Show floating chat",
-    "hideChatOverlay": "Hide floating chat"
+    "nextVersion": "Next version"
   },
   "personaImportExport": {
     "title": "Import & Export Personas",

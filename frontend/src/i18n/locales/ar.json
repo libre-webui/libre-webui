@@ -194,10 +194,6 @@
       "evening": "مساء الخير",
       "night": "تصبح على خير"
     },
-    "overlay": {
-      "title": "محادثة",
-      "close": "إغلاق المحادثة العائمة"
-    },
     "followUp": "متابعة",
     "welcome": {
       "helpToday": "كيف يمكنني مساعدتك اليوم؟",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "الإصدار {{current}} من {{total}}",
     "previousVersion": "الإصدار السابق",
-    "nextVersion": "الإصدار التالي",
-    "fullscreen": "ملء الشاشة",
-    "exitFullscreen": "إنهاء ملء الشاشة",
-    "showChatOverlay": "إظهار المحادثة العائمة",
-    "hideChatOverlay": "إخفاء المحادثة العائمة"
+    "nextVersion": "الإصدار التالي"
   },
   "personaImportExport": {
     "title": "استيراد وتصدير الشخصيات",

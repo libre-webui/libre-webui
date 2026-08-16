@@ -194,10 +194,6 @@
       "evening": "शुभ संध्या",
       "night": "शुभ रात्रि"
     },
-    "overlay": {
-      "title": "चैट",
-      "close": "तैरती चैट बंद करें"
-    },
     "followUp": "आगे पूछें",
     "welcome": {
       "helpToday": "आज मैं किसमें मदद कर सकता हूँ?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "संस्करण {{current}} / {{total}}",
     "previousVersion": "पिछला संस्करण",
-    "nextVersion": "अगला संस्करण",
-    "fullscreen": "पूर्ण स्क्रीन",
-    "exitFullscreen": "पूर्ण स्क्रीन से बाहर निकलें",
-    "showChatOverlay": "तैरती चैट दिखाएँ",
-    "hideChatOverlay": "तैरती चैट छिपाएँ"
+    "nextVersion": "अगला संस्करण"
   },
   "personaImportExport": {
     "title": "पर्सोना आयात और निर्यात",

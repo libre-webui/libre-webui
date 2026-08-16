@@ -194,10 +194,6 @@
       "evening": "こんばんは",
       "night": "おやすみなさい"
     },
-    "overlay": {
-      "title": "チャット",
-      "close": "フローティングチャットを閉じる"
-    },
     "followUp": "フォローアップ",
     "welcome": {
       "helpToday": "今日は何をお手伝いしましょうか？",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "バージョン {{current}} / {{total}}",
     "previousVersion": "前のバージョン",
-    "nextVersion": "次のバージョン",
-    "fullscreen": "全画面表示",
-    "exitFullscreen": "全画面表示を終了",
-    "showChatOverlay": "フローティングチャットを表示",
-    "hideChatOverlay": "フローティングチャットを非表示"
+    "nextVersion": "次のバージョン"
   },
   "personaImportExport": {
     "title": "ペルソナのインポート＆エクスポート",

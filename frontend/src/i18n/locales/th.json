@@ -194,10 +194,6 @@
       "evening": "สวัสดีตอนเย็น",
       "night": "สวัสดีตอนดึก"
     },
-    "overlay": {
-      "title": "แชท",
-      "close": "ปิดแชทลอย"
-    },
     "followUp": "ติดตามต่อ",
     "welcome": {
       "helpToday": "วันนี้ฉันช่วยอะไรได้บ้าง?",
@@ -1727,11 +1723,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "เวอร์ชัน {{current}} จาก {{total}}",
     "previousVersion": "เวอร์ชันก่อนหน้า",
-    "nextVersion": "เวอร์ชันถัดไป",
-    "fullscreen": "เต็มหน้าจอ",
-    "exitFullscreen": "ออกจากโหมดเต็มหน้าจอ",
-    "showChatOverlay": "แสดงแชทลอย",
-    "hideChatOverlay": "ซ่อนแชทลอย"
+    "nextVersion": "เวอร์ชันถัดไป"
   },
   "personaImportExport": {
     "title": "นำเข้าและส่งออกเพอร์โซน่า",

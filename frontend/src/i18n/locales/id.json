@@ -194,10 +194,6 @@
       "evening": "Selamat sore",
       "night": "Selamat malam"
     },
-    "overlay": {
-      "title": "Chat",
-      "close": "Tutup chat mengambang"
-    },
     "followUp": "Tindak lanjut",
     "welcome": {
       "helpToday": "Apa yang bisa saya bantu hari ini?",
@@ -1727,11 +1723,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Versi {{current}} dari {{total}}",
     "previousVersion": "Versi sebelumnya",
-    "nextVersion": "Versi berikutnya",
-    "fullscreen": "Layar penuh",
-    "exitFullscreen": "Keluar dari layar penuh",
-    "showChatOverlay": "Tampilkan chat mengambang",
-    "hideChatOverlay": "Sembunyikan chat mengambang"
+    "nextVersion": "Versi berikutnya"
   },
   "personaImportExport": {
     "title": "Impor & Ekspor Persona",

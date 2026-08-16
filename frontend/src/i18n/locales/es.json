@@ -194,10 +194,6 @@
       "evening": "Buenas tardes",
       "night": "Buenas noches"
     },
-    "overlay": {
-      "title": "Chat",
-      "close": "Cerrar el chat flotante"
-    },
     "followUp": "Continuar",
     "welcome": {
       "helpToday": "¿En qué puedo ayudarte hoy?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Versión {{current}} de {{total}}",
     "previousVersion": "Versión anterior",
-    "nextVersion": "Versión siguiente",
-    "fullscreen": "Pantalla completa",
-    "exitFullscreen": "Salir de pantalla completa",
-    "showChatOverlay": "Mostrar el chat flotante",
-    "hideChatOverlay": "Ocultar el chat flotante"
+    "nextVersion": "Versión siguiente"
   },
   "personaImportExport": {
     "title": "Importar y exportar personas",

@@ -51,14 +51,8 @@ interface AppState {
   // Artifact Panel
   artifactPanelOpen: boolean;
   artifactPanelArtifact: Artifact | null;
-  artifactPanelFullscreen: boolean;
   openArtifactPanel: (artifact: Artifact) => void;
   closeArtifactPanel: () => void;
-  setArtifactPanelFullscreen: (fullscreen: boolean) => void;
-
-  // Floating chat overlay (rendered by ChatPage over the artifact panel)
-  chatOverlayOpen: boolean;
-  setChatOverlayOpen: (open: boolean) => void;
 
   // User preferences
   preferences: UserPreferences;
@@ -178,21 +172,10 @@ export const useAppStore = create<AppState>()(
       // Artifact Panel
       artifactPanelOpen: false,
       artifactPanelArtifact: null,
-      artifactPanelFullscreen: false,
       openArtifactPanel: artifact =>
         set({ artifactPanelOpen: true, artifactPanelArtifact: artifact }),
       closeArtifactPanel: () =>
-        set({
-          artifactPanelOpen: false,
-          artifactPanelArtifact: null,
-          artifactPanelFullscreen: false,
-        }),
-      setArtifactPanelFullscreen: fullscreen =>
-        set({ artifactPanelFullscreen: fullscreen }),
-
-      // Floating chat overlay
-      chatOverlayOpen: false,
-      setChatOverlayOpen: open => set({ chatOverlayOpen: open }),
+        set({ artifactPanelOpen: false, artifactPanelArtifact: null }),
 
       // User preferences
       preferences: {

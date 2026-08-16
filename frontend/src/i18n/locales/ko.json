@@ -194,10 +194,6 @@
       "evening": "좋은 저녁입니다",
       "night": "안녕히 주무세요"
     },
-    "overlay": {
-      "title": "채팅",
-      "close": "떠 있는 채팅 닫기"
-    },
     "followUp": "후속 질문",
     "welcome": {
       "helpToday": "오늘 무엇을 도와드릴까요?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "버전 {{current}} / {{total}}",
     "previousVersion": "이전 버전",
-    "nextVersion": "다음 버전",
-    "fullscreen": "전체 화면",
-    "exitFullscreen": "전체 화면 종료",
-    "showChatOverlay": "떠 있는 채팅 표시",
-    "hideChatOverlay": "떠 있는 채팅 숨기기"
+    "nextVersion": "다음 버전"
   },
   "personaImportExport": {
     "title": "페르소나 가져오기 및 내보내기",

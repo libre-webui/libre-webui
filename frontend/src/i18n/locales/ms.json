@@ -194,10 +194,6 @@
       "evening": "Selamat petang",
       "night": "Selamat malam"
     },
-    "overlay": {
-      "title": "Sembang",
-      "close": "Tutup sembang terapung"
-    },
     "followUp": "Susulan",
     "welcome": {
       "helpToday": "Apa yang boleh saya bantu hari ini?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Versi {{current}} daripada {{total}}",
     "previousVersion": "Versi sebelumnya",
-    "nextVersion": "Versi seterusnya",
-    "fullscreen": "Skrin penuh",
-    "exitFullscreen": "Keluar skrin penuh",
-    "showChatOverlay": "Tunjukkan sembang terapung",
-    "hideChatOverlay": "Sembunyikan sembang terapung"
+    "nextVersion": "Versi seterusnya"
   },
   "personaImportExport": {
     "title": "Import & Eksport Persona",

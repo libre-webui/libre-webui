@@ -194,10 +194,6 @@
       "evening": "Bonsoir",
       "night": "Bonne nuit"
     },
-    "overlay": {
-      "title": "Discussion",
-      "close": "Fermer la discussion flottante"
-    },
     "followUp": "Poursuivre",
     "welcome": {
       "helpToday": "Comment puis-je vous aider aujourd'hui ?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} sur {{total}}",
     "previousVersion": "Version précédente",
-    "nextVersion": "Version suivante",
-    "fullscreen": "Plein écran",
-    "exitFullscreen": "Quitter le plein écran",
-    "showChatOverlay": "Afficher la discussion flottante",
-    "hideChatOverlay": "Masquer la discussion flottante"
+    "nextVersion": "Version suivante"
   },
   "personaImportExport": {
     "title": "Importer et exporter des personas",

@@ -194,10 +194,6 @@
       "evening": "Dobry wieczór",
       "night": "Dobranoc"
     },
-    "overlay": {
-      "title": "Czat",
-      "close": "Zamknij pływający czat"
-    },
     "followUp": "Kontynuacja",
     "welcome": {
       "helpToday": "W czym mogę dziś pomóc?",
@@ -1946,11 +1942,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Wersja {{current}} z {{total}}",
     "previousVersion": "Poprzednia wersja",
-    "nextVersion": "Następna wersja",
-    "fullscreen": "Pełny ekran",
-    "exitFullscreen": "Zamknij pełny ekran",
-    "showChatOverlay": "Pokaż pływający czat",
-    "hideChatOverlay": "Ukryj pływający czat"
+    "nextVersion": "Następna wersja"
   },
   "personaImportExport": {
     "title": "Import i eksport person",

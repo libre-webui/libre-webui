@@ -194,10 +194,6 @@
       "evening": "Buonasera",
       "night": "Buonanotte"
     },
-    "overlay": {
-      "title": "Chat",
-      "close": "Chiudi la chat flottante"
-    },
     "followUp": "Approfondisci",
     "welcome": {
       "helpToday": "Come posso aiutarti oggi?",
@@ -1727,11 +1723,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Versione {{current}} di {{total}}",
     "previousVersion": "Versione precedente",
-    "nextVersion": "Versione successiva",
-    "fullscreen": "Schermo intero",
-    "exitFullscreen": "Esci da schermo intero",
-    "showChatOverlay": "Mostra chat flottante",
-    "hideChatOverlay": "Nascondi chat flottante"
+    "nextVersion": "Versione successiva"
   },
   "personaImportExport": {
     "title": "Importa ed esporta personas",

@@ -194,10 +194,6 @@
       "evening": "İyi akşamlar",
       "night": "İyi geceler"
     },
-    "overlay": {
-      "title": "Sohbet",
-      "close": "Yüzen sohbeti kapat"
-    },
     "followUp": "Devam et",
     "welcome": {
       "helpToday": "Bugün size nasıl yardımcı olabilirim?",
@@ -1727,11 +1723,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Sürüm {{current}} / {{total}}",
     "previousVersion": "Önceki sürüm",
-    "nextVersion": "Sonraki sürüm",
-    "fullscreen": "Tam ekran",
-    "exitFullscreen": "Tam ekrandan çık",
-    "showChatOverlay": "Yüzen sohbeti göster",
-    "hideChatOverlay": "Yüzen sohbeti gizle"
+    "nextVersion": "Sonraki sürüm"
   },
   "personaImportExport": {
     "title": "Personaları İçe ve Dışa Aktar",
