@@ -136,12 +136,25 @@ class WebSocketService {
         socket.onclose = () => {
           logger.debug('WebSocket disconnected');
           if (this.ws === socket) this.ws = null;
-          if (this.shouldReconnect && epoch === this.connectionEpoch) {
+          if (epoch !== this.connectionEpoch) {
+            // Settle a superseded attempt so its awaiter never hangs when
+            // the browser skips the error event for a pre-open close.
+            resolve();
+            return;
+          }
+          if (this.shouldReconnect) {
             this.attemptReconnect();
           }
         };
 
         socket.onerror = error => {
+          if (epoch !== this.connectionEpoch) {
+            // A newer connect superseded this attempt (login re-dial,
+            // explicit disconnect). Being replaced is not a failure of
+            // the caller's current connection.
+            resolve();
+            return;
+          }
           logger.error('WebSocket error:', error);
           reject(error);
         };
@@ -159,6 +172,17 @@ class WebSocketService {
       this.ws.close();
       this.ws = null;
     }
+  }
+
+  /**
+   * Atomically supersede any open socket or in-flight attempt and dial
+   * fresh. Callers must use this instead of pairing disconnect() with
+   * connect(): that pairing races other connect callers, whose awaited
+   * attempt would be killed mid-handshake and reject.
+   */
+  reconnect(): Promise<void> {
+    this.disconnect();
+    return this.connect();
   }
 
   send(message: WebSocketMessage | Record<string, unknown>): boolean {

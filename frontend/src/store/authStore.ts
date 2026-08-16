@@ -98,10 +98,18 @@ export const useAuthStore = create<AuthState>()(
 
             logger.debug('Reinitializing app after login...');
 
-            // Reconnect WebSocket with the new token
+            // Reconnect WebSocket with the new token. A WebSocket problem
+            // must not abort the data loading below — streaming recovers
+            // through its own reconnect loop.
             logger.debug('Reconnecting WebSocket with auth token...');
-            websocketService.disconnect();
-            await websocketService.connect();
+            try {
+              await websocketService.reconnect();
+            } catch (websocketError) {
+              logger.warn(
+                'WebSocket reconnect after login failed; continuing app initialization:',
+                websocketError
+              );
+            }
 
             // Ollama is optional when the user has a configured plugin model.
             // Its health check must not block the rest of post-login loading.
