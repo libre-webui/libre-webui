@@ -56,6 +56,63 @@ const requestService = new ChatRequestService({
   preferencesService,
 });
 
+/**
+ * A completion event has to fit the durable payload ceiling, and a long reply
+ * with reasoning does not. The message itself is persisted in the same
+ * transaction, so an oversized event drops the bulky fields and marks itself
+ * truncated; a client that was not streaming reloads the session instead of
+ * reading them off the event.
+ */
+const boundCompletionPayload = (value: {
+  type: 'done';
+  messageId: string;
+  content: string;
+  thinking?: string;
+  statistics?: unknown;
+  providerMetadata?: unknown;
+}): Record<string, unknown> => {
+  const BUDGET_BYTES = 48 * 1024;
+  const size = (candidate: unknown): number =>
+    Buffer.byteLength(JSON.stringify(candidate), 'utf8');
+  if (size(value) <= BUDGET_BYTES) return value;
+
+  // The payload must hold JSON values only, so bulky fields are removed
+  // rather than blanked with undefined.
+  const withoutThinking: Record<string, unknown> = {
+    ...value,
+    truncated: true,
+  };
+  delete withoutThinking.thinking;
+  if (size(withoutThinking) <= BUDGET_BYTES) return withoutThinking;
+
+  return { ...withoutThinking, content: '' };
+};
+
+/**
+ * Split text into pieces that each fit a byte budget, never cutting a
+ * character in half. A provider is free to emit one enormous delta, and a
+ * single event that exceeds the durable payload ceiling would fail the whole
+ * generation.
+ */
+const sliceByBytes = (text: string, maxBytes: number): string[] => {
+  if (Buffer.byteLength(text, 'utf8') <= maxBytes) return text ? [text] : [];
+  const pieces: string[] = [];
+  let current = '';
+  let currentBytes = 0;
+  for (const character of text) {
+    const width = Buffer.byteLength(character, 'utf8');
+    if (currentBytes + width > maxBytes) {
+      pieces.push(current);
+      current = '';
+      currentBytes = 0;
+    }
+    current += character;
+    currentBytes += width;
+  }
+  if (current) pieces.push(current);
+  return pieces;
+};
+
 const streamId = (sessionId: string): string => `chat:${sessionId}`;
 
 const append = async (
@@ -121,23 +178,45 @@ const streamGeneratedAssistant = async (
   // Chunk events carry only their delta. Persisting the accumulated total in
   // every event made storage quadratic in message length; consumers rebuild
   // the message by replaying the generation's ordered deltas.
+  // Leaves room for the event envelope inside the durable payload ceiling.
+  const MAX_DELTA_BYTES = 32 * 1024;
   const publish = async (batch: {
     contentDelta: string;
     thinkingDelta: string;
   }): Promise<void> => {
     await context.assertSideEffectAllowed();
-    await append(
-      input,
-      'chat.stream.v1',
-      {
-        type: 'chunk',
-        messageId: input.assistantMessageId,
-        content: batch.contentDelta,
-        ...(batch.thinkingDelta ? { thinking: batch.thinkingDelta } : {}),
-        done: false,
-      },
-      `attempt:${context.attemptCount}:stream:${++streamEventSequence}`
-    );
+    const emit = async (content: string, thinking?: string): Promise<void> => {
+      await append(
+        input,
+        'chat.stream.v1',
+        {
+          type: 'chunk',
+          messageId: input.assistantMessageId,
+          content,
+          ...(thinking ? { thinking } : {}),
+          done: false,
+        },
+        `attempt:${context.attemptCount}:stream:${++streamEventSequence}`
+      );
+    };
+
+    const fitsInOneEvent =
+      Buffer.byteLength(batch.contentDelta, 'utf8') +
+        Buffer.byteLength(batch.thinkingDelta, 'utf8') <=
+      MAX_DELTA_BYTES;
+    if (fitsInOneEvent) {
+      await emit(batch.contentDelta, batch.thinkingDelta || undefined);
+      return;
+    }
+
+    // Ordered pieces: reasoning first, then the answer, exactly as a
+    // consumer replaying the stream would rebuild them.
+    for (const piece of sliceByBytes(batch.thinkingDelta, MAX_DELTA_BYTES)) {
+      await emit('', piece);
+    }
+    for (const piece of sliceByBytes(batch.contentDelta, MAX_DELTA_BYTES)) {
+      await emit(piece);
+    }
   };
   const streamPublisher = createChatStreamCoalescer(publish);
   const queuePublish = (contentDelta = '', thinkingDelta = ''): void => {
@@ -186,6 +265,11 @@ const streamGeneratedAssistant = async (
       name: string;
       arguments: string;
     }> = [];
+    // Token counts the provider reported; without them the statistics strip
+    // shows nothing for provider-backed replies.
+    let usage: { promptTokens?: number; completionTokens?: number } | undefined;
+    let providerTimings:
+      { promptMs?: number; predictedMs?: number } | undefined;
     try {
       for await (const chunk of pluginService.executePluginStreamRequest(
         prepared.target.actualModelName,
@@ -203,6 +287,10 @@ const streamGeneratedAssistant = async (
           queuePublish('', chunk.content);
         } else if (chunk.type === 'tool_call' && chunk.toolCall) {
           toolCalls.push(chunk.toolCall);
+        } else if (chunk.type === 'usage') {
+          if (chunk.usage) usage = { ...usage, ...chunk.usage };
+          if (chunk.timings)
+            providerTimings = { ...providerTimings, ...chunk.timings };
         } else if (chunk.type === 'done') {
           if (chunk.doneReason?.startsWith('incomplete:')) {
             throw new Error(
@@ -226,7 +314,35 @@ const streamGeneratedAssistant = async (
         prepared.target.actualModelName,
         content,
         thinking || undefined,
-        providerMetadata
+        providerMetadata,
+        {
+          ...(usage?.promptTokens !== undefined
+            ? { prompt_tokens: usage.promptTokens }
+            : {}),
+          ...(usage?.completionTokens !== undefined
+            ? { completion_tokens: usage.completionTokens }
+            : {}),
+        },
+        // The server reports milliseconds; the statistics contract is
+        // nanoseconds, matching Ollama.
+        providerTimings
+          ? {
+              ...(providerTimings.promptMs !== undefined
+                ? { firstTokenNs: providerTimings.promptMs * 1e6 }
+                : {}),
+              ...(providerTimings.predictedMs !== undefined
+                ? { generationNs: providerTimings.predictedMs * 1e6 }
+                : {}),
+              ...(providerTimings.promptMs !== undefined &&
+              providerTimings.predictedMs !== undefined
+                ? {
+                    totalNs:
+                      (providerTimings.promptMs + providerTimings.predictedMs) *
+                      1e6,
+                  }
+                : {}),
+            }
+          : undefined
       ),
       content,
       ...(thinking ? { thinking } : {}),
@@ -478,7 +594,7 @@ class DurableChatGenerationService {
         actorUserId: input.actorUserId,
         payload: {
           mode: 'encrypted',
-          value: {
+          value: boundCompletionPayload({
             type: 'done',
             messageId: input.assistantMessageId,
             content: assistant.content,
@@ -489,7 +605,7 @@ class DurableChatGenerationService {
             ...(assistant.providerMetadata
               ? { providerMetadata: assistant.providerMetadata }
               : {}),
-          },
+          }),
         },
       },
     });

@@ -1205,6 +1205,12 @@ router.post(
       let fullResponse = '';
       let fullThinking = '';
       let assistantProviderMetadata: Record<string, unknown> | undefined;
+      // Token counts a provider reported, in either the streaming or the
+      // non-streaming branch, so the statistics strip is not empty for them.
+      let streamedUsage:
+        { promptTokens?: number; completionTokens?: number } | undefined;
+      let streamedTimings:
+        { promptMs?: number; predictedMs?: number } | undefined;
 
       if (target.providerType === 'agent' && target.providerId) {
         for await (const chunk of agentCliService.executeAgentStreamRequest(
@@ -1287,6 +1293,13 @@ router.post(
               });
             } else if (chunk.type === 'tool_call' && chunk.toolCall) {
               toolCalls.push(chunk.toolCall);
+            } else if (chunk.type === 'usage') {
+              if (chunk.usage) {
+                streamedUsage = { ...streamedUsage, ...chunk.usage };
+              }
+              if (chunk.timings) {
+                streamedTimings = { ...streamedTimings, ...chunk.timings };
+              }
             } else if (chunk.type === 'done') {
               if (chunk.doneReason?.startsWith('incomplete:')) {
                 const reason =
@@ -1327,6 +1340,14 @@ router.post(
             });
           fullResponse = generationResult.assistantContent;
           fullThinking = generationResult.assistantThinking || '';
+          streamedUsage = {
+            ...(generationResult.response.prompt_eval_count !== undefined
+              ? { promptTokens: generationResult.response.prompt_eval_count }
+              : {}),
+            ...(generationResult.response.eval_count !== undefined
+              ? { completionTokens: generationResult.response.eval_count }
+              : {}),
+          };
           assistantProviderMetadata =
             generationResult.response.message.providerMetadata;
           if (fullThinking) {
@@ -1354,6 +1375,51 @@ router.post(
               thinking: fullThinking || undefined,
               model: session.model,
               providerMetadata: withSearchSources(assistantProviderMetadata),
+              ...(streamedUsage?.promptTokens !== undefined ||
+              streamedUsage?.completionTokens !== undefined
+                ? {
+                    statistics: {
+                      ...(streamedUsage.promptTokens !== undefined
+                        ? { prompt_eval_count: streamedUsage.promptTokens }
+                        : {}),
+                      ...(streamedUsage.completionTokens !== undefined
+                        ? { eval_count: streamedUsage.completionTokens }
+                        : {}),
+                      ...(streamedTimings?.promptMs !== undefined
+                        ? {
+                            prompt_eval_duration:
+                              streamedTimings.promptMs * 1e6,
+                          }
+                        : {}),
+                      ...(streamedTimings?.predictedMs !== undefined
+                        ? {
+                            eval_duration: streamedTimings.predictedMs * 1e6,
+                          }
+                        : {}),
+                      ...(streamedTimings?.promptMs !== undefined &&
+                      streamedTimings?.predictedMs !== undefined
+                        ? {
+                            total_duration:
+                              (streamedTimings.promptMs +
+                                streamedTimings.predictedMs) *
+                              1e6,
+                          }
+                        : {}),
+                      ...(streamedUsage.completionTokens !== undefined &&
+                      streamedTimings?.predictedMs
+                        ? {
+                            tokens_per_second:
+                              Math.round(
+                                (streamedUsage.completionTokens /
+                                  (streamedTimings.predictedMs / 1000)) *
+                                  100
+                              ) / 100,
+                          }
+                        : {}),
+                      model: session.model,
+                    },
+                  }
+                : {}),
             },
             userId,
             {

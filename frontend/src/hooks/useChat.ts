@@ -442,6 +442,8 @@ export const useChat = (sessionId: string) => {
         thinking?: string;
         statistics?: GenerationStatistics; // Generation statistics from Ollama
         providerMetadata?: Record<string, unknown>;
+        /** The reply was too large to ride along; read it from the session. */
+        truncated?: boolean;
       };
       logger.debug(
         'Hook: Received assistant_complete for session:',
@@ -463,6 +465,12 @@ export const useChat = (sessionId: string) => {
       }
 
       if (!isCurrentGeneration) {
+        if (completeData.truncated && messageId) {
+          // Nothing was streamed into this client and the event does not
+          // carry the text, so take it from the stored session.
+          void reloadCompletedDurableGeneration(sessionId, messageId);
+          return;
+        }
         if (messageId) {
           updateMessageWithStatistics(
             sessionId,

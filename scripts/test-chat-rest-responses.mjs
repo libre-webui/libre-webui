@@ -822,6 +822,194 @@ test('ordinary chat mutation and durable completion share one write lease', asyn
   }
 });
 
+test('one enormous delta is split across events instead of failing', async () => {
+  const session = await createPluginSession('oversized-single-delta');
+  configurePluginTarget(true);
+  // A provider is free to hand over the whole answer in one chunk.
+  const huge = 'z'.repeat(90_000);
+  pluginService.executePluginStreamRequest = async function* () {
+    yield { type: 'reasoning', content: 'w'.repeat(40_000) };
+    yield { type: 'content', content: huge };
+    yield { type: 'done' };
+  };
+
+  const queued = await chatService.queueDurableGeneration({
+    sessionId: session.id,
+    userId: 'chat-rest-user',
+    userMessageId: 'user-oversized-single-delta',
+    assistantMessageId: 'assistant-oversized-single-delta',
+    message: 'Answer in one enormous chunk',
+  });
+  const lease = await durableRuntime.service.claim(
+    'single-delta-worker',
+    30_000
+  );
+  await durableChatGenerationService.execute(
+    durableRuntime.service.readPayload(lease),
+    {
+      signal: new AbortController().signal,
+      attemptCount: lease.attemptCount,
+      sideEffectLease: {
+        jobId: lease.id,
+        workerId: lease.workerId,
+        leaseToken: lease.leaseToken,
+      },
+      assertSideEffectAllowed: async () => {},
+    }
+  );
+
+  const persisted = await storageService.getSession(
+    session.id,
+    'chat-rest-user'
+  );
+  const assistant = persisted.messages.find(
+    message => message.id === 'assistant-oversized-single-delta'
+  );
+  assert.ok(assistant, 'the reply was stored');
+  assert.equal(assistant.content, huge, 'every character survived the split');
+  assert.equal(assistant.thinking?.length, 40_000, 'so did the reasoning');
+});
+
+test('a reply larger than the durable event ceiling still completes once', async () => {
+  const session = await createPluginSession('oversized-completion');
+  configurePluginTarget(true);
+  // Comfortably past the 64 KiB payload ceiling, with reasoning as well.
+  // Delivered the way a real provider streams it: many small deltas that
+  // only add up to something too large for one completion event.
+  const bulk = 'x'.repeat(70_000);
+  pluginService.executePluginStreamRequest = async function* () {
+    for (let index = 0; index < 200; index += 1) {
+      yield { type: 'reasoning', content: 'y'.repeat(100) };
+    }
+    for (let index = 0; index < 700; index += 1) {
+      yield {
+        type: 'content',
+        content: bulk.slice(index * 100, index * 100 + 100),
+      };
+    }
+    yield { type: 'done' };
+  };
+
+  const queued = await chatService.queueDurableGeneration({
+    sessionId: session.id,
+    userId: 'chat-rest-user',
+    userMessageId: 'user-oversized-completion',
+    assistantMessageId: 'assistant-oversized-completion',
+    message: 'Write something very long',
+  });
+  const lease = await durableRuntime.service.claim('oversized-worker', 30_000);
+  await durableChatGenerationService.execute(
+    durableRuntime.service.readPayload(lease),
+    {
+      signal: new AbortController().signal,
+      attemptCount: lease.attemptCount,
+      sideEffectLease: {
+        jobId: lease.id,
+        workerId: lease.workerId,
+        leaseToken: lease.leaseToken,
+      },
+      assertSideEffectAllowed: async () => {},
+    }
+  );
+
+  const persisted = await storageService.getSession(
+    session.id,
+    'chat-rest-user'
+  );
+  const assistant = persisted.messages.find(
+    message => message.id === 'assistant-oversized-completion'
+  );
+  assert.ok(assistant, 'the oversized reply was stored');
+  assert.equal(
+    assistant.content.length,
+    bulk.length,
+    'the stored message keeps the whole reply'
+  );
+  assert.equal(
+    persisted.messages.filter(
+      message => message.id === 'assistant-oversized-completion'
+    ).length,
+    1,
+    'and it was written exactly once'
+  );
+});
+
+test('a provider that reports usage produces real token statistics', async () => {
+  const session = await createPluginSession('plugin-usage-statistics');
+  configurePluginTarget(true);
+  pluginService.executePluginStreamRequest = async function* () {
+    yield { type: 'content', content: 'Counted reply' };
+    yield {
+      type: 'usage',
+      usage: { promptTokens: 41, completionTokens: 7 },
+      // The shape llama.cpp reports, in milliseconds.
+      timings: { promptMs: 120, predictedMs: 500, predictedPerSecond: 14 },
+    };
+    yield { type: 'done' };
+  };
+
+  const queued = await chatService.queueDurableGeneration({
+    sessionId: session.id,
+    userId: 'chat-rest-user',
+    userMessageId: 'user-plugin-usage-statistics',
+    assistantMessageId: 'assistant-plugin-usage-statistics',
+    message: 'How many tokens did that take?',
+  });
+  const lease = await durableRuntime.service.claim('usage-worker', 30_000);
+  await durableChatGenerationService.execute(
+    durableRuntime.service.readPayload(lease),
+    {
+      signal: new AbortController().signal,
+      attemptCount: lease.attemptCount,
+      sideEffectLease: {
+        jobId: lease.id,
+        workerId: lease.workerId,
+        leaseToken: lease.leaseToken,
+      },
+      assertSideEffectAllowed: async () => {},
+    }
+  );
+
+  const persisted = await storageService.getSession(
+    session.id,
+    'chat-rest-user'
+  );
+  const assistant = persisted.messages.find(
+    message => message.id === 'assistant-plugin-usage-statistics'
+  );
+  assert.ok(assistant, 'the assistant reply was stored');
+  assert.equal(
+    assistant.statistics?.prompt_eval_count,
+    41,
+    'prompt tokens come from the provider'
+  );
+  assert.equal(
+    assistant.statistics?.eval_count,
+    7,
+    'generated tokens come from the provider'
+  );
+  assert.equal(
+    assistant.statistics?.prompt_eval_duration,
+    120e6,
+    'prompt time is the server figure, in nanoseconds'
+  );
+  assert.equal(
+    assistant.statistics?.eval_duration,
+    500e6,
+    'generation time is the server figure, in nanoseconds'
+  );
+  assert.equal(
+    assistant.statistics?.total_duration,
+    620e6,
+    'total time is prompt plus generation'
+  );
+  assert.equal(
+    assistant.statistics?.tokens_per_second,
+    14,
+    'speed is derived from the reported figures'
+  );
+});
+
 test('durable streamed plugin completion persists JSON-safe statistics and done', async () => {
   const session = await createPluginSession('durable-plugin-statistics');
   const userMessageId = 'user-durable-plugin-statistics';
