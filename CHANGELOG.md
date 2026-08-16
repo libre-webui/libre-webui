@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.23.1] - 2026-08-16
+
+Same-day fixes for 0.23.0, all found and verified on a live team deployment. Recommended for everyone, especially Work users.
+
+### 🐛 Bug Fixes
+
+- **The first message on a new Work task no longer fails with "This Work task is active on another replica."** Creating a task races the interface's file browser against the run itself: the file helper briefly holds the task's runtime lease while it prepares the sandbox, and the run used to give up instantly when it lost that race — killing the user's first prompt. The run now waits out transient lease holders (up to `WORK_RUN_LEASE_WAIT_MS`, default 60 seconds) before reporting a genuine replica conflict.
+- **Tab menus draw above page headers.** The tab bar's right-click menu and the new-tab menu could render underneath the Work header and banners; both now render at the top of the page's stacking order.
+- **A WebSocket hiccup during sign-in can no longer break app loading.** Signing in could kill a racing WebSocket connection attempt mid-handshake, and the resulting error aborted the entire post-login initialization — models and chats then failed to load. Superseded connection attempts are no longer treated as failures, sign-in re-dials atomically, and data loading proceeds even when the socket needs its own reconnect cycle.
+- **Work previews can capture the mouse.** Previewed games and 3D scenes may now request pointer lock; it still requires a click and the preview keeps its isolated, opaque origin.
+- **Chat reconnects no longer compete with sign-in traffic for one rate limit.** WebSocket tickets have their own rate bucket, and the general authentication bucket — which now also serves the session and API-key management screens — has room for real interactive use. Login and signup keep their strict limits.
+
 ## [0.23.0] - 2026-08-16
 
 The trust release. Accounts get real sessions you can revoke, scoped API keys, administrator-managed groups, a sharing-grant foundation, sign-in with any OpenID Connect provider, and a security audit log — all working identically on SQLite and PostgreSQL deployments. Also fixes two Work bugs, including one that could take the whole server down.
