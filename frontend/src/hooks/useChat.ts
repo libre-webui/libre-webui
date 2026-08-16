@@ -611,6 +611,7 @@ export const useChat = (sessionId: string) => {
     maybeGenerateTitle,
     clearQueuedTitleGeneration,
     removeMessage,
+    reloadCompletedDurableGeneration,
   ]);
 
   const sendMessage = useCallback(
