@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -132,6 +133,7 @@ export const AppTabBar: React.FC = () => {
     null
   );
   const menuRef = useRef<HTMLDivElement>(null);
+  const newTabMenuRef = useRef<HTMLDivElement>(null);
   const newTabButtonRef = useRef<HTMLButtonElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
@@ -170,6 +172,7 @@ export const AppTabBar: React.FC = () => {
       const target = event.target as Node;
       if (
         !menuRef.current?.contains(target) &&
+        !newTabMenuRef.current?.contains(target) &&
         !contextMenuRef.current?.contains(target)
       ) {
         setMenuOpen(false);
@@ -484,68 +487,74 @@ export const AppTabBar: React.FC = () => {
         })}
       </div>
 
-      {contextMenu && contextTab && (
-        <div
-          ref={contextMenuRef}
-          role='menu'
-          aria-label={t('tabs.actions', 'Tab actions')}
-          data-testid='app-tab-context-menu'
-          onContextMenu={event => event.preventDefault()}
-          onKeyDown={handleContextMenuKeyDown}
-          className='fixed z-[100] w-56 rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-        >
-          <button
-            type='button'
-            role='menuitem'
-            data-testid='app-tab-context-close'
-            disabled={contextTab.id === 'home'}
-            onClick={() => {
-              const fallback = closeTab(contextTab.id);
-              setContextMenu(null);
-              if (fallback) navigate(fallback.path);
-            }}
-            className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+      {/* Both menus render through a portal: the tab bar's own stacking
+          context (z-20) would otherwise trap them below page headers and
+          banners (e.g. the Work header at z-50). */}
+      {contextMenu &&
+        contextTab &&
+        createPortal(
+          <div
+            ref={contextMenuRef}
+            role='menu'
+            aria-label={t('tabs.actions', 'Tab actions')}
+            data-testid='app-tab-context-menu'
+            onContextMenu={event => event.preventDefault()}
+            onKeyDown={handleContextMenuKeyDown}
+            className='fixed z-[100] w-56 rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
+            style={{ left: contextMenu.x, top: contextMenu.y }}
           >
-            <X className='h-4 w-4 shrink-0' />
-            <span>{t('tabs.close', 'Close tab')}</span>
-          </button>
-          <button
-            type='button'
-            role='menuitem'
-            data-testid='app-tab-context-close-others'
-            disabled={otherTabIds.length === 0}
-            onClick={() => closeTabSet(otherTabIds, contextTab.id)}
-            className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
-          >
-            <SquareX className='h-4 w-4 shrink-0' />
-            <span>{t('tabs.closeOthers', 'Close other tabs')}</span>
-          </button>
-          <button
-            type='button'
-            role='menuitem'
-            data-testid='app-tab-context-close-right'
-            disabled={rightTabIds.length === 0}
-            onClick={() => closeTabSet(rightTabIds, contextTab.id)}
-            className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
-          >
-            <PanelRightClose className='h-4 w-4 shrink-0' />
-            <span>{t('tabs.closeRight', 'Close tabs to the right')}</span>
-          </button>
-          <div className='mx-2 my-1 h-px bg-line' role='separator' />
-          <button
-            type='button'
-            role='menuitem'
-            data-testid='app-tab-context-close-all'
-            disabled={allClosableTabIds.length === 0}
-            onClick={() => closeTabSet(allClosableTabIds, 'home')}
-            className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
-          >
-            <ListX className='h-4 w-4 shrink-0' />
-            <span>{t('tabs.closeAll', 'Close all tabs')}</span>
-          </button>
-        </div>
-      )}
+            <button
+              type='button'
+              role='menuitem'
+              data-testid='app-tab-context-close'
+              disabled={contextTab.id === 'home'}
+              onClick={() => {
+                const fallback = closeTab(contextTab.id);
+                setContextMenu(null);
+                if (fallback) navigate(fallback.path);
+              }}
+              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+            >
+              <X className='h-4 w-4 shrink-0' />
+              <span>{t('tabs.close', 'Close tab')}</span>
+            </button>
+            <button
+              type='button'
+              role='menuitem'
+              data-testid='app-tab-context-close-others'
+              disabled={otherTabIds.length === 0}
+              onClick={() => closeTabSet(otherTabIds, contextTab.id)}
+              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+            >
+              <SquareX className='h-4 w-4 shrink-0' />
+              <span>{t('tabs.closeOthers', 'Close other tabs')}</span>
+            </button>
+            <button
+              type='button'
+              role='menuitem'
+              data-testid='app-tab-context-close-right'
+              disabled={rightTabIds.length === 0}
+              onClick={() => closeTabSet(rightTabIds, contextTab.id)}
+              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+            >
+              <PanelRightClose className='h-4 w-4 shrink-0' />
+              <span>{t('tabs.closeRight', 'Close tabs to the right')}</span>
+            </button>
+            <div className='mx-2 my-1 h-px bg-line' role='separator' />
+            <button
+              type='button'
+              role='menuitem'
+              data-testid='app-tab-context-close-all'
+              disabled={allClosableTabIds.length === 0}
+              onClick={() => closeTabSet(allClosableTabIds, 'home')}
+              className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+            >
+              <ListX className='h-4 w-4 shrink-0' />
+              <span>{t('tabs.closeAll', 'Close all tabs')}</span>
+            </button>
+          </div>,
+          document.body
+        )}
 
       <div className='relative flex-none' ref={menuRef}>
         <button
@@ -559,41 +568,45 @@ export const AppTabBar: React.FC = () => {
         >
           <Plus className='h-4 w-4' />
         </button>
-        {menuOpen && menuPosition && (
-          <div
-            role='menu'
-            data-testid='app-tab-new-menu'
-            className='fixed z-50 max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
-            style={menuPosition}
-          >
-            {menuItems.map(item => (
-              <React.Fragment key={item.key}>
-                {item.separatorBefore && (
-                  <div className='mx-2 my-1 h-px bg-line' role='separator' />
-                )}
-                <button
-                  type='button'
-                  role='menuitem'
-                  onClick={() => {
-                    setMenuOpen(false);
-                    item.action();
-                  }}
-                  className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink dark:hover:bg-white/[0.06]'
-                >
-                  <item.icon className='h-4 w-4 shrink-0' />
-                  <span className='min-w-0 flex-1 truncate text-start'>
-                    {item.label}
-                  </span>
-                  {item.shortcut && (
-                    <span className='font-mono text-[10px] tracking-wide text-ink-subtle'>
-                      {item.shortcut}
-                    </span>
+        {menuOpen &&
+          menuPosition &&
+          createPortal(
+            <div
+              ref={newTabMenuRef}
+              role='menu'
+              data-testid='app-tab-new-menu'
+              className='fixed z-[100] max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
+              style={menuPosition}
+            >
+              {menuItems.map(item => (
+                <React.Fragment key={item.key}>
+                  {item.separatorBefore && (
+                    <div className='mx-2 my-1 h-px bg-line' role='separator' />
                   )}
-                </button>
-              </React.Fragment>
-            ))}
-          </div>
-        )}
+                  <button
+                    type='button'
+                    role='menuitem'
+                    onClick={() => {
+                      setMenuOpen(false);
+                      item.action();
+                    }}
+                    className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink dark:hover:bg-white/[0.06]'
+                  >
+                    <item.icon className='h-4 w-4 shrink-0' />
+                    <span className='min-w-0 flex-1 truncate text-start'>
+                      {item.label}
+                    </span>
+                    {item.shortcut && (
+                      <span className='font-mono text-[10px] tracking-wide text-ink-subtle'>
+                        {item.shortcut}
+                      </span>
+                    )}
+                  </button>
+                </React.Fragment>
+              ))}
+            </div>,
+            document.body
+          )}
       </div>
     </div>
   );
