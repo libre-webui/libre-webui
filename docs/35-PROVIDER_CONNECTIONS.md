@@ -57,6 +57,25 @@ Plugin definitions are shared instance configuration, so only administrators
 can import, install, update, or delete them. Each authenticated user controls
 their own activation state, credential, and allowed generation settings.
 
+## Add a Connection Quickly
+
+**Settings > Connections** is a shorter path for the common case: one
+OpenAI-compatible endpoint, one API key. Administrators see a card for the
+local Ollama runtime with its health and version, a list of the existing
+OpenAI-compatible connections, and a small form to add another.
+
+Adding a connection takes a display name, the full chat completions URL, and
+an optional API key. Libre WebUI derives the connection ID from the name,
+installs the provider definition, stores the key server-side, activates the
+connection, and asks the endpoint which models it serves. The discovered
+models replace the placeholder catalog and appear in the chat model picker.
+
+Each row carries the endpoint, the model count, whether a key is stored, an
+active toggle, a model refresh, and a delete. Anything beyond this — response
+API modes, base URL overrides, per-capability catalogs, generation parameter
+policy — still lives in the fuller **Settings > Plugins** workspace described
+above.
+
 ## Codex (ChatGPT Sign-In)
 
 The bundled **Codex (ChatGPT)** provider needs no API key. When the server has

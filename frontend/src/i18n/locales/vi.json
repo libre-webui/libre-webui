@@ -194,6 +194,10 @@
       "evening": "Chào buổi tối",
       "night": "Chúc ngủ ngon"
     },
+    "overlay": {
+      "title": "Chat",
+      "close": "Đóng cửa sổ chat nổi"
+    },
     "followUp": "Tiếp tục",
     "welcome": {
       "helpToday": "Tôi có thể giúp gì cho bạn hôm nay?",
@@ -421,7 +425,12 @@
       "notes": "Ghi chú"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
-    "expandSidebar": "Mở rộng thanh bên"
+    "expandSidebar": "Mở rộng thanh bên",
+    "pinned": {
+      "label": "Đã ghim",
+      "pin": "Ghim vào thanh bên",
+      "unpin": "Bỏ ghim khỏi thanh bên"
+    }
   },
   "user": {
     "menu": {
@@ -473,7 +482,8 @@
       "shortcuts": "Phím tắt",
       "about": "Giới thiệu",
       "sessions": "Phiên đăng nhập",
-      "apiKeys": "Khóa API"
+      "apiKeys": "Khóa API",
+      "connections": "Kết nối"
     },
     "appearance": {
       "title": "Giao diện",
@@ -904,6 +914,59 @@
       "saved": "Đã lưu cài đặt tìm kiếm",
       "saveFailed": "Không thể lưu cài đặt tìm kiếm"
     },
+    "compaction": {
+      "title": "Nén ngữ cảnh",
+      "description": "Khi một cuộc trò chuyện vượt quá ngưỡng token, máy chủ sẽ tóm tắt các tin nhắn cũ và chỉ giữ nguyên văn những tin nhắn mới nhất. Áp dụng cho mọi người dùng trên máy chủ này.",
+      "thresholdLabel": "Ngưỡng token",
+      "thresholdDescription": "Số token ngữ cảnh ước tính mà khi vượt quá, lịch sử cũ sẽ được tóm tắt, 500-1.000.000.",
+      "thresholdInvalid": "Ngưỡng token phải từ 500 đến 1.000.000.",
+      "keepRecentLabel": "Số tin nhắn gần đây được giữ",
+      "keepRecentDescription": "Bao nhiêu tin nhắn mới nhất luôn được giữ nguyên văn, 2-200.",
+      "keepRecentInvalid": "Số tin nhắn gần đây được giữ phải từ 2 đến 200.",
+      "modelLabel": "Mô hình nén",
+      "modelDescription": "Mô hình viết các bản tóm tắt. Khi không chọn, mô hình của chính phiên sẽ được dùng.",
+      "sessionModelOption": "Dùng mô hình của phiên",
+      "promptLabel": "Prompt tóm tắt tùy chỉnh",
+      "promptPlaceholder": "Để trống để dùng prompt tích hợp",
+      "promptDescription": "Các biến mẫu {{previousSummaryVariable}} và {{messagesVariable}} được thay bằng bản tóm tắt trước đó và các tin nhắn đang được tóm tắt.",
+      "saved": "Đã lưu cài đặt nén",
+      "saveFailed": "Không thể lưu cài đặt nén"
+    },
+    "connections": {
+      "title": "Kết nối",
+      "description": "Các nhà cung cấp mô hình mà máy chủ này liên lạc: môi trường chạy Ollama cục bộ và các điểm cuối tương thích OpenAI.",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "Môi trường chạy mô hình cục bộ.",
+      "version": "Phiên bản {{version}}.",
+      "statusChecking": "Đang kiểm tra…",
+      "statusOnline": "Trực tuyến",
+      "statusOffline": "Ngoại tuyến",
+      "providersTitle": "Kết nối tương thích OpenAI",
+      "providersDescription": "Mỗi kết nối là một nhà cung cấp hoàn thành có mô hình xuất hiện trong bộ chọn mô hình của chat. Khóa API được lưu phía máy chủ.",
+      "noConnections": "Chưa có kết nối nào được cấu hình.",
+      "modelsCount": "{{total}} mô hình",
+      "pendingDiscovery": "Mô hình đang chờ khám phá",
+      "apiKeyMissing": "Không có khóa API",
+      "deleteConfirm": "Xóa kết nối này? Các cuộc trò chuyện dùng mô hình của nó sẽ mất quyền truy cập.",
+      "addTitle": "Thêm kết nối",
+      "addDescription": "Đăng ký một điểm cuối chat completions tương thích OpenAI làm nhà cung cấp.",
+      "nameLabel": "Tên hiển thị",
+      "namePlaceholder": "Nhà cung cấp của tôi",
+      "idPreview": "ID kết nối: {{id}}",
+      "endpointLabel": "URL điểm cuối",
+      "endpointDescription": "URL chat completions đầy đủ, ví dụ https://api.example.com/v1/chat/completions.",
+      "apiKeyLabel": "Khóa API",
+      "apiKeyOptionalHint": "(tùy chọn, có thể thêm sau)",
+      "nameRequired": "Nhập tên hiển thị cho kết nối.",
+      "endpointInvalid": "Nhập URL điểm cuối http(s) hợp lệ.",
+      "alreadyExists": "Đã tồn tại kết nối với ID này.",
+      "add": "Thêm kết nối",
+      "adding": "Đang thêm…",
+      "added": "Đã thêm kết nối",
+      "addFailed": "Không thể thêm kết nối",
+      "keySaveFailed": "Đã thêm kết nối, nhưng không thể lưu khóa API",
+      "activateFailed": "Đã thêm kết nối, nhưng không thể kích hoạt"
+    },
     "sessions": {
       "title": "Phiên đăng nhập",
       "description": "Tất cả những nơi tài khoản này đang đăng nhập. Đăng xuất một phiên có hiệu lực ngay lập tức; đăng nhập lại sẽ khôi phục quyền truy cập.",
@@ -1059,7 +1122,22 @@
       "running": "Mô hình đang chạy",
       "local": "Mô hình cục bộ",
       "advanced": "Hành động nâng cao",
-      "huggingface": "HuggingFace Hub"
+      "huggingface": "HuggingFace Hub",
+      "catalog": "Danh mục mô hình"
+    },
+    "catalog": {
+      "models": "khả dụng",
+      "searchPlaceholder": "Tìm mô hình theo tên hoặc nhà cung cấp...",
+      "noModels": "Chưa có mô hình nào khả dụng.",
+      "empty": "Không có mô hình nào khớp với tìm kiếm của bạn.",
+      "providerOllama": "Ollama",
+      "default": "Mặc định",
+      "makeDefault": "Đặt làm mặc định",
+      "defaultSet": "{{model}} giờ là mô hình mặc định của bạn.",
+      "hidden": "Đã ẩn",
+      "hide": "Ẩn với người dùng",
+      "show": "Hiện với người dùng",
+      "visibilityFailed": "Không thể cập nhật hiển thị của mô hình."
     },
     "pull": {
       "placeholder": "Nhập tên mô hình (vd: llama3.2:3b, deepseek-r1:14b)",
@@ -1649,7 +1727,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Phiên bản {{current}} / {{total}}",
     "previousVersion": "Phiên bản trước",
-    "nextVersion": "Phiên bản sau"
+    "nextVersion": "Phiên bản sau",
+    "fullscreen": "Toàn màn hình",
+    "exitFullscreen": "Thoát toàn màn hình",
+    "showChatOverlay": "Hiện cửa sổ chat nổi",
+    "hideChatOverlay": "Ẩn cửa sổ chat nổi"
   },
   "personaImportExport": {
     "title": "Nhập & Xuất Personas",

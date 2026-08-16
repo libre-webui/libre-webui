@@ -59,11 +59,11 @@
       "loginSuccess": "Login lykkedes!",
       "loginFailed": "Login mislykkedes",
       "checkCredentials": "Login mislykkedes. Kontroller venligst dine loginoplysninger.",
+      "approvalPending": "Din konto afventer godkendelse af administrator.",
       "enterBoth": "Indtast venligst både brugernavn og adgangskode",
       "githubSuccess": "GitHub-login lykkedes!",
       "githubFailed": "GitHub-godkendelse mislykkedes",
       "githubVerifyFailed": "Kunne ikke bekræfte GitHub-godkendelse",
-      "approvalPending": "Din konto afventer godkendelse af administrator.",
       "verificationFailed": "Sikkerhedskontrollen mislykkedes. Opdater siden og prøv igen."
     },
     "signup": {
@@ -82,15 +82,15 @@
       "hasAccount": "Har du allerede en konto?",
       "signInHere": "Log ind her",
       "signupSuccess": "Konto oprettet!",
+      "approvalPending": "Registrering modtaget. En administrator skal godkende din konto.",
+      "awaitingApproval": "Afventer godkendelse",
+      "awaitingApprovalDescription": "Din konto er oprettet, men en administrator skal aktivere den, før du kan logge ind.",
+      "backToSignIn": "Tilbage til login",
       "signupFailed": "Tilmelding mislykkedes",
       "tryAgain": "Tilmelding mislykkedes. Prøv venligst igen.",
       "usernameRequired": "Brugernavn og adgangskode er påkrævet",
       "passwordMismatch": "Adgangskoderne stemmer ikke overens",
-      "passwordTooShort": "Adgangskoden skal være mindst 6 tegn lang",
-      "approvalPending": "Registrering modtaget. En administrator skal godkende din konto.",
-      "awaitingApproval": "Afventer godkendelse",
-      "awaitingApprovalDescription": "Din konto er oprettet, men en administrator skal aktivere den, før du kan logge ind.",
-      "backToSignIn": "Tilbage til login"
+      "passwordTooShort": "Adgangskoden skal være mindst 6 tegn lang"
     },
     "logout": {
       "button": "Log ud",
@@ -166,9 +166,9 @@
       "createAdmin": "Opret administrator",
       "success": "Administratorkonto oprettet!",
       "failed": "Kunne ikke oprette administratorkonto",
+      "approvalUnexpected": "Den oprindelige administrator kunne ikke aktiveres. Prøv igen.",
       "fillAllFields": "Udfyld venligst alle felter",
-      "note": "Dette bliver den primære administratorkonto for din Libre WebUI-instans",
-      "approvalUnexpected": "Den oprindelige administrator kunne ikke aktiveres. Prøv igen."
+      "note": "Dette bliver den primære administratorkonto for din Libre WebUI-instans"
     },
     "encryptionKey": {
       "title": "Gem din krypteringsnøgle",
@@ -193,6 +193,10 @@
       "afternoon": "God eftermiddag",
       "evening": "Godaften",
       "night": "Godnat"
+    },
+    "overlay": {
+      "title": "Chat",
+      "close": "Luk den flydende chat"
     },
     "followUp": "Opfølgning",
     "welcome": {
@@ -277,6 +281,7 @@
       "work": "Arbejde",
       "chat": "Chat",
       "private": "Privat",
+      "incognito": "Incognito-chat",
       "privateMode": "Privat tilstand",
       "privateDescription": "Denne samtale gemmes ikke",
       "privateTooltip": "Start en privat samtale, der ikke gemmes",
@@ -290,7 +295,6 @@
       "pinChat": "Fastgør",
       "unpinChat": "Frigør",
       "deleteChat": "Slet chat",
-      "incognito": "Incognito-chat",
       "archiveChat": "Arkivér chat",
       "groups": {
         "pinned": "Fastgjorte",
@@ -410,27 +414,32 @@
       "models": "Modeller",
       "personas": "Personaer",
       "imagine": "Forestil",
-      "settings": "Indstillinger",
-      "userManagement": "Brugeradministration",
-      "signOut": "Log ud",
       "agents": "Agenter",
       "work": "Arbejde",
-      "exploreLabel": "Udforsk",
+      "settings": "Indstillinger",
       "usageAnalytics": "Udbyderforbrug",
       "system": "System",
+      "userManagement": "Brugeradministration",
+      "signOut": "Log ud",
+      "exploreLabel": "Udforsk",
       "notes": "Noter"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
-    "expandSidebar": "Udvid sidebjælke"
+    "expandSidebar": "Udvid sidebjælke",
+    "pinned": {
+      "label": "Fastgjorte",
+      "pin": "Fastgør til sidepanelet",
+      "unpin": "Frigør fra sidepanelet"
+    }
   },
   "user": {
     "menu": {
       "changePicture": "Skift billede",
       "settings": "Indstillinger",
-      "userManagement": "Brugeradministration",
-      "logout": "Log ud",
       "usageAnalytics": "Udbyderforbrug",
-      "system": "System"
+      "system": "System",
+      "userManagement": "Brugeradministration",
+      "logout": "Log ud"
     },
     "avatar": {
       "title": "Skift profilbillede",
@@ -473,7 +482,8 @@
       "shortcuts": "Genveje",
       "about": "Om",
       "sessions": "Sessioner",
-      "apiKeys": "API-nøgler"
+      "apiKeys": "API-nøgler",
+      "connections": "Forbindelser"
     },
     "appearance": {
       "title": "Udseende",
@@ -525,6 +535,13 @@
       "defaultModel": "Standardmodel",
       "defaultModelDescription": "Denne model bruges som standard til nye samtaler",
       "selectModel": "Vælg en model",
+      "specializedModels": "Specialiserede modeller",
+      "visionModel": "Visionsmodel",
+      "selectVisionModel": "Brug den aktuelle chatmodel",
+      "visionModelDescription": "Bruges automatisk, når den udgående chatkontekst indeholder billeder. Vælg en model, der understøtter billedinput.",
+      "visionModelUpdateFailed": "Kunne ikke opdatere visionsmodellen: {{error}}",
+      "visionModelNoProvider": "Denne visionsmodel har ingen udbyderidentitet. Vælg en tilgængelig model.",
+      "persona": "Persona",
       "updateAll": "Opdater alle modeller",
       "updateAllDescription": "Tjek for opdateringer og hent seneste versioner af alle installerede modeller",
       "updateAllButton": "Opdater alle",
@@ -547,15 +564,8 @@
         "selectTaskModel": "Vælg opgavemodel",
         "taskModelDescription": "Model brugt til at generere samtaletitler"
       },
-      "persona": "Persona",
       "updatingModel": "Opdaterer {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} af {{total}} modeller",
-      "specializedModels": "Specialiserede modeller",
-      "visionModel": "Visionsmodel",
-      "selectVisionModel": "Brug den aktuelle chatmodel",
-      "visionModelDescription": "Bruges automatisk, når den udgående chatkontekst indeholder billeder. Vælg en model, der understøtter billedinput.",
-      "visionModelUpdateFailed": "Kunne ikke opdatere visionsmodellen: {{error}}",
-      "visionModelNoProvider": "Denne visionsmodel har ingen udbyderidentitet. Vælg en tilgængelig model."
+      "modelsProgress": "{{current}} af {{total}} modeller"
     },
     "systemMessage": {
       "title": "Systembesked",
@@ -567,6 +577,13 @@
     "plugins": {
       "title": "Plugins",
       "description": "Administrer dine installerede plugins",
+      "providerConnections": "Udbyderforbindelser",
+      "providerConnectionsDescription": "Tilslut, konfigurer og inspicer modeludbydere via plugins.",
+      "providers": "Udbydere",
+      "searchProviders": "Søg udbydere",
+      "noProvidersFound": "Ingen udbydere matcher din søgning.",
+      "selectProvider": "Vælg en udbyder",
+      "selectProviderDescription": "Vælg en udbyder for at inspicere dens forbindelse og modelkatalog.",
       "addNew": "Tilføj nyt plugin",
       "upload": "Upload plugin",
       "addJson": "Tilføj JSON",
@@ -585,33 +602,12 @@
       "models": "modeller",
       "apiKeySet": "API-nøgle angivet",
       "apiKeyConfiguration": "API-nøgle konfiguration",
+      "apiKeyDescription": "Gem en personlig API-nøgle til {{name}}.",
       "apiKeyEnvAlternative": "Alternativt, sæt",
       "environmentVariable": "miljøvariabel",
       "apiKeyConfigured": "API-nøgle konfigureret",
       "apiKeyPlaceholder": "Indtast din API-nøgle...",
       "saveApiKey": "Gem API-nøgle",
-      "apiKey": {
-        "title": "API-nøgle",
-        "placeholder": "Indtast API-nøgle",
-        "save": "Gem nøgle",
-        "remove": "Fjern nøgle",
-        "configured": "API-nøgle konfigureret",
-        "notConfigured": "API-nøgle påkrævet",
-        "saved": "API-nøgle gemt",
-        "removed": "API-nøgle fjernet",
-        "saveFailed": "Kunne ikke gemme API-nøgle",
-        "removeFailed": "Kunne ikke fjerne API-nøgle",
-        "enterKey": "Indtast venligst en API-nøgle"
-      },
-      "variables": "Variables",
-      "providerConnections": "Udbyderforbindelser",
-      "providerConnectionsDescription": "Tilslut, konfigurer og inspicer modeludbydere via plugins.",
-      "providers": "Udbydere",
-      "searchProviders": "Søg udbydere",
-      "noProvidersFound": "Ingen udbydere matcher din søgning.",
-      "selectProvider": "Vælg en udbyder",
-      "selectProviderDescription": "Vælg en udbyder for at inspicere dens forbindelse og modelkatalog.",
-      "apiKeyDescription": "Gem en personlig API-nøgle til {{name}}.",
       "showApiKey": "Vis API-nøgle",
       "hideApiKey": "Skjul API-nøgle",
       "configure": "Konfigurer",
@@ -637,7 +633,21 @@
         "transcription": "Transskription"
       },
       "exportPlugin": "Eksporter plugin",
-      "deletePlugin": "Slet plugin"
+      "deletePlugin": "Slet plugin",
+      "apiKey": {
+        "title": "API-nøgle",
+        "placeholder": "Indtast API-nøgle",
+        "save": "Gem nøgle",
+        "remove": "Fjern nøgle",
+        "configured": "API-nøgle konfigureret",
+        "notConfigured": "API-nøgle påkrævet",
+        "saved": "API-nøgle gemt",
+        "removed": "API-nøgle fjernet",
+        "saveFailed": "Kunne ikke gemme API-nøgle",
+        "removeFailed": "Kunne ikke fjerne API-nøgle",
+        "enterKey": "Indtast venligst en API-nøgle"
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Genereringsindstillinger",
@@ -647,6 +657,8 @@
       "scopeModel": "Kun {{model}}",
       "scopeAllHint": "De værdier hver model bruger, medmindre den har sine egne.",
       "scopeModelHint": "Gemmes kun for denne model og vinder over de generelle værdier.",
+      "advancedSettings": "Avancerede genereringsindstillinger",
+      "advancedSettingsDescription": "Sampling, token-grænser, kontekst, straffe og stop-sekvenser",
       "coreParameters": "Kerneparametre",
       "temperature": "Temperatur",
       "temperatureDescription": "Styrer tilfældighed. Lavere værdier er mere fokuserede, højere værdier mere kreative.",
@@ -678,9 +690,7 @@
       "resetDefaults": "Nulstil til standard",
       "saveOptions": "Gem indstillinger",
       "embeddingSettings": "Embedding-indstillinger",
-      "enableEmbeddings": "Aktiver dokument-embeddings",
-      "advancedSettings": "Avancerede genereringsindstillinger",
-      "advancedSettingsDescription": "Sampling, token-grænser, kontekst, straffe og stop-sekvenser"
+      "enableEmbeddings": "Aktiver dokument-embeddings"
     },
     "documents": {
       "title": "Dokumentindstillinger",
@@ -790,6 +800,7 @@
       "title": "Dataadministration",
       "export": "Eksporter data",
       "exportDescription": "Download et flytbart arkiv med indstillinger, chatmapper, sessioner og beskeder, noter, videnssamlinger og udtrukket dokumenttekst.",
+      "archiveScopeV3": "Omfatter indstillinger, chats, mapper, noter, videnssamlinger og udtrukket dokumenttekst. Udelader konti og hemmeligheder, biometrisk klonede stemmer, genererede medier, personaer og hukommelse samt Work-data eller -drev.",
       "exportAll": "Eksporter alle data",
       "import": "Importer data",
       "importDescription": "Importer data fra en tidligere eksport.",
@@ -830,8 +841,7 @@
         "title": "Arkiverede chats",
         "empty": "Ingen arkiverede chats",
         "unarchive": "Gendan"
-      },
-      "archiveScopeV3": "Omfatter indstillinger, chats, mapper, noter, videnssamlinger og udtrukket dokumenttekst. Udelader konti og hemmeligheder, biometrisk klonede stemmer, genererede medier, personaer og hukommelse samt Work-data eller -drev."
+      }
     },
     "about": {
       "title": "Om",
@@ -903,6 +913,59 @@
       "save": "Gem",
       "saved": "Søgeindstillinger gemt",
       "saveFailed": "Kunne ikke gemme søgeindstillingerne"
+    },
+    "compaction": {
+      "title": "Komprimering af kontekst",
+      "description": "Når en samtale vokser ud over token-grænsen, opsummerer serveren de ældre beskeder og beholder kun de nyeste ordret. Gælder alle brugere på denne server.",
+      "thresholdLabel": "Token-grænse",
+      "thresholdDescription": "Anslåede kontekst-tokens, hvorover ældre historik opsummeres, 500-1.000.000.",
+      "thresholdInvalid": "Token-grænsen skal være mellem 500 og 1.000.000.",
+      "keepRecentLabel": "Bevarede nyeste beskeder",
+      "keepRecentDescription": "Hvor mange af de nyeste beskeder der altid bevares ordret, 2-200.",
+      "keepRecentInvalid": "Antallet af bevarede nyeste beskeder skal være mellem 2 og 200.",
+      "modelLabel": "Model til komprimering",
+      "modelDescription": "Modellen, der skriver opsummeringerne. Vælges ingen, bruges samtalens egen model.",
+      "sessionModelOption": "Brug samtalens model",
+      "promptLabel": "Egen opsummeringsprompt",
+      "promptPlaceholder": "Lad stå tom for at bruge den indbyggede prompt",
+      "promptDescription": "Skabelonvariablerne {{previousSummaryVariable}} og {{messagesVariable}} erstattes af den forrige opsummering og de beskeder, der opsummeres.",
+      "saved": "Indstillinger for komprimering gemt",
+      "saveFailed": "Indstillingerne for komprimering kunne ikke gemmes"
+    },
+    "connections": {
+      "title": "Forbindelser",
+      "description": "De modeludbydere, denne server taler med: den lokale Ollama-runtime og OpenAI-kompatible endepunkter.",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "Lokal modelruntime.",
+      "version": "Version {{version}}.",
+      "statusChecking": "Kontrollerer…",
+      "statusOnline": "Online",
+      "statusOffline": "Offline",
+      "providersTitle": "OpenAI-kompatible forbindelser",
+      "providersDescription": "Hver forbindelse er en completion-udbyder, hvis modeller vises i chattens modelvælger. API-nøgler gemmes på serveren.",
+      "noConnections": "Der er endnu ingen forbindelser.",
+      "modelsCount": "{{total}} modeller",
+      "pendingDiscovery": "Modeller afventer registrering",
+      "apiKeyMissing": "Ingen API-nøgle",
+      "deleteConfirm": "Slet denne forbindelse? Chats, der bruger dens modeller, mister adgangen til dem.",
+      "addTitle": "Tilføj forbindelse",
+      "addDescription": "Registrer et OpenAI-kompatibelt chat completions-endepunkt som udbyder.",
+      "nameLabel": "Vist navn",
+      "namePlaceholder": "Min udbyder",
+      "idPreview": "Forbindelses-id: {{id}}",
+      "endpointLabel": "Endepunkts-URL",
+      "endpointDescription": "Fuld chat completions-URL, for eksempel https://api.example.com/v1/chat/completions.",
+      "apiKeyLabel": "API-nøgle",
+      "apiKeyOptionalHint": "(valgfri, kan tilføjes senere)",
+      "nameRequired": "Indtast et vist navn til forbindelsen.",
+      "endpointInvalid": "Indtast en gyldig http(s)-endepunkts-URL.",
+      "alreadyExists": "Der findes allerede en forbindelse med dette id.",
+      "add": "Tilføj forbindelse",
+      "adding": "Tilføjer…",
+      "added": "Forbindelse tilføjet",
+      "addFailed": "Forbindelsen kunne ikke tilføjes",
+      "keySaveFailed": "Forbindelsen blev tilføjet, men API-nøglen kunne ikke gemmes",
+      "activateFailed": "Forbindelsen blev tilføjet, men den kunne ikke aktiveres"
     },
     "sessions": {
       "title": "Sessioner",
@@ -1056,10 +1119,25 @@
     "sections": {
       "pull": "Hent ny model",
       "library": "Gennemse bibliotek",
+      "huggingface": "HuggingFace Hub",
       "running": "Kørende modeller",
       "local": "Lokale modeller",
       "advanced": "Avancerede handlinger",
-      "huggingface": "HuggingFace Hub"
+      "catalog": "Modelkatalog"
+    },
+    "catalog": {
+      "models": "tilgængelige",
+      "searchPlaceholder": "Søg efter modeller på navn eller udbyder...",
+      "noModels": "Der er endnu ingen tilgængelige modeller.",
+      "empty": "Ingen modeller matcher din søgning.",
+      "providerOllama": "Ollama",
+      "default": "Standard",
+      "makeDefault": "Gør til standard",
+      "defaultSet": "{{model}} er nu din standardmodel.",
+      "hidden": "Skjult",
+      "hide": "Skjul for brugere",
+      "show": "Vis for brugere",
+      "visibilityFailed": "Modellens synlighed kunne ikke opdateres."
     },
     "pull": {
       "placeholder": "Indtast modelnavn (f.eks. llama3.2:3b, deepseek-r1:14b)",
@@ -1089,6 +1167,37 @@
       "installed": "Installeret",
       "more": "+{{count}} mere",
       "refresh": "Opdater bibliotek"
+    },
+    "huggingface": {
+      "browseAll": "Gennemse alle på HuggingFace",
+      "checkingGguf": "Søger efter GGUF-filer...",
+      "noGgufAvailable": "Ingen GGUF-filer tilgængelige til direkte Ollama-hentning",
+      "ggufFilesCount": "GGUF-filer ({{count}}) - Hent direkte til Ollama",
+      "noModelsFound": "Ingen modeller fundet",
+      "noResults": "Ingen modeller fundet. Prøv at justere din søgning eller filtre.",
+      "browseAllLink": "Se alle",
+      "search": "Søg i HuggingFace-modeller...",
+      "by": "af",
+      "gated": "Begrænset adgang",
+      "viewOnHF": "Vis på HuggingFace",
+      "sortDownloads": "Downloads",
+      "sortLikes": "Likes",
+      "sortRecent": "Seneste",
+      "taskTextGeneration": "Tekstgenerering",
+      "taskTextToSpeech": "Tekst til tale",
+      "taskTextToImage": "Tekst til billede",
+      "taskSpeechRecognition": "Talegenkendelse",
+      "tasks": {
+        "textGen": "Tekstgenerering",
+        "tts": "Tekst til tale",
+        "image": "Tekst til billede",
+        "stt": "Talegenkendelse"
+      },
+      "sort": {
+        "downloads": "Flest downloads",
+        "likes": "Mest populære",
+        "recent": "Senest opdateret"
+      }
     },
     "local": {
       "noModels": "Ingen modeller installeret endnu",
@@ -1167,37 +1276,6 @@
         "success": "Genererede {{count}}-dimensionel embedding-vektor",
         "failed": "Kunne ikke generere embeddings",
         "enterBoth": "Vælg venligst en model og indtast tekst"
-      }
-    },
-    "huggingface": {
-      "browseAll": "Gennemse alle på HuggingFace",
-      "checkingGguf": "Søger efter GGUF-filer...",
-      "noGgufAvailable": "Ingen GGUF-filer tilgængelige til direkte Ollama-hentning",
-      "ggufFilesCount": "GGUF-filer ({{count}}) - Hent direkte til Ollama",
-      "noModelsFound": "Ingen modeller fundet",
-      "noResults": "Ingen modeller fundet. Prøv at justere din søgning eller filtre.",
-      "browseAllLink": "Se alle",
-      "search": "Søg i HuggingFace-modeller...",
-      "by": "af",
-      "gated": "Begrænset adgang",
-      "viewOnHF": "Vis på HuggingFace",
-      "sortDownloads": "Downloads",
-      "sortLikes": "Likes",
-      "sortRecent": "Seneste",
-      "taskTextGeneration": "Tekstgenerering",
-      "taskTextToSpeech": "Tekst til tale",
-      "taskTextToImage": "Tekst til billede",
-      "taskSpeechRecognition": "Talegenkendelse",
-      "tasks": {
-        "textGen": "Tekstgenerering",
-        "tts": "Tekst til tale",
-        "image": "Tekst til billede",
-        "stt": "Talegenkendelse"
-      },
-      "sort": {
-        "downloads": "Flest downloads",
-        "likes": "Mest populære",
-        "recent": "Senest opdateret"
       }
     }
   },
@@ -1371,6 +1449,17 @@
     "deleteSuccess": "Bruger slettet",
     "deleteFailed": "Kunne ikke slette bruger",
     "cannotDeleteSelf": "Du kan ikke slette din egen konto",
+    "approval": {
+      "title": "Afventende godkendelser",
+      "description": "Gennemgå nye registreringer, før de får adgang til denne instans.",
+      "registered": "Registreret",
+      "activate": "Aktiver konto",
+      "reject": "Afvis registrering",
+      "approved": "{{name}} kan nu logge ind.",
+      "failed": "Kontoen kunne ikke godkendes.",
+      "notification": "{{count}} registrering(er) afventer din godkendelse.",
+      "notificationBadge": "{{count}} afventende brugergodkendelser"
+    },
     "form": {
       "title": {
         "create": "Opret bruger",
@@ -1392,17 +1481,6 @@
       "updateSuccess": "Bruger opdateret",
       "createFailed": "Kunne ikke oprette bruger",
       "updateFailed": "Kunne ikke opdatere bruger"
-    },
-    "approval": {
-      "title": "Afventende godkendelser",
-      "description": "Gennemgå nye registreringer, før de får adgang til denne instans.",
-      "registered": "Registreret",
-      "activate": "Aktiver konto",
-      "reject": "Afvis registrering",
-      "approved": "{{name}} kan nu logge ind.",
-      "failed": "Kontoen kunne ikke godkendes.",
-      "notification": "{{count}} registrering(er) afventer din godkendelse.",
-      "notificationBadge": "{{count}} afventende brugergodkendelser"
     },
     "workAccess": {
       "title": "Work-adgang",
@@ -1508,6 +1586,174 @@
       "target": "Mål"
     }
   },
+  "usageAnalytics": {
+    "eyebrow": "Administration",
+    "title": "Udbyderforbrug",
+    "description": "Følg udgående API-kald og modelforbrug på tværs af aktiverede plugins på denne instans.",
+    "days": "{{count}} dage",
+    "refresh": "Opdater forbrug",
+    "loadFailed": "Udbyderforbrug kunne ikke indlæses.",
+    "metrics": {
+      "calls": "Kald",
+      "tokens": "Tokens"
+    },
+    "cards": {
+      "calls": "API-kald",
+      "callsDetail": "På tværs af {{count}} aktiv(e) bruger(e)",
+      "tokens": "Rapporterede tokens",
+      "tokensDetail": "Forbrug rapporteret på {{count}} kald",
+      "success": "Succesrate",
+      "successDetail": "{{count}} mislykkede kald",
+      "latency": "Gennemsnitlig latens",
+      "latencyDetail": "Ende-til-ende udbydertid"
+    },
+    "activity": {
+      "title": "Forbrug over tid",
+      "callsDescription": "Daglige udgående anmodninger til aktiverede plugins",
+      "tokensDescription": "Daglige token-totaler rapporteret af udbydere",
+      "chartLabel": "Daglig udbyder {{metric}}-diagram"
+    },
+    "models": {
+      "title": "Modelforbrug",
+      "description": "De modeller, der bærer mest trafik i denne periode.",
+      "model": "Model",
+      "success": "Succes",
+      "latency": "Latens"
+    },
+    "providers": {
+      "title": "Aktiveret plugin-trafik"
+    },
+    "capabilities": {
+      "title": "Mulighedsmix",
+      "characters": "{{count}} tegn",
+      "bytes": "{{count}} byte",
+      "images": "{{count}} billeder",
+      "jobs": "{{count}} videojobs",
+      "inputs": "{{count}} input",
+      "reportedTokens": "{{count}} rapporterede tokens"
+    },
+    "empty": {
+      "title": "Ingen udbyderkald endnu",
+      "description": "Kald vises her, når et aktiveret plugin håndterer anmodninger om chat, arbejde, embedding, billede, tale, lyd eller video."
+    },
+    "privacyNote": "Forbrug måles på serveren ved den udgående plugin-grænse. Libre WebUI gemmer udbyder, model, timing, status og rapporterede tællere — aldrig prompts, svar, endepunkter, legitimationsoplysninger eller udbyderfejlmeddelelser. Token-totaler inkluderer kun kald, hvor udbyderen returnerede forbrugsmetadata.",
+    "heatmap": {
+      "title": "Et års aktivitet",
+      "description": "Daglige udbyderkald det seneste år, farvet efter dagens mest brugte model.",
+      "calls": "kald",
+      "noCalls": "Ingen kald",
+      "other": "Andre modeller",
+      "less": "Mindre",
+      "more": "Mere",
+      "yearTotal": "{{formatted}} kald det seneste år"
+    }
+  },
+  "systemPage": {
+    "eyebrow": "Administration",
+    "title": "System",
+    "description": "Overvåg maskinen og runtime, der hoster denne Libre WebUI-instans.",
+    "updated": "Opdateret {{date}}",
+    "refresh": "Opdater systeminformation",
+    "loadFailed": "Systeminformation kunne ikke indlæses.",
+    "cards": {
+      "uptime": "Værtens oppetid",
+      "uptimeDetail": "Kører siden {{date}}",
+      "memory": "Hukommelse brugt",
+      "memoryDetail": "{{used}} af {{total}}",
+      "freeSpace": "Ledig plads",
+      "freeSpaceDetail": "{{label}} · {{total}} totalt",
+      "containers": "Kørende containere",
+      "containersDetail": "{{total}} container(e) kendt af Docker",
+      "dockerUnavailable": "Docker utilgængelig",
+      "unavailable": "Utilgængelig"
+    },
+    "host": {
+      "title": "Vært og runtime",
+      "description": "Operativsystem, processor og Libre WebUI-procesdetaljer.",
+      "container": "Container-runtime",
+      "native": "Native runtime",
+      "hostname": "Værtsnavn",
+      "operatingSystem": "Operativsystem",
+      "processor": "Processor",
+      "logicalCpus": "logiske CPU'er",
+      "loadAverage": "Belastningsgennemsnit · 1 / 5 / 15 min",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Proces",
+      "workingDirectory": "Arbejdsmappe"
+    },
+    "memory": {
+      "title": "Hukommelse",
+      "description": "Runtime-synlig systemhukommelse og applikationsprocesforbrug.",
+      "usedOf": "{{used}} brugt af {{total}}",
+      "free": "{{value}} ledig",
+      "processRss": "Proces-RSS",
+      "heapUsed": "V8-heap brugt",
+      "heapTotal": "V8-heap total",
+      "external": "Ekstern hukommelse"
+    },
+    "storage": {
+      "title": "Lagring",
+      "description": "Tilgængelig plads til runtime-filsystemet og vedvarende applikationsdata.",
+      "used": "{{value}} brugt",
+      "free": "{{value}} ledig",
+      "empty": "Filsysteminformation er utilgængelig i denne runtime."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Skrivebeskyttet Docker Engine-status og en reduceret liste over containere.",
+      "connected": "Forbundet",
+      "unavailable": "Utilgængelig",
+      "unavailableDetail": "Docker Engine-diagnostik er utilgængelig.",
+      "socketStatus": "Lokal socket: {{status}}",
+      "mounted": "monteret",
+      "notMounted": "ikke monteret",
+      "running": "Kører",
+      "stopped": "Stoppet",
+      "paused": "Sat på pause",
+      "total": "Total",
+      "version": "Version",
+      "host": "Vært",
+      "architecture": "Arkitektur",
+      "cpus": "CPU'er",
+      "memory": "Hukommelse",
+      "container": "Container",
+      "image": "Image",
+      "state": "Tilstand",
+      "created": "Oprettet",
+      "empty": "Docker er forbundet, og der er i øjeblikket ingen containere på listen."
+    },
+    "network": {
+      "title": "Netværk",
+      "description": "Runtime-synlige grænseflader, adresser og Linux-trafiktællere.",
+      "internal": "intern",
+      "empty": "Ingen netværksgrænseflader er synlige for applikationsruntime."
+    },
+    "securityNote": "Denne side er begrænset til administratorer. Serveren returnerer kun operationelle oversigter: den udsætter ikke miljøvariabler, legitimationsoplysninger, Docker-labels, monteringer, containerkommandoer eller inspektions-payloads. Når Libre WebUI kører i en container, kommer CPU- og hukommelsesdetaljer på værtsniveau fra Docker Engine, når dens lokale socket er tilgængelig; andre værdier beskriver applikationsruntime.",
+    "work": {
+      "title": "Work",
+      "description": "Sandkasser på tværs af alle brugere",
+      "access": "Adgang",
+      "accessAdmins": "Kun administratorer",
+      "accessAllUsers": "Alle brugere",
+      "runtimeAvailable": "Tilgængelig",
+      "runtimeUnavailable": "Utilgængelig",
+      "activeRuntimes": "Aktive kørselsmiljøer",
+      "pendingCleanups": "Afventende oprydninger",
+      "orphans": "Forældreløse containere",
+      "owner": "Ejer",
+      "task": "Opgave",
+      "state": "Tilstand",
+      "preview": "Forhåndsvisning",
+      "terminals": "Terminaler",
+      "updated": "Opdateret",
+      "stateRunning": "Kører",
+      "stateStopped": "Stoppet",
+      "stateStarting": "Starter",
+      "stateUnknown": "Ukendt",
+      "noTasks": "Ingen Work-opgaver endnu."
+    }
+  },
   "chatHistory": {
     "label": "Samtalehistorik",
     "jumpToTurn": "Gå til tur {{index}} af {{total}}"
@@ -1576,6 +1822,57 @@
     "failed": "Kunne ikke generere billede",
     "enterPrompt": "Indtast venligst en prompt",
     "promptTooLong": "Prompt overstiger den maksimale længde på {{max}} tegn"
+  },
+  "mediaGeneration": {
+    "title": "Generer medie",
+    "description": "Opret video, lyd, musik eller tale med en aktiveret medieudbyder.",
+    "image": "Billede",
+    "video": "Video",
+    "audio": "Lyd",
+    "sound": "Lyd",
+    "speech": "Tale",
+    "model": "Model",
+    "voice": "Stemme eller stemme-ID",
+    "cloneVoice": "Klon en referencestemme",
+    "cloneVoiceDescription": "Basér denne tale på en referenceoptagelse i stedet for en forudindstillet stemme.",
+    "referenceAudio": "Referencelyd",
+    "referenceTranscript": "Nøjagtig transskription af referencen",
+    "referenceTranscriptPlaceholder": "Indtast præcis det, der siges i referenceoptagelsen…",
+    "referenceAudioTooLarge": "Referencelyden skal være {{max}} eller mindre.",
+    "cloneConsent": "Klon kun en stemme, når du har talerens tilladelse. Optagelsen sendes til den valgte udbyder til denne generering og gemmes ikke af Libre WebUI.",
+    "saveVoiceProfile": "Gem som en genanvendelig stemme",
+    "saveVoiceProfileDescription": "Gem denne referenceoptagelse og transskription sikkert. Libre WebUI sender dem til den valgte udbyder for hver talebatch, der bruger stemmen.",
+    "voiceProfileName": "Navn på gemt stemme",
+    "voiceProfileNamePlaceholder": "For eksempel Min stemme",
+    "voiceStorageConsent": "Jeg bekræfter, at jeg har talerens tilladelse til at klone og gemme denne stemme. Referencen forbliver gemt, indtil jeg sletter den.",
+    "resolution": "Opløsning",
+    "aspectRatio": "Billedformat",
+    "duration": "Varighed",
+    "providerDefault": "Udbyderstandard",
+    "generateAudio": "Generer lyd sammen med videoen, når det understøttes",
+    "prompt": "Prompt",
+    "text": "Tekst der skal tales",
+    "videoPlaceholder": "Beskriv scenen, bevægelse, kamera og belysning...",
+    "audioPlaceholder": "Indtast teksten, du vil have stemmen til at tale...",
+    "soundPlaceholder": "Beskriv lyden, musikken, atmosfæren eller det talte svar, du ønsker...",
+    "generate": "Generer",
+    "generating": "Genererer… dette kan tage flere minutter",
+    "success": "Medie genereret og gemt i Imagine",
+    "successWithSavedVoice": "Mediet er oprettet, og “{{name}}” er nu tilgængelig i Taleindstillinger",
+    "failed": "Kunne ikke generere medie",
+    "loadFailed": "Kunne ikke indlæse medieudbydere",
+    "noModels": "Ingen {{kind}}-modeller er tilgængelige. Aktiver en kompatibel udbyder og gem dens legitimationsoplysninger først."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} elementer",
+    "empty": "Ingen genererede medier endnu",
+    "emptyHint": "Generer et billede, en video eller et stemmeklip, og det vises her.",
+    "filters": {
+      "all": "Alle",
+      "image": "Billeder",
+      "video": "Videoer",
+      "audio": "Lyd"
+    }
   },
   "errorBoundary": {
     "title": "Noget gik galt",
@@ -1649,7 +1946,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} af {{total}}",
     "previousVersion": "Forrige version",
-    "nextVersion": "Næste version"
+    "nextVersion": "Næste version",
+    "fullscreen": "Fuld skærm",
+    "exitFullscreen": "Forlad fuld skærm",
+    "showChatOverlay": "Vis flydende chat",
+    "hideChatOverlay": "Skjul flydende chat"
   },
   "personaImportExport": {
     "title": "Import og eksport af personaer",
@@ -1728,8 +2029,8 @@
       "saveFailed": "Kunne ikke gemme variabler",
       "resetDefaults": "Nulstil til standard",
       "reset": "Variabler nulstillet",
-      "sensitiveSet": "Værdi er sat (indtast ny for at ændre)",
       "resetFailed": "Kunne ikke nulstille variabler",
+      "sensitiveSet": "Værdi er sat (indtast ny for at ændre)",
       "showValue": "Vis {{label}}-værdi",
       "hideValue": "Skjul {{label}}-værdi",
       "connection": "Forbindelse",
@@ -1767,45 +2068,6 @@
   "demoMode": {
     "title": "Demotilstand",
     "github": "GitHub"
-  },
-  "personaBackground": {
-    "label": "Baggrundsbillede",
-    "uploadBackgroundImage": "Upload baggrundsbillede",
-    "dragAndDrop": "Træk og slip et billede eller klik for at gennemse",
-    "chooseImage": "Vælg billede",
-    "uploading": "Uploader...",
-    "enterImageUrl": "Eller indtast billed-URL",
-    "supportedFormats": "Understøtter: JPG, PNG, GIF, WebP (maks 5MB). Brede landskabsbilleder fungerer bedst.",
-    "customBackground": "Brugerdefineret baggrundsbillede",
-    "clickToChange": "Klik for at ændre eller fjerne",
-    "removed": "Baggrund fjernet",
-    "uploaded": "Baggrund uploadet succesfuldt",
-    "invalidFile": "Vælg venligst en gyldig billedfil",
-    "fileTooLarge": "Baggrundsbilledets størrelse skal være mindre end 5MB",
-    "readFailed": "Kunne ikke læse billedfil",
-    "uploadFailed": "Kunne ikke uploade baggrundsbillede"
-  },
-  "modelSelector": {
-    "searchInstalled": "Søg installerede modeller...",
-    "searchOllama": "Søg i Ollama-biblioteket...",
-    "searchHuggingFace": "Søg på HuggingFace...",
-    "selectModel": "Vælg model",
-    "personas": "Personas",
-    "ollamaModels": "Ollama-modeller",
-    "pluginModels": "Plugin-modeller",
-    "actions": "Handlinger",
-    "installed": "Installeret",
-    "use": "Brug",
-    "pull": "Download",
-    "pullRestricted": "Modelinstallation er begrænset til administratorer på denne instans.",
-    "adminOnlyPull": "Kun administratorer",
-    "legacyProvider": "udbyder ikke registreret",
-    "providerNotRecorded": "Udbyder ikke registreret",
-    "providerUnavailable": "udbyder utilgængelig",
-    "reselectProvider": "genvælg en udbyder for at fastgøre denne model",
-    "unavailable": "utilgængelig",
-    "unavailableSelections": "Utilgængelige valg",
-    "agentModels": "Agenter"
   },
   "libreClaw": {
     "title": "Agenter",
@@ -2149,224 +2411,44 @@
       "warning": "Opgaven kan læse og skrive denne mappe direkte. Lad stå tomt for et isoleret arbejdsområde."
     }
   },
-  "usageAnalytics": {
-    "eyebrow": "Administration",
-    "title": "Udbyderforbrug",
-    "description": "Følg udgående API-kald og modelforbrug på tværs af aktiverede plugins på denne instans.",
-    "days": "{{count}} dage",
-    "refresh": "Opdater forbrug",
-    "loadFailed": "Udbyderforbrug kunne ikke indlæses.",
-    "metrics": {
-      "calls": "Kald",
-      "tokens": "Tokens"
-    },
-    "cards": {
-      "calls": "API-kald",
-      "callsDetail": "På tværs af {{count}} aktiv(e) bruger(e)",
-      "tokens": "Rapporterede tokens",
-      "tokensDetail": "Forbrug rapporteret på {{count}} kald",
-      "success": "Succesrate",
-      "successDetail": "{{count}} mislykkede kald",
-      "latency": "Gennemsnitlig latens",
-      "latencyDetail": "Ende-til-ende udbydertid"
-    },
-    "activity": {
-      "title": "Forbrug over tid",
-      "callsDescription": "Daglige udgående anmodninger til aktiverede plugins",
-      "tokensDescription": "Daglige token-totaler rapporteret af udbydere",
-      "chartLabel": "Daglig udbyder {{metric}}-diagram"
-    },
-    "models": {
-      "title": "Modelforbrug",
-      "description": "De modeller, der bærer mest trafik i denne periode.",
-      "model": "Model",
-      "success": "Succes",
-      "latency": "Latens"
-    },
-    "providers": {
-      "title": "Aktiveret plugin-trafik"
-    },
-    "capabilities": {
-      "title": "Mulighedsmix",
-      "characters": "{{count}} tegn",
-      "bytes": "{{count}} byte",
-      "images": "{{count}} billeder",
-      "jobs": "{{count}} videojobs",
-      "inputs": "{{count}} input",
-      "reportedTokens": "{{count}} rapporterede tokens"
-    },
-    "empty": {
-      "title": "Ingen udbyderkald endnu",
-      "description": "Kald vises her, når et aktiveret plugin håndterer anmodninger om chat, arbejde, embedding, billede, tale, lyd eller video."
-    },
-    "privacyNote": "Forbrug måles på serveren ved den udgående plugin-grænse. Libre WebUI gemmer udbyder, model, timing, status og rapporterede tællere — aldrig prompts, svar, endepunkter, legitimationsoplysninger eller udbyderfejlmeddelelser. Token-totaler inkluderer kun kald, hvor udbyderen returnerede forbrugsmetadata.",
-    "heatmap": {
-      "title": "Et års aktivitet",
-      "description": "Daglige udbyderkald det seneste år, farvet efter dagens mest brugte model.",
-      "calls": "kald",
-      "noCalls": "Ingen kald",
-      "other": "Andre modeller",
-      "less": "Mindre",
-      "more": "Mere",
-      "yearTotal": "{{formatted}} kald det seneste år"
-    }
+  "personaBackground": {
+    "label": "Baggrundsbillede",
+    "uploadBackgroundImage": "Upload baggrundsbillede",
+    "dragAndDrop": "Træk og slip et billede eller klik for at gennemse",
+    "chooseImage": "Vælg billede",
+    "uploading": "Uploader...",
+    "enterImageUrl": "Eller indtast billed-URL",
+    "supportedFormats": "Understøtter: JPG, PNG, GIF, WebP (maks 5MB). Brede landskabsbilleder fungerer bedst.",
+    "customBackground": "Brugerdefineret baggrundsbillede",
+    "clickToChange": "Klik for at ændre eller fjerne",
+    "removed": "Baggrund fjernet",
+    "uploaded": "Baggrund uploadet succesfuldt",
+    "invalidFile": "Vælg venligst en gyldig billedfil",
+    "fileTooLarge": "Baggrundsbilledets størrelse skal være mindre end 5MB",
+    "readFailed": "Kunne ikke læse billedfil",
+    "uploadFailed": "Kunne ikke uploade baggrundsbillede"
   },
-  "systemPage": {
-    "eyebrow": "Administration",
-    "title": "System",
-    "description": "Overvåg maskinen og runtime, der hoster denne Libre WebUI-instans.",
-    "updated": "Opdateret {{date}}",
-    "refresh": "Opdater systeminformation",
-    "loadFailed": "Systeminformation kunne ikke indlæses.",
-    "cards": {
-      "uptime": "Værtens oppetid",
-      "uptimeDetail": "Kører siden {{date}}",
-      "memory": "Hukommelse brugt",
-      "memoryDetail": "{{used}} af {{total}}",
-      "freeSpace": "Ledig plads",
-      "freeSpaceDetail": "{{label}} · {{total}} totalt",
-      "containers": "Kørende containere",
-      "containersDetail": "{{total}} container(e) kendt af Docker",
-      "dockerUnavailable": "Docker utilgængelig",
-      "unavailable": "Utilgængelig"
-    },
-    "host": {
-      "title": "Vært og runtime",
-      "description": "Operativsystem, processor og Libre WebUI-procesdetaljer.",
-      "container": "Container-runtime",
-      "native": "Native runtime",
-      "hostname": "Værtsnavn",
-      "operatingSystem": "Operativsystem",
-      "processor": "Processor",
-      "logicalCpus": "logiske CPU'er",
-      "loadAverage": "Belastningsgennemsnit · 1 / 5 / 15 min",
-      "libreVersion": "Libre WebUI",
-      "nodeVersion": "Node.js",
-      "process": "Proces",
-      "workingDirectory": "Arbejdsmappe"
-    },
-    "memory": {
-      "title": "Hukommelse",
-      "description": "Runtime-synlig systemhukommelse og applikationsprocesforbrug.",
-      "usedOf": "{{used}} brugt af {{total}}",
-      "free": "{{value}} ledig",
-      "processRss": "Proces-RSS",
-      "heapUsed": "V8-heap brugt",
-      "heapTotal": "V8-heap total",
-      "external": "Ekstern hukommelse"
-    },
-    "storage": {
-      "title": "Lagring",
-      "description": "Tilgængelig plads til runtime-filsystemet og vedvarende applikationsdata.",
-      "used": "{{value}} brugt",
-      "free": "{{value}} ledig",
-      "empty": "Filsysteminformation er utilgængelig i denne runtime."
-    },
-    "docker": {
-      "title": "Docker",
-      "description": "Skrivebeskyttet Docker Engine-status og en reduceret liste over containere.",
-      "connected": "Forbundet",
-      "unavailable": "Utilgængelig",
-      "unavailableDetail": "Docker Engine-diagnostik er utilgængelig.",
-      "socketStatus": "Lokal socket: {{status}}",
-      "mounted": "monteret",
-      "notMounted": "ikke monteret",
-      "running": "Kører",
-      "stopped": "Stoppet",
-      "paused": "Sat på pause",
-      "total": "Total",
-      "version": "Version",
-      "host": "Vært",
-      "architecture": "Arkitektur",
-      "cpus": "CPU'er",
-      "memory": "Hukommelse",
-      "container": "Container",
-      "image": "Image",
-      "state": "Tilstand",
-      "created": "Oprettet",
-      "empty": "Docker er forbundet, og der er i øjeblikket ingen containere på listen."
-    },
-    "network": {
-      "title": "Netværk",
-      "description": "Runtime-synlige grænseflader, adresser og Linux-trafiktællere.",
-      "internal": "intern",
-      "empty": "Ingen netværksgrænseflader er synlige for applikationsruntime."
-    },
-    "securityNote": "Denne side er begrænset til administratorer. Serveren returnerer kun operationelle oversigter: den udsætter ikke miljøvariabler, legitimationsoplysninger, Docker-labels, monteringer, containerkommandoer eller inspektions-payloads. Når Libre WebUI kører i en container, kommer CPU- og hukommelsesdetaljer på værtsniveau fra Docker Engine, når dens lokale socket er tilgængelig; andre værdier beskriver applikationsruntime.",
-    "work": {
-      "title": "Work",
-      "description": "Sandkasser på tværs af alle brugere",
-      "access": "Adgang",
-      "accessAdmins": "Kun administratorer",
-      "accessAllUsers": "Alle brugere",
-      "runtimeAvailable": "Tilgængelig",
-      "runtimeUnavailable": "Utilgængelig",
-      "activeRuntimes": "Aktive kørselsmiljøer",
-      "pendingCleanups": "Afventende oprydninger",
-      "orphans": "Forældreløse containere",
-      "owner": "Ejer",
-      "task": "Opgave",
-      "state": "Tilstand",
-      "preview": "Forhåndsvisning",
-      "terminals": "Terminaler",
-      "updated": "Opdateret",
-      "stateRunning": "Kører",
-      "stateStopped": "Stoppet",
-      "stateStarting": "Starter",
-      "stateUnknown": "Ukendt",
-      "noTasks": "Ingen Work-opgaver endnu."
-    }
-  },
-  "mediaGeneration": {
-    "title": "Generer medie",
-    "description": "Opret video, lyd, musik eller tale med en aktiveret medieudbyder.",
-    "image": "Billede",
-    "video": "Video",
-    "audio": "Lyd",
-    "sound": "Lyd",
-    "speech": "Tale",
-    "model": "Model",
-    "voice": "Stemme eller stemme-ID",
-    "cloneVoice": "Klon en referencestemme",
-    "cloneVoiceDescription": "Basér denne tale på en referenceoptagelse i stedet for en forudindstillet stemme.",
-    "referenceAudio": "Referencelyd",
-    "referenceTranscript": "Nøjagtig transskription af referencen",
-    "referenceTranscriptPlaceholder": "Indtast præcis det, der siges i referenceoptagelsen…",
-    "referenceAudioTooLarge": "Referencelyden skal være {{max}} eller mindre.",
-    "cloneConsent": "Klon kun en stemme, når du har talerens tilladelse. Optagelsen sendes til den valgte udbyder til denne generering og gemmes ikke af Libre WebUI.",
-    "saveVoiceProfile": "Gem som en genanvendelig stemme",
-    "saveVoiceProfileDescription": "Gem denne referenceoptagelse og transskription sikkert. Libre WebUI sender dem til den valgte udbyder for hver talebatch, der bruger stemmen.",
-    "voiceProfileName": "Navn på gemt stemme",
-    "voiceProfileNamePlaceholder": "For eksempel Min stemme",
-    "voiceStorageConsent": "Jeg bekræfter, at jeg har talerens tilladelse til at klone og gemme denne stemme. Referencen forbliver gemt, indtil jeg sletter den.",
-    "successWithSavedVoice": "Mediet er oprettet, og “{{name}}” er nu tilgængelig i Taleindstillinger",
-    "resolution": "Opløsning",
-    "aspectRatio": "Billedformat",
-    "duration": "Varighed",
-    "providerDefault": "Udbyderstandard",
-    "generateAudio": "Generer lyd sammen med videoen, når det understøttes",
-    "prompt": "Prompt",
-    "text": "Tekst der skal tales",
-    "videoPlaceholder": "Beskriv scenen, bevægelse, kamera og belysning...",
-    "audioPlaceholder": "Indtast teksten, du vil have stemmen til at tale...",
-    "soundPlaceholder": "Beskriv lyden, musikken, atmosfæren eller det talte svar, du ønsker...",
-    "generate": "Generer",
-    "generating": "Genererer… dette kan tage flere minutter",
-    "success": "Medie genereret og gemt i Imagine",
-    "failed": "Kunne ikke generere medie",
-    "loadFailed": "Kunne ikke indlæse medieudbydere",
-    "noModels": "Ingen {{kind}}-modeller er tilgængelige. Aktiver en kompatibel udbyder og gem dens legitimationsoplysninger først."
-  },
-  "mediaGallery": {
-    "itemCount": "{{count}} elementer",
-    "empty": "Ingen genererede medier endnu",
-    "emptyHint": "Generer et billede, en video eller et stemmeklip, og det vises her.",
-    "filters": {
-      "all": "Alle",
-      "image": "Billeder",
-      "video": "Videoer",
-      "audio": "Lyd"
-    }
+  "modelSelector": {
+    "searchInstalled": "Søg installerede modeller...",
+    "searchOllama": "Søg i Ollama-biblioteket...",
+    "searchHuggingFace": "Søg på HuggingFace...",
+    "selectModel": "Vælg model",
+    "personas": "Personas",
+    "ollamaModels": "Ollama-modeller",
+    "pluginModels": "Plugin-modeller",
+    "actions": "Handlinger",
+    "installed": "Installeret",
+    "use": "Brug",
+    "pull": "Download",
+    "pullRestricted": "Modelinstallation er begrænset til administratorer på denne instans.",
+    "adminOnlyPull": "Kun administratorer",
+    "legacyProvider": "udbyder ikke registreret",
+    "providerNotRecorded": "Udbyder ikke registreret",
+    "providerUnavailable": "udbyder utilgængelig",
+    "reselectProvider": "genvælg en udbyder for at fastgøre denne model",
+    "unavailable": "utilgængelig",
+    "unavailableSelections": "Utilgængelige valg",
+    "agentModels": "Agenter"
   },
   "whatsNew": {
     "title": "Nyheder",

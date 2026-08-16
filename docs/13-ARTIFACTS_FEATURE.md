@@ -72,6 +72,15 @@ Artifacts open in a resizable side panel with:
 
 If an interactive artifact needs keyboard input, click inside the preview first or open it in a new window.
 
+## Keep Chatting Over a Fullscreen Artifact
+
+Two toolbar buttons let you give an artifact the whole window without losing the conversation:
+
+- **Fullscreen** expands the panel across the viewport, so a dense preview or a long file gets real space.
+- **Show floating chat** opens a small draggable chat window on top of it, wired to the same conversation you were already in.
+
+Drag the floating window by its header to park it wherever it does not cover the part of the artifact you are working on. Send a message, watch the artifact update behind it, and close the window when you are done. Escape and clicks inside the floating chat stay with the chat, so typing there never closes the artifact panel underneath.
+
 ## Sandbox Behavior
 
 HTML artifacts load through `GET /api/artifacts/sandbox`, a small backend

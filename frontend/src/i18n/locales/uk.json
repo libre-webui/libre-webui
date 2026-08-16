@@ -194,6 +194,10 @@
       "evening": "Доброго вечора",
       "night": "Доброї ночі"
     },
+    "overlay": {
+      "title": "Чат",
+      "close": "Закрити плаваючий чат"
+    },
     "followUp": "Продовжити",
     "welcome": {
       "helpToday": "Чим можу допомогти сьогодні?",
@@ -421,7 +425,12 @@
       "notes": "Нотатки"
     },
     "toggleSize": "Змінити розмір бічної панелі",
-    "expandSidebar": "Розгорнути бічну панель"
+    "expandSidebar": "Розгорнути бічну панель",
+    "pinned": {
+      "label": "Закріплені",
+      "pin": "Закріпити на бічній панелі",
+      "unpin": "Відкріпити від бічної панелі"
+    }
   },
   "user": {
     "menu": {
@@ -473,7 +482,8 @@
       "shortcuts": "Комбінації клавіш",
       "about": "Про програму",
       "sessions": "Сеанси",
-      "apiKeys": "API-ключі"
+      "apiKeys": "API-ключі",
+      "connections": "З'єднання"
     },
     "appearance": {
       "title": "Зовнішній вигляд",
@@ -904,6 +914,59 @@
       "saved": "Налаштування пошуку збережено",
       "saveFailed": "Не вдалося зберегти налаштування пошуку"
     },
+    "compaction": {
+      "title": "Стиснення контексту",
+      "description": "Коли розмова перевищує поріг токенів, сервер підсумовує її старіші повідомлення й дослівно зберігає лише найновіші. Діє для всіх користувачів цього сервера.",
+      "thresholdLabel": "Поріг токенів",
+      "thresholdDescription": "Оцінна кількість токенів контексту, вище якої стара історія підсумовується, 500-1 000 000.",
+      "thresholdInvalid": "Поріг токенів має бути від 500 до 1 000 000.",
+      "keepRecentLabel": "Збережені останні повідомлення",
+      "keepRecentDescription": "Скільки останніх повідомлень завжди залишаються дослівно, 2-200.",
+      "keepRecentInvalid": "Кількість збережених останніх повідомлень має бути від 2 до 200.",
+      "modelLabel": "Модель стиснення",
+      "modelDescription": "Модель, яка пише підсумки. Якщо нічого не вибрано, використовується модель самого сеансу.",
+      "sessionModelOption": "Використовувати модель сеансу",
+      "promptLabel": "Власний промпт для підсумку",
+      "promptPlaceholder": "Залиште порожнім, щоб використовувати вбудований промпт",
+      "promptDescription": "Змінні шаблону {{previousSummaryVariable}} і {{messagesVariable}} замінюються попереднім підсумком і повідомленнями, що підсумовуються.",
+      "saved": "Налаштування стиснення збережено",
+      "saveFailed": "Не вдалося зберегти налаштування стиснення"
+    },
+    "connections": {
+      "title": "З'єднання",
+      "description": "Провайдери моделей, з якими працює цей сервер: локальне середовище Ollama та OpenAI-сумісні кінцеві точки.",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "Локальне середовище виконання моделей.",
+      "version": "Версія {{version}}.",
+      "statusChecking": "Перевірка…",
+      "statusOnline": "Онлайн",
+      "statusOffline": "Офлайн",
+      "providersTitle": "OpenAI-сумісні з'єднання",
+      "providersDescription": "Кожне з'єднання — це провайдер завершень, чиї моделі з'являються у списку моделей чату. API-ключі зберігаються на сервері.",
+      "noConnections": "З'єднання ще не налаштовано.",
+      "modelsCount": "{{total}} моделей",
+      "pendingDiscovery": "Моделі очікують на виявлення",
+      "apiKeyMissing": "Немає API-ключа",
+      "deleteConfirm": "Видалити це з'єднання? Чати, що використовують його моделі, втратять до них доступ.",
+      "addTitle": "Додати з'єднання",
+      "addDescription": "Зареєструйте OpenAI-сумісну кінцеву точку chat completions як провайдера.",
+      "nameLabel": "Відображуване ім'я",
+      "namePlaceholder": "Мій провайдер",
+      "idPreview": "ID з'єднання: {{id}}",
+      "endpointLabel": "URL кінцевої точки",
+      "endpointDescription": "Повний URL chat completions, наприклад https://api.example.com/v1/chat/completions.",
+      "apiKeyLabel": "API-ключ",
+      "apiKeyOptionalHint": "(необов'язково, можна додати пізніше)",
+      "nameRequired": "Введіть відображуване ім'я з'єднання.",
+      "endpointInvalid": "Введіть коректний http(s) URL кінцевої точки.",
+      "alreadyExists": "З'єднання з таким ID вже існує.",
+      "add": "Додати з'єднання",
+      "adding": "Додавання…",
+      "added": "З'єднання додано",
+      "addFailed": "Не вдалося додати з'єднання",
+      "keySaveFailed": "З'єднання додано, але API-ключ зберегти не вдалося",
+      "activateFailed": "З'єднання додано, але активувати його не вдалося"
+    },
     "sessions": {
       "title": "Сеанси",
       "description": "Усі місця, де виконано вхід у цей обліковий запис. Вихід із сеансу набирає чинності негайно; повторний вхід відновлює доступ.",
@@ -1059,7 +1122,22 @@
       "running": "Запущені моделі",
       "local": "Локальні моделі",
       "advanced": "Розширені дії",
-      "huggingface": "HuggingFace Hub"
+      "huggingface": "HuggingFace Hub",
+      "catalog": "Каталог моделей"
+    },
+    "catalog": {
+      "models": "доступно",
+      "searchPlaceholder": "Шукати моделі за назвою або провайдером...",
+      "noModels": "Моделей поки немає.",
+      "empty": "Жодна модель не відповідає вашому запиту.",
+      "providerOllama": "Ollama",
+      "default": "За замовчуванням",
+      "makeDefault": "Зробити моделлю за замовчуванням",
+      "defaultSet": "{{model}} тепер ваша модель за замовчуванням.",
+      "hidden": "Прихована",
+      "hide": "Приховати від користувачів",
+      "show": "Показати користувачам",
+      "visibilityFailed": "Не вдалося оновити видимість моделі."
     },
     "pull": {
       "placeholder": "Введіть назву моделі (напр., llama3.2:3b, deepseek-r1:14b)",
@@ -1649,7 +1727,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Версія {{current}} з {{total}}",
     "previousVersion": "Попередня версія",
-    "nextVersion": "Наступна версія"
+    "nextVersion": "Наступна версія",
+    "fullscreen": "На весь екран",
+    "exitFullscreen": "Вийти з повноекранного режиму",
+    "showChatOverlay": "Показати плаваючий чат",
+    "hideChatOverlay": "Приховати плаваючий чат"
   },
   "personaImportExport": {
     "title": "Імпорт та експорт персон",

@@ -194,6 +194,10 @@
       "evening": "Selamat sore",
       "night": "Selamat malam"
     },
+    "overlay": {
+      "title": "Chat",
+      "close": "Tutup chat mengambang"
+    },
     "followUp": "Tindak lanjut",
     "welcome": {
       "helpToday": "Apa yang bisa saya bantu hari ini?",
@@ -421,7 +425,12 @@
       "notes": "Catatan"
     },
     "toggleSize": "Ubah ukuran sidebar",
-    "expandSidebar": "Perluas sidebar"
+    "expandSidebar": "Perluas sidebar",
+    "pinned": {
+      "label": "Disematkan",
+      "pin": "Sematkan ke sidebar",
+      "unpin": "Lepas sematan dari sidebar"
+    }
   },
   "user": {
     "menu": {
@@ -473,7 +482,8 @@
       "shortcuts": "Pintasan",
       "about": "Tentang",
       "sessions": "Sesi",
-      "apiKeys": "API key"
+      "apiKeys": "API key",
+      "connections": "Koneksi"
     },
     "appearance": {
       "title": "Tampilan",
@@ -904,6 +914,59 @@
       "saved": "Pengaturan pencarian disimpan",
       "saveFailed": "Tidak dapat menyimpan pengaturan pencarian"
     },
+    "compaction": {
+      "title": "Pemadatan konteks",
+      "description": "Saat percakapan melewati ambang token, server merangkum pesan-pesan lamanya dan hanya menyimpan pesan terbaru secara utuh. Berlaku untuk semua pengguna di server ini.",
+      "thresholdLabel": "Ambang token",
+      "thresholdDescription": "Perkiraan jumlah token konteks yang jika terlampaui, riwayat lama akan dirangkum, 500-1.000.000.",
+      "thresholdInvalid": "Ambang token harus antara 500 dan 1.000.000.",
+      "keepRecentLabel": "Pesan terbaru yang disimpan",
+      "keepRecentDescription": "Berapa banyak pesan terakhir yang selalu disimpan secara utuh, 2-200.",
+      "keepRecentInvalid": "Pesan terbaru yang disimpan harus antara 2 dan 200.",
+      "modelLabel": "Model pemadatan",
+      "modelDescription": "Model yang menulis rangkuman. Jika tidak ada yang dipilih, model milik sesi yang digunakan.",
+      "sessionModelOption": "Gunakan model sesi",
+      "promptLabel": "Prompt rangkuman kustom",
+      "promptPlaceholder": "Biarkan kosong untuk menggunakan prompt bawaan",
+      "promptDescription": "Variabel templat {{previousSummaryVariable}} dan {{messagesVariable}} akan diganti dengan rangkuman sebelumnya dan pesan-pesan yang sedang dirangkum.",
+      "saved": "Pengaturan pemadatan disimpan",
+      "saveFailed": "Tidak dapat menyimpan pengaturan pemadatan"
+    },
+    "connections": {
+      "title": "Koneksi",
+      "description": "Penyedia model yang terhubung dengan server ini: runtime Ollama lokal dan endpoint yang kompatibel dengan OpenAI.",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "Runtime model lokal.",
+      "version": "Versi {{version}}.",
+      "statusChecking": "Memeriksa…",
+      "statusOnline": "Online",
+      "statusOffline": "Offline",
+      "providersTitle": "Koneksi kompatibel OpenAI",
+      "providersDescription": "Setiap koneksi adalah penyedia completion yang model-modelnya muncul di pemilih model chat. API key disimpan di sisi server.",
+      "noConnections": "Belum ada koneksi yang dikonfigurasi.",
+      "modelsCount": "{{total}} model",
+      "pendingDiscovery": "Model menunggu penemuan",
+      "apiKeyMissing": "Tanpa API key",
+      "deleteConfirm": "Hapus koneksi ini? Chat yang menggunakan model-modelnya akan kehilangan akses ke model tersebut.",
+      "addTitle": "Tambah koneksi",
+      "addDescription": "Daftarkan endpoint chat completions yang kompatibel dengan OpenAI sebagai penyedia.",
+      "nameLabel": "Nama tampilan",
+      "namePlaceholder": "Penyedia saya",
+      "idPreview": "ID koneksi: {{id}}",
+      "endpointLabel": "URL endpoint",
+      "endpointDescription": "URL chat completions lengkap, misalnya https://api.example.com/v1/chat/completions.",
+      "apiKeyLabel": "API key",
+      "apiKeyOptionalHint": "(opsional, dapat ditambahkan nanti)",
+      "nameRequired": "Masukkan nama tampilan untuk koneksi.",
+      "endpointInvalid": "Masukkan URL endpoint http(s) yang valid.",
+      "alreadyExists": "Koneksi dengan ID ini sudah ada.",
+      "add": "Tambah koneksi",
+      "adding": "Menambahkan…",
+      "added": "Koneksi ditambahkan",
+      "addFailed": "Tidak dapat menambahkan koneksi",
+      "keySaveFailed": "Koneksi ditambahkan, tetapi API key tidak dapat disimpan",
+      "activateFailed": "Koneksi ditambahkan, tetapi tidak dapat diaktifkan"
+    },
     "sessions": {
       "title": "Sesi",
       "description": "Semua tempat akun ini masuk. Mengeluarkan sesi berlaku seketika; masuk kembali akan memulihkan akses.",
@@ -1059,7 +1122,22 @@
       "running": "Model Berjalan",
       "local": "Model Lokal",
       "advanced": "Tindakan Lanjutan",
-      "huggingface": "HuggingFace Hub"
+      "huggingface": "HuggingFace Hub",
+      "catalog": "Katalog Model"
+    },
+    "catalog": {
+      "models": "tersedia",
+      "searchPlaceholder": "Cari model berdasarkan nama atau penyedia...",
+      "noModels": "Belum ada model yang tersedia.",
+      "empty": "Tidak ada model yang cocok dengan pencarian Anda.",
+      "providerOllama": "Ollama",
+      "default": "Default",
+      "makeDefault": "Jadikan default",
+      "defaultSet": "{{model}} sekarang menjadi model default Anda.",
+      "hidden": "Disembunyikan",
+      "hide": "Sembunyikan dari pengguna",
+      "show": "Tampilkan ke pengguna",
+      "visibilityFailed": "Tidak dapat memperbarui visibilitas model."
     },
     "pull": {
       "placeholder": "Masukkan nama model (mis., llama3.2:3b, deepseek-r1:14b)",
@@ -1649,7 +1727,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Versi {{current}} dari {{total}}",
     "previousVersion": "Versi sebelumnya",
-    "nextVersion": "Versi berikutnya"
+    "nextVersion": "Versi berikutnya",
+    "fullscreen": "Layar penuh",
+    "exitFullscreen": "Keluar dari layar penuh",
+    "showChatOverlay": "Tampilkan chat mengambang",
+    "hideChatOverlay": "Sembunyikan chat mengambang"
   },
   "personaImportExport": {
     "title": "Impor & Ekspor Persona",

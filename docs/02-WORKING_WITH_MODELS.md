@@ -50,6 +50,12 @@ Open **Models** from the sidebar to:
 
 For Ollama Cloud results, the UI normalizes cloud model names before pulling. If a cloud model requires the `:cloud` or `-cloud` suffix, Libre WebUI applies that for you from the cloud model flow.
 
+## Model Catalog and Visibility
+
+The **Model Catalog** at the top of the Models page lists every chat model you can pick, local and provider-backed alike, with a provider badge and a search box. Use **Make default** on any row to set the model new chats start with.
+
+Administrators get one more control per row: an eye toggle that hides a model from everyone else's model pickers. Hiding trims long catalogs down to the models a server actually wants people using — it is a listing refinement, not an authorization gate, so treat it as curation rather than a security boundary. Administrators always see the full list, with hidden models marked.
+
 ## Local vs Cloud Models
 
 | Mode             | Strengths                                              | Tradeoffs                                                     |

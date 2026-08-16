@@ -59,11 +59,11 @@
       "loginSuccess": "登录成功！",
       "loginFailed": "登录失败",
       "checkCredentials": "登录失败，请检查您的凭据。",
+      "approvalPending": "您的账户正在等待管理员批准。",
       "enterBoth": "请输入用户名和密码",
       "githubSuccess": "GitHub 登录成功！",
       "githubFailed": "GitHub 认证失败",
       "githubVerifyFailed": "GitHub 认证验证失败",
-      "approvalPending": "您的账户正在等待管理员批准。",
       "verificationFailed": "安全验证失败。请刷新页面后重试。"
     },
     "signup": {
@@ -82,15 +82,15 @@
       "hasAccount": "已有账户？",
       "signInHere": "点击登录",
       "signupSuccess": "账户创建成功！",
+      "approvalPending": "已收到注册申请。需要管理员批准您的账户。",
+      "awaitingApproval": "等待批准",
+      "awaitingApprovalDescription": "您的账户已创建，但需要管理员激活后才能登录。",
+      "backToSignIn": "返回登录",
       "signupFailed": "注册失败",
       "tryAgain": "注册失败，请重试。",
       "usernameRequired": "用户名和密码为必填项",
       "passwordMismatch": "两次输入的密码不一致",
-      "passwordTooShort": "密码长度至少为6个字符",
-      "approvalPending": "已收到注册申请。需要管理员批准您的账户。",
-      "awaitingApproval": "等待批准",
-      "awaitingApprovalDescription": "您的账户已创建，但需要管理员激活后才能登录。",
-      "backToSignIn": "返回登录"
+      "passwordTooShort": "密码长度至少为6个字符"
     },
     "logout": {
       "button": "退出登录",
@@ -166,9 +166,9 @@
       "createAdmin": "创建管理员",
       "success": "管理员账户创建成功！",
       "failed": "创建管理员账户失败",
+      "approvalUnexpected": "无法激活初始管理员。请重试。",
       "fillAllFields": "请填写所有字段",
-      "note": "这将是您 Libre WebUI 实例的主管理员账户",
-      "approvalUnexpected": "无法激活初始管理员。请重试。"
+      "note": "这将是您 Libre WebUI 实例的主管理员账户"
     },
     "encryptionKey": {
       "title": "保存您的加密密钥",
@@ -193,6 +193,10 @@
       "afternoon": "下午好",
       "evening": "晚上好",
       "night": "夜深了"
+    },
+    "overlay": {
+      "title": "聊天",
+      "close": "关闭悬浮聊天"
     },
     "followUp": "后续问题",
     "welcome": {
@@ -277,6 +281,7 @@
       "work": "工作",
       "chat": "对话",
       "private": "私密",
+      "incognito": "隐身聊天",
       "privateMode": "私密模式",
       "privateDescription": "此对话不会被保存",
       "privateTooltip": "开始一个不会被保存的私密对话",
@@ -290,7 +295,6 @@
       "pinChat": "固定",
       "unpinChat": "取消固定",
       "deleteChat": "删除对话",
-      "incognito": "隐身聊天",
       "archiveChat": "归档聊天",
       "groups": {
         "pinned": "已固定",
@@ -410,27 +414,32 @@
       "models": "模型",
       "personas": "角色",
       "imagine": "创意",
-      "settings": "设置",
-      "userManagement": "用户管理",
-      "signOut": "退出登录",
       "agents": "智能体",
       "work": "工作",
-      "exploreLabel": "探索",
+      "settings": "设置",
       "usageAnalytics": "提供商使用情况",
       "system": "系统",
+      "userManagement": "用户管理",
+      "signOut": "退出登录",
+      "exploreLabel": "探索",
       "notes": "笔记"
     },
     "toggleSize": "切换侧边栏大小",
-    "expandSidebar": "展开侧边栏"
+    "expandSidebar": "展开侧边栏",
+    "pinned": {
+      "label": "已固定",
+      "pin": "固定到侧边栏",
+      "unpin": "从侧边栏取消固定"
+    }
   },
   "user": {
     "menu": {
       "changePicture": "更换头像",
       "settings": "设置",
-      "userManagement": "用户管理",
-      "logout": "退出登录",
       "usageAnalytics": "提供商使用情况",
-      "system": "系统"
+      "system": "系统",
+      "userManagement": "用户管理",
+      "logout": "退出登录"
     },
     "avatar": {
       "title": "更换头像",
@@ -473,7 +482,8 @@
       "shortcuts": "快捷键",
       "about": "关于",
       "sessions": "登录会话",
-      "apiKeys": "API 密钥"
+      "apiKeys": "API 密钥",
+      "connections": "连接"
     },
     "appearance": {
       "title": "外观",
@@ -525,6 +535,13 @@
       "defaultModel": "默认模型",
       "defaultModelDescription": "此模型将默认用于新对话",
       "selectModel": "选择模型",
+      "specializedModels": "专用模型",
+      "visionModel": "视觉模型",
+      "selectVisionModel": "使用当前聊天模型",
+      "visionModelDescription": "当发出的聊天上下文包含图像时自动使用。请选择支持图像输入的模型。",
+      "visionModelUpdateFailed": "更新视觉模型失败：{{error}}",
+      "visionModelNoProvider": "此视觉模型没有提供商标识。请选择一个可用的模型。",
+      "persona": "角色",
       "updateAll": "更新所有模型",
       "updateAllDescription": "检查更新并拉取所有已安装模型的最新版本",
       "updateAllButton": "全部更新",
@@ -547,15 +564,8 @@
         "selectTaskModel": "选择任务模型",
         "taskModelDescription": "用于生成对话标题的模型"
       },
-      "persona": "角色",
       "updatingModel": "正在更新 {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} 个模型中的第 {{current}} 个",
-      "specializedModels": "专用模型",
-      "visionModel": "视觉模型",
-      "selectVisionModel": "使用当前聊天模型",
-      "visionModelDescription": "当发出的聊天上下文包含图像时自动使用。请选择支持图像输入的模型。",
-      "visionModelUpdateFailed": "更新视觉模型失败：{{error}}",
-      "visionModelNoProvider": "此视觉模型没有提供商标识。请选择一个可用的模型。"
+      "modelsProgress": "{{total}} 个模型中的第 {{current}} 个"
     },
     "systemMessage": {
       "title": "系统消息",
@@ -567,6 +577,13 @@
     "plugins": {
       "title": "插件",
       "description": "管理已安装的插件",
+      "providerConnections": "提供商连接",
+      "providerConnectionsDescription": "通过插件连接、配置和检查模型提供商。",
+      "providers": "提供商",
+      "searchProviders": "搜索提供商",
+      "noProvidersFound": "没有找到匹配的提供商。",
+      "selectProvider": "选择提供商",
+      "selectProviderDescription": "选择一个提供商以检查其连接和模型目录。",
       "addNew": "添加新插件",
       "upload": "上传插件",
       "addJson": "添加 JSON",
@@ -585,33 +602,12 @@
       "models": "模型",
       "apiKeySet": "API 密钥已设置",
       "apiKeyConfiguration": "API 密钥配置",
+      "apiKeyDescription": "为 {{name}} 存储个人 API 密钥。",
       "apiKeyEnvAlternative": "或者设置",
       "environmentVariable": "环境变量",
       "apiKeyConfigured": "API 密钥已配置",
       "apiKeyPlaceholder": "输入您的 API 密钥...",
       "saveApiKey": "保存 API 密钥",
-      "apiKey": {
-        "title": "API 密钥",
-        "placeholder": "输入 API 密钥",
-        "save": "保存密钥",
-        "remove": "移除密钥",
-        "configured": "API 密钥已配置",
-        "notConfigured": "需要 API 密钥",
-        "saved": "API 密钥保存成功",
-        "removed": "API 密钥已移除",
-        "saveFailed": "保存 API 密钥失败",
-        "removeFailed": "移除 API 密钥失败",
-        "enterKey": "请输入 API 密钥"
-      },
-      "variables": "Variables",
-      "providerConnections": "提供商连接",
-      "providerConnectionsDescription": "通过插件连接、配置和检查模型提供商。",
-      "providers": "提供商",
-      "searchProviders": "搜索提供商",
-      "noProvidersFound": "没有找到匹配的提供商。",
-      "selectProvider": "选择提供商",
-      "selectProviderDescription": "选择一个提供商以检查其连接和模型目录。",
-      "apiKeyDescription": "为 {{name}} 存储个人 API 密钥。",
       "showApiKey": "显示 API 密钥",
       "hideApiKey": "隐藏 API 密钥",
       "configure": "配置",
@@ -637,7 +633,21 @@
         "transcription": "转录"
       },
       "exportPlugin": "导出插件",
-      "deletePlugin": "删除插件"
+      "deletePlugin": "删除插件",
+      "apiKey": {
+        "title": "API 密钥",
+        "placeholder": "输入 API 密钥",
+        "save": "保存密钥",
+        "remove": "移除密钥",
+        "configured": "API 密钥已配置",
+        "notConfigured": "需要 API 密钥",
+        "saved": "API 密钥保存成功",
+        "removed": "API 密钥已移除",
+        "saveFailed": "保存 API 密钥失败",
+        "removeFailed": "移除 API 密钥失败",
+        "enterKey": "请输入 API 密钥"
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "生成选项",
@@ -647,6 +657,8 @@
       "scopeModel": "仅 {{model}}",
       "scopeAllHint": "除非模型有自己的设置，否则所有模型都使用这些值。",
       "scopeModelHint": "仅为该模型保存，并优先于上面的通用值。",
+      "advancedSettings": "高级生成设置",
+      "advancedSettingsDescription": "采样、Token 限制、上下文、惩罚和停止序列",
       "coreParameters": "核心参数",
       "temperature": "温度",
       "temperatureDescription": "控制随机性。较低的值更专注，较高的值更有创意。",
@@ -678,9 +690,7 @@
       "resetDefaults": "重置为默认值",
       "saveOptions": "保存选项",
       "embeddingSettings": "嵌入设置",
-      "enableEmbeddings": "启用文档嵌入",
-      "advancedSettings": "高级生成设置",
-      "advancedSettingsDescription": "采样、Token 限制、上下文、惩罚和停止序列"
+      "enableEmbeddings": "启用文档嵌入"
     },
     "documents": {
       "title": "文档设置",
@@ -790,6 +800,7 @@
       "title": "数据管理",
       "export": "导出数据",
       "exportDescription": "下载包含偏好设置、聊天文件夹、会话和消息、笔记、知识集合及提取的文档文本的便携归档。",
+      "archiveScopeV3": "包含偏好设置、聊天、文件夹、笔记、知识集合及提取的文档文本。不包含账户和机密、生物特征克隆语音、生成的媒体、角色和记忆，以及 Work 数据或卷。",
       "exportAll": "导出所有数据",
       "import": "导入数据",
       "importDescription": "从之前的导出导入数据。",
@@ -830,8 +841,7 @@
         "title": "已归档的聊天",
         "empty": "没有已归档的聊天",
         "unarchive": "取消归档"
-      },
-      "archiveScopeV3": "包含偏好设置、聊天、文件夹、笔记、知识集合及提取的文档文本。不包含账户和机密、生物特征克隆语音、生成的媒体、角色和记忆，以及 Work 数据或卷。"
+      }
     },
     "about": {
       "title": "关于",
@@ -903,6 +913,59 @@
       "save": "保存",
       "saved": "搜索设置已保存",
       "saveFailed": "无法保存搜索设置"
+    },
+    "compaction": {
+      "title": "上下文压缩",
+      "description": "当对话超过令牌阈值时，服务器会总结较早的消息，只逐字保留最近的消息。对本服务器上的所有用户生效。",
+      "thresholdLabel": "令牌阈值",
+      "thresholdDescription": "估算的上下文令牌数超过该值时总结较早的历史记录，500-1,000,000。",
+      "thresholdInvalid": "令牌阈值必须介于 500 和 1,000,000 之间。",
+      "keepRecentLabel": "保留的最近消息",
+      "keepRecentDescription": "始终逐字保留多少条最新消息，2-200。",
+      "keepRecentInvalid": "保留的最近消息数必须介于 2 和 200 之间。",
+      "modelLabel": "压缩模型",
+      "modelDescription": "撰写摘要的模型。未选择时使用对话自身的模型。",
+      "sessionModelOption": "使用对话的模型",
+      "promptLabel": "自定义摘要提示词",
+      "promptPlaceholder": "留空则使用内置提示词",
+      "promptDescription": "模板变量 {{previousSummaryVariable}} 和 {{messagesVariable}} 会被替换为上一次的摘要和正在总结的消息。",
+      "saved": "已保存压缩设置",
+      "saveFailed": "无法保存压缩设置"
+    },
+    "connections": {
+      "title": "连接",
+      "description": "本服务器所连接的模型提供方：本地 Ollama 运行时和 OpenAI 兼容端点。",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "本地模型运行时。",
+      "version": "版本 {{version}}。",
+      "statusChecking": "检查中…",
+      "statusOnline": "在线",
+      "statusOffline": "离线",
+      "providersTitle": "OpenAI 兼容连接",
+      "providersDescription": "每个连接都是一个补全提供方，其模型会出现在聊天的模型选择器中。API 密钥保存在服务器端。",
+      "noConnections": "尚未配置任何连接。",
+      "modelsCount": "{{total}} 个模型",
+      "pendingDiscovery": "模型待发现",
+      "apiKeyMissing": "无 API 密钥",
+      "deleteConfirm": "删除此连接？使用其模型的聊天将无法再访问这些模型。",
+      "addTitle": "添加连接",
+      "addDescription": "将 OpenAI 兼容的 chat completions 端点注册为提供方。",
+      "nameLabel": "显示名称",
+      "namePlaceholder": "我的提供方",
+      "idPreview": "连接 ID：{{id}}",
+      "endpointLabel": "端点 URL",
+      "endpointDescription": "完整的 chat completions URL，例如 https://api.example.com/v1/chat/completions。",
+      "apiKeyLabel": "API 密钥",
+      "apiKeyOptionalHint": "（可选，可稍后添加）",
+      "nameRequired": "请输入连接的显示名称。",
+      "endpointInvalid": "请输入有效的 http(s) 端点 URL。",
+      "alreadyExists": "已存在使用该 ID 的连接。",
+      "add": "添加连接",
+      "adding": "正在添加…",
+      "added": "已添加连接",
+      "addFailed": "无法添加该连接",
+      "keySaveFailed": "已添加连接，但无法保存 API 密钥",
+      "activateFailed": "已添加连接，但无法启用"
     },
     "sessions": {
       "title": "登录会话",
@@ -1056,10 +1119,25 @@
     "sections": {
       "pull": "拉取新模型",
       "library": "浏览模型库",
+      "huggingface": "HuggingFace Hub",
       "running": "运行中的模型",
       "local": "本地模型",
       "advanced": "高级操作",
-      "huggingface": "HuggingFace Hub"
+      "catalog": "模型目录"
+    },
+    "catalog": {
+      "models": "可用",
+      "searchPlaceholder": "按名称或提供方搜索模型...",
+      "noModels": "暂无可用模型。",
+      "empty": "没有模型符合您的搜索。",
+      "providerOllama": "Ollama",
+      "default": "默认",
+      "makeDefault": "设为默认",
+      "defaultSet": "{{model}} 现在是您的默认模型。",
+      "hidden": "已隐藏",
+      "hide": "对用户隐藏",
+      "show": "对用户显示",
+      "visibilityFailed": "无法更新模型的可见性。"
     },
     "pull": {
       "placeholder": "输入模型名称（例如：llama3.2:3b、deepseek-r1:14b）",
@@ -1089,6 +1167,37 @@
       "installed": "已安装",
       "more": "+{{count}} 更多",
       "refresh": "刷新模型库"
+    },
+    "huggingface": {
+      "browseAll": "在 HuggingFace 上浏览全部",
+      "checkingGguf": "正在检查 GGUF 文件...",
+      "noGgufAvailable": "没有可用于直接 Ollama 拉取的 GGUF 文件",
+      "ggufFilesCount": "GGUF 文件 ({{count}}) - 直接拉取到 Ollama",
+      "noModelsFound": "未找到模型",
+      "noResults": "未找到模型。请尝试调整搜索或筛选条件。",
+      "browseAllLink": "浏览全部",
+      "search": "搜索 HuggingFace 模型...",
+      "by": "作者",
+      "gated": "受限访问",
+      "viewOnHF": "在 HuggingFace 上查看",
+      "sortDownloads": "下载量",
+      "sortLikes": "点赞",
+      "sortRecent": "最近",
+      "taskTextGeneration": "文本生成",
+      "taskTextToSpeech": "语音合成",
+      "taskTextToImage": "图像生成",
+      "taskSpeechRecognition": "语音识别",
+      "tasks": {
+        "textGen": "文本生成",
+        "tts": "语音合成",
+        "image": "图像生成",
+        "stt": "语音识别"
+      },
+      "sort": {
+        "downloads": "下载最多",
+        "likes": "最受欢迎",
+        "recent": "最近更新"
+      }
     },
     "local": {
       "noModels": "尚未安装模型",
@@ -1167,37 +1276,6 @@
         "success": "生成了 {{count}} 维嵌入向量",
         "failed": "生成嵌入失败",
         "enterBoth": "请选择模型并输入文本"
-      }
-    },
-    "huggingface": {
-      "browseAll": "在 HuggingFace 上浏览全部",
-      "checkingGguf": "正在检查 GGUF 文件...",
-      "noGgufAvailable": "没有可用于直接 Ollama 拉取的 GGUF 文件",
-      "ggufFilesCount": "GGUF 文件 ({{count}}) - 直接拉取到 Ollama",
-      "noModelsFound": "未找到模型",
-      "noResults": "未找到模型。请尝试调整搜索或筛选条件。",
-      "browseAllLink": "浏览全部",
-      "search": "搜索 HuggingFace 模型...",
-      "by": "作者",
-      "gated": "受限访问",
-      "viewOnHF": "在 HuggingFace 上查看",
-      "sortDownloads": "下载量",
-      "sortLikes": "点赞",
-      "sortRecent": "最近",
-      "taskTextGeneration": "文本生成",
-      "taskTextToSpeech": "语音合成",
-      "taskTextToImage": "图像生成",
-      "taskSpeechRecognition": "语音识别",
-      "tasks": {
-        "textGen": "文本生成",
-        "tts": "语音合成",
-        "image": "图像生成",
-        "stt": "语音识别"
-      },
-      "sort": {
-        "downloads": "下载最多",
-        "likes": "最受欢迎",
-        "recent": "最近更新"
       }
     }
   },
@@ -1371,6 +1449,17 @@
     "deleteSuccess": "用户删除成功",
     "deleteFailed": "删除用户失败",
     "cannotDeleteSelf": "您无法删除自己的账户",
+    "approval": {
+      "title": "待审批",
+      "description": "在允许新注册用户进入此实例之前进行审核。",
+      "registered": "已注册",
+      "activate": "激活账户",
+      "reject": "拒绝注册",
+      "approved": "{{name}} 现在可以登录了。",
+      "failed": "无法批准该账户。",
+      "notification": "{{count}} 个注册正在等待您的批准。",
+      "notificationBadge": "{{count}} 个待处理的用户批准"
+    },
     "form": {
       "title": {
         "create": "创建用户",
@@ -1392,17 +1481,6 @@
       "updateSuccess": "用户更新成功",
       "createFailed": "创建用户失败",
       "updateFailed": "更新用户失败"
-    },
-    "approval": {
-      "title": "待审批",
-      "description": "在允许新注册用户进入此实例之前进行审核。",
-      "registered": "已注册",
-      "activate": "激活账户",
-      "reject": "拒绝注册",
-      "approved": "{{name}} 现在可以登录了。",
-      "failed": "无法批准该账户。",
-      "notification": "{{count}} 个注册正在等待您的批准。",
-      "notificationBadge": "{{count}} 个待处理的用户批准"
     },
     "workAccess": {
       "title": "Work 访问权限",
@@ -1508,6 +1586,174 @@
       "target": "目标"
     }
   },
+  "usageAnalytics": {
+    "eyebrow": "管理",
+    "title": "提供商使用情况",
+    "description": "跟踪此实例上已启用插件的出站 API 调用和模型消耗。",
+    "days": "{{count}} 天",
+    "refresh": "刷新使用情况",
+    "loadFailed": "无法加载提供商使用情况。",
+    "metrics": {
+      "calls": "调用",
+      "tokens": "Token"
+    },
+    "cards": {
+      "calls": "API 调用",
+      "callsDetail": "跨 {{count}} 个活跃用户",
+      "tokens": "报告的 Token",
+      "tokensDetail": "在 {{count}} 次调用中报告的使用情况",
+      "success": "成功率",
+      "successDetail": "{{count}} 次失败调用",
+      "latency": "平均延迟",
+      "latencyDetail": "端到端提供商耗时"
+    },
+    "activity": {
+      "title": "随时间变化的消耗",
+      "callsDescription": "每日对已启用插件的出站请求",
+      "tokensDescription": "提供商报告的每日 token 总量",
+      "chartLabel": "每日提供商 {{metric}} 图表"
+    },
+    "models": {
+      "title": "模型消耗",
+      "description": "此期间承载最多流量的模型。",
+      "model": "模型",
+      "success": "成功",
+      "latency": "延迟"
+    },
+    "providers": {
+      "title": "已启用插件的流量"
+    },
+    "capabilities": {
+      "title": "能力组合",
+      "characters": "{{count}} 个字符",
+      "bytes": "{{count}} 字节",
+      "images": "{{count}} 张图片",
+      "jobs": "{{count}} 个视频任务",
+      "inputs": "{{count}} 个输入",
+      "reportedTokens": "{{count}} 个已报告 token"
+    },
+    "empty": {
+      "title": "暂无提供商调用",
+      "description": "当已启用的插件处理聊天、工作、嵌入、图像、语音、声音或视频请求后，调用将显示在此处。"
+    },
+    "privacyNote": "使用量在服务器的出站插件边界处进行计量。Libre WebUI 存储提供商、模型、计时、状态和已报告的计数器——绝不存储提示词、响应、端点、凭据或提供商错误正文。Token 总量仅包含提供商返回使用元数据的调用。",
+    "heatmap": {
+      "title": "一年的活动",
+      "description": "过去一年每日的提供商调用量，按当天使用最多的模型着色。",
+      "calls": "次调用",
+      "noCalls": "无调用",
+      "other": "其他模型",
+      "less": "少",
+      "more": "多",
+      "yearTotal": "过去一年共 {{formatted}} 次调用"
+    }
+  },
+  "systemPage": {
+    "eyebrow": "管理",
+    "title": "系统",
+    "description": "监控托管此 Libre WebUI 实例的机器和运行时。",
+    "updated": "已更新于 {{date}}",
+    "refresh": "刷新系统信息",
+    "loadFailed": "无法加载系统信息。",
+    "cards": {
+      "uptime": "主机运行时间",
+      "uptimeDetail": "自 {{date}} 起运行",
+      "memory": "已用内存",
+      "memoryDetail": "{{used}} / {{total}}",
+      "freeSpace": "可用空间",
+      "freeSpaceDetail": "{{label}} · 总计 {{total}}",
+      "containers": "运行中的容器",
+      "containersDetail": "Docker 已知 {{total}} 个容器",
+      "dockerUnavailable": "Docker 不可用",
+      "unavailable": "不可用"
+    },
+    "host": {
+      "title": "主机与运行时",
+      "description": "操作系统、处理器和 Libre WebUI 进程详情。",
+      "container": "容器运行时",
+      "native": "原生运行时",
+      "hostname": "主机名",
+      "operatingSystem": "操作系统",
+      "processor": "处理器",
+      "logicalCpus": "逻辑 CPU",
+      "loadAverage": "平均负载 · 1 / 5 / 15 分钟",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "进程",
+      "workingDirectory": "工作目录"
+    },
+    "memory": {
+      "title": "内存",
+      "description": "运行时可见的系统内存和应用程序进程使用情况。",
+      "usedOf": "已用 {{used}} / 共 {{total}}",
+      "free": "{{value}} 可用",
+      "processRss": "进程 RSS",
+      "heapUsed": "V8 堆已用",
+      "heapTotal": "V8 堆总量",
+      "external": "外部内存"
+    },
+    "storage": {
+      "title": "存储",
+      "description": "运行时文件系统和持久化应用程序数据的可用空间。",
+      "used": "已用 {{value}}",
+      "free": "{{value}} 可用",
+      "empty": "此运行时中文件系统信息不可用。"
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "只读的 Docker Engine 状态和精简的容器列表。",
+      "connected": "已连接",
+      "unavailable": "不可用",
+      "unavailableDetail": "Docker Engine 诊断不可用。",
+      "socketStatus": "本地套接字：{{status}}",
+      "mounted": "已挂载",
+      "notMounted": "未挂载",
+      "running": "运行中",
+      "stopped": "已停止",
+      "paused": "已暂停",
+      "total": "总计",
+      "version": "版本",
+      "host": "主机",
+      "architecture": "架构",
+      "cpus": "CPU",
+      "memory": "内存",
+      "container": "容器",
+      "image": "镜像",
+      "state": "状态",
+      "created": "创建时间",
+      "empty": "Docker 已连接，当前未列出任何容器。"
+    },
+    "network": {
+      "title": "网络",
+      "description": "运行时可见的接口、地址和 Linux 流量计数器。",
+      "internal": "内部",
+      "empty": "应用运行时未显示任何网络接口。"
+    },
+    "securityNote": "此页面仅限管理员访问。服务器仅返回运行状态摘要：不会暴露环境变量、凭据、Docker 标签、挂载点、容器命令或 inspect 负载。当 Libre WebUI 在容器中运行时，如果本地套接字可用，主机级别的 CPU 和内存详情来自 Docker Engine；其他值描述的是应用运行时。",
+    "work": {
+      "title": "Work",
+      "description": "所有用户的沙箱",
+      "access": "访问权限",
+      "accessAdmins": "仅管理员",
+      "accessAllUsers": "所有用户",
+      "runtimeAvailable": "可用",
+      "runtimeUnavailable": "不可用",
+      "activeRuntimes": "活跃运行时",
+      "pendingCleanups": "待处理清理",
+      "orphans": "孤立容器",
+      "owner": "所有者",
+      "task": "任务",
+      "state": "状态",
+      "preview": "预览",
+      "terminals": "终端",
+      "updated": "更新时间",
+      "stateRunning": "运行中",
+      "stateStopped": "已停止",
+      "stateStarting": "启动中",
+      "stateUnknown": "未知",
+      "noTasks": "暂无 Work 任务。"
+    }
+  },
   "chatHistory": {
     "label": "对话历史",
     "jumpToTurn": "跳转到第 {{index}} 项，共 {{total}} 项"
@@ -1576,6 +1822,57 @@
     "failed": "图像生成失败",
     "enterPrompt": "请输入提示词",
     "promptTooLong": "提示词超过最大长度 {{max}} 个字符"
+  },
+  "mediaGeneration": {
+    "title": "生成媒体",
+    "description": "使用已激活的媒体提供商创建视频、声音、音乐或语音。",
+    "image": "图像",
+    "video": "视频",
+    "audio": "音频",
+    "sound": "声音",
+    "speech": "语音",
+    "model": "模型",
+    "voice": "语音或语音 ID",
+    "cloneVoice": "克隆参考声音",
+    "cloneVoiceDescription": "根据参考录音而不是预设声音生成此语音。",
+    "referenceAudio": "参考音频",
+    "referenceTranscript": "准确的参考文字稿",
+    "referenceTranscriptPlaceholder": "请准确输入参考录音中说出的内容…",
+    "referenceAudioTooLarge": "参考音频不得大于 {{max}}。",
+    "cloneConsent": "仅在获得说话者许可后克隆其声音。该录音会发送给所选提供商以完成本次生成，Libre WebUI 不会保存录音。",
+    "saveVoiceProfile": "保存为可重复使用的声音",
+    "saveVoiceProfileDescription": "安全存储此参考录音及其文字稿。每当语音批次使用此声音时，Libre WebUI 都会将两者发送给所选提供商。",
+    "voiceProfileName": "已保存声音名称",
+    "voiceProfileNamePlaceholder": "例如：我的声音",
+    "voiceStorageConsent": "我确认已获得说话者许可，可以克隆和存储此声音。参考资料会一直保存，直到我将其删除。",
+    "resolution": "分辨率",
+    "aspectRatio": "宽高比",
+    "duration": "时长",
+    "providerDefault": "提供商默认",
+    "generateAudio": "在支持时随视频生成音频",
+    "prompt": "提示词",
+    "text": "要朗读的文本",
+    "videoPlaceholder": "描述场景、动作、镜头和光线...",
+    "audioPlaceholder": "输入您想让语音朗读的文本...",
+    "soundPlaceholder": "描述您想要的声音、音乐、氛围或语音响应...",
+    "generate": "生成",
+    "generating": "正在生成…这可能需要几分钟",
+    "success": "媒体已生成并保存到 Imagine",
+    "successWithSavedVoice": "媒体已生成，“{{name}}”现已可在语音设置中使用",
+    "failed": "生成媒体失败",
+    "loadFailed": "加载媒体提供商失败",
+    "noModels": "没有可用的 {{kind}} 模型。请先激活兼容的提供商并保存其凭据。"
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} 项",
+    "empty": "暂无生成的媒体",
+    "emptyHint": "生成图像、视频或语音片段后，将显示在此处。",
+    "filters": {
+      "all": "全部",
+      "image": "图像",
+      "video": "视频",
+      "audio": "音频"
+    }
   },
   "errorBoundary": {
     "title": "出错了",
@@ -1649,7 +1946,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "第 {{current}} 版，共 {{total}} 版",
     "previousVersion": "上一版本",
-    "nextVersion": "下一版本"
+    "nextVersion": "下一版本",
+    "fullscreen": "全屏",
+    "exitFullscreen": "退出全屏",
+    "showChatOverlay": "显示悬浮聊天",
+    "hideChatOverlay": "隐藏悬浮聊天"
   },
   "personaImportExport": {
     "title": "导入和导出角色",
@@ -1728,8 +2029,8 @@
       "saveFailed": "保存变量失败",
       "resetDefaults": "重置为默认值",
       "reset": "变量已重置",
-      "sensitiveSet": "值已设置（输入新值以更改）",
       "resetFailed": "重置变量失败",
+      "sensitiveSet": "值已设置（输入新值以更改）",
       "showValue": "显示 {{label}} 值",
       "hideValue": "隐藏 {{label}} 值",
       "connection": "连接",
@@ -1767,45 +2068,6 @@
   "demoMode": {
     "title": "演示模式",
     "github": "GitHub"
-  },
-  "personaBackground": {
-    "label": "背景图片",
-    "uploadBackgroundImage": "上传背景图片",
-    "dragAndDrop": "拖放图片或点击浏览",
-    "chooseImage": "选择图片",
-    "uploading": "上传中...",
-    "enterImageUrl": "或输入图片URL",
-    "supportedFormats": "支持格式：JPG、PNG、GIF、WebP（最大5MB）。宽幅横向图片效果最佳。",
-    "customBackground": "自定义背景图片",
-    "clickToChange": "点击更改或删除",
-    "removed": "背景已删除",
-    "uploaded": "背景上传成功",
-    "invalidFile": "请选择有效的图片文件",
-    "fileTooLarge": "背景图片大小必须小于5MB",
-    "readFailed": "无法读取图片文件",
-    "uploadFailed": "无法上传背景图片"
-  },
-  "modelSelector": {
-    "searchInstalled": "搜索已安装的模型...",
-    "searchOllama": "搜索Ollama库...",
-    "searchHuggingFace": "搜索HuggingFace...",
-    "selectModel": "选择模型",
-    "personas": "角色",
-    "ollamaModels": "Ollama模型",
-    "pluginModels": "插件模型",
-    "actions": "操作",
-    "installed": "已安装",
-    "use": "使用",
-    "pull": "下载",
-    "pullRestricted": "此实例上的模型安装仅限管理员。",
-    "adminOnlyPull": "仅管理员",
-    "legacyProvider": "未记录提供方",
-    "providerNotRecorded": "未记录提供方",
-    "providerUnavailable": "提供方不可用",
-    "reselectProvider": "重新选择提供方以固定此模型",
-    "unavailable": "不可用",
-    "unavailableSelections": "不可用的选择",
-    "agentModels": "智能体"
   },
   "libreClaw": {
     "title": "智能体",
@@ -2149,224 +2411,44 @@
       "warning": "任务可以直接读写此文件夹。留空则使用隔离工作区。"
     }
   },
-  "usageAnalytics": {
-    "eyebrow": "管理",
-    "title": "提供商使用情况",
-    "description": "跟踪此实例上已启用插件的出站 API 调用和模型消耗。",
-    "days": "{{count}} 天",
-    "refresh": "刷新使用情况",
-    "loadFailed": "无法加载提供商使用情况。",
-    "metrics": {
-      "calls": "调用",
-      "tokens": "Token"
-    },
-    "cards": {
-      "calls": "API 调用",
-      "callsDetail": "跨 {{count}} 个活跃用户",
-      "tokens": "报告的 Token",
-      "tokensDetail": "在 {{count}} 次调用中报告的使用情况",
-      "success": "成功率",
-      "successDetail": "{{count}} 次失败调用",
-      "latency": "平均延迟",
-      "latencyDetail": "端到端提供商耗时"
-    },
-    "activity": {
-      "title": "随时间变化的消耗",
-      "callsDescription": "每日对已启用插件的出站请求",
-      "tokensDescription": "提供商报告的每日 token 总量",
-      "chartLabel": "每日提供商 {{metric}} 图表"
-    },
-    "models": {
-      "title": "模型消耗",
-      "description": "此期间承载最多流量的模型。",
-      "model": "模型",
-      "success": "成功",
-      "latency": "延迟"
-    },
-    "providers": {
-      "title": "已启用插件的流量"
-    },
-    "capabilities": {
-      "title": "能力组合",
-      "characters": "{{count}} 个字符",
-      "bytes": "{{count}} 字节",
-      "images": "{{count}} 张图片",
-      "jobs": "{{count}} 个视频任务",
-      "inputs": "{{count}} 个输入",
-      "reportedTokens": "{{count}} 个已报告 token"
-    },
-    "empty": {
-      "title": "暂无提供商调用",
-      "description": "当已启用的插件处理聊天、工作、嵌入、图像、语音、声音或视频请求后，调用将显示在此处。"
-    },
-    "privacyNote": "使用量在服务器的出站插件边界处进行计量。Libre WebUI 存储提供商、模型、计时、状态和已报告的计数器——绝不存储提示词、响应、端点、凭据或提供商错误正文。Token 总量仅包含提供商返回使用元数据的调用。",
-    "heatmap": {
-      "title": "一年的活动",
-      "description": "过去一年每日的提供商调用量，按当天使用最多的模型着色。",
-      "calls": "次调用",
-      "noCalls": "无调用",
-      "other": "其他模型",
-      "less": "少",
-      "more": "多",
-      "yearTotal": "过去一年共 {{formatted}} 次调用"
-    }
+  "personaBackground": {
+    "label": "背景图片",
+    "uploadBackgroundImage": "上传背景图片",
+    "dragAndDrop": "拖放图片或点击浏览",
+    "chooseImage": "选择图片",
+    "uploading": "上传中...",
+    "enterImageUrl": "或输入图片URL",
+    "supportedFormats": "支持格式：JPG、PNG、GIF、WebP（最大5MB）。宽幅横向图片效果最佳。",
+    "customBackground": "自定义背景图片",
+    "clickToChange": "点击更改或删除",
+    "removed": "背景已删除",
+    "uploaded": "背景上传成功",
+    "invalidFile": "请选择有效的图片文件",
+    "fileTooLarge": "背景图片大小必须小于5MB",
+    "readFailed": "无法读取图片文件",
+    "uploadFailed": "无法上传背景图片"
   },
-  "systemPage": {
-    "eyebrow": "管理",
-    "title": "系统",
-    "description": "监控托管此 Libre WebUI 实例的机器和运行时。",
-    "updated": "已更新于 {{date}}",
-    "refresh": "刷新系统信息",
-    "loadFailed": "无法加载系统信息。",
-    "cards": {
-      "uptime": "主机运行时间",
-      "uptimeDetail": "自 {{date}} 起运行",
-      "memory": "已用内存",
-      "memoryDetail": "{{used}} / {{total}}",
-      "freeSpace": "可用空间",
-      "freeSpaceDetail": "{{label}} · 总计 {{total}}",
-      "containers": "运行中的容器",
-      "containersDetail": "Docker 已知 {{total}} 个容器",
-      "dockerUnavailable": "Docker 不可用",
-      "unavailable": "不可用"
-    },
-    "host": {
-      "title": "主机与运行时",
-      "description": "操作系统、处理器和 Libre WebUI 进程详情。",
-      "container": "容器运行时",
-      "native": "原生运行时",
-      "hostname": "主机名",
-      "operatingSystem": "操作系统",
-      "processor": "处理器",
-      "logicalCpus": "逻辑 CPU",
-      "loadAverage": "平均负载 · 1 / 5 / 15 分钟",
-      "libreVersion": "Libre WebUI",
-      "nodeVersion": "Node.js",
-      "process": "进程",
-      "workingDirectory": "工作目录"
-    },
-    "memory": {
-      "title": "内存",
-      "description": "运行时可见的系统内存和应用程序进程使用情况。",
-      "usedOf": "已用 {{used}} / 共 {{total}}",
-      "free": "{{value}} 可用",
-      "processRss": "进程 RSS",
-      "heapUsed": "V8 堆已用",
-      "heapTotal": "V8 堆总量",
-      "external": "外部内存"
-    },
-    "storage": {
-      "title": "存储",
-      "description": "运行时文件系统和持久化应用程序数据的可用空间。",
-      "used": "已用 {{value}}",
-      "free": "{{value}} 可用",
-      "empty": "此运行时中文件系统信息不可用。"
-    },
-    "docker": {
-      "title": "Docker",
-      "description": "只读的 Docker Engine 状态和精简的容器列表。",
-      "connected": "已连接",
-      "unavailable": "不可用",
-      "unavailableDetail": "Docker Engine 诊断不可用。",
-      "socketStatus": "本地套接字：{{status}}",
-      "mounted": "已挂载",
-      "notMounted": "未挂载",
-      "running": "运行中",
-      "stopped": "已停止",
-      "paused": "已暂停",
-      "total": "总计",
-      "version": "版本",
-      "host": "主机",
-      "architecture": "架构",
-      "cpus": "CPU",
-      "memory": "内存",
-      "container": "容器",
-      "image": "镜像",
-      "state": "状态",
-      "created": "创建时间",
-      "empty": "Docker 已连接，当前未列出任何容器。"
-    },
-    "network": {
-      "title": "网络",
-      "description": "运行时可见的接口、地址和 Linux 流量计数器。",
-      "internal": "内部",
-      "empty": "应用运行时未显示任何网络接口。"
-    },
-    "securityNote": "此页面仅限管理员访问。服务器仅返回运行状态摘要：不会暴露环境变量、凭据、Docker 标签、挂载点、容器命令或 inspect 负载。当 Libre WebUI 在容器中运行时，如果本地套接字可用，主机级别的 CPU 和内存详情来自 Docker Engine；其他值描述的是应用运行时。",
-    "work": {
-      "title": "Work",
-      "description": "所有用户的沙箱",
-      "access": "访问权限",
-      "accessAdmins": "仅管理员",
-      "accessAllUsers": "所有用户",
-      "runtimeAvailable": "可用",
-      "runtimeUnavailable": "不可用",
-      "activeRuntimes": "活跃运行时",
-      "pendingCleanups": "待处理清理",
-      "orphans": "孤立容器",
-      "owner": "所有者",
-      "task": "任务",
-      "state": "状态",
-      "preview": "预览",
-      "terminals": "终端",
-      "updated": "更新时间",
-      "stateRunning": "运行中",
-      "stateStopped": "已停止",
-      "stateStarting": "启动中",
-      "stateUnknown": "未知",
-      "noTasks": "暂无 Work 任务。"
-    }
-  },
-  "mediaGeneration": {
-    "title": "生成媒体",
-    "description": "使用已激活的媒体提供商创建视频、声音、音乐或语音。",
-    "image": "图像",
-    "video": "视频",
-    "audio": "音频",
-    "sound": "声音",
-    "speech": "语音",
-    "model": "模型",
-    "voice": "语音或语音 ID",
-    "cloneVoice": "克隆参考声音",
-    "cloneVoiceDescription": "根据参考录音而不是预设声音生成此语音。",
-    "referenceAudio": "参考音频",
-    "referenceTranscript": "准确的参考文字稿",
-    "referenceTranscriptPlaceholder": "请准确输入参考录音中说出的内容…",
-    "referenceAudioTooLarge": "参考音频不得大于 {{max}}。",
-    "cloneConsent": "仅在获得说话者许可后克隆其声音。该录音会发送给所选提供商以完成本次生成，Libre WebUI 不会保存录音。",
-    "saveVoiceProfile": "保存为可重复使用的声音",
-    "saveVoiceProfileDescription": "安全存储此参考录音及其文字稿。每当语音批次使用此声音时，Libre WebUI 都会将两者发送给所选提供商。",
-    "voiceProfileName": "已保存声音名称",
-    "voiceProfileNamePlaceholder": "例如：我的声音",
-    "voiceStorageConsent": "我确认已获得说话者许可，可以克隆和存储此声音。参考资料会一直保存，直到我将其删除。",
-    "successWithSavedVoice": "媒体已生成，“{{name}}”现已可在语音设置中使用",
-    "resolution": "分辨率",
-    "aspectRatio": "宽高比",
-    "duration": "时长",
-    "providerDefault": "提供商默认",
-    "generateAudio": "在支持时随视频生成音频",
-    "prompt": "提示词",
-    "text": "要朗读的文本",
-    "videoPlaceholder": "描述场景、动作、镜头和光线...",
-    "audioPlaceholder": "输入您想让语音朗读的文本...",
-    "soundPlaceholder": "描述您想要的声音、音乐、氛围或语音响应...",
-    "generate": "生成",
-    "generating": "正在生成…这可能需要几分钟",
-    "success": "媒体已生成并保存到 Imagine",
-    "failed": "生成媒体失败",
-    "loadFailed": "加载媒体提供商失败",
-    "noModels": "没有可用的 {{kind}} 模型。请先激活兼容的提供商并保存其凭据。"
-  },
-  "mediaGallery": {
-    "itemCount": "{{count}} 项",
-    "empty": "暂无生成的媒体",
-    "emptyHint": "生成图像、视频或语音片段后，将显示在此处。",
-    "filters": {
-      "all": "全部",
-      "image": "图像",
-      "video": "视频",
-      "audio": "音频"
-    }
+  "modelSelector": {
+    "searchInstalled": "搜索已安装的模型...",
+    "searchOllama": "搜索Ollama库...",
+    "searchHuggingFace": "搜索HuggingFace...",
+    "selectModel": "选择模型",
+    "personas": "角色",
+    "ollamaModels": "Ollama模型",
+    "pluginModels": "插件模型",
+    "actions": "操作",
+    "installed": "已安装",
+    "use": "使用",
+    "pull": "下载",
+    "pullRestricted": "此实例上的模型安装仅限管理员。",
+    "adminOnlyPull": "仅管理员",
+    "legacyProvider": "未记录提供方",
+    "providerNotRecorded": "未记录提供方",
+    "providerUnavailable": "提供方不可用",
+    "reselectProvider": "重新选择提供方以固定此模型",
+    "unavailable": "不可用",
+    "unavailableSelections": "不可用的选择",
+    "agentModels": "智能体"
   },
   "whatsNew": {
     "title": "新功能",

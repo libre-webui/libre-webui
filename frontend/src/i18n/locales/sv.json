@@ -194,6 +194,10 @@
       "evening": "God kväll",
       "night": "God natt"
     },
+    "overlay": {
+      "title": "Chatt",
+      "close": "Stäng flytande chatt"
+    },
     "followUp": "Uppföljning",
     "welcome": {
       "helpToday": "Vad kan jag hjälpa till med idag?",
@@ -421,7 +425,12 @@
       "notes": "Anteckningar"
     },
     "toggleSize": "Växla sidofältets storlek",
-    "expandSidebar": "Expandera sidofältet"
+    "expandSidebar": "Expandera sidofältet",
+    "pinned": {
+      "label": "Fästa",
+      "pin": "Fäst i sidofältet",
+      "unpin": "Lossa från sidofältet"
+    }
   },
   "user": {
     "menu": {
@@ -473,7 +482,8 @@
       "shortcuts": "Kortkommandon",
       "about": "Om",
       "sessions": "Sessioner",
-      "apiKeys": "API-nycklar"
+      "apiKeys": "API-nycklar",
+      "connections": "Anslutningar"
     },
     "appearance": {
       "title": "Utseende",
@@ -904,6 +914,59 @@
       "saved": "Sökinställningar sparade",
       "saveFailed": "Kunde inte spara sökinställningarna"
     },
+    "compaction": {
+      "title": "Kontextkomprimering",
+      "description": "När en konversation växer förbi tokentröskeln sammanfattar servern dess äldre meddelanden och behåller bara de senaste ordagrant. Gäller alla användare på den här servern.",
+      "thresholdLabel": "Tokentröskel",
+      "thresholdDescription": "Uppskattat antal kontexttokens över vilket äldre historik sammanfattas, 500-1 000 000.",
+      "thresholdInvalid": "Tokentröskeln måste vara mellan 500 och 1 000 000.",
+      "keepRecentLabel": "Senaste meddelanden som behålls",
+      "keepRecentDescription": "Hur många av de senaste meddelandena som alltid behålls ordagrant, 2-200.",
+      "keepRecentInvalid": "Antalet senaste meddelanden som behålls måste vara mellan 2 och 200.",
+      "modelLabel": "Komprimeringsmodell",
+      "modelDescription": "Modellen som skriver sammanfattningarna. Sessionens egen modell används när ingen är vald.",
+      "sessionModelOption": "Använd sessionens modell",
+      "promptLabel": "Egen sammanfattningsprompt",
+      "promptPlaceholder": "Lämna tomt för att använda den inbyggda prompten",
+      "promptDescription": "Mallvariablerna {{previousSummaryVariable}} och {{messagesVariable}} ersätts med den föregående sammanfattningen och meddelandena som sammanfattas.",
+      "saved": "Komprimeringsinställningar sparade",
+      "saveFailed": "Kunde inte spara komprimeringsinställningarna"
+    },
+    "connections": {
+      "title": "Anslutningar",
+      "description": "Modelleverantörerna som den här servern pratar med: den lokala Ollama-miljön och OpenAI-kompatibla ändpunkter.",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "Lokal modellmiljö.",
+      "version": "Version {{version}}.",
+      "statusChecking": "Kontrollerar…",
+      "statusOnline": "Online",
+      "statusOffline": "Offline",
+      "providersTitle": "OpenAI-kompatibla anslutningar",
+      "providersDescription": "Varje anslutning är en kompletteringsleverantör vars modeller visas i chattens modellväljare. API-nycklar lagras på servern.",
+      "noConnections": "Inga anslutningar har konfigurerats ännu.",
+      "modelsCount": "{{total}} modeller",
+      "pendingDiscovery": "Modeller väntar på upptäckt",
+      "apiKeyMissing": "Ingen API-nyckel",
+      "deleteConfirm": "Ta bort den här anslutningen? Chattar som använder dess modeller förlorar åtkomsten till dem.",
+      "addTitle": "Lägg till anslutning",
+      "addDescription": "Registrera en OpenAI-kompatibel chat completions-ändpunkt som leverantör.",
+      "nameLabel": "Visningsnamn",
+      "namePlaceholder": "Min leverantör",
+      "idPreview": "Anslutnings-ID: {{id}}",
+      "endpointLabel": "Ändpunkts-URL",
+      "endpointDescription": "Fullständig chat completions-URL, till exempel https://api.example.com/v1/chat/completions.",
+      "apiKeyLabel": "API-nyckel",
+      "apiKeyOptionalHint": "(valfri, kan läggas till senare)",
+      "nameRequired": "Ange ett visningsnamn för anslutningen.",
+      "endpointInvalid": "Ange en giltig http(s)-ändpunkts-URL.",
+      "alreadyExists": "En anslutning med detta ID finns redan.",
+      "add": "Lägg till anslutning",
+      "adding": "Lägger till…",
+      "added": "Anslutning tillagd",
+      "addFailed": "Kunde inte lägga till anslutningen",
+      "keySaveFailed": "Anslutningen lades till, men API-nyckeln kunde inte sparas",
+      "activateFailed": "Anslutningen lades till, men den kunde inte aktiveras"
+    },
     "sessions": {
       "title": "Sessioner",
       "description": "Alla platser där detta konto är inloggat. Att logga ut en session sker omedelbart; att logga in igen återställer åtkomsten.",
@@ -1059,7 +1122,22 @@
       "running": "Aktiva modeller",
       "local": "Lokala modeller",
       "advanced": "Avancerade åtgärder",
-      "huggingface": "HuggingFace Hub"
+      "huggingface": "HuggingFace Hub",
+      "catalog": "Modellkatalog"
+    },
+    "catalog": {
+      "models": "tillgängliga",
+      "searchPlaceholder": "Sök modeller efter namn eller leverantör...",
+      "noModels": "Inga modeller är tillgängliga ännu.",
+      "empty": "Inga modeller matchar din sökning.",
+      "providerOllama": "Ollama",
+      "default": "Standard",
+      "makeDefault": "Gör till standard",
+      "defaultSet": "{{model}} är nu din standardmodell.",
+      "hidden": "Dold",
+      "hide": "Dölj för användare",
+      "show": "Visa för användare",
+      "visibilityFailed": "Kunde inte uppdatera modellens synlighet."
     },
     "pull": {
       "placeholder": "Ange modellnamn (t.ex. llama3.2:3b, deepseek-r1:14b)",
@@ -1649,7 +1727,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} av {{total}}",
     "previousVersion": "Föregående version",
-    "nextVersion": "Nästa version"
+    "nextVersion": "Nästa version",
+    "fullscreen": "Helskärm",
+    "exitFullscreen": "Avsluta helskärm",
+    "showChatOverlay": "Visa flytande chatt",
+    "hideChatOverlay": "Dölj flytande chatt"
   },
   "personaImportExport": {
     "title": "Importera och exportera personas",

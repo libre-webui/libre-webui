@@ -194,6 +194,10 @@
       "evening": "สวัสดีตอนเย็น",
       "night": "สวัสดีตอนดึก"
     },
+    "overlay": {
+      "title": "แชท",
+      "close": "ปิดแชทลอย"
+    },
     "followUp": "ติดตามต่อ",
     "welcome": {
       "helpToday": "วันนี้ฉันช่วยอะไรได้บ้าง?",
@@ -421,7 +425,12 @@
       "notes": "บันทึกย่อ"
     },
     "toggleSize": "สลับขนาดแถบด้านข้าง",
-    "expandSidebar": "ขยายแถบด้านข้าง"
+    "expandSidebar": "ขยายแถบด้านข้าง",
+    "pinned": {
+      "label": "ปักหมุดไว้",
+      "pin": "ปักหมุดไว้ที่แถบด้านข้าง",
+      "unpin": "เลิกปักหมุดจากแถบด้านข้าง"
+    }
   },
   "user": {
     "menu": {
@@ -473,7 +482,8 @@
       "shortcuts": "ทางลัด",
       "about": "เกี่ยวกับ",
       "sessions": "เซสชัน",
-      "apiKeys": "คีย์ API"
+      "apiKeys": "คีย์ API",
+      "connections": "การเชื่อมต่อ"
     },
     "appearance": {
       "title": "รูปลักษณ์",
@@ -904,6 +914,59 @@
       "saved": "บันทึกการตั้งค่าการค้นหาแล้ว",
       "saveFailed": "ไม่สามารถบันทึกการตั้งค่าการค้นหาได้"
     },
+    "compaction": {
+      "title": "การบีบอัดบริบท",
+      "description": "เมื่อการสนทนายาวเกินเกณฑ์โทเคน เซิร์ฟเวอร์จะสรุปข้อความเก่าและเก็บเฉพาะข้อความล่าสุดไว้ตามต้นฉบับ มีผลกับผู้ใช้ทุกคนบนเซิร์ฟเวอร์นี้",
+      "thresholdLabel": "เกณฑ์โทเคน",
+      "thresholdDescription": "จำนวนโทเคนบริบทโดยประมาณที่เมื่อเกินแล้วประวัติเก่าจะถูกสรุป 500-1,000,000",
+      "thresholdInvalid": "เกณฑ์โทเคนต้องอยู่ระหว่าง 500 ถึง 1,000,000",
+      "keepRecentLabel": "ข้อความล่าสุดที่เก็บไว้",
+      "keepRecentDescription": "จำนวนข้อความล่าสุดที่จะเก็บไว้ตามต้นฉบับเสมอ 2-200",
+      "keepRecentInvalid": "ข้อความล่าสุดที่เก็บไว้ต้องอยู่ระหว่าง 2 ถึง 200",
+      "modelLabel": "โมเดลสำหรับบีบอัด",
+      "modelDescription": "โมเดลที่เขียนบทสรุป หากไม่ได้เลือกจะใช้โมเดลของเซสชันเอง",
+      "sessionModelOption": "ใช้โมเดลของเซสชัน",
+      "promptLabel": "พรอมต์สรุปแบบกำหนดเอง",
+      "promptPlaceholder": "เว้นว่างเพื่อใช้พรอมต์ในตัว",
+      "promptDescription": "ตัวแปรเทมเพลต {{previousSummaryVariable}} และ {{messagesVariable}} จะถูกแทนที่ด้วยบทสรุปก่อนหน้าและข้อความที่กำลังถูกสรุป",
+      "saved": "บันทึกการตั้งค่าการบีบอัดแล้ว",
+      "saveFailed": "ไม่สามารถบันทึกการตั้งค่าการบีบอัดได้"
+    },
+    "connections": {
+      "title": "การเชื่อมต่อ",
+      "description": "ผู้ให้บริการโมเดลที่เซิร์ฟเวอร์นี้ติดต่อด้วย: รันไทม์ Ollama ในเครื่องและเอนด์พอยต์ที่เข้ากันได้กับ OpenAI",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "รันไทม์โมเดลในเครื่อง",
+      "version": "เวอร์ชัน {{version}}",
+      "statusChecking": "กำลังตรวจสอบ…",
+      "statusOnline": "ออนไลน์",
+      "statusOffline": "ออฟไลน์",
+      "providersTitle": "การเชื่อมต่อที่เข้ากันได้กับ OpenAI",
+      "providersDescription": "การเชื่อมต่อแต่ละรายการคือผู้ให้บริการการตอบสนองซึ่งโมเดลจะปรากฏในตัวเลือกโมเดลของแชท คีย์ API ถูกเก็บไว้ฝั่งเซิร์ฟเวอร์",
+      "noConnections": "ยังไม่มีการเชื่อมต่อที่กำหนดค่าไว้",
+      "modelsCount": "{{total}} โมเดล",
+      "pendingDiscovery": "โมเดลรอการค้นพบ",
+      "apiKeyMissing": "ไม่มีคีย์ API",
+      "deleteConfirm": "ลบการเชื่อมต่อนี้หรือไม่ แชทที่ใช้โมเดลของการเชื่อมต่อนี้จะเข้าถึงโมเดลเหล่านั้นไม่ได้อีก",
+      "addTitle": "เพิ่มการเชื่อมต่อ",
+      "addDescription": "ลงทะเบียนเอนด์พอยต์ chat completions ที่เข้ากันได้กับ OpenAI เป็นผู้ให้บริการ",
+      "nameLabel": "ชื่อที่แสดง",
+      "namePlaceholder": "ผู้ให้บริการของฉัน",
+      "idPreview": "ID การเชื่อมต่อ: {{id}}",
+      "endpointLabel": "URL เอนด์พอยต์",
+      "endpointDescription": "URL แบบเต็มของ chat completions เช่น https://api.example.com/v1/chat/completions",
+      "apiKeyLabel": "คีย์ API",
+      "apiKeyOptionalHint": "(ไม่บังคับ เพิ่มภายหลังได้)",
+      "nameRequired": "ป้อนชื่อที่แสดงสำหรับการเชื่อมต่อ",
+      "endpointInvalid": "ป้อน URL เอนด์พอยต์ http(s) ที่ถูกต้อง",
+      "alreadyExists": "มีการเชื่อมต่อที่ใช้ ID นี้อยู่แล้ว",
+      "add": "เพิ่มการเชื่อมต่อ",
+      "adding": "กำลังเพิ่ม…",
+      "added": "เพิ่มการเชื่อมต่อแล้ว",
+      "addFailed": "ไม่สามารถเพิ่มการเชื่อมต่อได้",
+      "keySaveFailed": "เพิ่มการเชื่อมต่อแล้ว แต่ไม่สามารถบันทึกคีย์ API ได้",
+      "activateFailed": "เพิ่มการเชื่อมต่อแล้ว แต่ไม่สามารถเปิดใช้งานได้"
+    },
     "sessions": {
       "title": "เซสชัน",
       "description": "ทุกที่ที่บัญชีนี้เข้าสู่ระบบอยู่ การออกจากระบบเซสชันจะมีผลทันที และการเข้าสู่ระบบอีกครั้งจะคืนการเข้าถึง",
@@ -1059,7 +1122,22 @@
       "running": "โมเดลที่กำลังทำงาน",
       "local": "โมเดลในเครื่อง",
       "advanced": "การดำเนินการขั้นสูง",
-      "huggingface": "HuggingFace Hub"
+      "huggingface": "HuggingFace Hub",
+      "catalog": "แคตตาล็อกโมเดล"
+    },
+    "catalog": {
+      "models": "พร้อมใช้งาน",
+      "searchPlaceholder": "ค้นหาโมเดลตามชื่อหรือผู้ให้บริการ...",
+      "noModels": "ยังไม่มีโมเดลพร้อมใช้งาน",
+      "empty": "ไม่มีโมเดลที่ตรงกับการค้นหาของคุณ",
+      "providerOllama": "Ollama",
+      "default": "ค่าเริ่มต้น",
+      "makeDefault": "ตั้งเป็นค่าเริ่มต้น",
+      "defaultSet": "{{model}} เป็นโมเดลเริ่มต้นของคุณแล้ว",
+      "hidden": "ซ่อนอยู่",
+      "hide": "ซ่อนจากผู้ใช้",
+      "show": "แสดงให้ผู้ใช้เห็น",
+      "visibilityFailed": "ไม่สามารถอัปเดตการมองเห็นของโมเดลได้"
     },
     "pull": {
       "placeholder": "ป้อนชื่อโมเดล (เช่น llama3.2:3b, deepseek-r1:14b)",
@@ -1649,7 +1727,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "เวอร์ชัน {{current}} จาก {{total}}",
     "previousVersion": "เวอร์ชันก่อนหน้า",
-    "nextVersion": "เวอร์ชันถัดไป"
+    "nextVersion": "เวอร์ชันถัดไป",
+    "fullscreen": "เต็มหน้าจอ",
+    "exitFullscreen": "ออกจากโหมดเต็มหน้าจอ",
+    "showChatOverlay": "แสดงแชทลอย",
+    "hideChatOverlay": "ซ่อนแชทลอย"
   },
   "personaImportExport": {
     "title": "นำเข้าและส่งออกเพอร์โซน่า",

@@ -194,6 +194,10 @@
       "evening": "Good evening",
       "night": "Good night"
     },
+    "overlay": {
+      "title": "Chat",
+      "close": "Close floating chat"
+    },
     "followUp": "Follow up",
     "welcome": {
       "helpToday": "What can I help with today?",
@@ -421,7 +425,12 @@
       "notes": "Notes"
     },
     "toggleSize": "Toggle sidebar size",
-    "expandSidebar": "Expand sidebar"
+    "expandSidebar": "Expand sidebar",
+    "pinned": {
+      "label": "Pinned",
+      "pin": "Pin to sidebar",
+      "unpin": "Unpin from sidebar"
+    }
   },
   "user": {
     "menu": {
@@ -473,7 +482,8 @@
       "shortcuts": "Shortcuts",
       "about": "About",
       "sessions": "Sessions",
-      "apiKeys": "API keys"
+      "apiKeys": "API keys",
+      "connections": "Connections"
     },
     "appearance": {
       "title": "Appearance",
@@ -904,6 +914,59 @@
       "saved": "Search settings saved",
       "saveFailed": "Could not save the search settings"
     },
+    "compaction": {
+      "title": "Context compaction",
+      "description": "When a conversation grows past the token threshold, the server summarizes its older messages and keeps only the most recent ones verbatim. Applies to every user on this server.",
+      "thresholdLabel": "Token threshold",
+      "thresholdDescription": "Estimated context tokens above which older history is summarized, 500-1,000,000.",
+      "thresholdInvalid": "Token threshold must be between 500 and 1,000,000.",
+      "keepRecentLabel": "Recent messages kept",
+      "keepRecentDescription": "How many of the latest messages always stay verbatim, 2-200.",
+      "keepRecentInvalid": "Recent messages kept must be between 2 and 200.",
+      "modelLabel": "Compaction model",
+      "modelDescription": "The model that writes the summaries. The session's own model is used when none is picked.",
+      "sessionModelOption": "Use the session's model",
+      "promptLabel": "Custom summary prompt",
+      "promptPlaceholder": "Leave empty to use the built-in prompt",
+      "promptDescription": "The template variables {{previousSummaryVariable}} and {{messagesVariable}} are replaced with the previous summary and the messages being summarized.",
+      "saved": "Compaction settings saved",
+      "saveFailed": "Could not save the compaction settings"
+    },
+    "connections": {
+      "title": "Connections",
+      "description": "The model providers this server talks to: the local Ollama runtime and OpenAI-compatible endpoints.",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "Local model runtime.",
+      "version": "Version {{version}}.",
+      "statusChecking": "Checking…",
+      "statusOnline": "Online",
+      "statusOffline": "Offline",
+      "providersTitle": "OpenAI-compatible connections",
+      "providersDescription": "Each connection is a completion provider whose models appear in the chat model picker. API keys are stored server-side.",
+      "noConnections": "No connections configured yet.",
+      "modelsCount": "{{total}} models",
+      "pendingDiscovery": "Models pending discovery",
+      "apiKeyMissing": "No API key",
+      "deleteConfirm": "Delete this connection? Chats using its models will lose access to them.",
+      "addTitle": "Add connection",
+      "addDescription": "Register an OpenAI-compatible chat completions endpoint as a provider.",
+      "nameLabel": "Display name",
+      "namePlaceholder": "My provider",
+      "idPreview": "Connection ID: {{id}}",
+      "endpointLabel": "Endpoint URL",
+      "endpointDescription": "Full chat completions URL, for example https://api.example.com/v1/chat/completions.",
+      "apiKeyLabel": "API key",
+      "apiKeyOptionalHint": "(optional, can be added later)",
+      "nameRequired": "Enter a display name for the connection.",
+      "endpointInvalid": "Enter a valid http(s) endpoint URL.",
+      "alreadyExists": "A connection with this ID already exists.",
+      "add": "Add connection",
+      "adding": "Adding…",
+      "added": "Connection added",
+      "addFailed": "Could not add the connection",
+      "keySaveFailed": "Connection added, but the API key could not be saved",
+      "activateFailed": "Connection added, but it could not be activated"
+    },
     "sessions": {
       "title": "Sessions",
       "description": "Everywhere this account is signed in. Signing a session out takes effect immediately; signing in again restores access.",
@@ -1059,7 +1122,22 @@
       "huggingface": "HuggingFace Hub",
       "running": "Running Models",
       "local": "Local Models",
-      "advanced": "Advanced Actions"
+      "advanced": "Advanced Actions",
+      "catalog": "Model Catalog"
+    },
+    "catalog": {
+      "models": "available",
+      "searchPlaceholder": "Search models by name or provider...",
+      "noModels": "No models are available yet.",
+      "empty": "No models match your search.",
+      "providerOllama": "Ollama",
+      "default": "Default",
+      "makeDefault": "Make default",
+      "defaultSet": "{{model}} is now your default model.",
+      "hidden": "Hidden",
+      "hide": "Hide from users",
+      "show": "Show to users",
+      "visibilityFailed": "Could not update model visibility."
     },
     "pull": {
       "placeholder": "Enter model name (e.g., llama3.2:3b, deepseek-r1:14b)",
@@ -1868,7 +1946,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} of {{total}}",
     "previousVersion": "Previous version",
-    "nextVersion": "Next version"
+    "nextVersion": "Next version",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen",
+    "showChatOverlay": "Show floating chat",
+    "hideChatOverlay": "Hide floating chat"
   },
   "personaImportExport": {
     "title": "Import & Export Personas",

@@ -59,11 +59,11 @@
       "loginSuccess": "تم تسجيل الدخول بنجاح!",
       "loginFailed": "فشل تسجيل الدخول",
       "checkCredentials": "فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد.",
+      "approvalPending": "حسابك في انتظار موافقة المسؤول.",
       "enterBoth": "يرجى إدخال اسم المستخدم وكلمة المرور",
       "githubSuccess": "تم تسجيل الدخول عبر GitHub بنجاح!",
       "githubFailed": "فشلت مصادقة GitHub",
       "githubVerifyFailed": "فشل التحقق من مصادقة GitHub",
-      "approvalPending": "حسابك في انتظار موافقة المسؤول.",
       "verificationFailed": "فشل التحقق الأمني. حدّث الصفحة وحاول مجددًا."
     },
     "signup": {
@@ -82,15 +82,15 @@
       "hasAccount": "لديك حساب بالفعل؟",
       "signInHere": "سجّل الدخول هنا",
       "signupSuccess": "تم إنشاء الحساب بنجاح!",
+      "approvalPending": "تم استلام التسجيل. يجب أن يوافق المسؤول على حسابك.",
+      "awaitingApproval": "في انتظار الموافقة",
+      "awaitingApprovalDescription": "تم إنشاء حسابك، ولكن يجب أن يقوم المسؤول بتفعيله قبل أن تتمكن من تسجيل الدخول.",
+      "backToSignIn": "العودة لتسجيل الدخول",
       "signupFailed": "فشل التسجيل",
       "tryAgain": "فشل التسجيل. يرجى المحاولة مرة أخرى.",
       "usernameRequired": "اسم المستخدم وكلمة المرور مطلوبان",
       "passwordMismatch": "كلمات المرور غير متطابقة",
-      "passwordTooShort": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
-      "approvalPending": "تم استلام التسجيل. يجب أن يوافق المسؤول على حسابك.",
-      "awaitingApproval": "في انتظار الموافقة",
-      "awaitingApprovalDescription": "تم إنشاء حسابك، ولكن يجب أن يقوم المسؤول بتفعيله قبل أن تتمكن من تسجيل الدخول.",
-      "backToSignIn": "العودة لتسجيل الدخول"
+      "passwordTooShort": "يجب أن تكون كلمة المرور 6 أحرف على الأقل"
     },
     "logout": {
       "button": "تسجيل الخروج",
@@ -166,9 +166,9 @@
       "createAdmin": "إنشاء المسؤول",
       "success": "تم إنشاء حساب المسؤول بنجاح!",
       "failed": "فشل إنشاء حساب المسؤول",
+      "approvalUnexpected": "تعذر تفعيل المسؤول الأولي. يرجى المحاولة مرة أخرى.",
       "fillAllFields": "يرجى ملء جميع الحقول",
-      "note": "سيكون هذا حساب المسؤول الرئيسي لـ Libre WebUI الخاص بك",
-      "approvalUnexpected": "تعذر تفعيل المسؤول الأولي. يرجى المحاولة مرة أخرى."
+      "note": "سيكون هذا حساب المسؤول الرئيسي لـ Libre WebUI الخاص بك"
     },
     "encryptionKey": {
       "title": "احفظ مفتاح التشفير",
@@ -193,6 +193,10 @@
       "afternoon": "مساء الخير",
       "evening": "مساء الخير",
       "night": "تصبح على خير"
+    },
+    "overlay": {
+      "title": "محادثة",
+      "close": "إغلاق المحادثة العائمة"
     },
     "followUp": "متابعة",
     "welcome": {
@@ -277,6 +281,7 @@
       "work": "العمل",
       "chat": "محادثة",
       "private": "خاص",
+      "incognito": "دردشة مخفية",
       "privateMode": "الوضع الخاص",
       "privateDescription": "لن يتم حفظ هذه المحادثة",
       "privateTooltip": "ابدأ محادثة خاصة لن يتم حفظها",
@@ -290,7 +295,6 @@
       "pinChat": "تثبيت",
       "unpinChat": "إلغاء التثبيت",
       "deleteChat": "حذف المحادثة",
-      "incognito": "دردشة مخفية",
       "archiveChat": "أرشفة المحادثة",
       "groups": {
         "pinned": "المثبتة",
@@ -410,27 +414,32 @@
       "models": "النماذج",
       "personas": "الشخصيات",
       "imagine": "تخيّل",
+      "agents": "الوكلاء",
       "work": "العمل",
       "settings": "الإعدادات",
-      "userManagement": "إدارة المستخدمين",
-      "signOut": "تسجيل الخروج",
-      "agents": "الوكلاء",
-      "exploreLabel": "استكشاف",
       "usageAnalytics": "استخدام المزود",
       "system": "النظام",
+      "userManagement": "إدارة المستخدمين",
+      "signOut": "تسجيل الخروج",
+      "exploreLabel": "استكشاف",
       "notes": "الملاحظات"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
-    "expandSidebar": "توسيع الشريط الجانبي"
+    "expandSidebar": "توسيع الشريط الجانبي",
+    "pinned": {
+      "label": "المثبّتة",
+      "pin": "تثبيت في الشريط الجانبي",
+      "unpin": "إلغاء التثبيت من الشريط الجانبي"
+    }
   },
   "user": {
     "menu": {
       "changePicture": "تغيير الصورة",
       "settings": "الإعدادات",
-      "userManagement": "إدارة المستخدمين",
-      "logout": "تسجيل الخروج",
       "usageAnalytics": "استخدام المزود",
-      "system": "النظام"
+      "system": "النظام",
+      "userManagement": "إدارة المستخدمين",
+      "logout": "تسجيل الخروج"
     },
     "avatar": {
       "title": "تغيير صورة الملف الشخصي",
@@ -473,7 +482,8 @@
       "shortcuts": "الاختصارات",
       "about": "حول",
       "sessions": "الجلسات",
-      "apiKeys": "مفاتيح API"
+      "apiKeys": "مفاتيح API",
+      "connections": "الاتصالات"
     },
     "appearance": {
       "title": "المظهر",
@@ -525,6 +535,13 @@
       "defaultModel": "النموذج الافتراضي",
       "defaultModelDescription": "سيتم استخدام هذا النموذج افتراضياً للمحادثات الجديدة",
       "selectModel": "اختر نموذجاً",
+      "specializedModels": "نماذج متخصصة",
+      "visionModel": "نموذج الرؤية",
+      "selectVisionModel": "استخدام نموذج الدردشة الحالي",
+      "visionModelDescription": "يُستخدم تلقائيًا كلما احتوى سياق الدردشة الصادر على صور. اختر نموذجًا يدعم إدخال الصور.",
+      "visionModelUpdateFailed": "فشل تحديث نموذج الرؤية: {{error}}",
+      "visionModelNoProvider": "نموذج الرؤية هذا ليس له هوية مزوّد. اختر نموذجاً متاحاً.",
+      "persona": "شخصية",
       "updateAll": "تحديث جميع النماذج",
       "updateAllDescription": "التحقق من التحديثات وسحب أحدث إصدارات جميع النماذج المثبتة",
       "updateAllButton": "تحديث الكل",
@@ -547,15 +564,8 @@
         "selectTaskModel": "اختر نموذج المهام",
         "taskModelDescription": "النموذج المستخدم لتوليد عناوين المحادثات"
       },
-      "persona": "شخصية",
       "updatingModel": "تحديث {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} من {{total}} نماذج",
-      "specializedModels": "نماذج متخصصة",
-      "visionModel": "نموذج الرؤية",
-      "selectVisionModel": "استخدام نموذج الدردشة الحالي",
-      "visionModelDescription": "يُستخدم تلقائيًا كلما احتوى سياق الدردشة الصادر على صور. اختر نموذجًا يدعم إدخال الصور.",
-      "visionModelUpdateFailed": "فشل تحديث نموذج الرؤية: {{error}}",
-      "visionModelNoProvider": "نموذج الرؤية هذا ليس له هوية مزوّد. اختر نموذجاً متاحاً."
+      "modelsProgress": "{{current}} من {{total}} نماذج"
     },
     "systemMessage": {
       "title": "رسالة النظام",
@@ -567,6 +577,13 @@
     "plugins": {
       "title": "الإضافات",
       "description": "إدارة الإضافات المثبتة",
+      "providerConnections": "اتصالات المزود",
+      "providerConnectionsDescription": "اتصل، وقم بتكوين، وفحص مزودي النماذج عبر الإضافات.",
+      "providers": "المزودون",
+      "searchProviders": "ابحث عن المزودين",
+      "noProvidersFound": "لا يوجد مزودون يطابقون بحثك.",
+      "selectProvider": "اختر مزودًا",
+      "selectProviderDescription": "اختر مزودًا لفحص اتصاله وكتالوج النماذج الخاص به.",
       "addNew": "إضافة إضافة جديدة",
       "upload": "رفع إضافة",
       "addJson": "إضافة JSON",
@@ -585,33 +602,12 @@
       "models": "نماذج",
       "apiKeySet": "تم تعيين مفتاح API",
       "apiKeyConfiguration": "إعداد مفتاح API",
+      "apiKeyDescription": "قم بتخزين مفتاح API شخصي لـ {{name}}.",
       "apiKeyEnvAlternative": "بدلاً من ذلك، عيّن",
       "environmentVariable": "متغير البيئة",
       "apiKeyConfigured": "تم إعداد مفتاح API",
       "apiKeyPlaceholder": "أدخل مفتاح API...",
       "saveApiKey": "حفظ مفتاح API",
-      "apiKey": {
-        "title": "مفتاح API",
-        "placeholder": "أدخل مفتاح API",
-        "save": "حفظ المفتاح",
-        "remove": "إزالة المفتاح",
-        "configured": "تم إعداد مفتاح API",
-        "notConfigured": "مفتاح API مطلوب",
-        "saved": "تم حفظ مفتاح API بنجاح",
-        "removed": "تم إزالة مفتاح API",
-        "saveFailed": "فشل حفظ مفتاح API",
-        "removeFailed": "فشل إزالة مفتاح API",
-        "enterKey": "يرجى إدخال مفتاح API"
-      },
-      "variables": "Variables",
-      "providerConnections": "اتصالات المزود",
-      "providerConnectionsDescription": "اتصل، وقم بتكوين، وفحص مزودي النماذج عبر الإضافات.",
-      "providers": "المزودون",
-      "searchProviders": "ابحث عن المزودين",
-      "noProvidersFound": "لا يوجد مزودون يطابقون بحثك.",
-      "selectProvider": "اختر مزودًا",
-      "selectProviderDescription": "اختر مزودًا لفحص اتصاله وكتالوج النماذج الخاص به.",
-      "apiKeyDescription": "قم بتخزين مفتاح API شخصي لـ {{name}}.",
       "showApiKey": "إظهار مفتاح API",
       "hideApiKey": "إخفاء مفتاح API",
       "configure": "تكوين",
@@ -637,7 +633,21 @@
         "transcription": "نسخ"
       },
       "exportPlugin": "تصدير الإضافة",
-      "deletePlugin": "حذف الإضافة"
+      "deletePlugin": "حذف الإضافة",
+      "apiKey": {
+        "title": "مفتاح API",
+        "placeholder": "أدخل مفتاح API",
+        "save": "حفظ المفتاح",
+        "remove": "إزالة المفتاح",
+        "configured": "تم إعداد مفتاح API",
+        "notConfigured": "مفتاح API مطلوب",
+        "saved": "تم حفظ مفتاح API بنجاح",
+        "removed": "تم إزالة مفتاح API",
+        "saveFailed": "فشل حفظ مفتاح API",
+        "removeFailed": "فشل إزالة مفتاح API",
+        "enterKey": "يرجى إدخال مفتاح API"
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "خيارات التوليد",
@@ -647,6 +657,8 @@
       "scopeModel": "{{model}} فقط",
       "scopeAllHint": "القيم التي يستخدمها كل نموذج ما لم يكن له إعداد خاص به.",
       "scopeModelHint": "يُحفظ لهذا النموذج وحده، ويتجاوز الإعدادات العامة.",
+      "advancedSettings": "إعدادات التوليد المتقدمة",
+      "advancedSettingsDescription": "أخذ العينات، وحدود الرموز، والسياق، والعقوبات، وتسلسلات الإيقاف",
       "coreParameters": "المعلمات الأساسية",
       "temperature": "درجة الحرارة",
       "temperatureDescription": "يتحكم في العشوائية. القيم الأقل أكثر تركيزاً، والقيم الأعلى أكثر إبداعاً.",
@@ -678,9 +690,7 @@
       "resetDefaults": "إعادة تعيين الافتراضيات",
       "saveOptions": "حفظ الخيارات",
       "embeddingSettings": "إعدادات التضمين",
-      "enableEmbeddings": "تفعيل تضمين المستندات",
-      "advancedSettings": "إعدادات التوليد المتقدمة",
-      "advancedSettingsDescription": "أخذ العينات، وحدود الرموز، والسياق، والعقوبات، وتسلسلات الإيقاف"
+      "enableEmbeddings": "تفعيل تضمين المستندات"
     },
     "documents": {
       "title": "إعدادات المستندات",
@@ -790,6 +800,7 @@
       "title": "إدارة البيانات",
       "export": "تصدير البيانات",
       "exportDescription": "نزّل أرشيفًا قابلاً للنقل يضم التفضيلات ومجلدات المحادثات والجلسات والرسائل والملاحظات ومجموعات المعرفة ونصوص المستندات المستخرجة.",
+      "archiveScopeV3": "يشمل التفضيلات والمحادثات والمجلدات والملاحظات ومجموعات المعرفة ونصوص المستندات المستخرجة. يستثني الحسابات والأسرار والأصوات الحيوية المستنسخة والوسائط المنشأة والشخصيات والذاكرة وبيانات أو وحدات تخزين Work.",
       "exportAll": "تصدير جميع البيانات",
       "import": "استيراد البيانات",
       "importDescription": "استيراد البيانات من تصدير سابق.",
@@ -830,8 +841,7 @@
         "title": "المحادثات المؤرشفة",
         "empty": "لا توجد محادثات مؤرشفة",
         "unarchive": "إلغاء الأرشفة"
-      },
-      "archiveScopeV3": "يشمل التفضيلات والمحادثات والمجلدات والملاحظات ومجموعات المعرفة ونصوص المستندات المستخرجة. يستثني الحسابات والأسرار والأصوات الحيوية المستنسخة والوسائط المنشأة والشخصيات والذاكرة وبيانات أو وحدات تخزين Work."
+      }
     },
     "about": {
       "title": "حول",
@@ -903,6 +913,59 @@
       "save": "حفظ",
       "saved": "تم حفظ إعدادات البحث",
       "saveFailed": "تعذر حفظ إعدادات البحث"
+    },
+    "compaction": {
+      "title": "ضغط السياق",
+      "description": "عندما تتجاوز المحادثة حدّ الرموز، يلخّص الخادم رسائلها الأقدم ويحتفظ بالأحدث فقط كما هي. ينطبق ذلك على كل مستخدمي هذا الخادم.",
+      "thresholdLabel": "حدّ الرموز",
+      "thresholdDescription": "عدد رموز السياق التقديري الذي يُلخَّص فوقه السجل الأقدم، 500-1,000,000.",
+      "thresholdInvalid": "يجب أن يكون حدّ الرموز بين 500 و1,000,000.",
+      "keepRecentLabel": "الرسائل الحديثة المحتفظ بها",
+      "keepRecentDescription": "كم عدد أحدث الرسائل التي تبقى كما هي دائمًا، 2-200.",
+      "keepRecentInvalid": "يجب أن يكون عدد الرسائل الحديثة المحتفظ بها بين 2 و200.",
+      "modelLabel": "نموذج الضغط",
+      "modelDescription": "النموذج الذي يكتب الملخّصات. يُستخدم نموذج الجلسة نفسها إذا لم يُختَر أي نموذج.",
+      "sessionModelOption": "استخدام نموذج الجلسة",
+      "promptLabel": "موجّه تلخيص مخصّص",
+      "promptPlaceholder": "اتركه فارغًا لاستخدام الموجّه المدمج",
+      "promptDescription": "يُستبدل متغيّرا القالب {{previousSummaryVariable}} و{{messagesVariable}} بالملخّص السابق وبالرسائل التي يجري تلخيصها.",
+      "saved": "تم حفظ إعدادات الضغط",
+      "saveFailed": "تعذّر حفظ إعدادات الضغط"
+    },
+    "connections": {
+      "title": "الاتصالات",
+      "description": "مزوّدو النماذج الذين يتواصل معهم هذا الخادم: بيئة تشغيل Ollama المحلية والنقاط الطرفية المتوافقة مع OpenAI.",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "بيئة تشغيل النماذج المحلية.",
+      "version": "الإصدار {{version}}.",
+      "statusChecking": "جارٍ التحقق…",
+      "statusOnline": "متصل",
+      "statusOffline": "غير متصل",
+      "providersTitle": "الاتصالات المتوافقة مع OpenAI",
+      "providersDescription": "كل اتصال هو مزوّد إكمال تظهر نماذجه في محدّد النماذج داخل المحادثة. تُخزَّن مفاتيح API على الخادم.",
+      "noConnections": "لم يُضبط أي اتصال بعد.",
+      "modelsCount": "{{total}} نموذج",
+      "pendingDiscovery": "النماذج بانتظار الاكتشاف",
+      "apiKeyMissing": "لا يوجد مفتاح API",
+      "deleteConfirm": "حذف هذا الاتصال؟ ستفقد المحادثات التي تستخدم نماذجه إمكانية الوصول إليها.",
+      "addTitle": "إضافة اتصال",
+      "addDescription": "سجّل نقطة طرفية chat completions متوافقة مع OpenAI كمزوّد.",
+      "nameLabel": "الاسم المعروض",
+      "namePlaceholder": "مزوّدي",
+      "idPreview": "معرّف الاتصال: {{id}}",
+      "endpointLabel": "رابط النقطة الطرفية",
+      "endpointDescription": "رابط chat completions الكامل، مثل https://api.example.com/v1/chat/completions.",
+      "apiKeyLabel": "مفتاح API",
+      "apiKeyOptionalHint": "(اختياري، يمكن إضافته لاحقًا)",
+      "nameRequired": "أدخل اسمًا معروضًا للاتصال.",
+      "endpointInvalid": "أدخل رابط نقطة طرفية http(s) صالحًا.",
+      "alreadyExists": "يوجد اتصال بهذا المعرّف بالفعل.",
+      "add": "إضافة اتصال",
+      "adding": "جارٍ الإضافة…",
+      "added": "تمت إضافة الاتصال",
+      "addFailed": "تعذّرت إضافة الاتصال",
+      "keySaveFailed": "تمت إضافة الاتصال، لكن تعذّر حفظ مفتاح API",
+      "activateFailed": "تمت إضافة الاتصال، لكن تعذّر تفعيله"
     },
     "sessions": {
       "title": "الجلسات",
@@ -1056,10 +1119,25 @@
     "sections": {
       "pull": "سحب نموذج جديد",
       "library": "تصفح المكتبة",
+      "huggingface": "HuggingFace Hub",
       "running": "النماذج قيد التشغيل",
       "local": "النماذج المحلية",
       "advanced": "إجراءات متقدمة",
-      "huggingface": "HuggingFace Hub"
+      "catalog": "دليل النماذج"
+    },
+    "catalog": {
+      "models": "متاح",
+      "searchPlaceholder": "ابحث عن النماذج بالاسم أو المزوّد...",
+      "noModels": "لا توجد نماذج متاحة بعد.",
+      "empty": "لا توجد نماذج تطابق بحثك.",
+      "providerOllama": "Ollama",
+      "default": "الافتراضي",
+      "makeDefault": "تعيينه افتراضيًا",
+      "defaultSet": "أصبح {{model}} نموذجك الافتراضي.",
+      "hidden": "مخفي",
+      "hide": "إخفاؤه عن المستخدمين",
+      "show": "إظهاره للمستخدمين",
+      "visibilityFailed": "تعذّر تحديث ظهور النموذج."
     },
     "pull": {
       "placeholder": "أدخل اسم النموذج (مثل llama3.2:3b، deepseek-r1:14b)",
@@ -1089,6 +1167,37 @@
       "installed": "مثبت",
       "more": "+{{count}} المزيد",
       "refresh": "تحديث المكتبة"
+    },
+    "huggingface": {
+      "browseAll": "تصفح الكل على HuggingFace",
+      "checkingGguf": "البحث عن ملفات GGUF...",
+      "noGgufAvailable": "لا توجد ملفات GGUF متاحة للسحب المباشر من Ollama",
+      "ggufFilesCount": "ملفات GGUF ({{count}}) - سحب مباشر إلى Ollama",
+      "noModelsFound": "لم يتم العثور على نماذج",
+      "noResults": "لم يتم العثور على نماذج. حاول تعديل البحث أو المرشحات.",
+      "browseAllLink": "تصفح الكل",
+      "search": "البحث في نماذج HuggingFace...",
+      "by": "بواسطة",
+      "gated": "وصول مقيد",
+      "viewOnHF": "عرض على HuggingFace",
+      "sortDownloads": "التنزيلات",
+      "sortLikes": "الإعجابات",
+      "sortRecent": "الأحدث",
+      "taskTextGeneration": "توليد النص",
+      "taskTextToSpeech": "تحويل النص إلى كلام",
+      "taskTextToImage": "تحويل النص إلى صورة",
+      "taskSpeechRecognition": "التعرف على الكلام",
+      "tasks": {
+        "textGen": "توليد النص",
+        "tts": "تحويل النص إلى كلام",
+        "image": "تحويل النص إلى صورة",
+        "stt": "التعرف على الكلام"
+      },
+      "sort": {
+        "downloads": "الأكثر تنزيلاً",
+        "likes": "الأكثر إعجاباً",
+        "recent": "المحدثة مؤخراً"
+      }
     },
     "local": {
       "noModels": "لم يتم تثبيت نماذج بعد",
@@ -1167,37 +1276,6 @@
         "success": "تم توليد متجه تضمين من {{count}} بُعد",
         "failed": "فشل توليد التضمينات",
         "enterBoth": "يرجى اختيار نموذج وإدخال نص"
-      }
-    },
-    "huggingface": {
-      "browseAll": "تصفح الكل على HuggingFace",
-      "checkingGguf": "البحث عن ملفات GGUF...",
-      "noGgufAvailable": "لا توجد ملفات GGUF متاحة للسحب المباشر من Ollama",
-      "ggufFilesCount": "ملفات GGUF ({{count}}) - سحب مباشر إلى Ollama",
-      "noModelsFound": "لم يتم العثور على نماذج",
-      "noResults": "لم يتم العثور على نماذج. حاول تعديل البحث أو المرشحات.",
-      "browseAllLink": "تصفح الكل",
-      "search": "البحث في نماذج HuggingFace...",
-      "by": "بواسطة",
-      "gated": "وصول مقيد",
-      "viewOnHF": "عرض على HuggingFace",
-      "sortDownloads": "التنزيلات",
-      "sortLikes": "الإعجابات",
-      "sortRecent": "الأحدث",
-      "taskTextGeneration": "توليد النص",
-      "taskTextToSpeech": "تحويل النص إلى كلام",
-      "taskTextToImage": "تحويل النص إلى صورة",
-      "taskSpeechRecognition": "التعرف على الكلام",
-      "tasks": {
-        "textGen": "توليد النص",
-        "tts": "تحويل النص إلى كلام",
-        "image": "تحويل النص إلى صورة",
-        "stt": "التعرف على الكلام"
-      },
-      "sort": {
-        "downloads": "الأكثر تنزيلاً",
-        "likes": "الأكثر إعجاباً",
-        "recent": "المحدثة مؤخراً"
       }
     }
   },
@@ -1371,6 +1449,17 @@
     "deleteSuccess": "تم حذف المستخدم بنجاح",
     "deleteFailed": "فشل حذف المستخدم",
     "cannotDeleteSelf": "لا يمكنك حذف حسابك الخاص",
+    "approval": {
+      "title": "الموافقات المعلقة",
+      "description": "راجع التسجيلات الجديدة قبل السماح لها بالدخول إلى هذا المثيل.",
+      "registered": "مسجل",
+      "activate": "تفعيل الحساب",
+      "reject": "رفض التسجيل",
+      "approved": "يمكن لـ {{name}} الآن تسجيل الدخول.",
+      "failed": "تعذر الموافقة على الحساب.",
+      "notification": "{{count}} تسجيل ينتظر موافقتك.",
+      "notificationBadge": "{{count}} موافقات مستخدمين معلقة"
+    },
     "form": {
       "title": {
         "create": "إنشاء مستخدم",
@@ -1392,17 +1481,6 @@
       "updateSuccess": "تم تحديث المستخدم بنجاح",
       "createFailed": "فشل إنشاء المستخدم",
       "updateFailed": "فشل تحديث المستخدم"
-    },
-    "approval": {
-      "title": "الموافقات المعلقة",
-      "description": "راجع التسجيلات الجديدة قبل السماح لها بالدخول إلى هذا المثيل.",
-      "registered": "مسجل",
-      "activate": "تفعيل الحساب",
-      "reject": "رفض التسجيل",
-      "approved": "يمكن لـ {{name}} الآن تسجيل الدخول.",
-      "failed": "تعذر الموافقة على الحساب.",
-      "notification": "{{count}} تسجيل ينتظر موافقتك.",
-      "notificationBadge": "{{count}} موافقات مستخدمين معلقة"
     },
     "workAccess": {
       "title": "الوصول إلى Work",
@@ -1508,6 +1586,174 @@
       "target": "الهدف"
     }
   },
+  "usageAnalytics": {
+    "eyebrow": "الإدارة",
+    "title": "استخدام المزود",
+    "description": "تابع مكالمات API الصادرة واستهلاك النماذج عبر الإضافات الممكّنة في هذا المثيل.",
+    "days": "{{count}} أيام",
+    "refresh": "تحديث الاستخدام",
+    "loadFailed": "تعذر تحميل استخدام المزود.",
+    "metrics": {
+      "calls": "المكالمات",
+      "tokens": "الرموز"
+    },
+    "cards": {
+      "calls": "مكالمات API",
+      "callsDetail": "عبر {{count}} مستخدم نشط",
+      "tokens": "الرموز المُبلغ عنها",
+      "tokensDetail": "الاستخدام المُبلغ عنه في {{count}} مكالمة",
+      "success": "معدل النجاح",
+      "successDetail": "{{count}} مكالمة فاشلة",
+      "latency": "متوسط زمن الاستجابة",
+      "latencyDetail": "وقت المزود من البداية للنهاية"
+    },
+    "activity": {
+      "title": "الاستهلاك بمرور الوقت",
+      "callsDescription": "الطلبات الصادرة اليومية للإضافات الممكّنة",
+      "tokensDescription": "إجمالي الرموز اليومية التي أبلغ عنها المزودون",
+      "chartLabel": "مخطط {{metric}} اليومي للمزود"
+    },
+    "models": {
+      "title": "استهلاك النموذج",
+      "description": "النماذج التي تحمل أكبر قدر من حركة المرور في هذه الفترة.",
+      "model": "النموذج",
+      "success": "النجاح",
+      "latency": "زمن الاستجابة"
+    },
+    "providers": {
+      "title": "حركة مرور الإضافات الممكّنة"
+    },
+    "capabilities": {
+      "title": "مزيج القدرات",
+      "characters": "{{count}} حرف",
+      "bytes": "{{count}} بايت",
+      "images": "{{count}} صورة",
+      "jobs": "{{count}} مهمة فيديو",
+      "inputs": "{{count}} مدخل",
+      "reportedTokens": "{{count}} رمز مُبلغ عنه"
+    },
+    "empty": {
+      "title": "لا توجد مكالمات مزود بعد",
+      "description": "ستظهر المكالمات هنا بعد أن تعالج إضافة ممكّنة طلبات الدردشة، أو العمل، أو التضمين، أو الصورة، أو الكلام، أو الصوت، أو الفيديو."
+    },
+    "privacyNote": "يتم قياس الاستخدام على الخادم عند حدود الإضافة الصادرة. يخزن Libre WebUI المزود، والنموذج، والتوقيت، والحالة، والعدادات المُبلغ عنها — وليس المطالبات، أو الاستجابات، أو نقاط النهاية، أو بيانات الاعتماد، أو هيئات أخطاء المزود. تشمل إجماليات الرموز فقط المكالمات التي أعاد فيها المزود بيانات الاستخدام الوصفية.",
+    "heatmap": {
+      "title": "عام من النشاط",
+      "description": "استدعاءات المزوّد اليومية خلال العام الماضي، ملوّنة حسب النموذج الأكثر استخدامًا في كل يوم.",
+      "calls": "استدعاءات",
+      "noCalls": "لا استدعاءات",
+      "other": "نماذج أخرى",
+      "less": "أقل",
+      "more": "أكثر",
+      "yearTotal": "{{formatted}} استدعاءً خلال العام الماضي"
+    }
+  },
+  "systemPage": {
+    "eyebrow": "الإدارة",
+    "title": "النظام",
+    "description": "راقب الجهاز ووقت التشغيل الذي يستضيف مثيل Libre WebUI هذا.",
+    "updated": "تم التحديث {{date}}",
+    "refresh": "تحديث معلومات النظام",
+    "loadFailed": "تعذر تحميل معلومات النظام.",
+    "cards": {
+      "uptime": "وقت تشغيل المضيف",
+      "uptimeDetail": "يعمل منذ {{date}}",
+      "memory": "الذاكرة المستخدمة",
+      "memoryDetail": "{{used}} من {{total}}",
+      "freeSpace": "مساحة فارغة",
+      "freeSpaceDetail": "{{label}} · {{total}} الإجمالي",
+      "containers": "الحاويات قيد التشغيل",
+      "containersDetail": "{{total}} حاوية معروفة لـ Docker",
+      "dockerUnavailable": "Docker غير متاح",
+      "unavailable": "غير متاح"
+    },
+    "host": {
+      "title": "المضيف ووقت التشغيل",
+      "description": "تفاصيل نظام التشغيل والمعالج وعملية Libre WebUI.",
+      "container": "وقت تشغيل الحاوية",
+      "native": "وقت تشغيل أصلي",
+      "hostname": "اسم المضيف",
+      "operatingSystem": "نظام التشغيل",
+      "processor": "المعالج",
+      "logicalCpus": "وحدات CPU منطقية",
+      "loadAverage": "متوسط الحمل · 1 / 5 / 15 دقيقة",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "العملية",
+      "workingDirectory": "دليل العمل"
+    },
+    "memory": {
+      "title": "الذاكرة",
+      "description": "ذاكرة النظام المرئية لوقت التشغيل واستخدام عملية التطبيق.",
+      "usedOf": "{{used}} مستخدمة من {{total}}",
+      "free": "{{value}} فارغة",
+      "processRss": "RSS العملية",
+      "heapUsed": "كومة V8 المستخدمة",
+      "heapTotal": "إجمالي كومة V8",
+      "external": "ذاكرة خارجية"
+    },
+    "storage": {
+      "title": "التخزين",
+      "description": "المساحة المتاحة لنظام ملفات وقت التشغيل وبيانات التطبيق الدائمة.",
+      "used": "{{value}} مستخدمة",
+      "free": "{{value}} فارغة",
+      "empty": "معلومات نظام الملفات غير متاحة في وقت التشغيل هذا."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "حالة Docker Engine للقراءة فقط وقائمة مختصرة من الحاويات.",
+      "connected": "متصل",
+      "unavailable": "غير متاح",
+      "unavailableDetail": "تشخيصات Docker Engine غير متاحة.",
+      "socketStatus": "مقبس محلي: {{status}}",
+      "mounted": "مُثبت",
+      "notMounted": "غير مُثبت",
+      "running": "قيد التشغيل",
+      "stopped": "متوقف",
+      "paused": "متوقف مؤقتًا",
+      "total": "الإجمالي",
+      "version": "الإصدار",
+      "host": "المضيف",
+      "architecture": "البنية",
+      "cpus": "وحدات CPU",
+      "memory": "الذاكرة",
+      "container": "الحاوية",
+      "image": "الصورة",
+      "state": "الحالة",
+      "created": "تم الإنشاء",
+      "empty": "Docker متصل ولا توجد حاويات مدرجة حاليًا."
+    },
+    "network": {
+      "title": "الشبكة",
+      "description": "الواجهات والعناوين وعدادات حركة مرور Linux المرئية لوقت التشغيل.",
+      "internal": "داخلي",
+      "empty": "لا توجد واجهات شبكة مرئية لوقت تشغيل التطبيق."
+    },
+    "securityNote": "هذه الصفحة مخصصة للمسؤولين فقط. يُرجع الخادم ملخصات تشغيلية فقط: فهو لا يكشف متغيرات البيئة، أو بيانات الاعتماد، أو تسميات Docker، أو التثبيتات، أو أوامر الحاوية، أو حمولات الفحص. عندما يعمل Libre WebUI في حاوية، تأتي تفاصيل CPU والذاكرة على مستوى المضيف من Docker Engine عندما يكون مقبسه المحلي متاحًا؛ تصف القيم الأخرى وقت تشغيل التطبيق.",
+    "work": {
+      "title": "Work",
+      "description": "بيئات معزولة لجميع المستخدمين",
+      "access": "الوصول",
+      "accessAdmins": "المسؤولون فقط",
+      "accessAllUsers": "جميع المستخدمين",
+      "runtimeAvailable": "متاح",
+      "runtimeUnavailable": "غير متاح",
+      "activeRuntimes": "بيئات التشغيل النشطة",
+      "pendingCleanups": "عمليات تنظيف معلقة",
+      "orphans": "حاويات يتيمة",
+      "owner": "المالك",
+      "task": "المهمة",
+      "state": "الحالة",
+      "preview": "المعاينة",
+      "terminals": "الطرفيات",
+      "updated": "آخر تحديث",
+      "stateRunning": "قيد التشغيل",
+      "stateStopped": "متوقف",
+      "stateStarting": "قيد البدء",
+      "stateUnknown": "غير معروف",
+      "noTasks": "لا توجد مهام Work بعد."
+    }
+  },
   "chatHistory": {
     "label": "سجل المحادثة",
     "jumpToTurn": "الانتقال إلى الدور {{index}} من {{total}}"
@@ -1576,6 +1822,57 @@
     "failed": "فشل توليد الصورة",
     "enterPrompt": "يرجى إدخال موجه",
     "promptTooLong": "يتجاوز النص الحد الأقصى البالغ {{max}} حرف"
+  },
+  "mediaGeneration": {
+    "title": "توليد الوسائط",
+    "description": "أنشئ فيديو أو صوتًا أو موسيقى أو كلامًا باستخدام مزود وسائط مُفعّل.",
+    "image": "صورة",
+    "video": "فيديو",
+    "audio": "صوت",
+    "sound": "صوت",
+    "speech": "كلام",
+    "model": "النموذج",
+    "voice": "الصوت أو معرف الصوت",
+    "cloneVoice": "استنساخ صوت مرجعي",
+    "cloneVoiceDescription": "أنشئ هذا الكلام استنادًا إلى تسجيل مرجعي بدلاً من صوت مُعد مسبقًا.",
+    "referenceAudio": "الصوت المرجعي",
+    "referenceTranscript": "النص المطابق للتسجيل المرجعي",
+    "referenceTranscriptPlaceholder": "أدخل بالضبط ما يُقال في التسجيل المرجعي…",
+    "referenceAudioTooLarge": "يجب ألا يتجاوز حجم الصوت المرجعي {{max}}.",
+    "cloneConsent": "لا تستنسخ صوتًا إلا بإذن المتحدث. يُرسل التسجيل إلى المزوّد المحدد لإنشاء هذا المقطع ولا يحفظه Libre WebUI.",
+    "saveVoiceProfile": "حفظ كصوت قابل لإعادة الاستخدام",
+    "saveVoiceProfileDescription": "خزّن هذا التسجيل المرجعي ونصه بأمان. يرسلهما Libre WebUI إلى المزوّد المحدد مع كل دفعة كلام تستخدم هذا الصوت.",
+    "voiceProfileName": "اسم الصوت المحفوظ",
+    "voiceProfileNamePlaceholder": "مثال: صوتي",
+    "voiceStorageConsent": "أؤكد أن لدي إذن المتحدث لاستنساخ هذا الصوت وحفظه. سيبقى المرجع محفوظًا حتى أحذفه.",
+    "resolution": "الدقة",
+    "aspectRatio": "نسبة العرض إلى الارتفاع",
+    "duration": "المدة",
+    "providerDefault": "افتراضي للمزود",
+    "generateAudio": "توليد صوت مع الفيديو عند الدعم",
+    "prompt": "المطالبة",
+    "text": "النص للتحدث",
+    "videoPlaceholder": "صف المشهد، والحركة، والكاميرا، والإضاءة...",
+    "audioPlaceholder": "أدخل النص الذي تريد للصوت أن ينطقه...",
+    "soundPlaceholder": "صف الصوت، أو الموسيقى، أو الأجواء، أو الاستجابة المنطوقة التي تريدها...",
+    "generate": "توليد",
+    "generating": "جارٍ التوليد… قد يستغرق هذا عدة دقائق",
+    "success": "تم توليد الوسائط وحفظها في Imagine",
+    "successWithSavedVoice": "تم إنشاء الوسائط وأصبح «{{name}}» متاحًا الآن في إعدادات الكلام",
+    "failed": "فشل توليد الوسائط",
+    "loadFailed": "فشل تحميل مزودي الوسائط",
+    "noModels": "لا تتوفر نماذج {{kind}}. قم بتفعيل مزود متوافق واحفظ بيانات اعتماده أولاً."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} عناصر",
+    "empty": "لا توجد وسائط مولدة بعد",
+    "emptyHint": "قم بتوليد صورة أو فيديو أو مقطع صوتي وسيظهر هنا.",
+    "filters": {
+      "all": "الكل",
+      "image": "الصور",
+      "video": "مقاطع الفيديو",
+      "audio": "الصوت"
+    }
   },
   "errorBoundary": {
     "title": "حدث خطأ ما",
@@ -1649,7 +1946,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "الإصدار {{current}} من {{total}}",
     "previousVersion": "الإصدار السابق",
-    "nextVersion": "الإصدار التالي"
+    "nextVersion": "الإصدار التالي",
+    "fullscreen": "ملء الشاشة",
+    "exitFullscreen": "إنهاء ملء الشاشة",
+    "showChatOverlay": "إظهار المحادثة العائمة",
+    "hideChatOverlay": "إخفاء المحادثة العائمة"
   },
   "personaImportExport": {
     "title": "استيراد وتصدير الشخصيات",
@@ -1728,8 +2029,8 @@
       "saveFailed": "فشل حفظ المتغيرات",
       "resetDefaults": "إعادة التعيين للافتراضي",
       "reset": "تم إعادة تعيين المتغيرات",
-      "sensitiveSet": "تم تعيين القيمة (أدخل قيمة جديدة للتغيير)",
       "resetFailed": "فشل إعادة تعيين المتغيرات",
+      "sensitiveSet": "تم تعيين القيمة (أدخل قيمة جديدة للتغيير)",
       "showValue": "إظهار قيمة {{label}}",
       "hideValue": "إخفاء قيمة {{label}}",
       "connection": "اتصال",
@@ -1767,45 +2068,6 @@
   "demoMode": {
     "title": "وضع تجريبي",
     "github": "GitHub"
-  },
-  "personaBackground": {
-    "label": "صورة الخلفية",
-    "uploadBackgroundImage": "رفع صورة الخلفية",
-    "dragAndDrop": "اسحب وأفلت صورة أو انقر للتصفح",
-    "chooseImage": "اختيار صورة",
-    "uploading": "جارٍ الرفع...",
-    "enterImageUrl": "أو أدخل رابط الصورة",
-    "supportedFormats": "يدعم: JPG, PNG, GIF, WebP (الحد الأقصى 5 ميجابايت). الصور العريضة الأفقية تعمل بشكل أفضل.",
-    "customBackground": "صورة خلفية مخصصة",
-    "clickToChange": "انقر للتغيير أو الإزالة",
-    "removed": "تم إزالة الخلفية",
-    "uploaded": "تم رفع الخلفية بنجاح",
-    "invalidFile": "يرجى اختيار ملف صورة صالح",
-    "fileTooLarge": "يجب أن يكون حجم صورة الخلفية أقل من 5 ميجابايت",
-    "readFailed": "فشل في قراءة ملف الصورة",
-    "uploadFailed": "فشل في رفع صورة الخلفية"
-  },
-  "modelSelector": {
-    "searchInstalled": "البحث في النماذج المثبتة...",
-    "searchOllama": "البحث في مكتبة Ollama...",
-    "searchHuggingFace": "البحث في HuggingFace...",
-    "selectModel": "اختر نموذجًا",
-    "personas": "الشخصيات",
-    "ollamaModels": "نماذج Ollama",
-    "pluginModels": "نماذج الإضافات",
-    "actions": "الإجراءات",
-    "installed": "مثبت",
-    "use": "استخدام",
-    "pull": "تنزيل",
-    "pullRestricted": "تثبيت النماذج مقصور على المسؤولين في هذا المثيل.",
-    "adminOnlyPull": "للمسؤولين فقط",
-    "legacyProvider": "المزود غير مسجل",
-    "providerNotRecorded": "المزود غير مسجل",
-    "providerUnavailable": "المزود غير متاح",
-    "reselectProvider": "أعد اختيار مزود لتثبيت هذا النموذج",
-    "unavailable": "غير متاح",
-    "unavailableSelections": "اختيارات غير متاحة",
-    "agentModels": "الوكلاء"
   },
   "libreClaw": {
     "title": "الوكلاء",
@@ -2149,224 +2411,44 @@
       "warning": "يمكن للمهمة قراءة هذا المجلد والكتابة فيه مباشرة. اتركه فارغًا لاستخدام مساحة عمل معزولة."
     }
   },
-  "usageAnalytics": {
-    "eyebrow": "الإدارة",
-    "title": "استخدام المزود",
-    "description": "تابع مكالمات API الصادرة واستهلاك النماذج عبر الإضافات الممكّنة في هذا المثيل.",
-    "days": "{{count}} أيام",
-    "refresh": "تحديث الاستخدام",
-    "loadFailed": "تعذر تحميل استخدام المزود.",
-    "metrics": {
-      "calls": "المكالمات",
-      "tokens": "الرموز"
-    },
-    "cards": {
-      "calls": "مكالمات API",
-      "callsDetail": "عبر {{count}} مستخدم نشط",
-      "tokens": "الرموز المُبلغ عنها",
-      "tokensDetail": "الاستخدام المُبلغ عنه في {{count}} مكالمة",
-      "success": "معدل النجاح",
-      "successDetail": "{{count}} مكالمة فاشلة",
-      "latency": "متوسط زمن الاستجابة",
-      "latencyDetail": "وقت المزود من البداية للنهاية"
-    },
-    "activity": {
-      "title": "الاستهلاك بمرور الوقت",
-      "callsDescription": "الطلبات الصادرة اليومية للإضافات الممكّنة",
-      "tokensDescription": "إجمالي الرموز اليومية التي أبلغ عنها المزودون",
-      "chartLabel": "مخطط {{metric}} اليومي للمزود"
-    },
-    "models": {
-      "title": "استهلاك النموذج",
-      "description": "النماذج التي تحمل أكبر قدر من حركة المرور في هذه الفترة.",
-      "model": "النموذج",
-      "success": "النجاح",
-      "latency": "زمن الاستجابة"
-    },
-    "providers": {
-      "title": "حركة مرور الإضافات الممكّنة"
-    },
-    "capabilities": {
-      "title": "مزيج القدرات",
-      "characters": "{{count}} حرف",
-      "bytes": "{{count}} بايت",
-      "images": "{{count}} صورة",
-      "jobs": "{{count}} مهمة فيديو",
-      "inputs": "{{count}} مدخل",
-      "reportedTokens": "{{count}} رمز مُبلغ عنه"
-    },
-    "empty": {
-      "title": "لا توجد مكالمات مزود بعد",
-      "description": "ستظهر المكالمات هنا بعد أن تعالج إضافة ممكّنة طلبات الدردشة، أو العمل، أو التضمين، أو الصورة، أو الكلام، أو الصوت، أو الفيديو."
-    },
-    "privacyNote": "يتم قياس الاستخدام على الخادم عند حدود الإضافة الصادرة. يخزن Libre WebUI المزود، والنموذج، والتوقيت، والحالة، والعدادات المُبلغ عنها — وليس المطالبات، أو الاستجابات، أو نقاط النهاية، أو بيانات الاعتماد، أو هيئات أخطاء المزود. تشمل إجماليات الرموز فقط المكالمات التي أعاد فيها المزود بيانات الاستخدام الوصفية.",
-    "heatmap": {
-      "title": "عام من النشاط",
-      "description": "استدعاءات المزوّد اليومية خلال العام الماضي، ملوّنة حسب النموذج الأكثر استخدامًا في كل يوم.",
-      "calls": "استدعاءات",
-      "noCalls": "لا استدعاءات",
-      "other": "نماذج أخرى",
-      "less": "أقل",
-      "more": "أكثر",
-      "yearTotal": "{{formatted}} استدعاءً خلال العام الماضي"
-    }
+  "personaBackground": {
+    "label": "صورة الخلفية",
+    "uploadBackgroundImage": "رفع صورة الخلفية",
+    "dragAndDrop": "اسحب وأفلت صورة أو انقر للتصفح",
+    "chooseImage": "اختيار صورة",
+    "uploading": "جارٍ الرفع...",
+    "enterImageUrl": "أو أدخل رابط الصورة",
+    "supportedFormats": "يدعم: JPG, PNG, GIF, WebP (الحد الأقصى 5 ميجابايت). الصور العريضة الأفقية تعمل بشكل أفضل.",
+    "customBackground": "صورة خلفية مخصصة",
+    "clickToChange": "انقر للتغيير أو الإزالة",
+    "removed": "تم إزالة الخلفية",
+    "uploaded": "تم رفع الخلفية بنجاح",
+    "invalidFile": "يرجى اختيار ملف صورة صالح",
+    "fileTooLarge": "يجب أن يكون حجم صورة الخلفية أقل من 5 ميجابايت",
+    "readFailed": "فشل في قراءة ملف الصورة",
+    "uploadFailed": "فشل في رفع صورة الخلفية"
   },
-  "systemPage": {
-    "eyebrow": "الإدارة",
-    "title": "النظام",
-    "description": "راقب الجهاز ووقت التشغيل الذي يستضيف مثيل Libre WebUI هذا.",
-    "updated": "تم التحديث {{date}}",
-    "refresh": "تحديث معلومات النظام",
-    "loadFailed": "تعذر تحميل معلومات النظام.",
-    "cards": {
-      "uptime": "وقت تشغيل المضيف",
-      "uptimeDetail": "يعمل منذ {{date}}",
-      "memory": "الذاكرة المستخدمة",
-      "memoryDetail": "{{used}} من {{total}}",
-      "freeSpace": "مساحة فارغة",
-      "freeSpaceDetail": "{{label}} · {{total}} الإجمالي",
-      "containers": "الحاويات قيد التشغيل",
-      "containersDetail": "{{total}} حاوية معروفة لـ Docker",
-      "dockerUnavailable": "Docker غير متاح",
-      "unavailable": "غير متاح"
-    },
-    "host": {
-      "title": "المضيف ووقت التشغيل",
-      "description": "تفاصيل نظام التشغيل والمعالج وعملية Libre WebUI.",
-      "container": "وقت تشغيل الحاوية",
-      "native": "وقت تشغيل أصلي",
-      "hostname": "اسم المضيف",
-      "operatingSystem": "نظام التشغيل",
-      "processor": "المعالج",
-      "logicalCpus": "وحدات CPU منطقية",
-      "loadAverage": "متوسط الحمل · 1 / 5 / 15 دقيقة",
-      "libreVersion": "Libre WebUI",
-      "nodeVersion": "Node.js",
-      "process": "العملية",
-      "workingDirectory": "دليل العمل"
-    },
-    "memory": {
-      "title": "الذاكرة",
-      "description": "ذاكرة النظام المرئية لوقت التشغيل واستخدام عملية التطبيق.",
-      "usedOf": "{{used}} مستخدمة من {{total}}",
-      "free": "{{value}} فارغة",
-      "processRss": "RSS العملية",
-      "heapUsed": "كومة V8 المستخدمة",
-      "heapTotal": "إجمالي كومة V8",
-      "external": "ذاكرة خارجية"
-    },
-    "storage": {
-      "title": "التخزين",
-      "description": "المساحة المتاحة لنظام ملفات وقت التشغيل وبيانات التطبيق الدائمة.",
-      "used": "{{value}} مستخدمة",
-      "free": "{{value}} فارغة",
-      "empty": "معلومات نظام الملفات غير متاحة في وقت التشغيل هذا."
-    },
-    "docker": {
-      "title": "Docker",
-      "description": "حالة Docker Engine للقراءة فقط وقائمة مختصرة من الحاويات.",
-      "connected": "متصل",
-      "unavailable": "غير متاح",
-      "unavailableDetail": "تشخيصات Docker Engine غير متاحة.",
-      "socketStatus": "مقبس محلي: {{status}}",
-      "mounted": "مُثبت",
-      "notMounted": "غير مُثبت",
-      "running": "قيد التشغيل",
-      "stopped": "متوقف",
-      "paused": "متوقف مؤقتًا",
-      "total": "الإجمالي",
-      "version": "الإصدار",
-      "host": "المضيف",
-      "architecture": "البنية",
-      "cpus": "وحدات CPU",
-      "memory": "الذاكرة",
-      "container": "الحاوية",
-      "image": "الصورة",
-      "state": "الحالة",
-      "created": "تم الإنشاء",
-      "empty": "Docker متصل ولا توجد حاويات مدرجة حاليًا."
-    },
-    "network": {
-      "title": "الشبكة",
-      "description": "الواجهات والعناوين وعدادات حركة مرور Linux المرئية لوقت التشغيل.",
-      "internal": "داخلي",
-      "empty": "لا توجد واجهات شبكة مرئية لوقت تشغيل التطبيق."
-    },
-    "securityNote": "هذه الصفحة مخصصة للمسؤولين فقط. يُرجع الخادم ملخصات تشغيلية فقط: فهو لا يكشف متغيرات البيئة، أو بيانات الاعتماد، أو تسميات Docker، أو التثبيتات، أو أوامر الحاوية، أو حمولات الفحص. عندما يعمل Libre WebUI في حاوية، تأتي تفاصيل CPU والذاكرة على مستوى المضيف من Docker Engine عندما يكون مقبسه المحلي متاحًا؛ تصف القيم الأخرى وقت تشغيل التطبيق.",
-    "work": {
-      "title": "Work",
-      "description": "بيئات معزولة لجميع المستخدمين",
-      "access": "الوصول",
-      "accessAdmins": "المسؤولون فقط",
-      "accessAllUsers": "جميع المستخدمين",
-      "runtimeAvailable": "متاح",
-      "runtimeUnavailable": "غير متاح",
-      "activeRuntimes": "بيئات التشغيل النشطة",
-      "pendingCleanups": "عمليات تنظيف معلقة",
-      "orphans": "حاويات يتيمة",
-      "owner": "المالك",
-      "task": "المهمة",
-      "state": "الحالة",
-      "preview": "المعاينة",
-      "terminals": "الطرفيات",
-      "updated": "آخر تحديث",
-      "stateRunning": "قيد التشغيل",
-      "stateStopped": "متوقف",
-      "stateStarting": "قيد البدء",
-      "stateUnknown": "غير معروف",
-      "noTasks": "لا توجد مهام Work بعد."
-    }
-  },
-  "mediaGeneration": {
-    "title": "توليد الوسائط",
-    "description": "أنشئ فيديو أو صوتًا أو موسيقى أو كلامًا باستخدام مزود وسائط مُفعّل.",
-    "image": "صورة",
-    "video": "فيديو",
-    "audio": "صوت",
-    "sound": "صوت",
-    "speech": "كلام",
-    "model": "النموذج",
-    "voice": "الصوت أو معرف الصوت",
-    "cloneVoice": "استنساخ صوت مرجعي",
-    "cloneVoiceDescription": "أنشئ هذا الكلام استنادًا إلى تسجيل مرجعي بدلاً من صوت مُعد مسبقًا.",
-    "referenceAudio": "الصوت المرجعي",
-    "referenceTranscript": "النص المطابق للتسجيل المرجعي",
-    "referenceTranscriptPlaceholder": "أدخل بالضبط ما يُقال في التسجيل المرجعي…",
-    "referenceAudioTooLarge": "يجب ألا يتجاوز حجم الصوت المرجعي {{max}}.",
-    "cloneConsent": "لا تستنسخ صوتًا إلا بإذن المتحدث. يُرسل التسجيل إلى المزوّد المحدد لإنشاء هذا المقطع ولا يحفظه Libre WebUI.",
-    "saveVoiceProfile": "حفظ كصوت قابل لإعادة الاستخدام",
-    "saveVoiceProfileDescription": "خزّن هذا التسجيل المرجعي ونصه بأمان. يرسلهما Libre WebUI إلى المزوّد المحدد مع كل دفعة كلام تستخدم هذا الصوت.",
-    "voiceProfileName": "اسم الصوت المحفوظ",
-    "voiceProfileNamePlaceholder": "مثال: صوتي",
-    "voiceStorageConsent": "أؤكد أن لدي إذن المتحدث لاستنساخ هذا الصوت وحفظه. سيبقى المرجع محفوظًا حتى أحذفه.",
-    "successWithSavedVoice": "تم إنشاء الوسائط وأصبح «{{name}}» متاحًا الآن في إعدادات الكلام",
-    "resolution": "الدقة",
-    "aspectRatio": "نسبة العرض إلى الارتفاع",
-    "duration": "المدة",
-    "providerDefault": "افتراضي للمزود",
-    "generateAudio": "توليد صوت مع الفيديو عند الدعم",
-    "prompt": "المطالبة",
-    "text": "النص للتحدث",
-    "videoPlaceholder": "صف المشهد، والحركة، والكاميرا، والإضاءة...",
-    "audioPlaceholder": "أدخل النص الذي تريد للصوت أن ينطقه...",
-    "soundPlaceholder": "صف الصوت، أو الموسيقى، أو الأجواء، أو الاستجابة المنطوقة التي تريدها...",
-    "generate": "توليد",
-    "generating": "جارٍ التوليد… قد يستغرق هذا عدة دقائق",
-    "success": "تم توليد الوسائط وحفظها في Imagine",
-    "failed": "فشل توليد الوسائط",
-    "loadFailed": "فشل تحميل مزودي الوسائط",
-    "noModels": "لا تتوفر نماذج {{kind}}. قم بتفعيل مزود متوافق واحفظ بيانات اعتماده أولاً."
-  },
-  "mediaGallery": {
-    "itemCount": "{{count}} عناصر",
-    "empty": "لا توجد وسائط مولدة بعد",
-    "emptyHint": "قم بتوليد صورة أو فيديو أو مقطع صوتي وسيظهر هنا.",
-    "filters": {
-      "all": "الكل",
-      "image": "الصور",
-      "video": "مقاطع الفيديو",
-      "audio": "الصوت"
-    }
+  "modelSelector": {
+    "searchInstalled": "البحث في النماذج المثبتة...",
+    "searchOllama": "البحث في مكتبة Ollama...",
+    "searchHuggingFace": "البحث في HuggingFace...",
+    "selectModel": "اختر نموذجًا",
+    "personas": "الشخصيات",
+    "ollamaModels": "نماذج Ollama",
+    "pluginModels": "نماذج الإضافات",
+    "actions": "الإجراءات",
+    "installed": "مثبت",
+    "use": "استخدام",
+    "pull": "تنزيل",
+    "pullRestricted": "تثبيت النماذج مقصور على المسؤولين في هذا المثيل.",
+    "adminOnlyPull": "للمسؤولين فقط",
+    "legacyProvider": "المزود غير مسجل",
+    "providerNotRecorded": "المزود غير مسجل",
+    "providerUnavailable": "المزود غير متاح",
+    "reselectProvider": "أعد اختيار مزود لتثبيت هذا النموذج",
+    "unavailable": "غير متاح",
+    "unavailableSelections": "اختيارات غير متاحة",
+    "agentModels": "الوكلاء"
   },
   "whatsNew": {
     "title": "ما الجديد",

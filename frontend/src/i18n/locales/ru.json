@@ -194,6 +194,10 @@
       "evening": "Добрый вечер",
       "night": "Доброй ночи"
     },
+    "overlay": {
+      "title": "Чат",
+      "close": "Закрыть плавающий чат"
+    },
     "followUp": "Продолжить",
     "welcome": {
       "helpToday": "Чем могу помочь сегодня?",
@@ -421,7 +425,12 @@
       "notes": "Заметки"
     },
     "toggleSize": "Переключить размер боковой панели",
-    "expandSidebar": "Развернуть боковую панель"
+    "expandSidebar": "Развернуть боковую панель",
+    "pinned": {
+      "label": "Закреплённые",
+      "pin": "Закрепить в боковой панели",
+      "unpin": "Открепить от боковой панели"
+    }
   },
   "user": {
     "menu": {
@@ -473,7 +482,8 @@
       "shortcuts": "Сочетания клавиш",
       "about": "О программе",
       "sessions": "Сеансы",
-      "apiKeys": "API-ключи"
+      "apiKeys": "API-ключи",
+      "connections": "Подключения"
     },
     "appearance": {
       "title": "Внешний вид",
@@ -904,6 +914,59 @@
       "saved": "Настройки поиска сохранены",
       "saveFailed": "Не удалось сохранить настройки поиска"
     },
+    "compaction": {
+      "title": "Сжатие контекста",
+      "description": "Когда разговор превышает порог токенов, сервер суммирует его старые сообщения и оставляет дословно только самые последние. Действует для всех пользователей этого сервера.",
+      "thresholdLabel": "Порог токенов",
+      "thresholdDescription": "Оценочное число токенов контекста, выше которого старая история суммируется, 500-1 000 000.",
+      "thresholdInvalid": "Порог токенов должен быть от 500 до 1 000 000.",
+      "keepRecentLabel": "Сохраняемые последние сообщения",
+      "keepRecentDescription": "Сколько последних сообщений всегда остаются дословно, 2-200.",
+      "keepRecentInvalid": "Число сохраняемых последних сообщений должно быть от 2 до 200.",
+      "modelLabel": "Модель сжатия",
+      "modelDescription": "Модель, которая пишет сводки. Если ничего не выбрано, используется модель самого сеанса.",
+      "sessionModelOption": "Использовать модель сеанса",
+      "promptLabel": "Собственный промпт для сводки",
+      "promptPlaceholder": "Оставьте пустым, чтобы использовать встроенный промпт",
+      "promptDescription": "Переменные шаблона {{previousSummaryVariable}} и {{messagesVariable}} заменяются предыдущей сводкой и суммируемыми сообщениями.",
+      "saved": "Настройки сжатия сохранены",
+      "saveFailed": "Не удалось сохранить настройки сжатия"
+    },
+    "connections": {
+      "title": "Подключения",
+      "description": "Провайдеры моделей, с которыми работает этот сервер: локальная среда Ollama и OpenAI-совместимые эндпоинты.",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "Локальная среда выполнения моделей.",
+      "version": "Версия {{version}}.",
+      "statusChecking": "Проверка…",
+      "statusOnline": "Онлайн",
+      "statusOffline": "Офлайн",
+      "providersTitle": "OpenAI-совместимые подключения",
+      "providersDescription": "Каждое подключение — это провайдер завершений, чьи модели появляются в списке моделей чата. API-ключи хранятся на сервере.",
+      "noConnections": "Подключения ещё не настроены.",
+      "modelsCount": "{{total}} моделей",
+      "pendingDiscovery": "Модели ожидают обнаружения",
+      "apiKeyMissing": "Нет API-ключа",
+      "deleteConfirm": "Удалить это подключение? Чаты, использующие его модели, потеряют к ним доступ.",
+      "addTitle": "Добавить подключение",
+      "addDescription": "Зарегистрируйте OpenAI-совместимый эндпоинт chat completions как провайдера.",
+      "nameLabel": "Отображаемое имя",
+      "namePlaceholder": "Мой провайдер",
+      "idPreview": "ID подключения: {{id}}",
+      "endpointLabel": "URL эндпоинта",
+      "endpointDescription": "Полный URL chat completions, например https://api.example.com/v1/chat/completions.",
+      "apiKeyLabel": "API-ключ",
+      "apiKeyOptionalHint": "(необязательно, можно добавить позже)",
+      "nameRequired": "Введите отображаемое имя подключения.",
+      "endpointInvalid": "Введите корректный http(s) URL эндпоинта.",
+      "alreadyExists": "Подключение с таким ID уже существует.",
+      "add": "Добавить подключение",
+      "adding": "Добавление…",
+      "added": "Подключение добавлено",
+      "addFailed": "Не удалось добавить подключение",
+      "keySaveFailed": "Подключение добавлено, но API-ключ сохранить не удалось",
+      "activateFailed": "Подключение добавлено, но активировать его не удалось"
+    },
     "sessions": {
       "title": "Сеансы",
       "description": "Все устройства, где выполнен вход в этот аккаунт. Выход из сеанса вступает в силу немедленно; повторный вход восстанавливает доступ.",
@@ -1059,7 +1122,22 @@
       "running": "Запущенные модели",
       "local": "Локальные модели",
       "advanced": "Расширенные действия",
-      "huggingface": "HuggingFace Hub"
+      "huggingface": "HuggingFace Hub",
+      "catalog": "Каталог моделей"
+    },
+    "catalog": {
+      "models": "доступно",
+      "searchPlaceholder": "Искать модели по названию или провайдеру...",
+      "noModels": "Моделей пока нет.",
+      "empty": "Ни одна модель не соответствует вашему запросу.",
+      "providerOllama": "Ollama",
+      "default": "По умолчанию",
+      "makeDefault": "Сделать моделью по умолчанию",
+      "defaultSet": "{{model}} теперь ваша модель по умолчанию.",
+      "hidden": "Скрыта",
+      "hide": "Скрыть от пользователей",
+      "show": "Показать пользователям",
+      "visibilityFailed": "Не удалось изменить видимость модели."
     },
     "pull": {
       "placeholder": "Введите название модели (напр., llama3.2:3b, deepseek-r1:14b)",
@@ -1649,7 +1727,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Версия {{current}} из {{total}}",
     "previousVersion": "Предыдущая версия",
-    "nextVersion": "Следующая версия"
+    "nextVersion": "Следующая версия",
+    "fullscreen": "Во весь экран",
+    "exitFullscreen": "Выйти из полноэкранного режима",
+    "showChatOverlay": "Показать плавающий чат",
+    "hideChatOverlay": "Скрыть плавающий чат"
   },
   "personaImportExport": {
     "title": "Импорт и экспорт персон",

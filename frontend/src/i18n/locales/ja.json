@@ -59,11 +59,11 @@
       "loginSuccess": "ログインに成功しました！",
       "loginFailed": "ログインに失敗しました",
       "checkCredentials": "ログインに失敗しました。認証情報を確認してください。",
+      "approvalPending": "アカウントは管理者の承認待ちです。",
       "enterBoth": "ユーザー名とパスワードを入力してください",
       "githubSuccess": "GitHubログインに成功しました！",
       "githubFailed": "GitHub認証に失敗しました",
       "githubVerifyFailed": "GitHub認証の確認に失敗しました",
-      "approvalPending": "アカウントは管理者の承認待ちです。",
       "verificationFailed": "セキュリティ確認に失敗しました。ページを更新して再試行してください。"
     },
     "signup": {
@@ -82,15 +82,15 @@
       "hasAccount": "すでにアカウントをお持ちですか？",
       "signInHere": "サインインはこちら",
       "signupSuccess": "アカウントが正常に作成されました！",
+      "approvalPending": "登録を受け付けました。管理者がアカウントを承認する必要があります。",
+      "awaitingApproval": "承認待ち",
+      "awaitingApprovalDescription": "アカウントは作成されましたが、サインインするには管理者による有効化が必要です。",
+      "backToSignIn": "サインインに戻る",
       "signupFailed": "登録に失敗しました",
       "tryAgain": "登録に失敗しました。もう一度お試しください。",
       "usernameRequired": "ユーザー名とパスワードは必須です",
       "passwordMismatch": "パスワードが一致しません",
-      "passwordTooShort": "パスワードは6文字以上である必要があります",
-      "approvalPending": "登録を受け付けました。管理者がアカウントを承認する必要があります。",
-      "awaitingApproval": "承認待ち",
-      "awaitingApprovalDescription": "アカウントは作成されましたが、サインインするには管理者による有効化が必要です。",
-      "backToSignIn": "サインインに戻る"
+      "passwordTooShort": "パスワードは6文字以上である必要があります"
     },
     "logout": {
       "button": "ログアウト",
@@ -166,9 +166,9 @@
       "createAdmin": "管理者を作成",
       "success": "管理者アカウントが正常に作成されました！",
       "failed": "管理者アカウントの作成に失敗しました",
+      "approvalUnexpected": "初期管理者を有効化できませんでした。もう一度お試しください。",
       "fillAllFields": "すべてのフィールドを入力してください",
-      "note": "これはLibre WebUIインスタンスの主要な管理者アカウントになります",
-      "approvalUnexpected": "初期管理者を有効化できませんでした。もう一度お試しください。"
+      "note": "これはLibre WebUIインスタンスの主要な管理者アカウントになります"
     },
     "encryptionKey": {
       "title": "暗号化キーを保存",
@@ -193,6 +193,10 @@
       "afternoon": "こんにちは",
       "evening": "こんばんは",
       "night": "おやすみなさい"
+    },
+    "overlay": {
+      "title": "チャット",
+      "close": "フローティングチャットを閉じる"
     },
     "followUp": "フォローアップ",
     "welcome": {
@@ -277,6 +281,7 @@
       "work": "作業",
       "chat": "チャット",
       "private": "プライベート",
+      "incognito": "シークレットチャット",
       "privateMode": "プライベートモード",
       "privateDescription": "この会話は保存されません",
       "privateTooltip": "保存されないプライベート会話を開始",
@@ -290,7 +295,6 @@
       "pinChat": "ピン留め",
       "unpinChat": "ピン留めを解除",
       "deleteChat": "チャットを削除",
-      "incognito": "シークレットチャット",
       "archiveChat": "チャットをアーカイブ",
       "groups": {
         "pinned": "ピン留め済み",
@@ -410,27 +414,32 @@
       "models": "モデル",
       "personas": "ペルソナ",
       "imagine": "画像生成",
-      "settings": "設定",
-      "userManagement": "ユーザー管理",
-      "signOut": "サインアウト",
       "agents": "エージェント",
       "work": "作業",
-      "exploreLabel": "探索",
+      "settings": "設定",
       "usageAnalytics": "プロバイダー使用状況",
       "system": "システム",
+      "userManagement": "ユーザー管理",
+      "signOut": "サインアウト",
+      "exploreLabel": "探索",
       "notes": "ノート"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
-    "expandSidebar": "サイドバーを展開"
+    "expandSidebar": "サイドバーを展開",
+    "pinned": {
+      "label": "ピン留め",
+      "pin": "サイドバーにピン留め",
+      "unpin": "サイドバーからピン留めを解除"
+    }
   },
   "user": {
     "menu": {
       "changePicture": "画像を変更",
       "settings": "設定",
-      "userManagement": "ユーザー管理",
-      "logout": "ログアウト",
       "usageAnalytics": "プロバイダー使用状況",
-      "system": "システム"
+      "system": "システム",
+      "userManagement": "ユーザー管理",
+      "logout": "ログアウト"
     },
     "avatar": {
       "title": "プロフィール画像を変更",
@@ -473,7 +482,8 @@
       "shortcuts": "ショートカット",
       "about": "概要",
       "sessions": "セッション",
-      "apiKeys": "APIキー"
+      "apiKeys": "APIキー",
+      "connections": "接続"
     },
     "appearance": {
       "title": "外観",
@@ -525,6 +535,13 @@
       "defaultModel": "デフォルトモデル",
       "defaultModelDescription": "このモデルは新しい会話でデフォルトで使用されます",
       "selectModel": "モデルを選択",
+      "specializedModels": "専用モデル",
+      "visionModel": "ビジョンモデル",
+      "selectVisionModel": "現在のチャットモデルを使用",
+      "visionModelDescription": "送信するチャットコンテキストに画像が含まれる場合、自動的に使用されます。画像入力に対応したモデルを選択してください。",
+      "visionModelUpdateFailed": "ビジョンモデルの更新に失敗しました: {{error}}",
+      "visionModelNoProvider": "このビジョンモデルにはプロバイダー識別情報がありません。利用可能なモデルを選択してください。",
+      "persona": "ペルソナ",
       "updateAll": "すべてのモデルを更新",
       "updateAllDescription": "インストールされているすべてのモデルの更新を確認し、最新バージョンをプル",
       "updateAllButton": "すべて更新",
@@ -547,15 +564,8 @@
         "selectTaskModel": "タスクモデルを選択",
         "taskModelDescription": "会話タイトルの生成に使用するモデル"
       },
-      "persona": "ペルソナ",
       "updatingModel": "{{name}} を更新中 ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} モデル中 {{current}}",
-      "specializedModels": "専用モデル",
-      "visionModel": "ビジョンモデル",
-      "selectVisionModel": "現在のチャットモデルを使用",
-      "visionModelDescription": "送信するチャットコンテキストに画像が含まれる場合、自動的に使用されます。画像入力に対応したモデルを選択してください。",
-      "visionModelUpdateFailed": "ビジョンモデルの更新に失敗しました: {{error}}",
-      "visionModelNoProvider": "このビジョンモデルにはプロバイダー識別情報がありません。利用可能なモデルを選択してください。"
+      "modelsProgress": "{{total}} モデル中 {{current}}"
     },
     "systemMessage": {
       "title": "システムメッセージ",
@@ -567,6 +577,13 @@
     "plugins": {
       "title": "プラグイン",
       "description": "インストールされているプラグインを管理",
+      "providerConnections": "プロバイダー接続",
+      "providerConnectionsDescription": "プラグインを通じてモデルプロバイダーに接続、設定、確認します。",
+      "providers": "プロバイダー",
+      "searchProviders": "プロバイダーを検索",
+      "noProvidersFound": "検索に一致するプロバイダーがありません。",
+      "selectProvider": "プロバイダーを選択",
+      "selectProviderDescription": "プロバイダーを選択して、接続状況とモデルカタログを確認します。",
       "addNew": "新しいプラグインを追加",
       "upload": "プラグインをアップロード",
       "addJson": "JSONを追加",
@@ -585,33 +602,12 @@
       "models": "モデル",
       "apiKeySet": "APIキー設定済み",
       "apiKeyConfiguration": "APIキー設定",
+      "apiKeyDescription": "{{name}}用の個人APIキーを保存します。",
       "apiKeyEnvAlternative": "または環境変数を設定",
       "environmentVariable": "環境変数",
       "apiKeyConfigured": "APIキーが設定されています",
       "apiKeyPlaceholder": "APIキーを入力...",
       "saveApiKey": "APIキーを保存",
-      "apiKey": {
-        "title": "APIキー",
-        "placeholder": "APIキーを入力",
-        "save": "キーを保存",
-        "remove": "キーを削除",
-        "configured": "APIキー設定済み",
-        "notConfigured": "APIキーが必要",
-        "saved": "APIキーが正常に保存されました",
-        "removed": "APIキーが削除されました",
-        "saveFailed": "APIキーの保存に失敗しました",
-        "removeFailed": "APIキーの削除に失敗しました",
-        "enterKey": "APIキーを入力してください"
-      },
-      "variables": "Variables",
-      "providerConnections": "プロバイダー接続",
-      "providerConnectionsDescription": "プラグインを通じてモデルプロバイダーに接続、設定、確認します。",
-      "providers": "プロバイダー",
-      "searchProviders": "プロバイダーを検索",
-      "noProvidersFound": "検索に一致するプロバイダーがありません。",
-      "selectProvider": "プロバイダーを選択",
-      "selectProviderDescription": "プロバイダーを選択して、接続状況とモデルカタログを確認します。",
-      "apiKeyDescription": "{{name}}用の個人APIキーを保存します。",
       "showApiKey": "APIキーを表示",
       "hideApiKey": "APIキーを非表示",
       "configure": "設定",
@@ -637,7 +633,21 @@
         "transcription": "文字起こし"
       },
       "exportPlugin": "プラグインをエクスポート",
-      "deletePlugin": "プラグインを削除"
+      "deletePlugin": "プラグインを削除",
+      "apiKey": {
+        "title": "APIキー",
+        "placeholder": "APIキーを入力",
+        "save": "キーを保存",
+        "remove": "キーを削除",
+        "configured": "APIキー設定済み",
+        "notConfigured": "APIキーが必要",
+        "saved": "APIキーが正常に保存されました",
+        "removed": "APIキーが削除されました",
+        "saveFailed": "APIキーの保存に失敗しました",
+        "removeFailed": "APIキーの削除に失敗しました",
+        "enterKey": "APIキーを入力してください"
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "生成オプション",
@@ -647,6 +657,8 @@
       "scopeModel": "{{model}} のみ",
       "scopeAllHint": "個別の設定がないかぎり、すべてのモデルが使う値です。",
       "scopeModelHint": "このモデルだけに保存され、全体の値より優先されます。",
+      "advancedSettings": "高度な生成設定",
+      "advancedSettingsDescription": "サンプリング、トークン制限、コンテキスト、ペナルティ、ストップシーケンス",
       "coreParameters": "コアパラメータ",
       "temperature": "温度",
       "temperatureDescription": "ランダム性を制御します。低い値はより集中的、高い値はより創造的。",
@@ -678,9 +690,7 @@
       "resetDefaults": "デフォルトにリセット",
       "saveOptions": "オプションを保存",
       "embeddingSettings": "埋め込み設定",
-      "enableEmbeddings": "ドキュメント埋め込みを有効にする",
-      "advancedSettings": "高度な生成設定",
-      "advancedSettingsDescription": "サンプリング、トークン制限、コンテキスト、ペナルティ、ストップシーケンス"
+      "enableEmbeddings": "ドキュメント埋め込みを有効にする"
     },
     "documents": {
       "title": "ドキュメント設定",
@@ -790,6 +800,7 @@
       "title": "データ管理",
       "export": "データをエクスポート",
       "exportDescription": "設定、チャットフォルダー、セッションとメッセージ、ノート、ナレッジコレクション、抽出した文書テキストを含むポータブルアーカイブをダウンロードします。",
+      "archiveScopeV3": "設定、チャット、フォルダー、ノート、ナレッジコレクション、抽出した文書テキストが含まれます。アカウントとシークレット、生体情報に基づく複製音声、生成メディア、ペルソナとメモリ、Work のデータやボリュームは含まれません。",
       "exportAll": "すべてのデータをエクスポート",
       "import": "データをインポート",
       "importDescription": "以前のエクスポートからデータをインポート。",
@@ -830,8 +841,7 @@
         "title": "アーカイブ済みチャット",
         "empty": "アーカイブ済みのチャットはありません",
         "unarchive": "アーカイブ解除"
-      },
-      "archiveScopeV3": "設定、チャット、フォルダー、ノート、ナレッジコレクション、抽出した文書テキストが含まれます。アカウントとシークレット、生体情報に基づく複製音声、生成メディア、ペルソナとメモリ、Work のデータやボリュームは含まれません。"
+      }
     },
     "about": {
       "title": "概要",
@@ -903,6 +913,59 @@
       "save": "保存",
       "saved": "検索設定を保存しました",
       "saveFailed": "検索設定を保存できませんでした"
+    },
+    "compaction": {
+      "title": "コンテキストの圧縮",
+      "description": "会話がトークンのしきい値を超えると、サーバーが古いメッセージを要約し、最新のものだけをそのまま残します。このサーバーのすべてのユーザーに適用されます。",
+      "thresholdLabel": "トークンのしきい値",
+      "thresholdDescription": "この推定コンテキストトークン数を超えると古い履歴が要約されます。500〜1,000,000。",
+      "thresholdInvalid": "トークンのしきい値は 500 から 1,000,000 の間で指定してください。",
+      "keepRecentLabel": "そのまま残す直近のメッセージ数",
+      "keepRecentDescription": "直近のメッセージを何件そのまま残すか。2〜200。",
+      "keepRecentInvalid": "そのまま残す直近のメッセージ数は 2 から 200 の間で指定してください。",
+      "modelLabel": "圧縮に使うモデル",
+      "modelDescription": "要約を書くモデルです。選択しない場合はその会話のモデルが使われます。",
+      "sessionModelOption": "会話のモデルを使う",
+      "promptLabel": "カスタム要約プロンプト",
+      "promptPlaceholder": "空欄にすると組み込みのプロンプトを使います",
+      "promptDescription": "テンプレート変数 {{previousSummaryVariable}} と {{messagesVariable}} は、前回の要約と要約対象のメッセージに置き換えられます。",
+      "saved": "圧縮の設定を保存しました",
+      "saveFailed": "圧縮の設定を保存できませんでした"
+    },
+    "connections": {
+      "title": "接続",
+      "description": "このサーバーが通信するモデルプロバイダー: ローカルの Ollama ランタイムと OpenAI 互換のエンドポイントです。",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "ローカルのモデルランタイム。",
+      "version": "バージョン {{version}}。",
+      "statusChecking": "確認中…",
+      "statusOnline": "オンライン",
+      "statusOffline": "オフライン",
+      "providersTitle": "OpenAI 互換の接続",
+      "providersDescription": "各接続は補完プロバイダーで、そのモデルはチャットのモデル選択に表示されます。API キーはサーバー側に保存されます。",
+      "noConnections": "接続はまだ設定されていません。",
+      "modelsCount": "{{total}} 個のモデル",
+      "pendingDiscovery": "モデルの検出待ち",
+      "apiKeyMissing": "API キーなし",
+      "deleteConfirm": "この接続を削除しますか？そのモデルを使っているチャットはアクセスできなくなります。",
+      "addTitle": "接続を追加",
+      "addDescription": "OpenAI 互換の chat completions エンドポイントをプロバイダーとして登録します。",
+      "nameLabel": "表示名",
+      "namePlaceholder": "自分のプロバイダー",
+      "idPreview": "接続 ID: {{id}}",
+      "endpointLabel": "エンドポイント URL",
+      "endpointDescription": "chat completions の完全な URL。例: https://api.example.com/v1/chat/completions",
+      "apiKeyLabel": "API キー",
+      "apiKeyOptionalHint": "(任意、後から追加できます)",
+      "nameRequired": "接続の表示名を入力してください。",
+      "endpointInvalid": "有効な http(s) のエンドポイント URL を入力してください。",
+      "alreadyExists": "この ID の接続はすでに存在します。",
+      "add": "接続を追加",
+      "adding": "追加中…",
+      "added": "接続を追加しました",
+      "addFailed": "接続を追加できませんでした",
+      "keySaveFailed": "接続は追加されましたが、API キーを保存できませんでした",
+      "activateFailed": "接続は追加されましたが、有効化できませんでした"
     },
     "sessions": {
       "title": "セッション",
@@ -1056,10 +1119,25 @@
     "sections": {
       "pull": "新しいモデルをプル",
       "library": "ライブラリを閲覧",
+      "huggingface": "HuggingFace Hub",
       "running": "実行中のモデル",
       "local": "ローカルモデル",
       "advanced": "詳細アクション",
-      "huggingface": "HuggingFace Hub"
+      "catalog": "モデルカタログ"
+    },
+    "catalog": {
+      "models": "利用可能",
+      "searchPlaceholder": "名前またはプロバイダーでモデルを検索...",
+      "noModels": "利用できるモデルがまだありません。",
+      "empty": "検索に一致するモデルはありません。",
+      "providerOllama": "Ollama",
+      "default": "既定",
+      "makeDefault": "既定にする",
+      "defaultSet": "{{model}} が既定のモデルになりました。",
+      "hidden": "非表示",
+      "hide": "ユーザーに非表示",
+      "show": "ユーザーに表示",
+      "visibilityFailed": "モデルの表示設定を更新できませんでした。"
     },
     "pull": {
       "placeholder": "モデル名を入力（例: llama3.2:3b, deepseek-r1:14b）",
@@ -1089,6 +1167,37 @@
       "installed": "インストール済み",
       "more": "+{{count}}件",
       "refresh": "ライブラリを更新"
+    },
+    "huggingface": {
+      "browseAll": "HuggingFaceで全て見る",
+      "checkingGguf": "GGUFファイルを確認中...",
+      "noGgufAvailable": "Ollamaで直接プルできるGGUFファイルがありません",
+      "ggufFilesCount": "GGUFファイル ({{count}}) - Ollamaに直接プル",
+      "noModelsFound": "モデルが見つかりません",
+      "noResults": "モデルが見つかりません。検索条件やフィルターを調整してください。",
+      "browseAllLink": "すべて見る",
+      "search": "HuggingFaceモデルを検索...",
+      "by": "作成者",
+      "gated": "アクセス制限",
+      "viewOnHF": "HuggingFaceで表示",
+      "sortDownloads": "ダウンロード数",
+      "sortLikes": "いいね",
+      "sortRecent": "最近",
+      "taskTextGeneration": "テキスト生成",
+      "taskTextToSpeech": "音声合成",
+      "taskTextToImage": "画像生成",
+      "taskSpeechRecognition": "音声認識",
+      "tasks": {
+        "textGen": "テキスト生成",
+        "tts": "音声合成",
+        "image": "画像生成",
+        "stt": "音声認識"
+      },
+      "sort": {
+        "downloads": "ダウンロード数順",
+        "likes": "人気順",
+        "recent": "更新順"
+      }
     },
     "local": {
       "noModels": "まだモデルがインストールされていません",
@@ -1167,37 +1276,6 @@
         "success": "{{count}}次元の埋め込みベクトルを生成しました",
         "failed": "埋め込みの生成に失敗しました",
         "enterBoth": "モデルを選択してテキストを入力してください"
-      }
-    },
-    "huggingface": {
-      "browseAll": "HuggingFaceで全て見る",
-      "checkingGguf": "GGUFファイルを確認中...",
-      "noGgufAvailable": "Ollamaで直接プルできるGGUFファイルがありません",
-      "ggufFilesCount": "GGUFファイル ({{count}}) - Ollamaに直接プル",
-      "noModelsFound": "モデルが見つかりません",
-      "noResults": "モデルが見つかりません。検索条件やフィルターを調整してください。",
-      "browseAllLink": "すべて見る",
-      "search": "HuggingFaceモデルを検索...",
-      "by": "作成者",
-      "gated": "アクセス制限",
-      "viewOnHF": "HuggingFaceで表示",
-      "sortDownloads": "ダウンロード数",
-      "sortLikes": "いいね",
-      "sortRecent": "最近",
-      "taskTextGeneration": "テキスト生成",
-      "taskTextToSpeech": "音声合成",
-      "taskTextToImage": "画像生成",
-      "taskSpeechRecognition": "音声認識",
-      "tasks": {
-        "textGen": "テキスト生成",
-        "tts": "音声合成",
-        "image": "画像生成",
-        "stt": "音声認識"
-      },
-      "sort": {
-        "downloads": "ダウンロード数順",
-        "likes": "人気順",
-        "recent": "更新順"
       }
     }
   },
@@ -1371,6 +1449,17 @@
     "deleteSuccess": "ユーザーが正常に削除されました",
     "deleteFailed": "ユーザーの削除に失敗しました",
     "cannotDeleteSelf": "自分のアカウントは削除できません",
+    "approval": {
+      "title": "保留中の承認",
+      "description": "このインスタンスへのアクセスを許可する前に、新規登録を確認してください。",
+      "registered": "登録日",
+      "activate": "アカウントを有効化",
+      "reject": "登録を拒否",
+      "approved": "{{name}} はサインインできるようになりました。",
+      "failed": "アカウントを承認できませんでした。",
+      "notification": "{{count}}件の登録が承認待ちです。",
+      "notificationBadge": "{{count}}件の保留中のユーザー承認"
+    },
     "form": {
       "title": {
         "create": "ユーザーを作成",
@@ -1392,17 +1481,6 @@
       "updateSuccess": "ユーザーが正常に更新されました",
       "createFailed": "ユーザーの作成に失敗しました",
       "updateFailed": "ユーザーの更新に失敗しました"
-    },
-    "approval": {
-      "title": "保留中の承認",
-      "description": "このインスタンスへのアクセスを許可する前に、新規登録を確認してください。",
-      "registered": "登録日",
-      "activate": "アカウントを有効化",
-      "reject": "登録を拒否",
-      "approved": "{{name}} はサインインできるようになりました。",
-      "failed": "アカウントを承認できませんでした。",
-      "notification": "{{count}}件の登録が承認待ちです。",
-      "notificationBadge": "{{count}}件の保留中のユーザー承認"
     },
     "workAccess": {
       "title": "Work へのアクセス",
@@ -1508,6 +1586,174 @@
       "target": "対象"
     }
   },
+  "usageAnalytics": {
+    "eyebrow": "管理",
+    "title": "プロバイダーの使用状況",
+    "description": "このインスタンスで有効なプラグイン全体の送信API呼び出しとモデル消費量を追跡します。",
+    "days": "{{count}}日間",
+    "refresh": "使用状況を更新",
+    "loadFailed": "プロバイダーの使用状況を読み込めませんでした。",
+    "metrics": {
+      "calls": "呼び出し",
+      "tokens": "トークン"
+    },
+    "cards": {
+      "calls": "API呼び出し",
+      "callsDetail": "{{count}}人のアクティブユーザー全体",
+      "tokens": "報告されたトークン",
+      "tokensDetail": "{{count}}件の呼び出しで報告された使用量",
+      "success": "成功率",
+      "successDetail": "{{count}}件の失敗した呼び出し",
+      "latency": "平均レイテンシ",
+      "latencyDetail": "エンドツーエンドのプロバイダ時間"
+    },
+    "activity": {
+      "title": "時間経過に伴う消費量",
+      "callsDescription": "有効なプラグインへの1日の送信リクエスト",
+      "tokensDescription": "プロバイダから報告された1日のトークン合計",
+      "chartLabel": "1日のプロバイダ {{metric}} チャート"
+    },
+    "models": {
+      "title": "モデル消費量",
+      "description": "この期間中に最もトラフィックが多いモデル。",
+      "model": "モデル",
+      "success": "成功",
+      "latency": "レイテンシ"
+    },
+    "providers": {
+      "title": "有効なプラグインのトラフィック"
+    },
+    "capabilities": {
+      "title": "機能の構成",
+      "characters": "{{count}} 文字",
+      "bytes": "{{count}} バイト",
+      "images": "{{count}} 画像",
+      "jobs": "{{count}} 件の動画ジョブ",
+      "inputs": "{{count}} 件の入力",
+      "reportedTokens": "{{count}} 報告トークン"
+    },
+    "empty": {
+      "title": "プロバイダ呼び出しはまだありません",
+      "description": "有効なプラグインがチャット、Work、埋め込み、画像、音声、サウンド、または動画のリクエストを処理すると、呼び出しがここに表示されます。"
+    },
+    "privacyNote": "使用量はサーバー上の送信プラグイン境界で計測されます。Libre WebUIはプロバイダ、モデル、タイミング、ステータス、および報告されたカウンターを保存しますが、プロンプト、レスポンス、エンドポイント、資格情報、またはプロバイダのエラー本文は保存しません。トークン合計には、プロバイダが使用量メタデータを返した呼び出しのみが含まれます。",
+    "heatmap": {
+      "title": "1年間のアクティビティ",
+      "description": "過去1年間の日次プロバイダー呼び出し。各日の最も使用されたモデルごとに色分けされています。",
+      "calls": "回の呼び出し",
+      "noCalls": "呼び出しなし",
+      "other": "その他のモデル",
+      "less": "少",
+      "more": "多",
+      "yearTotal": "過去1年間で{{formatted}}回の呼び出し"
+    }
+  },
+  "systemPage": {
+    "eyebrow": "管理",
+    "title": "システム",
+    "description": "この Libre WebUI インスタンスをホストしているマシンとランタイムを監視します。",
+    "updated": "更新日時: {{date}}",
+    "refresh": "システム情報を更新",
+    "loadFailed": "システム情報を読み込めませんでした。",
+    "cards": {
+      "uptime": "ホストの稼働時間",
+      "uptimeDetail": "{{date}} から稼働中",
+      "memory": "使用メモリ",
+      "memoryDetail": "{{total}} 中 {{used}} 使用",
+      "freeSpace": "空き容量",
+      "freeSpaceDetail": "{{label}} · 合計 {{total}}",
+      "containers": "実行中のコンテナ",
+      "containersDetail": "Docker に認識されている {{total}} 個のコンテナ",
+      "dockerUnavailable": "Docker は利用できません",
+      "unavailable": "利用不可"
+    },
+    "host": {
+      "title": "ホストとランタイム",
+      "description": "オペレーティングシステム、プロセッサ、および Libre WebUI プロセスの詳細。",
+      "container": "コンテナランタイム",
+      "native": "ネイティブランタイム",
+      "hostname": "ホスト名",
+      "operatingSystem": "オペレーティングシステム",
+      "processor": "プロセッサー",
+      "logicalCpus": "論理 CPU",
+      "loadAverage": "負荷平均 · 1 / 5 / 15 分",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "プロセス",
+      "workingDirectory": "作業ディレクトリ"
+    },
+    "memory": {
+      "title": "メモリ",
+      "description": "ランタイムで認識されるシステムメモリとアプリケーションプロセスの使用状況。",
+      "usedOf": "{{total}} のうち {{used}} 使用中",
+      "free": "{{value}} 空き",
+      "processRss": "プロセス RSS",
+      "heapUsed": "V8 ヒープ使用量",
+      "heapTotal": "V8 ヒープ合計",
+      "external": "外部メモリ"
+    },
+    "storage": {
+      "title": "ストレージ",
+      "description": "ランタイムファイルシステムおよび永続的なアプリケーションデータに利用可能な空き容量。",
+      "used": "{{value}} 使用済み",
+      "free": "{{value}} 空き",
+      "empty": "このランタイムではファイルシステム情報を利用できません。"
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "読み取り専用の Docker Engine ステータスと、絞り込まれたコンテナのリスト。",
+      "connected": "接続済み",
+      "unavailable": "利用不可",
+      "unavailableDetail": "Docker Engine の診断は利用できません。",
+      "socketStatus": "ローカルソケット: {{status}}",
+      "mounted": "マウント済み",
+      "notMounted": "未マウント",
+      "running": "実行中",
+      "stopped": "停止",
+      "paused": "一時停止",
+      "total": "合計",
+      "version": "バージョン",
+      "host": "ホスト",
+      "architecture": "アーキテクチャ",
+      "cpus": "CPU",
+      "memory": "メモリ",
+      "container": "コンテナ",
+      "image": "イメージ",
+      "state": "状態",
+      "created": "作成日時",
+      "empty": "Dockerに接続されており、現在リストされているコンテナはありません。"
+    },
+    "network": {
+      "title": "ネットワーク",
+      "description": "ランタイムで表示されるインターフェース、アドレス、およびLinuxトラフィックカウンター。",
+      "internal": "内部",
+      "empty": "アプリケーションランタイムに表示されるネットワークインターフェースはありません。"
+    },
+    "securityNote": "このページは管理者に限定されています。サーバーは運用上の要約のみを返します。環境変数、認証情報、Dockerラベル、マウント、コンテナコマンド、またはinspectペイロードは公開されません。Libre WebUIがコンテナ内で実行されている場合、ローカルソケットが利用可能であれば、ホストレベルのCPUおよびメモリの詳細はDocker Engineから取得されます。その他の値はアプリケーションランタイムを示します。",
+    "work": {
+      "title": "Work",
+      "description": "全ユーザーのサンドボックス",
+      "access": "アクセス",
+      "accessAdmins": "管理者のみ",
+      "accessAllUsers": "すべてのユーザー",
+      "runtimeAvailable": "利用可能",
+      "runtimeUnavailable": "利用不可",
+      "activeRuntimes": "アクティブなランタイム",
+      "pendingCleanups": "保留中のクリーンアップ",
+      "orphans": "孤立したコンテナ",
+      "owner": "所有者",
+      "task": "タスク",
+      "state": "状態",
+      "preview": "プレビュー",
+      "terminals": "ターミナル",
+      "updated": "更新日時",
+      "stateRunning": "実行中",
+      "stateStopped": "停止",
+      "stateStarting": "起動中",
+      "stateUnknown": "不明",
+      "noTasks": "Work タスクはまだありません。"
+    }
+  },
   "chatHistory": {
     "label": "会話履歴",
     "jumpToTurn": "{{total}} 件中 {{index}} 件目に移動"
@@ -1576,6 +1822,57 @@
     "failed": "画像の生成に失敗しました",
     "enterPrompt": "プロンプトを入力してください",
     "promptTooLong": "プロンプトが最大文字数{{max}}文字を超えています"
+  },
+  "mediaGeneration": {
+    "title": "メディアを生成",
+    "description": "有効化されたメディアプロバイダーでビデオ、サウンド、音楽、または音声を作成します。",
+    "image": "画像",
+    "video": "ビデオ",
+    "audio": "オーディオ",
+    "sound": "サウンド",
+    "speech": "音声",
+    "model": "モデル",
+    "voice": "音声または音声ID",
+    "cloneVoice": "参照音声をクローン",
+    "cloneVoiceDescription": "プリセットの声ではなく、参照録音に基づいてこの音声を生成します。",
+    "referenceAudio": "参照オーディオ",
+    "referenceTranscript": "参照録音の正確な文字起こし",
+    "referenceTranscriptPlaceholder": "参照録音で話されている内容を正確に入力してください…",
+    "referenceAudioTooLarge": "参照オーディオは{{max}}以下にしてください。",
+    "cloneConsent": "話者の許可を得ている場合にのみ声をクローンしてください。この生成のために録音が選択したプロバイダーへ送信されますが、Libre WebUIには保存されません。",
+    "saveVoiceProfile": "再利用可能な声として保存",
+    "saveVoiceProfileDescription": "この参照録音と文字起こしを安全に保存します。この声を使用する音声バッチごとに、Libre WebUI が選択したプロバイダーへ両方を送信します。",
+    "voiceProfileName": "保存する声の名前",
+    "voiceProfileNamePlaceholder": "例：自分の声",
+    "voiceStorageConsent": "この声のクローンと保存について話者の許可を得ていることを確認します。参照データは削除するまで保存されます。",
+    "resolution": "解像度",
+    "aspectRatio": "アスペクト比",
+    "duration": "長さ",
+    "providerDefault": "プロバイダーのデフォルト",
+    "generateAudio": "サポートされている場合、ビデオと一緒にオーディオを生成",
+    "prompt": "プロンプト",
+    "text": "読み上げるテキスト",
+    "videoPlaceholder": "シーン、動き、カメラ、照明を説明してください...",
+    "audioPlaceholder": "音声に読み上げさせたいテキストを入力してください...",
+    "soundPlaceholder": "欲しいサウンド、音楽、雰囲気、または音声応答を説明してください...",
+    "generate": "生成",
+    "generating": "生成中… 数分かかる場合があります",
+    "success": "メディアが生成され、Imagineに保存されました",
+    "successWithSavedVoice": "メディアを生成しました。「{{name}}」が音声設定で利用できるようになりました",
+    "failed": "メディアの生成に失敗しました",
+    "loadFailed": "メディアプロバイダーの読み込みに失敗しました",
+    "noModels": "利用可能な{{kind}}モデルはありません。互換性のあるプロバイダーを有効化し、その認証情報を先に保存してください。"
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} 件",
+    "empty": "まだ生成されたメディアはありません",
+    "emptyHint": "画像、ビデオ、または音声クリップを生成すると、ここに表示されます。",
+    "filters": {
+      "all": "すべて",
+      "image": "画像",
+      "video": "動画",
+      "audio": "オーディオ"
+    }
   },
   "errorBoundary": {
     "title": "エラーが発生しました",
@@ -1649,7 +1946,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "バージョン {{current}} / {{total}}",
     "previousVersion": "前のバージョン",
-    "nextVersion": "次のバージョン"
+    "nextVersion": "次のバージョン",
+    "fullscreen": "全画面表示",
+    "exitFullscreen": "全画面表示を終了",
+    "showChatOverlay": "フローティングチャットを表示",
+    "hideChatOverlay": "フローティングチャットを非表示"
   },
   "personaImportExport": {
     "title": "ペルソナのインポート＆エクスポート",
@@ -1728,8 +2029,8 @@
       "saveFailed": "変数の保存に失敗しました",
       "resetDefaults": "デフォルトにリセット",
       "reset": "変数をリセットしました",
-      "sensitiveSet": "値が設定済み（変更するには新しい値を入力）",
       "resetFailed": "変数のリセットに失敗しました",
+      "sensitiveSet": "値が設定済み（変更するには新しい値を入力）",
       "showValue": "{{label}}の値を表示",
       "hideValue": "{{label}}の値を非表示",
       "connection": "接続",
@@ -1767,45 +2068,6 @@
   "demoMode": {
     "title": "デモモード",
     "github": "GitHub"
-  },
-  "personaBackground": {
-    "label": "背景画像",
-    "uploadBackgroundImage": "背景画像をアップロード",
-    "dragAndDrop": "画像をドラッグ＆ドロップするか、クリックして参照",
-    "chooseImage": "画像を選択",
-    "uploading": "アップロード中...",
-    "enterImageUrl": "または画像URLを入力",
-    "supportedFormats": "対応形式: JPG, PNG, GIF, WebP (最大5MB)。横長の画像が最適です。",
-    "customBackground": "カスタム背景画像",
-    "clickToChange": "クリックして変更または削除",
-    "removed": "背景を削除しました",
-    "uploaded": "背景のアップロードに成功しました",
-    "invalidFile": "有効な画像ファイルを選択してください",
-    "fileTooLarge": "背景画像のサイズは5MB未満にしてください",
-    "readFailed": "画像ファイルの読み取りに失敗しました",
-    "uploadFailed": "背景画像のアップロードに失敗しました"
-  },
-  "modelSelector": {
-    "searchInstalled": "インストール済みモデルを検索...",
-    "searchOllama": "Ollamaライブラリを検索...",
-    "searchHuggingFace": "HuggingFaceを検索...",
-    "selectModel": "モデルを選択",
-    "personas": "ペルソナ",
-    "ollamaModels": "Ollamaモデル",
-    "pluginModels": "プラグインモデル",
-    "actions": "アクション",
-    "installed": "インストール済み",
-    "use": "使用",
-    "pull": "ダウンロード",
-    "pullRestricted": "このインスタンスでは、モデルのインストールは管理者のみに制限されています。",
-    "adminOnlyPull": "管理者のみ",
-    "legacyProvider": "プロバイダー未記録",
-    "providerNotRecorded": "プロバイダー未記録",
-    "providerUnavailable": "プロバイダー利用不可",
-    "reselectProvider": "このモデルを固定するにはプロバイダーを再選択してください",
-    "unavailable": "利用不可",
-    "unavailableSelections": "利用できない選択",
-    "agentModels": "エージェント"
   },
   "libreClaw": {
     "title": "エージェント",
@@ -2149,224 +2411,44 @@
       "warning": "タスクはこのフォルダーを直接読み書きできます。分離ワークスペースを使うには空欄のままにしてください。"
     }
   },
-  "usageAnalytics": {
-    "eyebrow": "管理",
-    "title": "プロバイダーの使用状況",
-    "description": "このインスタンスで有効なプラグイン全体の送信API呼び出しとモデル消費量を追跡します。",
-    "days": "{{count}}日間",
-    "refresh": "使用状況を更新",
-    "loadFailed": "プロバイダーの使用状況を読み込めませんでした。",
-    "metrics": {
-      "calls": "呼び出し",
-      "tokens": "トークン"
-    },
-    "cards": {
-      "calls": "API呼び出し",
-      "callsDetail": "{{count}}人のアクティブユーザー全体",
-      "tokens": "報告されたトークン",
-      "tokensDetail": "{{count}}件の呼び出しで報告された使用量",
-      "success": "成功率",
-      "successDetail": "{{count}}件の失敗した呼び出し",
-      "latency": "平均レイテンシ",
-      "latencyDetail": "エンドツーエンドのプロバイダ時間"
-    },
-    "activity": {
-      "title": "時間経過に伴う消費量",
-      "callsDescription": "有効なプラグインへの1日の送信リクエスト",
-      "tokensDescription": "プロバイダから報告された1日のトークン合計",
-      "chartLabel": "1日のプロバイダ {{metric}} チャート"
-    },
-    "models": {
-      "title": "モデル消費量",
-      "description": "この期間中に最もトラフィックが多いモデル。",
-      "model": "モデル",
-      "success": "成功",
-      "latency": "レイテンシ"
-    },
-    "providers": {
-      "title": "有効なプラグインのトラフィック"
-    },
-    "capabilities": {
-      "title": "機能の構成",
-      "characters": "{{count}} 文字",
-      "bytes": "{{count}} バイト",
-      "images": "{{count}} 画像",
-      "jobs": "{{count}} 件の動画ジョブ",
-      "inputs": "{{count}} 件の入力",
-      "reportedTokens": "{{count}} 報告トークン"
-    },
-    "empty": {
-      "title": "プロバイダ呼び出しはまだありません",
-      "description": "有効なプラグインがチャット、Work、埋め込み、画像、音声、サウンド、または動画のリクエストを処理すると、呼び出しがここに表示されます。"
-    },
-    "privacyNote": "使用量はサーバー上の送信プラグイン境界で計測されます。Libre WebUIはプロバイダ、モデル、タイミング、ステータス、および報告されたカウンターを保存しますが、プロンプト、レスポンス、エンドポイント、資格情報、またはプロバイダのエラー本文は保存しません。トークン合計には、プロバイダが使用量メタデータを返した呼び出しのみが含まれます。",
-    "heatmap": {
-      "title": "1年間のアクティビティ",
-      "description": "過去1年間の日次プロバイダー呼び出し。各日の最も使用されたモデルごとに色分けされています。",
-      "calls": "回の呼び出し",
-      "noCalls": "呼び出しなし",
-      "other": "その他のモデル",
-      "less": "少",
-      "more": "多",
-      "yearTotal": "過去1年間で{{formatted}}回の呼び出し"
-    }
+  "personaBackground": {
+    "label": "背景画像",
+    "uploadBackgroundImage": "背景画像をアップロード",
+    "dragAndDrop": "画像をドラッグ＆ドロップするか、クリックして参照",
+    "chooseImage": "画像を選択",
+    "uploading": "アップロード中...",
+    "enterImageUrl": "または画像URLを入力",
+    "supportedFormats": "対応形式: JPG, PNG, GIF, WebP (最大5MB)。横長の画像が最適です。",
+    "customBackground": "カスタム背景画像",
+    "clickToChange": "クリックして変更または削除",
+    "removed": "背景を削除しました",
+    "uploaded": "背景のアップロードに成功しました",
+    "invalidFile": "有効な画像ファイルを選択してください",
+    "fileTooLarge": "背景画像のサイズは5MB未満にしてください",
+    "readFailed": "画像ファイルの読み取りに失敗しました",
+    "uploadFailed": "背景画像のアップロードに失敗しました"
   },
-  "systemPage": {
-    "eyebrow": "管理",
-    "title": "システム",
-    "description": "この Libre WebUI インスタンスをホストしているマシンとランタイムを監視します。",
-    "updated": "更新日時: {{date}}",
-    "refresh": "システム情報を更新",
-    "loadFailed": "システム情報を読み込めませんでした。",
-    "cards": {
-      "uptime": "ホストの稼働時間",
-      "uptimeDetail": "{{date}} から稼働中",
-      "memory": "使用メモリ",
-      "memoryDetail": "{{total}} 中 {{used}} 使用",
-      "freeSpace": "空き容量",
-      "freeSpaceDetail": "{{label}} · 合計 {{total}}",
-      "containers": "実行中のコンテナ",
-      "containersDetail": "Docker に認識されている {{total}} 個のコンテナ",
-      "dockerUnavailable": "Docker は利用できません",
-      "unavailable": "利用不可"
-    },
-    "host": {
-      "title": "ホストとランタイム",
-      "description": "オペレーティングシステム、プロセッサ、および Libre WebUI プロセスの詳細。",
-      "container": "コンテナランタイム",
-      "native": "ネイティブランタイム",
-      "hostname": "ホスト名",
-      "operatingSystem": "オペレーティングシステム",
-      "processor": "プロセッサー",
-      "logicalCpus": "論理 CPU",
-      "loadAverage": "負荷平均 · 1 / 5 / 15 分",
-      "libreVersion": "Libre WebUI",
-      "nodeVersion": "Node.js",
-      "process": "プロセス",
-      "workingDirectory": "作業ディレクトリ"
-    },
-    "memory": {
-      "title": "メモリ",
-      "description": "ランタイムで認識されるシステムメモリとアプリケーションプロセスの使用状況。",
-      "usedOf": "{{total}} のうち {{used}} 使用中",
-      "free": "{{value}} 空き",
-      "processRss": "プロセス RSS",
-      "heapUsed": "V8 ヒープ使用量",
-      "heapTotal": "V8 ヒープ合計",
-      "external": "外部メモリ"
-    },
-    "storage": {
-      "title": "ストレージ",
-      "description": "ランタイムファイルシステムおよび永続的なアプリケーションデータに利用可能な空き容量。",
-      "used": "{{value}} 使用済み",
-      "free": "{{value}} 空き",
-      "empty": "このランタイムではファイルシステム情報を利用できません。"
-    },
-    "docker": {
-      "title": "Docker",
-      "description": "読み取り専用の Docker Engine ステータスと、絞り込まれたコンテナのリスト。",
-      "connected": "接続済み",
-      "unavailable": "利用不可",
-      "unavailableDetail": "Docker Engine の診断は利用できません。",
-      "socketStatus": "ローカルソケット: {{status}}",
-      "mounted": "マウント済み",
-      "notMounted": "未マウント",
-      "running": "実行中",
-      "stopped": "停止",
-      "paused": "一時停止",
-      "total": "合計",
-      "version": "バージョン",
-      "host": "ホスト",
-      "architecture": "アーキテクチャ",
-      "cpus": "CPU",
-      "memory": "メモリ",
-      "container": "コンテナ",
-      "image": "イメージ",
-      "state": "状態",
-      "created": "作成日時",
-      "empty": "Dockerに接続されており、現在リストされているコンテナはありません。"
-    },
-    "network": {
-      "title": "ネットワーク",
-      "description": "ランタイムで表示されるインターフェース、アドレス、およびLinuxトラフィックカウンター。",
-      "internal": "内部",
-      "empty": "アプリケーションランタイムに表示されるネットワークインターフェースはありません。"
-    },
-    "securityNote": "このページは管理者に限定されています。サーバーは運用上の要約のみを返します。環境変数、認証情報、Dockerラベル、マウント、コンテナコマンド、またはinspectペイロードは公開されません。Libre WebUIがコンテナ内で実行されている場合、ローカルソケットが利用可能であれば、ホストレベルのCPUおよびメモリの詳細はDocker Engineから取得されます。その他の値はアプリケーションランタイムを示します。",
-    "work": {
-      "title": "Work",
-      "description": "全ユーザーのサンドボックス",
-      "access": "アクセス",
-      "accessAdmins": "管理者のみ",
-      "accessAllUsers": "すべてのユーザー",
-      "runtimeAvailable": "利用可能",
-      "runtimeUnavailable": "利用不可",
-      "activeRuntimes": "アクティブなランタイム",
-      "pendingCleanups": "保留中のクリーンアップ",
-      "orphans": "孤立したコンテナ",
-      "owner": "所有者",
-      "task": "タスク",
-      "state": "状態",
-      "preview": "プレビュー",
-      "terminals": "ターミナル",
-      "updated": "更新日時",
-      "stateRunning": "実行中",
-      "stateStopped": "停止",
-      "stateStarting": "起動中",
-      "stateUnknown": "不明",
-      "noTasks": "Work タスクはまだありません。"
-    }
-  },
-  "mediaGeneration": {
-    "title": "メディアを生成",
-    "description": "有効化されたメディアプロバイダーでビデオ、サウンド、音楽、または音声を作成します。",
-    "image": "画像",
-    "video": "ビデオ",
-    "audio": "オーディオ",
-    "sound": "サウンド",
-    "speech": "音声",
-    "model": "モデル",
-    "voice": "音声または音声ID",
-    "cloneVoice": "参照音声をクローン",
-    "cloneVoiceDescription": "プリセットの声ではなく、参照録音に基づいてこの音声を生成します。",
-    "referenceAudio": "参照オーディオ",
-    "referenceTranscript": "参照録音の正確な文字起こし",
-    "referenceTranscriptPlaceholder": "参照録音で話されている内容を正確に入力してください…",
-    "referenceAudioTooLarge": "参照オーディオは{{max}}以下にしてください。",
-    "cloneConsent": "話者の許可を得ている場合にのみ声をクローンしてください。この生成のために録音が選択したプロバイダーへ送信されますが、Libre WebUIには保存されません。",
-    "saveVoiceProfile": "再利用可能な声として保存",
-    "saveVoiceProfileDescription": "この参照録音と文字起こしを安全に保存します。この声を使用する音声バッチごとに、Libre WebUI が選択したプロバイダーへ両方を送信します。",
-    "voiceProfileName": "保存する声の名前",
-    "voiceProfileNamePlaceholder": "例：自分の声",
-    "voiceStorageConsent": "この声のクローンと保存について話者の許可を得ていることを確認します。参照データは削除するまで保存されます。",
-    "successWithSavedVoice": "メディアを生成しました。「{{name}}」が音声設定で利用できるようになりました",
-    "resolution": "解像度",
-    "aspectRatio": "アスペクト比",
-    "duration": "長さ",
-    "providerDefault": "プロバイダーのデフォルト",
-    "generateAudio": "サポートされている場合、ビデオと一緒にオーディオを生成",
-    "prompt": "プロンプト",
-    "text": "読み上げるテキスト",
-    "videoPlaceholder": "シーン、動き、カメラ、照明を説明してください...",
-    "audioPlaceholder": "音声に読み上げさせたいテキストを入力してください...",
-    "soundPlaceholder": "欲しいサウンド、音楽、雰囲気、または音声応答を説明してください...",
-    "generate": "生成",
-    "generating": "生成中… 数分かかる場合があります",
-    "success": "メディアが生成され、Imagineに保存されました",
-    "failed": "メディアの生成に失敗しました",
-    "loadFailed": "メディアプロバイダーの読み込みに失敗しました",
-    "noModels": "利用可能な{{kind}}モデルはありません。互換性のあるプロバイダーを有効化し、その認証情報を先に保存してください。"
-  },
-  "mediaGallery": {
-    "itemCount": "{{count}} 件",
-    "empty": "まだ生成されたメディアはありません",
-    "emptyHint": "画像、ビデオ、または音声クリップを生成すると、ここに表示されます。",
-    "filters": {
-      "all": "すべて",
-      "image": "画像",
-      "video": "動画",
-      "audio": "オーディオ"
-    }
+  "modelSelector": {
+    "searchInstalled": "インストール済みモデルを検索...",
+    "searchOllama": "Ollamaライブラリを検索...",
+    "searchHuggingFace": "HuggingFaceを検索...",
+    "selectModel": "モデルを選択",
+    "personas": "ペルソナ",
+    "ollamaModels": "Ollamaモデル",
+    "pluginModels": "プラグインモデル",
+    "actions": "アクション",
+    "installed": "インストール済み",
+    "use": "使用",
+    "pull": "ダウンロード",
+    "pullRestricted": "このインスタンスでは、モデルのインストールは管理者のみに制限されています。",
+    "adminOnlyPull": "管理者のみ",
+    "legacyProvider": "プロバイダー未記録",
+    "providerNotRecorded": "プロバイダー未記録",
+    "providerUnavailable": "プロバイダー利用不可",
+    "reselectProvider": "このモデルを固定するにはプロバイダーを再選択してください",
+    "unavailable": "利用不可",
+    "unavailableSelections": "利用できない選択",
+    "agentModels": "エージェント"
   },
   "whatsNew": {
     "title": "新機能",

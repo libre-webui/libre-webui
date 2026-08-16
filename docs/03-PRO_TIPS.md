@@ -53,6 +53,14 @@ Right-click a tab (or press `Shift + F10` on a focused tab) for:
 Home is always the first tab and cannot be closed. Administrators also get
 direct **Users**, **System**, and **Usage** entries in the `+` menu.
 
+## Pin the Sections You Live In
+
+Sections you open constantly do not have to stay two clicks away. Open the
+user menu at the bottom of the sidebar and use the pin next to an entry to
+keep it in a **Pinned** list under the main sidebar navigation. Pin what your
+day actually runs on and unpin it the same way when the work moves on. The
+choice is stored per user, so it follows your account rather than the browser.
+
 ## Theme Default
 
 New installs use the dark theme, applied before first paint so there is no
@@ -160,6 +168,19 @@ For best results, upload focused documents per chat instead of one huge mixed do
 | Repeat penalty | Raise slightly when a model loops                                   |
 
 When a model behaves badly, first lower temperature, then reduce context pressure, then try another model.
+
+## Let Long Chats Compact Themselves
+
+Administrators can turn on **context compaction** in Settings > Generation. Once a conversation's estimated context passes the token threshold, the server asks a model to summarize the older messages and keeps only the most recent ones verbatim. The summary rides along as a system message; the original messages stay in your transcript, they just stop being sent to the model.
+
+| Setting               | What it controls                                                       |
+| --------------------- | ---------------------------------------------------------------------- |
+| Token threshold       | Estimated context size that triggers a compaction                      |
+| Recent messages kept  | How many of the latest messages always stay verbatim                   |
+| Compaction model      | Which model writes summaries; defaults to the conversation's own model |
+| Custom summary prompt | Your own instructions, with `{{PREVIOUS_SUMMARY}}` and `{{MESSAGES}}`  |
+
+Compaction is off by default and applies to every user on the server. It never splits a turn: the messages kept verbatim always start on one of your own. Each new compaction folds the previous summary into the new one, so a conversation carries a single running summary. If the summarizer fails, generation continues with the uncompacted history rather than blocking on it.
 
 ## Keep Provider Keys Per User
 

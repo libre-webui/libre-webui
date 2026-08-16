@@ -194,6 +194,10 @@
       "evening": "İyi akşamlar",
       "night": "İyi geceler"
     },
+    "overlay": {
+      "title": "Sohbet",
+      "close": "Yüzen sohbeti kapat"
+    },
     "followUp": "Devam et",
     "welcome": {
       "helpToday": "Bugün size nasıl yardımcı olabilirim?",
@@ -421,7 +425,12 @@
       "notes": "Notlar"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
-    "expandSidebar": "Kenar çubuğunu genişlet"
+    "expandSidebar": "Kenar çubuğunu genişlet",
+    "pinned": {
+      "label": "Sabitlenenler",
+      "pin": "Kenar çubuğuna sabitle",
+      "unpin": "Kenar çubuğundan kaldır"
+    }
   },
   "user": {
     "menu": {
@@ -473,7 +482,8 @@
       "shortcuts": "Kısayollar",
       "about": "Hakkında",
       "sessions": "Oturumlar",
-      "apiKeys": "API Anahtarları"
+      "apiKeys": "API Anahtarları",
+      "connections": "Bağlantılar"
     },
     "appearance": {
       "title": "Görünüm",
@@ -904,6 +914,59 @@
       "saved": "Arama ayarları kaydedildi",
       "saveFailed": "Arama ayarları kaydedilemedi"
     },
+    "compaction": {
+      "title": "Bağlam sıkıştırma",
+      "description": "Bir konuşma token eşiğini aştığında sunucu eski mesajları özetler ve yalnızca en yeni mesajları olduğu gibi tutar. Bu sunucudaki tüm kullanıcılar için geçerlidir.",
+      "thresholdLabel": "Token eşiği",
+      "thresholdDescription": "Üzerine çıkıldığında eski geçmişin özetleneceği tahmini bağlam token sayısı, 500-1.000.000.",
+      "thresholdInvalid": "Token eşiği 500 ile 1.000.000 arasında olmalıdır.",
+      "keepRecentLabel": "Tutulan son mesajlar",
+      "keepRecentDescription": "En son mesajlardan kaçının her zaman olduğu gibi kalacağı, 2-200.",
+      "keepRecentInvalid": "Tutulan son mesaj sayısı 2 ile 200 arasında olmalıdır.",
+      "modelLabel": "Sıkıştırma modeli",
+      "modelDescription": "Özetleri yazan model. Hiçbiri seçilmediğinde oturumun kendi modeli kullanılır.",
+      "sessionModelOption": "Oturumun modelini kullan",
+      "promptLabel": "Özel özet promptu",
+      "promptPlaceholder": "Yerleşik promptu kullanmak için boş bırakın",
+      "promptDescription": "Şablon değişkenleri {{previousSummaryVariable}} ve {{messagesVariable}}, önceki özet ve özetlenen mesajlarla değiştirilir.",
+      "saved": "Sıkıştırma ayarları kaydedildi",
+      "saveFailed": "Sıkıştırma ayarları kaydedilemedi"
+    },
+    "connections": {
+      "title": "Bağlantılar",
+      "description": "Bu sunucunun iletişim kurduğu model sağlayıcıları: yerel Ollama çalışma ortamı ve OpenAI uyumlu uç noktalar.",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "Yerel model çalışma ortamı.",
+      "version": "Sürüm {{version}}.",
+      "statusChecking": "Kontrol ediliyor…",
+      "statusOnline": "Çevrimiçi",
+      "statusOffline": "Çevrimdışı",
+      "providersTitle": "OpenAI uyumlu bağlantılar",
+      "providersDescription": "Her bağlantı, modelleri sohbetin model seçicisinde görünen bir tamamlama sağlayıcısıdır. API anahtarları sunucu tarafında saklanır.",
+      "noConnections": "Henüz yapılandırılmış bağlantı yok.",
+      "modelsCount": "{{total}} model",
+      "pendingDiscovery": "Modeller keşif bekliyor",
+      "apiKeyMissing": "API anahtarı yok",
+      "deleteConfirm": "Bu bağlantı silinsin mi? Modellerini kullanan sohbetler bu modellere erişimi kaybedecek.",
+      "addTitle": "Bağlantı ekle",
+      "addDescription": "OpenAI uyumlu bir chat completions uç noktasını sağlayıcı olarak kaydedin.",
+      "nameLabel": "Görünen ad",
+      "namePlaceholder": "Sağlayıcım",
+      "idPreview": "Bağlantı kimliği: {{id}}",
+      "endpointLabel": "Uç nokta URL'si",
+      "endpointDescription": "Tam chat completions URL'si, örneğin https://api.example.com/v1/chat/completions.",
+      "apiKeyLabel": "API anahtarı",
+      "apiKeyOptionalHint": "(isteğe bağlı, sonra eklenebilir)",
+      "nameRequired": "Bağlantı için bir görünen ad girin.",
+      "endpointInvalid": "Geçerli bir http(s) uç nokta URL'si girin.",
+      "alreadyExists": "Bu kimliğe sahip bir bağlantı zaten var.",
+      "add": "Bağlantı ekle",
+      "adding": "Ekleniyor…",
+      "added": "Bağlantı eklendi",
+      "addFailed": "Bağlantı eklenemedi",
+      "keySaveFailed": "Bağlantı eklendi ancak API anahtarı kaydedilemedi",
+      "activateFailed": "Bağlantı eklendi ancak etkinleştirilemedi"
+    },
     "sessions": {
       "title": "Oturumlar",
       "description": "Bu hesabın oturum açık olduğu tüm yerler. Bir oturumu kapatmak anında geçerli olur; yeniden giriş yapmak erişimi geri getirir.",
@@ -1059,7 +1122,22 @@
       "running": "Çalışan Modeller",
       "local": "Yerel Modeller",
       "advanced": "Gelişmiş İşlemler",
-      "huggingface": "HuggingFace Hub"
+      "huggingface": "HuggingFace Hub",
+      "catalog": "Model Kataloğu"
+    },
+    "catalog": {
+      "models": "kullanılabilir",
+      "searchPlaceholder": "Modelleri ada veya sağlayıcıya göre arayın...",
+      "noModels": "Henüz kullanılabilir model yok.",
+      "empty": "Aramanızla eşleşen model yok.",
+      "providerOllama": "Ollama",
+      "default": "Varsayılan",
+      "makeDefault": "Varsayılan yap",
+      "defaultSet": "{{model}} artık varsayılan modeliniz.",
+      "hidden": "Gizli",
+      "hide": "Kullanıcılardan gizle",
+      "show": "Kullanıcılara göster",
+      "visibilityFailed": "Model görünürlüğü güncellenemedi."
     },
     "pull": {
       "placeholder": "Model adını girin (ör., llama3.2:3b, deepseek-r1:14b)",
@@ -1649,7 +1727,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Sürüm {{current}} / {{total}}",
     "previousVersion": "Önceki sürüm",
-    "nextVersion": "Sonraki sürüm"
+    "nextVersion": "Sonraki sürüm",
+    "fullscreen": "Tam ekran",
+    "exitFullscreen": "Tam ekrandan çık",
+    "showChatOverlay": "Yüzen sohbeti göster",
+    "hideChatOverlay": "Yüzen sohbeti gizle"
   },
   "personaImportExport": {
     "title": "Personaları İçe ve Dışa Aktar",

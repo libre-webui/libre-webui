@@ -194,6 +194,10 @@
       "evening": "Gott kvöld",
       "night": "Góða nótt"
     },
+    "overlay": {
+      "title": "Spjall",
+      "close": "Loka fljótandi spjalli"
+    },
     "followUp": "Framhald",
     "welcome": {
       "helpToday": "Hvernig get ég aðstoðað í dag?",
@@ -421,7 +425,12 @@
       "notes": "Glósur"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
-    "expandSidebar": "Stækka hliðarspjald"
+    "expandSidebar": "Stækka hliðarspjald",
+    "pinned": {
+      "label": "Fest",
+      "pin": "Festa á hliðarspjald",
+      "unpin": "Losa af hliðarspjaldi"
+    }
   },
   "user": {
     "menu": {
@@ -473,7 +482,8 @@
       "shortcuts": "Flýtileiðir",
       "about": "Um",
       "sessions": "Setur",
-      "apiKeys": "API lyklar"
+      "apiKeys": "API lyklar",
+      "connections": "Tengingar"
     },
     "appearance": {
       "title": "Útlit",
@@ -904,6 +914,59 @@
       "saved": "Leitarstillingar vistaðar",
       "saveFailed": "Ekki tókst að vista leitarstillingar"
     },
+    "compaction": {
+      "title": "Samþjöppun samhengis",
+      "description": "Þegar samtal fer yfir tókamörkin tekur þjónninn saman eldri skilaboð þess og geymir aðeins nýjustu skilaboðin óbreytt. Gildir fyrir alla notendur á þessum þjóni.",
+      "thresholdLabel": "Tókamörk",
+      "thresholdDescription": "Áætlaður fjöldi samhengistóka; fari hann yfir mörkin er eldri saga tekin saman, 500-1.000.000.",
+      "thresholdInvalid": "Tókamörk verða að vera á milli 500 og 1.000.000.",
+      "keepRecentLabel": "Nýleg skilaboð sem eru geymd",
+      "keepRecentDescription": "Hversu mörg af nýjustu skilaboðunum eru alltaf geymd óbreytt, 2-200.",
+      "keepRecentInvalid": "Fjöldi geymdra nýlegra skilaboða verður að vera á milli 2 og 200.",
+      "modelLabel": "Samþjöppunarlíkan",
+      "modelDescription": "Líkanið sem skrifar samantektirnar. Líkan setunnar er notað ef ekkert er valið.",
+      "sessionModelOption": "Nota líkan setunnar",
+      "promptLabel": "Sérsniðin samantektarfyrirmæli",
+      "promptPlaceholder": "Skildu eftir autt til að nota innbyggðu fyrirmælin",
+      "promptDescription": "Sniðmátsbreyturnar {{previousSummaryVariable}} og {{messagesVariable}} eru fylltar með fyrri samantekt og skilaboðunum sem verið er að taka saman.",
+      "saved": "Samþjöppunarstillingar vistaðar",
+      "saveFailed": "Ekki tókst að vista samþjöppunarstillingarnar"
+    },
+    "connections": {
+      "title": "Tengingar",
+      "description": "Líkanaveiturnar sem þessi þjónn talar við: staðbundna Ollama keyrsluumhverfið og endapunktar samhæfðir OpenAI.",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "Staðbundið keyrsluumhverfi líkana.",
+      "version": "Útgáfa {{version}}.",
+      "statusChecking": "Athuga…",
+      "statusOnline": "Tengt",
+      "statusOffline": "Ótengt",
+      "providersTitle": "OpenAI-samhæfðar tengingar",
+      "providersDescription": "Hver tenging er veita fyrir svör (completions) og líkön hennar birtast í líkanavali spjallsins. API lyklar eru geymdir þjónsmegin.",
+      "noConnections": "Engar tengingar hafa verið stilltar enn.",
+      "modelsCount": "{{total}} líkön",
+      "pendingDiscovery": "Líkön bíða uppgötvunar",
+      "apiKeyMissing": "Enginn API lykill",
+      "deleteConfirm": "Eyða þessari tengingu? Spjöll sem nota líkön hennar missa aðgang að þeim.",
+      "addTitle": "Bæta við tengingu",
+      "addDescription": "Skráðu OpenAI-samhæfðan chat completions endapunkt sem veitu.",
+      "nameLabel": "Birtingarnafn",
+      "namePlaceholder": "Veitan mín",
+      "idPreview": "Auðkenni tengingar: {{id}}",
+      "endpointLabel": "Vefslóð endapunkts",
+      "endpointDescription": "Full chat completions vefslóð, til dæmis https://api.example.com/v1/chat/completions.",
+      "apiKeyLabel": "API lykill",
+      "apiKeyOptionalHint": "(valfrjálst, hægt að bæta við síðar)",
+      "nameRequired": "Sláðu inn birtingarnafn fyrir tenginguna.",
+      "endpointInvalid": "Sláðu inn gilda http(s) vefslóð endapunkts.",
+      "alreadyExists": "Tenging með þessu auðkenni er þegar til.",
+      "add": "Bæta við tengingu",
+      "adding": "Bæti við…",
+      "added": "Tengingu bætt við",
+      "addFailed": "Ekki tókst að bæta tengingunni við",
+      "keySaveFailed": "Tengingu bætt við en ekki tókst að vista API lykilinn",
+      "activateFailed": "Tengingu bætt við en ekki tókst að virkja hana"
+    },
     "sessions": {
       "title": "Setur",
       "description": "Allir staðir þar sem þessi aðgangur er skráður inn. Útskráning setu tekur gildi samstundis; innskráning að nýju endurheimtir aðgang.",
@@ -1059,7 +1122,22 @@
       "running": "Líkön í gangi",
       "local": "Staðbundin líkön",
       "advanced": "Ítarlegar aðgerðir",
-      "huggingface": "HuggingFace Hub"
+      "huggingface": "HuggingFace Hub",
+      "catalog": "Líkanaskrá"
+    },
+    "catalog": {
+      "models": "í boði",
+      "searchPlaceholder": "Leita að líkönum eftir nafni eða veitu...",
+      "noModels": "Engin líkön eru í boði enn.",
+      "empty": "Engin líkön passa við leitina.",
+      "providerOllama": "Ollama",
+      "default": "Sjálfgefið",
+      "makeDefault": "Gera sjálfgefið",
+      "defaultSet": "{{model}} er nú sjálfgefna líkanið þitt.",
+      "hidden": "Falið",
+      "hide": "Fela fyrir notendum",
+      "show": "Sýna notendum",
+      "visibilityFailed": "Ekki tókst að uppfæra sýnileika líkansins."
     },
     "pull": {
       "placeholder": "Sláðu inn nafn líkans (t.d. llama3.2:3b, deepseek-r1:14b)",
@@ -1649,7 +1727,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Útgáfa {{current}} af {{total}}",
     "previousVersion": "Fyrri útgáfa",
-    "nextVersion": "Næsta útgáfa"
+    "nextVersion": "Næsta útgáfa",
+    "fullscreen": "Fullskjár",
+    "exitFullscreen": "Hætta í fullskjá",
+    "showChatOverlay": "Sýna fljótandi spjall",
+    "hideChatOverlay": "Fela fljótandi spjall"
   },
   "personaImportExport": {
     "title": "Flytja inn og út persónur",

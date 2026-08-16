@@ -194,6 +194,10 @@
       "evening": "Buonasera",
       "night": "Buonanotte"
     },
+    "overlay": {
+      "title": "Chat",
+      "close": "Chiudi la chat flottante"
+    },
     "followUp": "Approfondisci",
     "welcome": {
       "helpToday": "Come posso aiutarti oggi?",
@@ -421,7 +425,12 @@
       "notes": "Note"
     },
     "toggleSize": "Cambia dimensione barra laterale",
-    "expandSidebar": "Espandi barra laterale"
+    "expandSidebar": "Espandi barra laterale",
+    "pinned": {
+      "label": "Fissati",
+      "pin": "Fissa alla barra laterale",
+      "unpin": "Rimuovi dalla barra laterale"
+    }
   },
   "user": {
     "menu": {
@@ -473,7 +482,8 @@
       "shortcuts": "Scorciatoie",
       "about": "Informazioni",
       "sessions": "Sessioni",
-      "apiKeys": "Chiavi API"
+      "apiKeys": "Chiavi API",
+      "connections": "Connessioni"
     },
     "appearance": {
       "title": "Aspetto",
@@ -904,6 +914,59 @@
       "saved": "Impostazioni di ricerca salvate",
       "saveFailed": "Impossibile salvare le impostazioni di ricerca"
     },
+    "compaction": {
+      "title": "Compattazione del contesto",
+      "description": "Quando una conversazione supera la soglia di token, il server riassume i messaggi più vecchi e conserva integralmente solo i più recenti. Si applica a tutti gli utenti di questo server.",
+      "thresholdLabel": "Soglia di token",
+      "thresholdDescription": "Numero stimato di token di contesto oltre il quale la cronologia meno recente viene riassunta, 500-1.000.000.",
+      "thresholdInvalid": "La soglia di token deve essere compresa tra 500 e 1.000.000.",
+      "keepRecentLabel": "Messaggi recenti conservati",
+      "keepRecentDescription": "Quanti degli ultimi messaggi restano sempre integrali, 2-200.",
+      "keepRecentInvalid": "I messaggi recenti conservati devono essere compresi tra 2 e 200.",
+      "modelLabel": "Modello di compattazione",
+      "modelDescription": "Il modello che scrive i riassunti. Se non ne viene scelto uno, viene usato il modello della sessione.",
+      "sessionModelOption": "Usa il modello della sessione",
+      "promptLabel": "Prompt di riassunto personalizzato",
+      "promptPlaceholder": "Lascia vuoto per usare il prompt integrato",
+      "promptDescription": "Le variabili del template {{previousSummaryVariable}} e {{messagesVariable}} vengono sostituite con il riassunto precedente e i messaggi da riassumere.",
+      "saved": "Impostazioni di compattazione salvate",
+      "saveFailed": "Impossibile salvare le impostazioni di compattazione"
+    },
+    "connections": {
+      "title": "Connessioni",
+      "description": "I provider di modelli con cui comunica questo server: il runtime locale Ollama e gli endpoint compatibili con OpenAI.",
+      "ollamaTitle": "Ollama",
+      "ollamaDescription": "Runtime locale per i modelli.",
+      "version": "Versione {{version}}.",
+      "statusChecking": "Verifica in corso…",
+      "statusOnline": "Online",
+      "statusOffline": "Offline",
+      "providersTitle": "Connessioni compatibili con OpenAI",
+      "providersDescription": "Ogni connessione è un provider di completamento i cui modelli compaiono nel selettore dei modelli della chat. Le chiavi API sono salvate lato server.",
+      "noConnections": "Nessuna connessione configurata.",
+      "modelsCount": "{{total}} modelli",
+      "pendingDiscovery": "Modelli in attesa di rilevamento",
+      "apiKeyMissing": "Nessuna chiave API",
+      "deleteConfirm": "Eliminare questa connessione? Le chat che usano i suoi modelli ne perderanno l'accesso.",
+      "addTitle": "Aggiungi connessione",
+      "addDescription": "Registra un endpoint chat completions compatibile con OpenAI come provider.",
+      "nameLabel": "Nome visualizzato",
+      "namePlaceholder": "Il mio provider",
+      "idPreview": "ID connessione: {{id}}",
+      "endpointLabel": "URL dell'endpoint",
+      "endpointDescription": "URL chat completions completo, ad esempio https://api.example.com/v1/chat/completions.",
+      "apiKeyLabel": "Chiave API",
+      "apiKeyOptionalHint": "(facoltativa, può essere aggiunta in seguito)",
+      "nameRequired": "Inserisci un nome visualizzato per la connessione.",
+      "endpointInvalid": "Inserisci un URL endpoint http(s) valido.",
+      "alreadyExists": "Esiste già una connessione con questo ID.",
+      "add": "Aggiungi connessione",
+      "adding": "Aggiunta in corso…",
+      "added": "Connessione aggiunta",
+      "addFailed": "Impossibile aggiungere la connessione",
+      "keySaveFailed": "Connessione aggiunta, ma non è stato possibile salvare la chiave API",
+      "activateFailed": "Connessione aggiunta, ma non è stato possibile attivarla"
+    },
     "sessions": {
       "title": "Sessioni",
       "description": "Tutti i luoghi in cui questo account è connesso. La disconnessione di una sessione ha effetto immediato; un nuovo accesso ripristina l'accesso.",
@@ -1059,7 +1122,22 @@
       "running": "Modelli in esecuzione",
       "local": "Modelli locali",
       "advanced": "Azioni avanzate",
-      "huggingface": "HuggingFace Hub"
+      "huggingface": "HuggingFace Hub",
+      "catalog": "Catalogo modelli"
+    },
+    "catalog": {
+      "models": "disponibili",
+      "searchPlaceholder": "Cerca modelli per nome o provider...",
+      "noModels": "Nessun modello ancora disponibile.",
+      "empty": "Nessun modello corrisponde alla ricerca.",
+      "providerOllama": "Ollama",
+      "default": "Predefinito",
+      "makeDefault": "Imposta come predefinito",
+      "defaultSet": "{{model}} è ora il tuo modello predefinito.",
+      "hidden": "Nascosto",
+      "hide": "Nascondi agli utenti",
+      "show": "Mostra agli utenti",
+      "visibilityFailed": "Impossibile aggiornare la visibilità del modello."
     },
     "pull": {
       "placeholder": "Inserisci nome modello (es. llama3.2:3b, deepseek-r1:14b)",
@@ -1649,7 +1727,11 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Versione {{current}} di {{total}}",
     "previousVersion": "Versione precedente",
-    "nextVersion": "Versione successiva"
+    "nextVersion": "Versione successiva",
+    "fullscreen": "Schermo intero",
+    "exitFullscreen": "Esci da schermo intero",
+    "showChatOverlay": "Mostra chat flottante",
+    "hideChatOverlay": "Nascondi chat flottante"
   },
   "personaImportExport": {
     "title": "Importa ed esporta personas",
