@@ -85,7 +85,10 @@ export const GroupManager: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    void load();
+    // Deferred by a tick so the loader's first setState lands after this
+    // commit instead of cascading a second synchronous render.
+    const timer = setTimeout(() => void load(), 0);
+    return () => clearTimeout(timer);
   }, [load]);
 
   const handleCreate = async (event: React.FormEvent) => {

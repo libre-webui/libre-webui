@@ -65,14 +65,18 @@ export const DocumentIndicator: React.FC<DocumentIndicatorProps> = ({
   }, [sessionId]);
 
   useEffect(() => {
-    void loadDocuments();
+    // Deferred by a tick so the loader's first setState lands after this
+    // commit instead of cascading a second synchronous render.
+    const timer = setTimeout(() => void loadDocuments(), 0);
     const handleDocumentsUpdated = () => void loadDocuments();
     window.addEventListener('libre:documents-updated', handleDocumentsUpdated);
-    return () =>
+    return () => {
+      clearTimeout(timer);
       window.removeEventListener(
         'libre:documents-updated',
         handleDocumentsUpdated
       );
+    };
   }, [loadDocuments]);
 
   useEffect(() => {

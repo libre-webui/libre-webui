@@ -70,7 +70,10 @@ export const SecurityAuditLog: React.FC = () => {
   }, [actionFilter, resultFilter, limit]);
 
   useEffect(() => {
-    void load();
+    // Deferred by a tick so the loader's first setState lands after this
+    // commit instead of cascading a second synchronous render.
+    const timer = setTimeout(() => void load(), 0);
+    return () => clearTimeout(timer);
     // Only refetch on demand or when filters change via the refresh button;
     // initial mount fetch is enough here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
