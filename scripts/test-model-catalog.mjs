@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
+import { createServer } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import test, { after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import express from 'express';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,13 +38,56 @@ await platformStorageModule.initializePlatformStorageRuntime({
 
 const catalog = await distModule('services/modelVisibilityService.js');
 
+// Every await has to happen before the first test() call: the runner tears the
+// file down once the tests it knows about have settled, so a test registered
+// after a top-level await would run against a closed server.
+const coordinationModule = await distModule('platform/coordination/service.js');
+await coordinationModule.initializeCoordinator();
+const [{ getDatabase }, { authService }, { default: ollamaRouter }] =
+  await Promise.all([
+    distModule('db.js'),
+    distModule('services/authService.js'),
+    distModule('routes/ollama.js'),
+  ]);
+
+const now = Date.now();
+const insertUser = getDatabase().prepare(
+  `INSERT INTO users (
+    id, username, email, password_hash, role, avatar, created_at, updated_at
+  ) VALUES (?, ?, NULL, 'unused', ?, NULL, ?, ?)`
+);
+insertUser.run('catalog-admin', 'catalog-admin', 'admin', now, now);
+insertUser.run('catalog-member', 'catalog-member', 'user', now, now);
+const tokenFor = (id, role) =>
+  authService.generateToken({
+    id,
+    username: id,
+    email: null,
+    role,
+    status: 'active',
+    avatar: null,
+    createdAt: new Date(now).toISOString(),
+    updatedAt: new Date(now).toISOString(),
+  });
+const adminToken = tokenFor('catalog-admin', 'admin');
+const memberToken = tokenFor('catalog-member', 'user');
+
+const app = express();
+app.use(express.json({ limit: '5mb' }));
+app.use('/api/ollama', ollamaRouter);
+const server = createServer(app);
+await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+const baseUrl = `http://127.0.0.1:${server.address().port}/api/ollama`;
+
 after(async () => {
+  await new Promise(resolve => server.close(resolve));
   await platformStorageModule.closePlatformStorageRuntime();
   await persistenceModule.closePersistence();
   await rm(dataDir, { recursive: true, force: true });
 });
 
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==';
+const asJson = { 'Content-Type': 'application/json' };
 
 test('the catalog starts empty and every read fails open', async () => {
   assert.deepEqual(await catalog.getHiddenModels(), []);
@@ -134,50 +179,6 @@ test('hidden models, order, and metadata are stored independently', async () => 
 });
 
 // --- The HTTP path the catalog screen actually uses ------------------------
-
-import { createServer } from 'node:http';
-import express from 'express';
-
-const coordinationModule = await distModule('platform/coordination/service.js');
-await coordinationModule.initializeCoordinator();
-const [{ getDatabase }, { authService }, { default: ollamaRouter }] =
-  await Promise.all([
-    distModule('db.js'),
-    distModule('services/authService.js'),
-    distModule('routes/ollama.js'),
-  ]);
-
-const now = Date.now();
-const insertUser = getDatabase().prepare(
-  `INSERT INTO users (
-    id, username, email, password_hash, role, avatar, created_at, updated_at
-  ) VALUES (?, ?, NULL, 'unused', ?, NULL, ?, ?)`
-);
-insertUser.run('catalog-admin', 'catalog-admin', 'admin', now, now);
-insertUser.run('catalog-member', 'catalog-member', 'user', now, now);
-const tokenFor = (id, role) =>
-  authService.generateToken({
-    id,
-    username: id,
-    email: null,
-    role,
-    status: 'active',
-    avatar: null,
-    createdAt: new Date(now).toISOString(),
-    updatedAt: new Date(now).toISOString(),
-  });
-const adminToken = tokenFor('catalog-admin', 'admin');
-const memberToken = tokenFor('catalog-member', 'user');
-
-const app = express();
-app.use(express.json({ limit: '5mb' }));
-app.use('/api/ollama', ollamaRouter);
-const server = createServer(app);
-await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-const baseUrl = `http://127.0.0.1:${server.address().port}/api/ollama`;
-after(() => new Promise(resolve => server.close(resolve)));
-
-const asJson = { 'Content-Type': 'application/json' };
 
 test('a reorder survives the round trip the UI makes', async () => {
   const wanted = ['gemma3:12b', 'qwen3:8b', 'llama3.2:3b'];
