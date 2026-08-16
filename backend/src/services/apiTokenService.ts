@@ -83,6 +83,10 @@ const PATH_SCOPES: ReadonlyArray<{ prefix: string; scope: ApiTokenScope }> = [
   { prefix: '/api/work', scope: 'work' },
   { prefix: '/api/agent-clis', scope: 'work' },
   { prefix: '/api/health', scope: 'chat' },
+  // The OpenAI-compatible surface is the primary consumer of API keys.
+  { prefix: '/v1/chat', scope: 'chat' },
+  { prefix: '/v1/completions', scope: 'chat' },
+  { prefix: '/v1/models', scope: 'models' },
 ];
 
 const FORBIDDEN_PREFIXES = ['/api/auth'];
