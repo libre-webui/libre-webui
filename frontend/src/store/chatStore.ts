@@ -49,6 +49,7 @@ import {
   findChatModelForSelection,
 } from '@/utils/chatModelSelection';
 import { modelVisibilityKey } from '@/utils/modelVisibility';
+import type { ModelPresentation } from '@/utils/api/modelApi';
 
 const logger = createLogger('chat-store');
 
@@ -136,6 +137,8 @@ interface ChatState {
    */
   hiddenModels: string[];
   setHiddenModels: (keys: string[]) => void;
+  /** Administrator-set name and picture per model key, for the pickers. */
+  modelMetadata: Record<string, ModelPresentation>;
   /** False when the last model load could not reach the Ollama endpoint. */
   ollamaConnected: boolean;
   loadModels: (options?: { quiet?: boolean }) => Promise<void>;
@@ -348,6 +351,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       currentSession: null,
       models: [],
       hiddenModels: [],
+      modelMetadata: {},
       selectedModel: '',
       selectedProviderType: null,
       selectedProviderId: null,
@@ -716,6 +720,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   models: [],
   hiddenModels: [],
   setHiddenModels: (keys: string[]) => set({ hiddenModels: keys }),
+  modelMetadata: {},
   ollamaConnected: false,
   loadModels: async (options?: { quiet?: boolean }) => {
     const quiet = options?.quiet === true;
@@ -831,10 +836,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // hidden entries (Ollama and plugin alike). Fail open: visibility is a
       // listing refinement, never a reason to blank the picker.
       let hiddenModels: string[] = [];
+      let modelOrder: string[] = [];
+      let modelMetadata: Record<string, ModelPresentation> = {};
       try {
         const visibilityResponse = await ollamaApi.getModelVisibility();
         if (visibilityResponse.success && visibilityResponse.data) {
-          hiddenModels = visibilityResponse.data.hidden;
+          hiddenModels = visibilityResponse.data.hidden ?? [];
+          modelOrder = visibilityResponse.data.order ?? [];
+          modelMetadata = visibilityResponse.data.metadata ?? {};
         }
       } catch (visibilityError) {
         logger.warn(
@@ -856,7 +865,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
       } catch (authError) {
         logger.warn('Could not resolve viewer role for model list:', authError);
       }
-      set({ hiddenModels });
+      // The order an administrator arranged, with anything newer after it.
+      if (modelOrder.length > 0) {
+        const rank = new Map(modelOrder.map((key, index) => [key, index]));
+        allModels = [...allModels].sort((a, b) => {
+          const left =
+            rank.get(modelVisibilityKey(a)) ?? Number.MAX_SAFE_INTEGER;
+          const right =
+            rank.get(modelVisibilityKey(b)) ?? Number.MAX_SAFE_INTEGER;
+          return left - right;
+        });
+      }
+      set({ hiddenModels, modelMetadata });
 
       logger.debug('Total models loaded:', allModels.length);
       const providerLoadError =

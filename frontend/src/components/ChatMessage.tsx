@@ -84,15 +84,23 @@ interface ChatAvatarProps {
   role: 'assistant' | 'user';
   user?: { username?: string; avatar?: string | null } | null;
   personaAvatar?: string | null;
+  modelAvatar?: string | null;
 }
 
 /** Message avatars matching the Work conversation: the Libre mark for the
  * assistant (or the persona's avatar) and the account avatar for the user. */
-function ChatAvatar({ role, user, personaAvatar }: ChatAvatarProps) {
+function ChatAvatar({
+  role,
+  user,
+  personaAvatar,
+  modelAvatar,
+}: ChatAvatarProps) {
   const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
 
   if (role === 'assistant') {
-    const persona = personaAvatar?.trim() || '';
+    // A persona's own picture wins; otherwise the administrator's picture for
+    // the model that answered.
+    const persona = (personaAvatar?.trim() || modelAvatar?.trim()) ?? '';
     const personaImage =
       persona.startsWith('data:') && persona !== failedAvatar ? persona : '';
     return (
@@ -171,9 +179,26 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const isSystem = message.role === 'system';
   const { preferences } = useAppStore();
   const { user } = useAuthStore();
-  const { setSystemMessage, getCurrentPersona, currentSession, rateMessage } =
-    useChatStore();
+  const {
+    setSystemMessage,
+    getCurrentPersona,
+    currentSession,
+    rateMessage,
+    modelMetadata,
+  } = useChatStore();
   const currentPersona = getCurrentPersona();
+  // What an administrator named this model and gave it for a picture. A
+  // plugin model is keyed by `${pluginId}/${model}`, so fall back to matching
+  // on the bare model name the message recorded.
+  // A message only carries its model once it has been persisted, so a reply
+  // still streaming falls back to the model the session is using.
+  const answeringModel = message.model || currentSession?.model || '';
+  const modelPresentation = answeringModel
+    ? (modelMetadata[answeringModel] ??
+      Object.entries(modelMetadata).find(
+        ([key]) => key.slice(key.indexOf('/') + 1) === answeringModel
+      )?.[1])
+    : undefined;
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -444,7 +469,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     if (currentPersona?.name) {
       return currentPersona.name;
     }
-    return message.model || t('chatMessage.assistant');
+    return (
+      modelPresentation?.label || answeringModel || t('chatMessage.assistant')
+    );
   };
 
   const handleEditSystemMessage = () => {
@@ -510,7 +537,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         )}
       >
         {!isUser && !isSystem && (
-          <ChatAvatar role='assistant' personaAvatar={currentPersona?.avatar} />
+          <ChatAvatar
+            role='assistant'
+            personaAvatar={currentPersona?.avatar}
+            modelAvatar={modelPresentation?.avatar}
+          />
         )}
         {/* Content */}
         <div

@@ -51,6 +51,8 @@ import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 import { createLogger } from '@/utils/logger';
 import { isAvailableOllamaModel } from '@/utils/chatModelSelection';
+import { modelVisibilityKey } from '@/utils/modelVisibility';
+import { useChatStore } from '@/store/chatStore';
 import { HuggingFaceModelsTab } from '@/components/model-selector/HuggingFaceModelsTab';
 import { InstalledModelsTab } from '@/components/model-selector/InstalledModelsTab';
 import { OllamaLibraryTab } from '@/components/model-selector/OllamaLibraryTab';
@@ -190,6 +192,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
   const getModelValue = (model: OllamaModel): string =>
     getModelValueOverride?.(model) ?? model.name;
+
+  const modelMetadata = useChatStore(state => state.modelMetadata);
 
   const currentModel = models.find(
     model => getModelValue(model) === selectedModel
@@ -481,6 +485,17 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   };
 
   const getModelIcon = (model: OllamaModel) => {
+    // An administrator-set picture stands in for the generic provider icon.
+    const picture = modelMetadata[modelVisibilityKey(model)]?.avatar;
+    if (picture && !model.isPersona) {
+      return (
+        <img
+          src={picture}
+          alt=''
+          className='h-4 w-4 shrink-0 rounded-full object-cover'
+        />
+      );
+    }
     if (model.isLegacySelection) {
       return <Brain className='h-4 w-4 text-gray-500 dark:text-dark-600' />;
     }
@@ -496,6 +511,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const getModelLabel = (model: OllamaModel) => {
     if (getModelLabelOverride) {
       return getModelLabelOverride(model);
+    }
+    const named = modelMetadata[modelVisibilityKey(model)]?.label;
+    if (named && !model.isPersona) {
+      return named;
     }
     if (model.isLegacySelection) {
       return `${model.name} (${t(
