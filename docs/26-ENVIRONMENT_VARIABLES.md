@@ -72,42 +72,42 @@ embedded vectors, local coordination, and an embedded durable worker. The
 and an external worker. Team configuration is fail-closed: all shared
 dependencies must be selected together.
 
-| Variable                             | Default                                | Purpose                                                                                         |
-| ------------------------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `LIBRE_PLATFORM_MODE`                | `solo`                                 | Select the coherent `solo` or `team` profile                                                    |
-| `DATABASE_BACKEND`                   | `sqlite`                               | Select `sqlite` or `postgres`                                                                   |
-| `DATABASE_URL`                       | unset                                  | PostgreSQL connection URL, required with `postgres`                                             |
-| `DATABASE_SSL_MODE`                  | `verify-full`                          | PostgreSQL TLS policy: `disable`, `require`, or hostname-verifying `verify-full`                |
-| `POSTGRES_MIGRATION_MODE`            | `apply`                                | Run compatible migrations under the leader lock, or use `validate` for a read-only schema check |
-| `POSTGRES_POOL_MAX`                  | `10`                                   | Maximum PostgreSQL connections per application or worker process (1-100)                        |
-| `POSTGRES_CONNECT_TIMEOUT_MS`        | `5000`                                 | PostgreSQL connection timeout (1-60000 ms)                                                      |
-| `POSTGRES_IDLE_TIMEOUT_MS`           | `30000`                                | PostgreSQL idle connection timeout (1-600000 ms)                                                |
-| `POSTGRES_STATEMENT_TIMEOUT_MS`      | `30000`                                | PostgreSQL statement timeout (1-600000 ms)                                                      |
-| `POSTGRES_MIGRATION_LOCK_TIMEOUT_MS` | `60000`                                | Time to wait for the migration-leader lock (1-600000 ms)                                        |
-| `BLOB_STORE_BACKEND`                 | `local`                                | Select encrypted `local` storage or private `s3`                                                |
-| `VECTOR_STORE_BACKEND`               | `embedded` with SQLite                 | Select encrypted `embedded` vectors or `pgvector`                                               |
-| `COORDINATION_BACKEND`               | `local` in solo; `redis` in team       | Select process-local or Redis coordination                                                      |
-| `REDIS_URL`                          | unset                                  | `redis:` or `rediss:` URL, required with Redis coordination                                     |
-| `REDIS_KEY_PREFIX`                   | `libre`                                | 1-64 character namespace for Libre coordination keys                                            |
-| `REDIS_CONNECT_TIMEOUT_MS`           | `5000`                                 | Initial Redis connection timeout, capped at 60 seconds                                          |
-| `JOB_WORKER_MODE`                    | `embedded` in solo; `external` in team | Run handlers in the app or in the standalone shared worker                                      |
-| `JOB_WORKER_CONCURRENCY`             | `4`                                    | Durable jobs one worker may run at the same time (1-32)                                         |
-| `CHAT_STREAM_EVENT_RETENTION_HOURS`  | `24`                                   | Hours chat stream chunk events stay before the hourly sweep removes them                        |
-| `PLATFORM_EVENT_RETENTION_DAYS`      | `30`                                   | Days any durable event stays before the hourly sweep removes it                                 |
-| `PLATFORM_JOB_RETENTION_DAYS`        | `30`                                   | Days finished non-lifecycle jobs stay before the hourly sweep removes them                      |
+| Variable                             | Default                                | Purpose                                                                                                                    |
+| ------------------------------------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `LIBRE_PLATFORM_MODE`                | `solo`                                 | Select the coherent `solo` or `team` profile                                                                               |
+| `DATABASE_BACKEND`                   | `sqlite`                               | Select `sqlite` or `postgres`                                                                                              |
+| `DATABASE_URL`                       | unset                                  | PostgreSQL connection URL, required with `postgres`                                                                        |
+| `DATABASE_SSL_MODE`                  | `verify-full`                          | PostgreSQL TLS policy: `disable`, `require`, or hostname-verifying `verify-full`                                           |
+| `POSTGRES_MIGRATION_MODE`            | `apply`                                | Run compatible migrations under the leader lock, or use `validate` for a read-only schema check                            |
+| `POSTGRES_POOL_MAX`                  | `10`                                   | Maximum PostgreSQL connections per application or worker process (1-100)                                                   |
+| `POSTGRES_CONNECT_TIMEOUT_MS`        | `5000`                                 | PostgreSQL connection timeout (1-60000 ms)                                                                                 |
+| `POSTGRES_IDLE_TIMEOUT_MS`           | `30000`                                | PostgreSQL idle connection timeout (1-600000 ms)                                                                           |
+| `POSTGRES_STATEMENT_TIMEOUT_MS`      | `30000`                                | PostgreSQL statement timeout (1-600000 ms)                                                                                 |
+| `POSTGRES_MIGRATION_LOCK_TIMEOUT_MS` | `60000`                                | Time to wait for the migration-leader lock (1-600000 ms)                                                                   |
+| `BLOB_STORE_BACKEND`                 | `local`                                | Select encrypted `local` storage or private `s3`                                                                           |
+| `VECTOR_STORE_BACKEND`               | `embedded` with SQLite                 | Select encrypted `embedded` vectors or `pgvector`                                                                          |
+| `COORDINATION_BACKEND`               | `local` in solo; `redis` in team       | Select process-local or Redis coordination                                                                                 |
+| `REDIS_URL`                          | unset                                  | `redis:` or `rediss:` URL, required with Redis coordination                                                                |
+| `REDIS_KEY_PREFIX`                   | `libre`                                | 1-64 character namespace for Libre coordination keys                                                                       |
+| `REDIS_CONNECT_TIMEOUT_MS`           | `5000`                                 | Initial Redis connection timeout, capped at 60 seconds                                                                     |
+| `JOB_WORKER_MODE`                    | `embedded` in solo; `external` in team | Run handlers in the app or in the standalone shared worker                                                                 |
+| `JOB_WORKER_CONCURRENCY`             | `4`                                    | Durable jobs one worker may run at the same time (1-32)                                                                    |
+| `CHAT_STREAM_EVENT_RETENTION_HOURS`  | `24`                                   | Hours chat stream chunk events stay before the hourly sweep removes them                                                   |
+| `PLATFORM_EVENT_RETENTION_DAYS`      | `30`                                   | Days any durable event stays before the hourly sweep removes it                                                            |
+| `PLATFORM_JOB_RETENTION_DAYS`        | `30`                                   | Days finished non-lifecycle jobs stay before the hourly sweep removes them                                                 |
 | `LIBRE_SKIP_STARTUP_INTEGRITY_SCAN`  | unset                                  | `1` skips the deep legacy-ciphertext scan on the next start (escape hatch; scan is otherwise cached per schema generation) |
-| `STORAGE_ENCRYPTION_KEYS`            | unset                                  | Secret JSON key map; currently must include `legacy` matching `ENCRYPTION_KEY`                  |
-| `STORAGE_ENCRYPTION_ACTIVE_KEY_ID`   | unset                                  | Key ID used for new local blob and embedded-vector writes                                       |
-| `BLOB_QUOTA_BYTES_PER_USER`          | `10737418240`                          | Durable maximum plaintext blob bytes per owner (positive safe integer)                          |
-| `BLOB_QUOTA_RESERVATION_TTL_MS`      | `3600000`                              | Lifetime of an abandoned streaming quota reservation (at least 60000 ms)                        |
-| `S3_BUCKET`                          | unset                                  | Private S3-compatible bucket, required with `s3`                                                |
-| `S3_REGION`                          | unset                                  | S3 region, required with `s3`                                                                   |
-| `S3_ENDPOINT`                        | provider default                       | Optional absolute HTTP(S) endpoint for MinIO or another compatible service                      |
-| `S3_ACCESS_KEY_ID`                   | SDK credential chain                   | Optional explicit S3 access key                                                                 |
-| `S3_SECRET_ACCESS_KEY`               | SDK credential chain                   | Required when an explicit access key is set                                                     |
-| `S3_SESSION_TOKEN`                   | unset                                  | Optional token accompanying explicit S3 credentials                                             |
-| `S3_FORCE_PATH_STYLE`                | `false`                                | Set `true` for services that require path-style addressing                                      |
-| `S3_BLOB_PREFIX`                     | `libre/blobs`                          | Opaque bucket-key prefix owned by Libre                                                         |
+| `STORAGE_ENCRYPTION_KEYS`            | unset                                  | Secret JSON key map; currently must include `legacy` matching `ENCRYPTION_KEY`                                             |
+| `STORAGE_ENCRYPTION_ACTIVE_KEY_ID`   | unset                                  | Key ID used for new local blob and embedded-vector writes                                                                  |
+| `BLOB_QUOTA_BYTES_PER_USER`          | `10737418240`                          | Durable maximum plaintext blob bytes per owner (positive safe integer)                                                     |
+| `BLOB_QUOTA_RESERVATION_TTL_MS`      | `3600000`                              | Lifetime of an abandoned streaming quota reservation (at least 60000 ms)                                                   |
+| `S3_BUCKET`                          | unset                                  | Private S3-compatible bucket, required with `s3`                                                                           |
+| `S3_REGION`                          | unset                                  | S3 region, required with `s3`                                                                                              |
+| `S3_ENDPOINT`                        | provider default                       | Optional absolute HTTP(S) endpoint for MinIO or another compatible service                                                 |
+| `S3_ACCESS_KEY_ID`                   | SDK credential chain                   | Optional explicit S3 access key                                                                                            |
+| `S3_SECRET_ACCESS_KEY`               | SDK credential chain                   | Required when an explicit access key is set                                                                                |
+| `S3_SESSION_TOKEN`                   | unset                                  | Optional token accompanying explicit S3 credentials                                                                        |
+| `S3_FORCE_PATH_STYLE`                | `false`                                | Set `true` for services that require path-style addressing                                                                 |
+| `S3_BLOB_PREFIX`                     | `libre/blobs`                          | Opaque bucket-key prefix owned by Libre                                                                                    |
 
 When the versioned storage key map is absent, storage adapters use the existing
 `ENCRYPTION_KEY` as key ID `legacy`; when it is also absent, they read the
@@ -225,8 +225,8 @@ out or revoking a session from Settings → Sessions invalidates the token
 immediately on every replica and closes live WebSocket connections. Security
 audit retention is configurable:
 
-| Variable               | Default | Purpose                                              |
-| ---------------------- | ------- | ---------------------------------------------------- |
+| Variable               | Default | Purpose                                             |
+| ---------------------- | ------- | --------------------------------------------------- |
 | `AUDIT_RETENTION_DAYS` | `180`   | Days to retain rows in the security audit event log |
 
 ### Generic OIDC single sign-on
@@ -235,18 +235,18 @@ Any OpenID Connect provider with a discovery document can be used for login.
 The flow uses PKCE (S256), CSRF state, and a nonce verified inside the
 signature-checked ID token. Identities are linked on the stable `sub` claim.
 
-| Variable                     | Default                              | Purpose                                                                              |
-| ---------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------ |
-| `OIDC_ISSUER_URL`            | unset                                | Issuer base URL; discovery is fetched from `<issuer>/.well-known/openid-configuration` |
-| `OIDC_CLIENT_ID`             | unset                                | OAuth client id registered with the provider                                         |
-| `OIDC_CLIENT_SECRET`         | unset                                | OAuth client secret                                                                  |
-| `OIDC_DISPLAY_NAME`          | `Single Sign-On`                     | Label shown on the login button                                                      |
-| `OIDC_SCOPES`                | `openid profile email`               | Requested scopes                                                                     |
-| `OIDC_CALLBACK_URL`          | `BASE_URL` + OIDC callback route     | Redirect URI registered with the provider                                            |
-| `OIDC_ALLOWED_EMAIL_DOMAINS` | unset                                | Comma list; when set, a verified email in one of these domains is required           |
-| `OIDC_GROUP_CLAIM`           | `groups`                             | ID-token claim holding group names                                                   |
-| `OIDC_ADMIN_GROUPS`          | unset                                | Comma list; when set, the admin role follows claim membership on every login         |
-| `OIDC_SYNC_GROUPS`           | `false`                              | `true` reconciles Libre group memberships with the group claim on every login        |
+| Variable                     | Default                          | Purpose                                                                                |
+| ---------------------------- | -------------------------------- | -------------------------------------------------------------------------------------- |
+| `OIDC_ISSUER_URL`            | unset                            | Issuer base URL; discovery is fetched from `<issuer>/.well-known/openid-configuration` |
+| `OIDC_CLIENT_ID`             | unset                            | OAuth client id registered with the provider                                           |
+| `OIDC_CLIENT_SECRET`         | unset                            | OAuth client secret                                                                    |
+| `OIDC_DISPLAY_NAME`          | `Single Sign-On`                 | Label shown on the login button                                                        |
+| `OIDC_SCOPES`                | `openid profile email`           | Requested scopes                                                                       |
+| `OIDC_CALLBACK_URL`          | `BASE_URL` + OIDC callback route | Redirect URI registered with the provider                                              |
+| `OIDC_ALLOWED_EMAIL_DOMAINS` | unset                            | Comma list; when set, a verified email in one of these domains is required             |
+| `OIDC_GROUP_CLAIM`           | `groups`                         | ID-token claim holding group names                                                     |
+| `OIDC_ADMIN_GROUPS`          | unset                            | Comma list; when set, the admin role follows claim membership on every login           |
+| `OIDC_SYNC_GROUPS`           | `false`                          | `true` reconciles Libre group memberships with the group claim on every login          |
 
 OIDC is enabled only when the issuer URL, client id, and client secret are all
 present. An email already used by an unlinked local account is rejected rather
@@ -335,6 +335,7 @@ selects Kubernetes when `work.enabled=true`.
 | `WORK_MAX_TASKS_GLOBAL`               | `500`                                                                                         | Maximum persisted Work tasks for the whole instance                                                         |
 | `WORK_MAX_TASKS_PER_USER`             | `100`                                                                                         | Maximum persisted Work tasks for one administrator                                                          |
 | `WORK_NETWORK_NAME`                   | `libre-webui-work`                                                                            | Managed sandbox bridge network for networked tasks                                                          |
+| `WORK_RUN_LEASE_WAIT_MS`              | `60000`                                                                                       | How long a run waits for the task's shared runtime lease before reporting a replica conflict (team mode)    |
 | `WORK_RUNTIME_DNS`                    | unset                                                                                         | Comma-separated resolver IPs forced onto networked tasks                                                    |
 | `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://` or `tcp://`, else `/var/run/docker.sock`                           | Docker Engine endpoint for terminals and diagnostics                                                        |
 | `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous browser terminals attached to one task                                                         |

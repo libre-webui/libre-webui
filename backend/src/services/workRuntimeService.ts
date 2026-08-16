@@ -90,6 +90,50 @@ const logger = createLogger('services:work-runtime');
 const PREVIEW_READY_TIMEOUT_MS = 15_000;
 const PREVIEW_POLL_INTERVAL_MS = 250;
 
+/** How long a run waits for the shared runtime lease before conflicting. */
+const runLeaseWaitMs = (): number => {
+  const parsed = Number.parseInt(process.env.WORK_RUN_LEASE_WAIT_MS ?? '', 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 60_000;
+};
+
+/**
+ * Acquire a shared runtime lease, polling until the deadline when a caller
+ * can wait. Transient holders — a racing Files helper on the app replica,
+ * task-creation prepare — release within seconds; a genuine long-lived
+ * holder on another replica still conflicts once the deadline passes.
+ */
+export const acquireSharedRuntimeLeaseWithWait = async <T>(
+  attempt: () => Promise<T | null>,
+  options: {
+    waitMs: number;
+    signal?: AbortSignal | undefined;
+    beforeRetry?: () => Promise<void>;
+  }
+): Promise<T> => {
+  const deadline = Date.now() + options.waitMs;
+  for (;;) {
+    const lease = await attempt();
+    if (lease) return lease;
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      throw new WorkRuntimeError(
+        'This Work task is active on another replica.',
+        409,
+        'WORK_RUNTIME_LEASE_CONFLICT'
+      );
+    }
+    // The sleep is actively awaited by the caller, so it must keep the
+    // event loop alive until it fires.
+    await waitForAbortSignal(
+      new Promise<void>(resolve => {
+        setTimeout(resolve, Math.min(1_000, Math.max(50, remaining)));
+      }),
+      options.signal
+    );
+    await options.beforeRetry?.();
+  }
+};
+
 interface PreviewStateHooks {
   onStarting?: () => void | Promise<void>;
   onRunning?: (
@@ -276,7 +320,8 @@ export class WorkRuntimeService {
 
   private async acquireRuntimeLease(
     task: WorkTaskRecord,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    options?: { sharedWaitMs?: number }
   ): Promise<() => void> {
     signal?.throwIfAborted();
     await this.assertTaskIsActive(task);
@@ -314,40 +359,43 @@ export class WorkRuntimeService {
         holders: 1,
       };
       if (getPlatformRuntimeConfig().mode === 'team') {
-        let abandoned = false;
-        const pendingSharedLease = getCoordinator().acquireLease(
-          `work-task-runtime:${task.id}`,
-          60_000
+        const attemptSharedLease =
+          async (): Promise<CoordinationLease | null> => {
+            let abandoned = false;
+            const pendingSharedLease = getCoordinator().acquireLease(
+              `work-task-runtime:${task.id}`,
+              60_000
+            );
+            void pendingSharedLease
+              .then(lease => {
+                if (!abandoned || !lease) return;
+                void withCoordinationTimeout(
+                  lease.release(),
+                  SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+                ).catch(() => undefined);
+              })
+              .catch(() => undefined);
+            try {
+              return await waitForAbortSignal(
+                withCoordinationTimeout(
+                  pendingSharedLease,
+                  SHARED_COORDINATION_OPERATION_TIMEOUT_MS
+                ),
+                signal
+              );
+            } catch (error) {
+              abandoned = true;
+              throw error;
+            }
+          };
+        const sharedLease = await acquireSharedRuntimeLeaseWithWait(
+          attemptSharedLease,
+          {
+            waitMs: options?.sharedWaitMs ?? 0,
+            signal,
+            beforeRetry: () => this.assertTaskIsActive(task),
+          }
         );
-        void pendingSharedLease
-          .then(lease => {
-            if (!abandoned || !lease) return;
-            void withCoordinationTimeout(
-              lease.release(),
-              SHARED_COORDINATION_OPERATION_TIMEOUT_MS
-            ).catch(() => undefined);
-          })
-          .catch(() => undefined);
-        let sharedLease: CoordinationLease | null;
-        try {
-          sharedLease = await waitForAbortSignal(
-            withCoordinationTimeout(
-              pendingSharedLease,
-              SHARED_COORDINATION_OPERATION_TIMEOUT_MS
-            ),
-            signal
-          );
-        } catch (error) {
-          abandoned = true;
-          throw error;
-        }
-        if (!sharedLease) {
-          throw new WorkRuntimeError(
-            'This Work task is active on another replica.',
-            409,
-            'WORK_RUNTIME_LEASE_CONFLICT'
-          );
-        }
         runtimeLease.sharedLease = sharedLease;
         runtimeLease.sharedLeaseTimer = setInterval(() => {
           void withCoordinationTimeout(
@@ -468,7 +516,12 @@ export class WorkRuntimeService {
     task: WorkTaskRecord,
     signal?: AbortSignal
   ): Promise<() => void> {
-    const releaseLease = await this.acquireRuntimeLease(task, signal);
+    // The run executor waits out short-lived lease holders (a racing Files
+    // helper on the app replica, task-creation prepare) instead of failing
+    // the user's first run with a replica conflict.
+    const releaseLease = await this.acquireRuntimeLease(task, signal, {
+      sharedWaitMs: runLeaseWaitMs(),
+    });
     await this.assertTaskIsActive(task);
     const active = this.preparations.get(task.id);
     if (active) {

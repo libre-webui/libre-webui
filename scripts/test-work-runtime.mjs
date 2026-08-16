@@ -3,6 +3,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import {
   mkdtempSync,
   mkdirSync,
+  readFileSync,
   realpathSync,
   rmSync,
   symlinkSync,
@@ -269,6 +270,62 @@ test('workspace helpers attach to a running sandbox when the lease is held elsew
     () => service.listFiles(task, '.'),
     error => error.code === 'WORK_RUNTIME_LEASE_CONFLICT'
   );
+});
+
+test('a run waits out a transient shared-lease holder instead of failing', async () => {
+  const { acquireSharedRuntimeLeaseWithWait } = runtimeModule;
+
+  // A racing Files helper (or task-creation prepare) holds the lease for a
+  // moment at run start; the run must poll through it and then proceed.
+  let attempts = 0;
+  let retries = 0;
+  const lease = await acquireSharedRuntimeLeaseWithWait(
+    async () => {
+      attempts += 1;
+      return attempts < 3 ? null : { token: 'acquired' };
+    },
+    {
+      waitMs: 10_000,
+      beforeRetry: async () => {
+        retries += 1;
+      },
+    }
+  );
+  assert.deepEqual(lease, { token: 'acquired' });
+  assert.equal(attempts, 3);
+  assert.equal(retries, 2);
+
+  // Callers without a wait budget (helpers, previews, stop) conflict at once.
+  await assert.rejects(
+    () => acquireSharedRuntimeLeaseWithWait(async () => null, { waitMs: 0 }),
+    error => error.code === 'WORK_RUNTIME_LEASE_CONFLICT'
+  );
+
+  // A holder that outlives the deadline is a genuine replica conflict.
+  await assert.rejects(
+    () => acquireSharedRuntimeLeaseWithWait(async () => null, { waitMs: 120 }),
+    error => error.code === 'WORK_RUNTIME_LEASE_CONFLICT'
+  );
+
+  // An aborted run stops waiting instead of holding its poll loop.
+  const controller = new AbortController();
+  const aborting = assert.rejects(
+    () =>
+      acquireSharedRuntimeLeaseWithWait(async () => null, {
+        waitMs: 10_000,
+        signal: controller.signal,
+      }),
+    error => error.code !== 'WORK_RUNTIME_LEASE_CONFLICT'
+  );
+  controller.abort(new Error('run cancelled'));
+  await aborting;
+
+  // The run executor is the caller that opts into the wait.
+  const source = readFileSync(
+    path.join(repoRoot, 'backend', 'src', 'services', 'workRuntimeService.ts'),
+    'utf8'
+  );
+  assert.match(source, /sharedWaitMs: runLeaseWaitMs\(\)/);
 });
 
 test('runtime limits expose admission capacity and live occupancy', () => {
