@@ -37,6 +37,19 @@ const TITLE_GENERATION_OPTIONS: GenerationOptions = {
   num_predict: 20,
 };
 
+/**
+ * Providers reached over the plugin path cannot be told to skip reasoning the
+ * way a local Ollama call can (`think: false`). A reasoning model spends the
+ * whole budget thinking and returns empty content, which used to surface as
+ * "could not generate a title", so give that path room to think and still
+ * answer. Only the visible content is read, and the result is trimmed to a
+ * title afterwards.
+ */
+const PLUGIN_TITLE_GENERATION_OPTIONS: GenerationOptions = {
+  temperature: 0.3,
+  num_predict: 512,
+};
+
 const TITLE_STOP_SEQUENCES = ['\n', '.', '!', '?'];
 
 export interface GenerateTitleForSessionOptions {
@@ -313,7 +326,7 @@ export class TitleGenerationService {
             timestamp: this.now(),
           },
         ],
-        target.mergedOptions,
+        { ...target.mergedOptions, ...PLUGIN_TITLE_GENERATION_OPTIONS },
         userId,
         target.activePlugin.id
       );
