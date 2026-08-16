@@ -106,6 +106,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
                   borderRadius={0}
                   customStyle={messageCodeBodyStyle}
                   className='!m-0 !rounded-none !border-none'
+                  showLineNumbers
                 >
                   {codeString}
                 </LazySyntaxHighlighter>

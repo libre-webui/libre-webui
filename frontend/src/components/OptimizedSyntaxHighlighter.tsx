@@ -52,6 +52,9 @@ interface OptimizedSyntaxHighlighterProps {
   backgroundColor?: string;
   borderRadius?: string | number;
   customStyle?: React.CSSProperties;
+  showLineNumbers?: boolean;
+  /** Rendered as the outer pre; lets callers own scrolling and refs. */
+  preTag?: React.ComponentType<React.HTMLAttributes<HTMLPreElement>>;
 }
 
 const languageMap: Record<string, string> = {
@@ -121,13 +124,18 @@ export const OptimizedSyntaxHighlighter: React.FC<
   backgroundColor,
   borderRadius = '0.5rem',
   customStyle,
+  showLineNumbers = false,
+  preTag,
 }) => {
   const normalizedLanguage =
     languageMap[language.toLowerCase()] || language.toLowerCase();
 
   if (!supportedLanguages.has(normalizedLanguage)) {
+    // The plain fallback must still honor the caller's pre element so
+    // scroll ownership (streaming tail-follow) survives unknown languages.
+    const PlainPre = preTag ?? 'pre';
     return (
-      <pre
+      <PlainPre
         dir='ltr'
         style={{
           ...customStyle,
@@ -136,7 +144,7 @@ export const OptimizedSyntaxHighlighter: React.FC<
         className={`${isDark ? 'bg-[#0D1117] text-[#E6EDF3]' : 'bg-gray-100 text-gray-900'} overflow-x-auto rounded-lg p-3 text-left font-mono text-sm ${className}`}
       >
         <code className=''>{children}</code>
-      </pre>
+      </PlainPre>
     );
   }
 
@@ -160,7 +168,14 @@ export const OptimizedSyntaxHighlighter: React.FC<
             ? { background: backgroundColor, backgroundColor }
             : {}),
         }}
-        showLineNumbers={false}
+        showLineNumbers={showLineNumbers}
+        lineNumberStyle={{
+          minWidth: '2.5em',
+          paddingRight: '1.25em',
+          color: isDark ? '#6E7681' : '#9CA3AF',
+          userSelect: 'none',
+        }}
+        {...(preTag ? { PreTag: preTag } : {})}
       >
         {children}
       </SyntaxHighlighter>
