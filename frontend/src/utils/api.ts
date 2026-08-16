@@ -35,6 +35,7 @@ export type {
   UserGroupMember,
 } from './api/adminSecurityApi';
 export { chatApi } from './api/chatApi';
+export type { CompactionConfig } from './api/chatApi';
 export { documentsApi, embeddingApi } from './api/documentsApi';
 export { notesApi } from './api/notesApi';
 export { searchApi } from './api/searchApi';

@@ -28,6 +28,19 @@ import { API_BASE_URL } from '@/utils/config';
 import { api, createDemoResponse, logger } from './client';
 import { DEMO_SESSIONS, getDemoSessions } from './demoData';
 
+/** Server-wide context compaction settings, managed by administrators. */
+export interface CompactionConfig {
+  enabled: boolean;
+  /** Estimated tokens above which older history is summarized. */
+  thresholdTokens: number;
+  /** Recent messages always kept verbatim. */
+  keepRecentMessages: number;
+  /** Summarizer model; empty string means "the session's own model". */
+  model: string;
+  /** Custom prompt; empty string means the built-in prompt. */
+  prompt: string;
+}
+
 export const chatApi = {
   // Sessions
   getSessions: (): Promise<ApiResponse<ChatSession[]>> => {
@@ -378,5 +391,37 @@ export const chatApi = {
         }
       )
       .then(res => res.data);
+  },
+
+  // Context compaction settings (read: any user, write: admin)
+  getCompactionConfig: (): Promise<ApiResponse<CompactionConfig>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<CompactionConfig>({
+        enabled: false,
+        thresholdTokens: 8000,
+        keepRecentMessages: 8,
+        model: '',
+        prompt: '',
+      });
+    }
+    return api.get('/chat/compaction-config').then(res => res.data);
+  },
+
+  setCompactionConfig: (
+    update: Partial<CompactionConfig>
+  ): Promise<ApiResponse<CompactionConfig>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<CompactionConfig>(
+        {
+          enabled: false,
+          thresholdTokens: 8000,
+          keepRecentMessages: 8,
+          model: '',
+          prompt: '',
+        },
+        false
+      );
+    }
+    return api.put('/chat/compaction-config', update).then(res => res.data);
   },
 };

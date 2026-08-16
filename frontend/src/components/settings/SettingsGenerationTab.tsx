@@ -16,10 +16,14 @@
  */
 
 import { Check, ChevronDown, RotateCcw } from 'lucide-react';
-import { useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Select } from '@/components/ui';
+import { toast } from 'react-hot-toast';
+import { Button, Select, Textarea } from '@/components/ui';
 import { cn } from '@/utils';
+import { chatApi } from '@/utils/api';
+import { useAuthStore } from '@/store/authStore';
+import { useChatStore } from '@/store/chatStore';
 import type {
   EmbeddingStatus,
   GenerationOptions,
@@ -457,6 +461,224 @@ export function SettingsGenerationTab({
               </Button>
             </div>
           </div>
+        </div>
+
+        <ContextCompactionSection />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Administrator configuration for context compaction. Compaction is a
+ * server-wide setting: when a conversation grows past the token threshold,
+ * the backend summarizes the older messages and keeps only the recent ones
+ * verbatim, so the section is only shown to administrators.
+ */
+function ContextCompactionSection() {
+  const { t } = useTranslation();
+  const authUser = useAuthStore(state => state.user);
+  const systemInfo = useAuthStore(state => state.systemInfo);
+  const isAdmin =
+    authUser?.role === 'admin' || systemInfo?.requiresAuth === false;
+  const models = useChatStore(state => state.models);
+
+  const [enabled, setEnabled] = useState(false);
+  const [thresholdTokens, setThresholdTokens] = useState('8000');
+  const [keepRecentMessages, setKeepRecentMessages] = useState('8');
+  const [model, setModel] = useState('');
+  const [prompt, setPrompt] = useState('');
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    chatApi
+      .getCompactionConfig()
+      .then(response => {
+        if (cancelled || !response.success || !response.data) return;
+        setEnabled(response.data.enabled);
+        setThresholdTokens(String(response.data.thresholdTokens));
+        setKeepRecentMessages(String(response.data.keepRecentMessages));
+        setModel(response.data.model);
+        setPrompt(response.data.prompt);
+        setLoaded(true);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
+
+  if (!isAdmin) return null;
+
+  // Personas and agent CLIs are not summarizers; the backend resolves the
+  // value as a plain model name, so only real chat models are offered.
+  const selectableModels = models.filter(
+    candidate => !candidate.isPersona && !candidate.isAgent
+  );
+  const modelOptions = [
+    { value: '', label: t('settings.compaction.sessionModelOption') },
+    ...selectableModels.map(candidate => ({
+      value: candidate.name,
+      label: candidate.isPlugin
+        ? `${candidate.name} · ${candidate.pluginName || candidate.pluginId}`
+        : `${candidate.name} · Ollama`,
+    })),
+    ...(model && !selectableModels.some(candidate => candidate.name === model)
+      ? [{ value: model, label: `${model} (current)` }]
+      : []),
+  ];
+
+  const save = async (nextEnabled = enabled) => {
+    const parsedThreshold = Number(thresholdTokens);
+    if (
+      !Number.isInteger(parsedThreshold) ||
+      parsedThreshold < 500 ||
+      parsedThreshold > 1_000_000
+    ) {
+      toast.error(t('settings.compaction.thresholdInvalid'));
+      return;
+    }
+    const parsedKeepRecent = Number(keepRecentMessages);
+    if (
+      !Number.isInteger(parsedKeepRecent) ||
+      parsedKeepRecent < 2 ||
+      parsedKeepRecent > 200
+    ) {
+      toast.error(t('settings.compaction.keepRecentInvalid'));
+      return;
+    }
+    setSaving(true);
+    try {
+      const response = await chatApi.setCompactionConfig({
+        enabled: nextEnabled,
+        thresholdTokens: parsedThreshold,
+        keepRecentMessages: parsedKeepRecent,
+        model,
+        prompt,
+      });
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Compaction settings update failed.');
+      }
+      setEnabled(response.data.enabled);
+      setThresholdTokens(String(response.data.thresholdTokens));
+      setKeepRecentMessages(String(response.data.keepRecentMessages));
+      setModel(response.data.model);
+      setPrompt(response.data.prompt);
+      toast.success(t('settings.compaction.saved'));
+    } catch (error) {
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : t('settings.compaction.saveFailed')
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className='mt-6'>
+      <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+        <div className='flex items-center justify-between gap-4 mb-1'>
+          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+            {t('settings.compaction.title')}
+          </label>
+          <SettingsToggle
+            checked={enabled}
+            onChange={checked => {
+              setEnabled(checked);
+              void save(checked);
+            }}
+            disabled={saving || !loaded}
+          />
+        </div>
+        <p className='text-xs text-gray-500 dark:text-gray-400 mb-4'>
+          {t('settings.compaction.description')}
+        </p>
+
+        <div className='space-y-4'>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div>
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                {t('settings.compaction.thresholdLabel')}
+              </label>
+              <input
+                type='number'
+                min={500}
+                max={1000000}
+                step={500}
+                value={thresholdTokens}
+                onChange={event => setThresholdTokens(event.target.value)}
+                className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+              />
+              <p className='text-xs text-gray-500 mt-1'>
+                {t('settings.compaction.thresholdDescription')}
+              </p>
+            </div>
+            <div>
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                {t('settings.compaction.keepRecentLabel')}
+              </label>
+              <input
+                type='number'
+                min={2}
+                max={200}
+                value={keepRecentMessages}
+                onChange={event => setKeepRecentMessages(event.target.value)}
+                className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+              />
+              <p className='text-xs text-gray-500 mt-1'>
+                {t('settings.compaction.keepRecentDescription')}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              {t('settings.compaction.modelLabel')}
+            </label>
+            <Select
+              value={model}
+              onChange={event => setModel(event.target.value)}
+              options={modelOptions}
+            />
+            <p className='text-xs text-gray-500 mt-1'>
+              {t('settings.compaction.modelDescription')}
+            </p>
+          </div>
+
+          <div>
+            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              {t('settings.compaction.promptLabel')}
+            </label>
+            <Textarea
+              value={prompt}
+              onChange={event => setPrompt(event.target.value)}
+              rows={5}
+              placeholder={t('settings.compaction.promptPlaceholder')}
+              spellCheck={false}
+            />
+            <p className='text-xs text-gray-500 mt-1'>
+              {t('settings.compaction.promptDescription', {
+                previousSummaryVariable: '{{PREVIOUS_SUMMARY}}',
+                messagesVariable: '{{MESSAGES}}',
+              })}
+            </p>
+          </div>
+        </div>
+
+        <div className='flex justify-end items-center mt-4'>
+          <Button
+            onClick={() => void save()}
+            disabled={saving || !loaded}
+            className='flex items-center gap-2'
+          >
+            <Check size={16} />
+            {t('settings.saveSettings')}
+          </Button>
         </div>
       </div>
     </div>
