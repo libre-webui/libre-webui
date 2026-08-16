@@ -105,6 +105,7 @@ class PreferencesService {
     showFollowUpSuggestions: true, // Suggest follow-up messages after responses
     hapticFeedbackEnabled: false,
     workRemoteProviderDisclosureDismissed: false,
+    pinnedNavItems: [],
   };
 
   constructor() {

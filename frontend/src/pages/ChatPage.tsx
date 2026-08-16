@@ -22,16 +22,19 @@ import React, {
   useRef,
   useMemo,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowUp,
+  GripVertical,
   Plus,
   Paperclip,
   Minus,
   Ghost,
   Globe,
   SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
@@ -70,6 +73,11 @@ import {
 } from '@/utils/welcomePrompts';
 
 const logger = createLogger('pages:chat-page');
+
+// Floating chat overlay geometry
+const CHAT_OVERLAY_WIDTH = 380;
+const CHAT_OVERLAY_HEIGHT = 480;
+const CHAT_OVERLAY_MARGIN = 16;
 
 interface WelcomePrompt {
   id: WelcomePromptId;
@@ -668,6 +676,124 @@ export const ChatPage: React.FC = () => {
     sendMessage(message, images, format, webSearch);
   };
 
+  // --- Floating chat overlay -----------------------------------------------
+  // Rendered from this page so it reuses the useChat instance above; a second
+  // hook instance would silently steal the WebSocket message handlers.
+  const chatOverlayOpen = useAppStore(state => state.chatOverlayOpen);
+  const setChatOverlayOpen = useAppStore(state => state.setChatOverlayOpen);
+  const [overlayPosition, setOverlayPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [overlayDragging, setOverlayDragging] = useState(false);
+  const overlayPointerIdRef = useRef<number | null>(null);
+  const overlayFrameRef = useRef<number | null>(null);
+  const overlayPendingRef = useRef({ x: 0, y: 0 });
+  const overlayDragStartRef = useRef({ pointerX: 0, pointerY: 0, x: 0, y: 0 });
+
+  const effectiveOverlayPosition = overlayPosition ?? {
+    x: CHAT_OVERLAY_MARGIN,
+    y: Math.max(
+      CHAT_OVERLAY_MARGIN,
+      window.innerHeight - CHAT_OVERLAY_HEIGHT - CHAT_OVERLAY_MARGIN
+    ),
+  };
+
+  const clampOverlayPosition = useCallback((x: number, y: number) => {
+    const maxX = window.innerWidth - CHAT_OVERLAY_WIDTH - 8;
+    const maxY = window.innerHeight - 56;
+    return {
+      x: Math.min(Math.max(x, 8), Math.max(8, maxX)),
+      y: Math.min(Math.max(y, 8), Math.max(8, maxY)),
+    };
+  }, []);
+
+  const scheduleOverlayPosition = useCallback(
+    (position: { x: number; y: number }) => {
+      overlayPendingRef.current = position;
+      if (overlayFrameRef.current !== null) return;
+      overlayFrameRef.current = window.requestAnimationFrame(() => {
+        overlayFrameRef.current = null;
+        setOverlayPosition(overlayPendingRef.current);
+      });
+    },
+    []
+  );
+
+  const handleOverlayDragEnd = useCallback(() => {
+    overlayPointerIdRef.current = null;
+    setOverlayDragging(false);
+    if (overlayFrameRef.current !== null) {
+      window.cancelAnimationFrame(overlayFrameRef.current);
+      overlayFrameRef.current = null;
+      setOverlayPosition(overlayPendingRef.current);
+    }
+  }, []);
+
+  const handleOverlayDragMove = useCallback(
+    (e: PointerEvent) => {
+      if (
+        overlayPointerIdRef.current === null ||
+        e.pointerId !== overlayPointerIdRef.current
+      ) {
+        return;
+      }
+      e.preventDefault();
+      const start = overlayDragStartRef.current;
+      scheduleOverlayPosition(
+        clampOverlayPosition(
+          start.x + e.clientX - start.pointerX,
+          start.y + e.clientY - start.pointerY
+        )
+      );
+    },
+    [clampOverlayPosition, scheduleOverlayPosition]
+  );
+
+  const handleOverlayDragStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const position = effectiveOverlayPosition;
+    overlayPointerIdRef.current = e.pointerId;
+    overlayDragStartRef.current = {
+      pointerX: e.clientX,
+      pointerY: e.clientY,
+      x: position.x,
+      y: position.y,
+    };
+    overlayPendingRef.current = position;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setOverlayDragging(true);
+  };
+
+  useEffect(() => {
+    if (!overlayDragging) return undefined;
+
+    const handlePointerEnd = (e: PointerEvent) => {
+      if (
+        overlayPointerIdRef.current === null ||
+        e.pointerId === overlayPointerIdRef.current
+      ) {
+        handleOverlayDragEnd();
+      }
+    };
+
+    window.addEventListener('pointermove', handleOverlayDragMove, {
+      passive: false,
+    });
+    window.addEventListener('pointerup', handlePointerEnd);
+    window.addEventListener('pointercancel', handlePointerEnd);
+    window.addEventListener('blur', handleOverlayDragEnd);
+    document.body.style.userSelect = 'none';
+
+    return () => {
+      window.removeEventListener('pointermove', handleOverlayDragMove);
+      window.removeEventListener('pointerup', handlePointerEnd);
+      window.removeEventListener('pointercancel', handlePointerEnd);
+      window.removeEventListener('blur', handleOverlayDragEnd);
+      document.body.style.userSelect = '';
+    };
+  }, [overlayDragging, handleOverlayDragMove, handleOverlayDragEnd]);
+
   if (!currentSession) {
     const hasAdvancedFeatures = welcomeImages.length > 0;
 
@@ -1041,6 +1167,72 @@ export const ChatPage: React.FC = () => {
           />
         </div>
       </div>
+
+      {chatOverlayOpen &&
+        createPortal(
+          <>
+            {/* Transparent shield: iframes (artifact sandboxes) would
+                otherwise swallow pointermove events during the drag. */}
+            {overlayDragging && (
+              <div
+                className='fixed inset-0 z-[65] cursor-grabbing select-none'
+                aria-hidden='true'
+              />
+            )}
+            <div
+              data-testid='floating-chat-overlay'
+              className='fixed z-[70] flex w-[380px] max-w-[calc(100vw-1rem)] flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-surface shadow-2xl dark:border-white/[0.1] dark:bg-dark-25'
+              style={{
+                left: effectiveOverlayPosition.x,
+                top: effectiveOverlayPosition.y,
+                height: `min(${CHAT_OVERLAY_HEIGHT}px, calc(100dvh - 1rem))`,
+              }}
+            >
+              <div
+                onPointerDown={handleOverlayDragStart}
+                className={cn(
+                  'flex shrink-0 touch-none select-none items-center justify-between border-b border-black/[0.06] bg-gray-50 px-3 py-2 dark:border-white/[0.07] dark:bg-dark-100/50',
+                  overlayDragging ? 'cursor-grabbing' : 'cursor-grab'
+                )}
+              >
+                <div className='flex min-w-0 items-center gap-2 text-gray-500 dark:text-dark-600'>
+                  <GripVertical className='h-3.5 w-3.5 shrink-0' />
+                  <span className='truncate text-xs font-medium'>
+                    {t('chat.overlay.title')}
+                  </span>
+                </div>
+                <button
+                  type='button'
+                  onClick={() => setChatOverlayOpen(false)}
+                  onPointerDown={e => e.stopPropagation()}
+                  aria-label={t('chat.overlay.close')}
+                  title={t('chat.overlay.close')}
+                  className='flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-black/[0.06] hover:text-gray-700 dark:hover:bg-white/[0.08] dark:hover:text-dark-800'
+                >
+                  <X className='h-3.5 w-3.5' />
+                </button>
+              </div>
+              <ChatMessages
+                messages={currentSession.messages}
+                streamingMessage={streamingMessage}
+                streamingThinking={streamingThinking}
+                streamingMessageId={streamingMessageId}
+                isStreaming={isStreaming}
+                toolActivities={toolActivities}
+                onRegenerate={regenerateLastMessage}
+                onSelectBranch={selectBranch}
+                onEditResend={editAndResendMessage}
+                className='min-h-0 flex-1'
+              />
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                onStopGeneration={stopGeneration}
+                disabled={!currentSession}
+              />
+            </div>
+          </>,
+          document.body
+        )}
     </div>
   );
 };

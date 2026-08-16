@@ -368,6 +368,7 @@ const preferenceKeys = new Set<keyof UserPreferences>([
   'showFollowUpSuggestions',
   'hapticFeedbackEnabled',
   'workRemoteProviderDisclosureDismissed',
+  'pinnedNavItems',
   'backgroundSettings',
 ]);
 
@@ -399,6 +400,9 @@ const booleanPreferenceKeys = new Set([
   'hapticFeedbackEnabled',
   'workRemoteProviderDisclosureDismissed',
 ]);
+
+// Preferences whose value is a flat array of short strings.
+const arrayPreferenceKeys = new Set(['pinnedNavItems']);
 
 const providerPreferenceKeys = new Set([
   'defaultProviderType',
@@ -433,6 +437,15 @@ function normalizePreferences(
         );
       }
       preferences[key] = entry;
+    } else if (arrayPreferenceKeys.has(key)) {
+      if (!Array.isArray(entry)) {
+        throw new DataArchiveValidationError(
+          `preferences.${key} must be an array`
+        );
+      }
+      preferences[key] = entry.map((item, index) =>
+        requireString(item, `preferences.${key}[${index}]`, MAX_ID_LENGTH)
+      );
     } else if (providerPreferenceKeys.has(key)) {
       if (
         entry !== null &&

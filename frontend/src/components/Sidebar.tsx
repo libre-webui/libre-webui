@@ -35,6 +35,7 @@ import { triggerHapticFeedback } from '@/utils/haptics';
 import { AvatarModal } from '@/components/sidebar/AvatarModal';
 import { SidebarHeader } from '@/components/sidebar/SidebarHeader';
 import { SidebarNavigation } from '@/components/sidebar/SidebarNavigation';
+import { SidebarPinnedNavigation } from '@/components/sidebar/SidebarPinnedNavigation';
 import { SidebarSessions } from '@/components/sidebar/SidebarSessions';
 import { SidebarUserSection } from '@/components/sidebar/SidebarUserSection';
 import { SidebarWorkTasks } from '@/components/sidebar/SidebarWorkTasks';
@@ -406,6 +407,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               sidebarCompact={sidebarCompact}
               activePath={location.pathname}
               showAgents={canUseAgents()}
+              onMobileNavigate={compactOnMobile}
+            />
+          )}
+
+          {!sidebarCompact && (
+            <SidebarPinnedNavigation
+              activePath={location.pathname}
+              showAgents={canUseAgents()}
+              showAdmin={systemInfo?.requiresAuth === false || admin}
               onMobileNavigate={compactOnMobile}
             />
           )}
