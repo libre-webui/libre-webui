@@ -1501,7 +1501,7 @@ test('shows tool activity, saves files, and isolates preview content', async ({
   );
   await expect(frame).toHaveAttribute(
     'sandbox',
-    'allow-scripts allow-forms allow-modals allow-downloads'
+    'allow-scripts allow-forms allow-modals allow-downloads allow-pointer-lock'
   );
   await expect(frame).not.toHaveAttribute('sandbox', /allow-same-origin/);
   await expect(frame).not.toHaveAttribute('sandbox', /allow-popups/);

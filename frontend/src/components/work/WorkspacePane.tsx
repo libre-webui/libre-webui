@@ -1092,7 +1092,10 @@ export function WorkspacePane({
                 defaultValue: 'Workspace preview',
               })}
               src={previewUrl}
-              sandbox='allow-scripts allow-forms allow-modals allow-downloads'
+              // allow-pointer-lock: previewed games and 3D scenes need mouse
+              // capture; it requires a user gesture and keeps the opaque
+              // origin, so it does not weaken the isolation boundary.
+              sandbox='allow-scripts allow-forms allow-modals allow-downloads allow-pointer-lock'
               referrerPolicy='no-referrer'
               className='min-h-0 flex-1 border-0 bg-white'
             />

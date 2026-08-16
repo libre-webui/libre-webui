@@ -108,14 +108,32 @@ const signupRateLimiter = coordinatedRateLimit({
   message: 'Too many authentication attempts, please try again later',
 });
 
-// Rate limiter for general auth routes: 100 requests per 15 minutes
+// Rate limiter for general auth routes. This bucket also serves the session
+// and API-token management endpoints, so it is sized to never starve an
+// interactive user; the credential endpoints keep their own strict
+// coordinated limiters above.
 const generalAuthRateLimiter = rateLimit({
   keyPrefix: 'auth-general',
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 300, // limit each IP to 300 requests per windowMs
   message: {
     success: false,
     message: 'Too many requests, please try again later',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// WebSocket tickets get their own bucket: every chat reconnect consumes one,
+// and a reconnect storm competing with sign-in traffic must not lock either
+// out. The ticket service additionally enforces per-user and global quotas.
+const ticketRateLimiter = rateLimit({
+  keyPrefix: 'auth-ticket',
+  windowMs: 5 * 60 * 1000,
+  max: 120,
+  message: {
+    success: false,
+    message: 'Too many WebSocket ticket requests, please try again later',
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -128,7 +146,7 @@ const generalAuthRateLimiter = rateLimit({
  */
 router.post(
   '/websocket-ticket',
-  generalAuthRateLimiter,
+  ticketRateLimiter,
   authenticate,
   async (req: AuthenticatedRequest, res) => {
     res.set('Cache-Control', 'no-store');
