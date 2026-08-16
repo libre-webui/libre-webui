@@ -15,6 +15,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.23.0] - 2026-08-16
+
+The trust release. Accounts get real sessions you can revoke, scoped API keys, administrator-managed groups, a sharing-grant foundation, sign-in with any OpenID Connect provider, and a security audit log — all working identically on SQLite and PostgreSQL deployments. Also fixes two Work bugs, including one that could take the whole server down.
+
+### ✨ New Features
+
+- **Sessions you can see and sign out.** Every sign-in now creates a server-side session bound into its token. Settings → Sessions lists each device with its sign-in method and activity; revoking one (or "Sign out other sessions") invalidates that token immediately on every replica and closes its live chat and terminal connections. Logout now really signs the token out instead of only clearing the browser.
+- **Scoped API keys.** Settings → API keys mints personal tokens for scripts and integrations. Each key carries an explicit scope list (chat, models, documents, notes, personas, media, work, admin), is shown once and stored only as a hash, supports expiry, tracks last use, is rate-limited per key, and can be revoked at any time. A notes-only key cannot touch chats or administration, and session management is never reachable with a key.
+- **Groups.** Administrators can create groups and manage memberships from the User Management page. Membership is evaluated live, so removing someone revokes group-granted access immediately. A new "effective access" view answers "why can this account access this?" — role, groups, feature access, and every grant that reaches the user.
+- **Resource sharing grants (foundation).** One private-by-default grant model for chats, notes, documents, knowledge collections, folders, and personas: owners can grant read, write, or admin access to a user or a group through the new access API, and group-shared retrieval is plumbed all the way into vector search. Every access decision now flows through a single authorization service — the global admin role deliberately grants no access to other people's content. Sharing UI arrives in a later release; the machinery and API ship now.
+- **Sign in with any OpenID Connect provider.** Keycloak, Authentik, Authelia, Okta, Entra ID, Google Workspace, and friends — configured with three environment variables. The flow uses PKCE, CSRF state, and a nonce verified inside the signature-checked ID token; identities link on the stable subject claim, so a renamed provider account keeps its Libre account. Optional policies: allowed email domains, admin-role mapping from a group claim, and per-login group membership sync.
+- **Security audit log.** Sign-ins and failures, logouts, session and key revocations, and user, group, and grant changes are recorded in an append-only log that is separate from usage analytics. Details are redacted before storage — secrets and prompt content can never enter the log — and group/grant changes commit in the same database transaction as their audit event, so a change cannot exist without its trail. Administrators query it from the User Management page; retention defaults to 180 days.
+
+### 🔧 Improvements
+
+- Work, model download, web search, and agent access checks now flow through the same central authorization service as resource grants, with unchanged semantics.
+- New schema migration on both backends (SQLite v14, PostgreSQL v13) creates the seven trust-foundation tables; applied automatically on upgrade.
+- All new interface text is translated in all 25 languages.
+
+### 🐛 Bug Fixes
+
+- **A long Work response no longer crashes the server.** Work streamed each progress event with the full accumulated reply attached, so once a response passed 64 KiB the durable event log rejected the payload — and the unhandled rejection killed the process. Durable copies of delta events now carry only the delta, oversized payloads are bounded instead of rejected, and a durable append failure can never take a running task down — live viewers keep receiving events either way.
+- **Work's Files pane works during runs on team deployments.** While the external worker was executing a task, the app replica could not acquire the task's runtime lease and answered file browsing with "This Work task is active on another replica." File helpers now attach to the running sandbox when the lease holder is the deployment's own worker.
+
+### 📚 Documentation
+
+- Authentication, single sign-on, and environment variable docs cover sessions, API keys, groups, grants, the audit log, and the full OIDC configuration reference.
+
 ## [0.22.1] - 2026-08-15
 
 A same-day repair release for 0.22.0. If 0.22.0 refused to start after an upgrade with "Invalid platform storage encryption configuration", or the interface came up empty after signing in, this release fixes both — no manual steps needed.
