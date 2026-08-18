@@ -352,10 +352,11 @@ export const ChatPage: React.FC = () => {
   const welcomeThinkingAvailable = Boolean(
     selectedModel &&
     !selectedModelEntry?.isAgent &&
-    (selectedModelEntry?.isPlugin ||
-      (welcomeThinkingSupport?.model === selectedModel
+    (selectedModelEntry?.isPlugin
+      ? selectedModelEntry.reasoningSupport !== false
+      : welcomeThinkingSupport?.model === selectedModel
         ? welcomeThinkingSupport.supported !== false
-        : true))
+        : true)
   );
 
   const setWelcomeThinking = (think: ThinkingPreference | null) => {

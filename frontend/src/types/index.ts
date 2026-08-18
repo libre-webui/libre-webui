@@ -148,6 +148,12 @@ export interface OllamaModel {
    * published.
    */
   contextLength?: number;
+  /**
+   * Whether the model reasons, when the provider's listing or its family
+   * says. Absent means unknown, and unknown keeps the thinking control
+   * offered — the same fail-open rule Ollama models follow.
+   */
+  reasoningSupport?: boolean;
 }
 
 /** How hard a model should think: off, on, or one of the named levels. */
@@ -449,6 +455,8 @@ export interface Plugin {
   model_map: string[];
   /** Context window per model, where the provider publishes one. */
   model_context?: Record<string, number>;
+  /** Whether each model reasons, where that is knowable; absent is unknown. */
+  model_reasoning?: Record<string, boolean>;
   capabilities?: PluginCapabilities;
   variables?: PluginVariableDefinition[];
   active?: boolean;

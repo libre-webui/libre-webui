@@ -452,7 +452,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const thinkingAvailable = Boolean(
     currentSession &&
     !activeModelEntry?.isAgent &&
-    (activeModelEntry?.isPlugin || ollamaThinkingSupported !== false)
+    (activeModelEntry?.isPlugin
+      ? activeModelEntry.reasoningSupport !== false
+      : ollamaThinkingSupported !== false)
   );
 
   // How full the model's context is. The window comes from the same settings

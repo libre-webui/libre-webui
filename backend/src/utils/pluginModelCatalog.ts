@@ -81,6 +81,101 @@ export function readModelContextLength(
 /** Context windows by model id, for the models that report one. */
 export type PluginModelContextMap = Record<string, number>;
 
+/** Reasoning support by model id, for the models where it is knowable. */
+export type PluginModelReasoningMap = Record<string, boolean>;
+
+/**
+ * Whether one listing entry says its model can reason. OpenRouter publishes
+ * `supported_parameters` for every model, so on entries that carry the array
+ * its silence is a real "no"; other providers say nothing, and nothing is
+ * recorded rather than guessed here — the name heuristic below is the
+ * fallback, kept separate because a listing's own answer must win.
+ */
+export function readModelReasoningSupport(
+  entry: Record<string, unknown> | undefined
+): boolean | undefined {
+  if (!entry) return undefined;
+
+  const supportedParameters = entry.supported_parameters;
+  if (Array.isArray(supportedParameters)) {
+    return supportedParameters.some(
+      parameter =>
+        parameter === 'reasoning' ||
+        parameter === 'include_reasoning' ||
+        parameter === 'reasoning_effort'
+    );
+  }
+
+  const capabilities = entry.capabilities;
+  if (
+    Array.isArray(capabilities) &&
+    capabilities.some(
+      capability => capability === 'reasoning' || capability === 'thinking'
+    )
+  ) {
+    return true;
+  }
+
+  if (entry.reasoning === true) return true;
+
+  return undefined;
+}
+
+/**
+ * What a model's name says about reasoning, for the providers whose listings
+ * say nothing. This is a maintained table of the major families: a wrong
+ * "true" costs a provider error the user can act on, a wrong "false" hides a
+ * working control, and an unknown name stays undefined — offered, like an
+ * Ollama model that reports no capabilities.
+ */
+export function inferReasoningFromModelId(id: string): boolean | undefined {
+  const name = id.toLowerCase();
+  const tail = name.split('/').pop() ?? name;
+
+  // OpenAI: the o-series, gpt-5 family, and gpt-oss reason; the gpt-4/4o and
+  // earlier chat families do not.
+  if (/^o[134](-|$)/.test(tail) || tail.startsWith('gpt-5')) return true;
+  if (tail.includes('gpt-oss')) return true;
+  if (/^(chatgpt-|gpt-4|gpt-3)/.test(tail)) return false;
+
+  // Anthropic: extended thinking exists from Claude 3.7 on. Everything older
+  // — Claude 3.x, Claude 2, Instant — predates it.
+  if (tail.includes('claude')) {
+    return !/claude-(3-[05]|3-(haiku|sonnet|opus)|2|instant)/.test(tail);
+  }
+
+  // Gemini: thinking arrived with 2.5; 2.0 only in the models that carry
+  // "thinking" in the name.
+  if (tail.includes('gemini')) {
+    if (tail.includes('thinking')) return true;
+    const generation = /gemini-(\d+(?:\.\d+)?)/.exec(tail);
+    return generation ? Number(generation[1]) >= 2.5 : undefined;
+  }
+
+  // Open reasoning families served through providers.
+  if (/(^|[^a-z])r1([^a-z]|$)/.test(tail) || tail.includes('qwq')) return true;
+
+  return undefined;
+}
+
+export function readModelReasoningMap(
+  entries: readonly unknown[]
+): PluginModelReasoningMap {
+  const reasoning: PluginModelReasoningMap = {};
+
+  for (const entry of entries) {
+    if (!entry || typeof entry !== 'object') continue;
+    const record = entry as Record<string, unknown>;
+    const id = record.id;
+    if (typeof id !== 'string' || id.length === 0) continue;
+    const support =
+      readModelReasoningSupport(record) ?? inferReasoningFromModelId(id);
+    if (support !== undefined) reasoning[id] = support;
+  }
+
+  return reasoning;
+}
+
 export function readModelContextMap(
   entries: readonly unknown[]
 ): PluginModelContextMap {
@@ -101,6 +196,7 @@ export function readModelContextMap(
 export interface DiscoveredPluginCatalog {
   models: string[];
   modelContext?: PluginModelContextMap;
+  modelReasoning?: PluginModelReasoningMap;
   /**
    * Whether the catalog was written before context windows were captured. Such
    * a catalog cannot be told apart from a provider that simply publishes none,
@@ -124,6 +220,7 @@ export function serializeDiscoveredCatalog(
     version: 1,
     models: catalog.models,
     context: catalog.modelContext ?? {},
+    reasoning: catalog.modelReasoning ?? {},
   });
 }
 
@@ -146,6 +243,9 @@ export function parseDiscoveredCatalog(
     return { models: uniqueModels(parsed), legacy: true };
   }
 
+  // An object catalog missing the reasoning key was written before reasoning
+  // support was captured; like the plain-array form it earns one refresh.
+
   if (!parsed || typeof parsed !== 'object') {
     return { models: [] };
   }
@@ -159,15 +259,29 @@ export function parseDiscoveredCatalog(
       ? (record.context as Record<string, unknown>)
       : undefined;
 
-  if (!context) return { models };
-
   const modelContext: PluginModelContextMap = {};
-  for (const [model, length] of Object.entries(context)) {
-    const contextLength = asContextLength(length);
-    if (contextLength !== undefined) modelContext[model] = contextLength;
+  if (context) {
+    for (const [model, length] of Object.entries(context)) {
+      const contextLength = asContextLength(length);
+      if (contextLength !== undefined) modelContext[model] = contextLength;
+    }
   }
 
-  return Object.keys(modelContext).length > 0
-    ? { models, modelContext }
-    : { models };
+  const reasoning =
+    record.reasoning && typeof record.reasoning === 'object'
+      ? (record.reasoning as Record<string, unknown>)
+      : undefined;
+  const modelReasoning: PluginModelReasoningMap = {};
+  if (reasoning) {
+    for (const [model, support] of Object.entries(reasoning)) {
+      if (typeof support === 'boolean') modelReasoning[model] = support;
+    }
+  }
+
+  return {
+    models,
+    ...(Object.keys(modelContext).length > 0 ? { modelContext } : {}),
+    ...(Object.keys(modelReasoning).length > 0 ? { modelReasoning } : {}),
+    ...('reasoning' in record ? {} : { legacy: true }),
+  };
 }

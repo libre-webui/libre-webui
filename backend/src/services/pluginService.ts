@@ -65,10 +65,13 @@ import {
   toOpenAICompatibleMessages,
 } from '../utils/pluginChatAdapter.js';
 import {
+  inferReasoningFromModelId,
   parseDiscoveredCatalog,
   readModelContextMap,
+  readModelReasoningMap,
   serializeDiscoveredCatalog,
   type PluginModelContextMap,
+  type PluginModelReasoningMap,
 } from '../utils/pluginModelCatalog.js';
 import {
   streamAnthropicResponse,
@@ -359,6 +362,11 @@ export class PluginService {
     string,
     PluginModelContextMap | null
   >();
+  /** Whether each discovered model reasons, where the listing or its name says. */
+  private discoveredModelReasoningCache = new Map<
+    string,
+    PluginModelReasoningMap | null
+  >();
   /** Catalogs stored before context windows were captured. */
   private discoveredCatalogIsLegacy = new Map<string, boolean>();
   private discoveredModelsUpdatedAt = new Map<string, number>();
@@ -514,6 +522,7 @@ export class PluginService {
     const completionKeys = new Set([
       ...this.discoveredModelsCache.keys(),
       ...this.discoveredModelContextCache.keys(),
+      ...this.discoveredModelReasoningCache.keys(),
       ...this.discoveredModelsUpdatedAt.keys(),
       ...this.discoveryAttemptedAt.keys(),
       ...this.inflightDiscovery.keys(),
@@ -557,6 +566,7 @@ export class PluginService {
       if (!completionMatches(key)) continue;
       this.discoveredModelsCache.delete(key);
       this.discoveredModelContextCache.delete(key);
+      this.discoveredModelReasoningCache.delete(key);
       this.discoveredCatalogIsLegacy.delete(key);
       this.discoveredModelsUpdatedAt.delete(key);
       this.discoveryAttemptedAt.delete(key);
@@ -772,20 +782,22 @@ export class PluginService {
       if (!row) {
         this.discoveredModelsCache.set(cacheKey, null);
         this.discoveredModelContextCache.set(cacheKey, null);
+        this.discoveredModelReasoningCache.set(cacheKey, null);
         return undefined;
       }
 
-      const { models, modelContext, legacy } = parseDiscoveredCatalog(
-        row.models_json
-      );
+      const { models, modelContext, modelReasoning, legacy } =
+        parseDiscoveredCatalog(row.models_json);
       this.discoveredCatalogIsLegacy.set(cacheKey, legacy === true);
       if (models.length === 0) {
         this.discoveredModelsCache.set(cacheKey, null);
         this.discoveredModelContextCache.set(cacheKey, null);
+        this.discoveredModelReasoningCache.set(cacheKey, null);
         return undefined;
       }
       this.discoveredModelsCache.set(cacheKey, models);
       this.discoveredModelContextCache.set(cacheKey, modelContext ?? null);
+      this.discoveredModelReasoningCache.set(cacheKey, modelReasoning ?? null);
       if (typeof row.updated_at === 'number') {
         this.discoveredModelsUpdatedAt.set(cacheKey, row.updated_at);
       }
@@ -798,6 +810,7 @@ export class PluginService {
       );
       this.discoveredModelsCache.set(cacheKey, null);
       this.discoveredModelContextCache.set(cacheKey, null);
+      this.discoveredModelReasoningCache.set(cacheKey, null);
       return undefined;
     }
   }
@@ -806,7 +819,8 @@ export class PluginService {
     pluginId: string,
     models: string[],
     userId?: string,
-    modelContext?: PluginModelContextMap
+    modelContext?: PluginModelContextMap,
+    modelReasoning?: PluginModelReasoningMap
   ): Promise<void> {
     await this.ensureCacheInvalidation();
     const effectiveUserId = userId || 'default';
@@ -820,11 +834,13 @@ export class PluginService {
         models_json: serializeDiscoveredCatalog({
           models: uniqueModels,
           modelContext,
+          modelReasoning,
         }),
         updated_at: discoveredAt,
       });
       this.discoveredModelsCache.set(cacheKey, uniqueModels);
       this.discoveredModelContextCache.set(cacheKey, modelContext ?? null);
+      this.discoveredModelReasoningCache.set(cacheKey, modelReasoning ?? null);
       this.discoveredCatalogIsLegacy.set(cacheKey, false);
       this.discoveredModelsUpdatedAt.set(cacheKey, discoveredAt);
       await publishPluginCacheInvalidation({
@@ -976,18 +992,52 @@ export class PluginService {
         }
       }
     }
-    // Context windows travel with the catalog they were discovered from, so a
-    // model list and the budget each model runs against cannot disagree.
-    const modelContext = this.discoveredModelContextCache.get(
-      this.discoveredModelsCacheKey(plugin.id, userId || 'default')
+    // Context windows and reasoning support travel with the catalog they were
+    // discovered from, so a model list and what each model can do never
+    // disagree.
+    const catalogKey = this.discoveredModelsCacheKey(
+      plugin.id,
+      userId || 'default'
     );
+    const modelContext = this.discoveredModelContextCache.get(catalogKey);
+    const modelReasoning = this.discoveredModelReasoningCache.get(catalogKey);
 
     return {
       ...plugin,
       ...(models ? { model_map: [...models] } : {}),
       ...(capabilities ? { capabilities } : {}),
       ...(modelContext ? { model_context: { ...modelContext } } : {}),
+      ...(modelReasoning ? { model_reasoning: { ...modelReasoning } } : {}),
     };
+  }
+
+  /**
+   * The provider-side twin of Ollama's capability gate: a thinking setting
+   * never reaches a model that is known not to reason, where "known" is the
+   * discovered catalog's answer or, for manually configured model maps, what
+   * the model's name says. An unknown model keeps the setting — offered and
+   * fail-open, exactly like an Ollama model that reports no capabilities.
+   */
+  private stripUnsupportedThinking(
+    pluginId: string,
+    model: string,
+    options: GenerationOptions,
+    userId?: string
+  ): GenerationOptions {
+    if (!('think' in options)) return options;
+    const catalog = this.discoveredModelReasoningCache.get(
+      this.discoveredModelsCacheKey(pluginId, userId || 'default')
+    );
+    const support = catalog?.[model] ?? inferReasoningFromModelId(model);
+    if (support !== false) return options;
+
+    logger.debug(
+      '%s does not reason; sending the request to %s without the setting.',
+      model,
+      pluginId
+    );
+    const { think: _think, ...rest } = options;
+    return rest;
   }
 
   private ensurePluginsDirectory(): void {
@@ -1834,6 +1884,7 @@ export class PluginService {
         // Providers that publish a context window are worth remembering: it is
         // the only way the application can say how full a conversation is.
         const modelContext = readModelContextMap(response.data.data);
+        const modelReasoning = readModelReasoningMap(response.data.data);
 
         if (models.length > 0) {
           logger.debug(
@@ -1862,7 +1913,8 @@ export class PluginService {
             pluginId,
             models,
             userId,
-            modelContext
+            modelContext,
+            modelReasoning
           );
           const stored =
             (await this.getDiscoveredModels(pluginId, userId)) || models;
@@ -2427,6 +2479,12 @@ export class PluginService {
         `Model ${model} is not supported by plugin ${activePlugin.id}`
       );
     }
+    options = this.stripUnsupportedThinking(
+      activePlugin.id,
+      model,
+      options,
+      userId
+    );
     if (activePlugin.id === CODEX_OAUTH_PLUGIN_ID) {
       await codexOAuthService.ensureFreshToken(signal);
       // The codex endpoint only answers as an SSE stream; aggregate it here
@@ -2595,6 +2653,12 @@ export class PluginService {
         `Model ${model} is not supported by plugin ${activePlugin.id}`
       );
     }
+    options = this.stripUnsupportedThinking(
+      activePlugin.id,
+      model,
+      options,
+      userId
+    );
     if (activePlugin.id === CODEX_OAUTH_PLUGIN_ID) {
       await codexOAuthService.ensureFreshToken(signal);
     }

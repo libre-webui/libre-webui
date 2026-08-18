@@ -597,6 +597,11 @@ export interface Plugin {
    * same as a model with no context.
    */
   model_context?: Record<string, number>;
+  /**
+   * Whether each model reasons, where the listing said or the model's name
+   * places it in a known family. Absent means unknown, never "no".
+   */
+  model_reasoning?: Record<string, boolean>;
   capabilities?: PluginCapabilities; // Multi-capability support
   variables?: PluginVariableDefinition[];
   active?: boolean;

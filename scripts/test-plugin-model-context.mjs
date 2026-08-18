@@ -108,14 +108,76 @@ test('a catalog written before windows existed reads, and is refreshed', () => {
 
 test('an unreadable catalog reports nothing rather than guessing', () => {
   assert.deepEqual(catalog.parseDiscoveredCatalog('null'), { models: [] });
+  // A version-1 object without the reasoning key predates reasoning capture
+  // and earns one refresh, exactly like the plain-array form did for windows.
   assert.deepEqual(catalog.parseDiscoveredCatalog('{"version":1}'), {
     models: [],
+    legacy: true,
   });
   assert.deepEqual(
     catalog.parseDiscoveredCatalog(
-      '{"version":1,"models":["a"],"context":{"a":"wide"}}'
+      '{"version":1,"models":["a"],"context":{"a":"wide"},"reasoning":{}}'
     ),
     { models: ['a'] },
     'a window that is not a number is dropped, the models are kept'
   );
+});
+
+test('reasoning support is read from the listing or inferred from the name', () => {
+  // OpenRouter-style: supported_parameters answers definitively both ways.
+  assert.equal(
+    catalog.readModelReasoningSupport({
+      supported_parameters: ['temperature', 'reasoning'],
+    }),
+    true
+  );
+  assert.equal(
+    catalog.readModelReasoningSupport({
+      supported_parameters: ['temperature'],
+    }),
+    false
+  );
+  // A listing that says nothing stays unknown at this layer.
+  assert.equal(catalog.readModelReasoningSupport({ id: 'gpt-4o' }), undefined);
+
+  // Name heuristics for the listings that say nothing.
+  assert.equal(catalog.inferReasoningFromModelId('gpt-4o'), false);
+  assert.equal(catalog.inferReasoningFromModelId('gpt-5-mini'), true);
+  assert.equal(catalog.inferReasoningFromModelId('o3-mini'), true);
+  assert.equal(catalog.inferReasoningFromModelId('openai/gpt-oss-120b'), true);
+  assert.equal(
+    catalog.inferReasoningFromModelId('claude-3-5-sonnet-20241022'),
+    false
+  );
+  assert.equal(catalog.inferReasoningFromModelId('claude-sonnet-4-5'), true);
+  assert.equal(catalog.inferReasoningFromModelId('claude-3-7-sonnet'), true);
+  assert.equal(catalog.inferReasoningFromModelId('gemini-2.0-flash'), false);
+  assert.equal(
+    catalog.inferReasoningFromModelId('gemini-2.5-flash'),
+    true
+  );
+  assert.equal(catalog.inferReasoningFromModelId('deepseek/deepseek-r1'), true);
+  assert.equal(
+    catalog.inferReasoningFromModelId('totally-unknown-model'),
+    undefined
+  );
+});
+
+test('reasoning support round-trips through the stored catalog', () => {
+  const entries = [
+    { id: 'thinker', supported_parameters: ['reasoning'] },
+    { id: 'plain', supported_parameters: ['temperature'] },
+    { id: 'mystery' },
+  ];
+  const reasoning = catalog.readModelReasoningMap(entries);
+  assert.deepEqual(reasoning, { thinker: true, plain: false });
+
+  const parsed = catalog.parseDiscoveredCatalog(
+    catalog.serializeDiscoveredCatalog({
+      models: ['thinker', 'plain', 'mystery'],
+      modelReasoning: reasoning,
+    })
+  );
+  assert.deepEqual(parsed.modelReasoning, { thinker: true, plain: false });
+  assert.notEqual(parsed.legacy, true, 'a fresh catalog is not legacy');
 });

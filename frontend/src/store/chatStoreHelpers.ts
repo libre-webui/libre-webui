@@ -37,6 +37,7 @@ interface PluginModelSource {
   name: string;
   model_map?: string[];
   model_context?: Record<string, number>;
+  model_reasoning?: Record<string, boolean>;
   capabilities?: Plugin['capabilities'];
 }
 
@@ -339,6 +340,9 @@ export function buildPluginModels(plugins: PluginModelSource[]): OllamaModel[] {
         pluginName: plugin.name,
         ...(plugin.model_context?.[modelName]
           ? { contextLength: plugin.model_context[modelName] }
+          : {}),
+        ...(plugin.model_reasoning?.[modelName] !== undefined
+          ? { reasoningSupport: plugin.model_reasoning[modelName] }
           : {}),
       }))
     );
