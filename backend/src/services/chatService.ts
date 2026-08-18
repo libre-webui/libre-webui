@@ -931,7 +931,10 @@ class ChatService {
     sessionId: string,
     userId: string,
     maxMessages = 10,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    // A retried durable attempt serves whatever state the first attempt
+    // left rather than paying for another summarizer round trip.
+    skipCompaction = false
   ): Promise<ChatMessage[]> {
     const session = await this.getSession(sessionId, userId);
     if (!session) return [];
@@ -950,10 +953,12 @@ class ChatService {
         maxMessages,
         compactionConfig.keepRecentMessages
       );
-      const plan = await planCompaction(session, userId, {
-        config: compactionConfig,
-        signal,
-      });
+      const plan = skipCompaction
+        ? null
+        : await planCompaction(session, userId, {
+            config: compactionConfig,
+            signal,
+          });
       if (plan) {
         try {
           messages = await this.applyContextCompaction(sessionId, userId, plan);

@@ -78,22 +78,24 @@ export function normalizeThinkingPreference(
  * it beside `options`, and the other providers take their own field entirely.
  * This lifts it back out at the request boundary.
  */
+type WithoutThink<T> = T extends Record<string, unknown> ? Omit<T, 'think'> : T;
+
 export function splitThinkingOption<
   T extends Record<string, unknown> | undefined,
 >(
   options: T
 ): {
   think: ThinkingPreference | undefined;
-  options: T;
+  options: WithoutThink<T>;
 } {
   if (!options || !('think' in options)) {
-    return { think: undefined, options };
+    return { think: undefined, options: options as WithoutThink<T> };
   }
 
   const { think, ...rest } = options;
   return {
     think: normalizeThinkingPreference(think),
-    options: rest as T,
+    options: rest as WithoutThink<T>,
   };
 }
 

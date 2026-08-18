@@ -506,7 +506,10 @@ class DurableChatGenerationService {
             input.sessionId,
             input.actorUserId,
             undefined,
-            context.signal
+            context.signal,
+            // Compaction runs once, on the first attempt; a retry serves
+            // whatever that attempt already persisted.
+            context.attemptCount > 1
           )
         ).filter(message => {
           if (!input.regenerate || !input.originalMessageId) return true;
