@@ -35,9 +35,6 @@ export const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
 const TITLE_GENERATION_OPTIONS: GenerationOptions = {
   temperature: 0.3,
   num_predict: 20,
-  // Naming a conversation is not worth a reasoning pass, whatever the chat
-  // itself is set to.
-  think: false,
 };
 
 /**
@@ -51,6 +48,8 @@ const TITLE_GENERATION_OPTIONS: GenerationOptions = {
 const PLUGIN_TITLE_GENERATION_OPTIONS: GenerationOptions = {
   temperature: 0.3,
   num_predict: 512,
+  // Naming a conversation is not worth a reasoning pass, whatever the chat
+  // itself is set to.
   think: false,
 };
 
@@ -344,13 +343,17 @@ export class TitleGenerationService {
       };
     }
 
+    // Ollama takes the thinking setting beside the options, never inside
+    // them, and this call answers it for itself below.
+    const { think: _think, ...ollamaOptions } = target.mergedOptions;
+
     const response = await this.ollamaService.generateResponse({
       model: target.actualModelName,
       prompt,
       stream: false,
       think: false,
       options: {
-        ...target.mergedOptions,
+        ...ollamaOptions,
         temperature: TITLE_GENERATION_OPTIONS.temperature,
         num_predict: TITLE_GENERATION_OPTIONS.num_predict,
         stop: TITLE_STOP_SEQUENCES,
