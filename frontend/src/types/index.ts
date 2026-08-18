@@ -142,6 +142,12 @@ export interface OllamaModel {
   agentId?: string;
   isLegacySelection?: boolean;
   isUnavailable?: boolean;
+  /**
+   * Tokens the model can hold, when that is known. Ollama reports it through
+   * the model's own defaults; provider models carry whatever their listing
+   * published.
+   */
+  contextLength?: number;
 }
 
 /** How hard a model should think: off, on, or one of the named levels. */
@@ -441,6 +447,8 @@ export interface Plugin {
   api_path?: string;
   auth: PluginAuthConfig;
   model_map: string[];
+  /** Context window per model, where the provider publishes one. */
+  model_context?: Record<string, number>;
   capabilities?: PluginCapabilities;
   variables?: PluginVariableDefinition[];
   active?: boolean;

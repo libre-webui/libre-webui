@@ -65,6 +65,12 @@ import {
   toOpenAICompatibleMessages,
 } from '../utils/pluginChatAdapter.js';
 import {
+  parseDiscoveredCatalog,
+  readModelContextMap,
+  serializeDiscoveredCatalog,
+  type PluginModelContextMap,
+} from '../utils/pluginModelCatalog.js';
+import {
   streamAnthropicResponse,
   streamOpenAICompatibleResponse,
   streamOpenAIResponsesResponse,
@@ -348,6 +354,11 @@ export class PluginService {
   private historicalPluginConflictDirs: string[];
   private pluginReadDirs: string[];
   private discoveredModelsCache = new Map<string, string[] | null>();
+  /** Context windows the provider reported for its own models. */
+  private discoveredModelContextCache = new Map<
+    string,
+    PluginModelContextMap | null
+  >();
   private discoveredModelsUpdatedAt = new Map<string, number>();
   private discoveryAttemptedAt = new Map<string, number>();
   private inflightDiscovery = new Map<
@@ -500,6 +511,7 @@ export class PluginService {
   private invalidateRuntimeCaches(invalidation: PluginCacheInvalidation): void {
     const completionKeys = new Set([
       ...this.discoveredModelsCache.keys(),
+      ...this.discoveredModelContextCache.keys(),
       ...this.discoveredModelsUpdatedAt.keys(),
       ...this.discoveryAttemptedAt.keys(),
       ...this.inflightDiscovery.keys(),
@@ -542,6 +554,7 @@ export class PluginService {
     for (const key of completionKeys) {
       if (!completionMatches(key)) continue;
       this.discoveredModelsCache.delete(key);
+      this.discoveredModelContextCache.delete(key);
       this.discoveredModelsUpdatedAt.delete(key);
       this.discoveryAttemptedAt.delete(key);
       this.inflightDiscovery.delete(key);
@@ -755,25 +768,18 @@ export class PluginService {
       );
       if (!row) {
         this.discoveredModelsCache.set(cacheKey, null);
+        this.discoveredModelContextCache.set(cacheKey, null);
         return undefined;
       }
 
-      const parsed = JSON.parse(row.models_json) as unknown;
-      const models = Array.isArray(parsed)
-        ? Array.from(
-            new Set(
-              parsed.filter(
-                (model): model is string =>
-                  typeof model === 'string' && model.length > 0
-              )
-            )
-          )
-        : [];
+      const { models, modelContext } = parseDiscoveredCatalog(row.models_json);
       if (models.length === 0) {
         this.discoveredModelsCache.set(cacheKey, null);
+        this.discoveredModelContextCache.set(cacheKey, null);
         return undefined;
       }
       this.discoveredModelsCache.set(cacheKey, models);
+      this.discoveredModelContextCache.set(cacheKey, modelContext ?? null);
       if (typeof row.updated_at === 'number') {
         this.discoveredModelsUpdatedAt.set(cacheKey, row.updated_at);
       }
@@ -785,6 +791,7 @@ export class PluginService {
         error
       );
       this.discoveredModelsCache.set(cacheKey, null);
+      this.discoveredModelContextCache.set(cacheKey, null);
       return undefined;
     }
   }
@@ -792,7 +799,8 @@ export class PluginService {
   private async storeDiscoveredModels(
     pluginId: string,
     models: string[],
-    userId?: string
+    userId?: string,
+    modelContext?: PluginModelContextMap
   ): Promise<void> {
     await this.ensureCacheInvalidation();
     const effectiveUserId = userId || 'default';
@@ -803,10 +811,14 @@ export class PluginService {
       await this.repositories().pluginDiscovery.upsert({
         user_id: effectiveUserId,
         plugin_id: pluginId,
-        models_json: JSON.stringify(uniqueModels),
+        models_json: serializeDiscoveredCatalog({
+          models: uniqueModels,
+          modelContext,
+        }),
         updated_at: discoveredAt,
       });
       this.discoveredModelsCache.set(cacheKey, uniqueModels);
+      this.discoveredModelContextCache.set(cacheKey, modelContext ?? null);
       this.discoveredModelsUpdatedAt.set(cacheKey, discoveredAt);
       await publishPluginCacheInvalidation({
         version: 1,
@@ -957,10 +969,17 @@ export class PluginService {
         }
       }
     }
+    // Context windows travel with the catalog they were discovered from, so a
+    // model list and the budget each model runs against cannot disagree.
+    const modelContext = this.discoveredModelContextCache.get(
+      this.discoveredModelsCacheKey(plugin.id, userId || 'default')
+    );
+
     return {
       ...plugin,
       ...(models ? { model_map: [...models] } : {}),
       ...(capabilities ? { capabilities } : {}),
+      ...(modelContext ? { model_context: { ...modelContext } } : {}),
     };
   }
 
@@ -1800,6 +1819,9 @@ export class PluginService {
         const models = response.data.data
           .map((m: { id?: string }) => m.id)
           .filter((id: unknown): id is string => typeof id === 'string');
+        // Providers that publish a context window are worth remembering: it is
+        // the only way the application can say how full a conversation is.
+        const modelContext = readModelContextMap(response.data.data);
 
         if (models.length > 0) {
           logger.debug(
@@ -1824,7 +1846,12 @@ export class PluginService {
               reason: 'Provider configuration changed during discovery',
             };
           }
-          await this.storeDiscoveredModels(pluginId, models, userId);
+          await this.storeDiscoveredModels(
+            pluginId,
+            models,
+            userId,
+            modelContext
+          );
           const stored =
             (await this.getDiscoveredModels(pluginId, userId)) || models;
           return {

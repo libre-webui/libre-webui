@@ -591,6 +591,12 @@ export interface Plugin {
   api_path?: string; // Optional path relative to base_url
   auth: PluginAuthConfig;
   model_map: string[]; // Primary model map for backward compatibility
+  /**
+   * Context window per model, for the providers that publish one with their
+   * model listing. Absent for models that report nothing, which is not the
+   * same as a model with no context.
+   */
+  model_context?: Record<string, number>;
   capabilities?: PluginCapabilities; // Multi-capability support
   variables?: PluginVariableDefinition[];
   active?: boolean;
