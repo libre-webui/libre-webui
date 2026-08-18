@@ -9,7 +9,7 @@ dotenv.config();
 
 // Read version from package.json
 const packageJson = JSON.parse(
-  readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8')
+  readFileSync(path.resolve(import.meta.dirname, 'package.json'), 'utf-8')
 );
 
 // Get version - use VITE_APP_VERSION env var if set (Docker builds), otherwise detect git branch
@@ -21,15 +21,15 @@ const getVersion = () => {
 
   // Try to detect git branch for local dev
   try {
-    const gitDir = path.resolve(__dirname, '../.git');
+    const gitDir = path.resolve(import.meta.dirname, '../.git');
     if (existsSync(gitDir)) {
       const branch = execSync('git rev-parse --abbrev-ref HEAD', {
-        cwd: path.resolve(__dirname, '..'),
+        cwd: path.resolve(import.meta.dirname, '..'),
         encoding: 'utf-8',
       }).trim();
       if (branch === 'dev') {
         const commitHash = execSync('git rev-parse --short HEAD', {
-          cwd: path.resolve(__dirname, '..'),
+          cwd: path.resolve(import.meta.dirname, '..'),
           encoding: 'utf-8',
         }).trim();
         return `${packageJson.version}-dev (${commitHash})`;
@@ -50,7 +50,7 @@ const appVersion = getVersion();
 const getLatestReleaseNotes = () => {
   try {
     const changelog = readFileSync(
-      path.resolve(__dirname, '../CHANGELOG.md'),
+      path.resolve(import.meta.dirname, '../CHANGELOG.md'),
       'utf-8'
     );
     const headings = [
@@ -106,7 +106,7 @@ const artifactRuntimeHeaders = () => ({
 const artifactRuntimeFingerprint = (): string => {
   try {
     return readFileSync(
-      path.resolve(__dirname, 'public/artifact-runtime/.build-fingerprint'),
+      path.resolve(import.meta.dirname, 'public/artifact-runtime/.build-fingerprint'),
       'utf-8'
     )
       .trim()
@@ -131,7 +131,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(import.meta.dirname, './src'),
     },
   },
   server: {
