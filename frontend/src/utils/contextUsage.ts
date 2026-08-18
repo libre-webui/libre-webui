@@ -44,15 +44,27 @@ export const COMPACTION_SUMMARY_PREFIX = '[Conversation summary] ';
 export const isCompactionSummaryContent = (content: string): boolean =>
   content.startsWith(COMPACTION_SUMMARY_PREFIX);
 
-export const estimateTextTokens = (text: string | undefined): number =>
-  text ? Math.ceil(text.length / 4) : 0;
+// CJK scripts tokenize near one token per character rather than one per
+// four. Kept in step with the server's copy in `contextCompactionService.ts`.
+const CJK_PATTERN =
+  /[\u1100-\u11FF\u2E80-\uA4CF\uAC00-\uD7AF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFFEF]/g;
+
+/** A vision model spends real tokens per image; same flat cost as the server. */
+const IMAGE_TOKEN_ESTIMATE = 768;
+
+export const estimateTextTokens = (text: string | undefined): number => {
+  if (!text) return 0;
+  const cjkCharacters = text.match(CJK_PATTERN)?.length ?? 0;
+  return cjkCharacters + Math.ceil((text.length - cjkCharacters) / 4);
+};
 
 export const estimateMessageTokens = (
-  message: Pick<ChatMessage, 'content' | 'thinking'>
+  message: Pick<ChatMessage, 'content' | 'thinking' | 'images'>
 ): number =>
   MESSAGE_FRAMING_TOKENS +
   estimateTextTokens(message.content) +
-  estimateTextTokens(message.thinking);
+  estimateTextTokens(message.thinking) +
+  (message.images?.length ?? 0) * IMAGE_TOKEN_ESTIMATE;
 
 export interface ContextUsage {
   /** Tokens the next request starts from. */

@@ -166,6 +166,25 @@ test('token estimator scales with content and thinking length', () => {
   assert.equal(estimate, 4 + 100 + (4 + 100 + 100));
 });
 
+test('token estimator prices CJK text and images realistically', () => {
+  // CJK characters cost roughly a token each, not a quarter of one.
+  assert.equal(
+    compaction.estimateChatTokens([{ content: '日本語のテスト' }]),
+    4 + 7
+  );
+  // Mixed text: CJK per character, the rest per four characters.
+  assert.equal(
+    compaction.estimateChatTokens([{ content: `你好${'a'.repeat(8)}` }]),
+    4 + 2 + 2
+  );
+  // Images carry a flat cost instead of counting as zero.
+  const withImage = compaction.estimateChatTokens([
+    { content: 'look', images: ['data:image/png;base64,xyz'] },
+  ]);
+  const withoutImage = compaction.estimateChatTokens([{ content: 'look' }]);
+  assert.equal(withImage - withoutImage, 768);
+});
+
 test('disabled compaction never summarizes an oversized session', async () => {
   const session = await chatService.createSession(
     'No compaction',

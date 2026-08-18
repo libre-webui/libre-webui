@@ -169,19 +169,42 @@ export const setCompactionConfig = async (
 };
 
 /**
- * Rough context estimate: ~4 characters per token plus per-message
- * framing. Deliberately simple — the threshold is a coarse safety valve,
- * not billing.
+ * CJK scripts tokenize near one token per character rather than one per
+ * four, so they are priced separately — a Japanese conversation would
+ * otherwise read as a quarter of its real size and never compact.
+ * Kept in step with the meter's copy in `frontend/src/utils/contextUsage.ts`.
+ */
+// Hangul jamo, CJK radicals through Yi (covers kana and unified
+// ideographs), Hangul syllables, compatibility ideographs, vertical and
+// fullwidth forms.
+const CJK_PATTERN =
+  /[\u1100-\u11FF\u2E80-\uA4CF\uAC00-\uD7AF\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFFEF]/g;
+
+/** A vision model spends real tokens per image; a flat middle-ground cost
+ * keeps image-heavy chats from reading as nearly empty. */
+const IMAGE_TOKEN_ESTIMATE = 768;
+
+export const estimateTextTokens = (text: string | undefined): number => {
+  if (!text) return 0;
+  const cjkCharacters = text.match(CJK_PATTERN)?.length ?? 0;
+  return cjkCharacters + Math.ceil((text.length - cjkCharacters) / 4);
+};
+
+/**
+ * Rough context estimate: ~4 characters per token (CJK-aware) plus
+ * per-message framing and a flat cost per image. Deliberately simple — the
+ * threshold is a coarse safety valve, not billing.
  */
 export const estimateChatTokens = (
-  messages: readonly Pick<ChatMessage, 'content' | 'thinking'>[]
+  messages: readonly Pick<ChatMessage, 'content' | 'thinking' | 'images'>[]
 ): number =>
   messages.reduce(
     (total, message) =>
       total +
       4 +
-      Math.ceil((message.content?.length ?? 0) / 4) +
-      Math.ceil((message.thinking?.length ?? 0) / 4),
+      estimateTextTokens(message.content) +
+      estimateTextTokens(message.thinking) +
+      (message.images?.length ?? 0) * IMAGE_TOKEN_ESTIMATE,
     0
   );
 
@@ -200,12 +223,18 @@ Conversation:
 const TRANSCRIPT_CHAR_BUDGET = 48_000;
 
 const buildBoundedTranscript = (
-  messages: readonly Pick<ChatMessage, 'role' | 'content'>[]
+  messages: readonly Pick<ChatMessage, 'role' | 'content' | 'images'>[]
 ): string => {
   const lines: string[] = [];
   let used = 0;
   for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const line = `${messages[index].role}: ${messages[index].content}`;
+    const message = messages[index];
+    // Images cannot ride into a text summary, but their existence can: a
+    // summary that never mentions them silently rewrites what happened.
+    const imageNote = message.images?.length
+      ? ` [${message.images.length} image(s) attached]`
+      : '';
+    const line = `${message.role}: ${message.content}${imageNote}`;
     if (used + line.length > TRANSCRIPT_CHAR_BUDGET && lines.length > 0) {
       lines.push('[earlier messages omitted for length]');
       break;

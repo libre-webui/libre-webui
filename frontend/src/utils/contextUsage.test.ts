@@ -169,6 +169,23 @@ test('the rolling window keeps the last ten turns starting on a user turn', () =
   assert.equal(selected[selected.length - 1].content, 'turn 24');
 });
 
+test('CJK text and images are priced like the server prices them', () => {
+  const cjk = buildContextUsage({
+    messages: [message('user', '日本語のテスト')],
+  });
+  assert.equal(cjk.used, 4 + 7, 'CJK costs about a token per character');
+
+  const withImage = buildContextUsage({
+    messages: [
+      message('user', 'look', { images: ['data:image/png;base64,x'] }),
+    ],
+  });
+  const withoutImage = buildContextUsage({
+    messages: [message('user', 'look')],
+  });
+  assert.equal(withImage.used - withoutImage.used, 768);
+});
+
 test('a chat with no measured reply is estimated from what would be sent', () => {
   const usage = buildContextUsage({
     messages: [
