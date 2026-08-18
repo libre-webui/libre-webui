@@ -888,14 +888,14 @@
         "githubDescription": "Bekijk broncode en draag bij",
         "website": "Website",
         "websiteDescription": "Bezoek onze website",
-        "ollama": "Ollama",
-        "ollamaDescription": "Meer informatie over Ollama",
         "documentation": "Documentatie",
         "reportIssue": "Problemen melden",
         "reportIssueDescription": "Bugmeldingen & functieverzoeken",
-        "gitlab": "GitLab-spiegel",
-        "gitlabDescription": "Zelf-gehoste GitLab-repository",
-        "documentationDescription": "Handleidingen, tutorials en API-referentie"
+        "documentationDescription": "Handleidingen, tutorials en API-referentie",
+        "forgejo": "Forgejo-spiegel",
+        "forgejoDescription": "Zelf-gehoste Forgejo-repository",
+        "sponsor": "Sponsor",
+        "sponsorDescription": "Help het project financieren"
       },
       "version": "Versie {{version}}"
     },

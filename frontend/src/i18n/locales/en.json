@@ -888,14 +888,14 @@
         "githubDescription": "View source code and contribute",
         "website": "Website",
         "websiteDescription": "Visit our website",
-        "ollama": "Ollama",
-        "ollamaDescription": "Learn more about Ollama",
         "documentation": "Documentation",
         "reportIssue": "Report Issues",
         "reportIssueDescription": "Bug reports & feature requests",
-        "gitlab": "GitLab Mirror",
-        "gitlabDescription": "Self-hosted GitLab repository",
-        "documentationDescription": "Guides, tutorials and API reference"
+        "documentationDescription": "Guides, tutorials and API reference",
+        "forgejo": "Forgejo Mirror",
+        "forgejoDescription": "Self-hosted Forgejo repository",
+        "sponsor": "Sponsor",
+        "sponsorDescription": "Help fund the project"
       },
       "version": "Version {{version}}"
     },

@@ -888,14 +888,14 @@
         "githubDescription": "查看源代码并贡献",
         "website": "网站",
         "websiteDescription": "访问我们的网站",
-        "ollama": "Ollama",
-        "ollamaDescription": "了解更多关于 Ollama",
         "documentation": "文档",
         "reportIssue": "报告问题",
         "reportIssueDescription": "错误报告和功能请求",
-        "gitlab": "GitLab镜像",
-        "gitlabDescription": "自托管GitLab仓库",
-        "documentationDescription": "指南、教程和API参考"
+        "documentationDescription": "指南、教程和API参考",
+        "forgejo": "Forgejo镜像",
+        "forgejoDescription": "自托管Forgejo仓库",
+        "sponsor": "赞助",
+        "sponsorDescription": "帮助资助本项目"
       },
       "version": "版本 {{version}}"
     },

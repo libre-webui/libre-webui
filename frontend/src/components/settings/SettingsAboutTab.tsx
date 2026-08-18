@@ -17,10 +17,10 @@
 
 import {
   BookOpen,
-  Bot,
   ExternalLink,
   GitBranch,
   GitMerge,
+  Heart,
   MessageSquare,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -41,8 +41,8 @@ const aboutLinks = [
   {
     href: 'https://git.kroonen.ai/libre-webui/libre-webui',
     icon: GitMerge,
-    labelKey: 'settings.about.links.gitlab',
-    descriptionKey: 'settings.about.links.gitlabDescription',
+    labelKey: 'settings.about.links.forgejo',
+    descriptionKey: 'settings.about.links.forgejoDescription',
   },
   {
     href: 'https://librewebui.org',
@@ -57,10 +57,10 @@ const aboutLinks = [
     descriptionKey: 'settings.about.links.documentationDescription',
   },
   {
-    href: 'https://ollama.ai',
-    icon: Bot,
-    labelKey: 'settings.about.links.ollama',
-    descriptionKey: 'settings.about.links.ollamaDescription',
+    href: 'https://github.com/sponsors/libre-webui',
+    icon: Heart,
+    labelKey: 'settings.about.links.sponsor',
+    descriptionKey: 'settings.about.links.sponsorDescription',
   },
   {
     href: 'https://github.com/libre-webui/libre-webui/issues',

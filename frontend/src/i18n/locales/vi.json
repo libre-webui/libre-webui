@@ -888,14 +888,14 @@
         "githubDescription": "Xem mã nguồn và đóng góp",
         "website": "Website",
         "websiteDescription": "Truy cập website của chúng tôi",
-        "ollama": "Ollama",
-        "ollamaDescription": "Tìm hiểu thêm về Ollama",
         "documentation": "Tài liệu",
         "reportIssue": "Báo cáo vấn đề",
         "reportIssueDescription": "Báo lỗi & yêu cầu tính năng",
-        "gitlab": "Bản sao GitLab",
-        "gitlabDescription": "Kho GitLab tự lưu trữ",
-        "documentationDescription": "Hướng dẫn, bài học và tham khảo API"
+        "documentationDescription": "Hướng dẫn, bài học và tham khảo API",
+        "forgejo": "Bản sao Forgejo",
+        "forgejoDescription": "Kho Forgejo tự lưu trữ",
+        "sponsor": "Tài trợ",
+        "sponsorDescription": "Giúp tài trợ cho dự án"
       },
       "version": "Phiên bản {{version}}"
     },

@@ -888,14 +888,14 @@
         "githubDescription": "ดูซอร์สโค้ดและมีส่วนร่วม",
         "website": "เว็บไซต์",
         "websiteDescription": "เยี่ยมชมเว็บไซต์ของเรา",
-        "ollama": "Ollama",
-        "ollamaDescription": "เรียนรู้เพิ่มเติมเกี่ยวกับ Ollama",
         "documentation": "เอกสาร",
         "reportIssue": "รายงานปัญหา",
         "reportIssueDescription": "รายงานบั๊กและคำขอฟีเจอร์",
-        "gitlab": "มิเรอร์ GitLab",
-        "gitlabDescription": "คลัง GitLab โฮสต์เอง",
-        "documentationDescription": "คู่มือ บทช่วยสอน และข้อมูลอ้างอิง API"
+        "documentationDescription": "คู่มือ บทช่วยสอน และข้อมูลอ้างอิง API",
+        "forgejo": "มิเรอร์ Forgejo",
+        "forgejoDescription": "คลัง Forgejo โฮสต์เอง",
+        "sponsor": "สนับสนุน",
+        "sponsorDescription": "ช่วยสนับสนุนทุนให้โครงการ"
       },
       "version": "เวอร์ชัน {{version}}"
     },

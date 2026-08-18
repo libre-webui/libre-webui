@@ -888,14 +888,14 @@
         "githubDescription": "ソースコードを見る・貢献する",
         "website": "ウェブサイト",
         "websiteDescription": "ウェブサイトを訪問",
-        "ollama": "Ollama",
-        "ollamaDescription": "Ollamaについて詳しく",
         "documentation": "ドキュメント",
         "reportIssue": "問題を報告",
         "reportIssueDescription": "バグ報告・機能リクエスト",
-        "gitlab": "GitLabミラー",
-        "gitlabDescription": "セルフホストGitLabリポジトリ",
-        "documentationDescription": "ガイド、チュートリアル、APIリファレンス"
+        "documentationDescription": "ガイド、チュートリアル、APIリファレンス",
+        "forgejo": "Forgejoミラー",
+        "forgejoDescription": "セルフホストForgejoリポジトリ",
+        "sponsor": "スポンサー",
+        "sponsorDescription": "プロジェクトの資金を支援"
       },
       "version": "バージョン {{version}}"
     },

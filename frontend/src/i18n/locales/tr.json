@@ -888,14 +888,14 @@
         "githubDescription": "Kaynak kodunu görüntüle ve katkıda bulun",
         "website": "Web Sitesi",
         "websiteDescription": "Web sitemizi ziyaret edin",
-        "ollama": "Ollama",
-        "ollamaDescription": "Ollama hakkında daha fazla bilgi edinin",
         "documentation": "Dokümantasyon",
         "reportIssue": "Sorun Bildir",
         "reportIssueDescription": "Hata raporları ve özellik istekleri",
-        "gitlab": "GitLab Aynası",
-        "gitlabDescription": "Kendi barındırılan GitLab deposu",
-        "documentationDescription": "Kılavuzlar, öğreticiler ve API referansı"
+        "documentationDescription": "Kılavuzlar, öğreticiler ve API referansı",
+        "forgejo": "Forgejo Aynası",
+        "forgejoDescription": "Kendi barındırılan Forgejo deposu",
+        "sponsor": "Destek ol",
+        "sponsorDescription": "Projenin finansmanına katkıda bulunun"
       },
       "version": "Sürüm {{version}}"
     },

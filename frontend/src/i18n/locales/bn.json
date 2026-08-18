@@ -888,14 +888,14 @@
         "githubDescription": "সোর্স কোড দেখুন এবং অবদান রাখুন",
         "website": "ওয়েবসাইট",
         "websiteDescription": "আমাদের ওয়েবসাইট দেখুন",
-        "ollama": "Ollama",
-        "ollamaDescription": "Ollama সম্পর্কে আরও জানুন",
         "documentation": "Documentation",
         "reportIssue": "সমস্যা রিপোর্ট করুন",
         "reportIssueDescription": "বাগ রিপোর্ট এবং ফিচার অনুরোধ",
-        "gitlab": "GitLab Mirror",
-        "gitlabDescription": "Self-hosted GitLab repository",
-        "documentationDescription": "Guides, tutorials and API reference"
+        "documentationDescription": "Guides, tutorials and API reference",
+        "forgejo": "Forgejo Mirror",
+        "forgejoDescription": "Self-hosted Forgejo repository",
+        "sponsor": "পৃষ্ঠপোষক",
+        "sponsorDescription": "প্রকল্পে আর্থিক সহায়তা করুন"
       },
       "version": "সংস্করণ {{version}}"
     },

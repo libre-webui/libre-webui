@@ -888,14 +888,14 @@
         "githubDescription": "Veja o código-fonte e contribua",
         "website": "Site",
         "websiteDescription": "Visite nosso site",
-        "ollama": "Ollama",
-        "ollamaDescription": "Saiba mais sobre o Ollama",
         "documentation": "Documentação",
         "reportIssue": "Relatar Problemas",
         "reportIssueDescription": "Reportar bugs e solicitar recursos",
-        "gitlab": "Espelho GitLab",
-        "gitlabDescription": "Repositório GitLab auto-hospedado",
-        "documentationDescription": "Guias, tutoriais e referência da API"
+        "documentationDescription": "Guias, tutoriais e referência da API",
+        "forgejo": "Espelho Forgejo",
+        "forgejoDescription": "Repositório Forgejo auto-hospedado",
+        "sponsor": "Patrocinar",
+        "sponsorDescription": "Ajude a financiar o projeto"
       },
       "version": "Versão {{version}}"
     },

@@ -888,14 +888,14 @@
         "githubDescription": "Переглянути вихідний код та зробити внесок",
         "website": "Веб-сайт",
         "websiteDescription": "Відвідайте наш веб-сайт",
-        "ollama": "Ollama",
-        "ollamaDescription": "Дізнайтеся більше про Ollama",
         "documentation": "Документація",
         "reportIssue": "Повідомити про проблему",
         "reportIssueDescription": "Звіти про помилки та запити функцій",
-        "gitlab": "Дзеркало GitLab",
-        "gitlabDescription": "Самостійно розміщений репозиторій GitLab",
-        "documentationDescription": "Посібники, навчальні матеріали та довідник API"
+        "documentationDescription": "Посібники, навчальні матеріали та довідник API",
+        "forgejo": "Дзеркало Forgejo",
+        "forgejoDescription": "Самостійно розміщений репозиторій Forgejo",
+        "sponsor": "Підтримати",
+        "sponsorDescription": "Допоможіть фінансувати проєкт"
       },
       "version": "Версія {{version}}"
     },

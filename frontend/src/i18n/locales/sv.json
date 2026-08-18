@@ -888,14 +888,14 @@
         "githubDescription": "Visa källkod och bidra",
         "website": "Webbplats",
         "websiteDescription": "Besök vår webbplats",
-        "ollama": "Ollama",
-        "ollamaDescription": "Läs mer om Ollama",
         "documentation": "Dokumentation",
         "reportIssue": "Rapportera problem",
         "reportIssueDescription": "Felrapporter och funktionsförfrågningar",
-        "gitlab": "GitLab-spegel",
-        "gitlabDescription": "Självhostat GitLab-förråd",
-        "documentationDescription": "Guider, handledningar och API-referens"
+        "documentationDescription": "Guider, handledningar och API-referens",
+        "forgejo": "Forgejo-spegel",
+        "forgejoDescription": "Självhostat Forgejo-förråd",
+        "sponsor": "Sponsra",
+        "sponsorDescription": "Hjälp till att finansiera projektet"
       },
       "version": "Version {{version}}"
     },

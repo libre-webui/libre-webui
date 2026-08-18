@@ -888,14 +888,14 @@
         "githubDescription": "소스 코드 보기 및 기여",
         "website": "웹사이트",
         "websiteDescription": "웹사이트 방문",
-        "ollama": "Ollama",
-        "ollamaDescription": "Ollama에 대해 자세히 알아보기",
         "documentation": "문서",
         "reportIssue": "문제 보고",
         "reportIssueDescription": "버그 보고서 및 기능 요청",
-        "gitlab": "GitLab 미러",
-        "gitlabDescription": "자체 호스팅 GitLab 저장소",
-        "documentationDescription": "가이드, 튜토리얼 및 API 레퍼런스"
+        "documentationDescription": "가이드, 튜토리얼 및 API 레퍼런스",
+        "forgejo": "Forgejo 미러",
+        "forgejoDescription": "자체 호스팅 Forgejo 저장소",
+        "sponsor": "후원",
+        "sponsorDescription": "프로젝트 운영을 후원하기"
       },
       "version": "버전 {{version}}"
     },

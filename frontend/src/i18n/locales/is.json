@@ -888,14 +888,14 @@
         "githubDescription": "Skoðaðu frumkóða og leggðu til",
         "website": "Vefsíða",
         "websiteDescription": "Heimsæktu vefsíðuna okkar",
-        "ollama": "Ollama",
-        "ollamaDescription": "Frekari upplýsingar um Ollama",
         "documentation": "Documentation",
         "reportIssue": "Tilkynna vandamál",
         "reportIssueDescription": "Villutilkynningar og eiginleikabeiðnir",
-        "gitlab": "GitLab Mirror",
-        "gitlabDescription": "Self-hosted GitLab repository",
-        "documentationDescription": "Guides, tutorials and API reference"
+        "documentationDescription": "Guides, tutorials and API reference",
+        "forgejo": "Forgejo Mirror",
+        "forgejoDescription": "Self-hosted Forgejo repository",
+        "sponsor": "Styrkja",
+        "sponsorDescription": "Hjálpaðu til við að fjármagna verkefnið"
       },
       "version": "Útgáfa {{version}}"
     },

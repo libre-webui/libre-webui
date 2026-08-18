@@ -888,14 +888,14 @@
         "githubDescription": "Lihat kod sumber dan sumbang",
         "website": "Laman Web",
         "websiteDescription": "Lawati laman web kami",
-        "ollama": "Ollama",
-        "ollamaDescription": "Ketahui lebih lanjut tentang Ollama",
         "documentation": "Documentation",
         "reportIssue": "Laporkan Isu",
         "reportIssueDescription": "Laporan pepijat & permintaan ciri",
-        "gitlab": "GitLab Mirror",
-        "gitlabDescription": "Self-hosted GitLab repository",
-        "documentationDescription": "Guides, tutorials and API reference"
+        "documentationDescription": "Guides, tutorials and API reference",
+        "forgejo": "Forgejo Mirror",
+        "forgejoDescription": "Self-hosted Forgejo repository",
+        "sponsor": "Penaja",
+        "sponsorDescription": "Bantu biayai projek ini"
       },
       "version": "Versi {{version}}"
     },
