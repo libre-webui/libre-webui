@@ -264,6 +264,17 @@ test('Anthropic receives a budget, and no sampling beside it', () => {
   assert.equal(capped.max_tokens, 4096);
   assert.equal(capped.thinking.budget_tokens, 4096 - 1024);
 
+  // The model's documented output ceiling bounds max_tokens and the budget:
+  // high thinking on an 8192-ceiling model must not ask for 17408.
+  const { payload: ceilinged } = chatAdapter.buildPluginChatPayload(
+    { id: 'anthropic', name: 'Anthropic' },
+    'claude-3-5-haiku-20241022',
+    message('hello'),
+    { think: 'high' }
+  );
+  assert.equal(ceilinged.max_tokens, 8192);
+  assert.equal(ceilinged.thinking.budget_tokens, 8192 - 1024);
+
   // Without a thinking setting the sampling behaviour is unchanged.
   const { payload: sampled } = chatAdapter.buildPluginChatPayload(
     { id: 'anthropic', name: 'Anthropic' },

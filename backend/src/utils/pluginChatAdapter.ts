@@ -75,6 +75,33 @@ const ANTHROPIC_LEGACY_SAMPLING_MODELS = new Set([
   'claude-sonnet-4-6',
 ]);
 
+/**
+ * Documented max_tokens ceilings by model family, longest prefix first. A
+ * thinking budget raised max_tokens past what the model accepts — 17,408 on
+ * a model that stops at 8,192 is a 400 the user could not predict — so the
+ * request is clamped to the ceiling and the budget shrinks with it. Unknown
+ * families are not clamped: a wrong ceiling would truncate real replies.
+ */
+const ANTHROPIC_MAX_OUTPUT_TOKENS: ReadonlyArray<[string, number]> = [
+  ['claude-3-7-sonnet', 64000],
+  ['claude-3-5-sonnet', 8192],
+  ['claude-3-5-haiku', 8192],
+  ['claude-3-haiku', 4096],
+  ['claude-3-opus', 4096],
+  ['claude-3-sonnet', 4096],
+  ['claude-sonnet-4', 64000],
+  ['claude-haiku-4', 64000],
+  ['claude-opus-4', 32000],
+];
+
+export function anthropicMaxOutputTokens(model: string): number | undefined {
+  const name = model.toLowerCase();
+  for (const [prefix, ceiling] of ANTHROPIC_MAX_OUTPUT_TOKENS) {
+    if (name.startsWith(prefix)) return ceiling;
+  }
+  return undefined;
+}
+
 export function resolvePluginChatParameters(
   options: GenerationOptions = {},
   pluginVars: PluginVariables = {}
@@ -276,14 +303,25 @@ function buildAnthropicChatPayload(
 
   // Anthropic prices thinking in tokens and takes it as its own block. The
   // budget has to fit inside max_tokens with room left for the answer; an
-  // explicit user ceiling shrinks the budget rather than being raised.
+  // explicit user ceiling shrinks the budget rather than being raised, and
+  // the model's own documented ceiling bounds them both.
   const levelBudget = thinkingBudgetTokens(options.think);
   const fitted =
     levelBudget === undefined
       ? undefined
       : fitThinkingBudget(params.maxTokens, levelBudget);
-  const budgetTokens = fitted?.budgetTokens;
-  const maxTokens = fitted?.maxTokens ?? params.maxTokens ?? 1024;
+  const modelCeiling = anthropicMaxOutputTokens(model);
+  let budgetTokens = fitted?.budgetTokens;
+  let maxTokens = fitted?.maxTokens ?? params.maxTokens ?? 1024;
+  if (modelCeiling !== undefined && maxTokens > modelCeiling) {
+    maxTokens = modelCeiling;
+    if (budgetTokens !== undefined) {
+      budgetTokens = Math.max(
+        1024,
+        Math.min(budgetTokens, modelCeiling - 1024)
+      );
+    }
+  }
 
   const payload: Record<string, unknown> = {
     model,
