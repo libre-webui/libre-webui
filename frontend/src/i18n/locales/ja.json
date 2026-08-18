@@ -942,7 +942,8 @@
       "promptPlaceholder": "空欄にすると組み込みのプロンプトを使います",
       "promptDescription": "テンプレート変数 {{previousSummaryVariable}} と {{messagesVariable}} は、前回の要約と要約対象のメッセージに置き換えられます。",
       "saved": "圧縮の設定を保存しました",
-      "saveFailed": "圧縮の設定を保存できませんでした"
+      "saveFailed": "圧縮の設定を保存できませんでした",
+      "loadFailed": "圧縮の設定を読み込めませんでした"
     },
     "sessions": {
       "title": "セッション",
@@ -1747,6 +1748,7 @@
     "you": "あなた",
     "assistant": "アシスタント",
     "system": "システム",
+    "conversationSummary": "会話の要約",
     "copy": "コピー",
     "copyMessage": "メッセージをコピー",
     "copied": "コピーしました！",

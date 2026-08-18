@@ -537,11 +537,13 @@ function ContextCompactionSection() {
         setPrompt(response.data.prompt);
         setLoaded(true);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) toast.error(t('settings.compaction.loadFailed'));
+      });
     return () => {
       cancelled = true;
     };
-  }, [isAdmin]);
+  }, [isAdmin, t]);
 
   if (!isAdmin) return null;
 
@@ -620,8 +622,9 @@ function ContextCompactionSection() {
           </label>
           <SettingsToggle
             checked={enabled}
+            // The toggle reflects the server's answer, not the click: a
+            // rejected or invalid save must not leave it visually flipped.
             onChange={checked => {
-              setEnabled(checked);
               void save(checked);
             }}
             disabled={saving || !loaded}

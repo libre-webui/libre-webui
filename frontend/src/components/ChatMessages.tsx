@@ -32,6 +32,7 @@ import { MessageBranch } from '@/components/MessageBranch';
 import { ChatMessage as ChatMessageType, ToolActivity } from '@/types';
 import { ToolActivityIndicator } from '@/components/ToolActivityIndicator';
 import { cn } from '@/utils';
+import { isCompactionSummaryContent } from '@/utils/contextUsage';
 import { ArrowDown, Sparkles } from 'lucide-react';
 import { createLogger } from '@/utils/logger';
 
@@ -63,6 +64,20 @@ const getActiveGroupMessage = (group: MessageGroup) =>
   group.messages.find(message => message.isActive === true) ||
   group.messages.find(message => message.isActive !== false) ||
   group.messages[0];
+
+/**
+ * A group whose every variant was deactivated has been compacted away: it
+ * still reads, but it no longer reaches the model and offers no branch to
+ * choose — selecting one would silently resurrect a message the summary
+ * already covers.
+ */
+const isCompactedGroup = (group: MessageGroup) =>
+  group.messages.every(message => message.isActive === false);
+
+/** Compaction summaries keep their place in the conversation; only real
+ * system prompts sort to the top. */
+const sortsAsSystem = (message: Pick<ChatMessageType, 'role' | 'content'>) =>
+  message.role === 'system' && !isCompactionSummaryContent(message.content);
 
 const preferredScrollBehavior = (): ScrollBehavior =>
   typeof window !== 'undefined' &&
@@ -123,8 +138,8 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     // Sort messages by their original index, then by branch index
     const sortedMessages = [...messages].sort((a, b) => {
       // System messages always come first
-      if (a.role === 'system' && b.role !== 'system') return -1;
-      if (b.role === 'system' && a.role !== 'system') return 1;
+      if (sortsAsSystem(a) && !sortsAsSystem(b)) return -1;
+      if (sortsAsSystem(b) && !sortsAsSystem(a)) return 1;
       // Then sort by timestamp or branch index
       if (a.parentId === b.parentId) {
         return (a.branchIndex || 0) - (b.branchIndex || 0);
@@ -197,8 +212,8 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       const aFirstMsg = a.messages[0];
       const bFirstMsg = b.messages[0];
 
-      if (aFirstMsg.role === 'system' && bFirstMsg.role !== 'system') return -1;
-      if (bFirstMsg.role === 'system' && aFirstMsg.role !== 'system') return 1;
+      if (sortsAsSystem(aFirstMsg) && !sortsAsSystem(bFirstMsg)) return -1;
+      if (sortsAsSystem(bFirstMsg) && !sortsAsSystem(aFirstMsg)) return 1;
 
       return aFirstMsg.timestamp - bFirstMsg.timestamp;
     });
@@ -541,9 +556,22 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
               group.messages.some(m => m.id === streamingMessageId);
 
             let renderedMessage: React.ReactNode;
+            const compacted = isCompactedGroup(group);
 
-            // For single messages (no branches), render normally
-            if (group.messages.length === 1) {
+            // A compacted group stays readable but dimmed, and never offers
+            // branch selection: its variants are all summarized away.
+            if (compacted) {
+              renderedMessage = (
+                <div className='opacity-55'>
+                  <ChatMessage
+                    message={getActiveGroupMessage(group)}
+                    isStreaming={false}
+                    isLastAssistantMessage={false}
+                    className={groupIndex === 0 ? 'mt-3 sm:mt-4' : ''}
+                  />
+                </div>
+              );
+            } else if (group.messages.length === 1) {
               const message = group.messages[0];
               const isThisMessageStreaming =
                 isStreaming && message.id === streamingMessageId;

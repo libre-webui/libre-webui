@@ -942,7 +942,8 @@
       "promptPlaceholder": "Biarkan kosong untuk menggunakan prompt bawaan",
       "promptDescription": "Variabel templat {{previousSummaryVariable}} dan {{messagesVariable}} akan diganti dengan rangkuman sebelumnya dan pesan-pesan yang sedang dirangkum.",
       "saved": "Pengaturan pemadatan disimpan",
-      "saveFailed": "Tidak dapat menyimpan pengaturan pemadatan"
+      "saveFailed": "Tidak dapat menyimpan pengaturan pemadatan",
+      "loadFailed": "Tidak dapat memuat pengaturan pemadatan"
     },
     "sessions": {
       "title": "Sesi",
@@ -1747,6 +1748,7 @@
     "you": "Anda",
     "assistant": "Asisten",
     "system": "Sistem",
+    "conversationSummary": "Ringkasan percakapan",
     "copy": "Salin",
     "copyMessage": "Salin pesan",
     "copied": "Disalin!",

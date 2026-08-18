@@ -44,6 +44,7 @@ import {
   ChevronDown,
   ChevronUp,
   Brain,
+  History,
   RefreshCw,
   Copy,
   Check,
@@ -51,6 +52,10 @@ import {
   ThumbsDown,
   User as UserIcon,
 } from 'lucide-react';
+import {
+  COMPACTION_SUMMARY_PREFIX,
+  isCompactionSummaryContent,
+} from '@/utils/contextUsage';
 import { LogoMark } from '@/components/LogoMark';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
@@ -177,6 +182,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const { t, i18n } = useTranslation();
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
+  // A compaction summary is written by the app, not the user: it reads as
+  // "what the model remembers" and is never editable — the edit path writes
+  // to the user's system prompt, which this is not.
+  const isCompactionSummary =
+    isSystem && isCompactionSummaryContent(message.content);
+  const systemDisplayContent = isCompactionSummary
+    ? message.content.slice(COMPACTION_SUMMARY_PREFIX.length)
+    : message.content;
   const { preferences } = useAppStore();
   const { user } = useAuthStore();
   const {
@@ -458,6 +471,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   // Determine display name for messages
   const getDisplayName = () => {
+    if (isCompactionSummary) return t('chatMessage.conversationSummary');
     if (isSystem) return t('chatMessage.system');
     if (isUser) {
       if (preferences.showUsername && user?.username) {
@@ -520,7 +534,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   // Determine if system message should show expand/collapse button
-  const shouldShowExpandButton = isSystem && message.content.length > 100;
+  const shouldShowExpandButton = isSystem && systemDisplayContent.length > 100;
 
   return (
     <div
@@ -650,11 +664,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               <div className='relative z-0 rounded-2xl border border-black/[0.06] bg-white/55 p-3 dark:border-white/[0.06] dark:bg-dark-200/45'>
                 <div className='mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-dark-500'>
                   <div className='flex items-center gap-1'>
-                    <Settings className='h-2.5 w-2.5 opacity-50' />
-                    {t('chatMessage.system')}
+                    {isCompactionSummary ? (
+                      <History className='h-2.5 w-2.5 opacity-50' />
+                    ) : (
+                      <Settings className='h-2.5 w-2.5 opacity-50' />
+                    )}
+                    {isCompactionSummary
+                      ? t('chatMessage.conversationSummary')
+                      : t('chatMessage.system')}
                   </div>
                   <div className='flex items-center gap-1'>
-                    {isEditing ? (
+                    {isCompactionSummary ? null : isEditing ? (
                       <>
                         <button
                           onClick={handleSaveSystemMessage}
@@ -700,8 +720,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                       className='whitespace-pre-wrap text-xs leading-relaxed text-gray-500 dark:text-dark-600'
                     >
                       {isSystemMessageExpanded
-                        ? message.content
-                        : truncateSystemMessage(message.content)}
+                        ? systemDisplayContent
+                        : truncateSystemMessage(systemDisplayContent)}
                     </p>
                     {shouldShowExpandButton && (
                       <button

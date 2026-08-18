@@ -942,7 +942,8 @@
       "promptPlaceholder": "Déjalo vacío para usar el prompt integrado",
       "promptDescription": "Las variables de plantilla {{previousSummaryVariable}} y {{messagesVariable}} se sustituyen por el resumen anterior y los mensajes que se van a resumir.",
       "saved": "Ajustes de compactación guardados",
-      "saveFailed": "No se pudieron guardar los ajustes de compactación"
+      "saveFailed": "No se pudieron guardar los ajustes de compactación",
+      "loadFailed": "No se pudieron cargar los ajustes de compactación"
     },
     "sessions": {
       "title": "Sesiones",
@@ -1747,6 +1748,7 @@
     "you": "Tú",
     "assistant": "Asistente",
     "system": "Sistema",
+    "conversationSummary": "Resumen de la conversación",
     "copy": "Copiar",
     "copyMessage": "Copiar mensaje",
     "copied": "¡Copiado!",

@@ -942,7 +942,8 @@
       "promptPlaceholder": "Skildu eftir autt til að nota innbyggðu fyrirmælin",
       "promptDescription": "Sniðmátsbreyturnar {{previousSummaryVariable}} og {{messagesVariable}} eru fylltar með fyrri samantekt og skilaboðunum sem verið er að taka saman.",
       "saved": "Samþjöppunarstillingar vistaðar",
-      "saveFailed": "Ekki tókst að vista samþjöppunarstillingarnar"
+      "saveFailed": "Ekki tókst að vista samþjöppunarstillingarnar",
+      "loadFailed": "Ekki tókst að hlaða samþjöppunarstillingunum"
     },
     "sessions": {
       "title": "Setur",
@@ -1747,6 +1748,7 @@
     "you": "Þú",
     "assistant": "Aðstoðarmaður",
     "system": "Kerfi",
+    "conversationSummary": "Samantekt samtals",
     "copy": "Afrita",
     "copyMessage": "Afrita skilaboð",
     "copied": "Afritað!",

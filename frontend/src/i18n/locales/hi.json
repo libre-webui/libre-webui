@@ -942,7 +942,8 @@
       "promptPlaceholder": "अंतर्निहित प्रॉम्प्ट उपयोग करने के लिए खाली छोड़ें",
       "promptDescription": "टेम्पलेट चर {{previousSummaryVariable}} और {{messagesVariable}} पिछले सारांश और सारांशित किए जा रहे संदेशों से बदल दिए जाते हैं।",
       "saved": "संकुचन सेटिंग्स सहेजी गईं",
-      "saveFailed": "संकुचन सेटिंग्स सहेजी नहीं जा सकीं"
+      "saveFailed": "संकुचन सेटिंग्स सहेजी नहीं जा सकीं",
+      "loadFailed": "संकुचन सेटिंग्स लोड नहीं हो सकीं"
     },
     "sessions": {
       "title": "सत्र",
@@ -1747,6 +1748,7 @@
     "you": "आप",
     "assistant": "सहायक",
     "system": "सिस्टम",
+    "conversationSummary": "बातचीत का सारांश",
     "copy": "कॉपी करें",
     "copyMessage": "संदेश कॉपी करें",
     "copied": "कॉपी किया गया!",

@@ -942,7 +942,8 @@
       "promptPlaceholder": "اتركه فارغًا لاستخدام الموجّه المدمج",
       "promptDescription": "يُستبدل متغيّرا القالب {{previousSummaryVariable}} و{{messagesVariable}} بالملخّص السابق وبالرسائل التي يجري تلخيصها.",
       "saved": "تم حفظ إعدادات الضغط",
-      "saveFailed": "تعذّر حفظ إعدادات الضغط"
+      "saveFailed": "تعذّر حفظ إعدادات الضغط",
+      "loadFailed": "تعذّر تحميل إعدادات الضغط"
     },
     "sessions": {
       "title": "الجلسات",
@@ -1747,6 +1748,7 @@
     "you": "أنت",
     "assistant": "المساعد",
     "system": "النظام",
+    "conversationSummary": "ملخص المحادثة",
     "copy": "نسخ",
     "copyMessage": "نسخ الرسالة",
     "copied": "تم النسخ!",

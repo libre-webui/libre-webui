@@ -49,6 +49,7 @@ import {
   findChatModelForSelection,
 } from '@/utils/chatModelSelection';
 import { modelVisibilityKey } from '@/utils/modelVisibility';
+import { isCompactionSummaryContent } from '@/utils/contextUsage';
 import type { ModelPresentation } from '@/utils/api/modelApi';
 
 const logger = createLogger('chat-store');
@@ -1126,10 +1127,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
       logger.warn('Failed to save system message to backend:', _error);
     });
 
-    // Update the system message in the current session if it exists
+    // Update the system message in the current session if it exists — never
+    // a compaction summary, which also has role 'system' and may sit first.
     if (state.currentSession) {
       const systemMessageIndex = state.currentSession.messages.findIndex(
-        msg => msg.role === 'system'
+        msg => msg.role === 'system' && !isCompactionSummaryContent(msg.content)
       );
 
       if (systemMessageIndex !== -1) {

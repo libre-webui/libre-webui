@@ -942,7 +942,8 @@
       "promptPlaceholder": "Lämna tomt för att använda den inbyggda prompten",
       "promptDescription": "Mallvariablerna {{previousSummaryVariable}} och {{messagesVariable}} ersätts med den föregående sammanfattningen och meddelandena som sammanfattas.",
       "saved": "Komprimeringsinställningar sparade",
-      "saveFailed": "Kunde inte spara komprimeringsinställningarna"
+      "saveFailed": "Kunde inte spara komprimeringsinställningarna",
+      "loadFailed": "Kunde inte läsa in komprimeringsinställningarna"
     },
     "sessions": {
       "title": "Sessioner",
@@ -1747,6 +1748,7 @@
     "you": "Du",
     "assistant": "Assistent",
     "system": "System",
+    "conversationSummary": "Sammanfattning av samtalet",
     "copy": "Kopiera",
     "copyMessage": "Kopiera meddelande",
     "copied": "Kopierat!",

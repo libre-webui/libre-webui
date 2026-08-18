@@ -942,7 +942,8 @@
       "promptPlaceholder": "Để trống để dùng prompt tích hợp",
       "promptDescription": "Các biến mẫu {{previousSummaryVariable}} và {{messagesVariable}} được thay bằng bản tóm tắt trước đó và các tin nhắn đang được tóm tắt.",
       "saved": "Đã lưu cài đặt nén",
-      "saveFailed": "Không thể lưu cài đặt nén"
+      "saveFailed": "Không thể lưu cài đặt nén",
+      "loadFailed": "Không thể tải cài đặt nén"
     },
     "sessions": {
       "title": "Phiên đăng nhập",
@@ -1747,6 +1748,7 @@
     "you": "Bạn",
     "assistant": "Trợ lý",
     "system": "Hệ thống",
+    "conversationSummary": "Tóm tắt cuộc trò chuyện",
     "copy": "Sao chép",
     "copyMessage": "Sao chép tin nhắn",
     "copied": "Đã sao chép!",

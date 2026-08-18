@@ -942,7 +942,8 @@
       "promptPlaceholder": "Lad stå tom for at bruge den indbyggede prompt",
       "promptDescription": "Skabelonvariablerne {{previousSummaryVariable}} og {{messagesVariable}} erstattes af den forrige opsummering og de beskeder, der opsummeres.",
       "saved": "Indstillinger for komprimering gemt",
-      "saveFailed": "Indstillingerne for komprimering kunne ikke gemmes"
+      "saveFailed": "Indstillingerne for komprimering kunne ikke gemmes",
+      "loadFailed": "Indstillingerne for komprimering kunne ikke indlæses"
     },
     "sessions": {
       "title": "Sessioner",
@@ -1747,6 +1748,7 @@
     "you": "Dig",
     "assistant": "Assistent",
     "system": "System",
+    "conversationSummary": "Resumé af samtalen",
     "copy": "Kopier",
     "copyMessage": "Kopier besked",
     "copied": "Kopieret!",

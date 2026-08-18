@@ -942,7 +942,8 @@
       "promptPlaceholder": "Yerleşik promptu kullanmak için boş bırakın",
       "promptDescription": "Şablon değişkenleri {{previousSummaryVariable}} ve {{messagesVariable}}, önceki özet ve özetlenen mesajlarla değiştirilir.",
       "saved": "Sıkıştırma ayarları kaydedildi",
-      "saveFailed": "Sıkıştırma ayarları kaydedilemedi"
+      "saveFailed": "Sıkıştırma ayarları kaydedilemedi",
+      "loadFailed": "Sıkıştırma ayarları yüklenemedi"
     },
     "sessions": {
       "title": "Oturumlar",
@@ -1747,6 +1748,7 @@
     "you": "Siz",
     "assistant": "Asistan",
     "system": "Sistem",
+    "conversationSummary": "Konuşma özeti",
     "copy": "Kopyala",
     "copyMessage": "Mesajı kopyala",
     "copied": "Kopyalandı!",

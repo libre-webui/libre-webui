@@ -942,7 +942,8 @@
       "promptPlaceholder": "Leave empty to use the built-in prompt",
       "promptDescription": "The template variables {{previousSummaryVariable}} and {{messagesVariable}} are replaced with the previous summary and the messages being summarized.",
       "saved": "Compaction settings saved",
-      "saveFailed": "Could not save the compaction settings"
+      "saveFailed": "Could not save the compaction settings",
+      "loadFailed": "Could not load the compaction settings"
     },
     "sessions": {
       "title": "Sessions",
@@ -1747,6 +1748,7 @@
     "you": "You",
     "assistant": "Assistant",
     "system": "System",
+    "conversationSummary": "Conversation summary",
     "copy": "Copy",
     "copyMessage": "Copy message",
     "copied": "Copied!",

@@ -942,7 +942,8 @@
       "promptPlaceholder": "Pozostaw puste, aby użyć wbudowanego promptu",
       "promptDescription": "Zmienne szablonu {{previousSummaryVariable}} i {{messagesVariable}} są zastępowane poprzednim streszczeniem oraz streszczanymi wiadomościami.",
       "saved": "Zapisano ustawienia kompaktowania",
-      "saveFailed": "Nie udało się zapisać ustawień kompaktowania"
+      "saveFailed": "Nie udało się zapisać ustawień kompaktowania",
+      "loadFailed": "Nie udało się wczytać ustawień kompaktowania"
     },
     "sessions": {
       "title": "Sesje",
@@ -1747,6 +1748,7 @@
     "you": "Ty",
     "assistant": "Asystent",
     "system": "System",
+    "conversationSummary": "Podsumowanie rozmowy",
     "copy": "Kopiuj",
     "copyMessage": "Kopiuj wiadomość",
     "copied": "Skopiowano!",

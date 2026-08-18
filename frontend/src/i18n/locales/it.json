@@ -942,7 +942,8 @@
       "promptPlaceholder": "Lascia vuoto per usare il prompt integrato",
       "promptDescription": "Le variabili del template {{previousSummaryVariable}} e {{messagesVariable}} vengono sostituite con il riassunto precedente e i messaggi da riassumere.",
       "saved": "Impostazioni di compattazione salvate",
-      "saveFailed": "Impossibile salvare le impostazioni di compattazione"
+      "saveFailed": "Impossibile salvare le impostazioni di compattazione",
+      "loadFailed": "Impossibile caricare le impostazioni di compattazione"
     },
     "sessions": {
       "title": "Sessioni",
@@ -1747,6 +1748,7 @@
     "you": "Tu",
     "assistant": "Assistente",
     "system": "Sistema",
+    "conversationSummary": "Riepilogo della conversazione",
     "copy": "Copia",
     "copyMessage": "Copia messaggio",
     "copied": "Copiato!",

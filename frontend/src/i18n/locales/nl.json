@@ -942,7 +942,8 @@
       "promptPlaceholder": "Laat leeg om de ingebouwde prompt te gebruiken",
       "promptDescription": "De sjabloonvariabelen {{previousSummaryVariable}} en {{messagesVariable}} worden vervangen door de vorige samenvatting en de berichten die worden samengevat.",
       "saved": "Compactie-instellingen opgeslagen",
-      "saveFailed": "De compactie-instellingen konden niet worden opgeslagen"
+      "saveFailed": "De compactie-instellingen konden niet worden opgeslagen",
+      "loadFailed": "De compactie-instellingen konden niet worden geladen"
     },
     "sessions": {
       "title": "Sessies",
@@ -1747,6 +1748,7 @@
     "you": "U",
     "assistant": "Assistent",
     "system": "Systeem",
+    "conversationSummary": "Samenvatting van het gesprek",
     "copy": "Kopiëren",
     "copyMessage": "Bericht kopiëren",
     "copied": "Gekopieerd!",

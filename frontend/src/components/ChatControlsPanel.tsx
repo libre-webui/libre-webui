@@ -30,6 +30,7 @@ import {
   thinkingPreferenceOf,
 } from '@/utils/thinking';
 import { createLogger } from '@/utils/logger';
+import { isCompactionSummaryContent } from '@/utils/contextUsage';
 import type { ChatSession, GenerationOptions } from '@/types';
 
 const logger = createLogger('components:chat-controls-panel');
@@ -133,7 +134,12 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
   );
 
   const systemMessage = useMemo(
-    () => session?.messages.find(message => message.role === 'system'),
+    () =>
+      session?.messages.find(
+        message =>
+          message.role === 'system' &&
+          !isCompactionSummaryContent(message.content)
+      ),
     [session?.messages]
   );
 

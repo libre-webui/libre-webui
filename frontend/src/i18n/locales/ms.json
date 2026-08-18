@@ -942,7 +942,8 @@
       "promptPlaceholder": "Biarkan kosong untuk menggunakan gesaan terbina dalam",
       "promptDescription": "Pemboleh ubah templat {{previousSummaryVariable}} dan {{messagesVariable}} akan digantikan dengan ringkasan sebelumnya dan mesej yang sedang diringkaskan.",
       "saved": "Tetapan pemadatan disimpan",
-      "saveFailed": "Tetapan pemadatan tidak dapat disimpan"
+      "saveFailed": "Tetapan pemadatan tidak dapat disimpan",
+      "loadFailed": "Tetapan pemadatan tidak dapat dimuatkan"
     },
     "sessions": {
       "title": "Sesi",
@@ -1747,6 +1748,7 @@
     "you": "Anda",
     "assistant": "Pembantu",
     "system": "Sistem",
+    "conversationSummary": "Ringkasan perbualan",
     "copy": "Salin",
     "copyMessage": "Salin mesej",
     "copied": "Disalin!",

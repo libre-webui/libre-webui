@@ -942,7 +942,8 @@
       "promptPlaceholder": "留空则使用内置提示词",
       "promptDescription": "模板变量 {{previousSummaryVariable}} 和 {{messagesVariable}} 会被替换为上一次的摘要和正在总结的消息。",
       "saved": "已保存压缩设置",
-      "saveFailed": "无法保存压缩设置"
+      "saveFailed": "无法保存压缩设置",
+      "loadFailed": "无法加载压缩设置"
     },
     "sessions": {
       "title": "登录会话",
@@ -1747,6 +1748,7 @@
     "you": "您",
     "assistant": "助手",
     "system": "系统",
+    "conversationSummary": "对话摘要",
     "copy": "复制",
     "copyMessage": "复制消息",
     "copied": "已复制！",

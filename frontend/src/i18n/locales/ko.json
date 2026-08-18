@@ -942,7 +942,8 @@
       "promptPlaceholder": "비워 두면 기본 프롬프트를 사용합니다",
       "promptDescription": "템플릿 변수 {{previousSummaryVariable}} 및 {{messagesVariable}}는 이전 요약과 요약할 메시지로 바뀝니다.",
       "saved": "압축 설정을 저장했습니다",
-      "saveFailed": "압축 설정을 저장하지 못했습니다"
+      "saveFailed": "압축 설정을 저장하지 못했습니다",
+      "loadFailed": "압축 설정을 불러오지 못했습니다"
     },
     "sessions": {
       "title": "세션",
@@ -1747,6 +1748,7 @@
     "you": "나",
     "assistant": "어시스턴트",
     "system": "시스템",
+    "conversationSummary": "대화 요약",
     "copy": "복사",
     "copyMessage": "메시지 복사",
     "copied": "복사됨!",

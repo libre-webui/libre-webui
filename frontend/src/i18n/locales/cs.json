@@ -942,7 +942,8 @@
       "promptPlaceholder": "Ponechte prázdné pro vestavěný prompt",
       "promptDescription": "Proměnné šablony {{previousSummaryVariable}} a {{messagesVariable}} se nahradí předchozím shrnutím a zprávami, které se shrnují.",
       "saved": "Nastavení zhutnění uloženo",
-      "saveFailed": "Nastavení zhutnění se nepodařilo uložit"
+      "saveFailed": "Nastavení zhutnění se nepodařilo uložit",
+      "loadFailed": "Nastavení zhutnění se nepodařilo načíst"
     },
     "sessions": {
       "title": "Relace",
@@ -1747,6 +1748,7 @@
     "you": "Vy",
     "assistant": "Asistent",
     "system": "Systém",
+    "conversationSummary": "Shrnutí konverzace",
     "copy": "Kopírovat",
     "copyMessage": "Kopírovat zprávu",
     "copied": "Zkopírováno!",

@@ -942,7 +942,8 @@
       "promptPlaceholder": "Leer lassen, um den integrierten Prompt zu verwenden",
       "promptDescription": "Die Vorlagenvariablen {{previousSummaryVariable}} und {{messagesVariable}} werden durch die vorherige Zusammenfassung und die zusammenzufassenden Nachrichten ersetzt.",
       "saved": "Einstellungen zur Verdichtung gespeichert",
-      "saveFailed": "Die Einstellungen zur Verdichtung konnten nicht gespeichert werden"
+      "saveFailed": "Die Einstellungen zur Verdichtung konnten nicht gespeichert werden",
+      "loadFailed": "Die Einstellungen zur Verdichtung konnten nicht geladen werden"
     },
     "sessions": {
       "title": "Sitzungen",
@@ -1747,6 +1748,7 @@
     "you": "Sie",
     "assistant": "Assistent",
     "system": "System",
+    "conversationSummary": "Zusammenfassung des Gesprächs",
     "copy": "Kopieren",
     "copyMessage": "Nachricht kopieren",
     "copied": "Kopiert!",

@@ -942,7 +942,8 @@
       "promptPlaceholder": "Laisser vide pour utiliser l'invite intégrée",
       "promptDescription": "Les variables de modèle {{previousSummaryVariable}} et {{messagesVariable}} sont remplacées par le résumé précédent et les messages à résumer.",
       "saved": "Paramètres de compactage enregistrés",
-      "saveFailed": "Impossible d'enregistrer les paramètres de compactage"
+      "saveFailed": "Impossible d'enregistrer les paramètres de compactage",
+      "loadFailed": "Impossible de charger les paramètres de compactage"
     },
     "sessions": {
       "title": "Sessions",
@@ -1747,6 +1748,7 @@
     "you": "Vous",
     "assistant": "Assistant",
     "system": "Système",
+    "conversationSummary": "Résumé de la conversation",
     "copy": "Copier",
     "copyMessage": "Copier le message",
     "copied": "Copié !",
