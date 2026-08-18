@@ -270,7 +270,9 @@
       "browserSpeech": "Servicio de voz del navegador",
       "providerTranscriptionDisclosure": "Grabar y enviar audio a {{provider}} para transcribirlo",
       "webSearchOn": "Búsqueda web activada — las respuestas usan resultados en vivo",
-      "webSearchOff": "Buscar en la web para este mensaje"
+      "webSearchOff": "Buscar en la web para este mensaje",
+      "thinkingOn": "Razonamiento activado ({{level}})",
+      "thinkingOff": "Razonar antes de responder"
     },
     "session": {
       "new": "Nuevo chat",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Penalización de repetición",
         "seed": "Semilla",
         "contextLength": "Longitud de contexto"
-      }
+      },
+      "thinking": "Razonamiento",
+      "thinkingDescription": "Cuánto razona el modelo antes de responder. Los modelos sin razonamiento lo ignoran."
     },
     "message": {
       "sources": "Fuentes"
@@ -680,7 +684,17 @@
       "resetDefaults": "Restablecer predeterminados",
       "saveOptions": "Guardar opciones",
       "embeddingSettings": "Configuración de embeddings",
-      "enableEmbeddings": "Habilitar embeddings de documentos"
+      "enableEmbeddings": "Habilitar embeddings de documentos",
+      "thinking": "Razonamiento",
+      "thinkingDescription": "Esfuerzo de razonamiento predeterminado para las respuestas. Cada chat puede cambiarlo.",
+      "thinkingLevels": {
+        "default": "Predeterminado del modelo",
+        "off": "Desactivado",
+        "on": "Activado",
+        "low": "Bajo",
+        "medium": "Medio",
+        "high": "Alto"
+      }
     },
     "documents": {
       "title": "Configuración de documentos",

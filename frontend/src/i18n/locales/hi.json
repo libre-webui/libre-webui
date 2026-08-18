@@ -270,7 +270,9 @@
       "browserSpeech": "ब्राउज़र वाक् सेवा",
       "providerTranscriptionDisclosure": "ट्रांसक्रिप्शन के लिए ऑडियो रिकॉर्ड करके {{provider}} को भेजें",
       "webSearchOn": "वेब खोज चालू — उत्तर लाइव परिणाम उपयोग करते हैं",
-      "webSearchOff": "इस संदेश के लिए वेब पर खोजें"
+      "webSearchOff": "इस संदेश के लिए वेब पर खोजें",
+      "thinkingOn": "सोच चालू ({{level}})",
+      "thinkingOff": "उत्तर से पहले सोचें"
     },
     "session": {
       "new": "नई चैट",
@@ -375,7 +377,9 @@
         "repeatPenalty": "दोहराव दंड",
         "seed": "सीड",
         "contextLength": "संदर्भ लंबाई"
-      }
+      },
+      "thinking": "सोच",
+      "thinkingDescription": "उत्तर देने से पहले मॉडल कितना सोचता है। बिना तर्क वाले मॉडल इसे अनदेखा करते हैं।"
     },
     "message": {
       "sources": "स्रोत"
@@ -680,7 +684,17 @@
       "resetDefaults": "डिफ़ॉल्ट पर रीसेट करें",
       "saveOptions": "विकल्प सहेजें",
       "embeddingSettings": "एम्बेडिंग सेटिंग्स",
-      "enableEmbeddings": "दस्तावेज़ एम्बेडिंग सक्षम करें"
+      "enableEmbeddings": "दस्तावेज़ एम्बेडिंग सक्षम करें",
+      "thinking": "सोच",
+      "thinkingDescription": "उत्तरों के लिए डिफ़ॉल्ट सोच स्तर। हर चैट इसे बदल सकती है।",
+      "thinkingLevels": {
+        "default": "मॉडल डिफ़ॉल्ट",
+        "off": "बंद",
+        "on": "चालू",
+        "low": "कम",
+        "medium": "मध्यम",
+        "high": "अधिक"
+      }
     },
     "documents": {
       "title": "दस्तावेज़ सेटिंग्स",

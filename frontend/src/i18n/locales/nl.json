@@ -270,7 +270,9 @@
       "browserSpeech": "Spraakservice van de browser",
       "providerTranscriptionDisclosure": "Audio opnemen en naar {{provider}} sturen voor transcriptie",
       "webSearchOn": "Webzoeken aan — antwoorden gebruiken live resultaten",
-      "webSearchOff": "Zoek op het web voor dit bericht"
+      "webSearchOff": "Zoek op het web voor dit bericht",
+      "thinkingOn": "Nadenken aan ({{level}})",
+      "thinkingOff": "Nadenken voor het antwoord"
     },
     "session": {
       "new": "Nieuwe chat",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Herhalingsstraf",
         "seed": "Seed",
         "contextLength": "Contextlengte"
-      }
+      },
+      "thinking": "Nadenken",
+      "thinkingDescription": "Hoeveel het model nadenkt voordat het antwoordt. Modellen zonder redeneren negeren dit."
     },
     "message": {
       "sources": "Bronnen"
@@ -680,7 +684,17 @@
       "resetDefaults": "Resetten naar standaard",
       "saveOptions": "Opties opslaan",
       "embeddingSettings": "Embedding-instellingen",
-      "enableEmbeddings": "Document-embeddings inschakelen"
+      "enableEmbeddings": "Document-embeddings inschakelen",
+      "thinking": "Nadenken",
+      "thinkingDescription": "Standaard denkinspanning voor antwoorden. Elke chat kan dit overschrijven.",
+      "thinkingLevels": {
+        "default": "Standaard van model",
+        "off": "Uit",
+        "on": "Aan",
+        "low": "Laag",
+        "medium": "Gemiddeld",
+        "high": "Hoog"
+      }
     },
     "documents": {
       "title": "Documentinstellingen",

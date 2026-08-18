@@ -270,7 +270,9 @@
       "browserSpeech": "Browserens talegenkendelsestjeneste",
       "providerTranscriptionDisclosure": "Optag og send lyd til {{provider}} til transskribering",
       "webSearchOn": "Websøgning til — svar bruger live-resultater",
-      "webSearchOff": "Søg på nettet for denne besked"
+      "webSearchOff": "Søg på nettet for denne besked",
+      "thinkingOn": "Tænkning slået til ({{level}})",
+      "thinkingOff": "Tænk før svaret"
     },
     "session": {
       "new": "Ny chat",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Gentagelsesstraf",
         "seed": "Seed",
         "contextLength": "Kontekstlængde"
-      }
+      },
+      "thinking": "Tænkning",
+      "thinkingDescription": "Hvor meget modellen tænker, før den svarer. Modeller uden ræsonnement ignorerer det."
     },
     "message": {
       "sources": "Kilder"
@@ -680,7 +684,17 @@
       "resetDefaults": "Nulstil til standard",
       "saveOptions": "Gem indstillinger",
       "embeddingSettings": "Embedding-indstillinger",
-      "enableEmbeddings": "Aktiver dokument-embeddings"
+      "enableEmbeddings": "Aktiver dokument-embeddings",
+      "thinking": "Tænkning",
+      "thinkingDescription": "Standardindsats for tænkning i svar. Hver chat kan ændre det.",
+      "thinkingLevels": {
+        "default": "Modellens standard",
+        "off": "Fra",
+        "on": "Til",
+        "low": "Lav",
+        "medium": "Mellem",
+        "high": "Høj"
+      }
     },
     "documents": {
       "title": "Dokumentindstillinger",

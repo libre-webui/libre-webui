@@ -270,7 +270,9 @@
       "browserSpeech": "บริการรู้จำเสียงพูดของเบราว์เซอร์",
       "providerTranscriptionDisclosure": "บันทึกและส่งเสียงไปยัง {{provider}} เพื่อถอดเสียง",
       "webSearchOn": "การค้นหาเว็บเปิดอยู่ — คำตอบใช้ผลลัพธ์สด",
-      "webSearchOff": "ค้นหาเว็บสำหรับข้อความนี้"
+      "webSearchOff": "ค้นหาเว็บสำหรับข้อความนี้",
+      "thinkingOn": "เปิดการคิด ({{level}})",
+      "thinkingOff": "คิดก่อนตอบ"
     },
     "session": {
       "new": "แชทใหม่",
@@ -375,7 +377,9 @@
         "repeatPenalty": "บทลงโทษการทำซ้ำ",
         "seed": "ซีด",
         "contextLength": "ความยาวบริบท"
-      }
+      },
+      "thinking": "การคิด",
+      "thinkingDescription": "โมเดลคิดมากแค่ไหนก่อนตอบ โมเดลที่ไม่มีการให้เหตุผลจะไม่สนใจค่านี้"
     },
     "message": {
       "sources": "แหล่งที่มา"
@@ -680,7 +684,17 @@
       "resetDefaults": "รีเซ็ตเป็นค่าเริ่มต้น",
       "saveOptions": "บันทึกตัวเลือก",
       "embeddingSettings": "การตั้งค่า Embedding",
-      "enableEmbeddings": "เปิดใช้ Document Embeddings"
+      "enableEmbeddings": "เปิดใช้ Document Embeddings",
+      "thinking": "การคิด",
+      "thinkingDescription": "ระดับการคิดเริ่มต้นสำหรับคำตอบ แต่ละแชทเปลี่ยนได้",
+      "thinkingLevels": {
+        "default": "ค่าเริ่มต้นของโมเดล",
+        "off": "ปิด",
+        "on": "เปิด",
+        "low": "ต่ำ",
+        "medium": "ปานกลาง",
+        "high": "สูง"
+      }
     },
     "documents": {
       "title": "การตั้งค่าเอกสาร",

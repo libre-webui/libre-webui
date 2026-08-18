@@ -285,6 +285,9 @@ export const ollamaApi = {
       options: Partial<GenerationOptions>;
       trainedContextLength?: number;
       contextCapped: boolean;
+      /** What Ollama reports the model can do, when it reports anything. */
+      capabilities?: string[];
+      supportsThinking?: boolean;
     }>
   > =>
     api

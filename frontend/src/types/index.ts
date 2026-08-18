@@ -144,6 +144,10 @@ export interface OllamaModel {
   isUnavailable?: boolean;
 }
 
+/** How hard a model should think: off, on, or one of the named levels. */
+export type ThinkingLevel = 'low' | 'medium' | 'high';
+export type ThinkingPreference = boolean | ThinkingLevel;
+
 export interface GenerationOptions {
   // Core parameters
   temperature?: number; // 0.0-2.0, default 0.8
@@ -178,6 +182,14 @@ export interface GenerationOptions {
   format?: string | Record<string, unknown>; // Response format (json, etc.)
   raw?: boolean; // Skip prompt templating
   keep_alive?: string; // Keep model in memory duration
+
+  /**
+   * How hard the model should think before answering. Unset leaves the choice
+   * to the provider; the server translates the rest into whatever the provider
+   * behind the model expects. `null` clears a stored setting, which a missing
+   * key cannot do once one has been saved.
+   */
+  think?: ThinkingPreference | null;
 }
 
 export interface ApiResponse<T = unknown> {

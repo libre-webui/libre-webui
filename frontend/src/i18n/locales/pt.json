@@ -270,7 +270,9 @@
       "browserSpeech": "Serviço de voz do navegador",
       "providerTranscriptionDisclosure": "Gravar e enviar áudio para {{provider}} para transcrição",
       "webSearchOn": "Pesquisa na web ativa — respostas usam resultados ao vivo",
-      "webSearchOff": "Pesquisar na web para esta mensagem"
+      "webSearchOff": "Pesquisar na web para esta mensagem",
+      "thinkingOn": "Raciocínio ativado ({{level}})",
+      "thinkingOff": "Raciocinar antes de responder"
     },
     "session": {
       "new": "Nova conversa",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Penalização de repetição",
         "seed": "Semente",
         "contextLength": "Comprimento do contexto"
-      }
+      },
+      "thinking": "Raciocínio",
+      "thinkingDescription": "Quanto o modelo raciocina antes de responder. Modelos sem raciocínio ignoram isto."
     },
     "message": {
       "sources": "Fontes"
@@ -680,7 +684,17 @@
       "resetDefaults": "Restaurar Padrões",
       "saveOptions": "Salvar Opções",
       "embeddingSettings": "Configurações de Embedding",
-      "enableEmbeddings": "Ativar Embeddings de Documentos"
+      "enableEmbeddings": "Ativar Embeddings de Documentos",
+      "thinking": "Raciocínio",
+      "thinkingDescription": "Esforço de raciocínio padrão das respostas. Cada conversa pode alterá-lo.",
+      "thinkingLevels": {
+        "default": "Padrão do modelo",
+        "off": "Desativado",
+        "on": "Ativado",
+        "low": "Baixo",
+        "medium": "Médio",
+        "high": "Alto"
+      }
     },
     "documents": {
       "title": "Configurações de Documentos",

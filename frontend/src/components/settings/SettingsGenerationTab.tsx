@@ -21,6 +21,11 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { Button, Select, Textarea } from '@/components/ui';
 import { cn } from '@/utils';
+import {
+  THINKING_CHOICES,
+  thinkingChoiceOf,
+  thinkingPreferenceOf,
+} from '@/utils/thinking';
 import { chatApi } from '@/utils/api';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
@@ -53,7 +58,7 @@ interface SettingsGenerationTabProps {
   embeddingStatus: EmbeddingStatus | null;
   onGenerationOptionChange: (
     key: keyof GenerationOptions,
-    value: string | number | boolean | string[] | undefined
+    value: string | number | boolean | string[] | null | undefined
   ) => void;
   onEmbeddingSettingsChange: (
     key: keyof EmbeddingSettings,
@@ -85,6 +90,7 @@ export function SettingsGenerationTab({
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const advancedPanelId = useId();
   const scopeSelectId = useId();
+  const thinkingSelectId = useId();
 
   // A model can only be pinned when one is actually selected.
   const scopeOptions = [
@@ -265,6 +271,32 @@ export function SettingsGenerationTab({
                   description={t('settings.generation.seedDescription')}
                   onChange={value => onGenerationOptionChange('seed', value)}
                 />
+
+                <div className='md:col-span-2'>
+                  <label
+                    htmlFor={thinkingSelectId}
+                    className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+                  >
+                    {t('settings.generation.thinking')}
+                  </label>
+                  <Select
+                    id={thinkingSelectId}
+                    value={thinkingChoiceOf(generationOptions.think)}
+                    onChange={event =>
+                      onGenerationOptionChange(
+                        'think',
+                        thinkingPreferenceOf(event.target.value)
+                      )
+                    }
+                    options={THINKING_CHOICES.map(choice => ({
+                      value: choice,
+                      label: t(`settings.generation.thinkingLevels.${choice}`),
+                    }))}
+                  />
+                  <p className='text-xs text-gray-500 mt-1'>
+                    {t('settings.generation.thinkingDescription')}
+                  </p>
+                </div>
               </GenerationSection>
 
               <GenerationSection

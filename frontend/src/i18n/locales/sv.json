@@ -270,7 +270,9 @@
       "browserSpeech": "Webbläsarens taligenkänningstjänst",
       "providerTranscriptionDisclosure": "Spela in och skicka ljud till {{provider}} för transkribering",
       "webSearchOn": "Webbsökning på — svar använder live-resultat",
-      "webSearchOff": "Sök på webben för det här meddelandet"
+      "webSearchOff": "Sök på webben för det här meddelandet",
+      "thinkingOn": "Tänkande på ({{level}})",
+      "thinkingOff": "Tänk innan svaret"
     },
     "session": {
       "new": "Ny chatt",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Upprepningsstraff",
         "seed": "Frö",
         "contextLength": "Kontextlängd"
-      }
+      },
+      "thinking": "Tänkande",
+      "thinkingDescription": "Hur mycket modellen tänker innan den svarar. Modeller utan resonemang ignorerar detta."
     },
     "message": {
       "sources": "Källor"
@@ -680,7 +684,17 @@
       "resetDefaults": "Återställ till standardvärden",
       "saveOptions": "Spara alternativ",
       "embeddingSettings": "Inbäddningsinställningar",
-      "enableEmbeddings": "Aktivera dokumentinbäddningar"
+      "enableEmbeddings": "Aktivera dokumentinbäddningar",
+      "thinking": "Tänkande",
+      "thinkingDescription": "Standardnivå för tänkande i svar. Varje chatt kan ändra den.",
+      "thinkingLevels": {
+        "default": "Modellens standard",
+        "off": "Av",
+        "on": "På",
+        "low": "Låg",
+        "medium": "Medel",
+        "high": "Hög"
+      }
     },
     "documents": {
       "title": "Dokumentinställningar",

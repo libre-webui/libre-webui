@@ -270,7 +270,9 @@
       "browserSpeech": "浏览器语音识别服务",
       "providerTranscriptionDisclosure": "录制音频并发送至 {{provider}} 进行转写",
       "webSearchOn": "网页搜索已开启 — 回复将使用实时结果",
-      "webSearchOff": "为这条消息搜索网页"
+      "webSearchOff": "为这条消息搜索网页",
+      "thinkingOn": "思考已开启 ({{level}})",
+      "thinkingOff": "回答前先思考"
     },
     "session": {
       "new": "新对话",
@@ -375,7 +377,9 @@
         "repeatPenalty": "重复惩罚",
         "seed": "种子",
         "contextLength": "上下文长度"
-      }
+      },
+      "thinking": "思考",
+      "thinkingDescription": "模型回答前思考的程度。不具备推理能力的模型会忽略此设置。"
     },
     "message": {
       "sources": "来源"
@@ -680,7 +684,17 @@
       "resetDefaults": "重置为默认值",
       "saveOptions": "保存选项",
       "embeddingSettings": "嵌入设置",
-      "enableEmbeddings": "启用文档嵌入"
+      "enableEmbeddings": "启用文档嵌入",
+      "thinking": "思考",
+      "thinkingDescription": "回复的默认思考强度。每个对话都可以单独覆盖。",
+      "thinkingLevels": {
+        "default": "模型默认",
+        "off": "关闭",
+        "on": "开启",
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      }
     },
     "documents": {
       "title": "文档设置",

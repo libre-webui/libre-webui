@@ -270,7 +270,9 @@
       "browserSpeech": "Servizio vocale del browser",
       "providerTranscriptionDisclosure": "Registra e invia l’audio a {{provider}} per la trascrizione",
       "webSearchOn": "Ricerca web attiva — le risposte usano risultati in tempo reale",
-      "webSearchOff": "Cerca sul web per questo messaggio"
+      "webSearchOff": "Cerca sul web per questo messaggio",
+      "thinkingOn": "Ragionamento attivo ({{level}})",
+      "thinkingOff": "Ragiona prima di rispondere"
     },
     "session": {
       "new": "Nuova chat",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Penalità di ripetizione",
         "seed": "Seed",
         "contextLength": "Lunghezza contesto"
-      }
+      },
+      "thinking": "Ragionamento",
+      "thinkingDescription": "Quanto il modello ragiona prima di rispondere. I modelli senza ragionamento lo ignorano."
     },
     "message": {
       "sources": "Fonti"
@@ -680,7 +684,17 @@
       "resetDefaults": "Ripristina predefiniti",
       "saveOptions": "Salva opzioni",
       "embeddingSettings": "Impostazioni embedding",
-      "enableEmbeddings": "Abilita embedding documenti"
+      "enableEmbeddings": "Abilita embedding documenti",
+      "thinking": "Ragionamento",
+      "thinkingDescription": "Livello di ragionamento predefinito per le risposte. Ogni chat può modificarlo.",
+      "thinkingLevels": {
+        "default": "Predefinito del modello",
+        "off": "Disattivato",
+        "on": "Attivo",
+        "low": "Basso",
+        "medium": "Medio",
+        "high": "Alto"
+      }
     },
     "documents": {
       "title": "Impostazioni documenti",

@@ -270,7 +270,9 @@
       "browserSpeech": "Dịch vụ nhận dạng giọng nói của trình duyệt",
       "providerTranscriptionDisclosure": "Ghi âm và gửi âm thanh đến {{provider}} để chuyển thành văn bản",
       "webSearchOn": "Tìm kiếm web đang bật — trả lời dùng kết quả trực tiếp",
-      "webSearchOff": "Tìm trên web cho tin nhắn này"
+      "webSearchOff": "Tìm trên web cho tin nhắn này",
+      "thinkingOn": "Suy luận đang bật ({{level}})",
+      "thinkingOff": "Suy luận trước khi trả lời"
     },
     "session": {
       "new": "Cuộc trò chuyện mới",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Phạt lặp lại",
         "seed": "Seed",
         "contextLength": "Độ dài ngữ cảnh"
-      }
+      },
+      "thinking": "Suy luận",
+      "thinkingDescription": "Mức độ mô hình suy luận trước khi trả lời. Mô hình không suy luận sẽ bỏ qua."
     },
     "message": {
       "sources": "Nguồn"
@@ -680,7 +684,17 @@
       "resetDefaults": "Đặt lại mặc định",
       "saveOptions": "Lưu tùy chọn",
       "embeddingSettings": "Cài đặt nhúng",
-      "enableEmbeddings": "Bật nhúng tài liệu"
+      "enableEmbeddings": "Bật nhúng tài liệu",
+      "thinking": "Suy luận",
+      "thinkingDescription": "Mức suy luận mặc định cho câu trả lời. Mỗi cuộc trò chuyện có thể thay đổi.",
+      "thinkingLevels": {
+        "default": "Mặc định của mô hình",
+        "off": "Tắt",
+        "on": "Bật",
+        "low": "Thấp",
+        "medium": "Trung bình",
+        "high": "Cao"
+      }
     },
     "documents": {
       "title": "Cài đặt tài liệu",

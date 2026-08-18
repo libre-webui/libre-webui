@@ -34,6 +34,10 @@ import {
   parseOllamaModelDefaults,
   type OllamaModelDefaults,
 } from '../utils/ollamaModelDefaults.js';
+import {
+  splitThinkingOption,
+  type ThinkingPreference,
+} from '../utils/thinkingOptions.js';
 import pluginUsageService, {
   type PluginUsageStatus,
 } from './pluginUsageService.js';
@@ -61,8 +65,11 @@ export function isCloudModel(model: string | undefined): boolean {
  */
 export function sanitizeOptionsForModel(
   model: string,
-  options: Record<string, unknown> | undefined
+  rawOptions: Record<string, unknown> | undefined
 ): Record<string, unknown> | undefined {
+  // `think` rides along with the generation options so a chat can carry it,
+  // but Ollama takes it beside them, not inside.
+  const { options } = splitThinkingOption(rawOptions);
   if (!options) return options;
   const isInvalid = (value: unknown) => typeof value === 'number' && value <= 0;
   const dropNumCtx = isInvalid(options.num_ctx);
@@ -622,6 +629,63 @@ export class OllamaService {
     });
   }
 
+  /**
+   * The thinking setting a request should actually be sent with.
+   *
+   * A model that does not reason answers a `think` request with a 400, and the
+   * setting can arrive from global preferences that were never written with
+   * this model in mind. Where Ollama says what the model can do, that answer
+   * is respected; where it says nothing, the request is left alone.
+   */
+  private async resolveThinking(
+    model: string,
+    think: ThinkingPreference | undefined,
+    signal?: AbortSignal
+  ): Promise<ThinkingPreference | undefined> {
+    if (think === undefined || think === false) return think;
+
+    const { supportsThinking } = await this.getModelDefaults(model, signal);
+    if (supportsThinking === false) {
+      logger.debug(`${model} does not reason; sending the request without it.`);
+      return undefined;
+    }
+
+    return think;
+  }
+
+  /**
+   * The wire form of a chat request: messages Ollama can parse, options it
+   * accepts, and `think` where it belongs, in the body rather than the
+   * options.
+   */
+  private async buildChatRequestBody(
+    request: OllamaChatRequest,
+    stream: boolean,
+    signal?: AbortSignal
+  ): Promise<Record<string, unknown>> {
+    const { think: optionThink } = splitThinkingOption(request.options);
+    const think = await this.resolveThinking(
+      request.model,
+      request.think ?? optionThink,
+      signal
+    );
+
+    const body: Record<string, unknown> = {
+      ...request,
+      messages: normalizeChatMessagesForOllama(request.messages),
+      options: sanitizeOptionsForModel(request.model, request.options),
+      stream,
+    };
+
+    if (think === undefined) {
+      delete body.think;
+    } else {
+      body.think = think;
+    }
+
+    return body;
+  }
+
   async generateChatResponse(
     request: OllamaChatRequest,
     signal?: AbortSignal,
@@ -632,12 +696,7 @@ export class OllamaService {
       // Use long operation client for chat generation as it may need to load model on first use
       const response = await this.longOperationClient.post(
         '/api/chat',
-        {
-          ...request,
-          messages: normalizeChatMessagesForOllama(request.messages),
-          options: sanitizeOptionsForModel(request.model, request.options),
-          stream: false,
-        },
+        await this.buildChatRequestBody(request, false, signal),
         { signal }
       );
       this.recordChatUsage(
@@ -690,12 +749,7 @@ export class OllamaService {
       // Use long operation client for chat streaming as it may need to load model on first use
       const response = await this.longOperationClient.post(
         '/api/chat',
-        {
-          ...request,
-          messages: normalizeChatMessagesForOllama(request.messages),
-          options: sanitizeOptionsForModel(request.model, request.options),
-          stream: true,
-        },
+        await this.buildChatRequestBody(request, true, signal),
         {
           responseType: 'stream',
           signal,

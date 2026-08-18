@@ -49,6 +49,8 @@ export interface OpenAIResponsesPayloadOptions {
   top_p?: number;
   stream?: boolean;
   stateScope?: string;
+  /** How hard the model should reason, when the caller has an opinion. */
+  reasoningEffort?: 'low' | 'medium' | 'high';
 }
 
 export interface OpenAIResponsesPayload extends JsonObject {
@@ -444,6 +446,9 @@ export function buildOpenAIResponsesPayload(
       : {}),
     ...(typeof options.top_p === 'number' ? { top_p: options.top_p } : {}),
     ...(typeof options.stream === 'boolean' ? { stream: options.stream } : {}),
+    ...(options.reasoningEffort
+      ? { reasoning: { effort: options.reasoningEffort } }
+      : {}),
   };
 }
 

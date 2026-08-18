@@ -270,7 +270,9 @@
       "browserSpeech": "ব্রাউজারের স্পিচ পরিষেবা",
       "providerTranscriptionDisclosure": "ট্রান্সক্রিপশনের জন্য অডিও রেকর্ড করে {{provider}}-এ পাঠান",
       "webSearchOn": "ওয়েব অনুসন্ধান চালু — উত্তরে লাইভ ফলাফল ব্যবহৃত হয়",
-      "webSearchOff": "এই বার্তার জন্য ওয়েবে অনুসন্ধান করুন"
+      "webSearchOff": "এই বার্তার জন্য ওয়েবে অনুসন্ধান করুন",
+      "thinkingOn": "চিন্তা চালু ({{level}})",
+      "thinkingOff": "উত্তরের আগে চিন্তা করুন"
     },
     "session": {
       "new": "নতুন চ্যাট",
@@ -375,7 +377,9 @@
         "repeatPenalty": "পুনরাবৃত্তি জরিমানা",
         "seed": "সিড",
         "contextLength": "প্রসঙ্গ দৈর্ঘ্য"
-      }
+      },
+      "thinking": "চিন্তা",
+      "thinkingDescription": "উত্তর দেওয়ার আগে মডেল কতটা চিন্তা করে। যুক্তি করতে না পারা মডেল এটি উপেক্ষা করে।"
     },
     "message": {
       "sources": "উৎস"
@@ -680,7 +684,17 @@
       "resetDefaults": "ডিফল্টে রিসেট করুন",
       "saveOptions": "অপশন সংরক্ষণ করুন",
       "embeddingSettings": "এমবেডিং সেটিংস",
-      "enableEmbeddings": "ডকুমেন্ট এমবেডিং সক্রিয় করুন"
+      "enableEmbeddings": "ডকুমেন্ট এমবেডিং সক্রিয় করুন",
+      "thinking": "চিন্তা",
+      "thinkingDescription": "উত্তরের জন্য ডিফল্ট চিন্তার মাত্রা। প্রতিটি চ্যাট এটি বদলাতে পারে।",
+      "thinkingLevels": {
+        "default": "মডেলের ডিফল্ট",
+        "off": "বন্ধ",
+        "on": "চালু",
+        "low": "কম",
+        "medium": "মাঝারি",
+        "high": "বেশি"
+      }
     },
     "documents": {
       "title": "ডকুমেন্ট সেটিংস",

@@ -35,6 +35,9 @@ export const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
 const TITLE_GENERATION_OPTIONS: GenerationOptions = {
   temperature: 0.3,
   num_predict: 20,
+  // Naming a conversation is not worth a reasoning pass, whatever the chat
+  // itself is set to.
+  think: false,
 };
 
 /**
@@ -48,6 +51,7 @@ const TITLE_GENERATION_OPTIONS: GenerationOptions = {
 const PLUGIN_TITLE_GENERATION_OPTIONS: GenerationOptions = {
   temperature: 0.3,
   num_predict: 512,
+  think: false,
 };
 
 const TITLE_STOP_SEQUENCES = ['\n', '.', '!', '?'];

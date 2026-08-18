@@ -44,6 +44,7 @@ import { MediaUpload } from './MediaUpload';
 import { DocumentIndicator } from './DocumentIndicator';
 import { StructuredOutput } from './StructuredOutput';
 import { ModelSelector } from './ModelSelector';
+import { ThinkingSelector } from './ThinkingSelector';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
 import {
@@ -51,13 +52,19 @@ import {
   chatApi,
   imageGenApi,
   documentsApi,
+  ollamaApi,
   searchApi,
   sttApi,
 } from '@/utils/api';
 import type { STTModel } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
-import { Persona, KnowledgeCollection, ChatSession } from '@/types';
+import {
+  Persona,
+  KnowledgeCollection,
+  ChatSession,
+  ThinkingPreference,
+} from '@/types';
 import { createLogger } from '@/utils/logger';
 import {
   chatModelOptionKey,
@@ -363,6 +370,102 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       cancelled = true;
     };
   }, [knowledgeMenuOpen]);
+
+  // Thinking is a property of the conversation, not of one message: it is kept
+  // on the session so a reload, a regenerate, and the chat controls panel all
+  // agree about it.
+  const activeThinking = currentSession?.settings?.generationOptions?.think;
+
+  const activeModelEntry = useMemo(
+    () => models.find(model => model.name === currentSession?.model),
+    [models, currentSession?.model]
+  );
+  // Asking a model that cannot reason to reason is an error from Ollama, so
+  // the toggle only appears where thinking means something. Models reached
+  // through a plugin answer for themselves; Ollama says what it supports, and
+  // where it says nothing the toggle is offered rather than hidden. The answer
+  // is stored with the model it was read for, so switching models never shows
+  // the previous model's answer.
+  const [thinkingSupport, setThinkingSupport] = useState<{
+    model: string;
+    supported?: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    const model = currentSession?.model;
+    if (!model || activeModelEntry?.isPlugin || activeModelEntry?.isAgent) {
+      return;
+    }
+
+    let cancelled = false;
+    void ollamaApi
+      .getModelDefaults(model)
+      .then(response => {
+        if (cancelled || !response.success || !response.data) return;
+        setThinkingSupport({
+          model,
+          supported: response.data.supportsThinking,
+        });
+      })
+      .catch(() => {
+        // A model that cannot be inspected keeps the toggle available.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeModelEntry?.isAgent,
+    activeModelEntry?.isPlugin,
+    currentSession?.model,
+  ]);
+
+  const ollamaThinkingSupported =
+    thinkingSupport?.model === currentSession?.model
+      ? thinkingSupport?.supported
+      : undefined;
+
+  const thinkingAvailable = Boolean(
+    currentSession &&
+    !activeModelEntry?.isAgent &&
+    (activeModelEntry?.isPlugin || ollamaThinkingSupported !== false)
+  );
+
+  const applyThinking = async (think: ThinkingPreference | null) => {
+    if (!currentSession) return;
+
+    const generationOptions = {
+      ...(currentSession.settings?.generationOptions ?? {}),
+    };
+    // "Model default" is the absence of a setting, so it is removed rather
+    // than stored.
+    if (think === null) delete generationOptions.think;
+    else generationOptions.think = think;
+
+    const settings = {
+      ...currentSession.settings,
+      generationOptions,
+    };
+
+    useChatStore.setState(state => ({
+      currentSession:
+        state.currentSession?.id === currentSession.id
+          ? { ...state.currentSession, settings }
+          : state.currentSession,
+      sessions: state.sessions.map(session =>
+        session.id === currentSession.id ? { ...session, settings } : session
+      ),
+    }));
+
+    if (currentSession.isPrivate) return;
+    try {
+      await chatApi.updateSession(currentSession.id, {
+        settings,
+      } as Partial<ChatSession>);
+    } catch (error) {
+      logger.error('Failed to update the thinking setting:', error);
+    }
+  };
 
   const attachedCollectionIds =
     currentSession?.settings?.knowledgeCollectionIds ?? [];
@@ -1129,6 +1232,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         showImageGen={showImageGeneration}
                       />
                     </div>
+                  )}
+
+                  {/* Thinking level */}
+                  {thinkingAvailable && (
+                    <ThinkingSelector
+                      value={activeThinking}
+                      onChange={think => void applyThinking(think)}
+                    />
                   )}
 
                   {/* Web search toggle */}

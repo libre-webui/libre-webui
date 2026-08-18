@@ -270,7 +270,9 @@
       "browserSpeech": "Service de reconnaissance vocale du navigateur",
       "providerTranscriptionDisclosure": "Enregistrer et envoyer l’audio à {{provider}} pour transcription",
       "webSearchOn": "Recherche web activée — les réponses utilisent des résultats en direct",
-      "webSearchOff": "Chercher sur le web pour ce message"
+      "webSearchOff": "Chercher sur le web pour ce message",
+      "thinkingOn": "Réflexion activée ({{level}})",
+      "thinkingOff": "Réfléchir avant de répondre"
     },
     "session": {
       "new": "Nouvelle conversation",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Pénalité de répétition",
         "seed": "Graine",
         "contextLength": "Longueur de contexte"
-      }
+      },
+      "thinking": "Réflexion",
+      "thinkingDescription": "Le temps que le modèle passe à réfléchir avant de répondre. Les modèles sans raisonnement l'ignorent."
     },
     "message": {
       "sources": "Sources"
@@ -680,7 +684,17 @@
       "resetDefaults": "Réinitialiser les valeurs par défaut",
       "saveOptions": "Enregistrer les options",
       "embeddingSettings": "Paramètres d'embedding",
-      "enableEmbeddings": "Activer les embeddings de documents"
+      "enableEmbeddings": "Activer les embeddings de documents",
+      "thinking": "Réflexion",
+      "thinkingDescription": "Effort de réflexion par défaut pour les réponses. Chaque conversation peut le remplacer.",
+      "thinkingLevels": {
+        "default": "Valeur du modèle",
+        "off": "Désactivée",
+        "on": "Activée",
+        "low": "Faible",
+        "medium": "Moyenne",
+        "high": "Élevée"
+      }
     },
     "documents": {
       "title": "Paramètres des documents",

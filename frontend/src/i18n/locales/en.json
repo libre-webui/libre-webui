@@ -270,7 +270,9 @@
       "browserSpeech": "Browser speech service",
       "providerTranscriptionDisclosure": "Record and send audio to {{provider}} for transcription",
       "webSearchOn": "Web search on — replies use live results",
-      "webSearchOff": "Search the web for this message"
+      "webSearchOff": "Search the web for this message",
+      "thinkingOn": "Thinking on ({{level}})",
+      "thinkingOff": "Think before answering"
     },
     "session": {
       "new": "New Chat",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Repeat penalty",
         "seed": "Seed",
         "contextLength": "Context length"
-      }
+      },
+      "thinking": "Thinking",
+      "thinkingDescription": "How much the model reasons before answering. Models that cannot reason ignore this."
     },
     "message": {
       "sources": "Sources"
@@ -680,7 +684,17 @@
       "resetDefaults": "Reset to Defaults",
       "saveOptions": "Save Options",
       "embeddingSettings": "Embedding Settings",
-      "enableEmbeddings": "Enable Document Embeddings"
+      "enableEmbeddings": "Enable Document Embeddings",
+      "thinking": "Thinking",
+      "thinkingDescription": "Default reasoning effort for replies. Each chat can override it.",
+      "thinkingLevels": {
+        "default": "Model default",
+        "off": "Off",
+        "on": "On",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      }
     },
     "documents": {
       "title": "Document Settings",

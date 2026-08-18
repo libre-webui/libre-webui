@@ -270,7 +270,9 @@
       "browserSpeech": "ブラウザーの音声認識サービス",
       "providerTranscriptionDisclosure": "音声を録音し、文字起こしのために{{provider}}へ送信",
       "webSearchOn": "ウェブ検索オン — 返信にライブ結果を使用",
-      "webSearchOff": "このメッセージについてウェブを検索"
+      "webSearchOff": "このメッセージについてウェブを検索",
+      "thinkingOn": "思考オン ({{level}})",
+      "thinkingOff": "回答前に考える"
     },
     "session": {
       "new": "新しいチャット",
@@ -375,7 +377,9 @@
         "repeatPenalty": "繰り返しペナルティ",
         "seed": "シード",
         "contextLength": "コンテキスト長"
-      }
+      },
+      "thinking": "思考",
+      "thinkingDescription": "回答前にモデルがどれだけ考えるか。推論しないモデルでは無視されます。"
     },
     "message": {
       "sources": "出典"
@@ -680,7 +684,17 @@
       "resetDefaults": "デフォルトにリセット",
       "saveOptions": "オプションを保存",
       "embeddingSettings": "埋め込み設定",
-      "enableEmbeddings": "ドキュメント埋め込みを有効にする"
+      "enableEmbeddings": "ドキュメント埋め込みを有効にする",
+      "thinking": "思考",
+      "thinkingDescription": "回答の既定の思考量。チャットごとに変更できます。",
+      "thinkingLevels": {
+        "default": "モデルの既定",
+        "off": "オフ",
+        "on": "オン",
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      }
     },
     "documents": {
       "title": "ドキュメント設定",

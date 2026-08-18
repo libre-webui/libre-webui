@@ -1447,7 +1447,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleGenerationOptionChange = (
     key: string,
-    value: string | number | boolean | string[] | undefined
+    value: string | number | boolean | string[] | null | undefined
   ) => {
     setTempGenerationOptions(prev => ({
       ...prev,

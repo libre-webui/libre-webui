@@ -431,6 +431,8 @@ router.get(
           options: defaults.options,
           trainedContextLength: defaults.trainedContextLength,
           contextCapped: defaults.contextCapped,
+          capabilities: defaults.capabilities,
+          supportsThinking: defaults.supportsThinking,
         },
       });
     } catch (error: unknown) {

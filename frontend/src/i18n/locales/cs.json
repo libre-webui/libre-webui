@@ -270,7 +270,9 @@
       "browserSpeech": "Služba rozpoznávání řeči prohlížeče",
       "providerTranscriptionDisclosure": "Nahrát a odeslat zvuk službě {{provider}} k přepisu",
       "webSearchOn": "Vyhledávání zapnuto — odpovědi využívají živé výsledky",
-      "webSearchOff": "Vyhledat tuto zprávu na webu"
+      "webSearchOff": "Vyhledat tuto zprávu na webu",
+      "thinkingOn": "Přemýšlení zapnuto ({{level}})",
+      "thinkingOff": "Přemýšlet před odpovědí"
     },
     "session": {
       "new": "Nový chat",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Penalizace opakování",
         "seed": "Seed",
         "contextLength": "Délka kontextu"
-      }
+      },
+      "thinking": "Přemýšlení",
+      "thinkingDescription": "Jak moc model přemýšlí, než odpoví. Modely bez uvažování to ignorují."
     },
     "message": {
       "sources": "Zdroje"
@@ -680,7 +684,17 @@
       "resetDefaults": "Obnovit výchozí",
       "saveOptions": "Uložit možnosti",
       "embeddingSettings": "Nastavení embeddingů",
-      "enableEmbeddings": "Povolit embeddingy dokumentů"
+      "enableEmbeddings": "Povolit embeddingy dokumentů",
+      "thinking": "Přemýšlení",
+      "thinkingDescription": "Výchozí míra přemýšlení u odpovědí. Každý chat ji může změnit.",
+      "thinkingLevels": {
+        "default": "Výchozí podle modelu",
+        "off": "Vypnuto",
+        "on": "Zapnuto",
+        "low": "Nízká",
+        "medium": "Střední",
+        "high": "Vysoká"
+      }
     },
     "documents": {
       "title": "Nastavení dokumentů",

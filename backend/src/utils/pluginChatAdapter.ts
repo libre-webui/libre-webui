@@ -26,6 +26,11 @@ import {
   buildOpenAIResponsesPayload,
   normalizeOpenAIResponsesResponse,
 } from './openAIResponsesAdapter.js';
+import {
+  maxTokensForBudget,
+  thinkingBudgetTokens,
+  thinkingEffort,
+} from './thinkingOptions.js';
 
 export type PluginVariables = Record<string, string | number | boolean>;
 
@@ -269,18 +274,35 @@ function buildAnthropicChatPayload(
     message => message.role !== 'system'
   );
 
+  // Anthropic prices thinking in tokens and takes it as its own block. The
+  // budget has to fit inside max_tokens with room left for the answer.
+  const budgetTokens = thinkingBudgetTokens(options.think);
+  const maxTokens =
+    budgetTokens === undefined
+      ? (params.maxTokens ?? 1024)
+      : maxTokensForBudget(params.maxTokens ?? 1024, budgetTokens);
+
   const payload: Record<string, unknown> = {
     model,
     messages: toAnthropicMessages(nonSystemMessages),
-    max_tokens: params.maxTokens ?? 1024,
+    max_tokens: maxTokens,
     stop_sequences: options.stop,
     stream: params.shouldStream,
+    ...(budgetTokens !== undefined
+      ? { thinking: { type: 'enabled', budget_tokens: budgetTokens } }
+      : {}),
   };
 
   // Anthropic rejects non-default sampling parameters on Claude Opus 4.7 and
   // newer model families. Unknown model IDs are treated as current so models
   // found through discovery remain safe as Anthropic expands the catalog.
-  if (ANTHROPIC_LEGACY_SAMPLING_MODELS.has(model)) {
+  // Extended thinking rejects them on every model, so a request that reasons
+  // sends none. Turning thinking off is left to the model's own default: the
+  // parameter itself is unknown to the models that never reasoned.
+  if (
+    budgetTokens === undefined &&
+    ANTHROPIC_LEGACY_SAMPLING_MODELS.has(model)
+  ) {
     if (params.topP !== undefined && params.topP < 1) {
       payload.top_p = params.topP;
     } else {
@@ -328,6 +350,11 @@ function buildGeminiChatPayload(
     parts.push({ text: lastMessage.content });
   }
 
+  // Gemini takes a thinking budget too, inside the generation config. Only an
+  // enabled setting is sent: a zero budget is rejected by the models that
+  // always reason, so switching thinking off is left to the model.
+  const budgetTokens = thinkingBudgetTokens(options.think);
+
   return {
     payload: {
       contents: [{ parts }],
@@ -336,6 +363,9 @@ function buildGeminiChatPayload(
         maxOutputTokens: params.maxTokens ?? 1024,
         topP: params.topP,
         stopSequences: options.stop,
+        ...(budgetTokens !== undefined
+          ? { thinkingConfig: { thinkingBudget: budgetTokens } }
+          : {}),
       },
     },
   };
@@ -348,6 +378,11 @@ function buildOpenAICompatibleChatPayload(
   options: GenerationOptions,
   params: PluginChatParameters
 ): PluginChatPayloadResult {
+  // OpenAI and the providers that copy its shape name the levels instead of
+  // budgeting tokens. Nothing is sent unless thinking was asked for: the field
+  // is unknown to models that do not reason.
+  const effort = thinkingEffort(options.think);
+
   return {
     payload: {
       model,
@@ -358,6 +393,7 @@ function buildOpenAICompatibleChatPayload(
       max_tokens: params.maxTokens,
       stop: options.stop,
       stream: params.shouldStream,
+      ...(effort ? { reasoning_effort: effort } : {}),
     },
   };
 }
@@ -405,6 +441,7 @@ export function buildPluginChatPayload(
           // The codex endpoint rejects non-streaming requests outright.
           stream: supportsSampling ? params.shouldStream : true,
           stateScope: providerStateScope,
+          reasoningEffort: thinkingEffort(options.think),
         }
       ),
     };

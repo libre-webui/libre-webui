@@ -270,7 +270,9 @@
       "browserSpeech": "Tarayıcı konuşma hizmeti",
       "providerTranscriptionDisclosure": "Sesi kaydedip transkripsiyon için {{provider}} hizmetine gönder",
       "webSearchOn": "Web araması açık — yanıtlar canlı sonuçları kullanır",
-      "webSearchOff": "Bu mesaj için webde ara"
+      "webSearchOff": "Bu mesaj için webde ara",
+      "thinkingOn": "Düşünme açık ({{level}})",
+      "thinkingOff": "Yanıtlamadan önce düşün"
     },
     "session": {
       "new": "Yeni Sohbet",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Tekrar cezası",
         "seed": "Tohum",
         "contextLength": "Bağlam uzunluğu"
-      }
+      },
+      "thinking": "Düşünme",
+      "thinkingDescription": "Modelin yanıtlamadan önce ne kadar düşündüğü. Akıl yürütmeyen modeller bunu yok sayar."
     },
     "message": {
       "sources": "Kaynaklar"
@@ -680,7 +684,17 @@
       "resetDefaults": "Varsayılanlara Sıfırla",
       "saveOptions": "Seçenekleri Kaydet",
       "embeddingSettings": "Gömme Ayarları",
-      "enableEmbeddings": "Belge Gömmelerini Etkinleştir"
+      "enableEmbeddings": "Belge Gömmelerini Etkinleştir",
+      "thinking": "Düşünme",
+      "thinkingDescription": "Yanıtlar için varsayılan düşünme düzeyi. Her sohbet bunu değiştirebilir.",
+      "thinkingLevels": {
+        "default": "Model varsayılanı",
+        "off": "Kapalı",
+        "on": "Açık",
+        "low": "Düşük",
+        "medium": "Orta",
+        "high": "Yüksek"
+      }
     },
     "documents": {
       "title": "Belge Ayarları",

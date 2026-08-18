@@ -270,7 +270,9 @@
       "browserSpeech": "Layanan ucapan browser",
       "providerTranscriptionDisclosure": "Rekam dan kirim audio ke {{provider}} untuk ditranskripsikan",
       "webSearchOn": "Pencarian web aktif — balasan memakai hasil langsung",
-      "webSearchOff": "Cari di web untuk pesan ini"
+      "webSearchOff": "Cari di web untuk pesan ini",
+      "thinkingOn": "Berpikir aktif ({{level}})",
+      "thinkingOff": "Berpikir sebelum menjawab"
     },
     "session": {
       "new": "Chat Baru",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Penalti pengulangan",
         "seed": "Seed",
         "contextLength": "Panjang konteks"
-      }
+      },
+      "thinking": "Berpikir",
+      "thinkingDescription": "Seberapa dalam model berpikir sebelum menjawab. Model tanpa penalaran mengabaikannya."
     },
     "message": {
       "sources": "Sumber"
@@ -680,7 +684,17 @@
       "resetDefaults": "Reset ke Default",
       "saveOptions": "Simpan Opsi",
       "embeddingSettings": "Pengaturan Embedding",
-      "enableEmbeddings": "Aktifkan Embedding Dokumen"
+      "enableEmbeddings": "Aktifkan Embedding Dokumen",
+      "thinking": "Berpikir",
+      "thinkingDescription": "Tingkat berpikir bawaan untuk jawaban. Setiap obrolan dapat mengubahnya.",
+      "thinkingLevels": {
+        "default": "Bawaan model",
+        "off": "Nonaktif",
+        "on": "Aktif",
+        "low": "Rendah",
+        "medium": "Sedang",
+        "high": "Tinggi"
+      }
     },
     "documents": {
       "title": "Pengaturan Dokumen",

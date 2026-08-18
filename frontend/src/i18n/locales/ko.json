@@ -270,7 +270,9 @@
       "browserSpeech": "브라우저 음성 인식 서비스",
       "providerTranscriptionDisclosure": "오디오를 녹음하여 텍스트 변환을 위해 {{provider}}에 전송",
       "webSearchOn": "웹 검색 켜짐 — 답변에 실시간 결과 사용",
-      "webSearchOff": "이 메시지에 대해 웹 검색"
+      "webSearchOff": "이 메시지에 대해 웹 검색",
+      "thinkingOn": "사고 켜짐 ({{level}})",
+      "thinkingOff": "답하기 전에 생각하기"
     },
     "session": {
       "new": "새 채팅",
@@ -375,7 +377,9 @@
         "repeatPenalty": "반복 페널티",
         "seed": "시드",
         "contextLength": "컨텍스트 길이"
-      }
+      },
+      "thinking": "사고",
+      "thinkingDescription": "모델이 답하기 전에 얼마나 생각할지. 추론하지 않는 모델은 무시합니다."
     },
     "message": {
       "sources": "출처"
@@ -680,7 +684,17 @@
       "resetDefaults": "기본값으로 재설정",
       "saveOptions": "옵션 저장",
       "embeddingSettings": "임베딩 설정",
-      "enableEmbeddings": "문서 임베딩 활성화"
+      "enableEmbeddings": "문서 임베딩 활성화",
+      "thinking": "사고",
+      "thinkingDescription": "답변의 기본 사고 수준. 채팅마다 변경할 수 있습니다.",
+      "thinkingLevels": {
+        "default": "모델 기본값",
+        "off": "끄기",
+        "on": "켜기",
+        "low": "낮음",
+        "medium": "보통",
+        "high": "높음"
+      }
     },
     "documents": {
       "title": "문서 설정",

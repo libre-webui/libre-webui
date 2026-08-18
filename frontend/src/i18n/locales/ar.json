@@ -270,7 +270,9 @@
       "browserSpeech": "خدمة التعرّف على الكلام في المتصفح",
       "providerTranscriptionDisclosure": "تسجيل الصوت وإرساله إلى {{provider}} لتحويله إلى نص",
       "webSearchOn": "البحث في الويب مفعّل — تستخدم الردود نتائج حية",
-      "webSearchOff": "ابحث في الويب لهذه الرسالة"
+      "webSearchOff": "ابحث في الويب لهذه الرسالة",
+      "thinkingOn": "التفكير مفعّل ({{level}})",
+      "thinkingOff": "فكّر قبل الإجابة"
     },
     "session": {
       "new": "محادثة جديدة",
@@ -375,7 +377,9 @@
         "repeatPenalty": "عقوبة التكرار",
         "seed": "البذرة",
         "contextLength": "طول السياق"
-      }
+      },
+      "thinking": "التفكير",
+      "thinkingDescription": "مقدار تفكير النموذج قبل الإجابة. النماذج التي لا تفكر تتجاهل هذا."
     },
     "message": {
       "sources": "المصادر"
@@ -680,7 +684,17 @@
       "resetDefaults": "إعادة تعيين الافتراضيات",
       "saveOptions": "حفظ الخيارات",
       "embeddingSettings": "إعدادات التضمين",
-      "enableEmbeddings": "تفعيل تضمين المستندات"
+      "enableEmbeddings": "تفعيل تضمين المستندات",
+      "thinking": "التفكير",
+      "thinkingDescription": "مستوى التفكير الافتراضي للردود. يمكن لكل محادثة تغييره.",
+      "thinkingLevels": {
+        "default": "افتراضي النموذج",
+        "off": "معطّل",
+        "on": "مفعّل",
+        "low": "منخفض",
+        "medium": "متوسط",
+        "high": "مرتفع"
+      }
     },
     "documents": {
       "title": "إعدادات المستندات",

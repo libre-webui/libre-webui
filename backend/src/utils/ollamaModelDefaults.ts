@@ -165,6 +165,25 @@ export interface OllamaModelDefaults {
   trainedContextLength?: number;
   /** Whether the adopted context was reduced from the trained length. */
   contextCapped: boolean;
+  /**
+   * What the model can do, as `/api/show` reports it: `tools`, `vision`,
+   * `thinking`, and so on. Absent on Ollama versions that do not report it,
+   * which is not the same as a model that can do nothing.
+   */
+  capabilities?: string[];
+  /** Whether the model reasons before answering, when that is known. */
+  supportsThinking?: boolean;
+}
+
+/** The `capabilities` array from `/api/show`, when the server sends one. */
+export function parseModelCapabilities(
+  capabilities: unknown
+): string[] | undefined {
+  if (!Array.isArray(capabilities)) return undefined;
+  const named = capabilities.filter(
+    (capability): capability is string => typeof capability === 'string'
+  );
+  return named.length > 0 ? named : undefined;
 }
 
 /**
@@ -178,6 +197,8 @@ export function parseOllamaModelDefaults(
   show: Record<string, unknown> | undefined
 ): OllamaModelDefaults {
   if (!show) return { options: {}, contextCapped: false };
+
+  const capabilities = parseModelCapabilities(show.capabilities);
 
   const options = parseModelParameters(
     typeof show.parameters === 'string' ? show.parameters : undefined
@@ -201,5 +222,15 @@ export function parseOllamaModelDefaults(
     }
   }
 
-  return { options, trainedContextLength, contextCapped };
+  return {
+    options,
+    trainedContextLength,
+    contextCapped,
+    ...(capabilities
+      ? {
+          capabilities,
+          supportsThinking: capabilities.includes('thinking'),
+        }
+      : {}),
+  };
 }

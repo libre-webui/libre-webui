@@ -142,6 +142,14 @@ export interface GenerationOptions {
   raw?: boolean; // Skip prompt templating
   keep_alive?: string; // Keep model in memory duration
   stream?: boolean; // Enable streaming
+
+  /**
+   * How hard the model should think before answering. Unset leaves the choice
+   * to the provider, and `null` is how a stored setting says "no preference".
+   * This is not a sampling parameter: it is lifted out of the options at each
+   * provider boundary and sent the way that provider expects.
+   */
+  think?: boolean | 'low' | 'medium' | 'high' | null;
 }
 
 export interface EmbeddingSettings {
@@ -244,7 +252,8 @@ export interface OllamaChatRequest {
   model: string;
   messages: OllamaChatMessage[];
   tools?: Record<string, unknown>[];
-  think?: boolean;
+  /** Ollama takes reasoning levels as strings for the models that name them. */
+  think?: boolean | 'low' | 'medium' | 'high';
   format?: string | Record<string, unknown>;
   options?: Record<string, unknown>;
   stream?: boolean;
@@ -294,7 +303,7 @@ export interface OllamaGenerateRequest {
   model: string;
   prompt: string;
   stream?: boolean;
-  think?: boolean;
+  think?: boolean | 'low' | 'medium' | 'high';
   options?: {
     temperature?: number;
     top_p?: number;

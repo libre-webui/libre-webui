@@ -270,7 +270,9 @@
       "browserSpeech": "Spracherkennungsdienst des Browsers",
       "providerTranscriptionDisclosure": "Audio aufnehmen und zur Transkription an {{provider}} senden",
       "webSearchOn": "Websuche aktiv — Antworten nutzen Live-Ergebnisse",
-      "webSearchOff": "Für diese Nachricht im Web suchen"
+      "webSearchOff": "Für diese Nachricht im Web suchen",
+      "thinkingOn": "Nachdenken aktiv ({{level}})",
+      "thinkingOff": "Vor dem Antworten nachdenken"
     },
     "session": {
       "new": "Neuer Chat",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Wiederholungsstrafe",
         "seed": "Seed",
         "contextLength": "Kontextlänge"
-      }
+      },
+      "thinking": "Nachdenken",
+      "thinkingDescription": "Wie ausführlich das Modell vor der Antwort nachdenkt. Modelle ohne Reasoning ignorieren dies."
     },
     "message": {
       "sources": "Quellen"
@@ -680,7 +684,17 @@
       "resetDefaults": "Auf Standardwerte zurücksetzen",
       "saveOptions": "Optionen speichern",
       "embeddingSettings": "Embedding-Einstellungen",
-      "enableEmbeddings": "Dokument-Embeddings aktivieren"
+      "enableEmbeddings": "Dokument-Embeddings aktivieren",
+      "thinking": "Nachdenken",
+      "thinkingDescription": "Standardmäßiger Denkaufwand für Antworten. Jeder Chat kann ihn überschreiben.",
+      "thinkingLevels": {
+        "default": "Modellvorgabe",
+        "off": "Aus",
+        "on": "An",
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch"
+      }
     },
     "documents": {
       "title": "Dokumenteinstellungen",

@@ -24,6 +24,11 @@ import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
 import { chatApi, ollamaApi } from '@/utils/api';
 import { generateId } from '@/utils';
+import {
+  THINKING_CHOICES,
+  thinkingChoiceOf,
+  thinkingPreferenceOf,
+} from '@/utils/thinking';
 import { createLogger } from '@/utils/logger';
 import type { ChatSession, GenerationOptions } from '@/types';
 
@@ -156,6 +161,18 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
         {}
     );
   }
+
+  // A chat's own thinking setting. Absent means the model decides, which is
+  // why the choice is removed rather than stored as a value.
+  const setThinkingOverride = (choice: string) => {
+    setOverrides(previous => {
+      const next = { ...previous };
+      const think = thinkingPreferenceOf(choice);
+      if (think === null) delete next.think;
+      else next.think = think;
+      return next;
+    });
+  };
 
   const setNumericOverride = (key: NumericOption, raw: string) => {
     setOverrides(previous => {
@@ -299,6 +316,30 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
             placeholder={t('chat.controls.systemPromptPlaceholder')}
             className='min-h-[110px] w-full resize-y rounded-xl border border-black/[0.08] bg-white p-2.5 text-[13px] leading-relaxed text-gray-900 placeholder:text-gray-400 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900 dark:placeholder:text-dark-500'
           />
+        </div>
+
+        <div>
+          <label
+            htmlFor='chat-control-think'
+            className='mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500 dark:text-dark-500'
+          >
+            {t('chat.controls.thinking')}
+          </label>
+          <select
+            id='chat-control-think'
+            value={thinkingChoiceOf(overrides.think ?? effectiveDefaults.think)}
+            onChange={event => setThinkingOverride(event.target.value)}
+            className='w-full rounded-xl border border-black/[0.08] bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
+          >
+            {THINKING_CHOICES.map(choice => (
+              <option key={choice} value={choice}>
+                {t(`settings.generation.thinkingLevels.${choice}`)}
+              </option>
+            ))}
+          </select>
+          <p className='mt-1.5 text-[11px] leading-snug text-gray-400 dark:text-dark-500'>
+            {t('chat.controls.thinkingDescription')}
+          </p>
         </div>
 
         <div>

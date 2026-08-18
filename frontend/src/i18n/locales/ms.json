@@ -270,7 +270,9 @@
       "browserSpeech": "Perkhidmatan pertuturan pelayar",
       "providerTranscriptionDisclosure": "Rakam dan hantar audio kepada {{provider}} untuk transkripsi",
       "webSearchOn": "Carian web hidup — balasan menggunakan hasil langsung",
-      "webSearchOff": "Cari di web untuk mesej ini"
+      "webSearchOff": "Cari di web untuk mesej ini",
+      "thinkingOn": "Pemikiran aktif ({{level}})",
+      "thinkingOff": "Fikir sebelum menjawab"
     },
     "session": {
       "new": "Sembang Baharu",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Penalti ulangan",
         "seed": "Benih",
         "contextLength": "Panjang konteks"
-      }
+      },
+      "thinking": "Pemikiran",
+      "thinkingDescription": "Sebanyak mana model berfikir sebelum menjawab. Model tanpa penaakulan mengabaikannya."
     },
     "message": {
       "sources": "Sumber"
@@ -680,7 +684,17 @@
       "resetDefaults": "Tetap Semula ke Lalai",
       "saveOptions": "Simpan Pilihan",
       "embeddingSettings": "Tetapan Pembenaman",
-      "enableEmbeddings": "Aktifkan Pembenaman Dokumen"
+      "enableEmbeddings": "Aktifkan Pembenaman Dokumen",
+      "thinking": "Pemikiran",
+      "thinkingDescription": "Tahap pemikiran lalai untuk jawapan. Setiap sembang boleh mengubahnya.",
+      "thinkingLevels": {
+        "default": "Lalai model",
+        "off": "Mati",
+        "on": "Hidup",
+        "low": "Rendah",
+        "medium": "Sederhana",
+        "high": "Tinggi"
+      }
     },
     "documents": {
       "title": "Tetapan Dokumen",

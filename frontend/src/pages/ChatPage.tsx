@@ -41,15 +41,22 @@ import { CodeAwareTextarea } from '@/components/CodeAwareTextarea';
 import { LogoMark } from '@/components/LogoMark';
 import { ModelSelector } from '@/components/ModelSelector';
 import { PersonaIndicator } from '@/components/PersonaIndicator';
+import { ThinkingSelector } from '@/components/ThinkingSelector';
 import { Button } from '@/components/ui';
 import { ImageUpload } from '@/components/ImageUpload';
 import { useChatStore } from '@/store/chatStore';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
 import { useChat } from '@/hooks/useChat';
-import { chatApi, documentsApi, imageGenApi, searchApi } from '@/utils/api';
+import {
+  chatApi,
+  documentsApi,
+  imageGenApi,
+  ollamaApi,
+  searchApi,
+} from '@/utils/api';
 import { cn, generateId } from '@/utils';
-import type { ChatSession } from '@/types';
+import type { ChatSession, ThinkingPreference } from '@/types';
 import { createLogger } from '@/utils/logger';
 import { triggerHapticFeedback } from '@/utils/haptics';
 import { isRTL } from '@/i18n';
@@ -282,6 +289,84 @@ export const ChatPage: React.FC = () => {
   const [welcomeUploadingDocument, setWelcomeUploadingDocument] =
     useState(false);
   const welcomeDocumentInputRef = useRef<HTMLInputElement>(null);
+
+  // Thinking from the very first message. The choice is kept as a draft and
+  // carried onto the session that the first message creates, so the chat opens
+  // already set the way it was asked for.
+  const draftSessionSettings = useChatStore(
+    state => state.draftSessionSettings
+  );
+  const setDraftSessionSettings = useChatStore(
+    state => state.setDraftSessionSettings
+  );
+  const welcomeThinking = draftSessionSettings.generationOptions?.think;
+  const selectedModelEntry = useMemo(
+    () => models.find(model => model.name === selectedModel),
+    [models, selectedModel]
+  );
+  // Only Ollama says whether a model reasons, and only its answer can hide the
+  // toggle: a model reached through a plugin decides for itself.
+  const [welcomeThinkingSupport, setWelcomeThinkingSupport] = useState<{
+    model: string;
+    supported?: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    if (
+      !selectedModel ||
+      selectedModelEntry?.isPlugin ||
+      selectedModelEntry?.isAgent
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    void ollamaApi
+      .getModelDefaults(selectedModel)
+      .then(response => {
+        if (cancelled || !response.success || !response.data) return;
+        setWelcomeThinkingSupport({
+          model: selectedModel,
+          supported: response.data.supportsThinking,
+        });
+      })
+      .catch(() => {
+        // A model that cannot be inspected keeps the toggle available.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    selectedModel,
+    selectedModelEntry?.isAgent,
+    selectedModelEntry?.isPlugin,
+  ]);
+
+  const welcomeThinkingAvailable = Boolean(
+    selectedModel &&
+    !selectedModelEntry?.isAgent &&
+    (selectedModelEntry?.isPlugin ||
+      (welcomeThinkingSupport?.model === selectedModel
+        ? welcomeThinkingSupport.supported !== false
+        : true))
+  );
+
+  const setWelcomeThinking = (think: ThinkingPreference | null) => {
+    const draft = useChatStore.getState().draftSessionSettings;
+    const generationOptions = { ...draft.generationOptions };
+    // "Model default" is the absence of a setting, so it is removed rather
+    // than carried onto the new chat as a value.
+    if (think === null) delete generationOptions.think;
+    else generationOptions.think = think;
+
+    setDraftSessionSettings({
+      ...draft,
+      generationOptions: Object.keys(generationOptions).length
+        ? generationOptions
+        : undefined,
+    });
+  };
 
   // Documents attached before the first message are user-scoped; retrieval
   // picks them up for the session created on send.
@@ -824,6 +909,13 @@ export const ChatPage: React.FC = () => {
                           <Plus className='h-4 w-4' />
                         )}
                       </Button>
+
+                      {welcomeThinkingAvailable && (
+                        <ThinkingSelector
+                          value={welcomeThinking}
+                          onChange={setWelcomeThinking}
+                        />
+                      )}
 
                       {welcomeWebSearchAllowed && (
                         <Button

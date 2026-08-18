@@ -270,7 +270,9 @@
       "browserSpeech": "Usługa rozpoznawania mowy przeglądarki",
       "providerTranscriptionDisclosure": "Nagraj i wyślij dźwięk do {{provider}} w celu transkrypcji",
       "webSearchOn": "Wyszukiwanie włączone — odpowiedzi używają bieżących wyników",
-      "webSearchOff": "Szukaj w sieci dla tej wiadomości"
+      "webSearchOff": "Szukaj w sieci dla tej wiadomości",
+      "thinkingOn": "Myślenie włączone ({{level}})",
+      "thinkingOff": "Pomyśl przed odpowiedzią"
     },
     "session": {
       "new": "Nowy czat",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Kara za powtórzenia",
         "seed": "Ziarno",
         "contextLength": "Długość kontekstu"
-      }
+      },
+      "thinking": "Myślenie",
+      "thinkingDescription": "Jak długo model myśli przed odpowiedzią. Modele bez rozumowania to ignorują."
     },
     "message": {
       "sources": "Źródła"
@@ -680,7 +684,17 @@
       "resetDefaults": "Przywróć domyślne",
       "saveOptions": "Zapisz opcje",
       "embeddingSettings": "Ustawienia embeddingów",
-      "enableEmbeddings": "Włącz embeddingi dokumentów"
+      "enableEmbeddings": "Włącz embeddingi dokumentów",
+      "thinking": "Myślenie",
+      "thinkingDescription": "Domyślny poziom myślenia w odpowiedziach. Każdy czat może go zmienić.",
+      "thinkingLevels": {
+        "default": "Domyślne modelu",
+        "off": "Wyłączone",
+        "on": "Włączone",
+        "low": "Niski",
+        "medium": "Średni",
+        "high": "Wysoki"
+      }
     },
     "documents": {
       "title": "Ustawienia dokumentów",

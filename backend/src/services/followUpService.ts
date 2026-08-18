@@ -29,6 +29,9 @@ import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.j
 const FOLLOW_UP_GENERATION_OPTIONS: GenerationOptions = {
   temperature: 0.7,
   num_predict: 200,
+  // Suggestions are a side task; they should not spend the chat's reasoning
+  // budget, on any provider.
+  think: false,
 };
 
 const MAX_SUGGESTIONS = 4;

@@ -270,7 +270,9 @@
       "browserSpeech": "Talgreiningarþjónusta vafrans",
       "providerTranscriptionDisclosure": "Taka upp og senda hljóð til {{provider}} til umritunar",
       "webSearchOn": "Vefleit virk — svör nota lifandi niðurstöður",
-      "webSearchOff": "Leita á vefnum fyrir þessi skilaboð"
+      "webSearchOff": "Leita á vefnum fyrir þessi skilaboð",
+      "thinkingOn": "Hugsun virk ({{level}})",
+      "thinkingOff": "Hugsa fyrir svarið"
     },
     "session": {
       "new": "Nýtt spjall",
@@ -375,7 +377,9 @@
         "repeatPenalty": "Endurtekningarrefsing",
         "seed": "Sáðgildi",
         "contextLength": "Samhengislengd"
-      }
+      },
+      "thinking": "Hugsun",
+      "thinkingDescription": "Hversu mikið líkanið hugsar áður en það svarar. Líkön án rökhugsunar hunsa þetta."
     },
     "message": {
       "sources": "Heimildir"
@@ -680,7 +684,17 @@
       "resetDefaults": "Endurstilla á sjálfgefið",
       "saveOptions": "Vista stillingar",
       "embeddingSettings": "Innfellinga stillingar",
-      "enableEmbeddings": "Virkja innfellingar skjala"
+      "enableEmbeddings": "Virkja innfellingar skjala",
+      "thinking": "Hugsun",
+      "thinkingDescription": "Sjálfgefið hugsunarstig fyrir svör. Hvert spjall getur breytt því.",
+      "thinkingLevels": {
+        "default": "Sjálfgefið líkans",
+        "off": "Af",
+        "on": "Á",
+        "low": "Lágt",
+        "medium": "Miðlungs",
+        "high": "Hátt"
+      }
     },
     "documents": {
       "title": "Skjalastillingar",
