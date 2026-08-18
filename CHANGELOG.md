@@ -15,6 +15,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.24.0] - 2026-08-18
+
+Control over how models answer, and a clearer view of what they are working with: a thinking level per chat, a context meter in the composer, an administrator model catalog, and long conversations that compact themselves.
+
+### ✨ New Features
+
+- **Set how hard a model thinks.** A control in the composer opens the reasoning levels (off, on, low, medium, high) for the chat you are in, on the new chat screen as well, and the same setting lives in the chat controls panel and in Settings → Generation as a default for new replies. One value travels with the chat and is translated at each provider boundary: Ollama takes it in the request body, OpenAI-style providers take a reasoning effort, the Responses API takes its own field, and Anthropic and Gemini take a token budget with room reserved for the answer. Nothing is sent when the setting is unset, so a model you never configure behaves exactly as before, and a model Ollama reports as unable to reason is never asked to. (#205, Zack Young)
+- **See how full the context window is.** A ring beside the model name fills as the conversation grows; hovering it reports how full, the tokens used, and the window they run against. The count is what the provider measured for the last reply where it reported one, and an estimate at four characters per token before that, marked as an estimate. A window capped below what the model was trained for says so, which is what explains a 32k reading on a model trained for 262k.
+- **Context windows for provider models.** Model discovery now keeps the context window a provider publishes with its listing, reading whichever field that provider uses, so the meter has something to measure against on hosted models and not only on Ollama. Catalogs stored before this release are refreshed once instead of waiting out their refresh interval.
+- **Administrator model catalog.** Settings → Models gains a searchable catalog where administrators choose which models everyone sees, the order they appear in, and the name and picture each one carries. Hiding a model applies immediately, dragging shows where it will land, and a default model can be set for the deployment.
+- **Long conversations compact themselves.** Past a token threshold, older turns are replaced by a summary that carries the goals, decisions, facts, and open questions forward, keeping a long chat inside the model's window instead of failing at it. Administrators control the threshold, the model that writes the summary, and the prompt.
+- **Code blocks read like code while they stream.** Line numbers and syntax highlighting now apply to a reply as it arrives, rather than only once it has finished.
+- **Model names and pictures in the chat.** The picker and each assistant message show the model's configured name and picture. A reply that is still streaming has no model stamped on it yet, so it shows the chat's own model rather than the generic word Assistant.
+
+### 🔧 Improvements
+
+- Titles and follow-up suggestions never spend a reasoning pass, whatever the chat is set to.
+- The About screen names the mirror correctly as Forgejo and links to project sponsorship.
+- The Vite configuration reads its own directory through `import.meta`, so builds no longer warn about an unsupported configuration feature.
+- All new interface text is translated in all 25 languages.
+
+### 🐛 Bug Fixes
+
+- **Reasoning models can name a chat.** A model that thinks before answering spent its whole allowance on reasoning and returned empty content, so the chat fell back to a message preview for its title. Local models are asked not to reason for this, and providers that cannot be told that are given room to think and still answer.
+- **A long reply no longer fails its durable job and regenerates.** Progress events carried the whole accumulated reply, so a long answer hit the durable event size ceiling and the interface responded by generating the same reply again. Completion events are bounded and oversized deltas are split across ordered events.
+- **Token counts and timings appear for provider-backed replies.** Streams never asked for usage, so nothing was reported, and the timings llama.cpp returns beside the counts were dropped on the way through.
+- **Work rounds that only reason keep their context and finish.** A round that produced reasoning and no visible text lost that context instead of completing with it.
+- **The workspace file list retries quietly while a sandbox is preparing.** It used to report a failure for a sandbox that was simply not ready yet.
+- Three interface render fixes: mount-time loaders no longer force a second synchronous render, a streaming code block no longer rebuilds and resets its scroll mid-stream, and the durable reload effect no longer misses a dependency.
+
+### 🔒 Security & Dependencies
+
+- Dependencies refreshed across the workspace: `@kubernetes/client-node` 2.0 (a major upgrade, with the Work Kubernetes driver verified against it), `framer-motion` 13.1, `katex` 0.18.4, `papaparse` 5.6, `zustand` 5.0.15, `tsx`, and `eslint-plugin-react-refresh`, along with AWS SDK and TypeScript ESLint updates resolved in the lockfile.
+
 ## [0.23.1] - 2026-08-16
 
 Same-day fixes for 0.23.0, all found and verified on a live team deployment. Recommended for everyone, especially Work users.
