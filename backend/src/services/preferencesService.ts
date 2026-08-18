@@ -82,6 +82,10 @@ class PreferencesService {
       format: undefined,
       raw: undefined,
       keep_alive: undefined,
+
+      // Thinking: unset means the provider decides. Present here so a reset
+      // clears a saved level instead of leaving it behind forever.
+      think: undefined,
     },
     // Set per model, from the model's own recommendations or by the user.
     modelGenerationOptions: {},

@@ -300,6 +300,12 @@ export const ChatPage: React.FC = () => {
     state => state.setDraftSessionSettings
   );
   const welcomeThinking = draftSessionSettings.generationOptions?.think;
+  const welcomeInheritedThinking = useAppStore(state => {
+    const pinned = selectedModel
+      ? state.preferences.modelGenerationOptions?.[selectedModel]?.think
+      : undefined;
+    return pinned ?? state.preferences.generationOptions?.think ?? null;
+  });
   const selectedModelEntry = useMemo(
     () => models.find(model => model.name === selectedModel),
     [models, selectedModel]
@@ -312,10 +318,14 @@ export const ChatPage: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
+    // Only a model resolved as a local Ollama model is worth asking Ollama
+    // about — see the same guard in ChatInput.
     if (
       !selectedModel ||
-      selectedModelEntry?.isPlugin ||
-      selectedModelEntry?.isAgent
+      models.length === 0 ||
+      !selectedModelEntry ||
+      selectedModelEntry.isPlugin ||
+      selectedModelEntry.isAgent
     ) {
       return;
     }
@@ -337,11 +347,7 @@ export const ChatPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [
-    selectedModel,
-    selectedModelEntry?.isAgent,
-    selectedModelEntry?.isPlugin,
-  ]);
+  }, [selectedModel, selectedModelEntry, models.length]);
 
   const welcomeThinkingAvailable = Boolean(
     selectedModel &&
@@ -913,6 +919,7 @@ export const ChatPage: React.FC = () => {
                       {welcomeThinkingAvailable && (
                         <ThinkingSelector
                           value={welcomeThinking}
+                          inheritedValue={welcomeInheritedThinking}
                           onChange={setWelcomeThinking}
                         />
                       )}

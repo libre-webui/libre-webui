@@ -696,6 +696,7 @@
       "thinkingDescription": "回答の既定の思考量。チャットごとに変更できます。",
       "thinkingLevels": {
         "default": "モデルの既定",
+        "defaultWith": "モデルの既定 ({{level}})",
         "off": "オフ",
         "on": "オン",
         "low": "低",

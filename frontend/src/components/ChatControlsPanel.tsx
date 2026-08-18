@@ -199,8 +199,11 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
       const cleanedOverrides = Object.fromEntries(
         Object.entries(overrides).filter(([, value]) => value !== undefined)
       ) as Partial<GenerationOptions>;
-      const settings =
-        Object.keys(cleanedOverrides).length > 0
+      // Preserve sibling settings (knowledge collections, provider binding):
+      // this panel owns only the generation options.
+      const settings = session
+        ? { ...session.settings, generationOptions: cleanedOverrides }
+        : Object.keys(cleanedOverrides).length > 0
           ? { generationOptions: cleanedOverrides }
           : undefined;
 
@@ -327,13 +330,24 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
           </label>
           <select
             id='chat-control-think'
-            value={thinkingChoiceOf(overrides.think ?? effectiveDefaults.think)}
+            // The select holds this chat's own choice; picking Default must
+            // stay on Default rather than snapping to the value it inherits,
+            // so the inherited value is named inside the Default option.
+            value={thinkingChoiceOf(overrides.think)}
             onChange={event => setThinkingOverride(event.target.value)}
             className='w-full rounded-xl border border-black/[0.08] bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
           >
             {THINKING_CHOICES.map(choice => (
               <option key={choice} value={choice}>
-                {t(`settings.generation.thinkingLevels.${choice}`)}
+                {choice === 'default' &&
+                effectiveDefaults.think !== undefined &&
+                effectiveDefaults.think !== null
+                  ? t('settings.generation.thinkingLevels.defaultWith', {
+                      level: t(
+                        `settings.generation.thinkingLevels.${thinkingChoiceOf(effectiveDefaults.think)}`
+                      ),
+                    })
+                  : t(`settings.generation.thinkingLevels.${choice}`)}
               </option>
             ))}
           </select>

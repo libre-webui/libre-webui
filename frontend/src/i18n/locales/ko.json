@@ -696,6 +696,7 @@
       "thinkingDescription": "답변의 기본 사고 수준. 채팅마다 변경할 수 있습니다.",
       "thinkingLevels": {
         "default": "모델 기본값",
+        "defaultWith": "모델 기본값 ({{level}})",
         "off": "끄기",
         "on": "켜기",
         "low": "낮음",

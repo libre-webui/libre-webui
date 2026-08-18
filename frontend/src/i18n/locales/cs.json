@@ -696,6 +696,7 @@
       "thinkingDescription": "Výchozí míra přemýšlení u odpovědí. Každý chat ji může změnit.",
       "thinkingLevels": {
         "default": "Výchozí podle modelu",
+        "defaultWith": "Výchozí podle modelu ({{level}})",
         "off": "Vypnuto",
         "on": "Zapnuto",
         "low": "Nízká",

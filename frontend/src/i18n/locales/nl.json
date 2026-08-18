@@ -696,6 +696,7 @@
       "thinkingDescription": "Standaard denkinspanning voor antwoorden. Elke chat kan dit overschrijven.",
       "thinkingLevels": {
         "default": "Standaard van model",
+        "defaultWith": "Standaard van model ({{level}})",
         "off": "Uit",
         "on": "Aan",
         "low": "Laag",

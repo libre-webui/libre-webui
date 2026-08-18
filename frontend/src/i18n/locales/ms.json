@@ -696,6 +696,7 @@
       "thinkingDescription": "Tahap pemikiran lalai untuk jawapan. Setiap sembang boleh mengubahnya.",
       "thinkingLevels": {
         "default": "Lalai model",
+        "defaultWith": "Lalai model ({{level}})",
         "off": "Mati",
         "on": "Hidup",
         "low": "Rendah",

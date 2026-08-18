@@ -29,8 +29,14 @@ import {
 import type { ThinkingPreference } from '@/types';
 
 interface ThinkingSelectorProps {
-  /** The chat's current setting, or nothing when the model decides. */
+  /** The chat's current setting, or nothing when the default applies. */
   value: ThinkingPreference | null | undefined;
+  /**
+   * What "default" currently resolves to — the user's pinned or global
+   * setting. The button reflects the value the next reply actually runs
+   * with, not just this chat's override.
+   */
+  inheritedValue?: ThinkingPreference | null;
   onChange: (think: ThinkingPreference | null) => void;
 }
 
@@ -41,13 +47,20 @@ interface ThinkingSelectorProps {
  */
 export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
   value,
+  inheritedValue,
   onChange,
 }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const active = isThinkingEnabled(value);
+  const effective = value ?? inheritedValue;
+  const active = isThinkingEnabled(effective);
+  const effectiveChoice = thinkingChoiceOf(effective);
   const choice = thinkingChoiceOf(value);
+  const inheritedChoice =
+    inheritedValue === undefined || inheritedValue === null
+      ? undefined
+      : thinkingChoiceOf(inheritedValue);
 
   useEffect(() => {
     if (!open) return;
@@ -84,7 +97,9 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
         title={
           active
             ? t('chat.input.thinkingOn', {
-                level: t(`settings.generation.thinkingLevels.${choice}`),
+                level: t(
+                  `settings.generation.thinkingLevels.${effectiveChoice}`
+                ),
               })
             : t('chat.input.thinkingOff')
         }
@@ -95,7 +110,7 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
         <Brain className='h-4 w-4' />
         {active && (
           <span className='text-[11px] font-medium'>
-            {t(`settings.generation.thinkingLevels.${choice}`)}
+            {t(`settings.generation.thinkingLevels.${effectiveChoice}`)}
           </span>
         )}
       </Button>
@@ -126,7 +141,13 @@ export const ThinkingSelector: React.FC<ThinkingSelectorProps> = ({
                 )}
               >
                 <span className='truncate'>
-                  {t(`settings.generation.thinkingLevels.${option}`)}
+                  {option === 'default' && inheritedChoice !== undefined
+                    ? t('settings.generation.thinkingLevels.defaultWith', {
+                        level: t(
+                          `settings.generation.thinkingLevels.${inheritedChoice}`
+                        ),
+                      })
+                    : t(`settings.generation.thinkingLevels.${option}`)}
                 </span>
                 {selected && <Check className='h-3.5 w-3.5 shrink-0' />}
               </button>

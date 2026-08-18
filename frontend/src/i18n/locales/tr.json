@@ -696,6 +696,7 @@
       "thinkingDescription": "Yanıtlar için varsayılan düşünme düzeyi. Her sohbet bunu değiştirebilir.",
       "thinkingLevels": {
         "default": "Model varsayılanı",
+        "defaultWith": "Model varsayılanı ({{level}})",
         "off": "Kapalı",
         "on": "Açık",
         "low": "Düşük",

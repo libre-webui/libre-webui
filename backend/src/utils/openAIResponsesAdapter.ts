@@ -446,8 +446,10 @@ export function buildOpenAIResponsesPayload(
       : {}),
     ...(typeof options.top_p === 'number' ? { top_p: options.top_p } : {}),
     ...(typeof options.stream === 'boolean' ? { stream: options.stream } : {}),
+    // Without a requested summary OpenAI emits no reasoning events at all:
+    // the user would pay for thinking and see none.
     ...(options.reasoningEffort
-      ? { reasoning: { effort: options.reasoningEffort } }
+      ? { reasoning: { effort: options.reasoningEffort, summary: 'auto' } }
       : {}),
   };
 }

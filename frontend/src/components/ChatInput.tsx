@@ -384,8 +384,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   // Thinking is a property of the conversation, not of one message: it is kept
   // on the session so a reload, a regenerate, and the chat controls panel all
-  // agree about it.
+  // agree about it. What "default" resolves to — the pinned or global setting
+  // — travels along so the button reflects what the next reply actually does.
   const activeThinking = currentSession?.settings?.generationOptions?.think;
+  const inheritedThinking =
+    pinnedModelOptions?.think ?? globalGenerationOptions?.think ?? null;
 
   const activeModelEntry = useMemo(
     () => models.find(model => model.name === currentSession?.model),
@@ -407,7 +410,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   useEffect(() => {
     const model = currentSession?.model;
-    if (!model || activeModelEntry?.isPlugin || activeModelEntry?.isAgent) {
+    // Only a model resolved as a local Ollama model is worth asking Ollama
+    // about: while the list is loading, and for agents, personas, and plugin
+    // models, the lookup would 404 against a name Ollama has never heard of.
+    if (
+      !model ||
+      models.length === 0 ||
+      !activeModelEntry ||
+      activeModelEntry.isPlugin ||
+      activeModelEntry.isAgent
+    ) {
       return;
     }
 
@@ -431,11 +443,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [
-    activeModelEntry?.isAgent,
-    activeModelEntry?.isPlugin,
-    currentSession?.model,
-  ]);
+  }, [activeModelEntry, currentSession?.model, models.length]);
 
   const activeModelDefaults =
     modelDefaults?.model === currentSession?.model ? modelDefaults : null;
@@ -1258,6 +1266,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   {thinkingAvailable && (
                     <ThinkingSelector
                       value={activeThinking}
+                      inheritedValue={inheritedThinking}
                       onChange={think => void applyThinking(think)}
                     />
                   )}

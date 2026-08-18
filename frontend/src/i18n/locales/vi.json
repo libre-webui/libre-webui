@@ -696,6 +696,7 @@
       "thinkingDescription": "Mức suy luận mặc định cho câu trả lời. Mỗi cuộc trò chuyện có thể thay đổi.",
       "thinkingLevels": {
         "default": "Mặc định của mô hình",
+        "defaultWith": "Mặc định của mô hình ({{level}})",
         "off": "Tắt",
         "on": "Bật",
         "low": "Thấp",

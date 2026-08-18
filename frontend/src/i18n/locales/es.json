@@ -696,6 +696,7 @@
       "thinkingDescription": "Esfuerzo de razonamiento predeterminado para las respuestas. Cada chat puede cambiarlo.",
       "thinkingLevels": {
         "default": "Predeterminado del modelo",
+        "defaultWith": "Predeterminado del modelo ({{level}})",
         "off": "Desactivado",
         "on": "Activado",
         "low": "Bajo",

@@ -116,8 +116,9 @@ export function thinkingBudgetTokens(think: unknown): number | undefined {
 
 /**
  * A reply has to fit beside the reasoning it took: Anthropic rejects a budget
- * that is not smaller than `max_tokens`, and a budget that eats the whole
- * allowance leaves the answer truncated.
+ * that is not smaller than `max_tokens`, Gemini counts thinking against
+ * `maxOutputTokens`, and a budget that eats the whole allowance leaves the
+ * answer truncated.
  */
 export function maxTokensForBudget(
   maxTokens: number | undefined,
@@ -125,4 +126,47 @@ export function maxTokensForBudget(
 ): number {
   const minimum = budgetTokens + ANSWER_HEADROOM_TOKENS;
   return maxTokens === undefined ? minimum : Math.max(maxTokens, minimum);
+}
+
+/** Providers require at least this much budget for thinking to mean anything. */
+const MINIMUM_THINKING_BUDGET_TOKENS = 1024;
+
+/**
+ * Fit a thinking budget and an output ceiling together. An explicit user
+ * ceiling is respected by shrinking the budget into it rather than silently
+ * raising a cap the user chose; only a ceiling too small to hold any
+ * thinking at all is raised, and by the minimum that makes the request
+ * valid.
+ */
+export function fitThinkingBudget(
+  maxTokens: number | undefined,
+  budgetTokens: number
+): { maxTokens: number; budgetTokens: number } {
+  if (
+    maxTokens === undefined ||
+    maxTokens >= budgetTokens + ANSWER_HEADROOM_TOKENS
+  ) {
+    return {
+      maxTokens: maxTokensForBudget(maxTokens, budgetTokens),
+      budgetTokens,
+    };
+  }
+
+  const shrunk = Math.max(
+    MINIMUM_THINKING_BUDGET_TOKENS,
+    maxTokens - ANSWER_HEADROOM_TOKENS
+  );
+  return {
+    maxTokens: maxTokensForBudget(maxTokens, shrunk),
+    budgetTokens: shrunk,
+  };
+}
+
+/**
+ * The only Ollama family that understands named thinking levels. Every other
+ * reasoning model takes `think` as a boolean, so a level from a chat that
+ * moved between models degrades to "on" instead of erroring.
+ */
+export function ollamaSupportsThinkingLevels(model: string): boolean {
+  return model.toLowerCase().includes('gpt-oss');
 }

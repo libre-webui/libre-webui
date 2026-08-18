@@ -696,6 +696,7 @@
       "thinkingDescription": "Standardindsats for tænkning i svar. Hver chat kan ændre det.",
       "thinkingLevels": {
         "default": "Modellens standard",
+        "defaultWith": "Modellens standard ({{level}})",
         "off": "Fra",
         "on": "Til",
         "low": "Lav",

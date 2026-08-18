@@ -35,6 +35,8 @@ import {
   type OllamaModelDefaults,
 } from '../utils/ollamaModelDefaults.js';
 import {
+  isThinkingLevel,
+  ollamaSupportsThinkingLevels,
   splitThinkingOption,
   type ThinkingPreference,
 } from '../utils/thinkingOptions.js';
@@ -648,6 +650,12 @@ export class OllamaService {
     if (supportsThinking === false) {
       logger.debug(`${model} does not reason; sending the request without it.`);
       return undefined;
+    }
+
+    // A named level on a model that only understands a boolean degrades to
+    // "on" instead of erroring — levels exist for the gpt-oss family only.
+    if (isThinkingLevel(think) && !ollamaSupportsThinkingLevels(model)) {
+      return true;
     }
 
     return think;

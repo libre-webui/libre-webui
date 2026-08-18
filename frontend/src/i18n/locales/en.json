@@ -696,6 +696,7 @@
       "thinkingDescription": "Default reasoning effort for replies. Each chat can override it.",
       "thinkingLevels": {
         "default": "Model default",
+        "defaultWith": "Model default ({{level}})",
         "off": "Off",
         "on": "On",
         "low": "Low",

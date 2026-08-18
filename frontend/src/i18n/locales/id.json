@@ -696,6 +696,7 @@
       "thinkingDescription": "Tingkat berpikir bawaan untuk jawaban. Setiap obrolan dapat mengubahnya.",
       "thinkingLevels": {
         "default": "Bawaan model",
+        "defaultWith": "Bawaan model ({{level}})",
         "off": "Nonaktif",
         "on": "Aktif",
         "low": "Rendah",

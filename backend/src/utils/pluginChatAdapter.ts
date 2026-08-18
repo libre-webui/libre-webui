@@ -27,7 +27,7 @@ import {
   normalizeOpenAIResponsesResponse,
 } from './openAIResponsesAdapter.js';
 import {
-  maxTokensForBudget,
+  fitThinkingBudget,
   thinkingBudgetTokens,
   thinkingEffort,
 } from './thinkingOptions.js';
@@ -275,12 +275,15 @@ function buildAnthropicChatPayload(
   );
 
   // Anthropic prices thinking in tokens and takes it as its own block. The
-  // budget has to fit inside max_tokens with room left for the answer.
-  const budgetTokens = thinkingBudgetTokens(options.think);
-  const maxTokens =
-    budgetTokens === undefined
-      ? (params.maxTokens ?? 1024)
-      : maxTokensForBudget(params.maxTokens ?? 1024, budgetTokens);
+  // budget has to fit inside max_tokens with room left for the answer; an
+  // explicit user ceiling shrinks the budget rather than being raised.
+  const levelBudget = thinkingBudgetTokens(options.think);
+  const fitted =
+    levelBudget === undefined
+      ? undefined
+      : fitThinkingBudget(params.maxTokens, levelBudget);
+  const budgetTokens = fitted?.budgetTokens;
+  const maxTokens = fitted?.maxTokens ?? params.maxTokens ?? 1024;
 
   const payload: Record<string, unknown> = {
     model,
@@ -352,19 +355,31 @@ function buildGeminiChatPayload(
 
   // Gemini takes a thinking budget too, inside the generation config. Only an
   // enabled setting is sent: a zero budget is rejected by the models that
-  // always reason, so switching thinking off is left to the model.
-  const budgetTokens = thinkingBudgetTokens(options.think);
+  // always reason, so switching thinking off is left to the model. Thinking
+  // tokens count against maxOutputTokens, so the ceiling has to hold the
+  // budget plus the answer or the reply arrives empty at MAX_TOKENS.
+  const levelBudget = thinkingBudgetTokens(options.think);
+  const fitted =
+    levelBudget === undefined
+      ? undefined
+      : fitThinkingBudget(params.maxTokens, levelBudget);
 
   return {
     payload: {
       contents: [{ parts }],
       generationConfig: {
         temperature: params.temperature,
-        maxOutputTokens: params.maxTokens ?? 1024,
+        maxOutputTokens: fitted?.maxTokens ?? params.maxTokens ?? 1024,
         topP: params.topP,
         stopSequences: options.stop,
-        ...(budgetTokens !== undefined
-          ? { thinkingConfig: { thinkingBudget: budgetTokens } }
+        ...(fitted !== undefined
+          ? {
+              thinkingConfig: {
+                thinkingBudget: fitted.budgetTokens,
+                // Without this the user pays for thinking and sees none.
+                includeThoughts: true,
+              },
+            }
           : {}),
       },
     },
@@ -478,17 +493,16 @@ export function convertAnthropicResponse(
       : 'stop';
 
   let content = '';
+  let reasoning = '';
   if (Array.isArray(anthropicResponse.content)) {
     for (const block of anthropicResponse.content) {
-      if (
-        block &&
-        typeof block === 'object' &&
-        'type' in block &&
-        block.type === 'text' &&
-        'text' in block &&
-        typeof block.text === 'string'
-      ) {
-        content += block.text;
+      if (!block || typeof block !== 'object' || !('type' in block)) continue;
+      if (block.type === 'text' && 'text' in block) {
+        if (typeof block.text === 'string') content += block.text;
+      } else if (block.type === 'thinking' && 'thinking' in block) {
+        // The streaming path renders these; a non-streaming reply must not
+        // silently drop the reasoning the user paid for.
+        if (typeof block.thinking === 'string') reasoning += block.thinking;
       }
     }
   }
@@ -523,6 +537,7 @@ export function convertAnthropicResponse(
         message: {
           role: 'assistant',
           content,
+          ...(reasoning ? { reasoning_content: reasoning } : {}),
         },
         finish_reason: stopReason,
       },
@@ -538,6 +553,7 @@ export function convertGeminiResponse(
   const id = `chatcmpl-${Date.now()}`;
 
   let content = '';
+  let reasoning = '';
   let finishReason = 'stop';
 
   if (Array.isArray(geminiResponse.candidates)) {
@@ -555,7 +571,13 @@ export function convertGeminiResponse(
               'text' in part &&
               typeof part.text === 'string'
             ) {
-              content += part.text;
+              // Thought summaries arrive as parts flagged `thought`; they are
+              // reasoning, not answer text.
+              if ('thought' in part && part.thought === true) {
+                reasoning += part.text;
+              } else {
+                content += part.text;
+              }
             }
           }
         }
@@ -607,6 +629,7 @@ export function convertGeminiResponse(
         message: {
           role: 'assistant',
           content,
+          ...(reasoning ? { reasoning_content: reasoning } : {}),
         },
         finish_reason: finishReason,
       },

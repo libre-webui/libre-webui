@@ -696,6 +696,7 @@
       "thinkingDescription": "Effort de réflexion par défaut pour les réponses. Chaque conversation peut le remplacer.",
       "thinkingLevels": {
         "default": "Valeur du modèle",
+        "defaultWith": "Valeur du modèle ({{level}})",
         "off": "Désactivée",
         "on": "Activée",
         "low": "Faible",

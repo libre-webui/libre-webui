@@ -21,6 +21,7 @@ const ollamaRequests = [];
 /** Capabilities `/api/show` reports, per model. */
 const modelCapabilities = new Map([
   ['thinker', ['completion', 'thinking']],
+  ['gpt-oss:20b', ['completion', 'thinking']],
   ['plain', ['completion']],
 ]);
 
@@ -142,7 +143,7 @@ test('a model reports whether it reasons at all', () => {
 test('Ollama receives the level in the request body', async () => {
   ollamaRequests.length = 0;
   await ollamaService.generateChatResponse({
-    model: 'thinker',
+    model: 'gpt-oss:20b',
     messages: [{ role: 'user', content: 'hello' }],
     options: { temperature: 0.5, think: 'high' },
   });
@@ -150,6 +151,22 @@ test('Ollama receives the level in the request body', async () => {
   const [chat] = requestsTo('/api/chat');
   assert.equal(chat.body.think, 'high');
   assert.deepEqual(chat.body.options, { temperature: 0.5 });
+});
+
+test('a level degrades to "on" for models without named levels', async () => {
+  ollamaRequests.length = 0;
+  await ollamaService.generateChatResponse({
+    model: 'thinker',
+    messages: [{ role: 'user', content: 'hello' }],
+    options: { think: 'high' },
+  });
+
+  const [chat] = requestsTo('/api/chat');
+  assert.equal(
+    chat.body.think,
+    true,
+    'only the gpt-oss family understands level strings'
+  );
 });
 
 test('a model that cannot reason is not asked to', async () => {
@@ -215,7 +232,7 @@ test('the Responses API receives the effort in its own shape', () => {
     undefined,
     'responses'
   );
-  assert.deepEqual(payload.reasoning, { effort: 'medium' });
+  assert.deepEqual(payload.reasoning, { effort: 'medium', summary: 'auto' });
 });
 
 test('Anthropic receives a budget, and no sampling beside it', () => {
@@ -223,7 +240,7 @@ test('Anthropic receives a budget, and no sampling beside it', () => {
     { id: 'anthropic', name: 'Anthropic' },
     'claude-sonnet-4-5',
     message('hello'),
-    { think: 'medium', num_predict: 1024 }
+    { think: 'medium' }
   );
   assert.deepEqual(payload.thinking, {
     type: 'enabled',
@@ -235,6 +252,17 @@ test('Anthropic receives a budget, and no sampling beside it', () => {
   );
   assert.ok(!('temperature' in payload));
   assert.ok(!('top_p' in payload));
+
+  // An explicit answer cap is respected: the budget shrinks into it rather
+  // than the cap being silently raised past what the user asked for.
+  const { payload: capped } = chatAdapter.buildPluginChatPayload(
+    { id: 'anthropic', name: 'Anthropic' },
+    'claude-sonnet-4-5',
+    message('hello'),
+    { think: 'medium', num_predict: 4096 }
+  );
+  assert.equal(capped.max_tokens, 4096);
+  assert.equal(capped.thinking.budget_tokens, 4096 - 1024);
 
   // Without a thinking setting the sampling behaviour is unchanged.
   const { payload: sampled } = chatAdapter.buildPluginChatPayload(
@@ -257,7 +285,12 @@ test('Gemini receives a thinking budget in its generation config', () => {
   );
   assert.deepEqual(payload.generationConfig.thinkingConfig, {
     thinkingBudget: 2048,
+    includeThoughts: true,
   });
+  assert.ok(
+    payload.generationConfig.maxOutputTokens >= 2048 + 1024,
+    'thinking counts against maxOutputTokens, so the ceiling must hold both'
+  );
 
   const { payload: quiet } = chatAdapter.buildPluginChatPayload(
     { id: 'gemini', name: 'Gemini' },

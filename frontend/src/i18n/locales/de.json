@@ -696,6 +696,7 @@
       "thinkingDescription": "Standardmäßiger Denkaufwand für Antworten. Jeder Chat kann ihn überschreiben.",
       "thinkingLevels": {
         "default": "Modellvorgabe",
+        "defaultWith": "Modellvorgabe ({{level}})",
         "off": "Aus",
         "on": "An",
         "low": "Niedrig",

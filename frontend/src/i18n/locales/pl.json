@@ -696,6 +696,7 @@
       "thinkingDescription": "Domyślny poziom myślenia w odpowiedziach. Każdy czat może go zmienić.",
       "thinkingLevels": {
         "default": "Domyślne modelu",
+        "defaultWith": "Domyślne modelu ({{level}})",
         "off": "Wyłączone",
         "on": "Włączone",
         "low": "Niski",

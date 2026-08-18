@@ -696,6 +696,7 @@
       "thinkingDescription": "Sjálfgefið hugsunarstig fyrir svör. Hvert spjall getur breytt því.",
       "thinkingLevels": {
         "default": "Sjálfgefið líkans",
+        "defaultWith": "Sjálfgefið líkans ({{level}})",
         "off": "Af",
         "on": "Á",
         "low": "Lágt",

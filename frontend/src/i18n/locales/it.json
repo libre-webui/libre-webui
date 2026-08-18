@@ -696,6 +696,7 @@
       "thinkingDescription": "Livello di ragionamento predefinito per le risposte. Ogni chat può modificarlo.",
       "thinkingLevels": {
         "default": "Predefinito del modello",
+        "defaultWith": "Predefinito del modello ({{level}})",
         "off": "Disattivato",
         "on": "Attivo",
         "low": "Basso",

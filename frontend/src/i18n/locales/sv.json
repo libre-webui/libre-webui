@@ -696,6 +696,7 @@
       "thinkingDescription": "Standardnivå för tänkande i svar. Varje chatt kan ändra den.",
       "thinkingLevels": {
         "default": "Modellens standard",
+        "defaultWith": "Modellens standard ({{level}})",
         "off": "Av",
         "on": "På",
         "low": "Låg",

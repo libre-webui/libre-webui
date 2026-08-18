@@ -696,6 +696,7 @@
       "thinkingDescription": "Esforço de raciocínio padrão das respostas. Cada conversa pode alterá-lo.",
       "thinkingLevels": {
         "default": "Padrão do modelo",
+        "defaultWith": "Padrão do modelo ({{level}})",
         "off": "Desativado",
         "on": "Ativado",
         "low": "Baixo",

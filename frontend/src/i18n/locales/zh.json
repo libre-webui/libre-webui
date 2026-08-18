@@ -696,6 +696,7 @@
       "thinkingDescription": "回复的默认思考强度。每个对话都可以单独覆盖。",
       "thinkingLevels": {
         "default": "模型默认",
+        "defaultWith": "模型默认 ({{level}})",
         "off": "关闭",
         "on": "开启",
         "low": "低",
