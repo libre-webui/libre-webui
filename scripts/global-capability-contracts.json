@@ -217,6 +217,12 @@
           "file": "backend/src/routes/chat.ts",
           "mount": "/api/chat",
           "method": "GET",
+          "path": "/context-policy"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "GET",
           "path": "/compaction-config"
         },
         {

@@ -327,6 +327,32 @@ test('a failing summarizer fails open and context is still served', async () => 
   await compaction.setCompactionConfig({ enabled: false });
 });
 
+test('context policy is readable by any user and mirrors keep-recent', async () => {
+  await compaction.setCompactionConfig({ enabled: false });
+  const dormant = await fetch(`${baseUrl}/context-policy`, {
+    headers: { Authorization: `Bearer ${userToken}` },
+  });
+  assert.equal(dormant.status, 200);
+  assert.equal((await dormant.json()).data.windowMessages, 10);
+
+  await compaction.setCompactionConfig({
+    enabled: true,
+    keepRecentMessages: 24,
+  });
+  const widened = await fetch(`${baseUrl}/context-policy`, {
+    headers: { Authorization: `Bearer ${userToken}` },
+  });
+  assert.equal(
+    (await widened.json()).data.windowMessages,
+    24,
+    'an admin keep-recent above the default widens the window'
+  );
+  await compaction.setCompactionConfig({
+    enabled: false,
+    keepRecentMessages: 8,
+  });
+});
+
 test('compaction config routes: admin-only in both directions', async () => {
   // The custom summarizer prompt is administrator configuration; regular
   // users have no reason to read it.

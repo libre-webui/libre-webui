@@ -393,7 +393,17 @@ export const chatApi = {
       .then(res => res.data);
   },
 
-  // Context compaction settings (read: any user, write: admin)
+  /** The rolling window every conversation runs with, for the context meter. */
+  getContextPolicy: (): Promise<ApiResponse<{ windowMessages: number }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<{ windowMessages: number }>({
+        windowMessages: 10,
+      });
+    }
+    return api.get('/chat/context-policy').then(res => res.data);
+  },
+
+  // Context compaction settings (admin-only)
   getCompactionConfig: (): Promise<ApiResponse<CompactionConfig>> => {
     if (isDemoMode()) {
       return createDemoResponse<CompactionConfig>({

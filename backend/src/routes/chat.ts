@@ -1856,6 +1856,31 @@ router.post(
   }
 );
 
+/**
+ * The rolling window every conversation runs with, for any signed-in user:
+ * the context meter needs the real message count to mirror what is sent.
+ * Deliberately narrow — none of the admin compaction configuration (prompt,
+ * model, thresholds) leaves this endpoint.
+ */
+router.get('/context-policy', async (_req, res) => {
+  try {
+    const compaction = await getCompactionConfig();
+    res.json({
+      success: true,
+      data: {
+        windowMessages: compaction.enabled
+          ? Math.max(10, compaction.keepRecentMessages)
+          : 10,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: getErrorMessage(error, 'Failed to load context policy'),
+    });
+  }
+});
+
 /** Context compaction settings: admin-only in both directions — the custom
  * summarizer prompt is administrator configuration, not user data. */
 router.get('/compaction-config', requireAdmin, async (_req, res) => {

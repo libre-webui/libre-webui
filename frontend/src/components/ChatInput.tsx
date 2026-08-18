@@ -467,14 +467,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     modelDefaults: activeModelDefaults?.options,
     globalOptions: globalGenerationOptions,
   });
+  const contextWindowMessages = useChatStore(
+    state => state.contextWindowMessages
+  );
   const contextUsage = useMemo(
     () =>
       buildContextUsage({
         messages: currentSession?.messages ?? [],
         budget: contextBudget,
         systemPrompt: currentPersona?.parameters?.system_prompt,
+        windowMessages: contextWindowMessages,
       }),
-    [contextBudget, currentPersona, currentSession?.messages]
+    [
+      contextBudget,
+      contextWindowMessages,
+      currentPersona,
+      currentSession?.messages,
+    ]
   );
 
   const applyThinking = async (think: ThinkingPreference | null) => {

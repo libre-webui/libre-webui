@@ -130,13 +130,14 @@ export function resolveContextBudget({
  * not the whole transcript.
  */
 export function selectContextMessages(
-  messages: readonly ChatMessage[]
+  messages: readonly ChatMessage[],
+  windowMessages: number = CONTEXT_WINDOW_MESSAGES
 ): ChatMessage[] {
   const active = messages.filter(message => message.isActive !== false);
   const system = active.filter(message => message.role === 'system');
   const conversation = active
     .filter(message => message.role !== 'system')
-    .slice(-CONTEXT_WINDOW_MESSAGES);
+    .slice(-Math.max(1, windowMessages));
   const firstUserIndex = conversation.findIndex(
     message => message.role === 'user'
   );
@@ -179,16 +180,19 @@ export function buildContextUsage({
   messages,
   budget,
   systemPrompt,
+  windowMessages,
 }: {
   messages: readonly ChatMessage[];
   budget?: number;
   /** A persona or preference prompt the server adds, which no message holds. */
   systemPrompt?: string;
+  /** The server's rolling window, when it has said; defaults to the mirror. */
+  windowMessages?: number;
 }): ContextUsage {
   // A persona prompt replaces stored system messages on the server, except a
   // compaction summary — count what is actually sent.
   const hasPersonaPrompt = Boolean(systemPrompt?.trim());
-  const sent = selectContextMessages(messages).filter(
+  const sent = selectContextMessages(messages, windowMessages).filter(
     message =>
       !hasPersonaPrompt ||
       message.role !== 'system' ||

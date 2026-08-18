@@ -144,6 +144,8 @@ interface ChatState {
   ollamaConnected: boolean;
   loadModels: (options?: { quiet?: boolean }) => Promise<void>;
   loadPreferences: () => Promise<void>;
+  /** The server's rolling context window, in messages; the meter mirrors it. */
+  contextWindowMessages: number;
   selectedModel: string;
   selectedProviderType: ChatProviderType | null;
   selectedProviderId: string | null;
@@ -977,8 +979,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
+  // The rolling window the server sends with each request; the context meter
+  // measures against it. 10 until the server says otherwise.
+  contextWindowMessages: 10,
+
   // Load preferences from backend and set default model
   loadPreferences: async () => {
+    // Fire-and-forget beside the preferences read: the meter falls back to
+    // the default window until (and unless) the server answers.
+    void chatApi
+      .getContextPolicy()
+      .then(policy => {
+        if (policy.success && policy.data?.windowMessages) {
+          set({ contextWindowMessages: policy.data.windowMessages });
+        }
+      })
+      .catch(() => {});
     try {
       const response = await preferencesApi.getPreferences();
 
