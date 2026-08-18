@@ -178,16 +178,24 @@ reserved for the answer.
 Two things are worth knowing. A model Ollama reports as unable to reason never
 receives the setting at all, so the control is simply absent for it. And the
 named levels only exist on the models that publish them, such as gpt-oss; on a
-model that reasons without levels, use **on** rather than **high**.
+model that reasons without levels, a named level simply behaves as **on**, so a
+chat that moves between models never errors over it. When a global or pinned
+default is set, the composer button shows the level the next reply actually
+runs with, and the "Default" entry names what it currently resolves to.
 
 ## Watch the Context Window
 
 The ring beside the model name fills as the conversation grows. Hover it for how
-full the window is, the tokens used, and the window they run against.
+full the window is, the tokens used, and the window they run against. It turns
+amber past four fifths and red at the window; a model whose window is unknown
+shows a dashed ring rather than an empty one.
 
-The number is what the provider measured for the last reply when it reported
-one, and an estimate at four characters per token before that, marked with a
-`~`. A window capped below what the model was trained for says so: the meter
+The count covers what the next request will actually send — compacted history
+and abandoned branches cost nothing. It anchors to what the provider measured
+for the last reply when it reported one, plus an estimate at four characters
+per token for what the conversation added since, marked with a `~` when no
+measurement exists yet. A window capped below what the model was trained for
+says so: the meter
 measures the window the request actually runs with, which is
 `OLLAMA_MAX_CONTEXT` (32,768 by default) rather than the model's full trained
 length. Raise that variable and both the real window and the meter follow.
@@ -198,7 +206,7 @@ them by.
 
 ## Let Long Chats Compact Themselves
 
-Administrators can turn on **context compaction** in Settings > Generation. Once a conversation's estimated context passes the token threshold, the server asks a model to summarize the older messages and keeps only the most recent ones verbatim. The summary rides along as a system message; the original messages stay in your transcript, they just stop being sent to the model.
+Administrators can turn on **context compaction** in Settings > Generation. Once a conversation's estimated context passes the token threshold, the server asks a model to summarize the older messages and keeps only the most recent ones verbatim. The summary appears as a conversation-summary card at the point in the chat where the history was folded, and the summarized messages render dimmed: still readable, no longer sent to the model. With compaction on, the "recent messages kept" count is also the rolling window a conversation sends, so raising it genuinely widens what the model sees.
 
 | Setting               | What it controls                                                       |
 | --------------------- | ---------------------------------------------------------------------- |
