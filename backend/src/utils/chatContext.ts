@@ -27,6 +27,17 @@ export type ChatContextMessage = Pick<
   ChatMessage,
   'role' | 'content' | 'thinking' | 'images' | 'providerMetadata'
 >;
+
+/**
+ * Marks a system message produced by context compaction. Lives here rather
+ * than in the compaction service so message-shaping utilities can recognize
+ * summaries without importing a service.
+ */
+export const COMPACTION_SUMMARY_PREFIX = '[Conversation summary] ';
+
+export function isCompactionSummaryContent(content: string): boolean {
+  return content.startsWith(COMPACTION_SUMMARY_PREFIX);
+}
 type ContentMessage = {
   role: string;
   content: string;
@@ -92,7 +103,9 @@ export function sanitizeChatMessageProviderState<T extends ChatContextMessage>(
 export function selectChatMessagesForContext<
   T extends Pick<ChatMessage, 'role' | 'isActive'>,
 >(messages: readonly T[], maxMessages = 10): T[] {
-  const systemMessages = messages.filter(message => message.role === 'system');
+  const systemMessages = messages.filter(
+    message => message.role === 'system' && message.isActive !== false
+  );
   const conversationMessages = messages.filter(
     message => message.role !== 'system' && message.isActive !== false
   );
@@ -186,12 +199,17 @@ export function withSystemPrompt(
     return [...messages];
   }
 
+  // The persona prompt replaces stored system messages, except a compaction
+  // summary — dropping that would silently lose the compacted history.
   return [
     {
       role: 'system',
       content: prompt,
     },
-    ...messages.filter(message => message.role !== 'system'),
+    ...messages.filter(
+      message =>
+        message.role !== 'system' || isCompactionSummaryContent(message.content)
+    ),
   ];
 }
 

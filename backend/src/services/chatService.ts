@@ -42,6 +42,7 @@ import {
 import { getCoordinator } from '../platform/coordination/service.js';
 import {
   COMPACTION_SUMMARY_PREFIX,
+  getCompactionConfig,
   planCompaction,
   type CompactionPlan,
 } from './contextCompactionService.js';
@@ -929,7 +930,8 @@ class ChatService {
   async getMessagesForContext(
     sessionId: string,
     userId: string,
-    maxMessages = 10
+    maxMessages = 10,
+    signal?: AbortSignal
   ): Promise<ChatMessage[]> {
     const session = await this.getSession(sessionId, userId);
     if (!session) return [];
@@ -938,19 +940,33 @@ class ChatService {
     // history into a system message so it keeps informing the model instead
     // of silently falling out of the context window. Fails open.
     let messages = session.messages;
-    const plan = await planCompaction(session, userId);
-    if (plan) {
-      try {
-        messages = await this.applyContextCompaction(sessionId, userId, plan);
-      } catch (error) {
-        logger.warn(
-          `Applying context compaction failed for session ${sessionId}:`,
-          error
-        );
+    let contextWindow = maxMessages;
+    const compactionConfig = await getCompactionConfig();
+    if (compactionConfig.enabled) {
+      // With compaction on, the admin's keep-recent count is the context
+      // window: compaction bounds the active history, so a keep-recent
+      // above the default window must not be silently truncated back down.
+      contextWindow = Math.max(
+        maxMessages,
+        compactionConfig.keepRecentMessages
+      );
+      const plan = await planCompaction(session, userId, {
+        config: compactionConfig,
+        signal,
+      });
+      if (plan) {
+        try {
+          messages = await this.applyContextCompaction(sessionId, userId, plan);
+        } catch (error) {
+          logger.warn(
+            `Applying context compaction failed for session ${sessionId}:`,
+            error
+          );
+        }
       }
     }
 
-    return selectChatMessagesForContext(messages, maxMessages).map(
+    return selectChatMessagesForContext(messages, contextWindow).map(
       sanitizeChatMessageProviderState
     );
   }
@@ -1043,9 +1059,13 @@ class ChatService {
     session: ChatSession,
     newSystemMessage: string
   ): void {
-    // Find existing system message
+    // Find the existing system message — never a compaction summary, which
+    // also has role 'system' and may sit first in a session that had no
+    // system message of its own.
     const systemMessageIndex = session.messages.findIndex(
-      msg => msg.role === 'system'
+      msg =>
+        msg.role === 'system' &&
+        !msg.content.startsWith(COMPACTION_SUMMARY_PREFIX)
     );
 
     if (systemMessageIndex !== -1) {
@@ -1221,7 +1241,9 @@ Guidelines:
         const authoritative = await this.getSession(session.id, userId);
         if (!authoritative) return;
         const systemMessageIndex = authoritative.messages.findIndex(
-          msg => msg.role === 'system'
+          msg =>
+            msg.role === 'system' &&
+            !msg.content.startsWith(COMPACTION_SUMMARY_PREFIX)
         );
         if (systemMessageIndex !== -1) {
           authoritative.messages[systemMessageIndex] = {

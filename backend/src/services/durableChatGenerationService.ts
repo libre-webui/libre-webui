@@ -494,6 +494,9 @@ class DurableChatGenerationService {
           if (context.signal.aborted) throw error;
         }
       }
+      // getMessagesForContext may compact the session — a real side effect,
+      // so it must run fenced like the generation below it.
+      await context.assertSideEffectAllowed();
       const prepared = await requestService.prepareGenerationRequest({
         session,
         userId: input.actorUserId,
@@ -501,7 +504,9 @@ class DurableChatGenerationService {
         persistedMessages: (
           await chatService.getMessagesForContext(
             input.sessionId,
-            input.actorUserId
+            input.actorUserId,
+            undefined,
+            context.signal
           )
         ).filter(message => {
           if (!input.regenerate || !input.originalMessageId) return true;

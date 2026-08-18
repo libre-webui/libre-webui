@@ -591,7 +591,9 @@ router.post(
           options,
           persistedMessages: await chatService.getMessagesForContext(
             sessionId,
-            userId
+            userId,
+            undefined,
+            signal
           ),
           content: message,
           hasRelevantContext,
@@ -1174,7 +1176,9 @@ router.post(
           options,
           persistedMessages: await chatService.getMessagesForContext(
             sessionId,
-            userId
+            userId,
+            undefined,
+            signal
           ),
           content: message,
           enhancedContent:
@@ -1852,8 +1856,9 @@ router.post(
   }
 );
 
-/** Context compaction settings: readable by any user, set by admins. */
-router.get('/compaction-config', async (_req, res) => {
+/** Context compaction settings: admin-only in both directions — the custom
+ * summarizer prompt is administrator configuration, not user data. */
+router.get('/compaction-config', requireAdmin, async (_req, res) => {
   try {
     res.json({ success: true, data: await getCompactionConfig() });
   } catch (error) {

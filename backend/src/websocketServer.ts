@@ -584,7 +584,12 @@ export function registerWebSocketServer(
 
           const persistedMessages = isPrivate
             ? []
-            : await chatService.getMessagesForContext(sessionId, userId);
+            : await chatService.getMessagesForContext(
+                sessionId,
+                userId,
+                undefined,
+                generationSignal
+              );
           const preparedGeneration =
             await chatRequestService.prepareGenerationRequest({
               session,

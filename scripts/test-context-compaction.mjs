@@ -103,6 +103,7 @@ after(async () => {
 });
 
 let summarizerCalls = 0;
+let lastSummarizerPrompt = '';
 let summaryText = 'The user is building a forest scene and prefers Three.js.';
 chatGenerationService.prepareGenerationTarget = async modelName => ({
   actualModelName: modelName,
@@ -112,6 +113,7 @@ chatGenerationService.prepareGenerationTarget = async modelName => ({
 });
 chatGenerationService.executeNonStreaming = async ({ ollamaMessages }) => {
   summarizerCalls += 1;
+  lastSummarizerPrompt = ollamaMessages[0].content;
   assert.match(ollamaMessages[0].content, /Conversation:/);
   return {
     response: {},
@@ -229,8 +231,23 @@ test('oversized history compacts into one summary on a user-turn boundary', asyn
   // Growing past the threshold again folds the old summary into a new one.
   summaryText = 'Folded: forest scene progress plus new lighting decisions.';
   await addTurns(session.id, 'second', 10);
-  await chatService.getMessagesForContext(session.id, userId, 100);
+  const foldedContext = await chatService.getMessagesForContext(
+    session.id,
+    userId,
+    100
+  );
   assert.equal(summarizerCalls, 2, 'summarizer ran again');
+  const contextSummaries = foldedContext.filter(
+    message =>
+      message.role === 'system' &&
+      message.content.startsWith(compaction.COMPACTION_SUMMARY_PREFIX)
+  );
+  assert.equal(
+    contextSummaries.length,
+    1,
+    'replaced summaries stay out of model context'
+  );
+  assert.match(contextSummaries[0].content, /Folded/);
   const after = await chatService.getSession(session.id, userId);
   const liveSummaries = after.messages.filter(
     message =>
@@ -240,6 +257,31 @@ test('oversized history compacts into one summary on a user-turn boundary', asyn
   );
   assert.equal(liveSummaries.length, 1, 'exactly one live summary');
   assert.match(liveSummaries[0].content, /Folded/);
+});
+
+test('replacement patterns in chat content reach the summarizer verbatim', async () => {
+  const session = await chatService.createSession(
+    'Dollar signs',
+    'test-model',
+    userId
+  );
+  const marker = "code costs $& and $' plus $1 dollars";
+  await chatService.addMessage(
+    session.id,
+    { role: 'user', content: `${marker} ${filler}` },
+    userId
+  );
+  await addTurns(session.id, 'dollar', 8);
+  await compaction.setCompactionConfig({
+    enabled: true,
+    thresholdTokens: 500,
+    keepRecentMessages: 4,
+  });
+  await chatService.getMessagesForContext(session.id, userId, 100);
+  assert.ok(
+    lastSummarizerPrompt.includes(marker),
+    'string replacement patterns are not interpreted'
+  );
 });
 
 test('a failing summarizer fails open and context is still served', async () => {
@@ -266,9 +308,16 @@ test('a failing summarizer fails open and context is still served', async () => 
   await compaction.setCompactionConfig({ enabled: false });
 });
 
-test('compaction config routes: read for users, writes for admins only', async () => {
-  const read = await fetch(`${baseUrl}/compaction-config`, {
+test('compaction config routes: admin-only in both directions', async () => {
+  // The custom summarizer prompt is administrator configuration; regular
+  // users have no reason to read it.
+  const forbiddenRead = await fetch(`${baseUrl}/compaction-config`, {
     headers: { Authorization: `Bearer ${userToken}` },
+  });
+  assert.equal(forbiddenRead.status, 403);
+
+  const read = await fetch(`${baseUrl}/compaction-config`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
   });
   assert.equal(read.status, 200);
   const readBody = await read.json();

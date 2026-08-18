@@ -269,6 +269,27 @@ test('Chat context keeps complete user-led turns when the message limit cuts thr
   );
 });
 
+test('Chat context drops deactivated system messages such as replaced summaries', () => {
+  const selected = chatContext.selectChatMessagesForContext(
+    [
+      {
+        role: 'system',
+        content: `${chatContext.COMPACTION_SUMMARY_PREFIX}stale summary`,
+        isActive: false,
+      },
+      {
+        role: 'system',
+        content: `${chatContext.COMPACTION_SUMMARY_PREFIX}current summary`,
+      },
+      { role: 'user', content: 'prompt' },
+    ],
+    10
+  );
+
+  assert.equal(selected.length, 2);
+  assert.match(selected[0].content, /current summary/);
+});
+
 test('withSystemPrompt replaces stale system messages with the persona prompt', () => {
   const result = chatContext.withSystemPrompt(
     [
@@ -280,6 +301,24 @@ test('withSystemPrompt replaces stale system messages with the persona prompt', 
 
   assert.deepEqual(result, [
     { role: 'system', content: 'persona system' },
+    { role: 'user', content: 'hello' },
+  ]);
+});
+
+test('withSystemPrompt keeps a compaction summary beside the persona prompt', () => {
+  const summary = `${chatContext.COMPACTION_SUMMARY_PREFIX}earlier decisions`;
+  const result = chatContext.withSystemPrompt(
+    [
+      { role: 'system', content: 'old system' },
+      { role: 'system', content: summary },
+      { role: 'user', content: 'hello' },
+    ],
+    'persona system'
+  );
+
+  assert.deepEqual(result, [
+    { role: 'system', content: 'persona system' },
+    { role: 'system', content: summary },
     { role: 'user', content: 'hello' },
   ]);
 });
