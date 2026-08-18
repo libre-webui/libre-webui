@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Dokumente im Kontext"
+    },
+    "context": {
+      "title": "Kontextfenster:",
+      "full": "{{percent}}% belegt",
+      "tokensUsed": "{{used}} / {{budget}} Tokens belegt",
+      "tokensUsedNoBudget": "{{used}} Tokens belegt",
+      "capped": "begrenzt von {{trained}}"
     }
   },
   "sidebar": {

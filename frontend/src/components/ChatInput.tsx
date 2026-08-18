@@ -45,6 +45,7 @@ import { DocumentIndicator } from './DocumentIndicator';
 import { StructuredOutput } from './StructuredOutput';
 import { ModelSelector } from './ModelSelector';
 import { ThinkingSelector } from './ThinkingSelector';
+import { ContextMeter } from './ContextMeter';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
 import {
@@ -59,10 +60,12 @@ import {
 import type { STTModel } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
+import { buildContextUsage, resolveContextBudget } from '@/utils/contextUsage';
 import {
   Persona,
   KnowledgeCollection,
   ChatSession,
+  GenerationOptions,
   ThinkingPreference,
 } from '@/types';
 import { createLogger } from '@/utils/logger';
@@ -270,11 +273,19 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const attachMenuRef = useRef<HTMLDivElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
   const { isGenerating, setBackgroundImage } = useAppStore();
+  const globalGenerationOptions = useAppStore(
+    state => state.preferences.generationOptions
+  );
   const imageGenerationEnabled = useAppStore(
     state => state.preferences.imageGenSettings?.enabled === true
   );
   const showImageGeneration = imageGenerationEnabled && hasImageGenPlugins;
   const { currentSession, models } = useChatStore();
+  const pinnedModelOptions = useAppStore(state =>
+    currentSession?.model
+      ? state.preferences.modelGenerationOptions?.[currentSession.model]
+      : undefined
+  );
   const currentSessionId = currentSession?.id;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sessionSelection = useMemo(
@@ -386,9 +397,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   // where it says nothing the toggle is offered rather than hidden. The answer
   // is stored with the model it was read for, so switching models never shows
   // the previous model's answer.
-  const [thinkingSupport, setThinkingSupport] = useState<{
+  const [modelDefaults, setModelDefaults] = useState<{
     model: string;
-    supported?: boolean;
+    supportsThinking?: boolean;
+    options: Partial<GenerationOptions>;
+    trainedContextLength?: number;
+    contextCapped?: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -402,9 +416,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       .getModelDefaults(model)
       .then(response => {
         if (cancelled || !response.success || !response.data) return;
-        setThinkingSupport({
+        setModelDefaults({
           model,
-          supported: response.data.supportsThinking,
+          supportsThinking: response.data.supportsThinking,
+          options: response.data.options ?? {},
+          trainedContextLength: response.data.trainedContextLength,
+          contextCapped: response.data.contextCapped,
         });
       })
       .catch(() => {
@@ -420,15 +437,34 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     currentSession?.model,
   ]);
 
-  const ollamaThinkingSupported =
-    thinkingSupport?.model === currentSession?.model
-      ? thinkingSupport?.supported
-      : undefined;
+  const activeModelDefaults =
+    modelDefaults?.model === currentSession?.model ? modelDefaults : null;
+  const ollamaThinkingSupported = activeModelDefaults?.supportsThinking;
 
   const thinkingAvailable = Boolean(
     currentSession &&
     !activeModelEntry?.isAgent &&
     (activeModelEntry?.isPlugin || ollamaThinkingSupported !== false)
+  );
+
+  // How full the model's context is. The window comes from the same settings
+  // the request runs with, so the meter measures against what will actually
+  // be sent rather than against a default nobody uses.
+  const contextBudget = resolveContextBudget({
+    model: activeModelEntry,
+    sessionOptions: currentSession?.settings?.generationOptions,
+    pinnedOptions: pinnedModelOptions,
+    modelDefaults: activeModelDefaults?.options,
+    globalOptions: globalGenerationOptions,
+  });
+  const contextUsage = useMemo(
+    () =>
+      buildContextUsage({
+        messages: currentSession?.messages ?? [],
+        budget: contextBudget,
+        systemPrompt: currentPersona?.parameters?.system_prompt,
+      }),
+    [contextBudget, currentPersona, currentSession?.messages]
   );
 
   const applyThinking = async (think: ThinkingPreference | null) => {
@@ -1218,22 +1254,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
                 {/* Integrated Controls Row */}
                 <div className='ms-auto flex flex-shrink-0 items-center gap-1 sm:gap-1.5'>
-                  {/* Model Selector - Integrated */}
-                  {currentSession && selectorModels.length > 0 && (
-                    <div className='hidden sm:block'>
-                      <ModelSelector
-                        models={selectorModels}
-                        selectedModel={sessionModelKey}
-                        onModelChange={handleModelOrPersonaChange}
-                        getModelValue={chatModelOptionKey}
-                        currentPersona={currentPersona}
-                        className='min-w-[150px] max-w-[230px]'
-                        compact
-                        showImageGen={showImageGeneration}
-                      />
-                    </div>
-                  )}
-
                   {/* Thinking level */}
                   {thinkingAvailable && (
                     <ThinkingSelector
@@ -1340,6 +1360,33 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         <Mic className='h-4 w-4' />
                       )}
                     </Button>
+                  )}
+
+                  {currentSession && (
+                    <ContextMeter
+                      usage={contextUsage}
+                      trainedBudget={
+                        activeModelDefaults?.contextCapped
+                          ? activeModelDefaults.trainedContextLength
+                          : undefined
+                      }
+                    />
+                  )}
+
+                  {/* Model Selector - Integrated */}
+                  {currentSession && selectorModels.length > 0 && (
+                    <div className='hidden sm:block'>
+                      <ModelSelector
+                        models={selectorModels}
+                        selectedModel={sessionModelKey}
+                        onModelChange={handleModelOrPersonaChange}
+                        getModelValue={chatModelOptionKey}
+                        currentPersona={currentPersona}
+                        className='min-w-[150px] max-w-[230px]'
+                        compact
+                        showImageGen={showImageGeneration}
+                      />
+                    </div>
                   )}
 
                   {/* Send/Stop Button - Integrated Right */}

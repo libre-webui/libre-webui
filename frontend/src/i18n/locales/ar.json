@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "مستندات في السياق"
+    },
+    "context": {
+      "title": "نافذة السياق:",
+      "full": "ممتلئة بنسبة {{percent}}%",
+      "tokensUsed": "استُخدم {{used}} / {{budget}} رمز",
+      "tokensUsedNoBudget": "استُخدم {{used}} رمز",
+      "capped": "محدودة من {{trained}}"
     }
   },
   "sidebar": {

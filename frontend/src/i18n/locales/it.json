@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Documenti nel contesto"
+    },
+    "context": {
+      "title": "Finestra di contesto:",
+      "full": "{{percent}}% piena",
+      "tokensUsed": "{{used}} / {{budget}} token usati",
+      "tokensUsedNoBudget": "{{used}} token usati",
+      "capped": "limitata da {{trained}}"
     }
   },
   "sidebar": {

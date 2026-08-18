@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Documents in context"
+    },
+    "context": {
+      "title": "Context window:",
+      "full": "{{percent}}% full",
+      "tokensUsed": "{{used}} / {{budget}} tokens used",
+      "tokensUsedNoBudget": "{{used}} tokens used",
+      "capped": "capped from {{trained}}"
     }
   },
   "sidebar": {

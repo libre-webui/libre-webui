@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Dokumenty v kontextu"
+    },
+    "context": {
+      "title": "Kontextové okno:",
+      "full": "{{percent}}% zaplněno",
+      "tokensUsed": "{{used}} / {{budget}} tokenů využito",
+      "tokensUsedNoBudget": "{{used}} tokenů využito",
+      "capped": "omezeno z {{trained}}"
     }
   },
   "sidebar": {

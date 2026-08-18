@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Documenten in context"
+    },
+    "context": {
+      "title": "Contextvenster:",
+      "full": "{{percent}}% vol",
+      "tokensUsed": "{{used}} / {{budget}} tokens gebruikt",
+      "tokensUsedNoBudget": "{{used}} tokens gebruikt",
+      "capped": "beperkt vanaf {{trained}}"
     }
   },
   "sidebar": {

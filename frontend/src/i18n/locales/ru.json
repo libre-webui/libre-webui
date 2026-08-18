@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Документы в контексте"
+    },
+    "context": {
+      "title": "Окно контекста:",
+      "full": "заполнено на {{percent}}%",
+      "tokensUsed": "использовано {{used}} / {{budget}} токенов",
+      "tokensUsedNoBudget": "использовано {{used}} токенов",
+      "capped": "ограничено с {{trained}}"
     }
   },
   "sidebar": {

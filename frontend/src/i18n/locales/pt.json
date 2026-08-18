@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Documentos no contexto"
+    },
+    "context": {
+      "title": "Janela de contexto:",
+      "full": "{{percent}}% cheia",
+      "tokensUsed": "{{used}} / {{budget}} tokens usados",
+      "tokensUsedNoBudget": "{{used}} tokens usados",
+      "capped": "limitada a partir de {{trained}}"
     }
   },
   "sidebar": {

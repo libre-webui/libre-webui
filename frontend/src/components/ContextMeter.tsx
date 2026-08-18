@@ -1,0 +1,135 @@
+/*
+ * Libre WebUI
+ * Copyright (C) 2025 Kroonen AI, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at:
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { cn } from '@/utils';
+import { formatTokenCount, type ContextUsage } from '@/utils/contextUsage';
+
+interface ContextMeterProps {
+  usage: ContextUsage;
+  /**
+   * The window the model was trained for, when the one it runs with is
+   * smaller. A capped window is the honest number to measure against, but on
+   * its own it reads as the wrong one.
+   */
+  trainedBudget?: number;
+}
+
+/** Ring geometry, in the same units as the SVG viewBox. */
+const RADIUS = 7;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+/**
+ * How full the model's context is, as a ring beside the model name.
+ *
+ * A conversation runs out of room quietly: replies slow down, and then the
+ * oldest turns are summarized away. The ring puts that in front of the person
+ * writing instead of leaving it in a log, and the numbers behind it are one
+ * hover away rather than a click into settings.
+ */
+export const ContextMeter: React.FC<ContextMeterProps> = ({
+  usage,
+  trainedBudget,
+}) => {
+  const { t } = useTranslation();
+  const ratio = usage.ratio ?? 0;
+  const percent = Math.round(ratio * 100);
+  const approx = usage.measured ? '' : '~';
+  const used = `${approx}${formatTokenCount(usage.used)}`;
+
+  const tokenLine = usage.budget
+    ? t('chat.context.tokensUsed', {
+        used,
+        budget: formatTokenCount(usage.budget),
+      })
+    : t('chat.context.tokensUsedNoBudget', { used });
+
+  return (
+    <div className='group relative flex-shrink-0'>
+      <span
+        role='img'
+        tabIndex={0}
+        aria-label={`${t('chat.context.title')} ${
+          usage.budget ? t('chat.context.full', { percent }) : ''
+        } ${tokenLine}`}
+        className={cn(
+          'flex h-9 w-9 items-center justify-center rounded-full text-gray-400 outline-none',
+          'transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary-500/40',
+          'dark:text-dark-500',
+          // Past four fifths the summarizer is close enough to warn about.
+          ratio >= 0.8 && 'text-amber-600 dark:text-amber-400'
+        )}
+      >
+        <svg viewBox='0 0 18 18' className='h-4 w-4 -rotate-90'>
+          <circle
+            cx='9'
+            cy='9'
+            r={RADIUS}
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            className='opacity-30'
+          />
+          {ratio > 0 && (
+            <circle
+              cx='9'
+              cy='9'
+              r={RADIUS}
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={CIRCUMFERENCE * (1 - ratio)}
+            />
+          )}
+        </svg>
+      </span>
+
+      <div
+        role='tooltip'
+        className={cn(
+          'pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 -translate-x-1/2',
+          'whitespace-nowrap rounded-2xl bg-surface/95 px-4 py-3 text-center shadow-lv3 backdrop-blur-xl',
+          'border border-black/[0.06] dark:border-white/[0.08] dark:bg-dark-100/95',
+          'opacity-0 transition-opacity duration-150',
+          'group-hover:opacity-100 group-focus-within:opacity-100'
+        )}
+      >
+        <p className='text-[13px] text-gray-500 dark:text-dark-600'>
+          {t('chat.context.title')}
+        </p>
+        {usage.budget && (
+          <p className='text-[13px] text-gray-500 dark:text-dark-600'>
+            {t('chat.context.full', { percent })}
+          </p>
+        )}
+        <p className='text-[13px] tabular-nums text-gray-900 dark:text-dark-900'>
+          {tokenLine}
+        </p>
+        {trainedBudget !== undefined && (
+          <p className='mt-1 text-[11px] text-gray-400 dark:text-dark-500'>
+            {t('chat.context.capped', {
+              trained: formatTokenCount(trainedBudget),
+            })}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};

@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Documents dans le contexte"
+    },
+    "context": {
+      "title": "Fenêtre de contexte :",
+      "full": "{{percent}}% pleine",
+      "tokensUsed": "{{used}} / {{budget}} jetons utilisés",
+      "tokensUsedNoBudget": "{{used}} jetons utilisés",
+      "capped": "limitée depuis {{trained}}"
     }
   },
   "sidebar": {

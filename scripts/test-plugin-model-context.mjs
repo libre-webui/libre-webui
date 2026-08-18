@@ -74,18 +74,18 @@ test('a listing yields the windows of the models that publish one', () => {
   );
 });
 
-test('a catalog without windows is still stored as a plain list', () => {
+test('a catalog without windows is still a catalog, not a legacy one', () => {
   const serialized = catalog.serializeDiscoveredCatalog({
     models: ['a', 'b', 'a'],
   });
-  assert.deepEqual(
-    JSON.parse(serialized),
-    ['a', 'b', 'a'],
-    'releases that never knew about context windows read this column'
-  );
   assert.deepEqual(catalog.parseDiscoveredCatalog(serialized), {
     models: ['a', 'b'],
   });
+  assert.equal(
+    catalog.parseDiscoveredCatalog(serialized).legacy,
+    undefined,
+    'a provider that publishes no windows should not be re-discovered forever'
+  );
 });
 
 test('a catalog with windows round-trips both halves', () => {
@@ -99,9 +99,10 @@ test('a catalog with windows round-trips both halves', () => {
   });
 });
 
-test('a catalog written before windows existed still reads', () => {
+test('a catalog written before windows existed reads, and is refreshed', () => {
   assert.deepEqual(catalog.parseDiscoveredCatalog('["old-model", "", 7]'), {
     models: ['old-model'],
+    legacy: true,
   });
 });
 

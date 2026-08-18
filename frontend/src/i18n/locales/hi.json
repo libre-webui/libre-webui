@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "संदर्भ में दस्तावेज़"
+    },
+    "context": {
+      "title": "संदर्भ विंडो:",
+      "full": "{{percent}}% भरी",
+      "tokensUsed": "{{used}} / {{budget}} टोकन उपयोग",
+      "tokensUsedNoBudget": "{{used}} टोकन उपयोग",
+      "capped": "{{trained}} से सीमित"
     }
   },
   "sidebar": {

@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Dokumenter i kontekst"
+    },
+    "context": {
+      "title": "Kontekstvindue:",
+      "full": "{{percent}}% fyldt",
+      "tokensUsed": "{{used}} / {{budget}} tokens brugt",
+      "tokensUsedNoBudget": "{{used}} tokens brugt",
+      "capped": "begrænset fra {{trained}}"
     }
   },
   "sidebar": {

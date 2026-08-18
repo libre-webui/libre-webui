@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Skjöl í samhengi"
+    },
+    "context": {
+      "title": "Samhengisgluggi:",
+      "full": "{{percent}}% fullur",
+      "tokensUsed": "{{used}} / {{budget}} tákn notuð",
+      "tokensUsedNoBudget": "{{used}} tákn notuð",
+      "capped": "takmarkað úr {{trained}}"
     }
   },
   "sidebar": {

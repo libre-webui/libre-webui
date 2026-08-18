@@ -359,6 +359,8 @@ export class PluginService {
     string,
     PluginModelContextMap | null
   >();
+  /** Catalogs stored before context windows were captured. */
+  private discoveredCatalogIsLegacy = new Map<string, boolean>();
   private discoveredModelsUpdatedAt = new Map<string, number>();
   private discoveryAttemptedAt = new Map<string, number>();
   private inflightDiscovery = new Map<
@@ -555,6 +557,7 @@ export class PluginService {
       if (!completionMatches(key)) continue;
       this.discoveredModelsCache.delete(key);
       this.discoveredModelContextCache.delete(key);
+      this.discoveredCatalogIsLegacy.delete(key);
       this.discoveredModelsUpdatedAt.delete(key);
       this.discoveryAttemptedAt.delete(key);
       this.inflightDiscovery.delete(key);
@@ -772,7 +775,10 @@ export class PluginService {
         return undefined;
       }
 
-      const { models, modelContext } = parseDiscoveredCatalog(row.models_json);
+      const { models, modelContext, legacy } = parseDiscoveredCatalog(
+        row.models_json
+      );
+      this.discoveredCatalogIsLegacy.set(cacheKey, legacy === true);
       if (models.length === 0) {
         this.discoveredModelsCache.set(cacheKey, null);
         this.discoveredModelContextCache.set(cacheKey, null);
@@ -819,6 +825,7 @@ export class PluginService {
       });
       this.discoveredModelsCache.set(cacheKey, uniqueModels);
       this.discoveredModelContextCache.set(cacheKey, modelContext ?? null);
+      this.discoveredCatalogIsLegacy.set(cacheKey, false);
       this.discoveredModelsUpdatedAt.set(cacheKey, discoveredAt);
       await publishPluginCacheInvalidation({
         version: 1,
@@ -1497,6 +1504,11 @@ export class PluginService {
     const models = await this.getDiscoveredModels(pluginId, userId);
     const updatedAt = this.discoveredModelsUpdatedAt.get(cacheKey);
     if (!models || !updatedAt) return true;
+
+    // A catalog stored before context windows were captured has none of them.
+    // Waiting out the whole refresh interval would leave every provider model
+    // without a window for hours after an upgrade, so it is refreshed once.
+    if (this.discoveredCatalogIsLegacy.get(cacheKey)) return true;
 
     return Date.now() - updatedAt >= modelDiscoveryTtlMs();
   }

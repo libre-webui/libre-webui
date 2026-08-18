@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Dokumenty w kontekście"
+    },
+    "context": {
+      "title": "Okno kontekstu:",
+      "full": "{{percent}}% zapełnione",
+      "tokensUsed": "{{used}} / {{budget}} tokenów użytych",
+      "tokensUsedNoBudget": "{{used}} tokenów użytych",
+      "capped": "ograniczone z {{trained}}"
     }
   },
   "sidebar": {

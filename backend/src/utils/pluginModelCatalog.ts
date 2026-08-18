@@ -101,26 +101,30 @@ export function readModelContextMap(
 export interface DiscoveredPluginCatalog {
   models: string[];
   modelContext?: PluginModelContextMap;
+  /**
+   * Whether the catalog was written before context windows were captured. Such
+   * a catalog cannot be told apart from a provider that simply publishes none,
+   * so it is refreshed once rather than left without windows until its next
+   * scheduled refresh.
+   */
+  legacy?: boolean;
 }
 
 /**
- * Discovery is stored as a plain array of identifiers, which is what every
- * release before context windows wrote. The richer form is an object that
- * still carries that array, so an older build reads it as "nothing
- * discovered" and re-discovers rather than misreading a catalog.
+ * Discovery used to be stored as a plain array of identifiers. It is now an
+ * object that still carries that array, so an older build reads it as "nothing
+ * discovered" and re-discovers rather than misreading a catalog, and a newer
+ * one can tell a catalog with no windows from one written before windows were
+ * kept at all.
  */
 export function serializeDiscoveredCatalog(
   catalog: DiscoveredPluginCatalog
 ): string {
-  const hasContext =
-    catalog.modelContext !== undefined &&
-    Object.keys(catalog.modelContext).length > 0;
-
-  return JSON.stringify(
-    hasContext
-      ? { version: 1, models: catalog.models, context: catalog.modelContext }
-      : catalog.models
-  );
+  return JSON.stringify({
+    version: 1,
+    models: catalog.models,
+    context: catalog.modelContext ?? {},
+  });
 }
 
 export function parseDiscoveredCatalog(
@@ -139,7 +143,7 @@ export function parseDiscoveredCatalog(
     );
 
   if (Array.isArray(parsed)) {
-    return { models: uniqueModels(parsed) };
+    return { models: uniqueModels(parsed), legacy: true };
   }
 
   if (!parsed || typeof parsed !== 'object') {

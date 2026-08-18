@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "컨텍스트의 문서"
+    },
+    "context": {
+      "title": "컨텍스트 창:",
+      "full": "{{percent}}% 사용",
+      "tokensUsed": "{{used}} / {{budget}} 토큰 사용",
+      "tokensUsedNoBudget": "{{used}} 토큰 사용",
+      "capped": "{{trained}}에서 제한됨"
     }
   },
   "sidebar": {

@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "প্রসঙ্গে থাকা নথি"
+    },
+    "context": {
+      "title": "প্রসঙ্গ উইন্ডো:",
+      "full": "{{percent}}% পূর্ণ",
+      "tokensUsed": "{{used}} / {{budget}} টোকেন ব্যবহৃত",
+      "tokensUsedNoBudget": "{{used}} টোকেন ব্যবহৃত",
+      "capped": "{{trained}} থেকে সীমিত"
     }
   },
   "sidebar": {

@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test:unit": "node --import tsx --test src/utils/appVersion.test.ts src/utils/dataArchive.test.ts src/utils/workCode.test.ts src/utils/workEvents.test.ts src/utils/pluginEndpoint.test.ts src/utils/chatModelSelection.test.ts src/utils/imageGenModels.test.ts src/utils/api/chatEventStream.test.ts src/utils/api/workEventStream.test.ts src/utils/pluginVariableOverrides.test.ts src/utils/pluginProviderCatalog.test.ts src/utils/ttsBatching.test.ts src/utils/workDiff.test.ts src/utils/workGitDiff.test.ts src/utils/theme.test.ts src/utils/artifactHtml.test.ts src/utils/thinkingTimer.test.ts src/i18n/workTranslations.test.ts src/store/pluginStore.test.ts src/store/tabStore.test.ts",
+    "test:unit": "node --import tsx --test src/utils/appVersion.test.ts src/utils/dataArchive.test.ts src/utils/workCode.test.ts src/utils/workEvents.test.ts src/utils/pluginEndpoint.test.ts src/utils/chatModelSelection.test.ts src/utils/imageGenModels.test.ts src/utils/api/chatEventStream.test.ts src/utils/api/workEventStream.test.ts src/utils/pluginVariableOverrides.test.ts src/utils/pluginProviderCatalog.test.ts src/utils/ttsBatching.test.ts src/utils/workDiff.test.ts src/utils/workGitDiff.test.ts src/utils/theme.test.ts src/utils/artifactHtml.test.ts src/utils/thinkingTimer.test.ts src/utils/contextUsage.test.ts src/i18n/workTranslations.test.ts src/store/pluginStore.test.ts src/store/tabStore.test.ts",
     "e2e": "playwright test",
     "type-check": "tsc --noEmit",
     "lint": "eslint src/ e2e/ playwright.config.ts --ext .ts,.tsx,.js,.jsx --max-warnings 100",

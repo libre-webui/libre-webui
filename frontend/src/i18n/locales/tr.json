@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Bağlamdaki belgeler"
+    },
+    "context": {
+      "title": "Bağlam penceresi:",
+      "full": "%{{percent}} dolu",
+      "tokensUsed": "{{used}} / {{budget}} token kullanıldı",
+      "tokensUsedNoBudget": "{{used}} token kullanıldı",
+      "capped": "{{trained}} değerinden sınırlandı"
     }
   },
   "sidebar": {

@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Tài liệu trong ngữ cảnh"
+    },
+    "context": {
+      "title": "Cửa sổ ngữ cảnh:",
+      "full": "đầy {{percent}}%",
+      "tokensUsed": "đã dùng {{used}} / {{budget}} token",
+      "tokensUsedNoBudget": "đã dùng {{used}} token",
+      "capped": "giới hạn từ {{trained}}"
     }
   },
   "sidebar": {

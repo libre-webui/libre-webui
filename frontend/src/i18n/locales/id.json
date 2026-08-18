@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "Dokumen dalam konteks"
+    },
+    "context": {
+      "title": "Jendela konteks:",
+      "full": "{{percent}}% penuh",
+      "tokensUsed": "{{used}} / {{budget}} token terpakai",
+      "tokensUsedNoBudget": "{{used}} token terpakai",
+      "capped": "dibatasi dari {{trained}}"
     }
   },
   "sidebar": {

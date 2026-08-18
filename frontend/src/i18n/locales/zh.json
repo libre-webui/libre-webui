@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "上下文中的文档"
+    },
+    "context": {
+      "title": "上下文窗口：",
+      "full": "已用 {{percent}}%",
+      "tokensUsed": "已用 {{used}} / {{budget}} 个 token",
+      "tokensUsedNoBudget": "已用 {{used}} 个 token",
+      "capped": "已从 {{trained}} 限制"
     }
   },
   "sidebar": {

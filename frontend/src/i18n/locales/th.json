@@ -406,6 +406,13 @@
     },
     "documents": {
       "title": "เอกสารในบริบท"
+    },
+    "context": {
+      "title": "หน้าต่างบริบท:",
+      "full": "เต็ม {{percent}}%",
+      "tokensUsed": "ใช้ไป {{used}} / {{budget}} โทเคน",
+      "tokensUsedNoBudget": "ใช้ไป {{used}} โทเคน",
+      "capped": "จำกัดจาก {{trained}}"
     }
   },
   "sidebar": {
