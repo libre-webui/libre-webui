@@ -53,14 +53,6 @@ Right-click a tab (or press `Shift + F10` on a focused tab) for:
 Home is always the first tab and cannot be closed. Administrators also get
 direct **Users**, **System**, and **Usage** entries in the `+` menu.
 
-## Pin the Sections You Live In
-
-Sections you open constantly do not have to stay two clicks away. Open the
-user menu at the bottom of the sidebar and use the pin next to an entry to
-keep it in a **Pinned** list under the main sidebar navigation. Pin what your
-day actually runs on and unpin it the same way when the work moves on. The
-choice is stored per user, so it follows your account rather than the browser.
-
 ## Theme Default
 
 New installs use the dark theme, applied before first paint so there is no
@@ -168,6 +160,41 @@ For best results, upload focused documents per chat instead of one huge mixed do
 | Repeat penalty | Raise slightly when a model loops                                   |
 
 When a model behaves badly, first lower temperature, then reduce context pressure, then try another model.
+
+## Decide How Hard a Model Thinks
+
+The control beside the model name in the composer opens the reasoning levels:
+**off**, **on**, **low**, **medium**, and **high**. The choice belongs to the
+conversation, so it survives a reload and applies to a regenerate; Settings >
+Generation holds the default for new replies, and the chat controls panel shows
+the same value.
+
+Leave it unset and nothing is sent, which is what every release before this one
+did. Set it and the server translates the one value for whichever provider
+answers: Ollama takes it in the request body, OpenAI-style providers take a
+reasoning effort, and Anthropic and Gemini take a token budget with room
+reserved for the answer.
+
+Two things are worth knowing. A model Ollama reports as unable to reason never
+receives the setting at all, so the control is simply absent for it. And the
+named levels only exist on the models that publish them, such as gpt-oss; on a
+model that reasons without levels, use **on** rather than **high**.
+
+## Watch the Context Window
+
+The ring beside the model name fills as the conversation grows. Hover it for how
+full the window is, the tokens used, and the window they run against.
+
+The number is what the provider measured for the last reply when it reported
+one, and an estimate at four characters per token before that, marked with a
+`~`. A window capped below what the model was trained for says so: the meter
+measures the window the request actually runs with, which is
+`OLLAMA_MAX_CONTEXT` (32,768 by default) rather than the model's full trained
+length. Raise that variable and both the real window and the meter follow.
+
+Provider models show a window only when their model listing publishes one. When
+it does not, the meter still counts the tokens and simply has nothing to divide
+them by.
 
 ## Let Long Chats Compact Themselves
 
