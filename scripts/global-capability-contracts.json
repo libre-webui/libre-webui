@@ -216,6 +216,12 @@
         {
           "file": "backend/src/routes/chat.ts",
           "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/compaction/:messageId/restore"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
           "method": "GET",
           "path": "/context-policy"
         },

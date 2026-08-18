@@ -35,7 +35,8 @@ import {
   peekThinkingDuration,
 } from '@/utils/thinkingTimer';
 import { parseArtifacts } from '@/utils/artifactParser';
-import { findTTSModel, resolveTTSModel, ttsApi } from '@/utils/api';
+import { chatApi, findTTSModel, resolveTTSModel, ttsApi } from '@/utils/api';
+import toast from 'react-hot-toast';
 import {
   Settings,
   Edit3,
@@ -46,6 +47,7 @@ import {
   Brain,
   History,
   RefreshCw,
+  Undo2,
   Copy,
   Check,
   ThumbsUp,
@@ -493,6 +495,36 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     setEditedContent(message.content);
   };
 
+  const [restoringCompaction, setRestoringCompaction] = useState(false);
+  const handleRestoreCompacted = async () => {
+    if (!currentSession || restoringCompaction) return;
+    setRestoringCompaction(true);
+    try {
+      const response = await chatApi.restoreCompaction(
+        currentSession.id,
+        message.id
+      );
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Restore failed');
+      }
+      const updated = response.data;
+      useChatStore.setState(state => ({
+        sessions: state.sessions.map(session =>
+          session.id === updated.id ? updated : session
+        ),
+        currentSession:
+          state.currentSession?.id === updated.id
+            ? updated
+            : state.currentSession,
+      }));
+    } catch (error) {
+      logger.error('Failed to restore compacted messages:', error);
+      toast.error(t('chatMessage.restoreFailed'));
+    } finally {
+      setRestoringCompaction(false);
+    }
+  };
+
   const handleSaveSystemMessage = async () => {
     setIsSaving(true);
     try {
@@ -674,7 +706,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                       : t('chatMessage.system')}
                   </div>
                   <div className='flex items-center gap-1'>
-                    {isCompactionSummary ? null : isEditing ? (
+                    {isCompactionSummary ? (
+                      <button
+                        onClick={() => void handleRestoreCompacted()}
+                        disabled={restoringCompaction}
+                        className='rounded-lg p-1.5 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-dark-300'
+                        title={t('chatMessage.restoreCompacted')}
+                      >
+                        <Undo2 className='h-3 w-3 text-gray-600 dark:text-gray-400' />
+                      </button>
+                    ) : isEditing ? (
                       <>
                         <button
                           onClick={handleSaveSystemMessage}

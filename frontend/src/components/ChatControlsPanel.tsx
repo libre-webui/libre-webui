@@ -152,6 +152,9 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
       {}
   );
   const [saving, setSaving] = useState(false);
+  const [compactionAllowed, setCompactionAllowed] = useState(
+    session?.settings?.compaction !== false
+  );
   const [seededSessionId, setSeededSessionId] = useState(
     session?.id ?? 'draft'
   );
@@ -166,6 +169,7 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
         draftSettings.generationOptions ??
         {}
     );
+    setCompactionAllowed(session?.settings?.compaction !== false);
   }
 
   // A chat's own thinking setting. Absent means the model decides, which is
@@ -206,12 +210,17 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
         Object.entries(overrides).filter(([, value]) => value !== undefined)
       ) as Partial<GenerationOptions>;
       // Preserve sibling settings (knowledge collections, provider binding):
-      // this panel owns only the generation options.
+      // this panel owns only the generation options and the compaction
+      // opt-out. "Allowed" is the absence of the key, not a stored true.
       const settings = session
         ? { ...session.settings, generationOptions: cleanedOverrides }
         : Object.keys(cleanedOverrides).length > 0
           ? { generationOptions: cleanedOverrides }
           : undefined;
+      if (settings && session) {
+        if (compactionAllowed) delete settings.compaction;
+        else settings.compaction = false;
+      }
 
       // No session yet: keep the choices as a draft for the one about to be
       // created, so a conversation can start the way the user wants it.
@@ -361,6 +370,33 @@ export const ChatControlsPanel: React.FC<ChatControlsPanelProps> = ({
             {t('chat.controls.thinkingDescription')}
           </p>
         </div>
+
+        {session && (
+          <div>
+            <label
+              htmlFor='chat-control-compaction'
+              className='mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500 dark:text-dark-500'
+            >
+              {t('chat.controls.compaction')}
+            </label>
+            <select
+              id='chat-control-compaction'
+              value={compactionAllowed ? 'default' : 'off'}
+              onChange={event =>
+                setCompactionAllowed(event.target.value !== 'off')
+              }
+              className='w-full rounded-xl border border-black/[0.08] bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:border-primary-500/40 focus:outline-none dark:border-white/[0.08] dark:bg-dark-50 dark:text-dark-900'
+            >
+              <option value='default'>
+                {t('chat.controls.compactionDefault')}
+              </option>
+              <option value='off'>{t('chat.controls.compactionOff')}</option>
+            </select>
+            <p className='mt-1.5 text-[11px] leading-snug text-gray-400 dark:text-dark-500'>
+              {t('chat.controls.compactionDescription')}
+            </p>
+          </div>
+        )}
 
         <div>
           <p className='mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500 dark:text-dark-500'>

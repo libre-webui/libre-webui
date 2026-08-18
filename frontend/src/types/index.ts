@@ -86,6 +86,8 @@ export interface ChatSession {
 export interface ChatSessionSettings {
   generationOptions?: Partial<GenerationOptions>;
   knowledgeCollectionIds?: string[]; // Collections whose documents join this chat's context
+  /** False opts this chat out of server-wide context compaction. */
+  compaction?: boolean;
 }
 
 export interface SessionFolder {

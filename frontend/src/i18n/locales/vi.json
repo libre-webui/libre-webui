@@ -379,7 +379,11 @@
         "contextLength": "Độ dài ngữ cảnh"
       },
       "thinking": "Suy luận",
-      "thinkingDescription": "Mức độ mô hình suy luận trước khi trả lời. Mô hình không suy luận sẽ bỏ qua."
+      "thinkingDescription": "Mức độ mô hình suy luận trước khi trả lời. Mô hình không suy luận sẽ bỏ qua.",
+      "compaction": "Nén ngữ cảnh",
+      "compactionDescription": "Khi máy chủ nén các cuộc trò chuyện dài, cuộc trò chuyện này có thể đứng ngoài và giữ toàn bộ lịch sử.",
+      "compactionDefault": "Mặc định của máy chủ",
+      "compactionOff": "Tắt cho cuộc trò chuyện này"
     },
     "message": {
       "sources": "Nguồn"
@@ -1749,6 +1753,8 @@
     "assistant": "Trợ lý",
     "system": "Hệ thống",
     "conversationSummary": "Tóm tắt cuộc trò chuyện",
+    "restoreCompacted": "Khôi phục các tin nhắn đã tóm tắt",
+    "restoreFailed": "Không thể khôi phục các tin nhắn đã tóm tắt",
     "copy": "Sao chép",
     "copyMessage": "Sao chép tin nhắn",
     "copied": "Đã sao chép!",

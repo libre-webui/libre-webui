@@ -393,6 +393,16 @@ export const chatApi = {
       .then(res => res.data);
   },
 
+  /** Undo one compaction: reactivates what the summary replaced. */
+  restoreCompaction: (
+    sessionId: string,
+    messageId: string
+  ): Promise<ApiResponse<ChatSession>> => {
+    return api
+      .post(`/chat/sessions/${sessionId}/compaction/${messageId}/restore`)
+      .then(res => res.data);
+  },
+
   /** The rolling window every conversation runs with, for the context meter. */
   getContextPolicy: (): Promise<ApiResponse<{ windowMessages: number }>> => {
     if (isDemoMode()) {

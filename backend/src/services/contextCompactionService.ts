@@ -290,6 +290,8 @@ export const planCompaction = async (
   try {
     const config = options.config ?? (await getCompactionConfig());
     if (!config.enabled) return null;
+    // A chat can opt out of the server-wide policy for itself.
+    if (session.settings?.compaction === false) return null;
 
     const active = session.messages.filter(
       message => message.isActive !== false
@@ -355,17 +357,21 @@ export const planCompaction = async (
     const summary = result.assistantContent.trim();
     if (!summary) return null;
 
+    const deactivateIds = [
+      ...summarize.map(message => message.id),
+      ...(previousSummary ? [previousSummary.id] : []),
+    ];
     return {
       summaryMessage: {
         id: randomUUID(),
         role: 'system',
         content: `${COMPACTION_SUMMARY_PREFIX}${summary}`,
         timestamp: Date.now(),
+        // Provenance: exactly which messages this summary replaced, so a
+        // compaction can be undone instead of being a one-way door.
+        providerMetadata: { compactedMessageIds: deactivateIds },
       },
-      deactivateIds: [
-        ...summarize.map(message => message.id),
-        ...(previousSummary ? [previousSummary.id] : []),
-      ],
+      deactivateIds,
     };
   } catch (error) {
     // Fail open: a broken summarizer must never block generation.

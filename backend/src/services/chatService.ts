@@ -1017,6 +1017,53 @@ class ChatService {
     });
   }
 
+  /**
+   * Undo one compaction: reactivate exactly the messages the summary
+   * replaced — including the previous summary it folded in, which was live
+   * before — and remove the summary itself. Repeated restores walk back
+   * through chained compactions one at a time.
+   */
+  async restoreCompaction(
+    sessionId: string,
+    userId: string,
+    summaryMessageId: string
+  ): Promise<ChatSession | null> {
+    return this.withSessionWriteLease(sessionId, userId, async assertHeld => {
+      const session = await this.getSession(sessionId, userId);
+      if (!session) return null;
+
+      const summary = session.messages.find(
+        message =>
+          message.id === summaryMessageId &&
+          message.role === 'system' &&
+          message.isActive !== false &&
+          message.content.startsWith(COMPACTION_SUMMARY_PREFIX)
+      );
+      if (!summary) return null;
+
+      const compactedIds = summary.providerMetadata?.compactedMessageIds;
+      if (!Array.isArray(compactedIds) || compactedIds.length === 0) {
+        return null;
+      }
+      const restore = new Set(
+        compactedIds.filter((id): id is string => typeof id === 'string')
+      );
+
+      const updatedSession = {
+        ...session,
+        messages: session.messages
+          .filter(message => message.id !== summary.id)
+          .map(message =>
+            restore.has(message.id) ? { ...message, isActive: true } : message
+          ),
+        updatedAt: Date.now(),
+      };
+      this.sessions.set(sessionId, updatedSession);
+      await storageService.saveSession(updatedSession, userId, assertHeld);
+      return updatedSession;
+    });
+  }
+
   private async updateSystemMessageForPersona(
     session: ChatSession,
     personaId: string,

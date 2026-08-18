@@ -1857,6 +1857,44 @@ router.post(
 );
 
 /**
+ * Undo one compaction: the summary knows exactly which messages it replaced,
+ * so restoring is reactivating them and removing the summary.
+ */
+router.post(
+  '/sessions/:sessionId/compaction/:messageId/restore',
+  authenticate,
+  chatRateLimiter,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const sessionId = req.params.sessionId as string;
+      const messageId = req.params.messageId as string;
+      const userId = req.user?.userId || 'default';
+
+      const session = await chatService.restoreCompaction(
+        sessionId,
+        userId,
+        messageId
+      );
+      if (!session) {
+        res.status(404).json({
+          success: false,
+          error: 'No restorable summary with that id in this session',
+        });
+        return;
+      }
+
+      res.json({ success: true, data: session });
+    } catch (error) {
+      logger.error('Restore compaction error:', error);
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to restore compacted messages'),
+      });
+    }
+  }
+);
+
+/**
  * The rolling window every conversation runs with, for any signed-in user:
  * the context meter needs the real message count to mirror what is sent.
  * Deliberately narrow — none of the admin compaction configuration (prompt,

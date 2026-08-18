@@ -379,7 +379,11 @@
         "contextLength": "Délka kontextu"
       },
       "thinking": "Přemýšlení",
-      "thinkingDescription": "Jak moc model přemýšlí, než odpoví. Modely bez uvažování to ignorují."
+      "thinkingDescription": "Jak moc model přemýšlí, než odpoví. Modely bez uvažování to ignorují.",
+      "compaction": "Zhutnění kontextu",
+      "compactionDescription": "Když server zhutňuje dlouhé konverzace, tento chat se může vyjmout a ponechat si celou historii.",
+      "compactionDefault": "Výchozí nastavení serveru",
+      "compactionOff": "Vypnuto pro tento chat"
     },
     "message": {
       "sources": "Zdroje"
@@ -1749,6 +1753,8 @@
     "assistant": "Asistent",
     "system": "Systém",
     "conversationSummary": "Shrnutí konverzace",
+    "restoreCompacted": "Obnovit shrnuté zprávy",
+    "restoreFailed": "Shrnuté zprávy se nepodařilo obnovit",
     "copy": "Kopírovat",
     "copyMessage": "Kopírovat zprávu",
     "copied": "Zkopírováno!",

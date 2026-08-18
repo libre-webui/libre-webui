@@ -379,7 +379,11 @@
         "contextLength": "Context length"
       },
       "thinking": "Thinking",
-      "thinkingDescription": "How much the model reasons before answering. Models that cannot reason ignore this."
+      "thinkingDescription": "How much the model reasons before answering. Models that cannot reason ignore this.",
+      "compaction": "Context compaction",
+      "compactionDescription": "When the server compacts long conversations, this chat can opt out and keep its full history.",
+      "compactionDefault": "Server default",
+      "compactionOff": "Off for this chat"
     },
     "message": {
       "sources": "Sources"
@@ -1749,6 +1753,8 @@
     "assistant": "Assistant",
     "system": "System",
     "conversationSummary": "Conversation summary",
+    "restoreCompacted": "Restore the summarized messages",
+    "restoreFailed": "Could not restore the summarized messages",
     "copy": "Copy",
     "copyMessage": "Copy message",
     "copied": "Copied!",

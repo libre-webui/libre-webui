@@ -379,7 +379,11 @@
         "contextLength": "コンテキスト長"
       },
       "thinking": "思考",
-      "thinkingDescription": "回答前にモデルがどれだけ考えるか。推論しないモデルでは無視されます。"
+      "thinkingDescription": "回答前にモデルがどれだけ考えるか。推論しないモデルでは無視されます。",
+      "compaction": "コンテキストの圧縮",
+      "compactionDescription": "サーバーが長い会話を圧縮するとき、このチャットは対象外にして全履歴を保てます。",
+      "compactionDefault": "サーバーの既定",
+      "compactionOff": "このチャットでは無効"
     },
     "message": {
       "sources": "出典"
@@ -1749,6 +1753,8 @@
     "assistant": "アシスタント",
     "system": "システム",
     "conversationSummary": "会話の要約",
+    "restoreCompacted": "要約されたメッセージを復元",
+    "restoreFailed": "要約されたメッセージを復元できませんでした",
     "copy": "コピー",
     "copyMessage": "メッセージをコピー",
     "copied": "コピーしました！",

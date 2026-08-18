@@ -379,7 +379,11 @@
         "contextLength": "Bağlam uzunluğu"
       },
       "thinking": "Düşünme",
-      "thinkingDescription": "Modelin yanıtlamadan önce ne kadar düşündüğü. Akıl yürütmeyen modeller bunu yok sayar."
+      "thinkingDescription": "Modelin yanıtlamadan önce ne kadar düşündüğü. Akıl yürütmeyen modeller bunu yok sayar.",
+      "compaction": "Bağlam sıkıştırma",
+      "compactionDescription": "Sunucu uzun konuşmaları sıkıştırdığında bu sohbet bunun dışında kalıp tüm geçmişini koruyabilir.",
+      "compactionDefault": "Sunucu varsayılanı",
+      "compactionOff": "Bu sohbet için kapalı"
     },
     "message": {
       "sources": "Kaynaklar"
@@ -1749,6 +1753,8 @@
     "assistant": "Asistan",
     "system": "Sistem",
     "conversationSummary": "Konuşma özeti",
+    "restoreCompacted": "Özetlenen mesajları geri yükle",
+    "restoreFailed": "Özetlenen mesajlar geri yüklenemedi",
     "copy": "Kopyala",
     "copyMessage": "Mesajı kopyala",
     "copied": "Kopyalandı!",

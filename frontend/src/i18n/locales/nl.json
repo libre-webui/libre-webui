@@ -379,7 +379,11 @@
         "contextLength": "Contextlengte"
       },
       "thinking": "Nadenken",
-      "thinkingDescription": "Hoeveel het model nadenkt voordat het antwoordt. Modellen zonder redeneren negeren dit."
+      "thinkingDescription": "Hoeveel het model nadenkt voordat het antwoordt. Modellen zonder redeneren negeren dit.",
+      "compaction": "Contextcompactie",
+      "compactionDescription": "Wanneer de server lange gesprekken compacteert, kan deze chat zich daarvan uitsluiten en zijn volledige geschiedenis behouden.",
+      "compactionDefault": "Serverstandaard",
+      "compactionOff": "Uit voor deze chat"
     },
     "message": {
       "sources": "Bronnen"
@@ -1749,6 +1753,8 @@
     "assistant": "Assistent",
     "system": "Systeem",
     "conversationSummary": "Samenvatting van het gesprek",
+    "restoreCompacted": "Samengevatte berichten herstellen",
+    "restoreFailed": "De samengevatte berichten konden niet worden hersteld",
     "copy": "Kopiëren",
     "copyMessage": "Bericht kopiëren",
     "copied": "Gekopieerd!",

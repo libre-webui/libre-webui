@@ -379,7 +379,11 @@
         "contextLength": "Kontekstlængde"
       },
       "thinking": "Tænkning",
-      "thinkingDescription": "Hvor meget modellen tænker, før den svarer. Modeller uden ræsonnement ignorerer det."
+      "thinkingDescription": "Hvor meget modellen tænker, før den svarer. Modeller uden ræsonnement ignorerer det.",
+      "compaction": "Komprimering af kontekst",
+      "compactionDescription": "Når serveren komprimerer lange samtaler, kan denne chat fravælge det og beholde hele sin historik.",
+      "compactionDefault": "Serverens standard",
+      "compactionOff": "Slået fra for denne chat"
     },
     "message": {
       "sources": "Kilder"
@@ -1749,6 +1753,8 @@
     "assistant": "Assistent",
     "system": "System",
     "conversationSummary": "Resumé af samtalen",
+    "restoreCompacted": "Gendan de opsummerede beskeder",
+    "restoreFailed": "De opsummerede beskeder kunne ikke gendannes",
     "copy": "Kopier",
     "copyMessage": "Kopier besked",
     "copied": "Kopieret!",

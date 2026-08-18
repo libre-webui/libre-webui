@@ -379,7 +379,11 @@
         "contextLength": "Lunghezza contesto"
       },
       "thinking": "Ragionamento",
-      "thinkingDescription": "Quanto il modello ragiona prima di rispondere. I modelli senza ragionamento lo ignorano."
+      "thinkingDescription": "Quanto il modello ragiona prima di rispondere. I modelli senza ragionamento lo ignorano.",
+      "compaction": "Compattazione del contesto",
+      "compactionDescription": "Quando il server compatta le conversazioni lunghe, questa chat può esserne esclusa e mantenere l’intera cronologia.",
+      "compactionDefault": "Predefinito del server",
+      "compactionOff": "Disattivata per questa chat"
     },
     "message": {
       "sources": "Fonti"
@@ -1749,6 +1753,8 @@
     "assistant": "Assistente",
     "system": "Sistema",
     "conversationSummary": "Riepilogo della conversazione",
+    "restoreCompacted": "Ripristina i messaggi riassunti",
+    "restoreFailed": "Impossibile ripristinare i messaggi riassunti",
     "copy": "Copia",
     "copyMessage": "Copia messaggio",
     "copied": "Copiato!",

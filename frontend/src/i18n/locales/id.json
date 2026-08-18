@@ -379,7 +379,11 @@
         "contextLength": "Panjang konteks"
       },
       "thinking": "Berpikir",
-      "thinkingDescription": "Seberapa dalam model berpikir sebelum menjawab. Model tanpa penalaran mengabaikannya."
+      "thinkingDescription": "Seberapa dalam model berpikir sebelum menjawab. Model tanpa penalaran mengabaikannya.",
+      "compaction": "Pemadatan konteks",
+      "compactionDescription": "Saat server memadatkan percakapan panjang, obrolan ini dapat memilih keluar dan menyimpan riwayat lengkapnya.",
+      "compactionDefault": "Bawaan server",
+      "compactionOff": "Nonaktif untuk obrolan ini"
     },
     "message": {
       "sources": "Sumber"
@@ -1749,6 +1753,8 @@
     "assistant": "Asisten",
     "system": "Sistem",
     "conversationSummary": "Ringkasan percakapan",
+    "restoreCompacted": "Pulihkan pesan yang diringkas",
+    "restoreFailed": "Pesan yang diringkas tidak dapat dipulihkan",
     "copy": "Salin",
     "copyMessage": "Salin pesan",
     "copied": "Disalin!",

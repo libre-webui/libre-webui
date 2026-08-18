@@ -379,7 +379,11 @@
         "contextLength": "컨텍스트 길이"
       },
       "thinking": "사고",
-      "thinkingDescription": "모델이 답하기 전에 얼마나 생각할지. 추론하지 않는 모델은 무시합니다."
+      "thinkingDescription": "모델이 답하기 전에 얼마나 생각할지. 추론하지 않는 모델은 무시합니다.",
+      "compaction": "컨텍스트 압축",
+      "compactionDescription": "서버가 긴 대화를 압축할 때 이 채팅은 제외되어 전체 기록을 유지할 수 있습니다.",
+      "compactionDefault": "서버 기본값",
+      "compactionOff": "이 채팅에서는 끔"
     },
     "message": {
       "sources": "출처"
@@ -1749,6 +1753,8 @@
     "assistant": "어시스턴트",
     "system": "시스템",
     "conversationSummary": "대화 요약",
+    "restoreCompacted": "요약된 메시지 복원",
+    "restoreFailed": "요약된 메시지를 복원하지 못했습니다",
     "copy": "복사",
     "copyMessage": "메시지 복사",
     "copied": "복사됨!",

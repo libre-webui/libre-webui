@@ -379,7 +379,11 @@
         "contextLength": "Kontextlänge"
       },
       "thinking": "Nachdenken",
-      "thinkingDescription": "Wie ausführlich das Modell vor der Antwort nachdenkt. Modelle ohne Reasoning ignorieren dies."
+      "thinkingDescription": "Wie ausführlich das Modell vor der Antwort nachdenkt. Modelle ohne Reasoning ignorieren dies.",
+      "compaction": "Kontextverdichtung",
+      "compactionDescription": "Wenn der Server lange Gespräche verdichtet, kann dieser Chat sich ausnehmen und seinen vollen Verlauf behalten.",
+      "compactionDefault": "Serverstandard",
+      "compactionOff": "Für diesen Chat aus"
     },
     "message": {
       "sources": "Quellen"
@@ -1749,6 +1753,8 @@
     "assistant": "Assistent",
     "system": "System",
     "conversationSummary": "Zusammenfassung des Gesprächs",
+    "restoreCompacted": "Zusammengefasste Nachrichten wiederherstellen",
+    "restoreFailed": "Die zusammengefassten Nachrichten konnten nicht wiederhergestellt werden",
     "copy": "Kopieren",
     "copyMessage": "Nachricht kopieren",
     "copied": "Kopiert!",

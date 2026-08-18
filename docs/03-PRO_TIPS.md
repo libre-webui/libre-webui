@@ -215,7 +215,7 @@ Administrators can turn on **context compaction** in Settings > Generation. Once
 | Compaction model      | Which model writes summaries; defaults to the conversation's own model |
 | Custom summary prompt | Your own instructions, with `{{PREVIOUS_SUMMARY}}` and `{{MESSAGES}}`  |
 
-Compaction is off by default and applies to every user on the server. It never splits a turn: the messages kept verbatim always start on one of your own. Each new compaction folds the previous summary into the new one, so a conversation carries a single running summary. If the summarizer fails, generation continues with the uncompacted history rather than blocking on it.
+Compaction is off by default and applies to every user on the server, but each chat keeps a say: the chat controls panel can switch compaction off for one conversation, and every summary card carries an undo — restoring reactivates exactly the messages that summary replaced, one compaction at a time. It never splits a turn: the messages kept verbatim always start on one of your own. Each new compaction folds the previous summary into the new one, so a conversation carries a single running summary. If the summarizer fails, generation continues with the uncompacted history rather than blocking on it.
 
 ## Keep Provider Keys Per User
 

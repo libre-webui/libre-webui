@@ -379,7 +379,11 @@
         "contextLength": "Comprimento do contexto"
       },
       "thinking": "Raciocínio",
-      "thinkingDescription": "Quanto o modelo raciocina antes de responder. Modelos sem raciocínio ignoram isto."
+      "thinkingDescription": "Quanto o modelo raciocina antes de responder. Modelos sem raciocínio ignoram isto.",
+      "compaction": "Compactação de contexto",
+      "compactionDescription": "Quando o servidor compacta conversas longas, este chat pode ficar de fora e manter todo o seu histórico.",
+      "compactionDefault": "Padrão do servidor",
+      "compactionOff": "Desativada neste chat"
     },
     "message": {
       "sources": "Fontes"
@@ -1749,6 +1753,8 @@
     "assistant": "Assistente",
     "system": "Sistema",
     "conversationSummary": "Resumo da conversa",
+    "restoreCompacted": "Restaurar as mensagens resumidas",
+    "restoreFailed": "Não foi possível restaurar as mensagens resumidas",
     "copy": "Copiar",
     "copyMessage": "Copiar mensagem",
     "copied": "Copiado!",

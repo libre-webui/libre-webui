@@ -379,7 +379,11 @@
         "contextLength": "Panjang konteks"
       },
       "thinking": "Pemikiran",
-      "thinkingDescription": "Sebanyak mana model berfikir sebelum menjawab. Model tanpa penaakulan mengabaikannya."
+      "thinkingDescription": "Sebanyak mana model berfikir sebelum menjawab. Model tanpa penaakulan mengabaikannya.",
+      "compaction": "Pemadatan konteks",
+      "compactionDescription": "Apabila pelayan memadatkan perbualan panjang, sembang ini boleh dikecualikan dan menyimpan sejarah penuhnya.",
+      "compactionDefault": "Lalai pelayan",
+      "compactionOff": "Dimatikan untuk sembang ini"
     },
     "message": {
       "sources": "Sumber"
@@ -1749,6 +1753,8 @@
     "assistant": "Pembantu",
     "system": "Sistem",
     "conversationSummary": "Ringkasan perbualan",
+    "restoreCompacted": "Pulihkan mesej yang diringkaskan",
+    "restoreFailed": "Mesej yang diringkaskan tidak dapat dipulihkan",
     "copy": "Salin",
     "copyMessage": "Salin mesej",
     "copied": "Disalin!",

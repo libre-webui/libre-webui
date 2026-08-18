@@ -379,7 +379,11 @@
         "contextLength": "Samhengislengd"
       },
       "thinking": "Hugsun",
-      "thinkingDescription": "Hversu mikið líkanið hugsar áður en það svarar. Líkön án rökhugsunar hunsa þetta."
+      "thinkingDescription": "Hversu mikið líkanið hugsar áður en það svarar. Líkön án rökhugsunar hunsa þetta.",
+      "compaction": "Samþjöppun samhengis",
+      "compactionDescription": "Þegar þjónninn þjappar löngum samtölum getur þetta spjall staðið utan við og haldið allri sögu sinni.",
+      "compactionDefault": "Sjálfgefið hjá þjóni",
+      "compactionOff": "Slökkt fyrir þetta spjall"
     },
     "message": {
       "sources": "Heimildir"
@@ -1749,6 +1753,8 @@
     "assistant": "Aðstoðarmaður",
     "system": "Kerfi",
     "conversationSummary": "Samantekt samtals",
+    "restoreCompacted": "Endurheimta samandregnu skilaboðin",
+    "restoreFailed": "Ekki tókst að endurheimta samandregnu skilaboðin",
     "copy": "Afrita",
     "copyMessage": "Afrita skilaboð",
     "copied": "Afritað!",

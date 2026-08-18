@@ -379,7 +379,11 @@
         "contextLength": "Kontextlängd"
       },
       "thinking": "Tänkande",
-      "thinkingDescription": "Hur mycket modellen tänker innan den svarar. Modeller utan resonemang ignorerar detta."
+      "thinkingDescription": "Hur mycket modellen tänker innan den svarar. Modeller utan resonemang ignorerar detta.",
+      "compaction": "Kontextkomprimering",
+      "compactionDescription": "När servern komprimerar långa samtal kan den här chatten stå utanför och behålla hela sin historik.",
+      "compactionDefault": "Serverns standard",
+      "compactionOff": "Av för den här chatten"
     },
     "message": {
       "sources": "Källor"
@@ -1749,6 +1753,8 @@
     "assistant": "Assistent",
     "system": "System",
     "conversationSummary": "Sammanfattning av samtalet",
+    "restoreCompacted": "Återställ de sammanfattade meddelandena",
+    "restoreFailed": "De sammanfattade meddelandena kunde inte återställas",
     "copy": "Kopiera",
     "copyMessage": "Kopiera meddelande",
     "copied": "Kopierat!",

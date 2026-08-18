@@ -379,7 +379,11 @@
         "contextLength": "上下文长度"
       },
       "thinking": "思考",
-      "thinkingDescription": "模型回答前思考的程度。不具备推理能力的模型会忽略此设置。"
+      "thinkingDescription": "模型回答前思考的程度。不具备推理能力的模型会忽略此设置。",
+      "compaction": "上下文压缩",
+      "compactionDescription": "当服务器压缩长对话时，此对话可以不参与并保留完整历史。",
+      "compactionDefault": "服务器默认",
+      "compactionOff": "此对话中关闭"
     },
     "message": {
       "sources": "来源"
@@ -1749,6 +1753,8 @@
     "assistant": "助手",
     "system": "系统",
     "conversationSummary": "对话摘要",
+    "restoreCompacted": "恢复已总结的消息",
+    "restoreFailed": "无法恢复已总结的消息",
     "copy": "复制",
     "copyMessage": "复制消息",
     "copied": "已复制！",

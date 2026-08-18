@@ -303,6 +303,80 @@ test('replacement patterns in chat content reach the summarizer verbatim', async
   );
 });
 
+test('a chat that opted out never compacts, and a compaction can be restored', async () => {
+  await compaction.setCompactionConfig({
+    enabled: true,
+    thresholdTokens: 500,
+    keepRecentMessages: 4,
+  });
+
+  // Opt-out: same oversized shape as the compacting test, but the chat said no.
+  const optedOut = await chatService.createSession(
+    'No thanks',
+    'test-model',
+    userId
+  );
+  await chatService.updateSession(
+    optedOut.id,
+    { settings: { compaction: false } },
+    userId
+  );
+  const callsBefore = summarizerCalls;
+  await addTurns(optedOut.id, 'private', 10);
+  await chatService.getMessagesForContext(optedOut.id, userId, 100);
+  assert.equal(summarizerCalls, callsBefore, 'opted-out chat never summarizes');
+
+  // Restore: compact, then undo it via the provenance the summary carries.
+  const restorable = await chatService.createSession(
+    'Restorable',
+    'test-model',
+    userId
+  );
+  await addTurns(restorable.id, 'undo', 10);
+  await chatService.getMessagesForContext(restorable.id, userId, 100);
+  const compacted = await chatService.getSession(restorable.id, userId);
+  const summary = compacted.messages.find(
+    message =>
+      message.isActive !== false &&
+      message.role === 'system' &&
+      message.content.startsWith(compaction.COMPACTION_SUMMARY_PREFIX)
+  );
+  assert.ok(summary, 'compaction produced a live summary');
+  assert.ok(
+    Array.isArray(summary.providerMetadata?.compactedMessageIds) &&
+      summary.providerMetadata.compactedMessageIds.length > 0,
+    'the summary records which messages it replaced'
+  );
+  const deactivatedCount = compacted.messages.filter(
+    message => message.isActive === false
+  ).length;
+  assert.ok(deactivatedCount > 0);
+
+  const restoreResponse = await fetch(
+    `${baseUrl}/sessions/${restorable.id}/compaction/${summary.id}/restore`,
+    { method: 'POST', headers: { Authorization: `Bearer ${userToken}` } }
+  );
+  assert.equal(restoreResponse.status, 200);
+  const restored = await chatService.getSession(restorable.id, userId);
+  assert.ok(
+    !restored.messages.some(message => message.id === summary.id),
+    'the summary itself is removed'
+  );
+  assert.equal(
+    restored.messages.filter(message => message.isActive === false).length,
+    0,
+    'every compacted message is active again'
+  );
+
+  const again = await fetch(
+    `${baseUrl}/sessions/${restorable.id}/compaction/${summary.id}/restore`,
+    { method: 'POST', headers: { Authorization: `Bearer ${userToken}` } }
+  );
+  assert.equal(again.status, 404, 'a second restore has nothing to restore');
+
+  await compaction.setCompactionConfig({ enabled: false });
+});
+
 test('a failing summarizer fails open and context is still served', async () => {
   chatGenerationService.executeNonStreaming = async () => {
     throw new Error('provider down');

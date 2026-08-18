@@ -379,7 +379,11 @@
         "contextLength": "طول السياق"
       },
       "thinking": "التفكير",
-      "thinkingDescription": "مقدار تفكير النموذج قبل الإجابة. النماذج التي لا تفكر تتجاهل هذا."
+      "thinkingDescription": "مقدار تفكير النموذج قبل الإجابة. النماذج التي لا تفكر تتجاهل هذا.",
+      "compaction": "ضغط السياق",
+      "compactionDescription": "عندما يضغط الخادم المحادثات الطويلة، يمكن لهذه المحادثة الانسحاب والاحتفاظ بسجلها الكامل.",
+      "compactionDefault": "إعداد الخادم",
+      "compactionOff": "معطّل لهذه المحادثة"
     },
     "message": {
       "sources": "المصادر"
@@ -1749,6 +1753,8 @@
     "assistant": "المساعد",
     "system": "النظام",
     "conversationSummary": "ملخص المحادثة",
+    "restoreCompacted": "استعادة الرسائل الملخّصة",
+    "restoreFailed": "تعذّرت استعادة الرسائل الملخّصة",
     "copy": "نسخ",
     "copyMessage": "نسخ الرسالة",
     "copied": "تم النسخ!",

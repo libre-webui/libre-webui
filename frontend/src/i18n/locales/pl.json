@@ -379,7 +379,11 @@
         "contextLength": "Długość kontekstu"
       },
       "thinking": "Myślenie",
-      "thinkingDescription": "Jak długo model myśli przed odpowiedzią. Modele bez rozumowania to ignorują."
+      "thinkingDescription": "Jak długo model myśli przed odpowiedzią. Modele bez rozumowania to ignorują.",
+      "compaction": "Kompaktowanie kontekstu",
+      "compactionDescription": "Gdy serwer kompaktuje długie rozmowy, ten czat może zostać z tego wyłączony i zachować pełną historię.",
+      "compactionDefault": "Domyślne ustawienie serwera",
+      "compactionOff": "Wyłączone dla tego czatu"
     },
     "message": {
       "sources": "Źródła"
@@ -1749,6 +1753,8 @@
     "assistant": "Asystent",
     "system": "System",
     "conversationSummary": "Podsumowanie rozmowy",
+    "restoreCompacted": "Przywróć podsumowane wiadomości",
+    "restoreFailed": "Nie udało się przywrócić podsumowanych wiadomości",
     "copy": "Kopiuj",
     "copyMessage": "Kopiuj wiadomość",
     "copied": "Skopiowano!",
