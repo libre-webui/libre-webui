@@ -18,17 +18,31 @@
 /**
  * How much of a model's context a conversation is holding.
  *
- * Two numbers exist and they are not the same. The provider reports what the
- * last prompt actually cost, which is the truth but only arrives after a
- * reply. Everything else is an estimate at four characters per token, the same
- * rule the server compacts by, so the meter and the compaction it warns about
- * cannot disagree with each other.
+ * The count is anchored to what the provider reported for the last completed
+ * reply — the truth about what the prompt actually cost — and everything the
+ * conversation added since then is estimated at four characters per token,
+ * the same rule the server compacts by. Only messages the server would
+ * actually send are counted: deactivated branches, compacted history, and
+ * turns older than the rolling window cost nothing.
  */
 
 import type { ChatMessage, GenerationOptions, OllamaModel } from '@/types';
 
 /** The server's estimate, kept in step with `estimateChatTokens`. */
 const MESSAGE_FRAMING_TOKENS = 4;
+
+/**
+ * Mirrors the server's `selectChatMessagesForContext` default: active system
+ * messages plus the most recent active conversation turns, aligned to start
+ * on a user turn. If the server default changes, change this with it.
+ */
+const CONTEXT_WINDOW_MESSAGES = 10;
+
+/** Mirrors the server's compaction summary marker in `chatContext.ts`. */
+export const COMPACTION_SUMMARY_PREFIX = '[Conversation summary] ';
+
+export const isCompactionSummaryContent = (content: string): boolean =>
+  content.startsWith(COMPACTION_SUMMARY_PREFIX);
 
 export const estimateTextTokens = (text: string | undefined): number =>
   text ? Math.ceil(text.length / 4) : 0;
@@ -40,28 +54,28 @@ export const estimateMessageTokens = (
   estimateTextTokens(message.content) +
   estimateTextTokens(message.thinking);
 
-export interface ContextUsageSegment {
-  key: 'systemPrompt' | 'messages' | 'reasoning';
-  tokens: number;
-}
-
 export interface ContextUsage {
   /** Tokens the next request starts from. */
   used: number;
   /** The model's window, when it is known. */
   budget?: number;
-  /** 0 to 1 of the window, absent when there is no window to divide by. */
+  /**
+   * Fraction of the window, absent when there is no window to divide by.
+   * Deliberately not clamped: past 1 the conversation is over budget, which
+   * is worth showing rather than rounding away.
+   */
   ratio?: number;
-  /** Whether `used` came from the provider rather than from counting characters. */
+  /** Whether `used` is anchored to a provider-reported count. */
   measured: boolean;
-  segments: ContextUsageSegment[];
 }
 
 /**
  * The window the next message runs against, in order of authority: what this
  * chat overrides, what the user pinned for the model, what the model itself
  * recommends, and finally the application default. Provider models carry the
- * window their listing published, which nothing local overrides.
+ * window their listing published, which nothing local overrides. A model that
+ * is not resolved yet — the list still loading, an agent, a persona alias —
+ * has no known window: Ollama defaults must not stand in for it.
  */
 export function resolveContextBudget({
   model,
@@ -70,13 +84,18 @@ export function resolveContextBudget({
   modelDefaults,
   globalOptions,
 }: {
-  model?: Pick<OllamaModel, 'isPlugin' | 'contextLength'>;
+  model?: Pick<OllamaModel, 'isPlugin' | 'contextLength'> & {
+    isAgent?: boolean;
+  };
   sessionOptions?: Partial<GenerationOptions>;
   pinnedOptions?: Partial<GenerationOptions>;
   modelDefaults?: Partial<GenerationOptions>;
   globalOptions?: Partial<GenerationOptions>;
 }): number | undefined {
-  if (model?.isPlugin) {
+  if (!model || model.isAgent) {
+    return undefined;
+  }
+  if (model.isPlugin) {
     return model.contextLength;
   }
 
@@ -94,18 +113,51 @@ export function resolveContextBudget({
 }
 
 /**
- * What the last exchange actually cost, when the provider said so: its prompt
- * plus the reply it produced is what the next prompt carries forward.
+ * The messages the server would send with the next request: mirrors
+ * `selectChatMessagesForContext` so the meter measures the actual prompt,
+ * not the whole transcript.
  */
-export function measuredContextTokens(
+export function selectContextMessages(
   messages: readonly ChatMessage[]
-): number | undefined {
+): ChatMessage[] {
+  const active = messages.filter(message => message.isActive !== false);
+  const system = active.filter(message => message.role === 'system');
+  const conversation = active
+    .filter(message => message.role !== 'system')
+    .slice(-CONTEXT_WINDOW_MESSAGES);
+  const firstUserIndex = conversation.findIndex(
+    message => message.role === 'user'
+  );
+  return [
+    ...system,
+    ...(firstUserIndex >= 0 ? conversation.slice(firstUserIndex) : []),
+  ];
+}
+
+interface MeasuredAnchor {
+  /** Prompt plus reply of the last exchange the provider measured. */
+  tokens: number;
+  /** Index into the full message list of the reply that reported it. */
+  index: number;
+}
+
+/**
+ * The last provider-measured exchange, skipping replies that have not
+ * reported yet — the placeholder of a streaming reply must not flip the
+ * meter from measured to estimated and back every turn.
+ */
+function measuredAnchor(
+  messages: readonly ChatMessage[]
+): MeasuredAnchor | undefined {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
-    if (message.role !== 'assistant') continue;
+    if (message.role !== 'assistant' || message.isActive === false) continue;
     const promptTokens = message.statistics?.prompt_eval_count;
-    if (typeof promptTokens !== 'number') return undefined;
-    return promptTokens + (message.statistics?.eval_count ?? 0);
+    if (typeof promptTokens !== 'number') continue;
+    return {
+      tokens: promptTokens + (message.statistics?.eval_count ?? 0),
+      index,
+    };
   }
 
   return undefined;
@@ -121,40 +173,63 @@ export function buildContextUsage({
   /** A persona or preference prompt the server adds, which no message holds. */
   systemPrompt?: string;
 }): ContextUsage {
-  let systemTokens = estimateTextTokens(systemPrompt);
-  let messageTokens = 0;
-  let reasoningTokens = 0;
+  // A persona prompt replaces stored system messages on the server, except a
+  // compaction summary — count what is actually sent.
+  const hasPersonaPrompt = Boolean(systemPrompt?.trim());
+  const sent = selectContextMessages(messages).filter(
+    message =>
+      !hasPersonaPrompt ||
+      message.role !== 'system' ||
+      isCompactionSummaryContent(message.content)
+  );
 
-  for (const message of messages) {
-    if (message.role === 'system') {
-      systemTokens += estimateMessageTokens(message);
-      continue;
-    }
-    messageTokens +=
-      MESSAGE_FRAMING_TOKENS + estimateTextTokens(message.content);
-    reasoningTokens += estimateTextTokens(message.thinking);
+  const anchor = measuredAnchor(messages);
+  if (anchor === undefined) {
+    const estimated =
+      estimateTextTokens(systemPrompt) +
+      sent.reduce(
+        (total, message) => total + estimateMessageTokens(message),
+        0
+      );
+    return {
+      used: estimated,
+      budget,
+      ratio: budget ? estimated / budget : undefined,
+      measured: false,
+    };
   }
 
-  const measured = measuredContextTokens(messages);
-  const estimated = systemTokens + messageTokens + reasoningTokens;
-  const used = measured ?? estimated;
+  // Measured base plus an estimate of what the conversation added since the
+  // provider last reported: stable while a reply streams, and it converges
+  // back onto the measured number when the reply completes.
+  let tailTokens = 0;
+  for (let index = anchor.index + 1; index < messages.length; index += 1) {
+    const message = messages[index];
+    if (message.isActive !== false) {
+      tailTokens += estimateMessageTokens(message);
+    }
+  }
 
+  const used = anchor.tokens + tailTokens;
   return {
     used,
     budget,
-    ratio: budget ? Math.min(used / budget, 1) : undefined,
-    measured: measured !== undefined,
-    segments: [
-      { key: 'systemPrompt', tokens: systemTokens },
-      { key: 'messages', tokens: messageTokens },
-      { key: 'reasoning', tokens: reasoningTokens },
-    ],
+    ratio: budget ? used / budget : undefined,
+    measured: true,
   };
 }
 
-/** Token counts read at a glance: 138, 6.4k, 262k. */
-export function formatTokenCount(tokens: number): string {
-  if (tokens < 1000) return String(tokens);
-  const thousands = tokens / 1000;
-  return `${thousands < 10 ? thousands.toFixed(1).replace(/\.0$/, '') : Math.round(thousands)}k`;
+/**
+ * Token counts read at a glance — 138, 6.4K, 262K — in the reader's own
+ * digits and notation.
+ */
+export function formatTokenCount(tokens: number, locale?: string): string {
+  try {
+    return new Intl.NumberFormat(locale, {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(tokens);
+  } catch {
+    return String(tokens);
+  }
 }

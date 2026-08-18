@@ -42,26 +42,49 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  * writing instead of leaving it in a log, and the numbers behind it are one
  * hover away rather than a click into settings.
  */
+/** Isolate a numeric run so RTL text cannot visually reorder it. */
+const bidiIsolate = (text: string): string => `⁨${text}⁩`;
+
 export const ContextMeter: React.FC<ContextMeterProps> = ({
   usage,
   trainedBudget,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // The panel is mounted only while it is being read. Kept in the document and
   // merely faded out, it stays a tooltip to anything reading the page, which is
   // both wrong for a screen reader and indistinguishable from a real one.
   const [visible, setVisible] = useState(false);
+  const hasBudget = typeof usage.budget === 'number' && usage.budget > 0;
   const ratio = usage.ratio ?? 0;
   const percent = Math.round(ratio * 100);
   const approx = usage.measured ? '' : '~';
-  const used = `${approx}${formatTokenCount(usage.used)}`;
+  const locale = i18n.language;
+  const used = `${approx}${formatTokenCount(usage.used, locale)}`;
 
-  const tokenLine = usage.budget
+  const tokenLine = hasBudget
     ? t('chat.context.tokensUsed', {
-        used,
-        budget: formatTokenCount(usage.budget),
+        used: bidiIsolate(used),
+        budget: bidiIsolate(formatTokenCount(usage.budget as number, locale)),
       })
-    : t('chat.context.tokensUsedNoBudget', { used });
+    : t('chat.context.tokensUsedNoBudget', { used: bidiIsolate(used) });
+  const cappedLine =
+    trainedBudget !== undefined
+      ? t('chat.context.capped', {
+          trained: bidiIsolate(formatTokenCount(trainedBudget, locale)),
+        })
+      : undefined;
+  const label = [
+    t('chat.context.title'),
+    hasBudget ? t('chat.context.full', { percent }) : undefined,
+    tokenLine,
+    cappedLine,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  // The arc caps at full; the color and the percentage keep going, so an
+  // over-budget conversation reads as one instead of as exactly full.
+  const arcRatio = Math.min(ratio, 1);
 
   return (
     <div
@@ -70,19 +93,30 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
       onMouseLeave={() => setVisible(false)}
       onFocus={() => setVisible(true)}
       onBlur={() => setVisible(false)}
+      onKeyDown={event => {
+        if (event.key === 'Escape') setVisible(false);
+      }}
     >
       <span
-        role='img'
+        role={hasBudget ? 'meter' : 'img'}
         tabIndex={0}
-        aria-label={`${t('chat.context.title')} ${
-          usage.budget ? t('chat.context.full', { percent }) : ''
-        } ${tokenLine}`}
+        aria-label={label}
+        {...(hasBudget
+          ? {
+              'aria-valuemin': 0,
+              'aria-valuemax': 100,
+              'aria-valuenow': Math.min(percent, 100),
+              'aria-valuetext': label,
+            }
+          : {})}
         className={cn(
-          'flex h-9 w-9 items-center justify-center rounded-full text-gray-400 outline-none',
+          'flex h-9 w-9 items-center justify-center rounded-full text-gray-400 outline-none sm:h-10 sm:w-10',
           'transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary-500/40',
           'dark:text-dark-500',
-          // Past four fifths the summarizer is close enough to warn about.
-          ratio >= 0.8 && 'text-amber-600 dark:text-amber-400'
+          // Past four fifths the summarizer is close enough to warn about;
+          // at the window the conversation is losing history.
+          ratio >= 0.8 && ratio < 1 && 'text-amber-600 dark:text-amber-400',
+          ratio >= 1 && 'text-red-600 dark:text-red-400'
         )}
       >
         <svg viewBox='0 0 18 18' className='h-4 w-4 -rotate-90'>
@@ -94,8 +128,11 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
             stroke='currentColor'
             strokeWidth='2'
             className='opacity-30'
+            // An unknown window is not an empty one: the track goes dashed
+            // instead of rendering the same ring as a fresh conversation.
+            {...(hasBudget ? {} : { strokeDasharray: '2 2' })}
           />
-          {ratio > 0 && (
+          {hasBudget && arcRatio > 0 && (
             <circle
               cx='9'
               cy='9'
@@ -105,7 +142,7 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
               strokeWidth='2'
               strokeLinecap='round'
               strokeDasharray={CIRCUMFERENCE}
-              strokeDashoffset={CIRCUMFERENCE * (1 - ratio)}
+              strokeDashoffset={CIRCUMFERENCE * (1 - arcRatio)}
             />
           )}
         </svg>
@@ -124,7 +161,7 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
           <p className='text-[13px] text-gray-500 dark:text-dark-600'>
             {t('chat.context.title')}
           </p>
-          {usage.budget && (
+          {hasBudget && (
             <p className='text-[13px] text-gray-500 dark:text-dark-600'>
               {t('chat.context.full', { percent })}
             </p>
@@ -132,11 +169,9 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
           <p className='text-[13px] tabular-nums text-gray-900 dark:text-dark-900'>
             {tokenLine}
           </p>
-          {trainedBudget !== undefined && (
+          {cappedLine && (
             <p className='mt-1 text-[11px] text-gray-400 dark:text-dark-500'>
-              {t('chat.context.capped', {
-                trained: formatTokenCount(trainedBudget),
-              })}
+              {cappedLine}
             </p>
           )}
         </div>
