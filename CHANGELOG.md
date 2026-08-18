@@ -15,6 +15,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.24.1] - 2026-08-18
+
+A correctness pass over the three systems 0.24.0 introduced. Compaction, the context meter, and the thinking levels now share one definition of what a conversation's context is — and each of them answers to the person using it: compaction can be refused or undone per conversation, the meter counts exactly what the next request sends, and a thinking setting never reaches a model that cannot honor it.
+
+### ✨ New Features
+
+- **A compaction can be refused, and undone.** Every summary now records exactly which messages it replaced, and an undo on the summary card restores them and removes the summary — chained compactions walk back one at a time. The chat controls panel can switch compaction off for a single conversation while the server-wide policy stays on.
+- **The application knows which provider models reason.** Model discovery keeps reasoning support beside each model's context window: the listing's own answer where one exists, a maintained name-family table where it does not. The thinking control is hidden for models known not to reason, and the setting is stripped before a request reaches one — the provider-side twin of the local capability gate. Unknown models stay offered, exactly as before.
+- **The meter measures the real window.** With compaction on, the "recent messages kept" count is now also the rolling window a conversation sends, so raising it genuinely widens what the model sees — and a narrow context-policy endpoint lets the meter mirror that number instead of assuming the default.
+
+### 🔧 Improvements
+
+- **The context meter counts the prompt that is actually sent.** It mirrors the server's message selection, so compacted history, abandoned branches, and turns outside the rolling window cost nothing — the ring no longer drifted upward without bound or rose after the very compaction that had just shrunk the prompt. The count anchors to the provider's last measured reply plus an estimate of what followed, instead of flipping between measured and estimated on every turn.
+- **Token estimates price text and images honestly.** CJK characters count at roughly a token each rather than a quarter — a Japanese conversation no longer reads as a fraction of its real size — and images carry a flat per-image cost instead of counting as zero, identically on the server and in the meter. The compaction transcript notes attached images so a summary cannot silently erase that they existed.
+- **The summary reads as what it is.** The compaction summary renders as a conversation-summary card at the point in the chat where the history was folded, and the summarized messages render dimmed: still readable, no longer sent. The card is not editable — its earlier edit path overwrote the global system prompt — and compacted turns no longer offer branch selection that would silently resurrect a message the summary already covers.
+- **The summarizer behaves like part of the product.** Its transcript is bounded so it fits its own context window, template placeholders substitute literally, the conversation is framed as data rather than instructions, the session's provider binding travels with the call, pressing Stop reaches it, and its configuration is read from a short-lived cache instead of the database on every reply. The compaction configuration endpoint is admin-only in both directions, and a retried background generation reuses the first attempt's compaction instead of paying for another summarizer round trip.
+- **Anthropic requests respect each model's output ceiling.** A thinking budget or an oversized token cap can no longer push `max_tokens` past what the model accepts; documented family ceilings bound both, and unknown families stay unclamped so a wrong guess can never truncate real replies. An explicit answer cap now shrinks the thinking budget into it rather than being silently raised.
+- **Reasoning renders wherever it was paid for.** The Responses API asks for a reasoning summary so thinking is shown rather than only billed, Gemini requests thought summaries and routes them as reasoning with an output ceiling that holds the budget plus the answer, and Anthropic replies keep their thinking on the non-streaming path too.
+
+### 🐛 Bug Fixes
+
+- **Replaced summaries stayed in every prompt forever.** Deactivated system messages were still selected into the model context, so each compaction left one more stale summary riding along; they are now filtered exactly like deactivated conversation turns.
+- **Persona conversations lost the summary entirely.** The persona prompt replaced all stored system messages, compaction summary included — pure context loss. The summary now survives beside the persona prompt, and the writers that update the leading system message can no longer overwrite a summary that happens to sit first.
+- **The keep-recent boundary kept fewer messages than configured.** It extended forward to the next user turn and could summarize everything except the message just typed; it now extends backwards, so at least the configured count always survives, still starting on a user turn.
+- **A conversation on an unresolved model read as full.** While the model list loaded — and for every agent conversation — the meter borrowed the 2,048-token application default and rendered a full amber ring; an unknown window now shows a dashed ring instead of a wrong one. Over budget shows red past the amber warning instead of being rounded down to exactly full, the ring is a real meter to screen readers, and token counts format in the reader's locale with bidi isolation.
+- **Gemini thinking could consume the entire reply.** The thinking budget counted against an output ceiling that had not grown to hold it, so low effort on default settings returned empty replies at the token limit.
+- **Reset to defaults now clears a saved thinking level** instead of leaving it behind while every other option reset.
+- **A named thinking level no longer errors on models without named levels.** It degrades to plain "on", so a conversation that moves between models keeps working.
+- **The thinking control tells the truth everywhere.** The composer button reflects the pinned or global default a conversation inherits, the chat controls panel shows the conversation's own choice with the inherited value named inside "Default", saving the panel no longer drops sibling session settings such as attached knowledge collections, and capability lookups stop firing for provider, persona, and still-loading models.
+- **The compaction settings toggle no longer lies.** A rejected or invalid save leaves it in the server's state instead of visually flipped, and a failed configuration load says so instead of leaving the controls silently dead.
+
+### 🌍 Translations
+
+- All new interface text — the summary card, the restore action, and the per-conversation compaction control — is translated in all 25 languages.
+
 ## [0.24.0] - 2026-08-18
 
 Control over how models answer, and a clearer view of what they are working with: a thinking level per chat, a context meter in the composer, an administrator model catalog, and long conversations that compact themselves.
