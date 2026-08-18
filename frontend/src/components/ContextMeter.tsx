@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils';
 import { formatTokenCount, type ContextUsage } from '@/utils/contextUsage';
@@ -47,6 +47,10 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
   trainedBudget,
 }) => {
   const { t } = useTranslation();
+  // The panel is mounted only while it is being read. Kept in the document and
+  // merely faded out, it stays a tooltip to anything reading the page, which is
+  // both wrong for a screen reader and indistinguishable from a real one.
+  const [visible, setVisible] = useState(false);
   const ratio = usage.ratio ?? 0;
   const percent = Math.round(ratio * 100);
   const approx = usage.measured ? '' : '~';
@@ -60,7 +64,13 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
     : t('chat.context.tokensUsedNoBudget', { used });
 
   return (
-    <div className='group relative flex-shrink-0'>
+    <div
+      className='relative flex-shrink-0'
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+      onFocus={() => setVisible(true)}
+      onBlur={() => setVisible(false)}
+    >
       <span
         role='img'
         tabIndex={0}
@@ -101,35 +111,36 @@ export const ContextMeter: React.FC<ContextMeterProps> = ({
         </svg>
       </span>
 
-      <div
-        role='tooltip'
-        className={cn(
-          'pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 -translate-x-1/2',
-          'whitespace-nowrap rounded-2xl bg-surface/95 px-4 py-3 text-center shadow-lv3 backdrop-blur-xl',
-          'border border-black/[0.06] dark:border-white/[0.08] dark:bg-dark-100/95',
-          'opacity-0 transition-opacity duration-150',
-          'group-hover:opacity-100 group-focus-within:opacity-100'
-        )}
-      >
-        <p className='text-[13px] text-gray-500 dark:text-dark-600'>
-          {t('chat.context.title')}
-        </p>
-        {usage.budget && (
+      {visible && (
+        <div
+          role='tooltip'
+          className={cn(
+            'pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 -translate-x-1/2',
+            'whitespace-nowrap rounded-2xl bg-surface/95 px-4 py-3 text-center shadow-lv3 backdrop-blur-xl',
+            'border border-black/[0.06] dark:border-white/[0.08] dark:bg-dark-100/95',
+            'animate-scale-in'
+          )}
+        >
           <p className='text-[13px] text-gray-500 dark:text-dark-600'>
-            {t('chat.context.full', { percent })}
+            {t('chat.context.title')}
           </p>
-        )}
-        <p className='text-[13px] tabular-nums text-gray-900 dark:text-dark-900'>
-          {tokenLine}
-        </p>
-        {trainedBudget !== undefined && (
-          <p className='mt-1 text-[11px] text-gray-400 dark:text-dark-500'>
-            {t('chat.context.capped', {
-              trained: formatTokenCount(trainedBudget),
-            })}
+          {usage.budget && (
+            <p className='text-[13px] text-gray-500 dark:text-dark-600'>
+              {t('chat.context.full', { percent })}
+            </p>
+          )}
+          <p className='text-[13px] tabular-nums text-gray-900 dark:text-dark-900'>
+            {tokenLine}
           </p>
-        )}
-      </div>
+          {trainedBudget !== undefined && (
+            <p className='mt-1 text-[11px] text-gray-400 dark:text-dark-500'>
+              {t('chat.context.capped', {
+                trained: formatTokenCount(trainedBudget),
+              })}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
