@@ -1454,6 +1454,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      // Passive default: the composer reads the tool catalog on mount, and an
+      // empty one keeps the tool controls off exactly as they were before the
+      // route existed. Specs that care about tools route this themselves.
+      if (path === '/tools/catalog' && method === 'GET') {
+        await fulfillJson(route, { available: false, tools: [] });
+        return;
+      }
+
       if (path === '/system' && method === 'GET') {
         if (!options.systemDiagnostics) {
           await fulfillApiError(route, 503, 'System diagnostics unavailable');
