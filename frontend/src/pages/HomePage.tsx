@@ -59,6 +59,7 @@ export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { user, systemInfo, canUseWork, canUseAgents } = useAuthStore();
   const sessions = useChatStore(state => state.sessions);
+  const chatModels = useChatStore(state => state.models);
   const workTasks = useWorkStore(state => state.tasks);
   const capabilities = useWorkStore(state => state.capabilities);
   const loadWorkTasks = useWorkStore(state => state.loadTasks);
@@ -221,7 +222,12 @@ export const HomePage: React.FC = () => {
                     {session.title || t('tabs.chat', 'Chat')}
                   </span>
                   <span className='hidden shrink-0 font-mono text-[10px] text-gray-400 sm:inline dark:text-dark-500'>
-                    {session.model}
+                    {session.model.startsWith('persona:')
+                      ? chatModels.find(
+                          model =>
+                            model.isPersona && model.name === session.model
+                        )?.personaName || t('chat.persona.label', 'Persona')
+                      : session.model}
                   </span>
                   <span className='shrink-0 font-mono text-[10px] text-gray-400 dark:text-dark-500'>
                     {formatTimestamp(session.updatedAt, i18n.language)}
