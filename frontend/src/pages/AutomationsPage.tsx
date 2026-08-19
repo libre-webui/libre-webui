@@ -289,10 +289,14 @@ const AutomationsPage: React.FC = () => {
                           <>
                             {' · '}
                             {t('automations.nextRun', {
-                              when: formatTimestamp(
-                                automation.nextRunAt,
-                                i18n.language
-                              ),
+                              // Absolute, because relative formatting reads
+                              // future times as "just now".
+                              when: new Intl.DateTimeFormat(i18n.language, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              }).format(automation.nextRunAt),
                             })}
                           </>
                         )}
