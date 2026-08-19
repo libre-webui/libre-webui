@@ -276,7 +276,7 @@ export function SettingsPluginsTab({
               aria-label={t('settings.plugins.providers', {
                 defaultValue: 'Providers',
               })}
-              className='border-b border-gray-200 dark:border-dark-300 lg:border-b-0 lg:border-e'
+              className='border-b border-gray-200 dark:border-dark-300 lg:flex lg:min-h-0 lg:flex-col lg:border-b-0 lg:border-e'
             >
               <div className='border-b border-gray-200 p-4 dark:border-dark-300'>
                 <div className='mb-3 flex items-center justify-between gap-2'>
@@ -312,7 +312,9 @@ export function SettingsPluginsTab({
                 </div>
               </div>
 
-              <div className='max-h-[32rem] space-y-2 overflow-y-auto p-3'>
+              {/* Stacked: cap the list. Side by side: fill the column so no
+                  dead space collects under it when the detail pane is tall. */}
+              <div className='max-h-[32rem] space-y-2 overflow-y-auto p-3 lg:min-h-0 lg:max-h-none lg:flex-1'>
                 {loading && plugins.length === 0 ? (
                   <div className='p-6 text-center text-sm text-gray-500 dark:text-gray-400'>
                     <Loader2 className='mx-auto mb-2 h-5 w-5 animate-spin' />
