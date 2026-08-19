@@ -1283,13 +1283,18 @@ export const useChat = (sessionId: string) => {
       if (index === -1 || session.messages[index].role !== 'user') return;
 
       const editedMessage = session.messages[index];
-      const truncatedMessages = session.messages.slice(0, index);
 
       try {
         if (!session.isPrivate) {
-          await chatApi.updateSession(sessionId, {
-            messages: truncatedMessages,
-          });
+          // The metadata PUT ignores `messages`, so the server exposes a
+          // dedicated truncate operation for shortening the history.
+          const response = await chatApi.truncateMessagesFrom(
+            sessionId,
+            messageId
+          );
+          if (!response.success) {
+            throw new Error(response.error || 'Failed to truncate session');
+          }
         }
         state.truncateMessagesFrom(sessionId, messageId);
         await sendMessage(newContent, editedMessage.images);

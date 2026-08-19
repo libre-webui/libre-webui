@@ -127,6 +127,34 @@ export const chatApi = {
       .then(res => res.data);
   },
 
+  truncateMessagesFrom: (
+    sessionId: string,
+    messageId: string
+  ): Promise<ApiResponse<ChatSession>> => {
+    if (isDemoMode()) {
+      const session = DEMO_SESSIONS.find(s => s.id === sessionId);
+      if (session) {
+        const index = session.messages.findIndex(m => m.id === messageId);
+        if (index === -1) {
+          return Promise.resolve({
+            success: false,
+            error: 'Message not found in demo mode',
+          });
+        }
+        session.messages = session.messages.slice(0, index);
+        session.updatedAt = Date.now();
+        return createDemoResponse(session);
+      }
+      return Promise.resolve({
+        success: false,
+        error: 'Session not found in demo mode',
+      });
+    }
+    return api
+      .post(`/chat/sessions/${sessionId}/messages/${messageId}/truncate`)
+      .then(res => res.data);
+  },
+
   deleteSession: (sessionId: string): Promise<ApiResponse> => {
     if (isDemoMode()) {
       return createDemoResponse(null);

@@ -546,7 +546,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const handleSaveUserEdit = () => {
     const trimmed = editedContent.trim();
     setIsEditing(false);
-    if (!trimmed || trimmed === message.content) return;
+    if (!trimmed) return;
+    // Unchanged content still resends — the button promises a submit either
+    // way, and silently doing nothing reads as a broken edit.
     onEditResend?.(message.id, trimmed);
   };
 

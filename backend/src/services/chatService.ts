@@ -788,6 +788,41 @@ class ChatService {
     return updatedMessage;
   }
 
+  // Remove a message and everything after it (edit-and-resend). The client
+  // only names the cut point; the kept prefix comes from the server's own
+  // copy, so a stale client snapshot can never erase a worker response.
+  async truncateMessagesFrom(
+    sessionId: string,
+    messageId: string,
+    userId: string = 'default'
+  ): Promise<ChatSession | undefined> {
+    return this.withSessionWriteLease(sessionId, userId, async assertHeld => {
+      const session = await this.getSession(sessionId, userId);
+      if (!session) return undefined;
+
+      const index = session.messages.findIndex(msg => msg.id === messageId);
+      if (index === -1) return undefined;
+
+      // Any generation still in flight targets the tail being removed.
+      await getDurableJobRuntime().service.cancelAllForActor(
+        userId,
+        'superseded',
+        {
+          jobTypes: [CHAT_GENERATE_JOB_TYPE],
+          idempotencyScopes: [chatGenerationIdempotencyScope(sessionId)],
+        }
+      );
+
+      session.messages = session.messages.slice(0, index);
+      session.updatedAt = Date.now();
+
+      this.sessions.set(sessionId, session);
+      await assertHeld();
+      await storageService.saveSession(session, userId, assertHeld);
+      return session;
+    });
+  }
+
   async deleteSession(
     sessionId: string,
     userId: string = 'default'

@@ -371,6 +371,47 @@ router.put(
   }
 );
 
+// Truncate a session at a message: drop it and everything after it
+// (edit-and-resend). The metadata PUT deliberately ignores `messages`,
+// so this is the only way a client can shorten the server-side history.
+router.post(
+  '/sessions/:sessionId/messages/:messageId/truncate',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<ChatSession>>
+  ): Promise<void> => {
+    try {
+      const sessionId = req.params.sessionId as string;
+      const messageId = req.params.messageId as string;
+      const userId = req.user?.userId || 'default';
+
+      const updatedSession = await chatService.truncateMessagesFrom(
+        sessionId,
+        messageId,
+        userId
+      );
+
+      if (!updatedSession) {
+        res.status(404).json({
+          success: false,
+          error: 'Session or message not found',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: updatedSession,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to truncate session'),
+      });
+    }
+  }
+);
+
 // Delete a chat session
 router.delete(
   '/sessions/:sessionId',
