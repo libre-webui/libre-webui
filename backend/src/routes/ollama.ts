@@ -18,6 +18,7 @@
 import express, { Request, Response } from 'express';
 import embeddingService from '../services/embeddingService.js';
 import ollamaService from '../services/ollamaService.js';
+import chatGenerationService from '../services/chatGenerationService.js';
 import { ApiResponse, OllamaModel, getErrorMessage } from '../types/index.js';
 import {
   authenticate,
@@ -421,7 +422,12 @@ router.get(
   '/models/:modelName/defaults',
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-      const modelName = decodeURIComponent(req.params.modelName as string);
+      const requestedName = decodeURIComponent(req.params.modelName as string);
+      // A persona is not an Ollama model — its backing model answers.
+      const modelName = await chatGenerationService.resolveActualModelName(
+        requestedName,
+        req.user?.userId || 'default'
+      );
       const defaults = await ollamaService.getModelDefaults(modelName);
 
       res.json({

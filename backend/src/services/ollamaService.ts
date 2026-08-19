@@ -502,7 +502,11 @@ export class OllamaService {
       return response.data;
     } catch (error: unknown) {
       if (signal?.aborted) throw error;
-      logger.error('Failed to show model:', error);
+      // Callers routinely probe models Ollama does not serve (plugin
+      // models, personas); a one-line message keeps the log readable.
+      logger.error(
+        `Failed to show model ${modelName}: ${getErrorMessage(error, 'unknown error')}`
+      );
       throw new Error(getErrorMessage(error, 'Failed to show model'));
     }
   }
