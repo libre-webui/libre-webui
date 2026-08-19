@@ -369,7 +369,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ref={sidebarRef}
         data-testid='sidebar'
         className={cn(
-          'fixed inset-y-0 start-0 z-50 border-e border-black/[0.04] dark:border-white/[0.06] transform transition-[width,transform,background-color] duration-200 ease-out shadow-[0_24px_80px_rgba(15,23,42,0.12)]',
+          // The end border only exists while the sidebar overlays content on
+          // small screens; on desktop it shares one surface with the top bar.
+          'fixed inset-y-0 start-0 z-50 max-lg:border-e border-black/[0.04] dark:border-white/[0.06] transform transition-[width,transform,background-color] duration-200 ease-out shadow-[0_24px_80px_rgba(15,23,42,0.12)]',
           sidebarCompact
             ? 'w-16'
             : 'w-72 max-sm:w-[calc(100vw-4.5rem)] max-sm:max-w-80',
