@@ -904,9 +904,19 @@
         "forgejo": "Зеркало Forgejo",
         "forgejoDescription": "Самостоятельно размещённый репозиторий Forgejo",
         "sponsor": "Поддержать",
-        "sponsorDescription": "Помогите финансировать проект"
+        "sponsorDescription": "Помогите финансировать проект",
+        "star": "Звезда на GitHub",
+        "starDescription": "Звезда помогает другим найти проект"
       },
-      "version": "Версия {{version}}"
+      "version": "Версия {{version}}",
+      "updates": {
+        "checking": "Проверка обновлений…",
+        "upToDate": "У вас последняя версия",
+        "updateAvailable": "Доступна версия {{version}}",
+        "ahead": "Вы опережаете последний релиз ({{version}})",
+        "checkFailed": "Не удалось проверить обновления",
+        "viewChangelog": "Список изменений"
+      }
     },
     "groups": {
       "general": "Основные",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "Что нового",
     "releaseNotes": "Примечания к выпуску",
-    "cta": "Хорошо, поехали"
+    "cta": "Хорошо, поехали",
+    "starAsk": "Нравится Libre WebUI? Поставьте звезду на GitHub"
   },
   "notes": {
     "title": "Заметки",

@@ -904,9 +904,19 @@
         "forgejo": "Forgejo镜像",
         "forgejoDescription": "自托管Forgejo仓库",
         "sponsor": "赞助",
-        "sponsorDescription": "帮助资助本项目"
+        "sponsorDescription": "帮助资助本项目",
+        "star": "在 GitHub 上加星",
+        "starDescription": "星标能帮助更多人发现这个项目"
       },
-      "version": "版本 {{version}}"
+      "version": "版本 {{version}}",
+      "updates": {
+        "checking": "正在检查更新…",
+        "upToDate": "您正在使用最新版本",
+        "updateAvailable": "版本 {{version}} 已发布",
+        "ahead": "领先于最新发布版本（{{version}}）",
+        "checkFailed": "无法检查更新",
+        "viewChangelog": "查看更新日志"
+      }
     },
     "groups": {
       "general": "通用",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "新功能",
     "releaseNotes": "版本说明",
-    "cta": "好的，开始吧"
+    "cta": "好的，开始吧",
+    "starAsk": "喜欢 Libre WebUI？在 GitHub 上给我们一颗星吧"
   },
   "notes": {
     "title": "笔记",

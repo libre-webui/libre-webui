@@ -904,9 +904,19 @@
         "forgejo": "Дзеркало Forgejo",
         "forgejoDescription": "Самостійно розміщений репозиторій Forgejo",
         "sponsor": "Підтримати",
-        "sponsorDescription": "Допоможіть фінансувати проєкт"
+        "sponsorDescription": "Допоможіть фінансувати проєкт",
+        "star": "Зірка на GitHub",
+        "starDescription": "Зірка допомагає іншим знайти проєкт"
       },
-      "version": "Версія {{version}}"
+      "version": "Версія {{version}}",
+      "updates": {
+        "checking": "Перевірка оновлень…",
+        "upToDate": "У вас остання версія",
+        "updateAvailable": "Доступна версія {{version}}",
+        "ahead": "Ви випереджаєте останній реліз ({{version}})",
+        "checkFailed": "Не вдалося перевірити оновлення",
+        "viewChangelog": "Переглянути список змін"
+      }
     },
     "groups": {
       "general": "Загальні",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "Що нового",
     "releaseNotes": "Нотатки випуску",
-    "cta": "Гаразд, поїхали"
+    "cta": "Гаразд, поїхали",
+    "starAsk": "Подобається Libre WebUI? Поставте зірку на GitHub"
   },
   "notes": {
     "title": "Нотатки",

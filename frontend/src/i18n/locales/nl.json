@@ -904,9 +904,19 @@
         "forgejo": "Forgejo-spiegel",
         "forgejoDescription": "Zelf-gehoste Forgejo-repository",
         "sponsor": "Sponsor",
-        "sponsorDescription": "Help het project financieren"
+        "sponsorDescription": "Help het project financieren",
+        "star": "Ster op GitHub",
+        "starDescription": "Een ster helpt anderen het project te ontdekken"
       },
-      "version": "Versie {{version}}"
+      "version": "Versie {{version}}",
+      "updates": {
+        "checking": "Zoeken naar updates…",
+        "upToDate": "Je gebruikt de nieuwste versie",
+        "updateAvailable": "Versie {{version}} is beschikbaar",
+        "ahead": "Loopt voor op de laatste release ({{version}})",
+        "checkFailed": "Kon niet op updates controleren",
+        "viewChangelog": "Changelog bekijken"
+      }
     },
     "groups": {
       "general": "Algemeen",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "Wat is nieuw",
     "releaseNotes": "Release-opmerkingen",
-    "cta": "Oké, aan de slag"
+    "cta": "Oké, aan de slag",
+    "starAsk": "Bevalt Libre WebUI? Geef een ster op GitHub"
   },
   "notes": {
     "title": "Notities",

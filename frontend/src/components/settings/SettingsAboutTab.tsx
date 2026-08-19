@@ -15,13 +15,20 @@
  * limitations under the License.
  */
 
+import { useEffect, useState } from 'react';
 import {
+  ArrowUpCircle,
   BookOpen,
+  CheckCircle2,
   ExternalLink,
   GitBranch,
+  GitCommitHorizontal,
   GitMerge,
   Heart,
+  Loader2,
   MessageSquare,
+  ScrollText,
+  Star,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from '@/components/Logo';
@@ -31,12 +38,78 @@ interface SettingsAboutTabProps {
   appVersion: string;
 }
 
+const RELEASES_URL = 'https://github.com/libre-webui/libre-webui/releases';
+
+type UpdateStatus = 'checking' | 'latest' | 'behind' | 'ahead' | 'error';
+
+function parseVersion(version: string): number[] | null {
+  const match = version.match(/^v?(\d+)\.(\d+)\.(\d+)/);
+  return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+}
+
+function compareVersions(a: number[], b: number[]): number {
+  for (let index = 0; index < 3; index++) {
+    if (a[index] !== b[index]) return a[index] - b[index];
+  }
+  return 0;
+}
+
+// Compare the running build against the newest GitHub release. A "-dev"
+// build whose base version matches (or passes) the pinned release is ahead
+// of it — commits on top of the pin — never "outdated".
+function useUpdateCheck(appVersion: string) {
+  const [status, setStatus] = useState<UpdateStatus>('checking');
+  const [latestVersion, setLatestVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const current = parseVersion(appVersion);
+    const isDev = appVersion.includes('-dev');
+
+    (async () => {
+      try {
+        const response = await fetch(
+          'https://api.github.com/repos/libre-webui/libre-webui/releases/latest',
+          { headers: { Accept: 'application/vnd.github+json' } }
+        );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const release = (await response.json()) as { tag_name?: string };
+        const latest = parseVersion(release.tag_name ?? '');
+        if (cancelled) return;
+        if (!current || !latest) {
+          setStatus('error');
+          return;
+        }
+        setLatestVersion(latest.join('.'));
+        const relation = compareVersions(current, latest);
+        if (relation < 0) setStatus('behind');
+        else if (relation > 0 || isDev) setStatus('ahead');
+        else setStatus('latest');
+      } catch {
+        if (!cancelled) setStatus('error');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [appVersion]);
+
+  return { status, latestVersion };
+}
+
 const aboutLinks = [
   {
     href: 'https://github.com/libre-webui/libre-webui',
     icon: GitBranch,
     labelKey: 'settings.about.links.github',
     descriptionKey: 'settings.about.links.githubDescription',
+  },
+  {
+    href: 'https://github.com/libre-webui/libre-webui',
+    icon: Star,
+    labelKey: 'settings.about.links.star',
+    descriptionKey: 'settings.about.links.starDescription',
   },
   {
     href: 'https://git.kroonen.ai/libre-webui/libre-webui',
@@ -76,8 +149,66 @@ const featureKeys = [
   'settings.about.features.localInference',
 ];
 
+function UpdateStatusLine({
+  status,
+  latestVersion,
+}: {
+  status: UpdateStatus;
+  latestVersion: string | null;
+}) {
+  const { t } = useTranslation();
+
+  if (status === 'checking') {
+    return (
+      <span className='inline-flex items-center gap-1.5 text-gray-500 dark:text-dark-500'>
+        <Loader2 className='h-3.5 w-3.5 animate-spin' />
+        {t('settings.about.updates.checking')}
+      </span>
+    );
+  }
+  if (status === 'latest') {
+    return (
+      <span className='inline-flex items-center gap-1.5 text-success-600 dark:text-success-400'>
+        <CheckCircle2 className='h-3.5 w-3.5' />
+        {t('settings.about.updates.upToDate')}
+      </span>
+    );
+  }
+  if (status === 'ahead') {
+    return (
+      <span className='inline-flex items-center gap-1.5 text-gray-600 dark:text-dark-600'>
+        <GitCommitHorizontal className='h-3.5 w-3.5' />
+        {t('settings.about.updates.ahead', { version: latestVersion ?? '' })}
+      </span>
+    );
+  }
+  if (status === 'behind') {
+    return (
+      <a
+        href={RELEASES_URL + '/latest'}
+        target='_blank'
+        rel='noopener noreferrer'
+        className='inline-flex items-center gap-1.5 font-medium text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300'
+      >
+        <ArrowUpCircle className='h-3.5 w-3.5' />
+        {t('settings.about.updates.updateAvailable', {
+          version: latestVersion ?? '',
+        })}
+        <ExternalLink className='h-3 w-3' />
+      </a>
+    );
+  }
+  return (
+    <span className='text-gray-500 dark:text-dark-500'>
+      {t('settings.about.updates.checkFailed')}
+    </span>
+  );
+}
+
 export function SettingsAboutTab({ appVersion }: SettingsAboutTabProps) {
   const { t } = useTranslation();
+  const { status, latestVersion } = useUpdateCheck(appVersion);
+  const hasReleaseNotes = Boolean(__LATEST_RELEASE_NOTES__);
 
   return (
     <div className='space-y-6'>
@@ -115,7 +246,7 @@ export function SettingsAboutTab({ appVersion }: SettingsAboutTabProps) {
 
               return (
                 <a
-                  key={link.href}
+                  key={link.labelKey}
                   href={link.href}
                   target='_blank'
                   rel='noopener noreferrer'
@@ -138,22 +269,38 @@ export function SettingsAboutTab({ appVersion }: SettingsAboutTabProps) {
         </div>
 
         <div className='mt-6 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
-          <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400'>
-            {appVersion.includes('-dev') ? (
-              <span>
-                {t('settings.about.version', { version: appVersion })}
-              </span>
-            ) : (
-              <a
-                href={`https://github.com/libre-webui/libre-webui/releases/tag/v${appVersion}`}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
-              >
-                {t('settings.about.version', { version: appVersion })}
-              </a>
-            )}
-            <span>
+          <div className='flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-xs'>
+            <div className='flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5'>
+              {appVersion.includes('-dev') ? (
+                <span className='text-gray-500 dark:text-gray-400'>
+                  {t('settings.about.version', { version: appVersion })}
+                </span>
+              ) : (
+                <a
+                  href={`https://github.com/libre-webui/libre-webui/releases/tag/v${appVersion}`}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition-colors'
+                >
+                  {t('settings.about.version', { version: appVersion })}
+                </a>
+              )}
+              <UpdateStatusLine status={status} latestVersion={latestVersion} />
+              {hasReleaseNotes && (
+                <button
+                  type='button'
+                  onClick={() =>
+                    window.dispatchEvent(new Event('libre:open-whats-new'))
+                  }
+                  className='inline-flex items-center gap-1.5 text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-dark-900'
+                  data-testid='about-view-changelog'
+                >
+                  <ScrollText className='h-3.5 w-3.5' />
+                  {t('settings.about.updates.viewChangelog')}
+                </button>
+              )}
+            </div>
+            <span className='text-gray-500 dark:text-gray-400'>
               {t('settings.about.openSourceBy', { company: '' })}
               <a
                 href='https://kroonen.ai'

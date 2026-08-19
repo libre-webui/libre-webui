@@ -904,9 +904,19 @@
         "forgejo": "มิเรอร์ Forgejo",
         "forgejoDescription": "คลัง Forgejo โฮสต์เอง",
         "sponsor": "สนับสนุน",
-        "sponsorDescription": "ช่วยสนับสนุนทุนให้โครงการ"
+        "sponsorDescription": "ช่วยสนับสนุนทุนให้โครงการ",
+        "star": "ให้ดาวบน GitHub",
+        "starDescription": "ดาวช่วยให้คนอื่นค้นพบโปรเจกต์นี้"
       },
-      "version": "เวอร์ชัน {{version}}"
+      "version": "เวอร์ชัน {{version}}",
+      "updates": {
+        "checking": "กำลังตรวจสอบการอัปเดต…",
+        "upToDate": "คุณใช้เวอร์ชันล่าสุดอยู่",
+        "updateAvailable": "มีเวอร์ชัน {{version}} ให้ใช้งาน",
+        "ahead": "ล้ำหน้ากว่ารุ่นล่าสุดที่เผยแพร่ ({{version}})",
+        "checkFailed": "ไม่สามารถตรวจสอบการอัปเดตได้",
+        "viewChangelog": "ดูบันทึกการเปลี่ยนแปลง"
+      }
     },
     "groups": {
       "general": "ทั่วไป",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "มีอะไรใหม่",
     "releaseNotes": "บันทึกประจำรุ่น",
-    "cta": "โอเค ไปกันเลย"
+    "cta": "โอเค ไปกันเลย",
+    "starAsk": "ชอบ Libre WebUI ไหม? ให้ดาวบน GitHub"
   },
   "notes": {
     "title": "บันทึกย่อ",

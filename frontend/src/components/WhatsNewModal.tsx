@@ -18,7 +18,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
+import { Star, X } from 'lucide-react';
 import { Button } from '@/components/ui';
 
 interface WhatsNewModalProps {
@@ -114,7 +114,16 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
             </ReactMarkdown>
           </div>
 
-          <div className='flex justify-end border-t border-gray-200/70 px-6 py-4 dark:border-white/[0.08]'>
+          <div className='flex items-center justify-between gap-3 border-t border-gray-200/70 px-6 py-4 dark:border-white/[0.08]'>
+            <a
+              href='https://github.com/libre-webui/libre-webui'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='inline-flex min-w-0 items-center gap-1.5 text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-dark-500 dark:hover:text-dark-900'
+            >
+              <Star className='h-3.5 w-3.5 shrink-0' />
+              <span className='truncate'>{t('whatsNew.starAsk')}</span>
+            </a>
             <Button onClick={onDismiss} size='sm'>
               {t('whatsNew.cta')}
             </Button>

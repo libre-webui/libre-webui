@@ -904,9 +904,19 @@
         "forgejo": "Forgejo-spegel",
         "forgejoDescription": "Självhostat Forgejo-förråd",
         "sponsor": "Sponsra",
-        "sponsorDescription": "Hjälp till att finansiera projektet"
+        "sponsorDescription": "Hjälp till att finansiera projektet",
+        "star": "Stjärna på GitHub",
+        "starDescription": "En stjärna hjälper andra att hitta projektet"
       },
-      "version": "Version {{version}}"
+      "version": "Version {{version}}",
+      "updates": {
+        "checking": "Söker efter uppdateringar…",
+        "upToDate": "Du har den senaste versionen",
+        "updateAvailable": "Version {{version}} är tillgänglig",
+        "ahead": "Före den senaste utgåvan ({{version}})",
+        "checkFailed": "Kunde inte söka efter uppdateringar",
+        "viewChangelog": "Visa ändringslogg"
+      }
     },
     "groups": {
       "general": "Allmänt",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "Nyheter",
     "releaseNotes": "Versionsinformation",
-    "cta": "Okej, nu kör vi"
+    "cta": "Okej, nu kör vi",
+    "starAsk": "Gillar du Libre WebUI? Lämna en stjärna på GitHub"
   },
   "notes": {
     "title": "Anteckningar",

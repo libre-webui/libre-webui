@@ -904,9 +904,19 @@
         "forgejo": "Espelho Forgejo",
         "forgejoDescription": "Repositório Forgejo auto-hospedado",
         "sponsor": "Patrocinar",
-        "sponsorDescription": "Ajude a financiar o projeto"
+        "sponsorDescription": "Ajude a financiar o projeto",
+        "star": "Estrela no GitHub",
+        "starDescription": "Uma estrela ajuda outros a descobrir o projeto"
       },
-      "version": "Versão {{version}}"
+      "version": "Versão {{version}}",
+      "updates": {
+        "checking": "Verificando atualizações…",
+        "upToDate": "Você está na versão mais recente",
+        "updateAvailable": "A versão {{version}} está disponível",
+        "ahead": "À frente da última versão lançada ({{version}})",
+        "checkFailed": "Não foi possível verificar atualizações",
+        "viewChangelog": "Ver registro de alterações"
+      }
     },
     "groups": {
       "general": "Geral",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "Novidades",
     "releaseNotes": "Notas de lançamento",
-    "cta": "Certo, vamos lá"
+    "cta": "Certo, vamos lá",
+    "starAsk": "Gostando do Libre WebUI? Deixe uma estrela no GitHub"
   },
   "notes": {
     "title": "Notas",

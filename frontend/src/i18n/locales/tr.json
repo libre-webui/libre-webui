@@ -904,9 +904,19 @@
         "forgejo": "Forgejo Aynası",
         "forgejoDescription": "Kendi barındırılan Forgejo deposu",
         "sponsor": "Destek ol",
-        "sponsorDescription": "Projenin finansmanına katkıda bulunun"
+        "sponsorDescription": "Projenin finansmanına katkıda bulunun",
+        "star": "GitHub'da yıldız ver",
+        "starDescription": "Bir yıldız başkalarının projeyi keşfetmesine yardımcı olur"
       },
-      "version": "Sürüm {{version}}"
+      "version": "Sürüm {{version}}",
+      "updates": {
+        "checking": "Güncellemeler denetleniyor…",
+        "upToDate": "En son sürümü kullanıyorsunuz",
+        "updateAvailable": "{{version}} sürümü mevcut",
+        "ahead": "En son sürümün ilerisindesiniz ({{version}})",
+        "checkFailed": "Güncellemeler denetlenemedi",
+        "viewChangelog": "Değişiklik günlüğünü görüntüle"
+      }
     },
     "groups": {
       "general": "Genel",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "Yenilikler",
     "releaseNotes": "Sürüm notları",
-    "cta": "Tamam, başlayalım"
+    "cta": "Tamam, başlayalım",
+    "starAsk": "Libre WebUI'yi beğendiniz mi? GitHub'da yıldız bırakın"
   },
   "notes": {
     "title": "Notlar",

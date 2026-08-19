@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const SEEN_STORAGE_KEY = 'libre-webui:whats-new-seen';
 
@@ -31,6 +31,13 @@ export function useWhatsNew() {
       return false;
     }
   });
+
+  // Settings → About re-opens the release notes on demand.
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener('libre:open-whats-new', onOpen);
+    return () => window.removeEventListener('libre:open-whats-new', onOpen);
+  }, []);
 
   const dismiss = () => {
     setOpen(false);

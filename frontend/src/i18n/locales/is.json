@@ -904,9 +904,19 @@
         "forgejo": "Forgejo Mirror",
         "forgejoDescription": "Self-hosted Forgejo repository",
         "sponsor": "Styrkja",
-        "sponsorDescription": "Hjálpaðu til við að fjármagna verkefnið"
+        "sponsorDescription": "Hjálpaðu til við að fjármagna verkefnið",
+        "star": "Stjarna á GitHub",
+        "starDescription": "Stjarna hjálpar öðrum að finna verkefnið"
       },
-      "version": "Útgáfa {{version}}"
+      "version": "Útgáfa {{version}}",
+      "updates": {
+        "checking": "Leita að uppfærslum…",
+        "upToDate": "Þú ert með nýjustu útgáfuna",
+        "updateAvailable": "Útgáfa {{version}} er í boði",
+        "ahead": "Á undan nýjustu útgáfunni ({{version}})",
+        "checkFailed": "Ekki tókst að athuga uppfærslur",
+        "viewChangelog": "Skoða breytingaskrá"
+      }
     },
     "groups": {
       "general": "Almennt",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "Nýjungar",
     "releaseNotes": "Útgáfuskýringar",
-    "cta": "Allt í lagi, byrjum"
+    "cta": "Allt í lagi, byrjum",
+    "starAsk": "Líkar þér Libre WebUI? Gefðu stjörnu á GitHub"
   },
   "notes": {
     "title": "Glósur",

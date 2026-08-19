@@ -904,9 +904,19 @@
         "forgejo": "Bản sao Forgejo",
         "forgejoDescription": "Kho Forgejo tự lưu trữ",
         "sponsor": "Tài trợ",
-        "sponsorDescription": "Giúp tài trợ cho dự án"
+        "sponsorDescription": "Giúp tài trợ cho dự án",
+        "star": "Gắn sao trên GitHub",
+        "starDescription": "Một ngôi sao giúp người khác khám phá dự án"
       },
-      "version": "Phiên bản {{version}}"
+      "version": "Phiên bản {{version}}",
+      "updates": {
+        "checking": "Đang kiểm tra bản cập nhật…",
+        "upToDate": "Bạn đang dùng phiên bản mới nhất",
+        "updateAvailable": "Đã có phiên bản {{version}}",
+        "ahead": "Đang chạy trước bản phát hành mới nhất ({{version}})",
+        "checkFailed": "Không thể kiểm tra bản cập nhật",
+        "viewChangelog": "Xem nhật ký thay đổi"
+      }
     },
     "groups": {
       "general": "Chung",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "Có gì mới",
     "releaseNotes": "Ghi chú phát hành",
-    "cta": "Được rồi, bắt đầu thôi"
+    "cta": "Được rồi, bắt đầu thôi",
+    "starAsk": "Thích Libre WebUI? Hãy để lại một ngôi sao trên GitHub"
   },
   "notes": {
     "title": "Ghi chú",

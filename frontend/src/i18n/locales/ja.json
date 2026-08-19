@@ -904,9 +904,19 @@
         "forgejo": "Forgejoミラー",
         "forgejoDescription": "セルフホストForgejoリポジトリ",
         "sponsor": "スポンサー",
-        "sponsorDescription": "プロジェクトの資金を支援"
+        "sponsorDescription": "プロジェクトの資金を支援",
+        "star": "GitHub でスターを付ける",
+        "starDescription": "スターは他の人がプロジェクトを見つける助けになります"
       },
-      "version": "バージョン {{version}}"
+      "version": "バージョン {{version}}",
+      "updates": {
+        "checking": "更新を確認しています…",
+        "upToDate": "最新バージョンを使用中です",
+        "updateAvailable": "バージョン {{version}} が利用可能です",
+        "ahead": "最新リリースより先行しています（{{version}}）",
+        "checkFailed": "更新を確認できませんでした",
+        "viewChangelog": "変更履歴を見る"
+      }
     },
     "groups": {
       "general": "一般",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "新機能",
     "releaseNotes": "リリースノート",
-    "cta": "さあ、始めましょう"
+    "cta": "さあ、始めましょう",
+    "starAsk": "Libre WebUI を気に入りましたか？GitHub でスターをお願いします"
   },
   "notes": {
     "title": "ノート",

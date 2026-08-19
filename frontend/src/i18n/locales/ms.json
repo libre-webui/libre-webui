@@ -904,9 +904,19 @@
         "forgejo": "Forgejo Mirror",
         "forgejoDescription": "Self-hosted Forgejo repository",
         "sponsor": "Penaja",
-        "sponsorDescription": "Bantu biayai projek ini"
+        "sponsorDescription": "Bantu biayai projek ini",
+        "star": "Bintang di GitHub",
+        "starDescription": "Bintang membantu orang lain menemui projek ini"
       },
-      "version": "Versi {{version}}"
+      "version": "Versi {{version}}",
+      "updates": {
+        "checking": "Menyemak kemas kini…",
+        "upToDate": "Anda menggunakan versi terkini",
+        "updateAvailable": "Versi {{version}} tersedia",
+        "ahead": "Mendahului keluaran terkini ({{version}})",
+        "checkFailed": "Tidak dapat menyemak kemas kini",
+        "viewChangelog": "Lihat log perubahan"
+      }
     },
     "groups": {
       "general": "Umum",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "Apa yang baharu",
     "releaseNotes": "Nota keluaran",
-    "cta": "Okay, mari mula"
+    "cta": "Okay, mari mula",
+    "starAsk": "Suka Libre WebUI? Beri bintang di GitHub"
   },
   "notes": {
     "title": "Nota",

@@ -904,9 +904,19 @@
         "forgejo": "Forgejo मिरर",
         "forgejoDescription": "स्व-होस्टेड Forgejo रिपॉजिटरी",
         "sponsor": "प्रायोजक",
-        "sponsorDescription": "परियोजना को आर्थिक सहयोग दें"
+        "sponsorDescription": "परियोजना को आर्थिक सहयोग दें",
+        "star": "GitHub पर स्टार दें",
+        "starDescription": "एक स्टार दूसरों को प्रोजेक्ट खोजने में मदद करता है"
       },
-      "version": "संस्करण {{version}}"
+      "version": "संस्करण {{version}}",
+      "updates": {
+        "checking": "अपडेट जांचे जा रहे हैं…",
+        "upToDate": "आप नवीनतम संस्करण पर हैं",
+        "updateAvailable": "संस्करण {{version}} उपलब्ध है",
+        "ahead": "नवीनतम रिलीज़ से आगे चल रहे हैं ({{version}})",
+        "checkFailed": "अपडेट जांच नहीं सके",
+        "viewChangelog": "परिवर्तन सूची देखें"
+      }
     },
     "groups": {
       "general": "सामान्य",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "नया क्या है",
     "releaseNotes": "रिलीज़ नोट्स",
-    "cta": "ठीक है, चलिए"
+    "cta": "ठीक है, चलिए",
+    "starAsk": "Libre WebUI पसंद आया? GitHub पर स्टार दें"
   },
   "notes": {
     "title": "नोट्स",

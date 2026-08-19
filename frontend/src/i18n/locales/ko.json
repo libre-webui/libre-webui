@@ -904,9 +904,19 @@
         "forgejo": "Forgejo 미러",
         "forgejoDescription": "자체 호스팅 Forgejo 저장소",
         "sponsor": "후원",
-        "sponsorDescription": "프로젝트 운영을 후원하기"
+        "sponsorDescription": "프로젝트 운영을 후원하기",
+        "star": "GitHub에 스타 남기기",
+        "starDescription": "스타는 다른 사람들이 프로젝트를 발견하는 데 도움이 됩니다"
       },
-      "version": "버전 {{version}}"
+      "version": "버전 {{version}}",
+      "updates": {
+        "checking": "업데이트 확인 중…",
+        "upToDate": "최신 버전을 사용 중입니다",
+        "updateAvailable": "{{version}} 버전이 있습니다",
+        "ahead": "최신 릴리스보다 앞서 있습니다 ({{version}})",
+        "checkFailed": "업데이트를 확인할 수 없습니다",
+        "viewChangelog": "변경 내역 보기"
+      }
     },
     "groups": {
       "general": "일반",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "새로운 기능",
     "releaseNotes": "릴리스 노트",
-    "cta": "좋아요, 시작하죠"
+    "cta": "좋아요, 시작하죠",
+    "starAsk": "Libre WebUI가 마음에 드시나요? GitHub에 스타를 남겨주세요"
   },
   "notes": {
     "title": "노트",

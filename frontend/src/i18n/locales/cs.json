@@ -904,9 +904,19 @@
         "forgejo": "Forgejo zrcadlo",
         "forgejoDescription": "Vlastní hostovaný Forgejo repozitář",
         "sponsor": "Podpořit",
-        "sponsorDescription": "Pomozte financovat projekt"
+        "sponsorDescription": "Pomozte financovat projekt",
+        "star": "Hvězdička na GitHubu",
+        "starDescription": "Hvězdička pomáhá ostatním projekt objevit"
       },
-      "version": "Verze {{version}}"
+      "version": "Verze {{version}}",
+      "updates": {
+        "checking": "Kontrola aktualizací…",
+        "upToDate": "Máte nejnovější verzi",
+        "updateAvailable": "Je k dispozici verze {{version}}",
+        "ahead": "Jste před posledním vydáním ({{version}})",
+        "checkFailed": "Nepodařilo se zkontrolovat aktualizace",
+        "viewChangelog": "Zobrazit seznam změn"
+      }
     },
     "groups": {
       "general": "Obecné",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "Co je nového",
     "releaseNotes": "Poznámky k vydání",
-    "cta": "Dobře, jdeme na to"
+    "cta": "Dobře, jdeme na to",
+    "starAsk": "Líbí se vám Libre WebUI? Dejte hvězdičku na GitHubu"
   },
   "notes": {
     "title": "Poznámky",

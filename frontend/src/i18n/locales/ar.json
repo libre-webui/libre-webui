@@ -904,9 +904,19 @@
         "forgejo": "مرآة Forgejo",
         "forgejoDescription": "مستودع Forgejo مستضاف ذاتياً",
         "sponsor": "ادعم المشروع",
-        "sponsorDescription": "ساهم في تمويل المشروع"
+        "sponsorDescription": "ساهم في تمويل المشروع",
+        "star": "نجمة على GitHub",
+        "starDescription": "النجمة تساعد الآخرين على اكتشاف المشروع"
       },
-      "version": "الإصدار {{version}}"
+      "version": "الإصدار {{version}}",
+      "updates": {
+        "checking": "جارٍ البحث عن تحديثات…",
+        "upToDate": "أنت على أحدث إصدار",
+        "updateAvailable": "الإصدار {{version}} متاح",
+        "ahead": "أنت متقدم على أحدث إصدار ({{version}})",
+        "checkFailed": "تعذّر التحقق من التحديثات",
+        "viewChangelog": "عرض سجل التغييرات"
+      }
     },
     "groups": {
       "general": "عام",
@@ -2446,7 +2456,8 @@
   "whatsNew": {
     "title": "ما الجديد",
     "releaseNotes": "ملاحظات الإصدار",
-    "cta": "حسنًا، هيا بنا"
+    "cta": "حسنًا، هيا بنا",
+    "starAsk": "هل يعجبك Libre WebUI؟ اترك نجمة على GitHub"
   },
   "notes": {
     "title": "الملاحظات",
