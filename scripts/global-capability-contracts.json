@@ -3,7 +3,9 @@
   "scope": {
     "uiSource": "frontend/src/App.tsx",
     "backendSource": "backend/src/index.ts",
-    "excludedUiRoutes": ["/*"],
+    "excludedUiRoutes": [
+      "/*"
+    ],
     "providerContract": "scripts/capability-contracts.json",
     "backendRouteDirectory": "backend/src/routes",
     "websocketSource": "backend/src/websocketServer.ts"
@@ -12,11 +14,15 @@
     {
       "id": "home",
       "title": "Home",
-      "uiRoutes": ["/"],
+      "uiRoutes": [
+        "/"
+      ],
       "documentation": [
         {
           "file": "docs/00-README.md",
-          "patterns": ["Home greets you, offers what to start"]
+          "patterns": [
+            "Home greets you, offers what to start"
+          ]
         }
       ],
       "focusedTests": [
@@ -42,7 +48,10 @@
           "evidence": [
             {
               "file": "frontend/src/utils/welcomePrompts.ts",
-              "patterns": ["WELCOME_PROMPT_IDS", "getWelcomePromptId"]
+              "patterns": [
+                "WELCOME_PROMPT_IDS",
+                "getWelcomePromptId"
+              ]
             }
           ]
         }
@@ -51,7 +60,10 @@
     {
       "id": "chat",
       "title": "Chat",
-      "uiRoutes": ["/chat", "/c/:sessionId"],
+      "uiRoutes": [
+        "/chat",
+        "/c/:sessionId"
+      ],
       "documentation": [
         {
           "file": "docs/01-QUICK_START.md",
@@ -306,11 +318,15 @@
     {
       "id": "model-management",
       "title": "Model management",
-      "uiRoutes": ["/models"],
+      "uiRoutes": [
+        "/models"
+      ],
       "documentation": [
         {
           "file": "docs/02-WORKING_WITH_MODELS.md",
-          "patterns": ["## Model Manager"]
+          "patterns": [
+            "## Model Manager"
+          ]
         }
       ],
       "focusedTests": [
@@ -318,7 +334,10 @@
           "file": "frontend/e2e/model-manager.spec.ts",
           "runner": "test:e2e",
           "name": "cloud library pulls append the Ollama cloud suffix automatically",
-          "behaviorPatterns": ["/api/ollama/pull/stream", "gpt-oss:cloud"]
+          "behaviorPatterns": [
+            "/api/ollama/pull/stream",
+            "gpt-oss:cloud"
+          ]
         }
       ],
       "backendRoutes": [
@@ -638,7 +657,10 @@
           "evidence": [
             {
               "file": "backend/src/services/ollamaService.ts",
-              "patterns": ["modelDefaultsCache", "getModelDefaults"]
+              "patterns": [
+                "modelDefaultsCache",
+                "getModelDefaults"
+              ]
             }
           ]
         }
@@ -647,11 +669,21 @@
     {
       "id": "personas",
       "title": "Personas",
-      "uiRoutes": ["/personas"],
+      "uiRoutes": [
+        "/personas"
+      ],
       "documentation": [
         {
           "file": "docs/16-PERSONA_DEVELOPMENT_FRAMEWORK.md",
-          "patterns": ["Personas let you save a reusable assistant profile"]
+          "patterns": [
+            "Personas let you save a reusable assistant profile"
+          ]
+        },
+        {
+          "file": "docs/52-ASSISTANT_PROFILES.md",
+          "patterns": [
+            "Authorization is never frozen"
+          ]
         }
       ],
       "focusedTests": [
@@ -662,6 +694,15 @@
           "behaviorPatterns": [
             "service\\.storeMemory",
             "assert\\.equal\\(rows\\.size, 1\\)"
+          ]
+        },
+        {
+          "file": "scripts/test-assistant-profiles.mjs",
+          "runner": "test:package",
+          "name": "a profile stores its bindings normalized, versioned, and encrypted",
+          "behaviorPatterns": [
+            "the bindings column is populated",
+            "fetched\\.bindings, boundPersona\\.bindings"
           ]
         }
       ],
@@ -758,7 +799,10 @@
           "evidence": [
             {
               "file": "frontend/src/components/persona-form/defaults.ts",
-              "patterns": ["DEFAULT_FORM_DATA", "memory_settings"]
+              "patterns": [
+                "DEFAULT_FORM_DATA",
+                "memory_settings"
+              ]
             }
           ]
         }
@@ -767,11 +811,15 @@
     {
       "id": "media-gallery",
       "title": "Media gallery",
-      "uiRoutes": ["/gallery"],
+      "uiRoutes": [
+        "/gallery"
+      ],
       "documentation": [
         {
           "file": "docs/38-MEDIA_GENERATION.md",
-          "patterns": ["Open \\*\\*Imagine\\*\\* \\(`/gallery`\\)"]
+          "patterns": [
+            "Open \\*\\*Imagine\\*\\* \\(`/gallery`\\)"
+          ]
         }
       ],
       "focusedTests": [
@@ -917,7 +965,10 @@
           "evidence": [
             {
               "file": "scripts/capability-contracts.json",
-              "patterns": ["\"id\": \"image\"", "\"id\": \"video\""]
+              "patterns": [
+                "\"id\": \"image\"",
+                "\"id\": \"video\""
+              ]
             }
           ]
         },
@@ -925,7 +976,10 @@
           "evidence": [
             {
               "file": "scripts/test-capability-contracts.mjs",
-              "patterns": ["default_duration", "default_format"]
+              "patterns": [
+                "default_duration",
+                "default_format"
+              ]
             }
           ]
         }
@@ -934,11 +988,15 @@
     {
       "id": "notes",
       "title": "Notes",
-      "uiRoutes": ["/notes"],
+      "uiRoutes": [
+        "/notes"
+      ],
       "documentation": [
         {
           "file": "docs/03-PRO_TIPS.md",
-          "patterns": ["## Keep Durable Notes Beside Your Work"]
+          "patterns": [
+            "## Keep Durable Notes Beside Your Work"
+          ]
         }
       ],
       "focusedTests": [
@@ -946,7 +1004,10 @@
           "file": "frontend/e2e/notes.spec.ts",
           "runner": "test:e2e",
           "name": "notes open in Markdown preview and make editing explicit",
-          "behaviorPatterns": ["notes-preview", "notes-preview-toggle"]
+          "behaviorPatterns": [
+            "notes-preview",
+            "notes-preview-toggle"
+          ]
         }
       ],
       "backendRoutes": [
@@ -980,7 +1041,10 @@
           "evidence": [
             {
               "file": "backend/src/types/index.ts",
-              "patterns": ["export interface Note", "updatedAt: number"]
+              "patterns": [
+                "export interface Note",
+                "updatedAt: number"
+              ]
             }
           ]
         },
@@ -995,11 +1059,15 @@
     {
       "id": "calendar",
       "title": "Calendar",
-      "uiRoutes": ["/calendar"],
+      "uiRoutes": [
+        "/calendar"
+      ],
       "documentation": [
         {
           "file": "docs/47-CALENDAR.md",
-          "patterns": ["Range queries expand them server-side"]
+          "patterns": [
+            "Range queries expand them server-side"
+          ]
         }
       ],
       "focusedTests": [
@@ -1062,11 +1130,15 @@
     {
       "id": "automations",
       "title": "Automations",
-      "uiRoutes": ["/automations"],
+      "uiRoutes": [
+        "/automations"
+      ],
       "documentation": [
         {
           "file": "docs/48-AUTOMATIONS.md",
-          "patterns": ["each occurrence fires at most once"]
+          "patterns": [
+            "each occurrence fires at most once"
+          ]
         }
       ],
       "focusedTests": [
@@ -1182,9 +1254,382 @@
       }
     },
     {
+      "id": "prompts",
+      "title": "Prompt Library",
+      "uiRoutes": [
+        "/prompts"
+      ],
+      "documentation": [
+        {
+          "file": "docs/50-PROMPTS.md",
+          "patterns": [
+            "archives the prior revision"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-prompts.mjs",
+          "runner": "test:package",
+          "name": "prompts round-trip through the API and stay encrypted at rest",
+          "behaviorPatterns": [
+            "slugs stay plaintext for lookup",
+            "the title is encrypted"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/prompts.ts",
+          "mount": "/api/prompts",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/prompts.ts",
+          "mount": "/api/prompts",
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/prompts.ts",
+          "mount": "/api/prompts",
+          "method": "POST",
+          "path": "/import"
+        },
+        {
+          "file": "backend/src/routes/prompts.ts",
+          "mount": "/api/prompts",
+          "method": "GET",
+          "path": "/:promptId"
+        },
+        {
+          "file": "backend/src/routes/prompts.ts",
+          "mount": "/api/prompts",
+          "method": "PUT",
+          "path": "/:promptId"
+        },
+        {
+          "file": "backend/src/routes/prompts.ts",
+          "mount": "/api/prompts",
+          "method": "DELETE",
+          "path": "/:promptId"
+        },
+        {
+          "file": "backend/src/routes/prompts.ts",
+          "mount": "/api/prompts",
+          "method": "GET",
+          "path": "/:promptId/versions"
+        },
+        {
+          "file": "backend/src/routes/prompts.ts",
+          "mount": "/api/prompts",
+          "method": "POST",
+          "path": "/:promptId/rollback"
+        },
+        {
+          "file": "backend/src/routes/prompts.ts",
+          "mount": "/api/prompts",
+          "method": "GET",
+          "path": "/:promptId/export"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/services/promptService.ts",
+              "patterns": [
+                "export interface Prompt ",
+                "export interface PromptVariable"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Prompts are first-party account resources; their portable form is the versioned libre-prompt.v1 export document, not an installable or discovery manifest."
+        },
+        "defaults": {
+          "notApplicable": "A prompt has no implicit content default: every field is user-supplied and rendering substitutes only declared variables, enforced by scripts/test-prompts.mjs."
+        }
+      }
+    },
+    {
+      "id": "skills",
+      "title": "Skills",
+      "uiRoutes": [
+        "/skills"
+      ],
+      "documentation": [
+        {
+          "file": "docs/51-SKILLS.md",
+          "patterns": [
+            "The description is the manifest"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-skills.mjs",
+          "runner": "test:package",
+          "name": "skills round-trip through the API and stay encrypted at rest",
+          "behaviorPatterns": [
+            "slugs stay plaintext",
+            "the name is encrypted"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "POST",
+          "path": "/import"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "GET",
+          "path": "/:skillId"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "PUT",
+          "path": "/:skillId"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "DELETE",
+          "path": "/:skillId"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "GET",
+          "path": "/:skillId/versions"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "POST",
+          "path": "/:skillId/rollback"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "GET",
+          "path": "/:skillId/export"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/services/skillService.ts",
+              "patterns": [
+                "export interface Skill ",
+                "export interface SkillManifest"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "backend/src/services/skillService.ts",
+              "patterns": [
+                "export const skillManifest"
+              ]
+            }
+          ]
+        },
+        "defaults": {
+          "notApplicable": "A skill has no implicit content default: the manifest and instructions are exactly what the owner wrote, and disabled skills leave the manifest entirely."
+        }
+      }
+    },
+    {
+      "id": "chat-tools",
+      "title": "Chat Tools",
+      "uiRoutes": [
+        "/tools"
+      ],
+      "documentation": [
+        {
+          "file": "docs/49-CHAT_TOOLS.md",
+          "patterns": [
+            "Read-only tools run without asking"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-tool-gateway.mjs",
+          "runner": "test:package",
+          "name": "registering an OpenAPI server pins the spec and extracts its tools",
+          "behaviorPatterns": [
+            "petServer\\.specDigest",
+            "sideEffect, false"
+          ]
+        },
+        {
+          "file": "scripts/test-chat-tool-loop.mjs",
+          "runner": "test:package",
+          "name": "a side-effecting call waits for approval and then executes",
+          "behaviorPatterns": [
+            "nothing runs before the decision",
+            "the POST reached the mock"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "GET",
+          "path": "/access"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "PUT",
+          "path": "/access"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "GET",
+          "path": "/servers"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "POST",
+          "path": "/servers"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "GET",
+          "path": "/servers/:id"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "PUT",
+          "path": "/servers/:id"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "DELETE",
+          "path": "/servers/:id"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "POST",
+          "path": "/servers/:id/refresh"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "PUT",
+          "path": "/servers/:id/tools/:toolName"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "PUT",
+          "path": "/servers/:id/credential"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "DELETE",
+          "path": "/servers/:id/credential"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "GET",
+          "path": "/approvals"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "POST",
+          "path": "/approvals/:id"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "DELETE",
+          "path": "/approvals/:id"
+        },
+        {
+          "file": "backend/src/routes/tools.ts",
+          "mount": "/api/tools",
+          "method": "GET",
+          "path": "/catalog"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/tools.ts",
+              "patterns": [
+                "export interface ToolServer ",
+                "export interface ChatToolCall "
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "evidence": [
+            {
+              "file": "backend/src/services/toolServerService.ts",
+              "patterns": [
+                "const pinInventory",
+                "spec_digest: inventory.digest"
+              ]
+            }
+          ]
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/toolAccessService.ts",
+              "patterns": [
+                "The default is admins-only"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
       "id": "work",
       "title": "Work",
-      "uiRoutes": ["/work", "/work/:taskId"],
+      "uiRoutes": [
+        "/work",
+        "/work/:taskId"
+      ],
       "documentation": [
         {
           "file": "docs/33-WORKSPACES.md",
@@ -1198,7 +1643,10 @@
           "file": "scripts/test-work-runtime.mjs",
           "runner": "test:package",
           "name": "runtime limits expose admission capacity and live occupancy",
-          "behaviorPatterns": ["maxActiveRuntimesGlobal", "activeRuntimeCounts"]
+          "behaviorPatterns": [
+            "maxActiveRuntimesGlobal",
+            "activeRuntimeCounts"
+          ]
         },
         {
           "file": "scripts/test-websocket-tickets.mjs",
@@ -1426,7 +1874,10 @@
           "evidence": [
             {
               "file": "scripts/capability-contracts.json",
-              "patterns": ["\"id\": \"completion\"", "Work can use active"]
+              "patterns": [
+                "\"id\": \"completion\"",
+                "Work can use active"
+              ]
             }
           ]
         },
@@ -1446,11 +1897,15 @@
     {
       "id": "agent-cli",
       "title": "Agent CLI models",
-      "uiRoutes": ["/agents"],
+      "uiRoutes": [
+        "/agents"
+      ],
       "documentation": [
         {
           "file": "docs/36-AGENT_CLI_MODELS.md",
-          "patterns": ["# Use an Installed Coding Agent as a Chat Model"]
+          "patterns": [
+            "# Use an Installed Coding Agent as a Chat Model"
+          ]
         }
       ],
       "focusedTests": [
@@ -1491,7 +1946,10 @@
           "evidence": [
             {
               "file": "backend/src/services/agentAccessService.ts",
-              "patterns": ["AGENTS_ENABLED_KEY", "stay disabled"]
+              "patterns": [
+                "AGENTS_ENABLED_KEY",
+                "stay disabled"
+              ]
             }
           ]
         }
@@ -1500,11 +1958,15 @@
     {
       "id": "artifacts",
       "title": "Artifacts",
-      "uiRoutes": ["/artifacts"],
+      "uiRoutes": [
+        "/artifacts"
+      ],
       "documentation": [
         {
           "file": "docs/13-ARTIFACTS_FEATURE.md",
-          "patterns": ["Artifacts turn model-generated files and code blocks"]
+          "patterns": [
+            "Artifacts turn model-generated files and code blocks"
+          ]
         }
       ],
       "focusedTests": [
@@ -1512,7 +1974,10 @@
           "file": "frontend/e2e/artifacts.spec.ts",
           "runner": "test:e2e",
           "name": "chat detects multi-file HTML artifacts and renders them in the slide-out panel",
-          "behaviorPatterns": ["artifact-slide-out-panel", "allow-same-origin"]
+          "behaviorPatterns": [
+            "artifact-slide-out-panel",
+            "allow-same-origin"
+          ]
         }
       ],
       "backendRoutes": [
@@ -1539,7 +2004,10 @@
           "evidence": [
             {
               "file": "frontend/src/artifact-runtime/manifest.ts",
-              "patterns": ["single source of truth", "ARTIFACT_MODULES"]
+              "patterns": [
+                "single source of truth",
+                "ARTIFACT_MODULES"
+              ]
             }
           ]
         },
@@ -1559,7 +2027,9 @@
     {
       "id": "usage",
       "title": "Provider usage",
-      "uiRoutes": ["/usage"],
+      "uiRoutes": [
+        "/usage"
+      ],
       "documentation": [
         {
           "file": "docs/37-SYSTEM_MONITORING.md",
@@ -1573,7 +2043,10 @@
           "file": "scripts/test-plugin-usage-analytics.mjs",
           "runner": "test:package",
           "name": "the usage endpoint is explicitly protected by administrator middleware",
-          "behaviorPatterns": ["routeSource", "requireAdmin"]
+          "behaviorPatterns": [
+            "routeSource",
+            "requireAdmin"
+          ]
         }
       ],
       "backendRoutes": [
@@ -1603,7 +2076,10 @@
           "evidence": [
             {
               "file": "backend/src/services/pluginUsageService.ts",
-              "patterns": ["MAX_ANALYTICS_DAYS", "RETENTION_DAYS"]
+              "patterns": [
+                "MAX_ANALYTICS_DAYS",
+                "RETENTION_DAYS"
+              ]
             }
           ]
         }
@@ -1612,11 +2088,15 @@
     {
       "id": "system-diagnostics",
       "title": "System diagnostics",
-      "uiRoutes": ["/system"],
+      "uiRoutes": [
+        "/system"
+      ],
       "documentation": [
         {
           "file": "docs/37-SYSTEM_MONITORING.md",
-          "patterns": ["The System page \\(`/system`\\) reports"]
+          "patterns": [
+            "The System page \\(`/system`\\) reports"
+          ]
         }
       ],
       "focusedTests": [
@@ -1624,7 +2104,10 @@
           "file": "scripts/test-system-diagnostics.mjs",
           "runner": "test:package",
           "name": "system route requires both authentication and current administrator status",
-          "behaviorPatterns": ["authenticate", "requireAdmin"]
+          "behaviorPatterns": [
+            "authenticate",
+            "requireAdmin"
+          ]
         }
       ],
       "backendRoutes": [
@@ -1678,7 +2161,10 @@
           "evidence": [
             {
               "file": "backend/src/services/healthService.ts",
-              "patterns": ["READINESS_CACHE_MS", "HEALTH_CHECK_TIMEOUT_MS"]
+              "patterns": [
+                "READINESS_CACHE_MS",
+                "HEALTH_CHECK_TIMEOUT_MS"
+              ]
             }
           ]
         }
@@ -1687,7 +2173,9 @@
     {
       "id": "user-administration",
       "title": "User administration",
-      "uiRoutes": ["/users"],
+      "uiRoutes": [
+        "/users"
+      ],
       "documentation": [
         {
           "file": "docs/12-AUTHENTICATION.md",
@@ -1774,7 +2262,9 @@
     {
       "id": "authentication",
       "title": "Authentication",
-      "uiRoutes": ["/login"],
+      "uiRoutes": [
+        "/login"
+      ],
       "documentation": [
         {
           "file": "docs/12-AUTHENTICATION.md",
@@ -1786,7 +2276,7 @@
           "file": "docs/12-AUTHENTICATION.md",
           "patterns": [
             "Every login also creates a server-side session record bound into the JWT",
-            "Settings \u2192 API keys mints personal access tokens"
+            "Settings → API keys mints personal access tokens"
           ]
         }
       ],
@@ -1795,7 +2285,10 @@
           "file": "frontend/e2e/auth.spec.ts",
           "runner": "test:e2e",
           "name": "password login requires and submits a Turnstile token",
-          "behaviorPatterns": ["Security verification", "verified-login-token"]
+          "behaviorPatterns": [
+            "Security verification",
+            "verified-login-token"
+          ]
         },
         {
           "file": "scripts/test-auth-sessions.mjs",
@@ -2017,13 +2510,19 @@
           "file": "scripts/test-authorization.mjs",
           "runner": "test:package",
           "name": "group grants reach members and die with the membership",
-          "behaviorPatterns": ["addGroupMember", "removeGroupMember"]
+          "behaviorPatterns": [
+            "addGroupMember",
+            "removeGroupMember"
+          ]
         },
         {
           "file": "scripts/test-security-audit.mjs",
           "runner": "test:package",
           "name": "a rolled-back duplicate group create leaves no audit row",
-          "behaviorPatterns": ["group\\.create", "createGroup"]
+          "behaviorPatterns": [
+            "group\\.create",
+            "createGroup"
+          ]
         }
       ],
       "backendRoutes": [
@@ -2146,7 +2645,7 @@
         {
           "file": "docs/41-DATA_PORTABILITY.md",
           "patterns": [
-            "Settings \u2192 Data Management",
+            "Settings → Data Management",
             "GET`  \\| `/api/preferences/export"
           ]
         }
@@ -2198,7 +2697,10 @@
           "evidence": [
             {
               "file": "backend/src/services/dataArchiveService.ts",
-              "patterns": ["DATA_ARCHIVE_FORMAT", "DataArchiveIntegrity"]
+              "patterns": [
+                "DATA_ARCHIVE_FORMAT",
+                "DataArchiveIntegrity"
+              ]
             }
           ]
         },
@@ -2367,7 +2869,10 @@
           "evidence": [
             {
               "file": "backend/src/services/preferencesService.ts",
-              "patterns": ["embeddingSettings:", "model: 'nomic-embed-text'"]
+              "patterns": [
+                "embeddingSettings:",
+                "model: 'nomic-embed-text'"
+              ]
             }
           ]
         }
@@ -2464,7 +2969,10 @@
           "evidence": [
             {
               "file": "frontend/src/components/persona-form/defaults.ts",
-              "patterns": ["memory_settings:", "mutation_settings:"]
+              "patterns": [
+                "memory_settings:",
+                "mutation_settings:"
+              ]
             }
           ]
         }
@@ -2570,7 +3078,10 @@
       "sourceEvidence": [
         {
           "file": "backend/src/services/preferencesService.ts",
-          "patterns": ["getPreferences\\(", "updatePreferences\\("]
+          "patterns": [
+            "getPreferences\\(",
+            "updatePreferences\\("
+          ]
         }
       ],
       "documentation": [
@@ -2587,7 +3098,10 @@
           "file": "frontend/e2e/settings.spec.ts",
           "runner": "test:e2e",
           "name": "theme preference survives refresh and retries a failed save",
-          "behaviorPatterns": ["/api/preferences", "themeSyncPending"]
+          "behaviorPatterns": [
+            "/api/preferences",
+            "themeSyncPending"
+          ]
         }
       ],
       "backendRoutes": [
@@ -2665,7 +3179,10 @@
           "evidence": [
             {
               "file": "backend/src/services/preferencesService.ts",
-              "patterns": ["private defaultPreferences", "mode: 'dark'"]
+              "patterns": [
+                "private defaultPreferences",
+                "mode: 'dark'"
+              ]
             }
           ]
         }
@@ -2678,11 +3195,17 @@
       "sourceEvidence": [
         {
           "file": "backend/src/routes/stt.ts",
-          "patterns": ["router.post\\('/transcribe'", "executeSTTRequest\\("]
+          "patterns": [
+            "router.post\\('/transcribe'",
+            "executeSTTRequest\\("
+          ]
         },
         {
           "file": "backend/src/routes/tts.ts",
-          "patterns": ["router.post\\(", "executeTTSRequest\\("]
+          "patterns": [
+            "router.post\\(",
+            "executeTTSRequest\\("
+          ]
         }
       ],
       "documentation": [
@@ -2695,7 +3218,10 @@
         },
         {
           "file": "docs/27-QWEN3_TTS.md",
-          "patterns": ["text-to-speech", "Qwen3-TTS"]
+          "patterns": [
+            "text-to-speech",
+            "Qwen3-TTS"
+          ]
         }
       ],
       "focusedTests": [
@@ -2703,7 +3229,10 @@
           "file": "scripts/test-stt-routing.mjs",
           "runner": "test:package",
           "name": "STT sends an OpenAI-compatible multipart request to the selected route",
-          "behaviorPatterns": ["service\\.transcribe", "name=\"model\""]
+          "behaviorPatterns": [
+            "service\\.transcribe",
+            "name=\"model\""
+          ]
         },
         {
           "file": "frontend/e2e/stt.spec.ts",
@@ -2718,13 +3247,19 @@
           "file": "frontend/e2e/stt.spec.ts",
           "runner": "test:e2e",
           "name": "invalid provider audio is rejected safely without inserting a transcript",
-          "behaviorPatterns": ["status: 400", "toHaveValue\\(''\\)"]
+          "behaviorPatterns": [
+            "status: 400",
+            "toHaveValue\\(''\\)"
+          ]
         },
         {
           "file": "scripts/test-tts-routing.mjs",
           "runner": "test:package",
           "name": "TTS routes a shared model alias through the selected plugin and user valve",
-          "behaviorPatterns": ["executeTTSRequest", "apiKeyLookups"]
+          "behaviorPatterns": [
+            "executeTTSRequest",
+            "apiKeyLookups"
+          ]
         }
       ],
       "backendRoutes": [
@@ -2805,7 +3340,10 @@
           "evidence": [
             {
               "file": "scripts/capability-contracts.json",
-              "patterns": ["\"id\": \"stt\"", "\"id\": \"tts\""]
+              "patterns": [
+                "\"id\": \"stt\"",
+                "\"id\": \"tts\""
+              ]
             }
           ]
         },
@@ -2813,7 +3351,10 @@
           "evidence": [
             {
               "file": "scripts/test-capability-contracts.mjs",
-              "patterns": ["default_voice", "default_format"]
+              "patterns": [
+                "default_voice",
+                "default_format"
+              ]
             }
           ]
         }
@@ -2826,13 +3367,19 @@
       "sourceEvidence": [
         {
           "file": "backend/src/routes/huggingfaceHub.ts",
-          "patterns": ["router.use\\(authenticate\\)", "router.get\\("]
+          "patterns": [
+            "router.use\\(authenticate\\)",
+            "router.get\\("
+          ]
         }
       ],
       "documentation": [
         {
           "file": "docs/29-HUGGINGFACE_HUB.md",
-          "patterns": ["# Hugging Face Hub", "## Model Browser"]
+          "patterns": [
+            "# Hugging Face Hub",
+            "## Model Browser"
+          ]
         }
       ],
       "focusedTests": [
@@ -2909,7 +3456,10 @@
           "evidence": [
             {
               "file": "backend/src/routes/huggingfaceHub.ts",
-              "patterns": ["CACHE_TTL = 24", "VALID_HF_ID_PATTERN"]
+              "patterns": [
+                "CACHE_TTL = 24",
+                "VALID_HF_ID_PATTERN"
+              ]
             }
           ]
         }
@@ -2942,7 +3492,10 @@
           "file": "frontend/e2e/sidebar-create-actions.spec.ts",
           "runner": "test:e2e",
           "name": "Work and Agents are hidden and route-protected for non-admin users",
-          "behaviorPatterns": ["/api/libre-claw", "libreClawRequests"]
+          "behaviorPatterns": [
+            "/api/libre-claw",
+            "libreClawRequests"
+          ]
         }
       ],
       "backendRoutes": [
@@ -3122,7 +3675,10 @@
           "evidence": [
             {
               "file": "backend/src/services/libreClawService.ts",
-              "patterns": ["DEFAULT_BASE_URL", "LIBRE_CLAW_TIMEOUT_MS"]
+              "patterns": [
+                "DEFAULT_BASE_URL",
+                "LIBRE_CLAW_TIMEOUT_MS"
+              ]
             }
           ]
         }
@@ -3144,7 +3700,10 @@
       "documentation": [
         {
           "file": "docs/45-PLATFORM_FOUNDATION.md",
-          "patterns": ["## Durable jobs and events", "idempotent enqueue"]
+          "patterns": [
+            "## Durable jobs and events",
+            "idempotent enqueue"
+          ]
         }
       ],
       "focusedTests": [
@@ -3228,7 +3787,10 @@
       "documentation": [
         {
           "file": "docs/45-PLATFORM_FOUNDATION.md",
-          "patterns": ["## Runtime profiles", "LIBRE_PLATFORM_MODE=team"]
+          "patterns": [
+            "## Runtime profiles",
+            "LIBRE_PLATFORM_MODE=team"
+          ]
         }
       ],
       "focusedTests": [
@@ -3259,7 +3821,10 @@
           "evidence": [
             {
               "file": "helm/libre-webui/values.schema.json",
-              "patterns": ["replicaCount", "\"worker\": \\{"]
+              "patterns": [
+                "replicaCount",
+                "\"worker\": \\{"
+              ]
             }
           ]
         },
@@ -3267,7 +3832,10 @@
           "evidence": [
             {
               "file": "helm/libre-webui/values.yaml",
-              "patterns": ["replicaCount: 1", "ENABLE_SIGNUP: 'false'"]
+              "patterns": [
+                "replicaCount: 1",
+                "ENABLE_SIGNUP: 'false'"
+              ]
             }
           ]
         }
@@ -3280,7 +3848,10 @@
       "sourceEvidence": [
         {
           "file": "backend/src/cli/recoveryBackup.ts",
-          "patterns": ["createBackupArchive", "restore-team-apply"]
+          "patterns": [
+            "createBackupArchive",
+            "restore-team-apply"
+          ]
         }
       ],
       "documentation": [
