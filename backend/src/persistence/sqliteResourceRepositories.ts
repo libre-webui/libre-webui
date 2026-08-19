@@ -19,6 +19,9 @@ import type Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import type {
   ApplicationResourceRepositories,
+  AutomationRepository,
+  AutomationRunRepository,
+  CalendarEventRepository,
   ChatSessionRepository,
   DataArchiveApplyPlan,
   DataArchiveRepository,
@@ -26,6 +29,9 @@ import type {
   NoteRepository,
   PreferenceRepository,
   SessionFolderRepository,
+  StoredAutomationRecord,
+  StoredAutomationRunRecord,
+  StoredCalendarEventRecord,
   StoredChatMessageRecord,
   StoredChatSessionAggregate,
   StoredChatSessionRecord,
@@ -459,6 +465,414 @@ class SQLiteNoteRepository implements NoteRepository {
         .prepare('DELETE FROM notes WHERE id = ? AND user_id = ?')
         .run(noteId, userId).changes > 0
     );
+  }
+}
+
+class SQLiteCalendarEventRepository implements CalendarEventRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listByOwnerBetween(
+    userId: string,
+    from: number,
+    to: number,
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM calendar_events
+         WHERE user_id = ? AND start_at >= ? AND start_at < ?
+         ORDER BY start_at ASC
+         LIMIT ?`
+      )
+      .all(userId, from, to, maximum) as StoredCalendarEventRecord[];
+  }
+
+  async listRecurringByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM calendar_events
+         WHERE user_id = ? AND recurrence IS NOT NULL
+         ORDER BY start_at ASC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredCalendarEventRecord[];
+  }
+
+  async findByOwner(
+    eventId: string,
+    userId: string
+  ): Promise<StoredCalendarEventRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM calendar_events WHERE id = ? AND user_id = ?')
+        .get(eventId, userId) as StoredCalendarEventRecord | undefined) ?? null
+    );
+  }
+
+  async replaceWithLimit(
+    event: StoredCalendarEventRecord,
+    maximum: number
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      const exists = ensureSameOwner(
+        this.database,
+        'calendar_events',
+        event.id,
+        event.user_id
+      );
+      if (!exists) {
+        const row = this.database
+          .prepare(
+            'SELECT COUNT(*) AS count FROM calendar_events WHERE user_id = ?'
+          )
+          .get(event.user_id) as { count: number };
+        if (row.count >= maximum) {
+          throw new PersistenceResourceLimitError('calendar-event', maximum);
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO calendar_events
+             (id, user_id, title, notes, start_at, end_at, all_day,
+              recurrence, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             title = excluded.title,
+             notes = excluded.notes,
+             start_at = excluded.start_at,
+             end_at = excluded.end_at,
+             all_day = excluded.all_day,
+             recurrence = excluded.recurrence,
+             updated_at = excluded.updated_at
+           WHERE calendar_events.user_id = excluded.user_id`
+        )
+        .run(
+          event.id,
+          event.user_id,
+          event.title,
+          event.notes,
+          event.start_at,
+          event.end_at,
+          event.all_day,
+          event.recurrence,
+          event.created_at,
+          event.updated_at
+        );
+    });
+    replace();
+  }
+
+  async deleteByOwner(eventId: string, userId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM calendar_events WHERE id = ? AND user_id = ?')
+        .run(eventId, userId).changes > 0
+    );
+  }
+}
+
+class SQLiteAutomationRepository implements AutomationRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredAutomationRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM automations
+         WHERE user_id = ?
+         ORDER BY updated_at DESC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredAutomationRecord[];
+  }
+
+  async findByOwner(
+    automationId: string,
+    userId: string
+  ): Promise<StoredAutomationRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM automations WHERE id = ? AND user_id = ?')
+        .get(automationId, userId) as StoredAutomationRecord | undefined) ??
+      null
+    );
+  }
+
+  async findById(automationId: string): Promise<StoredAutomationRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM automations WHERE id = ?')
+        .get(automationId) as StoredAutomationRecord | undefined) ?? null
+    );
+  }
+
+  async replaceWithLimit(
+    automation: StoredAutomationRecord,
+    maximum: number
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      const exists = ensureSameOwner(
+        this.database,
+        'automations',
+        automation.id,
+        automation.user_id
+      );
+      if (!exists) {
+        const row = this.database
+          .prepare(
+            'SELECT COUNT(*) AS count FROM automations WHERE user_id = ?'
+          )
+          .get(automation.user_id) as { count: number };
+        if (row.count >= maximum) {
+          throw new PersistenceResourceLimitError('automation', maximum);
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO automations
+             (id, user_id, name, instructions, triggers, provider, model,
+              notify, status, next_run_at, last_run_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             name = excluded.name,
+             instructions = excluded.instructions,
+             triggers = excluded.triggers,
+             provider = excluded.provider,
+             model = excluded.model,
+             notify = excluded.notify,
+             status = excluded.status,
+             next_run_at = excluded.next_run_at,
+             last_run_at = excluded.last_run_at,
+             updated_at = excluded.updated_at
+           WHERE automations.user_id = excluded.user_id`
+        )
+        .run(
+          automation.id,
+          automation.user_id,
+          automation.name,
+          automation.instructions,
+          automation.triggers,
+          automation.provider,
+          automation.model,
+          automation.notify,
+          automation.status,
+          automation.next_run_at,
+          automation.last_run_at,
+          automation.created_at,
+          automation.updated_at
+        );
+    });
+    replace();
+  }
+
+  async listDue(
+    now: number,
+    maximum: number
+  ): Promise<StoredAutomationRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM automations
+         WHERE status = 'active'
+           AND next_run_at IS NOT NULL
+           AND next_run_at <= ?
+         ORDER BY next_run_at ASC
+         LIMIT ?`
+      )
+      .all(now, maximum) as StoredAutomationRecord[];
+  }
+
+  async advanceNextRun(
+    automationId: string,
+    observedNextRunAt: number,
+    nextRunAt: number | null,
+    lastRunAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE automations
+           SET next_run_at = ?, last_run_at = ?
+           WHERE id = ? AND next_run_at = ?`
+        )
+        .run(nextRunAt, lastRunAt, automationId, observedNextRunAt).changes > 0
+    );
+  }
+
+  async setStatus(
+    automationId: string,
+    userId: string,
+    status: string,
+    nextRunAt: number | null,
+    updatedAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE automations
+           SET status = ?, next_run_at = ?, updated_at = ?
+           WHERE id = ? AND user_id = ?`
+        )
+        .run(status, nextRunAt, updatedAt, automationId, userId).changes > 0
+    );
+  }
+
+  async deleteByOwner(automationId: string, userId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM automations WHERE id = ? AND user_id = ?')
+        .run(automationId, userId).changes > 0
+    );
+  }
+}
+
+class SQLiteAutomationRunRepository implements AutomationRunRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async insert(run: StoredAutomationRunRecord): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO automation_runs
+           (id, automation_id, user_id, scheduled_for, started_at,
+            finished_at, status, session_id, assistant_message_id, error,
+            seen_at, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        run.id,
+        run.automation_id,
+        run.user_id,
+        run.scheduled_for,
+        run.started_at,
+        run.finished_at,
+        run.status,
+        run.session_id,
+        run.assistant_message_id,
+        run.error,
+        run.seen_at,
+        run.created_at
+      );
+  }
+
+  async findByOwner(
+    runId: string,
+    userId: string
+  ): Promise<StoredAutomationRunRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM automation_runs WHERE id = ? AND user_id = ?')
+        .get(runId, userId) as StoredAutomationRunRecord | undefined) ?? null
+    );
+  }
+
+  async listByOwner(
+    userId: string,
+    options: {
+      automationId?: string;
+      from?: number;
+      to?: number;
+      maximum: number;
+    }
+  ): Promise<StoredAutomationRunRecord[]> {
+    const clauses = ['user_id = ?'];
+    const values: Array<string | number> = [userId];
+    if (options.automationId !== undefined) {
+      clauses.push('automation_id = ?');
+      values.push(options.automationId);
+    }
+    if (options.from !== undefined) {
+      clauses.push('scheduled_for >= ?');
+      values.push(options.from);
+    }
+    if (options.to !== undefined) {
+      clauses.push('scheduled_for < ?');
+      values.push(options.to);
+    }
+    values.push(options.maximum);
+    return this.database
+      .prepare(
+        `SELECT * FROM automation_runs
+         WHERE ${clauses.join(' AND ')}
+         ORDER BY scheduled_for DESC
+         LIMIT ?`
+      )
+      .all(...values) as StoredAutomationRunRecord[];
+  }
+
+  async listUnfinished(maximum: number): Promise<StoredAutomationRunRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM automation_runs
+         WHERE status IN ('queued', 'running')
+         ORDER BY scheduled_for ASC
+         LIMIT ?`
+      )
+      .all(maximum) as StoredAutomationRunRecord[];
+  }
+
+  async markStarted(
+    runId: string,
+    sessionId: string,
+    assistantMessageId: string,
+    startedAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE automation_runs
+           SET session_id = ?, assistant_message_id = ?, started_at = ?,
+               status = 'running'
+           WHERE id = ? AND status = 'queued'`
+        )
+        .run(sessionId, assistantMessageId, startedAt, runId).changes > 0
+    );
+  }
+
+  async finalize(
+    runId: string,
+    status: string,
+    finishedAt: number,
+    error: string | null
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE automation_runs
+           SET status = ?, finished_at = ?, error = ?
+           WHERE id = ? AND status IN ('queued', 'running')`
+        )
+        .run(status, finishedAt, error, runId).changes > 0
+    );
+  }
+
+  async countUnseenFinished(userId: string): Promise<number> {
+    const row = this.database
+      .prepare(
+        `SELECT COUNT(*) AS count FROM automation_runs
+         WHERE user_id = ?
+           AND status IN ('succeeded', 'failed')
+           AND seen_at IS NULL`
+      )
+      .get(userId) as { count: number };
+    return row.count;
+  }
+
+  async markSeenBefore(userId: string, seenAt: number): Promise<number> {
+    return this.database
+      .prepare(
+        `UPDATE automation_runs
+         SET seen_at = ?
+         WHERE user_id = ?
+           AND status IN ('succeeded', 'failed')
+           AND seen_at IS NULL
+           AND finished_at IS NOT NULL
+           AND finished_at <= ?`
+      )
+      .run(seenAt, userId, seenAt).changes;
   }
 }
 
@@ -1059,6 +1473,9 @@ export const createSQLiteResourceRepositories = (
   chatSessions: new SQLiteChatSessionRepository(database),
   knowledgeCollections: new SQLiteKnowledgeCollectionRepository(database),
   notes: new SQLiteNoteRepository(database),
+  calendarEvents: new SQLiteCalendarEventRepository(database),
+  automations: new SQLiteAutomationRepository(database),
+  automationRuns: new SQLiteAutomationRunRepository(database),
   sessionFolders: new SQLiteSessionFolderRepository(database),
   preferences: new SQLitePreferenceRepository(database),
   systemSettings: new SQLiteSystemSettingRepository(database),

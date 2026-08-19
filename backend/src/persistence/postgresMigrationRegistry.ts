@@ -19,6 +19,7 @@ import { POSTGRES_CORE_MIGRATION } from './postgresCoreMigration.js';
 import { POSTGRES_EXTENSION_MIGRATION } from './postgresExtensionMigration.js';
 import { POSTGRES_PLUGIN_DEFINITION_MIGRATION } from './postgresPluginDefinitionMigration.js';
 import { POSTGRES_TRUST_FOUNDATION_MIGRATION } from './postgresTrustFoundationMigration.js';
+import { POSTGRES_PERSONAL_AUTOMATIONS_MIGRATION } from './postgresPersonalAutomationsMigration.js';
 import type { PostgresMigration } from './postgresMigrationTypes.js';
 import { validatePostgresMigrationRegistry } from './postgresMigrations.js';
 
@@ -40,6 +41,7 @@ export const POSTGRES_MIGRATIONS: readonly PostgresMigration[] =
         POSTGRES_WORK_MESSAGE_CONTENT_MIGRATION,
         POSTGRES_DURABLE_EVENT_REPLAY_INDEX_MIGRATION,
         POSTGRES_TRUST_FOUNDATION_MIGRATION,
+        POSTGRES_PERSONAL_AUTOMATIONS_MIGRATION,
       ].map(migration => Object.freeze({ ...migration }))
     )
   );

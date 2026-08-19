@@ -102,6 +102,67 @@ export interface SessionFolder {
   updatedAt: number;
 }
 
+export type AutomationTrigger =
+  | { kind: 'once'; at: number }
+  | { kind: 'hourly'; minute: number; startHour?: number; endHour?: number }
+  | { kind: 'daily'; hour: number; minute: number }
+  | { kind: 'weekly'; dayOfWeek: number; hour: number; minute: number }
+  | { kind: 'monthly'; dayOfMonth: number; hour: number; minute: number }
+  | {
+      kind: 'yearly';
+      month: number;
+      dayOfMonth: number;
+      hour: number;
+      minute: number;
+    };
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  notes?: string;
+  startAt: number;
+  endAt?: number;
+  allDay: boolean;
+  recurrence?: AutomationTrigger;
+  createdAt: number;
+  updatedAt: number;
+  /** Present on expanded occurrences of a recurring event. */
+  baseEventId?: string;
+}
+
+export type AutomationNotify = 'app' | 'off';
+export type AutomationStatus = 'active' | 'paused';
+export type AutomationRunStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+
+export interface Automation {
+  id: string;
+  name: string;
+  instructions: string;
+  triggers: AutomationTrigger[];
+  /** Null provider/model means Auto: resolve the default model at run time. */
+  provider?: string;
+  model?: string;
+  notify: AutomationNotify;
+  status: AutomationStatus;
+  nextRunAt?: number;
+  lastRunAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AutomationRun {
+  id: string;
+  automationId: string;
+  scheduledFor: number;
+  startedAt?: number;
+  finishedAt?: number;
+  status: AutomationRunStatus;
+  sessionId?: string;
+  error?: string;
+  seen: boolean;
+  createdAt: number;
+}
+
 export interface ChatSessionSettings {
   generationOptions?: Partial<GenerationOptions>;
   knowledgeCollectionIds?: string[]; // Collections whose documents join this chat's context

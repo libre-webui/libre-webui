@@ -8,6 +8,9 @@ import type { PoolClient, QueryResultRow } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import type {
   ApplicationResourceRepositories,
+  AutomationRepository,
+  AutomationRunRepository,
+  CalendarEventRepository,
   ChatSessionRepository,
   DataArchiveApplyPlan,
   DataArchiveRepository,
@@ -16,6 +19,9 @@ import type {
   PersistenceCommitFence,
   PreferenceRepository,
   SessionFolderRepository,
+  StoredAutomationRecord,
+  StoredAutomationRunRecord,
+  StoredCalendarEventRecord,
   StoredChatMessageRecord,
   StoredChatSessionAggregate,
   StoredChatSessionRecord,
@@ -76,6 +82,46 @@ const note = (row: NumericRow): StoredNoteRecord => ({
   ...(row as unknown as StoredNoteRecord),
   created_at: number(row.created_at, 'note created_at'),
   updated_at: number(row.updated_at, 'note updated_at'),
+});
+
+const calendarEvent = (row: NumericRow): StoredCalendarEventRecord => ({
+  ...(row as unknown as StoredCalendarEventRecord),
+  start_at: number(row.start_at, 'calendar event start_at'),
+  end_at:
+    row.end_at === null ? null : number(row.end_at, 'calendar event end_at'),
+  all_day: number(row.all_day, 'calendar event all_day'),
+  created_at: number(row.created_at, 'calendar event created_at'),
+  updated_at: number(row.updated_at, 'calendar event updated_at'),
+});
+
+const automation = (row: NumericRow): StoredAutomationRecord => ({
+  ...(row as unknown as StoredAutomationRecord),
+  next_run_at:
+    row.next_run_at === null
+      ? null
+      : number(row.next_run_at, 'automation next_run_at'),
+  last_run_at:
+    row.last_run_at === null
+      ? null
+      : number(row.last_run_at, 'automation last_run_at'),
+  created_at: number(row.created_at, 'automation created_at'),
+  updated_at: number(row.updated_at, 'automation updated_at'),
+});
+
+const automationRun = (row: NumericRow): StoredAutomationRunRecord => ({
+  ...(row as unknown as StoredAutomationRunRecord),
+  scheduled_for: number(row.scheduled_for, 'automation run scheduled_for'),
+  started_at:
+    row.started_at === null
+      ? null
+      : number(row.started_at, 'automation run started_at'),
+  finished_at:
+    row.finished_at === null
+      ? null
+      : number(row.finished_at, 'automation run finished_at'),
+  seen_at:
+    row.seen_at === null ? null : number(row.seen_at, 'automation run seen_at'),
+  created_at: number(row.created_at, 'automation run created_at'),
 });
 
 const changes = (rowCount: number | null): number => rowCount ?? 0;
@@ -516,6 +562,435 @@ class PostgresNoteRepository implements NoteRepository {
           )
         ).rowCount
       ) > 0
+    );
+  }
+}
+
+class PostgresCalendarEventRepository implements CalendarEventRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async listByOwnerBetween(
+    userId: string,
+    from: number,
+    to: number,
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM calendar_events
+        WHERE user_id = $1 AND start_at >= $2 AND start_at < $3
+        ORDER BY start_at ASC
+        LIMIT $4`,
+      [userId, from, to, maximum]
+    );
+    return result.rows.map(calendarEvent);
+  }
+
+  async listRecurringByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM calendar_events
+        WHERE user_id = $1 AND recurrence IS NOT NULL
+        ORDER BY start_at ASC
+        LIMIT $2`,
+      [userId, maximum]
+    );
+    return result.rows.map(calendarEvent);
+  }
+
+  async findByOwner(
+    eventId: string,
+    userId: string
+  ): Promise<StoredCalendarEventRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM calendar_events WHERE id = $1 AND user_id = $2',
+      [eventId, userId]
+    );
+    return result.rows[0] ? calendarEvent(result.rows[0]) : null;
+  }
+
+  async replaceWithLimit(
+    value: StoredCalendarEventRecord,
+    maximum: number
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      await lockOwner(client, value.user_id);
+      const existing = await client.query<{ user_id: string }>(
+        'SELECT user_id FROM calendar_events WHERE id = $1 FOR UPDATE',
+        [value.id]
+      );
+      if (existing.rows[0] && existing.rows[0].user_id !== value.user_id) {
+        throw new PersistenceResourceConflictError();
+      }
+      if (!existing.rows[0]) {
+        const count = await client.query<{ count: string }>(
+          'SELECT COUNT(*)::text AS count FROM calendar_events WHERE user_id = $1',
+          [value.user_id]
+        );
+        if (Number(count.rows[0]?.count || 0) >= maximum) {
+          throw new PersistenceResourceLimitError('calendar-event', maximum);
+        }
+      }
+      const result = await client.query(
+        `INSERT INTO calendar_events
+           (id, user_id, title, notes, start_at, end_at, all_day,
+            recurrence, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         ON CONFLICT (id) DO UPDATE SET
+           title = EXCLUDED.title,
+           notes = EXCLUDED.notes,
+           start_at = EXCLUDED.start_at,
+           end_at = EXCLUDED.end_at,
+           all_day = EXCLUDED.all_day,
+           recurrence = EXCLUDED.recurrence,
+           updated_at = EXCLUDED.updated_at
+         WHERE calendar_events.user_id = EXCLUDED.user_id`,
+        [
+          value.id,
+          value.user_id,
+          value.title,
+          value.notes,
+          value.start_at,
+          value.end_at,
+          value.all_day,
+          value.recurrence,
+          value.created_at,
+          value.updated_at,
+        ]
+      );
+      if (result.rowCount !== 1) throw new PersistenceResourceConflictError();
+    });
+  }
+
+  async deleteByOwner(eventId: string, userId: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            'DELETE FROM calendar_events WHERE id = $1 AND user_id = $2',
+            [eventId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+}
+
+class PostgresAutomationRepository implements AutomationRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredAutomationRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM automations
+        WHERE user_id = $1
+        ORDER BY updated_at DESC
+        LIMIT $2`,
+      [userId, maximum]
+    );
+    return result.rows.map(automation);
+  }
+
+  async findByOwner(
+    automationId: string,
+    userId: string
+  ): Promise<StoredAutomationRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM automations WHERE id = $1 AND user_id = $2',
+      [automationId, userId]
+    );
+    return result.rows[0] ? automation(result.rows[0]) : null;
+  }
+
+  async findById(automationId: string): Promise<StoredAutomationRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM automations WHERE id = $1',
+      [automationId]
+    );
+    return result.rows[0] ? automation(result.rows[0]) : null;
+  }
+
+  async replaceWithLimit(
+    value: StoredAutomationRecord,
+    maximum: number
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      await lockOwner(client, value.user_id);
+      const existing = await client.query<{ user_id: string }>(
+        'SELECT user_id FROM automations WHERE id = $1 FOR UPDATE',
+        [value.id]
+      );
+      if (existing.rows[0] && existing.rows[0].user_id !== value.user_id) {
+        throw new PersistenceResourceConflictError();
+      }
+      if (!existing.rows[0]) {
+        const count = await client.query<{ count: string }>(
+          'SELECT COUNT(*)::text AS count FROM automations WHERE user_id = $1',
+          [value.user_id]
+        );
+        if (Number(count.rows[0]?.count || 0) >= maximum) {
+          throw new PersistenceResourceLimitError('automation', maximum);
+        }
+      }
+      const result = await client.query(
+        `INSERT INTO automations
+           (id, user_id, name, instructions, triggers, provider, model,
+            notify, status, next_run_at, last_run_at, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         ON CONFLICT (id) DO UPDATE SET
+           name = EXCLUDED.name,
+           instructions = EXCLUDED.instructions,
+           triggers = EXCLUDED.triggers,
+           provider = EXCLUDED.provider,
+           model = EXCLUDED.model,
+           notify = EXCLUDED.notify,
+           status = EXCLUDED.status,
+           next_run_at = EXCLUDED.next_run_at,
+           last_run_at = EXCLUDED.last_run_at,
+           updated_at = EXCLUDED.updated_at
+         WHERE automations.user_id = EXCLUDED.user_id`,
+        [
+          value.id,
+          value.user_id,
+          value.name,
+          value.instructions,
+          value.triggers,
+          value.provider,
+          value.model,
+          value.notify,
+          value.status,
+          value.next_run_at,
+          value.last_run_at,
+          value.created_at,
+          value.updated_at,
+        ]
+      );
+      if (result.rowCount !== 1) throw new PersistenceResourceConflictError();
+    });
+  }
+
+  async listDue(
+    now: number,
+    maximum: number
+  ): Promise<StoredAutomationRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM automations
+        WHERE status = 'active'
+          AND next_run_at IS NOT NULL
+          AND next_run_at <= $1
+        ORDER BY next_run_at ASC
+        LIMIT $2`,
+      [now, maximum]
+    );
+    return result.rows.map(automation);
+  }
+
+  async advanceNextRun(
+    automationId: string,
+    observedNextRunAt: number,
+    nextRunAt: number | null,
+    lastRunAt: number
+  ): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            `UPDATE automations
+              SET next_run_at = $1, last_run_at = $2
+              WHERE id = $3 AND next_run_at = $4`,
+            [nextRunAt, lastRunAt, automationId, observedNextRunAt]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async setStatus(
+    automationId: string,
+    userId: string,
+    status: string,
+    nextRunAt: number | null,
+    updatedAt: number
+  ): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            `UPDATE automations
+              SET status = $1, next_run_at = $2, updated_at = $3
+              WHERE id = $4 AND user_id = $5`,
+            [status, nextRunAt, updatedAt, automationId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async deleteByOwner(automationId: string, userId: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            'DELETE FROM automations WHERE id = $1 AND user_id = $2',
+            [automationId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+}
+
+class PostgresAutomationRunRepository implements AutomationRunRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async insert(run: StoredAutomationRunRecord): Promise<void> {
+    await this.database.query(
+      `INSERT INTO automation_runs
+         (id, automation_id, user_id, scheduled_for, started_at, finished_at,
+          status, session_id, assistant_message_id, error, seen_at, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        run.id,
+        run.automation_id,
+        run.user_id,
+        run.scheduled_for,
+        run.started_at,
+        run.finished_at,
+        run.status,
+        run.session_id,
+        run.assistant_message_id,
+        run.error,
+        run.seen_at,
+        run.created_at,
+      ]
+    );
+  }
+
+  async findByOwner(
+    runId: string,
+    userId: string
+  ): Promise<StoredAutomationRunRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM automation_runs WHERE id = $1 AND user_id = $2',
+      [runId, userId]
+    );
+    return result.rows[0] ? automationRun(result.rows[0]) : null;
+  }
+
+  async listByOwner(
+    userId: string,
+    options: {
+      automationId?: string;
+      from?: number;
+      to?: number;
+      maximum: number;
+    }
+  ): Promise<StoredAutomationRunRecord[]> {
+    const clauses = ['user_id = $1'];
+    const values: Array<string | number> = [userId];
+    if (options.automationId !== undefined) {
+      values.push(options.automationId);
+      clauses.push(`automation_id = $${values.length}`);
+    }
+    if (options.from !== undefined) {
+      values.push(options.from);
+      clauses.push(`scheduled_for >= $${values.length}`);
+    }
+    if (options.to !== undefined) {
+      values.push(options.to);
+      clauses.push(`scheduled_for < $${values.length}`);
+    }
+    values.push(options.maximum);
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM automation_runs
+        WHERE ${clauses.join(' AND ')}
+        ORDER BY scheduled_for DESC
+        LIMIT $${values.length}`,
+      values
+    );
+    return result.rows.map(automationRun);
+  }
+
+  async listUnfinished(maximum: number): Promise<StoredAutomationRunRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM automation_runs
+        WHERE status IN ('queued', 'running')
+        ORDER BY scheduled_for ASC
+        LIMIT $1`,
+      [maximum]
+    );
+    return result.rows.map(automationRun);
+  }
+
+  async markStarted(
+    runId: string,
+    sessionId: string,
+    assistantMessageId: string,
+    startedAt: number
+  ): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            `UPDATE automation_runs
+              SET session_id = $1, assistant_message_id = $2, started_at = $3,
+                  status = 'running'
+              WHERE id = $4 AND status = 'queued'`,
+            [sessionId, assistantMessageId, startedAt, runId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async finalize(
+    runId: string,
+    status: string,
+    finishedAt: number,
+    error: string | null
+  ): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            `UPDATE automation_runs
+              SET status = $1, finished_at = $2, error = $3
+              WHERE id = $4 AND status IN ('queued', 'running')`,
+            [status, finishedAt, error, runId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async countUnseenFinished(userId: string): Promise<number> {
+    const result = await this.database.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM automation_runs
+        WHERE user_id = $1
+          AND status IN ('succeeded', 'failed')
+          AND seen_at IS NULL`,
+      [userId]
+    );
+    return Number(result.rows[0]?.count || 0);
+  }
+
+  async markSeenBefore(userId: string, seenAt: number): Promise<number> {
+    return changes(
+      (
+        await this.database.query(
+          `UPDATE automation_runs
+            SET seen_at = $1
+            WHERE user_id = $2
+              AND status IN ('succeeded', 'failed')
+              AND seen_at IS NULL
+              AND finished_at IS NOT NULL
+              AND finished_at <= $3`,
+          [seenAt, userId, seenAt]
+        )
+      ).rowCount
     );
   }
 }
@@ -1172,6 +1647,9 @@ export const createPostgresResourceRepositories = (
   chatSessions: new PostgresChatSessionRepository(database),
   knowledgeCollections: new PostgresKnowledgeCollectionRepository(database),
   notes: new PostgresNoteRepository(database),
+  calendarEvents: new PostgresCalendarEventRepository(database),
+  automations: new PostgresAutomationRepository(database),
+  automationRuns: new PostgresAutomationRunRepository(database),
   sessionFolders: new PostgresSessionFolderRepository(database),
   preferences: new PostgresPreferenceRepository(database),
   systemSettings: new PostgresSystemSettingRepository(database),

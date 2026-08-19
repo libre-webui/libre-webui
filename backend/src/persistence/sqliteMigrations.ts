@@ -726,6 +726,50 @@ const TRUST_FOUNDATION_REQUIRED_SCHEMA = {
   ],
 } as const;
 
+const PERSONAL_AUTOMATIONS_REQUIRED_SCHEMA = {
+  calendar_events: [
+    'id',
+    'user_id',
+    'title',
+    'notes',
+    'start_at',
+    'end_at',
+    'all_day',
+    'recurrence',
+    'created_at',
+    'updated_at',
+  ],
+  automations: [
+    'id',
+    'user_id',
+    'name',
+    'instructions',
+    'triggers',
+    'provider',
+    'model',
+    'notify',
+    'status',
+    'next_run_at',
+    'last_run_at',
+    'created_at',
+    'updated_at',
+  ],
+  automation_runs: [
+    'id',
+    'automation_id',
+    'user_id',
+    'scheduled_for',
+    'started_at',
+    'finished_at',
+    'status',
+    'session_id',
+    'assistant_message_id',
+    'error',
+    'seen_at',
+    'created_at',
+  ],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -943,6 +987,68 @@ export const TRUST_FOUNDATION_SCHEMA_SQL = `
 
   CREATE INDEX IF NOT EXISTS idx_security_audit_action
     ON security_audit_events(action, occurred_at);
+`;
+
+export const PERSONAL_AUTOMATIONS_SCHEMA_SQL = `
+  CREATE TABLE IF NOT EXISTS calendar_events (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    notes TEXT,
+    start_at INTEGER NOT NULL,
+    end_at INTEGER,
+    all_day INTEGER NOT NULL DEFAULT 0,
+    recurrence TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_calendar_events_owner_start
+    ON calendar_events(user_id, start_at);
+
+  CREATE TABLE IF NOT EXISTS automations (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    instructions TEXT NOT NULL,
+    triggers TEXT NOT NULL,
+    provider TEXT,
+    model TEXT,
+    notify TEXT NOT NULL CHECK (notify IN ('app', 'off')),
+    status TEXT NOT NULL CHECK (status IN ('active', 'paused')),
+    next_run_at INTEGER,
+    last_run_at INTEGER,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_automations_owner
+    ON automations(user_id, updated_at);
+
+  CREATE INDEX IF NOT EXISTS idx_automations_due
+    ON automations(status, next_run_at);
+
+  CREATE TABLE IF NOT EXISTS automation_runs (
+    id TEXT PRIMARY KEY,
+    automation_id TEXT NOT NULL REFERENCES automations(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    scheduled_for INTEGER NOT NULL,
+    started_at INTEGER,
+    finished_at INTEGER,
+    status TEXT NOT NULL
+      CHECK (status IN ('queued', 'running', 'succeeded', 'failed')),
+    session_id TEXT,
+    assistant_message_id TEXT,
+    error TEXT,
+    seen_at INTEGER,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_automation_runs_automation
+    ON automation_runs(automation_id, scheduled_for);
+
+  CREATE INDEX IF NOT EXISTS idx_automation_runs_owner_time
+    ON automation_runs(user_id, scheduled_for);
 `;
 
 const REQUIRED_SCHEMA = {
@@ -1220,6 +1326,9 @@ const REQUIRED_PRIMARY_KEYS: Readonly<Record<string, readonly string[]>> = {
   api_tokens: ['id'],
   oauth_identities: ['provider', 'subject'],
   security_audit_events: ['id'],
+  calendar_events: ['id'],
+  automations: ['id'],
+  automation_runs: ['id'],
 };
 
 const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
@@ -1378,6 +1487,34 @@ const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
   },
   {
     table: 'oauth_identities',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'calendar_events',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'automations',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'automation_runs',
+    columns: ['automation_id'],
+    referencedTable: 'automations',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'automation_runs',
     columns: ['user_id'],
     referencedTable: 'users',
     referencedColumns: ['id'],
@@ -1580,6 +1717,31 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     name: 'idx_security_audit_action',
     table: 'security_audit_events',
     columns: ['action', 'occurred_at'],
+  },
+  {
+    name: 'idx_calendar_events_owner_start',
+    table: 'calendar_events',
+    columns: ['user_id', 'start_at'],
+  },
+  {
+    name: 'idx_automations_owner',
+    table: 'automations',
+    columns: ['user_id', 'updated_at'],
+  },
+  {
+    name: 'idx_automations_due',
+    table: 'automations',
+    columns: ['status', 'next_run_at'],
+  },
+  {
+    name: 'idx_automation_runs_automation',
+    table: 'automation_runs',
+    columns: ['automation_id', 'scheduled_for'],
+  },
+  {
+    name: 'idx_automation_runs_owner_time',
+    table: 'automation_runs',
+    columns: ['user_id', 'scheduled_for'],
   },
 ];
 
@@ -1961,6 +2123,7 @@ const collectMissingSchema = (database: Database.Database): string[] => [
   ...collectMissingDurableEventIdempotencySchema(database),
   ...collectMissingResourceDeletionLifecycleSchema(database),
   ...collectMissingTrustFoundationSchema(database),
+  ...collectMissingPersonalAutomationsSchema(database),
 ];
 
 const collectMissingMigrationLedgerSchema = (
@@ -2095,6 +2258,18 @@ const collectMissingTrustFoundationSchema = (
   ),
 ];
 
+const collectMissingPersonalAutomationsSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, PERSONAL_AUTOMATIONS_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(
+    item =>
+      item.includes('calendar_events') ||
+      item.includes('automations') ||
+      item.includes('automation_runs')
+  ),
+];
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -2141,6 +2316,7 @@ function collectMissingSchemaAtVersion(
       ? collectMissingDurableEventReplayIndexSchema(database)
       : []),
     ...(version >= 14 ? collectMissingTrustFoundationSchema(database) : []),
+    ...(version >= 15 ? collectMissingPersonalAutomationsSchema(database) : []),
   ];
 }
 
@@ -2224,6 +2400,8 @@ const TRUST_FOUNDATION_MIGRATION_CHECKSUM =
   'c5a73245de3cd3e37db8877c8457c975d789f98c1c71ae1e4fc891ba09e8de5a';
 const LEGACY_DURABLE_EVENT_REPLAY_INDEX_MIGRATION_CHECKSUM =
   'DURABLE_EVENT_REPLAY_INDEX_CHECKSUM_TO_FREEZE';
+const PERSONAL_AUTOMATIONS_MIGRATION_CHECKSUM =
+  '5bfb4a1789480a3cacc09c5a4359a4e77b82b0edafa80f6d78cde73e57ddc70b';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -2474,6 +2652,20 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite trust foundation schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 15,
+    name: 'personal-automations',
+    checksum: PERSONAL_AUTOMATIONS_MIGRATION_CHECKSUM,
+    apply(database) {
+      database.exec(PERSONAL_AUTOMATIONS_SCHEMA_SQL);
+      const missing = collectMissingPersonalAutomationsSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite personal automations schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

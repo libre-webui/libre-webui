@@ -997,6 +997,65 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
     ['id'],
     { integers: timestamps }
   ),
+  table(
+    'calendar_events',
+    'calendar_events',
+    [
+      'id',
+      'user_id',
+      'title',
+      'notes',
+      'start_at',
+      'end_at',
+      'all_day',
+      'recurrence',
+      'created_at',
+      'updated_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'start_at', 'end_at', 'all_day'] }
+  ),
+  table(
+    'automations',
+    'automations',
+    [
+      'id',
+      'user_id',
+      'name',
+      'instructions',
+      'triggers',
+      'provider',
+      'model',
+      'notify',
+      'status',
+      'next_run_at',
+      'last_run_at',
+      'created_at',
+      'updated_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'next_run_at', 'last_run_at'] }
+  ),
+  table(
+    'automation_runs',
+    'automation_runs',
+    [
+      'id',
+      'automation_id',
+      'user_id',
+      'scheduled_for',
+      'started_at',
+      'finished_at',
+      'status',
+      'session_id',
+      'assistant_message_id',
+      'error',
+      'seen_at',
+      'created_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'scheduled_for', 'seen_at'] }
+  ),
 ]);
 
 interface SourceTextNulField {

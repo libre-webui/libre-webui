@@ -80,28 +80,38 @@ test('PostgreSQL configuration rejects ambiguous TLS and unsafe bounds', () => {
 test('PostgreSQL migration registry is contiguous, checksummed, and frozen', () => {
   assert.deepEqual(
     POSTGRES_MIGRATIONS.map(migration => migration.version),
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
   );
   validatePostgresMigrationRegistry(POSTGRES_MIGRATIONS);
   assert.equal(Object.isFrozen(POSTGRES_MIGRATIONS), true);
   assert.equal(POSTGRES_MIGRATIONS.every(Object.isFrozen), true);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 14);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'trust-foundation');
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 12);
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'durable-event-replay-index');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 15);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'personal-automations');
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.version, 12);
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.name, 'durable-event-replay-index');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
     /CREATE INDEX idx_platform_events_stream_subject_cursor\s+ON platform_events \(stream_id, subject_id, global_cursor\)/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 13);
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'trust-foundation');
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 13);
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'trust-foundation');
   assert.match(
-    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /CREATE TABLE user_groups/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /CREATE TABLE security_audit_events/
+  );
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 14);
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'personal-automations');
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    /CREATE TABLE calendar_events/
+  );
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    /CREATE TABLE automation_runs/
   );
   assert.equal(
     SQLITE_MIGRATION_CONTRACT.some(

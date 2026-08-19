@@ -140,6 +140,140 @@ export interface NoteRepository {
   deleteByOwner(noteId: string, userId: string): Promise<boolean>;
 }
 
+export interface StoredCalendarEventRecord {
+  id: string;
+  user_id: string;
+  title: string;
+  notes: string | null;
+  start_at: number;
+  end_at: number | null;
+  all_day: number;
+  recurrence: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface CalendarEventRepository {
+  listByOwnerBetween(
+    userId: string,
+    from: number,
+    to: number,
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]>;
+  listRecurringByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]>;
+  findByOwner(
+    eventId: string,
+    userId: string
+  ): Promise<StoredCalendarEventRecord | null>;
+  replaceWithLimit(
+    event: StoredCalendarEventRecord,
+    maximum: number
+  ): Promise<void>;
+  deleteByOwner(eventId: string, userId: string): Promise<boolean>;
+}
+
+export interface StoredAutomationRecord {
+  id: string;
+  user_id: string;
+  name: string;
+  instructions: string;
+  triggers: string;
+  provider: string | null;
+  model: string | null;
+  notify: string;
+  status: string;
+  next_run_at: number | null;
+  last_run_at: number | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface StoredAutomationRunRecord {
+  id: string;
+  automation_id: string;
+  user_id: string;
+  scheduled_for: number;
+  started_at: number | null;
+  finished_at: number | null;
+  status: string;
+  session_id: string | null;
+  assistant_message_id: string | null;
+  error: string | null;
+  seen_at: number | null;
+  created_at: number;
+}
+
+export interface AutomationRepository {
+  listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredAutomationRecord[]>;
+  findByOwner(
+    automationId: string,
+    userId: string
+  ): Promise<StoredAutomationRecord | null>;
+  findById(automationId: string): Promise<StoredAutomationRecord | null>;
+  replaceWithLimit(
+    automation: StoredAutomationRecord,
+    maximum: number
+  ): Promise<void>;
+  /** Claim due automations: read active rows whose next_run_at is at or before now. */
+  listDue(now: number, maximum: number): Promise<StoredAutomationRecord[]>;
+  /**
+   * Advance scheduling state only when the row still carries the observed
+   * next_run_at, so concurrent ticks fire each occurrence exactly once.
+   */
+  advanceNextRun(
+    automationId: string,
+    observedNextRunAt: number,
+    nextRunAt: number | null,
+    lastRunAt: number
+  ): Promise<boolean>;
+  setStatus(
+    automationId: string,
+    userId: string,
+    status: string,
+    nextRunAt: number | null,
+    updatedAt: number
+  ): Promise<boolean>;
+  deleteByOwner(automationId: string, userId: string): Promise<boolean>;
+}
+
+export interface AutomationRunRepository {
+  insert(run: StoredAutomationRunRecord): Promise<void>;
+  findByOwner(
+    runId: string,
+    userId: string
+  ): Promise<StoredAutomationRunRecord | null>;
+  listByOwner(
+    userId: string,
+    options: {
+      automationId?: string;
+      from?: number;
+      to?: number;
+      maximum: number;
+    }
+  ): Promise<StoredAutomationRunRecord[]>;
+  listUnfinished(maximum: number): Promise<StoredAutomationRunRecord[]>;
+  markStarted(
+    runId: string,
+    sessionId: string,
+    assistantMessageId: string,
+    startedAt: number
+  ): Promise<boolean>;
+  finalize(
+    runId: string,
+    status: string,
+    finishedAt: number,
+    error: string | null
+  ): Promise<boolean>;
+  countUnseenFinished(userId: string): Promise<number>;
+  markSeenBefore(userId: string, seenAt: number): Promise<number>;
+}
+
 export interface SessionFolderRepository {
   listByOwner(
     userId: string,
@@ -291,6 +425,9 @@ export interface ApplicationResourceRepositories {
   chatSessions: ChatSessionRepository;
   knowledgeCollections: KnowledgeCollectionRepository;
   notes: NoteRepository;
+  calendarEvents: CalendarEventRepository;
+  automations: AutomationRepository;
+  automationRuns: AutomationRunRepository;
   sessionFolders: SessionFolderRepository;
   preferences: PreferenceRepository;
   systemSettings: SystemSettingRepository;
@@ -315,7 +452,8 @@ export class PersistenceResourceDeletionReservedError extends Error {
 
 export class PersistenceResourceLimitError extends Error {
   constructor(
-    readonly resource: 'note' | 'session-folder',
+    readonly resource:
+      'note' | 'session-folder' | 'calendar-event' | 'automation',
     readonly maximum: number
   ) {
     super(`The ${resource} storage limit of ${maximum} has been reached`);
