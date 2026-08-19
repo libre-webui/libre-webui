@@ -433,7 +433,8 @@
       "userManagement": "User Management",
       "signOut": "Sign Out",
       "exploreLabel": "Explore",
-      "notes": "Notes"
+      "notes": "Notes",
+      "calendar": "Calendar"
     },
     "toggleSize": "Toggle sidebar size",
     "expandSidebar": "Expand sidebar"
@@ -2456,6 +2457,33 @@
     "createFailed": "Could not create a note",
     "deleteConfirm": "Delete this note?",
     "deleteFailed": "Could not delete the note"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "month": "Month",
+    "week": "Week",
+    "previous": "Previous",
+    "next": "Next",
+    "newEvent": "New event",
+    "editEvent": "Edit event",
+    "eventTitle": "Title",
+    "titlePlaceholder": "Event title",
+    "date": "Date",
+    "start": "Start",
+    "end": "End",
+    "allDay": "All day",
+    "repeat": "Repeat",
+    "repeatNone": "Does not repeat",
+    "repeatDaily": "Daily",
+    "repeatWeekly": "Weekly",
+    "repeatMonthly": "Monthly",
+    "repeatYearly": "Yearly",
+    "notes": "Notes",
+    "more": "+{{n}} more",
+    "loadFailed": "Failed to load calendar",
+    "saveFailed": "Failed to save event",
+    "deleteFailed": "Failed to delete event"
   },
   "home": {
     "active": "active",

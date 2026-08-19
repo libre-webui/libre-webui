@@ -433,7 +433,8 @@
       "userManagement": "Gebruikersbeheer",
       "signOut": "Uitloggen",
       "exploreLabel": "Verkennen",
-      "notes": "Notities"
+      "notes": "Notities",
+      "calendar": "Kalender"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
     "expandSidebar": "Zijbalk uitvouwen"
@@ -2456,6 +2457,33 @@
     "createFailed": "Kon geen notitie maken",
     "deleteConfirm": "Deze notitie verwijderen?",
     "deleteFailed": "Kon de notitie niet verwijderen"
+  },
+  "calendar": {
+    "title": "Kalender",
+    "today": "Vandaag",
+    "month": "Maand",
+    "week": "Week",
+    "previous": "Vorige",
+    "next": "Volgende",
+    "newEvent": "Nieuwe afspraak",
+    "editEvent": "Afspraak bewerken",
+    "eventTitle": "Titel",
+    "titlePlaceholder": "Titel van de afspraak",
+    "date": "Datum",
+    "start": "Begin",
+    "end": "Einde",
+    "allDay": "Hele dag",
+    "repeat": "Herhalen",
+    "repeatNone": "Wordt niet herhaald",
+    "repeatDaily": "Dagelijks",
+    "repeatWeekly": "Wekelijks",
+    "repeatMonthly": "Maandelijks",
+    "repeatYearly": "Jaarlijks",
+    "notes": "Notities",
+    "more": "+{{n}} meer",
+    "loadFailed": "Kalender kon niet worden geladen",
+    "saveFailed": "Afspraak kon niet worden opgeslagen",
+    "deleteFailed": "Afspraak kon niet worden verwijderd"
   },
   "home": {
     "active": "actief",

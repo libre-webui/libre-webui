@@ -433,7 +433,8 @@
       "userManagement": "Kullanıcı Yönetimi",
       "signOut": "Çıkış Yap",
       "exploreLabel": "Keşfet",
-      "notes": "Notlar"
+      "notes": "Notlar",
+      "calendar": "Takvim"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -2456,6 +2457,33 @@
     "createFailed": "Not oluşturulamadı",
     "deleteConfirm": "Bu not silinsin mi?",
     "deleteFailed": "Not silinemedi"
+  },
+  "calendar": {
+    "title": "Takvim",
+    "today": "Bugün",
+    "month": "Ay",
+    "week": "Hafta",
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "newEvent": "Yeni etkinlik",
+    "editEvent": "Etkinliği düzenle",
+    "eventTitle": "Başlık",
+    "titlePlaceholder": "Etkinlik başlığı",
+    "date": "Tarih",
+    "start": "Başlangıç",
+    "end": "Bitiş",
+    "allDay": "Tüm gün",
+    "repeat": "Tekrarla",
+    "repeatNone": "Tekrarlanmaz",
+    "repeatDaily": "Her gün",
+    "repeatWeekly": "Her hafta",
+    "repeatMonthly": "Her ay",
+    "repeatYearly": "Her yıl",
+    "notes": "Notlar",
+    "more": "+{{n}} daha",
+    "loadFailed": "Takvim yüklenemedi",
+    "saveFailed": "Etkinlik kaydedilemedi",
+    "deleteFailed": "Etkinlik silinemedi"
   },
   "home": {
     "active": "etkin",

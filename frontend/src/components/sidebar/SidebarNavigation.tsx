@@ -19,6 +19,7 @@ import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   Bot,
+  CalendarDays,
   Database,
   NotebookPen,
   Sparkles,
@@ -35,6 +36,11 @@ interface SidebarNavigationProps {
 
 const DESTINATIONS = [
   { path: '/notes', icon: NotebookPen, labelKey: 'sidebar.navigation.notes' },
+  {
+    path: '/calendar',
+    icon: CalendarDays,
+    labelKey: 'sidebar.navigation.calendar',
+  },
   { path: '/models', icon: Database, labelKey: 'sidebar.navigation.models' },
   {
     path: '/personas',

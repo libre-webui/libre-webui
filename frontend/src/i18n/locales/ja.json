@@ -433,7 +433,8 @@
       "userManagement": "ユーザー管理",
       "signOut": "サインアウト",
       "exploreLabel": "探索",
-      "notes": "ノート"
+      "notes": "ノート",
+      "calendar": "カレンダー"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
     "expandSidebar": "サイドバーを展開"
@@ -2456,6 +2457,33 @@
     "createFailed": "ノートを作成できませんでした",
     "deleteConfirm": "このノートを削除しますか？",
     "deleteFailed": "ノートを削除できませんでした"
+  },
+  "calendar": {
+    "title": "カレンダー",
+    "today": "今日",
+    "month": "月",
+    "week": "週",
+    "previous": "前へ",
+    "next": "次へ",
+    "newEvent": "新しい予定",
+    "editEvent": "予定を編集",
+    "eventTitle": "タイトル",
+    "titlePlaceholder": "予定のタイトル",
+    "date": "日付",
+    "start": "開始",
+    "end": "終了",
+    "allDay": "終日",
+    "repeat": "繰り返し",
+    "repeatNone": "繰り返さない",
+    "repeatDaily": "毎日",
+    "repeatWeekly": "毎週",
+    "repeatMonthly": "毎月",
+    "repeatYearly": "毎年",
+    "notes": "メモ",
+    "more": "他{{n}}件",
+    "loadFailed": "カレンダーを読み込めませんでした",
+    "saveFailed": "予定を保存できませんでした",
+    "deleteFailed": "予定を削除できませんでした"
   },
   "home": {
     "active": "アクティブ",

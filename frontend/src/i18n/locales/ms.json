@@ -433,7 +433,8 @@
       "userManagement": "Pengurusan Pengguna",
       "signOut": "Log Keluar",
       "exploreLabel": "Terokai",
-      "notes": "Nota"
+      "notes": "Nota",
+      "calendar": "Kalendar"
     },
     "toggleSize": "Togol saiz bar sisi",
     "expandSidebar": "Kembangkan bar sisi"
@@ -2456,6 +2457,33 @@
     "createFailed": "Tidak dapat mencipta nota",
     "deleteConfirm": "Padam nota ini?",
     "deleteFailed": "Tidak dapat memadam nota"
+  },
+  "calendar": {
+    "title": "Kalendar",
+    "today": "Hari ini",
+    "month": "Bulan",
+    "week": "Minggu",
+    "previous": "Sebelumnya",
+    "next": "Seterusnya",
+    "newEvent": "Acara baharu",
+    "editEvent": "Edit acara",
+    "eventTitle": "Tajuk",
+    "titlePlaceholder": "Tajuk acara",
+    "date": "Tarikh",
+    "start": "Mula",
+    "end": "Tamat",
+    "allDay": "Sepanjang hari",
+    "repeat": "Ulang",
+    "repeatNone": "Tidak berulang",
+    "repeatDaily": "Harian",
+    "repeatWeekly": "Mingguan",
+    "repeatMonthly": "Bulanan",
+    "repeatYearly": "Tahunan",
+    "notes": "Nota",
+    "more": "+{{n}} lagi",
+    "loadFailed": "Gagal memuatkan kalendar",
+    "saveFailed": "Gagal menyimpan acara",
+    "deleteFailed": "Gagal memadamkan acara"
   },
   "home": {
     "active": "aktif",

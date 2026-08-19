@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Bot,
   Briefcase,
+  CalendarDays,
   Database,
   Ghost,
   Home,
@@ -177,6 +178,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         label: t('sidebar.navigation.imagine', 'Imagine'),
         icon: Sparkles,
         run: () => navigate('/gallery'),
+      },
+      {
+        id: 'action:calendar',
+        section: actionSection,
+        label: t('sidebar.navigation.calendar', 'Calendar'),
+        icon: CalendarDays,
+        run: () => navigate('/calendar'),
       },
       ...(showAgents
         ? [

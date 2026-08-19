@@ -433,7 +433,8 @@
       "userManagement": "Gestión de usuarios",
       "signOut": "Cerrar sesión",
       "exploreLabel": "Explorar",
-      "notes": "Notas"
+      "notes": "Notas",
+      "calendar": "Calendario"
     },
     "toggleSize": "Cambiar tamaño de barra lateral",
     "expandSidebar": "Expandir barra lateral"
@@ -2456,6 +2457,33 @@
     "createFailed": "No se pudo crear la nota",
     "deleteConfirm": "¿Eliminar esta nota?",
     "deleteFailed": "No se pudo eliminar la nota"
+  },
+  "calendar": {
+    "title": "Calendario",
+    "today": "Hoy",
+    "month": "Mes",
+    "week": "Semana",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "newEvent": "Nuevo evento",
+    "editEvent": "Editar evento",
+    "eventTitle": "Título",
+    "titlePlaceholder": "Título del evento",
+    "date": "Fecha",
+    "start": "Inicio",
+    "end": "Fin",
+    "allDay": "Todo el día",
+    "repeat": "Repetir",
+    "repeatNone": "No se repite",
+    "repeatDaily": "Diariamente",
+    "repeatWeekly": "Semanalmente",
+    "repeatMonthly": "Mensualmente",
+    "repeatYearly": "Anualmente",
+    "notes": "Notas",
+    "more": "+{{n}} más",
+    "loadFailed": "No se pudo cargar el calendario",
+    "saveFailed": "No se pudo guardar el evento",
+    "deleteFailed": "No se pudo eliminar el evento"
   },
   "home": {
     "active": "activo",

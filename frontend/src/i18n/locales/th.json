@@ -433,7 +433,8 @@
       "userManagement": "จัดการผู้ใช้",
       "signOut": "ออกจากระบบ",
       "exploreLabel": "สำรวจ",
-      "notes": "บันทึกย่อ"
+      "notes": "บันทึกย่อ",
+      "calendar": "ปฏิทิน"
     },
     "toggleSize": "สลับขนาดแถบด้านข้าง",
     "expandSidebar": "ขยายแถบด้านข้าง"
@@ -2456,6 +2457,33 @@
     "createFailed": "ไม่สามารถสร้างบันทึกได้",
     "deleteConfirm": "ลบบันทึกนี้?",
     "deleteFailed": "ไม่สามารถลบบันทึกได้"
+  },
+  "calendar": {
+    "title": "ปฏิทิน",
+    "today": "วันนี้",
+    "month": "เดือน",
+    "week": "สัปดาห์",
+    "previous": "ก่อนหน้า",
+    "next": "ถัดไป",
+    "newEvent": "กิจกรรมใหม่",
+    "editEvent": "แก้ไขกิจกรรม",
+    "eventTitle": "ชื่อ",
+    "titlePlaceholder": "ชื่อกิจกรรม",
+    "date": "วันที่",
+    "start": "เริ่ม",
+    "end": "สิ้นสุด",
+    "allDay": "ทั้งวัน",
+    "repeat": "ทำซ้ำ",
+    "repeatNone": "ไม่ทำซ้ำ",
+    "repeatDaily": "ทุกวัน",
+    "repeatWeekly": "ทุกสัปดาห์",
+    "repeatMonthly": "ทุกเดือน",
+    "repeatYearly": "ทุกปี",
+    "notes": "บันทึก",
+    "more": "อีก {{n}} รายการ",
+    "loadFailed": "โหลดปฏิทินไม่สำเร็จ",
+    "saveFailed": "บันทึกกิจกรรมไม่สำเร็จ",
+    "deleteFailed": "ลบกิจกรรมไม่สำเร็จ"
   },
   "home": {
     "active": "ใช้งานอยู่",

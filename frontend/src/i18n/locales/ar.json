@@ -433,7 +433,8 @@
       "userManagement": "إدارة المستخدمين",
       "signOut": "تسجيل الخروج",
       "exploreLabel": "استكشاف",
-      "notes": "الملاحظات"
+      "notes": "الملاحظات",
+      "calendar": "التقويم"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
     "expandSidebar": "توسيع الشريط الجانبي"
@@ -2456,6 +2457,33 @@
     "createFailed": "تعذر إنشاء ملاحظة",
     "deleteConfirm": "حذف هذه الملاحظة؟",
     "deleteFailed": "تعذر حذف الملاحظة"
+  },
+  "calendar": {
+    "title": "التقويم",
+    "today": "اليوم",
+    "month": "شهر",
+    "week": "أسبوع",
+    "previous": "السابق",
+    "next": "التالي",
+    "newEvent": "حدث جديد",
+    "editEvent": "تعديل الحدث",
+    "eventTitle": "العنوان",
+    "titlePlaceholder": "عنوان الحدث",
+    "date": "التاريخ",
+    "start": "البداية",
+    "end": "النهاية",
+    "allDay": "طوال اليوم",
+    "repeat": "تكرار",
+    "repeatNone": "لا يتكرر",
+    "repeatDaily": "يوميًا",
+    "repeatWeekly": "أسبوعيًا",
+    "repeatMonthly": "شهريًا",
+    "repeatYearly": "سنويًا",
+    "notes": "ملاحظات",
+    "more": "+{{n}} أخرى",
+    "loadFailed": "فشل تحميل التقويم",
+    "saveFailed": "فشل حفظ الحدث",
+    "deleteFailed": "فشل حذف الحدث"
   },
   "home": {
     "active": "نشط",

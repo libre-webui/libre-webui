@@ -433,7 +433,8 @@
       "userManagement": "उपयोगकर्ता प्रबंधन",
       "signOut": "साइन आउट",
       "exploreLabel": "एक्सप्लोर",
-      "notes": "नोट्स"
+      "notes": "नोट्स",
+      "calendar": "कैलेंडर"
     },
     "toggleSize": "साइडबार का आकार बदलें",
     "expandSidebar": "साइडबार विस्तारित करें"
@@ -2456,6 +2457,33 @@
     "createFailed": "नोट बनाया नहीं जा सका",
     "deleteConfirm": "यह नोट हटाएँ?",
     "deleteFailed": "नोट हटाया नहीं जा सका"
+  },
+  "calendar": {
+    "title": "कैलेंडर",
+    "today": "आज",
+    "month": "महीना",
+    "week": "सप्ताह",
+    "previous": "पिछला",
+    "next": "अगला",
+    "newEvent": "नया इवेंट",
+    "editEvent": "इवेंट संपादित करें",
+    "eventTitle": "शीर्षक",
+    "titlePlaceholder": "इवेंट का शीर्षक",
+    "date": "तारीख़",
+    "start": "शुरुआत",
+    "end": "समाप्ति",
+    "allDay": "पूरा दिन",
+    "repeat": "दोहराएँ",
+    "repeatNone": "दोहराया नहीं जाता",
+    "repeatDaily": "प्रतिदिन",
+    "repeatWeekly": "साप्ताहिक",
+    "repeatMonthly": "मासिक",
+    "repeatYearly": "वार्षिक",
+    "notes": "नोट्स",
+    "more": "+{{n}} और",
+    "loadFailed": "कैलेंडर लोड नहीं हो सका",
+    "saveFailed": "इवेंट सहेजा नहीं जा सका",
+    "deleteFailed": "इवेंट हटाया नहीं जा सका"
   },
   "home": {
     "active": "सक्रिय",

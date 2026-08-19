@@ -433,7 +433,8 @@
       "userManagement": "Zarządzanie użytkownikami",
       "signOut": "Wyloguj się",
       "exploreLabel": "Odkrywaj",
-      "notes": "Notatki"
+      "notes": "Notatki",
+      "calendar": "Kalendarz"
     },
     "toggleSize": "Zmień rozmiar panelu bocznego",
     "expandSidebar": "Rozwiń panel boczny"
@@ -2456,6 +2457,33 @@
     "createFailed": "Nie udało się utworzyć notatki",
     "deleteConfirm": "Usunąć tę notatkę?",
     "deleteFailed": "Nie udało się usunąć notatki"
+  },
+  "calendar": {
+    "title": "Kalendarz",
+    "today": "Dziś",
+    "month": "Miesiąc",
+    "week": "Tydzień",
+    "previous": "Poprzedni",
+    "next": "Następny",
+    "newEvent": "Nowe wydarzenie",
+    "editEvent": "Edytuj wydarzenie",
+    "eventTitle": "Tytuł",
+    "titlePlaceholder": "Tytuł wydarzenia",
+    "date": "Data",
+    "start": "Początek",
+    "end": "Koniec",
+    "allDay": "Cały dzień",
+    "repeat": "Powtarzaj",
+    "repeatNone": "Nie powtarza się",
+    "repeatDaily": "Codziennie",
+    "repeatWeekly": "Co tydzień",
+    "repeatMonthly": "Co miesiąc",
+    "repeatYearly": "Co rok",
+    "notes": "Notatki",
+    "more": "+{{n}} więcej",
+    "loadFailed": "Nie udało się załadować kalendarza",
+    "saveFailed": "Nie udało się zapisać wydarzenia",
+    "deleteFailed": "Nie udało się usunąć wydarzenia"
   },
   "home": {
     "active": "aktywny",

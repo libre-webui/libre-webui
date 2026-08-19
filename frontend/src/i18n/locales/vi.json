@@ -433,7 +433,8 @@
       "userManagement": "Quản lý người dùng",
       "signOut": "Đăng xuất",
       "exploreLabel": "Khám phá",
-      "notes": "Ghi chú"
+      "notes": "Ghi chú",
+      "calendar": "Lịch"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
     "expandSidebar": "Mở rộng thanh bên"
@@ -2456,6 +2457,33 @@
     "createFailed": "Không thể tạo ghi chú",
     "deleteConfirm": "Xóa ghi chú này?",
     "deleteFailed": "Không thể xóa ghi chú"
+  },
+  "calendar": {
+    "title": "Lịch",
+    "today": "Hôm nay",
+    "month": "Tháng",
+    "week": "Tuần",
+    "previous": "Trước",
+    "next": "Sau",
+    "newEvent": "Sự kiện mới",
+    "editEvent": "Chỉnh sửa sự kiện",
+    "eventTitle": "Tiêu đề",
+    "titlePlaceholder": "Tiêu đề sự kiện",
+    "date": "Ngày",
+    "start": "Bắt đầu",
+    "end": "Kết thúc",
+    "allDay": "Cả ngày",
+    "repeat": "Lặp lại",
+    "repeatNone": "Không lặp lại",
+    "repeatDaily": "Hằng ngày",
+    "repeatWeekly": "Hằng tuần",
+    "repeatMonthly": "Hằng tháng",
+    "repeatYearly": "Hằng năm",
+    "notes": "Ghi chú",
+    "more": "+{{n}} nữa",
+    "loadFailed": "Không thể tải lịch",
+    "saveFailed": "Không thể lưu sự kiện",
+    "deleteFailed": "Không thể xóa sự kiện"
   },
   "home": {
     "active": "đang hoạt động",

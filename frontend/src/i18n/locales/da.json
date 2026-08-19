@@ -433,7 +433,8 @@
       "userManagement": "Brugeradministration",
       "signOut": "Log ud",
       "exploreLabel": "Udforsk",
-      "notes": "Noter"
+      "notes": "Noter",
+      "calendar": "Kalender"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
     "expandSidebar": "Udvid sidebjælke"
@@ -2456,6 +2457,33 @@
     "createFailed": "Kunne ikke oprette en note",
     "deleteConfirm": "Slet denne note?",
     "deleteFailed": "Kunne ikke slette noten"
+  },
+  "calendar": {
+    "title": "Kalender",
+    "today": "I dag",
+    "month": "Måned",
+    "week": "Uge",
+    "previous": "Forrige",
+    "next": "Næste",
+    "newEvent": "Ny begivenhed",
+    "editEvent": "Rediger begivenhed",
+    "eventTitle": "Titel",
+    "titlePlaceholder": "Begivenhedens titel",
+    "date": "Dato",
+    "start": "Start",
+    "end": "Slut",
+    "allDay": "Hele dagen",
+    "repeat": "Gentag",
+    "repeatNone": "Gentages ikke",
+    "repeatDaily": "Dagligt",
+    "repeatWeekly": "Ugentligt",
+    "repeatMonthly": "Månedligt",
+    "repeatYearly": "Årligt",
+    "notes": "Noter",
+    "more": "+{{n}} flere",
+    "loadFailed": "Kalenderen kunne ikke indlæses",
+    "saveFailed": "Begivenheden kunne ikke gemmes",
+    "deleteFailed": "Begivenheden kunne ikke slettes"
   },
   "home": {
     "active": "aktiv",

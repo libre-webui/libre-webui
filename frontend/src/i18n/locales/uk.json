@@ -433,7 +433,8 @@
       "userManagement": "Керування користувачами",
       "signOut": "Вийти",
       "exploreLabel": "Огляд",
-      "notes": "Нотатки"
+      "notes": "Нотатки",
+      "calendar": "Календар"
     },
     "toggleSize": "Змінити розмір бічної панелі",
     "expandSidebar": "Розгорнути бічну панель"
@@ -2456,6 +2457,33 @@
     "createFailed": "Не вдалося створити нотатку",
     "deleteConfirm": "Видалити цю нотатку?",
     "deleteFailed": "Не вдалося видалити нотатку"
+  },
+  "calendar": {
+    "title": "Календар",
+    "today": "Сьогодні",
+    "month": "Місяць",
+    "week": "Тиждень",
+    "previous": "Назад",
+    "next": "Далі",
+    "newEvent": "Нова подія",
+    "editEvent": "Редагувати подію",
+    "eventTitle": "Назва",
+    "titlePlaceholder": "Назва події",
+    "date": "Дата",
+    "start": "Початок",
+    "end": "Кінець",
+    "allDay": "Увесь день",
+    "repeat": "Повторювати",
+    "repeatNone": "Не повторюється",
+    "repeatDaily": "Щодня",
+    "repeatWeekly": "Щотижня",
+    "repeatMonthly": "Щомісяця",
+    "repeatYearly": "Щороку",
+    "notes": "Нотатки",
+    "more": "ще {{n}}",
+    "loadFailed": "Не вдалося завантажити календар",
+    "saveFailed": "Не вдалося зберегти подію",
+    "deleteFailed": "Не вдалося видалити подію"
   },
   "home": {
     "active": "активно",

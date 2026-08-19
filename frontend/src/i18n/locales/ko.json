@@ -433,7 +433,8 @@
       "userManagement": "사용자 관리",
       "signOut": "로그아웃",
       "exploreLabel": "둘러보기",
-      "notes": "노트"
+      "notes": "노트",
+      "calendar": "캘린더"
     },
     "toggleSize": "사이드바 크기 전환",
     "expandSidebar": "사이드바 확장"
@@ -2456,6 +2457,33 @@
     "createFailed": "노트를 만들지 못했습니다",
     "deleteConfirm": "이 노트를 삭제할까요?",
     "deleteFailed": "노트를 삭제하지 못했습니다"
+  },
+  "calendar": {
+    "title": "캘린더",
+    "today": "오늘",
+    "month": "월",
+    "week": "주",
+    "previous": "이전",
+    "next": "다음",
+    "newEvent": "새 일정",
+    "editEvent": "일정 편집",
+    "eventTitle": "제목",
+    "titlePlaceholder": "일정 제목",
+    "date": "날짜",
+    "start": "시작",
+    "end": "종료",
+    "allDay": "종일",
+    "repeat": "반복",
+    "repeatNone": "반복 안 함",
+    "repeatDaily": "매일",
+    "repeatWeekly": "매주",
+    "repeatMonthly": "매월",
+    "repeatYearly": "매년",
+    "notes": "메모",
+    "more": "+{{n}}개 더",
+    "loadFailed": "캘린더를 불러오지 못했습니다",
+    "saveFailed": "일정을 저장하지 못했습니다",
+    "deleteFailed": "일정을 삭제하지 못했습니다"
   },
   "home": {
     "active": "활성",

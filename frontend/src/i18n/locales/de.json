@@ -433,7 +433,8 @@
       "userManagement": "Benutzerverwaltung",
       "signOut": "Abmelden",
       "exploreLabel": "Entdecken",
-      "notes": "Notizen"
+      "notes": "Notizen",
+      "calendar": "Kalender"
     },
     "toggleSize": "Seitenleistengröße umschalten",
     "expandSidebar": "Seitenleiste erweitern"
@@ -2456,6 +2457,33 @@
     "createFailed": "Notiz konnte nicht erstellt werden",
     "deleteConfirm": "Diese Notiz löschen?",
     "deleteFailed": "Notiz konnte nicht gelöscht werden"
+  },
+  "calendar": {
+    "title": "Kalender",
+    "today": "Heute",
+    "month": "Monat",
+    "week": "Woche",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "newEvent": "Neuer Termin",
+    "editEvent": "Termin bearbeiten",
+    "eventTitle": "Titel",
+    "titlePlaceholder": "Titel des Termins",
+    "date": "Datum",
+    "start": "Beginn",
+    "end": "Ende",
+    "allDay": "Ganztägig",
+    "repeat": "Wiederholen",
+    "repeatNone": "Keine Wiederholung",
+    "repeatDaily": "Täglich",
+    "repeatWeekly": "Wöchentlich",
+    "repeatMonthly": "Monatlich",
+    "repeatYearly": "Jährlich",
+    "notes": "Notizen",
+    "more": "+{{n}} weitere",
+    "loadFailed": "Kalender konnte nicht geladen werden",
+    "saveFailed": "Termin konnte nicht gespeichert werden",
+    "deleteFailed": "Termin konnte nicht gelöscht werden"
   },
   "home": {
     "active": "aktiv",

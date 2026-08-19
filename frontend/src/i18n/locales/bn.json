@@ -433,7 +433,8 @@
       "userManagement": "ব্যবহারকারী ব্যবস্থাপনা",
       "signOut": "সাইন আউট",
       "exploreLabel": "অন্বেষণ",
-      "notes": "নোট"
+      "notes": "নোট",
+      "calendar": "ক্যালেন্ডার"
     },
     "toggleSize": "সাইডবার সাইজ টগল করুন",
     "expandSidebar": "সাইডবার প্রসারিত করুন"
@@ -2456,6 +2457,33 @@
     "createFailed": "নোট তৈরি করা যায়নি",
     "deleteConfirm": "এই নোটটি মুছবেন?",
     "deleteFailed": "নোট মুছে ফেলা যায়নি"
+  },
+  "calendar": {
+    "title": "ক্যালেন্ডার",
+    "today": "আজ",
+    "month": "মাস",
+    "week": "সপ্তাহ",
+    "previous": "পূর্ববর্তী",
+    "next": "পরবর্তী",
+    "newEvent": "নতুন ইভেন্ট",
+    "editEvent": "ইভেন্ট সম্পাদনা",
+    "eventTitle": "শিরোনাম",
+    "titlePlaceholder": "ইভেন্টের শিরোনাম",
+    "date": "তারিখ",
+    "start": "শুরু",
+    "end": "শেষ",
+    "allDay": "সারা দিন",
+    "repeat": "পুনরাবৃত্তি",
+    "repeatNone": "পুনরাবৃত্তি হয় না",
+    "repeatDaily": "প্রতিদিন",
+    "repeatWeekly": "সাপ্তাহিক",
+    "repeatMonthly": "মাসিক",
+    "repeatYearly": "বার্ষিক",
+    "notes": "নোট",
+    "more": "+{{n}} আরও",
+    "loadFailed": "ক্যালেন্ডার লোড করা যায়নি",
+    "saveFailed": "ইভেন্ট সংরক্ষণ করা যায়নি",
+    "deleteFailed": "ইভেন্ট মুছে ফেলা যায়নি"
   },
   "home": {
     "active": "সক্রিয়",

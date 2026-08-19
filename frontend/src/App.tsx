@@ -78,6 +78,7 @@ const ModelsPage = React.lazy(() => import('@/pages/ModelsPage'));
 const PersonasPage = React.lazy(() => import('@/pages/PersonasPage'));
 const GalleryPage = React.lazy(() => import('@/pages/GalleryPage'));
 const NotesPage = React.lazy(() => import('@/pages/NotesPage'));
+const CalendarPage = React.lazy(() => import('@/pages/CalendarPage'));
 const LibreClawPage = React.lazy(() => import('@/pages/LibreClawPage'));
 const WorkPage = React.lazy(() => import('@/pages/WorkPage'));
 const UserManagementPage = React.lazy(
@@ -526,6 +527,7 @@ const AppContent: React.FC = () => {
             <Route path='/personas' element={<PersonasPage />} />
             <Route path='/gallery' element={<GalleryPage />} />
             <Route path='/notes' element={<NotesPage />} />
+            <Route path='/calendar' element={<CalendarPage />} />
             <Route
               path='/work'
               element={
@@ -593,6 +595,7 @@ const AppContent: React.FC = () => {
                     <Route path='/personas' element={<PersonasPage />} />
                     <Route path='/gallery' element={<GalleryPage />} />
                     <Route path='/notes' element={<NotesPage />} />
+                    <Route path='/calendar' element={<CalendarPage />} />
                     <Route
                       path='/work'
                       element={

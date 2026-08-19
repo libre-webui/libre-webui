@@ -433,7 +433,8 @@
       "userManagement": "Správa uživatelů",
       "signOut": "Odhlásit se",
       "exploreLabel": "Prozkoumat",
-      "notes": "Poznámky"
+      "notes": "Poznámky",
+      "calendar": "Kalendář"
     },
     "toggleSize": "Změnit velikost postranního panelu",
     "expandSidebar": "Rozbalit postranní panel"
@@ -2456,6 +2457,33 @@
     "createFailed": "Poznámku se nepodařilo vytvořit",
     "deleteConfirm": "Smazat tuto poznámku?",
     "deleteFailed": "Poznámku se nepodařilo smazat"
+  },
+  "calendar": {
+    "title": "Kalendář",
+    "today": "Dnes",
+    "month": "Měsíc",
+    "week": "Týden",
+    "previous": "Předchozí",
+    "next": "Další",
+    "newEvent": "Nová událost",
+    "editEvent": "Upravit událost",
+    "eventTitle": "Název",
+    "titlePlaceholder": "Název události",
+    "date": "Datum",
+    "start": "Začátek",
+    "end": "Konec",
+    "allDay": "Celý den",
+    "repeat": "Opakovat",
+    "repeatNone": "Neopakuje se",
+    "repeatDaily": "Denně",
+    "repeatWeekly": "Týdně",
+    "repeatMonthly": "Měsíčně",
+    "repeatYearly": "Ročně",
+    "notes": "Poznámky",
+    "more": "+{{n}} dalších",
+    "loadFailed": "Kalendář se nepodařilo načíst",
+    "saveFailed": "Událost se nepodařilo uložit",
+    "deleteFailed": "Událost se nepodařilo smazat"
   },
   "home": {
     "active": "aktivní",

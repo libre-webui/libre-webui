@@ -433,7 +433,8 @@
       "userManagement": "Manajemen Pengguna",
       "signOut": "Keluar",
       "exploreLabel": "Jelajahi",
-      "notes": "Catatan"
+      "notes": "Catatan",
+      "calendar": "Kalender"
     },
     "toggleSize": "Ubah ukuran sidebar",
     "expandSidebar": "Perluas sidebar"
@@ -2456,6 +2457,33 @@
     "createFailed": "Gagal membuat catatan",
     "deleteConfirm": "Hapus catatan ini?",
     "deleteFailed": "Gagal menghapus catatan"
+  },
+  "calendar": {
+    "title": "Kalender",
+    "today": "Hari ini",
+    "month": "Bulan",
+    "week": "Minggu",
+    "previous": "Sebelumnya",
+    "next": "Berikutnya",
+    "newEvent": "Acara baru",
+    "editEvent": "Edit acara",
+    "eventTitle": "Judul",
+    "titlePlaceholder": "Judul acara",
+    "date": "Tanggal",
+    "start": "Mulai",
+    "end": "Selesai",
+    "allDay": "Sepanjang hari",
+    "repeat": "Ulangi",
+    "repeatNone": "Tidak berulang",
+    "repeatDaily": "Harian",
+    "repeatWeekly": "Mingguan",
+    "repeatMonthly": "Bulanan",
+    "repeatYearly": "Tahunan",
+    "notes": "Catatan",
+    "more": "+{{n}} lagi",
+    "loadFailed": "Gagal memuat kalender",
+    "saveFailed": "Gagal menyimpan acara",
+    "deleteFailed": "Gagal menghapus acara"
   },
   "home": {
     "active": "aktif",

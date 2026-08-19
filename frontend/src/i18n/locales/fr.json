@@ -433,7 +433,8 @@
       "userManagement": "Gestion des utilisateurs",
       "signOut": "Déconnexion",
       "exploreLabel": "Explorer",
-      "notes": "Notes"
+      "notes": "Notes",
+      "calendar": "Calendrier"
     },
     "toggleSize": "Basculer la taille de la barre latérale",
     "expandSidebar": "Agrandir la barre latérale"
@@ -2456,6 +2457,33 @@
     "createFailed": "Impossible de créer une note",
     "deleteConfirm": "Supprimer cette note ?",
     "deleteFailed": "Impossible de supprimer la note"
+  },
+  "calendar": {
+    "title": "Calendrier",
+    "today": "Aujourd'hui",
+    "month": "Mois",
+    "week": "Semaine",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "newEvent": "Nouvel événement",
+    "editEvent": "Modifier l'événement",
+    "eventTitle": "Titre",
+    "titlePlaceholder": "Titre de l'événement",
+    "date": "Date",
+    "start": "Début",
+    "end": "Fin",
+    "allDay": "Toute la journée",
+    "repeat": "Répéter",
+    "repeatNone": "Ne se répète pas",
+    "repeatDaily": "Quotidien",
+    "repeatWeekly": "Hebdomadaire",
+    "repeatMonthly": "Mensuel",
+    "repeatYearly": "Annuel",
+    "notes": "Notes",
+    "more": "+{{n}} autres",
+    "loadFailed": "Impossible de charger le calendrier",
+    "saveFailed": "Impossible d'enregistrer l'événement",
+    "deleteFailed": "Impossible de supprimer l'événement"
   },
   "home": {
     "active": "actif",

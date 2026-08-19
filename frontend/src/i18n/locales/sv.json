@@ -433,7 +433,8 @@
       "userManagement": "Användarhantering",
       "signOut": "Logga ut",
       "exploreLabel": "Utforska",
-      "notes": "Anteckningar"
+      "notes": "Anteckningar",
+      "calendar": "Kalender"
     },
     "toggleSize": "Växla sidofältets storlek",
     "expandSidebar": "Expandera sidofältet"
@@ -2456,6 +2457,33 @@
     "createFailed": "Kunde inte skapa en anteckning",
     "deleteConfirm": "Ta bort den här anteckningen?",
     "deleteFailed": "Kunde inte ta bort anteckningen"
+  },
+  "calendar": {
+    "title": "Kalender",
+    "today": "Idag",
+    "month": "Månad",
+    "week": "Vecka",
+    "previous": "Föregående",
+    "next": "Nästa",
+    "newEvent": "Ny händelse",
+    "editEvent": "Redigera händelse",
+    "eventTitle": "Titel",
+    "titlePlaceholder": "Händelsens titel",
+    "date": "Datum",
+    "start": "Start",
+    "end": "Slut",
+    "allDay": "Hela dagen",
+    "repeat": "Upprepa",
+    "repeatNone": "Upprepas inte",
+    "repeatDaily": "Dagligen",
+    "repeatWeekly": "Varje vecka",
+    "repeatMonthly": "Varje månad",
+    "repeatYearly": "Varje år",
+    "notes": "Anteckningar",
+    "more": "+{{n}} till",
+    "loadFailed": "Kalendern kunde inte läsas in",
+    "saveFailed": "Händelsen kunde inte sparas",
+    "deleteFailed": "Händelsen kunde inte tas bort"
   },
   "home": {
     "active": "aktiv",

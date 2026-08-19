@@ -989,7 +989,7 @@
     {
       "id": "calendar",
       "title": "Calendar",
-      "uiRoutes": [],
+      "uiRoutes": ["/calendar"],
       "documentation": [
         {
           "file": "docs/47-CALENDAR.md",

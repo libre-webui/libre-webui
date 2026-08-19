@@ -105,6 +105,34 @@ export interface Note {
   updatedAt: number;
 }
 
+export type AutomationTrigger =
+  | { kind: 'once'; at: number }
+  | { kind: 'hourly'; minute: number; startHour?: number; endHour?: number }
+  | { kind: 'daily'; hour: number; minute: number }
+  | { kind: 'weekly'; dayOfWeek: number; hour: number; minute: number }
+  | { kind: 'monthly'; dayOfMonth: number; hour: number; minute: number }
+  | {
+      kind: 'yearly';
+      month: number;
+      dayOfMonth: number;
+      hour: number;
+      minute: number;
+    };
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  notes?: string;
+  startAt: number;
+  endAt?: number;
+  allDay: boolean;
+  recurrence?: AutomationTrigger;
+  createdAt: number;
+  updatedAt: number;
+  /** Present on server-expanded occurrences of a recurring event. */
+  baseEventId?: string;
+}
+
 export type ChatProviderType = 'ollama' | 'plugin' | 'agent';
 
 export interface ChatModelSelection {

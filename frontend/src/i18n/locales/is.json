@@ -433,7 +433,8 @@
       "userManagement": "Notendastjórnun",
       "signOut": "Skrá út",
       "exploreLabel": "Kanna",
-      "notes": "Glósur"
+      "notes": "Glósur",
+      "calendar": "Dagatal"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
     "expandSidebar": "Stækka hliðarspjald"
@@ -2456,6 +2457,33 @@
     "createFailed": "Ekki tókst að búa til glósu",
     "deleteConfirm": "Eyða þessari glósu?",
     "deleteFailed": "Ekki tókst að eyða glósunni"
+  },
+  "calendar": {
+    "title": "Dagatal",
+    "today": "Í dag",
+    "month": "Mánuður",
+    "week": "Vika",
+    "previous": "Fyrri",
+    "next": "Næsta",
+    "newEvent": "Nýr viðburður",
+    "editEvent": "Breyta viðburði",
+    "eventTitle": "Titill",
+    "titlePlaceholder": "Titill viðburðar",
+    "date": "Dagsetning",
+    "start": "Byrjun",
+    "end": "Lok",
+    "allDay": "Allan daginn",
+    "repeat": "Endurtaka",
+    "repeatNone": "Endurtekst ekki",
+    "repeatDaily": "Daglega",
+    "repeatWeekly": "Vikulega",
+    "repeatMonthly": "Mánaðarlega",
+    "repeatYearly": "Árlega",
+    "notes": "Minnispunktar",
+    "more": "+{{n}} í viðbót",
+    "loadFailed": "Ekki tókst að hlaða dagatalinu",
+    "saveFailed": "Ekki tókst að vista viðburðinn",
+    "deleteFailed": "Ekki tókst að eyða viðburðinum"
   },
   "home": {
     "active": "virkt",

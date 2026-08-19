@@ -433,7 +433,8 @@
       "userManagement": "Управление пользователями",
       "signOut": "Выйти",
       "exploreLabel": "Обзор",
-      "notes": "Заметки"
+      "notes": "Заметки",
+      "calendar": "Календарь"
     },
     "toggleSize": "Переключить размер боковой панели",
     "expandSidebar": "Развернуть боковую панель"
@@ -2456,6 +2457,33 @@
     "createFailed": "Не удалось создать заметку",
     "deleteConfirm": "Удалить эту заметку?",
     "deleteFailed": "Не удалось удалить заметку"
+  },
+  "calendar": {
+    "title": "Календарь",
+    "today": "Сегодня",
+    "month": "Месяц",
+    "week": "Неделя",
+    "previous": "Назад",
+    "next": "Вперёд",
+    "newEvent": "Новое событие",
+    "editEvent": "Изменить событие",
+    "eventTitle": "Название",
+    "titlePlaceholder": "Название события",
+    "date": "Дата",
+    "start": "Начало",
+    "end": "Конец",
+    "allDay": "Весь день",
+    "repeat": "Повторять",
+    "repeatNone": "Не повторяется",
+    "repeatDaily": "Ежедневно",
+    "repeatWeekly": "Еженедельно",
+    "repeatMonthly": "Ежемесячно",
+    "repeatYearly": "Ежегодно",
+    "notes": "Заметки",
+    "more": "ещё {{n}}",
+    "loadFailed": "Не удалось загрузить календарь",
+    "saveFailed": "Не удалось сохранить событие",
+    "deleteFailed": "Не удалось удалить событие"
   },
   "home": {
     "active": "активно",

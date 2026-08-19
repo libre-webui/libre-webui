@@ -28,6 +28,7 @@ import {
   Home,
   ListX,
   MessageSquare,
+  CalendarDays,
   NotebookPen,
   Package,
   PanelRightClose,
@@ -54,6 +55,7 @@ type IconComponent = React.ComponentType<{ className?: string }>;
 
 const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> = {
   '/notes': { icon: NotebookPen, labelKey: 'sidebar.navigation.notes' },
+  '/calendar': { icon: CalendarDays, labelKey: 'sidebar.navigation.calendar' },
   '/models': { icon: Database, labelKey: 'sidebar.navigation.models' },
   '/personas': { icon: UserIcon, labelKey: 'sidebar.navigation.personas' },
   '/gallery': { icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
@@ -365,12 +367,14 @@ export const AppTabBar: React.FC = () => {
           },
         ]
       : []),
-    ...['/notes', '/models', '/personas', '/gallery'].map(path => ({
-      key: path,
-      label: t(PAGE_META[path].labelKey, path.slice(1)),
-      icon: PAGE_META[path].icon,
-      action: () => navigate(path),
-    })),
+    ...['/notes', '/calendar', '/models', '/personas', '/gallery'].map(
+      path => ({
+        key: path,
+        label: t(PAGE_META[path].labelKey, path.slice(1)),
+        icon: PAGE_META[path].icon,
+        action: () => navigate(path),
+      })
+    ),
     ...(canUseAgents()
       ? [
           {
