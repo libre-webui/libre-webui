@@ -1304,6 +1304,7 @@ interface PgPersonaRow extends QueryResultRow {
   embedding_model: string | null;
   memory_settings: string | null;
   mutation_settings: string | null;
+  bindings: string | null;
   created_at: string | number;
   updated_at: string | number;
 }
@@ -1349,6 +1350,9 @@ class PostgresPersonaRepository implements PersonaRepository {
             ),
           }
         : {}),
+      ...(row.bindings
+        ? { bindings: parse<Persona['bindings']>(row.bindings) }
+        : {}),
       created_at: safeInteger(row.created_at, 'persona creation time'),
       updated_at: safeInteger(row.updated_at, 'persona update time'),
     };
@@ -1378,8 +1382,8 @@ class PostgresPersonaRepository implements PersonaRepository {
           `INSERT INTO personas
              (id, user_id, name, description, model, parameters, avatar,
               background, embedding_model, memory_settings, mutation_settings,
-              created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+              bindings, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
           [
             persona.id,
             persona.user_id,
@@ -1398,6 +1402,9 @@ class PostgresPersonaRepository implements PersonaRepository {
             persona.mutation_settings
               ? this.cipher.encrypt(JSON.stringify(persona.mutation_settings))
               : null,
+            persona.bindings
+              ? this.cipher.encrypt(JSON.stringify(persona.bindings))
+              : null,
             persona.created_at,
             persona.updated_at,
           ]
@@ -1412,8 +1419,8 @@ class PostgresPersonaRepository implements PersonaRepository {
       `UPDATE personas SET name = $1, description = $2, model = $3,
               parameters = $4, avatar = $5, background = $6,
               embedding_model = $7, memory_settings = $8,
-              mutation_settings = $9, updated_at = $10
-        WHERE id = $11 AND user_id = $12`,
+              mutation_settings = $9, bindings = $10, updated_at = $11
+        WHERE id = $12 AND user_id = $13`,
       [
         this.cipher.encrypt(persona.name),
         persona.description ? this.cipher.encrypt(persona.description) : null,
@@ -1427,6 +1434,9 @@ class PostgresPersonaRepository implements PersonaRepository {
           : null,
         persona.mutation_settings
           ? this.cipher.encrypt(JSON.stringify(persona.mutation_settings))
+          : null,
+        persona.bindings
+          ? this.cipher.encrypt(JSON.stringify(persona.bindings))
           : null,
         persona.updated_at,
         persona.id,
@@ -1494,6 +1504,14 @@ class PostgresPersonaRepository implements PersonaRepository {
         patch.mutation_settings === null
           ? null
           : this.cipher.encrypt(JSON.stringify(patch.mutation_settings))
+      );
+    }
+    if (patch.bindings !== undefined) {
+      assign(
+        'bindings',
+        patch.bindings === null
+          ? null
+          : this.cipher.encrypt(JSON.stringify(patch.bindings))
       );
     }
     assign('updated_at', patch.updated_at);

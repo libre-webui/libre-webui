@@ -770,6 +770,97 @@ const PERSONAL_AUTOMATIONS_REQUIRED_SCHEMA = {
   ],
 } as const;
 
+const AGENT_FOUNDATION_REQUIRED_SCHEMA = {
+  personas: ['bindings'],
+  tool_servers: [
+    'id',
+    'user_id',
+    'name',
+    'description',
+    'kind',
+    'base_url',
+    'spec',
+    'spec_digest',
+    'spec_revision',
+    'auth_mode',
+    'auth_header',
+    'access_mode',
+    'enabled',
+    'timeout_ms',
+    'max_response_bytes',
+    'created_at',
+    'updated_at',
+  ],
+  tool_server_tools: [
+    'id',
+    'server_id',
+    'name',
+    'description',
+    'params_schema',
+    'detail',
+    'side_effect',
+    'enabled',
+    'created_at',
+    'updated_at',
+  ],
+  tool_server_credentials: [
+    'id',
+    'server_id',
+    'user_id',
+    'secret',
+    'created_at',
+    'updated_at',
+  ],
+  tool_approvals: [
+    'id',
+    'user_id',
+    'session_id',
+    'server_id',
+    'tool_name',
+    'call_id',
+    'arguments_digest',
+    'scope',
+    'status',
+    'created_at',
+    'resolved_at',
+    'expires_at',
+  ],
+  prompts: [
+    'id',
+    'user_id',
+    'slug',
+    'title',
+    'description',
+    'content',
+    'variables',
+    'tags',
+    'version',
+    'created_at',
+    'updated_at',
+  ],
+  prompt_versions: [
+    'id',
+    'prompt_id',
+    'version',
+    'content',
+    'variables',
+    'created_at',
+  ],
+  skills: [
+    'id',
+    'user_id',
+    'slug',
+    'name',
+    'description',
+    'instructions',
+    'enabled',
+    'version',
+    'created_at',
+    'updated_at',
+  ],
+  skill_versions: ['id', 'skill_id', 'version', 'instructions', 'created_at'],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -1051,6 +1142,133 @@ export const PERSONAL_AUTOMATIONS_SCHEMA_SQL = `
     ON automation_runs(user_id, scheduled_for);
 `;
 
+export const AGENT_FOUNDATION_TABLES_SQL = `
+  CREATE TABLE IF NOT EXISTS tool_servers (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    kind TEXT NOT NULL CHECK (kind IN ('openapi', 'mcp')),
+    base_url TEXT NOT NULL,
+    spec TEXT,
+    spec_digest TEXT,
+    spec_revision INTEGER NOT NULL DEFAULT 1,
+    auth_mode TEXT NOT NULL CHECK (auth_mode IN ('none', 'bearer', 'header')),
+    auth_header TEXT,
+    access_mode TEXT NOT NULL
+      CHECK (access_mode IN ('admins-only', 'all-users', 'granted')),
+    enabled INTEGER NOT NULL DEFAULT 1,
+    timeout_ms INTEGER NOT NULL,
+    max_response_bytes INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_tool_servers_updated
+    ON tool_servers(updated_at);
+
+  CREATE TABLE IF NOT EXISTS tool_server_tools (
+    id TEXT PRIMARY KEY,
+    server_id TEXT NOT NULL REFERENCES tool_servers(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    params_schema TEXT,
+    detail TEXT,
+    side_effect INTEGER NOT NULL DEFAULT 1,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    UNIQUE (server_id, name)
+  );
+
+  CREATE TABLE IF NOT EXISTS tool_server_credentials (
+    id TEXT PRIMARY KEY,
+    server_id TEXT NOT NULL REFERENCES tool_servers(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    secret TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    UNIQUE (server_id, user_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS tool_approvals (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_id TEXT REFERENCES sessions(id) ON DELETE CASCADE,
+    server_id TEXT REFERENCES tool_servers(id) ON DELETE CASCADE,
+    tool_name TEXT NOT NULL,
+    call_id TEXT,
+    arguments_digest TEXT,
+    scope TEXT NOT NULL CHECK (scope IN ('once', 'session', 'always')),
+    status TEXT NOT NULL
+      CHECK (status IN ('pending', 'approved', 'denied', 'expired')),
+    created_at INTEGER NOT NULL,
+    resolved_at INTEGER,
+    expires_at INTEGER
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_tool_approvals_owner
+    ON tool_approvals(user_id, status, created_at);
+
+  CREATE TABLE IF NOT EXISTS prompts (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    slug TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    content TEXT NOT NULL,
+    variables TEXT,
+    tags TEXT,
+    version INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    UNIQUE (user_id, slug)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_prompts_owner
+    ON prompts(user_id, updated_at);
+
+  CREATE TABLE IF NOT EXISTS prompt_versions (
+    id TEXT PRIMARY KEY,
+    prompt_id TEXT NOT NULL REFERENCES prompts(id) ON DELETE CASCADE,
+    version INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    variables TEXT,
+    created_at INTEGER NOT NULL,
+    UNIQUE (prompt_id, version)
+  );
+
+  CREATE TABLE IF NOT EXISTS skills (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    slug TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    instructions TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    version INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    UNIQUE (user_id, slug)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_skills_owner
+    ON skills(user_id, updated_at);
+
+  CREATE TABLE IF NOT EXISTS skill_versions (
+    id TEXT PRIMARY KEY,
+    skill_id TEXT NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
+    version INTEGER NOT NULL,
+    instructions TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    UNIQUE (skill_id, version)
+  );
+`;
+
+export const AGENT_FOUNDATION_SCHEMA_SQL = `
+  ALTER TABLE personas ADD COLUMN bindings TEXT;
+${AGENT_FOUNDATION_TABLES_SQL}`;
+
 const REQUIRED_SCHEMA = {
   ...LEGACY_REQUIRED_SCHEMA,
   users: [
@@ -1329,6 +1547,14 @@ const REQUIRED_PRIMARY_KEYS: Readonly<Record<string, readonly string[]>> = {
   calendar_events: ['id'],
   automations: ['id'],
   automation_runs: ['id'],
+  tool_servers: ['id'],
+  tool_server_tools: ['id'],
+  tool_server_credentials: ['id'],
+  tool_approvals: ['id'],
+  prompts: ['id'],
+  prompt_versions: ['id'],
+  skills: ['id'],
+  skill_versions: ['id'],
 };
 
 const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
@@ -1349,6 +1575,12 @@ const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
     ['resource_type', 'resource_id', 'principal_type', 'principal_id'],
   ],
   api_tokens: [['token_hash']],
+  tool_server_tools: [['server_id', 'name']],
+  tool_server_credentials: [['server_id', 'user_id']],
+  prompts: [['user_id', 'slug']],
+  prompt_versions: [['prompt_id', 'version']],
+  skills: [['user_id', 'slug']],
+  skill_versions: [['skill_id', 'version']],
 };
 
 const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
@@ -1517,6 +1749,76 @@ const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
     table: 'automation_runs',
     columns: ['user_id'],
     referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'tool_servers',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'tool_server_tools',
+    columns: ['server_id'],
+    referencedTable: 'tool_servers',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'tool_server_credentials',
+    columns: ['server_id'],
+    referencedTable: 'tool_servers',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'tool_server_credentials',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'tool_approvals',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'tool_approvals',
+    columns: ['session_id'],
+    referencedTable: 'sessions',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'prompts',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'prompt_versions',
+    columns: ['prompt_id'],
+    referencedTable: 'prompts',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'skills',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'skill_versions',
+    columns: ['skill_id'],
+    referencedTable: 'skills',
     referencedColumns: ['id'],
     onDelete: 'CASCADE',
   },
@@ -1743,6 +2045,26 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     table: 'automation_runs',
     columns: ['user_id', 'scheduled_for'],
   },
+  {
+    name: 'idx_tool_servers_updated',
+    table: 'tool_servers',
+    columns: ['updated_at'],
+  },
+  {
+    name: 'idx_tool_approvals_owner',
+    table: 'tool_approvals',
+    columns: ['user_id', 'status', 'created_at'],
+  },
+  {
+    name: 'idx_prompts_owner',
+    table: 'prompts',
+    columns: ['user_id', 'updated_at'],
+  },
+  {
+    name: 'idx_skills_owner',
+    table: 'skills',
+    columns: ['user_id', 'updated_at'],
+  },
 ];
 
 const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
@@ -1782,6 +2104,15 @@ const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
     "permission IN ('read', 'write', 'admin')",
   ],
   security_audit_events: ["result IN ('success', 'denied', 'failure')"],
+  tool_servers: [
+    "kind IN ('openapi', 'mcp')",
+    "auth_mode IN ('none', 'bearer', 'header')",
+    "access_mode IN ('admins-only', 'all-users', 'granted')",
+  ],
+  tool_approvals: [
+    "scope IN ('once', 'session', 'always')",
+    "status IN ('pending', 'approved', 'denied', 'expired')",
+  ],
 };
 
 const quoteIdentifier = (identifier: string): string =>
@@ -2124,6 +2455,7 @@ const collectMissingSchema = (database: Database.Database): string[] => [
   ...collectMissingResourceDeletionLifecycleSchema(database),
   ...collectMissingTrustFoundationSchema(database),
   ...collectMissingPersonalAutomationsSchema(database),
+  ...collectMissingAgentFoundationSchema(database),
 ];
 
 const collectMissingMigrationLedgerSchema = (
@@ -2270,6 +2602,19 @@ const collectMissingPersonalAutomationsSchema = (
   ),
 ];
 
+const collectMissingAgentFoundationSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, AGENT_FOUNDATION_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(
+    item =>
+      item.includes('tool_server') ||
+      item.includes('tool_approvals') ||
+      item.includes('prompt') ||
+      item.includes('skill')
+  ),
+];
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -2317,6 +2662,7 @@ function collectMissingSchemaAtVersion(
       : []),
     ...(version >= 14 ? collectMissingTrustFoundationSchema(database) : []),
     ...(version >= 15 ? collectMissingPersonalAutomationsSchema(database) : []),
+    ...(version >= 16 ? collectMissingAgentFoundationSchema(database) : []),
   ];
 }
 
@@ -2402,6 +2748,8 @@ const LEGACY_DURABLE_EVENT_REPLAY_INDEX_MIGRATION_CHECKSUM =
   'DURABLE_EVENT_REPLAY_INDEX_CHECKSUM_TO_FREEZE';
 const PERSONAL_AUTOMATIONS_MIGRATION_CHECKSUM =
   '5bfb4a1789480a3cacc09c5a4359a4e77b82b0edafa80f6d78cde73e57ddc70b';
+const AGENT_FOUNDATION_MIGRATION_CHECKSUM =
+  '7e3a346fae66c073aac800aa45847999a4300b2f17eb3eaf9ed6351e891e2941';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -2666,6 +3014,21 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite personal automations schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 16,
+    name: 'agent-foundation',
+    checksum: AGENT_FOUNDATION_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(database, 'personas', 'bindings', 'TEXT');
+      database.exec(AGENT_FOUNDATION_TABLES_SQL);
+      const missing = collectMissingAgentFoundationSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite agent foundation schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

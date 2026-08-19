@@ -27,6 +27,26 @@ export const MAX_AUTOMATIONS_PER_USER = 50;
 export const MAX_AUTOMATION_NAME_LENGTH = 200;
 export const MAX_AUTOMATION_INSTRUCTIONS_LENGTH = 20_000;
 export const MAX_AUTOMATION_TRIGGERS = 5;
+export const MAX_TOOL_SERVERS = 50;
+export const MAX_TOOL_SERVER_NAME_LENGTH = 120;
+export const MAX_TOOL_SERVER_DESCRIPTION_LENGTH = 2000;
+export const MAX_TOOL_SERVER_SPEC_BYTES = 1_000_000;
+export const MAX_TOOL_SERVER_TOOLS = 128;
+export const MAX_TOOL_SERVER_SECRET_LENGTH = 4096;
+export const MAX_PROMPTS_PER_USER = 200;
+export const MAX_PROMPT_SLUG_LENGTH = 64;
+export const MAX_PROMPT_TITLE_LENGTH = 200;
+export const MAX_PROMPT_DESCRIPTION_LENGTH = 2000;
+export const MAX_PROMPT_CONTENT_LENGTH = 50_000;
+export const MAX_PROMPT_VARIABLES = 20;
+export const MAX_PROMPT_TAGS = 20;
+export const MAX_PROMPT_VERSIONS = 50;
+export const MAX_SKILLS_PER_USER = 100;
+export const MAX_SKILL_SLUG_LENGTH = 64;
+export const MAX_SKILL_NAME_LENGTH = 200;
+export const MAX_SKILL_DESCRIPTION_LENGTH = 1000;
+export const MAX_SKILL_INSTRUCTIONS_LENGTH = 100_000;
+export const MAX_SKILL_VERSIONS = 50;
 
 export class ResourcePolicyError extends Error {
   constructor(

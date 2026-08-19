@@ -897,6 +897,27 @@ export interface AdvancedFeatures {
     sensitivity: 'low' | 'medium' | 'high';
     auto_adapt: boolean;
   };
+  bindings?: PersonaBindings;
+}
+
+/**
+ * Assistant-profile bindings: the resources a persona composes beyond its
+ * model and generation parameters. Every id is revalidated against the
+ * invoking user's effective permissions when the persona is used, never at
+ * bind time alone.
+ */
+export interface PersonaBindings {
+  knowledge_collection_ids?: string[];
+  tool_server_ids?: string[];
+  builtin_tools?: string[];
+  skill_ids?: string[];
+  prompt_id?: string;
+  voice?: {
+    plugin_id: string;
+    voice: string;
+  };
+  /** Monotonic revision counter, incremented on every binding change. */
+  version?: number;
 }
 
 export interface Persona extends AdvancedFeatures {

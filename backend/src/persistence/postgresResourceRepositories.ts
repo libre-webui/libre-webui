@@ -18,7 +18,9 @@ import type {
   NoteRepository,
   PersistenceCommitFence,
   PreferenceRepository,
+  PromptRepository,
   SessionFolderRepository,
+  SkillRepository,
   StoredAutomationRecord,
   StoredAutomationRunRecord,
   StoredCalendarEventRecord,
@@ -29,7 +31,19 @@ import type {
   StoredNotePatch,
   StoredNoteRecord,
   StoredPreferenceRecord,
+  StoredPromptRecord,
+  StoredPromptVersionRecord,
+  StoredSkillRecord,
+  StoredSkillVersionRecord,
+  StoredToolApprovalRecord,
+  StoredToolServerCredentialRecord,
+  StoredToolServerRecord,
+  StoredToolServerToolRecord,
   SystemSettingRepository,
+  ToolApprovalRepository,
+  ToolServerCredentialRepository,
+  ToolServerRepository,
+  ToolServerToolRepository,
 } from './resourceTypes.js';
 import {
   PersistenceResourceConflictError,
@@ -122,6 +136,75 @@ const automationRun = (row: NumericRow): StoredAutomationRunRecord => ({
   seen_at:
     row.seen_at === null ? null : number(row.seen_at, 'automation run seen_at'),
   created_at: number(row.created_at, 'automation run created_at'),
+});
+
+const toolServer = (row: NumericRow): StoredToolServerRecord => ({
+  ...(row as unknown as StoredToolServerRecord),
+  spec_revision: number(row.spec_revision, 'tool server spec_revision'),
+  enabled: number(row.enabled, 'tool server enabled'),
+  timeout_ms: number(row.timeout_ms, 'tool server timeout_ms'),
+  max_response_bytes: number(
+    row.max_response_bytes,
+    'tool server max_response_bytes'
+  ),
+  created_at: number(row.created_at, 'tool server created_at'),
+  updated_at: number(row.updated_at, 'tool server updated_at'),
+});
+
+const toolServerTool = (row: NumericRow): StoredToolServerToolRecord => ({
+  ...(row as unknown as StoredToolServerToolRecord),
+  side_effect: number(row.side_effect, 'tool side_effect'),
+  enabled: number(row.enabled, 'tool enabled'),
+  created_at: number(row.created_at, 'tool created_at'),
+  updated_at: number(row.updated_at, 'tool updated_at'),
+});
+
+const toolServerCredential = (
+  row: NumericRow
+): StoredToolServerCredentialRecord => ({
+  ...(row as unknown as StoredToolServerCredentialRecord),
+  created_at: number(row.created_at, 'tool credential created_at'),
+  updated_at: number(row.updated_at, 'tool credential updated_at'),
+});
+
+const toolApproval = (row: NumericRow): StoredToolApprovalRecord => ({
+  ...(row as unknown as StoredToolApprovalRecord),
+  created_at: number(row.created_at, 'tool approval created_at'),
+  resolved_at:
+    row.resolved_at === null
+      ? null
+      : number(row.resolved_at, 'tool approval resolved_at'),
+  expires_at:
+    row.expires_at === null
+      ? null
+      : number(row.expires_at, 'tool approval expires_at'),
+});
+
+const prompt = (row: NumericRow): StoredPromptRecord => ({
+  ...(row as unknown as StoredPromptRecord),
+  version: number(row.version, 'prompt version'),
+  created_at: number(row.created_at, 'prompt created_at'),
+  updated_at: number(row.updated_at, 'prompt updated_at'),
+});
+
+const promptVersion = (row: NumericRow): StoredPromptVersionRecord => ({
+  ...(row as unknown as StoredPromptVersionRecord),
+  version: number(row.version, 'prompt revision version'),
+  created_at: number(row.created_at, 'prompt revision created_at'),
+});
+
+const skill = (row: NumericRow): StoredSkillRecord => ({
+  ...(row as unknown as StoredSkillRecord),
+  enabled: number(row.enabled, 'skill enabled'),
+  version: number(row.version, 'skill version'),
+  created_at: number(row.created_at, 'skill created_at'),
+  updated_at: number(row.updated_at, 'skill updated_at'),
+});
+
+const skillVersion = (row: NumericRow): StoredSkillVersionRecord => ({
+  ...(row as unknown as StoredSkillVersionRecord),
+  version: number(row.version, 'skill revision version'),
+  created_at: number(row.created_at, 'skill revision created_at'),
 });
 
 const changes = (rowCount: number | null): number => rowCount ?? 0;
@@ -995,6 +1078,691 @@ class PostgresAutomationRunRepository implements AutomationRunRepository {
   }
 }
 
+class PostgresToolServerRepository implements ToolServerRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async list(maximum: number): Promise<StoredToolServerRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM tool_servers
+        ORDER BY updated_at DESC
+        LIMIT $1`,
+      [maximum]
+    );
+    return result.rows.map(toolServer);
+  }
+
+  async findById(serverId: string): Promise<StoredToolServerRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM tool_servers WHERE id = $1',
+      [serverId]
+    );
+    return result.rows[0] ? toolServer(result.rows[0]) : null;
+  }
+
+  async replaceWithLimit(
+    value: StoredToolServerRecord,
+    maximum: number
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      await lockOwner(client, value.user_id);
+      const existing = await client.query(
+        'SELECT id FROM tool_servers WHERE id = $1 FOR UPDATE',
+        [value.id]
+      );
+      if (!existing.rows[0]) {
+        const count = await client.query<{ count: string }>(
+          'SELECT COUNT(*)::text AS count FROM tool_servers'
+        );
+        if (Number(count.rows[0]?.count || 0) >= maximum) {
+          throw new PersistenceResourceLimitError('tool-server', maximum);
+        }
+      }
+      await client.query(
+        `INSERT INTO tool_servers
+           (id, user_id, name, description, kind, base_url, spec, spec_digest,
+            spec_revision, auth_mode, auth_header, access_mode, enabled,
+            timeout_ms, max_response_bytes, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+                 $15, $16, $17)
+         ON CONFLICT (id) DO UPDATE SET
+           name = EXCLUDED.name,
+           description = EXCLUDED.description,
+           base_url = EXCLUDED.base_url,
+           spec = EXCLUDED.spec,
+           spec_digest = EXCLUDED.spec_digest,
+           spec_revision = EXCLUDED.spec_revision,
+           auth_mode = EXCLUDED.auth_mode,
+           auth_header = EXCLUDED.auth_header,
+           access_mode = EXCLUDED.access_mode,
+           enabled = EXCLUDED.enabled,
+           timeout_ms = EXCLUDED.timeout_ms,
+           max_response_bytes = EXCLUDED.max_response_bytes,
+           updated_at = EXCLUDED.updated_at`,
+        [
+          value.id,
+          value.user_id,
+          value.name,
+          value.description,
+          value.kind,
+          value.base_url,
+          value.spec,
+          value.spec_digest,
+          value.spec_revision,
+          value.auth_mode,
+          value.auth_header,
+          value.access_mode,
+          value.enabled,
+          value.timeout_ms,
+          value.max_response_bytes,
+          value.created_at,
+          value.updated_at,
+        ]
+      );
+    });
+  }
+
+  async delete(serverId: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query('DELETE FROM tool_servers WHERE id = $1', [
+            serverId,
+          ])
+        ).rowCount
+      ) > 0
+    );
+  }
+}
+
+class PostgresToolServerToolRepository implements ToolServerToolRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async listByServer(serverId: string): Promise<StoredToolServerToolRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM tool_server_tools
+        WHERE server_id = $1
+        ORDER BY name ASC`,
+      [serverId]
+    );
+    return result.rows.map(toolServerTool);
+  }
+
+  async replaceAllForServer(
+    serverId: string,
+    tools: readonly StoredToolServerToolRecord[]
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      const previousResult = await client.query<{
+        name: string;
+        enabled: unknown;
+        side_effect: unknown;
+      }>(
+        `SELECT name, enabled, side_effect FROM tool_server_tools
+          WHERE server_id = $1 FOR UPDATE`,
+        [serverId]
+      );
+      const previous = new Map(
+        previousResult.rows.map(row => [
+          row.name,
+          {
+            enabled: number(row.enabled, 'tool enabled'),
+            side_effect: number(row.side_effect, 'tool side_effect'),
+          },
+        ])
+      );
+      await client.query('DELETE FROM tool_server_tools WHERE server_id = $1', [
+        serverId,
+      ]);
+      for (const tool of tools) {
+        if (tool.server_id !== serverId) {
+          throw new Error('A tool row does not belong to its server');
+        }
+        const kept = previous.get(tool.name);
+        await client.query(
+          `INSERT INTO tool_server_tools
+             (id, server_id, name, description, params_schema, detail,
+              side_effect, enabled, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [
+            tool.id,
+            tool.server_id,
+            tool.name,
+            tool.description,
+            tool.params_schema,
+            tool.detail,
+            kept ? kept.side_effect : tool.side_effect,
+            kept ? kept.enabled : tool.enabled,
+            tool.created_at,
+            tool.updated_at,
+          ]
+        );
+      }
+    });
+  }
+
+  async updateOverrides(
+    serverId: string,
+    toolName: string,
+    overrides: { enabled?: number; side_effect?: number },
+    updatedAt: number
+  ): Promise<StoredToolServerToolRecord | null> {
+    const assignments: string[] = ['updated_at = $1'];
+    const values: Array<string | number> = [updatedAt];
+    if (overrides.enabled !== undefined) {
+      values.push(overrides.enabled);
+      assignments.push(`enabled = $${values.length}`);
+    }
+    if (overrides.side_effect !== undefined) {
+      values.push(overrides.side_effect);
+      assignments.push(`side_effect = $${values.length}`);
+    }
+    values.push(serverId, toolName);
+    const result = await this.database.query<NumericRow>(
+      `UPDATE tool_server_tools
+        SET ${assignments.join(', ')}
+        WHERE server_id = $${values.length - 1} AND name = $${values.length}
+        RETURNING *`,
+      values
+    );
+    return result.rows[0] ? toolServerTool(result.rows[0]) : null;
+  }
+}
+
+class PostgresToolServerCredentialRepository implements ToolServerCredentialRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async find(
+    serverId: string,
+    userId: string
+  ): Promise<StoredToolServerCredentialRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM tool_server_credentials
+        WHERE server_id = $1 AND user_id = $2`,
+      [serverId, userId]
+    );
+    return result.rows[0] ? toolServerCredential(result.rows[0]) : null;
+  }
+
+  async upsert(credential: StoredToolServerCredentialRecord): Promise<void> {
+    await this.database.query(
+      `INSERT INTO tool_server_credentials
+         (id, server_id, user_id, secret, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (server_id, user_id) DO UPDATE SET
+         secret = EXCLUDED.secret,
+         updated_at = EXCLUDED.updated_at`,
+      [
+        credential.id,
+        credential.server_id,
+        credential.user_id,
+        credential.secret,
+        credential.created_at,
+        credential.updated_at,
+      ]
+    );
+  }
+
+  async delete(serverId: string, userId: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            `DELETE FROM tool_server_credentials
+              WHERE server_id = $1 AND user_id = $2`,
+            [serverId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+}
+
+class PostgresToolApprovalRepository implements ToolApprovalRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async insert(approval: StoredToolApprovalRecord): Promise<void> {
+    await this.database.query(
+      `INSERT INTO tool_approvals
+         (id, user_id, session_id, server_id, tool_name, call_id,
+          arguments_digest, scope, status, created_at, resolved_at, expires_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        approval.id,
+        approval.user_id,
+        approval.session_id,
+        approval.server_id,
+        approval.tool_name,
+        approval.call_id,
+        approval.arguments_digest,
+        approval.scope,
+        approval.status,
+        approval.created_at,
+        approval.resolved_at,
+        approval.expires_at,
+      ]
+    );
+  }
+
+  async findByOwner(
+    approvalId: string,
+    userId: string
+  ): Promise<StoredToolApprovalRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM tool_approvals WHERE id = $1 AND user_id = $2',
+      [approvalId, userId]
+    );
+    return result.rows[0] ? toolApproval(result.rows[0]) : null;
+  }
+
+  async findStanding(
+    userId: string,
+    serverId: string | null,
+    toolName: string,
+    sessionId: string | null
+  ): Promise<StoredToolApprovalRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM tool_approvals
+        WHERE user_id = $1
+          AND status = 'approved'
+          AND tool_name = $2
+          AND ((server_id IS NULL AND $3::text IS NULL) OR server_id = $3)
+          AND (scope = 'always'
+               OR (scope = 'session' AND session_id IS NOT NULL AND session_id = $4))
+        ORDER BY resolved_at DESC
+        LIMIT 1`,
+      [userId, toolName, serverId, sessionId]
+    );
+    return result.rows[0] ? toolApproval(result.rows[0]) : null;
+  }
+
+  async resolvePending(
+    approvalId: string,
+    userId: string,
+    status: string,
+    scope: string,
+    resolvedAt: number
+  ): Promise<StoredToolApprovalRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      `UPDATE tool_approvals
+        SET status = $1, scope = $2, resolved_at = $3
+        WHERE id = $4 AND user_id = $5 AND status = 'pending'
+          AND (expires_at IS NULL OR expires_at > $3)
+        RETURNING *`,
+      [status, scope, resolvedAt, approvalId, userId]
+    );
+    return result.rows[0] ? toolApproval(result.rows[0]) : null;
+  }
+
+  async listPendingByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredToolApprovalRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM tool_approvals
+        WHERE user_id = $1 AND status = 'pending'
+        ORDER BY created_at ASC
+        LIMIT $2`,
+      [userId, maximum]
+    );
+    return result.rows.map(toolApproval);
+  }
+
+  async listStandingByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredToolApprovalRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM tool_approvals
+        WHERE user_id = $1 AND status = 'approved'
+          AND scope IN ('session', 'always')
+        ORDER BY resolved_at DESC
+        LIMIT $2`,
+      [userId, maximum]
+    );
+    return result.rows.map(toolApproval);
+  }
+
+  async expirePending(now: number): Promise<number> {
+    return changes(
+      (
+        await this.database.query(
+          `UPDATE tool_approvals
+            SET status = 'expired', resolved_at = $1
+            WHERE status = 'pending' AND expires_at IS NOT NULL
+              AND expires_at <= $1`,
+          [now]
+        )
+      ).rowCount
+    );
+  }
+
+  async deleteByOwner(approvalId: string, userId: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            'DELETE FROM tool_approvals WHERE id = $1 AND user_id = $2',
+            [approvalId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+}
+
+class PostgresPromptRepository implements PromptRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredPromptRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM prompts
+        WHERE user_id = $1
+        ORDER BY updated_at DESC
+        LIMIT $2`,
+      [userId, maximum]
+    );
+    return result.rows.map(prompt);
+  }
+
+  async findByOwner(
+    promptId: string,
+    userId: string
+  ): Promise<StoredPromptRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM prompts WHERE id = $1 AND user_id = $2',
+      [promptId, userId]
+    );
+    return result.rows[0] ? prompt(result.rows[0]) : null;
+  }
+
+  async findById(promptId: string): Promise<StoredPromptRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM prompts WHERE id = $1',
+      [promptId]
+    );
+    return result.rows[0] ? prompt(result.rows[0]) : null;
+  }
+
+  async findBySlug(
+    userId: string,
+    slug: string
+  ): Promise<StoredPromptRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM prompts WHERE user_id = $1 AND slug = $2',
+      [userId, slug]
+    );
+    return result.rows[0] ? prompt(result.rows[0]) : null;
+  }
+
+  async replaceWithLimit(
+    value: StoredPromptRecord,
+    maximum: number,
+    archivedVersion: StoredPromptVersionRecord | null
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      await lockOwner(client, value.user_id);
+      const existing = await client.query<{ user_id: string }>(
+        'SELECT user_id FROM prompts WHERE id = $1 FOR UPDATE',
+        [value.id]
+      );
+      if (existing.rows[0] && existing.rows[0].user_id !== value.user_id) {
+        throw new PersistenceResourceConflictError();
+      }
+      if (!existing.rows[0]) {
+        const count = await client.query<{ count: string }>(
+          'SELECT COUNT(*)::text AS count FROM prompts WHERE user_id = $1',
+          [value.user_id]
+        );
+        if (Number(count.rows[0]?.count || 0) >= maximum) {
+          throw new PersistenceResourceLimitError('prompt', maximum);
+        }
+      }
+      const result = await client.query(
+        `INSERT INTO prompts
+           (id, user_id, slug, title, description, content, variables, tags,
+            version, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         ON CONFLICT (id) DO UPDATE SET
+           slug = EXCLUDED.slug,
+           title = EXCLUDED.title,
+           description = EXCLUDED.description,
+           content = EXCLUDED.content,
+           variables = EXCLUDED.variables,
+           tags = EXCLUDED.tags,
+           version = EXCLUDED.version,
+           updated_at = EXCLUDED.updated_at
+         WHERE prompts.user_id = EXCLUDED.user_id`,
+        [
+          value.id,
+          value.user_id,
+          value.slug,
+          value.title,
+          value.description,
+          value.content,
+          value.variables,
+          value.tags,
+          value.version,
+          value.created_at,
+          value.updated_at,
+        ]
+      );
+      if (result.rowCount !== 1) throw new PersistenceResourceConflictError();
+      if (archivedVersion) {
+        await client.query(
+          `INSERT INTO prompt_versions
+             (id, prompt_id, version, content, variables, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (prompt_id, version) DO NOTHING`,
+          [
+            archivedVersion.id,
+            archivedVersion.prompt_id,
+            archivedVersion.version,
+            archivedVersion.content,
+            archivedVersion.variables,
+            archivedVersion.created_at,
+          ]
+        );
+      }
+    });
+  }
+
+  async listVersions(
+    promptId: string,
+    maximum: number
+  ): Promise<StoredPromptVersionRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM prompt_versions
+        WHERE prompt_id = $1
+        ORDER BY version DESC
+        LIMIT $2`,
+      [promptId, maximum]
+    );
+    return result.rows.map(promptVersion);
+  }
+
+  async findVersion(
+    promptId: string,
+    version: number
+  ): Promise<StoredPromptVersionRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM prompt_versions WHERE prompt_id = $1 AND version = $2',
+      [promptId, version]
+    );
+    return result.rows[0] ? promptVersion(result.rows[0]) : null;
+  }
+
+  async deleteByOwner(promptId: string, userId: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            'DELETE FROM prompts WHERE id = $1 AND user_id = $2',
+            [promptId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+}
+
+class PostgresSkillRepository implements SkillRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredSkillRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM skills
+        WHERE user_id = $1
+        ORDER BY updated_at DESC
+        LIMIT $2`,
+      [userId, maximum]
+    );
+    return result.rows.map(skill);
+  }
+
+  async findByOwner(
+    skillId: string,
+    userId: string
+  ): Promise<StoredSkillRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM skills WHERE id = $1 AND user_id = $2',
+      [skillId, userId]
+    );
+    return result.rows[0] ? skill(result.rows[0]) : null;
+  }
+
+  async findById(skillId: string): Promise<StoredSkillRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM skills WHERE id = $1',
+      [skillId]
+    );
+    return result.rows[0] ? skill(result.rows[0]) : null;
+  }
+
+  async findBySlug(
+    userId: string,
+    slug: string
+  ): Promise<StoredSkillRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM skills WHERE user_id = $1 AND slug = $2',
+      [userId, slug]
+    );
+    return result.rows[0] ? skill(result.rows[0]) : null;
+  }
+
+  async replaceWithLimit(
+    value: StoredSkillRecord,
+    maximum: number,
+    archivedVersion: StoredSkillVersionRecord | null
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      await lockOwner(client, value.user_id);
+      const existing = await client.query<{ user_id: string }>(
+        'SELECT user_id FROM skills WHERE id = $1 FOR UPDATE',
+        [value.id]
+      );
+      if (existing.rows[0] && existing.rows[0].user_id !== value.user_id) {
+        throw new PersistenceResourceConflictError();
+      }
+      if (!existing.rows[0]) {
+        const count = await client.query<{ count: string }>(
+          'SELECT COUNT(*)::text AS count FROM skills WHERE user_id = $1',
+          [value.user_id]
+        );
+        if (Number(count.rows[0]?.count || 0) >= maximum) {
+          throw new PersistenceResourceLimitError('skill', maximum);
+        }
+      }
+      const result = await client.query(
+        `INSERT INTO skills
+           (id, user_id, slug, name, description, instructions, enabled,
+            version, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         ON CONFLICT (id) DO UPDATE SET
+           slug = EXCLUDED.slug,
+           name = EXCLUDED.name,
+           description = EXCLUDED.description,
+           instructions = EXCLUDED.instructions,
+           enabled = EXCLUDED.enabled,
+           version = EXCLUDED.version,
+           updated_at = EXCLUDED.updated_at
+         WHERE skills.user_id = EXCLUDED.user_id`,
+        [
+          value.id,
+          value.user_id,
+          value.slug,
+          value.name,
+          value.description,
+          value.instructions,
+          value.enabled,
+          value.version,
+          value.created_at,
+          value.updated_at,
+        ]
+      );
+      if (result.rowCount !== 1) throw new PersistenceResourceConflictError();
+      if (archivedVersion) {
+        await client.query(
+          `INSERT INTO skill_versions
+             (id, skill_id, version, instructions, created_at)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (skill_id, version) DO NOTHING`,
+          [
+            archivedVersion.id,
+            archivedVersion.skill_id,
+            archivedVersion.version,
+            archivedVersion.instructions,
+            archivedVersion.created_at,
+          ]
+        );
+      }
+    });
+  }
+
+  async listVersions(
+    skillId: string,
+    maximum: number
+  ): Promise<StoredSkillVersionRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM skill_versions
+        WHERE skill_id = $1
+        ORDER BY version DESC
+        LIMIT $2`,
+      [skillId, maximum]
+    );
+    return result.rows.map(skillVersion);
+  }
+
+  async findVersion(
+    skillId: string,
+    version: number
+  ): Promise<StoredSkillVersionRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM skill_versions WHERE skill_id = $1 AND version = $2',
+      [skillId, version]
+    );
+    return result.rows[0] ? skillVersion(result.rows[0]) : null;
+  }
+
+  async deleteByOwner(skillId: string, userId: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            'DELETE FROM skills WHERE id = $1 AND user_id = $2',
+            [skillId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+}
+
 class PostgresSessionFolderRepository implements SessionFolderRepository {
   constructor(private readonly database: PostgresDatabase) {}
 
@@ -1243,6 +2011,9 @@ const ARCHIVE_TABLES = {
   'knowledge-collection': 'knowledge_collections',
   document: 'documents',
   persona: 'personas',
+  prompt: 'prompts',
+  skill: 'skills',
+  'tool-server': 'tool_servers',
 } as const;
 
 class PostgresDataArchiveRepository implements DataArchiveRepository {
@@ -1650,6 +2421,12 @@ export const createPostgresResourceRepositories = (
   calendarEvents: new PostgresCalendarEventRepository(database),
   automations: new PostgresAutomationRepository(database),
   automationRuns: new PostgresAutomationRunRepository(database),
+  toolServers: new PostgresToolServerRepository(database),
+  toolServerTools: new PostgresToolServerToolRepository(database),
+  toolServerCredentials: new PostgresToolServerCredentialRepository(database),
+  toolApprovals: new PostgresToolApprovalRepository(database),
+  prompts: new PostgresPromptRepository(database),
+  skills: new PostgresSkillRepository(database),
   sessionFolders: new PostgresSessionFolderRepository(database),
   preferences: new PostgresPreferenceRepository(database),
   systemSettings: new PostgresSystemSettingRepository(database),

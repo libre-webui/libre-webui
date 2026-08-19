@@ -399,6 +399,7 @@ export interface PersonaPatch {
   embedding_model?: string | null;
   memory_settings?: Persona['memory_settings'] | null;
   mutation_settings?: Persona['mutation_settings'] | null;
+  bindings?: Persona['bindings'] | null;
   updated_at: number;
 }
 

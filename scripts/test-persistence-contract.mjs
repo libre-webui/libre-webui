@@ -86,6 +86,7 @@ const createArchiveResourceSchema = database => {
       embedding_model TEXT,
       memory_settings TEXT,
       mutation_settings TEXT,
+      bindings TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );

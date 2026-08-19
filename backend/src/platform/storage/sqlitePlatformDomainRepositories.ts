@@ -1336,6 +1336,7 @@ interface SQLitePersonaRow {
   embedding_model: string | null;
   memory_settings: string | null;
   mutation_settings: string | null;
+  bindings: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -1381,6 +1382,9 @@ class SQLitePersonaRepository implements PersonaRepository {
             ),
           }
         : {}),
+      ...(row.bindings
+        ? { bindings: parse<Persona['bindings']>(row.bindings) }
+        : {}),
       created_at: row.created_at,
       updated_at: row.updated_at,
     };
@@ -1419,6 +1423,9 @@ class SQLitePersonaRepository implements PersonaRepository {
       persona.mutation_settings
         ? this.cipher.encrypt(JSON.stringify(persona.mutation_settings))
         : null,
+      persona.bindings
+        ? this.cipher.encrypt(JSON.stringify(persona.bindings))
+        : null,
       persona.created_at,
       persona.updated_at,
     ];
@@ -1432,8 +1439,8 @@ class SQLitePersonaRepository implements PersonaRepository {
           `INSERT INTO personas
              (id, user_id, name, description, model, parameters, avatar,
               background, embedding_model, memory_settings, mutation_settings,
-              created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+              bindings, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(...this.values(persona));
     });
@@ -1445,7 +1452,8 @@ class SQLitePersonaRepository implements PersonaRepository {
       .prepare(
         `UPDATE personas SET name = ?, description = ?, model = ?,
                 parameters = ?, avatar = ?, background = ?, embedding_model = ?,
-                memory_settings = ?, mutation_settings = ?, updated_at = ?
+                memory_settings = ?, mutation_settings = ?, bindings = ?,
+                updated_at = ?
           WHERE id = ? AND user_id = ?`
       )
       .run(
@@ -1461,6 +1469,9 @@ class SQLitePersonaRepository implements PersonaRepository {
           : null,
         persona.mutation_settings
           ? this.cipher.encrypt(JSON.stringify(persona.mutation_settings))
+          : null,
+        persona.bindings
+          ? this.cipher.encrypt(JSON.stringify(persona.bindings))
           : null,
         persona.updated_at,
         persona.id,
@@ -1530,6 +1541,14 @@ class SQLitePersonaRepository implements PersonaRepository {
           patch.mutation_settings === null
             ? null
             : this.cipher.encrypt(JSON.stringify(patch.mutation_settings))
+        );
+      }
+      if (patch.bindings !== undefined) {
+        assign(
+          'bindings',
+          patch.bindings === null
+            ? null
+            : this.cipher.encrypt(JSON.stringify(patch.bindings))
         );
       }
       assign('updated_at', patch.updated_at);

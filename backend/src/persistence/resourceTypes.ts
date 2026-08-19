@@ -274,6 +274,227 @@ export interface AutomationRunRepository {
   markSeenBefore(userId: string, seenAt: number): Promise<number>;
 }
 
+export interface StoredToolServerRecord {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  kind: string;
+  base_url: string;
+  spec: string | null;
+  spec_digest: string | null;
+  spec_revision: number;
+  auth_mode: string;
+  auth_header: string | null;
+  access_mode: string;
+  enabled: number;
+  timeout_ms: number;
+  max_response_bytes: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface StoredToolServerToolRecord {
+  id: string;
+  server_id: string;
+  name: string;
+  description: string | null;
+  params_schema: string | null;
+  detail: string | null;
+  side_effect: number;
+  enabled: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface StoredToolServerCredentialRecord {
+  id: string;
+  server_id: string;
+  user_id: string;
+  secret: string;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface StoredToolApprovalRecord {
+  id: string;
+  user_id: string;
+  session_id: string | null;
+  server_id: string | null;
+  tool_name: string;
+  call_id: string | null;
+  arguments_digest: string | null;
+  scope: string;
+  status: string;
+  created_at: number;
+  resolved_at: number | null;
+  expires_at: number | null;
+}
+
+export interface ToolServerRepository {
+  list(maximum: number): Promise<StoredToolServerRecord[]>;
+  findById(serverId: string): Promise<StoredToolServerRecord | null>;
+  replaceWithLimit(
+    server: StoredToolServerRecord,
+    maximum: number
+  ): Promise<void>;
+  delete(serverId: string): Promise<boolean>;
+}
+
+export interface ToolServerToolRepository {
+  listByServer(serverId: string): Promise<StoredToolServerToolRecord[]>;
+  /** Re-pin a server's tool inventory atomically, preserving admin overrides by tool name. */
+  replaceAllForServer(
+    serverId: string,
+    tools: readonly StoredToolServerToolRecord[]
+  ): Promise<void>;
+  updateOverrides(
+    serverId: string,
+    toolName: string,
+    overrides: { enabled?: number; side_effect?: number },
+    updatedAt: number
+  ): Promise<StoredToolServerToolRecord | null>;
+}
+
+export interface ToolServerCredentialRepository {
+  find(
+    serverId: string,
+    userId: string
+  ): Promise<StoredToolServerCredentialRecord | null>;
+  upsert(credential: StoredToolServerCredentialRecord): Promise<void>;
+  delete(serverId: string, userId: string): Promise<boolean>;
+}
+
+export interface ToolApprovalRepository {
+  insert(approval: StoredToolApprovalRecord): Promise<void>;
+  findByOwner(
+    approvalId: string,
+    userId: string
+  ): Promise<StoredToolApprovalRecord | null>;
+  /**
+   * Find a standing decision covering this tool: an approved `always` grant,
+   * or an approved `session` grant bound to the given session.
+   */
+  findStanding(
+    userId: string,
+    serverId: string | null,
+    toolName: string,
+    sessionId: string | null
+  ): Promise<StoredToolApprovalRecord | null>;
+  /** Resolve a pending approval exactly once; returns null when it is no longer pending. */
+  resolvePending(
+    approvalId: string,
+    userId: string,
+    status: string,
+    scope: string,
+    resolvedAt: number
+  ): Promise<StoredToolApprovalRecord | null>;
+  listPendingByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredToolApprovalRecord[]>;
+  listStandingByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredToolApprovalRecord[]>;
+  expirePending(now: number): Promise<number>;
+  deleteByOwner(approvalId: string, userId: string): Promise<boolean>;
+}
+
+export interface StoredPromptRecord {
+  id: string;
+  user_id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  content: string;
+  variables: string | null;
+  tags: string | null;
+  version: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface StoredPromptVersionRecord {
+  id: string;
+  prompt_id: string;
+  version: number;
+  content: string;
+  variables: string | null;
+  created_at: number;
+}
+
+export interface PromptRepository {
+  listByOwner(userId: string, maximum: number): Promise<StoredPromptRecord[]>;
+  findByOwner(
+    promptId: string,
+    userId: string
+  ): Promise<StoredPromptRecord | null>;
+  findById(promptId: string): Promise<StoredPromptRecord | null>;
+  findBySlug(userId: string, slug: string): Promise<StoredPromptRecord | null>;
+  /** Upsert the prompt and archive the given prior revision in one transaction. */
+  replaceWithLimit(
+    prompt: StoredPromptRecord,
+    maximum: number,
+    archivedVersion: StoredPromptVersionRecord | null
+  ): Promise<void>;
+  listVersions(
+    promptId: string,
+    maximum: number
+  ): Promise<StoredPromptVersionRecord[]>;
+  findVersion(
+    promptId: string,
+    version: number
+  ): Promise<StoredPromptVersionRecord | null>;
+  deleteByOwner(promptId: string, userId: string): Promise<boolean>;
+}
+
+export interface StoredSkillRecord {
+  id: string;
+  user_id: string;
+  slug: string;
+  name: string;
+  description: string;
+  instructions: string;
+  enabled: number;
+  version: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface StoredSkillVersionRecord {
+  id: string;
+  skill_id: string;
+  version: number;
+  instructions: string;
+  created_at: number;
+}
+
+export interface SkillRepository {
+  listByOwner(userId: string, maximum: number): Promise<StoredSkillRecord[]>;
+  findByOwner(
+    skillId: string,
+    userId: string
+  ): Promise<StoredSkillRecord | null>;
+  findById(skillId: string): Promise<StoredSkillRecord | null>;
+  findBySlug(userId: string, slug: string): Promise<StoredSkillRecord | null>;
+  /** Upsert the skill and archive the given prior revision in one transaction. */
+  replaceWithLimit(
+    skill: StoredSkillRecord,
+    maximum: number,
+    archivedVersion: StoredSkillVersionRecord | null
+  ): Promise<void>;
+  listVersions(
+    skillId: string,
+    maximum: number
+  ): Promise<StoredSkillVersionRecord[]>;
+  findVersion(
+    skillId: string,
+    version: number
+  ): Promise<StoredSkillVersionRecord | null>;
+  deleteByOwner(skillId: string, userId: string): Promise<boolean>;
+}
+
 export interface SessionFolderRepository {
   listByOwner(
     userId: string,
@@ -337,6 +558,15 @@ export type ArchiveOwnedResource =
   | 'document'
   | 'persona';
 export type ArchiveNestedResource = 'session-message' | 'document-chunk';
+
+/**
+ * Resources that can carry access grants. Archive-owned resources are always
+ * grantable; prompts, skills, and tool servers are grantable without being
+ * part of the portable user archive (tool servers are instance-level, and
+ * prompt/skill portability uses their dedicated import/export surfaces).
+ */
+export type GrantableResource =
+  ArchiveOwnedResource | 'prompt' | 'skill' | 'tool-server';
 
 export interface ArchiveNestedOwner {
   userId: string;
@@ -407,7 +637,7 @@ export interface DataArchiveApplyPlan {
 }
 
 export interface DataArchiveRepository {
-  ownerOf(resource: ArchiveOwnedResource, id: string): Promise<string | null>;
+  ownerOf(resource: GrantableResource, id: string): Promise<string | null>;
   nestedOwnerOf(
     resource: ArchiveNestedResource,
     id: string
@@ -428,6 +658,12 @@ export interface ApplicationResourceRepositories {
   calendarEvents: CalendarEventRepository;
   automations: AutomationRepository;
   automationRuns: AutomationRunRepository;
+  toolServers: ToolServerRepository;
+  toolServerTools: ToolServerToolRepository;
+  toolServerCredentials: ToolServerCredentialRepository;
+  toolApprovals: ToolApprovalRepository;
+  prompts: PromptRepository;
+  skills: SkillRepository;
   sessionFolders: SessionFolderRepository;
   preferences: PreferenceRepository;
   systemSettings: SystemSettingRepository;
@@ -453,7 +689,13 @@ export class PersistenceResourceDeletionReservedError extends Error {
 export class PersistenceResourceLimitError extends Error {
   constructor(
     readonly resource:
-      'note' | 'session-folder' | 'calendar-event' | 'automation',
+      | 'note'
+      | 'session-folder'
+      | 'calendar-event'
+      | 'automation'
+      | 'tool-server'
+      | 'prompt'
+      | 'skill',
     readonly maximum: number
   ) {
     super(`The ${resource} storage limit of ${maximum} has been reached`);

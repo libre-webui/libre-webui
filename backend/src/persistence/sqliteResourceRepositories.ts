@@ -28,7 +28,9 @@ import type {
   KnowledgeCollectionRepository,
   NoteRepository,
   PreferenceRepository,
+  PromptRepository,
   SessionFolderRepository,
+  SkillRepository,
   StoredAutomationRecord,
   StoredAutomationRunRecord,
   StoredCalendarEventRecord,
@@ -39,7 +41,19 @@ import type {
   StoredNotePatch,
   StoredNoteRecord,
   StoredPreferenceRecord,
+  StoredPromptRecord,
+  StoredPromptVersionRecord,
+  StoredSkillRecord,
+  StoredSkillVersionRecord,
+  StoredToolApprovalRecord,
+  StoredToolServerCredentialRecord,
+  StoredToolServerRecord,
+  StoredToolServerToolRecord,
   SystemSettingRepository,
+  ToolApprovalRepository,
+  ToolServerCredentialRepository,
+  ToolServerRepository,
+  ToolServerToolRepository,
 } from './resourceTypes.js';
 import {
   PersistenceResourceConflictError,
@@ -876,6 +890,679 @@ class SQLiteAutomationRunRepository implements AutomationRunRepository {
   }
 }
 
+class SQLiteToolServerRepository implements ToolServerRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async list(maximum: number): Promise<StoredToolServerRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM tool_servers
+         ORDER BY updated_at DESC
+         LIMIT ?`
+      )
+      .all(maximum) as StoredToolServerRecord[];
+  }
+
+  async findById(serverId: string): Promise<StoredToolServerRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM tool_servers WHERE id = ?')
+        .get(serverId) as StoredToolServerRecord | undefined) ?? null
+    );
+  }
+
+  async replaceWithLimit(
+    server: StoredToolServerRecord,
+    maximum: number
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      const exists = this.database
+        .prepare('SELECT id FROM tool_servers WHERE id = ?')
+        .get(server.id);
+      if (!exists) {
+        const row = this.database
+          .prepare('SELECT COUNT(*) AS count FROM tool_servers')
+          .get() as { count: number };
+        if (row.count >= maximum) {
+          throw new PersistenceResourceLimitError('tool-server', maximum);
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO tool_servers
+             (id, user_id, name, description, kind, base_url, spec,
+              spec_digest, spec_revision, auth_mode, auth_header, access_mode,
+              enabled, timeout_ms, max_response_bytes, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             name = excluded.name,
+             description = excluded.description,
+             base_url = excluded.base_url,
+             spec = excluded.spec,
+             spec_digest = excluded.spec_digest,
+             spec_revision = excluded.spec_revision,
+             auth_mode = excluded.auth_mode,
+             auth_header = excluded.auth_header,
+             access_mode = excluded.access_mode,
+             enabled = excluded.enabled,
+             timeout_ms = excluded.timeout_ms,
+             max_response_bytes = excluded.max_response_bytes,
+             updated_at = excluded.updated_at`
+        )
+        .run(
+          server.id,
+          server.user_id,
+          server.name,
+          server.description,
+          server.kind,
+          server.base_url,
+          server.spec,
+          server.spec_digest,
+          server.spec_revision,
+          server.auth_mode,
+          server.auth_header,
+          server.access_mode,
+          server.enabled,
+          server.timeout_ms,
+          server.max_response_bytes,
+          server.created_at,
+          server.updated_at
+        );
+    });
+    replace();
+  }
+
+  async delete(serverId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM tool_servers WHERE id = ?')
+        .run(serverId).changes > 0
+    );
+  }
+}
+
+class SQLiteToolServerToolRepository implements ToolServerToolRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listByServer(serverId: string): Promise<StoredToolServerToolRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM tool_server_tools
+         WHERE server_id = ?
+         ORDER BY name ASC`
+      )
+      .all(serverId) as StoredToolServerToolRecord[];
+  }
+
+  async replaceAllForServer(
+    serverId: string,
+    tools: readonly StoredToolServerToolRecord[]
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      const previous = new Map(
+        (
+          this.database
+            .prepare(
+              'SELECT name, enabled, side_effect FROM tool_server_tools WHERE server_id = ?'
+            )
+            .all(serverId) as Array<{
+            name: string;
+            enabled: number;
+            side_effect: number;
+          }>
+        ).map(row => [row.name, row])
+      );
+      this.database
+        .prepare('DELETE FROM tool_server_tools WHERE server_id = ?')
+        .run(serverId);
+      const insert = this.database.prepare(
+        `INSERT INTO tool_server_tools
+           (id, server_id, name, description, params_schema, detail,
+            side_effect, enabled, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      );
+      for (const tool of tools) {
+        if (tool.server_id !== serverId) {
+          throw new Error('A tool row does not belong to its server');
+        }
+        const kept = previous.get(tool.name);
+        insert.run(
+          tool.id,
+          tool.server_id,
+          tool.name,
+          tool.description,
+          tool.params_schema,
+          tool.detail,
+          kept ? kept.side_effect : tool.side_effect,
+          kept ? kept.enabled : tool.enabled,
+          tool.created_at,
+          tool.updated_at
+        );
+      }
+    });
+    replace();
+  }
+
+  async updateOverrides(
+    serverId: string,
+    toolName: string,
+    overrides: { enabled?: number; side_effect?: number },
+    updatedAt: number
+  ): Promise<StoredToolServerToolRecord | null> {
+    const assignments: string[] = ['updated_at = ?'];
+    const values: Array<string | number> = [updatedAt];
+    if (overrides.enabled !== undefined) {
+      assignments.push('enabled = ?');
+      values.push(overrides.enabled);
+    }
+    if (overrides.side_effect !== undefined) {
+      assignments.push('side_effect = ?');
+      values.push(overrides.side_effect);
+    }
+    const changed = this.database
+      .prepare(
+        `UPDATE tool_server_tools
+         SET ${assignments.join(', ')}
+         WHERE server_id = ? AND name = ?`
+      )
+      .run(...values, serverId, toolName).changes;
+    if (changed === 0) return null;
+    return (
+      (this.database
+        .prepare(
+          'SELECT * FROM tool_server_tools WHERE server_id = ? AND name = ?'
+        )
+        .get(serverId, toolName) as StoredToolServerToolRecord | undefined) ??
+      null
+    );
+  }
+}
+
+class SQLiteToolServerCredentialRepository implements ToolServerCredentialRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async find(
+    serverId: string,
+    userId: string
+  ): Promise<StoredToolServerCredentialRecord | null> {
+    return (
+      (this.database
+        .prepare(
+          'SELECT * FROM tool_server_credentials WHERE server_id = ? AND user_id = ?'
+        )
+        .get(serverId, userId) as
+        StoredToolServerCredentialRecord | undefined) ?? null
+    );
+  }
+
+  async upsert(credential: StoredToolServerCredentialRecord): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO tool_server_credentials
+           (id, server_id, user_id, secret, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(server_id, user_id) DO UPDATE SET
+           secret = excluded.secret,
+           updated_at = excluded.updated_at`
+      )
+      .run(
+        credential.id,
+        credential.server_id,
+        credential.user_id,
+        credential.secret,
+        credential.created_at,
+        credential.updated_at
+      );
+  }
+
+  async delete(serverId: string, userId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          'DELETE FROM tool_server_credentials WHERE server_id = ? AND user_id = ?'
+        )
+        .run(serverId, userId).changes > 0
+    );
+  }
+}
+
+class SQLiteToolApprovalRepository implements ToolApprovalRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async insert(approval: StoredToolApprovalRecord): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO tool_approvals
+           (id, user_id, session_id, server_id, tool_name, call_id,
+            arguments_digest, scope, status, created_at, resolved_at,
+            expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        approval.id,
+        approval.user_id,
+        approval.session_id,
+        approval.server_id,
+        approval.tool_name,
+        approval.call_id,
+        approval.arguments_digest,
+        approval.scope,
+        approval.status,
+        approval.created_at,
+        approval.resolved_at,
+        approval.expires_at
+      );
+  }
+
+  async findByOwner(
+    approvalId: string,
+    userId: string
+  ): Promise<StoredToolApprovalRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM tool_approvals WHERE id = ? AND user_id = ?')
+        .get(approvalId, userId) as StoredToolApprovalRecord | undefined) ??
+      null
+    );
+  }
+
+  async findStanding(
+    userId: string,
+    serverId: string | null,
+    toolName: string,
+    sessionId: string | null
+  ): Promise<StoredToolApprovalRecord | null> {
+    return (
+      (this.database
+        .prepare(
+          `SELECT * FROM tool_approvals
+           WHERE user_id = ?
+             AND status = 'approved'
+             AND tool_name = ?
+             AND ((server_id IS NULL AND ? IS NULL) OR server_id = ?)
+             AND (scope = 'always'
+                  OR (scope = 'session' AND session_id IS NOT NULL AND session_id = ?))
+           ORDER BY resolved_at DESC
+           LIMIT 1`
+        )
+        .get(userId, toolName, serverId, serverId, sessionId) as
+        StoredToolApprovalRecord | undefined) ?? null
+    );
+  }
+
+  async resolvePending(
+    approvalId: string,
+    userId: string,
+    status: string,
+    scope: string,
+    resolvedAt: number
+  ): Promise<StoredToolApprovalRecord | null> {
+    const changed = this.database
+      .prepare(
+        `UPDATE tool_approvals
+         SET status = ?, scope = ?, resolved_at = ?
+         WHERE id = ? AND user_id = ? AND status = 'pending'
+           AND (expires_at IS NULL OR expires_at > ?)`
+      )
+      .run(status, scope, resolvedAt, approvalId, userId, resolvedAt).changes;
+    if (changed === 0) return null;
+    return this.findByOwner(approvalId, userId);
+  }
+
+  async listPendingByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredToolApprovalRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM tool_approvals
+         WHERE user_id = ? AND status = 'pending'
+         ORDER BY created_at ASC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredToolApprovalRecord[];
+  }
+
+  async listStandingByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredToolApprovalRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM tool_approvals
+         WHERE user_id = ? AND status = 'approved'
+           AND scope IN ('session', 'always')
+         ORDER BY resolved_at DESC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredToolApprovalRecord[];
+  }
+
+  async expirePending(now: number): Promise<number> {
+    return this.database
+      .prepare(
+        `UPDATE tool_approvals
+         SET status = 'expired', resolved_at = ?
+         WHERE status = 'pending' AND expires_at IS NOT NULL AND expires_at <= ?`
+      )
+      .run(now, now).changes;
+  }
+
+  async deleteByOwner(approvalId: string, userId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM tool_approvals WHERE id = ? AND user_id = ?')
+        .run(approvalId, userId).changes > 0
+    );
+  }
+}
+
+class SQLitePromptRepository implements PromptRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredPromptRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM prompts
+         WHERE user_id = ?
+         ORDER BY updated_at DESC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredPromptRecord[];
+  }
+
+  async findByOwner(
+    promptId: string,
+    userId: string
+  ): Promise<StoredPromptRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM prompts WHERE id = ? AND user_id = ?')
+        .get(promptId, userId) as StoredPromptRecord | undefined) ?? null
+    );
+  }
+
+  async findById(promptId: string): Promise<StoredPromptRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM prompts WHERE id = ?')
+        .get(promptId) as StoredPromptRecord | undefined) ?? null
+    );
+  }
+
+  async findBySlug(
+    userId: string,
+    slug: string
+  ): Promise<StoredPromptRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM prompts WHERE user_id = ? AND slug = ?')
+        .get(userId, slug) as StoredPromptRecord | undefined) ?? null
+    );
+  }
+
+  async replaceWithLimit(
+    prompt: StoredPromptRecord,
+    maximum: number,
+    archivedVersion: StoredPromptVersionRecord | null
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      const exists = ensureSameOwner(
+        this.database,
+        'prompts',
+        prompt.id,
+        prompt.user_id
+      );
+      if (!exists) {
+        const row = this.database
+          .prepare('SELECT COUNT(*) AS count FROM prompts WHERE user_id = ?')
+          .get(prompt.user_id) as { count: number };
+        if (row.count >= maximum) {
+          throw new PersistenceResourceLimitError('prompt', maximum);
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO prompts
+             (id, user_id, slug, title, description, content, variables,
+              tags, version, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             slug = excluded.slug,
+             title = excluded.title,
+             description = excluded.description,
+             content = excluded.content,
+             variables = excluded.variables,
+             tags = excluded.tags,
+             version = excluded.version,
+             updated_at = excluded.updated_at
+           WHERE prompts.user_id = excluded.user_id`
+        )
+        .run(
+          prompt.id,
+          prompt.user_id,
+          prompt.slug,
+          prompt.title,
+          prompt.description,
+          prompt.content,
+          prompt.variables,
+          prompt.tags,
+          prompt.version,
+          prompt.created_at,
+          prompt.updated_at
+        );
+      if (archivedVersion) {
+        this.database
+          .prepare(
+            `INSERT INTO prompt_versions
+               (id, prompt_id, version, content, variables, created_at)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON CONFLICT(prompt_id, version) DO NOTHING`
+          )
+          .run(
+            archivedVersion.id,
+            archivedVersion.prompt_id,
+            archivedVersion.version,
+            archivedVersion.content,
+            archivedVersion.variables,
+            archivedVersion.created_at
+          );
+      }
+    });
+    replace();
+  }
+
+  async listVersions(
+    promptId: string,
+    maximum: number
+  ): Promise<StoredPromptVersionRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM prompt_versions
+         WHERE prompt_id = ?
+         ORDER BY version DESC
+         LIMIT ?`
+      )
+      .all(promptId, maximum) as StoredPromptVersionRecord[];
+  }
+
+  async findVersion(
+    promptId: string,
+    version: number
+  ): Promise<StoredPromptVersionRecord | null> {
+    return (
+      (this.database
+        .prepare(
+          'SELECT * FROM prompt_versions WHERE prompt_id = ? AND version = ?'
+        )
+        .get(promptId, version) as StoredPromptVersionRecord | undefined) ??
+      null
+    );
+  }
+
+  async deleteByOwner(promptId: string, userId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM prompts WHERE id = ? AND user_id = ?')
+        .run(promptId, userId).changes > 0
+    );
+  }
+}
+
+class SQLiteSkillRepository implements SkillRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredSkillRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM skills
+         WHERE user_id = ?
+         ORDER BY updated_at DESC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredSkillRecord[];
+  }
+
+  async findByOwner(
+    skillId: string,
+    userId: string
+  ): Promise<StoredSkillRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM skills WHERE id = ? AND user_id = ?')
+        .get(skillId, userId) as StoredSkillRecord | undefined) ?? null
+    );
+  }
+
+  async findById(skillId: string): Promise<StoredSkillRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM skills WHERE id = ?')
+        .get(skillId) as StoredSkillRecord | undefined) ?? null
+    );
+  }
+
+  async findBySlug(
+    userId: string,
+    slug: string
+  ): Promise<StoredSkillRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM skills WHERE user_id = ? AND slug = ?')
+        .get(userId, slug) as StoredSkillRecord | undefined) ?? null
+    );
+  }
+
+  async replaceWithLimit(
+    skill: StoredSkillRecord,
+    maximum: number,
+    archivedVersion: StoredSkillVersionRecord | null
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      const exists = ensureSameOwner(
+        this.database,
+        'skills',
+        skill.id,
+        skill.user_id
+      );
+      if (!exists) {
+        const row = this.database
+          .prepare('SELECT COUNT(*) AS count FROM skills WHERE user_id = ?')
+          .get(skill.user_id) as { count: number };
+        if (row.count >= maximum) {
+          throw new PersistenceResourceLimitError('skill', maximum);
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO skills
+             (id, user_id, slug, name, description, instructions, enabled,
+              version, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             slug = excluded.slug,
+             name = excluded.name,
+             description = excluded.description,
+             instructions = excluded.instructions,
+             enabled = excluded.enabled,
+             version = excluded.version,
+             updated_at = excluded.updated_at
+           WHERE skills.user_id = excluded.user_id`
+        )
+        .run(
+          skill.id,
+          skill.user_id,
+          skill.slug,
+          skill.name,
+          skill.description,
+          skill.instructions,
+          skill.enabled,
+          skill.version,
+          skill.created_at,
+          skill.updated_at
+        );
+      if (archivedVersion) {
+        this.database
+          .prepare(
+            `INSERT INTO skill_versions
+               (id, skill_id, version, instructions, created_at)
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(skill_id, version) DO NOTHING`
+          )
+          .run(
+            archivedVersion.id,
+            archivedVersion.skill_id,
+            archivedVersion.version,
+            archivedVersion.instructions,
+            archivedVersion.created_at
+          );
+      }
+    });
+    replace();
+  }
+
+  async listVersions(
+    skillId: string,
+    maximum: number
+  ): Promise<StoredSkillVersionRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM skill_versions
+         WHERE skill_id = ?
+         ORDER BY version DESC
+         LIMIT ?`
+      )
+      .all(skillId, maximum) as StoredSkillVersionRecord[];
+  }
+
+  async findVersion(
+    skillId: string,
+    version: number
+  ): Promise<StoredSkillVersionRecord | null> {
+    return (
+      (this.database
+        .prepare(
+          'SELECT * FROM skill_versions WHERE skill_id = ? AND version = ?'
+        )
+        .get(skillId, version) as StoredSkillVersionRecord | undefined) ?? null
+    );
+  }
+
+  async deleteByOwner(skillId: string, userId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM skills WHERE id = ? AND user_id = ?')
+        .run(skillId, userId).changes > 0
+    );
+  }
+}
+
 class SQLiteSessionFolderRepository implements SessionFolderRepository {
   constructor(private readonly database: Database.Database) {}
 
@@ -1120,6 +1807,9 @@ const ARCHIVE_TABLES = {
   'knowledge-collection': 'knowledge_collections',
   document: 'documents',
   persona: 'personas',
+  prompt: 'prompts',
+  skill: 'skills',
+  'tool-server': 'tool_servers',
 } as const;
 
 class SQLiteDataArchiveRepository implements DataArchiveRepository {
@@ -1476,6 +2166,12 @@ export const createSQLiteResourceRepositories = (
   calendarEvents: new SQLiteCalendarEventRepository(database),
   automations: new SQLiteAutomationRepository(database),
   automationRuns: new SQLiteAutomationRunRepository(database),
+  toolServers: new SQLiteToolServerRepository(database),
+  toolServerTools: new SQLiteToolServerToolRepository(database),
+  toolServerCredentials: new SQLiteToolServerCredentialRepository(database),
+  toolApprovals: new SQLiteToolApprovalRepository(database),
+  prompts: new SQLitePromptRepository(database),
+  skills: new SQLiteSkillRepository(database),
   sessionFolders: new SQLiteSessionFolderRepository(database),
   preferences: new SQLitePreferenceRepository(database),
   systemSettings: new SQLiteSystemSettingRepository(database),

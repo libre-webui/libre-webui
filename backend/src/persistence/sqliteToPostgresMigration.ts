@@ -342,6 +342,7 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'embedding_model',
       'memory_settings',
       'mutation_settings',
+      'bindings',
       'created_at',
       'updated_at',
     ],
@@ -1055,6 +1056,135 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
     ],
     ['id'],
     { integers: [...timestamps, 'scheduled_for', 'seen_at'] }
+  ),
+  table(
+    'tool_servers',
+    'tool_servers',
+    [
+      'id',
+      'user_id',
+      'name',
+      'description',
+      'kind',
+      'base_url',
+      'spec',
+      'spec_digest',
+      'spec_revision',
+      'auth_mode',
+      'auth_header',
+      'access_mode',
+      'enabled',
+      'timeout_ms',
+      'max_response_bytes',
+      'created_at',
+      'updated_at',
+    ],
+    ['id'],
+    {
+      integers: [
+        ...timestamps,
+        'spec_revision',
+        'enabled',
+        'timeout_ms',
+        'max_response_bytes',
+      ],
+    }
+  ),
+  table(
+    'tool_server_tools',
+    'tool_server_tools',
+    [
+      'id',
+      'server_id',
+      'name',
+      'description',
+      'params_schema',
+      'detail',
+      'side_effect',
+      'enabled',
+      'created_at',
+      'updated_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'side_effect', 'enabled'] }
+  ),
+  table(
+    'tool_server_credentials',
+    'tool_server_credentials',
+    ['id', 'server_id', 'user_id', 'secret', 'created_at', 'updated_at'],
+    ['id'],
+    { integers: timestamps }
+  ),
+  table(
+    'tool_approvals',
+    'tool_approvals',
+    [
+      'id',
+      'user_id',
+      'session_id',
+      'server_id',
+      'tool_name',
+      'call_id',
+      'arguments_digest',
+      'scope',
+      'status',
+      'created_at',
+      'resolved_at',
+      'expires_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'resolved_at', 'expires_at'] }
+  ),
+  table(
+    'prompts',
+    'prompts',
+    [
+      'id',
+      'user_id',
+      'slug',
+      'title',
+      'description',
+      'content',
+      'variables',
+      'tags',
+      'version',
+      'created_at',
+      'updated_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'version'] }
+  ),
+  table(
+    'prompt_versions',
+    'prompt_versions',
+    ['id', 'prompt_id', 'version', 'content', 'variables', 'created_at'],
+    ['id'],
+    { integers: [...timestamps, 'version'] }
+  ),
+  table(
+    'skills',
+    'skills',
+    [
+      'id',
+      'user_id',
+      'slug',
+      'name',
+      'description',
+      'instructions',
+      'enabled',
+      'version',
+      'created_at',
+      'updated_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'enabled', 'version'] }
+  ),
+  table(
+    'skill_versions',
+    'skill_versions',
+    ['id', 'skill_id', 'version', 'instructions', 'created_at'],
+    ['id'],
+    { integers: [...timestamps, 'version'] }
   ),
 ]);
 
