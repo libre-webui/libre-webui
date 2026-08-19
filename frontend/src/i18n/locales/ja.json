@@ -2551,7 +2551,26 @@
       "monthly": "毎月{{day}}日の{{time}}",
       "yearly": "毎年{{date}}の{{time}}"
     },
-    "finishedNotification": "{{n}} 件の自動化の実行が完了しました"
+    "finishedNotification": "{{n}} 件の自動化の実行が完了しました",
+    "templatesTitle": "テンプレート",
+    "templates": {
+      "morningBrief": {
+        "name": "朝のブリーフ",
+        "description": "ヘッドラインと優先事項で1日を始めましょう。"
+      },
+      "newsDigest": {
+        "name": "AIニュースダイジェスト",
+        "description": "重要なモデルリリース、研究、資金調達。"
+      },
+      "weeklyReview": {
+        "name": "週次レビュー",
+        "description": "1週間の締めくくり：成果、積み残し、次の優先事項。"
+      },
+      "monthlyReport": {
+        "name": "月次レポート",
+        "description": "毎月1日にステータスレポートの骨子を作成。"
+      }
+    }
   },
   "home": {
     "active": "アクティブ",

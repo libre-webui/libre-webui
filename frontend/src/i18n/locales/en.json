@@ -2551,7 +2551,26 @@
       "monthly": "Monthly on day {{day}} at {{time}}",
       "yearly": "Yearly on {{date}} at {{time}}"
     },
-    "finishedNotification": "{{n}} automation run(s) finished"
+    "finishedNotification": "{{n}} automation run(s) finished",
+    "templatesTitle": "Templates",
+    "templates": {
+      "morningBrief": {
+        "name": "Morning brief",
+        "description": "Start the day with headlines and priorities."
+      },
+      "newsDigest": {
+        "name": "AI news digest",
+        "description": "Model releases, research, and funding that matter."
+      },
+      "weeklyReview": {
+        "name": "Weekly review",
+        "description": "Wrap the week: wins, loose ends, next priorities."
+      },
+      "monthlyReport": {
+        "name": "Monthly report",
+        "description": "A status report outline on the first of each month."
+      }
+    }
   },
   "home": {
     "active": "active",

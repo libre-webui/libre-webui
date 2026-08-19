@@ -2551,7 +2551,26 @@
       "monthly": "Den {{day}}:e varje månad kl. {{time}}",
       "yearly": "Varje år den {{date}} kl. {{time}}"
     },
-    "finishedNotification": "{{n}} automatiseringskörningar klara"
+    "finishedNotification": "{{n}} automatiseringskörningar klara",
+    "templatesTitle": "Mallar",
+    "templates": {
+      "morningBrief": {
+        "name": "Morgonöversikt",
+        "description": "Börja dagen med rubriker och prioriteringar."
+      },
+      "newsDigest": {
+        "name": "AI-nyhetsöversikt",
+        "description": "Modellsläpp, forskning och finansiering som spelar roll."
+      },
+      "weeklyReview": {
+        "name": "Veckogenomgång",
+        "description": "Avsluta veckan: framgångar, lösa trådar, nästa prioriteringar."
+      },
+      "monthlyReport": {
+        "name": "Månadsrapport",
+        "description": "En statusrapportskiss den första varje månad."
+      }
+    }
   },
   "home": {
     "active": "aktiv",

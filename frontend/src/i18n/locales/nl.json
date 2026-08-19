@@ -2551,7 +2551,26 @@
       "monthly": "Maandelijks op dag {{day}} om {{time}}",
       "yearly": "Jaarlijks op {{date}} om {{time}}"
     },
-    "finishedNotification": "{{n}} automatiseringsuitvoering(en) voltooid"
+    "finishedNotification": "{{n}} automatiseringsuitvoering(en) voltooid",
+    "templatesTitle": "Sjablonen",
+    "templates": {
+      "morningBrief": {
+        "name": "Ochtendoverzicht",
+        "description": "Begin de dag met koppen en prioriteiten."
+      },
+      "newsDigest": {
+        "name": "AI-nieuwsoverzicht",
+        "description": "Modelreleases, onderzoek en financiering die ertoe doen."
+      },
+      "weeklyReview": {
+        "name": "Wekelijkse terugblik",
+        "description": "Sluit de week af: successen, losse eindjes, volgende prioriteiten."
+      },
+      "monthlyReport": {
+        "name": "Maandrapport",
+        "description": "Een opzet voor een statusrapport op de eerste van elke maand."
+      }
+    }
   },
   "home": {
     "active": "actief",

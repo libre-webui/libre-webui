@@ -2551,7 +2551,26 @@
       "monthly": "Mensalmente no dia {{day}} às {{time}}",
       "yearly": "Anualmente em {{date}} às {{time}}"
     },
-    "finishedNotification": "{{n}} execuções de automação concluídas"
+    "finishedNotification": "{{n}} execuções de automação concluídas",
+    "templatesTitle": "Modelos",
+    "templates": {
+      "morningBrief": {
+        "name": "Resumo matinal",
+        "description": "Comece o dia com manchetes e prioridades."
+      },
+      "newsDigest": {
+        "name": "Resumo de notícias de IA",
+        "description": "Lançamentos de modelos, pesquisa e financiamento relevantes."
+      },
+      "weeklyReview": {
+        "name": "Revisão semanal",
+        "description": "Feche a semana: conquistas, pendências, próximas prioridades."
+      },
+      "monthlyReport": {
+        "name": "Relatório mensal",
+        "description": "Um esboço de relatório de status no primeiro dia de cada mês."
+      }
+    }
   },
   "home": {
     "active": "ativo",

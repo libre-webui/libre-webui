@@ -2551,7 +2551,26 @@
       "monthly": "Monatlich am {{day}}. um {{time}}",
       "yearly": "Jährlich am {{date}} um {{time}}"
     },
-    "finishedNotification": "{{n}} Automationslauf/-läufe abgeschlossen"
+    "finishedNotification": "{{n}} Automationslauf/-läufe abgeschlossen",
+    "templatesTitle": "Vorlagen",
+    "templates": {
+      "morningBrief": {
+        "name": "Morgenbriefing",
+        "description": "Starte den Tag mit Schlagzeilen und Prioritäten."
+      },
+      "newsDigest": {
+        "name": "KI-Nachrichtenüberblick",
+        "description": "Relevante Modellveröffentlichungen, Forschung und Finanzierung."
+      },
+      "weeklyReview": {
+        "name": "Wochenrückblick",
+        "description": "Die Woche abschließen: Erfolge, offene Punkte, nächste Prioritäten."
+      },
+      "monthlyReport": {
+        "name": "Monatsbericht",
+        "description": "Eine Statusbericht-Gliederung am Ersten jedes Monats."
+      }
+    }
   },
   "home": {
     "active": "aktiv",

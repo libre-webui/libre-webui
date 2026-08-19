@@ -2551,7 +2551,26 @@
       "monthly": "Hằng tháng vào ngày {{day}} lúc {{time}}",
       "yearly": "Hằng năm vào {{date}} lúc {{time}}"
     },
-    "finishedNotification": "{{n}} lần chạy tự động hóa đã hoàn tất"
+    "finishedNotification": "{{n}} lần chạy tự động hóa đã hoàn tất",
+    "templatesTitle": "Mẫu",
+    "templates": {
+      "morningBrief": {
+        "name": "Bản tin buổi sáng",
+        "description": "Bắt đầu ngày mới với tin chính và các ưu tiên."
+      },
+      "newsDigest": {
+        "name": "Tổng hợp tin tức AI",
+        "description": "Các bản phát hành mô hình, nghiên cứu và nguồn vốn quan trọng."
+      },
+      "weeklyReview": {
+        "name": "Tổng kết tuần",
+        "description": "Khép lại tuần: thành quả, việc dang dở, ưu tiên tiếp theo."
+      },
+      "monthlyReport": {
+        "name": "Báo cáo tháng",
+        "description": "Dàn ý báo cáo tình trạng vào ngày đầu mỗi tháng."
+      }
+    }
   },
   "home": {
     "active": "đang hoạt động",

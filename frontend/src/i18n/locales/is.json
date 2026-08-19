@@ -2551,7 +2551,26 @@
       "monthly": "Mánaðarlega þann {{day}}. kl. {{time}}",
       "yearly": "Árlega þann {{date}} kl. {{time}}"
     },
-    "finishedNotification": "{{n}} sjálfvirknikeyrslum lokið"
+    "finishedNotification": "{{n}} sjálfvirknikeyrslum lokið",
+    "templatesTitle": "Sniðmát",
+    "templates": {
+      "morningBrief": {
+        "name": "Morgunyfirlit",
+        "description": "Byrjaðu daginn með fyrirsögnum og forgangsröðun."
+      },
+      "newsDigest": {
+        "name": "Gervigreindarfréttayfirlit",
+        "description": "Útgáfur líkana, rannsóknir og fjármögnun sem skipta máli."
+      },
+      "weeklyReview": {
+        "name": "Vikuleg yfirferð",
+        "description": "Ljúktu vikunni: sigrar, lausir endar, næstu forgangsatriði."
+      },
+      "monthlyReport": {
+        "name": "Mánaðarskýrsla",
+        "description": "Uppkast að stöðuskýrslu fyrsta dag hvers mánaðar."
+      }
+    }
   },
   "home": {
     "active": "virkt",

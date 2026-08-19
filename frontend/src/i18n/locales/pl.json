@@ -2551,7 +2551,26 @@
       "monthly": "Co miesiąc {{day}}. dnia o {{time}}",
       "yearly": "Co rok {{date}} o {{time}}"
     },
-    "finishedNotification": "Ukończono {{n}} uruchomień automatyzacji"
+    "finishedNotification": "Ukończono {{n}} uruchomień automatyzacji",
+    "templatesTitle": "Szablony",
+    "templates": {
+      "morningBrief": {
+        "name": "Poranny przegląd",
+        "description": "Zacznij dzień od nagłówków i priorytetów."
+      },
+      "newsDigest": {
+        "name": "Przegląd wiadomości o AI",
+        "description": "Istotne wydania modeli, badania i finansowanie."
+      },
+      "weeklyReview": {
+        "name": "Przegląd tygodnia",
+        "description": "Zamknij tydzień: sukcesy, zaległości, kolejne priorytety."
+      },
+      "monthlyReport": {
+        "name": "Raport miesięczny",
+        "description": "Szkic raportu stanu pierwszego dnia każdego miesiąca."
+      }
+    }
   },
   "home": {
     "active": "aktywny",

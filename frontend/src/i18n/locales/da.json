@@ -2551,7 +2551,26 @@
       "monthly": "Månedligt den {{day}}. kl. {{time}}",
       "yearly": "Årligt den {{date}} kl. {{time}}"
     },
-    "finishedNotification": "{{n}} automatiseringskørsler er færdige"
+    "finishedNotification": "{{n}} automatiseringskørsler er færdige",
+    "templatesTitle": "Skabeloner",
+    "templates": {
+      "morningBrief": {
+        "name": "Morgenoverblik",
+        "description": "Start dagen med overskrifter og prioriteter."
+      },
+      "newsDigest": {
+        "name": "AI-nyhedsoverblik",
+        "description": "Modeludgivelser, forskning og finansiering der betyder noget."
+      },
+      "weeklyReview": {
+        "name": "Ugentlig gennemgang",
+        "description": "Afslut ugen: sejre, løse ender, næste prioriteter."
+      },
+      "monthlyReport": {
+        "name": "Månedsrapport",
+        "description": "En statusrapport-skitse den første i hver måned."
+      }
+    }
   },
   "home": {
     "active": "aktiv",

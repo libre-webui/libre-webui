@@ -2551,7 +2551,26 @@
       "monthly": "每月 {{day}} 日 {{time}}",
       "yearly": "每年 {{date}} {{time}}"
     },
-    "finishedNotification": "{{n}} 个自动化运行已完成"
+    "finishedNotification": "{{n}} 个自动化运行已完成",
+    "templatesTitle": "模板",
+    "templates": {
+      "morningBrief": {
+        "name": "晨间简报",
+        "description": "以头条新闻和优先事项开启一天。"
+      },
+      "newsDigest": {
+        "name": "AI 新闻摘要",
+        "description": "重要的模型发布、研究和融资动态。"
+      },
+      "weeklyReview": {
+        "name": "每周回顾",
+        "description": "收尾一周：成果、未竟事项、下周优先级。"
+      },
+      "monthlyReport": {
+        "name": "月度报告",
+        "description": "每月一日的状态报告提纲。"
+      }
+    }
   },
   "home": {
     "active": "活跃",

@@ -2551,7 +2551,26 @@
       "monthly": "매월 {{day}}일 {{time}}",
       "yearly": "매년 {{date}} {{time}}"
     },
-    "finishedNotification": "자동화 실행 {{n}}건이 완료되었습니다"
+    "finishedNotification": "자동화 실행 {{n}}건이 완료되었습니다",
+    "templatesTitle": "템플릿",
+    "templates": {
+      "morningBrief": {
+        "name": "아침 브리핑",
+        "description": "헤드라인과 우선순위로 하루를 시작하세요."
+      },
+      "newsDigest": {
+        "name": "AI 뉴스 다이제스트",
+        "description": "중요한 모델 출시, 연구, 투자 소식."
+      },
+      "weeklyReview": {
+        "name": "주간 리뷰",
+        "description": "한 주 마무리: 성과, 남은 일, 다음 우선순위."
+      },
+      "monthlyReport": {
+        "name": "월간 보고서",
+        "description": "매월 1일 상태 보고서 개요."
+      }
+    }
   },
   "home": {
     "active": "활성",

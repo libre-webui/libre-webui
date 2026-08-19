@@ -2551,7 +2551,26 @@
       "monthly": "Měsíčně {{day}}. den v {{time}}",
       "yearly": "Ročně {{date}} v {{time}}"
     },
-    "finishedNotification": "Dokončeno {{n}} běhů automatizace"
+    "finishedNotification": "Dokončeno {{n}} běhů automatizace",
+    "templatesTitle": "Šablony",
+    "templates": {
+      "morningBrief": {
+        "name": "Ranní přehled",
+        "description": "Začněte den titulky a prioritami."
+      },
+      "newsDigest": {
+        "name": "Přehled zpráv o AI",
+        "description": "Vydání modelů, výzkum a financování, na kterých záleží."
+      },
+      "weeklyReview": {
+        "name": "Týdenní rekapitulace",
+        "description": "Uzavřete týden: úspěchy, resty, priority."
+      },
+      "monthlyReport": {
+        "name": "Měsíční zpráva",
+        "description": "Osnova stavové zprávy prvního dne v měsíci."
+      }
+    }
   },
   "home": {
     "active": "aktivní",

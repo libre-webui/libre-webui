@@ -27,6 +27,8 @@ import { TriggerEditor } from './TriggerEditor';
 interface AutomationModalProps {
   open: boolean;
   automation: Automation | null;
+  /** Prefill for a new automation (template); ignored while editing. */
+  initial?: Partial<AutomationPayload> | null;
   models: OllamaModel[];
   saving: boolean;
   onClose: () => void;
@@ -48,6 +50,7 @@ const providerOf = (model: OllamaModel): string => {
 export function AutomationModal({
   open,
   automation,
+  initial,
   models,
   saving,
   onClose,
@@ -56,8 +59,9 @@ export function AutomationModal({
   if (!open) return null;
   return (
     <AutomationModalForm
-      key={automation?.id ?? 'new'}
+      key={automation?.id ?? initial?.name ?? 'new'}
       automation={automation}
+      initial={initial}
       models={models}
       saving={saving}
       onClose={onClose}
@@ -70,18 +74,20 @@ export function AutomationModal({
 // initializes directly from props.
 function AutomationModalForm({
   automation,
+  initial,
   models,
   saving,
   onClose,
   onSave,
 }: Omit<AutomationModalProps, 'open'>) {
   const { t } = useTranslation();
-  const [name, setName] = useState(automation?.name ?? '');
+  const [name, setName] = useState(automation?.name ?? initial?.name ?? '');
   const [instructions, setInstructions] = useState(
-    automation?.instructions ?? ''
+    automation?.instructions ?? initial?.instructions ?? ''
   );
   const [triggers, setTriggers] = useState<AutomationTrigger[]>(
-    automation?.triggers ?? [{ kind: 'daily', hour: 8, minute: 0 }]
+    automation?.triggers ??
+      initial?.triggers ?? [{ kind: 'daily', hour: 8, minute: 0 }]
   );
   const [model, setModel] = useState(automation?.model ?? '');
   const [notify, setNotify] = useState<'app' | 'off'>(

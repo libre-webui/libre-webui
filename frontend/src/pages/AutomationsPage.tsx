@@ -45,6 +45,10 @@ import { useChatStore } from '@/store/chatStore';
 import { cn, formatTimestamp } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import { describeTriggers } from '@/utils/automationSchedule';
+import {
+  AUTOMATION_TEMPLATES,
+  type AutomationTemplate,
+} from '@/utils/automationTemplates';
 import type { Automation, AutomationRun } from '@/types';
 
 const logger = createLogger('pages:automations');
@@ -63,6 +67,8 @@ const AutomationsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Automation | null>(null);
+  const [templatePrefill, setTemplatePrefill] =
+    useState<Partial<AutomationPayload> | null>(null);
   const [saving, setSaving] = useState(false);
   const [menuFor, setMenuFor] = useState<string | null>(null);
 
@@ -122,11 +128,23 @@ const AutomationsPage: React.FC = () => {
 
   const openCreate = () => {
     setEditing(null);
+    setTemplatePrefill(null);
+    setModalOpen(true);
+  };
+
+  const openTemplate = (template: AutomationTemplate) => {
+    setEditing(null);
+    setTemplatePrefill({
+      name: t(`automations.templates.${template.id}.name`),
+      instructions: template.instructions,
+      triggers: template.triggers,
+    });
     setModalOpen(true);
   };
 
   const openEdit = (automation: Automation) => {
     setEditing(automation);
+    setTemplatePrefill(null);
     setMenuFor(null);
     setModalOpen(true);
   };
@@ -332,7 +350,36 @@ const AutomationsPage: React.FC = () => {
               ))}
             </div>
           )
-        ) : (
+        ) : null}
+        {tab === 'automations' && !loading && (
+          <div className='mx-auto mt-8 w-full max-w-3xl'>
+            <p className='mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-dark-500'>
+              {t('automations.templatesTitle')}
+            </p>
+            <div className='grid gap-2 sm:grid-cols-2'>
+              {AUTOMATION_TEMPLATES.map(template => (
+                <button
+                  key={template.id}
+                  type='button'
+                  onClick={() => openTemplate(template)}
+                  data-testid='automation-template'
+                  className='rounded-2xl border border-black/[0.06] bg-white/40 px-4 py-3 text-start transition-colors hover:bg-white/80 dark:border-white/[0.07] dark:bg-dark-100/40 dark:hover:bg-dark-100/80'
+                >
+                  <p className='text-[13px] font-medium text-gray-900 dark:text-dark-900'>
+                    {t(`automations.templates.${template.id}.name`)}
+                  </p>
+                  <p className='mt-0.5 text-[12px] text-gray-500 dark:text-dark-500'>
+                    {t(`automations.templates.${template.id}.description`)}
+                  </p>
+                  <p className='mt-1.5 text-[11px] text-gray-400 dark:text-dark-500'>
+                    {describeTriggers(template.triggers, i18n.language, t)}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {tab === 'runs' && (
           <div className='mx-auto w-full max-w-3xl space-y-4'>
             {summary && (
               <RunHistoryStrip days={summary.days} locale={i18n.language} />
@@ -386,6 +433,7 @@ const AutomationsPage: React.FC = () => {
       <AutomationModal
         open={modalOpen}
         automation={editing}
+        initial={templatePrefill}
         models={models}
         saving={saving}
         onClose={() => setModalOpen(false)}

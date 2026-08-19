@@ -2551,7 +2551,26 @@
       "monthly": "Her ayın {{day}}. günü {{time}}",
       "yearly": "Her yıl {{date}} {{time}}"
     },
-    "finishedNotification": "{{n}} otomasyon çalıştırması tamamlandı"
+    "finishedNotification": "{{n}} otomasyon çalıştırması tamamlandı",
+    "templatesTitle": "Şablonlar",
+    "templates": {
+      "morningBrief": {
+        "name": "Sabah özeti",
+        "description": "Güne manşetler ve önceliklerle başlayın."
+      },
+      "newsDigest": {
+        "name": "Yapay zekâ haber özeti",
+        "description": "Önemli model sürümleri, araştırmalar ve yatırımlar."
+      },
+      "weeklyReview": {
+        "name": "Haftalık değerlendirme",
+        "description": "Haftayı kapatın: başarılar, eksikler, sonraki öncelikler."
+      },
+      "monthlyReport": {
+        "name": "Aylık rapor",
+        "description": "Her ayın birinde bir durum raporu taslağı."
+      }
+    }
   },
   "home": {
     "active": "etkin",

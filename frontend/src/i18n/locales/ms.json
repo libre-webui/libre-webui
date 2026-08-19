@@ -2551,7 +2551,26 @@
       "monthly": "Setiap {{day}} haribulan pada {{time}}",
       "yearly": "Setiap tahun pada {{date}} {{time}}"
     },
-    "finishedNotification": "{{n}} larian automasi selesai"
+    "finishedNotification": "{{n}} larian automasi selesai",
+    "templatesTitle": "Templat",
+    "templates": {
+      "morningBrief": {
+        "name": "Ringkasan pagi",
+        "description": "Mulakan hari dengan tajuk utama dan keutamaan."
+      },
+      "newsDigest": {
+        "name": "Ringkasan berita AI",
+        "description": "Keluaran model, penyelidikan dan pembiayaan yang penting."
+      },
+      "weeklyReview": {
+        "name": "Ulasan mingguan",
+        "description": "Tutup minggu: kejayaan, kerja tertangguh, keutamaan seterusnya."
+      },
+      "monthlyReport": {
+        "name": "Laporan bulanan",
+        "description": "Rangka laporan status pada satu haribulan setiap bulan."
+      }
+    }
   },
   "home": {
     "active": "aktif",

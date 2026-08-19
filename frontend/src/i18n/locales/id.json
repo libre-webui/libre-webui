@@ -2551,7 +2551,26 @@
       "monthly": "Setiap tanggal {{day}} pukul {{time}}",
       "yearly": "Setiap {{date}} pukul {{time}}"
     },
-    "finishedNotification": "{{n}} eksekusi otomatisasi selesai"
+    "finishedNotification": "{{n}} eksekusi otomatisasi selesai",
+    "templatesTitle": "Templat",
+    "templates": {
+      "morningBrief": {
+        "name": "Ringkasan pagi",
+        "description": "Mulai hari dengan berita utama dan prioritas."
+      },
+      "newsDigest": {
+        "name": "Ringkasan berita AI",
+        "description": "Rilis model, riset, dan pendanaan yang penting."
+      },
+      "weeklyReview": {
+        "name": "Tinjauan mingguan",
+        "description": "Tutup pekan: capaian, pekerjaan tersisa, prioritas berikutnya."
+      },
+      "monthlyReport": {
+        "name": "Laporan bulanan",
+        "description": "Kerangka laporan status setiap tanggal satu."
+      }
+    }
   },
   "home": {
     "active": "aktif",

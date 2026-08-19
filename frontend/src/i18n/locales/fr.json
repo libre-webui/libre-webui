@@ -2551,7 +2551,26 @@
       "monthly": "Le {{day}} de chaque mois à {{time}}",
       "yearly": "Chaque année le {{date}} à {{time}}"
     },
-    "finishedNotification": "{{n}} exécution(s) d’automatisation terminée(s)"
+    "finishedNotification": "{{n}} exécution(s) d’automatisation terminée(s)",
+    "templatesTitle": "Modèles",
+    "templates": {
+      "morningBrief": {
+        "name": "Brief du matin",
+        "description": "Commencez la journée avec les titres et les priorités."
+      },
+      "newsDigest": {
+        "name": "Résumé de l'actualité IA",
+        "description": "Sorties de modèles, recherche et financements qui comptent."
+      },
+      "weeklyReview": {
+        "name": "Bilan hebdomadaire",
+        "description": "Clôturez la semaine : réussites, points en suspens, priorités."
+      },
+      "monthlyReport": {
+        "name": "Rapport mensuel",
+        "description": "Un plan de rapport d'état le premier de chaque mois."
+      }
+    }
   },
   "home": {
     "active": "actif",

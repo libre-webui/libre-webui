@@ -2551,7 +2551,26 @@
       "monthly": "شهريًا في اليوم {{day}} في {{time}}",
       "yearly": "سنويًا في {{date}} في {{time}}"
     },
-    "finishedNotification": "اكتمل {{n}} من تشغيلات الأتمتة"
+    "finishedNotification": "اكتمل {{n}} من تشغيلات الأتمتة",
+    "templatesTitle": "قوالب",
+    "templates": {
+      "morningBrief": {
+        "name": "موجز الصباح",
+        "description": "ابدأ يومك بالعناوين والأولويات."
+      },
+      "newsDigest": {
+        "name": "موجز أخبار الذكاء الاصطناعي",
+        "description": "إصدارات النماذج والأبحاث والتمويل المهم."
+      },
+      "weeklyReview": {
+        "name": "مراجعة أسبوعية",
+        "description": "اختم الأسبوع: الإنجازات والمهام المعلقة وأولويات المرحلة المقبلة."
+      },
+      "monthlyReport": {
+        "name": "تقرير شهري",
+        "description": "مخطط تقرير حالة في أول كل شهر."
+      }
+    }
   },
   "home": {
     "active": "نشط",

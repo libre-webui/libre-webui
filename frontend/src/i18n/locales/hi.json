@@ -2551,7 +2551,26 @@
       "monthly": "हर महीने {{day}} तारीख़ को {{time}} बजे",
       "yearly": "हर साल {{date}} को {{time}} बजे"
     },
-    "finishedNotification": "{{n}} ऑटोमेशन रन पूर्ण हुए"
+    "finishedNotification": "{{n}} ऑटोमेशन रन पूर्ण हुए",
+    "templatesTitle": "टेम्पलेट",
+    "templates": {
+      "morningBrief": {
+        "name": "सुबह का सार",
+        "description": "सुर्खियों और प्राथमिकताओं के साथ दिन शुरू करें।"
+      },
+      "newsDigest": {
+        "name": "एआई समाचार सार",
+        "description": "महत्वपूर्ण मॉडल रिलीज़, शोध और फंडिंग।"
+      },
+      "weeklyReview": {
+        "name": "साप्ताहिक समीक्षा",
+        "description": "सप्ताह समाप्त करें: उपलब्धियाँ, बचे काम, अगली प्राथमिकताएँ।"
+      },
+      "monthlyReport": {
+        "name": "मासिक रिपोर्ट",
+        "description": "हर महीने की पहली तारीख़ को स्थिति रिपोर्ट की रूपरेखा।"
+      }
+    }
   },
   "home": {
     "active": "सक्रिय",
