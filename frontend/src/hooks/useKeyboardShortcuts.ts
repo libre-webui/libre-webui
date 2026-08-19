@@ -48,9 +48,7 @@ export const useKeyboardShortcuts = (
 
       // Special handling for ? key (which is Shift+/)
       if (event.key === '?' || (event.key === '/' && event.shiftKey)) {
-        const helpShortcut = shortcuts.find(
-          s => s.key === '?' || s.key === 'h'
-        );
+        const helpShortcut = shortcuts.find(s => s.key === '?');
         if (helpShortcut) {
           event.preventDefault();
           event.stopPropagation();

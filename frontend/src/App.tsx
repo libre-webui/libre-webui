@@ -376,7 +376,7 @@ const AppContent: React.FC = () => {
       description: t('keyboard.toggleDarkMode'),
     },
     {
-      key: 'h',
+      key: '?',
       action: () => {
         setSettingsTab('shortcuts');
         setSettingsOpen(true);
