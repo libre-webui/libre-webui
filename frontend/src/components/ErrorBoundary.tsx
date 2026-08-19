@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode, useEffect } from 'react';
+import { isRouteErrorResponse, useRouteError } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 import { createLogger } from '@/utils/logger';
@@ -82,6 +83,26 @@ const DefaultErrorFallback: React.FC<{ error?: Error }> = ({ error }) => {
       </div>
     </div>
   );
+};
+
+// Route-level errors are intercepted by the data router before they reach
+// the app-level ErrorBoundary, so without this the router renders its bare
+// developer stack-trace page. Same branded card, sourced via useRouteError.
+export const RouteErrorScreen: React.FC = () => {
+  const routeError = useRouteError();
+
+  useEffect(() => {
+    logger.error('Route error screen caught an error:', routeError);
+  }, [routeError]);
+
+  const error =
+    routeError instanceof Error
+      ? routeError
+      : isRouteErrorResponse(routeError)
+        ? new Error(`${routeError.status} ${routeError.statusText}`)
+        : new Error(String(routeError));
+
+  return <DefaultErrorFallback error={error} />;
 };
 
 export class ErrorBoundary extends Component<Props, State> {

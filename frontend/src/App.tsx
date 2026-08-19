@@ -45,7 +45,7 @@ const ElectronTitleBar: React.FC = () => {
 import { Toaster } from 'react-hot-toast';
 import { Sidebar } from '@/components/Sidebar';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ErrorBoundary, RouteErrorScreen } from '@/components/ErrorBoundary';
 import { API_BASE_URL } from '@/utils/config';
 import { WhatsNewModal } from '@/components/WhatsNewModal';
 import { useWhatsNew } from '@/hooks/useWhatsNew';
@@ -724,9 +724,16 @@ const AppContent: React.FC = () => {
 // Data routers support navigation blockers used by the Work file editor.
 // Electron still uses hash-based URLs because file:// cannot serve history
 // fallbacks.
+const appRoutes = [
+  {
+    path: '*',
+    element: <AppContent />,
+    errorElement: <RouteErrorScreen />,
+  },
+];
 const appRouter = isElectron
-  ? createHashRouter([{ path: '*', element: <AppContent /> }])
-  : createBrowserRouter([{ path: '*', element: <AppContent /> }]);
+  ? createHashRouter(appRoutes)
+  : createBrowserRouter(appRoutes);
 
 const App: React.FC = () => (
   <ErrorBoundary>
