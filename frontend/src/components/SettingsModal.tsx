@@ -2000,7 +2000,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* Tab Content */}
-            <div className='flex min-h-0 flex-1 flex-col'>
+            <div className='flex min-h-0 min-w-0 flex-1 flex-col'>
               <div className='hidden h-[54px] shrink-0 items-center justify-end px-3.5 pb-2 pt-5 sm:flex'>
                 <Button
                   variant='ghost'
