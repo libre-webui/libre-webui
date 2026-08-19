@@ -2863,5 +2863,19 @@
         "always": "Always"
       }
     }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Prompt library"
+    },
+    "skillMenu": {
+      "label": "Skills"
+    },
+    "variables": {
+      "title": "Fill in {{title}}",
+      "insert": "Insert",
+      "cancel": "Cancel",
+      "required": "{{name}} is required"
+    }
   }
 }

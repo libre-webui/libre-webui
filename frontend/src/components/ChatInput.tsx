@@ -60,6 +60,10 @@ import {
 } from '@/utils/api';
 import type { STTModel } from '@/utils/api';
 import { toolsApi } from '@/utils/api/toolsApi';
+import {
+  ComposerSuggestions,
+  type ComposerSuggestionsHandle,
+} from './composer/ComposerSuggestions';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
 import { buildContextUsage, resolveContextBudget } from '@/utils/contextUsage';
@@ -308,6 +312,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   );
   const currentSessionId = currentSession?.id;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const suggestionsRef = useRef<ComposerSuggestionsHandle>(null);
   const sessionSelection = useMemo(
     () => ({
       model: currentSession?.personaId
@@ -890,6 +895,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (suggestionsRef.current?.handleKeyDown(e)) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
@@ -1066,13 +1072,22 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             {/* Unified Input Container: text row above, controls row below. */}
             <div
               className={cn(
-                'rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
+                'relative rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
                 'bg-surface dark:bg-surface-subtle',
                 'border-black/[0.08] dark:border-white/[0.09]',
                 'shadow-lv2 focus-within:shadow-lv3'
               )}
             >
               {/* Text Input Area */}
+              <ComposerSuggestions
+                ref={suggestionsRef}
+                message={message}
+                disabled={disabled}
+                onApply={next => {
+                  setMessage(next);
+                  textareaRef.current?.focus();
+                }}
+              />
               <CodeAwareTextarea
                 ref={textareaRef}
                 value={message}
