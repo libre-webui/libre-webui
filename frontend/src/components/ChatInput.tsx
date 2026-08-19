@@ -37,6 +37,7 @@ import {
   Mic,
   BookOpen,
   Check,
+  Wrench,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { CodeAwareTextarea } from './CodeAwareTextarea';
@@ -58,6 +59,7 @@ import {
   sttApi,
 } from '@/utils/api';
 import type { STTModel } from '@/utils/api';
+import { toolsApi } from '@/utils/api/toolsApi';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
 import { buildContextUsage, resolveContextBudget } from '@/utils/contextUsage';
@@ -136,7 +138,8 @@ interface ChatInputProps {
     message: string,
     images?: string[],
     format?: string | Record<string, unknown>,
-    webSearch?: boolean
+    webSearch?: boolean,
+    tools?: boolean
   ) => void;
   onStopGeneration: () => void;
   disabled?: boolean;
@@ -230,6 +233,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   // toggle appears only when an administrator has enabled it.
   const [webSearchAvailable, setWebSearchAvailable] = useState(false);
   const [webSearchActive, setWebSearchActive] = useState(false);
+  // Native tool calls: available when the tools feature gate passes and the
+  // effective catalog is non-empty. Private sessions never offer tools.
+  const [toolsAvailable, setToolsAvailable] = useState(false);
+  const [toolsActive, setToolsActive] = useState(false);
+  const isPrivateSession = useChatStore(
+    state => state.currentSession?.isPrivate === true
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -238,6 +248,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       .then(response => {
         if (!cancelled && response.success && response.data) {
           setWebSearchAvailable(response.data.allowed);
+        }
+      })
+      .catch(() => {});
+    toolsApi
+      .getCatalog()
+      .then(response => {
+        if (!cancelled && response.success && response.data) {
+          setToolsAvailable(
+            response.data.available && response.data.tools.length > 0
+          );
         }
       })
       .catch(() => {});
@@ -862,7 +882,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       message.trim(),
       images.length > 0 ? images : undefined,
       format || undefined,
-      webSearchAvailable && webSearchActive ? true : undefined
+      webSearchAvailable && webSearchActive ? true : undefined,
+      toolsAvailable && toolsActive && !isPrivateSession ? true : undefined
     );
     setMessage('');
     setImages([]);
@@ -1305,6 +1326,31 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       aria-pressed={webSearchActive}
                     >
                       <Globe className='h-4 w-4' />
+                    </Button>
+                  )}
+
+                  {/* Native tool-call toggle */}
+                  {toolsAvailable && !isPrivateSession && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => setToolsActive(active => !active)}
+                      className={cn(
+                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                        'transition-colors duration-150 touch-manipulation',
+                        toolsActive &&
+                          'bg-primary-50 text-primary-600 dark:bg-primary-900/25 dark:text-primary-400'
+                      )}
+                      title={
+                        toolsActive
+                          ? t('chat.input.toolsOn')
+                          : t('chat.input.toolsOff')
+                      }
+                      aria-pressed={toolsActive}
+                    >
+                      <Wrench className='h-4 w-4' />
                     </Button>
                   )}
 

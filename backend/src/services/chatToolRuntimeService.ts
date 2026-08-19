@@ -238,6 +238,7 @@ const executeRoundCall = async (
     tool: entry,
     argumentsJson: call.arguments,
     sessionId: options.sessionId,
+    selection: options.catalog.selection,
     ...(options.signal ? { signal: options.signal } : {}),
   });
   const executed = finish(
@@ -374,6 +375,22 @@ export function runPluginToolLoop(options: PluginToolLoopOptions): {
         });
       }
     }
+
+    // The round cap ran out with the model still requesting tools (the final
+    // round offers none, but a provider may ignore that). Close the turn
+    // anyway so every transport still sees exactly one terminal chunk.
+    if (sawUsage) {
+      yield {
+        type: 'usage',
+        usage: {
+          promptTokens,
+          completionTokens,
+          totalTokens: promptTokens + completionTokens,
+        },
+        ...(timings ? { timings } : {}),
+      };
+    }
+    yield { type: 'done', doneReason: 'tool-round-limit' };
   }
 
   return { chunks: compose(), state };

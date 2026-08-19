@@ -29,8 +29,17 @@ import {
   ConversationHistoryRail,
 } from '@/components/ConversationHistoryRail';
 import { MessageBranch } from '@/components/MessageBranch';
-import { ChatMessage as ChatMessageType, ToolActivity } from '@/types';
+import {
+  ChatMessage as ChatMessageType,
+  ChatToolApprovalRequest,
+  ChatToolCall,
+  ToolActivity,
+} from '@/types';
 import { ToolActivityIndicator } from '@/components/ToolActivityIndicator';
+import {
+  ChatToolApprovalCard,
+  ChatToolCallList,
+} from '@/components/ChatToolCalls';
 import { cn } from '@/utils';
 import { isCompactionSummaryContent } from '@/utils/contextUsage';
 import { ArrowDown, Sparkles } from 'lucide-react';
@@ -45,6 +54,13 @@ interface ChatMessagesProps {
   streamingMessageId?: string | null;
   isStreaming?: boolean;
   toolActivities?: ToolActivity[];
+  activeToolCalls?: ChatToolCall[];
+  pendingToolApproval?: ChatToolApprovalRequest | null;
+  onDecideToolApproval?: (
+    approvalId: string,
+    approve: boolean,
+    scope: 'once' | 'session' | 'always'
+  ) => void;
   className?: string;
   onRegenerate?: () => void;
   onSelectBranch?: (messageId: string) => void;
@@ -95,6 +111,9 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   streamingMessageId,
   isStreaming = false,
   toolActivities = [],
+  activeToolCalls,
+  pendingToolApproval,
+  onDecideToolApproval,
   className,
   onRegenerate,
   onSelectBranch,
@@ -627,6 +646,16 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
               </div>
             );
           })}
+          {isStreaming && (activeToolCalls?.length ?? 0) > 0 && (
+            <ChatToolCallList calls={activeToolCalls ?? []} className='pb-2' />
+          )}
+          {pendingToolApproval && onDecideToolApproval && (
+            <ChatToolApprovalCard
+              approval={pendingToolApproval}
+              onDecide={onDecideToolApproval}
+              className='mb-2'
+            />
+          )}
           {isStreaming && toolActivities.length > 0 && (
             <ToolActivityIndicator tools={toolActivities} className='px-0' />
           )}

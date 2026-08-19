@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Record and send audio to {{provider}} for transcription",
       "webSearchOn": "Web search on — replies use live results",
       "webSearchOff": "Search the web for this message",
+      "toolsOn": "Tools on — the model can call approved tools",
+      "toolsOff": "Let the model call tools for this message",
       "thinkingOn": "Thinking on ({{level}})",
       "thinkingOff": "Think before answering"
     },
@@ -2614,5 +2616,26 @@
     "chat": "Chat",
     "newChat": "New Chat",
     "work": "Work"
+  },
+  "tools": {
+    "arguments": "Arguments",
+    "result": "Result",
+    "callStatus": {
+      "awaiting_approval": "Waiting for approval",
+      "running": "Running",
+      "succeeded": "Done",
+      "failed": "Failed",
+      "denied": "Denied",
+      "cancelled": "Cancelled"
+    },
+    "approval": {
+      "title": "Tool approval needed",
+      "description": "The model wants to run {{tool}} on {{server}}. This call can change data outside this chat.",
+      "builtinSource": "this server",
+      "allowOnce": "Allow once",
+      "allowSession": "Allow for this chat",
+      "allowAlways": "Always allow",
+      "deny": "Deny"
+    }
   }
 }

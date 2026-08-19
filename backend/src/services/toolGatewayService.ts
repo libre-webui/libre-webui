@@ -59,11 +59,16 @@ export interface ToolCatalogSelection {
   builtinTools?: readonly string[] | undefined;
   /** Server ids to offer; undefined offers every visible server. */
   serverIds?: readonly string[] | undefined;
+  /** Skill ids a profile binds; undefined offers every enabled skill. */
+  skillIds?: readonly string[] | undefined;
+  /** Knowledge collections scoping the document-search builtin. */
+  collectionIds?: readonly string[] | undefined;
 }
 
 export interface ToolCatalog {
   tools: EffectiveTool[];
   byName: Map<string, EffectiveTool>;
+  selection: ToolCatalogSelection;
 }
 
 /** Whether this actor may use chat tools at all (the feature gate). */
@@ -83,6 +88,10 @@ export async function buildToolCatalog(
   const builtinContext: BuiltinToolContext = {
     actor,
     ...(context.sessionId ? { sessionId: context.sessionId } : {}),
+    ...(selection.skillIds ? { skillIds: selection.skillIds } : {}),
+    ...(selection.collectionIds
+      ? { collectionIds: selection.collectionIds }
+      : {}),
   };
   const [builtins, serverTools] = await Promise.all([
     effectiveBuiltinTools(builtinContext, selection.builtinTools),
@@ -90,7 +99,7 @@ export async function buildToolCatalog(
   ]);
   const tools = [...builtins, ...serverTools];
   const byName = new Map(tools.map(tool => [tool.name, tool]));
-  return { tools, byName };
+  return { tools, byName, selection };
 }
 
 export interface ToolExecutionInput {
@@ -99,6 +108,8 @@ export interface ToolExecutionInput {
   argumentsJson: string;
   sessionId?: string;
   signal?: AbortSignal;
+  /** The turn's profile bindings, re-applied at execution time. */
+  selection?: ToolCatalogSelection;
 }
 
 export interface ToolExecutionResult {
@@ -148,6 +159,12 @@ export async function executeToolCall(
         actor,
         ...(input.sessionId ? { sessionId: input.sessionId } : {}),
         ...(input.signal ? { signal: input.signal } : {}),
+        ...(input.selection?.skillIds
+          ? { skillIds: input.selection.skillIds }
+          : {}),
+        ...(input.selection?.collectionIds
+          ? { collectionIds: input.selection.collectionIds }
+          : {}),
       });
     } else {
       const server = tool.serverId ? await getToolServer(tool.serverId) : null;

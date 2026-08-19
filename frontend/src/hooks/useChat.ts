@@ -18,7 +18,14 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
-import { ChatSession, GenerationStatistics, ToolActivity } from '@/types';
+import {
+  ChatSession,
+  ChatToolApprovalRequest,
+  ChatToolCall,
+  GenerationStatistics,
+  ToolActivity,
+} from '@/types';
+import { toolsApi, type ToolApprovalScope } from '@/utils/api/toolsApi';
 import websocketService from '@/utils/websocket';
 import { generateId } from '@/utils';
 import {
@@ -58,6 +65,9 @@ export const useChat = (sessionId: string) => {
   );
   const [isStreaming, setIsStreaming] = useState(false);
   const [toolActivities, setToolActivities] = useState<ToolActivity[]>([]);
+  const [activeToolCalls, setActiveToolCalls] = useState<ChatToolCall[]>([]);
+  const [pendingToolApproval, setPendingToolApproval] =
+    useState<ChatToolApprovalRequest | null>(null);
   const {
     addMessage,
     updateMessage,
@@ -332,6 +342,7 @@ export const useChat = (sessionId: string) => {
       websocketService.offMessage('assistant_complete');
       websocketService.offMessage('assistant_cancelled');
       websocketService.offMessage('tool_status');
+      websocketService.offMessage('tool_event');
       websocketService.offMessage('error');
       return;
     }
@@ -438,6 +449,79 @@ export const useChat = (sessionId: string) => {
       });
     });
 
+    // Normalized chat tool events (chat.tool-call.v1 / chat.tool-result.v1 /
+    // chat.approval.v1) arrive identically over the WebSocket and the durable
+    // event stream.
+    websocketService.onMessage('tool_event', (data: unknown) => {
+      const event = data as {
+        type?: string;
+        messageId?: string;
+        toolCall?: ChatToolCall;
+        toolCallId?: string;
+        status?: ChatToolCall['status'];
+        preview?: string;
+        isError?: boolean;
+        approvalId?: string;
+        expiresAt?: number;
+      };
+      if (!event.type || !event.messageId) return;
+      if (
+        streamingMessageIdRef.current &&
+        event.messageId !== streamingMessageIdRef.current
+      ) {
+        return;
+      }
+
+      if (event.type === 'chat.tool-call.v1' && event.toolCall) {
+        const call = event.toolCall;
+        setActiveToolCalls(prev => {
+          const existing = prev.find(entry => entry.id === call.id);
+          return existing
+            ? prev.map(entry => (entry.id === call.id ? call : entry))
+            : [...prev, call];
+        });
+        return;
+      }
+      if (event.type === 'chat.tool-result.v1' && event.toolCallId) {
+        setActiveToolCalls(prev =>
+          prev.map(entry =>
+            entry.id === event.toolCallId
+              ? {
+                  ...entry,
+                  status: event.status ?? entry.status,
+                  resultPreview: event.preview,
+                  isError: event.isError === true,
+                  finishedAt: Date.now(),
+                }
+              : entry
+          )
+        );
+        setPendingToolApproval(prev =>
+          prev && prev.toolCall.id === event.toolCallId ? null : prev
+        );
+        return;
+      }
+      if (
+        event.type === 'chat.approval.v1' &&
+        event.approvalId &&
+        event.toolCall
+      ) {
+        const call = event.toolCall;
+        setActiveToolCalls(prev => {
+          const existing = prev.find(entry => entry.id === call.id);
+          return existing
+            ? prev.map(entry => (entry.id === call.id ? call : entry))
+            : [...prev, call];
+        });
+        setPendingToolApproval({
+          approvalId: event.approvalId,
+          messageId: event.messageId,
+          toolCall: call,
+          expiresAt: event.expiresAt ?? Date.now() + 120_000,
+        });
+      }
+    });
+
     websocketService.onMessage('assistant_complete', (data: unknown) => {
       const completeData = data as {
         content: string;
@@ -494,6 +578,9 @@ export const useChat = (sessionId: string) => {
       resetVisibleStreamingMessage();
       setIsGenerating(false);
       setToolActivities([]);
+      // The persisted message's providerMetadata.toolCalls takes over.
+      setActiveToolCalls([]);
+      setPendingToolApproval(null);
 
       if (completeData && messageId) {
         // Ensure final update with the complete content
@@ -558,6 +645,8 @@ export const useChat = (sessionId: string) => {
       setStreamingMessageId(null);
       setIsGenerating(false);
       setToolActivities([]);
+      setActiveToolCalls([]);
+      setPendingToolApproval(null);
       streamingMessageIdRef.current = null;
       streamingContentRef.current = '';
       streamingThinkingRef.current = '';
@@ -572,6 +661,8 @@ export const useChat = (sessionId: string) => {
       setIsStreaming(false);
       resetVisibleStreamingMessage();
       setIsGenerating(false);
+      setActiveToolCalls([]);
+      setPendingToolApproval(null);
       streamingMessageIdRef.current = null;
       streamingThinkingRef.current = '';
 
@@ -624,7 +715,8 @@ export const useChat = (sessionId: string) => {
       content: string,
       images?: string[],
       format?: string | Record<string, unknown>,
-      webSearch?: boolean
+      webSearch?: boolean,
+      tools?: boolean
     ) => {
       // Allow sending if there's content OR if there are images
       if (!sessionId || (!content.trim() && (!images || images.length === 0)))
@@ -649,6 +741,8 @@ export const useChat = (sessionId: string) => {
         setIsGenerating(true);
         setIsStreaming(true);
         resetVisibleStreamingMessage();
+        setActiveToolCalls([]);
+        setPendingToolApproval(null);
         streamingContentRef.current = '';
         streamingThinkingRef.current = '';
 
@@ -741,6 +835,7 @@ export const useChat = (sessionId: string) => {
               ...(format !== undefined ? { format } : {}),
             },
             webSearch: webSearch === true,
+            tools: tools === true,
             signal: abort.signal,
           });
           const disposition = await acceptDurableGenerationJob(
@@ -767,6 +862,12 @@ export const useChat = (sessionId: string) => {
                 websocketService.dispatchMessage('assistant_chunk', payload);
               } else if (payload.type === 'done') {
                 websocketService.dispatchMessage('assistant_complete', payload);
+              } else if (
+                typeof payload.type === 'string' &&
+                (payload.type.startsWith('chat.tool') ||
+                  payload.type.startsWith('chat.approval'))
+              ) {
+                websocketService.dispatchMessage('tool_event', payload);
               } else if (payload.type === 'error') {
                 websocketService.dispatchMessage('error', {
                   ...payload,
@@ -817,6 +918,7 @@ export const useChat = (sessionId: string) => {
             assistantMessageId, // Send the message ID to backend
             isPrivate: isPrivateSession, // Private sessions don't persist to DB
             ...(webSearch === true ? { webSearch: true } : {}),
+            ...(tools === true && !isPrivateSession ? { tools: true } : {}),
             ...(isPrivateSession
               ? {
                   model: session?.model,
@@ -1306,6 +1408,21 @@ export const useChat = (sessionId: string) => {
     [sessionId, sendMessage]
   );
 
+  const decideToolApproval = useCallback(
+    async (approvalId: string, approve: boolean, scope: ToolApprovalScope) => {
+      try {
+        await toolsApi.decideApproval(approvalId, approve, scope);
+        setPendingToolApproval(prev =>
+          prev && prev.approvalId === approvalId ? null : prev
+        );
+      } catch (error) {
+        logger.error('Failed to record the tool decision:', error);
+        toast.error('The tool decision could not be recorded');
+      }
+    },
+    []
+  );
+
   return {
     sendMessage,
     stopGeneration,
@@ -1317,5 +1434,8 @@ export const useChat = (sessionId: string) => {
     streamingThinking,
     streamingMessageId,
     toolActivities,
+    activeToolCalls,
+    pendingToolApproval,
+    decideToolApproval,
   };
 };

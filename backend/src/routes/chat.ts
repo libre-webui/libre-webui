@@ -812,6 +812,7 @@ router.post(
         images,
         options,
         webSearch: req.body?.webSearch === true,
+        tools: req.body?.tools === true,
         regenerate,
         originalMessageId,
       });

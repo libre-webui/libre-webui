@@ -24,7 +24,11 @@ import React, {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { ChatMessage as ChatMessageType } from '@/types';
+import {
+  ChatMessage as ChatMessageType,
+  ChatToolCall as ChatToolCallType,
+} from '@/types';
+import { ChatToolCallList } from '@/components/ChatToolCalls';
 import { MessageContent } from '@/components/ui';
 import { GenerationStats } from '@/components/GenerationStats';
 import { ArtifactContainer } from '@/components/ArtifactContainer';
@@ -850,6 +854,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 <ArtifactContainer artifacts={artifacts} />
               </div>
             )}
+
+            {/* Tool calls this turn executed through the native tool loop */}
+            {!isUser &&
+              !isSystem &&
+              Array.isArray(message.providerMetadata?.toolCalls) &&
+              (message.providerMetadata.toolCalls as ChatToolCallType[])
+                .length > 0 && (
+                <ChatToolCallList
+                  calls={
+                    message.providerMetadata.toolCalls as ChatToolCallType[]
+                  }
+                  className='mt-2.5'
+                />
+              )}
 
             {/* Web search sources the reply drew on */}
             {!isUser &&

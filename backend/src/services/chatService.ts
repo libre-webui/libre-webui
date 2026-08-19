@@ -492,6 +492,7 @@ class ChatService {
     images?: string[];
     options?: Record<string, unknown>;
     webSearch?: boolean;
+    tools?: boolean;
     regenerate?: boolean;
     originalMessageId?: string;
   }): Promise<{ userMessage: ChatMessage; jobId: string } | undefined> {
@@ -574,6 +575,7 @@ class ChatService {
           hasImages: (input.images?.length ?? 0) > 0,
           options: input.options ?? {},
           webSearch: input.webSearch === true,
+          tools: input.tools === true,
           regenerate: input.regenerate === true,
           ...(input.regenerate && input.originalMessageId
             ? { originalMessageId: input.originalMessageId }

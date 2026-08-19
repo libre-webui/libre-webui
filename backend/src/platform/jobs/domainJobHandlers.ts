@@ -448,6 +448,7 @@ const readChatPayload = (value: unknown): DurableChatGenerationInput => {
     typeof record.options !== 'object' ||
     Array.isArray(record.options) ||
     typeof record.webSearch !== 'boolean' ||
+    (record.tools !== undefined && typeof record.tools !== 'boolean') ||
     (record.regenerate !== undefined &&
       typeof record.regenerate !== 'boolean') ||
     (record.regenerate === true &&
@@ -463,6 +464,7 @@ const readChatPayload = (value: unknown): DurableChatGenerationInput => {
   return {
     ...(record as unknown as DurableChatGenerationInput),
     regenerate: record.regenerate === true,
+    tools: record.tools === true,
   };
 };
 

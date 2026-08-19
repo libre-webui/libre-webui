@@ -52,10 +52,29 @@ import {
   sendAssistantComplete,
   sendConnected,
   sendError,
+  sendToolEvent,
   sendToolStatus,
   sendUserMessage,
   streamAssistantFakeChunks,
 } from './utils/websocketMessages.js';
+import {
+  ollamaStreamAsPluginChunks,
+  runPluginToolLoop,
+  toOllamaExtensionMessages,
+  type ToolLoopEventSink,
+} from './services/chatToolRuntimeService.js';
+import {
+  actorCanUseTools,
+  buildToolCatalog,
+  type ToolCatalog,
+} from './services/toolGatewayService.js';
+import type { AuthzActor } from './services/authorizationService.js';
+import { toOpenAICompatibleTools } from './utils/pluginChatAdapter.js';
+import { extractStatistics } from './utils/generationUtils.js';
+import type {
+  GenerationStatistics,
+  OllamaChatResponse,
+} from './types/index.js';
 import {
   createWorkTerminalServer,
   WORK_TERMINAL_WS_PATH,
@@ -338,6 +357,7 @@ export function registerWebSocketServer(
             providerId,
             messageHistory,
             webSearch: webSearchRequested,
+            tools: toolsRequested,
           } = message.data;
           if (!isPrivate && getPlatformRuntimeConfig().mode === 'team') {
             sendError(ws, {
@@ -620,6 +640,47 @@ export function registerWebSocketServer(
             shouldStreamPlugin,
           } = preparedGeneration;
 
+          // Native tool loop: persisted sessions only (a private session must
+          // not leave approvals, audit rows, or provider-bound side effects),
+          // gated by the tools feature and the turn's explicit request.
+          let toolCatalog: ToolCatalog | undefined;
+          const toolActor: AuthzActor = {
+            userId,
+            ...(currentUser.role ? { role: currentUser.role } : {}),
+          };
+          if (
+            !isPrivate &&
+            toolsRequested === true &&
+            (await actorCanUseTools(toolActor))
+          ) {
+            const personaBindings = session.personaId
+              ? (await personaService.getPersonaById(session.personaId, userId))
+                  ?.bindings
+              : undefined;
+            const candidateCatalog = await buildToolCatalog(
+              toolActor,
+              { sessionId },
+              {
+                builtinTools: personaBindings?.builtin_tools,
+                serverIds: personaBindings?.tool_server_ids,
+                skillIds: personaBindings?.skill_ids,
+                collectionIds: personaBindings?.knowledge_collection_ids,
+              }
+            );
+            if (candidateCatalog.tools.length > 0) {
+              toolCatalog = candidateCatalog;
+            }
+          }
+          const toolSink: ToolLoopEventSink = {
+            toolEvent: event => {
+              sendToolEvent(
+                ws,
+                { sessionId, ...event },
+                { ignoreClosedSocket: true }
+              );
+            },
+          };
+
           // Check if there's an active plugin for this model
           logger.debug(
             `[WebSocket] Looking for plugin for model: ${actualModelName}`
@@ -649,30 +710,63 @@ export function registerWebSocketServer(
             // ---------------------------------------------------------------
 
             try {
-              if (agentProviderId || shouldStreamPlugin) {
+              // Agent CLI targets run with --no-tools; the loop applies to
+              // plugin providers only.
+              const pluginToolLoop =
+                toolCatalog && !agentProviderId && activePlugin
+                  ? runPluginToolLoop({
+                      actor: toolActor,
+                      sessionId,
+                      assistantMessageId,
+                      catalog: toolCatalog,
+                      sink: toolSink,
+                      signal: generationSignal,
+                      startRound: (extension, tools) =>
+                        pluginService.executePluginStreamRequest(
+                          actualModelName,
+                          [...pluginMessages, ...extension],
+                          { ...mergedOptions, tools: [...tools] },
+                          userId,
+                          activePlugin.id,
+                          generationSignal
+                        ),
+                    })
+                  : undefined;
+              if (agentProviderId || shouldStreamPlugin || pluginToolLoop) {
                 const streamResult = await streamPluginResponse({
                   ws,
-                  chunks: agentProviderId
-                    ? agentCliService.executeAgentStreamRequest(
-                        agentProviderId,
-                        pluginMessages,
-                        userId,
-                        { model: actualModelName, signal: generationSignal }
-                      )
-                    : pluginService.executePluginStreamRequest(
-                        actualModelName,
-                        pluginMessages,
-                        mergedOptions,
-                        userId,
-                        (activePlugin as NonNullable<typeof activePlugin>).id,
-                        generationSignal
-                      ),
+                  chunks: pluginToolLoop
+                    ? pluginToolLoop.chunks
+                    : agentProviderId
+                      ? agentCliService.executeAgentStreamRequest(
+                          agentProviderId,
+                          pluginMessages,
+                          userId,
+                          { model: actualModelName, signal: generationSignal }
+                        )
+                      : pluginService.executePluginStreamRequest(
+                          actualModelName,
+                          pluginMessages,
+                          mergedOptions,
+                          userId,
+                          (activePlugin as NonNullable<typeof activePlugin>).id,
+                          generationSignal
+                        ),
                   messageId: assistantMessageId,
                   signal: generationSignal,
                 });
                 assistantContent = streamResult.content;
                 assistantThinking = streamResult.thinking || '';
                 assistantProviderMetadata = streamResult.providerMetadata;
+                if (
+                  pluginToolLoop &&
+                  pluginToolLoop.state.toolCalls.length > 0
+                ) {
+                  assistantProviderMetadata = {
+                    ...(assistantProviderMetadata ?? {}),
+                    toolCalls: pluginToolLoop.state.toolCalls,
+                  };
+                }
               } else {
                 const generationResult =
                   await chatGenerationService.executeNonStreaming({
@@ -828,35 +922,85 @@ export function registerWebSocketServer(
           // If we're here, it means either there was no plugin or plugin failed
           // The actualModelName was already resolved in the earlier code block
 
-          // Create chat request with advanced features
-          const chatRequest: OllamaChatRequest = {
-            model: actualModelName,
-            messages: ollamaMessages,
-            stream: true,
-            options: mergedOptions as Record<string, unknown>,
-          };
+          let ollamaStatistics: GenerationStatistics | undefined;
+          let ollamaToolMetadata: Record<string, unknown> | undefined;
+          if (toolCatalog) {
+            const bridgeState: { finalChunk?: OllamaChatResponse } = {};
+            const loop = runPluginToolLoop({
+              actor: toolActor,
+              sessionId,
+              assistantMessageId,
+              catalog: toolCatalog,
+              sink: toolSink,
+              signal: generationSignal,
+              startRound: (extension, tools) =>
+                ollamaStreamAsPluginChunks(
+                  {
+                    model: actualModelName,
+                    messages: [
+                      ...ollamaMessages,
+                      ...toOllamaExtensionMessages(extension),
+                    ],
+                    stream: true,
+                    options: mergedOptions as Record<string, unknown>,
+                    ...(tools.length > 0
+                      ? { tools: toOpenAICompatibleTools([...tools]) }
+                      : {}),
+                    ...(format ? { format } : {}),
+                  },
+                  ollamaService,
+                  bridgeState,
+                  generationSignal,
+                  { userId }
+                ),
+            });
+            const streamResult = await streamPluginResponse({
+              ws,
+              chunks: loop.chunks,
+              messageId: assistantMessageId,
+              signal: generationSignal,
+            });
+            assistantContent = streamResult.content;
+            assistantThinking = streamResult.thinking || '';
+            ollamaStatistics = bridgeState.finalChunk
+              ? extractStatistics(bridgeState.finalChunk)
+              : undefined;
+            if (loop.state.toolCalls.length > 0) {
+              ollamaToolMetadata = { toolCalls: loop.state.toolCalls };
+            }
+            throwIfChatGenerationCancelled(generationSignal);
+          } else {
+            // Create chat request with advanced features
+            const chatRequest: OllamaChatRequest = {
+              model: actualModelName,
+              messages: ollamaMessages,
+              stream: true,
+              options: mergedOptions as Record<string, unknown>,
+            };
 
-          // Add structured output format if specified
-          if (format) {
-            chatRequest.format = format;
-          }
+            // Add structured output format if specified
+            if (format) {
+              chatRequest.format = format;
+            }
 
-          const ollamaStream = await streamOllamaChatResponse({
-            ws,
-            request: chatRequest,
-            streamSource: ollamaService,
-            messageId: assistantMessageId,
-            userId,
-            signal: generationSignal,
-          });
+            const ollamaStream = await streamOllamaChatResponse({
+              ws,
+              request: chatRequest,
+              streamSource: ollamaService,
+              messageId: assistantMessageId,
+              userId,
+              signal: generationSignal,
+            });
 
-          assistantContent = ollamaStream.content;
-          assistantThinking = ollamaStream.thinking || '';
+            assistantContent = ollamaStream.content;
+            assistantThinking = ollamaStream.thinking || '';
+            ollamaStatistics = ollamaStream.statistics;
 
-          throwIfChatGenerationCancelled(generationSignal);
+            throwIfChatGenerationCancelled(generationSignal);
 
-          if (!ollamaStream.completed) {
-            return;
+            if (!ollamaStream.completed) {
+              return;
+            }
           }
 
           // Save the complete assistant message with the provided ID (skip for private sessions)
@@ -873,8 +1017,8 @@ export function registerWebSocketServer(
                 isPrivate,
                 regenerate,
                 originalMessageId,
-                statistics: ollamaStream.statistics,
-                providerMetadata: withContextSources(undefined),
+                statistics: ollamaStatistics,
+                providerMetadata: withContextSources(ollamaToolMetadata),
                 signal: generationSignal,
               });
 
@@ -886,7 +1030,7 @@ export function registerWebSocketServer(
               sendAssistantComplete(ws, {
                 ...completion.privateMessage,
                 messageId: assistantMessageId,
-                statistics: ollamaStream.statistics,
+                statistics: ollamaStatistics,
               });
             } else {
               logger.debug(
@@ -930,9 +1074,9 @@ export function registerWebSocketServer(
                 role: 'assistant',
                 timestamp: Date.now(),
                 messageId: assistantMessageId,
-                statistics: ollamaStream.statistics,
-                ...(withContextSources(undefined)
-                  ? { providerMetadata: withContextSources(undefined) }
+                statistics: ollamaStatistics,
+                ...(withContextSources(ollamaToolMetadata)
+                  ? { providerMetadata: withContextSources(ollamaToolMetadata) }
                   : {}),
                 ...completion.branchingFields,
               });

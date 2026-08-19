@@ -181,6 +181,9 @@ export const ChatPage: React.FC = () => {
     streamingThinking,
     streamingMessageId,
     toolActivities,
+    activeToolCalls,
+    pendingToolApproval,
+    decideToolApproval,
   } = useChat(currentSession?.id || '');
   const currentPersona = getCurrentPersona();
   const selectedModelState = useMemo(
@@ -752,12 +755,13 @@ export const ChatPage: React.FC = () => {
     message: string,
     images?: string[],
     format?: string | Record<string, unknown>,
-    webSearch?: boolean
+    webSearch?: boolean,
+    tools?: boolean
   ) => {
     if (!currentSession) return;
     triggerHapticFeedback('impact');
     setFollowUps(null);
-    sendMessage(message, images, format, webSearch);
+    sendMessage(message, images, format, webSearch, tools);
   };
 
   if (!currentSession) {
@@ -1120,6 +1124,9 @@ export const ChatPage: React.FC = () => {
               streamingMessageId={streamingMessageId}
               isStreaming={isStreaming}
               toolActivities={toolActivities}
+              activeToolCalls={activeToolCalls}
+              pendingToolApproval={pendingToolApproval}
+              onDecideToolApproval={decideToolApproval}
               onRegenerate={regenerateLastMessage}
               onSelectBranch={selectBranch}
               onEditResend={editAndResendMessage}

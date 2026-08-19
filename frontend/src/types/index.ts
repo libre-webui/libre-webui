@@ -22,6 +22,39 @@ export interface ToolActivity {
   startedAt: number;
 }
 
+export type ChatToolCallStatus =
+  | 'awaiting_approval'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'denied'
+  | 'cancelled';
+
+/** A native tool call executed within one assistant turn. */
+export interface ChatToolCall {
+  id: string;
+  name: string;
+  arguments: string;
+  source: 'builtin' | 'openapi' | 'mcp';
+  serverId?: string;
+  serverName?: string;
+  sideEffect: boolean;
+  status: ChatToolCallStatus;
+  startedAt?: number;
+  finishedAt?: number;
+  error?: string;
+  resultPreview?: string;
+  isError?: boolean;
+}
+
+/** A side-effecting tool call waiting for the user's decision. */
+export interface ChatToolApprovalRequest {
+  approvalId: string;
+  messageId: string;
+  toolCall: ChatToolCall;
+  expiresAt: number;
+}
+
 export interface GenerationStatistics {
   total_duration?: number; // Total time in nanoseconds
   load_duration?: number; // Model load time in nanoseconds

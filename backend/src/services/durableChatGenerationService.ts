@@ -20,9 +20,22 @@ import {
 import { extractStatistics } from '../utils/generationUtils.js';
 import { formatPluginStreamToolCalls } from '../utils/pluginStreaming.js';
 import { createChatStreamCoalescer } from '../utils/chatStreamCoalescer.js';
+import { toOpenAICompatibleTools } from '../utils/pluginChatAdapter.js';
 import agentCliService from './agentCliService.js';
 import chatGenerationService from './chatGenerationService.js';
 import { ChatRequestService } from './chatRequestService.js';
+import type { AuthzActor } from './authorizationService.js';
+import {
+  ollamaStreamAsPluginChunks,
+  runPluginToolLoop,
+  toOllamaExtensionMessages,
+  type ToolLoopEventSink,
+} from './chatToolRuntimeService.js';
+import {
+  actorCanUseTools,
+  buildToolCatalog,
+  type ToolCatalog,
+} from './toolGatewayService.js';
 import { assertDurableChatCompletionEvent } from './durableChatCompletion.js';
 import chatService from './chatService.js';
 import { personaService } from './personaService.js';
@@ -45,6 +58,7 @@ export interface DurableChatGenerationInput {
   hasImages: boolean;
   options: Record<string, unknown>;
   webSearch: boolean;
+  tools: boolean;
   regenerate: boolean;
   originalMessageId?: string;
 }
@@ -161,19 +175,37 @@ interface GeneratedAssistant {
   thinking?: string;
 }
 
+interface DurableToolContext {
+  actor: AuthzActor;
+  catalog: ToolCatalog;
+}
+
 const streamGeneratedAssistant = async (
   input: DurableChatGenerationInput,
   prepared: Awaited<ReturnType<ChatRequestService['prepareGenerationRequest']>>,
   context: Pick<
     DurableJobExecutionContext,
     'signal' | 'attemptCount' | 'assertSideEffectAllowed'
-  >
+  >,
+  toolContext?: DurableToolContext
 ): Promise<GeneratedAssistant> => {
   let content = '';
   let thinking = '';
   let providerMetadata: Record<string, unknown> | undefined;
   let finalResponse: OllamaChatResponse | undefined;
   let streamEventSequence = 0;
+  let toolEventSequence = 0;
+  const toolSink: ToolLoopEventSink = {
+    toolEvent: async event => {
+      await context.assertSideEffectAllowed();
+      await append(
+        input,
+        'chat.tool.v1',
+        event as unknown as Record<string, unknown>,
+        `attempt:${context.attemptCount}:tool:${++toolEventSequence}`
+      );
+    },
+  };
   // Chunk events carry only their delta. Persisting the accumulated total in
   // every event made storage quadratic in message length; consumers rebuild
   // the message by replaying the generation's ordered deltas.
@@ -258,7 +290,10 @@ const streamGeneratedAssistant = async (
     };
   }
 
-  if (prepared.target.activePlugin && prepared.shouldStreamPlugin) {
+  if (
+    prepared.target.activePlugin &&
+    (prepared.shouldStreamPlugin || toolContext)
+  ) {
     const toolCalls: Array<{
       id: string;
       name: string;
@@ -269,15 +304,37 @@ const streamGeneratedAssistant = async (
     let usage: { promptTokens?: number; completionTokens?: number } | undefined;
     let providerTimings:
       { promptMs?: number; predictedMs?: number } | undefined;
+    const activePluginId = prepared.target.activePlugin.id;
+    const toolLoop = toolContext
+      ? runPluginToolLoop({
+          actor: toolContext.actor,
+          sessionId: input.sessionId,
+          assistantMessageId: input.assistantMessageId,
+          catalog: toolContext.catalog,
+          sink: toolSink,
+          signal: context.signal,
+          startRound: (extension, tools) =>
+            pluginService.executePluginStreamRequest(
+              prepared.target.actualModelName,
+              [...prepared.pluginMessages, ...extension],
+              { ...prepared.target.mergedOptions, tools: [...tools] },
+              input.actorUserId,
+              activePluginId,
+              context.signal
+            ),
+        })
+      : undefined;
     try {
-      for await (const chunk of pluginService.executePluginStreamRequest(
-        prepared.target.actualModelName,
-        prepared.pluginMessages,
-        prepared.target.mergedOptions,
-        input.actorUserId,
-        prepared.target.activePlugin.id,
-        context.signal
-      )) {
+      for await (const chunk of toolLoop
+        ? toolLoop.chunks
+        : pluginService.executePluginStreamRequest(
+            prepared.target.actualModelName,
+            prepared.pluginMessages,
+            prepared.target.mergedOptions,
+            input.actorUserId,
+            activePluginId,
+            context.signal
+          )) {
         if (chunk.type === 'content' && chunk.content) {
           content += chunk.content;
           queuePublish(chunk.content);
@@ -307,6 +364,12 @@ const streamGeneratedAssistant = async (
       content += toolContent;
       queuePublish(toolContent);
       await streamPublisher.drain();
+    }
+    if (toolLoop && toolLoop.state.toolCalls.length > 0) {
+      providerMetadata = {
+        ...(providerMetadata ?? {}),
+        toolCalls: toolLoop.state.toolCalls,
+      };
     }
     return {
       response: chatGenerationService.createPluginChatResponse(
@@ -365,6 +428,72 @@ const streamGeneratedAssistant = async (
     });
     return {
       response: generated.response,
+      content,
+      ...(thinking ? { thinking } : {}),
+    };
+  }
+
+  if (toolContext) {
+    const bridgeState: { finalChunk?: OllamaChatResponse } = {};
+    const loop = runPluginToolLoop({
+      actor: toolContext.actor,
+      sessionId: input.sessionId,
+      assistantMessageId: input.assistantMessageId,
+      catalog: toolContext.catalog,
+      sink: toolSink,
+      signal: context.signal,
+      startRound: (extension, tools) =>
+        ollamaStreamAsPluginChunks(
+          {
+            model: prepared.target.actualModelName,
+            messages: [
+              ...prepared.ollamaMessages,
+              ...toOllamaExtensionMessages(extension),
+            ],
+            stream: true,
+            options: prepared.target.mergedOptions as Record<string, unknown>,
+            ...(tools.length > 0
+              ? { tools: toOpenAICompatibleTools([...tools]) }
+              : {}),
+          },
+          ollamaService,
+          bridgeState,
+          context.signal,
+          { userId: input.actorUserId }
+        ),
+    });
+    try {
+      for await (const chunk of loop.chunks) {
+        if (chunk.type === 'content' && chunk.content) {
+          content += chunk.content;
+          queuePublish(chunk.content);
+        } else if (chunk.type === 'reasoning' && chunk.content) {
+          thinking += chunk.content;
+          queuePublish('', chunk.content);
+        }
+      }
+    } finally {
+      await streamPublisher.drain();
+    }
+    const finalChunk = bridgeState.finalChunk;
+    if (!finalChunk) throw new Error('Provider stream produced no response');
+    return {
+      response: {
+        ...finalChunk,
+        message: {
+          ...finalChunk.message,
+          content,
+          ...(thinking ? { thinking } : {}),
+          ...(loop.state.toolCalls.length > 0
+            ? {
+                providerMetadata: {
+                  ...(finalChunk.message.providerMetadata ?? {}),
+                  toolCalls: loop.state.toolCalls,
+                },
+              }
+            : {}),
+        },
+      },
       content,
       ...(thinking ? { thinking } : {}),
     };
@@ -445,6 +574,38 @@ class DurableChatGenerationService {
         'chat-message-conflict',
         'The assistant message identity is already in use'
       );
+    }
+
+    // The tool loop runs only when the turn asked for it, the actor passes
+    // the tools feature gate, and the effective catalog is non-empty.
+    let toolContext: DurableToolContext | undefined;
+    if (input.tools) {
+      const actorUser = await userModel.getUserById(input.actorUserId);
+      const actor: AuthzActor = {
+        userId: input.actorUserId,
+        ...(actorUser?.role ? { role: actorUser.role } : {}),
+      };
+      if (await actorCanUseTools(actor)) {
+        const bindings = session.personaId
+          ? (
+              await personaService.getPersonaById(
+                session.personaId,
+                input.actorUserId
+              )
+            )?.bindings
+          : undefined;
+        const catalog = await buildToolCatalog(
+          actor,
+          { sessionId: input.sessionId },
+          {
+            builtinTools: bindings?.builtin_tools,
+            serverIds: bindings?.tool_server_ids,
+            skillIds: bindings?.skill_ids,
+            collectionIds: bindings?.knowledge_collection_ids,
+          }
+        );
+        if (catalog.tools.length > 0) toolContext = { actor, catalog };
+      }
     }
 
     let assistant;
@@ -531,7 +692,8 @@ class DurableChatGenerationService {
       const generated = await streamGeneratedAssistant(
         input,
         prepared,
-        context
+        context,
+        toolContext
       );
       await context.assertSideEffectAllowed();
       const authoritative = await chatService.getSession(

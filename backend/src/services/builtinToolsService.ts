@@ -27,7 +27,7 @@ import type { AuthzActor } from './authorizationService.js';
 import type { EffectiveTool } from '../types/tools.js';
 import { userCanUseWebSearch, webSearch } from './webSearchService.js';
 import documentService from './documentService.js';
-import { getSkillBySlug } from './skillService.js';
+import { getSkillBySlug, listSkills } from './skillService.js';
 
 const MAX_RESULT_CHARS = 24_000;
 
@@ -43,6 +43,9 @@ export interface BuiltinToolContext {
   actor: AuthzActor;
   sessionId?: string;
   signal?: AbortSignal;
+  /** Assistant-profile bindings scoping this turn, when a persona binds them. */
+  skillIds?: readonly string[];
+  collectionIds?: readonly string[];
 }
 
 export interface BuiltinToolResult {
@@ -149,7 +152,7 @@ const BUILTIN_TOOLS: readonly BuiltinToolSpec[] = [
         context.actor.userId,
         context.sessionId,
         limit,
-        undefined,
+        context.collectionIds ? [...context.collectionIds] : undefined,
         context.signal
       );
       if (chunks.length === 0) {
@@ -183,7 +186,7 @@ const BUILTIN_TOOLS: readonly BuiltinToolSpec[] = [
   {
     name: 'load_skill',
     description:
-      'Load the full instructions of one of the available skills by its slug. Call this before applying a skill mentioned in the system prompt.',
+      'Load the full instructions of one of the available skills by its slug.',
     paramsSchema: {
       type: 'object',
       properties: {
@@ -191,10 +194,12 @@ const BUILTIN_TOOLS: readonly BuiltinToolSpec[] = [
       },
       required: ['slug'],
     },
-    available: async () => true,
+    available: async context => (await availableSkills(context)).length > 0,
     execute: async (args, context) => {
       const slug = asString(args.slug).trim();
-      const skill = slug
+      const permitted = await availableSkills(context);
+      const listed = permitted.find(skill => skill.slug === slug);
+      const skill = listed
         ? await getSkillBySlug(context.actor.userId, slug)
         : null;
       if (!skill || !skill.enabled) {
@@ -212,6 +217,40 @@ const BUILTIN_TOOLS: readonly BuiltinToolSpec[] = [
   },
 ];
 
+const MAX_MANIFEST_SKILLS = 30;
+
+/** Enabled skills visible to this turn, honoring a profile's skill binding. */
+const availableSkills = async (
+  context: BuiltinToolContext
+): Promise<Array<{ slug: string; name: string; description: string }>> => {
+  const skills = await listSkills(context.actor.userId);
+  return skills
+    .filter(skill => skill.enabled)
+    .filter(skill => !context.skillIds || context.skillIds.includes(skill.id))
+    .slice(0, MAX_MANIFEST_SKILLS)
+    .map(skill => ({
+      slug: skill.slug,
+      name: skill.name,
+      description: skill.description,
+    }));
+};
+
+/**
+ * The lazy skill manifest travels in the load_skill tool description, so it
+ * reaches the model identically on every provider without touching the
+ * system-prompt plumbing.
+ */
+const loadSkillDescription = (
+  skills: readonly { slug: string; name: string; description: string }[]
+): string =>
+  [
+    'Load the full instructions of one of the available skills by its slug before applying it. Available skills:',
+    ...skills.map(
+      skill =>
+        `- ${skill.slug}: ${skill.name} — ${skill.description.slice(0, 200)}`
+    ),
+  ].join('\n');
+
 export const BUILTIN_TOOL_NAMES: readonly string[] = BUILTIN_TOOLS.map(
   tool => tool.name
 );
@@ -225,9 +264,13 @@ export async function effectiveBuiltinTools(
   for (const tool of BUILTIN_TOOLS) {
     if (names && !names.includes(tool.name)) continue;
     if (!(await tool.available(context))) continue;
+    const description =
+      tool.name === 'load_skill'
+        ? loadSkillDescription(await availableSkills(context))
+        : tool.description;
     catalog.push({
       name: tool.name,
-      description: tool.description,
+      description,
       paramsSchema: tool.paramsSchema,
       sideEffect: false,
       source: 'builtin',

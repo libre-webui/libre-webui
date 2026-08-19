@@ -239,7 +239,36 @@ export class ChatRequestService {
         session.personaId,
         userId
       );
-      return persona?.parameters?.system_prompt?.trim() || undefined;
+      const parts: string[] = [];
+      // An assistant profile can bind a library prompt; it leads the persona's
+      // own system prompt. A missing or inaccessible binding degrades to the
+      // persona prompt instead of failing the turn.
+      const promptId = persona?.bindings?.prompt_id;
+      if (promptId) {
+        try {
+          const { getPrompt, renderPrompt } =
+            await import('./promptService.js');
+          const boundPrompt = await getPrompt(promptId, { userId });
+          if (boundPrompt) {
+            let rendered = boundPrompt.content;
+            try {
+              rendered = renderPrompt(
+                boundPrompt.content,
+                boundPrompt.variables,
+                {}
+              );
+            } catch {
+              // Prompts with required variables serve their raw content here.
+            }
+            if (rendered.trim()) parts.push(rendered.trim());
+          }
+        } catch (error) {
+          logger.error('Error loading bound profile prompt:', error);
+        }
+      }
+      const own = persona?.parameters?.system_prompt?.trim();
+      if (own) parts.push(own);
+      return parts.length > 0 ? parts.join('\n\n') : undefined;
     } catch (error) {
       logger.error('Error loading persona system prompt:', error);
       return undefined;

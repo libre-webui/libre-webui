@@ -29,6 +29,95 @@ import { transactionalResourceDeletionEnqueuer } from '../platform/jobs/resource
 
 const logger = createLogger('services:persona-service');
 
+const MAX_BINDING_IDS = 32;
+const MAX_BINDING_ID_LENGTH = 128;
+
+const normalizeBindingIds = (
+  value: unknown,
+  field: string
+): string[] | undefined => {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) {
+    throw new Error(`Profile binding ${field} must be an array of ids`);
+  }
+  if (value.length > MAX_BINDING_IDS) {
+    throw new Error(
+      `Profile binding ${field} may reference at most ${MAX_BINDING_IDS} entries`
+    );
+  }
+  const ids = value.map(entry => {
+    if (
+      typeof entry !== 'string' ||
+      !entry.trim() ||
+      entry.length > MAX_BINDING_ID_LENGTH
+    ) {
+      throw new Error(`Profile binding ${field} contains an invalid id`);
+    }
+    return entry;
+  });
+  return [...new Set(ids)];
+};
+
+/**
+ * Validate assistant-profile bindings and advance their revision counter.
+ * Bound ids are revalidated against the invoking user's permissions when the
+ * persona is used, never at bind time alone.
+ */
+export function normalizePersonaBindings(
+  bindings: Persona['bindings'],
+  previous: Persona['bindings'] | undefined
+): NonNullable<Persona['bindings']> {
+  if (!bindings || typeof bindings !== 'object') {
+    throw new Error('Profile bindings must be an object');
+  }
+  const knowledge = normalizeBindingIds(
+    bindings.knowledge_collection_ids,
+    'knowledge_collection_ids'
+  );
+  const servers = normalizeBindingIds(
+    bindings.tool_server_ids,
+    'tool_server_ids'
+  );
+  const builtins = normalizeBindingIds(bindings.builtin_tools, 'builtin_tools');
+  const skills = normalizeBindingIds(bindings.skill_ids, 'skill_ids');
+  if (
+    bindings.prompt_id !== undefined &&
+    (typeof bindings.prompt_id !== 'string' ||
+      !bindings.prompt_id.trim() ||
+      bindings.prompt_id.length > MAX_BINDING_ID_LENGTH)
+  ) {
+    throw new Error('Profile binding prompt_id is invalid');
+  }
+  if (bindings.voice !== undefined) {
+    if (
+      !bindings.voice ||
+      typeof bindings.voice !== 'object' ||
+      typeof bindings.voice.plugin_id !== 'string' ||
+      !bindings.voice.plugin_id.trim() ||
+      typeof bindings.voice.voice !== 'string' ||
+      !bindings.voice.voice.trim()
+    ) {
+      throw new Error('Profile binding voice is invalid');
+    }
+  }
+  return {
+    ...(knowledge ? { knowledge_collection_ids: knowledge } : {}),
+    ...(servers ? { tool_server_ids: servers } : {}),
+    ...(builtins ? { builtin_tools: builtins } : {}),
+    ...(skills ? { skill_ids: skills } : {}),
+    ...(bindings.prompt_id ? { prompt_id: bindings.prompt_id } : {}),
+    ...(bindings.voice
+      ? {
+          voice: {
+            plugin_id: bindings.voice.plugin_id,
+            voice: bindings.voice.voice,
+          },
+        }
+      : {}),
+    version: (previous?.version ?? 0) + 1,
+  };
+}
+
 export class PersonaService {
   /**
    * Get all personas for a user with optional advanced features
@@ -227,6 +316,9 @@ export class PersonaService {
       name: data.name.trim(),
       model: data.model.trim(),
       parameters,
+      ...(data.bindings !== undefined
+        ? { bindings: normalizePersonaBindings(data.bindings, undefined) }
+        : {}),
     };
 
     const createdPersona = await personaModel.createPersona(
@@ -365,6 +457,12 @@ export class PersonaService {
     }
     if (updateData.model) {
       updateData.model = updateData.model.trim();
+    }
+    if (updateData.bindings !== undefined) {
+      updateData.bindings = normalizePersonaBindings(
+        updateData.bindings,
+        existingPersona.bindings
+      );
     }
 
     return await personaModel.updatePersona(id, updateData, userId);
