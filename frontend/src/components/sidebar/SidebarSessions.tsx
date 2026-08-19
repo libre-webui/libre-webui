@@ -35,6 +35,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
+import { SidebarHoverCard } from './SidebarHoverCard';
 import type { ChatSession, Persona, SessionFolder } from '@/types';
 import { cn, formatTimestamp, truncateText } from '@/utils';
 
@@ -106,7 +107,7 @@ interface HoverPreviewState {
 }
 
 function SessionHoverPreview({ preview }: { preview: HoverPreviewState }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { session } = preview;
   const firstUser = session.messages.find(
     message => message.role === 'user' && message.content.trim()
@@ -115,21 +116,13 @@ function SessionHoverPreview({ preview }: { preview: HoverPreviewState }) {
     message => message.role === 'assistant' && message.content.trim()
   );
 
-  return createPortal(
-    <div
-      role='tooltip'
-      className='pointer-events-none fixed z-[70] hidden w-72 rounded-2xl border border-black/[0.07] bg-surface/95 p-3.5 shadow-[0_16px_48px_rgba(15,23,42,0.18)] backdrop-blur-xl animate-scale-in dark:border-white/[0.09] dark:bg-dark-100/95 md:block'
-      style={{
-        top: Math.max(8, Math.min(preview.top, window.innerHeight - 220)),
-        left: preview.left,
-      }}
+  return (
+    <SidebarHoverCard
+      top={preview.top}
+      left={preview.left}
+      title={session.title}
+      timestamp={session.updatedAt}
     >
-      <p className='mb-1 truncate text-[13px] font-semibold text-gray-900 dark:text-dark-900'>
-        {session.title}
-      </p>
-      <p className='mb-2 text-[10px] tabular-nums text-gray-400 dark:text-dark-500'>
-        {formatTimestamp(session.updatedAt, i18n.language)}
-      </p>
       {firstUser && (
         <div className='mb-1.5 flex justify-end'>
           <p
@@ -153,8 +146,7 @@ function SessionHoverPreview({ preview }: { preview: HoverPreviewState }) {
           {t('chat.session.noChats')}
         </p>
       )}
-    </div>,
-    document.body
+    </SidebarHoverCard>
   );
 }
 

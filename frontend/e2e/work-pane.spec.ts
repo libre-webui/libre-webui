@@ -778,8 +778,6 @@ test('reopens each task with its own conversation and filesystem', async ({
     workTaskList
       .getByTestId('sidebar-work-task-item')
       .filter({ hasText: 'Garden planner' })
-      .getByRole('button')
-      .first()
   ).toHaveAttribute('aria-current', 'page');
   await expect(
     page.getByText('Only workspace A contains the garden plan.')
@@ -798,8 +796,6 @@ test('reopens each task with its own conversation and filesystem', async ({
   await page
     .getByTestId('sidebar-work-task-item')
     .filter({ hasText: 'Transit planner' })
-    .getByRole('button')
-    .first()
     .click();
   await expect(page).toHaveURL(/\/work\/workspace-b$/);
   await expect(page.getByTestId('work-composer-input')).toHaveValue('');
@@ -817,8 +813,6 @@ test('reopens each task with its own conversation and filesystem', async ({
   await page
     .getByTestId('sidebar-work-task-item')
     .filter({ hasText: 'Garden planner' })
-    .getByRole('button')
-    .first()
     .click();
   await expect(page.getByTestId('work-file-item')).toContainText('plan.txt');
   await page
@@ -908,7 +902,7 @@ test('keeps task positions stable and uses the requested status palette', async 
       expected.label
     );
 
-    await row.getByRole('button').first().click();
+    await row.click();
     await expect(page).toHaveURL(new RegExp(`/work/status-${expected.raw}$`));
     await expect(page.getByTestId('work-status')).toContainText(expected.label);
     await expect(page.getByTestId('work-status-indicator')).toHaveCSS(
@@ -947,7 +941,8 @@ test('keeps an inactive task deleted when an older poll finishes', async ({
 
   page.once('dialog', dialog => void dialog.accept());
   await inactiveRow.hover();
-  await inactiveRow.getByTestId('sidebar-work-task-delete').click();
+  await inactiveRow.getByTestId('sidebar-work-task-actions').click();
+  await page.getByTestId('sidebar-work-task-delete').click();
 
   await expect(inactiveRow).toHaveCount(0);
   expect(mock.workTaskDeleteRequests).toEqual(['inactive-workspace']);
@@ -991,7 +986,9 @@ test('deletes the selected sidebar task directly without a second dirty prompt',
   const selectedRow = page.locator(
     '[data-testid="sidebar-work-task-item"][data-task-id="selected-delete-workspace"]'
   );
-  const deleteButton = selectedRow.getByTestId('sidebar-work-task-delete');
+  await selectedRow.hover();
+  await selectedRow.getByTestId('sidebar-work-task-actions').click();
+  const deleteButton = page.getByTestId('sidebar-work-task-delete');
   await expect(deleteButton).toBeVisible();
 
   const dialogs: string[] = [];
@@ -2095,8 +2092,6 @@ test('ignores a file save that finishes after switching tasks', async ({
   const switchTask = page
     .getByTestId('sidebar-work-task-item')
     .filter({ hasText: 'Delayed save B' })
-    .getByRole('button')
-    .first()
     .click();
   const switchDialog = await switchDialogPromise;
   await switchDialog.accept();
@@ -2396,8 +2391,6 @@ test('restores an unsaved file draft after app navigation', async ({
   await page
     .getByTestId('sidebar-work-task-item')
     .filter({ hasText: 'Draft project' })
-    .getByRole('button')
-    .first()
     .click();
   await expect(page).toHaveURL(/\/work\/draft-workspace$/);
   await page

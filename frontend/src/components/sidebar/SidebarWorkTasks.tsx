@@ -15,8 +15,19 @@
  * limitations under the License.
  */
 
-import { Briefcase, Loader2, Trash2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import {
+  Briefcase,
+  ExternalLink,
+  Loader2,
+  MoreHorizontal,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui';
+import { SidebarHoverCard } from './SidebarHoverCard';
 import type { WorkTaskSummary } from '@/types/work';
 import { cn, formatTimestamp, truncateText } from '@/utils';
 import { workStatusPresentation } from '@/utils/workStatus';
@@ -42,6 +53,57 @@ function compactMonogram(title: string) {
   return `${Array.from(words[0])[0]}${Array.from(words[words.length - 1])[0]}`.toLocaleUpperCase();
 }
 
+interface HoverPreviewState {
+  task: WorkTaskSummary;
+  top: number;
+  left: number;
+}
+
+function WorkTaskHoverPreview({ preview }: { preview: HoverPreviewState }) {
+  const { t } = useTranslation();
+  const { task } = preview;
+  const status = workStatusPresentation[task.status];
+  const statusLabel = t(status.labelKey, { defaultValue: status.label });
+
+  return (
+    <SidebarHoverCard
+      top={preview.top}
+      left={preview.left}
+      title={
+        task.title ||
+        t('work.tasks.untitled', { defaultValue: 'Untitled task' })
+      }
+      timestamp={task.updatedAt}
+    >
+      <p className='flex items-center gap-1.5 text-[11px] leading-snug text-gray-600 dark:text-dark-700'>
+        <span
+          aria-hidden='true'
+          className={cn(
+            'h-2 w-2 shrink-0 rounded-full',
+            status.animated && 'animate-pulse'
+          )}
+          style={{ backgroundColor: status.color }}
+        />
+        {statusLabel}
+      </p>
+      <p className='mt-1.5 truncate font-mono text-[10px] text-gray-400 dark:text-dark-500'>
+        {task.model}
+      </p>
+      {task.hostPath && (
+        <p
+          className='mt-1 truncate font-mono text-[10px] text-gray-400 dark:text-dark-500'
+          title={task.hostPath}
+        >
+          {task.hostPath}
+        </p>
+      )}
+    </SidebarHoverCard>
+  );
+}
+
+const TASK_MENU_WIDTH = 208;
+const TASK_MENU_MAX_HEIGHT = 180;
+
 export function SidebarWorkTasks({
   tasks,
   currentTaskId,
@@ -57,6 +119,114 @@ export function SidebarWorkTasks({
     (first, second) => second.updatedAt - first.updatedAt
   );
   const compactTasks = sortedTasks;
+
+  const [hoverPreview, setHoverPreview] = useState<HoverPreviewState | null>(
+    null
+  );
+  const hoverTimerRef = useRef<number | null>(null);
+  const [mobileActionTaskId, setMobileActionTaskId] = useState<string | null>(
+    null
+  );
+  const mobileActionTask = mobileActionTaskId
+    ? (tasks.find(task => task.id === mobileActionTaskId) ?? null)
+    : null;
+
+  useEffect(
+    () => () => {
+      if (hoverTimerRef.current !== null) {
+        window.clearTimeout(hoverTimerRef.current);
+      }
+    },
+    []
+  );
+
+  const clearHoverPreview = () => {
+    if (hoverTimerRef.current !== null) {
+      window.clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setHoverPreview(null);
+  };
+
+  const scheduleHoverPreview = (
+    task: WorkTaskSummary,
+    element: HTMLElement
+  ) => {
+    const canHover = window.matchMedia(
+      '(hover: hover) and (pointer: fine)'
+    ).matches;
+    if (sidebarCompact || window.innerWidth < 768 || !canHover) return;
+    if (hoverTimerRef.current !== null) {
+      window.clearTimeout(hoverTimerRef.current);
+    }
+    hoverTimerRef.current = window.setTimeout(() => {
+      const rect = element.getBoundingClientRect();
+      setHoverPreview({
+        task,
+        top: rect.top,
+        left: rect.right + 10,
+      });
+    }, 500);
+  };
+
+  // Desktop "…" context menu, rendered through a portal so the scroll
+  // region cannot clip it. Anchored to the button that opened it.
+  const [taskMenu, setTaskMenu] = useState<{
+    taskId: string;
+    top: number;
+    left: number;
+  } | null>(null);
+  const taskMenuTask = taskMenu
+    ? (tasks.find(task => task.id === taskMenu.taskId) ?? null)
+    : null;
+
+  useEffect(() => {
+    if (!taskMenu) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setTaskMenu(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [taskMenu]);
+
+  const openTaskMenu = (
+    task: WorkTaskSummary,
+    event: React.MouseEvent<HTMLElement>
+  ) => {
+    event.stopPropagation();
+    clearHoverPreview();
+    if (taskMenu?.taskId === task.id) {
+      setTaskMenu(null);
+      return;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTaskMenu({
+      taskId: task.id,
+      top: Math.max(
+        8,
+        Math.min(rect.bottom + 6, window.innerHeight - TASK_MENU_MAX_HEIGHT - 8)
+      ),
+      left: Math.max(
+        8,
+        Math.min(
+          rect.right - TASK_MENU_WIDTH,
+          window.innerWidth - TASK_MENU_WIDTH - 8
+        )
+      ),
+    });
+  };
+
+  const openTaskInNewTab = (task: WorkTaskSummary) => {
+    // Electron serves the app from file:// with hash routing.
+    const isElectron = window.location.protocol === 'file:';
+    const url = isElectron
+      ? `${window.location.pathname}#/work/${task.id}`
+      : `/work/${task.id}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const taskDisplayTitle = (task: WorkTaskSummary) =>
+    task.title || t('work.tasks.untitled', { defaultValue: 'Untitled task' });
 
   return (
     <div
@@ -101,11 +271,7 @@ export function SidebarWorkTasks({
               {compactTasks.map(task => {
                 const selected = currentTaskId === task.id;
                 const status = workStatusPresentation[task.status];
-                const taskTitle =
-                  task.title ||
-                  t('work.tasks.untitled', {
-                    defaultValue: 'Untitled task',
-                  });
+                const taskTitle = taskDisplayTitle(task);
                 return (
                   <button
                     type='button'
@@ -193,140 +359,234 @@ export function SidebarWorkTasks({
             )}
           </div>
         ) : (
-          <div
-            data-testid='sidebar-work-task-list'
-            className={cn('space-y-0.5', sidebarCompact && 'space-y-1')}
-          >
+          <div data-testid='sidebar-work-task-list' className='space-y-0.5'>
             {tasks.map(task => {
               const selected = currentTaskId === task.id;
               const status = workStatusPresentation[task.status];
               const statusLabel = t(status.labelKey, {
                 defaultValue: status.label,
               });
+              const menuOpenForRow = taskMenu?.taskId === task.id;
               return (
                 <div
                   key={task.id}
                   data-testid='sidebar-work-task-item'
                   data-task-id={task.id}
+                  aria-current={selected ? 'page' : undefined}
                   className={cn(
-                    'group relative transition-colors duration-150 outline-none',
-                    sidebarCompact
-                      ? 'flex items-center justify-center rounded-xl p-1'
-                      : 'rounded-lg px-2',
+                    'group relative cursor-pointer rounded-lg px-2 transition-colors duration-150 outline-none touch-manipulation',
                     selected
                       ? 'bg-interactive-active'
                       : 'hover:bg-interactive-hover'
                   )}
+                  onClick={() => {
+                    clearHoverPreview();
+                    onSelectTask(task.id);
+                  }}
+                  onMouseEnter={event =>
+                    scheduleHoverPreview(task, event.currentTarget)
+                  }
+                  onMouseLeave={clearHoverPreview}
                 >
-                  <button
-                    type='button'
-                    aria-current={selected ? 'page' : undefined}
-                    className={cn(
-                      'w-full text-start outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
-                      sidebarCompact && 'flex h-10 items-center justify-center'
-                    )}
-                    title={
-                      sidebarCompact
-                        ? `${task.title} · ${task.model}`
-                        : undefined
-                    }
-                    onClick={() => onSelectTask(task.id)}
-                  >
-                    {sidebarCompact ? (
-                      <span
-                        className={cn(
-                          'relative flex h-9 w-9 items-center justify-center rounded-xl text-[11px] font-semibold uppercase transition-colors',
-                          selected
-                            ? 'bg-gray-950 text-white dark:bg-white dark:text-gray-950'
-                            : 'bg-white/70 text-gray-500 ring-1 ring-black/[0.04] dark:bg-dark-200/70 dark:text-dark-600 dark:ring-white/[0.05]'
-                        )}
-                      >
-                        {task.title.trim().charAt(0) || '•'}
-                        <span
-                          aria-hidden='true'
-                          data-testid='sidebar-work-task-status'
-                          data-status-label={statusLabel}
-                          className={cn(
-                            'absolute -bottom-0.5 -end-0.5 h-2.5 w-2.5 rounded-full border-2 border-gray-100 dark:border-dark-50',
-                            status.animated && 'animate-pulse',
-                            task.status === 'idle' &&
-                              'ring-1 ring-black/20 dark:ring-white/20'
-                          )}
-                          style={{ backgroundColor: status.color }}
-                        />
-                      </span>
-                    ) : (
-                      <span
-                        className='flex h-8 items-center gap-2'
-                        title={`${task.title} · ${task.model}`}
-                      >
-                        <span
-                          aria-hidden='true'
-                          data-testid='sidebar-work-task-status'
-                          data-status-label={statusLabel}
-                          className={cn(
-                            'h-2 w-2 shrink-0 rounded-full',
-                            status.animated && 'animate-pulse',
-                            task.status === 'idle' &&
-                              'ring-1 ring-black/20 dark:ring-white/20'
-                          )}
-                          style={{ backgroundColor: status.color }}
-                        />
-                        <span
-                          dir='auto'
-                          className='min-w-0 flex-1 truncate text-sm leading-5 text-ink'
-                        >
-                          {truncateText(
-                            task.title ||
-                              t('work.tasks.untitled', {
-                                defaultValue: 'Untitled task',
-                              }),
-                            40
-                          )}
-                        </span>
-                        <span className='shrink-0 text-xs leading-5 tabular-nums text-ink-subtle group-hover:hidden group-focus-within:hidden'>
-                          {formatTimestamp(task.updatedAt, i18n.language)}
-                        </span>
-                      </span>
-                    )}
-                    <span className='sr-only'>
-                      {t('work.tasks.status', {
-                        defaultValue: 'Status: {{status}}',
-                        status: statusLabel,
-                      })}
-                    </span>
-                  </button>
-                  {!sidebarCompact && (
-                    <button
-                      type='button'
-                      data-testid='sidebar-work-task-delete'
-                      disabled={actionLoading}
+                  <div className='flex h-8 w-full items-center'>
+                    <span
+                      aria-hidden='true'
+                      data-testid='sidebar-work-task-status'
+                      data-status-label={statusLabel}
                       className={cn(
-                        'absolute end-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition-[color,background-color,opacity] hover:bg-error-500/10 hover:text-error-600 focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error-500/30 disabled:cursor-not-allowed disabled:opacity-40 group-focus-within:opacity-100 group-hover:opacity-100 dark:text-dark-500',
-                        selected ? 'opacity-100' : 'opacity-0'
+                        'me-2 h-2 w-2 shrink-0 rounded-full',
+                        status.animated && 'animate-pulse',
+                        task.status === 'idle' &&
+                          'ring-1 ring-black/20 dark:ring-white/20'
                       )}
-                      aria-label={t('work.tasks.deleteNamed', {
-                        defaultValue: 'Delete {{title}}',
-                        title:
-                          task.title ||
-                          t('work.tasks.untitled', {
-                            defaultValue: 'Untitled task',
-                          }),
-                      })}
+                      style={{ backgroundColor: status.color }}
+                    />
+                    <h3
+                      dir='auto'
+                      className='min-w-0 flex-1 truncate text-sm leading-5 text-ink'
+                      title={taskDisplayTitle(task)}
+                    >
+                      {truncateText(taskDisplayTitle(task), 40)}
+                      <span className='sr-only'>
+                        {t('work.tasks.status', {
+                          defaultValue: 'Status: {{status}}',
+                          status: statusLabel,
+                        })}
+                      </span>
+                    </h3>
+
+                    {/* Relative time swaps for the row menu on hover. */}
+                    <span
+                      dir='auto'
+                      className={cn(
+                        'ms-2 shrink-0 text-xs leading-5 tabular-nums text-ink-subtle max-sm:hidden',
+                        'sm:group-hover:hidden sm:group-focus-within:hidden',
+                        menuOpenForRow && 'sm:hidden'
+                      )}
+                    >
+                      {formatTimestamp(task.updatedAt, i18n.language)}
+                    </span>
+
+                    <Button
+                      variant='ghost'
+                      size='sm'
                       onClick={event => {
                         event.stopPropagation();
-                        onDeleteTask(task);
+                        clearHoverPreview();
+                        setMobileActionTaskId(task.id);
                       }}
+                      className='h-8 w-8 shrink-0 rounded-lg p-0 touch-manipulation sm:hidden'
+                      title={t('palette.actions')}
+                      aria-label={t('palette.actions')}
+                      data-testid='sidebar-work-task-actions-mobile'
                     >
-                      <Trash2 aria-hidden='true' className='h-3.5 w-3.5' />
-                    </button>
-                  )}
+                      <MoreHorizontal className='h-4 w-4' />
+                    </Button>
+
+                    <div
+                      className={cn(
+                        'hidden shrink-0',
+                        'sm:group-hover:block sm:group-focus-within:block',
+                        menuOpenForRow && 'sm:block'
+                      )}
+                    >
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={event => openTaskMenu(task, event)}
+                        className={cn(
+                          'h-6 w-6 rounded-md p-0 text-ink-subtle hover:text-ink hover:bg-transparent touch-manipulation',
+                          menuOpenForRow && 'text-ink'
+                        )}
+                        title={t('palette.actions')}
+                        aria-label={t('palette.actions')}
+                        aria-haspopup='menu'
+                        aria-expanded={menuOpenForRow}
+                        data-testid='sidebar-work-task-actions'
+                      >
+                        <MoreHorizontal className='h-4 w-4' />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </div>
+      {hoverPreview && <WorkTaskHoverPreview preview={hoverPreview} />}
+      {taskMenu &&
+        taskMenuTask &&
+        createPortal(
+          <div className='fixed inset-0 z-[75] hidden sm:block'>
+            <button
+              type='button'
+              tabIndex={-1}
+              aria-label={t('common.close')}
+              className='absolute inset-0 cursor-default'
+              onClick={() => setTaskMenu(null)}
+            />
+            <div
+              role='menu'
+              aria-label={taskDisplayTitle(taskMenuTask)}
+              data-testid='sidebar-work-task-menu'
+              className='absolute overflow-y-auto rounded-xl border border-black/[0.04] bg-surface-overlay p-1 shadow-lv3 animate-scale-in dark:border-white/[0.06]'
+              style={{
+                top: taskMenu.top,
+                left: taskMenu.left,
+                width: TASK_MENU_WIDTH,
+                maxHeight: TASK_MENU_MAX_HEIGHT,
+              }}
+            >
+              <button
+                type='button'
+                role='menuitem'
+                onClick={() => {
+                  setTaskMenu(null);
+                  openTaskInNewTab(taskMenuTask);
+                }}
+                className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover'
+              >
+                <ExternalLink className='h-3.5 w-3.5 shrink-0' />
+                {t('chat.session.openNewTab')}
+              </button>
+              <button
+                type='button'
+                role='menuitem'
+                disabled={actionLoading}
+                data-testid='sidebar-work-task-delete'
+                onClick={() => {
+                  setTaskMenu(null);
+                  onDeleteTask(taskMenuTask);
+                }}
+                className='mt-1 flex w-full items-center gap-2.5 rounded-lg border-t border-black/[0.06] px-2.5 py-2 text-start text-[13px] text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/[0.07] dark:hover:bg-red-900/20'
+              >
+                <Trash2 className='h-3.5 w-3.5 shrink-0' />
+                {t('work.tasks.delete', { defaultValue: 'Delete task' })}
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
+      {mobileActionTask &&
+        createPortal(
+          <div className='fixed inset-0 z-[80] sm:hidden'>
+            <button
+              type='button'
+              className='absolute inset-0 bg-black/35 backdrop-blur-[2px]'
+              onClick={() => setMobileActionTaskId(null)}
+              aria-label={t('common.close')}
+            />
+            <div
+              role='dialog'
+              aria-modal='true'
+              aria-label={t('palette.actions')}
+              className='absolute inset-x-3 bottom-3 rounded-2xl border border-black/[0.08] bg-surface p-2 shadow-[0_20px_70px_rgba(0,0,0,0.3)] dark:border-white/[0.09] dark:bg-dark-100'
+              data-testid='sidebar-work-task-actions-sheet'
+            >
+              <div className='flex items-center justify-between gap-3 px-2 pb-2 pt-1'>
+                <p className='min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-dark-900'>
+                  {taskDisplayTitle(mobileActionTask)}
+                </p>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => setMobileActionTaskId(null)}
+                  className='h-9 w-9 shrink-0 rounded-xl p-0'
+                  title={t('common.close')}
+                  aria-label={t('common.close')}
+                >
+                  <X className='h-4 w-4' />
+                </Button>
+              </div>
+
+              <button
+                type='button'
+                onClick={() => {
+                  setMobileActionTaskId(null);
+                  openTaskInNewTab(mobileActionTask);
+                }}
+                className='flex w-full items-center gap-3 rounded-xl px-3 py-3 text-start text-sm text-ink hover:bg-interactive-hover'
+              >
+                <ExternalLink className='h-4 w-4 shrink-0' />
+                {t('chat.session.openNewTab')}
+              </button>
+              <button
+                type='button'
+                disabled={actionLoading}
+                onClick={() => {
+                  setMobileActionTaskId(null);
+                  onDeleteTask(mobileActionTask);
+                }}
+                className='flex w-full items-center gap-3 rounded-xl px-3 py-3 text-start text-sm text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-red-900/20'
+              >
+                <Trash2 className='h-4 w-4 shrink-0' />
+                {t('work.tasks.delete', { defaultValue: 'Delete task' })}
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
