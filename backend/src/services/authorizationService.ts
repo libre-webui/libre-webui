@@ -36,8 +36,8 @@
 
 import { getPersistence } from '../persistence/index.js';
 import type {
-  ArchiveOwnedResource,
   GrantPermission,
+  GrantableResource,
   StoredResourceGrantRecord,
 } from '../persistence/index.js';
 import { encryptionService } from './encryptionService.js';
@@ -45,13 +45,19 @@ import { getWorkAccessMode } from './workAccessService.js';
 import { getModelDownloadMode } from './modelAccessService.js';
 import { getAgentsEnabled } from './agentAccessService.js';
 import { getWebSearchAccessMode } from './webSearchService.js';
+import { getToolAccessMode } from './toolAccessService.js';
 
 export type AuthzAction = 'read' | 'write' | 'manage' | 'use';
 
-export type FeatureId = 'work' | 'model-download' | 'web-search' | 'agents';
+export type FeatureId =
+  'work' | 'model-download' | 'web-search' | 'agents' | 'tools';
 
-/** Grantable resource families reuse the portable-archive taxonomy. */
-export type ShareableResourceType = ArchiveOwnedResource;
+/**
+ * Grantable resource families: the portable-archive taxonomy plus prompts,
+ * skills, and tool servers, which are grantable without being archive
+ * sections.
+ */
+export type ShareableResourceType = GrantableResource;
 
 export const SHAREABLE_RESOURCE_TYPES: readonly ShareableResourceType[] = [
   'session',
@@ -60,6 +66,9 @@ export const SHAREABLE_RESOURCE_TYPES: readonly ShareableResourceType[] = [
   'knowledge-collection',
   'document',
   'persona',
+  'prompt',
+  'skill',
+  'tool-server',
 ];
 
 export const isShareableResourceType = (
@@ -131,6 +140,10 @@ const featureDecision = async (
       return (await getAgentsEnabled())
         ? { allowed: true, reason: 'feature-enabled' }
         : { allowed: false, reason: 'feature-disabled' };
+    case 'tools':
+      return (await getToolAccessMode()) === 'all-users'
+        ? { allowed: true, reason: 'feature-open-to-all-users' }
+        : { allowed: false, reason: 'feature-restricted-to-admins' };
   }
 };
 
@@ -236,11 +249,12 @@ export const explainEffectiveAccess = async (user: {
     status: user.status,
   };
   const groups = await security().groups.listGroupsForUser(user.id);
-  const [work, modelDownload, webSearch, agents] = await Promise.all([
+  const [work, modelDownload, webSearch, agents, tools] = await Promise.all([
     authorize(actor, 'use', { type: 'feature', id: 'work' }),
     authorize(actor, 'use', { type: 'feature', id: 'model-download' }),
     authorize(actor, 'use', { type: 'feature', id: 'web-search' }),
     authorize(actor, 'use', { type: 'feature', id: 'agents' }),
+    authorize(actor, 'use', { type: 'feature', id: 'tools' }),
   ]);
 
   const grantRows = [
@@ -262,6 +276,7 @@ export const explainEffectiveAccess = async (user: {
       'model-download': modelDownload.allowed,
       'web-search': webSearch.allowed,
       agents: agents.allowed,
+      tools: tools.allowed,
     },
     grants: grantRows.map(grant => ({
       id: grant.id,

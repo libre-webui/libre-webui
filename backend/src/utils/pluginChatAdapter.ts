@@ -21,6 +21,7 @@ import type {
   Plugin,
   PluginApiMode,
   PluginResponse,
+  ProviderToolSpec,
 } from '../types/index.js';
 import {
   buildOpenAIResponsesPayload,
@@ -159,6 +160,43 @@ export function getOpenAICompatibleSamplingParameters(
   };
 }
 
+/** OpenAI Chat Completions-style tool definitions from provider-neutral specs. */
+export function toOpenAICompatibleTools(
+  tools: readonly ProviderToolSpec[] | undefined
+): Array<Record<string, unknown>> | undefined {
+  if (!tools || tools.length === 0) return undefined;
+  return tools.map(tool => ({
+    type: 'function',
+    function: {
+      name: tool.name,
+      ...(tool.description ? { description: tool.description } : {}),
+      parameters: tool.parameters ?? { type: 'object', properties: {} },
+    },
+  }));
+}
+
+function toAnthropicTools(
+  tools: readonly ProviderToolSpec[] | undefined
+): Array<Record<string, unknown>> | undefined {
+  if (!tools || tools.length === 0) return undefined;
+  return tools.map(tool => ({
+    name: tool.name,
+    ...(tool.description ? { description: tool.description } : {}),
+    input_schema: tool.parameters ?? { type: 'object', properties: {} },
+  }));
+}
+
+const parseToolArguments = (value: string): Record<string, unknown> => {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+};
+
 function splitDataUrlImage(image: string): {
   mediaType: string;
   base64Data: string;
@@ -193,11 +231,17 @@ export function toOpenAICompatibleMessages(
       >;
   providerMetadata?: Record<string, unknown>;
   reasoning?: string;
+  tool_calls?: ChatMessage['tool_calls'];
+  tool_call_id?: string;
 }> {
   return messages.map(message => {
     const providerMetadata = options.preserveProviderMetadata
       ? message.providerMetadata
       : undefined;
+    const toolWire = {
+      ...(message.tool_calls?.length ? { tool_calls: message.tool_calls } : {}),
+      ...(message.tool_call_id ? { tool_call_id: message.tool_call_id } : {}),
+    };
     if (message.images && message.images.length > 0) {
       const content: Array<
         | { type: 'text'; text: string }
@@ -222,6 +266,7 @@ export function toOpenAICompatibleMessages(
           ? { reasoning: message.thinking }
           : {}),
         ...(providerMetadata ? { providerMetadata } : {}),
+        ...toolWire,
       };
     }
 
@@ -232,23 +277,65 @@ export function toOpenAICompatibleMessages(
         ? { reasoning: message.thinking }
         : {}),
       ...(providerMetadata ? { providerMetadata } : {}),
+      ...toolWire,
     };
   });
 }
 
+type AnthropicContentBlock =
+  | { type: 'text'; text: string }
+  | {
+      type: 'image';
+      source: { type: 'base64'; media_type: string; data: string };
+    }
+  | Record<string, unknown>;
+
 function toAnthropicMessages(messages: ChatMessage[]): Array<{
   role: string;
-  content:
-    | string
-    | Array<
-        | { type: 'text'; text: string }
-        | {
-            type: 'image';
-            source: { type: 'base64'; media_type: string; data: string };
-          }
-      >;
+  content: string | AnthropicContentBlock[];
 }> {
   return messages.map(message => {
+    // In-turn tool results travel back as user tool_result blocks.
+    if (message.role === 'tool') {
+      return {
+        role: 'user',
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: message.tool_call_id ?? '',
+            content: message.content,
+          },
+        ],
+      };
+    }
+
+    // An in-turn assistant round that requested tools replays its thinking
+    // blocks verbatim (Anthropic requires them ahead of tool results), then
+    // its text, then the tool_use blocks.
+    if (message.role === 'assistant' && message.tool_calls?.length) {
+      const thinkingBlocks = Array.isArray(
+        message.providerMetadata?.anthropicThinkingBlocks
+      )
+        ? (message.providerMetadata
+            .anthropicThinkingBlocks as AnthropicContentBlock[])
+        : [];
+      return {
+        role: 'assistant',
+        content: [
+          ...thinkingBlocks,
+          ...(message.content
+            ? [{ type: 'text', text: message.content } as const]
+            : []),
+          ...message.tool_calls.map(call => ({
+            type: 'tool_use',
+            id: call.id,
+            name: call.function.name,
+            input: parseToolArguments(call.function.arguments),
+          })),
+        ],
+      };
+    }
+
     if (message.images && message.images.length > 0) {
       const content: Array<
         | { type: 'text'; text: string }
@@ -323,12 +410,14 @@ function buildAnthropicChatPayload(
     }
   }
 
+  const anthropicTools = toAnthropicTools(options.tools);
   const payload: Record<string, unknown> = {
     model,
     messages: toAnthropicMessages(nonSystemMessages),
     max_tokens: maxTokens,
     stop_sequences: options.stop,
     stream: params.shouldStream,
+    ...(anthropicTools ? { tools: anthropicTools } : {}),
     ...(budgetTokens !== undefined
       ? { thinking: { type: 'enabled', budget_tokens: budgetTokens } }
       : {}),
@@ -435,6 +524,7 @@ function buildOpenAICompatibleChatPayload(
   // budgeting tokens. Nothing is sent unless thinking was asked for: the field
   // is unknown to models that do not reason.
   const effort = thinkingEffort(options.think);
+  const tools = toOpenAICompatibleTools(options.tools);
 
   return {
     payload: {
@@ -447,6 +537,7 @@ function buildOpenAICompatibleChatPayload(
       stop: options.stop,
       stream: params.shouldStream,
       ...(effort ? { reasoning_effort: effort } : {}),
+      ...(tools ? { tools } : {}),
     },
   };
 }
@@ -495,6 +586,9 @@ export function buildPluginChatPayload(
           stream: supportsSampling ? params.shouldStream : true,
           stateScope: providerStateScope,
           reasoningEffort: thinkingEffort(options.think),
+          ...(options.tools?.length
+            ? { tools: toOpenAICompatibleTools(options.tools) }
+            : {}),
         }
       ),
     };

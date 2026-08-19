@@ -63,6 +63,7 @@ import {
   getOpenAICompatibleSamplingParameters,
   resolvePluginChatParameters,
   toOpenAICompatibleMessages,
+  toOpenAICompatibleTools,
 } from '../utils/pluginChatAdapter.js';
 import {
   inferReasoningFromModelId,
@@ -2723,6 +2724,9 @@ export class PluginService {
         // they are asked for, which is why provider-backed replies used to
         // report zero tokens.
         stream_options: { include_usage: true },
+        ...(options.tools?.length
+          ? { tools: toOpenAICompatibleTools(options.tools) }
+          : {}),
       };
     }
 

@@ -42,7 +42,7 @@ export interface Artifact {
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
   thinking?: string;
   timestamp: number;
@@ -51,12 +51,32 @@ export interface ChatMessage {
   images?: string[]; // Base64 encoded images for multimodal support
   statistics?: GenerationStatistics; // Generation statistics from Ollama
   artifacts?: Artifact[]; // Artifacts associated with this message
+  // In-turn tool wire state used by the native tool loop. These fields are
+  // never persisted as messages: a completed turn records its tool calls on
+  // the final assistant message's providerMetadata instead.
+  tool_calls?: Array<{
+    id: string;
+    type: 'function';
+    function: { name: string; arguments: string };
+  }>;
+  tool_call_id?: string;
   // Branching support
   parentId?: string; // ID of the original message this is a variant of
   branchIndex?: number; // Index within branch group (0 = original)
   isActive?: boolean; // Whether this is the active variant
   siblingCount?: number; // Total number of variants (including this one)
   rating?: number; // User feedback: 1 = liked, -1 = disliked
+}
+
+/**
+ * A provider-neutral tool definition offered to the model for one turn. Each
+ * provider boundary lifts these out of the options and formats them the way
+ * that provider expects.
+ */
+export interface ProviderToolSpec {
+  name: string;
+  description?: string;
+  parameters?: Record<string, unknown>;
 }
 
 export type ChatProviderType = 'ollama' | 'plugin' | 'agent';
@@ -213,6 +233,13 @@ export interface GenerationOptions {
    * provider boundary and sent the way that provider expects.
    */
   think?: boolean | 'low' | 'medium' | 'high' | null;
+
+  /**
+   * Tools offered to the model for this call. Like `think`, this is not a
+   * sampling parameter: it is lifted out at each provider boundary and never
+   * forwarded inside provider option objects.
+   */
+  tools?: ProviderToolSpec[];
 }
 
 export interface EmbeddingSettings {

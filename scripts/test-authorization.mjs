@@ -246,6 +246,7 @@ test('explainEffectiveAccess returns groups, feature booleans, and grants', asyn
     'model-download': false,
     'web-search': false,
     agents: view.features.agents,
+    tools: false,
   });
   assert.equal(typeof view.features.agents, 'boolean');
   const groupGrant = view.grants.find(

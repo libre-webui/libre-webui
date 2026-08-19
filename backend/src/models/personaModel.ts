@@ -53,6 +53,7 @@ export class PersonaModel {
       ...(data.mutation_settings
         ? { mutation_settings: data.mutation_settings }
         : {}),
+      ...(data.bindings ? { bindings: data.bindings } : {}),
       created_at: now,
       updated_at: now,
     };
@@ -85,6 +86,7 @@ export class PersonaModel {
       ...(data.mutation_settings !== undefined
         ? { mutation_settings: data.mutation_settings }
         : {}),
+      ...(data.bindings !== undefined ? { bindings: data.bindings } : {}),
       updated_at: Date.now(),
     };
     return (

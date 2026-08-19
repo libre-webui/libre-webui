@@ -45,6 +45,7 @@ type WebSocketMessageType =
   | 'assistant_complete'
   | 'assistant_cancelled'
   | 'tool_status'
+  | 'tool_event'
   | 'error';
 
 function sendWebSocketMessage(
@@ -104,6 +105,19 @@ export function sendToolStatus(
   options?: SendOptions
 ): boolean {
   return sendWebSocketMessage(ws, 'tool_status', data, options);
+}
+
+/**
+ * A normalized chat tool event (chat.tool-call.v1 / chat.tool-result.v1 /
+ * chat.approval.v1). The same payload shapes are appended to the durable
+ * event stream in team mode.
+ */
+export function sendToolEvent(
+  ws: WebSocketLike,
+  data: unknown,
+  options?: SendOptions
+): boolean {
+  return sendWebSocketMessage(ws, 'tool_event', data, options);
 }
 
 export function sendError(ws: WebSocketLike, data: unknown): boolean {
