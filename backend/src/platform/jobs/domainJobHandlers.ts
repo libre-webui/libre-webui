@@ -1041,6 +1041,10 @@ const runAutomation: DurableJobHandler = async context => {
       userMessageId,
       assistantMessageId,
       message: automation.instructions,
+      // Scheduled runs have no per-message toggle, so always request web
+      // search; the generation pipeline only honors it when search is
+      // available and the owner is authorized.
+      webSearch: true,
     });
     if (!queued) {
       throw new Error('The automation chat session is no longer available');
