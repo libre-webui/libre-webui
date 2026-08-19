@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Nagraj i wyślij dźwięk do {{provider}} w celu transkrypcji",
       "webSearchOn": "Wyszukiwanie włączone — odpowiedzi używają bieżących wyników",
       "webSearchOff": "Szukaj w sieci dla tej wiadomości",
+      "toolsOn": "Narzędzia włączone — model może wywoływać zatwierdzone narzędzia",
+      "toolsOff": "Pozwól modelowi wywołać narzędzia w tej wiadomości",
       "thinkingOn": "Myślenie włączone ({{level}})",
       "thinkingOff": "Pomyśl przed odpowiedzią"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Odkrywaj",
       "notes": "Notatki",
       "calendar": "Kalendarz",
-      "automations": "Automatyzacje"
+      "automations": "Automatyzacje",
+      "prompts": "Prompty",
+      "skills": "Umiejętności",
+      "tools": "Narzędzia"
     },
     "toggleSize": "Zmień rozmiar panelu bocznego",
     "expandSidebar": "Rozwiń panel boczny"
@@ -1319,7 +1324,8 @@
       "basic": "Podstawowe",
       "parameters": "Parametry",
       "memory": "Pamięć i uczenie",
-      "advanced": "Zaawansowane"
+      "advanced": "Zaawansowane",
+      "bindings": "Powiązania"
     },
     "basic": {
       "name": "Nazwa",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Nie udało się zapisać"
+    },
+    "bindings": {
+      "toolServers": "Serwery narzędzi",
+      "toolServersHint": "Serwery, które ta persona może wywoływać. Puste pole oznacza każdy serwer, do którego użytkownik i tak ma dostęp.",
+      "noToolServers": "Nie masz dostępnych żadnych serwerów narzędzi.",
+      "builtinTools": "Wbudowane narzędzia",
+      "builtinToolsHint": "Narzędzia, które serwer obsługuje sam. Puste pole oznacza, że dostępne są wszystkie.",
+      "noBuiltinTools": "Brak dostępnych wbudowanych narzędzi.",
+      "builtin": {
+        "web_search": "Wyszukiwanie w sieci",
+        "search_documents": "Szukaj w dokumentach",
+        "load_skill": "Wczytaj umiejętność"
+      },
+      "skills": "Umiejętności",
+      "skillsHint": "Umiejętności, które model może wczytać, gdy ta persona jest aktywna.",
+      "noSkills": "Nie utworzyłeś jeszcze żadnych umiejętności.",
+      "collections": "Kolekcje wiedzy",
+      "collectionsHint": "Kolekcje dokumentów, w których ta persona może szukać.",
+      "noCollections": "Nie utworzyłeś jeszcze żadnych kolekcji.",
+      "prompt": "Prompt",
+      "promptHint": "Prompt, od którego zaczyna się każdy nowy czat z tą personą.",
+      "noPrompt": "Brak promptu",
+      "version": "Wersja powiązań {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Brak zarejestrowanych zdarzeń audytu.",
       "actor": "Wykonawca",
       "target": "Cel"
+    },
+    "tools": {
+      "title": "Dostęp do narzędzi",
+      "description": "Pozwól wszystkim wywoływać serwery narzędzi. Gdy jest wyłączone, mogą tylko administratorzy.",
+      "saved": "Dostęp do narzędzi zaktualizowany",
+      "saveFailed": "Nie udało się zaktualizować dostępu do narzędzi.",
+      "lockedByEnv": "Zablokowane zmienną środowiskową na tym serwerze."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Czat",
     "newChat": "Nowy czat",
     "work": "Praca"
+  },
+  "tools": {
+    "arguments": "Argumenty",
+    "result": "Wynik",
+    "callStatus": {
+      "awaiting_approval": "Czeka na zgodę",
+      "running": "W trakcie",
+      "succeeded": "Gotowe",
+      "failed": "Niepowodzenie",
+      "denied": "Odmówiono",
+      "cancelled": "Anulowano"
+    },
+    "approval": {
+      "title": "Narzędzie wymaga zgody",
+      "description": "Model chce uruchomić {{tool}} na {{server}}. To wywołanie może zmienić dane poza tym czatem.",
+      "builtinSource": "ten serwer",
+      "allowOnce": "Pozwól raz",
+      "allowSession": "Pozwól w tym czacie",
+      "allowAlways": "Pozwalaj zawsze",
+      "deny": "Odmów"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompty",
+    "description": "Szablony promptów wielokrotnego użytku z typowanymi zmiennymi. Wpisz / w polu czatu, aby wstawić jeden.",
+    "newPrompt": "Nowy prompt",
+    "editPrompt": "Edytuj prompt",
+    "empty": "Nie ma jeszcze promptów",
+    "emptyHint": "Prompt to zapisany szablon wiadomości. Gdy już go utworzysz, wpisanie /slug w polu czatu wstawi go i zapyta o zmienne, które deklaruje.",
+    "loadFailed": "Nie udało się wczytać twoich promptów.",
+    "saved": "Prompt zapisany",
+    "saveFailed": "Nie udało się zapisać promptu.",
+    "deleted": "Prompt usunięty",
+    "deleteFailed": "Nie udało się usunąć promptu.",
+    "deleteTitle": "Usuń prompt",
+    "deleteConfirm": "Usunąć \"{{title}}\"? Zniknie też jego historia wersji.",
+    "exportFailed": "Nie udało się wyeksportować promptu.",
+    "imported": "Prompt zaimportowany",
+    "importFailed": "Nie udało się zaimportować tego pliku.",
+    "historyFailed": "Nie udało się wczytać historii wersji.",
+    "rolledBack": "Prompt przywrócony",
+    "rollbackFailed": "Nie udało się przywrócić promptu.",
+    "versionLabel": "v{{version}}",
+    "updated": "Zaktualizowano {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Używany jako /slug w polu czatu.",
+      "slugInvalid": "Tylko małe litery, cyfry i myślniki.",
+      "title": "Tytuł",
+      "titlePlaceholder": "Raport tygodniowy",
+      "description": "Opis",
+      "descriptionPlaceholder": "Do czego służy ten prompt",
+      "content": "Treść",
+      "contentPlaceholder": "Napisz prompt. Wszystko, co ma być uzupełnione później, umieść w podwójnych nawiasach klamrowych.",
+      "contentHint": "Symbol zastępczy to nazwa w podwójnych nawiasach klamrowych. Zadeklaruj go poniżej, aby nadać mu etykietę lub wartość domyślną.",
+      "tags": "Tagi",
+      "tagsPlaceholder": "badania, pisanie",
+      "variables": "Zmienne",
+      "variablesHint": "Opcjonalne. Zadeklaruj tu symbol zastępczy, aby nadać mu etykietę, wartość domyślną albo zestaw opcji.",
+      "variableName": "Nazwa",
+      "variableType": "Typ",
+      "variableLabel": "Etykieta",
+      "variableDefault": "Domyślna",
+      "variableRequired": "Wymagana",
+      "variableOptions": "Opcje",
+      "variableOptionsPlaceholder": "Opcje oddzielone przecinkami",
+      "addVariable": "Dodaj zmienną",
+      "removeVariable": "Usuń zmienną"
+    },
+    "variableTypes": {
+      "text": "Tekst",
+      "number": "Liczba",
+      "select": "Wybór",
+      "boolean": "Tak lub nie"
+    },
+    "history": {
+      "open": "Historia wersji",
+      "title": "Historia {{title}}",
+      "subtitle": "Przywrócenie zapisuje wybraną wersję jako nową. Nic nie jest nadpisywane.",
+      "empty": "Nie ma jeszcze wcześniejszych wersji.",
+      "current": "Bieżąca",
+      "rollback": "Przywróć",
+      "rollingBack": "Przywracanie..."
+    }
+  },
+  "skillsPage": {
+    "title": "Umiejętności",
+    "description": "Nazwane zestawy instrukcji, które model może wczytać w trakcie pracy, gdy ich potrzebuje.",
+    "newSkill": "Nowa umiejętność",
+    "editSkill": "Edytuj umiejętność",
+    "empty": "Nie ma jeszcze umiejętności",
+    "emptyHint": "Umiejętność to zestaw instrukcji, który model wczytuje tylko wtedy, gdy go potrzebuje. Wspomnij $slug w wiadomości albo pozwól modelowi sięgnąć po nią narzędziem load_skill.",
+    "loadFailed": "Nie udało się wczytać twoich umiejętności.",
+    "saved": "Umiejętność zapisana",
+    "saveFailed": "Nie udało się zapisać umiejętności.",
+    "toggleFailed": "Nie udało się zmienić umiejętności.",
+    "deleted": "Umiejętność usunięta",
+    "deleteFailed": "Nie udało się usunąć umiejętności.",
+    "deleteTitle": "Usuń umiejętność",
+    "deleteConfirm": "Usunąć \"{{name}}\"? Zniknie też jej historia wersji.",
+    "exportFailed": "Nie udało się wyeksportować umiejętności.",
+    "imported": "Umiejętność zaimportowana",
+    "importFailed": "Nie udało się zaimportować tego pliku.",
+    "historyFailed": "Nie udało się wczytać historii wersji.",
+    "rolledBack": "Umiejętność przywrócona",
+    "rollbackFailed": "Nie udało się przywrócić umiejętności.",
+    "versionLabel": "v{{version}}",
+    "updated": "Zaktualizowano {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Używany jako $slug, gdy wspominasz umiejętność.",
+      "slugInvalid": "Tylko małe litery, cyfry i myślniki.",
+      "name": "Nazwa",
+      "namePlaceholder": "Przegląd kodu",
+      "description": "Opis",
+      "descriptionPlaceholder": "Kiedy używać tej umiejętności",
+      "descriptionHint": "To manifest, który widzi model. Napisz go tak, aby model poznał, kiedy umiejętność pasuje, bez wczytywania jej.",
+      "instructions": "Instrukcje",
+      "instructionsPlaceholder": "Instrukcje w Markdownie, które model czyta po wczytaniu tej umiejętności.",
+      "instructionsHint": "Wczytywane tylko wtedy, gdy umiejętność jest używana, więc do tego czasu ich długość nic nie kosztuje.",
+      "enabled": "Włączona",
+      "enabledHint": "Wyłączone umiejętności pozostają zapisane, ale nigdy nie są proponowane modelowi."
+    },
+    "history": {
+      "open": "Historia wersji",
+      "title": "Historia {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Narzędzia",
+    "description": "Serwery narzędzi, które model może wywołać, i zgody, których im udzieliłeś.",
+    "approvalNotice": "Narzędzia, które zmieniają dane poza czatem, zawsze proszą o zgodę, chyba że nadałeś im zgodę stałą albo obowiązującą w danym czacie.",
+    "registerServer": "Zarejestruj serwer",
+    "registerHint": "Libre WebUI odczytuje serwer raz i przypina narzędzia, które udostępnia. Odśwież serwer później, aby pobrać zmiany.",
+    "editServer": "Edytuj serwer",
+    "empty": "Brak serwerów narzędzi",
+    "emptyHintAdmin": "Zarejestruj serwer OpenAPI lub MCP, aby model miał co wywoływać.",
+    "emptyHintUser": "Żaden administrator nie udostępnił ci jeszcze serwerów narzędzi.",
+    "loadFailed": "Nie udało się wczytać serwerów narzędzi.",
+    "saved": "Serwer narzędzi zapisany",
+    "saveFailed": "Nie udało się zapisać serwera narzędzi.",
+    "deleted": "Serwer narzędzi usunięty",
+    "deleteFailed": "Nie udało się usunąć serwera narzędzi.",
+    "deleteTitle": "Usuń serwer narzędzi",
+    "deleteConfirm": "Usunąć \"{{name}}\"? Wszyscy stracą dostęp do jego narzędzi.",
+    "refresh": "Odśwież narzędzia",
+    "refreshed": "Narzędzia odczytane ponownie z serwera",
+    "refreshFailed": "Nie udało się odczytać serwera.",
+    "toolsLoadFailed": "Nie udało się wczytać przypiętych narzędzi.",
+    "overrideFailed": "Nie udało się zmienić narzędzia.",
+    "pinnedTools": "Przypięte narzędzia",
+    "noPinnedTools": "Ten serwer nie udostępnił żadnych narzędzi.",
+    "sideEffect": "Efekt uboczny",
+    "sideEffectOverride": "Efekt uboczny",
+    "specRevision": "Wersja {{revision}}",
+    "credential": "Osobiste poświadczenie",
+    "credentialHint": "Przechowywane zaszyfrowane i używane tylko do twoich własnych wywołań tego serwera.",
+    "credentialPlaceholder": "Wklej swój token",
+    "credentialSet": "Poświadczenie ustawione",
+    "credentialMissing": "Wymagane poświadczenie",
+    "credentialSaved": "Poświadczenie zapisane",
+    "credentialSaveFailed": "Nie udało się zapisać poświadczenia.",
+    "credentialRemove": "Usuń",
+    "credentialRemoved": "Poświadczenie usunięte",
+    "credentialRemoveFailed": "Nie udało się usunąć poświadczenia.",
+    "builtinSource": "Ten serwer",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Bez uwierzytelniania",
+      "bearer": "Token Bearer",
+      "header": "Własny nagłówek"
+    },
+    "accessModes": {
+      "admins-only": "Tylko administratorzy",
+      "all-users": "Wszyscy",
+      "granted": "Tylko osoby z przyznanym dostępem"
+    },
+    "form": {
+      "name": "Nazwa",
+      "namePlaceholder": "API pogodowe",
+      "kind": "Rodzaj",
+      "description": "Opis",
+      "descriptionPlaceholder": "Co robi ten serwer",
+      "baseUrl": "Bazowy URL",
+      "specUrl": "URL specyfikacji",
+      "specUrlHint": "Opcjonalne. Gdy pole jest puste, używany jest bazowy URL.",
+      "authMode": "Uwierzytelnianie",
+      "authHeader": "Nazwa nagłówka",
+      "accessMode": "Kto może z niego korzystać",
+      "timeoutMs": "Limit czasu (ms)",
+      "maxResponseBytes": "Maks. odpowiedź (bajty)",
+      "serverDefault": "Domyślne serwera",
+      "enabled": "Włączony",
+      "enabledHint": "Wyłączone serwery pozostają zarejestrowane, ale nigdy nie są proponowane modelowi."
+    },
+    "approvals": {
+      "title": "Stałe zgody",
+      "description": "Narzędzia, którym pozwoliłeś działać bez ponownego pytania. Cofnij zgodę, a następnym razem znowu zapyta.",
+      "empty": "Brak stałych zgód.",
+      "revoke": "Cofnij",
+      "revoked": "Zgoda cofnięta",
+      "revokeFailed": "Nie udało się cofnąć zgody.",
+      "scope": {
+        "once": "Raz",
+        "session": "Ten czat",
+        "always": "Zawsze"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Biblioteka promptów"
+    },
+    "skillMenu": {
+      "label": "Umiejętności"
+    },
+    "variables": {
+      "title": "Uzupełnij {{title}}",
+      "insert": "Wstaw",
+      "cancel": "Anuluj",
+      "required": "{{name}} jest wymagane"
+    }
   }
 }

@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Enregistrer et envoyer l’audio à {{provider}} pour transcription",
       "webSearchOn": "Recherche web activée — les réponses utilisent des résultats en direct",
       "webSearchOff": "Chercher sur le web pour ce message",
+      "toolsOn": "Outils activés — le modèle peut appeler les outils approuvés",
+      "toolsOff": "Laisser le modèle appeler des outils pour ce message",
       "thinkingOn": "Réflexion activée ({{level}})",
       "thinkingOff": "Réfléchir avant de répondre"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Explorer",
       "notes": "Notes",
       "calendar": "Calendrier",
-      "automations": "Automatisations"
+      "automations": "Automatisations",
+      "prompts": "Prompts",
+      "skills": "Compétences",
+      "tools": "Outils"
     },
     "toggleSize": "Basculer la taille de la barre latérale",
     "expandSidebar": "Agrandir la barre latérale"
@@ -1319,7 +1324,8 @@
       "basic": "Base",
       "parameters": "Paramètres",
       "memory": "Mémoire et apprentissage",
-      "advanced": "Avancé"
+      "advanced": "Avancé",
+      "bindings": "Liaisons"
     },
     "basic": {
       "name": "Nom",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Échec de l'enregistrement"
+    },
+    "bindings": {
+      "toolServers": "Serveurs d'outils",
+      "toolServersHint": "Serveurs que cette persona peut appeler. Laissé vide, tous les serveurs déjà accessibles à l'utilisateur sont proposés.",
+      "noToolServers": "Aucun serveur d'outils n'est à votre disposition.",
+      "builtinTools": "Outils intégrés",
+      "builtinToolsHint": "Outils que le serveur implémente lui-même. Laissé vide, ils sont tous proposés.",
+      "noBuiltinTools": "Aucun outil intégré n'est disponible.",
+      "builtin": {
+        "web_search": "Recherche web",
+        "search_documents": "Rechercher dans les documents",
+        "load_skill": "Charger une compétence"
+      },
+      "skills": "Compétences",
+      "skillsHint": "Compétences que le modèle peut charger tant que cette persona est active.",
+      "noSkills": "Vous n'avez encore créé aucune compétence.",
+      "collections": "Collections de connaissances",
+      "collectionsHint": "Collections de documents dans lesquelles cette persona peut chercher.",
+      "noCollections": "Vous n'avez encore créé aucune collection.",
+      "prompt": "Prompt",
+      "promptHint": "Un prompt pour amorcer chaque nouvelle conversation avec cette persona.",
+      "noPrompt": "Aucun prompt",
+      "version": "Révision des liaisons {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Aucun événement d'audit enregistré pour l'instant.",
       "actor": "Acteur",
       "target": "Cible"
+    },
+    "tools": {
+      "title": "Accès aux outils",
+      "description": "Autoriser tout le monde à appeler les serveurs d'outils. Si c'est désactivé, seuls les administrateurs le peuvent.",
+      "saved": "Accès aux outils mis à jour",
+      "saveFailed": "Impossible de mettre à jour l'accès aux outils.",
+      "lockedByEnv": "Verrouillé par une variable d'environnement sur ce serveur."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Chat",
     "newChat": "Nouvelle conversation",
     "work": "Travail"
+  },
+  "tools": {
+    "arguments": "Arguments",
+    "result": "Résultat",
+    "callStatus": {
+      "awaiting_approval": "En attente d'approbation",
+      "running": "En cours",
+      "succeeded": "Terminé",
+      "failed": "Échec",
+      "denied": "Refusé",
+      "cancelled": "Annulé"
+    },
+    "approval": {
+      "title": "Approbation d'outil requise",
+      "description": "Le modèle veut exécuter {{tool}} sur {{server}}. Cet appel peut modifier des données en dehors de cette conversation.",
+      "builtinSource": "ce serveur",
+      "allowOnce": "Autoriser une fois",
+      "allowSession": "Autoriser dans cette conversation",
+      "allowAlways": "Toujours autoriser",
+      "deny": "Refuser"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompts",
+    "description": "Modèles de prompts réutilisables avec des variables typées. Tapez / dans la zone de saisie pour en insérer un.",
+    "newPrompt": "Nouveau prompt",
+    "editPrompt": "Modifier le prompt",
+    "empty": "Aucun prompt pour l'instant",
+    "emptyHint": "Un prompt est un modèle de message enregistré. Une fois créé, taper /slug dans la zone de saisie l'insère et demande les variables qu'il déclare.",
+    "loadFailed": "Impossible de charger vos prompts.",
+    "saved": "Prompt enregistré",
+    "saveFailed": "Impossible d'enregistrer le prompt.",
+    "deleted": "Prompt supprimé",
+    "deleteFailed": "Impossible de supprimer le prompt.",
+    "deleteTitle": "Supprimer le prompt",
+    "deleteConfirm": "Supprimer \"{{title}}\" ? Son historique de versions disparaît aussi.",
+    "exportFailed": "Impossible d'exporter le prompt.",
+    "imported": "Prompt importé",
+    "importFailed": "Impossible d'importer ce fichier.",
+    "historyFailed": "Impossible de charger l'historique des versions.",
+    "rolledBack": "Prompt restauré",
+    "rollbackFailed": "Impossible de restaurer le prompt.",
+    "versionLabel": "v{{version}}",
+    "updated": "Mis à jour {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Utilisé sous la forme /slug dans la zone de saisie.",
+      "slugInvalid": "Minuscules, chiffres et tirets uniquement.",
+      "title": "Titre",
+      "titlePlaceholder": "Rapport hebdomadaire",
+      "description": "Description",
+      "descriptionPlaceholder": "À quoi sert ce prompt",
+      "content": "Contenu",
+      "contentPlaceholder": "Rédigez le prompt. Entourez de doubles accolades tout ce que vous voulez remplir plus tard.",
+      "contentHint": "Un espace réservé est un nom entre doubles accolades. Déclarez-le ci-dessous pour lui donner un libellé ou une valeur par défaut.",
+      "tags": "Étiquettes",
+      "tagsPlaceholder": "recherche, rédaction",
+      "variables": "Variables",
+      "variablesHint": "Facultatif. Déclarez ici un espace réservé pour lui donner un libellé, une valeur par défaut ou une liste de choix.",
+      "variableName": "Nom",
+      "variableType": "Type",
+      "variableLabel": "Libellé",
+      "variableDefault": "Valeur par défaut",
+      "variableRequired": "Obligatoire",
+      "variableOptions": "Options",
+      "variableOptionsPlaceholder": "Choix séparés par des virgules",
+      "addVariable": "Ajouter une variable",
+      "removeVariable": "Retirer la variable"
+    },
+    "variableTypes": {
+      "text": "Texte",
+      "number": "Nombre",
+      "select": "Choix",
+      "boolean": "Oui ou non"
+    },
+    "history": {
+      "open": "Historique des versions",
+      "title": "Historique de {{title}}",
+      "subtitle": "La restauration enregistre la révision choisie comme nouvelle version. Rien n'est écrasé.",
+      "empty": "Aucune version antérieure pour l'instant.",
+      "current": "Actuelle",
+      "rollback": "Restaurer",
+      "rollingBack": "Restauration..."
+    }
+  },
+  "skillsPage": {
+    "title": "Compétences",
+    "description": "Jeux d'instructions nommés que le modèle peut charger à la demande pendant qu'il travaille.",
+    "newSkill": "Nouvelle compétence",
+    "editSkill": "Modifier la compétence",
+    "empty": "Aucune compétence pour l'instant",
+    "emptyHint": "Une compétence est un jeu d'instructions que le modèle ne charge qu'au besoin. Mentionnez $slug dans un message, ou laissez le modèle y accéder via l'outil load_skill.",
+    "loadFailed": "Impossible de charger vos compétences.",
+    "saved": "Compétence enregistrée",
+    "saveFailed": "Impossible d'enregistrer la compétence.",
+    "toggleFailed": "Impossible de modifier la compétence.",
+    "deleted": "Compétence supprimée",
+    "deleteFailed": "Impossible de supprimer la compétence.",
+    "deleteTitle": "Supprimer la compétence",
+    "deleteConfirm": "Supprimer \"{{name}}\" ? Son historique de versions disparaît aussi.",
+    "exportFailed": "Impossible d'exporter la compétence.",
+    "imported": "Compétence importée",
+    "importFailed": "Impossible d'importer ce fichier.",
+    "historyFailed": "Impossible de charger l'historique des versions.",
+    "rolledBack": "Compétence restaurée",
+    "rollbackFailed": "Impossible de restaurer la compétence.",
+    "versionLabel": "v{{version}}",
+    "updated": "Mise à jour {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Utilisé sous la forme $slug quand vous mentionnez la compétence.",
+      "slugInvalid": "Minuscules, chiffres et tirets uniquement.",
+      "name": "Nom",
+      "namePlaceholder": "Revue de code",
+      "description": "Description",
+      "descriptionPlaceholder": "Quand utiliser cette compétence",
+      "descriptionHint": "C'est le manifeste que voit le modèle. Rédigez-le pour qu'il sache quand la compétence s'applique sans avoir à la charger.",
+      "instructions": "Instructions",
+      "instructionsPlaceholder": "Instructions en Markdown que le modèle lit une fois cette compétence chargée.",
+      "instructionsHint": "Chargées seulement quand la compétence sert : leur longueur ne coûte rien avant ça.",
+      "enabled": "Activée",
+      "enabledHint": "Les compétences désactivées restent enregistrées mais ne sont jamais proposées au modèle."
+    },
+    "history": {
+      "open": "Historique des versions",
+      "title": "Historique de {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Outils",
+    "description": "Les serveurs d'outils que le modèle peut appeler, et les approbations que vous leur avez accordées.",
+    "approvalNotice": "Les outils qui modifient des données en dehors de la conversation demandent toujours une approbation, sauf si vous leur avez accordé une approbation permanente ou valable pour la conversation.",
+    "registerServer": "Enregistrer un serveur",
+    "registerHint": "Libre WebUI lit le serveur une fois et fige les outils qu'il expose. Actualisez le serveur plus tard pour récupérer les changements.",
+    "editServer": "Modifier le serveur",
+    "empty": "Aucun serveur d'outils",
+    "emptyHintAdmin": "Enregistrez un serveur OpenAPI ou MCP pour donner au modèle quelque chose à appeler.",
+    "emptyHintUser": "Aucun administrateur n'a encore partagé de serveur d'outils avec vous.",
+    "loadFailed": "Impossible de charger les serveurs d'outils.",
+    "saved": "Serveur d'outils enregistré",
+    "saveFailed": "Impossible d'enregistrer le serveur d'outils.",
+    "deleted": "Serveur d'outils supprimé",
+    "deleteFailed": "Impossible de supprimer le serveur d'outils.",
+    "deleteTitle": "Supprimer le serveur d'outils",
+    "deleteConfirm": "Supprimer \"{{name}}\" ? Tout le monde perd l'accès à ses outils.",
+    "refresh": "Actualiser les outils",
+    "refreshed": "Outils relus depuis le serveur",
+    "refreshFailed": "Impossible de lire le serveur.",
+    "toolsLoadFailed": "Impossible de charger les outils épinglés.",
+    "overrideFailed": "Impossible de modifier l'outil.",
+    "pinnedTools": "Outils épinglés",
+    "noPinnedTools": "Ce serveur n'a exposé aucun outil.",
+    "sideEffect": "Effet de bord",
+    "sideEffectOverride": "Effet de bord",
+    "specRevision": "Révision {{revision}}",
+    "credential": "Identifiant personnel",
+    "credentialHint": "Stocké chiffré et utilisé uniquement pour vos propres appels à ce serveur.",
+    "credentialPlaceholder": "Collez votre token",
+    "credentialSet": "Identifiant défini",
+    "credentialMissing": "Identifiant requis",
+    "credentialSaved": "Identifiant enregistré",
+    "credentialSaveFailed": "Impossible d'enregistrer l'identifiant.",
+    "credentialRemove": "Supprimer",
+    "credentialRemoved": "Identifiant supprimé",
+    "credentialRemoveFailed": "Impossible de supprimer l'identifiant.",
+    "builtinSource": "Ce serveur",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Aucune authentification",
+      "bearer": "Token Bearer",
+      "header": "En-tête personnalisé"
+    },
+    "accessModes": {
+      "admins-only": "Administrateurs uniquement",
+      "all-users": "Tout le monde",
+      "granted": "Seulement les personnes autorisées"
+    },
+    "form": {
+      "name": "Nom",
+      "namePlaceholder": "API météo",
+      "kind": "Type",
+      "description": "Description",
+      "descriptionPlaceholder": "Ce que fait ce serveur",
+      "baseUrl": "URL de base",
+      "specUrl": "URL de la spécification",
+      "specUrlHint": "Facultatif. L'URL de base est utilisée si le champ reste vide.",
+      "authMode": "Authentification",
+      "authHeader": "Nom de l'en-tête",
+      "accessMode": "Qui peut l'utiliser",
+      "timeoutMs": "Délai d'attente (ms)",
+      "maxResponseBytes": "Réponse max (octets)",
+      "serverDefault": "Valeur par défaut du serveur",
+      "enabled": "Activé",
+      "enabledHint": "Les serveurs désactivés restent enregistrés mais ne sont jamais proposés au modèle."
+    },
+    "approvals": {
+      "title": "Approbations permanentes",
+      "description": "Outils que vous avez autorisés à s'exécuter sans redemander. Révoquez-en un et il redemandera la prochaine fois.",
+      "empty": "Aucune approbation permanente.",
+      "revoke": "Révoquer",
+      "revoked": "Approbation révoquée",
+      "revokeFailed": "Impossible de révoquer l'approbation.",
+      "scope": {
+        "once": "Une fois",
+        "session": "Cette conversation",
+        "always": "Toujours"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Bibliothèque de prompts"
+    },
+    "skillMenu": {
+      "label": "Compétences"
+    },
+    "variables": {
+      "title": "Remplir {{title}}",
+      "insert": "Insérer",
+      "cancel": "Annuler",
+      "required": "{{name}} est obligatoire"
+    }
   }
 }

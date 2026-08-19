@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Rekam dan kirim audio ke {{provider}} untuk ditranskripsikan",
       "webSearchOn": "Pencarian web aktif — balasan memakai hasil langsung",
       "webSearchOff": "Cari di web untuk pesan ini",
+      "toolsOn": "Alat aktif — model dapat memanggil alat yang disetujui",
+      "toolsOff": "Izinkan model memanggil alat untuk pesan ini",
       "thinkingOn": "Berpikir aktif ({{level}})",
       "thinkingOff": "Berpikir sebelum menjawab"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Jelajahi",
       "notes": "Catatan",
       "calendar": "Kalender",
-      "automations": "Otomatisasi"
+      "automations": "Otomatisasi",
+      "prompts": "Prompt",
+      "skills": "Keterampilan",
+      "tools": "Alat"
     },
     "toggleSize": "Ubah ukuran sidebar",
     "expandSidebar": "Perluas sidebar"
@@ -1319,7 +1324,8 @@
       "basic": "Dasar",
       "parameters": "Parameter",
       "memory": "Memori & Pembelajaran",
-      "advanced": "Lanjutan"
+      "advanced": "Lanjutan",
+      "bindings": "Ikatan"
     },
     "basic": {
       "name": "Nama",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Gagal menyimpan"
+    },
+    "bindings": {
+      "toolServers": "Server alat",
+      "toolServersHint": "Server yang boleh dipanggil persona ini. Jika dikosongkan, semua server yang memang bisa dijangkau pengguna akan ditawarkan.",
+      "noToolServers": "Tidak ada server alat yang tersedia untuk Anda.",
+      "builtinTools": "Alat bawaan",
+      "builtinToolsHint": "Alat yang dijalankan server itu sendiri. Jika dikosongkan, semuanya ditawarkan.",
+      "noBuiltinTools": "Tidak ada alat bawaan yang tersedia.",
+      "builtin": {
+        "web_search": "Pencarian web",
+        "search_documents": "Cari dokumen",
+        "load_skill": "Muat keterampilan"
+      },
+      "skills": "Keterampilan",
+      "skillsHint": "Keterampilan yang boleh dimuat model selama persona ini aktif.",
+      "noSkills": "Anda belum membuat keterampilan apa pun.",
+      "collections": "Koleksi pengetahuan",
+      "collectionsHint": "Koleksi dokumen yang bisa ditelusuri persona ini.",
+      "noCollections": "Anda belum membuat koleksi apa pun.",
+      "prompt": "Prompt",
+      "promptHint": "Prompt yang mengawali setiap obrolan baru dengan persona ini.",
+      "noPrompt": "Tanpa prompt",
+      "version": "Revisi ikatan {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Belum ada peristiwa audit yang tercatat.",
       "actor": "Pelaku",
       "target": "Target"
+    },
+    "tools": {
+      "title": "Akses alat",
+      "description": "Izinkan semua orang memanggil server alat. Saat mati, hanya administrator yang bisa.",
+      "saved": "Akses alat diperbarui",
+      "saveFailed": "Akses alat tidak dapat diperbarui.",
+      "lockedByEnv": "Terkunci oleh variabel lingkungan di server ini."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Chat",
     "newChat": "Chat Baru",
     "work": "Kerja"
+  },
+  "tools": {
+    "arguments": "Argumen",
+    "result": "Hasil",
+    "callStatus": {
+      "awaiting_approval": "Menunggu persetujuan",
+      "running": "Berjalan",
+      "succeeded": "Selesai",
+      "failed": "Gagal",
+      "denied": "Ditolak",
+      "cancelled": "Dibatalkan"
+    },
+    "approval": {
+      "title": "Alat memerlukan persetujuan",
+      "description": "Model ingin menjalankan {{tool}} di {{server}}. Panggilan ini dapat mengubah data di luar obrolan ini.",
+      "builtinSource": "server ini",
+      "allowOnce": "Izinkan sekali",
+      "allowSession": "Izinkan di obrolan ini",
+      "allowAlways": "Izinkan selalu",
+      "deny": "Tolak"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompt",
+    "description": "Templat prompt yang bisa dipakai ulang dengan variabel bertipe. Ketik / di kolom obrolan untuk menyisipkan salah satunya.",
+    "newPrompt": "Prompt baru",
+    "editPrompt": "Edit prompt",
+    "empty": "Belum ada prompt",
+    "emptyHint": "Prompt adalah templat pesan yang tersimpan. Setelah Anda membuatnya, mengetik /slug di kolom obrolan akan menyisipkannya dan menanyakan variabel yang dideklarasikannya.",
+    "loadFailed": "Prompt Anda tidak dapat dimuat.",
+    "saved": "Prompt disimpan",
+    "saveFailed": "Prompt tidak dapat disimpan.",
+    "deleted": "Prompt dihapus",
+    "deleteFailed": "Prompt tidak dapat dihapus.",
+    "deleteTitle": "Hapus prompt",
+    "deleteConfirm": "Hapus \"{{title}}\"? Riwayat versinya ikut hilang.",
+    "exportFailed": "Prompt tidak dapat diekspor.",
+    "imported": "Prompt diimpor",
+    "importFailed": "Berkas itu tidak dapat diimpor.",
+    "historyFailed": "Riwayat versi tidak dapat dimuat.",
+    "rolledBack": "Prompt dikembalikan",
+    "rollbackFailed": "Prompt tidak dapat dikembalikan.",
+    "versionLabel": "v{{version}}",
+    "updated": "Diperbarui {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Dipakai sebagai /slug di kolom obrolan.",
+      "slugInvalid": "Hanya huruf kecil, angka, dan tanda hubung.",
+      "title": "Judul",
+      "titlePlaceholder": "Laporan mingguan",
+      "description": "Deskripsi",
+      "descriptionPlaceholder": "Untuk apa prompt ini",
+      "content": "Isi",
+      "contentPlaceholder": "Tulis promptnya. Apa pun yang ingin diisi belakangan, bungkus dengan kurung kurawal ganda.",
+      "contentHint": "Placeholder adalah nama di dalam kurung kurawal ganda. Deklarasikan di bawah untuk memberinya label atau nilai bawaan.",
+      "tags": "Tag",
+      "tagsPlaceholder": "riset, menulis",
+      "variables": "Variabel",
+      "variablesHint": "Opsional. Deklarasikan placeholder di sini untuk memberinya label, nilai bawaan, atau sekumpulan pilihan.",
+      "variableName": "Nama",
+      "variableType": "Tipe",
+      "variableLabel": "Label",
+      "variableDefault": "Bawaan",
+      "variableRequired": "Wajib",
+      "variableOptions": "Pilihan",
+      "variableOptionsPlaceholder": "Pilihan dipisahkan koma",
+      "addVariable": "Tambah variabel",
+      "removeVariable": "Hapus variabel"
+    },
+    "variableTypes": {
+      "text": "Teks",
+      "number": "Angka",
+      "select": "Pilihan",
+      "boolean": "Ya atau tidak"
+    },
+    "history": {
+      "open": "Riwayat versi",
+      "title": "Riwayat {{title}}",
+      "subtitle": "Mengembalikan versi akan menyimpan revisi yang dipilih sebagai versi baru. Tidak ada yang ditimpa.",
+      "empty": "Belum ada versi sebelumnya.",
+      "current": "Saat ini",
+      "rollback": "Kembalikan",
+      "rollingBack": "Mengembalikan..."
+    }
+  },
+  "skillsPage": {
+    "title": "Keterampilan",
+    "description": "Kumpulan instruksi bernama yang bisa dimuat model saat dibutuhkan selama bekerja.",
+    "newSkill": "Keterampilan baru",
+    "editSkill": "Edit keterampilan",
+    "empty": "Belum ada keterampilan",
+    "emptyHint": "Keterampilan adalah kumpulan instruksi yang hanya dimuat model saat diperlukan. Sebut $slug dalam pesan, atau biarkan model mengambilnya lewat alat load_skill.",
+    "loadFailed": "Keterampilan Anda tidak dapat dimuat.",
+    "saved": "Keterampilan disimpan",
+    "saveFailed": "Keterampilan tidak dapat disimpan.",
+    "toggleFailed": "Keterampilan tidak dapat diubah.",
+    "deleted": "Keterampilan dihapus",
+    "deleteFailed": "Keterampilan tidak dapat dihapus.",
+    "deleteTitle": "Hapus keterampilan",
+    "deleteConfirm": "Hapus \"{{name}}\"? Riwayat versinya ikut hilang.",
+    "exportFailed": "Keterampilan tidak dapat diekspor.",
+    "imported": "Keterampilan diimpor",
+    "importFailed": "Berkas itu tidak dapat diimpor.",
+    "historyFailed": "Riwayat versi tidak dapat dimuat.",
+    "rolledBack": "Keterampilan dikembalikan",
+    "rollbackFailed": "Keterampilan tidak dapat dikembalikan.",
+    "versionLabel": "v{{version}}",
+    "updated": "Diperbarui {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Dipakai sebagai $slug saat Anda menyebut keterampilannya.",
+      "slugInvalid": "Hanya huruf kecil, angka, dan tanda hubung.",
+      "name": "Nama",
+      "namePlaceholder": "Tinjauan kode",
+      "description": "Deskripsi",
+      "descriptionPlaceholder": "Kapan keterampilan ini dipakai",
+      "descriptionHint": "Inilah manifes yang dilihat model. Tulis agar model tahu kapan keterampilan ini relevan tanpa memuatnya.",
+      "instructions": "Instruksi",
+      "instructionsPlaceholder": "Instruksi Markdown yang dibaca model setelah memuat keterampilan ini.",
+      "instructionsHint": "Hanya dimuat saat keterampilan dipakai, jadi panjangnya tidak menambah biaya sampai saat itu.",
+      "enabled": "Aktif",
+      "enabledHint": "Keterampilan yang dinonaktifkan tetap tersimpan, tetapi tidak pernah ditawarkan ke model."
+    },
+    "history": {
+      "open": "Riwayat versi",
+      "title": "Riwayat {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Alat",
+    "description": "Server alat yang bisa dipanggil model, dan persetujuan yang sudah Anda berikan.",
+    "approvalNotice": "Alat yang mengubah data di luar obrolan selalu meminta persetujuan, kecuali Anda sudah memberi alat itu persetujuan permanen atau persetujuan untuk obrolan ini.",
+    "registerServer": "Daftarkan server",
+    "registerHint": "Libre WebUI membaca server sekali dan menyematkan alat yang ditawarkannya. Segarkan server nanti untuk mengambil perubahan.",
+    "editServer": "Edit server",
+    "empty": "Tidak ada server alat",
+    "emptyHintAdmin": "Daftarkan server OpenAPI atau MCP agar model punya sesuatu untuk dipanggil.",
+    "emptyHintUser": "Administrator belum membagikan server alat apa pun kepada Anda.",
+    "loadFailed": "Server alat tidak dapat dimuat.",
+    "saved": "Server alat disimpan",
+    "saveFailed": "Server alat tidak dapat disimpan.",
+    "deleted": "Server alat dihapus",
+    "deleteFailed": "Server alat tidak dapat dihapus.",
+    "deleteTitle": "Hapus server alat",
+    "deleteConfirm": "Hapus \"{{name}}\"? Semua orang kehilangan akses ke alat-alatnya.",
+    "refresh": "Segarkan alat",
+    "refreshed": "Alat dibaca ulang dari server",
+    "refreshFailed": "Server tidak dapat dibaca.",
+    "toolsLoadFailed": "Alat yang disematkan tidak dapat dimuat.",
+    "overrideFailed": "Alat tidak dapat diubah.",
+    "pinnedTools": "Alat yang disematkan",
+    "noPinnedTools": "Server ini tidak menawarkan alat apa pun.",
+    "sideEffect": "Efek samping",
+    "sideEffectOverride": "Efek samping",
+    "specRevision": "Revisi {{revision}}",
+    "credential": "Kredensial pribadi",
+    "credentialHint": "Disimpan terenkripsi dan hanya dipakai untuk panggilan Anda sendiri ke server ini.",
+    "credentialPlaceholder": "Tempel token Anda",
+    "credentialSet": "Kredensial tersimpan",
+    "credentialMissing": "Perlu kredensial",
+    "credentialSaved": "Kredensial disimpan",
+    "credentialSaveFailed": "Kredensial tidak dapat disimpan.",
+    "credentialRemove": "Hapus",
+    "credentialRemoved": "Kredensial dihapus",
+    "credentialRemoveFailed": "Kredensial tidak dapat dihapus.",
+    "builtinSource": "Server ini",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Tanpa autentikasi",
+      "bearer": "Token bearer",
+      "header": "Header khusus"
+    },
+    "accessModes": {
+      "admins-only": "Hanya administrator",
+      "all-users": "Semua orang",
+      "granted": "Hanya yang diberi akses"
+    },
+    "form": {
+      "name": "Nama",
+      "namePlaceholder": "API cuaca",
+      "kind": "Jenis",
+      "description": "Deskripsi",
+      "descriptionPlaceholder": "Apa yang dilakukan server ini",
+      "baseUrl": "URL dasar",
+      "specUrl": "URL spesifikasi",
+      "specUrlHint": "Opsional. Jika dikosongkan, URL dasar yang dipakai.",
+      "authMode": "Autentikasi",
+      "authHeader": "Nama header",
+      "accessMode": "Siapa yang boleh memakainya",
+      "timeoutMs": "Batas waktu (ms)",
+      "maxResponseBytes": "Respons maksimum (byte)",
+      "serverDefault": "Bawaan server",
+      "enabled": "Aktif",
+      "enabledHint": "Server yang dinonaktifkan tetap terdaftar, tetapi tidak pernah ditawarkan ke model."
+    },
+    "approvals": {
+      "title": "Persetujuan tetap",
+      "description": "Alat yang Anda izinkan berjalan tanpa ditanya lagi. Cabut satu, dan lain kali ia akan bertanya lagi.",
+      "empty": "Tidak ada persetujuan tetap.",
+      "revoke": "Cabut",
+      "revoked": "Persetujuan dicabut",
+      "revokeFailed": "Persetujuan tidak dapat dicabut.",
+      "scope": {
+        "once": "Sekali",
+        "session": "Obrolan ini",
+        "always": "Selalu"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Pustaka prompt"
+    },
+    "skillMenu": {
+      "label": "Keterampilan"
+    },
+    "variables": {
+      "title": "Isi {{title}}",
+      "insert": "Sisipkan",
+      "cancel": "Batal",
+      "required": "{{name}} wajib diisi"
+    }
   }
 }

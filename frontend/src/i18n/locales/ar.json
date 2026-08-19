@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "تسجيل الصوت وإرساله إلى {{provider}} لتحويله إلى نص",
       "webSearchOn": "البحث في الويب مفعّل — تستخدم الردود نتائج حية",
       "webSearchOff": "ابحث في الويب لهذه الرسالة",
+      "toolsOn": "الأدوات مفعّلة — يمكن للنموذج استدعاء الأدوات المعتمدة",
+      "toolsOff": "اسمح للنموذج باستدعاء الأدوات في هذه الرسالة",
       "thinkingOn": "التفكير مفعّل ({{level}})",
       "thinkingOff": "فكّر قبل الإجابة"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "استكشاف",
       "notes": "الملاحظات",
       "calendar": "التقويم",
-      "automations": "الأتمتة"
+      "automations": "الأتمتة",
+      "prompts": "الموجهات",
+      "skills": "المهارات",
+      "tools": "الأدوات"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
     "expandSidebar": "توسيع الشريط الجانبي"
@@ -1319,7 +1324,8 @@
       "basic": "أساسي",
       "parameters": "المعلمات",
       "memory": "الذاكرة والتعلم",
-      "advanced": "متقدم"
+      "advanced": "متقدم",
+      "bindings": "الارتباطات"
     },
     "basic": {
       "name": "الاسم",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "فشل الحفظ"
+    },
+    "bindings": {
+      "toolServers": "خوادم الأدوات",
+      "toolServersHint": "الخوادم التي يجوز لهذه الشخصية استدعاؤها. ترك هذا فارغًا يتيح كل خادم يستطيع المستخدم الوصول إليه أصلًا.",
+      "noToolServers": "لا تتوفر لك أي خوادم أدوات.",
+      "builtinTools": "الأدوات المدمجة",
+      "builtinToolsHint": "أدوات ينفّذها الخادم بنفسه. ترك هذا فارغًا يتيحها كلها.",
+      "noBuiltinTools": "لا توجد أدوات مدمجة متاحة.",
+      "builtin": {
+        "web_search": "البحث في الويب",
+        "search_documents": "البحث في المستندات",
+        "load_skill": "تحميل مهارة"
+      },
+      "skills": "المهارات",
+      "skillsHint": "المهارات التي يجوز للنموذج تحميلها أثناء تفعيل هذه الشخصية.",
+      "noSkills": "لم تنشئ أي مهارات بعد.",
+      "collections": "مجموعات المعرفة",
+      "collectionsHint": "مجموعات المستندات التي يمكن لهذه الشخصية البحث فيها.",
+      "noCollections": "لم تنشئ أي مجموعات بعد.",
+      "prompt": "الموجه",
+      "promptHint": "موجه يبدأ به كل محادثة جديدة مع هذه الشخصية.",
+      "noPrompt": "بلا موجه",
+      "version": "مراجعة الارتباطات {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "لا توجد أحداث تدقيق مسجلة بعد.",
       "actor": "المنفّذ",
       "target": "الهدف"
+    },
+    "tools": {
+      "title": "الوصول إلى الأدوات",
+      "description": "السماح للجميع باستدعاء خوادم الأدوات. عند الإيقاف، يقتصر ذلك على المسؤولين.",
+      "saved": "حُدّث الوصول إلى الأدوات",
+      "saveFailed": "تعذّر تحديث الوصول إلى الأدوات.",
+      "lockedByEnv": "مقفل بمتغير بيئة على هذا الخادم."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "محادثة",
     "newChat": "محادثة جديدة",
     "work": "العمل"
+  },
+  "tools": {
+    "arguments": "الوسائط",
+    "result": "النتيجة",
+    "callStatus": {
+      "awaiting_approval": "بانتظار الموافقة",
+      "running": "قيد التشغيل",
+      "succeeded": "تم",
+      "failed": "فشل",
+      "denied": "مرفوض",
+      "cancelled": "أُلغي"
+    },
+    "approval": {
+      "title": "الأداة بحاجة إلى موافقة",
+      "description": "يريد النموذج تشغيل {{tool}} على {{server}}. قد يغيّر هذا الاستدعاء بيانات خارج هذه المحادثة.",
+      "builtinSource": "هذا الخادم",
+      "allowOnce": "السماح مرة واحدة",
+      "allowSession": "السماح في هذه المحادثة",
+      "allowAlways": "السماح دائمًا",
+      "deny": "رفض"
+    }
+  },
+  "promptsPage": {
+    "title": "الموجهات",
+    "description": "قوالب موجهات قابلة لإعادة الاستخدام بمتغيرات محددة النوع. اكتب / في مربع الكتابة لإدراج أحدها.",
+    "newPrompt": "موجه جديد",
+    "editPrompt": "تحرير الموجه",
+    "empty": "لا توجد موجهات بعد",
+    "emptyHint": "الموجه قالب رسالة محفوظ. بعد إنشاء واحد، تؤدي كتابة /slug في مربع الكتابة إلى إدراجه وطلب أي متغيرات يعلنها.",
+    "loadFailed": "تعذّر تحميل موجهاتك.",
+    "saved": "تم حفظ الموجه",
+    "saveFailed": "تعذّر حفظ الموجه.",
+    "deleted": "تم حذف الموجه",
+    "deleteFailed": "تعذّر حذف الموجه.",
+    "deleteTitle": "حذف الموجه",
+    "deleteConfirm": "هل تريد حذف \"{{title}}\"؟ سيؤدي هذا أيضًا إلى إزالة سجل إصداراته.",
+    "exportFailed": "تعذّر تصدير الموجه.",
+    "imported": "تم استيراد الموجه",
+    "importFailed": "تعذّر استيراد هذا الملف.",
+    "historyFailed": "تعذّر تحميل سجل الإصدارات.",
+    "rolledBack": "تمت إعادة الموجه إلى إصدار سابق",
+    "rollbackFailed": "تعذّرت إعادة الموجه إلى إصدار سابق.",
+    "versionLabel": "الإصدار {{version}}",
+    "updated": "حُدّث {{when}}",
+    "form": {
+      "slug": "المعرّف",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "يُستخدم بصيغة /slug في مربع الكتابة.",
+      "slugInvalid": "أحرف إنجليزية صغيرة وأرقام وشرطات فقط.",
+      "title": "العنوان",
+      "titlePlaceholder": "التقرير الأسبوعي",
+      "description": "الوصف",
+      "descriptionPlaceholder": "الغرض من هذا الموجه",
+      "content": "المحتوى",
+      "contentPlaceholder": "اكتب الموجه. ضع كل ما تريد ملأه لاحقًا بين قوسين معقوفين مزدوجين.",
+      "contentHint": "العنصر النائب اسم بين قوسين معقوفين مزدوجين. عرّفه أدناه لتمنحه تسمية أو قيمة افتراضية.",
+      "tags": "الوسوم",
+      "tagsPlaceholder": "بحث، كتابة",
+      "variables": "المتغيرات",
+      "variablesHint": "اختياري. عرّف عنصرًا نائبًا هنا لتمنحه تسمية أو قيمة افتراضية أو مجموعة خيارات.",
+      "variableName": "الاسم",
+      "variableType": "النوع",
+      "variableLabel": "التسمية",
+      "variableDefault": "القيمة الافتراضية",
+      "variableRequired": "مطلوب",
+      "variableOptions": "الخيارات",
+      "variableOptionsPlaceholder": "خيارات مفصولة بفواصل",
+      "addVariable": "إضافة متغير",
+      "removeVariable": "إزالة المتغير"
+    },
+    "variableTypes": {
+      "text": "نص",
+      "number": "رقم",
+      "select": "اختيار",
+      "boolean": "نعم أو لا"
+    },
+    "history": {
+      "open": "سجل الإصدارات",
+      "title": "سجل {{title}}",
+      "subtitle": "تحفظ الإعادة المراجعة المختارة كإصدار جديد. لا يُستبدل أي شيء.",
+      "empty": "لا توجد إصدارات سابقة بعد.",
+      "current": "الحالي",
+      "rollback": "إعادة",
+      "rollingBack": "جارٍ الإعادة..."
+    }
+  },
+  "skillsPage": {
+    "title": "المهارات",
+    "description": "مجموعات تعليمات مسمّاة يمكن للنموذج تحميلها عند الحاجة أثناء العمل.",
+    "newSkill": "مهارة جديدة",
+    "editSkill": "تحرير المهارة",
+    "empty": "لا توجد مهارات بعد",
+    "emptyHint": "المهارة مجموعة تعليمات لا يحمّلها النموذج إلا عند حاجته إليها. اذكر $slug في رسالة، أو دع النموذج يستدعيها عبر أداة load_skill.",
+    "loadFailed": "تعذّر تحميل مهاراتك.",
+    "saved": "تم حفظ المهارة",
+    "saveFailed": "تعذّر حفظ المهارة.",
+    "toggleFailed": "تعذّر تغيير المهارة.",
+    "deleted": "تم حذف المهارة",
+    "deleteFailed": "تعذّر حذف المهارة.",
+    "deleteTitle": "حذف المهارة",
+    "deleteConfirm": "هل تريد حذف \"{{name}}\"؟ سيؤدي هذا أيضًا إلى إزالة سجل إصداراتها.",
+    "exportFailed": "تعذّر تصدير المهارة.",
+    "imported": "تم استيراد المهارة",
+    "importFailed": "تعذّر استيراد هذا الملف.",
+    "historyFailed": "تعذّر تحميل سجل الإصدارات.",
+    "rolledBack": "تمت إعادة المهارة إلى إصدار سابق",
+    "rollbackFailed": "تعذّرت إعادة المهارة إلى إصدار سابق.",
+    "versionLabel": "الإصدار {{version}}",
+    "updated": "حُدّث {{when}}",
+    "form": {
+      "slug": "المعرّف",
+      "slugPlaceholder": "code-review",
+      "slugHint": "يُستخدم بصيغة $slug عند ذكر المهارة.",
+      "slugInvalid": "أحرف إنجليزية صغيرة وأرقام وشرطات فقط.",
+      "name": "الاسم",
+      "namePlaceholder": "مراجعة الشيفرة",
+      "description": "الوصف",
+      "descriptionPlaceholder": "متى تُستخدم هذه المهارة",
+      "descriptionHint": "هذا هو البيان الذي يراه النموذج. اكتبه بحيث يعرف النموذج متى تنطبق المهارة دون تحميلها.",
+      "instructions": "التعليمات",
+      "instructionsPlaceholder": "تعليمات بصيغة Markdown يقرأها النموذج بعد تحميل هذه المهارة.",
+      "instructionsHint": "تُحمّل فقط عند استخدام المهارة، لذا لا يكلّف طولها شيئًا حتى ذلك الحين.",
+      "enabled": "مُفعّل",
+      "enabledHint": "تبقى المهارات المعطّلة محفوظة لكنها لا تُعرض على النموذج أبدًا."
+    },
+    "history": {
+      "open": "سجل الإصدارات",
+      "title": "سجل {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "الأدوات",
+    "description": "خوادم الأدوات التي يمكن للنموذج استدعاؤها، والموافقات التي منحتها لها.",
+    "approvalNotice": "الأدوات التي تغيّر بيانات خارج المحادثة تطلب الموافقة دائمًا، إلا إذا منحت تلك الأداة موافقة دائمة أو موافقة لكل محادثة.",
+    "registerServer": "تسجيل خادم",
+    "registerHint": "يقرأ Libre WebUI الخادم مرة واحدة ويثبّت الأدوات التي يعرضها. حدّث الخادم لاحقًا لالتقاط التغييرات.",
+    "editServer": "تحرير الخادم",
+    "empty": "لا توجد خوادم أدوات",
+    "emptyHintAdmin": "سجّل خادم OpenAPI أو MCP لتمنح النموذج ما يستدعيه.",
+    "emptyHintUser": "لم يشارك أي مسؤول خوادم أدوات معك بعد.",
+    "loadFailed": "تعذّر تحميل خوادم الأدوات.",
+    "saved": "تم حفظ خادم الأدوات",
+    "saveFailed": "تعذّر حفظ خادم الأدوات.",
+    "deleted": "تم حذف خادم الأدوات",
+    "deleteFailed": "تعذّر حذف خادم الأدوات.",
+    "deleteTitle": "حذف خادم الأدوات",
+    "deleteConfirm": "هل تريد حذف \"{{name}}\"؟ سيفقد الجميع الوصول إلى أدواته.",
+    "refresh": "تحديث الأدوات",
+    "refreshed": "أُعيدت قراءة الأدوات من الخادم",
+    "refreshFailed": "تعذّرت قراءة الخادم.",
+    "toolsLoadFailed": "تعذّر تحميل الأدوات المثبّتة.",
+    "overrideFailed": "تعذّر تغيير الأداة.",
+    "pinnedTools": "الأدوات المثبّتة",
+    "noPinnedTools": "لم يعرض هذا الخادم أي أدوات.",
+    "sideEffect": "أثر جانبي",
+    "sideEffectOverride": "أثر جانبي",
+    "specRevision": "المراجعة {{revision}}",
+    "credential": "بيانات اعتماد شخصية",
+    "credentialHint": "تُخزَّن مشفّرة وتُستخدم فقط في استدعاءاتك أنت لهذا الخادم.",
+    "credentialPlaceholder": "الصق رمزك",
+    "credentialSet": "بيانات الاعتماد مضبوطة",
+    "credentialMissing": "بيانات الاعتماد مطلوبة",
+    "credentialSaved": "تم حفظ بيانات الاعتماد",
+    "credentialSaveFailed": "تعذّر حفظ بيانات الاعتماد.",
+    "credentialRemove": "إزالة",
+    "credentialRemoved": "تمت إزالة بيانات الاعتماد",
+    "credentialRemoveFailed": "تعذّرت إزالة بيانات الاعتماد.",
+    "builtinSource": "هذا الخادم",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "بدون مصادقة",
+      "bearer": "رمز Bearer",
+      "header": "ترويسة مخصصة"
+    },
+    "accessModes": {
+      "admins-only": "المسؤولون فقط",
+      "all-users": "الجميع",
+      "granted": "من مُنح الوصول فقط"
+    },
+    "form": {
+      "name": "الاسم",
+      "namePlaceholder": "واجهة الطقس",
+      "kind": "النوع",
+      "description": "الوصف",
+      "descriptionPlaceholder": "ما الذي يفعله هذا الخادم",
+      "baseUrl": "الرابط الأساسي",
+      "specUrl": "رابط المواصفة",
+      "specUrlHint": "اختياري. يُستخدم الرابط الأساسي عند تركه فارغًا.",
+      "authMode": "المصادقة",
+      "authHeader": "اسم الترويسة",
+      "accessMode": "من يمكنه استخدامه",
+      "timeoutMs": "المهلة (بالمللي ثانية)",
+      "maxResponseBytes": "أقصى استجابة (بايت)",
+      "serverDefault": "افتراضي الخادم",
+      "enabled": "مُفعّل",
+      "enabledHint": "تبقى الخوادم المعطّلة مسجّلة لكنها لا تُعرض على النموذج أبدًا."
+    },
+    "approvals": {
+      "title": "الموافقات الدائمة",
+      "description": "أدوات سمحت لها بالعمل دون سؤال مرة أخرى. أبطل إحداها وستسأل في المرة القادمة.",
+      "empty": "لا توجد موافقات دائمة.",
+      "revoke": "إبطال",
+      "revoked": "أُبطلت الموافقة",
+      "revokeFailed": "تعذّر إبطال الموافقة.",
+      "scope": {
+        "once": "مرة واحدة",
+        "session": "هذه المحادثة",
+        "always": "دائمًا"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "مكتبة الموجهات"
+    },
+    "skillMenu": {
+      "label": "المهارات"
+    },
+    "variables": {
+      "title": "املأ {{title}}",
+      "insert": "إدراج",
+      "cancel": "إلغاء",
+      "required": "{{name}} مطلوب"
+    }
   }
 }

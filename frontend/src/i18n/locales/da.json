@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Optag og send lyd til {{provider}} til transskribering",
       "webSearchOn": "Websøgning til — svar bruger live-resultater",
       "webSearchOff": "Søg på nettet for denne besked",
+      "toolsOn": "Værktøjer slået til — modellen kan kalde godkendte værktøjer",
+      "toolsOff": "Lad modellen kalde værktøjer i denne besked",
       "thinkingOn": "Tænkning slået til ({{level}})",
       "thinkingOff": "Tænk før svaret"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Udforsk",
       "notes": "Noter",
       "calendar": "Kalender",
-      "automations": "Automatiseringer"
+      "automations": "Automatiseringer",
+      "prompts": "Prompts",
+      "skills": "Færdigheder",
+      "tools": "Værktøjer"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
     "expandSidebar": "Udvid sidebjælke"
@@ -1319,7 +1324,8 @@
       "basic": "Grundlæggende",
       "parameters": "Parametre",
       "memory": "Hukommelse og læring",
-      "advanced": "Avanceret"
+      "advanced": "Avanceret",
+      "bindings": "Bindinger"
     },
     "basic": {
       "name": "Navn",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Kunne ikke gemme"
+    },
+    "bindings": {
+      "toolServers": "Værktøjsservere",
+      "toolServersHint": "Servere, denne persona må kalde. Er feltet tomt, tilbydes alle servere, brugeren allerede kan nå.",
+      "noToolServers": "Der er ingen værktøjsservere tilgængelige for dig.",
+      "builtinTools": "Indbyggede værktøjer",
+      "builtinToolsHint": "Værktøjer, serveren selv står for. Er feltet tomt, tilbydes de alle sammen.",
+      "noBuiltinTools": "Der er ingen indbyggede værktøjer tilgængelige.",
+      "builtin": {
+        "web_search": "Websøgning",
+        "search_documents": "Søg i dokumenter",
+        "load_skill": "Indlæs færdighed"
+      },
+      "skills": "Færdigheder",
+      "skillsHint": "Færdigheder, modellen må indlæse, mens denne persona er aktiv.",
+      "noSkills": "Du har ikke oprettet nogen færdigheder endnu.",
+      "collections": "Videnssamlinger",
+      "collectionsHint": "Dokumentsamlinger, denne persona kan søge i.",
+      "noCollections": "Du har ikke oprettet nogen samlinger endnu.",
+      "prompt": "Prompt",
+      "promptHint": "En prompt, som hver ny chat med denne persona starter med.",
+      "noPrompt": "Ingen prompt",
+      "version": "Bindingsrevision {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Ingen audithændelser registreret endnu.",
       "actor": "Aktør",
       "target": "Mål"
+    },
+    "tools": {
+      "title": "Værktøjsadgang",
+      "description": "Tillad alle at kalde værktøjsservere. Når det er slået fra, kan kun administratorer.",
+      "saved": "Værktøjsadgang opdateret",
+      "saveFailed": "Værktøjsadgangen kunne ikke opdateres.",
+      "lockedByEnv": "Låst af en miljøvariabel på denne server."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Chat",
     "newChat": "Ny chat",
     "work": "Arbejde"
+  },
+  "tools": {
+    "arguments": "Argumenter",
+    "result": "Resultat",
+    "callStatus": {
+      "awaiting_approval": "Venter på godkendelse",
+      "running": "Kører",
+      "succeeded": "Færdig",
+      "failed": "Mislykkedes",
+      "denied": "Afvist",
+      "cancelled": "Annulleret"
+    },
+    "approval": {
+      "title": "Værktøjet kræver godkendelse",
+      "description": "Modellen vil køre {{tool}} på {{server}}. Kaldet kan ændre data uden for denne chat.",
+      "builtinSource": "denne server",
+      "allowOnce": "Tillad én gang",
+      "allowSession": "Tillad i denne chat",
+      "allowAlways": "Tillad altid",
+      "deny": "Afvis"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompts",
+    "description": "Genbrugelige promptskabeloner med typede variabler. Skriv / i chatfeltet for at indsætte en.",
+    "newPrompt": "Ny prompt",
+    "editPrompt": "Rediger prompt",
+    "empty": "Ingen prompts endnu",
+    "emptyHint": "En prompt er en gemt beskedskabelon. Når du har oprettet en, indsætter /slug i chatfeltet den og spørger om de variabler, den erklærer.",
+    "loadFailed": "Dine prompts kunne ikke indlæses.",
+    "saved": "Prompt gemt",
+    "saveFailed": "Prompten kunne ikke gemmes.",
+    "deleted": "Prompt slettet",
+    "deleteFailed": "Prompten kunne ikke slettes.",
+    "deleteTitle": "Slet prompt",
+    "deleteConfirm": "Slet \"{{title}}\"? Versionshistorikken forsvinder også.",
+    "exportFailed": "Prompten kunne ikke eksporteres.",
+    "imported": "Prompt importeret",
+    "importFailed": "Filen kunne ikke importeres.",
+    "historyFailed": "Versionshistorikken kunne ikke indlæses.",
+    "rolledBack": "Prompt rullet tilbage",
+    "rollbackFailed": "Prompten kunne ikke rulles tilbage.",
+    "versionLabel": "v{{version}}",
+    "updated": "Opdateret {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Bruges som /slug i chatfeltet.",
+      "slugInvalid": "Kun små bogstaver, tal og bindestreger.",
+      "title": "Titel",
+      "titlePlaceholder": "Ugerapport",
+      "description": "Beskrivelse",
+      "descriptionPlaceholder": "Hvad prompten bruges til",
+      "content": "Indhold",
+      "contentPlaceholder": "Skriv prompten. Sæt alt, du vil udfylde senere, i dobbelte tuborgparenteser.",
+      "contentHint": "En pladsholder er et navn i dobbelte tuborgparenteser. Erklær den nedenfor for at give den en etiket eller en standardværdi.",
+      "tags": "Tags",
+      "tagsPlaceholder": "research, skrivning",
+      "variables": "Variabler",
+      "variablesHint": "Valgfrit. Erklær en pladsholder her for at give den en etiket, en standardværdi eller et sæt valgmuligheder.",
+      "variableName": "Navn",
+      "variableType": "Type",
+      "variableLabel": "Etiket",
+      "variableDefault": "Standard",
+      "variableRequired": "Påkrævet",
+      "variableOptions": "Valgmuligheder",
+      "variableOptionsPlaceholder": "Valg adskilt af komma",
+      "addVariable": "Tilføj variabel",
+      "removeVariable": "Fjern variabel"
+    },
+    "variableTypes": {
+      "text": "Tekst",
+      "number": "Tal",
+      "select": "Valg",
+      "boolean": "Ja eller nej"
+    },
+    "history": {
+      "open": "Versionshistorik",
+      "title": "Historik for {{title}}",
+      "subtitle": "Tilbagerulning gemmer den valgte revision som en ny version. Intet bliver overskrevet.",
+      "empty": "Ingen tidligere versioner endnu.",
+      "current": "Nuværende",
+      "rollback": "Rul tilbage",
+      "rollingBack": "Ruller tilbage..."
+    }
+  },
+  "skillsPage": {
+    "title": "Færdigheder",
+    "description": "Navngivne instruktionssæt, som modellen kan hente frem efter behov undervejs.",
+    "newSkill": "Ny færdighed",
+    "editSkill": "Rediger færdighed",
+    "empty": "Ingen færdigheder endnu",
+    "emptyHint": "En færdighed er et sæt instruktioner, som modellen kun indlæser, når den har brug for dem. Nævn $slug i en besked, eller lad modellen hente den via værktøjet load_skill.",
+    "loadFailed": "Dine færdigheder kunne ikke indlæses.",
+    "saved": "Færdighed gemt",
+    "saveFailed": "Færdigheden kunne ikke gemmes.",
+    "toggleFailed": "Færdigheden kunne ikke ændres.",
+    "deleted": "Færdighed slettet",
+    "deleteFailed": "Færdigheden kunne ikke slettes.",
+    "deleteTitle": "Slet færdighed",
+    "deleteConfirm": "Slet \"{{name}}\"? Versionshistorikken forsvinder også.",
+    "exportFailed": "Færdigheden kunne ikke eksporteres.",
+    "imported": "Færdighed importeret",
+    "importFailed": "Filen kunne ikke importeres.",
+    "historyFailed": "Versionshistorikken kunne ikke indlæses.",
+    "rolledBack": "Færdighed rullet tilbage",
+    "rollbackFailed": "Færdigheden kunne ikke rulles tilbage.",
+    "versionLabel": "v{{version}}",
+    "updated": "Opdateret {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Bruges som $slug, når du nævner færdigheden.",
+      "slugInvalid": "Kun små bogstaver, tal og bindestreger.",
+      "name": "Navn",
+      "namePlaceholder": "Kodegennemgang",
+      "description": "Beskrivelse",
+      "descriptionPlaceholder": "Hvornår denne færdighed skal bruges",
+      "descriptionHint": "Det er manifestet, modellen ser. Skriv det, så modellen kan afgøre, hvornår færdigheden passer, uden at indlæse den.",
+      "instructions": "Instruktioner",
+      "instructionsPlaceholder": "Markdown-instruktioner, som modellen læser, når den indlæser færdigheden.",
+      "instructionsHint": "Indlæses kun, når færdigheden bruges, så længden koster intet indtil da.",
+      "enabled": "Aktiveret",
+      "enabledHint": "Deaktiverede færdigheder bliver gemt, men tilbydes aldrig modellen."
+    },
+    "history": {
+      "open": "Versionshistorik",
+      "title": "Historik for {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Værktøjer",
+    "description": "Værktøjsservere, modellen kan kalde, og de godkendelser du har givet dem.",
+    "approvalNotice": "Værktøjer, der ændrer data uden for chatten, beder altid om godkendelse, medmindre du har givet værktøjet en permanent godkendelse eller en godkendelse for chatten.",
+    "registerServer": "Registrer server",
+    "registerHint": "Libre WebUI læser serveren én gang og fastholder de værktøjer, den udstiller. Opdater serveren senere for at hente ændringer.",
+    "editServer": "Rediger server",
+    "empty": "Ingen værktøjsservere",
+    "emptyHintAdmin": "Registrer en OpenAPI- eller MCP-server, så modellen har noget at kalde.",
+    "emptyHintUser": "En administrator har endnu ikke delt værktøjsservere med dig.",
+    "loadFailed": "Værktøjsserverne kunne ikke indlæses.",
+    "saved": "Værktøjsserver gemt",
+    "saveFailed": "Værktøjsserveren kunne ikke gemmes.",
+    "deleted": "Værktøjsserver slettet",
+    "deleteFailed": "Værktøjsserveren kunne ikke slettes.",
+    "deleteTitle": "Slet værktøjsserver",
+    "deleteConfirm": "Slet \"{{name}}\"? Alle mister adgang til dens værktøjer.",
+    "refresh": "Opdater værktøjer",
+    "refreshed": "Værktøjer læst fra serveren igen",
+    "refreshFailed": "Serveren kunne ikke læses.",
+    "toolsLoadFailed": "De fastholdte værktøjer kunne ikke indlæses.",
+    "overrideFailed": "Værktøjet kunne ikke ændres.",
+    "pinnedTools": "Fastholdte værktøjer",
+    "noPinnedTools": "Serveren udstillede ingen værktøjer.",
+    "sideEffect": "Sideeffekt",
+    "sideEffectOverride": "Sideeffekt",
+    "specRevision": "Revision {{revision}}",
+    "credential": "Personlige adgangsoplysninger",
+    "credentialHint": "Gemmes krypteret og bruges kun til dine egne kald til denne server.",
+    "credentialPlaceholder": "Indsæt dit token",
+    "credentialSet": "Adgangsoplysninger angivet",
+    "credentialMissing": "Adgangsoplysninger mangler",
+    "credentialSaved": "Adgangsoplysninger gemt",
+    "credentialSaveFailed": "Adgangsoplysningerne kunne ikke gemmes.",
+    "credentialRemove": "Fjern",
+    "credentialRemoved": "Adgangsoplysninger fjernet",
+    "credentialRemoveFailed": "Adgangsoplysningerne kunne ikke fjernes.",
+    "builtinSource": "Denne server",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Ingen godkendelse",
+      "bearer": "Bearer-token",
+      "header": "Egen header"
+    },
+    "accessModes": {
+      "admins-only": "Kun administratorer",
+      "all-users": "Alle",
+      "granted": "Kun dem, der har fået adgang"
+    },
+    "form": {
+      "name": "Navn",
+      "namePlaceholder": "Vejr-API",
+      "kind": "Type",
+      "description": "Beskrivelse",
+      "descriptionPlaceholder": "Hvad serveren gør",
+      "baseUrl": "Basis-URL",
+      "specUrl": "Spec-URL",
+      "specUrlHint": "Valgfrit. Bruger basis-URL'en, når feltet er tomt.",
+      "authMode": "Godkendelse",
+      "authHeader": "Headernavn",
+      "accessMode": "Hvem må bruge den",
+      "timeoutMs": "Timeout (ms)",
+      "maxResponseBytes": "Maks. svar (bytes)",
+      "serverDefault": "Serverstandard",
+      "enabled": "Aktiveret",
+      "enabledHint": "Deaktiverede servere forbliver registreret, men tilbydes aldrig modellen."
+    },
+    "approvals": {
+      "title": "Stående godkendelser",
+      "description": "Værktøjer, du har givet lov til at køre uden at spørge igen. Tilbagekald en, og den spørger næste gang.",
+      "empty": "Ingen stående godkendelser.",
+      "revoke": "Tilbagekald",
+      "revoked": "Godkendelse tilbagekaldt",
+      "revokeFailed": "Godkendelsen kunne ikke tilbagekaldes.",
+      "scope": {
+        "once": "Én gang",
+        "session": "Denne chat",
+        "always": "Altid"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Promptbibliotek"
+    },
+    "skillMenu": {
+      "label": "Færdigheder"
+    },
+    "variables": {
+      "title": "Udfyld {{title}}",
+      "insert": "Indsæt",
+      "cancel": "Annuller",
+      "required": "{{name}} er påkrævet"
+    }
   }
 }

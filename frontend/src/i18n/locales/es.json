@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Grabar y enviar audio a {{provider}} para transcribirlo",
       "webSearchOn": "Búsqueda web activada — las respuestas usan resultados en vivo",
       "webSearchOff": "Buscar en la web para este mensaje",
+      "toolsOn": "Herramientas activadas: el modelo puede llamar a las herramientas aprobadas",
+      "toolsOff": "Permitir que el modelo llame a herramientas en este mensaje",
       "thinkingOn": "Razonamiento activado ({{level}})",
       "thinkingOff": "Razonar antes de responder"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Explorar",
       "notes": "Notas",
       "calendar": "Calendario",
-      "automations": "Automatizaciones"
+      "automations": "Automatizaciones",
+      "prompts": "Prompts",
+      "skills": "Habilidades",
+      "tools": "Herramientas"
     },
     "toggleSize": "Cambiar tamaño de barra lateral",
     "expandSidebar": "Expandir barra lateral"
@@ -1319,7 +1324,8 @@
       "basic": "Básico",
       "parameters": "Parámetros",
       "memory": "Memoria y aprendizaje",
-      "advanced": "Avanzado"
+      "advanced": "Avanzado",
+      "bindings": "Vínculos"
     },
     "basic": {
       "name": "Nombre",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Error al guardar"
+    },
+    "bindings": {
+      "toolServers": "Servidores de herramientas",
+      "toolServersHint": "Servidores que esta persona puede llamar. Si se deja vacío se ofrece cualquier servidor al que el usuario ya llegue.",
+      "noToolServers": "No tienes ningún servidor de herramientas disponible.",
+      "builtinTools": "Herramientas integradas",
+      "builtinToolsHint": "Herramientas que implementa el propio servidor. Si se deja vacío se ofrecen todas.",
+      "noBuiltinTools": "No hay herramientas integradas disponibles.",
+      "builtin": {
+        "web_search": "Búsqueda web",
+        "search_documents": "Buscar en documentos",
+        "load_skill": "Cargar habilidad"
+      },
+      "skills": "Habilidades",
+      "skillsHint": "Habilidades que el modelo puede cargar mientras esta persona está activa.",
+      "noSkills": "Todavía no has creado ninguna habilidad.",
+      "collections": "Colecciones de conocimiento",
+      "collectionsHint": "Colecciones de documentos en las que esta persona puede buscar.",
+      "noCollections": "Todavía no has creado ninguna colección.",
+      "prompt": "Prompt",
+      "promptHint": "Un prompt con el que empieza cada chat nuevo con esta persona.",
+      "noPrompt": "Sin prompt",
+      "version": "Revisión de vínculos {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Aún no hay eventos de auditoría registrados.",
       "actor": "Actor",
       "target": "Objetivo"
+    },
+    "tools": {
+      "title": "Acceso a herramientas",
+      "description": "Permitir que todos llamen a servidores de herramientas. Si está desactivado, solo los administradores pueden.",
+      "saved": "Acceso a herramientas actualizado",
+      "saveFailed": "No se pudo actualizar el acceso a herramientas.",
+      "lockedByEnv": "Bloqueado por una variable de entorno en este servidor."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Chat",
     "newChat": "Nuevo chat",
     "work": "Trabajo"
+  },
+  "tools": {
+    "arguments": "Argumentos",
+    "result": "Resultado",
+    "callStatus": {
+      "awaiting_approval": "Esperando aprobación",
+      "running": "En ejecución",
+      "succeeded": "Listo",
+      "failed": "Falló",
+      "denied": "Rechazada",
+      "cancelled": "Cancelada"
+    },
+    "approval": {
+      "title": "Se necesita aprobación para la herramienta",
+      "description": "El modelo quiere ejecutar {{tool}} en {{server}}. Esta llamada puede cambiar datos fuera de este chat.",
+      "builtinSource": "este servidor",
+      "allowOnce": "Permitir una vez",
+      "allowSession": "Permitir en este chat",
+      "allowAlways": "Permitir siempre",
+      "deny": "Rechazar"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompts",
+    "description": "Plantillas de prompts reutilizables con variables tipadas. Escribe / en el campo de chat para insertar una.",
+    "newPrompt": "Nuevo prompt",
+    "editPrompt": "Editar prompt",
+    "empty": "Aún no hay prompts",
+    "emptyHint": "Un prompt es una plantilla de mensaje guardada. Una vez creado, escribir /slug en el campo de chat lo inserta y pide las variables que declara.",
+    "loadFailed": "No se pudieron cargar tus prompts.",
+    "saved": "Prompt guardado",
+    "saveFailed": "No se pudo guardar el prompt.",
+    "deleted": "Prompt eliminado",
+    "deleteFailed": "No se pudo eliminar el prompt.",
+    "deleteTitle": "Eliminar prompt",
+    "deleteConfirm": "¿Eliminar \"{{title}}\"? También se borra su historial de versiones.",
+    "exportFailed": "No se pudo exportar el prompt.",
+    "imported": "Prompt importado",
+    "importFailed": "No se pudo importar ese archivo.",
+    "historyFailed": "No se pudo cargar el historial de versiones.",
+    "rolledBack": "Prompt restaurado",
+    "rollbackFailed": "No se pudo restaurar el prompt.",
+    "versionLabel": "v{{version}}",
+    "updated": "Actualizado {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Se usa como /slug en el campo de chat.",
+      "slugInvalid": "Solo minúsculas, dígitos y guiones.",
+      "title": "Título",
+      "titlePlaceholder": "Informe semanal",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Para qué sirve este prompt",
+      "content": "Contenido",
+      "contentPlaceholder": "Escribe el prompt. Envuelve entre llaves dobles todo lo que quieras completar más tarde.",
+      "contentHint": "Un marcador es un nombre entre llaves dobles. Decláralo abajo para darle una etiqueta o un valor por defecto.",
+      "tags": "Etiquetas",
+      "tagsPlaceholder": "investigación, redacción",
+      "variables": "Variables",
+      "variablesHint": "Opcional. Declara aquí un marcador para darle una etiqueta, un valor por defecto o un conjunto de opciones.",
+      "variableName": "Nombre",
+      "variableType": "Tipo",
+      "variableLabel": "Etiqueta",
+      "variableDefault": "Por defecto",
+      "variableRequired": "Obligatorio",
+      "variableOptions": "Opciones",
+      "variableOptionsPlaceholder": "Opciones separadas por comas",
+      "addVariable": "Añadir variable",
+      "removeVariable": "Quitar variable"
+    },
+    "variableTypes": {
+      "text": "Texto",
+      "number": "Número",
+      "select": "Elección",
+      "boolean": "Sí o no"
+    },
+    "history": {
+      "open": "Historial de versiones",
+      "title": "Historial de {{title}}",
+      "subtitle": "Restaurar guarda la revisión elegida como una versión nueva. No se sobrescribe nada.",
+      "empty": "Aún no hay versiones anteriores.",
+      "current": "Actual",
+      "rollback": "Restaurar",
+      "rollingBack": "Restaurando..."
+    }
+  },
+  "skillsPage": {
+    "title": "Habilidades",
+    "description": "Conjuntos de instrucciones con nombre que el modelo puede cargar cuando los necesita.",
+    "newSkill": "Nueva habilidad",
+    "editSkill": "Editar habilidad",
+    "empty": "Aún no hay habilidades",
+    "emptyHint": "Una habilidad es un conjunto de instrucciones que el modelo carga solo cuando las necesita. Menciona $slug en un mensaje o deja que el modelo la use a través de la herramienta load_skill.",
+    "loadFailed": "No se pudieron cargar tus habilidades.",
+    "saved": "Habilidad guardada",
+    "saveFailed": "No se pudo guardar la habilidad.",
+    "toggleFailed": "No se pudo cambiar la habilidad.",
+    "deleted": "Habilidad eliminada",
+    "deleteFailed": "No se pudo eliminar la habilidad.",
+    "deleteTitle": "Eliminar habilidad",
+    "deleteConfirm": "¿Eliminar \"{{name}}\"? También se borra su historial de versiones.",
+    "exportFailed": "No se pudo exportar la habilidad.",
+    "imported": "Habilidad importada",
+    "importFailed": "No se pudo importar ese archivo.",
+    "historyFailed": "No se pudo cargar el historial de versiones.",
+    "rolledBack": "Habilidad restaurada",
+    "rollbackFailed": "No se pudo restaurar la habilidad.",
+    "versionLabel": "v{{version}}",
+    "updated": "Actualizada {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Se usa como $slug cuando mencionas la habilidad.",
+      "slugInvalid": "Solo minúsculas, dígitos y guiones.",
+      "name": "Nombre",
+      "namePlaceholder": "Revisión de código",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Cuándo usar esta habilidad",
+      "descriptionHint": "Este es el manifiesto que ve el modelo. Escríbelo de forma que el modelo sepa cuándo aplica la habilidad sin cargarla.",
+      "instructions": "Instrucciones",
+      "instructionsPlaceholder": "Instrucciones en Markdown que el modelo lee al cargar esta habilidad.",
+      "instructionsHint": "Se cargan solo cuando se usa la habilidad, así que su longitud no cuesta nada hasta entonces.",
+      "enabled": "Habilitada",
+      "enabledHint": "Las habilidades deshabilitadas siguen guardadas, pero nunca se ofrecen al modelo."
+    },
+    "history": {
+      "open": "Historial de versiones",
+      "title": "Historial de {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Herramientas",
+    "description": "Servidores de herramientas que el modelo puede llamar y las aprobaciones que les has dado.",
+    "approvalNotice": "Las herramientas que cambian datos fuera del chat siempre piden aprobación, salvo que le hayas dado a esa herramienta una aprobación permanente o para el chat.",
+    "registerServer": "Registrar servidor",
+    "registerHint": "Libre WebUI lee el servidor una vez y fija las herramientas que expone. Actualiza el servidor más tarde para recoger los cambios.",
+    "editServer": "Editar servidor",
+    "empty": "Sin servidores de herramientas",
+    "emptyHintAdmin": "Registra un servidor OpenAPI o MCP para darle al modelo algo que llamar.",
+    "emptyHintUser": "Ningún administrador ha compartido servidores de herramientas contigo todavía.",
+    "loadFailed": "No se pudieron cargar los servidores de herramientas.",
+    "saved": "Servidor de herramientas guardado",
+    "saveFailed": "No se pudo guardar el servidor de herramientas.",
+    "deleted": "Servidor de herramientas eliminado",
+    "deleteFailed": "No se pudo eliminar el servidor de herramientas.",
+    "deleteTitle": "Eliminar servidor de herramientas",
+    "deleteConfirm": "¿Eliminar \"{{name}}\"? Todos perderán el acceso a sus herramientas.",
+    "refresh": "Actualizar herramientas",
+    "refreshed": "Herramientas releídas del servidor",
+    "refreshFailed": "No se pudo leer el servidor.",
+    "toolsLoadFailed": "No se pudieron cargar las herramientas fijadas.",
+    "overrideFailed": "No se pudo cambiar la herramienta.",
+    "pinnedTools": "Herramientas fijadas",
+    "noPinnedTools": "Este servidor no expuso ninguna herramienta.",
+    "sideEffect": "Efecto secundario",
+    "sideEffectOverride": "Efecto secundario",
+    "specRevision": "Revisión {{revision}}",
+    "credential": "Credencial personal",
+    "credentialHint": "Se guarda cifrada y solo se usa para tus propias llamadas a este servidor.",
+    "credentialPlaceholder": "Pega tu token",
+    "credentialSet": "Credencial configurada",
+    "credentialMissing": "Falta la credencial",
+    "credentialSaved": "Credencial guardada",
+    "credentialSaveFailed": "No se pudo guardar la credencial.",
+    "credentialRemove": "Eliminar",
+    "credentialRemoved": "Credencial eliminada",
+    "credentialRemoveFailed": "No se pudo eliminar la credencial.",
+    "builtinSource": "Este servidor",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Sin autenticación",
+      "bearer": "Token Bearer",
+      "header": "Cabecera personalizada"
+    },
+    "accessModes": {
+      "admins-only": "Solo administradores",
+      "all-users": "Todos",
+      "granted": "Solo quienes tengan acceso concedido"
+    },
+    "form": {
+      "name": "Nombre",
+      "namePlaceholder": "API del tiempo",
+      "kind": "Tipo",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Qué hace este servidor",
+      "baseUrl": "URL base",
+      "specUrl": "URL de la especificación",
+      "specUrlHint": "Opcional. Si se deja vacío se usa la URL base.",
+      "authMode": "Autenticación",
+      "authHeader": "Nombre de la cabecera",
+      "accessMode": "Quién puede usarlo",
+      "timeoutMs": "Tiempo de espera (ms)",
+      "maxResponseBytes": "Respuesta máxima (bytes)",
+      "serverDefault": "Valor del servidor",
+      "enabled": "Habilitado",
+      "enabledHint": "Los servidores deshabilitados siguen registrados, pero nunca se ofrecen al modelo."
+    },
+    "approvals": {
+      "title": "Aprobaciones permanentes",
+      "description": "Herramientas que dejaste ejecutarse sin volver a preguntar. Revoca una y volverá a preguntar la próxima vez.",
+      "empty": "Sin aprobaciones permanentes.",
+      "revoke": "Revocar",
+      "revoked": "Aprobación revocada",
+      "revokeFailed": "No se pudo revocar la aprobación.",
+      "scope": {
+        "once": "Una vez",
+        "session": "Este chat",
+        "always": "Siempre"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Biblioteca de prompts"
+    },
+    "skillMenu": {
+      "label": "Habilidades"
+    },
+    "variables": {
+      "title": "Completa {{title}}",
+      "insert": "Insertar",
+      "cancel": "Cancelar",
+      "required": "{{name}} es obligatorio"
+    }
   }
 }

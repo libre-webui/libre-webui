@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Nahrát a odeslat zvuk službě {{provider}} k přepisu",
       "webSearchOn": "Vyhledávání zapnuto — odpovědi využívají živé výsledky",
       "webSearchOff": "Vyhledat tuto zprávu na webu",
+      "toolsOn": "Nástroje zapnuté — model může volat schválené nástroje",
+      "toolsOff": "Nechat model u této zprávy volat nástroje",
       "thinkingOn": "Přemýšlení zapnuto ({{level}})",
       "thinkingOff": "Přemýšlet před odpovědí"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Prozkoumat",
       "notes": "Poznámky",
       "calendar": "Kalendář",
-      "automations": "Automatizace"
+      "automations": "Automatizace",
+      "prompts": "Prompty",
+      "skills": "Dovednosti",
+      "tools": "Nástroje"
     },
     "toggleSize": "Změnit velikost postranního panelu",
     "expandSidebar": "Rozbalit postranní panel"
@@ -1319,7 +1324,8 @@
       "basic": "Základní",
       "parameters": "Parametry",
       "memory": "Paměť a učení",
-      "advanced": "Pokročilé"
+      "advanced": "Pokročilé",
+      "bindings": "Vazby"
     },
     "basic": {
       "name": "Název",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Nepodařilo se uložit"
+    },
+    "bindings": {
+      "toolServers": "Nástrojové servery",
+      "toolServersHint": "Servery, které tato persona může volat. Když necháte prázdné, nabídnou se všechny servery, na které uživatel už dosáhne.",
+      "noToolServers": "Nemáte k dispozici žádné nástrojové servery.",
+      "builtinTools": "Vestavěné nástroje",
+      "builtinToolsHint": "Nástroje, které si server zajišťuje sám. Když necháte prázdné, nabídnou se všechny.",
+      "noBuiltinTools": "Nejsou dostupné žádné vestavěné nástroje.",
+      "builtin": {
+        "web_search": "Vyhledávání na webu",
+        "search_documents": "Hledat v dokumentech",
+        "load_skill": "Načíst dovednost"
+      },
+      "skills": "Dovednosti",
+      "skillsHint": "Dovednosti, které si model může načíst, dokud je tato persona aktivní.",
+      "noSkills": "Zatím jste nevytvořili žádné dovednosti.",
+      "collections": "Kolekce znalostí",
+      "collectionsHint": "Kolekce dokumentů, ve kterých tato persona může hledat.",
+      "noCollections": "Zatím jste nevytvořili žádné kolekce.",
+      "prompt": "Prompt",
+      "promptHint": "Prompt, kterým začne každý nový chat s touto personou.",
+      "noPrompt": "Žádný prompt",
+      "version": "Revize vazeb {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Zatím žádné auditní události.",
       "actor": "Aktér",
       "target": "Cíl"
+    },
+    "tools": {
+      "title": "Přístup k nástrojům",
+      "description": "Povolit všem volat nástrojové servery. Když je vypnuto, mohou jen správci.",
+      "saved": "Přístup k nástrojům aktualizován",
+      "saveFailed": "Přístup k nástrojům se nepodařilo aktualizovat.",
+      "lockedByEnv": "Uzamčeno proměnnou prostředí na tomto serveru."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Chat",
     "newChat": "Nový chat",
     "work": "Práce"
+  },
+  "tools": {
+    "arguments": "Argumenty",
+    "result": "Výsledek",
+    "callStatus": {
+      "awaiting_approval": "Čeká na schválení",
+      "running": "Probíhá",
+      "succeeded": "Hotovo",
+      "failed": "Selhalo",
+      "denied": "Odmítnuto",
+      "cancelled": "Zrušeno"
+    },
+    "approval": {
+      "title": "Nástroj potřebuje schválení",
+      "description": "Model chce spustit {{tool}} na {{server}}. Toto volání může změnit data mimo tento chat.",
+      "builtinSource": "tento server",
+      "allowOnce": "Povolit jednou",
+      "allowSession": "Povolit v tomto chatu",
+      "allowAlways": "Povolit vždy",
+      "deny": "Odmítnout"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompty",
+    "description": "Znovupoužitelné šablony promptů s typovanými proměnnými. Napište / do pole chatu a vložte jeden.",
+    "newPrompt": "Nový prompt",
+    "editPrompt": "Upravit prompt",
+    "empty": "Zatím žádné prompty",
+    "emptyHint": "Prompt je uložená šablona zprávy. Jakmile nějakou vytvoříte, napsání /slug v poli chatu ji vloží a zeptá se na proměnné, které deklaruje.",
+    "loadFailed": "Vaše prompty se nepodařilo načíst.",
+    "saved": "Prompt uložen",
+    "saveFailed": "Prompt se nepodařilo uložit.",
+    "deleted": "Prompt smazán",
+    "deleteFailed": "Prompt se nepodařilo smazat.",
+    "deleteTitle": "Smazat prompt",
+    "deleteConfirm": "Smazat \"{{title}}\"? Zmizí i jeho historie verzí.",
+    "exportFailed": "Prompt se nepodařilo exportovat.",
+    "imported": "Prompt importován",
+    "importFailed": "Tento soubor se nepodařilo importovat.",
+    "historyFailed": "Historii verzí se nepodařilo načíst.",
+    "rolledBack": "Prompt vrácen zpět",
+    "rollbackFailed": "Prompt se nepodařilo vrátit zpět.",
+    "versionLabel": "v{{version}}",
+    "updated": "Aktualizováno {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Používá se jako /slug v poli chatu.",
+      "slugInvalid": "Pouze malá písmena, číslice a pomlčky.",
+      "title": "Název",
+      "titlePlaceholder": "Týdenní report",
+      "description": "Popis",
+      "descriptionPlaceholder": "K čemu tento prompt slouží",
+      "content": "Obsah",
+      "contentPlaceholder": "Napište prompt. Vše, co chcete doplnit později, uzavřete do dvojitých složených závorek.",
+      "contentHint": "Zástupný symbol je název ve dvojitých složených závorkách. Deklarujte ho níže, abyste mu dali popisek nebo výchozí hodnotu.",
+      "tags": "Štítky",
+      "tagsPlaceholder": "rešerše, psaní",
+      "variables": "Proměnné",
+      "variablesHint": "Nepovinné. Deklarujte zde zástupný symbol, abyste mu dali popisek, výchozí hodnotu nebo sadu voleb.",
+      "variableName": "Název",
+      "variableType": "Typ",
+      "variableLabel": "Popisek",
+      "variableDefault": "Výchozí",
+      "variableRequired": "Povinná",
+      "variableOptions": "Volby",
+      "variableOptionsPlaceholder": "Volby oddělené čárkou",
+      "addVariable": "Přidat proměnnou",
+      "removeVariable": "Odebrat proměnnou"
+    },
+    "variableTypes": {
+      "text": "Text",
+      "number": "Číslo",
+      "select": "Výběr",
+      "boolean": "Ano nebo ne"
+    },
+    "history": {
+      "open": "Historie verzí",
+      "title": "Historie {{title}}",
+      "subtitle": "Vrácení zpět uloží zvolenou revizi jako novou verzi. Nic se nepřepisuje.",
+      "empty": "Zatím žádné starší verze.",
+      "current": "Aktuální",
+      "rollback": "Vrátit zpět",
+      "rollingBack": "Vracím zpět..."
+    }
+  },
+  "skillsPage": {
+    "title": "Dovednosti",
+    "description": "Pojmenované sady instrukcí, které si model může při práci načíst, když je potřebuje.",
+    "newSkill": "Nová dovednost",
+    "editSkill": "Upravit dovednost",
+    "empty": "Zatím žádné dovednosti",
+    "emptyHint": "Dovednost je sada instrukcí, kterou si model načte jen tehdy, když ji potřebuje. Zmiňte $slug ve zprávě, nebo nechte model sáhnout po ní přes nástroj load_skill.",
+    "loadFailed": "Vaše dovednosti se nepodařilo načíst.",
+    "saved": "Dovednost uložena",
+    "saveFailed": "Dovednost se nepodařilo uložit.",
+    "toggleFailed": "Dovednost se nepodařilo změnit.",
+    "deleted": "Dovednost smazána",
+    "deleteFailed": "Dovednost se nepodařilo smazat.",
+    "deleteTitle": "Smazat dovednost",
+    "deleteConfirm": "Smazat \"{{name}}\"? Zmizí i její historie verzí.",
+    "exportFailed": "Dovednost se nepodařilo exportovat.",
+    "imported": "Dovednost importována",
+    "importFailed": "Tento soubor se nepodařilo importovat.",
+    "historyFailed": "Historii verzí se nepodařilo načíst.",
+    "rolledBack": "Dovednost vrácena zpět",
+    "rollbackFailed": "Dovednost se nepodařilo vrátit zpět.",
+    "versionLabel": "v{{version}}",
+    "updated": "Aktualizováno {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Používá se jako $slug, když dovednost zmíníte.",
+      "slugInvalid": "Pouze malá písmena, číslice a pomlčky.",
+      "name": "Název",
+      "namePlaceholder": "Revize kódu",
+      "description": "Popis",
+      "descriptionPlaceholder": "Kdy tuto dovednost použít",
+      "descriptionHint": "Toto je manifest, který model vidí. Napište ho tak, aby model poznal, kdy se dovednost hodí, aniž by ji načítal.",
+      "instructions": "Instrukce",
+      "instructionsPlaceholder": "Instrukce v Markdownu, které model přečte, jakmile tuto dovednost načte.",
+      "instructionsHint": "Načítají se jen při použití dovednosti, takže do té doby jejich délka nic nestojí.",
+      "enabled": "Povoleno",
+      "enabledHint": "Zakázané dovednosti zůstávají uložené, ale modelu se nikdy nenabízejí."
+    },
+    "history": {
+      "open": "Historie verzí",
+      "title": "Historie {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Nástroje",
+    "description": "Nástrojové servery, které model může volat, a schválení, která jste jim udělili.",
+    "approvalNotice": "Nástroje, které mění data mimo chat, si vždy říkají o schválení, pokud jste danému nástroji neudělili trvalé schválení nebo schválení pro tento chat.",
+    "registerServer": "Zaregistrovat server",
+    "registerHint": "Libre WebUI si server jednou přečte a připne nástroje, které nabízí. Později server obnovte, aby se změny promítly.",
+    "editServer": "Upravit server",
+    "empty": "Žádné nástrojové servery",
+    "emptyHintAdmin": "Zaregistrujte server OpenAPI nebo MCP, aby měl model co volat.",
+    "emptyHintUser": "Žádný správce s vámi zatím nesdílel nástrojové servery.",
+    "loadFailed": "Nástrojové servery se nepodařilo načíst.",
+    "saved": "Nástrojový server uložen",
+    "saveFailed": "Nástrojový server se nepodařilo uložit.",
+    "deleted": "Nástrojový server smazán",
+    "deleteFailed": "Nástrojový server se nepodařilo smazat.",
+    "deleteTitle": "Smazat nástrojový server",
+    "deleteConfirm": "Smazat \"{{name}}\"? Všichni přijdou o přístup k jeho nástrojům.",
+    "refresh": "Obnovit nástroje",
+    "refreshed": "Nástroje znovu načteny ze serveru",
+    "refreshFailed": "Server se nepodařilo přečíst.",
+    "toolsLoadFailed": "Připnuté nástroje se nepodařilo načíst.",
+    "overrideFailed": "Nástroj se nepodařilo změnit.",
+    "pinnedTools": "Připnuté nástroje",
+    "noPinnedTools": "Tento server nenabídl žádné nástroje.",
+    "sideEffect": "Vedlejší účinek",
+    "sideEffectOverride": "Vedlejší účinek",
+    "specRevision": "Revize {{revision}}",
+    "credential": "Osobní přihlašovací údaj",
+    "credentialHint": "Uložen zašifrovaně a použit jen pro vaše vlastní volání na tento server.",
+    "credentialPlaceholder": "Vložte svůj token",
+    "credentialSet": "Přihlašovací údaj nastaven",
+    "credentialMissing": "Chybí přihlašovací údaj",
+    "credentialSaved": "Přihlašovací údaj uložen",
+    "credentialSaveFailed": "Přihlašovací údaj se nepodařilo uložit.",
+    "credentialRemove": "Odebrat",
+    "credentialRemoved": "Přihlašovací údaj odebrán",
+    "credentialRemoveFailed": "Přihlašovací údaj se nepodařilo odebrat.",
+    "builtinSource": "Tento server",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Bez ověření",
+      "bearer": "Token Bearer",
+      "header": "Vlastní hlavička"
+    },
+    "accessModes": {
+      "admins-only": "Pouze správci",
+      "all-users": "Všichni",
+      "granted": "Jen lidé s uděleným přístupem"
+    },
+    "form": {
+      "name": "Název",
+      "namePlaceholder": "API počasí",
+      "kind": "Druh",
+      "description": "Popis",
+      "descriptionPlaceholder": "Co tento server dělá",
+      "baseUrl": "Základní URL",
+      "specUrl": "URL specifikace",
+      "specUrlHint": "Nepovinné. Když zůstane prázdné, použije se základní URL.",
+      "authMode": "Ověření",
+      "authHeader": "Název hlavičky",
+      "accessMode": "Kdo ho může používat",
+      "timeoutMs": "Časový limit (ms)",
+      "maxResponseBytes": "Maximální odpověď (bajty)",
+      "serverDefault": "Výchozí nastavení serveru",
+      "enabled": "Povoleno",
+      "enabledHint": "Zakázané servery zůstávají registrované, ale modelu se nikdy nenabízejí."
+    },
+    "approvals": {
+      "title": "Trvalá schválení",
+      "description": "Nástroje, kterým jste dovolili běžet bez dalšího ptaní. Odvolejte jedno a příště se zeptá znovu.",
+      "empty": "Žádná trvalá schválení.",
+      "revoke": "Odvolat",
+      "revoked": "Schválení odvoláno",
+      "revokeFailed": "Schválení se nepodařilo odvolat.",
+      "scope": {
+        "once": "Jednou",
+        "session": "Tento chat",
+        "always": "Vždy"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Knihovna promptů"
+    },
+    "skillMenu": {
+      "label": "Dovednosti"
+    },
+    "variables": {
+      "title": "Vyplňte {{title}}",
+      "insert": "Vložit",
+      "cancel": "Zrušit",
+      "required": "{{name}} je povinné"
+    }
   }
 }

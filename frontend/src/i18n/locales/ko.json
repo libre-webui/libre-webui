@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "오디오를 녹음하여 텍스트 변환을 위해 {{provider}}에 전송",
       "webSearchOn": "웹 검색 켜짐 — 답변에 실시간 결과 사용",
       "webSearchOff": "이 메시지에 대해 웹 검색",
+      "toolsOn": "도구 켜짐 — 모델이 승인된 도구를 호출할 수 있습니다",
+      "toolsOff": "이 메시지에서 모델이 도구를 호출하도록 허용",
       "thinkingOn": "사고 켜짐 ({{level}})",
       "thinkingOff": "답하기 전에 생각하기"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "둘러보기",
       "notes": "노트",
       "calendar": "캘린더",
-      "automations": "자동화"
+      "automations": "자동화",
+      "prompts": "프롬프트",
+      "skills": "스킬",
+      "tools": "도구"
     },
     "toggleSize": "사이드바 크기 전환",
     "expandSidebar": "사이드바 확장"
@@ -1319,7 +1324,8 @@
       "basic": "기본",
       "parameters": "매개변수",
       "memory": "메모리 및 학습",
-      "advanced": "고급"
+      "advanced": "고급",
+      "bindings": "바인딩"
     },
     "basic": {
       "name": "이름",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "저장 실패"
+    },
+    "bindings": {
+      "toolServers": "도구 서버",
+      "toolServersHint": "이 페르소나가 호출할 수 있는 서버입니다. 비워 두면 사용자가 이미 접근할 수 있는 모든 서버가 대상이 됩니다.",
+      "noToolServers": "사용할 수 있는 도구 서버가 없습니다.",
+      "builtinTools": "기본 제공 도구",
+      "builtinToolsHint": "서버가 직접 구현한 도구입니다. 비워 두면 전부 제공됩니다.",
+      "noBuiltinTools": "사용할 수 있는 기본 제공 도구가 없습니다.",
+      "builtin": {
+        "web_search": "웹 검색",
+        "search_documents": "문서 검색",
+        "load_skill": "스킬 불러오기"
+      },
+      "skills": "스킬",
+      "skillsHint": "이 페르소나가 활성일 때 모델이 불러올 수 있는 스킬입니다.",
+      "noSkills": "아직 만든 스킬이 없습니다.",
+      "collections": "지식 컬렉션",
+      "collectionsHint": "이 페르소나가 검색할 수 있는 문서 컬렉션입니다.",
+      "noCollections": "아직 만든 컬렉션이 없습니다.",
+      "prompt": "프롬프트",
+      "promptHint": "이 페르소나로 시작하는 모든 새 대화에 넣을 프롬프트입니다.",
+      "noPrompt": "프롬프트 없음",
+      "version": "바인딩 리비전 {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "아직 기록된 감사 이벤트가 없습니다.",
       "actor": "수행자",
       "target": "대상"
+    },
+    "tools": {
+      "title": "도구 접근 권한",
+      "description": "모두가 도구 서버를 호출할 수 있게 합니다. 꺼 두면 관리자만 호출할 수 있습니다.",
+      "saved": "도구 접근 권한을 업데이트했습니다",
+      "saveFailed": "도구 접근 권한을 업데이트하지 못했습니다.",
+      "lockedByEnv": "이 서버의 환경 변수로 잠겨 있습니다."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "채팅",
     "newChat": "새 채팅",
     "work": "작업"
+  },
+  "tools": {
+    "arguments": "인수",
+    "result": "결과",
+    "callStatus": {
+      "awaiting_approval": "승인 대기 중",
+      "running": "실행 중",
+      "succeeded": "완료",
+      "failed": "실패",
+      "denied": "거부됨",
+      "cancelled": "취소됨"
+    },
+    "approval": {
+      "title": "도구 승인이 필요합니다",
+      "description": "모델이 {{server}}에서 {{tool}}을(를) 실행하려고 합니다. 이 호출은 이 대화 밖의 데이터를 바꿀 수 있습니다.",
+      "builtinSource": "이 서버",
+      "allowOnce": "한 번만 허용",
+      "allowSession": "이 대화에서 허용",
+      "allowAlways": "항상 허용",
+      "deny": "거부"
+    }
+  },
+  "promptsPage": {
+    "title": "프롬프트",
+    "description": "타입이 지정된 변수를 갖춘 재사용 프롬프트 템플릿입니다. 입력창에 / 를 입력하면 삽입됩니다.",
+    "newPrompt": "새 프롬프트",
+    "editPrompt": "프롬프트 편집",
+    "empty": "아직 프롬프트가 없습니다",
+    "emptyHint": "프롬프트는 저장해 둔 메시지 템플릿입니다. 하나 만들어 두면 입력창에 /slug 를 입력했을 때 삽입되고, 선언한 변수를 물어봅니다.",
+    "loadFailed": "프롬프트를 불러오지 못했습니다.",
+    "saved": "프롬프트를 저장했습니다",
+    "saveFailed": "프롬프트를 저장하지 못했습니다.",
+    "deleted": "프롬프트를 삭제했습니다",
+    "deleteFailed": "프롬프트를 삭제하지 못했습니다.",
+    "deleteTitle": "프롬프트 삭제",
+    "deleteConfirm": "\"{{title}}\"을(를) 삭제할까요? 버전 기록도 함께 사라집니다.",
+    "exportFailed": "프롬프트를 내보내지 못했습니다.",
+    "imported": "프롬프트를 가져왔습니다",
+    "importFailed": "그 파일을 가져오지 못했습니다.",
+    "historyFailed": "버전 기록을 불러오지 못했습니다.",
+    "rolledBack": "프롬프트를 되돌렸습니다",
+    "rollbackFailed": "프롬프트를 되돌리지 못했습니다.",
+    "versionLabel": "v{{version}}",
+    "updated": "{{when}}에 업데이트됨",
+    "form": {
+      "slug": "슬러그",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "입력창에서 /slug 형태로 사용합니다.",
+      "slugInvalid": "소문자, 숫자, 하이픈만 사용할 수 있습니다.",
+      "title": "제목",
+      "titlePlaceholder": "주간 보고서",
+      "description": "설명",
+      "descriptionPlaceholder": "이 프롬프트의 용도",
+      "content": "내용",
+      "contentPlaceholder": "프롬프트를 작성하세요. 나중에 채울 부분은 이중 중괄호로 감싸면 됩니다.",
+      "contentHint": "자리 표시자는 이중 중괄호 안에 적은 이름입니다. 아래에서 선언하면 라벨이나 기본값을 줄 수 있습니다.",
+      "tags": "태그",
+      "tagsPlaceholder": "리서치, 글쓰기",
+      "variables": "변수",
+      "variablesHint": "선택 사항입니다. 여기서 자리 표시자를 선언하면 라벨, 기본값, 선택지를 줄 수 있습니다.",
+      "variableName": "이름",
+      "variableType": "유형",
+      "variableLabel": "라벨",
+      "variableDefault": "기본값",
+      "variableRequired": "필수",
+      "variableOptions": "선택지",
+      "variableOptionsPlaceholder": "쉼표로 구분한 선택지",
+      "addVariable": "변수 추가",
+      "removeVariable": "변수 삭제"
+    },
+    "variableTypes": {
+      "text": "텍스트",
+      "number": "숫자",
+      "select": "선택",
+      "boolean": "예 또는 아니요"
+    },
+    "history": {
+      "open": "버전 기록",
+      "title": "{{title}} 기록",
+      "subtitle": "되돌리면 고른 리비전이 새 버전으로 저장됩니다. 덮어쓰는 것은 없습니다.",
+      "empty": "아직 이전 버전이 없습니다.",
+      "current": "현재",
+      "rollback": "되돌리기",
+      "rollingBack": "되돌리는 중..."
+    }
+  },
+  "skillsPage": {
+    "title": "스킬",
+    "description": "모델이 작업 중 필요할 때 불러올 수 있는, 이름 붙은 지침 모음입니다.",
+    "newSkill": "새 스킬",
+    "editSkill": "스킬 편집",
+    "empty": "아직 스킬이 없습니다",
+    "emptyHint": "스킬은 모델이 필요할 때만 불러오는 지침 모음입니다. 메시지에서 $slug 로 언급하거나, load_skill 도구를 통해 모델이 직접 가져가게 하세요.",
+    "loadFailed": "스킬을 불러오지 못했습니다.",
+    "saved": "스킬을 저장했습니다",
+    "saveFailed": "스킬을 저장하지 못했습니다.",
+    "toggleFailed": "스킬을 변경하지 못했습니다.",
+    "deleted": "스킬을 삭제했습니다",
+    "deleteFailed": "스킬을 삭제하지 못했습니다.",
+    "deleteTitle": "스킬 삭제",
+    "deleteConfirm": "\"{{name}}\"을(를) 삭제할까요? 버전 기록도 함께 사라집니다.",
+    "exportFailed": "스킬을 내보내지 못했습니다.",
+    "imported": "스킬을 가져왔습니다",
+    "importFailed": "그 파일을 가져오지 못했습니다.",
+    "historyFailed": "버전 기록을 불러오지 못했습니다.",
+    "rolledBack": "스킬을 되돌렸습니다",
+    "rollbackFailed": "스킬을 되돌리지 못했습니다.",
+    "versionLabel": "v{{version}}",
+    "updated": "{{when}}에 업데이트됨",
+    "form": {
+      "slug": "슬러그",
+      "slugPlaceholder": "code-review",
+      "slugHint": "스킬을 언급할 때 $slug 형태로 사용합니다.",
+      "slugInvalid": "소문자, 숫자, 하이픈만 사용할 수 있습니다.",
+      "name": "이름",
+      "namePlaceholder": "코드 리뷰",
+      "description": "설명",
+      "descriptionPlaceholder": "이 스킬을 언제 쓰는지",
+      "descriptionHint": "모델이 보는 매니페스트입니다. 스킬을 불러오지 않고도 언제 쓸지 판단할 수 있게 써 주세요.",
+      "instructions": "지침",
+      "instructionsPlaceholder": "이 스킬을 불러온 모델이 읽을 Markdown 지침입니다.",
+      "instructionsHint": "스킬을 쓸 때만 불러오므로, 그전까지는 길이가 비용이 되지 않습니다.",
+      "enabled": "활성화됨",
+      "enabledHint": "비활성화된 스킬은 저장은 유지되지만 모델에 제공되지 않습니다."
+    },
+    "history": {
+      "open": "버전 기록",
+      "title": "{{name}} 기록"
+    }
+  },
+  "toolsPage": {
+    "title": "도구",
+    "description": "모델이 호출할 수 있는 도구 서버와, 여러분이 부여한 승인입니다.",
+    "approvalNotice": "대화 밖의 데이터를 바꾸는 도구는 항상 승인을 요청합니다. 해당 도구에 항상 허용이나 대화별 승인을 부여한 경우는 예외입니다.",
+    "registerServer": "서버 등록",
+    "registerHint": "Libre WebUI는 서버를 한 번 읽어 노출된 도구를 고정합니다. 변경 사항을 반영하려면 나중에 서버를 새로 고치세요.",
+    "editServer": "서버 편집",
+    "empty": "도구 서버가 없습니다",
+    "emptyHintAdmin": "OpenAPI 또는 MCP 서버를 등록해 모델이 호출할 대상을 마련하세요.",
+    "emptyHintUser": "관리자가 아직 도구 서버를 공유하지 않았습니다.",
+    "loadFailed": "도구 서버를 불러오지 못했습니다.",
+    "saved": "도구 서버를 저장했습니다",
+    "saveFailed": "도구 서버를 저장하지 못했습니다.",
+    "deleted": "도구 서버를 삭제했습니다",
+    "deleteFailed": "도구 서버를 삭제하지 못했습니다.",
+    "deleteTitle": "도구 서버 삭제",
+    "deleteConfirm": "\"{{name}}\"을(를) 삭제할까요? 모두가 그 도구에 접근할 수 없게 됩니다.",
+    "refresh": "도구 새로 고침",
+    "refreshed": "서버에서 도구를 다시 읽었습니다",
+    "refreshFailed": "서버를 읽지 못했습니다.",
+    "toolsLoadFailed": "고정된 도구를 불러오지 못했습니다.",
+    "overrideFailed": "도구를 변경하지 못했습니다.",
+    "pinnedTools": "고정된 도구",
+    "noPinnedTools": "이 서버는 도구를 노출하지 않았습니다.",
+    "sideEffect": "부수 효과",
+    "sideEffectOverride": "부수 효과",
+    "specRevision": "리비전 {{revision}}",
+    "credential": "개인 자격 증명",
+    "credentialHint": "암호화해 저장하며, 이 서버로 보내는 여러분 본인의 호출에만 사용합니다.",
+    "credentialPlaceholder": "토큰을 붙여넣으세요",
+    "credentialSet": "자격 증명 설정됨",
+    "credentialMissing": "자격 증명 필요",
+    "credentialSaved": "자격 증명을 저장했습니다",
+    "credentialSaveFailed": "자격 증명을 저장하지 못했습니다.",
+    "credentialRemove": "삭제",
+    "credentialRemoved": "자격 증명을 삭제했습니다",
+    "credentialRemoveFailed": "자격 증명을 삭제하지 못했습니다.",
+    "builtinSource": "이 서버",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "인증 없음",
+      "bearer": "Bearer 토큰",
+      "header": "사용자 지정 헤더"
+    },
+    "accessModes": {
+      "admins-only": "관리자만",
+      "all-users": "모두",
+      "granted": "접근 권한을 받은 사람만"
+    },
+    "form": {
+      "name": "이름",
+      "namePlaceholder": "날씨 API",
+      "kind": "종류",
+      "description": "설명",
+      "descriptionPlaceholder": "이 서버가 하는 일",
+      "baseUrl": "기본 URL",
+      "specUrl": "스펙 URL",
+      "specUrlHint": "선택 사항입니다. 비워 두면 기본 URL을 사용합니다.",
+      "authMode": "인증",
+      "authHeader": "헤더 이름",
+      "accessMode": "사용할 수 있는 사람",
+      "timeoutMs": "제한 시간(ms)",
+      "maxResponseBytes": "최대 응답(바이트)",
+      "serverDefault": "서버 기본값",
+      "enabled": "활성화됨",
+      "enabledHint": "비활성화된 서버는 등록은 유지되지만 모델에 제공되지 않습니다."
+    },
+    "approvals": {
+      "title": "상시 승인",
+      "description": "다시 묻지 않고 실행하도록 허용한 도구입니다. 취소하면 다음번에 다시 물어봅니다.",
+      "empty": "상시 승인이 없습니다.",
+      "revoke": "취소",
+      "revoked": "승인을 취소했습니다",
+      "revokeFailed": "승인을 취소하지 못했습니다.",
+      "scope": {
+        "once": "한 번",
+        "session": "이 대화",
+        "always": "항상"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "프롬프트 라이브러리"
+    },
+    "skillMenu": {
+      "label": "스킬"
+    },
+    "variables": {
+      "title": "{{title}} 채우기",
+      "insert": "삽입",
+      "cancel": "취소",
+      "required": "{{name}}은(는) 필수입니다"
+    }
   }
 }

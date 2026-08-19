@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "音声を録音し、文字起こしのために{{provider}}へ送信",
       "webSearchOn": "ウェブ検索オン — 返信にライブ結果を使用",
       "webSearchOff": "このメッセージについてウェブを検索",
+      "toolsOn": "ツールは有効 — モデルは承認済みのツールを呼び出せます",
+      "toolsOff": "このメッセージでモデルにツールを呼び出させる",
       "thinkingOn": "思考オン ({{level}})",
       "thinkingOff": "回答前に考える"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "探索",
       "notes": "ノート",
       "calendar": "カレンダー",
-      "automations": "自動化"
+      "automations": "自動化",
+      "prompts": "プロンプト",
+      "skills": "スキル",
+      "tools": "ツール"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
     "expandSidebar": "サイドバーを展開"
@@ -1319,7 +1324,8 @@
       "basic": "基本",
       "parameters": "パラメータ",
       "memory": "記憶と学習",
-      "advanced": "詳細"
+      "advanced": "詳細",
+      "bindings": "バインディング"
     },
     "basic": {
       "name": "名前",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "保存に失敗しました"
+    },
+    "bindings": {
+      "toolServers": "ツールサーバー",
+      "toolServersHint": "このペルソナが呼び出せるサーバーです。空のままなら、ユーザーが元々使えるすべてのサーバーが対象になります。",
+      "noToolServers": "利用できるツールサーバーがありません。",
+      "builtinTools": "組み込みツール",
+      "builtinToolsHint": "サーバー自身が実装しているツールです。空のままならすべてが対象になります。",
+      "noBuiltinTools": "利用できる組み込みツールはありません。",
+      "builtin": {
+        "web_search": "ウェブ検索",
+        "search_documents": "ドキュメント検索",
+        "load_skill": "スキルの読み込み"
+      },
+      "skills": "スキル",
+      "skillsHint": "このペルソナが有効な間にモデルが読み込めるスキルです。",
+      "noSkills": "スキルはまだ作成されていません。",
+      "collections": "ナレッジコレクション",
+      "collectionsHint": "このペルソナが検索できるドキュメントコレクションです。",
+      "noCollections": "コレクションはまだ作成されていません。",
+      "prompt": "プロンプト",
+      "promptHint": "このペルソナでの新しいチャットを毎回このプロンプトで始めます。",
+      "noPrompt": "プロンプトなし",
+      "version": "バインディングのリビジョン {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "監査イベントはまだ記録されていません。",
       "actor": "実行者",
       "target": "対象"
+    },
+    "tools": {
+      "title": "ツールへのアクセス",
+      "description": "全員がツールサーバーを呼び出せるようにします。オフにすると管理者のみになります。",
+      "saved": "ツールへのアクセスを更新しました",
+      "saveFailed": "ツールへのアクセスを更新できませんでした。",
+      "lockedByEnv": "このサーバーの環境変数によりロックされています。"
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "チャット",
     "newChat": "新しいチャット",
     "work": "作業"
+  },
+  "tools": {
+    "arguments": "引数",
+    "result": "結果",
+    "callStatus": {
+      "awaiting_approval": "承認待ち",
+      "running": "実行中",
+      "succeeded": "完了",
+      "failed": "失敗",
+      "denied": "拒否済み",
+      "cancelled": "キャンセル済み"
+    },
+    "approval": {
+      "title": "ツールの承認が必要です",
+      "description": "モデルが {{server}} で {{tool}} を実行しようとしています。この呼び出しはこのチャットの外のデータを変更する可能性があります。",
+      "builtinSource": "このサーバー",
+      "allowOnce": "一度許可する",
+      "allowSession": "このチャットで許可する",
+      "allowAlways": "常に許可する",
+      "deny": "拒否"
+    }
+  },
+  "promptsPage": {
+    "title": "プロンプト",
+    "description": "型付き変数を備えた再利用可能なプロンプトテンプレート。入力欄で / と打つと挿入できます。",
+    "newPrompt": "新しいプロンプト",
+    "editPrompt": "プロンプトを編集",
+    "empty": "プロンプトはまだありません",
+    "emptyHint": "プロンプトは保存したメッセージのひな形です。作成すると、入力欄で /slug と打つだけで挿入され、宣言した変数を尋ねてきます。",
+    "loadFailed": "プロンプトを読み込めませんでした。",
+    "saved": "プロンプトを保存しました",
+    "saveFailed": "プロンプトを保存できませんでした。",
+    "deleted": "プロンプトを削除しました",
+    "deleteFailed": "プロンプトを削除できませんでした。",
+    "deleteTitle": "プロンプトを削除",
+    "deleteConfirm": "「{{title}}」を削除しますか？バージョン履歴も一緒に消えます。",
+    "exportFailed": "プロンプトをエクスポートできませんでした。",
+    "imported": "プロンプトをインポートしました",
+    "importFailed": "そのファイルをインポートできませんでした。",
+    "historyFailed": "バージョン履歴を読み込めませんでした。",
+    "rolledBack": "プロンプトを巻き戻しました",
+    "rollbackFailed": "プロンプトを巻き戻せませんでした。",
+    "versionLabel": "v{{version}}",
+    "updated": "{{when}} に更新",
+    "form": {
+      "slug": "スラッグ",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "入力欄では /slug の形で使います。",
+      "slugInvalid": "小文字・数字・ハイフンのみ使えます。",
+      "title": "タイトル",
+      "titlePlaceholder": "週次レポート",
+      "description": "説明",
+      "descriptionPlaceholder": "このプロンプトの用途",
+      "content": "本文",
+      "contentPlaceholder": "プロンプトを書きます。あとで埋めたい部分は二重波かっこで囲んでください。",
+      "contentHint": "プレースホルダーは二重波かっこで囲んだ名前です。下で宣言すると、ラベルや既定値を付けられます。",
+      "tags": "タグ",
+      "tagsPlaceholder": "リサーチ, 執筆",
+      "variables": "変数",
+      "variablesHint": "任意です。ここでプレースホルダーを宣言すると、ラベル・既定値・選択肢を付けられます。",
+      "variableName": "名前",
+      "variableType": "型",
+      "variableLabel": "ラベル",
+      "variableDefault": "既定値",
+      "variableRequired": "必須",
+      "variableOptions": "選択肢",
+      "variableOptionsPlaceholder": "カンマ区切りの選択肢",
+      "addVariable": "変数を追加",
+      "removeVariable": "変数を削除"
+    },
+    "variableTypes": {
+      "text": "テキスト",
+      "number": "数値",
+      "select": "選択",
+      "boolean": "はい／いいえ"
+    },
+    "history": {
+      "open": "バージョン履歴",
+      "title": "{{title}} の履歴",
+      "subtitle": "巻き戻すと、選んだリビジョンが新しいバージョンとして保存されます。上書きはされません。",
+      "empty": "以前のバージョンはまだありません。",
+      "current": "現在",
+      "rollback": "巻き戻す",
+      "rollingBack": "巻き戻し中..."
+    }
+  },
+  "skillsPage": {
+    "title": "スキル",
+    "description": "モデルが作業中に必要に応じて読み込める、名前付きの指示セットです。",
+    "newSkill": "新しいスキル",
+    "editSkill": "スキルを編集",
+    "empty": "スキルはまだありません",
+    "emptyHint": "スキルは、モデルが必要になったときだけ読み込む指示のまとまりです。メッセージで $slug と書くか、load_skill ツール経由でモデルに取りに行かせます。",
+    "loadFailed": "スキルを読み込めませんでした。",
+    "saved": "スキルを保存しました",
+    "saveFailed": "スキルを保存できませんでした。",
+    "toggleFailed": "スキルを変更できませんでした。",
+    "deleted": "スキルを削除しました",
+    "deleteFailed": "スキルを削除できませんでした。",
+    "deleteTitle": "スキルを削除",
+    "deleteConfirm": "「{{name}}」を削除しますか？バージョン履歴も一緒に消えます。",
+    "exportFailed": "スキルをエクスポートできませんでした。",
+    "imported": "スキルをインポートしました",
+    "importFailed": "そのファイルをインポートできませんでした。",
+    "historyFailed": "バージョン履歴を読み込めませんでした。",
+    "rolledBack": "スキルを巻き戻しました",
+    "rollbackFailed": "スキルを巻き戻せませんでした。",
+    "versionLabel": "v{{version}}",
+    "updated": "{{when}} に更新",
+    "form": {
+      "slug": "スラッグ",
+      "slugPlaceholder": "code-review",
+      "slugHint": "スキルに言及するときに $slug の形で使います。",
+      "slugInvalid": "小文字・数字・ハイフンのみ使えます。",
+      "name": "名前",
+      "namePlaceholder": "コードレビュー",
+      "description": "説明",
+      "descriptionPlaceholder": "このスキルを使う場面",
+      "descriptionHint": "これはモデルが見るマニフェストです。読み込まなくてもスキルが当てはまるか判断できるように書いてください。",
+      "instructions": "指示",
+      "instructionsPlaceholder": "このスキルを読み込んだモデルが読む Markdown の指示です。",
+      "instructionsHint": "スキルを使うときだけ読み込まれるので、それまでは長さのコストはかかりません。",
+      "enabled": "有効",
+      "enabledHint": "無効なスキルは保存されたまま残りますが、モデルに提示されることはありません。"
+    },
+    "history": {
+      "open": "バージョン履歴",
+      "title": "{{name}} の履歴"
+    }
+  },
+  "toolsPage": {
+    "title": "ツール",
+    "description": "モデルが呼び出せるツールサーバーと、あなたが与えた承認です。",
+    "approvalNotice": "チャットの外のデータを変えるツールは、そのツールに常時承認またはチャット単位の承認を与えていない限り、毎回承認を求めます。",
+    "registerServer": "サーバーを登録",
+    "registerHint": "Libre WebUI はサーバーを一度読み取り、公開されているツールを固定します。変更を取り込むには、あとでサーバーを更新してください。",
+    "editServer": "サーバーを編集",
+    "empty": "ツールサーバーがありません",
+    "emptyHintAdmin": "OpenAPI か MCP のサーバーを登録して、モデルに呼び出せるものを用意しましょう。",
+    "emptyHintUser": "管理者からツールサーバーはまだ共有されていません。",
+    "loadFailed": "ツールサーバーを読み込めませんでした。",
+    "saved": "ツールサーバーを保存しました",
+    "saveFailed": "ツールサーバーを保存できませんでした。",
+    "deleted": "ツールサーバーを削除しました",
+    "deleteFailed": "ツールサーバーを削除できませんでした。",
+    "deleteTitle": "ツールサーバーを削除",
+    "deleteConfirm": "「{{name}}」を削除しますか？全員がそのツールを使えなくなります。",
+    "refresh": "ツールを更新",
+    "refreshed": "サーバーからツールを読み直しました",
+    "refreshFailed": "サーバーを読み取れませんでした。",
+    "toolsLoadFailed": "固定されたツールを読み込めませんでした。",
+    "overrideFailed": "ツールを変更できませんでした。",
+    "pinnedTools": "固定されたツール",
+    "noPinnedTools": "このサーバーはツールを公開していませんでした。",
+    "sideEffect": "副作用",
+    "sideEffectOverride": "副作用",
+    "specRevision": "リビジョン {{revision}}",
+    "credential": "個人の認証情報",
+    "credentialHint": "暗号化して保存され、あなた自身のこのサーバーへの呼び出しにのみ使われます。",
+    "credentialPlaceholder": "トークンを貼り付けてください",
+    "credentialSet": "認証情報あり",
+    "credentialMissing": "認証情報が必要です",
+    "credentialSaved": "認証情報を保存しました",
+    "credentialSaveFailed": "認証情報を保存できませんでした。",
+    "credentialRemove": "削除",
+    "credentialRemoved": "認証情報を削除しました",
+    "credentialRemoveFailed": "認証情報を削除できませんでした。",
+    "builtinSource": "このサーバー",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "認証なし",
+      "bearer": "Bearer トークン",
+      "header": "カスタムヘッダー"
+    },
+    "accessModes": {
+      "admins-only": "管理者のみ",
+      "all-users": "全員",
+      "granted": "アクセスを許可された人のみ"
+    },
+    "form": {
+      "name": "名前",
+      "namePlaceholder": "天気 API",
+      "kind": "種類",
+      "description": "説明",
+      "descriptionPlaceholder": "このサーバーの役割",
+      "baseUrl": "ベース URL",
+      "specUrl": "仕様 URL",
+      "specUrlHint": "任意です。空のままならベース URL を使います。",
+      "authMode": "認証",
+      "authHeader": "ヘッダー名",
+      "accessMode": "使える人",
+      "timeoutMs": "タイムアウト（ミリ秒）",
+      "maxResponseBytes": "最大レスポンス（バイト）",
+      "serverDefault": "サーバーの既定値",
+      "enabled": "有効",
+      "enabledHint": "無効なサーバーは登録されたまま残りますが、モデルに提示されることはありません。"
+    },
+    "approvals": {
+      "title": "継続的な承認",
+      "description": "毎回尋ねずに実行してよいと許可したツールです。取り消すと、次回また確認されます。",
+      "empty": "継続的な承認はありません。",
+      "revoke": "取り消す",
+      "revoked": "承認を取り消しました",
+      "revokeFailed": "承認を取り消せませんでした。",
+      "scope": {
+        "once": "一度",
+        "session": "このチャット",
+        "always": "常に"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "プロンプトライブラリ"
+    },
+    "skillMenu": {
+      "label": "スキル"
+    },
+    "variables": {
+      "title": "{{title}} を入力",
+      "insert": "挿入",
+      "cancel": "キャンセル",
+      "required": "{{name}} は必須です"
+    }
   }
 }

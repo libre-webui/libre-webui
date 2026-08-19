@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Sesi kaydedip transkripsiyon için {{provider}} hizmetine gönder",
       "webSearchOn": "Web araması açık — yanıtlar canlı sonuçları kullanır",
       "webSearchOff": "Bu mesaj için webde ara",
+      "toolsOn": "Araçlar açık — model onaylanmış araçları çağırabilir",
+      "toolsOff": "Bu mesajda modelin araç çağırmasına izin ver",
       "thinkingOn": "Düşünme açık ({{level}})",
       "thinkingOff": "Yanıtlamadan önce düşün"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Keşfet",
       "notes": "Notlar",
       "calendar": "Takvim",
-      "automations": "Otomasyonlar"
+      "automations": "Otomasyonlar",
+      "prompts": "İstemler",
+      "skills": "Beceriler",
+      "tools": "Araçlar"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -1319,7 +1324,8 @@
       "basic": "Temel",
       "parameters": "Parametreler",
       "memory": "Bellek ve Öğrenme",
-      "advanced": "Gelişmiş"
+      "advanced": "Gelişmiş",
+      "bindings": "Bağlantılar"
     },
     "basic": {
       "name": "Ad",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Kaydetme başarısız"
+    },
+    "bindings": {
+      "toolServers": "Araç sunucuları",
+      "toolServersHint": "Bu personanın çağırabileceği sunucular. Boş bırakılırsa kullanıcının zaten erişebildiği tüm sunucular sunulur.",
+      "noToolServers": "Kullanabileceğiniz bir araç sunucusu yok.",
+      "builtinTools": "Yerleşik araçlar",
+      "builtinToolsHint": "Sunucunun kendi sağladığı araçlar. Boş bırakılırsa hepsi sunulur.",
+      "noBuiltinTools": "Kullanılabilir yerleşik araç yok.",
+      "builtin": {
+        "web_search": "Web araması",
+        "search_documents": "Belgelerde ara",
+        "load_skill": "Beceri yükle"
+      },
+      "skills": "Beceriler",
+      "skillsHint": "Bu persona etkinken modelin yükleyebileceği beceriler.",
+      "noSkills": "Henüz hiç beceri oluşturmadınız.",
+      "collections": "Bilgi koleksiyonları",
+      "collectionsHint": "Bu personanın arama yapabileceği belge koleksiyonları.",
+      "noCollections": "Henüz hiç koleksiyon oluşturmadınız.",
+      "prompt": "İstem",
+      "promptHint": "Bu persona ile başlayan her yeni sohbeti hazırlayacak istem.",
+      "noPrompt": "İstem yok",
+      "version": "Bağlantı revizyonu {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Henüz kaydedilmiş denetim olayı yok.",
       "actor": "Gerçekleştiren",
       "target": "Hedef"
+    },
+    "tools": {
+      "title": "Araç erişimi",
+      "description": "Herkesin araç sunucularını çağırmasına izin verin. Kapalıyken yalnızca yöneticiler çağırabilir.",
+      "saved": "Araç erişimi güncellendi",
+      "saveFailed": "Araç erişimi güncellenemedi.",
+      "lockedByEnv": "Bu sunucudaki bir ortam değişkeniyle kilitlenmiş."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Sohbet",
     "newChat": "Yeni Sohbet",
     "work": "Çalışma"
+  },
+  "tools": {
+    "arguments": "Argümanlar",
+    "result": "Sonuç",
+    "callStatus": {
+      "awaiting_approval": "Onay bekliyor",
+      "running": "Çalışıyor",
+      "succeeded": "Tamamlandı",
+      "failed": "Başarısız",
+      "denied": "Reddedildi",
+      "cancelled": "İptal edildi"
+    },
+    "approval": {
+      "title": "Araç için onay gerekiyor",
+      "description": "Model, {{server}} üzerinde {{tool}} aracını çalıştırmak istiyor. Bu çağrı bu sohbetin dışındaki verileri değiştirebilir.",
+      "builtinSource": "bu sunucu",
+      "allowOnce": "Bir kez izin ver",
+      "allowSession": "Bu sohbette izin ver",
+      "allowAlways": "Her zaman izin ver",
+      "deny": "Reddet"
+    }
+  },
+  "promptsPage": {
+    "title": "İstemler",
+    "description": "Tipli değişkenler içeren, yeniden kullanılabilir istem şablonları. Sohbet kutusuna / yazarak birini ekleyin.",
+    "newPrompt": "Yeni istem",
+    "editPrompt": "İstemi düzenle",
+    "empty": "Henüz istem yok",
+    "emptyHint": "İstem, kaydedilmiş bir mesaj şablonudur. Bir tane oluşturduğunuzda sohbet kutusuna /slug yazmak onu ekler ve tanımladığı değişkenleri sorar.",
+    "loadFailed": "İstemleriniz yüklenemedi.",
+    "saved": "İstem kaydedildi",
+    "saveFailed": "İstem kaydedilemedi.",
+    "deleted": "İstem silindi",
+    "deleteFailed": "İstem silinemedi.",
+    "deleteTitle": "İstemi sil",
+    "deleteConfirm": "\"{{title}}\" silinsin mi? Sürüm geçmişi de kaybolur.",
+    "exportFailed": "İstem dışa aktarılamadı.",
+    "imported": "İstem içe aktarıldı",
+    "importFailed": "Bu dosya içe aktarılamadı.",
+    "historyFailed": "Sürüm geçmişi yüklenemedi.",
+    "rolledBack": "İstem geri alındı",
+    "rollbackFailed": "İstem geri alınamadı.",
+    "versionLabel": "v{{version}}",
+    "updated": "{{when}} güncellendi",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Sohbet kutusunda /slug biçiminde kullanılır.",
+      "slugInvalid": "Yalnızca küçük harf, rakam ve tire.",
+      "title": "Başlık",
+      "titlePlaceholder": "Haftalık rapor",
+      "description": "Açıklama",
+      "descriptionPlaceholder": "Bu istem ne için",
+      "content": "İçerik",
+      "contentPlaceholder": "İstemi yazın. Sonradan doldurmak istediğiniz her şeyi çift süslü parantez içine alın.",
+      "contentHint": "Yer tutucu, çift süslü parantez içindeki bir addır. Etiket veya varsayılan değer vermek için aşağıda tanımlayın.",
+      "tags": "Etiketler",
+      "tagsPlaceholder": "araştırma, yazım",
+      "variables": "Değişkenler",
+      "variablesHint": "İsteğe bağlı. Bir yer tutucuya etiket, varsayılan değer veya seçenek kümesi vermek için burada tanımlayın.",
+      "variableName": "Ad",
+      "variableType": "Tür",
+      "variableLabel": "Etiket",
+      "variableDefault": "Varsayılan",
+      "variableRequired": "Zorunlu",
+      "variableOptions": "Seçenekler",
+      "variableOptionsPlaceholder": "Virgülle ayrılmış seçenekler",
+      "addVariable": "Değişken ekle",
+      "removeVariable": "Değişkeni kaldır"
+    },
+    "variableTypes": {
+      "text": "Metin",
+      "number": "Sayı",
+      "select": "Seçim",
+      "boolean": "Evet ya da hayır"
+    },
+    "history": {
+      "open": "Sürüm geçmişi",
+      "title": "{{title}} geçmişi",
+      "subtitle": "Geri alma, seçtiğiniz revizyonu yeni bir sürüm olarak kaydeder. Hiçbir şeyin üzerine yazılmaz.",
+      "empty": "Henüz eski sürüm yok.",
+      "current": "Güncel",
+      "rollback": "Geri al",
+      "rollingBack": "Geri alınıyor..."
+    }
+  },
+  "skillsPage": {
+    "title": "Beceriler",
+    "description": "Modelin çalışırken gerektiğinde yükleyebileceği, adlandırılmış yönerge setleri.",
+    "newSkill": "Yeni beceri",
+    "editSkill": "Beceriyi düzenle",
+    "empty": "Henüz beceri yok",
+    "emptyHint": "Beceri, modelin yalnızca ihtiyaç duyduğunda yüklediği bir yönerge setidir. Bir mesajda $slug diye anın ya da modelin load_skill aracıyla ona uzanmasına izin verin.",
+    "loadFailed": "Becerileriniz yüklenemedi.",
+    "saved": "Beceri kaydedildi",
+    "saveFailed": "Beceri kaydedilemedi.",
+    "toggleFailed": "Beceri değiştirilemedi.",
+    "deleted": "Beceri silindi",
+    "deleteFailed": "Beceri silinemedi.",
+    "deleteTitle": "Beceriyi sil",
+    "deleteConfirm": "\"{{name}}\" silinsin mi? Sürüm geçmişi de kaybolur.",
+    "exportFailed": "Beceri dışa aktarılamadı.",
+    "imported": "Beceri içe aktarıldı",
+    "importFailed": "Bu dosya içe aktarılamadı.",
+    "historyFailed": "Sürüm geçmişi yüklenemedi.",
+    "rolledBack": "Beceri geri alındı",
+    "rollbackFailed": "Beceri geri alınamadı.",
+    "versionLabel": "v{{version}}",
+    "updated": "{{when}} güncellendi",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Beceriyi andığınızda $slug biçiminde kullanılır.",
+      "slugInvalid": "Yalnızca küçük harf, rakam ve tire.",
+      "name": "Ad",
+      "namePlaceholder": "Kod incelemesi",
+      "description": "Açıklama",
+      "descriptionPlaceholder": "Bu beceri ne zaman kullanılır",
+      "descriptionHint": "Modelin gördüğü tanıtım metni budur. Modelin beceriyi yüklemeden ne zaman uygun olduğunu anlayacağı şekilde yazın.",
+      "instructions": "Yönergeler",
+      "instructionsPlaceholder": "Modelin bu beceriyi yükledikten sonra okuduğu Markdown yönergeleri.",
+      "instructionsHint": "Yalnızca beceri kullanıldığında yüklenir, o zamana kadar uzunluğunun bir maliyeti olmaz.",
+      "enabled": "Etkin",
+      "enabledHint": "Devre dışı beceriler kayıtlı kalır ama modele hiçbir zaman sunulmaz."
+    },
+    "history": {
+      "open": "Sürüm geçmişi",
+      "title": "{{name}} geçmişi"
+    }
+  },
+  "toolsPage": {
+    "title": "Araçlar",
+    "description": "Modelin çağırabileceği araç sunucuları ve onlara verdiğiniz onaylar.",
+    "approvalNotice": "Sohbetin dışındaki verileri değiştiren araçlar, o araca kalıcı ya da sohbete özel bir onay vermediyseniz her seferinde onay ister.",
+    "registerServer": "Sunucu kaydet",
+    "registerHint": "Libre WebUI sunucuyu bir kez okur ve sunduğu araçları sabitler. Değişiklikleri almak için sunucuyu daha sonra yenileyin.",
+    "editServer": "Sunucuyu düzenle",
+    "empty": "Araç sunucusu yok",
+    "emptyHintAdmin": "Modelin çağırabileceği bir şey olması için bir OpenAPI veya MCP sunucusu kaydedin.",
+    "emptyHintUser": "Bir yönetici sizinle henüz araç sunucusu paylaşmadı.",
+    "loadFailed": "Araç sunucuları yüklenemedi.",
+    "saved": "Araç sunucusu kaydedildi",
+    "saveFailed": "Araç sunucusu kaydedilemedi.",
+    "deleted": "Araç sunucusu silindi",
+    "deleteFailed": "Araç sunucusu silinemedi.",
+    "deleteTitle": "Araç sunucusunu sil",
+    "deleteConfirm": "\"{{name}}\" silinsin mi? Herkes araçlarına erişimini kaybeder.",
+    "refresh": "Araçları yenile",
+    "refreshed": "Araçlar sunucudan yeniden okundu",
+    "refreshFailed": "Sunucu okunamadı.",
+    "toolsLoadFailed": "Sabitlenmiş araçlar yüklenemedi.",
+    "overrideFailed": "Araç değiştirilemedi.",
+    "pinnedTools": "Sabitlenmiş araçlar",
+    "noPinnedTools": "Bu sunucu hiçbir araç sunmadı.",
+    "sideEffect": "Yan etki",
+    "sideEffectOverride": "Yan etki",
+    "specRevision": "Revizyon {{revision}}",
+    "credential": "Kişisel kimlik bilgisi",
+    "credentialHint": "Şifreli olarak saklanır ve yalnızca bu sunucuya yaptığınız kendi çağrılarınızda kullanılır.",
+    "credentialPlaceholder": "Belirtecinizi yapıştırın",
+    "credentialSet": "Kimlik bilgisi tanımlı",
+    "credentialMissing": "Kimlik bilgisi gerekli",
+    "credentialSaved": "Kimlik bilgisi kaydedildi",
+    "credentialSaveFailed": "Kimlik bilgisi kaydedilemedi.",
+    "credentialRemove": "Kaldır",
+    "credentialRemoved": "Kimlik bilgisi kaldırıldı",
+    "credentialRemoveFailed": "Kimlik bilgisi kaldırılamadı.",
+    "builtinSource": "Bu sunucu",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Kimlik doğrulama yok",
+      "bearer": "Bearer belirteci",
+      "header": "Özel başlık"
+    },
+    "accessModes": {
+      "admins-only": "Yalnızca yöneticiler",
+      "all-users": "Herkes",
+      "granted": "Yalnızca erişim verilen kişiler"
+    },
+    "form": {
+      "name": "Ad",
+      "namePlaceholder": "Hava durumu API'si",
+      "kind": "Tür",
+      "description": "Açıklama",
+      "descriptionPlaceholder": "Bu sunucu ne yapıyor",
+      "baseUrl": "Temel URL",
+      "specUrl": "Şema URL'si",
+      "specUrlHint": "İsteğe bağlı. Boş bırakılırsa temel URL kullanılır.",
+      "authMode": "Kimlik doğrulama",
+      "authHeader": "Başlık adı",
+      "accessMode": "Kimler kullanabilir",
+      "timeoutMs": "Zaman aşımı (ms)",
+      "maxResponseBytes": "Azami yanıt (bayt)",
+      "serverDefault": "Sunucu varsayılanı",
+      "enabled": "Etkin",
+      "enabledHint": "Devre dışı sunucular kayıtlı kalır ama modele hiçbir zaman sunulmaz."
+    },
+    "approvals": {
+      "title": "Kalıcı onaylar",
+      "description": "Yeniden sormadan çalışmasına izin verdiğiniz araçlar. Birini iptal ederseniz bir dahaki sefere yine sorar.",
+      "empty": "Kalıcı onay yok.",
+      "revoke": "İptal et",
+      "revoked": "Onay iptal edildi",
+      "revokeFailed": "Onay iptal edilemedi.",
+      "scope": {
+        "once": "Bir kez",
+        "session": "Bu sohbet",
+        "always": "Her zaman"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "İstem kitaplığı"
+    },
+    "skillMenu": {
+      "label": "Beceriler"
+    },
+    "variables": {
+      "title": "{{title}} alanlarını doldurun",
+      "insert": "Ekle",
+      "cancel": "İptal",
+      "required": "{{name}} zorunludur"
+    }
   }
 }

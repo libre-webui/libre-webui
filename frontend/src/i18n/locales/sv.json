@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Spela in och skicka ljud till {{provider}} för transkribering",
       "webSearchOn": "Webbsökning på — svar använder live-resultat",
       "webSearchOff": "Sök på webben för det här meddelandet",
+      "toolsOn": "Verktyg på — modellen kan anropa godkända verktyg",
+      "toolsOff": "Låt modellen anropa verktyg för det här meddelandet",
       "thinkingOn": "Tänkande på ({{level}})",
       "thinkingOff": "Tänk innan svaret"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Utforska",
       "notes": "Anteckningar",
       "calendar": "Kalender",
-      "automations": "Automatiseringar"
+      "automations": "Automatiseringar",
+      "prompts": "Prompter",
+      "skills": "Färdigheter",
+      "tools": "Verktyg"
     },
     "toggleSize": "Växla sidofältets storlek",
     "expandSidebar": "Expandera sidofältet"
@@ -1319,7 +1324,8 @@
       "basic": "Grundläggande",
       "parameters": "Parametrar",
       "memory": "Minne och inlärning",
-      "advanced": "Avancerat"
+      "advanced": "Avancerat",
+      "bindings": "Bindningar"
     },
     "basic": {
       "name": "Namn",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Kunde inte spara"
+    },
+    "bindings": {
+      "toolServers": "Verktygsservrar",
+      "toolServersHint": "Servrar som den här personan får anropa. Lämnas fältet tomt erbjuds alla servrar användaren redan når.",
+      "noToolServers": "Du har inga verktygsservrar tillgängliga.",
+      "builtinTools": "Inbyggda verktyg",
+      "builtinToolsHint": "Verktyg som servern själv står för. Lämnas fältet tomt erbjuds alla.",
+      "noBuiltinTools": "Det finns inga inbyggda verktyg tillgängliga.",
+      "builtin": {
+        "web_search": "Webbsökning",
+        "search_documents": "Sök i dokument",
+        "load_skill": "Läs in färdighet"
+      },
+      "skills": "Färdigheter",
+      "skillsHint": "Färdigheter som modellen får läsa in medan den här personan är aktiv.",
+      "noSkills": "Du har inte skapat några färdigheter än.",
+      "collections": "Kunskapssamlingar",
+      "collectionsHint": "Dokumentsamlingar som den här personan kan söka i.",
+      "noCollections": "Du har inte skapat några samlingar än.",
+      "prompt": "Prompt",
+      "promptHint": "En prompt som varje ny chatt med den här personan startar med.",
+      "noPrompt": "Ingen prompt",
+      "version": "Bindningsrevision {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Inga granskningshändelser registrerade ännu.",
       "actor": "Aktör",
       "target": "Mål"
+    },
+    "tools": {
+      "title": "Verktygsåtkomst",
+      "description": "Låt alla anropa verktygsservrar. När det är av kan bara administratörer göra det.",
+      "saved": "Verktygsåtkomsten uppdaterades",
+      "saveFailed": "Verktygsåtkomsten kunde inte uppdateras.",
+      "lockedByEnv": "Låst av en miljövariabel på den här servern."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Chatt",
     "newChat": "Ny chatt",
     "work": "Arbete"
+  },
+  "tools": {
+    "arguments": "Argument",
+    "result": "Resultat",
+    "callStatus": {
+      "awaiting_approval": "Väntar på godkännande",
+      "running": "Kör",
+      "succeeded": "Klart",
+      "failed": "Misslyckades",
+      "denied": "Nekad",
+      "cancelled": "Avbruten"
+    },
+    "approval": {
+      "title": "Verktyget behöver godkännande",
+      "description": "Modellen vill köra {{tool}} på {{server}}. Anropet kan ändra data utanför den här chatten.",
+      "builtinSource": "den här servern",
+      "allowOnce": "Tillåt en gång",
+      "allowSession": "Tillåt i den här chatten",
+      "allowAlways": "Tillåt alltid",
+      "deny": "Neka"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompter",
+    "description": "Återanvändbara promptmallar med typade variabler. Skriv / i chattrutan för att infoga en.",
+    "newPrompt": "Ny prompt",
+    "editPrompt": "Redigera prompt",
+    "empty": "Inga prompter än",
+    "emptyHint": "En prompt är en sparad meddelandemall. När du har skapat en infogar /slug i chattrutan den och frågar efter de variabler den deklarerar.",
+    "loadFailed": "Dina prompter kunde inte läsas in.",
+    "saved": "Prompten sparades",
+    "saveFailed": "Prompten kunde inte sparas.",
+    "deleted": "Prompten raderades",
+    "deleteFailed": "Prompten kunde inte raderas.",
+    "deleteTitle": "Radera prompt",
+    "deleteConfirm": "Radera \"{{title}}\"? Även versionshistoriken försvinner.",
+    "exportFailed": "Prompten kunde inte exporteras.",
+    "imported": "Prompten importerades",
+    "importFailed": "Filen kunde inte importeras.",
+    "historyFailed": "Versionshistoriken kunde inte läsas in.",
+    "rolledBack": "Prompten återställdes",
+    "rollbackFailed": "Prompten kunde inte återställas.",
+    "versionLabel": "v{{version}}",
+    "updated": "Uppdaterad {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Används som /slug i chattrutan.",
+      "slugInvalid": "Endast gemener, siffror och bindestreck.",
+      "title": "Titel",
+      "titlePlaceholder": "Veckorapport",
+      "description": "Beskrivning",
+      "descriptionPlaceholder": "Vad prompten är till för",
+      "content": "Innehåll",
+      "contentPlaceholder": "Skriv prompten. Omge allt du vill fylla i senare med dubbla klammerparenteser.",
+      "contentHint": "En platshållare är ett namn inom dubbla klammerparenteser. Deklarera den nedan för att ge den en etikett eller ett standardvärde.",
+      "tags": "Taggar",
+      "tagsPlaceholder": "research, skrivande",
+      "variables": "Variabler",
+      "variablesHint": "Valfritt. Deklarera en platshållare här för att ge den en etikett, ett standardvärde eller en uppsättning val.",
+      "variableName": "Namn",
+      "variableType": "Typ",
+      "variableLabel": "Etikett",
+      "variableDefault": "Standard",
+      "variableRequired": "Obligatorisk",
+      "variableOptions": "Alternativ",
+      "variableOptionsPlaceholder": "Val separerade med komma",
+      "addVariable": "Lägg till variabel",
+      "removeVariable": "Ta bort variabel"
+    },
+    "variableTypes": {
+      "text": "Text",
+      "number": "Tal",
+      "select": "Val",
+      "boolean": "Ja eller nej"
+    },
+    "history": {
+      "open": "Versionshistorik",
+      "title": "Historik för {{title}}",
+      "subtitle": "Återställning sparar den valda revisionen som en ny version. Inget skrivs över.",
+      "empty": "Inga tidigare versioner än.",
+      "current": "Nuvarande",
+      "rollback": "Återställ",
+      "rollingBack": "Återställer..."
+    }
+  },
+  "skillsPage": {
+    "title": "Färdigheter",
+    "description": "Namngivna instruktionsuppsättningar som modellen kan läsa in vid behov under arbetet.",
+    "newSkill": "Ny färdighet",
+    "editSkill": "Redigera färdighet",
+    "empty": "Inga färdigheter än",
+    "emptyHint": "En färdighet är en uppsättning instruktioner som modellen bara läser in när den behöver dem. Nämn $slug i ett meddelande, eller låt modellen hämta den via verktyget load_skill.",
+    "loadFailed": "Dina färdigheter kunde inte läsas in.",
+    "saved": "Färdigheten sparades",
+    "saveFailed": "Färdigheten kunde inte sparas.",
+    "toggleFailed": "Färdigheten kunde inte ändras.",
+    "deleted": "Färdigheten raderades",
+    "deleteFailed": "Färdigheten kunde inte raderas.",
+    "deleteTitle": "Radera färdighet",
+    "deleteConfirm": "Radera \"{{name}}\"? Även versionshistoriken försvinner.",
+    "exportFailed": "Färdigheten kunde inte exporteras.",
+    "imported": "Färdigheten importerades",
+    "importFailed": "Filen kunde inte importeras.",
+    "historyFailed": "Versionshistoriken kunde inte läsas in.",
+    "rolledBack": "Färdigheten återställdes",
+    "rollbackFailed": "Färdigheten kunde inte återställas.",
+    "versionLabel": "v{{version}}",
+    "updated": "Uppdaterad {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Används som $slug när du nämner färdigheten.",
+      "slugInvalid": "Endast gemener, siffror och bindestreck.",
+      "name": "Namn",
+      "namePlaceholder": "Kodgranskning",
+      "description": "Beskrivning",
+      "descriptionPlaceholder": "När den här färdigheten ska användas",
+      "descriptionHint": "Det här är manifestet modellen ser. Skriv det så att modellen förstår när färdigheten passar utan att läsa in den.",
+      "instructions": "Instruktioner",
+      "instructionsPlaceholder": "Markdown-instruktioner som modellen läser när den läser in färdigheten.",
+      "instructionsHint": "Läses bara in när färdigheten används, så längden kostar ingenting fram till dess.",
+      "enabled": "Aktiverad",
+      "enabledHint": "Inaktiverade färdigheter finns kvar sparade men erbjuds aldrig till modellen."
+    },
+    "history": {
+      "open": "Versionshistorik",
+      "title": "Historik för {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Verktyg",
+    "description": "Verktygsservrar som modellen kan anropa, och de godkännanden du har gett dem.",
+    "approvalNotice": "Verktyg som ändrar data utanför chatten frågar alltid om godkännande, om du inte har gett verktyget ett permanent godkännande eller ett godkännande för chatten.",
+    "registerServer": "Registrera server",
+    "registerHint": "Libre WebUI läser servern en gång och fäster de verktyg den exponerar. Uppdatera servern senare för att fånga ändringar.",
+    "editServer": "Redigera server",
+    "empty": "Inga verktygsservrar",
+    "emptyHintAdmin": "Registrera en OpenAPI- eller MCP-server så att modellen har något att anropa.",
+    "emptyHintUser": "Ingen administratör har delat några verktygsservrar med dig än.",
+    "loadFailed": "Verktygsservrarna kunde inte läsas in.",
+    "saved": "Verktygsservern sparades",
+    "saveFailed": "Verktygsservern kunde inte sparas.",
+    "deleted": "Verktygsservern raderades",
+    "deleteFailed": "Verktygsservern kunde inte raderas.",
+    "deleteTitle": "Radera verktygsserver",
+    "deleteConfirm": "Radera \"{{name}}\"? Alla förlorar åtkomsten till dess verktyg.",
+    "refresh": "Uppdatera verktyg",
+    "refreshed": "Verktygen lästes om från servern",
+    "refreshFailed": "Servern kunde inte läsas.",
+    "toolsLoadFailed": "De fästa verktygen kunde inte läsas in.",
+    "overrideFailed": "Verktyget kunde inte ändras.",
+    "pinnedTools": "Fästa verktyg",
+    "noPinnedTools": "Servern exponerade inga verktyg.",
+    "sideEffect": "Sidoeffekt",
+    "sideEffectOverride": "Sidoeffekt",
+    "specRevision": "Revision {{revision}}",
+    "credential": "Personlig autentiseringsuppgift",
+    "credentialHint": "Lagras krypterad och används bara för dina egna anrop till den här servern.",
+    "credentialPlaceholder": "Klistra in din token",
+    "credentialSet": "Autentiseringsuppgift angiven",
+    "credentialMissing": "Autentiseringsuppgift saknas",
+    "credentialSaved": "Autentiseringsuppgiften sparades",
+    "credentialSaveFailed": "Autentiseringsuppgiften kunde inte sparas.",
+    "credentialRemove": "Ta bort",
+    "credentialRemoved": "Autentiseringsuppgiften togs bort",
+    "credentialRemoveFailed": "Autentiseringsuppgiften kunde inte tas bort.",
+    "builtinSource": "Den här servern",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Ingen autentisering",
+      "bearer": "Bearer-token",
+      "header": "Egen header"
+    },
+    "accessModes": {
+      "admins-only": "Endast administratörer",
+      "all-users": "Alla",
+      "granted": "Endast de som fått åtkomst"
+    },
+    "form": {
+      "name": "Namn",
+      "namePlaceholder": "Väder-API",
+      "kind": "Typ",
+      "description": "Beskrivning",
+      "descriptionPlaceholder": "Vad servern gör",
+      "baseUrl": "Bas-URL",
+      "specUrl": "Spec-URL",
+      "specUrlHint": "Valfritt. Bas-URL:en används när fältet är tomt.",
+      "authMode": "Autentisering",
+      "authHeader": "Headernamn",
+      "accessMode": "Vem som får använda den",
+      "timeoutMs": "Tidsgräns (ms)",
+      "maxResponseBytes": "Max svar (byte)",
+      "serverDefault": "Serverns standard",
+      "enabled": "Aktiverad",
+      "enabledHint": "Inaktiverade servrar förblir registrerade men erbjuds aldrig till modellen."
+    },
+    "approvals": {
+      "title": "Stående godkännanden",
+      "description": "Verktyg du har låtit köra utan att fråga igen. Återkalla ett så frågar det nästa gång.",
+      "empty": "Inga stående godkännanden.",
+      "revoke": "Återkalla",
+      "revoked": "Godkännandet återkallades",
+      "revokeFailed": "Godkännandet kunde inte återkallas.",
+      "scope": {
+        "once": "En gång",
+        "session": "Den här chatten",
+        "always": "Alltid"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Promptbibliotek"
+    },
+    "skillMenu": {
+      "label": "Färdigheter"
+    },
+    "variables": {
+      "title": "Fyll i {{title}}",
+      "insert": "Infoga",
+      "cancel": "Avbryt",
+      "required": "{{name}} krävs"
+    }
   }
 }

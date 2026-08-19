@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Audio aufnehmen und zur Transkription an {{provider}} senden",
       "webSearchOn": "Websuche aktiv — Antworten nutzen Live-Ergebnisse",
       "webSearchOff": "Für diese Nachricht im Web suchen",
+      "toolsOn": "Werkzeuge aktiv — das Modell darf freigegebene Werkzeuge aufrufen",
+      "toolsOff": "Das Modell für diese Nachricht Werkzeuge aufrufen lassen",
       "thinkingOn": "Nachdenken aktiv ({{level}})",
       "thinkingOff": "Vor dem Antworten nachdenken"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Entdecken",
       "notes": "Notizen",
       "calendar": "Kalender",
-      "automations": "Automationen"
+      "automations": "Automationen",
+      "prompts": "Prompts",
+      "skills": "Skills",
+      "tools": "Werkzeuge"
     },
     "toggleSize": "Seitenleistengröße umschalten",
     "expandSidebar": "Seitenleiste erweitern"
@@ -1319,7 +1324,8 @@
       "basic": "Grundlegend",
       "parameters": "Parameter",
       "memory": "Erinnerung & Lernen",
-      "advanced": "Erweitert"
+      "advanced": "Erweitert",
+      "bindings": "Bindungen"
     },
     "basic": {
       "name": "Name",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Speichern fehlgeschlagen"
+    },
+    "bindings": {
+      "toolServers": "Werkzeugserver",
+      "toolServersHint": "Server, die diese Persona aufrufen darf. Leer bedeutet: jeder Server, den die Person ohnehin erreicht.",
+      "noToolServers": "Dir stehen keine Werkzeugserver zur Verfügung.",
+      "builtinTools": "Eingebaute Werkzeuge",
+      "builtinToolsHint": "Werkzeuge, die der Server selbst bereitstellt. Leer bedeutet: alle stehen zur Verfügung.",
+      "noBuiltinTools": "Es sind keine eingebauten Werkzeuge verfügbar.",
+      "builtin": {
+        "web_search": "Websuche",
+        "search_documents": "Dokumente durchsuchen",
+        "load_skill": "Skill laden"
+      },
+      "skills": "Skills",
+      "skillsHint": "Skills, die das Modell laden darf, solange diese Persona aktiv ist.",
+      "noSkills": "Du hast noch keine Skills angelegt.",
+      "collections": "Wissenssammlungen",
+      "collectionsHint": "Dokumentsammlungen, die diese Persona durchsuchen kann.",
+      "noCollections": "Du hast noch keine Sammlungen angelegt.",
+      "prompt": "Prompt",
+      "promptHint": "Ein Prompt, mit dem jeder neue Chat mit dieser Persona startet.",
+      "noPrompt": "Kein Prompt",
+      "version": "Bindungs-Revision {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Noch keine Audit-Ereignisse aufgezeichnet.",
       "actor": "Akteur",
       "target": "Ziel"
+    },
+    "tools": {
+      "title": "Werkzeugzugriff",
+      "description": "Allen erlauben, Werkzeugserver aufzurufen. Ist das aus, dürfen es nur Administratoren.",
+      "saved": "Werkzeugzugriff aktualisiert",
+      "saveFailed": "Der Werkzeugzugriff konnte nicht aktualisiert werden.",
+      "lockedByEnv": "Durch eine Umgebungsvariable auf diesem Server gesperrt."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Chat",
     "newChat": "Neuer Chat",
     "work": "Arbeit"
+  },
+  "tools": {
+    "arguments": "Argumente",
+    "result": "Ergebnis",
+    "callStatus": {
+      "awaiting_approval": "Wartet auf Genehmigung",
+      "running": "Läuft",
+      "succeeded": "Fertig",
+      "failed": "Fehlgeschlagen",
+      "denied": "Abgelehnt",
+      "cancelled": "Abgebrochen"
+    },
+    "approval": {
+      "title": "Werkzeug braucht eine Genehmigung",
+      "description": "Das Modell möchte {{tool}} auf {{server}} ausführen. Dieser Aufruf kann Daten außerhalb dieses Chats verändern.",
+      "builtinSource": "dieser Server",
+      "allowOnce": "Einmal zulassen",
+      "allowSession": "Für diesen Chat zulassen",
+      "allowAlways": "Immer zulassen",
+      "deny": "Ablehnen"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompts",
+    "description": "Wiederverwendbare Prompt-Vorlagen mit typisierten Variablen. Tippe / im Chat-Eingabefeld, um eine einzufügen.",
+    "newPrompt": "Neuer Prompt",
+    "editPrompt": "Prompt bearbeiten",
+    "empty": "Noch keine Prompts",
+    "emptyHint": "Ein Prompt ist eine gespeicherte Nachrichtenvorlage. Sobald du einen angelegt hast, fügt /slug im Chat-Eingabefeld ihn ein und fragt nach den Variablen, die er deklariert.",
+    "loadFailed": "Deine Prompts konnten nicht geladen werden.",
+    "saved": "Prompt gespeichert",
+    "saveFailed": "Der Prompt konnte nicht gespeichert werden.",
+    "deleted": "Prompt gelöscht",
+    "deleteFailed": "Der Prompt konnte nicht gelöscht werden.",
+    "deleteTitle": "Prompt löschen",
+    "deleteConfirm": "\"{{title}}\" löschen? Damit verschwindet auch der Versionsverlauf.",
+    "exportFailed": "Der Prompt konnte nicht exportiert werden.",
+    "imported": "Prompt importiert",
+    "importFailed": "Diese Datei konnte nicht importiert werden.",
+    "historyFailed": "Der Versionsverlauf konnte nicht geladen werden.",
+    "rolledBack": "Prompt zurückgesetzt",
+    "rollbackFailed": "Der Prompt konnte nicht zurückgesetzt werden.",
+    "versionLabel": "v{{version}}",
+    "updated": "Aktualisiert {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Wird als /slug im Eingabefeld verwendet.",
+      "slugInvalid": "Nur Kleinbuchstaben, Ziffern und Bindestriche.",
+      "title": "Titel",
+      "titlePlaceholder": "Wochenbericht",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Wofür dieser Prompt gedacht ist",
+      "content": "Inhalt",
+      "contentPlaceholder": "Schreibe den Prompt. Setze alles, was später ausgefüllt werden soll, in doppelte geschweifte Klammern.",
+      "contentHint": "Ein Platzhalter ist ein Name in doppelten geschweiften Klammern. Deklariere ihn unten, um ihm eine Bezeichnung oder einen Standardwert zu geben.",
+      "tags": "Tags",
+      "tagsPlaceholder": "recherche, schreiben",
+      "variables": "Variablen",
+      "variablesHint": "Optional. Deklariere hier einen Platzhalter, um ihm eine Bezeichnung, einen Standardwert oder eine Auswahl zu geben.",
+      "variableName": "Name",
+      "variableType": "Typ",
+      "variableLabel": "Bezeichnung",
+      "variableDefault": "Standard",
+      "variableRequired": "Erforderlich",
+      "variableOptions": "Optionen",
+      "variableOptionsPlaceholder": "Auswahl, durch Komma getrennt",
+      "addVariable": "Variable hinzufügen",
+      "removeVariable": "Variable entfernen"
+    },
+    "variableTypes": {
+      "text": "Text",
+      "number": "Zahl",
+      "select": "Auswahl",
+      "boolean": "Ja oder nein"
+    },
+    "history": {
+      "open": "Versionsverlauf",
+      "title": "Verlauf von {{title}}",
+      "subtitle": "Beim Zurücksetzen wird die gewählte Revision als neue Version gespeichert. Nichts wird überschrieben.",
+      "empty": "Noch keine früheren Versionen.",
+      "current": "Aktuell",
+      "rollback": "Zurücksetzen",
+      "rollingBack": "Wird zurückgesetzt..."
+    }
+  },
+  "skillsPage": {
+    "title": "Skills",
+    "description": "Benannte Anweisungssätze, die das Modell bei Bedarf während der Arbeit laden kann.",
+    "newSkill": "Neuer Skill",
+    "editSkill": "Skill bearbeiten",
+    "empty": "Noch keine Skills",
+    "emptyHint": "Ein Skill ist ein Satz Anweisungen, den das Modell nur lädt, wenn es ihn braucht. Erwähne $slug in einer Nachricht oder lass das Modell über das Werkzeug load_skill danach greifen.",
+    "loadFailed": "Deine Skills konnten nicht geladen werden.",
+    "saved": "Skill gespeichert",
+    "saveFailed": "Der Skill konnte nicht gespeichert werden.",
+    "toggleFailed": "Der Skill konnte nicht geändert werden.",
+    "deleted": "Skill gelöscht",
+    "deleteFailed": "Der Skill konnte nicht gelöscht werden.",
+    "deleteTitle": "Skill löschen",
+    "deleteConfirm": "\"{{name}}\" löschen? Damit verschwindet auch der Versionsverlauf.",
+    "exportFailed": "Der Skill konnte nicht exportiert werden.",
+    "imported": "Skill importiert",
+    "importFailed": "Diese Datei konnte nicht importiert werden.",
+    "historyFailed": "Der Versionsverlauf konnte nicht geladen werden.",
+    "rolledBack": "Skill zurückgesetzt",
+    "rollbackFailed": "Der Skill konnte nicht zurückgesetzt werden.",
+    "versionLabel": "v{{version}}",
+    "updated": "Aktualisiert {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Wird als $slug verwendet, wenn du den Skill erwähnst.",
+      "slugInvalid": "Nur Kleinbuchstaben, Ziffern und Bindestriche.",
+      "name": "Name",
+      "namePlaceholder": "Code-Review",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Wann dieser Skill zu verwenden ist",
+      "descriptionHint": "Das ist das Manifest, das das Modell sieht. Schreibe es so, dass das Modell ohne Laden erkennt, wann der Skill passt.",
+      "instructions": "Anweisungen",
+      "instructionsPlaceholder": "Markdown-Anweisungen, die das Modell liest, sobald es diesen Skill lädt.",
+      "instructionsHint": "Wird nur beim Einsatz des Skills geladen, Länge kostet hier also bis dahin nichts.",
+      "enabled": "Aktiviert",
+      "enabledHint": "Deaktivierte Skills bleiben gespeichert, werden dem Modell aber nie angeboten."
+    },
+    "history": {
+      "open": "Versionsverlauf",
+      "title": "Verlauf von {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Werkzeuge",
+    "description": "Werkzeugserver, die das Modell aufrufen kann, und die Genehmigungen, die du ihnen erteilt hast.",
+    "approvalNotice": "Werkzeuge, die Daten außerhalb des Chats verändern, fragen immer nach einer Genehmigung, außer du hast dem Werkzeug eine dauerhafte oder chatweite Genehmigung erteilt.",
+    "registerServer": "Server registrieren",
+    "registerHint": "Libre WebUI liest den Server einmal aus und fixiert die Werkzeuge, die er anbietet. Aktualisiere den Server später, um Änderungen zu übernehmen.",
+    "editServer": "Server bearbeiten",
+    "empty": "Keine Werkzeugserver",
+    "emptyHintAdmin": "Registriere einen OpenAPI- oder MCP-Server, damit das Modell etwas aufrufen kann.",
+    "emptyHintUser": "Ein Administrator hat noch keine Werkzeugserver mit dir geteilt.",
+    "loadFailed": "Die Werkzeugserver konnten nicht geladen werden.",
+    "saved": "Werkzeugserver gespeichert",
+    "saveFailed": "Der Werkzeugserver konnte nicht gespeichert werden.",
+    "deleted": "Werkzeugserver gelöscht",
+    "deleteFailed": "Der Werkzeugserver konnte nicht gelöscht werden.",
+    "deleteTitle": "Werkzeugserver löschen",
+    "deleteConfirm": "\"{{name}}\" löschen? Alle verlieren den Zugriff auf seine Werkzeuge.",
+    "refresh": "Werkzeuge aktualisieren",
+    "refreshed": "Werkzeuge erneut vom Server gelesen",
+    "refreshFailed": "Der Server konnte nicht gelesen werden.",
+    "toolsLoadFailed": "Die fixierten Werkzeuge konnten nicht geladen werden.",
+    "overrideFailed": "Das Werkzeug konnte nicht geändert werden.",
+    "pinnedTools": "Fixierte Werkzeuge",
+    "noPinnedTools": "Dieser Server hat keine Werkzeuge angeboten.",
+    "sideEffect": "Nebenwirkung",
+    "sideEffectOverride": "Nebenwirkung",
+    "specRevision": "Revision {{revision}}",
+    "credential": "Persönliche Zugangsdaten",
+    "credentialHint": "Verschlüsselt gespeichert und nur für deine eigenen Aufrufe an diesen Server verwendet.",
+    "credentialPlaceholder": "Token einfügen",
+    "credentialSet": "Zugangsdaten hinterlegt",
+    "credentialMissing": "Zugangsdaten erforderlich",
+    "credentialSaved": "Zugangsdaten gespeichert",
+    "credentialSaveFailed": "Die Zugangsdaten konnten nicht gespeichert werden.",
+    "credentialRemove": "Entfernen",
+    "credentialRemoved": "Zugangsdaten entfernt",
+    "credentialRemoveFailed": "Die Zugangsdaten konnten nicht entfernt werden.",
+    "builtinSource": "Dieser Server",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Keine Authentifizierung",
+      "bearer": "Bearer-Token",
+      "header": "Eigener Header"
+    },
+    "accessModes": {
+      "admins-only": "Nur Administratoren",
+      "all-users": "Alle",
+      "granted": "Nur Personen mit Freigabe"
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Wetter-API",
+      "kind": "Art",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Was dieser Server tut",
+      "baseUrl": "Basis-URL",
+      "specUrl": "Spezifikations-URL",
+      "specUrlHint": "Optional. Leer bedeutet: die Basis-URL wird verwendet.",
+      "authMode": "Authentifizierung",
+      "authHeader": "Header-Name",
+      "accessMode": "Wer es nutzen darf",
+      "timeoutMs": "Zeitlimit (ms)",
+      "maxResponseBytes": "Max. Antwort (Bytes)",
+      "serverDefault": "Server-Standard",
+      "enabled": "Aktiviert",
+      "enabledHint": "Deaktivierte Server bleiben registriert, werden dem Modell aber nie angeboten."
+    },
+    "approvals": {
+      "title": "Dauerhafte Genehmigungen",
+      "description": "Werkzeuge, die ohne erneutes Nachfragen laufen dürfen. Widerrufe eine, und beim nächsten Mal wird wieder gefragt.",
+      "empty": "Keine dauerhaften Genehmigungen.",
+      "revoke": "Widerrufen",
+      "revoked": "Genehmigung widerrufen",
+      "revokeFailed": "Die Genehmigung konnte nicht widerrufen werden.",
+      "scope": {
+        "once": "Einmal",
+        "session": "Dieser Chat",
+        "always": "Immer"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Prompt-Bibliothek"
+    },
+    "skillMenu": {
+      "label": "Skills"
+    },
+    "variables": {
+      "title": "{{title}} ausfüllen",
+      "insert": "Einfügen",
+      "cancel": "Abbrechen",
+      "required": "{{name}} ist erforderlich"
+    }
   }
 }

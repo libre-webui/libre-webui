@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Rakam dan hantar audio kepada {{provider}} untuk transkripsi",
       "webSearchOn": "Carian web hidup — balasan menggunakan hasil langsung",
       "webSearchOff": "Cari di web untuk mesej ini",
+      "toolsOn": "Alat dihidupkan — model boleh memanggil alat yang diluluskan",
+      "toolsOff": "Benarkan model memanggil alat untuk mesej ini",
       "thinkingOn": "Pemikiran aktif ({{level}})",
       "thinkingOff": "Fikir sebelum menjawab"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Terokai",
       "notes": "Nota",
       "calendar": "Kalendar",
-      "automations": "Automasi"
+      "automations": "Automasi",
+      "prompts": "Prompt",
+      "skills": "Kemahiran",
+      "tools": "Alat"
     },
     "toggleSize": "Togol saiz bar sisi",
     "expandSidebar": "Kembangkan bar sisi"
@@ -1319,7 +1324,8 @@
       "basic": "Asas",
       "parameters": "Parameter",
       "memory": "Ingatan & Pembelajaran",
-      "advanced": "Lanjutan"
+      "advanced": "Lanjutan",
+      "bindings": "Ikatan"
     },
     "basic": {
       "name": "Nama",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Gagal menyimpan"
+    },
+    "bindings": {
+      "toolServers": "Pelayan alat",
+      "toolServersHint": "Pelayan yang boleh dipanggil persona ini. Jika dibiarkan kosong, semua pelayan yang memang boleh dicapai pengguna akan ditawarkan.",
+      "noToolServers": "Tiada pelayan alat tersedia untuk anda.",
+      "builtinTools": "Alat terbina dalam",
+      "builtinToolsHint": "Alat yang dilaksanakan sendiri oleh pelayan. Jika dibiarkan kosong, semuanya ditawarkan.",
+      "noBuiltinTools": "Tiada alat terbina dalam tersedia.",
+      "builtin": {
+        "web_search": "Carian web",
+        "search_documents": "Cari dokumen",
+        "load_skill": "Muatkan kemahiran"
+      },
+      "skills": "Kemahiran",
+      "skillsHint": "Kemahiran yang boleh dimuatkan model semasa persona ini aktif.",
+      "noSkills": "Anda belum mencipta sebarang kemahiran.",
+      "collections": "Koleksi pengetahuan",
+      "collectionsHint": "Koleksi dokumen yang boleh dicari oleh persona ini.",
+      "noCollections": "Anda belum mencipta sebarang koleksi.",
+      "prompt": "Prompt",
+      "promptHint": "Prompt yang memulakan setiap sembang baharu dengan persona ini.",
+      "noPrompt": "Tiada prompt",
+      "version": "Semakan ikatan {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Belum ada peristiwa audit direkodkan.",
       "actor": "Pelaku",
       "target": "Sasaran"
+    },
+    "tools": {
+      "title": "Akses alat",
+      "description": "Benarkan semua orang memanggil pelayan alat. Apabila dimatikan, hanya pentadbir boleh.",
+      "saved": "Akses alat dikemas kini",
+      "saveFailed": "Akses alat tidak dapat dikemas kini.",
+      "lockedByEnv": "Dikunci oleh pemboleh ubah persekitaran pada pelayan ini."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Sembang",
     "newChat": "Sembang Baharu",
     "work": "Kerja"
+  },
+  "tools": {
+    "arguments": "Argumen",
+    "result": "Keputusan",
+    "callStatus": {
+      "awaiting_approval": "Menunggu kelulusan",
+      "running": "Sedang berjalan",
+      "succeeded": "Selesai",
+      "failed": "Gagal",
+      "denied": "Ditolak",
+      "cancelled": "Dibatalkan"
+    },
+    "approval": {
+      "title": "Alat perlukan kelulusan",
+      "description": "Model mahu menjalankan {{tool}} pada {{server}}. Panggilan ini boleh mengubah data di luar sembang ini.",
+      "builtinSource": "pelayan ini",
+      "allowOnce": "Izinkan sekali",
+      "allowSession": "Izinkan dalam sembang ini",
+      "allowAlways": "Izinkan sentiasa",
+      "deny": "Tolak"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompt",
+    "description": "Templat prompt boleh guna semula dengan pemboleh ubah bertaip. Taip / dalam ruang sembang untuk menyisipkan satu.",
+    "newPrompt": "Prompt baharu",
+    "editPrompt": "Edit prompt",
+    "empty": "Belum ada prompt",
+    "emptyHint": "Prompt ialah templat mesej yang disimpan. Setelah anda mencipta satu, menaip /slug dalam ruang sembang akan menyisipkannya dan bertanya pemboleh ubah yang diisytiharkannya.",
+    "loadFailed": "Prompt anda tidak dapat dimuatkan.",
+    "saved": "Prompt disimpan",
+    "saveFailed": "Prompt tidak dapat disimpan.",
+    "deleted": "Prompt dipadam",
+    "deleteFailed": "Prompt tidak dapat dipadam.",
+    "deleteTitle": "Padam prompt",
+    "deleteConfirm": "Padam \"{{title}}\"? Sejarah versinya turut hilang.",
+    "exportFailed": "Prompt tidak dapat dieksport.",
+    "imported": "Prompt diimport",
+    "importFailed": "Fail itu tidak dapat diimport.",
+    "historyFailed": "Sejarah versi tidak dapat dimuatkan.",
+    "rolledBack": "Prompt dikembalikan",
+    "rollbackFailed": "Prompt tidak dapat dikembalikan.",
+    "versionLabel": "v{{version}}",
+    "updated": "Dikemas kini {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Digunakan sebagai /slug dalam ruang sembang.",
+      "slugInvalid": "Huruf kecil, digit dan sengkang sahaja.",
+      "title": "Tajuk",
+      "titlePlaceholder": "Laporan mingguan",
+      "description": "Penerangan",
+      "descriptionPlaceholder": "Untuk apa prompt ini",
+      "content": "Kandungan",
+      "contentPlaceholder": "Tulis prompt itu. Balut apa-apa yang mahu diisi kemudian dengan kurungan kerinting berganda.",
+      "contentHint": "Pemegang tempat ialah nama dalam kurungan kerinting berganda. Isytiharkannya di bawah untuk memberi label atau nilai lalai.",
+      "tags": "Tag",
+      "tagsPlaceholder": "penyelidikan, penulisan",
+      "variables": "Pemboleh ubah",
+      "variablesHint": "Pilihan. Isytiharkan pemegang tempat di sini untuk memberinya label, nilai lalai atau satu set pilihan.",
+      "variableName": "Nama",
+      "variableType": "Jenis",
+      "variableLabel": "Label",
+      "variableDefault": "Lalai",
+      "variableRequired": "Diperlukan",
+      "variableOptions": "Pilihan",
+      "variableOptionsPlaceholder": "Pilihan dipisahkan koma",
+      "addVariable": "Tambah pemboleh ubah",
+      "removeVariable": "Buang pemboleh ubah"
+    },
+    "variableTypes": {
+      "text": "Teks",
+      "number": "Nombor",
+      "select": "Pilihan",
+      "boolean": "Ya atau tidak"
+    },
+    "history": {
+      "open": "Sejarah versi",
+      "title": "Sejarah {{title}}",
+      "subtitle": "Mengembalikan versi menyimpan semakan yang dipilih sebagai versi baharu. Tiada apa-apa ditulis ganti.",
+      "empty": "Belum ada versi terdahulu.",
+      "current": "Semasa",
+      "rollback": "Kembalikan",
+      "rollingBack": "Mengembalikan..."
+    }
+  },
+  "skillsPage": {
+    "title": "Kemahiran",
+    "description": "Set arahan bernama yang boleh dimuatkan model apabila diperlukan semasa bekerja.",
+    "newSkill": "Kemahiran baharu",
+    "editSkill": "Edit kemahiran",
+    "empty": "Belum ada kemahiran",
+    "emptyHint": "Kemahiran ialah set arahan yang dimuatkan model hanya apabila ia perlukannya. Sebut $slug dalam mesej, atau biarkan model mencapainya melalui alat load_skill.",
+    "loadFailed": "Kemahiran anda tidak dapat dimuatkan.",
+    "saved": "Kemahiran disimpan",
+    "saveFailed": "Kemahiran tidak dapat disimpan.",
+    "toggleFailed": "Kemahiran tidak dapat diubah.",
+    "deleted": "Kemahiran dipadam",
+    "deleteFailed": "Kemahiran tidak dapat dipadam.",
+    "deleteTitle": "Padam kemahiran",
+    "deleteConfirm": "Padam \"{{name}}\"? Sejarah versinya turut hilang.",
+    "exportFailed": "Kemahiran tidak dapat dieksport.",
+    "imported": "Kemahiran diimport",
+    "importFailed": "Fail itu tidak dapat diimport.",
+    "historyFailed": "Sejarah versi tidak dapat dimuatkan.",
+    "rolledBack": "Kemahiran dikembalikan",
+    "rollbackFailed": "Kemahiran tidak dapat dikembalikan.",
+    "versionLabel": "v{{version}}",
+    "updated": "Dikemas kini {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Digunakan sebagai $slug apabila anda menyebut kemahiran itu.",
+      "slugInvalid": "Huruf kecil, digit dan sengkang sahaja.",
+      "name": "Nama",
+      "namePlaceholder": "Semakan kod",
+      "description": "Penerangan",
+      "descriptionPlaceholder": "Bila kemahiran ini digunakan",
+      "descriptionHint": "Inilah manifes yang dilihat model. Tulis supaya model tahu bila kemahiran ini sesuai tanpa memuatkannya.",
+      "instructions": "Arahan",
+      "instructionsPlaceholder": "Arahan Markdown yang dibaca model setelah memuatkan kemahiran ini.",
+      "instructionsHint": "Dimuatkan hanya apabila kemahiran digunakan, jadi panjangnya tidak menelan kos sehingga waktu itu.",
+      "enabled": "Diaktifkan",
+      "enabledHint": "Kemahiran yang dilumpuhkan kekal tersimpan tetapi tidak pernah ditawarkan kepada model."
+    },
+    "history": {
+      "open": "Sejarah versi",
+      "title": "Sejarah {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Alat",
+    "description": "Pelayan alat yang boleh dipanggil model, dan kelulusan yang anda berikan kepadanya.",
+    "approvalNotice": "Alat yang mengubah data di luar sembang sentiasa meminta kelulusan, melainkan anda telah memberi alat itu kelulusan kekal atau kelulusan untuk sembang ini.",
+    "registerServer": "Daftar pelayan",
+    "registerHint": "Libre WebUI membaca pelayan sekali dan menyemat alat yang didedahkannya. Segarkan pelayan kemudian untuk menangkap perubahan.",
+    "editServer": "Edit pelayan",
+    "empty": "Tiada pelayan alat",
+    "emptyHintAdmin": "Daftarkan pelayan OpenAPI atau MCP supaya model ada sesuatu untuk dipanggil.",
+    "emptyHintUser": "Pentadbir belum berkongsi mana-mana pelayan alat dengan anda.",
+    "loadFailed": "Pelayan alat tidak dapat dimuatkan.",
+    "saved": "Pelayan alat disimpan",
+    "saveFailed": "Pelayan alat tidak dapat disimpan.",
+    "deleted": "Pelayan alat dipadam",
+    "deleteFailed": "Pelayan alat tidak dapat dipadam.",
+    "deleteTitle": "Padam pelayan alat",
+    "deleteConfirm": "Padam \"{{name}}\"? Semua orang hilang akses kepada alatnya.",
+    "refresh": "Segarkan alat",
+    "refreshed": "Alat dibaca semula daripada pelayan",
+    "refreshFailed": "Pelayan tidak dapat dibaca.",
+    "toolsLoadFailed": "Alat yang disemat tidak dapat dimuatkan.",
+    "overrideFailed": "Alat tidak dapat diubah.",
+    "pinnedTools": "Alat yang disemat",
+    "noPinnedTools": "Pelayan ini tidak mendedahkan sebarang alat.",
+    "sideEffect": "Kesan sampingan",
+    "sideEffectOverride": "Kesan sampingan",
+    "specRevision": "Semakan {{revision}}",
+    "credential": "Kelayakan peribadi",
+    "credentialHint": "Disimpan tersulit dan digunakan hanya untuk panggilan anda sendiri ke pelayan ini.",
+    "credentialPlaceholder": "Tampal token anda",
+    "credentialSet": "Kelayakan ditetapkan",
+    "credentialMissing": "Kelayakan diperlukan",
+    "credentialSaved": "Kelayakan disimpan",
+    "credentialSaveFailed": "Kelayakan tidak dapat disimpan.",
+    "credentialRemove": "Buang",
+    "credentialRemoved": "Kelayakan dibuang",
+    "credentialRemoveFailed": "Kelayakan tidak dapat dibuang.",
+    "builtinSource": "Pelayan ini",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Tiada pengesahan",
+      "bearer": "Token bearer",
+      "header": "Pengepala tersuai"
+    },
+    "accessModes": {
+      "admins-only": "Pentadbir sahaja",
+      "all-users": "Semua orang",
+      "granted": "Hanya mereka yang diberi akses"
+    },
+    "form": {
+      "name": "Nama",
+      "namePlaceholder": "API cuaca",
+      "kind": "Jenis",
+      "description": "Penerangan",
+      "descriptionPlaceholder": "Apa yang dilakukan pelayan ini",
+      "baseUrl": "URL asas",
+      "specUrl": "URL spesifikasi",
+      "specUrlHint": "Pilihan. URL asas digunakan apabila dibiarkan kosong.",
+      "authMode": "Pengesahan",
+      "authHeader": "Nama pengepala",
+      "accessMode": "Siapa yang boleh menggunakannya",
+      "timeoutMs": "Had masa (ms)",
+      "maxResponseBytes": "Respons maksimum (bait)",
+      "serverDefault": "Lalai pelayan",
+      "enabled": "Diaktifkan",
+      "enabledHint": "Pelayan yang dilumpuhkan kekal berdaftar tetapi tidak pernah ditawarkan kepada model."
+    },
+    "approvals": {
+      "title": "Kelulusan kekal",
+      "description": "Alat yang anda benarkan berjalan tanpa ditanya lagi. Tarik balik satu, dan ia akan bertanya lain kali.",
+      "empty": "Tiada kelulusan kekal.",
+      "revoke": "Tarik balik",
+      "revoked": "Kelulusan ditarik balik",
+      "revokeFailed": "Kelulusan tidak dapat ditarik balik.",
+      "scope": {
+        "once": "Sekali",
+        "session": "Sembang ini",
+        "always": "Sentiasa"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Pustaka prompt"
+    },
+    "skillMenu": {
+      "label": "Kemahiran"
+    },
+    "variables": {
+      "title": "Isikan {{title}}",
+      "insert": "Sisipkan",
+      "cancel": "Batal",
+      "required": "{{name}} diperlukan"
+    }
   }
 }

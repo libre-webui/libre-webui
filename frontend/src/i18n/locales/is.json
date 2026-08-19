@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Taka upp og senda hljóð til {{provider}} til umritunar",
       "webSearchOn": "Vefleit virk — svör nota lifandi niðurstöður",
       "webSearchOff": "Leita á vefnum fyrir þessi skilaboð",
+      "toolsOn": "Tól virk — líkanið má kalla á samþykkt tól",
+      "toolsOff": "Leyfa líkaninu að kalla á tól fyrir þessi skilaboð",
       "thinkingOn": "Hugsun virk ({{level}})",
       "thinkingOff": "Hugsa fyrir svarið"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Kanna",
       "notes": "Glósur",
       "calendar": "Dagatal",
-      "automations": "Sjálfvirkni"
+      "automations": "Sjálfvirkni",
+      "prompts": "Leiðbeiningar",
+      "skills": "Færni",
+      "tools": "Tól"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
     "expandSidebar": "Stækka hliðarspjald"
@@ -1319,7 +1324,8 @@
       "basic": "Grunnur",
       "parameters": "Færibreytur",
       "memory": "Minni og nám",
-      "advanced": "Ítarlegt"
+      "advanced": "Ítarlegt",
+      "bindings": "Tengingar"
     },
     "basic": {
       "name": "Nafn",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Ekki tókst að vista"
+    },
+    "bindings": {
+      "toolServers": "Tólaþjónar",
+      "toolServersHint": "Þjónar sem þessi persóna má kalla á. Sé reiturinn tómur eru allir þjónar sem notandinn nær í boði.",
+      "noToolServers": "Engir tólaþjónar eru þér tiltækir.",
+      "builtinTools": "Innbyggð tól",
+      "builtinToolsHint": "Tól sem þjónninn sér sjálfur um. Sé reiturinn tómur eru þau öll í boði.",
+      "noBuiltinTools": "Engin innbyggð tól eru tiltæk.",
+      "builtin": {
+        "web_search": "Vefleit",
+        "search_documents": "Leita í skjölum",
+        "load_skill": "Sækja færni"
+      },
+      "skills": "Færni",
+      "skillsHint": "Færni sem líkanið má sækja meðan þessi persóna er virk.",
+      "noSkills": "Þú hefur ekki búið til neina færni enn.",
+      "collections": "Þekkingarsöfn",
+      "collectionsHint": "Skjalasöfn sem þessi persóna getur leitað í.",
+      "noCollections": "Þú hefur ekki búið til nein söfn enn.",
+      "prompt": "Leiðbeining",
+      "promptHint": "Leiðbeining sem hvert nýtt spjall með þessari persónu byrjar á.",
+      "noPrompt": "Engin leiðbeining",
+      "version": "Útgáfa tenginga {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Engin atvik skráð enn.",
       "actor": "Gerandi",
       "target": "Viðfang"
+    },
+    "tools": {
+      "title": "Aðgangur að tólum",
+      "description": "Leyfa öllum að kalla á tólaþjóna. Þegar slökkt er geta aðeins stjórnendur það.",
+      "saved": "Aðgangur að tólum uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra aðgang að tólum.",
+      "lockedByEnv": "Læst með umhverfisbreytu á þessum þjóni."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Spjall",
     "newChat": "Nýtt spjall",
     "work": "Vinna"
+  },
+  "tools": {
+    "arguments": "Viðföng",
+    "result": "Niðurstaða",
+    "callStatus": {
+      "awaiting_approval": "Bíður samþykkis",
+      "running": "Í gangi",
+      "succeeded": "Lokið",
+      "failed": "Mistókst",
+      "denied": "Hafnað",
+      "cancelled": "Hætt við"
+    },
+    "approval": {
+      "title": "Tólið þarf samþykki",
+      "description": "Líkanið vill keyra {{tool}} á {{server}}. Þetta kall getur breytt gögnum utan þessa spjalls.",
+      "builtinSource": "þessi þjónn",
+      "allowOnce": "Leyfa einu sinni",
+      "allowSession": "Leyfa í þessu spjalli",
+      "allowAlways": "Leyfa alltaf",
+      "deny": "Hafna"
+    }
+  },
+  "promptsPage": {
+    "title": "Leiðbeiningar",
+    "description": "Endurnýtanleg leiðbeiningasnið með týpuðum breytum. Sláðu inn / í spjallreitinn til að setja eina inn.",
+    "newPrompt": "Ný leiðbeining",
+    "editPrompt": "Breyta leiðbeiningu",
+    "empty": "Engar leiðbeiningar enn",
+    "emptyHint": "Leiðbeining er vistað skilaboðasnið. Þegar þú hefur búið eina til setur /slug í spjallreitnum hana inn og spyr um breyturnar sem hún skilgreinir.",
+    "loadFailed": "Ekki tókst að sækja leiðbeiningarnar þínar.",
+    "saved": "Leiðbeining vistuð",
+    "saveFailed": "Ekki tókst að vista leiðbeininguna.",
+    "deleted": "Leiðbeiningu eytt",
+    "deleteFailed": "Ekki tókst að eyða leiðbeiningunni.",
+    "deleteTitle": "Eyða leiðbeiningu",
+    "deleteConfirm": "Eyða \"{{title}}\"? Útgáfusagan hverfur líka.",
+    "exportFailed": "Ekki tókst að flytja leiðbeininguna út.",
+    "imported": "Leiðbeining flutt inn",
+    "importFailed": "Ekki tókst að flytja inn þessa skrá.",
+    "historyFailed": "Ekki tókst að sækja útgáfusöguna.",
+    "rolledBack": "Leiðbeining færð til baka",
+    "rollbackFailed": "Ekki tókst að færa leiðbeininguna til baka.",
+    "versionLabel": "v{{version}}",
+    "updated": "Uppfært {{when}}",
+    "form": {
+      "slug": "Slóðarheiti",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Notað sem /slug í spjallreitnum.",
+      "slugInvalid": "Aðeins lágstafir, tölustafir og bandstrik.",
+      "title": "Titill",
+      "titlePlaceholder": "Vikuskýrsla",
+      "description": "Lýsing",
+      "descriptionPlaceholder": "Til hvers þessi leiðbeining er",
+      "content": "Efni",
+      "contentPlaceholder": "Skrifaðu leiðbeininguna. Settu allt sem á að fylla út síðar innan tvöfaldra slaufusviga.",
+      "contentHint": "Staðgengill er heiti innan tvöfaldra slaufusviga. Skilgreindu hann hér að neðan til að gefa honum merkimiða eða sjálfgefið gildi.",
+      "tags": "Merki",
+      "tagsPlaceholder": "rannsóknir, skrif",
+      "variables": "Breytur",
+      "variablesHint": "Valfrjálst. Skilgreindu staðgengil hér til að gefa honum merkimiða, sjálfgefið gildi eða safn valkosta.",
+      "variableName": "Heiti",
+      "variableType": "Tegund",
+      "variableLabel": "Merkimiði",
+      "variableDefault": "Sjálfgefið",
+      "variableRequired": "Nauðsynleg",
+      "variableOptions": "Valkostir",
+      "variableOptionsPlaceholder": "Valkostir aðskildir með kommu",
+      "addVariable": "Bæta við breytu",
+      "removeVariable": "Fjarlægja breytu"
+    },
+    "variableTypes": {
+      "text": "Texti",
+      "number": "Tala",
+      "select": "Val",
+      "boolean": "Já eða nei"
+    },
+    "history": {
+      "open": "Útgáfusaga",
+      "title": "Saga {{title}}",
+      "subtitle": "Þegar fært er til baka er valin útgáfa vistuð sem ný útgáfa. Engu er skrifað yfir.",
+      "empty": "Engar eldri útgáfur enn.",
+      "current": "Núverandi",
+      "rollback": "Færa til baka",
+      "rollingBack": "Færi til baka..."
+    }
+  },
+  "skillsPage": {
+    "title": "Færni",
+    "description": "Nefnd leiðbeiningasett sem líkanið getur sótt eftir þörfum meðan það vinnur.",
+    "newSkill": "Ný færni",
+    "editSkill": "Breyta færni",
+    "empty": "Engin færni enn",
+    "emptyHint": "Færni er sett af leiðbeiningum sem líkanið sækir aðeins þegar það þarf þær. Nefndu $slug í skilaboðum, eða láttu líkanið sækja hana með tólinu load_skill.",
+    "loadFailed": "Ekki tókst að sækja færnina þína.",
+    "saved": "Færni vistuð",
+    "saveFailed": "Ekki tókst að vista færnina.",
+    "toggleFailed": "Ekki tókst að breyta færninni.",
+    "deleted": "Færni eytt",
+    "deleteFailed": "Ekki tókst að eyða færninni.",
+    "deleteTitle": "Eyða færni",
+    "deleteConfirm": "Eyða \"{{name}}\"? Útgáfusagan hverfur líka.",
+    "exportFailed": "Ekki tókst að flytja færnina út.",
+    "imported": "Færni flutt inn",
+    "importFailed": "Ekki tókst að flytja inn þessa skrá.",
+    "historyFailed": "Ekki tókst að sækja útgáfusöguna.",
+    "rolledBack": "Færni færð til baka",
+    "rollbackFailed": "Ekki tókst að færa færnina til baka.",
+    "versionLabel": "v{{version}}",
+    "updated": "Uppfært {{when}}",
+    "form": {
+      "slug": "Slóðarheiti",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Notað sem $slug þegar þú nefnir færnina.",
+      "slugInvalid": "Aðeins lágstafir, tölustafir og bandstrik.",
+      "name": "Heiti",
+      "namePlaceholder": "Kóðarýni",
+      "description": "Lýsing",
+      "descriptionPlaceholder": "Hvenær á að nota þessa færni",
+      "descriptionHint": "Þetta er lýsingin sem líkanið sér. Skrifaðu hana þannig að líkanið átti sig á hvenær færnin á við án þess að sækja hana.",
+      "instructions": "Leiðbeiningar",
+      "instructionsPlaceholder": "Markdown-leiðbeiningar sem líkanið les þegar það sækir þessa færni.",
+      "instructionsHint": "Sóttar aðeins þegar færnin er notuð, svo lengdin kostar ekkert fram að því.",
+      "enabled": "Virk",
+      "enabledHint": "Óvirk færni helst vistuð en er aldrei boðin líkaninu."
+    },
+    "history": {
+      "open": "Útgáfusaga",
+      "title": "Saga {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Tól",
+    "description": "Tólaþjónar sem líkanið getur kallað á, og samþykkin sem þú hefur veitt þeim.",
+    "approvalNotice": "Tól sem breyta gögnum utan spjallsins biðja alltaf um samþykki, nema þú hafir veitt því tóli varanlegt samþykki eða samþykki fyrir spjallið.",
+    "registerServer": "Skrá þjón",
+    "registerHint": "Libre WebUI les þjóninn einu sinni og festir tólin sem hann býður. Endurlestu þjóninn síðar til að ná í breytingar.",
+    "editServer": "Breyta þjóni",
+    "empty": "Engir tólaþjónar",
+    "emptyHintAdmin": "Skráðu OpenAPI- eða MCP-þjón svo líkanið hafi eitthvað til að kalla á.",
+    "emptyHintUser": "Enginn stjórnandi hefur enn deilt tólaþjónum með þér.",
+    "loadFailed": "Ekki tókst að sækja tólaþjónana.",
+    "saved": "Tólaþjónn vistaður",
+    "saveFailed": "Ekki tókst að vista tólaþjóninn.",
+    "deleted": "Tólaþjóni eytt",
+    "deleteFailed": "Ekki tókst að eyða tólaþjóninum.",
+    "deleteTitle": "Eyða tólaþjóni",
+    "deleteConfirm": "Eyða \"{{name}}\"? Allir missa aðgang að tólum hans.",
+    "refresh": "Endurlesa tól",
+    "refreshed": "Tólin voru lesin aftur frá þjóninum",
+    "refreshFailed": "Ekki tókst að lesa þjóninn.",
+    "toolsLoadFailed": "Ekki tókst að sækja festu tólin.",
+    "overrideFailed": "Ekki tókst að breyta tólinu.",
+    "pinnedTools": "Fest tól",
+    "noPinnedTools": "Þessi þjónn bauð engin tól.",
+    "sideEffect": "Hliðaráhrif",
+    "sideEffectOverride": "Hliðaráhrif",
+    "specRevision": "Útgáfa {{revision}}",
+    "credential": "Persónulegar auðkenningarupplýsingar",
+    "credentialHint": "Geymt dulkóðað og aðeins notað fyrir þín eigin köll á þennan þjón.",
+    "credentialPlaceholder": "Límdu inn tókann þinn",
+    "credentialSet": "Auðkenni skráð",
+    "credentialMissing": "Auðkenni vantar",
+    "credentialSaved": "Auðkenni vistað",
+    "credentialSaveFailed": "Ekki tókst að vista auðkennið.",
+    "credentialRemove": "Fjarlægja",
+    "credentialRemoved": "Auðkenni fjarlægt",
+    "credentialRemoveFailed": "Ekki tókst að fjarlægja auðkennið.",
+    "builtinSource": "Þessi þjónn",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Engin auðkenning",
+      "bearer": "Bearer-tóki",
+      "header": "Sérsniðinn haus"
+    },
+    "accessModes": {
+      "admins-only": "Aðeins stjórnendur",
+      "all-users": "Allir",
+      "granted": "Aðeins þeir sem fengu aðgang"
+    },
+    "form": {
+      "name": "Heiti",
+      "namePlaceholder": "Veður-API",
+      "kind": "Tegund",
+      "description": "Lýsing",
+      "descriptionPlaceholder": "Hvað þessi þjónn gerir",
+      "baseUrl": "Grunnslóð",
+      "specUrl": "Slóð á lýsingu",
+      "specUrlHint": "Valfrjálst. Grunnslóðin er notuð ef reiturinn er tómur.",
+      "authMode": "Auðkenning",
+      "authHeader": "Heiti hauss",
+      "accessMode": "Hverjir mega nota hann",
+      "timeoutMs": "Tímamörk (ms)",
+      "maxResponseBytes": "Hámarkssvar (bæti)",
+      "serverDefault": "Sjálfgefið hjá þjóninum",
+      "enabled": "Virkt",
+      "enabledHint": "Óvirkir þjónar haldast skráðir en eru aldrei boðnir líkaninu."
+    },
+    "approvals": {
+      "title": "Varanleg samþykki",
+      "description": "Tól sem þú leyfðir að keyra án þess að spyrja aftur. Afturkallaðu eitt og það spyr næst.",
+      "empty": "Engin varanleg samþykki.",
+      "revoke": "Afturkalla",
+      "revoked": "Samþykki afturkallað",
+      "revokeFailed": "Ekki tókst að afturkalla samþykkið.",
+      "scope": {
+        "once": "Einu sinni",
+        "session": "Þetta spjall",
+        "always": "Alltaf"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Leiðbeiningasafn"
+    },
+    "skillMenu": {
+      "label": "Færni"
+    },
+    "variables": {
+      "title": "Fylltu út {{title}}",
+      "insert": "Setja inn",
+      "cancel": "Hætta við",
+      "required": "{{name}} er nauðsynlegt"
+    }
   }
 }

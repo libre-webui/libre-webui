@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Registra e invia l’audio a {{provider}} per la trascrizione",
       "webSearchOn": "Ricerca web attiva — le risposte usano risultati in tempo reale",
       "webSearchOff": "Cerca sul web per questo messaggio",
+      "toolsOn": "Strumenti attivi — il modello può chiamare gli strumenti approvati",
+      "toolsOff": "Consenti al modello di chiamare strumenti per questo messaggio",
       "thinkingOn": "Ragionamento attivo ({{level}})",
       "thinkingOff": "Ragiona prima di rispondere"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Esplora",
       "notes": "Note",
       "calendar": "Calendario",
-      "automations": "Automazioni"
+      "automations": "Automazioni",
+      "prompts": "Prompt",
+      "skills": "Competenze",
+      "tools": "Strumenti"
     },
     "toggleSize": "Cambia dimensione barra laterale",
     "expandSidebar": "Espandi barra laterale"
@@ -1319,7 +1324,8 @@
       "basic": "Base",
       "parameters": "Parametri",
       "memory": "Memoria e apprendimento",
-      "advanced": "Avanzato"
+      "advanced": "Avanzato",
+      "bindings": "Collegamenti"
     },
     "basic": {
       "name": "Nome",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Salvataggio fallito"
+    },
+    "bindings": {
+      "toolServers": "Server di strumenti",
+      "toolServersHint": "Server che questa persona può chiamare. Se lasci vuoto vengono offerti tutti i server già raggiungibili dall'utente.",
+      "noToolServers": "Non hai a disposizione nessun server di strumenti.",
+      "builtinTools": "Strumenti integrati",
+      "builtinToolsHint": "Strumenti che il server realizza da sé. Se lasci vuoto vengono offerti tutti.",
+      "noBuiltinTools": "Non ci sono strumenti integrati disponibili.",
+      "builtin": {
+        "web_search": "Ricerca web",
+        "search_documents": "Cerca nei documenti",
+        "load_skill": "Carica competenza"
+      },
+      "skills": "Competenze",
+      "skillsHint": "Competenze che il modello può caricare mentre questa persona è attiva.",
+      "noSkills": "Non hai ancora creato competenze.",
+      "collections": "Raccolte di conoscenza",
+      "collectionsHint": "Raccolte di documenti in cui questa persona può cercare.",
+      "noCollections": "Non hai ancora creato raccolte.",
+      "prompt": "Prompt",
+      "promptHint": "Un prompt con cui avviare ogni nuova chat con questa persona.",
+      "noPrompt": "Nessun prompt",
+      "version": "Revisione dei collegamenti {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Nessun evento di audit registrato finora.",
       "actor": "Autore",
       "target": "Destinazione"
+    },
+    "tools": {
+      "title": "Accesso agli strumenti",
+      "description": "Consenti a tutti di chiamare i server di strumenti. Se è disattivato possono farlo solo gli amministratori.",
+      "saved": "Accesso agli strumenti aggiornato",
+      "saveFailed": "Impossibile aggiornare l'accesso agli strumenti.",
+      "lockedByEnv": "Bloccato da una variabile d'ambiente su questo server."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Chat",
     "newChat": "Nuova chat",
     "work": "Lavoro"
+  },
+  "tools": {
+    "arguments": "Argomenti",
+    "result": "Risultato",
+    "callStatus": {
+      "awaiting_approval": "In attesa di approvazione",
+      "running": "In esecuzione",
+      "succeeded": "Fatto",
+      "failed": "Non riuscita",
+      "denied": "Rifiutata",
+      "cancelled": "Annullata"
+    },
+    "approval": {
+      "title": "Serve l'approvazione dello strumento",
+      "description": "Il modello vuole eseguire {{tool}} su {{server}}. Questa chiamata può modificare dati fuori da questa chat.",
+      "builtinSource": "questo server",
+      "allowOnce": "Consenti una volta",
+      "allowSession": "Consenti in questa chat",
+      "allowAlways": "Consenti sempre",
+      "deny": "Rifiuta"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompt",
+    "description": "Modelli di prompt riutilizzabili con variabili tipizzate. Digita / nella barra della chat per inserirne uno.",
+    "newPrompt": "Nuovo prompt",
+    "editPrompt": "Modifica prompt",
+    "empty": "Nessun prompt",
+    "emptyHint": "Un prompt è un modello di messaggio salvato. Una volta creato, digitando /slug nella barra della chat lo inserisci e ti vengono chieste le variabili che dichiara.",
+    "loadFailed": "Impossibile caricare i tuoi prompt.",
+    "saved": "Prompt salvato",
+    "saveFailed": "Impossibile salvare il prompt.",
+    "deleted": "Prompt eliminato",
+    "deleteFailed": "Impossibile eliminare il prompt.",
+    "deleteTitle": "Elimina prompt",
+    "deleteConfirm": "Eliminare \"{{title}}\"? Sparisce anche la sua cronologia delle versioni.",
+    "exportFailed": "Impossibile esportare il prompt.",
+    "imported": "Prompt importato",
+    "importFailed": "Impossibile importare quel file.",
+    "historyFailed": "Impossibile caricare la cronologia delle versioni.",
+    "rolledBack": "Prompt ripristinato",
+    "rollbackFailed": "Impossibile ripristinare il prompt.",
+    "versionLabel": "v{{version}}",
+    "updated": "Aggiornato {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Si usa come /slug nella barra della chat.",
+      "slugInvalid": "Solo lettere minuscole, cifre e trattini.",
+      "title": "Titolo",
+      "titlePlaceholder": "Report settimanale",
+      "description": "Descrizione",
+      "descriptionPlaceholder": "A cosa serve questo prompt",
+      "content": "Contenuto",
+      "contentPlaceholder": "Scrivi il prompt. Racchiudi tra doppie parentesi graffe tutto ciò che vuoi compilare dopo.",
+      "contentHint": "Un segnaposto è un nome tra doppie parentesi graffe. Dichiaralo qui sotto per dargli un'etichetta o un valore predefinito.",
+      "tags": "Tag",
+      "tagsPlaceholder": "ricerca, scrittura",
+      "variables": "Variabili",
+      "variablesHint": "Facoltativo. Dichiara qui un segnaposto per dargli un'etichetta, un valore predefinito o una serie di scelte.",
+      "variableName": "Nome",
+      "variableType": "Tipo",
+      "variableLabel": "Etichetta",
+      "variableDefault": "Predefinito",
+      "variableRequired": "Obbligatoria",
+      "variableOptions": "Opzioni",
+      "variableOptionsPlaceholder": "Scelte separate da virgole",
+      "addVariable": "Aggiungi variabile",
+      "removeVariable": "Rimuovi variabile"
+    },
+    "variableTypes": {
+      "text": "Testo",
+      "number": "Numero",
+      "select": "Scelta",
+      "boolean": "Sì o no"
+    },
+    "history": {
+      "open": "Cronologia versioni",
+      "title": "Cronologia di {{title}}",
+      "subtitle": "Il ripristino salva la revisione scelta come nuova versione. Non viene sovrascritto nulla.",
+      "empty": "Nessuna versione precedente.",
+      "current": "Attuale",
+      "rollback": "Ripristina",
+      "rollingBack": "Ripristino in corso..."
+    }
+  },
+  "skillsPage": {
+    "title": "Competenze",
+    "description": "Insiemi di istruzioni con un nome che il modello può caricare all'occorrenza mentre lavora.",
+    "newSkill": "Nuova competenza",
+    "editSkill": "Modifica competenza",
+    "empty": "Nessuna competenza",
+    "emptyHint": "Una competenza è un insieme di istruzioni che il modello carica solo quando serve. Cita $slug in un messaggio, oppure lascia che il modello la richiami con lo strumento load_skill.",
+    "loadFailed": "Impossibile caricare le tue competenze.",
+    "saved": "Competenza salvata",
+    "saveFailed": "Impossibile salvare la competenza.",
+    "toggleFailed": "Impossibile modificare la competenza.",
+    "deleted": "Competenza eliminata",
+    "deleteFailed": "Impossibile eliminare la competenza.",
+    "deleteTitle": "Elimina competenza",
+    "deleteConfirm": "Eliminare \"{{name}}\"? Sparisce anche la sua cronologia delle versioni.",
+    "exportFailed": "Impossibile esportare la competenza.",
+    "imported": "Competenza importata",
+    "importFailed": "Impossibile importare quel file.",
+    "historyFailed": "Impossibile caricare la cronologia delle versioni.",
+    "rolledBack": "Competenza ripristinata",
+    "rollbackFailed": "Impossibile ripristinare la competenza.",
+    "versionLabel": "v{{version}}",
+    "updated": "Aggiornata {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Si usa come $slug quando citi la competenza.",
+      "slugInvalid": "Solo lettere minuscole, cifre e trattini.",
+      "name": "Nome",
+      "namePlaceholder": "Revisione del codice",
+      "description": "Descrizione",
+      "descriptionPlaceholder": "Quando usare questa competenza",
+      "descriptionHint": "È il manifesto che vede il modello. Scrivilo in modo che capisca quando la competenza serve senza caricarla.",
+      "instructions": "Istruzioni",
+      "instructionsPlaceholder": "Istruzioni in Markdown che il modello legge quando carica questa competenza.",
+      "instructionsHint": "Vengono caricate solo quando la competenza è in uso, quindi finché non serve la lunghezza non costa nulla.",
+      "enabled": "Abilitata",
+      "enabledHint": "Le competenze disabilitate restano salvate ma non vengono mai offerte al modello."
+    },
+    "history": {
+      "open": "Cronologia versioni",
+      "title": "Cronologia di {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Strumenti",
+    "description": "I server di strumenti che il modello può chiamare e le approvazioni che hai concesso.",
+    "approvalNotice": "Gli strumenti che modificano dati fuori dalla chat chiedono sempre l'approvazione, a meno che tu non abbia concesso a quello strumento un'approvazione permanente o valida per la chat.",
+    "registerServer": "Registra server",
+    "registerHint": "Libre WebUI legge il server una volta e fissa gli strumenti che espone. Aggiorna il server più tardi per recepire le modifiche.",
+    "editServer": "Modifica server",
+    "empty": "Nessun server di strumenti",
+    "emptyHintAdmin": "Registra un server OpenAPI o MCP per dare al modello qualcosa da chiamare.",
+    "emptyHintUser": "Nessun amministratore ha ancora condiviso server di strumenti con te.",
+    "loadFailed": "Impossibile caricare i server di strumenti.",
+    "saved": "Server di strumenti salvato",
+    "saveFailed": "Impossibile salvare il server di strumenti.",
+    "deleted": "Server di strumenti eliminato",
+    "deleteFailed": "Impossibile eliminare il server di strumenti.",
+    "deleteTitle": "Elimina server di strumenti",
+    "deleteConfirm": "Eliminare \"{{name}}\"? Tutti perdono l'accesso ai suoi strumenti.",
+    "refresh": "Aggiorna strumenti",
+    "refreshed": "Strumenti riletti dal server",
+    "refreshFailed": "Impossibile leggere il server.",
+    "toolsLoadFailed": "Impossibile caricare gli strumenti fissati.",
+    "overrideFailed": "Impossibile modificare lo strumento.",
+    "pinnedTools": "Strumenti fissati",
+    "noPinnedTools": "Questo server non ha esposto alcuno strumento.",
+    "sideEffect": "Effetto collaterale",
+    "sideEffectOverride": "Effetto collaterale",
+    "specRevision": "Revisione {{revision}}",
+    "credential": "Credenziale personale",
+    "credentialHint": "Salvata cifrata e usata solo per le tue chiamate a questo server.",
+    "credentialPlaceholder": "Incolla il tuo token",
+    "credentialSet": "Credenziale impostata",
+    "credentialMissing": "Credenziale necessaria",
+    "credentialSaved": "Credenziale salvata",
+    "credentialSaveFailed": "Impossibile salvare la credenziale.",
+    "credentialRemove": "Rimuovi",
+    "credentialRemoved": "Credenziale rimossa",
+    "credentialRemoveFailed": "Impossibile rimuovere la credenziale.",
+    "builtinSource": "Questo server",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Nessuna autenticazione",
+      "bearer": "Token Bearer",
+      "header": "Intestazione personalizzata"
+    },
+    "accessModes": {
+      "admins-only": "Solo amministratori",
+      "all-users": "Tutti",
+      "granted": "Solo chi ha ricevuto l'accesso"
+    },
+    "form": {
+      "name": "Nome",
+      "namePlaceholder": "API meteo",
+      "kind": "Tipo",
+      "description": "Descrizione",
+      "descriptionPlaceholder": "Cosa fa questo server",
+      "baseUrl": "URL di base",
+      "specUrl": "URL della specifica",
+      "specUrlHint": "Facoltativo. Se lasciato vuoto si usa l'URL di base.",
+      "authMode": "Autenticazione",
+      "authHeader": "Nome dell'intestazione",
+      "accessMode": "Chi può usarlo",
+      "timeoutMs": "Timeout (ms)",
+      "maxResponseBytes": "Risposta massima (byte)",
+      "serverDefault": "Valore del server",
+      "enabled": "Abilitato",
+      "enabledHint": "I server disabilitati restano registrati ma non vengono mai offerti al modello."
+    },
+    "approvals": {
+      "title": "Approvazioni permanenti",
+      "description": "Strumenti che hai autorizzato a girare senza chiedere ogni volta. Revocane uno e la prossima volta tornerà a chiedere.",
+      "empty": "Nessuna approvazione permanente.",
+      "revoke": "Revoca",
+      "revoked": "Approvazione revocata",
+      "revokeFailed": "Impossibile revocare l'approvazione.",
+      "scope": {
+        "once": "Una volta",
+        "session": "Questa chat",
+        "always": "Sempre"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Libreria di prompt"
+    },
+    "skillMenu": {
+      "label": "Competenze"
+    },
+    "variables": {
+      "title": "Compila {{title}}",
+      "insert": "Inserisci",
+      "cancel": "Annulla",
+      "required": "{{name}} è obbligatorio"
+    }
   }
 }

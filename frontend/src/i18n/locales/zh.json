@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "录制音频并发送至 {{provider}} 进行转写",
       "webSearchOn": "网页搜索已开启 — 回复将使用实时结果",
       "webSearchOff": "为这条消息搜索网页",
+      "toolsOn": "工具已开启 — 模型可以调用已批准的工具",
+      "toolsOff": "允许模型在这条消息中调用工具",
       "thinkingOn": "思考已开启 ({{level}})",
       "thinkingOff": "回答前先思考"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "探索",
       "notes": "笔记",
       "calendar": "日历",
-      "automations": "自动化"
+      "automations": "自动化",
+      "prompts": "提示词",
+      "skills": "技能",
+      "tools": "工具"
     },
     "toggleSize": "切换侧边栏大小",
     "expandSidebar": "展开侧边栏"
@@ -1319,7 +1324,8 @@
       "basic": "基础",
       "parameters": "参数",
       "memory": "记忆与学习",
-      "advanced": "高级"
+      "advanced": "高级",
+      "bindings": "绑定"
     },
     "basic": {
       "name": "名称",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "保存失败"
+    },
+    "bindings": {
+      "toolServers": "工具服务器",
+      "toolServersHint": "该角色可以调用的服务器。留空则提供用户本来就能访问的所有服务器。",
+      "noToolServers": "你没有可用的工具服务器。",
+      "builtinTools": "内置工具",
+      "builtinToolsHint": "由服务器自身实现的工具。留空则全部提供。",
+      "noBuiltinTools": "没有可用的内置工具。",
+      "builtin": {
+        "web_search": "网络搜索",
+        "search_documents": "搜索文档",
+        "load_skill": "加载技能"
+      },
+      "skills": "技能",
+      "skillsHint": "该角色激活时模型可以加载的技能。",
+      "noSkills": "你还没有创建任何技能。",
+      "collections": "知识集合",
+      "collectionsHint": "该角色可以检索的文档集合。",
+      "noCollections": "你还没有创建任何集合。",
+      "prompt": "提示词",
+      "promptHint": "用这个提示词开启与该角色的每一次新对话。",
+      "noPrompt": "不使用提示词",
+      "version": "绑定修订 {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "尚未记录任何审计事件。",
       "actor": "操作者",
       "target": "目标"
+    },
+    "tools": {
+      "title": "工具访问权限",
+      "description": "允许所有人调用工具服务器。关闭后，只有管理员可以。",
+      "saved": "工具访问权限已更新",
+      "saveFailed": "无法更新工具访问权限。",
+      "lockedByEnv": "已被本服务器上的环境变量锁定。"
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "对话",
     "newChat": "新对话",
     "work": "工作"
+  },
+  "tools": {
+    "arguments": "参数",
+    "result": "结果",
+    "callStatus": {
+      "awaiting_approval": "等待批准",
+      "running": "运行中",
+      "succeeded": "完成",
+      "failed": "失败",
+      "denied": "已拒绝",
+      "cancelled": "已取消"
+    },
+    "approval": {
+      "title": "工具需要批准",
+      "description": "模型想在 {{server}} 上运行 {{tool}}。此调用可能改动本对话之外的数据。",
+      "builtinSource": "本服务器",
+      "allowOnce": "允许一次",
+      "allowSession": "在本对话中允许",
+      "allowAlways": "始终允许",
+      "deny": "拒绝"
+    }
+  },
+  "promptsPage": {
+    "title": "提示词",
+    "description": "可复用的提示词模板，带有类型化变量。在输入框中输入 / 即可插入一个。",
+    "newPrompt": "新建提示词",
+    "editPrompt": "编辑提示词",
+    "empty": "还没有提示词",
+    "emptyHint": "提示词就是保存下来的消息模板。创建之后，在输入框里输入 /slug 就会插入它，并询问它声明的变量。",
+    "loadFailed": "无法加载你的提示词。",
+    "saved": "提示词已保存",
+    "saveFailed": "无法保存提示词。",
+    "deleted": "提示词已删除",
+    "deleteFailed": "无法删除提示词。",
+    "deleteTitle": "删除提示词",
+    "deleteConfirm": "删除“{{title}}”？它的版本历史也会一并移除。",
+    "exportFailed": "无法导出提示词。",
+    "imported": "提示词已导入",
+    "importFailed": "无法导入该文件。",
+    "historyFailed": "无法加载版本历史。",
+    "rolledBack": "提示词已回滚",
+    "rollbackFailed": "无法回滚提示词。",
+    "versionLabel": "v{{version}}",
+    "updated": "更新于 {{when}}",
+    "form": {
+      "slug": "标识",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "在输入框中以 /slug 的形式使用。",
+      "slugInvalid": "只能使用小写字母、数字和连字符。",
+      "title": "标题",
+      "titlePlaceholder": "周报",
+      "description": "描述",
+      "descriptionPlaceholder": "这个提示词用来做什么",
+      "content": "内容",
+      "contentPlaceholder": "写下提示词。把之后要填写的内容放进双大括号里。",
+      "contentHint": "占位符就是写在双大括号里的名称。在下面声明它，就能给它一个标签或默认值。",
+      "tags": "标签",
+      "tagsPlaceholder": "调研, 写作",
+      "variables": "变量",
+      "variablesHint": "可选。在这里声明占位符，可以给它标签、默认值或一组选项。",
+      "variableName": "名称",
+      "variableType": "类型",
+      "variableLabel": "标签",
+      "variableDefault": "默认值",
+      "variableRequired": "必填",
+      "variableOptions": "选项",
+      "variableOptionsPlaceholder": "以逗号分隔的选项",
+      "addVariable": "添加变量",
+      "removeVariable": "移除变量"
+    },
+    "variableTypes": {
+      "text": "文本",
+      "number": "数字",
+      "select": "选择",
+      "boolean": "是或否"
+    },
+    "history": {
+      "open": "版本历史",
+      "title": "{{title}} 的历史",
+      "subtitle": "回滚会把选中的修订保存为新版本，不会覆盖任何内容。",
+      "empty": "还没有更早的版本。",
+      "current": "当前",
+      "rollback": "回滚",
+      "rollingBack": "正在回滚..."
+    }
+  },
+  "skillsPage": {
+    "title": "技能",
+    "description": "带名称的指令集，模型工作时可以按需加载。",
+    "newSkill": "新建技能",
+    "editSkill": "编辑技能",
+    "empty": "还没有技能",
+    "emptyHint": "技能是一组指令，模型只在需要时才加载。在消息中提到 $slug，或者让模型通过 load_skill 工具取用它。",
+    "loadFailed": "无法加载你的技能。",
+    "saved": "技能已保存",
+    "saveFailed": "无法保存技能。",
+    "toggleFailed": "无法修改技能。",
+    "deleted": "技能已删除",
+    "deleteFailed": "无法删除技能。",
+    "deleteTitle": "删除技能",
+    "deleteConfirm": "删除“{{name}}”？它的版本历史也会一并移除。",
+    "exportFailed": "无法导出技能。",
+    "imported": "技能已导入",
+    "importFailed": "无法导入该文件。",
+    "historyFailed": "无法加载版本历史。",
+    "rolledBack": "技能已回滚",
+    "rollbackFailed": "无法回滚技能。",
+    "versionLabel": "v{{version}}",
+    "updated": "更新于 {{when}}",
+    "form": {
+      "slug": "标识",
+      "slugPlaceholder": "code-review",
+      "slugHint": "提到这个技能时以 $slug 的形式使用。",
+      "slugInvalid": "只能使用小写字母、数字和连字符。",
+      "name": "名称",
+      "namePlaceholder": "代码评审",
+      "description": "描述",
+      "descriptionPlaceholder": "什么时候使用这个技能",
+      "descriptionHint": "这是模型能看到的清单。写清楚一点，让模型不用加载就知道这个技能何时适用。",
+      "instructions": "指令",
+      "instructionsPlaceholder": "模型加载这个技能后会读取的 Markdown 指令。",
+      "instructionsHint": "只有用到这个技能时才会加载，所以在那之前写多长都不占成本。",
+      "enabled": "已启用",
+      "enabledHint": "停用的技能仍会保存，但绝不会提供给模型。"
+    },
+    "history": {
+      "open": "版本历史",
+      "title": "{{name}} 的历史"
+    }
+  },
+  "toolsPage": {
+    "title": "工具",
+    "description": "模型可以调用的工具服务器，以及你授予它们的批准。",
+    "approvalNotice": "会改动对话之外数据的工具始终会请求批准，除非你已经给该工具授予了始终批准或本对话内的批准。",
+    "registerServer": "注册服务器",
+    "registerHint": "Libre WebUI 会读取服务器一次，并固定它公开的工具。之后刷新服务器即可获取变更。",
+    "editServer": "编辑服务器",
+    "empty": "没有工具服务器",
+    "emptyHintAdmin": "注册一个 OpenAPI 或 MCP 服务器，让模型有东西可以调用。",
+    "emptyHintUser": "管理员还没有向你共享任何工具服务器。",
+    "loadFailed": "无法加载工具服务器。",
+    "saved": "工具服务器已保存",
+    "saveFailed": "无法保存工具服务器。",
+    "deleted": "工具服务器已删除",
+    "deleteFailed": "无法删除工具服务器。",
+    "deleteTitle": "删除工具服务器",
+    "deleteConfirm": "删除“{{name}}”？所有人都会失去对它工具的访问权限。",
+    "refresh": "刷新工具",
+    "refreshed": "已从服务器重新读取工具",
+    "refreshFailed": "无法读取该服务器。",
+    "toolsLoadFailed": "无法加载已固定的工具。",
+    "overrideFailed": "无法修改该工具。",
+    "pinnedTools": "已固定的工具",
+    "noPinnedTools": "该服务器没有公开任何工具。",
+    "sideEffect": "副作用",
+    "sideEffectOverride": "副作用",
+    "specRevision": "修订 {{revision}}",
+    "credential": "个人凭据",
+    "credentialHint": "加密存储，仅用于你自己对该服务器的调用。",
+    "credentialPlaceholder": "粘贴你的令牌",
+    "credentialSet": "凭据已设置",
+    "credentialMissing": "需要凭据",
+    "credentialSaved": "凭据已保存",
+    "credentialSaveFailed": "无法保存凭据。",
+    "credentialRemove": "移除",
+    "credentialRemoved": "凭据已移除",
+    "credentialRemoveFailed": "无法移除凭据。",
+    "builtinSource": "本服务器",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "无需认证",
+      "bearer": "Bearer 令牌",
+      "header": "自定义请求头"
+    },
+    "accessModes": {
+      "admins-only": "仅管理员",
+      "all-users": "所有人",
+      "granted": "仅获得授权的人"
+    },
+    "form": {
+      "name": "名称",
+      "namePlaceholder": "天气 API",
+      "kind": "类型",
+      "description": "描述",
+      "descriptionPlaceholder": "这个服务器做什么",
+      "baseUrl": "基础 URL",
+      "specUrl": "规范 URL",
+      "specUrlHint": "可选。留空时使用基础 URL。",
+      "authMode": "认证",
+      "authHeader": "请求头名称",
+      "accessMode": "谁可以使用",
+      "timeoutMs": "超时（毫秒）",
+      "maxResponseBytes": "最大响应（字节）",
+      "serverDefault": "服务器默认值",
+      "enabled": "已启用",
+      "enabledHint": "停用的服务器仍会保留注册，但绝不会提供给模型。"
+    },
+    "approvals": {
+      "title": "长期批准",
+      "description": "你允许其无需再次询问就运行的工具。撤销之后，下次它会重新询问。",
+      "empty": "没有长期批准。",
+      "revoke": "撤销",
+      "revoked": "批准已撤销",
+      "revokeFailed": "无法撤销该批准。",
+      "scope": {
+        "once": "一次",
+        "session": "本对话",
+        "always": "始终"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "提示词库"
+    },
+    "skillMenu": {
+      "label": "技能"
+    },
+    "variables": {
+      "title": "填写 {{title}}",
+      "insert": "插入",
+      "cancel": "取消",
+      "required": "{{name}} 为必填项"
+    }
   }
 }

@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Audio opnemen en naar {{provider}} sturen voor transcriptie",
       "webSearchOn": "Webzoeken aan — antwoorden gebruiken live resultaten",
       "webSearchOff": "Zoek op het web voor dit bericht",
+      "toolsOn": "Gereedschappen aan — het model mag goedgekeurde gereedschappen aanroepen",
+      "toolsOff": "Het model gereedschappen laten aanroepen voor dit bericht",
       "thinkingOn": "Nadenken aan ({{level}})",
       "thinkingOff": "Nadenken voor het antwoord"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Verkennen",
       "notes": "Notities",
       "calendar": "Kalender",
-      "automations": "Automatiseringen"
+      "automations": "Automatiseringen",
+      "prompts": "Prompts",
+      "skills": "Vaardigheden",
+      "tools": "Gereedschappen"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
     "expandSidebar": "Zijbalk uitvouwen"
@@ -1319,7 +1324,8 @@
       "basic": "Basis",
       "parameters": "Parameters",
       "memory": "Geheugen & Leren",
-      "advanced": "Geavanceerd"
+      "advanced": "Geavanceerd",
+      "bindings": "Koppelingen"
     },
     "basic": {
       "name": "Naam",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Opslaan mislukt"
+    },
+    "bindings": {
+      "toolServers": "Gereedschapsservers",
+      "toolServersHint": "Servers die deze persona mag aanroepen. Leeg laten betekent: elke server die de gebruiker toch al kan bereiken.",
+      "noToolServers": "Er zijn geen gereedschapsservers voor je beschikbaar.",
+      "builtinTools": "Ingebouwde gereedschappen",
+      "builtinToolsHint": "Gereedschappen die de server zelf uitvoert. Leeg laten betekent: ze worden allemaal aangeboden.",
+      "noBuiltinTools": "Er zijn geen ingebouwde gereedschappen beschikbaar.",
+      "builtin": {
+        "web_search": "Zoeken op het web",
+        "search_documents": "Documenten doorzoeken",
+        "load_skill": "Vaardigheid laden"
+      },
+      "skills": "Vaardigheden",
+      "skillsHint": "Vaardigheden die het model mag laden zolang deze persona actief is.",
+      "noSkills": "Je hebt nog geen vaardigheden gemaakt.",
+      "collections": "Kenniscollecties",
+      "collectionsHint": "Documentcollecties die deze persona kan doorzoeken.",
+      "noCollections": "Je hebt nog geen collecties gemaakt.",
+      "prompt": "Prompt",
+      "promptHint": "Een prompt waarmee elke nieuwe chat met deze persona begint.",
+      "noPrompt": "Geen prompt",
+      "version": "Koppelingsrevisie {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Nog geen auditgebeurtenissen vastgelegd.",
       "actor": "Uitvoerder",
       "target": "Doel"
+    },
+    "tools": {
+      "title": "Gereedschapstoegang",
+      "description": "Iedereen toestaan gereedschapsservers aan te roepen. Staat dit uit, dan mogen alleen beheerders dat.",
+      "saved": "Gereedschapstoegang bijgewerkt",
+      "saveFailed": "De gereedschapstoegang kon niet worden bijgewerkt.",
+      "lockedByEnv": "Vergrendeld door een omgevingsvariabele op deze server."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Chat",
     "newChat": "Nieuwe chat",
     "work": "Werk"
+  },
+  "tools": {
+    "arguments": "Argumenten",
+    "result": "Resultaat",
+    "callStatus": {
+      "awaiting_approval": "Wacht op goedkeuring",
+      "running": "Bezig",
+      "succeeded": "Klaar",
+      "failed": "Mislukt",
+      "denied": "Geweigerd",
+      "cancelled": "Geannuleerd"
+    },
+    "approval": {
+      "title": "Gereedschap heeft goedkeuring nodig",
+      "description": "Het model wil {{tool}} uitvoeren op {{server}}. Deze aanroep kan gegevens buiten deze chat wijzigen.",
+      "builtinSource": "deze server",
+      "allowOnce": "Eén keer toestaan",
+      "allowSession": "Toestaan in deze chat",
+      "allowAlways": "Altijd toestaan",
+      "deny": "Weigeren"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompts",
+    "description": "Herbruikbare promptsjablonen met getypeerde variabelen. Typ / in het chatveld om er een in te voegen.",
+    "newPrompt": "Nieuwe prompt",
+    "editPrompt": "Prompt bewerken",
+    "empty": "Nog geen prompts",
+    "emptyHint": "Een prompt is een opgeslagen berichtsjabloon. Zodra je er een hebt gemaakt, voegt /slug in het chatveld hem in en vraagt om de variabelen die hij declareert.",
+    "loadFailed": "Je prompts konden niet worden geladen.",
+    "saved": "Prompt opgeslagen",
+    "saveFailed": "De prompt kon niet worden opgeslagen.",
+    "deleted": "Prompt verwijderd",
+    "deleteFailed": "De prompt kon niet worden verwijderd.",
+    "deleteTitle": "Prompt verwijderen",
+    "deleteConfirm": "\"{{title}}\" verwijderen? Ook de versiegeschiedenis verdwijnt.",
+    "exportFailed": "De prompt kon niet worden geëxporteerd.",
+    "imported": "Prompt geïmporteerd",
+    "importFailed": "Dat bestand kon niet worden geïmporteerd.",
+    "historyFailed": "De versiegeschiedenis kon niet worden geladen.",
+    "rolledBack": "Prompt teruggezet",
+    "rollbackFailed": "De prompt kon niet worden teruggezet.",
+    "versionLabel": "v{{version}}",
+    "updated": "Bijgewerkt {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Wordt gebruikt als /slug in het chatveld.",
+      "slugInvalid": "Alleen kleine letters, cijfers en koppeltekens.",
+      "title": "Titel",
+      "titlePlaceholder": "Weekrapport",
+      "description": "Omschrijving",
+      "descriptionPlaceholder": "Waar deze prompt voor is",
+      "content": "Inhoud",
+      "contentPlaceholder": "Schrijf de prompt. Zet alles wat je later wilt invullen tussen dubbele accolades.",
+      "contentHint": "Een placeholder is een naam tussen dubbele accolades. Declareer hem hieronder om hem een label of standaardwaarde te geven.",
+      "tags": "Tags",
+      "tagsPlaceholder": "onderzoek, schrijven",
+      "variables": "Variabelen",
+      "variablesHint": "Optioneel. Declareer hier een placeholder om hem een label, een standaardwaarde of een lijst met keuzes te geven.",
+      "variableName": "Naam",
+      "variableType": "Type",
+      "variableLabel": "Label",
+      "variableDefault": "Standaard",
+      "variableRequired": "Verplicht",
+      "variableOptions": "Opties",
+      "variableOptionsPlaceholder": "Keuzes gescheiden door komma's",
+      "addVariable": "Variabele toevoegen",
+      "removeVariable": "Variabele verwijderen"
+    },
+    "variableTypes": {
+      "text": "Tekst",
+      "number": "Getal",
+      "select": "Keuze",
+      "boolean": "Ja of nee"
+    },
+    "history": {
+      "open": "Versiegeschiedenis",
+      "title": "Geschiedenis van {{title}}",
+      "subtitle": "Terugzetten bewaart de gekozen revisie als nieuwe versie. Er wordt niets overschreven.",
+      "empty": "Nog geen eerdere versies.",
+      "current": "Huidig",
+      "rollback": "Terugzetten",
+      "rollingBack": "Bezig met terugzetten..."
+    }
+  },
+  "skillsPage": {
+    "title": "Vaardigheden",
+    "description": "Instructiesets met een naam die het model tijdens het werk kan laden wanneer nodig.",
+    "newSkill": "Nieuwe vaardigheid",
+    "editSkill": "Vaardigheid bewerken",
+    "empty": "Nog geen vaardigheden",
+    "emptyHint": "Een vaardigheid is een set instructies die het model alleen laadt wanneer het ze nodig heeft. Noem $slug in een bericht, of laat het model ernaar grijpen via het gereedschap load_skill.",
+    "loadFailed": "Je vaardigheden konden niet worden geladen.",
+    "saved": "Vaardigheid opgeslagen",
+    "saveFailed": "De vaardigheid kon niet worden opgeslagen.",
+    "toggleFailed": "De vaardigheid kon niet worden gewijzigd.",
+    "deleted": "Vaardigheid verwijderd",
+    "deleteFailed": "De vaardigheid kon niet worden verwijderd.",
+    "deleteTitle": "Vaardigheid verwijderen",
+    "deleteConfirm": "\"{{name}}\" verwijderen? Ook de versiegeschiedenis verdwijnt.",
+    "exportFailed": "De vaardigheid kon niet worden geëxporteerd.",
+    "imported": "Vaardigheid geïmporteerd",
+    "importFailed": "Dat bestand kon niet worden geïmporteerd.",
+    "historyFailed": "De versiegeschiedenis kon niet worden geladen.",
+    "rolledBack": "Vaardigheid teruggezet",
+    "rollbackFailed": "De vaardigheid kon niet worden teruggezet.",
+    "versionLabel": "v{{version}}",
+    "updated": "Bijgewerkt {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Wordt gebruikt als $slug wanneer je de vaardigheid noemt.",
+      "slugInvalid": "Alleen kleine letters, cijfers en koppeltekens.",
+      "name": "Naam",
+      "namePlaceholder": "Codereview",
+      "description": "Omschrijving",
+      "descriptionPlaceholder": "Wanneer je deze vaardigheid gebruikt",
+      "descriptionHint": "Dit is het manifest dat het model ziet. Schrijf het zo dat het model zonder laden weet wanneer de vaardigheid past.",
+      "instructions": "Instructies",
+      "instructionsPlaceholder": "Markdown-instructies die het model leest zodra het deze vaardigheid laadt.",
+      "instructionsHint": "Wordt alleen geladen wanneer de vaardigheid wordt gebruikt, dus lengte kost tot dan niets.",
+      "enabled": "Ingeschakeld",
+      "enabledHint": "Uitgeschakelde vaardigheden blijven bewaard, maar worden nooit aan het model aangeboden."
+    },
+    "history": {
+      "open": "Versiegeschiedenis",
+      "title": "Geschiedenis van {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Gereedschappen",
+    "description": "Gereedschapsservers die het model kan aanroepen, en de goedkeuringen die je hebt gegeven.",
+    "approvalNotice": "Gereedschappen die gegevens buiten de chat wijzigen vragen altijd om goedkeuring, tenzij je dat gereedschap een blijvende of chatbrede goedkeuring hebt gegeven.",
+    "registerServer": "Server registreren",
+    "registerHint": "Libre WebUI leest de server één keer uit en legt de aangeboden gereedschappen vast. Ververs de server later om wijzigingen op te halen.",
+    "editServer": "Server bewerken",
+    "empty": "Geen gereedschapsservers",
+    "emptyHintAdmin": "Registreer een OpenAPI- of MCP-server zodat het model iets heeft om aan te roepen.",
+    "emptyHintUser": "Een beheerder heeft nog geen gereedschapsservers met je gedeeld.",
+    "loadFailed": "De gereedschapsservers konden niet worden geladen.",
+    "saved": "Gereedschapsserver opgeslagen",
+    "saveFailed": "De gereedschapsserver kon niet worden opgeslagen.",
+    "deleted": "Gereedschapsserver verwijderd",
+    "deleteFailed": "De gereedschapsserver kon niet worden verwijderd.",
+    "deleteTitle": "Gereedschapsserver verwijderen",
+    "deleteConfirm": "\"{{name}}\" verwijderen? Iedereen verliest toegang tot de gereedschappen ervan.",
+    "refresh": "Gereedschappen verversen",
+    "refreshed": "Gereedschappen opnieuw van de server gelezen",
+    "refreshFailed": "De server kon niet worden gelezen.",
+    "toolsLoadFailed": "De vastgezette gereedschappen konden niet worden geladen.",
+    "overrideFailed": "Het gereedschap kon niet worden gewijzigd.",
+    "pinnedTools": "Vastgezette gereedschappen",
+    "noPinnedTools": "Deze server bood geen gereedschappen aan.",
+    "sideEffect": "Bijwerking",
+    "sideEffectOverride": "Bijwerking",
+    "specRevision": "Revisie {{revision}}",
+    "credential": "Persoonlijke inloggegevens",
+    "credentialHint": "Versleuteld opgeslagen en alleen gebruikt voor je eigen aanroepen naar deze server.",
+    "credentialPlaceholder": "Plak je token",
+    "credentialSet": "Inloggegevens ingesteld",
+    "credentialMissing": "Inloggegevens nodig",
+    "credentialSaved": "Inloggegevens opgeslagen",
+    "credentialSaveFailed": "De inloggegevens konden niet worden opgeslagen.",
+    "credentialRemove": "Verwijderen",
+    "credentialRemoved": "Inloggegevens verwijderd",
+    "credentialRemoveFailed": "De inloggegevens konden niet worden verwijderd.",
+    "builtinSource": "Deze server",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Geen authenticatie",
+      "bearer": "Bearer-token",
+      "header": "Eigen header"
+    },
+    "accessModes": {
+      "admins-only": "Alleen beheerders",
+      "all-users": "Iedereen",
+      "granted": "Alleen wie toegang heeft gekregen"
+    },
+    "form": {
+      "name": "Naam",
+      "namePlaceholder": "Weer-API",
+      "kind": "Soort",
+      "description": "Omschrijving",
+      "descriptionPlaceholder": "Wat deze server doet",
+      "baseUrl": "Basis-URL",
+      "specUrl": "Spec-URL",
+      "specUrlHint": "Optioneel. Leeg laten betekent: de basis-URL wordt gebruikt.",
+      "authMode": "Authenticatie",
+      "authHeader": "Headernaam",
+      "accessMode": "Wie het mag gebruiken",
+      "timeoutMs": "Time-out (ms)",
+      "maxResponseBytes": "Max. antwoord (bytes)",
+      "serverDefault": "Standaard van de server",
+      "enabled": "Ingeschakeld",
+      "enabledHint": "Uitgeschakelde servers blijven geregistreerd, maar worden nooit aan het model aangeboden."
+    },
+    "approvals": {
+      "title": "Blijvende goedkeuringen",
+      "description": "Gereedschappen die zonder nieuwe vraag mogen draaien. Trek er een in en de volgende keer wordt het weer gevraagd.",
+      "empty": "Geen blijvende goedkeuringen.",
+      "revoke": "Intrekken",
+      "revoked": "Goedkeuring ingetrokken",
+      "revokeFailed": "De goedkeuring kon niet worden ingetrokken.",
+      "scope": {
+        "once": "Eén keer",
+        "session": "Deze chat",
+        "always": "Altijd"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Promptbibliotheek"
+    },
+    "skillMenu": {
+      "label": "Vaardigheden"
+    },
+    "variables": {
+      "title": "Vul {{title}} in",
+      "insert": "Invoegen",
+      "cancel": "Annuleren",
+      "required": "{{name}} is verplicht"
+    }
   }
 }

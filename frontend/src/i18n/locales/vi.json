@@ -271,6 +271,8 @@
       "providerTranscriptionDisclosure": "Ghi âm và gửi âm thanh đến {{provider}} để chuyển thành văn bản",
       "webSearchOn": "Tìm kiếm web đang bật — trả lời dùng kết quả trực tiếp",
       "webSearchOff": "Tìm trên web cho tin nhắn này",
+      "toolsOn": "Công cụ đang bật — mô hình có thể gọi các công cụ đã được phê duyệt",
+      "toolsOff": "Cho phép mô hình gọi công cụ trong tin nhắn này",
       "thinkingOn": "Suy luận đang bật ({{level}})",
       "thinkingOff": "Suy luận trước khi trả lời"
     },
@@ -435,7 +437,10 @@
       "exploreLabel": "Khám phá",
       "notes": "Ghi chú",
       "calendar": "Lịch",
-      "automations": "Tự động hóa"
+      "automations": "Tự động hóa",
+      "prompts": "Prompt",
+      "skills": "Kỹ năng",
+      "tools": "Công cụ"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
     "expandSidebar": "Mở rộng thanh bên"
@@ -1319,7 +1324,8 @@
       "basic": "Cơ bản",
       "parameters": "Tham số",
       "memory": "Bộ nhớ & Học tập",
-      "advanced": "Nâng cao"
+      "advanced": "Nâng cao",
+      "bindings": "Ràng buộc"
     },
     "basic": {
       "name": "Tên",
@@ -1410,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Không thể lưu"
+    },
+    "bindings": {
+      "toolServers": "Máy chủ công cụ",
+      "toolServersHint": "Các máy chủ persona này được gọi. Để trống thì mọi máy chủ mà người dùng vốn đã truy cập được đều khả dụng.",
+      "noToolServers": "Bạn không có máy chủ công cụ nào khả dụng.",
+      "builtinTools": "Công cụ tích hợp",
+      "builtinToolsHint": "Các công cụ do chính máy chủ đảm nhiệm. Để trống thì tất cả đều khả dụng.",
+      "noBuiltinTools": "Không có công cụ tích hợp nào khả dụng.",
+      "builtin": {
+        "web_search": "Tìm kiếm web",
+        "search_documents": "Tìm trong tài liệu",
+        "load_skill": "Nạp kỹ năng"
+      },
+      "skills": "Kỹ năng",
+      "skillsHint": "Các kỹ năng mô hình được nạp khi persona này đang hoạt động.",
+      "noSkills": "Bạn chưa tạo kỹ năng nào.",
+      "collections": "Bộ sưu tập kiến thức",
+      "collectionsHint": "Các bộ sưu tập tài liệu mà persona này có thể tìm kiếm.",
+      "noCollections": "Bạn chưa tạo bộ sưu tập nào.",
+      "prompt": "Prompt",
+      "promptHint": "Một prompt để mở đầu mọi cuộc trò chuyện mới với persona này.",
+      "noPrompt": "Không có prompt",
+      "version": "Bản sửa đổi ràng buộc {{version}}"
     }
   },
   "personaCard": {
@@ -1588,6 +1617,13 @@
       "empty": "Chưa có sự kiện kiểm tra nào được ghi lại.",
       "actor": "Người thực hiện",
       "target": "Đối tượng"
+    },
+    "tools": {
+      "title": "Quyền dùng công cụ",
+      "description": "Cho phép mọi người gọi máy chủ công cụ. Khi tắt, chỉ quản trị viên mới gọi được.",
+      "saved": "Đã cập nhật quyền dùng công cụ",
+      "saveFailed": "Không cập nhật được quyền dùng công cụ.",
+      "lockedByEnv": "Bị khóa bởi một biến môi trường trên máy chủ này."
     }
   },
   "usageAnalytics": {
@@ -2614,5 +2650,232 @@
     "chat": "Trò chuyện",
     "newChat": "Cuộc trò chuyện mới",
     "work": "Công việc"
+  },
+  "tools": {
+    "arguments": "Tham số",
+    "result": "Kết quả",
+    "callStatus": {
+      "awaiting_approval": "Đang chờ phê duyệt",
+      "running": "Đang chạy",
+      "succeeded": "Xong",
+      "failed": "Thất bại",
+      "denied": "Đã từ chối",
+      "cancelled": "Đã hủy"
+    },
+    "approval": {
+      "title": "Công cụ cần được phê duyệt",
+      "description": "Mô hình muốn chạy {{tool}} trên {{server}}. Lệnh gọi này có thể thay đổi dữ liệu bên ngoài cuộc trò chuyện.",
+      "builtinSource": "máy chủ này",
+      "allowOnce": "Cho phép một lần",
+      "allowSession": "Cho phép trong cuộc trò chuyện này",
+      "allowAlways": "Luôn cho phép",
+      "deny": "Từ chối"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompt",
+    "description": "Mẫu prompt dùng lại được với biến có kiểu. Gõ / trong ô soạn tin để chèn một mẫu.",
+    "newPrompt": "Prompt mới",
+    "editPrompt": "Sửa prompt",
+    "empty": "Chưa có prompt nào",
+    "emptyHint": "Prompt là mẫu tin nhắn đã lưu. Sau khi bạn tạo một mẫu, gõ /slug trong ô soạn tin sẽ chèn nó và hỏi các biến mà nó khai báo.",
+    "loadFailed": "Không tải được các prompt của bạn.",
+    "saved": "Đã lưu prompt",
+    "saveFailed": "Không lưu được prompt.",
+    "deleted": "Đã xóa prompt",
+    "deleteFailed": "Không xóa được prompt.",
+    "deleteTitle": "Xóa prompt",
+    "deleteConfirm": "Xóa \"{{title}}\"? Lịch sử phiên bản của nó cũng mất theo.",
+    "exportFailed": "Không xuất được prompt.",
+    "imported": "Đã nhập prompt",
+    "importFailed": "Không nhập được tệp đó.",
+    "historyFailed": "Không tải được lịch sử phiên bản.",
+    "rolledBack": "Đã khôi phục prompt",
+    "rollbackFailed": "Không khôi phục được prompt.",
+    "versionLabel": "v{{version}}",
+    "updated": "Cập nhật {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Dùng dưới dạng /slug trong ô soạn tin.",
+      "slugInvalid": "Chỉ dùng chữ thường, chữ số và dấu gạch ngang.",
+      "title": "Tiêu đề",
+      "titlePlaceholder": "Báo cáo tuần",
+      "description": "Mô tả",
+      "descriptionPlaceholder": "Prompt này dùng để làm gì",
+      "content": "Nội dung",
+      "contentPlaceholder": "Viết prompt. Bọc mọi thứ bạn muốn điền sau này trong cặp ngoặc nhọn kép.",
+      "contentHint": "Chỗ giữ chỗ là một tên đặt trong cặp ngoặc nhọn kép. Khai báo bên dưới để đặt nhãn hoặc giá trị mặc định cho nó.",
+      "tags": "Thẻ",
+      "tagsPlaceholder": "nghiên cứu, viết lách",
+      "variables": "Biến",
+      "variablesHint": "Không bắt buộc. Khai báo chỗ giữ chỗ ở đây để đặt nhãn, giá trị mặc định hoặc danh sách lựa chọn.",
+      "variableName": "Tên",
+      "variableType": "Kiểu",
+      "variableLabel": "Nhãn",
+      "variableDefault": "Mặc định",
+      "variableRequired": "Bắt buộc",
+      "variableOptions": "Lựa chọn",
+      "variableOptionsPlaceholder": "Các lựa chọn cách nhau bằng dấu phẩy",
+      "addVariable": "Thêm biến",
+      "removeVariable": "Xóa biến"
+    },
+    "variableTypes": {
+      "text": "Văn bản",
+      "number": "Số",
+      "select": "Lựa chọn",
+      "boolean": "Có hoặc không"
+    },
+    "history": {
+      "open": "Lịch sử phiên bản",
+      "title": "Lịch sử của {{title}}",
+      "subtitle": "Khôi phục sẽ lưu bản sửa đổi bạn chọn thành một phiên bản mới. Không có gì bị ghi đè.",
+      "empty": "Chưa có phiên bản cũ hơn.",
+      "current": "Hiện tại",
+      "rollback": "Khôi phục",
+      "rollingBack": "Đang khôi phục..."
+    }
+  },
+  "skillsPage": {
+    "title": "Kỹ năng",
+    "description": "Các bộ hướng dẫn có tên mà mô hình có thể nạp khi cần trong lúc làm việc.",
+    "newSkill": "Kỹ năng mới",
+    "editSkill": "Sửa kỹ năng",
+    "empty": "Chưa có kỹ năng nào",
+    "emptyHint": "Kỹ năng là một bộ hướng dẫn mà mô hình chỉ nạp khi cần đến. Nhắc $slug trong tin nhắn, hoặc để mô hình tự lấy qua công cụ load_skill.",
+    "loadFailed": "Không tải được các kỹ năng của bạn.",
+    "saved": "Đã lưu kỹ năng",
+    "saveFailed": "Không lưu được kỹ năng.",
+    "toggleFailed": "Không thay đổi được kỹ năng.",
+    "deleted": "Đã xóa kỹ năng",
+    "deleteFailed": "Không xóa được kỹ năng.",
+    "deleteTitle": "Xóa kỹ năng",
+    "deleteConfirm": "Xóa \"{{name}}\"? Lịch sử phiên bản của nó cũng mất theo.",
+    "exportFailed": "Không xuất được kỹ năng.",
+    "imported": "Đã nhập kỹ năng",
+    "importFailed": "Không nhập được tệp đó.",
+    "historyFailed": "Không tải được lịch sử phiên bản.",
+    "rolledBack": "Đã khôi phục kỹ năng",
+    "rollbackFailed": "Không khôi phục được kỹ năng.",
+    "versionLabel": "v{{version}}",
+    "updated": "Cập nhật {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Dùng dưới dạng $slug khi bạn nhắc đến kỹ năng.",
+      "slugInvalid": "Chỉ dùng chữ thường, chữ số và dấu gạch ngang.",
+      "name": "Tên",
+      "namePlaceholder": "Rà soát mã nguồn",
+      "description": "Mô tả",
+      "descriptionPlaceholder": "Khi nào dùng kỹ năng này",
+      "descriptionHint": "Đây là bản kê khai mà mô hình nhìn thấy. Hãy viết sao cho mô hình biết khi nào kỹ năng phù hợp mà không cần nạp nó.",
+      "instructions": "Hướng dẫn",
+      "instructionsPlaceholder": "Hướng dẫn dạng Markdown mà mô hình đọc sau khi nạp kỹ năng này.",
+      "instructionsHint": "Chỉ được nạp khi kỹ năng được dùng, nên độ dài ở đây không tốn gì cho tới lúc đó.",
+      "enabled": "Đã bật",
+      "enabledHint": "Kỹ năng đã tắt vẫn được lưu nhưng không bao giờ được đưa cho mô hình."
+    },
+    "history": {
+      "open": "Lịch sử phiên bản",
+      "title": "Lịch sử của {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Công cụ",
+    "description": "Các máy chủ công cụ mà mô hình có thể gọi, và những phê duyệt bạn đã cấp cho chúng.",
+    "approvalNotice": "Các công cụ làm thay đổi dữ liệu bên ngoài cuộc trò chuyện luôn hỏi phê duyệt, trừ khi bạn đã cấp cho công cụ đó phê duyệt vĩnh viễn hoặc phê duyệt cho cuộc trò chuyện.",
+    "registerServer": "Đăng ký máy chủ",
+    "registerHint": "Libre WebUI đọc máy chủ một lần và ghim lại các công cụ mà nó cung cấp. Làm mới máy chủ sau này để cập nhật thay đổi.",
+    "editServer": "Sửa máy chủ",
+    "empty": "Không có máy chủ công cụ",
+    "emptyHintAdmin": "Đăng ký một máy chủ OpenAPI hoặc MCP để mô hình có thứ để gọi.",
+    "emptyHintUser": "Quản trị viên chưa chia sẻ máy chủ công cụ nào với bạn.",
+    "loadFailed": "Không tải được các máy chủ công cụ.",
+    "saved": "Đã lưu máy chủ công cụ",
+    "saveFailed": "Không lưu được máy chủ công cụ.",
+    "deleted": "Đã xóa máy chủ công cụ",
+    "deleteFailed": "Không xóa được máy chủ công cụ.",
+    "deleteTitle": "Xóa máy chủ công cụ",
+    "deleteConfirm": "Xóa \"{{name}}\"? Mọi người sẽ mất quyền dùng các công cụ của nó.",
+    "refresh": "Làm mới công cụ",
+    "refreshed": "Đã đọc lại công cụ từ máy chủ",
+    "refreshFailed": "Không đọc được máy chủ.",
+    "toolsLoadFailed": "Không tải được các công cụ đã ghim.",
+    "overrideFailed": "Không thay đổi được công cụ.",
+    "pinnedTools": "Công cụ đã ghim",
+    "noPinnedTools": "Máy chủ này không cung cấp công cụ nào.",
+    "sideEffect": "Tác dụng phụ",
+    "sideEffectOverride": "Tác dụng phụ",
+    "specRevision": "Bản sửa đổi {{revision}}",
+    "credential": "Thông tin xác thực cá nhân",
+    "credentialHint": "Được lưu mã hóa và chỉ dùng cho các lệnh gọi của riêng bạn tới máy chủ này.",
+    "credentialPlaceholder": "Dán token của bạn",
+    "credentialSet": "Đã đặt thông tin xác thực",
+    "credentialMissing": "Cần thông tin xác thực",
+    "credentialSaved": "Đã lưu thông tin xác thực",
+    "credentialSaveFailed": "Không lưu được thông tin xác thực.",
+    "credentialRemove": "Xóa",
+    "credentialRemoved": "Đã xóa thông tin xác thực",
+    "credentialRemoveFailed": "Không xóa được thông tin xác thực.",
+    "builtinSource": "Máy chủ này",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "Không xác thực",
+      "bearer": "Token Bearer",
+      "header": "Header tùy chỉnh"
+    },
+    "accessModes": {
+      "admins-only": "Chỉ quản trị viên",
+      "all-users": "Mọi người",
+      "granted": "Chỉ những người được cấp quyền"
+    },
+    "form": {
+      "name": "Tên",
+      "namePlaceholder": "API thời tiết",
+      "kind": "Loại",
+      "description": "Mô tả",
+      "descriptionPlaceholder": "Máy chủ này làm gì",
+      "baseUrl": "URL gốc",
+      "specUrl": "URL đặc tả",
+      "specUrlHint": "Không bắt buộc. Để trống thì dùng URL gốc.",
+      "authMode": "Xác thực",
+      "authHeader": "Tên header",
+      "accessMode": "Ai được dùng",
+      "timeoutMs": "Thời gian chờ (ms)",
+      "maxResponseBytes": "Phản hồi tối đa (byte)",
+      "serverDefault": "Mặc định của máy chủ",
+      "enabled": "Đã bật",
+      "enabledHint": "Máy chủ đã tắt vẫn được đăng ký nhưng không bao giờ được đưa cho mô hình."
+    },
+    "approvals": {
+      "title": "Phê duyệt thường trực",
+      "description": "Những công cụ bạn cho phép chạy mà không hỏi lại. Thu hồi một cái thì lần sau nó sẽ hỏi lại.",
+      "empty": "Không có phê duyệt thường trực.",
+      "revoke": "Thu hồi",
+      "revoked": "Đã thu hồi phê duyệt",
+      "revokeFailed": "Không thu hồi được phê duyệt.",
+      "scope": {
+        "once": "Một lần",
+        "session": "Cuộc trò chuyện này",
+        "always": "Luôn luôn"
+      }
+    }
+  },
+  "composer": {
+    "promptMenu": {
+      "label": "Thư viện prompt"
+    },
+    "skillMenu": {
+      "label": "Kỹ năng"
+    },
+    "variables": {
+      "title": "Điền {{title}}",
+      "insert": "Chèn",
+      "cancel": "Hủy",
+      "required": "{{name}} là bắt buộc"
+    }
   }
 }
