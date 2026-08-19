@@ -18,7 +18,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
-import { GenerationStatistics, ToolActivity } from '@/types';
+import { ChatSession, GenerationStatistics, ToolActivity } from '@/types';
 import websocketService from '@/utils/websocket';
 import { generateId } from '@/utils';
 import {
@@ -130,6 +130,30 @@ export const useChat = (sessionId: string) => {
     setStreamingThinking('');
   }, [cancelQueuedStreamingFrame]);
 
+  const applyAuthoritativeSession = useCallback(
+    (authoritativeSession: ChatSession) => {
+      useChatStore.setState(state => {
+        const sessions = state.sessions.some(
+          session => session.id === authoritativeSession.id
+        )
+          ? state.sessions.map(session =>
+              session.id === authoritativeSession.id
+                ? authoritativeSession
+                : session
+            )
+          : [authoritativeSession, ...state.sessions];
+        return {
+          sessions,
+          currentSession:
+            state.currentSession?.id === authoritativeSession.id
+              ? authoritativeSession
+              : state.currentSession,
+        };
+      });
+    },
+    []
+  );
+
   const reloadCompletedDurableGeneration = useCallback(
     async (targetSessionId: string, assistantMessageId: string) => {
       await reconcileCompletedDurableGeneration({
@@ -144,29 +168,10 @@ export const useChat = (sessionId: string) => {
           }
           return response.data;
         },
-        applySession: authoritativeSession => {
-          useChatStore.setState(state => {
-            const sessions = state.sessions.some(
-              session => session.id === authoritativeSession.id
-            )
-              ? state.sessions.map(session =>
-                  session.id === authoritativeSession.id
-                    ? authoritativeSession
-                    : session
-                )
-              : [authoritativeSession, ...state.sessions];
-            return {
-              sessions,
-              currentSession:
-                state.currentSession?.id === authoritativeSession.id
-                  ? authoritativeSession
-                  : state.currentSession,
-            };
-          });
-        },
+        applySession: applyAuthoritativeSession,
       });
     },
-    []
+    [applyAuthoritativeSession]
   );
 
   const settleDurableCancellation = useCallback(
@@ -1158,6 +1163,23 @@ export const useChat = (sessionId: string) => {
         }
       }
       logger.error('Failed to regenerate message:', error);
+      if (durableAssistantMessageId) {
+        // The optimistic branch placeholder never reached the server;
+        // keeping it would make every retry target a phantom message.
+        removeMessage(sessionId, durableAssistantMessageId);
+      }
+      // A rejected regeneration usually means the store and the server
+      // disagree about the last assistant message (for example a stream
+      // that died before it persisted) — resync so the next attempt
+      // targets what the server actually has.
+      try {
+        const response = await chatApi.getSession(sessionId);
+        if (response.success && response.data) {
+          applyAuthoritativeSession(response.data);
+        }
+      } catch (reloadError) {
+        logger.error('Failed to reload session after regenerate:', reloadError);
+      }
       setIsStreaming(false);
       resetVisibleStreamingMessage();
       setStreamingMessageId(null);
@@ -1171,6 +1193,8 @@ export const useChat = (sessionId: string) => {
     setIsGenerating,
     resetVisibleStreamingMessage,
     addMessage,
+    removeMessage,
+    applyAuthoritativeSession,
     settleDurableCancellation,
   ]);
 
