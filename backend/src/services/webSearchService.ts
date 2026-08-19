@@ -48,6 +48,14 @@ export const WEB_SEARCH_RESULTS_CEILING = 100;
 
 export type WebSearchAccessMode = 'admins' | 'all-users';
 
+export type WebSearchTimeRange = 'day' | 'week' | 'month' | 'year';
+export type WebSearchCategory = 'news' | 'science' | 'it';
+
+export interface WebSearchRequestOptions {
+  timeRange?: WebSearchTimeRange;
+  category?: WebSearchCategory;
+}
+
 export function isWebSearchAccessMode(
   value: unknown
 ): value is WebSearchAccessMode {
@@ -215,7 +223,8 @@ const bounded = (value: unknown, max: number): string =>
 export async function webSearch(
   query: string,
   maxResults?: number,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  options?: WebSearchRequestOptions
 ): Promise<WebSearchResult[]> {
   throwIfChatGenerationCancelled(signal);
   const config = await getWebSearchConfig();
@@ -238,6 +247,12 @@ export async function webSearch(
   target.searchParams.set('q', trimmedQuery);
   target.searchParams.set('format', 'json');
   target.searchParams.set('safesearch', config.safeSearch ? '1' : '0');
+  if (options?.timeRange) {
+    target.searchParams.set('time_range', options.timeRange);
+  }
+  if (options?.category) {
+    target.searchParams.set('categories', options.category);
+  }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SEARCH_TIMEOUT_MS);

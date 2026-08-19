@@ -33,9 +33,8 @@ import {
   buildWebSearchEnhancedContent,
   isWebSearchAvailable,
   userCanUseWebSearch,
-  webSearch,
-  type WebSearchResult,
 } from './webSearchService.js';
+import { runPlannedWebSearch } from './webSearchPlanService.js';
 
 export interface DurableChatGenerationInput {
   sessionId: string;
@@ -473,11 +472,12 @@ class DurableChatGenerationService {
       ) {
         await context.assertSideEffectAllowed();
         try {
-          const results: WebSearchResult[] = await webSearch(
-            input.message,
-            undefined,
-            context.signal
-          );
+          const { results } = await runPlannedWebSearch({
+            message: input.message,
+            session,
+            userId: input.actorUserId,
+            signal: context.signal,
+          });
           if (results.length > 0) {
             enhancedContent = buildWebSearchEnhancedContent(
               enhancedContent,

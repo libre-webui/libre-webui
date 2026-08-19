@@ -38,9 +38,8 @@ import {
   buildWebSearchEnhancedContent,
   isWebSearchAvailable,
   userCanUseWebSearch,
-  webSearch as runWebSearch,
-  type WebSearchResult,
 } from '../services/webSearchService.js';
+import { runPlannedWebSearch } from '../services/webSearchPlanService.js';
 import { userModel } from '../models/userModel.js';
 import chatGenerationService from '../services/chatGenerationService.js';
 import preferencesService from '../services/preferencesService.js';
@@ -561,11 +560,12 @@ router.post(
         (await userCanUseWebSearch(await userModel.getUserById(userId)))
       ) {
         try {
-          const results: WebSearchResult[] = await runWebSearch(
+          const { results } = await runPlannedWebSearch({
             message,
-            undefined,
-            signal
-          );
+            session,
+            userId,
+            signal,
+          });
           if (results.length > 0) {
             enhancedContent = buildWebSearchEnhancedContent(
               enhancedContent,
@@ -1123,11 +1123,12 @@ router.post(
       ) {
         await emitDurable({ type: 'search', status: 'searching' });
         try {
-          const results: WebSearchResult[] = await runWebSearch(
+          const { results } = await runPlannedWebSearch({
             message,
-            undefined,
-            signal
-          );
+            session,
+            userId,
+            signal,
+          });
           if (results.length > 0) {
             searchEnhancedContent = buildWebSearchEnhancedContent(
               documentContext.enhancedContent,

@@ -27,8 +27,8 @@ import {
   buildWebSearchEnhancedContent,
   isWebSearchAvailable,
   userCanUseWebSearch,
-  webSearch as runWebSearch,
 } from './services/webSearchService.js';
+import { runPlannedWebSearch } from './services/webSearchPlanService.js';
 import {
   buildChatDocumentContext,
   EMPTY_CHAT_DOCUMENT_CONTEXT,
@@ -523,11 +523,12 @@ export function registerWebSocketServer(
               phase: 'running',
             });
             try {
-              const results = await runWebSearch(
-                content,
-                undefined,
-                generationSignal
-              );
+              const { results } = await runPlannedWebSearch({
+                message: content,
+                session,
+                userId,
+                signal: generationSignal,
+              });
               if (results.length > 0) {
                 searchEnhancedContent = buildWebSearchEnhancedContent(
                   searchEnhancedContent,

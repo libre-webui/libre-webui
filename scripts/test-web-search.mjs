@@ -242,3 +242,135 @@ test('search routes gate configuration behind the administrator', () => {
   assert.doesNotMatch(compose, /^\s+ports:/m);
   assert.match(compose, /SEARXNG_URL: http:\/\/searxng:8080/);
 });
+
+test('planned web search fans out model queries and falls back safely', async () => {
+  const requests = [];
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url, 'http://localhost');
+    const q = url.searchParams.get('q');
+    requests.push({
+      q,
+      timeRange: url.searchParams.get('time_range'),
+      categories: url.searchParams.get('categories'),
+    });
+    // Every query shares one URL so the merge has a duplicate to drop.
+    const results =
+      q === 'planner empty'
+        ? []
+        : [
+            { title: 'shared', url: 'https://example.com/shared', content: 'ok' },
+            ...[1, 2].map(rank => ({
+              title: `${q} #${rank}`,
+              url: `https://example.com/${encodeURIComponent(q)}/${rank}`,
+              content: 'ok',
+            })),
+          ];
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ results }));
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const port = server.address().port;
+
+  const { default: chatGenerationService } = await import(
+    dist('services/chatGenerationService.js')
+  );
+  const { runPlannedWebSearch } = await import(
+    dist('services/webSearchPlanService.js')
+  );
+  const originalPrepare = chatGenerationService.prepareGenerationTarget;
+  const originalExecute = chatGenerationService.executeNonStreaming;
+  let plannerReply = '';
+  chatGenerationService.prepareGenerationTarget = async () => ({
+    actualModelName: 'stub',
+    mergedOptions: {},
+    activePlugin: null,
+    pluginVariables: {},
+  });
+  chatGenerationService.executeNonStreaming = async () => ({
+    response: {},
+    assistantContent: plannerReply,
+    source: 'ollama',
+  });
+  const session = { id: 'plan-session', model: 'stub' };
+  try {
+    await setWebSearchConfig({
+      enabled: true,
+      url: `http://127.0.0.1:${port}`,
+      maxResults: 4,
+      safeSearch: true,
+    });
+
+    plannerReply =
+      'Sure! {"queries": ["alpha news", "beta funding"], "time_range": "day", "category": "news"}';
+    const planned = await runPlannedWebSearch({
+      message: 'Summarize the most important AI news from the last 24 hours',
+      session,
+      userId: 'default',
+    });
+    assert.deepEqual(planned.queries, ['alpha news', 'beta funding']);
+    // Both planned queries ran, carrying the freshness and category hints.
+    assert.deepEqual(
+      requests.map(r => [r.q, r.timeRange, r.categories]).sort(),
+      [
+        ['alpha news', 'day', 'news'],
+        ['beta funding', 'day', 'news'],
+      ]
+    );
+    // Round-robin merge with the shared URL deduplicated.
+    assert.deepEqual(
+      planned.results.map(result => result.url),
+      [
+        'https://example.com/shared',
+        'https://example.com/alpha%20news/1',
+        'https://example.com/beta%20funding/1',
+      ]
+    );
+
+    // An unparsable plan degrades to the raw message with no hints.
+    requests.length = 0;
+    plannerReply = 'no json here';
+    const fallback = await runPlannedWebSearch({
+      message: 'plain question',
+      session,
+      userId: 'default',
+    });
+    assert.deepEqual(fallback.queries, ['plain question']);
+    assert.deepEqual(requests, [
+      { q: 'plain question', timeRange: null, categories: null },
+    ]);
+    assert.equal(fallback.results.length, 3);
+
+    // Planned queries that find nothing rerun the raw message instead.
+    requests.length = 0;
+    plannerReply =
+      '{"queries": ["planner empty"], "time_range": null, "category": null}';
+    const rescued = await runPlannedWebSearch({
+      message: 'rescue me',
+      session,
+      userId: 'default',
+    });
+    assert.deepEqual(rescued.queries, ['rescue me']);
+    assert.deepEqual(
+      requests.map(r => r.q),
+      ['planner empty', 'rescue me']
+    );
+    assert.equal(rescued.results.length, 3);
+
+    // A planner outage never blocks the search either.
+    chatGenerationService.executeNonStreaming = async () => {
+      throw new Error('model down');
+    };
+    const degraded = await runPlannedWebSearch({
+      message: 'still works',
+      session,
+      userId: 'default',
+    });
+    assert.deepEqual(degraded.queries, ['still works']);
+    assert.equal(degraded.results.length, 3);
+  } finally {
+    chatGenerationService.prepareGenerationTarget = originalPrepare;
+    chatGenerationService.executeNonStreaming = originalExecute;
+    await setWebSearchConfig({ enabled: false, url: '' });
+    server.close();
+  }
+});
