@@ -447,7 +447,9 @@
       "usageAnalytics": "Użycie dostawców",
       "system": "System",
       "userManagement": "Zarządzanie użytkownikami",
-      "logout": "Wyloguj się"
+      "logout": "Wyloguj się",
+      "pinShortcut": "Przypnij do paska bocznego",
+      "unpinShortcut": "Odepnij od paska bocznego"
     },
     "avatar": {
       "title": "Zmień zdjęcie profilowe",

@@ -447,7 +447,9 @@
       "usageAnalytics": "Sağlayıcı Kullanımı",
       "system": "Sistem",
       "userManagement": "Kullanıcı Yönetimi",
-      "logout": "Çıkış Yap"
+      "logout": "Çıkış Yap",
+      "pinShortcut": "Kenar çubuğuna sabitle",
+      "unpinShortcut": "Kenar çubuğundan kaldır"
     },
     "avatar": {
       "title": "Profil Resmini Değiştir",

@@ -447,7 +447,9 @@
       "usageAnalytics": "Leverantörsanvändning",
       "system": "System",
       "userManagement": "Användarhantering",
-      "logout": "Logga ut"
+      "logout": "Logga ut",
+      "pinShortcut": "Fäst i sidofältet",
+      "unpinShortcut": "Ta bort från sidofältet"
     },
     "avatar": {
       "title": "Ändra profilbild",

@@ -447,7 +447,9 @@
       "usageAnalytics": "Anbieter-Nutzung",
       "system": "System",
       "userManagement": "Benutzerverwaltung",
-      "logout": "Abmelden"
+      "logout": "Abmelden",
+      "pinShortcut": "An Seitenleiste anheften",
+      "unpinShortcut": "Von Seitenleiste lösen"
     },
     "avatar": {
       "title": "Profilbild ändern",

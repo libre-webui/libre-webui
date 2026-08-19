@@ -447,7 +447,9 @@
       "usageAnalytics": "Penggunaan Penyedia",
       "system": "Sistem",
       "userManagement": "Pengurusan Pengguna",
-      "logout": "Log keluar"
+      "logout": "Log keluar",
+      "pinShortcut": "Semat ke bar sisi",
+      "unpinShortcut": "Nyahsemat dari bar sisi"
     },
     "avatar": {
       "title": "Tukar Gambar Profil",

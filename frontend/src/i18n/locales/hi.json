@@ -447,7 +447,9 @@
       "usageAnalytics": "प्रदाता उपयोग",
       "system": "सिस्टम",
       "userManagement": "उपयोगकर्ता प्रबंधन",
-      "logout": "लॉग आउट"
+      "logout": "लॉग आउट",
+      "pinShortcut": "साइडबार में पिन करें",
+      "unpinShortcut": "साइडबार से अनपिन करें"
     },
     "avatar": {
       "title": "प्रोफ़ाइल चित्र बदलें",

@@ -447,7 +447,9 @@
       "usageAnalytics": "Utilisation des fournisseurs",
       "system": "Système",
       "userManagement": "Gestion des utilisateurs",
-      "logout": "Déconnexion"
+      "logout": "Déconnexion",
+      "pinShortcut": "Épingler à la barre latérale",
+      "unpinShortcut": "Détacher de la barre latérale"
     },
     "avatar": {
       "title": "Changer la photo de profil",

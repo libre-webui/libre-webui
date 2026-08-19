@@ -92,6 +92,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     sidebarCompact,
     toggleSidebarCompact,
     isGenerating,
+    pinnedAdminShortcuts,
+    toggleAdminShortcut,
   } = useAppStore();
 
   // A brand-new chat is "awaiting its title" from the moment its first
@@ -481,6 +483,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             sidebarCompact={sidebarCompact}
             userMenuOpen={userMenuOpen}
             userMenuRef={userMenuRef}
+            pinnedShortcuts={pinnedAdminShortcuts}
+            onToggleShortcutPin={toggleAdminShortcut}
             onToggleUserMenu={() => setUserMenuOpen(open => !open)}
             onOpenSettings={handleOpenSettings}
             onOpenAvatar={handleOpenAvatar}

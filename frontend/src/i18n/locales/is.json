@@ -447,7 +447,9 @@
       "usageAnalytics": "Notkun þjónustuaðila",
       "system": "Kerfi",
       "userManagement": "Notendastjórnun",
-      "logout": "Skrá út"
+      "logout": "Skrá út",
+      "pinShortcut": "Festa við hliðarstiku",
+      "unpinShortcut": "Losa úr hliðarstiku"
     },
     "avatar": {
       "title": "Breyta prófílmynd",

@@ -142,8 +142,12 @@ test('administrators open provider usage from the user menu', async ({
   ).toHaveText([
     'Change Picture',
     'User Management',
+    // Icon-only pin toggles follow each admin shortcut row.
+    '',
     'System',
+    '',
     'Provider Usage',
+    '',
     'Settings',
     'Log out',
   ]);

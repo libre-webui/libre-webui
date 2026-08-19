@@ -447,7 +447,9 @@
       "usageAnalytics": "Mức sử dụng nhà cung cấp",
       "system": "Hệ thống",
       "userManagement": "Quản lý người dùng",
-      "logout": "Đăng xuất"
+      "logout": "Đăng xuất",
+      "pinShortcut": "Ghim vào thanh bên",
+      "unpinShortcut": "Bỏ ghim khỏi thanh bên"
     },
     "avatar": {
       "title": "Đổi ảnh hồ sơ",

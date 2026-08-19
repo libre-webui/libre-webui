@@ -447,7 +447,9 @@
       "usageAnalytics": "提供商使用情况",
       "system": "系统",
       "userManagement": "用户管理",
-      "logout": "退出登录"
+      "logout": "退出登录",
+      "pinShortcut": "固定到侧边栏",
+      "unpinShortcut": "从侧边栏取消固定"
     },
     "avatar": {
       "title": "更换头像",

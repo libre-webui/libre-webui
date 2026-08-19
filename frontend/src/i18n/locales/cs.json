@@ -447,7 +447,9 @@
       "usageAnalytics": "Využití poskytovatelů",
       "system": "Systém",
       "userManagement": "Správa uživatelů",
-      "logout": "Odhlásit se"
+      "logout": "Odhlásit se",
+      "pinShortcut": "Připnout na boční panel",
+      "unpinShortcut": "Odepnout z bočního panelu"
     },
     "avatar": {
       "title": "Změnit profilový obrázek",

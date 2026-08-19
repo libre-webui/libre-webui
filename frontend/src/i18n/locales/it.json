@@ -447,7 +447,9 @@
       "usageAnalytics": "Utilizzo provider",
       "system": "Sistema",
       "userManagement": "Gestione utenti",
-      "logout": "Esci"
+      "logout": "Esci",
+      "pinShortcut": "Fissa nella barra laterale",
+      "unpinShortcut": "Rimuovi dalla barra laterale"
     },
     "avatar": {
       "title": "Cambia immagine profilo",

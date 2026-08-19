@@ -23,6 +23,8 @@ import {
   ChartNoAxesCombined,
   ChevronRight,
   LogOut,
+  Pin,
+  PinOff,
   Server,
   Settings,
   Shield,
@@ -39,6 +41,8 @@ interface SidebarUserSectionProps {
   sidebarCompact: boolean;
   userMenuOpen: boolean;
   userMenuRef: RefObject<HTMLDivElement | null>;
+  pinnedShortcuts: string[];
+  onToggleShortcutPin: (id: string) => void;
   onToggleUserMenu: () => void;
   onOpenSettings: () => void;
   onOpenAvatar: (avatar: string) => void;
@@ -46,6 +50,24 @@ interface SidebarUserSectionProps {
   onMobileNavigate: () => void;
   onCloseUserMenu: () => void;
 }
+
+// Admin destinations that can be pinned out of the avatar menu into the
+// sidebar footer, so reaching them doesn't require opening the menu.
+const ADMIN_SHORTCUTS = [
+  {
+    id: 'users',
+    to: '/users',
+    icon: UserIcon,
+    labelKey: 'user.menu.userManagement',
+  },
+  { id: 'system', to: '/system', icon: Server, labelKey: 'user.menu.system' },
+  {
+    id: 'usage',
+    to: '/usage',
+    icon: ChartNoAxesCombined,
+    labelKey: 'user.menu.usageAnalytics',
+  },
+] as const;
 
 function UserAvatar({ user, size }: { user: User; size: 'sm' | 'md' }) {
   const dimension = size === 'sm' ? 'w-7 h-7' : 'w-8 h-8';
@@ -78,6 +100,8 @@ export function SidebarUserSection({
   sidebarCompact,
   userMenuOpen,
   userMenuRef,
+  pinnedShortcuts,
+  onToggleShortcutPin,
   onToggleUserMenu,
   onOpenSettings,
   onOpenAvatar,
@@ -87,6 +111,63 @@ export function SidebarUserSection({
 }: SidebarUserSectionProps) {
   const { t } = useTranslation();
   if (!requiresAuth || !user) return null;
+
+  const pinnedItems = isAdmin
+    ? ADMIN_SHORTCUTS.filter(shortcut => pinnedShortcuts.includes(shortcut.id))
+    : [];
+
+  // One row per admin destination inside the menu, with a pin toggle that
+  // promotes it to the sidebar footer without navigating.
+  const renderMenuShortcuts = () =>
+    isAdmin &&
+    ADMIN_SHORTCUTS.map(shortcut => {
+      const pinned = pinnedShortcuts.includes(shortcut.id);
+      const pinLabel = pinned
+        ? t('user.menu.unpinShortcut')
+        : t('user.menu.pinShortcut');
+      return (
+        <div key={shortcut.id} className='group/shortcut relative'>
+          <Link
+            to={shortcut.to}
+            onClick={() => {
+              onCloseUserMenu();
+              onMobileNavigate();
+            }}
+            className='flex w-full items-center gap-3 px-3 py-2.5 pe-9 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
+          >
+            <shortcut.icon className='h-4 w-4 shrink-0' />
+            <span className='min-w-0 flex-1 text-start'>
+              {t(shortcut.labelKey)}
+            </span>
+            {shortcut.id === 'users' && pendingApprovalCount > 0 && (
+              <span className='rounded-md bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
+                {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
+              </span>
+            )}
+          </Link>
+          <button
+            type='button'
+            onClick={() => onToggleShortcutPin(shortcut.id)}
+            className={cn(
+              'absolute end-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-subtle transition-[color,opacity] hover:text-ink focus-visible:opacity-100',
+              pinned
+                ? 'opacity-100 text-primary-600 dark:text-primary-400 hover:text-primary-500'
+                : 'opacity-0 group-hover/shortcut:opacity-100'
+            )}
+            title={pinLabel}
+            aria-label={`${pinLabel}: ${t(shortcut.labelKey)}`}
+            aria-pressed={pinned}
+            data-testid={`sidebar-shortcut-pin-${shortcut.id}`}
+          >
+            {pinned ? (
+              <PinOff className='h-3.5 w-3.5' />
+            ) : (
+              <Pin className='h-3.5 w-3.5' />
+            )}
+          </button>
+        </div>
+      );
+    });
 
   return (
     <div
@@ -100,6 +181,24 @@ export function SidebarUserSection({
           className='relative flex flex-col items-center gap-1'
           ref={userMenuRef}
         >
+          {pinnedItems.map(shortcut => (
+            <Link
+              key={shortcut.id}
+              to={shortcut.to}
+              onClick={onMobileNavigate}
+              className='relative flex h-9 w-9 items-center justify-center rounded-full text-ink outline-none transition-colors hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-primary-500/30'
+              title={t(shortcut.labelKey)}
+              aria-label={t(shortcut.labelKey)}
+              data-testid={`sidebar-rail-pinned-${shortcut.id}`}
+            >
+              <shortcut.icon className='h-[18px] w-[18px]' />
+              {shortcut.id === 'users' && pendingApprovalCount > 0 && (
+                <span className='absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-md bg-error-500 px-1 text-[9px] font-semibold text-white shadow-sm'>
+                  {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
+                </span>
+              )}
+            </Link>
+          ))}
           <button
             type='button'
             onClick={onOpenSettings}
@@ -160,58 +259,7 @@ export function SidebarUserSection({
               </button>
 
               <div className='py-1'>
-                {isAdmin && (
-                  <Link
-                    to='/users'
-                    onClick={() => {
-                      onCloseUserMenu();
-                      onMobileNavigate();
-                    }}
-                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
-                  >
-                    <UserIcon className='h-4 w-4 shrink-0' />
-                    <span className='min-w-0 flex-1 text-start'>
-                      {t('user.menu.userManagement')}
-                    </span>
-                    {pendingApprovalCount > 0 && (
-                      <span className='rounded-md bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
-                        {pendingApprovalCount > 99
-                          ? '99+'
-                          : pendingApprovalCount}
-                      </span>
-                    )}
-                  </Link>
-                )}
-                {isAdmin && (
-                  <Link
-                    to='/system'
-                    onClick={() => {
-                      onCloseUserMenu();
-                      onMobileNavigate();
-                    }}
-                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
-                  >
-                    <Server className='h-4 w-4 shrink-0' />
-                    <span className='min-w-0 flex-1 text-start'>
-                      {t('user.menu.system')}
-                    </span>
-                  </Link>
-                )}
-                {isAdmin && (
-                  <Link
-                    to='/usage'
-                    onClick={() => {
-                      onCloseUserMenu();
-                      onMobileNavigate();
-                    }}
-                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
-                  >
-                    <ChartNoAxesCombined className='h-4 w-4 shrink-0' />
-                    <span className='min-w-0 flex-1 text-start'>
-                      {t('user.menu.usageAnalytics')}
-                    </span>
-                  </Link>
-                )}
+                {renderMenuShortcuts()}
                 <div className='my-1 border-t border-gray-100 dark:border-dark-200/50' />
                 <button
                   type='button'
@@ -241,6 +289,25 @@ export function SidebarUserSection({
         </div>
       ) : (
         <div className='relative' ref={userMenuRef}>
+          {pinnedItems.map(shortcut => (
+            <Link
+              key={shortcut.id}
+              to={shortcut.to}
+              onClick={onMobileNavigate}
+              className='flex h-[34px] w-full items-center gap-2 rounded-xl px-2.5 text-start text-sm text-ink transition-colors duration-150 hover:bg-interactive-hover touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
+              data-testid={`sidebar-pinned-${shortcut.id}`}
+            >
+              <shortcut.icon className='h-4 w-4 shrink-0 text-ink-muted' />
+              <span className='min-w-0 flex-1 truncate'>
+                {t(shortcut.labelKey)}
+              </span>
+              {shortcut.id === 'users' && pendingApprovalCount > 0 && (
+                <span className='rounded-md bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
+                  {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
+                </span>
+              )}
+            </Link>
+          ))}
           <button
             type='button'
             onClick={onOpenSettings}
@@ -314,60 +381,7 @@ export function SidebarUserSection({
                   {t('user.menu.changePicture')}
                 </button>
 
-                {isAdmin && (
-                  <Link
-                    to='/users'
-                    onClick={() => {
-                      onCloseUserMenu();
-                      onMobileNavigate();
-                    }}
-                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
-                  >
-                    <UserIcon className='h-4 w-4 shrink-0' />
-                    <span className='min-w-0 flex-1 text-start'>
-                      {t('user.menu.userManagement')}
-                    </span>
-                    {pendingApprovalCount > 0 && (
-                      <span className='rounded-md bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
-                        {pendingApprovalCount > 99
-                          ? '99+'
-                          : pendingApprovalCount}
-                      </span>
-                    )}
-                  </Link>
-                )}
-
-                {isAdmin && (
-                  <Link
-                    to='/system'
-                    onClick={() => {
-                      onCloseUserMenu();
-                      onMobileNavigate();
-                    }}
-                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
-                  >
-                    <Server className='h-4 w-4 shrink-0' />
-                    <span className='min-w-0 flex-1 text-start'>
-                      {t('user.menu.system')}
-                    </span>
-                  </Link>
-                )}
-
-                {isAdmin && (
-                  <Link
-                    to='/usage'
-                    onClick={() => {
-                      onCloseUserMenu();
-                      onMobileNavigate();
-                    }}
-                    className='flex w-full items-center gap-3 px-3 py-2.5 text-[13px] text-ink transition-colors duration-150 hover:bg-interactive-hover'
-                  >
-                    <ChartNoAxesCombined className='h-4 w-4 shrink-0' />
-                    <span className='min-w-0 flex-1 text-start'>
-                      {t('user.menu.usageAnalytics')}
-                    </span>
-                  </Link>
-                )}
+                {renderMenuShortcuts()}
 
                 <div className='border-t border-gray-100 dark:border-dark-200/50 my-1'></div>
 

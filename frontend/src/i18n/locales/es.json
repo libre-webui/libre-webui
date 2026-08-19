@@ -447,7 +447,9 @@
       "usageAnalytics": "Uso del proveedor",
       "system": "Sistema",
       "userManagement": "Gestión de usuarios",
-      "logout": "Cerrar sesión"
+      "logout": "Cerrar sesión",
+      "pinShortcut": "Fijar en la barra lateral",
+      "unpinShortcut": "Quitar de la barra lateral"
     },
     "avatar": {
       "title": "Cambiar imagen de perfil",

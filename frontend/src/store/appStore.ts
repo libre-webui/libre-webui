@@ -72,6 +72,10 @@ interface AppState {
   isGenerating: boolean;
   setIsGenerating: (generating: boolean) => void;
 
+  // Admin shortcuts pinned into the sidebar footer (ids: users, system, usage)
+  pinnedAdminShortcuts: string[];
+  toggleAdminShortcut: (id: string) => void;
+
   // Settings notification
   hasSeenSettingsNotification: boolean;
   markSettingsNotificationAsSeen: () => void;
@@ -266,6 +270,14 @@ export const useAppStore = create<AppState>()(
       isGenerating: false,
       setIsGenerating: generating => set({ isGenerating: generating }),
 
+      pinnedAdminShortcuts: [],
+      toggleAdminShortcut: id =>
+        set(state => ({
+          pinnedAdminShortcuts: state.pinnedAdminShortcuts.includes(id)
+            ? state.pinnedAdminShortcuts.filter(pinned => pinned !== id)
+            : [...state.pinnedAdminShortcuts, id],
+        })),
+
       // Settings notification
       hasSeenSettingsNotification: false,
       markSettingsNotificationAsSeen: () =>
@@ -439,6 +451,7 @@ export const useAppStore = create<AppState>()(
           themeSyncPending: state.themeSyncPending,
           sidebarOpen: state.sidebarOpen,
           sidebarCompact: state.sidebarCompact,
+          pinnedAdminShortcuts: state.pinnedAdminShortcuts,
           preferences: preferencesWithoutBackground,
           hasSeenSettingsNotification: state.hasSeenSettingsNotification,
           // Note: backgroundImage and backgroundSettings are stored in backend preferences, not localStorage

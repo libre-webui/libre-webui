@@ -447,7 +447,9 @@
       "usageAnalytics": "Udbyderforbrug",
       "system": "System",
       "userManagement": "Brugeradministration",
-      "logout": "Log ud"
+      "logout": "Log ud",
+      "pinShortcut": "Fastgør til sidepanelet",
+      "unpinShortcut": "Frigør fra sidepanelet"
     },
     "avatar": {
       "title": "Skift profilbillede",

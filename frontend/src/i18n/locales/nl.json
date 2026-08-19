@@ -447,7 +447,9 @@
       "usageAnalytics": "Providergebruik",
       "system": "Systeem",
       "userManagement": "Gebruikersbeheer",
-      "logout": "Uitloggen"
+      "logout": "Uitloggen",
+      "pinShortcut": "Vastmaken aan zijbalk",
+      "unpinShortcut": "Losmaken van zijbalk"
     },
     "avatar": {
       "title": "Profielfoto wijzigen",

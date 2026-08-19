@@ -447,7 +447,9 @@
       "usageAnalytics": "プロバイダー使用状況",
       "system": "システム",
       "userManagement": "ユーザー管理",
-      "logout": "ログアウト"
+      "logout": "ログアウト",
+      "pinShortcut": "サイドバーにピン留め",
+      "unpinShortcut": "サイドバーからピン留めを解除"
     },
     "avatar": {
       "title": "プロフィール画像を変更",

@@ -447,7 +447,9 @@
       "usageAnalytics": "Uso de Fornecedores",
       "system": "Sistema",
       "userManagement": "Gerenciamento de Usuários",
-      "logout": "Sair"
+      "logout": "Sair",
+      "pinShortcut": "Fixar na barra lateral",
+      "unpinShortcut": "Desafixar da barra lateral"
     },
     "avatar": {
       "title": "Alterar foto de perfil",

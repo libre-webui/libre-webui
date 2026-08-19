@@ -447,7 +447,9 @@
       "usageAnalytics": "প্রোভাইডার ব্যবহার",
       "system": "সিস্টেম",
       "userManagement": "ব্যবহারকারী ব্যবস্থাপনা",
-      "logout": "লগ আউট"
+      "logout": "লগ আউট",
+      "pinShortcut": "সাইডবারে পিন করুন",
+      "unpinShortcut": "সাইডবার থেকে আনপিন করুন"
     },
     "avatar": {
       "title": "প্রোফাইল ছবি পরিবর্তন করুন",

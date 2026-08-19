@@ -447,7 +447,9 @@
       "usageAnalytics": "프로바이더 사용량",
       "system": "시스템",
       "userManagement": "사용자 관리",
-      "logout": "로그아웃"
+      "logout": "로그아웃",
+      "pinShortcut": "사이드바에 고정",
+      "unpinShortcut": "사이드바에서 고정 해제"
     },
     "avatar": {
       "title": "프로필 사진 변경",

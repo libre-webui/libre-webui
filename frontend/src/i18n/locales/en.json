@@ -447,7 +447,9 @@
       "usageAnalytics": "Provider Usage",
       "system": "System",
       "userManagement": "User Management",
-      "logout": "Log out"
+      "logout": "Log out",
+      "pinShortcut": "Pin to sidebar",
+      "unpinShortcut": "Unpin from sidebar"
     },
     "avatar": {
       "title": "Change Profile Picture",
