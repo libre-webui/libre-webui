@@ -28,8 +28,9 @@ test('keyboard shortcuts are listed in settings, not in a floating overlay', asy
   // The floating indicator that used to sit over the chat is gone.
   await expect(page.getByTitle(/keyboard shortcuts/i)).toHaveCount(0);
 
-  // Its key now opens settings on the shortcuts tab.
-  await page.keyboard.press('h');
+  // The help key opens settings on the shortcuts tab. A bare letter would
+  // fire while merely browsing, so only ? (Shift+/) is bound.
+  await page.keyboard.press('?');
   const tab = page.getByRole('tab', { name: 'Shortcuts', exact: true });
   await expect(tab).toHaveAttribute('aria-selected', 'true');
 
