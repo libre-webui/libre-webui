@@ -26,12 +26,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { personaApi, embeddingApi } from '@/utils/api';
 import {
+  PersonaBindings,
   PersonaParameters,
   UpdatePersonaRequest,
   OllamaModel,
   EmbeddingModel,
 } from '@/types';
-import { Brain, Sliders, Sparkles, User } from 'lucide-react';
+import { Brain, Plug, Sliders, Sparkles, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
@@ -41,6 +42,7 @@ import { DEFAULT_FORM_DATA } from '@/components/persona-form/defaults';
 import { PersonaAdvancedTab } from '@/components/persona-form/PersonaAdvancedTab';
 import { PersonaBasicTab } from '@/components/persona-form/PersonaBasicTab';
 import { PersonaFormActions } from '@/components/persona-form/PersonaFormActions';
+import { PersonaBindingsTab } from '@/components/persona-form/PersonaBindingsTab';
 import { PersonaMemoryTab } from '@/components/persona-form/PersonaMemoryTab';
 import { PersonaParametersTab } from '@/components/persona-form/PersonaParametersTab';
 import type {
@@ -237,6 +239,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
               persona.memory_settings || DEFAULT_FORM_DATA.memory_settings,
             mutation_settings:
               persona.mutation_settings || DEFAULT_FORM_DATA.mutation_settings,
+            bindings: persona.bindings,
           });
 
           if (
@@ -301,6 +304,9 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         embedding_model: formData.embedding_model,
         memory_settings: formData.memory_settings,
         mutation_settings: formData.mutation_settings,
+        // Left out entirely when untouched: the backend only revalidates and
+        // bumps the bindings revision when the field is present.
+        bindings: formData.bindings,
       };
 
       const response = persona
@@ -340,6 +346,11 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         id: 'memory' as const,
         label: t('personaForm.tabs.memory'),
         icon: Sparkles,
+      },
+      {
+        id: 'bindings' as const,
+        label: t('personaForm.tabs.bindings'),
+        icon: Plug,
       },
       {
         id: 'advanced' as const,
@@ -431,6 +442,14 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                 wipingMemories={wipingMemories}
                 onSettingsChange={updateSettings}
                 onWipeMemories={handleWipeMemories}
+              />
+            )}
+            {activeTab === 'bindings' && (
+              <PersonaBindingsTab
+                bindings={formData.bindings}
+                onChange={(bindings: PersonaBindings) =>
+                  updateForm('bindings', bindings)
+                }
               />
             )}
             {activeTab === 'advanced' && (

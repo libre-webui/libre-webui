@@ -18,12 +18,15 @@
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
+  BookText,
   Bot,
   CalendarDays,
   Database,
+  GraduationCap,
   NotebookPen,
   Sparkles,
   User as UserIcon,
+  Wrench,
   Zap,
 } from 'lucide-react';
 import { cn } from '@/utils';
@@ -49,6 +52,13 @@ const DESTINATIONS = [
     icon: Zap,
     labelKey: 'sidebar.navigation.automations',
   },
+  { path: '/prompts', icon: BookText, labelKey: 'sidebar.navigation.prompts' },
+  {
+    path: '/skills',
+    icon: GraduationCap,
+    labelKey: 'sidebar.navigation.skills',
+  },
+  { path: '/tools', icon: Wrench, labelKey: 'sidebar.navigation.tools' },
   { path: '/models', icon: Database, labelKey: 'sidebar.navigation.models' },
   {
     path: '/personas',

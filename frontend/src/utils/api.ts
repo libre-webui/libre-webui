@@ -80,6 +80,35 @@ export type {
 } from './api/libreClawApi';
 export { ollamaApi, MODELS_CHANGED_EVENT } from './api/modelApi';
 export { personaApi } from './api/personaApi';
+export { promptsApi } from './api/promptsApi';
+export type {
+  Prompt,
+  PromptExport,
+  PromptInput,
+  PromptRevision,
+  PromptVariable,
+  PromptVariableType,
+} from './api/promptsApi';
+export { skillsApi } from './api/skillsApi';
+export type {
+  Skill,
+  SkillExport,
+  SkillInput,
+  SkillRevision,
+} from './api/skillsApi';
+export { toolsApi } from './api/toolsApi';
+export type {
+  ToolApprovalScope,
+  ToolApprovalView,
+  ToolCatalogEntry,
+  ToolCatalogView,
+  ToolServerAccessMode,
+  ToolServerAuthMode,
+  ToolServerInput,
+  ToolServerKind,
+  ToolServerToolView,
+  ToolServerView,
+} from './api/toolsApi';
 export { pluginApi } from './api/pluginApi';
 export type {
   PluginUsageAnalytics,

@@ -437,7 +437,10 @@
       "exploreLabel": "Explore",
       "notes": "Notes",
       "calendar": "Calendar",
-      "automations": "Automations"
+      "automations": "Automations",
+      "prompts": "Prompts",
+      "skills": "Skills",
+      "tools": "Tools"
     },
     "toggleSize": "Toggle sidebar size",
     "expandSidebar": "Expand sidebar"
@@ -1321,7 +1324,8 @@
       "basic": "Basic",
       "parameters": "Parameters",
       "memory": "Memory & Learning",
-      "advanced": "Advanced"
+      "advanced": "Advanced",
+      "bindings": "Bindings"
     },
     "basic": {
       "name": "Name",
@@ -1412,6 +1416,29 @@
     },
     "error": {
       "saveFailed": "Failed to save"
+    },
+    "bindings": {
+      "toolServers": "Tool servers",
+      "toolServersHint": "Servers this persona may call. Leaving this empty offers every server the user can already reach.",
+      "noToolServers": "No tool servers are available to you.",
+      "builtinTools": "Built-in tools",
+      "builtinToolsHint": "Tools the server implements itself. Leaving this empty offers all of them.",
+      "noBuiltinTools": "No built-in tools are available.",
+      "builtin": {
+        "web_search": "Web search",
+        "search_documents": "Search documents",
+        "load_skill": "Load skill"
+      },
+      "skills": "Skills",
+      "skillsHint": "Skills the model may load while this persona is active.",
+      "noSkills": "You have not created any skills yet.",
+      "collections": "Knowledge collections",
+      "collectionsHint": "Document collections this persona can search.",
+      "noCollections": "You have not created any collections yet.",
+      "prompt": "Prompt",
+      "promptHint": "A prompt to seed every new chat with this persona.",
+      "noPrompt": "No prompt",
+      "version": "Bindings revision {{version}}"
     }
   },
   "personaCard": {
@@ -1590,6 +1617,13 @@
       "empty": "No audit events recorded yet.",
       "actor": "Actor",
       "target": "Target"
+    },
+    "tools": {
+      "title": "Tool access",
+      "description": "Allow everyone to call tool servers. When off, only administrators can.",
+      "saved": "Tool access updated",
+      "saveFailed": "Could not update tool access.",
+      "lockedByEnv": "Locked by an environment variable on this server."
     }
   },
   "usageAnalytics": {
@@ -2636,6 +2670,198 @@
       "allowSession": "Allow for this chat",
       "allowAlways": "Always allow",
       "deny": "Deny"
+    }
+  },
+  "promptsPage": {
+    "title": "Prompts",
+    "description": "Reusable prompt templates with typed variables. Type / in the chat composer to insert one.",
+    "newPrompt": "New prompt",
+    "editPrompt": "Edit prompt",
+    "empty": "No prompts yet",
+    "emptyHint": "A prompt is a saved message template. Once you create one, typing /slug in the chat composer inserts it and asks for any variables it declares.",
+    "loadFailed": "Could not load your prompts.",
+    "saved": "Prompt saved",
+    "saveFailed": "Could not save the prompt.",
+    "deleted": "Prompt deleted",
+    "deleteFailed": "Could not delete the prompt.",
+    "deleteTitle": "Delete prompt",
+    "deleteConfirm": "Delete \"{{title}}\"? This also removes its version history.",
+    "exportFailed": "Could not export the prompt.",
+    "imported": "Prompt imported",
+    "importFailed": "Could not import that file.",
+    "historyFailed": "Could not load the version history.",
+    "rolledBack": "Prompt rolled back",
+    "rollbackFailed": "Could not roll the prompt back.",
+    "versionLabel": "v{{version}}",
+    "updated": "Updated {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "weekly-report",
+      "slugHint": "Used as /slug in the composer.",
+      "slugInvalid": "Lowercase letters, digits and hyphens only.",
+      "title": "Title",
+      "titlePlaceholder": "Weekly report",
+      "description": "Description",
+      "descriptionPlaceholder": "What this prompt is for",
+      "content": "Content",
+      "contentPlaceholder": "Write the prompt. Wrap anything you want filled in later in double braces.",
+      "contentHint": "A placeholder is a name in double braces. Declare it below to give it a label or a default.",
+      "tags": "Tags",
+      "tagsPlaceholder": "research, writing",
+      "variables": "Variables",
+      "variablesHint": "Optional. Declare a placeholder here to give it a label, a default or a set of choices.",
+      "variableName": "Name",
+      "variableType": "Type",
+      "variableLabel": "Label",
+      "variableDefault": "Default",
+      "variableRequired": "Required",
+      "variableOptions": "Options",
+      "variableOptionsPlaceholder": "Comma-separated choices",
+      "addVariable": "Add variable",
+      "removeVariable": "Remove variable"
+    },
+    "variableTypes": {
+      "text": "Text",
+      "number": "Number",
+      "select": "Choice",
+      "boolean": "Yes or no"
+    },
+    "history": {
+      "open": "Version history",
+      "title": "History of {{title}}",
+      "subtitle": "Rolling back saves the picked revision as a new version. Nothing is overwritten.",
+      "empty": "No earlier versions yet.",
+      "current": "Current",
+      "rollback": "Roll back",
+      "rollingBack": "Rolling back..."
+    }
+  },
+  "skillsPage": {
+    "title": "Skills",
+    "description": "Named instruction sets the model can load on demand while it works.",
+    "newSkill": "New skill",
+    "editSkill": "Edit skill",
+    "empty": "No skills yet",
+    "emptyHint": "A skill is a set of instructions the model loads only when it needs them. Mention $slug in a message, or let the model reach for it through the load_skill tool.",
+    "loadFailed": "Could not load your skills.",
+    "saved": "Skill saved",
+    "saveFailed": "Could not save the skill.",
+    "toggleFailed": "Could not change the skill.",
+    "deleted": "Skill deleted",
+    "deleteFailed": "Could not delete the skill.",
+    "deleteTitle": "Delete skill",
+    "deleteConfirm": "Delete \"{{name}}\"? This also removes its version history.",
+    "exportFailed": "Could not export the skill.",
+    "imported": "Skill imported",
+    "importFailed": "Could not import that file.",
+    "historyFailed": "Could not load the version history.",
+    "rolledBack": "Skill rolled back",
+    "rollbackFailed": "Could not roll the skill back.",
+    "versionLabel": "v{{version}}",
+    "updated": "Updated {{when}}",
+    "form": {
+      "slug": "Slug",
+      "slugPlaceholder": "code-review",
+      "slugHint": "Used as $slug when you mention the skill.",
+      "slugInvalid": "Lowercase letters, digits and hyphens only.",
+      "name": "Name",
+      "namePlaceholder": "Code review",
+      "description": "Description",
+      "descriptionPlaceholder": "When to use this skill",
+      "descriptionHint": "This is the manifest the model sees. Write it so the model can tell when the skill applies without loading it.",
+      "instructions": "Instructions",
+      "instructionsPlaceholder": "Markdown instructions the model reads once it loads this skill.",
+      "instructionsHint": "Loaded only when the skill is used, so length here costs nothing until then.",
+      "enabled": "Enabled",
+      "enabledHint": "Disabled skills stay saved but are never offered to the model."
+    },
+    "history": {
+      "open": "Version history",
+      "title": "History of {{name}}"
+    }
+  },
+  "toolsPage": {
+    "title": "Tools",
+    "description": "Tool servers the model can call, and the approvals you have granted them.",
+    "approvalNotice": "Tools that change data outside the chat always ask for approval, unless you granted that tool an always or per-chat approval.",
+    "registerServer": "Register server",
+    "registerHint": "Libre WebUI reads the server once and pins the tools it exposes. Refresh the server later to pick up changes.",
+    "editServer": "Edit server",
+    "empty": "No tool servers",
+    "emptyHintAdmin": "Register an OpenAPI or MCP server to give the model something to call.",
+    "emptyHintUser": "An administrator has not shared any tool servers with you yet.",
+    "loadFailed": "Could not load the tool servers.",
+    "saved": "Tool server saved",
+    "saveFailed": "Could not save the tool server.",
+    "deleted": "Tool server deleted",
+    "deleteFailed": "Could not delete the tool server.",
+    "deleteTitle": "Delete tool server",
+    "deleteConfirm": "Delete \"{{name}}\"? Everyone loses access to its tools.",
+    "refresh": "Refresh tools",
+    "refreshed": "Tools re-read from the server",
+    "refreshFailed": "Could not read the server.",
+    "toolsLoadFailed": "Could not load the pinned tools.",
+    "overrideFailed": "Could not change the tool.",
+    "pinnedTools": "Pinned tools",
+    "noPinnedTools": "This server exposed no tools.",
+    "sideEffect": "Side effect",
+    "sideEffectOverride": "Side effect",
+    "specRevision": "Revision {{revision}}",
+    "credential": "Personal credential",
+    "credentialHint": "Stored encrypted and used only for your own calls to this server.",
+    "credentialPlaceholder": "Paste your token",
+    "credentialSet": "Credential set",
+    "credentialMissing": "Credential needed",
+    "credentialSaved": "Credential saved",
+    "credentialSaveFailed": "Could not save the credential.",
+    "credentialRemove": "Remove",
+    "credentialRemoved": "Credential removed",
+    "credentialRemoveFailed": "Could not remove the credential.",
+    "builtinSource": "This server",
+    "kinds": {
+      "openapi": "OpenAPI",
+      "mcp": "MCP"
+    },
+    "authModes": {
+      "none": "No authentication",
+      "bearer": "Bearer token",
+      "header": "Custom header"
+    },
+    "accessModes": {
+      "admins-only": "Administrators only",
+      "all-users": "Everyone",
+      "granted": "Only people granted access"
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Weather API",
+      "kind": "Kind",
+      "description": "Description",
+      "descriptionPlaceholder": "What this server does",
+      "baseUrl": "Base URL",
+      "specUrl": "Spec URL",
+      "specUrlHint": "Optional. Defaults to the base URL when left empty.",
+      "authMode": "Authentication",
+      "authHeader": "Header name",
+      "accessMode": "Who can use it",
+      "timeoutMs": "Timeout (ms)",
+      "maxResponseBytes": "Max response (bytes)",
+      "serverDefault": "Server default",
+      "enabled": "Enabled",
+      "enabledHint": "Disabled servers stay registered but are never offered to the model."
+    },
+    "approvals": {
+      "title": "Standing approvals",
+      "description": "Tools you allowed to run without asking again. Revoke one and it will ask the next time.",
+      "empty": "No standing approvals.",
+      "revoke": "Revoke",
+      "revoked": "Approval revoked",
+      "revokeFailed": "Could not revoke the approval.",
+      "scope": {
+        "once": "Once",
+        "session": "This chat",
+        "always": "Always"
+      }
     }
   }
 }

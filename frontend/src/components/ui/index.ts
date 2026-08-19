@@ -30,3 +30,5 @@ export {
 } from './Card';
 export { Switch } from './Switch';
 export { PageHeader, PageShell } from './PageShell';
+export { ModalShell, modalFieldClass, modalLabelClass } from './ModalShell';
+export { IconAction } from './IconAction';

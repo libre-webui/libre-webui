@@ -19,6 +19,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserManager } from '@/components/UserManager';
 import { AgentAccessSettings } from '@/components/AgentAccessSettings';
+import { ToolAccessSettings } from '@/components/ToolAccessSettings';
 import { GroupManager } from '@/components/GroupManager';
 import { SecurityAuditLog } from '@/components/SecurityAuditLog';
 import { ModelDownloadSettings } from '@/components/ModelDownloadSettings';
@@ -42,6 +43,7 @@ export const UserManagementPage: React.FC = () => {
         <ModelDownloadSettings />
         <WebSearchAccessSettings />
         <AgentAccessSettings />
+        <ToolAccessSettings />
         <GroupManager />
         <SecurityAuditLog />
       </div>

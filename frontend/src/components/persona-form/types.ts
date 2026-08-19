@@ -38,7 +38,8 @@ export interface ExtendedFormData extends CreatePersonaRequest {
   };
 }
 
-export type PersonaFormTab = 'basic' | 'parameters' | 'memory' | 'advanced';
+export type PersonaFormTab =
+  'basic' | 'parameters' | 'memory' | 'bindings' | 'advanced';
 
 export interface MemoryStatus {
   status: 'active' | 'wiped' | 'backed_up';

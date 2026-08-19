@@ -26,11 +26,13 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
+  BookText,
   Bot,
   Briefcase,
   CalendarDays,
   Database,
   Ghost,
+  GraduationCap,
   Home,
   MessageSquare,
   Moon,
@@ -38,6 +40,7 @@ import {
   Settings,
   Sparkles,
   User as UserIcon,
+  Wrench,
   Zap,
 } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
@@ -272,6 +275,30 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         icon: Zap,
         keywords: 'automations schedule cron recurring routines',
         run: () => navigate('/automations'),
+      },
+      {
+        id: 'action:prompts',
+        section: actionSection,
+        label: t('sidebar.navigation.prompts', 'Prompts'),
+        icon: BookText,
+        keywords: 'prompts templates slash snippets library',
+        run: () => navigate('/prompts'),
+      },
+      {
+        id: 'action:skills',
+        section: actionSection,
+        label: t('sidebar.navigation.skills', 'Skills'),
+        icon: GraduationCap,
+        keywords: 'skills instructions playbooks load_skill',
+        run: () => navigate('/skills'),
+      },
+      {
+        id: 'action:tools',
+        section: actionSection,
+        label: t('sidebar.navigation.tools', 'Tools'),
+        icon: Wrench,
+        keywords: 'tools servers mcp openapi integrations approvals',
+        run: () => navigate('/tools'),
       },
       ...(showAgents
         ? [
