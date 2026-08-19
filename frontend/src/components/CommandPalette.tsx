@@ -413,8 +413,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   if (!open) return null;
 
-  let lastSection = '';
-
   return createPortal(
     <div
       data-testid='command-palette'
@@ -472,8 +470,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             </p>
           )}
           {filtered.map(({ item, ranges }, index) => {
-            const showSection = item.section !== lastSection;
-            lastSection = item.section;
+            const showSection =
+              index === 0 || item.section !== filtered[index - 1].item.section;
             return (
               <React.Fragment key={item.id}>
                 {showSection && (
