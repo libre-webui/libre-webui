@@ -15,6 +15,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.25.0] - 2026-08-19
+
+A calendar, and automations that use it: recurring events on a month or week grid, and scheduled AI tasks whose runs land in your chat list as ordinary conversations. Around them, web search that plans its queries before running them, a rebuilt command palette, and a round of persona and interface fixes.
+
+### ✨ New Features
+
+- **A personal calendar.** Month and week views with one-off and recurring events — hourly through yearly. A recurring event is stored once and expanded server-side, so editing it updates every future occurrence. Titles and notes are encrypted at rest with the same envelope used for chats and notes.
+- **Automations: scheduled AI tasks.** An automation runs your instructions on up to five triggers and delivers each run as a normal chat session — a daily digest or a weekly review lands in your chat list, ready to be opened and continued like any other conversation. Runs go through the same durable generation pipeline as every chat — provider routing, persona defaults, and web search when it is enabled — with pause and resume, run-now, starter templates, optional in-app notifications when a run finishes, and a run history that tells failures apart from runs that stalled. The scheduler ticks once a minute behind a coordination lease, so exactly one replica advances schedules and each occurrence fires at most once; a server that was down fires the missed occurrence once when it returns. Automations project their upcoming occurrences and finished runs onto the calendar, and both pages appear in Explore on the home screen.
+- **Web search plans its queries.** A chat message is rarely a good search query, so the session's own model first turns it into a few keyword queries, plus an optional freshness window and engine category. Every failure along the way degrades to the plain raw-message search this replaces, never below it. The results-per-search ceiling rises to 100.
+- **A larger command palette.** Cmd-K opens centered, with fuzzy matching and the matched characters highlighted.
+- **Pinnable admin shortcuts.** Administrators can pin admin pages into the sidebar footer for one-click access.
+- **The About screen checks for updates.** It compares the running version against the latest published release and says which of the two is ahead, and gains links to reopen the release notes and to star the project.
+- **Small comforts.** The settings modal is larger, and a new chat shows a spinner in the sidebar while its title is being written.
+
+### 🔧 Improvements
+
+- The sidebar and top bar share one continuous surface, text fields no longer draw a double frame when focused, the chat composer's icons align left like the new-chat composer's, and Work task rows use the same actions menu and hover preview as chats.
+- A routing error now renders the branded error screen instead of a blank page.
+- New schema migration on both backends (SQLite v15, PostgreSQL v14) creates the calendar and automations tables; applied automatically on upgrade.
+
+### 🐛 Bug Fixes
+
+- **Editing a message now rewrites the conversation on the server.** Edit-and-resend sent its truncation through a metadata update that silently ignores messages, so the server kept the entire replaced tail and the edit existed only in the browser. A dedicated truncate operation removes the cut messages for real, cancels any generation still writing into them, and keeps the prefix from the server's own copy so a stale client can never erase a newer reply.
+- **Personas answer with the model they are built on.** A persona backed by a provider plugin now routes to that provider, its model default resolves to the persona's backing model, provider models are selectable as persona backends in the first place, and the home screen's continue list shows persona names.
+- **A failed regenerate cleans up after itself.** The failed attempt is removed and the conversation resyncs with the server instead of drifting out of step.
+- **A stray `h` no longer opens settings.** Single-letter navigation shortcuts require their modifier; the shortcuts help opens with `?`.
+
+### 🌍 Translations
+
+- All new interface text — the calendar, automations, the palette, the About screen, and the admin pins — is translated in all 25 languages.
+
+### 📚 Documentation
+
+- New guides for the calendar and automations, and the quick start, pro tips, and keyboard shortcuts pages catch up with the palette, the admin pins, and the current shortcut set.
+
 ## [0.24.1] - 2026-08-18
 
 A correctness pass over the three systems 0.24.0 introduced. Compaction, the context meter, and the thinking levels now share one definition of what a conversation's context is — and each of them answers to the person using it: compaction can be refused or undone per conversation, the meter counts exactly what the next request sends, and a thinking setting never reaches a model that cannot honor it.
