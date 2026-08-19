@@ -24,7 +24,7 @@ import React, {
 } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { personaApi, ollamaApi, embeddingApi } from '@/utils/api';
+import { personaApi, embeddingApi } from '@/utils/api';
 import {
   PersonaParameters,
   UpdatePersonaRequest,
@@ -34,6 +34,7 @@ import {
 import { Brain, Sliders, Sparkles, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppStore } from '@/store/appStore';
+import { useChatStore } from '@/store/chatStore';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import { DEFAULT_FORM_DATA } from '@/components/persona-form/defaults';
@@ -59,7 +60,22 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   const { preferences } = useAppStore();
   const { t } = useTranslation();
   const [formData, setFormData] = useState<ExtendedFormData>(DEFAULT_FORM_DATA);
-  const [availableModels, setAvailableModels] = useState<OllamaModel[]>([]);
+  const chatModels = useChatStore(state => state.models);
+  const loadChatModels = useChatStore(state => state.loadModels);
+  // The chat store's list already merges Ollama and provider (plugin) models;
+  // personas can back onto either — the backend routes plugin models by name.
+  // Other personas and agent CLIs are not valid persona backends.
+  const availableModels = useMemo<OllamaModel[]>(
+    () =>
+      chatModels.filter(
+        model =>
+          !model.isPersona &&
+          !model.isAgent &&
+          !model.isUnavailable &&
+          !model.isLegacySelection
+      ),
+    [chatModels]
+  );
   const [embeddingModels, setEmbeddingModels] = useState<EmbeddingModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -176,18 +192,13 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     const initialize = async () => {
       setLoading(true);
       try {
-        const [modelsResponse, embeddingModelsResponse, defaultsResponse] =
-          await Promise.all([
-            ollamaApi.getModels(),
-            embeddingApi.getModels(),
-            !persona
-              ? personaApi.getDefaultParameters()
-              : Promise.resolve(null),
-          ]);
-
-        if (modelsResponse.success && modelsResponse.data) {
-          setAvailableModels(modelsResponse.data);
-        }
+        const [embeddingModelsResponse, defaultsResponse] = await Promise.all([
+          embeddingApi.getModels(),
+          !persona ? personaApi.getDefaultParameters() : Promise.resolve(null),
+          useChatStore.getState().models.length === 0
+            ? loadChatModels({ quiet: true })
+            : Promise.resolve(),
+        ]);
 
         const embModels = normalizeEmbeddingModels(
           embeddingModelsResponse.success && embeddingModelsResponse.data
@@ -268,7 +279,12 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     };
 
     initialize();
-  }, [persona, normalizeEmbeddingModels, preferences.embeddingSettings?.model]);
+  }, [
+    persona,
+    normalizeEmbeddingModels,
+    loadChatModels,
+    preferences.embeddingSettings?.model,
+  ]);
 
   const handleSubmit = async (closeAfter: boolean) => {
     setSubmitting(true);

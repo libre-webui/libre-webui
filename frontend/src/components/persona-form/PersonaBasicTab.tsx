@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AvatarUpload } from '@/components/AvatarUpload';
 import { PersonaBackgroundUpload } from '@/components/PersonaBackgroundUpload';
@@ -41,6 +42,26 @@ export function PersonaBasicTab({
   onParameterChange,
 }: PersonaBasicTabProps) {
   const { t } = useTranslation();
+
+  // Group provider (plugin) models under their provider name so local and
+  // remote models stay tellable apart in one flat select.
+  const localModels = useMemo(
+    () => availableModels.filter(model => !model.isPlugin),
+    [availableModels]
+  );
+  const providerGroups = useMemo(() => {
+    const groups = new Map<string, OllamaModel[]>();
+    for (const model of availableModels) {
+      if (!model.isPlugin) continue;
+      const provider = model.pluginName || model.pluginId || 'Provider';
+      const bucket = groups.get(provider);
+      if (bucket) bucket.push(model);
+      else groups.set(provider, [model]);
+    }
+    return [...groups.entries()].sort(([left], [right]) =>
+      left.localeCompare(right)
+    );
+  }, [availableModels]);
 
   return (
     <div className='space-y-6'>
@@ -70,10 +91,27 @@ export function PersonaBasicTab({
             required
           >
             <option value=''>{t('personaForm.basic.selectModel')}</option>
-            {availableModels.map(model => (
-              <option key={model.name} value={model.name}>
-                {model.name}
-              </option>
+            {formData.model &&
+              !availableModels.some(model => model.name === formData.model) && (
+                <option value={formData.model}>{formData.model}</option>
+              )}
+            {localModels.length > 0 && (
+              <optgroup label='Ollama'>
+                {localModels.map(model => (
+                  <option key={model.name} value={model.name}>
+                    {model.name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {providerGroups.map(([providerName, models]) => (
+              <optgroup key={providerName} label={providerName}>
+                {models.map(model => (
+                  <option key={model.name} value={model.name}>
+                    {model.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>
