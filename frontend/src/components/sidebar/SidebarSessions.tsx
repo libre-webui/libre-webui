@@ -27,6 +27,7 @@ import {
   ExternalLink,
   Folder,
   FolderPlus,
+  Loader2,
   MessageSquare,
   MoreHorizontal,
   Pin,
@@ -744,29 +745,13 @@ export function SidebarSessions({
                                 title={session.title}
                               >
                                 {generatingTitleForSession === session.id ? (
-                                  <span className='inline-flex items-center gap-1'>
-                                    <span className='animate-pulse'>
-                                      {t('chat.session.generatingTitle')}
-                                    </span>
-                                    <span className='inline-flex'>
-                                      <span
-                                        className='animate-bounce'
-                                        style={{ animationDelay: '0ms' }}
-                                      >
-                                        .
-                                      </span>
-                                      <span
-                                        className='animate-bounce'
-                                        style={{ animationDelay: '150ms' }}
-                                      >
-                                        .
-                                      </span>
-                                      <span
-                                        className='animate-bounce'
-                                        style={{ animationDelay: '300ms' }}
-                                      >
-                                        .
-                                      </span>
+                                  <span
+                                    className='inline-flex items-center gap-1.5'
+                                    title={t('chat.session.generatingTitle')}
+                                  >
+                                    <Loader2 className='h-3.5 w-3.5 shrink-0 animate-spin text-ink-subtle' />
+                                    <span className='truncate'>
+                                      {truncateText(session.title, 40)}
                                     </span>
                                   </span>
                                 ) : (

@@ -38,6 +38,7 @@ import { SidebarNavigation } from '@/components/sidebar/SidebarNavigation';
 import { SidebarSessions } from '@/components/sidebar/SidebarSessions';
 import { SidebarUserSection } from '@/components/sidebar/SidebarUserSection';
 import { SidebarWorkTasks } from '@/components/sidebar/SidebarWorkTasks';
+import { isDefaultSessionTitle } from '@/hooks/useChat';
 import { usePendingUserApprovals } from '@/hooks/usePendingUserApprovals';
 import { useAutomationRunNotifications } from '@/hooks/useAutomationRunNotifications';
 
@@ -86,8 +87,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const deleteWorkTask = useWorkStore(state => state.deleteTask);
   const { user, isAdmin, systemInfo, setUser, canUseWork, canUseAgents } =
     useAuthStore();
-  const { backgroundImage, sidebarCompact, toggleSidebarCompact } =
-    useAppStore();
+  const {
+    backgroundImage,
+    sidebarCompact,
+    toggleSidebarCompact,
+    isGenerating,
+  } = useAppStore();
+
+  // A brand-new chat is "awaiting its title" from the moment its first
+  // generation starts, not just while the title API call is in flight.
+  const awaitingTitleSessionId =
+    generatingTitleForSession ??
+    (isGenerating &&
+    currentSession &&
+    isDefaultSessionTitle(currentSession.title)
+      ? currentSession.id
+      : null);
   const admin = isAdmin();
   const { pendingApprovalCount } = usePendingUserApprovals(
     Boolean(user && admin && systemInfo?.requiresAuth)
@@ -433,7 +448,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               sessions={sessions.filter(session => !session.archived)}
               personas={personas}
               currentSessionId={currentSessionId}
-              generatingTitleForSession={generatingTitleForSession}
+              generatingTitleForSession={awaitingTitleSessionId}
               sidebarCompact={sidebarCompact}
               editingSessionId={editingSessionId}
               editingTitle={editingTitle}

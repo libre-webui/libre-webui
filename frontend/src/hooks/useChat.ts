@@ -47,7 +47,7 @@ import {
 const logger = createLogger('use-chat');
 const DEFAULT_SESSION_TITLES = new Set(['New Chat', 'New Demo Session']);
 
-const isDefaultSessionTitle = (title?: string) =>
+export const isDefaultSessionTitle = (title?: string) =>
   !title || DEFAULT_SESSION_TITLES.has(title);
 
 export const useChat = (sessionId: string) => {
