@@ -1054,6 +1054,128 @@
       }
     },
     {
+      "id": "automations",
+      "title": "Automations",
+      "uiRoutes": [],
+      "documentation": [
+        {
+          "file": "docs/48-AUTOMATIONS.md",
+          "patterns": ["each occurrence fires at most once"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-automations.mjs",
+          "runner": "test:package",
+          "name": "the scheduler fires due automations once and settles stalled runs",
+          "behaviorPatterns": [
+            "the due automation fires exactly once",
+            "the same occurrence never fires twice"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "GET",
+          "path": "/occurrences"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "GET",
+          "path": "/runs"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "GET",
+          "path": "/runs/summary"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "POST",
+          "path": "/runs/seen"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "GET",
+          "path": "/:automationId"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "PUT",
+          "path": "/:automationId"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "DELETE",
+          "path": "/:automationId"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "POST",
+          "path": "/:automationId/pause"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "POST",
+          "path": "/:automationId/resume"
+        },
+        {
+          "file": "backend/src/routes/automations.ts",
+          "mount": "/api/automations",
+          "method": "POST",
+          "path": "/:automationId/run"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface Automation ",
+                "export interface AutomationRun "
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Automations are first-party account resources and have no installable or discovery manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "docs/48-AUTOMATIONS.md",
+              "patterns": [
+                "empty means Auto: your default chat model at run time"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
       "id": "work",
       "title": "Work",
       "uiRoutes": ["/work", "/work/:taskId"],
