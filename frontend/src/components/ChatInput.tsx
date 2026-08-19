@@ -1271,8 +1271,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   />
                 </div>
 
-                {/* Integrated Controls Row */}
-                <div className='ms-auto flex flex-shrink-0 items-center gap-1 sm:gap-1.5'>
+                {/* Integrated Controls Row — icons grouped on the left in the
+                  same order as the new-chat composer; model + send stay right. */}
+                <div className='flex min-w-0 flex-1 items-center gap-1 sm:gap-1.5'>
                   {/* Thinking level */}
                   {thinkingAvailable && (
                     <ThinkingSelector
@@ -1392,6 +1393,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       }
                     />
                   )}
+
+                  <div className='min-w-0 flex-1' />
 
                   {/* Model Selector - Integrated */}
                   {currentSession && selectorModels.length > 0 && (
