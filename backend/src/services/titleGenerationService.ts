@@ -261,7 +261,11 @@ export class TitleGenerationService {
     );
     const providerSelection =
       requestedModel === AUTO_TITLE_CURRENT_MODEL
-        ? normalizeChatProviderSelection(session)
+        ? // A persona session's binding points at the pseudo-model; the
+          // resolved backing model finds its own provider by name.
+          session.model.startsWith('persona:')
+          ? undefined
+          : normalizeChatProviderSelection(session)
         : normalizeChatProviderSelection({ providerType, providerId });
 
     let title = buildFallbackTitle(message);

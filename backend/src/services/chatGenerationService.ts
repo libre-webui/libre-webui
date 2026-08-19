@@ -155,7 +155,13 @@ class ChatGenerationService {
     providerSelection?: ChatProviderSelection,
     signal?: AbortSignal
   ): Promise<GenerationTarget> {
-    const provider = normalizeChatProviderSelection(providerSelection);
+    // A persona session's provider binding describes the persona
+    // pseudo-model, not its backing model (the UI historically stamped
+    // "ollama" on every persona). The backing model's own name decides
+    // the provider, so the binding must not pin routing here.
+    const provider = sessionModel.startsWith('persona:')
+      ? undefined
+      : normalizeChatProviderSelection(providerSelection);
     const actualModelName = await this.resolveActualModelName(
       sessionModel,
       userId

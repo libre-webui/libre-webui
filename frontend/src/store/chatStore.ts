@@ -202,12 +202,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
   ) => {
     try {
       set({ loading: true, error: null });
+      // A persona session must not persist the picker's provider namespace:
+      // the persona's backing model resolves its own provider server-side.
+      const isPersonaModel = model.startsWith('persona:');
       const response = await chatApi.createSession(
         model,
         title,
         personaId,
-        providerType,
-        providerId
+        isPersonaModel ? null : providerType,
+        isPersonaModel ? null : providerId
       );
 
       if (response.success && response.data) {
@@ -1057,6 +1060,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const state = get();
     if (!state.currentSession) {
       throw new Error('No current session to update');
+    }
+    if (model.startsWith('persona:')) {
+      // Same rule as createSession: the persona's backing model resolves
+      // its own provider server-side.
+      providerType = null;
+      providerId = null;
     }
 
     try {
