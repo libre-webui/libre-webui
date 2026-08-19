@@ -379,6 +379,18 @@ button {
   outline-offset: 2px;
 }
 
+/* Text-entry fields signal focus through their caret and the field's own
+   border/ring styling — the global outline double-frames them (composer,
+   palette, search fields). Checkboxes, radios, ranges, buttons, and links
+   keep the outline: keyboard users have no other focus cue there. */
+input:not([type='checkbox']):not([type='radio']):not(
+    [type='range']
+  ):focus-visible,
+textarea:focus-visible,
+[contenteditable='true']:focus-visible {
+  outline: none;
+}
+
 .touch-manipulation {
   touch-action: manipulation;
 }
