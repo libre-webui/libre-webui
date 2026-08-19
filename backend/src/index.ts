@@ -116,6 +116,7 @@ import {
   initializeDurableEventGateway,
 } from './platform/events/index.js';
 import workEventService from './services/workEventService.js';
+import automationSchedulerService from './services/automationSchedulerService.js';
 import {
   closePlatformStorageRuntime,
   initializePlatformStorageRuntime,
@@ -775,6 +776,9 @@ const durableEventGateway = initializeDurableEventGateway(
   platformCoordinator
 );
 workEventService.initializeDurableGateway(durableEventGateway);
+// Fire due automations and settle their runs; the coordinator lease inside
+// the tick keeps this single-writer across replicas.
+automationSchedulerService.start();
 healthService.registerDependencyCheck({
   id: 'durable-jobs',
   required: true,
@@ -909,6 +913,7 @@ const shutdown = async (signal: 'SIGTERM' | 'SIGINT'): Promise<void> => {
   if (shutdownStarted) return;
   shutdownStarted = true;
   logger.info(`${signal} signal received: shutting down`);
+  automationSchedulerService.stop();
   const httpClosed = new Promise<void>(resolve => {
     server.close(() => {
       logger.info('HTTP server closed');

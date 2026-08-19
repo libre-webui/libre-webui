@@ -30,6 +30,7 @@ import { createLogger } from '../../utils/logger.js';
 import { DurableJobExecutionError } from './durableJobTypes.js';
 import type { DurableJobHandler } from './embeddedDurableJobWorker.js';
 import {
+  AUTOMATION_RUN_JOB_TYPE,
   CHAT_GENERATE_JOB_TYPE,
   DOCUMENT_INGEST_IDEMPOTENCY_SCOPE,
   DOCUMENT_INGEST_JOB_TYPE,
@@ -933,6 +934,136 @@ const deleteOwnerContent: DurableJobHandler = async context => {
   }
 };
 
+const readAutomationPayload = (
+  value: unknown
+): { runId: string; automationId: string } => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The automation run payload is invalid'
+    );
+  }
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.runId !== 'string' ||
+    !record.runId.trim() ||
+    typeof record.automationId !== 'string' ||
+    !record.automationId.trim()
+  ) {
+    throw new DurableJobExecutionError(
+      false,
+      'payload-invalid',
+      'The automation run payload is invalid'
+    );
+  }
+  return { runId: record.runId, automationId: record.automationId };
+};
+
+const runAutomation: DurableJobHandler = async context => {
+  const { runId, automationId } = readAutomationPayload(context.payload);
+  const automationModule = await import('../../services/automationService.js');
+  const automationService = automationModule.default;
+  const { decodeProvider } = automationModule;
+  const run = await automationService.getRunRecord(runId, context.actorUserId);
+  // The run row is authoritative; a deleted automation cascades its runs
+  // away and a finished run must never execute twice.
+  if (!run || (run.status !== 'queued' && run.status !== 'running')) {
+    return { resultReference: `automation-run:${runId}:skipped` };
+  }
+  const automation = await automationService.getAutomationRecord(automationId);
+  if (!automation || automation.userId !== context.actorUserId) {
+    await automationService.finalizeRun(runId, 'failed', 'automation-missing');
+    return { resultReference: `automation-run:${runId}:missing` };
+  }
+  await context.assertSideEffectAllowed();
+  await context.reportProgress({
+    current: 1,
+    total: 2,
+    message: 'Preparing automation chat session',
+  });
+
+  const { default: chatService } =
+    await import('../../services/chatService.js');
+  // Message identities derive from the run so a retried attempt re-lands on
+  // the identical durable chat job instead of enqueueing a duplicate.
+  const userMessageId = `${runId}-user`;
+  const assistantMessageId = `${runId}-assistant`;
+  let sessionId = run.session_id;
+  try {
+    if (!sessionId) {
+      let model = automation.model;
+      let provider = decodeProvider(automation.provider ?? null);
+      if (!model) {
+        // Auto: fall back to the owner's default chat model.
+        const { default: preferencesService } =
+          await import('../../services/preferencesService.js');
+        const preferences = await preferencesService.getPreferences(
+          context.actorUserId
+        );
+        model = preferences.defaultModel;
+        provider = {
+          providerType: preferences.defaultProviderType ?? undefined,
+          providerId: preferences.defaultProviderId ?? undefined,
+        };
+      }
+      if (!model) {
+        await automationService.finalizeRun(runId, 'failed', 'no-model');
+        return { resultReference: `automation-run:${runId}:no-model` };
+      }
+      const title = `${automation.name} — ${new Date(
+        run.scheduled_for
+      ).toLocaleDateString()}`;
+      const session = await chatService.createSession(
+        model,
+        title,
+        context.actorUserId,
+        undefined,
+        provider.providerType
+          ? {
+              providerType: provider.providerType as
+                'ollama' | 'plugin' | 'agent',
+              providerId: provider.providerId,
+            }
+          : undefined
+      );
+      sessionId = session.id;
+      await automationService.markRunStarted(
+        runId,
+        sessionId,
+        assistantMessageId
+      );
+    }
+    await context.assertSideEffectAllowed();
+    const queued = await chatService.queueDurableGeneration({
+      sessionId,
+      userId: context.actorUserId,
+      userMessageId,
+      assistantMessageId,
+      message: automation.instructions,
+    });
+    if (!queued) {
+      throw new Error('The automation chat session is no longer available');
+    }
+  } catch (error) {
+    if (error instanceof DurableJobExecutionError || context.signal.aborted) {
+      throw error;
+    }
+    handlerLogger.error(`Automation run ${runId} failed:`, error);
+    throw new DurableJobExecutionError(
+      true,
+      'automation-run-failed',
+      'The automation run could not start its chat generation'
+    );
+  }
+  await context.reportProgress({
+    current: 2,
+    total: 2,
+    message: 'Automation chat generation queued',
+  });
+  return { resultReference: `automation-run:${runId}:session:${sessionId}` };
+};
+
 const executeWork: DurableJobHandler = async context => {
   const { taskId, runId } = readWorkPayload(context.payload);
   await context.assertSideEffectAllowed();
@@ -971,4 +1102,5 @@ export const createDomainDurableJobHandlers = (): ReadonlyMap<
     [OWNER_DELETE_CONTENT_JOB_TYPE, deleteOwnerContent],
     [RESOURCE_DELETE_JOB_TYPE, deleteResource],
     [WORK_EXECUTE_JOB_TYPE, executeWork],
+    [AUTOMATION_RUN_JOB_TYPE, runAutomation],
   ]);
