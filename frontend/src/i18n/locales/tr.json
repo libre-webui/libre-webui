@@ -2550,7 +2550,8 @@
       "weekly": "Her {{day}} {{time}}",
       "monthly": "Her ayın {{day}}. günü {{time}}",
       "yearly": "Her yıl {{date}} {{time}}"
-    }
+    },
+    "finishedNotification": "{{n}} otomasyon çalıştırması tamamlandı"
   },
   "home": {
     "active": "etkin",

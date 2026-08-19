@@ -2550,7 +2550,8 @@
       "weekly": "Ugentligt {{day}} kl. {{time}}",
       "monthly": "Månedligt den {{day}}. kl. {{time}}",
       "yearly": "Årligt den {{date}} kl. {{time}}"
-    }
+    },
+    "finishedNotification": "{{n}} automatiseringskørsler er færdige"
   },
   "home": {
     "active": "aktiv",

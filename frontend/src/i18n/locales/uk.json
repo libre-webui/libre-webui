@@ -2550,7 +2550,8 @@
       "weekly": "Щотижня у {{day}} о {{time}}",
       "monthly": "Щомісяця {{day}}-го числа о {{time}}",
       "yearly": "Щороку {{date}} о {{time}}"
-    }
+    },
+    "finishedNotification": "Завершено запусків автоматизації: {{n}}"
   },
   "home": {
     "active": "активно",

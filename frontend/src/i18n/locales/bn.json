@@ -2550,7 +2550,8 @@
       "weekly": "প্রতি {{day}} {{time}} এ",
       "monthly": "প্রতি মাসের {{day}} তারিখে {{time}} এ",
       "yearly": "প্রতি বছর {{date}} {{time}} এ"
-    }
+    },
+    "finishedNotification": "{{n}}টি অটোমেশন রান সম্পন্ন হয়েছে"
   },
   "home": {
     "active": "সক্রিয়",

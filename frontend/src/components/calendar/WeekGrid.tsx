@@ -17,7 +17,7 @@
 
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CalendarEvent } from '@/types';
+import type { CalendarDisplayEvent } from './EventChip';
 import { cn } from '@/utils';
 import { isSameDay, timeLabel, weekDays } from '@/utils/calendarDates';
 import { EventChip } from './EventChip';
@@ -26,9 +26,9 @@ const HOUR_HEIGHT_PX = 48;
 
 interface WeekGridProps {
   anchor: Date;
-  events: CalendarEvent[];
+  events: CalendarDisplayEvent[];
   onDayClick: (day: Date, hour: number) => void;
-  onEventClick: (event: CalendarEvent) => void;
+  onEventClick: (event: CalendarDisplayEvent) => void;
 }
 
 export function WeekGrid({

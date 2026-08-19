@@ -32,6 +32,8 @@ interface SidebarNavigationProps {
   sidebarCompact: boolean;
   activePath: string;
   showAgents: boolean;
+  /** Finished automation runs not yet acknowledged; badges the Zap icon. */
+  unseenRunCount?: number;
   onMobileNavigate: () => void;
 }
 
@@ -66,6 +68,7 @@ export function SidebarNavigation({
   sidebarCompact,
   activePath,
   showAgents,
+  unseenRunCount = 0,
   onMobileNavigate,
 }: SidebarNavigationProps) {
   const { t } = useTranslation();
@@ -108,6 +111,14 @@ export function SidebarNavigation({
                 />
               )}
               <Icon className='h-[18px] w-[18px] shrink-0' />
+              {path === '/automations' && unseenRunCount > 0 && (
+                <span
+                  data-testid='automations-unseen-badge'
+                  className='absolute -end-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary-500 px-0.5 text-[9px] font-semibold leading-none text-white'
+                >
+                  {unseenRunCount > 9 ? '9+' : unseenRunCount}
+                </span>
+              )}
             </Link>
           );
         })}

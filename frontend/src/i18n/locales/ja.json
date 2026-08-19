@@ -2550,7 +2550,8 @@
       "weekly": "毎週{{day}}の{{time}}",
       "monthly": "毎月{{day}}日の{{time}}",
       "yearly": "毎年{{date}}の{{time}}"
-    }
+    },
+    "finishedNotification": "{{n}} 件の自動化の実行が完了しました"
   },
   "home": {
     "active": "アクティブ",

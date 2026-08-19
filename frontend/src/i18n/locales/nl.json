@@ -2550,7 +2550,8 @@
       "weekly": "Wekelijks op {{day}} om {{time}}",
       "monthly": "Maandelijks op dag {{day}} om {{time}}",
       "yearly": "Jaarlijks op {{date}} om {{time}}"
-    }
+    },
+    "finishedNotification": "{{n}} automatiseringsuitvoering(en) voltooid"
   },
   "home": {
     "active": "actief",

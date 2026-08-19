@@ -2550,7 +2550,8 @@
       "weekly": "Varje {{day}} kl. {{time}}",
       "monthly": "Den {{day}}:e varje månad kl. {{time}}",
       "yearly": "Varje år den {{date}} kl. {{time}}"
-    }
+    },
+    "finishedNotification": "{{n}} automatiseringskörningar klara"
   },
   "home": {
     "active": "aktiv",

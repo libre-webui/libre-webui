@@ -16,6 +16,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -23,7 +24,8 @@ import { Button } from '@/components/ui';
 import { MonthGrid } from '@/components/calendar/MonthGrid';
 import { WeekGrid } from '@/components/calendar/WeekGrid';
 import { EventModal, EventModalResult } from '@/components/calendar/EventModal';
-import { calendarApi } from '@/utils/api';
+import type { CalendarDisplayEvent } from '@/components/calendar/EventChip';
+import { automationsApi, calendarApi } from '@/utils/api';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import { addDays, monthLabel, startOfWeek } from '@/utils/calendarDates';
@@ -35,9 +37,13 @@ type CalendarView = 'month' | 'week';
 
 const CalendarPage: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [view, setView] = useState<CalendarView>('month');
   const [anchor, setAnchor] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [automationItems, setAutomationItems] = useState<
+    CalendarDisplayEvent[]
+  >([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [modalStartAt, setModalStartAt] = useState(() => Date.now());
@@ -77,10 +83,63 @@ const CalendarPage: React.FC = () => {
         logger.error('Failed to load calendar events:', error);
         toast.error(t('calendar.loadFailed'));
       });
+    // Automations project onto the calendar: upcoming occurrences plus the
+    // outcome of finished runs. Their absence never blocks the event grid.
+    Promise.all([
+      automationsApi.getOccurrences(range.from, range.to),
+      automationsApi.getRuns({ from: range.from, to: range.to }),
+      automationsApi.getAutomations(),
+    ])
+      .then(([occurrences, runs, automations]) => {
+        if (cancelled) return;
+        const now = Date.now();
+        const nameOf = (automationId: string) =>
+          automations.data?.find(item => item.id === automationId)?.name ??
+          t('automations.deletedAutomation');
+        const items: CalendarDisplayEvent[] = [];
+        for (const occurrence of occurrences.data ?? []) {
+          if (occurrence.at <= now) continue;
+          items.push({
+            id: `automation:${occurrence.automationId}:${occurrence.at}`,
+            title: occurrence.name,
+            startAt: occurrence.at,
+            allDay: false,
+            createdAt: occurrence.at,
+            updatedAt: occurrence.at,
+            variant: 'automation',
+          });
+        }
+        for (const run of runs.data ?? []) {
+          if (run.status !== 'succeeded' && run.status !== 'failed') continue;
+          items.push({
+            id: `run:${run.id}`,
+            title: nameOf(run.automationId),
+            startAt: run.scheduledFor,
+            allDay: false,
+            createdAt: run.createdAt,
+            updatedAt: run.createdAt,
+            variant: run.status === 'succeeded' ? 'runSucceeded' : 'runFailed',
+            ...(run.sessionId ? { sessionId: run.sessionId } : {}),
+          });
+        }
+        setAutomationItems(items);
+      })
+      .catch(error => {
+        if (cancelled) return;
+        logger.error('Failed to project automations onto the calendar:', error);
+      });
     return () => {
       cancelled = true;
     };
   }, [range.from, range.to, refreshCounter, t]);
+
+  const displayEvents = useMemo<CalendarDisplayEvent[]>(
+    () =>
+      [...events, ...automationItems].sort(
+        (left, right) => left.startAt - right.startAt
+      ),
+    [events, automationItems]
+  );
 
   const step = (direction: 1 | -1) => {
     setAnchor(current =>
@@ -104,7 +163,18 @@ const CalendarPage: React.FC = () => {
     setModalOpen(true);
   };
 
-  const openEdit = (event: CalendarEvent) => {
+  const openEdit = (event: CalendarDisplayEvent) => {
+    // Automation projections navigate instead of opening the editor: a
+    // finished run opens its chat, an upcoming occurrence its automation.
+    if (event.variant === 'runSucceeded' || event.variant === 'runFailed') {
+      if (event.sessionId) navigate(`/c/${event.sessionId}`);
+      else navigate('/automations');
+      return;
+    }
+    if (event.variant === 'automation') {
+      navigate('/automations');
+      return;
+    }
     // Occurrences edit their source event.
     if (event.baseEventId) {
       const source = events.find(item => item.id === event.baseEventId);
@@ -242,14 +312,14 @@ const CalendarPage: React.FC = () => {
         <MonthGrid
           year={anchor.getFullYear()}
           monthIndex={anchor.getMonth()}
-          events={events}
+          events={displayEvents}
           onDayClick={day => openCreate(day)}
           onEventClick={openEdit}
         />
       ) : (
         <WeekGrid
           anchor={anchor}
-          events={events}
+          events={displayEvents}
           onDayClick={(day, hour) => openCreate(day, hour)}
           onEventClick={openEdit}
         />

@@ -2550,7 +2550,8 @@
       "weekly": "Hằng tuần vào {{day}} lúc {{time}}",
       "monthly": "Hằng tháng vào ngày {{day}} lúc {{time}}",
       "yearly": "Hằng năm vào {{date}} lúc {{time}}"
-    }
+    },
+    "finishedNotification": "{{n}} lần chạy tự động hóa đã hoàn tất"
   },
   "home": {
     "active": "đang hoạt động",

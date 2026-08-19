@@ -39,6 +39,7 @@ import { SidebarSessions } from '@/components/sidebar/SidebarSessions';
 import { SidebarUserSection } from '@/components/sidebar/SidebarUserSection';
 import { SidebarWorkTasks } from '@/components/sidebar/SidebarWorkTasks';
 import { usePendingUserApprovals } from '@/hooks/usePendingUserApprovals';
+import { useAutomationRunNotifications } from '@/hooks/useAutomationRunNotifications';
 
 const logger = createLogger('components:sidebar');
 const SettingsModal = React.lazy(() =>
@@ -90,6 +91,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const admin = isAdmin();
   const { pendingApprovalCount } = usePendingUserApprovals(
     Boolean(user && admin && systemInfo?.requiresAuth)
+  );
+  const { unseenRunCount } = useAutomationRunNotifications(
+    Boolean(user || systemInfo?.requiresAuth === false)
   );
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
@@ -406,6 +410,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               sidebarCompact={sidebarCompact}
               activePath={location.pathname}
               showAgents={canUseAgents()}
+              unseenRunCount={unseenRunCount}
               onMobileNavigate={compactOnMobile}
             />
           )}

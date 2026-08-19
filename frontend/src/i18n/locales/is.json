@@ -2550,7 +2550,8 @@
       "weekly": "Vikulega á {{day}} kl. {{time}}",
       "monthly": "Mánaðarlega þann {{day}}. kl. {{time}}",
       "yearly": "Árlega þann {{date}} kl. {{time}}"
-    }
+    },
+    "finishedNotification": "{{n}} sjálfvirknikeyrslum lokið"
   },
   "home": {
     "active": "virkt",

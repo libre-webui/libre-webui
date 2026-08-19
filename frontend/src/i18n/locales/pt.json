@@ -2550,7 +2550,8 @@
       "weekly": "Semanalmente na {{day}} às {{time}}",
       "monthly": "Mensalmente no dia {{day}} às {{time}}",
       "yearly": "Anualmente em {{date}} às {{time}}"
-    }
+    },
+    "finishedNotification": "{{n}} execuções de automação concluídas"
   },
   "home": {
     "active": "ativo",

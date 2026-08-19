@@ -2550,7 +2550,8 @@
       "weekly": "Týdně v {{day}} v {{time}}",
       "monthly": "Měsíčně {{day}}. den v {{time}}",
       "yearly": "Ročně {{date}} v {{time}}"
-    }
+    },
+    "finishedNotification": "Dokončeno {{n}} běhů automatizace"
   },
   "home": {
     "active": "aktivní",

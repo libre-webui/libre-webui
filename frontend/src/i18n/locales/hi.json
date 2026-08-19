@@ -2550,7 +2550,8 @@
       "weekly": "हर {{day}} {{time}} बजे",
       "monthly": "हर महीने {{day}} तारीख़ को {{time}} बजे",
       "yearly": "हर साल {{date}} को {{time}} बजे"
-    }
+    },
+    "finishedNotification": "{{n}} ऑटोमेशन रन पूर्ण हुए"
   },
   "home": {
     "active": "सक्रिय",

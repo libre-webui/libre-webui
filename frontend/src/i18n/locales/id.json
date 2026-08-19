@@ -2550,7 +2550,8 @@
       "weekly": "Setiap {{day}} pukul {{time}}",
       "monthly": "Setiap tanggal {{day}} pukul {{time}}",
       "yearly": "Setiap {{date}} pukul {{time}}"
-    }
+    },
+    "finishedNotification": "{{n}} eksekusi otomatisasi selesai"
   },
   "home": {
     "active": "aktif",

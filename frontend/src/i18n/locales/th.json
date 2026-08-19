@@ -2550,7 +2550,8 @@
       "weekly": "ทุกวัน{{day}} เวลา {{time}}",
       "monthly": "ทุกวันที่ {{day}} เวลา {{time}}",
       "yearly": "ทุกปีวันที่ {{date}} เวลา {{time}}"
-    }
+    },
+    "finishedNotification": "การทำงานอัตโนมัติเสร็จสิ้น {{n}} รายการ"
   },
   "home": {
     "active": "ใช้งานอยู่",

@@ -2550,7 +2550,8 @@
       "weekly": "매주 {{day}} {{time}}",
       "monthly": "매월 {{day}}일 {{time}}",
       "yearly": "매년 {{date}} {{time}}"
-    }
+    },
+    "finishedNotification": "자동화 실행 {{n}}건이 완료되었습니다"
   },
   "home": {
     "active": "활성",

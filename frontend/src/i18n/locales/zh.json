@@ -2550,7 +2550,8 @@
       "weekly": "每周{{day}} {{time}}",
       "monthly": "每月 {{day}} 日 {{time}}",
       "yearly": "每年 {{date}} {{time}}"
-    }
+    },
+    "finishedNotification": "{{n}} 个自动化运行已完成"
   },
   "home": {
     "active": "活跃",

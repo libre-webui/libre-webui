@@ -2550,7 +2550,8 @@
       "weekly": "Co tydzień w {{day}} o {{time}}",
       "monthly": "Co miesiąc {{day}}. dnia o {{time}}",
       "yearly": "Co rok {{date}} o {{time}}"
-    }
+    },
+    "finishedNotification": "Ukończono {{n}} uruchomień automatyzacji"
   },
   "home": {
     "active": "aktywny",

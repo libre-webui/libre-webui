@@ -17,7 +17,7 @@
 
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CalendarEvent } from '@/types';
+import type { CalendarDisplayEvent } from './EventChip';
 import { cn } from '@/utils';
 import {
   gridDaysForMonth,
@@ -32,9 +32,9 @@ const MAX_CHIPS_PER_DAY = 3;
 interface MonthGridProps {
   year: number;
   monthIndex: number;
-  events: CalendarEvent[];
+  events: CalendarDisplayEvent[];
   onDayClick: (day: Date) => void;
-  onEventClick: (event: CalendarEvent) => void;
+  onEventClick: (event: CalendarDisplayEvent) => void;
 }
 
 export function MonthGrid({
@@ -52,7 +52,7 @@ export function MonthGrid({
   const today = new Date();
 
   const eventsByDay = useMemo(() => {
-    const map = new Map<string, CalendarEvent[]>();
+    const map = new Map<string, CalendarDisplayEvent[]>();
     for (const event of events) {
       const date = new Date(event.startAt);
       const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;

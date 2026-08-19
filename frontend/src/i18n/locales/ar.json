@@ -2550,7 +2550,8 @@
       "weekly": "أسبوعيًا يوم {{day}} في {{time}}",
       "monthly": "شهريًا في اليوم {{day}} في {{time}}",
       "yearly": "سنويًا في {{date}} في {{time}}"
-    }
+    },
+    "finishedNotification": "اكتمل {{n}} من تشغيلات الأتمتة"
   },
   "home": {
     "active": "نشط",
