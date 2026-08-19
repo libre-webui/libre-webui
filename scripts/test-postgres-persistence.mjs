@@ -359,7 +359,7 @@ test(
         initializePostgresPersistence(config, codec),
       ]);
       assert.equal(first.schemaCompatibility.status, 'compatible');
-      assert.equal(second.schemaCompatibility.currentVersion, 13);
+      assert.equal(second.schemaCompatibility.currentVersion, 14);
       assert.equal((await first.health()).ready, true);
 
       const assertStructuralDamage = async (mutation, expected) => {
@@ -3194,6 +3194,12 @@ test(
       `ALTER TABLE work_messages
          DROP CONSTRAINT work_messages_content_json_string_check`
     );
+    await target.query('DROP TABLE automation_runs');
+    await target.query('DROP TABLE automations');
+    await target.query('DROP TABLE calendar_events');
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 14'
+    );
     await target.query('DROP TABLE security_audit_events');
     await target.query('DROP TABLE oauth_identities');
     await target.query('DROP TABLE api_tokens');
@@ -3259,7 +3265,7 @@ test(
     assert.equal(prefixDryRun.sourceFingerprint, dryRun.sourceFingerprint);
     assert.match(
       prefixDryRun.warnings.join('\n'),
-      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 13/i
+      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 14/i
     );
     const codec = {
       encrypt: value => value,
@@ -3289,7 +3295,7 @@ test(
       resumed.tables.every(row => row.status === 'verified'),
       true
     );
-    assert.equal(resumed.targetSchemaVersion, 13);
+    assert.equal(resumed.targetSchemaVersion, 14);
     const resumedState = await target.query(
       `SELECT
          (SELECT MAX(version)::text FROM libre_schema_migrations)
@@ -3302,7 +3308,7 @@ test(
          (SELECT COUNT(*)::text FROM work_messages) AS work_messages`
     );
     assert.deepEqual(resumedState.rows[0], {
-      schema_version: '13',
+      schema_version: '14',
       import_status: 'complete',
       journal_count: String(dryRun.tables.length),
       work_journal: '1',
