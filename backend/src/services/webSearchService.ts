@@ -44,7 +44,7 @@ export const WEB_SEARCH_MAX_RESULTS_KEY = 'web_search_max_results';
 export const WEB_SEARCH_SAFE_SEARCH_KEY = 'web_search_safe_search';
 
 export const WEB_SEARCH_DEFAULT_MAX_RESULTS = 6;
-export const WEB_SEARCH_RESULTS_CEILING = 10;
+export const WEB_SEARCH_RESULTS_CEILING = 100;
 
 export type WebSearchAccessMode = 'admins' | 'all-users';
 
@@ -70,7 +70,7 @@ export interface WebSearchConfig {
   url: string;
   /** Enabled and a URL is set — search can actually run. */
   available: boolean;
-  /** Admin ceiling on results per search, 1-10. */
+  /** Admin ceiling on results per search, 1-100. */
   maxResults: number;
   safeSearch: boolean;
 }

@@ -25,6 +25,7 @@ import {
   setWebSearchConfig,
   userCanUseWebSearch,
   webSearch,
+  WEB_SEARCH_RESULTS_CEILING,
 } from '../services/webSearchService.js';
 import { userModel } from '../models/userModel.js';
 import { getErrorMessage } from '../types/index.js';
@@ -121,11 +122,13 @@ router.put(
     }
     if (
       maxResults !== undefined &&
-      (!Number.isInteger(maxResults) || maxResults < 1 || maxResults > 10)
+      (!Number.isInteger(maxResults) ||
+        maxResults < 1 ||
+        maxResults > WEB_SEARCH_RESULTS_CEILING)
     ) {
       res.status(400).json({
         success: false,
-        error: 'maxResults must be an integer between 1 and 10.',
+        error: `maxResults must be an integer between 1 and ${WEB_SEARCH_RESULTS_CEILING}.`,
       });
       return;
     }

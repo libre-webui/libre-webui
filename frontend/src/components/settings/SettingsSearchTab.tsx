@@ -63,7 +63,7 @@ export const SettingsSearchTab: React.FC = () => {
 
   const save = async (nextEnabled = enabled) => {
     const parsedMax = Number(maxResults);
-    if (!Number.isInteger(parsedMax) || parsedMax < 1 || parsedMax > 10) {
+    if (!Number.isInteger(parsedMax) || parsedMax < 1 || parsedMax > 100) {
       toast.error(t('settings.search.maxResultsInvalid'));
       return;
     }
@@ -177,7 +177,7 @@ export const SettingsSearchTab: React.FC = () => {
             <Input
               type='number'
               min={1}
-              max={10}
+              max={100}
               value={maxResults}
               onChange={event => setMaxResults(event.target.value)}
               dir='ltr'

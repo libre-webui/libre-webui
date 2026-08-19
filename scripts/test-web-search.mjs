@@ -93,10 +93,10 @@ test('web search ships disabled and validates its configuration', async () => {
   const tuned = await setWebSearchConfig({
     enabled: false,
     url: 'http://searxng:8080',
-    maxResults: 99,
+    maxResults: 999,
     safeSearch: false,
   });
-  assert.equal(tuned.maxResults, 10);
+  assert.equal(tuned.maxResults, 100);
   assert.equal(tuned.safeSearch, false);
   await setWebSearchConfig({
     enabled: false,
