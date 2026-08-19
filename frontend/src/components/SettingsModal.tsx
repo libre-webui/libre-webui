@@ -1884,7 +1884,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       >
         <div
           data-testid='settings-modal-panel'
-          className='flex h-full w-full flex-col overscroll-behavior-contain bg-surface shadow-lv3 animate-scale-in sm:h-[min(800px,calc(100vh-3rem))] sm:max-w-[920px] sm:rounded-[24px] sm:border sm:border-black/[0.04] sm:dark:border-white/[0.06]'
+          className='flex h-full w-full flex-col overscroll-behavior-contain bg-surface shadow-lv3 animate-scale-in sm:h-[min(1000px,calc(100vh-2.5rem))] sm:max-w-[1280px] sm:rounded-[24px] sm:border sm:border-black/[0.04] sm:dark:border-white/[0.06]'
         >
           {/* Mobile-only header; on sm+ the title lives in the nav rail. */}
           <div className='flex items-center justify-between border-b border-line px-4 py-4 sm:hidden'>
