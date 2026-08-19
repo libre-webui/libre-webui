@@ -1,4 +1,6 @@
 ---
+sidebar_position: 48
+title: 'Automations'
 description: 'Scheduled AI tasks whose runs land in normal chat sessions.'
 slug: /AUTOMATIONS
 keywords: [automations, scheduled tasks, triggers, recurring, runs, digest]
@@ -47,20 +49,20 @@ a queued run never started within 30 minutes.
 All endpoints require authentication and operate only on the caller's own
 automations.
 
-| Method   | Path                                  | Purpose                        |
-| -------- | ------------------------------------- | ------------------------------ |
-| `GET`    | `/api/automations`                    | List automations               |
-| `POST`   | `/api/automations`                    | Create an automation           |
+| Method   | Path                                     | Purpose                       |
+| -------- | ---------------------------------------- | ----------------------------- |
+| `GET`    | `/api/automations`                       | List automations              |
+| `POST`   | `/api/automations`                       | Create an automation          |
 | `GET`    | `/api/automations/occurrences?from=&to=` | Upcoming computed occurrences |
-| `GET`    | `/api/automations/runs`               | Run history (filterable)       |
-| `GET`    | `/api/automations/runs/summary`       | Unseen count + 30-day buckets  |
-| `POST`   | `/api/automations/runs/seen`          | Mark finished runs as seen     |
-| `GET`    | `/api/automations/:automationId`      | Read one automation            |
-| `PUT`    | `/api/automations/:automationId`      | Update an automation           |
-| `DELETE` | `/api/automations/:automationId`      | Delete an automation           |
-| `POST`   | `/api/automations/:automationId/pause`  | Pause the schedule           |
-| `POST`   | `/api/automations/:automationId/resume` | Resume the schedule          |
-| `POST`   | `/api/automations/:automationId/run`  | Run now (202 with a run id)    |
+| `GET`    | `/api/automations/runs`                  | Run history (filterable)      |
+| `GET`    | `/api/automations/runs/summary`          | Unseen count + 30-day buckets |
+| `POST`   | `/api/automations/runs/seen`             | Mark finished runs as seen    |
+| `GET`    | `/api/automations/:automationId`         | Read one automation           |
+| `PUT`    | `/api/automations/:automationId`         | Update an automation          |
+| `DELETE` | `/api/automations/:automationId`         | Delete an automation          |
+| `POST`   | `/api/automations/:automationId/pause`   | Pause the schedule            |
+| `POST`   | `/api/automations/:automationId/resume`  | Resume the schedule           |
+| `POST`   | `/api/automations/:automationId/run`     | Run now (202 with a run id)   |
 
 A user may keep up to 50 automations; names are limited to 200 characters and
 instructions to 20,000.

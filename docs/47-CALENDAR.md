@@ -1,4 +1,6 @@
 ---
+sidebar_position: 47
+title: 'Calendar'
 description: 'A personal calendar with one-off and recurring events.'
 slug: /CALENDAR
 keywords: [calendar, events, schedule, recurrence, month view, week view]

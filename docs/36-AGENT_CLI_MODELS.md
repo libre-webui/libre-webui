@@ -95,10 +95,10 @@ container with an isolated workspace.
 
 ## Configuration
 
-| Variable                   | Default  | Purpose                                                  |
-| -------------------------- | -------- | -------------------------------------------------------- |
+| Variable                   | Default  | Purpose                                                                           |
+| -------------------------- | -------- | --------------------------------------------------------------------------------- |
 | `AGENT_CLI_MODELS_ENABLED` | unset    | Pin the feature `true`/`false`; unset defers to the admin toggle (off by default) |
-| `AGENT_CLI_TIMEOUT_MS`     | `600000` | How long a single agent turn may run before it is killed |
+| `AGENT_CLI_TIMEOUT_MS`     | `600000` | How long a single agent turn may run before it is killed                          |
 
 ## Troubleshooting
 

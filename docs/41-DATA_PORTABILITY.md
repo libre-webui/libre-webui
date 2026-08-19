@@ -1,4 +1,6 @@
 ---
+sidebar_position: 41
+title: 'Data Portability'
 description: 'Export and import a versioned per-user data archive.'
 slug: /DATA_PORTABILITY
 keywords: [data portability, export, import, archive, backup]

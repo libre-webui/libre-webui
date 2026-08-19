@@ -12,20 +12,33 @@ Libre WebUI includes app-level shortcuts for navigation and message composition.
 
 ## Global Shortcuts
 
-| Shortcut               | Action                                     |
-| ---------------------- | ------------------------------------------ |
-| `Cmd/Ctrl + K`         | Open the command palette                   |
-| `Cmd/Ctrl + Shift + O` | Start a new chat in a tab                  |
-| `Cmd/Ctrl + Shift + U` | Start a new Work session in a tab (with Work access) |
-| `Cmd/Ctrl + B`         | Toggle the sidebar                         |
-| `Cmd/Ctrl + ,`         | Open Settings                              |
-| `Cmd/Ctrl + D`         | Toggle light/dark theme                    |
-| `?` or `Shift + /`     | Open keyboard shortcuts                    |
-| `Esc`                  | Close open modals and overlays             |
+| Shortcut               | Action                                            |
+| ---------------------- | ------------------------------------------------- |
+| `Cmd/Ctrl + K`         | Open or close the command palette                 |
+| `Cmd/Ctrl + Shift + O` | Start a new chat in a tab                         |
+| `Cmd/Ctrl + Shift + U` | Start a new Work task in a tab (with Work access) |
+| `Cmd/Ctrl + B`         | Toggle the sidebar                                |
+| `Cmd/Ctrl + ,`         | Open Settings                                     |
+| `Cmd/Ctrl + D`         | Toggle light/dark theme                           |
+| `?` or `Shift + /`     | Open Settings on the Shortcuts tab                |
+| `Esc`                  | Close the settings modal                          |
 
-The command palette searches your chats, Work sessions, and app actions. Unlike
-the other shortcuts it also works while a message composer has focus, so you can
-jump somewhere else without clearing what you were typing.
+Global shortcuts never fire while an input has focus, and dialogs such as the
+command palette, artifact panel, image lightbox, and model selector each close
+with their own `Esc`. `Cmd/Ctrl + K` is the exception to the focus rule: it
+also works while a message composer has focus, so you can jump somewhere else
+without clearing what you were typing.
+
+### Command Palette
+
+The palette fuzzy-searches your chats, Work tasks, and app actions, highlights
+the matched characters, and ranks results by relevance.
+
+| Shortcut      | Action                   |
+| ------------- | ------------------------ |
+| `Up` / `Down` | Move the selection       |
+| `Enter`       | Open the selected result |
+| `Esc`         | Close the palette        |
 
 ## Chat Input
 
@@ -33,6 +46,15 @@ jump somewhere else without clearing what you were typing.
 | --------------- | ----------------- |
 | `Enter`         | Send the message  |
 | `Shift + Enter` | Insert a new line |
+
+## Editing a Sent Message
+
+While editing one of your own messages:
+
+| Shortcut | Action                                      |
+| -------- | ------------------------------------------- |
+| `Enter`  | Save the edit and resubmit the conversation |
+| `Esc`    | Cancel editing                              |
 
 ## Artifact Viewer
 
@@ -53,6 +75,8 @@ The artifact pane uses normal browser controls:
 | `Shift + Enter` | Insert a new line  |
 
 ### File Editor
+
+With the code editor focused:
 
 | Shortcut          | Action                                     |
 | ----------------- | ------------------------------------------ |
@@ -77,13 +101,14 @@ of the interface, including Arabic and other right-to-left layouts.
 
 ### Workspace Tabs
 
-With the **Files**, **Activity**, or **Preview** tab focused:
+With one of the **Files**, **Activity**, **Git**, **Terminal**, or **Preview**
+tabs focused:
 
-| Shortcut               | Action                                      |
-| ---------------------- | ------------------------------------------- |
-| `Left` / `Right Arrow` | Select the adjacent tab in visual direction |
-| `Home`                 | Select Files                                |
-| `End`                  | Select Preview                              |
+| Shortcut               | Action                                                       |
+| ---------------------- | ------------------------------------------------------------ |
+| `Left` / `Right Arrow` | Select the adjacent tab in visual direction, wrapping around |
+| `Home`                 | Select Files                                                 |
+| `End`                  | Select Preview                                               |
 
 ## Notes
 

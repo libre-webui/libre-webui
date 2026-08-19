@@ -51,7 +51,20 @@ Right-click a tab (or press `Shift + F10` on a focused tab) for:
 - **Close all tabs**
 
 Home is always the first tab and cannot be closed. Administrators also get
-direct **Users**, **System**, and **Usage** entries in the `+` menu.
+direct **User Management**, **System**, and **Provider Usage** entries in the
+`+` menu — and can pin any of the three into the sidebar footer (next to
+Settings) with the pin icon in the avatar menu, so they never need the menu
+again.
+
+## Fly Around with the Command Palette
+
+`Cmd/Ctrl + K` opens the command palette from anywhere — including while the
+composer has focus. It fuzzy-matches across app actions, your chats, and your
+Work tasks, so partial or misspelled queries still land: `autmtn` finds
+**Automations**, "pictures" finds **Imagine**, "dark" finds the theme toggle.
+Matched characters are highlighted, results are ranked by relevance, and with
+no query you get your most recent chats and tasks. Navigate with `↑`/`↓`,
+open with `Enter`, close with `Esc` (or `Cmd/Ctrl + K` again).
 
 ## Theme Default
 
@@ -75,8 +88,8 @@ A good first instruction gives the model:
 - The command or behavior that should verify completion.
 - Any files or interfaces that must remain unchanged.
 
-Follow progress in **Activity**, then inspect and test the result in **Files**
-and **Preview**. The file editor supports syntax highlighting in light and dark
+Follow progress in **Activity**, then inspect and test the result in **Files**,
+**Git**, **Terminal**, and **Preview**. The file editor supports syntax highlighting in light and dark
 themes, browser-backed unsaved drafts, and formatting for supported file types.
 Use `Cmd/Ctrl + S` to save and `Shift + Alt + F` to format.
 
@@ -231,7 +244,16 @@ For phone or LAN access, bind the dev server to the network interface:
 npm run dev:host
 ```
 
-Then open the machine’s LAN or Tailscale IP from the other device. In production, set `CORS_ORIGIN` and the frontend API URL explicitly so browsers do not fall back to localhost.
+Then open the machine’s LAN or Tailscale IP **on port 8080** from the other device (`dev:host` serves the frontend on 8080, not Vite's default). In production, set `CORS_ORIGIN` and the frontend API URL explicitly so browsers do not fall back to localhost.
+
+## Check Your Version Without Leaving the App
+
+**Settings → About** compares your build against the latest GitHub release: it
+tells you when you're current, links the release page when you're behind, and
+says so when a `-dev` build is running ahead of the pinned release. The same
+line has a **View changelog** button that reopens the release notes you saw
+after upgrading — and if Libre WebUI is useful to you, the **Star on GitHub**
+link there is the easiest way to help others find it.
 
 ## Keep Docs and UI in Sync
 
@@ -241,6 +263,8 @@ The product changes quickly. Prefer durable docs that describe behavior and work
 
 - [Work: Isolated Workspaces](./WORKSPACES)
 - [Working with Models](./WORKING_WITH_MODELS)
+- [Calendar](./CALENDAR)
+- [Automations](./AUTOMATIONS)
 - [Document Chat](./RAG_FEATURE)
 - [Artifacts](./ARTIFACTS_FEATURE)
 - [Personas](./PERSONA_DEVELOPMENT_FRAMEWORK)

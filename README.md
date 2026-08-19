@@ -123,18 +123,27 @@ persistent storage.
 
 ## Features
 
-| Feature              | Description                                                                        |
-| -------------------- | ---------------------------------------------------------------------------------- |
-| **Chat**             | Conversations with local models, remote providers, and compatible endpoints        |
-| **Local inference**  | Ollama support with no required cloud account                                      |
-| **Provider plugins** | Chat, image, embedding, and speech providers through an extensible plugin layer    |
-| **Document search**  | Search and chat with PDF and plain-text documents                                  |
-| **Artifacts**        | Generate and preview HTML, SVG, JSON, code, and multi-file projects                |
-| **Workspaces**       | Persistent, task-scoped environments with files, terminal, diffs, and previews     |
-| **Agents**           | Optional integration with installed agent CLIs and Libre Claw                      |
-| **Accounts**         | Local accounts, roles, optional OAuth, rate limits, and configurable signup        |
-| **Deployment**       | npm, Docker Compose, Kubernetes, Helm, and desktop client                          |
-| **Interface**        | Tabs, global search, themes, adaptive accents, and 25 locales including Arabic RTL |
+| Feature                | Description                                                                            |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| **Chat**               | Conversations with local models, remote providers, and compatible endpoints            |
+| **Local inference**    | Ollama support with no required cloud account                                          |
+| **Provider plugins**   | Chat, image, video, embedding, and speech providers through an extensible plugin layer |
+| **Document search**    | Search and chat with PDF and plain-text documents                                      |
+| **Web search**         | Self-hosted SearXNG search for chats and Work tasks                                    |
+| **Artifacts**          | Generate and preview HTML, SVG, JSON, code, and multi-file projects                    |
+| **Workspaces**         | Persistent, task-scoped environments with files, terminal, diffs, and previews         |
+| **Calendar**           | Per-user calendar with recurring events, encrypted at rest                             |
+| **Automations**        | Scheduled AI runs delivered as normal chat sessions                                    |
+| **Notes**              | A standing notebook alongside your conversations                                       |
+| **Personas**           | Reusable assistant profiles with their own prompts, models, and memory                 |
+| **Media generation**   | Image and video generation with a persistent gallery                                   |
+| **Voice**              | Speech-to-text dictation and text-to-speech playback                                   |
+| **Context management** | Context meter and undoable conversation compaction for long chats                      |
+| **Agents**             | Optional integration with installed agent CLIs and Libre Claw                          |
+| **Accounts**           | Local accounts, roles, groups, per-resource sharing, API tokens, and SSO               |
+| **Monitoring**         | System diagnostics, provider usage analytics, and an admin audit log                   |
+| **Deployment**         | npm, Docker Compose, Kubernetes, Helm, and desktop client                              |
+| **Interface**          | Tabs, global search, themes, adaptive accents, and 25 locales including Arabic RTL     |
 
 ## Models and providers
 
@@ -226,12 +235,14 @@ the request.
 
 For multi-user deployments, Libre WebUI supports:
 
-- Local accounts and roles
+- Local accounts, roles, and groups
+- Per-resource sharing with access grants
 - bcrypt password hashing
-- JWT sessions
+- JWT sessions and API tokens
 - Login and signup rate limits
 - Optional Cloudflare Turnstile
-- Optional GitHub and Hugging Face OAuth
+- Optional GitHub and Hugging Face OAuth, plus generic OIDC single sign-on
+- An admin-facing security audit log
 - AES-256-GCM encryption for sensitive application values
 - Persistent SQLite storage
 - Configurable data directories

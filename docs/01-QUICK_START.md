@@ -63,7 +63,9 @@ ollama pull nomic-embed-text
 
 ## Add Cloud Providers
 
-Cloud providers are optional. Add keys to `backend/.env`, restart the backend, then enable the provider in Settings:
+Cloud providers are optional. Add keys per user in **Settings → API keys**, or
+server-wide in `backend/.env` (restart the backend afterwards), then enable the
+provider in Settings:
 
 ```env
 OPENAI_API_KEY=sk-...
@@ -82,11 +84,12 @@ Work gives each task a persistent conversation and a separate container-backed
 filesystem. It is available to authenticated administrators.
 
 1. Install and start Docker on the machine running the Libre WebUI backend.
-2. Select **Work** in the sidebar.
+2. Start a task from the **Work** button in the sidebar header, the tab bar's
+   `+` menu, the Home page, or `Cmd/Ctrl + Shift + U`.
 3. Choose a model that supports tool calling.
 4. Describe what you want to build or change, then select **Run**.
-5. Inspect the generated files, tool activity, and application preview in the
-   workspace pane.
+5. Follow the result in the workspace pane's **Files**, **Activity**, **Git**,
+   **Terminal**, and **Preview** tabs.
 
 The task remains in the sidebar so you can return to the same conversation and
 files later. Stopping a run or preview preserves the workspace. Deleting the
@@ -130,21 +133,38 @@ Bundled Ollama is also internal-only. Add
 `-f docker-compose.ollama-host.yml` only when another host process needs its API;
 the override binds to loopback by default.
 
+## Find Your Way Around
+
+The **Home** tab has three sections: **Start** (new chat, incognito chat, new
+Work task), **Continue** (your recent conversations and tasks), and **Explore**
+(Notes, Calendar, Automations, Models, Personas, Imagine). The same
+destinations sit in the sidebar's navigation row and in the command palette
+(`Cmd/Ctrl + K`), which fuzzy-searches your chats, Work tasks, and app actions.
+
+- [Calendar](./CALENDAR) — a per-user calendar with recurring events.
+- [Automations](./AUTOMATIONS) — scheduled AI runs delivered as chat sessions.
+
 ## Keyboard Shortcuts
 
-| Shortcut        | Action             |
-| --------------- | ------------------ |
-| `Cmd/Ctrl + B`  | Toggle sidebar     |
-| `Cmd/Ctrl + ,`  | Settings           |
-| `Cmd/Ctrl + D`  | Toggle theme       |
-| `?`             | Keyboard shortcuts |
-| `Enter`         | Send message       |
-| `Shift + Enter` | New line           |
+| Shortcut               | Action                               |
+| ---------------------- | ------------------------------------ |
+| `Cmd/Ctrl + K`         | Command palette (works while typing) |
+| `Cmd/Ctrl + Shift + O` | New chat                             |
+| `Cmd/Ctrl + Shift + U` | New Work task                        |
+| `Cmd/Ctrl + B`         | Toggle sidebar                       |
+| `Cmd/Ctrl + ,`         | Settings                             |
+| `Cmd/Ctrl + D`         | Toggle theme                         |
+| `?`                    | Open Settings on the Shortcuts tab   |
+| `Esc`                  | Close the settings modal             |
+| `Enter`                | Send message                         |
+| `Shift + Enter`        | New line                             |
 
 ## Next Steps
 
 - [Working with Models](./WORKING_WITH_MODELS)
 - [Work: Isolated Workspaces](./WORKSPACES)
+- [Calendar](./CALENDAR)
+- [Automations](./AUTOMATIONS)
 - [Hardware Requirements](./HARDWARE_REQUIREMENTS)
 - [Document Chat](./RAG_FEATURE)
 - [Artifacts](./ARTIFACTS_FEATURE)

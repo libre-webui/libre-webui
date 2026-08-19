@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
-title: "Libre WebUI"
-description: "Install Libre WebUI, connect the models you choose, build with agents, and deploy a private AI workspace."
+title: 'Libre WebUI'
+description: 'Install Libre WebUI, connect the models you choose, build with agents, and deploy a private AI workspace.'
 slug: /
 hide_title: true
 hide_table_of_contents: true
@@ -155,6 +155,8 @@ import CodeBlock from '@theme/CodeBlock';
         <p>{"Turn conversations into durable projects, reusable context, and working material."}</p>
         <ul>
           <li><a href="/WORKSPACES">Work: Isolated Workspaces</a></li>
+          <li><a href="/CALENDAR">Calendar</a></li>
+          <li><a href="/AUTOMATIONS">Automations</a></li>
           <li><a href="/RAG_FEATURE">Document Chat</a></li>
           <li><a href="/ARTIFACTS_FEATURE">Artifacts</a></li>
           <li><a href="/PERSONA_DEVELOPMENT_FRAMEWORK">Personas</a></li>
