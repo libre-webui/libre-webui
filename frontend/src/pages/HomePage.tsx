@@ -21,12 +21,14 @@ import { useTranslation } from 'react-i18next';
 import {
   Bot,
   Briefcase,
+  CalendarDays,
   Database,
   Ghost,
   MessageSquare,
   NotebookPen,
   Sparkles,
   User as UserIcon,
+  Zap,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
@@ -244,6 +246,16 @@ export const HomePage: React.FC = () => {
             {(
               [
                 ['/notes', NotebookPen, t('sidebar.navigation.notes', 'Notes')],
+                [
+                  '/calendar',
+                  CalendarDays,
+                  t('sidebar.navigation.calendar', 'Calendar'),
+                ],
+                [
+                  '/automations',
+                  Zap,
+                  t('sidebar.navigation.automations', 'Automations'),
+                ],
                 ['/models', Database, t('sidebar.navigation.models', 'Models')],
                 [
                   '/personas',
