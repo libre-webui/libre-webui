@@ -114,6 +114,12 @@
         {
           "file": "backend/src/routes/chat.ts",
           "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/messages/:messageId/truncate"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
           "method": "DELETE",
           "path": "/sessions/:sessionId"
         },
