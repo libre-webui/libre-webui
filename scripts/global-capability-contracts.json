@@ -987,6 +987,73 @@
       }
     },
     {
+      "id": "calendar",
+      "title": "Calendar",
+      "uiRoutes": [],
+      "documentation": [
+        {
+          "file": "docs/47-CALENDAR.md",
+          "patterns": ["Range queries expand them server-side"]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-calendar.mjs",
+          "runner": "test:package",
+          "name": "calendar events persist per owner and expand recurrence into range queries",
+          "behaviorPatterns": [
+            "event\\.baseEventId === recurring\\.id",
+            "weekly event occurs three times in range"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/calendar.ts",
+          "mount": "/api/calendar",
+          "method": "GET",
+          "path": "/events"
+        },
+        {
+          "file": "backend/src/routes/calendar.ts",
+          "mount": "/api/calendar",
+          "method": "POST",
+          "path": "/events"
+        },
+        {
+          "file": "backend/src/routes/calendar.ts",
+          "mount": "/api/calendar",
+          "method": "PUT",
+          "path": "/events/:eventId"
+        },
+        {
+          "file": "backend/src/routes/calendar.ts",
+          "mount": "/api/calendar",
+          "method": "DELETE",
+          "path": "/events/:eventId"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface CalendarEvent",
+                "export type AutomationTrigger"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Calendar events are first-party account resources and have no installable or discovery manifest."
+        },
+        "defaults": {
+          "notApplicable": "Calendar events have no implicit content default beyond explicit user-supplied fields; recurrence math uses the server timezone documented in docs/47-CALENDAR.md."
+        }
+      }
+    },
+    {
       "id": "work",
       "title": "Work",
       "uiRoutes": ["/work", "/work/:taskId"],

@@ -64,6 +64,7 @@ import preferencesRoutes from './routes/preferences.js';
 import pluginRoutes from './routes/plugins.js';
 import documentRoutes from './routes/documents.js';
 import notesRoutes from './routes/notes.js';
+import calendarRoutes from './routes/calendar.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
 import personaRoutes from './routes/personas.js';
@@ -640,6 +641,7 @@ app.use(
 app.use('/api/embeddings', embeddingsRoutes);
 app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/notes', documentsRateLimiter, notesRoutes);
+app.use('/api/calendar', documentsRateLimiter, calendarRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 app.use('/api/tts', ttsRateLimiter, optionalAuth, ttsRoutes);
 app.use('/api/stt', sttRoutes);

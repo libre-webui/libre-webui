@@ -39,6 +39,7 @@ const canonicalCapabilityIds = [
   'personas',
   'media-gallery',
   'notes',
+  'calendar',
   'work',
   'agent-cli',
   'artifacts',

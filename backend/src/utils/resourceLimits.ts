@@ -20,6 +20,13 @@ export const MAX_NOTE_TITLE_LENGTH = 200;
 export const MAX_NOTE_CONTENT_LENGTH = 200_000;
 export const MAX_SESSION_FOLDERS_PER_USER = 100;
 export const MAX_SESSION_FOLDER_NAME_LENGTH = 120;
+export const MAX_CALENDAR_EVENTS_PER_USER = 2000;
+export const MAX_CALENDAR_EVENT_TITLE_LENGTH = 200;
+export const MAX_CALENDAR_EVENT_NOTES_LENGTH = 10_000;
+export const MAX_AUTOMATIONS_PER_USER = 50;
+export const MAX_AUTOMATION_NAME_LENGTH = 200;
+export const MAX_AUTOMATION_INSTRUCTIONS_LENGTH = 20_000;
+export const MAX_AUTOMATION_TRIGGERS = 5;
 
 export class ResourcePolicyError extends Error {
   constructor(

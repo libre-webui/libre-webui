@@ -17,6 +17,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import {
+  AutomationTrigger,
+  CalendarEvent,
   ChatSession,
   ChatMessage,
   DocumentChunk,
@@ -30,6 +32,9 @@ import { getPersistence } from './persistence/index.js';
 import { PersistenceResourceLimitError } from './persistence/resourceTypes.js';
 import { createLogger } from './utils/logger.js';
 import {
+  MAX_CALENDAR_EVENT_NOTES_LENGTH,
+  MAX_CALENDAR_EVENT_TITLE_LENGTH,
+  MAX_CALENDAR_EVENTS_PER_USER,
   MAX_NOTE_CONTENT_LENGTH,
   MAX_NOTES_PER_USER,
   MAX_NOTE_TITLE_LENGTH,
@@ -49,6 +54,7 @@ import type {
   ChatGenerationEnqueueInput,
 } from './persistence/chatGenerationTypes.js';
 import type {
+  StoredCalendarEventRecord,
   StoredChatSessionAggregate,
   StoredChatMessageRecord,
   StoredPreferenceRecord,
@@ -441,6 +447,119 @@ class StorageService {
     return getPersistence(
       encryptionService
     ).repositories.resources.notes.deleteByOwner(noteId, userId);
+  }
+
+  // =================================
+  // CALENDAR EVENTS
+  // =================================
+
+  private mapCalendarEventRow(row: StoredCalendarEventRecord): CalendarEvent {
+    const recurrence = row.recurrence
+      ? (JSON.parse(
+          encryptionService.decrypt(row.recurrence)
+        ) as AutomationTrigger)
+      : undefined;
+    return {
+      id: row.id,
+      title: encryptionService.decrypt(row.title),
+      notes: row.notes ? encryptionService.decrypt(row.notes) : undefined,
+      startAt: row.start_at,
+      endAt: row.end_at ?? undefined,
+      allDay: row.all_day === 1,
+      ...(recurrence ? { recurrence } : {}),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  async getCalendarEventsBetween(
+    from: number,
+    to: number,
+    userId = 'default'
+  ): Promise<CalendarEvent[]> {
+    const repositories = getPersistence(encryptionService).repositories;
+    const rows = await repositories.resources.calendarEvents.listByOwnerBetween(
+      userId,
+      from,
+      to,
+      MAX_CALENDAR_EVENTS_PER_USER
+    );
+    return rows.map(row => this.mapCalendarEventRow(row));
+  }
+
+  async getRecurringCalendarEvents(
+    userId = 'default'
+  ): Promise<CalendarEvent[]> {
+    const repositories = getPersistence(encryptionService).repositories;
+    const rows =
+      await repositories.resources.calendarEvents.listRecurringByOwner(
+        userId,
+        MAX_CALENDAR_EVENTS_PER_USER
+      );
+    return rows.map(row => this.mapCalendarEventRow(row));
+  }
+
+  async getCalendarEvent(
+    eventId: string,
+    userId = 'default'
+  ): Promise<CalendarEvent | undefined> {
+    const row = await getPersistence(
+      encryptionService
+    ).repositories.resources.calendarEvents.findByOwner(eventId, userId);
+    return row ? this.mapCalendarEventRow(row) : undefined;
+  }
+
+  async saveCalendarEvent(
+    event: CalendarEvent,
+    userId = 'default'
+  ): Promise<void> {
+    if (
+      event.title.length > MAX_CALENDAR_EVENT_TITLE_LENGTH ||
+      (event.notes?.length ?? 0) > MAX_CALENDAR_EVENT_NOTES_LENGTH
+    ) {
+      throw new ResourcePolicyError(
+        'Calendar event exceeds the maximum size',
+        400
+      );
+    }
+    try {
+      await getPersistence(
+        encryptionService
+      ).repositories.resources.calendarEvents.replaceWithLimit(
+        {
+          id: event.id,
+          user_id: userId,
+          title: encryptionService.encrypt(event.title),
+          notes: event.notes ? encryptionService.encrypt(event.notes) : null,
+          start_at: event.startAt,
+          end_at: event.endAt ?? null,
+          all_day: event.allDay ? 1 : 0,
+          recurrence: event.recurrence
+            ? encryptionService.encrypt(JSON.stringify(event.recurrence))
+            : null,
+          created_at: event.createdAt,
+          updated_at: event.updatedAt,
+        },
+        MAX_CALENDAR_EVENTS_PER_USER
+      );
+    } catch (error) {
+      if (error instanceof PersistenceResourceLimitError) {
+        throw new ResourcePolicyError(
+          `A user may store at most ${MAX_CALENDAR_EVENTS_PER_USER} calendar events`,
+          409
+        );
+      }
+      throw error;
+    }
+  }
+
+  async deleteCalendarEvent(
+    eventId: string,
+    userId = 'default'
+  ): Promise<boolean> {
+    return getPersistence(
+      encryptionService
+    ).repositories.resources.calendarEvents.deleteByOwner(eventId, userId);
   }
 
   // =================================
