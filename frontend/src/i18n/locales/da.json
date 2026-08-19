@@ -434,7 +434,8 @@
       "signOut": "Log ud",
       "exploreLabel": "Udforsk",
       "notes": "Noter",
-      "calendar": "Kalender"
+      "calendar": "Kalender",
+      "automations": "Automatiseringer"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
     "expandSidebar": "Udvid sidebjælke"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Kalenderen kunne ikke indlæses",
     "saveFailed": "Begivenheden kunne ikke gemmes",
     "deleteFailed": "Begivenheden kunne ikke slettes"
+  },
+  "automations": {
+    "title": "Automatiseringer",
+    "tab": {
+      "automations": "Automatiseringer",
+      "runs": "Kørsler"
+    },
+    "newAutomation": "Ny automatisering",
+    "editAutomation": "Rediger automatisering",
+    "empty": "Ingen automatiseringer endnu. Opret en for at køre en opgave efter en tidsplan.",
+    "loadFailed": "Automatiseringer kunne ikke indlæses",
+    "saveFailed": "Automatiseringen kunne ikke gemmes",
+    "actionFailed": "Handlingen mislykkedes",
+    "runQueued": "Kørsel startet",
+    "status": {
+      "active": "Aktiv",
+      "paused": "Sat på pause"
+    },
+    "nextRun": "Næste kørsel {{when}}",
+    "actions": "Handlinger",
+    "pause": "Sæt på pause",
+    "resume": "Genoptag",
+    "runNow": "Kør nu",
+    "openChat": "Åbn chat",
+    "noRuns": "Ingen kørsler endnu",
+    "deletedAutomation": "Slettet automatisering",
+    "runHistory": "Kørselshistorik (seneste 30 dage)",
+    "succeeded": "lykkedes",
+    "failed": "mislykkedes",
+    "form": {
+      "name": "Navn",
+      "namePlaceholder": "Min automatisering",
+      "triggers": "Udløsere",
+      "addTrigger": "Tilføj udløser",
+      "instructions": "Instruktioner",
+      "instructionsPlaceholder": "Hvad skal køres efter denne tidsplan?",
+      "model": "Model",
+      "modelAuto": "Auto",
+      "notification": "Notifikation",
+      "notifyApp": "App",
+      "notifyOff": "Fra",
+      "frequency": "Frekvens",
+      "time": "Tidspunkt",
+      "minute": "Minut",
+      "fromHour": "Fra",
+      "toHour": "Til",
+      "weekday": "Ugedag",
+      "dayOfMonth": "Dag",
+      "month": "Måned"
+    },
+    "kind": {
+      "once": "Én gang",
+      "hourly": "Hver time",
+      "daily": "Dagligt",
+      "weekly": "Ugentligt",
+      "monthly": "Månedligt",
+      "yearly": "Årligt"
+    },
+    "trigger": {
+      "once": "Én gang den {{when}}",
+      "hourly": "Hver time ved :{{minute}}",
+      "daily": "Dagligt kl. {{time}}",
+      "weekly": "Ugentligt {{day}} kl. {{time}}",
+      "monthly": "Månedligt den {{day}}. kl. {{time}}",
+      "yearly": "Årligt den {{date}} kl. {{time}}"
+    }
   },
   "home": {
     "active": "aktiv",

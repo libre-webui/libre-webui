@@ -434,7 +434,8 @@
       "signOut": "退出登录",
       "exploreLabel": "探索",
       "notes": "笔记",
-      "calendar": "日历"
+      "calendar": "日历",
+      "automations": "自动化"
     },
     "toggleSize": "切换侧边栏大小",
     "expandSidebar": "展开侧边栏"
@@ -2484,6 +2485,72 @@
     "loadFailed": "无法加载日历",
     "saveFailed": "无法保存日程",
     "deleteFailed": "无法删除日程"
+  },
+  "automations": {
+    "title": "自动化",
+    "tab": {
+      "automations": "自动化",
+      "runs": "运行记录"
+    },
+    "newAutomation": "新建自动化",
+    "editAutomation": "编辑自动化",
+    "empty": "还没有自动化。创建一个以按计划运行任务。",
+    "loadFailed": "无法加载自动化",
+    "saveFailed": "无法保存自动化",
+    "actionFailed": "操作失败",
+    "runQueued": "已开始运行",
+    "status": {
+      "active": "已启用",
+      "paused": "已暂停"
+    },
+    "nextRun": "下次运行 {{when}}",
+    "actions": "操作",
+    "pause": "暂停",
+    "resume": "恢复",
+    "runNow": "立即运行",
+    "openChat": "打开对话",
+    "noRuns": "还没有运行记录",
+    "deletedAutomation": "已删除的自动化",
+    "runHistory": "运行历史（最近 30 天）",
+    "succeeded": "成功",
+    "failed": "失败",
+    "form": {
+      "name": "名称",
+      "namePlaceholder": "我的自动化",
+      "triggers": "触发器",
+      "addTrigger": "添加触发器",
+      "instructions": "指令",
+      "instructionsPlaceholder": "按此计划应运行什么？",
+      "model": "模型",
+      "modelAuto": "自动",
+      "notification": "通知",
+      "notifyApp": "应用",
+      "notifyOff": "关闭",
+      "frequency": "频率",
+      "time": "时间",
+      "minute": "分钟",
+      "fromHour": "从",
+      "toHour": "到",
+      "weekday": "星期",
+      "dayOfMonth": "日",
+      "month": "月"
+    },
+    "kind": {
+      "once": "一次",
+      "hourly": "每小时",
+      "daily": "每天",
+      "weekly": "每周",
+      "monthly": "每月",
+      "yearly": "每年"
+    },
+    "trigger": {
+      "once": "{{when}} 运行一次",
+      "hourly": "每小时第 {{minute}} 分钟",
+      "daily": "每天 {{time}}",
+      "weekly": "每周{{day}} {{time}}",
+      "monthly": "每月 {{day}} 日 {{time}}",
+      "yearly": "每年 {{date}} {{time}}"
+    }
   },
   "home": {
     "active": "活跃",

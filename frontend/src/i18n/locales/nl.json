@@ -434,7 +434,8 @@
       "signOut": "Uitloggen",
       "exploreLabel": "Verkennen",
       "notes": "Notities",
-      "calendar": "Kalender"
+      "calendar": "Kalender",
+      "automations": "Automatiseringen"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
     "expandSidebar": "Zijbalk uitvouwen"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Kalender kon niet worden geladen",
     "saveFailed": "Afspraak kon niet worden opgeslagen",
     "deleteFailed": "Afspraak kon niet worden verwijderd"
+  },
+  "automations": {
+    "title": "Automatiseringen",
+    "tab": {
+      "automations": "Automatiseringen",
+      "runs": "Uitvoeringen"
+    },
+    "newAutomation": "Nieuwe automatisering",
+    "editAutomation": "Automatisering bewerken",
+    "empty": "Nog geen automatiseringen. Maak er een om een taak volgens schema uit te voeren.",
+    "loadFailed": "Automatiseringen konden niet worden geladen",
+    "saveFailed": "Automatisering kon niet worden opgeslagen",
+    "actionFailed": "De actie is mislukt",
+    "runQueued": "Uitvoering gestart",
+    "status": {
+      "active": "Actief",
+      "paused": "Gepauzeerd"
+    },
+    "nextRun": "Volgende uitvoering {{when}}",
+    "actions": "Acties",
+    "pause": "Pauzeren",
+    "resume": "Hervatten",
+    "runNow": "Nu uitvoeren",
+    "openChat": "Chat openen",
+    "noRuns": "Nog geen uitvoeringen",
+    "deletedAutomation": "Verwijderde automatisering",
+    "runHistory": "Uitvoeringsgeschiedenis (laatste 30 dagen)",
+    "succeeded": "geslaagd",
+    "failed": "mislukt",
+    "form": {
+      "name": "Naam",
+      "namePlaceholder": "Mijn automatisering",
+      "triggers": "Triggers",
+      "addTrigger": "Trigger toevoegen",
+      "instructions": "Instructies",
+      "instructionsPlaceholder": "Wat moet er volgens dit schema worden uitgevoerd?",
+      "model": "Model",
+      "modelAuto": "Auto",
+      "notification": "Melding",
+      "notifyApp": "App",
+      "notifyOff": "Uit",
+      "frequency": "Frequentie",
+      "time": "Tijd",
+      "minute": "Minuut",
+      "fromHour": "Van",
+      "toHour": "Tot",
+      "weekday": "Weekdag",
+      "dayOfMonth": "Dag",
+      "month": "Maand"
+    },
+    "kind": {
+      "once": "Eenmalig",
+      "hourly": "Elk uur",
+      "daily": "Dagelijks",
+      "weekly": "Wekelijks",
+      "monthly": "Maandelijks",
+      "yearly": "Jaarlijks"
+    },
+    "trigger": {
+      "once": "Eenmalig op {{when}}",
+      "hourly": "Elk uur om :{{minute}}",
+      "daily": "Dagelijks om {{time}}",
+      "weekly": "Wekelijks op {{day}} om {{time}}",
+      "monthly": "Maandelijks op dag {{day}} om {{time}}",
+      "yearly": "Jaarlijks op {{date}} om {{time}}"
+    }
   },
   "home": {
     "active": "actief",

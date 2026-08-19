@@ -434,7 +434,8 @@
       "signOut": "Esci",
       "exploreLabel": "Esplora",
       "notes": "Note",
-      "calendar": "Calendario"
+      "calendar": "Calendario",
+      "automations": "Automazioni"
     },
     "toggleSize": "Cambia dimensione barra laterale",
     "expandSidebar": "Espandi barra laterale"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Impossibile caricare il calendario",
     "saveFailed": "Impossibile salvare l'evento",
     "deleteFailed": "Impossibile eliminare l'evento"
+  },
+  "automations": {
+    "title": "Automazioni",
+    "tab": {
+      "automations": "Automazioni",
+      "runs": "Esecuzioni"
+    },
+    "newAutomation": "Nuova automazione",
+    "editAutomation": "Modifica automazione",
+    "empty": "Ancora nessuna automazione. Creane una per eseguire un compito secondo un programma.",
+    "loadFailed": "Impossibile caricare le automazioni",
+    "saveFailed": "Impossibile salvare l'automazione",
+    "actionFailed": "L'azione non è riuscita",
+    "runQueued": "Esecuzione avviata",
+    "status": {
+      "active": "Attiva",
+      "paused": "In pausa"
+    },
+    "nextRun": "Prossima esecuzione {{when}}",
+    "actions": "Azioni",
+    "pause": "Metti in pausa",
+    "resume": "Riprendi",
+    "runNow": "Esegui ora",
+    "openChat": "Apri chat",
+    "noRuns": "Ancora nessuna esecuzione",
+    "deletedAutomation": "Automazione eliminata",
+    "runHistory": "Cronologia esecuzioni (ultimi 30 giorni)",
+    "succeeded": "riuscite",
+    "failed": "fallite",
+    "form": {
+      "name": "Nome",
+      "namePlaceholder": "La mia automazione",
+      "triggers": "Trigger",
+      "addTrigger": "Aggiungi trigger",
+      "instructions": "Istruzioni",
+      "instructionsPlaceholder": "Cosa deve essere eseguito secondo questo programma?",
+      "model": "Modello",
+      "modelAuto": "Auto",
+      "notification": "Notifica",
+      "notifyApp": "App",
+      "notifyOff": "Disattivata",
+      "frequency": "Frequenza",
+      "time": "Ora",
+      "minute": "Minuto",
+      "fromHour": "Da",
+      "toHour": "A",
+      "weekday": "Giorno della settimana",
+      "dayOfMonth": "Giorno",
+      "month": "Mese"
+    },
+    "kind": {
+      "once": "Una volta",
+      "hourly": "Ogni ora",
+      "daily": "Giornaliera",
+      "weekly": "Settimanale",
+      "monthly": "Mensile",
+      "yearly": "Annuale"
+    },
+    "trigger": {
+      "once": "Una volta il {{when}}",
+      "hourly": "Ogni ora al minuto :{{minute}}",
+      "daily": "Ogni giorno alle {{time}}",
+      "weekly": "Ogni {{day}} alle {{time}}",
+      "monthly": "Il giorno {{day}} di ogni mese alle {{time}}",
+      "yearly": "Ogni anno il {{date}} alle {{time}}"
+    }
   },
   "home": {
     "active": "attivo",

@@ -24,6 +24,7 @@ import {
   NotebookPen,
   Sparkles,
   User as UserIcon,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/utils';
 
@@ -40,6 +41,11 @@ const DESTINATIONS = [
     path: '/calendar',
     icon: CalendarDays,
     labelKey: 'sidebar.navigation.calendar',
+  },
+  {
+    path: '/automations',
+    icon: Zap,
+    labelKey: 'sidebar.navigation.automations',
   },
   { path: '/models', icon: Database, labelKey: 'sidebar.navigation.models' },
   {

@@ -434,7 +434,8 @@
       "signOut": "Sign Out",
       "exploreLabel": "Explore",
       "notes": "Notes",
-      "calendar": "Calendar"
+      "calendar": "Calendar",
+      "automations": "Automations"
     },
     "toggleSize": "Toggle sidebar size",
     "expandSidebar": "Expand sidebar"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Failed to load calendar",
     "saveFailed": "Failed to save event",
     "deleteFailed": "Failed to delete event"
+  },
+  "automations": {
+    "title": "Automations",
+    "tab": {
+      "automations": "Automations",
+      "runs": "Runs"
+    },
+    "newAutomation": "New automation",
+    "editAutomation": "Edit automation",
+    "empty": "No automations yet. Create one to run a task on a schedule.",
+    "loadFailed": "Failed to load automations",
+    "saveFailed": "Failed to save the automation",
+    "actionFailed": "The action failed",
+    "runQueued": "Run started",
+    "status": {
+      "active": "Active",
+      "paused": "Paused"
+    },
+    "nextRun": "Next run {{when}}",
+    "actions": "Actions",
+    "pause": "Pause",
+    "resume": "Resume",
+    "runNow": "Run now",
+    "openChat": "Open chat",
+    "noRuns": "No runs yet",
+    "deletedAutomation": "Deleted automation",
+    "runHistory": "Run history (last 30 days)",
+    "succeeded": "succeeded",
+    "failed": "failed",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "My automation",
+      "triggers": "Triggers",
+      "addTrigger": "Add trigger",
+      "instructions": "Instructions",
+      "instructionsPlaceholder": "What should run on this schedule?",
+      "model": "Model",
+      "modelAuto": "Auto",
+      "notification": "Notification",
+      "notifyApp": "App",
+      "notifyOff": "Off",
+      "frequency": "Frequency",
+      "time": "Time",
+      "minute": "Minute",
+      "fromHour": "From",
+      "toHour": "To",
+      "weekday": "Weekday",
+      "dayOfMonth": "Day",
+      "month": "Month"
+    },
+    "kind": {
+      "once": "Once",
+      "hourly": "Hourly",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly"
+    },
+    "trigger": {
+      "once": "Once on {{when}}",
+      "hourly": "Hourly at :{{minute}}",
+      "daily": "Daily at {{time}}",
+      "weekly": "Weekly on {{day}} at {{time}}",
+      "monthly": "Monthly on day {{day}} at {{time}}",
+      "yearly": "Yearly on {{date}} at {{time}}"
+    }
   },
   "home": {
     "active": "active",

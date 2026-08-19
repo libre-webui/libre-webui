@@ -434,7 +434,8 @@
       "signOut": "সাইন আউট",
       "exploreLabel": "অন্বেষণ",
       "notes": "নোট",
-      "calendar": "ক্যালেন্ডার"
+      "calendar": "ক্যালেন্ডার",
+      "automations": "অটোমেশন"
     },
     "toggleSize": "সাইডবার সাইজ টগল করুন",
     "expandSidebar": "সাইডবার প্রসারিত করুন"
@@ -2484,6 +2485,72 @@
     "loadFailed": "ক্যালেন্ডার লোড করা যায়নি",
     "saveFailed": "ইভেন্ট সংরক্ষণ করা যায়নি",
     "deleteFailed": "ইভেন্ট মুছে ফেলা যায়নি"
+  },
+  "automations": {
+    "title": "অটোমেশন",
+    "tab": {
+      "automations": "অটোমেশন",
+      "runs": "রান"
+    },
+    "newAutomation": "নতুন অটোমেশন",
+    "editAutomation": "অটোমেশন সম্পাদনা",
+    "empty": "এখনও কোনো অটোমেশন নেই। সময়সূচি অনুযায়ী কাজ চালাতে একটি তৈরি করুন।",
+    "loadFailed": "অটোমেশন লোড করা যায়নি",
+    "saveFailed": "অটোমেশন সংরক্ষণ করা যায়নি",
+    "actionFailed": "কাজটি ব্যর্থ হয়েছে",
+    "runQueued": "রান শুরু হয়েছে",
+    "status": {
+      "active": "সক্রিয়",
+      "paused": "বিরতিতে"
+    },
+    "nextRun": "পরবর্তী রান {{when}}",
+    "actions": "অ্যাকশন",
+    "pause": "বিরতি",
+    "resume": "পুনরায় চালু",
+    "runNow": "এখনই চালান",
+    "openChat": "চ্যাট খুলুন",
+    "noRuns": "এখনও কোনো রান নেই",
+    "deletedAutomation": "মুছে ফেলা অটোমেশন",
+    "runHistory": "রান ইতিহাস (গত ৩০ দিন)",
+    "succeeded": "সফল",
+    "failed": "ব্যর্থ",
+    "form": {
+      "name": "নাম",
+      "namePlaceholder": "আমার অটোমেশন",
+      "triggers": "ট্রিগার",
+      "addTrigger": "ট্রিগার যোগ করুন",
+      "instructions": "নির্দেশাবলী",
+      "instructionsPlaceholder": "এই সময়সূচিতে কী চালানো উচিত?",
+      "model": "মডেল",
+      "modelAuto": "স্বয়ংক্রিয়",
+      "notification": "বিজ্ঞপ্তি",
+      "notifyApp": "অ্যাপ",
+      "notifyOff": "বন্ধ",
+      "frequency": "পুনরাবৃত্তি",
+      "time": "সময়",
+      "minute": "মিনিট",
+      "fromHour": "থেকে",
+      "toHour": "পর্যন্ত",
+      "weekday": "বার",
+      "dayOfMonth": "দিন",
+      "month": "মাস"
+    },
+    "kind": {
+      "once": "একবার",
+      "hourly": "প্রতি ঘণ্টায়",
+      "daily": "প্রতিদিন",
+      "weekly": "সাপ্তাহিক",
+      "monthly": "মাসিক",
+      "yearly": "বার্ষিক"
+    },
+    "trigger": {
+      "once": "{{when}} এ একবার",
+      "hourly": "প্রতি ঘণ্টার :{{minute}} মিনিটে",
+      "daily": "প্রতিদিন {{time}} এ",
+      "weekly": "প্রতি {{day}} {{time}} এ",
+      "monthly": "প্রতি মাসের {{day}} তারিখে {{time}} এ",
+      "yearly": "প্রতি বছর {{date}} {{time}} এ"
+    }
   },
   "home": {
     "active": "সক্রিয়",

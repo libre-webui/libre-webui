@@ -434,7 +434,8 @@
       "signOut": "サインアウト",
       "exploreLabel": "探索",
       "notes": "ノート",
-      "calendar": "カレンダー"
+      "calendar": "カレンダー",
+      "automations": "自動化"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
     "expandSidebar": "サイドバーを展開"
@@ -2484,6 +2485,72 @@
     "loadFailed": "カレンダーを読み込めませんでした",
     "saveFailed": "予定を保存できませんでした",
     "deleteFailed": "予定を削除できませんでした"
+  },
+  "automations": {
+    "title": "自動化",
+    "tab": {
+      "automations": "自動化",
+      "runs": "実行履歴"
+    },
+    "newAutomation": "新しい自動化",
+    "editAutomation": "自動化を編集",
+    "empty": "まだ自動化はありません。スケジュールに沿ってタスクを実行するには作成してください。",
+    "loadFailed": "自動化を読み込めませんでした",
+    "saveFailed": "自動化を保存できませんでした",
+    "actionFailed": "操作に失敗しました",
+    "runQueued": "実行を開始しました",
+    "status": {
+      "active": "有効",
+      "paused": "一時停止中"
+    },
+    "nextRun": "次回の実行 {{when}}",
+    "actions": "操作",
+    "pause": "一時停止",
+    "resume": "再開",
+    "runNow": "今すぐ実行",
+    "openChat": "チャットを開く",
+    "noRuns": "まだ実行はありません",
+    "deletedAutomation": "削除された自動化",
+    "runHistory": "実行履歴（過去30日）",
+    "succeeded": "成功",
+    "failed": "失敗",
+    "form": {
+      "name": "名前",
+      "namePlaceholder": "マイ自動化",
+      "triggers": "トリガー",
+      "addTrigger": "トリガーを追加",
+      "instructions": "指示",
+      "instructionsPlaceholder": "このスケジュールで何を実行しますか？",
+      "model": "モデル",
+      "modelAuto": "自動",
+      "notification": "通知",
+      "notifyApp": "アプリ",
+      "notifyOff": "オフ",
+      "frequency": "頻度",
+      "time": "時刻",
+      "minute": "分",
+      "fromHour": "開始",
+      "toHour": "終了",
+      "weekday": "曜日",
+      "dayOfMonth": "日",
+      "month": "月"
+    },
+    "kind": {
+      "once": "1回のみ",
+      "hourly": "毎時",
+      "daily": "毎日",
+      "weekly": "毎週",
+      "monthly": "毎月",
+      "yearly": "毎年"
+    },
+    "trigger": {
+      "once": "{{when}}に1回",
+      "hourly": "毎時{{minute}}分",
+      "daily": "毎日{{time}}",
+      "weekly": "毎週{{day}}の{{time}}",
+      "monthly": "毎月{{day}}日の{{time}}",
+      "yearly": "毎年{{date}}の{{time}}"
+    }
   },
   "home": {
     "active": "アクティブ",

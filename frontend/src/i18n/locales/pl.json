@@ -434,7 +434,8 @@
       "signOut": "Wyloguj się",
       "exploreLabel": "Odkrywaj",
       "notes": "Notatki",
-      "calendar": "Kalendarz"
+      "calendar": "Kalendarz",
+      "automations": "Automatyzacje"
     },
     "toggleSize": "Zmień rozmiar panelu bocznego",
     "expandSidebar": "Rozwiń panel boczny"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Nie udało się załadować kalendarza",
     "saveFailed": "Nie udało się zapisać wydarzenia",
     "deleteFailed": "Nie udało się usunąć wydarzenia"
+  },
+  "automations": {
+    "title": "Automatyzacje",
+    "tab": {
+      "automations": "Automatyzacje",
+      "runs": "Uruchomienia"
+    },
+    "newAutomation": "Nowa automatyzacja",
+    "editAutomation": "Edytuj automatyzację",
+    "empty": "Brak automatyzacji. Utwórz jedną, aby uruchamiać zadanie według harmonogramu.",
+    "loadFailed": "Nie udało się załadować automatyzacji",
+    "saveFailed": "Nie udało się zapisać automatyzacji",
+    "actionFailed": "Akcja nie powiodła się",
+    "runQueued": "Uruchomienie rozpoczęte",
+    "status": {
+      "active": "Aktywna",
+      "paused": "Wstrzymana"
+    },
+    "nextRun": "Następne uruchomienie {{when}}",
+    "actions": "Akcje",
+    "pause": "Wstrzymaj",
+    "resume": "Wznów",
+    "runNow": "Uruchom teraz",
+    "openChat": "Otwórz czat",
+    "noRuns": "Brak uruchomień",
+    "deletedAutomation": "Usunięta automatyzacja",
+    "runHistory": "Historia uruchomień (ostatnie 30 dni)",
+    "succeeded": "udanych",
+    "failed": "nieudanych",
+    "form": {
+      "name": "Nazwa",
+      "namePlaceholder": "Moja automatyzacja",
+      "triggers": "Wyzwalacze",
+      "addTrigger": "Dodaj wyzwalacz",
+      "instructions": "Instrukcje",
+      "instructionsPlaceholder": "Co ma być uruchamiane według tego harmonogramu?",
+      "model": "Model",
+      "modelAuto": "Auto",
+      "notification": "Powiadomienie",
+      "notifyApp": "Aplikacja",
+      "notifyOff": "Wyłączone",
+      "frequency": "Częstotliwość",
+      "time": "Godzina",
+      "minute": "Minuta",
+      "fromHour": "Od",
+      "toHour": "Do",
+      "weekday": "Dzień tygodnia",
+      "dayOfMonth": "Dzień",
+      "month": "Miesiąc"
+    },
+    "kind": {
+      "once": "Raz",
+      "hourly": "Co godzinę",
+      "daily": "Codziennie",
+      "weekly": "Co tydzień",
+      "monthly": "Co miesiąc",
+      "yearly": "Co rok"
+    },
+    "trigger": {
+      "once": "Raz, {{when}}",
+      "hourly": "Co godzinę o :{{minute}}",
+      "daily": "Codziennie o {{time}}",
+      "weekly": "Co tydzień w {{day}} o {{time}}",
+      "monthly": "Co miesiąc {{day}}. dnia o {{time}}",
+      "yearly": "Co rok {{date}} o {{time}}"
+    }
   },
   "home": {
     "active": "aktywny",

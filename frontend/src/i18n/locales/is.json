@@ -434,7 +434,8 @@
       "signOut": "Skrá út",
       "exploreLabel": "Kanna",
       "notes": "Glósur",
-      "calendar": "Dagatal"
+      "calendar": "Dagatal",
+      "automations": "Sjálfvirkni"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
     "expandSidebar": "Stækka hliðarspjald"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Ekki tókst að hlaða dagatalinu",
     "saveFailed": "Ekki tókst að vista viðburðinn",
     "deleteFailed": "Ekki tókst að eyða viðburðinum"
+  },
+  "automations": {
+    "title": "Sjálfvirkni",
+    "tab": {
+      "automations": "Sjálfvirkni",
+      "runs": "Keyrslur"
+    },
+    "newAutomation": "Ný sjálfvirkni",
+    "editAutomation": "Breyta sjálfvirkni",
+    "empty": "Engin sjálfvirkni enn. Búðu til eina til að keyra verkefni eftir áætlun.",
+    "loadFailed": "Ekki tókst að hlaða sjálfvirkni",
+    "saveFailed": "Ekki tókst að vista sjálfvirknina",
+    "actionFailed": "Aðgerðin mistókst",
+    "runQueued": "Keyrsla hafin",
+    "status": {
+      "active": "Virk",
+      "paused": "Í bið"
+    },
+    "nextRun": "Næsta keyrsla {{when}}",
+    "actions": "Aðgerðir",
+    "pause": "Setja í bið",
+    "resume": "Halda áfram",
+    "runNow": "Keyra núna",
+    "openChat": "Opna spjall",
+    "noRuns": "Engar keyrslur enn",
+    "deletedAutomation": "Eydd sjálfvirkni",
+    "runHistory": "Keyrslusaga (síðustu 30 dagar)",
+    "succeeded": "tókust",
+    "failed": "mistókust",
+    "form": {
+      "name": "Heiti",
+      "namePlaceholder": "Sjálfvirknin mín",
+      "triggers": "Kveikjur",
+      "addTrigger": "Bæta við kveikju",
+      "instructions": "Leiðbeiningar",
+      "instructionsPlaceholder": "Hvað á að keyra samkvæmt þessari áætlun?",
+      "model": "Líkan",
+      "modelAuto": "Sjálfvirkt",
+      "notification": "Tilkynning",
+      "notifyApp": "Forrit",
+      "notifyOff": "Slökkt",
+      "frequency": "Tíðni",
+      "time": "Tími",
+      "minute": "Mínúta",
+      "fromHour": "Frá",
+      "toHour": "Til",
+      "weekday": "Vikudagur",
+      "dayOfMonth": "Dagur",
+      "month": "Mánuður"
+    },
+    "kind": {
+      "once": "Einu sinni",
+      "hourly": "Á klukkutíma fresti",
+      "daily": "Daglega",
+      "weekly": "Vikulega",
+      "monthly": "Mánaðarlega",
+      "yearly": "Árlega"
+    },
+    "trigger": {
+      "once": "Einu sinni {{when}}",
+      "hourly": "Á klukkutíma fresti á :{{minute}}",
+      "daily": "Daglega kl. {{time}}",
+      "weekly": "Vikulega á {{day}} kl. {{time}}",
+      "monthly": "Mánaðarlega þann {{day}}. kl. {{time}}",
+      "yearly": "Árlega þann {{date}} kl. {{time}}"
+    }
   },
   "home": {
     "active": "virkt",

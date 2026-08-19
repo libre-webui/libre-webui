@@ -434,7 +434,8 @@
       "signOut": "Sair",
       "exploreLabel": "Explorar",
       "notes": "Notas",
-      "calendar": "Calendário"
+      "calendar": "Calendário",
+      "automations": "Automações"
     },
     "toggleSize": "Alternar tamanho da barra lateral",
     "expandSidebar": "Expandir barra lateral"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Não foi possível carregar o calendário",
     "saveFailed": "Não foi possível salvar o evento",
     "deleteFailed": "Não foi possível excluir o evento"
+  },
+  "automations": {
+    "title": "Automações",
+    "tab": {
+      "automations": "Automações",
+      "runs": "Execuções"
+    },
+    "newAutomation": "Nova automação",
+    "editAutomation": "Editar automação",
+    "empty": "Ainda não há automações. Crie uma para executar uma tarefa conforme um agendamento.",
+    "loadFailed": "Não foi possível carregar as automações",
+    "saveFailed": "Não foi possível salvar a automação",
+    "actionFailed": "A ação falhou",
+    "runQueued": "Execução iniciada",
+    "status": {
+      "active": "Ativa",
+      "paused": "Pausada"
+    },
+    "nextRun": "Próxima execução {{when}}",
+    "actions": "Ações",
+    "pause": "Pausar",
+    "resume": "Retomar",
+    "runNow": "Executar agora",
+    "openChat": "Abrir chat",
+    "noRuns": "Ainda não há execuções",
+    "deletedAutomation": "Automação excluída",
+    "runHistory": "Histórico de execuções (últimos 30 dias)",
+    "succeeded": "bem-sucedidas",
+    "failed": "falharam",
+    "form": {
+      "name": "Nome",
+      "namePlaceholder": "Minha automação",
+      "triggers": "Gatilhos",
+      "addTrigger": "Adicionar gatilho",
+      "instructions": "Instruções",
+      "instructionsPlaceholder": "O que deve ser executado neste agendamento?",
+      "model": "Modelo",
+      "modelAuto": "Auto",
+      "notification": "Notificação",
+      "notifyApp": "Aplicativo",
+      "notifyOff": "Desativada",
+      "frequency": "Frequência",
+      "time": "Hora",
+      "minute": "Minuto",
+      "fromHour": "De",
+      "toHour": "Até",
+      "weekday": "Dia da semana",
+      "dayOfMonth": "Dia",
+      "month": "Mês"
+    },
+    "kind": {
+      "once": "Uma vez",
+      "hourly": "A cada hora",
+      "daily": "Diária",
+      "weekly": "Semanal",
+      "monthly": "Mensal",
+      "yearly": "Anual"
+    },
+    "trigger": {
+      "once": "Uma vez em {{when}}",
+      "hourly": "A cada hora no minuto :{{minute}}",
+      "daily": "Diariamente às {{time}}",
+      "weekly": "Semanalmente na {{day}} às {{time}}",
+      "monthly": "Mensalmente no dia {{day}} às {{time}}",
+      "yearly": "Anualmente em {{date}} às {{time}}"
+    }
   },
   "home": {
     "active": "ativo",

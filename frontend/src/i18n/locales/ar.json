@@ -434,7 +434,8 @@
       "signOut": "تسجيل الخروج",
       "exploreLabel": "استكشاف",
       "notes": "الملاحظات",
-      "calendar": "التقويم"
+      "calendar": "التقويم",
+      "automations": "الأتمتة"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
     "expandSidebar": "توسيع الشريط الجانبي"
@@ -2484,6 +2485,72 @@
     "loadFailed": "فشل تحميل التقويم",
     "saveFailed": "فشل حفظ الحدث",
     "deleteFailed": "فشل حذف الحدث"
+  },
+  "automations": {
+    "title": "الأتمتة",
+    "tab": {
+      "automations": "الأتمتة",
+      "runs": "التشغيلات"
+    },
+    "newAutomation": "أتمتة جديدة",
+    "editAutomation": "تعديل الأتمتة",
+    "empty": "لا توجد أتمتة بعد. أنشئ واحدة لتشغيل مهمة وفق جدول.",
+    "loadFailed": "فشل تحميل الأتمتة",
+    "saveFailed": "فشل حفظ الأتمتة",
+    "actionFailed": "فشل الإجراء",
+    "runQueued": "بدأ التشغيل",
+    "status": {
+      "active": "نشطة",
+      "paused": "متوقفة"
+    },
+    "nextRun": "التشغيل التالي {{when}}",
+    "actions": "إجراءات",
+    "pause": "إيقاف مؤقت",
+    "resume": "استئناف",
+    "runNow": "تشغيل الآن",
+    "openChat": "فتح المحادثة",
+    "noRuns": "لا توجد تشغيلات بعد",
+    "deletedAutomation": "أتمتة محذوفة",
+    "runHistory": "سجل التشغيل (آخر 30 يومًا)",
+    "succeeded": "نجحت",
+    "failed": "فشلت",
+    "form": {
+      "name": "الاسم",
+      "namePlaceholder": "الأتمتة الخاصة بي",
+      "triggers": "المشغّلات",
+      "addTrigger": "إضافة مشغّل",
+      "instructions": "التعليمات",
+      "instructionsPlaceholder": "ما الذي يجب تشغيله وفق هذا الجدول؟",
+      "model": "النموذج",
+      "modelAuto": "تلقائي",
+      "notification": "الإشعار",
+      "notifyApp": "التطبيق",
+      "notifyOff": "إيقاف",
+      "frequency": "التكرار",
+      "time": "الوقت",
+      "minute": "الدقيقة",
+      "fromHour": "من",
+      "toHour": "إلى",
+      "weekday": "اليوم",
+      "dayOfMonth": "اليوم",
+      "month": "الشهر"
+    },
+    "kind": {
+      "once": "مرة واحدة",
+      "hourly": "كل ساعة",
+      "daily": "يوميًا",
+      "weekly": "أسبوعيًا",
+      "monthly": "شهريًا",
+      "yearly": "سنويًا"
+    },
+    "trigger": {
+      "once": "مرة واحدة في {{when}}",
+      "hourly": "كل ساعة عند الدقيقة {{minute}}",
+      "daily": "يوميًا في {{time}}",
+      "weekly": "أسبوعيًا يوم {{day}} في {{time}}",
+      "monthly": "شهريًا في اليوم {{day}} في {{time}}",
+      "yearly": "سنويًا في {{date}} في {{time}}"
+    }
   },
   "home": {
     "active": "نشط",

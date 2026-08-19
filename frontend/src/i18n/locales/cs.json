@@ -434,7 +434,8 @@
       "signOut": "Odhlásit se",
       "exploreLabel": "Prozkoumat",
       "notes": "Poznámky",
-      "calendar": "Kalendář"
+      "calendar": "Kalendář",
+      "automations": "Automatizace"
     },
     "toggleSize": "Změnit velikost postranního panelu",
     "expandSidebar": "Rozbalit postranní panel"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Kalendář se nepodařilo načíst",
     "saveFailed": "Událost se nepodařilo uložit",
     "deleteFailed": "Událost se nepodařilo smazat"
+  },
+  "automations": {
+    "title": "Automatizace",
+    "tab": {
+      "automations": "Automatizace",
+      "runs": "Běhy"
+    },
+    "newAutomation": "Nová automatizace",
+    "editAutomation": "Upravit automatizaci",
+    "empty": "Zatím žádné automatizace. Vytvořte si úlohu běžící podle plánu.",
+    "loadFailed": "Automatizace se nepodařilo načíst",
+    "saveFailed": "Automatizaci se nepodařilo uložit",
+    "actionFailed": "Akce se nezdařila",
+    "runQueued": "Běh zahájen",
+    "status": {
+      "active": "Aktivní",
+      "paused": "Pozastaveno"
+    },
+    "nextRun": "Další běh {{when}}",
+    "actions": "Akce",
+    "pause": "Pozastavit",
+    "resume": "Obnovit",
+    "runNow": "Spustit teď",
+    "openChat": "Otevřít chat",
+    "noRuns": "Zatím žádné běhy",
+    "deletedAutomation": "Smazaná automatizace",
+    "runHistory": "Historie běhů (posledních 30 dní)",
+    "succeeded": "úspěšných",
+    "failed": "neúspěšných",
+    "form": {
+      "name": "Název",
+      "namePlaceholder": "Moje automatizace",
+      "triggers": "Spouštěče",
+      "addTrigger": "Přidat spouštěč",
+      "instructions": "Instrukce",
+      "instructionsPlaceholder": "Co se má podle tohoto plánu spouštět?",
+      "model": "Model",
+      "modelAuto": "Automaticky",
+      "notification": "Oznámení",
+      "notifyApp": "Aplikace",
+      "notifyOff": "Vypnuto",
+      "frequency": "Frekvence",
+      "time": "Čas",
+      "minute": "Minuta",
+      "fromHour": "Od",
+      "toHour": "Do",
+      "weekday": "Den v týdnu",
+      "dayOfMonth": "Den",
+      "month": "Měsíc"
+    },
+    "kind": {
+      "once": "Jednou",
+      "hourly": "Každou hodinu",
+      "daily": "Denně",
+      "weekly": "Týdně",
+      "monthly": "Měsíčně",
+      "yearly": "Ročně"
+    },
+    "trigger": {
+      "once": "Jednou {{when}}",
+      "hourly": "Každou hodinu v :{{minute}}",
+      "daily": "Denně v {{time}}",
+      "weekly": "Týdně v {{day}} v {{time}}",
+      "monthly": "Měsíčně {{day}}. den v {{time}}",
+      "yearly": "Ročně {{date}} v {{time}}"
+    }
   },
   "home": {
     "active": "aktivní",

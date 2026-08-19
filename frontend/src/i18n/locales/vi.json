@@ -434,7 +434,8 @@
       "signOut": "Đăng xuất",
       "exploreLabel": "Khám phá",
       "notes": "Ghi chú",
-      "calendar": "Lịch"
+      "calendar": "Lịch",
+      "automations": "Tự động hóa"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
     "expandSidebar": "Mở rộng thanh bên"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Không thể tải lịch",
     "saveFailed": "Không thể lưu sự kiện",
     "deleteFailed": "Không thể xóa sự kiện"
+  },
+  "automations": {
+    "title": "Tự động hóa",
+    "tab": {
+      "automations": "Tự động hóa",
+      "runs": "Lần chạy"
+    },
+    "newAutomation": "Tự động hóa mới",
+    "editAutomation": "Chỉnh sửa tự động hóa",
+    "empty": "Chưa có tự động hóa nào. Tạo một cái để chạy tác vụ theo lịch.",
+    "loadFailed": "Không thể tải tự động hóa",
+    "saveFailed": "Không thể lưu tự động hóa",
+    "actionFailed": "Thao tác thất bại",
+    "runQueued": "Đã bắt đầu chạy",
+    "status": {
+      "active": "Đang hoạt động",
+      "paused": "Tạm dừng"
+    },
+    "nextRun": "Lần chạy tiếp theo {{when}}",
+    "actions": "Thao tác",
+    "pause": "Tạm dừng",
+    "resume": "Tiếp tục",
+    "runNow": "Chạy ngay",
+    "openChat": "Mở cuộc trò chuyện",
+    "noRuns": "Chưa có lần chạy nào",
+    "deletedAutomation": "Tự động hóa đã xóa",
+    "runHistory": "Lịch sử chạy (30 ngày qua)",
+    "succeeded": "thành công",
+    "failed": "thất bại",
+    "form": {
+      "name": "Tên",
+      "namePlaceholder": "Tự động hóa của tôi",
+      "triggers": "Bộ kích hoạt",
+      "addTrigger": "Thêm bộ kích hoạt",
+      "instructions": "Hướng dẫn",
+      "instructionsPlaceholder": "Nên chạy gì theo lịch này?",
+      "model": "Mô hình",
+      "modelAuto": "Tự động",
+      "notification": "Thông báo",
+      "notifyApp": "Ứng dụng",
+      "notifyOff": "Tắt",
+      "frequency": "Tần suất",
+      "time": "Thời gian",
+      "minute": "Phút",
+      "fromHour": "Từ",
+      "toHour": "Đến",
+      "weekday": "Thứ",
+      "dayOfMonth": "Ngày",
+      "month": "Tháng"
+    },
+    "kind": {
+      "once": "Một lần",
+      "hourly": "Hằng giờ",
+      "daily": "Hằng ngày",
+      "weekly": "Hằng tuần",
+      "monthly": "Hằng tháng",
+      "yearly": "Hằng năm"
+    },
+    "trigger": {
+      "once": "Một lần vào {{when}}",
+      "hourly": "Hằng giờ vào phút :{{minute}}",
+      "daily": "Hằng ngày lúc {{time}}",
+      "weekly": "Hằng tuần vào {{day}} lúc {{time}}",
+      "monthly": "Hằng tháng vào ngày {{day}} lúc {{time}}",
+      "yearly": "Hằng năm vào {{date}} lúc {{time}}"
+    }
   },
   "home": {
     "active": "đang hoạt động",

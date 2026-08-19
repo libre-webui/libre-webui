@@ -434,7 +434,8 @@
       "signOut": "ออกจากระบบ",
       "exploreLabel": "สำรวจ",
       "notes": "บันทึกย่อ",
-      "calendar": "ปฏิทิน"
+      "calendar": "ปฏิทิน",
+      "automations": "ระบบอัตโนมัติ"
     },
     "toggleSize": "สลับขนาดแถบด้านข้าง",
     "expandSidebar": "ขยายแถบด้านข้าง"
@@ -2484,6 +2485,72 @@
     "loadFailed": "โหลดปฏิทินไม่สำเร็จ",
     "saveFailed": "บันทึกกิจกรรมไม่สำเร็จ",
     "deleteFailed": "ลบกิจกรรมไม่สำเร็จ"
+  },
+  "automations": {
+    "title": "ระบบอัตโนมัติ",
+    "tab": {
+      "automations": "ระบบอัตโนมัติ",
+      "runs": "การทำงาน"
+    },
+    "newAutomation": "สร้างระบบอัตโนมัติ",
+    "editAutomation": "แก้ไขระบบอัตโนมัติ",
+    "empty": "ยังไม่มีระบบอัตโนมัติ สร้างขึ้นเพื่อรันงานตามกำหนดเวลา",
+    "loadFailed": "โหลดระบบอัตโนมัติไม่สำเร็จ",
+    "saveFailed": "บันทึกระบบอัตโนมัติไม่สำเร็จ",
+    "actionFailed": "ดำเนินการไม่สำเร็จ",
+    "runQueued": "เริ่มการทำงานแล้ว",
+    "status": {
+      "active": "ใช้งานอยู่",
+      "paused": "หยุดชั่วคราว"
+    },
+    "nextRun": "ทำงานครั้งถัดไป {{when}}",
+    "actions": "การดำเนินการ",
+    "pause": "หยุดชั่วคราว",
+    "resume": "ทำต่อ",
+    "runNow": "รันตอนนี้",
+    "openChat": "เปิดแชท",
+    "noRuns": "ยังไม่มีการทำงาน",
+    "deletedAutomation": "ระบบอัตโนมัติที่ถูกลบ",
+    "runHistory": "ประวัติการทำงาน (30 วันล่าสุด)",
+    "succeeded": "สำเร็จ",
+    "failed": "ล้มเหลว",
+    "form": {
+      "name": "ชื่อ",
+      "namePlaceholder": "ระบบอัตโนมัติของฉัน",
+      "triggers": "ทริกเกอร์",
+      "addTrigger": "เพิ่มทริกเกอร์",
+      "instructions": "คำสั่ง",
+      "instructionsPlaceholder": "ต้องการรันอะไรตามกำหนดเวลานี้?",
+      "model": "โมเดล",
+      "modelAuto": "อัตโนมัติ",
+      "notification": "การแจ้งเตือน",
+      "notifyApp": "แอป",
+      "notifyOff": "ปิด",
+      "frequency": "ความถี่",
+      "time": "เวลา",
+      "minute": "นาที",
+      "fromHour": "ตั้งแต่",
+      "toHour": "ถึง",
+      "weekday": "วันในสัปดาห์",
+      "dayOfMonth": "วันที่",
+      "month": "เดือน"
+    },
+    "kind": {
+      "once": "ครั้งเดียว",
+      "hourly": "ทุกชั่วโมง",
+      "daily": "ทุกวัน",
+      "weekly": "ทุกสัปดาห์",
+      "monthly": "ทุกเดือน",
+      "yearly": "ทุกปี"
+    },
+    "trigger": {
+      "once": "ครั้งเดียวเมื่อ {{when}}",
+      "hourly": "ทุกชั่วโมงที่นาที {{minute}}",
+      "daily": "ทุกวันเวลา {{time}}",
+      "weekly": "ทุกวัน{{day}} เวลา {{time}}",
+      "monthly": "ทุกวันที่ {{day}} เวลา {{time}}",
+      "yearly": "ทุกปีวันที่ {{date}} เวลา {{time}}"
+    }
   },
   "home": {
     "active": "ใช้งานอยู่",

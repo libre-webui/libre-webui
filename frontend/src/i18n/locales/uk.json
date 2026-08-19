@@ -434,7 +434,8 @@
       "signOut": "Вийти",
       "exploreLabel": "Огляд",
       "notes": "Нотатки",
-      "calendar": "Календар"
+      "calendar": "Календар",
+      "automations": "Автоматизації"
     },
     "toggleSize": "Змінити розмір бічної панелі",
     "expandSidebar": "Розгорнути бічну панель"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Не вдалося завантажити календар",
     "saveFailed": "Не вдалося зберегти подію",
     "deleteFailed": "Не вдалося видалити подію"
+  },
+  "automations": {
+    "title": "Автоматизації",
+    "tab": {
+      "automations": "Автоматизації",
+      "runs": "Запуски"
+    },
+    "newAutomation": "Нова автоматизація",
+    "editAutomation": "Редагувати автоматизацію",
+    "empty": "Поки що немає автоматизацій. Створіть одну, щоб виконувати завдання за розкладом.",
+    "loadFailed": "Не вдалося завантажити автоматизації",
+    "saveFailed": "Не вдалося зберегти автоматизацію",
+    "actionFailed": "Дія не виконана",
+    "runQueued": "Запуск розпочато",
+    "status": {
+      "active": "Активна",
+      "paused": "Призупинена"
+    },
+    "nextRun": "Наступний запуск {{when}}",
+    "actions": "Дії",
+    "pause": "Призупинити",
+    "resume": "Відновити",
+    "runNow": "Запустити зараз",
+    "openChat": "Відкрити чат",
+    "noRuns": "Поки що немає запусків",
+    "deletedAutomation": "Видалена автоматизація",
+    "runHistory": "Історія запусків (останні 30 днів)",
+    "succeeded": "успішних",
+    "failed": "невдалих",
+    "form": {
+      "name": "Назва",
+      "namePlaceholder": "Моя автоматизація",
+      "triggers": "Тригери",
+      "addTrigger": "Додати тригер",
+      "instructions": "Інструкції",
+      "instructionsPlaceholder": "Що виконувати за цим розкладом?",
+      "model": "Модель",
+      "modelAuto": "Авто",
+      "notification": "Сповіщення",
+      "notifyApp": "Застосунок",
+      "notifyOff": "Вимкнено",
+      "frequency": "Частота",
+      "time": "Час",
+      "minute": "Хвилина",
+      "fromHour": "Від",
+      "toHour": "До",
+      "weekday": "День тижня",
+      "dayOfMonth": "День",
+      "month": "Місяць"
+    },
+    "kind": {
+      "once": "Одноразово",
+      "hourly": "Щогодини",
+      "daily": "Щодня",
+      "weekly": "Щотижня",
+      "monthly": "Щомісяця",
+      "yearly": "Щороку"
+    },
+    "trigger": {
+      "once": "Одноразово {{when}}",
+      "hourly": "Щогодини о :{{minute}}",
+      "daily": "Щодня о {{time}}",
+      "weekly": "Щотижня у {{day}} о {{time}}",
+      "monthly": "Щомісяця {{day}}-го числа о {{time}}",
+      "yearly": "Щороку {{date}} о {{time}}"
+    }
   },
   "home": {
     "active": "активно",

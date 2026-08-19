@@ -133,6 +133,39 @@ export interface CalendarEvent {
   baseEventId?: string;
 }
 
+export type AutomationNotify = 'app' | 'off';
+export type AutomationStatus = 'active' | 'paused';
+export type AutomationRunStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+
+export interface Automation {
+  id: string;
+  name: string;
+  instructions: string;
+  triggers: AutomationTrigger[];
+  /** `providerType[:providerId]`; absent means Auto. */
+  provider?: string;
+  model?: string;
+  notify: AutomationNotify;
+  status: AutomationStatus;
+  nextRunAt?: number;
+  lastRunAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AutomationRun {
+  id: string;
+  automationId: string;
+  scheduledFor: number;
+  startedAt?: number;
+  finishedAt?: number;
+  status: AutomationRunStatus;
+  sessionId?: string;
+  error?: string;
+  seen: boolean;
+  createdAt: number;
+}
+
 export type ChatProviderType = 'ollama' | 'plugin' | 'agent';
 
 export interface ChatModelSelection {

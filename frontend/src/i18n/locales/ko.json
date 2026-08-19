@@ -434,7 +434,8 @@
       "signOut": "로그아웃",
       "exploreLabel": "둘러보기",
       "notes": "노트",
-      "calendar": "캘린더"
+      "calendar": "캘린더",
+      "automations": "자동화"
     },
     "toggleSize": "사이드바 크기 전환",
     "expandSidebar": "사이드바 확장"
@@ -2484,6 +2485,72 @@
     "loadFailed": "캘린더를 불러오지 못했습니다",
     "saveFailed": "일정을 저장하지 못했습니다",
     "deleteFailed": "일정을 삭제하지 못했습니다"
+  },
+  "automations": {
+    "title": "자동화",
+    "tab": {
+      "automations": "자동화",
+      "runs": "실행 기록"
+    },
+    "newAutomation": "새 자동화",
+    "editAutomation": "자동화 편집",
+    "empty": "아직 자동화가 없습니다. 일정에 따라 작업을 실행하려면 하나 만들어 보세요.",
+    "loadFailed": "자동화를 불러오지 못했습니다",
+    "saveFailed": "자동화를 저장하지 못했습니다",
+    "actionFailed": "작업이 실패했습니다",
+    "runQueued": "실행이 시작되었습니다",
+    "status": {
+      "active": "활성",
+      "paused": "일시중지"
+    },
+    "nextRun": "다음 실행 {{when}}",
+    "actions": "작업",
+    "pause": "일시중지",
+    "resume": "재개",
+    "runNow": "지금 실행",
+    "openChat": "채팅 열기",
+    "noRuns": "아직 실행 기록이 없습니다",
+    "deletedAutomation": "삭제된 자동화",
+    "runHistory": "실행 기록 (최근 30일)",
+    "succeeded": "성공",
+    "failed": "실패",
+    "form": {
+      "name": "이름",
+      "namePlaceholder": "내 자동화",
+      "triggers": "트리거",
+      "addTrigger": "트리거 추가",
+      "instructions": "지침",
+      "instructionsPlaceholder": "이 일정에 무엇을 실행할까요?",
+      "model": "모델",
+      "modelAuto": "자동",
+      "notification": "알림",
+      "notifyApp": "앱",
+      "notifyOff": "끄기",
+      "frequency": "빈도",
+      "time": "시간",
+      "minute": "분",
+      "fromHour": "시작",
+      "toHour": "종료",
+      "weekday": "요일",
+      "dayOfMonth": "일",
+      "month": "월"
+    },
+    "kind": {
+      "once": "한 번",
+      "hourly": "매시간",
+      "daily": "매일",
+      "weekly": "매주",
+      "monthly": "매월",
+      "yearly": "매년"
+    },
+    "trigger": {
+      "once": "{{when}}에 한 번",
+      "hourly": "매시 {{minute}}분",
+      "daily": "매일 {{time}}",
+      "weekly": "매주 {{day}} {{time}}",
+      "monthly": "매월 {{day}}일 {{time}}",
+      "yearly": "매년 {{date}} {{time}}"
+    }
   },
   "home": {
     "active": "활성",

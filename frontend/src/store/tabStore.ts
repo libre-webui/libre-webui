@@ -30,6 +30,7 @@ export const HOME_TAB: AppTab = { id: 'home', kind: 'home', path: '/' };
 
 const PAGE_TAB_PATHS = [
   '/calendar',
+  '/automations',
   '/models',
   '/personas',
   '/gallery',

@@ -434,7 +434,8 @@
       "signOut": "Abmelden",
       "exploreLabel": "Entdecken",
       "notes": "Notizen",
-      "calendar": "Kalender"
+      "calendar": "Kalender",
+      "automations": "Automationen"
     },
     "toggleSize": "Seitenleistengröße umschalten",
     "expandSidebar": "Seitenleiste erweitern"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Kalender konnte nicht geladen werden",
     "saveFailed": "Termin konnte nicht gespeichert werden",
     "deleteFailed": "Termin konnte nicht gelöscht werden"
+  },
+  "automations": {
+    "title": "Automationen",
+    "tab": {
+      "automations": "Automationen",
+      "runs": "Läufe"
+    },
+    "newAutomation": "Neue Automation",
+    "editAutomation": "Automation bearbeiten",
+    "empty": "Noch keine Automationen. Erstelle eine, um eine Aufgabe nach Zeitplan auszuführen.",
+    "loadFailed": "Automationen konnten nicht geladen werden",
+    "saveFailed": "Automation konnte nicht gespeichert werden",
+    "actionFailed": "Die Aktion ist fehlgeschlagen",
+    "runQueued": "Lauf gestartet",
+    "status": {
+      "active": "Aktiv",
+      "paused": "Pausiert"
+    },
+    "nextRun": "Nächster Lauf {{when}}",
+    "actions": "Aktionen",
+    "pause": "Pausieren",
+    "resume": "Fortsetzen",
+    "runNow": "Jetzt ausführen",
+    "openChat": "Chat öffnen",
+    "noRuns": "Noch keine Läufe",
+    "deletedAutomation": "Gelöschte Automation",
+    "runHistory": "Laufverlauf (letzte 30 Tage)",
+    "succeeded": "erfolgreich",
+    "failed": "fehlgeschlagen",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Meine Automation",
+      "triggers": "Auslöser",
+      "addTrigger": "Auslöser hinzufügen",
+      "instructions": "Anweisungen",
+      "instructionsPlaceholder": "Was soll nach diesem Zeitplan ausgeführt werden?",
+      "model": "Modell",
+      "modelAuto": "Auto",
+      "notification": "Benachrichtigung",
+      "notifyApp": "App",
+      "notifyOff": "Aus",
+      "frequency": "Häufigkeit",
+      "time": "Uhrzeit",
+      "minute": "Minute",
+      "fromHour": "Von",
+      "toHour": "Bis",
+      "weekday": "Wochentag",
+      "dayOfMonth": "Tag",
+      "month": "Monat"
+    },
+    "kind": {
+      "once": "Einmalig",
+      "hourly": "Stündlich",
+      "daily": "Täglich",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich",
+      "yearly": "Jährlich"
+    },
+    "trigger": {
+      "once": "Einmalig am {{when}}",
+      "hourly": "Stündlich um :{{minute}}",
+      "daily": "Täglich um {{time}}",
+      "weekly": "Wöchentlich am {{day}} um {{time}}",
+      "monthly": "Monatlich am {{day}}. um {{time}}",
+      "yearly": "Jährlich am {{date}} um {{time}}"
+    }
   },
   "home": {
     "active": "aktiv",

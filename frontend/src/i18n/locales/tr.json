@@ -434,7 +434,8 @@
       "signOut": "Çıkış Yap",
       "exploreLabel": "Keşfet",
       "notes": "Notlar",
-      "calendar": "Takvim"
+      "calendar": "Takvim",
+      "automations": "Otomasyonlar"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Takvim yüklenemedi",
     "saveFailed": "Etkinlik kaydedilemedi",
     "deleteFailed": "Etkinlik silinemedi"
+  },
+  "automations": {
+    "title": "Otomasyonlar",
+    "tab": {
+      "automations": "Otomasyonlar",
+      "runs": "Çalıştırmalar"
+    },
+    "newAutomation": "Yeni otomasyon",
+    "editAutomation": "Otomasyonu düzenle",
+    "empty": "Henüz otomasyon yok. Bir görevi zamanlamayla çalıştırmak için bir tane oluşturun.",
+    "loadFailed": "Otomasyonlar yüklenemedi",
+    "saveFailed": "Otomasyon kaydedilemedi",
+    "actionFailed": "İşlem başarısız oldu",
+    "runQueued": "Çalıştırma başlatıldı",
+    "status": {
+      "active": "Etkin",
+      "paused": "Duraklatıldı"
+    },
+    "nextRun": "Sonraki çalıştırma {{when}}",
+    "actions": "İşlemler",
+    "pause": "Duraklat",
+    "resume": "Devam ettir",
+    "runNow": "Şimdi çalıştır",
+    "openChat": "Sohbeti aç",
+    "noRuns": "Henüz çalıştırma yok",
+    "deletedAutomation": "Silinmiş otomasyon",
+    "runHistory": "Çalıştırma geçmişi (son 30 gün)",
+    "succeeded": "başarılı",
+    "failed": "başarısız",
+    "form": {
+      "name": "Ad",
+      "namePlaceholder": "Otomasyonum",
+      "triggers": "Tetikleyiciler",
+      "addTrigger": "Tetikleyici ekle",
+      "instructions": "Talimatlar",
+      "instructionsPlaceholder": "Bu zamanlamada ne çalıştırılmalı?",
+      "model": "Model",
+      "modelAuto": "Otomatik",
+      "notification": "Bildirim",
+      "notifyApp": "Uygulama",
+      "notifyOff": "Kapalı",
+      "frequency": "Sıklık",
+      "time": "Saat",
+      "minute": "Dakika",
+      "fromHour": "Başlangıç",
+      "toHour": "Bitiş",
+      "weekday": "Haftanın günü",
+      "dayOfMonth": "Gün",
+      "month": "Ay"
+    },
+    "kind": {
+      "once": "Bir kez",
+      "hourly": "Saatlik",
+      "daily": "Günlük",
+      "weekly": "Haftalık",
+      "monthly": "Aylık",
+      "yearly": "Yıllık"
+    },
+    "trigger": {
+      "once": "{{when}} tarihinde bir kez",
+      "hourly": "Her saat :{{minute}} dakikasında",
+      "daily": "Her gün {{time}}",
+      "weekly": "Her {{day}} {{time}}",
+      "monthly": "Her ayın {{day}}. günü {{time}}",
+      "yearly": "Her yıl {{date}} {{time}}"
+    }
   },
   "home": {
     "active": "etkin",

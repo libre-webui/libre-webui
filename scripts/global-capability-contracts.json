@@ -1056,7 +1056,7 @@
     {
       "id": "automations",
       "title": "Automations",
-      "uiRoutes": [],
+      "uiRoutes": ["/automations"],
       "documentation": [
         {
           "file": "docs/48-AUTOMATIONS.md",

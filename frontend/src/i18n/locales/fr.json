@@ -434,7 +434,8 @@
       "signOut": "Déconnexion",
       "exploreLabel": "Explorer",
       "notes": "Notes",
-      "calendar": "Calendrier"
+      "calendar": "Calendrier",
+      "automations": "Automatisations"
     },
     "toggleSize": "Basculer la taille de la barre latérale",
     "expandSidebar": "Agrandir la barre latérale"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Impossible de charger le calendrier",
     "saveFailed": "Impossible d'enregistrer l'événement",
     "deleteFailed": "Impossible de supprimer l'événement"
+  },
+  "automations": {
+    "title": "Automatisations",
+    "tab": {
+      "automations": "Automatisations",
+      "runs": "Exécutions"
+    },
+    "newAutomation": "Nouvelle automatisation",
+    "editAutomation": "Modifier l'automatisation",
+    "empty": "Aucune automatisation pour l'instant. Créez-en une pour exécuter une tâche selon un horaire.",
+    "loadFailed": "Impossible de charger les automatisations",
+    "saveFailed": "Impossible d'enregistrer l'automatisation",
+    "actionFailed": "L'action a échoué",
+    "runQueued": "Exécution démarrée",
+    "status": {
+      "active": "Active",
+      "paused": "En pause"
+    },
+    "nextRun": "Prochaine exécution {{when}}",
+    "actions": "Actions",
+    "pause": "Mettre en pause",
+    "resume": "Reprendre",
+    "runNow": "Exécuter maintenant",
+    "openChat": "Ouvrir la discussion",
+    "noRuns": "Aucune exécution pour l'instant",
+    "deletedAutomation": "Automatisation supprimée",
+    "runHistory": "Historique des exécutions (30 derniers jours)",
+    "succeeded": "réussies",
+    "failed": "échouées",
+    "form": {
+      "name": "Nom",
+      "namePlaceholder": "Mon automatisation",
+      "triggers": "Déclencheurs",
+      "addTrigger": "Ajouter un déclencheur",
+      "instructions": "Instructions",
+      "instructionsPlaceholder": "Que faut-il exécuter selon cet horaire ?",
+      "model": "Modèle",
+      "modelAuto": "Auto",
+      "notification": "Notification",
+      "notifyApp": "Application",
+      "notifyOff": "Désactivée",
+      "frequency": "Fréquence",
+      "time": "Heure",
+      "minute": "Minute",
+      "fromHour": "De",
+      "toHour": "À",
+      "weekday": "Jour de la semaine",
+      "dayOfMonth": "Jour",
+      "month": "Mois"
+    },
+    "kind": {
+      "once": "Une fois",
+      "hourly": "Toutes les heures",
+      "daily": "Quotidien",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel",
+      "yearly": "Annuel"
+    },
+    "trigger": {
+      "once": "Une fois le {{when}}",
+      "hourly": "Toutes les heures à :{{minute}}",
+      "daily": "Tous les jours à {{time}}",
+      "weekly": "Chaque {{day}} à {{time}}",
+      "monthly": "Le {{day}} de chaque mois à {{time}}",
+      "yearly": "Chaque année le {{date}} à {{time}}"
+    }
   },
   "home": {
     "active": "actif",

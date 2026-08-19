@@ -38,6 +38,7 @@ import {
   Settings,
   Sparkles,
   User as UserIcon,
+  Zap,
 } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
@@ -185,6 +186,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         label: t('sidebar.navigation.calendar', 'Calendar'),
         icon: CalendarDays,
         run: () => navigate('/calendar'),
+      },
+      {
+        id: 'action:automations',
+        section: actionSection,
+        label: t('sidebar.navigation.automations', 'Automations'),
+        icon: Zap,
+        run: () => navigate('/automations'),
       },
       ...(showAgents
         ? [

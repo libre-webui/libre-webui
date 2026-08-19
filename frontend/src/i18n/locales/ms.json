@@ -434,7 +434,8 @@
       "signOut": "Log Keluar",
       "exploreLabel": "Terokai",
       "notes": "Nota",
-      "calendar": "Kalendar"
+      "calendar": "Kalendar",
+      "automations": "Automasi"
     },
     "toggleSize": "Togol saiz bar sisi",
     "expandSidebar": "Kembangkan bar sisi"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Gagal memuatkan kalendar",
     "saveFailed": "Gagal menyimpan acara",
     "deleteFailed": "Gagal memadamkan acara"
+  },
+  "automations": {
+    "title": "Automasi",
+    "tab": {
+      "automations": "Automasi",
+      "runs": "Larian"
+    },
+    "newAutomation": "Automasi baharu",
+    "editAutomation": "Edit automasi",
+    "empty": "Belum ada automasi. Cipta satu untuk menjalankan tugas mengikut jadual.",
+    "loadFailed": "Gagal memuatkan automasi",
+    "saveFailed": "Gagal menyimpan automasi",
+    "actionFailed": "Tindakan gagal",
+    "runQueued": "Larian dimulakan",
+    "status": {
+      "active": "Aktif",
+      "paused": "Dijeda"
+    },
+    "nextRun": "Larian seterusnya {{when}}",
+    "actions": "Tindakan",
+    "pause": "Jeda",
+    "resume": "Sambung semula",
+    "runNow": "Jalankan sekarang",
+    "openChat": "Buka sembang",
+    "noRuns": "Belum ada larian",
+    "deletedAutomation": "Automasi dipadamkan",
+    "runHistory": "Sejarah larian (30 hari lepas)",
+    "succeeded": "berjaya",
+    "failed": "gagal",
+    "form": {
+      "name": "Nama",
+      "namePlaceholder": "Automasi saya",
+      "triggers": "Pencetus",
+      "addTrigger": "Tambah pencetus",
+      "instructions": "Arahan",
+      "instructionsPlaceholder": "Apa yang patut dijalankan mengikut jadual ini?",
+      "model": "Model",
+      "modelAuto": "Auto",
+      "notification": "Pemberitahuan",
+      "notifyApp": "Aplikasi",
+      "notifyOff": "Mati",
+      "frequency": "Kekerapan",
+      "time": "Masa",
+      "minute": "Minit",
+      "fromHour": "Dari",
+      "toHour": "Hingga",
+      "weekday": "Hari",
+      "dayOfMonth": "Hari bulan",
+      "month": "Bulan"
+    },
+    "kind": {
+      "once": "Sekali",
+      "hourly": "Setiap jam",
+      "daily": "Harian",
+      "weekly": "Mingguan",
+      "monthly": "Bulanan",
+      "yearly": "Tahunan"
+    },
+    "trigger": {
+      "once": "Sekali pada {{when}}",
+      "hourly": "Setiap jam pada minit :{{minute}}",
+      "daily": "Setiap hari pada {{time}}",
+      "weekly": "Setiap {{day}} pada {{time}}",
+      "monthly": "Setiap {{day}} haribulan pada {{time}}",
+      "yearly": "Setiap tahun pada {{date}} {{time}}"
+    }
   },
   "home": {
     "active": "aktif",

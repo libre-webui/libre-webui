@@ -434,7 +434,8 @@
       "signOut": "Logga ut",
       "exploreLabel": "Utforska",
       "notes": "Anteckningar",
-      "calendar": "Kalender"
+      "calendar": "Kalender",
+      "automations": "Automatiseringar"
     },
     "toggleSize": "Växla sidofältets storlek",
     "expandSidebar": "Expandera sidofältet"
@@ -2484,6 +2485,72 @@
     "loadFailed": "Kalendern kunde inte läsas in",
     "saveFailed": "Händelsen kunde inte sparas",
     "deleteFailed": "Händelsen kunde inte tas bort"
+  },
+  "automations": {
+    "title": "Automatiseringar",
+    "tab": {
+      "automations": "Automatiseringar",
+      "runs": "Körningar"
+    },
+    "newAutomation": "Ny automatisering",
+    "editAutomation": "Redigera automatisering",
+    "empty": "Inga automatiseringar ännu. Skapa en för att köra en uppgift enligt ett schema.",
+    "loadFailed": "Automatiseringarna kunde inte läsas in",
+    "saveFailed": "Automatiseringen kunde inte sparas",
+    "actionFailed": "Åtgärden misslyckades",
+    "runQueued": "Körning startad",
+    "status": {
+      "active": "Aktiv",
+      "paused": "Pausad"
+    },
+    "nextRun": "Nästa körning {{when}}",
+    "actions": "Åtgärder",
+    "pause": "Pausa",
+    "resume": "Återuppta",
+    "runNow": "Kör nu",
+    "openChat": "Öppna chatt",
+    "noRuns": "Inga körningar ännu",
+    "deletedAutomation": "Borttagen automatisering",
+    "runHistory": "Körningshistorik (senaste 30 dagarna)",
+    "succeeded": "lyckades",
+    "failed": "misslyckades",
+    "form": {
+      "name": "Namn",
+      "namePlaceholder": "Min automatisering",
+      "triggers": "Utlösare",
+      "addTrigger": "Lägg till utlösare",
+      "instructions": "Instruktioner",
+      "instructionsPlaceholder": "Vad ska köras enligt det här schemat?",
+      "model": "Modell",
+      "modelAuto": "Auto",
+      "notification": "Avisering",
+      "notifyApp": "App",
+      "notifyOff": "Av",
+      "frequency": "Frekvens",
+      "time": "Tid",
+      "minute": "Minut",
+      "fromHour": "Från",
+      "toHour": "Till",
+      "weekday": "Veckodag",
+      "dayOfMonth": "Dag",
+      "month": "Månad"
+    },
+    "kind": {
+      "once": "En gång",
+      "hourly": "Varje timme",
+      "daily": "Dagligen",
+      "weekly": "Varje vecka",
+      "monthly": "Varje månad",
+      "yearly": "Varje år"
+    },
+    "trigger": {
+      "once": "En gång den {{when}}",
+      "hourly": "Varje timme vid :{{minute}}",
+      "daily": "Dagligen kl. {{time}}",
+      "weekly": "Varje {{day}} kl. {{time}}",
+      "monthly": "Den {{day}}:e varje månad kl. {{time}}",
+      "yearly": "Varje år den {{date}} kl. {{time}}"
+    }
   },
   "home": {
     "active": "aktiv",

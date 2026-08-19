@@ -434,7 +434,8 @@
       "signOut": "साइन आउट",
       "exploreLabel": "एक्सप्लोर",
       "notes": "नोट्स",
-      "calendar": "कैलेंडर"
+      "calendar": "कैलेंडर",
+      "automations": "ऑटोमेशन"
     },
     "toggleSize": "साइडबार का आकार बदलें",
     "expandSidebar": "साइडबार विस्तारित करें"
@@ -2484,6 +2485,72 @@
     "loadFailed": "कैलेंडर लोड नहीं हो सका",
     "saveFailed": "इवेंट सहेजा नहीं जा सका",
     "deleteFailed": "इवेंट हटाया नहीं जा सका"
+  },
+  "automations": {
+    "title": "ऑटोमेशन",
+    "tab": {
+      "automations": "ऑटोमेशन",
+      "runs": "रन"
+    },
+    "newAutomation": "नया ऑटोमेशन",
+    "editAutomation": "ऑटोमेशन संपादित करें",
+    "empty": "अभी कोई ऑटोमेशन नहीं है। शेड्यूल पर कार्य चलाने के लिए एक बनाएँ।",
+    "loadFailed": "ऑटोमेशन लोड नहीं हो सके",
+    "saveFailed": "ऑटोमेशन सहेजा नहीं जा सका",
+    "actionFailed": "कार्रवाई विफल रही",
+    "runQueued": "रन शुरू हुआ",
+    "status": {
+      "active": "सक्रिय",
+      "paused": "रोका गया"
+    },
+    "nextRun": "अगला रन {{when}}",
+    "actions": "कार्रवाइयाँ",
+    "pause": "रोकें",
+    "resume": "फिर शुरू करें",
+    "runNow": "अभी चलाएँ",
+    "openChat": "चैट खोलें",
+    "noRuns": "अभी कोई रन नहीं",
+    "deletedAutomation": "हटाया गया ऑटोमेशन",
+    "runHistory": "रन इतिहास (पिछले 30 दिन)",
+    "succeeded": "सफल",
+    "failed": "विफल",
+    "form": {
+      "name": "नाम",
+      "namePlaceholder": "मेरा ऑटोमेशन",
+      "triggers": "ट्रिगर",
+      "addTrigger": "ट्रिगर जोड़ें",
+      "instructions": "निर्देश",
+      "instructionsPlaceholder": "इस शेड्यूल पर क्या चलाना चाहिए?",
+      "model": "मॉडल",
+      "modelAuto": "स्वतः",
+      "notification": "सूचना",
+      "notifyApp": "ऐप",
+      "notifyOff": "बंद",
+      "frequency": "आवृत्ति",
+      "time": "समय",
+      "minute": "मिनट",
+      "fromHour": "से",
+      "toHour": "तक",
+      "weekday": "सप्ताह का दिन",
+      "dayOfMonth": "दिन",
+      "month": "महीना"
+    },
+    "kind": {
+      "once": "एक बार",
+      "hourly": "हर घंटे",
+      "daily": "प्रतिदिन",
+      "weekly": "साप्ताहिक",
+      "monthly": "मासिक",
+      "yearly": "वार्षिक"
+    },
+    "trigger": {
+      "once": "{{when}} को एक बार",
+      "hourly": "हर घंटे :{{minute}} मिनट पर",
+      "daily": "प्रतिदिन {{time}} बजे",
+      "weekly": "हर {{day}} {{time}} बजे",
+      "monthly": "हर महीने {{day}} तारीख़ को {{time}} बजे",
+      "yearly": "हर साल {{date}} को {{time}} बजे"
+    }
   },
   "home": {
     "active": "सक्रिय",
