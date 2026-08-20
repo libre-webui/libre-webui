@@ -3151,5 +3151,25 @@
     "empty": "You are all caught up.",
     "markAllRead": "Mark all as read",
     "markRead": "Mark as read"
+  },
+  "voiceMode": {
+    "title": "Voice mode",
+    "open": "Start voice mode",
+    "close": "Close voice mode",
+    "starting": "Starting…",
+    "listening": "Listening…",
+    "muted": "Microphone muted",
+    "transcribing": "Transcribing…",
+    "generating": "Thinking…",
+    "speaking": "Speaking…",
+    "mute": "Mute microphone",
+    "unmute": "Unmute microphone",
+    "finishTurn": "Done speaking",
+    "skipReply": "Skip reply",
+    "microphoneFailed": "Microphone unavailable",
+    "transcriptionFailed": "Transcription failed",
+    "replyTimeout": "The reply took too long",
+    "unsupported": "Voice mode is unavailable",
+    "unsupportedHint": "Voice mode needs a microphone and either a speech-to-text provider or browser speech recognition."
   }
 }

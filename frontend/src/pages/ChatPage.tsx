@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
+import { VoiceModeOverlay } from '@/components/VoiceModeOverlay';
 import { ChatControlsPanel } from '@/components/ChatControlsPanel';
 import { ChatSourcesPanel } from '@/components/ChatSourcesPanel';
 import { CodeAwareTextarea } from '@/components/CodeAwareTextarea';
@@ -158,6 +159,19 @@ const getWelcomePrompt = (
       ? t(`chat.welcome.variety.${id}.subtitle`)
       : 'Start with a thought, a sketch, or a stubborn problem.',
   };
+};
+
+const findLastAssistantMessage = (
+  messages: Array<{ id: string; role: string; content: string }> | undefined
+): { id: string; content: string } | null => {
+  if (!messages) return null;
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const candidate = messages[index];
+    if (candidate.role === 'assistant') {
+      return { id: candidate.id, content: candidate.content };
+    }
+  }
+  return null;
 };
 
 export const ChatPage: React.FC = () => {
@@ -455,6 +469,10 @@ export const ChatPage: React.FC = () => {
 
   // Image generation state
   const [hasImageGenPlugins, setHasImageGenPlugins] = useState(false);
+  const [voiceModeOpen, setVoiceModeOpen] = useState(false);
+  const lastAssistantMessage = findLastAssistantMessage(
+    currentSession?.messages
+  );
   const showImageGeneration = imageGenerationEnabled && hasImageGenPlugins;
 
   const startPrivateSession = useCallback(
@@ -1242,10 +1260,19 @@ export const ChatPage: React.FC = () => {
                 onSendMessage={handleSendMessage}
                 onStopGeneration={stopGeneration}
                 onCancelComparison={cancelComparison}
+                onOpenVoiceMode={() => setVoiceModeOpen(true)}
                 disabled={!currentSession}
               />
             )}
           </div>
+          {voiceModeOpen && currentSession && (
+            <VoiceModeOverlay
+              onClose={() => setVoiceModeOpen(false)}
+              onSendMessage={text => handleSendMessage(text)}
+              isStreaming={isStreaming}
+              lastAssistantMessage={lastAssistantMessage}
+            />
+          )}
           {currentSession && <ChatSourcesPanel session={currentSession} />}
           <ChatControlsPanel
             session={currentSession}

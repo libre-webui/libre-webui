@@ -3151,5 +3151,25 @@
     "empty": "Semua sudah dibaca.",
     "markAllRead": "Tandai semua sudah dibaca",
     "markRead": "Tandai sudah dibaca"
+  },
+  "voiceMode": {
+    "title": "Mode suara",
+    "open": "Mulai mode suara",
+    "close": "Tutup mode suara",
+    "starting": "Memulai…",
+    "listening": "Mendengarkan…",
+    "muted": "Mikrofon dibisukan",
+    "transcribing": "Mentranskripsi…",
+    "generating": "Berpikir…",
+    "speaking": "Berbicara…",
+    "mute": "Bisukan mikrofon",
+    "unmute": "Bunyikan mikrofon",
+    "finishTurn": "Selesai berbicara",
+    "skipReply": "Lewati jawaban",
+    "microphoneFailed": "Mikrofon tidak tersedia",
+    "transcriptionFailed": "Transkripsi gagal",
+    "replyTimeout": "Jawaban terlalu lama",
+    "unsupported": "Mode suara tidak tersedia",
+    "unsupportedHint": "Mode suara memerlukan mikrofon serta penyedia ucapan-ke-teks atau pengenalan suara peramban."
   }
 }

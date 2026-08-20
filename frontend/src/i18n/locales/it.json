@@ -3151,5 +3151,25 @@
     "empty": "Sei in pari.",
     "markAllRead": "Segna tutto come letto",
     "markRead": "Segna come letto"
+  },
+  "voiceMode": {
+    "title": "Modalità vocale",
+    "open": "Avvia la modalità vocale",
+    "close": "Chiudi la modalità vocale",
+    "starting": "Avvio…",
+    "listening": "In ascolto…",
+    "muted": "Microfono disattivato",
+    "transcribing": "Trascrizione…",
+    "generating": "Sto pensando…",
+    "speaking": "Sto parlando…",
+    "mute": "Disattiva il microfono",
+    "unmute": "Riattiva il microfono",
+    "finishTurn": "Ho finito di parlare",
+    "skipReply": "Salta la risposta",
+    "microphoneFailed": "Microfono non disponibile",
+    "transcriptionFailed": "Trascrizione non riuscita",
+    "replyTimeout": "La risposta ha impiegato troppo tempo",
+    "unsupported": "La modalità vocale non è disponibile",
+    "unsupportedHint": "La modalità vocale richiede un microfono e un provider voce-testo oppure il riconoscimento vocale del browser."
   }
 }

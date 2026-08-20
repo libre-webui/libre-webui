@@ -3151,5 +3151,25 @@
     "empty": "Vous êtes à jour.",
     "markAllRead": "Tout marquer comme lu",
     "markRead": "Marquer comme lu"
+  },
+  "voiceMode": {
+    "title": "Mode vocal",
+    "open": "Démarrer le mode vocal",
+    "close": "Fermer le mode vocal",
+    "starting": "Démarrage…",
+    "listening": "À l’écoute…",
+    "muted": "Micro coupé",
+    "transcribing": "Transcription…",
+    "generating": "Réflexion…",
+    "speaking": "Parle…",
+    "mute": "Couper le micro",
+    "unmute": "Réactiver le micro",
+    "finishTurn": "J’ai fini de parler",
+    "skipReply": "Passer la réponse",
+    "microphoneFailed": "Micro indisponible",
+    "transcriptionFailed": "Échec de la transcription",
+    "replyTimeout": "La réponse a pris trop de temps",
+    "unsupported": "Le mode vocal est indisponible",
+    "unsupportedHint": "Le mode vocal nécessite un micro et un fournisseur de reconnaissance vocale ou la reconnaissance du navigateur."
   }
 }

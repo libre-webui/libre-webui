@@ -3151,5 +3151,25 @@
     "empty": "Du bist auf dem Laufenden.",
     "markAllRead": "Alle als gelesen markieren",
     "markRead": "Als gelesen markieren"
+  },
+  "voiceMode": {
+    "title": "Sprachmodus",
+    "open": "Sprachmodus starten",
+    "close": "Sprachmodus schließen",
+    "starting": "Wird gestartet…",
+    "listening": "Ich höre zu…",
+    "muted": "Mikrofon stummgeschaltet",
+    "transcribing": "Wird transkribiert…",
+    "generating": "Denkt nach…",
+    "speaking": "Spricht…",
+    "mute": "Mikrofon stummschalten",
+    "unmute": "Stummschaltung aufheben",
+    "finishTurn": "Fertig gesprochen",
+    "skipReply": "Antwort überspringen",
+    "microphoneFailed": "Mikrofon nicht verfügbar",
+    "transcriptionFailed": "Transkription fehlgeschlagen",
+    "replyTimeout": "Die Antwort hat zu lange gedauert",
+    "unsupported": "Der Sprachmodus ist nicht verfügbar",
+    "unsupportedHint": "Der Sprachmodus benötigt ein Mikrofon und entweder einen Sprache-zu-Text-Anbieter oder die Spracherkennung des Browsers."
   }
 }

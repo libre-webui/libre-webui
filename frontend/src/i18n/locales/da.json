@@ -3151,5 +3151,25 @@
     "empty": "Du er ajour.",
     "markAllRead": "Markér alle som læst",
     "markRead": "Markér som læst"
+  },
+  "voiceMode": {
+    "title": "Stemmetilstand",
+    "open": "Start stemmetilstand",
+    "close": "Luk stemmetilstand",
+    "starting": "Starter…",
+    "listening": "Lytter…",
+    "muted": "Mikrofonen er slået fra",
+    "transcribing": "Transskriberer…",
+    "generating": "Tænker…",
+    "speaking": "Taler…",
+    "mute": "Slå mikrofonen fra",
+    "unmute": "Slå mikrofonen til",
+    "finishTurn": "Færdig med at tale",
+    "skipReply": "Spring svaret over",
+    "microphoneFailed": "Mikrofonen er ikke tilgængelig",
+    "transcriptionFailed": "Transskription mislykkedes",
+    "replyTimeout": "Svaret tog for lang tid",
+    "unsupported": "Stemmetilstand er ikke tilgængelig",
+    "unsupportedHint": "Stemmetilstand kræver en mikrofon og en tale-til-tekst-udbyder eller browserens talegenkendelse."
   }
 }

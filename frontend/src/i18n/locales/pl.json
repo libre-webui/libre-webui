@@ -3151,5 +3151,25 @@
     "empty": "Wszystko przeczytane.",
     "markAllRead": "Oznacz wszystkie jako przeczytane",
     "markRead": "Oznacz jako przeczytane"
+  },
+  "voiceMode": {
+    "title": "Tryb głosowy",
+    "open": "Uruchom tryb głosowy",
+    "close": "Zamknij tryb głosowy",
+    "starting": "Uruchamianie…",
+    "listening": "Słucham…",
+    "muted": "Mikrofon wyciszony",
+    "transcribing": "Transkrypcja…",
+    "generating": "Myślę…",
+    "speaking": "Mówię…",
+    "mute": "Wycisz mikrofon",
+    "unmute": "Włącz mikrofon",
+    "finishTurn": "Skończyłem mówić",
+    "skipReply": "Pomiń odpowiedź",
+    "microphoneFailed": "Mikrofon niedostępny",
+    "transcriptionFailed": "Transkrypcja nie powiodła się",
+    "replyTimeout": "Odpowiedź trwała zbyt długo",
+    "unsupported": "Tryb głosowy jest niedostępny",
+    "unsupportedHint": "Tryb głosowy wymaga mikrofonu oraz dostawcy mowy na tekst lub rozpoznawania mowy w przeglądarce."
   }
 }

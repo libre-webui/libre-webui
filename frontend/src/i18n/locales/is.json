@@ -3151,5 +3151,25 @@
     "empty": "Þú ert með allt á hreinu.",
     "markAllRead": "Merkja allt sem lesið",
     "markRead": "Merkja sem lesið"
+  },
+  "voiceMode": {
+    "title": "Raddhamur",
+    "open": "Ræsa raddham",
+    "close": "Loka raddham",
+    "starting": "Ræsi…",
+    "listening": "Hlusta…",
+    "muted": "Slökkt á hljóðnema",
+    "transcribing": "Umriti…",
+    "generating": "Hugsa…",
+    "speaking": "Tala…",
+    "mute": "Slökkva á hljóðnema",
+    "unmute": "Kveikja á hljóðnema",
+    "finishTurn": "Búinn að tala",
+    "skipReply": "Sleppa svari",
+    "microphoneFailed": "Hljóðnemi ekki tiltækur",
+    "transcriptionFailed": "Umritun mistókst",
+    "replyTimeout": "Svarið tók of langan tíma",
+    "unsupported": "Raddhamur er ekki tiltækur",
+    "unsupportedHint": "Raddhamur þarf hljóðnema og tal-í-texta þjónustu eða talgreiningu vafrans."
   }
 }

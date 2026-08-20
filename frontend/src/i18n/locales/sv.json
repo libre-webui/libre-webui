@@ -3151,5 +3151,25 @@
     "empty": "Du är ikapp.",
     "markAllRead": "Markera alla som lästa",
     "markRead": "Markera som läst"
+  },
+  "voiceMode": {
+    "title": "Röstläge",
+    "open": "Starta röstläget",
+    "close": "Stäng röstläget",
+    "starting": "Startar…",
+    "listening": "Lyssnar…",
+    "muted": "Mikrofonen är avstängd",
+    "transcribing": "Transkriberar…",
+    "generating": "Tänker…",
+    "speaking": "Talar…",
+    "mute": "Stäng av mikrofonen",
+    "unmute": "Slå på mikrofonen",
+    "finishTurn": "Klar med att tala",
+    "skipReply": "Hoppa över svaret",
+    "microphoneFailed": "Mikrofonen är inte tillgänglig",
+    "transcriptionFailed": "Transkriberingen misslyckades",
+    "replyTimeout": "Svaret tog för lång tid",
+    "unsupported": "Röstläget är inte tillgängligt",
+    "unsupportedHint": "Röstläget kräver en mikrofon och en tal-till-text-leverantör eller webbläsarens taligenkänning."
   }
 }

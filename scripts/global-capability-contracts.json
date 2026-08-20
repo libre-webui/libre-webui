@@ -3837,6 +3837,13 @@
             "setVoiceAccessMode\\(feature, mode\\)",
             "voiceAccessModeLockedByEnv\\(feature\\)"
           ]
+        },
+        {
+          "file": "frontend/src/utils/voiceModeController.ts",
+          "patterns": [
+            "reduceVoiceMode\\(this\\.state, event\\)",
+            "startBargeInMonitor\\("
+          ]
         }
       ],
       "documentation": [
@@ -3852,6 +3859,13 @@
           "patterns": [
             "text-to-speech",
             "Qwen3-TTS"
+          ]
+        },
+        {
+          "file": "docs/57-VOICE_MODE.md",
+          "patterns": [
+            "# Voice Mode",
+            "Interrupt a spoken reply just by talking"
           ]
         }
       ],
@@ -3890,6 +3904,15 @@
           "behaviorPatterns": [
             "executeTTSRequest",
             "apiKeyLookups"
+          ]
+        },
+        {
+          "file": "frontend/e2e/voice-mode.spec.ts",
+          "runner": "test:e2e",
+          "name": "voice mode opens hands-free conversation and transcribes a manual turn",
+          "behaviorPatterns": [
+            "voice-mode-overlay",
+            "Done speaking"
           ]
         }
       ],

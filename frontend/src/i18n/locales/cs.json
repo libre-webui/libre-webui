@@ -3151,5 +3151,25 @@
     "empty": "Vše přečteno.",
     "markAllRead": "Označit vše jako přečtené",
     "markRead": "Označit jako přečtené"
+  },
+  "voiceMode": {
+    "title": "Hlasový režim",
+    "open": "Spustit hlasový režim",
+    "close": "Zavřít hlasový režim",
+    "starting": "Spouštění…",
+    "listening": "Poslouchám…",
+    "muted": "Mikrofon ztlumen",
+    "transcribing": "Přepisuji…",
+    "generating": "Přemýšlím…",
+    "speaking": "Mluvím…",
+    "mute": "Ztlumit mikrofon",
+    "unmute": "Zrušit ztlumení",
+    "finishTurn": "Domluvil jsem",
+    "skipReply": "Přeskočit odpověď",
+    "microphoneFailed": "Mikrofon není k dispozici",
+    "transcriptionFailed": "Přepis se nezdařil",
+    "replyTimeout": "Odpověď trvala příliš dlouho",
+    "unsupported": "Hlasový režim není k dispozici",
+    "unsupportedHint": "Hlasový režim vyžaduje mikrofon a poskytovatele převodu řeči na text nebo rozpoznávání řeči v prohlížeči."
   }
 }

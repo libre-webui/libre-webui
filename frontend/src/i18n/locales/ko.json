@@ -3151,5 +3151,25 @@
     "empty": "모두 확인했습니다.",
     "markAllRead": "모두 읽음으로 표시",
     "markRead": "읽음으로 표시"
+  },
+  "voiceMode": {
+    "title": "음성 모드",
+    "open": "음성 모드 시작",
+    "close": "음성 모드 닫기",
+    "starting": "시작 중…",
+    "listening": "듣는 중…",
+    "muted": "마이크 음소거됨",
+    "transcribing": "텍스트 변환 중…",
+    "generating": "생각 중…",
+    "speaking": "말하는 중…",
+    "mute": "마이크 음소거",
+    "unmute": "음소거 해제",
+    "finishTurn": "말하기 완료",
+    "skipReply": "응답 건너뛰기",
+    "microphoneFailed": "마이크를 사용할 수 없음",
+    "transcriptionFailed": "텍스트 변환 실패",
+    "replyTimeout": "응답이 너무 오래 걸렸습니다",
+    "unsupported": "음성 모드를 사용할 수 없습니다",
+    "unsupportedHint": "음성 모드에는 마이크와 음성-텍스트 제공업체 또는 브라우저 음성 인식이 필요합니다."
   }
 }

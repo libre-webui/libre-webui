@@ -35,10 +35,12 @@ import {
   Braces,
   Loader2,
   Mic,
+  AudioLines,
   BookOpen,
   Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { unlockTTSAudioPlayback } from '@/utils/ttsBatching';
 import { CodeAwareTextarea } from './CodeAwareTextarea';
 import { MediaUpload } from './MediaUpload';
 import { DocumentIndicator } from './DocumentIndicator';
@@ -163,6 +165,7 @@ interface ChatInputProps {
   ) => void;
   onStopGeneration: () => void;
   onCancelComparison?: (assistantMessageId: string) => void;
+  onOpenVoiceMode?: () => void;
   disabled?: boolean;
 }
 
@@ -170,6 +173,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage,
   onStopGeneration,
   onCancelComparison,
+  onOpenVoiceMode,
   disabled = false,
 }) => {
   const { t, i18n } = useTranslation();
@@ -1537,6 +1541,29 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       ) : (
                         <Mic className='h-4 w-4' />
                       )}
+                    </Button>
+                  )}
+                  {speechSupported && onOpenVoiceMode && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => {
+                        // Prime audio playback inside this gesture so the
+                        // spoken replies are not blocked by autoplay policy.
+                        void unlockTTSAudioPlayback();
+                        onOpenVoiceMode();
+                      }}
+                      className={cn(
+                        'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                        'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                        'transition-colors duration-150 touch-manipulation'
+                      )}
+                      title={t('voiceMode.open')}
+                      aria-label={t('voiceMode.open')}
+                      data-testid='voice-mode-open'
+                    >
+                      <AudioLines className='h-4 w-4' />
                     </Button>
                   )}
 

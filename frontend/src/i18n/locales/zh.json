@@ -3151,5 +3151,25 @@
     "empty": "没有未读通知。",
     "markAllRead": "全部标为已读",
     "markRead": "标为已读"
+  },
+  "voiceMode": {
+    "title": "语音模式",
+    "open": "开始语音模式",
+    "close": "关闭语音模式",
+    "starting": "正在启动…",
+    "listening": "正在聆听…",
+    "muted": "麦克风已静音",
+    "transcribing": "正在转写…",
+    "generating": "思考中…",
+    "speaking": "正在朗读…",
+    "mute": "静音麦克风",
+    "unmute": "取消静音",
+    "finishTurn": "说完了",
+    "skipReply": "跳过回复",
+    "microphoneFailed": "麦克风不可用",
+    "transcriptionFailed": "转写失败",
+    "replyTimeout": "回复耗时过长",
+    "unsupported": "语音模式不可用",
+    "unsupportedHint": "语音模式需要麦克风，以及语音转文字服务商或浏览器语音识别。"
   }
 }

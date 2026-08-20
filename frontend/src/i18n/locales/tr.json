@@ -3151,5 +3151,25 @@
     "empty": "Her şey okundu.",
     "markAllRead": "Tümünü okundu işaretle",
     "markRead": "Okundu işaretle"
+  },
+  "voiceMode": {
+    "title": "Ses modu",
+    "open": "Ses modunu başlat",
+    "close": "Ses modunu kapat",
+    "starting": "Başlatılıyor…",
+    "listening": "Dinliyorum…",
+    "muted": "Mikrofon sessizde",
+    "transcribing": "Yazıya dökülüyor…",
+    "generating": "Düşünüyorum…",
+    "speaking": "Konuşuyorum…",
+    "mute": "Mikrofonu sessize al",
+    "unmute": "Sessizi kaldır",
+    "finishTurn": "Konuşmayı bitirdim",
+    "skipReply": "Yanıtı atla",
+    "microphoneFailed": "Mikrofon kullanılamıyor",
+    "transcriptionFailed": "Yazıya dökme başarısız",
+    "replyTimeout": "Yanıt çok uzun sürdü",
+    "unsupported": "Ses modu kullanılamıyor",
+    "unsupportedHint": "Ses modu için mikrofon ve konuşmadan metne sağlayıcısı veya tarayıcı konuşma tanıma gerekir."
   }
 }

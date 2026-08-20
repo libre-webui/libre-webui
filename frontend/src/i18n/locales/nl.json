@@ -3151,5 +3151,25 @@
     "empty": "Je bent helemaal bij.",
     "markAllRead": "Alles als gelezen markeren",
     "markRead": "Als gelezen markeren"
+  },
+  "voiceMode": {
+    "title": "Spraakmodus",
+    "open": "Spraakmodus starten",
+    "close": "Spraakmodus sluiten",
+    "starting": "Starten…",
+    "listening": "Aan het luisteren…",
+    "muted": "Microfoon gedempt",
+    "transcribing": "Transcriberen…",
+    "generating": "Aan het denken…",
+    "speaking": "Aan het spreken…",
+    "mute": "Microfoon dempen",
+    "unmute": "Dempen opheffen",
+    "finishTurn": "Klaar met spreken",
+    "skipReply": "Antwoord overslaan",
+    "microphoneFailed": "Microfoon niet beschikbaar",
+    "transcriptionFailed": "Transcriptie mislukt",
+    "replyTimeout": "Het antwoord duurde te lang",
+    "unsupported": "Spraakmodus is niet beschikbaar",
+    "unsupportedHint": "De spraakmodus heeft een microfoon nodig en een spraak-naar-tekstprovider of browserspraakherkenning."
   }
 }

@@ -3151,5 +3151,25 @@
     "empty": "Bạn đã xem hết.",
     "markAllRead": "Đánh dấu tất cả đã đọc",
     "markRead": "Đánh dấu đã đọc"
+  },
+  "voiceMode": {
+    "title": "Chế độ giọng nói",
+    "open": "Bắt đầu chế độ giọng nói",
+    "close": "Đóng chế độ giọng nói",
+    "starting": "Đang khởi động…",
+    "listening": "Đang lắng nghe…",
+    "muted": "Micrô đã tắt tiếng",
+    "transcribing": "Đang chuyển thành văn bản…",
+    "generating": "Đang suy nghĩ…",
+    "speaking": "Đang nói…",
+    "mute": "Tắt tiếng micrô",
+    "unmute": "Bật tiếng micrô",
+    "finishTurn": "Nói xong",
+    "skipReply": "Bỏ qua câu trả lời",
+    "microphoneFailed": "Micrô không khả dụng",
+    "transcriptionFailed": "Chuyển văn bản thất bại",
+    "replyTimeout": "Câu trả lời mất quá nhiều thời gian",
+    "unsupported": "Chế độ giọng nói không khả dụng",
+    "unsupportedHint": "Chế độ giọng nói cần micrô và nhà cung cấp chuyển giọng nói thành văn bản hoặc nhận dạng giọng nói của trình duyệt."
   }
 }

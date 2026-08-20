@@ -3151,5 +3151,25 @@
     "empty": "Você está em dia.",
     "markAllRead": "Marcar tudo como lido",
     "markRead": "Marcar como lido"
+  },
+  "voiceMode": {
+    "title": "Modo de voz",
+    "open": "Iniciar o modo de voz",
+    "close": "Fechar o modo de voz",
+    "starting": "Iniciando…",
+    "listening": "Ouvindo…",
+    "muted": "Microfone silenciado",
+    "transcribing": "Transcrevendo…",
+    "generating": "Pensando…",
+    "speaking": "Falando…",
+    "mute": "Silenciar o microfone",
+    "unmute": "Reativar o microfone",
+    "finishTurn": "Terminei de falar",
+    "skipReply": "Pular a resposta",
+    "microphoneFailed": "Microfone indisponível",
+    "transcriptionFailed": "Falha na transcrição",
+    "replyTimeout": "A resposta demorou demais",
+    "unsupported": "O modo de voz não está disponível",
+    "unsupportedHint": "O modo de voz precisa de um microfone e de um provedor de fala para texto ou do reconhecimento de voz do navegador."
   }
 }
