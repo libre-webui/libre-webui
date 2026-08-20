@@ -1525,6 +1525,52 @@ test('v13 installs and inspects the subject-filtered event replay index', t => {
   );
 });
 
+test('v18 preflight permits the team collaboration migration', t => {
+  const dataDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'libre-schema-team-collaboration-')
+  );
+  const database = new Database(initializeApplicationDatabase(dataDir));
+  t.after(() => {
+    database.close();
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  database.exec(`
+    DELETE FROM _libre_schema_migrations WHERE version = 19;
+    DROP TABLE webhook_targets;
+    DROP TABLE notifications;
+    DROP TABLE channel_attachments;
+    DROP TABLE channel_reactions;
+    DROP TABLE channel_messages;
+    DROP TABLE channel_members;
+    DROP TABLE channels;
+    DROP TABLE calendars;
+    DROP INDEX IF EXISTS idx_calendar_scoped_events;
+    ALTER TABLE calendar_events DROP COLUMN calendar_id;
+    ALTER TABLE calendar_events DROP COLUMN reminder_minutes;
+    ALTER TABLE calendar_events DROP COLUMN last_reminded_occurrence;
+  `);
+
+  assert.deepEqual(migrations.preflightSQLiteMigrationLedger(database), {
+    dialect: 'sqlite',
+    status: 'migrating',
+    currentVersion: 18,
+    targetVersion: 19,
+    minimumSupportedVersion: 1,
+  });
+  assert.equal(
+    migrations.runSQLiteMigrationCoordinator(database).currentVersion,
+    19
+  );
+  assert.deepEqual(
+    database
+      .prepare('PRAGMA index_info(idx_calendar_scoped_events)')
+      .all()
+      .map(column => column.name),
+    ['calendar_id']
+  );
+});
+
 test('historical v13 checksum is repaired only for the canonical replay index', t => {
   const root = fs.mkdtempSync(
     path.join(os.tmpdir(), 'libre-schema-event-replay-checksum-')
