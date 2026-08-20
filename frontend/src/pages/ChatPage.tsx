@@ -42,12 +42,12 @@ import {
   ComposerSuggestions,
   type ComposerSuggestionsHandle,
 } from '@/components/composer/ComposerSuggestions';
+import { ComposerToolsMenu } from '@/components/composer/ComposerToolsMenu';
 import {
-  ComposerToolsMenu,
   DEFAULT_COMPOSER_TOOLS,
   composerToolsRequest,
   type ComposerToolsValue,
-} from '@/components/composer/ComposerToolsMenu';
+} from '@/components/composer/composerTools';
 import { LogoMark } from '@/components/LogoMark';
 import { ModelSelector } from '@/components/ModelSelector';
 import { PersonaIndicator } from '@/components/PersonaIndicator';

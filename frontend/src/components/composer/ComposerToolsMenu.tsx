@@ -28,39 +28,7 @@ import { Wrench } from 'lucide-react';
 import { cn } from '@/utils';
 import { Button } from '@/components/ui';
 import { toolsApi, type ToolCatalogEntry } from '@/utils/api/toolsApi';
-
-export interface ComposerToolsValue {
-  enabled: boolean;
-  /** Null means every available entry; a list narrows the turn to it. */
-  builtinTools: string[] | null;
-  serverIds: string[] | null;
-}
-
-export const DEFAULT_COMPOSER_TOOLS: ComposerToolsValue = {
-  enabled: false,
-  builtinTools: null,
-  serverIds: null,
-};
-
-/** The request fields the composer sends for one turn. */
-export const composerToolsRequest = (
-  value: ComposerToolsValue
-): {
-  tools?: true;
-  toolSelection?: { builtinTools?: string[]; serverIds?: string[] };
-} => {
-  if (!value.enabled) return {};
-  const selection = {
-    ...(value.builtinTools !== null
-      ? { builtinTools: value.builtinTools }
-      : {}),
-    ...(value.serverIds !== null ? { serverIds: value.serverIds } : {}),
-  };
-  return {
-    tools: true,
-    ...(Object.keys(selection).length > 0 ? { toolSelection: selection } : {}),
-  };
-};
+import type { ComposerToolsValue } from './composerTools';
 
 interface ComposerToolsMenuProps {
   value: ComposerToolsValue;

@@ -62,12 +62,12 @@ import {
   ComposerSuggestions,
   type ComposerSuggestionsHandle,
 } from './composer/ComposerSuggestions';
+import { ComposerToolsMenu } from './composer/ComposerToolsMenu';
 import {
-  ComposerToolsMenu,
   DEFAULT_COMPOSER_TOOLS,
   composerToolsRequest,
   type ComposerToolsValue,
-} from './composer/ComposerToolsMenu';
+} from './composer/composerTools';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
 import { buildContextUsage, resolveContextBudget } from '@/utils/contextUsage';
