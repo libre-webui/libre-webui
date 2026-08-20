@@ -120,7 +120,9 @@ Personas store the selected model, system prompt, generation parameters, avatar/
 
 Open **Notes** from the create menu when information should remain independent
 of one chat or Work task. Notes support Markdown preview, explicit editing,
-search, and automatic saving. The note tools drawer adds revision history
+search, and automatic saving. The preview also renders inline SVG and basic
+HTML embedded in a note, sanitized so scripts, event handlers, and unsafe
+URLs never execute. The note tools drawer adds revision history
 with restore, file attachments, pinning, per-user sharing (view or edit),
 Markdown export, and an AI edit sidebar that previews every proposal as a
 diff before it is applied — and since applying snapshots the previous

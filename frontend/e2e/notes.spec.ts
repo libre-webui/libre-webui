@@ -35,10 +35,26 @@ const tableNote: MockNote = {
     '| Product dimension | Current leader | Assessment |',
     '| --- | --- | --- |',
     '| Whole-chat sharing | Libre WebUI | Built in |',
-    '| Knowledge and RAG | Open WebUI | Gap to close |',
+    '| Knowledge and RAG | Other tools | Gap to close |',
   ].join('\n'),
   createdAt: 1_770_000_000_000,
   updatedAt: 1_770_000_002_000,
+};
+
+const htmlNote: MockNote = {
+  id: 'html-note',
+  title: 'Launch roundup',
+  content: [
+    '<div align="center"><svg width="150" height="150" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="85" r="12" fill="#0288D1" stroke="#ECEFF1" stroke-width="2"/></svg></div>',
+    '',
+    'A <b>bold</b> overview.',
+    '',
+    '<script>window.notesXss = true;</script>',
+    '',
+    '<img src="missing.png" onerror="window.notesXss = true">',
+  ].join('\n'),
+  createdAt: 1_770_000_000_500,
+  updatedAt: 1_770_000_000_500,
 };
 
 const secondNote: MockNote = {
@@ -166,6 +182,36 @@ test('notes open in Markdown preview and make editing explicit', async ({
     preview.getByRole('heading', { name: 'Ship safely' })
   ).toBeVisible();
   await expect(page.getByTestId('notes-content-editor')).toBeHidden();
+});
+
+test('note preview renders inline SVG and basic HTML, sanitized', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  await mockNotesApi(page, [htmlNote]);
+
+  await page.goto('/chat');
+  await page.getByRole('link', { name: 'Notes' }).click();
+  await page.getByText(htmlNote.title, { exact: true }).click();
+
+  const preview = page.getByTestId('notes-preview');
+  await expect(preview).toBeVisible();
+
+  // Inline SVG renders as an element, not escaped source text
+  await expect(preview.locator('svg circle')).toHaveAttribute('r', '12');
+  await expect(preview).not.toContainText('<svg');
+
+  // Basic HTML renders
+  await expect(preview.locator('b', { hasText: 'bold' })).toBeVisible();
+
+  // Scripts and event handlers are stripped
+  await expect(preview.locator('script')).toHaveCount(0);
+  const img = preview.locator('img');
+  await expect(img).toHaveCount(1);
+  await expect(img).not.toHaveAttribute('onerror', /.+/);
+  await expect
+    .poll(() => page.evaluate(() => 'notesXss' in window))
+    .toBe(false);
 });
 
 test('a new blank note opens directly in edit mode', async ({ page }) => {

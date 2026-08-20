@@ -23,7 +23,11 @@ import ReactMarkdown, {
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
+import type { PluggableList } from 'unified';
 import 'katex/dist/katex.min.css';
+import { richContentSanitizeSchema } from './richContentSanitizeSchema';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
 import { preprocessLaTeX } from './messageContentUtils';
@@ -42,6 +46,8 @@ const LazySyntaxHighlighter = React.lazy(
 interface RichMessageContentProps {
   content: string;
   className?: string;
+  /** Render sanitized raw HTML and inline SVG (notes preview). */
+  allowHtml?: boolean;
 }
 
 type MarkdownCodeProps = React.ComponentPropsWithoutRef<'code'> & ExtraProps;
@@ -65,11 +71,20 @@ function CodeFallback({
 export const RichMessageContent: React.FC<RichMessageContentProps> = ({
   content,
   className,
+  allowHtml = false,
 }) => {
   const isDark = useAppStore(state => state.theme.mode === 'dark');
   const processedContent = React.useMemo(
     () => preprocessLaTeX(content),
     [content]
+  );
+  const rehypePlugins = React.useMemo<PluggableList>(
+    () =>
+      allowHtml
+        ? // Sanitize before KaTeX so its generated markup is left intact.
+          [rehypeRaw, [rehypeSanitize, richContentSanitizeSchema], rehypeKatex]
+        : [rehypeKatex],
+    [allowHtml]
   );
 
   const markdownComponents: Components = {
@@ -308,7 +323,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={rehypePlugins}
         components={markdownComponents}
       >
         {processedContent}
