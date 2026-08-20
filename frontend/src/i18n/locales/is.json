@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Leiðbeiningasafn"
+      "label": "Leiðbeiningasafn",
+      "empty": "Engin skipunarsnið enn — búðu til eitt í Stillingar → Skipunarsnið, eða byrjaðu að slá inn slóðarheiti."
     },
     "skillMenu": {
-      "label": "Færni"
+      "label": "Færni",
+      "empty": "Engin færni enn — búðu til eina í Stillingar → Færni."
     },
     "variables": {
       "title": "Fylltu út {{title}}",

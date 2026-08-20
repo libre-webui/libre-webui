@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Pustaka prompt"
+      "label": "Pustaka prompt",
+      "empty": "Belum ada prom — cipta satu di Tetapan → Prom, atau mula taip slug."
     },
     "skillMenu": {
-      "label": "Kemahiran"
+      "label": "Kemahiran",
+      "empty": "Belum ada kemahiran — cipta satu di Tetapan → Kemahiran."
     },
     "variables": {
       "title": "Isikan {{title}}",

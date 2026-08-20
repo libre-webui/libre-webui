@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Bibliothèque de prompts"
+      "label": "Bibliothèque de prompts",
+      "empty": "Aucun prompt pour l’instant — créez-en un dans Paramètres → Prompts, ou commencez à saisir un slug."
     },
     "skillMenu": {
-      "label": "Compétences"
+      "label": "Compétences",
+      "empty": "Aucune compétence pour l’instant — créez-en une dans Paramètres → Compétences."
     },
     "variables": {
       "title": "Remplir {{title}}",

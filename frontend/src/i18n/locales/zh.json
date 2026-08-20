@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "提示词库"
+      "label": "提示词库",
+      "empty": "还没有提示词——请在设置 → 提示词中创建，或开始输入 slug。"
     },
     "skillMenu": {
-      "label": "技能"
+      "label": "技能",
+      "empty": "还没有技能——请在设置 → 技能中创建。"
     },
     "variables": {
       "title": "填写 {{title}}",

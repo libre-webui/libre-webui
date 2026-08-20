@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Biblioteca de prompts"
+      "label": "Biblioteca de prompts",
+      "empty": "Aún no hay prompts: crea uno en Ajustes → Prompts o empieza a escribir un slug."
     },
     "skillMenu": {
-      "label": "Habilidades"
+      "label": "Habilidades",
+      "empty": "Aún no hay habilidades: crea una en Ajustes → Habilidades."
     },
     "variables": {
       "title": "Completa {{title}}",

@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "İstem kitaplığı"
+      "label": "İstem kitaplığı",
+      "empty": "Henüz istem yok — Ayarlar → İstemler bölümünden bir tane oluşturun veya bir slug yazmaya başlayın."
     },
     "skillMenu": {
-      "label": "Beceriler"
+      "label": "Beceriler",
+      "empty": "Henüz beceri yok — Ayarlar → Beceriler bölümünden bir tane oluşturun."
     },
     "variables": {
       "title": "{{title}} alanlarını doldurun",

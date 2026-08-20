@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Pustaka prompt"
+      "label": "Pustaka prompt",
+      "empty": "Belum ada prompt — buat satu di Pengaturan → Prompt, atau mulai ketik slug."
     },
     "skillMenu": {
-      "label": "Keterampilan"
+      "label": "Keterampilan",
+      "empty": "Belum ada keahlian — buat satu di Pengaturan → Keahlian."
     },
     "variables": {
       "title": "Isi {{title}}",

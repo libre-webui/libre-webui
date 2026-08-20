@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Knihovna promptů"
+      "label": "Knihovna promptů",
+      "empty": "Zatím žádné prompty — vytvořte si jeden v Nastavení → Prompty, nebo začněte psát slug."
     },
     "skillMenu": {
-      "label": "Dovednosti"
+      "label": "Dovednosti",
+      "empty": "Zatím žádné dovednosti — vytvořte si jednu v Nastavení → Dovednosti."
     },
     "variables": {
       "title": "Vyplňte {{title}}",

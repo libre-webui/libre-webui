@@ -83,3 +83,58 @@ test('the composer offers prompts on slash and inserts rendered content', async 
   await expect(page.getByTestId('composer-suggestions')).toHaveCount(0);
   await expect(composer).toHaveValue(standupPrompt.content);
 });
+
+test('the welcome composer offers prompts on slash too', async ({ page }) => {
+  await mockLibreWebUiApi(page, { sessions: [] });
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'en');
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+  await page.route(/\/api\/prompts(?:\/.*)?$/, async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [standupPrompt] }),
+    });
+  });
+
+  // A brand-new chat starts on the welcome screen, which has its own
+  // composer — the command menus must work there as well.
+  await page.goto('/chat');
+  const composer = page.locator('textarea[rows="1"]').first();
+  await expect(composer).toBeVisible();
+
+  await composer.fill('/stand');
+  const menu = page.getByTestId('composer-suggestions');
+  await expect(menu).toBeVisible();
+  await expect(menu).toContainText('/standup');
+
+  await menu.getByRole('option', { name: /Daily standup/ }).click();
+  await expect(composer).toHaveValue(standupPrompt.content);
+});
+
+test('a bare slash with an empty library points at the settings panel', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, { sessions: [] });
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'en');
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+  await page.route(/\/api\/prompts(?:\/.*)?$/, async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: [] }),
+    });
+  });
+
+  await page.goto('/chat');
+  const composer = page.locator('textarea[rows="1"]').first();
+  await expect(composer).toBeVisible();
+
+  await composer.fill('/');
+  const empty = page.getByTestId('composer-suggestions-empty');
+  await expect(empty).toBeVisible();
+  await expect(empty).toContainText('Settings');
+});

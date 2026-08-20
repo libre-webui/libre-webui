@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Libreria di prompt"
+      "label": "Libreria di prompt",
+      "empty": "Ancora nessun prompt: creane uno in Impostazioni → Prompt, oppure inizia a digitare uno slug."
     },
     "skillMenu": {
-      "label": "Competenze"
+      "label": "Competenze",
+      "empty": "Ancora nessuna abilità: creane una in Impostazioni → Abilità."
     },
     "variables": {
       "title": "Compila {{title}}",

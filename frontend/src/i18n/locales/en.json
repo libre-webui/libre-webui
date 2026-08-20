@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Prompt library"
+      "label": "Prompt library",
+      "empty": "No prompts yet — create one in Settings → Prompts, or start typing a slug."
     },
     "skillMenu": {
-      "label": "Skills"
+      "label": "Skills",
+      "empty": "No skills yet — create one in Settings → Skills."
     },
     "variables": {
       "title": "Fill in {{title}}",

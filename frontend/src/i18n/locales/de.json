@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Prompt-Bibliothek"
+      "label": "Prompt-Bibliothek",
+      "empty": "Noch keine Prompts — lege einen unter Einstellungen → Prompts an oder tippe einen Slug."
     },
     "skillMenu": {
-      "label": "Skills"
+      "label": "Skills",
+      "empty": "Noch keine Skills — lege einen unter Einstellungen → Skills an."
     },
     "variables": {
       "title": "{{title}} ausfüllen",

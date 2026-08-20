@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Promptbibliotek"
+      "label": "Promptbibliotek",
+      "empty": "Inga prompts ännu — skapa en under Inställningar → Prompts, eller börja skriva en slug."
     },
     "skillMenu": {
-      "label": "Färdigheter"
+      "label": "Färdigheter",
+      "empty": "Inga färdigheter ännu — skapa en under Inställningar → Färdigheter."
     },
     "variables": {
       "title": "Fyll i {{title}}",

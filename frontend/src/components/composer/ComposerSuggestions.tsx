@@ -331,7 +331,29 @@ export const ComposerSuggestions = forwardRef<
     );
   }
 
-  if (suggestions.length === 0) return null;
+  // A bare trigger with an empty library gets a pointer instead of silence.
+  const activeTrigger = promptMatch ? 'prompt' : skillMatch ? 'skill' : null;
+  const libraryLoaded = promptMatch ? prompts !== null : skills !== null;
+  const bareTrigger = promptMatch
+    ? promptMatch[1] === ''
+    : skillMatch
+      ? skillMatch[1] === ''
+      : false;
+  if (suggestions.length === 0) {
+    if (activeTrigger && libraryLoaded && bareTrigger) {
+      return (
+        <div
+          className='absolute bottom-full left-0 z-30 mb-2 w-full max-w-md rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-500 shadow-lg dark:border-dark-200 dark:bg-dark-50 dark:text-gray-400'
+          data-testid='composer-suggestions-empty'
+        >
+          {activeTrigger === 'prompt'
+            ? t('composer.promptMenu.empty')
+            : t('composer.skillMenu.empty')}
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div

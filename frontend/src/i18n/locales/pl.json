@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Biblioteka promptów"
+      "label": "Biblioteka promptów",
+      "empty": "Brak promptów — utwórz je w Ustawienia → Prompty lub zacznij wpisywać slug."
     },
     "skillMenu": {
-      "label": "Umiejętności"
+      "label": "Umiejętności",
+      "empty": "Brak umiejętności — utwórz je w Ustawienia → Umiejętności."
     },
     "variables": {
       "title": "Uzupełnij {{title}}",

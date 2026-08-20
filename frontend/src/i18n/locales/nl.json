@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Promptbibliotheek"
+      "label": "Promptbibliotheek",
+      "empty": "Nog geen prompts — maak er een aan onder Instellingen → Prompts, of typ een slug."
     },
     "skillMenu": {
-      "label": "Vaardigheden"
+      "label": "Vaardigheden",
+      "empty": "Nog geen vaardigheden — maak er een aan onder Instellingen → Vaardigheden."
     },
     "variables": {
       "title": "Vul {{title}} in",

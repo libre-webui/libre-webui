@@ -38,6 +38,10 @@ import { ChatInput } from '@/components/ChatInput';
 import { ChatControlsPanel } from '@/components/ChatControlsPanel';
 import { ChatSourcesPanel } from '@/components/ChatSourcesPanel';
 import { CodeAwareTextarea } from '@/components/CodeAwareTextarea';
+import {
+  ComposerSuggestions,
+  type ComposerSuggestionsHandle,
+} from '@/components/composer/ComposerSuggestions';
 import { LogoMark } from '@/components/LogoMark';
 import { ModelSelector } from '@/components/ModelSelector';
 import { PersonaIndicator } from '@/components/PersonaIndicator';
@@ -419,6 +423,7 @@ export const ChatPage: React.FC = () => {
   }, []);
   const [showWelcomeAdvanced, setShowWelcomeAdvanced] = useState(false);
   const welcomeTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const welcomeSuggestionsRef = useRef<ComposerSuggestionsHandle>(null);
 
   useEffect(() => {
     const handleWelcomePromptChange = () => {
@@ -729,6 +734,7 @@ export const ChatPage: React.FC = () => {
   );
 
   const handleWelcomeKeyDown = (e: React.KeyboardEvent) => {
+    if (welcomeSuggestionsRef.current?.handleKeyDown(e)) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleWelcomeSubmit(e);
@@ -873,11 +879,19 @@ export const ChatPage: React.FC = () => {
                 <form onSubmit={handleWelcomeSubmit}>
                   <div
                     className={cn(
-                      'rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
+                      'relative rounded-[24px] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200',
                       'border-black/[0.08] bg-surface dark:border-white/[0.09] dark:bg-surface-subtle',
                       'shadow-lv2 focus-within:shadow-lv3'
                     )}
                   >
+                    <ComposerSuggestions
+                      ref={welcomeSuggestionsRef}
+                      message={welcomeMessage}
+                      onApply={next => {
+                        setWelcomeMessage(next);
+                        welcomeTextareaRef.current?.focus();
+                      }}
+                    />
                     {/* Text Input */}
                     <CodeAwareTextarea
                       ref={welcomeTextareaRef}

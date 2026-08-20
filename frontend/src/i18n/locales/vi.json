@@ -2915,10 +2915,12 @@
   },
   "composer": {
     "promptMenu": {
-      "label": "Thư viện prompt"
+      "label": "Thư viện prompt",
+      "empty": "Chưa có prompt nào — hãy tạo trong Cài đặt → Prompt, hoặc bắt đầu gõ slug."
     },
     "skillMenu": {
-      "label": "Kỹ năng"
+      "label": "Kỹ năng",
+      "empty": "Chưa có kỹ năng nào — hãy tạo trong Cài đặt → Kỹ năng."
     },
     "variables": {
       "title": "Điền {{title}}",
