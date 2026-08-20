@@ -475,7 +475,8 @@
       "userManagement": "Gestion des utilisateurs",
       "logout": "Déconnexion",
       "pinShortcut": "Épingler à la barre latérale",
-      "unpinShortcut": "Détacher de la barre latérale"
+      "unpinShortcut": "Détacher de la barre latérale",
+      "evaluations": "Évaluations"
     },
     "avatar": {
       "title": "Changer la photo de profil",
@@ -1878,7 +1879,15 @@
     "startConversation": "Démarrer une conversation",
     "startConversationDescription": "Envoyez un message pour commencer à discuter avec votre assistant IA. Posez des questions, obtenez de l'aide pour le code ou ayez une conversation naturelle.",
     "scrollToBottom": "Défiler vers le bas",
-    "newMessages": "Nouveaux messages"
+    "newMessages": "Nouveaux messages",
+    "feedbackTags": {
+      "accuracy": "Exactitude",
+      "style": "Style",
+      "incomplete": "Incomplet",
+      "harmful": "Nuisible",
+      "formatting": "Mise en forme"
+    },
+    "feedbackComment": "Ajouter un commentaire…"
   },
   "imageGallery": {
     "title": "Galerie d'images",
@@ -3233,5 +3242,58 @@
     "addTariff": "Ajouter un tarif",
     "deleteTariff": "Supprimer le tarif",
     "tariffSaved": "Tarif enregistré"
+  },
+  "evaluations": {
+    "title": "Évaluations",
+    "description": "Duels d’arène à l’aveugle, classement Elo, jeux d’évaluation réutilisables et votre jeu de données de retours.",
+    "loadFailed": "Impossible de charger les évaluations",
+    "matchFailed": "Le duel d’arène a échoué",
+    "voteRecorded": "Vote enregistré",
+    "voteFailed": "Impossible d’enregistrer le vote",
+    "saveFailed": "Échec de l’enregistrement",
+    "exportFailed": "Échec de l’export",
+    "setSaved": "Jeu d’évaluation enregistré",
+    "runStarted": "Exécution lancée",
+    "pickModel": "Choisir un modèle",
+    "tabs": {
+      "arena": "Arène",
+      "leaderboard": "Classement",
+      "sets": "Jeux d’éval",
+      "feedback": "Retours"
+    },
+    "arenaModelA": "Modèle A",
+    "arenaModelB": "Modèle B",
+    "arenaPrompt": "Posez la même question aux deux modèles…",
+    "startMatch": "Lancer le duel",
+    "arenaHint": "Les identités des modèles restent cachées jusqu’au vote.",
+    "candidate": "Réponse {{letter}}",
+    "voteFirst": "La première est meilleure",
+    "voteSecond": "La seconde est meilleure",
+    "voteTie": "Égalité",
+    "voteBothBad": "Les deux mauvaises",
+    "model": "Modèle",
+    "rating": "Score",
+    "record": "Bilan",
+    "votes": "Votes",
+    "noVotes": "Aucun vote d’arène — lancez un duel pour construire le classement.",
+    "newSet": "Nouveau jeu d’évaluation",
+    "setName": "Nom du jeu",
+    "setPrompts": "Un prompt par ligne…",
+    "saveSet": "Enregistrer le jeu",
+    "yourSets": "Vos jeux",
+    "noSets": "Aucun jeu d’évaluation.",
+    "itemCount": "{{total}} prompts",
+    "run": "Exécuter",
+    "deleteSet": "Supprimer le jeu",
+    "cancelRun": "Annuler l’exécution",
+    "exportRun": "Exporter l’exécution",
+    "status": {
+      "queued": "En attente",
+      "running": "En cours",
+      "completed": "Terminée",
+      "failed": "Échouée",
+      "cancelled": "Annulée"
+    },
+    "noFeedback": "Aucun retour — évaluez des réponses pour constituer votre jeu de données."
   }
 }

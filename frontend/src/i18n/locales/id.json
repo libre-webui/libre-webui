@@ -475,7 +475,8 @@
       "userManagement": "Manajemen Pengguna",
       "logout": "Keluar",
       "pinShortcut": "Sematkan ke bilah samping",
-      "unpinShortcut": "Lepas dari bilah samping"
+      "unpinShortcut": "Lepas dari bilah samping",
+      "evaluations": "Evaluasi"
     },
     "avatar": {
       "title": "Ubah Foto Profil",
@@ -1878,7 +1879,15 @@
     "startConversation": "Mulai percakapan",
     "startConversationDescription": "Kirim pesan untuk mulai mengobrol dengan asisten AI Anda. Ajukan pertanyaan, minta bantuan dengan kode, atau lakukan percakapan alami.",
     "scrollToBottom": "Gulir ke bawah",
-    "newMessages": "Pesan baru"
+    "newMessages": "Pesan baru",
+    "feedbackTags": {
+      "accuracy": "Akurasi",
+      "style": "Gaya",
+      "incomplete": "Tidak lengkap",
+      "harmful": "Berbahaya",
+      "formatting": "Format"
+    },
+    "feedbackComment": "Tambahkan komentar…"
   },
   "imageGallery": {
     "title": "Galeri Gambar",
@@ -3233,5 +3242,58 @@
     "addTariff": "Tambah tarif",
     "deleteTariff": "Hapus tarif",
     "tariffSaved": "Tarif disimpan"
+  },
+  "evaluations": {
+    "title": "Evaluasi",
+    "description": "Duel arena buta, papan peringkat Elo, set evaluasi yang dapat digunakan ulang, dan dataset umpan balik Anda.",
+    "loadFailed": "Gagal memuat evaluasi",
+    "matchFailed": "Duel arena gagal",
+    "voteRecorded": "Suara tercatat",
+    "voteFailed": "Gagal mencatat suara",
+    "saveFailed": "Gagal menyimpan",
+    "exportFailed": "Gagal mengekspor",
+    "setSaved": "Set evaluasi disimpan",
+    "runStarted": "Evaluasi dimulai",
+    "pickModel": "Pilih model",
+    "tabs": {
+      "arena": "Arena",
+      "leaderboard": "Papan peringkat",
+      "sets": "Set evaluasi",
+      "feedback": "Umpan balik"
+    },
+    "arenaModelA": "Model A",
+    "arenaModelB": "Model B",
+    "arenaPrompt": "Ajukan pertanyaan yang sama ke kedua model…",
+    "startMatch": "Mulai duel",
+    "arenaHint": "Identitas model disembunyikan sampai Anda memilih.",
+    "candidate": "Jawaban {{letter}}",
+    "voteFirst": "Pertama lebih baik",
+    "voteSecond": "Kedua lebih baik",
+    "voteTie": "Seri",
+    "voteBothBad": "Keduanya buruk",
+    "model": "Model",
+    "rating": "Skor",
+    "record": "Rekor",
+    "votes": "Suara",
+    "noVotes": "Belum ada suara — mulai duel untuk membangun papan peringkat.",
+    "newSet": "Set evaluasi baru",
+    "setName": "Nama set",
+    "setPrompts": "Satu prompt per baris…",
+    "saveSet": "Simpan set",
+    "yourSets": "Set Anda",
+    "noSets": "Belum ada set evaluasi.",
+    "itemCount": "{{total}} prompt",
+    "run": "Jalankan",
+    "deleteSet": "Hapus set",
+    "cancelRun": "Batalkan eksekusi",
+    "exportRun": "Ekspor eksekusi",
+    "status": {
+      "queued": "Antre",
+      "running": "Berjalan",
+      "completed": "Selesai",
+      "failed": "Gagal",
+      "cancelled": "Dibatalkan"
+    },
+    "noFeedback": "Belum ada umpan balik — nilai jawaban untuk membangun dataset Anda."
   }
 }

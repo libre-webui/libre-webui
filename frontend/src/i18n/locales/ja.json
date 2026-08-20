@@ -475,7 +475,8 @@
       "userManagement": "ユーザー管理",
       "logout": "ログアウト",
       "pinShortcut": "サイドバーにピン留め",
-      "unpinShortcut": "サイドバーからピン留めを解除"
+      "unpinShortcut": "サイドバーからピン留めを解除",
+      "evaluations": "評価"
     },
     "avatar": {
       "title": "プロフィール画像を変更",
@@ -1878,7 +1879,15 @@
     "startConversation": "会話を始める",
     "startConversationDescription": "メッセージを送信してAIアシスタントとの会話を開始します。質問したり、コードのヘルプを得たり、自然な会話を楽しんだりできます。",
     "scrollToBottom": "一番下にスクロール",
-    "newMessages": "新しいメッセージ"
+    "newMessages": "新しいメッセージ",
+    "feedbackTags": {
+      "accuracy": "正確さ",
+      "style": "文体",
+      "incomplete": "不完全",
+      "harmful": "有害",
+      "formatting": "書式"
+    },
+    "feedbackComment": "コメントを追加…"
   },
   "imageGallery": {
     "title": "画像ギャラリー",
@@ -3233,5 +3242,58 @@
     "addTariff": "タリフを追加",
     "deleteTariff": "タリフを削除",
     "tariffSaved": "タリフを保存しました"
+  },
+  "evaluations": {
+    "title": "評価",
+    "description": "ブラインドのアリーナ対戦、Eloランキング、再利用可能な評価セット、フィードバックのデータセット。",
+    "loadFailed": "評価を読み込めませんでした",
+    "matchFailed": "アリーナ対戦に失敗しました",
+    "voteRecorded": "投票を記録しました",
+    "voteFailed": "投票を記録できませんでした",
+    "saveFailed": "保存に失敗しました",
+    "exportFailed": "エクスポートに失敗しました",
+    "setSaved": "評価セットを保存しました",
+    "runStarted": "評価の実行を開始しました",
+    "pickModel": "モデルを選択",
+    "tabs": {
+      "arena": "アリーナ",
+      "leaderboard": "ランキング",
+      "sets": "評価セット",
+      "feedback": "フィードバック"
+    },
+    "arenaModelA": "モデルA",
+    "arenaModelB": "モデルB",
+    "arenaPrompt": "両方のモデルに同じ質問をする…",
+    "startMatch": "対戦を開始",
+    "arenaHint": "投票するまでモデル名は伏せられます。",
+    "candidate": "回答 {{letter}}",
+    "voteFirst": "1つ目が良い",
+    "voteSecond": "2つ目が良い",
+    "voteTie": "引き分け",
+    "voteBothBad": "どちらも悪い",
+    "model": "モデル",
+    "rating": "レート",
+    "record": "戦績",
+    "votes": "投票数",
+    "noVotes": "まだ投票がありません。対戦を始めてランキングを作りましょう。",
+    "newSet": "新しい評価セット",
+    "setName": "セット名",
+    "setPrompts": "1行に1プロンプト…",
+    "saveSet": "セットを保存",
+    "yourSets": "あなたのセット",
+    "noSets": "評価セットはまだありません。",
+    "itemCount": "{{total}} 件のプロンプト",
+    "run": "実行",
+    "deleteSet": "セットを削除",
+    "cancelRun": "実行をキャンセル",
+    "exportRun": "実行をエクスポート",
+    "status": {
+      "queued": "待機中",
+      "running": "実行中",
+      "completed": "完了",
+      "failed": "失敗",
+      "cancelled": "キャンセル"
+    },
+    "noFeedback": "まだフィードバックがありません。返答を評価してデータセットを作りましょう。"
   }
 }

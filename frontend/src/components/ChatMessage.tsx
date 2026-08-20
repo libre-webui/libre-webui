@@ -68,6 +68,7 @@ import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { createLogger } from '@/utils/logger';
+import { evaluationsApi } from '@/utils/api/evaluationsApi';
 import { triggerHapticFeedback } from '@/utils/haptics';
 import {
   activateTTSPlaybackSession,
@@ -80,6 +81,14 @@ import {
   type TTSAudioUnlockState,
   unlockTTSAudioPlayback,
 } from '@/utils/ttsBatching';
+
+const FEEDBACK_TAGS = [
+  'accuracy',
+  'style',
+  'incomplete',
+  'harmful',
+  'formatting',
+] as const;
 
 const logger = createLogger('components:chat-message');
 
@@ -228,6 +237,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const [isSystemMessageExpanded, setIsSystemMessageExpanded] = useState(false);
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
   const [autoPlayState, setAutoPlayState] = useState<TTSPlaybackState>('idle');
+  const [feedbackDetailsFor, setFeedbackDetailsFor] = useState<1 | -1 | null>(
+    null
+  );
+  const [feedbackTags, setFeedbackTags] = useState<string[]>([]);
+  const [feedbackComment, setFeedbackComment] = useState('');
   const [isCopied, setIsCopied] = useState(false);
   const autoPlaySessionRef = useRef<TTSPlaybackSession | null>(null);
   const autoPlayRunRef = useRef(0);
@@ -561,11 +575,39 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   const handleRate = (value: number) => {
     if (!currentSession) return;
-    rateMessage(
-      currentSession.id,
-      message.id,
-      message.rating === value ? undefined : value
-    );
+    const cleared = message.rating === value;
+    rateMessage(currentSession.id, message.id, cleared ? undefined : value);
+    // Private sessions never persist feedback datasets.
+    if (currentSession.isPrivate) return;
+    if (cleared) {
+      setFeedbackDetailsFor(null);
+      void evaluationsApi.deleteFeedback(message.id).catch(() => undefined);
+      return;
+    }
+    setFeedbackTags([]);
+    setFeedbackComment('');
+    setFeedbackDetailsFor(value === 1 ? 1 : -1);
+    void evaluationsApi
+      .upsertFeedback({
+        sessionId: currentSession.id,
+        messageId: message.id,
+        rating: value === 1 ? 1 : -1,
+      })
+      .catch(() => undefined);
+  };
+
+  const submitFeedbackDetails = () => {
+    if (!currentSession || feedbackDetailsFor === null) return;
+    void evaluationsApi
+      .upsertFeedback({
+        sessionId: currentSession.id,
+        messageId: message.id,
+        rating: feedbackDetailsFor,
+        tags: feedbackTags,
+        ...(feedbackComment.trim() ? { comment: feedbackComment.trim() } : {}),
+      })
+      .catch(() => undefined);
+    setFeedbackDetailsFor(null);
   };
 
   // Helper function to truncate system message for display
@@ -1030,6 +1072,59 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                         fill={message.rating === -1 ? 'currentColor' : 'none'}
                       />
                     </button>
+                    {feedbackDetailsFor !== null && (
+                      <div
+                        className='ml-1 flex flex-wrap items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1 dark:border-dark-300 dark:bg-dark-100'
+                        data-testid='feedback-details'
+                      >
+                        {FEEDBACK_TAGS.map(tag => (
+                          <button
+                            key={tag}
+                            type='button'
+                            onClick={() =>
+                              setFeedbackTags(current =>
+                                current.includes(tag)
+                                  ? current.filter(item => item !== tag)
+                                  : [...current, tag]
+                              )
+                            }
+                            className={cn(
+                              'rounded-full border px-2 py-0.5 text-[10px]',
+                              feedbackTags.includes(tag)
+                                ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
+                                : 'border-gray-300 text-gray-500 dark:border-dark-300'
+                            )}
+                            aria-pressed={feedbackTags.includes(tag)}
+                          >
+                            {t(`chatMessage.feedbackTags.${tag}`)}
+                          </button>
+                        ))}
+                        <input
+                          value={feedbackComment}
+                          onChange={event =>
+                            setFeedbackComment(event.target.value)
+                          }
+                          placeholder={t('chatMessage.feedbackComment')}
+                          className='w-32 rounded border border-gray-300 px-1.5 py-0.5 text-[10px] dark:border-dark-300 dark:bg-dark-50'
+                          maxLength={2000}
+                        />
+                        <button
+                          type='button'
+                          onClick={submitFeedbackDetails}
+                          className='rounded bg-gray-900 px-2 py-0.5 text-[10px] text-white dark:bg-white dark:text-gray-900'
+                        >
+                          {t('common.save')}
+                        </button>
+                        <button
+                          type='button'
+                          onClick={() => setFeedbackDetailsFor(null)}
+                          aria-label={t('common.close')}
+                          className='rounded p-0.5 text-gray-400 hover:text-gray-600'
+                        >
+                          <X className='h-3 w-3' />
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
                 {!isUser && isLastAssistantMessage && onRegenerate && (

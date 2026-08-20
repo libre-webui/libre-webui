@@ -475,7 +475,8 @@
       "userManagement": "Gestione utenti",
       "logout": "Esci",
       "pinShortcut": "Fissa nella barra laterale",
-      "unpinShortcut": "Rimuovi dalla barra laterale"
+      "unpinShortcut": "Rimuovi dalla barra laterale",
+      "evaluations": "Valutazioni"
     },
     "avatar": {
       "title": "Cambia immagine profilo",
@@ -1878,7 +1879,15 @@
     "startConversation": "Inizia una conversazione",
     "startConversationDescription": "Invia un messaggio per iniziare a chattare con il tuo assistente IA. Fai domande, chiedi aiuto con il codice o fai una conversazione naturale.",
     "scrollToBottom": "Scorri in fondo",
-    "newMessages": "Nuovi messaggi"
+    "newMessages": "Nuovi messaggi",
+    "feedbackTags": {
+      "accuracy": "Accuratezza",
+      "style": "Stile",
+      "incomplete": "Incompleta",
+      "harmful": "Dannosa",
+      "formatting": "Formattazione"
+    },
+    "feedbackComment": "Aggiungi un commento…"
   },
   "imageGallery": {
     "title": "Galleria immagini",
@@ -3233,5 +3242,58 @@
     "addTariff": "Aggiungi tariffa",
     "deleteTariff": "Elimina tariffa",
     "tariffSaved": "Tariffa salvata"
+  },
+  "evaluations": {
+    "title": "Valutazioni",
+    "description": "Duelli in arena alla cieca, classifica Elo, set di valutazione riutilizzabili e il tuo dataset di feedback.",
+    "loadFailed": "Impossibile caricare le valutazioni",
+    "matchFailed": "Il duello in arena non è riuscito",
+    "voteRecorded": "Voto registrato",
+    "voteFailed": "Impossibile registrare il voto",
+    "saveFailed": "Salvataggio non riuscito",
+    "exportFailed": "Esportazione non riuscita",
+    "setSaved": "Set di valutazione salvato",
+    "runStarted": "Esecuzione avviata",
+    "pickModel": "Scegli un modello",
+    "tabs": {
+      "arena": "Arena",
+      "leaderboard": "Classifica",
+      "sets": "Set di eval",
+      "feedback": "Feedback"
+    },
+    "arenaModelA": "Modello A",
+    "arenaModelB": "Modello B",
+    "arenaPrompt": "Fai la stessa domanda a entrambi i modelli…",
+    "startMatch": "Avvia duello",
+    "arenaHint": "Le identità dei modelli restano nascoste fino al voto.",
+    "candidate": "Risposta {{letter}}",
+    "voteFirst": "La prima è migliore",
+    "voteSecond": "La seconda è migliore",
+    "voteTie": "Pareggio",
+    "voteBothBad": "Entrambe scarse",
+    "model": "Modello",
+    "rating": "Punteggio",
+    "record": "Bilancio",
+    "votes": "Voti",
+    "noVotes": "Nessun voto in arena — avvia un duello per costruire la classifica.",
+    "newSet": "Nuovo set di valutazione",
+    "setName": "Nome del set",
+    "setPrompts": "Un prompt per riga…",
+    "saveSet": "Salva set",
+    "yourSets": "I tuoi set",
+    "noSets": "Nessun set di valutazione.",
+    "itemCount": "{{total}} prompt",
+    "run": "Esegui",
+    "deleteSet": "Elimina set",
+    "cancelRun": "Annulla esecuzione",
+    "exportRun": "Esporta esecuzione",
+    "status": {
+      "queued": "In coda",
+      "running": "In corso",
+      "completed": "Completata",
+      "failed": "Non riuscita",
+      "cancelled": "Annullata"
+    },
+    "noFeedback": "Nessun feedback — valuta le risposte per costruire il tuo dataset."
   }
 }

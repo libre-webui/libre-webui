@@ -19,6 +19,7 @@ import type { RefObject } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
+  Trophy,
   Camera,
   ChartNoAxesCombined,
   ChevronRight,
@@ -66,6 +67,12 @@ const ADMIN_SHORTCUTS = [
     to: '/usage',
     icon: ChartNoAxesCombined,
     labelKey: 'user.menu.usageAnalytics',
+  },
+  {
+    id: 'evaluations',
+    to: '/evaluations',
+    icon: Trophy,
+    labelKey: 'user.menu.evaluations',
   },
 ] as const;
 

@@ -475,7 +475,8 @@
       "userManagement": "Benutzerverwaltung",
       "logout": "Abmelden",
       "pinShortcut": "An Seitenleiste anheften",
-      "unpinShortcut": "Von Seitenleiste lösen"
+      "unpinShortcut": "Von Seitenleiste lösen",
+      "evaluations": "Evaluationen"
     },
     "avatar": {
       "title": "Profilbild ändern",
@@ -1878,7 +1879,15 @@
     "startConversation": "Gespräch starten",
     "startConversationDescription": "Senden Sie eine Nachricht, um mit Ihrem KI-Assistenten zu chatten. Stellen Sie Fragen, lassen Sie sich bei Code helfen oder führen Sie ein natürliches Gespräch.",
     "scrollToBottom": "Nach unten scrollen",
-    "newMessages": "Neue Nachrichten"
+    "newMessages": "Neue Nachrichten",
+    "feedbackTags": {
+      "accuracy": "Genauigkeit",
+      "style": "Stil",
+      "incomplete": "Unvollständig",
+      "harmful": "Schädlich",
+      "formatting": "Formatierung"
+    },
+    "feedbackComment": "Kommentar hinzufügen…"
   },
   "imageGallery": {
     "title": "Bildergalerie",
@@ -3233,5 +3242,58 @@
     "addTariff": "Tarif hinzufügen",
     "deleteTariff": "Tarif löschen",
     "tariffSaved": "Tarif gespeichert"
+  },
+  "evaluations": {
+    "title": "Evaluationen",
+    "description": "Blinde Arena-Duelle, eine Elo-Rangliste, wiederverwendbare Evaluationssets und dein Feedback-Datensatz.",
+    "loadFailed": "Evaluationen konnten nicht geladen werden",
+    "matchFailed": "Das Arena-Duell ist fehlgeschlagen",
+    "voteRecorded": "Stimme erfasst",
+    "voteFailed": "Stimme konnte nicht erfasst werden",
+    "saveFailed": "Speichern fehlgeschlagen",
+    "exportFailed": "Export fehlgeschlagen",
+    "setSaved": "Evaluationsset gespeichert",
+    "runStarted": "Evaluationslauf gestartet",
+    "pickModel": "Modell wählen",
+    "tabs": {
+      "arena": "Arena",
+      "leaderboard": "Rangliste",
+      "sets": "Eval-Sets",
+      "feedback": "Feedback"
+    },
+    "arenaModelA": "Modell A",
+    "arenaModelB": "Modell B",
+    "arenaPrompt": "Stelle beiden Modellen dieselbe Frage…",
+    "startMatch": "Duell starten",
+    "arenaHint": "Die Modellnamen bleiben bis zur Abstimmung verborgen.",
+    "candidate": "Antwort {{letter}}",
+    "voteFirst": "Erste ist besser",
+    "voteSecond": "Zweite ist besser",
+    "voteTie": "Unentschieden",
+    "voteBothBad": "Beide schlecht",
+    "model": "Modell",
+    "rating": "Wertung",
+    "record": "Bilanz",
+    "votes": "Stimmen",
+    "noVotes": "Noch keine Arena-Stimmen — starte ein Duell für die Rangliste.",
+    "newSet": "Neues Evaluationsset",
+    "setName": "Name des Sets",
+    "setPrompts": "Ein Prompt pro Zeile…",
+    "saveSet": "Set speichern",
+    "yourSets": "Deine Sets",
+    "noSets": "Noch keine Evaluationssets.",
+    "itemCount": "{{total}} Prompts",
+    "run": "Ausführen",
+    "deleteSet": "Set löschen",
+    "cancelRun": "Lauf abbrechen",
+    "exportRun": "Lauf exportieren",
+    "status": {
+      "queued": "Wartet",
+      "running": "Läuft",
+      "completed": "Abgeschlossen",
+      "failed": "Fehlgeschlagen",
+      "cancelled": "Abgebrochen"
+    },
+    "noFeedback": "Noch kein Feedback — bewerte Antworten, um deinen Datensatz aufzubauen."
   }
 }

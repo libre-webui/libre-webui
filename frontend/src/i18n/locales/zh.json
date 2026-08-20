@@ -475,7 +475,8 @@
       "userManagement": "用户管理",
       "logout": "退出登录",
       "pinShortcut": "固定到侧边栏",
-      "unpinShortcut": "从侧边栏取消固定"
+      "unpinShortcut": "从侧边栏取消固定",
+      "evaluations": "评测"
     },
     "avatar": {
       "title": "更换头像",
@@ -1878,7 +1879,15 @@
     "startConversation": "开始对话",
     "startConversationDescription": "发送消息开始与 AI 助手聊天。提问、获取代码帮助或进行自然对话。",
     "scrollToBottom": "滚动到底部",
-    "newMessages": "新消息"
+    "newMessages": "新消息",
+    "feedbackTags": {
+      "accuracy": "准确性",
+      "style": "风格",
+      "incomplete": "不完整",
+      "harmful": "有害",
+      "formatting": "格式"
+    },
+    "feedbackComment": "添加评论…"
   },
   "imageGallery": {
     "title": "图像库",
@@ -3233,5 +3242,58 @@
     "addTariff": "添加资费",
     "deleteTariff": "删除资费",
     "tariffSaved": "资费已保存"
+  },
+  "evaluations": {
+    "title": "评测",
+    "description": "盲测竞技场对战、Elo 排行榜、可复用的评测集和你的反馈数据集。",
+    "loadFailed": "无法加载评测",
+    "matchFailed": "竞技场对战失败",
+    "voteRecorded": "投票已记录",
+    "voteFailed": "无法记录投票",
+    "saveFailed": "保存失败",
+    "exportFailed": "导出失败",
+    "setSaved": "评测集已保存",
+    "runStarted": "评测运行已开始",
+    "pickModel": "选择模型",
+    "tabs": {
+      "arena": "竞技场",
+      "leaderboard": "排行榜",
+      "sets": "评测集",
+      "feedback": "反馈"
+    },
+    "arenaModelA": "模型 A",
+    "arenaModelB": "模型 B",
+    "arenaPrompt": "向两个模型提出同一个问题…",
+    "startMatch": "开始对战",
+    "arenaHint": "投票前模型身份保持隐藏。",
+    "candidate": "回答 {{letter}}",
+    "voteFirst": "第一个更好",
+    "voteSecond": "第二个更好",
+    "voteTie": "平局",
+    "voteBothBad": "都不好",
+    "model": "模型",
+    "rating": "评分",
+    "record": "战绩",
+    "votes": "票数",
+    "noVotes": "还没有投票——开始一场对战来构建排行榜。",
+    "newSet": "新建评测集",
+    "setName": "评测集名称",
+    "setPrompts": "每行一个提示词…",
+    "saveSet": "保存评测集",
+    "yourSets": "你的评测集",
+    "noSets": "还没有评测集。",
+    "itemCount": "{{total}} 条提示词",
+    "run": "运行",
+    "deleteSet": "删除评测集",
+    "cancelRun": "取消运行",
+    "exportRun": "导出运行",
+    "status": {
+      "queued": "排队中",
+      "running": "运行中",
+      "completed": "已完成",
+      "failed": "失败",
+      "cancelled": "已取消"
+    },
+    "noFeedback": "还没有反馈——为回复评分以构建你的数据集。"
   }
 }

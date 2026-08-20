@@ -475,7 +475,8 @@
       "userManagement": "Brugeradministration",
       "logout": "Log ud",
       "pinShortcut": "Fastgør til sidepanelet",
-      "unpinShortcut": "Frigør fra sidepanelet"
+      "unpinShortcut": "Frigør fra sidepanelet",
+      "evaluations": "Evalueringer"
     },
     "avatar": {
       "title": "Skift profilbillede",
@@ -1878,7 +1879,15 @@
     "startConversation": "Start en samtale",
     "startConversationDescription": "Send en besked for at begynde at chatte med din AI-assistent. Stil spørgsmål, få hjælp med kode eller hav en naturlig samtale.",
     "scrollToBottom": "Rul til bunden",
-    "newMessages": "Nye beskeder"
+    "newMessages": "Nye beskeder",
+    "feedbackTags": {
+      "accuracy": "Nøjagtighed",
+      "style": "Stil",
+      "incomplete": "Ufuldstændig",
+      "harmful": "Skadelig",
+      "formatting": "Formatering"
+    },
+    "feedbackComment": "Tilføj en kommentar…"
   },
   "imageGallery": {
     "title": "Billedgalleri",
@@ -3233,5 +3242,58 @@
     "addTariff": "Tilføj tarif",
     "deleteTariff": "Slet tarif",
     "tariffSaved": "Tarif gemt"
+  },
+  "evaluations": {
+    "title": "Evalueringer",
+    "description": "Blinde arenadueller, en Elo-rangliste, genbrugelige evalueringssæt og dit feedbackdatasæt.",
+    "loadFailed": "Kunne ikke indlæse evalueringer",
+    "matchFailed": "Arenaduellen mislykkedes",
+    "voteRecorded": "Stemme registreret",
+    "voteFailed": "Kunne ikke registrere stemmen",
+    "saveFailed": "Lagring mislykkedes",
+    "exportFailed": "Eksport mislykkedes",
+    "setSaved": "Evalueringssæt gemt",
+    "runStarted": "Evalueringskørsel startet",
+    "pickModel": "Vælg en model",
+    "tabs": {
+      "arena": "Arena",
+      "leaderboard": "Rangliste",
+      "sets": "Sæt",
+      "feedback": "Feedback"
+    },
+    "arenaModelA": "Model A",
+    "arenaModelB": "Model B",
+    "arenaPrompt": "Stil begge modeller det samme spørgsmål…",
+    "startMatch": "Start duel",
+    "arenaHint": "Modellernes identitet forbliver skjult, indtil du stemmer.",
+    "candidate": "Svar {{letter}}",
+    "voteFirst": "Første er bedst",
+    "voteSecond": "Andet er bedst",
+    "voteTie": "Uafgjort",
+    "voteBothBad": "Begge dårlige",
+    "model": "Model",
+    "rating": "Score",
+    "record": "Statistik",
+    "votes": "Stemmer",
+    "noVotes": "Ingen stemmer endnu — start en duel for at bygge ranglisten.",
+    "newSet": "Nyt evalueringssæt",
+    "setName": "Sætnavn",
+    "setPrompts": "Én prompt pr. linje…",
+    "saveSet": "Gem sæt",
+    "yourSets": "Dine sæt",
+    "noSets": "Ingen evalueringssæt endnu.",
+    "itemCount": "{{total}} prompts",
+    "run": "Kør",
+    "deleteSet": "Slet sæt",
+    "cancelRun": "Annuller kørsel",
+    "exportRun": "Eksportér kørsel",
+    "status": {
+      "queued": "I kø",
+      "running": "Kører",
+      "completed": "Fuldført",
+      "failed": "Mislykket",
+      "cancelled": "Annulleret"
+    },
+    "noFeedback": "Ingen feedback endnu — bedøm svar for at bygge dit datasæt."
   }
 }

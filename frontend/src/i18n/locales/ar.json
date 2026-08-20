@@ -475,7 +475,8 @@
       "userManagement": "إدارة المستخدمين",
       "logout": "تسجيل الخروج",
       "pinShortcut": "تثبيت في الشريط الجانبي",
-      "unpinShortcut": "إلغاء التثبيت من الشريط الجانبي"
+      "unpinShortcut": "إلغاء التثبيت من الشريط الجانبي",
+      "evaluations": "التقييمات"
     },
     "avatar": {
       "title": "تغيير صورة الملف الشخصي",
@@ -1878,7 +1879,15 @@
     "startConversation": "ابدأ محادثة",
     "startConversationDescription": "أرسل رسالة للبدء في الدردشة مع مساعدك الذكي. اطرح أسئلة، احصل على مساعدة في البرمجة، أو أجرِ محادثة طبيعية.",
     "scrollToBottom": "انتقل إلى الأسفل",
-    "newMessages": "رسائل جديدة"
+    "newMessages": "رسائل جديدة",
+    "feedbackTags": {
+      "accuracy": "الدقة",
+      "style": "الأسلوب",
+      "incomplete": "غير مكتمل",
+      "harmful": "ضار",
+      "formatting": "التنسيق"
+    },
+    "feedbackComment": "أضف تعليقًا…"
   },
   "imageGallery": {
     "title": "معرض الصور",
@@ -3233,5 +3242,58 @@
     "addTariff": "إضافة تعرفة",
     "deleteTariff": "حذف التعرفة",
     "tariffSaved": "تم حفظ التعرفة"
+  },
+  "evaluations": {
+    "title": "التقييمات",
+    "description": "مبارزات ساحة عمياء، ولوحة تصنيف Elo، ومجموعات تقييم قابلة لإعادة الاستخدام، ومجموعة بيانات ملاحظاتك.",
+    "loadFailed": "تعذر تحميل التقييمات",
+    "matchFailed": "فشلت مبارزة الساحة",
+    "voteRecorded": "تم تسجيل الصوت",
+    "voteFailed": "تعذر تسجيل الصوت",
+    "saveFailed": "فشل الحفظ",
+    "exportFailed": "فشل التصدير",
+    "setSaved": "تم حفظ مجموعة التقييم",
+    "runStarted": "بدأ تشغيل التقييم",
+    "pickModel": "اختر نموذجًا",
+    "tabs": {
+      "arena": "الساحة",
+      "leaderboard": "التصنيف",
+      "sets": "مجموعات التقييم",
+      "feedback": "الملاحظات"
+    },
+    "arenaModelA": "النموذج A",
+    "arenaModelB": "النموذج B",
+    "arenaPrompt": "اطرح السؤال نفسه على النموذجين…",
+    "startMatch": "بدء المبارزة",
+    "arenaHint": "تبقى هويات النماذج مخفية حتى تصوّت.",
+    "candidate": "الرد {{letter}}",
+    "voteFirst": "الأول أفضل",
+    "voteSecond": "الثاني أفضل",
+    "voteTie": "تعادل",
+    "voteBothBad": "كلاهما سيئ",
+    "model": "النموذج",
+    "rating": "التقييم",
+    "record": "السجل",
+    "votes": "الأصوات",
+    "noVotes": "لا توجد أصوات بعد — ابدأ مبارزة لبناء التصنيف.",
+    "newSet": "مجموعة تقييم جديدة",
+    "setName": "اسم المجموعة",
+    "setPrompts": "موجّه واحد في كل سطر…",
+    "saveSet": "حفظ المجموعة",
+    "yourSets": "مجموعاتك",
+    "noSets": "لا توجد مجموعات تقييم بعد.",
+    "itemCount": "{{total}} موجّهات",
+    "run": "تشغيل",
+    "deleteSet": "حذف المجموعة",
+    "cancelRun": "إلغاء التشغيل",
+    "exportRun": "تصدير التشغيل",
+    "status": {
+      "queued": "في الانتظار",
+      "running": "قيد التشغيل",
+      "completed": "مكتمل",
+      "failed": "فشل",
+      "cancelled": "أُلغي"
+    },
+    "noFeedback": "لا توجد ملاحظات بعد — قيّم الردود لبناء مجموعة بياناتك."
   }
 }

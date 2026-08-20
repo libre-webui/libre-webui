@@ -31,6 +31,7 @@ import { createLogger } from '../../utils/logger.js';
 import { DurableJobExecutionError } from './durableJobTypes.js';
 import type { DurableJobHandler } from './embeddedDurableJobWorker.js';
 import {
+  EVAL_RUN_JOB_TYPE,
   AUTOMATION_RUN_JOB_TYPE,
   CHANNEL_MENTION_JOB_TYPE,
   CHAT_GENERATE_JOB_TYPE,
@@ -1344,6 +1345,156 @@ const deliverWebhook: DurableJobHandler = async context => {
   }
 };
 
+const readEvalRunPayload = (payload: unknown): { runId: string } => {
+  const record = payload as Record<string, unknown>;
+  if (!record || typeof record.runId !== 'string') {
+    throw new DurableJobExecutionError(
+      false,
+      'eval-run-payload-invalid',
+      'The evaluation run payload is invalid'
+    );
+  }
+  return { runId: record.runId };
+};
+
+/**
+ * Reproducible evaluation run (ADMIN-02): execute every prompt of an eval
+ * set against the recorded model, one at a time, under the run owner\'s
+ * identity and credentials. Item failures are recorded per item rather
+ * than failing the run; cancellation marks the run cancelled.
+ */
+const runEvaluation: DurableJobHandler = async context => {
+  const { runId } = readEvalRunPayload(context.payload);
+  const { default: evaluationService } =
+    await import('../../services/evaluationService.js');
+  const { default: chatGenerationService } =
+    await import('../../services/chatGenerationService.js');
+  const run = await evaluationService.getRun(runId, context.actorUserId);
+  if (!run) {
+    throw new DurableJobExecutionError(
+      false,
+      'eval-run-missing',
+      'The evaluation run no longer exists'
+    );
+  }
+  if (run.status === 'completed' || run.status === 'failed') {
+    return { resultReference: `eval-run:${runId}` };
+  }
+  const set = await evaluationService.getEvalSet(
+    run.setId,
+    context.actorUserId
+  );
+  if (!set) {
+    await evaluationService.updateRunStatus(
+      runId,
+      context.actorUserId,
+      'failed',
+      { error: 'The evaluation set was deleted' }
+    );
+    throw new DurableJobExecutionError(
+      false,
+      'eval-set-missing',
+      'The evaluation set no longer exists'
+    );
+  }
+  await evaluationService.updateRunStatus(
+    runId,
+    context.actorUserId,
+    'running'
+  );
+  const results = [];
+  try {
+    for (const [index, item] of set.items.entries()) {
+      if (context.signal.aborted) throw context.signal.reason;
+      await context.assertSideEffectAllowed();
+      const startedAt = Date.now();
+      try {
+        const target = await chatGenerationService.prepareGenerationTarget(
+          run.model,
+          context.actorUserId,
+          {},
+          run.pluginId
+            ? ({ providerType: 'plugin', providerId: run.pluginId } as never)
+            : undefined,
+          context.signal
+        );
+        const messages = [
+          {
+            id: `${runId}-${item.id}`,
+            role: 'user' as const,
+            content: item.prompt,
+            timestamp: startedAt,
+          },
+        ];
+        const result = await chatGenerationService.executeNonStreaming({
+          target,
+          ollamaMessages: messages.map(message => ({
+            role: message.role,
+            content: message.content,
+          })),
+          pluginMessages: messages,
+          userId: context.actorUserId,
+          signal: context.signal,
+        });
+        results.push({
+          itemId: item.id,
+          prompt: item.prompt,
+          output: evaluationService.truncateOutput(result.assistantContent),
+          error: null,
+          durationMs: Date.now() - startedAt,
+        });
+      } catch (error) {
+        if (context.signal.aborted) throw error;
+        results.push({
+          itemId: item.id,
+          prompt: item.prompt,
+          output: '',
+          error:
+            error instanceof Error
+              ? error.message.slice(0, 300)
+              : 'The model request failed',
+          durationMs: Date.now() - startedAt,
+        });
+      }
+      await context.reportProgress({
+        current: index + 1,
+        total: set.items.length,
+        message: `Evaluated ${index + 1}/${set.items.length}`,
+      });
+    }
+    await evaluationService.updateRunStatus(
+      runId,
+      context.actorUserId,
+      'completed',
+      { results }
+    );
+    return { resultReference: `eval-run:${runId}` };
+  } catch (error) {
+    const cancelled = context.signal.aborted;
+    await evaluationService
+      .updateRunStatus(
+        runId,
+        context.actorUserId,
+        cancelled ? 'cancelled' : 'failed',
+        {
+          results,
+          error: cancelled
+            ? 'The evaluation run was cancelled'
+            : error instanceof Error
+              ? error.message.slice(0, 300)
+              : 'The evaluation run failed',
+        }
+      )
+      .catch(() => undefined);
+    if (error instanceof DurableJobExecutionError || cancelled) throw error;
+    throw new DurableJobExecutionError(
+      false,
+      'eval-run-failed',
+      'The evaluation run failed'
+    );
+  }
+};
+
 export const createDomainDurableJobHandlers = (): ReadonlyMap<
   string,
   DurableJobHandler
@@ -1359,4 +1510,5 @@ export const createDomainDurableJobHandlers = (): ReadonlyMap<
     [AUTOMATION_RUN_JOB_TYPE, runAutomation],
     [CHANNEL_MENTION_JOB_TYPE, runChannelMention],
     [WEBHOOK_DELIVER_JOB_TYPE, deliverWebhook],
+    [EVAL_RUN_JOB_TYPE, runEvaluation],
   ]);

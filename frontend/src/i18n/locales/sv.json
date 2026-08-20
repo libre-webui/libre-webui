@@ -475,7 +475,8 @@
       "userManagement": "Användarhantering",
       "logout": "Logga ut",
       "pinShortcut": "Fäst i sidofältet",
-      "unpinShortcut": "Ta bort från sidofältet"
+      "unpinShortcut": "Ta bort från sidofältet",
+      "evaluations": "Utvärderingar"
     },
     "avatar": {
       "title": "Ändra profilbild",
@@ -1878,7 +1879,15 @@
     "startConversation": "Starta en konversation",
     "startConversationDescription": "Skicka ett meddelande för att börja chatta med din AI-assistent. Ställ frågor, få hjälp med kod eller ha en naturlig konversation.",
     "scrollToBottom": "Scrolla till botten",
-    "newMessages": "Nya meddelanden"
+    "newMessages": "Nya meddelanden",
+    "feedbackTags": {
+      "accuracy": "Noggrannhet",
+      "style": "Stil",
+      "incomplete": "Ofullständig",
+      "harmful": "Skadlig",
+      "formatting": "Formatering"
+    },
+    "feedbackComment": "Lägg till en kommentar…"
   },
   "imageGallery": {
     "title": "Bildgalleri",
@@ -3233,5 +3242,58 @@
     "addTariff": "Lägg till tariff",
     "deleteTariff": "Ta bort tariff",
     "tariffSaved": "Tariff sparad"
+  },
+  "evaluations": {
+    "title": "Utvärderingar",
+    "description": "Blinda arenadueller, en Elo-topplista, återanvändbara utvärderingsset och din feedbackdata.",
+    "loadFailed": "Kunde inte läsa in utvärderingar",
+    "matchFailed": "Arenaduellen misslyckades",
+    "voteRecorded": "Röst registrerad",
+    "voteFailed": "Kunde inte registrera rösten",
+    "saveFailed": "Det gick inte att spara",
+    "exportFailed": "Export misslyckades",
+    "setSaved": "Utvärderingsset sparat",
+    "runStarted": "Utvärderingskörning startad",
+    "pickModel": "Välj en modell",
+    "tabs": {
+      "arena": "Arena",
+      "leaderboard": "Topplista",
+      "sets": "Set",
+      "feedback": "Feedback"
+    },
+    "arenaModelA": "Modell A",
+    "arenaModelB": "Modell B",
+    "arenaPrompt": "Ställ samma fråga till båda modellerna…",
+    "startMatch": "Starta duell",
+    "arenaHint": "Modellernas identitet hålls dold tills du röstar.",
+    "candidate": "Svar {{letter}}",
+    "voteFirst": "Första är bättre",
+    "voteSecond": "Andra är bättre",
+    "voteTie": "Oavgjort",
+    "voteBothBad": "Båda dåliga",
+    "model": "Modell",
+    "rating": "Poäng",
+    "record": "Facit",
+    "votes": "Röster",
+    "noVotes": "Inga röster ännu — starta en duell för att bygga topplistan.",
+    "newSet": "Nytt utvärderingsset",
+    "setName": "Setnamn",
+    "setPrompts": "En prompt per rad…",
+    "saveSet": "Spara set",
+    "yourSets": "Dina set",
+    "noSets": "Inga utvärderingsset ännu.",
+    "itemCount": "{{total}} prompts",
+    "run": "Kör",
+    "deleteSet": "Ta bort set",
+    "cancelRun": "Avbryt körning",
+    "exportRun": "Exportera körning",
+    "status": {
+      "queued": "I kö",
+      "running": "Körs",
+      "completed": "Slutförd",
+      "failed": "Misslyckad",
+      "cancelled": "Avbruten"
+    },
+    "noFeedback": "Ingen feedback ännu — betygsätt svar för att bygga din data."
   }
 }

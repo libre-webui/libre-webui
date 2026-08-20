@@ -86,6 +86,7 @@ const UserManagementPage = React.lazy(
   () => import('@/pages/UserManagementPage')
 );
 const PluginUsagePage = React.lazy(() => import('@/pages/PluginUsagePage'));
+const EvaluationsPage = React.lazy(() => import('@/pages/EvaluationsPage'));
 const SystemPage = React.lazy(() => import('@/pages/SystemPage'));
 const ArtifactDemoPage = React.lazy(() => import('@/pages/ArtifactDemoPage'));
 const SettingsModal = React.lazy(() =>
@@ -562,6 +563,7 @@ const AppContent: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+            <Route path='/evaluations' element={<EvaluationsPage />} />
             <Route
               path='/system'
               element={
@@ -635,6 +637,7 @@ const AppContent: React.FC = () => {
                         </ProtectedRoute>
                       }
                     />
+                    <Route path='/evaluations' element={<EvaluationsPage />} />
                     <Route
                       path='/system'
                       element={

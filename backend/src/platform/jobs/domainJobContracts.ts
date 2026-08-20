@@ -37,6 +37,8 @@ export const channelEventStreamId = (channelId: string): string =>
   `channel:${channelId}`;
 export const notificationEventStreamId = (userId: string): string =>
   `notify:${userId}`;
+export const EVAL_RUN_JOB_TYPE = 'evaluation.run.v1';
+export const EVAL_RUN_IDEMPOTENCY_SCOPE = 'evaluation.run.v1';
 export const AUTOMATION_RUN_JOB_TYPE = 'automation.run.v1';
 export const AUTOMATION_RUN_IDEMPOTENCY_SCOPE = 'automation.run.v1';
 export const automationRunIdempotencyScope = (automationId: string): string =>

@@ -475,7 +475,8 @@
       "userManagement": "사용자 관리",
       "logout": "로그아웃",
       "pinShortcut": "사이드바에 고정",
-      "unpinShortcut": "사이드바에서 고정 해제"
+      "unpinShortcut": "사이드바에서 고정 해제",
+      "evaluations": "평가"
     },
     "avatar": {
       "title": "프로필 사진 변경",
@@ -1878,7 +1879,15 @@
     "startConversation": "대화 시작하기",
     "startConversationDescription": "AI 어시스턴트와 채팅을 시작하려면 메시지를 보내세요. 질문하고, 코드 도움을 받거나, 자연스러운 대화를 나누세요.",
     "scrollToBottom": "맨 아래로 스크롤",
-    "newMessages": "새 메시지"
+    "newMessages": "새 메시지",
+    "feedbackTags": {
+      "accuracy": "정확성",
+      "style": "문체",
+      "incomplete": "불완전",
+      "harmful": "유해함",
+      "formatting": "서식"
+    },
+    "feedbackComment": "댓글 추가…"
   },
   "imageGallery": {
     "title": "이미지 갤러리",
@@ -3233,5 +3242,58 @@
     "addTariff": "타리프 추가",
     "deleteTariff": "타리프 삭제",
     "tariffSaved": "타리프 저장됨"
+  },
+  "evaluations": {
+    "title": "평가",
+    "description": "블라인드 아레나 대결, Elo 리더보드, 재사용 가능한 평가 세트, 피드백 데이터셋.",
+    "loadFailed": "평가를 불러오지 못했습니다",
+    "matchFailed": "아레나 대결에 실패했습니다",
+    "voteRecorded": "투표가 기록되었습니다",
+    "voteFailed": "투표를 기록하지 못했습니다",
+    "saveFailed": "저장 실패",
+    "exportFailed": "내보내기 실패",
+    "setSaved": "평가 세트 저장됨",
+    "runStarted": "평가 실행 시작됨",
+    "pickModel": "모델 선택",
+    "tabs": {
+      "arena": "아레나",
+      "leaderboard": "리더보드",
+      "sets": "평가 세트",
+      "feedback": "피드백"
+    },
+    "arenaModelA": "모델 A",
+    "arenaModelB": "모델 B",
+    "arenaPrompt": "두 모델에 같은 질문을 하세요…",
+    "startMatch": "대결 시작",
+    "arenaHint": "투표할 때까지 모델 이름은 숨겨집니다.",
+    "candidate": "응답 {{letter}}",
+    "voteFirst": "첫 번째가 더 좋음",
+    "voteSecond": "두 번째가 더 좋음",
+    "voteTie": "무승부",
+    "voteBothBad": "둘 다 나쁨",
+    "model": "모델",
+    "rating": "점수",
+    "record": "전적",
+    "votes": "투표 수",
+    "noVotes": "아직 투표가 없습니다. 대결을 시작해 리더보드를 만들어 보세요.",
+    "newSet": "새 평가 세트",
+    "setName": "세트 이름",
+    "setPrompts": "한 줄에 프롬프트 하나…",
+    "saveSet": "세트 저장",
+    "yourSets": "내 세트",
+    "noSets": "아직 평가 세트가 없습니다.",
+    "itemCount": "프롬프트 {{total}}개",
+    "run": "실행",
+    "deleteSet": "세트 삭제",
+    "cancelRun": "실행 취소",
+    "exportRun": "실행 내보내기",
+    "status": {
+      "queued": "대기 중",
+      "running": "실행 중",
+      "completed": "완료",
+      "failed": "실패",
+      "cancelled": "취소됨"
+    },
+    "noFeedback": "아직 피드백이 없습니다. 응답을 평가해 데이터셋을 만들어 보세요."
   }
 }

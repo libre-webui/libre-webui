@@ -50,6 +50,7 @@ const canonicalCapabilityIds = [
   'agent-cli',
   'artifacts',
   'usage',
+  'evaluations',
   'system-diagnostics',
   'user-administration',
   'authentication',

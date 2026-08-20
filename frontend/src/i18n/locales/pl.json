@@ -475,7 +475,8 @@
       "userManagement": "Zarządzanie użytkownikami",
       "logout": "Wyloguj się",
       "pinShortcut": "Przypnij do paska bocznego",
-      "unpinShortcut": "Odepnij od paska bocznego"
+      "unpinShortcut": "Odepnij od paska bocznego",
+      "evaluations": "Ewaluacje"
     },
     "avatar": {
       "title": "Zmień zdjęcie profilowe",
@@ -1878,7 +1879,15 @@
     "startConversation": "Rozpocznij rozmowę",
     "startConversationDescription": "Wyślij wiadomość, aby rozpocząć rozmowę z asystentem AI. Zadawaj pytania, uzyskaj pomoc z kodem lub prowadź naturalną rozmowę.",
     "scrollToBottom": "Przewiń na dół",
-    "newMessages": "Nowe wiadomości"
+    "newMessages": "Nowe wiadomości",
+    "feedbackTags": {
+      "accuracy": "Dokładność",
+      "style": "Styl",
+      "incomplete": "Niekompletna",
+      "harmful": "Szkodliwa",
+      "formatting": "Formatowanie"
+    },
+    "feedbackComment": "Dodaj komentarz…"
   },
   "imageGallery": {
     "title": "Galeria obrazów",
@@ -3233,5 +3242,58 @@
     "addTariff": "Dodaj taryfę",
     "deleteTariff": "Usuń taryfę",
     "tariffSaved": "Taryfa zapisana"
+  },
+  "evaluations": {
+    "title": "Ewaluacje",
+    "description": "Ślepe pojedynki na arenie, ranking Elo, zestawy ewaluacyjne wielokrotnego użytku i twój zbiór opinii.",
+    "loadFailed": "Nie udało się wczytać ewaluacji",
+    "matchFailed": "Pojedynek na arenie nie powiódł się",
+    "voteRecorded": "Głos zapisany",
+    "voteFailed": "Nie udało się zapisać głosu",
+    "saveFailed": "Zapis nie powiódł się",
+    "exportFailed": "Eksport nie powiódł się",
+    "setSaved": "Zestaw ewaluacyjny zapisany",
+    "runStarted": "Uruchomiono ewaluację",
+    "pickModel": "Wybierz model",
+    "tabs": {
+      "arena": "Arena",
+      "leaderboard": "Ranking",
+      "sets": "Zestawy",
+      "feedback": "Opinie"
+    },
+    "arenaModelA": "Model A",
+    "arenaModelB": "Model B",
+    "arenaPrompt": "Zadaj obu modelom to samo pytanie…",
+    "startMatch": "Rozpocznij pojedynek",
+    "arenaHint": "Tożsamości modeli pozostają ukryte do oddania głosu.",
+    "candidate": "Odpowiedź {{letter}}",
+    "voteFirst": "Pierwsza lepsza",
+    "voteSecond": "Druga lepsza",
+    "voteTie": "Remis",
+    "voteBothBad": "Obie złe",
+    "model": "Model",
+    "rating": "Wynik",
+    "record": "Bilans",
+    "votes": "Głosy",
+    "noVotes": "Brak głosów — rozpocznij pojedynek, aby zbudować ranking.",
+    "newSet": "Nowy zestaw ewaluacyjny",
+    "setName": "Nazwa zestawu",
+    "setPrompts": "Jeden prompt na wiersz…",
+    "saveSet": "Zapisz zestaw",
+    "yourSets": "Twoje zestawy",
+    "noSets": "Brak zestawów ewaluacyjnych.",
+    "itemCount": "{{total}} promptów",
+    "run": "Uruchom",
+    "deleteSet": "Usuń zestaw",
+    "cancelRun": "Anuluj przebieg",
+    "exportRun": "Eksportuj przebieg",
+    "status": {
+      "queued": "W kolejce",
+      "running": "W toku",
+      "completed": "Ukończono",
+      "failed": "Niepowodzenie",
+      "cancelled": "Anulowano"
+    },
+    "noFeedback": "Brak opinii — oceniaj odpowiedzi, aby zbudować swój zbiór danych."
   }
 }

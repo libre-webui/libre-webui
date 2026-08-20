@@ -475,7 +475,8 @@
       "userManagement": "Notendastjórnun",
       "logout": "Skrá út",
       "pinShortcut": "Festa við hliðarstiku",
-      "unpinShortcut": "Losa úr hliðarstiku"
+      "unpinShortcut": "Losa úr hliðarstiku",
+      "evaluations": "Mat"
     },
     "avatar": {
       "title": "Breyta prófílmynd",
@@ -1878,7 +1879,15 @@
     "startConversation": "Hefja samtal",
     "startConversationDescription": "Sendu skilaboð til að byrja að spjalla við gervigreindaraðstoðarmanninn þinn. Spyrðu spurninga, fáðu hjálp með kóða eða átt náttúrulegt samtal.",
     "scrollToBottom": "Fletta neðst",
-    "newMessages": "Ný skilaboð"
+    "newMessages": "Ný skilaboð",
+    "feedbackTags": {
+      "accuracy": "Nákvæmni",
+      "style": "Stíll",
+      "incomplete": "Ófullgert",
+      "harmful": "Skaðlegt",
+      "formatting": "Snið"
+    },
+    "feedbackComment": "Bæta við athugasemd…"
   },
   "imageGallery": {
     "title": "Myndasafn",
@@ -3233,5 +3242,58 @@
     "addTariff": "Bæta við gjaldskrá",
     "deleteTariff": "Eyða gjaldskrá",
     "tariffSaved": "Gjaldskrá vistuð"
+  },
+  "evaluations": {
+    "title": "Mat",
+    "description": "Blindir hólmgöngubardagar, Elo-stigatafla, endurnýtanleg matssett og gagnasafn athugasemda þinna.",
+    "loadFailed": "Ekki tókst að hlaða mati",
+    "matchFailed": "Hólmgangan mistókst",
+    "voteRecorded": "Atkvæði skráð",
+    "voteFailed": "Ekki tókst að skrá atkvæði",
+    "saveFailed": "Vistun mistókst",
+    "exportFailed": "Útflutningur mistókst",
+    "setSaved": "Matssett vistað",
+    "runStarted": "Matskeyrsla hafin",
+    "pickModel": "Veldu líkan",
+    "tabs": {
+      "arena": "Hólmganga",
+      "leaderboard": "Stigatafla",
+      "sets": "Matssett",
+      "feedback": "Athugasemdir"
+    },
+    "arenaModelA": "Líkan A",
+    "arenaModelB": "Líkan B",
+    "arenaPrompt": "Spyrðu bæði líkönin sömu spurningar…",
+    "startMatch": "Hefja bardaga",
+    "arenaHint": "Auðkenni líkananna eru falin þar til þú kýst.",
+    "candidate": "Svar {{letter}}",
+    "voteFirst": "Fyrra er betra",
+    "voteSecond": "Seinna er betra",
+    "voteTie": "Jafntefli",
+    "voteBothBad": "Bæði slæm",
+    "model": "Líkan",
+    "rating": "Stig",
+    "record": "Ferill",
+    "votes": "Atkvæði",
+    "noVotes": "Engin atkvæði enn — hefðu bardaga til að byggja stigatöfluna.",
+    "newSet": "Nýtt matssett",
+    "setName": "Heiti setts",
+    "setPrompts": "Ein skipun í hverja línu…",
+    "saveSet": "Vista sett",
+    "yourSets": "Settin þín",
+    "noSets": "Engin matssett enn.",
+    "itemCount": "{{total}} skipanir",
+    "run": "Keyra",
+    "deleteSet": "Eyða setti",
+    "cancelRun": "Hætta við keyrslu",
+    "exportRun": "Flytja út keyrslu",
+    "status": {
+      "queued": "Í röð",
+      "running": "Í keyrslu",
+      "completed": "Lokið",
+      "failed": "Mistókst",
+      "cancelled": "Hætt við"
+    },
+    "noFeedback": "Engar athugasemdir enn — gefðu svörum einkunn til að byggja gagnasafnið."
   }
 }

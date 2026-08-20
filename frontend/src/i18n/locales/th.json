@@ -475,7 +475,8 @@
       "userManagement": "จัดการผู้ใช้",
       "logout": "ออกจากระบบ",
       "pinShortcut": "ปักหมุดไว้ที่แถบด้านข้าง",
-      "unpinShortcut": "เลิกปักหมุดจากแถบด้านข้าง"
+      "unpinShortcut": "เลิกปักหมุดจากแถบด้านข้าง",
+      "evaluations": "การประเมิน"
     },
     "avatar": {
       "title": "เปลี่ยนรูปโปรไฟล์",
@@ -1878,7 +1879,15 @@
     "startConversation": "เริ่มการสนทนา",
     "startConversationDescription": "ส่งข้อความเพื่อเริ่มแชทกับผู้ช่วย AI ของคุณ ถามคำถาม ขอความช่วยเหลือเรื่องโค้ด หรือสนทนาตามธรรมชาติ",
     "scrollToBottom": "เลื่อนไปด้านล่าง",
-    "newMessages": "ข้อความใหม่"
+    "newMessages": "ข้อความใหม่",
+    "feedbackTags": {
+      "accuracy": "ความถูกต้อง",
+      "style": "สไตล์",
+      "incomplete": "ไม่สมบูรณ์",
+      "harmful": "เป็นอันตราย",
+      "formatting": "การจัดรูปแบบ"
+    },
+    "feedbackComment": "เพิ่มความคิดเห็น…"
   },
   "imageGallery": {
     "title": "แกลเลอรีรูปภาพ",
@@ -3233,5 +3242,58 @@
     "addTariff": "เพิ่มอัตรา",
     "deleteTariff": "ลบอัตรา",
     "tariffSaved": "บันทึกอัตราแล้ว"
+  },
+  "evaluations": {
+    "title": "การประเมิน",
+    "description": "การดวลแบบไม่เปิดเผยชื่อ ลีดเดอร์บอร์ด Elo ชุดประเมินที่ใช้ซ้ำได้ และชุดข้อมูลคำติชมของคุณ",
+    "loadFailed": "โหลดการประเมินไม่สำเร็จ",
+    "matchFailed": "การดวลล้มเหลว",
+    "voteRecorded": "บันทึกคะแนนโหวตแล้ว",
+    "voteFailed": "บันทึกคะแนนโหวตไม่สำเร็จ",
+    "saveFailed": "บันทึกไม่สำเร็จ",
+    "exportFailed": "ส่งออกไม่สำเร็จ",
+    "setSaved": "บันทึกชุดประเมินแล้ว",
+    "runStarted": "เริ่มการประเมินแล้ว",
+    "pickModel": "เลือกโมเดล",
+    "tabs": {
+      "arena": "สนามประลอง",
+      "leaderboard": "ลีดเดอร์บอร์ด",
+      "sets": "ชุดประเมิน",
+      "feedback": "คำติชม"
+    },
+    "arenaModelA": "โมเดล A",
+    "arenaModelB": "โมเดล B",
+    "arenaPrompt": "ถามคำถามเดียวกันกับทั้งสองโมเดล…",
+    "startMatch": "เริ่มดวล",
+    "arenaHint": "ชื่อโมเดลจะถูกซ่อนจนกว่าคุณจะโหวต",
+    "candidate": "คำตอบ {{letter}}",
+    "voteFirst": "อันแรกดีกว่า",
+    "voteSecond": "อันที่สองดีกว่า",
+    "voteTie": "เสมอ",
+    "voteBothBad": "แย่ทั้งคู่",
+    "model": "โมเดล",
+    "rating": "คะแนน",
+    "record": "สถิติ",
+    "votes": "โหวต",
+    "noVotes": "ยังไม่มีโหวต — เริ่มดวลเพื่อสร้างลีดเดอร์บอร์ด",
+    "newSet": "ชุดประเมินใหม่",
+    "setName": "ชื่อชุด",
+    "setPrompts": "หนึ่งพรอมป์ต่อบรรทัด…",
+    "saveSet": "บันทึกชุด",
+    "yourSets": "ชุดของคุณ",
+    "noSets": "ยังไม่มีชุดประเมิน",
+    "itemCount": "{{total}} พรอมป์",
+    "run": "รัน",
+    "deleteSet": "ลบชุด",
+    "cancelRun": "ยกเลิกการรัน",
+    "exportRun": "ส่งออกการรัน",
+    "status": {
+      "queued": "รอคิว",
+      "running": "กำลังรัน",
+      "completed": "เสร็จสิ้น",
+      "failed": "ล้มเหลว",
+      "cancelled": "ยกเลิกแล้ว"
+    },
+    "noFeedback": "ยังไม่มีคำติชม — ให้คะแนนคำตอบเพื่อสร้างชุดข้อมูลของคุณ"
   }
 }

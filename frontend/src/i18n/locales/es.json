@@ -475,7 +475,8 @@
       "userManagement": "Gestión de usuarios",
       "logout": "Cerrar sesión",
       "pinShortcut": "Fijar en la barra lateral",
-      "unpinShortcut": "Quitar de la barra lateral"
+      "unpinShortcut": "Quitar de la barra lateral",
+      "evaluations": "Evaluaciones"
     },
     "avatar": {
       "title": "Cambiar imagen de perfil",
@@ -1878,7 +1879,15 @@
     "startConversation": "Iniciar una conversación",
     "startConversationDescription": "Envía un mensaje para comenzar a chatear con tu asistente de IA. Haz preguntas, obtén ayuda con código o mantén una conversación natural.",
     "scrollToBottom": "Desplazar al final",
-    "newMessages": "Nuevos mensajes"
+    "newMessages": "Nuevos mensajes",
+    "feedbackTags": {
+      "accuracy": "Precisión",
+      "style": "Estilo",
+      "incomplete": "Incompleta",
+      "harmful": "Dañina",
+      "formatting": "Formato"
+    },
+    "feedbackComment": "Añadir un comentario…"
   },
   "imageGallery": {
     "title": "Galería de imágenes",
@@ -3233,5 +3242,58 @@
     "addTariff": "Añadir tarifa",
     "deleteTariff": "Eliminar tarifa",
     "tariffSaved": "Tarifa guardada"
+  },
+  "evaluations": {
+    "title": "Evaluaciones",
+    "description": "Duelos de arena a ciegas, clasificación Elo, conjuntos de evaluación reutilizables y tu conjunto de datos de comentarios.",
+    "loadFailed": "No se pudieron cargar las evaluaciones",
+    "matchFailed": "El duelo de arena falló",
+    "voteRecorded": "Voto registrado",
+    "voteFailed": "No se pudo registrar el voto",
+    "saveFailed": "Error al guardar",
+    "exportFailed": "Error al exportar",
+    "setSaved": "Conjunto de evaluación guardado",
+    "runStarted": "Ejecución iniciada",
+    "pickModel": "Elige un modelo",
+    "tabs": {
+      "arena": "Arena",
+      "leaderboard": "Clasificación",
+      "sets": "Conjuntos",
+      "feedback": "Comentarios"
+    },
+    "arenaModelA": "Modelo A",
+    "arenaModelB": "Modelo B",
+    "arenaPrompt": "Haz la misma pregunta a ambos modelos…",
+    "startMatch": "Iniciar duelo",
+    "arenaHint": "Las identidades de los modelos permanecen ocultas hasta que votes.",
+    "candidate": "Respuesta {{letter}}",
+    "voteFirst": "La primera es mejor",
+    "voteSecond": "La segunda es mejor",
+    "voteTie": "Empate",
+    "voteBothBad": "Ambas malas",
+    "model": "Modelo",
+    "rating": "Puntuación",
+    "record": "Historial",
+    "votes": "Votos",
+    "noVotes": "Aún no hay votos de arena: inicia un duelo para construir la clasificación.",
+    "newSet": "Nuevo conjunto de evaluación",
+    "setName": "Nombre del conjunto",
+    "setPrompts": "Un prompt por línea…",
+    "saveSet": "Guardar conjunto",
+    "yourSets": "Tus conjuntos",
+    "noSets": "Aún no hay conjuntos de evaluación.",
+    "itemCount": "{{total}} prompts",
+    "run": "Ejecutar",
+    "deleteSet": "Eliminar conjunto",
+    "cancelRun": "Cancelar ejecución",
+    "exportRun": "Exportar ejecución",
+    "status": {
+      "queued": "En cola",
+      "running": "En curso",
+      "completed": "Completada",
+      "failed": "Fallida",
+      "cancelled": "Cancelada"
+    },
+    "noFeedback": "Aún no hay comentarios: califica respuestas para construir tu conjunto de datos."
   }
 }

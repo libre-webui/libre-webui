@@ -475,7 +475,8 @@
       "userManagement": "User Management",
       "logout": "Log out",
       "pinShortcut": "Pin to sidebar",
-      "unpinShortcut": "Unpin from sidebar"
+      "unpinShortcut": "Unpin from sidebar",
+      "evaluations": "Evaluations"
     },
     "avatar": {
       "title": "Change Profile Picture",
@@ -1878,7 +1879,15 @@
     "startConversation": "Start a conversation",
     "startConversationDescription": "Send a message to begin chatting with your AI assistant. Ask questions, get help with code, or have a natural conversation.",
     "scrollToBottom": "Scroll to bottom",
-    "newMessages": "New messages"
+    "newMessages": "New messages",
+    "feedbackTags": {
+      "accuracy": "Accuracy",
+      "style": "Style",
+      "incomplete": "Incomplete",
+      "harmful": "Harmful",
+      "formatting": "Formatting"
+    },
+    "feedbackComment": "Add a comment…"
   },
   "imageGallery": {
     "title": "Image Gallery",
@@ -3233,5 +3242,58 @@
     "addTariff": "Add tariff",
     "deleteTariff": "Delete tariff",
     "tariffSaved": "Tariff saved"
+  },
+  "evaluations": {
+    "title": "Evaluations",
+    "description": "Blind arena matches, an Elo leaderboard, reusable evaluation sets, and your feedback dataset.",
+    "loadFailed": "Failed to load evaluations",
+    "matchFailed": "The arena match failed",
+    "voteRecorded": "Vote recorded",
+    "voteFailed": "Failed to record the vote",
+    "saveFailed": "Save failed",
+    "exportFailed": "Export failed",
+    "setSaved": "Evaluation set saved",
+    "runStarted": "Evaluation run started",
+    "pickModel": "Pick a model",
+    "tabs": {
+      "arena": "Arena",
+      "leaderboard": "Leaderboard",
+      "sets": "Eval sets",
+      "feedback": "Feedback"
+    },
+    "arenaModelA": "Model A",
+    "arenaModelB": "Model B",
+    "arenaPrompt": "Ask both models the same question…",
+    "startMatch": "Start match",
+    "arenaHint": "Model identities stay hidden until you vote.",
+    "candidate": "Response {{letter}}",
+    "voteFirst": "First is better",
+    "voteSecond": "Second is better",
+    "voteTie": "Tie",
+    "voteBothBad": "Both bad",
+    "model": "Model",
+    "rating": "Rating",
+    "record": "Record",
+    "votes": "Votes",
+    "noVotes": "No arena votes yet — start a match to build the leaderboard.",
+    "newSet": "New evaluation set",
+    "setName": "Set name",
+    "setPrompts": "One prompt per line…",
+    "saveSet": "Save set",
+    "yourSets": "Your sets",
+    "noSets": "No evaluation sets yet.",
+    "itemCount": "{{total}} prompts",
+    "run": "Run",
+    "deleteSet": "Delete set",
+    "cancelRun": "Cancel run",
+    "exportRun": "Export run",
+    "status": {
+      "queued": "Queued",
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "noFeedback": "No feedback yet — rate assistant replies to build your dataset."
   }
 }

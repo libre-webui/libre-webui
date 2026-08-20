@@ -475,7 +475,8 @@
       "userManagement": "उपयोगकर्ता प्रबंधन",
       "logout": "लॉग आउट",
       "pinShortcut": "साइडबार में पिन करें",
-      "unpinShortcut": "साइडबार से अनपिन करें"
+      "unpinShortcut": "साइडबार से अनपिन करें",
+      "evaluations": "मूल्यांकन"
     },
     "avatar": {
       "title": "प्रोफ़ाइल चित्र बदलें",
@@ -1878,7 +1879,15 @@
     "startConversation": "बातचीत शुरू करें",
     "startConversationDescription": "अपने AI सहायक के साथ चैट शुरू करने के लिए एक संदेश भेजें। प्रश्न पूछें, कोड में मदद पाएं, या प्राकृतिक बातचीत करें।",
     "scrollToBottom": "नीचे स्क्रॉल करें",
-    "newMessages": "नए संदेश"
+    "newMessages": "नए संदेश",
+    "feedbackTags": {
+      "accuracy": "सटीकता",
+      "style": "शैली",
+      "incomplete": "अधूरा",
+      "harmful": "हानिकारक",
+      "formatting": "स्वरूपण"
+    },
+    "feedbackComment": "टिप्पणी जोड़ें…"
   },
   "imageGallery": {
     "title": "छवि गैलरी",
@@ -3233,5 +3242,58 @@
     "addTariff": "टैरिफ जोड़ें",
     "deleteTariff": "टैरिफ हटाएँ",
     "tariffSaved": "टैरिफ सहेजा गया"
+  },
+  "evaluations": {
+    "title": "मूल्यांकन",
+    "description": "ब्लाइंड एरिना मुकाबले, Elo लीडरबोर्ड, पुन: प्रयोज्य मूल्यांकन सेट और आपका फ़ीडबैक डेटासेट।",
+    "loadFailed": "मूल्यांकन लोड नहीं हो सके",
+    "matchFailed": "एरिना मुकाबला विफल रहा",
+    "voteRecorded": "वोट दर्ज हुआ",
+    "voteFailed": "वोट दर्ज नहीं हो सका",
+    "saveFailed": "सहेजना विफल",
+    "exportFailed": "निर्यात विफल",
+    "setSaved": "मूल्यांकन सेट सहेजा गया",
+    "runStarted": "मूल्यांकन रन शुरू हुआ",
+    "pickModel": "मॉडल चुनें",
+    "tabs": {
+      "arena": "एरिना",
+      "leaderboard": "लीडरबोर्ड",
+      "sets": "मूल्यांकन सेट",
+      "feedback": "फ़ीडबैक"
+    },
+    "arenaModelA": "मॉडल A",
+    "arenaModelB": "मॉडल B",
+    "arenaPrompt": "दोनों मॉडलों से एक ही सवाल पूछें…",
+    "startMatch": "मुकाबला शुरू करें",
+    "arenaHint": "वोट देने तक मॉडलों की पहचान छिपी रहती है।",
+    "candidate": "उत्तर {{letter}}",
+    "voteFirst": "पहला बेहतर",
+    "voteSecond": "दूसरा बेहतर",
+    "voteTie": "बराबरी",
+    "voteBothBad": "दोनों खराब",
+    "model": "मॉडल",
+    "rating": "रेटिंग",
+    "record": "रिकॉर्ड",
+    "votes": "वोट",
+    "noVotes": "अभी कोई वोट नहीं — लीडरबोर्ड बनाने के लिए मुकाबला शुरू करें।",
+    "newSet": "नया मूल्यांकन सेट",
+    "setName": "सेट का नाम",
+    "setPrompts": "प्रति पंक्ति एक प्रॉम्प्ट…",
+    "saveSet": "सेट सहेजें",
+    "yourSets": "आपके सेट",
+    "noSets": "अभी कोई मूल्यांकन सेट नहीं।",
+    "itemCount": "{{total}} प्रॉम्प्ट",
+    "run": "चलाएँ",
+    "deleteSet": "सेट हटाएँ",
+    "cancelRun": "रन रद्द करें",
+    "exportRun": "रन निर्यात करें",
+    "status": {
+      "queued": "कतार में",
+      "running": "चल रहा",
+      "completed": "पूर्ण",
+      "failed": "विफल",
+      "cancelled": "रद्द"
+    },
+    "noFeedback": "अभी कोई फ़ीडबैक नहीं — डेटासेट बनाने के लिए उत्तरों को रेट करें।"
   }
 }

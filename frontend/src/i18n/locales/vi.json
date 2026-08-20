@@ -475,7 +475,8 @@
       "userManagement": "Quản lý người dùng",
       "logout": "Đăng xuất",
       "pinShortcut": "Ghim vào thanh bên",
-      "unpinShortcut": "Bỏ ghim khỏi thanh bên"
+      "unpinShortcut": "Bỏ ghim khỏi thanh bên",
+      "evaluations": "Đánh giá"
     },
     "avatar": {
       "title": "Đổi ảnh hồ sơ",
@@ -1878,7 +1879,15 @@
     "startConversation": "Bắt đầu cuộc trò chuyện",
     "startConversationDescription": "Gửi tin nhắn để bắt đầu trò chuyện với trợ lý AI của bạn. Đặt câu hỏi, nhờ giúp đỡ về code, hoặc có một cuộc trò chuyện tự nhiên.",
     "scrollToBottom": "Cuộn xuống dưới",
-    "newMessages": "Tin nhắn mới"
+    "newMessages": "Tin nhắn mới",
+    "feedbackTags": {
+      "accuracy": "Độ chính xác",
+      "style": "Văn phong",
+      "incomplete": "Chưa đầy đủ",
+      "harmful": "Có hại",
+      "formatting": "Định dạng"
+    },
+    "feedbackComment": "Thêm bình luận…"
   },
   "imageGallery": {
     "title": "Thư viện hình ảnh",
@@ -3233,5 +3242,58 @@
     "addTariff": "Thêm biểu phí",
     "deleteTariff": "Xóa biểu phí",
     "tariffSaved": "Đã lưu biểu phí"
+  },
+  "evaluations": {
+    "title": "Đánh giá",
+    "description": "Trận đấu trường mù, bảng xếp hạng Elo, bộ đánh giá tái sử dụng và tập dữ liệu phản hồi của bạn.",
+    "loadFailed": "Không tải được đánh giá",
+    "matchFailed": "Trận đấu trường thất bại",
+    "voteRecorded": "Đã ghi phiếu bầu",
+    "voteFailed": "Không ghi được phiếu bầu",
+    "saveFailed": "Lưu thất bại",
+    "exportFailed": "Xuất thất bại",
+    "setSaved": "Đã lưu bộ đánh giá",
+    "runStarted": "Đã bắt đầu chạy đánh giá",
+    "pickModel": "Chọn mô hình",
+    "tabs": {
+      "arena": "Đấu trường",
+      "leaderboard": "Bảng xếp hạng",
+      "sets": "Bộ đánh giá",
+      "feedback": "Phản hồi"
+    },
+    "arenaModelA": "Mô hình A",
+    "arenaModelB": "Mô hình B",
+    "arenaPrompt": "Hỏi cả hai mô hình cùng một câu hỏi…",
+    "startMatch": "Bắt đầu trận đấu",
+    "arenaHint": "Danh tính mô hình được ẩn cho đến khi bạn bình chọn.",
+    "candidate": "Câu trả lời {{letter}}",
+    "voteFirst": "Câu đầu tốt hơn",
+    "voteSecond": "Câu sau tốt hơn",
+    "voteTie": "Hòa",
+    "voteBothBad": "Cả hai đều tệ",
+    "model": "Mô hình",
+    "rating": "Điểm",
+    "record": "Thành tích",
+    "votes": "Phiếu bầu",
+    "noVotes": "Chưa có phiếu bầu — bắt đầu một trận đấu để xây dựng bảng xếp hạng.",
+    "newSet": "Bộ đánh giá mới",
+    "setName": "Tên bộ",
+    "setPrompts": "Mỗi dòng một câu lệnh…",
+    "saveSet": "Lưu bộ",
+    "yourSets": "Bộ của bạn",
+    "noSets": "Chưa có bộ đánh giá.",
+    "itemCount": "{{total}} câu lệnh",
+    "run": "Chạy",
+    "deleteSet": "Xóa bộ",
+    "cancelRun": "Hủy lượt chạy",
+    "exportRun": "Xuất lượt chạy",
+    "status": {
+      "queued": "Đang chờ",
+      "running": "Đang chạy",
+      "completed": "Hoàn thành",
+      "failed": "Thất bại",
+      "cancelled": "Đã hủy"
+    },
+    "noFeedback": "Chưa có phản hồi — hãy đánh giá các câu trả lời để xây dựng tập dữ liệu."
   }
 }

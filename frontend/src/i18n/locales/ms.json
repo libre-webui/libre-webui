@@ -475,7 +475,8 @@
       "userManagement": "Pengurusan Pengguna",
       "logout": "Log keluar",
       "pinShortcut": "Semat ke bar sisi",
-      "unpinShortcut": "Nyahsemat dari bar sisi"
+      "unpinShortcut": "Nyahsemat dari bar sisi",
+      "evaluations": "Penilaian"
     },
     "avatar": {
       "title": "Tukar Gambar Profil",
@@ -1878,7 +1879,15 @@
     "startConversation": "Mulakan perbualan",
     "startConversationDescription": "Hantar mesej untuk mula berbual dengan pembantu AI anda. Tanya soalan, dapatkan bantuan dengan kod atau berbual secara semula jadi.",
     "scrollToBottom": "Tatal ke bawah",
-    "newMessages": "Mesej baharu"
+    "newMessages": "Mesej baharu",
+    "feedbackTags": {
+      "accuracy": "Ketepatan",
+      "style": "Gaya",
+      "incomplete": "Tidak lengkap",
+      "harmful": "Berbahaya",
+      "formatting": "Pemformatan"
+    },
+    "feedbackComment": "Tambah komen…"
   },
   "imageGallery": {
     "title": "Galeri Imej",
@@ -3233,5 +3242,58 @@
     "addTariff": "Tambah tarif",
     "deleteTariff": "Padam tarif",
     "tariffSaved": "Tarif disimpan"
+  },
+  "evaluations": {
+    "title": "Penilaian",
+    "description": "Pertarungan arena buta, papan pendahulu Elo, set penilaian boleh guna semula dan set data maklum balas anda.",
+    "loadFailed": "Gagal memuatkan penilaian",
+    "matchFailed": "Pertarungan arena gagal",
+    "voteRecorded": "Undian direkodkan",
+    "voteFailed": "Gagal merekodkan undian",
+    "saveFailed": "Gagal menyimpan",
+    "exportFailed": "Gagal mengeksport",
+    "setSaved": "Set penilaian disimpan",
+    "runStarted": "Larian penilaian dimulakan",
+    "pickModel": "Pilih model",
+    "tabs": {
+      "arena": "Arena",
+      "leaderboard": "Papan pendahulu",
+      "sets": "Set penilaian",
+      "feedback": "Maklum balas"
+    },
+    "arenaModelA": "Model A",
+    "arenaModelB": "Model B",
+    "arenaPrompt": "Tanya soalan yang sama kepada kedua-dua model…",
+    "startMatch": "Mulakan pertarungan",
+    "arenaHint": "Identiti model kekal tersembunyi sehingga anda mengundi.",
+    "candidate": "Jawapan {{letter}}",
+    "voteFirst": "Pertama lebih baik",
+    "voteSecond": "Kedua lebih baik",
+    "voteTie": "Seri",
+    "voteBothBad": "Kedua-duanya teruk",
+    "model": "Model",
+    "rating": "Skor",
+    "record": "Rekod",
+    "votes": "Undian",
+    "noVotes": "Belum ada undian — mulakan pertarungan untuk membina papan pendahulu.",
+    "newSet": "Set penilaian baharu",
+    "setName": "Nama set",
+    "setPrompts": "Satu prom setiap baris…",
+    "saveSet": "Simpan set",
+    "yourSets": "Set anda",
+    "noSets": "Belum ada set penilaian.",
+    "itemCount": "{{total}} prom",
+    "run": "Jalankan",
+    "deleteSet": "Padam set",
+    "cancelRun": "Batalkan larian",
+    "exportRun": "Eksport larian",
+    "status": {
+      "queued": "Menunggu",
+      "running": "Berjalan",
+      "completed": "Selesai",
+      "failed": "Gagal",
+      "cancelled": "Dibatalkan"
+    },
+    "noFeedback": "Belum ada maklum balas — nilai jawapan untuk membina set data anda."
   }
 }

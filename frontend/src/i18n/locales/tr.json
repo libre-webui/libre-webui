@@ -475,7 +475,8 @@
       "userManagement": "Kullanıcı Yönetimi",
       "logout": "Çıkış Yap",
       "pinShortcut": "Kenar çubuğuna sabitle",
-      "unpinShortcut": "Kenar çubuğundan kaldır"
+      "unpinShortcut": "Kenar çubuğundan kaldır",
+      "evaluations": "Değerlendirmeler"
     },
     "avatar": {
       "title": "Profil Resmini Değiştir",
@@ -1878,7 +1879,15 @@
     "startConversation": "Bir konuşma başlatın",
     "startConversationDescription": "Yapay zeka asistanınızla sohbet etmeye başlamak için bir mesaj gönderin. Soru sorun, kod konusunda yardım alın veya doğal bir konuşma yapın.",
     "scrollToBottom": "En alta kaydır",
-    "newMessages": "Yeni mesajlar"
+    "newMessages": "Yeni mesajlar",
+    "feedbackTags": {
+      "accuracy": "Doğruluk",
+      "style": "Üslup",
+      "incomplete": "Eksik",
+      "harmful": "Zararlı",
+      "formatting": "Biçimlendirme"
+    },
+    "feedbackComment": "Yorum ekle…"
   },
   "imageGallery": {
     "title": "Görsel Galerisi",
@@ -3233,5 +3242,58 @@
     "addTariff": "Tarife ekle",
     "deleteTariff": "Tarifeyi sil",
     "tariffSaved": "Tarife kaydedildi"
+  },
+  "evaluations": {
+    "title": "Değerlendirmeler",
+    "description": "Kör arena düelloları, Elo sıralaması, yeniden kullanılabilir değerlendirme setleri ve geri bildirim veri kümeniz.",
+    "loadFailed": "Değerlendirmeler yüklenemedi",
+    "matchFailed": "Arena düellosu başarısız oldu",
+    "voteRecorded": "Oy kaydedildi",
+    "voteFailed": "Oy kaydedilemedi",
+    "saveFailed": "Kaydetme başarısız",
+    "exportFailed": "Dışa aktarma başarısız",
+    "setSaved": "Değerlendirme seti kaydedildi",
+    "runStarted": "Değerlendirme çalıştırması başladı",
+    "pickModel": "Bir model seç",
+    "tabs": {
+      "arena": "Arena",
+      "leaderboard": "Sıralama",
+      "sets": "Setler",
+      "feedback": "Geri bildirim"
+    },
+    "arenaModelA": "Model A",
+    "arenaModelB": "Model B",
+    "arenaPrompt": "Her iki modele aynı soruyu sor…",
+    "startMatch": "Düelloyu başlat",
+    "arenaHint": "Oy verene kadar model kimlikleri gizli kalır.",
+    "candidate": "Yanıt {{letter}}",
+    "voteFirst": "İlki daha iyi",
+    "voteSecond": "İkincisi daha iyi",
+    "voteTie": "Berabere",
+    "voteBothBad": "İkisi de kötü",
+    "model": "Model",
+    "rating": "Puan",
+    "record": "Sicil",
+    "votes": "Oylar",
+    "noVotes": "Henüz oy yok — sıralamayı oluşturmak için bir düello başlat.",
+    "newSet": "Yeni değerlendirme seti",
+    "setName": "Set adı",
+    "setPrompts": "Her satıra bir istem…",
+    "saveSet": "Seti kaydet",
+    "yourSets": "Setleriniz",
+    "noSets": "Henüz değerlendirme seti yok.",
+    "itemCount": "{{total}} istem",
+    "run": "Çalıştır",
+    "deleteSet": "Seti sil",
+    "cancelRun": "Çalıştırmayı iptal et",
+    "exportRun": "Çalıştırmayı dışa aktar",
+    "status": {
+      "queued": "Kuyrukta",
+      "running": "Çalışıyor",
+      "completed": "Tamamlandı",
+      "failed": "Başarısız",
+      "cancelled": "İptal edildi"
+    },
+    "noFeedback": "Henüz geri bildirim yok — veri kümenizi oluşturmak için yanıtları puanlayın."
   }
 }

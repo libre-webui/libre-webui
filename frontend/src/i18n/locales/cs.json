@@ -475,7 +475,8 @@
       "userManagement": "Správa uživatelů",
       "logout": "Odhlásit se",
       "pinShortcut": "Připnout na boční panel",
-      "unpinShortcut": "Odepnout z bočního panelu"
+      "unpinShortcut": "Odepnout z bočního panelu",
+      "evaluations": "Vyhodnocení"
     },
     "avatar": {
       "title": "Změnit profilový obrázek",
@@ -1878,7 +1879,15 @@
     "startConversation": "Zahájit konverzaci",
     "startConversationDescription": "Pošlete zprávu pro zahájení chatu s AI asistentem. Ptejte se, získejte pomoc s kódem nebo veďte přirozenou konverzaci.",
     "scrollToBottom": "Posunout dolů",
-    "newMessages": "Nové zprávy"
+    "newMessages": "Nové zprávy",
+    "feedbackTags": {
+      "accuracy": "Přesnost",
+      "style": "Styl",
+      "incomplete": "Neúplná",
+      "harmful": "Škodlivá",
+      "formatting": "Formátování"
+    },
+    "feedbackComment": "Přidat komentář…"
   },
   "imageGallery": {
     "title": "Galerie obrázků",
@@ -3233,5 +3242,58 @@
     "addTariff": "Přidat sazbu",
     "deleteTariff": "Smazat sazbu",
     "tariffSaved": "Sazba uložena"
+  },
+  "evaluations": {
+    "title": "Vyhodnocení",
+    "description": "Slepé arénové souboje, žebříček Elo, opakovaně použitelné sady a tvůj dataset zpětné vazby.",
+    "loadFailed": "Vyhodnocení se nepodařilo načíst",
+    "matchFailed": "Arénový souboj selhal",
+    "voteRecorded": "Hlas zaznamenán",
+    "voteFailed": "Hlas se nepodařilo zaznamenat",
+    "saveFailed": "Uložení se nezdařilo",
+    "exportFailed": "Export se nezdařil",
+    "setSaved": "Sada uložena",
+    "runStarted": "Běh vyhodnocení spuštěn",
+    "pickModel": "Vyber model",
+    "tabs": {
+      "arena": "Aréna",
+      "leaderboard": "Žebříček",
+      "sets": "Sady",
+      "feedback": "Zpětná vazba"
+    },
+    "arenaModelA": "Model A",
+    "arenaModelB": "Model B",
+    "arenaPrompt": "Polož oběma modelům stejnou otázku…",
+    "startMatch": "Zahájit souboj",
+    "arenaHint": "Identity modelů zůstávají skryté, dokud nehlasuješ.",
+    "candidate": "Odpověď {{letter}}",
+    "voteFirst": "První je lepší",
+    "voteSecond": "Druhá je lepší",
+    "voteTie": "Remíza",
+    "voteBothBad": "Obě špatné",
+    "model": "Model",
+    "rating": "Skóre",
+    "record": "Bilance",
+    "votes": "Hlasy",
+    "noVotes": "Zatím žádné hlasy — zahaj souboj a vybuduj žebříček.",
+    "newSet": "Nová sada",
+    "setName": "Název sady",
+    "setPrompts": "Jeden prompt na řádek…",
+    "saveSet": "Uložit sadu",
+    "yourSets": "Tvoje sady",
+    "noSets": "Zatím žádné sady.",
+    "itemCount": "{{total}} promptů",
+    "run": "Spustit",
+    "deleteSet": "Smazat sadu",
+    "cancelRun": "Zrušit běh",
+    "exportRun": "Exportovat běh",
+    "status": {
+      "queued": "Ve frontě",
+      "running": "Běží",
+      "completed": "Dokončeno",
+      "failed": "Selhalo",
+      "cancelled": "Zrušeno"
+    },
+    "noFeedback": "Zatím žádná zpětná vazba — hodnoť odpovědi a vybuduj svůj dataset."
   }
 }

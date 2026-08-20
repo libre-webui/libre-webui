@@ -2701,6 +2701,158 @@
       }
     },
     {
+      "id": "evaluations",
+      "title": "Evaluation platform",
+      "uiRoutes": [
+        "/evaluations"
+      ],
+      "documentation": [
+        {
+          "file": "docs/59-EVALUATIONS.md",
+          "patterns": [
+            "# Evaluations",
+            "Model identities stay hidden"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-evaluations.mjs",
+          "runner": "test:package",
+          "name": "arena votes are one per user per comparison and Elo replays deterministically",
+          "behaviorPatterns": [
+            "arenaLeaderboard",
+            "one vote per match"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "POST",
+          "path": "/feedback"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "DELETE",
+          "path": "/feedback/:messageId"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "GET",
+          "path": "/feedback"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "GET",
+          "path": "/feedback/all"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "POST",
+          "path": "/arena/votes"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "POST",
+          "path": "/arena/matches"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "GET",
+          "path": "/arena/leaderboard"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "GET",
+          "path": "/sets"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "POST",
+          "path": "/sets"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "PUT",
+          "path": "/sets/:setId"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "DELETE",
+          "path": "/sets/:setId"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "GET",
+          "path": "/runs"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "POST",
+          "path": "/runs"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "GET",
+          "path": "/runs/:runId"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "POST",
+          "path": "/runs/:runId/cancel"
+        },
+        {
+          "file": "backend/src/routes/evaluations.ts",
+          "mount": "/api/evaluations",
+          "method": "GET",
+          "path": "/runs/:runId/export"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/persistence/resourceTypes.ts",
+              "patterns": [
+                "export interface StoredEvalSetRecord",
+                "export interface StoredArenaVoteRecord"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Evaluations are account resources persisted by Libre and do not use an installable or discovery manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "backend/src/services/evaluationService.ts",
+              "patterns": [
+                "const MAX_EVAL_ITEMS = 50",
+                "const ELO_K = 32"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
       "id": "system-diagnostics",
       "title": "System diagnostics",
       "uiRoutes": [

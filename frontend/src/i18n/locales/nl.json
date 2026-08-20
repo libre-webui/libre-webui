@@ -475,7 +475,8 @@
       "userManagement": "Gebruikersbeheer",
       "logout": "Uitloggen",
       "pinShortcut": "Vastmaken aan zijbalk",
-      "unpinShortcut": "Losmaken van zijbalk"
+      "unpinShortcut": "Losmaken van zijbalk",
+      "evaluations": "Evaluaties"
     },
     "avatar": {
       "title": "Profielfoto wijzigen",
@@ -1878,7 +1879,15 @@
     "startConversation": "Start een gesprek",
     "startConversationDescription": "Stuur een bericht om te beginnen met chatten met uw AI-assistent. Stel vragen, krijg hulp met code of voer een natuurlijk gesprek.",
     "scrollToBottom": "Naar beneden scrollen",
-    "newMessages": "Nieuwe berichten"
+    "newMessages": "Nieuwe berichten",
+    "feedbackTags": {
+      "accuracy": "Nauwkeurigheid",
+      "style": "Stijl",
+      "incomplete": "Onvolledig",
+      "harmful": "Schadelijk",
+      "formatting": "Opmaak"
+    },
+    "feedbackComment": "Voeg een opmerking toe…"
   },
   "imageGallery": {
     "title": "Afbeeldingengalerij",
@@ -3233,5 +3242,58 @@
     "addTariff": "Tarief toevoegen",
     "deleteTariff": "Tarief verwijderen",
     "tariffSaved": "Tarief opgeslagen"
+  },
+  "evaluations": {
+    "title": "Evaluaties",
+    "description": "Blinde arenaduels, een Elo-ranglijst, herbruikbare evaluatiesets en je feedbackdataset.",
+    "loadFailed": "Evaluaties laden mislukt",
+    "matchFailed": "Het arenaduel is mislukt",
+    "voteRecorded": "Stem geregistreerd",
+    "voteFailed": "Stem registreren mislukt",
+    "saveFailed": "Opslaan mislukt",
+    "exportFailed": "Export mislukt",
+    "setSaved": "Evaluatieset opgeslagen",
+    "runStarted": "Evaluatierun gestart",
+    "pickModel": "Kies een model",
+    "tabs": {
+      "arena": "Arena",
+      "leaderboard": "Ranglijst",
+      "sets": "Eval-sets",
+      "feedback": "Feedback"
+    },
+    "arenaModelA": "Model A",
+    "arenaModelB": "Model B",
+    "arenaPrompt": "Stel beide modellen dezelfde vraag…",
+    "startMatch": "Duel starten",
+    "arenaHint": "De modelnamen blijven verborgen tot je stemt.",
+    "candidate": "Antwoord {{letter}}",
+    "voteFirst": "Eerste is beter",
+    "voteSecond": "Tweede is beter",
+    "voteTie": "Gelijkspel",
+    "voteBothBad": "Beide slecht",
+    "model": "Model",
+    "rating": "Score",
+    "record": "Balans",
+    "votes": "Stemmen",
+    "noVotes": "Nog geen arenastemmen — start een duel om de ranglijst op te bouwen.",
+    "newSet": "Nieuwe evaluatieset",
+    "setName": "Naam van de set",
+    "setPrompts": "Eén prompt per regel…",
+    "saveSet": "Set opslaan",
+    "yourSets": "Jouw sets",
+    "noSets": "Nog geen evaluatiesets.",
+    "itemCount": "{{total}} prompts",
+    "run": "Uitvoeren",
+    "deleteSet": "Set verwijderen",
+    "cancelRun": "Run annuleren",
+    "exportRun": "Run exporteren",
+    "status": {
+      "queued": "In wachtrij",
+      "running": "Bezig",
+      "completed": "Voltooid",
+      "failed": "Mislukt",
+      "cancelled": "Geannuleerd"
+    },
+    "noFeedback": "Nog geen feedback — beoordeel antwoorden om je dataset op te bouwen."
   }
 }
