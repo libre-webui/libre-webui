@@ -39,3 +39,25 @@ slash lookup works.
 
 An assistant profile can bind one prompt; the rendered content then leads
 the profile's own system prompt for every session using that profile.
+
+## Example
+
+Create a prompt under **Prompts**:
+
+- Slug: `review-pr`
+- Title: `Pull request review`
+- Content:
+
+  ```text
+  Review the following {{language}} changes with {{strictness}} strictness.
+  Point out bugs first, style second, and end with a one-line verdict.
+  ```
+
+- Variables: `language` (text, required) and `strictness` (select:
+  `low`, `normal`, `pedantic`, default `normal`).
+
+In any chat, type `/` — the composer lists your prompts. Pick
+`/review-pr`, fill in `language: TypeScript` and pick `pedantic`, and the
+rendered text replaces your draft, ready to send (paste the diff after
+it). Editing the prompt later bumps it to version 2; the old wording stays
+in the history and can be rolled back.

@@ -91,6 +91,80 @@ two minutes, which the model sees as a denial. Denials and timeouts never
 execute the call. Every decision and every call leaves a redacted security
 audit event.
 
+## Examples
+
+Turn the wrench toggle on in the composer first; every example below is a
+normal chat message.
+
+### `web_search` — look something up
+
+> What changed in the latest SQLite release? Search the web before
+> answering.
+
+The model calls `web_search` with a query like
+`{"query": "SQLite latest release changelog"}`, the call card shows the
+result snippets it received, and the reply cites what it found. Requires
+web search to be configured and allowed for your account.
+
+### `search_documents` — ask your own files
+
+Upload a PDF or add documents to a knowledge collection, then:
+
+> Search my documents for the termination clause and quote it exactly.
+
+The model calls `search_documents` with
+`{"query": "termination clause"}` and receives matching passages labeled
+with their source document, so the answer can quote and attribute them.
+
+### `load_skill` — apply a saved skill
+
+Create a skill under **Skills** (say `$release-notes` — how you like release
+notes written), then:
+
+> Draft release notes for this diff using $release-notes.
+
+The model sees the skill in its manifest, calls
+`load_skill {"slug": "release-notes"}` to fetch the full instructions, and
+follows them. Typing `$` in the composer autocompletes your skill slugs.
+
+### An OpenAPI server — for example a weather API
+
+1. **Tools → Register server**: name `Weather`, kind `OpenAPI`, base URL
+   `https://api.example-weather.dev`, spec URL
+   `https://api.example-weather.dev/openapi.json`, auth mode `bearer`.
+2. The spec is pinned and its operations appear as tools — say
+   `getForecast` (GET, read-only) and `createAlert` (POST, side effect).
+3. Each user who wants it saves their own API key on the server's card.
+4. In chat:
+
+   > What's the forecast for Montreal this weekend?
+
+   The model calls `weather__getForecast {"city": "Montreal"}` and it runs
+   immediately — read-only tools never prompt.
+
+   > Alert me if it drops below -20 tonight.
+
+   `weather__createAlert` is a side effect, so the turn pauses with an
+   approval card: **Allow once**, **Allow for this chat**, **Always
+   allow**, or **Deny**. Nothing is sent until you choose.
+
+### An MCP server — for example an issue tracker
+
+1. **Tools → Register server**: name `Issues`, kind `MCP`, base URL
+   `https://mcp.example-tracker.dev/mcp`, auth mode `header` with header
+   name `X-Api-Key`.
+2. Its tool list is pinned; tools marked read-only by the server (like
+   `search_issues`) run freely, everything else (like `create_issue`) asks
+   first.
+3. In chat:
+
+   > Find open issues mentioning "database lock" and file a new one
+   > summarizing the pattern.
+
+   `issues__search_issues` runs immediately; `issues__create_issue` shows
+   the exact arguments in the approval card so you can read what would be
+   filed before allowing it.
+
 ## Environment variables
 
 | Variable                          | Effect                                                                        |
