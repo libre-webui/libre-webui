@@ -20,6 +20,7 @@ import {
 } from './embeddedDurableJobWorker.js';
 import { PostgresDurableJobService } from './postgresDurableJobService.js';
 import { runWithLogContext } from '../../observability/requestContext.js';
+import { instrumentDurableJobExecution } from '../../observability/otel.js';
 import {
   OWNER_DELETE_CONTENT_JOB_TYPE,
   RESOURCE_DELETE_JOB_TYPE,
@@ -336,20 +337,22 @@ export class PostgresDurableJobWorker {
       lastAuthorityCheckAt = Date.now();
       const payload = await this.options.service.readPayload(lease);
       const result = await runWithLogContext({ jobId: lease.id }, () =>
-        handler({
-          signal: abort.signal,
-          payload,
-          actorUserId: lease.actorUserId,
-          attemptCount: lease.attemptCount,
-          sideEffectLease: {
-            jobId: lease.id,
-            workerId: lease.workerId,
-            leaseToken: lease.leaseToken,
-          },
-          reportProgress: progress =>
-            this.options.service.reportProgress(lease, progress),
-          assertSideEffectAllowed,
-        })
+        instrumentDurableJobExecution(lease.jobType, lease.attemptCount, () =>
+          handler({
+            signal: abort.signal,
+            payload,
+            actorUserId: lease.actorUserId,
+            attemptCount: lease.attemptCount,
+            sideEffectLease: {
+              jobId: lease.id,
+              workerId: lease.workerId,
+              leaseToken: lease.leaseToken,
+            },
+            reportProgress: progress =>
+              this.options.service.reportProgress(lease, progress),
+            assertSideEffectAllowed,
+          })
+        )
       );
       await this.allowed(lease);
       try {

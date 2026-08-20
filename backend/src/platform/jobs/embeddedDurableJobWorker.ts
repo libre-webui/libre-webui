@@ -26,6 +26,7 @@ import {
 } from './durableJobTypes.js';
 import { DurableJobService } from './durableJobService.js';
 import { runWithLogContext } from '../../observability/requestContext.js';
+import { instrumentDurableJobExecution } from '../../observability/otel.js';
 import {
   OWNER_DELETE_CONTENT_JOB_TYPE,
   RESOURCE_DELETE_JOB_TYPE,
@@ -460,20 +461,22 @@ export class EmbeddedDurableJobWorker {
       lastAuthorityCheckAt = Date.now();
       const payload = this.service.readPayload(lease);
       const result = await runWithLogContext({ jobId: lease.id }, () =>
-        handler({
-          signal: abort.signal,
-          payload,
-          actorUserId: lease.actorUserId,
-          attemptCount: lease.attemptCount,
-          sideEffectLease: {
-            jobId: lease.id,
-            workerId: lease.workerId,
-            leaseToken: lease.leaseToken,
-          },
-          reportProgress: progress =>
-            this.service.reportProgress(lease, progress),
-          assertSideEffectAllowed,
-        })
+        instrumentDurableJobExecution(lease.jobType, lease.attemptCount, () =>
+          handler({
+            signal: abort.signal,
+            payload,
+            actorUserId: lease.actorUserId,
+            attemptCount: lease.attemptCount,
+            sideEffectLease: {
+              jobId: lease.id,
+              workerId: lease.workerId,
+              leaseToken: lease.leaseToken,
+            },
+            reportProgress: progress =>
+              this.service.reportProgress(lease, progress),
+            assertSideEffectAllowed,
+          })
+        )
       );
       await this.assertActorAllowed(lease);
       this.service.complete(lease, result?.resultReference);

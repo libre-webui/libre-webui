@@ -50,6 +50,7 @@ import {
   accessLogger,
   errorHandler,
   notFoundHandler,
+  otelRequestTelemetry,
   requestContext,
   requestLogger,
 } from './middleware/index.js';
@@ -432,6 +433,7 @@ app.use(
 // morgan's combined format: it strips query strings (which can carry user
 // content or short-lived credentials) and carries the request id.
 app.use(requestContext);
+app.use(otelRequestTelemetry);
 if (process.env.NODE_ENV !== 'test') {
   app.use(accessLogger);
 }

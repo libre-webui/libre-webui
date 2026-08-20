@@ -36,6 +36,9 @@ test-only canaries are intentionally omitted.
 | `BASE_URL`                   | `http://localhost:3001`                                  | Base URL used for OAuth callback defaults                                                     |
 | `LOG_LEVEL`                  | `info` (`warn` in tests)                                 | Backend log level                                                                             |
 | `LOG_FORMAT`                 | `text`                                                   | `json` switches to structured one-line logs with timestamps, correlation ids, and redaction   |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | unset                                                   | Opt-in OTLP/HTTP JSON telemetry export; unset means no telemetry leaves the process           |
+| `OTEL_EXPORTER_OTLP_HEADERS` | unset                                                    | Comma-separated `key=value` headers sent to the OTLP collector (for example auth)             |
+| `OTEL_SERVICE_NAME`          | `libre-webui`                                            | `service.name` resource attribute on exported telemetry                                       |
 | `WEBUI_HOST`                 | loopback; `0.0.0.0` in Docker                            | HTTP listen address                                                                           |
 | `OPEN_BROWSER`               | `true` when serving the frontend                         | Set `false` to suppress automatic browser launch                                              |
 | `FULL_DOCUMENT_CONTEXT_MAX_TOKENS` | `32000`                                            | Token guard for the per-chat full-document context mode (1000-2000000)                        |

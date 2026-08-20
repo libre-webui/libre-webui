@@ -22,6 +22,11 @@ import {
   currentLogContext,
   runWithLogContext,
 } from '../observability/requestContext.js';
+import {
+  incrementOtelCounter,
+  isOtelEnabled,
+  recordOtelSpan,
+} from '../observability/otel.js';
 
 const logger = createLogger('middleware:index');
 const accessLog = createLogger('http');
@@ -118,6 +123,45 @@ export const notFoundHandler = (
     error: 'Route not found',
     path: req.originalUrl,
   });
+};
+
+/**
+ * Server span and request counter per HTTP request (OBS-02). A no-op when
+ * OTLP export is not configured; only the path (no query string), method,
+ * status, and correlation id are attached.
+ */
+export const otelRequestTelemetry = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!isOtelEnabled()) {
+    next();
+    return;
+  }
+  const start = Date.now();
+  const context = currentLogContext();
+  res.on('finish', () => {
+    const path = req.originalUrl.split('?')[0];
+    recordOtelSpan({
+      name: `${req.method} ${path}`,
+      kind: 2,
+      startMs: start,
+      endMs: Date.now(),
+      ok: res.statusCode < 500,
+      attributes: {
+        'http.request.method': req.method,
+        'url.path': path,
+        'http.response.status_code': res.statusCode,
+        ...(context?.requestId ? { requestId: context.requestId } : {}),
+      },
+    });
+    incrementOtelCounter('http.server.requests', {
+      method: req.method,
+      status_class: `${Math.floor(res.statusCode / 100)}xx`,
+    });
+  });
+  next();
 };
 
 export const requestLogger = (

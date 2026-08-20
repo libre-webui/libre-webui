@@ -16,59 +16,14 @@
  */
 
 import { currentLogContext } from '../observability/requestContext.js';
+import { recordOtelLog } from '../observability/otel.js';
+import { redactLogFields } from './logRedaction.js';
+
+export { redactLogFields } from './logRedaction.js';
 
 export type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'debug';
 
 export type LogFormat = 'text' | 'json';
-
-/**
- * Structured-log redaction. Any key that looks like it could carry a
- * credential is dropped outright, and prompt-sized strings are truncated so
- * conversational content cannot ride along in operational logs.
- */
-const SECRET_KEY_PATTERN =
-  /pass(word)?|secret|token|key|authorization|cookie|credential|bearer|jwt/i;
-const MAX_FIELD_STRING = 512;
-const MAX_FIELD_DEPTH = 6;
-const MAX_FIELD_ARRAY = 64;
-
-export const redactLogFields = (value: unknown, depth = 0): unknown => {
-  if (depth > MAX_FIELD_DEPTH) return '[depth]';
-  if (typeof value === 'string') {
-    return value.length > MAX_FIELD_STRING
-      ? `${value.slice(0, MAX_FIELD_STRING)}…[truncated]`
-      : value;
-  }
-  if (
-    value === null ||
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  ) {
-    return value;
-  }
-  if (value === undefined) return undefined;
-  if (value instanceof Error) {
-    return {
-      name: value.name,
-      message: redactLogFields(value.message, depth + 1),
-    };
-  }
-  if (Array.isArray(value)) {
-    return value
-      .slice(0, MAX_FIELD_ARRAY)
-      .map(item => redactLogFields(item, depth + 1));
-  }
-  if (typeof value === 'object') {
-    const result: Record<string, unknown> = {};
-    for (const [key, item] of Object.entries(value)) {
-      if (SECRET_KEY_PATTERN.test(key)) continue;
-      const redacted = redactLogFields(item, depth + 1);
-      if (redacted !== undefined) result[key] = redacted;
-    }
-    return result;
-  }
-  return String(value);
-};
 
 export const getLogFormat = (): LogFormat =>
   process.env.LOG_FORMAT?.trim().toLowerCase() === 'json' ? 'json' : 'text';
@@ -184,6 +139,21 @@ export function createLogger(scope: string): Logger {
     args: unknown[]
   ) => {
     if (!isLogLevelEnabled(level)) return;
+    if (level === 'warn' || level === 'error') {
+      // Best-effort log export; a no-op unless OTLP is configured.
+      recordOtelLog(
+        level,
+        scope,
+        args
+          .map(arg => {
+            const redacted = redactLogFields(arg);
+            return typeof redacted === 'string'
+              ? redacted
+              : JSON.stringify(redacted);
+          })
+          .join(' ')
+      );
+    }
     if (getLogFormat() === 'json') {
       writeStructuredLine(level, scope, args);
       return;
