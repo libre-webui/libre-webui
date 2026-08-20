@@ -426,6 +426,10 @@
       "moveDown": "Turunkan",
       "updateFailed": "Tidak dapat memperbarui prompt dalam antrean",
       "enqueueFailed": "Tidak dapat mengantrekan prompt"
+    },
+    "compare": {
+      "title": "Bandingkan model",
+      "hint": "Jawab dengan hingga {{max}} model tambahan"
     }
   },
   "sidebar": {

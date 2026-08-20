@@ -426,6 +426,10 @@
       "moveDown": "Nach unten",
       "updateFailed": "Der wartende Prompt konnte nicht aktualisiert werden",
       "enqueueFailed": "Der Prompt konnte nicht eingereiht werden"
+    },
+    "compare": {
+      "title": "Modelle vergleichen",
+      "hint": "Mit bis zu {{max}} zusätzlichen Modellen antworten"
     }
   },
   "sidebar": {

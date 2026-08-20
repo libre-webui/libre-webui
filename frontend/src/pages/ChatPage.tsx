@@ -183,6 +183,7 @@ export const ChatPage: React.FC = () => {
   const {
     sendMessage,
     stopGeneration,
+    cancelComparison,
     regenerateLastMessage,
     editAndResendMessage,
     selectBranch,
@@ -778,12 +779,25 @@ export const ChatPage: React.FC = () => {
     format?: string | Record<string, unknown>,
     webSearch?: boolean,
     tools?: boolean,
-    toolSelection?: { builtinTools?: string[]; serverIds?: string[] }
+    toolSelection?: { builtinTools?: string[]; serverIds?: string[] },
+    compareTargets?: Array<{
+      model: string;
+      providerType?: string | null;
+      providerId?: string | null;
+    }>
   ) => {
     if (!currentSession) return;
     triggerHapticFeedback('impact');
     setFollowUps(null);
-    sendMessage(message, images, format, webSearch, tools, toolSelection);
+    sendMessage(
+      message,
+      images,
+      format,
+      webSearch,
+      tools,
+      toolSelection,
+      compareTargets
+    );
   };
 
   if (!currentSession) {
@@ -1173,6 +1187,7 @@ export const ChatPage: React.FC = () => {
             <ChatInput
               onSendMessage={handleSendMessage}
               onStopGeneration={stopGeneration}
+              onCancelComparison={cancelComparison}
               disabled={!currentSession}
             />
           </div>

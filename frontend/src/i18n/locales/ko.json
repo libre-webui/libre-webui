@@ -426,6 +426,10 @@
       "moveDown": "아래로 이동",
       "updateFailed": "대기 중인 프롬프트를 수정할 수 없습니다",
       "enqueueFailed": "프롬프트를 대기열에 추가할 수 없습니다"
+    },
+    "compare": {
+      "title": "모델 비교",
+      "hint": "최대 {{max}}개의 추가 모델로 답변"
     }
   },
   "sidebar": {

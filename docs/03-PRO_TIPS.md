@@ -154,6 +154,13 @@ prompts appear above the composer, can be edited, reordered, and removed,
 and are sent one by one as each reply finishes. The queue is stored with
 the chat, so it survives a reload or reconnect.
 
+## Compare Models in One Turn
+
+The columns button beside the tool picker fans your next prompt out to up
+to three extra models. Each reply is its own generation with its own model
+label, statistics, and cancel control, so slow or failing models never
+block the others.
+
 ## Use Document Chat Deliberately
 
 Document Chat accepts PDF, Office (DOCX/PPTX/XLSX), Markdown, HTML, code, and CSV files up to 10 MB. Search works in two modes:

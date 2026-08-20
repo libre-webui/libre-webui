@@ -426,6 +426,10 @@
       "moveDown": "Dolů",
       "updateFailed": "Čekající prompt se nepodařilo upravit",
       "enqueueFailed": "Prompt se nepodařilo zařadit do fronty"
+    },
+    "compare": {
+      "title": "Porovnat modely",
+      "hint": "Odpovědět až {{max}} dalšími modely"
     }
   },
   "sidebar": {

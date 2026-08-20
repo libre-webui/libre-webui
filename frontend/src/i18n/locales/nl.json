@@ -426,6 +426,10 @@
       "moveDown": "Omlaag",
       "updateFailed": "Kon de wachtende prompt niet bijwerken",
       "enqueueFailed": "Kon de prompt niet in de wachtrij zetten"
+    },
+    "compare": {
+      "title": "Modellen vergelijken",
+      "hint": "Antwoorden met maximaal {{max}} extra modellen"
     }
   },
   "sidebar": {

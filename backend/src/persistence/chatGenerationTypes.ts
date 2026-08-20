@@ -7,6 +7,12 @@
 import type { PostgresQueryExecutor } from './postgresDatabase.js';
 import type { PersistenceSyncExecutor } from './types.js';
 
+export interface ChatGenerationModelOverride {
+  model: string;
+  providerType?: string | null;
+  providerId?: string | null;
+}
+
 export interface ChatGenerationEnqueueInput {
   sessionId: string;
   actorUserId: string;
@@ -18,6 +24,10 @@ export interface ChatGenerationEnqueueInput {
   webSearch: boolean;
   regenerate: boolean;
   originalMessageId?: string;
+  /** Multi-model comparison: this generation answers with another model. */
+  modelOverride?: ChatGenerationModelOverride;
+  /** Marks the reply as part of the turn's comparison group. */
+  compare?: boolean;
 }
 
 export interface ChatGenerationEnqueueResult {

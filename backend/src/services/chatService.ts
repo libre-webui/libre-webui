@@ -628,6 +628,12 @@ class ChatService {
     };
     regenerate?: boolean;
     originalMessageId?: string;
+    modelOverride?: {
+      model: string;
+      providerType?: string | null;
+      providerId?: string | null;
+    };
+    compare?: boolean;
   }): Promise<{ userMessage: ChatMessage; jobId: string } | undefined> {
     return this.withSessionWriteLease(
       input.sessionId,
@@ -699,6 +705,18 @@ class ChatService {
         ) {
           throw new Error('Chat generation idempotency key was reused');
         }
+        if (input.modelOverride) {
+          const model = input.modelOverride.model?.trim();
+          if (!model || model.length > 200) {
+            throw new Error('The comparison model name is invalid');
+          }
+          // Validates the provider pairing the same way session bindings do.
+          normalizeChatProviderSelection({
+            providerType: (input.modelOverride.providerType ??
+              null) as ChatProviderSelection['providerType'],
+            providerId: input.modelOverride.providerId ?? null,
+          });
+        }
         const enqueueInput = {
           sessionId: input.sessionId,
           actorUserId: input.userId,
@@ -716,6 +734,10 @@ class ChatService {
           ...(input.regenerate && input.originalMessageId
             ? { originalMessageId: input.originalMessageId }
             : {}),
+          ...(input.modelOverride
+            ? { modelOverride: input.modelOverride }
+            : {}),
+          ...(input.compare ? { compare: true } : {}),
         };
         const persistAndEnqueue = (): Promise<void> =>
           storageService.saveSessionAndEnqueueGeneration(

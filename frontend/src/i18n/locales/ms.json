@@ -426,6 +426,10 @@
       "moveDown": "Turun",
       "updateFailed": "Tidak dapat mengemas kini prom dalam giliran",
       "enqueueFailed": "Tidak dapat membariskan prom"
+    },
+    "compare": {
+      "title": "Banding model",
+      "hint": "Jawab dengan sehingga {{max}} model tambahan"
     }
   },
   "sidebar": {

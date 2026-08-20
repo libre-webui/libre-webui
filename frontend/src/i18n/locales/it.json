@@ -426,6 +426,10 @@
       "moveDown": "Sposta giù",
       "updateFailed": "Impossibile aggiornare il prompt in coda",
       "enqueueFailed": "Impossibile mettere in coda il prompt"
+    },
+    "compare": {
+      "title": "Confronta modelli",
+      "hint": "Rispondi con un massimo di {{max}} modelli aggiuntivi"
     }
   },
   "sidebar": {

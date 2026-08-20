@@ -426,6 +426,10 @@
       "moveDown": "Flyt ned",
       "updateFailed": "Kunne ikke opdatere prompten i køen",
       "enqueueFailed": "Kunne ikke sætte prompten i kø"
+    },
+    "compare": {
+      "title": "Sammenlign modeller",
+      "hint": "Svar med op til {{max}} ekstra modeller"
     }
   },
   "sidebar": {

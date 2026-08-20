@@ -49,6 +49,12 @@ import { ContextMeter } from './ContextMeter';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
 import PromptQueueList from '@/components/composer/PromptQueueList';
+import ComposerCompareMenu, {
+  compareTargetsFromKeys,
+  type CompareTarget,
+} from '@/components/composer/ComposerCompareMenu';
+import { chatModelSelectionKey } from '@/utils/chatModelSelection';
+import { X } from 'lucide-react';
 import { applyPromptQueueToChatStore } from '@/utils/promptQueue';
 import {
   personaApi,
@@ -150,15 +156,18 @@ interface ChatInputProps {
     format?: string | Record<string, unknown>,
     webSearch?: boolean,
     tools?: boolean,
-    toolSelection?: { builtinTools?: string[]; serverIds?: string[] }
+    toolSelection?: { builtinTools?: string[]; serverIds?: string[] },
+    compareTargets?: CompareTarget[]
   ) => void;
   onStopGeneration: () => void;
+  onCancelComparison?: (assistantMessageId: string) => void;
   disabled?: boolean;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage,
   onStopGeneration,
+  onCancelComparison,
   disabled = false,
 }) => {
   const { t, i18n } = useTranslation();
@@ -244,6 +253,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   // toggle appears only when an administrator has enabled it.
   const [webSearchAvailable, setWebSearchAvailable] = useState(false);
   const [webSearchActive, setWebSearchActive] = useState(false);
+  const [compareKeys, setCompareKeys] = useState<string[]>([]);
+  const pendingComparisons = useChatStore(state => state.pendingComparisons);
   // Native tool calls: the picker manages catalog availability itself.
   // Private sessions never offer tools.
   const [composerTools, setComposerTools] = useState<ComposerToolsValue>(
@@ -910,13 +921,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     const toolsRequest = isPrivateSession
       ? {}
       : composerToolsRequest(composerTools);
+    const compareTargets = isPrivateSession
+      ? []
+      : compareTargetsFromKeys(models, compareKeys);
     onSendMessage(
       message.trim(),
       images.length > 0 ? images : undefined,
       format || undefined,
       webSearchAvailable && webSearchActive ? true : undefined,
       toolsRequest.tools,
-      toolsRequest.toolSelection
+      toolsRequest.toolSelection,
+      compareTargets.length > 0 ? compareTargets : undefined
     );
     setMessage('');
     setImages([]);
@@ -947,6 +962,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         : '';
     }
   }, [message]);
+
+  // Comparison model picks are per chat.
+  useEffect(() => {
+    setCompareKeys([]);
+  }, [currentSessionId]);
 
   // Load current persona when session changes
   useEffect(() => {
@@ -1103,6 +1123,42 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 sessionId={currentSessionId}
                 queue={currentSession!.settings!.promptQueue!}
               />
+            )}
+          {currentSessionId &&
+            pendingComparisons.some(
+              entry => entry.sessionId === currentSessionId
+            ) && (
+              <div
+                className='mx-auto mb-1.5 flex w-full max-w-3xl flex-wrap gap-1.5 px-1'
+                data-testid='pending-comparisons'
+              >
+                {pendingComparisons
+                  .filter(entry => entry.sessionId === currentSessionId)
+                  .map(entry => (
+                    <span
+                      key={entry.assistantMessageId}
+                      className='flex items-center gap-1.5 rounded-full border border-black/[0.07] bg-surface/70 px-2.5 py-1 text-[12px] text-gray-600 dark:border-white/[0.08] dark:bg-dark-200/70 dark:text-dark-700'
+                      data-testid='pending-comparison'
+                    >
+                      <Loader2 className='h-3 w-3 animate-spin' />
+                      <span dir='ltr' className='max-w-[160px] truncate'>
+                        {entry.model}
+                      </span>
+                      {onCancelComparison && (
+                        <button
+                          type='button'
+                          onClick={() =>
+                            onCancelComparison(entry.assistantMessageId)
+                          }
+                          className='rounded-full p-0.5 text-gray-400 hover:text-red-500'
+                          aria-label={t('common.cancel')}
+                        >
+                          <X className='h-3 w-3' />
+                        </button>
+                      )}
+                    </span>
+                  ))}
+              </div>
             )}
           <form onSubmit={handleSubmit}>
             {/* Unified Input Container: text row above, controls row below. */}
@@ -1385,6 +1441,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     <ComposerToolsMenu
                       value={composerTools}
                       onChange={setComposerTools}
+                    />
+                  )}
+
+                  {/* Multi-model comparison picker */}
+                  {!isPrivateSession && currentSession && (
+                    <ComposerCompareMenu
+                      models={models}
+                      currentModelKey={chatModelSelectionKey({
+                        model: currentSession.personaId
+                          ? `persona:${currentSession.personaId}`
+                          : currentSession.model,
+                        providerType: currentSession.providerType ?? null,
+                        providerId: currentSession.providerId ?? null,
+                      })}
+                      selectedKeys={compareKeys}
+                      onChange={setCompareKeys}
+                      disabled={disabled}
                     />
                   )}
 

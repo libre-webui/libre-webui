@@ -426,6 +426,10 @@
       "moveDown": "下へ移動",
       "updateFailed": "キュー内のプロンプトを更新できませんでした",
       "enqueueFailed": "プロンプトをキューに追加できませんでした"
+    },
+    "compare": {
+      "title": "モデルを比較",
+      "hint": "最大 {{max}} 個の追加モデルで回答"
     }
   },
   "sidebar": {

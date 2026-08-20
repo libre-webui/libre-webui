@@ -79,6 +79,7 @@ export const useChat = (sessionId: string) => {
   } = useChatStore();
   const { setIsGenerating } = useAppStore();
   const drainPromptQueueRef = useRef<(() => Promise<void>) | null>(null);
+  const comparisonAbortsRef = useRef(new Map<string, AbortController>());
   const streamingMessageIdRef = useRef<string | null>(null);
   const cancelRequestedMessageIdsRef = useRef<Set<string>>(new Set());
   const demoGenerationTimerRef = useRef<number | null>(null);
@@ -724,7 +725,12 @@ export const useChat = (sessionId: string) => {
       format?: string | Record<string, unknown>,
       webSearch?: boolean,
       tools?: boolean,
-      toolSelection?: { builtinTools?: string[]; serverIds?: string[] }
+      toolSelection?: { builtinTools?: string[]; serverIds?: string[] },
+      compareTargets?: Array<{
+        model: string;
+        providerType?: string | null;
+        providerId?: string | null;
+      }>
     ) => {
       // Allow sending if there's content OR if there are images
       if (!sessionId || (!content.trim() && (!images || images.length === 0)))
@@ -861,6 +867,68 @@ export const useChat = (sessionId: string) => {
               durableGenerationRef.current = null;
             }
             return;
+          }
+          // Comparison targets fan out as their own durable generations with
+          // independent identities, cancel handles, errors, and usage. They
+          // do not stream token-by-token; the completed reply is merged from
+          // the authoritative session when its terminal event arrives.
+          for (const target of compareTargets ?? []) {
+            const compareAssistantId = generateId();
+            const compareAbort = new AbortController();
+            comparisonAbortsRef.current.set(compareAssistantId, compareAbort);
+            useChatStore.getState().addPendingComparison({
+              sessionId,
+              assistantMessageId: compareAssistantId,
+              model: target.model,
+            });
+            void (async () => {
+              try {
+                await enqueueDurableChatGeneration({
+                  sessionId,
+                  message: content.trim(),
+                  images,
+                  userMessageId,
+                  assistantMessageId: compareAssistantId,
+                  options: {
+                    ...(session?.settings?.generationOptions ?? {}),
+                    ...(format !== undefined ? { format } : {}),
+                  },
+                  webSearch: false,
+                  compare: true,
+                  modelOverride: target,
+                  signal: compareAbort.signal,
+                });
+                await streamDurableChatGeneration({
+                  sessionId,
+                  assistantMessageId: compareAssistantId,
+                  signal: compareAbort.signal,
+                  onEvent: payload => {
+                    if (payload.type === 'done') {
+                      void reloadCompletedDurableGeneration(
+                        sessionId,
+                        compareAssistantId
+                      );
+                    } else if (payload.type === 'error') {
+                      toast.error(
+                        `${target.model}: ${String(payload.error ?? 'generation failed')}`
+                      );
+                    }
+                  },
+                });
+              } catch (error) {
+                if (!compareAbort.signal.aborted) {
+                  logger.error('Comparison generation failed:', error);
+                  toast.error(
+                    `${target.model}: ${error instanceof Error ? error.message : 'comparison failed'}`
+                  );
+                }
+              } finally {
+                comparisonAbortsRef.current.delete(compareAssistantId);
+                useChatStore
+                  .getState()
+                  .removePendingComparison(compareAssistantId);
+              }
+            })();
           }
           await streamDurableChatGeneration({
             sessionId,
@@ -1471,9 +1539,29 @@ export const useChat = (sessionId: string) => {
     return () => window.clearTimeout(timer);
   }, [sessionId]);
 
+  /** Stops one comparison generation without touching the others. */
+  const cancelComparison = useCallback(
+    async (assistantMessageId: string) => {
+      if (!sessionId) return;
+      comparisonAbortsRef.current.get(assistantMessageId)?.abort();
+      try {
+        await cancelDurableChatGenerationByIdentity(
+          sessionId,
+          assistantMessageId
+        );
+      } catch (error) {
+        logger.error('Failed to cancel the comparison generation:', error);
+      } finally {
+        useChatStore.getState().removePendingComparison(assistantMessageId);
+      }
+    },
+    [sessionId]
+  );
+
   return {
     sendMessage,
     stopGeneration,
+    cancelComparison,
     regenerateLastMessage,
     editAndResendMessage,
     selectBranch,

@@ -426,6 +426,10 @@
       "moveDown": "Flytta ner",
       "updateFailed": "Kunde inte uppdatera prompten i kön",
       "enqueueFailed": "Kunde inte köa prompten"
+    },
+    "compare": {
+      "title": "Jämför modeller",
+      "hint": "Svara med upp till {{max}} extra modeller"
     }
   },
   "sidebar": {

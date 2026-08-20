@@ -457,7 +457,17 @@ const readChatPayload = (value: unknown): DurableChatGenerationInput => {
       typeof record.regenerate !== 'boolean') ||
     (record.regenerate === true &&
       (typeof record.originalMessageId !== 'string' ||
-        !record.originalMessageId.trim()))
+        !record.originalMessageId.trim())) ||
+    (record.compare !== undefined && typeof record.compare !== 'boolean') ||
+    (record.modelOverride !== undefined &&
+      (typeof record.modelOverride !== 'object' ||
+        record.modelOverride === null ||
+        Array.isArray(record.modelOverride) ||
+        typeof (record.modelOverride as Record<string, unknown>).model !==
+          'string' ||
+        !(
+          (record.modelOverride as Record<string, unknown>).model as string
+        ).trim()))
   ) {
     throw new DurableJobExecutionError(
       false,

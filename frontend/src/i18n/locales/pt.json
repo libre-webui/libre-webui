@@ -426,6 +426,10 @@
       "moveDown": "Mover para baixo",
       "updateFailed": "Não foi possível atualizar o prompt na fila",
       "enqueueFailed": "Não foi possível enfileirar o prompt"
+    },
+    "compare": {
+      "title": "Comparar modelos",
+      "hint": "Responder com até {{max}} modelos adicionais"
     }
   },
   "sidebar": {

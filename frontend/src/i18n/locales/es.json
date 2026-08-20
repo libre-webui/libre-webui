@@ -426,6 +426,10 @@
       "moveDown": "Bajar",
       "updateFailed": "No se pudo actualizar el mensaje en cola",
       "enqueueFailed": "No se pudo poner el mensaje en cola"
+    },
+    "compare": {
+      "title": "Comparar modelos",
+      "hint": "Responder con hasta {{max}} modelos adicionales"
     }
   },
   "sidebar": {

@@ -154,6 +154,19 @@ interface ChatState {
     providerType?: ChatProviderType | null,
     providerId?: string | null
   ) => void;
+
+  // Multi-model comparison generations still running
+  pendingComparisons: Array<{
+    sessionId: string;
+    assistantMessageId: string;
+    model: string;
+  }>;
+  addPendingComparison: (entry: {
+    sessionId: string;
+    assistantMessageId: string;
+    model: string;
+  }) => void;
+  removePendingComparison: (assistantMessageId: string) => void;
   updateCurrentSessionModel: (
     model: string,
     providerType?: ChatProviderType | null,
@@ -1034,6 +1047,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
   selectedModel: '',
   selectedProviderType: null,
   selectedProviderId: null,
+  pendingComparisons: [],
+  addPendingComparison: entry =>
+    set(state => ({
+      pendingComparisons: [...state.pendingComparisons, entry],
+    })),
+  removePendingComparison: assistantMessageId =>
+    set(state => ({
+      pendingComparisons: state.pendingComparisons.filter(
+        entry => entry.assistantMessageId !== assistantMessageId
+      ),
+    })),
+
   setSelectedModel: (model, providerType = null, providerId = null) => {
     const normalizedProviderId =
       providerType === 'plugin' || providerType === 'agent'

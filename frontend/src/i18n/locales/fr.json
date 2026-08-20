@@ -426,6 +426,10 @@
       "moveDown": "Descendre",
       "updateFailed": "Impossible de mettre à jour le prompt en attente",
       "enqueueFailed": "Impossible de mettre le prompt en attente"
+    },
+    "compare": {
+      "title": "Comparer les modèles",
+      "hint": "Répondre avec jusqu'à {{max}} modèles supplémentaires"
     }
   },
   "sidebar": {

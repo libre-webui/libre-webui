@@ -426,6 +426,10 @@
       "moveDown": "Chuyển xuống",
       "updateFailed": "Không thể cập nhật lời nhắc trong hàng đợi",
       "enqueueFailed": "Không thể xếp lời nhắc vào hàng đợi"
+    },
+    "compare": {
+      "title": "So sánh mô hình",
+      "hint": "Trả lời với tối đa {{max}} mô hình bổ sung"
     }
   },
   "sidebar": {

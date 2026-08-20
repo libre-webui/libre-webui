@@ -65,6 +65,12 @@ export interface DurableChatGenerationInput {
   toolSelection?: RequestedToolSelection;
   regenerate: boolean;
   originalMessageId?: string;
+  modelOverride?: {
+    model: string;
+    providerType?: string | null;
+    providerId?: string | null;
+  };
+  compare?: boolean;
 }
 
 const requestService = new ChatRequestService({
@@ -673,8 +679,19 @@ class DurableChatGenerationService {
       // getMessagesForContext may compact the session — a real side effect,
       // so it must run fenced like the generation below it.
       await context.assertSideEffectAllowed();
+      // A comparison turn answers with a different model while the session
+      // itself keeps its own binding.
+      const generationSession = input.modelOverride
+        ? {
+            ...session,
+            model: input.modelOverride.model,
+            providerType: (input.modelOverride.providerType ??
+              null) as typeof session.providerType,
+            providerId: input.modelOverride.providerId ?? null,
+          }
+        : session;
       const prepared = await requestService.prepareGenerationRequest({
-        session,
+        session: generationSession,
         userId: input.actorUserId,
         options: input.options as GenerationOptions,
         persistedMessages: (
@@ -728,30 +745,34 @@ class DurableChatGenerationService {
           'The assistant message identity is already in use'
         );
       }
+      const metadataExtras: Record<string, unknown> = {};
+      if (webSearchSources?.length) {
+        metadataExtras.webSearchSources = webSearchSources;
+      }
+      if (documentContext.sources.length > 0) {
+        metadataExtras.ragSources = documentContext.sources;
+        metadataExtras.ragContextMode = documentContext.mode;
+      }
+      if (documentContext.fullContextSkipped) {
+        metadataExtras.ragFullContextSkipped =
+          documentContext.fullContextSkipped;
+      }
+      if (input.compare) {
+        metadataExtras.compareGroup = input.userMessageId;
+      }
       assistant = {
         id: input.assistantMessageId,
         role: 'assistant' as const,
         content: generated.content,
         thinking: generated.thinking,
-        model: authoritative.model,
+        model: input.modelOverride?.model ?? authoritative.model,
         timestamp: Date.now(),
         statistics: extractStatistics(generated.response),
         providerMetadata:
-          webSearchSources?.length || documentContext.sources.length > 0
+          Object.keys(metadataExtras).length > 0
             ? {
                 ...(generated.response.message.providerMetadata ?? {}),
-                ...(webSearchSources?.length ? { webSearchSources } : {}),
-                ...(documentContext.sources.length > 0
-                  ? {
-                      ragSources: documentContext.sources,
-                      ragContextMode: documentContext.mode,
-                    }
-                  : {}),
-                ...(documentContext.fullContextSkipped
-                  ? {
-                      ragFullContextSkipped: documentContext.fullContextSkipped,
-                    }
-                  : {}),
+                ...metadataExtras,
               }
             : generated.response.message.providerMetadata,
         ...(input.regenerate && input.originalMessageId

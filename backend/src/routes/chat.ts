@@ -832,6 +832,24 @@ router.post(
           : {}),
         regenerate,
         originalMessageId,
+        ...(req.body?.modelOverride &&
+        typeof req.body.modelOverride === 'object' &&
+        typeof req.body.modelOverride.model === 'string'
+          ? {
+              modelOverride: {
+                model: String(req.body.modelOverride.model),
+                providerType:
+                  typeof req.body.modelOverride.providerType === 'string'
+                    ? String(req.body.modelOverride.providerType)
+                    : null,
+                providerId:
+                  typeof req.body.modelOverride.providerId === 'string'
+                    ? String(req.body.modelOverride.providerId)
+                    : null,
+              },
+            }
+          : {}),
+        ...(req.body?.compare === true ? { compare: true } : {}),
       });
       if (!queued) {
         cleanupCloseFence();

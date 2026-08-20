@@ -426,6 +426,10 @@
       "moveDown": "Aşağı taşı",
       "updateFailed": "Kuyruktaki istem güncellenemedi",
       "enqueueFailed": "İstem kuyruğa eklenemedi"
+    },
+    "compare": {
+      "title": "Modelleri karşılaştır",
+      "hint": "En fazla {{max}} ek modelle yanıtla"
     }
   },
   "sidebar": {

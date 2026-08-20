@@ -426,6 +426,10 @@
       "moveDown": "下移",
       "updateFailed": "无法更新排队中的提示",
       "enqueueFailed": "无法将提示加入队列"
+    },
+    "compare": {
+      "title": "比较模型",
+      "hint": "最多使用 {{max}} 个额外模型回答"
     }
   },
   "sidebar": {

@@ -168,6 +168,12 @@ export const enqueueDurableChatGeneration = async (input: {
   toolSelection?: { builtinTools?: string[]; serverIds?: string[] };
   regenerate?: boolean;
   originalMessageId?: string;
+  modelOverride?: {
+    model: string;
+    providerType?: string | null;
+    providerId?: string | null;
+  };
+  compare?: boolean;
   signal: AbortSignal;
 }): Promise<QueuedChatGeneration> => {
   const response = await fetch(
@@ -191,6 +197,8 @@ export const enqueueDurableChatGeneration = async (input: {
         ...(input.toolSelection ? { toolSelection: input.toolSelection } : {}),
         regenerate: input.regenerate === true,
         originalMessageId: input.originalMessageId,
+        ...(input.modelOverride ? { modelOverride: input.modelOverride } : {}),
+        ...(input.compare ? { compare: true } : {}),
       }),
     }
   );

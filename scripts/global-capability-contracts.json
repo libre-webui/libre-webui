@@ -99,6 +99,15 @@
             "claimQueuedPrompt",
             "reorderPromptQueue"
           ]
+        },
+        {
+          "file": "scripts/test-multi-model-compare.mjs",
+          "runner": "test:package",
+          "name": "a comparison fan-out shares one user turn across independent jobs",
+          "behaviorPatterns": [
+            "modelOverride",
+            "cmp-assistant-alt"
+          ]
         }
       ],
       "backendRoutes": [

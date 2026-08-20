@@ -426,6 +426,10 @@
       "moveDown": "Færa niður",
       "updateFailed": "Ekki tókst að uppfæra fyrirmælin í biðröðinni",
       "enqueueFailed": "Ekki tókst að setja fyrirmælin í biðröð"
+    },
+    "compare": {
+      "title": "Bera saman líkön",
+      "hint": "Svara með allt að {{max}} auka líkönum"
     }
   },
   "sidebar": {

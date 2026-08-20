@@ -426,6 +426,10 @@
       "moveDown": "W dół",
       "updateFailed": "Nie udało się zaktualizować promptu w kolejce",
       "enqueueFailed": "Nie udało się dodać promptu do kolejki"
+    },
+    "compare": {
+      "title": "Porównaj modele",
+      "hint": "Odpowiadaj z użyciem do {{max}} dodatkowych modeli"
     }
   },
   "sidebar": {
