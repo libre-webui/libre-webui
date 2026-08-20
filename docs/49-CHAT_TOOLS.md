@@ -37,7 +37,7 @@ collections restrict what the model sees for sessions using that profile.
 
 ## Built-in tools
 
-Three first-party, read-only tools ship with Chat:
+Four first-party, read-only tools ship with Chat:
 
 - `web_search` — the admin-configured search engine, honoring the web-search
   access mode.
@@ -45,7 +45,11 @@ Three first-party, read-only tools ship with Chat:
   collections (profile bindings can scope the collections).
 - `load_skill` — loads a skill's full instructions by slug; the tool's
   description carries the manifest of the user's enabled skills, so skills
-  stay lazy until the model needs one.
+  stay lazy until the model needs one. If the skill bundles companion
+  files, the loaded instructions end with the file inventory.
+- `read_skill_file` — reads one companion file bundled with a skill, by
+  slug and relative path, so a large reference document costs no context
+  until the model actually opens it.
 
 ## Tool servers
 

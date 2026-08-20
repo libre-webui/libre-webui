@@ -157,6 +157,10 @@ import CodeBlock from '@theme/CodeBlock';
           <li><a href="/WORKSPACES">Work: Isolated Workspaces</a></li>
           <li><a href="/CALENDAR">Calendar</a></li>
           <li><a href="/AUTOMATIONS">Automations</a></li>
+          <li><a href="/CHAT_TOOLS">Chat Tools</a></li>
+          <li><a href="/PROMPTS">Prompt Library</a></li>
+          <li><a href="/SKILLS">Skills</a></li>
+          <li><a href="/ASSISTANT_PROFILES">Assistant Profiles</a></li>
           <li><a href="/RAG_FEATURE">Document Chat</a></li>
           <li><a href="/ARTIFACTS_FEATURE">Artifacts</a></li>
           <li><a href="/PERSONA_DEVELOPMENT_FRAMEWORK">Personas</a></li>

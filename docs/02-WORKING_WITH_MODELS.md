@@ -38,7 +38,7 @@ Large models such as 30B, 70B, and MoE models can be excellent, but they need mu
 
 ## Model Manager
 
-Open **Models** from the sidebar to:
+Open **Settings → Model** to:
 
 - Pull models from Ollama by name.
 - Search the live Ollama Library instead of relying on a static list.

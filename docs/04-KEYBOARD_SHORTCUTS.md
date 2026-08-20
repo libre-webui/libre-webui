@@ -42,10 +42,20 @@ the matched characters, and ranks results by relevance.
 
 ## Chat Input
 
-| Shortcut        | Action            |
-| --------------- | ----------------- |
-| `Enter`         | Send the message  |
-| `Shift + Enter` | Insert a new line |
+| Shortcut        | Action                                          |
+| --------------- | ----------------------------------------------- |
+| `Enter`         | Send the message                                |
+| `Shift + Enter` | Insert a new line                               |
+| `/` (as the first character) | Open the prompt library menu      |
+| `$` (before the cursor)      | Open the skills menu              |
+
+While a prompt or skill menu is open:
+
+| Shortcut        | Action                            |
+| --------------- | --------------------------------- |
+| `Up` / `Down`   | Move the selection                |
+| `Enter` / `Tab` | Insert the selected prompt or skill |
+| `Esc`           | Close the menu, keeping the draft |
 
 ## Editing a Sent Message
 
