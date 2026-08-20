@@ -28,14 +28,14 @@ type MockNote = {
 
 const tableNote: MockNote = {
   id: 'table-note',
-  title: 'Position at a glance',
+  title: 'Reading list',
   content: [
-    '## Product comparison',
+    '## Book queue',
     '',
-    '| Product dimension | Current leader | Assessment |',
+    '| Title | Author | Status |',
     '| --- | --- | --- |',
-    '| Whole-chat sharing | Libre WebUI | Built in |',
-    '| Knowledge and RAG | Other tools | Gap to close |',
+    '| The Pragmatic Programmer | Hunt and Thomas | Finished |',
+    '| The Mythical Man-Month | Fred Brooks | In progress |',
   ].join('\n'),
   createdAt: 1_770_000_000_000,
   updatedAt: 1_770_000_002_000,
@@ -151,15 +151,15 @@ test('notes open in Markdown preview and make editing explicit', async ({
   const table = preview.getByRole('table');
   await expect(table).toBeVisible();
   await expect(
-    table.getByRole('columnheader', { name: 'Product dimension' })
+    table.getByRole('columnheader', { name: 'Title' })
   ).toBeVisible();
   await expect(
-    table.getByRole('columnheader', { name: 'Current leader' })
+    table.getByRole('columnheader', { name: 'Author' })
   ).toBeVisible();
   await expect(
-    table.getByRole('cell', { name: 'Whole-chat sharing' })
+    table.getByRole('cell', { name: 'The Pragmatic Programmer' })
   ).toBeVisible();
-  await expect(table.getByRole('cell', { name: 'Gap to close' })).toBeVisible();
+  await expect(table.getByRole('cell', { name: 'In progress' })).toBeVisible();
   await expect(table.locator('..')).toHaveCSS('overflow-x', 'auto');
 
   const modeToggle = page.getByTestId('notes-preview-toggle');

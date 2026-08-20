@@ -31,9 +31,9 @@ const mobileNote = {
     '',
     'The editor and preview stay inside the page.',
     '',
-    '| Product dimension | Current leader | Detailed assessment |',
+    '| Chapter title | Author commentary | Detailed reading notes |',
     '| --- | --- | --- |',
-    '| Whole-chat sharing and forking | Libre WebUI | Built in and ready to use |',
+    '| The Mythical Man-Month revisited | Still holds up decades later | Adding people to a late project makes it later |',
   ].join('\n'),
   createdAt: Date.now(),
   updatedAt: Date.now(),
@@ -91,10 +91,10 @@ test('notes preview wide Markdown tables without mobile page overflow', async ({
 
   const table = preview.getByRole('table');
   await expect(
-    table.getByRole('columnheader', { name: 'Product dimension' })
+    table.getByRole('columnheader', { name: 'Chapter title' })
   ).toBeVisible();
   await expect(
-    table.getByRole('cell', { name: 'Whole-chat sharing and forking' })
+    table.getByRole('cell', { name: 'The Mythical Man-Month revisited' })
   ).toBeVisible();
 
   const containment = await table.evaluate(element => {
