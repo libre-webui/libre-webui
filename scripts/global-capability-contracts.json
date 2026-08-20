@@ -1373,6 +1373,212 @@
       }
     },
     {
+      "id": "channels",
+      "title": "Channels",
+      "uiRoutes": [],
+      "documentation": [
+        {
+          "file": "docs/54-CHANNELS.md",
+          "patterns": [
+            "strictly under the invoking member's identity",
+            "the ledger is delivery, not truth"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-channels.mjs",
+          "runner": "test:package",
+          "name": "timeline: idempotent posts, ordering, threads, edit and tombstone rules",
+          "behaviorPatterns": [
+            "must not apply",
+            "one level deep"
+          ]
+        },
+        {
+          "file": "scripts/test-channels.mjs",
+          "runner": "test:package",
+          "name": "@model mentions run under the invoking member and fail safely",
+          "behaviorPatterns": [
+            "no longer a member",
+            "actorUserId, BOB"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "GET",
+          "path": "/public"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "POST",
+          "path": "/dm"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "GET",
+          "path": "/:channelId"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "PATCH",
+          "path": "/:channelId"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "DELETE",
+          "path": "/:channelId"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "POST",
+          "path": "/:channelId/join"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "GET",
+          "path": "/:channelId/members"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "POST",
+          "path": "/:channelId/members"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "DELETE",
+          "path": "/:channelId/members/:userId"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "GET",
+          "path": "/:channelId/messages"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "POST",
+          "path": "/:channelId/messages"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "GET",
+          "path": "/:channelId/pins"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "POST",
+          "path": "/:channelId/read"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "GET",
+          "path": "/messages/:messageId/thread"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "PATCH",
+          "path": "/messages/:messageId"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "DELETE",
+          "path": "/messages/:messageId"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "POST",
+          "path": "/messages/:messageId/pin"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "POST",
+          "path": "/messages/:messageId/reactions"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "DELETE",
+          "path": "/messages/:messageId/reactions/:emoji"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "POST",
+          "path": "/:channelId/attachments"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "GET",
+          "path": "/attachments/:attachmentId"
+        },
+        {
+          "file": "backend/src/routes/channels.ts",
+          "mount": "/api/channels",
+          "method": "GET",
+          "path": "/:channelId/events"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface ChannelSummary",
+                "export interface ChannelMessageView"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Channels are first-party account resources and have no installable or discovery manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "docs/54-CHANNELS.md",
+              "patterns": [
+                "Channels created per user | 50"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
       "id": "prompts",
       "title": "Prompt Library",
       "uiRoutes": [],

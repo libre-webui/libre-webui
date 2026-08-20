@@ -31,6 +31,7 @@ import { DurableJobExecutionError } from './durableJobTypes.js';
 import type { DurableJobHandler } from './embeddedDurableJobWorker.js';
 import {
   AUTOMATION_RUN_JOB_TYPE,
+  CHANNEL_MENTION_JOB_TYPE,
   CHAT_GENERATE_JOB_TYPE,
   DOCUMENT_INGEST_IDEMPOTENCY_SCOPE,
   DOCUMENT_INGEST_JOB_TYPE,
@@ -1110,6 +1111,148 @@ const executeWork: DurableJobHandler = async context => {
   return { resultReference: `work-run:${runId}` };
 };
 
+const readChannelMentionPayload = (
+  payload: unknown
+): {
+  channelId: string;
+  promptMessageId: string;
+  replyMessageId: string;
+  model: string;
+  providerType?: string;
+  providerId?: string;
+} => {
+  const record = payload as Record<string, unknown>;
+  for (const field of [
+    'channelId',
+    'promptMessageId',
+    'replyMessageId',
+    'model',
+  ]) {
+    if (typeof record?.[field] !== 'string' || !record[field]) {
+      throw new DurableJobExecutionError(
+        false,
+        'invalid-payload',
+        'The channel mention payload is malformed'
+      );
+    }
+  }
+  return {
+    channelId: record.channelId as string,
+    promptMessageId: record.promptMessageId as string,
+    replyMessageId: record.replyMessageId as string,
+    model: record.model as string,
+    ...(typeof record.providerType === 'string'
+      ? { providerType: record.providerType }
+      : {}),
+    ...(typeof record.providerId === 'string'
+      ? { providerId: record.providerId }
+      : {}),
+  };
+};
+
+/**
+ * @model in a channel (CHANNEL-03): a one-shot completion executed with
+ * the invoking user's credentials, model access, and provider routing —
+ * never another member's. The pending reply row is authoritative; a
+ * deleted reply skips generation, and failures surface on the reply
+ * instead of dead-lettering silently.
+ */
+const runChannelMention: DurableJobHandler = async context => {
+  const payload = readChannelMentionPayload(context.payload);
+  const { channelService } = await import('../../services/channelService.js');
+  const reply = await channelService.findMessage(payload.replyMessageId);
+  if (!reply || reply.deleted_at !== null) {
+    return {
+      resultReference: `channel-mention:${payload.replyMessageId}:gone`,
+    };
+  }
+  // Membership is the authority to speak in this channel; recheck it under
+  // the job's identity so a removed member cannot leave a queued mention
+  // running with stale access.
+  try {
+    await channelService.requireMember(payload.channelId, context.actorUserId);
+  } catch {
+    await channelService.failModelReply(
+      payload.replyMessageId,
+      'The requester is no longer a member of this channel'
+    );
+    return {
+      resultReference: `channel-mention:${payload.replyMessageId}:denied`,
+    };
+  }
+  try {
+    const chatGenerationService = (
+      await import('../../services/chatGenerationService.js')
+    ).default;
+    const conversation = await channelService.mentionContext(
+      payload.channelId,
+      payload.promptMessageId
+    );
+    const transcript = conversation
+      .map(entry => `${entry.author}: ${entry.content}`)
+      .join('\n');
+    const system =
+      'You are an assistant participating in a team channel. Reply to the ' +
+      'latest message using the conversation for context. Be direct and ' +
+      'concise; do not prefix your reply with your own name.';
+    const now = Date.now();
+    const pluginMessages = [
+      {
+        id: `${payload.replyMessageId}-system`,
+        role: 'system' as const,
+        content: system,
+        timestamp: now,
+      },
+      {
+        id: `${payload.replyMessageId}-prompt`,
+        role: 'user' as const,
+        content: transcript,
+        timestamp: now,
+      },
+    ];
+    const target = await chatGenerationService.prepareGenerationTarget(
+      payload.model,
+      context.actorUserId,
+      {},
+      payload.providerType
+        ? ({
+            providerType: payload.providerType,
+            ...(payload.providerId ? { providerId: payload.providerId } : {}),
+          } as never)
+        : undefined,
+      context.signal
+    );
+    await context.assertSideEffectAllowed();
+    const result = await chatGenerationService.executeNonStreaming({
+      target,
+      ollamaMessages: pluginMessages.map(message => ({
+        role: message.role,
+        content: message.content,
+      })),
+      pluginMessages,
+      userId: context.actorUserId,
+      signal: context.signal,
+    });
+    await context.assertSideEffectAllowed();
+    await channelService.completeModelReply(
+      payload.replyMessageId,
+      result.assistantContent.trim() || 'The model returned an empty reply.'
+    );
+    return { resultReference: `channel-mention:${payload.replyMessageId}` };
+  } catch (error) {
+    if (error instanceof DurableJobExecutionError) throw error;
+    const summary =
+      error instanceof Error && error.message
+        ? error.message.slice(0, 300)
+        : 'The model request failed';
+    await channelService
+      .failModelReply(payload.replyMessageId, summary)
+      .catch(() => undefined);
+    if (context.signal.aborted) throw error;
+    throw new DurableJobExecutionError(true, 'channel-mention-failed', summary);
+  }
+};
+
 export const createDomainDurableJobHandlers = (): ReadonlyMap<
   string,
   DurableJobHandler
@@ -1123,4 +1266,5 @@ export const createDomainDurableJobHandlers = (): ReadonlyMap<
     [RESOURCE_DELETE_JOB_TYPE, deleteResource],
     [WORK_EXECUTE_JOB_TYPE, executeWork],
     [AUTOMATION_RUN_JOB_TYPE, runAutomation],
+    [CHANNEL_MENTION_JOB_TYPE, runChannelMention],
   ]);

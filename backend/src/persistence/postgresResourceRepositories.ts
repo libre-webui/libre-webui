@@ -1818,12 +1818,17 @@ class PostgresChannelMessageRepository implements ChannelMessageRepository {
     return result.rows.map(channelAttachment);
   }
 
-  async listAttachmentBlobIds(channelId: string): Promise<string[]> {
-    const result = await this.database.query<{ blob_id: string }>(
-      'SELECT blob_id FROM channel_attachments WHERE channel_id = $1',
+  async listAttachmentBlobIds(
+    channelId: string
+  ): Promise<Array<{ blob_id: string; created_by: string | null }>> {
+    const result = await this.database.query<{
+      blob_id: string;
+      created_by: string | null;
+    }>(
+      'SELECT blob_id, created_by FROM channel_attachments WHERE channel_id = $1',
       [channelId]
     );
-    return result.rows.map(row => row.blob_id);
+    return result.rows;
   }
 }
 

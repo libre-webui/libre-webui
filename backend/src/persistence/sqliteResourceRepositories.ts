@@ -1558,11 +1558,14 @@ class SQLiteChannelMessageRepository implements ChannelMessageRepository {
       .all(...messageIds) as StoredChannelAttachmentRecord[];
   }
 
-  async listAttachmentBlobIds(channelId: string): Promise<string[]> {
-    const rows = this.database
-      .prepare('SELECT blob_id FROM channel_attachments WHERE channel_id = ?')
-      .all(channelId) as Array<{ blob_id: string }>;
-    return rows.map(row => row.blob_id);
+  async listAttachmentBlobIds(
+    channelId: string
+  ): Promise<Array<{ blob_id: string; created_by: string | null }>> {
+    return this.database
+      .prepare(
+        'SELECT blob_id, created_by FROM channel_attachments WHERE channel_id = ?'
+      )
+      .all(channelId) as Array<{ blob_id: string; created_by: string | null }>;
   }
 }
 

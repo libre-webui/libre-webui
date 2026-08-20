@@ -440,8 +440,10 @@ export interface ChannelMessageRepository {
   listAttachmentsForMessages(
     messageIds: readonly string[]
   ): Promise<StoredChannelAttachmentRecord[]>;
-  /** Blob ids referenced by a channel, for deletion hygiene. */
-  listAttachmentBlobIds(channelId: string): Promise<string[]>;
+  /** Blob references of a channel's attachments, for deletion hygiene. */
+  listAttachmentBlobIds(
+    channelId: string
+  ): Promise<Array<{ blob_id: string; created_by: string | null }>>;
 }
 
 export interface StoredNotificationRecord {

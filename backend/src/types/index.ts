@@ -165,6 +165,105 @@ export interface Calendar {
   color?: string;
   createdAt: number;
   updatedAt: number;
+  /** Present when the calendar reaches the actor through a grant. */
+  shared?: { ownerUserId: string; permission: 'read' | 'write' };
+}
+
+export type ChannelType = 'public' | 'private' | 'dm';
+export type ChannelRole = 'owner' | 'member';
+
+export interface Channel {
+  id: string;
+  type: ChannelType;
+  name: string;
+  description?: string;
+  createdBy?: string | null;
+  createdAt: number;
+  updatedAt: number;
+  archivedAt?: number;
+}
+
+export interface ChannelSummary extends Channel {
+  role?: ChannelRole;
+  isMember: boolean;
+  memberCount?: number;
+  unreadCount?: number;
+  latestMessageAt?: number | null;
+  lastReadAt?: number;
+  /** The other participant of a direct-message channel. */
+  dmPeer?: { userId: string; username: string };
+}
+
+export interface ChannelMemberView {
+  userId: string;
+  username: string;
+  role: ChannelRole;
+  joinedAt: number;
+}
+
+export interface ChannelReactionView {
+  emoji: string;
+  count: number;
+  /** Whether the requesting user has this reaction on the message. */
+  mine: boolean;
+}
+
+export interface ChannelAttachmentView {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+}
+
+export interface ChannelMessageView {
+  id: string;
+  channelId: string;
+  parentId?: string;
+  authorKind: 'user' | 'model';
+  model?: string;
+  author?: { userId: string; username: string } | null;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+  editedAt?: number;
+  deleted?: boolean;
+  pinnedAt?: number;
+  replyCount?: number;
+  reactions?: ChannelReactionView[];
+  attachments?: ChannelAttachmentView[];
+  /** Model-reply lifecycle state for @model messages. */
+  pending?: boolean;
+  error?: string;
+}
+
+export type NotificationType =
+  | 'channel-mention'
+  | 'channel-dm'
+  | 'channel-invite'
+  | 'share'
+  | 'automation-failed'
+  | 'calendar-reminder'
+  | 'system';
+
+export interface NotificationView {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body?: string;
+  href?: string;
+  createdAt: number;
+  readAt?: number;
+}
+
+export interface WebhookTargetView {
+  id: string;
+  name: string;
+  url: string;
+  hasSecret: boolean;
+  events: string[];
+  enabled: boolean;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export type AutomationNotify = 'app' | 'off';
