@@ -887,6 +887,83 @@ const NOTES_V2_REQUIRED_SCHEMA = {
   ],
 } as const;
 
+const TEAM_COLLABORATION_REQUIRED_SCHEMA = {
+  calendar_events: [
+    'calendar_id',
+    'reminder_minutes',
+    'last_reminded_occurrence',
+  ],
+  calendars: ['id', 'user_id', 'name', 'color', 'created_at', 'updated_at'],
+  channels: [
+    'id',
+    'type',
+    'name',
+    'description',
+    'dm_key',
+    'created_by',
+    'created_at',
+    'updated_at',
+    'archived_at',
+  ],
+  channel_members: [
+    'channel_id',
+    'user_id',
+    'role',
+    'joined_at',
+    'last_read_at',
+  ],
+  channel_messages: [
+    'id',
+    'channel_id',
+    'user_id',
+    'parent_id',
+    'author_kind',
+    'model',
+    'content',
+    'metadata',
+    'created_at',
+    'updated_at',
+    'edited_at',
+    'deleted_at',
+    'pinned_at',
+    'pinned_by',
+  ],
+  channel_reactions: ['id', 'message_id', 'user_id', 'emoji', 'created_at'],
+  channel_attachments: [
+    'id',
+    'message_id',
+    'channel_id',
+    'blob_id',
+    'filename',
+    'content_type',
+    'size',
+    'created_by',
+    'created_at',
+  ],
+  notifications: [
+    'id',
+    'user_id',
+    'type',
+    'title',
+    'body',
+    'href',
+    'source_key',
+    'created_at',
+    'read_at',
+  ],
+  webhook_targets: [
+    'id',
+    'name',
+    'url',
+    'secret',
+    'events',
+    'enabled',
+    'created_by',
+    'created_at',
+    'updated_at',
+  ],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -1365,6 +1442,137 @@ export const NOTES_V2_SCHEMA_SQL = `
     ON note_attachments(note_id);
 `;
 
+export const TEAM_COLLABORATION_TABLES_SQL = `
+  CREATE INDEX IF NOT EXISTS idx_calendar_scoped_events
+    ON calendar_events(calendar_id)
+    WHERE calendar_id IS NOT NULL;
+
+  CREATE TABLE IF NOT EXISTS calendars (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    color TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_calendars_owner
+    ON calendars(user_id, updated_at);
+
+  CREATE TABLE IF NOT EXISTS channels (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL CHECK (type IN ('public', 'private', 'dm')),
+    name TEXT NOT NULL,
+    description TEXT,
+    dm_key TEXT,
+    created_by TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    archived_at INTEGER
+  );
+
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_channels_dm_key
+    ON channels(dm_key)
+    WHERE dm_key IS NOT NULL;
+
+  CREATE TABLE IF NOT EXISTS channel_members (
+    channel_id TEXT NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('owner', 'member')),
+    joined_at INTEGER NOT NULL,
+    last_read_at INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (channel_id, user_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_channel_members_user
+    ON channel_members(user_id);
+
+  CREATE TABLE IF NOT EXISTS channel_messages (
+    id TEXT PRIMARY KEY,
+    channel_id TEXT NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+    user_id TEXT,
+    parent_id TEXT,
+    author_kind TEXT NOT NULL DEFAULT 'user' CHECK (author_kind IN ('user', 'model')),
+    model TEXT,
+    content TEXT NOT NULL,
+    metadata TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    edited_at INTEGER,
+    deleted_at INTEGER,
+    pinned_at INTEGER,
+    pinned_by TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_channel_messages_timeline
+    ON channel_messages(channel_id, created_at, id);
+
+  CREATE INDEX IF NOT EXISTS idx_channel_messages_thread
+    ON channel_messages(parent_id)
+    WHERE parent_id IS NOT NULL;
+
+  CREATE TABLE IF NOT EXISTS channel_reactions (
+    id TEXT PRIMARY KEY,
+    message_id TEXT NOT NULL REFERENCES channel_messages(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    emoji TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    UNIQUE (message_id, user_id, emoji)
+  );
+
+  CREATE TABLE IF NOT EXISTS channel_attachments (
+    id TEXT PRIMARY KEY,
+    message_id TEXT NOT NULL REFERENCES channel_messages(id) ON DELETE CASCADE,
+    channel_id TEXT NOT NULL,
+    blob_id TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    content_type TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    created_by TEXT,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_channel_attachments_message
+    ON channel_attachments(message_id);
+
+  CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT,
+    href TEXT,
+    source_key TEXT,
+    created_at INTEGER NOT NULL,
+    read_at INTEGER
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_notifications_user
+    ON notifications(user_id, created_at);
+
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_notifications_dedupe
+    ON notifications(user_id, source_key)
+    WHERE source_key IS NOT NULL;
+
+  CREATE TABLE IF NOT EXISTS webhook_targets (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    secret TEXT,
+    events TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+    created_by TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+`;
+
+export const TEAM_COLLABORATION_SCHEMA_SQL = `
+  ALTER TABLE calendar_events ADD COLUMN calendar_id TEXT;
+  ALTER TABLE calendar_events ADD COLUMN reminder_minutes INTEGER;
+  ALTER TABLE calendar_events ADD COLUMN last_reminded_occurrence INTEGER;
+${TEAM_COLLABORATION_TABLES_SQL}`;
+
 const REQUIRED_SCHEMA = {
   ...LEGACY_REQUIRED_SCHEMA,
   users: [
@@ -1654,6 +1862,14 @@ const REQUIRED_PRIMARY_KEYS: Readonly<Record<string, readonly string[]>> = {
   skill_files: ['id'],
   note_revisions: ['id'],
   note_attachments: ['id'],
+  calendars: ['id'],
+  channels: ['id'],
+  channel_members: ['channel_id', 'user_id'],
+  channel_messages: ['id'],
+  channel_reactions: ['id'],
+  channel_attachments: ['id'],
+  notifications: ['id'],
+  webhook_targets: ['id'],
 };
 
 const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
@@ -1943,6 +2159,55 @@ const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
     referencedColumns: ['id'],
     onDelete: 'CASCADE',
   },
+  {
+    table: 'calendars',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'channel_members',
+    columns: ['channel_id'],
+    referencedTable: 'channels',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'channel_members',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'channel_messages',
+    columns: ['channel_id'],
+    referencedTable: 'channels',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'channel_reactions',
+    columns: ['message_id'],
+    referencedTable: 'channel_messages',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'channel_attachments',
+    columns: ['message_id'],
+    referencedTable: 'channel_messages',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'notifications',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
 ];
 
 const REQUIRED_INDEXES: readonly RequiredIndex[] = [
@@ -2201,6 +2466,56 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     table: 'note_attachments',
     columns: ['note_id'],
   },
+  {
+    name: 'idx_calendar_scoped_events',
+    table: 'calendar_events',
+    columns: ['calendar_id'],
+    sqlFragment: 'WHERE calendar_id IS NOT NULL',
+  },
+  {
+    name: 'idx_calendars_owner',
+    table: 'calendars',
+    columns: ['user_id', 'updated_at'],
+  },
+  {
+    name: 'idx_channels_dm_key',
+    table: 'channels',
+    columns: ['dm_key'],
+    unique: true,
+    sqlFragment: 'WHERE dm_key IS NOT NULL',
+  },
+  {
+    name: 'idx_channel_members_user',
+    table: 'channel_members',
+    columns: ['user_id'],
+  },
+  {
+    name: 'idx_channel_messages_timeline',
+    table: 'channel_messages',
+    columns: ['channel_id', 'created_at', 'id'],
+  },
+  {
+    name: 'idx_channel_messages_thread',
+    table: 'channel_messages',
+    columns: ['parent_id'],
+  },
+  {
+    name: 'idx_channel_attachments_message',
+    table: 'channel_attachments',
+    columns: ['message_id'],
+  },
+  {
+    name: 'idx_notifications_user',
+    table: 'notifications',
+    columns: ['user_id', 'created_at'],
+  },
+  {
+    name: 'idx_notifications_dedupe',
+    table: 'notifications',
+    columns: ['user_id', 'source_key'],
+    unique: true,
+    sqlFragment: 'WHERE source_key IS NOT NULL',
+  },
 ];
 
 const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
@@ -2249,6 +2564,11 @@ const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
     "scope IN ('once', 'session', 'always')",
     "status IN ('pending', 'approved', 'denied', 'expired')",
   ],
+  channels: ["type IN ('public', 'private', 'dm')"],
+  channel_members: ["role IN ('owner', 'member')"],
+  channel_messages: ["author_kind IN ('user', 'model')"],
+  channel_reactions: ['UNIQUE (message_id, user_id, emoji)'],
+  webhook_targets: ['enabled IN (0, 1)'],
 };
 
 const quoteIdentifier = (identifier: string): string =>
@@ -2594,6 +2914,7 @@ const collectMissingSchema = (database: Database.Database): string[] => [
   ...collectMissingAgentFoundationSchema(database),
   ...collectMissingSkillFilesSchema(database),
   ...collectMissingNotesV2Schema(database),
+  ...collectMissingTeamCollaborationSchema(database),
 ];
 
 const collectMissingMigrationLedgerSchema = (
@@ -2769,6 +3090,20 @@ const collectMissingNotesV2Schema = (database: Database.Database): string[] => [
   ),
 ];
 
+const collectMissingTeamCollaborationSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, TEAM_COLLABORATION_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(
+    item =>
+      item.includes('channel') ||
+      item.includes('notifications') ||
+      item.includes('webhook_targets') ||
+      item.includes('calendars') ||
+      item.includes('idx_calendar_scoped_events')
+  ),
+];
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -2819,6 +3154,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 16 ? collectMissingAgentFoundationSchema(database) : []),
     ...(version >= 17 ? collectMissingSkillFilesSchema(database) : []),
     ...(version >= 18 ? collectMissingNotesV2Schema(database) : []),
+    ...(version >= 19 ? collectMissingTeamCollaborationSchema(database) : []),
   ];
 }
 
@@ -2910,6 +3246,8 @@ const SKILL_FILES_MIGRATION_CHECKSUM =
   '584e1f9bca79eb5974f997088636d74d7f2c1e5fd816fcd0f6cf74ec30aea161';
 const NOTES_V2_MIGRATION_CHECKSUM =
   '05a6758ab2b2a54f9097a5d5604a2bd57e085f1dd16816b5dc96d1eb7a41a399';
+const TEAM_COLLABORATION_MIGRATION_CHECKSUM =
+  '1cf021c941cfd9207a82e794e58d7553ae24a35b3f8f8a84bb4a0e06d0d77443';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -3218,6 +3556,33 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite notes v2 schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 19,
+    name: 'team-collaboration',
+    checksum: TEAM_COLLABORATION_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(database, 'calendar_events', 'calendar_id', 'TEXT');
+      addColumnIfMissing(
+        database,
+        'calendar_events',
+        'reminder_minutes',
+        'INTEGER'
+      );
+      addColumnIfMissing(
+        database,
+        'calendar_events',
+        'last_reminded_occurrence',
+        'INTEGER'
+      );
+      database.exec(TEAM_COLLABORATION_TABLES_SQL);
+      const missing = collectMissingTeamCollaborationSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite team collaboration schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

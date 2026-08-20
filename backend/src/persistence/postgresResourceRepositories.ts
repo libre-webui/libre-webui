@@ -11,11 +11,16 @@ import type {
   AutomationRepository,
   AutomationRunRepository,
   CalendarEventRepository,
+  CalendarRepository,
+  ChannelMessageRepository,
+  ChannelRepository,
+  ChannelTimelineCursor,
   ChatSessionRepository,
   DataArchiveApplyPlan,
   DataArchiveRepository,
   KnowledgeCollectionRepository,
   NoteRepository,
+  NotificationRepository,
   PersistenceCommitFence,
   PreferenceRepository,
   PromptRepository,
@@ -25,6 +30,14 @@ import type {
   StoredAutomationRecord,
   StoredAutomationRunRecord,
   StoredCalendarEventRecord,
+  StoredCalendarRecord,
+  StoredChannelAttachmentRecord,
+  StoredChannelMemberRecord,
+  StoredChannelMembershipView,
+  StoredChannelMessageRecord,
+  StoredChannelReactionRecord,
+  StoredChannelRecord,
+  StoredChannelUnreadRow,
   StoredChatMessageRecord,
   StoredChatSessionAggregate,
   StoredChatSessionRecord,
@@ -33,6 +46,7 @@ import type {
   StoredNotePatch,
   StoredNoteRecord,
   StoredNoteRevisionRecord,
+  StoredNotificationRecord,
   StoredPreferenceRecord,
   StoredPromptRecord,
   StoredPromptVersionRecord,
@@ -43,11 +57,13 @@ import type {
   StoredToolServerCredentialRecord,
   StoredToolServerRecord,
   StoredToolServerToolRecord,
+  StoredWebhookTargetRecord,
   SystemSettingRepository,
   ToolApprovalRepository,
   ToolServerCredentialRepository,
   ToolServerRepository,
   ToolServerToolRepository,
+  WebhookTargetRepository,
 } from './resourceTypes.js';
 import {
   PersistenceResourceConflictError,
@@ -120,8 +136,84 @@ const calendarEvent = (row: NumericRow): StoredCalendarEventRecord => ({
   end_at:
     row.end_at === null ? null : number(row.end_at, 'calendar event end_at'),
   all_day: number(row.all_day, 'calendar event all_day'),
+  reminder_minutes:
+    row.reminder_minutes === null
+      ? null
+      : number(row.reminder_minutes, 'calendar event reminder_minutes'),
+  last_reminded_occurrence:
+    row.last_reminded_occurrence === null
+      ? null
+      : number(
+          row.last_reminded_occurrence,
+          'calendar event last_reminded_occurrence'
+        ),
   created_at: number(row.created_at, 'calendar event created_at'),
   updated_at: number(row.updated_at, 'calendar event updated_at'),
+});
+
+const calendar = (row: NumericRow): StoredCalendarRecord => ({
+  ...(row as unknown as StoredCalendarRecord),
+  created_at: number(row.created_at, 'calendar created_at'),
+  updated_at: number(row.updated_at, 'calendar updated_at'),
+});
+
+const channel = (row: NumericRow): StoredChannelRecord => ({
+  ...(row as unknown as StoredChannelRecord),
+  created_at: number(row.created_at, 'channel created_at'),
+  updated_at: number(row.updated_at, 'channel updated_at'),
+  archived_at:
+    row.archived_at === null
+      ? null
+      : number(row.archived_at, 'channel archived_at'),
+});
+
+const channelMember = (row: NumericRow): StoredChannelMemberRecord => ({
+  ...(row as unknown as StoredChannelMemberRecord),
+  joined_at: number(row.joined_at, 'channel member joined_at'),
+  last_read_at: number(row.last_read_at, 'channel member last_read_at'),
+});
+
+const channelMessage = (row: NumericRow): StoredChannelMessageRecord => ({
+  ...(row as unknown as StoredChannelMessageRecord),
+  created_at: number(row.created_at, 'channel message created_at'),
+  updated_at: number(row.updated_at, 'channel message updated_at'),
+  edited_at:
+    row.edited_at === null
+      ? null
+      : number(row.edited_at, 'channel message edited_at'),
+  deleted_at:
+    row.deleted_at === null
+      ? null
+      : number(row.deleted_at, 'channel message deleted_at'),
+  pinned_at:
+    row.pinned_at === null
+      ? null
+      : number(row.pinned_at, 'channel message pinned_at'),
+});
+
+const channelReaction = (row: NumericRow): StoredChannelReactionRecord => ({
+  ...(row as unknown as StoredChannelReactionRecord),
+  created_at: number(row.created_at, 'channel reaction created_at'),
+});
+
+const channelAttachment = (row: NumericRow): StoredChannelAttachmentRecord => ({
+  ...(row as unknown as StoredChannelAttachmentRecord),
+  size: number(row.size, 'channel attachment size'),
+  created_at: number(row.created_at, 'channel attachment created_at'),
+});
+
+const notification = (row: NumericRow): StoredNotificationRecord => ({
+  ...(row as unknown as StoredNotificationRecord),
+  created_at: number(row.created_at, 'notification created_at'),
+  read_at:
+    row.read_at === null ? null : number(row.read_at, 'notification read_at'),
+});
+
+const webhookTarget = (row: NumericRow): StoredWebhookTargetRecord => ({
+  ...(row as unknown as StoredWebhookTargetRecord),
+  enabled: number(row.enabled, 'webhook target enabled'),
+  created_at: number(row.created_at, 'webhook target created_at'),
+  updated_at: number(row.updated_at, 'webhook target updated_at'),
 });
 
 const automation = (row: NumericRow): StoredAutomationRecord => ({
@@ -867,6 +959,40 @@ class PostgresCalendarEventRepository implements CalendarEventRepository {
     return result.rows.map(calendarEvent);
   }
 
+  async listByCalendarsBetween(
+    calendarIds: readonly string[],
+    from: number,
+    to: number,
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]> {
+    if (calendarIds.length === 0) return [];
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM calendar_events
+        WHERE calendar_id = ANY($1::text[])
+          AND start_at >= $2 AND start_at < $3
+        ORDER BY start_at ASC
+        LIMIT $4`,
+      [[...calendarIds], from, to, maximum]
+    );
+    return result.rows.map(calendarEvent);
+  }
+
+  async listRecurringByCalendars(
+    calendarIds: readonly string[],
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]> {
+    if (calendarIds.length === 0) return [];
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM calendar_events
+        WHERE calendar_id = ANY($1::text[])
+          AND recurrence IS NOT NULL
+        ORDER BY start_at ASC
+        LIMIT $2`,
+      [[...calendarIds], maximum]
+    );
+    return result.rows.map(calendarEvent);
+  }
+
   async findByOwner(
     eventId: string,
     userId: string
@@ -876,6 +1002,47 @@ class PostgresCalendarEventRepository implements CalendarEventRepository {
       [eventId, userId]
     );
     return result.rows[0] ? calendarEvent(result.rows[0]) : null;
+  }
+
+  async findById(eventId: string): Promise<StoredCalendarEventRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM calendar_events WHERE id = $1',
+      [eventId]
+    );
+    return result.rows[0] ? calendarEvent(result.rows[0]) : null;
+  }
+
+  async listWithReminders(
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM calendar_events
+        WHERE reminder_minutes IS NOT NULL
+        ORDER BY start_at ASC
+        LIMIT $1`,
+      [maximum]
+    );
+    return result.rows.map(calendarEvent);
+  }
+
+  async markReminded(
+    eventId: string,
+    occurrenceStart: number
+  ): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            `UPDATE calendar_events
+              SET last_reminded_occurrence = $1
+              WHERE id = $2
+                AND (last_reminded_occurrence IS NULL
+                  OR last_reminded_occurrence < $1)`,
+            [occurrenceStart, eventId]
+          )
+        ).rowCount
+      ) > 0
+    );
   }
 
   async replaceWithLimit(
@@ -903,8 +1070,9 @@ class PostgresCalendarEventRepository implements CalendarEventRepository {
       const result = await client.query(
         `INSERT INTO calendar_events
            (id, user_id, title, notes, start_at, end_at, all_day,
-            recurrence, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            recurrence, calendar_id, reminder_minutes,
+            last_reminded_occurrence, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
          ON CONFLICT (id) DO UPDATE SET
            title = EXCLUDED.title,
            notes = EXCLUDED.notes,
@@ -912,6 +1080,9 @@ class PostgresCalendarEventRepository implements CalendarEventRepository {
            end_at = EXCLUDED.end_at,
            all_day = EXCLUDED.all_day,
            recurrence = EXCLUDED.recurrence,
+           calendar_id = EXCLUDED.calendar_id,
+           reminder_minutes = EXCLUDED.reminder_minutes,
+           last_reminded_occurrence = EXCLUDED.last_reminded_occurrence,
            updated_at = EXCLUDED.updated_at
          WHERE calendar_events.user_id = EXCLUDED.user_id`,
         [
@@ -923,6 +1094,9 @@ class PostgresCalendarEventRepository implements CalendarEventRepository {
           value.end_at,
           value.all_day,
           value.recurrence,
+          value.calendar_id,
+          value.reminder_minutes,
+          value.last_reminded_occurrence,
           value.created_at,
           value.updated_at,
         ]
@@ -938,6 +1112,904 @@ class PostgresCalendarEventRepository implements CalendarEventRepository {
           await this.database.query(
             'DELETE FROM calendar_events WHERE id = $1 AND user_id = $2',
             [eventId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+}
+
+class PostgresCalendarRepository implements CalendarRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredCalendarRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM calendars
+        WHERE user_id = $1
+        ORDER BY created_at ASC
+        LIMIT $2`,
+      [userId, maximum]
+    );
+    return result.rows.map(calendar);
+  }
+
+  async findByOwner(
+    calendarId: string,
+    userId: string
+  ): Promise<StoredCalendarRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM calendars WHERE id = $1 AND user_id = $2',
+      [calendarId, userId]
+    );
+    return result.rows[0] ? calendar(result.rows[0]) : null;
+  }
+
+  async findById(calendarId: string): Promise<StoredCalendarRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM calendars WHERE id = $1',
+      [calendarId]
+    );
+    return result.rows[0] ? calendar(result.rows[0]) : null;
+  }
+
+  async replaceWithLimit(
+    value: StoredCalendarRecord,
+    maximum: number
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      await lockOwner(client, value.user_id);
+      const existing = await client.query<{ user_id: string }>(
+        'SELECT user_id FROM calendars WHERE id = $1 FOR UPDATE',
+        [value.id]
+      );
+      if (existing.rows[0] && existing.rows[0].user_id !== value.user_id) {
+        throw new PersistenceResourceConflictError();
+      }
+      if (!existing.rows[0]) {
+        const count = await client.query<{ count: string }>(
+          'SELECT COUNT(*)::text AS count FROM calendars WHERE user_id = $1',
+          [value.user_id]
+        );
+        if (Number(count.rows[0]?.count || 0) >= maximum) {
+          throw new PersistenceResourceLimitError('calendar', maximum);
+        }
+      }
+      const result = await client.query(
+        `INSERT INTO calendars
+           (id, user_id, name, color, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (id) DO UPDATE SET
+           name = EXCLUDED.name,
+           color = EXCLUDED.color,
+           updated_at = EXCLUDED.updated_at
+         WHERE calendars.user_id = EXCLUDED.user_id`,
+        [
+          value.id,
+          value.user_id,
+          value.name,
+          value.color,
+          value.created_at,
+          value.updated_at,
+        ]
+      );
+      if (result.rowCount !== 1) throw new PersistenceResourceConflictError();
+    });
+  }
+
+  async deleteAndDetach(calendarId: string, userId: string): Promise<boolean> {
+    return this.database.transaction(async client => {
+      const deleted =
+        changes(
+          (
+            await client.query(
+              'DELETE FROM calendars WHERE id = $1 AND user_id = $2',
+              [calendarId, userId]
+            )
+          ).rowCount
+        ) > 0;
+      if (deleted) {
+        await client.query(
+          `UPDATE calendar_events
+            SET calendar_id = NULL
+            WHERE calendar_id = $1 AND user_id = $2`,
+          [calendarId, userId]
+        );
+      }
+      return deleted;
+    });
+  }
+}
+
+class PostgresChannelRepository implements ChannelRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async insertWithOwner(
+    value: StoredChannelRecord,
+    owner: StoredChannelMemberRecord,
+    maximumPerUser: number
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      await lockOwner(client, owner.user_id);
+      const count = await client.query<{ count: string }>(
+        'SELECT COUNT(*)::text AS count FROM channels WHERE created_by = $1',
+        [owner.user_id]
+      );
+      if (Number(count.rows[0]?.count || 0) >= maximumPerUser) {
+        throw new PersistenceResourceLimitError('channel', maximumPerUser);
+      }
+      await client.query(
+        `INSERT INTO channels
+           (id, type, name, description, dm_key, created_by,
+            created_at, updated_at, archived_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          value.id,
+          value.type,
+          value.name,
+          value.description,
+          value.dm_key,
+          value.created_by,
+          value.created_at,
+          value.updated_at,
+          value.archived_at,
+        ]
+      );
+      await client.query(
+        `INSERT INTO channel_members
+           (channel_id, user_id, role, joined_at, last_read_at)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          owner.channel_id,
+          owner.user_id,
+          owner.role,
+          owner.joined_at,
+          owner.last_read_at,
+        ]
+      );
+    });
+  }
+
+  async findById(channelId: string): Promise<StoredChannelRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM channels WHERE id = $1',
+      [channelId]
+    );
+    return result.rows[0] ? channel(result.rows[0]) : null;
+  }
+
+  async findByDmKey(dmKey: string): Promise<StoredChannelRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM channels WHERE dm_key = $1',
+      [dmKey]
+    );
+    return result.rows[0] ? channel(result.rows[0]) : null;
+  }
+
+  async listForUser(
+    userId: string,
+    maximum: number
+  ): Promise<StoredChannelMembershipView[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT
+         c.id, c.type, c.name, c.description, c.dm_key, c.created_by,
+         c.created_at, c.updated_at, c.archived_at,
+         m.channel_id AS member_channel_id, m.user_id AS member_user_id,
+         m.role AS member_role, m.joined_at AS member_joined_at,
+         m.last_read_at AS member_last_read_at
+       FROM channel_members m
+       JOIN channels c ON c.id = m.channel_id
+       WHERE m.user_id = $1
+       ORDER BY c.updated_at DESC
+       LIMIT $2`,
+      [userId, maximum]
+    );
+    return result.rows.map(row => ({
+      channel: channel(row),
+      member: channelMember({
+        channel_id: row.member_channel_id,
+        user_id: row.member_user_id,
+        role: row.member_role,
+        joined_at: row.member_joined_at,
+        last_read_at: row.member_last_read_at,
+      } as NumericRow),
+    }));
+  }
+
+  async listPublic(maximum: number): Promise<StoredChannelRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM channels
+        WHERE type = 'public' AND archived_at IS NULL
+        ORDER BY updated_at DESC
+        LIMIT $1`,
+      [maximum]
+    );
+    return result.rows.map(channel);
+  }
+
+  async update(value: StoredChannelRecord): Promise<void> {
+    await this.database.query(
+      `UPDATE channels SET
+         name = $1,
+         description = $2,
+         updated_at = $3,
+         archived_at = $4
+       WHERE id = $5`,
+      [
+        value.name,
+        value.description,
+        value.updated_at,
+        value.archived_at,
+        value.id,
+      ]
+    );
+  }
+
+  async delete(channelId: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query('DELETE FROM channels WHERE id = $1', [
+            channelId,
+          ])
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async upsertMember(
+    member: StoredChannelMemberRecord,
+    maximumMembers: number
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      const existing = await client.query(
+        `SELECT 1 FROM channel_members
+          WHERE channel_id = $1 AND user_id = $2
+          FOR UPDATE`,
+        [member.channel_id, member.user_id]
+      );
+      if (!existing.rows[0]) {
+        const count = await client.query<{ count: string }>(
+          `SELECT COUNT(*)::text AS count FROM channel_members
+            WHERE channel_id = $1`,
+          [member.channel_id]
+        );
+        if (Number(count.rows[0]?.count || 0) >= maximumMembers) {
+          throw new PersistenceResourceLimitError(
+            'channel-member',
+            maximumMembers
+          );
+        }
+      }
+      await client.query(
+        `INSERT INTO channel_members
+           (channel_id, user_id, role, joined_at, last_read_at)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (channel_id, user_id) DO UPDATE SET
+           role = EXCLUDED.role`,
+        [
+          member.channel_id,
+          member.user_id,
+          member.role,
+          member.joined_at,
+          member.last_read_at,
+        ]
+      );
+    });
+  }
+
+  async findMember(
+    channelId: string,
+    userId: string
+  ): Promise<StoredChannelMemberRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM channel_members WHERE channel_id = $1 AND user_id = $2',
+      [channelId, userId]
+    );
+    return result.rows[0] ? channelMember(result.rows[0]) : null;
+  }
+
+  async listMembers(
+    channelId: string,
+    maximum: number
+  ): Promise<StoredChannelMemberRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM channel_members
+        WHERE channel_id = $1
+        ORDER BY joined_at ASC
+        LIMIT $2`,
+      [channelId, maximum]
+    );
+    return result.rows.map(channelMember);
+  }
+
+  async removeMember(channelId: string, userId: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            'DELETE FROM channel_members WHERE channel_id = $1 AND user_id = $2',
+            [channelId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async advanceLastRead(
+    channelId: string,
+    userId: string,
+    lastReadAt: number
+  ): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            `UPDATE channel_members
+              SET last_read_at = $1
+              WHERE channel_id = $2 AND user_id = $3 AND last_read_at < $1`,
+            [lastReadAt, channelId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async unreadSummaryForUser(
+    userId: string
+  ): Promise<StoredChannelUnreadRow[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT
+         m.channel_id,
+         COUNT(msg.id)::text AS unread_count,
+         MAX(msg.created_at) AS latest_message_at
+       FROM channel_members m
+       LEFT JOIN channel_messages msg
+         ON msg.channel_id = m.channel_id
+        AND msg.created_at > m.last_read_at
+        AND msg.deleted_at IS NULL
+        AND (msg.user_id IS NULL OR msg.user_id != m.user_id
+             OR msg.author_kind != 'user')
+       WHERE m.user_id = $1
+       GROUP BY m.channel_id`,
+      [userId]
+    );
+    return result.rows.map(row => ({
+      channel_id: row.channel_id as string,
+      unread_count: number(row.unread_count, 'channel unread_count'),
+      latest_message_at:
+        row.latest_message_at === null
+          ? null
+          : number(row.latest_message_at, 'channel latest_message_at'),
+    }));
+  }
+}
+
+class PostgresChannelMessageRepository implements ChannelMessageRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async insertIfAbsent(
+    message: StoredChannelMessageRecord,
+    attachments: readonly StoredChannelAttachmentRecord[],
+    maximumPerChannel: number
+  ): Promise<{ stored: StoredChannelMessageRecord; inserted: boolean }> {
+    return this.database.transaction(async client => {
+      const existing = await client.query<NumericRow>(
+        'SELECT * FROM channel_messages WHERE id = $1',
+        [message.id]
+      );
+      if (existing.rows[0]) {
+        return { stored: channelMessage(existing.rows[0]), inserted: false };
+      }
+      const count = await client.query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM channel_messages
+          WHERE channel_id = $1`,
+        [message.channel_id]
+      );
+      if (Number(count.rows[0]?.count || 0) >= maximumPerChannel) {
+        throw new PersistenceResourceLimitError(
+          'channel-message',
+          maximumPerChannel
+        );
+      }
+      await client.query(
+        `INSERT INTO channel_messages
+           (id, channel_id, user_id, parent_id, author_kind, model, content,
+            metadata, created_at, updated_at, edited_at, deleted_at,
+            pinned_at, pinned_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        [
+          message.id,
+          message.channel_id,
+          message.user_id,
+          message.parent_id,
+          message.author_kind,
+          message.model,
+          message.content,
+          message.metadata,
+          message.created_at,
+          message.updated_at,
+          message.edited_at,
+          message.deleted_at,
+          message.pinned_at,
+          message.pinned_by,
+        ]
+      );
+      for (const attachment of attachments) {
+        if (attachment.message_id !== message.id) {
+          throw new Error(
+            'A channel attachment does not belong to its message'
+          );
+        }
+        await client.query(
+          `INSERT INTO channel_attachments
+             (id, message_id, channel_id, blob_id, filename, content_type,
+              size, created_by, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [
+            attachment.id,
+            attachment.message_id,
+            attachment.channel_id,
+            attachment.blob_id,
+            attachment.filename,
+            attachment.content_type,
+            attachment.size,
+            attachment.created_by,
+            attachment.created_at,
+          ]
+        );
+      }
+      await client.query('UPDATE channels SET updated_at = $1 WHERE id = $2', [
+        message.created_at,
+        message.channel_id,
+      ]);
+      return { stored: message, inserted: true };
+    });
+  }
+
+  async findById(
+    messageId: string
+  ): Promise<StoredChannelMessageRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM channel_messages WHERE id = $1',
+      [messageId]
+    );
+    return result.rows[0] ? channelMessage(result.rows[0]) : null;
+  }
+
+  async listPage(
+    channelId: string,
+    options: {
+      before?: ChannelTimelineCursor;
+      after?: ChannelTimelineCursor;
+      parentId?: string | null;
+      limit: number;
+    }
+  ): Promise<StoredChannelMessageRecord[]> {
+    const clauses = ['channel_id = $1'];
+    const parameters: unknown[] = [channelId];
+    if (options.parentId === null) {
+      clauses.push('parent_id IS NULL');
+    } else if (options.parentId !== undefined) {
+      parameters.push(options.parentId);
+      clauses.push(`parent_id = $${parameters.length}`);
+    }
+    if (options.before) {
+      parameters.push(options.before.created_at);
+      const createdIndex = parameters.length;
+      parameters.push(options.before.id);
+      clauses.push(
+        `(created_at < $${createdIndex} OR ` +
+          `(created_at = $${createdIndex} AND id < $${parameters.length}))`
+      );
+    }
+    if (options.after) {
+      parameters.push(options.after.created_at);
+      const createdIndex = parameters.length;
+      parameters.push(options.after.id);
+      clauses.push(
+        `(created_at > $${createdIndex} OR ` +
+          `(created_at = $${createdIndex} AND id > $${parameters.length}))`
+      );
+    }
+    const direction = options.after ? 'ASC' : 'DESC';
+    parameters.push(options.limit);
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM channel_messages
+        WHERE ${clauses.join(' AND ')}
+        ORDER BY created_at ${direction}, id ${direction}
+        LIMIT $${parameters.length}`,
+      parameters
+    );
+    return result.rows.map(channelMessage);
+  }
+
+  async listThread(
+    parentId: string,
+    maximum: number
+  ): Promise<StoredChannelMessageRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM channel_messages
+        WHERE parent_id = $1
+        ORDER BY created_at ASC, id ASC
+        LIMIT $2`,
+      [parentId, maximum]
+    );
+    return result.rows.map(channelMessage);
+  }
+
+  async countThreadReplies(
+    parentIds: readonly string[]
+  ): Promise<Record<string, number>> {
+    if (parentIds.length === 0) return {};
+    const result = await this.database.query<NumericRow>(
+      `SELECT parent_id, COUNT(*)::text AS count
+        FROM channel_messages
+        WHERE parent_id = ANY($1::text[]) AND deleted_at IS NULL
+        GROUP BY parent_id`,
+      [[...parentIds]]
+    );
+    const counts: Record<string, number> = {};
+    for (const row of result.rows) {
+      counts[row.parent_id as string] = number(
+        row.count,
+        'channel thread reply count'
+      );
+    }
+    return counts;
+  }
+
+  async update(message: StoredChannelMessageRecord): Promise<void> {
+    await this.database.query(
+      `UPDATE channel_messages SET
+         content = $1,
+         metadata = $2,
+         updated_at = $3,
+         edited_at = $4,
+         deleted_at = $5,
+         pinned_at = $6,
+         pinned_by = $7
+       WHERE id = $8`,
+      [
+        message.content,
+        message.metadata,
+        message.updated_at,
+        message.edited_at,
+        message.deleted_at,
+        message.pinned_at,
+        message.pinned_by,
+        message.id,
+      ]
+    );
+  }
+
+  async listPinned(
+    channelId: string,
+    maximum: number
+  ): Promise<StoredChannelMessageRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM channel_messages
+        WHERE channel_id = $1 AND pinned_at IS NOT NULL
+          AND deleted_at IS NULL
+        ORDER BY pinned_at DESC
+        LIMIT $2`,
+      [channelId, maximum]
+    );
+    return result.rows.map(channelMessage);
+  }
+
+  async listRecentForChannels(
+    channelIds: readonly string[],
+    maximum: number
+  ): Promise<StoredChannelMessageRecord[]> {
+    if (channelIds.length === 0) return [];
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM channel_messages
+        WHERE channel_id = ANY($1::text[]) AND deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $2`,
+      [[...channelIds], maximum]
+    );
+    return result.rows.map(channelMessage);
+  }
+
+  async addReaction(
+    reaction: StoredChannelReactionRecord,
+    maximumPerMessage: number
+  ): Promise<boolean> {
+    return this.database.transaction(async client => {
+      const existing = await client.query(
+        `SELECT 1 FROM channel_reactions
+          WHERE message_id = $1 AND user_id = $2 AND emoji = $3`,
+        [reaction.message_id, reaction.user_id, reaction.emoji]
+      );
+      if (existing.rows[0]) return false;
+      const count = await client.query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM channel_reactions
+          WHERE message_id = $1`,
+        [reaction.message_id]
+      );
+      if (Number(count.rows[0]?.count || 0) >= maximumPerMessage) {
+        throw new PersistenceResourceLimitError(
+          'channel-reaction',
+          maximumPerMessage
+        );
+      }
+      const result = await client.query(
+        `INSERT INTO channel_reactions
+           (id, message_id, user_id, emoji, created_at)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (message_id, user_id, emoji) DO NOTHING`,
+        [
+          reaction.id,
+          reaction.message_id,
+          reaction.user_id,
+          reaction.emoji,
+          reaction.created_at,
+        ]
+      );
+      return changes(result.rowCount) > 0;
+    });
+  }
+
+  async removeReaction(
+    messageId: string,
+    userId: string,
+    emoji: string
+  ): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            `DELETE FROM channel_reactions
+              WHERE message_id = $1 AND user_id = $2 AND emoji = $3`,
+            [messageId, userId, emoji]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async listReactionsForMessages(
+    messageIds: readonly string[]
+  ): Promise<StoredChannelReactionRecord[]> {
+    if (messageIds.length === 0) return [];
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM channel_reactions
+        WHERE message_id = ANY($1::text[])
+        ORDER BY created_at ASC`,
+      [[...messageIds]]
+    );
+    return result.rows.map(channelReaction);
+  }
+
+  async findAttachment(
+    attachmentId: string
+  ): Promise<StoredChannelAttachmentRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM channel_attachments WHERE id = $1',
+      [attachmentId]
+    );
+    return result.rows[0] ? channelAttachment(result.rows[0]) : null;
+  }
+
+  async listAttachmentsForMessages(
+    messageIds: readonly string[]
+  ): Promise<StoredChannelAttachmentRecord[]> {
+    if (messageIds.length === 0) return [];
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM channel_attachments
+        WHERE message_id = ANY($1::text[])
+        ORDER BY created_at ASC`,
+      [[...messageIds]]
+    );
+    return result.rows.map(channelAttachment);
+  }
+
+  async listAttachmentBlobIds(channelId: string): Promise<string[]> {
+    const result = await this.database.query<{ blob_id: string }>(
+      'SELECT blob_id FROM channel_attachments WHERE channel_id = $1',
+      [channelId]
+    );
+    return result.rows.map(row => row.blob_id);
+  }
+}
+
+class PostgresNotificationRepository implements NotificationRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async insertWithLimit(
+    value: StoredNotificationRecord,
+    maximumPerUser: number
+  ): Promise<boolean> {
+    return this.database.transaction(async client => {
+      await lockOwner(client, value.user_id);
+      const result = await client.query(
+        `INSERT INTO notifications
+           (id, user_id, type, title, body, href, source_key,
+            created_at, read_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         ON CONFLICT (user_id, source_key) DO NOTHING`,
+        [
+          value.id,
+          value.user_id,
+          value.type,
+          value.title,
+          value.body,
+          value.href,
+          value.source_key,
+          value.created_at,
+          value.read_at,
+        ]
+      );
+      if (changes(result.rowCount) === 0) return false;
+      await client.query(
+        `DELETE FROM notifications
+          WHERE user_id = $1
+            AND id NOT IN (
+              SELECT id FROM notifications
+              WHERE user_id = $1
+              ORDER BY created_at DESC, id DESC
+              LIMIT $2
+            )`,
+        [value.user_id, maximumPerUser]
+      );
+      return true;
+    });
+  }
+
+  async listByOwner(
+    userId: string,
+    options: { before?: number; limit: number; unreadOnly?: boolean }
+  ): Promise<StoredNotificationRecord[]> {
+    const clauses = ['user_id = $1'];
+    const parameters: unknown[] = [userId];
+    if (options.before !== undefined) {
+      parameters.push(options.before);
+      clauses.push(`created_at < $${parameters.length}`);
+    }
+    if (options.unreadOnly) {
+      clauses.push('read_at IS NULL');
+    }
+    parameters.push(options.limit);
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM notifications
+        WHERE ${clauses.join(' AND ')}
+        ORDER BY created_at DESC, id DESC
+        LIMIT $${parameters.length}`,
+      parameters
+    );
+    return result.rows.map(notification);
+  }
+
+  async countUnread(userId: string): Promise<number> {
+    const result = await this.database.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM notifications
+        WHERE user_id = $1 AND read_at IS NULL`,
+      [userId]
+    );
+    return Number(result.rows[0]?.count || 0);
+  }
+
+  async markRead(
+    notificationId: string,
+    userId: string,
+    readAt: number
+  ): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            `UPDATE notifications SET read_at = $1
+              WHERE id = $2 AND user_id = $3 AND read_at IS NULL`,
+            [readAt, notificationId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async markAllRead(userId: string, readAt: number): Promise<number> {
+    return changes(
+      (
+        await this.database.query(
+          `UPDATE notifications SET read_at = $1
+            WHERE user_id = $2 AND read_at IS NULL`,
+          [readAt, userId]
+        )
+      ).rowCount
+    );
+  }
+
+  async deleteByOwner(
+    notificationId: string,
+    userId: string
+  ): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            'DELETE FROM notifications WHERE id = $1 AND user_id = $2',
+            [notificationId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+}
+
+class PostgresWebhookTargetRepository implements WebhookTargetRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async list(maximum: number): Promise<StoredWebhookTargetRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM webhook_targets ORDER BY created_at ASC LIMIT $1',
+      [maximum]
+    );
+    return result.rows.map(webhookTarget);
+  }
+
+  async findById(targetId: string): Promise<StoredWebhookTargetRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM webhook_targets WHERE id = $1',
+      [targetId]
+    );
+    return result.rows[0] ? webhookTarget(result.rows[0]) : null;
+  }
+
+  async replaceWithLimit(
+    value: StoredWebhookTargetRecord,
+    maximum: number
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      const existing = await client.query(
+        'SELECT 1 FROM webhook_targets WHERE id = $1 FOR UPDATE',
+        [value.id]
+      );
+      if (!existing.rows[0]) {
+        const count = await client.query<{ count: string }>(
+          'SELECT COUNT(*)::text AS count FROM webhook_targets'
+        );
+        if (Number(count.rows[0]?.count || 0) >= maximum) {
+          throw new PersistenceResourceLimitError('webhook-target', maximum);
+        }
+      }
+      await client.query(
+        `INSERT INTO webhook_targets
+           (id, name, url, secret, events, enabled, created_by,
+            created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         ON CONFLICT (id) DO UPDATE SET
+           name = EXCLUDED.name,
+           url = EXCLUDED.url,
+           secret = EXCLUDED.secret,
+           events = EXCLUDED.events,
+           enabled = EXCLUDED.enabled,
+           updated_at = EXCLUDED.updated_at`,
+        [
+          value.id,
+          value.name,
+          value.url,
+          value.secret,
+          value.events,
+          value.enabled,
+          value.created_by,
+          value.created_at,
+          value.updated_at,
+        ]
+      );
+    });
+  }
+
+  async delete(targetId: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            'DELETE FROM webhook_targets WHERE id = $1',
+            [targetId]
           )
         ).rowCount
       ) > 0
@@ -2309,6 +3381,7 @@ const ARCHIVE_TABLES = {
   prompt: 'prompts',
   skill: 'skills',
   'tool-server': 'tool_servers',
+  calendar: 'calendars',
 } as const;
 
 class PostgresDataArchiveRepository implements DataArchiveRepository {
@@ -2713,7 +3786,12 @@ export const createPostgresResourceRepositories = (
   chatSessions: new PostgresChatSessionRepository(database),
   knowledgeCollections: new PostgresKnowledgeCollectionRepository(database),
   notes: new PostgresNoteRepository(database),
+  calendars: new PostgresCalendarRepository(database),
   calendarEvents: new PostgresCalendarEventRepository(database),
+  channels: new PostgresChannelRepository(database),
+  channelMessages: new PostgresChannelMessageRepository(database),
+  notifications: new PostgresNotificationRepository(database),
+  webhookTargets: new PostgresWebhookTargetRepository(database),
   automations: new PostgresAutomationRepository(database),
   automationRuns: new PostgresAutomationRunRepository(database),
   toolServers: new PostgresToolServerRepository(database),

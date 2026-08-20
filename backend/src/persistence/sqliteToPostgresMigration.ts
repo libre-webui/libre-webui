@@ -1021,6 +1021,13 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
     { integers: timestamps }
   ),
   table(
+    'calendars',
+    'calendars',
+    ['id', 'user_id', 'name', 'color', 'created_at', 'updated_at'],
+    ['id'],
+    { integers: timestamps }
+  ),
+  table(
     'calendar_events',
     'calendar_events',
     [
@@ -1032,11 +1039,23 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
       'end_at',
       'all_day',
       'recurrence',
+      'calendar_id',
+      'reminder_minutes',
+      'last_reminded_occurrence',
       'created_at',
       'updated_at',
     ],
     ['id'],
-    { integers: [...timestamps, 'start_at', 'end_at', 'all_day'] }
+    {
+      integers: [
+        ...timestamps,
+        'start_at',
+        'end_at',
+        'all_day',
+        'reminder_minutes',
+        'last_reminded_occurrence',
+      ],
+    }
   ),
   table(
     'automations',
@@ -1214,6 +1233,112 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
     ['id', 'skill_id', 'path', 'content', 'size', 'created_at', 'updated_at'],
     ['id'],
     { integers: [...timestamps, 'size'] }
+  ),
+  table(
+    'channels',
+    'channels',
+    [
+      'id',
+      'type',
+      'name',
+      'description',
+      'dm_key',
+      'created_by',
+      'created_at',
+      'updated_at',
+      'archived_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'archived_at'] }
+  ),
+  table(
+    'channel_members',
+    'channel_members',
+    ['channel_id', 'user_id', 'role', 'joined_at', 'last_read_at'],
+    ['channel_id', 'user_id'],
+    { integers: ['joined_at', 'last_read_at'] }
+  ),
+  table(
+    'channel_messages',
+    'channel_messages',
+    [
+      'id',
+      'channel_id',
+      'user_id',
+      'parent_id',
+      'author_kind',
+      'model',
+      'content',
+      'metadata',
+      'created_at',
+      'updated_at',
+      'edited_at',
+      'deleted_at',
+      'pinned_at',
+      'pinned_by',
+    ],
+    ['id'],
+    {
+      integers: [...timestamps, 'edited_at', 'deleted_at', 'pinned_at'],
+    }
+  ),
+  table(
+    'channel_reactions',
+    'channel_reactions',
+    ['id', 'message_id', 'user_id', 'emoji', 'created_at'],
+    ['id'],
+    { integers: timestamps }
+  ),
+  table(
+    'channel_attachments',
+    'channel_attachments',
+    [
+      'id',
+      'message_id',
+      'channel_id',
+      'blob_id',
+      'filename',
+      'content_type',
+      'size',
+      'created_by',
+      'created_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'size'] }
+  ),
+  table(
+    'notifications',
+    'notifications',
+    [
+      'id',
+      'user_id',
+      'type',
+      'title',
+      'body',
+      'href',
+      'source_key',
+      'created_at',
+      'read_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'read_at'] }
+  ),
+  table(
+    'webhook_targets',
+    'webhook_targets',
+    [
+      'id',
+      'name',
+      'url',
+      'secret',
+      'events',
+      'enabled',
+      'created_by',
+      'created_at',
+      'updated_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'enabled'] }
   ),
 ]);
 

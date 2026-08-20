@@ -195,8 +195,36 @@ export interface StoredCalendarEventRecord {
   end_at: number | null;
   all_day: number;
   recurrence: string | null;
+  calendar_id: string | null;
+  reminder_minutes: number | null;
+  last_reminded_occurrence: number | null;
   created_at: number;
   updated_at: number;
+}
+
+export interface StoredCalendarRecord {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface CalendarRepository {
+  listByOwner(userId: string, maximum: number): Promise<StoredCalendarRecord[]>;
+  findByOwner(
+    calendarId: string,
+    userId: string
+  ): Promise<StoredCalendarRecord | null>;
+  /** Cross-owner read; callers must authorize before returning content. */
+  findById(calendarId: string): Promise<StoredCalendarRecord | null>;
+  replaceWithLimit(
+    calendar: StoredCalendarRecord,
+    maximum: number
+  ): Promise<void>;
+  /** Deletes the calendar and detaches its events back to the default scope. */
+  deleteAndDetach(calendarId: string, userId: string): Promise<boolean>;
 }
 
 export interface CalendarEventRepository {
@@ -210,15 +238,266 @@ export interface CalendarEventRepository {
     userId: string,
     maximum: number
   ): Promise<StoredCalendarEventRecord[]>;
+  /** Cross-owner reads for shared calendars; callers authorize per calendar. */
+  listByCalendarsBetween(
+    calendarIds: readonly string[],
+    from: number,
+    to: number,
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]>;
+  listRecurringByCalendars(
+    calendarIds: readonly string[],
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]>;
   findByOwner(
     eventId: string,
     userId: string
   ): Promise<StoredCalendarEventRecord | null>;
+  /** Cross-owner read; callers must authorize before returning content. */
+  findById(eventId: string): Promise<StoredCalendarEventRecord | null>;
+  /** Events carrying a reminder offset, for the scheduler sweep. */
+  listWithReminders(maximum: number): Promise<StoredCalendarEventRecord[]>;
+  /**
+   * Record that a reminder fired for the given occurrence start. Only
+   * advances forward, so concurrent sweeps notify each occurrence once.
+   */
+  markReminded(eventId: string, occurrenceStart: number): Promise<boolean>;
   replaceWithLimit(
     event: StoredCalendarEventRecord,
     maximum: number
   ): Promise<void>;
   deleteByOwner(eventId: string, userId: string): Promise<boolean>;
+}
+
+export interface StoredChannelRecord {
+  id: string;
+  type: string;
+  name: string;
+  description: string | null;
+  dm_key: string | null;
+  created_by: string | null;
+  created_at: number;
+  updated_at: number;
+  archived_at: number | null;
+}
+
+export interface StoredChannelMemberRecord {
+  channel_id: string;
+  user_id: string;
+  role: string;
+  joined_at: number;
+  last_read_at: number;
+}
+
+export interface StoredChannelMembershipView {
+  channel: StoredChannelRecord;
+  member: StoredChannelMemberRecord;
+}
+
+export interface StoredChannelUnreadRow {
+  channel_id: string;
+  unread_count: number;
+  latest_message_at: number | null;
+}
+
+export interface StoredChannelMessageRecord {
+  id: string;
+  channel_id: string;
+  user_id: string | null;
+  parent_id: string | null;
+  author_kind: string;
+  model: string | null;
+  content: string;
+  metadata: string | null;
+  created_at: number;
+  updated_at: number;
+  edited_at: number | null;
+  deleted_at: number | null;
+  pinned_at: number | null;
+  pinned_by: string | null;
+}
+
+export interface StoredChannelReactionRecord {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: number;
+}
+
+export interface StoredChannelAttachmentRecord {
+  id: string;
+  message_id: string;
+  channel_id: string;
+  blob_id: string;
+  filename: string;
+  content_type: string;
+  size: number;
+  created_by: string | null;
+  created_at: number;
+}
+
+export interface ChannelTimelineCursor {
+  created_at: number;
+  id: string;
+}
+
+export interface ChannelRepository {
+  /** Creates the channel and its owner membership atomically. */
+  insertWithOwner(
+    channel: StoredChannelRecord,
+    owner: StoredChannelMemberRecord,
+    maximumPerUser: number
+  ): Promise<void>;
+  findById(channelId: string): Promise<StoredChannelRecord | null>;
+  findByDmKey(dmKey: string): Promise<StoredChannelRecord | null>;
+  listForUser(
+    userId: string,
+    maximum: number
+  ): Promise<StoredChannelMembershipView[]>;
+  listPublic(maximum: number): Promise<StoredChannelRecord[]>;
+  update(channel: StoredChannelRecord): Promise<void>;
+  delete(channelId: string): Promise<boolean>;
+  upsertMember(
+    member: StoredChannelMemberRecord,
+    maximumMembers: number
+  ): Promise<void>;
+  findMember(
+    channelId: string,
+    userId: string
+  ): Promise<StoredChannelMemberRecord | null>;
+  listMembers(
+    channelId: string,
+    maximum: number
+  ): Promise<StoredChannelMemberRecord[]>;
+  removeMember(channelId: string, userId: string): Promise<boolean>;
+  /** Advances the read cursor monotonically; never moves it backwards. */
+  advanceLastRead(
+    channelId: string,
+    userId: string,
+    lastReadAt: number
+  ): Promise<boolean>;
+  /** Per-channel unread counts for every channel the user belongs to. */
+  unreadSummaryForUser(userId: string): Promise<StoredChannelUnreadRow[]>;
+}
+
+export interface ChannelMessageRepository {
+  /**
+   * Idempotent append: when the id already exists the stored row is
+   * returned unchanged and `inserted` is false, so client retries and
+   * duplicate deliveries never duplicate timeline entries.
+   */
+  insertIfAbsent(
+    message: StoredChannelMessageRecord,
+    attachments: readonly StoredChannelAttachmentRecord[],
+    maximumPerChannel: number
+  ): Promise<{ stored: StoredChannelMessageRecord; inserted: boolean }>;
+  findById(messageId: string): Promise<StoredChannelMessageRecord | null>;
+  listPage(
+    channelId: string,
+    options: {
+      before?: ChannelTimelineCursor;
+      after?: ChannelTimelineCursor;
+      parentId?: string | null;
+      limit: number;
+    }
+  ): Promise<StoredChannelMessageRecord[]>;
+  listThread(
+    parentId: string,
+    maximum: number
+  ): Promise<StoredChannelMessageRecord[]>;
+  countThreadReplies(
+    parentIds: readonly string[]
+  ): Promise<Record<string, number>>;
+  /** Cross-owner patch; callers must authorize before invoking. */
+  update(message: StoredChannelMessageRecord): Promise<void>;
+  listPinned(
+    channelId: string,
+    maximum: number
+  ): Promise<StoredChannelMessageRecord[]>;
+  /** Recent decryptable candidates for in-process search scoring. */
+  listRecentForChannels(
+    channelIds: readonly string[],
+    maximum: number
+  ): Promise<StoredChannelMessageRecord[]>;
+  addReaction(
+    reaction: StoredChannelReactionRecord,
+    maximumPerMessage: number
+  ): Promise<boolean>;
+  removeReaction(
+    messageId: string,
+    userId: string,
+    emoji: string
+  ): Promise<boolean>;
+  listReactionsForMessages(
+    messageIds: readonly string[]
+  ): Promise<StoredChannelReactionRecord[]>;
+  findAttachment(
+    attachmentId: string
+  ): Promise<StoredChannelAttachmentRecord | null>;
+  listAttachmentsForMessages(
+    messageIds: readonly string[]
+  ): Promise<StoredChannelAttachmentRecord[]>;
+  /** Blob ids referenced by a channel, for deletion hygiene. */
+  listAttachmentBlobIds(channelId: string): Promise<string[]>;
+}
+
+export interface StoredNotificationRecord {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  body: string | null;
+  href: string | null;
+  source_key: string | null;
+  created_at: number;
+  read_at: number | null;
+}
+
+export interface NotificationRepository {
+  /**
+   * Inserts unless the (user, source_key) pair already exists; prunes the
+   * oldest rows beyond the per-user cap in the same transaction. Returns
+   * false when deduplicated.
+   */
+  insertWithLimit(
+    notification: StoredNotificationRecord,
+    maximumPerUser: number
+  ): Promise<boolean>;
+  listByOwner(
+    userId: string,
+    options: { before?: number; limit: number; unreadOnly?: boolean }
+  ): Promise<StoredNotificationRecord[]>;
+  countUnread(userId: string): Promise<number>;
+  markRead(
+    notificationId: string,
+    userId: string,
+    readAt: number
+  ): Promise<boolean>;
+  markAllRead(userId: string, readAt: number): Promise<number>;
+  deleteByOwner(notificationId: string, userId: string): Promise<boolean>;
+}
+
+export interface StoredWebhookTargetRecord {
+  id: string;
+  name: string;
+  url: string;
+  secret: string | null;
+  events: string;
+  enabled: number;
+  created_by: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface WebhookTargetRepository {
+  list(maximum: number): Promise<StoredWebhookTargetRecord[]>;
+  findById(targetId: string): Promise<StoredWebhookTargetRecord | null>;
+  replaceWithLimit(
+    target: StoredWebhookTargetRecord,
+    maximum: number
+  ): Promise<void>;
+  delete(targetId: string): Promise<boolean>;
 }
 
 export interface StoredAutomationRecord {
@@ -634,7 +913,7 @@ export type ArchiveNestedResource = 'session-message' | 'document-chunk';
  * prompt/skill portability uses their dedicated import/export surfaces).
  */
 export type GrantableResource =
-  ArchiveOwnedResource | 'prompt' | 'skill' | 'tool-server';
+  ArchiveOwnedResource | 'prompt' | 'skill' | 'tool-server' | 'calendar';
 
 export interface ArchiveNestedOwner {
   userId: string;
@@ -723,7 +1002,12 @@ export interface ApplicationResourceRepositories {
   chatSessions: ChatSessionRepository;
   knowledgeCollections: KnowledgeCollectionRepository;
   notes: NoteRepository;
+  calendars: CalendarRepository;
   calendarEvents: CalendarEventRepository;
+  channels: ChannelRepository;
+  channelMessages: ChannelMessageRepository;
+  notifications: NotificationRepository;
+  webhookTargets: WebhookTargetRepository;
   automations: AutomationRepository;
   automationRuns: AutomationRunRepository;
   toolServers: ToolServerRepository;
@@ -761,12 +1045,19 @@ export class PersistenceResourceLimitError extends Error {
       | 'note'
       | 'session-folder'
       | 'calendar-event'
+      | 'calendar'
       | 'automation'
       | 'tool-server'
       | 'prompt'
       | 'skill'
       | 'skill-file'
-      | 'note-attachment',
+      | 'note-attachment'
+      | 'channel'
+      | 'channel-member'
+      | 'channel-message'
+      | 'channel-reaction'
+      | 'notification'
+      | 'webhook-target',
     readonly maximum: number
   ) {
     super(`The ${resource} storage limit of ${maximum} has been reached`);

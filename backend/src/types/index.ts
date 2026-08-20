@@ -145,10 +145,24 @@ export interface CalendarEvent {
   endAt?: number;
   allDay: boolean;
   recurrence?: AutomationTrigger;
+  /** Named calendar this event belongs to; absent = the default calendar. */
+  calendarId?: string;
+  /** Minutes before the start when an in-app reminder should fire. */
+  reminderMinutes?: number;
+  /** Internal: occurrence start the reminder sweep last notified for. */
+  lastRemindedOccurrence?: number;
   createdAt: number;
   updatedAt: number;
   /** Present on expanded occurrences of a recurring event. */
   baseEventId?: string;
+}
+
+export interface Calendar {
+  id: string;
+  name: string;
+  color?: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export type AutomationNotify = 'app' | 'off';

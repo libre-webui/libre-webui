@@ -22,11 +22,16 @@ import type {
   AutomationRepository,
   AutomationRunRepository,
   CalendarEventRepository,
+  CalendarRepository,
+  ChannelMessageRepository,
+  ChannelRepository,
+  ChannelTimelineCursor,
   ChatSessionRepository,
   DataArchiveApplyPlan,
   DataArchiveRepository,
   KnowledgeCollectionRepository,
   NoteRepository,
+  NotificationRepository,
   PreferenceRepository,
   PromptRepository,
   SessionFolderRepository,
@@ -35,6 +40,14 @@ import type {
   StoredAutomationRecord,
   StoredAutomationRunRecord,
   StoredCalendarEventRecord,
+  StoredCalendarRecord,
+  StoredChannelAttachmentRecord,
+  StoredChannelMemberRecord,
+  StoredChannelMembershipView,
+  StoredChannelMessageRecord,
+  StoredChannelReactionRecord,
+  StoredChannelRecord,
+  StoredChannelUnreadRow,
   StoredChatMessageRecord,
   StoredChatSessionAggregate,
   StoredChatSessionRecord,
@@ -43,6 +56,7 @@ import type {
   StoredNotePatch,
   StoredNoteRecord,
   StoredNoteRevisionRecord,
+  StoredNotificationRecord,
   StoredPreferenceRecord,
   StoredPromptRecord,
   StoredPromptVersionRecord,
@@ -53,11 +67,13 @@ import type {
   StoredToolServerCredentialRecord,
   StoredToolServerRecord,
   StoredToolServerToolRecord,
+  StoredWebhookTargetRecord,
   SystemSettingRepository,
   ToolApprovalRepository,
   ToolServerCredentialRepository,
   ToolServerRepository,
   ToolServerToolRepository,
+  WebhookTargetRepository,
 } from './resourceTypes.js';
 import {
   PersistenceResourceConflictError,
@@ -690,6 +706,42 @@ class SQLiteCalendarEventRepository implements CalendarEventRepository {
       .all(userId, maximum) as StoredCalendarEventRecord[];
   }
 
+  async listByCalendarsBetween(
+    calendarIds: readonly string[],
+    from: number,
+    to: number,
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]> {
+    if (calendarIds.length === 0) return [];
+    const placeholders = calendarIds.map(() => '?').join(', ');
+    return this.database
+      .prepare(
+        `SELECT * FROM calendar_events
+         WHERE calendar_id IN (${placeholders})
+           AND start_at >= ? AND start_at < ?
+         ORDER BY start_at ASC
+         LIMIT ?`
+      )
+      .all(...calendarIds, from, to, maximum) as StoredCalendarEventRecord[];
+  }
+
+  async listRecurringByCalendars(
+    calendarIds: readonly string[],
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]> {
+    if (calendarIds.length === 0) return [];
+    const placeholders = calendarIds.map(() => '?').join(', ');
+    return this.database
+      .prepare(
+        `SELECT * FROM calendar_events
+         WHERE calendar_id IN (${placeholders})
+           AND recurrence IS NOT NULL
+         ORDER BY start_at ASC
+         LIMIT ?`
+      )
+      .all(...calendarIds, maximum) as StoredCalendarEventRecord[];
+  }
+
   async findByOwner(
     eventId: string,
     userId: string
@@ -698,6 +750,44 @@ class SQLiteCalendarEventRepository implements CalendarEventRepository {
       (this.database
         .prepare('SELECT * FROM calendar_events WHERE id = ? AND user_id = ?')
         .get(eventId, userId) as StoredCalendarEventRecord | undefined) ?? null
+    );
+  }
+
+  async findById(eventId: string): Promise<StoredCalendarEventRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM calendar_events WHERE id = ?')
+        .get(eventId) as StoredCalendarEventRecord | undefined) ?? null
+    );
+  }
+
+  async listWithReminders(
+    maximum: number
+  ): Promise<StoredCalendarEventRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM calendar_events
+         WHERE reminder_minutes IS NOT NULL
+         ORDER BY start_at ASC
+         LIMIT ?`
+      )
+      .all(maximum) as StoredCalendarEventRecord[];
+  }
+
+  async markReminded(
+    eventId: string,
+    occurrenceStart: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE calendar_events
+           SET last_reminded_occurrence = ?
+           WHERE id = ?
+             AND (last_reminded_occurrence IS NULL
+               OR last_reminded_occurrence < ?)`
+        )
+        .run(occurrenceStart, eventId, occurrenceStart).changes > 0
     );
   }
 
@@ -726,8 +816,9 @@ class SQLiteCalendarEventRepository implements CalendarEventRepository {
         .prepare(
           `INSERT INTO calendar_events
              (id, user_id, title, notes, start_at, end_at, all_day,
-              recurrence, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              recurrence, calendar_id, reminder_minutes,
+              last_reminded_occurrence, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              title = excluded.title,
              notes = excluded.notes,
@@ -735,6 +826,9 @@ class SQLiteCalendarEventRepository implements CalendarEventRepository {
              end_at = excluded.end_at,
              all_day = excluded.all_day,
              recurrence = excluded.recurrence,
+             calendar_id = excluded.calendar_id,
+             reminder_minutes = excluded.reminder_minutes,
+             last_reminded_occurrence = excluded.last_reminded_occurrence,
              updated_at = excluded.updated_at
            WHERE calendar_events.user_id = excluded.user_id`
         )
@@ -747,6 +841,9 @@ class SQLiteCalendarEventRepository implements CalendarEventRepository {
           event.end_at,
           event.all_day,
           event.recurrence,
+          event.calendar_id,
+          event.reminder_minutes,
+          event.last_reminded_occurrence,
           event.created_at,
           event.updated_at
         );
@@ -759,6 +856,890 @@ class SQLiteCalendarEventRepository implements CalendarEventRepository {
       this.database
         .prepare('DELETE FROM calendar_events WHERE id = ? AND user_id = ?')
         .run(eventId, userId).changes > 0
+    );
+  }
+}
+
+class SQLiteCalendarRepository implements CalendarRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredCalendarRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM calendars
+         WHERE user_id = ?
+         ORDER BY created_at ASC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredCalendarRecord[];
+  }
+
+  async findByOwner(
+    calendarId: string,
+    userId: string
+  ): Promise<StoredCalendarRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM calendars WHERE id = ? AND user_id = ?')
+        .get(calendarId, userId) as StoredCalendarRecord | undefined) ?? null
+    );
+  }
+
+  async findById(calendarId: string): Promise<StoredCalendarRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM calendars WHERE id = ?')
+        .get(calendarId) as StoredCalendarRecord | undefined) ?? null
+    );
+  }
+
+  async replaceWithLimit(
+    calendar: StoredCalendarRecord,
+    maximum: number
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      const exists = ensureSameOwner(
+        this.database,
+        'calendars',
+        calendar.id,
+        calendar.user_id
+      );
+      if (!exists) {
+        const row = this.database
+          .prepare('SELECT COUNT(*) AS count FROM calendars WHERE user_id = ?')
+          .get(calendar.user_id) as { count: number };
+        if (row.count >= maximum) {
+          throw new PersistenceResourceLimitError('calendar', maximum);
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO calendars
+             (id, user_id, name, color, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             name = excluded.name,
+             color = excluded.color,
+             updated_at = excluded.updated_at
+           WHERE calendars.user_id = excluded.user_id`
+        )
+        .run(
+          calendar.id,
+          calendar.user_id,
+          calendar.name,
+          calendar.color,
+          calendar.created_at,
+          calendar.updated_at
+        );
+    });
+    replace();
+  }
+
+  async deleteAndDetach(calendarId: string, userId: string): Promise<boolean> {
+    const remove = this.database.transaction(() => {
+      const deleted =
+        this.database
+          .prepare('DELETE FROM calendars WHERE id = ? AND user_id = ?')
+          .run(calendarId, userId).changes > 0;
+      if (deleted) {
+        this.database
+          .prepare(
+            `UPDATE calendar_events
+             SET calendar_id = NULL
+             WHERE calendar_id = ? AND user_id = ?`
+          )
+          .run(calendarId, userId);
+      }
+      return deleted;
+    });
+    return remove();
+  }
+}
+
+class SQLiteChannelRepository implements ChannelRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async insertWithOwner(
+    channel: StoredChannelRecord,
+    owner: StoredChannelMemberRecord,
+    maximumPerUser: number
+  ): Promise<void> {
+    const insert = this.database.transaction(() => {
+      const count = this.database
+        .prepare(
+          `SELECT COUNT(*) AS count
+           FROM channels
+           WHERE created_by = ?`
+        )
+        .get(owner.user_id) as { count: number };
+      if (count.count >= maximumPerUser) {
+        throw new PersistenceResourceLimitError('channel', maximumPerUser);
+      }
+      this.database
+        .prepare(
+          `INSERT INTO channels
+             (id, type, name, description, dm_key, created_by,
+              created_at, updated_at, archived_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(
+          channel.id,
+          channel.type,
+          channel.name,
+          channel.description,
+          channel.dm_key,
+          channel.created_by,
+          channel.created_at,
+          channel.updated_at,
+          channel.archived_at
+        );
+      this.database
+        .prepare(
+          `INSERT INTO channel_members
+             (channel_id, user_id, role, joined_at, last_read_at)
+           VALUES (?, ?, ?, ?, ?)`
+        )
+        .run(
+          owner.channel_id,
+          owner.user_id,
+          owner.role,
+          owner.joined_at,
+          owner.last_read_at
+        );
+    });
+    insert();
+  }
+
+  async findById(channelId: string): Promise<StoredChannelRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM channels WHERE id = ?')
+        .get(channelId) as StoredChannelRecord | undefined) ?? null
+    );
+  }
+
+  async findByDmKey(dmKey: string): Promise<StoredChannelRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM channels WHERE dm_key = ?')
+        .get(dmKey) as StoredChannelRecord | undefined) ?? null
+    );
+  }
+
+  async listForUser(
+    userId: string,
+    maximum: number
+  ): Promise<StoredChannelMembershipView[]> {
+    const rows = this.database
+      .prepare(
+        `SELECT
+           c.id, c.type, c.name, c.description, c.dm_key, c.created_by,
+           c.created_at, c.updated_at, c.archived_at,
+           m.channel_id AS member_channel_id, m.user_id AS member_user_id,
+           m.role AS member_role, m.joined_at AS member_joined_at,
+           m.last_read_at AS member_last_read_at
+         FROM channel_members m
+         JOIN channels c ON c.id = m.channel_id
+         WHERE m.user_id = ?
+         ORDER BY c.updated_at DESC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as Array<Record<string, unknown>>;
+    return rows.map(row => ({
+      channel: {
+        id: row.id as string,
+        type: row.type as string,
+        name: row.name as string,
+        description: row.description as string | null,
+        dm_key: row.dm_key as string | null,
+        created_by: row.created_by as string | null,
+        created_at: row.created_at as number,
+        updated_at: row.updated_at as number,
+        archived_at: row.archived_at as number | null,
+      },
+      member: {
+        channel_id: row.member_channel_id as string,
+        user_id: row.member_user_id as string,
+        role: row.member_role as string,
+        joined_at: row.member_joined_at as number,
+        last_read_at: row.member_last_read_at as number,
+      },
+    }));
+  }
+
+  async listPublic(maximum: number): Promise<StoredChannelRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM channels
+         WHERE type = 'public' AND archived_at IS NULL
+         ORDER BY updated_at DESC
+         LIMIT ?`
+      )
+      .all(maximum) as StoredChannelRecord[];
+  }
+
+  async update(channel: StoredChannelRecord): Promise<void> {
+    this.database
+      .prepare(
+        `UPDATE channels SET
+           name = ?,
+           description = ?,
+           updated_at = ?,
+           archived_at = ?
+         WHERE id = ?`
+      )
+      .run(
+        channel.name,
+        channel.description,
+        channel.updated_at,
+        channel.archived_at,
+        channel.id
+      );
+  }
+
+  async delete(channelId: string): Promise<boolean> {
+    return (
+      this.database.prepare('DELETE FROM channels WHERE id = ?').run(channelId)
+        .changes > 0
+    );
+  }
+
+  async upsertMember(
+    member: StoredChannelMemberRecord,
+    maximumMembers: number
+  ): Promise<void> {
+    const upsert = this.database.transaction(() => {
+      const existing = this.database
+        .prepare(
+          'SELECT 1 FROM channel_members WHERE channel_id = ? AND user_id = ?'
+        )
+        .get(member.channel_id, member.user_id);
+      if (!existing) {
+        const count = this.database
+          .prepare(
+            'SELECT COUNT(*) AS count FROM channel_members WHERE channel_id = ?'
+          )
+          .get(member.channel_id) as { count: number };
+        if (count.count >= maximumMembers) {
+          throw new PersistenceResourceLimitError(
+            'channel-member',
+            maximumMembers
+          );
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO channel_members
+             (channel_id, user_id, role, joined_at, last_read_at)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(channel_id, user_id) DO UPDATE SET
+             role = excluded.role`
+        )
+        .run(
+          member.channel_id,
+          member.user_id,
+          member.role,
+          member.joined_at,
+          member.last_read_at
+        );
+    });
+    upsert();
+  }
+
+  async findMember(
+    channelId: string,
+    userId: string
+  ): Promise<StoredChannelMemberRecord | null> {
+    return (
+      (this.database
+        .prepare(
+          'SELECT * FROM channel_members WHERE channel_id = ? AND user_id = ?'
+        )
+        .get(channelId, userId) as StoredChannelMemberRecord | undefined) ??
+      null
+    );
+  }
+
+  async listMembers(
+    channelId: string,
+    maximum: number
+  ): Promise<StoredChannelMemberRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM channel_members
+         WHERE channel_id = ?
+         ORDER BY joined_at ASC
+         LIMIT ?`
+      )
+      .all(channelId, maximum) as StoredChannelMemberRecord[];
+  }
+
+  async removeMember(channelId: string, userId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          'DELETE FROM channel_members WHERE channel_id = ? AND user_id = ?'
+        )
+        .run(channelId, userId).changes > 0
+    );
+  }
+
+  async advanceLastRead(
+    channelId: string,
+    userId: string,
+    lastReadAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE channel_members
+           SET last_read_at = ?
+           WHERE channel_id = ? AND user_id = ? AND last_read_at < ?`
+        )
+        .run(lastReadAt, channelId, userId, lastReadAt).changes > 0
+    );
+  }
+
+  async unreadSummaryForUser(
+    userId: string
+  ): Promise<StoredChannelUnreadRow[]> {
+    return this.database
+      .prepare(
+        `SELECT
+           m.channel_id,
+           COUNT(msg.id) AS unread_count,
+           MAX(msg.created_at) AS latest_message_at
+         FROM channel_members m
+         LEFT JOIN channel_messages msg
+           ON msg.channel_id = m.channel_id
+          AND msg.created_at > m.last_read_at
+          AND msg.deleted_at IS NULL
+          AND (msg.user_id IS NULL OR msg.user_id != m.user_id
+               OR msg.author_kind != 'user')
+         WHERE m.user_id = ?
+         GROUP BY m.channel_id`
+      )
+      .all(userId) as StoredChannelUnreadRow[];
+  }
+}
+
+class SQLiteChannelMessageRepository implements ChannelMessageRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  private insertMessageRow(message: StoredChannelMessageRecord): void {
+    this.database
+      .prepare(
+        `INSERT INTO channel_messages
+           (id, channel_id, user_id, parent_id, author_kind, model, content,
+            metadata, created_at, updated_at, edited_at, deleted_at,
+            pinned_at, pinned_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        message.id,
+        message.channel_id,
+        message.user_id,
+        message.parent_id,
+        message.author_kind,
+        message.model,
+        message.content,
+        message.metadata,
+        message.created_at,
+        message.updated_at,
+        message.edited_at,
+        message.deleted_at,
+        message.pinned_at,
+        message.pinned_by
+      );
+  }
+
+  async insertIfAbsent(
+    message: StoredChannelMessageRecord,
+    attachments: readonly StoredChannelAttachmentRecord[],
+    maximumPerChannel: number
+  ): Promise<{ stored: StoredChannelMessageRecord; inserted: boolean }> {
+    const insert = this.database.transaction(() => {
+      const existing = this.database
+        .prepare('SELECT * FROM channel_messages WHERE id = ?')
+        .get(message.id) as StoredChannelMessageRecord | undefined;
+      if (existing) {
+        return { stored: existing, inserted: false };
+      }
+      const count = this.database
+        .prepare(
+          'SELECT COUNT(*) AS count FROM channel_messages WHERE channel_id = ?'
+        )
+        .get(message.channel_id) as { count: number };
+      if (count.count >= maximumPerChannel) {
+        throw new PersistenceResourceLimitError(
+          'channel-message',
+          maximumPerChannel
+        );
+      }
+      this.insertMessageRow(message);
+      const insertAttachment = this.database.prepare(
+        `INSERT INTO channel_attachments
+           (id, message_id, channel_id, blob_id, filename, content_type,
+            size, created_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      );
+      for (const attachment of attachments) {
+        if (attachment.message_id !== message.id) {
+          throw new Error(
+            'A channel attachment does not belong to its message'
+          );
+        }
+        insertAttachment.run(
+          attachment.id,
+          attachment.message_id,
+          attachment.channel_id,
+          attachment.blob_id,
+          attachment.filename,
+          attachment.content_type,
+          attachment.size,
+          attachment.created_by,
+          attachment.created_at
+        );
+      }
+      this.database
+        .prepare('UPDATE channels SET updated_at = ? WHERE id = ?')
+        .run(message.created_at, message.channel_id);
+      return { stored: message, inserted: true };
+    });
+    return insert();
+  }
+
+  async findById(
+    messageId: string
+  ): Promise<StoredChannelMessageRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM channel_messages WHERE id = ?')
+        .get(messageId) as StoredChannelMessageRecord | undefined) ?? null
+    );
+  }
+
+  async listPage(
+    channelId: string,
+    options: {
+      before?: ChannelTimelineCursor;
+      after?: ChannelTimelineCursor;
+      parentId?: string | null;
+      limit: number;
+    }
+  ): Promise<StoredChannelMessageRecord[]> {
+    const clauses = ['channel_id = ?'];
+    const parameters: unknown[] = [channelId];
+    if (options.parentId === null) {
+      clauses.push('parent_id IS NULL');
+    } else if (options.parentId !== undefined) {
+      clauses.push('parent_id = ?');
+      parameters.push(options.parentId);
+    }
+    if (options.before) {
+      clauses.push('(created_at < ? OR (created_at = ? AND id < ?))');
+      parameters.push(
+        options.before.created_at,
+        options.before.created_at,
+        options.before.id
+      );
+    }
+    if (options.after) {
+      clauses.push('(created_at > ? OR (created_at = ? AND id > ?))');
+      parameters.push(
+        options.after.created_at,
+        options.after.created_at,
+        options.after.id
+      );
+    }
+    const direction = options.after ? 'ASC' : 'DESC';
+    parameters.push(options.limit);
+    return this.database
+      .prepare(
+        `SELECT * FROM channel_messages
+         WHERE ${clauses.join(' AND ')}
+         ORDER BY created_at ${direction}, id ${direction}
+         LIMIT ?`
+      )
+      .all(...parameters) as StoredChannelMessageRecord[];
+  }
+
+  async listThread(
+    parentId: string,
+    maximum: number
+  ): Promise<StoredChannelMessageRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM channel_messages
+         WHERE parent_id = ?
+         ORDER BY created_at ASC, id ASC
+         LIMIT ?`
+      )
+      .all(parentId, maximum) as StoredChannelMessageRecord[];
+  }
+
+  async countThreadReplies(
+    parentIds: readonly string[]
+  ): Promise<Record<string, number>> {
+    if (parentIds.length === 0) return {};
+    const placeholders = parentIds.map(() => '?').join(', ');
+    const rows = this.database
+      .prepare(
+        `SELECT parent_id, COUNT(*) AS count
+         FROM channel_messages
+         WHERE parent_id IN (${placeholders}) AND deleted_at IS NULL
+         GROUP BY parent_id`
+      )
+      .all(...parentIds) as Array<{ parent_id: string; count: number }>;
+    const counts: Record<string, number> = {};
+    for (const row of rows) counts[row.parent_id] = row.count;
+    return counts;
+  }
+
+  async update(message: StoredChannelMessageRecord): Promise<void> {
+    this.database
+      .prepare(
+        `UPDATE channel_messages SET
+           content = ?,
+           metadata = ?,
+           updated_at = ?,
+           edited_at = ?,
+           deleted_at = ?,
+           pinned_at = ?,
+           pinned_by = ?
+         WHERE id = ?`
+      )
+      .run(
+        message.content,
+        message.metadata,
+        message.updated_at,
+        message.edited_at,
+        message.deleted_at,
+        message.pinned_at,
+        message.pinned_by,
+        message.id
+      );
+  }
+
+  async listPinned(
+    channelId: string,
+    maximum: number
+  ): Promise<StoredChannelMessageRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM channel_messages
+         WHERE channel_id = ? AND pinned_at IS NOT NULL AND deleted_at IS NULL
+         ORDER BY pinned_at DESC
+         LIMIT ?`
+      )
+      .all(channelId, maximum) as StoredChannelMessageRecord[];
+  }
+
+  async listRecentForChannels(
+    channelIds: readonly string[],
+    maximum: number
+  ): Promise<StoredChannelMessageRecord[]> {
+    if (channelIds.length === 0) return [];
+    const placeholders = channelIds.map(() => '?').join(', ');
+    return this.database
+      .prepare(
+        `SELECT * FROM channel_messages
+         WHERE channel_id IN (${placeholders}) AND deleted_at IS NULL
+         ORDER BY created_at DESC
+         LIMIT ?`
+      )
+      .all(...channelIds, maximum) as StoredChannelMessageRecord[];
+  }
+
+  async addReaction(
+    reaction: StoredChannelReactionRecord,
+    maximumPerMessage: number
+  ): Promise<boolean> {
+    const add = this.database.transaction(() => {
+      const existing = this.database
+        .prepare(
+          `SELECT 1 FROM channel_reactions
+           WHERE message_id = ? AND user_id = ? AND emoji = ?`
+        )
+        .get(reaction.message_id, reaction.user_id, reaction.emoji);
+      if (existing) return false;
+      const count = this.database
+        .prepare(
+          'SELECT COUNT(*) AS count FROM channel_reactions WHERE message_id = ?'
+        )
+        .get(reaction.message_id) as { count: number };
+      if (count.count >= maximumPerMessage) {
+        throw new PersistenceResourceLimitError(
+          'channel-reaction',
+          maximumPerMessage
+        );
+      }
+      this.database
+        .prepare(
+          `INSERT INTO channel_reactions
+             (id, message_id, user_id, emoji, created_at)
+           VALUES (?, ?, ?, ?, ?)`
+        )
+        .run(
+          reaction.id,
+          reaction.message_id,
+          reaction.user_id,
+          reaction.emoji,
+          reaction.created_at
+        );
+      return true;
+    });
+    return add();
+  }
+
+  async removeReaction(
+    messageId: string,
+    userId: string,
+    emoji: string
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `DELETE FROM channel_reactions
+           WHERE message_id = ? AND user_id = ? AND emoji = ?`
+        )
+        .run(messageId, userId, emoji).changes > 0
+    );
+  }
+
+  async listReactionsForMessages(
+    messageIds: readonly string[]
+  ): Promise<StoredChannelReactionRecord[]> {
+    if (messageIds.length === 0) return [];
+    const placeholders = messageIds.map(() => '?').join(', ');
+    return this.database
+      .prepare(
+        `SELECT * FROM channel_reactions
+         WHERE message_id IN (${placeholders})
+         ORDER BY created_at ASC`
+      )
+      .all(...messageIds) as StoredChannelReactionRecord[];
+  }
+
+  async findAttachment(
+    attachmentId: string
+  ): Promise<StoredChannelAttachmentRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM channel_attachments WHERE id = ?')
+        .get(attachmentId) as StoredChannelAttachmentRecord | undefined) ?? null
+    );
+  }
+
+  async listAttachmentsForMessages(
+    messageIds: readonly string[]
+  ): Promise<StoredChannelAttachmentRecord[]> {
+    if (messageIds.length === 0) return [];
+    const placeholders = messageIds.map(() => '?').join(', ');
+    return this.database
+      .prepare(
+        `SELECT * FROM channel_attachments
+         WHERE message_id IN (${placeholders})
+         ORDER BY created_at ASC`
+      )
+      .all(...messageIds) as StoredChannelAttachmentRecord[];
+  }
+
+  async listAttachmentBlobIds(channelId: string): Promise<string[]> {
+    const rows = this.database
+      .prepare('SELECT blob_id FROM channel_attachments WHERE channel_id = ?')
+      .all(channelId) as Array<{ blob_id: string }>;
+    return rows.map(row => row.blob_id);
+  }
+}
+
+class SQLiteNotificationRepository implements NotificationRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async insertWithLimit(
+    notification: StoredNotificationRecord,
+    maximumPerUser: number
+  ): Promise<boolean> {
+    const insert = this.database.transaction(() => {
+      const result = this.database
+        .prepare(
+          `INSERT INTO notifications
+             (id, user_id, type, title, body, href, source_key,
+              created_at, read_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(user_id, source_key)
+             WHERE source_key IS NOT NULL
+             DO NOTHING`
+        )
+        .run(
+          notification.id,
+          notification.user_id,
+          notification.type,
+          notification.title,
+          notification.body,
+          notification.href,
+          notification.source_key,
+          notification.created_at,
+          notification.read_at
+        );
+      if (result.changes === 0) return false;
+      this.database
+        .prepare(
+          `DELETE FROM notifications
+           WHERE user_id = ?
+             AND id NOT IN (
+               SELECT id FROM notifications
+               WHERE user_id = ?
+               ORDER BY created_at DESC, id DESC
+               LIMIT ?
+             )`
+        )
+        .run(notification.user_id, notification.user_id, maximumPerUser);
+      return true;
+    });
+    return insert();
+  }
+
+  async listByOwner(
+    userId: string,
+    options: { before?: number; limit: number; unreadOnly?: boolean }
+  ): Promise<StoredNotificationRecord[]> {
+    const clauses = ['user_id = ?'];
+    const parameters: unknown[] = [userId];
+    if (options.before !== undefined) {
+      clauses.push('created_at < ?');
+      parameters.push(options.before);
+    }
+    if (options.unreadOnly) {
+      clauses.push('read_at IS NULL');
+    }
+    parameters.push(options.limit);
+    return this.database
+      .prepare(
+        `SELECT * FROM notifications
+         WHERE ${clauses.join(' AND ')}
+         ORDER BY created_at DESC, id DESC
+         LIMIT ?`
+      )
+      .all(...parameters) as StoredNotificationRecord[];
+  }
+
+  async countUnread(userId: string): Promise<number> {
+    const row = this.database
+      .prepare(
+        `SELECT COUNT(*) AS count FROM notifications
+         WHERE user_id = ? AND read_at IS NULL`
+      )
+      .get(userId) as { count: number };
+    return row.count;
+  }
+
+  async markRead(
+    notificationId: string,
+    userId: string,
+    readAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE notifications SET read_at = ?
+           WHERE id = ? AND user_id = ? AND read_at IS NULL`
+        )
+        .run(readAt, notificationId, userId).changes > 0
+    );
+  }
+
+  async markAllRead(userId: string, readAt: number): Promise<number> {
+    return this.database
+      .prepare(
+        `UPDATE notifications SET read_at = ?
+         WHERE user_id = ? AND read_at IS NULL`
+      )
+      .run(readAt, userId).changes;
+  }
+
+  async deleteByOwner(
+    notificationId: string,
+    userId: string
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM notifications WHERE id = ? AND user_id = ?')
+        .run(notificationId, userId).changes > 0
+    );
+  }
+}
+
+class SQLiteWebhookTargetRepository implements WebhookTargetRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async list(maximum: number): Promise<StoredWebhookTargetRecord[]> {
+    return this.database
+      .prepare('SELECT * FROM webhook_targets ORDER BY created_at ASC LIMIT ?')
+      .all(maximum) as StoredWebhookTargetRecord[];
+  }
+
+  async findById(targetId: string): Promise<StoredWebhookTargetRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM webhook_targets WHERE id = ?')
+        .get(targetId) as StoredWebhookTargetRecord | undefined) ?? null
+    );
+  }
+
+  async replaceWithLimit(
+    target: StoredWebhookTargetRecord,
+    maximum: number
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      const existing = this.database
+        .prepare('SELECT 1 FROM webhook_targets WHERE id = ?')
+        .get(target.id);
+      if (!existing) {
+        const row = this.database
+          .prepare('SELECT COUNT(*) AS count FROM webhook_targets')
+          .get() as { count: number };
+        if (row.count >= maximum) {
+          throw new PersistenceResourceLimitError('webhook-target', maximum);
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO webhook_targets
+             (id, name, url, secret, events, enabled, created_by,
+              created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             name = excluded.name,
+             url = excluded.url,
+             secret = excluded.secret,
+             events = excluded.events,
+             enabled = excluded.enabled,
+             updated_at = excluded.updated_at`
+        )
+        .run(
+          target.id,
+          target.name,
+          target.url,
+          target.secret,
+          target.events,
+          target.enabled,
+          target.created_by,
+          target.created_at,
+          target.updated_at
+        );
+    });
+    replace();
+  }
+
+  async delete(targetId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM webhook_targets WHERE id = ?')
+        .run(targetId).changes > 0
     );
   }
 }
@@ -2093,6 +3074,7 @@ const ARCHIVE_TABLES = {
   prompt: 'prompts',
   skill: 'skills',
   'tool-server': 'tool_servers',
+  calendar: 'calendars',
 } as const;
 
 class SQLiteDataArchiveRepository implements DataArchiveRepository {
@@ -2446,7 +3428,12 @@ export const createSQLiteResourceRepositories = (
   chatSessions: new SQLiteChatSessionRepository(database),
   knowledgeCollections: new SQLiteKnowledgeCollectionRepository(database),
   notes: new SQLiteNoteRepository(database),
+  calendars: new SQLiteCalendarRepository(database),
   calendarEvents: new SQLiteCalendarEventRepository(database),
+  channels: new SQLiteChannelRepository(database),
+  channelMessages: new SQLiteChannelMessageRepository(database),
+  notifications: new SQLiteNotificationRepository(database),
+  webhookTargets: new SQLiteWebhookTargetRepository(database),
   automations: new SQLiteAutomationRepository(database),
   automationRuns: new SQLiteAutomationRunRepository(database),
   toolServers: new SQLiteToolServerRepository(database),

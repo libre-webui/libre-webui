@@ -172,6 +172,14 @@ test('readiness fails closed while a valid older schema awaits migration', async
     DROP TABLE platform_event_stream_heads;
     DROP TABLE platform_job_attempts;
     DROP TABLE platform_jobs;
+    DROP TABLE webhook_targets;
+    DROP TABLE notifications;
+    DROP TABLE channel_attachments;
+    DROP TABLE channel_reactions;
+    DROP TABLE channel_messages;
+    DROP TABLE channel_members;
+    DROP TABLE channels;
+    DROP TABLE calendars;
     DROP TABLE note_attachments;
     DROP TABLE note_revisions;
     ALTER TABLE notes DROP COLUMN pinned;
@@ -195,6 +203,7 @@ test('readiness fails closed while a valid older schema awaits migration', async
     DROP TABLE resource_grants;
     DROP TABLE user_group_members;
     DROP TABLE user_groups;
+    DELETE FROM _libre_schema_migrations WHERE version = 19;
     DELETE FROM _libre_schema_migrations WHERE version = 18;
     DELETE FROM _libre_schema_migrations WHERE version = 17;
     DELETE FROM _libre_schema_migrations WHERE version = 16;

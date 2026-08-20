@@ -470,6 +470,9 @@ class StorageService {
       endAt: row.end_at ?? undefined,
       allDay: row.all_day === 1,
       ...(recurrence ? { recurrence } : {}),
+      calendarId: row.calendar_id ?? undefined,
+      reminderMinutes: row.reminder_minutes ?? undefined,
+      lastRemindedOccurrence: row.last_reminded_occurrence ?? undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
@@ -540,6 +543,9 @@ class StorageService {
           recurrence: event.recurrence
             ? encryptionService.encrypt(JSON.stringify(event.recurrence))
             : null,
+          calendar_id: event.calendarId ?? null,
+          reminder_minutes: event.reminderMinutes ?? null,
+          last_reminded_occurrence: event.lastRemindedOccurrence ?? null,
           created_at: event.createdAt,
           updated_at: event.updatedAt,
         },
