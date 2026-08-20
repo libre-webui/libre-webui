@@ -8,11 +8,17 @@ import type { PoolClient, QueryResultRow } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import type {
   ApplicationResourceRepositories,
+  ArenaVoteRepository,
   AutomationRepository,
   AutomationRunRepository,
   CalendarEventRepository,
   CalendarRepository,
   ChannelMessageRepository,
+  EvalRunRepository,
+  EvalSetRepository,
+  MessageFeedbackRepository,
+  ModelTariffRepository,
+  UsageBudgetRepository,
   ChannelRepository,
   ChannelTimelineCursor,
   ChatSessionRepository,
@@ -27,11 +33,17 @@ import type {
   SessionFolderRepository,
   SkillFileRepository,
   SkillRepository,
+  StoredArenaVoteRecord,
   StoredAutomationRecord,
   StoredAutomationRunRecord,
   StoredCalendarEventRecord,
   StoredCalendarRecord,
   StoredChannelAttachmentRecord,
+  StoredEvalRunRecord,
+  StoredEvalSetRecord,
+  StoredMessageFeedbackRecord,
+  StoredModelTariffRecord,
+  StoredUsageBudgetRecord,
   StoredChannelMemberRecord,
   StoredChannelMembershipView,
   StoredChannelMessageRecord,
@@ -3795,6 +3807,436 @@ class PostgresDataArchiveRepository implements DataArchiveRepository {
   }
 }
 
+const modelTariff = (row: NumericRow): StoredModelTariffRecord => ({
+  ...(row as unknown as StoredModelTariffRecord),
+  input_per_million:
+    row.input_per_million === null ? null : Number(row.input_per_million),
+  output_per_million:
+    row.output_per_million === null ? null : Number(row.output_per_million),
+  unit_price: row.unit_price === null ? null : Number(row.unit_price),
+  effective_from: number(row.effective_from, 'tariff effective_from'),
+  created_at: number(row.created_at, 'tariff created_at'),
+});
+
+const usageBudget = (row: NumericRow): StoredUsageBudgetRecord => ({
+  ...(row as unknown as StoredUsageBudgetRecord),
+  amount_usd: Number(row.amount_usd),
+  created_at: number(row.created_at, 'budget created_at'),
+  updated_at: number(row.updated_at, 'budget updated_at'),
+});
+
+const messageFeedback = (row: NumericRow): StoredMessageFeedbackRecord => ({
+  ...(row as unknown as StoredMessageFeedbackRecord),
+  rating: number(row.rating, 'feedback rating'),
+  created_at: number(row.created_at, 'feedback created_at'),
+  updated_at: number(row.updated_at, 'feedback updated_at'),
+});
+
+const arenaVote = (row: NumericRow): StoredArenaVoteRecord => ({
+  ...(row as unknown as StoredArenaVoteRecord),
+  created_at: number(row.created_at, 'arena vote created_at'),
+});
+
+const evalSet = (row: NumericRow): StoredEvalSetRecord => ({
+  ...(row as unknown as StoredEvalSetRecord),
+  created_at: number(row.created_at, 'eval set created_at'),
+  updated_at: number(row.updated_at, 'eval set updated_at'),
+});
+
+const evalRun = (row: NumericRow): StoredEvalRunRecord => ({
+  ...(row as unknown as StoredEvalRunRecord),
+  created_at: number(row.created_at, 'eval run created_at'),
+  updated_at: number(row.updated_at, 'eval run updated_at'),
+  completed_at:
+    row.completed_at === null
+      ? null
+      : number(row.completed_at, 'eval run completed_at'),
+});
+
+class PostgresModelTariffRepository implements ModelTariffRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async listAll(maximum: number): Promise<StoredModelTariffRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM model_tariffs
+        ORDER BY plugin_id ASC, model ASC, effective_from DESC
+        LIMIT $1`,
+      [maximum]
+    );
+    return result.rows.map(modelTariff);
+  }
+
+  async insert(tariff: StoredModelTariffRecord): Promise<void> {
+    await this.database.query(
+      `INSERT INTO model_tariffs
+         (id, plugin_id, model, input_per_million, output_per_million,
+          unit_price, currency, effective_from, created_by, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        tariff.id,
+        tariff.plugin_id,
+        tariff.model,
+        tariff.input_per_million,
+        tariff.output_per_million,
+        tariff.unit_price,
+        tariff.currency,
+        tariff.effective_from,
+        tariff.created_by,
+        tariff.created_at,
+      ]
+    );
+  }
+
+  async deleteById(tariffId: string): Promise<boolean> {
+    const result = await this.database.query(
+      'DELETE FROM model_tariffs WHERE id = $1',
+      [tariffId]
+    );
+    return changes(result.rowCount) > 0;
+  }
+}
+
+class PostgresUsageBudgetRepository implements UsageBudgetRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async listAll(maximum: number): Promise<StoredUsageBudgetRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM usage_budgets
+        ORDER BY created_at ASC, id ASC
+        LIMIT $1`,
+      [maximum]
+    );
+    return result.rows.map(usageBudget);
+  }
+
+  async findById(budgetId: string): Promise<StoredUsageBudgetRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM usage_budgets WHERE id = $1',
+      [budgetId]
+    );
+    return result.rows[0] ? usageBudget(result.rows[0]) : null;
+  }
+
+  async replace(budget: StoredUsageBudgetRecord): Promise<void> {
+    await this.database.query(
+      `INSERT INTO usage_budgets
+         (id, name, principal_type, principal_id, period, amount_usd,
+          mode, created_by, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT (id) DO UPDATE SET
+         name = EXCLUDED.name,
+         principal_type = EXCLUDED.principal_type,
+         principal_id = EXCLUDED.principal_id,
+         period = EXCLUDED.period,
+         amount_usd = EXCLUDED.amount_usd,
+         mode = EXCLUDED.mode,
+         updated_at = EXCLUDED.updated_at`,
+      [
+        budget.id,
+        budget.name,
+        budget.principal_type,
+        budget.principal_id,
+        budget.period,
+        budget.amount_usd,
+        budget.mode,
+        budget.created_by,
+        budget.created_at,
+        budget.updated_at,
+      ]
+    );
+  }
+
+  async deleteById(budgetId: string): Promise<boolean> {
+    const result = await this.database.query(
+      'DELETE FROM usage_budgets WHERE id = $1',
+      [budgetId]
+    );
+    return changes(result.rowCount) > 0;
+  }
+}
+
+class PostgresMessageFeedbackRepository implements MessageFeedbackRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async upsertByMessage(feedback: StoredMessageFeedbackRecord): Promise<void> {
+    await this.database.query(
+      `INSERT INTO message_feedback
+         (id, user_id, session_id, message_id, rating, tags, comment,
+          model, plugin_id, snapshot, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       ON CONFLICT (user_id, message_id) DO UPDATE SET
+         rating = EXCLUDED.rating,
+         tags = EXCLUDED.tags,
+         comment = EXCLUDED.comment,
+         model = EXCLUDED.model,
+         plugin_id = EXCLUDED.plugin_id,
+         snapshot = EXCLUDED.snapshot,
+         updated_at = EXCLUDED.updated_at`,
+      [
+        feedback.id,
+        feedback.user_id,
+        feedback.session_id,
+        feedback.message_id,
+        feedback.rating,
+        feedback.tags,
+        feedback.comment,
+        feedback.model,
+        feedback.plugin_id,
+        feedback.snapshot,
+        feedback.created_at,
+        feedback.updated_at,
+      ]
+    );
+  }
+
+  async deleteByMessage(userId: string, messageId: string): Promise<boolean> {
+    const result = await this.database.query(
+      'DELETE FROM message_feedback WHERE user_id = $1 AND message_id = $2',
+      [userId, messageId]
+    );
+    return changes(result.rowCount) > 0;
+  }
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredMessageFeedbackRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM message_feedback
+        WHERE user_id = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT $2`,
+      [userId, maximum]
+    );
+    return result.rows.map(messageFeedback);
+  }
+
+  async listAll(maximum: number): Promise<StoredMessageFeedbackRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM message_feedback
+        ORDER BY created_at DESC, id DESC
+        LIMIT $1`,
+      [maximum]
+    );
+    return result.rows.map(messageFeedback);
+  }
+}
+
+class PostgresArenaVoteRepository implements ArenaVoteRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async insertOnce(vote: StoredArenaVoteRecord): Promise<boolean> {
+    const result = await this.database.query(
+      `INSERT INTO arena_votes
+         (id, user_id, compare_group, model_a, model_b, winner, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (user_id, compare_group) DO NOTHING`,
+      [
+        vote.id,
+        vote.user_id,
+        vote.compare_group,
+        vote.model_a,
+        vote.model_b,
+        vote.winner,
+        vote.created_at,
+      ]
+    );
+    return changes(result.rowCount) > 0;
+  }
+
+  async listAllOrdered(maximum: number): Promise<StoredArenaVoteRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM arena_votes
+        ORDER BY created_at ASC, id ASC
+        LIMIT $1`,
+      [maximum]
+    );
+    return result.rows.map(arenaVote);
+  }
+}
+
+class PostgresEvalSetRepository implements EvalSetRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredEvalSetRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM eval_sets
+        WHERE user_id = $1
+        ORDER BY updated_at DESC, id DESC
+        LIMIT $2`,
+      [userId, maximum]
+    );
+    return result.rows.map(evalSet);
+  }
+
+  async findByOwner(
+    setId: string,
+    userId: string
+  ): Promise<StoredEvalSetRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM eval_sets WHERE id = $1 AND user_id = $2',
+      [setId, userId]
+    );
+    return result.rows[0] ? evalSet(result.rows[0]) : null;
+  }
+
+  async replaceWithLimit(
+    value: StoredEvalSetRecord,
+    maximum: number
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      await lockOwner(client, value.user_id);
+      const existing = await client.query<{ user_id: string }>(
+        'SELECT user_id FROM eval_sets WHERE id = $1 FOR UPDATE',
+        [value.id]
+      );
+      if (existing.rows[0] && existing.rows[0].user_id !== value.user_id) {
+        throw new PersistenceResourceConflictError();
+      }
+      if (!existing.rows[0]) {
+        const count = await client.query<{ count: string }>(
+          'SELECT COUNT(*)::text AS count FROM eval_sets WHERE user_id = $1',
+          [value.user_id]
+        );
+        if (Number(count.rows[0]?.count || 0) >= maximum) {
+          throw new PersistenceResourceLimitError('eval-set', maximum);
+        }
+      }
+      const result = await client.query(
+        `INSERT INTO eval_sets
+           (id, user_id, name, description, items, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (id) DO UPDATE SET
+           name = EXCLUDED.name,
+           description = EXCLUDED.description,
+           items = EXCLUDED.items,
+           updated_at = EXCLUDED.updated_at
+         WHERE eval_sets.user_id = EXCLUDED.user_id`,
+        [
+          value.id,
+          value.user_id,
+          value.name,
+          value.description,
+          value.items,
+          value.created_at,
+          value.updated_at,
+        ]
+      );
+      if (result.rowCount !== 1) throw new PersistenceResourceConflictError();
+    });
+  }
+
+  async deleteByOwner(setId: string, userId: string): Promise<boolean> {
+    const result = await this.database.query(
+      'DELETE FROM eval_sets WHERE id = $1 AND user_id = $2',
+      [setId, userId]
+    );
+    return changes(result.rowCount) > 0;
+  }
+}
+
+class PostgresEvalRunRepository implements EvalRunRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredEvalRunRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM eval_runs
+        WHERE user_id = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT $2`,
+      [userId, maximum]
+    );
+    return result.rows.map(evalRun);
+  }
+
+  async listBySet(
+    setId: string,
+    userId: string,
+    maximum: number
+  ): Promise<StoredEvalRunRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM eval_runs
+        WHERE set_id = $1 AND user_id = $2
+        ORDER BY created_at DESC, id DESC
+        LIMIT $3`,
+      [setId, userId, maximum]
+    );
+    return result.rows.map(evalRun);
+  }
+
+  async findByOwner(
+    runId: string,
+    userId: string
+  ): Promise<StoredEvalRunRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM eval_runs WHERE id = $1 AND user_id = $2',
+      [runId, userId]
+    );
+    return result.rows[0] ? evalRun(result.rows[0]) : null;
+  }
+
+  async insert(run: StoredEvalRunRecord): Promise<void> {
+    await this.database.query(
+      `INSERT INTO eval_runs
+         (id, set_id, user_id, label, plugin_id, model, status, results,
+          error, created_at, updated_at, completed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        run.id,
+        run.set_id,
+        run.user_id,
+        run.label,
+        run.plugin_id,
+        run.model,
+        run.status,
+        run.results,
+        run.error,
+        run.created_at,
+        run.updated_at,
+        run.completed_at,
+      ]
+    );
+  }
+
+  async update(
+    runId: string,
+    userId: string,
+    updates: {
+      status: StoredEvalRunRecord['status'];
+      results?: string | null;
+      error?: string | null;
+      updated_at: number;
+      completed_at?: number | null;
+    }
+  ): Promise<boolean> {
+    const result = await this.database.query(
+      `UPDATE eval_runs SET
+         status = $1,
+         results = COALESCE($2, results),
+         error = $3,
+         updated_at = $4,
+         completed_at = COALESCE($5, completed_at)
+       WHERE id = $6 AND user_id = $7`,
+      [
+        updates.status,
+        updates.results ?? null,
+        updates.error ?? null,
+        updates.updated_at,
+        updates.completed_at ?? null,
+        runId,
+        userId,
+      ]
+    );
+    return changes(result.rowCount) > 0;
+  }
+}
+
 export const createPostgresResourceRepositories = (
   database: PostgresDatabase
 ): ApplicationResourceRepositories => ({
@@ -3820,6 +4262,12 @@ export const createPostgresResourceRepositories = (
   preferences: new PostgresPreferenceRepository(database),
   systemSettings: new PostgresSystemSettingRepository(database),
   archive: new PostgresDataArchiveRepository(database),
+  modelTariffs: new PostgresModelTariffRepository(database),
+  usageBudgets: new PostgresUsageBudgetRepository(database),
+  messageFeedback: new PostgresMessageFeedbackRepository(database),
+  arenaVotes: new PostgresArenaVoteRepository(database),
+  evalSets: new PostgresEvalSetRepository(database),
+  evalRuns: new PostgresEvalRunRepository(database),
 });
 
 /** Create transaction-scoped repositories over one pinned pooled client. */

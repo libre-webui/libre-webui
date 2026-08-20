@@ -19,10 +19,16 @@ import type Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 import type {
   ApplicationResourceRepositories,
+  ArenaVoteRepository,
   AutomationRepository,
   AutomationRunRepository,
   CalendarEventRepository,
   CalendarRepository,
+  EvalRunRepository,
+  EvalSetRepository,
+  MessageFeedbackRepository,
+  ModelTariffRepository,
+  UsageBudgetRepository,
   ChannelMessageRepository,
   ChannelRepository,
   ChannelTimelineCursor,
@@ -37,10 +43,16 @@ import type {
   SessionFolderRepository,
   SkillFileRepository,
   SkillRepository,
+  StoredArenaVoteRecord,
   StoredAutomationRecord,
   StoredAutomationRunRecord,
   StoredCalendarEventRecord,
   StoredCalendarRecord,
+  StoredEvalRunRecord,
+  StoredEvalSetRecord,
+  StoredMessageFeedbackRecord,
+  StoredModelTariffRecord,
+  StoredUsageBudgetRecord,
   StoredChannelAttachmentRecord,
   StoredChannelMemberRecord,
   StoredChannelMembershipView,
@@ -3435,6 +3447,398 @@ class SQLiteDataArchiveRepository implements DataArchiveRepository {
   }
 }
 
+class SQLiteModelTariffRepository implements ModelTariffRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listAll(maximum: number): Promise<StoredModelTariffRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM model_tariffs
+         ORDER BY plugin_id ASC, model ASC, effective_from DESC
+         LIMIT ?`
+      )
+      .all(maximum) as StoredModelTariffRecord[];
+  }
+
+  async insert(tariff: StoredModelTariffRecord): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO model_tariffs
+           (id, plugin_id, model, input_per_million, output_per_million,
+            unit_price, currency, effective_from, created_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        tariff.id,
+        tariff.plugin_id,
+        tariff.model,
+        tariff.input_per_million,
+        tariff.output_per_million,
+        tariff.unit_price,
+        tariff.currency,
+        tariff.effective_from,
+        tariff.created_by,
+        tariff.created_at
+      );
+  }
+
+  async deleteById(tariffId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM model_tariffs WHERE id = ?')
+        .run(tariffId).changes > 0
+    );
+  }
+}
+
+class SQLiteUsageBudgetRepository implements UsageBudgetRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listAll(maximum: number): Promise<StoredUsageBudgetRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM usage_budgets
+         ORDER BY created_at ASC, id ASC
+         LIMIT ?`
+      )
+      .all(maximum) as StoredUsageBudgetRecord[];
+  }
+
+  async findById(budgetId: string): Promise<StoredUsageBudgetRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM usage_budgets WHERE id = ?')
+        .get(budgetId) as StoredUsageBudgetRecord | undefined) ?? null
+    );
+  }
+
+  async replace(budget: StoredUsageBudgetRecord): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO usage_budgets
+           (id, name, principal_type, principal_id, period, amount_usd,
+            mode, created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           name = excluded.name,
+           principal_type = excluded.principal_type,
+           principal_id = excluded.principal_id,
+           period = excluded.period,
+           amount_usd = excluded.amount_usd,
+           mode = excluded.mode,
+           updated_at = excluded.updated_at`
+      )
+      .run(
+        budget.id,
+        budget.name,
+        budget.principal_type,
+        budget.principal_id,
+        budget.period,
+        budget.amount_usd,
+        budget.mode,
+        budget.created_by,
+        budget.created_at,
+        budget.updated_at
+      );
+  }
+
+  async deleteById(budgetId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM usage_budgets WHERE id = ?')
+        .run(budgetId).changes > 0
+    );
+  }
+}
+
+class SQLiteMessageFeedbackRepository implements MessageFeedbackRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async upsertByMessage(feedback: StoredMessageFeedbackRecord): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO message_feedback
+           (id, user_id, session_id, message_id, rating, tags, comment,
+            model, plugin_id, snapshot, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(user_id, message_id) DO UPDATE SET
+           rating = excluded.rating,
+           tags = excluded.tags,
+           comment = excluded.comment,
+           model = excluded.model,
+           plugin_id = excluded.plugin_id,
+           snapshot = excluded.snapshot,
+           updated_at = excluded.updated_at`
+      )
+      .run(
+        feedback.id,
+        feedback.user_id,
+        feedback.session_id,
+        feedback.message_id,
+        feedback.rating,
+        feedback.tags,
+        feedback.comment,
+        feedback.model,
+        feedback.plugin_id,
+        feedback.snapshot,
+        feedback.created_at,
+        feedback.updated_at
+      );
+  }
+
+  async deleteByMessage(userId: string, messageId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          'DELETE FROM message_feedback WHERE user_id = ? AND message_id = ?'
+        )
+        .run(userId, messageId).changes > 0
+    );
+  }
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredMessageFeedbackRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM message_feedback
+         WHERE user_id = ?
+         ORDER BY created_at DESC, id DESC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredMessageFeedbackRecord[];
+  }
+
+  async listAll(maximum: number): Promise<StoredMessageFeedbackRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM message_feedback
+         ORDER BY created_at DESC, id DESC
+         LIMIT ?`
+      )
+      .all(maximum) as StoredMessageFeedbackRecord[];
+  }
+}
+
+class SQLiteArenaVoteRepository implements ArenaVoteRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async insertOnce(vote: StoredArenaVoteRecord): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `INSERT INTO arena_votes
+             (id, user_id, compare_group, model_a, model_b, winner, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(user_id, compare_group) DO NOTHING`
+        )
+        .run(
+          vote.id,
+          vote.user_id,
+          vote.compare_group,
+          vote.model_a,
+          vote.model_b,
+          vote.winner,
+          vote.created_at
+        ).changes > 0
+    );
+  }
+
+  async listAllOrdered(maximum: number): Promise<StoredArenaVoteRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM arena_votes
+         ORDER BY created_at ASC, id ASC
+         LIMIT ?`
+      )
+      .all(maximum) as StoredArenaVoteRecord[];
+  }
+}
+
+class SQLiteEvalSetRepository implements EvalSetRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredEvalSetRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM eval_sets
+         WHERE user_id = ?
+         ORDER BY updated_at DESC, id DESC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredEvalSetRecord[];
+  }
+
+  async findByOwner(
+    setId: string,
+    userId: string
+  ): Promise<StoredEvalSetRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM eval_sets WHERE id = ? AND user_id = ?')
+        .get(setId, userId) as StoredEvalSetRecord | undefined) ?? null
+    );
+  }
+
+  async replaceWithLimit(
+    set: StoredEvalSetRecord,
+    maximum: number
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      const exists = ensureSameOwner(
+        this.database,
+        'eval_sets',
+        set.id,
+        set.user_id
+      );
+      if (!exists) {
+        const row = this.database
+          .prepare('SELECT COUNT(*) AS count FROM eval_sets WHERE user_id = ?')
+          .get(set.user_id) as { count: number };
+        if (row.count >= maximum) {
+          throw new PersistenceResourceLimitError('eval-set', maximum);
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO eval_sets
+             (id, user_id, name, description, items, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             name = excluded.name,
+             description = excluded.description,
+             items = excluded.items,
+             updated_at = excluded.updated_at
+           WHERE eval_sets.user_id = excluded.user_id`
+        )
+        .run(
+          set.id,
+          set.user_id,
+          set.name,
+          set.description,
+          set.items,
+          set.created_at,
+          set.updated_at
+        );
+    });
+    replace();
+  }
+
+  async deleteByOwner(setId: string, userId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM eval_sets WHERE id = ? AND user_id = ?')
+        .run(setId, userId).changes > 0
+    );
+  }
+}
+
+class SQLiteEvalRunRepository implements EvalRunRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredEvalRunRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM eval_runs
+         WHERE user_id = ?
+         ORDER BY created_at DESC, id DESC
+         LIMIT ?`
+      )
+      .all(userId, maximum) as StoredEvalRunRecord[];
+  }
+
+  async listBySet(
+    setId: string,
+    userId: string,
+    maximum: number
+  ): Promise<StoredEvalRunRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM eval_runs
+         WHERE set_id = ? AND user_id = ?
+         ORDER BY created_at DESC, id DESC
+         LIMIT ?`
+      )
+      .all(setId, userId, maximum) as StoredEvalRunRecord[];
+  }
+
+  async findByOwner(
+    runId: string,
+    userId: string
+  ): Promise<StoredEvalRunRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM eval_runs WHERE id = ? AND user_id = ?')
+        .get(runId, userId) as StoredEvalRunRecord | undefined) ?? null
+    );
+  }
+
+  async insert(run: StoredEvalRunRecord): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO eval_runs
+           (id, set_id, user_id, label, plugin_id, model, status, results,
+            error, created_at, updated_at, completed_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        run.id,
+        run.set_id,
+        run.user_id,
+        run.label,
+        run.plugin_id,
+        run.model,
+        run.status,
+        run.results,
+        run.error,
+        run.created_at,
+        run.updated_at,
+        run.completed_at
+      );
+  }
+
+  async update(
+    runId: string,
+    userId: string,
+    changes: {
+      status: StoredEvalRunRecord['status'];
+      results?: string | null;
+      error?: string | null;
+      updated_at: number;
+      completed_at?: number | null;
+    }
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE eval_runs SET
+             status = ?,
+             results = COALESCE(?, results),
+             error = ?,
+             updated_at = ?,
+             completed_at = COALESCE(?, completed_at)
+           WHERE id = ? AND user_id = ?`
+        )
+        .run(
+          changes.status,
+          changes.results ?? null,
+          changes.error ?? null,
+          changes.updated_at,
+          changes.completed_at ?? null,
+          runId,
+          userId
+        ).changes > 0
+    );
+  }
+}
+
 export const createSQLiteResourceRepositories = (
   database: Database.Database
 ): ApplicationResourceRepositories => ({
@@ -3460,4 +3864,10 @@ export const createSQLiteResourceRepositories = (
   preferences: new SQLitePreferenceRepository(database),
   systemSettings: new SQLiteSystemSettingRepository(database),
   archive: new SQLiteDataArchiveRepository(database),
+  modelTariffs: new SQLiteModelTariffRepository(database),
+  usageBudgets: new SQLiteUsageBudgetRepository(database),
+  messageFeedback: new SQLiteMessageFeedbackRepository(database),
+  arenaVotes: new SQLiteArenaVoteRepository(database),
+  evalSets: new SQLiteEvalSetRepository(database),
+  evalRuns: new SQLiteEvalRunRepository(database),
 });

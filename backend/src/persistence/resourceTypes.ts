@@ -1002,6 +1002,154 @@ export interface DataArchiveRepository {
   applyImport(plan: DataArchiveApplyPlan): Promise<void>;
 }
 
+export interface StoredModelTariffRecord {
+  id: string;
+  plugin_id: string;
+  model: string | null;
+  input_per_million: number | null;
+  output_per_million: number | null;
+  unit_price: number | null;
+  currency: string;
+  effective_from: number;
+  created_by: string | null;
+  created_at: number;
+}
+
+export interface ModelTariffRepository {
+  listAll(maximum: number): Promise<StoredModelTariffRecord[]>;
+  insert(tariff: StoredModelTariffRecord): Promise<void>;
+  deleteById(tariffId: string): Promise<boolean>;
+}
+
+export interface StoredUsageBudgetRecord {
+  id: string;
+  name: string;
+  principal_type: 'instance' | 'user' | 'group';
+  principal_id: string | null;
+  period: 'daily' | 'weekly' | 'monthly';
+  amount_usd: number;
+  mode: 'observe' | 'soft' | 'hard';
+  created_by: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface UsageBudgetRepository {
+  listAll(maximum: number): Promise<StoredUsageBudgetRecord[]>;
+  findById(budgetId: string): Promise<StoredUsageBudgetRecord | null>;
+  replace(budget: StoredUsageBudgetRecord): Promise<void>;
+  deleteById(budgetId: string): Promise<boolean>;
+}
+
+export interface StoredMessageFeedbackRecord {
+  id: string;
+  user_id: string;
+  session_id: string;
+  message_id: string;
+  rating: number;
+  /** Plain JSON array of short topic tags. */
+  tags: string | null;
+  /** Encrypted free-text comment. */
+  comment: string | null;
+  model: string | null;
+  plugin_id: string | null;
+  /** Encrypted JSON snapshot of the rated exchange. */
+  snapshot: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface MessageFeedbackRepository {
+  /** Insert or update the caller's feedback for one message. */
+  upsertByMessage(feedback: StoredMessageFeedbackRecord): Promise<void>;
+  deleteByMessage(userId: string, messageId: string): Promise<boolean>;
+  listByOwner(
+    userId: string,
+    maximum: number
+  ): Promise<StoredMessageFeedbackRecord[]>;
+  /** Instance-wide feedback for administrators, newest first. */
+  listAll(maximum: number): Promise<StoredMessageFeedbackRecord[]>;
+}
+
+export interface StoredArenaVoteRecord {
+  id: string;
+  user_id: string;
+  compare_group: string;
+  model_a: string;
+  model_b: string;
+  winner: 'a' | 'b' | 'tie' | 'both-bad';
+  created_at: number;
+}
+
+export interface ArenaVoteRepository {
+  /** Returns false when this user already voted on the comparison. */
+  insertOnce(vote: StoredArenaVoteRecord): Promise<boolean>;
+  /** Deterministic replay order (created_at, id) for rating computation. */
+  listAllOrdered(maximum: number): Promise<StoredArenaVoteRecord[]>;
+}
+
+export interface StoredEvalSetRecord {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  /** Encrypted JSON array of evaluation items. */
+  items: string;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface EvalSetRepository {
+  listByOwner(userId: string, maximum: number): Promise<StoredEvalSetRecord[]>;
+  findByOwner(
+    setId: string,
+    userId: string
+  ): Promise<StoredEvalSetRecord | null>;
+  replaceWithLimit(set: StoredEvalSetRecord, maximum: number): Promise<void>;
+  deleteByOwner(setId: string, userId: string): Promise<boolean>;
+}
+
+export interface StoredEvalRunRecord {
+  id: string;
+  set_id: string;
+  user_id: string;
+  label: string | null;
+  plugin_id: string | null;
+  model: string;
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+  /** Encrypted JSON array of per-item results. */
+  results: string | null;
+  error: string | null;
+  created_at: number;
+  updated_at: number;
+  completed_at: number | null;
+}
+
+export interface EvalRunRepository {
+  listByOwner(userId: string, maximum: number): Promise<StoredEvalRunRecord[]>;
+  listBySet(
+    setId: string,
+    userId: string,
+    maximum: number
+  ): Promise<StoredEvalRunRecord[]>;
+  findByOwner(
+    runId: string,
+    userId: string
+  ): Promise<StoredEvalRunRecord | null>;
+  insert(run: StoredEvalRunRecord): Promise<void>;
+  update(
+    runId: string,
+    userId: string,
+    changes: {
+      status: StoredEvalRunRecord['status'];
+      results?: string | null;
+      error?: string | null;
+      updated_at: number;
+      completed_at?: number | null;
+    }
+  ): Promise<boolean>;
+}
+
 export interface ApplicationResourceRepositories {
   chatSessions: ChatSessionRepository;
   knowledgeCollections: KnowledgeCollectionRepository;
@@ -1025,6 +1173,12 @@ export interface ApplicationResourceRepositories {
   preferences: PreferenceRepository;
   systemSettings: SystemSettingRepository;
   archive: DataArchiveRepository;
+  modelTariffs: ModelTariffRepository;
+  usageBudgets: UsageBudgetRepository;
+  messageFeedback: MessageFeedbackRepository;
+  arenaVotes: ArenaVoteRepository;
+  evalSets: EvalSetRepository;
+  evalRuns: EvalRunRepository;
 }
 
 export class PersistenceResourceConflictError extends Error {
@@ -1061,7 +1215,8 @@ export class PersistenceResourceLimitError extends Error {
       | 'channel-message'
       | 'channel-reaction'
       | 'notification'
-      | 'webhook-target',
+      | 'webhook-target'
+      | 'eval-set',
     readonly maximum: number
   ) {
     super(`The ${resource} storage limit of ${maximum} has been reached`);

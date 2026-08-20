@@ -80,43 +80,46 @@ test('PostgreSQL configuration rejects ambiguous TLS and unsafe bounds', () => {
 test('PostgreSQL migration registry is contiguous, checksummed, and frozen', () => {
   assert.deepEqual(
     POSTGRES_MIGRATIONS.map(migration => migration.version),
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
   );
   validatePostgresMigrationRegistry(POSTGRES_MIGRATIONS);
   assert.equal(Object.isFrozen(POSTGRES_MIGRATIONS), true);
   assert.equal(POSTGRES_MIGRATIONS.every(Object.isFrozen), true);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 19);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'team-collaboration');
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.version, 18);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.name, 'notes-v2');
-  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.version, 16);
-  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.name, 'skill-files');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 20);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'media-enterprise-ops');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.version, 19);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.name, 'team-collaboration');
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.version, 17);
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.name, 'notes-v2');
   assert.match(
     POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
-    /CREATE TABLE skill_files/
-  );
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 17);
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'notes-v2');
-  assert.match(
-    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /CREATE TABLE note_revisions/
   );
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 18);
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'team-collaboration');
   assert.match(
     POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
-    /CREATE TABLE note_attachments/
-  );
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 18);
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'team-collaboration');
-  assert.match(POSTGRES_MIGRATIONS.at(-1)?.sql ?? '', /CREATE TABLE channels/);
-  assert.match(
-    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
-    /CREATE TABLE channel_messages/
+    /CREATE TABLE channels/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /CREATE TABLE notifications/
   );
-  assert.match(POSTGRES_MIGRATIONS.at(-1)?.sql ?? '', /CREATE TABLE calendars/);
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 19);
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'media-enterprise-ops');
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    /CREATE TABLE model_tariffs/
+  );
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    /CREATE TABLE usage_budgets/
+  );
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    /CREATE TABLE message_feedback/
+  );
+  assert.match(POSTGRES_MIGRATIONS.at(-1)?.sql ?? '', /CREATE TABLE eval_runs/);
   assert.equal(
     SQLITE_MIGRATION_CONTRACT.some(
       migration => migration.name === 'blob-quotas'
@@ -363,7 +366,7 @@ test(
         initializePostgresPersistence(config, codec),
       ]);
       assert.equal(first.schemaCompatibility.status, 'compatible');
-      assert.equal(second.schemaCompatibility.currentVersion, 18);
+      assert.equal(second.schemaCompatibility.currentVersion, 19);
       assert.equal((await first.health()).ready, true);
 
       const assertStructuralDamage = async (mutation, expected) => {
@@ -3202,6 +3205,23 @@ test(
       `ALTER TABLE work_messages
          DROP CONSTRAINT work_messages_content_json_string_check`
     );
+    await target.query('DROP TABLE eval_runs');
+    await target.query('DROP TABLE eval_sets');
+    await target.query('DROP TABLE arena_votes');
+    await target.query('DROP TABLE message_feedback');
+    await target.query('DROP TABLE usage_budgets');
+    await target.query('DROP TABLE model_tariffs');
+    await target.query(
+      'ALTER TABLE voice_profiles DROP COLUMN consent_expires_at'
+    );
+    await target.query('ALTER TABLE voice_profiles DROP COLUMN revoked_at');
+    await target.query('ALTER TABLE voice_profiles DROP COLUMN transfer_count');
+    await target.query(
+      'ALTER TABLE voice_profiles DROP COLUMN last_transfer_at'
+    );
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 19'
+    );
     await target.query('DROP TABLE webhook_targets');
     await target.query('DROP TABLE notifications');
     await target.query('DROP TABLE channel_attachments');
@@ -3313,7 +3333,7 @@ test(
     assert.equal(prefixDryRun.sourceFingerprint, dryRun.sourceFingerprint);
     assert.match(
       prefixDryRun.warnings.join('\n'),
-      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 18/i
+      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 19/i
     );
     const codec = {
       encrypt: value => value,
@@ -3343,7 +3363,7 @@ test(
       resumed.tables.every(row => row.status === 'verified'),
       true
     );
-    assert.equal(resumed.targetSchemaVersion, 18);
+    assert.equal(resumed.targetSchemaVersion, 19);
     const resumedState = await target.query(
       `SELECT
          (SELECT MAX(version)::text FROM libre_schema_migrations)
@@ -3356,7 +3376,7 @@ test(
          (SELECT COUNT(*)::text FROM work_messages) AS work_messages`
     );
     assert.deepEqual(resumedState.rows[0], {
-      schema_version: '18',
+      schema_version: '19',
       import_status: 'complete',
       journal_count: String(dryRun.tables.length),
       work_journal: '1',

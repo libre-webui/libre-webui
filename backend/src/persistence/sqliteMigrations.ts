@@ -964,6 +964,85 @@ const TEAM_COLLABORATION_REQUIRED_SCHEMA = {
   ],
 } as const;
 
+const MEDIA_ENTERPRISE_OPS_REQUIRED_SCHEMA = {
+  voice_profiles: [
+    'consent_expires_at',
+    'revoked_at',
+    'transfer_count',
+    'last_transfer_at',
+  ],
+  model_tariffs: [
+    'id',
+    'plugin_id',
+    'model',
+    'input_per_million',
+    'output_per_million',
+    'unit_price',
+    'currency',
+    'effective_from',
+    'created_by',
+    'created_at',
+  ],
+  usage_budgets: [
+    'id',
+    'name',
+    'principal_type',
+    'principal_id',
+    'period',
+    'amount_usd',
+    'mode',
+    'created_by',
+    'created_at',
+    'updated_at',
+  ],
+  message_feedback: [
+    'id',
+    'user_id',
+    'session_id',
+    'message_id',
+    'rating',
+    'tags',
+    'comment',
+    'model',
+    'plugin_id',
+    'snapshot',
+    'created_at',
+    'updated_at',
+  ],
+  arena_votes: [
+    'id',
+    'user_id',
+    'compare_group',
+    'model_a',
+    'model_b',
+    'winner',
+    'created_at',
+  ],
+  eval_sets: [
+    'id',
+    'user_id',
+    'name',
+    'description',
+    'items',
+    'created_at',
+    'updated_at',
+  ],
+  eval_runs: [
+    'id',
+    'set_id',
+    'user_id',
+    'label',
+    'plugin_id',
+    'model',
+    'status',
+    'results',
+    'error',
+    'created_at',
+    'updated_at',
+    'completed_at',
+  ],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -1573,6 +1652,114 @@ export const TEAM_COLLABORATION_SCHEMA_SQL = `
   ALTER TABLE calendar_events ADD COLUMN last_reminded_occurrence INTEGER;
 ${TEAM_COLLABORATION_TABLES_SQL}`;
 
+export const MEDIA_ENTERPRISE_OPS_TABLES_SQL = `
+  CREATE TABLE IF NOT EXISTS model_tariffs (
+    id TEXT PRIMARY KEY,
+    plugin_id TEXT NOT NULL,
+    model TEXT,
+    input_per_million REAL,
+    output_per_million REAL,
+    unit_price REAL,
+    currency TEXT NOT NULL DEFAULT 'USD',
+    effective_from INTEGER NOT NULL,
+    created_by TEXT,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_model_tariffs_lookup
+    ON model_tariffs(plugin_id, model, effective_from);
+
+  CREATE TABLE IF NOT EXISTS usage_budgets (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    principal_type TEXT NOT NULL CHECK (principal_type IN ('instance', 'user', 'group')),
+    principal_id TEXT,
+    period TEXT NOT NULL CHECK (period IN ('daily', 'weekly', 'monthly')),
+    amount_usd REAL NOT NULL,
+    mode TEXT NOT NULL CHECK (mode IN ('observe', 'soft', 'hard')),
+    created_by TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_usage_budgets_principal
+    ON usage_budgets(principal_type, principal_id);
+
+  CREATE TABLE IF NOT EXISTS message_feedback (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_id TEXT NOT NULL,
+    message_id TEXT NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating IN (-1, 1)),
+    tags TEXT,
+    comment TEXT,
+    model TEXT,
+    plugin_id TEXT,
+    snapshot TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    UNIQUE (user_id, message_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_message_feedback_owner
+    ON message_feedback(user_id, created_at);
+
+  CREATE TABLE IF NOT EXISTS arena_votes (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    compare_group TEXT NOT NULL,
+    model_a TEXT NOT NULL,
+    model_b TEXT NOT NULL,
+    winner TEXT NOT NULL CHECK (winner IN ('a', 'b', 'tie', 'both-bad')),
+    created_at INTEGER NOT NULL,
+    UNIQUE (user_id, compare_group)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_arena_votes_order
+    ON arena_votes(created_at, id);
+
+  CREATE TABLE IF NOT EXISTS eval_sets (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    items TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_eval_sets_owner
+    ON eval_sets(user_id, updated_at);
+
+  CREATE TABLE IF NOT EXISTS eval_runs (
+    id TEXT PRIMARY KEY,
+    set_id TEXT NOT NULL REFERENCES eval_sets(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    label TEXT,
+    plugin_id TEXT,
+    model TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'failed', 'cancelled')),
+    results TEXT,
+    error TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    completed_at INTEGER
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_eval_runs_owner
+    ON eval_runs(user_id, created_at);
+
+  CREATE INDEX IF NOT EXISTS idx_eval_runs_parent
+    ON eval_runs(set_id);
+`;
+
+export const MEDIA_ENTERPRISE_OPS_SCHEMA_SQL = `
+  ALTER TABLE voice_profiles ADD COLUMN consent_expires_at INTEGER;
+  ALTER TABLE voice_profiles ADD COLUMN revoked_at INTEGER;
+  ALTER TABLE voice_profiles ADD COLUMN transfer_count INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE voice_profiles ADD COLUMN last_transfer_at INTEGER;
+${MEDIA_ENTERPRISE_OPS_TABLES_SQL}`;
+
 const REQUIRED_SCHEMA = {
   ...LEGACY_REQUIRED_SCHEMA,
   users: [
@@ -1870,6 +2057,12 @@ const REQUIRED_PRIMARY_KEYS: Readonly<Record<string, readonly string[]>> = {
   channel_attachments: ['id'],
   notifications: ['id'],
   webhook_targets: ['id'],
+  model_tariffs: ['id'],
+  usage_budgets: ['id'],
+  message_feedback: ['id'],
+  arena_votes: ['id'],
+  eval_sets: ['id'],
+  eval_runs: ['id'],
 };
 
 const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
@@ -1897,6 +2090,8 @@ const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
   skills: [['user_id', 'slug']],
   skill_versions: [['skill_id', 'version']],
   skill_files: [['skill_id', 'path']],
+  message_feedback: [['user_id', 'message_id']],
+  arena_votes: [['user_id', 'compare_group']],
 };
 
 const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
@@ -2208,6 +2403,41 @@ const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
     referencedColumns: ['id'],
     onDelete: 'CASCADE',
   },
+  {
+    table: 'message_feedback',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'arena_votes',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'eval_sets',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'eval_runs',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'eval_runs',
+    columns: ['set_id'],
+    referencedTable: 'eval_sets',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
 ];
 
 const REQUIRED_INDEXES: readonly RequiredIndex[] = [
@@ -2516,6 +2746,41 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     unique: true,
     sqlFragment: 'WHERE source_key IS NOT NULL',
   },
+  {
+    name: 'idx_model_tariffs_lookup',
+    table: 'model_tariffs',
+    columns: ['plugin_id', 'model', 'effective_from'],
+  },
+  {
+    name: 'idx_usage_budgets_principal',
+    table: 'usage_budgets',
+    columns: ['principal_type', 'principal_id'],
+  },
+  {
+    name: 'idx_message_feedback_owner',
+    table: 'message_feedback',
+    columns: ['user_id', 'created_at'],
+  },
+  {
+    name: 'idx_arena_votes_order',
+    table: 'arena_votes',
+    columns: ['created_at', 'id'],
+  },
+  {
+    name: 'idx_eval_sets_owner',
+    table: 'eval_sets',
+    columns: ['user_id', 'updated_at'],
+  },
+  {
+    name: 'idx_eval_runs_owner',
+    table: 'eval_runs',
+    columns: ['user_id', 'created_at'],
+  },
+  {
+    name: 'idx_eval_runs_parent',
+    table: 'eval_runs',
+    columns: ['set_id'],
+  },
 ];
 
 const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
@@ -2569,6 +2834,19 @@ const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
   channel_messages: ["author_kind IN ('user', 'model')"],
   channel_reactions: ['UNIQUE (message_id, user_id, emoji)'],
   webhook_targets: ['enabled IN (0, 1)'],
+  usage_budgets: [
+    "principal_type IN ('instance', 'user', 'group')",
+    "period IN ('daily', 'weekly', 'monthly')",
+    "mode IN ('observe', 'soft', 'hard')",
+  ],
+  message_feedback: ['rating IN (-1, 1)', 'UNIQUE (user_id, message_id)'],
+  arena_votes: [
+    "winner IN ('a', 'b', 'tie', 'both-bad')",
+    'UNIQUE (user_id, compare_group)',
+  ],
+  eval_runs: [
+    "status IN ('queued', 'running', 'completed', 'failed', 'cancelled')",
+  ],
 };
 
 const quoteIdentifier = (identifier: string): string =>
@@ -3104,6 +3382,21 @@ const collectMissingTeamCollaborationSchema = (
   ),
 ];
 
+const collectMissingMediaEnterpriseOpsSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, MEDIA_ENTERPRISE_OPS_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(
+    item =>
+      item.includes('model_tariffs') ||
+      item.includes('usage_budgets') ||
+      item.includes('message_feedback') ||
+      item.includes('arena_votes') ||
+      item.includes('eval_sets') ||
+      item.includes('eval_runs')
+  ),
+];
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -3155,6 +3448,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 17 ? collectMissingSkillFilesSchema(database) : []),
     ...(version >= 18 ? collectMissingNotesV2Schema(database) : []),
     ...(version >= 19 ? collectMissingTeamCollaborationSchema(database) : []),
+    ...(version >= 20 ? collectMissingMediaEnterpriseOpsSchema(database) : []),
   ];
 }
 
@@ -3248,6 +3542,8 @@ const NOTES_V2_MIGRATION_CHECKSUM =
   '05a6758ab2b2a54f9097a5d5604a2bd57e085f1dd16816b5dc96d1eb7a41a399';
 const TEAM_COLLABORATION_MIGRATION_CHECKSUM =
   '1cf021c941cfd9207a82e794e58d7553ae24a35b3f8f8a84bb4a0e06d0d77443';
+const MEDIA_ENTERPRISE_OPS_MIGRATION_CHECKSUM =
+  'c6bc6d98518f7a279ad7109cfdfcd8a75fbf7e3e157c50bca98142b50ac0f38b';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -3583,6 +3879,39 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite team collaboration schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 20,
+    name: 'media-enterprise-ops',
+    checksum: MEDIA_ENTERPRISE_OPS_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(
+        database,
+        'voice_profiles',
+        'consent_expires_at',
+        'INTEGER'
+      );
+      addColumnIfMissing(database, 'voice_profiles', 'revoked_at', 'INTEGER');
+      addColumnIfMissing(
+        database,
+        'voice_profiles',
+        'transfer_count',
+        'INTEGER NOT NULL DEFAULT 0'
+      );
+      addColumnIfMissing(
+        database,
+        'voice_profiles',
+        'last_transfer_at',
+        'INTEGER'
+      );
+      database.exec(MEDIA_ENTERPRISE_OPS_TABLES_SQL);
+      const missing = collectMissingMediaEnterpriseOpsSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite media enterprise ops schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },
