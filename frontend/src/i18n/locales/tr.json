@@ -2812,6 +2812,13 @@
         "name": "Toplantı notu biçimi",
         "description": "Bir dökümden kararlar, yapılacaklar ve açık sorular."
       }
+    },
+    "importUrl": {
+      "button": "URL’den",
+      "title": "URL’den beceri içe aktar",
+      "hint": "Bir skills.sh veya GitHub bağlantısı, owner/repo/skill ya da bir SKILL.md dosyasına doğrudan bağlantı yapıştırın.",
+      "placeholder": "https://skills.sh/owner/repo/skill veya owner/repo/skill",
+      "overwrite": "Slug zaten varsa becerimin üzerine yaz"
     }
   },
   "toolsPage": {

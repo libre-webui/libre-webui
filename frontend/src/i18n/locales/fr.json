@@ -2812,6 +2812,13 @@
         "name": "Format compte rendu de réunion",
         "description": "Décisions, actions à mener et questions ouvertes à partir d'une transcription."
       }
+    },
+    "importUrl": {
+      "button": "Depuis une URL",
+      "title": "Importer une compétence depuis une URL",
+      "hint": "Collez un lien skills.sh ou GitHub, owner/repo/skill, ou un lien direct vers un fichier SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill ou owner/repo/skill",
+      "overwrite": "Écraser ma compétence si le slug existe déjà"
     }
   },
   "toolsPage": {

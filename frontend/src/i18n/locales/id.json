@@ -2812,6 +2812,13 @@
         "name": "Format catatan rapat",
         "description": "Keputusan, tindak lanjut, dan pertanyaan terbuka dari transkrip."
       }
+    },
+    "importUrl": {
+      "button": "Dari URL",
+      "title": "Impor keahlian dari URL",
+      "hint": "Tempel tautan skills.sh atau GitHub, owner/repo/skill, atau tautan langsung ke berkas SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill atau owner/repo/skill",
+      "overwrite": "Timpa keahlian saya jika slug sudah ada"
     }
   },
   "toolsPage": {

@@ -90,6 +90,17 @@ export const skillsApi = {
   export: (skillId: string): Promise<ApiResponse<SkillExport>> =>
     api.get(`/skills/${skillId}/export`).then(res => res.data),
 
+  importFromUrl: (
+    source: string,
+    options?: { overwriteSlug?: boolean }
+  ): Promise<ApiResponse<Skill>> =>
+    api
+      .post('/skills/import-url', {
+        source,
+        overwriteSlug: options?.overwriteSlug === true,
+      })
+      .then(res => res.data),
+
   import: (
     payload: unknown,
     options?: { overwriteSlug?: boolean }

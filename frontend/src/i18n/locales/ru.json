@@ -2812,6 +2812,13 @@
         "name": "Формат заметок со встречи",
         "description": "Решения, задачи и открытые вопросы из расшифровки."
       }
+    },
+    "importUrl": {
+      "button": "Из URL",
+      "title": "Импортировать навык по URL",
+      "hint": "Вставьте ссылку skills.sh или GitHub, owner/repo/skill или прямую ссылку на файл SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill или owner/repo/skill",
+      "overwrite": "Перезаписать мой навык, если слаг уже существует"
     }
   },
   "toolsPage": {

@@ -2812,6 +2812,13 @@
         "name": "Формат нотаток зі зустрічі",
         "description": "Рішення, завдання та відкриті питання з розшифровки."
       }
+    },
+    "importUrl": {
+      "button": "З URL",
+      "title": "Імпортувати навичку з URL",
+      "hint": "Вставте посилання skills.sh чи GitHub, owner/repo/skill або пряме посилання на файл SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill або owner/repo/skill",
+      "overwrite": "Перезаписати мою навичку, якщо слаг уже існує"
     }
   },
   "toolsPage": {

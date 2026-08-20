@@ -2812,6 +2812,13 @@
         "name": "Format för mötesanteckningar",
         "description": "Beslut, åtgärdspunkter och öppna frågor från en utskrift."
       }
+    },
+    "importUrl": {
+      "button": "Från URL",
+      "title": "Importera en färdighet från en URL",
+      "hint": "Klistra in en skills.sh- eller GitHub-länk, owner/repo/skill, eller en direktlänk till en SKILL.md-fil.",
+      "placeholder": "https://skills.sh/owner/repo/skill eller owner/repo/skill",
+      "overwrite": "Skriv över min färdighet om denna slug redan finns"
     }
   },
   "toolsPage": {

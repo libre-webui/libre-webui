@@ -520,3 +520,106 @@ test('skills round-trip through the SKILL.md interchange form', async () => {
     /frontmatter/
   );
 });
+
+test('remote skill sources resolve to bounded raw-content candidates', () => {
+  assert.deepEqual(
+    skillService.resolveSkillSourceCandidates('vercel-labs/agent-skills'),
+    ['https://raw.githubusercontent.com/vercel-labs/agent-skills/HEAD/SKILL.md']
+  );
+  assert.deepEqual(
+    skillService.resolveSkillSourceCandidates('acme/repo/writer'),
+    [
+      'https://raw.githubusercontent.com/acme/repo/HEAD/skills/writer/SKILL.md',
+      'https://raw.githubusercontent.com/acme/repo/HEAD/skills/.curated/writer/SKILL.md',
+      'https://raw.githubusercontent.com/acme/repo/HEAD/writer/SKILL.md',
+    ]
+  );
+  assert.deepEqual(
+    skillService.resolveSkillSourceCandidates(
+      'https://www.skills.sh/acme/repo/writer'
+    ),
+    skillService.resolveSkillSourceCandidates('acme/repo/writer')
+  );
+  assert.deepEqual(
+    skillService.resolveSkillSourceCandidates(
+      'https://github.com/acme/repo/tree/main/skills/writer'
+    ),
+    [
+      'https://raw.githubusercontent.com/acme/repo/main/skills/writer/SKILL.md',
+    ]
+  );
+  assert.deepEqual(
+    skillService.resolveSkillSourceCandidates(
+      'https://github.com/acme/repo/blob/main/skills/writer/SKILL.md'
+    ),
+    [
+      'https://raw.githubusercontent.com/acme/repo/main/skills/writer/SKILL.md',
+    ]
+  );
+  assert.deepEqual(
+    skillService.resolveSkillSourceCandidates(
+      'https://example.com/store/my.skill.md'
+    ),
+    ['https://example.com/store/my.skill.md']
+  );
+  assert.throws(
+    () => skillService.resolveSkillSourceCandidates('just-one-segment'),
+    /owner\/repo/
+  );
+  assert.throws(
+    () => skillService.resolveSkillSourceCandidates('a/b/c/d'),
+    /owner\/repo/
+  );
+});
+
+test('a skill imports from a remote store URL through the egress guard', async t => {
+  const remoteMarkdown = [
+    '---',
+    'name: remote-style',
+    'description: Imported from a remote store.',
+    '---',
+    '',
+    '# Remote style',
+    '',
+    '- fetched over HTTP',
+    '',
+  ].join('\n');
+  const remote = createServer((req, res) => {
+    if (req.url === '/skills/remote-style/SKILL.md') {
+      res.writeHead(200, { 'content-type': 'text/markdown' });
+      res.end(remoteMarkdown);
+      return;
+    }
+    res.writeHead(404).end();
+  });
+  await new Promise(resolve => remote.listen(0, '127.0.0.1', resolve));
+  t.after(() => remote.close());
+  const port = remote.address().port;
+  const sourceUrl = `http://127.0.0.1:${port}/skills/remote-style/SKILL.md`;
+
+  // Without the allowlist the guard refuses loopback outright.
+  delete process.env.TOOLS_PRIVATE_NETWORK_ALLOWLIST;
+  await assert.rejects(
+    skillService.importSkillFromUrl(OWNER, sourceUrl),
+    /private or local address/
+  );
+
+  process.env.TOOLS_PRIVATE_NETWORK_ALLOWLIST = '127.0.0.1';
+  try {
+    const imported = await skillService.importSkillFromUrl(OWNER, sourceUrl);
+    assert.equal(imported.slug, 'remote-style');
+    assert.equal(imported.name, 'remote-style');
+    assert.match(imported.instructions, /fetched over HTTP/);
+
+    // A 404 on every candidate surfaces as a clear client error.
+    await assert.rejects(
+      skillService.importSkillFromUrl(
+        OWNER,
+        `http://127.0.0.1:${port}/missing.md`
+      ),
+      /No SKILL\.md/
+    );
+  } finally {
+    delete process.env.TOOLS_PRIVATE_NETWORK_ALLOWLIST;
+  }
+});

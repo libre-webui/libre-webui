@@ -2812,6 +2812,13 @@
         "name": "Định dạng biên bản họp",
         "description": "Quyết định, việc cần làm và câu hỏi còn bỏ ngỏ từ bản ghi."
       }
+    },
+    "importUrl": {
+      "button": "Từ URL",
+      "title": "Nhập kỹ năng từ URL",
+      "hint": "Dán liên kết skills.sh hoặc GitHub, owner/repo/skill, hoặc liên kết trực tiếp đến tệp SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill hoặc owner/repo/skill",
+      "overwrite": "Ghi đè kỹ năng của tôi nếu slug đã tồn tại"
     }
   },
   "toolsPage": {

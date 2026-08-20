@@ -31,6 +31,17 @@ which export downloads and import accepts alongside the JSON envelope.
 Names, descriptions, and instructions are encrypted at rest; the slug stays
 plain.
 
+## Importing from a store
+
+Skills can be pulled straight from a remote source under **Settings →
+Skills → From URL**. Accepted forms: a [skills.sh](https://skills.sh)
+listing link, a GitHub repository or tree/blob URL, an `owner/repo/skill`
+shorthand (resolved against the conventional `skills/<name>/SKILL.md`
+layout), or a direct link to any SKILL.md file. The fetch runs through the
+same pinned egress guard as tool servers — public addresses only, size
+capped — and the document lands as your own editable skill, so a remote
+source never updates itself silently.
+
 ## Sharing and profiles
 
 Skills are private by default and shareable through the common

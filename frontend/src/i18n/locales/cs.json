@@ -2812,6 +2812,13 @@
         "name": "Formát zápisu z porady",
         "description": "Rozhodnutí, úkoly a otevřené otázky z přepisu."
       }
+    },
+    "importUrl": {
+      "button": "Z adresy URL",
+      "title": "Importovat dovednost z adresy URL",
+      "hint": "Vložte odkaz na skills.sh nebo GitHub, owner/repo/skill, nebo přímý odkaz na soubor SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill nebo owner/repo/skill",
+      "overwrite": "Přepsat moji dovednost, pokud slug už existuje"
     }
   },
   "toolsPage": {

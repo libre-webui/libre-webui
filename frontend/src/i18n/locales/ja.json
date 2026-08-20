@@ -2812,6 +2812,13 @@
         "name": "議事録フォーマット",
         "description": "文字起こしから決定事項、アクションアイテム、未解決の論点を抽出。"
       }
+    },
+    "importUrl": {
+      "button": "URLから",
+      "title": "URLからスキルをインポート",
+      "hint": "skills.sh または GitHub のリンク、owner/repo/skill、または SKILL.md ファイルへの直接リンクを貼り付けてください。",
+      "placeholder": "https://skills.sh/owner/repo/skill または owner/repo/skill",
+      "overwrite": "スラッグが既に存在する場合は自分のスキルを上書きする"
     }
   },
   "toolsPage": {

@@ -2812,6 +2812,13 @@
         "name": "Format til mødereferat",
         "description": "Beslutninger, opgaver og åbne spørgsmål fra en udskrift."
       }
+    },
+    "importUrl": {
+      "button": "Fra URL",
+      "title": "Importér en færdighed fra en URL",
+      "hint": "Indsæt et skills.sh- eller GitHub-link, owner/repo/skill, eller et direkte link til en SKILL.md-fil.",
+      "placeholder": "https://skills.sh/owner/repo/skill eller owner/repo/skill",
+      "overwrite": "Overskriv min færdighed, hvis slug allerede findes"
     }
   },
   "toolsPage": {

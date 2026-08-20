@@ -2812,6 +2812,13 @@
         "name": "Format nota mesyuarat",
         "description": "Keputusan, tindakan susulan dan soalan terbuka daripada transkrip."
       }
+    },
+    "importUrl": {
+      "button": "Dari URL",
+      "title": "Import kemahiran daripada URL",
+      "hint": "Tampal pautan skills.sh atau GitHub, owner/repo/skill, atau pautan terus ke fail SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill atau owner/repo/skill",
+      "overwrite": "Tulis ganti kemahiran saya jika slug sudah wujud"
     }
   },
   "toolsPage": {

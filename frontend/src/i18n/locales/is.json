@@ -2812,6 +2812,13 @@
         "name": "Snið fundargerðar",
         "description": "Ákvarðanir, verkefni og opnar spurningar úr uppritun."
       }
+    },
+    "importUrl": {
+      "button": "Frá vefslóð",
+      "title": "Flytja inn færni frá vefslóð",
+      "hint": "Límdu skills.sh- eða GitHub-tengil, owner/repo/skill, eða beinan tengil á SKILL.md-skrá.",
+      "placeholder": "https://skills.sh/owner/repo/skill eða owner/repo/skill",
+      "overwrite": "Skrifa yfir færnina mína ef slóðarheitið er þegar til"
     }
   },
   "toolsPage": {

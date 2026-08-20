@@ -2812,6 +2812,13 @@
         "name": "Formato de acta de reunión",
         "description": "Decisiones, tareas y preguntas abiertas a partir de una transcripción."
       }
+    },
+    "importUrl": {
+      "button": "Desde URL",
+      "title": "Importar una habilidad desde una URL",
+      "hint": "Pega un enlace de skills.sh o GitHub, owner/repo/skill, o un enlace directo a un archivo SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill u owner/repo/skill",
+      "overwrite": "Sobrescribir mi habilidad si el slug ya existe"
     }
   },
   "toolsPage": {

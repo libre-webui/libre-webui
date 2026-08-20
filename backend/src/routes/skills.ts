@@ -29,6 +29,7 @@ import {
   exportSkill,
   getSkill,
   importSkill,
+  importSkillFromUrl,
   listSkills,
   listVersions,
   rollbackSkill,
@@ -108,6 +109,24 @@ router.post('/import', async (req: AuthenticatedRequest, res) => {
     const body = (req.body ?? {}) as Record<string, unknown>;
     const payload = body.skill !== undefined ? body.skill : body;
     const skill = await importSkill(userIdOf(req), payload, {
+      overwriteSlug: body.overwriteSlug === true,
+    });
+    res.status(201).json({ success: true, data: skill } as ApiResponse);
+  } catch (error) {
+    sendSkillError(res, error, 'Failed to import the skill');
+  }
+});
+
+router.post('/import-url', async (req: AuthenticatedRequest, res) => {
+  try {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    if (typeof body.source !== 'string' || !body.source.trim()) {
+      res
+        .status(400)
+        .json({ success: false, error: 'A skill source is required' });
+      return;
+    }
+    const skill = await importSkillFromUrl(userIdOf(req), body.source, {
       overwriteSlug: body.overwriteSlug === true,
     });
     res.status(201).json({ success: true, data: skill } as ApiResponse);

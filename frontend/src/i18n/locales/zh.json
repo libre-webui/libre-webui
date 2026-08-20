@@ -2812,6 +2812,13 @@
         "name": "会议纪要格式",
         "description": "从记录中提取决议、待办事项和未决问题。"
       }
+    },
+    "importUrl": {
+      "button": "从 URL",
+      "title": "从 URL 导入技能",
+      "hint": "粘贴 skills.sh 或 GitHub 链接、owner/repo/skill，或指向 SKILL.md 文件的直接链接。",
+      "placeholder": "https://skills.sh/owner/repo/skill 或 owner/repo/skill",
+      "overwrite": "如果 slug 已存在则覆盖我的技能"
     }
   },
   "toolsPage": {

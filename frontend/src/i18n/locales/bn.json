@@ -2812,6 +2812,13 @@
         "name": "মিটিং নোটের বিন্যাস",
         "description": "ট্রান্সক্রিপ্ট থেকে সিদ্ধান্ত, করণীয় ও অমীমাংসিত প্রশ্ন।"
       }
+    },
+    "importUrl": {
+      "button": "URL থেকে",
+      "title": "URL থেকে একটি স্কিল আমদানি করুন",
+      "hint": "skills.sh বা GitHub লিঙ্ক, owner/repo/skill, বা SKILL.md ফাইলের সরাসরি লিঙ্ক পেস্ট করুন।",
+      "placeholder": "https://skills.sh/owner/repo/skill বা owner/repo/skill",
+      "overwrite": "স্লাগ ইতিমধ্যে থাকলে আমার স্কিল ওভাররাইট করুন"
     }
   },
   "toolsPage": {

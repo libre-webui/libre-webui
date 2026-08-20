@@ -2812,6 +2812,13 @@
         "name": "회의록 형식",
         "description": "대화 기록에서 결정 사항, 실행 항목, 남은 질문을 정리."
       }
+    },
+    "importUrl": {
+      "button": "URL에서",
+      "title": "URL에서 스킬 가져오기",
+      "hint": "skills.sh 또는 GitHub 링크, owner/repo/skill, 또는 SKILL.md 파일 직접 링크를 붙여넣으세요.",
+      "placeholder": "https://skills.sh/owner/repo/skill 또는 owner/repo/skill",
+      "overwrite": "슬러그가 이미 있으면 내 스킬 덮어쓰기"
     }
   },
   "toolsPage": {

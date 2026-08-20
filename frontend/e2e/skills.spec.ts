@@ -340,3 +340,53 @@ test('skills manage manifest fields and version history through the UI', async (
   expect(skillsApi.rollbackRequests[0].version).toBe(1);
   await expect(row).toContainText('v3');
 });
+
+test('a skill imports from a remote store URL through the modal', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  await mockSkillsApi(page, []);
+
+  const importUrlBodies: Array<{ source?: string; overwriteSlug?: boolean }> =
+    [];
+  await page.route(/\/api\/skills\/import-url$/, async route => {
+    importUrlBodies.push(route.request().postDataJSON());
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          id: 'skill-remote',
+          slug: 'remote-style',
+          name: 'remote-style',
+          description: 'Imported from a remote store.',
+          instructions: '# Remote style',
+          enabled: true,
+          version: 1,
+          createdAt: 1_770_000_000_000,
+          updatedAt: 1_770_000_000_000,
+          ownerUserId: 'e2e-user',
+        },
+      }),
+    });
+  });
+
+  await page.goto('/');
+  await openSettingsTab(page, 'Skills');
+  await page.getByTestId('skill-import-url').click();
+
+  const modal = page.getByTestId('skill-import-url-modal');
+  await expect(modal).toBeVisible();
+  await page
+    .getByTestId('skill-import-url-source')
+    .fill('https://skills.sh/acme/repo/remote-style');
+  await page.getByTestId('skill-import-url-submit').click();
+
+  await expect(modal).toHaveCount(0);
+  expect(importUrlBodies).toHaveLength(1);
+  expect(importUrlBodies[0]).toMatchObject({
+    source: 'https://skills.sh/acme/repo/remote-style',
+    overwriteSlug: false,
+  });
+});

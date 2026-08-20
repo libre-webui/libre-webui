@@ -2812,6 +2812,13 @@
         "name": "Format für Besprechungsnotizen",
         "description": "Entscheidungen, Aufgaben und offene Fragen aus einem Transkript."
       }
+    },
+    "importUrl": {
+      "button": "Von URL",
+      "title": "Skill von einer URL importieren",
+      "hint": "Füge einen skills.sh- oder GitHub-Link ein, owner/repo/skill oder einen direkten Link zu einer SKILL.md-Datei.",
+      "placeholder": "https://skills.sh/owner/repo/skill oder owner/repo/skill",
+      "overwrite": "Meinen Skill überschreiben, wenn der Slug bereits existiert"
     }
   },
   "toolsPage": {

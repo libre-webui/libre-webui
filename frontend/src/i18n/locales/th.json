@@ -2812,6 +2812,13 @@
         "name": "รูปแบบบันทึกการประชุม",
         "description": "ข้อสรุป สิ่งที่ต้องทำ และคำถามที่ค้างอยู่ จากบทถอดเสียง"
       }
+    },
+    "importUrl": {
+      "button": "จาก URL",
+      "title": "นำเข้าสกิลจาก URL",
+      "hint": "วางลิงก์ skills.sh หรือ GitHub, owner/repo/skill หรือลิงก์ตรงไปยังไฟล์ SKILL.md",
+      "placeholder": "https://skills.sh/owner/repo/skill หรือ owner/repo/skill",
+      "overwrite": "เขียนทับสกิลของฉันหากมีสลักนี้อยู่แล้ว"
     }
   },
   "toolsPage": {

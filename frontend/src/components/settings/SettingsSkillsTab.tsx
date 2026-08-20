@@ -21,6 +21,8 @@ import {
   Download,
   GraduationCap,
   History,
+  Link as LinkIcon,
+  Loader2,
   Pencil,
   Plus,
   Trash2,
@@ -63,6 +65,10 @@ export const SettingsSkillsTab: React.FC = () => {
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [rollingBackTo, setRollingBackTo] = useState<number | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const [urlImportOpen, setUrlImportOpen] = useState(false);
+  const [urlSource, setUrlSource] = useState('');
+  const [urlOverwrite, setUrlOverwrite] = useState(false);
+  const [urlImporting, setUrlImporting] = useState(false);
 
   const [refreshCounter, setRefreshCounter] = useState(0);
   const refresh = useCallback(
@@ -189,6 +195,31 @@ export const SettingsSkillsTab: React.FC = () => {
     }
   };
 
+  const handleUrlImport = async () => {
+    if (!urlSource.trim()) return;
+    setUrlImporting(true);
+    try {
+      const response = await skillsApi.importFromUrl(urlSource.trim(), {
+        overwriteSlug: urlOverwrite,
+      });
+      if (!response.success) throw new Error(response.error);
+      toast.success(t('skillsPage.imported'));
+      setUrlImportOpen(false);
+      setUrlSource('');
+      setUrlOverwrite(false);
+      refresh();
+    } catch (error) {
+      logger.error('Failed to import the skill from a URL:', error);
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : t('skillsPage.importFailed')
+      );
+    } finally {
+      setUrlImporting(false);
+    }
+  };
+
   const openHistory = async (skill: Skill) => {
     setHistoryFor(skill);
     setVersionsLoading(true);
@@ -254,6 +285,15 @@ export const SettingsSkillsTab: React.FC = () => {
             >
               <Upload className='me-1.5 h-3.5 w-3.5' />
               {t('common.import')}
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setUrlImportOpen(true)}
+              data-testid='skill-import-url'
+            >
+              <LinkIcon className='me-1.5 h-3.5 w-3.5' />
+              {t('skillsPage.importUrl.button')}
             </Button>
             <Button
               size='sm'
@@ -370,6 +410,66 @@ export const SettingsSkillsTab: React.FC = () => {
             setModalOpen(true);
           }}
         />
+      )}
+
+      {urlImportOpen && (
+        <ModalShell
+          titleId='skill-import-url-title'
+          title={t('skillsPage.importUrl.title')}
+          subtitle={t('skillsPage.importUrl.hint')}
+          onClose={() => setUrlImportOpen(false)}
+          widthClassName='max-w-lg'
+          testId='skill-import-url-modal'
+          footer={
+            <>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => setUrlImportOpen(false)}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                size='sm'
+                disabled={urlImporting || !urlSource.trim()}
+                onClick={() => void handleUrlImport()}
+                data-testid='skill-import-url-submit'
+              >
+                {urlImporting ? (
+                  <Loader2 className='me-1.5 h-3.5 w-3.5 animate-spin' />
+                ) : (
+                  <Download className='me-1.5 h-3.5 w-3.5' />
+                )}
+                {t('common.import')}
+              </Button>
+            </>
+          }
+        >
+          <div className='flex flex-col gap-2'>
+            <input
+              type='text'
+              value={urlSource}
+              onChange={event => setUrlSource(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === 'Enter') void handleUrlImport();
+              }}
+              placeholder={t('skillsPage.importUrl.placeholder')}
+              dir='ltr'
+              autoFocus
+              data-testid='skill-import-url-source'
+              className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-sm dark:border-dark-300 dark:bg-dark-100'
+            />
+            <label className='flex cursor-pointer items-center gap-2 text-xs text-gray-500 dark:text-gray-400'>
+              <input
+                type='checkbox'
+                checked={urlOverwrite}
+                onChange={() => setUrlOverwrite(value => !value)}
+                className='h-3.5 w-3.5 accent-primary-600'
+              />
+              {t('skillsPage.importUrl.overwrite')}
+            </label>
+          </div>
+        </ModalShell>
       )}
 
       <SkillModal

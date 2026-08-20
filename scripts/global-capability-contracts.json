@@ -1371,6 +1371,15 @@
             "slugs stay plaintext",
             "the name is encrypted"
           ]
+        },
+        {
+          "file": "scripts/test-skills.mjs",
+          "runner": "test:package",
+          "name": "a skill imports from a remote store URL through the egress guard",
+          "behaviorPatterns": [
+            "private or local address",
+            "remote-style"
+          ]
         }
       ],
       "backendRoutes": [
@@ -1391,6 +1400,12 @@
           "mount": "/api/skills",
           "method": "POST",
           "path": "/import"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "POST",
+          "path": "/import-url"
         },
         {
           "file": "backend/src/routes/skills.ts",

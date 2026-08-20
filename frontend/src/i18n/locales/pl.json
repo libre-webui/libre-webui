@@ -2812,6 +2812,13 @@
         "name": "Format notatek ze spotkania",
         "description": "Decyzje, zadania i otwarte pytania na podstawie transkrypcji."
       }
+    },
+    "importUrl": {
+      "button": "Z adresu URL",
+      "title": "Importuj umiejętność z adresu URL",
+      "hint": "Wklej link skills.sh lub GitHub, owner/repo/skill, albo bezpośredni link do pliku SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill lub owner/repo/skill",
+      "overwrite": "Nadpisz moją umiejętność, jeśli slug już istnieje"
     }
   },
   "toolsPage": {

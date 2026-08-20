@@ -2812,6 +2812,13 @@
         "name": "मीटिंग नोट्स प्रारूप",
         "description": "ट्रांसक्रिप्ट से निर्णय, कार्य-बिंदु और खुले प्रश्न।"
       }
+    },
+    "importUrl": {
+      "button": "URL से",
+      "title": "URL से स्किल आयात करें",
+      "hint": "skills.sh या GitHub लिंक, owner/repo/skill, या SKILL.md फ़ाइल का सीधा लिंक पेस्ट करें।",
+      "placeholder": "https://skills.sh/owner/repo/skill या owner/repo/skill",
+      "overwrite": "स्लग पहले से मौजूद हो तो मेरी स्किल अधिलेखित करें"
     }
   },
   "toolsPage": {

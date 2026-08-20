@@ -2812,6 +2812,13 @@
         "name": "Formato verbale di riunione",
         "description": "Decisioni, azioni da fare e questioni aperte a partire da una trascrizione."
       }
+    },
+    "importUrl": {
+      "button": "Da URL",
+      "title": "Importa un'abilità da un URL",
+      "hint": "Incolla un link skills.sh o GitHub, owner/repo/skill, oppure un link diretto a un file SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill oppure owner/repo/skill",
+      "overwrite": "Sovrascrivi la mia abilità se lo slug esiste già"
     }
   },
   "toolsPage": {

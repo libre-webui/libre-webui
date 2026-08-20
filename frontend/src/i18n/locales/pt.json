@@ -2812,6 +2812,13 @@
         "name": "Formato de ata de reunião",
         "description": "Decisões, ações e perguntas em aberto a partir de uma transcrição."
       }
+    },
+    "importUrl": {
+      "button": "De URL",
+      "title": "Importar uma habilidade de uma URL",
+      "hint": "Cole um link do skills.sh ou GitHub, owner/repo/skill, ou um link direto para um arquivo SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill ou owner/repo/skill",
+      "overwrite": "Sobrescrever minha habilidade se o slug já existir"
     }
   },
   "toolsPage": {

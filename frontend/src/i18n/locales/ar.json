@@ -2812,6 +2812,13 @@
         "name": "تنسيق محضر الاجتماع",
         "description": "القرارات وبنود العمل والأسئلة المفتوحة من نص الاجتماع."
       }
+    },
+    "importUrl": {
+      "button": "من رابط",
+      "title": "استيراد مهارة من رابط",
+      "hint": "الصق رابط skills.sh أو GitHub، أو owner/repo/skill، أو رابطًا مباشرًا لملف SKILL.md.",
+      "placeholder": "https://skills.sh/owner/repo/skill أو owner/repo/skill",
+      "overwrite": "استبدال مهارتي إذا كان المعرف موجودًا بالفعل"
     }
   },
   "toolsPage": {

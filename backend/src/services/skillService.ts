@@ -553,3 +553,163 @@ export const skillManifest = (skill: Skill): SkillManifest => ({
   name: skill.name,
   description: skill.description,
 });
+
+// === Remote skill import ===
+//
+// Skills travel as SKILL.md documents in public Git repositories, and
+// registries such as skills.sh identify them as `owner/repo[/skill]`. The
+// resolver turns every accepted spelling into a bounded list of candidate
+// raw-content URLs; the fetch itself goes through the pinned egress guard,
+// so a skill source can never reach private address space.
+
+const MAX_REMOTE_SKILL_BYTES = 200 * 1024;
+const REMOTE_FETCH_TIMEOUT_MS = 15_000;
+const GITHUB_SEGMENT = /^[A-Za-z0-9_.-]+$/;
+
+const rawGitHubUrl = (
+  owner: string,
+  repo: string,
+  ref: string,
+  path: string
+): string =>
+  `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${path}`;
+
+const candidatesForRepoSkill = (
+  owner: string,
+  repo: string,
+  ref: string,
+  skill?: string
+): string[] => {
+  if (!skill) return [rawGitHubUrl(owner, repo, ref, 'SKILL.md')];
+  return [
+    rawGitHubUrl(owner, repo, ref, `skills/${skill}/SKILL.md`),
+    rawGitHubUrl(owner, repo, ref, `skills/.curated/${skill}/SKILL.md`),
+    rawGitHubUrl(owner, repo, ref, `${skill}/SKILL.md`),
+  ];
+};
+
+/**
+ * Accepted source spellings, resolved to candidate SKILL.md URLs:
+ * - a direct URL to a Markdown document,
+ * - `owner/repo` or `owner/repo/skill` shorthand,
+ * - a skills.sh listing URL,
+ * - a github.com repo, tree, or blob URL.
+ */
+export const resolveSkillSourceCandidates = (rawSource: string): string[] => {
+  const source = rawSource.trim();
+  if (!source || source.length > 512) {
+    throw new ResourcePolicyError('A skill source is required', 400);
+  }
+
+  if (!/^https?:\/\//i.test(source)) {
+    const segments = source.split('/').filter(Boolean);
+    if (
+      segments.length < 2 ||
+      segments.length > 3 ||
+      !segments.every(segment => GITHUB_SEGMENT.test(segment))
+    ) {
+      throw new ResourcePolicyError(
+        'Use owner/repo, owner/repo/skill, or a full URL',
+        400
+      );
+    }
+    const [owner, repo, skill] = segments;
+    return candidatesForRepoSkill(owner, repo, 'HEAD', skill);
+  }
+
+  let url: URL;
+  try {
+    url = new URL(source);
+  } catch {
+    throw new ResourcePolicyError('Invalid skill source URL', 400);
+  }
+  const host = url.hostname.toLowerCase();
+  const segments = url.pathname.split('/').filter(Boolean);
+
+  if (host === 'skills.sh' || host === 'www.skills.sh') {
+    const [owner, repo, skill] = segments;
+    if (!owner || !repo) {
+      throw new ResourcePolicyError(
+        'A skills.sh source needs at least owner/repo in its path',
+        400
+      );
+    }
+    return candidatesForRepoSkill(owner, repo, 'HEAD', skill);
+  }
+
+  if (host === 'github.com' || host === 'www.github.com') {
+    const [owner, repo, kind, ref, ...rest] = segments;
+    if (!owner || !repo) {
+      throw new ResourcePolicyError('A repository URL needs owner/repo', 400);
+    }
+    if ((kind === 'tree' || kind === 'blob') && ref) {
+      const path = rest.join('/');
+      if (path.toLowerCase().endsWith('.md')) {
+        return [rawGitHubUrl(owner, repo, ref, path)];
+      }
+      return [
+        rawGitHubUrl(owner, repo, ref, path ? `${path}/SKILL.md` : 'SKILL.md'),
+      ];
+    }
+    return candidatesForRepoSkill(owner, repo, 'HEAD', segments[2]);
+  }
+
+  // Any other URL must point at the Markdown document itself.
+  return [url.toString()];
+};
+
+/** Import one skill from a remote SKILL.md source. */
+export const importSkillFromUrl = async (
+  userId: string,
+  source: string,
+  options: { overwriteSlug?: boolean } = {}
+): Promise<Skill> => {
+  const { secureToolRequest, ToolEgressError } =
+    await import('../utils/toolEgress.js');
+  const candidates = resolveSkillSourceCandidates(source);
+  let lastError: Error | undefined;
+  for (const candidate of candidates) {
+    let response;
+    try {
+      response = await secureToolRequest({
+        url: candidate,
+        method: 'GET',
+        headers: { Accept: 'text/markdown, text/plain, */*' },
+        timeoutMs: REMOTE_FETCH_TIMEOUT_MS,
+        maxResponseBytes: MAX_REMOTE_SKILL_BYTES,
+      });
+    } catch (error) {
+      if (error instanceof ToolEgressError) throw error;
+      lastError = error instanceof Error ? error : new Error(String(error));
+      continue;
+    }
+    if (response.status === 404) {
+      lastError = new Error(`No SKILL.md at ${candidate}`);
+      continue;
+    }
+    if (response.status >= 400 || response.truncated) {
+      throw new ResourcePolicyError(
+        `The skill source answered with status ${response.status}`,
+        400
+      );
+    }
+    const skill = await importSkill(
+      userId,
+      { markdown: response.bodyText },
+      options
+    );
+    recordAuditEvent({
+      action: 'skill.import-url',
+      result: 'success',
+      actorUserId: userId,
+      targetType: 'skill',
+      targetId: skill.id,
+      details: { host: new URL(candidate).hostname },
+    });
+    return skill;
+  }
+  throw new ResourcePolicyError(
+    lastError?.message ?? 'No SKILL.md was found at the given source',
+    400
+  );
+};

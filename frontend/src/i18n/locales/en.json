@@ -2812,6 +2812,13 @@
         "name": "Meeting notes format",
         "description": "Decisions, action items, and open questions from a transcript."
       }
+    },
+    "importUrl": {
+      "button": "From URL",
+      "title": "Import a skill from a URL",
+      "hint": "Paste a skills.sh or GitHub link, owner/repo/skill, or a direct link to a SKILL.md file.",
+      "placeholder": "https://skills.sh/owner/repo/skill or owner/repo/skill",
+      "overwrite": "Overwrite my skill if the slug already exists"
     }
   },
   "toolsPage": {

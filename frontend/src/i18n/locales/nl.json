@@ -2812,6 +2812,13 @@
         "name": "Opzet voor vergadernotulen",
         "description": "Besluiten, actiepunten en openstaande vragen uit een transcript."
       }
+    },
+    "importUrl": {
+      "button": "Vanaf URL",
+      "title": "Een vaardigheid importeren vanaf een URL",
+      "hint": "Plak een skills.sh- of GitHub-link, owner/repo/skill, of een directe link naar een SKILL.md-bestand.",
+      "placeholder": "https://skills.sh/owner/repo/skill of owner/repo/skill",
+      "overwrite": "Mijn vaardigheid overschrijven als de slug al bestaat"
     }
   },
   "toolsPage": {
