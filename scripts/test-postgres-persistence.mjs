@@ -366,7 +366,7 @@ test(
         initializePostgresPersistence(config, codec),
       ]);
       assert.equal(first.schemaCompatibility.status, 'compatible');
-      assert.equal(second.schemaCompatibility.currentVersion, 14);
+      assert.equal(second.schemaCompatibility.currentVersion, 16);
       assert.equal((await first.health()).ready, true);
 
       const assertStructuralDamage = async (mutation, expected) => {
@@ -3201,6 +3201,22 @@ test(
       `ALTER TABLE work_messages
          DROP CONSTRAINT work_messages_content_json_string_check`
     );
+    await target.query('DROP TABLE skill_files');
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 16'
+    );
+    await target.query('DROP TABLE skill_versions');
+    await target.query('DROP TABLE skills');
+    await target.query('DROP TABLE prompt_versions');
+    await target.query('DROP TABLE prompts');
+    await target.query('DROP TABLE tool_approvals');
+    await target.query('DROP TABLE tool_server_credentials');
+    await target.query('DROP TABLE tool_server_tools');
+    await target.query('DROP TABLE tool_servers');
+    await target.query('ALTER TABLE personas DROP COLUMN bindings');
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 15'
+    );
     await target.query('DROP TABLE automation_runs');
     await target.query('DROP TABLE automations');
     await target.query('DROP TABLE calendar_events');
@@ -3272,7 +3288,7 @@ test(
     assert.equal(prefixDryRun.sourceFingerprint, dryRun.sourceFingerprint);
     assert.match(
       prefixDryRun.warnings.join('\n'),
-      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 14/i
+      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 16/i
     );
     const codec = {
       encrypt: value => value,
@@ -3302,7 +3318,7 @@ test(
       resumed.tables.every(row => row.status === 'verified'),
       true
     );
-    assert.equal(resumed.targetSchemaVersion, 14);
+    assert.equal(resumed.targetSchemaVersion, 16);
     const resumedState = await target.query(
       `SELECT
          (SELECT MAX(version)::text FROM libre_schema_migrations)
@@ -3315,7 +3331,7 @@ test(
          (SELECT COUNT(*)::text FROM work_messages) AS work_messages`
     );
     assert.deepEqual(resumedState.rows[0], {
-      schema_version: '14',
+      schema_version: '16',
       import_status: 'complete',
       journal_count: String(dryRun.tables.length),
       work_journal: '1',
