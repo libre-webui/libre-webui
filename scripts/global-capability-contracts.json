@@ -21,7 +21,7 @@
         {
           "file": "docs/00-README.md",
           "patterns": [
-            "Home greets you, offers what to start"
+            "Start on your own infrastructure"
           ]
         }
       ],
@@ -1063,9 +1063,10 @@
       ],
       "documentation": [
         {
-          "file": "docs/03-PRO_TIPS.md",
+          "file": "docs/61-NOTES.md",
           "patterns": [
-            "## Keep Durable Notes Beside Your Work"
+            "Notes are durable Markdown documents",
+            "## Revisions and restore"
           ]
         }
       ],
@@ -2579,7 +2580,7 @@
         {
           "file": "docs/37-SYSTEM_MONITORING.md",
           "patterns": [
-            "The Usage page \\(`/usage`\\) charts outbound provider traffic"
+            "The Usage page \\(`/usage`\\) charts user-attributed model and provider work"
           ]
         },
         {
@@ -2587,6 +2588,13 @@
           "patterns": [
             "# Cost Governance",
             "hard budgets alert and additionally block"
+          ]
+        },
+        {
+          "file": "docs/60-OBSERVABILITY.md",
+          "patterns": [
+            "# Observability",
+            "## Enable OpenTelemetry"
           ]
         }
       ],
