@@ -11,7 +11,14 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { Download, ImageOff, Loader2, Trash2, Volume2 } from 'lucide-react';
+import {
+  Download,
+  ImageOff,
+  Loader2,
+  Trash2,
+  Volume2,
+  Wand2,
+} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type {
@@ -27,12 +34,14 @@ interface MediaGalleryProps {
   kind?: GeneratedMediaKind;
   refreshKey?: number;
   onCountChange?: (count: number) => void;
+  onEditImage?: (item: GeneratedMedia) => void;
 }
 
 export function MediaGallery({
   kind,
   refreshKey,
   onCountChange,
+  onEditImage,
 }: MediaGalleryProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -137,6 +146,16 @@ export function MediaGallery({
                   {item.model}
                 </span>
                 <div className='flex shrink-0 gap-1'>
+                  {item.kind === 'image' && onEditImage && (
+                    <button
+                      onClick={() => onEditImage(item)}
+                      className='rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-white/10'
+                      title={t('imageEdit.title')}
+                      data-testid={`edit-image-${item.id}`}
+                    >
+                      <Wand2 className='h-4 w-4' />
+                    </button>
+                  )}
                   <button
                     onClick={() => void download(item)}
                     className='rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-white/10'

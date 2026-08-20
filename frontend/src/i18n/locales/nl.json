@@ -3171,5 +3171,20 @@
     "replyTimeout": "Het antwoord duurde te lang",
     "unsupported": "Spraakmodus is niet beschikbaar",
     "unsupportedHint": "De spraakmodus heeft een microfoon nodig en een spraak-naar-tekstprovider of browserspraakherkenning."
+  },
+  "imageEdit": {
+    "title": "Afbeelding bewerken",
+    "prompt": "Beschrijf de wijziging",
+    "promptPlaceholder": "Bijvoorbeeld: vervang de lucht door een zonsondergang",
+    "model": "Model",
+    "apply": "Bewerking toepassen",
+    "maskHint": "Schilder over de gebieden die opnieuw getekend moeten worden; laat het canvas onaangeroerd om de hele afbeelding te bewerken.",
+    "brushSize": "Penseelgrootte",
+    "clearMask": "Masker wissen",
+    "referenceImages": "Referentieafbeeldingen (maximaal {{total}})",
+    "noModels": "Geen geconfigureerd model ondersteunt beeldbewerking.",
+    "saved": "Bewerkte afbeelding opgeslagen in de galerij",
+    "failed": "Beeldbewerking mislukt",
+    "loadFailed": "Bronafbeelding laden mislukt"
   }
 }

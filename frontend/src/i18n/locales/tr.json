@@ -3171,5 +3171,20 @@
     "replyTimeout": "Yanıt çok uzun sürdü",
     "unsupported": "Ses modu kullanılamıyor",
     "unsupportedHint": "Ses modu için mikrofon ve konuşmadan metne sağlayıcısı veya tarayıcı konuşma tanıma gerekir."
+  },
+  "imageEdit": {
+    "title": "Görseli düzenle",
+    "prompt": "Değişikliği açıkla",
+    "promptPlaceholder": "Örneğin: gökyüzünü gün batımıyla değiştir",
+    "model": "Model",
+    "apply": "Düzenlemeyi uygula",
+    "maskHint": "Yeniden çizilecek alanları boya; tüm görseli düzenlemek için tuvale dokunma.",
+    "brushSize": "Fırça boyutu",
+    "clearMask": "Maskeyi temizle",
+    "referenceImages": "Referans görseller (en fazla {{total}})",
+    "noModels": "Yapılandırılmış hiçbir model görsel düzenlemeyi desteklemiyor.",
+    "saved": "Düzenlenen görsel galeriye kaydedildi",
+    "failed": "Görsel düzenleme başarısız oldu",
+    "loadFailed": "Kaynak görsel yüklenemedi"
   }
 }

@@ -886,6 +886,15 @@
             "videoGenerationRequests\\.length",
             "videoResumeRequests"
           ]
+        },
+        {
+          "file": "scripts/test-image-editing.mjs",
+          "runner": "test:package",
+          "name": "edits post an authorized multipart request and meter usage",
+          "behaviorPatterns": [
+            "name=\"mask\"",
+            "usageEvents\\[0\\]\\.capability"
+          ]
         }
       ],
       "backendRoutes": [
@@ -1002,6 +1011,12 @@
           "mount": "/api/media",
           "method": "DELETE",
           "path": "/gallery/:mediaId"
+        },
+        {
+          "file": "backend/src/routes/media.ts",
+          "mount": "/api/media",
+          "method": "POST",
+          "path": "/image/edit"
         }
       ],
       "contractSurfaces": {

@@ -700,6 +700,16 @@ export interface ImageGenConfig {
   size_parameter?: 'size' | 'aspect_ratio' | 'resolution';
   size_label?: string;
   omit_quality_when_empty?: boolean;
+  /** OpenAI-compatible multipart edit/inpaint endpoint; presence enables editing. */
+  edit_endpoint?: string;
+  /** Whether the edit endpoint accepts a transparency mask for inpainting. */
+  supports_mask?: boolean;
+  /** Reference images accepted per edit request (compositing); default 1. */
+  max_reference_images?: number;
+  /** Accepted edit input MIME types; default PNG only. */
+  edit_mime_types?: string[];
+  /** Per-image input ceiling in bytes; capped by the global 10 MiB limit. */
+  max_edit_image_bytes?: number;
 }
 
 export interface VideoGenConfig {

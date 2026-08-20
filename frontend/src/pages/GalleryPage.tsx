@@ -20,10 +20,11 @@ import { useTranslation } from 'react-i18next';
 import { Film, ImageIcon, Volume2 } from 'lucide-react';
 import { ImageGenerationPanel } from '@/components/ImageGenerationPanel';
 import { MediaGenerationPanel } from '@/components/MediaGenerationPanel';
+import { ImageEditPanel } from '@/components/ImageEditPanel';
 import MediaGallery from '@/components/MediaGallery';
 import { Button, PageHeader, PageShell } from '@/components/ui';
 import { useAppStore } from '@/store/appStore';
-import type { GeneratedMediaKind } from '@/types';
+import type { GeneratedMedia, GeneratedMediaKind } from '@/types';
 import { cn } from '@/utils';
 
 export const GalleryPage: React.FC = () => {
@@ -34,6 +35,7 @@ export const GalleryPage: React.FC = () => {
     'video' | 'audio' | null
   >(null);
   const [filter, setFilter] = useState<'all' | GeneratedMediaKind>('all');
+  const [editSource, setEditSource] = useState<GeneratedMedia | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const imageGenerationEnabled = useAppStore(
     state => state.preferences.imageGenSettings?.enabled === true
@@ -110,6 +112,14 @@ export const GalleryPage: React.FC = () => {
         kind={filter === 'all' ? undefined : filter}
         refreshKey={refreshKey}
         onCountChange={setMediaCount}
+        onEditImage={setEditSource}
+      />
+
+      <ImageEditPanel
+        isOpen={editSource !== null}
+        source={editSource}
+        onClose={() => setEditSource(null)}
+        onEdited={handleImageGenerated}
       />
 
       <ImageGenerationPanel

@@ -3171,5 +3171,20 @@
     "replyTimeout": "Svarið tók of langan tíma",
     "unsupported": "Raddhamur er ekki tiltækur",
     "unsupportedHint": "Raddhamur þarf hljóðnema og tal-í-texta þjónustu eða talgreiningu vafrans."
+  },
+  "imageEdit": {
+    "title": "Breyta mynd",
+    "prompt": "Lýstu breytingunni",
+    "promptPlaceholder": "Til dæmis: skipta himninum út fyrir sólsetur",
+    "model": "Líkan",
+    "apply": "Beita breytingu",
+    "maskHint": "Málaðu yfir svæðin sem á að teikna upp á nýtt; láttu strigann ósnertan til að breyta allri myndinni.",
+    "brushSize": "Penslastærð",
+    "clearMask": "Hreinsa grímu",
+    "referenceImages": "Viðmiðunarmyndir (allt að {{total}})",
+    "noModels": "Ekkert uppsett líkan styður myndbreytingar.",
+    "saved": "Breytt mynd vistuð í safnið",
+    "failed": "Myndbreyting mistókst",
+    "loadFailed": "Ekki tókst að hlaða upprunamyndinni"
   }
 }

@@ -197,6 +197,33 @@ export const mediaApi = {
   deleteGalleryItem: (mediaId: string): Promise<ApiResponse<void>> =>
     api.delete(`/media/gallery/${mediaId}`).then(response => response.data),
 
+  editImage: (
+    request: {
+      model: string;
+      pluginId: string;
+      prompt: string;
+      size?: string;
+      sourceMediaId?: string;
+      images?: File[];
+      mask?: Blob;
+    },
+    signal?: AbortSignal
+  ): Promise<ApiResponse<GeneratedMedia>> => {
+    const form = new FormData();
+    form.set('model', request.model);
+    form.set('pluginId', request.pluginId);
+    form.set('prompt', request.prompt);
+    if (request.size) form.set('size', request.size);
+    if (request.sourceMediaId) form.set('sourceMediaId', request.sourceMediaId);
+    for (const file of request.images ?? []) {
+      form.append('images', file);
+    }
+    if (request.mask) form.append('mask', request.mask, 'mask.png');
+    return api
+      .post('/media/image/edit', form, { signal })
+      .then(response => response.data);
+  },
+
   getGalleryContent: (mediaId: string): Promise<Blob> =>
     api
       .get(`/media/gallery/${mediaId}/content`, { responseType: 'blob' })

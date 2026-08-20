@@ -3171,5 +3171,20 @@
     "replyTimeout": "The reply took too long",
     "unsupported": "Voice mode is unavailable",
     "unsupportedHint": "Voice mode needs a microphone and either a speech-to-text provider or browser speech recognition."
+  },
+  "imageEdit": {
+    "title": "Edit image",
+    "prompt": "Describe the change",
+    "promptPlaceholder": "For example: replace the sky with a sunset",
+    "model": "Model",
+    "apply": "Apply edit",
+    "maskHint": "Paint over the areas to repaint; leave the canvas untouched to edit the whole image.",
+    "brushSize": "Brush size",
+    "clearMask": "Clear mask",
+    "referenceImages": "Reference images (up to {{total}})",
+    "noModels": "No configured model supports image editing.",
+    "saved": "Edited image saved to the gallery",
+    "failed": "Image edit failed",
+    "loadFailed": "Failed to load the source image"
   }
 }

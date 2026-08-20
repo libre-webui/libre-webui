@@ -52,7 +52,10 @@ import pluginActivationService from './pluginActivationService.js';
 import { PluginAudioGenerationService } from './pluginAudioGenerationService.js';
 import { PluginCapabilityRegistryService } from './pluginCapabilityRegistryService.js';
 import { PluginEmbeddingService } from './pluginEmbeddingService.js';
-import { PluginImageGenerationService } from './pluginImageGenerationService.js';
+import {
+  PluginImageGenerationService,
+  type ImageEditInputImage,
+} from './pluginImageGenerationService.js';
 import { PluginSTTService } from './pluginSTTService.js';
 import { PluginTTSService } from './pluginTTSService.js';
 import { PluginVideoGenerationService } from './pluginVideoGenerationService.js';
@@ -3153,6 +3156,27 @@ export class PluginService {
     return this.imageGenerationService.executeImageGenRequest(
       model,
       prompt,
+      options
+    );
+  }
+
+  async executeImageEditRequest(
+    model: string,
+    prompt: string,
+    images: ImageEditInputImage[],
+    mask: ImageEditInputImage | null,
+    options: {
+      size?: string;
+      pluginId: string;
+      userId?: string;
+      signal?: AbortSignal;
+    }
+  ): Promise<ImageGenResponse> {
+    return this.imageGenerationService.executeImageEditRequest(
+      model,
+      prompt,
+      images,
+      mask,
       options
     );
   }

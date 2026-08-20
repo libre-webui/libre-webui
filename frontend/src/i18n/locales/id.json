@@ -3171,5 +3171,20 @@
     "replyTimeout": "Jawaban terlalu lama",
     "unsupported": "Mode suara tidak tersedia",
     "unsupportedHint": "Mode suara memerlukan mikrofon serta penyedia ucapan-ke-teks atau pengenalan suara peramban."
+  },
+  "imageEdit": {
+    "title": "Edit gambar",
+    "prompt": "Jelaskan perubahannya",
+    "promptPlaceholder": "Misalnya: ganti langit dengan matahari terbenam",
+    "model": "Model",
+    "apply": "Terapkan edit",
+    "maskHint": "Cat area yang akan digambar ulang; biarkan kanvas tak tersentuh untuk mengedit seluruh gambar.",
+    "brushSize": "Ukuran kuas",
+    "clearMask": "Hapus mask",
+    "referenceImages": "Gambar referensi (hingga {{total}})",
+    "noModels": "Tidak ada model terkonfigurasi yang mendukung edit gambar.",
+    "saved": "Gambar hasil edit disimpan ke galeri",
+    "failed": "Edit gambar gagal",
+    "loadFailed": "Gagal memuat gambar sumber"
   }
 }

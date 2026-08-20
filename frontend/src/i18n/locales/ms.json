@@ -3171,5 +3171,20 @@
     "replyTimeout": "Jawapan mengambil masa terlalu lama",
     "unsupported": "Mod suara tidak tersedia",
     "unsupportedHint": "Mod suara memerlukan mikrofon serta penyedia pertuturan-ke-teks atau pengecaman pertuturan pelayar."
+  },
+  "imageEdit": {
+    "title": "Edit imej",
+    "prompt": "Terangkan perubahan",
+    "promptPlaceholder": "Contohnya: gantikan langit dengan matahari terbenam",
+    "model": "Model",
+    "apply": "Gunakan suntingan",
+    "maskHint": "Cat kawasan yang perlu dilukis semula; biarkan kanvas tidak disentuh untuk mengedit keseluruhan imej.",
+    "brushSize": "Saiz berus",
+    "clearMask": "Kosongkan topeng",
+    "referenceImages": "Imej rujukan (sehingga {{total}})",
+    "noModels": "Tiada model yang dikonfigurasi menyokong suntingan imej.",
+    "saved": "Imej yang disunting disimpan ke galeri",
+    "failed": "Suntingan imej gagal",
+    "loadFailed": "Gagal memuatkan imej sumber"
   }
 }

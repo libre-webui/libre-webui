@@ -26,6 +26,10 @@ export interface ImageGenModel {
     styles?: string[];
     default_style?: string;
     max_prompt_length?: number;
+    edit_endpoint?: string;
+    supports_mask?: boolean;
+    max_reference_images?: number;
+    edit_mime_types?: string[];
     size_label?: string;
     omit_quality_when_empty?: boolean;
   };

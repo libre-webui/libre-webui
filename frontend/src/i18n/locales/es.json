@@ -3171,5 +3171,20 @@
     "replyTimeout": "La respuesta tardó demasiado",
     "unsupported": "El modo de voz no está disponible",
     "unsupportedHint": "El modo de voz necesita un micrófono y un proveedor de voz a texto o el reconocimiento de voz del navegador."
+  },
+  "imageEdit": {
+    "title": "Editar imagen",
+    "prompt": "Describe el cambio",
+    "promptPlaceholder": "Por ejemplo: reemplazar el cielo por un atardecer",
+    "model": "Modelo",
+    "apply": "Aplicar edición",
+    "maskHint": "Pinta las zonas que se deben repintar; deja el lienzo intacto para editar toda la imagen.",
+    "brushSize": "Tamaño del pincel",
+    "clearMask": "Borrar máscara",
+    "referenceImages": "Imágenes de referencia (hasta {{total}})",
+    "noModels": "Ningún modelo configurado admite la edición de imágenes.",
+    "saved": "Imagen editada guardada en la galería",
+    "failed": "La edición de la imagen falló",
+    "loadFailed": "No se pudo cargar la imagen de origen"
   }
 }

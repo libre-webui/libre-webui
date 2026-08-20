@@ -3171,5 +3171,20 @@
     "replyTimeout": "Odpowiedź trwała zbyt długo",
     "unsupported": "Tryb głosowy jest niedostępny",
     "unsupportedHint": "Tryb głosowy wymaga mikrofonu oraz dostawcy mowy na tekst lub rozpoznawania mowy w przeglądarce."
+  },
+  "imageEdit": {
+    "title": "Edytuj obraz",
+    "prompt": "Opisz zmianę",
+    "promptPlaceholder": "Na przykład: zastąp niebo zachodem słońca",
+    "model": "Model",
+    "apply": "Zastosuj edycję",
+    "maskHint": "Zamaluj obszary do przerysowania; pozostaw płótno nietknięte, aby edytować cały obraz.",
+    "brushSize": "Rozmiar pędzla",
+    "clearMask": "Wyczyść maskę",
+    "referenceImages": "Obrazy referencyjne (do {{total}})",
+    "noModels": "Żaden skonfigurowany model nie obsługuje edycji obrazów.",
+    "saved": "Edytowany obraz zapisano w galerii",
+    "failed": "Edycja obrazu nie powiodła się",
+    "loadFailed": "Nie udało się wczytać obrazu źródłowego"
   }
 }

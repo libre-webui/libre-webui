@@ -35,6 +35,12 @@ import type { PluginUsageEventInput } from './pluginUsageService.js';
 type PluginVariables = Record<string, string | number | boolean>;
 type MaybePromise<T> = T | Promise<T>;
 type ImageGenImage = ImageGenResponse['images'][number];
+
+export interface ImageEditInputImage {
+  buffer: Buffer;
+  mimeType: string;
+  filename: string;
+}
 const logger = createLogger('services:plugin-image-generation');
 
 export interface PluginImageGenerationServiceDependencies {
@@ -342,6 +348,176 @@ export class PluginImageGenerationService {
           error.response?.data?.message ||
           error.message;
         throw new Error(`Image generation failed: ${message}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Provider-neutral image edit/inpaint/composite (IMAGE-01) over the
+   * OpenAI-compatible multipart edits contract: one or more reference
+   * images, an optional transparency mask (transparent regions are
+   * repainted), and a prompt. Only plugins that declare `edit_endpoint`
+   * participate; capability limits are validated before any bytes leave
+   * the process.
+   */
+  async executeImageEditRequest(
+    model: string,
+    prompt: string,
+    images: ImageEditInputImage[],
+    mask: ImageEditInputImage | null,
+    options: {
+      size?: string;
+      pluginId: string;
+      userId?: string;
+      signal?: AbortSignal;
+    }
+  ): Promise<ImageGenResponse> {
+    validatePluginModel(model);
+    if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+      throw new Error('Invalid prompt: must be a non-empty string');
+    }
+    if (images.length === 0) {
+      throw new Error('At least one source image is required');
+    }
+
+    const plugin = await this.getPluginForImageGen(
+      model,
+      options.pluginId,
+      options.userId
+    );
+    if (!plugin) {
+      throw new Error(
+        `No image generation plugin found for model: ${model} in plugin ${options.pluginId}`
+      );
+    }
+    const imageConfig = plugin.capabilities?.image?.config;
+    const editEndpointTemplate = imageConfig?.edit_endpoint;
+    if (!editEndpointTemplate) {
+      throw new Error(`Plugin ${plugin.id} does not support image editing`);
+    }
+    if (mask && imageConfig?.supports_mask === false) {
+      throw new Error(`Plugin ${plugin.id} does not support edit masks`);
+    }
+    const maxReferenceImages = Math.max(
+      1,
+      imageConfig?.max_reference_images ?? 1
+    );
+    if (images.length > maxReferenceImages) {
+      throw new Error(
+        `Plugin ${plugin.id} accepts at most ${maxReferenceImages} reference image(s)`
+      );
+    }
+    if (
+      imageConfig?.max_prompt_length &&
+      prompt.length > imageConfig.max_prompt_length
+    ) {
+      throw new Error(
+        `Prompt exceeds maximum length of ${imageConfig.max_prompt_length} characters`
+      );
+    }
+
+    const imageVars = await this.deps.getPluginVariables(
+      plugin,
+      options.userId
+    );
+    // Edits always use the manifest's declared edit endpoint; the
+    // generation endpoint-override variable never redirects them.
+    const endpoint = resolvePluginOperationEndpoint(
+      editEndpointTemplate,
+      imageVars
+    );
+    assertSafePluginEndpoint(endpoint);
+
+    const noAuthRequired =
+      (imageConfig as Record<string, unknown> | undefined)?.no_auth_required ===
+      true;
+    const apiKey = await this.deps.getApiKey(plugin, options.userId);
+    if (!apiKey && !noAuthRequired) {
+      throw new Error(
+        `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
+      );
+    }
+    // Strip the JSON content type so axios emits the multipart boundary.
+    const { 'Content-Type': _jsonContentType, ...headers } =
+      buildPluginAuthHeaders(plugin, apiKey, endpoint);
+
+    const form = new FormData();
+    form.append('model', model);
+    form.append('prompt', prompt);
+    for (const [index, image] of images.entries()) {
+      const blob = new Blob([Uint8Array.from(image.buffer)], {
+        type: image.mimeType,
+      });
+      form.append(
+        images.length > 1 ? 'image[]' : 'image',
+        blob,
+        image.filename || `image-${index}.png`
+      );
+    }
+    if (mask) {
+      form.append(
+        'mask',
+        new Blob([Uint8Array.from(mask.buffer)], { type: mask.mimeType }),
+        mask.filename || 'mask.png'
+      );
+    }
+    const requestedSize = options.size || imageConfig?.default_size;
+    if (requestedSize) form.append('size', requestedSize);
+    if (imageConfig?.supports_response_format !== false) {
+      form.append('response_format', 'b64_json');
+    }
+
+    const startedAt = Date.now();
+    try {
+      const response = await axios.post(endpoint, form, {
+        headers,
+        timeout: 300000,
+        maxRedirects: 0,
+        maxContentLength: 80 * 1024 * 1024,
+        signal: options.signal,
+      });
+      const result: ImageGenResponse = {
+        images: normalizeImageGenerationResponse(response.data),
+        model,
+        pluginId: plugin.id,
+      };
+      this.deps.recordUsage?.({
+        userId: options.userId,
+        pluginId: plugin.id,
+        pluginName: plugin.name,
+        capability: 'image',
+        model,
+        status: 'success',
+        durationMs: Date.now() - startedAt,
+        outputUnits: result.images.length,
+        unitKind: 'images',
+      });
+      return result;
+    } catch (error) {
+      const cancelled = axios.isCancel(error) || options.signal?.aborted;
+      this.deps.recordUsage?.({
+        userId: options.userId,
+        pluginId: plugin.id,
+        pluginName: plugin.name,
+        capability: 'image',
+        model,
+        status: cancelled ? 'cancelled' : 'error',
+        durationMs: Date.now() - startedAt,
+        outputUnits: 0,
+        unitKind: 'images',
+      });
+      if (cancelled) {
+        throw options.signal?.reason instanceof Error
+          ? options.signal.reason
+          : new Error('Image provider request was cancelled');
+      }
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.error?.message ||
+          error.response?.data?.message ||
+          error.message;
+        throw new Error(`Image edit failed: ${message}`);
       }
       throw error;
     }

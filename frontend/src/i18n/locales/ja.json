@@ -3171,5 +3171,20 @@
     "replyTimeout": "応答に時間がかかりすぎました",
     "unsupported": "ボイスモードは利用できません",
     "unsupportedHint": "ボイスモードにはマイクと、音声認識プロバイダーまたはブラウザの音声認識が必要です。"
+  },
+  "imageEdit": {
+    "title": "画像を編集",
+    "prompt": "変更内容を記述",
+    "promptPlaceholder": "例：空を夕焼けに置き換える",
+    "model": "モデル",
+    "apply": "編集を適用",
+    "maskHint": "描き直す領域を塗りつぶします。何も塗らなければ画像全体が編集対象になります。",
+    "brushSize": "ブラシサイズ",
+    "clearMask": "マスクをクリア",
+    "referenceImages": "参照画像（最大 {{total}} 枚）",
+    "noModels": "画像編集に対応するモデルが設定されていません。",
+    "saved": "編集した画像をギャラリーに保存しました",
+    "failed": "画像の編集に失敗しました",
+    "loadFailed": "元画像の読み込みに失敗しました"
   }
 }

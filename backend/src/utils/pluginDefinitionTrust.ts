@@ -50,7 +50,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   'mlx-lm': 'c5aad700fd557216a1e1eda361c0d67f92d51d1fe46d9c2028354f8ca8f25503',
   'openai-tts':
     'ebc3677f4f0ef2ec1628408d59a9e273059cc50d2f9d462e7a3b7f0c4eefe843',
-  openai: '992eac06973a3fb5565adc693ded077858b1aa37de327218727a93a6f8aa1ba8',
+  openai: 'f7a8104551d63b5fe9a771832d7e99cff5e907de66c443f3440323eeef32423c',
   openrouter:
     '83cd1e5918d6c3176bb2929fbed6e325677e5d2e0c1ceda2da7a75f64df8365f',
   'qwen-tts':

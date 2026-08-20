@@ -3171,5 +3171,20 @@
     "replyTimeout": "Câu trả lời mất quá nhiều thời gian",
     "unsupported": "Chế độ giọng nói không khả dụng",
     "unsupportedHint": "Chế độ giọng nói cần micrô và nhà cung cấp chuyển giọng nói thành văn bản hoặc nhận dạng giọng nói của trình duyệt."
+  },
+  "imageEdit": {
+    "title": "Chỉnh sửa ảnh",
+    "prompt": "Mô tả thay đổi",
+    "promptPlaceholder": "Ví dụ: thay bầu trời bằng hoàng hôn",
+    "model": "Mô hình",
+    "apply": "Áp dụng chỉnh sửa",
+    "maskHint": "Tô lên các vùng cần vẽ lại; để nguyên khung vẽ nếu muốn chỉnh sửa toàn bộ ảnh.",
+    "brushSize": "Kích thước cọ",
+    "clearMask": "Xóa mặt nạ",
+    "referenceImages": "Ảnh tham chiếu (tối đa {{total}})",
+    "noModels": "Không có mô hình nào được cấu hình hỗ trợ chỉnh sửa ảnh.",
+    "saved": "Đã lưu ảnh chỉnh sửa vào thư viện",
+    "failed": "Chỉnh sửa ảnh thất bại",
+    "loadFailed": "Không thể tải ảnh gốc"
   }
 }

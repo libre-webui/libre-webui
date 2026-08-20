@@ -3171,5 +3171,20 @@
     "replyTimeout": "La réponse a pris trop de temps",
     "unsupported": "Le mode vocal est indisponible",
     "unsupportedHint": "Le mode vocal nécessite un micro et un fournisseur de reconnaissance vocale ou la reconnaissance du navigateur."
+  },
+  "imageEdit": {
+    "title": "Modifier l’image",
+    "prompt": "Décrire la modification",
+    "promptPlaceholder": "Par exemple : remplacer le ciel par un coucher de soleil",
+    "model": "Modèle",
+    "apply": "Appliquer la modification",
+    "maskHint": "Peignez les zones à repeindre ; laissez la toile intacte pour modifier toute l’image.",
+    "brushSize": "Taille du pinceau",
+    "clearMask": "Effacer le masque",
+    "referenceImages": "Images de référence (jusqu’à {{total}})",
+    "noModels": "Aucun modèle configuré ne prend en charge la retouche d’image.",
+    "saved": "Image modifiée enregistrée dans la galerie",
+    "failed": "Échec de la modification de l’image",
+    "loadFailed": "Impossible de charger l’image source"
   }
 }

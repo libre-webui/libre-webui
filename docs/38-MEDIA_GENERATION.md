@@ -127,6 +127,26 @@ job moves through `pending`, `in_progress`, and finally `completed` or
   (encrypted at rest). Completed and failed job records older than 30 days are
   pruned opportunistically; pending handles are not expired by that cleanup.
 
+## Image Editing and Inpainting
+
+Gallery images with an edit-capable model configured gain an **Edit image**
+action. The editor paints a mask directly on the image — painted regions are
+repainted by the model, an untouched canvas edits the whole image — and can
+attach additional reference images for compositing when the model accepts
+more than one input. Editing rides the OpenAI-compatible multipart edits
+contract: a plugin participates by declaring `edit_endpoint` in its image
+capability config, plus optional `supports_mask`, `max_reference_images`,
+`edit_mime_types`, and `max_edit_image_bytes` limits (the bundled OpenAI
+manifest declares all of them).
+
+Every input is validated before any bytes leave the process: declared MIME,
+sniffed magic bytes (PNG, JPEG, or WebP), and a 10 MiB per-image ceiling;
+masks must be PNG because only PNG carries the alpha channel that marks the
+regions to repaint. Results are saved back to the gallery with provenance
+metadata recording the source gallery item, the number of uploaded
+reference images, and whether a mask was used. Edits meter usage exactly
+like generations.
+
 ## The Unified Gallery
 
 The gallery lists all media kinds interleaved by creation time, with filter

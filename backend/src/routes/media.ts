@@ -27,6 +27,12 @@ import {
 import type { GeneratedMediaKind } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import {
+  IMAGE_EDIT_GLOBAL_MAX_IMAGE_BYTES,
+  IMAGE_EDIT_GLOBAL_MAX_REFERENCE_IMAGES,
+  ImageEditUploadError,
+  validateImageEditUpload,
+} from '../utils/imageEditUpload.js';
+import {
   parseTTSVoiceCloneUpload,
   reserveTTSVoiceCloneUpload,
   TTS_VOICE_CLONE_GLOBAL_MAX_AUDIO_BYTES,
@@ -480,6 +486,235 @@ router.post(
         .json({ success: false, message });
     } finally {
       await uploadSlot?.release();
+      requestAbort.cleanup();
+    }
+  }
+);
+
+const imageEditUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: IMAGE_EDIT_GLOBAL_MAX_IMAGE_BYTES,
+    files: IMAGE_EDIT_GLOBAL_MAX_REFERENCE_IMAGES + 1,
+    fields: 16,
+  },
+}).fields([
+  { name: 'images', maxCount: IMAGE_EDIT_GLOBAL_MAX_REFERENCE_IMAGES },
+  { name: 'mask', maxCount: 1 },
+]);
+
+const parseImageEditUpload = (
+  req: AuthenticatedRequest,
+  res: express.Response
+): Promise<void> =>
+  new Promise((resolve, reject) => {
+    imageEditUpload(req, res, (error: unknown) =>
+      error ? reject(error) : resolve()
+    );
+  });
+
+const readGalleryImageSource = async (
+  mediaId: string,
+  ownerUserId: string
+): Promise<{ buffer: Buffer; mimeType: string } | null> => {
+  const opened = await galleryService.openMediaContent(mediaId, ownerUserId);
+  if (!opened || opened.record.kind !== 'image') return null;
+  const chunks: Buffer[] = [];
+  let total = 0;
+  for await (const chunk of opened.content.body) {
+    const piece = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    total += piece.length;
+    if (total > IMAGE_EDIT_GLOBAL_MAX_IMAGE_BYTES) {
+      throw new ImageEditUploadError(
+        'file_too_large',
+        'The selected gallery image is too large to edit'
+      );
+    }
+    chunks.push(piece);
+  }
+  return { buffer: Buffer.concat(chunks), mimeType: opened.record.mimeType };
+};
+
+/**
+ * Provider-neutral image edit/inpaint/composite (IMAGE-01). Sources come
+ * from uploaded files, an owned gallery image, or both; an optional PNG
+ * transparency mask marks the regions to repaint. The result lands in the
+ * gallery with full provenance metadata.
+ */
+router.post(
+  '/image/edit',
+  generationRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    const requestAbort = requestAbortSignal(req, res);
+    try {
+      const id = userId(req);
+      await parseImageEditUpload(req, res);
+      const { prompt, model, pluginId, size, sourceMediaId } = req.body || {};
+      if (
+        typeof prompt !== 'string' ||
+        prompt.trim().length === 0 ||
+        typeof model !== 'string' ||
+        typeof pluginId !== 'string'
+      ) {
+        res.status(400).json({
+          success: false,
+          message: 'prompt, model, and pluginId are required',
+        });
+        return;
+      }
+      if (size !== undefined && typeof size !== 'string') {
+        res
+          .status(400)
+          .json({ success: false, message: 'size must be a string' });
+        return;
+      }
+      const config = await pluginService.getImageGenConfig(pluginId, id);
+      if (!config?.edit_endpoint) {
+        res.status(400).json({
+          success: false,
+          message: 'The selected model does not support image editing',
+        });
+        return;
+      }
+      const files = req.files as
+        Record<string, Express.Multer.File[] | undefined> | undefined;
+      const uploadedImages = files?.images ?? [];
+      const maskFile = files?.mask?.[0];
+
+      const images: Array<{
+        buffer: Buffer;
+        mimeType: string;
+        filename: string;
+      }> = [];
+      const provenanceSources: string[] = [];
+      if (typeof sourceMediaId === 'string' && sourceMediaId) {
+        const source = await readGalleryImageSource(sourceMediaId, id);
+        if (!source) {
+          res.status(404).json({
+            success: false,
+            message: 'Gallery source image not found',
+          });
+          return;
+        }
+        images.push(
+          validateImageEditUpload(
+            {
+              buffer: source.buffer,
+              mimetype: source.mimeType,
+              size: source.buffer.length,
+            },
+            {
+              allowedMimeTypes: config.edit_mime_types,
+              maxBytes: config.max_edit_image_bytes,
+              filename: 'source.png',
+            }
+          )
+        );
+        provenanceSources.push(sourceMediaId);
+      }
+      for (const [index, file] of uploadedImages.entries()) {
+        images.push(
+          validateImageEditUpload(file, {
+            allowedMimeTypes: config.edit_mime_types,
+            maxBytes: config.max_edit_image_bytes,
+            filename: `image-${index}.png`,
+          })
+        );
+      }
+      if (images.length === 0) {
+        res.status(400).json({
+          success: false,
+          message: 'A source image (upload or gallery) is required',
+        });
+        return;
+      }
+      let mask = null;
+      if (maskFile) {
+        if (config.supports_mask === false) {
+          res.status(400).json({
+            success: false,
+            message: 'The selected model does not support edit masks',
+          });
+          return;
+        }
+        // Masks must carry alpha, so only PNG is accepted regardless of
+        // the model's reference-image formats.
+        mask = validateImageEditUpload(maskFile, {
+          allowedMimeTypes: ['image/png'],
+          maxBytes: config.max_edit_image_bytes,
+          filename: 'mask.png',
+        });
+      }
+
+      const result = await pluginService.executeImageEditRequest(
+        model,
+        prompt.trim(),
+        images,
+        mask,
+        {
+          ...(size ? { size } : {}),
+          pluginId,
+          userId: id,
+          signal: requestAbort.signal,
+        }
+      );
+      if (requestAbort.signal.aborted) return;
+      const first = result.images[0];
+      if (!first?.b64_json) {
+        res.status(502).json({
+          success: false,
+          message: 'The provider did not return image data for this edit',
+        });
+        return;
+      }
+      const mimeType = first.mime_type || 'image/png';
+      const saved = await galleryService.saveMedia(id, {
+        kind: 'image',
+        prompt: prompt.trim(),
+        model,
+        pluginId,
+        mediaData: `data:${mimeType};base64,${first.b64_json}`,
+        mimeType,
+        metadata: {
+          edit: {
+            sourceMediaIds: provenanceSources,
+            uploadedImages: uploadedImages.length,
+            maskUsed: Boolean(mask),
+          },
+        },
+      });
+      if (!saved) throw new Error('Failed to save the edited image');
+      res.json({ success: true, data: publicMedia(saved) });
+    } catch (error) {
+      if (requestAbort.signal.aborted) return;
+      if (error instanceof ImageEditUploadError) {
+        res.status(error.code === 'file_too_large' ? 413 : 400).json({
+          success: false,
+          message: error.message,
+        });
+        return;
+      }
+      if (error instanceof multer.MulterError) {
+        res.status(error.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({
+          success: false,
+          message: 'Invalid image edit upload',
+        });
+        return;
+      }
+      logger.error('Image edit failed:', error);
+      const message =
+        error instanceof Error ? error.message : 'Image edit failed';
+      const status = /does not support|required|at most|exceeds maximum/.test(
+        message
+      )
+        ? 400
+        : /API key not found/.test(message)
+          ? 503
+          : /No image generation plugin found/.test(message)
+            ? 404
+            : 502;
+      res.status(status).json({ success: false, message });
+    } finally {
       requestAbort.cleanup();
     }
   }

@@ -3171,5 +3171,20 @@
     "replyTimeout": "La risposta ha impiegato troppo tempo",
     "unsupported": "La modalità vocale non è disponibile",
     "unsupportedHint": "La modalità vocale richiede un microfono e un provider voce-testo oppure il riconoscimento vocale del browser."
+  },
+  "imageEdit": {
+    "title": "Modifica immagine",
+    "prompt": "Descrivi la modifica",
+    "promptPlaceholder": "Per esempio: sostituire il cielo con un tramonto",
+    "model": "Modello",
+    "apply": "Applica la modifica",
+    "maskHint": "Dipingi le aree da ridipingere; lascia la tela intatta per modificare l’intera immagine.",
+    "brushSize": "Dimensione del pennello",
+    "clearMask": "Cancella maschera",
+    "referenceImages": "Immagini di riferimento (fino a {{total}})",
+    "noModels": "Nessun modello configurato supporta la modifica delle immagini.",
+    "saved": "Immagine modificata salvata nella galleria",
+    "failed": "Modifica dell’immagine non riuscita",
+    "loadFailed": "Impossibile caricare l’immagine di origine"
   }
 }

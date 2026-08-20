@@ -3171,5 +3171,20 @@
     "replyTimeout": "Svaret tog för lång tid",
     "unsupported": "Röstläget är inte tillgängligt",
     "unsupportedHint": "Röstläget kräver en mikrofon och en tal-till-text-leverantör eller webbläsarens taligenkänning."
+  },
+  "imageEdit": {
+    "title": "Redigera bild",
+    "prompt": "Beskriv ändringen",
+    "promptPlaceholder": "Till exempel: ersätt himlen med en solnedgång",
+    "model": "Modell",
+    "apply": "Tillämpa redigering",
+    "maskHint": "Måla över områdena som ska målas om; lämna duken orörd för att redigera hela bilden.",
+    "brushSize": "Penselstorlek",
+    "clearMask": "Rensa mask",
+    "referenceImages": "Referensbilder (upp till {{total}})",
+    "noModels": "Ingen konfigurerad modell stöder bildredigering.",
+    "saved": "Redigerad bild sparad i galleriet",
+    "failed": "Bildredigeringen misslyckades",
+    "loadFailed": "Kunde inte läsa in källbilden"
   }
 }

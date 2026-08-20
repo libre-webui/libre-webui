@@ -3171,5 +3171,20 @@
     "replyTimeout": "Die Antwort hat zu lange gedauert",
     "unsupported": "Der Sprachmodus ist nicht verfügbar",
     "unsupportedHint": "Der Sprachmodus benötigt ein Mikrofon und entweder einen Sprache-zu-Text-Anbieter oder die Spracherkennung des Browsers."
+  },
+  "imageEdit": {
+    "title": "Bild bearbeiten",
+    "prompt": "Änderung beschreiben",
+    "promptPlaceholder": "Zum Beispiel: den Himmel durch einen Sonnenuntergang ersetzen",
+    "model": "Modell",
+    "apply": "Bearbeitung anwenden",
+    "maskHint": "Übermale die Bereiche, die neu gezeichnet werden sollen; unberührt lassen, um das ganze Bild zu bearbeiten.",
+    "brushSize": "Pinselgröße",
+    "clearMask": "Maske löschen",
+    "referenceImages": "Referenzbilder (bis zu {{total}})",
+    "noModels": "Kein konfiguriertes Modell unterstützt Bildbearbeitung.",
+    "saved": "Bearbeitetes Bild in der Galerie gespeichert",
+    "failed": "Bildbearbeitung fehlgeschlagen",
+    "loadFailed": "Quellbild konnte nicht geladen werden"
   }
 }

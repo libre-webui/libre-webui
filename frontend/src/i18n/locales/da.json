@@ -3171,5 +3171,20 @@
     "replyTimeout": "Svaret tog for lang tid",
     "unsupported": "Stemmetilstand er ikke tilgængelig",
     "unsupportedHint": "Stemmetilstand kræver en mikrofon og en tale-til-tekst-udbyder eller browserens talegenkendelse."
+  },
+  "imageEdit": {
+    "title": "Rediger billede",
+    "prompt": "Beskriv ændringen",
+    "promptPlaceholder": "For eksempel: erstat himlen med en solnedgang",
+    "model": "Model",
+    "apply": "Anvend redigering",
+    "maskHint": "Mal over de områder, der skal males om; lad lærredet være urørt for at redigere hele billedet.",
+    "brushSize": "Penselstørrelse",
+    "clearMask": "Ryd maske",
+    "referenceImages": "Referencebilleder (op til {{total}})",
+    "noModels": "Ingen konfigureret model understøtter billedredigering.",
+    "saved": "Redigeret billede gemt i galleriet",
+    "failed": "Billedredigering mislykkedes",
+    "loadFailed": "Kunne ikke indlæse kildebilledet"
   }
 }

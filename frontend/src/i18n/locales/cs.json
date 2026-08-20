@@ -3171,5 +3171,20 @@
     "replyTimeout": "Odpověď trvala příliš dlouho",
     "unsupported": "Hlasový režim není k dispozici",
     "unsupportedHint": "Hlasový režim vyžaduje mikrofon a poskytovatele převodu řeči na text nebo rozpoznávání řeči v prohlížeči."
+  },
+  "imageEdit": {
+    "title": "Upravit obrázek",
+    "prompt": "Popiš změnu",
+    "promptPlaceholder": "Například: nahradit oblohu západem slunce",
+    "model": "Model",
+    "apply": "Použít úpravu",
+    "maskHint": "Přemaluj oblasti, které se mají překreslit; nedotčené plátno upraví celý obrázek.",
+    "brushSize": "Velikost štětce",
+    "clearMask": "Vymazat masku",
+    "referenceImages": "Referenční obrázky (až {{total}})",
+    "noModels": "Žádný nakonfigurovaný model nepodporuje úpravu obrázků.",
+    "saved": "Upravený obrázek uložen do galerie",
+    "failed": "Úprava obrázku se nezdařila",
+    "loadFailed": "Zdrojový obrázek se nepodařilo načíst"
   }
 }

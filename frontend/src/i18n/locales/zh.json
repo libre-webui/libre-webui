@@ -3171,5 +3171,20 @@
     "replyTimeout": "回复耗时过长",
     "unsupported": "语音模式不可用",
     "unsupportedHint": "语音模式需要麦克风，以及语音转文字服务商或浏览器语音识别。"
+  },
+  "imageEdit": {
+    "title": "编辑图片",
+    "prompt": "描述修改内容",
+    "promptPlaceholder": "例如：把天空换成日落",
+    "model": "模型",
+    "apply": "应用编辑",
+    "maskHint": "涂抹需要重绘的区域；不涂抹则编辑整张图片。",
+    "brushSize": "画笔大小",
+    "clearMask": "清除蒙版",
+    "referenceImages": "参考图片（最多 {{total}} 张）",
+    "noModels": "没有已配置的模型支持图片编辑。",
+    "saved": "已将编辑后的图片保存到图库",
+    "failed": "图片编辑失败",
+    "loadFailed": "无法加载源图片"
   }
 }
