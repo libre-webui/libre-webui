@@ -202,7 +202,8 @@ class AutomationSchedulerService {
               await automationService.finalizeRun(
                 run.id,
                 'failed',
-                chatJob.errorSummary ?? chatJob.state
+                chatJob.errorSummary ?? chatJob.state,
+                { userId: run.user_id, automationId: run.automation_id }
               )
             ) {
               settled += 1;
@@ -228,7 +229,8 @@ class AutomationSchedulerService {
             await automationService.finalizeRun(
               run.id,
               'failed',
-              runJob.errorSummary ?? runJob.state
+              runJob.errorSummary ?? runJob.state,
+              { userId: run.user_id, automationId: run.automation_id }
             )
           ) {
             settled += 1;
@@ -237,7 +239,10 @@ class AutomationSchedulerService {
         }
         if (run.status === 'queued' && now - run.created_at > STALE_QUEUED_MS) {
           if (
-            await automationService.finalizeRun(run.id, 'failed', 'stalled')
+            await automationService.finalizeRun(run.id, 'failed', 'stalled', {
+              userId: run.user_id,
+              automationId: run.automation_id,
+            })
           ) {
             settled += 1;
           }

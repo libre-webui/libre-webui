@@ -42,6 +42,7 @@ const canonicalCapabilityIds = [
   'calendar',
   'automations',
   'channels',
+  'notifications',
   'prompts',
   'skills',
   'chat-tools',

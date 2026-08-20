@@ -1579,6 +1579,122 @@
       }
     },
     {
+      "id": "notifications",
+      "title": "Notifications",
+      "uiRoutes": [],
+      "documentation": [
+        {
+          "file": "docs/55-NOTIFICATIONS.md",
+          "patterns": [
+            "never from client input",
+            "Notification bodies, message"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-notifications.mjs",
+          "runner": "test:package",
+          "name": "the inbox is durable, encrypted, deduplicated, and capped",
+          "behaviorPatterns": [
+            "collapses into the existing row",
+            "Encrypted at rest"
+          ]
+        },
+        {
+          "file": "scripts/test-notifications.mjs",
+          "runner": "test:package",
+          "name": "webhook targets are egress-guarded, signed, redacted, and retried",
+          "behaviorPatterns": [
+            "x-libre-signature",
+            "must never leave"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/notifications.ts",
+          "mount": "/api/notifications",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/notifications.ts",
+          "mount": "/api/notifications",
+          "method": "GET",
+          "path": "/unread-count"
+        },
+        {
+          "file": "backend/src/routes/notifications.ts",
+          "mount": "/api/notifications",
+          "method": "POST",
+          "path": "/read-all"
+        },
+        {
+          "file": "backend/src/routes/notifications.ts",
+          "mount": "/api/notifications",
+          "method": "POST",
+          "path": "/:notificationId/read"
+        },
+        {
+          "file": "backend/src/routes/notifications.ts",
+          "mount": "/api/notifications",
+          "method": "DELETE",
+          "path": "/:notificationId"
+        },
+        {
+          "file": "backend/src/routes/notifications.ts",
+          "mount": "/api/notifications",
+          "method": "GET",
+          "path": "/events"
+        },
+        {
+          "file": "backend/src/routes/notifications.ts",
+          "mount": "/api/notifications",
+          "method": "GET",
+          "path": "/webhooks"
+        },
+        {
+          "file": "backend/src/routes/notifications.ts",
+          "mount": "/api/notifications",
+          "method": "POST",
+          "path": "/webhooks"
+        },
+        {
+          "file": "backend/src/routes/notifications.ts",
+          "mount": "/api/notifications",
+          "method": "DELETE",
+          "path": "/webhooks/:targetId"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/types/index.ts",
+              "patterns": [
+                "export interface NotificationView",
+                "export interface WebhookTargetView"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "Notifications are first-party account state and have no installable or discovery manifest."
+        },
+        "defaults": {
+          "evidence": [
+            {
+              "file": "docs/55-NOTIFICATIONS.md",
+              "patterns": [
+                "capped at 500 per user"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
       "id": "prompts",
       "title": "Prompt Library",
       "uiRoutes": [],

@@ -52,29 +52,51 @@ const logger = createLogger('resource-grants');
  * Failures are logged, never thrown: the SQL grant rows stay authoritative
  * and the next index publication converges the ACL.
  */
-const propagateGrantChange = async (record: {
-  resource_type: string;
-  resource_id: string;
-  owner_user_id: string;
-}): Promise<void> => {
+const propagateGrantChange = async (
+  record: {
+    id: string;
+    resource_type: string;
+    resource_id: string;
+    owner_user_id: string;
+    principal_type: string;
+    principal_id: string;
+  },
+  change: 'created' | 'revoked'
+): Promise<void> => {
   if (
-    record.resource_type !== 'document' &&
-    record.resource_type !== 'knowledge-collection'
+    record.resource_type === 'document' ||
+    record.resource_type === 'knowledge-collection'
   ) {
-    return;
+    try {
+      const { default: documentService } = await import('./documentService.js');
+      await documentService.syncShareGrants(
+        record.resource_type,
+        record.resource_id,
+        record.owner_user_id
+      );
+    } catch (error) {
+      logger.error('Failed to propagate a share change to the vector ACL', {
+        resourceType: record.resource_type,
+        error,
+      });
+    }
   }
-  try {
-    const { default: documentService } = await import('./documentService.js');
-    await documentService.syncShareGrants(
-      record.resource_type,
-      record.resource_id,
-      record.owner_user_id
-    );
-  } catch (error) {
-    logger.error('Failed to propagate a share change to the vector ACL', {
-      resourceType: record.resource_type,
-      error,
-    });
+  if (change === 'created' && record.principal_type === 'user') {
+    try {
+      const [{ notificationService }, { userModel }] = await Promise.all([
+        import('./notificationService.js'),
+        import('../models/userModel.js'),
+      ]);
+      const owner = await userModel.getUserById(record.owner_user_id);
+      await notificationService.publish({
+        userId: record.principal_id,
+        type: 'share',
+        title: `${owner?.username ?? 'Someone'} shared a ${record.resource_type.replace(/-/g, ' ')} with you`,
+        sourceKey: `share:${record.id}`,
+      });
+    } catch (error) {
+      logger.warn('Share notification failed', { error });
+    }
   }
 };
 
@@ -213,7 +235,7 @@ export const createGrant = async (
       await tx.audit.insert(audit);
     });
   }
-  await propagateGrantChange(record);
+  await propagateGrantChange(record, 'created');
   return record;
 };
 
@@ -263,7 +285,7 @@ export const deleteGrant = async (
           if (removed) await tx.audit.insert(audit);
           return removed;
         });
-  if (deleted) await propagateGrantChange(record);
+  if (deleted) await propagateGrantChange(record, 'revoked');
   return deleted;
 };
 

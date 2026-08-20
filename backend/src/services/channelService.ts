@@ -1186,6 +1186,17 @@ export class ChannelService {
       ...(input.parentId ? { parentId: input.parentId } : {}),
       attachments,
     });
+    if (posted.created) {
+      await this.notifyForMessage(
+        actor,
+        channelId,
+        messageId,
+        input.content,
+        input.parentId
+      ).catch(error => {
+        logger.warn('Channel notification fan-out failed', { error });
+      });
+    }
     if (!posted.created || !input.mentionModel) return posted;
 
     // The pending reply and its durable job share deterministic identities,
@@ -1227,6 +1238,98 @@ export class ChannelService {
       await this.failModelReply(replyId, 'The model request could not start');
     }
     return posted;
+  }
+
+  /**
+   * In-app notifications for a new message: the DM peer, `@username`
+   * mentions of channel members, and the thread-root author.
+   */
+  private async notifyForMessage(
+    actor: { userId: string },
+    channelId: string,
+    messageId: string,
+    content: string,
+    parentId?: string
+  ): Promise<void> {
+    const channel = await channels().findById(channelId);
+    if (!channel) return;
+    const { notificationService } = await import('./notificationService.js');
+    const authorNames = await resolveUsernames([actor.userId]);
+    const authorName = authorNames.get(actor.userId) ?? actor.userId;
+    const channelLabel =
+      channel.type === 'dm'
+        ? 'a direct message'
+        : `#${decryptOptional(channel.name) ?? 'channel'}`;
+    const preview = content.slice(0, 140);
+    const recipients = new Map<
+      string,
+      { type: 'channel-dm' | 'channel-mention'; title: string }
+    >();
+
+    if (channel.type === 'dm') {
+      const members = await channels().listMembers(channelId, 4);
+      for (const member of members) {
+        if (member.user_id === actor.userId) continue;
+        recipients.set(member.user_id, {
+          type: 'channel-dm',
+          title: `${authorName} sent you a direct message`,
+        });
+      }
+    } else {
+      const mentioned = new Set(
+        [...content.matchAll(/@([A-Za-z0-9._-]+)/g)].map(match =>
+          match[1].toLowerCase()
+        )
+      );
+      if (mentioned.size > 0) {
+        const members = await channels().listMembers(
+          channelId,
+          MAX_CHANNEL_MEMBERS
+        );
+        const names = await resolveUsernames(
+          members.map(member => member.user_id)
+        );
+        for (const member of members) {
+          if (member.user_id === actor.userId) continue;
+          const username = names.get(member.user_id);
+          if (username && mentioned.has(username.toLowerCase())) {
+            recipients.set(member.user_id, {
+              type: 'channel-mention',
+              title: `${authorName} mentioned you in ${channelLabel}`,
+            });
+          }
+        }
+      }
+      if (parentId) {
+        const parent = await messages().findById(parentId);
+        if (
+          parent?.user_id &&
+          parent.user_id !== actor.userId &&
+          !recipients.has(parent.user_id) &&
+          parent.author_kind === 'user'
+        ) {
+          recipients.set(parent.user_id, {
+            type: 'channel-mention',
+            title: `${authorName} replied to your message in ${channelLabel}`,
+          });
+        }
+      }
+    }
+
+    for (const [userId, entry] of recipients) {
+      // Only members receive notifications, even if a mention names an
+      // outsider's username.
+      const member = await channels().findMember(channelId, userId);
+      if (!member) continue;
+      await notificationService.publish({
+        userId,
+        type: entry.type,
+        title: entry.title,
+        body: preview,
+        href: `/channels/${channelId}`,
+        sourceKey: `channel-message:${messageId}:${userId}`,
+      });
+    }
   }
 
   /** Reply completion used by the durable mention job. */

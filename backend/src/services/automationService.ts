@@ -306,14 +306,38 @@ class AutomationService {
   async finalizeRun(
     runId: string,
     status: 'succeeded' | 'failed',
-    error: string | null = null
+    error: string | null = null,
+    context?: { userId: string; automationId: string }
   ): Promise<boolean> {
-    return repositories().automationRuns.finalize(
+    const finalized = await repositories().automationRuns.finalize(
       runId,
       status,
       Date.now(),
       error
     );
+    if (finalized && status === 'failed' && context) {
+      // Failure awareness must not depend on the automations page being
+      // open; publish an in-app notification unless the automation opted
+      // out of notifications entirely.
+      try {
+        const automation = await this.getAutomationRecord(context.automationId);
+        if (automation && automation.notify !== 'off') {
+          const { notificationService } =
+            await import('./notificationService.js');
+          await notificationService.publish({
+            userId: context.userId,
+            type: 'automation-failed',
+            title: `Automation "${automation.name}" failed`,
+            ...(error ? { body: error } : {}),
+            href: '/automations',
+            sourceKey: `automation-run-failed:${runId}`,
+          });
+        }
+      } catch {
+        // Best effort: the run row already records the failure.
+      }
+    }
+    return finalized;
   }
 
   async runsSummary(userId: string): Promise<{

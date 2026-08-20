@@ -33,6 +33,7 @@ import {
   AUTOMATION_RUN_JOB_TYPE,
   CHANNEL_MENTION_JOB_TYPE,
   CHAT_GENERATE_JOB_TYPE,
+  WEBHOOK_DELIVER_JOB_TYPE,
   DOCUMENT_INGEST_IDEMPOTENCY_SCOPE,
   DOCUMENT_INGEST_JOB_TYPE,
   OWNER_DELETE_CONTENT_JOB_TYPE,
@@ -1025,7 +1026,10 @@ const runAutomation: DurableJobHandler = async context => {
         };
       }
       if (!model) {
-        await automationService.finalizeRun(runId, 'failed', 'no-model');
+        await automationService.finalizeRun(runId, 'failed', 'no-model', {
+          userId: context.actorUserId,
+          automationId,
+        });
         return { resultReference: `automation-run:${runId}:no-model` };
       }
       const title = `${automation.name} — ${new Date(
@@ -1253,6 +1257,68 @@ const runChannelMention: DurableJobHandler = async context => {
   }
 };
 
+const readWebhookPayload = (
+  payload: unknown
+): { targetId: string; event: Record<string, unknown> } => {
+  const record = payload as Record<string, unknown>;
+  if (
+    typeof record?.targetId !== 'string' ||
+    !record.targetId ||
+    typeof record.event !== 'object' ||
+    record.event === null
+  ) {
+    throw new DurableJobExecutionError(
+      false,
+      'invalid-payload',
+      'The webhook delivery payload is malformed'
+    );
+  }
+  return {
+    targetId: record.targetId,
+    event: record.event as Record<string, unknown>,
+  };
+};
+
+/**
+ * Signed webhook delivery (NOTIFY-01). The envelope is already redacted
+ * when it is enqueued; this handler only signs and posts it through the
+ * tool-server egress guard, retrying transient failures with the job
+ * system's bounded backoff.
+ */
+const deliverWebhook: DurableJobHandler = async context => {
+  const { targetId, event } = readWebhookPayload(context.payload);
+  const { notificationService } =
+    await import('../../services/notificationService.js');
+  await context.assertSideEffectAllowed();
+  try {
+    const result = await notificationService.deliverWebhook(
+      targetId,
+      event,
+      context.signal
+    );
+    if (!result.delivered && result.status !== undefined) {
+      // 4xx responses are the receiver's verdict; only 5xx retries.
+      if (result.status >= 500) {
+        throw new DurableJobExecutionError(
+          true,
+          'webhook-upstream-error',
+          `The webhook endpoint responded ${result.status}`
+        );
+      }
+      return { resultReference: `webhook:${targetId}:${result.status}` };
+    }
+    return { resultReference: `webhook:${targetId}:delivered` };
+  } catch (error) {
+    if (error instanceof DurableJobExecutionError) throw error;
+    if (context.signal.aborted) throw error;
+    throw new DurableJobExecutionError(
+      true,
+      'webhook-delivery-failed',
+      'The webhook could not be delivered'
+    );
+  }
+};
+
 export const createDomainDurableJobHandlers = (): ReadonlyMap<
   string,
   DurableJobHandler
@@ -1267,4 +1333,5 @@ export const createDomainDurableJobHandlers = (): ReadonlyMap<
     [WORK_EXECUTE_JOB_TYPE, executeWork],
     [AUTOMATION_RUN_JOB_TYPE, runAutomation],
     [CHANNEL_MENTION_JOB_TYPE, runChannelMention],
+    [WEBHOOK_DELIVER_JOB_TYPE, deliverWebhook],
   ]);
