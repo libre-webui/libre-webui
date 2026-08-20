@@ -42,6 +42,7 @@ test-only canaries are intentionally omitted.
 | `WEBUI_HOST`                 | loopback; `0.0.0.0` in Docker                            | HTTP listen address                                                                           |
 | `OPEN_BROWSER`               | `true` when serving the frontend                         | Set `false` to suppress automatic browser launch                                              |
 | `FULL_DOCUMENT_CONTEXT_MAX_TOKENS` | `32000`                                            | Token guard for the per-chat full-document context mode (1000-2000000)                        |
+| `GALLERY_RETENTION_DAYS`     | unset (keep forever)                                     | Delete gallery media older than this many days via the scheduler sweep                        |
 
 Source launches anchor relative `DATA_DIR`, `PLUGINS_DIR`, and
 `PLATFORM_PREFLIGHT_TMP_DIR` values at the backend directory, independent of

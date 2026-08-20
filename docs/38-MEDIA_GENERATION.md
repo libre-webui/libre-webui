@@ -126,6 +126,10 @@ job moves through `pending`, `in_progress`, and finally `completed` or
 - The job record stores the plugin, model, options, status, and the prompt
   (encrypted at rest). Completed and failed job records older than 30 days are
   pruned opportunistically; pending handles are not expired by that cleanup.
+- Terminal states notify: a completed video posts a **media-ready**
+  notification and a provider failure posts **media-failed**, both linking to
+  the gallery and deduplicated per job, delivered through the in-app inbox
+  and any subscribed webhooks.
 
 ## Image Editing and Inpainting
 
@@ -152,6 +156,10 @@ like generations.
 The gallery lists all media kinds interleaved by creation time, with filter
 pills for **All**, **Images**, **Videos**, and **Audio**. Videos and audio play
 inline; images open in the lightbox; every item can be downloaded or deleted.
+Administrators can opt into automatic retention with
+`GALLERY_RETENTION_DAYS`: the scheduler sweep deletes media older than the
+window through the same durable deletion lifecycle as a manual delete.
+Unset (the default) keeps media until the owner deletes it.
 
 Storage and serving are deliberately conservative:
 

@@ -204,6 +204,11 @@ export interface GalleryMetadataRepository {
   ): Promise<{ records: GalleryMetadataRecord[]; total: number }>;
   /** Atomically publishes a migrated blob reference and clears inline bytes. */
   adoptLegacyBlob(reference: BlobReference): Promise<void>;
+  /** Items older than the cutoff, oldest first, for the retention sweep. */
+  listCreatedBefore(
+    cutoff: number,
+    limit: number
+  ): Promise<Array<{ id: string; userId: string }>>;
   /** Atomically deletes metadata/reference and returns the physical blob link. */
   deleteByOwner(
     mediaId: string,

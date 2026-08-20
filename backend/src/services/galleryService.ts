@@ -485,6 +485,34 @@ class GalleryService {
     };
   }
 
+  /**
+   * Retention sweep (MEDIA-01): when GALLERY_RETENTION_DAYS is configured,
+   * delete gallery items older than the cutoff through the same durable
+   * deletion lifecycle as a manual delete. Unset means keep forever.
+   */
+  async sweepRetention(now: number): Promise<number> {
+    const days = Number.parseInt(process.env.GALLERY_RETENTION_DAYS || '', 10);
+    if (!Number.isInteger(days) || days < 1) return 0;
+    const cutoff = now - days * 24 * 60 * 60 * 1000;
+    const expired =
+      await getPlatformStorageRuntime().domains.gallery.listCreatedBefore(
+        cutoff,
+        25
+      );
+    let removed = 0;
+    for (const item of expired) {
+      try {
+        if (await this.deleteMedia(item.id, item.userId)) removed += 1;
+      } catch (error) {
+        logger.warn('Gallery retention delete failed', {
+          mediaId: item.id,
+          error,
+        });
+      }
+    }
+    return removed;
+  }
+
   async deleteMedia(mediaId: string, userId: string): Promise<boolean> {
     await this.cancelVideoLifecycle(mediaId, userId);
     return this.withMediaWriteLease(mediaId, userId, async assertHeld => {

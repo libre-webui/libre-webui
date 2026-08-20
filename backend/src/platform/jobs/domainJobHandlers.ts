@@ -5,6 +5,7 @@
  */
 
 import mediaGenerationJobService from '../../services/mediaGenerationJobService.js';
+import { notificationService } from '../../services/notificationService.js';
 import documentService, {
   DocumentChunkLimitError,
 } from '../../services/documentService.js';
@@ -598,6 +599,18 @@ const resumeVideo: DurableJobHandler = async context => {
           error: 'Video provider reported failure',
         }
       );
+      // Best effort: a notification failure must not mask the job outcome.
+      try {
+        await notificationService.publish({
+          userId: context.actorUserId,
+          type: 'media-failed',
+          title: `Video generation failed (${job.model})`,
+          href: '/gallery',
+          sourceKey: `media-job-failed:${job.id}`,
+        });
+      } catch {
+        // Ignored by contract.
+      }
       throw new DurableJobExecutionError(
         false,
         'provider-job-failed',
@@ -651,6 +664,18 @@ const resumeVideo: DurableJobHandler = async context => {
       total: 100,
       message: 'Media saved',
     });
+    // Best effort: the saved media is authoritative even if notifying fails.
+    try {
+      await notificationService.publish({
+        userId: context.actorUserId,
+        type: 'media-ready',
+        title: `Video ready (${job.model})`,
+        href: '/gallery',
+        sourceKey: `media-job-ready:${job.id}`,
+      });
+    } catch {
+      // Ignored by contract.
+    }
     return { resultReference: `gallery:${media.id}` };
   }
 };

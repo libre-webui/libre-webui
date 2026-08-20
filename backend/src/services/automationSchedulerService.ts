@@ -91,6 +91,14 @@ class AutomationSchedulerService {
       } catch (error) {
         logger.warn('Calendar reminder sweep failed', { error });
       }
+      // Gallery retention shares the same lease; a no-op unless the
+      // administrator configured GALLERY_RETENTION_DAYS.
+      try {
+        const { default: galleryService } = await import('./galleryService.js');
+        await galleryService.sweepRetention(now);
+      } catch (error) {
+        logger.warn('Gallery retention sweep failed', { error });
+      }
       return { fired, settled };
     } finally {
       await lease.release().catch(() => false);

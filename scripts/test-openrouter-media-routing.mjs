@@ -1082,3 +1082,49 @@ test('paused legacy inline migration cannot attach a blob after deletion', async
   );
   await assert.rejects(runtime.blobStore.stat(publishedBlob.id, 'default'));
 });
+
+test('gallery retention sweep deletes only expired media when configured', async () => {
+  delete process.env.GALLERY_RETENTION_DAYS;
+  const kept = await galleryService.saveMedia('default', {
+    kind: 'image',
+    prompt: 'retention keep',
+    model: 'img-model',
+    pluginId: 'openrouter',
+    mediaData: `data:image/png;base64,${Buffer.from('keep').toString('base64')}`,
+    mimeType: 'image/png',
+  });
+  const expired = await galleryService.saveMedia('default', {
+    kind: 'image',
+    prompt: 'retention expire',
+    model: 'img-model',
+    pluginId: 'openrouter',
+    mediaData: `data:image/png;base64,${Buffer.from('old').toString('base64')}`,
+    mimeType: 'image/png',
+  });
+  assert.ok(kept && expired);
+  const now = Date.now();
+  databaseModule
+    .getDatabase()
+    .prepare('UPDATE generated_images SET created_at = ? WHERE id = ?')
+    .run(now - 40 * 24 * 60 * 60 * 1000, expired.id);
+
+  // Unset means keep forever.
+  assert.equal(await galleryService.sweepRetention(now), 0);
+  assert.ok(await galleryService.getMediaItem(expired.id, 'default'));
+
+  process.env.GALLERY_RETENTION_DAYS = '30';
+  try {
+    // Earlier tests may have left other stale rows; the invariant is that
+    // the expired item goes and in-window items stay.
+    assert.ok((await galleryService.sweepRetention(now)) >= 1);
+    assert.equal(await galleryService.getMediaItem(expired.id, 'default'), null);
+    assert.ok(
+      await galleryService.getMediaItem(kept.id, 'default'),
+      'items inside the retention window survive'
+    );
+    // Idempotent: nothing left to remove.
+    assert.equal(await galleryService.sweepRetention(now), 0);
+  } finally {
+    delete process.env.GALLERY_RETENTION_DAYS;
+  }
+});

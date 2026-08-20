@@ -607,6 +607,21 @@ class SQLiteGalleryMetadataRepository implements GalleryMetadataRepository {
     };
   }
 
+  async listCreatedBefore(
+    cutoff: number,
+    limit: number
+  ): Promise<Array<{ id: string; userId: string }>> {
+    const rows = this.database
+      .prepare(
+        `SELECT id, user_id FROM generated_images
+          WHERE created_at < ?
+          ORDER BY created_at ASC
+          LIMIT ?`
+      )
+      .all(cutoff, limit) as Array<{ id: string; user_id: string }>;
+    return rows.map(row => ({ id: row.id, userId: row.user_id }));
+  }
+
   async insert(
     record: GalleryMetadataRecord,
     reference: BlobReference

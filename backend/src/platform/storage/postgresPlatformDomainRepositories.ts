@@ -593,6 +593,23 @@ class PostgresGalleryMetadataRepository implements GalleryMetadataRepository {
     };
   }
 
+  async listCreatedBefore(
+    cutoff: number,
+    limit: number
+  ): Promise<Array<{ id: string; userId: string }>> {
+    const result = await this.database.query<{
+      id: string;
+      user_id: string;
+    }>(
+      `SELECT id, user_id FROM platform_generated_media
+        WHERE created_at < $1
+        ORDER BY created_at ASC
+        LIMIT $2`,
+      [cutoff, limit]
+    );
+    return result.rows.map(row => ({ id: row.id, userId: row.user_id }));
+  }
+
   async insert(
     record: GalleryMetadataRecord,
     reference: BlobReference

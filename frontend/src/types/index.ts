@@ -291,6 +291,8 @@ export type NotificationType =
   | 'share'
   | 'automation-failed'
   | 'calendar-reminder'
+  | 'media-ready'
+  | 'media-failed'
   | 'system';
 
 export interface AppNotification {
