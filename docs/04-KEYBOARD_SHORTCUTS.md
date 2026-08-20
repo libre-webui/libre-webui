@@ -32,7 +32,8 @@ without clearing what you were typing.
 ### Command Palette
 
 The palette fuzzy-searches your chats, Work tasks, and app actions, highlights
-the matched characters, and ranks results by relevance.
+the matched characters, and ranks results by relevance. From three characters
+on it also full-text searches your message, note, and document contents.
 
 | Shortcut      | Action                   |
 | ------------- | ------------------------ |

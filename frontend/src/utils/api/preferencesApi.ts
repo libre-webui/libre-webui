@@ -146,6 +146,11 @@ const DEMO_DATA_ARCHIVE_EXCLUSIONS: DataArchiveExclusion[] = [
     key: 'derivedEmbeddings',
     reason: 'Document embeddings can be regenerated after import.',
   },
+  {
+    key: 'noteHistoryAndAttachments',
+    reason:
+      'Note revision history and note attachments are not part of archive version 3.',
+  },
 ];
 
 function archiveImportPayload(

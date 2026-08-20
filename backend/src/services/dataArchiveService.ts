@@ -107,6 +107,24 @@ export const DATA_ARCHIVE_EXCLUSIONS: DataArchiveExclusion[] = [
   },
 ];
 
+/**
+ * Disclosed in every new export but not demanded on import: archives sealed
+ * before these features existed remain valid, and their exclusion lists were
+ * accurate for the data they could contain.
+ */
+export const DATA_ARCHIVE_EXPORT_ONLY_EXCLUSIONS: DataArchiveExclusion[] = [
+  {
+    key: 'noteHistoryAndAttachments',
+    reason:
+      'Note revision history and note attachments are not part of archive version 3.',
+  },
+];
+
+const exportedExclusions = (): DataArchiveExclusion[] => [
+  ...DATA_ARCHIVE_EXCLUSIONS,
+  ...DATA_ARCHIVE_EXPORT_ONLY_EXCLUSIONS,
+];
+
 export interface ArchivedDocument extends Document {
   chunks: Array<Omit<DocumentChunk, 'embedding'>>;
 }
@@ -982,7 +1000,7 @@ function normalizeArchive(value: unknown): NormalizedArchive {
       notes,
       knowledgeCollections,
       documents,
-      exclusions: DATA_ARCHIVE_EXCLUSIONS,
+      exclusions: exportedExclusions(),
     }),
     migratedFromVersion,
     warnings,
@@ -1143,7 +1161,7 @@ async function buildPlan(
     documents: emptySection(),
     remappedIds: 0,
     warnings: [...normalized.warnings],
-    exclusions: DATA_ARCHIVE_EXCLUSIONS,
+    exclusions: exportedExclusions(),
   };
 
   const mapIds = async <T extends { id: string }>(
@@ -1581,7 +1599,7 @@ class DataArchiveService {
       notes,
       knowledgeCollections,
       documents,
-      exclusions: DATA_ARCHIVE_EXCLUSIONS,
+      exclusions: exportedExclusions(),
     });
     assertExportIsRestorable(archive);
     return archive;
@@ -1623,7 +1641,7 @@ class DataArchiveService {
       },
       result,
       warnings: plan.result.warnings,
-      exclusions: DATA_ARCHIVE_EXCLUSIONS,
+      exclusions: exportedExclusions(),
     };
   }
 

@@ -139,7 +139,8 @@ The **Home** tab has three sections: **Start** (new chat, incognito chat, new
 Work task), **Continue** (your recent conversations and tasks), and **Explore**
 (Notes, Calendar, Automations, Models, Personas, Imagine). The same
 destinations sit in the sidebar's navigation row and in the command palette
-(`Cmd/Ctrl + K`), which fuzzy-searches your chats, Work tasks, and app actions.
+(`Cmd/Ctrl + K`), which fuzzy-searches your chats, Work tasks, and app
+actions, and full-text searches your message, note, and document contents.
 
 - [Calendar](./CALENDAR) — a per-user calendar with recurring events.
 - [Automations](./AUTOMATIONS) — scheduled AI runs delivered as chat sessions.

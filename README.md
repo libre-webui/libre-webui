@@ -123,27 +123,28 @@ persistent storage.
 
 ## Features
 
-| Feature                | Description                                                                            |
-| ---------------------- | -------------------------------------------------------------------------------------- |
-| **Chat**               | Conversations with local models, remote providers, and compatible endpoints            |
-| **Local inference**    | Ollama support with no required cloud account                                          |
-| **Provider plugins**   | Chat, image, video, embedding, and speech providers through an extensible plugin layer |
-| **Document search**    | Search and chat with PDF and plain-text documents                                      |
-| **Web search**         | Self-hosted SearXNG search for chats and Work tasks                                    |
-| **Artifacts**          | Generate and preview HTML, SVG, JSON, code, and multi-file projects                    |
-| **Workspaces**         | Persistent, task-scoped environments with files, terminal, diffs, and previews         |
-| **Calendar**           | Per-user calendar with recurring events, encrypted at rest                             |
-| **Automations**        | Scheduled AI runs delivered as normal chat sessions                                    |
-| **Notes**              | A standing notebook alongside your conversations                                       |
-| **Personas**           | Reusable assistant profiles with their own prompts, models, and memory                 |
-| **Media generation**   | Image and video generation with a persistent gallery                                   |
-| **Voice**              | Speech-to-text dictation and text-to-speech playback                                   |
-| **Context management** | Context meter and undoable conversation compaction for long chats                      |
-| **Agents**             | Optional integration with installed agent CLIs and Libre Claw                          |
-| **Accounts**           | Local accounts, roles, groups, per-resource sharing, API tokens, and SSO               |
-| **Monitoring**         | System diagnostics, provider usage analytics, and an admin audit log                   |
-| **Deployment**         | npm, Docker Compose, Kubernetes, Helm, and desktop client                              |
-| **Interface**          | Tabs, global search, themes, adaptive accents, and 25 locales including Arabic RTL     |
+| Feature                | Description                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Chat**               | Streaming conversations with prompt queueing, multi-model comparison, and chat forking                 |
+| **Local inference**    | Ollama support with no required cloud account                                                          |
+| **Provider plugins**   | Chat, image, video, embedding, and speech providers through an extensible plugin layer                 |
+| **Knowledge**          | Chat with PDF, Office, Markdown, HTML, code, and CSV documents via hybrid retrieval with cited sources |
+| **Web search**         | Self-hosted SearXNG search for chats and Work tasks                                                    |
+| **Artifacts**          | Generate and preview HTML, SVG, JSON, code, and multi-file projects                                    |
+| **Workspaces**         | Persistent, task-scoped environments with files, terminal, diffs, and previews                         |
+| **Calendar**           | Per-user calendar with recurring events, encrypted at rest                                             |
+| **Automations**        | Scheduled AI runs delivered as normal chat sessions                                                    |
+| **Notes**              | Notebook with revision history, attachments, sharing, and reversible AI edits                          |
+| **Personas**           | Reusable assistant profiles with their own prompts, models, and memory                                 |
+| **Media generation**   | Image and video generation with a persistent gallery                                                   |
+| **Voice**              | Speech-to-text dictation and text-to-speech playback                                                   |
+| **Context management** | Context meter and undoable conversation compaction for long chats                                      |
+| **Agents**             | Optional integration with installed agent CLIs and Libre Claw                                          |
+| **Accounts**           | Local accounts, roles, groups, per-resource sharing, API tokens, and SSO                               |
+| **Public API**         | OpenAI-compatible `/v1` endpoints on scoped API tokens                                                 |
+| **Monitoring**         | System diagnostics, provider usage analytics, and an admin audit log                                   |
+| **Deployment**         | npm, Docker Compose, Kubernetes, Helm, and desktop client                                              |
+| **Interface**          | Tabs, full-text search across chats, notes, and documents, themes, and 25 locales including Arabic RTL |
 
 ## Models and providers
 
@@ -238,7 +239,7 @@ For multi-user deployments, Libre WebUI supports:
 - Local accounts, roles, and groups
 - Per-resource sharing with access grants
 - bcrypt password hashing
-- JWT sessions and API tokens
+- JWT sessions and scoped API tokens (which also drive the OpenAI-compatible `/v1` API)
 - Login and signup rate limits
 - Optional Cloudflare Turnstile
 - Optional GitHub and Hugging Face OAuth, plus generic OIDC single sign-on
@@ -309,6 +310,7 @@ See the [deployment documentation](https://docs.librewebui.org) for details.
 - [Provider connections](https://docs.librewebui.org/PROVIDER_CONNECTIONS)
 - [Work workspaces](https://docs.librewebui.org/WORKSPACES)
 - [Document chat](https://docs.librewebui.org/RAG_FEATURE)
+- [Public API](https://docs.librewebui.org/PUBLIC_API)
 - [Plugin architecture](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)
 - [Capability contracts](https://docs.librewebui.org/CAPABILITY_CONTRACTS)
 - [Authentication](https://docs.librewebui.org/AUTHENTICATION)

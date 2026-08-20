@@ -62,9 +62,13 @@ again.
 composer has focus. It fuzzy-matches across app actions, your chats, and your
 Work tasks, so partial or misspelled queries still land: `autmtn` finds
 **Automations**, "pictures" finds **Imagine**, "dark" finds the theme toggle.
-Matched characters are highlighted, results are ranked by relevance, and with
-no query you get your most recent chats and tasks. Navigate with `↑`/`↓`,
-open with `Enter`, close with `Esc` (or `Cmd/Ctrl + K` again).
+From three characters on it also searches inside message, note, and document
+content (including notes shared with you) and shows a snippet for each hit —
+this runs over your own decrypted data in memory; nothing is indexed in
+plaintext on disk. Matched characters are highlighted,
+results are ranked by relevance, and with no query you get your most recent
+chats and tasks. Navigate with `↑`/`↓`, open with `Enter`, close with `Esc`
+(or `Cmd/Ctrl + K` again).
 
 ## Theme Default
 
@@ -116,8 +120,13 @@ Personas store the selected model, system prompt, generation parameters, avatar/
 
 Open **Notes** from the create menu when information should remain independent
 of one chat or Work task. Notes support Markdown preview, explicit editing,
-search, and automatic saving. They are account-scoped and are included in a
-full user archive.
+search, and automatic saving. The note tools drawer adds revision history
+with restore, file attachments, pinning, per-user sharing (view or edit),
+Markdown export, and an AI edit sidebar that previews every proposal as a
+diff before it is applied — and since applying snapshots the previous
+version first, any AI edit can be undone. Notes are account-scoped and are
+included in a full user archive; revision history and attachments stay on
+the instance and are not part of the archive.
 
 ## Make Artifacts More Reliable
 
@@ -153,13 +162,6 @@ Sending during generation queues the prompt instead of dropping it: queued
 prompts appear above the composer, can be edited, reordered, and removed,
 and are sent one by one as each reply finishes. The queue is stored with
 the chat, so it survives a reload or reconnect.
-
-## Search Everything From the Palette
-
-From three characters on, the command palette (Ctrl/Cmd+K) also searches
-inside your chat messages, notes (including notes shared with you), and
-document contents, showing a snippet for each hit. Search runs over your
-own decrypted data in memory — nothing is indexed in plaintext on disk.
 
 ## Fork a Conversation
 

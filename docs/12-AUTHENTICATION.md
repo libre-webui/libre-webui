@@ -136,8 +136,9 @@ Administrators can create groups and manage memberships from the User
 Management page. Groups are principals for resource grants: the owner of a
 chat, note, document, knowledge collection, folder, persona, prompt, or
 skill can grant `read`, `write`, or `admin` access to a user or a group
-through the access API, and administrators can scope registered tool
-servers to users or groups the same way. Resources stay private by default — the global `admin` role does not
+through the access API — Notes additionally offer a share panel in the
+editor, the first per-resource sharing UI — and administrators can scope
+registered tool servers to users or groups the same way. Resources stay private by default — the global `admin` role does not
 grant access to other users' content. Membership is evaluated at request
 time, so removing a member revokes group-granted access immediately. The
 "effective access" view on the User Management page answers "why can this
@@ -189,7 +190,8 @@ and session management is never reachable with a token. Tokens support
 optional expiry, track last use, can be revoked at any time, and are
 rate-limited per token across replicas. Admin-scoped tokens can be minted
 only by administrators and still require the account to hold the admin role
-when used.
+when used. A `chat`-scoped token is also the key for the OpenAI-compatible
+[public `/v1` API](./53-PUBLIC_API.md).
 
 ## Cloudflare Turnstile
 

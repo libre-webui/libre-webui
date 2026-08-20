@@ -36,14 +36,14 @@ queries. It contains:
 - chat folders;
 - chat sessions, messages, branches, ratings, artifacts, and per-chat
   settings;
-- standalone Notes;
+- standalone Notes, including their pinned state;
 - knowledge collections;
 - extracted document content and metadata, session/collection associations,
   and text chunks.
 
 Document embeddings are not exported because they are derived data. Regenerate
-embeddings after import when semantic retrieval is enabled. Libre WebUI stores
-the extracted text used by RAG, not the original uploaded PDF or text-file
+embeddings after import when semantic retrieval is enabled. The archive
+carries the extracted text used by RAG, not the original uploaded file
 bytes, so an archive cannot recreate the original upload byte-for-byte.
 
 Each archive includes an `exclusions` list. Version 3 deliberately excludes:
@@ -54,6 +54,7 @@ Each archive includes an `exclusions` list. Version 3 deliberately excludes:
   and require separate consent-aware handling;
 - personas and persona memory;
 - generated image, audio, and video library files;
+- note revision history and note attachments;
 - Work tasks, runs, sandboxes, and Docker or Kubernetes volumes.
 
 Use a database/data-directory backup with the same `ENCRYPTION_KEY` for full
