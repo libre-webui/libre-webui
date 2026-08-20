@@ -148,6 +148,8 @@ test('administrators open provider usage from the user menu', async ({
     '',
     'Provider Usage',
     '',
+    'Evaluations',
+    '',
     'Settings',
     'Log out',
   ]);

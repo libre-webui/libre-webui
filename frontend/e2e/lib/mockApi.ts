@@ -2520,11 +2520,21 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         const model = url.searchParams.get('model');
         await fulfillJson(
           route,
-          ttsVoiceProfiles.filter(
-            profile =>
-              (!pluginId || profile.pluginId === pluginId) &&
-              (!model || profile.model === model)
-          )
+          ttsVoiceProfiles
+            .filter(
+              profile =>
+                (!pluginId || profile.pluginId === pluginId) &&
+                (!model || profile.model === model)
+            )
+            .map(profile => ({
+              consentConfirmedAt: 0,
+              consentExpiresAt: null,
+              revokedAt: null,
+              transferCount: 0,
+              lastTransferAt: null,
+              consentStatus: 'active',
+              ...profile,
+            }))
         );
         return;
       }
@@ -2570,6 +2580,30 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       // Passive defaults for the team surfaces: the notification bell and
       // channel list poll from every page, so specs that don't exercise
       // them still get quiet, empty answers.
+      // Passive defaults: the admin usage page polls cost governance data.
+      if (method === 'GET' && path === '/costs/analytics') {
+        await fulfillJson(route, {
+          from: 0,
+          to: 0,
+          totalUsd: 0,
+          meteredEvents: 0,
+          unmeteredEvents: 0,
+          byPlugin: [],
+          byModel: [],
+          byUser: [],
+          byDay: [],
+          budgets: [],
+        });
+        return;
+      }
+      if (
+        method === 'GET' &&
+        (path === '/costs/tariffs' || path === '/costs/budgets')
+      ) {
+        await fulfillJson(route, []);
+        return;
+      }
+
       if (method === 'GET' && path === '/notifications/unread-count') {
         await route.fulfill({
           status: 200,

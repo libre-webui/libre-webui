@@ -535,7 +535,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         profile =>
           profile.pluginId === modelResolvedTtsSettings.pluginId &&
           profile.model === modelResolvedTtsSettings.model &&
-          profile.consentStatus === 'active'
+          (profile.consentStatus ?? 'active') === 'active'
       ),
     [modelResolvedTtsSettings, ttsVoiceProfiles]
   );
@@ -554,7 +554,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       (!selectedProfile ||
         selectedProfile.pluginId !== modelResolvedTtsSettings.pluginId ||
         selectedProfile.model !== modelResolvedTtsSettings.model ||
-        selectedProfile.consentStatus !== 'active');
+        (selectedProfile.consentStatus ?? 'active') !== 'active');
     if (
       !selectedProfileId ||
       (!selectedModelCannotClone && !selectedProfileIsUnavailable)

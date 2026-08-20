@@ -398,7 +398,7 @@ export function SettingsTtsTab({
                       {profile.pluginId} · {profile.model}
                       {' · '}
                       {t('settings.tts.transferCount', {
-                        total: profile.transferCount,
+                        total: profile.transferCount ?? 0,
                         defaultValue: 'sent to provider {{total}}×',
                       })}
                       {profile.consentExpiresAt &&
@@ -415,7 +415,7 @@ export function SettingsTtsTab({
                         )}
                     </p>
                   </div>
-                  {profile.consentStatus === 'active' && (
+                  {(profile.consentStatus ?? 'active') === 'active' && (
                     <Button
                       type='button'
                       variant='ghost'
