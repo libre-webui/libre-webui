@@ -37,6 +37,16 @@ import { createPinnedLookup, isPublicIpAddress } from './webpageFetcher.js';
 const ABSOLUTE_MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
 const ABSOLUTE_MAX_TIMEOUT_MS = 120_000;
 
+// Explicit comparisons, not Math.min/Math.max: a NaN request value must land
+// on the ceiling instead of propagating, and the bounds stay visible to
+// static analysis of the setTimeout below.
+const clampFinite = (value: number, min: number, max: number): number => {
+  if (!Number.isFinite(value)) return max;
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+};
+
 export class ToolEgressError extends Error {
   constructor(message: string) {
     super(message);
@@ -125,12 +135,14 @@ export async function secureToolRequest(
 ): Promise<ToolHttpResponse> {
   const url = validateToolServerUrl(request.url);
   const target = await resolveTarget(url);
-  const maxBytes = Math.min(
-    Math.max(1, request.maxResponseBytes),
+  const maxBytes = clampFinite(
+    request.maxResponseBytes,
+    1,
     ABSOLUTE_MAX_RESPONSE_BYTES
   );
-  const timeoutMs = Math.min(
-    Math.max(1000, request.timeoutMs),
+  const timeoutMs = clampFinite(
+    request.timeoutMs,
+    1000,
     ABSOLUTE_MAX_TIMEOUT_MS
   );
 
