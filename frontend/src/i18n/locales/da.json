@@ -2734,6 +2734,25 @@
       "current": "Nuværende",
       "rollback": "Rul tilbage",
       "rollingBack": "Ruller tilbage..."
+    },
+    "templatesTitle": "Start fra en skabelon",
+    "templates": {
+      "reviewPr": {
+        "name": "Gennemgang af pull request",
+        "description": "Struktureret kodegennemgang med justerbar strenghed."
+      },
+      "summarize": {
+        "name": "Opsummer til en målgruppe",
+        "description": "Punktopstillet resumé tilpasset læseren."
+      },
+      "translate": {
+        "name": "Oversæt",
+        "description": "Oversættelse der bevarer tone og formatering."
+      },
+      "explainCode": {
+        "name": "Forklar kode",
+        "description": "Gennemgang plus grænsetilfælde og risici."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Versionshistorik",
       "title": "Historik for {{name}}"
+    },
+    "templatesTitle": "Start fra en skabelon",
+    "templates": {
+      "citeSources": {
+        "name": "Angiv kilder",
+        "description": "Nummererede referencer med URL'er, ingen påstande uden kilde."
+      },
+      "releaseNotes": {
+        "name": "Stil til udgivelsesnoter",
+        "description": "Grupperede, brugervendte punkter uden interne id'er."
+      },
+      "meetingNotes": {
+        "name": "Format til mødereferat",
+        "description": "Beslutninger, opgaver og åbne spørgsmål fra en udskrift."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Én gang",
         "session": "Denne chat",
         "always": "Altid"
+      }
+    },
+    "templatesTitle": "Start fra en skabelon",
+    "templates": {
+      "petstore": {
+        "name": "Petstore-demo",
+        "description": "Et offentligt demo-API til en sikker første ende-til-ende-test."
+      },
+      "internalOpenApi": {
+        "name": "Internt API",
+        "description": "Et udgangspunkt for din egen OpenAPI-tjeneste."
+      },
+      "mcpServer": {
+        "name": "MCP-server",
+        "description": "Et udgangspunkt for en MCP-server over Streamable HTTP."
       }
     }
   },

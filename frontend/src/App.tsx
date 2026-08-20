@@ -74,15 +74,11 @@ const logger = createLogger('app');
 // Lazy load pages for code splitting
 const HomePage = React.lazy(() => import('@/pages/HomePage'));
 const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
-const ModelsPage = React.lazy(() => import('@/pages/ModelsPage'));
 const PersonasPage = React.lazy(() => import('@/pages/PersonasPage'));
 const GalleryPage = React.lazy(() => import('@/pages/GalleryPage'));
 const NotesPage = React.lazy(() => import('@/pages/NotesPage'));
 const CalendarPage = React.lazy(() => import('@/pages/CalendarPage'));
 const AutomationsPage = React.lazy(() => import('@/pages/AutomationsPage'));
-const PromptsPage = React.lazy(() => import('@/pages/PromptsPage'));
-const SkillsPage = React.lazy(() => import('@/pages/SkillsPage'));
-const ToolsPage = React.lazy(() => import('@/pages/ToolsPage'));
 const LibreClawPage = React.lazy(() => import('@/pages/LibreClawPage'));
 const WorkPage = React.lazy(() => import('@/pages/WorkPage'));
 const UserManagementPage = React.lazy(
@@ -527,15 +523,11 @@ const AppContent: React.FC = () => {
             <Route path='/' element={<HomePage />} />
             <Route path='/chat' element={<ChatPage />} />
             <Route path='/c/:sessionId' element={<ChatPage />} />
-            <Route path='/models' element={<ModelsPage />} />
             <Route path='/personas' element={<PersonasPage />} />
             <Route path='/gallery' element={<GalleryPage />} />
             <Route path='/notes' element={<NotesPage />} />
             <Route path='/calendar' element={<CalendarPage />} />
             <Route path='/automations' element={<AutomationsPage />} />
-            <Route path='/prompts' element={<PromptsPage />} />
-            <Route path='/skills' element={<SkillsPage />} />
-            <Route path='/tools' element={<ToolsPage />} />
             <Route
               path='/work'
               element={
@@ -599,15 +591,11 @@ const AppContent: React.FC = () => {
                     <Route path='/' element={<HomePage />} />
                     <Route path='/chat' element={<ChatPage />} />
                     <Route path='/c/:sessionId' element={<ChatPage />} />
-                    <Route path='/models' element={<ModelsPage />} />
                     <Route path='/personas' element={<PersonasPage />} />
                     <Route path='/gallery' element={<GalleryPage />} />
                     <Route path='/notes' element={<NotesPage />} />
                     <Route path='/calendar' element={<CalendarPage />} />
                     <Route path='/automations' element={<AutomationsPage />} />
-                    <Route path='/prompts' element={<PromptsPage />} />
-                    <Route path='/skills' element={<SkillsPage />} />
-                    <Route path='/tools' element={<ToolsPage />} />
                     <Route
                       path='/work'
                       element={
@@ -724,7 +712,16 @@ const AppContent: React.FC = () => {
       />
 
       {hasWorkspaceAccess && (
-        <CommandPalette onOpenSettings={() => setSettingsOpen(true)} />
+        <CommandPalette
+          onOpenSettings={() => {
+            setSettingsTab(undefined);
+            setSettingsOpen(true);
+          }}
+          onOpenSettingsTab={tab => {
+            setSettingsTab(tab);
+            setSettingsOpen(true);
+          }}
+        />
       )}
     </>
   );

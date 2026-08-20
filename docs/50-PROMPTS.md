@@ -42,7 +42,8 @@ the profile's own system prompt for every session using that profile.
 
 ## Example
 
-Create a prompt under **Prompts**:
+Create a prompt under **Settings → Prompts** (or pick one of the starter
+templates there and edit it):
 
 - Slug: `review-pr`
 - Title: `Pull request review`

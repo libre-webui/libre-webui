@@ -2734,6 +2734,25 @@
       "current": "Güncel",
       "rollback": "Geri al",
       "rollingBack": "Geri alınıyor..."
+    },
+    "templatesTitle": "Bir şablonla başlayın",
+    "templates": {
+      "reviewPr": {
+        "name": "Pull request incelemesi",
+        "description": "Katılık düzeyi ayarlanabilen, yapılandırılmış kod incelemesi."
+      },
+      "summarize": {
+        "name": "Belirli bir okuyucu için özetle",
+        "description": "Okuyucuya göre uyarlanmış madde madde özet."
+      },
+      "translate": {
+        "name": "Çevir",
+        "description": "Üslubu ve biçimlendirmeyi koruyan çeviri."
+      },
+      "explainCode": {
+        "name": "Kodu açıkla",
+        "description": "Adım adım anlatım, uç durumlar ve riskler."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Sürüm geçmişi",
       "title": "{{name}} geçmişi"
+    },
+    "templatesTitle": "Bir şablonla başlayın",
+    "templates": {
+      "citeSources": {
+        "name": "Kaynak göster",
+        "description": "URL'li numaralı kaynaklar, kaynaksız iddia yok."
+      },
+      "releaseNotes": {
+        "name": "Sürüm notu biçemi",
+        "description": "İç kimlikler olmadan, kullanıcıya dönük gruplanmış maddeler."
+      },
+      "meetingNotes": {
+        "name": "Toplantı notu biçimi",
+        "description": "Bir dökümden kararlar, yapılacaklar ve açık sorular."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Bir kez",
         "session": "Bu sohbet",
         "always": "Her zaman"
+      }
+    },
+    "templatesTitle": "Bir şablonla başlayın",
+    "templates": {
+      "petstore": {
+        "name": "Petstore demosu",
+        "description": "Güvenli bir ilk uçtan uca deneme için herkese açık demo API."
+      },
+      "internalOpenApi": {
+        "name": "Dahili API",
+        "description": "Kendi OpenAPI servisiniz için bir başlangıç noktası."
+      },
+      "mcpServer": {
+        "name": "MCP sunucusu",
+        "description": "Streamable HTTP üzerinden çalışan bir MCP sunucusu için başlangıç noktası."
       }
     }
   },

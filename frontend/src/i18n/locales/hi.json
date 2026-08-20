@@ -2734,6 +2734,25 @@
       "current": "मौजूदा",
       "rollback": "पहले जैसा करें",
       "rollingBack": "पहले जैसा किया जा रहा है..."
+    },
+    "templatesTitle": "टेम्पलेट से शुरू करें",
+    "templates": {
+      "reviewPr": {
+        "name": "पुल रिक्वेस्ट समीक्षा",
+        "description": "समायोज्य सख़्ती के साथ संरचित कोड समीक्षा।"
+      },
+      "summarize": {
+        "name": "किसी पाठक वर्ग के लिए सारांश",
+        "description": "पाठक के अनुसार ढाला गया बुलेट-पॉइंट सारांश।"
+      },
+      "translate": {
+        "name": "अनुवाद",
+        "description": "ऐसा अनुवाद जो लहजा और स्वरूपण बनाए रखे।"
+      },
+      "explainCode": {
+        "name": "कोड समझाएँ",
+        "description": "चरणबद्ध व्याख्या के साथ किनारे के मामले और जोखिम।"
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "संस्करण इतिहास",
       "title": "{{name}} का इतिहास"
+    },
+    "templatesTitle": "टेम्पलेट से शुरू करें",
+    "templates": {
+      "citeSources": {
+        "name": "स्रोत उद्धृत करें",
+        "description": "URL सहित क्रमांकित संदर्भ, बिना स्रोत कोई दावा नहीं।"
+      },
+      "releaseNotes": {
+        "name": "रिलीज़ नोट्स शैली",
+        "description": "आंतरिक आईडी के बिना, समूहबद्ध और उपयोगकर्ता-केंद्रित प्रविष्टियाँ।"
+      },
+      "meetingNotes": {
+        "name": "मीटिंग नोट्स प्रारूप",
+        "description": "ट्रांसक्रिप्ट से निर्णय, कार्य-बिंदु और खुले प्रश्न।"
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "एक बार",
         "session": "यह चैट",
         "always": "हमेशा"
+      }
+    },
+    "templatesTitle": "टेम्पलेट से शुरू करें",
+    "templates": {
+      "petstore": {
+        "name": "Petstore डेमो",
+        "description": "सुरक्षित पहले एंड-टू-एंड परीक्षण के लिए एक सार्वजनिक डेमो API।"
+      },
+      "internalOpenApi": {
+        "name": "आंतरिक API",
+        "description": "आपकी अपनी OpenAPI सेवा के लिए एक शुरुआती बिंदु।"
+      },
+      "mcpServer": {
+        "name": "MCP सर्वर",
+        "description": "Streamable HTTP पर चलने वाले MCP सर्वर के लिए एक शुरुआती बिंदु।"
       }
     }
   },

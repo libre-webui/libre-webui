@@ -16,6 +16,5 @@
  */
 
 export { ChatPage } from './ChatPage';
-export { ModelsPage } from './ModelsPage';
 export { LoginPage } from './LoginPage';
 export { default as UserManagementPage } from './UserManagementPage';

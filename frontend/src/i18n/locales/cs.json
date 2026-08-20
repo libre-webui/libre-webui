@@ -2734,6 +2734,25 @@
       "current": "Aktuální",
       "rollback": "Vrátit zpět",
       "rollingBack": "Vracím zpět..."
+    },
+    "templatesTitle": "Začněte ze šablony",
+    "templates": {
+      "reviewPr": {
+        "name": "Revize pull requestu",
+        "description": "Strukturovaná revize kódu s nastavitelnou přísností."
+      },
+      "summarize": {
+        "name": "Shrnutí pro publikum",
+        "description": "Shrnutí v odrážkách přizpůsobené čtenáři."
+      },
+      "translate": {
+        "name": "Překlad",
+        "description": "Překlad, který zachová tón i formátování."
+      },
+      "explainCode": {
+        "name": "Vysvětlení kódu",
+        "description": "Průchod kódem plus hraniční případy a rizika."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Historie verzí",
       "title": "Historie {{name}}"
+    },
+    "templatesTitle": "Začněte ze šablony",
+    "templates": {
+      "citeSources": {
+        "name": "Citování zdrojů",
+        "description": "Číslované odkazy s URL, žádná tvrzení bez zdroje."
+      },
+      "releaseNotes": {
+        "name": "Styl poznámek k vydání",
+        "description": "Seskupené položky pro uživatele bez interních id."
+      },
+      "meetingNotes": {
+        "name": "Formát zápisu z porady",
+        "description": "Rozhodnutí, úkoly a otevřené otázky z přepisu."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Jednou",
         "session": "Tento chat",
         "always": "Vždy"
+      }
+    },
+    "templatesTitle": "Začněte ze šablony",
+    "templates": {
+      "petstore": {
+        "name": "Ukázka Petstore",
+        "description": "Veřejné ukázkové API pro bezpečný první test od začátku do konce."
+      },
+      "internalOpenApi": {
+        "name": "Interní API",
+        "description": "Výchozí bod pro vaši vlastní službu OpenAPI."
+      },
+      "mcpServer": {
+        "name": "Server MCP",
+        "description": "Výchozí bod pro server MCP přes Streamable HTTP."
       }
     }
   },

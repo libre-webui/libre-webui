@@ -2734,6 +2734,25 @@
       "current": "Current",
       "rollback": "Roll back",
       "rollingBack": "Rolling back..."
+    },
+    "templatesTitle": "Start from a template",
+    "templates": {
+      "reviewPr": {
+        "name": "Pull request review",
+        "description": "Structured code review with adjustable strictness."
+      },
+      "summarize": {
+        "name": "Summarize for an audience",
+        "description": "Bullet-point summary tuned to a reader."
+      },
+      "translate": {
+        "name": "Translate",
+        "description": "Translation that preserves tone and formatting."
+      },
+      "explainCode": {
+        "name": "Explain code",
+        "description": "Walkthrough plus edge cases and risks."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Version history",
       "title": "History of {{name}}"
+    },
+    "templatesTitle": "Start from a template",
+    "templates": {
+      "citeSources": {
+        "name": "Cite sources",
+        "description": "Numbered references with URLs, no unreferenced claims."
+      },
+      "releaseNotes": {
+        "name": "Release notes style",
+        "description": "Grouped, user-facing entries without internal ids."
+      },
+      "meetingNotes": {
+        "name": "Meeting notes format",
+        "description": "Decisions, action items, and open questions from a transcript."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Once",
         "session": "This chat",
         "always": "Always"
+      }
+    },
+    "templatesTitle": "Start from a template",
+    "templates": {
+      "petstore": {
+        "name": "Petstore demo",
+        "description": "A public demo API for a safe first end-to-end test."
+      },
+      "internalOpenApi": {
+        "name": "Internal API",
+        "description": "A starting point for your own OpenAPI service."
+      },
+      "mcpServer": {
+        "name": "MCP server",
+        "description": "A starting point for an MCP server over Streamable HTTP."
       }
     }
   },

@@ -32,6 +32,8 @@ const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
 interface SkillModalProps {
   open: boolean;
   skill: Skill | null;
+  /** Starter values for a new skill; ignored while editing an existing one. */
+  prefill?: SkillInput | null;
   saving: boolean;
   onClose: () => void;
   onSave: (payload: SkillInput) => void;
@@ -40,6 +42,7 @@ interface SkillModalProps {
 export function SkillModal({
   open,
   skill,
+  prefill = null,
   saving,
   onClose,
   onSave,
@@ -47,8 +50,9 @@ export function SkillModal({
   if (!open) return null;
   return (
     <SkillModalForm
-      key={skill?.id ?? 'new'}
+      key={skill?.id ?? (prefill ? `template-${prefill.slug}` : 'new')}
       skill={skill}
+      prefill={prefill}
       saving={saving}
       onClose={onClose}
       onSave={onSave}
@@ -60,16 +64,18 @@ export function SkillModal({
 // directly from props.
 function SkillModalForm({
   skill,
+  prefill,
   saving,
   onClose,
   onSave,
 }: Omit<SkillModalProps, 'open'>) {
   const { t } = useTranslation();
-  const [slug, setSlug] = useState(skill?.slug ?? '');
-  const [name, setName] = useState(skill?.name ?? '');
-  const [description, setDescription] = useState(skill?.description ?? '');
-  const [instructions, setInstructions] = useState(skill?.instructions ?? '');
-  const [enabled, setEnabled] = useState(skill?.enabled ?? true);
+  const seed = skill ?? prefill;
+  const [slug, setSlug] = useState(seed?.slug ?? '');
+  const [name, setName] = useState(seed?.name ?? '');
+  const [description, setDescription] = useState(seed?.description ?? '');
+  const [instructions, setInstructions] = useState(seed?.instructions ?? '');
+  const [enabled, setEnabled] = useState(seed?.enabled ?? true);
 
   const slugValid = SLUG_PATTERN.test(slug.trim());
   const valid =

@@ -36,6 +36,8 @@ const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
 interface PromptModalProps {
   open: boolean;
   prompt: Prompt | null;
+  /** Starter values for a new prompt; ignored while editing an existing one. */
+  prefill?: PromptInput | null;
   saving: boolean;
   onClose: () => void;
   onSave: (payload: PromptInput) => void;
@@ -44,6 +46,7 @@ interface PromptModalProps {
 export function PromptModal({
   open,
   prompt,
+  prefill = null,
   saving,
   onClose,
   onSave,
@@ -51,8 +54,9 @@ export function PromptModal({
   if (!open) return null;
   return (
     <PromptModalForm
-      key={prompt?.id ?? 'new'}
+      key={prompt?.id ?? (prefill ? `template-${prefill.slug}` : 'new')}
       prompt={prompt}
+      prefill={prefill}
       saving={saving}
       onClose={onClose}
       onSave={onSave}
@@ -64,19 +68,21 @@ export function PromptModal({
 // directly from props.
 function PromptModalForm({
   prompt,
+  prefill,
   saving,
   onClose,
   onSave,
 }: Omit<PromptModalProps, 'open'>) {
   const { t } = useTranslation();
-  const [slug, setSlug] = useState(prompt?.slug ?? '');
-  const [title, setTitle] = useState(prompt?.title ?? '');
-  const [description, setDescription] = useState(prompt?.description ?? '');
-  const [content, setContent] = useState(prompt?.content ?? '');
+  const seed = prompt ?? prefill;
+  const [slug, setSlug] = useState(seed?.slug ?? '');
+  const [title, setTitle] = useState(seed?.title ?? '');
+  const [description, setDescription] = useState(seed?.description ?? '');
+  const [content, setContent] = useState(seed?.content ?? '');
   const [variables, setVariables] = useState<PromptVariable[]>(
-    prompt?.variables ?? []
+    seed?.variables ?? []
   );
-  const [tags, setTags] = useState((prompt?.tags ?? []).join(', '));
+  const [tags, setTags] = useState((seed?.tags ?? []).join(', '));
 
   const slugValid = SLUG_PATTERN.test(slug.trim());
   const valid =

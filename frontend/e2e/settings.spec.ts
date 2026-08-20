@@ -134,7 +134,7 @@ test('vision model selection persists the exact provider-qualified model', async
   await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
 
   await page.keyboard.press('Control+,');
-  await page.getByRole('tab', { name: 'Model' }).click();
+  await page.getByRole('tab', { name: 'Model', exact: true }).click();
 
   const visionModel = page.getByTestId('vision-model-select');
   await visionModel.selectOption({ label: 'gpt-cloud · OpenAI Cloud' });
@@ -154,7 +154,7 @@ test('vision model selection persists the exact provider-qualified model', async
   await page.reload();
   await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
   await page.keyboard.press('Control+,');
-  await page.getByRole('tab', { name: 'Model' }).click();
+  await page.getByRole('tab', { name: 'Model', exact: true }).click();
   await expect(page.getByTestId('vision-model-select')).toHaveValue(
     'plugin:openai-cloud:gpt-cloud'
   );

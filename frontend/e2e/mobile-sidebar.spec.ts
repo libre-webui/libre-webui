@@ -54,9 +54,9 @@ test('mobile navigation compacts the sidebar and pushes content aside', async ({
   expect(expandedBox).not.toBeNull();
   expect(expandedBox!.width).toBeGreaterThan(200);
 
-  await page.getByRole('link', { name: 'Models' }).click();
+  await page.getByRole('link', { name: 'Personas' }).click();
   await expect(
-    page.getByRole('heading', { name: 'Models', exact: true })
+    page.getByRole('heading', { name: 'Personas', exact: true })
   ).toBeVisible();
 
   await expect
@@ -130,8 +130,8 @@ test('Arabic mobile navigation mirrors the sidebar and content offset', async ({
   expect(expandedBox).not.toBeNull();
   expect(expandedBox!.x + expandedBox!.width).toBeCloseTo(390, 0);
 
-  await page.locator('a[href="/models"]').click();
-  await page.waitForURL('**/models');
+  await page.locator('a[href="/personas"]').click();
+  await page.waitForURL('**/personas');
 
   await expect
     // Compact rail is w-16 (4rem) against the app's 15px root font.

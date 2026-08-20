@@ -17,6 +17,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
+import { openSettingsTab } from './lib/settingsTab';
 
 type MockSkill = {
   id: string;
@@ -210,7 +211,8 @@ test('the skills page lists the manifest the model would see', async ({
   await mockLibreWebUiApi(page);
   await mockSkillsApi(page, [seededSkill]);
 
-  await page.goto('/skills');
+  await page.goto('/');
+  await openSettingsTab(page, 'Skills');
   await expect(page.getByTestId('skills-page')).toBeVisible();
 
   const row = page.getByTestId('skill-row');
@@ -228,7 +230,8 @@ test('the skills page explains itself when nothing is saved yet', async ({
   await mockLibreWebUiApi(page);
   await mockSkillsApi(page, []);
 
-  await page.goto('/skills');
+  await page.goto('/');
+  await openSettingsTab(page, 'Skills');
   await expect(page.getByTestId('skills-page')).toBeVisible();
   await expect(page.getByTestId('skill-row')).toHaveCount(0);
   await expect(page.getByText('No skills yet')).toBeVisible();
@@ -240,7 +243,8 @@ test('a skill is disabled from the row switch and deleted behind a confirmation'
   await mockLibreWebUiApi(page);
   const skillsApi = await mockSkillsApi(page, [seededSkill]);
 
-  await page.goto('/skills');
+  await page.goto('/');
+  await openSettingsTab(page, 'Skills');
   const row = page.getByTestId('skill-row');
   await expect(row).toBeVisible();
 
@@ -275,7 +279,8 @@ test('skills manage manifest fields and version history through the UI', async (
   await mockLibreWebUiApi(page);
   const skillsApi = await mockSkillsApi(page, []);
 
-  await page.goto('/skills');
+  await page.goto('/');
+  await openSettingsTab(page, 'Skills');
   await expect(page.getByTestId('skills-page')).toBeVisible();
 
   // The manifest fields are what the model sees before it loads anything.

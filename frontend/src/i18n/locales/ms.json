@@ -2734,6 +2734,25 @@
       "current": "Semasa",
       "rollback": "Kembalikan",
       "rollingBack": "Mengembalikan..."
+    },
+    "templatesTitle": "Mula daripada templat",
+    "templates": {
+      "reviewPr": {
+        "name": "Semakan pull request",
+        "description": "Semakan kod berstruktur dengan tahap ketegasan boleh laras."
+      },
+      "summarize": {
+        "name": "Ringkaskan untuk khalayak tertentu",
+        "description": "Ringkasan bentuk poin yang disesuaikan dengan pembaca."
+      },
+      "translate": {
+        "name": "Terjemah",
+        "description": "Terjemahan yang mengekalkan nada dan format."
+      },
+      "explainCode": {
+        "name": "Terangkan kod",
+        "description": "Penerangan langkah demi langkah serta kes tepi dan risiko."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Sejarah versi",
       "title": "Sejarah {{name}}"
+    },
+    "templatesTitle": "Mula daripada templat",
+    "templates": {
+      "citeSources": {
+        "name": "Nyatakan sumber",
+        "description": "Rujukan bernombor dengan URL, tiada dakwaan tanpa sumber."
+      },
+      "releaseNotes": {
+        "name": "Gaya nota keluaran",
+        "description": "Entri berkumpulan untuk pengguna, tanpa id dalaman."
+      },
+      "meetingNotes": {
+        "name": "Format nota mesyuarat",
+        "description": "Keputusan, tindakan susulan dan soalan terbuka daripada transkrip."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Sekali",
         "session": "Sembang ini",
         "always": "Sentiasa"
+      }
+    },
+    "templatesTitle": "Mula daripada templat",
+    "templates": {
+      "petstore": {
+        "name": "Demo Petstore",
+        "description": "API demo awam untuk ujian hujung ke hujung pertama yang selamat."
+      },
+      "internalOpenApi": {
+        "name": "API dalaman",
+        "description": "Titik permulaan untuk perkhidmatan OpenAPI anda sendiri."
+      },
+      "mcpServer": {
+        "name": "Pelayan MCP",
+        "description": "Titik permulaan untuk pelayan MCP melalui Streamable HTTP."
       }
     }
   },

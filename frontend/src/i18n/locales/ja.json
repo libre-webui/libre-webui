@@ -2734,6 +2734,25 @@
       "current": "現在",
       "rollback": "巻き戻す",
       "rollingBack": "巻き戻し中..."
+    },
+    "templatesTitle": "テンプレートから始める",
+    "templates": {
+      "reviewPr": {
+        "name": "プルリクエストのレビュー",
+        "description": "厳しさを調整できる、構造化されたコードレビュー。"
+      },
+      "summarize": {
+        "name": "読み手に合わせて要約",
+        "description": "読み手に合わせた箇条書きの要約。"
+      },
+      "translate": {
+        "name": "翻訳",
+        "description": "トーンと書式を保った翻訳。"
+      },
+      "explainCode": {
+        "name": "コードの解説",
+        "description": "順を追った解説に加えて、エッジケースとリスクも。"
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "バージョン履歴",
       "title": "{{name}} の履歴"
+    },
+    "templatesTitle": "テンプレートから始める",
+    "templates": {
+      "citeSources": {
+        "name": "出典を示す",
+        "description": "URL 付きの番号付き参照。出典のない主張はしません。"
+      },
+      "releaseNotes": {
+        "name": "リリースノート形式",
+        "description": "内部 ID を含まない、利用者向けにまとめた項目。"
+      },
+      "meetingNotes": {
+        "name": "議事録フォーマット",
+        "description": "文字起こしから決定事項、アクションアイテム、未解決の論点を抽出。"
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "一度",
         "session": "このチャット",
         "always": "常に"
+      }
+    },
+    "templatesTitle": "テンプレートから始める",
+    "templates": {
+      "petstore": {
+        "name": "Petstore デモ",
+        "description": "安全に初めてのエンドツーエンド確認ができる公開デモ API。"
+      },
+      "internalOpenApi": {
+        "name": "社内 API",
+        "description": "自前の OpenAPI サービスを登録するための出発点。"
+      },
+      "mcpServer": {
+        "name": "MCP サーバー",
+        "description": "Streamable HTTP 経由の MCP サーバーの出発点。"
       }
     }
   },

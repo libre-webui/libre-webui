@@ -2734,6 +2734,25 @@
       "current": "Huidig",
       "rollback": "Terugzetten",
       "rollingBack": "Bezig met terugzetten..."
+    },
+    "templatesTitle": "Begin met een sjabloon",
+    "templates": {
+      "reviewPr": {
+        "name": "Pull request-review",
+        "description": "Gestructureerde codereview met instelbare strengheid."
+      },
+      "summarize": {
+        "name": "Samenvatten voor een publiek",
+        "description": "Samenvatting in bullets, afgestemd op de lezer."
+      },
+      "translate": {
+        "name": "Vertalen",
+        "description": "Vertaling die toon en opmaak behoudt."
+      },
+      "explainCode": {
+        "name": "Code uitleggen",
+        "description": "Stap voor stap plus randgevallen en risico's."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Versiegeschiedenis",
       "title": "Geschiedenis van {{name}}"
+    },
+    "templatesTitle": "Begin met een sjabloon",
+    "templates": {
+      "citeSources": {
+        "name": "Bronnen vermelden",
+        "description": "Genummerde bronnen met URL's, geen beweringen zonder bron."
+      },
+      "releaseNotes": {
+        "name": "Stijl van release notes",
+        "description": "Gegroepeerde items voor gebruikers, zonder interne id's."
+      },
+      "meetingNotes": {
+        "name": "Opzet voor vergadernotulen",
+        "description": "Besluiten, actiepunten en openstaande vragen uit een transcript."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Eén keer",
         "session": "Deze chat",
         "always": "Altijd"
+      }
+    },
+    "templatesTitle": "Begin met een sjabloon",
+    "templates": {
+      "petstore": {
+        "name": "Petstore-demo",
+        "description": "Een openbare demo-API voor een veilige eerste end-to-endtest."
+      },
+      "internalOpenApi": {
+        "name": "Interne API",
+        "description": "Een startpunt voor je eigen OpenAPI-service."
+      },
+      "mcpServer": {
+        "name": "MCP-server",
+        "description": "Een startpunt voor een MCP-server via Streamable HTTP."
       }
     }
   },

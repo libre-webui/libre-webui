@@ -46,7 +46,9 @@ Three first-party, read-only tools ship with Chat:
 
 ## Tool servers
 
-Administrators register external tool servers under Tools:
+Administrators register external tool servers under **Settings → Tools**
+(starter templates there prefill the form, including a safe public demo
+API):
 
 - **OpenAPI**: a JSON OpenAPI 3.x specification is fetched once and pinned
   with a SHA-256 digest. Each operation becomes a tool; `GET` operations are
@@ -69,7 +71,7 @@ the shared resource-grant model (user and group grants on the tool server).
 Servers that require authentication use per-user credentials (bearer token
 or a named header). Each secret is encrypted with additional authenticated
 data binding it to the exact user and server, entered by each user under
-Tools, and never shared between accounts.
+Settings → Tools, and never shared between accounts.
 
 ### Egress policy
 
@@ -86,7 +88,8 @@ pinned and capped. Tool output re-enters the model as untrusted text.
 Read-only tools run without asking. A side-effecting tool pauses the turn
 and asks the user: allow once, allow for this chat, always allow this tool
 on this server, or deny. Decisions are durable — an "always" grant survives
-restarts and is revocable under Tools — and a pending request expires after
+restarts and is revocable under Settings → Tools — and a pending request
+expires after
 two minutes, which the model sees as a denial. Denials and timeouts never
 execute the call. Every decision and every call leaves a redacted security
 audit event.
@@ -118,7 +121,8 @@ with their source document, so the answer can quote and attribute them.
 
 ### `load_skill` — apply a saved skill
 
-Create a skill under **Skills** (say `$release-notes` — how you like release
+Create a skill under **Settings → Skills** (say `$release-notes` — how you
+like release
 notes written), then:
 
 > Draft release notes for this diff using $release-notes.
@@ -129,7 +133,8 @@ follows them. Typing `$` in the composer autocompletes your skill slugs.
 
 ### An OpenAPI server — for example a weather API
 
-1. **Tools → Register server**: name `Weather`, kind `OpenAPI`, base URL
+1. **Settings → Tools → Register server**: name `Weather`, kind `OpenAPI`,
+   base URL
    `https://api.example-weather.dev`, spec URL
    `https://api.example-weather.dev/openapi.json`, auth mode `bearer`.
 2. The spec is pinned and its operations appear as tools — say
@@ -150,7 +155,8 @@ follows them. Typing `$` in the composer autocompletes your skill slugs.
 
 ### An MCP server — for example an issue tracker
 
-1. **Tools → Register server**: name `Issues`, kind `MCP`, base URL
+1. **Settings → Tools → Register server**: name `Issues`, kind `MCP`, base
+   URL
    `https://mcp.example-tracker.dev/mcp`, auth mode `header` with header
    name `X-Api-Key`.
 2. Its tool list is pinned; tools marked read-only by the server (like
@@ -167,9 +173,9 @@ follows them. Typing `$` in the composer autocompletes your skill slugs.
 
 ## Environment variables
 
-| Variable                          | Effect                                                                        |
-| --------------------------------- | ----------------------------------------------------------------------------- |
-| `TOOLS_ACCESS_MODE`               | Pin the tools feature to `admins` or `all-users` and lock the admin toggle.  |
+| Variable                          | Effect                                                                      |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| `TOOLS_ACCESS_MODE`               | Pin the tools feature to `admins` or `all-users` and lock the admin toggle. |
 | `TOOLS_PRIVATE_NETWORK_ALLOWLIST` | Exact hostnames tool servers may resolve to private addresses (comma list). |
 
 ## Boundaries

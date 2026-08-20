@@ -72,8 +72,8 @@ test('the new-tab menu opens pages as tabs and shows their shortcuts', async ({
   await expect(menu.getByRole('menuitem').nth(1)).toHaveText('Incognito Chat');
   await expect(menu.getByRole('menuitem', { name: 'Notes' })).toBeVisible();
 
-  await menu.getByRole('menuitem', { name: /Models/ }).click();
-  await expect(page).toHaveURL(/\/models$/);
+  await menu.getByRole('menuitem', { name: /Calendar/ }).click();
+  await expect(page).toHaveURL(/\/calendar$/);
   await expect(page.getByTestId('app-tab')).toHaveCount(2);
 });
 
@@ -165,16 +165,16 @@ test('the tab context menu closes other, right-side, or all non-Home tabs', asyn
     await expect(tabs).toHaveCount(expectedCount);
   };
 
-  await openTab('Models', 2);
+  await openTab('Calendar', 2);
   await openTab('Personas', 3);
   await openTab('Imagine', 4);
 
-  await tabs.filter({ hasText: 'Models' }).click({ button: 'right' });
+  await tabs.filter({ hasText: 'Calendar' }).click({ button: 'right' });
   const contextMenu = page.getByTestId('app-tab-context-menu');
   await expect(contextMenu).toBeVisible();
   await page.getByTestId('app-tab-context-close-right').click();
   await expect(tabs).toHaveCount(2);
-  await expect(page).toHaveURL(/\/models$/);
+  await expect(page).toHaveURL(/\/calendar$/);
 
   await openTab('Personas', 3);
   await openTab('Imagine', 4);
@@ -250,7 +250,7 @@ test('reopening the palette starts from an empty, focused query', async ({
   await expect(input).toHaveValue('');
 
   // Same again, closing via the shortcut and reopening from the sidebar.
-  await input.fill('models');
+  await input.fill('calendar');
   await page.keyboard.press('ControlOrMeta+k');
   await expect(page.getByTestId('command-palette')).toHaveCount(0);
   await page.getByTestId('sidebar-search-button').click();

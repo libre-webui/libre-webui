@@ -18,8 +18,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  BookText,
   Download,
-  GraduationCap,
   History,
   Pencil,
   Plus,
@@ -27,35 +27,37 @@ import {
   Upload,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-  Button,
-  IconAction,
-  ModalShell,
-  PageHeader,
-  PageShell,
-  Switch,
-} from '@/components/ui';
-import { SkillModal } from '@/components/skills/SkillModal';
+import { Button, IconAction, ModalShell } from '@/components/ui';
+import { SettingsTabHeader } from './SettingsTabHeader';
+import { PromptModal } from '@/components/prompts/PromptModal';
+import { WorkspaceTemplateGrid } from './WorkspaceTemplateGrid';
+import { PROMPT_TEMPLATES } from '@/utils/promptTemplates';
 import { VersionHistoryModal } from '@/components/versions/VersionHistoryModal';
-import { skillsApi } from '@/utils/api';
-import type { Skill, SkillInput, SkillRevision } from '@/utils/api/skillsApi';
+import { promptsApi } from '@/utils/api';
+import type {
+  Prompt,
+  PromptInput,
+  PromptRevision,
+} from '@/utils/api/promptsApi';
 import { formatTimestamp } from '@/utils';
 import { downloadJson, readJsonFile } from '@/utils/fileDownload';
 import { createLogger } from '@/utils/logger';
 
-const logger = createLogger('pages:skills');
+const logger = createLogger('pages:prompts');
 
-const SkillsPage: React.FC = () => {
+export const SettingsPromptsTab: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const [skills, setSkills] = useState<Skill[]>([]);
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Skill | null>(null);
+  const [editing, setEditing] = useState<Prompt | null>(null);
+  const [templatePrefill, setTemplatePrefill] = useState<PromptInput | null>(
+    null
+  );
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState<Skill | null>(null);
-  const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [historyFor, setHistoryFor] = useState<Skill | null>(null);
-  const [versions, setVersions] = useState<SkillRevision[]>([]);
+  const [deleting, setDeleting] = useState<Prompt | null>(null);
+  const [historyFor, setHistoryFor] = useState<Prompt | null>(null);
+  const [versions, setVersions] = useState<PromptRevision[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [rollingBackTo, setRollingBackTo] = useState<number | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -68,20 +70,20 @@ const SkillsPage: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
-    skillsApi
+    promptsApi
       .list()
       .then(response => {
         if (cancelled) return;
         if (response.success && response.data) {
-          setSkills(response.data);
+          setPrompts(response.data);
         } else {
-          toast.error(response.error || t('skillsPage.loadFailed'));
+          toast.error(response.error || t('promptsPage.loadFailed'));
         }
       })
       .catch(error => {
         if (cancelled) return;
-        logger.error('Failed to load skills:', error);
-        toast.error(t('skillsPage.loadFailed'));
+        logger.error('Failed to load prompts:', error);
+        toast.error(t('promptsPage.loadFailed'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -91,47 +93,25 @@ const SkillsPage: React.FC = () => {
     };
   }, [refreshCounter, t]);
 
-  const handleSave = async (payload: SkillInput) => {
+  const handleSave = async (payload: PromptInput) => {
     setSaving(true);
     try {
       const response = editing
-        ? await skillsApi.update(editing.id, payload)
-        : await skillsApi.create(payload);
+        ? await promptsApi.update(editing.id, payload)
+        : await promptsApi.create(payload);
       if (response.success) {
         setModalOpen(false);
-        toast.success(t('skillsPage.saved'));
+        setTemplatePrefill(null);
+        toast.success(t('promptsPage.saved'));
         refresh();
       } else {
-        toast.error(response.error || t('skillsPage.saveFailed'));
+        toast.error(response.error || t('promptsPage.saveFailed'));
       }
     } catch (error) {
-      logger.error('Failed to save skill:', error);
-      toast.error(t('skillsPage.saveFailed'));
+      logger.error('Failed to save prompt:', error);
+      toast.error(t('promptsPage.saveFailed'));
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleToggle = async (skill: Skill, enabled: boolean) => {
-    setTogglingId(skill.id);
-    // Optimistic: the switch is the whole interaction, so a round trip of
-    // dead time reads as a broken control.
-    setSkills(current =>
-      current.map(item => (item.id === skill.id ? { ...item, enabled } : item))
-    );
-    try {
-      const response = await skillsApi.update(skill.id, { enabled });
-      if (!response.success) throw new Error(response.error);
-    } catch (error) {
-      logger.error('Failed to toggle skill:', error);
-      toast.error(t('skillsPage.toggleFailed'));
-      setSkills(current =>
-        current.map(item =>
-          item.id === skill.id ? { ...item, enabled: skill.enabled } : item
-        )
-      );
-    } finally {
-      setTogglingId(null);
     }
   };
 
@@ -140,55 +120,55 @@ const SkillsPage: React.FC = () => {
     const target = deleting;
     setDeleting(null);
     try {
-      const response = await skillsApi.remove(target.id);
+      const response = await promptsApi.remove(target.id);
       if (!response.success) throw new Error(response.error);
-      toast.success(t('skillsPage.deleted'));
+      toast.success(t('promptsPage.deleted'));
       refresh();
     } catch (error) {
-      logger.error('Failed to delete skill:', error);
-      toast.error(t('skillsPage.deleteFailed'));
+      logger.error('Failed to delete prompt:', error);
+      toast.error(t('promptsPage.deleteFailed'));
     }
   };
 
-  const handleExport = async (skill: Skill) => {
+  const handleExport = async (prompt: Prompt) => {
     try {
-      const response = await skillsApi.export(skill.id);
+      const response = await promptsApi.export(prompt.id);
       if (!response.success || !response.data) {
         throw new Error(response.error);
       }
-      downloadJson(`${skill.slug}.skill.json`, response.data);
+      downloadJson(`${prompt.slug}.prompt.json`, response.data);
     } catch (error) {
-      logger.error('Failed to export skill:', error);
-      toast.error(t('skillsPage.exportFailed'));
+      logger.error('Failed to export prompt:', error);
+      toast.error(t('promptsPage.exportFailed'));
     }
   };
 
   const handleImport = async (file: File) => {
     try {
-      const response = await skillsApi.import(await readJsonFile(file));
+      const response = await promptsApi.import(await readJsonFile(file));
       if (!response.success) throw new Error(response.error);
-      toast.success(t('skillsPage.imported'));
+      toast.success(t('promptsPage.imported'));
       refresh();
     } catch (error) {
-      logger.error('Failed to import skill:', error);
-      toast.error(t('skillsPage.importFailed'));
+      logger.error('Failed to import prompt:', error);
+      toast.error(t('promptsPage.importFailed'));
     }
   };
 
-  const openHistory = async (skill: Skill) => {
-    setHistoryFor(skill);
+  const openHistory = async (prompt: Prompt) => {
+    setHistoryFor(prompt);
     setVersionsLoading(true);
     setVersions([]);
     try {
-      const response = await skillsApi.versions(skill.id);
+      const response = await promptsApi.versions(prompt.id);
       if (response.success && response.data) {
         setVersions(response.data);
       } else {
-        toast.error(response.error || t('skillsPage.historyFailed'));
+        toast.error(response.error || t('promptsPage.historyFailed'));
       }
     } catch (error) {
-      logger.error('Failed to load skill history:', error);
-      toast.error(t('skillsPage.historyFailed'));
+      logger.error('Failed to load prompt history:', error);
+      toast.error(t('promptsPage.historyFailed'));
     } finally {
       setVersionsLoading(false);
     }
@@ -198,26 +178,26 @@ const SkillsPage: React.FC = () => {
     if (!historyFor) return;
     setRollingBackTo(version);
     try {
-      const response = await skillsApi.rollback(historyFor.id, version);
+      const response = await promptsApi.rollback(historyFor.id, version);
       if (!response.success || !response.data) {
         throw new Error(response.error);
       }
-      toast.success(t('skillsPage.rolledBack'));
+      toast.success(t('promptsPage.rolledBack'));
       setHistoryFor(null);
       refresh();
     } catch (error) {
-      logger.error('Failed to roll the skill back:', error);
-      toast.error(t('skillsPage.rollbackFailed'));
+      logger.error('Failed to roll the prompt back:', error);
+      toast.error(t('promptsPage.rollbackFailed'));
     } finally {
       setRollingBackTo(null);
     }
   };
 
   return (
-    <PageShell data-testid='skills-page'>
-      <PageHeader
-        title={t('skillsPage.title')}
-        description={t('skillsPage.description')}
+    <div data-testid='prompts-page' className='pb-2'>
+      <SettingsTabHeader
+        title={t('promptsPage.title')}
+        description={t('promptsPage.description')}
         actions={
           <>
             <input
@@ -225,7 +205,7 @@ const SkillsPage: React.FC = () => {
               type='file'
               accept='application/json,.json'
               className='hidden'
-              data-testid='skill-import-input'
+              data-testid='prompt-import-input'
               onChange={event => {
                 const file = event.target.files?.[0];
                 event.target.value = '';
@@ -236,7 +216,7 @@ const SkillsPage: React.FC = () => {
               variant='outline'
               size='sm'
               onClick={() => importInputRef.current?.click()}
-              data-testid='skill-import'
+              data-testid='prompt-import'
             >
               <Upload className='me-1.5 h-3.5 w-3.5' />
               {t('common.import')}
@@ -245,90 +225,100 @@ const SkillsPage: React.FC = () => {
               size='sm'
               onClick={() => {
                 setEditing(null);
+                setTemplatePrefill(null);
                 setModalOpen(true);
               }}
-              data-testid='skill-new'
+              data-testid='prompt-new'
             >
               <Plus className='me-1.5 h-3.5 w-3.5' />
-              {t('skillsPage.newSkill')}
+              {t('promptsPage.newPrompt')}
             </Button>
           </>
         }
       />
 
-      {loading ? null : skills.length === 0 ? (
+      {loading ? null : prompts.length === 0 ? (
         <div className='px-3 py-16 text-center'>
-          <GraduationCap className='mx-auto mb-3 h-6 w-6 text-gray-300 dark:text-dark-400' />
+          <BookText className='mx-auto mb-3 h-6 w-6 text-gray-300 dark:text-dark-400' />
           <p className='text-sm text-gray-500 dark:text-dark-500'>
-            {t('skillsPage.empty')}
+            {t('promptsPage.empty')}
           </p>
           <p className='mx-auto mt-2 max-w-md text-[13px] leading-6 text-gray-400 dark:text-dark-500'>
-            {t('skillsPage.emptyHint')}
+            {t('promptsPage.emptyHint')}
           </p>
         </div>
       ) : (
         <div className='space-y-2'>
-          {skills.map(skill => (
+          {prompts.map(prompt => (
             <div
-              key={skill.id}
-              data-testid='skill-row'
+              key={prompt.id}
+              data-testid='prompt-row'
               className='rounded-2xl border border-black/[0.06] bg-white/60 px-4 py-3 dark:border-white/[0.07] dark:bg-dark-100/60'
             >
               <div className='flex items-start justify-between gap-3'>
                 <div className='min-w-0'>
                   <div className='flex flex-wrap items-center gap-2'>
                     <p className='truncate text-[14px] font-medium text-gray-900 dark:text-dark-900'>
-                      {skill.name}
+                      {prompt.title}
                     </p>
                     <code className='rounded-md bg-black/[0.04] px-1.5 py-0.5 text-[11px] text-gray-500 dark:bg-white/[0.06] dark:text-dark-500'>
-                      ${skill.slug}
+                      /{prompt.slug}
                     </code>
                     <span className='text-[11px] text-gray-400 dark:text-dark-500'>
-                      {t('skillsPage.versionLabel', { version: skill.version })}
+                      {t('promptsPage.versionLabel', {
+                        version: prompt.version,
+                      })}
                     </span>
                   </div>
-                  <p className='mt-1 text-[12px] text-gray-500 dark:text-dark-500'>
-                    {skill.description}
-                  </p>
-                  <p className='mt-1.5 text-[11px] text-gray-400 dark:text-dark-500'>
-                    {t('skillsPage.updated', {
-                      when: formatTimestamp(skill.updatedAt, i18n.language),
-                    })}
-                  </p>
+                  {prompt.description && (
+                    <p className='mt-1 text-[12px] text-gray-500 dark:text-dark-500'>
+                      {prompt.description}
+                    </p>
+                  )}
+                  <div className='mt-1.5 flex flex-wrap items-center gap-1.5'>
+                    {prompt.tags.map(tag => (
+                      <span
+                        key={tag}
+                        className='rounded-full bg-black/[0.04] px-2 py-0.5 text-[10px] text-gray-500 dark:bg-white/[0.06] dark:text-dark-500'
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    <span className='text-[11px] text-gray-400 dark:text-dark-500'>
+                      {t('promptsPage.updated', {
+                        when: formatTimestamp(prompt.updatedAt, i18n.language),
+                      })}
+                    </span>
+                  </div>
                 </div>
                 <div className='flex shrink-0 items-center gap-1'>
-                  <Switch
-                    checked={skill.enabled}
-                    disabled={togglingId === skill.id}
-                    onChange={checked => void handleToggle(skill, checked)}
-                  />
                   <IconAction
                     icon={History}
-                    label={t('skillsPage.history.open')}
-                    testId='skill-history'
-                    onClick={() => void openHistory(skill)}
+                    label={t('promptsPage.history.open')}
+                    testId='prompt-history'
+                    onClick={() => void openHistory(prompt)}
                   />
                   <IconAction
                     icon={Download}
                     label={t('common.export')}
-                    testId='skill-export'
-                    onClick={() => void handleExport(skill)}
+                    testId='prompt-export'
+                    onClick={() => void handleExport(prompt)}
                   />
                   <IconAction
                     icon={Pencil}
                     label={t('common.edit')}
-                    testId='skill-edit'
+                    testId='prompt-edit'
                     onClick={() => {
-                      setEditing(skill);
+                      setEditing(prompt);
                       setModalOpen(true);
                     }}
                   />
                   <IconAction
                     icon={Trash2}
                     label={t('common.delete')}
-                    testId='skill-delete'
+                    testId='prompt-delete'
                     destructive
-                    onClick={() => setDeleting(skill)}
+                    onClick={() => setDeleting(prompt)}
                   />
                 </div>
               </div>
@@ -337,20 +327,44 @@ const SkillsPage: React.FC = () => {
         </div>
       )}
 
-      <SkillModal
+      {!loading && (
+        <WorkspaceTemplateGrid
+          title={t('promptsPage.templatesTitle')}
+          testId='prompt-template'
+          cards={PROMPT_TEMPLATES.map(template => ({
+            id: template.id,
+            name: t(`promptsPage.templates.${template.id}.name`),
+            description: t(`promptsPage.templates.${template.id}.description`),
+            meta: `/${template.input.slug}`,
+          }))}
+          onPick={id => {
+            const template = PROMPT_TEMPLATES.find(entry => entry.id === id);
+            if (!template) return;
+            setEditing(null);
+            setTemplatePrefill(template.input);
+            setModalOpen(true);
+          }}
+        />
+      )}
+
+      <PromptModal
         open={modalOpen}
-        skill={editing}
+        prompt={editing}
+        prefill={templatePrefill}
         saving={saving}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          setTemplatePrefill(null);
+        }}
         onSave={payload => void handleSave(payload)}
       />
 
       {historyFor && (
         <VersionHistoryModal
-          title={t('skillsPage.history.title', { name: historyFor.name })}
+          title={t('promptsPage.history.title', { title: historyFor.title })}
           entries={versions.map(revision => ({
             version: revision.version,
-            body: revision.instructions,
+            body: revision.content,
             createdAt: revision.createdAt,
           }))}
           loading={versionsLoading}
@@ -358,18 +372,18 @@ const SkillsPage: React.FC = () => {
           rollingBackTo={rollingBackTo}
           onRollback={version => void handleRollback(version)}
           onClose={() => setHistoryFor(null)}
-          testId='skill-history-modal'
+          testId='prompt-history-modal'
         />
       )}
 
       {deleting && (
         <ModalShell
-          titleId='skill-delete-title'
-          title={t('skillsPage.deleteTitle')}
-          subtitle={t('skillsPage.deleteConfirm', { name: deleting.name })}
+          titleId='prompt-delete-title'
+          title={t('promptsPage.deleteTitle')}
+          subtitle={t('promptsPage.deleteConfirm', { title: deleting.title })}
           onClose={() => setDeleting(null)}
           widthClassName='max-w-sm'
-          testId='skill-delete-modal'
+          testId='prompt-delete-modal'
           footer={
             <>
               <Button
@@ -383,7 +397,7 @@ const SkillsPage: React.FC = () => {
                 variant='danger'
                 size='sm'
                 onClick={() => void handleDelete()}
-                data-testid='skill-delete-confirm'
+                data-testid='prompt-delete-confirm'
               >
                 {t('common.delete')}
               </Button>
@@ -391,8 +405,8 @@ const SkillsPage: React.FC = () => {
           }
         />
       )}
-    </PageShell>
+    </div>
   );
 };
 
-export default SkillsPage;
+export default SettingsPromptsTab;

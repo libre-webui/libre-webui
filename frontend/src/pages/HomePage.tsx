@@ -22,7 +22,6 @@ import {
   Bot,
   Briefcase,
   CalendarDays,
-  Database,
   Ghost,
   MessageSquare,
   NotebookPen,
@@ -256,7 +255,6 @@ export const HomePage: React.FC = () => {
                   Zap,
                   t('sidebar.navigation.automations', 'Automations'),
                 ],
-                ['/models', Database, t('sidebar.navigation.models', 'Models')],
                 [
                   '/personas',
                   UserIcon,

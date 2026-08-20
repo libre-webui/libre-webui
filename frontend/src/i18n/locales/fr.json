@@ -2734,6 +2734,25 @@
       "current": "Actuelle",
       "rollback": "Restaurer",
       "rollingBack": "Restauration..."
+    },
+    "templatesTitle": "Partir d'un modèle",
+    "templates": {
+      "reviewPr": {
+        "name": "Revue de pull request",
+        "description": "Revue de code structurée, avec une exigence réglable."
+      },
+      "summarize": {
+        "name": "Résumer pour un public",
+        "description": "Résumé en puces adapté au lecteur."
+      },
+      "translate": {
+        "name": "Traduire",
+        "description": "Traduction qui préserve le ton et la mise en forme."
+      },
+      "explainCode": {
+        "name": "Expliquer le code",
+        "description": "Explication pas à pas, plus les cas limites et les risques."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Historique des versions",
       "title": "Historique de {{name}}"
+    },
+    "templatesTitle": "Partir d'un modèle",
+    "templates": {
+      "citeSources": {
+        "name": "Citer les sources",
+        "description": "Références numérotées avec URL, aucune affirmation sans source."
+      },
+      "releaseNotes": {
+        "name": "Style notes de version",
+        "description": "Entrées groupées, tournées vers l'utilisateur, sans identifiants internes."
+      },
+      "meetingNotes": {
+        "name": "Format compte rendu de réunion",
+        "description": "Décisions, actions à mener et questions ouvertes à partir d'une transcription."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Une fois",
         "session": "Cette conversation",
         "always": "Toujours"
+      }
+    },
+    "templatesTitle": "Partir d'un modèle",
+    "templates": {
+      "petstore": {
+        "name": "Démo Petstore",
+        "description": "Une API de démonstration publique pour un premier test de bout en bout sans risque."
+      },
+      "internalOpenApi": {
+        "name": "API interne",
+        "description": "Un point de départ pour votre propre service OpenAPI."
+      },
+      "mcpServer": {
+        "name": "Serveur MCP",
+        "description": "Un point de départ pour un serveur MCP via Streamable HTTP."
       }
     }
   },

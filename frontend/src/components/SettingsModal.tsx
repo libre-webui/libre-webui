@@ -39,6 +39,9 @@ import {
   KeyRound,
   MonitorSmartphone,
   Search,
+  BookText,
+  GraduationCap,
+  Wrench,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn } from '@/utils';
@@ -56,6 +59,11 @@ import { SettingsSessionsTab } from '@/components/settings/SettingsSessionsTab';
 import { SettingsApiKeysTab } from '@/components/settings/SettingsApiKeysTab';
 import { useAuthStore } from '@/store/authStore';
 import { SettingsTtsTab } from '@/components/settings/SettingsTtsTab';
+import { SettingsPromptsTab } from '@/components/settings/SettingsPromptsTab';
+import { SettingsSkillsTab } from '@/components/settings/SettingsSkillsTab';
+import { SettingsToolsTab } from '@/components/settings/SettingsToolsTab';
+import { SettingsTabHeader } from '@/components/settings/SettingsTabHeader';
+import { ModelManager } from '@/components/ModelManager';
 import { useSettingsDataImport } from '@/components/settings/useSettingsDataImport';
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/store/chatStore';
@@ -1588,6 +1596,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     shortcuts: 'keyboard keys hotkeys shortcut command palette',
     sessions: 'sessions devices sign out logout revoke security login',
     'api-keys': 'api key token scope secret bearer security integration',
+    'model-manager': 'models download pull delete ollama library huggingface',
+    prompts: 'prompts slash command template variables library rollback',
+    skills: 'skills manifest instructions slug load_skill rollback',
+    tools: 'tools mcp openapi server credential approval function calling',
   };
 
   const settingsQueryText = settingsQuery.trim().toLowerCase();
@@ -1632,6 +1644,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       tabs: [
         { id: 'models', label: t('settings.tabs.model'), icon: Bot },
         {
+          id: 'model-manager',
+          label: t('models.title'),
+          icon: Database,
+        },
+        {
           id: 'generation',
           label: t('settings.tabs.generation'),
           icon: Sliders,
@@ -1640,6 +1657,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           id: 'documents',
           label: t('settings.tabs.documents'),
           icon: Database,
+        },
+        {
+          id: 'prompts',
+          label: t('sidebar.navigation.prompts'),
+          icon: BookText,
+        },
+        {
+          id: 'skills',
+          label: t('sidebar.navigation.skills'),
+          icon: GraduationCap,
         },
       ],
     },
@@ -1660,6 +1687,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       label: t('settings.groups.connections', 'Connections'),
       tabs: [
         { id: 'plugins', label: t('settings.tabs.plugins'), icon: Puzzle },
+        {
+          id: 'tools',
+          label: t('sidebar.navigation.tools'),
+          icon: Wrench,
+        },
         ...(isSettingsAdmin
           ? [{ id: 'search', label: t('settings.tabs.search'), icon: Globe }]
           : []),
@@ -1769,6 +1801,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       case 'search':
         return <SettingsSearchTab />;
+
+      case 'model-manager':
+        return (
+          <div className='pb-2'>
+            <SettingsTabHeader
+              title={t('models.title')}
+              description={t('models.subtitle')}
+            />
+            <ModelManager />
+          </div>
+        );
+
+      case 'prompts':
+        return <SettingsPromptsTab />;
+
+      case 'skills':
+        return <SettingsSkillsTab />;
+
+      case 'tools':
+        return <SettingsToolsTab />;
 
       case 'sessions':
         return <SettingsSessionsTab />;

@@ -2734,6 +2734,25 @@
       "current": "Actual",
       "rollback": "Restaurar",
       "rollingBack": "Restaurando..."
+    },
+    "templatesTitle": "Empieza con una plantilla",
+    "templates": {
+      "reviewPr": {
+        "name": "Revisión de pull request",
+        "description": "Revisión de código estructurada con rigor ajustable."
+      },
+      "summarize": {
+        "name": "Resumir para un público",
+        "description": "Resumen en viñetas ajustado a quien lo lee."
+      },
+      "translate": {
+        "name": "Traducir",
+        "description": "Traducción que conserva el tono y el formato."
+      },
+      "explainCode": {
+        "name": "Explicar código",
+        "description": "Recorrido paso a paso más casos límite y riesgos."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Historial de versiones",
       "title": "Historial de {{name}}"
+    },
+    "templatesTitle": "Empieza con una plantilla",
+    "templates": {
+      "citeSources": {
+        "name": "Citar fuentes",
+        "description": "Referencias numeradas con URL, sin afirmaciones sin fuente."
+      },
+      "releaseNotes": {
+        "name": "Estilo de notas de versión",
+        "description": "Entradas agrupadas y orientadas al usuario, sin ids internos."
+      },
+      "meetingNotes": {
+        "name": "Formato de acta de reunión",
+        "description": "Decisiones, tareas y preguntas abiertas a partir de una transcripción."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Una vez",
         "session": "Este chat",
         "always": "Siempre"
+      }
+    },
+    "templatesTitle": "Empieza con una plantilla",
+    "templates": {
+      "petstore": {
+        "name": "Demo de Petstore",
+        "description": "Una API de demostración pública para una primera prueba integral segura."
+      },
+      "internalOpenApi": {
+        "name": "API interna",
+        "description": "Un punto de partida para tu propio servicio OpenAPI."
+      },
+      "mcpServer": {
+        "name": "Servidor MCP",
+        "description": "Un punto de partida para un servidor MCP sobre Streamable HTTP."
       }
     }
   },

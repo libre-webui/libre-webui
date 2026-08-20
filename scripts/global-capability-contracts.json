@@ -318,9 +318,7 @@
     {
       "id": "model-management",
       "title": "Model management",
-      "uiRoutes": [
-        "/models"
-      ],
+      "uiRoutes": [],
       "documentation": [
         {
           "file": "docs/02-WORKING_WITH_MODELS.md",
@@ -1256,9 +1254,7 @@
     {
       "id": "prompts",
       "title": "Prompt Library",
-      "uiRoutes": [
-        "/prompts"
-      ],
+      "uiRoutes": [],
       "documentation": [
         {
           "file": "docs/50-PROMPTS.md",
@@ -1357,9 +1353,7 @@
     {
       "id": "skills",
       "title": "Skills",
-      "uiRoutes": [
-        "/skills"
-      ],
+      "uiRoutes": [],
       "documentation": [
         {
           "file": "docs/51-SKILLS.md",
@@ -1465,9 +1459,7 @@
     {
       "id": "chat-tools",
       "title": "Chat Tools",
-      "uiRoutes": [
-        "/tools"
-      ],
+      "uiRoutes": [],
       "documentation": [
         {
           "file": "docs/49-CHAT_TOOLS.md",

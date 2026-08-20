@@ -46,9 +46,9 @@ const chatTab: AppTab = {
   path: '/c/alpha',
 };
 const modelsTab: AppTab = {
-  id: 'page:/models',
+  id: 'page:/personas',
   kind: 'page',
-  path: '/models',
+  path: '/personas',
 };
 const workTab: AppTab = {
   id: 'work:beta',

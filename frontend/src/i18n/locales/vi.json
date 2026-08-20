@@ -2734,6 +2734,25 @@
       "current": "Hiện tại",
       "rollback": "Khôi phục",
       "rollingBack": "Đang khôi phục..."
+    },
+    "templatesTitle": "Bắt đầu từ một mẫu",
+    "templates": {
+      "reviewPr": {
+        "name": "Rà soát pull request",
+        "description": "Rà soát mã nguồn có cấu trúc, mức độ khắt khe tùy chỉnh được."
+      },
+      "summarize": {
+        "name": "Tóm tắt cho một nhóm người đọc",
+        "description": "Bản tóm tắt dạng gạch đầu dòng, phù hợp với người đọc."
+      },
+      "translate": {
+        "name": "Dịch",
+        "description": "Bản dịch giữ nguyên giọng văn và định dạng."
+      },
+      "explainCode": {
+        "name": "Giải thích mã nguồn",
+        "description": "Giải thích từng bước cùng các trường hợp biên và rủi ro."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Lịch sử phiên bản",
       "title": "Lịch sử của {{name}}"
+    },
+    "templatesTitle": "Bắt đầu từ một mẫu",
+    "templates": {
+      "citeSources": {
+        "name": "Trích dẫn nguồn",
+        "description": "Tài liệu tham khảo đánh số kèm URL, không có khẳng định thiếu nguồn."
+      },
+      "releaseNotes": {
+        "name": "Phong cách ghi chú phát hành",
+        "description": "Các mục được nhóm lại cho người dùng, không có id nội bộ."
+      },
+      "meetingNotes": {
+        "name": "Định dạng biên bản họp",
+        "description": "Quyết định, việc cần làm và câu hỏi còn bỏ ngỏ từ bản ghi."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Một lần",
         "session": "Cuộc trò chuyện này",
         "always": "Luôn luôn"
+      }
+    },
+    "templatesTitle": "Bắt đầu từ một mẫu",
+    "templates": {
+      "petstore": {
+        "name": "Bản demo Petstore",
+        "description": "API demo công khai để thử nghiệm đầu-cuối lần đầu một cách an toàn."
+      },
+      "internalOpenApi": {
+        "name": "API nội bộ",
+        "description": "Điểm khởi đầu cho dịch vụ OpenAPI của riêng bạn."
+      },
+      "mcpServer": {
+        "name": "Máy chủ MCP",
+        "description": "Điểm khởi đầu cho một máy chủ MCP qua Streamable HTTP."
       }
     }
   },

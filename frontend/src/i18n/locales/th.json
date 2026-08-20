@@ -2734,6 +2734,25 @@
       "current": "ปัจจุบัน",
       "rollback": "ย้อนกลับ",
       "rollingBack": "กำลังย้อนกลับ..."
+    },
+    "templatesTitle": "เริ่มจากเทมเพลต",
+    "templates": {
+      "reviewPr": {
+        "name": "รีวิว pull request",
+        "description": "รีวิวโค้ดอย่างเป็นระบบ ปรับระดับความเข้มงวดได้"
+      },
+      "summarize": {
+        "name": "สรุปให้เหมาะกับผู้อ่าน",
+        "description": "สรุปเป็นหัวข้อย่อยตามกลุ่มผู้อ่าน"
+      },
+      "translate": {
+        "name": "แปลภาษา",
+        "description": "แปลโดยคงน้ำเสียงและรูปแบบเดิม"
+      },
+      "explainCode": {
+        "name": "อธิบายโค้ด",
+        "description": "อธิบายทีละขั้น พร้อมกรณีสุดขอบและความเสี่ยง"
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "ประวัติเวอร์ชัน",
       "title": "ประวัติของ {{name}}"
+    },
+    "templatesTitle": "เริ่มจากเทมเพลต",
+    "templates": {
+      "citeSources": {
+        "name": "อ้างอิงแหล่งที่มา",
+        "description": "รายการอ้างอิงมีหมายเลขพร้อม URL ไม่มีข้อความที่ไม่มีแหล่งอ้างอิง"
+      },
+      "releaseNotes": {
+        "name": "สไตล์บันทึกการเผยแพร่",
+        "description": "รายการที่จัดกลุ่มเพื่อผู้ใช้ ไม่มีรหัสภายใน"
+      },
+      "meetingNotes": {
+        "name": "รูปแบบบันทึกการประชุม",
+        "description": "ข้อสรุป สิ่งที่ต้องทำ และคำถามที่ค้างอยู่ จากบทถอดเสียง"
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "ครั้งเดียว",
         "session": "แชทนี้",
         "always": "เสมอ"
+      }
+    },
+    "templatesTitle": "เริ่มจากเทมเพลต",
+    "templates": {
+      "petstore": {
+        "name": "เดโม Petstore",
+        "description": "API เดโมสาธารณะสำหรับทดสอบครบวงจรครั้งแรกอย่างปลอดภัย"
+      },
+      "internalOpenApi": {
+        "name": "API ภายใน",
+        "description": "จุดเริ่มต้นสำหรับบริการ OpenAPI ของคุณเอง"
+      },
+      "mcpServer": {
+        "name": "เซิร์ฟเวอร์ MCP",
+        "description": "จุดเริ่มต้นสำหรับเซิร์ฟเวอร์ MCP ผ่าน Streamable HTTP"
       }
     }
   },

@@ -17,6 +17,7 @@
 
 import { expect, test } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
+import { openSettingsTab } from './lib/settingsTab';
 
 test('cloud library pulls append the Ollama cloud suffix automatically', async ({
   page,
@@ -34,7 +35,8 @@ test('cloud library pulls append the Ollama cloud suffix automatically', async (
     ],
   });
 
-  await page.goto('/models');
+  await page.goto('/');
+  await openSettingsTab(page, 'Models');
 
   await page.getByRole('button', { name: /browse library/i }).click();
   await page.getByRole('button', { name: /^cloud$/i }).click();

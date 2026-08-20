@@ -36,12 +36,13 @@ sessions using that profile only see those skills in the manifest.
 
 ## Example
 
-Create a skill under **Skills**:
+Create a skill under **Settings → Skills** (or pick one of the starter
+templates there and edit it):
 
 - Slug: `cite-sources`
 - Name: `Cite sources`
 - Description: `How to cite evidence: numbered references with URLs, no
-  unreferenced claims.` (this line is what the model sees in the manifest —
+unreferenced claims.` (this line is what the model sees in the manifest —
   make it say when to use the skill)
 - Instructions:
 

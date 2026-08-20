@@ -2734,6 +2734,25 @@
       "current": "当前",
       "rollback": "回滚",
       "rollingBack": "正在回滚..."
+    },
+    "templatesTitle": "从模板开始",
+    "templates": {
+      "reviewPr": {
+        "name": "拉取请求评审",
+        "description": "结构化的代码评审，严格程度可调。"
+      },
+      "summarize": {
+        "name": "面向特定读者的摘要",
+        "description": "针对读者调整的要点式摘要。"
+      },
+      "translate": {
+        "name": "翻译",
+        "description": "保留语气和格式的翻译。"
+      },
+      "explainCode": {
+        "name": "讲解代码",
+        "description": "逐步讲解，并指出边界情况和风险。"
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "版本历史",
       "title": "{{name}} 的历史"
+    },
+    "templatesTitle": "从模板开始",
+    "templates": {
+      "citeSources": {
+        "name": "标注来源",
+        "description": "带 URL 的编号引用，不作无出处的断言。"
+      },
+      "releaseNotes": {
+        "name": "发布说明风格",
+        "description": "面向用户分组的条目，不含内部 ID。"
+      },
+      "meetingNotes": {
+        "name": "会议纪要格式",
+        "description": "从记录中提取决议、待办事项和未决问题。"
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "一次",
         "session": "本对话",
         "always": "始终"
+      }
+    },
+    "templatesTitle": "从模板开始",
+    "templates": {
+      "petstore": {
+        "name": "Petstore 演示",
+        "description": "公开的演示 API，可安全地完成第一次端到端测试。"
+      },
+      "internalOpenApi": {
+        "name": "内部 API",
+        "description": "接入你自己的 OpenAPI 服务的起点。"
+      },
+      "mcpServer": {
+        "name": "MCP 服务器",
+        "description": "通过 Streamable HTTP 接入 MCP 服务器的起点。"
       }
     }
   },

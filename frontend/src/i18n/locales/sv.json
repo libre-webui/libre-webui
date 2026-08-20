@@ -2734,6 +2734,25 @@
       "current": "Nuvarande",
       "rollback": "Återställ",
       "rollingBack": "Återställer..."
+    },
+    "templatesTitle": "Börja från en mall",
+    "templates": {
+      "reviewPr": {
+        "name": "Granskning av pull request",
+        "description": "Strukturerad kodgranskning med justerbar stränghet."
+      },
+      "summarize": {
+        "name": "Sammanfatta för en målgrupp",
+        "description": "Punktsammanfattning anpassad till läsaren."
+      },
+      "translate": {
+        "name": "Översätt",
+        "description": "Översättning som bevarar ton och formatering."
+      },
+      "explainCode": {
+        "name": "Förklara kod",
+        "description": "Genomgång plus gränsfall och risker."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Versionshistorik",
       "title": "Historik för {{name}}"
+    },
+    "templatesTitle": "Börja från en mall",
+    "templates": {
+      "citeSources": {
+        "name": "Ange källor",
+        "description": "Numrerade referenser med URL:er, inga påståenden utan källa."
+      },
+      "releaseNotes": {
+        "name": "Stil för versionsnoteringar",
+        "description": "Grupperade poster för användare, utan interna id:n."
+      },
+      "meetingNotes": {
+        "name": "Format för mötesanteckningar",
+        "description": "Beslut, åtgärdspunkter och öppna frågor från en utskrift."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "En gång",
         "session": "Den här chatten",
         "always": "Alltid"
+      }
+    },
+    "templatesTitle": "Börja från en mall",
+    "templates": {
+      "petstore": {
+        "name": "Petstore-demo",
+        "description": "Ett offentligt demo-API för ett tryggt första test från början till slut."
+      },
+      "internalOpenApi": {
+        "name": "Internt API",
+        "description": "En utgångspunkt för din egen OpenAPI-tjänst."
+      },
+      "mcpServer": {
+        "name": "MCP-server",
+        "description": "En utgångspunkt för en MCP-server över Streamable HTTP."
       }
     }
   },

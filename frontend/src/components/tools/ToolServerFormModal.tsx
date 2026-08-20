@@ -44,6 +44,8 @@ interface ToolServerFormModalProps {
   open: boolean;
   /** Null registers a new server; a server switches the form to edit mode. */
   server: ToolServerView | null;
+  /** Starter values for a new registration; ignored in edit mode. */
+  prefill?: ToolServerInput | null;
   saving: boolean;
   onClose: () => void;
   onSave: (payload: ToolServerInput | Partial<ToolServerInput>) => void;
@@ -52,6 +54,7 @@ interface ToolServerFormModalProps {
 export function ToolServerFormModal({
   open,
   server,
+  prefill = null,
   saving,
   onClose,
   onSave,
@@ -59,8 +62,9 @@ export function ToolServerFormModal({
   if (!open) return null;
   return (
     <ToolServerForm
-      key={server?.id ?? 'new'}
+      key={server?.id ?? (prefill ? `template-${prefill.name}` : 'new')}
       server={server}
+      prefill={prefill}
       saving={saving}
       onClose={onClose}
       onSave={onSave}
@@ -72,25 +76,27 @@ export function ToolServerFormModal({
 // directly from props.
 function ToolServerForm({
   server,
+  prefill,
   saving,
   onClose,
   onSave,
 }: Omit<ToolServerFormModalProps, 'open'>) {
   const { t } = useTranslation();
   const editing = server !== null;
-  const [name, setName] = useState(server?.name ?? '');
-  const [description, setDescription] = useState(server?.description ?? '');
-  const [kind, setKind] = useState<ToolServerKind>(server?.kind ?? 'openapi');
-  const [baseUrl, setBaseUrl] = useState(server?.baseUrl ?? '');
-  const [specUrl, setSpecUrl] = useState('');
+  const seed = server ?? prefill;
+  const [name, setName] = useState(seed?.name ?? '');
+  const [description, setDescription] = useState(seed?.description ?? '');
+  const [kind, setKind] = useState<ToolServerKind>(seed?.kind ?? 'openapi');
+  const [baseUrl, setBaseUrl] = useState(seed?.baseUrl ?? '');
+  const [specUrl, setSpecUrl] = useState(prefill?.specUrl ?? '');
   const [authMode, setAuthMode] = useState<ToolServerAuthMode>(
-    server?.authMode ?? 'none'
+    seed?.authMode ?? 'none'
   );
-  const [authHeader, setAuthHeader] = useState(server?.authHeader ?? '');
+  const [authHeader, setAuthHeader] = useState(seed?.authHeader ?? '');
   const [accessMode, setAccessMode] = useState<ToolServerAccessMode>(
-    server?.accessMode ?? 'admins-only'
+    seed?.accessMode ?? 'admins-only'
   );
-  const [enabled, setEnabled] = useState(server?.enabled ?? true);
+  const [enabled, setEnabled] = useState(seed?.enabled ?? true);
   const [timeoutMs, setTimeoutMs] = useState(
     server?.timeoutMs ? String(server.timeoutMs) : ''
   );

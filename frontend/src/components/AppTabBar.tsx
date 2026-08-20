@@ -20,13 +20,10 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
-  BookText,
   Bot,
   Briefcase,
   ChartNoAxesCombined,
-  Database,
   Ghost,
-  GraduationCap,
   Home,
   ListX,
   MessageSquare,
@@ -40,7 +37,6 @@ import {
   SquareX,
   User as UserIcon,
   Users,
-  Wrench,
   X,
   Zap,
 } from 'lucide-react';
@@ -61,10 +57,6 @@ const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> = {
   '/notes': { icon: NotebookPen, labelKey: 'sidebar.navigation.notes' },
   '/calendar': { icon: CalendarDays, labelKey: 'sidebar.navigation.calendar' },
   '/automations': { icon: Zap, labelKey: 'sidebar.navigation.automations' },
-  '/prompts': { icon: BookText, labelKey: 'sidebar.navigation.prompts' },
-  '/skills': { icon: GraduationCap, labelKey: 'sidebar.navigation.skills' },
-  '/tools': { icon: Wrench, labelKey: 'sidebar.navigation.tools' },
-  '/models': { icon: Database, labelKey: 'sidebar.navigation.models' },
   '/personas': { icon: UserIcon, labelKey: 'sidebar.navigation.personas' },
   '/gallery': { icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
   '/agents': { icon: Bot, labelKey: 'sidebar.navigation.agents' },
@@ -375,22 +367,14 @@ export const AppTabBar: React.FC = () => {
           },
         ]
       : []),
-    ...[
-      '/notes',
-      '/calendar',
-      '/automations',
-      '/prompts',
-      '/skills',
-      '/tools',
-      '/models',
-      '/personas',
-      '/gallery',
-    ].map(path => ({
-      key: path,
-      label: t(PAGE_META[path].labelKey, path.slice(1)),
-      icon: PAGE_META[path].icon,
-      action: () => navigate(path),
-    })),
+    ...['/notes', '/calendar', '/automations', '/personas', '/gallery'].map(
+      path => ({
+        key: path,
+        label: t(PAGE_META[path].labelKey, path.slice(1)),
+        icon: PAGE_META[path].icon,
+        action: () => navigate(path),
+      })
+    ),
     ...(canUseAgents()
       ? [
           {

@@ -17,6 +17,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
+import { openSettingsTab } from './lib/settingsTab';
 
 type MockToolServer = {
   id: string;
@@ -272,7 +273,8 @@ test('tool servers register, scope, and collect credentials through the UI', asy
   await signIn(page, 'admin');
   const toolsApi = await mockToolsApi(page, { role: 'admin' });
 
-  await page.goto('/tools');
+  await page.goto('/');
+  await openSettingsTab(page, 'Tools');
   await expect(page.getByTestId('tools-page')).toBeVisible();
   await expect(page.getByText('No tool servers')).toBeVisible();
 
@@ -334,7 +336,8 @@ test('an administrator expands a server to override the tools it pinned', async 
     tools: { [weatherServer.id]: weatherTools },
   });
 
-  await page.goto('/tools');
+  await page.goto('/');
+  await openSettingsTab(page, 'Tools');
   const row = page.getByTestId('tool-server-row');
   await expect(row).toContainText('Weather API');
   await expect(row).toContainText('Revision 3');
@@ -372,7 +375,8 @@ test('a non-admin sees only the public server fields and saves a personal creden
     tools: { [weatherServer.id]: weatherTools },
   });
 
-  await page.goto('/tools');
+  await page.goto('/');
+  await openSettingsTab(page, 'Tools');
   const row = page.getByTestId('tool-server-row');
   await expect(row).toContainText('Weather API');
   await expect(row).toContainText('OpenAPI');
@@ -415,7 +419,8 @@ test('a standing approval is revoked from the tools page', async ({ page }) => {
     ],
   });
 
-  await page.goto('/tools');
+  await page.goto('/');
+  await openSettingsTab(page, 'Tools');
   const approval = page.getByTestId('tool-approval-row');
   await expect(approval).toHaveCount(1);
   await expect(approval).toContainText('set_alert');

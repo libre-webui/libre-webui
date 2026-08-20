@@ -19,10 +19,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Button, ModalShell, PageHeader, PageShell } from '@/components/ui';
+import { Button, ModalShell } from '@/components/ui';
+import { SettingsTabHeader } from './SettingsTabHeader';
 import { ToolApprovalsSection } from '@/components/tools/ToolApprovalsSection';
 import { ToolServerCard } from '@/components/tools/ToolServerCard';
 import { ToolServerFormModal } from '@/components/tools/ToolServerFormModal';
+import { WorkspaceTemplateGrid } from './WorkspaceTemplateGrid';
+import { TOOL_SERVER_TEMPLATES } from '@/utils/toolServerTemplates';
 import { useAuthStore } from '@/store/authStore';
 import { toolsApi } from '@/utils/api';
 import type {
@@ -34,7 +37,7 @@ import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('pages:tools');
 
-const ToolsPage: React.FC = () => {
+export const SettingsToolsTab: React.FC = () => {
   const { t } = useTranslation();
   const isAdmin = useAuthStore(state => state.isAdmin());
   const [servers, setServers] = useState<ToolServerView[]>([]);
@@ -42,6 +45,8 @@ const ToolsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ToolServerView | null>(null);
+  const [templatePrefill, setTemplatePrefill] =
+    useState<ToolServerInput | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<ToolServerView | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
@@ -89,6 +94,7 @@ const ToolsPage: React.FC = () => {
         : await toolsApi.registerServer(payload as ToolServerInput);
       if (response.success) {
         setModalOpen(false);
+        setTemplatePrefill(null);
         toast.success(t('toolsPage.saved'));
         refresh();
       } else {
@@ -133,8 +139,8 @@ const ToolsPage: React.FC = () => {
   };
 
   return (
-    <PageShell data-testid='tools-page'>
-      <PageHeader
+    <div data-testid='tools-page' className='pb-2'>
+      <SettingsTabHeader
         title={t('toolsPage.title')}
         description={t('toolsPage.description')}
         actions={
@@ -143,6 +149,7 @@ const ToolsPage: React.FC = () => {
               size='sm'
               onClick={() => {
                 setEditing(null);
+                setTemplatePrefill(null);
                 setModalOpen(true);
               }}
               data-testid='tool-server-new'
@@ -195,11 +202,37 @@ const ToolsPage: React.FC = () => {
         onRevoke={approvalId => void handleRevoke(approvalId)}
       />
 
+      {isAdmin && !loading && (
+        <WorkspaceTemplateGrid
+          title={t('toolsPage.templatesTitle')}
+          testId='tool-server-template'
+          cards={TOOL_SERVER_TEMPLATES.map(template => ({
+            id: template.id,
+            name: t(`toolsPage.templates.${template.id}.name`),
+            description: t(`toolsPage.templates.${template.id}.description`),
+            meta: template.input.baseUrl,
+          }))}
+          onPick={id => {
+            const template = TOOL_SERVER_TEMPLATES.find(
+              entry => entry.id === id
+            );
+            if (!template) return;
+            setEditing(null);
+            setTemplatePrefill(template.input);
+            setModalOpen(true);
+          }}
+        />
+      )}
+
       <ToolServerFormModal
         open={modalOpen}
         server={editing}
+        prefill={templatePrefill}
         saving={saving}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          setTemplatePrefill(null);
+        }}
         onSave={payload => void handleSave(payload)}
       />
 
@@ -232,8 +265,8 @@ const ToolsPage: React.FC = () => {
           }
         />
       )}
-    </PageShell>
+    </div>
   );
 };
 
-export default ToolsPage;
+export default SettingsToolsTab;

@@ -2734,6 +2734,25 @@
       "current": "현재",
       "rollback": "되돌리기",
       "rollingBack": "되돌리는 중..."
+    },
+    "templatesTitle": "템플릿으로 시작하기",
+    "templates": {
+      "reviewPr": {
+        "name": "풀 리퀘스트 리뷰",
+        "description": "엄격도를 조절할 수 있는 구조적 코드 리뷰."
+      },
+      "summarize": {
+        "name": "대상 독자에 맞춘 요약",
+        "description": "독자에 맞춰 정리한 요점 요약."
+      },
+      "translate": {
+        "name": "번역",
+        "description": "어조와 서식을 유지하는 번역."
+      },
+      "explainCode": {
+        "name": "코드 설명",
+        "description": "단계별 설명과 함께 예외 상황과 위험 요소까지."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "버전 기록",
       "title": "{{name}} 기록"
+    },
+    "templatesTitle": "템플릿으로 시작하기",
+    "templates": {
+      "citeSources": {
+        "name": "출처 표기",
+        "description": "URL이 포함된 번호 매긴 참고 문헌, 출처 없는 주장은 금지."
+      },
+      "releaseNotes": {
+        "name": "릴리스 노트 스타일",
+        "description": "내부 ID 없이 사용자 관점으로 묶은 항목."
+      },
+      "meetingNotes": {
+        "name": "회의록 형식",
+        "description": "대화 기록에서 결정 사항, 실행 항목, 남은 질문을 정리."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "한 번",
         "session": "이 대화",
         "always": "항상"
+      }
+    },
+    "templatesTitle": "템플릿으로 시작하기",
+    "templates": {
+      "petstore": {
+        "name": "Petstore 데모",
+        "description": "안전하게 처음 엔드투엔드로 시험해 볼 수 있는 공개 데모 API."
+      },
+      "internalOpenApi": {
+        "name": "내부 API",
+        "description": "직접 만든 OpenAPI 서비스를 위한 출발점."
+      },
+      "mcpServer": {
+        "name": "MCP 서버",
+        "description": "Streamable HTTP 기반 MCP 서버를 위한 출발점."
       }
     }
   },

@@ -2734,6 +2734,25 @@
       "current": "الحالي",
       "rollback": "إعادة",
       "rollingBack": "جارٍ الإعادة..."
+    },
+    "templatesTitle": "ابدأ من قالب",
+    "templates": {
+      "reviewPr": {
+        "name": "مراجعة طلب السحب",
+        "description": "مراجعة شيفرة منظّمة بمستوى صرامة قابل للضبط."
+      },
+      "summarize": {
+        "name": "تلخيص لجمهور محدد",
+        "description": "ملخّص بنقاط مُصاغ حسب القارئ."
+      },
+      "translate": {
+        "name": "ترجمة",
+        "description": "ترجمة تحافظ على النبرة والتنسيق."
+      },
+      "explainCode": {
+        "name": "شرح الشيفرة",
+        "description": "شرح تفصيلي مع الحالات الحدّية والمخاطر."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "سجل الإصدارات",
       "title": "سجل {{name}}"
+    },
+    "templatesTitle": "ابدأ من قالب",
+    "templates": {
+      "citeSources": {
+        "name": "الاستشهاد بالمصادر",
+        "description": "مراجع مرقّمة مع روابط، دون ادعاءات بلا مصدر."
+      },
+      "releaseNotes": {
+        "name": "أسلوب ملاحظات الإصدار",
+        "description": "مدخلات مجمّعة موجّهة للمستخدم بلا معرّفات داخلية."
+      },
+      "meetingNotes": {
+        "name": "تنسيق محضر الاجتماع",
+        "description": "القرارات وبنود العمل والأسئلة المفتوحة من نص الاجتماع."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "مرة واحدة",
         "session": "هذه المحادثة",
         "always": "دائمًا"
+      }
+    },
+    "templatesTitle": "ابدأ من قالب",
+    "templates": {
+      "petstore": {
+        "name": "عرض Petstore التجريبي",
+        "description": "واجهة تجريبية عامة لاختبار أول آمن من طرف إلى طرف."
+      },
+      "internalOpenApi": {
+        "name": "واجهة داخلية",
+        "description": "نقطة بداية لخدمة OpenAPI الخاصة بك."
+      },
+      "mcpServer": {
+        "name": "خادم MCP",
+        "description": "نقطة بداية لخادم MCP عبر Streamable HTTP."
       }
     }
   },

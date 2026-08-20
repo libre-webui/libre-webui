@@ -2734,6 +2734,25 @@
       "current": "Saat ini",
       "rollback": "Kembalikan",
       "rollingBack": "Mengembalikan..."
+    },
+    "templatesTitle": "Mulai dari templat",
+    "templates": {
+      "reviewPr": {
+        "name": "Tinjauan pull request",
+        "description": "Tinjauan kode terstruktur dengan tingkat ketelitian yang bisa diatur."
+      },
+      "summarize": {
+        "name": "Ringkas untuk audiens tertentu",
+        "description": "Ringkasan poin-poin yang disesuaikan dengan pembaca."
+      },
+      "translate": {
+        "name": "Terjemahkan",
+        "description": "Terjemahan yang menjaga nada dan format."
+      },
+      "explainCode": {
+        "name": "Jelaskan kode",
+        "description": "Penjelasan bertahap plus kasus tepi dan risikonya."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Riwayat versi",
       "title": "Riwayat {{name}}"
+    },
+    "templatesTitle": "Mulai dari templat",
+    "templates": {
+      "citeSources": {
+        "name": "Sebutkan sumber",
+        "description": "Rujukan bernomor dengan URL, tanpa klaim tanpa sumber."
+      },
+      "releaseNotes": {
+        "name": "Gaya catatan rilis",
+        "description": "Entri terkelompok untuk pengguna, tanpa id internal."
+      },
+      "meetingNotes": {
+        "name": "Format catatan rapat",
+        "description": "Keputusan, tindak lanjut, dan pertanyaan terbuka dari transkrip."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Sekali",
         "session": "Obrolan ini",
         "always": "Selalu"
+      }
+    },
+    "templatesTitle": "Mulai dari templat",
+    "templates": {
+      "petstore": {
+        "name": "Demo Petstore",
+        "description": "API demo publik untuk uji coba menyeluruh pertama yang aman."
+      },
+      "internalOpenApi": {
+        "name": "API internal",
+        "description": "Titik awal untuk layanan OpenAPI Anda sendiri."
+      },
+      "mcpServer": {
+        "name": "Server MCP",
+        "description": "Titik awal untuk server MCP melalui Streamable HTTP."
       }
     }
   },

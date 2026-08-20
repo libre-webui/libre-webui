@@ -2734,6 +2734,25 @@
       "current": "Núverandi",
       "rollback": "Færa til baka",
       "rollingBack": "Færi til baka..."
+    },
+    "templatesTitle": "Byrjaðu á sniðmáti",
+    "templates": {
+      "reviewPr": {
+        "name": "Yfirferð á pull request",
+        "description": "Skipulögð kóðarýni með stillanlegri hörku."
+      },
+      "summarize": {
+        "name": "Draga saman fyrir tiltekinn lesanda",
+        "description": "Punktasamantekt sniðin að lesandanum."
+      },
+      "translate": {
+        "name": "Þýða",
+        "description": "Þýðing sem heldur tón og sniði."
+      },
+      "explainCode": {
+        "name": "Útskýra kóða",
+        "description": "Yfirferð ásamt jaðartilvikum og áhættum."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Útgáfusaga",
       "title": "Saga {{name}}"
+    },
+    "templatesTitle": "Byrjaðu á sniðmáti",
+    "templates": {
+      "citeSources": {
+        "name": "Vísa í heimildir",
+        "description": "Númeraðar heimildir með vefslóðum, engar fullyrðingar án heimildar."
+      },
+      "releaseNotes": {
+        "name": "Stíll útgáfunótna",
+        "description": "Flokkaðar færslur fyrir notendur án innri auðkenna."
+      },
+      "meetingNotes": {
+        "name": "Snið fundargerðar",
+        "description": "Ákvarðanir, verkefni og opnar spurningar úr uppritun."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Einu sinni",
         "session": "Þetta spjall",
         "always": "Alltaf"
+      }
+    },
+    "templatesTitle": "Byrjaðu á sniðmáti",
+    "templates": {
+      "petstore": {
+        "name": "Petstore-sýnidæmi",
+        "description": "Opið sýni-API fyrir örugga fyrstu heildarprófun."
+      },
+      "internalOpenApi": {
+        "name": "Innra API",
+        "description": "Upphafspunktur fyrir þína eigin OpenAPI-þjónustu."
+      },
+      "mcpServer": {
+        "name": "MCP-þjónn",
+        "description": "Upphafspunktur fyrir MCP-þjón yfir Streamable HTTP."
       }
     }
   },

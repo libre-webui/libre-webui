@@ -143,10 +143,13 @@ function HighlightedLabel({
 
 interface CommandPaletteProps {
   onOpenSettings: () => void;
+  /** Open the settings panel directly on one tab (workspace deep links). */
+  onOpenSettingsTab: (tab: string) => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onOpenSettings,
+  onOpenSettingsTab,
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -243,7 +246,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         label: t('sidebar.navigation.models', 'Models'),
         icon: Database,
         keywords: 'models ollama providers llm',
-        run: () => navigate('/models'),
+        run: () => onOpenSettingsTab('model-manager'),
       },
       {
         id: 'action:personas',
@@ -282,7 +285,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         label: t('sidebar.navigation.prompts', 'Prompts'),
         icon: BookText,
         keywords: 'prompts templates slash snippets library',
-        run: () => navigate('/prompts'),
+        run: () => onOpenSettingsTab('prompts'),
       },
       {
         id: 'action:skills',
@@ -290,7 +293,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         label: t('sidebar.navigation.skills', 'Skills'),
         icon: GraduationCap,
         keywords: 'skills instructions playbooks load_skill',
-        run: () => navigate('/skills'),
+        run: () => onOpenSettingsTab('skills'),
       },
       {
         id: 'action:tools',
@@ -298,7 +301,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         label: t('sidebar.navigation.tools', 'Tools'),
         icon: Wrench,
         keywords: 'tools servers mcp openapi integrations approvals',
-        run: () => navigate('/tools'),
+        run: () => onOpenSettingsTab('tools'),
       },
       ...(showAgents
         ? [
@@ -365,6 +368,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     mod,
     navigate,
     onOpenSettings,
+    onOpenSettingsTab,
     toggleTheme,
     sessions,
     workTasks,

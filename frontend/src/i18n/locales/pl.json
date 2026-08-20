@@ -2734,6 +2734,25 @@
       "current": "Bieżąca",
       "rollback": "Przywróć",
       "rollingBack": "Przywracanie..."
+    },
+    "templatesTitle": "Zacznij od szablonu",
+    "templates": {
+      "reviewPr": {
+        "name": "Przegląd pull requestu",
+        "description": "Uporządkowany przegląd kodu z regulowaną surowością."
+      },
+      "summarize": {
+        "name": "Podsumuj dla odbiorcy",
+        "description": "Podsumowanie w punktach dopasowane do czytelnika."
+      },
+      "translate": {
+        "name": "Tłumaczenie",
+        "description": "Tłumaczenie, które zachowuje ton i formatowanie."
+      },
+      "explainCode": {
+        "name": "Wyjaśnij kod",
+        "description": "Omówienie krok po kroku plus przypadki brzegowe i ryzyka."
+      }
     }
   },
   "skillsPage": {
@@ -2778,6 +2797,21 @@
     "history": {
       "open": "Historia wersji",
       "title": "Historia {{name}}"
+    },
+    "templatesTitle": "Zacznij od szablonu",
+    "templates": {
+      "citeSources": {
+        "name": "Podawaj źródła",
+        "description": "Numerowane odniesienia z adresami URL, żadnych twierdzeń bez źródła."
+      },
+      "releaseNotes": {
+        "name": "Styl informacji o wydaniu",
+        "description": "Pogrupowane wpisy dla użytkowników, bez wewnętrznych identyfikatorów."
+      },
+      "meetingNotes": {
+        "name": "Format notatek ze spotkania",
+        "description": "Decyzje, zadania i otwarte pytania na podstawie transkrypcji."
+      }
     }
   },
   "toolsPage": {
@@ -2861,6 +2895,21 @@
         "once": "Raz",
         "session": "Ten czat",
         "always": "Zawsze"
+      }
+    },
+    "templatesTitle": "Zacznij od szablonu",
+    "templates": {
+      "petstore": {
+        "name": "Demo Petstore",
+        "description": "Publiczne API demonstracyjne na bezpieczny pierwszy test od początku do końca."
+      },
+      "internalOpenApi": {
+        "name": "Wewnętrzne API",
+        "description": "Punkt wyjścia dla własnej usługi OpenAPI."
+      },
+      "mcpServer": {
+        "name": "Serwer MCP",
+        "description": "Punkt wyjścia dla serwera MCP przez Streamable HTTP."
       }
     }
   },
