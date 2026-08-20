@@ -35,6 +35,7 @@ import {
   type ApiTokenScope,
 } from '../services/apiTokenService.js';
 import { createLogger } from '../utils/logger.js';
+import { authorize, type FeatureId } from '../services/authorizationService.js';
 
 const logger = createLogger('middleware:auth');
 
@@ -217,6 +218,41 @@ export const authenticate = async (
 /**
  * Admin only middleware
  */
+/**
+ * Feature-gate middleware: the actor must pass the central authorization
+ * check for `use` on the given feature. Backend enforcement mirrors any UI
+ * hiding; administrators always pass by role.
+ */
+export const requireFeature =
+  (featureId: FeatureId) =>
+  async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    if (!req.user) {
+      unauthorized(res, 'Authentication required');
+      return;
+    }
+    try {
+      const decision = await authorize(
+        { userId: req.user.userId, role: req.user.role },
+        'use',
+        { type: 'feature', id: featureId }
+      );
+      if (!decision.allowed) {
+        res.status(403).json({
+          success: false,
+          message: 'This feature is restricted to administrators',
+        });
+        return;
+      }
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+
 export const requireAdmin = async (
   req: AuthenticatedRequest,
   res: Response,

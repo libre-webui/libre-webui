@@ -822,7 +822,15 @@
       "models": "modellen",
       "test": "Testen",
       "testing": "Testen...",
-      "stop": "Stoppen"
+      "stop": "Stoppen",
+      "consentRevoked": "Toestemming ingetrokken",
+      "consentExpired": "Toestemming verlopen",
+      "transferCount": "{{total}}× naar de provider gestuurd",
+      "consentExpires": "toestemming tot {{date}}",
+      "revokeSavedVoice": "Toestemming intrekken voor {{name}}",
+      "revokeSavedVoiceConfirm": "Toestemming intrekken voor ‘{{name}}’? De opgeslagen stem kan niet meer worden gebruikt, maar het toestemmingsbewijs blijft bewaard.",
+      "savedVoiceRevoked": "Toestemming ingetrokken",
+      "savedVoiceRevokeFailed": "Toestemming intrekken mislukt"
     },
     "imageGen": {
       "title": "Beeldgeneratie",
@@ -1648,6 +1656,19 @@
       "saved": "Gereedschapstoegang bijgewerkt",
       "saveFailed": "De gereedschapstoegang kon niet worden bijgewerkt.",
       "lockedByEnv": "Vergrendeld door een omgevingsvariabele op deze server."
+    },
+    "voice": {
+      "title": "Spraaktoegang",
+      "description": "Bepaalt wie spraakfuncties mag gebruiken. Beheerders hebben altijd toegang.",
+      "lockedByEnv": "Vastgezet door een omgevingsvariabele",
+      "saved": "Spraaktoegang bijgewerkt",
+      "saveFailed": "Spraaktoegang bijwerken mislukt",
+      "features": {
+        "stt": "Spraak naar tekst",
+        "tts": "Tekst naar spraak",
+        "voiceMode": "Spraakmodus",
+        "voiceCloning": "Stemklonen"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Media gegenereerd en ‘{{name}}’ is nu beschikbaar in de spraakinstellingen",
     "failed": "Media genereren mislukt",
     "loadFailed": "Laden van mediaproviders mislukt",
-    "noModels": "Er zijn geen {{kind}} modellen beschikbaar. Activeer eerst een compatibele provider en sla de inloggegevens op."
+    "noModels": "Er zijn geen {{kind}} modellen beschikbaar. Activeer eerst een compatibele provider en sla de inloggegevens op.",
+    "consentTtl": {
+      "label": "Duur van de toestemming",
+      "never": "Totdat ik die intrek",
+      "days30": "30 dagen",
+      "days90": "90 dagen",
+      "days365": "Eén jaar"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} items",

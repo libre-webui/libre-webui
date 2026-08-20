@@ -2806,7 +2806,7 @@
           "file": "docs/12-AUTHENTICATION.md",
           "patterns": [
             "Every login also creates a server-side session record bound into the JWT",
-            "Settings \u2192 API keys mints personal access tokens"
+            "Settings → API keys mints personal access tokens"
           ]
         }
       ],
@@ -3254,7 +3254,7 @@
         {
           "file": "docs/41-DATA_PORTABILITY.md",
           "patterns": [
-            "Settings \u2192 Data Management",
+            "Settings → Data Management",
             "GET`  \\| `/api/preferences/export"
           ]
         }
@@ -3830,6 +3830,13 @@
             "router.post\\(",
             "executeTTSRequest\\("
           ]
+        },
+        {
+          "file": "backend/src/routes/voiceAccess.ts",
+          "patterns": [
+            "setVoiceAccessMode\\(feature, mode\\)",
+            "voiceAccessModeLockedByEnv\\(feature\\)"
+          ]
         }
       ],
       "documentation": [
@@ -3914,6 +3921,12 @@
         {
           "file": "backend/src/routes/tts.ts",
           "mount": "/api/tts",
+          "method": "POST",
+          "path": "/voice-profiles/:profileId/revoke"
+        },
+        {
+          "file": "backend/src/routes/tts.ts",
+          "mount": "/api/tts",
           "method": "GET",
           "path": "/models"
         },
@@ -3946,6 +3959,18 @@
           "mount": "/api/tts",
           "method": "GET",
           "path": "/plugins"
+        },
+        {
+          "file": "backend/src/routes/voiceAccess.ts",
+          "mount": "/api/voice-access",
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "file": "backend/src/routes/voiceAccess.ts",
+          "mount": "/api/voice-access",
+          "method": "PUT",
+          "path": "/:feature"
         }
       ],
       "contractSurfaces": {

@@ -46,11 +46,20 @@ import { getModelDownloadMode } from './modelAccessService.js';
 import { getAgentsEnabled } from './agentAccessService.js';
 import { getWebSearchAccessMode } from './webSearchService.js';
 import { getToolAccessMode } from './toolAccessService.js';
+import { getVoiceAccessMode, isVoiceFeatureKey } from './voiceAccessService.js';
 
 export type AuthzAction = 'read' | 'write' | 'manage' | 'use';
 
 export type FeatureId =
-  'work' | 'model-download' | 'web-search' | 'agents' | 'tools';
+  | 'work'
+  | 'model-download'
+  | 'web-search'
+  | 'agents'
+  | 'tools'
+  | 'stt'
+  | 'tts'
+  | 'voice-mode'
+  | 'voice-cloning';
 
 /**
  * Grantable resource families: the portable-archive taxonomy plus prompts,
@@ -145,7 +154,16 @@ const featureDecision = async (
       return (await getToolAccessMode()) === 'all-users'
         ? { allowed: true, reason: 'feature-open-to-all-users' }
         : { allowed: false, reason: 'feature-restricted-to-admins' };
+    case 'stt':
+    case 'tts':
+    case 'voice-mode':
+    case 'voice-cloning':
+      if (!isVoiceFeatureKey(featureId)) break;
+      return (await getVoiceAccessMode(featureId)) === 'all-users'
+        ? { allowed: true, reason: 'feature-open-to-all-users' }
+        : { allowed: false, reason: 'feature-restricted-to-admins' };
   }
+  return { allowed: false, reason: 'unknown-feature' };
 };
 
 /** Effective grants a user holds on a resource, via user and group rows. */
@@ -250,12 +268,26 @@ export const explainEffectiveAccess = async (user: {
     status: user.status,
   };
   const groups = await security().groups.listGroupsForUser(user.id);
-  const [work, modelDownload, webSearch, agents, tools] = await Promise.all([
+  const [
+    work,
+    modelDownload,
+    webSearch,
+    agents,
+    tools,
+    stt,
+    tts,
+    voiceMode,
+    voiceCloning,
+  ] = await Promise.all([
     authorize(actor, 'use', { type: 'feature', id: 'work' }),
     authorize(actor, 'use', { type: 'feature', id: 'model-download' }),
     authorize(actor, 'use', { type: 'feature', id: 'web-search' }),
     authorize(actor, 'use', { type: 'feature', id: 'agents' }),
     authorize(actor, 'use', { type: 'feature', id: 'tools' }),
+    authorize(actor, 'use', { type: 'feature', id: 'stt' }),
+    authorize(actor, 'use', { type: 'feature', id: 'tts' }),
+    authorize(actor, 'use', { type: 'feature', id: 'voice-mode' }),
+    authorize(actor, 'use', { type: 'feature', id: 'voice-cloning' }),
   ]);
 
   const grantRows = [
@@ -278,6 +310,10 @@ export const explainEffectiveAccess = async (user: {
       'web-search': webSearch.allowed,
       agents: agents.allowed,
       tools: tools.allowed,
+      stt: stt.allowed,
+      tts: tts.allowed,
+      'voice-mode': voiceMode.allowed,
+      'voice-cloning': voiceCloning.allowed,
     },
     grants: grantRows.map(grant => ({
       id: grant.id,

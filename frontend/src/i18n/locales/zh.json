@@ -822,7 +822,15 @@
       "models": "模型",
       "test": "测试",
       "testing": "测试中...",
-      "stop": "停止"
+      "stop": "停止",
+      "consentRevoked": "同意已撤回",
+      "consentExpired": "同意已过期",
+      "transferCount": "已发送给服务商 {{total}} 次",
+      "consentExpires": "同意有效期至 {{date}}",
+      "revokeSavedVoice": "撤回对 {{name}} 的同意",
+      "revokeSavedVoiceConfirm": "撤回对“{{name}}”的同意？保存的声音将无法再使用，但同意记录会被保留。",
+      "savedVoiceRevoked": "同意已撤回",
+      "savedVoiceRevokeFailed": "撤回同意失败"
     },
     "imageGen": {
       "title": "图像生成",
@@ -1648,6 +1656,19 @@
       "saved": "工具访问权限已更新",
       "saveFailed": "无法更新工具访问权限。",
       "lockedByEnv": "已被本服务器上的环境变量锁定。"
+    },
+    "voice": {
+      "title": "语音访问",
+      "description": "控制谁可以使用语音功能。管理员始终拥有访问权限。",
+      "lockedByEnv": "已由环境变量固定",
+      "saved": "语音访问已更新",
+      "saveFailed": "更新语音访问失败",
+      "features": {
+        "stt": "语音转文字",
+        "tts": "文字转语音",
+        "voiceMode": "语音模式",
+        "voiceCloning": "声音克隆"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "媒体已生成，“{{name}}”现已可在语音设置中使用",
     "failed": "生成媒体失败",
     "loadFailed": "加载媒体提供商失败",
-    "noModels": "没有可用的 {{kind}} 模型。请先激活兼容的提供商并保存其凭据。"
+    "noModels": "没有可用的 {{kind}} 模型。请先激活兼容的提供商并保存其凭据。",
+    "consentTtl": {
+      "label": "同意有效期",
+      "never": "直到我撤回为止",
+      "days30": "30 天",
+      "days90": "90 天",
+      "days365": "一年"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} 项",

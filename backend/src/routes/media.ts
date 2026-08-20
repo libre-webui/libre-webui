@@ -8,7 +8,12 @@
 import express from 'express';
 import multer from 'multer';
 import rateLimit from '../middleware/sharedRateLimit.js';
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  authenticate,
+  requireFeature,
+  type AuthenticatedRequest,
+} from '../middleware/auth.js';
+import { recordAuditEvent } from '../services/securityAuditService.js';
 import galleryService from '../services/galleryService.js';
 import mediaGenerationJobService from '../services/mediaGenerationJobService.js';
 import pluginService from '../services/pluginService.js';
@@ -238,6 +243,7 @@ router.post(
 
 router.post(
   '/audio/voice-clone',
+  requireFeature('voice-cloning'),
   generationRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);
@@ -258,6 +264,7 @@ router.post(
         response_format,
         saveVoiceName,
         consentToStore,
+        consentTtlDays,
       } = req.body || {};
       if (
         typeof model !== 'string' ||
@@ -302,6 +309,24 @@ router.post(
         });
         return;
       }
+      let consentExpiresAt: number | null = null;
+      if (consentTtlDays !== undefined) {
+        const days = Number(consentTtlDays);
+        if (
+          !Number.isInteger(days) ||
+          days < 1 ||
+          days > 3650 ||
+          saveVoiceName === undefined
+        ) {
+          res.status(400).json({
+            success: false,
+            message:
+              'consentTtlDays must be 1-3650 and requires a saved voice name',
+          });
+          return;
+        }
+        consentExpiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
+      }
 
       const selectedPlugin = await pluginService.getPluginForTTS(
         model,
@@ -345,6 +370,7 @@ router.post(
               ...(reference_text?.trim()
                 ? { referenceText: reference_text.trim() }
                 : {}),
+              ...(consentExpiresAt !== null ? { consentExpiresAt } : {}),
             }
           : null;
       if (profileInput)
@@ -378,7 +404,19 @@ router.post(
       // the caller never receives a partial success.
       if (profileInput) {
         try {
-          await voiceProfileService.create(id, profileInput);
+          const created = await voiceProfileService.create(id, profileInput);
+          recordAuditEvent({
+            actorUserId: id,
+            action: 'voice-profile.consent.grant',
+            targetType: 'voice-profile',
+            targetId: created.id,
+            result: 'success',
+            details: {
+              pluginId: created.pluginId,
+              model: created.model,
+              consentExpiresAt: created.consentExpiresAt,
+            },
+          });
         } catch (error) {
           await galleryService.deleteMedia(saved.id, id);
           throw error;

@@ -822,7 +822,15 @@
       "models": "モデル",
       "test": "テスト",
       "testing": "テスト中...",
-      "stop": "停止"
+      "stop": "停止",
+      "consentRevoked": "同意を撤回済み",
+      "consentExpired": "同意の期限切れ",
+      "transferCount": "プロバイダーへの送信 {{total}} 回",
+      "consentExpires": "同意期限 {{date}}",
+      "revokeSavedVoice": "{{name}} の同意を撤回",
+      "revokeSavedVoiceConfirm": "「{{name}}」の同意を撤回しますか？保存した声は使用できなくなりますが、同意の記録は保持されます。",
+      "savedVoiceRevoked": "同意を撤回しました",
+      "savedVoiceRevokeFailed": "同意を撤回できませんでした"
     },
     "imageGen": {
       "title": "画像生成",
@@ -1648,6 +1656,19 @@
       "saved": "ツールへのアクセスを更新しました",
       "saveFailed": "ツールへのアクセスを更新できませんでした。",
       "lockedByEnv": "このサーバーの環境変数によりロックされています。"
+    },
+    "voice": {
+      "title": "音声アクセス",
+      "description": "音声機能を使用できるユーザーを制御します。管理者は常にアクセスできます。",
+      "lockedByEnv": "環境変数で固定されています",
+      "saved": "音声アクセスを更新しました",
+      "saveFailed": "音声アクセスを更新できませんでした",
+      "features": {
+        "stt": "音声認識",
+        "tts": "音声合成",
+        "voiceMode": "ボイスモード",
+        "voiceCloning": "音声クローン"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "メディアを生成しました。「{{name}}」が音声設定で利用できるようになりました",
     "failed": "メディアの生成に失敗しました",
     "loadFailed": "メディアプロバイダーの読み込みに失敗しました",
-    "noModels": "利用可能な{{kind}}モデルはありません。互換性のあるプロバイダーを有効化し、その認証情報を先に保存してください。"
+    "noModels": "利用可能な{{kind}}モデルはありません。互換性のあるプロバイダーを有効化し、その認証情報を先に保存してください。",
+    "consentTtl": {
+      "label": "同意の有効期間",
+      "never": "撤回するまで",
+      "days30": "30日間",
+      "days90": "90日間",
+      "days365": "1年間"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} 件",

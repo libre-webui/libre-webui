@@ -8,7 +8,11 @@
 import express, { type Response } from 'express';
 import multer from 'multer';
 import rateLimit from '../middleware/sharedRateLimit.js';
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  authenticate,
+  requireFeature,
+  type AuthenticatedRequest,
+} from '../middleware/auth.js';
 import pluginService from '../services/pluginService.js';
 import { STTProviderResponseError } from '../services/pluginSTTService.js';
 import { createLogger } from '../utils/logger.js';
@@ -29,6 +33,7 @@ const logger = createLogger('routes:stt');
 const router = express.Router();
 
 router.use(authenticate);
+router.use(requireFeature('stt'));
 router.use(
   rateLimit({
     keyPrefix: 'speech-to-text',

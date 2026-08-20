@@ -822,7 +822,15 @@
       "models": "modelli",
       "test": "Test",
       "testing": "Test in corso...",
-      "stop": "Stop"
+      "stop": "Stop",
+      "consentRevoked": "Consenso revocato",
+      "consentExpired": "Consenso scaduto",
+      "transferCount": "inviato al fornitore {{total}} volte",
+      "consentExpires": "consenso fino al {{date}}",
+      "revokeSavedVoice": "Revoca il consenso per {{name}}",
+      "revokeSavedVoiceConfirm": "Revocare il consenso per «{{name}}»? La voce salvata non potrà più essere usata, ma la traccia del consenso viene conservata.",
+      "savedVoiceRevoked": "Consenso revocato",
+      "savedVoiceRevokeFailed": "Impossibile revocare il consenso"
     },
     "imageGen": {
       "title": "Generazione immagini",
@@ -1648,6 +1656,19 @@
       "saved": "Accesso agli strumenti aggiornato",
       "saveFailed": "Impossibile aggiornare l'accesso agli strumenti.",
       "lockedByEnv": "Bloccato da una variabile d'ambiente su questo server."
+    },
+    "voice": {
+      "title": "Accesso vocale",
+      "description": "Controlla chi può usare le funzioni vocali. Gli amministratori hanno sempre accesso.",
+      "lockedByEnv": "Impostato da una variabile d’ambiente",
+      "saved": "Accesso vocale aggiornato",
+      "saveFailed": "Impossibile aggiornare l’accesso vocale",
+      "features": {
+        "stt": "Voce in testo",
+        "tts": "Testo in voce",
+        "voiceMode": "Modalità vocale",
+        "voiceCloning": "Clonazione vocale"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Contenuto generato e «{{name}}» è ora disponibile nelle impostazioni Voce",
     "failed": "Generazione del media non riuscita",
     "loadFailed": "Caricamento dei provider media non riuscito",
-    "noModels": "Nessun modello {{kind}} disponibile. Attiva prima un provider compatibile e salva le sue credenziali."
+    "noModels": "Nessun modello {{kind}} disponibile. Attiva prima un provider compatibile e salva le sue credenziali.",
+    "consentTtl": {
+      "label": "Durata del consenso",
+      "never": "Finché non lo revoco",
+      "days30": "30 giorni",
+      "days90": "90 giorni",
+      "days365": "Un anno"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} elementi",

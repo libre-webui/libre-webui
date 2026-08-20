@@ -822,7 +822,15 @@
       "models": "modelos",
       "test": "Probar",
       "testing": "Probando...",
-      "stop": "Detener"
+      "stop": "Detener",
+      "consentRevoked": "Consentimiento retirado",
+      "consentExpired": "Consentimiento caducado",
+      "transferCount": "enviado al proveedor {{total}} veces",
+      "consentExpires": "consentimiento hasta {{date}}",
+      "revokeSavedVoice": "Retirar el consentimiento de {{name}}",
+      "revokeSavedVoiceConfirm": "¿Retirar el consentimiento de «{{name}}»? La voz guardada ya no podrá usarse, pero el registro del consentimiento se conserva.",
+      "savedVoiceRevoked": "Consentimiento retirado",
+      "savedVoiceRevokeFailed": "No se pudo retirar el consentimiento"
     },
     "imageGen": {
       "title": "Generación de imágenes",
@@ -1648,6 +1656,19 @@
       "saved": "Acceso a herramientas actualizado",
       "saveFailed": "No se pudo actualizar el acceso a herramientas.",
       "lockedByEnv": "Bloqueado por una variable de entorno en este servidor."
+    },
+    "voice": {
+      "title": "Acceso de voz",
+      "description": "Controla quién puede usar las funciones de voz. Los administradores siempre tienen acceso.",
+      "lockedByEnv": "Fijado por una variable de entorno",
+      "saved": "Acceso de voz actualizado",
+      "saveFailed": "No se pudo actualizar el acceso de voz",
+      "features": {
+        "stt": "Voz a texto",
+        "tts": "Texto a voz",
+        "voiceMode": "Modo de voz",
+        "voiceCloning": "Clonación de voz"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Se generó el contenido y «{{name}}» ya está disponible en los ajustes de Voz",
     "failed": "Error al generar multimedia",
     "loadFailed": "Error al cargar los proveedores multimedia",
-    "noModels": "No hay modelos de {{kind}} disponibles. Activa un proveedor compatible y guarda sus credenciales primero."
+    "noModels": "No hay modelos de {{kind}} disponibles. Activa un proveedor compatible y guarda sus credenciales primero.",
+    "consentTtl": {
+      "label": "Duración del consentimiento",
+      "never": "Hasta que lo retire",
+      "days30": "30 días",
+      "days90": "90 días",
+      "days365": "Un año"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} elementos",

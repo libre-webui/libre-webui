@@ -822,7 +822,15 @@
       "models": "model",
       "test": "Uji",
       "testing": "Menguji...",
-      "stop": "Berhenti"
+      "stop": "Berhenti",
+      "consentRevoked": "Persetujuan ditarik balik",
+      "consentExpired": "Persetujuan tamat tempoh",
+      "transferCount": "dihantar kepada penyedia {{total}} kali",
+      "consentExpires": "persetujuan hingga {{date}}",
+      "revokeSavedVoice": "Tarik balik persetujuan untuk {{name}}",
+      "revokeSavedVoiceConfirm": "Tarik balik persetujuan untuk “{{name}}”? Suara yang disimpan tidak boleh digunakan lagi, tetapi rekod persetujuan dikekalkan.",
+      "savedVoiceRevoked": "Persetujuan ditarik balik",
+      "savedVoiceRevokeFailed": "Gagal menarik balik persetujuan"
     },
     "imageGen": {
       "title": "Penjanaan Imej",
@@ -1648,6 +1656,19 @@
       "saved": "Akses alat dikemas kini",
       "saveFailed": "Akses alat tidak dapat dikemas kini.",
       "lockedByEnv": "Dikunci oleh pemboleh ubah persekitaran pada pelayan ini."
+    },
+    "voice": {
+      "title": "Akses suara",
+      "description": "Mengawal siapa yang boleh menggunakan ciri suara. Pentadbir sentiasa mempunyai akses.",
+      "lockedByEnv": "Ditetapkan oleh pemboleh ubah persekitaran",
+      "saved": "Akses suara dikemas kini",
+      "saveFailed": "Gagal mengemas kini akses suara",
+      "features": {
+        "stt": "Pertuturan ke teks",
+        "tts": "Teks ke pertuturan",
+        "voiceMode": "Mod suara",
+        "voiceCloning": "Pengklonan suara"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Media telah dijana dan “{{name}}” kini tersedia dalam tetapan Pertuturan",
     "failed": "Gagal menjana media",
     "loadFailed": "Gagal memuatkan penyedia media",
-    "noModels": "Tiada model {{kind}} tersedia. Aktifkan penyedia yang serasi dan simpan kelayakannya dahulu."
+    "noModels": "Tiada model {{kind}} tersedia. Aktifkan penyedia yang serasi dan simpan kelayakannya dahulu.",
+    "consentTtl": {
+      "label": "Tempoh persetujuan",
+      "never": "Sehingga saya menariknya balik",
+      "days30": "30 hari",
+      "days90": "90 hari",
+      "days365": "Setahun"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} item",

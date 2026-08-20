@@ -729,9 +729,9 @@ class SQLiteVoiceProfileRepository implements VoiceProfileRepository {
           `INSERT INTO voice_profiles
              (id, user_id, name, name_lookup, plugin_id, model, reference_audio,
               reference_text, routing_fingerprint, audio_mime_type,
-              audio_format, audio_size, consent_confirmed_at, created_at,
-              updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+              audio_format, audio_size, consent_confirmed_at,
+              consent_expires_at, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
           profile.id,
@@ -747,6 +747,7 @@ class SQLiteVoiceProfileRepository implements VoiceProfileRepository {
           profile.audio_format,
           profile.audio_size,
           profile.consent_confirmed_at,
+          profile.consent_expires_at,
           profile.created_at,
           profile.updated_at
         );
@@ -759,6 +760,38 @@ class SQLiteVoiceProfileRepository implements VoiceProfileRepository {
       this.database
         .prepare('DELETE FROM voice_profiles WHERE id = ? AND user_id = ?')
         .run(id, userId).changes > 0
+    );
+  }
+
+  async revoke(
+    id: string,
+    userId: string,
+    revokedAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE voice_profiles
+             SET revoked_at = ?, updated_at = ?
+           WHERE id = ? AND user_id = ? AND revoked_at IS NULL`
+        )
+        .run(revokedAt, revokedAt, id, userId).changes > 0
+    );
+  }
+
+  async recordTransfer(
+    id: string,
+    userId: string,
+    transferredAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE voice_profiles
+             SET transfer_count = transfer_count + 1, last_transfer_at = ?
+           WHERE id = ? AND user_id = ?`
+        )
+        .run(transferredAt, id, userId).changes > 0
     );
   }
 }

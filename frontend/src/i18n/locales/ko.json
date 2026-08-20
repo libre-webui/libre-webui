@@ -822,7 +822,15 @@
       "models": "모델",
       "test": "테스트",
       "testing": "테스트 중...",
-      "stop": "중지"
+      "stop": "중지",
+      "consentRevoked": "동의 철회됨",
+      "consentExpired": "동의 만료됨",
+      "transferCount": "제공업체로 {{total}}회 전송됨",
+      "consentExpires": "동의 유효기간 {{date}}",
+      "revokeSavedVoice": "{{name}}에 대한 동의 철회",
+      "revokeSavedVoiceConfirm": "“{{name}}”에 대한 동의를 철회할까요? 저장된 음성은 더 이상 사용할 수 없지만 동의 기록은 유지됩니다.",
+      "savedVoiceRevoked": "동의가 철회되었습니다",
+      "savedVoiceRevokeFailed": "동의를 철회하지 못했습니다"
     },
     "imageGen": {
       "title": "이미지 생성",
@@ -1648,6 +1656,19 @@
       "saved": "도구 접근 권한을 업데이트했습니다",
       "saveFailed": "도구 접근 권한을 업데이트하지 못했습니다.",
       "lockedByEnv": "이 서버의 환경 변수로 잠겨 있습니다."
+    },
+    "voice": {
+      "title": "음성 접근",
+      "description": "음성 기능을 사용할 수 있는 사용자를 제어합니다. 관리자는 항상 접근할 수 있습니다.",
+      "lockedByEnv": "환경 변수로 고정됨",
+      "saved": "음성 접근이 업데이트되었습니다",
+      "saveFailed": "음성 접근을 업데이트하지 못했습니다",
+      "features": {
+        "stt": "음성을 텍스트로",
+        "tts": "텍스트를 음성으로",
+        "voiceMode": "음성 모드",
+        "voiceCloning": "음성 복제"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "미디어가 생성되었으며 이제 음성 설정에서 ‘{{name}}’을(를) 사용할 수 있습니다",
     "failed": "미디어 생성 실패",
     "loadFailed": "미디어 제공자 로드 실패",
-    "noModels": "사용 가능한 {{kind}} 모델이 없습니다. 호환되는 제공자를 활성화하고 자격 증명을 먼저 저장하세요."
+    "noModels": "사용 가능한 {{kind}} 모델이 없습니다. 호환되는 제공자를 활성화하고 자격 증명을 먼저 저장하세요.",
+    "consentTtl": {
+      "label": "동의 유효 기간",
+      "never": "철회할 때까지",
+      "days30": "30일",
+      "days90": "90일",
+      "days365": "1년"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}}개 항목",

@@ -787,3 +787,118 @@ test('saved-voice generation caps in-flight batches per user and globally across
     await server.close();
   }
 });
+
+test('consent lifecycle: expiry and revocation block use, receipts count transfers', async () => {
+  const ownerId = 'voice-consent-owner';
+  upsertUser(ownerId);
+
+  // Expiry must be in the future at creation time.
+  await assert.rejects(
+    createProfile(ownerId, {
+      name: 'Expired at birth',
+      consentExpiresAt: Date.now() - 1000,
+    }),
+    /expiry must be in the future/i
+  );
+
+  const created = await createProfile(ownerId, {
+    name: 'Consent voice',
+    consentExpiresAt: Date.now() + 60_000,
+  });
+  assert.equal(created.consentStatus, 'active');
+  assert.equal(created.transferCount, 0);
+
+  // Transfers are receipted per provider send.
+  assert.equal(
+    await voiceProfileService.recordTransfer(created.id, ownerId),
+    true
+  );
+  assert.equal(
+    await voiceProfileService.recordTransfer(created.id, ownerId),
+    true
+  );
+  const [listed] = await voiceProfileService.list(ownerId, {});
+  assert.equal(listed.transferCount, 2);
+  assert.ok(listed.lastTransferAt > 0);
+  assert.equal(listed.consentStatus, 'active');
+
+  // Force the expiry into the past: the profile can no longer be used but
+  // stays listed with its status.
+  databaseModule
+    .getDatabase()
+    .prepare('UPDATE voice_profiles SET consent_expires_at = ? WHERE id = ?')
+    .run(Date.now() - 5_000, created.id);
+  await assert.rejects(
+    voiceProfileService.get(created.id, ownerId),
+    /consent for this saved voice has expired/i
+  );
+  const [expired] = await voiceProfileService.list(ownerId, {});
+  assert.equal(expired.consentStatus, 'expired');
+
+  // Revocation keeps the row as a receipt and is one-way.
+  const revocable = await createProfile(ownerId, { name: 'Revocable voice' });
+  assert.equal(await voiceProfileService.revoke(revocable.id, ownerId), true);
+  assert.equal(await voiceProfileService.revoke(revocable.id, ownerId), false);
+  await assert.rejects(
+    voiceProfileService.get(revocable.id, ownerId),
+    /consent for this saved voice was revoked/i
+  );
+  const revoked = (await voiceProfileService.list(ownerId, {})).find(
+    profile => profile.id === revocable.id
+  );
+  assert.equal(revoked.consentStatus, 'revoked');
+  assert.ok(revoked.revokedAt > 0);
+
+  // Another user cannot revoke or receipt someone else's profile.
+  upsertUser('voice-consent-other');
+  assert.equal(
+    await voiceProfileService.revoke(created.id, 'voice-consent-other'),
+    false
+  );
+  assert.equal(
+    await voiceProfileService.recordTransfer(created.id, 'voice-consent-other'),
+    false
+  );
+});
+
+test('voice access modes gate features centrally and honor env pins', async () => {
+  const { authorize } = await import(
+    pathToFileURL(
+      path.join(distRoot, 'services', 'authorizationService.js')
+    ).href
+  );
+  const voiceAccess = await import(
+    pathToFileURL(path.join(distRoot, 'services', 'voiceAccessService.js')).href
+  );
+  const user = { userId: 'voice-consent-owner', role: 'user' };
+  const admin = { userId: 'voice-admin', role: 'admin' };
+
+  for (const feature of ['stt', 'tts', 'voice-mode', 'voice-cloning']) {
+    assert.equal(await voiceAccess.getVoiceAccessMode(feature), 'all-users');
+    const open = await authorize(user, 'use', { type: 'feature', id: feature });
+    assert.equal(open.allowed, true);
+
+    await voiceAccess.setVoiceAccessMode(feature, 'admins');
+    const closed = await authorize(user, 'use', {
+      type: 'feature',
+      id: feature,
+    });
+    assert.equal(closed.allowed, false);
+    const adminAllowed = await authorize(admin, 'use', {
+      type: 'feature',
+      id: feature,
+    });
+    assert.equal(adminAllowed.allowed, true);
+    await voiceAccess.setVoiceAccessMode(feature, 'all-users');
+  }
+
+  process.env.STT_ACCESS_MODE = 'admins';
+  try {
+    assert.equal(voiceAccess.voiceAccessModeLockedByEnv('stt'), true);
+    assert.equal(await voiceAccess.getVoiceAccessMode('stt'), 'admins');
+    const pinned = await authorize(user, 'use', { type: 'feature', id: 'stt' });
+    assert.equal(pinned.allowed, false);
+  } finally {
+    delete process.env.STT_ACCESS_MODE;
+  }
+});

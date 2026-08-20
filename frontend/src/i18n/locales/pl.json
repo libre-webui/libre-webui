@@ -822,7 +822,15 @@
       "models": "modeli",
       "test": "Test",
       "testing": "Testowanie...",
-      "stop": "Stop"
+      "stop": "Stop",
+      "consentRevoked": "Zgoda wycofana",
+      "consentExpired": "Zgoda wygasła",
+      "transferCount": "wysłano do dostawcy {{total}} razy",
+      "consentExpires": "zgoda do {{date}}",
+      "revokeSavedVoice": "Wycofaj zgodę dla {{name}}",
+      "revokeSavedVoiceConfirm": "Wycofać zgodę dla „{{name}}”? Zapisany głos nie będzie już używany, ale zapis zgody zostanie zachowany.",
+      "savedVoiceRevoked": "Zgoda wycofana",
+      "savedVoiceRevokeFailed": "Nie udało się wycofać zgody"
     },
     "imageGen": {
       "title": "Generowanie obrazów",
@@ -1648,6 +1656,19 @@
       "saved": "Dostęp do narzędzi zaktualizowany",
       "saveFailed": "Nie udało się zaktualizować dostępu do narzędzi.",
       "lockedByEnv": "Zablokowane zmienną środowiskową na tym serwerze."
+    },
+    "voice": {
+      "title": "Dostęp głosowy",
+      "description": "Określa, kto może korzystać z funkcji głosowych. Administratorzy zawsze mają dostęp.",
+      "lockedByEnv": "Ustalone przez zmienną środowiskową",
+      "saved": "Zaktualizowano dostęp głosowy",
+      "saveFailed": "Nie udało się zaktualizować dostępu głosowego",
+      "features": {
+        "stt": "Mowa na tekst",
+        "tts": "Tekst na mowę",
+        "voiceMode": "Tryb głosowy",
+        "voiceCloning": "Klonowanie głosu"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Multimedia zostały utworzone, a „{{name}}” jest teraz dostępny w ustawieniach mowy",
     "failed": "Nie udało się wygenerować multimediów",
     "loadFailed": "Nie udało się załadować dostawców multimediów",
-    "noModels": "Brak dostępnych modeli {{kind}}. Najpierw aktywuj kompatybilnego dostawcę i zapisz jego poświadczenia."
+    "noModels": "Brak dostępnych modeli {{kind}}. Najpierw aktywuj kompatybilnego dostawcę i zapisz jego poświadczenia.",
+    "consentTtl": {
+      "label": "Okres obowiązywania zgody",
+      "never": "Dopóki jej nie wycofam",
+      "days30": "30 dni",
+      "days90": "90 dni",
+      "days365": "Rok"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} elementów",

@@ -822,7 +822,15 @@
       "models": "modèles",
       "test": "Tester",
       "testing": "Test...",
-      "stop": "Arrêter"
+      "stop": "Arrêter",
+      "consentRevoked": "Consentement retiré",
+      "consentExpired": "Consentement expiré",
+      "transferCount": "envoyé au fournisseur {{total}} fois",
+      "consentExpires": "consentement jusqu’au {{date}}",
+      "revokeSavedVoice": "Retirer le consentement pour {{name}}",
+      "revokeSavedVoiceConfirm": "Retirer le consentement pour « {{name}} » ? La voix enregistrée ne pourra plus être utilisée, mais la trace du consentement est conservée.",
+      "savedVoiceRevoked": "Consentement retiré",
+      "savedVoiceRevokeFailed": "Échec du retrait du consentement"
     },
     "imageGen": {
       "title": "Génération d'images",
@@ -1648,6 +1656,19 @@
       "saved": "Accès aux outils mis à jour",
       "saveFailed": "Impossible de mettre à jour l'accès aux outils.",
       "lockedByEnv": "Verrouillé par une variable d'environnement sur ce serveur."
+    },
+    "voice": {
+      "title": "Accès vocal",
+      "description": "Détermine qui peut utiliser les fonctions vocales. Les administrateurs y ont toujours accès.",
+      "lockedByEnv": "Fixé par une variable d’environnement",
+      "saved": "Accès vocal mis à jour",
+      "saveFailed": "Échec de la mise à jour de l’accès vocal",
+      "features": {
+        "stt": "Reconnaissance vocale",
+        "tts": "Synthèse vocale",
+        "voiceMode": "Mode vocal",
+        "voiceCloning": "Clonage de voix"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Le média a été généré et « {{name}} » est maintenant disponible dans les réglages de la parole",
     "failed": "Échec de la génération du média",
     "loadFailed": "Échec du chargement des fournisseurs de médias",
-    "noModels": "Aucun modèle {{kind}} n'est disponible. Activez un fournisseur compatible et enregistrez d'abord ses identifiants."
+    "noModels": "Aucun modèle {{kind}} n'est disponible. Activez un fournisseur compatible et enregistrez d'abord ses identifiants.",
+    "consentTtl": {
+      "label": "Durée du consentement",
+      "never": "Jusqu’à ce que je le retire",
+      "days30": "30 jours",
+      "days90": "90 jours",
+      "days365": "Un an"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} éléments",

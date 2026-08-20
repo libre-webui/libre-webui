@@ -51,6 +51,7 @@ export function MediaGenerationPanel({
   const [saveVoiceProfile, setSaveVoiceProfile] = useState(false);
   const [voiceProfileName, setVoiceProfileName] = useState('');
   const [consentToStore, setConsentToStore] = useState(false);
+  const [consentTtlDays, setConsentTtlDays] = useState<number | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [resolution, setResolution] = useState('');
   const [aspectRatio, setAspectRatio] = useState('');
@@ -268,6 +269,10 @@ export function MediaGenerationPanel({
                   ? voiceProfileName.trim()
                   : undefined,
                 consentToStore: saveVoiceProfile && consentToStore,
+                consentTtlDays:
+                  saveVoiceProfile && consentTtlDays !== null
+                    ? consentTtlDays
+                    : undefined,
               },
               controller.signal
             )
@@ -738,6 +743,44 @@ export function MediaGenerationPanel({
                               })}
                             </span>
                           </label>
+                          <Field
+                            label={t('mediaGeneration.consentTtl.label', {
+                              defaultValue: 'Consent duration',
+                            })}
+                          >
+                            <select
+                              value={consentTtlDays ?? ''}
+                              onChange={event =>
+                                setConsentTtlDays(
+                                  event.target.value === ''
+                                    ? null
+                                    : Number(event.target.value)
+                                )
+                              }
+                              className={inputClass}
+                            >
+                              <option value=''>
+                                {t('mediaGeneration.consentTtl.never', {
+                                  defaultValue: 'Until I withdraw it',
+                                })}
+                              </option>
+                              <option value='30'>
+                                {t('mediaGeneration.consentTtl.days30', {
+                                  defaultValue: '30 days',
+                                })}
+                              </option>
+                              <option value='90'>
+                                {t('mediaGeneration.consentTtl.days90', {
+                                  defaultValue: '90 days',
+                                })}
+                              </option>
+                              <option value='365'>
+                                {t('mediaGeneration.consentTtl.days365', {
+                                  defaultValue: 'One year',
+                                })}
+                              </option>
+                            </select>
+                          </Field>
                         </div>
                       )}
                       {!saveVoiceProfile && (

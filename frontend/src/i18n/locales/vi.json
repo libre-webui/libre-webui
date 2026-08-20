@@ -822,7 +822,15 @@
       "models": "mô hình",
       "test": "Kiểm tra",
       "testing": "Đang kiểm tra...",
-      "stop": "Dừng"
+      "stop": "Dừng",
+      "consentRevoked": "Đã rút lại sự đồng ý",
+      "consentExpired": "Sự đồng ý đã hết hạn",
+      "transferCount": "đã gửi tới nhà cung cấp {{total}} lần",
+      "consentExpires": "đồng ý đến {{date}}",
+      "revokeSavedVoice": "Rút lại sự đồng ý cho {{name}}",
+      "revokeSavedVoiceConfirm": "Rút lại sự đồng ý cho “{{name}}”? Giọng nói đã lưu sẽ không dùng được nữa, nhưng hồ sơ đồng ý vẫn được giữ.",
+      "savedVoiceRevoked": "Đã rút lại sự đồng ý",
+      "savedVoiceRevokeFailed": "Không thể rút lại sự đồng ý"
     },
     "imageGen": {
       "title": "Tạo hình ảnh",
@@ -1648,6 +1656,19 @@
       "saved": "Đã cập nhật quyền dùng công cụ",
       "saveFailed": "Không cập nhật được quyền dùng công cụ.",
       "lockedByEnv": "Bị khóa bởi một biến môi trường trên máy chủ này."
+    },
+    "voice": {
+      "title": "Quyền truy cập giọng nói",
+      "description": "Kiểm soát ai có thể dùng các tính năng giọng nói. Quản trị viên luôn có quyền truy cập.",
+      "lockedByEnv": "Được cố định bởi biến môi trường",
+      "saved": "Đã cập nhật quyền truy cập giọng nói",
+      "saveFailed": "Không thể cập nhật quyền truy cập giọng nói",
+      "features": {
+        "stt": "Giọng nói thành văn bản",
+        "tts": "Văn bản thành giọng nói",
+        "voiceMode": "Chế độ giọng nói",
+        "voiceCloning": "Nhân bản giọng nói"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Đã tạo nội dung và “{{name}}” hiện có trong cài đặt Giọng nói",
     "failed": "Không thể tạo phương tiện",
     "loadFailed": "Không thể tải nhà cung cấp phương tiện",
-    "noModels": "Không có mô hình {{kind}} nào khả dụng. Kích hoạt nhà cung cấp tương thích và lưu thông tin xác thực của nó trước."
+    "noModels": "Không có mô hình {{kind}} nào khả dụng. Kích hoạt nhà cung cấp tương thích và lưu thông tin xác thực của nó trước.",
+    "consentTtl": {
+      "label": "Thời hạn đồng ý",
+      "never": "Cho đến khi tôi rút lại",
+      "days30": "30 ngày",
+      "days90": "90 ngày",
+      "days365": "Một năm"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} mục",

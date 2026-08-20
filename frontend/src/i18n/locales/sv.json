@@ -822,7 +822,15 @@
       "models": "modeller",
       "test": "Testa",
       "testing": "Testar...",
-      "stop": "Stoppa"
+      "stop": "Stoppa",
+      "consentRevoked": "Samtycke återkallat",
+      "consentExpired": "Samtycket har löpt ut",
+      "transferCount": "skickat till leverantören {{total}} gånger",
+      "consentExpires": "samtycke till {{date}}",
+      "revokeSavedVoice": "Återkalla samtycke för {{name}}",
+      "revokeSavedVoiceConfirm": "Återkalla samtycke för “{{name}}”? Den sparade rösten kan inte längre användas, men samtyckesposten behålls.",
+      "savedVoiceRevoked": "Samtycke återkallat",
+      "savedVoiceRevokeFailed": "Det gick inte att återkalla samtycket"
     },
     "imageGen": {
       "title": "Bildgenerering",
@@ -1648,6 +1656,19 @@
       "saved": "Verktygsåtkomsten uppdaterades",
       "saveFailed": "Verktygsåtkomsten kunde inte uppdateras.",
       "lockedByEnv": "Låst av en miljövariabel på den här servern."
+    },
+    "voice": {
+      "title": "Röståtkomst",
+      "description": "Styr vem som får använda röstfunktioner. Administratörer har alltid åtkomst.",
+      "lockedByEnv": "Låst av en miljövariabel",
+      "saved": "Röståtkomst uppdaterad",
+      "saveFailed": "Det gick inte att uppdatera röståtkomsten",
+      "features": {
+        "stt": "Tal till text",
+        "tts": "Text till tal",
+        "voiceMode": "Röstläge",
+        "voiceCloning": "Röstkloning"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Mediet har skapats och ”{{name}}” är nu tillgänglig i talinställningarna",
     "failed": "Misslyckades att generera media",
     "loadFailed": "Misslyckades att ladda medieleverantörer",
-    "noModels": "Inga {{kind}}-modeller är tillgängliga. Aktivera en kompatibel leverantör och spara dess autentiseringsuppgifter först."
+    "noModels": "Inga {{kind}}-modeller är tillgängliga. Aktivera en kompatibel leverantör och spara dess autentiseringsuppgifter först.",
+    "consentTtl": {
+      "label": "Samtyckets varaktighet",
+      "never": "Tills jag återkallar det",
+      "days30": "30 dagar",
+      "days90": "90 dagar",
+      "days365": "Ett år"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} objekt",

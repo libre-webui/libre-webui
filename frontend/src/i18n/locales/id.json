@@ -822,7 +822,15 @@
       "models": "model",
       "test": "Tes",
       "testing": "Menguji...",
-      "stop": "Berhenti"
+      "stop": "Berhenti",
+      "consentRevoked": "Persetujuan dicabut",
+      "consentExpired": "Persetujuan kedaluwarsa",
+      "transferCount": "dikirim ke penyedia {{total}} kali",
+      "consentExpires": "persetujuan hingga {{date}}",
+      "revokeSavedVoice": "Cabut persetujuan untuk {{name}}",
+      "revokeSavedVoiceConfirm": "Cabut persetujuan untuk “{{name}}”? Suara tersimpan tidak dapat digunakan lagi, tetapi catatan persetujuan tetap disimpan.",
+      "savedVoiceRevoked": "Persetujuan dicabut",
+      "savedVoiceRevokeFailed": "Gagal mencabut persetujuan"
     },
     "imageGen": {
       "title": "Pembuatan Gambar",
@@ -1648,6 +1656,19 @@
       "saved": "Akses alat diperbarui",
       "saveFailed": "Akses alat tidak dapat diperbarui.",
       "lockedByEnv": "Terkunci oleh variabel lingkungan di server ini."
+    },
+    "voice": {
+      "title": "Akses suara",
+      "description": "Mengatur siapa yang boleh menggunakan fitur suara. Administrator selalu memiliki akses.",
+      "lockedByEnv": "Ditetapkan oleh variabel lingkungan",
+      "saved": "Akses suara diperbarui",
+      "saveFailed": "Gagal memperbarui akses suara",
+      "features": {
+        "stt": "Ucapan ke teks",
+        "tts": "Teks ke ucapan",
+        "voiceMode": "Mode suara",
+        "voiceCloning": "Kloning suara"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Media dibuat dan “{{name}}” kini tersedia di pengaturan Ucapan",
     "failed": "Gagal menghasilkan media",
     "loadFailed": "Gagal memuat penyedia media",
-    "noModels": "Tidak ada model {{kind}} yang tersedia. Aktifkan penyedia yang kompatibel dan simpan kredensialnya terlebih dahulu."
+    "noModels": "Tidak ada model {{kind}} yang tersedia. Aktifkan penyedia yang kompatibel dan simpan kredensialnya terlebih dahulu.",
+    "consentTtl": {
+      "label": "Durasi persetujuan",
+      "never": "Sampai saya mencabutnya",
+      "days30": "30 hari",
+      "days90": "90 hari",
+      "days365": "Satu tahun"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} item",

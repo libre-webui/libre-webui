@@ -534,7 +534,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       ttsVoiceProfiles.filter(
         profile =>
           profile.pluginId === modelResolvedTtsSettings.pluginId &&
-          profile.model === modelResolvedTtsSettings.model
+          profile.model === modelResolvedTtsSettings.model &&
+          profile.consentStatus === 'active'
       ),
     [modelResolvedTtsSettings, ttsVoiceProfiles]
   );
@@ -552,7 +553,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       Boolean(selectedProfileId) &&
       (!selectedProfile ||
         selectedProfile.pluginId !== modelResolvedTtsSettings.pluginId ||
-        selectedProfile.model !== modelResolvedTtsSettings.model);
+        selectedProfile.model !== modelResolvedTtsSettings.model ||
+        selectedProfile.consentStatus !== 'active');
     if (
       !selectedProfileId ||
       (!selectedModelCannotClone && !selectedProfileIsUnavailable)
@@ -885,6 +887,51 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       voice,
       voiceProfileId,
     }));
+  };
+
+  const handleRevokeTtsVoiceProfile = async (profile: TTSVoiceProfile) => {
+    if (
+      !window.confirm(
+        t('settings.tts.revokeSavedVoiceConfirm', {
+          name: profile.name,
+          defaultValue:
+            'Withdraw consent for “{{name}}”? The saved voice can no longer be used, but the consent record is kept.',
+        })
+      )
+    ) {
+      return;
+    }
+    try {
+      const response = await ttsApi.revokeVoiceProfile(profile.id);
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to revoke consent');
+      }
+      const updated = response.data;
+      queryClient.setQueryData<TTSVoiceProfile[]>(
+        ['tts-voice-profiles'],
+        current =>
+          current?.map(candidate =>
+            candidate.id === profile.id && updated ? updated : candidate
+          ) ?? []
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ['tts-voice-profiles'],
+      });
+      toast.success(
+        t('settings.tts.savedVoiceRevoked', {
+          defaultValue: 'Consent withdrawn',
+        })
+      );
+    } catch (error: unknown) {
+      toast.error(
+        getErrorMessage(
+          error,
+          t('settings.tts.savedVoiceRevokeFailed', {
+            defaultValue: 'Failed to withdraw consent',
+          })
+        )
+      );
+    }
   };
 
   const handleDeleteTtsVoiceProfile = async (profile: TTSVoiceProfile) => {
@@ -1759,6 +1806,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onSettingChange={handleTtsSettingChange}
             onVoiceChange={handleTtsVoiceChange}
             onDeleteVoiceProfile={handleDeleteTtsVoiceProfile}
+            onRevokeVoiceProfile={handleRevokeTtsVoiceProfile}
             onModelChange={handleTtsModelChange}
             onReset={handleResetTtsSettings}
             onTest={handleTestTTS}

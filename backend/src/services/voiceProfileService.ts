@@ -24,6 +24,8 @@ const MAX_PROFILE_NAME_CHARACTERS = 80;
 const MAX_REFERENCE_TEXT_CHARACTERS = 32_000;
 const PLUGIN_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/;
 
+export type VoiceProfileConsentStatus = 'active' | 'expired' | 'revoked';
+
 export interface VoiceProfileMetadata {
   id: string;
   name: string;
@@ -32,6 +34,24 @@ export interface VoiceProfileMetadata {
   mimeType: string;
   createdAt: number;
   updatedAt: number;
+  consentConfirmedAt: number;
+  consentExpiresAt: number | null;
+  revokedAt: number | null;
+  transferCount: number;
+  lastTransferAt: number | null;
+  consentStatus: VoiceProfileConsentStatus;
+}
+
+/** Thrown when a saved voice is used after consent expired or was revoked. */
+export class VoiceProfileConsentError extends Error {
+  constructor(readonly status: Exclude<VoiceProfileConsentStatus, 'active'>) {
+    super(
+      status === 'revoked'
+        ? 'Consent for this saved voice was revoked; it can no longer be used'
+        : 'Consent for this saved voice has expired; save it again to renew consent'
+    );
+    this.name = 'VoiceProfileConsentError';
+  }
 }
 
 export interface VoiceProfileSecret extends VoiceProfileMetadata {
@@ -47,7 +67,11 @@ export interface CreateVoiceProfileInput {
   routingFingerprint: string;
   referenceAudio: ValidatedTTSVoiceCloneAudio;
   referenceText?: string;
+  /** Optional consent expiry (epoch ms); the profile is unusable after it. */
+  consentExpiresAt?: number | null;
 }
+
+const MAX_CONSENT_TTL_MS = 10 * 365 * 24 * 60 * 60 * 1000;
 
 export class VoiceProfileService {
   async validateCreate(
@@ -86,6 +110,7 @@ export class VoiceProfileService {
         `Saved voice reference audio is limited to ${MAX_TOTAL_REFERENCE_AUDIO_BYTES_PER_USER} bytes per account`
       );
     }
+    this.validateConsentExpiry(input.consentExpiresAt);
     const nameLookup = createVoiceProfileNameLookup(encryptionService, name);
     const duplicate = profiles.some(
       profile =>
@@ -126,6 +151,10 @@ export class VoiceProfileService {
     const row = await this.repository().find(id, userId);
     if (!row) {
       return null;
+    }
+    const status = this.consentStatus(row);
+    if (status !== 'active') {
+      throw new VoiceProfileConsentError(status);
     }
 
     const referenceAudio = validateTTSVoiceCloneAudio(
@@ -185,6 +214,7 @@ export class VoiceProfileService {
         `Reference transcript must be at most ${MAX_REFERENCE_TEXT_CHARACTERS} characters`
       );
     }
+    this.validateConsentExpiry(input.consentExpiresAt);
 
     const id = randomUUID();
     const now = Date.now();
@@ -213,6 +243,10 @@ export class VoiceProfileService {
       audio_format: referenceAudio.format,
       audio_size: referenceAudio.size,
       consent_confirmed_at: now,
+      consent_expires_at: input.consentExpiresAt ?? null,
+      revoked_at: null,
+      transfer_count: 0,
+      last_transfer_at: null,
       created_at: now,
       updated_at: now,
     };
@@ -248,11 +282,27 @@ export class VoiceProfileService {
       mimeType: referenceAudio.mimetype,
       createdAt: now,
       updatedAt: now,
+      consentConfirmedAt: now,
+      consentExpiresAt: input.consentExpiresAt ?? null,
+      revokedAt: null,
+      transferCount: 0,
+      lastTransferAt: null,
+      consentStatus: 'active',
     };
   }
 
   delete(id: string, userId: string): Promise<boolean> {
     return this.repository().delete(id, userId);
+  }
+
+  /** Withdraw consent while keeping the row as a receipt. */
+  revoke(id: string, userId: string): Promise<boolean> {
+    return this.repository().revoke(id, userId, Date.now());
+  }
+
+  /** Record one transfer of the reference audio to the provider. */
+  recordTransfer(id: string, userId: string): Promise<boolean> {
+    return this.repository().recordTransfer(id, userId, Date.now());
   }
 
   private metadataFromRow(row: StoredVoiceProfile): VoiceProfileMetadata {
@@ -269,7 +319,34 @@ export class VoiceProfileService {
       mimeType: row.audio_mime_type,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      consentConfirmedAt: row.consent_confirmed_at,
+      consentExpiresAt: row.consent_expires_at ?? null,
+      revokedAt: row.revoked_at ?? null,
+      transferCount: row.transfer_count ?? 0,
+      lastTransferAt: row.last_transfer_at ?? null,
+      consentStatus: this.consentStatus(row),
     };
+  }
+
+  private consentStatus(row: StoredVoiceProfile): VoiceProfileConsentStatus {
+    if (row.revoked_at) return 'revoked';
+    if (row.consent_expires_at && row.consent_expires_at <= Date.now()) {
+      return 'expired';
+    }
+    return 'active';
+  }
+
+  private validateConsentExpiry(value: number | null | undefined): void {
+    if (value === null || value === undefined) return;
+    if (!Number.isInteger(value)) {
+      throw new Error('Consent expiry must be a timestamp in milliseconds');
+    }
+    const now = Date.now();
+    if (value <= now || value > now + MAX_CONSENT_TTL_MS) {
+      throw new Error(
+        'Consent expiry must be in the future (10 years at most)'
+      );
+    }
   }
 
   private validateName(value: string): string {

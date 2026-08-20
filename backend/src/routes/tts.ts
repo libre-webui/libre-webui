@@ -19,7 +19,11 @@ import express, { type Response } from 'express';
 import multer from 'multer';
 import rateLimit from '../middleware/sharedRateLimit.js';
 import pluginService from '../services/pluginService.js';
-import { authenticate, type AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  authenticate,
+  requireFeature,
+  type AuthenticatedRequest,
+} from '../middleware/auth.js';
 import { createLogger } from '../utils/logger.js';
 import {
   parseTTSVoiceCloneUpload,
@@ -34,6 +38,7 @@ import {
   TTSProviderResponseError,
 } from '../services/pluginTTSService.js';
 import voiceProfileService from '../services/voiceProfileService.js';
+import { recordAuditEvent } from '../services/securityAuditService.js';
 import type { Plugin } from '../types/index.js';
 import {
   acquireSharedCapacity,
@@ -47,6 +52,7 @@ const logger = createLogger('routes:tts');
 
 const router = express.Router();
 router.use(authenticate);
+router.use(requireFeature('tts'));
 
 const TTS_RESPONSE_FORMATS = [
   'mp3',
@@ -222,6 +228,7 @@ async function assertProfileRoutingIsCurrent(
 }
 
 function profileRequestStatus(message: string): number {
+  if (/consent for this saved voice/i.test(message)) return 403;
   if (/not found/i.test(message)) return 404;
   if (/Database is not available/i.test(message)) return 503;
   if (
@@ -235,27 +242,74 @@ function profileRequestStatus(message: string): number {
 }
 
 /** Metadata only: reference recordings and transcripts are never returned. */
-router.get('/voice-profiles', async (req: AuthenticatedRequest, res) => {
-  try {
-    const pluginId = requestString(req.query.pluginId);
-    const model = requestString(req.query.model);
-    res.json({
-      success: true,
-      data: await voiceProfileService.list(authenticatedUserId(req), {
-        ...(pluginId ? { pluginId } : {}),
-        ...(model ? { model } : {}),
-      }),
-    });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to list voice profiles';
-    logger.error('Failed to list voice profiles:', error);
-    res.status(profileRequestStatus(message)).json({ success: false, message });
+router.get(
+  '/voice-profiles',
+  requireFeature('voice-cloning'),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const pluginId = requestString(req.query.pluginId);
+      const model = requestString(req.query.model);
+      res.json({
+        success: true,
+        data: await voiceProfileService.list(authenticatedUserId(req), {
+          ...(pluginId ? { pluginId } : {}),
+          ...(model ? { model } : {}),
+        }),
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to list voice profiles';
+      logger.error('Failed to list voice profiles:', error);
+      res
+        .status(profileRequestStatus(message))
+        .json({ success: false, message });
+    }
   }
-});
+);
+
+/** Withdraw consent for a saved voice; the profile row stays as a receipt. */
+router.post(
+  '/voice-profiles/:profileId/revoke',
+  requireFeature('voice-cloning'),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const profileId = Array.isArray(req.params.profileId)
+        ? req.params.profileId[0]
+        : req.params.profileId;
+      const userId = authenticatedUserId(req);
+      if (!(await voiceProfileService.revoke(profileId, userId))) {
+        res.status(404).json({
+          success: false,
+          message: 'Voice profile not found or already revoked',
+        });
+        return;
+      }
+      recordAuditEvent({
+        actorUserId: userId,
+        action: 'voice-profile.consent.revoke',
+        targetType: 'voice-profile',
+        targetId: profileId,
+        result: 'success',
+      });
+      res.json({
+        success: true,
+        data: await voiceProfileService.getMetadata(profileId, userId),
+      });
+    } catch (error) {
+      logger.error('Failed to revoke voice profile consent:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to revoke voice profile consent',
+      });
+    }
+  }
+);
 
 router.delete(
   '/voice-profiles/:profileId',
+  requireFeature('voice-cloning'),
   async (req: AuthenticatedRequest, res) => {
     try {
       const profileId = Array.isArray(req.params.profileId)
@@ -483,6 +537,9 @@ router.post(
             );
             if (!profile) throw new Error('Voice profile not found');
             await assertProfileRoutingIsCurrent(profile, plugin, userId);
+            // Transfer receipt: the encrypted reference audio is about to be
+            // resent to the provider for this generation.
+            await voiceProfileService.recordTransfer(voiceProfileId, userId);
             return pluginService.executeVoiceCloneRequest(
               model,
               input,
@@ -573,6 +630,8 @@ router.post(
         statusCode = 404;
       } else if (errorMessage.includes('Voice profile not found')) {
         statusCode = 404;
+      } else if (errorMessage.includes('Consent for this saved voice')) {
+        statusCode = 403;
       } else if (errorMessage.includes('API key not found')) {
         statusCode = 503; // Service unavailable
       } else if (
@@ -603,6 +662,7 @@ router.post(
  */
 router.post(
   '/voice-clone',
+  requireFeature('voice-cloning'),
   voiceCloneRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);
@@ -955,6 +1015,9 @@ router.post(
             );
             if (!profile) throw new Error('Voice profile not found');
             await assertProfileRoutingIsCurrent(profile, plugin, userId);
+            // Transfer receipt: the encrypted reference audio is about to be
+            // resent to the provider for this generation.
+            await voiceProfileService.recordTransfer(voiceProfileId, userId);
             return pluginService.executeVoiceCloneRequest(
               model,
               input,
@@ -1065,6 +1128,8 @@ router.post(
         statusCode = 404;
       } else if (errorMessage.includes('Voice profile not found')) {
         statusCode = 404;
+      } else if (errorMessage.includes('Consent for this saved voice')) {
+        statusCode = 403;
       } else if (errorMessage.includes('API key not found')) {
         statusCode = 503;
       } else if (

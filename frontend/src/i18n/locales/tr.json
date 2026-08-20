@@ -822,7 +822,15 @@
       "models": "model",
       "test": "Test Et",
       "testing": "Test ediliyor...",
-      "stop": "Durdur"
+      "stop": "Durdur",
+      "consentRevoked": "Onay geri çekildi",
+      "consentExpired": "Onayın süresi doldu",
+      "transferCount": "sağlayıcıya {{total}} kez gönderildi",
+      "consentExpires": "onay {{date}} tarihine kadar",
+      "revokeSavedVoice": "{{name}} için onayı geri çek",
+      "revokeSavedVoiceConfirm": "“{{name}}” için onay geri çekilsin mi? Kaydedilen ses artık kullanılamaz, ancak onay kaydı saklanır.",
+      "savedVoiceRevoked": "Onay geri çekildi",
+      "savedVoiceRevokeFailed": "Onay geri çekilemedi"
     },
     "imageGen": {
       "title": "Görsel Üretimi",
@@ -1648,6 +1656,19 @@
       "saved": "Araç erişimi güncellendi",
       "saveFailed": "Araç erişimi güncellenemedi.",
       "lockedByEnv": "Bu sunucudaki bir ortam değişkeniyle kilitlenmiş."
+    },
+    "voice": {
+      "title": "Ses erişimi",
+      "description": "Ses özelliklerini kimin kullanabileceğini belirler. Yöneticiler her zaman erişebilir.",
+      "lockedByEnv": "Bir ortam değişkeniyle sabitlenmiş",
+      "saved": "Ses erişimi güncellendi",
+      "saveFailed": "Ses erişimi güncellenemedi",
+      "features": {
+        "stt": "Konuşmadan metne",
+        "tts": "Metinden konuşmaya",
+        "voiceMode": "Ses modu",
+        "voiceCloning": "Ses klonlama"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Medya oluşturuldu ve “{{name}}” artık Konuşma ayarlarında kullanılabilir",
     "failed": "Medya oluşturulamadı",
     "loadFailed": "Medya sağlayıcıları yüklenemedi",
-    "noModels": "Kullanılabilir {{kind}} modeli yok. Önce uyumlu bir sağlayıcı etkinleştirin ve kimlik bilgilerini kaydedin."
+    "noModels": "Kullanılabilir {{kind}} modeli yok. Önce uyumlu bir sağlayıcı etkinleştirin ve kimlik bilgilerini kaydedin.",
+    "consentTtl": {
+      "label": "Onay süresi",
+      "never": "Ben geri çekene kadar",
+      "days30": "30 gün",
+      "days90": "90 gün",
+      "days365": "Bir yıl"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} öğe",

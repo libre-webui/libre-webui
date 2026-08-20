@@ -20,6 +20,7 @@ import {
   Loader2,
   Play,
   RotateCcw,
+  ShieldOff,
   Square,
   Trash2,
   Volume2,
@@ -54,6 +55,7 @@ interface SettingsTtsTabProps {
   onModelChange: (modelName: string, pluginId: string) => void;
   onVoiceChange: (voice: string, voiceProfileId: string) => void;
   onDeleteVoiceProfile: (profile: TTSVoiceProfile) => void;
+  onRevokeVoiceProfile: (profile: TTSVoiceProfile) => void;
   onReset: () => void;
   onTest: () => void;
   onSave: () => void;
@@ -74,6 +76,7 @@ export function SettingsTtsTab({
   onModelChange,
   onVoiceChange,
   onDeleteVoiceProfile,
+  onRevokeVoiceProfile,
   onReset,
   onTest,
   onSave,
@@ -376,11 +379,57 @@ export function SettingsTtsTab({
                   <div className='min-w-0'>
                     <p className='truncate text-sm text-gray-800 dark:text-gray-200'>
                       {profile.name}
+                      {profile.consentStatus === 'revoked' && (
+                        <span className='ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950/40 dark:text-red-400'>
+                          {t('settings.tts.consentRevoked', {
+                            defaultValue: 'Consent withdrawn',
+                          })}
+                        </span>
+                      )}
+                      {profile.consentStatus === 'expired' && (
+                        <span className='ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'>
+                          {t('settings.tts.consentExpired', {
+                            defaultValue: 'Consent expired',
+                          })}
+                        </span>
+                      )}
                     </p>
                     <p className='truncate text-xs text-gray-500 dark:text-gray-400'>
                       {profile.pluginId} · {profile.model}
+                      {' · '}
+                      {t('settings.tts.transferCount', {
+                        total: profile.transferCount,
+                        defaultValue: 'sent to provider {{total}}×',
+                      })}
+                      {profile.consentExpiresAt &&
+                        profile.consentStatus === 'active' && (
+                          <>
+                            {' · '}
+                            {t('settings.tts.consentExpires', {
+                              date: new Intl.DateTimeFormat(undefined, {
+                                dateStyle: 'medium',
+                              }).format(profile.consentExpiresAt),
+                              defaultValue: 'consent until {{date}}',
+                            })}
+                          </>
+                        )}
                     </p>
                   </div>
+                  {profile.consentStatus === 'active' && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onRevokeVoiceProfile(profile)}
+                      aria-label={t('settings.tts.revokeSavedVoice', {
+                        name: profile.name,
+                        defaultValue: 'Withdraw consent for {{name}}',
+                      })}
+                      className='shrink-0 px-2 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/30'
+                    >
+                      <ShieldOff className='h-4 w-4' />
+                    </Button>
+                  )}
                   <Button
                     type='button'
                     variant='ghost'

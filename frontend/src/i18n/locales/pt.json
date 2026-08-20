@@ -822,7 +822,15 @@
       "models": "modelos",
       "test": "Testar",
       "testing": "Testando...",
-      "stop": "Parar"
+      "stop": "Parar",
+      "consentRevoked": "Consentimento retirado",
+      "consentExpired": "Consentimento expirado",
+      "transferCount": "enviado ao provedor {{total}} vezes",
+      "consentExpires": "consentimento até {{date}}",
+      "revokeSavedVoice": "Retirar o consentimento de {{name}}",
+      "revokeSavedVoiceConfirm": "Retirar o consentimento de “{{name}}”? A voz salva não poderá mais ser usada, mas o registro do consentimento é mantido.",
+      "savedVoiceRevoked": "Consentimento retirado",
+      "savedVoiceRevokeFailed": "Falha ao retirar o consentimento"
     },
     "imageGen": {
       "title": "Geração de Imagens",
@@ -1648,6 +1656,19 @@
       "saved": "Acesso a ferramentas atualizado",
       "saveFailed": "Não foi possível atualizar o acesso a ferramentas.",
       "lockedByEnv": "Bloqueado por uma variável de ambiente neste servidor."
+    },
+    "voice": {
+      "title": "Acesso de voz",
+      "description": "Controla quem pode usar os recursos de voz. Administradores sempre têm acesso.",
+      "lockedByEnv": "Fixado por uma variável de ambiente",
+      "saved": "Acesso de voz atualizado",
+      "saveFailed": "Falha ao atualizar o acesso de voz",
+      "features": {
+        "stt": "Fala para texto",
+        "tts": "Texto para fala",
+        "voiceMode": "Modo de voz",
+        "voiceCloning": "Clonagem de voz"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Conteúdo multimédia gerado e «{{name}}» está agora disponível nas definições de Fala",
     "failed": "Falha ao gerar mídia",
     "loadFailed": "Falha ao carregar provedores de mídia",
-    "noModels": "Nenhum modelo {{kind}} está disponível. Ative um provedor compatível e salve sua credencial primeiro."
+    "noModels": "Nenhum modelo {{kind}} está disponível. Ative um provedor compatível e salve sua credencial primeiro.",
+    "consentTtl": {
+      "label": "Duração do consentimento",
+      "never": "Até eu retirá-lo",
+      "days30": "30 dias",
+      "days90": "90 dias",
+      "days365": "Um ano"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} itens",

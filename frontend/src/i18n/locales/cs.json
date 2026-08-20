@@ -822,7 +822,15 @@
       "models": "modelů",
       "test": "Test",
       "testing": "Testování...",
-      "stop": "Stop"
+      "stop": "Stop",
+      "consentRevoked": "Souhlas odvolán",
+      "consentExpired": "Souhlas vypršel",
+      "transferCount": "odesláno poskytovateli {{total}}×",
+      "consentExpires": "souhlas do {{date}}",
+      "revokeSavedVoice": "Odvolat souhlas pro {{name}}",
+      "revokeSavedVoiceConfirm": "Odvolat souhlas pro „{{name}}“? Uložený hlas už nebude možné použít, záznam o souhlasu ale zůstane zachován.",
+      "savedVoiceRevoked": "Souhlas odvolán",
+      "savedVoiceRevokeFailed": "Souhlas se nepodařilo odvolat"
     },
     "imageGen": {
       "title": "Generování obrázků",
@@ -1648,6 +1656,19 @@
       "saved": "Přístup k nástrojům aktualizován",
       "saveFailed": "Přístup k nástrojům se nepodařilo aktualizovat.",
       "lockedByEnv": "Uzamčeno proměnnou prostředí na tomto serveru."
+    },
+    "voice": {
+      "title": "Hlasový přístup",
+      "description": "Určuje, kdo smí používat hlasové funkce. Správci mají přístup vždy.",
+      "lockedByEnv": "Určeno proměnnou prostředí",
+      "saved": "Hlasový přístup aktualizován",
+      "saveFailed": "Hlasový přístup se nepodařilo aktualizovat",
+      "features": {
+        "stt": "Řeč na text",
+        "tts": "Text na řeč",
+        "voiceMode": "Hlasový režim",
+        "voiceCloning": "Klonování hlasu"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Médium bylo vytvořeno a hlas „{{name}}“ je nyní k dispozici v nastavení Řeči",
     "failed": "Nepodařilo se vygenerovat média",
     "loadFailed": "Nepodařilo se načíst poskytovatele médií",
-    "noModels": "Nejsou dostupné žádné modely typu {{kind}}. Nejprve aktivujte kompatibilního poskytovatele a uložte jeho přihlašovací údaje."
+    "noModels": "Nejsou dostupné žádné modely typu {{kind}}. Nejprve aktivujte kompatibilního poskytovatele a uložte jeho přihlašovací údaje.",
+    "consentTtl": {
+      "label": "Doba platnosti souhlasu",
+      "never": "Dokud jej neodvolám",
+      "days30": "30 dní",
+      "days90": "90 dní",
+      "days365": "Jeden rok"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} položek",

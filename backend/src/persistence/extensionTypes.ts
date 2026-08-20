@@ -207,6 +207,13 @@ export interface StoredVoiceProfile {
   audio_format: 'wav' | 'mp3' | 'flac' | 'ogg' | 'm4a';
   audio_size: number;
   consent_confirmed_at: number;
+  /** Optional consent expiry; a profile past this moment cannot be used. */
+  consent_expires_at: number | null;
+  /** Consent withdrawal moment; kept as a receipt rather than deleted. */
+  revoked_at: number | null;
+  /** How many times the reference audio was sent to the provider. */
+  transfer_count: number;
+  last_transfer_at: number | null;
   created_at: number;
   updated_at: number;
   name_lookup: string;
@@ -230,6 +237,14 @@ export interface VoiceProfileRepository {
     limits: VoiceProfileCreateLimits
   ): Promise<void>;
   delete(id: string, userId: string): Promise<boolean>;
+  /** Withdraw consent, keeping the row as a receipt. False when already revoked or missing. */
+  revoke(id: string, userId: string, revokedAt: number): Promise<boolean>;
+  /** Count one provider transfer of the reference audio. */
+  recordTransfer(
+    id: string,
+    userId: string,
+    transferredAt: number
+  ): Promise<boolean>;
 }
 
 export class VoiceProfileLimitError extends Error {

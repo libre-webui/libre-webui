@@ -65,6 +65,12 @@ export interface TTSVoiceProfile {
   mimeType: string;
   createdAt: number;
   updatedAt: number;
+  consentConfirmedAt: number;
+  consentExpiresAt: number | null;
+  revokedAt: number | null;
+  transferCount: number;
+  lastTransferAt: number | null;
+  consentStatus: 'active' | 'expired' | 'revoked';
 }
 
 export interface TTSGenerateBase64Response {
@@ -156,6 +162,21 @@ export const ttsApi = {
         },
       })
       .then(res => res.data);
+  },
+
+  revokeVoiceProfile: async (
+    id: string
+  ): Promise<ApiResponse<TTSVoiceProfile>> => {
+    if (isDemoMode()) {
+      return {
+        success: false,
+        error: 'Demo mode',
+      } as ApiResponse<TTSVoiceProfile>;
+    }
+    const response = await api.post(
+      `/tts/voice-profiles/${encodeURIComponent(id)}/revoke`
+    );
+    return response.data;
   },
 
   deleteVoiceProfile: async (id: string): Promise<void> => {

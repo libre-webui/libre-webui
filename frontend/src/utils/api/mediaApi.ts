@@ -92,6 +92,7 @@ export const mediaApi = {
       responseFormat?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
       saveVoiceName?: string;
       consentToStore?: boolean;
+      consentTtlDays?: number;
     },
     signal?: AbortSignal
   ): Promise<ApiResponse<GeneratedMedia>> => {
@@ -111,6 +112,9 @@ export const mediaApi = {
     }
     if (request.consentToStore) {
       form.set('consentToStore', 'true');
+    }
+    if (request.consentTtlDays !== undefined) {
+      form.set('consentTtlDays', String(request.consentTtlDays));
     }
 
     return api

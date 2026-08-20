@@ -822,7 +822,15 @@
       "models": "líkön",
       "test": "Prófa",
       "testing": "Prófar...",
-      "stop": "Stöðva"
+      "stop": "Stöðva",
+      "consentRevoked": "Samþykki afturkallað",
+      "consentExpired": "Samþykki útrunnið",
+      "transferCount": "sent til þjónustuveitanda {{total}} sinnum",
+      "consentExpires": "samþykki til {{date}}",
+      "revokeSavedVoice": "Afturkalla samþykki fyrir {{name}}",
+      "revokeSavedVoiceConfirm": "Afturkalla samþykki fyrir „{{name}}“? Ekki verður lengur hægt að nota vistuðu röddina, en samþykkisfærslan varðveitist.",
+      "savedVoiceRevoked": "Samþykki afturkallað",
+      "savedVoiceRevokeFailed": "Ekki tókst að afturkalla samþykki"
     },
     "imageGen": {
       "title": "Myndsköpun",
@@ -1648,6 +1656,19 @@
       "saved": "Aðgangur að tólum uppfærður",
       "saveFailed": "Ekki tókst að uppfæra aðgang að tólum.",
       "lockedByEnv": "Læst með umhverfisbreytu á þessum þjóni."
+    },
+    "voice": {
+      "title": "Raddaðgangur",
+      "description": "Stýrir hverjir mega nota raddeiginleika. Stjórnendur hafa alltaf aðgang.",
+      "lockedByEnv": "Fest með umhverfisbreytu",
+      "saved": "Raddaðgangur uppfærður",
+      "saveFailed": "Ekki tókst að uppfæra raddaðgang",
+      "features": {
+        "stt": "Tal í texta",
+        "tts": "Texti í tal",
+        "voiceMode": "Raddhamur",
+        "voiceCloning": "Raddklónun"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Miðillinn var búinn til og „{{name}}“ er nú í boði í talstillingum",
     "failed": "Mistókst að búa til miðil",
     "loadFailed": "Mistókst að hlaða miðilaveitur",
-    "noModels": "Engin {{kind}} líkön eru tiltæk. Virkjaðu samhæfa veitu og vistaðu skilríki hennar fyrst."
+    "noModels": "Engin {{kind}} líkön eru tiltæk. Virkjaðu samhæfa veitu og vistaðu skilríki hennar fyrst.",
+    "consentTtl": {
+      "label": "Gildistími samþykkis",
+      "never": "Þar til ég afturkalla það",
+      "days30": "30 dagar",
+      "days90": "90 dagar",
+      "days365": "Eitt ár"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} hlutir",

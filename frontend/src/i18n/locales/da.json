@@ -822,7 +822,15 @@
       "models": "modeller",
       "test": "Test",
       "testing": "Tester...",
-      "stop": "Stop"
+      "stop": "Stop",
+      "consentRevoked": "Samtykke trukket tilbage",
+      "consentExpired": "Samtykke udløbet",
+      "transferCount": "sendt til udbyderen {{total}} gange",
+      "consentExpires": "samtykke indtil {{date}}",
+      "revokeSavedVoice": "Træk samtykke tilbage for {{name}}",
+      "revokeSavedVoiceConfirm": "Træk samtykke tilbage for “{{name}}”? Den gemte stemme kan ikke længere bruges, men samtykkeregistreringen bevares.",
+      "savedVoiceRevoked": "Samtykke trukket tilbage",
+      "savedVoiceRevokeFailed": "Kunne ikke trække samtykke tilbage"
     },
     "imageGen": {
       "title": "Billedgenerering",
@@ -1648,6 +1656,19 @@
       "saved": "Værktøjsadgang opdateret",
       "saveFailed": "Værktøjsadgangen kunne ikke opdateres.",
       "lockedByEnv": "Låst af en miljøvariabel på denne server."
+    },
+    "voice": {
+      "title": "Stemmeadgang",
+      "description": "Styrer, hvem der må bruge talefunktioner. Administratorer har altid adgang.",
+      "lockedByEnv": "Fastlåst af en miljøvariabel",
+      "saved": "Stemmeadgang opdateret",
+      "saveFailed": "Kunne ikke opdatere stemmeadgang",
+      "features": {
+        "stt": "Tale til tekst",
+        "tts": "Tekst til tale",
+        "voiceMode": "Stemmetilstand",
+        "voiceCloning": "Stemmekloning"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Mediet er oprettet, og “{{name}}” er nu tilgængelig i Taleindstillinger",
     "failed": "Kunne ikke generere medie",
     "loadFailed": "Kunne ikke indlæse medieudbydere",
-    "noModels": "Ingen {{kind}}-modeller er tilgængelige. Aktiver en kompatibel udbyder og gem dens legitimationsoplysninger først."
+    "noModels": "Ingen {{kind}}-modeller er tilgængelige. Aktiver en kompatibel udbyder og gem dens legitimationsoplysninger først.",
+    "consentTtl": {
+      "label": "Samtykkets varighed",
+      "never": "Indtil jeg trækker det tilbage",
+      "days30": "30 dage",
+      "days90": "90 dage",
+      "days365": "Et år"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} elementer",

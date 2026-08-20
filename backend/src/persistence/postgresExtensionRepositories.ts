@@ -70,6 +70,19 @@ const voiceProfile = (row: NumericRow): StoredVoiceProfile => ({
     row.consent_confirmed_at,
     'voice consent_confirmed_at'
   ),
+  consent_expires_at:
+    row.consent_expires_at === null || row.consent_expires_at === undefined
+      ? null
+      : integer(row.consent_expires_at, 'voice consent_expires_at'),
+  revoked_at:
+    row.revoked_at === null || row.revoked_at === undefined
+      ? null
+      : integer(row.revoked_at, 'voice revoked_at'),
+  transfer_count: integer(row.transfer_count ?? 0, 'voice transfer_count'),
+  last_transfer_at:
+    row.last_transfer_at === null || row.last_transfer_at === undefined
+      ? null
+      : integer(row.last_transfer_at, 'voice last_transfer_at'),
   created_at: integer(row.created_at, 'voice created_at'),
   updated_at: integer(row.updated_at, 'voice updated_at'),
 });
@@ -828,9 +841,10 @@ class PostgresVoiceProfileRepository implements VoiceProfileRepository {
         `INSERT INTO voice_profiles
            (id, user_id, name, name_lookup, plugin_id, model, reference_audio,
             reference_text, routing_fingerprint, audio_mime_type, audio_format,
-            audio_size, consent_confirmed_at, created_at, updated_at)
+            audio_size, consent_confirmed_at, consent_expires_at, created_at,
+            updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-                 $13, $14, $15)`,
+                 $13, $14, $15, $16)`,
         [
           profile.id,
           profile.user_id,
@@ -845,6 +859,7 @@ class PostgresVoiceProfileRepository implements VoiceProfileRepository {
           profile.audio_format,
           profile.audio_size,
           profile.consent_confirmed_at,
+          profile.consent_expires_at,
           profile.created_at,
           profile.updated_at,
         ]
@@ -859,6 +874,44 @@ class PostgresVoiceProfileRepository implements VoiceProfileRepository {
           await this.database.query(
             'DELETE FROM voice_profiles WHERE id = $1 AND user_id = $2',
             [id, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async revoke(
+    id: string,
+    userId: string,
+    revokedAt: number
+  ): Promise<boolean> {
+    return (
+      rowCount(
+        (
+          await this.database.query(
+            `UPDATE voice_profiles
+               SET revoked_at = $1, updated_at = $2
+             WHERE id = $3 AND user_id = $4 AND revoked_at IS NULL`,
+            [revokedAt, revokedAt, id, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async recordTransfer(
+    id: string,
+    userId: string,
+    transferredAt: number
+  ): Promise<boolean> {
+    return (
+      rowCount(
+        (
+          await this.database.query(
+            `UPDATE voice_profiles
+               SET transfer_count = transfer_count + 1, last_transfer_at = $1
+             WHERE id = $2 AND user_id = $3`,
+            [transferredAt, id, userId]
           )
         ).rowCount
       ) > 0

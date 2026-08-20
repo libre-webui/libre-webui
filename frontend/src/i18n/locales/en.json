@@ -822,7 +822,15 @@
       "models": "models",
       "test": "Test",
       "testing": "Testing...",
-      "stop": "Stop"
+      "stop": "Stop",
+      "consentRevoked": "Consent withdrawn",
+      "consentExpired": "Consent expired",
+      "transferCount": "sent to provider {{total}}×",
+      "consentExpires": "consent until {{date}}",
+      "revokeSavedVoice": "Withdraw consent for {{name}}",
+      "revokeSavedVoiceConfirm": "Withdraw consent for “{{name}}”? The saved voice can no longer be used, but the consent record is kept.",
+      "savedVoiceRevoked": "Consent withdrawn",
+      "savedVoiceRevokeFailed": "Failed to withdraw consent"
     },
     "imageGen": {
       "title": "Image Generation",
@@ -1648,6 +1656,19 @@
       "saved": "Tool access updated",
       "saveFailed": "Could not update tool access.",
       "lockedByEnv": "Locked by an environment variable on this server."
+    },
+    "voice": {
+      "title": "Voice access",
+      "description": "Control who may use speech features. Administrators always have access.",
+      "lockedByEnv": "Pinned by an environment variable",
+      "saved": "Voice access updated",
+      "saveFailed": "Failed to update voice access",
+      "features": {
+        "stt": "Speech to text",
+        "tts": "Text to speech",
+        "voiceMode": "Voice mode",
+        "voiceCloning": "Voice cloning"
+      }
     }
   },
   "usageAnalytics": {
@@ -1928,7 +1949,14 @@
     "successWithSavedVoice": "Media generated and “{{name}}” is now available in Speech settings",
     "failed": "Failed to generate media",
     "loadFailed": "Failed to load media providers",
-    "noModels": "No {{kind}} models are available. Activate a compatible provider and save its credential first."
+    "noModels": "No {{kind}} models are available. Activate a compatible provider and save its credential first.",
+    "consentTtl": {
+      "label": "Consent duration",
+      "never": "Until I withdraw it",
+      "days30": "30 days",
+      "days90": "90 days",
+      "days365": "One year"
+    }
   },
   "mediaGallery": {
     "itemCount": "{{count}} items",
