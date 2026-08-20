@@ -24,6 +24,7 @@ import {
   type VectorActor,
   type VectorDeleteRequest,
   type VectorGrant,
+  type VectorGrantReplacementRequest,
   type VectorHit,
   type VectorQuery,
   type VectorResourceIndexProbe,
@@ -619,6 +620,68 @@ export class PgVectorStore implements VectorStore {
       return result.rowCount ?? 0;
     } catch (error) {
       throw mapPgError('Unable to delete owner PGVector records', error);
+    }
+  }
+
+  async replaceResourceGrants(
+    request: VectorGrantReplacementRequest
+  ): Promise<number> {
+    validateActor(request.actor);
+    validateString(request.namespace, 'namespace');
+    const resourceIds = [...new Set(request.resourceIds)];
+    if (resourceIds.length === 0) return 0;
+    if (resourceIds.length > 100) {
+      throw invalidInput('Too many vector resource filters');
+    }
+    for (const resourceId of resourceIds) {
+      validateString(resourceId, 'resource ID');
+    }
+    const grants = validateGrants(request.grants);
+    try {
+      return await this.database.transaction(async client => {
+        const rows = await client.query<{ id: string }>(
+          `SELECT id FROM platform_vector_entries
+            WHERE namespace = $1 AND owner_user_id = $2
+              AND resource_id = ANY($3::text[])`,
+          [request.namespace, request.actor.userId, resourceIds]
+        );
+        const ids = rows.rows.map(row => row.id);
+        if (ids.length === 0) return 0;
+        await client.query(
+          `DELETE FROM platform_vector_acl
+            WHERE namespace = $1 AND owner_user_id = $2
+              AND vector_id = ANY($3::text[])`,
+          [request.namespace, request.actor.userId, ids]
+        );
+        if (grants.length > 0) {
+          await client.query(
+            `INSERT INTO platform_vector_acl (
+               namespace, owner_user_id, vector_id,
+               principal_type, principal_id
+             )
+             SELECT $1, $2, vector_ids.id,
+                    acl_grant.principal_type, acl_grant.principal_id
+               FROM unnest($3::text[]) AS vector_ids(id)
+              CROSS JOIN jsonb_to_recordset($4::jsonb)
+                AS acl_grant(principal_type TEXT, principal_id TEXT)
+             ON CONFLICT DO NOTHING`,
+            [
+              request.namespace,
+              request.actor.userId,
+              ids,
+              JSON.stringify(
+                grants.map(grant => ({
+                  principal_type: grant.type,
+                  principal_id: grant.id,
+                }))
+              ),
+            ]
+          );
+        }
+        return ids.length;
+      });
+    } catch (error) {
+      throw mapPgError('Unable to replace PGVector resource grants', error);
     }
   }
 

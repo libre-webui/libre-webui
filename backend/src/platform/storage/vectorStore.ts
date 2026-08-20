@@ -93,6 +93,19 @@ export interface VectorDeleteRequest {
   ids?: readonly string[];
 }
 
+/**
+ * Owner-scoped ACL replacement: every current record of the listed
+ * resources receives exactly this grant set. Embeddings and attributes are
+ * untouched, so share/revoke operations never re-embed content and
+ * revocation applies to the very next query.
+ */
+export interface VectorGrantReplacementRequest {
+  actor: VectorActor;
+  namespace: string;
+  resourceIds: readonly string[];
+  grants: readonly VectorGrant[];
+}
+
 export interface VectorResourceIndexEntry {
   id: string;
   sourceRevision: string;
@@ -134,6 +147,10 @@ export interface VectorStore {
   hasExactResourceIndex(request: VectorResourceIndexProbe): Promise<boolean>;
   delete(request: VectorDeleteRequest): Promise<number>;
   deleteAllForOwner(actor: VectorActor): Promise<number>;
+  /** Returns the number of records whose grant set was replaced. */
+  replaceResourceGrants(
+    request: VectorGrantReplacementRequest
+  ): Promise<number>;
 }
 
 export type VectorStoreErrorCode =

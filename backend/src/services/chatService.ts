@@ -50,6 +50,14 @@ import {
   type CompactionPlan,
 } from './contextCompactionService.js';
 import { transactionalChatGenerationEnqueuer } from '../platform/jobs/chatGenerationEnqueuer.js';
+import { getPersistence } from '../persistence/index.js';
+import { encryptionService } from './encryptionService.js';
+import {
+  grantedResourceIdsFor,
+  sharedMetaFor,
+  type SharedResourceMeta,
+} from './sharedResourceAccess.js';
+import type { AuthzActor } from './authorizationService.js';
 import {
   CHAT_GENERATE_JOB_TYPE,
   chatEventStreamId,
@@ -253,6 +261,56 @@ class ChatService {
     });
 
     return sessionsArray;
+  }
+
+  /**
+   * Loads a session the actor may read: their own, or one shared with them
+   * through a grant. Shared results carry `shared` metadata and are
+   * read-only surfaces — every mutation path stays owner-scoped.
+   */
+  async getSessionShared(
+    sessionId: string,
+    actor: AuthzActor
+  ): Promise<
+    { session: ChatSession; shared?: SharedResourceMeta } | undefined
+  > {
+    const own = await this.getSession(sessionId, actor.userId);
+    if (own) return { session: own };
+    const ownerUserId = await getPersistence(
+      encryptionService
+    ).repositories.resources.archive.ownerOf('session', sessionId);
+    if (!ownerUserId || ownerUserId === actor.userId) return undefined;
+    const shared = await sharedMetaFor(
+      actor,
+      'session',
+      sessionId,
+      ownerUserId
+    );
+    if (!shared) return undefined;
+    const session = await storageService.getSession(sessionId, ownerUserId);
+    if (!session) return undefined;
+    return { session, shared };
+  }
+
+  /** Own sessions followed by sessions shared with the actor. */
+  async getAllSessionsWithShared(
+    actor: AuthzActor
+  ): Promise<Array<ChatSession & { shared?: SharedResourceMeta }>> {
+    const own: Array<ChatSession & { shared?: SharedResourceMeta }> =
+      await this.getAllSessions(actor.userId);
+    const sharedIds = await grantedResourceIdsFor(
+      actor,
+      'session',
+      new Set(own.map(session => session.id))
+    );
+    const shared: Array<ChatSession & { shared?: SharedResourceMeta }> = [];
+    for (const sessionId of sharedIds) {
+      const found = await this.getSessionShared(sessionId, actor);
+      if (!found || !found.shared) continue;
+      shared.push({ ...found.session, shared: found.shared });
+    }
+    shared.sort((left, right) => right.updatedAt - left.updatedAt);
+    return [...own, ...shared];
   }
 
   async updateSession(

@@ -305,6 +305,24 @@ class StorageService {
     }));
   }
 
+  /** Cross-owner read; callers must authorize before returning content. */
+  async getKnowledgeCollectionById(
+    collectionId: string
+  ): Promise<(KnowledgeCollection & { ownerUserId: string }) | undefined> {
+    const row =
+      await getPersistence(
+        encryptionService
+      ).repositories.resources.knowledgeCollections.findById(collectionId);
+    if (!row) return undefined;
+    return {
+      id: row.id,
+      name: encryptionService.decrypt(row.name),
+      ownerUserId: row.user_id,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
   async saveKnowledgeCollection(
     collection: KnowledgeCollection,
     userId = 'default'

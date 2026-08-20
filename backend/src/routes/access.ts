@@ -33,6 +33,8 @@ import {
 } from '../services/resourceGrantService.js';
 import type { AuthzActor } from '../services/authorizationService.js';
 import { userModel } from '../models/userModel.js';
+import { getPersistence } from '../persistence/index.js';
+import { encryptionService } from '../services/encryptionService.js';
 import { createLogger } from '../utils/logger.js';
 
 const router = express.Router();
@@ -69,23 +71,52 @@ const handleError = (
   res.status(500).json({ success: false, message: 'Internal server error' });
 };
 
-const publicGrant = (grant: {
-  id: string;
-  resource_type: string;
-  resource_id: string;
-  principal_type: string;
-  principal_id: string;
-  permission: string;
-  created_at: number;
-}) => ({
+const publicGrant = (
+  grant: {
+    id: string;
+    resource_type: string;
+    resource_id: string;
+    principal_type: string;
+    principal_id: string;
+    permission: string;
+    created_at: number;
+  },
+  principalName?: string
+) => ({
   id: grant.id,
   resourceType: grant.resource_type,
   resourceId: grant.resource_id,
   principalType: grant.principal_type,
   principalId: grant.principal_id,
+  ...(principalName !== undefined ? { principalName } : {}),
   permission: grant.permission,
   createdAt: new Date(grant.created_at).toISOString(),
 });
+
+/**
+ * Resolve display names for grant principals so shares render as people
+ * and groups rather than opaque identifiers.
+ */
+const withPrincipalNames = async (
+  grants: readonly Parameters<typeof publicGrant>[0][]
+) => {
+  const security = getPersistence(encryptionService).repositories.security;
+  const resolved = [];
+  for (const grant of grants) {
+    let name: string | undefined;
+    try {
+      if (grant.principal_type === 'user') {
+        name = (await userModel.getUserById(grant.principal_id))?.username;
+      } else {
+        name = (await security.groups.findById(grant.principal_id))?.name;
+      }
+    } catch {
+      name = undefined;
+    }
+    resolved.push(publicGrant(grant, name));
+  }
+  return resolved;
+};
 
 /**
  * Exact-match principal lookup for the share dialog. Only a complete
@@ -114,6 +145,34 @@ router.get('/principals', async (req: AuthenticatedRequest, res) => {
   }
 });
 
+/**
+ * Exact-match group lookup for the share dialog. Like the user lookup,
+ * only a complete group name resolves — this confirms a name the sharer
+ * already knows rather than enumerating groups.
+ */
+router.get('/principals/groups', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { name } = req.query;
+    if (typeof name !== 'string' || !name.trim()) {
+      res.status(400).json({ success: false, message: 'name is required' });
+      return;
+    }
+    const group = await getPersistence(
+      encryptionService
+    ).repositories.security.groups.findByName(name.trim());
+    if (!group) {
+      res.status(404).json({ success: false, message: 'Group not found' });
+      return;
+    }
+    res.json({
+      success: true,
+      data: { id: group.id, name: group.name },
+    });
+  } catch (error) {
+    handleError(res, error, 'Group principal lookup error:');
+  }
+});
+
 /** Grants on one of the caller's resources. */
 router.get('/grants', async (req: AuthenticatedRequest, res) => {
   try {
@@ -125,7 +184,7 @@ router.get('/grants', async (req: AuthenticatedRequest, res) => {
       return;
     }
     const grants = await listGrantsForResource(actorOf(req), type, id);
-    res.json({ success: true, data: grants.map(publicGrant) });
+    res.json({ success: true, data: await withPrincipalNames(grants) });
   } catch (error) {
     handleError(res, error, 'Grant list error:');
   }
@@ -181,7 +240,7 @@ router.delete('/grants/:id', async (req: AuthenticatedRequest, res) => {
 router.get('/shared-with-me', async (req: AuthenticatedRequest, res) => {
   try {
     const grants = await listGrantsForActor(actorOf(req));
-    res.json({ success: true, data: grants.map(publicGrant) });
+    res.json({ success: true, data: grants.map(grant => publicGrant(grant)) });
   } catch (error) {
     handleError(res, error, 'Shared list error:');
   }

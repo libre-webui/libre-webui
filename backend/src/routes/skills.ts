@@ -33,7 +33,7 @@ import {
   importSkill,
   importSkillFromUrl,
   listSkillFiles,
-  listSkills,
+  listSkillsWithShared,
   listVersions,
   putSkillFile,
   rollbackSkill,
@@ -89,7 +89,7 @@ router.get('/', async (req: AuthenticatedRequest, res) => {
   try {
     res.json({
       success: true,
-      data: await listSkills(userIdOf(req)),
+      data: await listSkillsWithShared(actorOf(req)),
     } as ApiResponse);
   } catch (error) {
     sendSkillError(res, error, 'Failed to load skills');

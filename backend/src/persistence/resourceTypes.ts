@@ -109,6 +109,8 @@ export interface StoredNamedResourceRecord {
 
 export interface KnowledgeCollectionRepository {
   listByOwner(userId: string): Promise<StoredNamedResourceRecord[]>;
+  /** Cross-owner read; callers must authorize before returning content. */
+  findById(collectionId: string): Promise<StoredNamedResourceRecord | null>;
   replace(collection: StoredNamedResourceRecord): Promise<void>;
   deleteAndDetach(collectionId: string, userId: string): Promise<boolean>;
 }

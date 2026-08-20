@@ -344,6 +344,16 @@ class SQLiteKnowledgeCollectionRepository implements KnowledgeCollectionReposito
       .all(userId) as StoredNamedResourceRecord[];
   }
 
+  async findById(
+    collectionId: string
+  ): Promise<StoredNamedResourceRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM knowledge_collections WHERE id = ?')
+        .get(collectionId) as StoredNamedResourceRecord | undefined) ?? null
+    );
+  }
+
   async replace(collection: StoredNamedResourceRecord): Promise<void> {
     ensureSameOwner(
       this.database,

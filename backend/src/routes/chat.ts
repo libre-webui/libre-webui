@@ -199,7 +199,10 @@ router.get(
   ): Promise<void> => {
     try {
       const userId = req.user?.userId || 'default';
-      const sessions = await chatService.getAllSessions(userId);
+      const sessions = await chatService.getAllSessionsWithShared({
+        userId,
+        role: req.user?.role,
+      });
       res.json({
         success: true,
         data: sessions,
@@ -269,9 +272,12 @@ router.get(
     try {
       const sessionId = req.params.sessionId as string;
       const userId = req.user?.userId || 'default';
-      const session = await chatService.getSession(sessionId, userId);
+      const found = await chatService.getSessionShared(sessionId, {
+        userId,
+        role: req.user?.role,
+      });
 
-      if (!session) {
+      if (!found) {
         res.status(404).json({
           success: false,
           error: 'Session not found',
@@ -281,7 +287,9 @@ router.get(
 
       res.json({
         success: true,
-        data: session,
+        data: found.shared
+          ? { ...found.session, shared: found.shared }
+          : found.session,
       });
     } catch (error: unknown) {
       res.status(500).json({

@@ -69,6 +69,7 @@ export const SHAREABLE_RESOURCE_TYPES: readonly ShareableResourceType[] = [
   'prompt',
   'skill',
   'tool-server',
+  'calendar',
 ];
 
 export const isShareableResourceType = (

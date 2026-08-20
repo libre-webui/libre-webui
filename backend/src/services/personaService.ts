@@ -26,6 +26,12 @@ import {
 import { createLogger } from '../utils/logger.js';
 import { getPlatformStorageRuntime } from '../platform/storage/index.js';
 import { transactionalResourceDeletionEnqueuer } from '../platform/jobs/resourceDeletionEnqueuer.js';
+import { getPersistence } from '../persistence/index.js';
+import { encryptionService } from './encryptionService.js';
+import {
+  grantedResourceIdsFor,
+  sharedMetaFor,
+} from './sharedResourceAccess.js';
 
 const logger = createLogger('services:persona-service');
 
@@ -217,7 +223,27 @@ export class PersonaService {
   }
 
   /**
-   * Get a specific persona by ID with optional advanced features
+   * Loads a persona shared with the actor through a grant, re-authorized on
+   * every resolution. Shared personas surface only the basic definition —
+   * never the owner's memories or evolution state.
+   */
+  private async getSharedPersona(
+    id: string,
+    userId: string
+  ): Promise<Persona | null> {
+    const ownerUserId = await getPersistence(
+      encryptionService
+    ).repositories.resources.archive.ownerOf('persona', id);
+    if (!ownerUserId || ownerUserId === userId) return null;
+    const shared = await sharedMetaFor({ userId }, 'persona', id, ownerUserId);
+    if (!shared) return null;
+    const persona = await personaModel.getPersonaById(id, ownerUserId);
+    return persona ? { ...persona, shared } : null;
+  }
+
+  /**
+   * Get a specific persona by ID with optional advanced features. Falls
+   * back to a read-only shared view when the actor holds a grant.
    */
   async getPersonaById(
     id: string,
@@ -225,7 +251,7 @@ export class PersonaService {
   ): Promise<Persona | null> {
     const basePersona = await personaModel.getPersonaById(id, userId);
     if (!basePersona) {
-      return null;
+      return this.getSharedPersona(id, userId);
     }
 
     // Check for advanced features and merge them
@@ -238,13 +264,33 @@ export class PersonaService {
   }
 
   /**
-   * Get a specific persona by ID (basic version)
+   * Get a specific persona by ID (basic version). Falls back to a
+   * read-only shared view when the actor holds a grant.
    */
   async getBasicPersonaById(
     id: string,
     userId: string = 'default'
   ): Promise<Persona | null> {
-    return await personaModel.getPersonaById(id, userId);
+    const persona = await personaModel.getPersonaById(id, userId);
+    if (persona) return persona;
+    return this.getSharedPersona(id, userId);
+  }
+
+  /** Own personas followed by personas shared with the actor. */
+  async getPersonasWithShared(userId: string): Promise<Persona[]> {
+    const own = await this.getPersonas(userId);
+    const sharedIds = await grantedResourceIdsFor(
+      { userId },
+      'persona',
+      new Set(own.map(persona => persona.id))
+    );
+    const shared: Persona[] = [];
+    for (const personaId of sharedIds) {
+      const persona = await this.getSharedPersona(personaId, userId);
+      if (persona) shared.push(persona);
+    }
+    shared.sort((left, right) => right.updated_at - left.updated_at);
+    return [...own, ...shared];
   }
 
   /**

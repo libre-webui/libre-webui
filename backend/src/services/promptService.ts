@@ -38,6 +38,11 @@ import {
   type AuthzActor,
 } from './authorizationService.js';
 import { deleteGrantsForResource } from './resourceGrantService.js';
+import {
+  grantedResourceIdsFor,
+  sharedMetaFor,
+  type SharedResourceMeta,
+} from './sharedResourceAccess.js';
 import { recordAuditEvent } from './securityAuditService.js';
 import {
   MAX_PROMPT_CONTENT_LENGTH,
@@ -438,6 +443,34 @@ const readable = async (
 export const listPrompts = async (userId: string): Promise<Prompt[]> => {
   const rows = await prompts().listByOwner(userId, MAX_PROMPTS_PER_USER);
   return rows.map(mapPromptRow);
+};
+
+export interface PromptWithAccess extends Prompt {
+  shared?: SharedResourceMeta;
+}
+
+/** Own prompts followed by prompts shared with the actor. */
+export const listPromptsWithShared = async (
+  actor: AuthzActor
+): Promise<PromptWithAccess[]> => {
+  const own: PromptWithAccess[] = (
+    await prompts().listByOwner(actor.userId, MAX_PROMPTS_PER_USER)
+  ).map(mapPromptRow);
+  const sharedIds = await grantedResourceIdsFor(
+    actor,
+    'prompt',
+    new Set(own.map(prompt => prompt.id))
+  );
+  const shared: PromptWithAccess[] = [];
+  for (const promptId of sharedIds) {
+    const row = await prompts().findById(promptId);
+    if (!row || row.user_id === actor.userId) continue;
+    const meta = await sharedMetaFor(actor, 'prompt', promptId, row.user_id);
+    if (!meta) continue;
+    shared.push({ ...mapPromptRow(row), shared: meta });
+  }
+  shared.sort((left, right) => right.updatedAt - left.updatedAt);
+  return [...own, ...shared];
 };
 
 export const getPrompt = async (

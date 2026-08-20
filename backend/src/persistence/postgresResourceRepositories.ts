@@ -611,6 +611,16 @@ class PostgresKnowledgeCollectionRepository implements KnowledgeCollectionReposi
     return result.rows.map(namedResource);
   }
 
+  async findById(
+    collectionId: string
+  ): Promise<StoredNamedResourceRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM knowledge_collections WHERE id = $1',
+      [collectionId]
+    );
+    return result.rows[0] ? namedResource(result.rows[0]) : null;
+  }
+
   async replace(collection: StoredNamedResourceRecord): Promise<void> {
     await this.database.transaction(async client => {
       await lockOwner(client, collection.user_id);

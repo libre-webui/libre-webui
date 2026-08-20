@@ -42,6 +42,41 @@ import {
   type ShareableResourceType,
 } from './authorizationService.js';
 import { userModel } from '../models/userModel.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('resource-grants');
+
+/**
+ * Post-commit propagation for a grant change. Knowledge shares re-publish
+ * the vector ACL so retrieval reflects the new grant set immediately.
+ * Failures are logged, never thrown: the SQL grant rows stay authoritative
+ * and the next index publication converges the ACL.
+ */
+const propagateGrantChange = async (record: {
+  resource_type: string;
+  resource_id: string;
+  owner_user_id: string;
+}): Promise<void> => {
+  if (
+    record.resource_type !== 'document' &&
+    record.resource_type !== 'knowledge-collection'
+  ) {
+    return;
+  }
+  try {
+    const { default: documentService } = await import('./documentService.js');
+    await documentService.syncShareGrants(
+      record.resource_type,
+      record.resource_id,
+      record.owner_user_id
+    );
+  } catch (error) {
+    logger.error('Failed to propagate a share change to the vector ACL', {
+      resourceType: record.resource_type,
+      error,
+    });
+  }
+};
 
 export class ResourceGrantError extends Error {
   constructor(
@@ -172,12 +207,13 @@ export const createGrant = async (
       tx.audit.insert(audit);
       return undefined;
     });
-    return record;
+  } else {
+    await persistence.transaction(async ({ security: tx }) => {
+      await tx.grants.upsert(record);
+      await tx.audit.insert(audit);
+    });
   }
-  await persistence.transaction(async ({ security: tx }) => {
-    await tx.grants.upsert(record);
-    await tx.audit.insert(audit);
-  });
+  await propagateGrantChange(record);
   return record;
 };
 
@@ -215,18 +251,20 @@ export const deleteGrant = async (
     },
   });
   const persistence = getPersistence(encryptionService);
-  if (persistence.dialect === 'sqlite') {
-    return persistence.transaction(({ security: tx }) => {
-      const deleted = tx.grants.delete(grantId);
-      if (deleted) tx.audit.insert(audit);
-      return deleted;
-    });
-  }
-  return persistence.transaction(async ({ security: tx }) => {
-    const deleted = await tx.grants.delete(grantId);
-    if (deleted) await tx.audit.insert(audit);
-    return deleted;
-  });
+  const deleted =
+    persistence.dialect === 'sqlite'
+      ? await persistence.transaction(({ security: tx }) => {
+          const removed = tx.grants.delete(grantId);
+          if (removed) tx.audit.insert(audit);
+          return removed;
+        })
+      : await persistence.transaction(async ({ security: tx }) => {
+          const removed = await tx.grants.delete(grantId);
+          if (removed) await tx.audit.insert(audit);
+          return removed;
+        });
+  if (deleted) await propagateGrantChange(record);
+  return deleted;
 };
 
 /** Resources shared with the actor (directly or via groups). */

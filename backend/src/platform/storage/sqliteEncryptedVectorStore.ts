@@ -30,6 +30,7 @@ import {
   type VectorActor,
   type VectorDeleteRequest,
   type VectorGrant,
+  type VectorGrantReplacementRequest,
   type VectorHit,
   type VectorQuery,
   type VectorResourceIndexProbe,
@@ -1161,5 +1162,56 @@ export class SqliteEncryptedVectorStore implements VectorStore {
     return this.database
       .prepare('DELETE FROM platform_vector_entries WHERE owner_user_id = ?')
       .run(actor.userId).changes;
+  }
+
+  async replaceResourceGrants(
+    request: VectorGrantReplacementRequest
+  ): Promise<number> {
+    validateActor(request.actor);
+    validateString(request.namespace, 'namespace');
+    const resourceIds = [...new Set(request.resourceIds)];
+    if (resourceIds.length === 0) return 0;
+    if (resourceIds.length > 100) {
+      throw invalidInput('Too many vector resource filters');
+    }
+    for (const resourceId of resourceIds) {
+      validateString(resourceId, 'resource ID');
+    }
+    const grants = validateGrants(request.grants);
+    const replace = this.database.transaction(() => {
+      const placeholders = resourceIds.map(() => '?').join(', ');
+      const rows = this.database
+        .prepare(
+          `SELECT id FROM platform_vector_entries
+           WHERE namespace = ? AND owner_user_id = ?
+             AND resource_id IN (${placeholders})`
+        )
+        .all(request.namespace, request.actor.userId, ...resourceIds) as Array<{
+        id: string;
+      }>;
+      const deleteAcl = this.database.prepare(
+        `DELETE FROM platform_vector_acl
+         WHERE namespace = ? AND owner_user_id = ? AND vector_id = ?`
+      );
+      const insertAcl = this.database.prepare(
+        `INSERT OR REPLACE INTO platform_vector_acl (
+           namespace, owner_user_id, vector_id, principal_type, principal_id
+         ) VALUES (?, ?, ?, ?, ?)`
+      );
+      for (const row of rows) {
+        deleteAcl.run(request.namespace, request.actor.userId, row.id);
+        for (const grant of grants) {
+          insertAcl.run(
+            request.namespace,
+            request.actor.userId,
+            row.id,
+            grant.type,
+            grant.id
+          );
+        }
+      }
+      return rows.length;
+    });
+    return replace();
   }
 }

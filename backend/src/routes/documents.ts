@@ -134,19 +134,30 @@ router.post('/upload', upload.single('document'), async (req, res) => {
   }
 });
 
-// Knowledge collections
+// Knowledge collections (own plus collections shared with the caller)
 router.get('/collections', async (req, res) => {
   try {
     const userId = requireUserId(req);
-    const collections = await storageService.getKnowledgeCollections(userId);
+    const collections = await documentService.listCollectionsWithShared({
+      userId,
+      role: req.user?.role,
+    });
     const documents = await storageService.getAllDocuments(userId);
+    const sharedDocuments = await documentService.listSharedDocuments({
+      userId,
+      role: req.user?.role,
+    });
+    const countFor = (collectionId: string): number =>
+      documents.filter(document => document.collectionId === collectionId)
+        .length +
+      sharedDocuments.filter(
+        entry => entry.document.collectionId === collectionId
+      ).length;
     res.json({
       success: true,
       data: collections.map(collection => ({
         ...collection,
-        documentCount: documents.filter(
-          document => document.collectionId === collection.id
-        ).length,
+        documentCount: countFor(collection.id),
       })),
     } as ApiResponse);
   } catch (error) {
@@ -326,22 +337,40 @@ router.get('/session/:sessionId', async (req, res) => {
   }
 });
 
-// Get all documents
+// Get all documents (own plus documents in shared collections)
 router.get('/', async (req, res) => {
   try {
-    const documents = await documentService.getDocuments(requireUserId(req));
+    const userId = requireUserId(req);
+    const documents = await documentService.getDocuments(userId);
+    const shared = await documentService.listSharedDocuments({
+      userId,
+      role: req.user?.role,
+    });
 
     // Return documents without full content
-    const documentsWithoutContent = documents.map(doc => ({
-      id: doc.id,
-      filename: doc.filename,
-      fileType: doc.fileType,
-      size: doc.size,
-      sessionId: doc.sessionId,
-      collectionId: doc.collectionId,
-      uploadedAt: doc.uploadedAt,
-      contentChars: doc.content?.length ?? 0,
-    }));
+    const documentsWithoutContent = [
+      ...documents.map(doc => ({
+        id: doc.id,
+        filename: doc.filename,
+        fileType: doc.fileType,
+        size: doc.size,
+        sessionId: doc.sessionId,
+        collectionId: doc.collectionId,
+        uploadedAt: doc.uploadedAt,
+        contentChars: doc.content?.length ?? 0,
+      })),
+      ...shared.map(entry => ({
+        id: entry.document.id,
+        filename: entry.document.filename,
+        fileType: entry.document.fileType,
+        size: entry.document.size,
+        sessionId: entry.document.sessionId,
+        collectionId: entry.document.collectionId,
+        uploadedAt: entry.document.uploadedAt,
+        contentChars: entry.document.content?.length ?? 0,
+        shared: entry.shared,
+      })),
+    ];
 
     res.json({
       success: true,
@@ -495,12 +524,18 @@ router.get('/:documentId/source', async (req, res) => {
       }
       range = { start, ...(end !== undefined ? { end } : {}) };
     }
-    const source = await documentService.openDocumentSource(
+    const found = await documentService.getDocumentShared(
       req.params.documentId as string,
-      requireUserId(req),
-      range,
-      abort.signal
+      { userId: requireUserId(req), role: req.user?.role }
     );
+    const source = found
+      ? await documentService.openDocumentSource(
+          req.params.documentId as string,
+          found.ownerUserId,
+          range,
+          abort.signal
+        )
+      : undefined;
     if (!source) {
       res
         .status(404)
@@ -548,10 +583,15 @@ router.get('/:documentId/source', async (req, res) => {
 router.get('/:documentId', async (req, res) => {
   try {
     const { documentId } = req.params;
-    const document = await documentService.getDocument(
-      documentId,
-      requireUserId(req)
+    const found = await documentService.getDocumentShared(
+      documentId as string,
+      { userId: requireUserId(req), role: req.user?.role }
     );
+    const document = found
+      ? found.shared
+        ? { ...found.document, shared: found.shared }
+        : found.document
+      : undefined;
 
     if (!document) {
       res.status(404).json({

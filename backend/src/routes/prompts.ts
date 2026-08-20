@@ -29,7 +29,7 @@ import {
   exportPrompt,
   getPrompt,
   importPrompt,
-  listPrompts,
+  listPromptsWithShared,
   listVersions,
   rollbackPrompt,
   updatePrompt,
@@ -85,7 +85,7 @@ router.get('/', async (req: AuthenticatedRequest, res) => {
   try {
     res.json({
       success: true,
-      data: await listPrompts(userIdOf(req)),
+      data: await listPromptsWithShared(actorOf(req)),
     } as ApiResponse);
   } catch (error) {
     sendPromptError(res, error, 'Failed to load prompts');

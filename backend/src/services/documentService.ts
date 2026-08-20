@@ -21,6 +21,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { DocumentChunk, DocumentFileType } from '../types/index.js';
 import { Document } from '../storage.js';
 import storageService from '../storage.js';
+import { getPersistence } from '../persistence/index.js';
+import { encryptionService } from './encryptionService.js';
+import { listGrantsForActor } from './resourceGrantService.js';
+import {
+  grantedResourceIdsFor,
+  sharedMetaFor,
+  type SharedResourceMeta,
+} from './sharedResourceAccess.js';
+import type { AuthzActor } from './authorizationService.js';
+import type { VectorGrant } from '../platform/storage/vectorStore.js';
 import {
   type BlobByteRange,
   type BlobReadResult,
@@ -1399,6 +1409,212 @@ export class DocumentService {
     );
   }
 
+  /**
+   * Principals that may retrieve this document's vectors: everyone granted
+   * the document directly plus everyone granted its collection. Grants ride
+   * the ACL table, so revocation applies on the very next query without
+   * re-embedding anything.
+   */
+  private async vectorGrantsForDocument(
+    document: Document
+  ): Promise<VectorGrant[]> {
+    const security = getPersistence(encryptionService).repositories.security;
+    const rows = [
+      ...(await security.grants.listForResource('document', document.id)),
+    ];
+    if (document.collectionId) {
+      rows.push(
+        ...(await security.grants.listForResource(
+          'knowledge-collection',
+          document.collectionId
+        ))
+      );
+    }
+    const unique = new Map<string, VectorGrant>();
+    for (const row of rows) {
+      if (row.principal_type !== 'user' && row.principal_type !== 'group') {
+        continue;
+      }
+      unique.set(`${row.principal_type} ${row.principal_id}`, {
+        type: row.principal_type,
+        id: row.principal_id,
+      });
+    }
+    return [...unique.values()];
+  }
+
+  /**
+   * Re-publishes the vector ACL for every document a share change affects.
+   * Called after a grant on a document or knowledge collection is created
+   * or revoked.
+   */
+  async syncShareGrants(
+    resourceType: 'document' | 'knowledge-collection',
+    resourceId: string,
+    ownerUserId: string
+  ): Promise<void> {
+    const platform = getPlatformStorageRuntime();
+    const documents =
+      resourceType === 'document'
+        ? await storageService
+            .getDocument(resourceId, ownerUserId)
+            .then(document => (document ? [document] : []))
+        : (await storageService.getAllDocuments(ownerUserId)).filter(
+            document => document.collectionId === resourceId
+          );
+    for (const document of documents) {
+      const grants = await this.vectorGrantsForDocument(document);
+      await platform.vectorStore.replaceResourceGrants({
+        actor: { userId: ownerUserId },
+        namespace: DOCUMENT_VECTOR_NAMESPACE,
+        resourceIds: [document.id],
+        grants,
+      });
+    }
+  }
+
+  /**
+   * Documents living in knowledge collections shared with the actor. The
+   * grant rows themselves are the authorization: they are resolved fresh
+   * (including group membership) on every call.
+   */
+  private async loadSharedScopeDocuments(
+    userId: string,
+    collectionIds?: string[]
+  ): Promise<Array<{ document: Document; ownerUserId: string }>> {
+    const grants = await listGrantsForActor({ userId });
+    const shared: Array<{ document: Document; ownerUserId: string }> = [];
+    const seenCollections = new Set<string>();
+    const seenDocuments = new Set<string>();
+    for (const grant of grants) {
+      if (grant.resource_type !== 'knowledge-collection') continue;
+      const collectionId = grant.resource_id;
+      if (seenCollections.has(collectionId)) continue;
+      seenCollections.add(collectionId);
+      if (grant.owner_user_id === userId) continue;
+      if (
+        collectionIds &&
+        collectionIds.length > 0 &&
+        !collectionIds.includes(collectionId)
+      ) {
+        continue;
+      }
+      const documents = (
+        await storageService.getAllDocuments(grant.owner_user_id)
+      ).filter(document => document.collectionId === collectionId);
+      for (const document of documents) {
+        if (seenDocuments.has(document.id)) continue;
+        seenDocuments.add(document.id);
+        shared.push({ document, ownerUserId: grant.owner_user_id });
+      }
+    }
+    return shared;
+  }
+
+  /**
+   * Loads a document the actor may read: their own, or one reachable
+   * through a document or collection grant. Shared results are read-only.
+   */
+  async getDocumentShared(
+    documentId: string,
+    actor: AuthzActor
+  ): Promise<
+    | { document: Document; ownerUserId: string; shared?: SharedResourceMeta }
+    | undefined
+  > {
+    const own = await storageService.getDocument(documentId, actor.userId);
+    if (own) return { document: own, ownerUserId: actor.userId };
+    const ownerUserId = await getPersistence(
+      encryptionService
+    ).repositories.resources.archive.ownerOf('document', documentId);
+    if (!ownerUserId || ownerUserId === actor.userId) return undefined;
+    const document = await storageService.getDocument(documentId, ownerUserId);
+    if (!document) return undefined;
+    let shared = await sharedMetaFor(
+      actor,
+      'document',
+      documentId,
+      ownerUserId
+    );
+    if (!shared && document.collectionId) {
+      shared = await sharedMetaFor(
+        actor,
+        'knowledge-collection',
+        document.collectionId,
+        ownerUserId
+      );
+    }
+    if (!shared) return undefined;
+    return { document, ownerUserId, shared };
+  }
+
+  /** Documents shared with the actor through collection grants. */
+  async listSharedDocuments(
+    actor: AuthzActor
+  ): Promise<Array<{ document: Document; shared: SharedResourceMeta }>> {
+    const entries = await this.loadSharedScopeDocuments(actor.userId);
+    const result: Array<{ document: Document; shared: SharedResourceMeta }> =
+      [];
+    for (const { document, ownerUserId } of entries) {
+      if (!document.collectionId) continue;
+      const meta = await sharedMetaFor(
+        actor,
+        'knowledge-collection',
+        document.collectionId,
+        ownerUserId
+      );
+      if (meta) result.push({ document, shared: meta });
+    }
+    return result;
+  }
+
+  /**
+   * The actor's own collections followed by collections shared with them.
+   */
+  async listCollectionsWithShared(actor: AuthzActor): Promise<
+    Array<{
+      id: string;
+      name: string;
+      createdAt: number;
+      updatedAt: number;
+      shared?: SharedResourceMeta;
+    }>
+  > {
+    const own = await storageService.getKnowledgeCollections(actor.userId);
+    const sharedIds = await grantedResourceIdsFor(
+      actor,
+      'knowledge-collection',
+      new Set(own.map(collection => collection.id))
+    );
+    const shared: Array<{
+      id: string;
+      name: string;
+      createdAt: number;
+      updatedAt: number;
+      shared?: SharedResourceMeta;
+    }> = [];
+    for (const collectionId of sharedIds) {
+      const collection =
+        await storageService.getKnowledgeCollectionById(collectionId);
+      if (!collection || collection.ownerUserId === actor.userId) continue;
+      const meta = await sharedMetaFor(
+        actor,
+        'knowledge-collection',
+        collectionId,
+        collection.ownerUserId
+      );
+      if (!meta) continue;
+      shared.push({
+        id: collection.id,
+        name: collection.name,
+        createdAt: collection.createdAt,
+        updatedAt: collection.updatedAt,
+        shared: meta,
+      });
+    }
+    return [...own, ...shared];
+  }
+
   private async indexDocumentChunks(
     document: Document,
     chunks: readonly DocumentChunk[],
@@ -1456,6 +1672,7 @@ export class DocumentService {
         expectedRevision,
         expectedSource
       );
+      const shareGrants = await this.vectorGrantsForDocument(document);
       for (
         let offset = 0;
         offset < embedded.length;
@@ -1491,6 +1708,7 @@ export class DocumentService {
                 ? { collectionId: document.collectionId }
                 : {}),
             },
+            ...(shareGrants.length > 0 ? { grants: shareGrants } : {}),
           })),
         });
         await assertSideEffectAllowed?.();
@@ -1604,11 +1822,25 @@ export class DocumentService {
       const documents = (await storageService.getAllDocuments(userId)).filter(
         document => this.documentInScope(document, sessionId, collectionIds)
       );
+      // Shared-collection documents join the corpus read-only: their chunks
+      // feed the lexical ranking directly, and their vector hits pass the
+      // store's ACL predicate through the grants published at share time.
+      const sharedDocuments = await this.loadSharedScopeDocuments(
+        userId,
+        collectionIds
+      );
       const platform = getPlatformStorageRuntime();
       const chunksById = new Map<
         string,
         { chunk: DocumentChunk; document: Document }
       >();
+      for (const { document } of sharedDocuments) {
+        throwIfChatGenerationCancelled(signal);
+        const documentChunks = await this.loadDocumentChunks(document.id);
+        for (const chunk of documentChunks) {
+          chunksById.set(chunk.id, { chunk, document });
+        }
+      }
       for (const document of documents) {
         throwIfChatGenerationCancelled(signal);
         let searchableDocument = document;
@@ -1736,7 +1968,10 @@ export class DocumentService {
         }
       }
 
-      const resourceIds = documents.map(document => document.id);
+      const resourceIds = [
+        ...documents.map(document => document.id),
+        ...sharedDocuments.map(entry => entry.document.id),
+      ];
       const hits: VectorHit[] = [];
       for (
         let offset = 0;
@@ -1867,6 +2102,16 @@ export class DocumentService {
 
       if (!this.documentInScope(document, sessionId, collectionIds)) continue;
 
+      for (const chunk of documentChunks) {
+        candidates.push({ chunk, document });
+      }
+    }
+    for (const { document } of await this.loadSharedScopeDocuments(
+      userId,
+      collectionIds
+    )) {
+      throwIfChatGenerationCancelled(signal);
+      const documentChunks = await this.loadDocumentChunks(document.id);
       for (const chunk of documentChunks) {
         candidates.push({ chunk, document });
       }

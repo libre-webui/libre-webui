@@ -98,6 +98,8 @@ export interface ChatSession extends ChatProviderSelection {
   settings?: ChatSessionSettings; // Per-chat overrides applied over global defaults
   folderId?: string | null; // Optional folder this chat lives in
   pinned?: boolean; // Kept in the sidebar's Pinned group
+  /** Present when the session reaches the actor through a grant. */
+  shared?: { ownerUserId: string; permission: 'read' | 'write' };
 }
 
 export interface KnowledgeCollection {
@@ -1001,6 +1003,8 @@ export interface Persona extends AdvancedFeatures {
   background?: string;
   created_at: number;
   updated_at: number;
+  /** Present when the persona reaches the actor through a grant. */
+  shared?: { ownerUserId: string; permission: 'read' | 'write' };
   // Advanced features (optional for unified interface)
 }
 

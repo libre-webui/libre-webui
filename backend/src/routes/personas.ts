@@ -61,7 +61,7 @@ router.get(
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const userId = req.user?.userId || 'default';
-      const personas = await personaService.getPersonas(userId);
+      const personas = await personaService.getPersonasWithShared(userId);
 
       res.json({
         success: true,

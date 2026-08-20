@@ -40,6 +40,11 @@ import {
   type AuthzActor,
 } from './authorizationService.js';
 import { deleteGrantsForResource } from './resourceGrantService.js';
+import {
+  grantedResourceIdsFor,
+  sharedMetaFor,
+  type SharedResourceMeta,
+} from './sharedResourceAccess.js';
 import { recordAuditEvent } from './securityAuditService.js';
 import {
   MAX_SKILL_DESCRIPTION_LENGTH,
@@ -274,6 +279,34 @@ const readable = async (
 export const listSkills = async (userId: string): Promise<Skill[]> => {
   const rows = await skills().listByOwner(userId, MAX_SKILLS_PER_USER);
   return rows.map(mapSkillRow);
+};
+
+export interface SkillWithAccess extends Skill {
+  shared?: SharedResourceMeta;
+}
+
+/** Own skills followed by skills shared with the actor. */
+export const listSkillsWithShared = async (
+  actor: AuthzActor
+): Promise<SkillWithAccess[]> => {
+  const own: SkillWithAccess[] = (
+    await skills().listByOwner(actor.userId, MAX_SKILLS_PER_USER)
+  ).map(mapSkillRow);
+  const sharedIds = await grantedResourceIdsFor(
+    actor,
+    'skill',
+    new Set(own.map(skill => skill.id))
+  );
+  const shared: SkillWithAccess[] = [];
+  for (const skillId of sharedIds) {
+    const row = await skills().findById(skillId);
+    if (!row || row.user_id === actor.userId) continue;
+    const meta = await sharedMetaFor(actor, 'skill', skillId, row.user_id);
+    if (!meta) continue;
+    shared.push({ ...mapSkillRow(row), shared: meta });
+  }
+  shared.sort((left, right) => right.updatedAt - left.updatedAt);
+  return [...own, ...shared];
 };
 
 export const getSkill = async (
