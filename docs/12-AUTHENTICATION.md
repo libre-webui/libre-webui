@@ -134,11 +134,11 @@ and retry.
 
 Administrators can create groups and manage memberships from the User
 Management page. Groups are principals for resource grants: the owner of a
-chat, note, document, knowledge collection, folder, persona, prompt, or
-skill can grant `read`, `write`, or `admin` access to a user or a group
-through the access API — Notes additionally offer a share panel in the
-editor, the first per-resource sharing UI — and administrators can scope
-registered tool servers to users or groups the same way. Resources stay private by default — the global `admin` role does not
+chat, note, document, knowledge collection, folder, persona, prompt,
+skill, or calendar can grant `read`, `write`, or `admin` access to a user
+or a group through the access API — every shareable surface uses the same
+share dialog (see [Sharing](./56-SHARING.md)) — and administrators can
+scope registered tool servers to users or groups the same way. Resources stay private by default — the global `admin` role does not
 grant access to other users' content. Membership is evaluated at request
 time, so removing a member revokes group-granted access immediately. The
 "effective access" view on the User Management page answers "why can this

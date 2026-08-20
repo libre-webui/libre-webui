@@ -132,15 +132,18 @@ persistent storage.
 | **Web search**         | Self-hosted SearXNG search for chats and Work tasks                                                    |
 | **Artifacts**          | Generate and preview HTML, SVG, JSON, code, and multi-file projects                                    |
 | **Workspaces**         | Persistent, task-scoped environments with files, terminal, diffs, and previews                         |
-| **Calendar**           | Per-user calendar with recurring events, encrypted at rest                                             |
+| **Channels**           | Public, private, and direct-message team conversations with threads, reactions, files, and `@model`    |
+| **Calendar**           | Multiple shareable calendars with recurrence, reminders, and ICS import/export, encrypted at rest      |
 | **Automations**        | Scheduled AI runs delivered as normal chat sessions                                                    |
+| **Notifications**      | Durable in-app inbox with live delivery and signed, egress-guarded outbound webhooks                   |
 | **Notes**              | Notebook with revision history, attachments, sharing, and reversible AI edits                          |
 | **Personas**           | Reusable assistant profiles with their own prompts, models, and memory                                 |
 | **Media generation**   | Image and video generation with a persistent gallery                                                   |
 | **Voice**              | Speech-to-text dictation and text-to-speech playback                                                   |
 | **Context management** | Context meter and undoable conversation compaction for long chats                                      |
 | **Agents**             | Optional integration with installed agent CLIs and Libre Claw                                          |
-| **Accounts**           | Local accounts, roles, groups, per-resource sharing, API tokens, and SSO                               |
+| **Sharing**            | One grant model for chats, notes, knowledge, personas, prompts, skills, and calendars                  |
+| **Accounts**           | Local accounts, roles, groups, API tokens, and SSO                                                     |
 | **Public API**         | OpenAI-compatible `/v1` endpoints on scoped API tokens                                                 |
 | **Monitoring**         | System diagnostics, provider usage analytics, and an admin audit log                                   |
 | **Deployment**         | npm, Docker Compose, Kubernetes, Helm, and desktop client                                              |
@@ -310,6 +313,10 @@ See the [deployment documentation](https://docs.librewebui.org) for details.
 - [Provider connections](https://docs.librewebui.org/PROVIDER_CONNECTIONS)
 - [Work workspaces](https://docs.librewebui.org/WORKSPACES)
 - [Document chat](https://docs.librewebui.org/RAG_FEATURE)
+- [Channels](https://docs.librewebui.org/CHANNELS)
+- [Notifications](https://docs.librewebui.org/NOTIFICATIONS)
+- [Sharing](https://docs.librewebui.org/SHARING)
+- [Calendar](https://docs.librewebui.org/CALENDAR)
 - [Public API](https://docs.librewebui.org/PUBLIC_API)
 - [Plugin architecture](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)
 - [Capability contracts](https://docs.librewebui.org/CAPABILITY_CONTRACTS)

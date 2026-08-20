@@ -57,6 +57,12 @@ lexical ranking when it fully contains at least one word of the query, so
 a compound identifier such as `ALPHA_BETA_GAMMA` never surfaces text that
 merely shares one of its fragments.
 
+Knowledge collections [shared with you](./56-SHARING.md) join both
+rankings automatically. Their access control is enforced inside the
+vector query itself — grants publish into the index ACL, so revoking a
+share hides those documents on the very next search without re-embedding
+anything.
+
 ## Enable Semantic Search
 
 Install an embedding model:

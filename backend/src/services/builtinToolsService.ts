@@ -16,11 +16,13 @@
  */
 
 /**
- * First-party chat tools (TOOL-01, minimal set). Every builtin is read-only
- * and executes with the invoking user's identity and effective permissions:
- * web search honors the web-search feature gate, document search only
- * reaches the user's own collections, and skill loading resolves the user's
- * own enabled skills. Outputs are bounded before they re-enter the model.
+ * First-party chat tools (TOOL-01). Every builtin executes with the
+ * invoking user's identity and effective permissions: web search honors
+ * the web-search feature gate, document search reaches the user's own and
+ * shared collections, and skill loading resolves the user's own enabled
+ * skills. Mutating tools (notes, calendar) are marked side-effecting and
+ * run behind the standard approval flow. Outputs are bounded before they
+ * re-enter the model.
  */
 
 import { randomUUID } from 'node:crypto';

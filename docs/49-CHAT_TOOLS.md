@@ -37,14 +37,16 @@ collections restrict what the model sees for sessions using that profile.
 
 ## Built-in tools
 
-Ten first-party tools ship with Chat (all read-only except the two
-note-mutation tools, which go through the side-effect approval flow):
+Thirteen first-party tools ship with Chat (all read-only except the
+note and calendar mutation tools, which go through the side-effect
+approval flow):
 
 - `web_search` — the admin-configured search engine, honoring the web-search
   access mode.
-- `search_documents` — hybrid search over the user's own uploaded documents
-  and knowledge collections (profile bindings can scope the collections);
-  each passage is cited with its chunk and source location.
+- `search_documents` — hybrid search over the user's uploaded documents
+  and knowledge collections, including collections shared with them
+  (profile bindings can scope the collections); each passage is cited
+  with its chunk and source location.
 - `list_documents` — lists the documents in this chat's scope with their
   ids, types, and sizes, so the model can decide what to read.
 - `read_document` — reads a bounded window of one available document by id
@@ -62,6 +64,12 @@ note-mutation tools, which go through the side-effect approval flow):
 - `create_note` — creates a note (side-effecting, requires approval).
 - `update_note` — replaces a note's content; the previous state is kept as
   a restorable revision, so a model edit is always reversible
+  (side-effecting, requires approval).
+- `list_calendar_events` — lists the user's calendar events, own and
+  shared, in an epoch-millisecond range.
+- `create_calendar_event` — creates a calendar event (side-effecting,
+  requires approval).
+- `delete_calendar_event` — deletes one calendar event by id
   (side-effecting, requires approval).
 
 ## Tool servers

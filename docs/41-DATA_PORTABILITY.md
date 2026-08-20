@@ -57,6 +57,10 @@ Each archive includes an `exclusions` list. Version 3 deliberately excludes:
 - note revision history and note attachments;
 - Work tasks, runs, sandboxes, and Docker or Kubernetes volumes.
 
+Channels, notifications, calendars, and automations also live outside the
+portable archive; they are instance/team state and travel with a full
+server backup instead.
+
 Use a database/data-directory backup with the same `ENCRYPTION_KEY` for full
 server recovery. Work also requires a consistent backup of its named volumes.
 See [SQLite migration and backup](./10-SQLITE_MIGRATION.md) and

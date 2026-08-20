@@ -17,8 +17,11 @@ be opened and continued like any other conversation.
 
 An automation has a name, free-text instructions, one or more triggers, an
 optional model (empty means Auto: your default chat model at run time), and a
-notification preference (in-app or off). Names and instructions are encrypted
-at rest. Every automation belongs to the user who created it.
+notification preference (in-app or off). With notifications on, a failed
+run also lands in the [notification inbox](./55-NOTIFICATIONS.md), so
+failures reach you even when the Automations page is closed. Names and
+instructions are encrypted at rest. Every automation belongs to the user
+who created it.
 
 Triggers reuse the calendar's shared model — `once`, `hourly`, `daily`,
 `weekly`, `monthly`, `yearly` — and an automation may hold up to five. The
