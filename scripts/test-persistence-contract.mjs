@@ -71,6 +71,7 @@ const createArchiveResourceSchema = database => {
       user_id TEXT NOT NULL,
       title TEXT NOT NULL,
       content TEXT NOT NULL,
+      pinned INTEGER DEFAULT 0,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
@@ -624,6 +625,7 @@ test('SQLite preference, archive, note, and persona patches preserve concurrent 
         user_id: 'a-oldest',
         title: 'original-title',
         content: 'original-content',
+          pinned: 0,
         created_at: 110,
         updated_at: 110,
       },
@@ -669,6 +671,7 @@ test('SQLite preference, archive, note, and persona patches preserve concurrent 
       user_id: 'a-oldest',
       title: 'replica-title',
       content: 'worker-content',
+      pinned: 0,
       created_at: 110,
       updated_at: 112,
     });
