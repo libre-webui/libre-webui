@@ -311,7 +311,8 @@
         "remove": "从文件夹中移除",
         "delete": "删除文件夹",
         "deleteConfirm": "删除此文件夹？其中的聊天会保留。"
-      }
+      },
+      "shareChat": "共享聊天…"
     },
     "persona": {
       "applied": "已应用角色",
@@ -437,7 +438,8 @@
       "failed": "无法分叉聊天",
       "origin": "分叉自 {{title}}",
       "originUnknown": "另一个聊天"
-    }
+    },
+    "sharedReadOnly": "由 {{owner}} 共享 — 仅可查看"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "自动化",
       "prompts": "提示词",
       "skills": "技能",
-      "tools": "工具"
+      "tools": "工具",
+      "channels": "频道"
     },
     "toggleSize": "切换侧边栏大小",
     "expandSidebar": "展开侧边栏"
@@ -768,7 +771,9 @@
         "deleteConfirm": "删除此集合？其中的文档会保留。",
         "createFailed": "无法创建集合",
         "deleteFailed": "无法删除集合",
-        "assignFailed": "无法移动文档"
+        "assignFailed": "无法移动文档",
+        "share": "共享合集",
+        "shared": "已共享"
       },
       "library": {
         "title": "已上传的文档",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "已清除 {{count}} 条记忆",
     "backupSuccess": "角色备份下载成功",
     "dnaSuccess": "角色 DNA 导出成功",
-    "failed": "{{action}}失败"
+    "failed": "{{action}}失败",
+    "shareTooltip": "共享此角色"
   },
   "userManager": {
     "title": "用户管理",
@@ -2593,7 +2599,25 @@
     "more": "还有 {{n}} 项",
     "loadFailed": "无法加载日历",
     "saveFailed": "无法保存日程",
-    "deleteFailed": "无法删除日程"
+    "deleteFailed": "无法删除日程",
+    "day": "日",
+    "calendarLabel": "日历",
+    "personalCalendar": "个人",
+    "reminderLabel": "提醒",
+    "reminderNone": "不提醒",
+    "reminderMinutes": "提前 {{minutes}} 分钟",
+    "reminderHour": "提前 1 小时",
+    "reminderDay": "提前 1 天",
+    "sharedReadOnly": "此日程仅以只读方式与你共享。",
+    "sharedBadge": "已共享",
+    "shareCalendar": "共享日历",
+    "newCalendarPlaceholder": "新日历…",
+    "calendarSaveFailed": "日历保存失败",
+    "exportFailed": "日历导出失败",
+    "importFailed": "文件导入失败",
+    "importResult": "已导入 {{total}} 个日程",
+    "importIcs": "导入",
+    "exportIcs": "导出"
   },
   "automations": {
     "title": "自动化",
@@ -3020,5 +3044,84 @@
       "servers": "工具服务器",
       "hint": "有副作用的调用在运行前仍会请求批准。"
     }
+  },
+  "share": {
+    "title": "共享“{{name}}”",
+    "subtitle": "向用户或群组授予访问权限。只有你能管理共享。",
+    "kindUser": "用户",
+    "kindGroup": "群组",
+    "usernamePlaceholder": "准确的用户名",
+    "groupPlaceholder": "准确的群组名",
+    "permissionRead": "可查看",
+    "permissionWrite": "可编辑",
+    "action": "共享",
+    "empty": "尚未与任何人共享。",
+    "hint": "输入准确的用户名或群组名。对方会在自己的工作区看到它；撤销后访问权限立即失效。",
+    "revoke": "撤销访问",
+    "added": "已与 {{name}} 共享",
+    "failed": "共享失败",
+    "userNotFound": "没有该用户名的用户",
+    "groupNotFound": "没有该名称的群组"
+  },
+  "channels": {
+    "title": "频道",
+    "browsePublic": "浏览公开频道",
+    "newDm": "新私信",
+    "newChannel": "新频道",
+    "empty": "还没有频道。创建一个或浏览公开频道。",
+    "selectPrompt": "选择一个频道开始交流",
+    "pins": "置顶",
+    "members": "成员",
+    "settings": "频道设置",
+    "sendFailed": "消息发送失败",
+    "uploadFailed": "文件上传失败",
+    "memberAdded": "已添加成员",
+    "memberAddFailed": "无法添加该用户",
+    "attach": "附加文件",
+    "askModel": "用这条消息询问模型",
+    "noModel": "不使用模型",
+    "composerPlaceholder": "输入消息…",
+    "thread": "话题",
+    "replyPlaceholder": "回复…",
+    "invitePlaceholder": "要邀请的用户名",
+    "roleOwner": "所有者",
+    "removeMember": "移出频道",
+    "leave": "退出频道",
+    "noPins": "还没有置顶消息。",
+    "noMessages": "还没有消息，打个招呼吧。",
+    "create": "创建",
+    "createFailed": "频道创建失败",
+    "nameLabel": "名称",
+    "typeLabel": "类型",
+    "typePublic": "公开 — 任何人都可以加入",
+    "typePrivate": "私密 — 仅限邀请",
+    "descriptionLabel": "描述",
+    "openDm": "打开会话",
+    "dmFailed": "无法打开会话",
+    "dmHint": "私信只有你们两人可见。",
+    "dmPlaceholder": "准确的用户名",
+    "noPublic": "没有公开频道。",
+    "joined": "已加入",
+    "join": "加入",
+    "save": "保存",
+    "delete": "删除频道",
+    "modelAuthor": "模型",
+    "unknownAuthor": "某人",
+    "edited": "已编辑",
+    "deletedMessage": "此消息已删除",
+    "modelThinking": "模型思考中…",
+    "react": "添加表情回应",
+    "reply": "在话题中回复",
+    "pin": "置顶消息",
+    "unpin": "取消置顶",
+    "edit": "编辑消息",
+    "deleteMessage": "删除消息",
+    "replyCount": "{{total}} 条回复"
+  },
+  "notifications": {
+    "title": "通知",
+    "empty": "没有未读通知。",
+    "markAllRead": "全部标为已读",
+    "markRead": "标为已读"
   }
 }

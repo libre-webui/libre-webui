@@ -311,7 +311,8 @@
         "remove": "นำออกจากโฟลเดอร์",
         "delete": "ลบโฟลเดอร์",
         "deleteConfirm": "ลบโฟลเดอร์นี้? แชทข้างในจะยังอยู่"
-      }
+      },
+      "shareChat": "แชร์แชต…"
     },
     "persona": {
       "applied": "ใช้เพอร์โซน่าแล้ว",
@@ -437,7 +438,8 @@
       "failed": "ไม่สามารถแยกสาขาแชทได้",
       "origin": "แยกสาขาจาก {{title}}",
       "originUnknown": "แชทอื่น"
-    }
+    },
+    "sharedReadOnly": "แชร์โดย {{owner}} — ดูได้อย่างเดียว"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "ระบบอัตโนมัติ",
       "prompts": "พรอมต์",
       "skills": "ทักษะ",
-      "tools": "เครื่องมือ"
+      "tools": "เครื่องมือ",
+      "channels": "แชนเนล"
     },
     "toggleSize": "สลับขนาดแถบด้านข้าง",
     "expandSidebar": "ขยายแถบด้านข้าง"
@@ -768,7 +771,9 @@
         "deleteConfirm": "ลบคอลเลกชันนี้? เอกสารข้างในจะยังอยู่",
         "createFailed": "สร้างคอลเลกชันไม่สำเร็จ",
         "deleteFailed": "ลบคอลเลกชันไม่สำเร็จ",
-        "assignFailed": "ย้ายเอกสารไม่สำเร็จ"
+        "assignFailed": "ย้ายเอกสารไม่สำเร็จ",
+        "share": "แชร์คอลเลกชัน",
+        "shared": "แชร์แล้ว"
       },
       "library": {
         "title": "เอกสารที่อัปโหลด",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "ล้าง {{count}} ความจำแล้ว",
     "backupSuccess": "ดาวน์โหลดสำรองข้อมูลเพอร์โซน่าสำเร็จ",
     "dnaSuccess": "ส่งออก DNA เพอร์โซน่าสำเร็จ",
-    "failed": "ไม่สามารถ {{action}}"
+    "failed": "ไม่สามารถ {{action}}",
+    "shareTooltip": "แชร์เพอร์โซนานี้"
   },
   "userManager": {
     "title": "จัดการผู้ใช้",
@@ -2593,7 +2599,25 @@
     "more": "อีก {{n}} รายการ",
     "loadFailed": "โหลดปฏิทินไม่สำเร็จ",
     "saveFailed": "บันทึกกิจกรรมไม่สำเร็จ",
-    "deleteFailed": "ลบกิจกรรมไม่สำเร็จ"
+    "deleteFailed": "ลบกิจกรรมไม่สำเร็จ",
+    "day": "วัน",
+    "calendarLabel": "ปฏิทิน",
+    "personalCalendar": "ส่วนตัว",
+    "reminderLabel": "การเตือน",
+    "reminderNone": "ไม่เตือน",
+    "reminderMinutes": "ล่วงหน้า {{minutes}} นาที",
+    "reminderHour": "ล่วงหน้า 1 ชั่วโมง",
+    "reminderDay": "ล่วงหน้า 1 วัน",
+    "sharedReadOnly": "กิจกรรมนี้ถูกแชร์ให้คุณดูได้อย่างเดียว",
+    "sharedBadge": "แชร์แล้ว",
+    "shareCalendar": "แชร์ปฏิทิน",
+    "newCalendarPlaceholder": "ปฏิทินใหม่…",
+    "calendarSaveFailed": "บันทึกปฏิทินไม่สำเร็จ",
+    "exportFailed": "ส่งออกปฏิทินไม่สำเร็จ",
+    "importFailed": "นำเข้าไฟล์ไม่สำเร็จ",
+    "importResult": "นำเข้า {{total}} กิจกรรมแล้ว",
+    "importIcs": "นำเข้า",
+    "exportIcs": "ส่งออก"
   },
   "automations": {
     "title": "ระบบอัตโนมัติ",
@@ -3020,5 +3044,84 @@
       "servers": "เซิร์ฟเวอร์เครื่องมือ",
       "hint": "การเรียกที่มีผลข้างเคียงยังคงขออนุมัติก่อนทำงาน"
     }
+  },
+  "share": {
+    "title": "แชร์ “{{name}}”",
+    "subtitle": "ให้สิทธิ์แก่ผู้ใช้หรือกลุ่ม คุณเท่านั้นที่จัดการการแชร์",
+    "kindUser": "ผู้ใช้",
+    "kindGroup": "กลุ่ม",
+    "usernamePlaceholder": "ชื่อผู้ใช้ที่ถูกต้อง",
+    "groupPlaceholder": "ชื่อกลุ่มที่ถูกต้อง",
+    "permissionRead": "ดูได้",
+    "permissionWrite": "แก้ไขได้",
+    "action": "แชร์",
+    "empty": "ยังไม่ได้แชร์กับใคร",
+    "hint": "กรอกชื่อผู้ใช้หรือกลุ่มให้ถูกต้อง ผู้รับจะเห็นในพื้นที่ทำงานของตน การเพิกถอนจะลบสิทธิ์ทันที",
+    "revoke": "เพิกถอนสิทธิ์",
+    "added": "แชร์กับ {{name}} แล้ว",
+    "failed": "แชร์ไม่สำเร็จ",
+    "userNotFound": "ไม่มีผู้ใช้ชื่อนี้",
+    "groupNotFound": "ไม่มีกลุ่มชื่อนี้"
+  },
+  "channels": {
+    "title": "แชนเนล",
+    "browsePublic": "ดูแชนเนลสาธารณะ",
+    "newDm": "ข้อความส่วนตัวใหม่",
+    "newChannel": "แชนเนลใหม่",
+    "empty": "ยังไม่มีแชนเนล สร้างใหม่หรือดูแชนเนลสาธารณะ",
+    "selectPrompt": "เลือกแชนเนลเพื่อเริ่มต้น",
+    "pins": "ปักหมุด",
+    "members": "สมาชิก",
+    "settings": "ตั้งค่าแชนเนล",
+    "sendFailed": "ส่งข้อความไม่สำเร็จ",
+    "uploadFailed": "อัปโหลดไฟล์ไม่สำเร็จ",
+    "memberAdded": "เพิ่มสมาชิกแล้ว",
+    "memberAddFailed": "เพิ่มผู้ใช้นี้ไม่สำเร็จ",
+    "attach": "แนบไฟล์",
+    "askModel": "ถามโมเดลด้วยข้อความนี้",
+    "noModel": "ไม่ใช้โมเดล",
+    "composerPlaceholder": "พิมพ์ข้อความ…",
+    "thread": "เธรด",
+    "replyPlaceholder": "ตอบกลับ…",
+    "invitePlaceholder": "ผู้ใช้ที่จะเชิญ",
+    "roleOwner": "เจ้าของ",
+    "removeMember": "นำออกจากแชนเนล",
+    "leave": "ออกจากแชนเนล",
+    "noPins": "ยังไม่มีการปักหมุด",
+    "noMessages": "ยังไม่มีข้อความ — ทักทายกันหน่อย",
+    "create": "สร้าง",
+    "createFailed": "สร้างแชนเนลไม่สำเร็จ",
+    "nameLabel": "ชื่อ",
+    "typeLabel": "ประเภท",
+    "typePublic": "สาธารณะ — ใครก็เข้าร่วมได้",
+    "typePrivate": "ส่วนตัว — เชิญเท่านั้น",
+    "descriptionLabel": "คำอธิบาย",
+    "openDm": "เปิดการสนทนา",
+    "dmFailed": "เปิดการสนทนาไม่สำเร็จ",
+    "dmHint": "ข้อความส่วนตัวเป็นเรื่องระหว่างคุณสองคนเท่านั้น",
+    "dmPlaceholder": "ชื่อผู้ใช้ที่ถูกต้อง",
+    "noPublic": "ไม่มีแชนเนลสาธารณะ",
+    "joined": "เข้าร่วมแล้ว",
+    "join": "เข้าร่วม",
+    "save": "บันทึก",
+    "delete": "ลบแชนเนล",
+    "modelAuthor": "โมเดล",
+    "unknownAuthor": "ใครบางคน",
+    "edited": "แก้ไขแล้ว",
+    "deletedMessage": "ข้อความนี้ถูกลบแล้ว",
+    "modelThinking": "โมเดลกำลังคิด…",
+    "react": "เพิ่มปฏิกิริยา",
+    "reply": "ตอบในเธรด",
+    "pin": "ปักหมุดข้อความ",
+    "unpin": "เลิกปักหมุด",
+    "edit": "แก้ไขข้อความ",
+    "deleteMessage": "ลบข้อความ",
+    "replyCount": "{{total}} การตอบกลับ"
+  },
+  "notifications": {
+    "title": "การแจ้งเตือน",
+    "empty": "อ่านครบทุกอย่างแล้ว",
+    "markAllRead": "ทำเครื่องหมายว่าอ่านทั้งหมด",
+    "markRead": "ทำเครื่องหมายว่าอ่านแล้ว"
   }
 }

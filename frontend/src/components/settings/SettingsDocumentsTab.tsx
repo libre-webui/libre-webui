@@ -25,10 +25,12 @@ import {
   RotateCcw,
   Trash2,
   X,
+  Share2,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { Button, Select } from '@/components/ui';
+import { ShareDialog } from '@/components/ShareDialog';
 import { formatFileSize } from '@/utils';
 import { documentsApi } from '@/utils/api';
 import type {
@@ -245,6 +247,10 @@ function KnowledgeCollectionsSection() {
   const [pendingCollectionDelete, setPendingCollectionDelete] = useState<
     string | null
   >(null);
+  const [shareCollection, setShareCollection] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [pendingDocumentDelete, setPendingDocumentDelete] = useState<
     string | null
   >(null);
@@ -390,13 +396,34 @@ function KnowledgeCollectionsSection() {
                 <span className='tabular-nums text-gray-400 dark:text-dark-500'>
                   {collection.documentCount ?? 0}
                 </span>
-                <button
-                  onClick={() => setPendingCollectionDelete(collection.id)}
-                  className='text-gray-400 transition-colors hover:text-red-500 dark:text-dark-500'
-                  title={t('common.delete')}
-                >
-                  <X className='h-3 w-3' />
-                </button>
+                {collection.shared ? (
+                  <span className='text-[10px] uppercase text-gray-400 dark:text-dark-500'>
+                    {t('settings.documents.collections.shared')}
+                  </span>
+                ) : (
+                  <>
+                    <button
+                      onClick={() =>
+                        setShareCollection({
+                          id: collection.id,
+                          name: collection.name,
+                        })
+                      }
+                      className='text-gray-400 transition-colors hover:text-primary-500 dark:text-dark-500'
+                      title={t('settings.documents.collections.share')}
+                      data-testid='collection-share'
+                    >
+                      <Share2 className='h-3 w-3' />
+                    </button>
+                    <button
+                      onClick={() => setPendingCollectionDelete(collection.id)}
+                      className='text-gray-400 transition-colors hover:text-red-500 dark:text-dark-500'
+                      title={t('common.delete')}
+                    >
+                      <X className='h-3 w-3' />
+                    </button>
+                  </>
+                )}
               </span>
             )
           )}
@@ -492,6 +519,14 @@ function KnowledgeCollectionsSection() {
             </div>
           ))}
         </div>
+      )}
+      {shareCollection && (
+        <ShareDialog
+          resourceType='knowledge-collection'
+          resourceId={shareCollection.id}
+          resourceLabel={shareCollection.name}
+          onClose={() => setShareCollection(null)}
+        />
       )}
     </div>
   );

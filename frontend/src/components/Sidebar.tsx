@@ -37,6 +37,7 @@ import { SidebarHeader } from '@/components/sidebar/SidebarHeader';
 import { SidebarNavigation } from '@/components/sidebar/SidebarNavigation';
 import { SidebarSessions } from '@/components/sidebar/SidebarSessions';
 import { SidebarUserSection } from '@/components/sidebar/SidebarUserSection';
+import { NotificationBell } from '@/components/NotificationBell';
 import { SidebarWorkTasks } from '@/components/sidebar/SidebarWorkTasks';
 import { isDefaultSessionTitle } from '@/hooks/useChat';
 import { usePendingUserApprovals } from '@/hooks/usePendingUserApprovals';
@@ -474,6 +475,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onExpandSidebar={handleToggleSidebarCompact}
             />
           )}
+
+          <NotificationBell sidebarCompact={sidebarCompact} />
 
           <SidebarUserSection
             requiresAuth={systemInfo?.requiresAuth}

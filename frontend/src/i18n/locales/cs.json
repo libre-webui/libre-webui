@@ -311,7 +311,8 @@
         "remove": "Odebrat ze složky",
         "delete": "Smazat složku",
         "deleteConfirm": "Smazat tuto složku? Chaty uvnitř zůstanou."
-      }
+      },
+      "shareChat": "Sdílet chat…"
     },
     "persona": {
       "applied": "Persona použita",
@@ -437,7 +438,8 @@
       "failed": "Chat se nepodařilo rozvětvit",
       "origin": "Odbočeno z {{title}}",
       "originUnknown": "jiného chatu"
-    }
+    },
+    "sharedReadOnly": "Sdílí {{owner}} — pouze ke čtení"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Automatizace",
       "prompts": "Prompty",
       "skills": "Dovednosti",
-      "tools": "Nástroje"
+      "tools": "Nástroje",
+      "channels": "Kanály"
     },
     "toggleSize": "Změnit velikost postranního panelu",
     "expandSidebar": "Rozbalit postranní panel"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Smazat tuto kolekci? Dokumenty uvnitř zůstanou.",
         "createFailed": "Kolekci se nepodařilo vytvořit",
         "deleteFailed": "Kolekci se nepodařilo smazat",
-        "assignFailed": "Dokument se nepodařilo přesunout"
+        "assignFailed": "Dokument se nepodařilo přesunout",
+        "share": "Sdílet kolekci",
+        "shared": "sdílená"
       },
       "library": {
         "title": "Nahrané dokumenty",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "Vymazáno {{count}} vzpomínek",
     "backupSuccess": "Záloha persony úspěšně stažena",
     "dnaSuccess": "DNA persony úspěšně exportováno",
-    "failed": "Nepodařilo se {{action}}"
+    "failed": "Nepodařilo se {{action}}",
+    "shareTooltip": "Sdílet tuto personu"
   },
   "userManager": {
     "title": "Správa uživatelů",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} dalších",
     "loadFailed": "Kalendář se nepodařilo načíst",
     "saveFailed": "Událost se nepodařilo uložit",
-    "deleteFailed": "Událost se nepodařilo smazat"
+    "deleteFailed": "Událost se nepodařilo smazat",
+    "day": "Den",
+    "calendarLabel": "Kalendář",
+    "personalCalendar": "Osobní",
+    "reminderLabel": "Připomínka",
+    "reminderNone": "Bez připomínky",
+    "reminderMinutes": "{{minutes}} minut předem",
+    "reminderHour": "1 hodinu předem",
+    "reminderDay": "1 den předem",
+    "sharedReadOnly": "Tato událost je s vámi sdílena pouze pro čtení.",
+    "sharedBadge": "sdílený",
+    "shareCalendar": "Sdílet kalendář",
+    "newCalendarPlaceholder": "Nový kalendář…",
+    "calendarSaveFailed": "Kalendář se nepodařilo uložit",
+    "exportFailed": "Kalendář se nepodařilo exportovat",
+    "importFailed": "Soubor se nepodařilo importovat",
+    "importResult": "Importováno událostí: {{total}}",
+    "importIcs": "Import",
+    "exportIcs": "Export"
   },
   "automations": {
     "title": "Automatizace",
@@ -3020,5 +3044,84 @@
       "servers": "Servery nástrojů",
       "hint": "Volání s vedlejšími účinky si před spuštěním stále vyžádají schválení."
     }
+  },
+  "share": {
+    "title": "Sdílet „{{name}}“",
+    "subtitle": "Dejte přístup lidem nebo skupinám. Sdílení spravujete jen vy.",
+    "kindUser": "Uživatel",
+    "kindGroup": "Skupina",
+    "usernamePlaceholder": "Přesné uživatelské jméno",
+    "groupPlaceholder": "Přesný název skupiny",
+    "permissionRead": "Může zobrazit",
+    "permissionWrite": "Může upravovat",
+    "action": "Sdílet",
+    "empty": "Zatím s nikým nesdíleno.",
+    "hint": "Zadejte přesné jméno uživatele nebo skupiny. Příjemci jej vidí ve svém prostoru; odvolání přístup okamžitě odebere.",
+    "revoke": "Odvolat přístup",
+    "added": "Sdíleno s {{name}}",
+    "failed": "Sdílení se nezdařilo",
+    "userNotFound": "Žádný uživatel s tímto jménem",
+    "groupNotFound": "Žádná skupina s tímto názvem"
+  },
+  "channels": {
+    "title": "Kanály",
+    "browsePublic": "Procházet veřejné kanály",
+    "newDm": "Nová přímá zpráva",
+    "newChannel": "Nový kanál",
+    "empty": "Zatím žádné kanály. Vytvořte si vlastní nebo projděte veřejné.",
+    "selectPrompt": "Vyberte kanál a začněte",
+    "pins": "Připnuté",
+    "members": "Členové",
+    "settings": "Nastavení kanálu",
+    "sendFailed": "Zprávu se nepodařilo odeslat",
+    "uploadFailed": "Soubor se nepodařilo nahrát",
+    "memberAdded": "Člen přidán",
+    "memberAddFailed": "Tohoto uživatele se nepodařilo přidat",
+    "attach": "Připojit soubor",
+    "askModel": "Zeptat se touto zprávou modelu",
+    "noModel": "Bez modelu",
+    "composerPlaceholder": "Napište zprávu…",
+    "thread": "Vlákno",
+    "replyPlaceholder": "Odpovědět…",
+    "invitePlaceholder": "Koho pozvat",
+    "roleOwner": "vlastník",
+    "removeMember": "Odebrat z kanálu",
+    "leave": "Opustit kanál",
+    "noPins": "Zatím nic připnutého.",
+    "noMessages": "Zatím žádné zprávy — pozdravte.",
+    "create": "Vytvořit",
+    "createFailed": "Kanál se nepodařilo vytvořit",
+    "nameLabel": "Název",
+    "typeLabel": "Typ",
+    "typePublic": "Veřejný — připojit se může kdokoli",
+    "typePrivate": "Soukromý — pouze na pozvání",
+    "descriptionLabel": "Popis",
+    "openDm": "Otevřít konverzaci",
+    "dmFailed": "Konverzaci se nepodařilo otevřít",
+    "dmHint": "Přímé zprávy zůstávají soukromé mezi vámi dvěma.",
+    "dmPlaceholder": "Přesné uživatelské jméno",
+    "noPublic": "Žádné veřejné kanály.",
+    "joined": "Připojeno",
+    "join": "Připojit se",
+    "save": "Uložit",
+    "delete": "Smazat kanál",
+    "modelAuthor": "Model",
+    "unknownAuthor": "Někdo",
+    "edited": "upraveno",
+    "deletedMessage": "Tato zpráva byla smazána",
+    "modelThinking": "Model přemýšlí…",
+    "react": "Přidat reakci",
+    "reply": "Odpovědět ve vlákně",
+    "pin": "Připnout zprávu",
+    "unpin": "Odepnout zprávu",
+    "edit": "Upravit zprávu",
+    "deleteMessage": "Smazat zprávu",
+    "replyCount": "Odpovědí: {{total}}"
+  },
+  "notifications": {
+    "title": "Oznámení",
+    "empty": "Vše přečteno.",
+    "markAllRead": "Označit vše jako přečtené",
+    "markRead": "Označit jako přečtené"
   }
 }

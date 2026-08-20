@@ -311,7 +311,8 @@
         "remove": "Fjarlægja úr möppu",
         "delete": "Eyða möppu",
         "deleteConfirm": "Eyða þessari möppu? Spjöll innan hennar haldast."
-      }
+      },
+      "shareChat": "Deila spjalli…"
     },
     "persona": {
       "applied": "Persóna notuð",
@@ -437,7 +438,8 @@
       "failed": "Ekki tókst að greina spjallið frá",
       "origin": "Greint frá {{title}}",
       "originUnknown": "öðru spjalli"
-    }
+    },
+    "sharedReadOnly": "Deilt af {{owner}} — aðeins til skoðunar"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Sjálfvirkni",
       "prompts": "Leiðbeiningar",
       "skills": "Færni",
-      "tools": "Tól"
+      "tools": "Tól",
+      "channels": "Rásir"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
     "expandSidebar": "Stækka hliðarspjald"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Eyða þessu safni? Skjölin innan þess haldast.",
         "createFailed": "Ekki tókst að búa til safnið",
         "deleteFailed": "Ekki tókst að eyða safninu",
-        "assignFailed": "Ekki tókst að færa skjalið"
+        "assignFailed": "Ekki tókst að færa skjalið",
+        "share": "Deila safni",
+        "shared": "deilt"
       },
       "library": {
         "title": "Hlaðin skjöl",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "Hreinsaði {{count}} minningar",
     "backupSuccess": "Öryggisafrit persónu sótt",
     "dnaSuccess": "DNA persónu flutt út",
-    "failed": "Ekki tókst að {{action}}"
+    "failed": "Ekki tókst að {{action}}",
+    "shareTooltip": "Deila þessari persónu"
   },
   "userManager": {
     "title": "Notendastjórnun",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} í viðbót",
     "loadFailed": "Ekki tókst að hlaða dagatalinu",
     "saveFailed": "Ekki tókst að vista viðburðinn",
-    "deleteFailed": "Ekki tókst að eyða viðburðinum"
+    "deleteFailed": "Ekki tókst að eyða viðburðinum",
+    "day": "Dagur",
+    "calendarLabel": "Dagatal",
+    "personalCalendar": "Persónulegt",
+    "reminderLabel": "Áminning",
+    "reminderNone": "Engin áminning",
+    "reminderMinutes": "{{minutes}} mínútum fyrir",
+    "reminderHour": "1 klukkustund fyrir",
+    "reminderDay": "1 degi fyrir",
+    "sharedReadOnly": "Þessum viðburði er deilt með þér eingöngu til skoðunar.",
+    "sharedBadge": "deilt",
+    "shareCalendar": "Deila dagatali",
+    "newCalendarPlaceholder": "Nýtt dagatal…",
+    "calendarSaveFailed": "Ekki tókst að vista dagatalið",
+    "exportFailed": "Ekki tókst að flytja dagatalið út",
+    "importFailed": "Ekki tókst að flytja skrána inn",
+    "importResult": "{{total}} viðburðir fluttir inn",
+    "importIcs": "Flytja inn",
+    "exportIcs": "Flytja út"
   },
   "automations": {
     "title": "Sjálfvirkni",
@@ -3020,5 +3044,84 @@
       "servers": "Verkfæraþjónar",
       "hint": "Köll með hliðarverkunum biðja áfram um samþykki áður en þau keyra."
     }
+  },
+  "share": {
+    "title": "Deila „{{name}}“",
+    "subtitle": "Veittu fólki eða hópum aðgang. Aðeins þú stjórnar deilingum.",
+    "kindUser": "Notandi",
+    "kindGroup": "Hópur",
+    "usernamePlaceholder": "Nákvæmt notandanafn",
+    "groupPlaceholder": "Nákvæmt hópheiti",
+    "permissionRead": "Getur skoðað",
+    "permissionWrite": "Getur breytt",
+    "action": "Deila",
+    "empty": "Ekki enn deilt með neinum.",
+    "hint": "Sláðu inn nákvæmt notanda- eða hópheiti. Viðtakendur sjá það í sínu eigin vinnusvæði; afturköllun fjarlægir aðganginn strax.",
+    "revoke": "Afturkalla aðgang",
+    "added": "Deilt með {{name}}",
+    "failed": "Deiling mistókst",
+    "userNotFound": "Enginn notandi með þetta nafn",
+    "groupNotFound": "Enginn hópur með þetta heiti"
+  },
+  "channels": {
+    "title": "Rásir",
+    "browsePublic": "Skoða opinberar rásir",
+    "newDm": "Ný bein skilaboð",
+    "newChannel": "Ný rás",
+    "empty": "Engar rásir enn. Búðu til eina eða skoðaðu opinberar rásir.",
+    "selectPrompt": "Veldu rás til að byrja",
+    "pins": "Fest",
+    "members": "Meðlimir",
+    "settings": "Rásarstillingar",
+    "sendFailed": "Ekki tókst að senda skilaboðin",
+    "uploadFailed": "Ekki tókst að hlaða skránni upp",
+    "memberAdded": "Meðlimur bætt við",
+    "memberAddFailed": "Ekki tókst að bæta þessum notanda við",
+    "attach": "Hengja skrá við",
+    "askModel": "Spyrja líkan með þessum skilaboðum",
+    "noModel": "Ekkert líkan",
+    "composerPlaceholder": "Skrifaðu skilaboð…",
+    "thread": "Þráður",
+    "replyPlaceholder": "Svara…",
+    "invitePlaceholder": "Notandi til að bjóða",
+    "roleOwner": "eigandi",
+    "removeMember": "Fjarlægja úr rásinni",
+    "leave": "Yfirgefa rásina",
+    "noPins": "Ekkert fest enn.",
+    "noMessages": "Engin skilaboð enn — heilsaðu.",
+    "create": "Búa til",
+    "createFailed": "Ekki tókst að búa til rásina",
+    "nameLabel": "Heiti",
+    "typeLabel": "Tegund",
+    "typePublic": "Opinber — allir geta tekið þátt",
+    "typePrivate": "Einka — aðeins með boði",
+    "descriptionLabel": "Lýsing",
+    "openDm": "Opna samtal",
+    "dmFailed": "Ekki tókst að opna samtalið",
+    "dmHint": "Bein skilaboð eru einkamál ykkar tveggja.",
+    "dmPlaceholder": "Nákvæmt notandanafn",
+    "noPublic": "Engar opinberar rásir.",
+    "joined": "Meðlimur",
+    "join": "Taka þátt",
+    "save": "Vista",
+    "delete": "Eyða rás",
+    "modelAuthor": "Líkan",
+    "unknownAuthor": "Einhver",
+    "edited": "breytt",
+    "deletedMessage": "Þessum skilaboðum var eytt",
+    "modelThinking": "Líkanið hugsar…",
+    "react": "Bæta við viðbragði",
+    "reply": "Svara í þræði",
+    "pin": "Festa skilaboð",
+    "unpin": "Losa skilaboð",
+    "edit": "Breyta skilaboðum",
+    "deleteMessage": "Eyða skilaboðum",
+    "replyCount": "{{total}} svör"
+  },
+  "notifications": {
+    "title": "Tilkynningar",
+    "empty": "Þú ert með allt á hreinu.",
+    "markAllRead": "Merkja allt sem lesið",
+    "markRead": "Merkja sem lesið"
   }
 }

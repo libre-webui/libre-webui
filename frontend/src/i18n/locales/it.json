@@ -311,7 +311,8 @@
         "remove": "Rimuovi dalla cartella",
         "delete": "Elimina cartella",
         "deleteConfirm": "Eliminare questa cartella? Le chat al suo interno restano."
-      }
+      },
+      "shareChat": "Condividi chat…"
     },
     "persona": {
       "applied": "Persona applicata",
@@ -437,7 +438,8 @@
       "failed": "Impossibile duplicare la chat",
       "origin": "Fork di {{title}}",
       "originUnknown": "un'altra chat"
-    }
+    },
+    "sharedReadOnly": "Condiviso da {{owner}} — sola lettura"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Automazioni",
       "prompts": "Prompt",
       "skills": "Competenze",
-      "tools": "Strumenti"
+      "tools": "Strumenti",
+      "channels": "Canali"
     },
     "toggleSize": "Cambia dimensione barra laterale",
     "expandSidebar": "Espandi barra laterale"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Eliminare questa raccolta? I documenti al suo interno restano.",
         "createFailed": "Impossibile creare la raccolta",
         "deleteFailed": "Impossibile eliminare la raccolta",
-        "assignFailed": "Impossibile spostare il documento"
+        "assignFailed": "Impossibile spostare il documento",
+        "share": "Condividi raccolta",
+        "shared": "condivisa"
       },
       "library": {
         "title": "Documenti caricati",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "Cancellate {{count}} memorie",
     "backupSuccess": "Backup persona scaricato con successo",
     "dnaSuccess": "DNA persona esportato con successo",
-    "failed": "{{action}} fallito"
+    "failed": "{{action}} fallito",
+    "shareTooltip": "Condividi questa persona"
   },
   "userManager": {
     "title": "Gestione utenti",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} altri",
     "loadFailed": "Impossibile caricare il calendario",
     "saveFailed": "Impossibile salvare l'evento",
-    "deleteFailed": "Impossibile eliminare l'evento"
+    "deleteFailed": "Impossibile eliminare l'evento",
+    "day": "Giorno",
+    "calendarLabel": "Calendario",
+    "personalCalendar": "Personale",
+    "reminderLabel": "Promemoria",
+    "reminderNone": "Nessun promemoria",
+    "reminderMinutes": "{{minutes}} minuti prima",
+    "reminderHour": "1 ora prima",
+    "reminderDay": "1 giorno prima",
+    "sharedReadOnly": "Questo evento è condiviso con te in sola lettura.",
+    "sharedBadge": "condiviso",
+    "shareCalendar": "Condividi calendario",
+    "newCalendarPlaceholder": "Nuovo calendario…",
+    "calendarSaveFailed": "Impossibile salvare il calendario",
+    "exportFailed": "Impossibile esportare il calendario",
+    "importFailed": "Impossibile importare il file",
+    "importResult": "{{total}} eventi importati",
+    "importIcs": "Importa",
+    "exportIcs": "Esporta"
   },
   "automations": {
     "title": "Automazioni",
@@ -3020,5 +3044,84 @@
       "servers": "Server di strumenti",
       "hint": "Le chiamate con effetti collaterali chiedono comunque l’approvazione prima di essere eseguite."
     }
+  },
+  "share": {
+    "title": "Condividi «{{name}}»",
+    "subtitle": "Concedi l'accesso a persone o gruppi. Solo tu gestisci le condivisioni.",
+    "kindUser": "Utente",
+    "kindGroup": "Gruppo",
+    "usernamePlaceholder": "Nome utente esatto",
+    "groupPlaceholder": "Nome gruppo esatto",
+    "permissionRead": "Può vedere",
+    "permissionWrite": "Può modificare",
+    "action": "Condividi",
+    "empty": "Non ancora condiviso con nessuno.",
+    "hint": "Inserisci il nome esatto dell'utente o del gruppo. I destinatari lo vedono nel proprio spazio; la revoca rimuove subito l'accesso.",
+    "revoke": "Revoca l'accesso",
+    "added": "Condiviso con {{name}}",
+    "failed": "Condivisione non riuscita",
+    "userNotFound": "Nessun utente con questo nome",
+    "groupNotFound": "Nessun gruppo con questo nome"
+  },
+  "channels": {
+    "title": "Canali",
+    "browsePublic": "Sfoglia i canali pubblici",
+    "newDm": "Nuovo messaggio diretto",
+    "newChannel": "Nuovo canale",
+    "empty": "Nessun canale. Creane uno o sfoglia quelli pubblici.",
+    "selectPrompt": "Scegli un canale per iniziare",
+    "pins": "Fissati",
+    "members": "Membri",
+    "settings": "Impostazioni canale",
+    "sendFailed": "Impossibile inviare il messaggio",
+    "uploadFailed": "Impossibile caricare il file",
+    "memberAdded": "Membro aggiunto",
+    "memberAddFailed": "Impossibile aggiungere questo utente",
+    "attach": "Allega un file",
+    "askModel": "Chiedi a un modello con questo messaggio",
+    "noModel": "Nessun modello",
+    "composerPlaceholder": "Scrivi un messaggio…",
+    "thread": "Discussione",
+    "replyPlaceholder": "Rispondi…",
+    "invitePlaceholder": "Utente da invitare",
+    "roleOwner": "proprietario",
+    "removeMember": "Rimuovi dal canale",
+    "leave": "Lascia il canale",
+    "noPins": "Niente di fissato.",
+    "noMessages": "Ancora nessun messaggio: saluta.",
+    "create": "Crea",
+    "createFailed": "Impossibile creare il canale",
+    "nameLabel": "Nome",
+    "typeLabel": "Tipo",
+    "typePublic": "Pubblico — chiunque può entrare",
+    "typePrivate": "Privato — solo su invito",
+    "descriptionLabel": "Descrizione",
+    "openDm": "Apri conversazione",
+    "dmFailed": "Impossibile aprire la conversazione",
+    "dmHint": "I messaggi diretti restano privati tra voi due.",
+    "dmPlaceholder": "Nome utente esatto",
+    "noPublic": "Nessun canale pubblico.",
+    "joined": "Iscritto",
+    "join": "Entra",
+    "save": "Salva",
+    "delete": "Elimina canale",
+    "modelAuthor": "Modello",
+    "unknownAuthor": "Qualcuno",
+    "edited": "modificato",
+    "deletedMessage": "Questo messaggio è stato eliminato",
+    "modelThinking": "Il modello sta pensando…",
+    "react": "Aggiungi una reazione",
+    "reply": "Rispondi nella discussione",
+    "pin": "Fissa il messaggio",
+    "unpin": "Sblocca il messaggio",
+    "edit": "Modifica messaggio",
+    "deleteMessage": "Elimina messaggio",
+    "replyCount": "{{total}} risposte"
+  },
+  "notifications": {
+    "title": "Notifiche",
+    "empty": "Sei in pari.",
+    "markAllRead": "Segna tutto come letto",
+    "markRead": "Segna come letto"
   }
 }

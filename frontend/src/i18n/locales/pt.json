@@ -311,7 +311,8 @@
         "remove": "Remover da pasta",
         "delete": "Eliminar pasta",
         "deleteConfirm": "Eliminar esta pasta? As conversas mantêm-se."
-      }
+      },
+      "shareChat": "Compartilhar conversa…"
     },
     "persona": {
       "applied": "Persona aplicada",
@@ -437,7 +438,8 @@
       "failed": "Não foi possível bifurcar o chat",
       "origin": "Bifurcado de {{title}}",
       "originUnknown": "outro chat"
-    }
+    },
+    "sharedReadOnly": "Compartilhado por {{owner}} — somente leitura"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Automações",
       "prompts": "Prompts",
       "skills": "Habilidades",
-      "tools": "Ferramentas"
+      "tools": "Ferramentas",
+      "channels": "Canais"
     },
     "toggleSize": "Alternar tamanho da barra lateral",
     "expandSidebar": "Expandir barra lateral"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Eliminar esta coleção? Os documentos mantêm-se.",
         "createFailed": "Não foi possível criar a coleção",
         "deleteFailed": "Não foi possível eliminar a coleção",
-        "assignFailed": "Não foi possível mover o documento"
+        "assignFailed": "Não foi possível mover o documento",
+        "share": "Compartilhar coleção",
+        "shared": "compartilhada"
       },
       "library": {
         "title": "Documentos carregados",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "{{count}} memórias apagadas",
     "backupSuccess": "Backup da persona baixado com sucesso",
     "dnaSuccess": "DNA da persona exportado com sucesso",
-    "failed": "Falha ao {{action}}"
+    "failed": "Falha ao {{action}}",
+    "shareTooltip": "Compartilhar esta persona"
   },
   "userManager": {
     "title": "Gerenciamento de Usuários",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} mais",
     "loadFailed": "Não foi possível carregar o calendário",
     "saveFailed": "Não foi possível salvar o evento",
-    "deleteFailed": "Não foi possível excluir o evento"
+    "deleteFailed": "Não foi possível excluir o evento",
+    "day": "Dia",
+    "calendarLabel": "Calendário",
+    "personalCalendar": "Pessoal",
+    "reminderLabel": "Lembrete",
+    "reminderNone": "Sem lembrete",
+    "reminderMinutes": "{{minutes}} minutos antes",
+    "reminderHour": "1 hora antes",
+    "reminderDay": "1 dia antes",
+    "sharedReadOnly": "Este evento foi compartilhado com você apenas para leitura.",
+    "sharedBadge": "compartilhado",
+    "shareCalendar": "Compartilhar calendário",
+    "newCalendarPlaceholder": "Novo calendário…",
+    "calendarSaveFailed": "Não foi possível salvar o calendário",
+    "exportFailed": "Não foi possível exportar o calendário",
+    "importFailed": "Não foi possível importar o arquivo",
+    "importResult": "{{total}} eventos importados",
+    "importIcs": "Importar",
+    "exportIcs": "Exportar"
   },
   "automations": {
     "title": "Automações",
@@ -3020,5 +3044,84 @@
       "servers": "Servidores de ferramentas",
       "hint": "Chamadas com efeitos colaterais continuam pedindo aprovação antes de executar."
     }
+  },
+  "share": {
+    "title": "Compartilhar “{{name}}”",
+    "subtitle": "Dê acesso a pessoas ou grupos. Só você gerencia os compartilhamentos.",
+    "kindUser": "Usuário",
+    "kindGroup": "Grupo",
+    "usernamePlaceholder": "Nome de usuário exato",
+    "groupPlaceholder": "Nome de grupo exato",
+    "permissionRead": "Pode ver",
+    "permissionWrite": "Pode editar",
+    "action": "Compartilhar",
+    "empty": "Ainda não compartilhado com ninguém.",
+    "hint": "Digite o nome exato do usuário ou grupo. Os destinatários veem no próprio espaço; revogar remove o acesso na hora.",
+    "revoke": "Revogar acesso",
+    "added": "Compartilhado com {{name}}",
+    "failed": "Falha ao compartilhar",
+    "userNotFound": "Nenhum usuário com esse nome",
+    "groupNotFound": "Nenhum grupo com esse nome"
+  },
+  "channels": {
+    "title": "Canais",
+    "browsePublic": "Explorar canais públicos",
+    "newDm": "Nova mensagem direta",
+    "newChannel": "Novo canal",
+    "empty": "Nenhum canal ainda. Crie um ou explore os públicos.",
+    "selectPrompt": "Escolha um canal para começar",
+    "pins": "Fixadas",
+    "members": "Membros",
+    "settings": "Configurações do canal",
+    "sendFailed": "Não foi possível enviar a mensagem",
+    "uploadFailed": "Não foi possível enviar o arquivo",
+    "memberAdded": "Membro adicionado",
+    "memberAddFailed": "Não foi possível adicionar esse usuário",
+    "attach": "Anexar arquivo",
+    "askModel": "Perguntar a um modelo com esta mensagem",
+    "noModel": "Sem modelo",
+    "composerPlaceholder": "Escreva uma mensagem…",
+    "thread": "Tópico",
+    "replyPlaceholder": "Responder…",
+    "invitePlaceholder": "Usuário a convidar",
+    "roleOwner": "dono",
+    "removeMember": "Remover do canal",
+    "leave": "Sair do canal",
+    "noPins": "Nada fixado ainda.",
+    "noMessages": "Nenhuma mensagem ainda — diga oi.",
+    "create": "Criar",
+    "createFailed": "Não foi possível criar o canal",
+    "nameLabel": "Nome",
+    "typeLabel": "Tipo",
+    "typePublic": "Público — qualquer um pode entrar",
+    "typePrivate": "Privado — apenas por convite",
+    "descriptionLabel": "Descrição",
+    "openDm": "Abrir conversa",
+    "dmFailed": "Não foi possível abrir a conversa",
+    "dmHint": "Mensagens diretas são privadas entre vocês dois.",
+    "dmPlaceholder": "Nome de usuário exato",
+    "noPublic": "Nenhum canal público.",
+    "joined": "Participando",
+    "join": "Entrar",
+    "save": "Salvar",
+    "delete": "Excluir canal",
+    "modelAuthor": "Modelo",
+    "unknownAuthor": "Alguém",
+    "edited": "editada",
+    "deletedMessage": "Esta mensagem foi excluída",
+    "modelThinking": "O modelo está pensando…",
+    "react": "Adicionar reação",
+    "reply": "Responder no tópico",
+    "pin": "Fixar mensagem",
+    "unpin": "Desafixar mensagem",
+    "edit": "Editar mensagem",
+    "deleteMessage": "Excluir mensagem",
+    "replyCount": "{{total}} respostas"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "empty": "Você está em dia.",
+    "markAllRead": "Marcar tudo como lido",
+    "markRead": "Marcar como lido"
   }
 }

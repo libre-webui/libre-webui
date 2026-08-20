@@ -18,7 +18,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Plus,
+  Share2,
+  Upload,
+  X,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui';
 import { MonthGrid } from '@/components/calendar/MonthGrid';
@@ -29,11 +37,12 @@ import { automationsApi, calendarApi } from '@/utils/api';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import { addDays, monthLabel, startOfWeek } from '@/utils/calendarDates';
-import type { CalendarEvent } from '@/types';
+import type { Calendar, CalendarEvent } from '@/types';
+import { ShareDialog } from '@/components/ShareDialog';
 
 const logger = createLogger('pages:calendar');
 
-type CalendarView = 'month' | 'week';
+type CalendarView = 'month' | 'week' | 'day';
 
 const CalendarPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -48,6 +57,10 @@ const CalendarPage: React.FC = () => {
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [modalStartAt, setModalStartAt] = useState(() => Date.now());
   const [saving, setSaving] = useState(false);
+  const [calendars, setCalendars] = useState<Calendar[]>([]);
+  const [newCalendarName, setNewCalendarName] = useState('');
+  const [shareCalendar, setShareCalendar] = useState<Calendar | null>(null);
+  const importInputRef = React.useRef<HTMLInputElement>(null);
 
   const range = useMemo(() => {
     if (view === 'month') {
@@ -58,6 +71,14 @@ const CalendarPage: React.FC = () => {
         to: addDays(gridStart, 42).getTime(),
       };
     }
+    if (view === 'day') {
+      const dayStart = new Date(
+        anchor.getFullYear(),
+        anchor.getMonth(),
+        anchor.getDate()
+      );
+      return { from: dayStart.getTime(), to: addDays(dayStart, 1).getTime() };
+    }
     const weekStart = startOfWeek(anchor);
     return { from: weekStart.getTime(), to: addDays(weekStart, 7).getTime() };
   }, [anchor, view]);
@@ -67,6 +88,15 @@ const CalendarPage: React.FC = () => {
     () => setRefreshCounter(counter => counter + 1),
     []
   );
+
+  useEffect(() => {
+    calendarApi
+      .getCalendars()
+      .then(response => {
+        if (response.success && response.data) setCalendars(response.data);
+      })
+      .catch(error => logger.error('Failed to load calendars:', error));
+  }, [refreshCounter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -145,7 +175,7 @@ const CalendarPage: React.FC = () => {
     setAnchor(current =>
       view === 'month'
         ? new Date(current.getFullYear(), current.getMonth() + direction, 1)
-        : addDays(current, direction * 7)
+        : addDays(current, direction * (view === 'day' ? 1 : 7))
     );
   };
 
@@ -173,6 +203,11 @@ const CalendarPage: React.FC = () => {
     }
     if (event.variant === 'automation') {
       navigate('/automations');
+      return;
+    }
+    // Shared read-only events never open the editor.
+    if (event.shared && event.shared.permission !== 'write') {
+      toast(t('calendar.sharedReadOnly'));
       return;
     }
     // Occurrences edit their source event.
@@ -231,7 +266,54 @@ const CalendarPage: React.FC = () => {
           month: 'long',
           day: 'numeric',
           year: 'numeric',
-        }).format(startOfWeek(anchor));
+        }).format(view === 'day' ? anchor : startOfWeek(anchor));
+
+  const handleCreateCalendar = async () => {
+    const name = newCalendarName.trim();
+    if (!name) return;
+    const response = await calendarApi
+      .createCalendar({ name })
+      .catch(() => undefined);
+    if (response?.success) {
+      setNewCalendarName('');
+      refreshEvents();
+    } else {
+      toast.error(t('calendar.calendarSaveFailed'));
+    }
+  };
+
+  const handleExport = async (calendarId?: string) => {
+    try {
+      const blob = await calendarApi.exportIcs(calendarId);
+      const url = URL.createObjectURL(blob);
+      const anchorElement = document.createElement('a');
+      anchorElement.href = url;
+      anchorElement.download = 'calendar.ics';
+      anchorElement.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      logger.error('Failed to export the calendar:', error);
+      toast.error(t('calendar.exportFailed'));
+    }
+  };
+
+  const handleImportFile = async (file: File) => {
+    try {
+      const ics = await file.text();
+      const response = await calendarApi.importIcs(ics);
+      if (response.success && response.data) {
+        toast.success(
+          t('calendar.importResult', { total: response.data.imported })
+        );
+        refreshEvents();
+      } else {
+        toast.error(response.error || t('calendar.importFailed'));
+      }
+    } catch (error) {
+      logger.error('Failed to import the calendar:', error);
+      toast.error(t('calendar.importFailed'));
+    }
+  };
 
   return (
     <div
@@ -252,7 +334,7 @@ const CalendarPage: React.FC = () => {
         </div>
         <div className='flex items-center gap-2'>
           <div className='flex items-center rounded-xl bg-black/[0.04] p-0.5 dark:bg-white/[0.06]'>
-            {(['month', 'week'] as const).map(choice => (
+            {(['month', 'week', 'day'] as const).map(choice => (
               <button
                 key={choice}
                 onClick={() => setView(choice)}
@@ -308,6 +390,93 @@ const CalendarPage: React.FC = () => {
         </div>
       </div>
 
+      <div className='flex flex-wrap items-center gap-1.5 border-b border-black/[0.06] px-4 py-2 dark:border-white/[0.07]'>
+        {calendars.map(calendar => (
+          <span
+            key={calendar.id}
+            className='inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] px-2.5 py-1 text-xs text-gray-700 dark:border-white/[0.1] dark:text-dark-800'
+            data-testid='calendar-chip'
+          >
+            <span
+              className='h-2 w-2 rounded-full'
+              style={{ backgroundColor: calendar.color ?? '#8b8b8b' }}
+            />
+            {calendar.name}
+            {calendar.shared ? (
+              <span className='text-[10px] uppercase text-gray-400 dark:text-dark-500'>
+                {t('calendar.sharedBadge')}
+              </span>
+            ) : (
+              <>
+                <button
+                  onClick={() => setShareCalendar(calendar)}
+                  className='text-gray-400 hover:text-primary-500 dark:text-dark-500'
+                  title={t('calendar.shareCalendar')}
+                  data-testid='calendar-share'
+                >
+                  <Share2 className='h-3 w-3' />
+                </button>
+                <button
+                  onClick={() =>
+                    void calendarApi
+                      .deleteCalendar(calendar.id)
+                      .then(refreshEvents)
+                  }
+                  className='text-gray-400 hover:text-red-500 dark:text-dark-500'
+                  title={t('common.delete')}
+                >
+                  <X className='h-3 w-3' />
+                </button>
+              </>
+            )}
+          </span>
+        ))}
+        <input
+          type='text'
+          value={newCalendarName}
+          onChange={event => setNewCalendarName(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') void handleCreateCalendar();
+          }}
+          placeholder={t('calendar.newCalendarPlaceholder')}
+          className='w-36 rounded-full border border-dashed border-black/[0.12] bg-transparent px-2.5 py-1 text-xs text-gray-700 placeholder:text-gray-400 focus:outline-none dark:border-white/[0.16] dark:text-dark-800'
+          data-testid='calendar-new-calendar'
+        />
+        <div className='ms-auto flex items-center gap-1'>
+          <input
+            ref={importInputRef}
+            type='file'
+            accept='.ics,text/calendar'
+            className='hidden'
+            onChange={event => {
+              const file = event.target.files?.[0];
+              if (file) void handleImportFile(file);
+              event.target.value = '';
+            }}
+          />
+          <Button
+            size='sm'
+            variant='ghost'
+            onClick={() => importInputRef.current?.click()}
+            className='h-7 gap-1 px-2 text-[12px]'
+            data-testid='calendar-import'
+          >
+            <Upload className='h-3.5 w-3.5' />
+            {t('calendar.importIcs')}
+          </Button>
+          <Button
+            size='sm'
+            variant='ghost'
+            onClick={() => void handleExport()}
+            className='h-7 gap-1 px-2 text-[12px]'
+            data-testid='calendar-export'
+          >
+            <Download className='h-3.5 w-3.5' />
+            {t('calendar.exportIcs')}
+          </Button>
+        </div>
+      </div>
+
       {view === 'month' ? (
         <MonthGrid
           year={anchor.getFullYear()}
@@ -320,15 +489,27 @@ const CalendarPage: React.FC = () => {
         <WeekGrid
           anchor={anchor}
           events={displayEvents}
+          dayCount={view === 'day' ? 1 : 7}
           onDayClick={(day, hour) => openCreate(day, hour)}
           onEventClick={openEdit}
         />
       )}
 
+      {shareCalendar && (
+        <ShareDialog
+          resourceType='calendar'
+          resourceId={shareCalendar.id}
+          resourceLabel={shareCalendar.name}
+          onClose={() => setShareCalendar(null)}
+        />
+      )}
       <EventModal
         open={modalOpen}
         event={editingEvent}
         initialStartAt={modalStartAt}
+        calendars={calendars.filter(
+          calendar => !calendar.shared || calendar.shared.permission === 'write'
+        )}
         saving={saving}
         onClose={() => setModalOpen(false)}
         onSave={result => void handleSave(result)}

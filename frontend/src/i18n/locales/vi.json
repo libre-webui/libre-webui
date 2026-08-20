@@ -311,7 +311,8 @@
         "remove": "Gỡ khỏi thư mục",
         "delete": "Xóa thư mục",
         "deleteConfirm": "Xóa thư mục này? Các cuộc trò chuyện bên trong vẫn giữ nguyên."
-      }
+      },
+      "shareChat": "Chia sẻ cuộc trò chuyện…"
     },
     "persona": {
       "applied": "Đã áp dụng persona",
@@ -437,7 +438,8 @@
       "failed": "Không thể tách nhánh cuộc trò chuyện",
       "origin": "Tách nhánh từ {{title}}",
       "originUnknown": "cuộc trò chuyện khác"
-    }
+    },
+    "sharedReadOnly": "Được {{owner}} chia sẻ — chỉ xem"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Tự động hóa",
       "prompts": "Prompt",
       "skills": "Kỹ năng",
-      "tools": "Công cụ"
+      "tools": "Công cụ",
+      "channels": "Kênh"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
     "expandSidebar": "Mở rộng thanh bên"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Xóa bộ sưu tập này? Tài liệu bên trong vẫn giữ nguyên.",
         "createFailed": "Không thể tạo bộ sưu tập",
         "deleteFailed": "Không thể xóa bộ sưu tập",
-        "assignFailed": "Không thể di chuyển tài liệu"
+        "assignFailed": "Không thể di chuyển tài liệu",
+        "share": "Chia sẻ bộ sưu tập",
+        "shared": "đã chia sẻ"
       },
       "library": {
         "title": "Tài liệu đã tải lên",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "Đã xóa {{count}} ký ức",
     "backupSuccess": "Đã tải xuống bản sao lưu persona thành công",
     "dnaSuccess": "Đã xuất DNA persona thành công",
-    "failed": "Không thể {{action}}"
+    "failed": "Không thể {{action}}",
+    "shareTooltip": "Chia sẻ persona này"
   },
   "userManager": {
     "title": "Quản lý người dùng",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} nữa",
     "loadFailed": "Không thể tải lịch",
     "saveFailed": "Không thể lưu sự kiện",
-    "deleteFailed": "Không thể xóa sự kiện"
+    "deleteFailed": "Không thể xóa sự kiện",
+    "day": "Ngày",
+    "calendarLabel": "Lịch",
+    "personalCalendar": "Cá nhân",
+    "reminderLabel": "Nhắc nhở",
+    "reminderNone": "Không nhắc",
+    "reminderMinutes": "Trước {{minutes}} phút",
+    "reminderHour": "Trước 1 giờ",
+    "reminderDay": "Trước 1 ngày",
+    "sharedReadOnly": "Sự kiện này được chia sẻ với bạn ở chế độ chỉ xem.",
+    "sharedBadge": "đã chia sẻ",
+    "shareCalendar": "Chia sẻ lịch",
+    "newCalendarPlaceholder": "Lịch mới…",
+    "calendarSaveFailed": "Không thể lưu lịch",
+    "exportFailed": "Không thể xuất lịch",
+    "importFailed": "Không thể nhập tệp",
+    "importResult": "Đã nhập {{total}} sự kiện",
+    "importIcs": "Nhập",
+    "exportIcs": "Xuất"
   },
   "automations": {
     "title": "Tự động hóa",
@@ -3020,5 +3044,84 @@
       "servers": "Máy chủ công cụ",
       "hint": "Các lệnh gọi có tác dụng phụ vẫn cần phê duyệt trước khi chạy."
     }
+  },
+  "share": {
+    "title": "Chia sẻ “{{name}}”",
+    "subtitle": "Cấp quyền truy cập cho người hoặc nhóm. Chỉ bạn quản lý các chia sẻ.",
+    "kindUser": "Người dùng",
+    "kindGroup": "Nhóm",
+    "usernamePlaceholder": "Tên người dùng chính xác",
+    "groupPlaceholder": "Tên nhóm chính xác",
+    "permissionRead": "Được xem",
+    "permissionWrite": "Được chỉnh sửa",
+    "action": "Chia sẻ",
+    "empty": "Chưa chia sẻ với ai.",
+    "hint": "Nhập chính xác tên người dùng hoặc nhóm. Người nhận thấy nó trong không gian làm việc của họ; thu hồi sẽ xóa quyền truy cập ngay lập tức.",
+    "revoke": "Thu hồi quyền truy cập",
+    "added": "Đã chia sẻ với {{name}}",
+    "failed": "Chia sẻ thất bại",
+    "userNotFound": "Không có người dùng nào với tên đó",
+    "groupNotFound": "Không có nhóm nào với tên đó"
+  },
+  "channels": {
+    "title": "Kênh",
+    "browsePublic": "Duyệt kênh công khai",
+    "newDm": "Tin nhắn trực tiếp mới",
+    "newChannel": "Kênh mới",
+    "empty": "Chưa có kênh nào. Tạo một kênh hoặc duyệt các kênh công khai.",
+    "selectPrompt": "Chọn một kênh để bắt đầu",
+    "pins": "Đã ghim",
+    "members": "Thành viên",
+    "settings": "Cài đặt kênh",
+    "sendFailed": "Không thể gửi tin nhắn",
+    "uploadFailed": "Không thể tải tệp lên",
+    "memberAdded": "Đã thêm thành viên",
+    "memberAddFailed": "Không thể thêm người dùng này",
+    "attach": "Đính kèm tệp",
+    "askModel": "Hỏi một mô hình bằng tin nhắn này",
+    "noModel": "Không dùng mô hình",
+    "composerPlaceholder": "Viết tin nhắn…",
+    "thread": "Chuỗi",
+    "replyPlaceholder": "Trả lời…",
+    "invitePlaceholder": "Người dùng cần mời",
+    "roleOwner": "chủ sở hữu",
+    "removeMember": "Xóa khỏi kênh",
+    "leave": "Rời kênh",
+    "noPins": "Chưa có gì được ghim.",
+    "noMessages": "Chưa có tin nhắn — hãy chào hỏi.",
+    "create": "Tạo",
+    "createFailed": "Không thể tạo kênh",
+    "nameLabel": "Tên",
+    "typeLabel": "Loại",
+    "typePublic": "Công khai — ai cũng có thể tham gia",
+    "typePrivate": "Riêng tư — chỉ theo lời mời",
+    "descriptionLabel": "Mô tả",
+    "openDm": "Mở cuộc trò chuyện",
+    "dmFailed": "Không thể mở cuộc trò chuyện",
+    "dmHint": "Tin nhắn trực tiếp chỉ riêng tư giữa hai bạn.",
+    "dmPlaceholder": "Tên người dùng chính xác",
+    "noPublic": "Không có kênh công khai.",
+    "joined": "Đã tham gia",
+    "join": "Tham gia",
+    "save": "Lưu",
+    "delete": "Xóa kênh",
+    "modelAuthor": "Mô hình",
+    "unknownAuthor": "Ai đó",
+    "edited": "đã sửa",
+    "deletedMessage": "Tin nhắn này đã bị xóa",
+    "modelThinking": "Mô hình đang suy nghĩ…",
+    "react": "Thêm cảm xúc",
+    "reply": "Trả lời trong chuỗi",
+    "pin": "Ghim tin nhắn",
+    "unpin": "Bỏ ghim tin nhắn",
+    "edit": "Sửa tin nhắn",
+    "deleteMessage": "Xóa tin nhắn",
+    "replyCount": "{{total}} trả lời"
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "empty": "Bạn đã xem hết.",
+    "markAllRead": "Đánh dấu tất cả đã đọc",
+    "markRead": "Đánh dấu đã đọc"
   }
 }

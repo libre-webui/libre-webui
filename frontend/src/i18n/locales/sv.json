@@ -311,7 +311,8 @@
         "remove": "Ta bort från mapp",
         "delete": "Ta bort mapp",
         "deleteConfirm": "Ta bort den här mappen? Chattarna i den behålls."
-      }
+      },
+      "shareChat": "Dela chatt…"
     },
     "persona": {
       "applied": "Persona tillämpad",
@@ -437,7 +438,8 @@
       "failed": "Kunde inte grena av chatten",
       "origin": "Avgrenad från {{title}}",
       "originUnknown": "en annan chatt"
-    }
+    },
+    "sharedReadOnly": "Delad av {{owner}} — endast visning"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Automatiseringar",
       "prompts": "Prompter",
       "skills": "Färdigheter",
-      "tools": "Verktyg"
+      "tools": "Verktyg",
+      "channels": "Kanaler"
     },
     "toggleSize": "Växla sidofältets storlek",
     "expandSidebar": "Expandera sidofältet"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Ta bort den här samlingen? Dokumenten i den behålls.",
         "createFailed": "Samlingen kunde inte skapas",
         "deleteFailed": "Samlingen kunde inte tas bort",
-        "assignFailed": "Dokumentet kunde inte flyttas"
+        "assignFailed": "Dokumentet kunde inte flyttas",
+        "share": "Dela samling",
+        "shared": "delad"
       },
       "library": {
         "title": "Uppladdade dokument",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "Raderade {{count}} minnen",
     "backupSuccess": "Personans säkerhetskopia laddades ner",
     "dnaSuccess": "Personans DNA exporterades",
-    "failed": "Kunde inte {{action}}"
+    "failed": "Kunde inte {{action}}",
+    "shareTooltip": "Dela denna persona"
   },
   "userManager": {
     "title": "Användarhantering",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} till",
     "loadFailed": "Kalendern kunde inte läsas in",
     "saveFailed": "Händelsen kunde inte sparas",
-    "deleteFailed": "Händelsen kunde inte tas bort"
+    "deleteFailed": "Händelsen kunde inte tas bort",
+    "day": "Dag",
+    "calendarLabel": "Kalender",
+    "personalCalendar": "Personlig",
+    "reminderLabel": "Påminnelse",
+    "reminderNone": "Ingen påminnelse",
+    "reminderMinutes": "{{minutes}} minuter innan",
+    "reminderHour": "1 timme innan",
+    "reminderDay": "1 dag innan",
+    "sharedReadOnly": "Händelsen är delad med dig som skrivskyddad.",
+    "sharedBadge": "delad",
+    "shareCalendar": "Dela kalender",
+    "newCalendarPlaceholder": "Ny kalender…",
+    "calendarSaveFailed": "Kalendern kunde inte sparas",
+    "exportFailed": "Kalendern kunde inte exporteras",
+    "importFailed": "Filen kunde inte importeras",
+    "importResult": "{{total}} händelser importerade",
+    "importIcs": "Importera",
+    "exportIcs": "Exportera"
   },
   "automations": {
     "title": "Automatiseringar",
@@ -3020,5 +3044,84 @@
       "servers": "Verktygsservrar",
       "hint": "Anrop med sidoeffekter ber fortfarande om godkännande innan de körs."
     }
+  },
+  "share": {
+    "title": "Dela ”{{name}}”",
+    "subtitle": "Ge personer eller grupper åtkomst. Bara du hanterar delningarna.",
+    "kindUser": "Användare",
+    "kindGroup": "Grupp",
+    "usernamePlaceholder": "Exakt användarnamn",
+    "groupPlaceholder": "Exakt gruppnamn",
+    "permissionRead": "Kan visa",
+    "permissionWrite": "Kan redigera",
+    "action": "Dela",
+    "empty": "Inte delad med någon ännu.",
+    "hint": "Ange exakt användar- eller gruppnamn. Mottagarna ser den i sin egen arbetsyta; återkallning tar bort åtkomsten direkt.",
+    "revoke": "Återkalla åtkomst",
+    "added": "Delad med {{name}}",
+    "failed": "Delningen misslyckades",
+    "userNotFound": "Ingen användare med det namnet",
+    "groupNotFound": "Ingen grupp med det namnet"
+  },
+  "channels": {
+    "title": "Kanaler",
+    "browsePublic": "Bläddra bland publika kanaler",
+    "newDm": "Nytt direktmeddelande",
+    "newChannel": "Ny kanal",
+    "empty": "Inga kanaler ännu. Skapa en eller bläddra bland publika.",
+    "selectPrompt": "Välj en kanal för att börja",
+    "pins": "Fästa",
+    "members": "Medlemmar",
+    "settings": "Kanalinställningar",
+    "sendFailed": "Meddelandet kunde inte skickas",
+    "uploadFailed": "Filen kunde inte laddas upp",
+    "memberAdded": "Medlem tillagd",
+    "memberAddFailed": "Användaren kunde inte läggas till",
+    "attach": "Bifoga en fil",
+    "askModel": "Fråga en modell med detta meddelande",
+    "noModel": "Ingen modell",
+    "composerPlaceholder": "Skriv ett meddelande…",
+    "thread": "Tråd",
+    "replyPlaceholder": "Svara…",
+    "invitePlaceholder": "Användare att bjuda in",
+    "roleOwner": "ägare",
+    "removeMember": "Ta bort från kanalen",
+    "leave": "Lämna kanalen",
+    "noPins": "Inget fäst ännu.",
+    "noMessages": "Inga meddelanden ännu — säg hej.",
+    "create": "Skapa",
+    "createFailed": "Kanalen kunde inte skapas",
+    "nameLabel": "Namn",
+    "typeLabel": "Typ",
+    "typePublic": "Publik — vem som helst kan gå med",
+    "typePrivate": "Privat — endast inbjudan",
+    "descriptionLabel": "Beskrivning",
+    "openDm": "Öppna konversation",
+    "dmFailed": "Konversationen kunde inte öppnas",
+    "dmHint": "Direktmeddelanden är privata mellan er två.",
+    "dmPlaceholder": "Exakt användarnamn",
+    "noPublic": "Inga publika kanaler.",
+    "joined": "Medlem",
+    "join": "Gå med",
+    "save": "Spara",
+    "delete": "Ta bort kanal",
+    "modelAuthor": "Modell",
+    "unknownAuthor": "Någon",
+    "edited": "redigerat",
+    "deletedMessage": "Meddelandet togs bort",
+    "modelThinking": "Modellen tänker…",
+    "react": "Lägg till reaktion",
+    "reply": "Svara i tråden",
+    "pin": "Fäst meddelande",
+    "unpin": "Lossa meddelande",
+    "edit": "Redigera meddelande",
+    "deleteMessage": "Ta bort meddelande",
+    "replyCount": "{{total}} svar"
+  },
+  "notifications": {
+    "title": "Aviseringar",
+    "empty": "Du är ikapp.",
+    "markAllRead": "Markera alla som lästa",
+    "markRead": "Markera som läst"
   }
 }

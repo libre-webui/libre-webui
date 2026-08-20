@@ -311,7 +311,8 @@
         "remove": "Klasörden çıkar",
         "delete": "Klasörü sil",
         "deleteConfirm": "Bu klasör silinsin mi? İçindeki sohbetler korunur."
-      }
+      },
+      "shareChat": "Sohbeti paylaş…"
     },
     "persona": {
       "applied": "Persona uygulandı",
@@ -437,7 +438,8 @@
       "failed": "Sohbet çatallanamadı",
       "origin": "{{title}} sohbetinden çatallandı",
       "originUnknown": "başka bir sohbet"
-    }
+    },
+    "sharedReadOnly": "{{owner}} paylaştı — yalnızca görüntüleme"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Otomasyonlar",
       "prompts": "İstemler",
       "skills": "Beceriler",
-      "tools": "Araçlar"
+      "tools": "Araçlar",
+      "channels": "Kanallar"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Bu koleksiyon silinsin mi? İçindeki belgeler korunur.",
         "createFailed": "Koleksiyon oluşturulamadı",
         "deleteFailed": "Koleksiyon silinemedi",
-        "assignFailed": "Belge taşınamadı"
+        "assignFailed": "Belge taşınamadı",
+        "share": "Koleksiyonu paylaş",
+        "shared": "paylaşılan"
       },
       "library": {
         "title": "Yüklenen belgeler",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "{{count}} anı silindi",
     "backupSuccess": "Persona yedeği başarıyla indirildi",
     "dnaSuccess": "Persona DNA'sı başarıyla dışa aktarıldı",
-    "failed": "{{action}} işlemi başarısız"
+    "failed": "{{action}} işlemi başarısız",
+    "shareTooltip": "Bu personayı paylaş"
   },
   "userManager": {
     "title": "Kullanıcı Yönetimi",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} daha",
     "loadFailed": "Takvim yüklenemedi",
     "saveFailed": "Etkinlik kaydedilemedi",
-    "deleteFailed": "Etkinlik silinemedi"
+    "deleteFailed": "Etkinlik silinemedi",
+    "day": "Gün",
+    "calendarLabel": "Takvim",
+    "personalCalendar": "Kişisel",
+    "reminderLabel": "Hatırlatıcı",
+    "reminderNone": "Hatırlatıcı yok",
+    "reminderMinutes": "{{minutes}} dakika önce",
+    "reminderHour": "1 saat önce",
+    "reminderDay": "1 gün önce",
+    "sharedReadOnly": "Bu etkinlik sizinle yalnızca görüntüleme için paylaşıldı.",
+    "sharedBadge": "paylaşılan",
+    "shareCalendar": "Takvimi paylaş",
+    "newCalendarPlaceholder": "Yeni takvim…",
+    "calendarSaveFailed": "Takvim kaydedilemedi",
+    "exportFailed": "Takvim dışa aktarılamadı",
+    "importFailed": "Dosya içe aktarılamadı",
+    "importResult": "{{total}} etkinlik içe aktarıldı",
+    "importIcs": "İçe aktar",
+    "exportIcs": "Dışa aktar"
   },
   "automations": {
     "title": "Otomasyonlar",
@@ -3020,5 +3044,84 @@
       "servers": "Araç sunucuları",
       "hint": "Yan etkili çağrılar çalışmadan önce yine onay ister."
     }
+  },
+  "share": {
+    "title": "“{{name}}” paylaş",
+    "subtitle": "Kişilere veya gruplara erişim verin. Paylaşımları yalnızca siz yönetirsiniz.",
+    "kindUser": "Kullanıcı",
+    "kindGroup": "Grup",
+    "usernamePlaceholder": "Tam kullanıcı adı",
+    "groupPlaceholder": "Tam grup adı",
+    "permissionRead": "Görüntüleyebilir",
+    "permissionWrite": "Düzenleyebilir",
+    "action": "Paylaş",
+    "empty": "Henüz kimseyle paylaşılmadı.",
+    "hint": "Tam kullanıcı veya grup adını girin. Alıcılar kendi çalışma alanında görür; iptal, erişimi anında kaldırır.",
+    "revoke": "Erişimi iptal et",
+    "added": "{{name}} ile paylaşıldı",
+    "failed": "Paylaşım başarısız",
+    "userNotFound": "Bu adda bir kullanıcı yok",
+    "groupNotFound": "Bu adda bir grup yok"
+  },
+  "channels": {
+    "title": "Kanallar",
+    "browsePublic": "Herkese açık kanallara göz at",
+    "newDm": "Yeni doğrudan mesaj",
+    "newChannel": "Yeni kanal",
+    "empty": "Henüz kanal yok. Bir tane oluşturun veya herkese açık kanallara bakın.",
+    "selectPrompt": "Başlamak için bir kanal seçin",
+    "pins": "Sabitlenenler",
+    "members": "Üyeler",
+    "settings": "Kanal ayarları",
+    "sendFailed": "Mesaj gönderilemedi",
+    "uploadFailed": "Dosya yüklenemedi",
+    "memberAdded": "Üye eklendi",
+    "memberAddFailed": "Bu kullanıcı eklenemedi",
+    "attach": "Dosya ekle",
+    "askModel": "Bu mesajla bir modele sor",
+    "noModel": "Model yok",
+    "composerPlaceholder": "Bir mesaj yazın…",
+    "thread": "Konu",
+    "replyPlaceholder": "Yanıtla…",
+    "invitePlaceholder": "Davet edilecek kullanıcı",
+    "roleOwner": "sahip",
+    "removeMember": "Kanaldan çıkar",
+    "leave": "Kanaldan ayrıl",
+    "noPins": "Henüz sabitlenmiş bir şey yok.",
+    "noMessages": "Henüz mesaj yok — merhaba deyin.",
+    "create": "Oluştur",
+    "createFailed": "Kanal oluşturulamadı",
+    "nameLabel": "Ad",
+    "typeLabel": "Tür",
+    "typePublic": "Herkese açık — herkes katılabilir",
+    "typePrivate": "Özel — yalnızca davetle",
+    "descriptionLabel": "Açıklama",
+    "openDm": "Sohbeti aç",
+    "dmFailed": "Sohbet açılamadı",
+    "dmHint": "Doğrudan mesajlar yalnızca ikinize özeldir.",
+    "dmPlaceholder": "Tam kullanıcı adı",
+    "noPublic": "Herkese açık kanal yok.",
+    "joined": "Katıldınız",
+    "join": "Katıl",
+    "save": "Kaydet",
+    "delete": "Kanalı sil",
+    "modelAuthor": "Model",
+    "unknownAuthor": "Birisi",
+    "edited": "düzenlendi",
+    "deletedMessage": "Bu mesaj silindi",
+    "modelThinking": "Model düşünüyor…",
+    "react": "Tepki ekle",
+    "reply": "Konuda yanıtla",
+    "pin": "Mesajı sabitle",
+    "unpin": "Sabitlemeyi kaldır",
+    "edit": "Mesajı düzenle",
+    "deleteMessage": "Mesajı sil",
+    "replyCount": "{{total}} yanıt"
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "empty": "Her şey okundu.",
+    "markAllRead": "Tümünü okundu işaretle",
+    "markRead": "Okundu işaretle"
   }
 }

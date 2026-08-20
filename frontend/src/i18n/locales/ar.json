@@ -311,7 +311,8 @@
         "remove": "إزالة من المجلد",
         "delete": "حذف المجلد",
         "deleteConfirm": "حذف هذا المجلد؟ ستبقى المحادثات بداخله."
-      }
+      },
+      "shareChat": "مشاركة المحادثة…"
     },
     "persona": {
       "applied": "تم تطبيق الشخصية",
@@ -437,7 +438,8 @@
       "failed": "تعذّر تفريع المحادثة",
       "origin": "تفريع من {{title}}",
       "originUnknown": "محادثة أخرى"
-    }
+    },
+    "sharedReadOnly": "مشاركة من {{owner}} — عرض فقط"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "الأتمتة",
       "prompts": "الموجهات",
       "skills": "المهارات",
-      "tools": "الأدوات"
+      "tools": "الأدوات",
+      "channels": "القنوات"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
     "expandSidebar": "توسيع الشريط الجانبي"
@@ -768,7 +771,9 @@
         "deleteConfirm": "حذف هذه المجموعة؟ ستبقى المستندات بداخلها.",
         "createFailed": "فشل إنشاء المجموعة",
         "deleteFailed": "فشل حذف المجموعة",
-        "assignFailed": "فشل نقل المستند"
+        "assignFailed": "فشل نقل المستند",
+        "share": "مشاركة المجموعة",
+        "shared": "مشتركة"
       },
       "library": {
         "title": "المستندات المرفوعة",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "تم مسح {{count}} ذكرى",
     "backupSuccess": "تم تحميل نسخة الشخصية الاحتياطية بنجاح",
     "dnaSuccess": "تم تصدير DNA الشخصية بنجاح",
-    "failed": "فشل {{action}}"
+    "failed": "فشل {{action}}",
+    "shareTooltip": "مشاركة هذه الشخصية"
   },
   "userManager": {
     "title": "إدارة المستخدمين",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} أخرى",
     "loadFailed": "فشل تحميل التقويم",
     "saveFailed": "فشل حفظ الحدث",
-    "deleteFailed": "فشل حذف الحدث"
+    "deleteFailed": "فشل حذف الحدث",
+    "day": "يوم",
+    "calendarLabel": "التقويم",
+    "personalCalendar": "شخصي",
+    "reminderLabel": "تذكير",
+    "reminderNone": "بدون تذكير",
+    "reminderMinutes": "قبل {{minutes}} دقيقة",
+    "reminderHour": "قبل ساعة واحدة",
+    "reminderDay": "قبل يوم واحد",
+    "sharedReadOnly": "هذا الحدث مشارك معك للعرض فقط.",
+    "sharedBadge": "مشترك",
+    "shareCalendar": "مشاركة التقويم",
+    "newCalendarPlaceholder": "تقويم جديد…",
+    "calendarSaveFailed": "تعذر حفظ التقويم",
+    "exportFailed": "تعذر تصدير التقويم",
+    "importFailed": "تعذر استيراد الملف",
+    "importResult": "تم استيراد {{total}} أحداث",
+    "importIcs": "استيراد",
+    "exportIcs": "تصدير"
   },
   "automations": {
     "title": "الأتمتة",
@@ -3020,5 +3044,84 @@
       "servers": "خوادم الأدوات",
       "hint": "الاستدعاءات ذات التأثير الجانبي لا تزال تطلب الموافقة قبل تشغيلها."
     }
+  },
+  "share": {
+    "title": "مشاركة «{{name}}»",
+    "subtitle": "امنح الوصول لأشخاص أو مجموعات. أنت وحدك من يدير المشاركات.",
+    "kindUser": "مستخدم",
+    "kindGroup": "مجموعة",
+    "usernamePlaceholder": "اسم المستخدم الدقيق",
+    "groupPlaceholder": "اسم المجموعة الدقيق",
+    "permissionRead": "يمكنه العرض",
+    "permissionWrite": "يمكنه التعديل",
+    "action": "مشاركة",
+    "empty": "لم تتم المشاركة مع أحد بعد.",
+    "hint": "أدخل اسم المستخدم أو المجموعة بدقة. يظهر العنصر في مساحة عمل المستلم، ويؤدي الإلغاء إلى إزالة الوصول فورًا.",
+    "revoke": "إلغاء الوصول",
+    "added": "تمت المشاركة مع {{name}}",
+    "failed": "فشلت المشاركة",
+    "userNotFound": "لا يوجد مستخدم بهذا الاسم",
+    "groupNotFound": "لا توجد مجموعة بهذا الاسم"
+  },
+  "channels": {
+    "title": "القنوات",
+    "browsePublic": "تصفح القنوات العامة",
+    "newDm": "رسالة مباشرة جديدة",
+    "newChannel": "قناة جديدة",
+    "empty": "لا توجد قنوات بعد. أنشئ واحدة أو تصفح القنوات العامة.",
+    "selectPrompt": "اختر قناة للبدء",
+    "pins": "المثبتة",
+    "members": "الأعضاء",
+    "settings": "إعدادات القناة",
+    "sendFailed": "تعذر إرسال الرسالة",
+    "uploadFailed": "تعذر رفع الملف",
+    "memberAdded": "تمت إضافة العضو",
+    "memberAddFailed": "تعذرت إضافة هذا المستخدم",
+    "attach": "إرفاق ملف",
+    "askModel": "اسأل نموذجًا بهذه الرسالة",
+    "noModel": "بدون نموذج",
+    "composerPlaceholder": "اكتب رسالة…",
+    "thread": "سلسلة",
+    "replyPlaceholder": "رد…",
+    "invitePlaceholder": "اسم المستخدم للدعوة",
+    "roleOwner": "المالك",
+    "removeMember": "إزالة من القناة",
+    "leave": "مغادرة القناة",
+    "noPins": "لا شيء مثبت بعد.",
+    "noMessages": "لا رسائل بعد — ألقِ التحية.",
+    "create": "إنشاء",
+    "createFailed": "تعذر إنشاء القناة",
+    "nameLabel": "الاسم",
+    "typeLabel": "النوع",
+    "typePublic": "عامة — يمكن لأي شخص الانضمام",
+    "typePrivate": "خاصة — بدعوة فقط",
+    "descriptionLabel": "الوصف",
+    "openDm": "فتح المحادثة",
+    "dmFailed": "تعذر فتح المحادثة",
+    "dmHint": "الرسائل المباشرة خاصة بينكما فقط.",
+    "dmPlaceholder": "اسم المستخدم الدقيق",
+    "noPublic": "لا توجد قنوات عامة.",
+    "joined": "منضم",
+    "join": "انضمام",
+    "save": "حفظ",
+    "delete": "حذف القناة",
+    "modelAuthor": "نموذج",
+    "unknownAuthor": "شخص ما",
+    "edited": "معدّلة",
+    "deletedMessage": "تم حذف هذه الرسالة",
+    "modelThinking": "النموذج يفكر…",
+    "react": "إضافة تفاعل",
+    "reply": "الرد في السلسلة",
+    "pin": "تثبيت الرسالة",
+    "unpin": "إلغاء التثبيت",
+    "edit": "تعديل الرسالة",
+    "deleteMessage": "حذف الرسالة",
+    "replyCount": "{{total}} ردود"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "لا إشعارات جديدة.",
+    "markAllRead": "تحديد الكل كمقروء",
+    "markRead": "تحديد كمقروء"
   }
 }

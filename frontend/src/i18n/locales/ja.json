@@ -311,7 +311,8 @@
         "remove": "フォルダーから外す",
         "delete": "フォルダーを削除",
         "deleteConfirm": "このフォルダーを削除しますか？中のチャットは残ります。"
-      }
+      },
+      "shareChat": "チャットを共有…"
     },
     "persona": {
       "applied": "ペルソナが適用されました",
@@ -437,7 +438,8 @@
       "failed": "チャットをフォークできませんでした",
       "origin": "{{title}} からフォーク",
       "originUnknown": "別のチャット"
-    }
+    },
+    "sharedReadOnly": "{{owner}} が共有 — 閲覧のみ"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "自動化",
       "prompts": "プロンプト",
       "skills": "スキル",
-      "tools": "ツール"
+      "tools": "ツール",
+      "channels": "チャンネル"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
     "expandSidebar": "サイドバーを展開"
@@ -768,7 +771,9 @@
         "deleteConfirm": "このコレクションを削除しますか？中のドキュメントは残ります。",
         "createFailed": "コレクションを作成できませんでした",
         "deleteFailed": "コレクションを削除できませんでした",
-        "assignFailed": "ドキュメントを移動できませんでした"
+        "assignFailed": "ドキュメントを移動できませんでした",
+        "share": "コレクションを共有",
+        "shared": "共有"
       },
       "library": {
         "title": "アップロード済みドキュメント",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "{{count}}件の記憶を消去しました",
     "backupSuccess": "ペルソナのバックアップが正常にダウンロードされました",
     "dnaSuccess": "ペルソナDNAが正常にエクスポートされました",
-    "failed": "{{action}}に失敗しました"
+    "failed": "{{action}}に失敗しました",
+    "shareTooltip": "このペルソナを共有"
   },
   "userManager": {
     "title": "ユーザー管理",
@@ -2593,7 +2599,25 @@
     "more": "他{{n}}件",
     "loadFailed": "カレンダーを読み込めませんでした",
     "saveFailed": "予定を保存できませんでした",
-    "deleteFailed": "予定を削除できませんでした"
+    "deleteFailed": "予定を削除できませんでした",
+    "day": "日",
+    "calendarLabel": "カレンダー",
+    "personalCalendar": "個人",
+    "reminderLabel": "リマインダー",
+    "reminderNone": "リマインダーなし",
+    "reminderMinutes": "{{minutes}} 分前",
+    "reminderHour": "1 時間前",
+    "reminderDay": "1 日前",
+    "sharedReadOnly": "この予定は閲覧のみで共有されています。",
+    "sharedBadge": "共有",
+    "shareCalendar": "カレンダーを共有",
+    "newCalendarPlaceholder": "新しいカレンダー…",
+    "calendarSaveFailed": "カレンダーを保存できませんでした",
+    "exportFailed": "カレンダーをエクスポートできませんでした",
+    "importFailed": "ファイルをインポートできませんでした",
+    "importResult": "{{total}} 件の予定をインポートしました",
+    "importIcs": "インポート",
+    "exportIcs": "エクスポート"
   },
   "automations": {
     "title": "自動化",
@@ -3020,5 +3044,84 @@
       "servers": "ツールサーバー",
       "hint": "副作用のある呼び出しは、実行前に引き続き承認を求めます。"
     }
+  },
+  "share": {
+    "title": "「{{name}}」を共有",
+    "subtitle": "ユーザーやグループにアクセスを付与します。共有の管理はあなただけが行えます。",
+    "kindUser": "ユーザー",
+    "kindGroup": "グループ",
+    "usernamePlaceholder": "正確なユーザー名",
+    "groupPlaceholder": "正確なグループ名",
+    "permissionRead": "閲覧可能",
+    "permissionWrite": "編集可能",
+    "action": "共有",
+    "empty": "まだ誰とも共有されていません。",
+    "hint": "正確なユーザー名またはグループ名を入力してください。相手のワークスペースに表示され、取り消すと即座にアクセスが失われます。",
+    "revoke": "アクセスを取り消す",
+    "added": "{{name}} と共有しました",
+    "failed": "共有に失敗しました",
+    "userNotFound": "その名前のユーザーは見つかりません",
+    "groupNotFound": "その名前のグループは見つかりません"
+  },
+  "channels": {
+    "title": "チャンネル",
+    "browsePublic": "公開チャンネルを見る",
+    "newDm": "新しいダイレクトメッセージ",
+    "newChannel": "新しいチャンネル",
+    "empty": "チャンネルがまだありません。作成するか公開チャンネルを見てみましょう。",
+    "selectPrompt": "チャンネルを選んで始めましょう",
+    "pins": "ピン留め",
+    "members": "メンバー",
+    "settings": "チャンネル設定",
+    "sendFailed": "メッセージを送信できませんでした",
+    "uploadFailed": "ファイルをアップロードできませんでした",
+    "memberAdded": "メンバーを追加しました",
+    "memberAddFailed": "このユーザーを追加できませんでした",
+    "attach": "ファイルを添付",
+    "askModel": "このメッセージをモデルに尋ねる",
+    "noModel": "モデルなし",
+    "composerPlaceholder": "メッセージを入力…",
+    "thread": "スレッド",
+    "replyPlaceholder": "返信…",
+    "invitePlaceholder": "招待するユーザー名",
+    "roleOwner": "オーナー",
+    "removeMember": "チャンネルから外す",
+    "leave": "チャンネルを退出",
+    "noPins": "ピン留めはまだありません。",
+    "noMessages": "まだメッセージがありません。挨拶してみましょう。",
+    "create": "作成",
+    "createFailed": "チャンネルを作成できませんでした",
+    "nameLabel": "名前",
+    "typeLabel": "種類",
+    "typePublic": "公開 — 誰でも参加できます",
+    "typePrivate": "非公開 — 招待制",
+    "descriptionLabel": "説明",
+    "openDm": "会話を開く",
+    "dmFailed": "会話を開けませんでした",
+    "dmHint": "ダイレクトメッセージは二人だけの非公開です。",
+    "dmPlaceholder": "正確なユーザー名",
+    "noPublic": "公開チャンネルはありません。",
+    "joined": "参加済み",
+    "join": "参加",
+    "save": "保存",
+    "delete": "チャンネルを削除",
+    "modelAuthor": "モデル",
+    "unknownAuthor": "誰か",
+    "edited": "編集済み",
+    "deletedMessage": "このメッセージは削除されました",
+    "modelThinking": "モデルが考え中…",
+    "react": "リアクションを追加",
+    "reply": "スレッドで返信",
+    "pin": "メッセージをピン留め",
+    "unpin": "ピン留めを解除",
+    "edit": "メッセージを編集",
+    "deleteMessage": "メッセージを削除",
+    "replyCount": "{{total}} 件の返信"
+  },
+  "notifications": {
+    "title": "通知",
+    "empty": "未読の通知はありません。",
+    "markAllRead": "すべて既読にする",
+    "markRead": "既読にする"
   }
 }

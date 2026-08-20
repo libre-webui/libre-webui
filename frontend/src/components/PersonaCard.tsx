@@ -18,6 +18,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { ShareDialog } from '@/components/ShareDialog';
 import { Button } from '@/components/ui/Button';
 import { Persona, MemoryStatus } from '@/types';
 import {
@@ -36,6 +37,7 @@ import {
   Zap,
   Settings2,
   Play,
+  Share2,
 } from 'lucide-react';
 import { personaApi } from '@/utils/api';
 import {
@@ -72,6 +74,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [showMenu, setShowMenu] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const hasAdvancedFeatures = Boolean(
@@ -418,6 +421,16 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             >
               <Edit className='h-4 w-4' />
             </button>
+            {!persona.shared && (
+              <button
+                onClick={() => setShareOpen(true)}
+                className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
+                title={t('personaCard.shareTooltip')}
+                data-testid='persona-share'
+              >
+                <Share2 className='h-4 w-4' />
+              </button>
+            )}
             <button
               onClick={() => onDownload(persona)}
               className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
@@ -491,6 +504,14 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
           </div>
         </div>
       </div>
+      {shareOpen && (
+        <ShareDialog
+          resourceType='persona'
+          resourceId={persona.id}
+          resourceLabel={persona.name}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </div>
   );
 };

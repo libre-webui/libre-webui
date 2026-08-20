@@ -311,7 +311,8 @@
         "remove": "Retirer du dossier",
         "delete": "Supprimer le dossier",
         "deleteConfirm": "Supprimer ce dossier ? Les discussions sont conservées."
-      }
+      },
+      "shareChat": "Partager la discussion…"
     },
     "persona": {
       "applied": "Persona appliqué",
@@ -437,7 +438,8 @@
       "failed": "Impossible de bifurquer la discussion",
       "origin": "Bifurquée depuis {{title}}",
       "originUnknown": "une autre discussion"
-    }
+    },
+    "sharedReadOnly": "Partagé par {{owner}} — lecture seule"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Automatisations",
       "prompts": "Prompts",
       "skills": "Compétences",
-      "tools": "Outils"
+      "tools": "Outils",
+      "channels": "Canaux"
     },
     "toggleSize": "Basculer la taille de la barre latérale",
     "expandSidebar": "Agrandir la barre latérale"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Supprimer cette collection ? Les documents sont conservés.",
         "createFailed": "Impossible de créer la collection",
         "deleteFailed": "Impossible de supprimer la collection",
-        "assignFailed": "Impossible de déplacer le document"
+        "assignFailed": "Impossible de déplacer le document",
+        "share": "Partager la collection",
+        "shared": "partagée"
       },
       "library": {
         "title": "Documents importés",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "{{count}} mémoires effacées",
     "backupSuccess": "Sauvegarde du persona téléchargée avec succès",
     "dnaSuccess": "ADN du persona exporté avec succès",
-    "failed": "Échec de {{action}}"
+    "failed": "Échec de {{action}}",
+    "shareTooltip": "Partager cette persona"
   },
   "userManager": {
     "title": "Gestion des utilisateurs",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} autres",
     "loadFailed": "Impossible de charger le calendrier",
     "saveFailed": "Impossible d'enregistrer l'événement",
-    "deleteFailed": "Impossible de supprimer l'événement"
+    "deleteFailed": "Impossible de supprimer l'événement",
+    "day": "Jour",
+    "calendarLabel": "Calendrier",
+    "personalCalendar": "Personnel",
+    "reminderLabel": "Rappel",
+    "reminderNone": "Aucun rappel",
+    "reminderMinutes": "{{minutes}} minutes avant",
+    "reminderHour": "1 heure avant",
+    "reminderDay": "1 jour avant",
+    "sharedReadOnly": "Cet événement est partagé avec vous en lecture seule.",
+    "sharedBadge": "partagé",
+    "shareCalendar": "Partager le calendrier",
+    "newCalendarPlaceholder": "Nouveau calendrier…",
+    "calendarSaveFailed": "Le calendrier n'a pas pu être enregistré",
+    "exportFailed": "Le calendrier n'a pas pu être exporté",
+    "importFailed": "Le fichier n'a pas pu être importé",
+    "importResult": "{{total}} événements importés",
+    "importIcs": "Importer",
+    "exportIcs": "Exporter"
   },
   "automations": {
     "title": "Automatisations",
@@ -3020,5 +3044,84 @@
       "servers": "Serveurs d’outils",
       "hint": "Les appels à effets de bord demandent toujours une approbation avant de s’exécuter."
     }
+  },
+  "share": {
+    "title": "Partager « {{name}} »",
+    "subtitle": "Donner accès à des personnes ou des groupes. Vous seul gérez les partages.",
+    "kindUser": "Utilisateur",
+    "kindGroup": "Groupe",
+    "usernamePlaceholder": "Nom d'utilisateur exact",
+    "groupPlaceholder": "Nom de groupe exact",
+    "permissionRead": "Peut consulter",
+    "permissionWrite": "Peut modifier",
+    "action": "Partager",
+    "empty": "Pas encore partagé.",
+    "hint": "Saisissez le nom exact de l'utilisateur ou du groupe. Les destinataires le voient dans leur espace ; la révocation retire l'accès immédiatement.",
+    "revoke": "Révoquer l'accès",
+    "added": "Partagé avec {{name}}",
+    "failed": "Le partage a échoué",
+    "userNotFound": "Aucun utilisateur avec ce nom",
+    "groupNotFound": "Aucun groupe avec ce nom"
+  },
+  "channels": {
+    "title": "Canaux",
+    "browsePublic": "Parcourir les canaux publics",
+    "newDm": "Nouveau message direct",
+    "newChannel": "Nouveau canal",
+    "empty": "Aucun canal pour le moment. Créez-en un ou parcourez les canaux publics.",
+    "selectPrompt": "Choisissez un canal pour commencer",
+    "pins": "Épinglés",
+    "members": "Membres",
+    "settings": "Paramètres du canal",
+    "sendFailed": "Le message n'a pas pu être envoyé",
+    "uploadFailed": "Le fichier n'a pas pu être téléversé",
+    "memberAdded": "Membre ajouté",
+    "memberAddFailed": "Impossible d'ajouter cet utilisateur",
+    "attach": "Joindre un fichier",
+    "askModel": "Poser ce message à un modèle",
+    "noModel": "Aucun modèle",
+    "composerPlaceholder": "Écrire un message…",
+    "thread": "Fil",
+    "replyPlaceholder": "Répondre…",
+    "invitePlaceholder": "Utilisateur à inviter",
+    "roleOwner": "propriétaire",
+    "removeMember": "Retirer du canal",
+    "leave": "Quitter le canal",
+    "noPins": "Rien d’épinglé pour le moment.",
+    "noMessages": "Aucun message — dites bonjour.",
+    "create": "Créer",
+    "createFailed": "Le canal n'a pas pu être créé",
+    "nameLabel": "Nom",
+    "typeLabel": "Type",
+    "typePublic": "Public — tout le monde peut rejoindre",
+    "typePrivate": "Privé — sur invitation",
+    "descriptionLabel": "Description",
+    "openDm": "Ouvrir la conversation",
+    "dmFailed": "La conversation n'a pas pu être ouverte",
+    "dmHint": "Les messages directs restent privés entre vous deux.",
+    "dmPlaceholder": "Nom d'utilisateur exact",
+    "noPublic": "Aucun canal public à parcourir.",
+    "joined": "Rejoint",
+    "join": "Rejoindre",
+    "save": "Enregistrer",
+    "delete": "Supprimer le canal",
+    "modelAuthor": "Modèle",
+    "unknownAuthor": "Quelqu'un",
+    "edited": "modifié",
+    "deletedMessage": "Ce message a été supprimé",
+    "modelThinking": "Le modèle réfléchit…",
+    "react": "Ajouter une réaction",
+    "reply": "Répondre dans le fil",
+    "pin": "Épingler le message",
+    "unpin": "Désépingler le message",
+    "edit": "Modifier le message",
+    "deleteMessage": "Supprimer le message",
+    "replyCount": "{{total}} réponses"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Vous êtes à jour.",
+    "markAllRead": "Tout marquer comme lu",
+    "markRead": "Marquer comme lu"
   }
 }

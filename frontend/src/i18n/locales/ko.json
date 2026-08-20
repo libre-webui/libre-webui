@@ -311,7 +311,8 @@
         "remove": "폴더에서 제거",
         "delete": "폴더 삭제",
         "deleteConfirm": "이 폴더를 삭제할까요? 안의 채팅은 유지됩니다."
-      }
+      },
+      "shareChat": "채팅 공유…"
     },
     "persona": {
       "applied": "페르소나 적용됨",
@@ -437,7 +438,8 @@
       "failed": "채팅을 분기할 수 없습니다",
       "origin": "{{title}}에서 분기됨",
       "originUnknown": "다른 채팅"
-    }
+    },
+    "sharedReadOnly": "{{owner}} 님이 공유 — 보기 전용"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "자동화",
       "prompts": "프롬프트",
       "skills": "스킬",
-      "tools": "도구"
+      "tools": "도구",
+      "channels": "채널"
     },
     "toggleSize": "사이드바 크기 전환",
     "expandSidebar": "사이드바 확장"
@@ -768,7 +771,9 @@
         "deleteConfirm": "이 컬렉션을 삭제할까요? 안의 문서는 유지됩니다.",
         "createFailed": "컬렉션을 만들지 못했습니다",
         "deleteFailed": "컬렉션을 삭제하지 못했습니다",
-        "assignFailed": "문서를 이동하지 못했습니다"
+        "assignFailed": "문서를 이동하지 못했습니다",
+        "share": "컬렉션 공유",
+        "shared": "공유됨"
       },
       "library": {
         "title": "업로드된 문서",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "메모리 {{count}}개가 지워졌습니다",
     "backupSuccess": "페르소나 백업이 성공적으로 다운로드되었습니다",
     "dnaSuccess": "페르소나 DNA가 성공적으로 내보내졌습니다",
-    "failed": "{{action}} 실패"
+    "failed": "{{action}} 실패",
+    "shareTooltip": "이 페르소나 공유"
   },
   "userManager": {
     "title": "사용자 관리",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}}개 더",
     "loadFailed": "캘린더를 불러오지 못했습니다",
     "saveFailed": "일정을 저장하지 못했습니다",
-    "deleteFailed": "일정을 삭제하지 못했습니다"
+    "deleteFailed": "일정을 삭제하지 못했습니다",
+    "day": "일",
+    "calendarLabel": "캘린더",
+    "personalCalendar": "개인",
+    "reminderLabel": "미리 알림",
+    "reminderNone": "알림 없음",
+    "reminderMinutes": "{{minutes}}분 전",
+    "reminderHour": "1시간 전",
+    "reminderDay": "1일 전",
+    "sharedReadOnly": "이 일정은 보기 전용으로 공유되었습니다.",
+    "sharedBadge": "공유됨",
+    "shareCalendar": "캘린더 공유",
+    "newCalendarPlaceholder": "새 캘린더…",
+    "calendarSaveFailed": "캘린더를 저장하지 못했습니다",
+    "exportFailed": "캘린더를 내보내지 못했습니다",
+    "importFailed": "파일을 가져오지 못했습니다",
+    "importResult": "{{total}}개의 일정을 가져왔습니다",
+    "importIcs": "가져오기",
+    "exportIcs": "내보내기"
   },
   "automations": {
     "title": "자동화",
@@ -3020,5 +3044,84 @@
       "servers": "도구 서버",
       "hint": "부작용이 있는 호출은 실행 전에 여전히 승인을 요청합니다."
     }
+  },
+  "share": {
+    "title": "“{{name}}” 공유",
+    "subtitle": "사용자나 그룹에게 접근 권한을 부여합니다. 공유 관리는 본인만 할 수 있습니다.",
+    "kindUser": "사용자",
+    "kindGroup": "그룹",
+    "usernamePlaceholder": "정확한 사용자 이름",
+    "groupPlaceholder": "정확한 그룹 이름",
+    "permissionRead": "보기 가능",
+    "permissionWrite": "편집 가능",
+    "action": "공유",
+    "empty": "아직 아무와도 공유하지 않았습니다.",
+    "hint": "정확한 사용자 또는 그룹 이름을 입력하세요. 상대의 작업 공간에 표시되며, 취소하면 즉시 접근이 제거됩니다.",
+    "revoke": "접근 취소",
+    "added": "{{name}} 님과 공유했습니다",
+    "failed": "공유하지 못했습니다",
+    "userNotFound": "해당 이름의 사용자가 없습니다",
+    "groupNotFound": "해당 이름의 그룹이 없습니다"
+  },
+  "channels": {
+    "title": "채널",
+    "browsePublic": "공개 채널 둘러보기",
+    "newDm": "새 다이렉트 메시지",
+    "newChannel": "새 채널",
+    "empty": "아직 채널이 없습니다. 새로 만들거나 공개 채널을 둘러보세요.",
+    "selectPrompt": "채널을 선택해 시작하세요",
+    "pins": "고정됨",
+    "members": "멤버",
+    "settings": "채널 설정",
+    "sendFailed": "메시지를 보내지 못했습니다",
+    "uploadFailed": "파일을 업로드하지 못했습니다",
+    "memberAdded": "멤버를 추가했습니다",
+    "memberAddFailed": "해당 사용자를 추가하지 못했습니다",
+    "attach": "파일 첨부",
+    "askModel": "이 메시지로 모델에게 질문",
+    "noModel": "모델 없음",
+    "composerPlaceholder": "메시지를 입력하세요…",
+    "thread": "스레드",
+    "replyPlaceholder": "답글…",
+    "invitePlaceholder": "초대할 사용자 이름",
+    "roleOwner": "소유자",
+    "removeMember": "채널에서 내보내기",
+    "leave": "채널 나가기",
+    "noPins": "아직 고정된 메시지가 없습니다.",
+    "noMessages": "아직 메시지가 없습니다. 인사해 보세요.",
+    "create": "만들기",
+    "createFailed": "채널을 만들지 못했습니다",
+    "nameLabel": "이름",
+    "typeLabel": "유형",
+    "typePublic": "공개 — 누구나 참여 가능",
+    "typePrivate": "비공개 — 초대 전용",
+    "descriptionLabel": "설명",
+    "openDm": "대화 열기",
+    "dmFailed": "대화를 열지 못했습니다",
+    "dmHint": "다이렉트 메시지는 두 사람만 볼 수 있습니다.",
+    "dmPlaceholder": "정확한 사용자 이름",
+    "noPublic": "공개 채널이 없습니다.",
+    "joined": "참여 중",
+    "join": "참여",
+    "save": "저장",
+    "delete": "채널 삭제",
+    "modelAuthor": "모델",
+    "unknownAuthor": "누군가",
+    "edited": "수정됨",
+    "deletedMessage": "삭제된 메시지입니다",
+    "modelThinking": "모델이 생각 중…",
+    "react": "반응 추가",
+    "reply": "스레드에 답글",
+    "pin": "메시지 고정",
+    "unpin": "고정 해제",
+    "edit": "메시지 수정",
+    "deleteMessage": "메시지 삭제",
+    "replyCount": "답글 {{total}}개"
+  },
+  "notifications": {
+    "title": "알림",
+    "empty": "모두 확인했습니다.",
+    "markAllRead": "모두 읽음으로 표시",
+    "markRead": "읽음으로 표시"
   }
 }

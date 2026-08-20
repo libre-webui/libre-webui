@@ -311,7 +311,8 @@
         "remove": "Usuń z folderu",
         "delete": "Usuń folder",
         "deleteConfirm": "Usunąć ten folder? Czaty w nim pozostaną."
-      }
+      },
+      "shareChat": "Udostępnij czat…"
     },
     "persona": {
       "applied": "Persona zastosowana",
@@ -437,7 +438,8 @@
       "failed": "Nie udało się rozgałęzić czatu",
       "origin": "Rozgałęziony z {{title}}",
       "originUnknown": "innego czatu"
-    }
+    },
+    "sharedReadOnly": "Udostępnione przez {{owner}} — tylko podgląd"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Automatyzacje",
       "prompts": "Prompty",
       "skills": "Umiejętności",
-      "tools": "Narzędzia"
+      "tools": "Narzędzia",
+      "channels": "Kanały"
     },
     "toggleSize": "Zmień rozmiar panelu bocznego",
     "expandSidebar": "Rozwiń panel boczny"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Usunąć tę kolekcję? Dokumenty w niej pozostaną.",
         "createFailed": "Nie udało się utworzyć kolekcji",
         "deleteFailed": "Nie udało się usunąć kolekcji",
-        "assignFailed": "Nie udało się przenieść dokumentu"
+        "assignFailed": "Nie udało się przenieść dokumentu",
+        "share": "Udostępnij kolekcję",
+        "shared": "udostępniona"
       },
       "library": {
         "title": "Przesłane dokumenty",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "Wyczyszczono {{count}} wspomnień",
     "backupSuccess": "Kopia zapasowa persony pobrana pomyślnie",
     "dnaSuccess": "DNA persony wyeksportowane pomyślnie",
-    "failed": "Nie udało się {{action}}"
+    "failed": "Nie udało się {{action}}",
+    "shareTooltip": "Udostępnij tę personę"
   },
   "userManager": {
     "title": "Zarządzanie użytkownikami",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} więcej",
     "loadFailed": "Nie udało się załadować kalendarza",
     "saveFailed": "Nie udało się zapisać wydarzenia",
-    "deleteFailed": "Nie udało się usunąć wydarzenia"
+    "deleteFailed": "Nie udało się usunąć wydarzenia",
+    "day": "Dzień",
+    "calendarLabel": "Kalendarz",
+    "personalCalendar": "Osobisty",
+    "reminderLabel": "Przypomnienie",
+    "reminderNone": "Bez przypomnienia",
+    "reminderMinutes": "{{minutes}} minut wcześniej",
+    "reminderHour": "1 godzinę wcześniej",
+    "reminderDay": "1 dzień wcześniej",
+    "sharedReadOnly": "To wydarzenie udostępniono ci tylko do odczytu.",
+    "sharedBadge": "udostępniony",
+    "shareCalendar": "Udostępnij kalendarz",
+    "newCalendarPlaceholder": "Nowy kalendarz…",
+    "calendarSaveFailed": "Nie udało się zapisać kalendarza",
+    "exportFailed": "Nie udało się wyeksportować kalendarza",
+    "importFailed": "Nie udało się zaimportować pliku",
+    "importResult": "Zaimportowano wydarzeń: {{total}}",
+    "importIcs": "Importuj",
+    "exportIcs": "Eksportuj"
   },
   "automations": {
     "title": "Automatyzacje",
@@ -3020,5 +3044,84 @@
       "servers": "Serwery narzędzi",
       "hint": "Wywołania ze skutkami ubocznymi nadal wymagają zatwierdzenia przed uruchomieniem."
     }
+  },
+  "share": {
+    "title": "Udostępnij „{{name}}”",
+    "subtitle": "Daj dostęp osobom lub grupom. Tylko ty zarządzasz udostępnieniami.",
+    "kindUser": "Użytkownik",
+    "kindGroup": "Grupa",
+    "usernamePlaceholder": "Dokładna nazwa użytkownika",
+    "groupPlaceholder": "Dokładna nazwa grupy",
+    "permissionRead": "Może przeglądać",
+    "permissionWrite": "Może edytować",
+    "action": "Udostępnij",
+    "empty": "Jeszcze nikomu nie udostępniono.",
+    "hint": "Wpisz dokładną nazwę użytkownika lub grupy. Odbiorcy widzą zasób w swojej przestrzeni; cofnięcie natychmiast odbiera dostęp.",
+    "revoke": "Cofnij dostęp",
+    "added": "Udostępniono {{name}}",
+    "failed": "Udostępnianie nie powiodło się",
+    "userNotFound": "Brak użytkownika o tej nazwie",
+    "groupNotFound": "Brak grupy o tej nazwie"
+  },
+  "channels": {
+    "title": "Kanały",
+    "browsePublic": "Przeglądaj kanały publiczne",
+    "newDm": "Nowa wiadomość prywatna",
+    "newChannel": "Nowy kanał",
+    "empty": "Brak kanałów. Utwórz własny lub przejrzyj publiczne.",
+    "selectPrompt": "Wybierz kanał, aby zacząć",
+    "pins": "Przypięte",
+    "members": "Członkowie",
+    "settings": "Ustawienia kanału",
+    "sendFailed": "Nie udało się wysłać wiadomości",
+    "uploadFailed": "Nie udało się przesłać pliku",
+    "memberAdded": "Dodano członka",
+    "memberAddFailed": "Nie udało się dodać tego użytkownika",
+    "attach": "Załącz plik",
+    "askModel": "Zapytaj model tą wiadomością",
+    "noModel": "Bez modelu",
+    "composerPlaceholder": "Napisz wiadomość…",
+    "thread": "Wątek",
+    "replyPlaceholder": "Odpowiedz…",
+    "invitePlaceholder": "Użytkownik do zaproszenia",
+    "roleOwner": "właściciel",
+    "removeMember": "Usuń z kanału",
+    "leave": "Opuść kanał",
+    "noPins": "Nic jeszcze nie przypięto.",
+    "noMessages": "Brak wiadomości — przywitaj się.",
+    "create": "Utwórz",
+    "createFailed": "Nie udało się utworzyć kanału",
+    "nameLabel": "Nazwa",
+    "typeLabel": "Typ",
+    "typePublic": "Publiczny — każdy może dołączyć",
+    "typePrivate": "Prywatny — tylko na zaproszenie",
+    "descriptionLabel": "Opis",
+    "openDm": "Otwórz rozmowę",
+    "dmFailed": "Nie udało się otworzyć rozmowy",
+    "dmHint": "Wiadomości prywatne widzicie tylko wy dwoje.",
+    "dmPlaceholder": "Dokładna nazwa użytkownika",
+    "noPublic": "Brak kanałów publicznych.",
+    "joined": "Dołączono",
+    "join": "Dołącz",
+    "save": "Zapisz",
+    "delete": "Usuń kanał",
+    "modelAuthor": "Model",
+    "unknownAuthor": "Ktoś",
+    "edited": "edytowano",
+    "deletedMessage": "Ta wiadomość została usunięta",
+    "modelThinking": "Model myśli…",
+    "react": "Dodaj reakcję",
+    "reply": "Odpowiedz w wątku",
+    "pin": "Przypnij wiadomość",
+    "unpin": "Odepnij wiadomość",
+    "edit": "Edytuj wiadomość",
+    "deleteMessage": "Usuń wiadomość",
+    "replyCount": "Odpowiedzi: {{total}}"
+  },
+  "notifications": {
+    "title": "Powiadomienia",
+    "empty": "Wszystko przeczytane.",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "markRead": "Oznacz jako przeczytane"
   }
 }

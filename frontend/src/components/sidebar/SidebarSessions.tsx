@@ -17,6 +17,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ShareDialog } from '@/components/ShareDialog';
 import { useTranslation } from 'react-i18next';
 import {
   Archive,
@@ -34,6 +35,7 @@ import {
   PinOff,
   Trash2,
   X,
+  Share2,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { SidebarHoverCard } from './SidebarHoverCard';
@@ -269,6 +271,7 @@ export function SidebarSessions({
 
   // Desktop "…" context menu, rendered through a portal so the scroll
   // region cannot clip it. Anchored to the button that opened it.
+  const [shareSession, setShareSession] = useState<ChatSession | null>(null);
   const [sessionMenu, setSessionMenu] = useState<{
     sessionId: string;
     top: number;
@@ -899,6 +902,21 @@ export function SidebarSessions({
                     : t('chat.session.pinChat')}
                 </button>
               )}
+              {!sessionMenuSession.shared && !sessionMenuSession.isPrivate && (
+                <button
+                  type='button'
+                  role='menuitem'
+                  onClick={() => {
+                    setSessionMenu(null);
+                    setShareSession(sessionMenuSession);
+                  }}
+                  className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13px] text-ink hover:bg-interactive-hover'
+                  data-testid='session-share'
+                >
+                  <Share2 className='h-3.5 w-3.5 shrink-0' />
+                  {t('chat.session.shareChat')}
+                </button>
+              )}
               {onArchiveSession && (
                 <button
                   type='button'
@@ -969,6 +987,14 @@ export function SidebarSessions({
           </div>,
           document.body
         )}
+      {shareSession && (
+        <ShareDialog
+          resourceType='session'
+          resourceId={shareSession.id}
+          resourceLabel={shareSession.title}
+          onClose={() => setShareSession(null)}
+        />
+      )}
       {mobileActionSession &&
         createPortal(
           <div className='fixed inset-0 z-[80] sm:hidden'>

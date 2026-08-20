@@ -24,6 +24,7 @@ export interface ResourceGrant {
   resourceId: string;
   principalType: 'user' | 'group';
   principalId: string;
+  principalName?: string;
   permission: string;
   createdAt: string;
 }
@@ -62,5 +63,12 @@ export const accessApi = {
   ): Promise<ApiResponse<ResolvedPrincipal>> =>
     api
       .get('/access/principals', { params: { username } })
+      .then(res => res.data),
+
+  resolveGroup: (
+    name: string
+  ): Promise<ApiResponse<{ id: string; name: string }>> =>
+    api
+      .get('/access/principals/groups', { params: { name } })
       .then(res => res.data),
 };

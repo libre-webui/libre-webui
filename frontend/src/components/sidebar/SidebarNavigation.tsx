@@ -24,6 +24,7 @@ import {
   Sparkles,
   User as UserIcon,
   Zap,
+  MessagesSquare,
 } from 'lucide-react';
 import { cn } from '@/utils';
 
@@ -37,6 +38,11 @@ interface SidebarNavigationProps {
 }
 
 const DESTINATIONS = [
+  {
+    path: '/channels',
+    icon: MessagesSquare,
+    labelKey: 'sidebar.navigation.channels',
+  },
   { path: '/notes', icon: NotebookPen, labelKey: 'sidebar.navigation.notes' },
   {
     path: '/calendar',

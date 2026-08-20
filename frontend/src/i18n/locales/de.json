@@ -311,7 +311,8 @@
         "remove": "Aus Ordner entfernen",
         "delete": "Ordner löschen",
         "deleteConfirm": "Diesen Ordner löschen? Die Chats darin bleiben erhalten."
-      }
+      },
+      "shareChat": "Chat teilen…"
     },
     "persona": {
       "applied": "Persona angewendet",
@@ -437,7 +438,8 @@
       "failed": "Der Chat konnte nicht abgezweigt werden",
       "origin": "Abgezweigt von {{title}}",
       "originUnknown": "einem anderen Chat"
-    }
+    },
+    "sharedReadOnly": "Geteilt von {{owner}} — nur ansehen"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Automationen",
       "prompts": "Prompts",
       "skills": "Skills",
-      "tools": "Werkzeuge"
+      "tools": "Werkzeuge",
+      "channels": "Kanäle"
     },
     "toggleSize": "Seitenleistengröße umschalten",
     "expandSidebar": "Seitenleiste erweitern"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Diese Sammlung löschen? Die Dokumente darin bleiben erhalten.",
         "createFailed": "Sammlung konnte nicht erstellt werden",
         "deleteFailed": "Sammlung konnte nicht gelöscht werden",
-        "assignFailed": "Dokument konnte nicht verschoben werden"
+        "assignFailed": "Dokument konnte nicht verschoben werden",
+        "share": "Sammlung teilen",
+        "shared": "geteilt"
       },
       "library": {
         "title": "Hochgeladene Dokumente",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "{{count}} Erinnerungen gelöscht",
     "backupSuccess": "Persona-Sicherung erfolgreich heruntergeladen",
     "dnaSuccess": "Persona-DNA erfolgreich exportiert",
-    "failed": "{{action}} fehlgeschlagen"
+    "failed": "{{action}} fehlgeschlagen",
+    "shareTooltip": "Diese Persona teilen"
   },
   "userManager": {
     "title": "Benutzerverwaltung",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} weitere",
     "loadFailed": "Kalender konnte nicht geladen werden",
     "saveFailed": "Termin konnte nicht gespeichert werden",
-    "deleteFailed": "Termin konnte nicht gelöscht werden"
+    "deleteFailed": "Termin konnte nicht gelöscht werden",
+    "day": "Tag",
+    "calendarLabel": "Kalender",
+    "personalCalendar": "Persönlich",
+    "reminderLabel": "Erinnerung",
+    "reminderNone": "Keine Erinnerung",
+    "reminderMinutes": "{{minutes}} Minuten vorher",
+    "reminderHour": "1 Stunde vorher",
+    "reminderDay": "1 Tag vorher",
+    "sharedReadOnly": "Dieser Termin ist nur zum Ansehen mit dir geteilt.",
+    "sharedBadge": "geteilt",
+    "shareCalendar": "Kalender teilen",
+    "newCalendarPlaceholder": "Neuer Kalender…",
+    "calendarSaveFailed": "Der Kalender konnte nicht gespeichert werden",
+    "exportFailed": "Der Kalender konnte nicht exportiert werden",
+    "importFailed": "Die Datei konnte nicht importiert werden",
+    "importResult": "{{total}} Termine importiert",
+    "importIcs": "Importieren",
+    "exportIcs": "Exportieren"
   },
   "automations": {
     "title": "Automationen",
@@ -3020,5 +3044,84 @@
       "servers": "Tool-Server",
       "hint": "Aufrufe mit Nebenwirkungen fragen weiterhin vor der Ausführung nach Freigabe."
     }
+  },
+  "share": {
+    "title": "„{{name}}“ teilen",
+    "subtitle": "Personen oder Gruppen Zugriff geben. Nur du verwaltest die Freigaben.",
+    "kindUser": "Benutzer",
+    "kindGroup": "Gruppe",
+    "usernamePlaceholder": "Genauer Benutzername",
+    "groupPlaceholder": "Genauer Gruppenname",
+    "permissionRead": "Darf ansehen",
+    "permissionWrite": "Darf bearbeiten",
+    "action": "Teilen",
+    "empty": "Noch mit niemandem geteilt.",
+    "hint": "Gib den genauen Benutzer- oder Gruppennamen ein. Empfänger sehen es im eigenen Arbeitsbereich; ein Widerruf entzieht den Zugriff sofort.",
+    "revoke": "Zugriff widerrufen",
+    "added": "Mit {{name}} geteilt",
+    "failed": "Teilen fehlgeschlagen",
+    "userNotFound": "Kein Benutzer mit diesem Namen",
+    "groupNotFound": "Keine Gruppe mit diesem Namen"
+  },
+  "channels": {
+    "title": "Kanäle",
+    "browsePublic": "Öffentliche Kanäle durchsuchen",
+    "newDm": "Neue Direktnachricht",
+    "newChannel": "Neuer Kanal",
+    "empty": "Noch keine Kanäle. Erstelle einen oder durchsuche öffentliche Kanäle.",
+    "selectPrompt": "Wähle einen Kanal, um loszulegen",
+    "pins": "Angeheftet",
+    "members": "Mitglieder",
+    "settings": "Kanaleinstellungen",
+    "sendFailed": "Die Nachricht konnte nicht gesendet werden",
+    "uploadFailed": "Die Datei konnte nicht hochgeladen werden",
+    "memberAdded": "Mitglied hinzugefügt",
+    "memberAddFailed": "Dieser Benutzer konnte nicht hinzugefügt werden",
+    "attach": "Datei anhängen",
+    "askModel": "Mit dieser Nachricht ein Modell fragen",
+    "noModel": "Kein Modell",
+    "composerPlaceholder": "Nachricht schreiben…",
+    "thread": "Thread",
+    "replyPlaceholder": "Antworten…",
+    "invitePlaceholder": "Benutzername zum Einladen",
+    "roleOwner": "Inhaber",
+    "removeMember": "Aus dem Kanal entfernen",
+    "leave": "Kanal verlassen",
+    "noPins": "Noch nichts angeheftet.",
+    "noMessages": "Noch keine Nachrichten — sag hallo.",
+    "create": "Erstellen",
+    "createFailed": "Der Kanal konnte nicht erstellt werden",
+    "nameLabel": "Name",
+    "typeLabel": "Typ",
+    "typePublic": "Öffentlich — jeder kann beitreten",
+    "typePrivate": "Privat — nur auf Einladung",
+    "descriptionLabel": "Beschreibung",
+    "openDm": "Unterhaltung öffnen",
+    "dmFailed": "Die Unterhaltung konnte nicht geöffnet werden",
+    "dmHint": "Direktnachrichten bleiben privat zwischen euch beiden.",
+    "dmPlaceholder": "Genauer Benutzername",
+    "noPublic": "Keine öffentlichen Kanäle vorhanden.",
+    "joined": "Beigetreten",
+    "join": "Beitreten",
+    "save": "Speichern",
+    "delete": "Kanal löschen",
+    "modelAuthor": "Modell",
+    "unknownAuthor": "Jemand",
+    "edited": "bearbeitet",
+    "deletedMessage": "Diese Nachricht wurde gelöscht",
+    "modelThinking": "Das Modell denkt nach…",
+    "react": "Reaktion hinzufügen",
+    "reply": "Im Thread antworten",
+    "pin": "Nachricht anheften",
+    "unpin": "Nachricht lösen",
+    "edit": "Nachricht bearbeiten",
+    "deleteMessage": "Nachricht löschen",
+    "replyCount": "{{total}} Antworten"
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "empty": "Du bist auf dem Laufenden.",
+    "markAllRead": "Alle als gelesen markieren",
+    "markRead": "Als gelesen markieren"
   }
 }

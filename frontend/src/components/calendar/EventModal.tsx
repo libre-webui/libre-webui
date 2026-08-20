@@ -19,7 +19,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Trash2, X } from 'lucide-react';
-import type { AutomationTrigger, CalendarEvent } from '@/types';
+import type { AutomationTrigger, Calendar, CalendarEvent } from '@/types';
 import {
   fromInputValues,
   toDateInputValue,
@@ -35,6 +35,8 @@ export interface EventModalResult {
   endAt?: number | null;
   allDay: boolean;
   recurrence: AutomationTrigger | null;
+  calendarId: string | null;
+  reminderMinutes: number | null;
 }
 
 interface EventModalProps {
@@ -43,6 +45,8 @@ interface EventModalProps {
   event: CalendarEvent | null;
   /** Prefill for new events (the clicked day). */
   initialStartAt: number;
+  /** Named calendars the event may live in (own plus writable shared). */
+  calendars: Calendar[];
   saving: boolean;
   onClose: () => void;
   onSave: (result: EventModalResult) => void;
@@ -91,6 +95,7 @@ export function EventModal({
   open,
   event,
   initialStartAt,
+  calendars,
   saving,
   onClose,
   onSave,
@@ -104,6 +109,7 @@ export function EventModal({
       key={`${event?.id ?? 'new'}:${initialStartAt}`}
       event={event}
       initialStartAt={initialStartAt}
+      calendars={calendars}
       saving={saving}
       onClose={onClose}
       onSave={onSave}
@@ -115,6 +121,7 @@ export function EventModal({
 function EventModalForm({
   event,
   initialStartAt,
+  calendars,
   saving,
   onClose,
   onSave,
@@ -135,6 +142,10 @@ function EventModalForm({
   const [repeat, setRepeat] = useState<RepeatChoice>(
     repeatOf(event?.recurrence)
   );
+  const [calendarId, setCalendarId] = useState(event?.calendarId ?? '');
+  const [reminder, setReminder] = useState(
+    event?.reminderMinutes !== undefined ? String(event.reminderMinutes) : ''
+  );
 
   const handleSave = () => {
     if (!title.trim() || !dateValue) return;
@@ -148,8 +159,19 @@ function EventModalForm({
       endAt: endAt !== null && endAt > startAt ? endAt : null,
       allDay,
       recurrence: triggerFor(repeat, startAt),
+      calendarId: calendarId || null,
+      reminderMinutes: reminder ? Number(reminder) : null,
     });
   };
+
+  const reminderChoices = [
+    { value: '', label: t('calendar.reminderNone') },
+    { value: '5', label: t('calendar.reminderMinutes', { minutes: 5 }) },
+    { value: '15', label: t('calendar.reminderMinutes', { minutes: 15 }) },
+    { value: '30', label: t('calendar.reminderMinutes', { minutes: 30 }) },
+    { value: '60', label: t('calendar.reminderHour') },
+    { value: '1440', label: t('calendar.reminderDay') },
+  ];
 
   const repeatChoices: Array<{ value: RepeatChoice; label: string }> = [
     { value: 'none', label: t('calendar.repeatNone') },
@@ -291,6 +313,46 @@ function EventModalForm({
               className={fieldClass}
               maxLength={10_000}
             />
+          </div>
+
+          <div className='grid grid-cols-2 gap-3'>
+            <div>
+              <label className={labelClass}>
+                {t('calendar.calendarLabel')}
+              </label>
+              <select
+                value={calendarId}
+                onChange={changeEvent =>
+                  setCalendarId(changeEvent.target.value)
+                }
+                className={fieldClass}
+                data-testid='calendar-event-calendar'
+              >
+                <option value=''>{t('calendar.personalCalendar')}</option>
+                {calendars.map(calendar => (
+                  <option key={calendar.id} value={calendar.id}>
+                    {calendar.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>
+                {t('calendar.reminderLabel')}
+              </label>
+              <select
+                value={reminder}
+                onChange={changeEvent => setReminder(changeEvent.target.value)}
+                className={fieldClass}
+                data-testid='calendar-event-reminder'
+              >
+                {reminderChoices.map(choice => (
+                  <option key={choice.value} value={choice.value}>
+                    {choice.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className='flex items-center justify-between gap-3 border-t border-gray-200 pt-4 dark:border-dark-300'>

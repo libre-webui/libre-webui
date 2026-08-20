@@ -44,6 +44,7 @@ import {
   User as UserIcon,
   Wrench,
   Zap,
+  MessagesSquare,
 } from 'lucide-react';
 import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
@@ -305,6 +306,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         icon: CalendarDays,
         keywords: 'calendar events schedule agenda',
         run: () => navigate('/calendar'),
+      },
+      {
+        id: 'action:channels',
+        section: actionSection,
+        label: t('sidebar.navigation.channels', 'Channels'),
+        icon: MessagesSquare,
+        keywords: 'channels team messages dm direct chat rooms',
+        run: () => navigate('/channels'),
       },
       {
         id: 'action:automations',

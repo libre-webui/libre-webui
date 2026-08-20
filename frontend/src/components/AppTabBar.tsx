@@ -39,6 +39,7 @@ import {
   Users,
   X,
   Zap,
+  MessagesSquare,
 } from 'lucide-react';
 import { useTabStore, AppTab } from '@/store/tabStore';
 import { useChatStore } from '@/store/chatStore';
@@ -57,6 +58,10 @@ const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> = {
   '/notes': { icon: NotebookPen, labelKey: 'sidebar.navigation.notes' },
   '/calendar': { icon: CalendarDays, labelKey: 'sidebar.navigation.calendar' },
   '/automations': { icon: Zap, labelKey: 'sidebar.navigation.automations' },
+  '/channels': {
+    icon: MessagesSquare,
+    labelKey: 'sidebar.navigation.channels',
+  },
   '/personas': { icon: UserIcon, labelKey: 'sidebar.navigation.personas' },
   '/gallery': { icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
   '/agents': { icon: Bot, labelKey: 'sidebar.navigation.agents' },
@@ -367,14 +372,19 @@ export const AppTabBar: React.FC = () => {
           },
         ]
       : []),
-    ...['/notes', '/calendar', '/automations', '/personas', '/gallery'].map(
-      path => ({
-        key: path,
-        label: t(PAGE_META[path].labelKey, path.slice(1)),
-        icon: PAGE_META[path].icon,
-        action: () => navigate(path),
-      })
-    ),
+    ...[
+      '/channels',
+      '/notes',
+      '/calendar',
+      '/automations',
+      '/personas',
+      '/gallery',
+    ].map(path => ({
+      key: path,
+      label: t(PAGE_META[path].labelKey, path.slice(1)),
+      icon: PAGE_META[path].icon,
+      action: () => navigate(path),
+    })),
     ...(canUseAgents()
       ? [
           {

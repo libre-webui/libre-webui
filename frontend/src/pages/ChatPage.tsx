@@ -1228,12 +1228,23 @@ export const ChatPage: React.FC = () => {
               onFollowUpSelect={suggestion => handleSendMessage(suggestion)}
               className='flex-1'
             />
-            <ChatInput
-              onSendMessage={handleSendMessage}
-              onStopGeneration={stopGeneration}
-              onCancelComparison={cancelComparison}
-              disabled={!currentSession}
-            />
+            {currentSession?.shared ? (
+              <div
+                className='mx-auto mb-4 w-full max-w-3xl rounded-xl border border-black/[0.06] bg-black/[0.02] px-4 py-3 text-center text-[13px] text-gray-500 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-dark-600'
+                data-testid='chat-shared-readonly'
+              >
+                {t('chat.sharedReadOnly', {
+                  owner: currentSession.shared.ownerUserId,
+                })}
+              </div>
+            ) : (
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                onStopGeneration={stopGeneration}
+                onCancelComparison={cancelComparison}
+                disabled={!currentSession}
+              />
+            )}
           </div>
           {currentSession && <ChatSourcesPanel session={currentSession} />}
           <ChatControlsPanel

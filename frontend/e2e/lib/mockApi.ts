@@ -2567,6 +2567,42 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      // Passive defaults for the team surfaces: the notification bell and
+      // channel list poll from every page, so specs that don't exercise
+      // them still get quiet, empty answers.
+      if (method === 'GET' && path === '/notifications/unread-count') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: { count: 0 } }),
+        });
+        return;
+      }
+      if (method === 'GET' && /^\/notifications(?:\?.*)?$/.test(path)) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [] }),
+        });
+        return;
+      }
+      if (method === 'GET' && path === '/channels') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [] }),
+        });
+        return;
+      }
+      if (method === 'GET' && path === '/calendar/calendars') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [] }),
+        });
+        return;
+      }
+
       await route.fulfill({
         status: 404,
         contentType: 'application/json',

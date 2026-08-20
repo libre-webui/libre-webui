@@ -15,7 +15,12 @@
  * limitations under the License.
  */
 
-import type { ApiResponse, AutomationTrigger, CalendarEvent } from '@/types';
+import type {
+  ApiResponse,
+  AutomationTrigger,
+  Calendar,
+  CalendarEvent,
+} from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 import { api, createDemoResponse } from './client';
 
@@ -26,6 +31,8 @@ export interface CalendarEventInput {
   endAt?: number | null;
   allDay?: boolean;
   recurrence?: AutomationTrigger | null;
+  calendarId?: string | null;
+  reminderMinutes?: number | null;
 }
 
 export const calendarApi = {
@@ -52,4 +59,47 @@ export const calendarApi = {
 
   deleteEvent: (eventId: string): Promise<ApiResponse> =>
     api.delete(`/calendar/events/${eventId}`).then(res => res.data),
+
+  getCalendars: (): Promise<ApiResponse<Calendar[]>> => {
+    if (isDemoMode()) return createDemoResponse([]);
+    return api.get('/calendar/calendars').then(res => res.data);
+  },
+
+  createCalendar: (input: {
+    name: string;
+    color?: string;
+  }): Promise<ApiResponse<Calendar>> =>
+    api.post('/calendar/calendars', input).then(res => res.data),
+
+  updateCalendar: (
+    calendarId: string,
+    input: { name: string; color?: string }
+  ): Promise<ApiResponse<Calendar>> =>
+    api.put(`/calendar/calendars/${calendarId}`, input).then(res => res.data),
+
+  deleteCalendar: (calendarId: string): Promise<ApiResponse> =>
+    api.delete(`/calendar/calendars/${calendarId}`).then(res => res.data),
+
+  exportIcs: (calendarId?: string): Promise<Blob> =>
+    api
+      .get(
+        calendarId
+          ? `/calendar/export?calendarId=${encodeURIComponent(calendarId)}`
+          : '/calendar/export',
+        { responseType: 'blob' }
+      )
+      .then(res => res.data),
+
+  importIcs: (
+    ics: string,
+    calendarId?: string
+  ): Promise<
+    ApiResponse<{ imported: number; skipped: number; droppedRules: number }>
+  > =>
+    api
+      .post('/calendar/import', {
+        ics,
+        ...(calendarId ? { calendarId } : {}),
+      })
+      .then(res => res.data),
 };

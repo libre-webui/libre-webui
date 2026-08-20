@@ -311,7 +311,8 @@
         "remove": "Keluarkan dari folder",
         "delete": "Hapus folder",
         "deleteConfirm": "Hapus folder ini? Obrolan di dalamnya tetap ada."
-      }
+      },
+      "shareChat": "Bagikan obrolan…"
     },
     "persona": {
       "applied": "Persona diterapkan",
@@ -437,7 +438,8 @@
       "failed": "Tidak dapat mencabangkan obrolan",
       "origin": "Dicabangkan dari {{title}}",
       "originUnknown": "obrolan lain"
-    }
+    },
+    "sharedReadOnly": "Dibagikan oleh {{owner}} — hanya lihat"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Otomatisasi",
       "prompts": "Prompt",
       "skills": "Keterampilan",
-      "tools": "Alat"
+      "tools": "Alat",
+      "channels": "Kanal"
     },
     "toggleSize": "Ubah ukuran sidebar",
     "expandSidebar": "Perluas sidebar"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Hapus koleksi ini? Dokumen di dalamnya tetap ada.",
         "createFailed": "Gagal membuat koleksi",
         "deleteFailed": "Gagal menghapus koleksi",
-        "assignFailed": "Gagal memindahkan dokumen"
+        "assignFailed": "Gagal memindahkan dokumen",
+        "share": "Bagikan koleksi",
+        "shared": "dibagikan"
       },
       "library": {
         "title": "Dokumen terunggah",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "Dihapus {{count}} memori",
     "backupSuccess": "Backup persona berhasil diunduh",
     "dnaSuccess": "DNA persona berhasil diekspor",
-    "failed": "Gagal {{action}}"
+    "failed": "Gagal {{action}}",
+    "shareTooltip": "Bagikan persona ini"
   },
   "userManager": {
     "title": "Manajemen Pengguna",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} lagi",
     "loadFailed": "Gagal memuat kalender",
     "saveFailed": "Gagal menyimpan acara",
-    "deleteFailed": "Gagal menghapus acara"
+    "deleteFailed": "Gagal menghapus acara",
+    "day": "Hari",
+    "calendarLabel": "Kalender",
+    "personalCalendar": "Pribadi",
+    "reminderLabel": "Pengingat",
+    "reminderNone": "Tanpa pengingat",
+    "reminderMinutes": "{{minutes}} menit sebelumnya",
+    "reminderHour": "1 jam sebelumnya",
+    "reminderDay": "1 hari sebelumnya",
+    "sharedReadOnly": "Acara ini dibagikan kepada Anda hanya untuk dilihat.",
+    "sharedBadge": "dibagikan",
+    "shareCalendar": "Bagikan kalender",
+    "newCalendarPlaceholder": "Kalender baru…",
+    "calendarSaveFailed": "Kalender tidak dapat disimpan",
+    "exportFailed": "Kalender tidak dapat diekspor",
+    "importFailed": "Berkas tidak dapat diimpor",
+    "importResult": "{{total}} acara diimpor",
+    "importIcs": "Impor",
+    "exportIcs": "Ekspor"
   },
   "automations": {
     "title": "Otomatisasi",
@@ -3020,5 +3044,84 @@
       "servers": "Server alat",
       "hint": "Panggilan dengan efek samping tetap meminta persetujuan sebelum dijalankan."
     }
+  },
+  "share": {
+    "title": "Bagikan “{{name}}”",
+    "subtitle": "Beri akses kepada orang atau grup. Hanya Anda yang mengelola pembagian.",
+    "kindUser": "Pengguna",
+    "kindGroup": "Grup",
+    "usernamePlaceholder": "Nama pengguna persis",
+    "groupPlaceholder": "Nama grup persis",
+    "permissionRead": "Bisa melihat",
+    "permissionWrite": "Bisa mengedit",
+    "action": "Bagikan",
+    "empty": "Belum dibagikan kepada siapa pun.",
+    "hint": "Masukkan nama pengguna atau grup yang persis. Penerima melihatnya di ruang kerja mereka; pencabutan langsung menghapus akses.",
+    "revoke": "Cabut akses",
+    "added": "Dibagikan dengan {{name}}",
+    "failed": "Gagal membagikan",
+    "userNotFound": "Tidak ada pengguna dengan nama itu",
+    "groupNotFound": "Tidak ada grup dengan nama itu"
+  },
+  "channels": {
+    "title": "Kanal",
+    "browsePublic": "Jelajahi kanal publik",
+    "newDm": "Pesan langsung baru",
+    "newChannel": "Kanal baru",
+    "empty": "Belum ada kanal. Buat satu atau jelajahi kanal publik.",
+    "selectPrompt": "Pilih kanal untuk memulai",
+    "pins": "Disematkan",
+    "members": "Anggota",
+    "settings": "Pengaturan kanal",
+    "sendFailed": "Pesan tidak dapat dikirim",
+    "uploadFailed": "Berkas tidak dapat diunggah",
+    "memberAdded": "Anggota ditambahkan",
+    "memberAddFailed": "Pengguna itu tidak dapat ditambahkan",
+    "attach": "Lampirkan berkas",
+    "askModel": "Tanyakan pesan ini ke model",
+    "noModel": "Tanpa model",
+    "composerPlaceholder": "Tulis pesan…",
+    "thread": "Utas",
+    "replyPlaceholder": "Balas…",
+    "invitePlaceholder": "Pengguna yang diundang",
+    "roleOwner": "pemilik",
+    "removeMember": "Keluarkan dari kanal",
+    "leave": "Tinggalkan kanal",
+    "noPins": "Belum ada yang disematkan.",
+    "noMessages": "Belum ada pesan — sapa dulu.",
+    "create": "Buat",
+    "createFailed": "Kanal tidak dapat dibuat",
+    "nameLabel": "Nama",
+    "typeLabel": "Jenis",
+    "typePublic": "Publik — siapa pun bisa bergabung",
+    "typePrivate": "Privat — hanya lewat undangan",
+    "descriptionLabel": "Deskripsi",
+    "openDm": "Buka percakapan",
+    "dmFailed": "Percakapan tidak dapat dibuka",
+    "dmHint": "Pesan langsung bersifat pribadi di antara kalian berdua.",
+    "dmPlaceholder": "Nama pengguna persis",
+    "noPublic": "Tidak ada kanal publik.",
+    "joined": "Bergabung",
+    "join": "Gabung",
+    "save": "Simpan",
+    "delete": "Hapus kanal",
+    "modelAuthor": "Model",
+    "unknownAuthor": "Seseorang",
+    "edited": "diedit",
+    "deletedMessage": "Pesan ini telah dihapus",
+    "modelThinking": "Model sedang berpikir…",
+    "react": "Tambah reaksi",
+    "reply": "Balas di utas",
+    "pin": "Sematkan pesan",
+    "unpin": "Lepas sematan",
+    "edit": "Edit pesan",
+    "deleteMessage": "Hapus pesan",
+    "replyCount": "{{total}} balasan"
+  },
+  "notifications": {
+    "title": "Notifikasi",
+    "empty": "Semua sudah dibaca.",
+    "markAllRead": "Tandai semua sudah dibaca",
+    "markRead": "Tandai sudah dibaca"
   }
 }

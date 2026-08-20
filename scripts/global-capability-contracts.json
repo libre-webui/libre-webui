@@ -1429,7 +1429,9 @@
     {
       "id": "channels",
       "title": "Channels",
-      "uiRoutes": [],
+      "uiRoutes": [
+        "/channels"
+      ],
       "documentation": [
         {
           "file": "docs/54-CHANNELS.md",

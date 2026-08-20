@@ -114,6 +114,8 @@ export interface ChatSession {
   settings?: ChatSessionSettings; // Per-chat overrides applied over global defaults
   folderId?: string | null; // Optional folder this chat lives in
   pinned?: boolean; // Kept in the sidebar's Pinned group
+  /** Present when the session belongs to someone else and is shared with us. */
+  shared?: { ownerUserId: string; permission: 'read' | 'write' };
 }
 
 export interface PromptQueueEntry {
@@ -196,10 +198,109 @@ export interface CalendarEvent {
   endAt?: number;
   allDay: boolean;
   recurrence?: AutomationTrigger;
+  /** Named calendar this event belongs to; absent = the default calendar. */
+  calendarId?: string;
+  /** Minutes before the start when an in-app reminder fires. */
+  reminderMinutes?: number;
   createdAt: number;
   updatedAt: number;
   /** Present on server-expanded occurrences of a recurring event. */
   baseEventId?: string;
+  /** Present on events from a calendar shared with us. */
+  shared?: { ownerUserId: string; permission: 'read' | 'write' };
+}
+
+export interface Calendar {
+  id: string;
+  name: string;
+  color?: string;
+  createdAt: number;
+  updatedAt: number;
+  /** Present when the calendar belongs to someone else and is shared with us. */
+  shared?: { ownerUserId: string; permission: 'read' | 'write' };
+}
+
+export type ChannelType = 'public' | 'private' | 'dm';
+export type ChannelRole = 'owner' | 'member';
+
+export interface Channel {
+  id: string;
+  type: ChannelType;
+  name: string;
+  description?: string;
+  createdBy?: string | null;
+  createdAt: number;
+  updatedAt: number;
+  archivedAt?: number;
+}
+
+export interface ChannelSummary extends Channel {
+  role?: ChannelRole;
+  isMember: boolean;
+  memberCount?: number;
+  unreadCount?: number;
+  latestMessageAt?: number | null;
+  lastReadAt?: number;
+  dmPeer?: { userId: string; username: string };
+}
+
+export interface ChannelMember {
+  userId: string;
+  username: string;
+  role: ChannelRole;
+  joinedAt: number;
+}
+
+export interface ChannelReaction {
+  emoji: string;
+  count: number;
+  mine: boolean;
+}
+
+export interface ChannelAttachment {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+}
+
+export interface ChannelMessage {
+  id: string;
+  channelId: string;
+  parentId?: string;
+  authorKind: 'user' | 'model';
+  model?: string;
+  author?: { userId: string; username: string } | null;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+  editedAt?: number;
+  deleted?: boolean;
+  pinnedAt?: number;
+  replyCount?: number;
+  reactions?: ChannelReaction[];
+  attachments?: ChannelAttachment[];
+  pending?: boolean;
+  error?: string;
+}
+
+export type NotificationType =
+  | 'channel-mention'
+  | 'channel-dm'
+  | 'channel-invite'
+  | 'share'
+  | 'automation-failed'
+  | 'calendar-reminder'
+  | 'system';
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body?: string;
+  href?: string;
+  createdAt: number;
+  readAt?: number;
 }
 
 export type AutomationNotify = 'app' | 'off';
@@ -622,6 +723,8 @@ export interface DocumentSummary {
 export interface KnowledgeCollection {
   id: string;
   name: string;
+  /** Present when the collection belongs to someone else and is shared with us. */
+  shared?: { ownerUserId: string; permission: 'read' | 'write' };
   createdAt: number;
   updatedAt: number;
   documentCount?: number;
@@ -784,6 +887,8 @@ export interface Persona extends AdvancedFeatures {
   updated_at: number;
   is_favorite?: boolean;
   category?: string;
+  /** Present when the persona belongs to someone else and is shared with us. */
+  shared?: { ownerUserId: string; permission: 'read' | 'write' };
   // Advanced features (unified from legacy system)
 }
 

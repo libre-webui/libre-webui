@@ -311,7 +311,8 @@
         "remove": "Remove from folder",
         "delete": "Delete folder",
         "deleteConfirm": "Delete this folder? Chats inside are kept."
-      }
+      },
+      "shareChat": "Share chat…"
     },
     "persona": {
       "applied": "Persona applied",
@@ -437,7 +438,8 @@
       "failed": "Could not fork the chat",
       "origin": "Forked from {{title}}",
       "originUnknown": "another chat"
-    }
+    },
+    "sharedReadOnly": "Shared by {{owner}} — view only"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Automations",
       "prompts": "Prompts",
       "skills": "Skills",
-      "tools": "Tools"
+      "tools": "Tools",
+      "channels": "Channels"
     },
     "toggleSize": "Toggle sidebar size",
     "expandSidebar": "Expand sidebar"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Delete this collection? Documents inside are kept.",
         "createFailed": "Failed to create the collection",
         "deleteFailed": "Failed to delete the collection",
-        "assignFailed": "Failed to move the document"
+        "assignFailed": "Failed to move the document",
+        "share": "Share collection",
+        "shared": "shared"
       },
       "library": {
         "title": "Uploaded documents",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "Wiped {{count}} memories",
     "backupSuccess": "Persona backup downloaded successfully",
     "dnaSuccess": "Persona DNA exported successfully",
-    "failed": "Failed to {{action}}"
+    "failed": "Failed to {{action}}",
+    "shareTooltip": "Share this persona"
   },
   "userManager": {
     "title": "User Management",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} more",
     "loadFailed": "Failed to load calendar",
     "saveFailed": "Failed to save event",
-    "deleteFailed": "Failed to delete event"
+    "deleteFailed": "Failed to delete event",
+    "day": "Day",
+    "calendarLabel": "Calendar",
+    "personalCalendar": "Personal",
+    "reminderLabel": "Reminder",
+    "reminderNone": "No reminder",
+    "reminderMinutes": "{{minutes}} minutes before",
+    "reminderHour": "1 hour before",
+    "reminderDay": "1 day before",
+    "sharedReadOnly": "This event is shared with you as view-only.",
+    "sharedBadge": "shared",
+    "shareCalendar": "Share calendar",
+    "newCalendarPlaceholder": "New calendar…",
+    "calendarSaveFailed": "The calendar could not be saved",
+    "exportFailed": "The calendar could not be exported",
+    "importFailed": "The file could not be imported",
+    "importResult": "Imported {{total}} events",
+    "importIcs": "Import",
+    "exportIcs": "Export"
   },
   "automations": {
     "title": "Automations",
@@ -3020,5 +3044,84 @@
       "servers": "Tool servers",
       "hint": "Side-effecting calls still ask for approval before they run."
     }
+  },
+  "share": {
+    "title": "Share “{{name}}”",
+    "subtitle": "Give people or groups access. Only you can manage shares.",
+    "kindUser": "User",
+    "kindGroup": "Group",
+    "usernamePlaceholder": "Exact username",
+    "groupPlaceholder": "Exact group name",
+    "permissionRead": "Can view",
+    "permissionWrite": "Can edit",
+    "action": "Share",
+    "empty": "Not shared with anyone yet.",
+    "hint": "Enter the exact username or group name. Recipients see it in their own workspace; revoking removes access immediately.",
+    "revoke": "Revoke access",
+    "added": "Shared with {{name}}",
+    "failed": "Sharing failed",
+    "userNotFound": "No user with that name",
+    "groupNotFound": "No group with that name"
+  },
+  "channels": {
+    "title": "Channels",
+    "browsePublic": "Browse public channels",
+    "newDm": "New direct message",
+    "newChannel": "New channel",
+    "empty": "No channels yet. Create one or browse public channels.",
+    "selectPrompt": "Pick a channel to start talking",
+    "pins": "Pinned",
+    "members": "Members",
+    "settings": "Channel settings",
+    "sendFailed": "The message could not be sent",
+    "uploadFailed": "The file could not be uploaded",
+    "memberAdded": "Member added",
+    "memberAddFailed": "That user could not be added",
+    "attach": "Attach a file",
+    "askModel": "Ask a model with this message",
+    "noModel": "No model",
+    "composerPlaceholder": "Write a message…",
+    "thread": "Thread",
+    "replyPlaceholder": "Reply…",
+    "invitePlaceholder": "Username to invite",
+    "roleOwner": "owner",
+    "removeMember": "Remove from channel",
+    "leave": "Leave channel",
+    "noPins": "Nothing pinned yet.",
+    "noMessages": "No messages yet — say hi.",
+    "create": "Create",
+    "createFailed": "The channel could not be created",
+    "nameLabel": "Name",
+    "typeLabel": "Type",
+    "typePublic": "Public — anyone can join",
+    "typePrivate": "Private — invite only",
+    "descriptionLabel": "Description",
+    "openDm": "Open conversation",
+    "dmFailed": "The conversation could not be opened",
+    "dmHint": "Direct messages are private between the two of you.",
+    "dmPlaceholder": "Exact username",
+    "noPublic": "No public channels to browse.",
+    "joined": "Joined",
+    "join": "Join",
+    "save": "Save",
+    "delete": "Delete channel",
+    "modelAuthor": "Model",
+    "unknownAuthor": "Someone",
+    "edited": "edited",
+    "deletedMessage": "This message was deleted",
+    "modelThinking": "The model is thinking…",
+    "react": "Add a reaction",
+    "reply": "Reply in thread",
+    "pin": "Pin message",
+    "unpin": "Unpin message",
+    "edit": "Edit message",
+    "deleteMessage": "Delete message",
+    "replyCount": "{{total}} replies"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "You are all caught up.",
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read"
   }
 }

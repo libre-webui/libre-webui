@@ -40,6 +40,8 @@ export { documentsApi, embeddingApi } from './api/documentsApi';
 export { notesApi } from './api/notesApi';
 export { accessApi } from './api/accessApi';
 export { calendarApi } from './api/calendarApi';
+export { channelsApi } from './api/channelsApi';
+export { notificationsApi } from './api/notificationsApi';
 export { automationsApi } from './api/automationsApi';
 export { searchApi } from './api/searchApi';
 export type { WebSearchConfigResponse } from './api/searchApi';

@@ -1326,7 +1326,7 @@ export class ChannelService {
         type: entry.type,
         title: entry.title,
         body: preview,
-        href: `/channels/${channelId}`,
+        href: `/channels?channel=${channelId}`,
         sourceKey: `channel-message:${messageId}:${userId}`,
       });
     }

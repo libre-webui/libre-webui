@@ -311,7 +311,8 @@
         "remove": "Fjern fra mappe",
         "delete": "Slet mappe",
         "deleteConfirm": "Slet denne mappe? Chats bevares."
-      }
+      },
+      "shareChat": "Del chat…"
     },
     "persona": {
       "applied": "Persona anvendt",
@@ -437,7 +438,8 @@
       "failed": "Kunne ikke forgrene chatten",
       "origin": "Forgrenet fra {{title}}",
       "originUnknown": "en anden chat"
-    }
+    },
+    "sharedReadOnly": "Delt af {{owner}} — kun visning"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Automatiseringer",
       "prompts": "Prompts",
       "skills": "Færdigheder",
-      "tools": "Værktøjer"
+      "tools": "Værktøjer",
+      "channels": "Kanaler"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
     "expandSidebar": "Udvid sidebjælke"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Slet denne samling? Dokumenterne bevares.",
         "createFailed": "Samlingen kunne ikke oprettes",
         "deleteFailed": "Samlingen kunne ikke slettes",
-        "assignFailed": "Dokumentet kunne ikke flyttes"
+        "assignFailed": "Dokumentet kunne ikke flyttes",
+        "share": "Del samling",
+        "shared": "delt"
       },
       "library": {
         "title": "Uploadede dokumenter",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "Slettede {{count}} hukommelser",
     "backupSuccess": "Persona-backup downloadet",
     "dnaSuccess": "Persona-DNA eksporteret",
-    "failed": "Kunne ikke {{action}}"
+    "failed": "Kunne ikke {{action}}",
+    "shareTooltip": "Del denne persona"
   },
   "userManager": {
     "title": "Brugeradministration",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} flere",
     "loadFailed": "Kalenderen kunne ikke indlæses",
     "saveFailed": "Begivenheden kunne ikke gemmes",
-    "deleteFailed": "Begivenheden kunne ikke slettes"
+    "deleteFailed": "Begivenheden kunne ikke slettes",
+    "day": "Dag",
+    "calendarLabel": "Kalender",
+    "personalCalendar": "Personlig",
+    "reminderLabel": "Påmindelse",
+    "reminderNone": "Ingen påmindelse",
+    "reminderMinutes": "{{minutes}} minutter før",
+    "reminderHour": "1 time før",
+    "reminderDay": "1 dag før",
+    "sharedReadOnly": "Denne begivenhed er delt med dig som skrivebeskyttet.",
+    "sharedBadge": "delt",
+    "shareCalendar": "Del kalender",
+    "newCalendarPlaceholder": "Ny kalender…",
+    "calendarSaveFailed": "Kalenderen kunne ikke gemmes",
+    "exportFailed": "Kalenderen kunne ikke eksporteres",
+    "importFailed": "Filen kunne ikke importeres",
+    "importResult": "{{total}} begivenheder importeret",
+    "importIcs": "Importér",
+    "exportIcs": "Eksportér"
   },
   "automations": {
     "title": "Automatiseringer",
@@ -3020,5 +3044,84 @@
       "servers": "Værktøjsservere",
       "hint": "Kald med sideeffekter beder stadig om godkendelse, før de kører."
     }
+  },
+  "share": {
+    "title": "Del “{{name}}”",
+    "subtitle": "Giv personer eller grupper adgang. Kun du styrer delingerne.",
+    "kindUser": "Bruger",
+    "kindGroup": "Gruppe",
+    "usernamePlaceholder": "Præcist brugernavn",
+    "groupPlaceholder": "Præcist gruppenavn",
+    "permissionRead": "Kan se",
+    "permissionWrite": "Kan redigere",
+    "action": "Del",
+    "empty": "Endnu ikke delt med nogen.",
+    "hint": "Indtast det præcise bruger- eller gruppenavn. Modtagerne ser det i deres eget arbejdsområde; tilbagekaldelse fjerner adgangen med det samme.",
+    "revoke": "Tilbagekald adgang",
+    "added": "Delt med {{name}}",
+    "failed": "Deling mislykkedes",
+    "userNotFound": "Ingen bruger med det navn",
+    "groupNotFound": "Ingen gruppe med det navn"
+  },
+  "channels": {
+    "title": "Kanaler",
+    "browsePublic": "Gennemse offentlige kanaler",
+    "newDm": "Ny direkte besked",
+    "newChannel": "Ny kanal",
+    "empty": "Ingen kanaler endnu. Opret en eller gennemse de offentlige.",
+    "selectPrompt": "Vælg en kanal for at komme i gang",
+    "pins": "Fastgjorte",
+    "members": "Medlemmer",
+    "settings": "Kanalindstillinger",
+    "sendFailed": "Beskeden kunne ikke sendes",
+    "uploadFailed": "Filen kunne ikke uploades",
+    "memberAdded": "Medlem tilføjet",
+    "memberAddFailed": "Brugeren kunne ikke tilføjes",
+    "attach": "Vedhæft en fil",
+    "askModel": "Spørg en model med denne besked",
+    "noModel": "Ingen model",
+    "composerPlaceholder": "Skriv en besked…",
+    "thread": "Tråd",
+    "replyPlaceholder": "Svar…",
+    "invitePlaceholder": "Bruger der skal inviteres",
+    "roleOwner": "ejer",
+    "removeMember": "Fjern fra kanalen",
+    "leave": "Forlad kanalen",
+    "noPins": "Intet fastgjort endnu.",
+    "noMessages": "Ingen beskeder endnu — sig hej.",
+    "create": "Opret",
+    "createFailed": "Kanalen kunne ikke oprettes",
+    "nameLabel": "Navn",
+    "typeLabel": "Type",
+    "typePublic": "Offentlig — alle kan deltage",
+    "typePrivate": "Privat — kun efter invitation",
+    "descriptionLabel": "Beskrivelse",
+    "openDm": "Åbn samtale",
+    "dmFailed": "Samtalen kunne ikke åbnes",
+    "dmHint": "Direkte beskeder er private mellem jer to.",
+    "dmPlaceholder": "Præcist brugernavn",
+    "noPublic": "Ingen offentlige kanaler.",
+    "joined": "Deltager",
+    "join": "Deltag",
+    "save": "Gem",
+    "delete": "Slet kanal",
+    "modelAuthor": "Model",
+    "unknownAuthor": "Nogen",
+    "edited": "redigeret",
+    "deletedMessage": "Denne besked blev slettet",
+    "modelThinking": "Modellen tænker…",
+    "react": "Tilføj reaktion",
+    "reply": "Svar i tråden",
+    "pin": "Fastgør besked",
+    "unpin": "Frigør besked",
+    "edit": "Rediger besked",
+    "deleteMessage": "Slet besked",
+    "replyCount": "{{total}} svar"
+  },
+  "notifications": {
+    "title": "Notifikationer",
+    "empty": "Du er ajour.",
+    "markAllRead": "Markér alle som læst",
+    "markRead": "Markér som læst"
   }
 }

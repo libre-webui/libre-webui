@@ -311,7 +311,8 @@
         "remove": "Uit map verwijderen",
         "delete": "Map verwijderen",
         "deleteConfirm": "Deze map verwijderen? De chats erin blijven bewaard."
-      }
+      },
+      "shareChat": "Chat delen…"
     },
     "persona": {
       "applied": "Persona toegepast",
@@ -437,7 +438,8 @@
       "failed": "Kon de chat niet afsplitsen",
       "origin": "Afgesplitst van {{title}}",
       "originUnknown": "een andere chat"
-    }
+    },
+    "sharedReadOnly": "Gedeeld door {{owner}} — alleen lezen"
   },
   "sidebar": {
     "navigation": {
@@ -458,7 +460,8 @@
       "automations": "Automatiseringen",
       "prompts": "Prompts",
       "skills": "Vaardigheden",
-      "tools": "Gereedschappen"
+      "tools": "Gereedschappen",
+      "channels": "Kanalen"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
     "expandSidebar": "Zijbalk uitvouwen"
@@ -768,7 +771,9 @@
         "deleteConfirm": "Deze collectie verwijderen? De documenten erin blijven bewaard.",
         "createFailed": "Collectie kon niet worden aangemaakt",
         "deleteFailed": "Collectie kon niet worden verwijderd",
-        "assignFailed": "Document kon niet worden verplaatst"
+        "assignFailed": "Document kon niet worden verplaatst",
+        "share": "Collectie delen",
+        "shared": "gedeeld"
       },
       "library": {
         "title": "Geüploade documenten",
@@ -1473,7 +1478,8 @@
     "wipeSuccess": "{{count}} herinneringen gewist",
     "backupSuccess": "Persona-back-up succesvol gedownload",
     "dnaSuccess": "Persona-DNA succesvol geëxporteerd",
-    "failed": "{{action}} mislukt"
+    "failed": "{{action}} mislukt",
+    "shareTooltip": "Deze persona delen"
   },
   "userManager": {
     "title": "Gebruikersbeheer",
@@ -2593,7 +2599,25 @@
     "more": "+{{n}} meer",
     "loadFailed": "Kalender kon niet worden geladen",
     "saveFailed": "Afspraak kon niet worden opgeslagen",
-    "deleteFailed": "Afspraak kon niet worden verwijderd"
+    "deleteFailed": "Afspraak kon niet worden verwijderd",
+    "day": "Dag",
+    "calendarLabel": "Kalender",
+    "personalCalendar": "Persoonlijk",
+    "reminderLabel": "Herinnering",
+    "reminderNone": "Geen herinnering",
+    "reminderMinutes": "{{minutes}} minuten van tevoren",
+    "reminderHour": "1 uur van tevoren",
+    "reminderDay": "1 dag van tevoren",
+    "sharedReadOnly": "Dit evenement is alleen-lezen met je gedeeld.",
+    "sharedBadge": "gedeeld",
+    "shareCalendar": "Kalender delen",
+    "newCalendarPlaceholder": "Nieuwe kalender…",
+    "calendarSaveFailed": "De kalender kon niet worden opgeslagen",
+    "exportFailed": "De kalender kon niet worden geëxporteerd",
+    "importFailed": "Het bestand kon niet worden geïmporteerd",
+    "importResult": "{{total}} evenementen geïmporteerd",
+    "importIcs": "Importeren",
+    "exportIcs": "Exporteren"
   },
   "automations": {
     "title": "Automatiseringen",
@@ -3020,5 +3044,84 @@
       "servers": "Toolservers",
       "hint": "Aanroepen met neveneffecten vragen nog steeds om goedkeuring voordat ze draaien."
     }
+  },
+  "share": {
+    "title": "“{{name}}” delen",
+    "subtitle": "Geef mensen of groepen toegang. Alleen jij beheert de gedeelde toegang.",
+    "kindUser": "Gebruiker",
+    "kindGroup": "Groep",
+    "usernamePlaceholder": "Exacte gebruikersnaam",
+    "groupPlaceholder": "Exacte groepsnaam",
+    "permissionRead": "Mag bekijken",
+    "permissionWrite": "Mag bewerken",
+    "action": "Delen",
+    "empty": "Nog met niemand gedeeld.",
+    "hint": "Voer de exacte gebruikers- of groepsnaam in. Ontvangers zien het in hun eigen werkruimte; intrekken verwijdert de toegang direct.",
+    "revoke": "Toegang intrekken",
+    "added": "Gedeeld met {{name}}",
+    "failed": "Delen mislukt",
+    "userNotFound": "Geen gebruiker met die naam",
+    "groupNotFound": "Geen groep met die naam"
+  },
+  "channels": {
+    "title": "Kanalen",
+    "browsePublic": "Openbare kanalen bekijken",
+    "newDm": "Nieuw direct bericht",
+    "newChannel": "Nieuw kanaal",
+    "empty": "Nog geen kanalen. Maak er een of bekijk de openbare kanalen.",
+    "selectPrompt": "Kies een kanaal om te beginnen",
+    "pins": "Vastgezet",
+    "members": "Leden",
+    "settings": "Kanaalinstellingen",
+    "sendFailed": "Het bericht kon niet worden verzonden",
+    "uploadFailed": "Het bestand kon niet worden geüpload",
+    "memberAdded": "Lid toegevoegd",
+    "memberAddFailed": "Deze gebruiker kon niet worden toegevoegd",
+    "attach": "Bestand bijvoegen",
+    "askModel": "Stel dit bericht aan een model",
+    "noModel": "Geen model",
+    "composerPlaceholder": "Schrijf een bericht…",
+    "thread": "Draad",
+    "replyPlaceholder": "Beantwoorden…",
+    "invitePlaceholder": "Gebruiker om uit te nodigen",
+    "roleOwner": "eigenaar",
+    "removeMember": "Uit het kanaal verwijderen",
+    "leave": "Kanaal verlaten",
+    "noPins": "Nog niets vastgezet.",
+    "noMessages": "Nog geen berichten — zeg hallo.",
+    "create": "Aanmaken",
+    "createFailed": "Het kanaal kon niet worden aangemaakt",
+    "nameLabel": "Naam",
+    "typeLabel": "Type",
+    "typePublic": "Openbaar — iedereen kan deelnemen",
+    "typePrivate": "Privé — alleen op uitnodiging",
+    "descriptionLabel": "Beschrijving",
+    "openDm": "Gesprek openen",
+    "dmFailed": "Het gesprek kon niet worden geopend",
+    "dmHint": "Directe berichten blijven privé tussen jullie twee.",
+    "dmPlaceholder": "Exacte gebruikersnaam",
+    "noPublic": "Geen openbare kanalen.",
+    "joined": "Lid",
+    "join": "Deelnemen",
+    "save": "Opslaan",
+    "delete": "Kanaal verwijderen",
+    "modelAuthor": "Model",
+    "unknownAuthor": "Iemand",
+    "edited": "bewerkt",
+    "deletedMessage": "Dit bericht is verwijderd",
+    "modelThinking": "Het model denkt na…",
+    "react": "Reactie toevoegen",
+    "reply": "Reageren in draad",
+    "pin": "Bericht vastzetten",
+    "unpin": "Bericht losmaken",
+    "edit": "Bericht bewerken",
+    "deleteMessage": "Bericht verwijderen",
+    "replyCount": "{{total}} reacties"
+  },
+  "notifications": {
+    "title": "Meldingen",
+    "empty": "Je bent helemaal bij.",
+    "markAllRead": "Alles als gelezen markeren",
+    "markRead": "Als gelezen markeren"
   }
 }

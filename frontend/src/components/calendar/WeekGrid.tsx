@@ -27,6 +27,8 @@ const HOUR_HEIGHT_PX = 48;
 interface WeekGridProps {
   anchor: Date;
   events: CalendarDisplayEvent[];
+  /** 7 renders the anchor's week; 1 renders only the anchor's day. */
+  dayCount?: 1 | 7;
   onDayClick: (day: Date, hour: number) => void;
   onEventClick: (event: CalendarDisplayEvent) => void;
 }
@@ -34,11 +36,18 @@ interface WeekGridProps {
 export function WeekGrid({
   anchor,
   events,
+  dayCount = 7,
   onDayClick,
   onEventClick,
 }: WeekGridProps) {
   const { i18n } = useTranslation();
-  const days = useMemo(() => weekDays(anchor), [anchor]);
+  const days = useMemo(
+    () =>
+      dayCount === 1
+        ? [new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate())]
+        : weekDays(anchor),
+    [anchor, dayCount]
+  );
   const today = new Date();
   const hourFormatter = useMemo(
     () => new Intl.DateTimeFormat(i18n.language, { hour: 'numeric' }),
