@@ -3212,7 +3212,8 @@ const collectMissingLegacySchema = (database: Database.Database): string[] => [
     item =>
       !item.includes('platform_') &&
       !item.includes('idx_users_email_lookup') &&
-      !item.includes('idx_voice_profiles_name_lookup')
+      !item.includes('idx_voice_profiles_name_lookup') &&
+      !item.includes('idx_calendar_scoped_events')
   ),
 ];
 
