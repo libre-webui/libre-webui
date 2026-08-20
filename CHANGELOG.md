@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✨ New Features
+
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.26.0] - 2026-08-20
+
 Models that use tools under your approval, retrieval that cites its sources, channels and sharing for teams, hands-free voice conversations, image editing — and the cost controls, evaluations, observability, and high-availability certification to run all of it in production. Everything built since 0.25.0 lands here at once.
 
 ### ✨ New Features
