@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} Tokens belegt",
       "tokensUsedNoBudget": "{{used}} Tokens belegt",
       "capped": "begrenzt von {{trained}}"
+    },
+    "queue": {
+      "title": "In Warteschlange ({{total}})",
+      "moveUp": "Nach oben",
+      "moveDown": "Nach unten",
+      "updateFailed": "Der wartende Prompt konnte nicht aktualisiert werden",
+      "enqueueFailed": "Der Prompt konnte nicht eingereiht werden"
     }
   },
   "sidebar": {

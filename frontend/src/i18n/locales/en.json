@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} tokens used",
       "tokensUsedNoBudget": "{{used}} tokens used",
       "capped": "capped from {{trained}}"
+    },
+    "queue": {
+      "title": "Queued ({{total}})",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "updateFailed": "Could not update the queued prompt",
+      "enqueueFailed": "Could not queue the prompt"
     }
   },
   "sidebar": {

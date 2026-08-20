@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} टोकन उपयोग",
       "tokensUsedNoBudget": "{{used}} टोकन उपयोग",
       "capped": "{{trained}} से सीमित"
+    },
+    "queue": {
+      "title": "कतार में ({{total}})",
+      "moveUp": "ऊपर ले जाएँ",
+      "moveDown": "नीचे ले जाएँ",
+      "updateFailed": "कतार का प्रॉम्प्ट अपडेट नहीं हो सका",
+      "enqueueFailed": "प्रॉम्प्ट कतार में नहीं जुड़ सका"
     }
   },
   "sidebar": {

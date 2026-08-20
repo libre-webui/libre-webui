@@ -33,6 +33,7 @@ import {
   takeThinkingDuration,
 } from '@/utils/thinkingTimer';
 import { chatApi } from '@/utils/api';
+import { applyPromptQueueToChatStore } from '@/utils/promptQueue';
 import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
 import toast from 'react-hot-toast';
@@ -77,6 +78,7 @@ export const useChat = (sessionId: string) => {
     removeMessage,
   } = useChatStore();
   const { setIsGenerating } = useAppStore();
+  const drainPromptQueueRef = useRef<(() => Promise<void>) | null>(null);
   const streamingMessageIdRef = useRef<string | null>(null);
   const cancelRequestedMessageIdsRef = useRef<Set<string>>(new Set());
   const demoGenerationTimerRef = useRef<number | null>(null);
@@ -616,6 +618,11 @@ export const useChat = (sessionId: string) => {
       streamingMessageIdRef.current = null;
       streamingContentRef.current = '';
       streamingThinkingRef.current = '';
+
+      // A finished turn hands over to the prompt queue, if any.
+      window.setTimeout(() => {
+        void drainPromptQueueRef.current?.();
+      }, 0);
 
       // Clear any pending store update timers
       if (storeUpdateTimer.current) {
@@ -1427,6 +1434,42 @@ export const useChat = (sessionId: string) => {
     },
     []
   );
+
+  /**
+   * Sends the next queued prompt once nothing is generating. The claim
+   * (removal) happens first and only the winner sends, so two tabs cannot
+   * double-send an entry.
+   */
+  const drainPromptQueue = useCallback(async () => {
+    if (!sessionId) return;
+    const state = useChatStore.getState();
+    const session = state.currentSession;
+    if (!session || session.id !== sessionId || session.isPrivate) return;
+    if (useAppStore.getState().isGenerating) return;
+    const queue = session.settings?.promptQueue;
+    if (!queue || queue.length === 0) return;
+    try {
+      const claimed = await chatApi.claimQueuedPrompt(sessionId, queue[0].id);
+      if (!claimed.success || !claimed.data) return;
+      applyPromptQueueToChatStore(sessionId, claimed.data.queue);
+      await sendMessage(claimed.data.entry.content);
+    } catch (error) {
+      logger.error('Prompt queue drain failed:', error);
+    }
+  }, [sessionId, sendMessage]);
+
+  useEffect(() => {
+    drainPromptQueueRef.current = drainPromptQueue;
+  }, [drainPromptQueue]);
+
+  // A reopened chat continues its queue once the stored state is loaded.
+  useEffect(() => {
+    if (!sessionId) return;
+    const timer = window.setTimeout(() => {
+      void drainPromptQueueRef.current?.();
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [sessionId]);
 
   return {
     sendMessage,

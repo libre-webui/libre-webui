@@ -184,6 +184,11 @@ export interface AutomationRun {
   createdAt: number;
 }
 
+export interface PromptQueueEntry {
+  id: string;
+  content: string;
+}
+
 export interface ChatSessionSettings {
   generationOptions?: Partial<GenerationOptions>;
   knowledgeCollectionIds?: string[]; // Collections whose documents join this chat's context
@@ -194,6 +199,8 @@ export interface ChatSessionSettings {
    * retrieved chunks, guarded by a token estimate.
    */
   fullDocumentContext?: boolean;
+  /** Prompts queued while a generation runs, sent in order afterwards. */
+  promptQueue?: PromptQueueEntry[];
 }
 
 export interface GenerationOptions {

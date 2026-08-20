@@ -419,6 +419,13 @@
       "tokensUsed": "використано {{used}} / {{budget}} токенів",
       "tokensUsedNoBudget": "використано {{used}} токенів",
       "capped": "обмежено з {{trained}}"
+    },
+    "queue": {
+      "title": "У черзі ({{total}})",
+      "moveUp": "Вище",
+      "moveDown": "Нижче",
+      "updateFailed": "Не вдалося змінити запит у черзі",
+      "enqueueFailed": "Не вдалося поставити запит у чергу"
     }
   },
   "sidebar": {

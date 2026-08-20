@@ -90,6 +90,15 @@
             "summarizer ran once",
             "survivors start on a user turn"
           ]
+        },
+        {
+          "file": "scripts/test-prompt-queue.mjs",
+          "runner": "test:package",
+          "name": "queued prompts can be edited, reordered, and removed atomically",
+          "behaviorPatterns": [
+            "claimQueuedPrompt",
+            "reorderPromptQueue"
+          ]
         }
       ],
       "backendRoutes": [
@@ -254,6 +263,30 @@
           "mount": "/api/chat",
           "method": "PUT",
           "path": "/compaction-config"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/queue"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "PUT",
+          "path": "/sessions/:sessionId/queue"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "PUT",
+          "path": "/sessions/:sessionId/queue/:entryId"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "DELETE",
+          "path": "/sessions/:sessionId/queue/:entryId"
         }
       ],
       "websocketRoutes": [

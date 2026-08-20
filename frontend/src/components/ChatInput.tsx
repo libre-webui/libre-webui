@@ -48,6 +48,8 @@ import { ThinkingSelector } from './ThinkingSelector';
 import { ContextMeter } from './ContextMeter';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
+import PromptQueueList from '@/components/composer/PromptQueueList';
+import { applyPromptQueueToChatStore } from '@/utils/promptQueue';
 import {
   personaApi,
   chatApi,
@@ -870,10 +872,36 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  const enqueueWhileGenerating = async (content: string) => {
+    if (!currentSessionId || isPrivateSession) return;
+    try {
+      const response = await chatApi.enqueuePrompt(currentSessionId, content);
+      if (response.success && response.data) {
+        applyPromptQueueToChatStore(currentSessionId, response.data.queue);
+        setMessage('');
+      } else {
+        toast.error(response.error || t('chat.queue.enqueueFailed'));
+      }
+    } catch (error) {
+      const detail =
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || t('chat.queue.enqueueFailed');
+      logger.error('Failed to queue the prompt:', error);
+      toast.error(detail);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!message.trim() || isGenerating) return;
+    if (!message.trim()) return;
+    if (isGenerating) {
+      // A second prompt during generation queues instead of being dropped.
+      if (images.length === 0 && !isPrivateSession && currentSessionId) {
+        void enqueueWhileGenerating(message.trim());
+      }
+      return;
+    }
     if (!sessionModelAvailable) {
       toast.error(t('chat.model.selectBeforeSending'));
       return;
@@ -1068,6 +1096,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
         {/* Main Input Area - Unified Input Bar */}
         <div className='pb-2.5 pt-1.5 sm:pb-3'>
+          {currentSessionId &&
+            !isPrivateSession &&
+            (currentSession?.settings?.promptQueue?.length ?? 0) > 0 && (
+              <PromptQueueList
+                sessionId={currentSessionId}
+                queue={currentSession!.settings!.promptQueue!}
+              />
+            )}
           <form onSubmit={handleSubmit}>
             {/* Unified Input Container: text row above, controls row below. */}
             <div

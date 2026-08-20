@@ -419,6 +419,13 @@
       "tokensUsed": "использовано {{used}} / {{budget}} токенов",
       "tokensUsedNoBudget": "использовано {{used}} токенов",
       "capped": "ограничено с {{trained}}"
+    },
+    "queue": {
+      "title": "В очереди ({{total}})",
+      "moveUp": "Выше",
+      "moveDown": "Ниже",
+      "updateFailed": "Не удалось изменить запрос в очереди",
+      "enqueueFailed": "Не удалось поставить запрос в очередь"
     }
   },
   "sidebar": {

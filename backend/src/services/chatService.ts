@@ -21,6 +21,7 @@ import {
   ChatProviderSelection,
   Persona,
   MemorySearchResult,
+  PromptQueueEntry,
   SessionFolder,
 } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -36,6 +37,8 @@ import {
   selectChatMessagesForContext,
 } from '../utils/chatContext.js';
 import {
+  MAX_PROMPT_QUEUE_CONTENT_LENGTH,
+  MAX_PROMPT_QUEUE_ENTRIES,
   MAX_SESSION_FOLDER_NAME_LENGTH,
   ResourcePolicyError,
 } from '../utils/resourceLimits.js';
@@ -260,6 +263,132 @@ class ChatService {
     return this.withSessionWriteLease(sessionId, userId, assertHeld =>
       this.updateSessionWithLeaseHeld(sessionId, updates, userId, assertHeld)
     );
+  }
+
+  /**
+   * Atomic prompt-queue mutation under the session write lease, so two
+   * tabs (or a removal racing a drain) never resurrect or double-claim an
+   * entry through a stale whole-settings write.
+   */
+  private async mutatePromptQueue<T>(
+    sessionId: string,
+    userId: string,
+    mutate: (queue: PromptQueueEntry[]) => {
+      queue: PromptQueueEntry[];
+      result: T;
+    } | null
+  ): Promise<T | undefined> {
+    return this.withSessionWriteLease(sessionId, userId, async assertHeld => {
+      const session = await this.getSession(sessionId, userId);
+      if (!session) return undefined;
+      const current = session.settings?.promptQueue ?? [];
+      const mutation = mutate(current.map(entry => ({ ...entry })));
+      if (!mutation) return undefined;
+      const settings = { ...session.settings };
+      if (mutation.queue.length > 0) settings.promptQueue = mutation.queue;
+      else delete settings.promptQueue;
+      const updated = await this.updateSessionWithLeaseHeld(
+        sessionId,
+        { settings },
+        userId,
+        assertHeld
+      );
+      return updated ? mutation.result : undefined;
+    });
+  }
+
+  async enqueuePrompt(
+    sessionId: string,
+    userId: string,
+    content: string
+  ): Promise<PromptQueueEntry[] | undefined> {
+    if (!content.trim()) {
+      throw new ResourcePolicyError('A queued prompt needs content', 400);
+    }
+    if (content.length > MAX_PROMPT_QUEUE_CONTENT_LENGTH) {
+      throw new ResourcePolicyError(
+        `A queued prompt may hold at most ${MAX_PROMPT_QUEUE_CONTENT_LENGTH} characters`,
+        400
+      );
+    }
+    return this.mutatePromptQueue(sessionId, userId, queue => {
+      if (queue.length >= MAX_PROMPT_QUEUE_ENTRIES) {
+        throw new ResourcePolicyError(
+          `A chat may queue at most ${MAX_PROMPT_QUEUE_ENTRIES} prompts`,
+          409
+        );
+      }
+      const next = [...queue, { id: uuidv4(), content }];
+      return { queue: next, result: next };
+    });
+  }
+
+  async updateQueuedPrompt(
+    sessionId: string,
+    userId: string,
+    entryId: string,
+    content: string
+  ): Promise<PromptQueueEntry[] | undefined> {
+    if (!content.trim()) {
+      throw new ResourcePolicyError('A queued prompt needs content', 400);
+    }
+    if (content.length > MAX_PROMPT_QUEUE_CONTENT_LENGTH) {
+      throw new ResourcePolicyError(
+        `A queued prompt may hold at most ${MAX_PROMPT_QUEUE_CONTENT_LENGTH} characters`,
+        400
+      );
+    }
+    return this.mutatePromptQueue(sessionId, userId, queue => {
+      const entry = queue.find(candidate => candidate.id === entryId);
+      if (!entry) return null;
+      entry.content = content;
+      return { queue, result: queue };
+    });
+  }
+
+  /**
+   * Reorders known entries by the given id order. Entries missing from the
+   * order (raced in by another tab) keep their relative position at the end
+   * instead of being dropped.
+   */
+  async reorderPromptQueue(
+    sessionId: string,
+    userId: string,
+    order: readonly string[]
+  ): Promise<PromptQueueEntry[] | undefined> {
+    return this.mutatePromptQueue(sessionId, userId, queue => {
+      const byId = new Map(queue.map(entry => [entry.id, entry]));
+      const next: PromptQueueEntry[] = [];
+      for (const id of order) {
+        const entry = byId.get(id);
+        if (entry) {
+          next.push(entry);
+          byId.delete(id);
+        }
+      }
+      next.push(...byId.values());
+      return { queue: next, result: next };
+    });
+  }
+
+  /**
+   * Removes one entry and returns it. Drains use this claim semantic: only
+   * the caller whose removal succeeded may send the entry, so concurrent
+   * clients cannot double-send.
+   */
+  async claimQueuedPrompt(
+    sessionId: string,
+    userId: string,
+    entryId: string
+  ): Promise<
+    { entry: PromptQueueEntry; queue: PromptQueueEntry[] } | undefined
+  > {
+    return this.mutatePromptQueue(sessionId, userId, queue => {
+      const index = queue.findIndex(candidate => candidate.id === entryId);
+      if (index === -1) return null;
+      const [entry] = queue.splice(index, 1);
+      return { queue, result: { entry, queue } };
+    });
   }
 
   private async updateSessionWithLeaseHeld(

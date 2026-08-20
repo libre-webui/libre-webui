@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} token kullanıldı",
       "tokensUsedNoBudget": "{{used}} token kullanıldı",
       "capped": "{{trained}} değerinden sınırlandı"
+    },
+    "queue": {
+      "title": "Kuyrukta ({{total}})",
+      "moveUp": "Yukarı taşı",
+      "moveDown": "Aşağı taşı",
+      "updateFailed": "Kuyruktaki istem güncellenemedi",
+      "enqueueFailed": "İstem kuyruğa eklenemedi"
     }
   },
   "sidebar": {

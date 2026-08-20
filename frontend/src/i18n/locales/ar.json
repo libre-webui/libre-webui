@@ -419,6 +419,13 @@
       "tokensUsed": "استُخدم {{used}} / {{budget}} رمز",
       "tokensUsedNoBudget": "استُخدم {{used}} رمز",
       "capped": "محدودة من {{trained}}"
+    },
+    "queue": {
+      "title": "في قائمة الانتظار ({{total}})",
+      "moveUp": "نقل لأعلى",
+      "moveDown": "نقل لأسفل",
+      "updateFailed": "تعذّر تحديث الطلب في قائمة الانتظار",
+      "enqueueFailed": "تعذّر إضافة الطلب إلى قائمة الانتظار"
     }
   },
   "sidebar": {

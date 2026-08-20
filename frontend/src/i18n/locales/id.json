@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} token terpakai",
       "tokensUsedNoBudget": "{{used}} token terpakai",
       "capped": "dibatasi dari {{trained}}"
+    },
+    "queue": {
+      "title": "Dalam antrean ({{total}})",
+      "moveUp": "Naikkan",
+      "moveDown": "Turunkan",
+      "updateFailed": "Tidak dapat memperbarui prompt dalam antrean",
+      "enqueueFailed": "Tidak dapat mengantrekan prompt"
     }
   },
   "sidebar": {

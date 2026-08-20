@@ -147,6 +147,13 @@ If you want separate blocks, name them clearly:
 
 Libre WebUI will try to bundle local CSS and JavaScript blocks into the HTML preview.
 
+## Queue Prompts While a Reply Streams
+
+Sending during generation queues the prompt instead of dropping it: queued
+prompts appear above the composer, can be edited, reordered, and removed,
+and are sent one by one as each reply finishes. The queue is stored with
+the chat, so it survives a reload or reconnect.
+
 ## Use Document Chat Deliberately
 
 Document Chat accepts PDF, Office (DOCX/PPTX/XLSX), Markdown, HTML, code, and CSV files up to 10 MB. Search works in two modes:

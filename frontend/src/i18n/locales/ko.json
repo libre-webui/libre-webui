@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} 토큰 사용",
       "tokensUsedNoBudget": "{{used}} 토큰 사용",
       "capped": "{{trained}}에서 제한됨"
+    },
+    "queue": {
+      "title": "대기 중 ({{total}})",
+      "moveUp": "위로 이동",
+      "moveDown": "아래로 이동",
+      "updateFailed": "대기 중인 프롬프트를 수정할 수 없습니다",
+      "enqueueFailed": "프롬프트를 대기열에 추가할 수 없습니다"
     }
   },
   "sidebar": {

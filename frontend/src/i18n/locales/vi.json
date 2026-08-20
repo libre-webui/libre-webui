@@ -419,6 +419,13 @@
       "tokensUsed": "đã dùng {{used}} / {{budget}} token",
       "tokensUsedNoBudget": "đã dùng {{used}} token",
       "capped": "giới hạn từ {{trained}}"
+    },
+    "queue": {
+      "title": "Trong hàng đợi ({{total}})",
+      "moveUp": "Chuyển lên",
+      "moveDown": "Chuyển xuống",
+      "updateFailed": "Không thể cập nhật lời nhắc trong hàng đợi",
+      "enqueueFailed": "Không thể xếp lời nhắc vào hàng đợi"
     }
   },
   "sidebar": {

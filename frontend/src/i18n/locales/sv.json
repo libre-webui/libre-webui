@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} tokens använda",
       "tokensUsedNoBudget": "{{used}} tokens använda",
       "capped": "begränsat från {{trained}}"
+    },
+    "queue": {
+      "title": "I kö ({{total}})",
+      "moveUp": "Flytta upp",
+      "moveDown": "Flytta ner",
+      "updateFailed": "Kunde inte uppdatera prompten i kön",
+      "enqueueFailed": "Kunde inte köa prompten"
     }
   },
   "sidebar": {

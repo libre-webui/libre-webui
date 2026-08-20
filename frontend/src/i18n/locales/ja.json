@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} トークン使用",
       "tokensUsedNoBudget": "{{used}} トークン使用",
       "capped": "{{trained}} から制限"
+    },
+    "queue": {
+      "title": "キュー内({{total}})",
+      "moveUp": "上へ移動",
+      "moveDown": "下へ移動",
+      "updateFailed": "キュー内のプロンプトを更新できませんでした",
+      "enqueueFailed": "プロンプトをキューに追加できませんでした"
     }
   },
   "sidebar": {

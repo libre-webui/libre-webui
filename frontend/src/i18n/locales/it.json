@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} token usati",
       "tokensUsedNoBudget": "{{used}} token usati",
       "capped": "limitata da {{trained}}"
+    },
+    "queue": {
+      "title": "In coda ({{total}})",
+      "moveUp": "Sposta su",
+      "moveDown": "Sposta giù",
+      "updateFailed": "Impossibile aggiornare il prompt in coda",
+      "enqueueFailed": "Impossibile mettere in coda il prompt"
     }
   },
   "sidebar": {

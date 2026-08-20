@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} tákn notuð",
       "tokensUsedNoBudget": "{{used}} tákn notuð",
       "capped": "takmarkað úr {{trained}}"
+    },
+    "queue": {
+      "title": "Í biðröð ({{total}})",
+      "moveUp": "Færa upp",
+      "moveDown": "Færa niður",
+      "updateFailed": "Ekki tókst að uppfæra fyrirmælin í biðröðinni",
+      "enqueueFailed": "Ekki tókst að setja fyrirmælin í biðröð"
     }
   },
   "sidebar": {

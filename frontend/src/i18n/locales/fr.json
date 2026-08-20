@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} jetons utilisés",
       "tokensUsedNoBudget": "{{used}} jetons utilisés",
       "capped": "limitée depuis {{trained}}"
+    },
+    "queue": {
+      "title": "En attente ({{total}})",
+      "moveUp": "Monter",
+      "moveDown": "Descendre",
+      "updateFailed": "Impossible de mettre à jour le prompt en attente",
+      "enqueueFailed": "Impossible de mettre le prompt en attente"
     }
   },
   "sidebar": {

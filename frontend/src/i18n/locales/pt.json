@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} tokens usados",
       "tokensUsedNoBudget": "{{used}} tokens usados",
       "capped": "limitada a partir de {{trained}}"
+    },
+    "queue": {
+      "title": "Na fila ({{total}})",
+      "moveUp": "Mover para cima",
+      "moveDown": "Mover para baixo",
+      "updateFailed": "Não foi possível atualizar o prompt na fila",
+      "enqueueFailed": "Não foi possível enfileirar o prompt"
     }
   },
   "sidebar": {

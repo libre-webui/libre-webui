@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} token digunakan",
       "tokensUsedNoBudget": "{{used}} token digunakan",
       "capped": "dihadkan daripada {{trained}}"
+    },
+    "queue": {
+      "title": "Dalam giliran ({{total}})",
+      "moveUp": "Naik",
+      "moveDown": "Turun",
+      "updateFailed": "Tidak dapat mengemas kini prom dalam giliran",
+      "enqueueFailed": "Tidak dapat membariskan prom"
     }
   },
   "sidebar": {

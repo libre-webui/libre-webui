@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} tokenů využito",
       "tokensUsedNoBudget": "{{used}} tokenů využito",
       "capped": "omezeno z {{trained}}"
+    },
+    "queue": {
+      "title": "Ve frontě ({{total}})",
+      "moveUp": "Nahoru",
+      "moveDown": "Dolů",
+      "updateFailed": "Čekající prompt se nepodařilo upravit",
+      "enqueueFailed": "Prompt se nepodařilo zařadit do fronty"
     }
   },
   "sidebar": {

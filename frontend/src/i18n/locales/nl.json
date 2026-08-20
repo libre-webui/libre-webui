@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} tokens gebruikt",
       "tokensUsedNoBudget": "{{used}} tokens gebruikt",
       "capped": "beperkt vanaf {{trained}}"
+    },
+    "queue": {
+      "title": "In wachtrij ({{total}})",
+      "moveUp": "Omhoog",
+      "moveDown": "Omlaag",
+      "updateFailed": "Kon de wachtende prompt niet bijwerken",
+      "enqueueFailed": "Kon de prompt niet in de wachtrij zetten"
     }
   },
   "sidebar": {

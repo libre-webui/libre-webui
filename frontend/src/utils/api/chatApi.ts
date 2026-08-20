@@ -22,6 +22,7 @@ import type {
   ChatProviderType,
   ChatSession,
   SessionFolder,
+  PromptQueueEntry,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 import { API_BASE_URL } from '@/utils/config';
@@ -126,6 +127,41 @@ export const chatApi = {
       .put(`/chat/sessions/${sessionId}`, updates)
       .then(res => res.data);
   },
+
+  enqueuePrompt: (
+    sessionId: string,
+    content: string
+  ): Promise<ApiResponse<{ queue: PromptQueueEntry[] }>> =>
+    api
+      .post(`/chat/sessions/${sessionId}/queue`, { content })
+      .then(res => res.data),
+
+  updateQueuedPrompt: (
+    sessionId: string,
+    entryId: string,
+    content: string
+  ): Promise<ApiResponse<{ queue: PromptQueueEntry[] }>> =>
+    api
+      .put(`/chat/sessions/${sessionId}/queue/${entryId}`, { content })
+      .then(res => res.data),
+
+  reorderPromptQueue: (
+    sessionId: string,
+    order: string[]
+  ): Promise<ApiResponse<{ queue: PromptQueueEntry[] }>> =>
+    api
+      .put(`/chat/sessions/${sessionId}/queue`, { order })
+      .then(res => res.data),
+
+  claimQueuedPrompt: (
+    sessionId: string,
+    entryId: string
+  ): Promise<
+    ApiResponse<{ entry: PromptQueueEntry; queue: PromptQueueEntry[] }>
+  > =>
+    api
+      .delete(`/chat/sessions/${sessionId}/queue/${entryId}`)
+      .then(res => res.data),
 
   truncateMessagesFrom: (
     sessionId: string,

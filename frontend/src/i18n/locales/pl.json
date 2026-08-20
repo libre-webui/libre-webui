@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} tokenów użytych",
       "tokensUsedNoBudget": "{{used}} tokenów użytych",
       "capped": "ograniczone z {{trained}}"
+    },
+    "queue": {
+      "title": "W kolejce ({{total}})",
+      "moveUp": "W górę",
+      "moveDown": "W dół",
+      "updateFailed": "Nie udało się zaktualizować promptu w kolejce",
+      "enqueueFailed": "Nie udało się dodać promptu do kolejki"
     }
   },
   "sidebar": {

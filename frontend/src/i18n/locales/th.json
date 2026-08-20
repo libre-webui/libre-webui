@@ -419,6 +419,13 @@
       "tokensUsed": "ใช้ไป {{used}} / {{budget}} โทเคน",
       "tokensUsedNoBudget": "ใช้ไป {{used}} โทเคน",
       "capped": "จำกัดจาก {{trained}}"
+    },
+    "queue": {
+      "title": "อยู่ในคิว ({{total}})",
+      "moveUp": "เลื่อนขึ้น",
+      "moveDown": "เลื่อนลง",
+      "updateFailed": "ไม่สามารถแก้ไขพรอมต์ในคิวได้",
+      "enqueueFailed": "ไม่สามารถเพิ่มพรอมต์เข้าคิวได้"
     }
   },
   "sidebar": {

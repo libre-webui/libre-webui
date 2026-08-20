@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} tokens usados",
       "tokensUsedNoBudget": "{{used}} tokens usados",
       "capped": "limitada desde {{trained}}"
+    },
+    "queue": {
+      "title": "En cola ({{total}})",
+      "moveUp": "Subir",
+      "moveDown": "Bajar",
+      "updateFailed": "No se pudo actualizar el mensaje en cola",
+      "enqueueFailed": "No se pudo poner el mensaje en cola"
     }
   },
   "sidebar": {

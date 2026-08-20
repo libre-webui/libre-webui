@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} টোকেন ব্যবহৃত",
       "tokensUsedNoBudget": "{{used}} টোকেন ব্যবহৃত",
       "capped": "{{trained}} থেকে সীমিত"
+    },
+    "queue": {
+      "title": "সারিতে ({{total}})",
+      "moveUp": "উপরে নিন",
+      "moveDown": "নিচে নিন",
+      "updateFailed": "সারির প্রম্পট আপডেট করা যায়নি",
+      "enqueueFailed": "প্রম্পট সারিতে যোগ করা যায়নি"
     }
   },
   "sidebar": {

@@ -922,6 +922,141 @@ router.post(
   }
 );
 
+// Prompt queue: prompts stored while a generation runs, sent in order
+// afterwards. Every mutation is atomic under the session write lease.
+router.post(
+  '/sessions/:sessionId/queue',
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.userId || 'default';
+      const { content } = req.body as { content?: unknown };
+      if (typeof content !== 'string') {
+        res.status(400).json({ success: false, error: 'content is required' });
+        return;
+      }
+      const queue = await chatService.enqueuePrompt(
+        String(req.params.sessionId || ''),
+        userId,
+        content
+      );
+      if (!queue) {
+        res.status(404).json({ success: false, error: 'Session not found' });
+        return;
+      }
+      res.status(201).json({ success: true, data: { queue } });
+    } catch (error) {
+      if (error instanceof ResourcePolicyError) {
+        res
+          .status(error.statusCode)
+          .json({ success: false, error: error.message });
+        return;
+      }
+      logger.error('Prompt enqueue error:', error);
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to queue the prompt' });
+    }
+  }
+);
+
+router.put(
+  '/sessions/:sessionId/queue',
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.userId || 'default';
+      const { order } = req.body as { order?: unknown };
+      if (
+        !Array.isArray(order) ||
+        order.some(id => typeof id !== 'string' || !id)
+      ) {
+        res
+          .status(400)
+          .json({ success: false, error: 'order must be a list of entry ids' });
+        return;
+      }
+      const queue = await chatService.reorderPromptQueue(
+        String(req.params.sessionId || ''),
+        userId,
+        order as string[]
+      );
+      if (!queue) {
+        res.status(404).json({ success: false, error: 'Session not found' });
+        return;
+      }
+      res.json({ success: true, data: { queue } });
+    } catch (error) {
+      logger.error('Prompt queue reorder error:', error);
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to reorder the queue' });
+    }
+  }
+);
+
+router.put(
+  '/sessions/:sessionId/queue/:entryId',
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.userId || 'default';
+      const { content } = req.body as { content?: unknown };
+      if (typeof content !== 'string') {
+        res.status(400).json({ success: false, error: 'content is required' });
+        return;
+      }
+      const queue = await chatService.updateQueuedPrompt(
+        String(req.params.sessionId || ''),
+        userId,
+        String(req.params.entryId || ''),
+        content
+      );
+      if (!queue) {
+        res
+          .status(404)
+          .json({ success: false, error: 'Queued prompt not found' });
+        return;
+      }
+      res.json({ success: true, data: { queue } });
+    } catch (error) {
+      if (error instanceof ResourcePolicyError) {
+        res
+          .status(error.statusCode)
+          .json({ success: false, error: error.message });
+        return;
+      }
+      logger.error('Prompt queue update error:', error);
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to update the queued prompt' });
+    }
+  }
+);
+
+router.delete(
+  '/sessions/:sessionId/queue/:entryId',
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.userId || 'default';
+      const claimed = await chatService.claimQueuedPrompt(
+        String(req.params.sessionId || ''),
+        userId,
+        String(req.params.entryId || '')
+      );
+      if (!claimed) {
+        res
+          .status(404)
+          .json({ success: false, error: 'Queued prompt not found' });
+        return;
+      }
+      res.json({ success: true, data: claimed });
+    } catch (error) {
+      logger.error('Prompt queue removal error:', error);
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to remove the queued prompt' });
+    }
+  }
+);
+
 router.get(
   '/sessions/:sessionId/events',
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {

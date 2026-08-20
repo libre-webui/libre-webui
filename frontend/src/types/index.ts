@@ -116,6 +116,11 @@ export interface ChatSession {
   pinned?: boolean; // Kept in the sidebar's Pinned group
 }
 
+export interface PromptQueueEntry {
+  id: string;
+  content: string;
+}
+
 export interface ChatSessionSettings {
   generationOptions?: Partial<GenerationOptions>;
   knowledgeCollectionIds?: string[]; // Collections whose documents join this chat's context
@@ -123,6 +128,8 @@ export interface ChatSessionSettings {
   compaction?: boolean;
   /** True sends full document content instead of retrieved excerpts. */
   fullDocumentContext?: boolean;
+  /** Prompts queued while a generation runs, sent in order afterwards. */
+  promptQueue?: PromptQueueEntry[];
 }
 
 export interface SessionFolder {

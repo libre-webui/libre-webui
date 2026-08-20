@@ -419,6 +419,13 @@
       "tokensUsed": "{{used}} / {{budget}} tokens brugt",
       "tokensUsedNoBudget": "{{used}} tokens brugt",
       "capped": "begrænset fra {{trained}}"
+    },
+    "queue": {
+      "title": "I kø ({{total}})",
+      "moveUp": "Flyt op",
+      "moveDown": "Flyt ned",
+      "updateFailed": "Kunne ikke opdatere prompten i køen",
+      "enqueueFailed": "Kunne ikke sætte prompten i kø"
     }
   },
   "sidebar": {
