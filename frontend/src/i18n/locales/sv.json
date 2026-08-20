@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Dokumentet laddades upp",
     "uploadFailed": "Kunde inte ladda upp dokument",
     "types": "Stöder: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Endast PDF- och TXT-filer stöds",
+    "unsupportedFileType": "Den här filtypen stöds inte",
     "fileSizeTooLarge": "Filstorleken måste vara mindre än 10MB",
     "uploadSuccessWithName": "Dokumentet \"{{name}}\" laddades upp",
     "removeSuccess": "Dokumentet togs bort",
@@ -1945,7 +1945,7 @@
     "removeError": "Ett fel uppstod vid borttagning av dokumentet",
     "clickToUpload": "Klicka för att ladda upp",
     "orDragAndDrop": "eller dra och släpp",
-    "fileTypesAndSize": "PDF- eller TXT-filer upp till 10MB",
+    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kod- och CSV-filer upp till 10 MB",
     "uploadedDocuments": "Uppladdade dokument",
     "removeDocument": "Ta bort dokument"
   },

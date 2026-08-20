@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Dokumen berjaya dimuat naik",
     "uploadFailed": "Gagal memuat naik dokumen",
     "types": "Disokong: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Hanya fail PDF dan TXT yang disokong",
+    "unsupportedFileType": "Jenis fail ini tidak disokong",
     "fileSizeTooLarge": "Saiz fail mesti kurang daripada 10MB",
     "uploadSuccessWithName": "Dokumen \"{{name}}\" berjaya dimuat naik",
     "removeSuccess": "Dokumen berjaya dibuang",
@@ -1945,7 +1945,7 @@
     "removeError": "Ralat berlaku semasa membuang dokumen",
     "clickToUpload": "Klik untuk muat naik",
     "orDragAndDrop": "atau seret dan lepas",
-    "fileTypesAndSize": "Fail PDF atau TXT sehingga 10MB",
+    "fileTypesAndSize": "Fail PDF, Office, Markdown, HTML, kod dan CSV sehingga 10MB",
     "uploadedDocuments": "Dokumen Dimuat Naik",
     "removeDocument": "Buang dokumen"
   },

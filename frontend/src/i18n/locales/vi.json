@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Đã tải lên tài liệu thành công",
     "uploadFailed": "Không thể tải lên tài liệu",
     "types": "Hỗ trợ: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Chỉ hỗ trợ file PDF và TXT",
+    "unsupportedFileType": "Loại tệp này không được hỗ trợ",
     "fileSizeTooLarge": "Kích thước file phải nhỏ hơn 10MB",
     "uploadSuccessWithName": "Đã tải lên tài liệu \"{{name}}\" thành công",
     "removeSuccess": "Đã xóa tài liệu thành công",
@@ -1945,7 +1945,7 @@
     "removeError": "Đã xảy ra lỗi khi xóa tài liệu",
     "clickToUpload": "Nhấp để tải lên",
     "orDragAndDrop": "hoặc kéo và thả",
-    "fileTypesAndSize": "File PDF hoặc TXT tối đa 10MB",
+    "fileTypesAndSize": "Tệp PDF, Office, Markdown, HTML, mã nguồn và CSV tối đa 10MB",
     "uploadedDocuments": "Tài liệu đã tải lên",
     "removeDocument": "Xóa tài liệu"
   },

@@ -564,7 +564,7 @@ HUGGINGFACE_CALLBACK_URL=https://your-domain.example/api/auth/oauth/huggingface/
 
 ## Document Chat Problems
 
-Libre WebUI currently accepts PDF and plain-text files up to 10 MB.
+Libre WebUI accepts PDF, Office (DOCX/PPTX/XLSX), Markdown, HTML, code, and CSV files up to 10 MB.
 
 If search works but semantic retrieval does not:
 

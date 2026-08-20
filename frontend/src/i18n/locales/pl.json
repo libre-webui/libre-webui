@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Dokument przesłany pomyślnie",
     "uploadFailed": "Nie udało się przesłać dokumentu",
     "types": "Obsługiwane: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Obsługiwane są tylko pliki PDF i TXT",
+    "unsupportedFileType": "Ten typ pliku nie jest obsługiwany",
     "fileSizeTooLarge": "Rozmiar pliku musi być mniejszy niż 10MB",
     "uploadSuccessWithName": "Dokument \"{{name}}\" przesłany pomyślnie",
     "removeSuccess": "Dokument usunięty pomyślnie",
@@ -1945,7 +1945,7 @@
     "removeError": "Wystąpił błąd podczas usuwania dokumentu",
     "clickToUpload": "Kliknij, aby przesłać",
     "orDragAndDrop": "lub przeciągnij i upuść",
-    "fileTypesAndSize": "Pliki PDF lub TXT do 10MB",
+    "fileTypesAndSize": "Pliki PDF, Office, Markdown, HTML, kod i CSV do 10 MB",
     "uploadedDocuments": "Przesłane dokumenty",
     "removeDocument": "Usuń dokument"
   },

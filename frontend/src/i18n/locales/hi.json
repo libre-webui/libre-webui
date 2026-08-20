@@ -1937,7 +1937,7 @@
     "uploadSuccess": "दस्तावेज़ सफलतापूर्वक अपलोड किया गया",
     "uploadFailed": "दस्तावेज़ अपलोड करने में विफल",
     "types": "समर्थित: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "केवल PDF और TXT फ़ाइलें समर्थित हैं",
+    "unsupportedFileType": "यह फ़ाइल प्रकार समर्थित नहीं है",
     "fileSizeTooLarge": "फ़ाइल का आकार 10MB से कम होना चाहिए",
     "uploadSuccessWithName": "दस्तावेज़ \"{{name}}\" सफलतापूर्वक अपलोड किया गया",
     "removeSuccess": "दस्तावेज़ सफलतापूर्वक हटाया गया",
@@ -1945,7 +1945,7 @@
     "removeError": "दस्तावेज़ हटाते समय एक त्रुटि हुई",
     "clickToUpload": "अपलोड करने के लिए क्लिक करें",
     "orDragAndDrop": "या खींचें और छोड़ें",
-    "fileTypesAndSize": "PDF या TXT फ़ाइलें 10MB तक",
+    "fileTypesAndSize": "PDF, Office, Markdown, HTML, कोड और CSV फ़ाइलें अधिकतम 10MB",
     "uploadedDocuments": "अपलोड किए गए दस्तावेज़",
     "removeDocument": "दस्तावेज़ हटाएं"
   },

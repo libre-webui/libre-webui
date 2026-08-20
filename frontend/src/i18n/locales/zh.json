@@ -1937,7 +1937,7 @@
     "uploadSuccess": "文档上传成功",
     "uploadFailed": "上传文档失败",
     "types": "支持格式：PDF、TXT、MD、DOCX",
-    "unsupportedFileType": "仅支持 PDF 和 TXT 文件",
+    "unsupportedFileType": "不支持此文件类型",
     "fileSizeTooLarge": "文件大小必须小于 10MB",
     "uploadSuccessWithName": "文档 \"{{name}}\" 上传成功",
     "removeSuccess": "文档移除成功",
@@ -1945,7 +1945,7 @@
     "removeError": "移除文档时发生错误",
     "clickToUpload": "点击上传",
     "orDragAndDrop": "或拖放文件",
-    "fileTypesAndSize": "PDF 或 TXT 文件，最大 10MB",
+    "fileTypesAndSize": "PDF、Office、Markdown、HTML、代码和 CSV 文件(最大 10MB)",
     "uploadedDocuments": "已上传文档",
     "removeDocument": "移除文档"
   },

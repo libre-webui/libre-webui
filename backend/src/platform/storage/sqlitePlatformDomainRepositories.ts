@@ -8,6 +8,7 @@ import type Database from 'better-sqlite3';
 import { createSQLiteSyncExecutor } from '../../persistence/sqliteSyncExecutor.js';
 import type {
   DocumentChunk,
+  DocumentFileType,
   Persona,
   PersonaState,
 } from '../../types/index.js';
@@ -140,7 +141,7 @@ const mapDocumentRow = (
   ...(row.content
     ? { content: decryptLegacyCompatible(cipher, row.content) }
     : {}),
-  ...(row.file_type ? { fileType: row.file_type as 'pdf' | 'txt' } : {}),
+  ...(row.file_type ? { fileType: row.file_type as DocumentFileType } : {}),
   ...(row.size === undefined ? {} : { size: row.size }),
   ...(row.session_id ? { sessionId: row.session_id } : {}),
   ...(row.collection_id ? { collectionId: row.collection_id } : {}),
@@ -335,7 +336,7 @@ class SQLiteDocumentRepository {
     userId: string,
     expectedSource: {
       content: string | null;
-      fileType: 'pdf' | 'txt' | null;
+      fileType: DocumentFileType | null;
     },
     embeddingIndex: unknown,
     chunks: readonly DocumentChunk[]
@@ -356,7 +357,7 @@ class SQLiteDocumentRepository {
         .get(documentId, userId) as
         | {
             content: string | null;
-            file_type: 'pdf' | 'txt' | null;
+            file_type: DocumentFileType | null;
             metadata: string | null;
           }
         | undefined;

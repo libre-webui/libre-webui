@@ -1937,7 +1937,7 @@
     "uploadSuccess": "문서가 성공적으로 업로드되었습니다",
     "uploadFailed": "문서 업로드 실패",
     "types": "지원: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "PDF와 TXT 파일만 지원됩니다",
+    "unsupportedFileType": "지원되지 않는 파일 형식입니다",
     "fileSizeTooLarge": "파일 크기는 10MB 미만이어야 합니다",
     "uploadSuccessWithName": "문서 \"{{name}}\"이(가) 성공적으로 업로드되었습니다",
     "removeSuccess": "문서가 성공적으로 제거되었습니다",
@@ -1945,7 +1945,7 @@
     "removeError": "문서를 제거하는 중 오류가 발생했습니다",
     "clickToUpload": "클릭하여 업로드",
     "orDragAndDrop": "또는 드래그 앤 드롭",
-    "fileTypesAndSize": "PDF 또는 TXT 파일 최대 10MB",
+    "fileTypesAndSize": "PDF, Office, Markdown, HTML, 코드, CSV 파일(최대 10MB)",
     "uploadedDocuments": "업로드된 문서",
     "removeDocument": "문서 제거"
   },

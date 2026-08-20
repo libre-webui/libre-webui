@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Belge başarıyla yüklendi",
     "uploadFailed": "Belge yüklenemedi",
     "types": "Desteklenen: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Yalnızca PDF ve TXT dosyaları desteklenir",
+    "unsupportedFileType": "Bu dosya türü desteklenmiyor",
     "fileSizeTooLarge": "Dosya boyutu 10MB'dan küçük olmalıdır",
     "uploadSuccessWithName": "\"{{name}}\" belgesi başarıyla yüklendi",
     "removeSuccess": "Belge başarıyla kaldırıldı",
@@ -1945,7 +1945,7 @@
     "removeError": "Belge kaldırılırken bir hata oluştu",
     "clickToUpload": "Yüklemek için tıklayın",
     "orDragAndDrop": "veya sürükleyip bırakın",
-    "fileTypesAndSize": "10MB'a kadar PDF veya TXT dosyaları",
+    "fileTypesAndSize": "10 MB'a kadar PDF, Office, Markdown, HTML, kod ve CSV dosyaları",
     "uploadedDocuments": "Yüklenen Belgeler",
     "removeDocument": "Belgeyi kaldır"
   },

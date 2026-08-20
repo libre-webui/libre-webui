@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Dokument uploadet",
     "uploadFailed": "Kunne ikke uploade dokument",
     "types": "Understøttet: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Kun PDF- og TXT-filer understøttes",
+    "unsupportedFileType": "Denne filtype understøttes ikke",
     "fileSizeTooLarge": "Filstørrelsen skal være mindre end 10 MB",
     "uploadSuccessWithName": "Dokumentet \"{{name}}\" blev uploadet",
     "removeSuccess": "Dokument fjernet",
@@ -1945,7 +1945,7 @@
     "removeError": "Der opstod en fejl under fjernelse af dokumentet",
     "clickToUpload": "Klik for at uploade",
     "orDragAndDrop": "eller træk og slip",
-    "fileTypesAndSize": "PDF- eller TXT-filer op til 10 MB",
+    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kode- og CSV-filer op til 10 MB",
     "uploadedDocuments": "Uploadede dokumenter",
     "removeDocument": "Fjern dokument"
   },

@@ -26,6 +26,7 @@ import { ApiResponse } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import { authenticate } from '../middleware/auth.js';
 import { fetchWebpageAsText } from '../utils/webpageFetcher.js';
+import { resolveDocumentFileType } from '../utils/documentExtraction.js';
 
 const logger = createLogger('routes:documents');
 
@@ -70,11 +71,14 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    // Allow only PDF and TXT files
-    if (file.mimetype === 'application/pdf' || file.mimetype === 'text/plain') {
+    if (resolveDocumentFileType(file.originalname, file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF and TXT files are allowed'));
+      cb(
+        new Error(
+          'Unsupported file type. Supported: PDF, text, Markdown, HTML, code, DOCX, PPTX, XLSX, and CSV files'
+        )
+      );
     }
   },
 });
@@ -111,10 +115,15 @@ router.post('/upload', upload.single('document'), async (req, res) => {
         sessionId: document.sessionId,
         uploadedAt: document.uploadedAt,
         jobId: queued.jobId,
-        processingStatus: 'queued',
+        processingStatus: queued.deduplicated
+          ? ((document.metadata?.processingStatus as string) ?? 'queued')
+          : 'queued',
+        ...(queued.deduplicated ? { deduplicated: true } : {}),
         // Don't send full content in response
       },
-      message: 'Document uploaded; extraction is queued',
+      message: queued.deduplicated
+        ? 'An identical document already exists in this scope'
+        : 'Document uploaded; extraction is queued',
     } as ApiResponse);
   } catch (error) {
     logger.error('Document upload error:', error);

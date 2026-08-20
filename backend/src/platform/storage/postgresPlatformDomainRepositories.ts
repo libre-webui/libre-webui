@@ -12,6 +12,7 @@ import type {
 import type { Document } from '../../storageMappers.js';
 import type {
   DocumentChunk,
+  DocumentFileType,
   Persona,
   PersonaState,
 } from '../../types/index.js';
@@ -143,7 +144,7 @@ interface PgDocumentRow extends QueryResultRow {
   filename: string;
   title: string | null;
   content: string | null;
-  file_type: 'pdf' | 'txt' | null;
+  file_type: DocumentFileType | null;
   size: string | number | null;
   session_id: string | null;
   collection_id: string | null;
@@ -360,7 +361,7 @@ class PostgresDocumentRepository implements DocumentRepository {
     userId: string,
     expectedSource: {
       content: string | null;
-      fileType: 'pdf' | 'txt' | null;
+      fileType: DocumentFileType | null;
     },
     embeddingIndex: unknown,
     chunks: readonly DocumentChunk[]
@@ -376,7 +377,7 @@ class PostgresDocumentRepository implements DocumentRepository {
       async client => {
         const current = await client.query<{
           content: string | null;
-          file_type: 'pdf' | 'txt' | null;
+          file_type: DocumentFileType | null;
           metadata: string | null;
         }>(
           `SELECT content, file_type, metadata FROM documents

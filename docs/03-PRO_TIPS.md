@@ -149,7 +149,7 @@ Libre WebUI will try to bundle local CSS and JavaScript blocks into the HTML pre
 
 ## Use Document Chat Deliberately
 
-Document Chat currently accepts PDF and plain-text files up to 10 MB. Search works in two modes:
+Document Chat accepts PDF, Office (DOCX/PPTX/XLSX), Markdown, HTML, code, and CSV files up to 10 MB. Search works in two modes:
 
 - Keyword search is always available.
 - Semantic search is used when embeddings are enabled in Settings and an embedding model is available.

@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Документ успішно завантажено",
     "uploadFailed": "Не вдалося завантажити документ",
     "types": "Підтримується: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Підтримуються лише файли PDF та TXT",
+    "unsupportedFileType": "Цей тип файлу не підтримується",
     "fileSizeTooLarge": "Розмір файлу має бути менше 10 МБ",
     "uploadSuccessWithName": "Документ \"{{name}}\" успішно завантажено",
     "removeSuccess": "Документ успішно видалено",
@@ -1945,7 +1945,7 @@
     "removeError": "Сталася помилка при видаленні документа",
     "clickToUpload": "Натисніть, щоб завантажити",
     "orDragAndDrop": "або перетягніть",
-    "fileTypesAndSize": "PDF або TXT файли до 10 МБ",
+    "fileTypesAndSize": "Файли PDF, Office, Markdown, HTML, код і CSV до 10 МБ",
     "uploadedDocuments": "Завантажені документи",
     "removeDocument": "Видалити документ"
   },

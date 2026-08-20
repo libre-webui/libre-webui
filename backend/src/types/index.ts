@@ -478,11 +478,14 @@ export interface OllamaLegacyEmbeddingsResponse {
 }
 
 // Document and RAG types
+export type DocumentFileType =
+  'pdf' | 'txt' | 'md' | 'html' | 'code' | 'docx' | 'pptx' | 'xlsx' | 'csv';
+
 export interface Document {
   id: string;
   filename: string;
   content: string;
-  fileType: 'pdf' | 'txt';
+  fileType: DocumentFileType;
   size: number;
   sessionId?: string;
   uploadedAt: number;

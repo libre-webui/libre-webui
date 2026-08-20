@@ -19,6 +19,7 @@ import type {
   ChatProviderType,
   ChatSession,
   DocumentChunk,
+  DocumentFileType,
 } from './types/index.js';
 import { encryptionService } from './services/encryptionService.js';
 
@@ -27,7 +28,7 @@ export interface Document {
   filename: string;
   title?: string;
   content?: string;
-  fileType?: 'pdf' | 'txt';
+  fileType?: DocumentFileType;
   size?: number;
   sessionId?: string;
   collectionId?: string;
@@ -194,7 +195,7 @@ export function mapDocumentRow(row: DocumentRow): Document {
     filename: row.filename,
     title: row.title ? encryptionService.decrypt(row.title) : undefined,
     content: row.content ? encryptionService.decrypt(row.content) : undefined,
-    fileType: row.file_type as 'pdf' | 'txt' | undefined,
+    fileType: row.file_type as DocumentFileType | undefined,
     size: row.size,
     sessionId: row.session_id,
     collectionId: row.collection_id || undefined,

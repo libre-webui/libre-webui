@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Documento caricato con successo",
     "uploadFailed": "Impossibile caricare il documento",
     "types": "Supportati: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Solo file PDF e TXT sono supportati",
+    "unsupportedFileType": "Questo tipo di file non è supportato",
     "fileSizeTooLarge": "La dimensione del file deve essere inferiore a 10 MB",
     "uploadSuccessWithName": "Documento \"{{name}}\" caricato con successo",
     "removeSuccess": "Documento rimosso con successo",
@@ -1945,7 +1945,7 @@
     "removeError": "Si è verificato un errore durante la rimozione del documento",
     "clickToUpload": "Clicca per caricare",
     "orDragAndDrop": "o trascina e rilascia",
-    "fileTypesAndSize": "File PDF o TXT fino a 10 MB",
+    "fileTypesAndSize": "File PDF, Office, Markdown, HTML, codice e CSV fino a 10 MB",
     "uploadedDocuments": "Documenti caricati",
     "removeDocument": "Rimuovi documento"
   },

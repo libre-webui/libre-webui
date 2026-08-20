@@ -1937,7 +1937,7 @@
     "uploadSuccess": "ドキュメントが正常にアップロードされました",
     "uploadFailed": "ドキュメントのアップロードに失敗しました",
     "types": "対応形式: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "PDFとTXTファイルのみ対応しています",
+    "unsupportedFileType": "このファイル形式はサポートされていません",
     "fileSizeTooLarge": "ファイルサイズは10MB未満である必要があります",
     "uploadSuccessWithName": "ドキュメント「{{name}}」が正常にアップロードされました",
     "removeSuccess": "ドキュメントが正常に削除されました",
@@ -1945,7 +1945,7 @@
     "removeError": "ドキュメントの削除中にエラーが発生しました",
     "clickToUpload": "クリックしてアップロード",
     "orDragAndDrop": "またはドラッグ＆ドロップ",
-    "fileTypesAndSize": "PDFまたはTXTファイル（最大10MB）",
+    "fileTypesAndSize": "PDF、Office、Markdown、HTML、コード、CSVファイル(最大10MB)",
     "uploadedDocuments": "アップロードされたドキュメント",
     "removeDocument": "ドキュメントを削除"
   },

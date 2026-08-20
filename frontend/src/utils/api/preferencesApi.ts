@@ -20,6 +20,7 @@ import type {
   ChatProviderType,
   ChatSession,
   DocumentChunk,
+  DocumentFileType,
   KnowledgeCollection,
   Note,
   SessionFolder,
@@ -46,7 +47,7 @@ export interface ArchivedDocument {
   filename: string;
   title?: string;
   content?: string;
-  fileType?: 'pdf' | 'txt';
+  fileType?: DocumentFileType;
   size?: number;
   sessionId?: string;
   collectionId?: string;

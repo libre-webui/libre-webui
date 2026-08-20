@@ -18,7 +18,7 @@
 import crypto from 'node:crypto';
 import { Readable } from 'node:stream';
 import { v4 as uuidv4 } from 'uuid';
-import { DocumentChunk } from '../types/index.js';
+import { DocumentChunk, DocumentFileType } from '../types/index.js';
 import { Document } from '../storage.js';
 import storageService from '../storage.js';
 import {
@@ -59,6 +59,11 @@ import { transactionalResourceDeletionEnqueuer } from '../platform/jobs/resource
 import preferencesService from './preferencesService.js';
 import { createLogger } from '../utils/logger.js';
 import { throwIfChatGenerationCancelled } from '../utils/chatCancellation.js';
+import {
+  extractDocumentContentByType,
+  resolveDocumentFileType,
+  type DocumentSegment,
+} from '../utils/documentExtraction.js';
 
 const logger = createLogger('documents');
 
@@ -360,33 +365,40 @@ const getPdfjsLib = async () => {
   return pdfjsLib;
 };
 
+/**
+ * Segment maps above this length would bloat the encrypted metadata column;
+ * a source under the extraction size cap never legitimately reaches it.
+ */
+const MAX_DOCUMENT_SEGMENTS = 5000;
+
 const extractDocumentContent = async (
+  fileName: string,
   fileBuffer: Buffer,
   mimeType: string,
   signal?: AbortSignal
-): Promise<{ content: string; fileType: 'pdf' | 'txt' }> => {
+): Promise<{
+  content: string;
+  fileType: DocumentFileType;
+  segments: DocumentSegment[];
+}> => {
   if (signal?.aborted) throw signal.reason;
-  if (mimeType === 'text/plain') {
-    return { content: fileBuffer.toString('utf8'), fileType: 'txt' };
-  }
-  if (mimeType !== 'application/pdf') {
+  const fileType = resolveDocumentFileType(fileName, mimeType);
+  if (!fileType) {
     throw new Error(`Unsupported file type: ${mimeType}`);
   }
-  const pdfLib = await getPdfjsLib();
-  const pdfDocument = await pdfLib.getDocument({
-    data: new Uint8Array(fileBuffer),
-  }).promise;
-  let textContent = '';
-  for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum += 1) {
-    if (signal?.aborted) throw signal.reason;
-    const page = await pdfDocument.getPage(pageNum);
-    const pageText = await page.getTextContent();
-    textContent += `${pageText.items
-      .map(item => ('str' in item ? item.str : ''))
-      .join(' ')}\n\n`;
-  }
-  return { content: textContent.trim(), fileType: 'pdf' };
+  const extracted = await extractDocumentContentByType(fileBuffer, fileType, {
+    signal,
+    ...(fileType === 'pdf' ? { pdfLib: await getPdfjsLib() } : {}),
+  });
+  return {
+    content: extracted.content,
+    fileType,
+    segments: extracted.segments.slice(0, MAX_DOCUMENT_SEGMENTS),
+  };
 };
+
+const documentContentSha256 = (fileBuffer: Buffer): string =>
+  crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
 export class DocumentService {
   private async captureEmbeddingExecutionSpec(
@@ -440,7 +452,7 @@ export class DocumentService {
     aggregateRevision?: string,
     expectedSource?: {
       content: string | null;
-      fileType: 'pdf' | 'txt' | null;
+      fileType: DocumentFileType | null;
     }
   ): Promise<Document> {
     const platform = getPlatformStorageRuntime();
@@ -477,23 +489,44 @@ export class DocumentService {
     userId: string,
     sessionId?: string,
     signal?: AbortSignal
-  ): Promise<{ document: Document; jobId: string }> {
-    if (mimeType !== 'text/plain' && mimeType !== 'application/pdf') {
+  ): Promise<{ document: Document; jobId: string; deduplicated?: boolean }> {
+    const resolvedType = resolveDocumentFileType(fileName, mimeType);
+    if (!resolvedType) {
       throw new Error(`Unsupported file type: ${mimeType}`);
     }
     if (signal?.aborted) throw signal.reason;
+    const contentSha256 = documentContentSha256(fileBuffer);
+    const duplicate = await this.findDuplicateDocument(
+      userId,
+      sessionId,
+      contentSha256
+    );
+    if (duplicate) {
+      const existingJob = await getDurableJobRuntime().service.getByIdempotency(
+        userId,
+        DOCUMENT_INGEST_IDEMPOTENCY_SCOPE,
+        duplicate.id
+      );
+      if (existingJob) {
+        return {
+          document: duplicate,
+          jobId: existingJob.id,
+          deduplicated: true,
+        };
+      }
+    }
     const documentId = uuidv4();
     const now = Date.now();
     const document: Document = {
       id: documentId,
       filename: fileName,
       content: '',
-      fileType: mimeType === 'application/pdf' ? 'pdf' : 'txt',
+      fileType: resolvedType,
       size: fileBuffer.length,
       ...(sessionId ? { sessionId } : {}),
       uploadedAt: now,
       createdAt: now,
-      metadata: { processingStatus: 'queued' },
+      metadata: { processingStatus: 'queued', contentSha256 },
     };
     const platform = getPlatformStorageRuntime();
     const sourceBlob = await platform.blobStore.put({
@@ -597,7 +630,8 @@ export class DocumentService {
   ): Promise<Document> {
     const documentId = uuidv4();
     try {
-      const { content, fileType } = await extractDocumentContent(
+      const { content, fileType, segments } = await extractDocumentContent(
+        fileName,
         fileBuffer,
         mimeType
       );
@@ -610,6 +644,10 @@ export class DocumentService {
         size: fileBuffer.length,
         sessionId,
         uploadedAt: Date.now(),
+        metadata: {
+          contentSha256: documentContentSha256(fileBuffer),
+          ...(segments.length > 0 ? { segments } : {}),
+        },
       };
 
       const spec = await this.captureEmbeddingExecutionSpec(userId);
@@ -1157,8 +1195,10 @@ export class DocumentService {
       }
       buffers.push(buffer);
     }
+    const sourceBuffer = Buffer.concat(buffers, size);
     const extracted = await extractDocumentContent(
-      Buffer.concat(buffers, size),
+      source.descriptor.originalFilename ?? current.filename,
+      sourceBuffer,
       source.descriptor.contentType,
       signal
     );
@@ -1180,6 +1220,10 @@ export class DocumentService {
       ...(document.metadata ?? {}),
       processingStatus: 'completed',
       processedAt: Date.now(),
+      contentSha256: documentContentSha256(sourceBuffer),
+      ...(extracted.segments.length > 0
+        ? { segments: extracted.segments }
+        : {}),
     };
     document = withDocumentIndexMetadata(document, embedded, spec);
     await assertSideEffectAllowed?.();
@@ -1236,6 +1280,32 @@ export class DocumentService {
     userId: string
   ): Promise<Document | undefined> {
     return storageService.getDocument(documentId, userId);
+  }
+
+  /**
+   * Finds an existing live document with identical source bytes in the same
+   * scope (the same session, or both standing). Upload deduplication only —
+   * a match in another scope is not a duplicate because deleting one scope's
+   * copy must never remove another's.
+   */
+  private async findDuplicateDocument(
+    userId: string,
+    sessionId: string | undefined,
+    contentSha256: string
+  ): Promise<Document | undefined> {
+    const scope = sessionId ?? null;
+    const platform = getPlatformStorageRuntime();
+    const documents = await storageService.getAllDocuments(userId);
+    for (const candidate of documents) {
+      if ((candidate.sessionId ?? null) !== scope) continue;
+      if (candidate.metadata?.contentSha256 !== contentSha256) continue;
+      const reserved = await platform.domains.resourceDeletions.isReserved(
+        'document',
+        candidate.id
+      );
+      if (!reserved) return candidate;
+    }
+    return undefined;
   }
 
   async getDocuments(userId: string, sessionId?: string): Promise<Document[]> {

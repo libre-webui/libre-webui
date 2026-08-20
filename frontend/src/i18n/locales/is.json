@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Skjali hlaðið upp",
     "uploadFailed": "Ekki tókst að hlaða upp skjali",
     "types": "Stuðningur: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Aðeins PDF og TXT skrár eru studdar",
+    "unsupportedFileType": "Þessi skráartegund er ekki studd",
     "fileSizeTooLarge": "Skráarstærð verður að vera minni en 10MB",
     "uploadSuccessWithName": "Skjali \"{{name}}\" hlaðið upp",
     "removeSuccess": "Skjal fjarlægt",
@@ -1945,7 +1945,7 @@
     "removeError": "Villa kom upp við að fjarlægja skjalið",
     "clickToUpload": "Smelltu til að hlaða upp",
     "orDragAndDrop": "eða dragðu og slepptu",
-    "fileTypesAndSize": "PDF eða TXT skrár allt að 10MB",
+    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kóða- og CSV-skrár allt að 10 MB",
     "uploadedDocuments": "Hlaðin upp skjöl",
     "removeDocument": "Fjarlægja skjal"
   },

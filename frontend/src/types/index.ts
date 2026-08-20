@@ -568,10 +568,13 @@ export interface PluginStatus {
 }
 
 // Document and RAG types
+export type DocumentFileType =
+  'pdf' | 'txt' | 'md' | 'html' | 'code' | 'docx' | 'pptx' | 'xlsx' | 'csv';
+
 export interface DocumentSummary {
   id: string;
   filename: string;
-  fileType: 'pdf' | 'txt';
+  fileType: DocumentFileType;
   size: number;
   sessionId?: string;
   collectionId?: string;

@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Документ успешно загружен",
     "uploadFailed": "Не удалось загрузить документ",
     "types": "Поддерживаются: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Поддерживаются только файлы PDF и TXT",
+    "unsupportedFileType": "Этот тип файла не поддерживается",
     "fileSizeTooLarge": "Размер файла должен быть менее 10 МБ",
     "uploadSuccessWithName": "Документ \"{{name}}\" успешно загружен",
     "removeSuccess": "Документ успешно удалён",
@@ -1945,7 +1945,7 @@
     "removeError": "Произошла ошибка при удалении документа",
     "clickToUpload": "Нажмите для загрузки",
     "orDragAndDrop": "или перетащите",
-    "fileTypesAndSize": "Файлы PDF или TXT до 10 МБ",
+    "fileTypesAndSize": "Файлы PDF, Office, Markdown, HTML, код и CSV до 10 МБ",
     "uploadedDocuments": "Загруженные документы",
     "removeDocument": "Удалить документ"
   },

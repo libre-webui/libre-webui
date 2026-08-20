@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Dokument úspěšně nahrán",
     "uploadFailed": "Nepodařilo se nahrát dokument",
     "types": "Podporované: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Podporovány jsou pouze soubory PDF a TXT",
+    "unsupportedFileType": "Tento typ souboru není podporován",
     "fileSizeTooLarge": "Velikost souboru musí být menší než 10MB",
     "uploadSuccessWithName": "Dokument \"{{name}}\" úspěšně nahrán",
     "removeSuccess": "Dokument úspěšně odstraněn",
@@ -1945,7 +1945,7 @@
     "removeError": "Při odstraňování dokumentu došlo k chybě",
     "clickToUpload": "Klikněte pro nahrání",
     "orDragAndDrop": "nebo přetáhněte",
-    "fileTypesAndSize": "PDF nebo TXT soubory do 10MB",
+    "fileTypesAndSize": "Soubory PDF, Office, Markdown, HTML, kód a CSV do 10 MB",
     "uploadedDocuments": "Nahrané dokumenty",
     "removeDocument": "Odstranit dokument"
   },

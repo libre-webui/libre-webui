@@ -1937,7 +1937,7 @@
     "uploadSuccess": "อัปโหลดเอกสารสำเร็จ",
     "uploadFailed": "ไม่สามารถอัปโหลดเอกสาร",
     "types": "รองรับ: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "รองรับเฉพาะไฟล์ PDF และ TXT",
+    "unsupportedFileType": "ไม่รองรับไฟล์ประเภทนี้",
     "fileSizeTooLarge": "ขนาดไฟล์ต้องน้อยกว่า 10MB",
     "uploadSuccessWithName": "อัปโหลดเอกสาร \"{{name}}\" สำเร็จ",
     "removeSuccess": "ลบเอกสารสำเร็จ",
@@ -1945,7 +1945,7 @@
     "removeError": "เกิดข้อผิดพลาดขณะลบเอกสาร",
     "clickToUpload": "คลิกเพื่ออัปโหลด",
     "orDragAndDrop": "หรือลากและวาง",
-    "fileTypesAndSize": "ไฟล์ PDF หรือ TXT ขนาดสูงสุด 10MB",
+    "fileTypesAndSize": "ไฟล์ PDF, Office, Markdown, HTML, โค้ด และ CSV ขนาดไม่เกิน 10MB",
     "uploadedDocuments": "เอกสารที่อัปโหลด",
     "removeDocument": "ลบเอกสาร"
   },

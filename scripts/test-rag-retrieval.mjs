@@ -217,6 +217,38 @@ test('document publish resolves a lost commit acknowledgement without deleting i
   );
 });
 
+test('re-uploading identical bytes into the same scope deduplicates instead of re-ingesting', async () => {
+  const bytes = Buffer.from('the pelican dedupe payload stays single');
+  const first = await documentService.queueDocumentProcessing(
+    'dedupe-a.txt',
+    bytes,
+    'text/plain',
+    USER,
+    SESSION
+  );
+  assert.equal(first.deduplicated, undefined);
+  const again = await documentService.queueDocumentProcessing(
+    'dedupe-b.txt',
+    bytes,
+    'text/plain',
+    USER,
+    SESSION
+  );
+  assert.equal(again.deduplicated, true);
+  assert.equal(again.document.id, first.document.id);
+  assert.equal(again.jobId, first.jobId);
+  // The same bytes in a different scope are a separate document: deleting
+  // one scope's copy must never remove another's.
+  const standing = await documentService.queueDocumentProcessing(
+    'dedupe-c.txt',
+    bytes,
+    'text/plain',
+    USER
+  );
+  assert.equal(standing.deduplicated, undefined);
+  assert.notEqual(standing.document.id, first.document.id);
+});
+
 test('keyword retrieval sees session documents AND user-scoped uploads', async () => {
   const chunks = await documentService.searchDocuments(
     'pelican refunds invoice',

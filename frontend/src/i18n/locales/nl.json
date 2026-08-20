@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Document succesvol geüpload",
     "uploadFailed": "Kon document niet uploaden",
     "types": "Ondersteund: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Alleen PDF- en TXT-bestanden worden ondersteund",
+    "unsupportedFileType": "Dit bestandstype wordt niet ondersteund",
     "fileSizeTooLarge": "Bestandsgrootte moet kleiner zijn dan 10 MB",
     "uploadSuccessWithName": "Document \"{{name}}\" succesvol geüpload",
     "removeSuccess": "Document succesvol verwijderd",
@@ -1945,7 +1945,7 @@
     "removeError": "Er is een fout opgetreden bij het verwijderen van het document",
     "clickToUpload": "Klik om te uploaden",
     "orDragAndDrop": "of sleep en plaats",
-    "fileTypesAndSize": "PDF- of TXT-bestanden tot 10 MB",
+    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, code- en CSV-bestanden tot 10 MB",
     "uploadedDocuments": "Geüploade documenten",
     "removeDocument": "Document verwijderen"
   },

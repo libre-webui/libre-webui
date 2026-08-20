@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 title: 'Document Chat (RAG)'
-description: 'Upload PDF and plain-text files, search them, and include relevant context in Libre WebUI chats.'
+description: 'Upload PDF, Office, Markdown, HTML, code, and CSV files, search them, and include relevant context in Libre WebUI chats.'
 slug: /RAG_FEATURE
 keywords:
   [libre webui rag, document chat, pdf chat, semantic search, vector embeddings]
@@ -16,9 +16,21 @@ Document Chat lets Libre WebUI search uploaded documents and pass relevant excer
 
 Current upload support:
 
-- PDF
-- Plain text
+- PDF (with per-page provenance)
+- Plain text and logs
+- Markdown (`.md`, `.markdown`, `.mdx`, with per-section provenance)
+- HTML
+- Word documents (`.docx`)
+- Presentations (`.pptx`, with per-slide provenance)
+- Spreadsheets (`.xlsx`, with per-sheet provenance) and CSV/TSV
+- Source code (TypeScript, Python, Go, Rust, SQL, YAML, and other common languages)
 - Maximum file size: 10 MB
+
+Office formats are unpacked with a bounded in-repo parser — no third-party
+document library runs in the server process. Re-uploading identical bytes
+into the same scope is deduplicated instead of ingested twice. Scanned
+images/OCR and audio transcription are not supported yet; they are planned
+alongside the media phase of the roadmap.
 
 Files are processed by the backend and stored with the rest of the application data.
 
@@ -52,7 +64,7 @@ Default embedding settings:
 
 ## Upload and Search
 
-1. Upload a PDF or text file from the document controls.
+1. Upload a supported file from the document controls.
 2. Wait for processing to finish.
 3. Ask a question in chat.
 4. Libre WebUI retrieves relevant chunks for that session and includes them as context.
@@ -70,7 +82,7 @@ Compare the uploaded policy with this proposed change.
 
 | Endpoint                                    | Purpose                           |
 | ------------------------------------------- | --------------------------------- |
-| `POST /api/documents/upload`                | Upload a PDF or text file         |
+| `POST /api/documents/upload`                | Upload a supported document       |
 | `GET /api/documents`                        | List uploaded documents           |
 | `GET /api/documents/session/:sessionId`     | List documents for a chat session |
 | `POST /api/documents/search`                | Search documents                  |

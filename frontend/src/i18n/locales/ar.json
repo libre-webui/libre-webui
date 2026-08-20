@@ -1937,7 +1937,7 @@
     "uploadSuccess": "تم رفع المستند بنجاح",
     "uploadFailed": "فشل رفع المستند",
     "types": "مدعوم: PDF، TXT، MD، DOCX",
-    "unsupportedFileType": "يتم دعم ملفات PDF وTXT فقط",
+    "unsupportedFileType": "نوع الملف هذا غير مدعوم",
     "fileSizeTooLarge": "يجب أن يكون حجم الملف أقل من 10 ميجابايت",
     "uploadSuccessWithName": "تم رفع المستند \"{{name}}\" بنجاح",
     "removeSuccess": "تم إزالة المستند بنجاح",
@@ -1945,7 +1945,7 @@
     "removeError": "حدث خطأ أثناء إزالة المستند",
     "clickToUpload": "انقر للرفع",
     "orDragAndDrop": "أو اسحب وأفلت",
-    "fileTypesAndSize": "ملفات PDF أو TXT حتى 10 ميجابايت",
+    "fileTypesAndSize": "ملفات PDF وOffice وMarkdown وHTML وملفات الشيفرة وCSV حتى 10 ميغابايت",
     "uploadedDocuments": "المستندات المرفوعة",
     "removeDocument": "إزالة المستند"
   },

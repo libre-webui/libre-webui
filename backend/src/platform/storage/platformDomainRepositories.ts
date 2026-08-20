@@ -9,6 +9,7 @@ import type { PersistenceSyncExecutor } from '../../persistence/types.js';
 import type { Document } from '../../storageMappers.js';
 import type {
   DocumentChunk,
+  DocumentFileType,
   GeneratedMediaKind,
   Persona,
   PersonaState,
@@ -139,7 +140,7 @@ export interface DocumentRepository {
     userId: string,
     expectedSource: {
       content: string | null;
-      fileType: 'pdf' | 'txt' | null;
+      fileType: DocumentFileType | null;
     },
     embeddingIndex: unknown,
     chunks: readonly DocumentChunk[]

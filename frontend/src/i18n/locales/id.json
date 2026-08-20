@@ -1937,7 +1937,7 @@
     "uploadSuccess": "Dokumen berhasil diunggah",
     "uploadFailed": "Gagal mengunggah dokumen",
     "types": "Didukung: PDF, TXT, MD, DOCX",
-    "unsupportedFileType": "Hanya file PDF dan TXT yang didukung",
+    "unsupportedFileType": "Jenis berkas ini tidak didukung",
     "fileSizeTooLarge": "Ukuran file harus kurang dari 10MB",
     "uploadSuccessWithName": "Dokumen \"{{name}}\" berhasil diunggah",
     "removeSuccess": "Dokumen berhasil dihapus",
@@ -1945,7 +1945,7 @@
     "removeError": "Terjadi kesalahan saat menghapus dokumen",
     "clickToUpload": "Klik untuk mengunggah",
     "orDragAndDrop": "atau seret dan lepas",
-    "fileTypesAndSize": "File PDF atau TXT hingga 10MB",
+    "fileTypesAndSize": "Berkas PDF, Office, Markdown, HTML, kode, dan CSV hingga 10MB",
     "uploadedDocuments": "Dokumen yang Diunggah",
     "removeDocument": "Hapus dokumen"
   },
