@@ -102,48 +102,57 @@ spec:
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: jwt-secret
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: database-url
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: redis-url
             - name: STORAGE_ENCRYPTION_KEYS
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: storage-encryption-keys
             - name: ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: encryption-key
-            {{- if .Values.secrets.s3AccessKeyId }}
+            {{- if or .Values.secrets.s3AccessKeyId .Values.secrets.existingSecret }}
             - name: S3_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: s3-access-key-id
+                  {{- if not .Values.secrets.s3AccessKeyId }}
+                  optional: true
+                  {{- end }}
             {{- end }}
-            {{- if .Values.secrets.s3SecretAccessKey }}
+            {{- if or .Values.secrets.s3SecretAccessKey .Values.secrets.existingSecret }}
             - name: S3_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: s3-secret-access-key
+                  {{- if not .Values.secrets.s3SecretAccessKey }}
+                  optional: true
+                  {{- end }}
             {{- end }}
-            {{- if .Values.secrets.s3SessionToken }}
+            {{- if or .Values.secrets.s3SessionToken .Values.secrets.existingSecret }}
             - name: S3_SESSION_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: s3-session-token
+                  {{- if not .Values.secrets.s3SessionToken }}
+                  optional: true
+                  {{- end }}
             {{- end }}
             {{- if .Values.work.enabled }}
             - name: WORK_RUNTIME_BACKEND

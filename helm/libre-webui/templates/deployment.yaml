@@ -1,4 +1,5 @@
 {{- $team := eq .Values.env.LIBRE_PLATFORM_MODE "team" }}
+{{- $existingSecret := .Values.secrets.existingSecret }}
 {{- if or (lt (int .Values.replicaCount) 0) (and (not $team) (gt (int .Values.replicaCount) 1)) }}
 {{- fail "Solo Libre WebUI requires replicaCount=0 or 1; select the complete team profile before adding replicas." }}
 {{- end }}
@@ -17,10 +18,13 @@
 {{- if and $team (or (ne .Values.env.AGENT_CLI_MODELS_ENABLED "false") (ne .Values.env.CODEX_OAUTH_MODELS_ENABLED "false")) }}
 {{- fail "Team mode does not support node-local Agent CLI or Codex OAuth credentials; keep AGENT_CLI_MODELS_ENABLED=false and CODEX_OAUTH_MODELS_ENABLED=false." }}
 {{- end }}
-{{- if and $team (or (not .Values.secrets.databaseUrl) (not .Values.secrets.redisUrl) (not (trim .Values.secrets.jwtSecret)) (not .Values.secrets.encryptionKey) (not .Values.secrets.storageEncryptionKeys) (not .Values.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID) (not .Values.env.S3_BUCKET) (not .Values.env.S3_REGION)) }}
+{{- if and $team (not $existingSecret) (or (not .Values.secrets.databaseUrl) (not .Values.secrets.redisUrl) (not (trim .Values.secrets.jwtSecret)) (not .Values.secrets.encryptionKey) (not .Values.secrets.storageEncryptionKeys) (not .Values.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID) (not .Values.env.S3_BUCKET) (not .Values.env.S3_REGION)) }}
 {{- fail "Team mode requires PostgreSQL, Redis, stable JWT, legacy/keyring secrets, an active key ID, S3 bucket, and S3 region." }}
 {{- end }}
-{{- if $team }}
+{{- if and $team $existingSecret (or (not .Values.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID) (not .Values.env.S3_BUCKET) (not .Values.env.S3_REGION)) }}
+{{- fail "Team mode with secrets.existingSecret still requires STORAGE_ENCRYPTION_ACTIVE_KEY_ID, S3_BUCKET, and S3_REGION; the secret must carry jwt-secret, encryption-key, database-url, redis-url, and storage-encryption-keys." }}
+{{- end }}
+{{- if and $team (not $existingSecret) }}
 {{- $storageKeys := mustFromJson .Values.secrets.storageEncryptionKeys }}
 {{- if or (not (hasKey $storageKeys "legacy")) (not (hasKey $storageKeys .Values.env.STORAGE_ENCRYPTION_ACTIVE_KEY_ID)) }}
 {{- fail "Team storageEncryptionKeys must contain both legacy and the configured active key ID." }}
@@ -195,91 +199,103 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
             {{- end }}
-            {{- if .Values.secrets.jwtSecret }}
+            {{- if or .Values.secrets.jwtSecret $existingSecret }}
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: jwt-secret
             {{- end }}
-            {{- if .Values.secrets.encryptionKey }}
+            {{- if or .Values.secrets.encryptionKey $existingSecret }}
             - name: ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: encryption-key
             {{- end }}
-            {{- if .Values.secrets.sessionSecret }}
+            {{- if or .Values.secrets.sessionSecret $existingSecret }}
             - name: SESSION_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: session-secret
+                  {{- if not .Values.secrets.sessionSecret }}
+                  optional: true
+                  {{- end }}
             {{- end }}
-            {{- if .Values.secrets.databaseUrl }}
+            {{- if or .Values.secrets.databaseUrl (and $existingSecret $team) }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: database-url
             {{- end }}
-            {{- if .Values.secrets.redisUrl }}
+            {{- if or .Values.secrets.redisUrl (and $existingSecret $team) }}
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: redis-url
             {{- end }}
-            {{- if .Values.secrets.storageEncryptionKeys }}
+            {{- if or .Values.secrets.storageEncryptionKeys (and $existingSecret $team) }}
             - name: STORAGE_ENCRYPTION_KEYS
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: storage-encryption-keys
             {{- end }}
-            {{- if .Values.secrets.s3AccessKeyId }}
+            {{- if or .Values.secrets.s3AccessKeyId $existingSecret }}
             - name: S3_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: s3-access-key-id
+                  {{- if not .Values.secrets.s3AccessKeyId }}
+                  optional: true
+                  {{- end }}
             {{- end }}
-            {{- if .Values.secrets.s3SecretAccessKey }}
+            {{- if or .Values.secrets.s3SecretAccessKey $existingSecret }}
             - name: S3_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: s3-secret-access-key
+                  {{- if not .Values.secrets.s3SecretAccessKey }}
+                  optional: true
+                  {{- end }}
             {{- end }}
-            {{- if .Values.secrets.s3SessionToken }}
+            {{- if or .Values.secrets.s3SessionToken $existingSecret }}
             - name: S3_SESSION_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: s3-session-token
+                  {{- if not .Values.secrets.s3SessionToken }}
+                  optional: true
+                  {{- end }}
             {{- end }}
             {{- if .Values.secrets.githubClientId }}
             - name: GITHUB_CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: github-client-id
             - name: GITHUB_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: github-client-secret
             {{- end }}
             {{- if .Values.secrets.huggingfaceClientId }}
             - name: HUGGINGFACE_CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: huggingface-client-id
             - name: HUGGINGFACE_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  name: {{ include "libre-webui.secretName" . }}
                   key: huggingface-client-secret
             {{- end }}
           volumeMounts:

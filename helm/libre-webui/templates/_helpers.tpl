@@ -71,3 +71,15 @@ Ollama URL - either external or bundled service
 {{- "http://localhost:11434" }}
 {{- end }}
 {{- end }}
+
+{{/*
+Secret name: an operator-managed existing secret wins over the chart-rendered
+one. The existing secret must carry the same keys the chart would render.
+*/}}
+{{- define "libre-webui.secretName" -}}
+{{- if .Values.secrets.existingSecret -}}
+{{- .Values.secrets.existingSecret -}}
+{{- else -}}
+{{- include "libre-webui.fullname" . }}-secrets
+{{- end -}}
+{{- end }}

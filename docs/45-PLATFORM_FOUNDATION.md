@@ -461,6 +461,30 @@ active Work runs/previews and jobs, blockers, and known exclusions. It is a
 pre-backup gate, not a complete backup. See
 [Recovery Readiness](./44-RECOVERY_READINESS.md).
 
+## Certified multi-replica operation
+
+The team profile is certified for three or more application replicas plus at
+least one external durable worker, provided every shared dependency is
+configured together: PostgreSQL, PGVector, Redis, S3-compatible blobs, stable
+shared secrets, and `JOB_WORKER_MODE=external`. The Helm chart enforces those
+prerequisites at render time — a replica count above one without the complete
+team profile fails the render rather than deploying an unsafe topology — and
+schema migrations elect a single leader through a PostgreSQL advisory lock so
+mixed-version replicas never race the ledger.
+
+Certification is executable, not aspirational: the release pipeline runs a
+three-replica drill (`npm run test:team-platform`) that builds the real image
+and exercises cross-replica stream resumption, worker death mid-write with
+deterministic replay, Redis outage fallback to authoritative SQL, revocation
+enforcement during coordinator loss, shared rate-limit consistency, S3 delete
+retry, and tenant isolation under load. Operators can harden the pods further
+with `secrets.existingSecret` (reference an operator-managed Secret instead of
+rendering chart values into one) and `networkPolicy.enabled` (default-deny
+ingress beyond the application port; the durable worker accepts no ingress).
+Pod security defaults stay strict either way: non-root, read-only root
+filesystem, dropped capabilities, seccomp `RuntimeDefault`, and no privilege
+escalation.
+
 ## Known remaining cutovers
 
 The foundation does not imply that every binary field is already a blob.

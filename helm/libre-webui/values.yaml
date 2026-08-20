@@ -134,6 +134,12 @@ env:
 
 # Secrets - provide via --set or external secret management
 secrets:
+  # Reference an operator-managed Secret instead of rendering one from the
+  # plaintext values below. The secret must carry the same keys the chart
+  # would render (jwt-secret, encryption-key, and in team mode database-url,
+  # redis-url, storage-encryption-keys; optionally session-secret and the
+  # s3-* keys). When set, the chart creates no Secret of its own.
+  existingSecret: ''
   jwtSecret: ''
   encryptionKey: ''
   sessionSecret: ''
@@ -149,6 +155,12 @@ secrets:
   githubClientSecret: ''
   huggingfaceClientId: ''
   huggingfaceClientSecret: ''
+
+# Default-deny ingress NetworkPolicies for the application and worker pods.
+# The application accepts only its HTTP port; the worker accepts nothing.
+# The Work sandbox namespace keeps its own stricter policy under `work`.
+networkPolicy:
+  enabled: false
 
 # Team mode runs durable handlers outside application replicas. This
 # Deployment is rendered only when LIBRE_PLATFORM_MODE=team.

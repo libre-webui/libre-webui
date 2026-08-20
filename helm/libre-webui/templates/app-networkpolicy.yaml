@@ -1,0 +1,40 @@
+{{- if .Values.networkPolicy.enabled }}
+# Default-deny ingress for the application and worker pods (SCALE-02).
+# The application accepts traffic only on its HTTP port; the durable worker
+# accepts none. Egress stays open because the app must reach PostgreSQL,
+# Redis, S3, and providers wherever the operator hosts them; the Work
+# sandbox namespace keeps its own stricter policy.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "libre-webui.fullname" . }}-app
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "libre-webui.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 3001
+{{- if eq .Values.env.LIBRE_PLATFORM_MODE "team" }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "libre-webui.fullname" . }}-worker
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "libre-webui.name" . }}-worker
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+  ingress: []
+{{- end }}
+{{- end }}

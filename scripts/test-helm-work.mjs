@@ -694,3 +694,48 @@ test('the chart renders cleanly with Work enabled when helm is available', t => 
     /NetworkPolicy|RoleBinding|WORK_RUNTIME_BACKEND/
   );
 });
+
+test('an operator-managed existing secret replaces the rendered Secret', () => {
+  const secrets = read('secrets.yaml');
+  assert.match(
+    secrets,
+    /^\{\{- if not \.Values\.secrets\.existingSecret \}\}/,
+    'the chart must not render a Secret when one is referenced'
+  );
+  const helpers = read('_helpers.tpl');
+  assert.match(helpers, /define "libre-webui\.secretName"/);
+  assert.match(helpers, /\.Values\.secrets\.existingSecret/);
+  for (const template of ['deployment.yaml', 'worker-deployment.yaml']) {
+    const rendered = read(template);
+    assert.doesNotMatch(
+      rendered,
+      /fullname" \. \}\}-secrets/,
+      `${template} must resolve the secret name through the helper`
+    );
+    assert.match(rendered, /libre-webui\.secretName/);
+  }
+  const deployment = read('deployment.yaml');
+  assert.match(
+    deployment,
+    /Team mode with secrets\.existingSecret still requires/,
+    'team prerequisites stay fail-closed with an external secret'
+  );
+  assert.match(values, /^\s+existingSecret: ''$/m);
+  assert.equal(
+    typeof valuesSchema.properties.secrets.properties.existingSecret,
+    'object'
+  );
+});
+
+test('application NetworkPolicies default-deny ingress beyond the app port', () => {
+  const policy = read('app-networkpolicy.yaml');
+  assert.match(policy, /^\{\{- if \.Values\.networkPolicy\.enabled \}\}/);
+  assert.match(policy, /policyTypes:\n\s+- Ingress/);
+  assert.match(policy, /port: 3001/);
+  assert.match(
+    policy,
+    /ingress: \[\]/,
+    'the durable worker accepts no ingress at all'
+  );
+  assert.match(values, /^networkPolicy:\n\s+enabled: false$/m);
+});
