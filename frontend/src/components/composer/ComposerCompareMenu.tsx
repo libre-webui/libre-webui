@@ -28,18 +28,10 @@ import { cn } from '@/utils';
 import { Button } from '@/components/ui';
 import {
   chatModelOptionKey,
-  chatModelSelectionFromKey,
   isAvailableOllamaModel,
 } from '@/utils/chatModelSelection';
+import { MAX_COMPARE_MODELS } from './compareTargets';
 import type { OllamaModel } from '@/types';
-
-export const MAX_COMPARE_MODELS = 3;
-
-export interface CompareTarget {
-  model: string;
-  providerType?: string | null;
-  providerId?: string | null;
-}
 
 interface ComposerCompareMenuProps {
   models: OllamaModel[];
@@ -49,23 +41,6 @@ interface ComposerCompareMenuProps {
   onChange: (keys: string[]) => void;
   disabled?: boolean;
 }
-
-export const compareTargetsFromKeys = (
-  models: OllamaModel[],
-  keys: string[]
-): CompareTarget[] => {
-  const targets: CompareTarget[] = [];
-  for (const key of keys) {
-    const selection = chatModelSelectionFromKey(models, key);
-    if (!selection) continue;
-    targets.push({
-      model: selection.model,
-      providerType: selection.providerType ?? null,
-      providerId: selection.providerId ?? null,
-    });
-  }
-  return targets;
-};
 
 export const ComposerCompareMenu: React.FC<ComposerCompareMenuProps> = ({
   models,

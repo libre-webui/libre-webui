@@ -87,20 +87,24 @@ export const NotesPage: React.FC = () => {
   }, []);
 
   // Deep links (e.g. palette search results) open a note via ?note=<id>.
+  // Selection state adjusts during render; the URL cleanup — a router
+  // navigation, not component state — stays in an effect.
+  const requestedNoteId = searchParams.get('note');
+  const requestedNote = requestedNoteId
+    ? notes.find(candidate => candidate.id === requestedNoteId)
+    : undefined;
+  if (requestedNote && selectedId !== requestedNote.id) {
+    setSelectedId(requestedNote.id);
+    setTitleDraft(requestedNote.title);
+    setContentDraft(requestedNote.content);
+    setPreviewing(true);
+    setSaveState('idle');
+  }
+  const requestConsumed =
+    requestedNoteId !== null && (requestedNote !== undefined || !loading);
   useEffect(() => {
-    const requested = searchParams.get('note');
-    if (!requested || notes.length === 0) return;
-    const note = notes.find(candidate => candidate.id === requested);
-    if (note && selectedId !== note.id) {
-      setSelectedId(note.id);
-      setTitleDraft(note.title);
-      setContentDraft(note.content);
-      setPreviewing(true);
-      setSaveState('idle');
-    }
-    setSearchParams({}, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notes, searchParams]);
+    if (requestConsumed) setSearchParams({}, { replace: true });
+  }, [requestConsumed, setSearchParams]);
 
   const isOwner = selectedNote ? !selectedNote.shared : true;
   const canWrite = selectedNote

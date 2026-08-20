@@ -209,12 +209,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [deepResults, setDeepResults] = useState<WorkspaceSearchResult | null>(
     null
   );
+  // Stale results clear during render the moment the query drops below the
+  // threshold or the palette closes; the effect only owns the debounced
+  // fetch.
+  if (deepResults !== null && (!open || query.trim().length < 3)) {
+    setDeepResults(null);
+  }
   useEffect(() => {
     const trimmed = query.trim();
-    if (!open || trimmed.length < 3) {
-      setDeepResults(null);
-      return;
-    }
+    if (!open || trimmed.length < 3) return;
     let cancelled = false;
     const timer = window.setTimeout(() => {
       searchApi

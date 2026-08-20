@@ -1061,6 +1061,7 @@ export const useChat = (sessionId: string) => {
       resetVisibleStreamingMessage,
       maybeGenerateTitle,
       settleDurableCancellation,
+      reloadCompletedDurableGeneration,
     ]
   );
 

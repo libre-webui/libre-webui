@@ -49,10 +49,11 @@ import { ContextMeter } from './ContextMeter';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
 import PromptQueueList from '@/components/composer/PromptQueueList';
-import ComposerCompareMenu, {
+import ComposerCompareMenu from '@/components/composer/ComposerCompareMenu';
+import {
   compareTargetsFromKeys,
   type CompareTarget,
-} from '@/components/composer/ComposerCompareMenu';
+} from '@/components/composer/compareTargets';
 import { chatModelSelectionKey } from '@/utils/chatModelSelection';
 import { X } from 'lucide-react';
 import { applyPromptQueueToChatStore } from '@/utils/promptQueue';
@@ -321,6 +322,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       : undefined
   );
   const currentSessionId = currentSession?.id;
+  // Comparison model picks are per chat: reset during render when the
+  // session changes (React's adjust-state-on-prop-change pattern).
+  const [compareSessionId, setCompareSessionId] = useState(currentSessionId);
+  if (compareSessionId !== currentSessionId) {
+    setCompareSessionId(currentSessionId);
+    setCompareKeys([]);
+  }
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const suggestionsRef = useRef<ComposerSuggestionsHandle>(null);
   const sessionSelection = useMemo(
@@ -963,11 +971,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         : '';
     }
   }, [message]);
-
-  // Comparison model picks are per chat.
-  useEffect(() => {
-    setCompareKeys([]);
-  }, [currentSessionId]);
 
   // Load current persona when session changes
   useEffect(() => {
