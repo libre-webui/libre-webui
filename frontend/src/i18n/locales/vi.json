@@ -2927,6 +2927,12 @@
       "insert": "Chèn",
       "cancel": "Hủy",
       "required": "{{name}} là bắt buộc"
+    },
+    "toolsMenu": {
+      "enable": "Dùng công cụ cho tin nhắn này",
+      "builtin": "Công cụ tích hợp",
+      "servers": "Máy chủ công cụ",
+      "hint": "Các lệnh gọi có tác dụng phụ vẫn cần phê duyệt trước khi chạy."
     }
   }
 }

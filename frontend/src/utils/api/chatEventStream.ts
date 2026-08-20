@@ -165,6 +165,7 @@ export const enqueueDurableChatGeneration = async (input: {
   options: Record<string, unknown>;
   webSearch: boolean;
   tools?: boolean;
+  toolSelection?: { builtinTools?: string[]; serverIds?: string[] };
   regenerate?: boolean;
   originalMessageId?: string;
   signal: AbortSignal;
@@ -187,6 +188,7 @@ export const enqueueDurableChatGeneration = async (input: {
         options: input.options,
         webSearch: input.webSearch,
         tools: input.tools === true,
+        ...(input.toolSelection ? { toolSelection: input.toolSelection } : {}),
         regenerate: input.regenerate === true,
         originalMessageId: input.originalMessageId,
       }),

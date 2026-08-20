@@ -2927,6 +2927,12 @@
       "insert": "Wstaw",
       "cancel": "Anuluj",
       "required": "{{name}} jest wymagane"
+    },
+    "toolsMenu": {
+      "enable": "Użyj narzędzi dla tej wiadomości",
+      "builtin": "Narzędzia wbudowane",
+      "servers": "Serwery narzędzi",
+      "hint": "Wywołania ze skutkami ubocznymi nadal wymagają zatwierdzenia przed uruchomieniem."
     }
   }
 }

@@ -2927,6 +2927,12 @@
       "insert": "Infoga",
       "cancel": "Avbryt",
       "required": "{{name}} krävs"
+    },
+    "toolsMenu": {
+      "enable": "Använd verktyg för det här meddelandet",
+      "builtin": "Inbyggda verktyg",
+      "servers": "Verktygsservrar",
+      "hint": "Anrop med sidoeffekter ber fortfarande om godkännande innan de körs."
     }
   }
 }

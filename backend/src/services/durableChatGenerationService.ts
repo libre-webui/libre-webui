@@ -34,6 +34,9 @@ import {
 import {
   actorCanUseTools,
   buildToolCatalog,
+  intersectToolSelection,
+  sanitizeRequestedToolSelection,
+  type RequestedToolSelection,
   type ToolCatalog,
 } from './toolGatewayService.js';
 import { assertDurableChatCompletionEvent } from './durableChatCompletion.js';
@@ -59,6 +62,7 @@ export interface DurableChatGenerationInput {
   options: Record<string, unknown>;
   webSearch: boolean;
   tools: boolean;
+  toolSelection?: RequestedToolSelection;
   regenerate: boolean;
   originalMessageId?: string;
 }
@@ -594,12 +598,23 @@ class DurableChatGenerationService {
               )
             )?.bindings
           : undefined;
+        // The turn's picker can narrow the offered tools, never widen past
+        // the profile binding.
+        const requestedSelection = sanitizeRequestedToolSelection(
+          input.toolSelection
+        );
         const catalog = await buildToolCatalog(
           actor,
           { sessionId: input.sessionId },
           {
-            builtinTools: bindings?.builtin_tools,
-            serverIds: bindings?.tool_server_ids,
+            builtinTools: intersectToolSelection(
+              bindings?.builtin_tools,
+              requestedSelection?.builtinTools
+            ),
+            serverIds: intersectToolSelection(
+              bindings?.tool_server_ids,
+              requestedSelection?.serverIds
+            ),
             skillIds: bindings?.skill_ids,
             collectionIds: bindings?.knowledge_collection_ids,
           }

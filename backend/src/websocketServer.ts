@@ -66,6 +66,8 @@ import {
 import {
   actorCanUseTools,
   buildToolCatalog,
+  intersectToolSelection,
+  sanitizeRequestedToolSelection,
   type ToolCatalog,
 } from './services/toolGatewayService.js';
 import type { AuthzActor } from './services/authorizationService.js';
@@ -358,6 +360,7 @@ export function registerWebSocketServer(
             messageHistory,
             webSearch: webSearchRequested,
             tools: toolsRequested,
+            toolSelection: toolSelectionRequested,
           } = message.data;
           if (!isPrivate && getPlatformRuntimeConfig().mode === 'team') {
             sendError(ws, {
@@ -657,12 +660,23 @@ export function registerWebSocketServer(
               ? (await personaService.getPersonaById(session.personaId, userId))
                   ?.bindings
               : undefined;
+            // The turn's picker can narrow the offered tools, never widen
+            // past the profile binding.
+            const requestedSelection = sanitizeRequestedToolSelection(
+              toolSelectionRequested
+            );
             const candidateCatalog = await buildToolCatalog(
               toolActor,
               { sessionId },
               {
-                builtinTools: personaBindings?.builtin_tools,
-                serverIds: personaBindings?.tool_server_ids,
+                builtinTools: intersectToolSelection(
+                  personaBindings?.builtin_tools,
+                  requestedSelection?.builtinTools
+                ),
+                serverIds: intersectToolSelection(
+                  personaBindings?.tool_server_ids,
+                  requestedSelection?.serverIds
+                ),
                 skillIds: personaBindings?.skill_ids,
                 collectionIds: personaBindings?.knowledge_collection_ids,
               }

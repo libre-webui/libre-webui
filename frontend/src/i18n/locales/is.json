@@ -2927,6 +2927,12 @@
       "insert": "Setja inn",
       "cancel": "Hætta við",
       "required": "{{name}} er nauðsynlegt"
+    },
+    "toolsMenu": {
+      "enable": "Nota verkfæri fyrir þessi skilaboð",
+      "builtin": "Innbyggð verkfæri",
+      "servers": "Verkfæraþjónar",
+      "hint": "Köll með hliðarverkunum biðja áfram um samþykki áður en þau keyra."
     }
   }
 }

@@ -36,7 +36,12 @@ import { VersionHistoryModal } from '@/components/versions/VersionHistoryModal';
 import { skillsApi } from '@/utils/api';
 import type { Skill, SkillInput, SkillRevision } from '@/utils/api/skillsApi';
 import { formatTimestamp } from '@/utils';
-import { downloadJson, readJsonFile } from '@/utils/fileDownload';
+import {
+  downloadJson,
+  downloadText,
+  readJsonFile,
+  readTextFile,
+} from '@/utils/fileDownload';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('pages:skills');
@@ -156,7 +161,13 @@ export const SettingsSkillsTab: React.FC = () => {
       if (!response.success || !response.data) {
         throw new Error(response.error);
       }
-      downloadJson(`${skill.slug}.skill.json`, response.data);
+      if (response.data.markdown) {
+        // SKILL.md is the interchange form: frontmatter plus the
+        // instructions exactly as written.
+        downloadText(`${skill.slug}.skill.md`, response.data.markdown);
+      } else {
+        downloadJson(`${skill.slug}.skill.json`, response.data);
+      }
     } catch (error) {
       logger.error('Failed to export skill:', error);
       toast.error(t('skillsPage.exportFailed'));
@@ -165,7 +176,10 @@ export const SettingsSkillsTab: React.FC = () => {
 
   const handleImport = async (file: File) => {
     try {
-      const response = await skillsApi.import(await readJsonFile(file));
+      const payload = file.name.endsWith('.md')
+        ? { markdown: await readTextFile(file) }
+        : await readJsonFile(file);
+      const response = await skillsApi.import(payload);
       if (!response.success) throw new Error(response.error);
       toast.success(t('skillsPage.imported'));
       refresh();
@@ -223,7 +237,7 @@ export const SettingsSkillsTab: React.FC = () => {
             <input
               ref={importInputRef}
               type='file'
-              accept='application/json,.json'
+              accept='application/json,.json,text/markdown,.md'
               className='hidden'
               data-testid='skill-import-input'
               onChange={event => {

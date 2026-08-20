@@ -2927,6 +2927,12 @@
       "insert": "Ekle",
       "cancel": "İptal",
       "required": "{{name}} zorunludur"
+    },
+    "toolsMenu": {
+      "enable": "Bu mesaj için araçları kullan",
+      "builtin": "Yerleşik araçlar",
+      "servers": "Araç sunucuları",
+      "hint": "Yan etkili çağrılar çalışmadan önce yine onay ister."
     }
   }
 }

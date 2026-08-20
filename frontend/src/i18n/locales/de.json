@@ -2927,6 +2927,12 @@
       "insert": "Einfügen",
       "cancel": "Abbrechen",
       "required": "{{name}} ist erforderlich"
+    },
+    "toolsMenu": {
+      "enable": "Tools für diese Nachricht verwenden",
+      "builtin": "Integrierte Tools",
+      "servers": "Tool-Server",
+      "hint": "Aufrufe mit Nebenwirkungen fragen weiterhin vor der Ausführung nach Freigabe."
     }
   }
 }

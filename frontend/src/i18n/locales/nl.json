@@ -2927,6 +2927,12 @@
       "insert": "Invoegen",
       "cancel": "Annuleren",
       "required": "{{name}} is verplicht"
+    },
+    "toolsMenu": {
+      "enable": "Tools gebruiken voor dit bericht",
+      "builtin": "Ingebouwde tools",
+      "servers": "Toolservers",
+      "hint": "Aanroepen met neveneffecten vragen nog steeds om goedkeuring voordat ze draaien."
     }
   }
 }

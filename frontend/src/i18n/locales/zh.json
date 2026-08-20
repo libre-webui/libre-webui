@@ -2927,6 +2927,12 @@
       "insert": "插入",
       "cancel": "取消",
       "required": "{{name}} 为必填项"
+    },
+    "toolsMenu": {
+      "enable": "为这条消息使用工具",
+      "builtin": "内置工具",
+      "servers": "工具服务器",
+      "hint": "有副作用的调用在运行前仍会请求批准。"
     }
   }
 }

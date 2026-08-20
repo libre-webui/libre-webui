@@ -2927,6 +2927,12 @@
       "insert": "Insert",
       "cancel": "Cancel",
       "required": "{{name}} is required"
+    },
+    "toolsMenu": {
+      "enable": "Use tools for this message",
+      "builtin": "Built-in tools",
+      "servers": "Tool servers",
+      "hint": "Side-effecting calls still ask for approval before they run."
     }
   }
 }

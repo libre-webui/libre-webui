@@ -24,8 +24,11 @@ bounded result previews, on the assistant message.
 ## Enabling tools
 
 Tools are off by default. An administrator opens them in User Management
-(admins-only or all users); each turn then opts in with the wrench toggle in
-the composer. Private (incognito) chats never offer tools: a tool call is an
+(admins-only or all users); each turn then opts in through the wrench in the
+composer, which opens a picker: a master switch plus one checkbox per
+built-in tool and per registered server, so a turn runs with exactly the
+tools you choose. The picker can narrow what a profile binds, never widen
+it. Private (incognito) chats never offer tools: a tool call is an
 outward-facing action and can leave approvals and audit records.
 
 An assistant profile (persona) can scope the offered tools: bound tool

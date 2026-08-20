@@ -2927,6 +2927,12 @@
       "insert": "Vložit",
       "cancel": "Zrušit",
       "required": "{{name}} je povinné"
+    },
+    "toolsMenu": {
+      "enable": "Použít nástroje pro tuto zprávu",
+      "builtin": "Vestavěné nástroje",
+      "servers": "Servery nástrojů",
+      "hint": "Volání s vedlejšími účinky si před spuštěním stále vyžádají schválení."
     }
   }
 }

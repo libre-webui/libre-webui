@@ -24,9 +24,12 @@ instructions therefore never occupy context until they are used. Mentioning
 
 Skills can be disabled without deleting them; a disabled skill leaves the
 manifest and refuses to load. Updates bump the version and archive the prior
-revision, with rollback restoring any revision as a new version. Export
-produces a `libre-skill.v1` JSON document and import recreates it. Names,
-descriptions, and instructions are encrypted at rest; the slug stays plain.
+revision, with rollback restoring any revision as a new version. The
+interchange form is a `SKILL.md` document — frontmatter carrying the name,
+slug, and description, followed by the Markdown instructions verbatim —
+which export downloads and import accepts alongside the JSON envelope.
+Names, descriptions, and instructions are encrypted at rest; the slug stays
+plain.
 
 ## Sharing and profiles
 

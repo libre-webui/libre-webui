@@ -2927,6 +2927,12 @@
       "insert": "Sisipkan",
       "cancel": "Batal",
       "required": "{{name}} diperlukan"
+    },
+    "toolsMenu": {
+      "enable": "Guna alat untuk mesej ini",
+      "builtin": "Alat terbina dalam",
+      "servers": "Pelayan alat",
+      "hint": "Panggilan dengan kesan sampingan masih meminta kelulusan sebelum dijalankan."
     }
   }
 }

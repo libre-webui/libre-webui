@@ -412,10 +412,68 @@ export const rollbackSkill = async (
   return mapSkillRow(restored);
 };
 
+/**
+ * The SKILL.md interchange form: YAML-style frontmatter carrying the
+ * manifest fields, followed by the Markdown instructions verbatim.
+ */
+export const skillToMarkdown = (skill: {
+  slug: string;
+  name: string;
+  description: string;
+  instructions: string;
+}): string => {
+  const escape = (value: string): string => value.replace(/\r?\n/g, ' ').trim();
+  return [
+    '---',
+    `name: ${escape(skill.name)}`,
+    `slug: ${escape(skill.slug)}`,
+    `description: ${escape(skill.description)}`,
+    '---',
+    '',
+    skill.instructions.trimEnd(),
+    '',
+  ].join('\n');
+};
+
+const SLUGIFY_PATTERN = /[^a-z0-9-]+/g;
+
+/** Parse a SKILL.md document (frontmatter + body) into a skill input. */
+export const skillFromMarkdown = (markdown: string): SkillInput => {
+  const match = markdown.match(/^\uFEFF?---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (!match) {
+    throw new ResourcePolicyError(
+      'A SKILL.md file starts with frontmatter: --- name/description ---',
+      400
+    );
+  }
+  const fields: Record<string, string> = {};
+  for (const line of match[1].split(/\r?\n/)) {
+    const separator = line.indexOf(':');
+    if (separator === -1) continue;
+    const key = line.slice(0, separator).trim().toLowerCase();
+    const value = line
+      .slice(separator + 1)
+      .trim()
+      .replace(/^['"]|['"]$/g, '');
+    if (key && value) fields[key] = value;
+  }
+  const name = fields.name ?? '';
+  const description = fields.description ?? '';
+  const slug =
+    fields.slug ??
+    name
+      .toLowerCase()
+      .replace(SLUGIFY_PATTERN, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 64);
+  const instructions = markdown.slice(match[0].length).trim();
+  return { slug, name, description, instructions };
+};
+
 export const exportSkill = async (
   skillId: string,
   actor: AuthzActor
-): Promise<SkillExport | null> => {
+): Promise<(SkillExport & { markdown: string }) | null> => {
   const skill = await getSkill(skillId, actor);
   if (!skill) return null;
   return {
@@ -427,6 +485,7 @@ export const exportSkill = async (
     version: skill.version,
     exportedAt: Date.now(),
     format: SKILL_EXPORT_FORMAT,
+    markdown: skillToMarkdown(skill),
   };
 };
 
@@ -445,7 +504,14 @@ export const importSkill = async (
       400
     );
   }
-  const normalized = normalize(raw as SkillInput);
+  // A SKILL.md document is the preferred interchange form. A JSON export
+  // envelope also carries the markdown for convenience, so explicit fields
+  // win when present — they preserve state markdown cannot (enabled).
+  const normalized = normalize(
+    typeof raw.markdown === 'string' && typeof raw.instructions !== 'string'
+      ? skillFromMarkdown(raw.markdown)
+      : (raw as SkillInput)
+  );
   const existing = await skills().findBySlug(userId, normalized.slug);
   if (existing && !options.overwriteSlug) {
     throw new ResourcePolicyError(

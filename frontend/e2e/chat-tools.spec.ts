@@ -113,6 +113,109 @@ test('the welcome composer offers prompts on slash too', async ({ page }) => {
   await expect(composer).toHaveValue(standupPrompt.content);
 });
 
+const toolCatalog = {
+  available: true,
+  tools: [
+    { name: 'web_search', sideEffect: false, source: 'builtin' },
+    {
+      name: 'petstore__addPet',
+      sideEffect: true,
+      source: 'openapi',
+      serverId: 'srv-petstore',
+      serverName: 'Petstore',
+    },
+  ],
+};
+
+test('the tool picker narrows a turn before it is sent', async ({ page }) => {
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      {
+        id: 'picker-session',
+        title: 'Picker',
+        model: 'llama3.2:3b',
+        createdAt: 1_770_000_000_000,
+        updatedAt: 1_770_000_000_000,
+        messages: [],
+      },
+    ],
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'en');
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+  await page.route(/\/api\/tools\/catalog$/, async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: toolCatalog }),
+    });
+  });
+
+  await page.goto('/c/picker-session');
+  const button = page.getByTestId('composer-tools-button');
+  await expect(button).toBeVisible();
+
+  await button.click();
+  const menu = page.getByTestId('composer-tools-menu');
+  await expect(menu).toBeVisible();
+  await expect(menu).toContainText('web_search');
+  await expect(menu).toContainText('Petstore');
+
+  // Turn tools on, then narrow the turn to the built-ins only.
+  await page.getByTestId('composer-tools-enable').check();
+  await menu
+    .locator('label', { hasText: 'Petstore' })
+    .getByTestId('composer-tool-option')
+    .uncheck();
+  await expect(button).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Escape');
+
+  const composer = page.locator('textarea[rows="1"][dir="auto"]');
+  await composer.fill('What is new today?');
+  await composer.press('Enter');
+
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const sent = (
+          window as unknown as {
+            __libreChatStreams?: Array<{
+              tools?: boolean;
+              toolSelection?: { serverIds?: string[] };
+            }>;
+          }
+        ).__libreChatStreams;
+        return sent?.at(-1) ?? null;
+      })
+    )
+    .toMatchObject({ tools: true, toolSelection: { serverIds: [] } });
+});
+
+test('the welcome composer offers the tool picker too', async ({ page }) => {
+  await mockLibreWebUiApi(page, { sessions: [] });
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'en');
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+  await page.route(/\/api\/tools\/catalog$/, async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: toolCatalog }),
+    });
+  });
+
+  await page.goto('/chat');
+  const button = page.getByTestId('composer-tools-button');
+  await expect(button).toBeVisible();
+  await button.click();
+  await expect(page.getByTestId('composer-tools-menu')).toBeVisible();
+  await expect(page.getByTestId('composer-tools-menu')).toContainText(
+    'Petstore'
+  );
+});
+
 test('a bare slash with an empty library points at the settings panel', async ({
   page,
 }) => {

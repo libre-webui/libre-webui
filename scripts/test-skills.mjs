@@ -478,3 +478,45 @@ test('skills are private by default and readable through a grant', async () => {
     'grants are cleaned up on delete'
   );
 });
+
+test('skills round-trip through the SKILL.md interchange form', async () => {
+  const markdown = skillService.skillToMarkdown({
+    slug: 'md-roundtrip',
+    name: 'Markdown roundtrip',
+    description: 'Frontmatter plus body, exactly.',
+    instructions: '# Steps\n\n- keep the body verbatim\n- including lists',
+  });
+  assert.match(markdown, /^---\nname: Markdown roundtrip\n/);
+  assert.match(markdown, /\ndescription: Frontmatter plus body, exactly\.\n/);
+
+  const parsed = skillService.skillFromMarkdown(markdown);
+  assert.equal(parsed.slug, 'md-roundtrip');
+  assert.equal(parsed.name, 'Markdown roundtrip');
+  assert.equal(parsed.description, 'Frontmatter plus body, exactly.');
+  assert.equal(
+    parsed.instructions,
+    '# Steps\n\n- keep the body verbatim\n- including lists'
+  );
+
+  const imported = await skillService.importSkill(OWNER, { markdown });
+  assert.equal(imported.slug, 'md-roundtrip');
+  assert.equal(imported.instructions, parsed.instructions);
+
+  const exported = await skillService.exportSkill(imported.id, ownerActor);
+  assert.ok(exported?.markdown, 'exports carry the SKILL.md form');
+  assert.equal(
+    skillService.skillFromMarkdown(exported.markdown).instructions,
+    parsed.instructions
+  );
+
+  // A slugless SKILL.md derives its slug from the name.
+  const derived = skillService.skillFromMarkdown(
+    '---\nname: Style Guide\ndescription: How to write here.\n---\n\nBody.'
+  );
+  assert.equal(derived.slug, 'style-guide');
+
+  assert.throws(
+    () => skillService.skillFromMarkdown('no frontmatter at all'),
+    /frontmatter/
+  );
+});

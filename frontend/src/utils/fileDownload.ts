@@ -33,3 +33,23 @@ export const downloadJson = (filename: string, payload: unknown): void => {
 /** Read a picked file and parse it as JSON; rejects on malformed input. */
 export const readJsonFile = async (file: File): Promise<unknown> =>
   JSON.parse(await file.text());
+
+/** Save plain text (e.g. a SKILL.md document) as a file download. */
+export const downloadText = (filename: string, text: string): void => {
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+};
+
+/** Read a file as text (for Markdown imports). */
+export const readTextFile = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => resolve(String(reader.result ?? ''));
+    reader.readAsText(file);
+  });

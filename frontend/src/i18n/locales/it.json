@@ -2927,6 +2927,12 @@
       "insert": "Inserisci",
       "cancel": "Annulla",
       "required": "{{name}} è obbligatorio"
+    },
+    "toolsMenu": {
+      "enable": "Usa gli strumenti per questo messaggio",
+      "builtin": "Strumenti integrati",
+      "servers": "Server di strumenti",
+      "hint": "Le chiamate con effetti collaterali chiedono comunque l’approvazione prima di essere eseguite."
     }
   }
 }

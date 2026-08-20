@@ -716,7 +716,8 @@ export const useChat = (sessionId: string) => {
       images?: string[],
       format?: string | Record<string, unknown>,
       webSearch?: boolean,
-      tools?: boolean
+      tools?: boolean,
+      toolSelection?: { builtinTools?: string[]; serverIds?: string[] }
     ) => {
       // Allow sending if there's content OR if there are images
       if (!sessionId || (!content.trim() && (!images || images.length === 0)))
@@ -836,6 +837,7 @@ export const useChat = (sessionId: string) => {
             },
             webSearch: webSearch === true,
             tools: tools === true,
+            ...(tools === true && toolSelection ? { toolSelection } : {}),
             signal: abort.signal,
           });
           const disposition = await acceptDurableGenerationJob(
@@ -919,6 +921,9 @@ export const useChat = (sessionId: string) => {
             isPrivate: isPrivateSession, // Private sessions don't persist to DB
             ...(webSearch === true ? { webSearch: true } : {}),
             ...(tools === true && !isPrivateSession ? { tools: true } : {}),
+            ...(tools === true && !isPrivateSession && toolSelection
+              ? { toolSelection }
+              : {}),
             ...(isPrivateSession
               ? {
                   model: session?.model,

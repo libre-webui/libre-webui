@@ -986,3 +986,27 @@ test('deleting a server drops its tools and its grants', async () => {
     .get(grantedServer.id);
   assert.equal(remaining.count, 0);
 });
+
+test('a per-turn selection narrows a binding but never widens it', () => {
+  assert.equal(gateway.intersectToolSelection(undefined, undefined), undefined);
+  assert.deepEqual(gateway.intersectToolSelection(undefined, ['a']), ['a']);
+  assert.deepEqual(gateway.intersectToolSelection(['a', 'b'], undefined), [
+    'a',
+    'b',
+  ]);
+  assert.deepEqual(gateway.intersectToolSelection(['a', 'b'], ['b', 'c']), [
+    'b',
+  ]);
+  assert.deepEqual(gateway.intersectToolSelection(['a'], ['c']), []);
+
+  assert.equal(gateway.sanitizeRequestedToolSelection('nope'), undefined);
+  assert.equal(gateway.sanitizeRequestedToolSelection({}), undefined);
+  assert.deepEqual(
+    gateway.sanitizeRequestedToolSelection({
+      builtinTools: ['web_search', 42, ''],
+      serverIds: 'not-an-array',
+      extra: true,
+    }),
+    { builtinTools: ['web_search'] }
+  );
+});

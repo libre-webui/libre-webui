@@ -449,6 +449,10 @@ const readChatPayload = (value: unknown): DurableChatGenerationInput => {
     Array.isArray(record.options) ||
     typeof record.webSearch !== 'boolean' ||
     (record.tools !== undefined && typeof record.tools !== 'boolean') ||
+    (record.toolSelection !== undefined &&
+      (typeof record.toolSelection !== 'object' ||
+        record.toolSelection === null ||
+        Array.isArray(record.toolSelection))) ||
     (record.regenerate !== undefined &&
       typeof record.regenerate !== 'boolean') ||
     (record.regenerate === true &&

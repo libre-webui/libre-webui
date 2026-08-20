@@ -71,6 +71,62 @@ export interface ToolCatalog {
   selection: ToolCatalogSelection;
 }
 
+/** A client's per-turn tool selection, before it meets profile bindings. */
+export interface RequestedToolSelection {
+  builtinTools?: readonly string[];
+  serverIds?: readonly string[];
+}
+
+const MAX_SELECTION_ENTRIES = 64;
+const MAX_SELECTION_ID_LENGTH = 128;
+
+const sanitizeSelectionIds = (
+  value: unknown
+): readonly string[] | undefined => {
+  if (!Array.isArray(value)) return undefined;
+  const ids = value
+    .filter(
+      (entry): entry is string =>
+        typeof entry === 'string' &&
+        entry.trim().length > 0 &&
+        entry.length <= MAX_SELECTION_ID_LENGTH
+    )
+    .slice(0, MAX_SELECTION_ENTRIES);
+  return ids;
+};
+
+/** Parse an untrusted per-turn tool selection from a client request. */
+export const sanitizeRequestedToolSelection = (
+  value: unknown
+): RequestedToolSelection | undefined => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  const builtinTools = sanitizeSelectionIds(record.builtinTools);
+  const serverIds = sanitizeSelectionIds(record.serverIds);
+  if (builtinTools === undefined && serverIds === undefined) return undefined;
+  return {
+    ...(builtinTools !== undefined ? { builtinTools } : {}),
+    ...(serverIds !== undefined ? { serverIds } : {}),
+  };
+};
+
+/**
+ * Combine a profile binding with a per-turn request. Undefined means "no
+ * restriction"; when both restrict, only their intersection is offered, so a
+ * turn can narrow a profile's tools but never widen them.
+ */
+export const intersectToolSelection = (
+  binding: readonly string[] | undefined,
+  requested: readonly string[] | undefined
+): readonly string[] | undefined => {
+  if (binding === undefined) return requested;
+  if (requested === undefined) return binding;
+  const allowed = new Set(binding);
+  return requested.filter(id => allowed.has(id));
+};
+
 /** Whether this actor may use chat tools at all (the feature gate). */
 export async function actorCanUseTools(actor: AuthzActor): Promise<boolean> {
   const decision = await authorize(actor, 'use', {

@@ -2927,6 +2927,12 @@
       "insert": "Indsæt",
       "cancel": "Annuller",
       "required": "{{name}} er påkrævet"
+    },
+    "toolsMenu": {
+      "enable": "Brug værktøjer til denne besked",
+      "builtin": "Indbyggede værktøjer",
+      "servers": "Værktøjsservere",
+      "hint": "Kald med sideeffekter beder stadig om godkendelse, før de kører."
     }
   }
 }

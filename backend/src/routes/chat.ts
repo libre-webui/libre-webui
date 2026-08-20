@@ -40,6 +40,7 @@ import {
   userCanUseWebSearch,
 } from '../services/webSearchService.js';
 import { runPlannedWebSearch } from '../services/webSearchPlanService.js';
+import { sanitizeRequestedToolSelection } from '../services/toolGatewayService.js';
 import { userModel } from '../models/userModel.js';
 import chatGenerationService from '../services/chatGenerationService.js';
 import preferencesService from '../services/preferencesService.js';
@@ -813,6 +814,13 @@ router.post(
         options,
         webSearch: req.body?.webSearch === true,
         tools: req.body?.tools === true,
+        ...(req.body?.toolSelection
+          ? {
+              toolSelection: sanitizeRequestedToolSelection(
+                req.body.toolSelection
+              ),
+            }
+          : {}),
         regenerate,
         originalMessageId,
       });

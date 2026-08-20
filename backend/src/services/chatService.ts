@@ -493,6 +493,10 @@ class ChatService {
     options?: Record<string, unknown>;
     webSearch?: boolean;
     tools?: boolean;
+    toolSelection?: {
+      builtinTools?: readonly string[];
+      serverIds?: readonly string[];
+    };
     regenerate?: boolean;
     originalMessageId?: string;
   }): Promise<{ userMessage: ChatMessage; jobId: string } | undefined> {
@@ -576,6 +580,9 @@ class ChatService {
           options: input.options ?? {},
           webSearch: input.webSearch === true,
           tools: input.tools === true,
+          ...(input.toolSelection
+            ? { toolSelection: input.toolSelection }
+            : {}),
           regenerate: input.regenerate === true,
           ...(input.regenerate && input.originalMessageId
             ? { originalMessageId: input.originalMessageId }

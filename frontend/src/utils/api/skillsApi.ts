@@ -56,6 +56,8 @@ export interface SkillExport {
   version: number;
   exportedAt: number;
   format: string;
+  /** The SKILL.md interchange form of this skill. */
+  markdown?: string;
 }
 
 export const skillsApi = {

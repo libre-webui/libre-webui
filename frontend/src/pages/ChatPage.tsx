@@ -42,6 +42,12 @@ import {
   ComposerSuggestions,
   type ComposerSuggestionsHandle,
 } from '@/components/composer/ComposerSuggestions';
+import {
+  ComposerToolsMenu,
+  DEFAULT_COMPOSER_TOOLS,
+  composerToolsRequest,
+  type ComposerToolsValue,
+} from '@/components/composer/ComposerToolsMenu';
 import { LogoMark } from '@/components/LogoMark';
 import { ModelSelector } from '@/components/ModelSelector';
 import { PersonaIndicator } from '@/components/PersonaIndicator';
@@ -293,6 +299,9 @@ export const ChatPage: React.FC = () => {
   // as the in-session composer.
   const [welcomeWebSearchAllowed, setWelcomeWebSearchAllowed] = useState(false);
   const [welcomeWebSearch, setWelcomeWebSearch] = useState(false);
+  const [welcomeTools, setWelcomeTools] = useState<ComposerToolsValue>(
+    DEFAULT_COMPOSER_TOOLS
+  );
   const [welcomeUploadingDocument, setWelcomeUploadingDocument] =
     useState(false);
   const welcomeDocumentInputRef = useRef<HTMLInputElement>(null);
@@ -591,6 +600,8 @@ export const ChatPage: React.FC = () => {
             content: string;
             images?: string[];
             webSearch?: boolean;
+            tools?: boolean;
+            toolSelection?: { builtinTools?: string[]; serverIds?: string[] };
           };
           // Small delay to ensure WebSocket handlers are set up
           setTimeout(() => {
@@ -598,7 +609,9 @@ export const ChatPage: React.FC = () => {
               pendingMessage.content,
               pendingMessage.images,
               undefined,
-              pendingMessage.webSearch === true
+              pendingMessage.webSearch === true,
+              pendingMessage.tools === true,
+              pendingMessage.toolSelection
             );
           }, 100);
         } catch (e) {
@@ -656,6 +669,7 @@ export const ChatPage: React.FC = () => {
       content: welcomeMessage.trim(),
       images: welcomeImages.length > 0 ? welcomeImages : undefined,
       webSearch: welcomeWebSearchAllowed && welcomeWebSearch ? true : undefined,
+      ...composerToolsRequest(welcomeTools),
     };
     sessionStorage.setItem('pendingMessage', JSON.stringify(pendingMessage));
 
@@ -663,6 +677,7 @@ export const ChatPage: React.FC = () => {
     setWelcomeMessage('');
     setWelcomeImages([]);
     setWelcomeWebSearch(false);
+    setWelcomeTools(DEFAULT_COMPOSER_TOOLS);
 
     // Create a new session and navigate to it
     const newSession = await createSession(
@@ -762,12 +777,13 @@ export const ChatPage: React.FC = () => {
     images?: string[],
     format?: string | Record<string, unknown>,
     webSearch?: boolean,
-    tools?: boolean
+    tools?: boolean,
+    toolSelection?: { builtinTools?: string[]; serverIds?: string[] }
   ) => {
     if (!currentSession) return;
     triggerHapticFeedback('impact');
     setFollowUps(null);
-    sendMessage(message, images, format, webSearch, tools);
+    sendMessage(message, images, format, webSearch, tools, toolSelection);
   };
 
   if (!currentSession) {
@@ -966,6 +982,12 @@ export const ChatPage: React.FC = () => {
                           <Globe className='h-4 w-4' />
                         </Button>
                       )}
+
+                      <ComposerToolsMenu
+                        value={welcomeTools}
+                        onChange={setWelcomeTools}
+                        buttonClassName='h-9 w-9'
+                      />
 
                       <div className='min-w-0 flex-1' />
 
