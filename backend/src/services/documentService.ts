@@ -60,6 +60,10 @@ import preferencesService from './preferencesService.js';
 import { createLogger } from '../utils/logger.js';
 import { throwIfChatGenerationCancelled } from '../utils/chatCancellation.js';
 import {
+  reciprocalRankFusion,
+  scoreCandidatesBm25,
+} from '../utils/hybridRetrieval.js';
+import {
   extractDocumentContentByType,
   resolveDocumentFileType,
   type DocumentSegment,
@@ -1592,7 +1596,6 @@ export class DocumentService {
         string,
         { chunk: DocumentChunk; document: Document }
       >();
-      const unembedded: { chunk: DocumentChunk; document: Document }[] = [];
       for (const document of documents) {
         throwIfChatGenerationCancelled(signal);
         let searchableDocument = document;
@@ -1634,10 +1637,6 @@ export class DocumentService {
         // and deletion cleanup through the shared document resource lease.
         // PostgreSQL/team reads never mutate PGVector.
         const publishedIndex = readDocumentIndexMetadata(searchableDocument);
-        const canProveCurrentEmbeddingModel = documentIndexMatchesSpec(
-          publishedIndex,
-          executionSpec
-        );
         const localIndexProbe =
           platform.dialect === 'sqlite'
             ? exactLocalDocumentIndexProbe(
@@ -1713,22 +1712,14 @@ export class DocumentService {
         for (const chunk of documentChunks) {
           // PostgreSQL deliberately keeps embeddings only in PGVector, so a
           // relational chunk without an `embedding` property can still be the
-          // authoritative content for a vector hit. Always make every current
-          // relational chunk available for hit hydration. Metadata tells us
-          // whether an absent inline embedding means "stored externally" or
-          // whether this chunk genuinely needs keyword fallback.
+          // authoritative content for a vector hit. Every current relational
+          // chunk joins the candidate set: vector hits hydrate from it and
+          // the BM25 side of the hybrid ranking scores it, so chunks without
+          // a current embedding stay reachable.
           chunksById.set(chunk.id, {
             chunk,
             document: searchableDocument,
           });
-          const indexedForSemanticQuery =
-            canProveCurrentEmbeddingModel &&
-            publishedIndex !== undefined &&
-            publishedIndex.dimensions !== null &&
-            (platform.dialect === 'postgres' || localIndexReady);
-          if (!indexedForSemanticQuery) {
-            unembedded.push({ chunk, document: searchableDocument });
-          }
         }
       }
 
@@ -1764,37 +1755,42 @@ export class DocumentService {
           left.ownerUserId.localeCompare(right.ownerUserId) ||
           left.id.localeCompare(right.id)
       );
-      const top: DocumentChunk[] = [];
-      const selectedChunkIds = new Set<string>();
+      // Hybrid assembly: fuse the vector ranking with an in-process BM25
+      // ranking over every in-scope chunk. The lexical side keeps chunks
+      // without current embeddings reachable and lets an exact term match
+      // outrank a semantically weak neighbor; fusion means neither ranking
+      // silently dominates the other.
+      const semanticRanked: string[] = [];
+      const semanticScores = new Map<string, number>();
       for (const hit of hits) {
-        if (top.length >= limit) break;
         const match = chunksById.get(hit.id);
         if (
           !match ||
           match.document.id !== hit.resourceId ||
           sourceRevision(match.chunk) !== hit.sourceRevision ||
-          selectedChunkIds.has(match.chunk.id)
+          semanticScores.has(match.chunk.id)
         ) {
           continue;
         }
+        semanticRanked.push(match.chunk.id);
+        semanticScores.set(match.chunk.id, hit.score);
+      }
+      const lexicalScored = this.scoreChunksByKeywords(query, [
+        ...chunksById.values(),
+      ]);
+      const fused = reciprocalRankFusion([
+        semanticRanked,
+        lexicalScored.map(entry => entry.chunk.id),
+      ]);
+      const top: DocumentChunk[] = [];
+      for (const { id } of fused) {
+        if (top.length >= limit) break;
+        const match = chunksById.get(id);
+        if (!match) continue;
         top.push({
           ...match.chunk,
           filename: match.document.filename,
         } as DocumentChunk);
-        selectedChunkIds.add(match.chunk.id);
-      }
-
-      if (top.length < limit && unembedded.length > 0) {
-        const scored = this.scoreChunksByKeywords(query, unembedded);
-        for (const entry of scored) {
-          if (top.length >= limit) break;
-          if (selectedChunkIds.has(entry.chunk.id)) continue;
-          top.push({
-            ...entry.chunk,
-            filename: entry.document.filename,
-          } as DocumentChunk);
-          selectedChunkIds.add(entry.chunk.id);
-        }
       }
       if (top.length > 0) return top;
 
@@ -1825,31 +1821,19 @@ export class DocumentService {
     }
   }
 
-  /** Term-frequency scores for a set of chunks, best first. */
+  /** BM25 scores for a set of chunks, best first. */
   private scoreChunksByKeywords(
     query: string,
     entries: { chunk: DocumentChunk; document: Document }[]
   ): { chunk: DocumentChunk; score: number; document: Document }[] {
-    const searchTerms = query
-      .toLowerCase()
-      .split(/\s+/)
-      .filter(term => term.length > 2);
-    const scored: {
-      chunk: DocumentChunk;
-      score: number;
-      document: Document;
-    }[] = [];
-    for (const { chunk, document } of entries) {
-      const chunkText = chunk.content.toLowerCase();
-      let score = 0;
-      for (const term of searchTerms) {
-        // Escape special regex characters to prevent injection
-        const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        score += (chunkText.match(new RegExp(escapedTerm, 'gi')) || []).length;
-      }
-      if (score > 0) scored.push({ chunk, score, document });
-    }
-    return scored.sort((a, b) => b.score - a.score);
+    const byId = new Map(entries.map(entry => [entry.chunk.id, entry]));
+    return scoreCandidatesBm25(
+      query,
+      entries.map(entry => ({ id: entry.chunk.id, text: entry.chunk.content }))
+    ).map(({ id, score }) => {
+      const entry = byId.get(id)!;
+      return { chunk: entry.chunk, score, document: entry.document };
+    });
   }
 
   private async keywordSearchDocuments(

@@ -38,12 +38,21 @@ Files are processed by the backend and stored with the rest of the application d
 
 Libre WebUI supports two retrieval modes:
 
-| Mode            | When used                      | Notes                                                        |
-| --------------- | ------------------------------ | ------------------------------------------------------------ |
-| Keyword search  | Always available               | No embedding model required                                  |
-| Semantic search | Embeddings enabled in Settings | Uses the configured embedding model and similarity threshold |
+| Mode            | When used                      | Notes                                                                       |
+| --------------- | ------------------------------ | --------------------------------------------------------------------------- |
+| Keyword search  | Always available               | BM25 ranking; no embedding model required                                   |
+| Hybrid search   | Embeddings enabled in Settings | Fuses the vector ranking with BM25 through reciprocal-rank fusion           |
 
-If embeddings fail or are disabled, document search falls back to keyword matching.
+With embeddings enabled, every query runs both rankings and merges them:
+an exact term match can outrank a semantically similar but vaguer chunk,
+and chunks whose embeddings are still being generated stay reachable
+through the lexical side. If embeddings fail or are disabled, document
+search falls back to pure keyword matching.
+
+Lexical scoring runs in-process over the chunks you can access. Libre
+deliberately does not maintain an on-disk full-text index for document
+chunks, because chunk text is stored encrypted and a token index would
+persist plaintext next to the ciphertext.
 
 ## Enable Semantic Search
 

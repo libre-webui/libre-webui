@@ -151,8 +151,8 @@ Libre WebUI will try to bundle local CSS and JavaScript blocks into the HTML pre
 
 Document Chat accepts PDF, Office (DOCX/PPTX/XLSX), Markdown, HTML, code, and CSV files up to 10 MB. Search works in two modes:
 
-- Keyword search is always available.
-- Semantic search is used when embeddings are enabled in Settings and an embedding model is available.
+- Keyword search (BM25) is always available.
+- Hybrid search fuses semantic and keyword rankings when embeddings are enabled in Settings and an embedding model is available.
 
 Install `nomic-embed-text` if you want an easy local embedding model:
 
