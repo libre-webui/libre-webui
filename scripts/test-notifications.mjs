@@ -202,7 +202,7 @@ test('channel DMs, mentions, and thread replies notify the right members', async
   const dmNote = friendInbox.find(entry => entry.type === 'channel-dm');
   assert.ok(dmNote);
   assert.match(dmNote.title, /direct message/);
-  assert.equal(dmNote.href, `/channels/${dm.id}`);
+  assert.equal(dmNote.href, `/channels?channel=${dm.id}`);
 
   const room = await channelService.createChannel(
     { userId: OWNER },
