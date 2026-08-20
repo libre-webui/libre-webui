@@ -430,6 +430,13 @@
     "compare": {
       "title": "Modelleri karşılaştır",
       "hint": "En fazla {{max}} ek modelle yanıtla"
+    },
+    "fork": {
+      "action": "Buradan çatalla",
+      "created": "Sohbet çatallandı",
+      "failed": "Sohbet çatallanamadı",
+      "origin": "{{title}} sohbetinden çatallandı",
+      "originUnknown": "başka bir sohbet"
     }
   },
   "sidebar": {

@@ -430,6 +430,13 @@
     "compare": {
       "title": "Comparer les modèles",
       "hint": "Répondre avec jusqu'à {{max}} modèles supplémentaires"
+    },
+    "fork": {
+      "action": "Bifurquer à partir d'ici",
+      "created": "Discussion dupliquée",
+      "failed": "Impossible de bifurquer la discussion",
+      "origin": "Bifurquée depuis {{title}}",
+      "originUnknown": "une autre discussion"
     }
   },
   "sidebar": {

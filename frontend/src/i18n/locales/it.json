@@ -430,6 +430,13 @@
     "compare": {
       "title": "Confronta modelli",
       "hint": "Rispondi con un massimo di {{max}} modelli aggiuntivi"
+    },
+    "fork": {
+      "action": "Crea un fork da qui",
+      "created": "Chat duplicata",
+      "failed": "Impossibile duplicare la chat",
+      "origin": "Fork di {{title}}",
+      "originUnknown": "un'altra chat"
     }
   },
   "sidebar": {

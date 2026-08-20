@@ -108,6 +108,15 @@
             "modelOverride",
             "cmp-assistant-alt"
           ]
+        },
+        {
+          "file": "scripts/test-chat-fork.mjs",
+          "runner": "test:package",
+          "name": "forking at a message copies the prefix with remapped identities",
+          "behaviorPatterns": [
+            "forkSession",
+            "forkedFrom\\.sessionId"
+          ]
         }
       ],
       "backendRoutes": [
@@ -296,6 +305,12 @@
           "mount": "/api/chat",
           "method": "DELETE",
           "path": "/sessions/:sessionId/queue/:entryId"
+        },
+        {
+          "file": "backend/src/routes/chat.ts",
+          "mount": "/api/chat",
+          "method": "POST",
+          "path": "/sessions/:sessionId/fork"
         }
       ],
       "websocketRoutes": [

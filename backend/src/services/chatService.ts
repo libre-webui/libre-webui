@@ -266,6 +266,86 @@ class ChatService {
   }
 
   /**
+   * Whole-chat fork: copies the conversation up to (and including) one
+   * message into a new session with fresh identities. Every internal
+   * reference — variant parents and compaction provenance — is remapped so
+   * the fork and the original never share message ids, and the fork records
+   * where it came from in its settings.
+   */
+  async forkSession(
+    sessionId: string,
+    userId: string,
+    options: { messageId?: string; title?: string } = {}
+  ): Promise<ChatSession | undefined> {
+    const source = await this.getSession(sessionId, userId);
+    if (!source) return undefined;
+    let cutoff = source.messages.length - 1;
+    if (options.messageId) {
+      cutoff = source.messages.findIndex(
+        message => message.id === options.messageId
+      );
+      if (cutoff === -1) {
+        throw new ResourcePolicyError(
+          'The fork point message was not found',
+          404
+        );
+      }
+    }
+    const prefix = source.messages.slice(0, cutoff + 1);
+    const idMap = new Map<string, string>();
+    for (const message of prefix) idMap.set(message.id, uuidv4());
+    const messages = prefix.map(message => {
+      const copy: ChatMessage = {
+        ...message,
+        id: idMap.get(message.id)!,
+      };
+      if (message.parentId) {
+        const mapped = idMap.get(message.parentId);
+        if (mapped) copy.parentId = mapped;
+        else {
+          delete copy.parentId;
+          delete copy.branchIndex;
+          delete copy.siblingCount;
+        }
+      }
+      const compacted = message.providerMetadata?.compactedMessageIds;
+      if (Array.isArray(compacted)) {
+        copy.providerMetadata = {
+          ...message.providerMetadata,
+          compactedMessageIds: compacted
+            .map(id => (typeof id === 'string' ? idMap.get(id) : undefined))
+            .filter((id): id is string => id !== undefined),
+        };
+      }
+      return copy;
+    });
+    const now = Date.now();
+    const settings: ChatSession['settings'] = {
+      ...source.settings,
+      forkedFrom: {
+        sessionId: source.id,
+        ...(options.messageId ? { messageId: options.messageId } : {}),
+        title: source.title,
+        forkedAt: now,
+      },
+    };
+    delete settings.promptQueue;
+    const fork: ChatSession = {
+      ...source,
+      id: uuidv4(),
+      title: options.title?.trim() || source.title,
+      messages,
+      settings,
+      createdAt: now,
+      updatedAt: now,
+      pinned: false,
+    };
+    await storageService.saveSession(fork, userId);
+    this.sessions.set(fork.id, fork);
+    return fork;
+  }
+
+  /**
    * Atomic prompt-queue mutation under the session write lease, so two
    * tabs (or a removal racing a drain) never resurrect or double-claim an
    * entry through a stale whole-settings write.

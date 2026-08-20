@@ -430,6 +430,13 @@
     "compare": {
       "title": "Jämför modeller",
       "hint": "Svara med upp till {{max}} extra modeller"
+    },
+    "fork": {
+      "action": "Grena av härifrån",
+      "created": "Chatt avgrenad",
+      "failed": "Kunde inte grena av chatten",
+      "origin": "Avgrenad från {{title}}",
+      "originUnknown": "en annan chatt"
     }
   },
   "sidebar": {

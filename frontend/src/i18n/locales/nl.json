@@ -430,6 +430,13 @@
     "compare": {
       "title": "Modellen vergelijken",
       "hint": "Antwoorden met maximaal {{max}} extra modellen"
+    },
+    "fork": {
+      "action": "Vanaf hier afsplitsen",
+      "created": "Chat afgesplitst",
+      "failed": "Kon de chat niet afsplitsen",
+      "origin": "Afgesplitst van {{title}}",
+      "originUnknown": "een andere chat"
     }
   },
   "sidebar": {

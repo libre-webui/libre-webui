@@ -430,6 +430,13 @@
     "compare": {
       "title": "比较模型",
       "hint": "最多使用 {{max}} 个额外模型回答"
+    },
+    "fork": {
+      "action": "从此处分叉",
+      "created": "已分叉聊天",
+      "failed": "无法分叉聊天",
+      "origin": "分叉自 {{title}}",
+      "originUnknown": "另一个聊天"
     }
   },
   "sidebar": {

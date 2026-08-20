@@ -430,6 +430,13 @@
     "compare": {
       "title": "So sánh mô hình",
       "hint": "Trả lời với tối đa {{max}} mô hình bổ sung"
+    },
+    "fork": {
+      "action": "Tách nhánh từ đây",
+      "created": "Đã tách nhánh cuộc trò chuyện",
+      "failed": "Không thể tách nhánh cuộc trò chuyện",
+      "origin": "Tách nhánh từ {{title}}",
+      "originUnknown": "cuộc trò chuyện khác"
     }
   },
   "sidebar": {

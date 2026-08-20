@@ -430,6 +430,13 @@
     "compare": {
       "title": "Comparar modelos",
       "hint": "Responder com até {{max}} modelos adicionais"
+    },
+    "fork": {
+      "action": "Bifurcar a partir daqui",
+      "created": "Chat bifurcado",
+      "failed": "Não foi possível bifurcar o chat",
+      "origin": "Bifurcado de {{title}}",
+      "originUnknown": "outro chat"
     }
   },
   "sidebar": {

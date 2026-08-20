@@ -430,6 +430,13 @@
     "compare": {
       "title": "Compare models",
       "hint": "Answer with up to {{max}} extra models"
+    },
+    "fork": {
+      "action": "Fork from here",
+      "created": "Chat forked",
+      "failed": "Could not fork the chat",
+      "origin": "Forked from {{title}}",
+      "originUnknown": "another chat"
     }
   },
   "sidebar": {

@@ -430,6 +430,13 @@
     "compare": {
       "title": "Porównaj modele",
       "hint": "Odpowiadaj z użyciem do {{max}} dodatkowych modeli"
+    },
+    "fork": {
+      "action": "Rozgałęź od tego miejsca",
+      "created": "Czat rozgałęziony",
+      "failed": "Nie udało się rozgałęzić czatu",
+      "origin": "Rozgałęziony z {{title}}",
+      "originUnknown": "innego czatu"
     }
   },
   "sidebar": {

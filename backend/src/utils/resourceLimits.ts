@@ -61,7 +61,7 @@ export const MAX_SKILL_FILES_TOTAL_BYTES = 1_000_000;
 export class ResourcePolicyError extends Error {
   constructor(
     message: string,
-    readonly statusCode: 400 | 409
+    readonly statusCode: 400 | 404 | 409
   ) {
     super(message);
     this.name = 'ResourcePolicyError';

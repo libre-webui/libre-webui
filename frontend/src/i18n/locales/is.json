@@ -430,6 +430,13 @@
     "compare": {
       "title": "Bera saman líkön",
       "hint": "Svara með allt að {{max}} auka líkönum"
+    },
+    "fork": {
+      "action": "Greina frá hér",
+      "created": "Spjall greint frá",
+      "failed": "Ekki tókst að greina spjallið frá",
+      "origin": "Greint frá {{title}}",
+      "originUnknown": "öðru spjalli"
     }
   },
   "sidebar": {

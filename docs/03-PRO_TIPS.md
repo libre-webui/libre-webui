@@ -154,6 +154,13 @@ prompts appear above the composer, can be edited, reordered, and removed,
 and are sent one by one as each reply finishes. The queue is stored with
 the chat, so it survives a reload or reconnect.
 
+## Fork a Conversation
+
+The fork button on any message copies the conversation up to that point
+into a new chat, variants included, and records where it came from. The
+original stays untouched, so exploratory tangents never pollute the main
+thread.
+
 ## Compare Models in One Turn
 
 The columns button beside the tool picker fans your next prompt out to up

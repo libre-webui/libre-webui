@@ -430,6 +430,13 @@
     "compare": {
       "title": "モデルを比較",
       "hint": "最大 {{max}} 個の追加モデルで回答"
+    },
+    "fork": {
+      "action": "ここからフォーク",
+      "created": "チャットをフォークしました",
+      "failed": "チャットをフォークできませんでした",
+      "origin": "{{title}} からフォーク",
+      "originUnknown": "別のチャット"
     }
   },
   "sidebar": {

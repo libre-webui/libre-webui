@@ -128,6 +128,12 @@ export const chatApi = {
       .then(res => res.data);
   },
 
+  forkSession: (
+    sessionId: string,
+    input: { messageId?: string; title?: string } = {}
+  ): Promise<ApiResponse<ChatSession>> =>
+    api.post(`/chat/sessions/${sessionId}/fork`, input).then(res => res.data),
+
   enqueuePrompt: (
     sessionId: string,
     content: string

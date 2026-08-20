@@ -430,6 +430,13 @@
     "compare": {
       "title": "Bandingkan model",
       "hint": "Jawab dengan hingga {{max}} model tambahan"
+    },
+    "fork": {
+      "action": "Cabangkan dari sini",
+      "created": "Obrolan dicabangkan",
+      "failed": "Tidak dapat mencabangkan obrolan",
+      "origin": "Dicabangkan dari {{title}}",
+      "originUnknown": "obrolan lain"
     }
   },
   "sidebar": {

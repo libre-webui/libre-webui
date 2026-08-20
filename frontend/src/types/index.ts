@@ -130,6 +130,13 @@ export interface ChatSessionSettings {
   fullDocumentContext?: boolean;
   /** Prompts queued while a generation runs, sent in order afterwards. */
   promptQueue?: PromptQueueEntry[];
+  /** Provenance of a whole-chat fork. */
+  forkedFrom?: {
+    sessionId: string;
+    messageId?: string;
+    title?: string;
+    forkedAt: number;
+  };
 }
 
 export interface SessionFolder {

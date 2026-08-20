@@ -430,6 +430,13 @@
     "compare": {
       "title": "모델 비교",
       "hint": "최대 {{max}}개의 추가 모델로 답변"
+    },
+    "fork": {
+      "action": "여기서 분기",
+      "created": "채팅을 분기했습니다",
+      "failed": "채팅을 분기할 수 없습니다",
+      "origin": "{{title}}에서 분기됨",
+      "originUnknown": "다른 채팅"
     }
   },
   "sidebar": {

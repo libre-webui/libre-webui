@@ -430,6 +430,13 @@
     "compare": {
       "title": "Banding model",
       "hint": "Jawab dengan sehingga {{max}} model tambahan"
+    },
+    "fork": {
+      "action": "Cabangkan dari sini",
+      "created": "Sembang dicabangkan",
+      "failed": "Tidak dapat mencabangkan sembang",
+      "origin": "Dicabangkan daripada {{title}}",
+      "originUnknown": "sembang lain"
     }
   },
   "sidebar": {

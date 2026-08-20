@@ -430,6 +430,13 @@
     "compare": {
       "title": "Modelle vergleichen",
       "hint": "Mit bis zu {{max}} zusätzlichen Modellen antworten"
+    },
+    "fork": {
+      "action": "Ab hier abzweigen",
+      "created": "Chat abgezweigt",
+      "failed": "Der Chat konnte nicht abgezweigt werden",
+      "origin": "Abgezweigt von {{title}}",
+      "originUnknown": "einem anderen Chat"
     }
   },
   "sidebar": {

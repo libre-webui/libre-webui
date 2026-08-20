@@ -30,6 +30,7 @@ import {
   Paperclip,
   Minus,
   Ghost,
+  GitFork,
   Globe,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -800,6 +801,28 @@ export const ChatPage: React.FC = () => {
     );
   };
 
+  const handleFork = async (messageId: string) => {
+    if (!currentSession) return;
+    try {
+      const response = await chatApi.forkSession(currentSession.id, {
+        messageId,
+      });
+      if (response.success && response.data) {
+        const fork = response.data;
+        useChatStore.setState(state => ({
+          sessions: [fork, ...state.sessions],
+        }));
+        toast.success(t('chat.fork.created'));
+        navigate(`/c/${fork.id}`);
+      } else {
+        toast.error(response.error || t('chat.fork.failed'));
+      }
+    } catch (error) {
+      logger.error('Failed to fork the chat:', error);
+      toast.error(t('chat.fork.failed'));
+    }
+  };
+
   if (!currentSession) {
     const hasAdvancedFeatures = welcomeImages.length > 0;
 
@@ -1167,6 +1190,25 @@ export const ChatPage: React.FC = () => {
             >
               <SlidersHorizontal className='h-3.5 w-3.5' />
             </button>
+            {currentSession.settings?.forkedFrom && (
+              <button
+                type='button'
+                onClick={() =>
+                  navigate(
+                    `/c/${currentSession.settings!.forkedFrom!.sessionId}`
+                  )
+                }
+                className='mx-auto mt-2 flex items-center gap-1.5 rounded-full border border-black/[0.07] bg-surface/70 px-3 py-1 text-[11px] text-gray-500 transition-colors hover:text-gray-800 dark:border-white/[0.08] dark:bg-dark-200/70 dark:text-dark-600 dark:hover:text-dark-900'
+                data-testid='forked-from-banner'
+              >
+                <GitFork className='h-3 w-3' />
+                {t('chat.fork.origin', {
+                  title:
+                    currentSession.settings.forkedFrom.title ||
+                    t('chat.fork.originUnknown'),
+                })}
+              </button>
+            )}
             <ChatMessages
               messages={currentSession.messages}
               streamingMessage={streamingMessage}
@@ -1180,6 +1222,7 @@ export const ChatPage: React.FC = () => {
               onRegenerate={regenerateLastMessage}
               onSelectBranch={selectBranch}
               onEditResend={editAndResendMessage}
+              onFork={messageId => void handleFork(messageId)}
               followUpSuggestions={followUpSuggestions}
               onFollowUpSelect={suggestion => handleSendMessage(suggestion)}
               className='flex-1'

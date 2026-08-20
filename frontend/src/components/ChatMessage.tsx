@@ -51,6 +51,7 @@ import {
   Brain,
   History,
   RefreshCw,
+  GitFork,
   Undo2,
   Copy,
   Check,
@@ -89,6 +90,7 @@ interface ChatMessageProps {
   isLastAssistantMessage?: boolean;
   onRegenerate?: () => void;
   onEditResend?: (messageId: string, content: string) => void;
+  onFork?: (messageId: string) => void;
 }
 
 interface ChatAvatarProps {
@@ -183,6 +185,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   className,
   isLastAssistantMessage = false,
   onRegenerate,
+  onFork,
   onEditResend,
 }) => {
   const { t, i18n } = useTranslation();
@@ -1036,6 +1039,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     title={t('chatMessage.regenerateResponse')}
                   >
                     <RefreshCw className='h-3.5 w-3.5' />
+                  </button>
+                )}
+                {onFork && (
+                  <button
+                    onClick={() => onFork(message.id)}
+                    className='flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-dark-200 dark:hover:text-dark-800'
+                    title={t('chat.fork.action')}
+                    data-testid='fork-from-message'
+                  >
+                    <GitFork className='h-3.5 w-3.5' />
                   </button>
                 )}
               </div>

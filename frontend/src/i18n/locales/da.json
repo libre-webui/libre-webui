@@ -430,6 +430,13 @@
     "compare": {
       "title": "Sammenlign modeller",
       "hint": "Svar med op til {{max}} ekstra modeller"
+    },
+    "fork": {
+      "action": "Forgren herfra",
+      "created": "Chat forgrenet",
+      "failed": "Kunne ikke forgrene chatten",
+      "origin": "Forgrenet fra {{title}}",
+      "originUnknown": "en anden chat"
     }
   },
   "sidebar": {

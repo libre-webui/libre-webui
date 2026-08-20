@@ -430,6 +430,13 @@
     "compare": {
       "title": "Porovnat modely",
       "hint": "Odpovědět až {{max}} dalšími modely"
+    },
+    "fork": {
+      "action": "Odbočit odsud",
+      "created": "Chat rozvětven",
+      "failed": "Chat se nepodařilo rozvětvit",
+      "origin": "Odbočeno z {{title}}",
+      "originUnknown": "jiného chatu"
     }
   },
   "sidebar": {

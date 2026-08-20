@@ -940,6 +940,58 @@ router.post(
   }
 );
 
+// Whole-chat fork: copy the conversation up to one message into a new
+// session with fresh identities and recorded provenance.
+router.post(
+  '/sessions/:sessionId/fork',
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.userId || 'default';
+      const { messageId, title } = req.body as {
+        messageId?: unknown;
+        title?: unknown;
+      };
+      if (messageId !== undefined && typeof messageId !== 'string') {
+        res
+          .status(400)
+          .json({ success: false, error: 'messageId must be a string' });
+        return;
+      }
+      if (
+        title !== undefined &&
+        (typeof title !== 'string' || title.length > 200)
+      ) {
+        res.status(400).json({ success: false, error: 'title is invalid' });
+        return;
+      }
+      const fork = await chatService.forkSession(
+        String(req.params.sessionId || ''),
+        userId,
+        {
+          ...(messageId ? { messageId } : {}),
+          ...(title ? { title } : {}),
+        }
+      );
+      if (!fork) {
+        res.status(404).json({ success: false, error: 'Session not found' });
+        return;
+      }
+      res.status(201).json({ success: true, data: fork });
+    } catch (error) {
+      if (error instanceof ResourcePolicyError) {
+        res
+          .status(error.statusCode)
+          .json({ success: false, error: error.message });
+        return;
+      }
+      logger.error('Chat fork error:', error);
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to fork the chat' });
+    }
+  }
+);
+
 // Prompt queue: prompts stored while a generation runs, sent in order
 // afterwards. Every mutation is atomic under the session write lease.
 router.post(
