@@ -2819,6 +2819,22 @@
       "hint": "粘贴 skills.sh 或 GitHub 链接、owner/repo/skill，或指向 SKILL.md 文件的直接链接。",
       "placeholder": "https://skills.sh/owner/repo/skill 或 owner/repo/skill",
       "overwrite": "如果 slug 已存在则覆盖我的技能"
+    },
+    "files": {
+      "title": "随附文件",
+      "hint": "模型可在需要时通过 read_skill_file 读取的参考文档和脚本。",
+      "add": "添加文件",
+      "empty": "暂无随附文件。",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "文件内容…",
+      "loadFailed": "无法加载文件",
+      "saveFailed": "无法保存文件",
+      "deleteFailed": "无法删除文件"
+    },
+    "folderImport": {
+      "button": "从文件夹导入",
+      "missingSkillMd": "文件夹中需要包含 SKILL.md 文件",
+      "done": "技能已导入，包含 {{count}} 个随附文件"
     }
   },
   "toolsPage": {

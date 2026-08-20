@@ -2819,6 +2819,22 @@
       "hint": "Tampal pautan skills.sh atau GitHub, owner/repo/skill, atau pautan terus ke fail SKILL.md.",
       "placeholder": "https://skills.sh/owner/repo/skill atau owner/repo/skill",
       "overwrite": "Tulis ganti kemahiran saya jika slug sudah wujud"
+    },
+    "files": {
+      "title": "Fail yang disertakan",
+      "hint": "Dokumen rujukan dan skrip yang dibaca model apabila perlu melalui read_skill_file.",
+      "add": "Tambah fail",
+      "empty": "Belum ada fail yang disertakan.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Kandungan fail…",
+      "loadFailed": "Gagal memuatkan fail",
+      "saveFailed": "Gagal menyimpan fail",
+      "deleteFailed": "Gagal memadam fail"
+    },
+    "folderImport": {
+      "button": "Dari folder",
+      "missingSkillMd": "Folder mesti mengandungi fail SKILL.md",
+      "done": "Kemahiran diimport dengan {{count}} fail yang disertakan"
     }
   },
   "toolsPage": {

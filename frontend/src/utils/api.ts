@@ -93,6 +93,8 @@ export { skillsApi } from './api/skillsApi';
 export type {
   Skill,
   SkillExport,
+  SkillFile,
+  SkillFileSummary,
   SkillInput,
   SkillRevision,
 } from './api/skillsApi';

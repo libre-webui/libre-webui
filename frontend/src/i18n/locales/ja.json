@@ -2819,6 +2819,22 @@
       "hint": "skills.sh または GitHub のリンク、owner/repo/skill、または SKILL.md ファイルへの直接リンクを貼り付けてください。",
       "placeholder": "https://skills.sh/owner/repo/skill または owner/repo/skill",
       "overwrite": "スラッグが既に存在する場合は自分のスキルを上書きする"
+    },
+    "files": {
+      "title": "同梱ファイル",
+      "hint": "モデルが read_skill_file で必要に応じて読む参照ドキュメントやスクリプトです。",
+      "add": "ファイルを追加",
+      "empty": "同梱ファイルはまだありません。",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "ファイルの内容…",
+      "loadFailed": "ファイルを読み込めませんでした",
+      "saveFailed": "ファイルを保存できませんでした",
+      "deleteFailed": "ファイルを削除できませんでした"
+    },
+    "folderImport": {
+      "button": "フォルダーから",
+      "missingSkillMd": "フォルダーには SKILL.md ファイルが必要です",
+      "done": "{{count}} 個の同梱ファイル付きでスキルをインポートしました"
     }
   },
   "toolsPage": {

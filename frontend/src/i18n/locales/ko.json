@@ -2819,6 +2819,22 @@
       "hint": "skills.sh 또는 GitHub 링크, owner/repo/skill, 또는 SKILL.md 파일 직접 링크를 붙여넣으세요.",
       "placeholder": "https://skills.sh/owner/repo/skill 또는 owner/repo/skill",
       "overwrite": "슬러그가 이미 있으면 내 스킬 덮어쓰기"
+    },
+    "files": {
+      "title": "번들 파일",
+      "hint": "모델이 read_skill_file로 필요할 때 읽는 참조 문서와 스크립트입니다.",
+      "add": "파일 추가",
+      "empty": "아직 번들 파일이 없습니다.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "파일 내용…",
+      "loadFailed": "파일을 불러오지 못했습니다",
+      "saveFailed": "파일을 저장하지 못했습니다",
+      "deleteFailed": "파일을 삭제하지 못했습니다"
+    },
+    "folderImport": {
+      "button": "폴더에서",
+      "missingSkillMd": "폴더에 SKILL.md 파일이 필요합니다",
+      "done": "번들 파일 {{count}}개와 함께 스킬을 가져왔습니다"
     }
   },
   "toolsPage": {

@@ -58,6 +58,19 @@ export interface SkillExport {
   format: string;
   /** The SKILL.md interchange form of this skill. */
   markdown?: string;
+  /** Companion files bundled with the skill (the SKILL.md folder layout). */
+  files?: { path: string; content: string }[];
+}
+
+export interface SkillFileSummary {
+  path: string;
+  size: number;
+  updatedAt: number;
+}
+
+export interface SkillFile extends SkillFileSummary {
+  content: string;
+  createdAt: number;
 }
 
 export const skillsApi = {
@@ -110,5 +123,27 @@ export const skillsApi = {
         skill: payload,
         overwriteSlug: options?.overwriteSlug === true,
       })
+      .then(res => res.data),
+
+  listFiles: (skillId: string): Promise<ApiResponse<SkillFileSummary[]>> =>
+    api.get(`/skills/${skillId}/files`).then(res => res.data),
+
+  getFile: (skillId: string, path: string): Promise<ApiResponse<SkillFile>> =>
+    api
+      .get(`/skills/${skillId}/files/content`, { params: { path } })
+      .then(res => res.data),
+
+  putFile: (
+    skillId: string,
+    path: string,
+    content: string
+  ): Promise<ApiResponse<SkillFileSummary>> =>
+    api
+      .put(`/skills/${skillId}/files`, { path, content })
+      .then(res => res.data),
+
+  deleteFile: (skillId: string, path: string): Promise<ApiResponse> =>
+    api
+      .delete(`/skills/${skillId}/files`, { params: { path } })
       .then(res => res.data),
 };

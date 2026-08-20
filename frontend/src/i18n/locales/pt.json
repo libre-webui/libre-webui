@@ -2819,6 +2819,22 @@
       "hint": "Cole um link do skills.sh ou GitHub, owner/repo/skill, ou um link direto para um arquivo SKILL.md.",
       "placeholder": "https://skills.sh/owner/repo/skill ou owner/repo/skill",
       "overwrite": "Sobrescrever minha habilidade se o slug já existir"
+    },
+    "files": {
+      "title": "Arquivos incluídos",
+      "hint": "Documentos de referência e scripts que o modelo lê sob demanda com read_skill_file.",
+      "add": "Adicionar arquivo",
+      "empty": "Ainda não há arquivos incluídos.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Conteúdo do arquivo…",
+      "loadFailed": "Falha ao carregar o arquivo",
+      "saveFailed": "Falha ao salvar o arquivo",
+      "deleteFailed": "Falha ao excluir o arquivo"
+    },
+    "folderImport": {
+      "button": "De uma pasta",
+      "missingSkillMd": "A pasta precisa de um arquivo SKILL.md",
+      "done": "Habilidade importada com {{count}} arquivos incluídos"
     }
   },
   "toolsPage": {

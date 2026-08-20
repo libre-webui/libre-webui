@@ -2819,6 +2819,22 @@
       "hint": "Indsæt et skills.sh- eller GitHub-link, owner/repo/skill, eller et direkte link til en SKILL.md-fil.",
       "placeholder": "https://skills.sh/owner/repo/skill eller owner/repo/skill",
       "overwrite": "Overskriv min færdighed, hvis slug allerede findes"
+    },
+    "files": {
+      "title": "Medfølgende filer",
+      "hint": "Referencedokumenter og scripts, som modellen læser efter behov med read_skill_file.",
+      "add": "Tilføj fil",
+      "empty": "Ingen medfølgende filer endnu.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Filindhold…",
+      "loadFailed": "Kunne ikke indlæse filen",
+      "saveFailed": "Kunne ikke gemme filen",
+      "deleteFailed": "Kunne ikke slette filen"
+    },
+    "folderImport": {
+      "button": "Fra mappe",
+      "missingSkillMd": "Mappen skal indeholde en SKILL.md-fil",
+      "done": "Færdighed importeret med {{count}} medfølgende filer"
     }
   },
   "toolsPage": {

@@ -2819,6 +2819,22 @@
       "hint": "skills.sh বা GitHub লিঙ্ক, owner/repo/skill, বা SKILL.md ফাইলের সরাসরি লিঙ্ক পেস্ট করুন।",
       "placeholder": "https://skills.sh/owner/repo/skill বা owner/repo/skill",
       "overwrite": "স্লাগ ইতিমধ্যে থাকলে আমার স্কিল ওভাররাইট করুন"
+    },
+    "files": {
+      "title": "সংযুক্ত ফাইল",
+      "hint": "রেফারেন্স নথি ও স্ক্রিপ্ট যা মডেল read_skill_file দিয়ে প্রয়োজনে পড়ে।",
+      "add": "ফাইল যোগ করুন",
+      "empty": "এখনও কোনো সংযুক্ত ফাইল নেই।",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "ফাইলের বিষয়বস্তু…",
+      "loadFailed": "ফাইল লোড করা যায়নি",
+      "saveFailed": "ফাইল সংরক্ষণ করা যায়নি",
+      "deleteFailed": "ফাইল মুছে ফেলা যায়নি"
+    },
+    "folderImport": {
+      "button": "ফোল্ডার থেকে",
+      "missingSkillMd": "ফোল্ডারে একটি SKILL.md ফাইল থাকা দরকার",
+      "done": "{{count}}টি সংযুক্ত ফাইলসহ দক্ষতা আমদানি হয়েছে"
     }
   },
   "toolsPage": {

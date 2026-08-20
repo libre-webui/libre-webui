@@ -2819,6 +2819,22 @@
       "hint": "Bir skills.sh veya GitHub bağlantısı, owner/repo/skill ya da bir SKILL.md dosyasına doğrudan bağlantı yapıştırın.",
       "placeholder": "https://skills.sh/owner/repo/skill veya owner/repo/skill",
       "overwrite": "Slug zaten varsa becerimin üzerine yaz"
+    },
+    "files": {
+      "title": "Paketlenmiş dosyalar",
+      "hint": "Modelin read_skill_file ile istek üzerine okuduğu referans belgeleri ve betikler.",
+      "add": "Dosya ekle",
+      "empty": "Henüz paketlenmiş dosya yok.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Dosya içeriği…",
+      "loadFailed": "Dosya yüklenemedi",
+      "saveFailed": "Dosya kaydedilemedi",
+      "deleteFailed": "Dosya silinemedi"
+    },
+    "folderImport": {
+      "button": "Klasörden",
+      "missingSkillMd": "Klasörde bir SKILL.md dosyası olmalı",
+      "done": "Beceri {{count}} paketlenmiş dosyayla içe aktarıldı"
     }
   },
   "toolsPage": {

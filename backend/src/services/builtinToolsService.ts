@@ -27,7 +27,12 @@ import type { AuthzActor } from './authorizationService.js';
 import type { EffectiveTool } from '../types/tools.js';
 import { userCanUseWebSearch, webSearch } from './webSearchService.js';
 import documentService from './documentService.js';
-import { getSkillBySlug, listSkills } from './skillService.js';
+import {
+  getSkillBySlug,
+  getSkillFile,
+  listSkillFiles,
+  listSkills,
+} from './skillService.js';
 
 const MAX_RESULT_CHARS = 24_000;
 
@@ -209,8 +214,70 @@ const BUILTIN_TOOLS: readonly BuiltinToolSpec[] = [
           truncated: false,
         };
       }
+      const files = (await listSkillFiles(skill.id, context.actor)) ?? [];
+      const inventory =
+        files.length > 0
+          ? [
+              '',
+              '',
+              'Bundled files (read one with read_skill_file):',
+              ...files.map(file => `- ${file.path} (${file.size} bytes)`),
+            ].join('\n')
+          : '';
       return {
-        ...bounded(`# Skill: ${skill.name}\n\n${skill.instructions}`),
+        ...bounded(
+          `# Skill: ${skill.name}\n\n${skill.instructions}${inventory}`
+        ),
+        isError: false,
+      };
+    },
+  },
+  {
+    name: 'read_skill_file',
+    description:
+      'Read a file bundled with a loaded skill. Pass the skill slug and the relative path listed by load_skill.',
+    paramsSchema: {
+      type: 'object',
+      properties: {
+        slug: { type: 'string', description: 'The skill slug' },
+        path: {
+          type: 'string',
+          description: 'The bundled file path, as listed by load_skill',
+        },
+      },
+      required: ['slug', 'path'],
+    },
+    available: async context => (await availableSkills(context)).length > 0,
+    execute: async (args, context) => {
+      const slug = asString(args.slug).trim();
+      const path = asString(args.path).trim();
+      const permitted = await availableSkills(context);
+      const listed = permitted.find(skill => skill.slug === slug);
+      const skill = listed
+        ? await getSkillBySlug(context.actor.userId, slug)
+        : null;
+      if (!skill || !skill.enabled) {
+        return {
+          text: `No enabled skill named "${slug}" is available.`,
+          isError: true,
+          truncated: false,
+        };
+      }
+      let file;
+      try {
+        file = await getSkillFile(skill.id, context.actor, path);
+      } catch {
+        file = null;
+      }
+      if (!file) {
+        return {
+          text: `The skill "${slug}" bundles no file at "${path}". Call load_skill to list its files.`,
+          isError: true,
+          truncated: false,
+        };
+      }
+      return {
+        ...bounded(`# ${slug}/${file.path}\n\n${file.content}`),
         isError: false,
       };
     },

@@ -2819,6 +2819,22 @@
       "hint": "Plak een skills.sh- of GitHub-link, owner/repo/skill, of een directe link naar een SKILL.md-bestand.",
       "placeholder": "https://skills.sh/owner/repo/skill of owner/repo/skill",
       "overwrite": "Mijn vaardigheid overschrijven als de slug al bestaat"
+    },
+    "files": {
+      "title": "Meegeleverde bestanden",
+      "hint": "Referentiedocumenten en scripts die het model op verzoek leest met read_skill_file.",
+      "add": "Bestand toevoegen",
+      "empty": "Nog geen meegeleverde bestanden.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Bestandsinhoud…",
+      "loadFailed": "Kan het bestand niet laden",
+      "saveFailed": "Kan het bestand niet opslaan",
+      "deleteFailed": "Kan het bestand niet verwijderen"
+    },
+    "folderImport": {
+      "button": "Uit map",
+      "missingSkillMd": "De map heeft een SKILL.md-bestand nodig",
+      "done": "Skill geïmporteerd met {{count}} meegeleverde bestanden"
     }
   },
   "toolsPage": {

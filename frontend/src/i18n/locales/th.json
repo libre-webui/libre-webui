@@ -2819,6 +2819,22 @@
       "hint": "วางลิงก์ skills.sh หรือ GitHub, owner/repo/skill หรือลิงก์ตรงไปยังไฟล์ SKILL.md",
       "placeholder": "https://skills.sh/owner/repo/skill หรือ owner/repo/skill",
       "overwrite": "เขียนทับสกิลของฉันหากมีสลักนี้อยู่แล้ว"
+    },
+    "files": {
+      "title": "ไฟล์ที่แนบมา",
+      "hint": "เอกสารอ้างอิงและสคริปต์ที่โมเดลอ่านตามต้องการผ่าน read_skill_file",
+      "add": "เพิ่มไฟล์",
+      "empty": "ยังไม่มีไฟล์ที่แนบมา",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "เนื้อหาไฟล์…",
+      "loadFailed": "โหลดไฟล์ไม่สำเร็จ",
+      "saveFailed": "บันทึกไฟล์ไม่สำเร็จ",
+      "deleteFailed": "ลบไฟล์ไม่สำเร็จ"
+    },
+    "folderImport": {
+      "button": "จากโฟลเดอร์",
+      "missingSkillMd": "โฟลเดอร์ต้องมีไฟล์ SKILL.md",
+      "done": "นำเข้าทักษะพร้อมไฟล์ที่แนบมา {{count}} ไฟล์แล้ว"
     }
   },
   "toolsPage": {

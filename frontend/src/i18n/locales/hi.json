@@ -2819,6 +2819,22 @@
       "hint": "skills.sh या GitHub लिंक, owner/repo/skill, या SKILL.md फ़ाइल का सीधा लिंक पेस्ट करें।",
       "placeholder": "https://skills.sh/owner/repo/skill या owner/repo/skill",
       "overwrite": "स्लग पहले से मौजूद हो तो मेरी स्किल अधिलेखित करें"
+    },
+    "files": {
+      "title": "साथ में शामिल फ़ाइलें",
+      "hint": "संदर्भ दस्तावेज़ और स्क्रिप्ट जिन्हें मॉडल read_skill_file से ज़रूरत पर पढ़ता है।",
+      "add": "फ़ाइल जोड़ें",
+      "empty": "अभी कोई शामिल फ़ाइल नहीं है।",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "फ़ाइल की सामग्री…",
+      "loadFailed": "फ़ाइल लोड नहीं हो सकी",
+      "saveFailed": "फ़ाइल सहेजी नहीं जा सकी",
+      "deleteFailed": "फ़ाइल हटाई नहीं जा सकी"
+    },
+    "folderImport": {
+      "button": "फ़ोल्डर से",
+      "missingSkillMd": "फ़ोल्डर में SKILL.md फ़ाइल होनी चाहिए",
+      "done": "कौशल {{count}} शामिल फ़ाइलों के साथ आयात हुआ"
     }
   },
   "toolsPage": {

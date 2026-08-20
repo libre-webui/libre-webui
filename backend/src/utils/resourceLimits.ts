@@ -47,6 +47,10 @@ export const MAX_SKILL_NAME_LENGTH = 200;
 export const MAX_SKILL_DESCRIPTION_LENGTH = 1000;
 export const MAX_SKILL_INSTRUCTIONS_LENGTH = 100_000;
 export const MAX_SKILL_VERSIONS = 50;
+export const MAX_SKILL_FILES = 32;
+export const MAX_SKILL_FILE_PATH_LENGTH = 200;
+export const MAX_SKILL_FILE_CONTENT_LENGTH = 200_000;
+export const MAX_SKILL_FILES_TOTAL_BYTES = 1_000_000;
 
 export class ResourcePolicyError extends Error {
   constructor(

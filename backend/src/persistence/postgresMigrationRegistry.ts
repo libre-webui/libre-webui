@@ -21,6 +21,7 @@ import { POSTGRES_PLUGIN_DEFINITION_MIGRATION } from './postgresPluginDefinition
 import { POSTGRES_TRUST_FOUNDATION_MIGRATION } from './postgresTrustFoundationMigration.js';
 import { POSTGRES_PERSONAL_AUTOMATIONS_MIGRATION } from './postgresPersonalAutomationsMigration.js';
 import { POSTGRES_AGENT_FOUNDATION_MIGRATION } from './postgresAgentFoundationMigration.js';
+import { POSTGRES_SKILL_FILES_MIGRATION } from './postgresSkillFilesMigration.js';
 import type { PostgresMigration } from './postgresMigrationTypes.js';
 import { validatePostgresMigrationRegistry } from './postgresMigrations.js';
 
@@ -44,6 +45,7 @@ export const POSTGRES_MIGRATIONS: readonly PostgresMigration[] =
         POSTGRES_TRUST_FOUNDATION_MIGRATION,
         POSTGRES_PERSONAL_AUTOMATIONS_MIGRATION,
         POSTGRES_AGENT_FOUNDATION_MIGRATION,
+        POSTGRES_SKILL_FILES_MIGRATION,
       ].map(migration => Object.freeze({ ...migration }))
     )
   );

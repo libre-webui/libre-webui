@@ -2819,6 +2819,22 @@
       "hint": "Füge einen skills.sh- oder GitHub-Link ein, owner/repo/skill oder einen direkten Link zu einer SKILL.md-Datei.",
       "placeholder": "https://skills.sh/owner/repo/skill oder owner/repo/skill",
       "overwrite": "Meinen Skill überschreiben, wenn der Slug bereits existiert"
+    },
+    "files": {
+      "title": "Mitgelieferte Dateien",
+      "hint": "Referenzdokumente und Skripte, die das Modell bei Bedarf mit read_skill_file liest.",
+      "add": "Datei hinzufügen",
+      "empty": "Noch keine mitgelieferten Dateien.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Dateiinhalt…",
+      "loadFailed": "Datei konnte nicht geladen werden",
+      "saveFailed": "Datei konnte nicht gespeichert werden",
+      "deleteFailed": "Datei konnte nicht gelöscht werden"
+    },
+    "folderImport": {
+      "button": "Aus Ordner",
+      "missingSkillMd": "Der Ordner benötigt eine SKILL.md-Datei",
+      "done": "Skill mit {{count}} mitgelieferten Dateien importiert"
     }
   },
   "toolsPage": {

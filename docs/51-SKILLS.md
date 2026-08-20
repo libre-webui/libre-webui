@@ -42,6 +42,21 @@ same pinned egress guard as tool servers — public addresses only, size
 capped — and the document lands as your own editable skill, so a remote
 source never updates itself silently.
 
+## Bundled files
+
+A skill can carry companion files in the `SKILL.md` folder layout —
+reference documents, templates, and script sources the instructions point
+at. `load_skill` lists the bundle at the end of the instructions, and the
+model reads a file on demand with the `read_skill_file` tool, so a large
+reference never occupies context until it is actually needed.
+
+Files travel everywhere the skill does: **Settings → Skills → From
+folder** uploads a local SKILL.md folder in one step, a remote import
+pulls the text files sitting next to the fetched SKILL.md, the JSON export
+carries the bundle, and the edit modal manages files one by one. Paths are
+relative and can never escape the skill; contents are text-only, encrypted
+at rest, and bounded (32 files, 200 KB each, 1 MB per skill).
+
 ## Sharing and profiles
 
 Skills are private by default and shareable through the common

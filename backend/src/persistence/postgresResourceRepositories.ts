@@ -20,6 +20,7 @@ import type {
   PreferenceRepository,
   PromptRepository,
   SessionFolderRepository,
+  SkillFileRepository,
   SkillRepository,
   StoredAutomationRecord,
   StoredAutomationRunRecord,
@@ -33,6 +34,7 @@ import type {
   StoredPreferenceRecord,
   StoredPromptRecord,
   StoredPromptVersionRecord,
+  StoredSkillFileRecord,
   StoredSkillRecord,
   StoredSkillVersionRecord,
   StoredToolApprovalRecord,
@@ -205,6 +207,13 @@ const skillVersion = (row: NumericRow): StoredSkillVersionRecord => ({
   ...(row as unknown as StoredSkillVersionRecord),
   version: number(row.version, 'skill revision version'),
   created_at: number(row.created_at, 'skill revision created_at'),
+});
+
+const skillFile = (row: NumericRow): StoredSkillFileRecord => ({
+  ...(row as unknown as StoredSkillFileRecord),
+  size: number(row.size, 'skill file size'),
+  created_at: number(row.created_at, 'skill file created_at'),
+  updated_at: number(row.updated_at, 'skill file updated_at'),
 });
 
 const changes = (rowCount: number | null): number => rowCount ?? 0;
@@ -1763,6 +1772,116 @@ class PostgresSkillRepository implements SkillRepository {
   }
 }
 
+class PostgresSkillFileRepository implements SkillFileRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async listBySkill(skillId: string): Promise<StoredSkillFileRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM skill_files
+        WHERE skill_id = $1
+        ORDER BY path ASC`,
+      [skillId]
+    );
+    return result.rows.map(skillFile);
+  }
+
+  async find(
+    skillId: string,
+    path: string
+  ): Promise<StoredSkillFileRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM skill_files WHERE skill_id = $1 AND path = $2',
+      [skillId, path]
+    );
+    return result.rows[0] ? skillFile(result.rows[0]) : null;
+  }
+
+  async upsert(
+    file: StoredSkillFileRecord,
+    maximumPerSkill: number
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      const existing = await client.query(
+        'SELECT id FROM skill_files WHERE skill_id = $1 AND path = $2 FOR UPDATE',
+        [file.skill_id, file.path]
+      );
+      if (!existing.rows[0]) {
+        const count = await client.query<{ count: string }>(
+          'SELECT COUNT(*)::text AS count FROM skill_files WHERE skill_id = $1',
+          [file.skill_id]
+        );
+        if (Number(count.rows[0]?.count || 0) >= maximumPerSkill) {
+          throw new PersistenceResourceLimitError(
+            'skill-file',
+            maximumPerSkill
+          );
+        }
+      }
+      await client.query(
+        `INSERT INTO skill_files
+           (id, skill_id, path, content, size, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (skill_id, path) DO UPDATE SET
+           content = EXCLUDED.content,
+           size = EXCLUDED.size,
+           updated_at = EXCLUDED.updated_at`,
+        [
+          file.id,
+          file.skill_id,
+          file.path,
+          file.content,
+          file.size,
+          file.created_at,
+          file.updated_at,
+        ]
+      );
+    });
+  }
+
+  async replaceAllForSkill(
+    skillId: string,
+    files: readonly StoredSkillFileRecord[]
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      await client.query('DELETE FROM skill_files WHERE skill_id = $1', [
+        skillId,
+      ]);
+      for (const file of files) {
+        if (file.skill_id !== skillId) {
+          throw new Error('A skill file does not belong to its skill');
+        }
+        await client.query(
+          `INSERT INTO skill_files
+             (id, skill_id, path, content, size, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            file.id,
+            file.skill_id,
+            file.path,
+            file.content,
+            file.size,
+            file.created_at,
+            file.updated_at,
+          ]
+        );
+      }
+    });
+  }
+
+  async delete(skillId: string, path: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            'DELETE FROM skill_files WHERE skill_id = $1 AND path = $2',
+            [skillId, path]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+}
+
 class PostgresSessionFolderRepository implements SessionFolderRepository {
   constructor(private readonly database: PostgresDatabase) {}
 
@@ -2427,6 +2546,7 @@ export const createPostgresResourceRepositories = (
   toolApprovals: new PostgresToolApprovalRepository(database),
   prompts: new PostgresPromptRepository(database),
   skills: new PostgresSkillRepository(database),
+  skillFiles: new PostgresSkillFileRepository(database),
   sessionFolders: new PostgresSessionFolderRepository(database),
   preferences: new PostgresPreferenceRepository(database),
   systemSettings: new PostgresSystemSettingRepository(database),

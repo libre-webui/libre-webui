@@ -470,6 +470,28 @@ export interface StoredSkillVersionRecord {
   created_at: number;
 }
 
+export interface StoredSkillFileRecord {
+  id: string;
+  skill_id: string;
+  path: string;
+  content: string;
+  size: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface SkillFileRepository {
+  listBySkill(skillId: string): Promise<StoredSkillFileRecord[]>;
+  find(skillId: string, path: string): Promise<StoredSkillFileRecord | null>;
+  upsert(file: StoredSkillFileRecord, maximumPerSkill: number): Promise<void>;
+  /** Replace a skill's whole bundle atomically (imports and full saves). */
+  replaceAllForSkill(
+    skillId: string,
+    files: readonly StoredSkillFileRecord[]
+  ): Promise<void>;
+  delete(skillId: string, path: string): Promise<boolean>;
+}
+
 export interface SkillRepository {
   listByOwner(userId: string, maximum: number): Promise<StoredSkillRecord[]>;
   findByOwner(
@@ -664,6 +686,7 @@ export interface ApplicationResourceRepositories {
   toolApprovals: ToolApprovalRepository;
   prompts: PromptRepository;
   skills: SkillRepository;
+  skillFiles: SkillFileRepository;
   sessionFolders: SessionFolderRepository;
   preferences: PreferenceRepository;
   systemSettings: SystemSettingRepository;
@@ -695,7 +718,8 @@ export class PersistenceResourceLimitError extends Error {
       | 'automation'
       | 'tool-server'
       | 'prompt'
-      | 'skill',
+      | 'skill'
+      | 'skill-file',
     readonly maximum: number
   ) {
     super(`The ${resource} storage limit of ${maximum} has been reached`);

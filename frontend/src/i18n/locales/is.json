@@ -2819,6 +2819,22 @@
       "hint": "Límdu skills.sh- eða GitHub-tengil, owner/repo/skill, eða beinan tengil á SKILL.md-skrá.",
       "placeholder": "https://skills.sh/owner/repo/skill eða owner/repo/skill",
       "overwrite": "Skrifa yfir færnina mína ef slóðarheitið er þegar til"
+    },
+    "files": {
+      "title": "Meðfylgjandi skrár",
+      "hint": "Tilvísunarskjöl og forskriftir sem líkanið les eftir þörfum með read_skill_file.",
+      "add": "Bæta við skrá",
+      "empty": "Engar meðfylgjandi skrár enn.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Innihald skráar…",
+      "loadFailed": "Ekki tókst að hlaða skránni",
+      "saveFailed": "Ekki tókst að vista skrána",
+      "deleteFailed": "Ekki tókst að eyða skránni"
+    },
+    "folderImport": {
+      "button": "Úr möppu",
+      "missingSkillMd": "Mappan þarf SKILL.md-skrá",
+      "done": "Færni flutt inn með {{count}} meðfylgjandi skrám"
     }
   },
   "toolsPage": {

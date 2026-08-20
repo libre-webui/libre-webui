@@ -623,3 +623,304 @@ test('a skill imports from a remote store URL through the egress guard', async t
     delete process.env.TOOLS_PRIVATE_NETWORK_ALLOWLIST;
   }
 });
+
+test('companion files round-trip, stay encrypted, and never escape the skill', async () => {
+  const created = (
+    await (
+      await post(baseUrl, ownerToken, {
+        slug: 'bundled-skill',
+        name: 'Bundled skill',
+        description: 'carries companion files',
+        instructions: 'Read reference.md before answering.',
+      })
+    ).json()
+  ).data;
+
+  let response = await fetch(`${baseUrl}/${created.id}/files`, {
+    method: 'PUT',
+    headers: headersFor(ownerToken),
+    body: JSON.stringify({
+      path: 'docs/reference.md',
+      content: '# Reference\n\nThe canonical checklist.',
+    }),
+  });
+  assert.equal(response.status, 200);
+  const saved = (await response.json()).data;
+  assert.equal(saved.path, 'docs/reference.md');
+  assert.ok(saved.size > 0);
+
+  const row = database
+    .prepare('SELECT * FROM skill_files WHERE skill_id = ?')
+    .get(created.id);
+  assert.ok(!row.content.includes('checklist'), 'file contents are encrypted');
+  assert.equal(
+    encryptionService.decrypt(row.content),
+    '# Reference\n\nThe canonical checklist.'
+  );
+
+  const listed = (
+    await (
+      await fetch(`${baseUrl}/${created.id}/files`, {
+        headers: headersFor(ownerToken),
+      })
+    ).json()
+  ).data;
+  assert.deepEqual(
+    listed.map(file => file.path),
+    ['docs/reference.md']
+  );
+
+  const content = (
+    await (
+      await fetch(
+        `${baseUrl}/${created.id}/files/content?path=docs%2Freference.md`,
+        { headers: headersFor(ownerToken) }
+      )
+    ).json()
+  ).data;
+  assert.match(content.content, /canonical checklist/);
+
+  // Traversal, absolute paths, and SKILL.md itself are refused.
+  for (const path of ['../escape.md', '/etc/passwd', 'SKILL.md', 'a/../b']) {
+    response = await fetch(`${baseUrl}/${created.id}/files`, {
+      method: 'PUT',
+      headers: headersFor(ownerToken),
+      body: JSON.stringify({ path, content: 'nope' }),
+    });
+    assert.equal(response.status, 400, `"${path}" must be rejected`);
+  }
+
+  // A read grant is not enough to write files.
+  response = await fetch(`${baseUrl}/${created.id}/files`, {
+    method: 'PUT',
+    headers: headersFor(strangerToken),
+    body: JSON.stringify({ path: 'hijack.md', content: 'nope' }),
+  });
+  assert.equal(response.status, 404, 'no access reads as absent');
+
+  response = await fetch(
+    `${baseUrl}/${created.id}/files?path=docs%2Freference.md`,
+    { method: 'DELETE', headers: headersFor(ownerToken) }
+  );
+  assert.equal(response.status, 200);
+  assert.equal(
+    database
+      .prepare('SELECT COUNT(*) AS count FROM skill_files WHERE skill_id = ?')
+      .get(created.id).count,
+    0
+  );
+});
+
+test('imports and exports carry companion files; deletes clean them up', async () => {
+  const imported = await skillService.importSkill(OWNER, {
+    markdown: [
+      '---',
+      'name: Folder skill',
+      'slug: folder-skill',
+      'description: A SKILL.md folder with companions.',
+      '---',
+      '',
+      'Use scripts/run.py as described in docs/usage.md.',
+    ].join('\n'),
+    files: [
+      { path: 'docs/usage.md', content: '# Usage\n\nRun the script.' },
+      { path: 'scripts/run.py', content: 'print("hello")' },
+    ],
+  });
+
+  const exported = await skillService.exportSkill(imported.id, ownerActor);
+  assert.deepEqual(
+    exported.files.map(file => file.path),
+    ['docs/usage.md', 'scripts/run.py']
+  );
+  assert.match(exported.files[1].content, /hello/);
+
+  // Re-importing the export elsewhere reproduces the whole folder.
+  const copied = await skillService.importSkill(STRANGER, exported);
+  const copiedExport = await skillService.exportSkill(copied.id, strangerActor);
+  assert.equal(copiedExport.files.length, 2);
+
+  // An overwrite import with a files array replaces the set.
+  await skillService.importSkill(
+    OWNER,
+    { ...exported, files: [{ path: 'only.md', content: 'the survivor' }] },
+    { overwriteSlug: true }
+  );
+  const replaced = await skillService.listSkillFiles(imported.id, ownerActor);
+  assert.deepEqual(
+    replaced.map(file => file.path),
+    ['only.md']
+  );
+
+  await skillService.deleteSkill(imported.id, OWNER);
+  assert.equal(
+    database
+      .prepare('SELECT COUNT(*) AS count FROM skill_files WHERE skill_id = ?')
+      .get(imported.id).count,
+    0,
+    'companion files are removed with the skill'
+  );
+});
+
+test('load_skill lists bundled files and read_skill_file serves them', async () => {
+  const tools = await distModule('services/builtinToolsService.js');
+  await skillService.importSkill(OWNER, {
+    markdown: [
+      '---',
+      'name: Tooling skill',
+      'slug: tooling-skill',
+      'description: Uses a bundled checklist.',
+      '---',
+      '',
+      'Consult checklist.md first.',
+    ].join('\n'),
+    files: [{ path: 'checklist.md', content: '1. Verify\n2. Ship' }],
+  });
+  const context = { actor: ownerActor };
+
+  const loaded = await tools.executeBuiltinTool(
+    'load_skill',
+    { slug: 'tooling-skill' },
+    context
+  );
+  assert.equal(loaded.isError, false);
+  assert.match(loaded.text, /Bundled files \(read one with read_skill_file\)/);
+  assert.match(loaded.text, /- checklist\.md \(\d+ bytes\)/);
+
+  const catalog = await tools.effectiveBuiltinTools(context);
+  assert.ok(
+    catalog.some(tool => tool.name === 'read_skill_file'),
+    'read_skill_file joins the catalog when skills exist'
+  );
+
+  const file = await tools.executeBuiltinTool(
+    'read_skill_file',
+    { slug: 'tooling-skill', path: 'checklist.md' },
+    context
+  );
+  assert.equal(file.isError, false);
+  assert.match(file.text, /1\. Verify/);
+
+  const missing = await tools.executeBuiltinTool(
+    'read_skill_file',
+    { slug: 'tooling-skill', path: 'nope.md' },
+    context
+  );
+  assert.equal(missing.isError, true);
+  assert.match(missing.text, /bundles no file/);
+
+  const strangerRead = await tools.executeBuiltinTool(
+    'read_skill_file',
+    { slug: 'tooling-skill', path: 'checklist.md' },
+    { actor: strangerActor }
+  );
+  assert.equal(strangerRead.isError, true, 'skills stay per-user');
+});
+
+test('remote folder skills pull their companion files through the guard', async t => {
+  assert.deepEqual(
+    skillService.parseRawGitHubSkillUrl(
+      'https://raw.githubusercontent.com/acme/repo/HEAD/skills/writer/SKILL.md'
+    ),
+    { owner: 'acme', repo: 'repo', ref: 'HEAD', dir: 'skills/writer' }
+  );
+  assert.equal(
+    skillService.parseRawGitHubSkillUrl(
+      'https://raw.githubusercontent.com/acme/repo/HEAD/SKILL.md'
+    ),
+    null,
+    'a root SKILL.md has no folder to walk'
+  );
+  assert.equal(
+    skillService.parseRawGitHubSkillUrl('https://example.com/store/my.md'),
+    null
+  );
+
+  const remote = createServer((req, res) => {
+    const url = new URL(req.url, 'http://localhost');
+    if (url.pathname === '/repos/acme/repo/contents/skills/writer') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(
+        JSON.stringify([
+          {
+            name: 'SKILL.md',
+            path: 'skills/writer/SKILL.md',
+            type: 'file',
+            size: 10,
+            download_url: `http://127.0.0.1:${remote.address().port}/raw/SKILL.md`,
+          },
+          {
+            name: 'style.md',
+            path: 'skills/writer/style.md',
+            type: 'file',
+            size: 20,
+            download_url: `http://127.0.0.1:${remote.address().port}/raw/style.md`,
+          },
+          {
+            name: 'logo.png',
+            path: 'skills/writer/logo.png',
+            type: 'file',
+            size: 20,
+            download_url: `http://127.0.0.1:${remote.address().port}/raw/logo.png`,
+          },
+          {
+            name: 'templates',
+            path: 'skills/writer/templates',
+            type: 'dir',
+            size: 0,
+          },
+        ])
+      );
+      return;
+    }
+    if (
+      url.pathname === '/repos/acme/repo/contents/skills/writer/templates'
+    ) {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(
+        JSON.stringify([
+          {
+            name: 'note.txt',
+            path: 'skills/writer/templates/note.txt',
+            type: 'file',
+            size: 12,
+            download_url: `http://127.0.0.1:${remote.address().port}/raw/note.txt`,
+          },
+        ])
+      );
+      return;
+    }
+    if (url.pathname === '/raw/style.md') {
+      res.writeHead(200, { 'content-type': 'text/markdown' });
+      res.end('# Style rules');
+      return;
+    }
+    if (url.pathname === '/raw/note.txt') {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.end('Note template');
+      return;
+    }
+    res.writeHead(404).end();
+  });
+  await new Promise(resolve => remote.listen(0, '127.0.0.1', resolve));
+  t.after(() => remote.close());
+
+  process.env.TOOLS_PRIVATE_NETWORK_ALLOWLIST = '127.0.0.1';
+  try {
+    const files = await skillService.fetchSkillCompanionFiles(
+      { owner: 'acme', repo: 'repo', ref: 'HEAD', dir: 'skills/writer' },
+      { apiBase: `http://127.0.0.1:${remote.address().port}` }
+    );
+    assert.deepEqual(
+      files.map(file => file.path).sort(),
+      ['style.md', 'templates/note.txt'],
+      'SKILL.md and binaries are skipped; subfolders are walked'
+    );
+    assert.equal(
+      files.find(file => file.path === 'style.md').content,
+      '# Style rules'
+    );
+  } finally {
+    delete process.env.TOOLS_PRIVATE_NETWORK_ALLOWLIST;
+  }
+});

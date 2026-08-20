@@ -26,12 +26,16 @@ import {
 import {
   createSkill,
   deleteSkill,
+  deleteSkillFile,
   exportSkill,
   getSkill,
+  getSkillFile,
   importSkill,
   importSkillFromUrl,
+  listSkillFiles,
   listSkills,
   listVersions,
+  putSkillFile,
   rollbackSkill,
   updateSkill,
   type SkillInput,
@@ -233,6 +237,80 @@ router.get('/:skillId/export', async (req: AuthenticatedRequest, res) => {
     res.json({ success: true, data: payload } as ApiResponse);
   } catch (error) {
     sendSkillError(res, error, 'Failed to export the skill');
+  }
+});
+
+router.get('/:skillId/files', async (req: AuthenticatedRequest, res) => {
+  try {
+    const files = await listSkillFiles(
+      req.params.skillId as string,
+      actorOf(req)
+    );
+    if (!files) {
+      notFound(res);
+      return;
+    }
+    res.json({ success: true, data: files } as ApiResponse);
+  } catch (error) {
+    sendSkillError(res, error, 'Failed to list the skill files');
+  }
+});
+
+router.get(
+  '/:skillId/files/content',
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const file = await getSkillFile(
+        req.params.skillId as string,
+        actorOf(req),
+        req.query.path
+      );
+      if (!file) {
+        notFound(res);
+        return;
+      }
+      res.json({ success: true, data: file } as ApiResponse);
+    } catch (error) {
+      sendSkillError(res, error, 'Failed to read the skill file');
+    }
+  }
+);
+
+router.put('/:skillId/files', async (req: AuthenticatedRequest, res) => {
+  try {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const file = await putSkillFile(
+      req.params.skillId as string,
+      actorOf(req),
+      {
+        path: body.path,
+        content: body.content,
+      }
+    );
+    if (!file) {
+      notFound(res);
+      return;
+    }
+    res.json({ success: true, data: file } as ApiResponse);
+  } catch (error) {
+    sendSkillError(res, error, 'Failed to save the skill file');
+  }
+});
+
+router.delete('/:skillId/files', async (req: AuthenticatedRequest, res) => {
+  try {
+    const deleted = await deleteSkillFile(
+      req.params.skillId as string,
+      actorOf(req),
+      req.query.path
+    );
+    if (deleted === null || deleted === false) {
+      notFound(res);
+      return;
+    }
+    res.json({ success: true, message: 'File deleted' } as ApiResponse);
+  } catch (error) {
+    sendSkillError(res, error, 'Failed to delete the skill file');
   }
 });
 

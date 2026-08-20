@@ -2819,6 +2819,22 @@
       "hint": "Wklej link skills.sh lub GitHub, owner/repo/skill, albo bezpośredni link do pliku SKILL.md.",
       "placeholder": "https://skills.sh/owner/repo/skill lub owner/repo/skill",
       "overwrite": "Nadpisz moją umiejętność, jeśli slug już istnieje"
+    },
+    "files": {
+      "title": "Dołączone pliki",
+      "hint": "Dokumenty referencyjne i skrypty, które model czyta na żądanie przez read_skill_file.",
+      "add": "Dodaj plik",
+      "empty": "Brak dołączonych plików.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Zawartość pliku…",
+      "loadFailed": "Nie udało się wczytać pliku",
+      "saveFailed": "Nie udało się zapisać pliku",
+      "deleteFailed": "Nie udało się usunąć pliku"
+    },
+    "folderImport": {
+      "button": "Z folderu",
+      "missingSkillMd": "Folder musi zawierać plik SKILL.md",
+      "done": "Zaimportowano umiejętność z {{count}} dołączonymi plikami"
     }
   },
   "toolsPage": {

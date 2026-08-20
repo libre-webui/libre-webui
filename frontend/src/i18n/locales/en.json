@@ -2819,6 +2819,22 @@
       "hint": "Paste a skills.sh or GitHub link, owner/repo/skill, or a direct link to a SKILL.md file.",
       "placeholder": "https://skills.sh/owner/repo/skill or owner/repo/skill",
       "overwrite": "Overwrite my skill if the slug already exists"
+    },
+    "files": {
+      "title": "Bundled files",
+      "hint": "Reference documents and scripts the model reads on demand with read_skill_file.",
+      "add": "Add file",
+      "empty": "No bundled files yet.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "File content…",
+      "loadFailed": "Failed to load the file",
+      "saveFailed": "Failed to save the file",
+      "deleteFailed": "Failed to delete the file"
+    },
+    "folderImport": {
+      "button": "From folder",
+      "missingSkillMd": "The folder needs a SKILL.md file",
+      "done": "Skill imported with {{count}} bundled files"
     }
   },
   "toolsPage": {

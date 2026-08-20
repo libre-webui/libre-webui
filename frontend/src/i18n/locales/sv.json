@@ -2819,6 +2819,22 @@
       "hint": "Klistra in en skills.sh- eller GitHub-länk, owner/repo/skill, eller en direktlänk till en SKILL.md-fil.",
       "placeholder": "https://skills.sh/owner/repo/skill eller owner/repo/skill",
       "overwrite": "Skriv över min färdighet om denna slug redan finns"
+    },
+    "files": {
+      "title": "Medföljande filer",
+      "hint": "Referensdokument och skript som modellen läser vid behov med read_skill_file.",
+      "add": "Lägg till fil",
+      "empty": "Inga medföljande filer ännu.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Filinnehåll…",
+      "loadFailed": "Det gick inte att läsa in filen",
+      "saveFailed": "Det gick inte att spara filen",
+      "deleteFailed": "Det gick inte att ta bort filen"
+    },
+    "folderImport": {
+      "button": "Från mapp",
+      "missingSkillMd": "Mappen behöver en SKILL.md-fil",
+      "done": "Färdighet importerad med {{count}} medföljande filer"
     }
   },
   "toolsPage": {

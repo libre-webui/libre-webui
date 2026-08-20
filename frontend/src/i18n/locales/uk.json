@@ -2819,6 +2819,22 @@
       "hint": "Вставте посилання skills.sh чи GitHub, owner/repo/skill або пряме посилання на файл SKILL.md.",
       "placeholder": "https://skills.sh/owner/repo/skill або owner/repo/skill",
       "overwrite": "Перезаписати мою навичку, якщо слаг уже існує"
+    },
+    "files": {
+      "title": "Додані файли",
+      "hint": "Довідкові документи та скрипти, які модель читає на вимогу через read_skill_file.",
+      "add": "Додати файл",
+      "empty": "Доданих файлів поки немає.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Вміст файлу…",
+      "loadFailed": "Не вдалося завантажити файл",
+      "saveFailed": "Не вдалося зберегти файл",
+      "deleteFailed": "Не вдалося видалити файл"
+    },
+    "folderImport": {
+      "button": "З папки",
+      "missingSkillMd": "У папці має бути файл SKILL.md",
+      "done": "Навичку імпортовано з {{count}} доданими файлами"
     }
   },
   "toolsPage": {

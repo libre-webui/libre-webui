@@ -2819,6 +2819,22 @@
       "hint": "Vložte odkaz na skills.sh nebo GitHub, owner/repo/skill, nebo přímý odkaz na soubor SKILL.md.",
       "placeholder": "https://skills.sh/owner/repo/skill nebo owner/repo/skill",
       "overwrite": "Přepsat moji dovednost, pokud slug už existuje"
+    },
+    "files": {
+      "title": "Přiložené soubory",
+      "hint": "Referenční dokumenty a skripty, které model čte na vyžádání přes read_skill_file.",
+      "add": "Přidat soubor",
+      "empty": "Zatím žádné přiložené soubory.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Obsah souboru…",
+      "loadFailed": "Soubor se nepodařilo načíst",
+      "saveFailed": "Soubor se nepodařilo uložit",
+      "deleteFailed": "Soubor se nepodařilo smazat"
+    },
+    "folderImport": {
+      "button": "Ze složky",
+      "missingSkillMd": "Složka musí obsahovat soubor SKILL.md",
+      "done": "Dovednost importována s {{count}} přiloženými soubory"
     }
   },
   "toolsPage": {

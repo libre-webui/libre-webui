@@ -30,6 +30,7 @@ import type {
   PreferenceRepository,
   PromptRepository,
   SessionFolderRepository,
+  SkillFileRepository,
   SkillRepository,
   StoredAutomationRecord,
   StoredAutomationRunRecord,
@@ -43,6 +44,7 @@ import type {
   StoredPreferenceRecord,
   StoredPromptRecord,
   StoredPromptVersionRecord,
+  StoredSkillFileRecord,
   StoredSkillRecord,
   StoredSkillVersionRecord,
   StoredToolApprovalRecord,
@@ -1563,6 +1565,114 @@ class SQLiteSkillRepository implements SkillRepository {
   }
 }
 
+class SQLiteSkillFileRepository implements SkillFileRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async listBySkill(skillId: string): Promise<StoredSkillFileRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM skill_files
+         WHERE skill_id = ?
+         ORDER BY path ASC`
+      )
+      .all(skillId) as StoredSkillFileRecord[];
+  }
+
+  async find(
+    skillId: string,
+    path: string
+  ): Promise<StoredSkillFileRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM skill_files WHERE skill_id = ? AND path = ?')
+        .get(skillId, path) as StoredSkillFileRecord | undefined) ?? null
+    );
+  }
+
+  async upsert(
+    file: StoredSkillFileRecord,
+    maximumPerSkill: number
+  ): Promise<void> {
+    const upsert = this.database.transaction(() => {
+      const exists = this.database
+        .prepare('SELECT id FROM skill_files WHERE skill_id = ? AND path = ?')
+        .get(file.skill_id, file.path);
+      if (!exists) {
+        const row = this.database
+          .prepare(
+            'SELECT COUNT(*) AS count FROM skill_files WHERE skill_id = ?'
+          )
+          .get(file.skill_id) as { count: number };
+        if (row.count >= maximumPerSkill) {
+          throw new PersistenceResourceLimitError(
+            'skill-file',
+            maximumPerSkill
+          );
+        }
+      }
+      this.database
+        .prepare(
+          `INSERT INTO skill_files
+             (id, skill_id, path, content, size, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(skill_id, path) DO UPDATE SET
+             content = excluded.content,
+             size = excluded.size,
+             updated_at = excluded.updated_at`
+        )
+        .run(
+          file.id,
+          file.skill_id,
+          file.path,
+          file.content,
+          file.size,
+          file.created_at,
+          file.updated_at
+        );
+    });
+    upsert();
+  }
+
+  async replaceAllForSkill(
+    skillId: string,
+    files: readonly StoredSkillFileRecord[]
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      this.database
+        .prepare('DELETE FROM skill_files WHERE skill_id = ?')
+        .run(skillId);
+      const insert = this.database.prepare(
+        `INSERT INTO skill_files
+           (id, skill_id, path, content, size, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      );
+      for (const file of files) {
+        if (file.skill_id !== skillId) {
+          throw new Error('A skill file does not belong to its skill');
+        }
+        insert.run(
+          file.id,
+          file.skill_id,
+          file.path,
+          file.content,
+          file.size,
+          file.created_at,
+          file.updated_at
+        );
+      }
+    });
+    replace();
+  }
+
+  async delete(skillId: string, path: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM skill_files WHERE skill_id = ? AND path = ?')
+        .run(skillId, path).changes > 0
+    );
+  }
+}
+
 class SQLiteSessionFolderRepository implements SessionFolderRepository {
   constructor(private readonly database: Database.Database) {}
 
@@ -2172,6 +2282,7 @@ export const createSQLiteResourceRepositories = (
   toolApprovals: new SQLiteToolApprovalRepository(database),
   prompts: new SQLitePromptRepository(database),
   skills: new SQLiteSkillRepository(database),
+  skillFiles: new SQLiteSkillFileRepository(database),
   sessionFolders: new SQLiteSessionFolderRepository(database),
   preferences: new SQLitePreferenceRepository(database),
   systemSettings: new SQLiteSystemSettingRepository(database),

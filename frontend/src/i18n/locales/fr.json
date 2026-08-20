@@ -2819,6 +2819,22 @@
       "hint": "Collez un lien skills.sh ou GitHub, owner/repo/skill, ou un lien direct vers un fichier SKILL.md.",
       "placeholder": "https://skills.sh/owner/repo/skill ou owner/repo/skill",
       "overwrite": "Écraser ma compétence si le slug existe déjà"
+    },
+    "files": {
+      "title": "Fichiers inclus",
+      "hint": "Documents de référence et scripts que le modèle lit à la demande avec read_skill_file.",
+      "add": "Ajouter un fichier",
+      "empty": "Aucun fichier inclus pour le moment.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Contenu du fichier…",
+      "loadFailed": "Échec du chargement du fichier",
+      "saveFailed": "Échec de l'enregistrement du fichier",
+      "deleteFailed": "Échec de la suppression du fichier"
+    },
+    "folderImport": {
+      "button": "Depuis un dossier",
+      "missingSkillMd": "Le dossier doit contenir un fichier SKILL.md",
+      "done": "Compétence importée avec {{count}} fichiers inclus"
     }
   },
   "toolsPage": {

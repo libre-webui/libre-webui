@@ -1186,6 +1186,13 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
     ['id'],
     { integers: [...timestamps, 'version'] }
   ),
+  table(
+    'skill_files',
+    'skill_files',
+    ['id', 'skill_id', 'path', 'content', 'size', 'created_at', 'updated_at'],
+    ['id'],
+    { integers: [...timestamps, 'size'] }
+  ),
 ]);
 
 interface SourceTextNulField {

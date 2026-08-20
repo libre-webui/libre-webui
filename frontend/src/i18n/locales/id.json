@@ -2819,6 +2819,22 @@
       "hint": "Tempel tautan skills.sh atau GitHub, owner/repo/skill, atau tautan langsung ke berkas SKILL.md.",
       "placeholder": "https://skills.sh/owner/repo/skill atau owner/repo/skill",
       "overwrite": "Timpa keahlian saya jika slug sudah ada"
+    },
+    "files": {
+      "title": "Berkas yang disertakan",
+      "hint": "Dokumen referensi dan skrip yang dibaca model sesuai kebutuhan lewat read_skill_file.",
+      "add": "Tambah berkas",
+      "empty": "Belum ada berkas yang disertakan.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Isi berkas…",
+      "loadFailed": "Gagal memuat berkas",
+      "saveFailed": "Gagal menyimpan berkas",
+      "deleteFailed": "Gagal menghapus berkas"
+    },
+    "folderImport": {
+      "button": "Dari folder",
+      "missingSkillMd": "Folder harus berisi berkas SKILL.md",
+      "done": "Keahlian diimpor dengan {{count}} berkas yang disertakan"
     }
   },
   "toolsPage": {

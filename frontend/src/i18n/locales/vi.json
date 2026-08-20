@@ -2819,6 +2819,22 @@
       "hint": "Dán liên kết skills.sh hoặc GitHub, owner/repo/skill, hoặc liên kết trực tiếp đến tệp SKILL.md.",
       "placeholder": "https://skills.sh/owner/repo/skill hoặc owner/repo/skill",
       "overwrite": "Ghi đè kỹ năng của tôi nếu slug đã tồn tại"
+    },
+    "files": {
+      "title": "Tệp đi kèm",
+      "hint": "Tài liệu tham khảo và tập lệnh mà mô hình đọc khi cần qua read_skill_file.",
+      "add": "Thêm tệp",
+      "empty": "Chưa có tệp đi kèm nào.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Nội dung tệp…",
+      "loadFailed": "Không thể tải tệp",
+      "saveFailed": "Không thể lưu tệp",
+      "deleteFailed": "Không thể xóa tệp"
+    },
+    "folderImport": {
+      "button": "Từ thư mục",
+      "missingSkillMd": "Thư mục cần có tệp SKILL.md",
+      "done": "Đã nhập kỹ năng với {{count}} tệp đi kèm"
     }
   },
   "toolsPage": {

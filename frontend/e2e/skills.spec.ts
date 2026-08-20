@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
 import { openSettingsTab } from './lib/settingsTab';
@@ -74,6 +77,12 @@ async function mockSkillsApi(page: Page, initialSkills: MockSkill[]) {
     [];
   const rollbackRequests: Array<{ id: string; version: number }> = [];
   const deleteRequests: string[] = [];
+  const importRequests: Array<Record<string, unknown>> = [];
+  const filePuts: Array<{ id: string; path: string; content: string }> = [];
+  const skillFiles = new Map<
+    string,
+    Map<string, { path: string; content: string; size: number }>
+  >();
   let nextId = skills.length + 1;
   let clock = 1_770_000_100_000;
 
@@ -124,6 +133,107 @@ async function mockSkillsApi(page: Page, initialSkills: MockSkill[]) {
       skills.push(created);
       recordRevision(created);
       await fulfill(created);
+      return;
+    }
+
+    if (path === '/api/skills/import' && method === 'POST') {
+      const body = request.postDataJSON() as {
+        skill: {
+          markdown?: string;
+          files?: { path: string; content: string }[];
+        };
+      };
+      importRequests.push(body as unknown as Record<string, unknown>);
+      const markdown = body.skill?.markdown ?? '';
+      const field = (name: string) =>
+        markdown.match(new RegExp(`^${name}: (.*)$`, 'm'))?.[1] ?? '';
+      clock += 1000;
+      const created: MockSkill = {
+        id: `skill-${nextId++}`,
+        slug:
+          field('slug') ||
+          field('name')
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, '-'),
+        name: field('name'),
+        description: field('description'),
+        instructions: markdown
+          .split(/---\s*/)
+          .slice(2)
+          .join('')
+          .trim(),
+        enabled: true,
+        version: 1,
+        createdAt: clock,
+        updatedAt: clock,
+        ownerUserId: 'e2e-user',
+      };
+      skills.push(created);
+      recordRevision(created);
+      skillFiles.set(
+        created.id,
+        new Map(
+          (body.skill?.files ?? []).map(file => [
+            file.path,
+            { ...file, size: file.content.length },
+          ])
+        )
+      );
+      await fulfill(created);
+      return;
+    }
+
+    const filesMatch = path.match(/^\/api\/skills\/([^/]+)\/files$/);
+    if (filesMatch) {
+      const id = filesMatch[1];
+      const store = skillFiles.get(id) ?? new Map();
+      skillFiles.set(id, store);
+      if (method === 'GET') {
+        await fulfill(
+          [...store.values()].map(file => ({
+            path: file.path,
+            size: file.size,
+            updatedAt: clock,
+          }))
+        );
+        return;
+      }
+      if (method === 'PUT') {
+        const body = request.postDataJSON() as {
+          path: string;
+          content: string;
+        };
+        filePuts.push({ id, ...body });
+        store.set(body.path, { ...body, size: body.content.length });
+        await fulfill({
+          path: body.path,
+          size: body.content.length,
+          updatedAt: clock,
+        });
+        return;
+      }
+      if (method === 'DELETE') {
+        const filePath = new URL(request.url()).searchParams.get('path') ?? '';
+        store.delete(filePath);
+        await fulfill({ deleted: true });
+        return;
+      }
+    }
+
+    const contentMatch = path.match(/^\/api\/skills\/([^/]+)\/files\/content$/);
+    if (contentMatch && method === 'GET') {
+      const store = skillFiles.get(contentMatch[1]);
+      const filePath = new URL(request.url()).searchParams.get('path') ?? '';
+      const file = store?.get(filePath);
+      if (!file) {
+        await route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: false, error: 'Not found' }),
+        });
+        return;
+      }
+      await fulfill({ ...file, createdAt: clock, updatedAt: clock });
       return;
     }
 
@@ -202,7 +312,14 @@ async function mockSkillsApi(page: Page, initialSkills: MockSkill[]) {
     });
   });
 
-  return { createRequests, updateRequests, rollbackRequests, deleteRequests };
+  return {
+    createRequests,
+    updateRequests,
+    rollbackRequests,
+    deleteRequests,
+    importRequests,
+    filePuts,
+  };
 }
 
 test('the skills page lists the manifest the model would see', async ({
@@ -262,7 +379,10 @@ test('a skill is disabled from the row switch and deleted behind a confirmation'
   // Deleting always asks first, and cancelling leaves the skill alone.
   await row.getByTestId('skill-delete').click();
   await expect(page.getByTestId('skill-delete-modal')).toBeVisible();
-  await page.getByRole('button', { name: 'Cancel' }).click();
+  await page
+    .getByTestId('skill-delete-modal')
+    .getByRole('button', { name: 'Cancel' })
+    .click();
   await expect(page.getByTestId('skill-delete-modal')).toHaveCount(0);
   expect(skillsApi.deleteRequests).toHaveLength(0);
 
@@ -389,4 +509,89 @@ test('a skill imports from a remote store URL through the modal', async ({
     source: 'https://skills.sh/acme/repo/remote-style',
     overwriteSlug: false,
   });
+});
+
+test('a skill folder imports SKILL.md with its companion files', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  const mocks = await mockSkillsApi(page, []);
+
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-folder-'));
+  fs.mkdirSync(path.join(folder, 'docs'));
+  fs.writeFileSync(
+    path.join(folder, 'SKILL.md'),
+    [
+      '---',
+      'name: Release notes',
+      'slug: release-notes',
+      'description: Write release notes from a diff.',
+      '---',
+      '',
+      'Use docs/template.md as the base.',
+    ].join('\n')
+  );
+  fs.writeFileSync(
+    path.join(folder, 'docs', 'template.md'),
+    '# Release {{version}}'
+  );
+  fs.writeFileSync(path.join(folder, 'logo.png'), Buffer.from([0x89, 0x50]));
+
+  await page.goto('/');
+  await openSettingsTab(page, 'Skills');
+  await page.getByTestId('skill-import-folder-input').setInputFiles(folder);
+
+  await expect(page.getByTestId('skill-row')).toHaveCount(1);
+  await expect(page.getByTestId('skill-row')).toContainText('Release notes');
+
+  expect(mocks.importRequests).toHaveLength(1);
+  const imported = mocks.importRequests[0].skill as {
+    markdown: string;
+    files: { path: string; content: string }[];
+  };
+  expect(imported.markdown).toContain('name: Release notes');
+  expect(imported.files).toEqual([
+    { path: 'docs/template.md', content: '# Release {{version}}' },
+  ]);
+
+  fs.rmSync(folder, { recursive: true, force: true });
+});
+
+test('the skill modal manages bundled companion files', async ({ page }) => {
+  await mockLibreWebUiApi(page);
+  const mocks = await mockSkillsApi(page, [seededSkill]);
+
+  await page.goto('/');
+  await openSettingsTab(page, 'Skills');
+  await page.getByTestId('skill-edit').click();
+  await expect(page.getByTestId('skill-files')).toBeVisible();
+
+  await page.getByTestId('skill-file-add').click();
+  await page.getByTestId('skill-file-path').fill('checklist.md');
+  await page.getByTestId('skill-file-content').fill('1. Verify\n2. Ship');
+  await page.getByTestId('skill-file-save').click();
+
+  const row = page.getByTestId('skill-file-row');
+  await expect(row).toHaveCount(1);
+  await expect(row).toContainText('checklist.md');
+  expect(mocks.filePuts).toEqual([
+    {
+      id: seededSkill.id,
+      path: 'checklist.md',
+      content: '1. Verify\n2. Ship',
+    },
+  ]);
+
+  // Reopening the editor loads the stored content back.
+  await page.getByTestId('skill-file-edit').click();
+  await expect(page.getByTestId('skill-file-content')).toHaveValue(
+    '1. Verify\n2. Ship'
+  );
+  await page
+    .getByTestId('skill-file-editor')
+    .getByRole('button', { name: 'Cancel' })
+    .click();
+
+  await page.getByTestId('skill-file-delete').click();
+  await expect(page.getByTestId('skill-file-row')).toHaveCount(0);
 });

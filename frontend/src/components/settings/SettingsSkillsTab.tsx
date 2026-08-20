@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Download,
+  FolderUp,
   GraduationCap,
   History,
   Link as LinkIcon,
@@ -65,6 +66,7 @@ export const SettingsSkillsTab: React.FC = () => {
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [rollingBackTo, setRollingBackTo] = useState<number | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
   const [urlImportOpen, setUrlImportOpen] = useState(false);
   const [urlSource, setUrlSource] = useState('');
   const [urlOverwrite, setUrlOverwrite] = useState(false);
@@ -195,6 +197,60 @@ export const SettingsSkillsTab: React.FC = () => {
     }
   };
 
+  // Mirrors the backend's companion whitelist: text files only, bounded.
+  const TEXT_COMPANION =
+    /\.(md|markdown|txt|text|py|js|mjs|cjs|ts|tsx|jsx|sh|bash|zsh|rb|sql|json|yaml|yml|toml|ini|cfg|csv|tsv|xml|html|css|svg|j2|jinja|tmpl|template)$/i;
+  const MAX_COMPANIONS = 32;
+  const MAX_COMPANION_BYTES = 200_000;
+
+  const handleFolderImport = async (list: FileList) => {
+    try {
+      const all = [...list];
+      const relativeOf = (file: File) => file.webkitRelativePath || file.name;
+      // The shallowest SKILL.md defines the skill; everything beside it is a
+      // companion file.
+      const manifest = all
+        .filter(file => file.name.toUpperCase() === 'SKILL.MD')
+        .sort(
+          (a, b) =>
+            relativeOf(a).split('/').length - relativeOf(b).split('/').length
+        )[0];
+      if (!manifest) {
+        toast.error(t('skillsPage.folderImport.missingSkillMd'));
+        return;
+      }
+      const root = relativeOf(manifest).slice(
+        0,
+        relativeOf(manifest).length - manifest.name.length
+      );
+      const markdown = await readTextFile(manifest);
+      const files: { path: string; content: string }[] = [];
+      for (const file of all) {
+        if (file === manifest) continue;
+        const relative = relativeOf(file);
+        if (!relative.startsWith(root)) continue;
+        if (!TEXT_COMPANION.test(file.name)) continue;
+        if (file.size > MAX_COMPANION_BYTES) continue;
+        if (files.length >= MAX_COMPANIONS) break;
+        files.push({
+          path: relative.slice(root.length),
+          content: await readTextFile(file),
+        });
+      }
+      const response = await skillsApi.import({ markdown, files });
+      if (!response.success) throw new Error(response.error);
+      toast.success(t('skillsPage.folderImport.done', { count: files.length }));
+      refresh();
+    } catch (error) {
+      logger.error('Failed to import the skill folder:', error);
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : t('skillsPage.importFailed')
+      );
+    }
+  };
+
   const handleUrlImport = async () => {
     if (!urlSource.trim()) return;
     setUrlImporting(true);
@@ -285,6 +341,31 @@ export const SettingsSkillsTab: React.FC = () => {
             >
               <Upload className='me-1.5 h-3.5 w-3.5' />
               {t('common.import')}
+            </Button>
+            <input
+              ref={folderInputRef}
+              type='file'
+              multiple
+              className='hidden'
+              data-testid='skill-import-folder-input'
+              {...({
+                webkitdirectory: '',
+                directory: '',
+              } as Record<string, string>)}
+              onChange={event => {
+                const list = event.target.files;
+                if (list && list.length > 0) void handleFolderImport(list);
+                event.target.value = '';
+              }}
+            />
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => folderInputRef.current?.click()}
+              data-testid='skill-import-folder'
+            >
+              <FolderUp className='me-1.5 h-3.5 w-3.5' />
+              {t('skillsPage.folderImport.button')}
             </Button>
             <Button
               variant='outline'

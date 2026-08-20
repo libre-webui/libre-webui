@@ -1442,6 +1442,30 @@
           "mount": "/api/skills",
           "method": "GET",
           "path": "/:skillId/export"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "GET",
+          "path": "/:skillId/files"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "GET",
+          "path": "/:skillId/files/content"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "PUT",
+          "path": "/:skillId/files"
+        },
+        {
+          "file": "backend/src/routes/skills.ts",
+          "mount": "/api/skills",
+          "method": "DELETE",
+          "path": "/:skillId/files"
         }
       ],
       "contractSurfaces": {

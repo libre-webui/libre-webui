@@ -2819,6 +2819,22 @@
       "hint": "Вставьте ссылку skills.sh или GitHub, owner/repo/skill или прямую ссылку на файл SKILL.md.",
       "placeholder": "https://skills.sh/owner/repo/skill или owner/repo/skill",
       "overwrite": "Перезаписать мой навык, если слаг уже существует"
+    },
+    "files": {
+      "title": "Прилагаемые файлы",
+      "hint": "Справочные документы и скрипты, которые модель читает по запросу через read_skill_file.",
+      "add": "Добавить файл",
+      "empty": "Прилагаемых файлов пока нет.",
+      "pathPlaceholder": "docs/reference.md",
+      "contentPlaceholder": "Содержимое файла…",
+      "loadFailed": "Не удалось загрузить файл",
+      "saveFailed": "Не удалось сохранить файл",
+      "deleteFailed": "Не удалось удалить файл"
+    },
+    "folderImport": {
+      "button": "Из папки",
+      "missingSkillMd": "В папке должен быть файл SKILL.md",
+      "done": "Навык импортирован с {{count}} прилагаемыми файлами"
     }
   },
   "toolsPage": {

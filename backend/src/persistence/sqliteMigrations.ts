@@ -861,6 +861,18 @@ const AGENT_FOUNDATION_REQUIRED_SCHEMA = {
   skill_versions: ['id', 'skill_id', 'version', 'instructions', 'created_at'],
 } as const;
 
+const SKILL_FILES_REQUIRED_SCHEMA = {
+  skill_files: [
+    'id',
+    'skill_id',
+    'path',
+    'content',
+    'size',
+    'created_at',
+    'updated_at',
+  ],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -1269,6 +1281,22 @@ export const AGENT_FOUNDATION_SCHEMA_SQL = `
   ALTER TABLE personas ADD COLUMN bindings TEXT;
 ${AGENT_FOUNDATION_TABLES_SQL}`;
 
+export const SKILL_FILES_SCHEMA_SQL = `
+  CREATE TABLE IF NOT EXISTS skill_files (
+    id TEXT PRIMARY KEY,
+    skill_id TEXT NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
+    path TEXT NOT NULL,
+    content TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    UNIQUE (skill_id, path)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_skill_files_skill
+    ON skill_files(skill_id);
+`;
+
 const REQUIRED_SCHEMA = {
   ...LEGACY_REQUIRED_SCHEMA,
   users: [
@@ -1555,6 +1583,7 @@ const REQUIRED_PRIMARY_KEYS: Readonly<Record<string, readonly string[]>> = {
   prompt_versions: ['id'],
   skills: ['id'],
   skill_versions: ['id'],
+  skill_files: ['id'],
 };
 
 const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
@@ -1581,6 +1610,7 @@ const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
   prompt_versions: [['prompt_id', 'version']],
   skills: [['user_id', 'slug']],
   skill_versions: [['skill_id', 'version']],
+  skill_files: [['skill_id', 'path']],
 };
 
 const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
@@ -1817,6 +1847,13 @@ const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
   },
   {
     table: 'skill_versions',
+    columns: ['skill_id'],
+    referencedTable: 'skills',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'skill_files',
     columns: ['skill_id'],
     referencedTable: 'skills',
     referencedColumns: ['id'],
@@ -2064,6 +2101,11 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     name: 'idx_skills_owner',
     table: 'skills',
     columns: ['user_id', 'updated_at'],
+  },
+  {
+    name: 'idx_skill_files_skill',
+    table: 'skill_files',
+    columns: ['skill_id'],
   },
 ];
 
@@ -2456,6 +2498,7 @@ const collectMissingSchema = (database: Database.Database): string[] => [
   ...collectMissingTrustFoundationSchema(database),
   ...collectMissingPersonalAutomationsSchema(database),
   ...collectMissingAgentFoundationSchema(database),
+  ...collectMissingSkillFilesSchema(database),
 ];
 
 const collectMissingMigrationLedgerSchema = (
@@ -2615,6 +2658,15 @@ const collectMissingAgentFoundationSchema = (
   ),
 ];
 
+const collectMissingSkillFilesSchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, SKILL_FILES_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(item =>
+    item.includes('skill_files')
+  ),
+];
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -2663,6 +2715,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 14 ? collectMissingTrustFoundationSchema(database) : []),
     ...(version >= 15 ? collectMissingPersonalAutomationsSchema(database) : []),
     ...(version >= 16 ? collectMissingAgentFoundationSchema(database) : []),
+    ...(version >= 17 ? collectMissingSkillFilesSchema(database) : []),
   ];
 }
 
@@ -2750,6 +2803,8 @@ const PERSONAL_AUTOMATIONS_MIGRATION_CHECKSUM =
   '5bfb4a1789480a3cacc09c5a4359a4e77b82b0edafa80f6d78cde73e57ddc70b';
 const AGENT_FOUNDATION_MIGRATION_CHECKSUM =
   '7e3a346fae66c073aac800aa45847999a4300b2f17eb3eaf9ed6351e891e2941';
+const SKILL_FILES_MIGRATION_CHECKSUM =
+  '584e1f9bca79eb5974f997088636d74d7f2c1e5fd816fcd0f6cf74ec30aea161';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -3029,6 +3084,20 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite agent foundation schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 17,
+    name: 'skill-files',
+    checksum: SKILL_FILES_MIGRATION_CHECKSUM,
+    apply(database) {
+      database.exec(SKILL_FILES_SCHEMA_SQL);
+      const missing = collectMissingSkillFilesSchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite skill files schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },
