@@ -80,45 +80,45 @@ test('PostgreSQL configuration rejects ambiguous TLS and unsafe bounds', () => {
 test('PostgreSQL migration registry is contiguous, checksummed, and frozen', () => {
   assert.deepEqual(
     POSTGRES_MIGRATIONS.map(migration => migration.version),
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
   );
   validatePostgresMigrationRegistry(POSTGRES_MIGRATIONS);
   assert.equal(Object.isFrozen(POSTGRES_MIGRATIONS), true);
   assert.equal(POSTGRES_MIGRATIONS.every(Object.isFrozen), true);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 17);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'skill-files');
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.version, 16);
-  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.name, 'agent-foundation');
-  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.version, 14);
-  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.name, 'personal-automations');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.version, 18);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-1)?.name, 'notes-v2');
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.version, 17);
+  assert.equal(SQLITE_MIGRATION_CONTRACT.at(-2)?.name, 'skill-files');
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.version, 15);
+  assert.equal(POSTGRES_MIGRATIONS.at(-3)?.name, 'agent-foundation');
   assert.match(
     POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
-    /CREATE TABLE calendar_events/
-  );
-  assert.match(
-    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
-    /CREATE TABLE automation_runs/
-  );
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 15);
-  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'agent-foundation');
-  assert.match(
-    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
     /ALTER TABLE personas ADD COLUMN bindings text/
   );
   assert.match(
-    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
     /CREATE TABLE tool_servers/
   );
-  assert.match(POSTGRES_MIGRATIONS.at(-2)?.sql ?? '', /CREATE TABLE prompts/);
+  assert.match(POSTGRES_MIGRATIONS.at(-3)?.sql ?? '', /CREATE TABLE prompts/);
   assert.match(
-    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
+    POSTGRES_MIGRATIONS.at(-3)?.sql ?? '',
     /CREATE TABLE skill_versions/
   );
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 16);
-  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'skill-files');
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.version, 16);
+  assert.equal(POSTGRES_MIGRATIONS.at(-2)?.name, 'skill-files');
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-2)?.sql ?? '',
+    /CREATE TABLE skill_files/
+  );
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.version, 17);
+  assert.equal(POSTGRES_MIGRATIONS.at(-1)?.name, 'notes-v2');
   assert.match(
     POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
-    /CREATE TABLE skill_files/
+    /CREATE TABLE note_revisions/
+  );
+  assert.match(
+    POSTGRES_MIGRATIONS.at(-1)?.sql ?? '',
+    /CREATE TABLE note_attachments/
   );
   assert.equal(
     SQLITE_MIGRATION_CONTRACT.some(
@@ -366,7 +366,7 @@ test(
         initializePostgresPersistence(config, codec),
       ]);
       assert.equal(first.schemaCompatibility.status, 'compatible');
-      assert.equal(second.schemaCompatibility.currentVersion, 16);
+      assert.equal(second.schemaCompatibility.currentVersion, 17);
       assert.equal((await first.health()).ready, true);
 
       const assertStructuralDamage = async (mutation, expected) => {
@@ -3201,6 +3201,12 @@ test(
       `ALTER TABLE work_messages
          DROP CONSTRAINT work_messages_content_json_string_check`
     );
+    await target.query('DROP TABLE note_attachments');
+    await target.query('DROP TABLE note_revisions');
+    await target.query('ALTER TABLE notes DROP COLUMN pinned');
+    await target.query(
+      'DELETE FROM libre_schema_migrations WHERE version = 17'
+    );
     await target.query('DROP TABLE skill_files');
     await target.query(
       'DELETE FROM libre_schema_migrations WHERE version = 16'
@@ -3288,7 +3294,7 @@ test(
     assert.equal(prefixDryRun.sourceFingerprint, dryRun.sourceFingerprint);
     assert.match(
       prefixDryRun.warnings.join('\n'),
-      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 16/i
+      /exact version 10 migration-ledger prefix.*--resume can safely apply through version 17/i
     );
     const codec = {
       encrypt: value => value,
@@ -3318,7 +3324,7 @@ test(
       resumed.tables.every(row => row.status === 'verified'),
       true
     );
-    assert.equal(resumed.targetSchemaVersion, 16);
+    assert.equal(resumed.targetSchemaVersion, 17);
     const resumedState = await target.query(
       `SELECT
          (SELECT MAX(version)::text FROM libre_schema_migrations)
@@ -3331,7 +3337,7 @@ test(
          (SELECT COUNT(*)::text FROM work_messages) AS work_messages`
     );
     assert.deepEqual(resumedState.rows[0], {
-      schema_version: '16',
+      schema_version: '17',
       import_status: 'complete',
       journal_count: String(dryRun.tables.length),
       work_journal: '1',

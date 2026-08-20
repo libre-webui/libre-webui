@@ -118,6 +118,7 @@ export interface StoredNoteRecord {
   user_id: string;
   title: string;
   content: string;
+  pinned: number;
   created_at: number;
   updated_at: number;
 }
@@ -125,19 +126,64 @@ export interface StoredNoteRecord {
 export interface StoredNotePatch {
   title?: string;
   content?: string;
+  pinned?: number;
   updated_at: number;
+}
+
+export interface StoredNoteRevisionRecord {
+  id: string;
+  note_id: string;
+  title: string;
+  content: string;
+  created_at: number;
+}
+
+export interface StoredNoteAttachmentRecord {
+  id: string;
+  note_id: string;
+  blob_id: string;
+  filename: string;
+  content_type: string;
+  size: number;
+  created_at: number;
 }
 
 export interface NoteRepository {
   listByOwner(userId: string, maximum: number): Promise<StoredNoteRecord[]>;
   findByOwner(noteId: string, userId: string): Promise<StoredNoteRecord | null>;
+  /** Cross-owner read; callers must authorize before returning content. */
+  findById(noteId: string): Promise<StoredNoteRecord | null>;
   replaceWithLimit(note: StoredNoteRecord, maximum: number): Promise<void>;
   patchByOwner(
     noteId: string,
     userId: string,
     patch: StoredNotePatch
   ): Promise<StoredNoteRecord | null>;
+  /** Cross-owner patch; callers must authorize write before invoking. */
+  patchById(
+    noteId: string,
+    patch: StoredNotePatch
+  ): Promise<StoredNoteRecord | null>;
   deleteByOwner(noteId: string, userId: string): Promise<boolean>;
+  listRevisions(
+    noteId: string,
+    maximum: number
+  ): Promise<StoredNoteRevisionRecord[]>;
+  findRevision(revisionId: string): Promise<StoredNoteRevisionRecord | null>;
+  /** Inserts a revision and prunes the oldest beyond the per-note cap. */
+  insertRevision(
+    revision: StoredNoteRevisionRecord,
+    maximum: number
+  ): Promise<void>;
+  listAttachments(noteId: string): Promise<StoredNoteAttachmentRecord[]>;
+  findAttachment(
+    attachmentId: string
+  ): Promise<StoredNoteAttachmentRecord | null>;
+  insertAttachmentWithLimit(
+    attachment: StoredNoteAttachmentRecord,
+    maximum: number
+  ): Promise<void>;
+  deleteAttachment(attachmentId: string): Promise<boolean>;
 }
 
 export interface StoredCalendarEventRecord {
@@ -719,7 +765,8 @@ export class PersistenceResourceLimitError extends Error {
       | 'tool-server'
       | 'prompt'
       | 'skill'
-      | 'skill-file',
+      | 'skill-file'
+      | 'note-attachment',
     readonly maximum: number
   ) {
     super(`The ${resource} storage limit of ${maximum} has been reached`);

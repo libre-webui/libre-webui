@@ -32,6 +32,7 @@ import {
   ResourceGrantError,
 } from '../services/resourceGrantService.js';
 import type { AuthzActor } from '../services/authorizationService.js';
+import { userModel } from '../models/userModel.js';
 import { createLogger } from '../utils/logger.js';
 
 const router = express.Router();
@@ -84,6 +85,33 @@ const publicGrant = (grant: {
   principalId: grant.principal_id,
   permission: grant.permission,
   createdAt: new Date(grant.created_at).toISOString(),
+});
+
+/**
+ * Exact-match principal lookup for the share dialog. Only a complete
+ * username resolves — there is deliberately no fuzzy search, so the
+ * endpoint confirms a name the sharer already knows rather than
+ * enumerating accounts.
+ */
+router.get('/principals', async (req: AuthenticatedRequest, res) => {
+  try {
+    const { username } = req.query;
+    if (typeof username !== 'string' || !username.trim()) {
+      res.status(400).json({ success: false, message: 'username is required' });
+      return;
+    }
+    const user = await userModel.getUserByUsername(username.trim());
+    if (!user || user.id === actorOf(req).userId) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+    res.json({
+      success: true,
+      data: { id: user.id, username: user.username },
+    });
+  } catch (error) {
+    handleError(res, error, 'Principal lookup error:');
+  }
 });
 
 /** Grants on one of the caller's resources. */

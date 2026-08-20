@@ -421,9 +421,31 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
   table(
     'notes',
     'notes',
-    ['id', 'user_id', 'title', 'content', 'created_at', 'updated_at'],
+    ['id', 'user_id', 'title', 'content', 'pinned', 'created_at', 'updated_at'],
     ['id'],
-    { integers: timestamps }
+    { integers: [...timestamps, 'pinned'] }
+  ),
+  table(
+    'note_revisions',
+    'note_revisions',
+    ['id', 'note_id', 'title', 'content', 'created_at'],
+    ['id'],
+    { integers: ['created_at'] }
+  ),
+  table(
+    'note_attachments',
+    'note_attachments',
+    [
+      'id',
+      'note_id',
+      'blob_id',
+      'filename',
+      'content_type',
+      'size',
+      'created_at',
+    ],
+    ['id'],
+    { integers: ['size', 'created_at'] }
   ),
   table(
     'documents',

@@ -1006,6 +1006,15 @@
             "notes-preview",
             "notes-preview-toggle"
           ]
+        },
+        {
+          "file": "scripts/test-notes.mjs",
+          "runner": "test:package",
+          "name": "content changes snapshot restorable revisions and prune beyond the cap",
+          "behaviorPatterns": [
+            "listRevisions",
+            "restoreRevision"
+          ]
         }
       ],
       "backendRoutes": [
@@ -1014,6 +1023,12 @@
           "mount": "/api/notes",
           "method": "GET",
           "path": "/"
+        },
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "GET",
+          "path": "/:noteId"
         },
         {
           "file": "backend/src/routes/notes.ts",
@@ -1032,6 +1047,48 @@
           "mount": "/api/notes",
           "method": "DELETE",
           "path": "/:noteId"
+        },
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "GET",
+          "path": "/:noteId/revisions"
+        },
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "POST",
+          "path": "/:noteId/revisions/:revisionId/restore"
+        },
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "GET",
+          "path": "/:noteId/attachments"
+        },
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "POST",
+          "path": "/:noteId/attachments"
+        },
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "GET",
+          "path": "/:noteId/attachments/:attachmentId"
+        },
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "DELETE",
+          "path": "/:noteId/attachments/:attachmentId"
+        },
+        {
+          "file": "backend/src/routes/notes.ts",
+          "mount": "/api/notes",
+          "method": "POST",
+          "path": "/:noteId/assist"
         }
       ],
       "contractSurfaces": {
@@ -1042,6 +1099,13 @@
               "patterns": [
                 "export interface Note",
                 "updatedAt: number"
+              ]
+            },
+            {
+              "file": "backend/src/persistence/resourceTypes.ts",
+              "patterns": [
+                "StoredNoteRevisionRecord",
+                "StoredNoteAttachmentRecord"
               ]
             }
           ]
@@ -2628,6 +2692,12 @@
           "mount": "/api/audit",
           "method": "GET",
           "path": "/"
+        },
+        {
+          "file": "backend/src/routes/access.ts",
+          "mount": "/api/access",
+          "method": "GET",
+          "path": "/principals"
         }
       ],
       "contractSurfaces": {

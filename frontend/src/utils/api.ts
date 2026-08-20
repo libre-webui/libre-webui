@@ -38,6 +38,7 @@ export { chatApi } from './api/chatApi';
 export type { CompactionConfig } from './api/chatApi';
 export { documentsApi, embeddingApi } from './api/documentsApi';
 export { notesApi } from './api/notesApi';
+export { accessApi } from './api/accessApi';
 export { calendarApi } from './api/calendarApi';
 export { automationsApi } from './api/automationsApi';
 export { searchApi } from './api/searchApi';

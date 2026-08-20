@@ -37,7 +37,8 @@ collections restrict what the model sees for sessions using that profile.
 
 ## Built-in tools
 
-Six first-party, read-only tools ship with Chat:
+Ten first-party tools ship with Chat (all read-only except the two
+note-mutation tools, which go through the side-effect approval flow):
 
 - `web_search` — the admin-configured search engine, honoring the web-search
   access mode.
@@ -56,6 +57,12 @@ Six first-party, read-only tools ship with Chat:
 - `read_skill_file` — reads one companion file bundled with a skill, by
   slug and relative path, so a large reference document costs no context
   until the model actually opens it.
+- `list_notes` — lists the user's own and shared notes with their ids.
+- `read_note` — reads one note's full content by id.
+- `create_note` — creates a note (side-effecting, requires approval).
+- `update_note` — replaces a note's content; the previous state is kept as
+  a restorable revision, so a model edit is always reversible
+  (side-effecting, requires approval).
 
 ## Tool servers
 

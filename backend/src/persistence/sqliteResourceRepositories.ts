@@ -39,8 +39,10 @@ import type {
   StoredChatSessionAggregate,
   StoredChatSessionRecord,
   StoredNamedResourceRecord,
+  StoredNoteAttachmentRecord,
   StoredNotePatch,
   StoredNoteRecord,
+  StoredNoteRevisionRecord,
   StoredPreferenceRecord,
   StoredPromptRecord,
   StoredPromptVersionRecord,
@@ -383,7 +385,7 @@ class SQLiteNoteRepository implements NoteRepository {
       .prepare(
         `SELECT * FROM notes
          WHERE user_id = ?
-         ORDER BY updated_at DESC
+         ORDER BY pinned DESC, updated_at DESC
          LIMIT ?`
       )
       .all(userId, maximum) as StoredNoteRecord[];
@@ -422,11 +424,12 @@ class SQLiteNoteRepository implements NoteRepository {
       this.database
         .prepare(
           `INSERT INTO notes
-             (id, user_id, title, content, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?)
+             (id, user_id, title, content, pinned, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              title = excluded.title,
              content = excluded.content,
+             pinned = excluded.pinned,
              updated_at = excluded.updated_at
            WHERE notes.user_id = excluded.user_id`
         )
@@ -435,6 +438,7 @@ class SQLiteNoteRepository implements NoteRepository {
           note.user_id,
           note.title,
           note.content,
+          note.pinned,
           note.created_at,
           note.updated_at
         );
@@ -458,6 +462,10 @@ class SQLiteNoteRepository implements NoteRepository {
         assignments.push('content = ?');
         values.push(patch.content);
       }
+      if (patch.pinned !== undefined) {
+        assignments.push('pinned = ?');
+        values.push(patch.pinned);
+      }
       assignments.push('updated_at = ?');
       values.push(patch.updated_at);
 
@@ -480,6 +488,171 @@ class SQLiteNoteRepository implements NoteRepository {
       this.database
         .prepare('DELETE FROM notes WHERE id = ? AND user_id = ?')
         .run(noteId, userId).changes > 0
+    );
+  }
+
+  async findById(noteId: string): Promise<StoredNoteRecord | null> {
+    return (
+      (this.database.prepare('SELECT * FROM notes WHERE id = ?').get(noteId) as
+        StoredNoteRecord | undefined) ?? null
+    );
+  }
+
+  async patchById(
+    noteId: string,
+    patch: StoredNotePatch
+  ): Promise<StoredNoteRecord | null> {
+    const update = this.database.transaction(() => {
+      const assignments: string[] = [];
+      const values: Array<string | number> = [];
+      if (patch.title !== undefined) {
+        assignments.push('title = ?');
+        values.push(patch.title);
+      }
+      if (patch.content !== undefined) {
+        assignments.push('content = ?');
+        values.push(patch.content);
+      }
+      if (patch.pinned !== undefined) {
+        assignments.push('pinned = ?');
+        values.push(patch.pinned);
+      }
+      assignments.push('updated_at = ?');
+      values.push(patch.updated_at);
+      const result = this.database
+        .prepare(`UPDATE notes SET ${assignments.join(', ')} WHERE id = ?`)
+        .run(...values, noteId);
+      if (result.changes !== 1) return null;
+      return this.database
+        .prepare('SELECT * FROM notes WHERE id = ?')
+        .get(noteId) as StoredNoteRecord;
+    });
+    return update.immediate();
+  }
+
+  async listRevisions(
+    noteId: string,
+    maximum: number
+  ): Promise<StoredNoteRevisionRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM note_revisions
+         WHERE note_id = ?
+         ORDER BY created_at DESC, id DESC
+         LIMIT ?`
+      )
+      .all(noteId, maximum) as StoredNoteRevisionRecord[];
+  }
+
+  async findRevision(
+    revisionId: string
+  ): Promise<StoredNoteRevisionRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM note_revisions WHERE id = ?')
+        .get(revisionId) as StoredNoteRevisionRecord | undefined) ?? null
+    );
+  }
+
+  async insertRevision(
+    revision: StoredNoteRevisionRecord,
+    maximum: number
+  ): Promise<void> {
+    const insert = this.database.transaction(() => {
+      // Strictly increasing per note so same-millisecond snapshots keep a
+      // deterministic order for listing, restore, and pruning.
+      const latest = this.database
+        .prepare(
+          'SELECT COALESCE(MAX(created_at), 0) AS latest FROM note_revisions WHERE note_id = ?'
+        )
+        .get(revision.note_id) as { latest: number };
+      const createdAt = Math.max(revision.created_at, latest.latest + 1);
+      this.database
+        .prepare(
+          `INSERT INTO note_revisions
+             (id, note_id, title, content, created_at)
+           VALUES (?, ?, ?, ?, ?)`
+        )
+        .run(
+          revision.id,
+          revision.note_id,
+          revision.title,
+          revision.content,
+          createdAt
+        );
+      this.database
+        .prepare(
+          `DELETE FROM note_revisions
+            WHERE note_id = ?
+              AND id NOT IN (
+                SELECT id FROM note_revisions
+                 WHERE note_id = ?
+                 ORDER BY created_at DESC, id DESC
+                 LIMIT ?
+              )`
+        )
+        .run(revision.note_id, revision.note_id, maximum);
+    });
+    insert();
+  }
+
+  async listAttachments(noteId: string): Promise<StoredNoteAttachmentRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM note_attachments
+         WHERE note_id = ?
+         ORDER BY created_at ASC, id ASC`
+      )
+      .all(noteId) as StoredNoteAttachmentRecord[];
+  }
+
+  async findAttachment(
+    attachmentId: string
+  ): Promise<StoredNoteAttachmentRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM note_attachments WHERE id = ?')
+        .get(attachmentId) as StoredNoteAttachmentRecord | undefined) ?? null
+    );
+  }
+
+  async insertAttachmentWithLimit(
+    attachment: StoredNoteAttachmentRecord,
+    maximum: number
+  ): Promise<void> {
+    const insert = this.database.transaction(() => {
+      const row = this.database
+        .prepare(
+          'SELECT COUNT(*) AS count FROM note_attachments WHERE note_id = ?'
+        )
+        .get(attachment.note_id) as { count: number };
+      if (row.count >= maximum) {
+        throw new PersistenceResourceLimitError('note-attachment', maximum);
+      }
+      this.database
+        .prepare(
+          `INSERT INTO note_attachments
+             (id, note_id, blob_id, filename, content_type, size, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(
+          attachment.id,
+          attachment.note_id,
+          attachment.blob_id,
+          attachment.filename,
+          attachment.content_type,
+          attachment.size,
+          attachment.created_at
+        );
+    });
+    insert();
+  }
+
+  async deleteAttachment(attachmentId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM note_attachments WHERE id = ?')
+        .run(attachmentId).changes > 0
     );
   }
 }

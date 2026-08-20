@@ -142,7 +142,7 @@
         {
           "file": "docs/09-RAG_FEATURE.md",
           "patterns": [
-            "Semantic search\\s+\\| Embeddings enabled in Settings",
+            "Hybrid search\\s+\\| Embeddings enabled in Settings",
             "You can use local Ollama embedding models or embedding-capable provider plugins\\."
           ]
         }

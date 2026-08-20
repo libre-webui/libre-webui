@@ -356,6 +356,7 @@ class StorageService {
       id: row.id,
       title: encryptionService.decrypt(row.title),
       content: encryptionService.decrypt(row.content),
+      ...(row.pinned ? { pinned: true } : {}),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }));
@@ -370,6 +371,7 @@ class StorageService {
           id: row.id,
           title: encryptionService.decrypt(row.title),
           content: encryptionService.decrypt(row.content),
+          ...(row.pinned ? { pinned: true } : {}),
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         }
@@ -392,6 +394,7 @@ class StorageService {
           user_id: userId,
           title: encryptionService.encrypt(note.title),
           content: encryptionService.encrypt(note.content),
+          pinned: note.pinned ? 1 : 0,
           created_at: note.createdAt,
           updated_at: note.updatedAt,
         },

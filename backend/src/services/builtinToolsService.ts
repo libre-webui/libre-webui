@@ -37,6 +37,13 @@ import {
   listSkillFiles,
   listSkills,
 } from './skillService.js';
+import {
+  createNote,
+  getNote,
+  listNotes,
+  NoteError,
+  updateNote,
+} from './noteService.js';
 
 const MAX_RESULT_CHARS = 24_000;
 const READ_DOCUMENT_WINDOW = 8_000;
@@ -68,6 +75,8 @@ interface BuiltinToolSpec {
   name: string;
   description: string;
   paramsSchema: Record<string, unknown>;
+  /** Mutating tools require the standard side-effect approval flow. */
+  sideEffect?: boolean;
   available(context: BuiltinToolContext): Promise<boolean>;
   execute(
     args: Record<string, unknown>,
@@ -301,6 +310,135 @@ const BUILTIN_TOOLS: readonly BuiltinToolSpec[] = [
     },
   },
   {
+    name: 'list_notes',
+    description:
+      "List the user's notes (own and shared) with their ids and titles.",
+    paramsSchema: {
+      type: 'object',
+      properties: {},
+    },
+    available: async () => true,
+    execute: async (_args, context) => {
+      const all = await listNotes(context.actor);
+      if (all.length === 0) {
+        return {
+          text: 'No notes exist yet.',
+          isError: false,
+          truncated: false,
+        };
+      }
+      const rendered = all
+        .map(entry => {
+          const marks = [
+            ...(entry.pinned ? ['pinned'] : []),
+            ...(entry.shared ? [`shared, ${entry.shared.permission}`] : []),
+          ];
+          const suffix = marks.length > 0 ? ` [${marks.join('; ')}]` : '';
+          return `- ${entry.title || 'Untitled'} (id: ${entry.id})${suffix}`;
+        })
+        .join('\n');
+      return { ...bounded(rendered), isError: false };
+    },
+  },
+  {
+    name: 'read_note',
+    description: 'Read the full content of one note by its id.',
+    paramsSchema: {
+      type: 'object',
+      properties: {
+        note_id: { type: 'string', description: 'The note id from list_notes' },
+      },
+      required: ['note_id'],
+    },
+    available: async () => true,
+    execute: async (args, context) => {
+      const noteId = asString(args.note_id).trim();
+      try {
+        const note = await getNote(context.actor, noteId);
+        return {
+          ...bounded(`# ${note.title || 'Untitled'}\n\n${note.content}`),
+          isError: false,
+        };
+      } catch (error) {
+        if (error instanceof NoteError) {
+          return { text: error.message, isError: true, truncated: false };
+        }
+        throw error;
+      }
+    },
+  },
+  {
+    name: 'create_note',
+    description:
+      'Create a new note with a title and Markdown content. Requires approval.',
+    sideEffect: true,
+    paramsSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'The note title' },
+        content: { type: 'string', description: 'The Markdown note content' },
+      },
+      required: ['title', 'content'],
+    },
+    available: async () => true,
+    execute: async (args, context) => {
+      try {
+        const note = await createNote(context.actor, {
+          title: asString(args.title),
+          content: asString(args.content),
+        });
+        return {
+          text: `Created note "${note.title}" (id: ${note.id}).`,
+          isError: false,
+          truncated: false,
+        };
+      } catch (error) {
+        if (error instanceof NoteError) {
+          return { text: error.message, isError: true, truncated: false };
+        }
+        throw error;
+      }
+    },
+  },
+  {
+    name: 'update_note',
+    description:
+      'Replace the content (and optionally the title) of an existing note. The previous state is kept as a restorable revision. Requires approval.',
+    sideEffect: true,
+    paramsSchema: {
+      type: 'object',
+      properties: {
+        note_id: { type: 'string', description: 'The note id from list_notes' },
+        content: {
+          type: 'string',
+          description: 'The complete replacement Markdown content',
+        },
+        title: { type: 'string', description: 'Optional replacement title' },
+      },
+      required: ['note_id', 'content'],
+    },
+    available: async () => true,
+    execute: async (args, context) => {
+      const noteId = asString(args.note_id).trim();
+      try {
+        const note = await updateNote(context.actor, noteId, {
+          content: asString(args.content),
+          ...(typeof args.title === 'string' ? { title: args.title } : {}),
+        });
+        return {
+          text: `Updated note "${note.title}" (id: ${note.id}); the previous version is saved as a revision.`,
+          isError: false,
+          truncated: false,
+        };
+      } catch (error) {
+        if (error instanceof NoteError) {
+          return { text: error.message, isError: true, truncated: false };
+        }
+        throw error;
+      }
+    },
+  },
+  {
     name: 'load_skill',
     description:
       'Load the full instructions of one of the available skills by its slug.',
@@ -451,7 +589,7 @@ export async function effectiveBuiltinTools(
       name: tool.name,
       description,
       paramsSchema: tool.paramsSchema,
-      sideEffect: false,
+      sideEffect: tool.sideEffect === true,
       source: 'builtin',
       toolName: tool.name,
     });

@@ -19,12 +19,16 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
+  Download,
   Eye,
   NotebookPen,
   Pencil,
+  Pin,
   Plus,
   Search,
+  SlidersHorizontal,
   Trash2,
+  Users,
 } from 'lucide-react';
 import { RichMessageContent } from '@/components/ui/RichMessageContent';
 import toast from 'react-hot-toast';
@@ -32,6 +36,9 @@ import { Button } from '@/components/ui';
 import { notesApi } from '@/utils/api';
 import { cn, formatTimestamp } from '@/utils';
 import { createLogger } from '@/utils/logger';
+import NoteToolsDrawer, {
+  type NoteToolsTab,
+} from '@/components/notes/NoteToolsDrawer';
 import type { Note } from '@/types';
 
 const logger = createLogger('pages:notes');
@@ -50,6 +57,7 @@ export const NotesPage: React.FC = () => {
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'idle'>(
     'idle'
   );
+  const [toolsTab, setToolsTab] = useState<NoteToolsTab | null>(null);
   const saveTimerRef = useRef<number | null>(null);
 
   const selectedNote = useMemo(
@@ -76,6 +84,11 @@ export const NotesPage: React.FC = () => {
     };
   }, []);
 
+  const isOwner = selectedNote ? !selectedNote.shared : true;
+  const canWrite = selectedNote
+    ? !selectedNote.shared || selectedNote.shared.permission === 'write'
+    : false;
+
   const selectNote = (note: Note, mode: 'preview' | 'edit' = 'preview') => {
     flushPendingSave();
     setSelectedId(note.id);
@@ -83,6 +96,37 @@ export const NotesPage: React.FC = () => {
     setContentDraft(note.content);
     setPreviewing(mode === 'preview');
     setSaveState('idle');
+    setToolsTab(null);
+  };
+
+  const handleTogglePin = async () => {
+    if (!selectedNote) return;
+    try {
+      const response = await notesApi.updateNote(selectedNote.id, {
+        pinned: !selectedNote.pinned,
+      });
+      if (response.success && response.data) {
+        const updated = response.data;
+        setNotes(previous =>
+          previous.map(note => (note.id === updated.id ? updated : note))
+        );
+      }
+    } catch (error) {
+      logger.error('Failed to toggle pin:', error);
+    }
+  };
+
+  const handleExport = () => {
+    if (!selectedNote) return;
+    const blob = new Blob([contentDraft], {
+      type: 'text/markdown;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${(titleDraft || 'note').replace(/[\\/:*?"<>|]/g, '-')}.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
   const scheduleSave = (noteId: string, title: string, content: string) => {
@@ -178,7 +222,7 @@ export const NotesPage: React.FC = () => {
 
   return (
     <div
-      className='flex h-full min-h-0 overflow-hidden'
+      className='relative flex h-full min-h-0 overflow-hidden'
       data-testid='notes-page'
     >
       {/* Note list */}
@@ -236,19 +280,35 @@ export const NotesPage: React.FC = () => {
                   )}
                 >
                   <div className='flex items-center justify-between gap-2'>
-                    <p className='truncate text-[13px] font-medium text-gray-900 dark:text-dark-900'>
-                      {note.title || t('notes.untitled')}
+                    <p className='flex min-w-0 flex-1 items-center gap-1 truncate text-[13px] font-medium text-gray-900 dark:text-dark-900'>
+                      {note.pinned && (
+                        <Pin
+                          className='h-3 w-3 shrink-0 text-primary-500'
+                          aria-label={t('notes.pinned')}
+                        />
+                      )}
+                      {note.shared && (
+                        <Users
+                          className='h-3 w-3 shrink-0 text-gray-400 dark:text-dark-500'
+                          aria-label={t('notes.sharedWithYou')}
+                        />
+                      )}
+                      <span className='truncate'>
+                        {note.title || t('notes.untitled')}
+                      </span>
                     </p>
-                    <button
-                      onClick={event => {
-                        event.stopPropagation();
-                        void handleDelete(note.id);
-                      }}
-                      className='shrink-0 rounded-md p-1 text-red-500 opacity-100 transition-opacity hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 dark:hover:bg-red-900/20'
-                      title={t('common.delete')}
-                    >
-                      <Trash2 className='h-3 w-3' />
-                    </button>
+                    {!note.shared && (
+                      <button
+                        onClick={event => {
+                          event.stopPropagation();
+                          void handleDelete(note.id);
+                        }}
+                        className='shrink-0 rounded-md p-1 text-red-500 opacity-100 transition-opacity hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 dark:hover:bg-red-900/20'
+                        title={t('common.delete')}
+                      >
+                        <Trash2 className='h-3 w-3' />
+                      </button>
+                    )}
                   </div>
                   <p className='mt-0.5 truncate text-[11px] text-gray-400 dark:text-dark-500'>
                     {formatTimestamp(note.updatedAt, i18n.language)}
@@ -305,6 +365,7 @@ export const NotesPage: React.FC = () => {
                   <input
                     data-testid='notes-title-editor'
                     dir='auto'
+                    readOnly={!canWrite}
                     value={titleDraft}
                     onChange={event => {
                       setTitleDraft(event.target.value);
@@ -329,6 +390,53 @@ export const NotesPage: React.FC = () => {
                   </span>
                 </>
               )}
+              {isOwner && (
+                <Button
+                  size='sm'
+                  variant='ghost'
+                  onClick={() => void handleTogglePin()}
+                  className={cn(
+                    'hidden h-8 w-8 shrink-0 p-0 sm:flex',
+                    selectedNote.pinned && 'text-primary-500'
+                  )}
+                  title={
+                    selectedNote.pinned ? t('notes.unpin') : t('notes.pin')
+                  }
+                  aria-label={
+                    selectedNote.pinned ? t('notes.unpin') : t('notes.pin')
+                  }
+                  data-testid='notes-pin-toggle'
+                >
+                  <Pin className='h-3.5 w-3.5' />
+                </Button>
+              )}
+              <Button
+                size='sm'
+                variant='ghost'
+                onClick={handleExport}
+                className='hidden h-8 w-8 shrink-0 p-0 sm:flex'
+                title={t('notes.export')}
+                aria-label={t('notes.export')}
+                data-testid='notes-export'
+              >
+                <Download className='h-3.5 w-3.5' />
+              </Button>
+              <Button
+                size='sm'
+                variant='ghost'
+                onClick={() =>
+                  setToolsTab(current =>
+                    current === null ? 'revisions' : null
+                  )
+                }
+                className='h-9 w-9 shrink-0 p-0 sm:h-8 sm:w-8'
+                title={t('notes.tools')}
+                aria-label={t('notes.tools')}
+                aria-expanded={toolsTab !== null}
+                data-testid='notes-tools-toggle'
+              >
+                <SlidersHorizontal className='h-3.5 w-3.5' />
+              </Button>
               <Button
                 size='sm'
                 variant='ghost'
@@ -372,6 +480,7 @@ export const NotesPage: React.FC = () => {
               <textarea
                 data-testid='notes-content-editor'
                 dir='auto'
+                readOnly={!canWrite}
                 value={contentDraft}
                 onChange={event => {
                   setContentDraft(event.target.value);
@@ -380,6 +489,26 @@ export const NotesPage: React.FC = () => {
                 onBlur={flushPendingSave}
                 placeholder={t('notes.contentPlaceholder')}
                 className='min-h-0 flex-1 resize-none bg-transparent px-4 py-3 font-mono text-base leading-relaxed text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-dark-900 dark:placeholder:text-dark-500 sm:px-5 sm:py-4 sm:text-[13.5px]'
+              />
+            )}
+            {toolsTab !== null && (
+              <NoteToolsDrawer
+                note={selectedNote}
+                currentContent={contentDraft}
+                currentTitle={titleDraft}
+                canWrite={canWrite}
+                isOwner={isOwner}
+                initialTab={toolsTab}
+                onClose={() => setToolsTab(null)}
+                onApplyContent={(content, title) => {
+                  setContentDraft(content);
+                  if (title !== undefined) setTitleDraft(title);
+                  void persistNote(
+                    selectedNote.id,
+                    title !== undefined ? title : titleDraft,
+                    content
+                  );
+                }}
               />
             )}
           </>

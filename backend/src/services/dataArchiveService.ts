@@ -503,6 +503,9 @@ function normalizeNote(value: unknown, index: number): Note {
       `${path}.content`,
       MAX_NOTE_CONTENT_LENGTH
     ),
+    ...(optionalBoolean(item.pinned, `${path}.pinned`) !== undefined
+      ? { pinned: optionalBoolean(item.pinned, `${path}.pinned`) }
+      : {}),
     createdAt: requireTimestamp(item.createdAt, `${path}.createdAt`),
     updatedAt: requireTimestamp(item.updatedAt, `${path}.updatedAt`),
   };
@@ -1423,6 +1426,7 @@ async function applyPlan(
       user_id: userId,
       title: encryptionService.encrypt(note.title),
       content: encryptionService.encrypt(note.content),
+      pinned: note.pinned ? 1 : 0,
       created_at: note.createdAt,
       updated_at: note.updatedAt,
     })),

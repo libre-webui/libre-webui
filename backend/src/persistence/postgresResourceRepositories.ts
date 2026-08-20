@@ -29,8 +29,10 @@ import type {
   StoredChatSessionAggregate,
   StoredChatSessionRecord,
   StoredNamedResourceRecord,
+  StoredNoteAttachmentRecord,
   StoredNotePatch,
   StoredNoteRecord,
+  StoredNoteRevisionRecord,
   StoredPreferenceRecord,
   StoredPromptRecord,
   StoredPromptVersionRecord,
@@ -96,8 +98,20 @@ const namedResource = (row: NumericRow): StoredNamedResourceRecord => ({
 
 const note = (row: NumericRow): StoredNoteRecord => ({
   ...(row as unknown as StoredNoteRecord),
+  pinned: number(row.pinned ?? 0, 'note pinned'),
   created_at: number(row.created_at, 'note created_at'),
   updated_at: number(row.updated_at, 'note updated_at'),
+});
+
+const noteRevision = (row: NumericRow): StoredNoteRevisionRecord => ({
+  ...(row as unknown as StoredNoteRevisionRecord),
+  created_at: number(row.created_at, 'note revision created_at'),
+});
+
+const noteAttachment = (row: NumericRow): StoredNoteAttachmentRecord => ({
+  ...(row as unknown as StoredNoteAttachmentRecord),
+  size: number(row.size, 'note attachment size'),
+  created_at: number(row.created_at, 'note attachment created_at'),
 });
 
 const calendarEvent = (row: NumericRow): StoredCalendarEventRecord => ({
@@ -555,7 +569,7 @@ class PostgresNoteRepository implements NoteRepository {
     const result = await this.database.query<NumericRow>(
       `SELECT * FROM notes
         WHERE user_id = $1
-        ORDER BY updated_at DESC
+        ORDER BY pinned DESC, updated_at DESC
         LIMIT $2`,
       [userId, maximum]
     );
@@ -596,11 +610,12 @@ class PostgresNoteRepository implements NoteRepository {
         }
       }
       const result = await client.query(
-        `INSERT INTO notes (id, user_id, title, content, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO notes (id, user_id, title, content, pinned, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (id) DO UPDATE SET
            title = EXCLUDED.title,
            content = EXCLUDED.content,
+           pinned = EXCLUDED.pinned,
            updated_at = EXCLUDED.updated_at
          WHERE notes.user_id = EXCLUDED.user_id`,
         [
@@ -608,6 +623,7 @@ class PostgresNoteRepository implements NoteRepository {
           value.user_id,
           value.title,
           value.content,
+          value.pinned,
           value.created_at,
           value.updated_at,
         ]
@@ -624,7 +640,7 @@ class PostgresNoteRepository implements NoteRepository {
     const assignments: string[] = [];
     const values: Array<string | number> = [];
     const assign = (
-      column: 'title' | 'content' | 'updated_at',
+      column: 'title' | 'content' | 'pinned' | 'updated_at',
       value: string | number
     ): void => {
       values.push(value);
@@ -632,6 +648,7 @@ class PostgresNoteRepository implements NoteRepository {
     };
     if (patch.title !== undefined) assign('title', patch.title);
     if (patch.content !== undefined) assign('content', patch.content);
+    if (patch.pinned !== undefined) assign('pinned', patch.pinned);
     assign('updated_at', patch.updated_at);
     values.push(noteId, userId);
 
@@ -651,6 +668,165 @@ class PostgresNoteRepository implements NoteRepository {
           await this.database.query(
             'DELETE FROM notes WHERE id = $1 AND user_id = $2',
             [noteId, userId]
+          )
+        ).rowCount
+      ) > 0
+    );
+  }
+
+  async findById(noteId: string): Promise<StoredNoteRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM notes WHERE id = $1',
+      [noteId]
+    );
+    return result.rows[0] ? note(result.rows[0]) : null;
+  }
+
+  async patchById(
+    noteId: string,
+    patch: StoredNotePatch
+  ): Promise<StoredNoteRecord | null> {
+    const assignments: string[] = [];
+    const values: Array<string | number> = [];
+    const assign = (
+      column: 'title' | 'content' | 'pinned' | 'updated_at',
+      value: string | number
+    ): void => {
+      values.push(value);
+      assignments.push(`${column} = $${values.length}`);
+    };
+    if (patch.title !== undefined) assign('title', patch.title);
+    if (patch.content !== undefined) assign('content', patch.content);
+    if (patch.pinned !== undefined) assign('pinned', patch.pinned);
+    assign('updated_at', patch.updated_at);
+    values.push(noteId);
+
+    const result = await this.database.query<NumericRow>(
+      `UPDATE notes SET ${assignments.join(', ')}
+        WHERE id = $${values.length}
+        RETURNING *`,
+      values
+    );
+    return result.rows[0] ? note(result.rows[0]) : null;
+  }
+
+  async listRevisions(
+    noteId: string,
+    maximum: number
+  ): Promise<StoredNoteRevisionRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM note_revisions
+        WHERE note_id = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT $2`,
+      [noteId, maximum]
+    );
+    return result.rows.map(noteRevision);
+  }
+
+  async findRevision(
+    revisionId: string
+  ): Promise<StoredNoteRevisionRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM note_revisions WHERE id = $1',
+      [revisionId]
+    );
+    return result.rows[0] ? noteRevision(result.rows[0]) : null;
+  }
+
+  async insertRevision(
+    revision: StoredNoteRevisionRecord,
+    maximum: number
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      // Strictly increasing per note so same-millisecond snapshots keep a
+      // deterministic order for listing, restore, and pruning.
+      await client.query(
+        `INSERT INTO note_revisions (id, note_id, title, content, created_at)
+         SELECT $1, $2, $3, $4,
+                GREATEST($5::bigint, COALESCE(MAX(created_at), 0) + 1)
+           FROM note_revisions WHERE note_id = $2`,
+        [
+          revision.id,
+          revision.note_id,
+          revision.title,
+          revision.content,
+          revision.created_at,
+        ]
+      );
+      await client.query(
+        `DELETE FROM note_revisions
+          WHERE note_id = $1
+            AND id NOT IN (
+              SELECT id FROM note_revisions
+               WHERE note_id = $1
+               ORDER BY created_at DESC, id DESC
+               LIMIT $2
+            )`,
+        [revision.note_id, maximum]
+      );
+    });
+  }
+
+  async listAttachments(noteId: string): Promise<StoredNoteAttachmentRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM note_attachments
+        WHERE note_id = $1
+        ORDER BY created_at ASC, id ASC`,
+      [noteId]
+    );
+    return result.rows.map(noteAttachment);
+  }
+
+  async findAttachment(
+    attachmentId: string
+  ): Promise<StoredNoteAttachmentRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM note_attachments WHERE id = $1',
+      [attachmentId]
+    );
+    return result.rows[0] ? noteAttachment(result.rows[0]) : null;
+  }
+
+  async insertAttachmentWithLimit(
+    attachment: StoredNoteAttachmentRecord,
+    maximum: number
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      await client.query('SELECT id FROM notes WHERE id = $1 FOR UPDATE', [
+        attachment.note_id,
+      ]);
+      const count = await client.query<{ count: string }>(
+        'SELECT COUNT(*)::text AS count FROM note_attachments WHERE note_id = $1',
+        [attachment.note_id]
+      );
+      if (Number(count.rows[0]?.count || 0) >= maximum) {
+        throw new PersistenceResourceLimitError('note-attachment', maximum);
+      }
+      await client.query(
+        `INSERT INTO note_attachments
+           (id, note_id, blob_id, filename, content_type, size, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          attachment.id,
+          attachment.note_id,
+          attachment.blob_id,
+          attachment.filename,
+          attachment.content_type,
+          attachment.size,
+          attachment.created_at,
+        ]
+      );
+    });
+  }
+
+  async deleteAttachment(attachmentId: string): Promise<boolean> {
+    return (
+      changes(
+        (
+          await this.database.query(
+            'DELETE FROM note_attachments WHERE id = $1',
+            [attachmentId]
           )
         ).rowCount
       ) > 0

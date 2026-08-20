@@ -136,8 +136,28 @@ export interface Note {
   id: string;
   title: string;
   content: string;
+  pinned?: boolean;
   createdAt: number;
   updatedAt: number;
+  /** Present when the note belongs to someone else and is shared with us. */
+  shared?: { ownerUserId: string; permission: 'read' | 'write' };
+}
+
+export interface NoteRevision {
+  id: string;
+  noteId: string;
+  title: string;
+  content: string;
+  createdAt: number;
+}
+
+export interface NoteAttachment {
+  id: string;
+  noteId: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  createdAt: number;
 }
 
 export type AutomationTrigger =

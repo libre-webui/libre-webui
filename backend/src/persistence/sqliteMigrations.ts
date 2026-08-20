@@ -873,6 +873,20 @@ const SKILL_FILES_REQUIRED_SCHEMA = {
   ],
 } as const;
 
+const NOTES_V2_REQUIRED_SCHEMA = {
+  notes: ['pinned'],
+  note_revisions: ['id', 'note_id', 'title', 'content', 'created_at'],
+  note_attachments: [
+    'id',
+    'note_id',
+    'blob_id',
+    'filename',
+    'content_type',
+    'size',
+    'created_at',
+  ],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -1297,6 +1311,60 @@ export const SKILL_FILES_SCHEMA_SQL = `
     ON skill_files(skill_id);
 `;
 
+export const NOTES_V2_TABLES_SQL = `
+  CREATE TABLE IF NOT EXISTS note_revisions (
+    id TEXT PRIMARY KEY,
+    note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_note_revisions_note
+    ON note_revisions(note_id, created_at);
+
+  CREATE TABLE IF NOT EXISTS note_attachments (
+    id TEXT PRIMARY KEY,
+    note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+    blob_id TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    content_type TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_note_attachments_note
+    ON note_attachments(note_id);
+`;
+
+export const NOTES_V2_SCHEMA_SQL = `
+  ALTER TABLE notes ADD COLUMN pinned INTEGER DEFAULT 0;
+
+  CREATE TABLE IF NOT EXISTS note_revisions (
+    id TEXT PRIMARY KEY,
+    note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_note_revisions_note
+    ON note_revisions(note_id, created_at);
+
+  CREATE TABLE IF NOT EXISTS note_attachments (
+    id TEXT PRIMARY KEY,
+    note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+    blob_id TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    content_type TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_note_attachments_note
+    ON note_attachments(note_id);
+`;
+
 const REQUIRED_SCHEMA = {
   ...LEGACY_REQUIRED_SCHEMA,
   users: [
@@ -1584,6 +1652,8 @@ const REQUIRED_PRIMARY_KEYS: Readonly<Record<string, readonly string[]>> = {
   skills: ['id'],
   skill_versions: ['id'],
   skill_files: ['id'],
+  note_revisions: ['id'],
+  note_attachments: ['id'],
 };
 
 const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
@@ -1859,6 +1929,20 @@ const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
     referencedColumns: ['id'],
     onDelete: 'CASCADE',
   },
+  {
+    table: 'note_revisions',
+    columns: ['note_id'],
+    referencedTable: 'notes',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'note_attachments',
+    columns: ['note_id'],
+    referencedTable: 'notes',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
 ];
 
 const REQUIRED_INDEXES: readonly RequiredIndex[] = [
@@ -2106,6 +2190,16 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     name: 'idx_skill_files_skill',
     table: 'skill_files',
     columns: ['skill_id'],
+  },
+  {
+    name: 'idx_note_revisions_note',
+    table: 'note_revisions',
+    columns: ['note_id', 'created_at'],
+  },
+  {
+    name: 'idx_note_attachments_note',
+    table: 'note_attachments',
+    columns: ['note_id'],
   },
 ];
 
@@ -2499,6 +2593,7 @@ const collectMissingSchema = (database: Database.Database): string[] => [
   ...collectMissingPersonalAutomationsSchema(database),
   ...collectMissingAgentFoundationSchema(database),
   ...collectMissingSkillFilesSchema(database),
+  ...collectMissingNotesV2Schema(database),
 ];
 
 const collectMissingMigrationLedgerSchema = (
@@ -2667,6 +2762,13 @@ const collectMissingSkillFilesSchema = (
   ),
 ];
 
+const collectMissingNotesV2Schema = (database: Database.Database): string[] => [
+  ...collectMissingColumns(database, NOTES_V2_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(
+    item => item.includes('note_revisions') || item.includes('note_attachments')
+  ),
+];
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -2716,6 +2818,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 15 ? collectMissingPersonalAutomationsSchema(database) : []),
     ...(version >= 16 ? collectMissingAgentFoundationSchema(database) : []),
     ...(version >= 17 ? collectMissingSkillFilesSchema(database) : []),
+    ...(version >= 18 ? collectMissingNotesV2Schema(database) : []),
   ];
 }
 
@@ -2805,6 +2908,8 @@ const AGENT_FOUNDATION_MIGRATION_CHECKSUM =
   '7e3a346fae66c073aac800aa45847999a4300b2f17eb3eaf9ed6351e891e2941';
 const SKILL_FILES_MIGRATION_CHECKSUM =
   '584e1f9bca79eb5974f997088636d74d7f2c1e5fd816fcd0f6cf74ec30aea161';
+const NOTES_V2_MIGRATION_CHECKSUM =
+  '05a6758ab2b2a54f9097a5d5604a2bd57e085f1dd16816b5dc96d1eb7a41a399';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -3098,6 +3203,21 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite skill files schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 18,
+    name: 'notes-v2',
+    checksum: NOTES_V2_MIGRATION_CHECKSUM,
+    apply(database) {
+      addColumnIfMissing(database, 'notes', 'pinned', 'INTEGER DEFAULT 0');
+      database.exec(NOTES_V2_TABLES_SQL);
+      const missing = collectMissingNotesV2Schema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite notes v2 schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },
