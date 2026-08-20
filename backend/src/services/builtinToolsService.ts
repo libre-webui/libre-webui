@@ -28,6 +28,10 @@ import type { EffectiveTool } from '../types/tools.js';
 import { userCanUseWebSearch, webSearch } from './webSearchService.js';
 import documentService from './documentService.js';
 import {
+  readDocumentSegments,
+  resolveSegmentLabel,
+} from '../utils/documentExtraction.js';
+import {
   getSkillBySlug,
   getSkillFile,
   listSkillFiles,
@@ -35,6 +39,7 @@ import {
 } from './skillService.js';
 
 const MAX_RESULT_CHARS = 24_000;
+const READ_DOCUMENT_WINDOW = 8_000;
 
 const bounded = (text: string): { text: string; truncated: boolean } =>
   text.length > MAX_RESULT_CHARS
@@ -180,12 +185,119 @@ const BUILTIN_TOOLS: readonly BuiltinToolSpec[] = [
         );
       }
       const rendered = chunks
-        .map(
-          chunk =>
-            `[${titles.get(chunk.documentId)} · chunk ${chunk.chunkIndex}]\n${chunk.content}`
-        )
+        .map(chunk => {
+          const cite = [
+            titles.get(chunk.documentId),
+            `chunk ${chunk.chunkIndex}`,
+            ...(chunk.location ? [chunk.location] : []),
+          ].join(' · ');
+          return `[${cite}]\n${chunk.content}`;
+        })
         .join('\n\n');
       return { ...bounded(rendered), isError: false };
+    },
+  },
+  {
+    name: 'list_documents',
+    description:
+      'List the documents available to this chat: its uploads, attached knowledge collections, and standing uploads. Returns ids for read_document.',
+    paramsSchema: {
+      type: 'object',
+      properties: {},
+    },
+    available: async () => true,
+    execute: async (_args, context) => {
+      const documents = await documentService.getDocumentsInScope(
+        context.actor.userId,
+        context.sessionId,
+        context.collectionIds ? [...context.collectionIds] : undefined
+      );
+      if (documents.length === 0) {
+        return {
+          text: 'No documents are available in this chat.',
+          isError: false,
+          truncated: false,
+        };
+      }
+      const rendered = documents
+        .map(document => {
+          const chars = (document.content ?? '').length;
+          const type = document.fileType ?? 'txt';
+          return `- ${document.filename} (id: ${document.id}, ${type}, ${chars} chars)`;
+        })
+        .join('\n');
+      return { ...bounded(rendered), isError: false };
+    },
+  },
+  {
+    name: 'read_document',
+    description:
+      'Read part of an available document by id. Returns up to 8000 characters from the requested offset with its source location.',
+    paramsSchema: {
+      type: 'object',
+      properties: {
+        document_id: {
+          type: 'string',
+          description: 'The document id from list_documents or search results',
+        },
+        offset: {
+          type: 'integer',
+          description: 'Character offset to start reading from (default 0)',
+        },
+      },
+      required: ['document_id'],
+    },
+    available: async () => true,
+    execute: async (args, context) => {
+      const documentId = asString(args.document_id).trim();
+      if (!documentId) {
+        return {
+          text: 'A document_id is required.',
+          isError: true,
+          truncated: false,
+        };
+      }
+      const documents = await documentService.getDocumentsInScope(
+        context.actor.userId,
+        context.sessionId,
+        context.collectionIds ? [...context.collectionIds] : undefined
+      );
+      const document = documents.find(candidate => candidate.id === documentId);
+      if (!document) {
+        return {
+          text: `No available document has the id "${documentId}". Call list_documents first.`,
+          isError: true,
+          truncated: false,
+        };
+      }
+      const content = document.content ?? '';
+      const total = content.length;
+      const requestedOffset =
+        typeof args.offset === 'number' && Number.isFinite(args.offset)
+          ? Math.trunc(args.offset)
+          : 0;
+      const offset = Math.min(Math.max(requestedOffset, 0), total);
+      const window = content.slice(offset, offset + READ_DOCUMENT_WINDOW);
+      if (!window) {
+        return {
+          text: `The document "${document.filename}" has ${total} characters; offset ${offset} is past its end.`,
+          isError: true,
+          truncated: false,
+        };
+      }
+      const location = resolveSegmentLabel(
+        readDocumentSegments(document.metadata),
+        offset,
+        offset + window.length
+      );
+      const end = offset + window.length;
+      const header = [
+        `# ${document.filename}`,
+        `chars ${offset}-${end} of ${total}`,
+        ...(location ? [location] : []),
+        ...(end < total ? [`continue with offset ${end}`] : []),
+      ].join(' · ');
+      return { ...bounded(`${header}\n\n${window}`), isError: false };
     },
   },
   {

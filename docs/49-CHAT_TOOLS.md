@@ -37,12 +37,18 @@ collections restrict what the model sees for sessions using that profile.
 
 ## Built-in tools
 
-Four first-party, read-only tools ship with Chat:
+Six first-party, read-only tools ship with Chat:
 
 - `web_search` — the admin-configured search engine, honoring the web-search
   access mode.
-- `search_documents` — the user's own uploaded documents and knowledge
-  collections (profile bindings can scope the collections).
+- `search_documents` — hybrid search over the user's own uploaded documents
+  and knowledge collections (profile bindings can scope the collections);
+  each passage is cited with its chunk and source location.
+- `list_documents` — lists the documents in this chat's scope with their
+  ids, types, and sizes, so the model can decide what to read.
+- `read_document` — reads a bounded window of one available document by id
+  and offset, labeled with its source location, for iterating through a
+  file that retrieval alone cannot answer from.
 - `load_skill` — loads a skill's full instructions by slug; the tool's
   description carries the manifest of the user's enabled skills, so skills
   stay lazy until the model needs one. If the skill bundles companion

@@ -1615,6 +1615,51 @@ test('full-document mode sends whole sources and falls back over the token guard
   }
 });
 
+test('the knowledge tools list, read, and cite scoped documents', async () => {
+  const builtins = await import(dist('services/builtinToolsService.js'));
+  const context = { actor: { userId: USER }, sessionId: SESSION };
+
+  const listed = await builtins.executeBuiltinTool('list_documents', {}, context);
+  assert.equal(listed.isError, false);
+  assert.match(listed.text, /segmented\.pptx/);
+  assert.match(listed.text, /global-handbook\.txt/);
+  assert.ok(
+    !listed.text.includes('other-session.txt'),
+    'documents from other sessions stay out of the tool listing'
+  );
+
+  const searched = await builtins.executeBuiltinTool(
+    'search_documents',
+    { query: 'kingfisher timeline' },
+    context
+  );
+  assert.equal(searched.isError, false);
+  assert.match(searched.text, /Slide 2/);
+
+  const read = await builtins.executeBuiltinTool(
+    'read_document',
+    { document_id: 'doc-full-small' },
+    { actor: { userId: USER }, sessionId: 'rag-full-context-session' }
+  );
+  assert.equal(read.isError, false);
+  assert.match(read.text, /whole-policy\.txt/);
+  assert.match(read.text, /two carry-ons per flight/);
+
+  const outOfScope = await builtins.executeBuiltinTool(
+    'read_document',
+    { document_id: 'doc-other' },
+    context
+  );
+  assert.equal(outOfScope.isError, true);
+
+  const pastEnd = await builtins.executeBuiltinTool(
+    'read_document',
+    { document_id: 'doc-full-small', offset: 100000 },
+    { actor: { userId: USER }, sessionId: 'rag-full-context-session' }
+  );
+  assert.equal(pastEnd.isError, true);
+});
+
 test('the chat context builder reports which documents contributed', async () => {
   const context = await buildChatDocumentContext(
     'pelican refunds invoice',

@@ -31,7 +31,13 @@ const logger = createLogger('components:persona-bindings');
  * Tools the server implements itself, so there is no registry to read them
  * from. Leaving the selection empty offers all of them.
  */
-const BUILTIN_TOOLS = ['web_search', 'search_documents', 'load_skill'];
+const BUILTIN_TOOLS = [
+  'web_search',
+  'search_documents',
+  'list_documents',
+  'read_document',
+  'load_skill',
+];
 
 interface PersonaBindingsTabProps {
   bindings: PersonaBindings | undefined;
