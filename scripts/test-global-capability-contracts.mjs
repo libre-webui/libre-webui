@@ -52,6 +52,7 @@ const canonicalCapabilityIds = [
   'user-administration',
   'authentication',
   'access-control',
+  'public-api',
   'data-portability',
   'document-knowledge',
   'persona-memory',

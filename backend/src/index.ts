@@ -83,6 +83,7 @@ import workRoutes from './routes/work.js';
 import systemDiagnosticsRoutes from './routes/systemDiagnostics.js';
 import artifactsRoutes from './routes/artifacts.js';
 import searchRoutes from './routes/search.js';
+import openaiCompatRoutes from './routes/openaiCompat.js';
 import healthRoutes from './routes/health.js';
 import jobsRoutes from './routes/jobs.js';
 import groupsRoutes from './routes/groups.js';
@@ -662,6 +663,8 @@ app.use('/api/work', workRateLimiter, workRoutes);
 app.use('/api/system', systemDiagnosticsRoutes);
 app.use('/api/artifacts', artifactsRoutes);
 app.use('/api/search', chatRateLimiter, searchRoutes);
+// The OpenAI-compatible public API answers on the canonical /v1 base.
+app.use('/v1', chatRateLimiter, openaiCompatRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/groups', groupsRoutes);
 app.use('/api/access', accessRoutes);

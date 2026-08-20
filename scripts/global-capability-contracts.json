@@ -2786,6 +2786,64 @@
       }
     },
     {
+      "id": "public-api",
+      "title": "Public API",
+      "uiRoutes": [],
+      "documentation": [
+        {
+          "file": "docs/53-PUBLIC_API.md",
+          "patterns": [
+            "POST /v1/chat/completions",
+            "scoped API token"
+          ]
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "scripts/test-openai-compat.mjs",
+          "runner": "test:package",
+          "name": "a streaming completion emits OpenAI chunk frames and [DONE]",
+          "behaviorPatterns": [
+            "chat\\.completion\\.chunk",
+            "\\[DONE\\]"
+          ]
+        }
+      ],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/openaiCompat.ts",
+          "mount": "/v1",
+          "method": "GET",
+          "path": "/models"
+        },
+        {
+          "file": "backend/src/routes/openaiCompat.ts",
+          "mount": "/v1",
+          "method": "POST",
+          "path": "/chat/completions"
+        }
+      ],
+      "contractSurfaces": {
+        "schemas": {
+          "evidence": [
+            {
+              "file": "backend/src/routes/openaiCompat.ts",
+              "patterns": [
+                "object: 'chat.completion'",
+                "chat\\.completion\\.chunk"
+              ]
+            }
+          ]
+        },
+        "manifests": {
+          "notApplicable": "The OpenAI-compatible surface mirrors an external wire format and has no installable manifest."
+        },
+        "defaults": {
+          "notApplicable": "Sampling defaults come from the caller's request and the model's own configuration, never from this surface."
+        }
+      }
+    },
+    {
       "id": "data-portability",
       "title": "Data portability",
       "uiRoutes": [],
