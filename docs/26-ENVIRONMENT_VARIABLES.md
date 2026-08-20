@@ -35,6 +35,7 @@ test-only canaries are intentionally omitted.
 | `PLUGINS_DIR`                | `$DATA_DIR/plugins`                                      | Writable directory for installed/customized plugins                                           |
 | `BASE_URL`                   | `http://localhost:3001`                                  | Base URL used for OAuth callback defaults                                                     |
 | `LOG_LEVEL`                  | `info` (`warn` in tests)                                 | Backend log level                                                                             |
+| `LOG_FORMAT`                 | `text`                                                   | `json` switches to structured one-line logs with timestamps, correlation ids, and redaction   |
 | `WEBUI_HOST`                 | loopback; `0.0.0.0` in Docker                            | HTTP listen address                                                                           |
 | `OPEN_BROWSER`               | `true` when serving the frontend                         | Set `false` to suppress automatic browser launch                                              |
 | `FULL_DOCUMENT_CONTEXT_MAX_TOKENS` | `32000`                                            | Token guard for the per-chat full-document context mode (1000-2000000)                        |

@@ -42,6 +42,7 @@ import type {
 } from '../persistence/index.js';
 import { encryptionService } from './encryptionService.js';
 import { createLogger } from '../utils/logger.js';
+import { currentLogContext } from '../observability/requestContext.js';
 
 const logger = createLogger('services:security-audit');
 
@@ -136,7 +137,7 @@ export const buildAuditEvent = (
   target_type: input.targetType ?? null,
   target_id: input.targetId ?? null,
   result: input.result,
-  request_id: input.requestId ?? null,
+  request_id: input.requestId ?? currentLogContext()?.requestId ?? null,
   ip_hash: input.ipHash ?? null,
   details: redactAuditDetails(input.details),
 });

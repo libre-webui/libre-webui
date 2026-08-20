@@ -15,7 +15,103 @@
  * limitations under the License.
  */
 
+import { currentLogContext } from '../observability/requestContext.js';
+
 export type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'debug';
+
+export type LogFormat = 'text' | 'json';
+
+/**
+ * Structured-log redaction. Any key that looks like it could carry a
+ * credential is dropped outright, and prompt-sized strings are truncated so
+ * conversational content cannot ride along in operational logs.
+ */
+const SECRET_KEY_PATTERN =
+  /pass(word)?|secret|token|key|authorization|cookie|credential|bearer|jwt/i;
+const MAX_FIELD_STRING = 512;
+const MAX_FIELD_DEPTH = 6;
+const MAX_FIELD_ARRAY = 64;
+
+export const redactLogFields = (value: unknown, depth = 0): unknown => {
+  if (depth > MAX_FIELD_DEPTH) return '[depth]';
+  if (typeof value === 'string') {
+    return value.length > MAX_FIELD_STRING
+      ? `${value.slice(0, MAX_FIELD_STRING)}…[truncated]`
+      : value;
+  }
+  if (
+    value === null ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+  if (value === undefined) return undefined;
+  if (value instanceof Error) {
+    return {
+      name: value.name,
+      message: redactLogFields(value.message, depth + 1),
+    };
+  }
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, MAX_FIELD_ARRAY)
+      .map(item => redactLogFields(item, depth + 1));
+  }
+  if (typeof value === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) {
+      if (SECRET_KEY_PATTERN.test(key)) continue;
+      const redacted = redactLogFields(item, depth + 1);
+      if (redacted !== undefined) result[key] = redacted;
+    }
+    return result;
+  }
+  return String(value);
+};
+
+export const getLogFormat = (): LogFormat =>
+  process.env.LOG_FORMAT?.trim().toLowerCase() === 'json' ? 'json' : 'text';
+
+const writeStructuredLine = (
+  level: Exclude<LogLevel, 'silent'>,
+  scope: string,
+  args: unknown[]
+): void => {
+  const messageParts: string[] = [];
+  let details: Record<string, unknown> | undefined;
+  for (const arg of args) {
+    if (
+      arg !== null &&
+      typeof arg === 'object' &&
+      !(arg instanceof Error) &&
+      !Array.isArray(arg)
+    ) {
+      details = {
+        ...details,
+        ...(redactLogFields(arg) as Record<string, unknown>),
+      };
+    } else if (arg instanceof Error) {
+      messageParts.push(arg.message);
+      details = { ...details, errorName: arg.name };
+    } else {
+      messageParts.push(String(redactLogFields(arg)));
+    }
+  }
+  const context = currentLogContext();
+  const line = JSON.stringify({
+    ts: new Date().toISOString(),
+    level,
+    scope,
+    message: messageParts.join(' '),
+    ...(context?.requestId ? { requestId: context.requestId } : {}),
+    ...(context?.jobId ? { jobId: context.jobId } : {}),
+    ...(details && Object.keys(details).length > 0 ? { details } : {}),
+  });
+  const stream =
+    level === 'error' || level === 'warn' ? process.stderr : process.stdout;
+  stream.write(`${line}\n`);
+};
 
 const LEVEL_PRIORITY: Record<LogLevel, number> = {
   silent: 0,
@@ -82,27 +178,24 @@ export interface Logger {
 export function createLogger(scope: string): Logger {
   const prefix = `[${scope}]`;
 
+  const emit = (
+    level: Exclude<LogLevel, 'silent'>,
+    write: (...args: unknown[]) => void,
+    args: unknown[]
+  ) => {
+    if (!isLogLevelEnabled(level)) return;
+    if (getLogFormat() === 'json') {
+      writeStructuredLine(level, scope, args);
+      return;
+    }
+    write(prefix, ...args);
+  };
+
   return {
-    debug: (...args: unknown[]) => {
-      if (isLogLevelEnabled('debug')) {
-        console.debug(prefix, ...args);
-      }
-    },
-    info: (...args: unknown[]) => {
-      if (isLogLevelEnabled('info')) {
-        console.info(prefix, ...args);
-      }
-    },
-    warn: (...args: unknown[]) => {
-      if (isLogLevelEnabled('warn')) {
-        console.warn(prefix, ...args);
-      }
-    },
-    error: (...args: unknown[]) => {
-      if (isLogLevelEnabled('error')) {
-        console.error(prefix, ...args);
-      }
-    },
+    debug: (...args: unknown[]) => emit('debug', console.debug, args),
+    info: (...args: unknown[]) => emit('info', console.info, args),
+    warn: (...args: unknown[]) => emit('warn', console.warn, args),
+    error: (...args: unknown[]) => emit('error', console.error, args),
   };
 }
 

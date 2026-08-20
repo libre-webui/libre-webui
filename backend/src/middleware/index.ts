@@ -16,9 +16,59 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { randomUUID } from 'node:crypto';
 import { createLogger } from '../utils/logger.js';
+import {
+  currentLogContext,
+  runWithLogContext,
+} from '../observability/requestContext.js';
 
 const logger = createLogger('middleware:index');
+const accessLog = createLogger('http');
+
+/**
+ * Assign one correlation id per request. A sane inbound X-Request-Id is
+ * honored so proxies can stitch traces together; anything else is replaced.
+ * The id is echoed back on the response and stored in async-local context so
+ * the logger and audit trail attach it without explicit plumbing.
+ */
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{8,64}$/;
+
+export const requestContext = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const inbound = req.header('x-request-id');
+  const requestId =
+    inbound && REQUEST_ID_PATTERN.test(inbound) ? inbound : randomUUID();
+  res.setHeader('X-Request-Id', requestId);
+  runWithLogContext({ requestId }, () => next());
+};
+
+/**
+ * Access log with the query string stripped: query parameters can carry
+ * user content or short-lived credentials, so only the path is recorded.
+ * The captured context is re-entered inside the finish callback because
+ * event emitters fire outside the registration's async scope.
+ */
+export const accessLogger = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const start = Date.now();
+  const context = currentLogContext();
+  res.on('finish', () => {
+    runWithLogContext(context ?? {}, () => {
+      const path = req.originalUrl.split('?')[0];
+      accessLog.info(
+        `${req.method} ${path} ${res.statusCode} ${Date.now() - start}ms`
+      );
+    });
+  });
+  next();
+};
 
 export const errorHandler = (
   error: unknown,
@@ -76,12 +126,14 @@ export const requestLogger = (
   next: NextFunction
 ) => {
   const start = Date.now();
+  const context = currentLogContext();
 
   res.on('finish', () => {
-    const duration = Date.now() - start;
-    logger.debug(
-      `${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`
-    );
+    runWithLogContext(context ?? {}, () => {
+      const duration = Date.now() - start;
+      const path = req.originalUrl.split('?')[0];
+      logger.debug(`${req.method} ${path} - ${res.statusCode} - ${duration}ms`);
+    });
   });
 
   next();

@@ -41,15 +41,16 @@ import rateLimit from './middleware/sharedRateLimit.js';
 import { isChatCancellationSafetyRequest } from './middleware/chatCancellationAdmission.js';
 import cors from 'cors';
 import helmet from 'helmet';
-import morgan from 'morgan';
 import { createServer } from 'http';
 import { join as pathJoin } from 'path';
 import { readFileSync } from 'fs';
 import { createHash } from 'crypto';
 
 import {
+  accessLogger,
   errorHandler,
   notFoundHandler,
+  requestContext,
   requestLogger,
 } from './middleware/index.js';
 import {
@@ -427,9 +428,12 @@ app.use(
   })
 );
 
-// Logging
+// Correlation ids and logging. The access log deliberately replaces
+// morgan's combined format: it strips query strings (which can carry user
+// content or short-lived credentials) and carries the request id.
+app.use(requestContext);
 if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan('combined'));
+  app.use(accessLogger);
 }
 app.use(requestLogger);
 
