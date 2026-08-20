@@ -1,3 +1,11 @@
+---
+sidebar_position: 58
+title: 'Cost Governance'
+description: 'Model tariffs, cost analytics, and budgets with hard enforcement.'
+slug: /COST_GOVERNANCE
+keywords: [costs, budgets, tariffs, usage, analytics, governance]
+---
+
 # Cost Governance
 
 Cost governance turns the privacy-preserving usage ledger into money:

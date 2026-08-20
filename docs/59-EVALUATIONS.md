@@ -1,3 +1,11 @@
+---
+sidebar_position: 59
+title: 'Evaluations'
+description: 'Reply feedback, blind model arena with Elo, and repeatable eval runs.'
+slug: /EVALUATIONS
+keywords: [evaluations, feedback, arena, elo, model quality]
+---
+
 # Evaluations
 
 The evaluation platform turns everyday use into comparable model quality

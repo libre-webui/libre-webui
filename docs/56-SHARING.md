@@ -1,3 +1,11 @@
+---
+sidebar_position: 56
+title: 'Sharing'
+description: 'Grant-based sharing for chats, personas, prompts, skills, and knowledge.'
+slug: /SHARING
+keywords: [sharing, grants, permissions, collaboration, access control]
+---
+
 # Sharing
 
 Every shareable resource in Libre WebUI moves through one grant model:

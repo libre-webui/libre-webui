@@ -1,3 +1,11 @@
+---
+sidebar_position: 57
+title: 'Voice Mode'
+description: 'Hands-free turn-based voice conversations with governance and consent.'
+slug: /VOICE_MODE
+keywords: [voice mode, speech, tts, stt, consent, governance]
+---
+
 # Voice Mode
 
 Voice mode turns a chat into a hands-free, turn-based conversation:

@@ -1,3 +1,11 @@
+---
+sidebar_position: 54
+title: 'Channels'
+description: 'Team channels with threads, reactions, files, and @model replies.'
+slug: /CHANNELS
+keywords: [channels, team chat, threads, reactions, mentions, direct messages]
+---
+
 # Channels
 
 Channels bring team conversations into Libre WebUI: public and private

@@ -1,3 +1,11 @@
+---
+sidebar_position: 55
+title: 'Notifications'
+description: 'A durable in-app notification inbox with live delivery and signed webhooks.'
+slug: /NOTIFICATIONS
+keywords: [notifications, inbox, webhooks, mentions, alerts]
+---
+
 # Notifications
 
 Libre WebUI keeps a durable, per-user notification inbox so team activity
