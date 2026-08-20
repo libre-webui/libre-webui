@@ -27,6 +27,8 @@ import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   BookText,
+  FileText,
+  NotebookPen,
   Bot,
   Briefcase,
   CalendarDays,
@@ -53,6 +55,8 @@ import {
   startNewWork,
 } from '@/utils/appNavigation';
 import { cn, formatTimestamp, isMac } from '@/utils';
+import { searchApi } from '@/utils/api/searchApi';
+import type { WorkspaceSearchResult } from '@/utils/api/searchApi';
 
 type IconComponent = React.ComponentType<{ className?: string }>;
 
@@ -199,6 +203,34 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   }, [open]);
 
   const close = useCallback(() => setOpen(false), []);
+
+  // Deep workspace search (messages, notes, documents) kicks in from three
+  // characters, debounced so typing does not hammer the backend.
+  const [deepResults, setDeepResults] = useState<WorkspaceSearchResult | null>(
+    null
+  );
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!open || trimmed.length < 3) {
+      setDeepResults(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      searchApi
+        .searchApp(trimmed)
+        .then(response => {
+          if (!cancelled && response.success && response.data) {
+            setDeepResults(response.data);
+          }
+        })
+        .catch(() => {});
+    }, 300);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [query, open]);
 
   const items = useMemo((): PaletteItem[] => {
     const actionSection = t('palette.actions', 'Actions');
@@ -417,7 +449,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       if (best === undefined || score > best)
         bestPerSection.set(item.section, score);
     });
-    return scored
+    const ranked = scored
       .sort(
         (a, b) =>
           (bestPerSection.get(b.item.section) ?? 0) -
@@ -427,7 +459,49 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       )
       .slice(0, MAX_RESULTS)
       .map(({ item, ranges }) => ({ item, ranges }));
-  }, [items, query]);
+
+    if (!deepResults) return ranked;
+    const listedSessions = new Set(
+      ranked
+        .filter(entry => entry.item.id.startsWith('session:'))
+        .map(entry => entry.item.id.slice('session:'.length))
+    );
+    const deepItems: PaletteItem[] = [
+      ...deepResults.sessions
+        .filter(hit => !listedSessions.has(hit.sessionId))
+        .map(hit => ({
+          id: `deep-session:${hit.sessionId}:${hit.messageId}`,
+          section: t('palette.messages', 'Messages'),
+          label: hit.title || t('tabs.chat', 'Chat'),
+          icon: MessageSquare,
+          hint: hit.snippet,
+          run: () => navigate(`/c/${hit.sessionId}`),
+        })),
+      ...deepResults.notes.map(hit => ({
+        id: `deep-note:${hit.noteId}`,
+        section: t('palette.notes', 'Notes'),
+        label: hit.title || t('notes.untitled', 'Untitled'),
+        icon: NotebookPen,
+        hint: hit.snippet,
+        run: () => navigate(`/notes?note=${encodeURIComponent(hit.noteId)}`),
+      })),
+      ...deepResults.documents.map(hit => ({
+        id: `deep-document:${hit.documentId}`,
+        section: t('palette.documents', 'Documents'),
+        label: hit.filename,
+        icon: FileText,
+        hint: hit.snippet,
+        run: () => onOpenSettingsTab('documents'),
+      })),
+    ];
+    return [
+      ...ranked,
+      ...deepItems.map(item => ({
+        item,
+        ranges: [] as Array<[number, number]>,
+      })),
+    ];
+  }, [items, query, deepResults, t, navigate, onOpenSettingsTab]);
 
   useEffect(() => {
     const selected = listRef.current?.querySelector<HTMLElement>(

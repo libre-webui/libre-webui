@@ -2695,7 +2695,10 @@
     "chats": "แชท",
     "search": "ค้นหา",
     "settings": "การตั้งค่า",
-    "work": "งาน"
+    "work": "งาน",
+    "messages": "ข้อความ",
+    "notes": "โน้ต",
+    "documents": "เอกสาร"
   },
   "tabs": {
     "actions": "การทำงานของแท็บ",

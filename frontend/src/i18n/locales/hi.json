@@ -2695,7 +2695,10 @@
     "chats": "चैट्स",
     "search": "खोजें",
     "settings": "सेटिंग्स",
-    "work": "काम"
+    "work": "काम",
+    "messages": "संदेश",
+    "notes": "नोट्स",
+    "documents": "दस्तावेज़"
   },
   "tabs": {
     "actions": "टैब क्रियाएँ",

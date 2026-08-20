@@ -2695,7 +2695,10 @@
     "chats": "Chats",
     "search": "Suchen",
     "settings": "Einstellungen",
-    "work": "Arbeit"
+    "work": "Arbeit",
+    "messages": "Nachrichten",
+    "notes": "Notizen",
+    "documents": "Dokumente"
   },
   "tabs": {
     "actions": "Tab-Aktionen",

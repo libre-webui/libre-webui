@@ -2695,7 +2695,10 @@
     "chats": "Spjöll",
     "search": "Leita",
     "settings": "Stillingar",
-    "work": "Vinna"
+    "work": "Vinna",
+    "messages": "Skilaboð",
+    "notes": "Minnispunktar",
+    "documents": "Skjöl"
   },
   "tabs": {
     "actions": "Flipaaðgerðir",

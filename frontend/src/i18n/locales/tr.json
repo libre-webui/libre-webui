@@ -2695,7 +2695,10 @@
     "chats": "Sohbetler",
     "search": "Ara",
     "settings": "Ayarlar",
-    "work": "Çalışma"
+    "work": "Çalışma",
+    "messages": "Mesajlar",
+    "notes": "Notlar",
+    "documents": "Belgeler"
   },
   "tabs": {
     "actions": "Sekme eylemleri",

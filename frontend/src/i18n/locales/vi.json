@@ -2695,7 +2695,10 @@
     "chats": "Cuộc trò chuyện",
     "search": "Tìm kiếm",
     "settings": "Cài đặt",
-    "work": "Công việc"
+    "work": "Công việc",
+    "messages": "Tin nhắn",
+    "notes": "Ghi chú",
+    "documents": "Tài liệu"
   },
   "tabs": {
     "actions": "Hành động thẻ",

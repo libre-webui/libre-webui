@@ -2695,7 +2695,10 @@
     "chats": "Sembang",
     "search": "Cari",
     "settings": "Tetapan",
-    "work": "Kerja"
+    "work": "Kerja",
+    "messages": "Mesej",
+    "notes": "Nota",
+    "documents": "Dokumen"
   },
   "tabs": {
     "actions": "Tindakan tab",

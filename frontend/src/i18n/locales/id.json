@@ -2695,7 +2695,10 @@
     "chats": "Chat",
     "search": "Cari",
     "settings": "Pengaturan",
-    "work": "Kerja"
+    "work": "Kerja",
+    "messages": "Pesan",
+    "notes": "Catatan",
+    "documents": "Dokumen"
   },
   "tabs": {
     "actions": "Aksi tab",

@@ -154,6 +154,13 @@ prompts appear above the composer, can be edited, reordered, and removed,
 and are sent one by one as each reply finishes. The queue is stored with
 the chat, so it survives a reload or reconnect.
 
+## Search Everything From the Palette
+
+From three characters on, the command palette (Ctrl/Cmd+K) also searches
+inside your chat messages, notes (including notes shared with you), and
+document contents, showing a snippet for each hit. Search runs over your
+own decrypted data in memory — nothing is indexed in plaintext on disk.
+
 ## Fork a Conversation
 
 The fork button on any message copies the conversation up to that point

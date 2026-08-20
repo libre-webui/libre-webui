@@ -36,6 +36,30 @@ export interface WebSearchConfigResponse {
 
 export type WebSearchAccessMode = 'admins' | 'all-users';
 
+export interface WorkspaceSearchResult {
+  sessions: Array<{
+    sessionId: string;
+    title: string;
+    messageId: string;
+    role: string;
+    snippet: string;
+    score: number;
+  }>;
+  notes: Array<{
+    noteId: string;
+    title: string;
+    shared: boolean;
+    snippet: string;
+    score: number;
+  }>;
+  documents: Array<{
+    documentId: string;
+    filename: string;
+    snippet: string;
+    score: number;
+  }>;
+}
+
 export const searchApi = {
   getConfig: (): Promise<ApiResponse<WebSearchConfigResponse>> => {
     if (isDemoMode()) {
@@ -81,6 +105,15 @@ export const searchApi = {
     }
     return api
       .put('/search/config', { enabled, url, ...(options ?? {}) })
+      .then(res => res.data);
+  },
+
+  searchApp: (query: string): Promise<ApiResponse<WorkspaceSearchResult>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ sessions: [], notes: [], documents: [] });
+    }
+    return api
+      .get('/search/app', { params: { q: query } })
       .then(res => res.data);
   },
 

@@ -2695,7 +2695,10 @@
     "chats": "চ্যাট",
     "search": "অনুসন্ধান",
     "settings": "সেটিংস",
-    "work": "কাজ"
+    "work": "কাজ",
+    "messages": "বার্তা",
+    "notes": "নোট",
+    "documents": "নথি"
   },
   "tabs": {
     "actions": "ট্যাব অ্যাকশন",

@@ -3167,6 +3167,15 @@
             "config\\.enabled, false",
             "config\\.maxResults, 6"
           ]
+        },
+        {
+          "file": "scripts/test-workspace-search.mjs",
+          "runner": "test:package",
+          "name": "search is scoped to what the actor can read",
+          "behaviorPatterns": [
+            "searchWorkspace\\(stranger",
+            "shared\\.notes\\[0\\]\\.shared, true"
+          ]
         }
       ],
       "backendRoutes": [
@@ -3199,6 +3208,12 @@
           "mount": "/api/search",
           "method": "POST",
           "path": "/test"
+        },
+        {
+          "file": "backend/src/routes/search.ts",
+          "mount": "/api/search",
+          "method": "GET",
+          "path": "/app"
         }
       ],
       "contractSurfaces": {

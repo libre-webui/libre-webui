@@ -2695,7 +2695,10 @@
     "chats": "Chattar",
     "search": "Sök",
     "settings": "Inställningar",
-    "work": "Arbete"
+    "work": "Arbete",
+    "messages": "Meddelanden",
+    "notes": "Anteckningar",
+    "documents": "Dokument"
   },
   "tabs": {
     "actions": "Flikåtgärder",

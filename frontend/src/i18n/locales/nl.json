@@ -2695,7 +2695,10 @@
     "chats": "Chats",
     "search": "Zoeken",
     "settings": "Instellingen",
-    "work": "Werk"
+    "work": "Werk",
+    "messages": "Berichten",
+    "notes": "Notities",
+    "documents": "Documenten"
   },
   "tabs": {
     "actions": "Tabbladacties",

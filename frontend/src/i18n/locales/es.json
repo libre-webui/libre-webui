@@ -2695,7 +2695,10 @@
     "chats": "Chats",
     "search": "Buscar",
     "settings": "Configuración",
-    "work": "Trabajo"
+    "work": "Trabajo",
+    "messages": "Mensajes",
+    "notes": "Notas",
+    "documents": "Documentos"
   },
   "tabs": {
     "actions": "Acciones de pestaña",

@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
@@ -59,6 +60,7 @@ export const NotesPage: React.FC = () => {
   );
   const [toolsTab, setToolsTab] = useState<NoteToolsTab | null>(null);
   const saveTimerRef = useRef<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const selectedNote = useMemo(
     () => notes.find(note => note.id === selectedId) ?? null,
@@ -83,6 +85,22 @@ export const NotesPage: React.FC = () => {
       cancelled = true;
     };
   }, []);
+
+  // Deep links (e.g. palette search results) open a note via ?note=<id>.
+  useEffect(() => {
+    const requested = searchParams.get('note');
+    if (!requested || notes.length === 0) return;
+    const note = notes.find(candidate => candidate.id === requested);
+    if (note && selectedId !== note.id) {
+      setSelectedId(note.id);
+      setTitleDraft(note.title);
+      setContentDraft(note.content);
+      setPreviewing(true);
+      setSaveState('idle');
+    }
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notes, searchParams]);
 
   const isOwner = selectedNote ? !selectedNote.shared : true;
   const canWrite = selectedNote

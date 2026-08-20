@@ -2695,7 +2695,10 @@
     "chats": "Chats",
     "search": "Søg",
     "settings": "Indstillinger",
-    "work": "Arbejde"
+    "work": "Arbejde",
+    "messages": "Beskeder",
+    "notes": "Noter",
+    "documents": "Dokumenter"
   },
   "tabs": {
     "actions": "Fanehandlinger",

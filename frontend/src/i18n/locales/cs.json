@@ -2695,7 +2695,10 @@
     "chats": "Chaty",
     "search": "Hledat",
     "settings": "Nastavení",
-    "work": "Práce"
+    "work": "Práce",
+    "messages": "Zprávy",
+    "notes": "Poznámky",
+    "documents": "Dokumenty"
   },
   "tabs": {
     "actions": "Akce karty",

@@ -2695,7 +2695,10 @@
     "chats": "채팅",
     "search": "검색",
     "settings": "설정",
-    "work": "작업"
+    "work": "작업",
+    "messages": "메시지",
+    "notes": "노트",
+    "documents": "문서"
   },
   "tabs": {
     "actions": "탭 작업",

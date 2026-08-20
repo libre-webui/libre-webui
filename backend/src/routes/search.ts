@@ -16,7 +16,11 @@
  */
 
 import express, { Request, Response } from 'express';
-import { authenticate, requireAdmin } from '../middleware/auth.js';
+import {
+  authenticate,
+  AuthenticatedRequest,
+  requireAdmin,
+} from '../middleware/auth.js';
 import {
   getWebSearchAccessMode,
   getWebSearchConfig,
@@ -30,9 +34,42 @@ import {
 import { userModel } from '../models/userModel.js';
 import { getErrorMessage } from '../types/index.js';
 
+import { searchWorkspace } from '../services/searchService.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('routes:search');
+
 const router = express.Router();
 
 router.use(authenticate);
+
+/**
+ * Workspace full-text search over the caller's chats, notes, and
+ * documents. Runs in-process over decrypted content; nothing is indexed
+ * on disk.
+ */
+router.get('/app', async (req: AuthenticatedRequest, res) => {
+  try {
+    const query = typeof req.query.q === 'string' ? req.query.q : '';
+    if (!query.trim() || query.length > 500) {
+      res
+        .status(400)
+        .json({ success: false, error: 'q must be 1-500 characters' });
+      return;
+    }
+    const results = await searchWorkspace(
+      {
+        userId: req.user?.userId || 'default',
+        ...(req.user?.role !== undefined ? { role: req.user.role } : {}),
+      },
+      query
+    );
+    res.json({ success: true, data: results });
+  } catch (error) {
+    logger.error('Workspace search error:', error);
+    res.status(500).json({ success: false, error: 'Workspace search failed' });
+  }
+});
 
 /**
  * Whether search is available. Open to any authenticated user so the chat

@@ -2695,7 +2695,10 @@
     "chats": "チャット",
     "search": "検索",
     "settings": "設定",
-    "work": "作業"
+    "work": "作業",
+    "messages": "メッセージ",
+    "notes": "ノート",
+    "documents": "ドキュメント"
   },
   "tabs": {
     "actions": "タブ操作",

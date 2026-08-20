@@ -2695,7 +2695,10 @@
     "chats": "对话",
     "search": "搜索",
     "settings": "设置",
-    "work": "工作"
+    "work": "工作",
+    "messages": "消息",
+    "notes": "笔记",
+    "documents": "文档"
   },
   "tabs": {
     "actions": "标签页操作",
