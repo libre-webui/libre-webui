@@ -185,10 +185,8 @@ helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
 
 ## Secrets
 
-Set a stable JWT secret and encryption key for production. The current chart
-creates its own `<release>-libre-webui-secrets` object from `secrets.*` values;
-it does not have an `existingSecret` setting, so pre-creating an unrelated
-generic Secret does not wire those values into the pod.
+Set a stable JWT secret and encryption key for production. By default the chart
+creates `<release>-libre-webui-secrets` from non-empty `secrets.*` values:
 
 ```bash
 helm upgrade --install libre-webui \
@@ -197,12 +195,54 @@ helm upgrade --install libre-webui \
   --set-string secrets.encryptionKey="$(openssl rand -hex 32)"
 ```
 
-For production automation, supply stable values through an encrypted Helm
-values workflow or an external-secrets integration you maintain; command-line
-values can be exposed through process inspection and are retained in Helm
-release metadata. The current chart exposes only the secret keys declared in
-`values.yaml`. Add provider keys through a deliberate chart extension or
-configure per-user credentials in the WebUI.
+For an operator-managed Secret, set `secrets.existingSecret`. The chart then
+renders no Secret and both application and worker pods reference the named
+object:
+
+```yaml
+secrets:
+  existingSecret: libre-webui-runtime
+```
+
+Create that Secret before installing the release. It must contain
+`jwt-secret` and `encryption-key`. Team mode additionally requires
+`database-url`, `redis-url`, and `storage-encryption-keys`. The optional keys
+understood by the chart are `session-secret`, `s3-access-key-id`,
+`s3-secret-access-key`, and `s3-session-token`. GitHub and Hugging Face OAuth
+can also read their `*-client-id` and `*-client-secret` pairs from the named
+Secret when the corresponding non-empty `secrets.githubClientId` or
+`secrets.huggingfaceClientId` value enables that integration. The chart
+deliberately does not validate or copy the Secret's values; a missing required
+key leaves the Pod unable to start.
+
+For production automation, prefer `secrets.existingSecret` with an
+external-secrets controller or supply stable values through an encrypted Helm
+values workflow. Command-line `--set` values can be exposed through process
+inspection and are retained in Helm release metadata. Add provider credentials
+through a deliberate chart extension or configure per-user credentials in the
+WebUI.
+
+## Application and worker NetworkPolicies
+
+Set `networkPolicy.enabled=true` to render ingress policies for the application
+and, in team mode, the external durable worker:
+
+```yaml
+networkPolicy:
+  enabled: true
+```
+
+The application accepts ingress only on its HTTP container port. The worker
+accepts no ingress. These policies do not restrict egress: application and
+worker processes must still reach the configured PostgreSQL, Redis, S3,
+Ollama, tool, and model-provider endpoints, and operators decide where those
+services live.
+
+This setting is separate from `work.networkPolicy.enabled`, which controls the
+default-deny policies in the Work sandbox namespace and is enabled by default
+when Work is enabled. Both settings require a CNI that actually enforces
+Kubernetes NetworkPolicy; rendering the objects alone does not prove network
+isolation.
 
 ## Persistence
 

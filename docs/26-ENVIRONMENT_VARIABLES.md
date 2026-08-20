@@ -584,5 +584,6 @@ TURNSTILE_EXPECTED_HOSTNAME=librewebui.example
 - [Authentication](./AUTHENTICATION)
 - [Single Sign-On](./SINGLE_SIGN_ON)
 - [Database Encryption](./DATABASE_ENCRYPTION)
+- [Observability](./OBSERVABILITY)
 - [Work: Isolated Workspaces](./WORKSPACES)
 - [Docker](./DOCKER)

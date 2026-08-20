@@ -1,12 +1,13 @@
 ---
 sidebar_position: 37
 title: 'System Diagnostics & Usage Analytics'
-description: 'Administrator-only System and Usage pages: live host diagnostics and provider usage metering in Libre WebUI.'
+description: 'Administrator-only System and Usage pages for live host diagnostics and model/provider usage metering.'
 slug: /SYSTEM_MONITORING
 keywords:
   [
     libre webui system diagnostics,
     usage analytics,
+    model usage,
     provider metering,
     admin monitoring,
     docker status,
@@ -15,11 +16,12 @@ keywords:
 
 # System Diagnostics & Usage Analytics
 
-Libre WebUI 0.18.0 gives administrators two live views of the instance: a
-**System** page with host and runtime diagnostics, and a **Usage** page with
-provider usage analytics. Both are administrator-only, in the backend and in
-the interface, and both read only the instance's own state — nothing is
-transmitted off the box.
+Libre WebUI gives administrators two live views of the instance: a **System**
+page with host and runtime diagnostics, and a **Usage** page with model and
+provider usage analytics. Both are administrator-only in the backend and the
+interface. Reading either page stays inside the deployment; optional external
+telemetry is a separate, operator-configured
+[Observability](./60-OBSERVABILITY.md) path.
 
 Reach them from the sidebar admin entries, the tab menu's admin shortcuts, or
 directly at `/system` and `/usage`. Non-administrators cannot open either page,
@@ -80,15 +82,24 @@ role accordingly.
 
 ## Usage Analytics
 
-The Usage page (`/usage`) charts outbound provider traffic. Metering happens on
-the server at the plugin provider boundary, so it covers every plugin-backed
-call regardless of which surface made it: chat (streaming and non-streaming),
-embeddings, image generation, TTS, audio and video generation, and plugin-backed
-Work runs. Requests to local Ollama are not metered.
+The Usage page (`/usage`) charts user-attributed model and provider work.
+Metering happens at each supported execution boundary and currently covers:
+
+- local Ollama chat calls, including native Chat and Ollama-backed Work calls;
+- installed agent CLI chat calls;
+- plugin-backed chat, streaming and non-streaming;
+- plugin embeddings, image generation, speech to text, text to speech, sound,
+  and video; and
+- plugin-backed Work calls.
+
+Background operations without an owning user are deliberately not assigned to a
+synthetic account and therefore are not metered. A call is still recorded when
+it fails or is cancelled.
 
 Each event records:
 
-- plugin id and a snapshot of the plugin name
+- provider/plugin id and a snapshot of its display name (`ollama` and
+  `agent-cli:*` use the same ledger as plugin providers)
 - capability (`chat`, `embedding`, `image`, `stt`, `tts`, `audio`, `video`)
 - model
 - status: `success`, `error`, or `cancelled` (an aborted stream counts as
@@ -101,10 +112,11 @@ Each event records:
 
 Nothing else is stored. **Prompts, responses, provider endpoints, credentials,
 and provider error bodies are never written to the usage table** — a failed
-call is recorded only as `status = 'error'`. The events live in the instance's
-own SQLite database and are kept for **400 days**; older rows are pruned
-opportunistically on write, at most once per day. Metering is best-effort by
-design and can never make a provider request fail.
+call is recorded only as `status = 'error'`. The events live in the selected
+application database (SQLite in solo mode, PostgreSQL in team mode) and are kept
+for **400 days**; older rows are pruned opportunistically on write, at most once
+per day. Metering is best-effort by design and can never make a model or
+provider request fail.
 
 The page offers 7, 30, and 90-day ranges over a single admin-only endpoint,
 `GET /api/plugins/usage?days=<1..365>` (default 30). It shows total calls,
@@ -115,6 +127,12 @@ usage metadata.
 
 There is no switch to disable metering. Because the data is aggregated across
 accounts, inspecting it is restricted to administrators.
+
+The Usage page reports calls, units, tokens, latency, and outcomes. Add
+[Cost Governance](./58-COST_GOVERNANCE.md) when those events need
+effective-dated tariffs, spend breakdowns, budgets, alerts, or accounting
+export. Events without a matching tariff or provider-reported usage remain
+visibly unpriced rather than being treated as free.
 
 ### OpenRouter attribution
 
@@ -130,3 +148,5 @@ self-hosted route — and they add nothing to what is stored locally.
 - [Docker](./DOCKER)
 - [Plugin Architecture](./PLUGIN_ARCHITECTURE)
 - [Environment Variables](./ENVIRONMENT_VARIABLES)
+- [Cost Governance](./58-COST_GOVERNANCE.md)
+- [Observability](./60-OBSERVABILITY.md)

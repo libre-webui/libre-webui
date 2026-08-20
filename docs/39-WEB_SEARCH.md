@@ -1,7 +1,7 @@
 ---
 sidebar_position: 39
 title: 'Web Search'
-description: 'Give chats and Work tasks live web search through a self-hosted SearXNG instance. Off by default, admin-enabled, fully private.'
+description: 'Give chats and Work tasks live web search through an administrator-controlled SearXNG instance, with the outbound search boundary made explicit.'
 slug: /WEB_SEARCH
 keywords:
   [
@@ -17,18 +17,19 @@ keywords:
 
 # Web Search
 
-Libre WebUI can search the web and hand the results to your models — without
-sending anything to a commercial search API. Search runs through a
-[SearXNG](https://docs.searxng.org/) instance you host yourself, next to the
-app. Queries leave your server only as anonymous SearXNG requests to the
-public search engines it aggregates.
+Libre WebUI can search the web and hand the results to your models without
+requiring a Libre WebUI vendor account or a commercial search API integration.
+Search runs through a [SearXNG](https://docs.searxng.org/) instance chosen by
+the administrator. SearXNG then sends queries to the public search engines it
+aggregates; those engines can observe the request from the SearXNG deployment
+and apply their own logging, retention, and network policies.
 
 Like every dual-use capability in Libre WebUI, it ships **off**. An
 administrator turns it on once; until then no search UI exists anywhere.
 
 ## How it works
 
-There are three pieces, and each one is invisible until the previous one
+There are four pieces, and each one is invisible until the previous one
 exists:
 
 1. **A SearXNG instance** the backend can reach. The bundled private deploy
@@ -41,12 +42,13 @@ exists:
    search admins-only even while it is enabled; on opens it to all active
    users. The backend enforces this on every request.
 4. **The per-use controls** that appear for permitted users:
-   - **Chat:** a globe toggle in the composer. When it is on, the backend
-     searches for your message before generating, injects the top results as
-     context, and the reply shows numbered **source chips** linking to each
-     result. This works with _every_ model — including small local models
-     with no tool-calling support — because the results arrive as context,
-     not as a tool the model must know how to call.
+   - **Chat retrieval:** a globe toggle in the composer. When it is on, the
+     session model plans focused keyword queries with optional freshness and
+     category hints. If planning fails, Libre falls back to the raw message.
+     Results enter the prompt as context and the reply shows numbered
+     **source chips**. This works with models that do not support tool calls.
+   - **Chat Tools:** permitted tool-capable models can call the built-in
+     `web_search` tool when tools are enabled for that turn.
    - **Work:** tasks whose network access is on gain a `web_search` tool in
      the agent loop. The model decides when to call it, like any other tool.
      Offline tasks (network disabled) never see the tool, even though the
@@ -99,10 +101,15 @@ survives restarts and takes effect immediately without redeploying.
 
 ## Privacy and scope
 
-- Searches run **server-side**. Browsers never contact the search engine,
-  and no API key or account is involved anywhere.
-- Result text is bounded before it reaches model context (500 characters
-  per result, at most 10 results), and only `http(s)` result URLs are kept.
+- Searches run **server-side**. Browsers never contact SearXNG directly.
+  Libre WebUI itself needs no search-provider account, although a custom
+  SearXNG deployment may configure engines with their own credentials.
+- Search terms leave the Libre WebUI process for SearXNG and then the selected
+  upstream engines. Self-hosting the gateway controls that hop; it does not
+  make public web search local or anonymous by itself.
+- Result text is bounded before it reaches model context (500 characters per
+  result). Administrators choose a result limit from 1–100; the default is 6.
+  Only `http(s)` result URLs are kept.
 - The bundled instance is reachable only on the stack's internal network.
   Its rate limiter is off for that reason; do not publish it.
 

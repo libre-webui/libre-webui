@@ -298,6 +298,7 @@ The product changes quickly. Prefer durable docs that describe behavior and work
 - [Calendar](./CALENDAR)
 - [Automations](./AUTOMATIONS)
 - [Document Chat](./RAG_FEATURE)
+- [Notes](./NOTES)
 - [Artifacts](./ARTIFACTS_FEATURE)
 - [Personas](./PERSONA_DEVELOPMENT_FRAMEWORK)
 - [Environment Variables](./ENVIRONMENT_VARIABLES)

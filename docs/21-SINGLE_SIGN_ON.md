@@ -1,10 +1,19 @@
 ---
 sidebar_position: 21
 title: 'Single Sign-On'
-description: 'Configure GitHub and Hugging Face OAuth login in Libre WebUI.'
+description: 'Configure GitHub and Hugging Face OAuth or a generic OpenID Connect provider, including optional domain, role, and group policies.'
 slug: /SINGLE_SIGN_ON
 keywords:
-  [libre webui sso, github oauth, hugging face oauth, oauth2 authentication]
+  [
+    libre webui sso,
+    openid connect,
+    oidc,
+    github oauth,
+    hugging face oauth,
+    keycloak,
+    authentik,
+    oauth2 authentication,
+  ]
 image: /img/social/21.png
 ---
 
