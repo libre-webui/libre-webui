@@ -1198,6 +1198,24 @@
             "event\\.baseEventId === recurring\\.id",
             "weekly event occurs three times in range"
           ]
+        },
+        {
+          "file": "scripts/test-calendar-team.mjs",
+          "runner": "test:package",
+          "name": "named calendars carry colors and share read/write through grants",
+          "behaviorPatterns": [
+            "the OWNER owns",
+            "clears its grants"
+          ]
+        },
+        {
+          "file": "scripts/test-calendar-team.mjs",
+          "runner": "test:package",
+          "name": "reminders fire once per occurrence into the notification inbox",
+          "behaviorPatterns": [
+            "never re-fires",
+            "calendar-reminder"
+          ]
         }
       ],
       "backendRoutes": [
@@ -1224,6 +1242,42 @@
           "mount": "/api/calendar",
           "method": "DELETE",
           "path": "/events/:eventId"
+        },
+        {
+          "file": "backend/src/routes/calendar.ts",
+          "mount": "/api/calendar",
+          "method": "GET",
+          "path": "/calendars"
+        },
+        {
+          "file": "backend/src/routes/calendar.ts",
+          "mount": "/api/calendar",
+          "method": "POST",
+          "path": "/calendars"
+        },
+        {
+          "file": "backend/src/routes/calendar.ts",
+          "mount": "/api/calendar",
+          "method": "PUT",
+          "path": "/calendars/:calendarId"
+        },
+        {
+          "file": "backend/src/routes/calendar.ts",
+          "mount": "/api/calendar",
+          "method": "DELETE",
+          "path": "/calendars/:calendarId"
+        },
+        {
+          "file": "backend/src/routes/calendar.ts",
+          "mount": "/api/calendar",
+          "method": "GET",
+          "path": "/export"
+        },
+        {
+          "file": "backend/src/routes/calendar.ts",
+          "mount": "/api/calendar",
+          "method": "POST",
+          "path": "/import"
         }
       ],
       "contractSurfaces": {

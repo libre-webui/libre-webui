@@ -17,8 +17,8 @@
 
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import storageService from '../storage.js';
-import { ApiResponse, CalendarEvent } from '../types/index.js';
+import { calendarService } from '../services/calendarService.js';
+import { ApiResponse, Calendar, CalendarEvent } from '../types/index.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   MAX_CALENDAR_EVENT_NOTES_LENGTH,
@@ -112,6 +112,18 @@ function readEventBody(
   body: Record<string, unknown>,
   existing?: CalendarEvent
 ): Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'> {
+  const calendarId =
+    body.calendarId !== undefined
+      ? body.calendarId === null
+        ? undefined
+        : String(body.calendarId)
+      : existing?.calendarId;
+  const reminderMinutes =
+    body.reminderMinutes !== undefined
+      ? body.reminderMinutes === null
+        ? undefined
+        : readEpoch(body.reminderMinutes, 'reminderMinutes')
+      : existing?.reminderMinutes;
   const title =
     readTextField(
       body.title,
@@ -163,6 +175,8 @@ function readEventBody(
     ...(endAt !== undefined ? { endAt } : {}),
     allDay,
     ...(recurrence !== undefined ? { recurrence } : {}),
+    ...(calendarId !== undefined ? { calendarId } : {}),
+    ...(reminderMinutes !== undefined ? { reminderMinutes } : {}),
   };
 }
 
@@ -191,22 +205,143 @@ router.get('/events', async (req: AuthenticatedRequest, res) => {
   try {
     const userId = userIdOf(req);
     const { from, to } = readRange(req);
-    const [inRange, recurring] = await Promise.all([
-      storageService.getCalendarEventsBetween(from, to, userId),
-      storageService.getRecurringCalendarEvents(userId),
-    ]);
-    const seen = new Set(inRange.map(event => event.id));
-    const expanded = recurring.flatMap(event =>
-      expandRecurring(event, from, to).filter(
-        occurrence => !seen.has(occurrence.id)
-      )
+    const { events: inRange, recurring } =
+      await calendarService.listEventsForActor(
+        { userId, role: req.user?.role },
+        { from, to }
+      );
+    const scoped = inRange.filter(
+      event => event.startAt >= from && event.startAt < to
     );
-    const events = [...inRange, ...expanded].sort(
+    const seen = new Set(scoped.map(event => event.id));
+    const expanded = recurring.flatMap(event =>
+      expandRecurring(event, from, to)
+        .filter(occurrence => !seen.has(occurrence.id))
+        .map(occurrence =>
+          event.shared ? { ...occurrence, shared: event.shared } : occurrence
+        )
+    );
+    const events = [...scoped, ...expanded].sort(
       (left, right) => left.startAt - right.startAt
     );
     res.json({ success: true, data: events } as ApiResponse<CalendarEvent[]>);
   } catch (error) {
     sendCalendarError(res, error, 'Failed to load calendar events');
+  }
+});
+
+// Named calendars: own plus shared, colors, and lifecycle.
+router.get('/calendars', async (req: AuthenticatedRequest, res) => {
+  try {
+    const calendars = await calendarService.listCalendars({
+      userId: userIdOf(req),
+      role: req.user?.role,
+    });
+    res.json({ success: true, data: calendars } as ApiResponse<Calendar[]>);
+  } catch (error) {
+    sendCalendarError(res, error, 'Failed to load calendars');
+  }
+});
+
+router.post('/calendars', async (req: AuthenticatedRequest, res) => {
+  try {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const calendar = await calendarService.saveCalendar(
+      { userId: userIdOf(req), role: req.user?.role },
+      {
+        name: typeof body.name === 'string' ? body.name : '',
+        ...(typeof body.color === 'string' && body.color
+          ? { color: body.color }
+          : {}),
+      }
+    );
+    res.status(201).json({ success: true, data: calendar } as ApiResponse);
+  } catch (error) {
+    sendCalendarError(res, error, 'Failed to create calendar');
+  }
+});
+
+router.put('/calendars/:calendarId', async (req: AuthenticatedRequest, res) => {
+  try {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const calendar = await calendarService.saveCalendar(
+      { userId: userIdOf(req), role: req.user?.role },
+      {
+        id: req.params.calendarId as string,
+        name: typeof body.name === 'string' ? body.name : '',
+        ...(typeof body.color === 'string' && body.color
+          ? { color: body.color }
+          : {}),
+      }
+    );
+    res.json({ success: true, data: calendar } as ApiResponse);
+  } catch (error) {
+    sendCalendarError(res, error, 'Failed to update calendar');
+  }
+});
+
+router.delete(
+  '/calendars/:calendarId',
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const deleted = await calendarService.deleteCalendar(
+        { userId: userIdOf(req), role: req.user?.role },
+        req.params.calendarId as string
+      );
+      if (!deleted) {
+        res
+          .status(404)
+          .json({ success: false, error: 'Calendar not found' } as ApiResponse);
+        return;
+      }
+      res.json({ success: true } as ApiResponse);
+    } catch (error) {
+      sendCalendarError(res, error, 'Failed to delete calendar');
+    }
+  }
+);
+
+// ICS portability.
+router.get('/export', async (req: AuthenticatedRequest, res) => {
+  try {
+    const calendarId =
+      typeof req.query.calendarId === 'string' && req.query.calendarId
+        ? req.query.calendarId
+        : undefined;
+    const exported = await calendarService.exportIcs(
+      { userId: userIdOf(req), role: req.user?.role },
+      calendarId
+    );
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${exported.filename}"`
+    );
+    res.send(exported.content);
+  } catch (error) {
+    sendCalendarError(res, error, 'Failed to export the calendar');
+  }
+});
+
+router.post('/import', async (req: AuthenticatedRequest, res) => {
+  try {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    if (typeof body.ics !== 'string' || !body.ics.trim()) {
+      res
+        .status(400)
+        .json({ success: false, error: 'ics content is required' });
+      return;
+    }
+    const result = await calendarService.importIcs(
+      { userId: userIdOf(req), role: req.user?.role },
+      typeof body.calendarId === 'string' && body.calendarId
+        ? body.calendarId
+        : undefined,
+      body.ics
+    );
+    res.json({ success: true, data: result } as ApiResponse);
+  } catch (error) {
+    sendCalendarError(res, error, 'Failed to import the calendar');
   }
 });
 
@@ -219,8 +354,15 @@ router.post('/events', async (req: AuthenticatedRequest, res) => {
       createdAt: now,
       updatedAt: now,
     };
-    await storageService.saveCalendarEvent(event, userIdOf(req));
-    res.json({ success: true, data: event } as ApiResponse<CalendarEvent>);
+    const saved = await calendarService.saveEventForActor(
+      { userId: userIdOf(req), role: req.user?.role },
+      event,
+      event.calendarId
+    );
+    res.json({
+      success: true,
+      data: saved.event,
+    } as ApiResponse<CalendarEvent>);
   } catch (error) {
     sendCalendarError(res, error, 'Failed to create calendar event');
   }
@@ -228,18 +370,11 @@ router.post('/events', async (req: AuthenticatedRequest, res) => {
 
 router.put('/events/:eventId', async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = userIdOf(req);
-    const existing = await storageService.getCalendarEvent(
-      req.params.eventId as string,
-      userId
+    const actor = { userId: userIdOf(req), role: req.user?.role };
+    const { event: existing } = await calendarService.requireWritableEvent(
+      actor,
+      req.params.eventId as string
     );
-    if (!existing) {
-      res.status(404).json({
-        success: false,
-        error: 'Calendar event not found',
-      } as ApiResponse);
-      return;
-    }
     const event: CalendarEvent = {
       ...existing,
       ...readEventBody((req.body ?? {}) as Record<string, unknown>, existing),
@@ -247,8 +382,15 @@ router.put('/events/:eventId', async (req: AuthenticatedRequest, res) => {
       createdAt: existing.createdAt,
       updatedAt: Date.now(),
     };
-    await storageService.saveCalendarEvent(event, userId);
-    res.json({ success: true, data: event } as ApiResponse<CalendarEvent>);
+    const saved = await calendarService.saveEventForActor(
+      actor,
+      event,
+      event.calendarId
+    );
+    res.json({
+      success: true,
+      data: saved.event,
+    } as ApiResponse<CalendarEvent>);
   } catch (error) {
     sendCalendarError(res, error, 'Failed to update calendar event');
   }
@@ -256,9 +398,9 @@ router.put('/events/:eventId', async (req: AuthenticatedRequest, res) => {
 
 router.delete('/events/:eventId', async (req: AuthenticatedRequest, res) => {
   try {
-    const deleted = await storageService.deleteCalendarEvent(
-      req.params.eventId as string,
-      userIdOf(req)
+    const deleted = await calendarService.deleteEventForActor(
+      { userId: userIdOf(req), role: req.user?.role },
+      req.params.eventId as string
     );
     if (!deleted) {
       res.status(404).json({

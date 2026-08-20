@@ -23,6 +23,8 @@
  * own enabled skills. Outputs are bounded before they re-enter the model.
  */
 
+import { randomUUID } from 'node:crypto';
+import { ResourcePolicyError } from '../utils/resourceLimits.js';
 import type { AuthzActor } from './authorizationService.js';
 import type { EffectiveTool } from '../types/tools.js';
 import { userCanUseWebSearch, webSearch } from './webSearchService.js';
@@ -436,6 +438,176 @@ const BUILTIN_TOOLS: readonly BuiltinToolSpec[] = [
         }
         throw error;
       }
+    },
+  },
+  {
+    name: 'list_calendar_events',
+    description:
+      "List the user's calendar events (own and shared calendars) in a " +
+      'date range. Times are epoch milliseconds.',
+    paramsSchema: {
+      type: 'object',
+      properties: {
+        from: {
+          type: 'number',
+          description: 'Range start as epoch milliseconds',
+        },
+        to: { type: 'number', description: 'Range end as epoch milliseconds' },
+      },
+      required: ['from', 'to'],
+    },
+    available: async () => true,
+    execute: async (args, context) => {
+      const from = Number(args.from);
+      const to = Number(args.to);
+      if (
+        !Number.isSafeInteger(from) ||
+        !Number.isSafeInteger(to) ||
+        to <= from
+      ) {
+        return {
+          text: 'from and to must be an increasing epoch-ms range.',
+          isError: true,
+          truncated: false,
+        };
+      }
+      try {
+        const { calendarService } = await import('./calendarService.js');
+        const { events } = await calendarService.listEventsForActor(
+          context.actor,
+          { from, to }
+        );
+        const scoped = events.filter(
+          event => event.startAt >= from && event.startAt < to
+        );
+        if (scoped.length === 0) {
+          return {
+            text: 'No calendar events in this range.',
+            isError: false,
+            truncated: false,
+          };
+        }
+        const rendered = scoped
+          .sort((left, right) => left.startAt - right.startAt)
+          .map(event => {
+            const start = new Date(event.startAt).toISOString();
+            const marks = [
+              ...(event.allDay ? ['all-day'] : []),
+              ...(event.recurrence ? ['recurring'] : []),
+              ...(event.shared ? ['shared'] : []),
+            ];
+            const suffix = marks.length > 0 ? ` [${marks.join('; ')}]` : '';
+            return `- ${start} ${event.title} (id: ${event.id})${suffix}`;
+          })
+          .join('\n');
+        return { ...bounded(rendered), isError: false };
+      } catch (error) {
+        if (error instanceof ResourcePolicyError) {
+          return { text: error.message, isError: true, truncated: false };
+        }
+        throw error;
+      }
+    },
+  },
+  {
+    name: 'create_calendar_event',
+    description:
+      'Create a calendar event. Times are epoch milliseconds. Requires approval.',
+    sideEffect: true,
+    paramsSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'The event title' },
+        start_at: {
+          type: 'number',
+          description: 'Event start as epoch milliseconds',
+        },
+        end_at: {
+          type: 'number',
+          description: 'Optional event end as epoch milliseconds',
+        },
+        notes: { type: 'string', description: 'Optional event notes' },
+        all_day: {
+          type: 'boolean',
+          description: 'Whether the event is all-day',
+        },
+      },
+      required: ['title', 'start_at'],
+    },
+    available: async () => true,
+    execute: async (args, context) => {
+      const startAt = Number(args.start_at);
+      const endAt = args.end_at !== undefined ? Number(args.end_at) : undefined;
+      if (
+        !Number.isSafeInteger(startAt) ||
+        (endAt !== undefined &&
+          (!Number.isSafeInteger(endAt) || endAt < startAt))
+      ) {
+        return {
+          text: 'start_at (and optional end_at) must be epoch milliseconds.',
+          isError: true,
+          truncated: false,
+        };
+      }
+      try {
+        const { calendarService } = await import('./calendarService.js');
+        const now = Date.now();
+        const saved = await calendarService.saveEventForActor(
+          context.actor,
+          {
+            id: randomUUID(),
+            title: asString(args.title),
+            ...(typeof args.notes === 'string' && args.notes
+              ? { notes: args.notes }
+              : {}),
+            startAt,
+            ...(endAt !== undefined ? { endAt } : {}),
+            allDay: args.all_day === true,
+            createdAt: now,
+            updatedAt: now,
+          },
+          undefined
+        );
+        return {
+          text:
+            `Created event "${saved.event.title}" at ` +
+            `${new Date(saved.event.startAt).toISOString()} ` +
+            `(id: ${saved.event.id}).`,
+          isError: false,
+          truncated: false,
+        };
+      } catch (error) {
+        if (error instanceof ResourcePolicyError) {
+          return { text: error.message, isError: true, truncated: false };
+        }
+        throw error;
+      }
+    },
+  },
+  {
+    name: 'delete_calendar_event',
+    description: 'Delete one calendar event by its id. Requires approval.',
+    sideEffect: true,
+    paramsSchema: {
+      type: 'object',
+      properties: {
+        event_id: {
+          type: 'string',
+          description: 'The event id from list_calendar_events',
+        },
+      },
+      required: ['event_id'],
+    },
+    available: async () => true,
+    execute: async (args, context) => {
+      const { calendarService } = await import('./calendarService.js');
+      const deleted = await calendarService.deleteEventForActor(
+        context.actor,
+        asString(args.event_id).trim()
+      );
+      return deleted
+        ? { text: 'Event deleted.', isError: false, truncated: false }
+        : { text: 'Event not found.', isError: true, truncated: false };
     },
   },
   {

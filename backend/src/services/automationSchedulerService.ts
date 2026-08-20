@@ -83,6 +83,14 @@ class AutomationSchedulerService {
     try {
       const fired = await this.fireDue(now);
       const settled = await this.settleRuns(now);
+      // Calendar reminders share the scheduler's coordination lease; the
+      // per-event compare-and-set keeps concurrent sweeps single-fire.
+      try {
+        const { calendarService } = await import('./calendarService.js');
+        await calendarService.sweepReminders(now);
+      } catch (error) {
+        logger.warn('Calendar reminder sweep failed', { error });
+      }
       return { fired, settled };
     } finally {
       await lease.release().catch(() => false);

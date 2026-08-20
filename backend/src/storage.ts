@@ -18,6 +18,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import {
   AutomationTrigger,
+  Calendar,
   CalendarEvent,
   ChatSession,
   ChatMessage,
@@ -32,9 +33,12 @@ import { getPersistence } from './persistence/index.js';
 import { PersistenceResourceLimitError } from './persistence/resourceTypes.js';
 import { createLogger } from './utils/logger.js';
 import {
+  MAX_CALENDAR_COLOR_LENGTH,
   MAX_CALENDAR_EVENT_NOTES_LENGTH,
   MAX_CALENDAR_EVENT_TITLE_LENGTH,
   MAX_CALENDAR_EVENTS_PER_USER,
+  MAX_CALENDARS_PER_USER,
+  MAX_CALENDAR_NAME_LENGTH,
   MAX_NOTE_CONTENT_LENGTH,
   MAX_NOTES_PER_USER,
   MAX_NOTE_TITLE_LENGTH,
@@ -587,6 +591,166 @@ class StorageService {
     return getPersistence(
       encryptionService
     ).repositories.resources.calendarEvents.deleteByOwner(eventId, userId);
+  }
+
+  /** Cross-owner reads for shared calendars; callers authorize per calendar. */
+  async getCalendarEventsForCalendarsBetween(
+    calendarIds: readonly string[],
+    from: number,
+    to: number
+  ): Promise<CalendarEvent[]> {
+    const rows = await getPersistence(
+      encryptionService
+    ).repositories.resources.calendarEvents.listByCalendarsBetween(
+      calendarIds,
+      from,
+      to,
+      MAX_CALENDAR_EVENTS_PER_USER
+    );
+    return rows.map(row => this.mapCalendarEventRow(row));
+  }
+
+  async getRecurringEventsForCalendars(
+    calendarIds: readonly string[]
+  ): Promise<CalendarEvent[]> {
+    const rows = await getPersistence(
+      encryptionService
+    ).repositories.resources.calendarEvents.listRecurringByCalendars(
+      calendarIds,
+      MAX_CALENDAR_EVENTS_PER_USER
+    );
+    return rows.map(row => this.mapCalendarEventRow(row));
+  }
+
+  /** Cross-owner read; callers must authorize before returning content. */
+  async getCalendarEventById(
+    eventId: string
+  ): Promise<{ event: CalendarEvent; ownerUserId: string } | undefined> {
+    const row =
+      await getPersistence(
+        encryptionService
+      ).repositories.resources.calendarEvents.findById(eventId);
+    if (!row) return undefined;
+    return {
+      event: this.mapCalendarEventRow(row),
+      ownerUserId: row.user_id,
+    };
+  }
+
+  async listCalendarEventsWithReminders(): Promise<
+    Array<{ event: CalendarEvent; ownerUserId: string }>
+  > {
+    const rows = await getPersistence(
+      encryptionService
+    ).repositories.resources.calendarEvents.listWithReminders(
+      MAX_CALENDAR_EVENTS_PER_USER
+    );
+    return rows.map(row => ({
+      event: this.mapCalendarEventRow(row),
+      ownerUserId: row.user_id,
+    }));
+  }
+
+  async markCalendarEventReminded(
+    eventId: string,
+    occurrenceStart: number
+  ): Promise<boolean> {
+    return getPersistence(
+      encryptionService
+    ).repositories.resources.calendarEvents.markReminded(
+      eventId,
+      occurrenceStart
+    );
+  }
+
+  // =================================
+  // NAMED CALENDARS
+  // =================================
+
+  private mapCalendarRow(row: {
+    id: string;
+    user_id: string;
+    name: string;
+    color: string | null;
+    created_at: number;
+    updated_at: number;
+  }): Calendar & { ownerUserId: string } {
+    return {
+      id: row.id,
+      name: encryptionService.decrypt(row.name),
+      ...(row.color ? { color: row.color } : {}),
+      ownerUserId: row.user_id,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  async getCalendars(
+    userId = 'default'
+  ): Promise<Array<Calendar & { ownerUserId: string }>> {
+    const rows = await getPersistence(
+      encryptionService
+    ).repositories.resources.calendars.listByOwner(
+      userId,
+      MAX_CALENDARS_PER_USER
+    );
+    return rows.map(row => this.mapCalendarRow(row));
+  }
+
+  /** Cross-owner read; callers must authorize before returning content. */
+  async getCalendarById(
+    calendarId: string
+  ): Promise<(Calendar & { ownerUserId: string }) | undefined> {
+    const row =
+      await getPersistence(
+        encryptionService
+      ).repositories.resources.calendars.findById(calendarId);
+    return row ? this.mapCalendarRow(row) : undefined;
+  }
+
+  async saveCalendar(calendar: Calendar, userId = 'default'): Promise<void> {
+    if (
+      !calendar.name.trim() ||
+      calendar.name.length > MAX_CALENDAR_NAME_LENGTH ||
+      (calendar.color?.length ?? 0) > MAX_CALENDAR_COLOR_LENGTH
+    ) {
+      throw new ResourcePolicyError(
+        'Calendar name or color is missing or exceeds the maximum size',
+        400
+      );
+    }
+    try {
+      await getPersistence(
+        encryptionService
+      ).repositories.resources.calendars.replaceWithLimit(
+        {
+          id: calendar.id,
+          user_id: userId,
+          name: encryptionService.encrypt(calendar.name.trim()),
+          color: calendar.color ?? null,
+          created_at: calendar.createdAt,
+          updated_at: calendar.updatedAt,
+        },
+        MAX_CALENDARS_PER_USER
+      );
+    } catch (error) {
+      if (error instanceof PersistenceResourceLimitError) {
+        throw new ResourcePolicyError(
+          `A user may store at most ${MAX_CALENDARS_PER_USER} calendars`,
+          409
+        );
+      }
+      throw error;
+    }
+  }
+
+  async deleteCalendar(
+    calendarId: string,
+    userId = 'default'
+  ): Promise<boolean> {
+    return getPersistence(
+      encryptionService
+    ).repositories.resources.calendars.deleteAndDetach(calendarId, userId);
   }
 
   // =================================
