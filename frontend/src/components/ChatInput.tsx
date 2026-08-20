@@ -56,6 +56,7 @@ import ComposerCompareMenu, {
 import { chatModelSelectionKey } from '@/utils/chatModelSelection';
 import { X } from 'lucide-react';
 import { applyPromptQueueToChatStore } from '@/utils/promptQueue';
+import { UPLOAD_ACCEPT_ATTRIBUTE } from '@/utils/documentUploadTypes';
 import {
   personaApi,
   chatApi,
@@ -1393,7 +1394,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   <input
                     ref={documentInputRef}
                     type='file'
-                    accept='.pdf,.txt,application/pdf,text/plain'
+                    accept={UPLOAD_ACCEPT_ATTRIBUTE}
                     className='hidden'
                     onChange={event => void handleDocumentSelected(event)}
                   />

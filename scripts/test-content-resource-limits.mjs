@@ -222,16 +222,44 @@ test('session-folder names and per-user storage are bounded', async () => {
   assert.equal(renamed?.name, 'Renamed while at quota');
 });
 
-test('the welcome document picker matches the PDF and text upload contract', () => {
-  const picker = fs.readFileSync(
-    path.join(repoRoot, 'frontend', 'src', 'pages', 'ChatPage.tsx'),
+test('every document picker advertises the shared upload contract', () => {
+  // The contract lives in one shared constant; each picker must reference
+  // it instead of hand-rolling an accept list, and the backend must gate
+  // uploads through the same type resolver the extractors use.
+  const shared = fs.readFileSync(
+    path.join(
+      repoRoot,
+      'frontend',
+      'src',
+      'utils',
+      'documentUploadTypes.ts'
+    ),
     'utf8'
   );
+  for (const extension of ['pdf', 'txt', 'md', 'docx', 'pptx', 'xlsx', 'csv']) {
+    assert.match(shared, new RegExp(`'${extension}'`));
+  }
+  for (const file of [
+    path.join('frontend', 'src', 'pages', 'ChatPage.tsx'),
+    path.join('frontend', 'src', 'components', 'ChatInput.tsx'),
+    path.join('frontend', 'src', 'components', 'DocumentUpload.tsx'),
+  ]) {
+    const source = fs.readFileSync(path.join(repoRoot, file), 'utf8');
+    assert.match(
+      source,
+      /accept=\{UPLOAD_ACCEPT_ATTRIBUTE\}/,
+      `${file} must use the shared accept attribute`
+    );
+    assert.doesNotMatch(
+      source,
+      /accept='\./,
+      `${file} must not hand-roll an accept list`
+    );
+  }
   const route = fs.readFileSync(
     path.join(repoRoot, 'backend', 'src', 'routes', 'documents.ts'),
     'utf8'
   );
-  assert.match(picker, /accept='\.pdf,\.txt'/);
-  assert.doesNotMatch(picker, /accept='\.pdf,\.txt,\.md'/);
-  assert.match(route, /Only PDF and TXT files are allowed/);
+  assert.match(route, /resolveDocumentFileType\(file\.originalname/);
+  assert.doesNotMatch(route, /Only PDF and TXT files are allowed/);
 });

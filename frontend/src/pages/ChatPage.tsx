@@ -56,6 +56,7 @@ import { ThinkingSelector } from '@/components/ThinkingSelector';
 import { Button } from '@/components/ui';
 import { ImageUpload } from '@/components/ImageUpload';
 import { useChatStore } from '@/store/chatStore';
+import { UPLOAD_ACCEPT_ATTRIBUTE } from '@/utils/documentUploadTypes';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
 import { useChat } from '@/hooks/useChat';
@@ -918,7 +919,7 @@ export const ChatPage: React.FC = () => {
                       <input
                         ref={welcomeDocumentInputRef}
                         type='file'
-                        accept='.pdf,.txt'
+                        accept={UPLOAD_ACCEPT_ATTRIBUTE}
                         className='hidden'
                         onChange={event =>
                           void handleWelcomeDocumentSelected(event)
