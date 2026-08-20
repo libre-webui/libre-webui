@@ -7,13 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Models that use tools under your approval, retrieval that cites its sources, channels and sharing for teams, hands-free voice conversations, image editing — and the cost controls, evaluations, observability, and high-availability certification to run all of it in production. Everything built since 0.25.0 lands here at once.
+
 ### ✨ New Features
+
+#### Agents and tools
+
+- **Models use tools, with your approval.** A chat can now run multiple tool rounds inside a single reply: the model calls a tool, reads the result, and continues — through Ollama and every OpenAI-style provider. Each call is shown as it happens, and side-effecting tools wait for your explicit approval before they run.
+- **Bring your own tools.** Register any OpenAPI service or MCP server as a tool source; its operations become tools the model can call, with per-user credentials and an egress guard between the model and your network. A safe public demo preset is included to try the flow end to end.
+- **Prompts, Skills, and Tools workspaces.** Saved prompts open from a slash menu in the composer; skills are folders of instructions and companion files the model can load on demand — write your own, or import from remote skill stores. All three live in the settings panel with starter templates, beside the model manager.
+- **Knowledge tools with citations.** The model can list and read your documents mid-conversation, and its answers cite the exact source passages they came from.
+
+#### Knowledge and chat
+
+- **Richer document ingestion.** Word, PowerPoint, and Excel files extract with page, slide, and sheet provenance — with no new native dependencies — and re-uploading an unchanged file is detected instead of re-indexed.
+- **Hybrid retrieval.** Keyword ranking (BM25) fuses with vector similarity, so exact identifiers and rare terms are found even when embeddings miss them. Because content stays encrypted at rest, ranking happens in memory over decrypted candidates the requester is allowed to see — there is deliberately no plaintext index on disk.
+- **Answers cite their sources.** RAG replies carry source citations down to the page or slide, and a chat can attach a document in full-context mode when you want the model to read the whole thing.
+- **Notes grow up.** Revision history with restore, file attachments, pinning, per-user sharing (view or edit), Markdown export, and an AI edit sidebar that previews every proposal as a diff — applying snapshots the previous version first, so any AI edit can be undone. The preview also renders inline SVG and basic HTML, sanitized.
+- **Queue prompts while a reply streams.** Follow-up messages wait in an editable queue and send one at a time when the model finishes.
+- **Ask several models at once.** A comparison fan-out sends the same message to additional models and labels each reply, so you can judge them side by side in the conversation.
+- **Fork a whole chat.** Duplicate a conversation with its full history and provenance recorded, and take the copy in a different direction.
+- **Search everything from the palette.** Cmd-K now searches across your chats, notes, and documents — scoped to what you can access, without a plaintext index.
+- **An OpenAI-compatible API.** `/v1/chat/completions` and friends work with scoped API tokens, so existing OpenAI-style clients and SDKs can point at your instance for stateless inference.
+
+#### Team collaboration
+
+- **Channels.** Public, private, and direct-message channels with threads, reactions, and file attachments — and @model mentions that bring an AI reply into the conversation under the asking member's identity. Delivery rides the same durable event ledger as everything else; the database rows are the truth.
+- **Share nearly anything.** Grant-based sharing for chats, personas, prompts, skills, and knowledge collections, per user, with view or edit roles. Shared knowledge answers retrieval queries for grantees immediately, and revocation is just as immediate.
+- **A notification inbox.** Durable in-app notifications with live delivery, plus signed outgoing webhooks so other systems can react to events — envelopes are redacted and retried sensibly.
+- **Calendars for more than one person.** Share a calendar with view or write access, color-code several of them, import and export ICS, and get single-fire reminders per occurrence. The model gains calendar tools, so an automation or chat can read and write events.
+
+#### Voice and media
+
+- **Hands-free voice mode.** A turn-based voice conversation: speak, the model answers aloud, and the turn returns to you — with an on-screen overlay showing exactly what state the exchange is in.
+- **Voice governance.** Administrators set access modes for speech-to-text, text-to-speech, voice mode, and voice cloning independently. Saved voices carry a consent lifecycle — consent is recorded, revocable (the receipt is kept), and every transfer of voice data to a provider is receipted.
+- **Edit images, not just generate them.** Inpaint with a mask, edit with an instruction, or composite multiple images — through the same approval and gallery flow as generation.
+- **The gallery cleans up after itself.** An optional retention sweep removes old generated media, and long-running media jobs notify you when they finish.
+
+#### Running it in production
+
+- **Costs and budgets.** Versioned per-model tariffs price real usage, a cost analytics view breaks spending down, and hard budgets stop generation when a period's limit is reached — with alert notifications on the way there.
+- **An evaluation platform.** Thumbs feedback on replies, blind arena battles between models with an Elo leaderboard computed from votes, and repeatable evaluation runs over saved sets — all admin-managed.
+- **Observability you can plug in.** Structured JSON logs with request correlation ids and secret redaction, and an opt-in OpenTelemetry export speaking OTLP/HTTP with zero new dependencies — spans cover HTTP requests and durable jobs.
+- **Certified high availability.** The Helm chart supports referencing an existing Secret instead of inlining credentials, ships optional NetworkPolicies for app and workers, and the three-replica failover drill that gates releases is now documented as the HA certification.
 
 ### 🔧 Improvements
 
+- The Prompts, Skills, Tools, and Model Manager surfaces live inside the settings panel, reachable from the command palette.
+- Every document picker shares one upload accept contract, so the accepted file types are identical everywhere and pinned by test.
+- The frontend clears every react-hooks lint warning — imperative engines (like the voice controller) now live outside components by design.
+- Schema migrations (SQLite v16–v20, PostgreSQL v15–v19) create the agents, notes, team, and media/enterprise tables; applied automatically on upgrade.
+
 ### 🐛 Bug Fixes
 
+- **Lexical retrieval stops admitting junk.** A candidate must fully contain every part of at least one query word — compound identifiers no longer let two shared fragments smuggle an irrelevant chunk through rank fusion.
+- **The v18 migration applies cleanly on upgraded databases.** A preflight check misread an index on a pre-existing table as missing schema and blocked the team migration.
+- **Composer menus tell the truth.** Slash and skill menus work on the welcome screen, stay live while typing, and the tool picker reflects what is actually enabled.
+
+### 🌍 Translations
+
+- All new interface text across the agent, knowledge, team, voice, media, and operations surfaces — roughly 350 new keys — is translated in all 25 languages.
+
 ### 📚 Documentation
+
+- New guides for tools and the tool gateway, skills, prompts, sharing, channels, notifications, team calendars, voice governance, image editing, costs and budgets, evaluations, observability, and the high-availability certification — plus worked examples for every tool, and honest boundary pages for what each system deliberately does not do yet.
 
 ## [0.25.0] - 2026-08-19
 
