@@ -93,6 +93,8 @@ export const ComposerToolsMenu: React.FC<ComposerToolsMenuProps> = ({
   const [available, setAvailable] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Fetched on mount for the initial availability check, then again on every
+  // open: tools and servers added mid-session must appear without a reload.
   useEffect(() => {
     let cancelled = false;
     toolsApi
@@ -106,7 +108,7 @@ export const ComposerToolsMenu: React.FC<ComposerToolsMenuProps> = ({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -143,11 +145,26 @@ export const ComposerToolsMenu: React.FC<ComposerToolsMenuProps> = ({
   ) => (
     <label
       key={key}
-      className='flex cursor-pointer items-start gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-dark-100'
+      className={cn(
+        'flex cursor-pointer items-start gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-dark-100',
+        !value.enabled && 'opacity-50'
+      )}
+      onClickCapture={
+        value.enabled
+          ? undefined
+          : event => {
+              // A dimmed row means tools are off: the first click anywhere
+              // just turns them on, keeping the shown selection intact.
+              event.preventDefault();
+              event.stopPropagation();
+              onChange({ ...value, enabled: true });
+            }
+      }
     >
       <input
         type='checkbox'
         checked={checked}
+        disabled={!value.enabled}
         onChange={onToggle}
         data-testid='composer-tool-option'
         className='mt-0.5 h-3.5 w-3.5 accent-primary-600'

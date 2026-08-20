@@ -191,31 +191,43 @@ export const ComposerSuggestions = forwardRef<
   const skillMatch =
     disabled || promptMatch ? null : SKILL_TRIGGER.exec(message);
 
-  useEffect(() => {
-    if (promptMatch && prompts === null && !loadingRef.current.prompts) {
-      loadingRef.current.prompts = true;
-      promptsApi
-        .list()
-        .then(response => {
-          if (response.success && response.data) setPrompts(response.data);
-          else setPrompts([]);
-        })
-        .catch(() => setPrompts([]));
-    }
-  }, [promptMatch, prompts]);
+  // Refetch on every menu open (the trigger appearing), not once per mount:
+  // a prompt or skill imported mid-session must show up in the next menu.
+  // A stale list keeps rendering while the refresh is in flight.
+  const promptMenuOpen = promptMatch !== null;
+  const skillMenuOpen = skillMatch !== null;
 
   useEffect(() => {
-    if (skillMatch && skills === null && !loadingRef.current.skills) {
-      loadingRef.current.skills = true;
-      skillsApi
-        .list()
-        .then(response => {
-          if (response.success && response.data) setSkills(response.data);
-          else setSkills([]);
-        })
-        .catch(() => setSkills([]));
-    }
-  }, [skillMatch, skills]);
+    if (!promptMenuOpen || loadingRef.current.prompts) return;
+    loadingRef.current.prompts = true;
+    promptsApi
+      .list()
+      .then(response => {
+        setPrompts(previous =>
+          response.success && response.data ? response.data : (previous ?? [])
+        );
+      })
+      .catch(() => setPrompts(previous => previous ?? []))
+      .finally(() => {
+        loadingRef.current.prompts = false;
+      });
+  }, [promptMenuOpen]);
+
+  useEffect(() => {
+    if (!skillMenuOpen || loadingRef.current.skills) return;
+    loadingRef.current.skills = true;
+    skillsApi
+      .list()
+      .then(response => {
+        setSkills(previous =>
+          response.success && response.data ? response.data : (previous ?? [])
+        );
+      })
+      .catch(() => setSkills(previous => previous ?? []))
+      .finally(() => {
+        loadingRef.current.skills = false;
+      });
+  }, [skillMenuOpen]);
 
   const suggestions = useMemo(() => {
     if (promptMatch) {
