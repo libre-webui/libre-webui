@@ -1615,6 +1615,35 @@ test('full-document mode sends whole sources and falls back over the token guard
   }
 });
 
+test('a compound identifier query does not surface documents sharing only subtokens', async () => {
+  await seedDocument('doc-needle', 'needle.txt', SESSION, [
+    {
+      content:
+        'LIBRE_TEAM_DOCUMENT_NEEDLE cross replica durable extraction and search.',
+    },
+  ]);
+  const foreign = await documentService.searchDocuments(
+    'LIBRE_OWNER_DELETE_NEEDLE',
+    USER,
+    SESSION,
+    5
+  );
+  assert.ok(
+    !foreign.some(chunk => chunk.documentId === 'doc-needle'),
+    'sharing two of four subtokens must not qualify a chunk'
+  );
+  const exact = await documentService.searchDocuments(
+    'LIBRE_TEAM_DOCUMENT_NEEDLE',
+    USER,
+    SESSION,
+    5
+  );
+  assert.ok(
+    exact.some(chunk => chunk.documentId === 'doc-needle'),
+    'the full identifier must still find its own document'
+  );
+});
+
 test('the knowledge tools list, read, and cite scoped documents', async () => {
   const builtins = await import(dist('services/builtinToolsService.js'));
   const context = { actor: { userId: USER }, sessionId: SESSION };

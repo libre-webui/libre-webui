@@ -91,6 +91,43 @@ test('reciprocal-rank fusion rewards agreement between rankings', () => {
   assert.deepEqual(oneSided.map(entry => entry.id), ['only-lexical']);
 });
 
+test('whole-word admission keeps compound identifiers from matching junk', () => {
+  // The three-replica drill's regression: two documents that share only the
+  // needle scaffolding ("libre", "needle") must not find each other.
+  const candidates = [
+    {
+      id: 'team-doc',
+      text: 'LIBRE_TEAM_DOCUMENT_NEEDLE cross replica durable extraction and search.',
+    },
+  ];
+  assert.deepEqual(
+    scoreCandidatesBm25('LIBRE_OWNER_DELETE_NEEDLE', candidates, {
+      requireQueryWordMatch: true,
+    }),
+    [],
+    'a compound word only matches when every subtoken is present'
+  );
+  assert.equal(
+    scoreCandidatesBm25('LIBRE_TEAM_DOCUMENT_NEEDLE', candidates, {
+      requireQueryWordMatch: true,
+    })[0]?.id,
+    'team-doc',
+    'the full identifier still matches its own document'
+  );
+  // Multi-word queries keep OR semantics: one fully matched word admits,
+  // even when the other words are absent.
+  assert.equal(
+    scoreCandidatesBm25('replica of the unrelated flotilla', candidates, {
+      requireQueryWordMatch: true,
+    })[0]?.id,
+    'team-doc'
+  );
+  // Without the option, raw BM25 stays permissive for fusion experiments.
+  assert.ok(
+    scoreCandidatesBm25('LIBRE_OWNER_DELETE_NEEDLE', candidates).length === 1
+  );
+});
+
 // A small labeled corpus proving the hybrid property this feature exists
 // for: fusion recovers the relevant answer both when the lexical ranking
 // fails (synonym query) and when the semantic ranking fails (identifier

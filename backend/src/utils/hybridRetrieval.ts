@@ -52,16 +52,35 @@ export interface ScoredCandidate {
   score: number;
 }
 
+export interface Bm25ScoringOptions {
+  /**
+   * Admit a candidate only when it fully contains at least one
+   * whitespace-delimited query word — every subtoken of that word. This
+   * keeps classic OR semantics for multi-word queries while refusing
+   * partial matches of a single compound identifier: a search for
+   * `ALPHA_BETA_GAMMA_DELTA` must not surface text that merely shares the
+   * `alpha`/`delta` scaffolding the tokenizer split off.
+   */
+  requireQueryWordMatch?: boolean;
+}
+
 /**
  * Okapi BM25 over one candidate set. Returns only candidates with a
  * positive score, best first, ties broken by id for deterministic output.
  */
 export const scoreCandidatesBm25 = (
   query: string,
-  candidates: readonly RetrievalCandidate[]
+  candidates: readonly RetrievalCandidate[],
+  options: Bm25ScoringOptions = {}
 ): ScoredCandidate[] => {
   const queryTerms = [...new Set(tokenizeForRetrieval(query))];
   if (queryTerms.length === 0 || candidates.length === 0) return [];
+  const queryWords = options.requireQueryWordMatch
+    ? query
+        .split(/\s+/)
+        .map(word => tokenizeForRetrieval(word))
+        .filter(subtokens => subtokens.length > 0)
+    : [];
 
   const termFrequencies: Array<Map<string, number>> = [];
   const lengths: number[] = [];
@@ -88,9 +107,11 @@ export const scoreCandidatesBm25 = (
     const frequency = termFrequencies[index];
     const length = lengths[index];
     let score = 0;
+    let matchedTerms = 0;
     for (const term of queryTerms) {
       const termFrequency = frequency.get(term);
       if (!termFrequency) continue;
+      matchedTerms += 1;
       const matching = documentFrequency.get(term) ?? 0;
       const idf = Math.log(
         1 + (candidates.length - matching + 0.5) / (matching + 0.5)
@@ -99,6 +120,12 @@ export const scoreCandidatesBm25 = (
         (idf * (termFrequency * (BM25_K1 + 1))) /
         (termFrequency +
           BM25_K1 * (1 - BM25_B + (BM25_B * length) / averageLength));
+    }
+    if (queryWords.length > 0 && matchedTerms > 0) {
+      const matchesWholeWord = queryWords.some(subtokens =>
+        subtokens.every(subtoken => frequency.has(subtoken))
+      );
+      if (!matchesWholeWord) continue;
     }
     if (score > 0) scored.push({ id: candidates[index].id, score });
   }

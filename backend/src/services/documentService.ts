@@ -1841,7 +1841,8 @@ export class DocumentService {
     const byId = new Map(entries.map(entry => [entry.chunk.id, entry]));
     return scoreCandidatesBm25(
       query,
-      entries.map(entry => ({ id: entry.chunk.id, text: entry.chunk.content }))
+      entries.map(entry => ({ id: entry.chunk.id, text: entry.chunk.content })),
+      { requireQueryWordMatch: true }
     ).map(({ id, score }) => {
       const entry = byId.get(id)!;
       return { chunk: entry.chunk, score, document: entry.document };

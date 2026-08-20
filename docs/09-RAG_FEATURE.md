@@ -52,7 +52,10 @@ search falls back to pure keyword matching.
 Lexical scoring runs in-process over the chunks you can access. Libre
 deliberately does not maintain an on-disk full-text index for document
 chunks, because chunk text is stored encrypted and a token index would
-persist plaintext next to the ciphertext.
+persist plaintext next to the ciphertext. A chunk only qualifies for the
+lexical ranking when it fully contains at least one word of the query, so
+a compound identifier such as `ALPHA_BETA_GAMMA` never surfaces text that
+merely shares one of its fragments.
 
 ## Enable Semantic Search
 
