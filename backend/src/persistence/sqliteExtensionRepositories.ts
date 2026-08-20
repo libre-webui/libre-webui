@@ -644,6 +644,20 @@ class SQLitePluginUsageRepository implements PluginUsageRepository {
       )
       .all(from, to) as Array<Record<string, unknown>>;
   }
+
+  async listSince(
+    from: number,
+    maximum: number
+  ): Promise<StoredPluginUsageEvent[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM plugin_usage_events
+          WHERE created_at >= ?
+          ORDER BY created_at ASC, id ASC
+          LIMIT ?`
+      )
+      .all(from, maximum) as StoredPluginUsageEvent[];
+  }
 }
 
 class SQLiteVoiceProfileRepository implements VoiceProfileRepository {

@@ -3186,5 +3186,52 @@
     "saved": "已将编辑后的图片保存到图库",
     "failed": "图片编辑失败",
     "loadFailed": "无法加载源图片"
+  },
+  "costs": {
+    "title": "成本与预算",
+    "description": "将资费价格应用于使用记录；预算用于观察或限制支出。",
+    "loadFailed": "无法加载成本数据",
+    "saveFailed": "保存失败",
+    "exportFailed": "导出失败",
+    "exportCsv": "导出 CSV",
+    "totalSpend": "总支出",
+    "meteredEvents": "已计价事件",
+    "unmeteredEvents": "未计价事件",
+    "topModel": "主要模型",
+    "budgets": "预算",
+    "noBudgets": "暂无预算。",
+    "budgetName": "预算名称",
+    "principalId": "用户或组 ID",
+    "addBudget": "添加预算",
+    "deleteBudget": "删除预算",
+    "budgetSaved": "预算已保存",
+    "scope": {
+      "instance": "整个实例",
+      "user": "用户",
+      "group": "组"
+    },
+    "period": {
+      "daily": "每天",
+      "weekly": "每周",
+      "monthly": "每月"
+    },
+    "mode": {
+      "observe": "观察",
+      "soft": "提醒",
+      "hard": "提醒并阻止"
+    },
+    "tariffs": "资费",
+    "noTariffs": "暂无资费——在添加价格前成本保持未计价状态。",
+    "plugin": "插件",
+    "model": "模型",
+    "modelOptional": "模型（可选）",
+    "allModels": "所有模型",
+    "inputPerMillion": "输入 $/百万 token",
+    "outputPerMillion": "输出 $/百万 token",
+    "unitPrice": "单价",
+    "effectiveFrom": "生效日期",
+    "addTariff": "添加资费",
+    "deleteTariff": "删除资费",
+    "tariffSaved": "资费已保存"
   }
 }

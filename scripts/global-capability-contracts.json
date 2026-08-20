@@ -2581,6 +2581,13 @@
           "patterns": [
             "The Usage page \\(`/usage`\\) charts outbound provider traffic"
           ]
+        },
+        {
+          "file": "docs/58-COST_GOVERNANCE.md",
+          "patterns": [
+            "# Cost Governance",
+            "hard budgets alert and additionally block"
+          ]
         }
       ],
       "focusedTests": [
@@ -2592,6 +2599,15 @@
             "routeSource",
             "requireAdmin"
           ]
+        },
+        {
+          "file": "scripts/test-cost-governance.mjs",
+          "runner": "test:package",
+          "name": "hard budgets block exhausted principals and fail open otherwise",
+          "behaviorPatterns": [
+            "BudgetExceededError",
+            "Team hard cap"
+          ]
         }
       ],
       "backendRoutes": [
@@ -2600,6 +2616,60 @@
           "mount": "/api/plugins",
           "method": "GET",
           "path": "/usage"
+        },
+        {
+          "file": "backend/src/routes/costs.ts",
+          "mount": "/api/costs",
+          "method": "GET",
+          "path": "/tariffs"
+        },
+        {
+          "file": "backend/src/routes/costs.ts",
+          "mount": "/api/costs",
+          "method": "POST",
+          "path": "/tariffs"
+        },
+        {
+          "file": "backend/src/routes/costs.ts",
+          "mount": "/api/costs",
+          "method": "DELETE",
+          "path": "/tariffs/:tariffId"
+        },
+        {
+          "file": "backend/src/routes/costs.ts",
+          "mount": "/api/costs",
+          "method": "GET",
+          "path": "/budgets"
+        },
+        {
+          "file": "backend/src/routes/costs.ts",
+          "mount": "/api/costs",
+          "method": "POST",
+          "path": "/budgets"
+        },
+        {
+          "file": "backend/src/routes/costs.ts",
+          "mount": "/api/costs",
+          "method": "PUT",
+          "path": "/budgets/:budgetId"
+        },
+        {
+          "file": "backend/src/routes/costs.ts",
+          "mount": "/api/costs",
+          "method": "DELETE",
+          "path": "/budgets/:budgetId"
+        },
+        {
+          "file": "backend/src/routes/costs.ts",
+          "mount": "/api/costs",
+          "method": "GET",
+          "path": "/analytics"
+        },
+        {
+          "file": "backend/src/routes/costs.ts",
+          "mount": "/api/costs",
+          "method": "GET",
+          "path": "/export"
         }
       ],
       "contractSurfaces": {

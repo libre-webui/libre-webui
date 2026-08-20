@@ -3186,5 +3186,52 @@
     "saved": "Imej yang disunting disimpan ke galeri",
     "failed": "Suntingan imej gagal",
     "loadFailed": "Gagal memuatkan imej sumber"
+  },
+  "costs": {
+    "title": "Kos dan bajet",
+    "description": "Harga tarif digunakan pada lejar penggunaan; bajet memantau atau mengehadkan perbelanjaan.",
+    "loadFailed": "Gagal memuatkan data kos",
+    "saveFailed": "Gagal menyimpan",
+    "exportFailed": "Gagal mengeksport",
+    "exportCsv": "Eksport CSV",
+    "totalSpend": "Jumlah perbelanjaan",
+    "meteredEvents": "Peristiwa berharga",
+    "unmeteredEvents": "Peristiwa tanpa harga",
+    "topModel": "Model teratas",
+    "budgets": "Bajet",
+    "noBudgets": "Belum ada bajet.",
+    "budgetName": "Nama bajet",
+    "principalId": "ID pengguna atau kumpulan",
+    "addBudget": "Tambah bajet",
+    "deleteBudget": "Padam bajet",
+    "budgetSaved": "Bajet disimpan",
+    "scope": {
+      "instance": "Seluruh instans",
+      "user": "Pengguna",
+      "group": "Kumpulan"
+    },
+    "period": {
+      "daily": "Harian",
+      "weekly": "Mingguan",
+      "monthly": "Bulanan"
+    },
+    "mode": {
+      "observe": "Pantau",
+      "soft": "Beri amaran",
+      "hard": "Beri amaran dan sekat"
+    },
+    "tariffs": "Tarif",
+    "noTariffs": "Belum ada tarif — kos kekal tanpa harga sehingga anda menambah harga.",
+    "plugin": "Plugin",
+    "model": "Model",
+    "modelOptional": "Model (pilihan)",
+    "allModels": "Semua model",
+    "inputPerMillion": "Input $/M token",
+    "outputPerMillion": "Output $/M token",
+    "unitPrice": "Harga seunit",
+    "effectiveFrom": "Berkuat kuasa dari",
+    "addTariff": "Tambah tarif",
+    "deleteTariff": "Padam tarif",
+    "tariffSaved": "Tarif disimpan"
   }
 }

@@ -3186,5 +3186,52 @@
     "saved": "Bearbeitetes Bild in der Galerie gespeichert",
     "failed": "Bildbearbeitung fehlgeschlagen",
     "loadFailed": "Quellbild konnte nicht geladen werden"
+  },
+  "costs": {
+    "title": "Kosten und Budgets",
+    "description": "Tarifpreise auf das Nutzungsjournal angewandt; Budgets beobachten oder begrenzen die Ausgaben.",
+    "loadFailed": "Kostendaten konnten nicht geladen werden",
+    "saveFailed": "Speichern fehlgeschlagen",
+    "exportFailed": "Export fehlgeschlagen",
+    "exportCsv": "CSV exportieren",
+    "totalSpend": "Gesamtausgaben",
+    "meteredEvents": "Bepreiste Ereignisse",
+    "unmeteredEvents": "Unbepreiste Ereignisse",
+    "topModel": "Top-Modell",
+    "budgets": "Budgets",
+    "noBudgets": "Noch keine Budgets.",
+    "budgetName": "Budgetname",
+    "principalId": "Benutzer- oder Gruppen-ID",
+    "addBudget": "Budget hinzufügen",
+    "deleteBudget": "Budget löschen",
+    "budgetSaved": "Budget gespeichert",
+    "scope": {
+      "instance": "Gesamte Instanz",
+      "user": "Benutzer",
+      "group": "Gruppe"
+    },
+    "period": {
+      "daily": "Täglich",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich"
+    },
+    "mode": {
+      "observe": "Beobachten",
+      "soft": "Warnen",
+      "hard": "Warnen und blockieren"
+    },
+    "tariffs": "Tarife",
+    "noTariffs": "Noch keine Tarife — Kosten bleiben unbepreist, bis Preise hinterlegt sind.",
+    "plugin": "Plugin",
+    "model": "Modell",
+    "modelOptional": "Modell (optional)",
+    "allModels": "Alle Modelle",
+    "inputPerMillion": "Eingabe $/M Token",
+    "outputPerMillion": "Ausgabe $/M Token",
+    "unitPrice": "Stückpreis",
+    "effectiveFrom": "Gültig ab",
+    "addTariff": "Tarif hinzufügen",
+    "deleteTariff": "Tarif löschen",
+    "tariffSaved": "Tarif gespeichert"
   }
 }

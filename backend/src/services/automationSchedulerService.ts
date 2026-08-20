@@ -99,6 +99,15 @@ class AutomationSchedulerService {
       } catch (error) {
         logger.warn('Gallery retention sweep failed', { error });
       }
+      // Budget threshold alerts also ride this lease; notification source
+      // keys keep each threshold single-fire per period.
+      try {
+        const { default: costGovernanceService } =
+          await import('./costGovernanceService.js');
+        await costGovernanceService.sweepBudgetAlerts(now);
+      } catch (error) {
+        logger.warn('Budget alert sweep failed', { error });
+      }
       return { fired, settled };
     } finally {
       await lease.release().catch(() => false);

@@ -30,6 +30,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Button, PageHeader, PageShell } from '@/components/ui';
+import { CostGovernancePanel } from '@/components/CostGovernancePanel';
 import { pluginApi, type PluginUsageAnalytics } from '@/utils/api';
 import { cn } from '@/utils';
 
@@ -676,6 +677,10 @@ const PluginUsagePage: React.FC = () => {
           <span>{errorMessage}</span>
         </div>
       )}
+
+      <div className='mb-6'>
+        <CostGovernancePanel days={days} />
+      </div>
 
       {analytics && (
         <div className='space-y-4'>

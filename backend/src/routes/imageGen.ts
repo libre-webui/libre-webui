@@ -20,6 +20,7 @@ import rateLimit from '../middleware/sharedRateLimit.js';
 import pluginService from '../services/pluginService.js';
 import galleryService from '../services/galleryService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
+import { budgetGuard } from '../middleware/index.js';
 import {
   normalizeImageGenerationCount,
   normalizeImageMediaType,
@@ -190,6 +191,7 @@ router.get('/plugins', async (req: AuthenticatedRequest, res) => {
  */
 router.post(
   '/generate',
+  budgetGuard,
   imageGenRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);

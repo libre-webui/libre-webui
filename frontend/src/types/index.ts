@@ -293,6 +293,7 @@ export type NotificationType =
   | 'calendar-reminder'
   | 'media-ready'
   | 'media-failed'
+  | 'budget-alert'
   | 'system';
 
 export interface AppNotification {

@@ -761,6 +761,38 @@ class PostgresPluginUsageRepository implements PluginUsageRepository {
       [from, to]
     );
   }
+
+  async listSince(
+    from: number,
+    maximum: number
+  ): Promise<StoredPluginUsageEvent[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM plugin_usage_events
+        WHERE created_at >= $1
+        ORDER BY created_at ASC, id ASC
+        LIMIT $2`,
+      [from, maximum]
+    );
+    return result.rows.map(row => ({
+      ...(row as unknown as StoredPluginUsageEvent),
+      prompt_tokens:
+        row.prompt_tokens === null
+          ? null
+          : integer(row.prompt_tokens, 'usage prompt_tokens'),
+      completion_tokens:
+        row.completion_tokens === null
+          ? null
+          : integer(row.completion_tokens, 'usage completion_tokens'),
+      total_tokens:
+        row.total_tokens === null
+          ? null
+          : integer(row.total_tokens, 'usage total_tokens'),
+      input_units: integer(row.input_units ?? 0, 'usage input_units'),
+      output_units: integer(row.output_units ?? 0, 'usage output_units'),
+      duration_ms: integer(row.duration_ms ?? 0, 'usage duration_ms'),
+      created_at: integer(row.created_at, 'usage created_at'),
+    }));
+  }
 }
 
 class PostgresVoiceProfileRepository implements VoiceProfileRepository {

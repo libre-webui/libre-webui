@@ -3186,5 +3186,52 @@
     "saved": "編集した画像をギャラリーに保存しました",
     "failed": "画像の編集に失敗しました",
     "loadFailed": "元画像の読み込みに失敗しました"
+  },
+  "costs": {
+    "title": "コストと予算",
+    "description": "タリフの価格を使用履歴に適用します。予算は支出を監視または制限します。",
+    "loadFailed": "コストデータを読み込めませんでした",
+    "saveFailed": "保存に失敗しました",
+    "exportFailed": "エクスポートに失敗しました",
+    "exportCsv": "CSVをエクスポート",
+    "totalSpend": "総支出",
+    "meteredEvents": "価格付きイベント",
+    "unmeteredEvents": "価格なしイベント",
+    "topModel": "トップモデル",
+    "budgets": "予算",
+    "noBudgets": "予算はまだありません。",
+    "budgetName": "予算名",
+    "principalId": "ユーザーまたはグループID",
+    "addBudget": "予算を追加",
+    "deleteBudget": "予算を削除",
+    "budgetSaved": "予算を保存しました",
+    "scope": {
+      "instance": "インスタンス全体",
+      "user": "ユーザー",
+      "group": "グループ"
+    },
+    "period": {
+      "daily": "毎日",
+      "weekly": "毎週",
+      "monthly": "毎月"
+    },
+    "mode": {
+      "observe": "観察",
+      "soft": "警告",
+      "hard": "警告してブロック"
+    },
+    "tariffs": "タリフ",
+    "noTariffs": "タリフがまだありません。価格を追加するまでコストは未計上のままです。",
+    "plugin": "プラグイン",
+    "model": "モデル",
+    "modelOptional": "モデル（任意）",
+    "allModels": "すべてのモデル",
+    "inputPerMillion": "入力 $/M トークン",
+    "outputPerMillion": "出力 $/M トークン",
+    "unitPrice": "単価",
+    "effectiveFrom": "適用開始日",
+    "addTariff": "タリフを追加",
+    "deleteTariff": "タリフを削除",
+    "tariffSaved": "タリフを保存しました"
   }
 }

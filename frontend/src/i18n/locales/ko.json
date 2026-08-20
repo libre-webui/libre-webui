@@ -3186,5 +3186,52 @@
     "saved": "편집된 이미지가 갤러리에 저장되었습니다",
     "failed": "이미지 편집 실패",
     "loadFailed": "원본 이미지를 불러오지 못했습니다"
+  },
+  "costs": {
+    "title": "비용 및 예산",
+    "description": "타리프 가격을 사용 기록에 적용합니다. 예산은 지출을 관찰하거나 제한합니다.",
+    "loadFailed": "비용 데이터를 불러오지 못했습니다",
+    "saveFailed": "저장 실패",
+    "exportFailed": "내보내기 실패",
+    "exportCsv": "CSV 내보내기",
+    "totalSpend": "총 지출",
+    "meteredEvents": "가격 책정된 이벤트",
+    "unmeteredEvents": "가격 미책정 이벤트",
+    "topModel": "상위 모델",
+    "budgets": "예산",
+    "noBudgets": "아직 예산이 없습니다.",
+    "budgetName": "예산 이름",
+    "principalId": "사용자 또는 그룹 ID",
+    "addBudget": "예산 추가",
+    "deleteBudget": "예산 삭제",
+    "budgetSaved": "예산 저장됨",
+    "scope": {
+      "instance": "전체 인스턴스",
+      "user": "사용자",
+      "group": "그룹"
+    },
+    "period": {
+      "daily": "매일",
+      "weekly": "매주",
+      "monthly": "매월"
+    },
+    "mode": {
+      "observe": "관찰",
+      "soft": "경고",
+      "hard": "경고 및 차단"
+    },
+    "tariffs": "타리프",
+    "noTariffs": "아직 타리프가 없습니다. 가격을 추가할 때까지 비용은 미책정 상태입니다.",
+    "plugin": "플러그인",
+    "model": "모델",
+    "modelOptional": "모델(선택)",
+    "allModels": "모든 모델",
+    "inputPerMillion": "입력 $/M 토큰",
+    "outputPerMillion": "출력 $/M 토큰",
+    "unitPrice": "단가",
+    "effectiveFrom": "적용 시작일",
+    "addTariff": "타리프 추가",
+    "deleteTariff": "타리프 삭제",
+    "tariffSaved": "타리프 저장됨"
   }
 }

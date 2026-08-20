@@ -3186,5 +3186,52 @@
     "saved": "Image modifiée enregistrée dans la galerie",
     "failed": "Échec de la modification de l’image",
     "loadFailed": "Impossible de charger l’image source"
+  },
+  "costs": {
+    "title": "Coûts et budgets",
+    "description": "Prix des tarifs appliqués au journal d’utilisation ; les budgets surveillent ou plafonnent les dépenses.",
+    "loadFailed": "Impossible de charger les données de coûts",
+    "saveFailed": "Échec de l’enregistrement",
+    "exportFailed": "Échec de l’export",
+    "exportCsv": "Exporter en CSV",
+    "totalSpend": "Dépense totale",
+    "meteredEvents": "Événements tarifés",
+    "unmeteredEvents": "Événements non tarifés",
+    "topModel": "Modèle principal",
+    "budgets": "Budgets",
+    "noBudgets": "Aucun budget pour l’instant.",
+    "budgetName": "Nom du budget",
+    "principalId": "Identifiant utilisateur ou groupe",
+    "addBudget": "Ajouter un budget",
+    "deleteBudget": "Supprimer le budget",
+    "budgetSaved": "Budget enregistré",
+    "scope": {
+      "instance": "Instance entière",
+      "user": "Utilisateur",
+      "group": "Groupe"
+    },
+    "period": {
+      "daily": "Quotidien",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel"
+    },
+    "mode": {
+      "observe": "Observer",
+      "soft": "Alerter",
+      "hard": "Alerter et bloquer"
+    },
+    "tariffs": "Tarifs",
+    "noTariffs": "Aucun tarif — les coûts restent non tarifés tant qu’aucun prix n’est défini.",
+    "plugin": "Plugin",
+    "model": "Modèle",
+    "modelOptional": "Modèle (facultatif)",
+    "allModels": "Tous les modèles",
+    "inputPerMillion": "Entrée $/M jetons",
+    "outputPerMillion": "Sortie $/M jetons",
+    "unitPrice": "Prix unitaire",
+    "effectiveFrom": "En vigueur depuis",
+    "addTariff": "Ajouter un tarif",
+    "deleteTariff": "Supprimer le tarif",
+    "tariffSaved": "Tarif enregistré"
   }
 }

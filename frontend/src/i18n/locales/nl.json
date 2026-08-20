@@ -3186,5 +3186,52 @@
     "saved": "Bewerkte afbeelding opgeslagen in de galerij",
     "failed": "Beeldbewerking mislukt",
     "loadFailed": "Bronafbeelding laden mislukt"
+  },
+  "costs": {
+    "title": "Kosten en budgetten",
+    "description": "Tariefprijzen toegepast op het gebruikslogboek; budgetten bewaken of begrenzen de uitgaven.",
+    "loadFailed": "Kostengegevens laden mislukt",
+    "saveFailed": "Opslaan mislukt",
+    "exportFailed": "Export mislukt",
+    "exportCsv": "CSV exporteren",
+    "totalSpend": "Totale uitgaven",
+    "meteredEvents": "Geprijsde gebeurtenissen",
+    "unmeteredEvents": "Ongeprijsde gebeurtenissen",
+    "topModel": "Topmodel",
+    "budgets": "Budgetten",
+    "noBudgets": "Nog geen budgetten.",
+    "budgetName": "Budgetnaam",
+    "principalId": "Gebruikers- of groeps-id",
+    "addBudget": "Budget toevoegen",
+    "deleteBudget": "Budget verwijderen",
+    "budgetSaved": "Budget opgeslagen",
+    "scope": {
+      "instance": "Hele instantie",
+      "user": "Gebruiker",
+      "group": "Groep"
+    },
+    "period": {
+      "daily": "Dagelijks",
+      "weekly": "Wekelijks",
+      "monthly": "Maandelijks"
+    },
+    "mode": {
+      "observe": "Observeren",
+      "soft": "Waarschuwen",
+      "hard": "Waarschuwen en blokkeren"
+    },
+    "tariffs": "Tarieven",
+    "noTariffs": "Nog geen tarieven — kosten blijven ongeprijsd totdat je prijzen toevoegt.",
+    "plugin": "Plugin",
+    "model": "Model",
+    "modelOptional": "Model (optioneel)",
+    "allModels": "Alle modellen",
+    "inputPerMillion": "Invoer $/M tokens",
+    "outputPerMillion": "Uitvoer $/M tokens",
+    "unitPrice": "Stuksprijs",
+    "effectiveFrom": "Geldig vanaf",
+    "addTariff": "Tarief toevoegen",
+    "deleteTariff": "Tarief verwijderen",
+    "tariffSaved": "Tarief opgeslagen"
   }
 }

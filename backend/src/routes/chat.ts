@@ -28,6 +28,7 @@ import {
   requireAdmin,
   AuthenticatedRequest,
 } from '../middleware/auth.js';
+import { budgetGuard } from '../middleware/index.js';
 import {
   getCompactionConfig,
   setCompactionConfig,
@@ -737,6 +738,7 @@ router.post(
 // ordered source of truth; Redis only wakes the subscriber after a commit.
 router.post(
   '/sessions/:sessionId/generations',
+  budgetGuard,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const sessionId = String(req.params.sessionId || '').trim();
     const userId = req.user?.userId || 'default';
@@ -1266,6 +1268,7 @@ router.get(
 // Generate a chat response with streaming
 router.post(
   '/sessions/:sessionId/generate/stream',
+  budgetGuard,
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     if (rejectProcessLocalTeamGeneration(res)) return;
     const { controller, cleanup } = abortChatGenerationOnResponseClose(res);

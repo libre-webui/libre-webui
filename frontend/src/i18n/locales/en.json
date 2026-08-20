@@ -3186,5 +3186,52 @@
     "saved": "Edited image saved to the gallery",
     "failed": "Image edit failed",
     "loadFailed": "Failed to load the source image"
+  },
+  "costs": {
+    "title": "Costs and budgets",
+    "description": "Tariff prices applied to the usage ledger; budgets watch or cap spending.",
+    "loadFailed": "Failed to load cost data",
+    "saveFailed": "Save failed",
+    "exportFailed": "Export failed",
+    "exportCsv": "Export CSV",
+    "totalSpend": "Total spend",
+    "meteredEvents": "Priced events",
+    "unmeteredEvents": "Unpriced events",
+    "topModel": "Top model",
+    "budgets": "Budgets",
+    "noBudgets": "No budgets yet.",
+    "budgetName": "Budget name",
+    "principalId": "User or group id",
+    "addBudget": "Add budget",
+    "deleteBudget": "Delete budget",
+    "budgetSaved": "Budget saved",
+    "scope": {
+      "instance": "Whole instance",
+      "user": "User",
+      "group": "Group"
+    },
+    "period": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "mode": {
+      "observe": "Observe",
+      "soft": "Alert",
+      "hard": "Alert and block"
+    },
+    "tariffs": "Tariffs",
+    "noTariffs": "No tariffs yet — costs stay unpriced until you add prices.",
+    "plugin": "Plugin",
+    "model": "Model",
+    "modelOptional": "Model (optional)",
+    "allModels": "All models",
+    "inputPerMillion": "Input $/M tokens",
+    "outputPerMillion": "Output $/M tokens",
+    "unitPrice": "Unit price",
+    "effectiveFrom": "Effective from",
+    "addTariff": "Add tariff",
+    "deleteTariff": "Delete tariff",
+    "tariffSaved": "Tariff saved"
   }
 }

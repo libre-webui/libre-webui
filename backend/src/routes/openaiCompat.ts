@@ -27,6 +27,7 @@
 import express, { Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
+import { budgetGuard } from '../middleware/index.js';
 import chatGenerationService from '../services/chatGenerationService.js';
 import ollamaService from '../services/ollamaService.js';
 import pluginService from '../services/pluginService.js';
@@ -170,197 +171,201 @@ const readSamplingOptions = (
   return options as GenerationOptions;
 };
 
-router.post('/chat/completions', async (req: AuthenticatedRequest, res) => {
-  const controller = new AbortController();
-  const abort = () => {
-    if (!controller.signal.aborted) {
-      controller.abort(new Error('The API client disconnected'));
-    }
-  };
-  req.once('aborted', abort);
-  res.once('close', () => {
-    if (!res.writableEnded) abort();
-  });
-  try {
-    const body = (req.body ?? {}) as Record<string, unknown>;
-    const model = body.model;
-    if (typeof model !== 'string' || !model.trim() || model.length > 200) {
-      sendError(res, 400, 'model is required');
-      return;
-    }
-    const messages = readMessages(body.messages);
-    if (typeof messages === 'string') {
-      sendError(res, 400, messages);
-      return;
-    }
-    const options = readSamplingOptions(body);
-    if (typeof options === 'string') {
-      sendError(res, 400, options);
-      return;
-    }
-    const stream = body.stream === true;
-    const userId = userIdOf(req);
-
-    let target;
-    try {
-      target = await chatGenerationService.prepareGenerationTarget(
-        model.trim(),
-        userId,
-        options as Record<string, unknown>,
-        undefined,
-        controller.signal
-      );
-    } catch (error) {
-      sendError(
-        res,
-        404,
-        `The model "${model}" is not available: ${
-          error instanceof Error ? error.message : 'unknown error'
-        }`,
-        'invalid_request_error'
-      );
-      return;
-    }
-
-    const ollamaMessages: OllamaChatMessage[] = messages.map(message => ({
-      role: message.role,
-      content: message.content,
-    }));
-    const timestamp = Date.now();
-    const pluginMessages: ChatMessage[] = messages.map((message, index) => ({
-      id: `v1-${index}`,
-      role: message.role,
-      content: message.content,
-      timestamp,
-    }));
-
-    const completionId = `chatcmpl-${randomUUID()}`;
-    const created = Math.floor(timestamp / 1000);
-
-    if (!stream) {
-      const result = await chatGenerationService.executeNonStreaming({
-        target,
-        ollamaMessages,
-        pluginMessages,
-        userId,
-        signal: controller.signal,
-      });
-      if (controller.signal.aborted) return;
-      const statistics = result.response;
-      const promptTokens = statistics.prompt_eval_count ?? 0;
-      const completionTokens = statistics.eval_count ?? 0;
-      res.json({
-        id: completionId,
-        object: 'chat.completion',
-        created,
-        model: target.actualModelName,
-        choices: [
-          {
-            index: 0,
-            message: {
-              role: 'assistant',
-              content: result.assistantContent,
-            },
-            finish_reason: 'stop',
-          },
-        ],
-        usage: {
-          prompt_tokens: promptTokens,
-          completion_tokens: completionTokens,
-          total_tokens: promptTokens + completionTokens,
-        },
-      });
-      return;
-    }
-
-    // Streaming: OpenAI-style SSE chunk frames ending with [DONE].
-    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders?.();
-    const writeChunk = (delta: Record<string, unknown>, finish?: string) => {
-      if (res.writableEnded) return;
-      res.write(
-        `data: ${JSON.stringify({
-          id: completionId,
-          object: 'chat.completion.chunk',
-          created,
-          model: target.actualModelName,
-          choices: [{ index: 0, delta, finish_reason: finish ?? null }],
-        })}\n\n`
-      );
-    };
-    writeChunk({ role: 'assistant' });
-    try {
-      if (target.activePlugin) {
-        for await (const chunk of pluginService.executePluginStreamRequest(
-          target.actualModelName,
-          pluginMessages,
-          target.mergedOptions as GenerationOptions,
-          userId,
-          target.activePlugin.id,
-          controller.signal
-        )) {
-          if (chunk.type === 'content' && chunk.content) {
-            writeChunk({ content: chunk.content });
-          }
-        }
-      } else {
-        await ollamaService.generateChatStreamResponse(
-          {
-            model: target.actualModelName,
-            messages: ollamaMessages,
-            stream: true,
-            options: target.mergedOptions as Record<string, unknown>,
-          },
-          chunk => {
-            if (chunk.message?.content) {
-              writeChunk({ content: chunk.message.content });
-            }
-          },
-          error => {
-            throw error;
-          },
-          () => undefined,
-          controller.signal,
-          { userId }
-        );
+router.post(
+  '/chat/completions',
+  budgetGuard,
+  async (req: AuthenticatedRequest, res) => {
+    const controller = new AbortController();
+    const abort = () => {
+      if (!controller.signal.aborted) {
+        controller.abort(new Error('The API client disconnected'));
       }
-      writeChunk({}, 'stop');
-      res.write('data: [DONE]\n\n');
-      res.end();
-    } catch (error) {
-      if (controller.signal.aborted) {
-        res.end();
+    };
+    req.once('aborted', abort);
+    res.once('close', () => {
+      if (!res.writableEnded) abort();
+    });
+    try {
+      const body = (req.body ?? {}) as Record<string, unknown>;
+      const model = body.model;
+      if (typeof model !== 'string' || !model.trim() || model.length > 200) {
+        sendError(res, 400, 'model is required');
         return;
       }
-      logger.error('Streaming completion failed:', error);
-      if (!res.writableEnded) {
+      const messages = readMessages(body.messages);
+      if (typeof messages === 'string') {
+        sendError(res, 400, messages);
+        return;
+      }
+      const options = readSamplingOptions(body);
+      if (typeof options === 'string') {
+        sendError(res, 400, options);
+        return;
+      }
+      const stream = body.stream === true;
+      const userId = userIdOf(req);
+
+      let target;
+      try {
+        target = await chatGenerationService.prepareGenerationTarget(
+          model.trim(),
+          userId,
+          options as Record<string, unknown>,
+          undefined,
+          controller.signal
+        );
+      } catch (error) {
+        sendError(
+          res,
+          404,
+          `The model "${model}" is not available: ${
+            error instanceof Error ? error.message : 'unknown error'
+          }`,
+          'invalid_request_error'
+        );
+        return;
+      }
+
+      const ollamaMessages: OllamaChatMessage[] = messages.map(message => ({
+        role: message.role,
+        content: message.content,
+      }));
+      const timestamp = Date.now();
+      const pluginMessages: ChatMessage[] = messages.map((message, index) => ({
+        id: `v1-${index}`,
+        role: message.role,
+        content: message.content,
+        timestamp,
+      }));
+
+      const completionId = `chatcmpl-${randomUUID()}`;
+      const created = Math.floor(timestamp / 1000);
+
+      if (!stream) {
+        const result = await chatGenerationService.executeNonStreaming({
+          target,
+          ollamaMessages,
+          pluginMessages,
+          userId,
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted) return;
+        const statistics = result.response;
+        const promptTokens = statistics.prompt_eval_count ?? 0;
+        const completionTokens = statistics.eval_count ?? 0;
+        res.json({
+          id: completionId,
+          object: 'chat.completion',
+          created,
+          model: target.actualModelName,
+          choices: [
+            {
+              index: 0,
+              message: {
+                role: 'assistant',
+                content: result.assistantContent,
+              },
+              finish_reason: 'stop',
+            },
+          ],
+          usage: {
+            prompt_tokens: promptTokens,
+            completion_tokens: completionTokens,
+            total_tokens: promptTokens + completionTokens,
+          },
+        });
+        return;
+      }
+
+      // Streaming: OpenAI-style SSE chunk frames ending with [DONE].
+      res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders?.();
+      const writeChunk = (delta: Record<string, unknown>, finish?: string) => {
+        if (res.writableEnded) return;
         res.write(
           `data: ${JSON.stringify({
-            error: {
-              message:
-                error instanceof Error ? error.message : 'generation failed',
-              type: 'server_error',
-              code: null,
-            },
+            id: completionId,
+            object: 'chat.completion.chunk',
+            created,
+            model: target.actualModelName,
+            choices: [{ index: 0, delta, finish_reason: finish ?? null }],
           })}\n\n`
         );
+      };
+      writeChunk({ role: 'assistant' });
+      try {
+        if (target.activePlugin) {
+          for await (const chunk of pluginService.executePluginStreamRequest(
+            target.actualModelName,
+            pluginMessages,
+            target.mergedOptions as GenerationOptions,
+            userId,
+            target.activePlugin.id,
+            controller.signal
+          )) {
+            if (chunk.type === 'content' && chunk.content) {
+              writeChunk({ content: chunk.content });
+            }
+          }
+        } else {
+          await ollamaService.generateChatStreamResponse(
+            {
+              model: target.actualModelName,
+              messages: ollamaMessages,
+              stream: true,
+              options: target.mergedOptions as Record<string, unknown>,
+            },
+            chunk => {
+              if (chunk.message?.content) {
+                writeChunk({ content: chunk.message.content });
+              }
+            },
+            error => {
+              throw error;
+            },
+            () => undefined,
+            controller.signal,
+            { userId }
+          );
+        }
+        writeChunk({}, 'stop');
+        res.write('data: [DONE]\n\n');
         res.end();
+      } catch (error) {
+        if (controller.signal.aborted) {
+          res.end();
+          return;
+        }
+        logger.error('Streaming completion failed:', error);
+        if (!res.writableEnded) {
+          res.write(
+            `data: ${JSON.stringify({
+              error: {
+                message:
+                  error instanceof Error ? error.message : 'generation failed',
+                type: 'server_error',
+                code: null,
+              },
+            })}\n\n`
+          );
+          res.end();
+        }
+      }
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      logger.error('Chat completion failed:', error);
+      if (!res.headersSent) {
+        sendError(
+          res,
+          500,
+          error instanceof Error ? error.message : 'generation failed',
+          'server_error'
+        );
       }
     }
-  } catch (error) {
-    if (controller.signal.aborted) return;
-    logger.error('Chat completion failed:', error);
-    if (!res.headersSent) {
-      sendError(
-        res,
-        500,
-        error instanceof Error ? error.message : 'generation failed',
-        'server_error'
-      );
-    }
   }
-});
+);
 
 export default router;

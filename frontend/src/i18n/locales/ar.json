@@ -3186,5 +3186,52 @@
     "saved": "تم حفظ الصورة المحررة في المعرض",
     "failed": "فشل تحرير الصورة",
     "loadFailed": "فشل تحميل الصورة المصدر"
+  },
+  "costs": {
+    "title": "التكاليف والميزانيات",
+    "description": "تُطبَّق أسعار التعرفة على سجل الاستخدام؛ تراقب الميزانيات الإنفاق أو تحدّه.",
+    "loadFailed": "تعذر تحميل بيانات التكاليف",
+    "saveFailed": "فشل الحفظ",
+    "exportFailed": "فشل التصدير",
+    "exportCsv": "تصدير CSV",
+    "totalSpend": "إجمالي الإنفاق",
+    "meteredEvents": "أحداث مسعّرة",
+    "unmeteredEvents": "أحداث غير مسعّرة",
+    "topModel": "النموذج الأعلى",
+    "budgets": "الميزانيات",
+    "noBudgets": "لا توجد ميزانيات بعد.",
+    "budgetName": "اسم الميزانية",
+    "principalId": "معرّف مستخدم أو مجموعة",
+    "addBudget": "إضافة ميزانية",
+    "deleteBudget": "حذف الميزانية",
+    "budgetSaved": "تم حفظ الميزانية",
+    "scope": {
+      "instance": "كامل المثيل",
+      "user": "مستخدم",
+      "group": "مجموعة"
+    },
+    "period": {
+      "daily": "يومي",
+      "weekly": "أسبوعي",
+      "monthly": "شهري"
+    },
+    "mode": {
+      "observe": "مراقبة",
+      "soft": "تنبيه",
+      "hard": "تنبيه وحظر"
+    },
+    "tariffs": "التعرفات",
+    "noTariffs": "لا توجد تعرفات بعد — تبقى التكاليف بلا تسعير حتى تضيف الأسعار.",
+    "plugin": "الإضافة",
+    "model": "النموذج",
+    "modelOptional": "النموذج (اختياري)",
+    "allModels": "كل النماذج",
+    "inputPerMillion": "الإدخال $/م رمز",
+    "outputPerMillion": "الإخراج $/م رمز",
+    "unitPrice": "سعر الوحدة",
+    "effectiveFrom": "سارية من",
+    "addTariff": "إضافة تعرفة",
+    "deleteTariff": "حذف التعرفة",
+    "tariffSaved": "تم حفظ التعرفة"
   }
 }

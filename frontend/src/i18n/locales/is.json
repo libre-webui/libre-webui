@@ -3186,5 +3186,52 @@
     "saved": "Breytt mynd vistuð í safnið",
     "failed": "Myndbreyting mistókst",
     "loadFailed": "Ekki tókst að hlaða upprunamyndinni"
+  },
+  "costs": {
+    "title": "Kostnaður og fjárhagsáætlanir",
+    "description": "Gjaldskrárverð eru notuð á notkunarskrána; fjárhagsáætlanir vakta eða takmarka útgjöld.",
+    "loadFailed": "Ekki tókst að hlaða kostnaðargögnum",
+    "saveFailed": "Vistun mistókst",
+    "exportFailed": "Útflutningur mistókst",
+    "exportCsv": "Flytja út CSV",
+    "totalSpend": "Heildarútgjöld",
+    "meteredEvents": "Verðlagðir atburðir",
+    "unmeteredEvents": "Óverðlagðir atburðir",
+    "topModel": "Efsta líkan",
+    "budgets": "Fjárhagsáætlanir",
+    "noBudgets": "Engar fjárhagsáætlanir enn.",
+    "budgetName": "Heiti áætlunar",
+    "principalId": "Notanda- eða hópauðkenni",
+    "addBudget": "Bæta við áætlun",
+    "deleteBudget": "Eyða áætlun",
+    "budgetSaved": "Áætlun vistuð",
+    "scope": {
+      "instance": "Allt tilvikið",
+      "user": "Notandi",
+      "group": "Hópur"
+    },
+    "period": {
+      "daily": "Daglega",
+      "weekly": "Vikulega",
+      "monthly": "Mánaðarlega"
+    },
+    "mode": {
+      "observe": "Fylgjast með",
+      "soft": "Vara við",
+      "hard": "Vara við og loka"
+    },
+    "tariffs": "Gjaldskrár",
+    "noTariffs": "Engar gjaldskrár enn — kostnaður helst óverðlagður þar til verð eru skráð.",
+    "plugin": "Viðbót",
+    "model": "Líkan",
+    "modelOptional": "Líkan (valfrjálst)",
+    "allModels": "Öll líkön",
+    "inputPerMillion": "Inntak $/M tákn",
+    "outputPerMillion": "Úttak $/M tákn",
+    "unitPrice": "Einingarverð",
+    "effectiveFrom": "Gildir frá",
+    "addTariff": "Bæta við gjaldskrá",
+    "deleteTariff": "Eyða gjaldskrá",
+    "tariffSaved": "Gjaldskrá vistuð"
   }
 }

@@ -3186,5 +3186,52 @@
     "saved": "संपादित छवि गैलरी में सहेजी गई",
     "failed": "छवि संपादन विफल रहा",
     "loadFailed": "स्रोत छवि लोड नहीं हो सकी"
+  },
+  "costs": {
+    "title": "लागत और बजट",
+    "description": "उपयोग बहीखाते पर टैरिफ मूल्य लागू होते हैं; बजट खर्च की निगरानी या सीमा तय करते हैं।",
+    "loadFailed": "लागत डेटा लोड नहीं हो सका",
+    "saveFailed": "सहेजना विफल",
+    "exportFailed": "निर्यात विफल",
+    "exportCsv": "CSV निर्यात करें",
+    "totalSpend": "कुल खर्च",
+    "meteredEvents": "मूल्यांकित घटनाएँ",
+    "unmeteredEvents": "बिना मूल्य की घटनाएँ",
+    "topModel": "शीर्ष मॉडल",
+    "budgets": "बजट",
+    "noBudgets": "अभी कोई बजट नहीं।",
+    "budgetName": "बजट का नाम",
+    "principalId": "उपयोगकर्ता या समूह ID",
+    "addBudget": "बजट जोड़ें",
+    "deleteBudget": "बजट हटाएँ",
+    "budgetSaved": "बजट सहेजा गया",
+    "scope": {
+      "instance": "पूरा इंस्टेंस",
+      "user": "उपयोगकर्ता",
+      "group": "समूह"
+    },
+    "period": {
+      "daily": "दैनिक",
+      "weekly": "साप्ताहिक",
+      "monthly": "मासिक"
+    },
+    "mode": {
+      "observe": "निगरानी",
+      "soft": "चेतावनी",
+      "hard": "चेतावनी और रोक"
+    },
+    "tariffs": "टैरिफ",
+    "noTariffs": "अभी कोई टैरिफ नहीं — मूल्य जोड़ने तक लागत बिना मूल्य की रहती है।",
+    "plugin": "प्लगइन",
+    "model": "मॉडल",
+    "modelOptional": "मॉडल (वैकल्पिक)",
+    "allModels": "सभी मॉडल",
+    "inputPerMillion": "इनपुट $/M टोकन",
+    "outputPerMillion": "आउटपुट $/M टोकन",
+    "unitPrice": "इकाई मूल्य",
+    "effectiveFrom": "प्रभावी तिथि",
+    "addTariff": "टैरिफ जोड़ें",
+    "deleteTariff": "टैरिफ हटाएँ",
+    "tariffSaved": "टैरिफ सहेजा गया"
   }
 }

@@ -3186,5 +3186,52 @@
     "saved": "Đã lưu ảnh chỉnh sửa vào thư viện",
     "failed": "Chỉnh sửa ảnh thất bại",
     "loadFailed": "Không thể tải ảnh gốc"
+  },
+  "costs": {
+    "title": "Chi phí và ngân sách",
+    "description": "Giá biểu phí được áp dụng vào sổ ghi sử dụng; ngân sách theo dõi hoặc giới hạn chi tiêu.",
+    "loadFailed": "Không tải được dữ liệu chi phí",
+    "saveFailed": "Lưu thất bại",
+    "exportFailed": "Xuất thất bại",
+    "exportCsv": "Xuất CSV",
+    "totalSpend": "Tổng chi tiêu",
+    "meteredEvents": "Sự kiện có giá",
+    "unmeteredEvents": "Sự kiện chưa có giá",
+    "topModel": "Mô hình hàng đầu",
+    "budgets": "Ngân sách",
+    "noBudgets": "Chưa có ngân sách.",
+    "budgetName": "Tên ngân sách",
+    "principalId": "ID người dùng hoặc nhóm",
+    "addBudget": "Thêm ngân sách",
+    "deleteBudget": "Xóa ngân sách",
+    "budgetSaved": "Đã lưu ngân sách",
+    "scope": {
+      "instance": "Toàn bộ phiên bản",
+      "user": "Người dùng",
+      "group": "Nhóm"
+    },
+    "period": {
+      "daily": "Hằng ngày",
+      "weekly": "Hằng tuần",
+      "monthly": "Hằng tháng"
+    },
+    "mode": {
+      "observe": "Quan sát",
+      "soft": "Cảnh báo",
+      "hard": "Cảnh báo và chặn"
+    },
+    "tariffs": "Biểu phí",
+    "noTariffs": "Chưa có biểu phí — chi phí sẽ chưa được định giá cho đến khi bạn thêm giá.",
+    "plugin": "Plugin",
+    "model": "Mô hình",
+    "modelOptional": "Mô hình (tùy chọn)",
+    "allModels": "Tất cả mô hình",
+    "inputPerMillion": "Đầu vào $/M token",
+    "outputPerMillion": "Đầu ra $/M token",
+    "unitPrice": "Đơn giá",
+    "effectiveFrom": "Hiệu lực từ",
+    "addTariff": "Thêm biểu phí",
+    "deleteTariff": "Xóa biểu phí",
+    "tariffSaved": "Đã lưu biểu phí"
   }
 }

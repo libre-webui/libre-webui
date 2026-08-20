@@ -3186,5 +3186,52 @@
     "saved": "Düzenlenen görsel galeriye kaydedildi",
     "failed": "Görsel düzenleme başarısız oldu",
     "loadFailed": "Kaynak görsel yüklenemedi"
+  },
+  "costs": {
+    "title": "Maliyetler ve bütçeler",
+    "description": "Tarife fiyatları kullanım kaydına uygulanır; bütçeler harcamayı izler veya sınırlar.",
+    "loadFailed": "Maliyet verileri yüklenemedi",
+    "saveFailed": "Kaydetme başarısız",
+    "exportFailed": "Dışa aktarma başarısız",
+    "exportCsv": "CSV dışa aktar",
+    "totalSpend": "Toplam harcama",
+    "meteredEvents": "Fiyatlandırılan olaylar",
+    "unmeteredEvents": "Fiyatlandırılmayan olaylar",
+    "topModel": "En çok kullanılan model",
+    "budgets": "Bütçeler",
+    "noBudgets": "Henüz bütçe yok.",
+    "budgetName": "Bütçe adı",
+    "principalId": "Kullanıcı veya grup kimliği",
+    "addBudget": "Bütçe ekle",
+    "deleteBudget": "Bütçeyi sil",
+    "budgetSaved": "Bütçe kaydedildi",
+    "scope": {
+      "instance": "Tüm örnek",
+      "user": "Kullanıcı",
+      "group": "Grup"
+    },
+    "period": {
+      "daily": "Günlük",
+      "weekly": "Haftalık",
+      "monthly": "Aylık"
+    },
+    "mode": {
+      "observe": "Gözlemle",
+      "soft": "Uyar",
+      "hard": "Uyar ve engelle"
+    },
+    "tariffs": "Tarifeler",
+    "noTariffs": "Henüz tarife yok — fiyat ekleyene kadar maliyetler fiyatsız kalır.",
+    "plugin": "Eklenti",
+    "model": "Model",
+    "modelOptional": "Model (isteğe bağlı)",
+    "allModels": "Tüm modeller",
+    "inputPerMillion": "Girdi $/M jeton",
+    "outputPerMillion": "Çıktı $/M jeton",
+    "unitPrice": "Birim fiyat",
+    "effectiveFrom": "Geçerlilik başlangıcı",
+    "addTariff": "Tarife ekle",
+    "deleteTariff": "Tarifeyi sil",
+    "tariffSaved": "Tarife kaydedildi"
   }
 }

@@ -3186,5 +3186,52 @@
     "saved": "Redigeret billede gemt i galleriet",
     "failed": "Billedredigering mislykkedes",
     "loadFailed": "Kunne ikke indlæse kildebilledet"
+  },
+  "costs": {
+    "title": "Omkostninger og budgetter",
+    "description": "Tarifpriser anvendes på forbrugsloggen; budgetter overvåger eller begrænser forbruget.",
+    "loadFailed": "Kunne ikke indlæse omkostningsdata",
+    "saveFailed": "Lagring mislykkedes",
+    "exportFailed": "Eksport mislykkedes",
+    "exportCsv": "Eksportér CSV",
+    "totalSpend": "Samlet forbrug",
+    "meteredEvents": "Prissatte hændelser",
+    "unmeteredEvents": "Ikke-prissatte hændelser",
+    "topModel": "Topmodel",
+    "budgets": "Budgetter",
+    "noBudgets": "Ingen budgetter endnu.",
+    "budgetName": "Budgetnavn",
+    "principalId": "Bruger- eller gruppe-id",
+    "addBudget": "Tilføj budget",
+    "deleteBudget": "Slet budget",
+    "budgetSaved": "Budget gemt",
+    "scope": {
+      "instance": "Hele instansen",
+      "user": "Bruger",
+      "group": "Gruppe"
+    },
+    "period": {
+      "daily": "Dagligt",
+      "weekly": "Ugentligt",
+      "monthly": "Månedligt"
+    },
+    "mode": {
+      "observe": "Observer",
+      "soft": "Advar",
+      "hard": "Advar og bloker"
+    },
+    "tariffs": "Tariffer",
+    "noTariffs": "Ingen tariffer endnu — omkostninger forbliver uden pris, indtil du tilføjer priser.",
+    "plugin": "Plugin",
+    "model": "Model",
+    "modelOptional": "Model (valgfri)",
+    "allModels": "Alle modeller",
+    "inputPerMillion": "Input $/M tokens",
+    "outputPerMillion": "Output $/M tokens",
+    "unitPrice": "Stykpris",
+    "effectiveFrom": "Gældende fra",
+    "addTariff": "Tilføj tarif",
+    "deleteTariff": "Slet tarif",
+    "tariffSaved": "Tarif gemt"
   }
 }

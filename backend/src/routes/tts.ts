@@ -24,6 +24,7 @@ import {
   requireFeature,
   type AuthenticatedRequest,
 } from '../middleware/auth.js';
+import { budgetGuard } from '../middleware/index.js';
 import { createLogger } from '../utils/logger.js';
 import {
   parseTTSVoiceCloneUpload,
@@ -401,6 +402,7 @@ router.get('/voices/:pluginId', async (req: AuthenticatedRequest, res) => {
  */
 router.post(
   '/generate',
+  budgetGuard,
   ttsRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);
@@ -663,6 +665,7 @@ router.post(
 router.post(
   '/voice-clone',
   requireFeature('voice-cloning'),
+  budgetGuard,
   voiceCloneRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);
@@ -879,6 +882,7 @@ router.post(
  */
 router.post(
   '/generate-base64',
+  budgetGuard,
   ttsRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);

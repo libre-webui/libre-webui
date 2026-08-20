@@ -27,6 +27,7 @@ import {
   isOtelEnabled,
   recordOtelSpan,
 } from '../observability/otel.js';
+import type { AuthenticatedRequest } from './auth.js';
 
 const logger = createLogger('middleware:index');
 const accessLog = createLogger('http');
@@ -181,4 +182,39 @@ export const requestLogger = (
   });
 
   next();
+};
+
+/**
+ * Hard-budget admission gate (ADMIN-01) for interactive generation
+ * endpoints. Exhausted hard budgets answer 429; any internal failure in the
+ * check fails open so cost governance can never take chat availability down.
+ */
+export const budgetGuard = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const userId = (req as AuthenticatedRequest).user?.userId;
+  if (!userId) {
+    next();
+    return;
+  }
+  try {
+    const { default: costGovernanceService, BudgetExceededError } =
+      await import('../services/costGovernanceService.js');
+    try {
+      await costGovernanceService.assertWithinBudget(userId);
+    } catch (error) {
+      if (error instanceof BudgetExceededError) {
+        res.status(429).json({ success: false, message: error.message });
+        return;
+      }
+      throw error;
+    }
+    next();
+  } catch (error) {
+    // Fail open by contract.
+    void error;
+    next();
+  }
 };

@@ -3186,5 +3186,52 @@
     "saved": "Redigerad bild sparad i galleriet",
     "failed": "Bildredigeringen misslyckades",
     "loadFailed": "Kunde inte läsa in källbilden"
+  },
+  "costs": {
+    "title": "Kostnader och budgetar",
+    "description": "Tariffpriser tillämpas på användningsloggen; budgetar bevakar eller begränsar utgifterna.",
+    "loadFailed": "Kunde inte läsa in kostnadsdata",
+    "saveFailed": "Det gick inte att spara",
+    "exportFailed": "Export misslyckades",
+    "exportCsv": "Exportera CSV",
+    "totalSpend": "Total kostnad",
+    "meteredEvents": "Prissatta händelser",
+    "unmeteredEvents": "Oprissatta händelser",
+    "topModel": "Toppmodell",
+    "budgets": "Budgetar",
+    "noBudgets": "Inga budgetar ännu.",
+    "budgetName": "Budgetnamn",
+    "principalId": "Användar- eller grupp-id",
+    "addBudget": "Lägg till budget",
+    "deleteBudget": "Ta bort budget",
+    "budgetSaved": "Budget sparad",
+    "scope": {
+      "instance": "Hela instansen",
+      "user": "Användare",
+      "group": "Grupp"
+    },
+    "period": {
+      "daily": "Dagligen",
+      "weekly": "Veckovis",
+      "monthly": "Månadsvis"
+    },
+    "mode": {
+      "observe": "Observera",
+      "soft": "Varna",
+      "hard": "Varna och blockera"
+    },
+    "tariffs": "Tariffer",
+    "noTariffs": "Inga tariffer ännu — kostnader förblir oprissatta tills du lägger till priser.",
+    "plugin": "Insticksprogram",
+    "model": "Modell",
+    "modelOptional": "Modell (valfritt)",
+    "allModels": "Alla modeller",
+    "inputPerMillion": "Indata $/M tokens",
+    "outputPerMillion": "Utdata $/M tokens",
+    "unitPrice": "Styckpris",
+    "effectiveFrom": "Gäller från",
+    "addTariff": "Lägg till tariff",
+    "deleteTariff": "Ta bort tariff",
+    "tariffSaved": "Tariff sparad"
   }
 }

@@ -86,6 +86,7 @@ const NOTIFICATION_TYPES: readonly NotificationType[] = [
   'calendar-reminder',
   'media-ready',
   'media-failed',
+  'budget-alert',
   'system',
 ];
 

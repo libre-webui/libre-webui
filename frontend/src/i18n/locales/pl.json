@@ -3186,5 +3186,52 @@
     "saved": "Edytowany obraz zapisano w galerii",
     "failed": "Edycja obrazu nie powiodła się",
     "loadFailed": "Nie udało się wczytać obrazu źródłowego"
+  },
+  "costs": {
+    "title": "Koszty i budżety",
+    "description": "Ceny taryf zastosowane do dziennika użycia; budżety obserwują lub ograniczają wydatki.",
+    "loadFailed": "Nie udało się wczytać danych o kosztach",
+    "saveFailed": "Zapis nie powiódł się",
+    "exportFailed": "Eksport nie powiódł się",
+    "exportCsv": "Eksportuj CSV",
+    "totalSpend": "Łączne wydatki",
+    "meteredEvents": "Zdarzenia wycenione",
+    "unmeteredEvents": "Zdarzenia bez wyceny",
+    "topModel": "Główny model",
+    "budgets": "Budżety",
+    "noBudgets": "Brak budżetów.",
+    "budgetName": "Nazwa budżetu",
+    "principalId": "ID użytkownika lub grupy",
+    "addBudget": "Dodaj budżet",
+    "deleteBudget": "Usuń budżet",
+    "budgetSaved": "Budżet zapisany",
+    "scope": {
+      "instance": "Cała instancja",
+      "user": "Użytkownik",
+      "group": "Grupa"
+    },
+    "period": {
+      "daily": "Dziennie",
+      "weekly": "Tygodniowo",
+      "monthly": "Miesięcznie"
+    },
+    "mode": {
+      "observe": "Obserwuj",
+      "soft": "Ostrzegaj",
+      "hard": "Ostrzegaj i blokuj"
+    },
+    "tariffs": "Taryfy",
+    "noTariffs": "Brak taryf — koszty pozostają bez wyceny, dopóki nie dodasz cen.",
+    "plugin": "Wtyczka",
+    "model": "Model",
+    "modelOptional": "Model (opcjonalnie)",
+    "allModels": "Wszystkie modele",
+    "inputPerMillion": "Wejście $/M tokenów",
+    "outputPerMillion": "Wyjście $/M tokenów",
+    "unitPrice": "Cena jednostkowa",
+    "effectiveFrom": "Obowiązuje od",
+    "addTariff": "Dodaj taryfę",
+    "deleteTariff": "Usuń taryfę",
+    "tariffSaved": "Taryfa zapisana"
   }
 }

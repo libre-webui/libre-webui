@@ -3186,5 +3186,52 @@
     "saved": "Immagine modificata salvata nella galleria",
     "failed": "Modifica dell’immagine non riuscita",
     "loadFailed": "Impossibile caricare l’immagine di origine"
+  },
+  "costs": {
+    "title": "Costi e budget",
+    "description": "Prezzi delle tariffe applicati al registro di utilizzo; i budget osservano o limitano la spesa.",
+    "loadFailed": "Impossibile caricare i dati dei costi",
+    "saveFailed": "Salvataggio non riuscito",
+    "exportFailed": "Esportazione non riuscita",
+    "exportCsv": "Esporta CSV",
+    "totalSpend": "Spesa totale",
+    "meteredEvents": "Eventi tariffati",
+    "unmeteredEvents": "Eventi non tariffati",
+    "topModel": "Modello principale",
+    "budgets": "Budget",
+    "noBudgets": "Nessun budget.",
+    "budgetName": "Nome del budget",
+    "principalId": "ID utente o gruppo",
+    "addBudget": "Aggiungi budget",
+    "deleteBudget": "Elimina budget",
+    "budgetSaved": "Budget salvato",
+    "scope": {
+      "instance": "Intera istanza",
+      "user": "Utente",
+      "group": "Gruppo"
+    },
+    "period": {
+      "daily": "Giornaliero",
+      "weekly": "Settimanale",
+      "monthly": "Mensile"
+    },
+    "mode": {
+      "observe": "Osserva",
+      "soft": "Avvisa",
+      "hard": "Avvisa e blocca"
+    },
+    "tariffs": "Tariffe",
+    "noTariffs": "Nessuna tariffa: i costi restano senza prezzo finché non aggiungi i prezzi.",
+    "plugin": "Plugin",
+    "model": "Modello",
+    "modelOptional": "Modello (opzionale)",
+    "allModels": "Tutti i modelli",
+    "inputPerMillion": "Input $/M token",
+    "outputPerMillion": "Output $/M token",
+    "unitPrice": "Prezzo unitario",
+    "effectiveFrom": "In vigore dal",
+    "addTariff": "Aggiungi tariffa",
+    "deleteTariff": "Elimina tariffa",
+    "tariffSaved": "Tariffa salvata"
   }
 }

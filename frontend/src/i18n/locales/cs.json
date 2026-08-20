@@ -3186,5 +3186,52 @@
     "saved": "Upravený obrázek uložen do galerie",
     "failed": "Úprava obrázku se nezdařila",
     "loadFailed": "Zdrojový obrázek se nepodařilo načíst"
+  },
+  "costs": {
+    "title": "Náklady a rozpočty",
+    "description": "Ceny sazeb se uplatňují na záznam využití; rozpočty výdaje sledují nebo omezují.",
+    "loadFailed": "Nepodařilo se načíst data o nákladech",
+    "saveFailed": "Uložení se nezdařilo",
+    "exportFailed": "Export se nezdařil",
+    "exportCsv": "Exportovat CSV",
+    "totalSpend": "Celkové výdaje",
+    "meteredEvents": "Oceněné události",
+    "unmeteredEvents": "Neoceněné události",
+    "topModel": "Nejpoužívanější model",
+    "budgets": "Rozpočty",
+    "noBudgets": "Zatím žádné rozpočty.",
+    "budgetName": "Název rozpočtu",
+    "principalId": "ID uživatele nebo skupiny",
+    "addBudget": "Přidat rozpočet",
+    "deleteBudget": "Smazat rozpočet",
+    "budgetSaved": "Rozpočet uložen",
+    "scope": {
+      "instance": "Celá instance",
+      "user": "Uživatel",
+      "group": "Skupina"
+    },
+    "period": {
+      "daily": "Denně",
+      "weekly": "Týdně",
+      "monthly": "Měsíčně"
+    },
+    "mode": {
+      "observe": "Sledovat",
+      "soft": "Upozornit",
+      "hard": "Upozornit a blokovat"
+    },
+    "tariffs": "Sazby",
+    "noTariffs": "Zatím žádné sazby — náklady zůstávají neoceněné, dokud ceny nepřidáte.",
+    "plugin": "Plugin",
+    "model": "Model",
+    "modelOptional": "Model (volitelné)",
+    "allModels": "Všechny modely",
+    "inputPerMillion": "Vstup $/M tokenů",
+    "outputPerMillion": "Výstup $/M tokenů",
+    "unitPrice": "Jednotková cena",
+    "effectiveFrom": "Platné od",
+    "addTariff": "Přidat sazbu",
+    "deleteTariff": "Smazat sazbu",
+    "tariffSaved": "Sazba uložena"
   }
 }

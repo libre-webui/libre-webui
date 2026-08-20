@@ -192,6 +192,8 @@ export interface PluginUsageRepository {
     from: number,
     to: number
   ): Promise<Array<Record<string, unknown>>>;
+  /** Raw events for cost attribution, oldest first, bounded by `maximum`. */
+  listSince(from: number, maximum: number): Promise<StoredPluginUsageEvent[]>;
 }
 
 export interface StoredVoiceProfile {

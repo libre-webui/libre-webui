@@ -13,6 +13,7 @@ import {
   requireFeature,
   type AuthenticatedRequest,
 } from '../middleware/auth.js';
+import { budgetGuard } from '../middleware/index.js';
 import { recordAuditEvent } from '../services/securityAuditService.js';
 import galleryService from '../services/galleryService.js';
 import mediaGenerationJobService from '../services/mediaGenerationJobService.js';
@@ -158,6 +159,7 @@ router.get('/models', async (req: AuthenticatedRequest, res) => {
 
 router.post(
   '/audio/generate',
+  budgetGuard,
   generationRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);
@@ -250,6 +252,7 @@ router.post(
 router.post(
   '/audio/voice-clone',
   requireFeature('voice-cloning'),
+  budgetGuard,
   generationRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);
@@ -543,6 +546,7 @@ const readGalleryImageSource = async (
  */
 router.post(
   '/image/edit',
+  budgetGuard,
   generationRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);
@@ -722,6 +726,7 @@ router.post(
 
 router.post(
   '/sound/generate',
+  budgetGuard,
   generationRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);
@@ -798,6 +803,7 @@ router.post(
 
 router.post(
   '/video/generate',
+  budgetGuard,
   generationRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     const requestAbort = requestAbortSignal(req, res);
