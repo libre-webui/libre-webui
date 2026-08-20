@@ -121,6 +121,8 @@ export interface ChatSessionSettings {
   knowledgeCollectionIds?: string[]; // Collections whose documents join this chat's context
   /** False opts this chat out of server-wide context compaction. */
   compaction?: boolean;
+  /** True sends full document content instead of retrieved excerpts. */
+  fullDocumentContext?: boolean;
 }
 
 export interface SessionFolder {
@@ -579,6 +581,8 @@ export interface DocumentSummary {
   sessionId?: string;
   collectionId?: string;
   uploadedAt: number;
+  /** Length of the extracted text, for context-size estimates. */
+  contentChars?: number;
 }
 
 export interface KnowledgeCollection {

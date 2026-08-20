@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "nebo přetáhněte",
     "fileTypesAndSize": "Soubory PDF, Office, Markdown, HTML, kód a CSV do 10 MB",
     "uploadedDocuments": "Nahrané dokumenty",
-    "removeDocument": "Odstranit dokument"
+    "removeDocument": "Odstranit dokument",
+    "fullContextToggle": "Odesílat celé dokumenty",
+    "fullContextEstimate": "≈ {{tokens}} tokenů",
+    "fullContextTooLarge": "Připojené dokumenty překračují limit plného kontextu, proto bylo použito vyhledávání",
+    "fullDocument": "Celý dokument"
   },
   "ttsButton": {
     "speak": "Mluvit",

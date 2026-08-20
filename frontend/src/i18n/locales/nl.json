@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "of sleep en plaats",
     "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, code- en CSV-bestanden tot 10 MB",
     "uploadedDocuments": "Geüploade documenten",
-    "removeDocument": "Document verwijderen"
+    "removeDocument": "Document verwijderen",
+    "fullContextToggle": "Volledige documenten sturen",
+    "fullContextEstimate": "≈ {{tokens}} tokens",
+    "fullContextTooLarge": "De bijgevoegde documenten overschrijden de limiet voor volledige context, dus is retrieval gebruikt",
+    "fullDocument": "Volledig document"
   },
   "ttsButton": {
     "speak": "Voorlezen",

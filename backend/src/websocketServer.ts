@@ -591,6 +591,10 @@ export function registerWebSocketServer(
             }
             if (documentContext.sources.length > 0) {
               extras.ragSources = documentContext.sources;
+              extras.ragContextMode = documentContext.mode;
+            }
+            if (documentContext.fullContextSkipped) {
+              extras.ragFullContextSkipped = documentContext.fullContextSkipped;
             }
             return Object.keys(extras).length > 0
               ? { ...(metadata ?? {}), ...extras }

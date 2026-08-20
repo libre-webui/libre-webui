@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "またはドラッグ＆ドロップ",
     "fileTypesAndSize": "PDF、Office、Markdown、HTML、コード、CSVファイル(最大10MB)",
     "uploadedDocuments": "アップロードされたドキュメント",
-    "removeDocument": "ドキュメントを削除"
+    "removeDocument": "ドキュメントを削除",
+    "fullContextToggle": "ドキュメント全文を送信",
+    "fullContextEstimate": "≈ {{tokens}} トークン",
+    "fullContextTooLarge": "添付ドキュメントが全文コンテキストの上限を超えたため、検索が使用されました",
+    "fullDocument": "全文"
   },
   "ttsButton": {
     "speak": "読み上げ",

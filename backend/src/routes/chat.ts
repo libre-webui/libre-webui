@@ -677,7 +677,16 @@ router.post(
                   ...(generationResult.response.message.providerMetadata ?? {}),
                   ...(webSearchSources?.length ? { webSearchSources } : {}),
                   ...(documentContext.sources.length > 0
-                    ? { ragSources: documentContext.sources }
+                    ? {
+                        ragSources: documentContext.sources,
+                        ragContextMode: documentContext.mode,
+                      }
+                    : {}),
+                  ...(documentContext.fullContextSkipped
+                    ? {
+                        ragFullContextSkipped:
+                          documentContext.fullContextSkipped,
+                      }
                     : {}),
                 }
               : generationResult.response.message.providerMetadata,
@@ -1214,6 +1223,10 @@ router.post(
         }
         if (documentContext.sources.length > 0) {
           extras.ragSources = documentContext.sources;
+          extras.ragContextMode = documentContext.mode;
+        }
+        if (documentContext.fullContextSkipped) {
+          extras.ragFullContextSkipped = documentContext.fullContextSkipped;
         }
         return Object.keys(extras).length > 0
           ? { ...(metadata ?? {}), ...extras }

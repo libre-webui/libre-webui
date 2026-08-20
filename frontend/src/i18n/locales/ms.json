@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "atau seret dan lepas",
     "fileTypesAndSize": "Fail PDF, Office, Markdown, HTML, kod dan CSV sehingga 10MB",
     "uploadedDocuments": "Dokumen Dimuat Naik",
-    "removeDocument": "Buang dokumen"
+    "removeDocument": "Buang dokumen",
+    "fullContextToggle": "Hantar dokumen penuh",
+    "fullContextEstimate": "≈ {{tokens}} token",
+    "fullContextTooLarge": "Dokumen yang dilampirkan melebihi had konteks penuh, jadi dapatan semula digunakan",
+    "fullDocument": "Dokumen penuh"
   },
   "ttsButton": {
     "speak": "Sebut",

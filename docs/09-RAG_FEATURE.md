@@ -71,6 +71,21 @@ Default embedding settings:
 - Chunk overlap: 200 characters
 - Similarity threshold: 0.3
 
+## Citations and Full-Document Mode
+
+Retrieved excerpts carry provenance: the source filename, the chunk index,
+the retrieval score, and — for formats with a segment map — the page, slide,
+sheet, or Markdown section the excerpt came from. The chat context labels
+each excerpt with that location, and the conversation's Sources rail lists
+the cited locations under each document.
+
+Each chat can also switch to **full-document mode** from the Sources rail.
+Instead of retrieved excerpts, the entire extracted content of every
+in-scope document is sent with the message. A token guard
+(`FULL_DOCUMENT_CONTEXT_MAX_TOKENS`, default 32000) protects the model's
+context window: when the attached documents exceed it, the chat falls back
+to retrieval and the Sources rail explains why.
+
 ## Upload and Search
 
 1. Upload a supported file from the document controls.

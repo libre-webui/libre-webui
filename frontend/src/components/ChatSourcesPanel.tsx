@@ -20,21 +20,33 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, ChevronUp, FileText, Globe, X } from 'lucide-react';
 import type { ChatSession } from '@/types';
-import { documentsApi } from '@/utils/api';
+import { chatApi, documentsApi } from '@/utils/api';
+import { useChatStore } from '@/store/chatStore';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:chat-sources-panel');
 
 interface WebSource {
   title: string;
   url: string;
 }
 
+interface RagCitation {
+  chunkIndex: number;
+  location?: string;
+}
+
 interface RagSource {
   id: string;
   filename: string;
+  citations?: RagCitation[];
+  full?: boolean;
 }
 
 interface AttachedDocument {
   id: string;
   filename: string;
+  contentChars?: number;
 }
 
 interface ChatSourcesPanelProps {
@@ -78,9 +90,10 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
   // sheet from a compact trigger, matching the app's mobile pattern.
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const { webSources, ragSources } = useMemo(() => {
+  const { webSources, ragSources, fullContextSkipped } = useMemo(() => {
     const web = new Map<string, WebSource>();
     const rag = new Map<string, RagSource>();
+    let skipped: { estimatedTokens: number; maxTokens: number } | undefined;
     for (const message of session.messages) {
       const metadata = message.providerMetadata;
       if (Array.isArray(metadata?.webSearchSources)) {
@@ -107,14 +120,41 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
                 typeof source.filename === 'string' && source.filename
                   ? source.filename
                   : source.id,
+              ...(Array.isArray(source.citations)
+                ? {
+                    citations: source.citations.filter(
+                      (citation): citation is RagCitation =>
+                        !!citation &&
+                        typeof citation === 'object' &&
+                        typeof (citation as RagCitation).chunkIndex === 'number'
+                    ),
+                  }
+                : {}),
+              ...(source.full === true ? { full: true } : {}),
             });
           }
         }
+      }
+      // The most recent turn's verdict wins; older skips are stale.
+      const rawSkip = metadata?.ragFullContextSkipped as
+        { estimatedTokens?: unknown; maxTokens?: unknown } | undefined;
+      if (
+        rawSkip &&
+        typeof rawSkip.estimatedTokens === 'number' &&
+        typeof rawSkip.maxTokens === 'number'
+      ) {
+        skipped = {
+          estimatedTokens: rawSkip.estimatedTokens,
+          maxTokens: rawSkip.maxTokens,
+        };
+      } else if (metadata?.ragSources) {
+        skipped = undefined;
       }
     }
     return {
       webSources: Array.from(web.values()),
       ragSources: Array.from(rag.values()),
+      fullContextSkipped: skipped,
     };
   }, [session.messages]);
 
@@ -134,6 +174,7 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
             docs: response.data.map(doc => ({
               id: doc.id,
               filename: doc.filename,
+              contentChars: doc.contentChars,
             })),
           });
         })
@@ -148,19 +189,73 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
   }, [session.id, session.isPrivate]);
 
   const documents = useMemo(() => {
-    const merged = new Map<string, AttachedDocument & { used: boolean }>();
+    const merged = new Map<
+      string,
+      AttachedDocument & {
+        used: boolean;
+        citations?: RagCitation[];
+        full?: boolean;
+      }
+    >();
     for (const doc of attachedDocuments) {
       merged.set(doc.id, { ...doc, used: false });
     }
     for (const source of ragSources) {
       merged.set(source.id, {
+        ...(merged.get(source.id) ?? {}),
         id: source.id,
         filename: source.filename,
         used: true,
+        ...(source.citations?.length ? { citations: source.citations } : {}),
+        ...(source.full ? { full: true } : {}),
       });
     }
     return Array.from(merged.values());
   }, [attachedDocuments, ragSources]);
+
+  const fullDocumentContext = session.settings?.fullDocumentContext === true;
+  const estimatedTokens = useMemo(
+    () =>
+      attachedDocuments.reduce(
+        (total, doc) => total + Math.ceil((doc.contentChars ?? 0) / 4),
+        0
+      ),
+    [attachedDocuments]
+  );
+
+  const toggleFullDocumentContext = async () => {
+    const settings = {
+      ...session.settings,
+      fullDocumentContext: fullDocumentContext ? undefined : true,
+    };
+    useChatStore.setState(state => ({
+      currentSession:
+        state.currentSession?.id === session.id
+          ? { ...state.currentSession, settings }
+          : state.currentSession,
+      sessions: state.sessions.map(existing =>
+        existing.id === session.id ? { ...existing, settings } : existing
+      ),
+    }));
+    if (session.isPrivate) return;
+    try {
+      await chatApi.updateSession(session.id, {
+        settings,
+      } as Partial<ChatSession>);
+    } catch (error) {
+      logger.error('Failed to update the full-document setting:', error);
+    }
+  };
+
+  const citationSummary = (citations: RagCitation[]): string => {
+    const labels: string[] = [];
+    for (const citation of citations) {
+      const label = citation.location ?? `#${citation.chunkIndex + 1}`;
+      if (!labels.includes(label)) labels.push(label);
+      if (labels.length >= 4) break;
+    }
+    return labels.join(' · ');
+  };
 
   if (webSources.length === 0 && documents.length === 0) return null;
 
@@ -241,22 +336,39 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
             {visibleDocuments.map(doc => (
               <li
                 key={doc.id}
-                className='-mx-1 flex items-center gap-2.5 rounded-lg px-1 py-1.5'
+                className='-mx-1 rounded-lg px-1 py-1.5'
                 title={doc.filename}
               >
-                <FileText className='h-4 w-4 shrink-0 text-gray-400 dark:text-dark-500' />
-                <span
-                  dir='ltr'
-                  className='min-w-0 flex-1 truncate text-[13px] leading-snug text-gray-800 dark:text-dark-800'
-                >
-                  {doc.filename}
-                </span>
-                {doc.used && (
+                <span className='flex items-center gap-2.5'>
+                  <FileText className='h-4 w-4 shrink-0 text-gray-400 dark:text-dark-500' />
                   <span
-                    aria-hidden='true'
-                    className='h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500'
-                  />
-                )}
+                    dir='ltr'
+                    className='min-w-0 flex-1 truncate text-[13px] leading-snug text-gray-800 dark:text-dark-800'
+                  >
+                    {doc.filename}
+                  </span>
+                  {doc.used && (
+                    <span
+                      aria-hidden='true'
+                      className='h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500'
+                    />
+                  )}
+                </span>
+                {doc.full ? (
+                  <span
+                    className='ms-[26px] block truncate text-[11px] text-gray-400 dark:text-dark-500'
+                    data-testid='chat-source-citation'
+                  >
+                    {t('documents.fullDocument', 'Full document')}
+                  </span>
+                ) : doc.citations?.length ? (
+                  <span
+                    className='ms-[26px] block truncate text-[11px] text-gray-400 dark:text-dark-500'
+                    data-testid='chat-source-citation'
+                  >
+                    {citationSummary(doc.citations)}
+                  </span>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -264,6 +376,33 @@ export const ChatSourcesPanel: React.FC<ChatSourcesPanelProps> = ({
             documents.length - visibleDocuments.length,
             allDocuments,
             () => setAllDocuments(current => !current)
+          )}
+          <label className='mt-3 flex cursor-pointer items-center gap-2 px-1 text-[12px] text-gray-500 dark:text-dark-500'>
+            <input
+              type='checkbox'
+              checked={fullDocumentContext}
+              onChange={toggleFullDocumentContext}
+              data-testid='full-document-context-toggle'
+              className='h-3.5 w-3.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-dark-400'
+            />
+            <span className='min-w-0 flex-1'>
+              {t('documents.fullContextToggle', 'Send full documents')}
+              {fullDocumentContext && estimatedTokens > 0 && (
+                <span className='ms-1 text-gray-400 dark:text-dark-500'>
+                  {t('documents.fullContextEstimate', {
+                    tokens: estimatedTokens.toLocaleString(),
+                  })}
+                </span>
+              )}
+            </span>
+          </label>
+          {fullDocumentContext && fullContextSkipped && (
+            <p
+              className='mt-1 px-1 text-[11px] text-amber-600 dark:text-amber-400'
+              data-testid='full-document-context-warning'
+            >
+              {t('documents.fullContextTooLarge')}
+            </p>
           )}
         </section>
       )}

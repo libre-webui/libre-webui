@@ -201,6 +201,72 @@ export const resolveDocumentFileType = (
   return null;
 };
 
+const SEGMENT_KINDS = new Set(['page', 'slide', 'sheet', 'section']);
+
+/** Validates a stored document metadata segment map. */
+export const readDocumentSegments = (
+  metadata: Record<string, unknown> | undefined
+): DocumentSegment[] => {
+  const value = metadata?.segments;
+  if (!Array.isArray(value)) return [];
+  const segments: DocumentSegment[] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object') return [];
+    const record = entry as Record<string, unknown>;
+    if (
+      typeof record.kind !== 'string' ||
+      !SEGMENT_KINDS.has(record.kind) ||
+      typeof record.label !== 'string' ||
+      !Number.isSafeInteger(record.startChar) ||
+      !Number.isSafeInteger(record.endChar) ||
+      (record.startChar as number) < 0 ||
+      (record.endChar as number) < (record.startChar as number)
+    ) {
+      return [];
+    }
+    segments.push({
+      kind: record.kind as DocumentSegment['kind'],
+      label: record.label,
+      startChar: record.startChar as number,
+      endChar: record.endChar as number,
+    });
+  }
+  return segments;
+};
+
+/**
+ * Human-readable location of a chunk inside its source, chosen as the
+ * segment with the greatest overlap of the chunk's character range.
+ * Offsets are approximate (chunking trims whitespace), so overlap rather
+ * than containment decides.
+ */
+export const resolveSegmentLabel = (
+  segments: readonly DocumentSegment[],
+  startChar: number,
+  endChar: number
+): string | undefined => {
+  let best: DocumentSegment | undefined;
+  let bestOverlap = 0;
+  for (const segment of segments) {
+    const overlap =
+      Math.min(segment.endChar, endChar) -
+      Math.max(segment.startChar, startChar);
+    if (overlap > bestOverlap) {
+      best = segment;
+      bestOverlap = overlap;
+    }
+  }
+  if (!best) return undefined;
+  switch (best.kind) {
+    case 'sheet':
+      return `Sheet ${best.label}`;
+    case 'section':
+      return `§ ${best.label}`;
+    default:
+      return best.label;
+  }
+};
+
 const XML_ENTITY_PATTERN = /&(amp|lt|gt|quot|apos|#x[0-9a-fA-F]+|#[0-9]+);/g;
 
 const decodeXmlEntities = (value: string): string =>

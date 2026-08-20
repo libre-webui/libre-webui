@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "অথবা টেনে আনুন",
     "fileTypesAndSize": "PDF, Office, Markdown, HTML, কোড এবং CSV ফাইল সর্বোচ্চ 10MB",
     "uploadedDocuments": "আপলোড করা ডকুমেন্ট",
-    "removeDocument": "ডকুমেন্ট সরান"
+    "removeDocument": "ডকুমেন্ট সরান",
+    "fullContextToggle": "সম্পূর্ণ নথি পাঠান",
+    "fullContextEstimate": "≈ {{tokens}} টোকেন",
+    "fullContextTooLarge": "সংযুক্ত নথিগুলি সম্পূর্ণ-প্রসঙ্গ সীমা ছাড়িয়ে গেছে, তাই পুনরুদ্ধার ব্যবহার করা হয়েছে",
+    "fullDocument": "সম্পূর্ণ নথি"
   },
   "ttsButton": {
     "speak": "বলুন",

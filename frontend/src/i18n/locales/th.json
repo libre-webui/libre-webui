@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "หรือลากและวาง",
     "fileTypesAndSize": "ไฟล์ PDF, Office, Markdown, HTML, โค้ด และ CSV ขนาดไม่เกิน 10MB",
     "uploadedDocuments": "เอกสารที่อัปโหลด",
-    "removeDocument": "ลบเอกสาร"
+    "removeDocument": "ลบเอกสาร",
+    "fullContextToggle": "ส่งเอกสารฉบับเต็ม",
+    "fullContextEstimate": "≈ {{tokens}} โทเคน",
+    "fullContextTooLarge": "เอกสารแนบเกินขีดจำกัดบริบทเต็ม จึงใช้การค้นคืนแทน",
+    "fullDocument": "เอกสารฉบับเต็ม"
   },
   "ttsButton": {
     "speak": "พูด",

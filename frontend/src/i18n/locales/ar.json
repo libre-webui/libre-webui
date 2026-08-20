@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "أو اسحب وأفلت",
     "fileTypesAndSize": "ملفات PDF وOffice وMarkdown وHTML وملفات الشيفرة وCSV حتى 10 ميغابايت",
     "uploadedDocuments": "المستندات المرفوعة",
-    "removeDocument": "إزالة المستند"
+    "removeDocument": "إزالة المستند",
+    "fullContextToggle": "إرسال المستندات كاملة",
+    "fullContextEstimate": "≈ {{tokens}} رمز",
+    "fullContextTooLarge": "تتجاوز المستندات المرفقة حد السياق الكامل، لذلك استُخدم الاسترجاع بدلاً من ذلك",
+    "fullDocument": "المستند الكامل"
   },
   "ttsButton": {
     "speak": "تحدث",

@@ -310,6 +310,7 @@ router.get('/session/:sessionId', async (req, res) => {
       sessionId: doc.sessionId,
       collectionId: doc.collectionId,
       uploadedAt: doc.uploadedAt,
+      contentChars: doc.content?.length ?? 0,
     }));
 
     res.json({
@@ -339,6 +340,7 @@ router.get('/', async (req, res) => {
       sessionId: doc.sessionId,
       collectionId: doc.collectionId,
       uploadedAt: doc.uploadedAt,
+      contentChars: doc.content?.length ?? 0,
     }));
 
     res.json({

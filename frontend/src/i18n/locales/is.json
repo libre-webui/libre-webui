@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "eða dragðu og slepptu",
     "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kóða- og CSV-skrár allt að 10 MB",
     "uploadedDocuments": "Hlaðin upp skjöl",
-    "removeDocument": "Fjarlægja skjal"
+    "removeDocument": "Fjarlægja skjal",
+    "fullContextToggle": "Senda heil skjöl",
+    "fullContextEstimate": "≈ {{tokens}} tókar",
+    "fullContextTooLarge": "Viðhengd skjöl fara yfir mörk fulls samhengis, svo leit var notuð í staðinn",
+    "fullDocument": "Heilt skjal"
   },
   "ttsButton": {
     "speak": "Tala",

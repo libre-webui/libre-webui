@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "或拖放文件",
     "fileTypesAndSize": "PDF、Office、Markdown、HTML、代码和 CSV 文件(最大 10MB)",
     "uploadedDocuments": "已上传文档",
-    "removeDocument": "移除文档"
+    "removeDocument": "移除文档",
+    "fullContextToggle": "发送完整文档",
+    "fullContextEstimate": "≈ {{tokens}} 个词元",
+    "fullContextTooLarge": "附加文档超出完整上下文限制,因此改用了检索",
+    "fullDocument": "完整文档"
   },
   "ttsButton": {
     "speak": "朗读",

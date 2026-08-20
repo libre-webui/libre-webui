@@ -65,7 +65,9 @@ import {
 } from '../utils/hybridRetrieval.js';
 import {
   extractDocumentContentByType,
+  readDocumentSegments,
   resolveDocumentFileType,
+  resolveSegmentLabel,
   type DocumentSegment,
 } from '../utils/documentExtraction.js';
 
@@ -1312,6 +1314,17 @@ export class DocumentService {
     return undefined;
   }
 
+  /** Documents in a chat's searchable scope: session uploads, selected collections, and standing uploads. */
+  async getDocumentsInScope(
+    userId: string,
+    sessionId?: string,
+    collectionIds?: string[]
+  ): Promise<Document[]> {
+    return (await storageService.getAllDocuments(userId)).filter(document =>
+      this.documentInScope(document, sessionId, collectionIds)
+    );
+  }
+
   async getDocuments(userId: string, sessionId?: string): Promise<Document[]> {
     const allDocs = await storageService.getAllDocuments(userId);
     if (sessionId) {
@@ -1783,14 +1796,13 @@ export class DocumentService {
         lexicalScored.map(entry => entry.chunk.id),
       ]);
       const top: DocumentChunk[] = [];
-      for (const { id } of fused) {
+      for (const { id, score } of fused) {
         if (top.length >= limit) break;
         const match = chunksById.get(id);
         if (!match) continue;
-        top.push({
-          ...match.chunk,
-          filename: match.document.filename,
-        } as DocumentChunk);
+        top.push(
+          this.hydrateRetrievedChunk(match.chunk, match.document, score)
+        );
       }
       if (top.length > 0) return top;
 
@@ -1861,10 +1873,30 @@ export class DocumentService {
     throwIfChatGenerationCancelled(signal);
     const results = this.scoreChunksByKeywords(query, candidates);
 
-    return results.slice(0, limit).map(result => ({
-      ...result.chunk,
-      filename: result.document.filename, // Add filename for context
-    })) as DocumentChunk[];
+    return results
+      .slice(0, limit)
+      .map(result =>
+        this.hydrateRetrievedChunk(result.chunk, result.document, result.score)
+      );
+  }
+
+  /** Attaches filename, score, and source location to a retrieval result. */
+  private hydrateRetrievedChunk(
+    chunk: DocumentChunk,
+    document: Document,
+    score?: number
+  ): DocumentChunk {
+    const location = resolveSegmentLabel(
+      readDocumentSegments(document.metadata),
+      chunk.startChar,
+      chunk.endChar
+    );
+    return {
+      ...chunk,
+      filename: document.filename,
+      ...(score !== undefined ? { score } : {}),
+      ...(location ? { location } : {}),
+    };
   }
 
   // Get relevant context for RAG

@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "o trascina e rilascia",
     "fileTypesAndSize": "File PDF, Office, Markdown, HTML, codice e CSV fino a 10 MB",
     "uploadedDocuments": "Documenti caricati",
-    "removeDocument": "Rimuovi documento"
+    "removeDocument": "Rimuovi documento",
+    "fullContextToggle": "Invia documenti completi",
+    "fullContextEstimate": "≈ {{tokens}} token",
+    "fullContextTooLarge": "I documenti allegati superano il limite di contesto completo, quindi è stato usato il recupero",
+    "fullDocument": "Documento completo"
   },
   "ttsButton": {
     "speak": "Parla",

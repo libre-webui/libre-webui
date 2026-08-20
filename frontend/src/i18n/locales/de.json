@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "oder per Drag & Drop",
     "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, Code- und CSV-Dateien bis 10 MB",
     "uploadedDocuments": "Hochgeladene Dokumente",
-    "removeDocument": "Dokument entfernen"
+    "removeDocument": "Dokument entfernen",
+    "fullContextToggle": "Vollständige Dokumente senden",
+    "fullContextEstimate": "≈ {{tokens}} Tokens",
+    "fullContextTooLarge": "Die angehängten Dokumente überschreiten das Volltext-Kontextlimit, daher wurde Retrieval verwendet",
+    "fullDocument": "Vollständiges Dokument"
   },
   "ttsButton": {
     "speak": "Sprechen",

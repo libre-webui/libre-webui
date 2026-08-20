@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "hoặc kéo và thả",
     "fileTypesAndSize": "Tệp PDF, Office, Markdown, HTML, mã nguồn và CSV tối đa 10MB",
     "uploadedDocuments": "Tài liệu đã tải lên",
-    "removeDocument": "Xóa tài liệu"
+    "removeDocument": "Xóa tài liệu",
+    "fullContextToggle": "Gửi toàn bộ tài liệu",
+    "fullContextEstimate": "≈ {{tokens}} token",
+    "fullContextTooLarge": "Tài liệu đính kèm vượt quá giới hạn ngữ cảnh đầy đủ, nên đã dùng truy xuất thay thế",
+    "fullDocument": "Toàn bộ tài liệu"
   },
   "ttsButton": {
     "speak": "Đọc",

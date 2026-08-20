@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "или перетащите",
     "fileTypesAndSize": "Файлы PDF, Office, Markdown, HTML, код и CSV до 10 МБ",
     "uploadedDocuments": "Загруженные документы",
-    "removeDocument": "Удалить документ"
+    "removeDocument": "Удалить документ",
+    "fullContextToggle": "Отправлять документы целиком",
+    "fullContextEstimate": "≈ {{tokens}} токенов",
+    "fullContextTooLarge": "Прикреплённые документы превышают лимит полного контекста, поэтому использован поиск",
+    "fullDocument": "Полный документ"
   },
   "ttsButton": {
     "speak": "Озвучить",

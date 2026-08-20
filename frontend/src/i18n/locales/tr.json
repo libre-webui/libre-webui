@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "veya sürükleyip bırakın",
     "fileTypesAndSize": "10 MB'a kadar PDF, Office, Markdown, HTML, kod ve CSV dosyaları",
     "uploadedDocuments": "Yüklenen Belgeler",
-    "removeDocument": "Belgeyi kaldır"
+    "removeDocument": "Belgeyi kaldır",
+    "fullContextToggle": "Belgeleri tam olarak gönder",
+    "fullContextEstimate": "≈ {{tokens}} jeton",
+    "fullContextTooLarge": "Ekli belgeler tam bağlam sınırını aşıyor, bu yüzden getirme kullanıldı",
+    "fullDocument": "Tam belge"
   },
   "ttsButton": {
     "speak": "Seslendir",

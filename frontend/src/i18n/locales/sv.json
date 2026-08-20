@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "eller dra och släpp",
     "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kod- och CSV-filer upp till 10 MB",
     "uploadedDocuments": "Uppladdade dokument",
-    "removeDocument": "Ta bort dokument"
+    "removeDocument": "Ta bort dokument",
+    "fullContextToggle": "Skicka hela dokument",
+    "fullContextEstimate": "≈ {{tokens}} tokens",
+    "fullContextTooLarge": "De bifogade dokumenten överskrider gränsen för full kontext, så sökning användes i stället",
+    "fullDocument": "Helt dokument"
   },
   "ttsButton": {
     "speak": "Tala",

@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "eller træk og slip",
     "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kode- og CSV-filer op til 10 MB",
     "uploadedDocuments": "Uploadede dokumenter",
-    "removeDocument": "Fjern dokument"
+    "removeDocument": "Fjern dokument",
+    "fullContextToggle": "Send hele dokumenter",
+    "fullContextEstimate": "≈ {{tokens}} tokens",
+    "fullContextTooLarge": "De vedhæftede dokumenter overskrider grænsen for fuld kontekst, så søgning blev brugt i stedet",
+    "fullDocument": "Helt dokument"
   },
   "ttsButton": {
     "speak": "Læs op",

@@ -1459,6 +1459,162 @@ test('durable ingestion rejects 100,001 chunks before publication without retryi
   );
 });
 
+test('retrieval results cite the source location from the segment map', async () => {
+  await storageService.saveDocument(
+    {
+      id: 'doc-segmented',
+      filename: 'segmented.pptx',
+      fileType: 'pptx',
+      size: 100,
+      sessionId: SESSION,
+      uploadedAt: now,
+      createdAt: now,
+      metadata: {
+        segments: [
+          { kind: 'slide', label: 'Slide 1', startChar: 0, endChar: 40 },
+          { kind: 'slide', label: 'Slide 2', startChar: 42, endChar: 90 },
+        ],
+      },
+    },
+    USER
+  );
+  await storageService.saveDocumentChunks('doc-segmented', [
+    {
+      id: 'doc-segmented-chunk-0',
+      documentId: 'doc-segmented',
+      content: 'The kingfisher budget covers slide one.',
+      chunkIndex: 0,
+      startChar: 0,
+      endChar: 39,
+    },
+    {
+      id: 'doc-segmented-chunk-1',
+      documentId: 'doc-segmented',
+      content: 'The kingfisher timeline lives on slide two.',
+      chunkIndex: 1,
+      startChar: 42,
+      endChar: 85,
+    },
+  ]);
+
+  const chunks = await documentService.searchDocuments(
+    'kingfisher timeline',
+    USER,
+    SESSION,
+    5
+  );
+  const timelineChunk = chunks.find(
+    chunk => chunk.id === 'doc-segmented-chunk-1'
+  );
+  assert.ok(timelineChunk, 'the segmented chunk must be retrievable');
+  assert.equal(timelineChunk.location, 'Slide 2');
+  assert.equal(typeof timelineChunk.score, 'number');
+  assert.ok(timelineChunk.score > 0);
+
+  const context = await buildChatDocumentContext(
+    'kingfisher timeline',
+    SESSION,
+    USER
+  );
+  assert.equal(context.mode, 'retrieval');
+  const source = context.sources.find(entry => entry.id === 'doc-segmented');
+  assert.ok(source, 'segmented document must be a cited source');
+  assert.ok(
+    source.citations.some(citation => citation.location === 'Slide 2'),
+    'the citation must carry the slide location'
+  );
+  assert.match(context.documentContext, /Slide 2/);
+});
+
+test('full-document mode sends whole sources and falls back over the token guard', async () => {
+  const fullSession = 'rag-full-context-session';
+  getDatabase()
+    .prepare(
+      `INSERT INTO sessions (
+        id, user_id, title, model, created_at, updated_at, settings
+      ) VALUES (?, ?, 'full ctx', 'test-model', ?, ?, ?)`
+    )
+    .run(
+      fullSession,
+      USER,
+      now,
+      now,
+      encryptionService.encrypt(JSON.stringify({ fullDocumentContext: true }))
+    );
+  await storageService.saveDocument(
+    {
+      id: 'doc-full-small',
+      filename: 'whole-policy.txt',
+      fileType: 'txt',
+      content: 'The heron policy allows two carry-ons per flight.',
+      size: 49,
+      sessionId: fullSession,
+      uploadedAt: now,
+      createdAt: now,
+    },
+    USER
+  );
+
+  const full = await buildChatDocumentContext(
+    'what does the policy allow?',
+    fullSession,
+    USER
+  );
+  assert.equal(full.mode, 'full');
+  assert.match(full.documentContext, /ATTACHED DOCUMENTS \(full content\)/);
+  assert.match(full.documentContext, /two carry-ons per flight/);
+  assert.ok(
+    full.sources.some(
+      source => source.id === 'doc-full-small' && source.full === true
+    ),
+    'the session document must be reported as a full source'
+  );
+  assert.ok(
+    full.sources.every(source => source.full === true),
+    'every full-mode source must be marked full'
+  );
+
+  // Shrink the guard below the document size: retrieval must take over and
+  // the result must say why.
+  process.env.FULL_DOCUMENT_CONTEXT_MAX_TOKENS = '1000';
+  try {
+    await storageService.saveDocument(
+      {
+        id: 'doc-full-large',
+        filename: 'oversized.txt',
+        fileType: 'txt',
+        content: `heron ${'filler words expanding the estimate '.repeat(200)}`,
+        size: 100,
+        sessionId: fullSession,
+        uploadedAt: now,
+        createdAt: now,
+      },
+      USER
+    );
+    await storageService.saveDocumentChunks('doc-full-large', [
+      {
+        id: 'doc-full-large-chunk-0',
+        documentId: 'doc-full-large',
+        content: 'heron filler chunk for retrieval fallback',
+        chunkIndex: 0,
+        startChar: 0,
+        endChar: 41,
+      },
+    ]);
+    const fallback = await buildChatDocumentContext(
+      'heron policy',
+      fullSession,
+      USER
+    );
+    assert.equal(fallback.mode, 'retrieval');
+    assert.ok(fallback.fullContextSkipped, 'the skip reason must be reported');
+    assert.equal(fallback.fullContextSkipped.maxTokens, 1000);
+    assert.ok(fallback.fullContextSkipped.estimatedTokens > 1000);
+  } finally {
+    delete process.env.FULL_DOCUMENT_CONTEXT_MAX_TOKENS;
+  }
+});
+
 test('the chat context builder reports which documents contributed', async () => {
   const context = await buildChatDocumentContext(
     'pelican refunds invoice',

@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "atau seret dan lepas",
     "fileTypesAndSize": "Berkas PDF, Office, Markdown, HTML, kode, dan CSV hingga 10MB",
     "uploadedDocuments": "Dokumen yang Diunggah",
-    "removeDocument": "Hapus dokumen"
+    "removeDocument": "Hapus dokumen",
+    "fullContextToggle": "Kirim dokumen lengkap",
+    "fullContextEstimate": "≈ {{tokens}} token",
+    "fullContextTooLarge": "Dokumen terlampir melebihi batas konteks penuh, jadi pengambilan digunakan sebagai gantinya",
+    "fullDocument": "Dokumen lengkap"
   },
   "ttsButton": {
     "speak": "Ucapkan",

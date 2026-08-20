@@ -188,6 +188,11 @@ export interface ChatSessionSettings {
   knowledgeCollectionIds?: string[]; // Collections whose documents join this chat's context
   /** False opts this chat out of server-wide context compaction. */
   compaction?: boolean;
+  /**
+   * True sends the full extracted content of in-scope documents instead of
+   * retrieved chunks, guarded by a token estimate.
+   */
+  fullDocumentContext?: boolean;
 }
 
 export interface GenerationOptions {
@@ -500,6 +505,12 @@ export interface DocumentChunk {
   endChar: number;
   // Add embedding vector for semantic search
   embedding?: number[];
+  /** Source filename, attached on retrieval results. */
+  filename?: string;
+  /** Retrieval score (fused rank score or BM25), attached on results. */
+  score?: number;
+  /** Human-readable source location (page/slide/sheet/section). */
+  location?: string;
 }
 
 // Plugin system types

@@ -742,7 +742,15 @@ class DurableChatGenerationService {
                 ...(generated.response.message.providerMetadata ?? {}),
                 ...(webSearchSources?.length ? { webSearchSources } : {}),
                 ...(documentContext.sources.length > 0
-                  ? { ragSources: documentContext.sources }
+                  ? {
+                      ragSources: documentContext.sources,
+                      ragContextMode: documentContext.mode,
+                    }
+                  : {}),
+                ...(documentContext.fullContextSkipped
+                  ? {
+                      ragFullContextSkipped: documentContext.fullContextSkipped,
+                    }
                   : {}),
               }
             : generated.response.message.providerMetadata,

@@ -1947,7 +1947,11 @@
     "orDragAndDrop": "або перетягніть",
     "fileTypesAndSize": "Файли PDF, Office, Markdown, HTML, код і CSV до 10 МБ",
     "uploadedDocuments": "Завантажені документи",
-    "removeDocument": "Видалити документ"
+    "removeDocument": "Видалити документ",
+    "fullContextToggle": "Надсилати документи повністю",
+    "fullContextEstimate": "≈ {{tokens}} токенів",
+    "fullContextTooLarge": "Прикріплені документи перевищують ліміт повного контексту, тому використано пошук",
+    "fullDocument": "Повний документ"
   },
   "ttsButton": {
     "speak": "Озвучити",
