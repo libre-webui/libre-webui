@@ -138,14 +138,15 @@ persistent storage.
 | **Notifications**      | Durable in-app inbox with live delivery and signed, egress-guarded outbound webhooks                   |
 | **Notes**              | Notebook with revision history, attachments, sharing, and reversible AI edits                          |
 | **Personas**           | Reusable assistant profiles with their own prompts, models, and memory                                 |
-| **Media generation**   | Image and video generation with a persistent gallery                                                   |
-| **Voice**              | Speech-to-text dictation and text-to-speech playback                                                   |
+| **Media generation**   | Image generation and editing plus video generation, with a persistent gallery and retention controls   |
+| **Voice**              | Speech-to-text dictation, text-to-speech playback, and hands-free voice mode with consent-aware voices |
 | **Context management** | Context meter and undoable conversation compaction for long chats                                      |
 | **Agents**             | Optional integration with installed agent CLIs and Libre Claw                                          |
 | **Sharing**            | One grant model for chats, notes, knowledge, personas, prompts, skills, and calendars                  |
 | **Accounts**           | Local accounts, roles, groups, API tokens, and SSO                                                     |
 | **Public API**         | OpenAI-compatible `/v1` endpoints on scoped API tokens                                                 |
-| **Monitoring**         | System diagnostics, provider usage analytics, and an admin audit log                                   |
+| **Evaluations**        | Feedback with topic tags, blind arena matches with an Elo leaderboard, and reproducible eval runs      |
+| **Monitoring**         | System diagnostics, usage analytics with tariffs and budgets, OpenTelemetry export, and an audit log   |
 | **Deployment**         | npm, Docker Compose, Kubernetes, Helm, and desktop client                                              |
 | **Interface**          | Tabs, full-text search across chats, notes, and documents, themes, and 25 locales including Arabic RTL |
 
