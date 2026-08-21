@@ -53,25 +53,29 @@ const logger = createLogger('components:artifact-slide-out-panel');
 // Min/max panel widths
 const MIN_PANEL_WIDTH = 320;
 const MAX_PANEL_WIDTH_RATIO = 0.9; // 90% of screen width
+// In split mode the chat keeps at least this much room, so the composer and
+// messages stay usable no matter how far the divider is dragged.
+const MIN_CHAT_WIDTH = 400;
 
-// Matches the shell's lg breakpoint: at and above it the panel splits the
+// Matches the shell's md breakpoint: at and above it the panel splits the
 // screen with the chat; below it the panel overlays the content.
-const DESKTOP_QUERY = '(min-width: 1024px)';
+const DESKTOP_QUERY = '(min-width: 768px)';
+// The shell's lg breakpoint, where the sidebar starts reserving layout width.
+const SIDEBAR_LAYOUT_QUERY = '(min-width: 1024px)';
 
-const useIsDesktop = () => {
-  const [isDesktop, setIsDesktop] = useState(
-    () =>
-      typeof window !== 'undefined' && window.matchMedia(DESKTOP_QUERY).matches
+const useMediaQuery = (query: string) => {
+  const [matches, setMatches] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(query).matches
   );
 
   useEffect(() => {
-    const query = window.matchMedia(DESKTOP_QUERY);
-    const onChange = () => setIsDesktop(query.matches);
-    query.addEventListener('change', onChange);
-    return () => query.removeEventListener('change', onChange);
-  }, []);
+    const mql = window.matchMedia(query);
+    const onChange = () => setMatches(mql.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, [query]);
 
-  return isDesktop;
+  return matches;
 };
 
 export const ArtifactSlideOutPanel: React.FC = () => {
@@ -87,8 +91,35 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     setArtifactPanelWidth: setPanelWidth,
     artifactPanelResizing: isResizing,
     setArtifactPanelResizing: setIsResizing,
+    sidebarOpen,
+    sidebarCompact,
   } = useAppStore();
-  const isDesktop = useIsDesktop();
+  const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  const isLgViewport = useMediaQuery(SIDEBAR_LAYOUT_QUERY);
+
+  // Mirrors the shell's sidebar spacers: at lg+ an open sidebar reserves its
+  // full width; below lg only the compact rail pushes content aside.
+  const sidebarReservedWidth = isLgViewport
+    ? sidebarOpen
+      ? sidebarCompact
+        ? 64
+        : 288
+      : 0
+    : sidebarOpen && sidebarCompact
+      ? 64
+      : 0;
+
+  // The widest the panel may get without squeezing the chat out of the split.
+  const getMaxPanelWidth = useCallback(
+    () =>
+      isDesktop
+        ? Math.max(
+            MIN_PANEL_WIDTH,
+            window.innerWidth - sidebarReservedWidth - MIN_CHAT_WIDTH
+          )
+        : window.innerWidth * MAX_PANEL_WIDTH_RATIO,
+    [isDesktop, sidebarReservedWidth]
+  );
   const currentSession = useChatStore(state => state.currentSession);
 
   // Artifacts sharing a title across the conversation are iterations of the
@@ -182,14 +213,13 @@ export const ArtifactSlideOutPanel: React.FC = () => {
 
       e.preventDefault();
       const deltaX = (resizeStartXRef.current - e.clientX) * (rtl ? -1 : 1);
-      const maxWidth = window.innerWidth * MAX_PANEL_WIDTH_RATIO;
       const newWidth = Math.min(
-        maxWidth,
+        getMaxPanelWidth(),
         Math.max(MIN_PANEL_WIDTH, resizeStartWidthRef.current + deltaX)
       );
       schedulePanelWidth(newWidth);
     },
-    [isResizing, rtl, schedulePanelWidth]
+    [isResizing, rtl, schedulePanelWidth, getMaxPanelWidth]
   );
 
   // Resize event listeners
@@ -228,18 +258,20 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     };
   }, [isResizing, handleResizeMove, handleResizeEnd]);
 
-  // Handle window resize to ensure panel doesn't exceed max width
+  // Clamp the panel to the window. Runs immediately as well: a persisted
+  // width from a larger screen must not squeeze the chat on a smaller one.
   useEffect(() => {
-    const handleWindowResize = () => {
-      const maxWidth = window.innerWidth * MAX_PANEL_WIDTH_RATIO;
+    const clampToWindow = () => {
+      const maxWidth = getMaxPanelWidth();
       if (panelWidth > maxWidth) {
         setPanelWidth(maxWidth);
       }
     };
 
-    window.addEventListener('resize', handleWindowResize);
-    return () => window.removeEventListener('resize', handleWindowResize);
-  }, [panelWidth, setPanelWidth]);
+    clampToWindow();
+    window.addEventListener('resize', clampToWindow);
+    return () => window.removeEventListener('resize', clampToWindow);
+  }, [panelWidth, setPanelWidth, getMaxPanelWidth]);
 
   // In overlay mode (below desktop) Escape closes the panel. In split mode
   // the chat stays interactive, so Escape is left to whatever has focus.
@@ -532,18 +564,23 @@ export const ArtifactSlideOutPanel: React.FC = () => {
 
       {isResizing && (
         <div
-          className='fixed inset-0 z-[55] cursor-col-resize select-none'
+          className={cn(
+            'fixed inset-0 cursor-col-resize select-none',
+            isDesktop ? 'z-40' : 'z-[55]'
+          )}
           aria-hidden='true'
         />
       )}
 
-      {/* Panel */}
+      {/* Panel — in split mode it sits with the layout (below modals);
+          in overlay mode it stacks above the page like a drawer. */}
       <div
         ref={panelRef}
         data-testid='artifact-slide-out-panel'
         style={{ width: effectiveWidth }}
         className={cn(
-          'fixed top-0 end-0 h-full z-50',
+          'fixed top-0 end-0 h-full',
+          isDesktop ? 'z-30' : 'z-50',
           'bg-white dark:bg-dark-25',
           'shadow-2xl border-s border-gray-200 dark:border-dark-200',
           'flex flex-col',

@@ -146,7 +146,7 @@ const ArtifactLayoutSpacer: React.FC = () => {
     <div
       aria-hidden='true'
       className={cn(
-        'hidden lg:block flex-shrink-0',
+        'hidden md:block flex-shrink-0',
         !artifactPanelResizing && 'transition-[width] duration-300 ease-out'
       )}
       style={{ width: artifactPanelOpen ? artifactPanelWidth : 0 }}

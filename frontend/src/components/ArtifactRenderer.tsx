@@ -57,7 +57,8 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
-  const { theme, openArtifactPanel } = useAppStore();
+  const { theme, openArtifactPanel, artifactPanelOpen, artifactPanelArtifact } =
+    useAppStore();
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -289,6 +290,42 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       artifact.type === 'mermaid'
     );
   };
+
+  // While the panel shows this artifact (any version shares the title), the
+  // inline preview collapses to a card so the same content isn't rendered
+  // twice side by side.
+  const shownInPanel =
+    artifactPanelOpen &&
+    artifactPanelArtifact !== null &&
+    artifactPanelArtifact.title.trim().toLowerCase() ===
+      artifact.title.trim().toLowerCase();
+
+  if (shownInPanel) {
+    return (
+      <button
+        type='button'
+        data-testid='artifact-collapsed-card'
+        onClick={() => openArtifactPanel(artifact)}
+        title={t('artifacts.openInPanel')}
+        className={cn(
+          'flex w-full max-w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-start shadow-sm transition-colors animate-fade-in',
+          'hover:bg-gray-50 dark:border-dark-200 dark:bg-dark-25 dark:hover:bg-dark-100',
+          className
+        )}
+      >
+        <div className='flex-shrink-0 text-gray-600 dark:text-gray-400'>
+          {getIcon()}
+        </div>
+        <span className='min-w-0 flex-1 truncate font-medium text-gray-900 dark:text-gray-100'>
+          {artifact.title}
+        </span>
+        <span className='flex-shrink-0 rounded-full bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'>
+          {artifact.type.toUpperCase()}
+        </span>
+        <Maximize2 className='h-4 w-4 flex-shrink-0 text-gray-400 dark:text-dark-500' />
+      </button>
+    );
+  }
 
   return (
     <div

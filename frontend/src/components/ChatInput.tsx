@@ -132,6 +132,10 @@ const RECORDING_MIME_TYPES = [
   { mimeType: 'audio/webm;codecs=opus', format: 'webm' },
 ] as const;
 
+// Below this measured composer width, secondary controls fold into the
+// attach menu so the icon row never clips.
+const COMPACT_COMPOSER_WIDTH = 560;
+
 const DEFAULT_MAX_RECORDING_SECONDS = 5 * 60;
 const RECORDING_DURATION_HEADROOM_SECONDS = 0.25;
 
@@ -311,6 +315,22 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [hasImageGenPlugins, setHasImageGenPlugins] = useState(false);
   const attachMenuRef = useRef<HTMLDivElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
+  // With the artifact panel splitting the screen, the composer can sit in a
+  // narrow column while the viewport is wide, so viewport breakpoints say
+  // nothing about the room it actually has. Measure the composer itself and
+  // fold secondary controls into the attach menu when it gets tight.
+  const composerRef = useRef<HTMLDivElement>(null);
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const node = composerRef.current;
+    if (!node) return undefined;
+    const observer = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width ?? node.clientWidth;
+      setCompact(width < COMPACT_COMPOSER_WIDTH);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
   const { isGenerating, setBackgroundImage } = useAppStore();
   const globalGenerationOptions = useAppStore(
     state => state.preferences.generationOptions
@@ -1107,7 +1127,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div className='pointer-events-none'>
       {/* Centered container matching chat messages width */}
-      <div className='pointer-events-auto mx-auto w-full max-w-3xl px-4 sm:px-6 md:px-8'>
+      <div
+        ref={composerRef}
+        className='pointer-events-auto mx-auto w-full max-w-3xl px-4 sm:px-6 md:px-8'
+      >
         {/* Advanced Features Panel */}
         {showAdvanced && (
           <div className='mb-2 animate-slide-up rounded-2xl border border-black/[0.07] bg-surface/90 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/90'>
@@ -1393,6 +1416,47 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             <Braces className='h-4 w-4 text-gray-500 dark:text-dark-600' />
                             {t('chat.input.menu.structuredOutput')}
                           </button>
+
+                          {/* Controls folded out of the narrow icon row */}
+                          {compact && webSearchAvailable && (
+                            <button
+                              type='button'
+                              onClick={() => {
+                                setWebSearchActive(active => !active);
+                                closeAttachMenu();
+                              }}
+                              className={cn(
+                                'flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200',
+                                webSearchActive &&
+                                  'text-primary-600 dark:text-primary-400'
+                              )}
+                              aria-pressed={webSearchActive}
+                            >
+                              <span className='flex items-center gap-2.5'>
+                                <Globe className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                                {webSearchActive
+                                  ? t('chat.input.webSearchOn')
+                                  : t('chat.input.webSearchOff')}
+                              </span>
+                              {webSearchActive && (
+                                <Check className='h-3.5 w-3.5 shrink-0' />
+                              )}
+                            </button>
+                          )}
+                          {compact && speechSupported && onOpenVoiceMode && (
+                            <button
+                              type='button'
+                              onClick={() => {
+                                void unlockTTSAudioPlayback();
+                                onOpenVoiceMode();
+                                closeAttachMenu();
+                              }}
+                              className='flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-start text-[13px] text-gray-700 hover:bg-gray-100 dark:text-dark-800 dark:hover:bg-dark-200'
+                            >
+                              <AudioLines className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                              {t('voiceMode.open')}
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
@@ -1409,7 +1473,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
                 {/* Integrated Controls Row — icons grouped on the left in the
                   same order as the new-chat composer; model + send stay right. */}
-                <div className='flex min-w-0 flex-1 items-center gap-1 sm:gap-1.5'>
+                <div className='flex min-w-0 flex-1 flex-wrap items-center gap-1 sm:gap-1.5'>
                   {/* Thinking level */}
                   {thinkingAvailable && (
                     <ThinkingSelector
@@ -1420,7 +1484,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   )}
 
                   {/* Web search toggle */}
-                  {webSearchAvailable && (
+                  {webSearchAvailable && !compact && (
                     <Button
                       type='button'
                       variant='ghost'
@@ -1453,7 +1517,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   )}
 
                   {/* Multi-model comparison picker */}
-                  {!isPrivateSession && currentSession && (
+                  {!isPrivateSession && currentSession && !compact && (
                     <ComposerCompareMenu
                       models={models}
                       currentModelKey={chatModelSelectionKey({
@@ -1471,7 +1535,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
                   {/* Voice input. Selecting a provider makes the audio transfer
                     explicit before the user starts recording. */}
-                  {selectableSttModels.length > 0 && (
+                  {selectableSttModels.length > 0 && !compact && (
                     <select
                       value={activeSpeechInputSource}
                       onChange={event =>
@@ -1543,7 +1607,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       )}
                     </Button>
                   )}
-                  {speechSupported && onOpenVoiceMode && (
+                  {speechSupported && onOpenVoiceMode && !compact && (
                     <Button
                       type='button'
                       variant='ghost'

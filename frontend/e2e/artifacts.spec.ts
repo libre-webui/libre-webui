@@ -432,19 +432,21 @@ test('artifact panel resize releases pointer state after mouse up', async ({
 
   const startX = handleBox!.x + handleBox!.width / 2;
   const startY = handleBox!.y + handleBox!.height / 2;
+  // Drag toward the panel: shrinking is never blocked by the split-mode
+  // width clamp that protects the chat column.
   await page.mouse.move(startX, startY);
   await page.mouse.down();
-  await page.mouse.move(startX - 140, startY);
+  await page.mouse.move(startX + 140, startY);
   await page.mouse.up();
 
   const resizedBox = await panel.boundingBox();
   expect(resizedBox).not.toBeNull();
-  expect(resizedBox!.width).toBeGreaterThan(initialBox!.width + 80);
+  expect(resizedBox!.width).toBeLessThan(initialBox!.width - 80);
   await expect
     .poll(() => page.evaluate(() => document.body.style.cursor))
     .toBe('');
 
-  await page.mouse.move(startX - 240, startY);
+  await page.mouse.move(startX + 240, startY);
   const afterReleaseBox = await panel.boundingBox();
   expect(afterReleaseBox).not.toBeNull();
   expect(Math.abs(afterReleaseBox!.width - resizedBox!.width)).toBeLessThan(2);
