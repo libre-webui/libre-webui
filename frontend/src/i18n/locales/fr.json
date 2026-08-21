@@ -567,7 +567,8 @@
       "shortcuts": "Raccourcis",
       "about": "À propos",
       "sessions": "Sessions",
-      "apiKeys": "Clés API"
+      "apiKeys": "Clés API",
+      "notifications": "Notifications"
     },
     "appearance": {
       "title": "Apparence",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Dernière utilisation",
       "expiresAt": "Expire",
       "neverExpires": "Jamais"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Comment ce navigateur est informé des mentions, partages, rappels et travaux terminés.",
+      "pushTitle": "Notifications du navigateur",
+      "pushHint": "Afficher les notifications système de cet appareil même quand l'onglet est en arrière-plan.",
+      "enabled": "Les notifications du navigateur sont activées sur cet appareil.",
+      "disabled": "Les notifications du navigateur sont désactivées sur cet appareil.",
+      "enableFailed": "Impossible d'activer les notifications du navigateur.",
+      "permissionDenied": "Les notifications sont bloquées dans les réglages du navigateur pour ce site.",
+      "unsupported": "Ce navigateur ne prend pas en charge les notifications push.",
+      "workerMissing": "Le push nécessite l'application installée. Rechargez l'application de production et réessayez.",
+      "deviceNote": "Les notifications sont propres à chaque appareil. Déconnecter la session supprime aussi son enregistrement push."
     }
   },
   "models": {

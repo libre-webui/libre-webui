@@ -2665,6 +2665,25 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         });
         return;
       }
+      if (method === 'GET' && path === '/push/public-key') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: { publicKey: 'BE2E-not-a-real-key' },
+          }),
+        });
+        return;
+      }
+      if (method === 'GET' && path === '/push/subscriptions') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [] }),
+        });
+        return;
+      }
       if (method === 'GET' && path === '/auth/passkeys') {
         await route.fulfill({
           status: 200,

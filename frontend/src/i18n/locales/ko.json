@@ -567,7 +567,8 @@
       "shortcuts": "단축키",
       "about": "정보",
       "sessions": "세션",
-      "apiKeys": "API 키"
+      "apiKeys": "API 키",
+      "notifications": "알림"
     },
     "appearance": {
       "title": "외관",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "마지막 사용",
       "expiresAt": "만료",
       "neverExpires": "만료 없음"
+    },
+    "notifications": {
+      "title": "알림",
+      "description": "멘션, 공유, 미리 알림, 완료된 작업을 이 브라우저에 알리는 방법입니다.",
+      "pushTitle": "브라우저 알림",
+      "pushHint": "탭이 백그라운드에 있어도 이 기기에서 시스템 알림을 표시합니다.",
+      "enabled": "이 기기에서 브라우저 알림이 켜졌습니다.",
+      "disabled": "이 기기에서 브라우저 알림이 꺼졌습니다.",
+      "enableFailed": "브라우저 알림을 켤 수 없습니다.",
+      "permissionDenied": "이 사이트의 알림이 브라우저 설정에서 차단되어 있습니다.",
+      "unsupported": "이 브라우저는 푸시 알림을 지원하지 않습니다.",
+      "workerMissing": "푸시는 설치된 앱이 필요합니다. 프로덕션 앱을 새로 고친 뒤 다시 시도하세요.",
+      "deviceNote": "알림은 기기별로 적용됩니다. 세션을 로그아웃하면 푸시 등록도 제거됩니다."
     }
   },
   "models": {

@@ -567,7 +567,8 @@
       "shortcuts": "Flýtileiðir",
       "about": "Um",
       "sessions": "Setur",
-      "apiKeys": "API lyklar"
+      "apiKeys": "API lyklar",
+      "notifications": "Tilkynningar"
     },
     "appearance": {
       "title": "Útlit",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Síðast notaður",
       "expiresAt": "Rennur út",
       "neverExpires": "Aldrei"
+    },
+    "notifications": {
+      "title": "Tilkynningar",
+      "description": "Hvernig þessi vafri fær að vita um tilvísanir, deilingar, áminningar og lokið verk.",
+      "pushTitle": "Vafratilkynningar",
+      "pushHint": "Sýna kerfistilkynningar frá þessu tæki, jafnvel þegar flipinn er í bakgrunni.",
+      "enabled": "Kveikt er á vafratilkynningum á þessu tæki.",
+      "disabled": "Slökkt er á vafratilkynningum á þessu tæki.",
+      "enableFailed": "Ekki tókst að kveikja á vafratilkynningum.",
+      "permissionDenied": "Tilkynningar eru læstar í vafrastillingum fyrir þessa síðu.",
+      "unsupported": "Þessi vafri styður ekki ýtitilkynningar.",
+      "workerMissing": "Ýting krefst uppsetta forritsins. Endurhlaðið framleiðsluforritið og reynið aftur.",
+      "deviceNote": "Tilkynningar gilda á hvert tæki. Útskráning lotunnar fjarlægir einnig ýtiskráningu hennar."
     }
   },
   "models": {

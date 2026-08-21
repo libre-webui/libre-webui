@@ -567,7 +567,8 @@
       "shortcuts": "Phím tắt",
       "about": "Giới thiệu",
       "sessions": "Phiên đăng nhập",
-      "apiKeys": "Khóa API"
+      "apiKeys": "Khóa API",
+      "notifications": "Thông báo"
     },
     "appearance": {
       "title": "Giao diện",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Dùng lần cuối",
       "expiresAt": "Hết hạn",
       "neverExpires": "Không bao giờ"
+    },
+    "notifications": {
+      "title": "Thông báo",
+      "description": "Cách trình duyệt này được báo về lượt nhắc, chia sẻ, lời nhắc và công việc đã xong.",
+      "pushTitle": "Thông báo trình duyệt",
+      "pushHint": "Hiển thị thông báo hệ thống từ thiết bị này ngay cả khi thẻ đang ở nền.",
+      "enabled": "Thông báo trình duyệt đang bật trên thiết bị này.",
+      "disabled": "Thông báo trình duyệt đang tắt trên thiết bị này.",
+      "enableFailed": "Không thể bật thông báo trình duyệt.",
+      "permissionDenied": "Thông báo bị chặn trong cài đặt trình duyệt cho trang này.",
+      "unsupported": "Trình duyệt này không hỗ trợ thông báo đẩy.",
+      "workerMissing": "Thông báo đẩy cần ứng dụng đã cài đặt. Tải lại bản chạy chính thức và thử lại.",
+      "deviceNote": "Thông báo áp dụng theo thiết bị. Đăng xuất phiên cũng xóa đăng ký đẩy của nó."
     }
   },
   "models": {

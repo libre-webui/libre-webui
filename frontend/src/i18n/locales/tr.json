@@ -567,7 +567,8 @@
       "shortcuts": "Kısayollar",
       "about": "Hakkında",
       "sessions": "Oturumlar",
-      "apiKeys": "API Anahtarları"
+      "apiKeys": "API Anahtarları",
+      "notifications": "Bildirimler"
     },
     "appearance": {
       "title": "Görünüm",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Son kullanım",
       "expiresAt": "Sona erme",
       "neverExpires": "Asla"
+    },
+    "notifications": {
+      "title": "Bildirimler",
+      "description": "Bu tarayıcının bahsetmeler, paylaşımlar, hatırlatıcılar ve tamamlanan işler hakkında nasıl bilgilendirileceği.",
+      "pushTitle": "Tarayıcı bildirimleri",
+      "pushHint": "Sekme arka planda olsa bile bu cihazdan sistem bildirimleri göster.",
+      "enabled": "Bu cihazda tarayıcı bildirimleri açık.",
+      "disabled": "Bu cihazda tarayıcı bildirimleri kapalı.",
+      "enableFailed": "Tarayıcı bildirimleri etkinleştirilemedi.",
+      "permissionDenied": "Bu site için bildirimler tarayıcı ayarlarında engellenmiş.",
+      "unsupported": "Bu tarayıcı push bildirimlerini desteklemiyor.",
+      "workerMissing": "Push, yüklü uygulamayı gerektirir. Üretim uygulamasını yeniden yükleyip tekrar dene.",
+      "deviceNote": "Bildirimler cihaz başınadır. Oturumu kapatmak push kaydını da kaldırır."
     }
   },
   "models": {

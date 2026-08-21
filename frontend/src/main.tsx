@@ -48,3 +48,13 @@ void i18nReady
     applyDocumentLanguage('en');
   })
   .then(renderApp);
+
+// Production only: the dev server serves fresh modules directly, and a dev
+// service worker would fight both Vite and the e2e route mocks.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Offline shell and push are progressive enhancements.
+    });
+  });
+}

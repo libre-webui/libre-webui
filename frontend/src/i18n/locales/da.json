@@ -567,7 +567,8 @@
       "shortcuts": "Genveje",
       "about": "Om",
       "sessions": "Sessioner",
-      "apiKeys": "API-nøgler"
+      "apiKeys": "API-nøgler",
+      "notifications": "Notifikationer"
     },
     "appearance": {
       "title": "Udseende",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Senest brugt",
       "expiresAt": "Udløber",
       "neverExpires": "Aldrig"
+    },
+    "notifications": {
+      "title": "Notifikationer",
+      "description": "Hvordan denne browser får besked om omtaler, delinger, påmindelser og færdigt arbejde.",
+      "pushTitle": "Browsernotifikationer",
+      "pushHint": "Vis systemnotifikationer fra denne enhed, selv når fanen er i baggrunden.",
+      "enabled": "Browsernotifikationer er slået til på denne enhed.",
+      "disabled": "Browsernotifikationer er slået fra på denne enhed.",
+      "enableFailed": "Browsernotifikationer kunne ikke slås til.",
+      "permissionDenied": "Notifikationer er blokeret i browserens indstillinger for dette websted.",
+      "unsupported": "Denne browser understøtter ikke push-notifikationer.",
+      "workerMissing": "Push kræver den installerede app. Genindlæs produktionsappen og prøv igen.",
+      "deviceNote": "Notifikationer gælder pr. enhed. Logges sessionen ud, fjernes dens push-registrering også."
     }
   },
   "models": {

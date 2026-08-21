@@ -567,7 +567,8 @@
       "shortcuts": "Skróty",
       "about": "O programie",
       "sessions": "Sesje",
-      "apiKeys": "Klucze API"
+      "apiKeys": "Klucze API",
+      "notifications": "Powiadomienia"
     },
     "appearance": {
       "title": "Wygląd",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Ostatnio użyty",
       "expiresAt": "Wygasa",
       "neverExpires": "Nigdy"
+    },
+    "notifications": {
+      "title": "Powiadomienia",
+      "description": "Jak ta przeglądarka jest informowana o wzmiankach, udostępnieniach, przypomnieniach i ukończonej pracy.",
+      "pushTitle": "Powiadomienia przeglądarki",
+      "pushHint": "Pokazuj powiadomienia systemowe z tego urządzenia, nawet gdy karta działa w tle.",
+      "enabled": "Powiadomienia przeglądarki są włączone na tym urządzeniu.",
+      "disabled": "Powiadomienia przeglądarki są wyłączone na tym urządzeniu.",
+      "enableFailed": "Nie udało się włączyć powiadomień przeglądarki.",
+      "permissionDenied": "Powiadomienia są zablokowane w ustawieniach przeglądarki dla tej witryny.",
+      "unsupported": "Ta przeglądarka nie obsługuje powiadomień push.",
+      "workerMissing": "Push wymaga zainstalowanej aplikacji. Odśwież aplikację produkcyjną i spróbuj ponownie.",
+      "deviceNote": "Powiadomienia działają per urządzenie. Wylogowanie sesji usuwa też jej rejestrację push."
     }
   },
   "models": {

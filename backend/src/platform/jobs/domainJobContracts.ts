@@ -32,6 +32,8 @@ export const WORK_EXECUTE_IDEMPOTENCY_SCOPE = 'work.execute.v1';
 export const CHANNEL_MENTION_JOB_TYPE = 'channel.mention.v1';
 export const WEBHOOK_DELIVER_JOB_TYPE = 'notify.webhook.v1';
 export const WEBHOOK_DELIVER_IDEMPOTENCY_SCOPE = 'notify.webhook.v1';
+export const PUSH_DELIVER_JOB_TYPE = 'notify.push.v1';
+export const PUSH_DELIVER_IDEMPOTENCY_SCOPE = 'notify.push.v1';
 export const CHANNEL_MENTION_IDEMPOTENCY_SCOPE = 'channel.mention.v1';
 export const channelEventStreamId = (channelId: string): string =>
   `channel:${channelId}`;

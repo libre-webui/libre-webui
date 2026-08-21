@@ -567,7 +567,8 @@
       "shortcuts": "Scorciatoie",
       "about": "Informazioni",
       "sessions": "Sessioni",
-      "apiKeys": "Chiavi API"
+      "apiKeys": "Chiavi API",
+      "notifications": "Notifiche"
     },
     "appearance": {
       "title": "Aspetto",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Ultimo utilizzo",
       "expiresAt": "Scadenza",
       "neverExpires": "Mai"
+    },
+    "notifications": {
+      "title": "Notifiche",
+      "description": "Come questo browser viene avvisato di menzioni, condivisioni, promemoria e lavori completati.",
+      "pushTitle": "Notifiche del browser",
+      "pushHint": "Mostra le notifiche di sistema da questo dispositivo anche quando la scheda è in secondo piano.",
+      "enabled": "Le notifiche del browser sono attive su questo dispositivo.",
+      "disabled": "Le notifiche del browser sono disattivate su questo dispositivo.",
+      "enableFailed": "Impossibile attivare le notifiche del browser.",
+      "permissionDenied": "Le notifiche sono bloccate nelle impostazioni del browser per questo sito.",
+      "unsupported": "Questo browser non supporta le notifiche push.",
+      "workerMissing": "Il push richiede l'app installata. Ricarica l'app di produzione e riprova.",
+      "deviceNote": "Le notifiche valgono per dispositivo. Disconnettere la sessione rimuove anche la sua registrazione push."
     }
   },
   "models": {

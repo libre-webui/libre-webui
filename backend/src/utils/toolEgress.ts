@@ -69,7 +69,8 @@ export interface ToolHttpRequest {
   url: string;
   method: string;
   headers?: Record<string, string>;
-  body?: string;
+  /** Request body; binary bodies (Web Push) send as-is. */
+  body?: string | Uint8Array;
   timeoutMs: number;
   maxResponseBytes: number;
   signal?: AbortSignal;

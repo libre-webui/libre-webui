@@ -567,7 +567,8 @@
       "shortcuts": "快捷键",
       "about": "关于",
       "sessions": "登录会话",
-      "apiKeys": "API 密钥"
+      "apiKeys": "API 密钥",
+      "notifications": "通知"
     },
     "appearance": {
       "title": "外观",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "最近使用",
       "expiresAt": "过期时间",
       "neverExpires": "永不"
+    },
+    "notifications": {
+      "title": "通知",
+      "description": "此浏览器如何获知提及、共享、提醒和已完成的工作。",
+      "pushTitle": "浏览器通知",
+      "pushHint": "即使标签页在后台，也从此设备显示系统通知。",
+      "enabled": "已在此设备上开启浏览器通知。",
+      "disabled": "已在此设备上关闭浏览器通知。",
+      "enableFailed": "无法开启浏览器通知。",
+      "permissionDenied": "此网站的通知已在浏览器设置中被屏蔽。",
+      "unsupported": "此浏览器不支持推送通知。",
+      "workerMissing": "推送需要已安装的应用。请重新加载正式版应用后重试。",
+      "deviceNote": "通知按设备生效。退出会话也会移除其推送注册。"
     }
   },
   "models": {

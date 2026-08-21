@@ -567,7 +567,8 @@
       "shortcuts": "Atajos",
       "about": "Acerca de",
       "sessions": "Sesiones",
-      "apiKeys": "Claves API"
+      "apiKeys": "Claves API",
+      "notifications": "Notificaciones"
     },
     "appearance": {
       "title": "Apariencia",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Último uso",
       "expiresAt": "Expira",
       "neverExpires": "Nunca"
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "description": "Cómo se informa a este navegador de menciones, comparticiones, recordatorios y trabajos terminados.",
+      "pushTitle": "Notificaciones del navegador",
+      "pushHint": "Mostrar notificaciones del sistema desde este dispositivo aunque la pestaña esté en segundo plano.",
+      "enabled": "Las notificaciones del navegador están activadas en este dispositivo.",
+      "disabled": "Las notificaciones del navegador están desactivadas en este dispositivo.",
+      "enableFailed": "No se pudieron activar las notificaciones del navegador.",
+      "permissionDenied": "Las notificaciones están bloqueadas en los ajustes del navegador para este sitio.",
+      "unsupported": "Este navegador no admite notificaciones push.",
+      "workerMissing": "Push requiere la aplicación instalada. Recarga la aplicación de producción e inténtalo de nuevo.",
+      "deviceNote": "Las notificaciones son por dispositivo. Cerrar la sesión también elimina su registro push."
     }
   },
   "models": {

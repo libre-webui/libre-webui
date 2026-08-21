@@ -221,6 +221,9 @@ pre-created directory in a `ReadWritePaths=` service drop-in; see
 | `TURNSTILE_EXPECTED_HOSTNAME` | hostname from `BASE_URL`          | Required hostname in Cloudflare's verification response  |
 | `MFA_REQUIRED_MODE`           | unset (admin toggle, `optional`)  | Pin the two-factor policy to `optional` or `required`    |
 | `WEBAUTHN_RP_ID`              | request hostname                  | Fixed relying-party id for passkeys behind many hostnames |
+| `VAPID_PUBLIC_KEY`            | generated and stored encrypted    | Pin the Web Push VAPID public key (base64url P-256 point) |
+| `VAPID_PRIVATE_KEY`           | generated and stored encrypted    | Pin the Web Push VAPID private key (base64url scalar)    |
+| `VAPID_SUBJECT`               | `mailto:admin@localhost`          | Contact claim inside signed Web Push authorizations      |
 
 Turnstile is enabled only when both Turnstile keys are present.
 

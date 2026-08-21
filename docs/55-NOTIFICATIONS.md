@@ -61,10 +61,38 @@ Administrators can register webhook targets that receive team events.
 - **Scoped.** Each target subscribes to specific notification types (or
   `*`).
 
+## Browser push
+
+Settings → Notifications registers this browser for Web Push, so mentions,
+shares, reminders, and finished work reach the device even when the tab is
+closed. The implementation is standard and self-contained:
+
+- **VAPID (RFC 8292).** The server signs each delivery with an ES256 key
+  pair, generated once and stored encrypted, or pinned with
+  `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` (`VAPID_SUBJECT` sets the contact
+  claim). No third-party push library or service account is involved beyond
+  the browser vendor's push endpoint.
+- **Encrypted payloads (RFC 8291).** Every message is encrypted to the
+  device's own keys with aes128gcm before it leaves the instance; the push
+  service relays ciphertext it cannot read.
+- **Per device, session-bound.** A subscription belongs to the browser that
+  created it and to that browser's auth session: signing the session out
+  (or "sign out other sessions") also removes its push registration.
+  Endpoints are stored encrypted with a keyed lookup token, and must be
+  public HTTPS destinations — the same egress hygiene as webhooks.
+- **Durable.** Push deliveries run as durable jobs with bounded retries; a
+  push service reporting the subscription gone (404/410) removes it.
+- The payload carries the notification title, optional body, type, and
+  target link — the same redaction posture as the inbox.
+
+Push requires the production app (the service worker registers only there)
+and a secure origin. The offline shell and installability come from the same
+service worker: the app manifest makes Libre WebUI installable, navigations
+fall back to the cached shell when offline, and hashed build assets are
+cached immutably. API traffic is never cached.
+
 ## Boundaries
 
-- Browser push and service-worker notifications wait for the PWA phase;
-  delivery today is in-app (live SSE plus the bell) and webhooks.
 - Per-type user preferences are not implemented yet; automations honor
   their own notify setting, and leaving a channel stops its
   notifications.

@@ -567,7 +567,8 @@
       "shortcuts": "Pintasan",
       "about": "Tentang",
       "sessions": "Sesi",
-      "apiKeys": "API key"
+      "apiKeys": "API key",
+      "notifications": "Notifikasi"
     },
     "appearance": {
       "title": "Tampilan",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Terakhir digunakan",
       "expiresAt": "Kedaluwarsa",
       "neverExpires": "Tidak pernah"
+    },
+    "notifications": {
+      "title": "Notifikasi",
+      "description": "Bagaimana browser ini diberi tahu tentang sebutan, berbagi, pengingat, dan pekerjaan yang selesai.",
+      "pushTitle": "Notifikasi browser",
+      "pushHint": "Tampilkan notifikasi sistem dari perangkat ini meski tab berada di latar belakang.",
+      "enabled": "Notifikasi browser aktif di perangkat ini.",
+      "disabled": "Notifikasi browser nonaktif di perangkat ini.",
+      "enableFailed": "Notifikasi browser tidak dapat diaktifkan.",
+      "permissionDenied": "Notifikasi diblokir di pengaturan browser untuk situs ini.",
+      "unsupported": "Browser ini tidak mendukung notifikasi push.",
+      "workerMissing": "Push memerlukan aplikasi terpasang. Muat ulang aplikasi produksi dan coba lagi.",
+      "deviceNote": "Notifikasi berlaku per perangkat. Mengakhiri sesi juga menghapus pendaftaran push-nya."
     }
   },
   "models": {

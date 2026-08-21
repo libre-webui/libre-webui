@@ -567,7 +567,8 @@
       "shortcuts": "ショートカット",
       "about": "概要",
       "sessions": "セッション",
-      "apiKeys": "APIキー"
+      "apiKeys": "APIキー",
+      "notifications": "通知"
     },
     "appearance": {
       "title": "外観",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "最終使用",
       "expiresAt": "有効期限",
       "neverExpires": "無期限"
+    },
+    "notifications": {
+      "title": "通知",
+      "description": "メンション、共有、リマインダー、完了した作業をこのブラウザに知らせる方法。",
+      "pushTitle": "ブラウザ通知",
+      "pushHint": "タブがバックグラウンドでも、この端末からシステム通知を表示します。",
+      "enabled": "この端末でブラウザ通知が有効になりました。",
+      "disabled": "この端末でブラウザ通知が無効になりました。",
+      "enableFailed": "ブラウザ通知を有効にできませんでした。",
+      "permissionDenied": "このサイトの通知はブラウザ設定でブロックされています。",
+      "unsupported": "このブラウザはプッシュ通知に対応していません。",
+      "workerMissing": "プッシュにはインストール済みアプリが必要です。本番アプリを再読み込みして再試行してください。",
+      "deviceNote": "通知は端末ごとです。セッションからサインアウトするとプッシュ登録も削除されます。"
     }
   },
   "models": {

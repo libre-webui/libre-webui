@@ -70,6 +70,8 @@ import calendarRoutes from './routes/calendar.js';
 import automationsRoutes from './routes/automations.js';
 import channelsRoutes from './routes/channels.js';
 import notificationsRoutes from './routes/notifications.js';
+import pushRoutes from './routes/push.js';
+import { registerPushSessionCleanup } from './services/webPushService.js';
 import promptsRoutes from './routes/prompts.js';
 import skillsRoutes from './routes/skills.js';
 import toolsRoutes from './routes/tools.js';
@@ -662,6 +664,7 @@ app.use('/api/calendar', documentsRateLimiter, calendarRoutes);
 app.use('/api/automations', documentsRateLimiter, automationsRoutes);
 app.use('/api/channels', channelsRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/push', pushRoutes);
 app.use('/api/prompts', documentsRateLimiter, promptsRoutes);
 app.use('/api/skills', documentsRateLimiter, skillsRoutes);
 app.use('/api/tools', documentsRateLimiter, toolsRoutes);
@@ -806,6 +809,8 @@ workEventService.initializeDurableGateway(durableEventGateway);
 // Fire due automations and settle their runs; the coordinator lease inside
 // the tick keeps this single-writer across replicas.
 automationSchedulerService.start();
+// Revoking an auth session also silences the push subscriptions it created.
+registerPushSessionCleanup();
 healthService.registerDependencyCheck({
   id: 'durable-jobs',
   required: true,

@@ -567,7 +567,8 @@
       "shortcuts": "Tastenkürzel",
       "about": "Über",
       "sessions": "Sitzungen",
-      "apiKeys": "API-Schlüssel"
+      "apiKeys": "API-Schlüssel",
+      "notifications": "Benachrichtigungen"
     },
     "appearance": {
       "title": "Darstellung",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Zuletzt verwendet",
       "expiresAt": "Läuft ab",
       "neverExpires": "Nie"
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "description": "Wie dieser Browser über Erwähnungen, Freigaben, Erinnerungen und fertige Aufgaben informiert wird.",
+      "pushTitle": "Browser-Benachrichtigungen",
+      "pushHint": "Systembenachrichtigungen von diesem Gerät anzeigen, auch wenn der Tab im Hintergrund ist.",
+      "enabled": "Browser-Benachrichtigungen sind auf diesem Gerät aktiviert.",
+      "disabled": "Browser-Benachrichtigungen sind auf diesem Gerät deaktiviert.",
+      "enableFailed": "Browser-Benachrichtigungen konnten nicht aktiviert werden.",
+      "permissionDenied": "Benachrichtigungen sind in den Browsereinstellungen für diese Seite blockiert.",
+      "unsupported": "Dieser Browser unterstützt keine Push-Benachrichtigungen.",
+      "workerMissing": "Push benötigt die installierte App. Lade die Produktions-App neu und versuche es erneut.",
+      "deviceNote": "Benachrichtigungen gelten pro Gerät. Das Abmelden der Sitzung entfernt auch ihre Push-Registrierung."
     }
   },
   "models": {

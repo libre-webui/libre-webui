@@ -567,7 +567,8 @@
       "shortcuts": "Sneltoetsen",
       "about": "Over",
       "sessions": "Sessies",
-      "apiKeys": "API-sleutels"
+      "apiKeys": "API-sleutels",
+      "notifications": "Meldingen"
     },
     "appearance": {
       "title": "Weergave",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Laatst gebruikt",
       "expiresAt": "Verloopt",
       "neverExpires": "Nooit"
+    },
+    "notifications": {
+      "title": "Meldingen",
+      "description": "Hoe deze browser wordt geïnformeerd over vermeldingen, gedeelde items, herinneringen en afgerond werk.",
+      "pushTitle": "Browsermeldingen",
+      "pushHint": "Toon systeemmeldingen van dit apparaat, ook als het tabblad op de achtergrond staat.",
+      "enabled": "Browsermeldingen staan aan op dit apparaat.",
+      "disabled": "Browsermeldingen staan uit op dit apparaat.",
+      "enableFailed": "Browsermeldingen konden niet worden ingeschakeld.",
+      "permissionDenied": "Meldingen zijn geblokkeerd in de browserinstellingen voor deze site.",
+      "unsupported": "Deze browser ondersteunt geen pushmeldingen.",
+      "workerMissing": "Push vereist de geïnstalleerde app. Herlaad de productie-app en probeer opnieuw.",
+      "deviceNote": "Meldingen gelden per apparaat. Het afmelden van de sessie verwijdert ook de pushregistratie."
     }
   },
   "models": {

@@ -37,6 +37,7 @@ import {
   ImageIcon,
   Keyboard,
   KeyRound,
+  BellRing,
   MonitorSmartphone,
   Search,
   BookText,
@@ -56,6 +57,7 @@ import { SettingsShortcutsTab } from '@/components/settings/SettingsShortcutsTab
 import { SettingsPluginsTab } from '@/components/settings/SettingsPluginsTab';
 import { SettingsSearchTab } from '@/components/settings/SettingsSearchTab';
 import { SettingsSessionsTab } from '@/components/settings/SettingsSessionsTab';
+import { SettingsNotificationsTab } from '@/components/settings/SettingsNotificationsTab';
 import { SettingsApiKeysTab } from '@/components/settings/SettingsApiKeysTab';
 import { useAuthStore } from '@/store/authStore';
 import { SettingsTtsTab } from '@/components/settings/SettingsTtsTab';
@@ -1682,6 +1684,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           icon: MonitorSmartphone,
         },
         {
+          id: 'notifications',
+          label: t('settings.tabs.notifications', 'Notifications'),
+          icon: BellRing,
+        },
+        {
           id: 'api-keys',
           label: t('settings.tabs.apiKeys', 'API keys'),
           icon: KeyRound,
@@ -1882,6 +1889,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       case 'sessions':
         return <SettingsSessionsTab />;
+      case 'notifications':
+        return <SettingsNotificationsTab />;
 
       case 'api-keys':
         return <SettingsApiKeysTab />;

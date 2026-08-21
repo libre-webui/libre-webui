@@ -1661,6 +1661,13 @@
             "never from client input",
             "Notification bodies, message"
           ]
+        },
+        {
+          "file": "docs/55-NOTIFICATIONS.md",
+          "patterns": [
+            "signing the session out",
+            "aes128gcm before it leaves the instance"
+          ]
         }
       ],
       "focusedTests": [
@@ -1680,6 +1687,24 @@
           "behaviorPatterns": [
             "x-libre-signature",
             "must never leave"
+          ]
+        },
+        {
+          "file": "scripts/test-web-push.mjs",
+          "runner": "test:package",
+          "name": "payload encryption reproduces the RFC 8291 test vector",
+          "behaviorPatterns": [
+            "encryptPushPayload",
+            "DGv6ra1nlYgDCS1FRnbzlw"
+          ]
+        },
+        {
+          "file": "scripts/test-web-push.mjs",
+          "runner": "test:package",
+          "name": "revoking an auth session removes its device subscriptions",
+          "behaviorPatterns": [
+            "registerPushSessionCleanup",
+            "session_id !== session.id"
           ]
         }
       ],
@@ -1737,6 +1762,30 @@
           "mount": "/api/notifications",
           "method": "DELETE",
           "path": "/webhooks/:targetId"
+        },
+        {
+          "file": "backend/src/routes/push.ts",
+          "mount": "/api/push",
+          "method": "GET",
+          "path": "/public-key"
+        },
+        {
+          "file": "backend/src/routes/push.ts",
+          "mount": "/api/push",
+          "method": "GET",
+          "path": "/subscriptions"
+        },
+        {
+          "file": "backend/src/routes/push.ts",
+          "mount": "/api/push",
+          "method": "POST",
+          "path": "/subscriptions"
+        },
+        {
+          "file": "backend/src/routes/push.ts",
+          "mount": "/api/push",
+          "method": "DELETE",
+          "path": "/subscriptions"
         }
       ],
       "contractSurfaces": {

@@ -567,7 +567,8 @@
       "shortcuts": "Pintasan",
       "about": "Perihal",
       "sessions": "Sesi",
-      "apiKeys": "Kunci API"
+      "apiKeys": "Kunci API",
+      "notifications": "Pemberitahuan"
     },
     "appearance": {
       "title": "Penampilan",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Terakhir digunakan",
       "expiresAt": "Luput",
       "neverExpires": "Tidak luput"
+    },
+    "notifications": {
+      "title": "Pemberitahuan",
+      "description": "Bagaimana pelayar ini dimaklumkan tentang sebutan, perkongsian, peringatan dan kerja yang selesai.",
+      "pushTitle": "Pemberitahuan pelayar",
+      "pushHint": "Tunjukkan pemberitahuan sistem daripada peranti ini walaupun tab berada di latar belakang.",
+      "enabled": "Pemberitahuan pelayar diaktifkan pada peranti ini.",
+      "disabled": "Pemberitahuan pelayar dimatikan pada peranti ini.",
+      "enableFailed": "Pemberitahuan pelayar tidak dapat diaktifkan.",
+      "permissionDenied": "Pemberitahuan disekat dalam tetapan pelayar untuk tapak ini.",
+      "unsupported": "Pelayar ini tidak menyokong pemberitahuan tolak.",
+      "workerMissing": "Tolakan memerlukan aplikasi yang dipasang. Muat semula aplikasi pengeluaran dan cuba lagi.",
+      "deviceNote": "Pemberitahuan adalah mengikut peranti. Log keluar sesi turut membuang pendaftaran tolaknya."
     }
   },
   "models": {

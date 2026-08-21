@@ -567,7 +567,8 @@
       "shortcuts": "Zkratky",
       "about": "O aplikaci",
       "sessions": "Relace",
-      "apiKeys": "API klíče"
+      "apiKeys": "API klíče",
+      "notifications": "Oznámení"
     },
     "appearance": {
       "title": "Vzhled",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Naposledy použit",
       "expiresAt": "Vyprší",
       "neverExpires": "Nikdy"
+    },
+    "notifications": {
+      "title": "Oznámení",
+      "description": "Jak se tento prohlížeč dozvídá o zmínkách, sdílení, připomenutích a dokončené práci.",
+      "pushTitle": "Oznámení prohlížeče",
+      "pushHint": "Zobrazovat systémová oznámení z tohoto zařízení, i když je karta na pozadí.",
+      "enabled": "Oznámení prohlížeče jsou na tomto zařízení zapnutá.",
+      "disabled": "Oznámení prohlížeče jsou na tomto zařízení vypnutá.",
+      "enableFailed": "Oznámení prohlížeče se nepodařilo zapnout.",
+      "permissionDenied": "Oznámení jsou pro tento web zablokována v nastavení prohlížeče.",
+      "unsupported": "Tento prohlížeč nepodporuje push oznámení.",
+      "workerMissing": "Push vyžaduje nainstalovanou aplikaci. Načtěte produkční aplikaci znovu a zkuste to znovu.",
+      "deviceNote": "Oznámení platí pro zařízení. Odhlášení relace odstraní i její push registraci."
     }
   },
   "models": {

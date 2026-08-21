@@ -567,7 +567,8 @@
       "shortcuts": "Kortkommandon",
       "about": "Om",
       "sessions": "Sessioner",
-      "apiKeys": "API-nycklar"
+      "apiKeys": "API-nycklar",
+      "notifications": "Aviseringar"
     },
     "appearance": {
       "title": "Utseende",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Senast använd",
       "expiresAt": "Upphör",
       "neverExpires": "Aldrig"
+    },
+    "notifications": {
+      "title": "Aviseringar",
+      "description": "Hur den här webbläsaren får veta om omnämnanden, delningar, påminnelser och färdigt arbete.",
+      "pushTitle": "Webbläsaraviseringar",
+      "pushHint": "Visa systemaviseringar från den här enheten även när fliken är i bakgrunden.",
+      "enabled": "Webbläsaraviseringar är på för den här enheten.",
+      "disabled": "Webbläsaraviseringar är av för den här enheten.",
+      "enableFailed": "Webbläsaraviseringarna kunde inte aktiveras.",
+      "permissionDenied": "Aviseringar är blockerade i webbläsarens inställningar för den här webbplatsen.",
+      "unsupported": "Den här webbläsaren stöder inte pushaviseringar.",
+      "workerMissing": "Push kräver den installerade appen. Ladda om produktionsappen och försök igen.",
+      "deviceNote": "Aviseringar gäller per enhet. Loggas sessionen ut tas även dess pushregistrering bort."
     }
   },
   "models": {

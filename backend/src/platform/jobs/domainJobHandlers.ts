@@ -36,6 +36,7 @@ import {
   CHANNEL_MENTION_JOB_TYPE,
   CHAT_GENERATE_JOB_TYPE,
   WEBHOOK_DELIVER_JOB_TYPE,
+  PUSH_DELIVER_JOB_TYPE,
   DOCUMENT_INGEST_IDEMPOTENCY_SCOPE,
   DOCUMENT_INGEST_JOB_TYPE,
   OWNER_DELETE_CONTENT_JOB_TYPE,
@@ -1345,6 +1346,65 @@ const deliverWebhook: DurableJobHandler = async context => {
   }
 };
 
+const readPushPayload = (
+  payload: unknown
+): { subscriptionId: string; message: Record<string, unknown> } => {
+  const record = payload as Record<string, unknown>;
+  if (
+    typeof record?.subscriptionId !== 'string' ||
+    !record.subscriptionId ||
+    typeof record.message !== 'object' ||
+    record.message === null
+  ) {
+    throw new DurableJobExecutionError(
+      false,
+      'invalid-payload',
+      'The push delivery payload is malformed'
+    );
+  }
+  return {
+    subscriptionId: record.subscriptionId,
+    message: record.message as Record<string, unknown>,
+  };
+};
+
+const deliverPush: DurableJobHandler = async context => {
+  const { subscriptionId, message } = readPushPayload(context.payload);
+  const webPush = await import('../../services/webPushService.js');
+  await context.assertSideEffectAllowed();
+  try {
+    const result = await webPush.deliverToSubscription(
+      subscriptionId,
+      message as unknown as import('../../services/webPushService.js').PushMessage,
+      context.signal
+    );
+    if (!result.delivered && result.status !== undefined) {
+      // 429/5xx are transient push-service states; 4xx verdicts are final.
+      if (result.status === 429 || result.status >= 500) {
+        throw new DurableJobExecutionError(
+          true,
+          'push-upstream-error',
+          `The push service responded ${result.status}`
+        );
+      }
+      return { resultReference: `push:${subscriptionId}:${result.status}` };
+    }
+    return { resultReference: `push:${subscriptionId}:delivered` };
+  } catch (error) {
+    if (error instanceof DurableJobExecutionError) throw error;
+    if (error instanceof webPush.PushSubscriptionGoneError) {
+      // The subscription row is already removed; nothing left to deliver.
+      return { resultReference: `push:${subscriptionId}:gone` };
+    }
+    if (context.signal.aborted) throw error;
+    throw new DurableJobExecutionError(
+      true,
+      'push-delivery-failed',
+      'The push notification could not be delivered'
+    );
+  }
+};
+
 const readEvalRunPayload = (payload: unknown): { runId: string } => {
   const record = payload as Record<string, unknown>;
   if (!record || typeof record.runId !== 'string') {
@@ -1510,5 +1570,6 @@ export const createDomainDurableJobHandlers = (): ReadonlyMap<
     [AUTOMATION_RUN_JOB_TYPE, runAutomation],
     [CHANNEL_MENTION_JOB_TYPE, runChannelMention],
     [WEBHOOK_DELIVER_JOB_TYPE, deliverWebhook],
+    [PUSH_DELIVER_JOB_TYPE, deliverPush],
     [EVAL_RUN_JOB_TYPE, runEvaluation],
   ]);

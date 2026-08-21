@@ -39,6 +39,8 @@ import { encryptionService } from './encryptionService.js';
 import { getDurableEventGateway } from '../platform/events/index.js';
 import {
   notificationEventStreamId,
+  PUSH_DELIVER_IDEMPOTENCY_SCOPE,
+  PUSH_DELIVER_JOB_TYPE,
   WEBHOOK_DELIVER_IDEMPOTENCY_SCOPE,
   WEBHOOK_DELIVER_JOB_TYPE,
 } from '../platform/jobs/domainJobContracts.js';
@@ -202,7 +204,41 @@ class NotificationService {
     await this.dispatchWebhooks(record).catch(error => {
       logger.warn('Webhook dispatch failed', { error });
     });
+    await this.dispatchPush(record).catch(error => {
+      logger.warn('Push dispatch failed', { error });
+    });
     return true;
+  }
+
+  /**
+   * Enqueues one durable Web Push delivery per registered browser device.
+   * Best effort like webhooks: the inbox row is already the source of truth.
+   */
+  private async dispatchPush(record: StoredNotificationRecord): Promise<void> {
+    const subscriptions = await repositories().pushSubscriptions.listByUser(
+      record.user_id
+    );
+    if (subscriptions.length === 0) return;
+    const message = {
+      title: decryptOptional(record.title) ?? '',
+      ...(record.body ? { body: decryptOptional(record.body) } : {}),
+      ...(record.href ? { href: record.href } : {}),
+      type: record.type,
+    };
+    const service = getDurableJobRuntime().service;
+    for (const subscription of subscriptions) {
+      await service.enqueue({
+        jobType: PUSH_DELIVER_JOB_TYPE,
+        actorUserId: record.user_id,
+        payload: {
+          mode: 'encrypted',
+          value: { subscriptionId: subscription.id, message },
+        },
+        idempotencyScope: PUSH_DELIVER_IDEMPOTENCY_SCOPE,
+        idempotencyKey: `${subscription.id}:${record.id}`,
+        maxAttempts: 3,
+      });
+    }
   }
 
   async list(

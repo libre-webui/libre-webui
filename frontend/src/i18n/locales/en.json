@@ -567,7 +567,8 @@
       "shortcuts": "Shortcuts",
       "about": "About",
       "sessions": "Sessions",
-      "apiKeys": "API keys"
+      "apiKeys": "API keys",
+      "notifications": "Notifications"
     },
     "appearance": {
       "title": "Appearance",
@@ -1102,6 +1103,19 @@
       "lastUsedAt": "Last used",
       "expiresAt": "Expires",
       "neverExpires": "Never"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "How this browser is told about mentions, shares, reminders, and finished work.",
+      "pushTitle": "Browser notifications",
+      "pushHint": "Show system notifications from this device even when the tab is in the background.",
+      "enabled": "Browser notifications are on for this device.",
+      "disabled": "Browser notifications are off for this device.",
+      "enableFailed": "Browser notifications could not be enabled.",
+      "permissionDenied": "Notifications are blocked in the browser settings for this site.",
+      "unsupported": "This browser does not support push notifications.",
+      "workerMissing": "Push needs the installed app. Reload the production app and try again.",
+      "deviceNote": "Notifications are per device. Signing the session out also removes its push registration."
     }
   },
   "models": {
