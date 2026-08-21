@@ -1918,6 +1918,34 @@
       "stateStarting": "Iniciando",
       "stateUnknown": "Desconocido",
       "noTasks": "Aún no hay tareas de Work."
+    },
+    "recovery": {
+      "title": "Simulacros de recuperación",
+      "scheduleOn": "Se ejecuta automáticamente cada {{hours}} h — cada simulacro respalda, restaura en una copia aislada y verifica el resultado.",
+      "scheduleOff": "Sin programar — define RECOVERY_DRILL_INTERVAL_HOURS para simulacros automáticos.",
+      "teamUnsupported": "Los simulacros cubren el perfil individual (SQLite); el perfil de equipo usa la CLI de respaldo coordinado.",
+      "runNow": "Ejecutar simulacro",
+      "running": "Ejecutando…",
+      "passed": "Simulacro de recuperación superado.",
+      "failed": "El simulacro de recuperación falló.",
+      "lastPassed": "Último superado",
+      "restoreTime": "Tiempo de restauración (RTO)",
+      "drillSpacing": "Intervalo entre simulacros (RPO)",
+      "archiveSize": "Tamaño del archivo",
+      "lastFailed": "Último simulacro falló el {{date}}",
+      "originManual": "Manual",
+      "originScheduled": "Programado",
+      "columns": {
+        "when": "Cuándo",
+        "origin": "Origen",
+        "status": "Estado",
+        "restore": "Restauración"
+      },
+      "status": {
+        "passed": "Superado",
+        "failed": "Fallido",
+        "running": "En curso"
+      }
     }
   },
   "chatHistory": {

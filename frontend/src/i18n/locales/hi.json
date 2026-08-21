@@ -1918,6 +1918,34 @@
       "stateStarting": "शुरू हो रहा है",
       "stateUnknown": "अज्ञात",
       "noTasks": "अभी कोई Work कार्य नहीं।"
+    },
+    "recovery": {
+      "title": "पुनर्प्राप्ति अभ्यास",
+      "scheduleOn": "हर {{hours}} घंटे में स्वतः चलता है — प्रत्येक अभ्यास बैकअप लेता है, अलग प्रति में पुनर्स्थापित करता है और परिणाम सत्यापित करता है।",
+      "scheduleOff": "अनुसूचित नहीं — स्वचालित अभ्यास के लिए RECOVERY_DRILL_INTERVAL_HOURS सेट करें।",
+      "teamUnsupported": "अभ्यास एकल (SQLite) प्रोफ़ाइल के लिए हैं; टीम प्रोफ़ाइल समन्वित बैकअप CLI उपयोग करती है।",
+      "runNow": "अभी अभ्यास चलाएँ",
+      "running": "चल रहा है…",
+      "passed": "पुनर्प्राप्ति अभ्यास सफल।",
+      "failed": "पुनर्प्राप्ति अभ्यास विफल रहा।",
+      "lastPassed": "अंतिम सफल",
+      "restoreTime": "पुनर्स्थापना समय (RTO)",
+      "drillSpacing": "अभ्यास अंतराल (RPO)",
+      "archiveSize": "संग्रह आकार",
+      "lastFailed": "अंतिम अभ्यास {{date}} को विफल रहा",
+      "originManual": "मैनुअल",
+      "originScheduled": "अनुसूचित",
+      "columns": {
+        "when": "कब",
+        "origin": "स्रोत",
+        "status": "स्थिति",
+        "restore": "पुनर्स्थापना"
+      },
+      "status": {
+        "passed": "सफल",
+        "failed": "विफल",
+        "running": "चल रहा है"
+      }
     }
   },
   "chatHistory": {

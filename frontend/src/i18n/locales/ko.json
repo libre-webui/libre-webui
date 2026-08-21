@@ -1918,6 +1918,34 @@
       "stateStarting": "시작 중",
       "stateUnknown": "알 수 없음",
       "noTasks": "아직 Work 작업이 없습니다."
+    },
+    "recovery": {
+      "title": "복구 훈련",
+      "scheduleOn": "{{hours}}시간마다 자동 실행 — 각 훈련은 백업하고 격리된 사본으로 복원한 뒤 결과를 검증합니다.",
+      "scheduleOff": "예약되지 않음 — RECOVERY_DRILL_INTERVAL_HOURS를 설정하면 자동으로 실행됩니다.",
+      "teamUnsupported": "훈련은 솔로(SQLite) 프로필에 적용됩니다. 팀 프로필은 조율된 백업 CLI를 사용합니다.",
+      "runNow": "지금 훈련 실행",
+      "running": "실행 중…",
+      "passed": "복구 훈련을 통과했습니다.",
+      "failed": "복구 훈련이 실패했습니다.",
+      "lastPassed": "마지막 통과",
+      "restoreTime": "복원 시간 (RTO)",
+      "drillSpacing": "훈련 간격 (RPO)",
+      "archiveSize": "아카이브 크기",
+      "lastFailed": "{{date}}의 마지막 훈련이 실패했습니다",
+      "originManual": "수동",
+      "originScheduled": "예약됨",
+      "columns": {
+        "when": "시각",
+        "origin": "출처",
+        "status": "상태",
+        "restore": "복원"
+      },
+      "status": {
+        "passed": "통과",
+        "failed": "실패",
+        "running": "실행 중"
+      }
     }
   },
   "chatHistory": {

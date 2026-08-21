@@ -1918,6 +1918,34 @@
       "stateStarting": "শুরু হচ্ছে",
       "stateUnknown": "অজানা",
       "noTasks": "এখনও কোনো Work টাস্ক নেই।"
+    },
+    "recovery": {
+      "title": "পুনরুদ্ধার মহড়া",
+      "scheduleOn": "প্রতি {{hours}} ঘণ্টায় স্বয়ংক্রিয়ভাবে চলে — প্রতিটি মহড়া ব্যাকআপ নেয়, বিচ্ছিন্ন কপিতে পুনরুদ্ধার করে এবং ফলাফল যাচাই করে।",
+      "scheduleOff": "সময়সূচি নেই — স্বয়ংক্রিয় মহড়ার জন্য RECOVERY_DRILL_INTERVAL_HOURS সেট করুন।",
+      "teamUnsupported": "মহড়া একক (SQLite) প্রোফাইলের জন্য; টিম প্রোফাইল সমন্বিত ব্যাকআপ CLI ব্যবহার করে।",
+      "runNow": "এখনই মহড়া চালান",
+      "running": "চলছে…",
+      "passed": "পুনরুদ্ধার মহড়া সফল।",
+      "failed": "পুনরুদ্ধার মহড়া ব্যর্থ হয়েছে।",
+      "lastPassed": "সর্বশেষ সফল",
+      "restoreTime": "পুনরুদ্ধারের সময় (RTO)",
+      "drillSpacing": "মহড়ার ব্যবধান (RPO)",
+      "archiveSize": "আর্কাইভের আকার",
+      "lastFailed": "সর্বশেষ মহড়া {{date}}-এ ব্যর্থ হয়েছে",
+      "originManual": "ম্যানুয়াল",
+      "originScheduled": "সময়সূচিত",
+      "columns": {
+        "when": "কখন",
+        "origin": "উৎস",
+        "status": "অবস্থা",
+        "restore": "পুনরুদ্ধার"
+      },
+      "status": {
+        "passed": "সফল",
+        "failed": "ব্যর্থ",
+        "running": "চলছে"
+      }
     }
   },
   "chatHistory": {

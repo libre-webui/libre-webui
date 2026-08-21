@@ -108,6 +108,12 @@ class AutomationSchedulerService {
       } catch (error) {
         logger.warn('Budget alert sweep failed', { error });
       }
+      try {
+        const { sweepDrills } = await import('./recoveryDrillService.js');
+        await sweepDrills(now);
+      } catch (error) {
+        logger.warn('Recovery drill sweep failed', { error });
+      }
       return { fired, settled };
     } finally {
       await lease.release().catch(() => false);

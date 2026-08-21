@@ -2665,6 +2665,17 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         });
         return;
       }
+      if (method === 'GET' && path === '/recovery/drills') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: { supported: true, intervalHours: null, drills: [] },
+          }),
+        });
+        return;
+      }
       if (method === 'GET' && path === '/push/public-key') {
         await route.fulfill({
           status: 200,

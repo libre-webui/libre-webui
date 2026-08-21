@@ -1918,6 +1918,34 @@
       "stateStarting": "Iniciando",
       "stateUnknown": "Desconhecido",
       "noTasks": "Ainda não há tarefas do Work."
+    },
+    "recovery": {
+      "title": "Simulações de recuperação",
+      "scheduleOn": "Executa automaticamente a cada {{hours}} h — cada simulação faz backup, restaura em uma cópia isolada e verifica o resultado.",
+      "scheduleOff": "Sem agendamento — defina RECOVERY_DRILL_INTERVAL_HOURS para simulações automáticas.",
+      "teamUnsupported": "As simulações cobrem o perfil solo (SQLite); o perfil de equipe usa a CLI de backup coordenado.",
+      "runNow": "Executar simulação",
+      "running": "Executando…",
+      "passed": "Simulação de recuperação aprovada.",
+      "failed": "A simulação de recuperação falhou.",
+      "lastPassed": "Última aprovada",
+      "restoreTime": "Tempo de restauração (RTO)",
+      "drillSpacing": "Intervalo entre simulações (RPO)",
+      "archiveSize": "Tamanho do arquivo",
+      "lastFailed": "Última simulação falhou em {{date}}",
+      "originManual": "Manual",
+      "originScheduled": "Agendada",
+      "columns": {
+        "when": "Quando",
+        "origin": "Origem",
+        "status": "Status",
+        "restore": "Restauração"
+      },
+      "status": {
+        "passed": "Aprovada",
+        "failed": "Falhou",
+        "running": "Em execução"
+      }
     }
   },
   "chatHistory": {

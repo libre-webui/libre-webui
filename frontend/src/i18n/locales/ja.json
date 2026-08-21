@@ -1918,6 +1918,34 @@
       "stateStarting": "起動中",
       "stateUnknown": "不明",
       "noTasks": "Work タスクはまだありません。"
+    },
+    "recovery": {
+      "title": "復旧訓練",
+      "scheduleOn": "{{hours}} 時間ごとに自動実行 — 各訓練はバックアップし、隔離されたコピーに復元して結果を検証します。",
+      "scheduleOff": "未スケジュール — RECOVERY_DRILL_INTERVAL_HOURS を設定すると自動実行されます。",
+      "teamUnsupported": "訓練はソロ（SQLite）プロファイル向けです。チームプロファイルは連携バックアップ CLI を使用します。",
+      "runNow": "今すぐ訓練を実行",
+      "running": "実行中…",
+      "passed": "復旧訓練に合格しました。",
+      "failed": "復旧訓練に失敗しました。",
+      "lastPassed": "最終合格",
+      "restoreTime": "復元時間 (RTO)",
+      "drillSpacing": "訓練間隔 (RPO)",
+      "archiveSize": "アーカイブサイズ",
+      "lastFailed": "{{date}} の訓練は失敗しました",
+      "originManual": "手動",
+      "originScheduled": "スケジュール",
+      "columns": {
+        "when": "日時",
+        "origin": "起点",
+        "status": "状態",
+        "restore": "復元"
+      },
+      "status": {
+        "passed": "合格",
+        "failed": "失敗",
+        "running": "実行中"
+      }
     }
   },
   "chatHistory": {

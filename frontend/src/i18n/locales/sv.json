@@ -1918,6 +1918,34 @@
       "stateStarting": "Startar",
       "stateUnknown": "Okänd",
       "noTasks": "Inga Work-uppgifter ännu."
+    },
+    "recovery": {
+      "title": "Återställningsövningar",
+      "scheduleOn": "Körs automatiskt var {{hours}} h — varje övning säkerhetskopierar, återställer i en isolerad kopia och verifierar resultatet.",
+      "scheduleOff": "Inte schemalagt — ange RECOVERY_DRILL_INTERVAL_HOURS för automatiska övningar.",
+      "teamUnsupported": "Övningar gäller soloprofilen (SQLite); teamprofilen använder den samordnade backup-CLI:n.",
+      "runNow": "Kör övning nu",
+      "running": "Kör…",
+      "passed": "Återställningsövningen lyckades.",
+      "failed": "Återställningsövningen misslyckades.",
+      "lastPassed": "Senast lyckad",
+      "restoreTime": "Återställningstid (RTO)",
+      "drillSpacing": "Övningsintervall (RPO)",
+      "archiveSize": "Arkivstorlek",
+      "lastFailed": "Senaste övningen misslyckades {{date}}",
+      "originManual": "Manuell",
+      "originScheduled": "Schemalagd",
+      "columns": {
+        "when": "När",
+        "origin": "Ursprung",
+        "status": "Status",
+        "restore": "Återställning"
+      },
+      "status": {
+        "passed": "Lyckad",
+        "failed": "Misslyckad",
+        "running": "Kör"
+      }
     }
   },
   "chatHistory": {

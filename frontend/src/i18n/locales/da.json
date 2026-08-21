@@ -1918,6 +1918,34 @@
       "stateStarting": "Starter",
       "stateUnknown": "Ukendt",
       "noTasks": "Ingen Work-opgaver endnu."
+    },
+    "recovery": {
+      "title": "Genoprettelsesøvelser",
+      "scheduleOn": "Kører automatisk hver {{hours}} t — hver øvelse sikkerhedskopierer, gendanner i en isoleret kopi og verificerer resultatet.",
+      "scheduleOff": "Ikke planlagt — sæt RECOVERY_DRILL_INTERVAL_HOURS for automatiske øvelser.",
+      "teamUnsupported": "Øvelser dækker solo-profilen (SQLite); teamprofilen bruger den koordinerede backup-CLI.",
+      "runNow": "Kør øvelse nu",
+      "running": "Kører…",
+      "passed": "Genoprettelsesøvelse bestået.",
+      "failed": "Genoprettelsesøvelsen mislykkedes.",
+      "lastPassed": "Senest bestået",
+      "restoreTime": "Gendannelsestid (RTO)",
+      "drillSpacing": "Øvelsesinterval (RPO)",
+      "archiveSize": "Arkivstørrelse",
+      "lastFailed": "Seneste øvelse mislykkedes {{date}}",
+      "originManual": "Manuel",
+      "originScheduled": "Planlagt",
+      "columns": {
+        "when": "Hvornår",
+        "origin": "Oprindelse",
+        "status": "Status",
+        "restore": "Gendannelse"
+      },
+      "status": {
+        "passed": "Bestået",
+        "failed": "Mislykkedes",
+        "running": "Kører"
+      }
     }
   },
   "chatHistory": {

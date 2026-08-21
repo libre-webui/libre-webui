@@ -1918,6 +1918,34 @@
       "stateStarting": "启动中",
       "stateUnknown": "未知",
       "noTasks": "暂无 Work 任务。"
+    },
+    "recovery": {
+      "title": "恢复演练",
+      "scheduleOn": "每 {{hours}} 小时自动运行 — 每次演练都会备份、还原到隔离副本并验证结果。",
+      "scheduleOff": "未排定 — 设置 RECOVERY_DRILL_INTERVAL_HOURS 以自动运行演练。",
+      "teamUnsupported": "演练适用于单机（SQLite）配置；团队配置使用协调备份 CLI。",
+      "runNow": "立即运行演练",
+      "running": "运行中…",
+      "passed": "恢复演练通过。",
+      "failed": "恢复演练失败。",
+      "lastPassed": "上次通过",
+      "restoreTime": "还原时间 (RTO)",
+      "drillSpacing": "演练间隔 (RPO)",
+      "archiveSize": "归档大小",
+      "lastFailed": "最近一次演练于 {{date}} 失败",
+      "originManual": "手动",
+      "originScheduled": "计划",
+      "columns": {
+        "when": "时间",
+        "origin": "来源",
+        "status": "状态",
+        "restore": "还原"
+      },
+      "status": {
+        "passed": "通过",
+        "failed": "失败",
+        "running": "运行中"
+      }
     }
   },
   "chatHistory": {

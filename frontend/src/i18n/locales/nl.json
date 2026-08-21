@@ -1918,6 +1918,34 @@
       "stateStarting": "Wordt gestart",
       "stateUnknown": "Onbekend",
       "noTasks": "Nog geen Work-taken."
+    },
+    "recovery": {
+      "title": "Hersteloefeningen",
+      "scheduleOn": "Draait automatisch elke {{hours}} u — elke oefening maakt een back-up, herstelt in een geïsoleerde kopie en verifieert het resultaat.",
+      "scheduleOff": "Niet gepland — stel RECOVERY_DRILL_INTERVAL_HOURS in voor automatische oefeningen.",
+      "teamUnsupported": "Oefeningen gelden voor het solo-profiel (SQLite); het teamprofiel gebruikt de gecoördineerde back-up-CLI.",
+      "runNow": "Oefening nu uitvoeren",
+      "running": "Bezig…",
+      "passed": "Hersteloefening geslaagd.",
+      "failed": "De hersteloefening is mislukt.",
+      "lastPassed": "Laatst geslaagd",
+      "restoreTime": "Hersteltijd (RTO)",
+      "drillSpacing": "Oefeningsinterval (RPO)",
+      "archiveSize": "Archiefgrootte",
+      "lastFailed": "Laatste oefening mislukt op {{date}}",
+      "originManual": "Handmatig",
+      "originScheduled": "Gepland",
+      "columns": {
+        "when": "Wanneer",
+        "origin": "Oorsprong",
+        "status": "Status",
+        "restore": "Herstel"
+      },
+      "status": {
+        "passed": "Geslaagd",
+        "failed": "Mislukt",
+        "running": "Bezig"
+      }
     }
   },
   "chatHistory": {

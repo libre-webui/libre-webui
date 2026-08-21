@@ -1918,6 +1918,34 @@
       "stateStarting": "กำลังเริ่ม",
       "stateUnknown": "ไม่ทราบ",
       "noTasks": "ยังไม่มีงาน Work"
+    },
+    "recovery": {
+      "title": "การซ้อมกู้คืน",
+      "scheduleOn": "ทำงานอัตโนมัติทุก {{hours}} ชม. — การซ้อมแต่ละครั้งจะสำรองข้อมูล กู้คืนไปยังสำเนาแยก และตรวจสอบผลลัพธ์",
+      "scheduleOff": "ยังไม่ได้ตั้งเวลา — ตั้งค่า RECOVERY_DRILL_INTERVAL_HOURS เพื่อซ้อมอัตโนมัติ",
+      "teamUnsupported": "การซ้อมครอบคลุมโปรไฟล์เดี่ยว (SQLite) โปรไฟล์ทีมใช้ CLI สำรองข้อมูลแบบประสานงาน",
+      "runNow": "เริ่มซ้อมตอนนี้",
+      "running": "กำลังทำงาน…",
+      "passed": "การซ้อมกู้คืนผ่าน",
+      "failed": "การซ้อมกู้คืนล้มเหลว",
+      "lastPassed": "ผ่านล่าสุด",
+      "restoreTime": "เวลากู้คืน (RTO)",
+      "drillSpacing": "ระยะห่างการซ้อม (RPO)",
+      "archiveSize": "ขนาดไฟล์เก็บถาวร",
+      "lastFailed": "การซ้อมล่าสุดล้มเหลวเมื่อ {{date}}",
+      "originManual": "ด้วยตนเอง",
+      "originScheduled": "ตามกำหนด",
+      "columns": {
+        "when": "เมื่อใด",
+        "origin": "ที่มา",
+        "status": "สถานะ",
+        "restore": "การกู้คืน"
+      },
+      "status": {
+        "passed": "ผ่าน",
+        "failed": "ล้มเหลว",
+        "running": "กำลังทำงาน"
+      }
     }
   },
   "chatHistory": {

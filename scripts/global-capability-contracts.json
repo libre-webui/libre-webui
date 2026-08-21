@@ -4986,6 +4986,13 @@
             "## Signed and encrypted backup commands",
             "backup restore-apply"
           ]
+        },
+        {
+          "file": "docs/44-RECOVERY_READINESS.md",
+          "patterns": [
+            "restore duration is the",
+            "Drills are verification, not backups"
+          ]
         }
       ],
       "focusedTests": [
@@ -5006,9 +5013,40 @@
             "restoreTeamBackupArchive",
             "restoredEvents\\.length, 2"
           ]
+        },
+        {
+          "file": "scripts/test-recovery-drills.mjs",
+          "runner": "test:package",
+          "name": "a manual drill backs up, restores in isolation, verifies, and measures",
+          "behaviorPatterns": [
+            "restore duration is the demonstrated RTO",
+            "no drill archive may be retained"
+          ]
+        },
+        {
+          "file": "scripts/test-recovery-drills.mjs",
+          "runner": "test:package",
+          "name": "an unattended drill failure alerts every administrator once",
+          "behaviorPatterns": [
+            "Recovery drill failed",
+            "regular members are not alerted"
+          ]
         }
       ],
-      "backendRoutes": [],
+      "backendRoutes": [
+        {
+          "file": "backend/src/routes/recovery.ts",
+          "mount": "/api/recovery",
+          "method": "GET",
+          "path": "/drills"
+        },
+        {
+          "file": "backend/src/routes/recovery.ts",
+          "mount": "/api/recovery",
+          "method": "POST",
+          "path": "/drills/run"
+        }
+      ],
       "contractSurfaces": {
         "schemas": {
           "evidence": [

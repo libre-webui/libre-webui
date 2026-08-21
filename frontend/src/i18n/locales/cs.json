@@ -1918,6 +1918,34 @@
       "stateStarting": "Spouští se",
       "stateUnknown": "Neznámý",
       "noTasks": "Zatím žádné úlohy Work."
+    },
+    "recovery": {
+      "title": "Cvičení obnovy",
+      "scheduleOn": "Spouští se automaticky každých {{hours}} h — každé cvičení zálohuje, obnoví do izolované kopie a ověří výsledek.",
+      "scheduleOff": "Nenaplánováno — nastavte RECOVERY_DRILL_INTERVAL_HOURS pro automatická cvičení.",
+      "teamUnsupported": "Cvičení pokrývají sólo profil (SQLite); týmový profil používá koordinované zálohovací CLI.",
+      "runNow": "Spustit cvičení",
+      "running": "Probíhá…",
+      "passed": "Cvičení obnovy uspělo.",
+      "failed": "Cvičení obnovy selhalo.",
+      "lastPassed": "Naposledy úspěšné",
+      "restoreTime": "Doba obnovy (RTO)",
+      "drillSpacing": "Rozestup cvičení (RPO)",
+      "archiveSize": "Velikost archivu",
+      "lastFailed": "Poslední cvičení selhalo {{date}}",
+      "originManual": "Ruční",
+      "originScheduled": "Plánované",
+      "columns": {
+        "when": "Kdy",
+        "origin": "Původ",
+        "status": "Stav",
+        "restore": "Obnova"
+      },
+      "status": {
+        "passed": "Úspěch",
+        "failed": "Selhání",
+        "running": "Probíhá"
+      }
     }
   },
   "chatHistory": {

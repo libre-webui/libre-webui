@@ -1918,6 +1918,34 @@
       "stateStarting": "Uruchamianie",
       "stateUnknown": "Nieznany",
       "noTasks": "Brak zadań Work."
+    },
+    "recovery": {
+      "title": "Ćwiczenia odzyskiwania",
+      "scheduleOn": "Uruchamia się automatycznie co {{hours}} h — każde ćwiczenie tworzy kopię, przywraca ją w izolowanym środowisku i weryfikuje wynik.",
+      "scheduleOff": "Brak harmonogramu — ustaw RECOVERY_DRILL_INTERVAL_HOURS, aby uruchamiać automatycznie.",
+      "teamUnsupported": "Ćwiczenia obejmują profil solo (SQLite); profil zespołowy używa skoordynowanego CLI kopii zapasowych.",
+      "runNow": "Uruchom ćwiczenie",
+      "running": "Trwa…",
+      "passed": "Ćwiczenie odzyskiwania zaliczone.",
+      "failed": "Ćwiczenie odzyskiwania nie powiodło się.",
+      "lastPassed": "Ostatnio zaliczone",
+      "restoreTime": "Czas przywracania (RTO)",
+      "drillSpacing": "Odstęp ćwiczeń (RPO)",
+      "archiveSize": "Rozmiar archiwum",
+      "lastFailed": "Ostatnie ćwiczenie nie powiodło się {{date}}",
+      "originManual": "Ręczne",
+      "originScheduled": "Zaplanowane",
+      "columns": {
+        "when": "Kiedy",
+        "origin": "Źródło",
+        "status": "Stan",
+        "restore": "Przywracanie"
+      },
+      "status": {
+        "passed": "Zaliczone",
+        "failed": "Niepowodzenie",
+        "running": "Trwa"
+      }
     }
   },
   "chatHistory": {

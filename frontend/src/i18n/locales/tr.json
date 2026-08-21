@@ -1918,6 +1918,34 @@
       "stateStarting": "Başlatılıyor",
       "stateUnknown": "Bilinmiyor",
       "noTasks": "Henüz Work görevi yok."
+    },
+    "recovery": {
+      "title": "Kurtarma tatbikatları",
+      "scheduleOn": "Her {{hours}} saatte bir otomatik çalışır — her tatbikat yedekler, yalıtılmış bir kopyaya geri yükler ve sonucu doğrular.",
+      "scheduleOff": "Zamanlanmadı — otomatik tatbikatlar için RECOVERY_DRILL_INTERVAL_HOURS ayarla.",
+      "teamUnsupported": "Tatbikatlar tekli (SQLite) profili kapsar; ekip profili koordineli yedekleme CLI'sini kullanır.",
+      "runNow": "Tatbikatı şimdi çalıştır",
+      "running": "Çalışıyor…",
+      "passed": "Kurtarma tatbikatı başarılı.",
+      "failed": "Kurtarma tatbikatı başarısız oldu.",
+      "lastPassed": "Son başarılı",
+      "restoreTime": "Geri yükleme süresi (RTO)",
+      "drillSpacing": "Tatbikat aralığı (RPO)",
+      "archiveSize": "Arşiv boyutu",
+      "lastFailed": "Son tatbikat {{date}} tarihinde başarısız oldu",
+      "originManual": "Elle",
+      "originScheduled": "Zamanlanmış",
+      "columns": {
+        "when": "Ne zaman",
+        "origin": "Kaynak",
+        "status": "Durum",
+        "restore": "Geri yükleme"
+      },
+      "status": {
+        "passed": "Başarılı",
+        "failed": "Başarısız",
+        "running": "Çalışıyor"
+      }
     }
   },
   "chatHistory": {

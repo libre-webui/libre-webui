@@ -1918,6 +1918,34 @@
       "stateStarting": "قيد البدء",
       "stateUnknown": "غير معروف",
       "noTasks": "لا توجد مهام Work بعد."
+    },
+    "recovery": {
+      "title": "تدريبات الاستعادة",
+      "scheduleOn": "يعمل تلقائيًا كل {{hours}} ساعة — كل تدريب ينسخ احتياطيًا ويستعيد في نسخة معزولة ويتحقق من النتيجة.",
+      "scheduleOff": "غير مجدول — عيّن RECOVERY_DRILL_INTERVAL_HOURS لتشغيل التدريبات تلقائيًا.",
+      "teamUnsupported": "تغطي التدريبات الملف الفردي (SQLite)؛ يستخدم ملف الفريق أداة النسخ الاحتياطي المنسقة.",
+      "runNow": "تشغيل التدريب الآن",
+      "running": "قيد التشغيل…",
+      "passed": "نجح تدريب الاستعادة.",
+      "failed": "فشل تدريب الاستعادة.",
+      "lastPassed": "آخر نجاح",
+      "restoreTime": "زمن الاستعادة (RTO)",
+      "drillSpacing": "الفاصل بين التدريبات (RPO)",
+      "archiveSize": "حجم الأرشيف",
+      "lastFailed": "فشل آخر تدريب في {{date}}",
+      "originManual": "يدوي",
+      "originScheduled": "مجدول",
+      "columns": {
+        "when": "متى",
+        "origin": "المصدر",
+        "status": "الحالة",
+        "restore": "الاستعادة"
+      },
+      "status": {
+        "passed": "نجح",
+        "failed": "فشل",
+        "running": "قيد التشغيل"
+      }
     }
   },
   "chatHistory": {

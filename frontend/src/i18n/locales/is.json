@@ -1918,6 +1918,34 @@
       "stateStarting": "Ræsist",
       "stateUnknown": "Óþekkt",
       "noTasks": "Engin Work-verkefni ennþá."
+    },
+    "recovery": {
+      "title": "Endurheimtaræfingar",
+      "scheduleOn": "Keyrir sjálfkrafa á {{hours}} klst. fresti — hver æfing tekur afrit, endurheimtir í einangrað eintak og staðfestir niðurstöðuna.",
+      "scheduleOff": "Ekki á áætlun — stilltu RECOVERY_DRILL_INTERVAL_HOURS fyrir sjálfvirkar æfingar.",
+      "teamUnsupported": "Æfingar ná til einstaklingssniðs (SQLite); hópsniðið notar samhæfða afritunar-CLI.",
+      "runNow": "Keyra æfingu núna",
+      "running": "Í gangi…",
+      "passed": "Endurheimtaræfing tókst.",
+      "failed": "Endurheimtaræfingin mistókst.",
+      "lastPassed": "Síðast tókst",
+      "restoreTime": "Endurheimtutími (RTO)",
+      "drillSpacing": "Æfingabil (RPO)",
+      "archiveSize": "Stærð safns",
+      "lastFailed": "Síðasta æfing mistókst {{date}}",
+      "originManual": "Handvirk",
+      "originScheduled": "Áætluð",
+      "columns": {
+        "when": "Hvenær",
+        "origin": "Uppruni",
+        "status": "Staða",
+        "restore": "Endurheimt"
+      },
+      "status": {
+        "passed": "Tókst",
+        "failed": "Mistókst",
+        "running": "Í gangi"
+      }
     }
   },
   "chatHistory": {

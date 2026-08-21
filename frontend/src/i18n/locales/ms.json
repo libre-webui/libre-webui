@@ -1918,6 +1918,34 @@
       "stateStarting": "Bermula",
       "stateUnknown": "Tidak diketahui",
       "noTasks": "Tiada tugas Work lagi."
+    },
+    "recovery": {
+      "title": "Latihan pemulihan",
+      "scheduleOn": "Berjalan secara automatik setiap {{hours}} jam — setiap latihan menyandarkan, memulihkan ke salinan terpencil dan mengesahkan hasilnya.",
+      "scheduleOff": "Tidak dijadualkan — tetapkan RECOVERY_DRILL_INTERVAL_HOURS untuk latihan automatik.",
+      "teamUnsupported": "Latihan meliputi profil solo (SQLite); profil pasukan menggunakan CLI sandaran terselaras.",
+      "runNow": "Jalankan latihan sekarang",
+      "running": "Sedang berjalan…",
+      "passed": "Latihan pemulihan berjaya.",
+      "failed": "Latihan pemulihan gagal.",
+      "lastPassed": "Terakhir berjaya",
+      "restoreTime": "Masa pemulihan (RTO)",
+      "drillSpacing": "Selang latihan (RPO)",
+      "archiveSize": "Saiz arkib",
+      "lastFailed": "Latihan terakhir gagal pada {{date}}",
+      "originManual": "Manual",
+      "originScheduled": "Berjadual",
+      "columns": {
+        "when": "Bila",
+        "origin": "Asal",
+        "status": "Status",
+        "restore": "Pemulihan"
+      },
+      "status": {
+        "passed": "Berjaya",
+        "failed": "Gagal",
+        "running": "Berjalan"
+      }
     }
   },
   "chatHistory": {

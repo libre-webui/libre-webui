@@ -1918,6 +1918,34 @@
       "stateStarting": "Démarrage",
       "stateUnknown": "Inconnu",
       "noTasks": "Aucune tâche Work pour l'instant."
+    },
+    "recovery": {
+      "title": "Exercices de restauration",
+      "scheduleOn": "S'exécute automatiquement toutes les {{hours}} h — chaque exercice sauvegarde, restaure dans une copie isolée et vérifie le résultat.",
+      "scheduleOff": "Non planifié — définissez RECOVERY_DRILL_INTERVAL_HOURS pour des exercices automatiques.",
+      "teamUnsupported": "Les exercices couvrent le profil solo (SQLite) ; le profil équipe utilise la CLI de sauvegarde coordonnée.",
+      "runNow": "Lancer un exercice",
+      "running": "En cours…",
+      "passed": "Exercice de restauration réussi.",
+      "failed": "L'exercice de restauration a échoué.",
+      "lastPassed": "Dernière réussite",
+      "restoreTime": "Temps de restauration (RTO)",
+      "drillSpacing": "Espacement des exercices (RPO)",
+      "archiveSize": "Taille de l'archive",
+      "lastFailed": "Dernier exercice échoué le {{date}}",
+      "originManual": "Manuel",
+      "originScheduled": "Planifié",
+      "columns": {
+        "when": "Quand",
+        "origin": "Origine",
+        "status": "Statut",
+        "restore": "Restauration"
+      },
+      "status": {
+        "passed": "Réussi",
+        "failed": "Échoué",
+        "running": "En cours"
+      }
     }
   },
   "chatHistory": {

@@ -1918,6 +1918,34 @@
       "stateStarting": "Đang khởi động",
       "stateUnknown": "Không rõ",
       "noTasks": "Chưa có tác vụ Work nào."
+    },
+    "recovery": {
+      "title": "Diễn tập khôi phục",
+      "scheduleOn": "Tự động chạy mỗi {{hours}} giờ — mỗi lần diễn tập sao lưu, khôi phục vào bản sao cách ly và xác minh kết quả.",
+      "scheduleOff": "Chưa lên lịch — đặt RECOVERY_DRILL_INTERVAL_HOURS để diễn tập tự động.",
+      "teamUnsupported": "Diễn tập áp dụng cho hồ sơ đơn (SQLite); hồ sơ nhóm dùng CLI sao lưu phối hợp.",
+      "runNow": "Chạy diễn tập ngay",
+      "running": "Đang chạy…",
+      "passed": "Diễn tập khôi phục thành công.",
+      "failed": "Diễn tập khôi phục thất bại.",
+      "lastPassed": "Lần thành công gần nhất",
+      "restoreTime": "Thời gian khôi phục (RTO)",
+      "drillSpacing": "Khoảng cách diễn tập (RPO)",
+      "archiveSize": "Kích thước lưu trữ",
+      "lastFailed": "Diễn tập gần nhất thất bại vào {{date}}",
+      "originManual": "Thủ công",
+      "originScheduled": "Theo lịch",
+      "columns": {
+        "when": "Thời điểm",
+        "origin": "Nguồn",
+        "status": "Trạng thái",
+        "restore": "Khôi phục"
+      },
+      "status": {
+        "passed": "Thành công",
+        "failed": "Thất bại",
+        "running": "Đang chạy"
+      }
     }
   },
   "chatHistory": {

@@ -285,3 +285,37 @@ targets as dirty and do not retry immediately. Inspect and clean the target
 PostgreSQL database, then enumerate and remove every object version and delete
 marker under the exact target S3 prefix. Run `restore-team-preflight` again;
 apply is safe to retry only after that clean-target preflight succeeds.
+
+## Scheduled verified recovery drills
+
+Backups that were never restored are hope, not recovery. A drill proves the
+instance is actually recoverable by exercising the exact pipeline above,
+end to end, without any downtime and without an operator:
+
+1. A quiescent snapshot of the data directory is staged — the SQLite
+   database through the online backup API, blobs and files by physical
+   copy. The drill waits for a quiet moment: it refuses to run while any
+   durable job is mid-flight, the same rule `recovery-check` enforces.
+2. The staged copy becomes a signed, AES-256-GCM-encrypted archive with
+   ephemeral drill keys, running the complete recovery inventory.
+3. The archive is verified, restored into an isolated temporary target,
+   and the restored environment is verified again.
+4. The drill records what it measured — restore duration is the
+   demonstrated RTO, and the spacing between successful drills bounds the
+   achievable RPO of the current schedule — then deletes every artifact.
+   Drills are verification, not backups: no archive or key is retained.
+
+Enable the schedule with `RECOVERY_DRILL_INTERVAL_HOURS` (for example `24`);
+drills then run on the shared scheduler under a coordinator lease, so
+replicas and overlapping ticks cannot double-run. The System page shows the
+drill history with a "Run drill now" button for administrators, backed by
+`GET /api/recovery/drills` and `POST /api/recovery/drills/run`. A drill
+that fails unattended alerts every administrator through the notification
+inbox (and any subscribed webhook targets); manual runs report their
+refusal directly instead. `RECOVERY_DRILL_HISTORY` bounds the retained
+history (default 60 entries).
+
+Drills cover the solo (SQLite) profile, where the filesystem archive is the
+authoritative backup path. The team profile keeps its coordinated
+`backup create-team` flow, whose restore rehearsal remains an operator
+runbook step for now.

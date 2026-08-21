@@ -43,6 +43,8 @@ test-only canaries are intentionally omitted.
 | `OPEN_BROWSER`               | `true` when serving the frontend                         | Set `false` to suppress automatic browser launch                                              |
 | `FULL_DOCUMENT_CONTEXT_MAX_TOKENS` | `32000`                                            | Token guard for the per-chat full-document context mode (1000-2000000)                        |
 | `GALLERY_RETENTION_DAYS`     | unset (keep forever)                                     | Delete gallery media older than this many days via the scheduler sweep                        |
+| `RECOVERY_DRILL_INTERVAL_HOURS` | unset (drills off)             | Run a verified recovery drill automatically every N hours (solo profile) |
+| `RECOVERY_DRILL_HISTORY`      | `60`                              | Retained recovery-drill history entries                  |
 
 Source launches anchor relative `DATA_DIR`, `PLUGINS_DIR`, and
 `PLATFORM_PREFLIGHT_TMP_DIR` values at the backend directory, independent of

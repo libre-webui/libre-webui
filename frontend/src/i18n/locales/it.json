@@ -1918,6 +1918,34 @@
       "stateStarting": "In avvio",
       "stateUnknown": "Sconosciuto",
       "noTasks": "Nessuna attività Work per ora."
+    },
+    "recovery": {
+      "title": "Esercitazioni di ripristino",
+      "scheduleOn": "Esegue automaticamente ogni {{hours}} h — ogni esercitazione salva, ripristina in una copia isolata e verifica il risultato.",
+      "scheduleOff": "Non pianificato — imposta RECOVERY_DRILL_INTERVAL_HOURS per esercitazioni automatiche.",
+      "teamUnsupported": "Le esercitazioni coprono il profilo singolo (SQLite); il profilo team usa la CLI di backup coordinato.",
+      "runNow": "Esegui esercitazione",
+      "running": "In corso…",
+      "passed": "Esercitazione di ripristino superata.",
+      "failed": "L'esercitazione di ripristino non è riuscita.",
+      "lastPassed": "Ultima superata",
+      "restoreTime": "Tempo di ripristino (RTO)",
+      "drillSpacing": "Intervallo esercitazioni (RPO)",
+      "archiveSize": "Dimensione archivio",
+      "lastFailed": "Ultima esercitazione fallita il {{date}}",
+      "originManual": "Manuale",
+      "originScheduled": "Pianificata",
+      "columns": {
+        "when": "Quando",
+        "origin": "Origine",
+        "status": "Stato",
+        "restore": "Ripristino"
+      },
+      "status": {
+        "passed": "Superata",
+        "failed": "Fallita",
+        "running": "In corso"
+      }
     }
   },
   "chatHistory": {

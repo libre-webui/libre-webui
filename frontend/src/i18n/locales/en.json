@@ -1918,6 +1918,34 @@
       "stateStarting": "Starting",
       "stateUnknown": "Unknown",
       "noTasks": "No Work tasks yet."
+    },
+    "recovery": {
+      "title": "Recovery drills",
+      "scheduleOn": "Runs automatically every {{hours}} h — each drill backs up, restores into an isolated copy, and verifies the result.",
+      "scheduleOff": "Not scheduled — set RECOVERY_DRILL_INTERVAL_HOURS to run drills automatically.",
+      "teamUnsupported": "Drills cover the solo (SQLite) profile; the team profile uses the coordinated backup CLI.",
+      "runNow": "Run drill now",
+      "running": "Running…",
+      "passed": "Recovery drill passed.",
+      "failed": "The recovery drill failed.",
+      "lastPassed": "Last passed",
+      "restoreTime": "Restore time (RTO)",
+      "drillSpacing": "Drill spacing (RPO)",
+      "archiveSize": "Archive size",
+      "lastFailed": "Last drill failed on {{date}}",
+      "originManual": "Manual",
+      "originScheduled": "Scheduled",
+      "columns": {
+        "when": "When",
+        "origin": "Origin",
+        "status": "Status",
+        "restore": "Restore"
+      },
+      "status": {
+        "passed": "Passed",
+        "failed": "Failed",
+        "running": "Running"
+      }
     }
   },
   "chatHistory": {

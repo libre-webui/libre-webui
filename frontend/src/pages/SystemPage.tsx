@@ -37,6 +37,7 @@ import { Button, PageHeader, PageShell } from '@/components/ui';
 import { cn } from '@/utils';
 import { systemApi, type SystemDiagnostics } from '@/utils/api';
 import { workApi } from '@/utils/api/workApi';
+import { RecoveryDrillsPanel } from '@/components/RecoveryDrillsPanel';
 
 const bytesFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 1,
@@ -468,6 +469,7 @@ const SystemPage: React.FC = () => {
           <StoragePanel diagnostics={diagnostics} />
           <DockerPanel diagnostics={diagnostics} />
           <WorkPanel />
+          <RecoveryDrillsPanel />
           <NetworkPanel diagnostics={diagnostics} />
 
           <div className='flex items-start gap-2 px-1 text-xs leading-5 text-gray-500 dark:text-dark-500'>
