@@ -22,6 +22,7 @@ import { MonitorSmartphone } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { authApi } from '@/utils/api';
 import type { AuthSession } from '@/utils/api';
+import { SettingsMfaSection } from './SettingsMfaSection';
 
 const formatDate = (value: string | null): string =>
   value ? new Date(value).toLocaleString() : '—';
@@ -118,7 +119,8 @@ export const SettingsSessionsTab: React.FC = () => {
   );
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-8'>
+      <SettingsMfaSection />
       <div>
         <h3 className='flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100'>
           <MonitorSmartphone className='h-5 w-5 text-primary-500' />

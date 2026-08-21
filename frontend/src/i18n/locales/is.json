@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Einföld innskráning"
+    },
+    "mfa": {
+      "sectionTitle": "Tveggja þátta auðkenning",
+      "sectionDescription": "Verndaðu aðganginn þinn með auðkenningarforriti og aðgangslyklum.",
+      "totpTitle": "Auðkenningarforrit",
+      "totpEnabledHint": "Virkt. Ónotaðir endurheimtukóðar: {{count}}",
+      "totpDisabledHint": "Bættu öðru skrefi við innskráningu með lykilorði með einnota kóða.",
+      "enableButton": "Virkja",
+      "disableButton": "Slökkva",
+      "activateButton": "Staðfesta",
+      "regenerateCodes": "Nýir endurheimtukóðar",
+      "confirmWithCode": "Staðfestu með kóða úr forritinu þínu eða endurheimtukóða",
+      "enabled": "Tveggja þátta auðkenning er virk.",
+      "disabled": "Tveggja þátta auðkenning er óvirk.",
+      "invalidCode": "Þessi kóði er ekki gildur.",
+      "enrollFailed": "Ekki tókst að hefja uppsetningu.",
+      "challengeExpired": "Innskráningarbeiðnin rann út. Skráðu þig inn aftur.",
+      "setupTitle": "Setja upp tveggja þátta auðkenningu",
+      "setupSubtitle": "Þessi uppsetning krefst annars innskráningarskrefs. Bættu leyndarmálinu við auðkenningarforritið þitt til að halda áfram.",
+      "verifyTitle": "Sláðu inn kóðann",
+      "verifyHint": "Sláðu inn 6 stafa kóðann úr auðkenningarforritinu þínu eða endurheimtukóða.",
+      "secretHint": "Bættu þessu leyndarmáli við auðkenningarforritið þitt og staðfestu með núverandi kóða.",
+      "openAuthenticator": "Opna í auðkenningarforriti",
+      "codeLabel": "6 stafa kóði",
+      "codeOrRecoveryLabel": "Kóði eða endurheimtukóði",
+      "codePlaceholder": "123456",
+      "verifyButton": "Staðfesta",
+      "backToSignIn": "Til baka í innskráningu",
+      "recoveryCodesTitle": "Endurheimtukóðar",
+      "recoveryCodesHint": "Geymdu þessa kóða á öruggum stað. Hver þeirra skráir þig inn einu sinni ef þú týnir auðkenningarforritinu.",
+      "recoveryCodesSaved": "Ég hef vistað endurheimtukóðana mína",
+      "recoveryCodesRegenerated": "Nýir endurheimtukóðar búnir til. Þeir gömlu virka ekki lengur."
+    },
+    "passkeys": {
+      "sectionTitle": "Aðgangslyklar",
+      "sectionDescription": "Skráðu þig inn án lykilorðs með skjálás tækisins eða öryggislykli.",
+      "addButton": "Bæta við aðgangslykli",
+      "empty": "Engir aðgangslyklar ennþá.",
+      "unnamed": "Aðgangslykill",
+      "createdAt": "Bætt við",
+      "lastUsedAt": "Síðast notaður",
+      "removeButton": "Fjarlægja aðgangslykil",
+      "registered": "Aðgangslykli bætt við.",
+      "registerFailed": "Ekki tókst að bæta við aðgangslyklinum.",
+      "removed": "Aðgangslykill fjarlægður.",
+      "removeFailed": "Ekki tókst að fjarlægja aðgangslykilinn.",
+      "signInButton": "Skrá inn með aðgangslykli",
+      "signInFailed": "Innskráning með aðgangslykli mistókst."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Raddhamur",
         "voiceCloning": "Raddklónun"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Tveggja þátta stefna",
+      "description": "Hvort aðgangar þurfi að ljúka öðru innskráningarskrefi.",
+      "requireAll": "Krefjast tveggja þátta af öllum notendum",
+      "requireAllHint": "Notendur án annars þáttar setja hann upp við næstu innskráningu.",
+      "lockedByEnv": "Fest með MFA_REQUIRED_MODE.",
+      "saved": "Stefna vistuð.",
+      "saveFailed": "Ekki tókst að vista stefnuna."
+    },
+    "mfaReset": "Endurstilla tveggja þátta",
+    "mfaResetConfirm": "Fjarlægja annan þátt fyrir {{name}}? Innskráning með lykilorði og ný uppsetning verða áfram möguleg.",
+    "mfaResetSuccess": "Annar þáttur fjarlægður fyrir {{name}}.",
+    "mfaResetNothing": "{{name}} var ekki með annan þátt.",
+    "mfaResetFailed": "Endurstillingin mistókst."
   },
   "usageAnalytics": {
     "eyebrow": "Stjórnun",

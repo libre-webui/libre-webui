@@ -179,6 +179,48 @@ Tokens issued before this feature carry no session id and remain valid until
 expiry, except that "sign out other sessions" from a fresh login also stamps
 a per-account cutoff that rejects them.
 
+## Two-Factor Authentication and Passkeys
+
+Settings → Sessions manages both second factors and passwordless sign-in:
+
+- **Authenticator app (TOTP).** Enrollment shows a base32 secret and an
+  `otpauth://` link for any authenticator app; confirming the first 6-digit
+  code activates it and reveals ten one-time recovery codes. After that,
+  password login returns a short-lived challenge instead of a session, and
+  `POST /api/auth/mfa/verify` completes the sign-in with a TOTP code or a
+  recovery code. Each accepted code's timestep is recorded, so an intercepted
+  code cannot be replayed; recovery codes are stored only as keyed one-way
+  lookup tokens and each works exactly once. Disabling or regenerating
+  recovery codes requires re-proving a factor.
+- **Passkeys (WebAuthn).** "Sign in with a passkey" performs a passwordless
+  login with a discoverable credential; user verification (screen lock,
+  biometric, or PIN) is required at registration and sign-in. Attestation is
+  accepted as `none`, ES256 and EdDSA credentials are supported, and
+  credential material is encrypted at rest with the id kept as a keyed
+  lookup token. Challenges are one-use and expire after five minutes; a
+  nonzero signature counter that fails to advance is rejected as a clone
+  signal. Passkeys need a secure (HTTPS) origin, or `localhost` in
+  development; set `WEBAUTHN_RP_ID` when the instance is reached under more
+  than one hostname.
+
+The MFA challenge token issued after a correct password is signed with a
+secret derived from (but distinct from) `JWT_SECRET`: it can never
+authenticate an API request, is bound to one account and one purpose, and is
+consumed on success.
+
+Administrators can require a second factor for every account (Users → the
+two-factor policy card, or pin it with `MFA_REQUIRED_MODE=required`). Users
+without one are walked through enrollment at their next sign-in before a
+session is issued. Administrators can also reset a user's TOTP enrollment
+from the user list for account recovery; passkeys are left in place because
+the user manages them from settings. Enrollment, activation, verification
+failures, disabling, policy changes, passkey registration/removal, and admin
+resets are all recorded in the security audit log.
+
+MFA applies to password logins. OAuth and OIDC sign-ins rely on the identity
+provider's own second factor and are not challenged again. API tokens are
+unaffected: they never touch session authentication.
+
 ## API Tokens
 
 Settings → API keys mints personal access tokens (prefix `lwk_`) for

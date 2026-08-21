@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Single sign-on"
+    },
+    "mfa": {
+      "sectionTitle": "Tweestapsverificatie",
+      "sectionDescription": "Bescherm je account met een authenticator-app en passkeys.",
+      "totpTitle": "Authenticator-app",
+      "totpEnabledHint": "Ingeschakeld. Ongebruikte herstelcodes: {{count}}",
+      "totpDisabledHint": "Voeg een tweede stap toe aan het inloggen met wachtwoord via een eenmalige code.",
+      "enableButton": "Inschakelen",
+      "disableButton": "Uitschakelen",
+      "activateButton": "Bevestigen",
+      "regenerateCodes": "Nieuwe herstelcodes",
+      "confirmWithCode": "Bevestig met een code uit je app of een herstelcode",
+      "enabled": "Tweestapsverificatie is ingeschakeld.",
+      "disabled": "Tweestapsverificatie is uitgeschakeld.",
+      "invalidCode": "Die code is niet geldig.",
+      "enrollFailed": "De installatie kon niet worden gestart.",
+      "challengeExpired": "De inlogpoging is verlopen. Log opnieuw in.",
+      "setupTitle": "Tweestapsverificatie instellen",
+      "setupSubtitle": "Deze instantie vereist een tweede inlogstap. Voeg het geheim toe aan je authenticator-app om door te gaan.",
+      "verifyTitle": "Voer je code in",
+      "verifyHint": "Voer de 6-cijferige code uit je authenticator-app in, of een herstelcode.",
+      "secretHint": "Voeg dit geheim toe aan je authenticator-app en bevestig met de huidige code.",
+      "openAuthenticator": "Openen in authenticator-app",
+      "codeLabel": "6-cijferige code",
+      "codeOrRecoveryLabel": "Code of herstelcode",
+      "codePlaceholder": "123456",
+      "verifyButton": "Verifiëren",
+      "backToSignIn": "Terug naar inloggen",
+      "recoveryCodesTitle": "Herstelcodes",
+      "recoveryCodesHint": "Bewaar deze codes op een veilige plek. Elke code logt je eenmalig in als je je authenticator kwijtraakt.",
+      "recoveryCodesSaved": "Ik heb mijn herstelcodes opgeslagen",
+      "recoveryCodesRegenerated": "Nieuwe herstelcodes aangemaakt. De oude werken niet meer."
+    },
+    "passkeys": {
+      "sectionTitle": "Passkeys",
+      "sectionDescription": "Log in zonder wachtwoord met de schermvergrendeling van je apparaat of een beveiligingssleutel.",
+      "addButton": "Passkey toevoegen",
+      "empty": "Nog geen passkeys.",
+      "unnamed": "Passkey",
+      "createdAt": "Toegevoegd",
+      "lastUsedAt": "Laatst gebruikt",
+      "removeButton": "Passkey verwijderen",
+      "registered": "Passkey toegevoegd.",
+      "registerFailed": "De passkey kon niet worden toegevoegd.",
+      "removed": "Passkey verwijderd.",
+      "removeFailed": "De passkey kon niet worden verwijderd.",
+      "signInButton": "Inloggen met een passkey",
+      "signInFailed": "Inloggen met passkey mislukt."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Spraakmodus",
         "voiceCloning": "Stemklonen"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Tweestapsbeleid",
+      "description": "Of accounts een tweede inlogstap moeten voltooien.",
+      "requireAll": "Tweestapsverificatie voor alle gebruikers verplichten",
+      "requireAllHint": "Gebruikers zonder tweede factor moeten die bij hun volgende aanmelding instellen.",
+      "lockedByEnv": "Vastgezet door MFA_REQUIRED_MODE.",
+      "saved": "Tweestapsbeleid opgeslagen.",
+      "saveFailed": "Het tweestapsbeleid kon niet worden opgeslagen."
+    },
+    "mfaReset": "Tweestapsverificatie resetten",
+    "mfaResetConfirm": "De tweede factor van {{name}} verwijderen? Inloggen met wachtwoord en opnieuw instellen blijft mogelijk.",
+    "mfaResetSuccess": "Tweestapsverificatie verwijderd voor {{name}}.",
+    "mfaResetNothing": "{{name}} had geen tweestapsverificatie.",
+    "mfaResetFailed": "Het resetten is mislukt."
   },
   "usageAnalytics": {
     "eyebrow": "Beheer",

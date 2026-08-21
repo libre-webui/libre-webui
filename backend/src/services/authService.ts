@@ -115,7 +115,14 @@ export interface SessionMetadata {
 
 export type AuthResult =
   | { status: 'authenticated'; user: UserPublic; token: string }
-  | { status: 'pending'; user: UserPublic };
+  | { status: 'pending'; user: UserPublic }
+  | {
+      status: 'mfa';
+      user: UserPublic;
+      /** verify = complete an existing second factor; enroll = policy-forced setup. */
+      requirement: 'verify' | 'enroll';
+      challengeToken: string;
+    };
 
 export interface SystemInfo {
   requiresAuth: boolean;
@@ -200,6 +207,20 @@ export class AuthService {
     if (!userPublic) return null;
     if (userPublic.status !== 'active') {
       return { status: 'pending', user: userPublic };
+    }
+
+    // A password alone is not a session when the account has a second factor
+    // (or the instance policy demands one). The caller receives a short-lived
+    // challenge instead; /auth/mfa endpoints finish the sign-in.
+    const { loginRequirement, issueMfaChallenge } =
+      await import('./mfaService.js');
+    const requirement = await loginRequirement(userPublic.id);
+    if (requirement !== 'none') {
+      const challengeToken = await issueMfaChallenge(
+        userPublic.id,
+        requirement === 'verify' ? 'mfa-verify' : 'mfa-enroll'
+      );
+      return { status: 'mfa', user: userPublic, requirement, challengeToken };
     }
 
     const token = await this.issueSession(userPublic, {

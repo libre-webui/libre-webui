@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Single Sign-On"
+    },
+    "mfa": {
+      "sectionTitle": "Zwei-Faktor-Authentifizierung",
+      "sectionDescription": "Schütze dein Konto mit einer Authenticator-App und Passkeys.",
+      "totpTitle": "Authenticator-App",
+      "totpEnabledHint": "Aktiviert. Unbenutzte Wiederherstellungscodes: {{count}}",
+      "totpDisabledHint": "Ergänze die Passwortanmeldung um einen Einmalcode als zweiten Schritt.",
+      "enableButton": "Aktivieren",
+      "disableButton": "Deaktivieren",
+      "activateButton": "Bestätigen",
+      "regenerateCodes": "Neue Wiederherstellungscodes",
+      "confirmWithCode": "Mit einem Code aus deiner App oder einem Wiederherstellungscode bestätigen",
+      "enabled": "Zwei-Faktor-Authentifizierung ist aktiviert.",
+      "disabled": "Zwei-Faktor-Authentifizierung ist deaktiviert.",
+      "invalidCode": "Dieser Code ist ungültig.",
+      "enrollFailed": "Die Einrichtung konnte nicht gestartet werden.",
+      "challengeExpired": "Die Anmeldeanfrage ist abgelaufen. Bitte melde dich erneut an.",
+      "setupTitle": "Zwei-Faktor-Authentifizierung einrichten",
+      "setupSubtitle": "Diese Instanz verlangt einen zweiten Anmeldeschritt. Füge das Geheimnis deiner Authenticator-App hinzu, um fortzufahren.",
+      "verifyTitle": "Code eingeben",
+      "verifyHint": "Gib den 6-stelligen Code aus deiner Authenticator-App oder einen Wiederherstellungscode ein.",
+      "secretHint": "Füge dieses Geheimnis deiner Authenticator-App hinzu und bestätige mit dem aktuellen Code.",
+      "openAuthenticator": "In Authenticator-App öffnen",
+      "codeLabel": "6-stelliger Code",
+      "codeOrRecoveryLabel": "Code oder Wiederherstellungscode",
+      "codePlaceholder": "123456",
+      "verifyButton": "Bestätigen",
+      "backToSignIn": "Zurück zur Anmeldung",
+      "recoveryCodesTitle": "Wiederherstellungscodes",
+      "recoveryCodesHint": "Bewahre diese Codes sicher auf. Jeder Code meldet dich einmal an, falls du deinen Authenticator verlierst.",
+      "recoveryCodesSaved": "Ich habe meine Wiederherstellungscodes gespeichert",
+      "recoveryCodesRegenerated": "Neue Wiederherstellungscodes erstellt. Die alten funktionieren nicht mehr."
+    },
+    "passkeys": {
+      "sectionTitle": "Passkeys",
+      "sectionDescription": "Melde dich ohne Passwort an – mit der Displaysperre deines Geräts oder einem Sicherheitsschlüssel.",
+      "addButton": "Passkey hinzufügen",
+      "empty": "Noch keine Passkeys.",
+      "unnamed": "Passkey",
+      "createdAt": "Hinzugefügt",
+      "lastUsedAt": "Zuletzt verwendet",
+      "removeButton": "Passkey entfernen",
+      "registered": "Passkey hinzugefügt.",
+      "registerFailed": "Der Passkey konnte nicht hinzugefügt werden.",
+      "removed": "Passkey entfernt.",
+      "removeFailed": "Der Passkey konnte nicht entfernt werden.",
+      "signInButton": "Mit Passkey anmelden",
+      "signInFailed": "Passkey-Anmeldung fehlgeschlagen."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Sprachmodus",
         "voiceCloning": "Stimmklonen"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Zwei-Faktor-Richtlinie",
+      "description": "Ob Konten einen zweiten Anmeldeschritt abschließen müssen.",
+      "requireAll": "Zwei-Faktor für alle Benutzer verlangen",
+      "requireAllHint": "Benutzer ohne zweiten Faktor müssen ihn bei der nächsten Anmeldung einrichten.",
+      "lockedByEnv": "Durch MFA_REQUIRED_MODE festgelegt.",
+      "saved": "Zwei-Faktor-Richtlinie gespeichert.",
+      "saveFailed": "Die Zwei-Faktor-Richtlinie konnte nicht gespeichert werden."
+    },
+    "mfaReset": "Zwei-Faktor zurücksetzen",
+    "mfaResetConfirm": "Zweiten Faktor für {{name}} entfernen? Die Anmeldung mit Passwort und eine neue Einrichtung bleiben möglich.",
+    "mfaResetSuccess": "Zwei-Faktor für {{name}} entfernt.",
+    "mfaResetNothing": "{{name}} hatte keine Zwei-Faktor-Einrichtung.",
+    "mfaResetFailed": "Das Zurücksetzen ist fehlgeschlagen."
   },
   "usageAnalytics": {
     "eyebrow": "Verwaltung",

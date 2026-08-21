@@ -557,7 +557,7 @@ test('keeps an in-flight remote disclosure dismissal scoped to its user', async 
   const login = async (username: string) => {
     await page.getByLabel('Username').fill(username);
     await page.getByLabel('Password').fill('password');
-    await page.getByRole('button', { name: /sign in/i }).click();
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click();
     await expect(page).toHaveURL(url => url.pathname === '/');
   };
   const logout = async (username: string) => {
@@ -2451,7 +2451,7 @@ test('preserves an authenticated user draft across a page refresh', async ({
   await page.goto('/login');
   await page.getByLabel('Username').fill('e2e');
   await page.getByLabel('Password').fill('password');
-  await page.getByRole('button', { name: /sign in/i }).click();
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
 
   await page.goto('/work/refresh-draft-workspace');

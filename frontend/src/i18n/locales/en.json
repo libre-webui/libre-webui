@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Single sign-on"
+    },
+    "mfa": {
+      "sectionTitle": "Two-factor authentication",
+      "sectionDescription": "Protect your account with an authenticator app and passkeys.",
+      "totpTitle": "Authenticator app",
+      "totpEnabledHint": "Enabled. Unused recovery codes: {{count}}",
+      "totpDisabledHint": "Add a second step to password sign-in with a one-time code.",
+      "enableButton": "Enable",
+      "disableButton": "Disable",
+      "activateButton": "Confirm",
+      "regenerateCodes": "New recovery codes",
+      "confirmWithCode": "Confirm with a code from your app or a recovery code",
+      "enabled": "Two-factor authentication is enabled.",
+      "disabled": "Two-factor authentication is disabled.",
+      "invalidCode": "That code is not valid.",
+      "enrollFailed": "Setup could not be started.",
+      "challengeExpired": "The sign-in challenge expired. Please sign in again.",
+      "setupTitle": "Set up two-factor authentication",
+      "setupSubtitle": "This instance requires a second sign-in step. Add the secret to your authenticator app to continue.",
+      "verifyTitle": "Enter your code",
+      "verifyHint": "Enter the 6-digit code from your authenticator app, or a recovery code.",
+      "secretHint": "Add this secret to your authenticator app, then confirm with the current code.",
+      "openAuthenticator": "Open in authenticator app",
+      "codeLabel": "6-digit code",
+      "codeOrRecoveryLabel": "Code or recovery code",
+      "codePlaceholder": "123456",
+      "verifyButton": "Verify",
+      "backToSignIn": "Back to sign in",
+      "recoveryCodesTitle": "Recovery codes",
+      "recoveryCodesHint": "Store these codes somewhere safe. Each one signs you in once if you lose your authenticator.",
+      "recoveryCodesSaved": "I saved my recovery codes",
+      "recoveryCodesRegenerated": "New recovery codes created. The old ones no longer work."
+    },
+    "passkeys": {
+      "sectionTitle": "Passkeys",
+      "sectionDescription": "Sign in without a password using your device's screen lock or security key.",
+      "addButton": "Add passkey",
+      "empty": "No passkeys yet.",
+      "unnamed": "Passkey",
+      "createdAt": "Added",
+      "lastUsedAt": "Last used",
+      "removeButton": "Remove passkey",
+      "registered": "Passkey added.",
+      "registerFailed": "The passkey could not be added.",
+      "removed": "Passkey removed.",
+      "removeFailed": "The passkey could not be removed.",
+      "signInButton": "Sign in with a passkey",
+      "signInFailed": "Passkey sign-in failed."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Voice mode",
         "voiceCloning": "Voice cloning"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Two-factor policy",
+      "description": "Whether accounts must complete a second sign-in step.",
+      "requireAll": "Require two-factor for all users",
+      "requireAllHint": "Users without a second factor must set one up at their next sign-in.",
+      "lockedByEnv": "Pinned by MFA_REQUIRED_MODE.",
+      "saved": "Two-factor policy saved.",
+      "saveFailed": "The two-factor policy could not be saved."
+    },
+    "mfaReset": "Reset two-factor",
+    "mfaResetConfirm": "Remove the second factor for {{name}}? They can sign in with their password and set it up again.",
+    "mfaResetSuccess": "Two-factor removed for {{name}}.",
+    "mfaResetNothing": "{{name}} had no two-factor enrollment.",
+    "mfaResetFailed": "The two-factor reset failed."
   },
   "usageAnalytics": {
     "eyebrow": "Administration",

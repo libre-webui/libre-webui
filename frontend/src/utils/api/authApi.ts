@@ -76,9 +76,40 @@ export const API_TOKEN_SCOPES = [
 ] as const;
 export type ApiTokenScope = (typeof API_TOKEN_SCOPES)[number];
 
+/** Login can complete immediately or hand back a second-factor challenge. */
+export interface MfaChallengeResponse {
+  mfaRequired: true;
+  requirement: 'verify' | 'enroll';
+  challengeToken: string;
+}
+
+export type LoginResult = LoginResponse | MfaChallengeResponse;
+
+export const isMfaChallenge = (
+  data: LoginResult | undefined
+): data is MfaChallengeResponse =>
+  !!data && (data as MfaChallengeResponse).mfaRequired === true;
+
+/** One registered passkey (public metadata only). */
+export interface PasskeyRecord {
+  id: string;
+  name: string | null;
+  createdAt: number;
+  lastUsedAt: number | null;
+}
+
+export interface MfaStatusResponse {
+  totpEnabled: boolean;
+  totpPending: boolean;
+  recoveryCodesRemaining: number;
+  required: boolean;
+  requiredModeLocked: boolean;
+  passkeys: PasskeyRecord[];
+}
+
 // Authentication API
 export const authApi = {
-  login: (credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
+  login: (credentials: LoginRequest): Promise<ApiResponse<LoginResult>> => {
     if (isDemoMode()) {
       return createDemoResponse<LoginResponse>({
         user: {
@@ -286,6 +317,98 @@ export const authApi = {
 
     return api.delete(`/auth/tokens/${id}`).then(res => res.data);
   },
+
+  mfaVerify: (payload: {
+    challengeToken: string;
+    code: string;
+  }): Promise<ApiResponse<LoginResponse>> =>
+    api.post('/auth/mfa/verify', payload).then(res => res.data),
+
+  mfaEnrollChallenge: (payload: {
+    challengeToken: string;
+  }): Promise<ApiResponse<{ secret: string; otpauthUrl: string }>> =>
+    api.post('/auth/mfa/enroll-challenge', payload).then(res => res.data),
+
+  mfaActivateChallenge: (payload: {
+    challengeToken: string;
+    code: string;
+  }): Promise<ApiResponse<LoginResponse & { recoveryCodes: string[] }>> =>
+    api.post('/auth/mfa/activate-challenge', payload).then(res => res.data),
+
+  getMfaStatus: (): Promise<ApiResponse<MfaStatusResponse>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<MfaStatusResponse>({
+        totpEnabled: false,
+        totpPending: false,
+        recoveryCodesRemaining: 0,
+        required: false,
+        requiredModeLocked: false,
+        passkeys: [],
+      });
+    }
+    return api.get('/auth/mfa').then(res => res.data);
+  },
+
+  mfaEnroll: (): Promise<ApiResponse<{ secret: string; otpauthUrl: string }>> =>
+    api.post('/auth/mfa/enroll').then(res => res.data),
+
+  mfaActivate: (payload: {
+    code: string;
+  }): Promise<ApiResponse<{ recoveryCodes: string[] }>> =>
+    api.post('/auth/mfa/activate', payload).then(res => res.data),
+
+  mfaRegenerateRecoveryCodes: (payload: {
+    code: string;
+  }): Promise<ApiResponse<{ recoveryCodes: string[] }>> =>
+    api.post('/auth/mfa/recovery-codes', payload).then(res => res.data),
+
+  mfaDisable: (payload: { code: string }): Promise<ApiResponse<void>> =>
+    api.post('/auth/mfa/disable', payload).then(res => res.data),
+
+  getMfaPolicy: (): Promise<
+    ApiResponse<{ mode: 'optional' | 'required'; locked: boolean }>
+  > => {
+    if (isDemoMode()) {
+      return createDemoResponse({ mode: 'optional' as const, locked: false });
+    }
+    return api.get('/auth/mfa/policy').then(res => res.data);
+  },
+
+  setMfaPolicy: (
+    mode: 'optional' | 'required'
+  ): Promise<ApiResponse<{ mode: 'optional' | 'required'; locked: boolean }>> =>
+    api.put('/auth/mfa/policy', { mode }).then(res => res.data),
+
+  passkeyRegisterOptions: (): Promise<
+    ApiResponse<{ challengeToken: string; publicKey: Record<string, unknown> }>
+  > => api.post('/auth/passkeys/register-options').then(res => res.data),
+
+  passkeyRegister: (payload: {
+    challengeToken: string;
+    name?: string;
+    credential: unknown;
+  }): Promise<ApiResponse<PasskeyRecord>> =>
+    api.post('/auth/passkeys/register', payload).then(res => res.data),
+
+  listPasskeys: (): Promise<ApiResponse<PasskeyRecord[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<PasskeyRecord[]>([]);
+    }
+    return api.get('/auth/passkeys').then(res => res.data);
+  },
+
+  deletePasskey: (id: string): Promise<ApiResponse<void>> =>
+    api.delete(`/auth/passkeys/${id}`).then(res => res.data),
+
+  passkeyLoginOptions: (): Promise<
+    ApiResponse<{ challengeToken: string; publicKey: Record<string, unknown> }>
+  > => api.post('/auth/passkeys/login-options').then(res => res.data),
+
+  passkeyLogin: (payload: {
+    challengeToken: string;
+    credential: unknown;
+  }): Promise<ApiResponse<LoginResponse>> =>
+    api.post('/auth/passkeys/login', payload).then(res => res.data),
 };
 
 // Users API
@@ -374,6 +497,9 @@ export const usersApi = {
 
     return api.patch(`/users/${id}/approve`).then(res => res.data);
   },
+
+  resetUserMfa: (id: string): Promise<ApiResponse<{ removed: boolean }>> =>
+    api.post(`/users/${id}/mfa/reset`).then(res => res.data),
 
   updateMyAvatar: (avatar: string | null): Promise<ApiResponse<User>> => {
     if (isDemoMode()) {

@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Single sign-on"
+    },
+    "mfa": {
+      "sectionTitle": "Autentikasi dua langkah",
+      "sectionDescription": "Lindungi akun Anda dengan aplikasi autentikator dan kunci sandi.",
+      "totpTitle": "Aplikasi autentikator",
+      "totpEnabledHint": "Aktif. Kode pemulihan belum terpakai: {{count}}",
+      "totpDisabledHint": "Tambahkan langkah kedua ke masuk dengan kata sandi lewat kode sekali pakai.",
+      "enableButton": "Aktifkan",
+      "disableButton": "Nonaktifkan",
+      "activateButton": "Konfirmasi",
+      "regenerateCodes": "Kode pemulihan baru",
+      "confirmWithCode": "Konfirmasi dengan kode dari aplikasi Anda atau kode pemulihan",
+      "enabled": "Autentikasi dua langkah aktif.",
+      "disabled": "Autentikasi dua langkah nonaktif.",
+      "invalidCode": "Kode itu tidak valid.",
+      "enrollFailed": "Penyiapan tidak dapat dimulai.",
+      "challengeExpired": "Tantangan masuk kedaluwarsa. Silakan masuk lagi.",
+      "setupTitle": "Siapkan autentikasi dua langkah",
+      "setupSubtitle": "Instans ini mewajibkan langkah masuk kedua. Tambahkan rahasia ke aplikasi autentikator Anda untuk melanjutkan.",
+      "verifyTitle": "Masukkan kode Anda",
+      "verifyHint": "Masukkan kode 6 digit dari aplikasi autentikator Anda, atau kode pemulihan.",
+      "secretHint": "Tambahkan rahasia ini ke aplikasi autentikator Anda, lalu konfirmasi dengan kode saat ini.",
+      "openAuthenticator": "Buka di aplikasi autentikator",
+      "codeLabel": "Kode 6 digit",
+      "codeOrRecoveryLabel": "Kode atau kode pemulihan",
+      "codePlaceholder": "123456",
+      "verifyButton": "Verifikasi",
+      "backToSignIn": "Kembali ke halaman masuk",
+      "recoveryCodesTitle": "Kode pemulihan",
+      "recoveryCodesHint": "Simpan kode ini di tempat aman. Masing-masing bisa dipakai sekali untuk masuk jika autentikator Anda hilang.",
+      "recoveryCodesSaved": "Saya sudah menyimpan kode pemulihan",
+      "recoveryCodesRegenerated": "Kode pemulihan baru dibuat. Kode lama tidak berlaku lagi."
+    },
+    "passkeys": {
+      "sectionTitle": "Kunci sandi",
+      "sectionDescription": "Masuk tanpa kata sandi menggunakan kunci layar perangkat atau kunci keamanan.",
+      "addButton": "Tambah kunci sandi",
+      "empty": "Belum ada kunci sandi.",
+      "unnamed": "Kunci sandi",
+      "createdAt": "Ditambahkan",
+      "lastUsedAt": "Terakhir dipakai",
+      "removeButton": "Hapus kunci sandi",
+      "registered": "Kunci sandi ditambahkan.",
+      "registerFailed": "Kunci sandi tidak dapat ditambahkan.",
+      "removed": "Kunci sandi dihapus.",
+      "removeFailed": "Kunci sandi tidak dapat dihapus.",
+      "signInButton": "Masuk dengan kunci sandi",
+      "signInFailed": "Masuk dengan kunci sandi gagal."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Mode suara",
         "voiceCloning": "Kloning suara"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Kebijakan dua langkah",
+      "description": "Apakah akun wajib menyelesaikan langkah masuk kedua.",
+      "requireAll": "Wajibkan dua langkah untuk semua pengguna",
+      "requireAllHint": "Pengguna tanpa faktor kedua harus menyiapkannya saat masuk berikutnya.",
+      "lockedByEnv": "Dikunci oleh MFA_REQUIRED_MODE.",
+      "saved": "Kebijakan disimpan.",
+      "saveFailed": "Kebijakan tidak dapat disimpan."
+    },
+    "mfaReset": "Setel ulang dua langkah",
+    "mfaResetConfirm": "Hapus faktor kedua untuk {{name}}? Mereka tetap bisa masuk dengan kata sandi dan menyiapkannya lagi.",
+    "mfaResetSuccess": "Dua langkah dihapus untuk {{name}}.",
+    "mfaResetNothing": "{{name}} tidak memiliki dua langkah.",
+    "mfaResetFailed": "Penyetelan ulang gagal."
   },
   "usageAnalytics": {
     "eyebrow": "Administrasi",

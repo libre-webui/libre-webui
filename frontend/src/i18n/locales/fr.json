@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Authentification unique"
+    },
+    "mfa": {
+      "sectionTitle": "Authentification à deux facteurs",
+      "sectionDescription": "Protégez votre compte avec une application d'authentification et des clés d'accès.",
+      "totpTitle": "Application d'authentification",
+      "totpEnabledHint": "Activée. Codes de récupération inutilisés : {{count}}",
+      "totpDisabledHint": "Ajoutez une deuxième étape à la connexion par mot de passe avec un code à usage unique.",
+      "enableButton": "Activer",
+      "disableButton": "Désactiver",
+      "activateButton": "Confirmer",
+      "regenerateCodes": "Nouveaux codes de récupération",
+      "confirmWithCode": "Confirmez avec un code de votre application ou un code de récupération",
+      "enabled": "L'authentification à deux facteurs est activée.",
+      "disabled": "L'authentification à deux facteurs est désactivée.",
+      "invalidCode": "Ce code n'est pas valide.",
+      "enrollFailed": "La configuration n'a pas pu démarrer.",
+      "challengeExpired": "Le défi de connexion a expiré. Veuillez vous reconnecter.",
+      "setupTitle": "Configurer l'authentification à deux facteurs",
+      "setupSubtitle": "Cette instance exige une deuxième étape de connexion. Ajoutez le secret à votre application d'authentification pour continuer.",
+      "verifyTitle": "Saisissez votre code",
+      "verifyHint": "Saisissez le code à 6 chiffres de votre application d'authentification, ou un code de récupération.",
+      "secretHint": "Ajoutez ce secret à votre application d'authentification, puis confirmez avec le code actuel.",
+      "openAuthenticator": "Ouvrir dans l'application d'authentification",
+      "codeLabel": "Code à 6 chiffres",
+      "codeOrRecoveryLabel": "Code ou code de récupération",
+      "codePlaceholder": "123456",
+      "verifyButton": "Vérifier",
+      "backToSignIn": "Retour à la connexion",
+      "recoveryCodesTitle": "Codes de récupération",
+      "recoveryCodesHint": "Conservez ces codes en lieu sûr. Chacun permet une connexion si vous perdez votre application d'authentification.",
+      "recoveryCodesSaved": "J'ai enregistré mes codes de récupération",
+      "recoveryCodesRegenerated": "Nouveaux codes de récupération créés. Les anciens ne fonctionnent plus."
+    },
+    "passkeys": {
+      "sectionTitle": "Clés d'accès",
+      "sectionDescription": "Connectez-vous sans mot de passe grâce au verrouillage de votre appareil ou à une clé de sécurité.",
+      "addButton": "Ajouter une clé d'accès",
+      "empty": "Aucune clé d'accès pour le moment.",
+      "unnamed": "Clé d'accès",
+      "createdAt": "Ajoutée",
+      "lastUsedAt": "Dernière utilisation",
+      "removeButton": "Supprimer la clé d'accès",
+      "registered": "Clé d'accès ajoutée.",
+      "registerFailed": "La clé d'accès n'a pas pu être ajoutée.",
+      "removed": "Clé d'accès supprimée.",
+      "removeFailed": "La clé d'accès n'a pas pu être supprimée.",
+      "signInButton": "Se connecter avec une clé d'accès",
+      "signInFailed": "Échec de la connexion par clé d'accès."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Mode vocal",
         "voiceCloning": "Clonage de voix"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Politique de double authentification",
+      "description": "Indique si les comptes doivent effectuer une deuxième étape de connexion.",
+      "requireAll": "Exiger la double authentification pour tous",
+      "requireAllHint": "Les utilisateurs sans deuxième facteur devront le configurer à leur prochaine connexion.",
+      "lockedByEnv": "Fixé par MFA_REQUIRED_MODE.",
+      "saved": "Politique de double authentification enregistrée.",
+      "saveFailed": "La politique de double authentification n'a pas pu être enregistrée."
+    },
+    "mfaReset": "Réinitialiser la double authentification",
+    "mfaResetConfirm": "Supprimer le deuxième facteur de {{name}} ? La connexion par mot de passe et une nouvelle configuration resteront possibles.",
+    "mfaResetSuccess": "Double authentification supprimée pour {{name}}.",
+    "mfaResetNothing": "{{name}} n'avait pas de double authentification.",
+    "mfaResetFailed": "La réinitialisation a échoué."
   },
   "usageAnalytics": {
     "eyebrow": "Administration",

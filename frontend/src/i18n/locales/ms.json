@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Log masuk tunggal"
+    },
+    "mfa": {
+      "sectionTitle": "Pengesahan dua langkah",
+      "sectionDescription": "Lindungi akaun anda dengan aplikasi pengesah dan kunci laluan.",
+      "totpTitle": "Aplikasi pengesah",
+      "totpEnabledHint": "Diaktifkan. Kod pemulihan belum digunakan: {{count}}",
+      "totpDisabledHint": "Tambah langkah kedua pada log masuk kata laluan dengan kod sekali guna.",
+      "enableButton": "Aktifkan",
+      "disableButton": "Nyahaktifkan",
+      "activateButton": "Sahkan",
+      "regenerateCodes": "Kod pemulihan baharu",
+      "confirmWithCode": "Sahkan dengan kod daripada aplikasi anda atau kod pemulihan",
+      "enabled": "Pengesahan dua langkah diaktifkan.",
+      "disabled": "Pengesahan dua langkah dinyahaktifkan.",
+      "invalidCode": "Kod itu tidak sah.",
+      "enrollFailed": "Persediaan tidak dapat dimulakan.",
+      "challengeExpired": "Cabaran log masuk telah tamat. Sila log masuk semula.",
+      "setupTitle": "Sediakan pengesahan dua langkah",
+      "setupSubtitle": "Instans ini memerlukan langkah log masuk kedua. Tambahkan rahsia ke aplikasi pengesah anda untuk meneruskan.",
+      "verifyTitle": "Masukkan kod anda",
+      "verifyHint": "Masukkan kod 6 digit daripada aplikasi pengesah anda, atau kod pemulihan.",
+      "secretHint": "Tambahkan rahsia ini ke aplikasi pengesah anda, kemudian sahkan dengan kod semasa.",
+      "openAuthenticator": "Buka dalam aplikasi pengesah",
+      "codeLabel": "Kod 6 digit",
+      "codeOrRecoveryLabel": "Kod atau kod pemulihan",
+      "codePlaceholder": "123456",
+      "verifyButton": "Sahkan",
+      "backToSignIn": "Kembali ke log masuk",
+      "recoveryCodesTitle": "Kod pemulihan",
+      "recoveryCodesHint": "Simpan kod ini di tempat selamat. Setiap satu membolehkan satu log masuk jika anda kehilangan pengesah anda.",
+      "recoveryCodesSaved": "Saya telah menyimpan kod pemulihan saya",
+      "recoveryCodesRegenerated": "Kod pemulihan baharu dicipta. Kod lama tidak lagi berfungsi."
+    },
+    "passkeys": {
+      "sectionTitle": "Kunci laluan",
+      "sectionDescription": "Log masuk tanpa kata laluan menggunakan kunci skrin peranti anda atau kunci keselamatan.",
+      "addButton": "Tambah kunci laluan",
+      "empty": "Belum ada kunci laluan.",
+      "unnamed": "Kunci laluan",
+      "createdAt": "Ditambah",
+      "lastUsedAt": "Terakhir digunakan",
+      "removeButton": "Buang kunci laluan",
+      "registered": "Kunci laluan ditambah.",
+      "registerFailed": "Kunci laluan tidak dapat ditambah.",
+      "removed": "Kunci laluan dibuang.",
+      "removeFailed": "Kunci laluan tidak dapat dibuang.",
+      "signInButton": "Log masuk dengan kunci laluan",
+      "signInFailed": "Log masuk dengan kunci laluan gagal."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Mod suara",
         "voiceCloning": "Pengklonan suara"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Dasar dua langkah",
+      "description": "Sama ada akaun mesti melengkapkan langkah log masuk kedua.",
+      "requireAll": "Wajibkan dua langkah untuk semua pengguna",
+      "requireAllHint": "Pengguna tanpa faktor kedua perlu menyediakannya pada log masuk seterusnya.",
+      "lockedByEnv": "Ditetapkan oleh MFA_REQUIRED_MODE.",
+      "saved": "Dasar disimpan.",
+      "saveFailed": "Dasar tidak dapat disimpan."
+    },
+    "mfaReset": "Tetapkan semula dua langkah",
+    "mfaResetConfirm": "Buang faktor kedua untuk {{name}}? Mereka masih boleh log masuk dengan kata laluan dan menyediakannya semula.",
+    "mfaResetSuccess": "Dua langkah dibuang untuk {{name}}.",
+    "mfaResetNothing": "{{name}} tiada dua langkah.",
+    "mfaResetFailed": "Penetapan semula gagal."
   },
   "usageAnalytics": {
     "eyebrow": "Pentadbiran",

@@ -137,7 +137,7 @@ test('Work and Agents are hidden and route-protected for non-admin users', async
   await page.goto('/login');
   await page.getByLabel('Username').fill('member');
   await page.getByLabel('Password').fill('password');
-  await page.getByRole('button', { name: /sign in/i }).click();
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId('sidebar-work-button')).toHaveCount(0);

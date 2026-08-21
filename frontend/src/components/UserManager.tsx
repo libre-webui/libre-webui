@@ -37,6 +37,7 @@ import {
   Edit,
   Plus,
   Shield,
+  ShieldOff,
   Trash2,
   User as UserIcon,
   UserCheck,
@@ -168,6 +169,30 @@ export const UserManager: React.FC = () => {
       }
 
       toast.error(errorMessage);
+    }
+  };
+
+  const handleResetMfa = async (userId: string, username: string) => {
+    if (!confirm(t('userManager.mfaResetConfirm', { name: username }))) {
+      return;
+    }
+    try {
+      const response = await usersApi.resetUserMfa(userId);
+      if (response.success && response.data?.removed) {
+        toast.success(t('userManager.mfaResetSuccess', { name: username }));
+      } else if (response.success) {
+        toast.success(t('userManager.mfaResetNothing', { name: username }));
+      } else {
+        toast.error(response.message || t('userManager.mfaResetFailed'));
+      }
+    } catch (error: unknown) {
+      logger.error('Error resetting MFA:', error);
+      const apiError = error as {
+        response?: { data?: { message?: string } };
+      };
+      toast.error(
+        apiError.response?.data?.message || t('userManager.mfaResetFailed')
+      );
     }
   };
 
@@ -593,6 +618,17 @@ export const UserManager: React.FC = () => {
                     className='text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400'
                   >
                     <Edit size={16} />
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    data-testid='reset-mfa-button'
+                    aria-label={t('userManager.mfaReset')}
+                    title={t('userManager.mfaReset')}
+                    onClick={() => handleResetMfa(user.id, user.username)}
+                    className='text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400'
+                  >
+                    <ShieldOff size={16} />
                   </Button>
                   <Button
                     variant='outline'

@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Tek oturum açma"
+    },
+    "mfa": {
+      "sectionTitle": "İki adımlı doğrulama",
+      "sectionDescription": "Hesabını bir doğrulayıcı uygulaması ve geçiş anahtarlarıyla koru.",
+      "totpTitle": "Doğrulayıcı uygulaması",
+      "totpEnabledHint": "Etkin. Kullanılmamış kurtarma kodları: {{count}}",
+      "totpDisabledHint": "Parola ile girişe tek kullanımlık kodla ikinci bir adım ekle.",
+      "enableButton": "Etkinleştir",
+      "disableButton": "Devre dışı bırak",
+      "activateButton": "Onayla",
+      "regenerateCodes": "Yeni kurtarma kodları",
+      "confirmWithCode": "Uygulamandaki bir kodla veya kurtarma koduyla onayla",
+      "enabled": "İki adımlı doğrulama etkin.",
+      "disabled": "İki adımlı doğrulama devre dışı.",
+      "invalidCode": "Bu kod geçerli değil.",
+      "enrollFailed": "Kurulum başlatılamadı.",
+      "challengeExpired": "Giriş isteğinin süresi doldu. Lütfen tekrar giriş yap.",
+      "setupTitle": "İki adımlı doğrulamayı kur",
+      "setupSubtitle": "Bu kurulum ikinci bir giriş adımı gerektiriyor. Devam etmek için gizli anahtarı doğrulayıcı uygulamana ekle.",
+      "verifyTitle": "Kodunu gir",
+      "verifyHint": "Doğrulayıcı uygulamandaki 6 haneli kodu veya bir kurtarma kodunu gir.",
+      "secretHint": "Bu gizli anahtarı doğrulayıcı uygulamana ekle ve güncel kodla onayla.",
+      "openAuthenticator": "Doğrulayıcı uygulamasında aç",
+      "codeLabel": "6 haneli kod",
+      "codeOrRecoveryLabel": "Kod veya kurtarma kodu",
+      "codePlaceholder": "123456",
+      "verifyButton": "Doğrula",
+      "backToSignIn": "Girişe geri dön",
+      "recoveryCodesTitle": "Kurtarma kodları",
+      "recoveryCodesHint": "Bu kodları güvenli bir yerde sakla. Doğrulayıcını kaybedersen her biri bir kez giriş yapmanı sağlar.",
+      "recoveryCodesSaved": "Kurtarma kodlarımı kaydettim",
+      "recoveryCodesRegenerated": "Yeni kurtarma kodları oluşturuldu. Eskiler artık çalışmıyor."
+    },
+    "passkeys": {
+      "sectionTitle": "Geçiş anahtarları",
+      "sectionDescription": "Cihazının ekran kilidi veya bir güvenlik anahtarıyla parolasız giriş yap.",
+      "addButton": "Geçiş anahtarı ekle",
+      "empty": "Henüz geçiş anahtarı yok.",
+      "unnamed": "Geçiş anahtarı",
+      "createdAt": "Eklendi",
+      "lastUsedAt": "Son kullanım",
+      "removeButton": "Geçiş anahtarını kaldır",
+      "registered": "Geçiş anahtarı eklendi.",
+      "registerFailed": "Geçiş anahtarı eklenemedi.",
+      "removed": "Geçiş anahtarı kaldırıldı.",
+      "removeFailed": "Geçiş anahtarı kaldırılamadı.",
+      "signInButton": "Geçiş anahtarıyla giriş yap",
+      "signInFailed": "Geçiş anahtarıyla giriş başarısız."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Ses modu",
         "voiceCloning": "Ses klonlama"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "İki adımlı doğrulama politikası",
+      "description": "Hesapların ikinci bir giriş adımını tamamlaması gerekip gerekmediği.",
+      "requireAll": "Tüm kullanıcılardan iki adım iste",
+      "requireAllHint": "İkinci adımı olmayan kullanıcılar bir sonraki girişte kuracak.",
+      "lockedByEnv": "MFA_REQUIRED_MODE ile sabitlendi.",
+      "saved": "Politika kaydedildi.",
+      "saveFailed": "Politika kaydedilemedi."
+    },
+    "mfaReset": "İki adımı sıfırla",
+    "mfaResetConfirm": "{{name}} için ikinci adımı kaldırmak istiyor musun? Parolayla giriş yapıp yeniden kurabilir.",
+    "mfaResetSuccess": "{{name}} için iki adım kaldırıldı.",
+    "mfaResetNothing": "{{name}} için iki adım tanımlı değildi.",
+    "mfaResetFailed": "Sıfırlama başarısız oldu."
   },
   "usageAnalytics": {
     "eyebrow": "Yönetim",

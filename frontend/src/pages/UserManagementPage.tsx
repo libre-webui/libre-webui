@@ -21,6 +21,7 @@ import { UserManager } from '@/components/UserManager';
 import { AgentAccessSettings } from '@/components/AgentAccessSettings';
 import { ToolAccessSettings } from '@/components/ToolAccessSettings';
 import { VoiceAccessSettings } from '@/components/VoiceAccessSettings';
+import { MfaPolicySettings } from '@/components/MfaPolicySettings';
 import { GroupManager } from '@/components/GroupManager';
 import { SecurityAuditLog } from '@/components/SecurityAuditLog';
 import { ModelDownloadSettings } from '@/components/ModelDownloadSettings';
@@ -46,6 +47,7 @@ export const UserManagementPage: React.FC = () => {
         <AgentAccessSettings />
         <ToolAccessSettings />
         <VoiceAccessSettings />
+        <MfaPolicySettings />
         <GroupManager />
         <SecurityAuditLog />
       </div>

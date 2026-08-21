@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Enkel inloggning"
+    },
+    "mfa": {
+      "sectionTitle": "Tvåfaktorsautentisering",
+      "sectionDescription": "Skydda ditt konto med en autentiseringsapp och passnycklar.",
+      "totpTitle": "Autentiseringsapp",
+      "totpEnabledHint": "Aktiverad. Oanvända återställningskoder: {{count}}",
+      "totpDisabledHint": "Lägg till ett andra steg vid lösenordsinloggning med en engångskod.",
+      "enableButton": "Aktivera",
+      "disableButton": "Inaktivera",
+      "activateButton": "Bekräfta",
+      "regenerateCodes": "Nya återställningskoder",
+      "confirmWithCode": "Bekräfta med en kod från din app eller en återställningskod",
+      "enabled": "Tvåfaktorsautentisering är aktiverad.",
+      "disabled": "Tvåfaktorsautentisering är inaktiverad.",
+      "invalidCode": "Koden är inte giltig.",
+      "enrollFailed": "Det gick inte att starta konfigurationen.",
+      "challengeExpired": "Inloggningsutmaningen gick ut. Logga in igen.",
+      "setupTitle": "Ställ in tvåfaktorsautentisering",
+      "setupSubtitle": "Den här instansen kräver ett andra inloggningssteg. Lägg till hemligheten i din autentiseringsapp för att fortsätta.",
+      "verifyTitle": "Ange din kod",
+      "verifyHint": "Ange den 6-siffriga koden från din autentiseringsapp eller en återställningskod.",
+      "secretHint": "Lägg till denna hemlighet i din autentiseringsapp och bekräfta med den aktuella koden.",
+      "openAuthenticator": "Öppna i autentiseringsapp",
+      "codeLabel": "6-siffrig kod",
+      "codeOrRecoveryLabel": "Kod eller återställningskod",
+      "codePlaceholder": "123456",
+      "verifyButton": "Verifiera",
+      "backToSignIn": "Tillbaka till inloggning",
+      "recoveryCodesTitle": "Återställningskoder",
+      "recoveryCodesHint": "Förvara koderna på en säker plats. Varje kod ger en inloggning om du förlorar din autentiseringsapp.",
+      "recoveryCodesSaved": "Jag har sparat mina återställningskoder",
+      "recoveryCodesRegenerated": "Nya återställningskoder skapade. De gamla fungerar inte längre."
+    },
+    "passkeys": {
+      "sectionTitle": "Passnycklar",
+      "sectionDescription": "Logga in utan lösenord med enhetens skärmlås eller en säkerhetsnyckel.",
+      "addButton": "Lägg till passnyckel",
+      "empty": "Inga passnycklar ännu.",
+      "unnamed": "Passnyckel",
+      "createdAt": "Tillagd",
+      "lastUsedAt": "Senast använd",
+      "removeButton": "Ta bort passnyckel",
+      "registered": "Passnyckel tillagd.",
+      "registerFailed": "Passnyckeln kunde inte läggas till.",
+      "removed": "Passnyckel borttagen.",
+      "removeFailed": "Passnyckeln kunde inte tas bort.",
+      "signInButton": "Logga in med passnyckel",
+      "signInFailed": "Inloggning med passnyckel misslyckades."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Röstläge",
         "voiceCloning": "Röstkloning"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Tvåfaktorspolicy",
+      "description": "Om konton måste slutföra ett andra inloggningssteg.",
+      "requireAll": "Kräv tvåfaktor för alla användare",
+      "requireAllHint": "Användare utan en andra faktor får ställa in den vid nästa inloggning.",
+      "lockedByEnv": "Låst av MFA_REQUIRED_MODE.",
+      "saved": "Tvåfaktorspolicy sparad.",
+      "saveFailed": "Tvåfaktorspolicyn kunde inte sparas."
+    },
+    "mfaReset": "Återställ tvåfaktor",
+    "mfaResetConfirm": "Ta bort den andra faktorn för {{name}}? Inloggning med lösenord och ny konfiguration är fortfarande möjlig.",
+    "mfaResetSuccess": "Tvåfaktor borttagen för {{name}}.",
+    "mfaResetNothing": "{{name}} hade ingen tvåfaktor.",
+    "mfaResetFailed": "Återställningen misslyckades."
   },
   "usageAnalytics": {
     "eyebrow": "Administration",

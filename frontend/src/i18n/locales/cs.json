@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Jednotné přihlášení"
+    },
+    "mfa": {
+      "sectionTitle": "Dvoufaktorové ověření",
+      "sectionDescription": "Chraňte svůj účet ověřovací aplikací a přístupovými klíči.",
+      "totpTitle": "Ověřovací aplikace",
+      "totpEnabledHint": "Zapnuto. Nepoužité záložní kódy: {{count}}",
+      "totpDisabledHint": "Přidejte k přihlášení heslem druhý krok pomocí jednorázového kódu.",
+      "enableButton": "Zapnout",
+      "disableButton": "Vypnout",
+      "activateButton": "Potvrdit",
+      "regenerateCodes": "Nové záložní kódy",
+      "confirmWithCode": "Potvrďte kódem z aplikace nebo záložním kódem",
+      "enabled": "Dvoufaktorové ověření je zapnuto.",
+      "disabled": "Dvoufaktorové ověření je vypnuto.",
+      "invalidCode": "Tento kód není platný.",
+      "enrollFailed": "Nastavení se nepodařilo zahájit.",
+      "challengeExpired": "Přihlašovací výzva vypršela. Přihlaste se znovu.",
+      "setupTitle": "Nastavit dvoufaktorové ověření",
+      "setupSubtitle": "Tato instance vyžaduje druhý krok přihlášení. Přidejte tajný klíč do ověřovací aplikace a pokračujte.",
+      "verifyTitle": "Zadejte kód",
+      "verifyHint": "Zadejte 6místný kód z ověřovací aplikace nebo záložní kód.",
+      "secretHint": "Přidejte tento tajný klíč do ověřovací aplikace a potvrďte aktuálním kódem.",
+      "openAuthenticator": "Otevřít v ověřovací aplikaci",
+      "codeLabel": "6místný kód",
+      "codeOrRecoveryLabel": "Kód nebo záložní kód",
+      "codePlaceholder": "123456",
+      "verifyButton": "Ověřit",
+      "backToSignIn": "Zpět na přihlášení",
+      "recoveryCodesTitle": "Záložní kódy",
+      "recoveryCodesHint": "Uložte tyto kódy na bezpečné místo. Každý umožní jedno přihlášení, pokud ztratíte ověřovací aplikaci.",
+      "recoveryCodesSaved": "Záložní kódy jsem si uložil",
+      "recoveryCodesRegenerated": "Byly vytvořeny nové záložní kódy. Staré už neplatí."
+    },
+    "passkeys": {
+      "sectionTitle": "Přístupové klíče",
+      "sectionDescription": "Přihlašujte se bez hesla pomocí zámku obrazovky zařízení nebo bezpečnostního klíče.",
+      "addButton": "Přidat přístupový klíč",
+      "empty": "Zatím žádné přístupové klíče.",
+      "unnamed": "Přístupový klíč",
+      "createdAt": "Přidán",
+      "lastUsedAt": "Naposledy použit",
+      "removeButton": "Odebrat přístupový klíč",
+      "registered": "Přístupový klíč přidán.",
+      "registerFailed": "Přístupový klíč se nepodařilo přidat.",
+      "removed": "Přístupový klíč odebrán.",
+      "removeFailed": "Přístupový klíč se nepodařilo odebrat.",
+      "signInButton": "Přihlásit se přístupovým klíčem",
+      "signInFailed": "Přihlášení přístupovým klíčem se nezdařilo."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Hlasový režim",
         "voiceCloning": "Klonování hlasu"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Zásada dvoufaktorového ověření",
+      "description": "Zda musí účty dokončit druhý krok přihlášení.",
+      "requireAll": "Vyžadovat druhý faktor od všech uživatelů",
+      "requireAllHint": "Uživatelé bez druhého faktoru si jej nastaví při příštím přihlášení.",
+      "lockedByEnv": "Určeno proměnnou MFA_REQUIRED_MODE.",
+      "saved": "Zásada uložena.",
+      "saveFailed": "Zásadu se nepodařilo uložit."
+    },
+    "mfaReset": "Resetovat druhý faktor",
+    "mfaResetConfirm": "Odebrat druhý faktor uživatele {{name}}? Přihlášení heslem a nové nastavení zůstanou možné.",
+    "mfaResetSuccess": "Druhý faktor uživatele {{name}} odebrán.",
+    "mfaResetNothing": "{{name}} neměl druhý faktor.",
+    "mfaResetFailed": "Reset se nezdařil."
   },
   "usageAnalytics": {
     "eyebrow": "Správa",

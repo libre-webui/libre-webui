@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Inicio de sesión único"
+    },
+    "mfa": {
+      "sectionTitle": "Autenticación en dos pasos",
+      "sectionDescription": "Protege tu cuenta con una aplicación de autenticación y llaves de acceso.",
+      "totpTitle": "Aplicación de autenticación",
+      "totpEnabledHint": "Activada. Códigos de recuperación sin usar: {{count}}",
+      "totpDisabledHint": "Añade un segundo paso al inicio de sesión con contraseña mediante un código de un solo uso.",
+      "enableButton": "Activar",
+      "disableButton": "Desactivar",
+      "activateButton": "Confirmar",
+      "regenerateCodes": "Nuevos códigos de recuperación",
+      "confirmWithCode": "Confirma con un código de tu aplicación o un código de recuperación",
+      "enabled": "La autenticación en dos pasos está activada.",
+      "disabled": "La autenticación en dos pasos está desactivada.",
+      "invalidCode": "Ese código no es válido.",
+      "enrollFailed": "No se pudo iniciar la configuración.",
+      "challengeExpired": "El desafío de inicio de sesión caducó. Inicia sesión de nuevo.",
+      "setupTitle": "Configurar la autenticación en dos pasos",
+      "setupSubtitle": "Esta instancia exige un segundo paso de inicio de sesión. Añade el secreto a tu aplicación de autenticación para continuar.",
+      "verifyTitle": "Introduce tu código",
+      "verifyHint": "Introduce el código de 6 dígitos de tu aplicación de autenticación o un código de recuperación.",
+      "secretHint": "Añade este secreto a tu aplicación de autenticación y confirma con el código actual.",
+      "openAuthenticator": "Abrir en la aplicación de autenticación",
+      "codeLabel": "Código de 6 dígitos",
+      "codeOrRecoveryLabel": "Código o código de recuperación",
+      "codePlaceholder": "123456",
+      "verifyButton": "Verificar",
+      "backToSignIn": "Volver al inicio de sesión",
+      "recoveryCodesTitle": "Códigos de recuperación",
+      "recoveryCodesHint": "Guarda estos códigos en un lugar seguro. Cada uno permite iniciar sesión una vez si pierdes tu autenticador.",
+      "recoveryCodesSaved": "He guardado mis códigos de recuperación",
+      "recoveryCodesRegenerated": "Nuevos códigos de recuperación creados. Los anteriores ya no funcionan."
+    },
+    "passkeys": {
+      "sectionTitle": "Llaves de acceso",
+      "sectionDescription": "Inicia sesión sin contraseña con el bloqueo de pantalla de tu dispositivo o una llave de seguridad.",
+      "addButton": "Añadir llave de acceso",
+      "empty": "Aún no hay llaves de acceso.",
+      "unnamed": "Llave de acceso",
+      "createdAt": "Añadida",
+      "lastUsedAt": "Último uso",
+      "removeButton": "Eliminar llave de acceso",
+      "registered": "Llave de acceso añadida.",
+      "registerFailed": "No se pudo añadir la llave de acceso.",
+      "removed": "Llave de acceso eliminada.",
+      "removeFailed": "No se pudo eliminar la llave de acceso.",
+      "signInButton": "Iniciar sesión con una llave de acceso",
+      "signInFailed": "El inicio de sesión con llave de acceso falló."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Modo de voz",
         "voiceCloning": "Clonación de voz"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Política de dos pasos",
+      "description": "Si las cuentas deben completar un segundo paso de inicio de sesión.",
+      "requireAll": "Exigir dos pasos a todos los usuarios",
+      "requireAllHint": "Quien no tenga un segundo factor deberá configurarlo en su próximo inicio de sesión.",
+      "lockedByEnv": "Fijado por MFA_REQUIRED_MODE.",
+      "saved": "Política de dos pasos guardada.",
+      "saveFailed": "No se pudo guardar la política de dos pasos."
+    },
+    "mfaReset": "Restablecer dos pasos",
+    "mfaResetConfirm": "¿Quitar el segundo factor de {{name}}? Podrá iniciar sesión con su contraseña y configurarlo de nuevo.",
+    "mfaResetSuccess": "Dos pasos eliminados para {{name}}.",
+    "mfaResetNothing": "{{name}} no tenía autenticación en dos pasos.",
+    "mfaResetFailed": "El restablecimiento falló."
   },
   "usageAnalytics": {
     "eyebrow": "Administración",

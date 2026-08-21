@@ -48,7 +48,7 @@ test('new registrations wait for approval and cannot enter the UI', async ({
   await page.getByRole('button', { name: 'Back to sign in' }).click();
   await page.getByLabel('Username').fill('pending-user');
   await page.getByLabel('Password').fill(validPassword);
-  await page.getByRole('button', { name: /sign in/i }).click();
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 
   await expect(page.getByTestId('login-approval-pending')).toBeVisible();
   await expect(page.getByTestId('app-shell-content')).toHaveCount(0);

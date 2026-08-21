@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "シングルサインオン"
+    },
+    "mfa": {
+      "sectionTitle": "2要素認証",
+      "sectionDescription": "認証アプリとパスキーでアカウントを保護します。",
+      "totpTitle": "認証アプリ",
+      "totpEnabledHint": "有効。未使用のリカバリーコード: {{count}}",
+      "totpDisabledHint": "ワンタイムコードでパスワードサインインに2つ目のステップを追加します。",
+      "enableButton": "有効にする",
+      "disableButton": "無効にする",
+      "activateButton": "確認",
+      "regenerateCodes": "新しいリカバリーコード",
+      "confirmWithCode": "アプリのコードまたはリカバリーコードで確認してください",
+      "enabled": "2要素認証が有効になりました。",
+      "disabled": "2要素認証が無効になりました。",
+      "invalidCode": "このコードは無効です。",
+      "enrollFailed": "セットアップを開始できませんでした。",
+      "challengeExpired": "サインインの有効期限が切れました。もう一度サインインしてください。",
+      "setupTitle": "2要素認証を設定",
+      "setupSubtitle": "このインスタンスでは2つ目のサインインステップが必要です。続行するにはシークレットを認証アプリに追加してください。",
+      "verifyTitle": "コードを入力",
+      "verifyHint": "認証アプリの6桁のコード、またはリカバリーコードを入力してください。",
+      "secretHint": "このシークレットを認証アプリに追加し、現在のコードで確認してください。",
+      "openAuthenticator": "認証アプリで開く",
+      "codeLabel": "6桁のコード",
+      "codeOrRecoveryLabel": "コードまたはリカバリーコード",
+      "codePlaceholder": "123456",
+      "verifyButton": "確認する",
+      "backToSignIn": "サインインに戻る",
+      "recoveryCodesTitle": "リカバリーコード",
+      "recoveryCodesHint": "これらのコードを安全な場所に保管してください。認証アプリを失った場合、各コードで1回サインインできます。",
+      "recoveryCodesSaved": "リカバリーコードを保存しました",
+      "recoveryCodesRegenerated": "新しいリカバリーコードを作成しました。古いコードは使えません。"
+    },
+    "passkeys": {
+      "sectionTitle": "パスキー",
+      "sectionDescription": "デバイスの画面ロックやセキュリティキーでパスワードなしでサインインします。",
+      "addButton": "パスキーを追加",
+      "empty": "パスキーはまだありません。",
+      "unnamed": "パスキー",
+      "createdAt": "追加日",
+      "lastUsedAt": "最終使用",
+      "removeButton": "パスキーを削除",
+      "registered": "パスキーを追加しました。",
+      "registerFailed": "パスキーを追加できませんでした。",
+      "removed": "パスキーを削除しました。",
+      "removeFailed": "パスキーを削除できませんでした。",
+      "signInButton": "パスキーでサインイン",
+      "signInFailed": "パスキーでのサインインに失敗しました。"
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "ボイスモード",
         "voiceCloning": "音声クローン"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "2要素ポリシー",
+      "description": "アカウントに2つ目のサインインステップを必須にするかどうか。",
+      "requireAll": "全ユーザーに2要素を必須にする",
+      "requireAllHint": "2つ目の要素がないユーザーは次回サインイン時に設定します。",
+      "lockedByEnv": "MFA_REQUIRED_MODE で固定されています。",
+      "saved": "ポリシーを保存しました。",
+      "saveFailed": "ポリシーを保存できませんでした。"
+    },
+    "mfaReset": "2要素をリセット",
+    "mfaResetConfirm": "{{name}} の2つ目の要素を削除しますか？パスワードでサインインして再設定できます。",
+    "mfaResetSuccess": "{{name}} の2要素を削除しました。",
+    "mfaResetNothing": "{{name}} は2要素を設定していませんでした。",
+    "mfaResetFailed": "リセットに失敗しました。"
   },
   "usageAnalytics": {
     "eyebrow": "管理",

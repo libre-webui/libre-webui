@@ -219,6 +219,8 @@ pre-created directory in a `ReadWritePaths=` service drop-in; see
 | `TURNSTILE_SITE_KEY`          | unset                             | Cloudflare Turnstile site key for login and signup       |
 | `TURNSTILE_SECRET_KEY`        | unset                             | Cloudflare Turnstile secret key for backend verification |
 | `TURNSTILE_EXPECTED_HOSTNAME` | hostname from `BASE_URL`          | Required hostname in Cloudflare's verification response  |
+| `MFA_REQUIRED_MODE`           | unset (admin toggle, `optional`)  | Pin the two-factor policy to `optional` or `required`    |
+| `WEBAUTHN_RP_ID`              | request hostname                  | Fixed relying-party id for passkeys behind many hostnames |
 
 Turnstile is enabled only when both Turnstile keys are present.
 

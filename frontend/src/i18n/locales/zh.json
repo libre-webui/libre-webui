@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "单点登录"
+    },
+    "mfa": {
+      "sectionTitle": "两步验证",
+      "sectionDescription": "使用身份验证器应用和通行密钥保护你的账户。",
+      "totpTitle": "身份验证器应用",
+      "totpEnabledHint": "已启用。未使用的恢复代码：{{count}}",
+      "totpDisabledHint": "使用一次性验证码为密码登录添加第二步。",
+      "enableButton": "启用",
+      "disableButton": "停用",
+      "activateButton": "确认",
+      "regenerateCodes": "新的恢复代码",
+      "confirmWithCode": "使用应用中的验证码或恢复代码确认",
+      "enabled": "两步验证已启用。",
+      "disabled": "两步验证已停用。",
+      "invalidCode": "验证码无效。",
+      "enrollFailed": "无法开始设置。",
+      "challengeExpired": "登录验证已过期，请重新登录。",
+      "setupTitle": "设置两步验证",
+      "setupSubtitle": "此实例要求第二步登录验证。请将密钥添加到你的身份验证器应用以继续。",
+      "verifyTitle": "输入验证码",
+      "verifyHint": "输入身份验证器应用中的 6 位验证码，或恢复代码。",
+      "secretHint": "将此密钥添加到你的身份验证器应用，然后用当前验证码确认。",
+      "openAuthenticator": "在身份验证器应用中打开",
+      "codeLabel": "6 位验证码",
+      "codeOrRecoveryLabel": "验证码或恢复代码",
+      "codePlaceholder": "123456",
+      "verifyButton": "验证",
+      "backToSignIn": "返回登录",
+      "recoveryCodesTitle": "恢复代码",
+      "recoveryCodesHint": "请将这些代码保存在安全的地方。如果你丢失身份验证器，每个代码可登录一次。",
+      "recoveryCodesSaved": "我已保存恢复代码",
+      "recoveryCodesRegenerated": "已生成新的恢复代码，旧代码不再有效。"
+    },
+    "passkeys": {
+      "sectionTitle": "通行密钥",
+      "sectionDescription": "使用设备的屏幕锁或安全密钥免密码登录。",
+      "addButton": "添加通行密钥",
+      "empty": "还没有通行密钥。",
+      "unnamed": "通行密钥",
+      "createdAt": "添加时间",
+      "lastUsedAt": "上次使用",
+      "removeButton": "移除通行密钥",
+      "registered": "已添加通行密钥。",
+      "registerFailed": "无法添加通行密钥。",
+      "removed": "已移除通行密钥。",
+      "removeFailed": "无法移除通行密钥。",
+      "signInButton": "使用通行密钥登录",
+      "signInFailed": "通行密钥登录失败。"
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "语音模式",
         "voiceCloning": "声音克隆"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "两步验证策略",
+      "description": "账户是否必须完成第二步登录验证。",
+      "requireAll": "要求所有用户启用两步验证",
+      "requireAllHint": "没有第二步验证的用户将在下次登录时设置。",
+      "lockedByEnv": "已由 MFA_REQUIRED_MODE 固定。",
+      "saved": "策略已保存。",
+      "saveFailed": "无法保存策略。"
+    },
+    "mfaReset": "重置两步验证",
+    "mfaResetConfirm": "移除 {{name}} 的第二步验证？该用户仍可使用密码登录并重新设置。",
+    "mfaResetSuccess": "已移除 {{name}} 的两步验证。",
+    "mfaResetNothing": "{{name}} 未设置两步验证。",
+    "mfaResetFailed": "重置失败。"
   },
   "usageAnalytics": {
     "eyebrow": "管理",

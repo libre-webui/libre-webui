@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Single sign-on"
+    },
+    "mfa": {
+      "sectionTitle": "Totrinsbekræftelse",
+      "sectionDescription": "Beskyt din konto med en godkendelsesapp og adgangsnøgler.",
+      "totpTitle": "Godkendelsesapp",
+      "totpEnabledHint": "Slået til. Ubrugte gendannelseskoder: {{count}}",
+      "totpDisabledHint": "Tilføj et andet trin til adgangskodelogin med en engangskode.",
+      "enableButton": "Slå til",
+      "disableButton": "Slå fra",
+      "activateButton": "Bekræft",
+      "regenerateCodes": "Nye gendannelseskoder",
+      "confirmWithCode": "Bekræft med en kode fra din app eller en gendannelseskode",
+      "enabled": "Totrinsbekræftelse er slået til.",
+      "disabled": "Totrinsbekræftelse er slået fra.",
+      "invalidCode": "Koden er ikke gyldig.",
+      "enrollFailed": "Opsætningen kunne ikke startes.",
+      "challengeExpired": "Login-udfordringen udløb. Log ind igen.",
+      "setupTitle": "Opsæt totrinsbekræftelse",
+      "setupSubtitle": "Denne instans kræver et andet login-trin. Tilføj hemmeligheden til din godkendelsesapp for at fortsætte.",
+      "verifyTitle": "Indtast din kode",
+      "verifyHint": "Indtast den 6-cifrede kode fra din godkendelsesapp eller en gendannelseskode.",
+      "secretHint": "Tilføj denne hemmelighed til din godkendelsesapp, og bekræft med den aktuelle kode.",
+      "openAuthenticator": "Åbn i godkendelsesapp",
+      "codeLabel": "6-cifret kode",
+      "codeOrRecoveryLabel": "Kode eller gendannelseskode",
+      "codePlaceholder": "123456",
+      "verifyButton": "Bekræft",
+      "backToSignIn": "Tilbage til login",
+      "recoveryCodesTitle": "Gendannelseskoder",
+      "recoveryCodesHint": "Opbevar koderne et sikkert sted. Hver kode giver ét login, hvis du mister din godkendelsesapp.",
+      "recoveryCodesSaved": "Jeg har gemt mine gendannelseskoder",
+      "recoveryCodesRegenerated": "Nye gendannelseskoder oprettet. De gamle virker ikke længere."
+    },
+    "passkeys": {
+      "sectionTitle": "Adgangsnøgler",
+      "sectionDescription": "Log ind uden adgangskode med din enheds skærmlås eller en sikkerhedsnøgle.",
+      "addButton": "Tilføj adgangsnøgle",
+      "empty": "Ingen adgangsnøgler endnu.",
+      "unnamed": "Adgangsnøgle",
+      "createdAt": "Tilføjet",
+      "lastUsedAt": "Senest brugt",
+      "removeButton": "Fjern adgangsnøgle",
+      "registered": "Adgangsnøgle tilføjet.",
+      "registerFailed": "Adgangsnøglen kunne ikke tilføjes.",
+      "removed": "Adgangsnøgle fjernet.",
+      "removeFailed": "Adgangsnøglen kunne ikke fjernes.",
+      "signInButton": "Log ind med en adgangsnøgle",
+      "signInFailed": "Login med adgangsnøgle mislykkedes."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Stemmetilstand",
         "voiceCloning": "Stemmekloning"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Totrinspolitik",
+      "description": "Om konti skal gennemføre et andet login-trin.",
+      "requireAll": "Kræv totrinsbekræftelse af alle brugere",
+      "requireAllHint": "Brugere uden en anden faktor skal opsætte den ved næste login.",
+      "lockedByEnv": "Fastlåst af MFA_REQUIRED_MODE.",
+      "saved": "Totrinspolitik gemt.",
+      "saveFailed": "Totrinspolitikken kunne ikke gemmes."
+    },
+    "mfaReset": "Nulstil totrinsbekræftelse",
+    "mfaResetConfirm": "Fjern den anden faktor for {{name}}? Login med adgangskode og ny opsætning er stadig muligt.",
+    "mfaResetSuccess": "Totrinsbekræftelse fjernet for {{name}}.",
+    "mfaResetNothing": "{{name}} havde ingen totrinsbekræftelse.",
+    "mfaResetFailed": "Nulstillingen mislykkedes."
   },
   "usageAnalytics": {
     "eyebrow": "Administration",

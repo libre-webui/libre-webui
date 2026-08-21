@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Logowanie jednokrotne"
+    },
+    "mfa": {
+      "sectionTitle": "Uwierzytelnianie dwuskładnikowe",
+      "sectionDescription": "Chroń swoje konto aplikacją uwierzytelniającą i kluczami dostępu.",
+      "totpTitle": "Aplikacja uwierzytelniająca",
+      "totpEnabledHint": "Włączone. Niewykorzystane kody odzyskiwania: {{count}}",
+      "totpDisabledHint": "Dodaj drugi krok logowania hasłem za pomocą kodu jednorazowego.",
+      "enableButton": "Włącz",
+      "disableButton": "Wyłącz",
+      "activateButton": "Potwierdź",
+      "regenerateCodes": "Nowe kody odzyskiwania",
+      "confirmWithCode": "Potwierdź kodem z aplikacji lub kodem odzyskiwania",
+      "enabled": "Uwierzytelnianie dwuskładnikowe jest włączone.",
+      "disabled": "Uwierzytelnianie dwuskładnikowe jest wyłączone.",
+      "invalidCode": "Ten kod jest nieprawidłowy.",
+      "enrollFailed": "Nie udało się rozpocząć konfiguracji.",
+      "challengeExpired": "Żądanie logowania wygasło. Zaloguj się ponownie.",
+      "setupTitle": "Skonfiguruj uwierzytelnianie dwuskładnikowe",
+      "setupSubtitle": "Ta instancja wymaga drugiego kroku logowania. Dodaj sekret do aplikacji uwierzytelniającej, aby kontynuować.",
+      "verifyTitle": "Wpisz kod",
+      "verifyHint": "Wpisz 6-cyfrowy kod z aplikacji uwierzytelniającej lub kod odzyskiwania.",
+      "secretHint": "Dodaj ten sekret do aplikacji uwierzytelniającej, a następnie potwierdź bieżącym kodem.",
+      "openAuthenticator": "Otwórz w aplikacji uwierzytelniającej",
+      "codeLabel": "Kod 6-cyfrowy",
+      "codeOrRecoveryLabel": "Kod lub kod odzyskiwania",
+      "codePlaceholder": "123456",
+      "verifyButton": "Zweryfikuj",
+      "backToSignIn": "Wróć do logowania",
+      "recoveryCodesTitle": "Kody odzyskiwania",
+      "recoveryCodesHint": "Przechowuj te kody w bezpiecznym miejscu. Każdy z nich pozwala zalogować się raz, gdy utracisz aplikację uwierzytelniającą.",
+      "recoveryCodesSaved": "Zapisałem kody odzyskiwania",
+      "recoveryCodesRegenerated": "Utworzono nowe kody odzyskiwania. Stare już nie działają."
+    },
+    "passkeys": {
+      "sectionTitle": "Klucze dostępu",
+      "sectionDescription": "Loguj się bez hasła za pomocą blokady ekranu urządzenia lub klucza bezpieczeństwa.",
+      "addButton": "Dodaj klucz dostępu",
+      "empty": "Brak kluczy dostępu.",
+      "unnamed": "Klucz dostępu",
+      "createdAt": "Dodano",
+      "lastUsedAt": "Ostatnio użyty",
+      "removeButton": "Usuń klucz dostępu",
+      "registered": "Dodano klucz dostępu.",
+      "registerFailed": "Nie udało się dodać klucza dostępu.",
+      "removed": "Usunięto klucz dostępu.",
+      "removeFailed": "Nie udało się usunąć klucza dostępu.",
+      "signInButton": "Zaloguj się kluczem dostępu",
+      "signInFailed": "Logowanie kluczem dostępu nie powiodło się."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Tryb głosowy",
         "voiceCloning": "Klonowanie głosu"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Zasady dwuskładnikowe",
+      "description": "Czy konta muszą wykonywać drugi krok logowania.",
+      "requireAll": "Wymagaj drugiego składnika od wszystkich",
+      "requireAllHint": "Użytkownicy bez drugiego składnika skonfigurują go przy następnym logowaniu.",
+      "lockedByEnv": "Ustalone przez MFA_REQUIRED_MODE.",
+      "saved": "Zapisano zasady dwuskładnikowe.",
+      "saveFailed": "Nie udało się zapisać zasad dwuskładnikowych."
+    },
+    "mfaReset": "Zresetuj drugi składnik",
+    "mfaResetConfirm": "Usunąć drugi składnik użytkownika {{name}}? Będzie można zalogować się hasłem i skonfigurować go ponownie.",
+    "mfaResetSuccess": "Usunięto drugi składnik użytkownika {{name}}.",
+    "mfaResetNothing": "{{name}} nie miał(a) drugiego składnika.",
+    "mfaResetFailed": "Resetowanie nie powiodło się."
   },
   "usageAnalytics": {
     "eyebrow": "Administracja",

@@ -270,6 +270,50 @@ router.patch(
 );
 
 /**
+ * Reset a user's second factor (admin account recovery). Removes the TOTP
+ * enrollment and recovery codes so the user can sign in with their password
+ * and re-enroll. Passkeys are left in place: they are sign-in credentials
+ * the user manages from settings.
+ */
+router.post(
+  '/:id/mfa/reset',
+  userRateLimiter,
+  authenticate,
+  requireAdmin,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const id = req.params.id as string;
+      const existingUser = await userModel.getUserById(id);
+      if (!existingUser) {
+        res.status(404).json({ success: false, message: 'User not found' });
+        return;
+      }
+      const { adminResetMfa } = await import('../services/mfaService.js');
+      const removed = await adminResetMfa(id);
+      const { recordAuditEvent } =
+        await import('../services/securityAuditService.js');
+      void recordAuditEvent({
+        action: 'admin.mfa.reset',
+        result: 'success',
+        actorUserId: req.user!.userId,
+        targetType: 'user',
+        targetId: id,
+        details: { removed },
+      });
+      logger.info(
+        `Administrator ${req.user!.username} reset MFA for ${existingUser.username}`
+      );
+      res.json({ success: true, data: { removed } });
+    } catch (error) {
+      logger.error('MFA reset error:', error);
+      res
+        .status(500)
+        .json({ success: false, message: 'Internal server error' });
+    }
+  }
+);
+
+/**
  * Update a user (admin only)
  */
 router.patch(

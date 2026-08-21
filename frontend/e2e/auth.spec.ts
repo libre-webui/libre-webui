@@ -203,9 +203,11 @@ test('demo mode login is click-only with disabled demo credentials', async ({
   await expect(page.getByLabel('Username')).toBeDisabled();
   await expect(page.getByLabel('Password')).toHaveValue('demo');
   await expect(page.getByLabel('Password')).toBeDisabled();
-  await expect(page.getByRole('button', { name: /sign in/i })).toBeEnabled();
+  await expect(
+    page.getByRole('button', { name: 'Sign In', exact: true })
+  ).toBeEnabled();
 
-  await page.getByRole('button', { name: /sign in/i }).click();
+  await page.getByRole('button', { name: 'Sign In', exact: true }).click();
 
   await expect(page.getByText('Demo Mode')).toBeVisible();
   // Signing in lands on the Home launcher tab, not straight into a chat.
@@ -268,7 +270,10 @@ test('password login requires and submits a Turnstile token', async ({
 
   await page.goto('/login');
 
-  const signInButton = page.getByRole('button', { name: /sign in/i });
+  const signInButton = page.getByRole('button', {
+    name: 'Sign In',
+    exact: true,
+  });
   await expect(page.getByLabel('Security verification')).toBeVisible();
   await expect(signInButton).toBeDisabled();
 

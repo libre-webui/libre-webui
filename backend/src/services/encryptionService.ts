@@ -456,6 +456,19 @@ export class EncryptionService {
   }
 
   /**
+   * Domain-separated variant of {@link lookupToken} for other equality-only
+   * lookups (MFA recovery codes, passkey credential ids, push endpoints).
+   * The purpose string keeps tokens from one domain unusable in another.
+   */
+  public purposeLookupToken(purpose: string, plaintext: string): string {
+    return crypto
+      .createHmac('sha256', this.encryptionKey)
+      .update(`libre:${purpose}:v1\0`, 'utf8')
+      .update(plaintext, 'utf8')
+      .digest('hex');
+  }
+
+  /**
    * Generate a new encryption key
    */
   public static generateKey(): string {

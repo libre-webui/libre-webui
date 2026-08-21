@@ -20,8 +20,18 @@ import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
-import { authApi } from '@/utils/api';
-import { Clock3, Eye, EyeOff, LogIn } from 'lucide-react';
+import { authApi, isMfaChallenge } from '@/utils/api';
+import type { MfaChallengeResponse } from '@/utils/api';
+import type { LoginResponse } from '@/types';
+import {
+  Clock3,
+  Eye,
+  EyeOff,
+  KeyRound,
+  LogIn,
+  ShieldCheck,
+} from 'lucide-react';
+import { getPasskeyAssertion, passkeysSupported } from '@/utils/webauthnClient';
 import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 import { HuggingFaceAuthButton } from '@/components/HuggingFaceAuthButton';
 import { OidcAuthButton } from '@/components/OidcAuthButton';
@@ -67,6 +77,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     initialApprovalPending
   );
   const [turnstileToken, setTurnstileToken] = useState('');
+  const [mfaChallenge, setMfaChallenge] = useState<MfaChallengeResponse | null>(
+    null
+  );
+  const [mfaCode, setMfaCode] = useState('');
+  const [enrollment, setEnrollment] = useState<{
+    secret: string;
+    otpauthUrl: string;
+  } | null>(null);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
+  const [pendingLogin, setPendingLogin] = useState<LoginResponse | null>(null);
   const navigate = useNavigate();
   const { login, systemInfo } = useAuthStore();
   const turnstileSiteKey = systemInfo?.turnstile?.siteKey;
@@ -116,6 +136,22 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       });
 
       if (response.success && response.data) {
+        if (isMfaChallenge(response.data)) {
+          setMfaChallenge(response.data);
+          setMfaCode('');
+          if (response.data.requirement === 'enroll') {
+            const enrollResponse = await authApi.mfaEnrollChallenge({
+              challengeToken: response.data.challengeToken,
+            });
+            if (enrollResponse.success && enrollResponse.data) {
+              setEnrollment(enrollResponse.data);
+            } else {
+              toast.error(enrollResponse.message || t('auth.mfa.enrollFailed'));
+              setMfaChallenge(null);
+            }
+          }
+          return;
+        }
         login(
           response.data.user,
           response.data.token,
@@ -150,6 +186,97 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     }
   };
 
+  const completeLogin = (data: LoginResponse) => {
+    login(data.user, data.token, data.systemInfo);
+    toast.success(t('auth.login.loginSuccess'));
+    onLogin?.();
+    navigate('/');
+  };
+
+  const handleMfaSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!mfaChallenge || !mfaCode.trim()) return;
+    setIsLoading(true);
+    try {
+      if (mfaChallenge.requirement === 'enroll') {
+        const response = await authApi.mfaActivateChallenge({
+          challengeToken: mfaChallenge.challengeToken,
+          code: mfaCode.trim(),
+        });
+        if (response.success && response.data) {
+          const { recoveryCodes: codes, ...loginData } = response.data;
+          setPendingLogin(loginData);
+          setRecoveryCodes(codes);
+        } else {
+          toast.error(response.message || t('auth.mfa.invalidCode'));
+        }
+        return;
+      }
+      const response = await authApi.mfaVerify({
+        challengeToken: mfaChallenge.challengeToken,
+        code: mfaCode.trim(),
+      });
+      if (response.success && response.data) {
+        completeLogin(response.data);
+      } else {
+        toast.error(response.message || t('auth.mfa.invalidCode'));
+      }
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string } } };
+      const message = apiError.response?.data?.message;
+      if (message && /challenge/i.test(message)) {
+        // The 5-minute challenge expired: back to the password step.
+        toast.error(t('auth.mfa.challengeExpired'));
+        setMfaChallenge(null);
+        setEnrollment(null);
+      } else {
+        toast.error(message || t('auth.mfa.invalidCode'));
+      }
+    } finally {
+      setMfaCode('');
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasskeyLogin = async () => {
+    setIsLoading(true);
+    try {
+      const optionsResponse = await authApi.passkeyLoginOptions();
+      if (!optionsResponse.success || !optionsResponse.data) {
+        toast.error(optionsResponse.message || t('auth.passkeys.signInFailed'));
+        return;
+      }
+      const credential = await getPasskeyAssertion(
+        optionsResponse.data.publicKey
+      );
+      const response = await authApi.passkeyLogin({
+        challengeToken: optionsResponse.data.challengeToken,
+        credential,
+      });
+      if (response.success && response.data) {
+        localStorage.removeItem('auth-token');
+        completeLogin(response.data);
+      } else {
+        toast.error(response.message || t('auth.passkeys.signInFailed'));
+      }
+    } catch (error: unknown) {
+      const domError = error as { name?: string };
+      if (
+        domError.name === 'NotAllowedError' ||
+        domError.name === 'AbortError'
+      ) {
+        return; // The user dismissed the browser prompt.
+      }
+      const apiError = error as { response?: { data?: { message?: string } } };
+      logger.error('Passkey login error:', error);
+      toast.error(
+        apiError.response?.data?.message || t('auth.passkeys.signInFailed')
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       // Find the form and trigger submit
@@ -159,6 +286,141 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       }
     }
   };
+
+  const cardClass = cn(
+    'mx-auto w-full max-w-md',
+    !bare &&
+      'rounded-3xl border border-line bg-surface-raised p-6 shadow-card sm:p-8'
+  );
+
+  const inputClass =
+    'h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-line-strong focus:ring-2 focus:ring-primary-500/35 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-muted motion-reduce:transition-none';
+
+  if (recoveryCodes && pendingLogin) {
+    return (
+      <div className={cardClass} data-testid='login-recovery-codes'>
+        <div className={cn('mb-6', bare ? 'text-start' : 'text-center')}>
+          <h1 className='mb-2 text-2xl font-light tracking-[-0.04em] text-ink'>
+            {t('auth.mfa.recoveryCodesTitle')}
+          </h1>
+          <p className='text-sm leading-6 text-ink-muted'>
+            {t('auth.mfa.recoveryCodesHint')}
+          </p>
+        </div>
+        <div className='mb-6 grid grid-cols-2 gap-2 rounded-xl border border-line bg-surface p-4 font-mono text-sm text-ink'>
+          {recoveryCodes.map(code => (
+            <span key={code} dir='ltr'>
+              {code}
+            </span>
+          ))}
+        </div>
+        <button
+          type='button'
+          onClick={() => completeLogin(pendingLogin)}
+          className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
+        >
+          {t('auth.mfa.recoveryCodesSaved')}
+        </button>
+      </div>
+    );
+  }
+
+  if (mfaChallenge) {
+    const enrolling = mfaChallenge.requirement === 'enroll';
+    return (
+      <div className={cardClass} data-testid='login-mfa-step'>
+        <div className={cn('mb-6', bare ? 'text-start' : 'text-center')}>
+          <div
+            className={cn(
+              'mb-3 flex',
+              bare ? 'justify-start' : 'justify-center'
+            )}
+          >
+            <ShieldCheck aria-hidden='true' className='h-8 w-8 text-ink' />
+          </div>
+          <h1 className='mb-2 text-2xl font-light tracking-[-0.04em] text-ink'>
+            {enrolling ? t('auth.mfa.setupTitle') : t('auth.mfa.verifyTitle')}
+          </h1>
+          <p className='text-sm leading-6 text-ink-muted'>
+            {enrolling ? t('auth.mfa.setupSubtitle') : t('auth.mfa.verifyHint')}
+          </p>
+        </div>
+        {enrolling && enrollment && (
+          <div className='mb-5 space-y-3 rounded-xl border border-line bg-surface p-4 text-start'>
+            <p className='text-xs leading-5 text-ink-muted'>
+              {t('auth.mfa.secretHint')}
+            </p>
+            <code
+              dir='ltr'
+              data-testid='mfa-enroll-secret'
+              className='block break-all font-mono text-sm text-ink'
+            >
+              {enrollment.secret}
+            </code>
+            <a
+              href={enrollment.otpauthUrl}
+              dir='ltr'
+              className='inline-block text-xs font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400'
+            >
+              {t('auth.mfa.openAuthenticator')}
+            </a>
+          </div>
+        )}
+        <form onSubmit={handleMfaSubmit} className='space-y-5'>
+          <div>
+            <label
+              htmlFor='mfa-code'
+              className='mb-2 block text-sm font-medium text-ink'
+            >
+              {enrolling
+                ? t('auth.mfa.codeLabel')
+                : t('auth.mfa.codeOrRecoveryLabel')}
+            </label>
+            <input
+              id='mfa-code'
+              data-testid='mfa-code-input'
+              type='text'
+              inputMode='numeric'
+              autoComplete='one-time-code'
+              autoFocus
+              dir='ltr'
+              value={mfaCode}
+              onChange={e => setMfaCode(e.target.value)}
+              className={inputClass}
+              placeholder={t('auth.mfa.codePlaceholder')}
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <button
+            type='submit'
+            disabled={isLoading || !mfaCode.trim()}
+            className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
+          >
+            {isLoading ? (
+              <div className='flex items-center'>
+                <div className='me-2 h-4 w-4 animate-spin rounded-full border-b-2 border-current'></div>
+                {t('auth.login.signingIn')}
+              </div>
+            ) : (
+              t('auth.mfa.verifyButton')
+            )}
+          </button>
+          <button
+            type='button'
+            onClick={() => {
+              setMfaChallenge(null);
+              setEnrollment(null);
+              setMfaCode('');
+            }}
+            className='w-full text-center text-sm font-medium text-ink-muted transition-colors hover:text-ink'
+          >
+            {t('auth.mfa.backToSignIn')}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -280,6 +542,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           )}
         </button>
       </form>
+
+      {!isDemo && passkeysSupported() && (
+        <button
+          type='button'
+          data-testid='passkey-signin-button'
+          onClick={handlePasskeyLogin}
+          disabled={isLoading}
+          className='mt-3 flex h-11 w-full items-center justify-center rounded-xl border border-line bg-surface px-4 text-sm font-medium text-ink shadow-subtle transition-colors hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
+        >
+          <KeyRound size={16} className='me-2' />
+          {t('auth.passkeys.signInButton')}
+        </button>
+      )}
 
       {!isDemo && (
         <>

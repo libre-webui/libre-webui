@@ -3018,6 +3018,12 @@
           "mount": "/api/users",
           "method": "DELETE",
           "path": "/:id"
+        },
+        {
+          "file": "backend/src/routes/users.ts",
+          "mount": "/api/users",
+          "method": "POST",
+          "path": "/:id/mfa/reset"
         }
       ],
       "contractSurfaces": {
@@ -3057,7 +3063,15 @@
           "file": "docs/12-AUTHENTICATION.md",
           "patterns": [
             "Every login also creates a server-side session record bound into the JWT",
-            "Settings \u2192 API keys mints personal access tokens"
+            "Settings → API keys mints personal access tokens"
+          ]
+        },
+        {
+          "file": "docs/12-AUTHENTICATION.md",
+          "patterns": [
+            "confirming the first 6-digit",
+            "recovery codes are stored only as keyed one-way",
+            "Challenges are one-use and expire after five minutes"
           ]
         }
       ],
@@ -3096,6 +3110,24 @@
           "behaviorPatterns": [
             "verifyIdToken\\(token, 'expected-nonce'\\)",
             "claims\\.sub, 'verify-sub'"
+          ]
+        },
+        {
+          "file": "scripts/test-mfa.mjs",
+          "runner": "test:package",
+          "name": "password login returns an MFA challenge, and the challenge is not a session",
+          "behaviorPatterns": [
+            "challenge token must never authenticate",
+            "consumeMfaChallenge\\(challenge\\.jti\\), false"
+          ]
+        },
+        {
+          "file": "scripts/test-mfa.mjs",
+          "runner": "test:package",
+          "name": "a passkey assertion signs the user in and challenges are one-use",
+          "behaviorPatterns": [
+            "verifyPasskeyLogin",
+            "already used"
           ]
         }
       ],
@@ -3243,6 +3275,102 @@
           "mount": "/api/auth",
           "method": "GET",
           "path": "/oauth/oidc/status"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/mfa/verify"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/mfa/enroll-challenge"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/mfa/activate-challenge"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/mfa"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/mfa/enroll"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/mfa/activate"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/mfa/recovery-codes"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/mfa/disable"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/mfa/policy"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "PUT",
+          "path": "/mfa/policy"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/passkeys/register-options"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/passkeys/register"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "GET",
+          "path": "/passkeys"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "DELETE",
+          "path": "/passkeys/:id"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/passkeys/login-options"
+        },
+        {
+          "file": "backend/src/routes/auth.ts",
+          "mount": "/api/auth",
+          "method": "POST",
+          "path": "/passkeys/login"
         }
       ],
       "contractSurfaces": {
@@ -3505,7 +3633,7 @@
         {
           "file": "docs/41-DATA_PORTABILITY.md",
           "patterns": [
-            "Settings \u2192 Data Management",
+            "Settings → Data Management",
             "GET`  \\| `/api/preferences/export"
           ]
         }

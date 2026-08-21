@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Login único"
+    },
+    "mfa": {
+      "sectionTitle": "Autenticação em dois fatores",
+      "sectionDescription": "Proteja sua conta com um aplicativo autenticador e chaves de acesso.",
+      "totpTitle": "Aplicativo autenticador",
+      "totpEnabledHint": "Ativada. Códigos de recuperação não usados: {{count}}",
+      "totpDisabledHint": "Adicione uma segunda etapa ao login com senha usando um código de uso único.",
+      "enableButton": "Ativar",
+      "disableButton": "Desativar",
+      "activateButton": "Confirmar",
+      "regenerateCodes": "Novos códigos de recuperação",
+      "confirmWithCode": "Confirme com um código do seu aplicativo ou um código de recuperação",
+      "enabled": "A autenticação em dois fatores está ativada.",
+      "disabled": "A autenticação em dois fatores está desativada.",
+      "invalidCode": "Esse código não é válido.",
+      "enrollFailed": "Não foi possível iniciar a configuração.",
+      "challengeExpired": "O desafio de login expirou. Entre novamente.",
+      "setupTitle": "Configurar a autenticação em dois fatores",
+      "setupSubtitle": "Esta instância exige uma segunda etapa de login. Adicione o segredo ao seu aplicativo autenticador para continuar.",
+      "verifyTitle": "Digite seu código",
+      "verifyHint": "Digite o código de 6 dígitos do seu aplicativo autenticador ou um código de recuperação.",
+      "secretHint": "Adicione este segredo ao seu aplicativo autenticador e confirme com o código atual.",
+      "openAuthenticator": "Abrir no aplicativo autenticador",
+      "codeLabel": "Código de 6 dígitos",
+      "codeOrRecoveryLabel": "Código ou código de recuperação",
+      "codePlaceholder": "123456",
+      "verifyButton": "Verificar",
+      "backToSignIn": "Voltar ao login",
+      "recoveryCodesTitle": "Códigos de recuperação",
+      "recoveryCodesHint": "Guarde estes códigos em local seguro. Cada um permite entrar uma vez se você perder seu autenticador.",
+      "recoveryCodesSaved": "Salvei meus códigos de recuperação",
+      "recoveryCodesRegenerated": "Novos códigos de recuperação criados. Os antigos não funcionam mais."
+    },
+    "passkeys": {
+      "sectionTitle": "Chaves de acesso",
+      "sectionDescription": "Entre sem senha usando o bloqueio de tela do seu dispositivo ou uma chave de segurança.",
+      "addButton": "Adicionar chave de acesso",
+      "empty": "Nenhuma chave de acesso ainda.",
+      "unnamed": "Chave de acesso",
+      "createdAt": "Adicionada",
+      "lastUsedAt": "Último uso",
+      "removeButton": "Remover chave de acesso",
+      "registered": "Chave de acesso adicionada.",
+      "registerFailed": "Não foi possível adicionar a chave de acesso.",
+      "removed": "Chave de acesso removida.",
+      "removeFailed": "Não foi possível remover a chave de acesso.",
+      "signInButton": "Entrar com uma chave de acesso",
+      "signInFailed": "Falha no login com chave de acesso."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Modo de voz",
         "voiceCloning": "Clonagem de voz"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Política de dois fatores",
+      "description": "Se as contas devem concluir uma segunda etapa de login.",
+      "requireAll": "Exigir dois fatores de todos os usuários",
+      "requireAllHint": "Quem não tiver um segundo fator precisará configurá-lo no próximo login.",
+      "lockedByEnv": "Fixado por MFA_REQUIRED_MODE.",
+      "saved": "Política de dois fatores salva.",
+      "saveFailed": "Não foi possível salvar a política de dois fatores."
+    },
+    "mfaReset": "Redefinir dois fatores",
+    "mfaResetConfirm": "Remover o segundo fator de {{name}}? A pessoa poderá entrar com a senha e configurá-lo novamente.",
+    "mfaResetSuccess": "Dois fatores removidos para {{name}}.",
+    "mfaResetNothing": "{{name}} não tinha autenticação em dois fatores.",
+    "mfaResetFailed": "A redefinição falhou."
   },
   "usageAnalytics": {
     "eyebrow": "Administração",

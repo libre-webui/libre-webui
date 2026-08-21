@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "통합 로그인"
+    },
+    "mfa": {
+      "sectionTitle": "2단계 인증",
+      "sectionDescription": "인증 앱과 패스키로 계정을 보호하세요.",
+      "totpTitle": "인증 앱",
+      "totpEnabledHint": "사용 중. 남은 복구 코드: {{count}}",
+      "totpDisabledHint": "일회용 코드로 비밀번호 로그인에 두 번째 단계를 추가합니다.",
+      "enableButton": "사용",
+      "disableButton": "사용 안 함",
+      "activateButton": "확인",
+      "regenerateCodes": "새 복구 코드",
+      "confirmWithCode": "앱의 코드 또는 복구 코드로 확인하세요",
+      "enabled": "2단계 인증이 활성화되었습니다.",
+      "disabled": "2단계 인증이 비활성화되었습니다.",
+      "invalidCode": "코드가 올바르지 않습니다.",
+      "enrollFailed": "설정을 시작할 수 없습니다.",
+      "challengeExpired": "로그인 요청이 만료되었습니다. 다시 로그인해 주세요.",
+      "setupTitle": "2단계 인증 설정",
+      "setupSubtitle": "이 인스턴스는 두 번째 로그인 단계를 요구합니다. 계속하려면 비밀 키를 인증 앱에 추가하세요.",
+      "verifyTitle": "코드 입력",
+      "verifyHint": "인증 앱의 6자리 코드 또는 복구 코드를 입력하세요.",
+      "secretHint": "이 비밀 키를 인증 앱에 추가한 뒤 현재 코드로 확인하세요.",
+      "openAuthenticator": "인증 앱에서 열기",
+      "codeLabel": "6자리 코드",
+      "codeOrRecoveryLabel": "코드 또는 복구 코드",
+      "codePlaceholder": "123456",
+      "verifyButton": "확인",
+      "backToSignIn": "로그인으로 돌아가기",
+      "recoveryCodesTitle": "복구 코드",
+      "recoveryCodesHint": "이 코드를 안전한 곳에 보관하세요. 인증 앱을 잃어버리면 각 코드로 한 번씩 로그인할 수 있습니다.",
+      "recoveryCodesSaved": "복구 코드를 저장했습니다",
+      "recoveryCodesRegenerated": "새 복구 코드가 생성되었습니다. 이전 코드는 더 이상 사용할 수 없습니다."
+    },
+    "passkeys": {
+      "sectionTitle": "패스키",
+      "sectionDescription": "기기의 화면 잠금 또는 보안 키로 비밀번호 없이 로그인하세요.",
+      "addButton": "패스키 추가",
+      "empty": "아직 패스키가 없습니다.",
+      "unnamed": "패스키",
+      "createdAt": "추가됨",
+      "lastUsedAt": "마지막 사용",
+      "removeButton": "패스키 삭제",
+      "registered": "패스키가 추가되었습니다.",
+      "registerFailed": "패스키를 추가할 수 없습니다.",
+      "removed": "패스키가 삭제되었습니다.",
+      "removeFailed": "패스키를 삭제할 수 없습니다.",
+      "signInButton": "패스키로 로그인",
+      "signInFailed": "패스키 로그인에 실패했습니다."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "음성 모드",
         "voiceCloning": "음성 복제"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "2단계 정책",
+      "description": "계정이 두 번째 로그인 단계를 완료해야 하는지 여부.",
+      "requireAll": "모든 사용자에게 2단계 요구",
+      "requireAllHint": "두 번째 요소가 없는 사용자는 다음 로그인 시 설정합니다.",
+      "lockedByEnv": "MFA_REQUIRED_MODE로 고정되었습니다.",
+      "saved": "정책이 저장되었습니다.",
+      "saveFailed": "정책을 저장할 수 없습니다."
+    },
+    "mfaReset": "2단계 재설정",
+    "mfaResetConfirm": "{{name}}의 두 번째 요소를 제거할까요? 비밀번호로 로그인하고 다시 설정할 수 있습니다.",
+    "mfaResetSuccess": "{{name}}의 2단계가 제거되었습니다.",
+    "mfaResetNothing": "{{name}}은(는) 2단계를 설정하지 않았습니다.",
+    "mfaResetFailed": "재설정에 실패했습니다."
   },
   "usageAnalytics": {
     "eyebrow": "관리",

@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Đăng nhập một lần"
+    },
+    "mfa": {
+      "sectionTitle": "Xác thực hai bước",
+      "sectionDescription": "Bảo vệ tài khoản của bạn bằng ứng dụng xác thực và khóa truy cập.",
+      "totpTitle": "Ứng dụng xác thực",
+      "totpEnabledHint": "Đã bật. Mã khôi phục chưa dùng: {{count}}",
+      "totpDisabledHint": "Thêm bước thứ hai vào đăng nhập bằng mật khẩu với mã dùng một lần.",
+      "enableButton": "Bật",
+      "disableButton": "Tắt",
+      "activateButton": "Xác nhận",
+      "regenerateCodes": "Mã khôi phục mới",
+      "confirmWithCode": "Xác nhận bằng mã từ ứng dụng của bạn hoặc mã khôi phục",
+      "enabled": "Xác thực hai bước đã được bật.",
+      "disabled": "Xác thực hai bước đã bị tắt.",
+      "invalidCode": "Mã đó không hợp lệ.",
+      "enrollFailed": "Không thể bắt đầu thiết lập.",
+      "challengeExpired": "Yêu cầu đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+      "setupTitle": "Thiết lập xác thực hai bước",
+      "setupSubtitle": "Hệ thống này yêu cầu bước đăng nhập thứ hai. Thêm khóa bí mật vào ứng dụng xác thực để tiếp tục.",
+      "verifyTitle": "Nhập mã của bạn",
+      "verifyHint": "Nhập mã 6 chữ số từ ứng dụng xác thực, hoặc mã khôi phục.",
+      "secretHint": "Thêm khóa bí mật này vào ứng dụng xác thực, sau đó xác nhận bằng mã hiện tại.",
+      "openAuthenticator": "Mở trong ứng dụng xác thực",
+      "codeLabel": "Mã 6 chữ số",
+      "codeOrRecoveryLabel": "Mã hoặc mã khôi phục",
+      "codePlaceholder": "123456",
+      "verifyButton": "Xác minh",
+      "backToSignIn": "Quay lại đăng nhập",
+      "recoveryCodesTitle": "Mã khôi phục",
+      "recoveryCodesHint": "Lưu các mã này ở nơi an toàn. Mỗi mã cho phép đăng nhập một lần nếu bạn mất ứng dụng xác thực.",
+      "recoveryCodesSaved": "Tôi đã lưu mã khôi phục",
+      "recoveryCodesRegenerated": "Đã tạo mã khôi phục mới. Mã cũ không còn hiệu lực."
+    },
+    "passkeys": {
+      "sectionTitle": "Khóa truy cập",
+      "sectionDescription": "Đăng nhập không cần mật khẩu bằng khóa màn hình thiết bị hoặc khóa bảo mật.",
+      "addButton": "Thêm khóa truy cập",
+      "empty": "Chưa có khóa truy cập.",
+      "unnamed": "Khóa truy cập",
+      "createdAt": "Đã thêm",
+      "lastUsedAt": "Dùng lần cuối",
+      "removeButton": "Xóa khóa truy cập",
+      "registered": "Đã thêm khóa truy cập.",
+      "registerFailed": "Không thể thêm khóa truy cập.",
+      "removed": "Đã xóa khóa truy cập.",
+      "removeFailed": "Không thể xóa khóa truy cập.",
+      "signInButton": "Đăng nhập bằng khóa truy cập",
+      "signInFailed": "Đăng nhập bằng khóa truy cập thất bại."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Chế độ giọng nói",
         "voiceCloning": "Nhân bản giọng nói"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Chính sách hai bước",
+      "description": "Tài khoản có bắt buộc hoàn thành bước đăng nhập thứ hai hay không.",
+      "requireAll": "Bắt buộc hai bước với mọi người dùng",
+      "requireAllHint": "Người dùng chưa có yếu tố thứ hai sẽ thiết lập ở lần đăng nhập tiếp theo.",
+      "lockedByEnv": "Được cố định bởi MFA_REQUIRED_MODE.",
+      "saved": "Đã lưu chính sách.",
+      "saveFailed": "Không thể lưu chính sách."
+    },
+    "mfaReset": "Đặt lại hai bước",
+    "mfaResetConfirm": "Xóa yếu tố thứ hai của {{name}}? Họ vẫn có thể đăng nhập bằng mật khẩu và thiết lập lại.",
+    "mfaResetSuccess": "Đã xóa hai bước của {{name}}.",
+    "mfaResetNothing": "{{name}} chưa thiết lập hai bước.",
+    "mfaResetFailed": "Đặt lại thất bại."
   },
   "usageAnalytics": {
     "eyebrow": "Quản trị",

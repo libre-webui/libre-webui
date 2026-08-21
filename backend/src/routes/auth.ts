@@ -61,6 +61,30 @@ import {
   recordAuditEvent,
 } from '../services/securityAuditService.js';
 import { OidcError, oidcOAuthService } from '../services/simpleOidcOAuth.js';
+import {
+  MfaError,
+  activateTotp,
+  beginTotpEnrollment,
+  consumeMfaChallenge,
+  disableTotp,
+  getMfaRequiredMode,
+  getMfaStatus,
+  mfaRequiredModeLockedByEnv,
+  peekMfaChallenge,
+  regenerateRecoveryCodes,
+  setMfaRequiredMode,
+  verifySecondFactor,
+} from '../services/mfaService.js';
+import {
+  PasskeyError,
+  deletePasskey,
+  listPasskeys,
+  loginOptions as passkeyLoginOptions,
+  registerPasskey,
+  registrationOptions as passkeyRegistrationOptions,
+  verifyPasskeyLogin,
+} from '../services/webauthnService.js';
+import { userModel } from '../models/userModel.js';
 
 const router = express.Router();
 const logger = createLogger('auth-routes');
@@ -106,6 +130,24 @@ const signupRateLimiter = coordinatedRateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
   message: 'Too many authentication attempts, please try again later',
+});
+
+// Second-factor attempts get their own strict bucket: a challenge token is
+// only minted after a correct password, so this budget covers typos without
+// permitting code guessing.
+const mfaRateLimiter = coordinatedRateLimit({
+  keyPrefix: 'security.mfa',
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  message: 'Too many verification attempts, please try again later',
+});
+
+// Passkey ceremonies (options + assertions) for anonymous sign-in.
+const passkeyRateLimiter = coordinatedRateLimit({
+  keyPrefix: 'security.passkey',
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  message: 'Too many passkey attempts, please try again later',
 });
 
 // Rate limiter for general auth routes. This bucket also serves the session
@@ -255,6 +297,20 @@ router.post('/login', loginRateLimiter, async (req, res) => {
       });
       return;
     }
+    if (result.status === 'mfa') {
+      // The password checked out, but this is not a session yet. Only the
+      // challenge leaves the server; account details wait for the second
+      // factor.
+      res.json({
+        success: true,
+        data: {
+          mfaRequired: true,
+          requirement: result.requirement,
+          challengeToken: result.challengeToken,
+        },
+      });
+      return;
+    }
 
     const systemInfo = await authService.getSystemInfo();
 
@@ -272,6 +328,481 @@ router.post('/login', loginRateLimiter, async (req, res) => {
       success: false,
       message: 'Internal server error',
     });
+  }
+});
+
+/** Finish a sign-in: issue the revocable session and the standard payload. */
+const completeSignIn = async (
+  req: express.Request,
+  res: express.Response,
+  userId: string,
+  kind: string
+): Promise<void> => {
+  const user = await userModel.getUserById(userId);
+  if (!user || user.status !== 'active') {
+    res.status(403).json({
+      success: false,
+      message: 'This account is not active',
+    });
+    return;
+  }
+  const token = await authService.issueSession(user, {
+    kind,
+    ip: getClientIp(req),
+    userAgent: req.headers['user-agent'],
+  });
+  res.json({
+    success: true,
+    data: { user, token, systemInfo: await authService.getSystemInfo() },
+  });
+};
+
+const handleMfaFailure = (
+  res: express.Response,
+  error: unknown,
+  fallback: string
+): void => {
+  if (error instanceof MfaError || error instanceof PasskeyError) {
+    res
+      .status(error.statusCode)
+      .json({ success: false, message: error.message });
+    return;
+  }
+  logger.error('MFA endpoint error:', error);
+  res.status(500).json({ success: false, message: fallback });
+};
+
+/**
+ * Complete a password sign-in with a TOTP or recovery code.
+ */
+router.post('/mfa/verify', mfaRateLimiter, async (req, res) => {
+  try {
+    const { challengeToken, code } = req.body ?? {};
+    if (typeof challengeToken !== 'string' || typeof code !== 'string') {
+      res.status(400).json({
+        success: false,
+        message: 'A challenge token and code are required',
+      });
+      return;
+    }
+    const challenge = peekMfaChallenge(challengeToken, 'mfa-verify');
+    const { verified, method } = await verifySecondFactor(
+      challenge.userId,
+      code
+    );
+    if (!verified) {
+      void recordAuditEvent({
+        action: 'auth.mfa.verify',
+        result: 'failure',
+        actorUserId: challenge.userId,
+        ipHash: hashClientIp(getClientIp(req)),
+      });
+      res
+        .status(401)
+        .json({ success: false, message: 'That code is not valid' });
+      return;
+    }
+    if (!(await consumeMfaChallenge(challenge.jti))) {
+      res.status(401).json({
+        success: false,
+        message: 'This sign-in challenge was already used',
+      });
+      return;
+    }
+    void recordAuditEvent({
+      action: 'auth.mfa.verify',
+      result: 'success',
+      actorUserId: challenge.userId,
+      ipHash: hashClientIp(getClientIp(req)),
+      details: { method },
+    });
+    await completeSignIn(req, res, challenge.userId, `password+${method}`);
+  } catch (error) {
+    handleMfaFailure(res, error, 'Verification failed');
+  }
+});
+
+/**
+ * Policy-forced enrollment during sign-in: mint the TOTP secret for a
+ * pending challenge without an authenticated session.
+ */
+router.post('/mfa/enroll-challenge', mfaRateLimiter, async (req, res) => {
+  try {
+    const { challengeToken } = req.body ?? {};
+    if (typeof challengeToken !== 'string') {
+      res
+        .status(400)
+        .json({ success: false, message: 'A challenge token is required' });
+      return;
+    }
+    const challenge = peekMfaChallenge(challengeToken, 'mfa-enroll');
+    const user = await userModel.getUserById(challenge.userId);
+    if (!user || user.status !== 'active') {
+      res
+        .status(403)
+        .json({ success: false, message: 'This account is not active' });
+      return;
+    }
+    const enrollment = await beginTotpEnrollment(user.id, user.username);
+    void recordAuditEvent({
+      action: 'auth.mfa.enroll',
+      result: 'success',
+      actorUserId: user.id,
+      details: { forced: true },
+    });
+    res.json({ success: true, data: enrollment });
+  } catch (error) {
+    handleMfaFailure(res, error, 'Enrollment failed');
+  }
+});
+
+/**
+ * Policy-forced enrollment during sign-in: confirm the first code, receive
+ * recovery codes, and finish the sign-in in one step.
+ */
+router.post('/mfa/activate-challenge', mfaRateLimiter, async (req, res) => {
+  try {
+    const { challengeToken, code } = req.body ?? {};
+    if (typeof challengeToken !== 'string' || typeof code !== 'string') {
+      res.status(400).json({
+        success: false,
+        message: 'A challenge token and code are required',
+      });
+      return;
+    }
+    const challenge = peekMfaChallenge(challengeToken, 'mfa-enroll');
+    const recoveryCodes = await activateTotp(challenge.userId, code);
+    if (!(await consumeMfaChallenge(challenge.jti))) {
+      res.status(401).json({
+        success: false,
+        message: 'This sign-in challenge was already used',
+      });
+      return;
+    }
+    void recordAuditEvent({
+      action: 'auth.mfa.activate',
+      result: 'success',
+      actorUserId: challenge.userId,
+      details: { forced: true },
+    });
+    const user = await userModel.getUserById(challenge.userId);
+    if (!user || user.status !== 'active') {
+      res
+        .status(403)
+        .json({ success: false, message: 'This account is not active' });
+      return;
+    }
+    const token = await authService.issueSession(user, {
+      kind: 'password+totp',
+      ip: getClientIp(req),
+      userAgent: req.headers['user-agent'],
+    });
+    res.json({
+      success: true,
+      data: {
+        user,
+        token,
+        systemInfo: await authService.getSystemInfo(),
+        recoveryCodes,
+      },
+    });
+  } catch (error) {
+    handleMfaFailure(res, error, 'Enrollment failed');
+  }
+});
+
+/** Second-factor status for the signed-in account. */
+router.get(
+  '/mfa',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const [status, passkeys] = await Promise.all([
+        getMfaStatus(req.user!.userId),
+        listPasskeys(req.user!.userId),
+      ]);
+      res.json({ success: true, data: { ...status, passkeys } });
+    } catch (error) {
+      handleMfaFailure(res, error, 'Failed to load MFA status');
+    }
+  }
+);
+
+/** Begin TOTP enrollment from settings. */
+router.post(
+  '/mfa/enroll',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const enrollment = await beginTotpEnrollment(
+        req.user!.userId,
+        req.user!.username
+      );
+      void recordAuditEvent({
+        action: 'auth.mfa.enroll',
+        result: 'success',
+        actorUserId: req.user!.userId,
+      });
+      res.json({ success: true, data: enrollment });
+    } catch (error) {
+      handleMfaFailure(res, error, 'Enrollment failed');
+    }
+  }
+);
+
+/** Confirm enrollment with a first valid code; returns the recovery codes. */
+router.post(
+  '/mfa/activate',
+  mfaRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { code } = req.body ?? {};
+      if (typeof code !== 'string') {
+        res.status(400).json({ success: false, message: 'A code is required' });
+        return;
+      }
+      const recoveryCodes = await activateTotp(req.user!.userId, code);
+      void recordAuditEvent({
+        action: 'auth.mfa.activate',
+        result: 'success',
+        actorUserId: req.user!.userId,
+      });
+      res.json({ success: true, data: { recoveryCodes } });
+    } catch (error) {
+      handleMfaFailure(res, error, 'Activation failed');
+    }
+  }
+);
+
+/** Regenerate recovery codes after re-proving the second factor. */
+router.post(
+  '/mfa/recovery-codes',
+  mfaRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { code } = req.body ?? {};
+      if (typeof code !== 'string') {
+        res.status(400).json({ success: false, message: 'A code is required' });
+        return;
+      }
+      const recoveryCodes = await regenerateRecoveryCodes(
+        req.user!.userId,
+        code
+      );
+      void recordAuditEvent({
+        action: 'auth.mfa.recovery-codes',
+        result: 'success',
+        actorUserId: req.user!.userId,
+      });
+      res.json({ success: true, data: { recoveryCodes } });
+    } catch (error) {
+      handleMfaFailure(res, error, 'Failed to regenerate recovery codes');
+    }
+  }
+);
+
+/** Disable TOTP after re-proving the second factor. */
+router.post(
+  '/mfa/disable',
+  mfaRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { code } = req.body ?? {};
+      if (typeof code !== 'string') {
+        res.status(400).json({ success: false, message: 'A code is required' });
+        return;
+      }
+      await disableTotp(req.user!.userId, code);
+      void recordAuditEvent({
+        action: 'auth.mfa.disable',
+        result: 'success',
+        actorUserId: req.user!.userId,
+      });
+      res.json({
+        success: true,
+        message: 'Two-factor authentication disabled',
+      });
+    } catch (error) {
+      handleMfaFailure(
+        res,
+        error,
+        'Failed to disable two-factor authentication'
+      );
+    }
+  }
+);
+
+/** Instance step-up policy (admin): optional vs required for every account. */
+router.get(
+  '/mfa/policy',
+  generalAuthRateLimiter,
+  authenticate,
+  requireAdmin,
+  async (_req: AuthenticatedRequest, res) => {
+    res.json({
+      success: true,
+      data: {
+        mode: await getMfaRequiredMode(),
+        locked: mfaRequiredModeLockedByEnv(),
+      },
+    });
+  }
+);
+
+router.put(
+  '/mfa/policy',
+  generalAuthRateLimiter,
+  authenticate,
+  requireAdmin,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { mode } = req.body ?? {};
+      if (mode !== 'optional' && mode !== 'required') {
+        res.status(400).json({
+          success: false,
+          message: "The MFA policy mode must be 'optional' or 'required'",
+        });
+        return;
+      }
+      await setMfaRequiredMode(mode);
+      void recordAuditEvent({
+        action: 'admin.mfa.policy',
+        result: 'success',
+        actorUserId: req.user!.userId,
+        details: { mode },
+      });
+      res.json({ success: true, data: { mode, locked: false } });
+    } catch (error) {
+      handleMfaFailure(res, error, 'Failed to update the MFA policy');
+    }
+  }
+);
+
+/** Passkey registration options for the signed-in account. */
+router.post(
+  '/passkeys/register-options',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const options = await passkeyRegistrationOptions(
+        { id: req.user!.userId, username: req.user!.username },
+        req.headers.host ?? ''
+      );
+      res.json({ success: true, data: options });
+    } catch (error) {
+      handleMfaFailure(res, error, 'Failed to prepare passkey registration');
+    }
+  }
+);
+
+/** Register a new passkey for the signed-in account. */
+router.post(
+  '/passkeys/register',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const passkey = await registerPasskey(
+        req.user!.userId,
+        req.body ?? {},
+        req.headers.host ?? ''
+      );
+      void recordAuditEvent({
+        action: 'auth.passkey.register',
+        result: 'success',
+        actorUserId: req.user!.userId,
+        targetType: 'passkey',
+        targetId: passkey.id,
+      });
+      res.json({ success: true, data: passkey });
+    } catch (error) {
+      handleMfaFailure(res, error, 'Passkey registration failed');
+    }
+  }
+);
+
+/** List the signed-in account's passkeys. */
+router.get(
+  '/passkeys',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      res.json({ success: true, data: await listPasskeys(req.user!.userId) });
+    } catch (error) {
+      handleMfaFailure(res, error, 'Failed to list passkeys');
+    }
+  }
+);
+
+/** Remove one of the signed-in account's passkeys. */
+router.delete(
+  '/passkeys/:id',
+  generalAuthRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const passkeyId = String(req.params.id);
+      const removed = await deletePasskey(req.user!.userId, passkeyId);
+      if (!removed) {
+        res.status(404).json({ success: false, message: 'Passkey not found' });
+        return;
+      }
+      void recordAuditEvent({
+        action: 'auth.passkey.remove',
+        result: 'success',
+        actorUserId: req.user!.userId,
+        targetType: 'passkey',
+        targetId: passkeyId,
+      });
+      res.json({ success: true, message: 'Passkey removed' });
+    } catch (error) {
+      handleMfaFailure(res, error, 'Failed to remove passkey');
+    }
+  }
+);
+
+/** Anonymous passkey sign-in: ceremony options. */
+router.post('/passkeys/login-options', passkeyRateLimiter, async (req, res) => {
+  try {
+    const options = await passkeyLoginOptions(req.headers.host ?? '');
+    res.json({ success: true, data: options });
+  } catch (error) {
+    handleMfaFailure(res, error, 'Failed to prepare passkey sign-in');
+  }
+});
+
+/** Anonymous passkey sign-in: verify the assertion and issue a session. */
+router.post('/passkeys/login', passkeyRateLimiter, async (req, res) => {
+  try {
+    const { userId, passkeyId } = await verifyPasskeyLogin(
+      req.body ?? {},
+      req.headers.host ?? ''
+    );
+    void recordAuditEvent({
+      action: 'auth.login',
+      result: 'success',
+      actorUserId: userId,
+      ipHash: hashClientIp(getClientIp(req)),
+      details: { method: 'passkey', passkeyId },
+    });
+    await completeSignIn(req, res, userId, 'passkey');
+  } catch (error) {
+    if (error instanceof PasskeyError) {
+      void recordAuditEvent({
+        action: 'auth.login',
+        result: 'failure',
+        ipHash: hashClientIp(getClientIp(req)),
+        details: { method: 'passkey' },
+      });
+    }
+    handleMfaFailure(res, error, 'Passkey sign-in failed');
   }
 });
 
@@ -677,7 +1208,9 @@ router.post('/signup', signupRateLimiter, async (req, res) => {
 
     const systemInfo = await authService.getSystemInfo();
 
-    if (result.status === 'pending') {
+    if (result.status !== 'authenticated') {
+      // Signup never produces an MFA challenge; any non-authenticated
+      // outcome here is a pending-approval account.
       res.status(202).json({
         success: true,
         data: {

@@ -18,12 +18,21 @@
 export { default, api } from './api/client';
 export { agentCliApi } from './api/agentCliApi';
 export type { AgentCliModel } from './api/agentCliApi';
-export { authApi, usersApi, API_TOKEN_SCOPES } from './api/authApi';
+export {
+  authApi,
+  usersApi,
+  API_TOKEN_SCOPES,
+  isMfaChallenge,
+} from './api/authApi';
 export type {
   ApiTokenCreateResponse,
   ApiTokenRecord,
   ApiTokenScope,
   AuthSession,
+  LoginResult,
+  MfaChallengeResponse,
+  MfaStatusResponse,
+  PasskeyRecord,
 } from './api/authApi';
 export { adminSecurityApi } from './api/adminSecurityApi';
 export type {

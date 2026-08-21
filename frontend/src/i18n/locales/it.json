@@ -132,6 +132,54 @@
     },
     "oidc": {
       "defaultProviderName": "Single sign-on"
+    },
+    "mfa": {
+      "sectionTitle": "Autenticazione a due fattori",
+      "sectionDescription": "Proteggi il tuo account con un'app di autenticazione e le passkey.",
+      "totpTitle": "App di autenticazione",
+      "totpEnabledHint": "Attiva. Codici di recupero inutilizzati: {{count}}",
+      "totpDisabledHint": "Aggiungi un secondo passaggio all'accesso con password tramite un codice monouso.",
+      "enableButton": "Attiva",
+      "disableButton": "Disattiva",
+      "activateButton": "Conferma",
+      "regenerateCodes": "Nuovi codici di recupero",
+      "confirmWithCode": "Conferma con un codice della tua app o un codice di recupero",
+      "enabled": "L'autenticazione a due fattori è attiva.",
+      "disabled": "L'autenticazione a due fattori è disattivata.",
+      "invalidCode": "Questo codice non è valido.",
+      "enrollFailed": "Impossibile avviare la configurazione.",
+      "challengeExpired": "La verifica di accesso è scaduta. Accedi di nuovo.",
+      "setupTitle": "Configura l'autenticazione a due fattori",
+      "setupSubtitle": "Questa istanza richiede un secondo passaggio di accesso. Aggiungi il segreto alla tua app di autenticazione per continuare.",
+      "verifyTitle": "Inserisci il codice",
+      "verifyHint": "Inserisci il codice a 6 cifre della tua app di autenticazione oppure un codice di recupero.",
+      "secretHint": "Aggiungi questo segreto alla tua app di autenticazione, poi conferma con il codice corrente.",
+      "openAuthenticator": "Apri nell'app di autenticazione",
+      "codeLabel": "Codice a 6 cifre",
+      "codeOrRecoveryLabel": "Codice o codice di recupero",
+      "codePlaceholder": "123456",
+      "verifyButton": "Verifica",
+      "backToSignIn": "Torna all'accesso",
+      "recoveryCodesTitle": "Codici di recupero",
+      "recoveryCodesHint": "Conserva questi codici in un luogo sicuro. Ognuno consente un accesso se perdi la tua app di autenticazione.",
+      "recoveryCodesSaved": "Ho salvato i miei codici di recupero",
+      "recoveryCodesRegenerated": "Nuovi codici di recupero creati. I vecchi non funzionano più."
+    },
+    "passkeys": {
+      "sectionTitle": "Passkey",
+      "sectionDescription": "Accedi senza password con il blocco schermo del tuo dispositivo o una chiave di sicurezza.",
+      "addButton": "Aggiungi passkey",
+      "empty": "Nessuna passkey al momento.",
+      "unnamed": "Passkey",
+      "createdAt": "Aggiunta",
+      "lastUsedAt": "Ultimo utilizzo",
+      "removeButton": "Rimuovi passkey",
+      "registered": "Passkey aggiunta.",
+      "registerFailed": "Impossibile aggiungere la passkey.",
+      "removed": "Passkey rimossa.",
+      "removeFailed": "Impossibile rimuovere la passkey.",
+      "signInButton": "Accedi con una passkey",
+      "signInFailed": "Accesso con passkey non riuscito."
     }
   },
   "setup": {
@@ -1672,7 +1720,21 @@
         "voiceMode": "Modalità vocale",
         "voiceCloning": "Clonazione vocale"
       }
-    }
+    },
+    "mfaPolicy": {
+      "title": "Criterio a due fattori",
+      "description": "Se gli account devono completare un secondo passaggio di accesso.",
+      "requireAll": "Richiedi due fattori a tutti gli utenti",
+      "requireAllHint": "Chi non ha un secondo fattore dovrà configurarlo al prossimo accesso.",
+      "lockedByEnv": "Fissato da MFA_REQUIRED_MODE.",
+      "saved": "Criterio a due fattori salvato.",
+      "saveFailed": "Impossibile salvare il criterio a due fattori."
+    },
+    "mfaReset": "Reimposta due fattori",
+    "mfaResetConfirm": "Rimuovere il secondo fattore di {{name}}? Potrà accedere con la password e configurarlo di nuovo.",
+    "mfaResetSuccess": "Due fattori rimossi per {{name}}.",
+    "mfaResetNothing": "{{name}} non aveva l'autenticazione a due fattori.",
+    "mfaResetFailed": "La reimpostazione non è riuscita."
   },
   "usageAnalytics": {
     "eyebrow": "Amministrazione",

@@ -2636,6 +2636,43 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         });
         return;
       }
+      if (method === 'GET' && path === '/auth/mfa') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              totpEnabled: false,
+              totpPending: false,
+              recoveryCodesRemaining: 0,
+              required: false,
+              requiredModeLocked: false,
+              passkeys: [],
+            },
+          }),
+        });
+        return;
+      }
+      if (method === 'GET' && path === '/auth/mfa/policy') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: { mode: 'optional', locked: false },
+          }),
+        });
+        return;
+      }
+      if (method === 'GET' && path === '/auth/passkeys') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [] }),
+        });
+        return;
+      }
 
       await route.fulfill({
         status: 404,
