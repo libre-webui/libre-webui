@@ -1043,6 +1043,52 @@ const MEDIA_ENTERPRISE_OPS_REQUIRED_SCHEMA = {
   ],
 } as const;
 
+const MFA_PUSH_RECOVERY_REQUIRED_SCHEMA = {
+  user_mfa: [
+    'user_id',
+    'totp_secret',
+    'activated_at',
+    'last_used_step',
+    'created_at',
+    'updated_at',
+  ],
+  mfa_recovery_codes: ['id', 'user_id', 'code_lookup', 'created_at', 'used_at'],
+  webauthn_credentials: [
+    'id',
+    'user_id',
+    'credential_lookup',
+    'credential_data',
+    'name',
+    'sign_count',
+    'created_at',
+    'last_used_at',
+  ],
+  push_subscriptions: [
+    'id',
+    'user_id',
+    'session_id',
+    'endpoint_lookup',
+    'subscription',
+    'user_agent',
+    'created_at',
+    'last_used_at',
+  ],
+  recovery_drills: [
+    'id',
+    'status',
+    'origin',
+    'started_at',
+    'finished_at',
+    'snapshot_bytes',
+    'rpo_seconds',
+    'restore_ms',
+    'error',
+    'report',
+    'created_by',
+    'created_at',
+  ],
+} as const;
+
 export const IDENTITY_EMAIL_LOOKUP_SCHEMA_SQL = `
   ALTER TABLE users ADD COLUMN email_lookup TEXT;
   CREATE UNIQUE INDEX idx_users_email_lookup
@@ -1760,6 +1806,74 @@ export const MEDIA_ENTERPRISE_OPS_SCHEMA_SQL = `
   ALTER TABLE voice_profiles ADD COLUMN last_transfer_at INTEGER;
 ${MEDIA_ENTERPRISE_OPS_TABLES_SQL}`;
 
+export const MFA_PUSH_RECOVERY_TABLES_SQL = `
+  CREATE TABLE IF NOT EXISTS user_mfa (
+    user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    totp_secret TEXT NOT NULL,
+    activated_at INTEGER,
+    last_used_step INTEGER,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS mfa_recovery_codes (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    code_lookup TEXT NOT NULL UNIQUE,
+    created_at INTEGER NOT NULL,
+    used_at INTEGER
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_mfa_recovery_codes_user
+    ON mfa_recovery_codes(user_id);
+
+  CREATE TABLE IF NOT EXISTS webauthn_credentials (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    credential_lookup TEXT NOT NULL UNIQUE,
+    credential_data TEXT NOT NULL,
+    name TEXT,
+    sign_count INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    last_used_at INTEGER
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_webauthn_credentials_user
+    ON webauthn_credentials(user_id);
+
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_id TEXT,
+    endpoint_lookup TEXT NOT NULL UNIQUE,
+    subscription TEXT NOT NULL,
+    user_agent TEXT,
+    created_at INTEGER NOT NULL,
+    last_used_at INTEGER
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user
+    ON push_subscriptions(user_id);
+
+  CREATE TABLE IF NOT EXISTS recovery_drills (
+    id TEXT PRIMARY KEY,
+    status TEXT NOT NULL CHECK (status IN ('running', 'passed', 'failed')),
+    origin TEXT NOT NULL CHECK (origin IN ('scheduled', 'manual')),
+    started_at INTEGER NOT NULL,
+    finished_at INTEGER,
+    snapshot_bytes INTEGER,
+    rpo_seconds INTEGER,
+    restore_ms INTEGER,
+    error TEXT,
+    report TEXT,
+    created_by TEXT,
+    created_at INTEGER NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_recovery_drills_started
+    ON recovery_drills(started_at);
+`;
+
 const REQUIRED_SCHEMA = {
   ...LEGACY_REQUIRED_SCHEMA,
   users: [
@@ -2063,6 +2177,11 @@ const REQUIRED_PRIMARY_KEYS: Readonly<Record<string, readonly string[]>> = {
   arena_votes: ['id'],
   eval_sets: ['id'],
   eval_runs: ['id'],
+  user_mfa: ['user_id'],
+  mfa_recovery_codes: ['id'],
+  webauthn_credentials: ['id'],
+  push_subscriptions: ['id'],
+  recovery_drills: ['id'],
 };
 
 const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
@@ -2092,6 +2211,9 @@ const REQUIRED_UNIQUE_KEYS: Readonly<Record<string, readonly string[][]>> = {
   skill_files: [['skill_id', 'path']],
   message_feedback: [['user_id', 'message_id']],
   arena_votes: [['user_id', 'compare_group']],
+  mfa_recovery_codes: [['code_lookup']],
+  webauthn_credentials: [['credential_lookup']],
+  push_subscriptions: [['endpoint_lookup']],
 };
 
 const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
@@ -2438,6 +2560,34 @@ const REQUIRED_FOREIGN_KEYS: readonly RequiredForeignKey[] = [
     referencedColumns: ['id'],
     onDelete: 'CASCADE',
   },
+  {
+    table: 'user_mfa',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'mfa_recovery_codes',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'webauthn_credentials',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
+  {
+    table: 'push_subscriptions',
+    columns: ['user_id'],
+    referencedTable: 'users',
+    referencedColumns: ['id'],
+    onDelete: 'CASCADE',
+  },
 ];
 
 const REQUIRED_INDEXES: readonly RequiredIndex[] = [
@@ -2781,6 +2931,26 @@ const REQUIRED_INDEXES: readonly RequiredIndex[] = [
     table: 'eval_runs',
     columns: ['set_id'],
   },
+  {
+    name: 'idx_mfa_recovery_codes_user',
+    table: 'mfa_recovery_codes',
+    columns: ['user_id'],
+  },
+  {
+    name: 'idx_webauthn_credentials_user',
+    table: 'webauthn_credentials',
+    columns: ['user_id'],
+  },
+  {
+    name: 'idx_push_subscriptions_user',
+    table: 'push_subscriptions',
+    columns: ['user_id'],
+  },
+  {
+    name: 'idx_recovery_drills_started',
+    table: 'recovery_drills',
+    columns: ['started_at'],
+  },
 ];
 
 const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
@@ -2846,6 +3016,10 @@ const REQUIRED_TABLE_SQL_FRAGMENTS: Readonly<
   ],
   eval_runs: [
     "status IN ('queued', 'running', 'completed', 'failed', 'cancelled')",
+  ],
+  recovery_drills: [
+    "status IN ('running', 'passed', 'failed')",
+    "origin IN ('scheduled', 'manual')",
   ],
 };
 
@@ -3398,6 +3572,20 @@ const collectMissingMediaEnterpriseOpsSchema = (
   ),
 ];
 
+const collectMissingMfaPushRecoverySchema = (
+  database: Database.Database
+): string[] => [
+  ...collectMissingColumns(database, MFA_PUSH_RECOVERY_REQUIRED_SCHEMA),
+  ...collectMissingStructuralInvariants(database).filter(
+    item =>
+      item.includes('user_mfa') ||
+      item.includes('mfa_recovery_codes') ||
+      item.includes('webauthn_credentials') ||
+      item.includes('push_subscriptions') ||
+      item.includes('recovery_drills')
+  ),
+];
+
 const collectMissingIdentityAccountRetirementSchema = (
   database: Database.Database
 ): string[] => {
@@ -3450,6 +3638,7 @@ function collectMissingSchemaAtVersion(
     ...(version >= 18 ? collectMissingNotesV2Schema(database) : []),
     ...(version >= 19 ? collectMissingTeamCollaborationSchema(database) : []),
     ...(version >= 20 ? collectMissingMediaEnterpriseOpsSchema(database) : []),
+    ...(version >= 21 ? collectMissingMfaPushRecoverySchema(database) : []),
   ];
 }
 
@@ -3545,6 +3734,8 @@ const TEAM_COLLABORATION_MIGRATION_CHECKSUM =
   '1cf021c941cfd9207a82e794e58d7553ae24a35b3f8f8a84bb4a0e06d0d77443';
 const MEDIA_ENTERPRISE_OPS_MIGRATION_CHECKSUM =
   'c6bc6d98518f7a279ad7109cfdfcd8a75fbf7e3e157c50bca98142b50ac0f38b';
+const MFA_PUSH_RECOVERY_MIGRATION_CHECKSUM =
+  '9b2cdc08d2316877af091587113c749aed4b224d6ee12e72626b830da5447005';
 
 const MIGRATIONS: readonly SQLiteMigration[] = [
   {
@@ -3913,6 +4104,20 @@ const MIGRATIONS: readonly SQLiteMigration[] = [
       if (missing.length > 0) {
         throw new Error(
           `SQLite media enterprise ops schema is incomplete; missing ${missing.join(', ')}`
+        );
+      }
+    },
+  },
+  {
+    version: 21,
+    name: 'mfa-push-recovery',
+    checksum: MFA_PUSH_RECOVERY_MIGRATION_CHECKSUM,
+    apply(database) {
+      database.exec(MFA_PUSH_RECOVERY_TABLES_SQL);
+      const missing = collectMissingMfaPushRecoverySchema(database);
+      if (missing.length > 0) {
+        throw new Error(
+          `SQLite mfa/push/recovery schema is incomplete; missing ${missing.join(', ')}`
         );
       }
     },

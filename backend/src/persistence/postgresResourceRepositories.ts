@@ -27,6 +27,8 @@ import type {
   KnowledgeCollectionRepository,
   NoteRepository,
   NotificationRepository,
+  PushSubscriptionRepository,
+  RecoveryDrillRepository,
   PersistenceCommitFence,
   PreferenceRepository,
   PromptRepository,
@@ -59,6 +61,8 @@ import type {
   StoredNoteRecord,
   StoredNoteRevisionRecord,
   StoredNotificationRecord,
+  StoredPushSubscriptionRecord,
+  StoredRecoveryDrillRecord,
   StoredPreferenceRecord,
   StoredPromptRecord,
   StoredPromptVersionRecord,
@@ -226,6 +230,37 @@ const webhookTarget = (row: NumericRow): StoredWebhookTargetRecord => ({
   enabled: number(row.enabled, 'webhook target enabled'),
   created_at: number(row.created_at, 'webhook target created_at'),
   updated_at: number(row.updated_at, 'webhook target updated_at'),
+});
+
+const pushSubscription = (row: NumericRow): StoredPushSubscriptionRecord => ({
+  ...(row as unknown as StoredPushSubscriptionRecord),
+  created_at: number(row.created_at, 'push subscription created_at'),
+  last_used_at:
+    row.last_used_at === null
+      ? null
+      : number(row.last_used_at, 'push subscription last_used_at'),
+});
+
+const recoveryDrill = (row: NumericRow): StoredRecoveryDrillRecord => ({
+  ...(row as unknown as StoredRecoveryDrillRecord),
+  started_at: number(row.started_at, 'recovery drill started_at'),
+  finished_at:
+    row.finished_at === null
+      ? null
+      : number(row.finished_at, 'recovery drill finished_at'),
+  snapshot_bytes:
+    row.snapshot_bytes === null
+      ? null
+      : number(row.snapshot_bytes, 'recovery drill snapshot_bytes'),
+  rpo_seconds:
+    row.rpo_seconds === null
+      ? null
+      : number(row.rpo_seconds, 'recovery drill rpo_seconds'),
+  restore_ms:
+    row.restore_ms === null
+      ? null
+      : number(row.restore_ms, 'recovery drill restore_ms'),
+  created_at: number(row.created_at, 'recovery drill created_at'),
 });
 
 const automation = (row: NumericRow): StoredAutomationRecord => ({
@@ -2041,6 +2076,216 @@ class PostgresWebhookTargetRepository implements WebhookTargetRepository {
         ).rowCount
       ) > 0
     );
+  }
+}
+
+class PostgresPushSubscriptionRepository implements PushSubscriptionRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async upsertByEndpoint(record: StoredPushSubscriptionRecord): Promise<void> {
+    await this.database.query(
+      `INSERT INTO push_subscriptions
+         (id, user_id, session_id, endpoint_lookup, subscription,
+          user_agent, created_at, last_used_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (endpoint_lookup) DO UPDATE SET
+         user_id = excluded.user_id,
+         session_id = excluded.session_id,
+         subscription = excluded.subscription,
+         user_agent = excluded.user_agent,
+         last_used_at = excluded.last_used_at`,
+      [
+        record.id,
+        record.user_id,
+        record.session_id,
+        record.endpoint_lookup,
+        record.subscription,
+        record.user_agent,
+        record.created_at,
+        record.last_used_at,
+      ]
+    );
+  }
+
+  async listByUser(userId: string): Promise<StoredPushSubscriptionRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM push_subscriptions
+        WHERE user_id = $1
+        ORDER BY created_at ASC`,
+      [userId]
+    );
+    return result.rows.map(pushSubscription);
+  }
+
+  async findByLookup(
+    endpointLookup: string
+  ): Promise<StoredPushSubscriptionRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM push_subscriptions WHERE endpoint_lookup = $1',
+      [endpointLookup]
+    );
+    return result.rows[0] ? pushSubscription(result.rows[0]) : null;
+  }
+
+  async findById(id: string): Promise<StoredPushSubscriptionRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM push_subscriptions WHERE id = $1',
+      [id]
+    );
+    return result.rows[0] ? pushSubscription(result.rows[0]) : null;
+  }
+
+  async touch(id: string, lastUsedAt: number): Promise<boolean> {
+    const result = await this.database.query(
+      'UPDATE push_subscriptions SET last_used_at = $1 WHERE id = $2',
+      [lastUsedAt, id]
+    );
+    return changes(result.rowCount) > 0;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const result = await this.database.query(
+      'DELETE FROM push_subscriptions WHERE id = $1',
+      [id]
+    );
+    return changes(result.rowCount) > 0;
+  }
+
+  async deleteByLookup(
+    userId: string,
+    endpointLookup: string
+  ): Promise<boolean> {
+    const result = await this.database.query(
+      `DELETE FROM push_subscriptions
+        WHERE user_id = $1 AND endpoint_lookup = $2`,
+      [userId, endpointLookup]
+    );
+    return changes(result.rowCount) > 0;
+  }
+
+  async deleteForSession(sessionId: string): Promise<number> {
+    const result = await this.database.query(
+      'DELETE FROM push_subscriptions WHERE session_id = $1',
+      [sessionId]
+    );
+    return changes(result.rowCount);
+  }
+
+  async deleteForUser(userId: string): Promise<number> {
+    const result = await this.database.query(
+      'DELETE FROM push_subscriptions WHERE user_id = $1',
+      [userId]
+    );
+    return changes(result.rowCount);
+  }
+}
+
+class PostgresRecoveryDrillRepository implements RecoveryDrillRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async insert(record: StoredRecoveryDrillRecord): Promise<void> {
+    await this.database.query(
+      `INSERT INTO recovery_drills
+         (id, status, origin, started_at, finished_at, snapshot_bytes,
+          rpo_seconds, restore_ms, error, report, created_by, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [
+        record.id,
+        record.status,
+        record.origin,
+        record.started_at,
+        record.finished_at,
+        record.snapshot_bytes,
+        record.rpo_seconds,
+        record.restore_ms,
+        record.error,
+        record.report,
+        record.created_by,
+        record.created_at,
+      ]
+    );
+  }
+
+  async update(
+    id: string,
+    patch: {
+      status?: string;
+      finished_at?: number | null;
+      snapshot_bytes?: number | null;
+      rpo_seconds?: number | null;
+      restore_ms?: number | null;
+      error?: string | null;
+      report?: string | null;
+    }
+  ): Promise<boolean> {
+    const assignments: string[] = [];
+    const parameters: unknown[] = [];
+    for (const [column, value] of Object.entries(patch)) {
+      if (value === undefined) continue;
+      parameters.push(value);
+      assignments.push(`${column} = $${parameters.length}`);
+    }
+    if (assignments.length === 0) return false;
+    parameters.push(id);
+    const result = await this.database.query(
+      `UPDATE recovery_drills SET ${assignments.join(', ')}
+        WHERE id = $${parameters.length}`,
+      parameters
+    );
+    return changes(result.rowCount) > 0;
+  }
+
+  async findById(id: string): Promise<StoredRecoveryDrillRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      'SELECT * FROM recovery_drills WHERE id = $1',
+      [id]
+    );
+    return result.rows[0] ? recoveryDrill(result.rows[0]) : null;
+  }
+
+  async list(limit: number): Promise<StoredRecoveryDrillRecord[]> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM recovery_drills
+        ORDER BY started_at DESC, id DESC
+        LIMIT $1`,
+      [limit]
+    );
+    return result.rows.map(recoveryDrill);
+  }
+
+  async findLatestFinished(): Promise<StoredRecoveryDrillRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM recovery_drills
+        WHERE status != 'running'
+        ORDER BY started_at DESC, id DESC
+        LIMIT 1`
+    );
+    return result.rows[0] ? recoveryDrill(result.rows[0]) : null;
+  }
+
+  async findRunning(): Promise<StoredRecoveryDrillRecord | null> {
+    const result = await this.database.query<NumericRow>(
+      `SELECT * FROM recovery_drills
+        WHERE status = 'running'
+        ORDER BY started_at DESC, id DESC
+        LIMIT 1`
+    );
+    return result.rows[0] ? recoveryDrill(result.rows[0]) : null;
+  }
+
+  async pruneToLimit(limit: number): Promise<number> {
+    const result = await this.database.query(
+      `DELETE FROM recovery_drills
+        WHERE status != 'running'
+          AND id NOT IN (
+            SELECT id FROM recovery_drills
+            WHERE status != 'running'
+            ORDER BY started_at DESC, id DESC
+            LIMIT $1
+          )`,
+      [limit]
+    );
+    return changes(result.rowCount);
   }
 }
 
@@ -4249,6 +4494,8 @@ export const createPostgresResourceRepositories = (
   channelMessages: new PostgresChannelMessageRepository(database),
   notifications: new PostgresNotificationRepository(database),
   webhookTargets: new PostgresWebhookTargetRepository(database),
+  pushSubscriptions: new PostgresPushSubscriptionRepository(database),
+  recoveryDrills: new PostgresRecoveryDrillRepository(database),
   automations: new PostgresAutomationRepository(database),
   automationRuns: new PostgresAutomationRunRepository(database),
   toolServers: new PostgresToolServerRepository(database),

@@ -504,6 +504,72 @@ export interface WebhookTargetRepository {
   delete(targetId: string): Promise<boolean>;
 }
 
+export interface StoredPushSubscriptionRecord {
+  id: string;
+  user_id: string;
+  session_id: string | null;
+  /** Keyed one-way lookup token of the push endpoint URL. */
+  endpoint_lookup: string;
+  /** Encrypted JSON: endpoint URL plus the browser's p256dh/auth keys. */
+  subscription: string;
+  user_agent: string | null;
+  created_at: number;
+  last_used_at: number | null;
+}
+
+export interface PushSubscriptionRepository {
+  /** Insert, or refresh owner/session/keys when the endpoint re-registers. */
+  upsertByEndpoint(record: StoredPushSubscriptionRecord): Promise<void>;
+  listByUser(userId: string): Promise<StoredPushSubscriptionRecord[]>;
+  findByLookup(
+    endpointLookup: string
+  ): Promise<StoredPushSubscriptionRecord | null>;
+  findById(id: string): Promise<StoredPushSubscriptionRecord | null>;
+  touch(id: string, lastUsedAt: number): Promise<boolean>;
+  delete(id: string): Promise<boolean>;
+  deleteByLookup(userId: string, endpointLookup: string): Promise<boolean>;
+  deleteForSession(sessionId: string): Promise<number>;
+  deleteForUser(userId: string): Promise<number>;
+}
+
+export interface StoredRecoveryDrillRecord {
+  id: string;
+  status: string;
+  origin: string;
+  started_at: number;
+  finished_at: number | null;
+  snapshot_bytes: number | null;
+  rpo_seconds: number | null;
+  restore_ms: number | null;
+  error: string | null;
+  /** Encrypted JSON step-by-step drill report. */
+  report: string | null;
+  created_by: string | null;
+  created_at: number;
+}
+
+export interface RecoveryDrillRepository {
+  insert(record: StoredRecoveryDrillRecord): Promise<void>;
+  update(
+    id: string,
+    patch: {
+      status?: string;
+      finished_at?: number | null;
+      snapshot_bytes?: number | null;
+      rpo_seconds?: number | null;
+      restore_ms?: number | null;
+      error?: string | null;
+      report?: string | null;
+    }
+  ): Promise<boolean>;
+  findById(id: string): Promise<StoredRecoveryDrillRecord | null>;
+  list(limit: number): Promise<StoredRecoveryDrillRecord[]>;
+  findLatestFinished(): Promise<StoredRecoveryDrillRecord | null>;
+  findRunning(): Promise<StoredRecoveryDrillRecord | null>;
+  /** Delete the oldest finished rows beyond the retained count. */
+  pruneToLimit(limit: number): Promise<number>;
+}
+
 export interface StoredAutomationRecord {
   id: string;
   user_id: string;
@@ -1160,6 +1226,8 @@ export interface ApplicationResourceRepositories {
   channelMessages: ChannelMessageRepository;
   notifications: NotificationRepository;
   webhookTargets: WebhookTargetRepository;
+  pushSubscriptions: PushSubscriptionRepository;
+  recoveryDrills: RecoveryDrillRepository;
   automations: AutomationRepository;
   automationRuns: AutomationRunRepository;
   toolServers: ToolServerRepository;

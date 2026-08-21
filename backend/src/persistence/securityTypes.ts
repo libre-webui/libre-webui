@@ -106,6 +106,39 @@ export interface StoredSecurityAuditEventRecord {
   details: string | null;
 }
 
+export interface StoredUserMfaRecord {
+  user_id: string;
+  /** Encrypted TOTP secret (base32 plaintext before encryption). */
+  totp_secret: string;
+  activated_at: number | null;
+  /** Last accepted TOTP timestep, to refuse code replay. */
+  last_used_step: number | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface StoredMfaRecoveryCodeRecord {
+  id: string;
+  user_id: string;
+  /** Keyed one-way lookup token of the recovery code; never the code itself. */
+  code_lookup: string;
+  created_at: number;
+  used_at: number | null;
+}
+
+export interface StoredWebAuthnCredentialRecord {
+  id: string;
+  user_id: string;
+  /** Keyed one-way lookup token of the raw credential id. */
+  credential_lookup: string;
+  /** Encrypted JSON: credential id, COSE public key, algorithm, transports. */
+  credential_data: string;
+  name: string | null;
+  sign_count: number;
+  created_at: number;
+  last_used_at: number | null;
+}
+
 export interface SecurityAuditQuery {
   action?: string;
   actorUserId?: string;
@@ -211,6 +244,54 @@ export interface SecurityAuditRepository {
   deleteBefore(before: number): Promise<number>;
 }
 
+export interface MfaRepository {
+  find(userId: string): Promise<StoredUserMfaRecord | null>;
+  /** Insert or replace the (single) pending/active MFA row for a user. */
+  upsert(record: StoredUserMfaRecord): Promise<void>;
+  activate(
+    userId: string,
+    activatedAt: number,
+    updatedAt: number
+  ): Promise<boolean>;
+  /**
+   * Record the accepted TOTP timestep. Only advances forward, so a replayed
+   * or older code can never be marked used twice.
+   */
+  markStepUsed(
+    userId: string,
+    step: number,
+    updatedAt: number
+  ): Promise<boolean>;
+  delete(userId: string): Promise<boolean>;
+  replaceRecoveryCodes(
+    userId: string,
+    records: StoredMfaRecoveryCodeRecord[]
+  ): Promise<void>;
+  findRecoveryCode(
+    codeLookup: string
+  ): Promise<StoredMfaRecoveryCodeRecord | null>;
+  /** Consume exactly once; false if already used. */
+  consumeRecoveryCode(id: string, usedAt: number): Promise<boolean>;
+  countUnusedRecoveryCodes(userId: string): Promise<number>;
+  deleteRecoveryCodes(userId: string): Promise<number>;
+}
+
+export interface WebAuthnCredentialRepository {
+  insert(record: StoredWebAuthnCredentialRecord): Promise<void>;
+  findByLookup(
+    credentialLookup: string
+  ): Promise<StoredWebAuthnCredentialRecord | null>;
+  listByUser(userId: string): Promise<StoredWebAuthnCredentialRecord[]>;
+  updateSignCount(
+    id: string,
+    signCount: number,
+    lastUsedAt: number
+  ): Promise<boolean>;
+  delete(id: string, userId: string): Promise<boolean>;
+  deleteForUser(userId: string): Promise<number>;
+  countForUser(userId: string): Promise<number>;
+}
+
 export interface SecurityRepositories {
   groups: GroupRepository;
   grants: ResourceGrantRepository;
@@ -218,6 +299,8 @@ export interface SecurityRepositories {
   apiTokens: ApiTokenRepository;
   oauthIdentities: OAuthIdentityRepository;
   audit: SecurityAuditRepository;
+  mfa: MfaRepository;
+  webauthnCredentials: WebAuthnCredentialRepository;
 }
 
 /**

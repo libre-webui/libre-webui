@@ -38,6 +38,8 @@ import type {
   KnowledgeCollectionRepository,
   NoteRepository,
   NotificationRepository,
+  PushSubscriptionRepository,
+  RecoveryDrillRepository,
   PreferenceRepository,
   PromptRepository,
   SessionFolderRepository,
@@ -69,6 +71,8 @@ import type {
   StoredNoteRecord,
   StoredNoteRevisionRecord,
   StoredNotificationRecord,
+  StoredPushSubscriptionRecord,
+  StoredRecoveryDrillRecord,
   StoredPreferenceRecord,
   StoredPromptRecord,
   StoredPromptVersionRecord,
@@ -1766,6 +1770,224 @@ class SQLiteWebhookTargetRepository implements WebhookTargetRepository {
         .prepare('DELETE FROM webhook_targets WHERE id = ?')
         .run(targetId).changes > 0
     );
+  }
+}
+
+class SQLitePushSubscriptionRepository implements PushSubscriptionRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async upsertByEndpoint(record: StoredPushSubscriptionRecord): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO push_subscriptions
+           (id, user_id, session_id, endpoint_lookup, subscription,
+            user_agent, created_at, last_used_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(endpoint_lookup) DO UPDATE SET
+           user_id = excluded.user_id,
+           session_id = excluded.session_id,
+           subscription = excluded.subscription,
+           user_agent = excluded.user_agent,
+           last_used_at = excluded.last_used_at`
+      )
+      .run(
+        record.id,
+        record.user_id,
+        record.session_id,
+        record.endpoint_lookup,
+        record.subscription,
+        record.user_agent,
+        record.created_at,
+        record.last_used_at
+      );
+  }
+
+  async listByUser(userId: string): Promise<StoredPushSubscriptionRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM push_subscriptions
+         WHERE user_id = ?
+         ORDER BY created_at ASC`
+      )
+      .all(userId) as StoredPushSubscriptionRecord[];
+  }
+
+  async findByLookup(
+    endpointLookup: string
+  ): Promise<StoredPushSubscriptionRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM push_subscriptions WHERE endpoint_lookup = ?')
+        .get(endpointLookup) as StoredPushSubscriptionRecord | undefined) ??
+      null
+    );
+  }
+
+  async findById(id: string): Promise<StoredPushSubscriptionRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM push_subscriptions WHERE id = ?')
+        .get(id) as StoredPushSubscriptionRecord | undefined) ?? null
+    );
+  }
+
+  async touch(id: string, lastUsedAt: number): Promise<boolean> {
+    return (
+      this.database
+        .prepare('UPDATE push_subscriptions SET last_used_at = ? WHERE id = ?')
+        .run(lastUsedAt, id).changes > 0
+    );
+  }
+
+  async delete(id: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare('DELETE FROM push_subscriptions WHERE id = ?')
+        .run(id).changes > 0
+    );
+  }
+
+  async deleteByLookup(
+    userId: string,
+    endpointLookup: string
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `DELETE FROM push_subscriptions
+           WHERE user_id = ? AND endpoint_lookup = ?`
+        )
+        .run(userId, endpointLookup).changes > 0
+    );
+  }
+
+  async deleteForSession(sessionId: string): Promise<number> {
+    return this.database
+      .prepare('DELETE FROM push_subscriptions WHERE session_id = ?')
+      .run(sessionId).changes;
+  }
+
+  async deleteForUser(userId: string): Promise<number> {
+    return this.database
+      .prepare('DELETE FROM push_subscriptions WHERE user_id = ?')
+      .run(userId).changes;
+  }
+}
+
+class SQLiteRecoveryDrillRepository implements RecoveryDrillRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async insert(record: StoredRecoveryDrillRecord): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO recovery_drills
+           (id, status, origin, started_at, finished_at, snapshot_bytes,
+            rpo_seconds, restore_ms, error, report, created_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        record.id,
+        record.status,
+        record.origin,
+        record.started_at,
+        record.finished_at,
+        record.snapshot_bytes,
+        record.rpo_seconds,
+        record.restore_ms,
+        record.error,
+        record.report,
+        record.created_by,
+        record.created_at
+      );
+  }
+
+  async update(
+    id: string,
+    patch: {
+      status?: string;
+      finished_at?: number | null;
+      snapshot_bytes?: number | null;
+      rpo_seconds?: number | null;
+      restore_ms?: number | null;
+      error?: string | null;
+      report?: string | null;
+    }
+  ): Promise<boolean> {
+    const assignments: string[] = [];
+    const parameters: unknown[] = [];
+    for (const [column, value] of Object.entries(patch)) {
+      if (value === undefined) continue;
+      assignments.push(`${column} = ?`);
+      parameters.push(value);
+    }
+    if (assignments.length === 0) return false;
+    parameters.push(id);
+    return (
+      this.database
+        .prepare(
+          `UPDATE recovery_drills SET ${assignments.join(', ')} WHERE id = ?`
+        )
+        .run(...parameters).changes > 0
+    );
+  }
+
+  async findById(id: string): Promise<StoredRecoveryDrillRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM recovery_drills WHERE id = ?')
+        .get(id) as StoredRecoveryDrillRecord | undefined) ?? null
+    );
+  }
+
+  async list(limit: number): Promise<StoredRecoveryDrillRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM recovery_drills
+         ORDER BY started_at DESC, id DESC
+         LIMIT ?`
+      )
+      .all(limit) as StoredRecoveryDrillRecord[];
+  }
+
+  async findLatestFinished(): Promise<StoredRecoveryDrillRecord | null> {
+    return (
+      (this.database
+        .prepare(
+          `SELECT * FROM recovery_drills
+           WHERE status != 'running'
+           ORDER BY started_at DESC, id DESC
+           LIMIT 1`
+        )
+        .get() as StoredRecoveryDrillRecord | undefined) ?? null
+    );
+  }
+
+  async findRunning(): Promise<StoredRecoveryDrillRecord | null> {
+    return (
+      (this.database
+        .prepare(
+          `SELECT * FROM recovery_drills
+           WHERE status = 'running'
+           ORDER BY started_at DESC, id DESC
+           LIMIT 1`
+        )
+        .get() as StoredRecoveryDrillRecord | undefined) ?? null
+    );
+  }
+
+  async pruneToLimit(limit: number): Promise<number> {
+    return this.database
+      .prepare(
+        `DELETE FROM recovery_drills
+         WHERE status != 'running'
+           AND id NOT IN (
+             SELECT id FROM recovery_drills
+             WHERE status != 'running'
+             ORDER BY started_at DESC, id DESC
+             LIMIT ?
+           )`
+      )
+      .run(limit).changes;
   }
 }
 
@@ -3851,6 +4073,8 @@ export const createSQLiteResourceRepositories = (
   channelMessages: new SQLiteChannelMessageRepository(database),
   notifications: new SQLiteNotificationRepository(database),
   webhookTargets: new SQLiteWebhookTargetRepository(database),
+  pushSubscriptions: new SQLitePushSubscriptionRepository(database),
+  recoveryDrills: new SQLiteRecoveryDrillRepository(database),
   automations: new SQLiteAutomationRepository(database),
   automationRuns: new SQLiteAutomationRunRepository(database),
   toolServers: new SQLiteToolServerRepository(database),

@@ -21,6 +21,7 @@ import type {
   AuthSessionRepository,
   GrantPrincipalType,
   GroupRepository,
+  MfaRepository,
   OAuthIdentityRepository,
   ResourceGrantRepository,
   SecurityAuditRepository,
@@ -30,9 +31,13 @@ import type {
   StoredAuthSessionRecord,
   StoredGroupMemberRecord,
   StoredGroupRecord,
+  StoredMfaRecoveryCodeRecord,
   StoredOAuthIdentityRecord,
   StoredResourceGrantRecord,
   StoredSecurityAuditEventRecord,
+  StoredUserMfaRecord,
+  StoredWebAuthnCredentialRecord,
+  WebAuthnCredentialRepository,
 } from './securityTypes.js';
 import type { PostgresDatabase } from './postgresDatabase.js';
 
@@ -92,6 +97,29 @@ const oauthIdentity = (row: NumericRow): StoredOAuthIdentityRecord => ({
 const auditEvent = (row: NumericRow): StoredSecurityAuditEventRecord => ({
   ...(row as unknown as StoredSecurityAuditEventRecord),
   occurred_at: number(row.occurred_at, 'audit occurred_at'),
+});
+
+const userMfa = (row: NumericRow): StoredUserMfaRecord => ({
+  ...(row as unknown as StoredUserMfaRecord),
+  activated_at: nullableNumber(row.activated_at, 'mfa activated_at'),
+  last_used_step: nullableNumber(row.last_used_step, 'mfa last_used_step'),
+  created_at: number(row.created_at, 'mfa created_at'),
+  updated_at: number(row.updated_at, 'mfa updated_at'),
+});
+
+const mfaRecoveryCode = (row: NumericRow): StoredMfaRecoveryCodeRecord => ({
+  ...(row as unknown as StoredMfaRecoveryCodeRecord),
+  created_at: number(row.created_at, 'recovery code created_at'),
+  used_at: nullableNumber(row.used_at, 'recovery code used_at'),
+});
+
+const webauthnCredential = (
+  row: NumericRow
+): StoredWebAuthnCredentialRecord => ({
+  ...(row as unknown as StoredWebAuthnCredentialRecord),
+  sign_count: number(row.sign_count, 'credential sign_count'),
+  created_at: number(row.created_at, 'credential created_at'),
+  last_used_at: nullableNumber(row.last_used_at, 'credential last_used_at'),
 });
 
 class PostgresGroupRepository implements GroupRepository {
@@ -653,6 +681,221 @@ class PostgresSecurityAuditRepository implements SecurityAuditRepository {
   }
 }
 
+class PostgresMfaRepository implements MfaRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async find(userId: string): Promise<StoredUserMfaRecord | null> {
+    const result = await this.database.query(
+      'SELECT * FROM user_mfa WHERE user_id = $1',
+      [userId]
+    );
+    return result.rows[0] ? userMfa(result.rows[0]) : null;
+  }
+
+  async upsert(record: StoredUserMfaRecord): Promise<void> {
+    await this.database.query(
+      `INSERT INTO user_mfa
+         (user_id, totp_secret, activated_at, last_used_step,
+          created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (user_id) DO UPDATE SET
+         totp_secret = excluded.totp_secret,
+         activated_at = excluded.activated_at,
+         last_used_step = excluded.last_used_step,
+         updated_at = excluded.updated_at`,
+      [
+        record.user_id,
+        record.totp_secret,
+        record.activated_at,
+        record.last_used_step,
+        record.created_at,
+        record.updated_at,
+      ]
+    );
+  }
+
+  async activate(
+    userId: string,
+    activatedAt: number,
+    updatedAt: number
+  ): Promise<boolean> {
+    const result = await this.database.query(
+      `UPDATE user_mfa SET activated_at = $1, updated_at = $2
+        WHERE user_id = $3 AND activated_at IS NULL`,
+      [activatedAt, updatedAt, userId]
+    );
+    return changes(result.rowCount) > 0;
+  }
+
+  async markStepUsed(
+    userId: string,
+    step: number,
+    updatedAt: number
+  ): Promise<boolean> {
+    const result = await this.database.query(
+      `UPDATE user_mfa SET last_used_step = $1, updated_at = $2
+        WHERE user_id = $3
+          AND (last_used_step IS NULL OR last_used_step < $1)`,
+      [step, updatedAt, userId]
+    );
+    return changes(result.rowCount) > 0;
+  }
+
+  async delete(userId: string): Promise<boolean> {
+    return this.database.transaction(async client => {
+      await client.query('DELETE FROM mfa_recovery_codes WHERE user_id = $1', [
+        userId,
+      ]);
+      const result = await client.query(
+        'DELETE FROM user_mfa WHERE user_id = $1',
+        [userId]
+      );
+      return changes(result.rowCount) > 0;
+    });
+  }
+
+  async replaceRecoveryCodes(
+    userId: string,
+    records: StoredMfaRecoveryCodeRecord[]
+  ): Promise<void> {
+    await this.database.transaction(async client => {
+      await client.query('DELETE FROM mfa_recovery_codes WHERE user_id = $1', [
+        userId,
+      ]);
+      for (const record of records) {
+        await client.query(
+          `INSERT INTO mfa_recovery_codes
+             (id, user_id, code_lookup, created_at, used_at)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [
+            record.id,
+            record.user_id,
+            record.code_lookup,
+            record.created_at,
+            record.used_at,
+          ]
+        );
+      }
+    });
+  }
+
+  async findRecoveryCode(
+    codeLookup: string
+  ): Promise<StoredMfaRecoveryCodeRecord | null> {
+    const result = await this.database.query(
+      'SELECT * FROM mfa_recovery_codes WHERE code_lookup = $1',
+      [codeLookup]
+    );
+    return result.rows[0] ? mfaRecoveryCode(result.rows[0]) : null;
+  }
+
+  async consumeRecoveryCode(id: string, usedAt: number): Promise<boolean> {
+    const result = await this.database.query(
+      `UPDATE mfa_recovery_codes SET used_at = $1
+        WHERE id = $2 AND used_at IS NULL`,
+      [usedAt, id]
+    );
+    return changes(result.rowCount) > 0;
+  }
+
+  async countUnusedRecoveryCodes(userId: string): Promise<number> {
+    const result = await this.database.query(
+      `SELECT COUNT(*) AS count FROM mfa_recovery_codes
+        WHERE user_id = $1 AND used_at IS NULL`,
+      [userId]
+    );
+    return number(result.rows[0]?.count, 'recovery code count');
+  }
+
+  async deleteRecoveryCodes(userId: string): Promise<number> {
+    const result = await this.database.query(
+      'DELETE FROM mfa_recovery_codes WHERE user_id = $1',
+      [userId]
+    );
+    return changes(result.rowCount);
+  }
+}
+
+class PostgresWebAuthnCredentialRepository implements WebAuthnCredentialRepository {
+  constructor(private readonly database: PostgresDatabase) {}
+
+  async insert(record: StoredWebAuthnCredentialRecord): Promise<void> {
+    await this.database.query(
+      `INSERT INTO webauthn_credentials
+         (id, user_id, credential_lookup, credential_data, name,
+          sign_count, created_at, last_used_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        record.id,
+        record.user_id,
+        record.credential_lookup,
+        record.credential_data,
+        record.name,
+        record.sign_count,
+        record.created_at,
+        record.last_used_at,
+      ]
+    );
+  }
+
+  async findByLookup(
+    credentialLookup: string
+  ): Promise<StoredWebAuthnCredentialRecord | null> {
+    const result = await this.database.query(
+      'SELECT * FROM webauthn_credentials WHERE credential_lookup = $1',
+      [credentialLookup]
+    );
+    return result.rows[0] ? webauthnCredential(result.rows[0]) : null;
+  }
+
+  async listByUser(userId: string): Promise<StoredWebAuthnCredentialRecord[]> {
+    const result = await this.database.query(
+      `SELECT * FROM webauthn_credentials
+        WHERE user_id = $1
+        ORDER BY created_at ASC`,
+      [userId]
+    );
+    return result.rows.map(webauthnCredential);
+  }
+
+  async updateSignCount(
+    id: string,
+    signCount: number,
+    lastUsedAt: number
+  ): Promise<boolean> {
+    const result = await this.database.query(
+      `UPDATE webauthn_credentials SET sign_count = $1, last_used_at = $2
+        WHERE id = $3`,
+      [signCount, lastUsedAt, id]
+    );
+    return changes(result.rowCount) > 0;
+  }
+
+  async delete(id: string, userId: string): Promise<boolean> {
+    const result = await this.database.query(
+      'DELETE FROM webauthn_credentials WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    return changes(result.rowCount) > 0;
+  }
+
+  async deleteForUser(userId: string): Promise<number> {
+    const result = await this.database.query(
+      'DELETE FROM webauthn_credentials WHERE user_id = $1',
+      [userId]
+    );
+    return changes(result.rowCount);
+  }
+
+  async countForUser(userId: string): Promise<number> {
+    const result = await this.database.query(
+      'SELECT COUNT(*) AS count FROM webauthn_credentials WHERE user_id = $1',
+      [userId]
+    );
+    return number(result.rows[0]?.count, 'webauthn credential count');
+  }
+}
+
 export const createPostgresSecurityRepositories = (
   database: PostgresDatabase
 ): SecurityRepositories => ({
@@ -662,6 +905,8 @@ export const createPostgresSecurityRepositories = (
   apiTokens: new PostgresApiTokenRepository(database),
   oauthIdentities: new PostgresOAuthIdentityRepository(database),
   audit: new PostgresSecurityAuditRepository(database),
+  mfa: new PostgresMfaRepository(database),
+  webauthnCredentials: new PostgresWebAuthnCredentialRepository(database),
 });
 
 /** Create transaction-scoped repositories over one pinned pooled client. */

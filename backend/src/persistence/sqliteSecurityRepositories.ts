@@ -23,6 +23,7 @@ import type {
   GrantPrincipalType,
   GroupRepository,
   GroupSyncRepository,
+  MfaRepository,
   OAuthIdentityRepository,
   ResourceGrantRepository,
   ResourceGrantSyncRepository,
@@ -35,9 +36,13 @@ import type {
   StoredAuthSessionRecord,
   StoredGroupMemberRecord,
   StoredGroupRecord,
+  StoredMfaRecoveryCodeRecord,
   StoredOAuthIdentityRecord,
   StoredResourceGrantRecord,
   StoredSecurityAuditEventRecord,
+  StoredUserMfaRecord,
+  StoredWebAuthnCredentialRecord,
+  WebAuthnCredentialRepository,
 } from './securityTypes.js';
 
 const insertGroupSql = `INSERT INTO user_groups
@@ -778,6 +783,236 @@ class SQLiteSecurityAuditSyncRepository implements SecurityAuditSyncRepository {
   }
 }
 
+class SQLiteMfaRepository implements MfaRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async find(userId: string): Promise<StoredUserMfaRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM user_mfa WHERE user_id = ?')
+        .get(userId) as StoredUserMfaRecord | undefined) ?? null
+    );
+  }
+
+  async upsert(record: StoredUserMfaRecord): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO user_mfa
+           (user_id, totp_secret, activated_at, last_used_step,
+            created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(user_id) DO UPDATE SET
+           totp_secret = excluded.totp_secret,
+           activated_at = excluded.activated_at,
+           last_used_step = excluded.last_used_step,
+           updated_at = excluded.updated_at`
+      )
+      .run(
+        record.user_id,
+        record.totp_secret,
+        record.activated_at,
+        record.last_used_step,
+        record.created_at,
+        record.updated_at
+      );
+  }
+
+  async activate(
+    userId: string,
+    activatedAt: number,
+    updatedAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE user_mfa SET activated_at = ?, updated_at = ?
+            WHERE user_id = ? AND activated_at IS NULL`
+        )
+        .run(activatedAt, updatedAt, userId).changes > 0
+    );
+  }
+
+  async markStepUsed(
+    userId: string,
+    step: number,
+    updatedAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE user_mfa SET last_used_step = ?, updated_at = ?
+            WHERE user_id = ?
+              AND (last_used_step IS NULL OR last_used_step < ?)`
+        )
+        .run(step, updatedAt, userId, step).changes > 0
+    );
+  }
+
+  async delete(userId: string): Promise<boolean> {
+    const remove = this.database.transaction(() => {
+      this.database
+        .prepare('DELETE FROM mfa_recovery_codes WHERE user_id = ?')
+        .run(userId);
+      return (
+        this.database
+          .prepare('DELETE FROM user_mfa WHERE user_id = ?')
+          .run(userId).changes > 0
+      );
+    });
+    return remove.immediate();
+  }
+
+  async replaceRecoveryCodes(
+    userId: string,
+    records: StoredMfaRecoveryCodeRecord[]
+  ): Promise<void> {
+    const replace = this.database.transaction(() => {
+      this.database
+        .prepare('DELETE FROM mfa_recovery_codes WHERE user_id = ?')
+        .run(userId);
+      const insert = this.database.prepare(
+        `INSERT INTO mfa_recovery_codes
+           (id, user_id, code_lookup, created_at, used_at)
+         VALUES (?, ?, ?, ?, ?)`
+      );
+      for (const record of records) {
+        insert.run(
+          record.id,
+          record.user_id,
+          record.code_lookup,
+          record.created_at,
+          record.used_at
+        );
+      }
+    });
+    replace.immediate();
+  }
+
+  async findRecoveryCode(
+    codeLookup: string
+  ): Promise<StoredMfaRecoveryCodeRecord | null> {
+    return (
+      (this.database
+        .prepare('SELECT * FROM mfa_recovery_codes WHERE code_lookup = ?')
+        .get(codeLookup) as StoredMfaRecoveryCodeRecord | undefined) ?? null
+    );
+  }
+
+  async consumeRecoveryCode(id: string, usedAt: number): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE mfa_recovery_codes SET used_at = ?
+            WHERE id = ? AND used_at IS NULL`
+        )
+        .run(usedAt, id).changes > 0
+    );
+  }
+
+  async countUnusedRecoveryCodes(userId: string): Promise<number> {
+    const row = this.database
+      .prepare(
+        `SELECT COUNT(*) AS count FROM mfa_recovery_codes
+          WHERE user_id = ? AND used_at IS NULL`
+      )
+      .get(userId) as { count: number };
+    return row.count;
+  }
+
+  async deleteRecoveryCodes(userId: string): Promise<number> {
+    return this.database
+      .prepare('DELETE FROM mfa_recovery_codes WHERE user_id = ?')
+      .run(userId).changes;
+  }
+}
+
+class SQLiteWebAuthnCredentialRepository implements WebAuthnCredentialRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  async insert(record: StoredWebAuthnCredentialRecord): Promise<void> {
+    this.database
+      .prepare(
+        `INSERT INTO webauthn_credentials
+           (id, user_id, credential_lookup, credential_data, name,
+            sign_count, created_at, last_used_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        record.id,
+        record.user_id,
+        record.credential_lookup,
+        record.credential_data,
+        record.name,
+        record.sign_count,
+        record.created_at,
+        record.last_used_at
+      );
+  }
+
+  async findByLookup(
+    credentialLookup: string
+  ): Promise<StoredWebAuthnCredentialRecord | null> {
+    return (
+      (this.database
+        .prepare(
+          'SELECT * FROM webauthn_credentials WHERE credential_lookup = ?'
+        )
+        .get(credentialLookup) as StoredWebAuthnCredentialRecord | undefined) ??
+      null
+    );
+  }
+
+  async listByUser(userId: string): Promise<StoredWebAuthnCredentialRecord[]> {
+    return this.database
+      .prepare(
+        `SELECT * FROM webauthn_credentials
+          WHERE user_id = ?
+          ORDER BY created_at ASC`
+      )
+      .all(userId) as StoredWebAuthnCredentialRecord[];
+  }
+
+  async updateSignCount(
+    id: string,
+    signCount: number,
+    lastUsedAt: number
+  ): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          `UPDATE webauthn_credentials SET sign_count = ?, last_used_at = ?
+            WHERE id = ?`
+        )
+        .run(signCount, lastUsedAt, id).changes > 0
+    );
+  }
+
+  async delete(id: string, userId: string): Promise<boolean> {
+    return (
+      this.database
+        .prepare(
+          'DELETE FROM webauthn_credentials WHERE id = ? AND user_id = ?'
+        )
+        .run(id, userId).changes > 0
+    );
+  }
+
+  async deleteForUser(userId: string): Promise<number> {
+    return this.database
+      .prepare('DELETE FROM webauthn_credentials WHERE user_id = ?')
+      .run(userId).changes;
+  }
+
+  async countForUser(userId: string): Promise<number> {
+    const row = this.database
+      .prepare(
+        'SELECT COUNT(*) AS count FROM webauthn_credentials WHERE user_id = ?'
+      )
+      .get(userId) as { count: number };
+    return row.count;
+  }
+}
+
 export const createSQLiteSecurityRepositories = (
   database: Database.Database
 ): SecurityRepositories => ({
@@ -787,6 +1022,8 @@ export const createSQLiteSecurityRepositories = (
   apiTokens: new SQLiteApiTokenRepository(database),
   oauthIdentities: new SQLiteOAuthIdentityRepository(database),
   audit: new SQLiteSecurityAuditRepository(database),
+  mfa: new SQLiteMfaRepository(database),
+  webauthnCredentials: new SQLiteWebAuthnCredentialRepository(database),
 });
 
 export const createSQLiteSecuritySyncRepositories = (

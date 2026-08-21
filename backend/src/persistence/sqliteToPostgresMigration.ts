@@ -1460,6 +1460,81 @@ const TABLE_MAPPINGS: readonly TableMapping[] = Object.freeze([
     ['id'],
     { integers: [...timestamps, 'completed_at'] }
   ),
+  table(
+    'user_mfa',
+    'user_mfa',
+    [
+      'user_id',
+      'totp_secret',
+      'activated_at',
+      'last_used_step',
+      'created_at',
+      'updated_at',
+    ],
+    ['user_id'],
+    { integers: [...timestamps, 'last_used_step'] }
+  ),
+  table(
+    'mfa_recovery_codes',
+    'mfa_recovery_codes',
+    ['id', 'user_id', 'code_lookup', 'created_at', 'used_at'],
+    ['id'],
+    { integers: [...timestamps, 'used_at'] }
+  ),
+  table(
+    'webauthn_credentials',
+    'webauthn_credentials',
+    [
+      'id',
+      'user_id',
+      'credential_lookup',
+      'credential_data',
+      'name',
+      'sign_count',
+      'created_at',
+      'last_used_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'sign_count', 'last_used_at'] }
+  ),
+  table(
+    'push_subscriptions',
+    'push_subscriptions',
+    [
+      'id',
+      'user_id',
+      'session_id',
+      'endpoint_lookup',
+      'subscription',
+      'user_agent',
+      'created_at',
+      'last_used_at',
+    ],
+    ['id'],
+    { integers: [...timestamps, 'last_used_at'] }
+  ),
+  table(
+    'recovery_drills',
+    'recovery_drills',
+    [
+      'id',
+      'status',
+      'origin',
+      'started_at',
+      'finished_at',
+      'snapshot_bytes',
+      'rpo_seconds',
+      'restore_ms',
+      'error',
+      'report',
+      'created_by',
+      'created_at',
+    ],
+    ['id'],
+    {
+      integers: [...timestamps, 'snapshot_bytes', 'rpo_seconds', 'restore_ms'],
+    }
+  ),
 ]);
 
 interface SourceTextNulField {
