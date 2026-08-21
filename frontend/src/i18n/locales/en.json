@@ -89,8 +89,7 @@
       "signupFailed": "Signup failed",
       "tryAgain": "Signup failed. Please try again.",
       "usernameRequired": "Username and password are required",
-      "passwordMismatch": "Passwords do not match",
-      "passwordTooShort": "Password must be at least 6 characters long"
+      "passwordMismatch": "Passwords do not match"
     },
     "logout": {
       "button": "Log out",
@@ -208,7 +207,7 @@
       "subtitle": "Administrator Setup",
       "description": "Create the first admin account for your Libre WebUI instance",
       "usernamePlaceholder": "Enter admin username",
-      "passwordPlaceholder": "Enter password (min 6 characters)",
+      "passwordPlaceholder": "Enter password (at least 12 characters)",
       "confirmPlaceholder": "Confirm your password",
       "creating": "Creating...",
       "createAdmin": "Create Admin",
@@ -3401,5 +3400,19 @@
       "cancelled": "Cancelled"
     },
     "noFeedback": "No feedback yet — rate assistant replies to build your dataset."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Weak",
+      "fair": "Fair",
+      "good": "Good",
+      "strong": "Strong"
+    },
+    "checks": {
+      "minLength": "At least 12 characters",
+      "hasCase": "Uppercase and lowercase letters",
+      "hasNumber": "At least one number",
+      "tooLong": "No more than 72 bytes"
+    }
   }
 }

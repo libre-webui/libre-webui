@@ -89,8 +89,7 @@
       "signupFailed": "Đăng ký thất bại",
       "tryAgain": "Đăng ký thất bại. Vui lòng thử lại.",
       "usernameRequired": "Tên người dùng và mật khẩu là bắt buộc",
-      "passwordMismatch": "Mật khẩu không khớp",
-      "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự"
+      "passwordMismatch": "Mật khẩu không khớp"
     },
     "logout": {
       "button": "Đăng xuất",
@@ -208,7 +207,7 @@
       "subtitle": "Thiết lập quản trị viên",
       "description": "Tạo tài khoản quản trị đầu tiên cho phiên bản Libre WebUI của bạn",
       "usernamePlaceholder": "Nhập tên người dùng quản trị",
-      "passwordPlaceholder": "Nhập mật khẩu (tối thiểu 6 ký tự)",
+      "passwordPlaceholder": "Nhập mật khẩu (ít nhất 12 ký tự)",
       "confirmPlaceholder": "Xác nhận mật khẩu của bạn",
       "creating": "Đang tạo...",
       "createAdmin": "Tạo quản trị viên",
@@ -3401,5 +3400,19 @@
       "cancelled": "Đã hủy"
     },
     "noFeedback": "Chưa có phản hồi — hãy đánh giá các câu trả lời để xây dựng tập dữ liệu."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Yếu",
+      "fair": "Trung bình",
+      "good": "Tốt",
+      "strong": "Mạnh"
+    },
+    "checks": {
+      "minLength": "Ít nhất 12 ký tự",
+      "hasCase": "Chữ hoa và chữ thường",
+      "hasNumber": "Ít nhất một chữ số",
+      "tooLong": "Tối đa 72 byte"
+    }
   }
 }

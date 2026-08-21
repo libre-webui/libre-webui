@@ -89,8 +89,7 @@
       "signupFailed": "Nýskráning mistókst",
       "tryAgain": "Nýskráning mistókst. Reyndu aftur.",
       "usernameRequired": "Notandanafn og lykilorð eru nauðsynleg",
-      "passwordMismatch": "Lykilorðin stemma ekki",
-      "passwordTooShort": "Lykilorð verður að vera að minnsta kosti 6 stafir"
+      "passwordMismatch": "Lykilorðin stemma ekki"
     },
     "logout": {
       "button": "Skrá út",
@@ -208,7 +207,7 @@
       "subtitle": "Uppsetning stjórnanda",
       "description": "Stofnaðu fyrsta stjórnandareikninginn fyrir Libre WebUI",
       "usernamePlaceholder": "Sláðu inn notandanafn stjórnanda",
-      "passwordPlaceholder": "Sláðu inn lykilorð (að minnsta kosti 6 stafir)",
+      "passwordPlaceholder": "Sláðu inn lykilorð (minnst 12 stafir)",
       "confirmPlaceholder": "Staðfestu lykilorðið",
       "creating": "Stofnar...",
       "createAdmin": "Stofna stjórnanda",
@@ -3401,5 +3400,19 @@
       "cancelled": "Hætt við"
     },
     "noFeedback": "Engar athugasemdir enn — gefðu svörum einkunn til að byggja gagnasafnið."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Veikt",
+      "fair": "Sæmilegt",
+      "good": "Gott",
+      "strong": "Sterkt"
+    },
+    "checks": {
+      "minLength": "Minnst 12 stafir",
+      "hasCase": "Há- og lágstafir",
+      "hasNumber": "Að minnsta kosti ein tala",
+      "tooLong": "Mest 72 bæti"
+    }
   }
 }

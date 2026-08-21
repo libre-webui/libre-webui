@@ -89,8 +89,7 @@
       "signupFailed": "Registratie mislukt",
       "tryAgain": "Registratie mislukt. Probeer het opnieuw.",
       "usernameRequired": "Gebruikersnaam en wachtwoord zijn verplicht",
-      "passwordMismatch": "Wachtwoorden komen niet overeen",
-      "passwordTooShort": "Wachtwoord moet minimaal 6 tekens bevatten"
+      "passwordMismatch": "Wachtwoorden komen niet overeen"
     },
     "logout": {
       "button": "Uitloggen",
@@ -208,7 +207,7 @@
       "subtitle": "Administrator instellen",
       "description": "Maak het eerste admin-account aan voor uw Libre WebUI-instantie",
       "usernamePlaceholder": "Voer admin-gebruikersnaam in",
-      "passwordPlaceholder": "Voer wachtwoord in (min. 6 tekens)",
+      "passwordPlaceholder": "Voer een wachtwoord in (minimaal 12 tekens)",
       "confirmPlaceholder": "Bevestig uw wachtwoord",
       "creating": "Aanmaken...",
       "createAdmin": "Admin aanmaken",
@@ -3401,5 +3400,19 @@
       "cancelled": "Geannuleerd"
     },
     "noFeedback": "Nog geen feedback — beoordeel antwoorden om je dataset op te bouwen."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Zwak",
+      "fair": "Redelijk",
+      "good": "Goed",
+      "strong": "Sterk"
+    },
+    "checks": {
+      "minLength": "Minimaal 12 tekens",
+      "hasCase": "Hoofd- en kleine letters",
+      "hasNumber": "Minstens één cijfer",
+      "tooLong": "Maximaal 72 bytes"
+    }
   }
 }

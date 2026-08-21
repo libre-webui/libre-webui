@@ -89,8 +89,7 @@
       "signupFailed": "가입 실패",
       "tryAgain": "가입 실패. 다시 시도해주세요.",
       "usernameRequired": "사용자 이름과 비밀번호가 필요합니다",
-      "passwordMismatch": "비밀번호가 일치하지 않습니다",
-      "passwordTooShort": "비밀번호는 최소 6자 이상이어야 합니다"
+      "passwordMismatch": "비밀번호가 일치하지 않습니다"
     },
     "logout": {
       "button": "로그아웃",
@@ -208,7 +207,7 @@
       "subtitle": "관리자 설정",
       "description": "Libre WebUI 인스턴스의 첫 번째 관리자 계정을 만드세요",
       "usernamePlaceholder": "관리자 사용자 이름을 입력하세요",
-      "passwordPlaceholder": "비밀번호를 입력하세요 (최소 6자)",
+      "passwordPlaceholder": "비밀번호 입력(12자 이상)",
       "confirmPlaceholder": "비밀번호를 다시 입력하세요",
       "creating": "생성 중...",
       "createAdmin": "관리자 만들기",
@@ -3401,5 +3400,19 @@
       "cancelled": "취소됨"
     },
     "noFeedback": "아직 피드백이 없습니다. 응답을 평가해 데이터셋을 만들어 보세요."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "약함",
+      "fair": "보통",
+      "good": "좋음",
+      "strong": "강함"
+    },
+    "checks": {
+      "minLength": "12자 이상",
+      "hasCase": "대문자와 소문자",
+      "hasNumber": "숫자 1개 이상",
+      "tooLong": "72바이트 이하"
+    }
   }
 }

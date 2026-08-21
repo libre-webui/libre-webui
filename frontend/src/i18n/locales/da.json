@@ -89,8 +89,7 @@
       "signupFailed": "Tilmelding mislykkedes",
       "tryAgain": "Tilmelding mislykkedes. Prøv venligst igen.",
       "usernameRequired": "Brugernavn og adgangskode er påkrævet",
-      "passwordMismatch": "Adgangskoderne stemmer ikke overens",
-      "passwordTooShort": "Adgangskoden skal være mindst 6 tegn lang"
+      "passwordMismatch": "Adgangskoderne stemmer ikke overens"
     },
     "logout": {
       "button": "Log ud",
@@ -208,7 +207,7 @@
       "subtitle": "Administrator-opsætning",
       "description": "Opret den første administratorkonto til din Libre WebUI-instans",
       "usernamePlaceholder": "Indtast administratorbrugernavn",
-      "passwordPlaceholder": "Indtast adgangskode (min. 6 tegn)",
+      "passwordPlaceholder": "Indtast adgangskode (mindst 12 tegn)",
       "confirmPlaceholder": "Bekræft din adgangskode",
       "creating": "Opretter...",
       "createAdmin": "Opret administrator",
@@ -3401,5 +3400,19 @@
       "cancelled": "Annulleret"
     },
     "noFeedback": "Ingen feedback endnu — bedøm svar for at bygge dit datasæt."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Svag",
+      "fair": "Rimelig",
+      "good": "God",
+      "strong": "Stærk"
+    },
+    "checks": {
+      "minLength": "Mindst 12 tegn",
+      "hasCase": "Store og små bogstaver",
+      "hasNumber": "Mindst ét tal",
+      "tooLong": "Højst 72 bytes"
+    }
   }
 }

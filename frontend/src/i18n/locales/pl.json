@@ -89,8 +89,7 @@
       "signupFailed": "Rejestracja nie powiodła się",
       "tryAgain": "Rejestracja nie powiodła się. Spróbuj ponownie.",
       "usernameRequired": "Nazwa użytkownika i hasło są wymagane",
-      "passwordMismatch": "Hasła nie pasują do siebie",
-      "passwordTooShort": "Hasło musi mieć co najmniej 6 znaków"
+      "passwordMismatch": "Hasła nie pasują do siebie"
     },
     "logout": {
       "button": "Wyloguj się",
@@ -208,7 +207,7 @@
       "subtitle": "Konfiguracja administratora",
       "description": "Utwórz pierwsze konto administratora dla Twojej instancji Libre WebUI",
       "usernamePlaceholder": "Wprowadź nazwę administratora",
-      "passwordPlaceholder": "Wprowadź hasło (min. 6 znaków)",
+      "passwordPlaceholder": "Wpisz hasło (co najmniej 12 znaków)",
       "confirmPlaceholder": "Potwierdź hasło",
       "creating": "Tworzenie...",
       "createAdmin": "Utwórz administratora",
@@ -3401,5 +3400,19 @@
       "cancelled": "Anulowano"
     },
     "noFeedback": "Brak opinii — oceniaj odpowiedzi, aby zbudować swój zbiór danych."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Słabe",
+      "fair": "Przeciętne",
+      "good": "Dobre",
+      "strong": "Silne"
+    },
+    "checks": {
+      "minLength": "Co najmniej 12 znaków",
+      "hasCase": "Wielkie i małe litery",
+      "hasNumber": "Co najmniej jedna cyfra",
+      "tooLong": "Najwyżej 72 bajty"
+    }
   }
 }

@@ -89,8 +89,7 @@
       "signupFailed": "साइन अप विफल",
       "tryAgain": "साइन अप विफल। कृपया पुनः प्रयास करें।",
       "usernameRequired": "उपयोगकर्ता नाम और पासवर्ड आवश्यक हैं",
-      "passwordMismatch": "पासवर्ड मेल नहीं खाते",
-      "passwordTooShort": "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए"
+      "passwordMismatch": "पासवर्ड मेल नहीं खाते"
     },
     "logout": {
       "button": "लॉग आउट",
@@ -208,7 +207,7 @@
       "subtitle": "एडमिनिस्ट्रेटर सेटअप",
       "description": "अपने Libre WebUI इंस्टेंस के लिए पहला एडमिन खाता बनाएं",
       "usernamePlaceholder": "एडमिन उपयोगकर्ता नाम दर्ज करें",
-      "passwordPlaceholder": "पासवर्ड दर्ज करें (न्यूनतम 6 अक्षर)",
+      "passwordPlaceholder": "पासवर्ड दर्ज करें (कम से कम 12 अक्षर)",
       "confirmPlaceholder": "अपना पासवर्ड फिर से दर्ज करें",
       "creating": "बनाया जा रहा है...",
       "createAdmin": "एडमिन बनाएं",
@@ -3401,5 +3400,19 @@
       "cancelled": "रद्द"
     },
     "noFeedback": "अभी कोई फ़ीडबैक नहीं — डेटासेट बनाने के लिए उत्तरों को रेट करें।"
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "कमज़ोर",
+      "fair": "ठीक-ठाक",
+      "good": "अच्छा",
+      "strong": "मज़बूत"
+    },
+    "checks": {
+      "minLength": "कम से कम 12 अक्षर",
+      "hasCase": "बड़े और छोटे अक्षर",
+      "hasNumber": "कम से कम एक अंक",
+      "tooLong": "अधिकतम 72 बाइट"
+    }
   }
 }

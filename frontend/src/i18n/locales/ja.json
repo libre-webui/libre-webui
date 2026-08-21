@@ -89,8 +89,7 @@
       "signupFailed": "登録に失敗しました",
       "tryAgain": "登録に失敗しました。もう一度お試しください。",
       "usernameRequired": "ユーザー名とパスワードは必須です",
-      "passwordMismatch": "パスワードが一致しません",
-      "passwordTooShort": "パスワードは6文字以上である必要があります"
+      "passwordMismatch": "パスワードが一致しません"
     },
     "logout": {
       "button": "ログアウト",
@@ -208,7 +207,7 @@
       "subtitle": "管理者セットアップ",
       "description": "Libre WebUIインスタンスの最初の管理者アカウントを作成します",
       "usernamePlaceholder": "管理者ユーザー名を入力",
-      "passwordPlaceholder": "パスワードを入力（6文字以上）",
+      "passwordPlaceholder": "パスワードを入力（12文字以上）",
       "confirmPlaceholder": "パスワードを確認",
       "creating": "作成中...",
       "createAdmin": "管理者を作成",
@@ -3401,5 +3400,19 @@
       "cancelled": "キャンセル"
     },
     "noFeedback": "まだフィードバックがありません。返答を評価してデータセットを作りましょう。"
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "弱い",
+      "fair": "普通",
+      "good": "良い",
+      "strong": "強い"
+    },
+    "checks": {
+      "minLength": "12文字以上",
+      "hasCase": "大文字と小文字",
+      "hasNumber": "数字を1つ以上",
+      "tooLong": "72バイト以内"
+    }
   }
 }

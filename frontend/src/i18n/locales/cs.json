@@ -89,8 +89,7 @@
       "signupFailed": "Registrace se nezdařila",
       "tryAgain": "Registrace se nezdařila. Zkuste to znovu.",
       "usernameRequired": "Uživatelské jméno a heslo jsou povinné",
-      "passwordMismatch": "Hesla se neshodují",
-      "passwordTooShort": "Heslo musí mít alespoň 6 znaků"
+      "passwordMismatch": "Hesla se neshodují"
     },
     "logout": {
       "button": "Odhlásit se",
@@ -208,7 +207,7 @@
       "subtitle": "Nastavení správce",
       "description": "Vytvořte první účet správce pro vaši instanci Libre WebUI",
       "usernamePlaceholder": "Zadejte jméno správce",
-      "passwordPlaceholder": "Zadejte heslo (min. 6 znaků)",
+      "passwordPlaceholder": "Zadejte heslo (alespoň 12 znaků)",
       "confirmPlaceholder": "Potvrďte heslo",
       "creating": "Vytváření...",
       "createAdmin": "Vytvořit správce",
@@ -3401,5 +3400,19 @@
       "cancelled": "Zrušeno"
     },
     "noFeedback": "Zatím žádná zpětná vazba — hodnoť odpovědi a vybuduj svůj dataset."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Slabé",
+      "fair": "Ucházející",
+      "good": "Dobré",
+      "strong": "Silné"
+    },
+    "checks": {
+      "minLength": "Alespoň 12 znaků",
+      "hasCase": "Velká a malá písmena",
+      "hasNumber": "Alespoň jedna číslice",
+      "tooLong": "Nejvýše 72 bajtů"
+    }
   }
 }

@@ -89,8 +89,7 @@
       "signupFailed": "فشل التسجيل",
       "tryAgain": "فشل التسجيل. يرجى المحاولة مرة أخرى.",
       "usernameRequired": "اسم المستخدم وكلمة المرور مطلوبان",
-      "passwordMismatch": "كلمات المرور غير متطابقة",
-      "passwordTooShort": "يجب أن تكون كلمة المرور 6 أحرف على الأقل"
+      "passwordMismatch": "كلمات المرور غير متطابقة"
     },
     "logout": {
       "button": "تسجيل الخروج",
@@ -208,7 +207,7 @@
       "subtitle": "إعداد المسؤول",
       "description": "أنشئ أول حساب مسؤول لـ Libre WebUI الخاص بك",
       "usernamePlaceholder": "أدخل اسم المسؤول",
-      "passwordPlaceholder": "أدخل كلمة المرور (6 أحرف على الأقل)",
+      "passwordPlaceholder": "أدخل كلمة مرور (12 حرفًا على الأقل)",
       "confirmPlaceholder": "أكّد كلمة المرور",
       "creating": "جاري الإنشاء...",
       "createAdmin": "إنشاء المسؤول",
@@ -3401,5 +3400,19 @@
       "cancelled": "أُلغي"
     },
     "noFeedback": "لا توجد ملاحظات بعد — قيّم الردود لبناء مجموعة بياناتك."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "ضعيفة",
+      "fair": "مقبولة",
+      "good": "جيدة",
+      "strong": "قوية"
+    },
+    "checks": {
+      "minLength": "12 حرفًا على الأقل",
+      "hasCase": "أحرف كبيرة وصغيرة",
+      "hasNumber": "رقم واحد على الأقل",
+      "tooLong": "لا تتجاوز 72 بايت"
+    }
   }
 }

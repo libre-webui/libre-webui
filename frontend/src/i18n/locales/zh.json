@@ -89,8 +89,7 @@
       "signupFailed": "注册失败",
       "tryAgain": "注册失败，请重试。",
       "usernameRequired": "用户名和密码为必填项",
-      "passwordMismatch": "两次输入的密码不一致",
-      "passwordTooShort": "密码长度至少为6个字符"
+      "passwordMismatch": "两次输入的密码不一致"
     },
     "logout": {
       "button": "退出登录",
@@ -208,7 +207,7 @@
       "subtitle": "管理员设置",
       "description": "为您的 Libre WebUI 实例创建第一个管理员账户",
       "usernamePlaceholder": "请输入管理员用户名",
-      "passwordPlaceholder": "请输入密码（至少6个字符）",
+      "passwordPlaceholder": "输入密码（至少 12 个字符）",
       "confirmPlaceholder": "请确认密码",
       "creating": "创建中...",
       "createAdmin": "创建管理员",
@@ -3401,5 +3400,19 @@
       "cancelled": "已取消"
     },
     "noFeedback": "还没有反馈——为回复评分以构建你的数据集。"
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "弱",
+      "fair": "一般",
+      "good": "良好",
+      "strong": "强"
+    },
+    "checks": {
+      "minLength": "至少 12 个字符",
+      "hasCase": "大写和小写字母",
+      "hasNumber": "至少一个数字",
+      "tooLong": "不超过 72 字节"
+    }
   }
 }

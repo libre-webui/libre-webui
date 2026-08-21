@@ -89,8 +89,7 @@
       "signupFailed": "Error en el registro",
       "tryAgain": "Error en el registro. Por favor intenta de nuevo.",
       "usernameRequired": "Nombre de usuario y contraseña son obligatorios",
-      "passwordMismatch": "Las contraseñas no coinciden",
-      "passwordTooShort": "La contraseña debe tener al menos 6 caracteres"
+      "passwordMismatch": "Las contraseñas no coinciden"
     },
     "logout": {
       "button": "Cerrar sesión",
@@ -208,7 +207,7 @@
       "subtitle": "Configuración del administrador",
       "description": "Crea la primera cuenta de administrador para tu instancia de Libre WebUI",
       "usernamePlaceholder": "Ingresa nombre de usuario admin",
-      "passwordPlaceholder": "Ingresa contraseña (mín. 6 caracteres)",
+      "passwordPlaceholder": "Introduce una contraseña (mínimo 12 caracteres)",
       "confirmPlaceholder": "Confirma tu contraseña",
       "creating": "Creando...",
       "createAdmin": "Crear admin",
@@ -3401,5 +3400,19 @@
       "cancelled": "Cancelada"
     },
     "noFeedback": "Aún no hay comentarios: califica respuestas para construir tu conjunto de datos."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Débil",
+      "fair": "Aceptable",
+      "good": "Buena",
+      "strong": "Fuerte"
+    },
+    "checks": {
+      "minLength": "Al menos 12 caracteres",
+      "hasCase": "Mayúsculas y minúsculas",
+      "hasNumber": "Al menos un número",
+      "tooLong": "Máximo 72 bytes"
+    }
   }
 }

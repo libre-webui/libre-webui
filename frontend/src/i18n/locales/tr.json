@@ -89,8 +89,7 @@
       "signupFailed": "Kayıt başarısız",
       "tryAgain": "Kayıt başarısız. Lütfen tekrar deneyin.",
       "usernameRequired": "Kullanıcı adı ve şifre gereklidir",
-      "passwordMismatch": "Şifreler eşleşmiyor",
-      "passwordTooShort": "Şifre en az 6 karakter olmalıdır"
+      "passwordMismatch": "Şifreler eşleşmiyor"
     },
     "logout": {
       "button": "Çıkış Yap",
@@ -208,7 +207,7 @@
       "subtitle": "Yönetici Kurulumu",
       "description": "Libre WebUI kurulumunuz için ilk yönetici hesabını oluşturun",
       "usernamePlaceholder": "Yönetici kullanıcı adını girin",
-      "passwordPlaceholder": "Şifre girin (en az 6 karakter)",
+      "passwordPlaceholder": "Parola gir (en az 12 karakter)",
       "confirmPlaceholder": "Şifrenizi onaylayın",
       "creating": "Oluşturuluyor...",
       "createAdmin": "Yönetici Oluştur",
@@ -3401,5 +3400,19 @@
       "cancelled": "İptal edildi"
     },
     "noFeedback": "Henüz geri bildirim yok — veri kümenizi oluşturmak için yanıtları puanlayın."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Zayıf",
+      "fair": "Orta",
+      "good": "İyi",
+      "strong": "Güçlü"
+    },
+    "checks": {
+      "minLength": "En az 12 karakter",
+      "hasCase": "Büyük ve küçük harf",
+      "hasNumber": "En az bir rakam",
+      "tooLong": "En fazla 72 bayt"
+    }
   }
 }

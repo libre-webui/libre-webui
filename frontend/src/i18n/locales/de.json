@@ -89,8 +89,7 @@
       "signupFailed": "Registrierung fehlgeschlagen",
       "tryAgain": "Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
       "usernameRequired": "Benutzername und Passwort sind erforderlich",
-      "passwordMismatch": "Passwörter stimmen nicht überein",
-      "passwordTooShort": "Das Passwort muss mindestens 6 Zeichen lang sein"
+      "passwordMismatch": "Passwörter stimmen nicht überein"
     },
     "logout": {
       "button": "Abmelden",
@@ -208,7 +207,7 @@
       "subtitle": "Administrator-Einrichtung",
       "description": "Erstellen Sie das erste Admin-Konto für Ihre Libre WebUI-Instanz",
       "usernamePlaceholder": "Admin-Benutzernamen eingeben",
-      "passwordPlaceholder": "Passwort eingeben (mind. 6 Zeichen)",
+      "passwordPlaceholder": "Passwort eingeben (mindestens 12 Zeichen)",
       "confirmPlaceholder": "Passwort bestätigen",
       "creating": "Wird erstellt...",
       "createAdmin": "Admin erstellen",
@@ -3401,5 +3400,19 @@
       "cancelled": "Abgebrochen"
     },
     "noFeedback": "Noch kein Feedback — bewerte Antworten, um deinen Datensatz aufzubauen."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Schwach",
+      "fair": "Ausreichend",
+      "good": "Gut",
+      "strong": "Stark"
+    },
+    "checks": {
+      "minLength": "Mindestens 12 Zeichen",
+      "hasCase": "Groß- und Kleinbuchstaben",
+      "hasNumber": "Mindestens eine Zahl",
+      "tooLong": "Höchstens 72 Bytes"
+    }
   }
 }

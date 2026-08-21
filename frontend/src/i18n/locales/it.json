@@ -89,8 +89,7 @@
       "signupFailed": "Registrazione fallita",
       "tryAgain": "Registrazione fallita. Riprova.",
       "usernameRequired": "Nome utente e password sono obbligatori",
-      "passwordMismatch": "Le password non corrispondono",
-      "passwordTooShort": "La password deve essere di almeno 6 caratteri"
+      "passwordMismatch": "Le password non corrispondono"
     },
     "logout": {
       "button": "Esci",
@@ -208,7 +207,7 @@
       "subtitle": "Configurazione amministratore",
       "description": "Crea il primo account amministratore per la tua istanza Libre WebUI",
       "usernamePlaceholder": "Inserisci nome utente admin",
-      "passwordPlaceholder": "Inserisci password (min 6 caratteri)",
+      "passwordPlaceholder": "Inserisci una password (almeno 12 caratteri)",
       "confirmPlaceholder": "Conferma la tua password",
       "creating": "Creazione...",
       "createAdmin": "Crea admin",
@@ -3401,5 +3400,19 @@
       "cancelled": "Annullata"
     },
     "noFeedback": "Nessun feedback — valuta le risposte per costruire il tuo dataset."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Debole",
+      "fair": "Discreta",
+      "good": "Buona",
+      "strong": "Forte"
+    },
+    "checks": {
+      "minLength": "Almeno 12 caratteri",
+      "hasCase": "Lettere maiuscole e minuscole",
+      "hasNumber": "Almeno un numero",
+      "tooLong": "Non oltre 72 byte"
+    }
   }
 }

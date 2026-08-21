@@ -89,8 +89,7 @@
       "signupFailed": "Falha no cadastro",
       "tryAgain": "Falha no cadastro. Por favor, tente novamente.",
       "usernameRequired": "Usuário e senha são obrigatórios",
-      "passwordMismatch": "As senhas não coincidem",
-      "passwordTooShort": "A senha deve ter pelo menos 6 caracteres"
+      "passwordMismatch": "As senhas não coincidem"
     },
     "logout": {
       "button": "Sair",
@@ -208,7 +207,7 @@
       "subtitle": "Configuração do Administrador",
       "description": "Crie a primeira conta de administrador para sua instância do Libre WebUI",
       "usernamePlaceholder": "Digite o nome de usuário do admin",
-      "passwordPlaceholder": "Digite a senha (mín. 6 caracteres)",
+      "passwordPlaceholder": "Digite uma senha (mínimo de 12 caracteres)",
       "confirmPlaceholder": "Confirme sua senha",
       "creating": "Criando...",
       "createAdmin": "Criar Admin",
@@ -3401,5 +3400,19 @@
       "cancelled": "Cancelada"
     },
     "noFeedback": "Ainda não há feedback — avalie respostas para construir seu conjunto de dados."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Fraca",
+      "fair": "Razoável",
+      "good": "Boa",
+      "strong": "Forte"
+    },
+    "checks": {
+      "minLength": "Pelo menos 12 caracteres",
+      "hasCase": "Letras maiúsculas e minúsculas",
+      "hasNumber": "Pelo menos um número",
+      "tooLong": "No máximo 72 bytes"
+    }
   }
 }

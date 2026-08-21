@@ -89,8 +89,7 @@
       "signupFailed": "Pendaftaran gagal",
       "tryAgain": "Pendaftaran gagal. Silakan coba lagi.",
       "usernameRequired": "Nama pengguna dan kata sandi wajib diisi",
-      "passwordMismatch": "Kata sandi tidak cocok",
-      "passwordTooShort": "Kata sandi harus minimal 6 karakter"
+      "passwordMismatch": "Kata sandi tidak cocok"
     },
     "logout": {
       "button": "Keluar",
@@ -208,7 +207,7 @@
       "subtitle": "Pengaturan Administrator",
       "description": "Buat akun admin pertama untuk instance Libre WebUI Anda",
       "usernamePlaceholder": "Masukkan nama pengguna admin",
-      "passwordPlaceholder": "Masukkan kata sandi (min 6 karakter)",
+      "passwordPlaceholder": "Masukkan kata sandi (minimal 12 karakter)",
       "confirmPlaceholder": "Konfirmasi kata sandi Anda",
       "creating": "Membuat...",
       "createAdmin": "Buat Admin",
@@ -3401,5 +3400,19 @@
       "cancelled": "Dibatalkan"
     },
     "noFeedback": "Belum ada umpan balik — nilai jawaban untuk membangun dataset Anda."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Lemah",
+      "fair": "Cukup",
+      "good": "Baik",
+      "strong": "Kuat"
+    },
+    "checks": {
+      "minLength": "Minimal 12 karakter",
+      "hasCase": "Huruf besar dan kecil",
+      "hasNumber": "Minimal satu angka",
+      "tooLong": "Maksimal 72 byte"
+    }
   }
 }

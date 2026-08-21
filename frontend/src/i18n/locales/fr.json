@@ -89,8 +89,7 @@
       "signupFailed": "Échec de l'inscription",
       "tryAgain": "Échec de l'inscription. Veuillez réessayer.",
       "usernameRequired": "Le nom d'utilisateur et le mot de passe sont requis",
-      "passwordMismatch": "Les mots de passe ne correspondent pas",
-      "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères"
+      "passwordMismatch": "Les mots de passe ne correspondent pas"
     },
     "logout": {
       "button": "Déconnexion",
@@ -208,7 +207,7 @@
       "subtitle": "Configuration administrateur",
       "description": "Créez le premier compte administrateur pour votre instance Libre WebUI",
       "usernamePlaceholder": "Entrez le nom d'utilisateur admin",
-      "passwordPlaceholder": "Entrez le mot de passe (min 6 caractères)",
+      "passwordPlaceholder": "Saisissez un mot de passe (au moins 12 caractères)",
       "confirmPlaceholder": "Confirmez votre mot de passe",
       "creating": "Création...",
       "createAdmin": "Créer l'admin",
@@ -3401,5 +3400,19 @@
       "cancelled": "Annulée"
     },
     "noFeedback": "Aucun retour — évaluez des réponses pour constituer votre jeu de données."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Faible",
+      "fair": "Moyen",
+      "good": "Bon",
+      "strong": "Fort"
+    },
+    "checks": {
+      "minLength": "Au moins 12 caractères",
+      "hasCase": "Majuscules et minuscules",
+      "hasNumber": "Au moins un chiffre",
+      "tooLong": "Au plus 72 octets"
+    }
   }
 }

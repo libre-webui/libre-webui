@@ -26,10 +26,8 @@ import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
-import {
-  getPasswordPolicyError,
-  PASSWORD_REQUIREMENTS,
-} from '@/utils/passwordPolicy';
+import { getPasswordPolicyError } from '@/utils/passwordPolicy';
+import { PasswordStrengthMeter } from '@/components/PasswordStrengthMeter';
 
 const logger = createLogger('components:signup-form');
 
@@ -265,9 +263,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
-          <p className='mt-1.5 text-xs text-ink-muted'>
-            {PASSWORD_REQUIREMENTS}
-          </p>
+          <PasswordStrengthMeter password={password} />
         </div>
 
         <div>

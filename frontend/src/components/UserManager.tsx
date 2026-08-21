@@ -43,7 +43,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { createLogger } from '@/utils/logger';
-import { PASSWORD_REQUIREMENTS } from '@/utils/passwordPolicy';
+import { PasswordStrengthMeter } from '@/components/PasswordStrengthMeter';
 
 const logger = createLogger('components:user-manager');
 
@@ -330,9 +330,7 @@ export const UserManager: React.FC = () => {
                     required
                     className='bg-white dark:bg-dark-100 border-gray-300 dark:border-dark-300 text-gray-900 dark:text-gray-100'
                   />
-                  <p className='mt-1 text-xs text-ink-muted'>
-                    {PASSWORD_REQUIREMENTS}
-                  </p>
+                  <PasswordStrengthMeter password={formData.password} />
                 </div>
                 <div>
                   <Label
@@ -440,9 +438,7 @@ export const UserManager: React.FC = () => {
                     placeholder={t('userManager.form.passwordHint')}
                     className='bg-white dark:bg-dark-100 border-gray-300 dark:border-dark-300 text-gray-900 dark:text-gray-100'
                   />
-                  <p className='mt-1 text-xs text-ink-muted'>
-                    {PASSWORD_REQUIREMENTS}
-                  </p>
+                  <PasswordStrengthMeter password={formData.password} />
                 </div>
                 <div>
                   <Label

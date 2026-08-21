@@ -3178,6 +3178,15 @@
             "verifyPasskeyLogin",
             "already used"
           ]
+        },
+        {
+          "file": "frontend/e2e/password-strength.spec.ts",
+          "runner": "test:e2e",
+          "name": "the signup password field grades strength live against the real policy",
+          "behaviorPatterns": [
+            "password-strength-label",
+            "At least one number"
+          ]
         }
       ],
       "backendRoutes": [

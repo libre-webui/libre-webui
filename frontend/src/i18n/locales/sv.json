@@ -89,8 +89,7 @@
       "signupFailed": "Registreringen misslyckades",
       "tryAgain": "Registreringen misslyckades. Försök igen.",
       "usernameRequired": "Användarnamn och lösenord krävs",
-      "passwordMismatch": "Lösenorden matchar inte",
-      "passwordTooShort": "Lösenordet måste vara minst 6 tecken långt"
+      "passwordMismatch": "Lösenorden matchar inte"
     },
     "logout": {
       "button": "Logga ut",
@@ -208,7 +207,7 @@
       "subtitle": "Administratörskonfiguration",
       "description": "Skapa det första administratörskontot för din Libre WebUI-instans",
       "usernamePlaceholder": "Ange administratörens användarnamn",
-      "passwordPlaceholder": "Ange lösenord (minst 6 tecken)",
+      "passwordPlaceholder": "Ange lösenord (minst 12 tecken)",
       "confirmPlaceholder": "Bekräfta ditt lösenord",
       "creating": "Skapar...",
       "createAdmin": "Skapa administratör",
@@ -3401,5 +3400,19 @@
       "cancelled": "Avbruten"
     },
     "noFeedback": "Ingen feedback ännu — betygsätt svar för att bygga din data."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Svagt",
+      "fair": "Okej",
+      "good": "Bra",
+      "strong": "Starkt"
+    },
+    "checks": {
+      "minLength": "Minst 12 tecken",
+      "hasCase": "Stora och små bokstäver",
+      "hasNumber": "Minst en siffra",
+      "tooLong": "Högst 72 byte"
+    }
   }
 }

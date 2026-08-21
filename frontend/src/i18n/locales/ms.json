@@ -89,8 +89,7 @@
       "signupFailed": "Gagal mendaftar",
       "tryAgain": "Gagal mendaftar. Sila cuba lagi.",
       "usernameRequired": "Nama pengguna dan kata laluan diperlukan",
-      "passwordMismatch": "Kata laluan tidak sepadan",
-      "passwordTooShort": "Kata laluan mesti sekurang-kurangnya 6 aksara"
+      "passwordMismatch": "Kata laluan tidak sepadan"
     },
     "logout": {
       "button": "Log keluar",
@@ -208,7 +207,7 @@
       "subtitle": "Persediaan Pentadbir",
       "description": "Cipta akaun pentadbir pertama untuk Libre WebUI anda",
       "usernamePlaceholder": "Masukkan nama pengguna pentadbir",
-      "passwordPlaceholder": "Masukkan kata laluan (min 6 aksara)",
+      "passwordPlaceholder": "Masukkan kata laluan (sekurang-kurangnya 12 aksara)",
       "confirmPlaceholder": "Sahkan kata laluan anda",
       "creating": "Sedang mencipta...",
       "createAdmin": "Cipta Pentadbir",
@@ -3401,5 +3400,19 @@
       "cancelled": "Dibatalkan"
     },
     "noFeedback": "Belum ada maklum balas — nilai jawapan untuk membina set data anda."
+  },
+  "passwordStrength": {
+    "levels": {
+      "weak": "Lemah",
+      "fair": "Sederhana",
+      "good": "Baik",
+      "strong": "Kukuh"
+    },
+    "checks": {
+      "minLength": "Sekurang-kurangnya 12 aksara",
+      "hasCase": "Huruf besar dan kecil",
+      "hasNumber": "Sekurang-kurangnya satu nombor",
+      "tooLong": "Tidak melebihi 72 bait"
+    }
   }
 }
