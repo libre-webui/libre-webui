@@ -36,7 +36,7 @@ const sessions = Array.from({ length: 8 }, (_, index) => ({
   updatedAt: Date.now() - index * 1000,
 }));
 
-test('desktop compact sidebar is a readable recent-chat rail', async ({
+test('desktop compact sidebar hides the unreadable session list', async ({
   page,
 }) => {
   await mockLibreWebUiApi(page, { sessions });
@@ -50,21 +50,11 @@ test('desktop compact sidebar is a readable recent-chat rail', async ({
     .toBeLessThan(90);
   await expect(page.getByTestId('sidebar-rail-expand')).toBeVisible();
   await expect(page.getByTestId('sidebar-navigation')).toHaveCount(0);
-  await expect(page.getByTestId('sidebar-compact-session')).toHaveCount(8);
+  // Session titles cannot be read at rail width, so no session list at all.
+  await expect(page.getByTestId('sidebar-compact-session')).toHaveCount(0);
   await expect(page.getByTestId('sidebar-mobile-chats')).toBeHidden();
 
-  const firstRecent = page.getByTestId('sidebar-compact-session').first();
-  await expect(firstRecent).toHaveAccessibleName('Northern lights research');
-  await expect(firstRecent).toHaveText('NR');
-  await page.getByTestId('sidebar-compact-session').nth(1).click();
-  await expect(page).toHaveURL(/\/c\/rail-session-1$/);
-  await expect(
-    page.getByTestId('sidebar-compact-session').nth(1)
-  ).toHaveAttribute('aria-current', 'page');
-  await expect(
-    page.getByTestId('sidebar-compact-session').first()
-  ).not.toHaveAttribute('aria-current', 'page');
-
+  // Expanding brings the readable session list back.
   await page.getByTestId('sidebar-rail-expand').click();
   await expect(
     sidebar.getByText('Northern lights research', { exact: true })

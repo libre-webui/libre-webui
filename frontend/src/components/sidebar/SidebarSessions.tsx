@@ -93,16 +93,6 @@ const GROUP_ORDER: SessionGroupKey[] = [
   'older',
 ];
 
-function compactMonogram(title: string) {
-  const words = title.trim().split(/\s+/u).filter(Boolean);
-  if (words.length === 0) return '•';
-  if (words.length === 1) {
-    return Array.from(words[0]).slice(0, 2).join('').toLocaleUpperCase();
-  }
-
-  return `${Array.from(words[0])[0]}${Array.from(words[words.length - 1])[0]}`.toLocaleUpperCase();
-}
-
 interface HoverPreviewState {
   session: ChatSession;
   top: number;
@@ -396,11 +386,6 @@ export function SidebarSessions({
       ),
     })).filter(group => group.sessions.length > 0),
   ];
-  const recentSessions = [...sessions].sort(
-    (first, second) => second.updatedAt - first.updatedAt
-  );
-  const compactSessions = recentSessions;
-
   return (
     <div
       data-testid='sidebar-session-scroll-region'
@@ -468,45 +453,6 @@ export function SidebarSessions({
                 </span>
               )}
             </button>
-
-            <div
-              data-testid='sidebar-compact-session-list'
-              className='flex w-full flex-col items-center gap-1'
-            >
-              {compactSessions.map(session => {
-                const isActive = currentSessionId === session.id;
-                return (
-                  <button
-                    type='button'
-                    key={session.id}
-                    onClick={() => onSelectSession(session)}
-                    data-testid='sidebar-compact-session'
-                    aria-current={isActive ? 'page' : undefined}
-                    aria-label={session.title}
-                    title={session.title}
-                    className={cn(
-                      'relative flex h-12 w-12 items-center justify-center rounded-xl outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-500/30',
-                      isActive
-                        ? 'bg-gray-950 text-white ring-1 ring-black/10 shadow-[0_8px_24px_-14px_rgba(0,0,0,0.7)] dark:bg-white dark:text-gray-950 dark:ring-white/20 dark:shadow-[0_8px_24px_-14px_rgba(255,255,255,0.45)]'
-                        : 'text-gray-500 hover:bg-white/70 hover:text-gray-950 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950'
-                    )}
-                  >
-                    {isActive && (
-                      <span
-                        aria-hidden='true'
-                        className='absolute -start-2 h-5 w-0.5 rounded-full bg-gray-950 shadow-[0_0_10px_rgba(0,0,0,0.35)] dark:bg-white dark:shadow-[0_0_10px_rgba(255,255,255,0.35)]'
-                      />
-                    )}
-                    <span className='font-mono text-[11px] font-semibold tracking-[-0.03em]'>
-                      {compactMonogram(session.title)}
-                    </span>
-                    {generatingTitleForSession === session.id && (
-                      <span className='absolute end-1.5 top-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-primary-500' />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
           </div>
         ) : sessions.length === 0 ? (
           <div
