@@ -486,6 +486,22 @@ function KnowledgeCollectionsSection() {
                         : t('settings.documents.library.everyChatScope')}
                     </p>
                   </div>
+                  {document.processingStatus === 'failed' && (
+                    <span
+                      className='shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                      title={
+                        document.processingError ||
+                        t('settings.documents.library.extractionFailed')
+                      }
+                    >
+                      {t('settings.documents.library.extractionFailed')}
+                    </span>
+                  )}
+                  {document.processingStatus === 'queued' && (
+                    <span className='shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-dark-200 dark:text-dark-700'>
+                      {t('settings.documents.library.extractionQueued')}
+                    </span>
+                  )}
                   {collections.length > 0 && (
                     <select
                       value={document.collectionId ?? ''}

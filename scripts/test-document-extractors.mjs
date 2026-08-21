@@ -30,6 +30,8 @@ const {
   extractDocumentContentByType,
   resolveDocumentFileType,
   DocumentExtractionError,
+  detectImageMimeType,
+  extractPdfEmbeddedJpegs,
 } = await import(dist('utils/documentExtraction.js'));
 const { readZipArchive, ZipArchiveError } = await import(
   dist('utils/zipArchive.js')
@@ -409,4 +411,84 @@ test('PDF extraction produces per-page segments through pdfjs', async () => {
     ),
     'Beta page text'
   );
+});
+
+test('image and audio uploads resolve to their media types', () => {
+  assert.equal(resolveDocumentFileType('scan.png', ''), 'image');
+  assert.equal(resolveDocumentFileType('photo.JPEG', 'image/jpeg'), 'image');
+  assert.equal(resolveDocumentFileType('meeting.wav', 'audio/wav'), 'audio');
+  assert.equal(resolveDocumentFileType('memo.webm', 'video/webm'), 'audio');
+  assert.equal(resolveDocumentFileType('capture', 'audio/webm'), 'audio');
+});
+
+test('image magic-byte detection accepts the four formats and nothing else', () => {
+  assert.equal(
+    detectImageMimeType(
+      Buffer.concat([
+        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+        Buffer.alloc(8),
+      ])
+    ),
+    'image/png'
+  );
+  assert.equal(
+    detectImageMimeType(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00])),
+    'image/jpeg'
+  );
+  const webp = Buffer.alloc(16);
+  webp.write('RIFF', 0, 'latin1');
+  webp.write('WEBP', 8, 'latin1');
+  assert.equal(detectImageMimeType(webp), 'image/webp');
+  assert.equal(
+    detectImageMimeType(Buffer.from('GIF89a......', 'latin1')),
+    'image/gif'
+  );
+  assert.throws(
+    () => detectImageMimeType(Buffer.from('plain text pretending')),
+    DocumentExtractionError
+  );
+});
+
+test('media types refuse the pure extraction layer', async () => {
+  await assert.rejects(
+    () => extractDocumentContentByType(Buffer.alloc(4), 'image'),
+    DocumentExtractionError
+  );
+  await assert.rejects(
+    () => extractDocumentContentByType(Buffer.alloc(4), 'audio'),
+    DocumentExtractionError
+  );
+});
+
+test('embedded JPEG page scans are recovered from a text-free PDF', () => {
+  const jpegBody = Buffer.concat([
+    Buffer.from([0xff, 0xd8, 0xff, 0xe0]),
+    Buffer.alloc(5000, 0x42),
+    Buffer.from([0xff, 0xd9]),
+  ]);
+  const tinyJpeg = Buffer.concat([
+    Buffer.from([0xff, 0xd8, 0xff, 0xe0]),
+    Buffer.alloc(64, 0x41),
+  ]);
+  const flateImage = Buffer.alloc(6000, 0x33);
+  const object = (id, dictionary, data) =>
+    Buffer.concat([
+      Buffer.from(`${id} 0 obj\n<< ${dictionary} /Length ${data.length} >>\nstream\n`, 'latin1'),
+      data,
+      Buffer.from('\nendstream\nendobj\n', 'latin1'),
+    ]);
+  const pdf = Buffer.concat([
+    Buffer.from('%PDF-1.5\n', 'latin1'),
+    object('4', '/Subtype /Image /Filter /DCTDecode /Width 100 /Height 100', jpegBody),
+    // Too small to be a page scan: skipped.
+    object('5', '/Subtype /Image /Filter /DCTDecode', tinyJpeg),
+    // Not a DCTDecode image: skipped.
+    object('6', '/Subtype /Image /Filter /FlateDecode', flateImage),
+    // Not an image at all: skipped.
+    object('7', '/Filter /FlateDecode', Buffer.alloc(5000, 0x21)),
+    Buffer.from('%%EOF\n', 'latin1'),
+  ]);
+  const images = extractPdfEmbeddedJpegs(pdf);
+  assert.equal(images.length, 1);
+  assert.deepEqual(images[0], jpegBody);
 });

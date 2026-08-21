@@ -618,7 +618,17 @@ export interface OllamaLegacyEmbeddingsResponse {
 
 // Document and RAG types
 export type DocumentFileType =
-  'pdf' | 'txt' | 'md' | 'html' | 'code' | 'docx' | 'pptx' | 'xlsx' | 'csv';
+  | 'pdf'
+  | 'txt'
+  | 'md'
+  | 'html'
+  | 'code'
+  | 'docx'
+  | 'pptx'
+  | 'xlsx'
+  | 'csv'
+  | 'image'
+  | 'audio';
 
 export interface Document {
   id: string;

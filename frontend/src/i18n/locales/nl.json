@@ -834,7 +834,9 @@
         "chatScope": "Eén chat",
         "everyChatScope": "Alle chats",
         "deleteConfirm": "\"{{name}}\" verwijderen? Het verdwijnt uit alle chats.",
-        "deleteFailed": "Document kon niet worden verwijderd"
+        "deleteFailed": "Document kon niet worden verwijderd",
+        "extractionFailed": "Extractie mislukt",
+        "extractionQueued": "Bezig met extraheren…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Er is een fout opgetreden bij het verwijderen van het document",
     "clickToUpload": "Klik om te uploaden",
     "orDragAndDrop": "of sleep en plaats",
-    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, code- en CSV-bestanden tot 10 MB",
+    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, code-, CSV-, afbeeldings- en audiobestanden tot 10 MB",
     "uploadedDocuments": "Geüploade documenten",
     "removeDocument": "Document verwijderen",
     "fullContextToggle": "Volledige documenten sturen",

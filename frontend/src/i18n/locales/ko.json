@@ -834,7 +834,9 @@
         "chatScope": "단일 채팅",
         "everyChatScope": "모든 채팅",
         "deleteConfirm": "\"{{name}}\"을(를) 삭제할까요? 모든 채팅에서 사라집니다.",
-        "deleteFailed": "문서를 삭제하지 못했습니다"
+        "deleteFailed": "문서를 삭제하지 못했습니다",
+        "extractionFailed": "추출 실패",
+        "extractionQueued": "추출 중…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "문서를 제거하는 중 오류가 발생했습니다",
     "clickToUpload": "클릭하여 업로드",
     "orDragAndDrop": "또는 드래그 앤 드롭",
-    "fileTypesAndSize": "PDF, Office, Markdown, HTML, 코드, CSV 파일(최대 10MB)",
+    "fileTypesAndSize": "PDF, Office, Markdown, HTML, 코드, CSV, 이미지, 오디오 파일(최대 10MB)",
     "uploadedDocuments": "업로드된 문서",
     "removeDocument": "문서 제거",
     "fullContextToggle": "전체 문서 보내기",

@@ -834,7 +834,9 @@
         "chatScope": "Eitt spjall",
         "everyChatScope": "Öll spjöll",
         "deleteConfirm": "Eyða „{{name}}“? Það hverfur úr öllum spjöllum.",
-        "deleteFailed": "Ekki tókst að eyða skjalinu"
+        "deleteFailed": "Ekki tókst að eyða skjalinu",
+        "extractionFailed": "Útdráttur mistókst",
+        "extractionQueued": "Dreg út…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Villa kom upp við að fjarlægja skjalið",
     "clickToUpload": "Smelltu til að hlaða upp",
     "orDragAndDrop": "eða dragðu og slepptu",
-    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kóða- og CSV-skrár allt að 10 MB",
+    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kóða-, CSV-, mynda- og hljóðskrár allt að 10 MB",
     "uploadedDocuments": "Hlaðin upp skjöl",
     "removeDocument": "Fjarlægja skjal",
     "fullContextToggle": "Senda heil skjöl",

@@ -834,7 +834,9 @@
         "chatScope": "Один чат",
         "everyChatScope": "Усі чати",
         "deleteConfirm": "Видалити «{{name}}»? Він зникне з усіх чатів.",
-        "deleteFailed": "Не вдалося видалити документ"
+        "deleteFailed": "Не вдалося видалити документ",
+        "extractionFailed": "Помилка видобування",
+        "extractionQueued": "Видобування…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Сталася помилка при видаленні документа",
     "clickToUpload": "Натисніть, щоб завантажити",
     "orDragAndDrop": "або перетягніть",
-    "fileTypesAndSize": "Файли PDF, Office, Markdown, HTML, код і CSV до 10 МБ",
+    "fileTypesAndSize": "Файли PDF, Office, Markdown, HTML, код, CSV, зображення та аудіо до 10 МБ",
     "uploadedDocuments": "Завантажені документи",
     "removeDocument": "Видалити документ",
     "fullContextToggle": "Надсилати документи повністю",

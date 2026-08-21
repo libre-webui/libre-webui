@@ -1437,7 +1437,13 @@ test('durable ingestion rejects 100,001 chunks before publication without retryi
     CHUNK_LIMIT_USER
   );
   assert.equal(retained.content ?? '', '');
-  assert.equal(retained.metadata.processingStatus, 'queued');
+  // Terminal failures surface on the row so the owner can see why the
+  // upload never became searchable.
+  assert.equal(retained.metadata.processingStatus, 'failed');
+  assert.match(
+    String(retained.metadata.processingError ?? ''),
+    /chunk indexing limit/
+  );
   assert.deepEqual(
     await storageService.getDocumentChunks(queued.document.id),
     [],

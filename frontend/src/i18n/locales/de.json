@@ -834,7 +834,9 @@
         "chatScope": "Ein Chat",
         "everyChatScope": "Alle Chats",
         "deleteConfirm": "„{{name}}“ löschen? Es verschwindet aus allen Chats.",
-        "deleteFailed": "Dokument konnte nicht gelöscht werden"
+        "deleteFailed": "Dokument konnte nicht gelöscht werden",
+        "extractionFailed": "Extraktion fehlgeschlagen",
+        "extractionQueued": "Wird extrahiert…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Beim Entfernen des Dokuments ist ein Fehler aufgetreten",
     "clickToUpload": "Klicken zum Hochladen",
     "orDragAndDrop": "oder per Drag & Drop",
-    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, Code- und CSV-Dateien bis 10 MB",
+    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, Code-, CSV-, Bild- und Audiodateien bis 10 MB",
     "uploadedDocuments": "Hochgeladene Dokumente",
     "removeDocument": "Dokument entfernen",
     "fullContextToggle": "Vollständige Dokumente senden",

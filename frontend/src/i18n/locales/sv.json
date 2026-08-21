@@ -834,7 +834,9 @@
         "chatScope": "En chatt",
         "everyChatScope": "Alla chattar",
         "deleteConfirm": "Ta bort \"{{name}}\"? Det försvinner från alla chattar.",
-        "deleteFailed": "Dokumentet kunde inte tas bort"
+        "deleteFailed": "Dokumentet kunde inte tas bort",
+        "extractionFailed": "Extraheringen misslyckades",
+        "extractionQueued": "Extraherar…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Ett fel uppstod vid borttagning av dokumentet",
     "clickToUpload": "Klicka för att ladda upp",
     "orDragAndDrop": "eller dra och släpp",
-    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kod- och CSV-filer upp till 10 MB",
+    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kod-, CSV-, bild- och ljudfiler upp till 10 MB",
     "uploadedDocuments": "Uppladdade dokument",
     "removeDocument": "Ta bort dokument",
     "fullContextToggle": "Skicka hela dokument",

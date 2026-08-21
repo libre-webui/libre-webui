@@ -9,6 +9,7 @@ import { notificationService } from '../../services/notificationService.js';
 import documentService, {
   DocumentChunkLimitError,
 } from '../../services/documentService.js';
+import { DocumentExtractionError } from '../../utils/documentExtraction.js';
 import durableChatGenerationService, {
   type DurableChatGenerationInput,
 } from '../../services/durableChatGenerationService.js';
@@ -838,6 +839,9 @@ const deleteResource: DurableJobHandler = async context => {
   }
 };
 
+/** Mirrors the enqueuer's maxAttempts so the final retry marks the row. */
+const DOCUMENT_INGEST_MAX_ATTEMPTS = 5;
+
 const ingestDocument: DurableJobHandler = async context => {
   const { documentId } = readDocumentPayload(context.payload);
   const lease = await acquireResourceLease(context, 'document', documentId);
@@ -859,11 +863,39 @@ const ingestDocument: DurableJobHandler = async context => {
       );
     } catch (error) {
       if (context.signal.aborted) throw error;
+      const markFailed = async (message: string) => {
+        try {
+          await documentService.markProcessingFailed(
+            documentId,
+            context.actorUserId,
+            message
+          );
+        } catch {
+          // The job record still carries the failure.
+        }
+      };
       if (error instanceof DocumentChunkLimitError) {
+        const message = `The document exceeds the ${MAX_VECTOR_RESOURCE_INDEX_ENTRIES}-chunk indexing limit; increase the embedding chunk size or remove excessive paragraph breaks`;
+        await markFailed(message);
         throw new DurableJobExecutionError(
           false,
           'document-chunk-limit',
-          `The document exceeds the ${MAX_VECTOR_RESOURCE_INDEX_ENTRIES}-chunk indexing limit; increase the embedding chunk size or remove excessive paragraph breaks`
+          message
+        );
+      }
+      // Extraction errors are deterministic (unsupported content, missing
+      // vision/STT configuration); retrying cannot change the outcome.
+      if (error instanceof DocumentExtractionError) {
+        await markFailed(error.message);
+        throw new DurableJobExecutionError(
+          false,
+          'document-extraction-failed',
+          error.message
+        );
+      }
+      if (context.attemptCount >= DOCUMENT_INGEST_MAX_ATTEMPTS) {
+        await markFailed(
+          'Document extraction or embedding did not complete after retries'
         );
       }
       throw new DurableJobExecutionError(

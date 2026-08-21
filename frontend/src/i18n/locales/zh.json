@@ -834,7 +834,9 @@
         "chatScope": "单个聊天",
         "everyChatScope": "所有聊天",
         "deleteConfirm": "删除“{{name}}”？它将从所有聊天中消失。",
-        "deleteFailed": "无法删除文档"
+        "deleteFailed": "无法删除文档",
+        "extractionFailed": "提取失败",
+        "extractionQueued": "正在提取…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "移除文档时发生错误",
     "clickToUpload": "点击上传",
     "orDragAndDrop": "或拖放文件",
-    "fileTypesAndSize": "PDF、Office、Markdown、HTML、代码和 CSV 文件(最大 10MB)",
+    "fileTypesAndSize": "PDF、Office、Markdown、HTML、代码、CSV、图片和音频文件（最大 10MB）",
     "uploadedDocuments": "已上传文档",
     "removeDocument": "移除文档",
     "fullContextToggle": "发送完整文档",

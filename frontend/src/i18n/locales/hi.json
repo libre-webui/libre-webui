@@ -834,7 +834,9 @@
         "chatScope": "एक चैट",
         "everyChatScope": "सभी चैट",
         "deleteConfirm": "\"{{name}}\" हटाएँ? यह सभी चैट से हट जाएगा।",
-        "deleteFailed": "दस्तावेज़ हटाया नहीं जा सका"
+        "deleteFailed": "दस्तावेज़ हटाया नहीं जा सका",
+        "extractionFailed": "निष्कर्षण विफल",
+        "extractionQueued": "निकाला जा रहा है…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "दस्तावेज़ हटाते समय एक त्रुटि हुई",
     "clickToUpload": "अपलोड करने के लिए क्लिक करें",
     "orDragAndDrop": "या खींचें और छोड़ें",
-    "fileTypesAndSize": "PDF, Office, Markdown, HTML, कोड और CSV फ़ाइलें अधिकतम 10MB",
+    "fileTypesAndSize": "PDF, Office, Markdown, HTML, कोड, CSV, छवि और ऑडियो फ़ाइलें (अधिकतम 10MB)",
     "uploadedDocuments": "अपलोड किए गए दस्तावेज़",
     "removeDocument": "दस्तावेज़ हटाएं",
     "fullContextToggle": "पूर्ण दस्तावेज़ भेजें",

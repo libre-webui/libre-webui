@@ -322,6 +322,8 @@ router.get('/session/:sessionId', async (req, res) => {
       collectionId: doc.collectionId,
       uploadedAt: doc.uploadedAt,
       contentChars: doc.content?.length ?? 0,
+      processingStatus: doc.metadata?.processingStatus,
+      processingError: doc.metadata?.processingError,
     }));
 
     res.json({
@@ -358,6 +360,8 @@ router.get('/', async (req, res) => {
         collectionId: doc.collectionId,
         uploadedAt: doc.uploadedAt,
         contentChars: doc.content?.length ?? 0,
+        processingStatus: doc.metadata?.processingStatus,
+        processingError: doc.metadata?.processingError,
       })),
       ...shared.map(entry => ({
         id: entry.document.id,

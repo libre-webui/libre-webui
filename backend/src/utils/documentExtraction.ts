@@ -30,9 +30,10 @@ import { readZipArchive, ZipArchive, ZipArchiveError } from './zipArchive.js';
  *
  * OOXML formats are unpacked with the in-repo bounded ZIP reader and a
  * narrow text-run scan of the document XML; the goal is faithful text for
- * retrieval, not layout fidelity. Images/OCR and audio transcription are
- * deliberately not extracted here — they are documented boundaries until an
- * OCR engine and a default speech-to-text route exist.
+ * retrieval, not layout fidelity. Images and audio resolve to types here
+ * but extract in the document service through the owner's vision model and
+ * STT provider — this layer stays pure and offline. For scanned PDFs it
+ * contributes the bounded embedded-JPEG recovery below.
  */
 
 export type { DocumentFileType } from '../types/index.js';
@@ -157,6 +158,18 @@ const DOCUMENT_TYPE_SPECS: readonly DocumentTypeSpec[] = [
     fileType: 'txt',
     extensions: ['txt', 'text', 'log'],
     mimeTypes: ['text/plain'],
+  },
+  {
+    fileType: 'image',
+    extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'],
+    mimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
+  },
+  {
+    fileType: 'audio',
+    extensions: ['wav', 'webm'],
+    // Browsers label .webm captures as audio or video depending on the
+    // recorder; the STT validator decides from the actual bytes.
+    mimeTypes: ['audio/wav', 'audio/x-wav', 'audio/webm', 'video/webm'],
   },
 ] as const;
 
@@ -559,6 +572,113 @@ const extractHtml = (buffer: Buffer): ExtractedDocumentContent => {
   return { content, segments: [] };
 };
 
+/* ------------------------------------------------------ image documents */
+
+/**
+ * Confirm an uploaded image really is one of the supported formats and
+ * report its actual MIME type from the magic bytes; the declared type and
+ * extension are advisory only.
+ */
+export const detectImageMimeType = (buffer: Buffer): string => {
+  if (
+    buffer.length >= 8 &&
+    buffer
+      .subarray(0, 8)
+      .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+  ) {
+    return 'image/png';
+  }
+  if (
+    buffer.length >= 3 &&
+    buffer[0] === 0xff &&
+    buffer[1] === 0xd8 &&
+    buffer[2] === 0xff
+  ) {
+    return 'image/jpeg';
+  }
+  if (
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString('latin1') === 'RIFF' &&
+    buffer.subarray(8, 12).toString('latin1') === 'WEBP'
+  ) {
+    return 'image/webp';
+  }
+  if (
+    buffer.length >= 6 &&
+    ['GIF87a', 'GIF89a'].includes(buffer.subarray(0, 6).toString('latin1'))
+  ) {
+    return 'image/gif';
+  }
+  throw new DocumentExtractionError(
+    'Image content is not a supported PNG, JPEG, WebP, or GIF file'
+  );
+};
+
+/** Bounds for scanned-PDF image recovery. */
+export const PDF_EMBEDDED_IMAGE_LIMITS = Object.freeze({
+  maxImages: 20,
+  /** Page-scan images below this are icons/decorations, not content. */
+  minBytesPerImage: 4 * 1024,
+  maxBytesPerImage: 8 * 1024 * 1024,
+});
+
+/**
+ * Recover embedded JPEG page scans from a PDF with no extractable text.
+ * Scanned PDFs overwhelmingly store each page as one DCTDecode (JPEG)
+ * XObject whose stream bytes are a complete JPEG file, so a bounded scan of
+ * the raw objects recovers them without a rendering engine. Other image
+ * filters (Flate bitmaps, CCITT fax, JBIG2) are out of scope and simply
+ * yield nothing.
+ */
+export const extractPdfEmbeddedJpegs = (
+  buffer: Buffer,
+  limits = PDF_EMBEDDED_IMAGE_LIMITS
+): Buffer[] => {
+  const images: Buffer[] = [];
+  const latin = buffer.toString('latin1');
+  let cursor = 0;
+  while (images.length < limits.maxImages) {
+    const streamIndex = latin.indexOf('stream', cursor);
+    if (streamIndex === -1) break;
+    cursor = streamIndex + 6;
+    // The object dictionary sits immediately before the stream keyword.
+    const dictionaryStart = latin.lastIndexOf('<<', streamIndex);
+    if (dictionaryStart === -1 || streamIndex - dictionaryStart > 4096) {
+      continue;
+    }
+    const dictionary = latin.slice(dictionaryStart, streamIndex);
+    if (
+      !/\/Subtype\s*\/Image\b/.test(dictionary) ||
+      !dictionary.includes('/DCTDecode')
+    ) {
+      continue;
+    }
+    let dataStart = streamIndex + 6;
+    if (latin[dataStart] === '\r') dataStart += 1;
+    if (latin[dataStart] === '\n') dataStart += 1;
+    const dataEnd = latin.indexOf('endstream', dataStart);
+    if (dataEnd === -1) break;
+    let data = buffer.subarray(dataStart, dataEnd);
+    // Strip the EOL that PDF permits before the endstream keyword.
+    while (
+      data.length > 0 &&
+      (data[data.length - 1] === 0x0a || data[data.length - 1] === 0x0d)
+    ) {
+      data = data.subarray(0, data.length - 1);
+    }
+    cursor = dataEnd + 9;
+    if (
+      data.length < limits.minBytesPerImage ||
+      data.length > limits.maxBytesPerImage
+    ) {
+      continue;
+    }
+    if (data[0] !== 0xff || data[1] !== 0xd8 || data[2] !== 0xff) continue;
+    images.push(data);
+  }
+  return images;
+};
+
 export interface PdfExtractionApi {
   getDocument(options: { data: Uint8Array }): {
     promise: Promise<{
@@ -649,6 +769,13 @@ export const extractDocumentContentByType = async (
     case 'code':
     case 'txt':
       return { content: decodeTextBuffer(buffer), segments: [] };
+    case 'image':
+    case 'audio':
+      // These types extract through model calls (vision OCR / provider
+      // STT) in the document service, never in this pure layer.
+      throw new DocumentExtractionError(
+        'Image and audio extraction require the media extraction pipeline'
+      );
     default: {
       const exhausted: never = fileType;
       throw new DocumentExtractionError(`Unsupported file type: ${exhausted}`);

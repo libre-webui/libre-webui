@@ -834,7 +834,9 @@
         "chatScope": "แชทเดียว",
         "everyChatScope": "ทุกแชท",
         "deleteConfirm": "ลบ \"{{name}}\" หรือไม่? เอกสารจะหายไปจากทุกแชท",
-        "deleteFailed": "ลบเอกสารไม่สำเร็จ"
+        "deleteFailed": "ลบเอกสารไม่สำเร็จ",
+        "extractionFailed": "การแยกข้อมูลล้มเหลว",
+        "extractionQueued": "กำลังแยกข้อมูล…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "เกิดข้อผิดพลาดขณะลบเอกสาร",
     "clickToUpload": "คลิกเพื่ออัปโหลด",
     "orDragAndDrop": "หรือลากและวาง",
-    "fileTypesAndSize": "ไฟล์ PDF, Office, Markdown, HTML, โค้ด และ CSV ขนาดไม่เกิน 10MB",
+    "fileTypesAndSize": "ไฟล์ PDF, Office, Markdown, HTML, โค้ด, CSV, รูปภาพ และเสียง สูงสุด 10 MB",
     "uploadedDocuments": "เอกสารที่อัปโหลด",
     "removeDocument": "ลบเอกสาร",
     "fullContextToggle": "ส่งเอกสารฉบับเต็ม",

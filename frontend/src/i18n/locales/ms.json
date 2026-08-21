@@ -834,7 +834,9 @@
         "chatScope": "Satu sembang",
         "everyChatScope": "Semua sembang",
         "deleteConfirm": "Padam \"{{name}}\"? Ia akan hilang daripada semua sembang.",
-        "deleteFailed": "Gagal memadamkan dokumen"
+        "deleteFailed": "Gagal memadamkan dokumen",
+        "extractionFailed": "Pengekstrakan gagal",
+        "extractionQueued": "Mengekstrak…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Ralat berlaku semasa membuang dokumen",
     "clickToUpload": "Klik untuk muat naik",
     "orDragAndDrop": "atau seret dan lepas",
-    "fileTypesAndSize": "Fail PDF, Office, Markdown, HTML, kod dan CSV sehingga 10MB",
+    "fileTypesAndSize": "Fail PDF, Office, Markdown, HTML, kod, CSV, imej dan audio sehingga 10 MB",
     "uploadedDocuments": "Dokumen Dimuat Naik",
     "removeDocument": "Buang dokumen",
     "fullContextToggle": "Hantar dokumen penuh",

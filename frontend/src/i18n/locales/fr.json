@@ -834,7 +834,9 @@
         "chatScope": "Un seul chat",
         "everyChatScope": "Tous les chats",
         "deleteConfirm": "Supprimer « {{name}} » ? Il disparaîtra de tous les chats.",
-        "deleteFailed": "Impossible de supprimer le document"
+        "deleteFailed": "Impossible de supprimer le document",
+        "extractionFailed": "Échec de l'extraction",
+        "extractionQueued": "Extraction…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Une erreur s'est produite lors de la suppression du document",
     "clickToUpload": "Cliquez pour envoyer",
     "orDragAndDrop": "ou glissez-déposez",
-    "fileTypesAndSize": "Fichiers PDF, Office, Markdown, HTML, code et CSV jusqu'à 10 Mo",
+    "fileTypesAndSize": "Fichiers PDF, Office, Markdown, HTML, code, CSV, image et audio jusqu'à 10 Mo",
     "uploadedDocuments": "Documents envoyés",
     "removeDocument": "Supprimer le document",
     "fullContextToggle": "Envoyer les documents complets",

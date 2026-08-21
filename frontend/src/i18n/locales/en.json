@@ -834,7 +834,9 @@
         "chatScope": "One chat",
         "everyChatScope": "Every chat",
         "deleteConfirm": "Delete \"{{name}}\"? It disappears from every chat.",
-        "deleteFailed": "Failed to delete the document"
+        "deleteFailed": "Failed to delete the document",
+        "extractionFailed": "Extraction failed",
+        "extractionQueued": "Extracting…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "An error occurred while removing the document",
     "clickToUpload": "Click to upload",
     "orDragAndDrop": "or drag and drop",
-    "fileTypesAndSize": "PDF, Office, Markdown, HTML, code, and CSV files up to 10MB",
+    "fileTypesAndSize": "PDF, Office, Markdown, HTML, code, CSV, image, and audio files up to 10MB",
     "uploadedDocuments": "Uploaded Documents",
     "removeDocument": "Remove document",
     "fullContextToggle": "Send full documents",

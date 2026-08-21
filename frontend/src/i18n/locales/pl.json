@@ -834,7 +834,9 @@
         "chatScope": "Jeden czat",
         "everyChatScope": "Wszystkie czaty",
         "deleteConfirm": "Usunąć „{{name}}”? Zniknie ze wszystkich czatów.",
-        "deleteFailed": "Nie udało się usunąć dokumentu"
+        "deleteFailed": "Nie udało się usunąć dokumentu",
+        "extractionFailed": "Ekstrakcja nie powiodła się",
+        "extractionQueued": "Trwa ekstrakcja…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Wystąpił błąd podczas usuwania dokumentu",
     "clickToUpload": "Kliknij, aby przesłać",
     "orDragAndDrop": "lub przeciągnij i upuść",
-    "fileTypesAndSize": "Pliki PDF, Office, Markdown, HTML, kod i CSV do 10 MB",
+    "fileTypesAndSize": "Pliki PDF, Office, Markdown, HTML, kod, CSV, obrazy i audio do 10 MB",
     "uploadedDocuments": "Przesłane dokumenty",
     "removeDocument": "Usuń dokument",
     "fullContextToggle": "Wysyłaj pełne dokumenty",

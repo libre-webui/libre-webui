@@ -834,7 +834,9 @@
         "chatScope": "Jeden chat",
         "everyChatScope": "Všechny chaty",
         "deleteConfirm": "Smazat „{{name}}“? Zmizí ze všech chatů.",
-        "deleteFailed": "Dokument se nepodařilo smazat"
+        "deleteFailed": "Dokument se nepodařilo smazat",
+        "extractionFailed": "Extrakce selhala",
+        "extractionQueued": "Probíhá extrakce…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Při odstraňování dokumentu došlo k chybě",
     "clickToUpload": "Klikněte pro nahrání",
     "orDragAndDrop": "nebo přetáhněte",
-    "fileTypesAndSize": "Soubory PDF, Office, Markdown, HTML, kód a CSV do 10 MB",
+    "fileTypesAndSize": "Soubory PDF, Office, Markdown, HTML, kód, CSV, obrázky a audio do 10 MB",
     "uploadedDocuments": "Nahrané dokumenty",
     "removeDocument": "Odstranit dokument",
     "fullContextToggle": "Odesílat celé dokumenty",

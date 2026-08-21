@@ -24,13 +24,24 @@ Current upload support:
 - Presentations (`.pptx`, with per-slide provenance)
 - Spreadsheets (`.xlsx`, with per-sheet provenance) and CSV/TSV
 - Source code (TypeScript, Python, Go, Rust, SQL, YAML, and other common languages)
+- Images (`.png`, `.jpg`, `.webp`, `.gif`) — the text is read by your
+  configured vision model (Settings → Model → Vision Model)
+- Audio (`.wav`, `.webm`) — transcribed through your speech-to-text
+  provider, behind the same STT access gate as voice input
 - Maximum file size: 10 MB
 
 Office formats are unpacked with a bounded in-repo parser — no third-party
 document library runs in the server process. Re-uploading identical bytes
-into the same scope is deduplicated instead of ingested twice. Scanned
-images/OCR and audio transcription are not supported yet; they are planned
-alongside the media phase of the roadmap.
+into the same scope is deduplicated instead of ingested twice.
+
+Image and audio extraction route to providers you already configured —
+no local OCR or speech engine is bundled, and nothing leaves the instance
+except the call to the model you chose. A PDF with no text layer (a scan)
+is handled the same way: its embedded JPEG page images are recovered and
+read through the vision model, with per-page provenance. Scans stored in
+other image encodings (CCITT fax, JBIG2) still yield no text, and if no
+vision model or STT provider is configured the upload is marked as failed
+with the reason shown in Settings → Documents.
 
 Files are processed by the backend and stored with the rest of the application data.
 
@@ -126,7 +137,8 @@ Compare the uploaded policy with this proposed change.
 ## Best Practices
 
 - Keep uploads focused on the current task.
-- Use text-based PDFs when possible; scanned PDFs may have little extractable text.
+- Prefer text-based PDFs; scanned PDFs work through the vision model but
+  cost a model call per page.
 - Regenerate embeddings after changing the embedding model.
 - Lower the similarity threshold if semantic search misses useful context.
 - Raise the threshold if results feel noisy.

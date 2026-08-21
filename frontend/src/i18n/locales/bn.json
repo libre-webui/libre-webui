@@ -834,7 +834,9 @@
         "chatScope": "একটি চ্যাট",
         "everyChatScope": "সব চ্যাট",
         "deleteConfirm": "\"{{name}}\" মুছবেন? এটি সব চ্যাট থেকে মুছে যাবে।",
-        "deleteFailed": "নথি মুছে ফেলা যায়নি"
+        "deleteFailed": "নথি মুছে ফেলা যায়নি",
+        "extractionFailed": "নিষ্কাশন ব্যর্থ",
+        "extractionQueued": "নিষ্কাশন চলছে…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "ডকুমেন্ট সরানোর সময় একটি ত্রুটি ঘটেছে",
     "clickToUpload": "আপলোড করতে ক্লিক করুন",
     "orDragAndDrop": "অথবা টেনে আনুন",
-    "fileTypesAndSize": "PDF, Office, Markdown, HTML, কোড এবং CSV ফাইল সর্বোচ্চ 10MB",
+    "fileTypesAndSize": "PDF, Office, Markdown, HTML, কোড, CSV, ছবি ও অডিও ফাইল (সর্বোচ্চ 10MB)",
     "uploadedDocuments": "আপলোড করা ডকুমেন্ট",
     "removeDocument": "ডকুমেন্ট সরান",
     "fullContextToggle": "সম্পূর্ণ নথি পাঠান",

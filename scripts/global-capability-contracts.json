@@ -3774,6 +3774,13 @@
             "Document Chat lets Libre WebUI search uploaded documents",
             "POST /api/documents/search"
           ]
+        },
+        {
+          "file": "docs/09-RAG_FEATURE.md",
+          "patterns": [
+            "embedded JPEG page images are recovered",
+            "no local OCR or speech engine is bundled"
+          ]
         }
       ],
       "focusedTests": [
@@ -3784,6 +3791,24 @@
           "behaviorPatterns": [
             "documentService\\.searchDocuments",
             "user-scoped upload must join the session scope"
+          ]
+        },
+        {
+          "file": "scripts/test-media-extraction.mjs",
+          "runner": "test:package",
+          "name": "multi-image OCR produces one labeled page segment per image",
+          "behaviorPatterns": [
+            "extractImagesToText",
+            "The middle page has no recoverable text"
+          ]
+        },
+        {
+          "file": "scripts/test-media-extraction.mjs",
+          "runner": "test:package",
+          "name": "audio transcripts carry one Transcript section and respect the stt gate",
+          "behaviorPatterns": [
+            "extractAudioToText",
+            "restricted to administrators"
           ]
         }
       ],

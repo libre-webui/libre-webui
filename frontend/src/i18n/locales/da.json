@@ -834,7 +834,9 @@
         "chatScope": "Én chat",
         "everyChatScope": "Alle chats",
         "deleteConfirm": "Slet \"{{name}}\"? Det forsvinder fra alle chats.",
-        "deleteFailed": "Dokumentet kunne ikke slettes"
+        "deleteFailed": "Dokumentet kunne ikke slettes",
+        "extractionFailed": "Udtrækning mislykkedes",
+        "extractionQueued": "Udtrækker…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Der opstod en fejl under fjernelse af dokumentet",
     "clickToUpload": "Klik for at uploade",
     "orDragAndDrop": "eller træk og slip",
-    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kode- og CSV-filer op til 10 MB",
+    "fileTypesAndSize": "PDF-, Office-, Markdown-, HTML-, kode-, CSV-, billed- og lydfiler op til 10 MB",
     "uploadedDocuments": "Uploadede dokumenter",
     "removeDocument": "Fjern dokument",
     "fullContextToggle": "Send hele dokumenter",

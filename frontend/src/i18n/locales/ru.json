@@ -834,7 +834,9 @@
         "chatScope": "Один чат",
         "everyChatScope": "Все чаты",
         "deleteConfirm": "Удалить «{{name}}»? Он исчезнет из всех чатов.",
-        "deleteFailed": "Не удалось удалить документ"
+        "deleteFailed": "Не удалось удалить документ",
+        "extractionFailed": "Ошибка извлечения",
+        "extractionQueued": "Извлечение…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Произошла ошибка при удалении документа",
     "clickToUpload": "Нажмите для загрузки",
     "orDragAndDrop": "или перетащите",
-    "fileTypesAndSize": "Файлы PDF, Office, Markdown, HTML, код и CSV до 10 МБ",
+    "fileTypesAndSize": "Файлы PDF, Office, Markdown, HTML, код, CSV, изображения и аудио до 10 МБ",
     "uploadedDocuments": "Загруженные документы",
     "removeDocument": "Удалить документ",
     "fullContextToggle": "Отправлять документы целиком",

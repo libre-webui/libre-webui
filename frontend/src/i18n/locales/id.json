@@ -834,7 +834,9 @@
         "chatScope": "Satu obrolan",
         "everyChatScope": "Semua obrolan",
         "deleteConfirm": "Hapus \"{{name}}\"? Dokumen ini akan hilang dari semua obrolan.",
-        "deleteFailed": "Gagal menghapus dokumen"
+        "deleteFailed": "Gagal menghapus dokumen",
+        "extractionFailed": "Ekstraksi gagal",
+        "extractionQueued": "Mengekstrak…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Terjadi kesalahan saat menghapus dokumen",
     "clickToUpload": "Klik untuk mengunggah",
     "orDragAndDrop": "atau seret dan lepas",
-    "fileTypesAndSize": "Berkas PDF, Office, Markdown, HTML, kode, dan CSV hingga 10MB",
+    "fileTypesAndSize": "Berkas PDF, Office, Markdown, HTML, kode, CSV, gambar, dan audio hingga 10 MB",
     "uploadedDocuments": "Dokumen yang Diunggah",
     "removeDocument": "Hapus dokumen",
     "fullContextToggle": "Kirim dokumen lengkap",

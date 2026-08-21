@@ -74,7 +74,10 @@ import {
   scoreCandidatesBm25,
 } from '../utils/hybridRetrieval.js';
 import {
+  DocumentExtractionError,
+  detectImageMimeType,
   extractDocumentContentByType,
+  extractPdfEmbeddedJpegs,
   readDocumentSegments,
   resolveDocumentFileType,
   resolveSegmentLabel,
@@ -391,7 +394,8 @@ const extractDocumentContent = async (
   fileName: string,
   fileBuffer: Buffer,
   mimeType: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  userId?: string
 ): Promise<{
   content: string;
   fileType: DocumentFileType;
@@ -402,10 +406,61 @@ const extractDocumentContent = async (
   if (!fileType) {
     throw new Error(`Unsupported file type: ${mimeType}`);
   }
+
+  // Images and audio extract through model calls (vision OCR / provider
+  // STT), which need the owner's identity, providers, and permissions.
+  if (fileType === 'image' || fileType === 'audio') {
+    if (!userId) {
+      throw new DocumentExtractionError(
+        'Image and audio extraction require an owning user'
+      );
+    }
+    const media = await import('./documentMediaExtractionService.js');
+    if (fileType === 'image') {
+      const mime = detectImageMimeType(fileBuffer);
+      const extracted = await media.extractImagesToText(
+        [{ data: fileBuffer, mime, label: 'Image' }],
+        userId,
+        signal
+      );
+      return { ...extracted, fileType };
+    }
+    const extracted = await media.extractAudioToText(
+      { buffer: fileBuffer, mimetype: mimeType, originalname: fileName },
+      userId,
+      signal
+    );
+    return { ...extracted, fileType };
+  }
+
   const extracted = await extractDocumentContentByType(fileBuffer, fileType, {
     signal,
     ...(fileType === 'pdf' ? { pdfLib: await getPdfjsLib() } : {}),
   });
+
+  // A PDF with no text layer is almost always a scan: recover the embedded
+  // JPEG page images and OCR them through the owner's vision model.
+  if (fileType === 'pdf' && !extracted.content.trim() && userId) {
+    const scans = extractPdfEmbeddedJpegs(fileBuffer);
+    if (scans.length > 0) {
+      const media = await import('./documentMediaExtractionService.js');
+      const ocr = await media.extractImagesToText(
+        scans.map((data, index) => ({
+          data,
+          mime: 'image/jpeg',
+          label: `Page ${index + 1}`,
+        })),
+        userId,
+        signal
+      );
+      return {
+        content: ocr.content,
+        fileType,
+        segments: ocr.segments.slice(0, MAX_DOCUMENT_SEGMENTS),
+      };
+    }
+  }
+
   return {
     content: extracted.content,
     fileType,
@@ -649,7 +704,9 @@ export class DocumentService {
       const { content, fileType, segments } = await extractDocumentContent(
         fileName,
         fileBuffer,
-        mimeType
+        mimeType,
+        undefined,
+        userId
       );
 
       let document: Document = {
@@ -1183,6 +1240,34 @@ export class DocumentService {
   }
 
   /** Durable extraction/embedding handler entrypoint for an existing source. */
+  /**
+   * Record a terminal extraction failure on the document row so the owner
+   * can see why the upload never became searchable. Best effort: the
+   * durable job remains the operational record.
+   */
+  async markProcessingFailed(
+    documentId: string,
+    userId: string,
+    message: string
+  ): Promise<boolean> {
+    const current = await this.getDocument(documentId, userId);
+    if (!current) return false;
+    const document: Document = {
+      ...current,
+      metadata: {
+        ...(current.metadata ?? {}),
+        processingStatus: 'failed',
+        processingError: message.slice(0, 500),
+        processedAt: Date.now(),
+      },
+    };
+    await getPlatformStorageRuntime().domains.documents.upsert(
+      document,
+      userId
+    );
+    return true;
+  }
+
   async reprocessDocument(
     documentId: string,
     userId: string,
@@ -1216,7 +1301,8 @@ export class DocumentService {
       source.descriptor.originalFilename ?? current.filename,
       sourceBuffer,
       source.descriptor.contentType,
-      signal
+      signal,
+      userId
     );
     let document: Document = {
       ...current,

@@ -834,7 +834,9 @@
         "chatScope": "Tek sohbet",
         "everyChatScope": "Tüm sohbetler",
         "deleteConfirm": "\"{{name}}\" silinsin mi? Tüm sohbetlerden kaldırılır.",
-        "deleteFailed": "Belge silinemedi"
+        "deleteFailed": "Belge silinemedi",
+        "extractionFailed": "Çıkarma başarısız",
+        "extractionQueued": "Çıkarılıyor…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Belge kaldırılırken bir hata oluştu",
     "clickToUpload": "Yüklemek için tıklayın",
     "orDragAndDrop": "veya sürükleyip bırakın",
-    "fileTypesAndSize": "10 MB'a kadar PDF, Office, Markdown, HTML, kod ve CSV dosyaları",
+    "fileTypesAndSize": "10 MB'a kadar PDF, Office, Markdown, HTML, kod, CSV, görsel ve ses dosyaları",
     "uploadedDocuments": "Yüklenen Belgeler",
     "removeDocument": "Belgeyi kaldır",
     "fullContextToggle": "Belgeleri tam olarak gönder",

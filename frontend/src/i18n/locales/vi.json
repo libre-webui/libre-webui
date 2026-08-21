@@ -834,7 +834,9 @@
         "chatScope": "Một cuộc trò chuyện",
         "everyChatScope": "Mọi cuộc trò chuyện",
         "deleteConfirm": "Xóa \"{{name}}\"? Tài liệu sẽ biến mất khỏi mọi cuộc trò chuyện.",
-        "deleteFailed": "Không thể xóa tài liệu"
+        "deleteFailed": "Không thể xóa tài liệu",
+        "extractionFailed": "Trích xuất thất bại",
+        "extractionQueued": "Đang trích xuất…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "Đã xảy ra lỗi khi xóa tài liệu",
     "clickToUpload": "Nhấp để tải lên",
     "orDragAndDrop": "hoặc kéo và thả",
-    "fileTypesAndSize": "Tệp PDF, Office, Markdown, HTML, mã nguồn và CSV tối đa 10MB",
+    "fileTypesAndSize": "Tệp PDF, Office, Markdown, HTML, mã nguồn, CSV, hình ảnh và âm thanh tối đa 10 MB",
     "uploadedDocuments": "Tài liệu đã tải lên",
     "removeDocument": "Xóa tài liệu",
     "fullContextToggle": "Gửi toàn bộ tài liệu",

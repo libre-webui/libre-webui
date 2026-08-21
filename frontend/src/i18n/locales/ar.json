@@ -834,7 +834,9 @@
         "chatScope": "محادثة واحدة",
         "everyChatScope": "كل المحادثات",
         "deleteConfirm": "حذف \"{{name}}\"؟ سيختفي من كل المحادثات.",
-        "deleteFailed": "فشل حذف المستند"
+        "deleteFailed": "فشل حذف المستند",
+        "extractionFailed": "فشل الاستخراج",
+        "extractionQueued": "جارٍ الاستخراج…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "حدث خطأ أثناء إزالة المستند",
     "clickToUpload": "انقر للرفع",
     "orDragAndDrop": "أو اسحب وأفلت",
-    "fileTypesAndSize": "ملفات PDF وOffice وMarkdown وHTML وملفات الشيفرة وCSV حتى 10 ميغابايت",
+    "fileTypesAndSize": "ملفات PDF وOffice وMarkdown وHTML والتعليمات البرمجية وCSV والصور والصوت حتى 10 ميغابايت",
     "uploadedDocuments": "المستندات المرفوعة",
     "removeDocument": "إزالة المستند",
     "fullContextToggle": "إرسال المستندات كاملة",

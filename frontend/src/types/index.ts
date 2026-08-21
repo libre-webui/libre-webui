@@ -710,7 +710,17 @@ export interface PluginStatus {
 
 // Document and RAG types
 export type DocumentFileType =
-  'pdf' | 'txt' | 'md' | 'html' | 'code' | 'docx' | 'pptx' | 'xlsx' | 'csv';
+  | 'pdf'
+  | 'txt'
+  | 'md'
+  | 'html'
+  | 'code'
+  | 'docx'
+  | 'pptx'
+  | 'xlsx'
+  | 'csv'
+  | 'image'
+  | 'audio';
 
 export interface DocumentSummary {
   id: string;
@@ -722,6 +732,9 @@ export interface DocumentSummary {
   uploadedAt: number;
   /** Length of the extracted text, for context-size estimates. */
   contentChars?: number;
+  /** Present when the async extraction pipeline reported an outcome. */
+  processingStatus?: 'queued' | 'completed' | 'failed';
+  processingError?: string;
 }
 
 export interface KnowledgeCollection {

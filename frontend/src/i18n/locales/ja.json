@@ -834,7 +834,9 @@
         "chatScope": "単一チャット",
         "everyChatScope": "すべてのチャット",
         "deleteConfirm": "「{{name}}」を削除しますか？すべてのチャットから消えます。",
-        "deleteFailed": "ドキュメントを削除できませんでした"
+        "deleteFailed": "ドキュメントを削除できませんでした",
+        "extractionFailed": "抽出に失敗しました",
+        "extractionQueued": "抽出中…"
       }
     },
     "tts": {
@@ -2084,7 +2086,7 @@
     "removeError": "ドキュメントの削除中にエラーが発生しました",
     "clickToUpload": "クリックしてアップロード",
     "orDragAndDrop": "またはドラッグ＆ドロップ",
-    "fileTypesAndSize": "PDF、Office、Markdown、HTML、コード、CSVファイル(最大10MB)",
+    "fileTypesAndSize": "PDF、Office、Markdown、HTML、コード、CSV、画像、音声ファイル（最大 10MB）",
     "uploadedDocuments": "アップロードされたドキュメント",
     "removeDocument": "ドキュメントを削除",
     "fullContextToggle": "ドキュメント全文を送信",

@@ -78,6 +78,15 @@ export const SUPPORTED_UPLOAD_EXTENSIONS = [
   'proto',
   'tf',
   'dockerfile',
+  // Images OCR through the configured vision model.
+  'png',
+  'jpg',
+  'jpeg',
+  'webp',
+  'gif',
+  // Audio transcribes through the provider STT pipeline.
+  'wav',
+  'webm',
 ];
 
 export const UPLOAD_ACCEPT_ATTRIBUTE = SUPPORTED_UPLOAD_EXTENSIONS.map(
