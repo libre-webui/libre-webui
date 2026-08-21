@@ -21,11 +21,8 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
-  ARTIFACT_SANDBOX_READY,
-  ARTIFACT_SANDBOX_RENDER,
   buildSvgArtifactDocument,
   HTML_ARTIFACT_SANDBOX,
-  openArtifactPreviewWindow,
   SVG_ARTIFACT_SANDBOX,
 } from './artifactHtml';
 
@@ -44,102 +41,6 @@ test('SVG artifacts are wrapped in a no-script, no-network document', () => {
 
   assert.match(document, /Content-Security-Policy[^>]+default-src 'none'/);
   assert.match(document, /<title>&lt;Untrusted title&gt;<\/title>/);
-});
-
-test('new-window HTML previews keep untrusted markup in a sandboxed iframe', () => {
-  const attributes = new Map<string, string>();
-  const posted: unknown[] = [];
-  const iframe = {
-    title: '',
-    src: '',
-    srcdoc: '',
-    style: {} as Record<string, string>,
-    contentWindow: {
-      postMessage(message: unknown) {
-        posted.push(message);
-      },
-    },
-    setAttribute(name: string, value: string) {
-      attributes.set(name, value);
-    },
-  };
-  let appended: unknown;
-  let replaced = false;
-  let listener: ((event: MessageEvent) => void) | null = null;
-  const previewWindow = {
-    opener: {} as unknown,
-    addEventListener(type: string, handler: (event: MessageEvent) => void) {
-      assert.equal(type, 'message');
-      listener = handler;
-    },
-    document: {
-      title: '',
-      documentElement: { style: {} as Record<string, string> },
-      body: {
-        style: {} as Record<string, string>,
-        replaceChildren() {
-          replaced = true;
-        },
-        appendChild(child: unknown) {
-          appended = child;
-        },
-      },
-      createElement(tagName: string) {
-        assert.equal(tagName, 'iframe');
-        return iframe;
-      },
-    },
-  };
-  const previousWindow = globalThis.window;
-  Object.defineProperty(globalThis, 'window', {
-    configurable: true,
-    value: { open: () => previewWindow },
-  });
-
-  try {
-    const result = openArtifactPreviewWindow(
-      '<!DOCTYPE html><html><body><script>parent.document.body.textContent="owned"</script></body></html>',
-      '/api/artifacts/sandbox',
-      'Preview'
-    );
-    assert.equal(result, previewWindow);
-    assert.equal(previewWindow.opener, null);
-    assert.equal(replaced, true);
-    assert.equal(appended, iframe);
-    assert.equal(attributes.get('sandbox'), HTML_ARTIFACT_SANDBOX);
-    // Markup reaches the sandbox host as a message, never as inherited-policy
-    // srcdoc markup and never through the popup's own DOM.
-    assert.equal(iframe.src, '/api/artifacts/sandbox');
-    assert.equal(iframe.srcdoc, '');
-    assert.equal(posted.length, 0);
-
-    const deliver = listener as ((event: MessageEvent) => void) | null;
-    assert.ok(deliver, 'expected a message listener on the preview window');
-    // A message from an unrelated window must not deliver the document.
-    deliver({
-      source: {},
-      data: { type: ARTIFACT_SANDBOX_READY },
-    } as unknown as MessageEvent);
-    assert.equal(posted.length, 0);
-
-    deliver({
-      source: iframe.contentWindow,
-      data: { type: ARTIFACT_SANDBOX_READY },
-    } as unknown as MessageEvent);
-    assert.equal(posted.length, 1);
-    const message = posted[0] as { type: string; html: string };
-    assert.equal(message.type, ARTIFACT_SANDBOX_RENDER);
-    assert.equal(message.html.includes('<script>'), true);
-  } finally {
-    if (previousWindow === undefined) {
-      Reflect.deleteProperty(globalThis, 'window');
-    } else {
-      Object.defineProperty(globalThis, 'window', {
-        configurable: true,
-        value: previousWindow,
-      });
-    }
-  }
 });
 
 test('SVG components do not inject artifact markup into the parent DOM', () => {

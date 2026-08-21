@@ -158,49 +158,6 @@ export function buildSvgArtifactDocument(
 </html>`;
 }
 
-/**
- * Opens an artifact in its own window. The document is composed by the caller
- * so that every artifact kind — plain HTML, React, Mermaid — reaches the same
- * sandbox host the inline preview uses.
- */
-export function openArtifactPreviewWindow(
-  html: string,
-  sandboxUrl: string,
-  title = 'Artifact'
-): Window | null {
-  const previewWindow = window.open('', '_blank');
-  if (!previewWindow) return null;
-
-  // Keep untrusted artifact markup out of the same-origin popup document. The
-  // popup only hosts an opaque-origin sandboxed iframe built with DOM APIs.
-  previewWindow.opener = null;
-  const { document } = previewWindow;
-  document.title = title;
-  document.documentElement.style.width = '100%';
-  document.documentElement.style.height = '100%';
-  document.body.style.width = '100%';
-  document.body.style.height = '100%';
-  document.body.style.margin = '0';
-  document.body.replaceChildren();
-
-  const iframe = document.createElement('iframe');
-  iframe.title = title;
-  iframe.src = sandboxUrl;
-  iframe.setAttribute('sandbox', HTML_ARTIFACT_SANDBOX);
-  iframe.setAttribute('allow', HTML_ARTIFACT_ALLOW);
-  iframe.style.width = '100%';
-  iframe.style.height = '100%';
-  iframe.style.border = '0';
-
-  previewWindow.addEventListener('message', (event: MessageEvent) => {
-    if (!isArtifactSandboxReady(event, iframe)) return;
-    postArtifactDocument(iframe, html);
-  });
-  document.body.appendChild(iframe);
-
-  return previewWindow;
-}
-
 function ensurePreviewHeadTags(htmlContent: string, title: string): string {
   let html = htmlContent;
 

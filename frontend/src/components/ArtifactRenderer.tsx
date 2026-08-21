@@ -26,7 +26,6 @@ import {
   Check,
   AlertTriangle,
   Download,
-  ExternalLink,
   Eye,
   Code2,
 } from 'lucide-react';
@@ -38,15 +37,9 @@ import { Artifact } from '@/types';
 import {
   buildHtmlArtifactDocument,
   buildSvgArtifactDocument,
-  openArtifactPreviewWindow,
   SVG_ARTIFACT_SANDBOX,
 } from '@/utils/artifactHtml';
-import { ARTIFACT_SANDBOX_URL } from '@/utils/artifactSandbox';
-import {
-  artifactSandboxKind,
-  buildArtifactSandboxDocument,
-  type ArtifactSandboxKind,
-} from '@/utils/artifactRuntimeDocument';
+import { type ArtifactSandboxKind } from '@/utils/artifactRuntimeDocument';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 
@@ -168,21 +161,6 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       </div>
     </div>
   );
-
-  // The runtime is inlined into the document, so preparing it is asynchronous.
-  const openArtifactWindow = async () => {
-    try {
-      const document = await buildArtifactSandboxDocument(
-        artifactSandboxKind(artifact.type) ?? 'html',
-        artifact.content,
-        artifact.title,
-        { colorScheme: theme.mode === 'dark' ? 'dark' : 'light' }
-      );
-      openArtifactPreviewWindow(document, ARTIFACT_SANDBOX_URL, artifact.title);
-    } catch (error) {
-      logger.error('Failed to open the artifact preview:', error);
-    }
-  };
 
   const renderSandbox = (kind: ArtifactSandboxKind) => {
     if (!artifact.content.trim()) {
@@ -494,18 +472,6 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
           {t('artifacts.created')}:{' '}
           {new Date(artifact.createdAt).toLocaleString()}
         </div>
-
-        {artifactSandboxKind(artifact.type) && (
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={() => openArtifactWindow()}
-            className='text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
-          >
-            <ExternalLink className='h-3 w-3 mr-1' />
-            {t('artifacts.openInNewWindow')}
-          </Button>
-        )}
       </div>
     </div>
   );
