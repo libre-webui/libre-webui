@@ -698,7 +698,7 @@ export function WorkspacePane({
                   <Button
                     data-testid='work-save-file-button'
                     size='sm'
-                    className='h-8 w-8 rounded-lg bg-[#ff7b52] px-0 text-[#3d120c] hover:bg-[#ff7b52]/90 sm:w-auto sm:px-2.5'
+                    className='h-8 w-8 rounded-lg bg-primary-600 px-0 text-white hover:bg-primary-500 sm:w-auto sm:px-2.5'
                     disabled={
                       !dirty || taskActive || formatting || actionLoading
                     }
@@ -788,7 +788,7 @@ export function WorkspacePane({
                 <Button
                   data-testid='work-start-preview-button'
                   size='sm'
-                  className='h-8 w-8 rounded-lg bg-[#ff7b52] px-0 text-[#3d120c] hover:bg-[#ff7b52]/90 sm:w-auto sm:px-2.5'
+                  className='h-8 w-8 rounded-lg bg-primary-600 px-0 text-white hover:bg-primary-500 sm:w-auto sm:px-2.5'
                   disabled={actionLoading}
                   onClick={() =>
                     void onStartPreview(previewCommand.trim() || undefined)

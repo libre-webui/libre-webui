@@ -132,7 +132,7 @@ export function ToolActivityRow({
         aria-expanded={hasDetails ? expanded : undefined}
         aria-controls={hasDetails ? detailId : undefined}
         aria-label={`${kindLabel}: ${tool.name}`}
-        className='flex min-h-10 w-full items-center gap-2 px-3 py-2 text-start outline-none hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ff7b52] disabled:cursor-default disabled:hover:bg-transparent'
+        className='flex min-h-10 w-full items-center gap-2 px-3 py-2 text-start outline-none hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500 disabled:cursor-default disabled:hover:bg-transparent'
       >
         <span className='flex h-5 w-5 shrink-0 items-center justify-center'>
           {error ? (
@@ -415,7 +415,7 @@ export function WorkLiveRunSurface({
       {run.skills.length > 0 && (
         <div className='mb-3 flex flex-wrap gap-1.5'>
           <span className='inline-flex items-center gap-1 rounded-full border border-line bg-surface-raised px-2 py-1 text-[10px] text-ink-muted'>
-            <Sparkles className='h-3 w-3 text-[#ff7b52]' aria-hidden='true' />
+            <Sparkles className='h-3 w-3 text-primary-500' aria-hidden='true' />
             <span dir='auto'>
               {t('work.live.skillsLoaded', {
                 count: run.skills.length,

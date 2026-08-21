@@ -31,19 +31,34 @@ interface WorkspaceTerminalProps {
   disabledReason?: string;
 }
 
-const LIGHT_THEME = {
+// The xterm canvas cannot read CSS variables, so the accent is resolved from
+// the same custom property the rest of the UI uses when the terminal mounts.
+const accentColor = (shade: number, alpha?: number): string => {
+  const triplet = getComputedStyle(document.documentElement)
+    .getPropertyValue(`--color-primary-${shade}`)
+    .trim();
+  if (!triplet) {
+    return alpha === undefined ? '#4176e6' : `rgba(65, 118, 230, ${alpha})`;
+  }
+  const [r, g, b] = triplet.split(/\s+/);
+  return alpha === undefined
+    ? `rgb(${r}, ${g}, ${b})`
+    : `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const lightTheme = () => ({
   background: '#ffffff',
   foreground: '#1f2328',
   cursor: '#1f2328',
-  selectionBackground: 'rgba(255, 123, 82, 0.28)',
-};
+  selectionBackground: accentColor(500, 0.28),
+});
 
-const DARK_THEME = {
+const darkTheme = () => ({
   background: '#0f1115',
   foreground: '#e6e6e6',
-  cursor: '#ff7b52',
-  selectionBackground: 'rgba(255, 123, 82, 0.32)',
-};
+  cursor: accentColor(400),
+  selectionBackground: accentColor(500, 0.32),
+});
 
 export function WorkspaceTerminal({
   taskId,
@@ -105,7 +120,7 @@ export function WorkspaceTerminal({
           'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
         fontSize: 12,
         scrollback: 5_000,
-        theme: isDark ? DARK_THEME : LIGHT_THEME,
+        theme: isDark ? darkTheme() : lightTheme(),
       });
       const fit = new FitAddon();
       terminal.loadAddon(fit);
@@ -260,7 +275,7 @@ export function WorkspaceTerminal({
             <Button
               size='sm'
               data-testid='work-terminal-reconnect-button'
-              className='h-8 rounded-lg bg-[#ff7b52] px-3 text-[#3d120c] hover:bg-[#ff7b52]/90'
+              className='h-8 rounded-lg bg-primary-600 px-3 text-white hover:bg-primary-500'
               onClick={reconnect}
             >
               {t('work.terminal.reconnect', { defaultValue: 'Reconnect' })}

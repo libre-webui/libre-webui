@@ -397,24 +397,24 @@ export function WorkSplitPane({
         onKeyDown={handleResizerKeyDown}
         className={cn(
           'group relative z-40 hidden h-full cursor-col-resize touch-none select-none items-center justify-center outline-none xl:flex',
-          'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ff7b52]'
+          'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500'
         )}
       >
         <span
           aria-hidden='true'
           className={cn(
             'pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-line transition-colors',
-            'group-hover:bg-[#ff7b52] group-focus-visible:bg-[#ff7b52]',
-            isResizing && 'bg-[#ff7b52]'
+            'group-hover:bg-primary-500 group-focus-visible:bg-primary-500',
+            isResizing && 'bg-primary-500'
           )}
         />
         <span
           aria-hidden='true'
           className={cn(
             'pointer-events-none relative h-14 w-1 rounded-full bg-ink-subtle/50 opacity-60 transition-[height,background-color,opacity]',
-            'group-hover:h-20 group-hover:bg-[#ff7b52] group-hover:opacity-100',
-            'group-focus-visible:h-20 group-focus-visible:bg-[#ff7b52] group-focus-visible:opacity-100',
-            isResizing && 'h-20 bg-[#ff7b52] opacity-100'
+            'group-hover:h-20 group-hover:bg-primary-500 group-hover:opacity-100',
+            'group-focus-visible:h-20 group-focus-visible:bg-primary-500 group-focus-visible:opacity-100',
+            isResizing && 'h-20 bg-primary-500 opacity-100'
           )}
         />
       </div>

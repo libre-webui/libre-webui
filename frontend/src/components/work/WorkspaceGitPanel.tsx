@@ -407,7 +407,7 @@ export function WorkspaceGitPanel({
         <Button
           data-testid='work-git-init-button'
           size='sm'
-          className='mt-4 bg-[#ff7b52] text-[#3d120c] hover:bg-[#ff7b52]/90'
+          className='mt-4 bg-primary-600 text-white hover:bg-primary-500'
           disabled={mutationsDisabled || busy}
           onClick={() =>
             void runMutation(
@@ -653,7 +653,7 @@ export function WorkspaceGitPanel({
                             : current.filter(path => path !== change.path)
                         )
                       }
-                      className='ms-2 h-3.5 w-3.5 accent-[#ff7b52]'
+                      className='ms-2 h-3.5 w-3.5 accent-primary-600'
                     />
                     <button
                       type='button'
@@ -710,7 +710,7 @@ export function WorkspaceGitPanel({
             <Button
               data-testid='work-git-commit-button'
               size='sm'
-              className='mt-1.5 w-full bg-[#ff7b52] text-[#3d120c] hover:bg-[#ff7b52]/90'
+              className='mt-1.5 w-full bg-primary-600 text-white hover:bg-primary-500'
               disabled={
                 mutationsDisabled ||
                 busy ||

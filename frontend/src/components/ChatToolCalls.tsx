@@ -168,15 +168,15 @@ export const ChatToolApprovalCard: React.FC<{
       role='alertdialog'
       aria-label={t('tools.approval.title')}
       className={cn(
-        'rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-700 dark:bg-amber-950/40',
+        'rounded-lg border border-primary-300/70 bg-primary-50 p-3 text-sm dark:border-primary-700/60 dark:bg-primary-900/20',
         className
       )}
     >
-      <div className='flex items-center gap-2 font-medium text-amber-800 dark:text-amber-200'>
+      <div className='flex items-center gap-2 font-medium text-primary-800 dark:text-primary-200'>
         <ShieldQuestion className='h-4 w-4 shrink-0' />
         {t('tools.approval.title')}
       </div>
-      <p className='mt-1 text-amber-800/90 dark:text-amber-100/80'>
+      <p className='mt-1 text-primary-800/90 dark:text-primary-100/80'>
         {t('tools.approval.description', {
           tool: approval.toolCall.name,
           server:
