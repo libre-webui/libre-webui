@@ -32,6 +32,8 @@ import {
   GripVertical,
   ChevronLeft,
   ChevronRight,
+  Pin,
+  PinOff,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
@@ -86,6 +88,9 @@ export const ArtifactSlideOutPanel: React.FC = () => {
   );
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+  // Pinned keeps the panel open (and the chat interactive) while the user
+  // types follow-ups; only the close button dismisses it.
+  const [pinned, setPinned] = useState(false);
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -219,18 +224,19 @@ export const ArtifactSlideOutPanel: React.FC = () => {
   // Handle escape key to close panel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && artifactPanelOpen) {
+      if (e.key === 'Escape' && artifactPanelOpen && !pinned) {
         closeArtifactPanel();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [artifactPanelOpen, closeArtifactPanel]);
+  }, [artifactPanelOpen, closeArtifactPanel, pinned]);
 
   // Handle click outside to close panel (but not on resize handle)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (isResizing) return; // Don't close while resizing
+      if (pinned) return; // Pinned panels stay open while the user works
 
       if (
         panelRef.current &&
@@ -248,7 +254,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       clearTimeout(timer);
       window.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [artifactPanelOpen, closeArtifactPanel, isResizing]);
+  }, [artifactPanelOpen, closeArtifactPanel, isResizing, pinned]);
 
   if (!artifactPanelArtifact) return null;
 
@@ -489,11 +495,13 @@ export const ArtifactSlideOutPanel: React.FC = () => {
 
   const panel = (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — dropped while pinned so the chat stays interactive */}
       <div
         className={cn(
           'fixed inset-0 bg-black/30 dark:bg-black/50 z-40 transition-opacity duration-300',
-          artifactPanelOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          artifactPanelOpen && !pinned
+            ? 'opacity-100'
+            : 'opacity-0 pointer-events-none'
         )}
       />
 
@@ -567,15 +575,37 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             </span>
           </div>
 
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={closeArtifactPanel}
-            className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 flex-shrink-0'
-            title={t('artifacts.closePanelEsc')}
-          >
-            <X className='h-5 w-5' />
-          </Button>
+          <div className='flex items-center gap-1 flex-shrink-0'>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => setPinned(previous => !previous)}
+              data-testid='artifact-pin-toggle'
+              className={cn(
+                'h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200',
+                pinned && 'text-primary-600 dark:text-primary-400'
+              )}
+              title={
+                pinned ? t('artifacts.unpinPanel') : t('artifacts.pinPanel')
+              }
+            >
+              {pinned ? (
+                <PinOff className='h-4 w-4' />
+              ) : (
+                <Pin className='h-4 w-4' />
+              )}
+            </Button>
+
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={closeArtifactPanel}
+              className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
+              title={t('artifacts.closePanelEsc')}
+            >
+              <X className='h-5 w-5' />
+            </Button>
+          </div>
         </div>
 
         {/* Toolbar */}

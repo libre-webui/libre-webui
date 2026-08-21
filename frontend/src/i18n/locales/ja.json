@@ -2052,7 +2052,9 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "バージョン {{current}} / {{total}}",
     "previousVersion": "前のバージョン",
-    "nextVersion": "次のバージョン"
+    "nextVersion": "次のバージョン",
+    "pinPanel": "パネルを固定",
+    "unpinPanel": "パネルの固定を解除"
   },
   "personaImportExport": {
     "title": "ペルソナのインポート＆エクスポート",

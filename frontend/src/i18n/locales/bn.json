@@ -2052,7 +2052,9 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "সংস্করণ {{current}} / {{total}}",
     "previousVersion": "পূর্ববর্তী সংস্করণ",
-    "nextVersion": "পরবর্তী সংস্করণ"
+    "nextVersion": "পরবর্তী সংস্করণ",
+    "pinPanel": "প্যানেল পিন করুন",
+    "unpinPanel": "প্যানেল আনপিন করুন"
   },
   "personaImportExport": {
     "title": "পার্সোনা ইম্পোর্ট এবং এক্সপোর্ট",

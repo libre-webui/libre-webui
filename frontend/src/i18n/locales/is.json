@@ -2052,7 +2052,9 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Útgáfa {{current}} af {{total}}",
     "previousVersion": "Fyrri útgáfa",
-    "nextVersion": "Næsta útgáfa"
+    "nextVersion": "Næsta útgáfa",
+    "pinPanel": "Festa spjaldið",
+    "unpinPanel": "Losa spjaldið"
   },
   "personaImportExport": {
     "title": "Flytja inn og út persónur",

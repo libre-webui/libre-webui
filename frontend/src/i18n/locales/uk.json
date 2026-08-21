@@ -2052,7 +2052,9 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Версія {{current}} з {{total}}",
     "previousVersion": "Попередня версія",
-    "nextVersion": "Наступна версія"
+    "nextVersion": "Наступна версія",
+    "pinPanel": "Закріпити панель",
+    "unpinPanel": "Відкріпити панель"
   },
   "personaImportExport": {
     "title": "Імпорт та експорт персон",

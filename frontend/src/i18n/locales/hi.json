@@ -2052,7 +2052,9 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "संस्करण {{current}} / {{total}}",
     "previousVersion": "पिछला संस्करण",
-    "nextVersion": "अगला संस्करण"
+    "nextVersion": "अगला संस्करण",
+    "pinPanel": "पैनल पिन करें",
+    "unpinPanel": "पैनल अनपिन करें"
   },
   "personaImportExport": {
     "title": "पर्सोना आयात और निर्यात",
