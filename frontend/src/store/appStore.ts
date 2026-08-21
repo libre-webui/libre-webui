@@ -166,7 +166,7 @@ export const useAppStore = create<AppState>()(
       },
       toggleTheme: () => {
         const currentTheme = get().theme;
-        const nextMode = currentTheme.mode === 'dark' ? 'light' : 'dark';
+        const nextMode = currentTheme.mode === 'light' ? 'dark' : 'light';
         get().updateTheme({ ...currentTheme, mode: nextMode });
       },
 

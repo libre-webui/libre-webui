@@ -173,7 +173,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
         content={artifact.content}
         title={artifact.title}
         kind={kind}
-        colorScheme={theme.mode === 'dark' ? 'dark' : 'light'}
+        colorScheme={theme.mode !== 'light' ? 'dark' : 'light'}
         className='w-full h-64 sm:h-80 lg:h-96 border-0 rounded-lg'
         fallback={renderHtmlFallback()}
       />
@@ -217,7 +217,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       <div className='relative max-h-64 sm:max-h-80 lg:max-h-96 overflow-auto'>
         <OptimizedSyntaxHighlighter
           language={getLanguage()}
-          isDark={theme.mode === 'dark'}
+          isDark={theme.mode !== 'light'}
           className='!m-0 !rounded-lg'
         >
           {artifact.content}
@@ -235,7 +235,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
         <div className='relative max-h-64 sm:max-h-80 lg:max-h-96 overflow-auto'>
           <OptimizedSyntaxHighlighter
             language='json'
-            isDark={theme.mode === 'dark'}
+            isDark={theme.mode !== 'light'}
             className='!m-0 !rounded-lg'
           >
             {formattedJson}

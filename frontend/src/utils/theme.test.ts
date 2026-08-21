@@ -27,3 +27,11 @@ test('uses dark mode when no theme preference exists', () => {
 test('preserves an explicit light theme preference', () => {
   assert.equal(normalizeTheme({ mode: 'light' }).mode, 'light');
 });
+
+test('preserves the amoled mode and collapses unknown modes to dark', () => {
+  assert.equal(normalizeTheme({ mode: 'amoled' }).mode, 'amoled');
+  assert.equal(
+    normalizeTheme({ mode: 'ophelia' as unknown as 'dark' }).mode,
+    'dark'
+  );
+});

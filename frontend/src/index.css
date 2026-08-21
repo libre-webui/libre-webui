@@ -145,6 +145,30 @@
   --scrollbar-thumb-hover: rgb(var(--color-ink-subtle));
 }
 
+/* AMOLED: the true-black variant of dark. Surfaces drop to (or near) black;
+   text and accent rungs stay on the grey dark values. The dark-* ladder is
+   overridden too because many components use it directly. */
+.dark.amoled {
+  --color-canvas: 0 0 0;
+  --color-surface: 0 0 0;
+  --color-surface-subtle: 10 10 11;
+  --color-surface-raised: 17 17 19;
+  --color-surface-overlay: 25 25 27;
+  --color-ink-inverse: 0 0 0;
+  --color-line: 27 27 29;
+  --color-line-strong: 46 47 50;
+
+  --color-sidebar: 0 0 0;
+  --interactive-hover-solid: 23 23 25;
+  --nav-item-active: 32 32 34;
+
+  --color-dark-25: 16 16 18;
+  --color-dark-50: 0 0 0;
+  --color-dark-100: 8 8 9;
+  --color-dark-200: 16 16 17;
+  --color-dark-300: 30 30 32;
+}
+
 html[data-runtime='electron'] {
   --scrollbar-width: 10px;
 }

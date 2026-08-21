@@ -1485,11 +1485,16 @@ test('shows tool activity, saves files, and isolates preview content', async ({
   await expect(
     previewToolbar.getByRole('textbox', { name: 'Optional start command' })
   ).toBeVisible();
-  await expect(startPreviewButton).toHaveCSS(
-    'background-color',
-    'rgb(255, 123, 82)'
+  const accent600 = await page.evaluate(
+    () =>
+      `rgb(${getComputedStyle(document.documentElement)
+        .getPropertyValue('--color-primary-600')
+        .trim()
+        .split(/\s+/)
+        .join(', ')})`
   );
-  await expect(startPreviewButton).toHaveCSS('color', 'rgb(61, 18, 12)');
+  await expect(startPreviewButton).toHaveCSS('background-color', accent600);
+  await expect(startPreviewButton).toHaveCSS('color', 'rgb(255, 255, 255)');
   await startPreviewButton.click();
   const frame = page.getByTestId('work-preview-frame');
   await expect(frame).toHaveAttribute(
@@ -1873,13 +1878,21 @@ test('formats and highlights workspace code in dark and light mode', async ({
   await expect(editor).toHaveValue(
     'export function Card() {\n  return <article>Calm</article>;\n}\n'
   );
+  const accent600 = await page.evaluate(
+    () =>
+      `rgb(${getComputedStyle(document.documentElement)
+        .getPropertyValue('--color-primary-600')
+        .trim()
+        .split(/\s+/)
+        .join(', ')})`
+  );
   await expect(page.getByTestId('work-save-file-button')).toHaveCSS(
     'background-color',
-    'rgb(255, 123, 82)'
+    accent600
   );
   await expect(page.getByTestId('work-save-file-button')).toHaveCSS(
     'color',
-    'rgb(61, 18, 12)'
+    'rgb(255, 255, 255)'
   );
   await editor.press('Control+s');
   await expect

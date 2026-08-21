@@ -423,7 +423,7 @@ export interface UserPreferences {
   visionProviderType?: ChatProviderType | null;
   visionProviderId?: string | null;
   theme: {
-    mode: 'light' | 'dark' | 'ophelia';
+    mode: 'light' | 'dark' | 'amoled' | 'ophelia';
     adaptToAccent?: boolean;
     accent?:
       | 'violet'

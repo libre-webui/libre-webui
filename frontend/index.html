@@ -13,13 +13,17 @@
 
           if (savedState?.state?.theme?.mode === 'light') {
             mode = 'light';
+          } else if (savedState?.state?.theme?.mode === 'amoled') {
+            mode = 'amoled';
           }
         } catch {
           // Keep the dark default when persisted state is unavailable or invalid.
         }
 
-        document.documentElement.classList.toggle('dark', mode === 'dark');
-        document.documentElement.style.colorScheme = mode;
+        document.documentElement.classList.toggle('dark', mode !== 'light');
+        document.documentElement.classList.toggle('amoled', mode === 'amoled');
+        document.documentElement.style.colorScheme =
+          mode === 'light' ? 'light' : 'dark';
       })();
     </script>
     <!-- The SVG mark carries its own prefers-color-scheme rule, so the favicon

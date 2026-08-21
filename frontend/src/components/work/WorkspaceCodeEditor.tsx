@@ -60,7 +60,7 @@ export function WorkspaceCodeEditor({
   onFormatShortcut,
 }: WorkspaceCodeEditorProps) {
   const { t } = useTranslation();
-  const isDark = useAppStore(state => state.theme.mode === 'dark');
+  const isDark = useAppStore(state => state.theme.mode !== 'light');
   const highlightContentRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [syntaxValue, setSyntaxValue] = useState('');

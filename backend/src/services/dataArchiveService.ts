@@ -473,6 +473,7 @@ function normalizePreferences(
       mode !== undefined &&
       mode !== 'dark' &&
       mode !== 'light' &&
+      mode !== 'amoled' &&
       mode !== 'ophelia'
     ) {
       throw new DataArchiveValidationError('preferences.theme.mode is invalid');

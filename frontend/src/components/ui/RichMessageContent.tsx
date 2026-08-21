@@ -73,7 +73,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
   className,
   allowHtml = false,
 }) => {
-  const isDark = useAppStore(state => state.theme.mode === 'dark');
+  const isDark = useAppStore(state => state.theme.mode !== 'light');
   const processedContent = React.useMemo(
     () => preprocessLaTeX(content),
     [content]

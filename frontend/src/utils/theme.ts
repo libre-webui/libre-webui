@@ -162,6 +162,23 @@ const DARK_NEUTRAL_LIGHTNESS: Record<NeutralShade, number> = {
   950: 99,
 };
 
+// True-black variant of the dark ladder: surfaces drop to (or near) zero
+// lightness for OLED displays; text rungs match the grey dark theme.
+const AMOLED_NEUTRAL_LIGHTNESS: Record<NeutralShade, number> = {
+  25: 6,
+  50: 0,
+  100: 3,
+  200: 6,
+  300: 12,
+  400: 24,
+  500: 46,
+  600: 65,
+  700: 82,
+  800: 89,
+  900: 95,
+  950: 99,
+};
+
 const LIGHT_INTERFACE_ROLES: Record<InterfaceRole, InterfaceRoleDefinition> = {
   canvas: { lightness: 96, saturationFactor: 1 },
   sidebar: { lightness: 94, saturationFactor: 1 },
@@ -192,6 +209,22 @@ const DARK_INTERFACE_ROLES: Record<InterfaceRole, InterfaceRoleDefinition> = {
   'ink-inverse': { lightness: 7, saturationFactor: 0.45 },
   line: { lightness: 18, saturationFactor: 0.8 },
   'line-strong': { lightness: 28, saturationFactor: 0.65 },
+};
+
+const AMOLED_INTERFACE_ROLES: Record<InterfaceRole, InterfaceRoleDefinition> = {
+  canvas: { lightness: 0, saturationFactor: 0 },
+  sidebar: { lightness: 0, saturationFactor: 0 },
+  surface: { lightness: 0, saturationFactor: 0 },
+  'surface-subtle': { lightness: 4, saturationFactor: 1 },
+  'surface-raised': { lightness: 7, saturationFactor: 1 },
+  'surface-overlay': { lightness: 10, saturationFactor: 1 },
+  'surface-inverse': { lightness: 96, saturationFactor: 0.35 },
+  ink: { lightness: 96, saturationFactor: 0.3 },
+  'ink-muted': { lightness: 67, saturationFactor: 0.35 },
+  'ink-subtle': { lightness: 48, saturationFactor: 0.4 },
+  'ink-inverse': { lightness: 0, saturationFactor: 0 },
+  line: { lightness: 11, saturationFactor: 0.8 },
+  'line-strong': { lightness: 20, saturationFactor: 0.65 },
 };
 
 const ACCENT_PALETTES: Record<AccentId, AccentPalette> = {
@@ -475,7 +508,12 @@ const createCustomPalette = (customAccent?: string): AccentPalette => {
 };
 
 export const normalizeTheme = (theme?: Partial<Theme> | null): Theme => {
-  const mode = theme?.mode === 'light' ? 'light' : DEFAULT_THEME_MODE;
+  const mode =
+    theme?.mode === 'light'
+      ? 'light'
+      : theme?.mode === 'amoled'
+        ? 'amoled'
+        : DEFAULT_THEME_MODE;
   const accent = theme?.accent === 'custom' ? 'custom' : theme?.accent;
   const presetAccent = ACCENT_OPTIONS.some(option => option.id === accent)
     ? accent
@@ -604,13 +642,17 @@ const applyAdaptiveInterfaceVariables = (root: HTMLElement, theme: Theme) => {
   const darkPalette = createNeutralPalette(
     h,
     s,
-    DARK_NEUTRAL_LIGHTNESS,
+    theme.mode === 'amoled' ? AMOLED_NEUTRAL_LIGHTNESS : DARK_NEUTRAL_LIGHTNESS,
     DEFAULT_INTERFACE_SATURATION
   );
   const roles = createInterfaceRoles(
     h,
     s,
-    theme.mode === 'dark' ? DARK_INTERFACE_ROLES : LIGHT_INTERFACE_ROLES,
+    theme.mode === 'light'
+      ? LIGHT_INTERFACE_ROLES
+      : theme.mode === 'amoled'
+        ? AMOLED_INTERFACE_ROLES
+        : DARK_INTERFACE_ROLES,
     activeProfile
   );
 
@@ -631,12 +673,15 @@ export const applyThemeToDocument = (theme?: Partial<Theme> | null) => {
   const root = document.documentElement;
   const palette = getAccentPalette(normalizedTheme);
 
-  root.classList.remove('dark', 'ophelia');
-  if (normalizedTheme.mode === 'dark') {
+  root.classList.remove('dark', 'amoled', 'ophelia');
+  if (normalizedTheme.mode !== 'light') {
     root.classList.add('dark');
   }
+  if (normalizedTheme.mode === 'amoled') {
+    root.classList.add('amoled');
+  }
 
-  root.style.colorScheme = normalizedTheme.mode;
+  root.style.colorScheme = normalizedTheme.mode === 'light' ? 'light' : 'dark';
   root.dataset.accent = normalizedTheme.accent || DEFAULT_ACCENT;
   root.dataset.themeStyle = normalizedTheme.adaptToAccent
     ? 'accent'

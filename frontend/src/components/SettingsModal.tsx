@@ -1292,7 +1292,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleThemeChange = (mode: 'light' | 'dark') => {
+  const handleThemeChange = (mode: Theme['mode']) => {
     const currentTheme = useAppStore.getState().theme;
     const newTheme = normalizeTheme({ ...currentTheme, mode });
     updateTheme(newTheme);

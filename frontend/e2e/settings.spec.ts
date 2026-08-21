@@ -1797,3 +1797,29 @@ test('disabled image generation prevents the gallery action', async ({
     page.getByRole('dialog', { name: 'Generate Image' })
   ).toHaveCount(0);
 });
+
+test('pure black theme paints true-black surfaces and persists', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Pure Black' }).click();
+  await expect(page.locator('html')).toHaveClass(/amoled/);
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        getComputedStyle(document.documentElement)
+          .getPropertyValue('--color-canvas')
+          .trim()
+      )
+    )
+    .toBe('0 0 0');
+
+  // Survives a reload via the persisted store + boot script.
+  await page.reload();
+  await expect(page.locator('html')).toHaveClass(/amoled/);
+});

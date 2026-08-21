@@ -444,7 +444,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         content={artifact.content}
         title={artifact.title}
         kind={kind}
-        colorScheme={theme.mode === 'dark' ? 'dark' : 'light'}
+        colorScheme={theme.mode !== 'light' ? 'dark' : 'light'}
         className={cn(
           'w-full h-full border-0 rounded-lg bg-white',
           isResizing && 'pointer-events-none'
@@ -489,7 +489,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       <div className='h-full overflow-auto'>
         <OptimizedSyntaxHighlighter
           language={getLanguage()}
-          isDark={theme.mode === 'dark'}
+          isDark={theme.mode !== 'light'}
           className='!m-0 !rounded-lg !h-full'
         >
           {artifact.content}
@@ -507,7 +507,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         <div className='h-full overflow-auto'>
           <OptimizedSyntaxHighlighter
             language='json'
-            isDark={theme.mode === 'dark'}
+            isDark={theme.mode !== 'light'}
             className='!m-0 !rounded-lg !h-full'
           >
             {formattedJson}

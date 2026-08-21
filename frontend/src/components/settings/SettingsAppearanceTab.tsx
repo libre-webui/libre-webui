@@ -16,7 +16,7 @@
  */
 
 import type { ReactNode } from 'react';
-import { Check, Moon, Palette, Sun } from 'lucide-react';
+import { Check, Moon, MoonStar, Palette, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { BackgroundUpload } from '@/components/BackgroundUpload';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -32,7 +32,7 @@ import {
 interface SettingsAppearanceTabProps {
   theme: Theme;
   preferences: UserPreferences;
-  onThemeChange: (mode: 'light' | 'dark') => void;
+  onThemeChange: (mode: Theme['mode']) => void;
   onAccentChange: (accent: NonNullable<Theme['accent']>) => void;
   onCustomAccentChange: (customAccent: string) => void;
   onAdaptToAccentChange: (adaptToAccent: boolean) => void;
@@ -109,11 +109,7 @@ export function SettingsAppearanceTab({
   const customAccentValue = theme.customAccent || DEFAULT_CUSTOM_ACCENT;
   const accentPreviewColor = getThemeAccentColor(theme);
 
-  const themeCube = (
-    mode: 'light' | 'dark',
-    Icon: typeof Sun,
-    label: string
-  ) => {
+  const themeCube = (mode: Theme['mode'], Icon: typeof Sun, label: string) => {
     const selected = theme.mode === mode;
     return (
       <button
@@ -145,6 +141,7 @@ export function SettingsAppearanceTab({
         <div className='flex flex-wrap items-stretch gap-2'>
           {themeCube('light', Sun, t('settings.appearance.theme.light'))}
           {themeCube('dark', Moon, t('settings.appearance.theme.dark'))}
+          {themeCube('amoled', MoonStar, t('settings.appearance.theme.amoled'))}
         </div>
       </div>
 
@@ -163,7 +160,7 @@ export function SettingsAppearanceTab({
           />
         </div>
 
-        <div className='grid grid-cols-5 gap-2 xs:grid-cols-6 sm:grid-cols-9'>
+        <div className='flex flex-wrap items-center gap-2.5'>
           {ACCENT_OPTIONS.map(option => {
             const isSelected = activeAccent === option.id;
 
@@ -173,10 +170,10 @@ export function SettingsAppearanceTab({
                 type='button'
                 onClick={() => onAccentChange(option.id)}
                 className={cn(
-                  'relative h-9 rounded-xl border transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
+                  'relative h-9 w-9 rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40',
                   isSelected
-                    ? 'border-ink'
-                    : 'border-transparent hover:scale-105'
+                    ? 'scale-105 ring-2 ring-ink ring-offset-2 ring-offset-surface'
+                    : 'hover:scale-110'
                 )}
                 style={{ backgroundColor: option.color }}
                 aria-label={t('settings.appearance.accent.useColor', {
@@ -197,10 +194,10 @@ export function SettingsAppearanceTab({
 
           <label
             className={cn(
-              'relative h-9 cursor-pointer overflow-hidden rounded-xl border transition-all duration-200 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-500/40',
+              'relative h-9 w-9 cursor-pointer overflow-hidden rounded-full transition-all duration-200 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-500/40',
               activeAccent === 'custom'
-                ? 'border-ink'
-                : 'border-transparent hover:scale-105'
+                ? 'scale-105 ring-2 ring-ink ring-offset-2 ring-offset-surface'
+                : 'hover:scale-110'
             )}
             title={t('settings.appearance.accent.custom', {
               defaultValue: 'Custom color',

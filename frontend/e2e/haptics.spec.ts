@@ -100,8 +100,10 @@ test('Android haptic feedback is opt-in and fires for mobile actions', async ({
     .toEqual([8]);
 
   await page.keyboard.press('Escape');
+  // The compact rail no longer lists sessions; expand the sidebar first.
+  await page.getByTestId('sidebar-mobile-chats').click();
   await page
-    .getByRole('button', { name: 'Haptic test conversation', exact: true })
+    .getByRole('heading', { name: 'Haptic test conversation', exact: true })
     .click();
 
   await expect
@@ -115,5 +117,6 @@ test('Android haptic feedback is opt-in and fires for mobile actions', async ({
           ).__hapticPatterns
       )
     )
-    .toEqual([8, 8]);
+    // Enable-toggle, sidebar expand, and session select each vibrate once.
+    .toEqual([8, 8, 8]);
 });

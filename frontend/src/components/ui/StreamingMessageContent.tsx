@@ -65,7 +65,7 @@ function StreamingCodeBlock({
   complete,
 }: StreamingMarkdownCodeSegment) {
   const displayedContent = complete ? content.replace(/\r?\n$/, '') : content;
-  const isDark = useAppStore(state => state.theme.mode === 'dark');
+  const isDark = useAppStore(state => state.theme.mode !== 'light');
   const viewportRef = React.useRef<HTMLPreElement>(null);
   const shouldFollowTailRef = React.useRef(true);
 

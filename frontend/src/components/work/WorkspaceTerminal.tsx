@@ -66,7 +66,7 @@ export function WorkspaceTerminal({
   disabledReason,
 }: WorkspaceTerminalProps) {
   const { t } = useTranslation();
-  const isDark = useAppStore(state => state.theme.mode === 'dark');
+  const isDark = useAppStore(state => state.theme.mode !== 'light');
   const mountRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const terminalRef = useRef<import('@xterm/xterm').Terminal | null>(null);

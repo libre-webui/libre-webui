@@ -461,7 +461,7 @@ export interface WebSocketMessage {
 }
 
 export interface Theme {
-  mode: 'light' | 'dark';
+  mode: 'light' | 'dark' | 'amoled';
   adaptToAccent?: boolean;
   accent?:
     | 'violet'

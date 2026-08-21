@@ -332,7 +332,7 @@ class PreferencesService {
   }
 
   async setTheme(
-    theme: 'light' | 'dark' | 'ophelia',
+    theme: 'light' | 'dark' | 'amoled' | 'ophelia',
     userId?: string
   ): Promise<UserPreferences> {
     return this.updatePreferences({ theme: { mode: theme } }, userId);
