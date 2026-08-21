@@ -491,6 +491,11 @@ export const ArtifactSlideOutPanel: React.FC = () => {
           language={getLanguage()}
           isDark={theme.mode !== 'light'}
           className='!m-0 !rounded-lg !h-full'
+          codeTheme='night'
+          showLineNumbers
+          backgroundColor={
+            theme.mode !== 'light' ? 'rgb(var(--color-dark-50))' : undefined
+          }
         >
           {artifact.content}
         </OptimizedSyntaxHighlighter>
@@ -509,6 +514,11 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             language='json'
             isDark={theme.mode !== 'light'}
             className='!m-0 !rounded-lg !h-full'
+            codeTheme='night'
+            showLineNumbers
+            backgroundColor={
+              theme.mode !== 'light' ? 'rgb(var(--color-dark-50))' : undefined
+            }
           >
             {formattedJson}
           </OptimizedSyntaxHighlighter>

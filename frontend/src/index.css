@@ -3,6 +3,8 @@
    stack but never loaded, so the interface fell back to system fonts.
    See scripts/vendor-inter.mjs. */
 @import '/fonts/inter.css';
+/* JetBrains Mono for code, same self-hosted policy. */
+@import '/fonts/jetbrains-mono.css';
 
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';

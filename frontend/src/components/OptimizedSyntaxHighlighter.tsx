@@ -41,6 +41,7 @@ import swift from 'react-syntax-highlighter/dist/esm/languages/prism/swift';
 import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
 import yaml from 'react-syntax-highlighter/dist/esm/languages/prism/yaml';
+import nightOwl from 'react-syntax-highlighter/dist/esm/styles/prism/night-owl';
 import oneDark from 'react-syntax-highlighter/dist/esm/styles/prism/one-dark';
 import oneLight from 'react-syntax-highlighter/dist/esm/styles/prism/one-light';
 
@@ -53,6 +54,8 @@ interface OptimizedSyntaxHighlighterProps {
   borderRadius?: string | number;
   customStyle?: React.CSSProperties;
   showLineNumbers?: boolean;
+  /** 'night' swaps the dark style for Night Owl — used by artifact views. */
+  codeTheme?: 'default' | 'night';
   /** Rendered as the outer pre; lets callers own scrolling and refs. */
   preTag?: React.ComponentType<React.HTMLAttributes<HTMLPreElement>>;
 }
@@ -125,6 +128,7 @@ export const OptimizedSyntaxHighlighter: React.FC<
   borderRadius = '0.5rem',
   customStyle,
   showLineNumbers = false,
+  codeTheme = 'default',
   preTag,
 }) => {
   const normalizedLanguage =
@@ -141,14 +145,18 @@ export const OptimizedSyntaxHighlighter: React.FC<
           ...customStyle,
           ...(backgroundColor ? { backgroundColor } : {}),
         }}
-        className={`${isDark ? 'bg-[#0D1117] text-[#E6EDF3]' : 'bg-gray-100 text-gray-900'} overflow-x-auto rounded-lg p-3 text-left font-mono text-sm ${className}`}
+        className={`${isDark ? 'bg-dark-50 text-dark-900' : 'bg-gray-100 text-gray-900'} overflow-x-auto rounded-lg p-3 text-left font-mono text-sm ${className}`}
       >
         <code className=''>{children}</code>
       </PlainPre>
     );
   }
 
-  const selectedStyle = isDark ? oneDark : oneLight;
+  const selectedStyle = isDark
+    ? codeTheme === 'night'
+      ? nightOwl
+      : oneDark
+    : oneLight;
 
   return (
     <div dir='ltr' className='text-left'>
