@@ -147,6 +147,7 @@ function StreamingCodeBlock({
           <LazySyntaxHighlighter
             language={language || 'text'}
             isDark={isDark}
+            codeTheme='night'
             backgroundColor={
               isDark
                 ? MESSAGE_CODE_BACKGROUND_DARK

@@ -241,12 +241,14 @@ function ProviderReasoningMessage({ message }: { message: WorkMessage }) {
         </span>
         <ChevronDown className='h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180' />
       </summary>
-      <p
+      <div
         dir='auto'
-        className='whitespace-pre-wrap break-words border-t border-line px-3 py-2.5 text-xs leading-relaxed text-ink-muted'
+        className='border-t border-line px-3 py-2.5 text-xs leading-relaxed text-ink-muted'
       >
-        {message.content}
-      </p>
+        {/* Markdown, so fenced code inside provider reasoning renders like
+            message code instead of collapsing into plain text. */}
+        <RichMessageContent content={message.content} className='text-xs' />
+      </div>
     </details>
   );
 }

@@ -875,13 +875,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                       )}
                     </button>
                     {isThinkingExpanded && thinkingContent && (
-                      <div className='mt-2 rounded-xl bg-gray-100/60 p-2.5 dark:bg-dark-200/60'>
-                        <p
-                          dir='auto'
-                          className='whitespace-pre-wrap text-[13px] leading-relaxed text-gray-600 dark:text-dark-700'
-                        >
-                          {thinkingContent}
-                        </p>
+                      <div
+                        dir='auto'
+                        className='mt-2 rounded-xl bg-gray-100/60 p-2.5 text-[13px] leading-relaxed text-gray-600 dark:bg-dark-200/60 dark:text-dark-700'
+                      >
+                        {/* Full markdown so fenced code inside the chain of
+                            thought gets the same treatment as message code. */}
+                        <MessageContent
+                          content={thinkingContent}
+                          isStreaming={thinkingStreaming}
+                          className='text-[13px] text-gray-600 dark:text-dark-700'
+                        />
                       </div>
                     )}
                   </div>

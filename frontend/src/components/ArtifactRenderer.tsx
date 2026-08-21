@@ -219,6 +219,11 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
           language={getLanguage()}
           isDark={theme.mode !== 'light'}
           className='!m-0 !rounded-lg'
+          codeTheme='night'
+          showLineNumbers
+          backgroundColor={
+            theme.mode !== 'light' ? 'rgb(var(--color-dark-50))' : undefined
+          }
         >
           {artifact.content}
         </OptimizedSyntaxHighlighter>
@@ -237,6 +242,11 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
             language='json'
             isDark={theme.mode !== 'light'}
             className='!m-0 !rounded-lg'
+            codeTheme='night'
+            showLineNumbers
+            backgroundColor={
+              theme.mode !== 'light' ? 'rgb(var(--color-dark-50))' : undefined
+            }
           >
             {formattedJson}
           </OptimizedSyntaxHighlighter>

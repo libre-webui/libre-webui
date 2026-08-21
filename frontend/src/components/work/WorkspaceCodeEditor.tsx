@@ -147,6 +147,7 @@ export function WorkspaceCodeEditor({
               <SyntaxHighlighter
                 language={language}
                 isDark={isDark}
+                codeTheme='night'
                 backgroundColor='transparent'
                 borderRadius={0}
                 customStyle={{

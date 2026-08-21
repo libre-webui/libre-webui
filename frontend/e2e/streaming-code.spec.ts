@@ -224,11 +224,20 @@ test('code stays in a specialized block throughout a live response', async ({
     page.getByRole('button', { name: 'Copy code: typescript', exact: true })
   ).toBeVisible();
   await expect(page.locator('body')).not.toContainText('```typescript');
-  expect(
-    await codeBlock.evaluate(
-      element => getComputedStyle(element).backgroundColor
-    )
-  ).toBe('rgb(13, 17, 23)');
+  // The code surface follows the active theme's dark-50 token (the same
+  // surface the artifact panel uses), not a hardcoded palette.
+  const codeSurface = await codeBlock.evaluate(element => {
+    const token = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-dark-50')
+      .trim()
+      .split(/\s+/)
+      .join(', ');
+    return {
+      actual: getComputedStyle(element).backgroundColor,
+      expected: `rgb(${token})`,
+    };
+  });
+  expect(codeSurface.actual).toBe(codeSurface.expected);
 
   await expect(codeBlock).toHaveAttribute('data-state', 'complete');
   await expect(page.getByTestId('message-streaming-cursor')).toBeVisible();

@@ -17,11 +17,14 @@
 
 import type { CSSProperties } from 'react';
 
-export const MESSAGE_CODE_BACKGROUND_DARK = '#0D1117';
+// The same surface the artifact code view uses, so message code blocks
+// follow the active theme (including AMOLED black) instead of pinning
+// GitHub's palette.
+export const MESSAGE_CODE_BACKGROUND_DARK = 'rgb(var(--color-dark-50))';
 export const MESSAGE_CODE_BACKGROUND_LIGHT = 'rgb(var(--color-surface-subtle))';
 
 export const messageCodeBodyClassName =
-  'max-h-[60vh] min-h-12 overflow-auto bg-surface-subtle p-4 text-left font-mono text-[14px] leading-6 text-ink whitespace-pre tabular-nums dark:bg-[#0D1117] dark:text-[#E6EDF3]';
+  'max-h-[60vh] min-h-12 overflow-auto bg-surface-subtle p-4 text-left font-mono text-[14px] leading-6 text-ink whitespace-pre tabular-nums dark:bg-dark-50 dark:text-dark-900';
 
 export const messageCodeBodyStyle: CSSProperties = {
   maxHeight: '60vh',
