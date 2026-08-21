@@ -136,6 +136,24 @@ const SidebarLayoutSpacer: React.FC<{ isOpen: boolean; compact: boolean }> = ({
   />
 );
 
+// Reserves room for the artifact panel so the chat splits beside it on
+// desktop instead of being covered. The panel itself is fixed-positioned and
+// fills exactly this space.
+const ArtifactLayoutSpacer: React.FC = () => {
+  const { artifactPanelOpen, artifactPanelWidth, artifactPanelResizing } =
+    useAppStore();
+  return (
+    <div
+      aria-hidden='true'
+      className={cn(
+        'hidden lg:block flex-shrink-0',
+        !artifactPanelResizing && 'transition-[width] duration-300 ease-out'
+      )}
+      style={{ width: artifactPanelOpen ? artifactPanelWidth : 0 }}
+    />
+  );
+};
+
 interface ShellLayoutProps {
   hasBackground: boolean;
   sidebarOpen: boolean;
@@ -193,6 +211,7 @@ const ShellLayout: React.FC<ShellLayoutProps> = ({
         </ErrorBoundary>
       </main>
     </div>
+    <ArtifactLayoutSpacer />
   </div>
 );
 

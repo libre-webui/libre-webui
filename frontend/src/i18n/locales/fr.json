@@ -2052,9 +2052,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Version {{current}} sur {{total}}",
     "previousVersion": "Version précédente",
-    "nextVersion": "Version suivante",
-    "pinPanel": "Épingler le panneau",
-    "unpinPanel": "Désépingler le panneau"
+    "nextVersion": "Version suivante"
   },
   "personaImportExport": {
     "title": "Importer et exporter des personas",

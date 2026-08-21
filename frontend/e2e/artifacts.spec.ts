@@ -1210,3 +1210,31 @@ test('three.js addons beyond controls and loaders are available', async ({
   await expect(frame.locator('canvas')).toBeVisible();
   expect(external).toEqual([]);
 });
+
+test('on desktop the panel splits the screen and the chat stays usable', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      sessionWith('split-session', 'Split layout', generatedMultiFileArtifact),
+    ],
+  });
+
+  await page.goto('/c/split-session');
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const panel = page.getByTestId('artifact-slide-out-panel');
+  await expect(panel).toBeVisible();
+
+  // The shell content shrinks beside the panel instead of sliding under it.
+  const shellBox = await page.getByTestId('app-shell-content').boundingBox();
+  const panelBox = await panel.boundingBox();
+  expect(shellBox!.x + shellBox!.width).toBeLessThanOrEqual(panelBox!.x + 2);
+
+  // Interacting with the chat no longer dismisses the panel.
+  const input = page.locator('textarea').first();
+  await input.click();
+  await input.fill('make it blue instead');
+  await expect(panel).toBeVisible();
+  await expect(input).toHaveValue('make it blue instead');
+});

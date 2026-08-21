@@ -2052,9 +2052,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "เวอร์ชัน {{current}} จาก {{total}}",
     "previousVersion": "เวอร์ชันก่อนหน้า",
-    "nextVersion": "เวอร์ชันถัดไป",
-    "pinPanel": "ปักหมุดแผง",
-    "unpinPanel": "เลิกปักหมุดแผง"
+    "nextVersion": "เวอร์ชันถัดไป"
   },
   "personaImportExport": {
     "title": "นำเข้าและส่งออกเพอร์โซน่า",

@@ -51,8 +51,14 @@ interface AppState {
   // Artifact Panel
   artifactPanelOpen: boolean;
   artifactPanelArtifact: Artifact | null;
+  // Width is shared with the shell layout, which reserves the same space so
+  // the chat splits beside the panel instead of sliding under it.
+  artifactPanelWidth: number;
+  artifactPanelResizing: boolean;
   openArtifactPanel: (artifact: Artifact) => void;
   closeArtifactPanel: () => void;
+  setArtifactPanelWidth: (width: number) => void;
+  setArtifactPanelResizing: (resizing: boolean) => void;
 
   // User preferences
   preferences: UserPreferences;
@@ -176,10 +182,15 @@ export const useAppStore = create<AppState>()(
       // Artifact Panel
       artifactPanelOpen: false,
       artifactPanelArtifact: null,
+      artifactPanelWidth: 600,
+      artifactPanelResizing: false,
       openArtifactPanel: artifact =>
         set({ artifactPanelOpen: true, artifactPanelArtifact: artifact }),
       closeArtifactPanel: () =>
         set({ artifactPanelOpen: false, artifactPanelArtifact: null }),
+      setArtifactPanelWidth: width => set({ artifactPanelWidth: width }),
+      setArtifactPanelResizing: resizing =>
+        set({ artifactPanelResizing: resizing }),
 
       // User preferences
       preferences: {
@@ -451,6 +462,7 @@ export const useAppStore = create<AppState>()(
           themeSyncPending: state.themeSyncPending,
           sidebarOpen: state.sidebarOpen,
           sidebarCompact: state.sidebarCompact,
+          artifactPanelWidth: state.artifactPanelWidth,
           pinnedAdminShortcuts: state.pinnedAdminShortcuts,
           preferences: preferencesWithoutBackground,
           hasSeenSettingsNotification: state.hasSeenSettingsNotification,

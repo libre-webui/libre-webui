@@ -2052,9 +2052,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Versi {{current}} dari {{total}}",
     "previousVersion": "Versi sebelumnya",
-    "nextVersion": "Versi berikutnya",
-    "pinPanel": "Sematkan panel",
-    "unpinPanel": "Lepas sematan panel"
+    "nextVersion": "Versi berikutnya"
   },
   "personaImportExport": {
     "title": "Impor & Ekspor Persona",

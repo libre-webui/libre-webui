@@ -2052,9 +2052,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "第 {{current}} 版，共 {{total}} 版",
     "previousVersion": "上一版本",
-    "nextVersion": "下一版本",
-    "pinPanel": "固定面板",
-    "unpinPanel": "取消固定面板"
+    "nextVersion": "下一版本"
   },
   "personaImportExport": {
     "title": "导入和导出角色",

@@ -2052,9 +2052,7 @@
     "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source.",
     "versionOf": "Phiên bản {{current}} / {{total}}",
     "previousVersion": "Phiên bản trước",
-    "nextVersion": "Phiên bản sau",
-    "pinPanel": "Ghim bảng điều khiển",
-    "unpinPanel": "Bỏ ghim bảng điều khiển"
+    "nextVersion": "Phiên bản sau"
   },
   "personaImportExport": {
     "title": "Nhập & Xuất Personas",
