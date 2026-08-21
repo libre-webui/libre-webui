@@ -2562,8 +2562,14 @@
             {
               "file": "frontend/src/components/ArtifactSlideOutPanel.tsx",
               "patterns": [
-                "DEFAULT_PANEL_WIDTH",
-                "useState\\(DEFAULT_PANEL_WIDTH\\)"
+                "MIN_PANEL_WIDTH",
+                "MAX_PANEL_WIDTH_RATIO"
+              ]
+            },
+            {
+              "file": "frontend/src/store/appStore.ts",
+              "patterns": [
+                "artifactPanelWidth: 600"
               ]
             }
           ]
@@ -3051,7 +3057,7 @@
           "file": "docs/12-AUTHENTICATION.md",
           "patterns": [
             "Every login also creates a server-side session record bound into the JWT",
-            "Settings → API keys mints personal access tokens"
+            "Settings \u2192 API keys mints personal access tokens"
           ]
         }
       ],
@@ -3499,7 +3505,7 @@
         {
           "file": "docs/41-DATA_PORTABILITY.md",
           "patterns": [
-            "Settings → Data Management",
+            "Settings \u2192 Data Management",
             "GET`  \\| `/api/preferences/export"
           ]
         }
