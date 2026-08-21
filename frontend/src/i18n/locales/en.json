@@ -552,7 +552,9 @@
         "followUpSuggestions": "Follow-up suggestions",
         "followUpSuggestionsDescription": "Suggest quick replies after each response",
         "hapticFeedback": "Haptic feedback (Android)",
-        "hapticFeedbackDescription": "Use subtle vibration for important mobile actions"
+        "hapticFeedbackDescription": "Use subtle vibration for important mobile actions",
+        "autoOpenArtifacts": "Auto-open artifacts",
+        "autoOpenArtifactsDescription": "Open the artifact panel when a response creates one"
       },
       "background": {
         "title": "Background Image",

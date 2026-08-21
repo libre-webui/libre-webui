@@ -552,7 +552,9 @@
         "followUpSuggestions": "คำแนะนำติดตามต่อ",
         "followUpSuggestionsDescription": "แนะนำการตอบกลับด่วนหลังการตอบแต่ละครั้ง",
         "hapticFeedback": "การตอบสนองแบบสัมผัส (Android)",
-        "hapticFeedbackDescription": "ใช้การสั่นเบา ๆ สำหรับการทำงานสำคัญบนมือถือ"
+        "hapticFeedbackDescription": "ใช้การสั่นเบา ๆ สำหรับการทำงานสำคัญบนมือถือ",
+        "autoOpenArtifacts": "เปิด Artifacts อัตโนมัติ",
+        "autoOpenArtifactsDescription": "เปิดแผง Artifact เมื่อคำตอบสร้างขึ้นมา"
       },
       "background": {
         "title": "รูปพื้นหลัง",

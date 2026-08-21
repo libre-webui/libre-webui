@@ -552,7 +552,9 @@
         "followUpSuggestions": "후속 질문 제안",
         "followUpSuggestionsDescription": "각 응답 후 빠른 답장을 제안합니다",
         "hapticFeedback": "햅틱 피드백 (Android)",
-        "hapticFeedbackDescription": "중요한 모바일 작업에 미세한 진동 사용"
+        "hapticFeedbackDescription": "중요한 모바일 작업에 미세한 진동 사용",
+        "autoOpenArtifacts": "아티팩트 자동 열기",
+        "autoOpenArtifactsDescription": "응답이 아티팩트를 생성하면 패널을 엽니다"
       },
       "background": {
         "title": "배경 이미지",

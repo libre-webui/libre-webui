@@ -552,7 +552,9 @@
         "followUpSuggestions": "ফলো-আপ পরামর্শ",
         "followUpSuggestionsDescription": "প্রতিটি উত্তরের পরে দ্রুত জবাবের পরামর্শ দিন",
         "hapticFeedback": "হ্যাপটিক প্রতিক্রিয়া (Android)",
-        "hapticFeedbackDescription": "গুরুত্বপূর্ণ মোবাইল কাজের জন্য সূক্ষ্ম কম্পন ব্যবহার করুন"
+        "hapticFeedbackDescription": "গুরুত্বপূর্ণ মোবাইল কাজের জন্য সূক্ষ্ম কম্পন ব্যবহার করুন",
+        "autoOpenArtifacts": "আর্টিফ্যাক্ট স্বয়ংক্রিয়ভাবে খুলুন",
+        "autoOpenArtifactsDescription": "কোনো উত্তরে আর্টিফ্যাক্ট তৈরি হলে আর্টিফ্যাক্ট প্যানেল খুলুন"
       },
       "background": {
         "title": "ব্যাকগ্রাউন্ড ইমেজ",

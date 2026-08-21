@@ -552,7 +552,9 @@
         "followUpSuggestions": "Propozycje kontynuacji",
         "followUpSuggestionsDescription": "Proponuj szybkie odpowiedzi po każdej odpowiedzi",
         "hapticFeedback": "Wibracje haptyczne (Android)",
-        "hapticFeedbackDescription": "Używaj subtelnych wibracji przy ważnych działaniach mobilnych"
+        "hapticFeedbackDescription": "Używaj subtelnych wibracji przy ważnych działaniach mobilnych",
+        "autoOpenArtifacts": "Automatycznie otwieraj artefakty",
+        "autoOpenArtifactsDescription": "Otwieraj panel artefaktów, gdy odpowiedź go utworzy"
       },
       "background": {
         "title": "Obraz tła",

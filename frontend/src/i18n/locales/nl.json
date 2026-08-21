@@ -552,7 +552,9 @@
         "followUpSuggestions": "Vervolgsuggesties",
         "followUpSuggestionsDescription": "Stel snelle antwoorden voor na elke reactie",
         "hapticFeedback": "Haptische feedback (Android)",
-        "hapticFeedbackDescription": "Gebruik subtiele trillingen voor belangrijke mobiele acties"
+        "hapticFeedbackDescription": "Gebruik subtiele trillingen voor belangrijke mobiele acties",
+        "autoOpenArtifacts": "Artefacten automatisch openen",
+        "autoOpenArtifactsDescription": "Open het artefactpaneel wanneer een antwoord er een aanmaakt"
       },
       "background": {
         "title": "Achtergrondafbeelding",

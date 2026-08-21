@@ -27,7 +27,8 @@ import {
 } from '@/types';
 import { toolsApi, type ToolApprovalScope } from '@/utils/api/toolsApi';
 import websocketService from '@/utils/websocket';
-import { generateId } from '@/utils';
+import { generateId, parseThinkingContent } from '@/utils';
+import { parseArtifacts } from '@/utils/artifactParser';
 import {
   trackThinkingProgress,
   takeThinkingDuration,
@@ -612,6 +613,19 @@ export const useChat = (sessionId: string) => {
           completeData.providerMetadata,
           finalThinking
         );
+
+        // Bring a freshly generated artifact forward. Only the turn that just
+        // finished passes through here, so historical messages never trigger
+        // this on session load.
+        const { preferences, openArtifactPanel } = useAppStore.getState();
+        if (preferences.autoOpenArtifactPanel !== false) {
+          const { artifacts } = parseArtifacts(
+            parseThinkingContent(finalContent).content
+          );
+          if (artifacts.length > 0) {
+            openArtifactPanel(artifacts[artifacts.length - 1]);
+          }
+        }
       }
 
       maybeGenerateTitle(sessionId);

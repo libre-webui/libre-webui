@@ -1240,3 +1240,38 @@ test('on desktop the panel splits the screen and the chat stays usable', async (
   await expect(panel).toBeVisible();
   await expect(input).toHaveValue('make it blue instead');
 });
+
+test('a freshly generated artifact opens the panel automatically', async ({
+  page,
+}) => {
+  const artifactReply = [
+    'Here is your page:\n\n',
+    '```html\n<!doctype html>\n<html>\n  <head><title>Auto Opened</title></head>\n',
+    '  <body><h1 id="ready">Generated page</h1></body>\n</html>\n```\n',
+  ];
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      {
+        id: 'auto-open-session',
+        title: 'Auto open',
+        model: 'llama3.2:3b',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messages: [],
+      },
+    ],
+    chatStream: { chunks: artifactReply, chunkDelayMs: 10 },
+  });
+
+  await page.goto('/c/auto-open-session');
+  // The panel must not open for historical messages, only fresh generations.
+  await expect(page.getByTestId('artifact-slide-out-panel')).toHaveCount(0);
+
+  const input = page.locator('textarea').first();
+  await input.fill('Make a page');
+  await input.press('Enter');
+
+  const panel = page.getByTestId('artifact-slide-out-panel');
+  await expect(panel).toBeVisible({ timeout: 15_000 });
+  await expect(panel.getByText('Auto Opened')).toBeVisible();
+});

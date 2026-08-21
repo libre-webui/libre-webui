@@ -552,7 +552,9 @@
         "followUpSuggestions": "Folgevorschläge",
         "followUpSuggestionsDescription": "Nach jeder Antwort schnelle Rückfragen vorschlagen",
         "hapticFeedback": "Haptisches Feedback (Android)",
-        "hapticFeedbackDescription": "Dezente Vibrationen für wichtige mobile Aktionen verwenden"
+        "hapticFeedbackDescription": "Dezente Vibrationen für wichtige mobile Aktionen verwenden",
+        "autoOpenArtifacts": "Artefakte automatisch öffnen",
+        "autoOpenArtifactsDescription": "Artefakt-Panel öffnen, wenn eine Antwort eines erstellt"
       },
       "background": {
         "title": "Hintergrundbild",

@@ -38,6 +38,7 @@ interface SettingsAppearanceTabProps {
   onAdaptToAccentChange: (adaptToAccent: boolean) => void;
   onShowUsernameChange: (showUsername: boolean) => void;
   onShowFollowUpsChange: (showFollowUpSuggestions: boolean) => void;
+  onAutoOpenArtifactsChange: (autoOpenArtifactPanel: boolean) => void;
   onHapticFeedbackChange: (hapticFeedbackEnabled: boolean) => void;
 }
 
@@ -100,6 +101,7 @@ export function SettingsAppearanceTab({
   onAdaptToAccentChange,
   onShowUsernameChange,
   onShowFollowUpsChange,
+  onAutoOpenArtifactsChange,
   onHapticFeedbackChange,
 }: SettingsAppearanceTabProps) {
   const { t } = useTranslation();
@@ -297,6 +299,20 @@ export function SettingsAppearanceTab({
           checked={preferences.showFollowUpSuggestions !== false}
           onChange={onShowFollowUpsChange}
           label={t('settings.appearance.chatInterface.followUpSuggestions')}
+        />
+      </SettingRow>
+
+      <SettingRow
+        title={t('settings.appearance.chatInterface.autoOpenArtifacts')}
+        description={t(
+          'settings.appearance.chatInterface.autoOpenArtifactsDescription'
+        )}
+      >
+        <ToggleSwitch
+          checked={preferences.autoOpenArtifactPanel !== false}
+          onChange={onAutoOpenArtifactsChange}
+          label={t('settings.appearance.chatInterface.autoOpenArtifacts')}
+          testId='auto-open-artifacts-toggle'
         />
       </SettingRow>
 

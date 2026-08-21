@@ -107,6 +107,7 @@ class PreferencesService {
     },
     showUsername: false, // Default to showing "you" instead of username
     showFollowUpSuggestions: true, // Suggest follow-up messages after responses
+    autoOpenArtifactPanel: true, // Open the artifact panel when a response generates one
     hapticFeedbackEnabled: false,
     workRemoteProviderDisclosureDismissed: false,
   };

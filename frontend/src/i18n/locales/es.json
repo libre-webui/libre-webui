@@ -552,7 +552,9 @@
         "followUpSuggestions": "Sugerencias de seguimiento",
         "followUpSuggestionsDescription": "Sugerir respuestas rápidas tras cada respuesta",
         "hapticFeedback": "Respuesta háptica (Android)",
-        "hapticFeedbackDescription": "Usar vibraciones sutiles para acciones móviles importantes"
+        "hapticFeedbackDescription": "Usar vibraciones sutiles para acciones móviles importantes",
+        "autoOpenArtifacts": "Abrir artefactos automáticamente",
+        "autoOpenArtifactsDescription": "Abrir el panel de artefactos cuando una respuesta crea uno"
       },
       "background": {
         "title": "Imagen de fondo",

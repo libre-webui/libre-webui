@@ -552,7 +552,9 @@
         "followUpSuggestions": "Подсказки для продолжения",
         "followUpSuggestionsDescription": "Предлагать быстрые ответы после каждого ответа",
         "hapticFeedback": "Тактильная отдача (Android)",
-        "hapticFeedbackDescription": "Использовать лёгкую вибрацию для важных действий на мобильном устройстве"
+        "hapticFeedbackDescription": "Использовать лёгкую вибрацию для важных действий на мобильном устройстве",
+        "autoOpenArtifacts": "Автоматически открывать артефакты",
+        "autoOpenArtifactsDescription": "Открывать панель артефактов, когда ответ создаёт артефакт"
       },
       "background": {
         "title": "Фоновое изображение",

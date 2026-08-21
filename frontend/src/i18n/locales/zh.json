@@ -552,7 +552,9 @@
         "followUpSuggestions": "后续建议",
         "followUpSuggestionsDescription": "每次回复后建议快捷回复",
         "hapticFeedback": "触觉反馈 (Android)",
-        "hapticFeedbackDescription": "为重要的移动操作使用轻微振动"
+        "hapticFeedbackDescription": "为重要的移动操作使用轻微振动",
+        "autoOpenArtifacts": "自动打开制品",
+        "autoOpenArtifactsDescription": "当回复生成制品时自动打开制品面板"
       },
       "background": {
         "title": "背景图片",

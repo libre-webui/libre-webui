@@ -552,7 +552,9 @@
         "followUpSuggestions": "Saran tindak lanjut",
         "followUpSuggestionsDescription": "Sarankan balasan cepat setelah setiap respons",
         "hapticFeedback": "Umpan balik haptik (Android)",
-        "hapticFeedbackDescription": "Gunakan getaran halus untuk tindakan seluler penting"
+        "hapticFeedbackDescription": "Gunakan getaran halus untuk tindakan seluler penting",
+        "autoOpenArtifacts": "Buka artefak secara otomatis",
+        "autoOpenArtifactsDescription": "Buka panel artefak saat sebuah jawaban membuatnya"
       },
       "background": {
         "title": "Gambar Latar",

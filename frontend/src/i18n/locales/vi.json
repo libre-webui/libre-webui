@@ -552,7 +552,9 @@
         "followUpSuggestions": "Gợi ý tiếp theo",
         "followUpSuggestionsDescription": "Gợi ý câu trả lời nhanh sau mỗi phản hồi",
         "hapticFeedback": "Phản hồi xúc giác (Android)",
-        "hapticFeedbackDescription": "Dùng rung nhẹ cho các thao tác quan trọng trên thiết bị di động"
+        "hapticFeedbackDescription": "Dùng rung nhẹ cho các thao tác quan trọng trên thiết bị di động",
+        "autoOpenArtifacts": "Tự động mở Artifact",
+        "autoOpenArtifactsDescription": "Mở bảng Artifact khi câu trả lời tạo ra một artifact"
       },
       "background": {
         "title": "Hình nền",

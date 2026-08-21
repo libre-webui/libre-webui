@@ -552,7 +552,9 @@
         "followUpSuggestions": "Framhaldstillögur",
         "followUpSuggestionsDescription": "Stinga upp á snöggum svörum eftir hvert svar",
         "hapticFeedback": "Snertiviðbrögð (Android)",
-        "hapticFeedbackDescription": "Nota vægan titring fyrir mikilvægar aðgerðir í síma"
+        "hapticFeedbackDescription": "Nota vægan titring fyrir mikilvægar aðgerðir í síma",
+        "autoOpenArtifacts": "Opna hluti sjálfkrafa",
+        "autoOpenArtifactsDescription": "Opna hlutaspjaldið þegar svar býr til hlut"
       },
       "background": {
         "title": "Bakgrunnsmynd",

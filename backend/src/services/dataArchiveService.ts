@@ -384,6 +384,7 @@ const preferenceKeys = new Set<keyof UserPreferences>([
   'titleSettings',
   'showUsername',
   'showFollowUpSuggestions',
+  'autoOpenArtifactPanel',
   'hapticFeedbackEnabled',
   'workRemoteProviderDisclosureDismissed',
   'backgroundSettings',
@@ -414,6 +415,7 @@ const nullableStringPreferenceKeys = new Set([
 const booleanPreferenceKeys = new Set([
   'showUsername',
   'showFollowUpSuggestions',
+  'autoOpenArtifactPanel',
   'hapticFeedbackEnabled',
   'workRemoteProviderDisclosureDismissed',
 ]);

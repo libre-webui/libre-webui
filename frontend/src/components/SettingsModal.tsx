@@ -1340,6 +1340,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       });
   };
 
+  const handleAutoOpenArtifactsChange = (autoOpenArtifactPanel: boolean) => {
+    setPreferences({ autoOpenArtifactPanel });
+    preferencesApi.updatePreferences({ autoOpenArtifactPanel }).catch(error => {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to update settings: ' + errorMessage);
+    });
+  };
+
   const handleHapticFeedbackChange = (hapticFeedbackEnabled: boolean) => {
     setPreferences({ hapticFeedbackEnabled });
     if (hapticFeedbackEnabled) triggerHapticFeedback('selection');
@@ -1629,7 +1638,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   // these keywords cover the English vocabulary users search with.
   const tabSearchKeywords: Record<string, string> = {
     appearance:
-      'theme dark light accent color language username follow-up background interface',
+      'theme dark light accent color language username follow-up background interface artifact panel auto open',
     data: 'export import backup clear history sessions',
     about: 'version license update',
     models: 'default model system prompt title vision auto',
@@ -1759,6 +1768,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onAdaptToAccentChange={handleAdaptToAccentChange}
             onShowUsernameChange={handleShowUsernameChange}
             onShowFollowUpsChange={handleShowFollowUpsChange}
+            onAutoOpenArtifactsChange={handleAutoOpenArtifactsChange}
             onHapticFeedbackChange={handleHapticFeedbackChange}
           />
         );

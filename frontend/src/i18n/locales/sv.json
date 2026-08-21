@@ -552,7 +552,9 @@
         "followUpSuggestions": "Uppföljningsförslag",
         "followUpSuggestionsDescription": "Föreslå snabba svar efter varje svar",
         "hapticFeedback": "Haptisk återkoppling (Android)",
-        "hapticFeedbackDescription": "Använd diskreta vibrationer för viktiga mobilåtgärder"
+        "hapticFeedbackDescription": "Använd diskreta vibrationer för viktiga mobilåtgärder",
+        "autoOpenArtifacts": "Öppna artefakter automatiskt",
+        "autoOpenArtifactsDescription": "Öppna artefaktpanelen när ett svar skapar en"
       },
       "background": {
         "title": "Bakgrundsbild",

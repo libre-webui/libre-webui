@@ -130,15 +130,29 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     const matches = (currentSession?.messages ?? [])
       .flatMap(message => message.artifacts ?? [])
       .filter(candidate => candidate.title.trim().toLowerCase() === key);
-    if (!matches.some(candidate => candidate.id === artifactPanelArtifact.id)) {
+    // Parsed artifacts get a fresh id on every parse, so an auto-opened
+    // artifact may carry a different id than the message's copy of the same
+    // content — match on content before treating it as a separate version.
+    if (
+      !matches.some(
+        candidate =>
+          candidate.id === artifactPanelArtifact.id ||
+          candidate.content === artifactPanelArtifact.content
+      )
+    ) {
       // Ad-hoc previews (e.g. from a code block) are not part of any message.
       return [...matches, artifactPanelArtifact];
     }
     return matches;
   }, [currentSession, artifactPanelArtifact]);
-  const versionIndex = versions.findIndex(
+  let versionIndex = versions.findIndex(
     candidate => candidate.id === artifactPanelArtifact?.id
   );
+  if (versionIndex === -1 && artifactPanelArtifact) {
+    versionIndex = versions.findIndex(
+      candidate => candidate.content === artifactPanelArtifact.content
+    );
+  }
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const panelRef = useRef<HTMLDivElement>(null);
@@ -595,6 +609,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
           <div
             onPointerDown={handleResizeStart}
             data-testid='artifact-resize-handle'
+            title={t('artifacts.dragEdgeToResize')}
             className={cn(
               'absolute start-0 top-0 bottom-0 w-4 -ms-2 cursor-col-resize z-[56]',
               'flex items-center justify-center',
@@ -623,108 +638,95 @@ export const ArtifactSlideOutPanel: React.FC = () => {
           </div>
         )}
 
-        {/* Header */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-200'>
-          <div className='flex items-center gap-3 min-w-0 flex-1'>
+        {/* Header — a single compact row so the artifact gets the space.
+            Created date and description live in tooltips instead of bands. */}
+        <div className='flex items-center gap-1.5 border-b border-gray-200 dark:border-dark-200 ps-3 pe-2 py-1.5'>
+          <div className='flex items-center gap-2 min-w-0 flex-1'>
             <div className='text-gray-600 dark:text-gray-400 flex-shrink-0'>
               {getIcon()}
             </div>
-            <h2 className='font-semibold text-gray-900 dark:text-gray-100 truncate'>
+            <h2
+              className='text-sm font-semibold text-gray-900 dark:text-gray-100 truncate'
+              title={
+                artifact.description ||
+                `${t('artifacts.created')}: ${new Date(artifact.createdAt).toLocaleString()}`
+              }
+            >
               {artifact.title}
             </h2>
-            <span className='text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full font-medium flex-shrink-0'>
+            <span className='hidden sm:inline text-[10px] bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0'>
               {artifact.type.toUpperCase()}
             </span>
           </div>
 
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={closeArtifactPanel}
-            className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 flex-shrink-0'
-            title={isDesktop ? t('common.close') : t('artifacts.closePanelEsc')}
-          >
-            <X className='h-5 w-5' />
-          </Button>
-        </div>
+          {versions.length > 1 && versionIndex !== -1 && (
+            <div className='flex items-center gap-0.5 flex-shrink-0'>
+              <Button
+                variant='ghost'
+                size='sm'
+                disabled={versionIndex === 0}
+                onClick={() => openArtifactPanel(versions[versionIndex - 1])}
+                className='h-7 w-7 p-0'
+                title={t('artifacts.previousVersion')}
+              >
+                <ChevronLeft className='h-3.5 w-3.5 rtl:rotate-180' />
+              </Button>
+              <span className='whitespace-nowrap text-xs tabular-nums text-gray-500 dark:text-dark-600'>
+                {t('artifacts.versionOf', {
+                  current: versionIndex + 1,
+                  total: versions.length,
+                })}
+              </span>
+              <Button
+                variant='ghost'
+                size='sm'
+                disabled={versionIndex === versions.length - 1}
+                onClick={() => openArtifactPanel(versions[versionIndex + 1])}
+                className='h-7 w-7 p-0'
+                title={t('artifacts.nextVersion')}
+              >
+                <ChevronRight className='h-3.5 w-3.5 rtl:rotate-180' />
+              </Button>
+            </div>
+          )}
 
-        {/* Toolbar */}
-        <div className='flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-100/50'>
-          <div className='flex items-center gap-1'>
-            {versions.length > 1 && versionIndex !== -1 && (
-              <div className='me-1 flex items-center gap-0.5'>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  disabled={versionIndex === 0}
-                  onClick={() => openArtifactPanel(versions[versionIndex - 1])}
-                  className='h-8 w-8 p-0'
-                  title={t('artifacts.previousVersion')}
-                >
-                  <ChevronLeft className='h-3.5 w-3.5 rtl:rotate-180' />
-                </Button>
-                <span className='whitespace-nowrap text-xs tabular-nums text-gray-500 dark:text-dark-600'>
-                  {t('artifacts.versionOf', {
-                    current: versionIndex + 1,
-                    total: versions.length,
-                  })}
-                </span>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  disabled={versionIndex === versions.length - 1}
-                  onClick={() => openArtifactPanel(versions[versionIndex + 1])}
-                  className='h-8 w-8 p-0'
-                  title={t('artifacts.nextVersion')}
-                >
-                  <ChevronRight className='h-3.5 w-3.5 rtl:rotate-180' />
-                </Button>
-              </div>
-            )}
-            {shouldShowViewToggle() && (
-              <>
-                <Button
-                  variant={viewMode === 'preview' ? 'primary' : 'ghost'}
-                  size='sm'
-                  onClick={() => setViewMode('preview')}
-                  className='h-8 px-3 text-xs'
-                  title={t('artifacts.previewMode')}
-                >
-                  <Eye className='h-3.5 w-3.5 me-1.5' />
-                  {t('artifacts.preview')}
-                </Button>
-                <Button
-                  variant={viewMode === 'code' ? 'primary' : 'ghost'}
-                  size='sm'
-                  onClick={() => setViewMode('code')}
-                  className='h-8 px-3 text-xs'
-                  title={t('artifacts.codeMode')}
-                >
-                  <Code2 className='h-3.5 w-3.5 me-1.5' />
-                  {t('artifacts.code')}
-                </Button>
-              </>
-            )}
-          </div>
+          {shouldShowViewToggle() && (
+            <div className='flex items-center gap-0.5 flex-shrink-0'>
+              <Button
+                variant={viewMode === 'preview' ? 'primary' : 'ghost'}
+                size='sm'
+                onClick={() => setViewMode('preview')}
+                className='h-7 px-2 text-xs'
+                title={t('artifacts.previewMode')}
+              >
+                <Eye className='h-3.5 w-3.5 me-1' />
+                {t('artifacts.preview')}
+              </Button>
+              <Button
+                variant={viewMode === 'code' ? 'primary' : 'ghost'}
+                size='sm'
+                onClick={() => setViewMode('code')}
+                className='h-7 px-2 text-xs'
+                title={t('artifacts.codeMode')}
+              >
+                <Code2 className='h-3.5 w-3.5 me-1' />
+                {t('artifacts.code')}
+              </Button>
+            </div>
+          )}
 
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-0.5 flex-shrink-0'>
             <Button
               variant='ghost'
               size='sm'
               onClick={() => copyToClipboard(artifact.content)}
-              className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
+              className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
               title={t('artifacts.copyContent')}
             >
               {copied ? (
-                <>
-                  <Check className='h-3.5 w-3.5 me-1.5 text-green-500' />
-                  {t('artifacts.copied')}
-                </>
+                <Check className='h-3.5 w-3.5 text-green-500' />
               ) : (
-                <>
-                  <Copy className='h-3.5 w-3.5 me-1.5' />
-                  {t('artifacts.copyButton')}
-                </>
+                <Copy className='h-3.5 w-3.5' />
               )}
             </Button>
 
@@ -732,41 +734,28 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               variant='ghost'
               size='sm'
               onClick={downloadArtifact}
-              className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
+              className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
               title={t('artifacts.download')}
             >
-              <Download className='h-3.5 w-3.5 me-1.5' />
-              {t('artifacts.download')}
+              <Download className='h-3.5 w-3.5' />
+            </Button>
+
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={closeArtifactPanel}
+              className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
+              title={
+                isDesktop ? t('common.close') : t('artifacts.closePanelEsc')
+              }
+            >
+              <X className='h-4 w-4' />
             </Button>
           </div>
         </div>
 
-        {/* Description */}
-        {artifact.description && (
-          <div className='px-4 py-3 border-b border-gray-100 dark:border-dark-200'>
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
-              {artifact.description}
-            </p>
-          </div>
-        )}
-
         {/* Content */}
-        <div className='flex-1 p-4 overflow-hidden'>{renderContent()}</div>
-
-        {/* Footer */}
-        <div className='px-4 py-2 border-t border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-100/50'>
-          <div className='flex items-center justify-between'>
-            <div className='text-xs text-gray-500 dark:text-gray-400'>
-              {t('artifacts.created')}:{' '}
-              {new Date(artifact.createdAt).toLocaleString()}
-            </div>
-            {!isMobile && (
-              <div className='text-xs text-gray-400 dark:text-dark-500'>
-                {t('artifacts.dragEdgeToResize')}
-              </div>
-            )}
-          </div>
-        </div>
+        <div className='flex-1 p-2 overflow-hidden'>{renderContent()}</div>
       </div>
     </>
   );
