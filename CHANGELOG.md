@@ -15,6 +15,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.27.0] - 2026-08-22
+
+Signing in gets serious — two-factor with recovery codes, passkeys, and a live password meter. The app now installs to your phone with real push notifications, knowledge ingests scans and audio, backups prove they restore on a schedule, artifacts get a proper split-screen panel, and the desktop app gets its real name.
+
+### ✨ New Features
+
+- **Two-factor and passkeys.** TOTP two-factor with one-time recovery codes, passkey (WebAuthn) sign-in, a per-role step-up policy administrators can require, and admin reset of a locked-out user's factors. Ships with a schema migration (SQLite v21 / PostgreSQL v20).
+- **Install it like an app.** Libre WebUI is now an installable PWA with an offline shell, and notifications can reach your device through web push — riding the same durable notification inbox introduced in 0.26.
+- **Knowledge reads scans and audio.** Images and scanned PDFs are OCR'd through the vision model, and uploaded audio is transcribed through speech-to-text, so screenshots, paper scans, and recordings become searchable, citable documents.
+- **Backups that prove they restore.** Scheduled recovery drills restore a real backup into an isolated area on a cadence you set, verify the result, and measure actual RTO and RPO — so restore confidence is measured, not assumed.
+- **A split-screen artifact panel.** On desktop, artifacts open beside the conversation instead of covering it, with a pin toggle that keeps the panel open while you chat, optional auto-open when a new artifact is generated, and compact chrome.
+- **Pure-black AMOLED theme.** A true-black appearance mode alongside light and dark, with redesigned circular accent swatches.
+- **Night-owl code theme.** Code blocks share one night-owl palette with line numbers across chat, thinking, and Work, rendered in a self-hosted JetBrains Mono — no external font requests.
+- **Live password strength meter.** Setup, signup, and user management show strength and policy feedback as you type.
+
+### 🔧 Improvements
+
+- **The desktop app is now Libre WebUI Desktop.** Renamed from "Libre WebUI Frontend" across installers and Homebrew: the old cask tokens migrate automatically on upgrade, installer assets use the new name from this release on, and existing installs keep their data and sessions through the rename.
+- Your chosen accent color now carries through approval cards, Work panes, the git panel, and the terminal instead of falling back to the default coral.
+
+### 🐛 Bug Fixes
+
+- Tool egress timeout and size caps are clamped defensively, so a malformed valve value can no longer disable the limits.
+- Artifact previews stay inside the sandboxed panel; the open-in-new-window escape hatch was removed.
+- Split-view polish: the artifact panel stacks below modals, inline previews collapse while the panel is open, and the composer stays compact beside it.
+- The compact sidebar rail no longer renders unreadable session chips.
+
+### 📚 Documentation
+
+- Completed the 0.26 guide set, including new observability and notes guides, a refreshed documentation landing page, and updates across Kubernetes, SSO, web search, and monitoring docs.
+- Added a factual, sourced product comparison page.
+
 ## [0.26.0] - 2026-08-20
 
 Models that use tools under your approval, retrieval that cites its sources, channels and sharing for teams, hands-free voice conversations, image editing — and the cost controls, evaluations, observability, and high-availability certification to run all of it in production. Everything built since 0.25.0 lands here at once.
