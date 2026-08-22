@@ -38,6 +38,9 @@ RUN chmod +x /usr/local/bin/start-computer
 # to ship your own (the [g] glob makes it optional); otherwise a gradient
 # is generated.
 COPY start-page.html tint2rc wallpaper.pn[g] /usr/local/share/libre-computer/
+# The site's own typefaces (Space Grotesk / Manrope / DM Mono), self-hosted
+# exactly like librewebui.org hosts them.
+COPY fonts /usr/local/share/libre-computer/fonts
 RUN [ -f /usr/local/share/libre-computer/wallpaper.png ] \
     || convert -size 1280x800 \
       gradient:'#141824'-'#2b3350' \

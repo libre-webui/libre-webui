@@ -3,149 +3,236 @@
 <head>
 <meta charset="utf-8">
 <title>Libre Work Computer</title>
+<link rel="stylesheet" href="file:///usr/local/share/libre-computer/fonts/fonts.css">
 <style>
-  :root { color-scheme: dark; }
-  html, body {
-    margin: 0; height: 100%;
-    /* The desktop wallpaper shows through a scrim that opens up toward the
-       horizon at the bottom of the frame. */
+  :root {
+    color-scheme: dark;
+    --paper: #f7f5f0;
+    --paper-secondary: #b6b2aa;
+    --paper-muted: #858179;
+    --ink: #0a0a0b;
+    --coral: #ff7b52;
+    --coral-deep: #BD4225;
+    --hairline: rgba(255, 255, 255, 0.14);
+    --display: 'Space Grotesk', 'Manrope', sans-serif;
+    --body: 'Manrope', sans-serif;
+    --mono: 'DM Mono', monospace;
+    --ease-out: cubic-bezier(.16, 1, .3, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex;
+    flex-direction: column;
     background:
-      linear-gradient(180deg,
-        rgba(5, 5, 8, 0.93) 0%,
-        rgba(7, 7, 10, 0.86) 42%,
-        rgba(8, 8, 11, 0.55) 75%,
-        rgba(8, 8, 10, 0.18) 100%),
+      linear-gradient(100deg,
+        rgba(5, 5, 6, 0.88) 0%,
+        rgba(5, 5, 6, 0.66) 40%,
+        rgba(5, 5, 6, 0.22) 72%,
+        rgba(5, 5, 6, 0.06) 100%),
       url('file:///usr/local/share/libre-computer/wallpaper.png') center / cover no-repeat,
-      #0b0b0c;
-    color: #f7f5f0;
-    font-family: "Space Grotesk", "Manrope", "DejaVu Sans", system-ui, sans-serif;
-    display: flex; align-items: center; justify-content: center;
+      #0a0a0b;
+    color: var(--paper);
+    font-family: var(--body);
+    overflow: hidden;
   }
-  .card { text-align: center; max-width: 640px; padding: 24px; }
-  .mark {
-    width: 76px; height: 76px; margin: 0 auto 18px;
-    border-radius: 12px;
-    background: rgba(14, 14, 18, 0.6);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    display: flex; align-items: center; justify-content: center;
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 34px 44px 0;
   }
-  .mark svg { width: 44px; height: 44px; color: #f7f5f0; }
-  #clock { font-size: 44px; font-weight: 300; letter-spacing: 1px; margin: 2px 0 0; }
-  #date { font-size: 13px; color: #858179; margin: 2px 0 22px; }
-  h1 { font-size: 19px; font-weight: 600; letter-spacing: 0.2px; margin: 0 0 6px; }
-  p.tag { font-size: 13px; margin: 0 0 24px; color: #b6b2aa; }
-  form.search {
-    display: flex; gap: 8px; margin: 0 auto 28px; max-width: 470px;
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    color: var(--paper-secondary);
+    font-family: var(--mono);
+    font-size: 0.67rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
-  form.search input[type="text"] {
-    flex: 1; padding: 12px 18px;
-    background: rgba(10, 10, 14, 0.55);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 999px;
-    color: #f7f5f0; font-size: 14px; outline: none;
+  .eyebrow::before {
+    content: '';
+    width: 30px;
+    height: 1px;
+    background: var(--coral);
   }
-  form.search input[type="text"]:focus { border-color: #ff7b52; }
-  form.search button {
-    padding: 0 22px; border: none; border-radius: 999px;
-    background: #ff7b52;
-    color: #0a0a0b; font-size: 14px; font-weight: 700; cursor: pointer;
+  header svg { width: 26px; height: 26px; color: var(--paper); opacity: 0.9; }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 44px 40px;
+    max-width: 720px;
   }
-  form.search button:hover { background: #ff9a7a; }
-  .links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-  .links a {
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    width: 96px; padding: 14px 6px 12px;
-    background: rgba(14, 14, 18, 0.55);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 8px;
-    color: #f7f5f0; text-decoration: none; font-size: 12px;
-    transition: border-color 0.15s ease, transform 0.15s ease;
+  .clock-frame { overflow: hidden; padding-bottom: 0.06em; }
+  #clock {
+    font-family: var(--display);
+    font-size: 118px;
+    font-weight: 400;
+    letter-spacing: -0.055em;
+    line-height: 0.96;
+    margin: 0;
   }
-  .links a:hover { border-color: rgba(255, 255, 255, 0.28); transform: translateY(-2px); }
-  .links .glyph {
-    width: 34px; height: 34px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 700;
-    background: #0b0b0c;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #ff7b52;
+  #date {
+    margin: 10px 0 0 6px;
+    color: var(--paper-secondary);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
-  .links .glyph svg { width: 20px; height: 20px; color: #ff7b52; }
+
+  form.command {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 34px 0 0 2px;
+    max-width: 480px;
+    border-bottom: 1px solid var(--hairline);
+    padding: 0 2px 10px;
+  }
+  form.command:focus-within { border-color: rgba(255, 255, 255, 0.34); }
+  .term-mark {
+    color: var(--coral);
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+  form.command input[type="text"] {
+    flex: 1;
+    border: 0;
+    background: none;
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    outline: none;
+  }
+  form.command input[type="text"]::placeholder { color: var(--paper-muted); }
+  .return-hint {
+    color: var(--paper-muted);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+  }
+
+  nav.proof {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 26px 0 0 4px;
+    flex-wrap: wrap;
+  }
+  nav.proof a {
+    color: var(--paper-secondary);
+    font-family: var(--mono);
+    font-size: 0.67rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  nav.proof a:hover { color: var(--coral); }
+  nav.proof span[aria-hidden] {
+    width: 1px;
+    height: 11px;
+    background: var(--hairline);
+  }
+
+  footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 28px;
+    padding: 15px 44px 17px;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(5, 5, 5, 0.92);
+  }
+  footer .still {
+    color: rgba(255, 255, 255, 0.38);
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  footer p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.78rem;
+  }
+
+  /* One quiet page-load sequence, borrowed from the site's reveal. */
+  .reveal { opacity: 0; transform: translateY(12px); }
+  .clock-frame #clock { transform: translateY(108%); }
+  .ready .reveal {
+    opacity: 1;
+    transform: none;
+    transition: opacity 620ms var(--ease-out), transform 620ms var(--ease-out);
+  }
+  .ready .clock-frame #clock {
+    transform: none;
+    transition: transform 900ms var(--ease-out) 80ms;
+  }
+  .ready .reveal.d1 { transition-delay: 120ms; }
+  .ready .reveal.d2 { transition-delay: 220ms; }
+  .ready .reveal.d3 { transition-delay: 320ms; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .clock-frame #clock { opacity: 1 !important; transform: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
-  <div class="card">
-    <div class="mark">
-      <svg viewBox="0 0 64 64" role="img" aria-label="Libre WebUI">
-        <path d="M 11.5 18.0 L 11.5 32 A 20.5 20.5 0 0 0 50.58 40.66"
-          fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
-        <path d="M 50.58 18.0 L 50.58 25.66"
-          fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
-      </svg>
+  <header>
+    <p class="eyebrow reveal">Libre Work Computer</p>
+    <svg viewBox="0 0 64 64" role="img" aria-label="Libre WebUI" class="reveal">
+      <path d="M 11.5 18.0 L 11.5 32 A 20.5 20.5 0 0 0 50.58 40.66"
+        fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
+      <path d="M 50.58 18.0 L 50.58 25.66"
+        fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
+    </svg>
+  </header>
+
+  <main>
+    <div class="clock-frame">
+      <h1 id="clock">--:--</h1>
     </div>
-    <div id="clock">--:--</div>
-    <div id="date"></div>
-    <h1>Libre Work Computer</h1>
-    <p class="tag">This screen belongs to your agent. Watch, take over, or teach it a task.</p>
-    <form class="search" action="https://duckduckgo.com/" method="get">
-      <input type="text" name="q" placeholder="Search the web" autocomplete="off" autofocus>
-      <!-- DuckDuckGo theme parameters tuned to the Libre WebUI palette. -->
+    <p id="date" class="reveal d1">&nbsp;</p>
+
+    <form class="command reveal d2" action="https://duckduckgo.com/" method="get">
+      <span class="term-mark" aria-hidden="true">›</span>
+      <input type="text" name="q" placeholder="search the web" autocomplete="off" autofocus>
+      <span class="return-hint" aria-hidden="true">↵</span>
       <input type="hidden" name="kae" value="d">
-      <input type="hidden" name="k7" value="0b0b0c">
-      <input type="hidden" name="kj" value="111111">
+      <input type="hidden" name="k7" value="0a0a0b">
+      <input type="hidden" name="kj" value="0a0a0b">
       <input type="hidden" name="k9" value="ff9a7a">
       <input type="hidden" name="kx" value="ff7b52">
       <input type="hidden" name="k8" value="f7f5f0">
-      <button type="submit">Search</button>
     </form>
-    <div class="links">
-      <a href="https://librewebui.org">
-        <span class="glyph">
-          <svg viewBox="0 0 64 64" aria-hidden="true">
-            <path d="M 11.5 18.0 L 11.5 32 A 20.5 20.5 0 0 0 50.58 40.66"
-              fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
-            <path d="M 50.58 18.0 L 50.58 25.66"
-              fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
-          </svg>
-        </span>
-        Website
-      </a>
-      <a href="https://docs.librewebui.org">
-        <span class="glyph">✦</span>
-        Docs
-      </a>
-      <a href="https://github.com/libre-webui/libre-webui">
-        <span class="glyph">
-          <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
-          </svg>
-        </span>
-        GitHub
-      </a>
-      <a href="https://git.kroonen.ai/libre-webui/libre-webui">
-        <span class="glyph">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-            <circle cx="7" cy="19" r="2.2" fill="currentColor" stroke="none"/>
-            <circle cx="7" cy="5" r="2.2" fill="currentColor" stroke="none"/>
-            <circle cx="18" cy="9" r="2.2" fill="currentColor" stroke="none"/>
-            <path d="M7 7.5v9M7.5 15c2-3.2 5.6-2.6 8.3-4.3"/>
-          </svg>
-        </span>
-        Forgejo
-      </a>
-      <a href="https://kroonen.ai">
-        <span class="glyph">K</span>
-        kroonen.ai
-      </a>
-      <a href="https://start.duckduckgo.com/?kae=d&amp;k7=0b0b0c&amp;kj=111111&amp;k9=ff9a7a&amp;kx=ff7b52&amp;k8=f7f5f0">
-        <span class="glyph">D</span>
-        DuckDuckGo
-      </a>
-    </div>
-  </div>
+
+    <nav class="proof reveal d3" aria-label="Libre WebUI links">
+      <a href="https://librewebui.org">Website</a>
+      <span aria-hidden="true"></span>
+      <a href="https://docs.librewebui.org">Docs</a>
+      <span aria-hidden="true"></span>
+      <a href="https://github.com/libre-webui/libre-webui">GitHub</a>
+      <span aria-hidden="true"></span>
+      <a href="https://git.kroonen.ai/libre-webui/libre-webui">Forgejo</a>
+      <span aria-hidden="true"></span>
+      <a href="https://kroonen.ai">kroonen.ai</a>
+      <span aria-hidden="true"></span>
+      <a href="https://start.duckduckgo.com/?kae=d&amp;k7=0a0a0b&amp;kj=0a0a0b&amp;k9=ff9a7a&amp;kx=ff7b52&amp;k8=f7f5f0">DuckDuckGo</a>
+    </nav>
+  </main>
+
+  <footer class="reveal d3">
+    <span class="still">Libre / Work Computer — Still 01</span>
+    <p>This screen belongs to your agent. Watch, take over, or teach it a task.</p>
+  </footer>
+
   <script>
     const clock = document.getElementById('clock');
     const date = document.getElementById('date');
@@ -156,6 +243,9 @@
     };
     tick();
     setInterval(tick, 10_000);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.body.classList.add('ready');
+    }));
   </script>
 </body>
 </html>

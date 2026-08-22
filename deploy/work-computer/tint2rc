@@ -2,10 +2,10 @@
 # bottom-centered panel over the wallpaper.
 
 # Panel background
-rounded = 12
+rounded = 6
 border_width = 1
-background_color = #10131c 62
-border_color = #ffffff 14
+background_color = #050505 78
+border_color = #ffffff 12
 
 # Task highlight background
 rounded = 8
