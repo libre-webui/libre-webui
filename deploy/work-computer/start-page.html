@@ -4,30 +4,73 @@
 <meta charset="utf-8">
 <title>Libre Work Computer</title>
 <style>
+  :root { color-scheme: dark; }
   html, body {
     margin: 0; height: 100%;
-    background: linear-gradient(160deg, #141824 0%, #2b3350 100%);
+    background:
+      radial-gradient(1000px 500px at 75% -10%, rgba(109, 141, 255, 0.18), transparent 60%),
+      radial-gradient(800px 500px at 15% 110%, rgba(154, 109, 255, 0.14), transparent 60%),
+      linear-gradient(160deg, #12151f 0%, #232a45 100%);
     color: #e6e9f2;
     font-family: "DejaVu Sans", system-ui, sans-serif;
     display: flex; align-items: center; justify-content: center;
   }
-  .card { text-align: center; opacity: 0.92; }
+  .card { text-align: center; max-width: 560px; padding: 24px; }
   .mark {
-    width: 72px; height: 72px; margin: 0 auto 20px;
-    border-radius: 20px;
+    width: 76px; height: 76px; margin: 0 auto 18px;
+    border-radius: 22px;
     background: linear-gradient(140deg, #6d8dff, #9a6dff);
     display: flex; align-items: center; justify-content: center;
-    font-size: 34px; font-weight: 700; color: #fff;
+    font-size: 36px; font-weight: 700; color: #fff;
+    box-shadow: 0 12px 40px rgba(109, 141, 255, 0.35);
   }
-  h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
-  p { font-size: 14px; margin: 0; color: #9aa3bd; }
+  #clock { font-size: 44px; font-weight: 200; letter-spacing: 2px; margin: 4px 0 0; }
+  #date { font-size: 13px; color: #9aa3bd; margin: 2px 0 18px; }
+  h1 { font-size: 19px; font-weight: 600; margin: 0 0 6px; }
+  p.tag { font-size: 13px; margin: 0 0 26px; color: #9aa3bd; }
+  .links { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .links a {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    width: 92px; padding: 14px 6px 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    color: #dfe4f2; text-decoration: none; font-size: 12px;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .links a:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-2px); }
+  .links .glyph {
+    width: 34px; height: 34px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 700; color: #fff;
+  }
 </style>
 </head>
 <body>
   <div class="card">
     <div class="mark">L</div>
+    <div id="clock">--:--</div>
+    <div id="date"></div>
     <h1>Libre Work Computer</h1>
-    <p>This screen belongs to your agent. Watch, take over, or teach it a task.</p>
+    <p class="tag">This screen belongs to your agent. Watch, take over, or teach it a task.</p>
+    <div class="links">
+      <a href="https://duckduckgo.com"><span class="glyph" style="background:#de5833">D</span>DuckDuckGo</a>
+      <a href="https://www.google.com"><span class="glyph" style="background:#4285f4">G</span>Google</a>
+      <a href="https://www.youtube.com"><span class="glyph" style="background:#ff0033">▶</span>YouTube</a>
+      <a href="https://github.com"><span class="glyph" style="background:#24292f">⌥</span>GitHub</a>
+      <a href="https://en.wikipedia.org"><span class="glyph" style="background:#5b6270">W</span>Wikipedia</a>
+    </div>
   </div>
+  <script>
+    const clock = document.getElementById('clock');
+    const date = document.getElementById('date');
+    const tick = () => {
+      const now = new Date();
+      clock.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      date.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+    };
+    tick();
+    setInterval(tick, 10_000);
+  </script>
 </body>
 </html>

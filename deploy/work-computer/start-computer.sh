@@ -41,18 +41,21 @@ while [ ! -e "/tmp/.X11-unix/X${DISPLAY_NUM}" ]; do
   sleep 0.1
 done
 
-fluxbox >/dev/null 2>&1 &
-echo $! > "$STATE_DIR/fluxbox.pid"
+# Openbox has no bar of its own; tint2 provides the dock (launchers,
+# running apps, clock) bottom-center over the wallpaper.
+openbox >/dev/null 2>&1 &
+echo $! > "$STATE_DIR/openbox.pid"
 
-# Paint the baked wallpaper straight onto the root window (the image's
-# fbsetbg is a no-op, so fluxbox's default wallpaper script can neither
-# repaint it nor pop its missing-image xmessage dialog).
 WALLPAPER="/usr/local/share/libre-computer/wallpaper.png"
 if [ -f "$WALLPAPER" ]; then
-  sleep 0.5
+  sleep 0.3
   display -window root "$WALLPAPER" >/dev/null 2>&1 &
   echo $! > "$STATE_DIR/wallpaper.pid"
 fi
+
+XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}" \
+  tint2 -c /usr/local/share/libre-computer/tint2rc >/dev/null 2>&1 &
+echo $! > "$STATE_DIR/tint2.pid"
 
 # Audio: PulseAudio with a null sink is the container's "sound card".
 # Chromium plays into it; the sink's monitor is captured as raw PCM and
@@ -98,6 +101,26 @@ chromium \
   --start-maximized \
   "file:///usr/local/share/libre-computer/start-page.html" >/dev/null 2>&1 &
 echo $! > "$STATE_DIR/chromium.pid"
+
+# --start-maximized is unreliable under a bare WM; assert it once the
+# window exists so the browser fills the screen above the dock.
+(
+  for _ in $(seq 1 60); do
+    found=""
+    # Chromium also maps tiny phantom windows; maximize every real one.
+    for wid in $(xdotool search --class chromium 2>/dev/null); do
+      width="$(xdotool getwindowgeometry --shell "$wid" 2>/dev/null \
+        | sed -n 's/^WIDTH=//p')"
+      if [ "${width:-0}" -gt 200 ]; then
+        xdotool windowstate --add MAXIMIZED_VERT "$wid" 2>/dev/null || true
+        xdotool windowstate --add MAXIMIZED_HORZ "$wid" 2>/dev/null || true
+        found=1
+      fi
+    done
+    [ -n "$found" ] && break
+    sleep 0.2
+  done
+) &
 
 # One VNC server, two privilege levels: the first password in the passwd
 # file grants full control (handed out by the backend only to the current

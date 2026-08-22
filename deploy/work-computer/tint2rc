@@ -1,0 +1,76 @@
+# Libre Work Computer dock: launchers + running apps + clock in one
+# bottom-centered panel over the wallpaper.
+
+# Panel background
+rounded = 12
+border_width = 1
+background_color = #10131c 62
+border_color = #ffffff 14
+
+# Task highlight background
+rounded = 8
+border_width = 0
+background_color = #ffffff 14
+border_color = #000000 0
+
+# Active task background
+rounded = 8
+border_width = 0
+background_color = #6d8dff 45
+border_color = #000000 0
+
+#-------------------------------------
+# Panel
+panel_items = LTC
+panel_position = bottom center horizontal
+panel_size = 42% 44
+panel_margin = 0 6
+panel_padding = 10 4 10
+panel_background_id = 1
+panel_layer = top
+wm_menu = 1
+strut_policy = follow_size
+
+#-------------------------------------
+# Launchers
+launcher_padding = 4 2 8
+launcher_background_id = 0
+launcher_icon_size = 30
+launcher_icon_theme = Adwaita
+launcher_icon_asb = 100 0 0
+launcher_item_app = /usr/share/applications/chromium.desktop
+launcher_item_app = /usr/share/applications/lxterminal.desktop
+startup_notifications = 0
+
+#-------------------------------------
+# Taskbar
+taskbar_mode = single_desktop
+taskbar_padding = 6 2 6
+taskbar_background_id = 0
+taskbar_name = 0
+task_maximum_size = 160 34
+task_padding = 8 3 8
+task_text = 1
+task_icon = 1
+task_centered = 1
+task_font = DejaVu Sans 9
+task_font_color = #e6e9f2 88
+task_background_id = 2
+task_active_background_id = 3
+task_active_font_color = #ffffff 100
+urgent_nb_of_blink = 8
+
+#-------------------------------------
+# Clock
+time1_format = %H:%M
+time1_font = DejaVu Sans Bold 10
+clock_font_color = #e6e9f2 92
+clock_padding = 8 0
+clock_background_id = 0
+
+#-------------------------------------
+# Misc
+autohide = 0
+mouse_effects = 1
+mouse_hover_icon_asb = 100 0 12
+mouse_pressed_icon_asb = 100 0 -12

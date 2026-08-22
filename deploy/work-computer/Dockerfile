@@ -11,7 +11,10 @@ USER root
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       xvfb \
-      fluxbox \
+      openbox \
+      tint2 \
+      lxterminal \
+      adwaita-icon-theme \
       x11vnc \
       websockify \
       chromium \
@@ -29,17 +32,14 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 COPY start-computer.sh /usr/local/bin/start-computer
 RUN chmod +x /usr/local/bin/start-computer
 
-# A presentable desktop instead of a bare X root: a generated wallpaper and
-# a minimal start page for the browser. Both are static assets baked at
-# build time so the runtime stays read-only. fbsetbg becomes a no-op: this
-# minimal install has no image backend for it, and every invocation (from
-# fluxbox's default styles) would otherwise pop a permanent xmessage error
-# dialog on the agent's screen.
-COPY start-page.html /usr/local/share/libre-computer/start-page.html
-RUN mkdir -p /usr/local/share/libre-computer \
-    && convert -size 1280x800 \
+# A presentable desktop instead of a bare X root: wallpaper, dock config,
+# and a start page for the browser — static assets baked at build time so
+# the runtime stays read-only. Drop a wallpaper.png beside this Dockerfile
+# to ship your own (the [g] glob makes it optional); otherwise a gradient
+# is generated.
+COPY start-page.html tint2rc wallpaper.pn[g] /usr/local/share/libre-computer/
+RUN [ -f /usr/local/share/libre-computer/wallpaper.png ] \
+    || convert -size 1280x800 \
       gradient:'#141824'-'#2b3350' \
       -attenuate 0.15 +noise Gaussian \
-      /usr/local/share/libre-computer/wallpaper.png \
-    && printf '#!/bin/sh\nexit 0\n' > /usr/bin/fbsetbg \
-    && chmod +x /usr/bin/fbsetbg
+      /usr/local/share/libre-computer/wallpaper.png
