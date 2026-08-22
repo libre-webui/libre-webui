@@ -624,9 +624,9 @@ test('an existing Forgejo release is updated when metadata differs', async () =>
 test('matching release metadata and assets are skipped idempotently', async () => {
   const asset = {
     id: 501,
-    name: 'Libre-WebUI-Frontend-0.8.6.AppImage',
+    name: 'Libre-WebUI-Desktop-0.8.6.AppImage',
     browser_download_url:
-      'https://github.test/downloads/Libre-WebUI-Frontend-0.8.6.AppImage',
+      'https://github.test/downloads/Libre-WebUI-Desktop-0.8.6.AppImage',
     type: 'external',
   };
   const source = sourceRelease({ assets: [asset] });
@@ -694,15 +694,15 @@ test('a missing asset is created as an external attachment by name', async () =>
 test('an existing external asset is updated by matching its name', async () => {
   const sourceAsset = {
     id: 701,
-    name: 'Libre-WebUI-Frontend-0.8.6.exe',
+    name: 'Libre-WebUI-Desktop-0.8.6.exe',
     browser_download_url:
-      'https://github.test/current/Libre-WebUI-Frontend-0.8.6.exe',
+      'https://github.test/current/Libre-WebUI-Desktop-0.8.6.exe',
   };
   const targetAsset = {
     id: 802,
     name: sourceAsset.name,
     browser_download_url:
-      'https://github.test/stale/Libre-WebUI-Frontend-0.8.6.exe',
+      'https://github.test/stale/Libre-WebUI-Desktop-0.8.6.exe',
     type: 'external',
   };
   const source = sourceRelease({ assets: [sourceAsset] });
@@ -801,9 +801,9 @@ test('requestWithRetry never retries an ambiguous POST create', async () => {
 test('dry-run inspects state but performs no release or asset writes', async () => {
   const asset = {
     id: 701,
-    name: 'Libre-WebUI-Frontend-0.8.6-amd64.deb',
+    name: 'Libre-WebUI-Desktop-0.8.6-amd64.deb',
     browser_download_url:
-      'https://github.test/current/Libre-WebUI-Frontend-0.8.6-amd64.deb',
+      'https://github.test/current/Libre-WebUI-Desktop-0.8.6-amd64.deb',
   };
   const source = sourceRelease({
     name: 'Updated title',

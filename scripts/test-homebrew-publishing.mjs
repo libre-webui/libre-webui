@@ -51,14 +51,21 @@ test('Homebrew templates match current release packaging', () => {
     /node@20|python-setuptools|npm", "run", "build"/
   );
 
-  assert.match(cask, /Libre-WebUI-Frontend-#\{version\}-mac-arm64\.dmg/);
-  assert.match(cask, /^cask "libre-webui-frontend" do/m);
-  assert.match(cask, /name "Libre WebUI Frontend"/);
+  assert.match(cask, /Libre-WebUI-Desktop-#\{version\}-mac-arm64\.dmg/);
+  assert.match(cask, /^cask "libre-webui-desktop" do/m);
+  assert.match(cask, /name "Libre WebUI Desktop"/);
   assert.doesNotMatch(cask, /^cask "libre-webui" do/m);
+  assert.doesNotMatch(cask, /^cask "libre-webui-frontend" do/m);
   assert.match(cask, /verified: "github\.com\/libre-webui\/libre-webui\/"/);
   assert.match(cask, /depends_on arch: :arm64/);
   assert.match(cask, /depends_on macos: :monterey/);
-  assert.match(cask, /app "Libre WebUI Frontend\.app"/);
+  assert.match(cask, /app "Libre WebUI Desktop\.app"/);
+  // The pre-rename userData directory must stay in zap so upgrades from the
+  // "Libre WebUI Frontend" era still clean up fully.
+  assert.match(
+    cask,
+    /~\/Library\/Application Support\/Libre WebUI Frontend/
+  );
   assert.match(cask, /brew install --formula libre-webui/);
   assert.doesNotMatch(
     cask,
@@ -83,7 +90,7 @@ test('the release pipeline hands desktop packaging to the desktop repo', () => {
   );
   assert.match(
     readRepoFile('homebrew/libre-webui-cask.template'),
-    /Libre-WebUI-Frontend-#\{version\}-mac-arm64\.dmg/
+    /Libre-WebUI-Desktop-#\{version\}-mac-arm64\.dmg/
   );
 });
 
@@ -114,17 +121,21 @@ test('Homebrew renderer produces a current formula and cask together', () => {
       'utf8'
     );
     const cask = fs.readFileSync(
-      path.join(outputDir, 'Casks/libre-webui-frontend.rb'),
+      path.join(outputDir, 'Casks/libre-webui-desktop.rb'),
       'utf8'
     );
 
     assert.match(formula, /libre-webui-9\.8\.7\.tgz/);
     assert.match(formula, new RegExp(`sha256 "${'a'.repeat(64)}"`));
     assert.match(cask, /version "9\.8\.7"/);
-    assert.match(cask, /^cask "libre-webui-frontend" do/m);
+    assert.match(cask, /^cask "libre-webui-desktop" do/m);
     assert.match(cask, new RegExp(`sha256 "${'b'.repeat(64)}"`));
     assert.equal(
       fs.existsSync(path.join(outputDir, 'Casks/libre-webui.rb')),
+      false
+    );
+    assert.equal(
+      fs.existsSync(path.join(outputDir, 'Casks/libre-webui-frontend.rb')),
       false
     );
   } finally {

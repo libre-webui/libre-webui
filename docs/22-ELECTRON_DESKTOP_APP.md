@@ -33,12 +33,16 @@ installers for every release are attached to the main repository's
 Grab the package for your platform from the
 [latest release](https://github.com/libre-webui/libre-webui/releases/latest):
 
-- **macOS (Apple Silicon)**: `Libre-WebUI-Frontend-{version}-mac-arm64.dmg`
-  or `.zip`, or `brew install --cask libre-webui/tap/libre-webui-frontend`
-- **Windows**: `Libre-WebUI-Frontend-Setup-{version}.exe` (installer) or
-  `Libre-WebUI-Frontend-{version}.exe` (portable)
-- **Linux**: `Libre-WebUI-Frontend-{version}.AppImage` or
-  `Libre-WebUI-Frontend-{version}-{arch}.deb`
+- **macOS (Apple Silicon)**: `Libre-WebUI-Desktop-{version}-mac-arm64.dmg`
+  or `.zip`, or `brew install --cask libre-webui/tap/libre-webui-desktop`
+- **Windows**: `Libre-WebUI-Desktop-Setup-{version}.exe` (installer) or
+  `Libre-WebUI-Desktop-{version}.exe` (portable)
+- **Linux**: `Libre-WebUI-Desktop-{version}.AppImage` or
+  `Libre-WebUI-Desktop-{version}-{arch}.deb`
+
+Releases before the rename shipped these assets under the
+`Libre-WebUI-Frontend` prefix with an app bundle named
+`Libre WebUI Frontend.app`.
 
 ### macOS blocks the app as damaged
 
@@ -52,8 +56,8 @@ If macOS does not offer that option, remove the quarantine attribute only after
 verifying that the application came from the official Libre WebUI release:
 
 ```bash
-xattr -dr com.apple.quarantine "/Applications/Libre WebUI Frontend.app"
-open "/Applications/Libre WebUI Frontend.app"
+xattr -dr com.apple.quarantine "/Applications/Libre WebUI Desktop.app"
+open "/Applications/Libre WebUI Desktop.app"
 ```
 
 Do not disable Gatekeeper globally. Seamless distribution still requires a
