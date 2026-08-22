@@ -95,8 +95,8 @@ CREATE INDEX idx_recovery_drills_started
 const version = 20;
 const name = 'mfa-push-recovery';
 // This is an integrity checksum of public schema DDL, not a password hash.
+// codeql[js/insufficient-password-hash]
 const checksum = createHash('sha256')
-  // codeql[js/insufficient-password-hash]
   .update(`${version}\n${name}\n${POSTGRES_MFA_PUSH_RECOVERY_SQL}`)
   .digest('hex');
 
