@@ -1644,7 +1644,9 @@
       "deleted": "Work ilkesi silindi",
       "failed": "Work ilkesi kaydedilemedi",
       "invalidNumber": "PID sınırı ve boşta durdurma sayı olmalıdır.",
-      "guiEnabled": "Work Computer (GUI + tarayıcı)"
+      "guiEnabled": "Work Computer (GUI + tarayıcı)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer, GUI imajını gerektirir: depodaki deploy/work-computer klasöründen derleyin ve libre-work-computer:latest olarak etiketleyin."
     },
     "modelAccess": {
       "title": "Model indirmeleri",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Çalışma zamanı ilkesi",
-      "default": "Varsayılan (genel sınırlar)"
+      "default": "Varsayılan (genel sınırlar)",
+      "setupHint": "Çalışma zamanı ilkeleri Work Computer'ı — ajan için izlenebilir bir tarayıcı masaüstü — ve görev başına sınırları açar.",
+      "setupLink": "Work ilkelerini ayarla"
     },
     "git": {
       "actionFailed": "Git eylemi başarısız.",

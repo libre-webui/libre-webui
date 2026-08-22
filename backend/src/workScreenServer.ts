@@ -29,6 +29,7 @@
  */
 
 import http from 'http';
+import net from 'net';
 import type { IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
 import {
@@ -190,12 +191,17 @@ async function handleScreenUpgrade(
   }
   socket.resume();
 
-  // Forward only the WebSocket handshake headers websockify needs.
-  const headers: Record<string, string> = {
-    host: `${endpoint.host}:${endpoint.port}`,
-    connection: 'Upgrade',
-    upgrade: request.headers.upgrade || 'websocket',
-  };
+  // Forward only the WebSocket handshake headers websockify needs. The
+  // upstream leg is a raw TCP socket with a hand-written handshake: Node's
+  // HTTP-client upgrade path proved to tear the connection down shortly
+  // after large frames transit, while a plain piped socket streams the VNC
+  // session indefinitely.
+  const headerLines = [
+    `GET / HTTP/1.1`,
+    `Host: ${endpoint.host}:${endpoint.port}`,
+    `Connection: Upgrade`,
+    `Upgrade: ${request.headers.upgrade || 'websocket'}`,
+  ];
   for (const name of [
     'sec-websocket-key',
     'sec-websocket-version',
@@ -203,23 +209,86 @@ async function handleScreenUpgrade(
     'sec-websocket-extensions',
   ]) {
     const value = request.headers[name];
-    if (typeof value === 'string') headers[name] = value;
+    if (typeof value === 'string') headerLines.push(`${name}: ${value}`);
   }
 
-  const upstreamRequest = http.request({
-    hostname: endpoint.host,
-    port: endpoint.port,
-    path: '/',
-    method: 'GET',
-    headers,
-  });
   socket.once('error', error => {
     logger.debug('Screen client socket closed with an error:', error);
   });
 
-  upstreamRequest.on('upgrade', (upstream, upstreamSocket, upstreamHead) => {
+  const upstreamSocket = net.connect({
+    host: endpoint.host,
+    port: endpoint.port,
+  });
+  upstreamSocket.setNoDelay(true);
+  let upstreamBuffer = Buffer.alloc(0);
+  let established = false;
+
+  const failUpstream = (message: string): void => {
+    logger.warn(`Work screen relay failed: ${message}`);
+    if (!established) httpError(socket, 502, message);
+    upstreamSocket.destroy();
+    if (established) socket.destroy();
+  };
+  upstreamSocket.once('error', error => {
+    logger.debug('Screen upstream socket closed with an error:', error);
+    failUpstream('The Work Computer screen is unreachable.');
+  });
+  upstreamSocket.setTimeout(10_000, () => {
+    if (!established) failUpstream('The Work Computer screen timed out.');
+  });
+  upstreamSocket.once('connect', () => {
+    upstreamSocket.write(`${headerLines.join('\r\n')}\r\n\r\n`);
+  });
+
+  const onHandshakeData = (chunk: Buffer): void => {
+    upstreamBuffer = Buffer.concat([upstreamBuffer, chunk]);
+    const headerEnd = upstreamBuffer.indexOf('\r\n\r\n');
+    if (headerEnd < 0) {
+      if (upstreamBuffer.length > 16_384) {
+        failUpstream('The Work Computer screen sent an invalid handshake.');
+      }
+      return;
+    }
+    upstreamSocket.off('data', onHandshakeData);
+    const rawResponse = upstreamBuffer.subarray(0, headerEnd).toString();
+    const remainder = upstreamBuffer.subarray(headerEnd + 4);
+    upstreamBuffer = Buffer.alloc(0);
+    const [statusLine = '', ...responseHeaderLines] = rawResponse.split('\r\n');
+    if (!/^HTTP\/1\.1 101 /.test(statusLine)) {
+      failUpstream('Screen upgrade failed.');
+      return;
+    }
+    const safeLines = responseHeaderLines.filter(line => {
+      const name = line.slice(0, line.indexOf(':')).trim().toLowerCase();
+      return SAFE_RESPONSE_HEADERS.has(name);
+    });
+    established = true;
+    upstreamSocket.setTimeout(0);
+    // A raw upgraded socket keeps the HTTP server's keep-alive timeout
+    // unless it is cleared — the ws library does this for the terminal; a
+    // raw relay must do it itself.
+    (socket as { setTimeout?: (ms: number) => void }).setTimeout?.(0);
+    (socket as { setNoDelay?: (on: boolean) => void }).setNoDelay?.(true);
+
     viewersByTask.set(task.id, (viewersByTask.get(task.id) ?? 0) + 1);
     workRuntimeService.noteTaskActivity(task.id);
+    // The viewer owns the running container for the connection's lifetime:
+    // without this hold, any workspace-helper call (a Files refresh) would
+    // stop the sandbox and kill the GUI session mid-view.
+    let releaseScreenSession: (() => Promise<void>) | undefined;
+    void workRuntimeService
+      .beginScreenSession(task)
+      .then(release => {
+        releaseScreenSession = release;
+        if (socket.destroyed) void release();
+      })
+      .catch(error => {
+        logger.warn(
+          `Could not hold the Work container for a screen session on ${task.id}:`,
+          error
+        );
+      });
     const activityTimer = setInterval(() => {
       workRuntimeService.noteTaskActivity(task.id);
     }, ACTIVITY_TICK_MS);
@@ -233,16 +302,10 @@ async function handleScreenUpgrade(
       : undefined;
     expiryTimer?.unref();
 
-    const statusLine = `HTTP/${upstream.httpVersion} ${upstream.statusCode || 101} ${upstream.statusMessage || 'Switching Protocols'}\r\n`;
-    const headerLines: string[] = [];
-    for (let index = 0; index < upstream.rawHeaders.length; index += 2) {
-      const name = upstream.rawHeaders[index];
-      const value = upstream.rawHeaders[index + 1];
-      if (!name || !SAFE_RESPONSE_HEADERS.has(name.toLowerCase())) continue;
-      headerLines.push(`${name}: ${value}`);
-    }
-    socket.write(`${statusLine}${headerLines.join('\r\n')}\r\n\r\n`);
-    if (upstreamHead.length > 0) socket.write(upstreamHead);
+    socket.write(
+      `HTTP/1.1 101 Switching Protocols\r\n${safeLines.join('\r\n')}\r\n\r\n`
+    );
+    if (remainder.length > 0) socket.write(remainder);
     if (head.length > 0) upstreamSocket.write(head);
 
     const cleanup = (): void => {
@@ -252,9 +315,9 @@ async function handleScreenUpgrade(
       if (remaining <= 0) viewersByTask.delete(task.id);
       else viewersByTask.set(task.id, remaining);
       workRuntimeService.noteTaskActivity(task.id);
+      void releaseScreenSession?.();
     };
-    upstreamSocket.once('error', error => {
-      logger.debug('Screen upstream socket closed with an error:', error);
+    upstreamSocket.once('close', () => {
       socket.destroy();
     });
     socket.once('close', () => {
@@ -263,14 +326,6 @@ async function handleScreenUpgrade(
     });
     upstreamSocket.pipe(socket);
     socket.pipe(upstreamSocket);
-  });
-  upstreamRequest.on('response', upstream => {
-    upstream.resume();
-    httpError(socket, upstream.statusCode || 502, 'Screen upgrade failed.');
-  });
-  upstreamRequest.on('error', error => {
-    logger.warn('Work screen relay failed:', error.message);
-    httpError(socket, 502, 'The Work Computer screen is unreachable.');
-  });
-  upstreamRequest.end();
+  };
+  upstreamSocket.on('data', onHandshakeData);
 }

@@ -1644,7 +1644,9 @@
       "deleted": "Work-Richtlinie gelöscht",
       "failed": "Work-Richtlinie konnte nicht gespeichert werden",
       "invalidNumber": "PID-Limit und Leerlauf-Stopp müssen Zahlen sein.",
-      "guiEnabled": "Work Computer (GUI + Browser)"
+      "guiEnabled": "Work Computer (GUI + Browser)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Der Work Computer benötigt das GUI-Image: aus deploy/work-computer im Repository bauen und als libre-work-computer:latest taggen."
     },
     "modelAccess": {
       "title": "Modell-Downloads",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Laufzeitrichtlinie",
-      "default": "Standard (globale Limits)"
+      "default": "Standard (globale Limits)",
+      "setupHint": "Laufzeit-Richtlinien schalten den Work Computer frei — einen beobachtbaren Browser-Desktop für den Agenten — sowie Limits pro Task.",
+      "setupLink": "Work-Richtlinien einrichten"
     },
     "git": {
       "actionFailed": "Git-Aktion fehlgeschlagen.",

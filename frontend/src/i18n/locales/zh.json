@@ -1644,7 +1644,9 @@
       "deleted": "已删除 Work 策略",
       "failed": "无法保存 Work 策略",
       "invalidNumber": "PID 限制和空闲停止必须是数字。",
-      "guiEnabled": "Work Computer（GUI + 浏览器）"
+      "guiEnabled": "Work Computer（GUI + 浏览器）",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer 需要 GUI 镜像：从仓库的 deploy/work-computer 构建并标记为 libre-work-computer:latest。"
     },
     "modelAccess": {
       "title": "模型下载",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "运行时策略",
-      "default": "默认（全局限制）"
+      "default": "默认（全局限制）",
+      "setupHint": "运行时策略可启用 Work Computer——供代理使用、可实时观看的浏览器桌面——以及按任务的资源限制。",
+      "setupLink": "设置 Work 策略"
     },
     "git": {
       "actionFailed": "Git 操作失败。",

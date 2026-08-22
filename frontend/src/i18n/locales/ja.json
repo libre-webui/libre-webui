@@ -1644,7 +1644,9 @@
       "deleted": "Work ポリシーを削除しました",
       "failed": "Work ポリシーを保存できませんでした",
       "invalidNumber": "PID 制限とアイドル停止は数値で入力してください。",
-      "guiEnabled": "Work Computer（GUI + ブラウザ）"
+      "guiEnabled": "Work Computer（GUI + ブラウザ）",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer には GUI イメージが必要です。リポジトリの deploy/work-computer からビルドし、libre-work-computer:latest とタグ付けしてください。"
     },
     "modelAccess": {
       "title": "モデルのダウンロード",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "ランタイムポリシー",
-      "default": "デフォルト（グローバル制限）"
+      "default": "デフォルト（グローバル制限）",
+      "setupHint": "ランタイムポリシーで Work Computer（エージェントの操作を見られるブラウザデスクトップ）とタスクごとの制限が有効になります。",
+      "setupLink": "Work ポリシーを設定"
     },
     "git": {
       "actionFailed": "Git 操作に失敗しました。",

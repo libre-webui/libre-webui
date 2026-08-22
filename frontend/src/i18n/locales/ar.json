@@ -1644,7 +1644,9 @@
       "deleted": "تم حذف سياسة Work",
       "failed": "تعذر حفظ سياسة Work",
       "invalidNumber": "يجب أن يكون حد PID والإيقاف عند الخمول أرقامًا.",
-      "guiEnabled": "Work Computer (واجهة + متصفح)"
+      "guiEnabled": "Work Computer (واجهة + متصفح)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "يتطلب الـ Work Computer صورة الواجهة الرسومية: ابنها من deploy/work-computer في المستودع بوسم libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "تنزيل النماذج",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "سياسة التشغيل",
-      "default": "افتراضي (الحدود العامة)"
+      "default": "افتراضي (الحدود العامة)",
+      "setupHint": "سياسات التشغيل تفعّل الـ Work Computer — سطح مكتب بمتصفح يمكن مشاهدته يعمل عليه الوكيل — وحدود لكل مهمة.",
+      "setupLink": "إعداد سياسات Work"
     },
     "git": {
       "actionFailed": "فشل إجراء Git.",

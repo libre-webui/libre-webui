@@ -1644,7 +1644,9 @@
       "deleted": "Політику Work видалено",
       "failed": "Не вдалося зберегти політику Work",
       "invalidNumber": "Ліміт PID і зупинка в простої мають бути числами.",
-      "guiEnabled": "Work Computer (GUI + браузер)"
+      "guiEnabled": "Work Computer (GUI + браузер)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Для Work Computer потрібен GUI-образ: зберіть його з deploy/work-computer у репозиторії та позначте libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Завантаження моделей",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Політика середовища",
-      "default": "За замовчуванням (глобальні ліміти)"
+      "default": "За замовчуванням (глобальні ліміти)",
+      "setupHint": "Політики виконання відкривають Work Computer — спостережуваний браузерний робочий стіл для агента — і ліміти на завдання.",
+      "setupLink": "Налаштувати політики Work"
     },
     "git": {
       "actionFailed": "Дія Git не вдалася.",

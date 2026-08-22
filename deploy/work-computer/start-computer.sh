@@ -37,8 +37,23 @@ while [ ! -e "/tmp/.X11-unix/X${DISPLAY_NUM}" ]; do
   sleep 0.1
 done
 
+# Plain background instead of fluxbox's default wallpaper script, whose
+# missing Debian image otherwise pops a permanent xmessage error dialog.
+mkdir -p "$HOME/.fluxbox"
+if [ ! -f "$HOME/.fluxbox/init" ]; then
+  {
+    echo 'session.screen0.rootCommand: xsetroot -solid "#3b4252" || true'
+    echo 'session.screen0.toolbar.visible: true'
+  } > "$HOME/.fluxbox/init"
+fi
 fluxbox >/dev/null 2>&1 &
 echo $! > "$STATE_DIR/fluxbox.pid"
+
+# A container killed mid-session leaves Chromium's profile singleton lock
+# behind; without clearing it the browser silently refuses to start and the
+# desktop comes up empty.
+rm -f "$PROFILE_DIR/SingletonLock" "$PROFILE_DIR/SingletonSocket" \
+  "$PROFILE_DIR/SingletonCookie" 2>/dev/null || true
 
 chromium \
   --no-sandbox \

@@ -1271,6 +1271,21 @@ export default function WorkPage() {
                   </select>
                 </div>
               )}
+              {policies.length === 0 && authenticatedUser?.role === 'admin' && (
+                <div
+                  className='mt-8 w-full max-w-2xl rounded-xl border border-line bg-surface px-4 py-3 text-[13px] text-ink-muted'
+                  data-testid='work-policy-setup-hint'
+                >
+                  {t('work.policy.setupHint')}{' '}
+                  <button
+                    type='button'
+                    onClick={() => navigate('/users')}
+                    className='font-medium text-primary-600 underline-offset-2 hover:underline dark:text-primary-400'
+                  >
+                    {t('work.policy.setupLink')}
+                  </button>
+                </div>
+              )}
               {hostWorkspacesEnabled && (
                 <div className='mt-8 w-full max-w-2xl'>
                   <label

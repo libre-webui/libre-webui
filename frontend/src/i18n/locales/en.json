@@ -1644,7 +1644,9 @@
       "deleted": "Work policy deleted",
       "failed": "Could not save the Work policy",
       "invalidNumber": "PID limit and idle stop must be numbers.",
-      "guiEnabled": "Work Computer (GUI + browser)"
+      "guiEnabled": "Work Computer (GUI + browser)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "The Work Computer needs the GUI image: build it from deploy/work-computer in the repository and tag it libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Model downloads",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Runtime policy",
-      "default": "Default (global limits)"
+      "default": "Default (global limits)",
+      "setupHint": "Runtime policies unlock the Work Computer — a watchable browser desktop for the agent — and per-task limits.",
+      "setupLink": "Set up Work policies"
     },
     "git": {
       "actionFailed": "Git action failed.",

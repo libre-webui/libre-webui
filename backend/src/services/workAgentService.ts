@@ -1460,6 +1460,9 @@ export class WorkAgentService {
   }
 
   private async cleanupExecutionContainer(task: WorkTaskRecord): Promise<void> {
+    // A watched Work Computer screen outlives the run for the same reason a
+    // preview does: someone is looking at it.
+    if (workRuntimeService.screenSessionCount(task.id) > 0) return;
     try {
       // A preview is intentionally allowed to outlive the model run so the
       // user can inspect it in the Work pane. Preserve only a verified ready

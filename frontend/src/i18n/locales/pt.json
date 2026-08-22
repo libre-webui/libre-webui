@@ -1644,7 +1644,9 @@
       "deleted": "Política do Work excluída",
       "failed": "Não foi possível salvar a política do Work",
       "invalidNumber": "O limite de PID e a parada por inatividade devem ser números.",
-      "guiEnabled": "Work Computer (GUI + navegador)"
+      "guiEnabled": "Work Computer (GUI + navegador)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "O Work Computer precisa da imagem GUI: construa a partir de deploy/work-computer no repositório e marque como libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Download de modelos",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Política de execução",
-      "default": "Padrão (limites globais)"
+      "default": "Padrão (limites globais)",
+      "setupHint": "As políticas de runtime desbloqueiam o Work Computer — um desktop com navegador observável para o agente — e limites por tarefa.",
+      "setupLink": "Configurar políticas de Work"
     },
     "git": {
       "actionFailed": "A ação do Git falhou.",

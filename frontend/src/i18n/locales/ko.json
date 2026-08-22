@@ -1644,7 +1644,9 @@
       "deleted": "Work 정책이 삭제되었습니다",
       "failed": "Work 정책을 저장할 수 없습니다",
       "invalidNumber": "PID 제한과 유휴 중지는 숫자여야 합니다.",
-      "guiEnabled": "Work Computer (GUI + 브라우저)"
+      "guiEnabled": "Work Computer (GUI + 브라우저)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer에는 GUI 이미지가 필요합니다. 저장소의 deploy/work-computer에서 빌드해 libre-work-computer:latest 태그를 지정하세요."
     },
     "modelAccess": {
       "title": "모델 다운로드",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "런타임 정책",
-      "default": "기본값(전역 제한)"
+      "default": "기본값(전역 제한)",
+      "setupHint": "런타임 정책은 Work Computer(에이전트의 화면을 지켜볼 수 있는 브라우저 데스크톱)와 작업별 제한을 활성화합니다.",
+      "setupLink": "Work 정책 설정"
     },
     "git": {
       "actionFailed": "Git 작업이 실패했습니다.",

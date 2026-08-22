@@ -1644,7 +1644,9 @@
       "deleted": "Đã xóa chính sách Work",
       "failed": "Không thể lưu chính sách Work",
       "invalidNumber": "Giới hạn PID và dừng khi rảnh phải là số.",
-      "guiEnabled": "Work Computer (GUI + trình duyệt)"
+      "guiEnabled": "Work Computer (GUI + trình duyệt)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer cần image GUI: dựng từ deploy/work-computer trong kho mã và gắn thẻ libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Tải mô hình",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Chính sách runtime",
-      "default": "Mặc định (giới hạn toàn cục)"
+      "default": "Mặc định (giới hạn toàn cục)",
+      "setupHint": "Chính sách thời gian chạy mở khóa Work Computer — màn hình trình duyệt có thể theo dõi cho tác nhân — và giới hạn theo tác vụ.",
+      "setupLink": "Thiết lập chính sách Work"
     },
     "git": {
       "actionFailed": "Hành động Git thất bại.",

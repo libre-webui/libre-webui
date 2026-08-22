@@ -1644,7 +1644,9 @@
       "deleted": "Politika Work smazána",
       "failed": "Politiku Work se nepodařilo uložit",
       "invalidNumber": "Limit PID a zastavení při nečinnosti musí být čísla.",
-      "guiEnabled": "Work Computer (GUI + prohlížeč)"
+      "guiEnabled": "Work Computer (GUI + prohlížeč)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer vyžaduje GUI image: sestavte jej z deploy/work-computer v repozitáři a označte libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Stahování modelů",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Běhová politika",
-      "default": "Výchozí (globální limity)"
+      "default": "Výchozí (globální limity)",
+      "setupHint": "Zásady běhu odemykají Work Computer — sledovatelnou plochu s prohlížečem pro agenta — a limity pro jednotlivé úkoly.",
+      "setupLink": "Nastavit zásady Work"
     },
     "git": {
       "actionFailed": "Akce Gitu selhala.",

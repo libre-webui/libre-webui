@@ -1644,7 +1644,9 @@
       "deleted": "Polityka Work usunięta",
       "failed": "Nie udało się zapisać polityki Work",
       "invalidNumber": "Limit PID i zatrzymanie przy bezczynności muszą być liczbami.",
-      "guiEnabled": "Work Computer (GUI + przeglądarka)"
+      "guiEnabled": "Work Computer (GUI + przeglądarka)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer wymaga obrazu GUI: zbuduj go z deploy/work-computer w repozytorium i oznacz libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Pobieranie modeli",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Polityka środowiska",
-      "default": "Domyślna (limity globalne)"
+      "default": "Domyślna (limity globalne)",
+      "setupHint": "Zasady uruchamiania odblokowują Work Computer — obserwowalny pulpit z przeglądarką dla agenta — oraz limity na zadanie.",
+      "setupLink": "Skonfiguruj zasady Work"
     },
     "git": {
       "actionFailed": "Akcja Git nie powiodła się.",

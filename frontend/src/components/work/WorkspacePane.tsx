@@ -738,19 +738,8 @@ export function WorkspacePane({
           </>
         )}
 
-        {(tab === 'activity' || tab === 'git') && (
+        {(tab === 'activity' || tab === 'git' || tab === 'screen') && (
           <div className='min-w-0 flex-1' />
-        )}
-
-        {tab === 'screen' && (
-          <div
-            id='work-workspace-panel-screen'
-            role='tabpanel'
-            aria-labelledby='work-workspace-tab-screen'
-            className='flex min-h-0 flex-1 flex-col'
-          >
-            <WorkspaceScreen taskId={task.id} active={tab === 'screen'} />
-          </div>
         )}
 
         {tab === 'terminal' && (

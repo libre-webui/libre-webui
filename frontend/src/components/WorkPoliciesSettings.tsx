@@ -18,7 +18,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { MonitorPlay, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import type { WorkPolicy, WorkPolicyInput } from '@/types/work';
 import { workApi } from '@/utils/api/workApi';
@@ -45,6 +45,18 @@ const emptyForm: PolicyFormState = {
   idleMinutes: '',
   networkDefault: 'inherit',
   guiEnabled: false,
+};
+
+// One-click starting point for the Work Computer: the GUI image variant
+// with a workable memory floor and the screen enabled. Without a policy
+// like this the whole feature is invisible in the product.
+const computerPresetForm: PolicyFormState = {
+  ...emptyForm,
+  name: 'Work Computer',
+  image: 'libre-work-computer:latest',
+  memoryLimit: '4g',
+  networkDefault: 'on',
+  guiEnabled: true,
 };
 
 const formFromPolicy = (policy: WorkPolicy): PolicyFormState => ({
@@ -211,18 +223,37 @@ export const WorkPoliciesSettings: React.FC = () => {
           </p>
         </div>
         {editing === null && (
-          <Button
-            size='sm'
-            variant='outline'
-            className='shrink-0 whitespace-nowrap'
-            onClick={() => {
-              setForm(emptyForm);
-              setEditing('new');
-            }}
-          >
-            <Plus size={14} className='shrink-0' />
-            <span className='ms-1.5'>{t('userManager.workPolicies.add')}</span>
-          </Button>
+          <div className='flex shrink-0 items-center gap-2'>
+            <Button
+              size='sm'
+              variant='outline'
+              className='whitespace-nowrap'
+              data-testid='work-policy-computer-preset'
+              onClick={() => {
+                setForm(computerPresetForm);
+                setEditing('new');
+              }}
+            >
+              <MonitorPlay size={14} className='shrink-0' />
+              <span className='ms-1.5'>
+                {t('userManager.workPolicies.computerPreset')}
+              </span>
+            </Button>
+            <Button
+              size='sm'
+              variant='outline'
+              className='whitespace-nowrap'
+              onClick={() => {
+                setForm(emptyForm);
+                setEditing('new');
+              }}
+            >
+              <Plus size={14} className='shrink-0' />
+              <span className='ms-1.5'>
+                {t('userManager.workPolicies.add')}
+              </span>
+            </Button>
+          </div>
         )}
       </div>
 
@@ -348,6 +379,11 @@ export const WorkPoliciesSettings: React.FC = () => {
               'node:22-bookworm@sha256:…'
             )}
           </div>
+          {form.guiEnabled && (
+            <p className='mt-2 text-[11px] text-gray-500 dark:text-gray-400'>
+              {t('userManager.workPolicies.computerPresetHint')}
+            </p>
+          )}
           <div className='mt-3 flex justify-end gap-2'>
             <Button
               size='sm'

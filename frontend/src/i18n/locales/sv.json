@@ -1644,7 +1644,9 @@
       "deleted": "Work-policy borttagen",
       "failed": "Kunde inte spara Work-policyn",
       "invalidNumber": "PID-gräns och tomgångsstopp måste vara tal.",
-      "guiEnabled": "Work Computer (GUI + webbläsare)"
+      "guiEnabled": "Work Computer (GUI + webbläsare)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer kräver GUI-avbilden: bygg den från deploy/work-computer i repositoriet och tagga den libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Modellnedladdningar",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Körningspolicy",
-      "default": "Standard (globala gränser)"
+      "default": "Standard (globala gränser)",
+      "setupHint": "Runtime-policyer låser upp Work Computer — ett browserskrivbord för agenten som går att följa — och gränser per uppgift.",
+      "setupLink": "Konfigurera Work-policyer"
     },
     "git": {
       "actionFailed": "Git-åtgärden misslyckades.",

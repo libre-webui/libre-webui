@@ -1644,7 +1644,9 @@
       "deleted": "Work-politik slettet",
       "failed": "Work-politikken kunne ikke gemmes",
       "invalidNumber": "PID-grænse og tomgangsstop skal være tal.",
-      "guiEnabled": "Work Computer (GUI + browser)"
+      "guiEnabled": "Work Computer (GUI + browser)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer kræver GUI-imaget: byg det fra deploy/work-computer i repositoriet og tag det libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Modeldownloads",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Kørselspolitik",
-      "default": "Standard (globale grænser)"
+      "default": "Standard (globale grænser)",
+      "setupHint": "Runtime-politikker låser op for Work Computer — et browser-skrivebord for agenten du kan se med på — og grænser pr. opgave.",
+      "setupLink": "Opsæt Work-politikker"
     },
     "git": {
       "actionFailed": "Git-handlingen mislykkedes.",

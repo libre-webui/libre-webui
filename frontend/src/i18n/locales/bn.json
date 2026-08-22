@@ -1644,7 +1644,9 @@
       "deleted": "Work নীতি মুছে ফেলা হয়েছে",
       "failed": "Work নীতি সংরক্ষণ করা যায়নি",
       "invalidNumber": "PID সীমা এবং নিষ্ক্রিয় বন্ধ অবশ্যই সংখ্যা হতে হবে।",
-      "guiEnabled": "Work Computer (GUI + ব্রাউজার)"
+      "guiEnabled": "Work Computer (GUI + ব্রাউজার)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer-এর জন্য GUI ইমেজ দরকার: রিপোজিটরির deploy/work-computer থেকে বিল্ড করে libre-work-computer:latest ট্যাগ দিন।"
     },
     "modelAccess": {
       "title": "মডেল ডাউনলোড",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "রানটাইম নীতি",
-      "default": "ডিফল্ট (গ্লোবাল সীমা)"
+      "default": "ডিফল্ট (গ্লোবাল সীমা)",
+      "setupHint": "রানটাইম নীতিগুলি Work Computer আনলক করে — এজেন্টের জন্য একটি দেখার-যোগ্য ব্রাউজার ডেস্কটপ — এবং প্রতি-কাজ সীমা।",
+      "setupLink": "Work নীতি সেট আপ করুন"
     },
     "git": {
       "actionFailed": "Git অ্যাকশন ব্যর্থ।",

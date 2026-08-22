@@ -1644,7 +1644,9 @@
       "deleted": "ลบนโยบาย Work แล้ว",
       "failed": "ไม่สามารถบันทึกนโยบาย Work ได้",
       "invalidNumber": "ขีดจำกัด PID และหยุดเมื่อไม่ใช้งานต้องเป็นตัวเลข",
-      "guiEnabled": "Work Computer (GUI + เบราว์เซอร์)"
+      "guiEnabled": "Work Computer (GUI + เบราว์เซอร์)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer ต้องใช้อิมเมจ GUI: สร้างจาก deploy/work-computer ในรีโพซิทอรีแล้วแท็กเป็น libre-work-computer:latest"
     },
     "modelAccess": {
       "title": "การดาวน์โหลดโมเดล",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "นโยบายรันไทม์",
-      "default": "ค่าเริ่มต้น (ขีดจำกัดส่วนกลาง)"
+      "default": "ค่าเริ่มต้น (ขีดจำกัดส่วนกลาง)",
+      "setupHint": "นโยบายรันไทม์ปลดล็อก Work Computer — เดสก์ท็อปเบราว์เซอร์ที่ดูได้สำหรับเอเจนต์ — และขีดจำกัดต่อภารกิจ",
+      "setupLink": "ตั้งค่านโยบาย Work"
     },
     "git": {
       "actionFailed": "การทำงานของ Git ล้มเหลว",

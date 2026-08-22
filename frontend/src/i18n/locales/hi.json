@@ -1644,7 +1644,9 @@
       "deleted": "Work नीति हटाई गई",
       "failed": "Work नीति सहेजी नहीं जा सकी",
       "invalidNumber": "PID सीमा और निष्क्रिय रोक संख्याएँ होनी चाहिए।",
-      "guiEnabled": "Work Computer (GUI + ब्राउज़र)"
+      "guiEnabled": "Work Computer (GUI + ब्राउज़र)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer को GUI इमेज चाहिए: रिपॉज़िटरी के deploy/work-computer से बनाएँ और libre-work-computer:latest टैग करें।"
     },
     "modelAccess": {
       "title": "मॉडल डाउनलोड",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "रनटाइम नीति",
-      "default": "डिफ़ॉल्ट (वैश्विक सीमाएँ)"
+      "default": "डिफ़ॉल्ट (वैश्विक सीमाएँ)",
+      "setupHint": "रनटाइम नीतियाँ Work Computer को अनलॉक करती हैं — एजेंट के लिए एक देखने-योग्य ब्राउज़र डेस्कटॉप — और प्रति-कार्य सीमाएँ।",
+      "setupLink": "Work नीतियाँ सेट करें"
     },
     "git": {
       "actionFailed": "Git क्रिया विफल।",

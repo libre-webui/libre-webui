@@ -1644,7 +1644,9 @@
       "deleted": "Politique Work supprimée",
       "failed": "Impossible d'enregistrer la politique Work",
       "invalidNumber": "La limite de PID et l'arrêt d'inactivité doivent être des nombres.",
-      "guiEnabled": "Work Computer (GUI + navigateur)"
+      "guiEnabled": "Work Computer (GUI + navigateur)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Le Work Computer requiert l'image GUI : construisez-la depuis deploy/work-computer du dépôt et taguez-la libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Téléchargement de modèles",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Politique d'exécution",
-      "default": "Par défaut (limites globales)"
+      "default": "Par défaut (limites globales)",
+      "setupHint": "Les politiques d'exécution débloquent le Work Computer — un bureau avec navigateur observable pour l'agent — et des limites par tâche.",
+      "setupLink": "Configurer les politiques Work"
     },
     "git": {
       "actionFailed": "L'action Git a échoué.",

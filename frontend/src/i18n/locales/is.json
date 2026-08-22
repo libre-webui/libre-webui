@@ -1644,7 +1644,9 @@
       "deleted": "Work-stefnu eytt",
       "failed": "Ekki tókst að vista Work-stefnuna",
       "invalidNumber": "PID-mörk og stöðvun í aðgerðaleysi verða að vera tölur.",
-      "guiEnabled": "Work Computer (viðmót + vafri)"
+      "guiEnabled": "Work Computer (viðmót + vafri)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer þarf GUI-myndina: byggðu hana úr deploy/work-computer í geymslunni og merktu libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Niðurhal líkana",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Keyrslustefna",
-      "default": "Sjálfgefið (almenn mörk)"
+      "default": "Sjálfgefið (almenn mörk)",
+      "setupHint": "Keyrslustefnur opna Work Computer — skjáborð með vafra sem hægt er að fylgjast með fyrir umboðið — og mörk fyrir hvert verk.",
+      "setupLink": "Setja upp Work-stefnur"
     },
     "git": {
       "actionFailed": "Git-aðgerð mistókst.",

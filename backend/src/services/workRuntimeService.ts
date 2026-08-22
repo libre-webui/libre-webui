@@ -405,6 +405,7 @@ export class WorkRuntimeService {
   private runtimeLeases = new Map<string, RuntimeLease>();
   private previewLeaseReleases = new Map<string, () => void>();
   private terminalHolds = new Map<string, number>();
+  private screenHolds = new Map<string, number>();
   private recoveryTasks = new Map<string, WorkTaskRecord>();
   private recoveryOrphans = new Map<string, DiscoveredWorkContainer>();
   private recoveryInventory?: WorkTaskRecord[];
@@ -824,6 +825,48 @@ export class WorkRuntimeService {
     return this.terminalHolds.get(taskId) ?? 0;
   }
 
+  /**
+   * A connected Screen viewer owns the running container the way an
+   * attached terminal does: while someone watches the Work Computer,
+   * workspace-helper teardown and run-end cleanup must not stop the
+   * sandbox out from under the GUI session. Callers hold the returned
+   * release for the lifetime of the viewer connection.
+   */
+  async beginScreenSession(task: WorkTaskRecord): Promise<() => Promise<void>> {
+    const releaseLease = await this.acquireRuntimeLease(task);
+    this.screenHolds.set(task.id, (this.screenHolds.get(task.id) ?? 0) + 1);
+    let released = false;
+    return async () => {
+      if (released) return;
+      released = true;
+      this.noteTaskActivity(task.id);
+      const remaining = (this.screenHolds.get(task.id) ?? 1) - 1;
+      if (remaining <= 0) {
+        this.screenHolds.delete(task.id);
+      } else {
+        this.screenHolds.set(task.id, remaining);
+      }
+      try {
+        if (remaining <= 0 && !this.shuttingDown) {
+          await this.withLifecycleLock(task.id, (_assertHeld, signal) =>
+            this.stopContainerIfIdleWithLock(task, signal)
+          );
+        }
+      } catch (error) {
+        logger.warn(
+          `Could not idle Work container ${task.containerName} after a screen session:`,
+          error
+        );
+      } finally {
+        releaseLease();
+      }
+    };
+  }
+
+  screenSessionCount(taskId: string): number {
+    return this.screenHolds.get(taskId) ?? 0;
+  }
+
   beginShutdown(): void {
     this.shuttingDown = true;
     if (this.recoveryTimer) {
@@ -1050,6 +1093,7 @@ export class WorkRuntimeService {
       const busy =
         this.activeCommands.has(task.id) ||
         (this.terminalHolds.get(task.id) ?? 0) > 0 ||
+        (this.screenHolds.get(task.id) ?? 0) > 0 ||
         (this.runtimeLeases.has(task.id) &&
           !this.previewLeaseReleases.has(task.id));
       const sharedActivity =
@@ -1414,20 +1458,27 @@ export class WorkRuntimeService {
     }
   }
 
+  /** Returns true when the container was actually stopped. */
   private async stopContainerIfIdleWithLock(
     task: WorkTaskRecord,
-    signal?: AbortSignal
-  ): Promise<void> {
-    if (this.activeCommands.has(task.id)) return;
+    signal?: AbortSignal,
+    options: { ignoreActiveCommands?: boolean } = {}
+  ): Promise<boolean> {
+    if (!options.ignoreActiveCommands && this.activeCommands.has(task.id)) {
+      return false;
+    }
     // An attached terminal session owns the running container exactly like a
     // ready preview does.
-    if ((this.terminalHolds.get(task.id) ?? 0) > 0) return;
+    if ((this.terminalHolds.get(task.id) ?? 0) > 0) return false;
+    // So does a watched Work Computer screen: without this, every Files
+    // refresh would destroy the GUI session mid-view.
+    if ((this.screenHolds.get(task.id) ?? 0) > 0) return false;
     try {
       if (
         (await this.previewProcessCheckWithLock(task, signal)) === 'ready' &&
         this.previewLeaseReleases.has(task.id)
       ) {
-        return;
+        return false;
       }
     } catch (error) {
       logger.warn(
@@ -1435,10 +1486,21 @@ export class WorkRuntimeService {
         error
       );
     }
+    // The preview probe above awaits a container exec; a terminal or screen
+    // hold can land during that window. Re-check synchronously so a viewer
+    // who just attached does not lose the session to a stale decision.
+    if (
+      (!options.ignoreActiveCommands && this.activeCommands.has(task.id)) ||
+      (this.terminalHolds.get(task.id) ?? 0) > 0 ||
+      (this.screenHolds.get(task.id) ?? 0) > 0
+    ) {
+      return false;
+    }
     await this.stopContainerWithLock(task, signal);
     this.releasePreviewLease(task.id);
     await this.markPreviewStopped(task.id);
     this.completeRecoveryTask(task.id);
+    return true;
   }
 
   async readFile(
@@ -1942,9 +2004,15 @@ export class WorkRuntimeService {
             if (commandRegistered) {
               // Keep the distributed lifecycle fence through teardown. A
               // second replica must never stop or recreate this sandbox in
-              // the gap between preparation and Docker exec.
-              await this.stopContainerWithLock(task, signal);
-              containerStopped = true;
+              // the gap between preparation and Docker exec. The managed
+              // command script already reaped the command's process group,
+              // so a container held by a screen viewer, terminal, or ready
+              // preview may keep running.
+              containerStopped = await this.stopContainerIfIdleWithLock(
+                task,
+                signal,
+                { ignoreActiveCommands: true }
+              );
             }
           }
         }

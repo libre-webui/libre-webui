@@ -89,7 +89,7 @@ export const WORK_AGENT_SKILLS: readonly WorkAgentSkill[] = [
       'This task has a virtual computer with a Chromium browser. computer_observe returns the current screenshot with the cursor position and active window title; computer_act performs batched mouse and keyboard actions and returns the screenshot after they settle.',
       'Coordinates are absolute pixels on the returned screenshot. Observe before the first action, act on what the screenshot actually shows, and re-observe instead of assuming an action worked.',
       'Batch related actions into one computer_act call: move, click, double_click, right_click, type, key, scroll, wait. Add a wait action after navigation or before reading a slow page.',
-      'run_command stops the sandbox processes when it finishes, which closes the browser. The computer session restarts on the next computer tool call and the browser profile persists, but open pages are lost — finish a browser workflow before running commands.',
+      'run_command can stop the sandbox when it finishes unless the screen is being watched; the computer session then restarts on the next computer tool call and the browser profile persists, but open pages are lost — finish a browser workflow before running commands.',
       'Never enter credentials, complete a CAPTCHA or 2FA challenge, or work around an authentication wall. Call request_takeover with a concrete reason instead — the user drives the real screen, the password never passes through you.',
       'While the user holds control your computer tools are blocked. When request_takeover reports control was handed back, computer_observe first; if no one takes over in time, report the exact blocker in your response.',
     ],

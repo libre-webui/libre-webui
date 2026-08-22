@@ -1644,7 +1644,9 @@
       "deleted": "Kebijakan Work dihapus",
       "failed": "Tidak dapat menyimpan kebijakan Work",
       "invalidNumber": "Batas PID dan henti saat idle harus berupa angka.",
-      "guiEnabled": "Work Computer (GUI + peramban)"
+      "guiEnabled": "Work Computer (GUI + peramban)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer memerlukan image GUI: bangun dari deploy/work-computer di repositori dan beri tag libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Unduhan model",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Kebijakan runtime",
-      "default": "Bawaan (batas global)"
+      "default": "Bawaan (batas global)",
+      "setupHint": "Kebijakan runtime membuka Work Computer — desktop browser yang dapat ditonton untuk agen — dan batas per tugas.",
+      "setupLink": "Siapkan kebijakan Work"
     },
     "git": {
       "actionFailed": "Aksi Git gagal.",

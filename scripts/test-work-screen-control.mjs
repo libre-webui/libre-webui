@@ -146,3 +146,24 @@ test('cancelling the run aborts the wait', async () => {
     return true;
   });
 });
+
+test('work-screen tickets survive the issue/consume round trip', async () => {
+  // Regression: the ticket validator once accepted only chat and
+  // work-terminal audiences, so every screen viewer got a 401 and the
+  // Work Computer was unwatchable through the relay.
+  const { WebSocketTicketService } = await distModule(
+    'services/websocketTicketService.js'
+  );
+  const tickets = new WebSocketTicketService();
+  for (const audience of ['chat', 'work-terminal', 'work-screen']) {
+    const resource = audience === 'chat' ? undefined : 'task-1';
+    const issued = await tickets.issue(
+      'user-1',
+      Date.now() + 60_000,
+      audience,
+      resource
+    );
+    const consumed = await tickets.consume(issued.ticket, audience, resource);
+    assert.equal(consumed?.userId, 'user-1', `audience ${audience}`);
+  }
+});

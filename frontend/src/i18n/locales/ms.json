@@ -1644,7 +1644,9 @@
       "deleted": "Dasar Work dipadamkan",
       "failed": "Tidak dapat menyimpan dasar Work",
       "invalidNumber": "Had PID dan henti melahu mestilah nombor.",
-      "guiEnabled": "Work Computer (GUI + pelayar)"
+      "guiEnabled": "Work Computer (GUI + pelayar)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "Work Computer memerlukan imej GUI: bina daripada deploy/work-computer dalam repositori dan tag sebagai libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Muat turun model",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Dasar masa jalan",
-      "default": "Lalai (had global)"
+      "default": "Lalai (had global)",
+      "setupHint": "Dasar masa jalan membuka Work Computer — desktop pelayar yang boleh ditonton untuk ejen — dan had setiap tugasan.",
+      "setupLink": "Sediakan dasar Work"
     },
     "git": {
       "actionFailed": "Tindakan Git gagal.",

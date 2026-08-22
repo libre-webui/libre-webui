@@ -95,7 +95,9 @@ const isTicketRecord = (value: unknown): value is TicketRecord => {
   return (
     typeof record.userId === 'string' &&
     record.userId.length > 0 &&
-    (record.audience === 'chat' || record.audience === 'work-terminal') &&
+    (record.audience === 'chat' ||
+      record.audience === 'work-terminal' ||
+      record.audience === 'work-screen') &&
     (record.resourceId === undefined ||
       typeof record.resourceId === 'string') &&
     (record.sessionId === undefined || typeof record.sessionId === 'string') &&

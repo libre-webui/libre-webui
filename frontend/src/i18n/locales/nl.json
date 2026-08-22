@@ -1644,7 +1644,9 @@
       "deleted": "Work-beleid verwijderd",
       "failed": "Kon het Work-beleid niet opslaan",
       "invalidNumber": "PID-limiet en inactiviteitsstop moeten getallen zijn.",
-      "guiEnabled": "Work Computer (GUI + browser)"
+      "guiEnabled": "Work Computer (GUI + browser)",
+      "computerPreset": "Work Computer",
+      "computerPresetHint": "De Work Computer vereist de GUI-image: bouw die vanuit deploy/work-computer in de repository en tag als libre-work-computer:latest."
     },
     "modelAccess": {
       "title": "Modeldownloads",
@@ -2577,7 +2579,9 @@
     },
     "policy": {
       "label": "Runtimebeleid",
-      "default": "Standaard (globale limieten)"
+      "default": "Standaard (globale limieten)",
+      "setupHint": "Runtime-beleid ontgrendelt de Work Computer — een meekijkbaar browserbureaublad voor de agent — en limieten per taak.",
+      "setupLink": "Work-beleid instellen"
     },
     "git": {
       "actionFailed": "Git-actie mislukt.",

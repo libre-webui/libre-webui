@@ -752,10 +752,24 @@ export class DockerWorkRuntimeDriver implements WorkRuntimeDriver {
           objectRecord
         )
       : [];
+    const screenBindings = Array.isArray(
+      portBindings[`${config.screenPort}/tcp`]
+    )
+      ? (portBindings[`${config.screenPort}/tcp`] as unknown[]).map(
+          objectRecord
+        )
+      : [];
+    // A GUI policy publishes the screen bridge next to the preview port;
+    // demanding exactly one binding here declared every Work Computer
+    // container permanently stale and recreated it on each prepare.
+    const guiEnabled = policy.guiEnabled === true;
     const portPolicyMatches = task.networkEnabled
-      ? Object.keys(portBindings).length === 1 &&
+      ? Object.keys(portBindings).length === (guiEnabled ? 2 : 1) &&
         previewBindings.length === 1 &&
-        previewBindings[0]?.HostIp === config.previewBind
+        previewBindings[0]?.HostIp === config.previewBind &&
+        (!guiEnabled ||
+          (screenBindings.length === 1 &&
+            screenBindings[0]?.HostIp === config.previewBind))
       : Object.keys(portBindings).length === 0;
     return (
       labels['ai.libre-webui.managed'] === 'true' &&
