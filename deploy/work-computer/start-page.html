@@ -8,59 +8,62 @@
   html, body {
     margin: 0; height: 100%;
     background:
-      radial-gradient(1000px 500px at 75% -10%, rgba(109, 141, 255, 0.18), transparent 60%),
-      radial-gradient(800px 500px at 15% 110%, rgba(154, 109, 255, 0.14), transparent 60%),
-      linear-gradient(160deg, #12151f 0%, #232a45 100%);
-    color: #e6e9f2;
-    font-family: "DejaVu Sans", system-ui, sans-serif;
+      radial-gradient(900px 480px at 50% -20%, rgba(255, 123, 82, 0.07), transparent 65%),
+      linear-gradient(180deg, #000000 0%, #0b0b0c 100%);
+    color: #f7f5f0;
+    font-family: "Space Grotesk", "Manrope", "DejaVu Sans", system-ui, sans-serif;
     display: flex; align-items: center; justify-content: center;
   }
-  .card { text-align: center; max-width: 620px; padding: 24px; }
+  .card { text-align: center; max-width: 640px; padding: 24px; }
   .mark {
-    width: 80px; height: 80px; margin: 0 auto 16px;
-    border-radius: 22px;
-    background: linear-gradient(140deg, #6d8dff, #9a6dff);
+    width: 76px; height: 76px; margin: 0 auto 18px;
+    border-radius: 12px;
+    background: #111111;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 12px 40px rgba(109, 141, 255, 0.35);
   }
-  .mark svg { width: 46px; height: 46px; color: #fff; }
-  #clock { font-size: 42px; font-weight: 200; letter-spacing: 2px; margin: 2px 0 0; }
-  #date { font-size: 13px; color: #9aa3bd; margin: 2px 0 20px; }
-  h1 { font-size: 19px; font-weight: 600; margin: 0 0 6px; }
-  p.tag { font-size: 13px; margin: 0 0 22px; color: #9aa3bd; }
+  .mark svg { width: 44px; height: 44px; color: #f7f5f0; }
+  #clock { font-size: 44px; font-weight: 300; letter-spacing: 1px; margin: 2px 0 0; }
+  #date { font-size: 13px; color: #858179; margin: 2px 0 22px; }
+  h1 { font-size: 19px; font-weight: 600; letter-spacing: 0.2px; margin: 0 0 6px; }
+  p.tag { font-size: 13px; margin: 0 0 24px; color: #b6b2aa; }
   form.search {
-    display: flex; gap: 8px; margin: 0 auto 26px; max-width: 460px;
+    display: flex; gap: 8px; margin: 0 auto 28px; max-width: 470px;
   }
   form.search input[type="text"] {
     flex: 1; padding: 12px 18px;
-    background: rgba(255, 255, 255, 0.07);
+    background: #0b0b0c;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 999px;
-    color: #e6e9f2; font-size: 14px; outline: none;
+    color: #f7f5f0; font-size: 14px; outline: none;
   }
-  form.search input[type="text"]:focus { border-color: rgba(109, 141, 255, 0.6); }
+  form.search input[type="text"]:focus { border-color: #ff7b52; }
   form.search button {
-    padding: 0 20px; border: none; border-radius: 999px;
-    background: linear-gradient(140deg, #6d8dff, #9a6dff);
-    color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+    padding: 0 22px; border: none; border-radius: 999px;
+    background: #ff7b52;
+    color: #0a0a0b; font-size: 14px; font-weight: 700; cursor: pointer;
   }
-  .links { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  form.search button:hover { background: #ff9a7a; }
+  .links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .links a {
     display: flex; flex-direction: column; align-items: center; gap: 8px;
     width: 96px; padding: 14px 6px 12px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    color: #dfe4f2; text-decoration: none; font-size: 12px;
-    transition: background 0.15s ease, transform 0.15s ease;
+    background: #111111;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #f7f5f0; text-decoration: none; font-size: 12px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
   }
-  .links a:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-2px); }
+  .links a:hover { border-color: rgba(255, 255, 255, 0.28); transform: translateY(-2px); }
   .links .glyph {
-    width: 34px; height: 34px; border-radius: 10px;
+    width: 34px; height: 34px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 700; color: #fff;
+    font-size: 16px; font-weight: 700;
+    background: #0b0b0c;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ff7b52;
   }
-  .links .glyph svg { width: 20px; height: 20px; color: #fff; }
+  .links .glyph svg { width: 20px; height: 20px; color: #ff7b52; }
 </style>
 </head>
 <body>
@@ -81,16 +84,16 @@
       <input type="text" name="q" placeholder="Search the web" autocomplete="off" autofocus>
       <!-- DuckDuckGo theme parameters tuned to the Libre WebUI palette. -->
       <input type="hidden" name="kae" value="d">
-      <input type="hidden" name="k7" value="12151f">
-      <input type="hidden" name="kj" value="181c2a">
-      <input type="hidden" name="k9" value="8fa7ff">
-      <input type="hidden" name="kx" value="9a6dff">
-      <input type="hidden" name="k8" value="e6e9f2">
+      <input type="hidden" name="k7" value="0b0b0c">
+      <input type="hidden" name="kj" value="111111">
+      <input type="hidden" name="k9" value="ff9a7a">
+      <input type="hidden" name="kx" value="ff7b52">
+      <input type="hidden" name="k8" value="f7f5f0">
       <button type="submit">Search</button>
     </form>
     <div class="links">
       <a href="https://librewebui.org">
-        <span class="glyph" style="background:linear-gradient(140deg,#6d8dff,#9a6dff)">
+        <span class="glyph">
           <svg viewBox="0 0 64 64" aria-hidden="true">
             <path d="M 11.5 18.0 L 11.5 32 A 20.5 20.5 0 0 0 50.58 40.66"
               fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
@@ -101,11 +104,11 @@
         Website
       </a>
       <a href="https://docs.librewebui.org">
-        <span class="glyph" style="background:#2c3554">📘</span>
+        <span class="glyph">✦</span>
         Docs
       </a>
       <a href="https://github.com/libre-webui/libre-webui">
-        <span class="glyph" style="background:#24292f">
+        <span class="glyph">
           <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
           </svg>
@@ -113,7 +116,7 @@
         GitHub
       </a>
       <a href="https://git.kroonen.ai/libre-webui/libre-webui">
-        <span class="glyph" style="background:#f4802c">
+        <span class="glyph">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
             <circle cx="7" cy="19" r="2.2" fill="currentColor" stroke="none"/>
             <circle cx="7" cy="5" r="2.2" fill="currentColor" stroke="none"/>
@@ -124,11 +127,11 @@
         Forgejo
       </a>
       <a href="https://kroonen.ai">
-        <span class="glyph" style="background:#3b4468">K</span>
+        <span class="glyph">K</span>
         kroonen.ai
       </a>
-      <a href="https://start.duckduckgo.com/?kae=d&amp;k7=12151f&amp;kj=181c2a&amp;k9=8fa7ff&amp;kx=9a6dff&amp;k8=e6e9f2">
-        <span class="glyph" style="background:#de5833">D</span>
+      <a href="https://start.duckduckgo.com/?kae=d&amp;k7=0b0b0c&amp;kj=111111&amp;k9=ff9a7a&amp;kx=ff7b52&amp;k8=f7f5f0">
+        <span class="glyph">D</span>
         DuckDuckGo
       </a>
     </div>

@@ -16,7 +16,7 @@ border_color = #000000 0
 # Active task background
 rounded = 8
 border_width = 0
-background_color = #6d8dff 45
+background_color = #ff7b52 40
 border_color = #000000 0
 
 #-------------------------------------
